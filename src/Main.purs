@@ -2,7 +2,7 @@ module Main where
 
 import Prelude
 
-import Control.Monad.Effect.Ref (Ref, modifyRef, newRef, readRef)
+import Control.Monad.Effect.Ref (modifyRef, newRef, readRef)
 import Control.Monad.Except (runExcept)
 import Data.Array (cons)
 import Data.Either (Either, either)
@@ -11,12 +11,12 @@ import Data.List.Types (NonEmptyList)
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import Node.Buffer (Buffer, concat_, toString___)
-import Node.Events.EventEmitter (class EventEmitter, on')
+import Node.Events.EventEmitter (on')
 import Node.Http.Server (Request, Response, create)
 import Node.Server (ListenOptions(..), listen_)
 import Node.Stream.Readable (class Readable)
 import Node.Stream.Readable.Events (data', end)
-import Node.Stream.Writable (endBuffer_, endString__)
+import Node.Stream.Writable (endString__)
 
 listenOptions :: ListenOptions
 listenOptions = TcpListenOptions
