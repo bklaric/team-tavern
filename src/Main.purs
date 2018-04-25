@@ -2,21 +2,16 @@ module Main where
 
 import Prelude
 
-import Control.Monad.Effect.Ref (modifyRef, newRef, readRef)
-import Control.Monad.Except (runExcept)
-import Data.Array (cons)
-import Data.Either (Either, either)
-import Data.Foreign (Foreign, ForeignError, unsafeFromForeign, unsafeReadTagged)
-import Data.List.Types (NonEmptyList)
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
-import Node.Buffer (Buffer, concat_, toString___)
-import Node.Events.EventEmitter (on')
+import Node.Buffer (concat_, toString___)
 import Node.Http.Server (Request, Response, create)
 import Node.Server (ListenOptions(..), listen_)
 import Node.Stream.Readable (class Readable)
-import Node.Stream.Readable.Events (data', end)
+import Node.Stream.Readable.Events (collectDataEvents)
 import Node.Stream.Writable (endString__)
+import Partial.Unsafe (unsafePartial)
+import Unsafe.Coerce (unsafeCoerce)
 
 listenOptions :: ListenOptions
 listenOptions = TcpListenOptions
@@ -26,26 +21,19 @@ listenOptions = TcpListenOptions
     , exclusive: Nothing
     }
 
-foreignToBuffer :: Foreign -> Either (NonEmptyList ForeignError) Buffer
-foreignToBuffer foreignBuffer =
-    unsafeReadTagged "Uint8Array" foreignBuffer
-    # runExcept
-    <#> unsafeFromForeign
-
-readEventsUtf8 :: forall readable. Readable readable =>
-    readable -> (String -> Effect Unit) -> Effect Unit
-readEventsUtf8 request callback = do
-    body <- newRef ([] :: Array Buffer)
-    _ <- request # on' data' \foreignData ->
-        foreignToBuffer foreignData # either (const $ pure unit) \buffer ->
-            modifyRef body (cons buffer)
-    _ <- request # on' end
-        (readRef body >>= concat_ >>= toString___ >>= callback)
-    pure unit
+-- For server library (because unsafePartial)
+readBuffersAsUtf8 :: forall readable. Readable readable =>
+    (String -> Effect Unit) -> readable -> Effect readable
+readBuffersAsUtf8 callback readable = unsafePartial do
+    readable # collectDataEvents
+        (map unsafeCoerce
+        >>> concat_
+        >=> toString___
+        >=> callback)
 
 requestHandler :: Request -> Response -> Effect Unit
 requestHandler request response = do
-    response # endString__ "Hello world!" # void
+    request # readBuffersAsUtf8 (flip endString__ response >>> void) # void
 
 main :: Effect Unit
 main = do
