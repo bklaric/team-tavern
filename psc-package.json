@@ -4,6 +4,7 @@
   "source": "https://github.com/bklaric/package-sets.git",
   "depends": [
     "idiomatic-node-http",
-    "uri"
+    "http-routing",
+    "psci-support"
   ]
 }
