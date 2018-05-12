@@ -5,6 +5,7 @@
   "depends": [
     "idiomatic-node-http",
     "http-routing",
-    "psci-support"
+    "psci-support",
+    "argonaut"
   ]
 }
