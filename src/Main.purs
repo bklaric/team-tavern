@@ -2,22 +2,22 @@ module Main where
 
 import Prelude
 
-import Body (Body, fromRequest, readAsUtf8)
-import Data.Either (Either, either)
-import Data.HTTP.Method (CustomMethod, Method(..), fromString)
-import Data.List (List(Nil))
+import Body (Body, fromRequest)
+import Data.Bifunctor (lmap)
+import Data.Either (Either(Right, Left))
+import Data.HTTP.Method (CustomMethod, Method, fromString)
 import Data.Maybe (Maybe(..))
+import Data.String.NonEmpty (toString)
+import Data.Variant (match)
 import Effect (Effect)
-import Global.Unsafe (unsafeStringify)
-import Node.Http.Server (Request, Response, create)
+import Node.Http.Server (HttpServer, Request, create)
 import Node.Http.ServerRequest (method, url)
+import Node.Http.ServerResponse (setStatusCode)
 import Node.Server (ListenOptions(..), listen_)
-import Node.Stream.Writable (end__, writeString__)
-import Routing.Junction (JunctionProxy(JunctionProxy), junctionRouter')
-import Text.Parsing.Parser (ParseError)
-import URI.Extra.QueryPairs (QueryPairs(QueryPairs))
-import Url (Url, parseUrl, pathSegments, queryPairs)
+import Node.Stream.Writable (endString__)
 import Routes (TeamTavernRoutes)
+import Routing.Junction (JunctionProxy(JunctionProxy), junctionRouter')
+import Url (Url, parseUrl, pathSegments, queryPairs)
 
 listenOptions :: ListenOptions
 listenOptions = TcpListenOptions
@@ -27,39 +27,54 @@ listenOptions = TcpListenOptions
     , exclusive: Nothing
     }
 
-requestHandler :: Request -> Response -> Effect Unit
-requestHandler request response = do
-    fromRequest request # readAsUtf8 (\body -> do
-        writeString__ body response # void
-        writeString__ "\n" response # void
-        let requestMethod = method request # fromString
-        let requestUrl = url request # parseUrl
-        let routedUrl = junctionRouter'
-                            (JunctionProxy :: JunctionProxy TeamTavernRoutes)
-                            (either id (const GET) requestMethod)
-                            (either (const Nil) pathSegments requestUrl)
-                            (either (const $ QueryPairs []) queryPairs requestUrl)
-        writeString__ (either show show requestMethod) response # void
-        writeString__ "\n" response # void
-        writeString__ (either show show requestUrl) response # void
-        writeString__ "\n" response # void
-        writeString__ (unsafeStringify routedUrl) response # void
-        end__ response # void) # void
-
 type HttpRequest =
-    { method :: Either Method CustomMethod
-    , url :: Either ParseError Url
+    { method :: Either CustomMethod Method
+    , url :: Either String Url
     , body :: Body
     }
 
 readRequest :: Request -> HttpRequest
 readRequest request =
-    { method: request # method # fromString
-    , url: request # url # parseUrl
+    { method: request # method # fromString # case _ of
+        Left m -> Right m
+        Right cm -> Left cm
+    , url: request # url # parseUrl # lmap (const $ url request)
     , body: fromRequest request
     }
 
-main :: Effect Unit
-main = do
-    server <- create requestHandler
+type HttpResponse =
+    { statusCode :: Int
+    , content :: String
+    }
+
+createFancy :: (HttpRequest -> Effect HttpResponse) -> Effect HttpServer
+createFancy handler = create \request response -> do
+    { statusCode, content } <- request # readRequest # handler
+    setStatusCode statusCode response
+    endString__ content response # void
+
+runServer
+    :: ListenOptions
+    -> (HttpRequest -> Effect HttpResponse)
+    -> Effect Unit
+runServer listenOptions handler = do
+    server <- createFancy handler
     server # listen_ listenOptions
+
+teamTavernRoutes = (JunctionProxy :: JunctionProxy TeamTavernRoutes)
+
+requestHandler3 method url body =
+    case junctionRouter' teamTavernRoutes method (pathSegments url) (queryPairs url) of
+    Left _ -> pure { statusCode: 404, content: "404 Not Found" }
+    Right routeValues -> routeValues # match
+        { viewPlayers: const $ pure { statusCode: 200, content: "You're viewing all players." }
+        , viewPlayer: \{nickname} -> pure { statusCode: 200, content: "You're viewing player " <> toString nickname <> "." }
+        , registerPlayer: const $ pure { statusCode: 200, content: "You're registering a player." }}
+
+requestHandler2 { method, url, body } =
+    case method, url of
+    Right method', Right url' -> requestHandler3 method' url' body
+    _, _ -> pure { statusCode: 400, content: "You fugen suck, lmao!" }
+
+main :: Effect Unit
+main = runServer listenOptions requestHandler2
