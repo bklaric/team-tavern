@@ -6,6 +6,8 @@
     "idiomatic-node-http",
     "http-routing",
     "psci-support",
-    "argonaut"
+    "argonaut",
+    "pg",
+    "foreign-generic"
   ]
 }
