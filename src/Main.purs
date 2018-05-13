@@ -18,9 +18,9 @@ import Data.String.NonEmpty (toString)
 import Data.Variant (match)
 import Effect (Effect)
 import Error.Class (message)
-import Node.Http.Server (HttpServer, Request, create)
-import Node.Http.ServerRequest (method, url)
-import Node.Http.ServerResponse (ServerResponse, setStatusCode)
+import Node.Http.Server (HttpServer, create_)
+import Node.Http.Server.Request (Request, method, url)
+import Node.Http.Server.Response (Response, setStatusCode)
 import Node.Server (ListenOptions(..), listen_)
 import Node.Stream.Writable (endString__)
 import Postgres.Client.Config (ClientConfig, database, host, password, port, user)
@@ -61,13 +61,13 @@ type HttpResponse =
 type RequestHandler =
     HttpRequest -> (HttpResponse -> Effect Unit) -> Effect Unit
 
-respond :: ServerResponse -> HttpResponse -> Effect Unit
+respond :: Response -> HttpResponse -> Effect Unit
 respond response { statusCode, content } = do
     setStatusCode statusCode response
     endString__ content response # void
 
 createFancy :: RequestHandler -> Effect HttpServer
-createFancy handler = create \request response ->
+createFancy handler = create_ \request response ->
     handler (readRequest request) (respond response)
 
 runServer :: ListenOptions -> RequestHandler -> Effect Unit

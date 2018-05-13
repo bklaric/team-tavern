@@ -4,17 +4,14 @@ module Body
     , readBuffers
     , collectBuffers
     , readAsUtf8
-    , readAsJson
     ) where
 
 import Prelude
 
-import Data.Argonaut (Json, jsonParser)
-import Data.Either (Either)
 import Effect (Effect)
 import Node.Buffer (Buffer, concat_, toString___)
 import Node.Events.EventEmitter (class EventEmitter)
-import Node.Http.Server (Request)
+import Node.Http.Server.Request (Request)
 import Node.Stream.Readable (class Readable)
 import Node.Stream.Readable.Events (collectDataEvents, readDataEvents)
 import Unsafe.Coerce (unsafeCoerce)
@@ -38,6 +35,3 @@ collectBuffers callback body =
 
 readAsUtf8 :: (String -> Effect Unit) -> Body -> Effect Body
 readAsUtf8 callback body = body # collectBuffers (toString___ >=> callback)
-
-readAsJson :: (Either String Json -> Effect Unit) -> Body -> Effect Body
-readAsJson callback body = body # readAsUtf8 (jsonParser >>> callback)
