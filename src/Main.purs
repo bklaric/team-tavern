@@ -69,7 +69,8 @@ requestHandler3 method url body =
     Right routeValues -> routeValues # match
         { viewPlayers: const $ pure { statusCode: 200, content: "You're viewing all players." }
         , viewPlayer: \{nickname} -> pure { statusCode: 200, content: "You're viewing player " <> toString nickname <> "." }
-        , registerPlayer: const $ pure { statusCode: 200, content: "You're registering a player." }}
+        , registerPlayer: const $ pure { statusCode: 200, content: "You're registering a player." }
+        }
 
 requestHandler2 { method, url, body } =
     case method, url of
