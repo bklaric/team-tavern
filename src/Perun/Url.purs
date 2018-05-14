@@ -1,9 +1,4 @@
-module Url
-    ( Url(..)
-    , parseUrl
-    , pathSegments
-    , queryPairs
-    ) where
+module Perun.Url (Url(..), parseUrl, pathSegments, queryPairs) where
 
 import Prelude
 

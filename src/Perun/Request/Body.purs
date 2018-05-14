@@ -1,4 +1,4 @@
-module Body
+module Perun.Request.Body
     ( Body
     , fromRequest
     , readBuffers
