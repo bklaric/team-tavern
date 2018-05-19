@@ -2,20 +2,19 @@ module Main where
 
 import Prelude
 
-import Control.Monad.Except (runExcept)
+import Control.Monad.Cont (ContT(..), lift, runContT)
 import Data.Either (Either(..))
-import Data.Foreign.Generic (genericDecodeJSON)
 import Data.Foreign.Generic.Types (SumEncoding(..))
 import Data.Foreign.Generic.Types as Generic
-import Data.Generic.Rep (class Generic)
 import Data.HTTP.Method (CustomMethod, Method)
 import Data.Maybe (Maybe(..))
 import Data.Monoid (mempty)
+import Data.Newtype (unwrap)
 import Data.Options (Options, (:=))
 import Data.String.NonEmpty (toString)
+import Data.Validation.Semigroup (unV)
 import Data.Variant (match)
 import Effect (Effect)
-import Error.Class (message)
 import Node.Server (ListenOptions(..))
 import Perun.Request (Request)
 import Perun.Request.Body (Body, readAsUtf8)
@@ -24,9 +23,10 @@ import Perun.Server (run_)
 import Perun.Url (Url, pathSegments, queryPairs)
 import Postgres.Client.Config (ClientConfig, database, host, password, port, user)
 import Postgres.Pool as Pool
-import Postgres.Query (Query(..), QueryParameter(..), query)
-import Routes (TeamTavernRoutes)
 import Routing.Junction (JunctionProxy(..), junctionRouter')
+import Simple.JSON (readJSON)
+import TeamTavern.Player.Register (register)
+import TeamTavern.Player.Routes (TeamTavernRoutes)
 
 listenOptions :: ListenOptions
 listenOptions = TcpListenOptions
@@ -37,13 +37,6 @@ listenOptions = TcpListenOptions
     }
 
 teamTavernRoutes = (JunctionProxy :: JunctionProxy TeamTavernRoutes)
-
-newtype RegisterPlayerModel = RegisterPlayerModel
-    { email :: String
-    , nickname :: String
-    }
-
-derive instance genericRegisterPlayerModel :: Generic RegisterPlayerModel _
 
 genericOptions :: Generic.Options
 genericOptions =
@@ -65,18 +58,18 @@ clientConfig =
     <> port := 5432
     <> database := "team_tavern"
 
-registerPlayer :: Body -> (Response -> Effect Unit) -> Effect Unit
-registerPlayer body respond = void $
-    body # readAsUtf8 \bodyString ->
-        case runExcept $ genericDecodeJSON genericOptions bodyString of
-        Left errors -> respond { statusCode: 400, content: "Couldnt parse body '" <> bodyString <> "' because: " <> show errors }
-        Right (RegisterPlayerModel { email, nickname }) -> do
-            Pool.create mempty clientConfig >>= query
-                (Query "insert into player (email, nickname, token) values ($1, $2, $3)")
-                (QueryParameter <$> [email, nickname, "aoeu654aoeu654"])
-                case _ of
-                Left error -> respond { statusCode: 400, content: "Error inserting in the database: " <> message error }
-                Right result -> respond { statusCode: 200, content: "Looks good: " <> email <> ", " <> nickname }
+registerPlayer :: Body -> (Response -> Effect Unit) -> ContT Unit Effect Unit
+registerPlayer body respond = do
+    bodyString <- flip readAsUtf8 body >>> void # ContT
+    case readJSON bodyString of
+        Left errors -> lift $ respond { statusCode: 400, content: "Couldnt parse body '" <> bodyString <> "' because: " <> show errors }
+        Right (playerToRegisterModel :: { email :: String, nickname :: String }) -> do
+            pool <- lift $ Pool.create mempty clientConfig
+            result <- register pool playerToRegisterModel
+            lift $ (unV
+                (\error -> respond { statusCode: 400, content: "Error inserting in the database."  })
+                (\player -> respond { statusCode: 200, content: "Looks good: " <> unwrap player.email <> ", " <> unwrap player.nickname })
+                result)
 
 requestHandler :: Either CustomMethod Method -> Url -> Body -> (Response -> Effect Unit) -> Effect Unit
 requestHandler method url body respond =
@@ -85,7 +78,7 @@ requestHandler method url body respond =
     Right routeValues -> routeValues # match
         { viewPlayers: const $ respond { statusCode: 200, content: "You're viewing all players." }
         , viewPlayer: \{nickname} -> respond { statusCode: 200, content: "You're viewing player " <> toString nickname <> "." }
-        , registerPlayer: const $ registerPlayer body respond
+        , registerPlayer: const $ runContT (registerPlayer body respond) pure
         }
 
 invalidUrlHandler :: Request -> (Response -> Effect Unit) -> Effect Unit

@@ -3,6 +3,10 @@
   "set": "master",
   "source": "https://github.com/bklaric/package-sets.git",
   "depends": [
+    "idiomatic-node-crypto",
+    "simple-json",
+    "validation",
+    "unicode",
     "idiomatic-node-http",
     "http-routing",
     "psci-support",
