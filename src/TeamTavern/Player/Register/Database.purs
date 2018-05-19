@@ -22,7 +22,7 @@ insertPlayerParameters { email, nickname, token } =
     [unwrap email, unwrap nickname, unwrap token] <#> QueryParameter
 
 addPlayer
-    :: forall errors querier fields
+    :: forall errors querier
     .  Querier querier
     => querier
     -> PlayerToRegister

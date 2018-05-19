@@ -6,8 +6,16 @@ import Prelude
 import Data.Char.Unicode (isPrint, isSpace)
 import Data.Foldable (all)
 import Data.Maybe (Maybe(..))
-import Data.String (length, toCharArray)
+import Data.String (length, null, toCharArray)
 import Data.Variant (SProxy(..), Variant, inj)
+
+type Empty = { }
+
+empty :: forall errors. String -> Maybe (Variant (empty :: Empty | errors))
+empty string =
+    if null string
+    then Just $ inj (SProxy :: SProxy "empty") { }
+    else Nothing
 
 type TooLong = { original :: String, maxLength :: Int, actualLength :: Int }
 
@@ -20,12 +28,12 @@ tooLong maxLength string = let
     then Nothing
     else Just
     $ inj (SProxy :: SProxy "tooLong")
-    $ { original: string, maxLength, actualLength }
+    { original: string, maxLength, actualLength }
 
-type NonPrintable = { original :: String }
+type NotPrintable = { original :: String }
 
 notPrintable :: forall errors.
-    String -> Maybe (Variant ( notPrintable :: NonPrintable | errors))
+    String -> Maybe (Variant ( notPrintable :: NotPrintable | errors))
 notPrintable string =
     if string # toCharArray # all isPrint
     then Nothing
