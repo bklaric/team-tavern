@@ -6,8 +6,9 @@ import Async (Async, fromEitherCont)
 import Data.Newtype (class Newtype)
 import Data.Traversable (traverse)
 import Effect (Effect)
-import Node.Buffer (Buffer, toString___)
+import Node.Buffer (Buffer, toString__)
 import Node.Crypto (randomBytes)
+import Node.Encoding (Encoding(..))
 import Node.Errors (Error)
 
 newtype Token = Token String
@@ -15,10 +16,10 @@ newtype Token = Token String
 derive instance newtypeToken :: Newtype Token _
 
 tokenSize :: Int
-tokenSize = 40
+tokenSize = 20
 
 bufferToToken :: Buffer -> Effect Token
-bufferToToken buffer = buffer # toString___ <#> Token
+bufferToToken buffer = buffer # toString__ Hex <#> Token
 
 create :: Async Error Token
 create = fromEitherCont \callback ->
