@@ -2,7 +2,7 @@ module TeamTavern.Architecture.Validated where
 
 import Prelude
 
-import Data.List (List, singleton)
+import Data.List.NonEmpty (NonEmptyList, singleton)
 import Data.Symbol (class IsSymbol, SProxy)
 import Data.Variant (Variant, inj)
 import Validated (Validated, lmap)
@@ -13,5 +13,5 @@ label
     => IsSymbol label
     => SProxy label
     -> Validated left right
-    -> Validated (List (Variant errors)) right
+    -> Validated (NonEmptyList (Variant errors)) right
 label label' validated' = validated' # lmap (singleton <<< inj label')

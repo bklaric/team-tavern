@@ -1,7 +1,7 @@
-module TeamTavern.Player.Nickname (Nickname, NicknameErrors, create) where
+module TeamTavern.Player.Nickname (Nickname, NicknameError, create) where
 
 
-import Data.List (List)
+import Data.List.Types (NonEmptyList)
 import Data.Newtype (class Newtype)
 import Data.String (trim)
 import Data.Variant (Variant)
@@ -13,14 +13,14 @@ newtype Nickname = Nickname String
 
 derive instance newtypeNickname :: Newtype Nickname _
 
-type NicknameErrors = List (Variant
+type NicknameError = Variant
     ( empty :: Empty
     , tooLong :: TooLong
     , notPrintable :: NotPrintable
     , containsWhitespace :: ContainsWhitespace
-    ))
+    )
 
-create :: String -> Validated NicknameErrors Nickname
+create :: String -> Validated (NonEmptyList NicknameError) Nickname
 create nickname =
     Wrapped.create
         trim [empty, tooLong 40, notPrintable, containsWhitespace]

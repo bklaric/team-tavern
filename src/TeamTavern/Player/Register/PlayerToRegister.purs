@@ -2,15 +2,15 @@ module TeamTavern.Player.Register.PlayerToRegister where
 
 import Prelude
 
-import TeamTavern.Architecture.Async as Async
-import TeamTavern.Architecture.Validated as Validated
 import Async (Async, fromEither)
-import Data.List (List)
+import Data.List.Types (NonEmptyList)
 import Data.Variant (SProxy(SProxy), Variant)
 import Node.Errors (Error)
-import TeamTavern.Player.Email (Email, EmailErrors)
+import TeamTavern.Architecture.Async as Async
+import TeamTavern.Architecture.Validated as Validated
+import TeamTavern.Player.Email (Email, EmailError)
 import TeamTavern.Player.Email as Email
-import TeamTavern.Player.Nickname (Nickname, NicknameErrors)
+import TeamTavern.Player.Nickname (Nickname, NicknameError)
 import TeamTavern.Player.Nickname as Nickname
 import TeamTavern.Player.Register.PlayerToRegisterModel (PlayerToRegisterModel)
 import TeamTavern.Player.Token (Token)
@@ -23,28 +23,28 @@ type PlayerToRegister =
     , token :: Token
     }
 
-type ValidationErrors = List (Variant
-    ( email :: EmailErrors
-    , nickname :: NicknameErrors
-    ))
+type ValidationError = Variant
+    ( email :: NonEmptyList EmailError
+    , nickname :: NonEmptyList NicknameError
+    )
 
-type PlayerToRegisterErrors errors = Variant
-    ( validation :: ValidationErrors
+type PlayerToRegisterError errors = Variant
+    ( validation :: NonEmptyList ValidationError
     , token :: Error
     | errors)
 
-validateEmail :: String -> Validated ValidationErrors Email
+validateEmail :: String -> Validated (NonEmptyList ValidationError) Email
 validateEmail email =
     Email.create email # Validated.label (SProxy :: SProxy "email")
 
-validateNickname :: String -> Validated ValidationErrors Nickname
+validateNickname :: String -> Validated (NonEmptyList ValidationError) Nickname
 validateNickname nickname =
     Nickname.create nickname # Validated.label (SProxy :: SProxy "nickname")
 
 create
     :: forall fields errors
     .  PlayerToRegisterModel fields
-    -> Async (PlayerToRegisterErrors errors) PlayerToRegister
+    -> Async (PlayerToRegisterError errors) PlayerToRegister
 create { email, nickname } = do
     token <- Token.create # Async.label (SProxy :: SProxy "token")
     { email: _, nickname: _, token }

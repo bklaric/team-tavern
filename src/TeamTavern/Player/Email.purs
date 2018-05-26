@@ -1,9 +1,9 @@
-module TeamTavern.Player.Email (Email, EmailErrors, Invalid, create) where
+module TeamTavern.Player.Email (Email, EmailError, Invalid, create) where
 
 import Prelude
 
 import Data.Either (fromRight)
-import Data.List (List)
+import Data.List.Types (NonEmptyList)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype)
 import Data.String (trim)
@@ -32,7 +32,7 @@ invalid email =
     Just [Just matchedEmail] -> Nothing
     _ -> Just $ inj (SProxy :: SProxy "invalid") { original: email }
 
-type EmailErrors = List (Variant (tooLong :: TooLong, invalid :: Invalid))
+type EmailError = Variant (tooLong :: TooLong, invalid :: Invalid)
 
-create :: String -> Validated EmailErrors Email
+create :: String -> Validated (NonEmptyList EmailError) Email
 create email = Wrapped.create trim [invalid, tooLong 254] Email email

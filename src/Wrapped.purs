@@ -3,8 +3,10 @@ module Wrapped where
 import Prelude
 
 import Data.Either (Either(..))
-import Data.List (List(..))
+import Data.List (List(..), (:))
+import Data.List.Types (NonEmptyList(..))
 import Data.Maybe (Maybe, maybe)
+import Data.NonEmpty ((:|))
 import Data.Traversable (class Foldable, foldl)
 
 create
@@ -14,7 +16,7 @@ create
     -> container (canonicalized -> Maybe error)
     -> (canonicalized -> result)
     -> input
-    -> Either (List error) result
+    -> Either (NonEmptyList error) result
 create canonicalize validate construct input = let
     canonicalized = canonicalize input
     in
@@ -25,4 +27,4 @@ create canonicalize validate construct input = let
         Nil
     # case _ of
     Nil -> Right $ construct canonicalized
-    errors -> Left errors
+    error : errors -> Left $ NonEmptyList $ error :| errors
