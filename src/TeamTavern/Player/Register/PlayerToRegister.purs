@@ -2,8 +2,8 @@ module TeamTavern.Player.Register.PlayerToRegister where
 
 import Prelude
 
-import Architecture.Async as Async
-import Architecture.Validated as Validated
+import TeamTavern.Architecture.Async as Async
+import TeamTavern.Architecture.Validated as Validated
 import Async (Async, fromEither)
 import Data.List (List)
 import Data.Variant (SProxy(SProxy), Variant)
@@ -33,13 +33,11 @@ type PlayerToRegisterErrors errors = Variant
     , token :: Error
     | errors)
 
-validateEmail :: forall errors.
-    String -> Validated ValidationErrors Email
+validateEmail :: String -> Validated ValidationErrors Email
 validateEmail email =
     Email.create email # Validated.label (SProxy :: SProxy "email")
 
-validateNickname :: forall errors.
-    String -> Validated ValidationErrors Nickname
+validateNickname :: String -> Validated ValidationErrors Nickname
 validateNickname nickname =
     Nickname.create nickname # Validated.label (SProxy :: SProxy "nickname")
 

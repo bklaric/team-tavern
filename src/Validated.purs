@@ -53,8 +53,8 @@ toEither (Invalid invalid') = Left invalid'
 
 fromEither :: forall invalid valid. Semigroup invalid =>
     Either invalid valid -> Validated invalid valid
-fromEither (Right valid) = Valid valid
-fromEither (Left invalid) = Invalid invalid
+fromEither (Right valid') = Valid valid'
+fromEither (Left invalid') = Invalid invalid'
 
 bimap
     :: forall oldValid oldInvalid newValid newInvalid
@@ -100,9 +100,9 @@ derive instance functorValidated :: Functor (Validated invalid)
 instance applyValidated :: Semigroup invalid => Apply (Validated invalid) where
     apply (Invalid leftInvalid) (Invalid rightInvalid ) =
         Invalid $ leftInvalid <> rightInvalid
-    apply (Invalid invalid) _ = Invalid invalid
-    apply _ (Invalid invalid) = Invalid invalid
-    apply (Valid validFunction) (Valid valid) = Valid $ validFunction valid
+    apply (Invalid invalid') _ = Invalid invalid'
+    apply _ (Invalid invalid') = Invalid invalid'
+    apply (Valid validFunction) (Valid valid') = Valid $ validFunction valid'
 
 instance applicativeValidated :: Semigroup invalid =>
     Applicative (Validated invalid) where

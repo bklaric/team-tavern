@@ -1,4 +1,4 @@
-module Architecture.Perun.Request.Body where
+module TeamTavern.Architecture.Perun.Request.Body where
 
 import Prelude
 

@@ -1,4 +1,4 @@
-module Architecture.Validated where
+module TeamTavern.Architecture.Validated where
 
 import Prelude
 

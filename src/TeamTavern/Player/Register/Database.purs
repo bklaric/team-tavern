@@ -2,8 +2,8 @@ module TeamTavern.Player.Register.Database (addPlayer) where
 
 import Prelude
 
-import Architecture.Async (label)
-import Architecture.Postgres.Query (query)
+import TeamTavern.Architecture.Async (label)
+import TeamTavern.Architecture.Postgres.Query (query)
 import Async (Async)
 import Data.Newtype (unwrap)
 import Data.Variant (SProxy(SProxy), Variant)

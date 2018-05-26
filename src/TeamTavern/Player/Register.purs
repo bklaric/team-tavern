@@ -2,7 +2,7 @@ module TeamTavern.Player.Register where
 
 import Prelude
 
-import Architecture.Perun.Request.Body (readBody)
+import TeamTavern.Architecture.Perun.Request.Body (readBody)
 import Async (Async, runAsync)
 import Data.Either (either)
 import Data.Foreign (ForeignError)
@@ -27,7 +27,7 @@ type RegisterPlayerErrors errors = (Variant
     | errors))
 
 register
-    :: forall fields querier errors
+    :: forall querier errors
     .  Querier querier
     => querier
     -> Body

@@ -2,7 +2,7 @@ module TeamTavern.Player.Register.PlayerToRegisterModel where
 
 import Prelude
 
-import Architecture.Async (label)
+import TeamTavern.Architecture.Async (label)
 import Async (Async, fromEither)
 import Data.Foreign (ForeignError)
 import Data.List.Types (NonEmptyList)

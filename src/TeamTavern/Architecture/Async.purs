@@ -1,4 +1,4 @@
-module Architecture.Async where
+module TeamTavern.Architecture.Async where
 
 import Prelude
 

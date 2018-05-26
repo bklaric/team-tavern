@@ -1,4 +1,4 @@
-module Architecture.Postgres.Query where
+module TeamTavern.Architecture.Postgres.Query where
 
 import Async (Async, fromEitherCont)
 import Node.Errors (Error)
