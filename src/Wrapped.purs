@@ -3,26 +3,26 @@ module Wrapped where
 import Prelude
 
 import Data.Either (Either(..))
-import Data.Maybe (Maybe(..))
-import Data.Traversable (class Traversable, traverse)
-import Data.Validation.Semigroup (V, fromEither)
-
-shout :: forall t11 t12. Semigroup t12 => t11 -> Maybe t12 -> V t12 t11
-shout valid maybe =
-    case maybe of
-    Just invalid -> invalid # Left # fromEither
-    Nothing -> Right valid # fromEither
+import Data.List (List(..))
+import Data.Maybe (Maybe, maybe)
+import Data.Traversable (class Foldable, foldl)
 
 create
-    :: forall container input canonicalized error result
-    .  Traversable container
-    => Semigroup (container error)
-    => container (canonicalized -> Maybe error)
-    -> (input -> canonicalized)
+    :: forall result input container error canonicalized
+    .  Foldable container
+    => (input -> canonicalized)
+    -> container (canonicalized -> Maybe error)
     -> (canonicalized -> result)
     -> input
-    -> V (container error) result
-create validate canonicalize construct input = let
+    -> Either (List error) result
+create canonicalize validate construct input = let
     canonicalized = canonicalize input
     in
-    validate # traverse (_ $ canonicalized) # shout (construct canonicalized)
+    validate
+    # foldl
+        (\errors validate' ->
+            maybe errors (flip Cons errors) (validate' canonicalized))
+        Nil
+    # case _ of
+    Nil -> Right $ construct canonicalized
+    errors -> Left errors
