@@ -2,13 +2,13 @@ module TeamTavern.Player.Register.Database (addPlayer) where
 
 import Prelude
 
-import TeamTavern.Architecture.Async (label)
-import TeamTavern.Architecture.Postgres.Query (query)
 import Async (Async)
 import Data.Newtype (unwrap)
 import Data.Variant (SProxy(SProxy), Variant)
-import Node.Errors (Error)
+import Postgres.Error (Error)
 import Postgres.Query (class Querier, Query(..), QueryParameter(..))
+import TeamTavern.Architecture.Async (label)
+import TeamTavern.Architecture.Postgres.Query (query)
 import TeamTavern.Player.Register.PlayerToRegister (PlayerToRegister)
 
 insertPlayerQuery :: Query

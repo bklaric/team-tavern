@@ -10,9 +10,10 @@ import Data.List.Types (NonEmptyList)
 import Data.Newtype (unwrap)
 import Data.Variant (SProxy(SProxy), Variant, inj, match)
 import Effect (Effect)
-import Node.Errors (Error)
+import Node.Errors as Node
 import Perun.Request.Body (Body)
 import Perun.Response (Response)
+import Postgres.Error as Postgres
 import Postgres.Query (class Querier)
 import Simple.JSON (writeJSON)
 import TeamTavern.Architecture.Perun.Request.Body (readBody)
@@ -26,8 +27,8 @@ import TeamTavern.Player.Register.PlayerToRegisterModel (readPlayerToRegisterMod
 type RegisterPlayerError = Variant
     ( model :: NonEmptyList ForeignError
     , validation :: NonEmptyList ValidationError
-    , token :: Error
-    , database :: Error
+    , token :: Node.Error
+    , database :: Postgres.Error
     )
 
 type RegisterPlayerErrorsModel = Variant

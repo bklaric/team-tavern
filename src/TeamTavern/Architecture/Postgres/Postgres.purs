@@ -1,7 +1,7 @@
 module TeamTavern.Architecture.Postgres.Query where
 
 import Async (Async, fromEitherCont)
-import Node.Errors (Error)
+import Postgres.Error (Error)
 import Postgres.Query (class Querier, Query, QueryParameter)
 import Postgres.Query as Postgres
 import Postgres.Result (Result)
