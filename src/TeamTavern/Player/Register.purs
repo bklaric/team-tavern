@@ -13,13 +13,12 @@ import Effect (Effect)
 import Node.Errors as Node
 import Perun.Request.Body (Body)
 import Perun.Response (Response)
-import Postgres.Error as Postgres
 import Postgres.Query (class Querier)
 import Simple.JSON (writeJSON)
 import TeamTavern.Architecture.Perun.Request.Body (readBody)
 import TeamTavern.Player.Email (EmailError)
 import TeamTavern.Player.Nickname (NicknameError)
-import TeamTavern.Player.Register.Database (addPlayer)
+import TeamTavern.Player.Register.Database (DatabaseError, addPlayer)
 import TeamTavern.Player.Register.PlayerToRegister (PlayerToRegister, ValidationError)
 import TeamTavern.Player.Register.PlayerToRegister as PlayerToRegister
 import TeamTavern.Player.Register.PlayerToRegisterModel (readPlayerToRegisterModel)
@@ -28,7 +27,7 @@ type RegisterPlayerError = Variant
     ( model :: NonEmptyList ForeignError
     , validation :: NonEmptyList ValidationError
     , token :: Node.Error
-    , database :: Postgres.Error
+    , database :: DatabaseError
     )
 
 type RegisterPlayerErrorsModel = Variant
@@ -36,8 +35,8 @@ type RegisterPlayerErrorsModel = Variant
         ( email ∷ Array EmailError
         , nickname ∷ Array NicknameError
         ))
-    , emailTaken :: { email :: String }
-    , nicknameTaken :: { nickname :: String }
+    , emailTaken :: {}
+    , nicknameTaken :: {}
     , other :: {}
     )
 
@@ -51,7 +50,11 @@ fromRegisterPlayerErrors = match
             })
         >>> inj (SProxy :: SProxy "validation")
     , token: const $ inj (SProxy :: SProxy "other") {}
-    , database: const $ inj (SProxy :: SProxy "other") {}
+    , database: match
+        { emailTaken: const $ inj (SProxy :: SProxy "emailTaken") {}
+        , nicknameTaken: const $ inj (SProxy :: SProxy "nicknameTaken") {}
+        , other: const $ inj (SProxy :: SProxy "other") {}
+        }
     }
 
 register :: forall querier. Querier querier =>
