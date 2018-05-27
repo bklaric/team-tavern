@@ -30,8 +30,7 @@ fromEffectCont = ContT >>> map Right >>> ExceptT >>> Async
 
 derive instance newtypeAsync :: Newtype (Async left right) _
 
-instance functorAsync :: Functor (Async left) where
-    map function (Async exceptT) = exceptT <#> function # Async
+derive newtype instance name :: Functor (Async left)
 
 instance applyAsync :: Apply (Async left) where
     apply = ap
