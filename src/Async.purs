@@ -3,7 +3,8 @@ module Async where
 import Prelude
 
 import Control.Monad.Cont (ContT(..), lift)
-import Control.Monad.Except (ExceptT(ExceptT))
+import Control.Monad.Except (ExceptT(ExceptT), withExceptT)
+import Data.Bifunctor (class Bifunctor)
 import Data.Either (Either(..))
 import Data.Newtype (class Newtype, unwrap)
 import Effect (Effect)
@@ -31,6 +32,10 @@ fromEffectCont = ContT >>> map Right >>> ExceptT >>> Async
 derive instance newtypeAsync :: Newtype (Async left right) _
 
 derive newtype instance name :: Functor (Async left)
+
+instance bifunctorAsync :: Bifunctor Async where
+    bimap leftFunction rightFunction (Async exceptT) =
+        exceptT # withExceptT leftFunction # map rightFunction # Async
 
 instance applyAsync :: Apply (Async left) where
     apply = ap
