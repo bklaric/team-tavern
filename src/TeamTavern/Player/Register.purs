@@ -2,19 +2,25 @@ module TeamTavern.Player.Register where
 
 import Prelude
 
-import Async (Async, runAsync)
+import Async (Async, fromEitherCont, runAsync)
 import Data.Array (fromFoldable)
 import Data.Either (either)
-import Data.Foreign (ForeignError)
+import Data.Foreign (Foreign, ForeignError)
 import Data.List.Types (NonEmptyList)
+import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
+import Data.Nullable (toNullable)
 import Data.Variant (SProxy(SProxy), Variant, inj, match)
 import Effect (Effect)
 import Node.Errors as Node
 import Perun.Request.Body (Body)
 import Perun.Response (Response)
 import Postgres.Query (class Querier)
+import Postmark.Client (Client, sendEmail)
+import Postmark.Error as Postmark
+import Postmark.Message (Message)
 import Simple.JSON (writeJSON)
+import TeamTavern.Architecture.Async as Async
 import TeamTavern.Architecture.Perun.Request.Body (readBody)
 import TeamTavern.Player.Email (EmailError)
 import TeamTavern.Player.Nickname (NicknameError)
@@ -28,6 +34,7 @@ type RegisterPlayerError = Variant
     , validation :: NonEmptyList ValidationError
     , token :: Node.Error
     , database :: DatabaseError
+    , email :: Postmark.Error
     )
 
 type RegisterPlayerErrorsModel = Variant
@@ -55,19 +62,33 @@ fromRegisterPlayerErrors = match
         , nicknameTaken: const $ inj (SProxy :: SProxy "nicknameTaken") {}
         , other: const $ inj (SProxy :: SProxy "other") {}
         }
+    , email: const $ inj (SProxy :: SProxy "other") {}
     }
 
+sendEmailAsync :: Message -> Client -> Async Postmark.Error Foreign
+sendEmailAsync message client = fromEitherCont \callback ->
+    sendEmail message callback client
+
 register :: forall querier. Querier querier =>
-    querier -> Body -> Async RegisterPlayerError PlayerToRegister
-register querier body = do
+    querier -> Client -> Body -> Async RegisterPlayerError PlayerToRegister
+register querier client body = do
     bodyString <- readBody body
     playerToRegisterModel <- readPlayerToRegisterModel bodyString
     playerToRegister <- PlayerToRegister.create playerToRegisterModel
-    addPlayer querier playerToRegister
+    _ <- addPlayer querier playerToRegister
+    _ <- client # sendEmailAsync
+        { to: "branimir.klaric1@xnet.hr"
+        , from: "branimir.klaric1@xnet.hr"
+        , subject: toNullable $ Just "From app"
+        , textBody: toNullable $ Just "Please work."
+        }
+        # Async.label (SProxy :: SProxy "email")
+    pure playerToRegister
+
 
 registerPlayerHandler :: forall querier. Querier querier =>
-    querier -> Body -> (Response -> Effect Unit) -> Effect Unit
-registerPlayerHandler querier body respond = (runAsync $ register querier body)
+    querier -> Client -> Body -> (Response -> Effect Unit) -> Effect Unit
+registerPlayerHandler querier client body respond = (runAsync $ register querier client body)
     (either
         (\error -> respond { statusCode: 400, content: error # fromRegisterPlayerErrors # writeJSON })
         (\player -> respond { statusCode: 200, content: "Looks good: " <> unwrap player.email <> ", " <> unwrap player.nickname }))

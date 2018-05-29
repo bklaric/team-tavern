@@ -6,7 +6,9 @@
   "directories": {
     "test": "test"
   },
-  "dependencies": {},
+  "dependencies": {
+    "postmark": "^1.6.1"
+  },
   "devDependencies": {
     "pg": "^7.4.3"
   },
