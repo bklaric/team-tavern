@@ -36,7 +36,7 @@ addPlayer
     .  Querier querier
     => querier
     -> PlayerToRegister
-    -> Async (Variant (database :: DatabaseError | errors)) PlayerToRegister
+    -> Async (Variant (database :: DatabaseError | errors)) Unit
 addPlayer querier playerToRegister =
     query insertPlayerQuery (insertPlayerParameters playerToRegister) querier
     # lmap (\error ->
@@ -49,4 +49,4 @@ addPlayer querier playerToRegister =
             { nickname: playerToRegister.nickname, error }
         _ -> inj (SProxy :: SProxy "other") { error })
     # label (SProxy :: SProxy "database")
-    # map (const playerToRegister)
+    # void

@@ -5,7 +5,7 @@ import Prelude
 import Async (Async, fromEitherCont, runAsync)
 import Data.Array (fromFoldable)
 import Data.Either (either)
-import Data.Foreign (Foreign, ForeignError)
+import Data.Foreign (ForeignError)
 import Data.List.Types (NonEmptyList)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
@@ -65,8 +65,8 @@ fromRegisterPlayerErrors = match
     , email: const $ inj (SProxy :: SProxy "other") {}
     }
 
-sendEmailAsync :: Message -> Client -> Async Postmark.Error Foreign
-sendEmailAsync message client = fromEitherCont \callback ->
+sendEmailAsync :: Message -> Client -> Async Postmark.Error Unit
+sendEmailAsync message client = void $ fromEitherCont \callback ->
     sendEmail message callback client
 
 register :: forall querier. Querier querier =>
@@ -75,8 +75,8 @@ register querier client body = do
     bodyString <- readBody body
     playerToRegisterModel <- readPlayerToRegisterModel bodyString
     playerToRegister <- PlayerToRegister.create playerToRegisterModel
-    _ <- addPlayer querier playerToRegister
-    _ <- client # sendEmailAsync
+    addPlayer querier playerToRegister
+    client # sendEmailAsync
         { to: "branimir.klaric1@xnet.hr"
         , from: "branimir.klaric1@xnet.hr"
         , subject: toNullable $ Just "From app"
@@ -84,7 +84,6 @@ register querier client body = do
         }
         # Async.label (SProxy :: SProxy "email")
     pure playerToRegister
-
 
 registerPlayerHandler :: forall querier. Querier querier =>
     querier -> Client -> Body -> (Response -> Effect Unit) -> Effect Unit
