@@ -15,12 +15,12 @@ newtype Token = Token String
 
 derive instance newtypeToken :: Newtype Token _
 
-tokenSize :: Int
-tokenSize = 20
+tokenByteSize :: Int
+tokenByteSize = 20
 
 bufferToToken :: Buffer -> Effect Token
 bufferToToken buffer = buffer # toString__ Hex <#> Token
 
 create :: Async Error Token
 create = fromEitherCont \callback ->
-    randomBytes tokenSize (traverse bufferToToken >=> callback)
+    randomBytes tokenByteSize (traverse bufferToToken >=> callback)

@@ -2,29 +2,26 @@ module TeamTavern.Player.Register where
 
 import Prelude
 
-import Async (Async, fromEitherCont, runAsync)
+import Async (Async, runAsync)
 import Data.Array (fromFoldable)
 import Data.Either (either)
 import Data.Foreign (ForeignError)
 import Data.List.Types (NonEmptyList)
-import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
-import Data.Nullable (toNullable)
 import Data.Variant (SProxy(SProxy), Variant, inj, match)
 import Effect (Effect)
 import Node.Errors as Node
 import Perun.Request.Body (Body)
 import Perun.Response (Response)
 import Postgres.Query (class Querier)
-import Postmark.Client (Client, sendEmail)
+import Postmark.Client (Client)
 import Postmark.Error as Postmark
-import Postmark.Message (Message)
 import Simple.JSON (writeJSON)
-import TeamTavern.Architecture.Async as Async
 import TeamTavern.Architecture.Perun.Request.Body (readBody)
 import TeamTavern.Player.Email (EmailError)
 import TeamTavern.Player.Nickname (NicknameError)
 import TeamTavern.Player.Register.Database (DatabaseError, addPlayer)
+import TeamTavern.Player.Register.Email (sendRegistrationEmail)
 import TeamTavern.Player.Register.PlayerToRegister (PlayerToRegister, ValidationError)
 import TeamTavern.Player.Register.PlayerToRegister as PlayerToRegister
 import TeamTavern.Player.Register.PlayerToRegisterModel (readPlayerToRegisterModel)
@@ -65,10 +62,6 @@ fromRegisterPlayerErrors = match
     , email: const $ inj (SProxy :: SProxy "other") {}
     }
 
-sendEmailAsync :: Message -> Client -> Async Postmark.Error Unit
-sendEmailAsync message client = void $ fromEitherCont \callback ->
-    sendEmail message callback client
-
 register :: forall querier. Querier querier =>
     querier -> Client -> Body -> Async RegisterPlayerError PlayerToRegister
 register querier client body = do
@@ -76,13 +69,7 @@ register querier client body = do
     playerToRegisterModel <- readPlayerToRegisterModel bodyString
     playerToRegister <- PlayerToRegister.create playerToRegisterModel
     addPlayer querier playerToRegister
-    client # sendEmailAsync
-        { to: "branimir.klaric1@xnet.hr"
-        , from: "branimir.klaric1@xnet.hr"
-        , subject: toNullable $ Just "From app"
-        , textBody: toNullable $ Just "Please work."
-        }
-        # Async.label (SProxy :: SProxy "email")
+    sendRegistrationEmail client playerToRegister
     pure playerToRegister
 
 registerPlayerHandler :: forall querier. Querier querier =>
