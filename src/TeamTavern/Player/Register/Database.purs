@@ -1,4 +1,4 @@
-module TeamTavern.Player.Register.Database (DatabaseError, addPlayer) where
+module TeamTavern.Player.Register.Database where
 
 import Prelude
 
@@ -10,18 +10,19 @@ import Data.Variant (SProxy(SProxy), Variant, inj)
 import Node.Errors.Class (code)
 import Postgres.Error (Error, constraint)
 import Postgres.Error.Codes (unique_violation)
-import Postgres.Query (class Querier, Query(..), QueryParameter(..))
+import Postgres.Pool (Pool)
+import Postgres.Query (Query(..), QueryParameter(..))
 import TeamTavern.Architecture.Async (label)
 import TeamTavern.Architecture.Postgres.Query (query)
+import TeamTavern.Player.Credentials (Credentials)
 import TeamTavern.Player.Email (Email)
 import TeamTavern.Player.Nickname (Nickname)
-import TeamTavern.Player.Register.PlayerToRegister (PlayerToRegister)
 
 insertPlayerQuery :: Query
 insertPlayerQuery =
     Query "insert into player (email, nickname, token) values ($1, $2, $3)"
 
-insertPlayerParameters :: PlayerToRegister -> Array QueryParameter
+insertPlayerParameters :: Credentials -> Array QueryParameter
 insertPlayerParameters { email, nickname, token } =
     [unwrap email, unwrap nickname, unwrap token] <#> QueryParameter
 
@@ -32,21 +33,20 @@ type DatabaseError = Variant
     )
 
 addPlayer
-    :: forall errors querier
-    .  Querier querier
-    => querier
-    -> PlayerToRegister
+    :: forall errors
+    .  Pool
+    -> Credentials
     -> Async (Variant (database :: DatabaseError | errors)) Unit
-addPlayer querier playerToRegister =
-    query insertPlayerQuery (insertPlayerParameters playerToRegister) querier
+addPlayer pool credentials =
+    query insertPlayerQuery (insertPlayerParameters credentials) pool
     # lmap (\error ->
         case code error == unique_violation of
         true | constraint error == Just "player_email_key" -> inj
             (SProxy :: SProxy "emailTaken")
-            { email: playerToRegister.email, error }
+            { email: credentials.email, error }
         true | constraint error == Just "player_nickname_key" -> inj
             (SProxy :: SProxy "nicknameTaken")
-            { nickname: playerToRegister.nickname, error }
+            { nickname: credentials.nickname, error }
         _ -> inj (SProxy :: SProxy "other") { error })
     # label (SProxy :: SProxy "database")
     # void

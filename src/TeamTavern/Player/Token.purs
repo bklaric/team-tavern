@@ -2,7 +2,7 @@ module TeamTavern.Player.Token (Token, create) where
 
 import Prelude
 
-import Async (Async, fromEitherCont)
+import Data.Either (Either)
 import Data.Newtype (class Newtype)
 import Data.Traversable (traverse)
 import Effect (Effect)
@@ -21,6 +21,6 @@ tokenByteSize = 20
 bufferToToken :: Buffer -> Effect Token
 bufferToToken buffer = buffer # toString__ Hex <#> Token
 
-create :: Async Error Token
-create = fromEitherCont \callback ->
+create :: (Either Error Token -> Effect Unit) -> Effect Unit
+create callback =
     randomBytes tokenByteSize (traverse bufferToToken >=> callback)

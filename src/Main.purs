@@ -24,7 +24,8 @@ import Postgres.Pool as Pool
 import Postmark.Client (Client)
 import Postmark.Client as Postmark
 import Routing.Junction (JunctionProxy(JunctionProxy), junctionRouter')
-import TeamTavern.Player.Register (registerPlayerHandler)
+import TeamTavern.Architecture.Environment (Environment(..))
+import TeamTavern.Player.Register.Run (handleRegister)
 import TeamTavern.Player.Routes (TeamTavernRoutes)
 
 listenOptions :: ListenOptions
@@ -64,7 +65,7 @@ requestHandler pool client method url body respond =
     Right routeValues -> routeValues # match
         { viewPlayers: const $ respond { statusCode: 200, content: "You're viewing all players." }
         , viewPlayer: \{nickname} -> respond { statusCode: 200, content: "You're viewing player " <> toString nickname <> "." }
-        , registerPlayer: const $ registerPlayerHandler pool client body respond
+        , registerPlayer: const $ handleRegister Local pool client body respond
         }
 
 invalidUrlHandler :: Pool -> Client -> Request -> (Response -> Effect Unit) -> Effect Unit

@@ -3,7 +3,7 @@ module Async where
 import Prelude
 
 import Control.Monad.Cont (ContT(..), lift)
-import Control.Monad.Except (ExceptT(ExceptT), withExceptT)
+import Control.Monad.Except (ExceptT(..), withExceptT)
 import Data.Bifunctor (class Bifunctor)
 import Data.Either (Either(..))
 import Data.Newtype (class Newtype, unwrap)

@@ -11,11 +11,11 @@ import Data.Variant (Variant)
 import Postmark.Client (Client)
 import Postmark.Error (Error)
 import Postmark.Message (Message)
-import TeamTavern.Architecture.Async as Async
+import TeamTavern.Architecture.Async (label)
 import TeamTavern.Architecture.Postmark.Client (sendEmail)
-import TeamTavern.Player.Register.PlayerToRegister (PlayerToRegister)
+import TeamTavern.Player.Credentials (Credentials)
 
-message :: PlayerToRegister -> Message
+message :: Credentials -> Message
 message { email, nickname, token } =
         { to: unwrap email
         , from: "branimir.klaric1@xnet.hr"
@@ -26,9 +26,9 @@ message { email, nickname, token } =
         }
 
 sendRegistrationEmail :: forall errors.
-    Client -> PlayerToRegister -> Async (Variant (email :: Error | errors)) Unit
+    Client -> Credentials -> Async (Variant (email :: Error | errors)) Unit
 sendRegistrationEmail client playerToRegister =
     client
     # sendEmail (message playerToRegister)
-    # Async.label (SProxy :: SProxy "email")
+    # label (SProxy :: SProxy "email")
     # void
