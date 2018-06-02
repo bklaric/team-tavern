@@ -44,8 +44,8 @@ interpretRegister environment pool client body = register # interpret (match
 
 respondRegister ::
     (Response -> Effect Unit) -> Async RegisterError Credentials -> Effect Unit
-respondRegister respond registerAsync = runAsync registerAsync
-    (either
+respondRegister respond registerAsync = runAsync registerAsync $
+    either
         (\error -> respond
             { statusCode: 400
             , content: error # fromRegisterPlayerErrors # writeJSON
@@ -55,7 +55,7 @@ respondRegister respond registerAsync = runAsync registerAsync
             , content: "Looks good: "
                 <> unwrap player.email <> ", "
                 <> unwrap player.nickname
-            }))
+            })
 
 handleRegister
     :: Environment
