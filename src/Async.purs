@@ -22,6 +22,11 @@ fromEitherCont :: forall left right.
     ((Either left right -> Effect Unit) -> Effect Unit) -> Async left right
 fromEitherCont = ContT >>> ExceptT >>> Async
 
+fromEitherEffect :: forall left right.
+    Effect (Either left right) -> Async left right
+fromEitherEffect eitherEffect = Async $ ExceptT $ ContT \callback ->
+    eitherEffect >>= callback
+
 fromEffect :: forall left right. Effect right -> Async left right
 fromEffect = lift >>> map Right >>> ExceptT >>> Async
 
