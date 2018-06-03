@@ -3,6 +3,7 @@
   "set": "master",
   "source": "https://github.com/bklaric/package-sets.git",
   "depends": [
+    "debug",
     "run",
     "idiomatic-node-crypto",
     "simple-json",

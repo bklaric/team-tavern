@@ -5,6 +5,7 @@ import Prelude
 import Async (Async, fromEffect, runAsync)
 import Control.Monad.Eff.Console (log)
 import Data.Either (either)
+import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
 import Effect (Effect)
 import Perun.Request.Body (Body)
@@ -13,7 +14,6 @@ import Postgres.Pool (Pool)
 import Postmark.Client (Client)
 import Run (interpret, match)
 import Simple.JSON (writeJSON)
-import TeamTavern.Architecture.Environment (Environment(..))
 import TeamTavern.Player.Credentials (Credentials)
 import TeamTavern.Player.Register (RegisterF(..), register)
 import TeamTavern.Player.Register.Database (addPlayer)
@@ -24,8 +24,8 @@ import TeamTavern.Player.Register.Token (generateToken)
 import Unsafe.Coerce (unsafeCoerce)
 
 interpretRegister ::
-    Environment -> Pool -> Client -> Body -> Async RegisterError Credentials
-interpretRegister environment pool client body = register # interpret (match
+    Pool -> Maybe Client -> Body -> Async RegisterError Credentials
+interpretRegister pool client body = register # interpret (match
     { register: case _ of
         ReadIdentifiers sendModel ->
             readIdentifiers body <#> sendModel
@@ -36,10 +36,12 @@ interpretRegister environment pool client body = register # interpret (match
         AddPlayer credentials send -> do
             addPlayer pool credentials <#> const send
         SendEmail credentials send ->
-            case environment of
-            Deployed -> sendRegistrationEmail client credentials <#> const send
-            Local -> "Sent email *wink wink* to " <> unwrap credentials.email
-                # log # unsafeCoerce # fromEffect <#> const send
+            case client of
+            Just client' ->
+                sendRegistrationEmail client' credentials <#> const send
+            Nothing ->
+                "Sent email *wink wink* to " <> unwrap credentials.email
+                # unsafeCoerce log # fromEffect <#> const send
     })
 
 respondRegister ::
@@ -57,13 +59,8 @@ respondRegister respond registerAsync = runAsync registerAsync $
                 <> unwrap player.nickname
             })
 
-handleRegister
-    :: Environment
-    -> Pool
-    -> Client
-    -> Body
-    -> (Response -> Effect Unit)
-    -> Effect Unit
-handleRegister environment pool client body respond =
-    interpretRegister environment pool client body
+handleRegister ::
+    Pool -> Maybe Client -> Body -> (Response -> Effect Unit) -> Effect Unit
+handleRegister pool client body respond =
+    interpretRegister pool client body
     # respondRegister respond
