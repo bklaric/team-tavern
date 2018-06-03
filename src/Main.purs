@@ -2,14 +2,20 @@ module Main where
 
 import Prelude
 
-import Data.Either (Either(Left, Right))
+import Control.Bind (bindFlipped)
+import Control.Monad.Eff.Console (log)
+import Control.Monad.Except (ExceptT(..), runExceptT)
+import Control.Monad.Maybe.Trans (lift)
+import Data.Either (Either(..), either, note)
 import Data.HTTP.Method (CustomMethod, Method)
+import Data.Int (fromString)
 import Data.Maybe (Maybe(..))
 import Data.Monoid (mempty)
 import Data.Options (Options, (:=))
 import Data.String.NonEmpty (toString)
 import Data.Variant (match)
 import Effect (Effect)
+import Node.Process (lookupEnv)
 import Node.Server (ListenOptions(..))
 import Perun.Request (Request)
 import Perun.Request.Body (Body)
@@ -21,10 +27,11 @@ import Postgres.Pool (Pool)
 import Postgres.Pool as Pool
 import Postmark.Client (Client)
 import Postmark.Client as Postmark
-import Routing.Junction (JunctionProxy(JunctionProxy), junctionRouter')
+import Routing.Junction (JunctionProxy(..), junctionRouter')
 import TeamTavern.Architecture.Environment (Environment(..))
 import TeamTavern.Player.Register.Run (handleRegister)
 import TeamTavern.Player.Routes (TeamTavernRoutes)
+import Unsafe.Coerce (unsafeCoerce)
 
 listenOptions :: ListenOptions
 listenOptions = TcpListenOptions
@@ -34,15 +41,42 @@ listenOptions = TcpListenOptions
     , exclusive: Nothing
     }
 
-teamTavernRoutes = JunctionProxy :: JunctionProxy TeamTavernRoutes
+loadPostgresVariables :: ExceptT String Effect
+    { user :: String
+    , password :: String
+    , host :: String
+    , port :: Int
+    , database :: String
+    }
+loadPostgresVariables = do
+    user <- lookupEnv "PGUSER"
+        <#> note ("Couldn't read variable PGUSER.") # ExceptT
+    password <- lookupEnv "PGPASSWORD"
+        <#> note ("Couldn't read variable PGPASSWORD.") # ExceptT
+    host <- lookupEnv "PGHOST"
+        <#> note ("Couldn't read variable PGHOST.") # ExceptT
+    port <- lookupEnv "PGPORT" <#> bindFlipped fromString
+        <#> note ("Couldn't read variable PGPORT.") # ExceptT
+    database <- lookupEnv "PGDATABASE"
+        <#> note ("Couldn't read variable PGDATABASE.") # ExceptT
+    pure { user, password, host, port, database }
 
-clientConfig :: Options ClientConfig
-clientConfig =
-    user := "bklaric"
-    <> password := "bklaric"
-    <> host := "localhost"
-    <> port := 5432
-    <> database := "team_tavern"
+createPostgresConfig ::
+    { user :: String
+    , password :: String
+    , host :: String
+    , port :: Int
+    , database :: String
+    }
+    -> Options ClientConfig
+createPostgresConfig variables =
+    user := variables.user
+    <> password := variables.password
+    <> host := variables.host
+    <> port := variables.port
+    <> database := variables.database
+
+teamTavernRoutes = JunctionProxy :: JunctionProxy TeamTavernRoutes
 
 handleRequest :: Pool -> Client -> Either CustomMethod Method -> Url -> Body -> (Response -> Effect Unit) -> Effect Unit
 handleRequest pool client method url body respond =
@@ -61,7 +95,8 @@ handleInvalidUrl pool client { method, url, body } respond =
     Left url' -> respond { statusCode: 400, content: "Couldn't parse url '" <> url' <> "'." }
 
 main :: Effect Unit
-main = do
-    pool <- Pool.create mempty clientConfig
-    client <- Postmark.create "d763b189-d006-4e4a-9d89-02212ccd87f5"
-    run_ listenOptions (handleInvalidUrl pool client)
+main = either (unsafeCoerce log) pure =<< runExceptT do
+    postgresConfig <- loadPostgresVariables <#> createPostgresConfig
+    pool <- lift $ Pool.create mempty postgresConfig
+    client <- lift $ Postmark.create "d763b189-d006-4e4a-9d89-02212ccd87f5"
+    lift $ run_ listenOptions (handleInvalidUrl pool client)

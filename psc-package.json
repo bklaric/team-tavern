@@ -12,6 +12,7 @@
     "http-routing",
     "psci-support",
     "pg",
-    "foreign-generic"
+    "foreign-generic",
+    "idiomatic-node-process"
   ]
 }
