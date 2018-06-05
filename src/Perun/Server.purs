@@ -1,9 +1,7 @@
-module Perun.Server (RequestHandler, create, create_, run, run_, run') where
+module Perun.Server (RequestHandler, create, create_, run, run_) where
 
 import Prelude
 
-import Async (Async, runAsync)
-import Data.Either (either)
 import Data.Monoid (mempty)
 import Effect (Effect)
 import Node.Errors (Error)
@@ -40,13 +38,3 @@ run listenOptions onListening onRequestError onResponseError handler = do
 
 run_ :: ListenOptions -> RequestHandler -> Effect Unit
 run_ listenOptions handler = run listenOptions mempty mempty mempty handler
-
-run'
-    :: ListenOptions
-    -> (Request -> (forall left. Async left Response))
-    -> Effect Unit
-run' listenOptions handler = run_ listenOptions (hmmm handler)
-
-hmmm :: (Request -> (forall left. Async left Response)) -> RequestHandler
-hmmm handler = \request respond ->
-    runAsync (handler request) (either absurd respond)

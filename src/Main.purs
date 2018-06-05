@@ -21,7 +21,7 @@ import Node.Server (ListenOptions(..))
 import Perun.Request (Request)
 import Perun.Request.Body (Body)
 import Perun.Response (Response)
-import Perun.Server (run')
+import Perun.Async.Server (run_)
 import Perun.Url (Url, pathSegments, queryPairs)
 import Postgres.Client.Config (ClientConfig, database, host, password, port, user)
 import Postgres.Pool (Pool)
@@ -127,4 +127,4 @@ main = either (unsafeCoerce log) pure =<< runExceptT do
     deployment <- loadDeployment
     pool <- createPostgresPool
     client <- createPostmarkClient deployment -- "d763b189-d006-4e4a-9d89-02212ccd87f5"
-    lift $ run' listenOptions (handleInvalidUrl pool client)
+    lift $ run_ listenOptions (handleInvalidUrl pool client)
