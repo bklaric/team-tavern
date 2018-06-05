@@ -2,12 +2,12 @@ module TeamTavern.Player.Register.Run where
 
 import Prelude
 
-import Async (Async, fromEffect, runAsync)
+import Async (Async(Async), fromEffect)
 import Control.Monad.Eff.Console (log)
-import Data.Either (either)
+import Control.Monad.Except (ExceptT(..))
+import Data.Either (Either(..), either)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
-import Effect (Effect)
 import Perun.Request.Body (Body)
 import Perun.Response (Response)
 import Postgres.Pool (Pool)
@@ -44,23 +44,39 @@ interpretRegister pool client body = register # interpret (match
                 # unsafeCoerce log # fromEffect <#> const send
     })
 
+anyLeft
+    :: forall inLeft inRight outRight
+    .  (inLeft -> outRight)
+    -> (inRight -> outRight)
+    -> Either inLeft inRight
+    -> (forall voidLeft. Either voidLeft outRight)
+anyLeft leftFunction rightFunction either' =
+    Right $ either leftFunction rightFunction either'
+
+anyAsyncLeft
+    :: forall inLeft inRight outRight
+    .  (inLeft -> outRight)
+    -> (inRight -> outRight)
+    -> Async inLeft inRight
+    -> (forall voidLeft. Async voidLeft outRight)
+anyAsyncLeft leftFunction rightFunction (Async (ExceptT eitherCont)) =
+    eitherCont <#> anyLeft leftFunction rightFunction # ExceptT # Async
+
 respondRegister ::
-    (Response -> Effect Unit) -> Async RegisterError Credentials -> Effect Unit
-respondRegister respond registerAsync = runAsync registerAsync $
-    either
-        (\error -> respond
-            { statusCode: 400
-            , content: error # fromRegisterPlayerErrors # writeJSON
-            })
-        (\player -> respond
-            { statusCode: 200
-            , content: "Looks good: "
-                <> unwrap player.email <> ", "
-                <> unwrap player.nickname
-            })
+    Async RegisterError Credentials -> (forall left. Async left Response)
+respondRegister registerAsync = registerAsync # anyAsyncLeft
+    (\error ->
+        { statusCode: 400
+        , content: error # fromRegisterPlayerErrors # writeJSON
+        })
+    (\player ->
+        { statusCode: 200
+        , content: "Looks good: "
+            <> unwrap player.email <> ", "
+            <> unwrap player.nickname
+        })
 
 handleRegister ::
-    Pool -> Maybe Client -> Body -> (Response -> Effect Unit) -> Effect Unit
-handleRegister pool client body respond =
-    interpretRegister pool client body
-    # respondRegister respond
+    Pool -> Maybe Client -> Body -> (forall left. Async left Response)
+handleRegister pool client body =
+    interpretRegister pool client body # respondRegister

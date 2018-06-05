@@ -2,6 +2,7 @@ module Main where
 
 import Prelude
 
+import Async (Async)
 import Control.Bind (bindFlipped)
 import Control.Monad.Eff.Console (log)
 import Control.Monad.Except (ExceptT(..), runExceptT)
@@ -20,7 +21,7 @@ import Node.Server (ListenOptions(..))
 import Perun.Request (Request)
 import Perun.Request.Body (Body)
 import Perun.Response (Response)
-import Perun.Server (run_)
+import Perun.Server (run')
 import Perun.Url (Url, pathSegments, queryPairs)
 import Postgres.Client.Config (ClientConfig, database, host, password, port, user)
 import Postgres.Pool (Pool)
@@ -105,25 +106,25 @@ createPostmarkClient =
 
 teamTavernRoutes = JunctionProxy :: JunctionProxy TeamTavernRoutes
 
-handleRequest :: Pool -> Maybe Client -> Either CustomMethod Method -> Url -> Body -> (Response -> Effect Unit) -> Effect Unit
-handleRequest pool client method url body respond =
+handleRequest :: Pool -> Maybe Client -> Either CustomMethod Method -> Url -> Body -> (forall left. Async left Response)
+handleRequest pool client method url body =
     case junctionRouter' teamTavernRoutes method (pathSegments url) (queryPairs url) of
-    Left _ -> respond { statusCode: 404, content: "404 Not Found" }
+    Left _ -> pure { statusCode: 404, content: "404 Not Found" }
     Right routeValues -> routeValues # match
-        { viewPlayers: const $ respond { statusCode: 200, content: "You're viewing all players." }
-        , viewPlayer: \{nickname} -> respond { statusCode: 200, content: "You're viewing player " <> toString nickname <> "." }
-        , registerPlayer: const $ handleRegister pool client body respond
+        { viewPlayers: const $ pure { statusCode: 200, content: "You're viewing all players." }
+        , viewPlayer: \{nickname} -> pure { statusCode: 200, content: "You're viewing player " <> toString nickname <> "." }
+        , registerPlayer: const $ handleRegister pool client body
         }
 
-handleInvalidUrl :: Pool -> Maybe Client -> Request -> (Response -> Effect Unit) -> Effect Unit
-handleInvalidUrl pool client { method, url, body } respond =
+handleInvalidUrl :: Pool -> Maybe Client -> Request -> (forall left. Async left Response)
+handleInvalidUrl pool client { method, url, body } =
     case url of
-    Right url' -> handleRequest pool client method url' body respond
-    Left url' -> respond { statusCode: 400, content: "Couldn't parse url '" <> url' <> "'." }
+    Right url' -> handleRequest pool client method url' body
+    Left url' -> pure { statusCode: 400, content: "Couldn't parse url '" <> url' <> "'." }
 
 main :: Effect Unit
 main = either (unsafeCoerce log) pure =<< runExceptT do
     deployment <- loadDeployment
     pool <- createPostgresPool
     client <- createPostmarkClient deployment -- "d763b189-d006-4e4a-9d89-02212ccd87f5"
-    lift $ run_ listenOptions (handleInvalidUrl pool client)
+    lift $ run' listenOptions (handleInvalidUrl pool client)
