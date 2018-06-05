@@ -6,6 +6,7 @@ import Control.Monad.Cont (ContT(..), lift)
 import Control.Monad.Except (ExceptT(..), withExceptT)
 import Data.Bifunctor (class Bifunctor)
 import Data.Either (Either(..))
+import Data.Either.AlwaysRight as Either
 import Data.Newtype (class Newtype, unwrap)
 import Effect (Effect)
 
@@ -33,6 +34,16 @@ fromEffect = lift >>> map Right >>> ExceptT >>> Async
 fromEffectCont :: forall left right.
     ((right -> Effect Unit) -> Effect Unit) -> Async left right
 fromEffectCont = ContT >>> map Right >>> ExceptT >>> Async
+
+alwaysRight
+    :: forall inLeft inRight outRight
+    .  (inLeft -> outRight)
+    -> (inRight -> outRight)
+    -> Async inLeft inRight
+    -> (forall voidLeft. Async voidLeft outRight)
+alwaysRight leftFunction rightFunction (Async (ExceptT eitherCont)) =
+    eitherCont <#> Either.alwaysRight leftFunction rightFunction
+    # ExceptT # Async
 
 derive instance newtypeAsync :: Newtype (Async left right) _
 

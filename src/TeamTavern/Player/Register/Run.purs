@@ -2,10 +2,8 @@ module TeamTavern.Player.Register.Run where
 
 import Prelude
 
-import Async (Async(Async), fromEffect)
+import Async (Async, alwaysRight, fromEffect)
 import Control.Monad.Eff.Console (log)
-import Control.Monad.Except (ExceptT(..))
-import Data.Either (Either(..), either)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
 import Perun.Request.Body (Body)
@@ -44,27 +42,9 @@ interpretRegister pool client body = register # interpret (match
                 # unsafeCoerce log # fromEffect <#> const send
     })
 
-anyLeft
-    :: forall inLeft inRight outRight
-    .  (inLeft -> outRight)
-    -> (inRight -> outRight)
-    -> Either inLeft inRight
-    -> (forall voidLeft. Either voidLeft outRight)
-anyLeft leftFunction rightFunction either' =
-    Right $ either leftFunction rightFunction either'
-
-anyAsyncLeft
-    :: forall inLeft inRight outRight
-    .  (inLeft -> outRight)
-    -> (inRight -> outRight)
-    -> Async inLeft inRight
-    -> (forall voidLeft. Async voidLeft outRight)
-anyAsyncLeft leftFunction rightFunction (Async (ExceptT eitherCont)) =
-    eitherCont <#> anyLeft leftFunction rightFunction # ExceptT # Async
-
 respondRegister ::
     Async RegisterError Credentials -> (forall left. Async left Response)
-respondRegister registerAsync = registerAsync # anyAsyncLeft
+respondRegister registerAsync = registerAsync # alwaysRight
     (\error ->
         { statusCode: 400
         , content: error # fromRegisterPlayerErrors # writeJSON
