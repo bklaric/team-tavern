@@ -49,11 +49,12 @@ respondRegister = alwaysRight
         { statusCode: 400
         , content: error # fromRegisterPlayerErrors # writeJSON
         })
-    (\player ->
+    (\credentials ->
         { statusCode: 200
-        , content: "Looks good: "
-            <> unwrap player.email <> ", "
-            <> unwrap player.nickname
+        , content: writeJSON
+            { email: unwrap credentials.email
+            , nickname: unwrap credentials.nickname
+            }
         })
 
 handleRegister ::
