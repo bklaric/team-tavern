@@ -44,7 +44,7 @@ interpretRegister pool client body = register # interpret (match
 
 respondRegister ::
     Async RegisterError Credentials -> (forall left. Async left Response)
-respondRegister registerAsync = registerAsync # alwaysRight
+respondRegister = alwaysRight
     (\error ->
         { statusCode: 400
         , content: error # fromRegisterPlayerErrors # writeJSON
