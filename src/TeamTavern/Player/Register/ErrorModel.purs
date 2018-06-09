@@ -36,16 +36,16 @@ _other = SProxy :: SProxy "other"
 
 fromRegisterPlayerErrors :: RegisterError -> RegisterErrorModel
 fromRegisterPlayerErrors = match
-    { model: const $ inj _other {}
-    , validation: _.errors
+    { readIdentifiers: const $ inj _other {}
+    , validateIdentifiers: _.errors
         >>> fromFoldable
         >>> map (match
             { email: fromFoldable >>> inj _email
             , nickname: fromFoldable >>> inj _nickname
             })
         >>> inj _validation
-    , token: const $ inj _other {}
-    , database: match
+    , generateToken: const $ inj _other {}
+    , addPlayer: match
         { emailTaken: const $ inj _emailTaken {}
         , nicknameTaken: const $ inj _nicknameTaken {}
         , other: const $ inj _other {}

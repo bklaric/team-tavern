@@ -8,18 +8,18 @@ import Data.Variant (Variant, match)
 import Effect (Effect)
 import Error.Class (message, name)
 import Node.Errors.Class (code)
-import TeamTavern.Player.Register.AddPlayer (DatabaseError)
-import TeamTavern.Player.Register.ReadIdentifiers (ModelError)
+import TeamTavern.Player.Register.AddPlayer (AddPlayerError)
+import TeamTavern.Player.Register.ReadIdentifiers (ReadIdentifiersError)
 import TeamTavern.Player.Register.SendEmail (SendEmailError)
-import TeamTavern.Player.Register.GenerateToken (TokenError)
-import TeamTavern.Player.Register.ValidateIdentifiers (ValidationError)
+import TeamTavern.Player.Register.GenerateToken (GenerateTokenError)
+import TeamTavern.Player.Register.ValidateIdentifiers (ValidateIdentifiersError)
 import Unsafe.Coerce (unsafeCoerce)
 
 type RegisterError = Variant
-    ( model :: ModelError
-    , validation :: ValidationError
-    , token :: TokenError
-    , database :: DatabaseError
+    ( readIdentifiers :: ReadIdentifiersError
+    , validateIdentifiers :: ValidateIdentifiersError
+    , generateToken :: GenerateTokenError
+    , addPlayer :: AddPlayerError
     , sendEmail :: SendEmailError
     )
 
@@ -27,20 +27,20 @@ logError :: RegisterError -> Effect Unit
 logError registerError = unsafeCoerce do
     log "Error registering player"
     registerError # match
-        { model: \{ errors, body } -> do
+        { readIdentifiers: \{ errors, body } -> do
             log $ "\tCouldn't read identifiers from body: " <> show body
             log $ "\tParsing resulted in these errors: " <> show errors
-        , validation: \{ errors, model } ->
+        , validateIdentifiers: \{ errors, model } ->
             log $ "\tFailed identifiers validation for identifiers: "
                 <> model.email <> ", " <> model.nickname
-        , token: \{ error, identifiers } -> do
+        , generateToken: \{ error, identifiers } -> do
             log $ "\tCouldn't generate token for identifiers: "
                 <> unwrap identifiers.email <> ", "
                 <> unwrap identifiers.nickname
             log $ "\tGenerating token resulted in this error: "
                 <> code error <> ", " <> name error <> ", "
                 <> message error
-        , database: match
+        , addPlayer: match
             { other: \{ error, credentials } -> do
                 log $ "\tCouldn't add to database player with credentials: "
                     <> unwrap credentials.email <> ", "

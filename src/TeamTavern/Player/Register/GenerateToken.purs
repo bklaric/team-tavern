@@ -11,11 +11,13 @@ import TeamTavern.Architecture.Async (label)
 import TeamTavern.Player.Identifiers (Identifiers)
 import TeamTavern.Player.Token (Token, create)
 
-type TokenError = { error :: Error, identifiers :: Identifiers }
+type GenerateTokenError = { error :: Error, identifiers :: Identifiers }
 
-generateToken :: forall errors.
-    Identifiers -> Async (Variant (token :: TokenError | errors)) Token
+generateToken
+    :: forall errors
+    .  Identifiers
+    -> Async (Variant (generateToken :: GenerateTokenError | errors)) Token
 generateToken identifiers =
     fromEitherCont create
     # lmap { error: _, identifiers }
-    # label (SProxy :: SProxy "token")
+    # label (SProxy :: SProxy "generateToken")

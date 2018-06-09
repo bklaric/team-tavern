@@ -13,10 +13,17 @@ import TeamTavern.Architecture.Async (label)
 import TeamTavern.Architecture.Perun.Request.Body (readBody)
 import TeamTavern.Player.Identifiers (IdentifiersModel)
 
-type ModelError = { errors :: NonEmptyList ForeignError, body :: String }
+type ReadIdentifiersError =
+    { errors :: NonEmptyList ForeignError
+    , body :: String
+    }
 
-readIdentifiers :: forall errors.
-    Body -> Async (Variant (model :: ModelError | errors)) IdentifiersModel
-readIdentifiers body = label (SProxy :: SProxy "model") do
+readIdentifiers
+    :: forall errors
+    .  Body
+    -> Async
+        (Variant (readIdentifiers :: ReadIdentifiersError | errors))
+        IdentifiersModel
+readIdentifiers body = label (SProxy :: SProxy "readIdentifiers") do
     content <- readBody body
     readJSON content # fromEither # lmap { errors: _, body: content }

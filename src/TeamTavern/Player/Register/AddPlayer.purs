@@ -24,7 +24,7 @@ insertPlayerParameters :: Credentials -> Array QueryParameter
 insertPlayerParameters { email, nickname, token } =
     [unwrap email, unwrap nickname, unwrap token] <#> QueryParameter
 
-type DatabaseError = Variant
+type AddPlayerError = Variant
     ( emailTaken :: { error :: Error, credentials :: Credentials }
     , nicknameTaken :: { error :: Error, credentials :: Credentials }
     , other :: { error :: Error, credentials :: Credentials }
@@ -34,7 +34,7 @@ addPlayer
     :: forall errors
     .  Pool
     -> Credentials
-    -> Async (Variant (database :: DatabaseError | errors)) Unit
+    -> Async (Variant (addPlayer :: AddPlayerError | errors)) Unit
 addPlayer pool credentials =
     query insertPlayerQuery (insertPlayerParameters credentials) pool
     # lmap (\error ->
@@ -44,5 +44,5 @@ addPlayer pool credentials =
         true | constraint error == Just "player_nickname_key" -> inj
             (SProxy :: SProxy "nicknameTaken") { error, credentials }
         _ -> inj (SProxy :: SProxy "other") { error, credentials })
-    # label (SProxy :: SProxy "database")
+    # label (SProxy :: SProxy "addPlayer")
     # void

@@ -10,7 +10,7 @@ import TeamTavern.Architecture.Async (label)
 import TeamTavern.Player.Identifiers (IdentifiersError, IdentifiersModel, Identifiers, create)
 import Validated (toEither)
 
-type ValidationError =
+type ValidateIdentifiersError =
     { errors :: NonEmptyList IdentifiersError
     , model :: IdentifiersModel
     }
@@ -18,10 +18,12 @@ type ValidationError =
 validateIdentifiers
     :: forall errors
     .  IdentifiersModel
-    -> Async (Variant (validation :: ValidationError | errors)) Identifiers
+    -> Async
+        (Variant (validateIdentifiers :: ValidateIdentifiersError | errors))
+        Identifiers
 validateIdentifiers model =
     create model
     # toEither
     # fromEither
     # lmap { errors: _, model }
-    # label (SProxy :: SProxy "validation")
+    # label (SProxy :: SProxy "validateIdentifiers")
