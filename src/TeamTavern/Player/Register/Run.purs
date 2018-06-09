@@ -22,7 +22,7 @@ import TeamTavern.Player.Register.Error (RegisterError, logError)
 import TeamTavern.Player.Register.ErrorModel (fromRegisterPlayerErrors)
 import TeamTavern.Player.Register.ReadIdentifiers (readIdentifiers)
 import TeamTavern.Player.Register.SendEmail (sendRegistrationEmail)
-import TeamTavern.Player.Register.Token (generateToken)
+import TeamTavern.Player.Register.GenerateToken (generateToken)
 import TeamTavern.Player.Register.ValidateIdentifiers (validateIdentifiers)
 import Unsafe.Coerce (unsafeCoerce)
 

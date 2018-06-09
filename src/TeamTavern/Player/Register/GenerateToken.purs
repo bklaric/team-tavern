@@ -1,4 +1,4 @@
-module TeamTavern.Player.Register.Token where
+module TeamTavern.Player.Register.GenerateToken where
 
 import Prelude
 
