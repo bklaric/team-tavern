@@ -1,4 +1,4 @@
-module TeamTavern.Player.Register.Database where
+module TeamTavern.Player.Register.AddPlayer where
 
 import Prelude
 
