@@ -1,4 +1,4 @@
-module TeamTavern.Player.Register.Errors where
+module TeamTavern.Player.Register.Error where
 
 import Prelude
 
