@@ -6,7 +6,7 @@ import Async (Async)
 import Data.Bifunctor (lmap)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
-import Data.Variant (SProxy(SProxy), Variant, inj)
+import Data.Variant (SProxy(..), Variant, inj)
 import Node.Errors.Class (code)
 import Postgres.Error (Error, constraint)
 import Postgres.Error.Codes (unique_violation)
@@ -15,8 +15,6 @@ import Postgres.Query (Query(..), QueryParameter(..))
 import TeamTavern.Architecture.Async (label)
 import TeamTavern.Architecture.Postgres.Query (query)
 import TeamTavern.Player.Credentials (Credentials)
-import TeamTavern.Player.Email (Email)
-import TeamTavern.Player.Nickname (Nickname)
 
 insertPlayerQuery :: Query
 insertPlayerQuery =
@@ -27,9 +25,9 @@ insertPlayerParameters { email, nickname, token } =
     [unwrap email, unwrap nickname, unwrap token] <#> QueryParameter
 
 type DatabaseError = Variant
-    ( emailTaken :: { email :: Email, error :: Error }
-    , nicknameTaken :: { nickname :: Nickname, error :: Error }
-    , other :: { error :: Error }
+    ( emailTaken :: { error :: Error, credentials :: Credentials }
+    , nicknameTaken :: { error :: Error, credentials :: Credentials }
+    , other :: { error :: Error, credentials :: Credentials }
     )
 
 addPlayer
@@ -42,11 +40,9 @@ addPlayer pool credentials =
     # lmap (\error ->
         case code error == unique_violation of
         true | constraint error == Just "player_email_key" -> inj
-            (SProxy :: SProxy "emailTaken")
-            { email: credentials.email, error }
+            (SProxy :: SProxy "emailTaken") { error, credentials }
         true | constraint error == Just "player_nickname_key" -> inj
-            (SProxy :: SProxy "nicknameTaken")
-            { nickname: credentials.nickname, error }
-        _ -> inj (SProxy :: SProxy "other") { error })
+            (SProxy :: SProxy "nicknameTaken") { error, credentials }
+        _ -> inj (SProxy :: SProxy "other") { error, credentials })
     # label (SProxy :: SProxy "database")
     # void

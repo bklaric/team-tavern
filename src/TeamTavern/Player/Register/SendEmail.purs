@@ -1,8 +1,9 @@
-module TeamTavern.Player.Register.Email where
+module TeamTavern.Player.Register.SendEmail where
 
 import Prelude
 
 import Async (Async)
+import Data.Bifunctor (lmap)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
 import Data.Nullable (toNullable)
@@ -25,10 +26,16 @@ message { email, nickname, token } =
             <> "Your registration token is " <> unwrap token <> "."
         }
 
-sendRegistrationEmail :: forall errors.
-    Client -> Credentials -> Async (Variant (email :: Error | errors)) Unit
-sendRegistrationEmail client playerToRegister =
+type SendEmailError = { error :: Error, credentials :: Credentials }
+
+sendRegistrationEmail
+    :: forall errors
+    .  Client
+    -> Credentials
+    -> Async (Variant (sendEmail :: SendEmailError | errors)) Unit
+sendRegistrationEmail client credentials =
     client
-    # sendEmail (message playerToRegister)
-    # label (SProxy :: SProxy "email")
+    # sendEmail (message credentials)
+    # lmap { error: _, credentials}
+    # label (SProxy :: SProxy "sendEmail")
     # void

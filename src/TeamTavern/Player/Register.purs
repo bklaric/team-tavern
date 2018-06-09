@@ -11,7 +11,7 @@ import TeamTavern.Player.Token (Token)
 data RegisterF result
     = ReadIdentifiers (IdentifiersModel -> result)
     | ValidateIdentifiers IdentifiersModel (Identifiers -> result)
-    | GenerateToken (Token -> result)
+    | GenerateToken Identifiers (Token -> result)
     | AddPlayer Credentials result
     | SendEmail Credentials result
 
@@ -30,8 +30,8 @@ validateIdentifiers
 validateIdentifiers model = lift _register (ValidateIdentifiers model id)
 
 generateToken :: forall computations.
-    Run (register :: FProxy RegisterF | computations) Token
-generateToken = lift _register (GenerateToken id)
+    Identifiers -> Run (register :: FProxy RegisterF | computations) Token
+generateToken identifiers = lift _register (GenerateToken identifiers id)
 
 addPlayer :: forall computations.
     Credentials -> Run (register :: FProxy RegisterF | computations) Unit
@@ -46,7 +46,7 @@ register :: forall computations.
 register = do
     model <- readIdentifiers
     { email, nickname } <- validateIdentifiers model
-    token <- generateToken
+    token <- generateToken { email, nickname }
     let credentials = { email, nickname, token }
     addPlayer credentials
     sendEmail credentials
