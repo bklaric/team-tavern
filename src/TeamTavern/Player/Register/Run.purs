@@ -20,9 +20,10 @@ import TeamTavern.Player.Register (RegisterF(..), register)
 import TeamTavern.Player.Register.AddPlayer (addPlayer)
 import TeamTavern.Player.Register.Error (RegisterError, logError)
 import TeamTavern.Player.Register.ErrorModel (fromRegisterPlayerErrors)
-import TeamTavern.Player.Register.Identifiers (readIdentifiers, validateIdentifiers)
+import TeamTavern.Player.Register.ReadIdentifiers (readIdentifiers)
 import TeamTavern.Player.Register.SendEmail (sendRegistrationEmail)
 import TeamTavern.Player.Register.Token (generateToken)
+import TeamTavern.Player.Register.ValidateIdentifiers (validateIdentifiers)
 import Unsafe.Coerce (unsafeCoerce)
 
 interpretRegister ::

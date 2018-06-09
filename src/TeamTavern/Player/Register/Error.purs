@@ -9,9 +9,10 @@ import Effect (Effect)
 import Error.Class (message, name)
 import Node.Errors.Class (code)
 import TeamTavern.Player.Register.AddPlayer (DatabaseError)
-import TeamTavern.Player.Register.Identifiers (ModelError, ValidationError)
+import TeamTavern.Player.Register.ReadIdentifiers (ModelError)
 import TeamTavern.Player.Register.SendEmail (SendEmailError)
 import TeamTavern.Player.Register.Token (TokenError)
+import TeamTavern.Player.Register.ValidateIdentifiers (ValidationError)
 import Unsafe.Coerce (unsafeCoerce)
 
 type RegisterError = Variant

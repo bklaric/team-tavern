@@ -1,4 +1,4 @@
-module TeamTavern.Player.Register.Identifiers where
+module TeamTavern.Player.Register.ReadIdentifiers where
 
 import Prelude
 
@@ -11,8 +11,7 @@ import Perun.Request.Body (Body)
 import Simple.JSON (readJSON)
 import TeamTavern.Architecture.Async (label)
 import TeamTavern.Architecture.Perun.Request.Body (readBody)
-import TeamTavern.Player.Identifiers (IdentifiersError, IdentifiersModel, Identifiers, create)
-import Validated (toEither)
+import TeamTavern.Player.Identifiers (IdentifiersModel)
 
 type ModelError = { errors :: NonEmptyList ForeignError, body :: String }
 
@@ -21,19 +20,3 @@ readIdentifiers :: forall errors.
 readIdentifiers body = label (SProxy :: SProxy "model") do
     content <- readBody body
     readJSON content # fromEither # lmap { errors: _, body: content }
-
-type ValidationError =
-    { errors :: NonEmptyList IdentifiersError
-    , model :: IdentifiersModel
-    }
-
-validateIdentifiers
-    :: forall errors
-    .  IdentifiersModel
-    -> Async (Variant (validation :: ValidationError | errors)) Identifiers
-validateIdentifiers model =
-    create model
-    # toEither
-    # fromEither
-    # lmap { errors: _, model }
-    # label (SProxy :: SProxy "validation")
