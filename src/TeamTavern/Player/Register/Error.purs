@@ -73,7 +73,7 @@ logError registerError = unsafeCoerce do
                 <> error.message
         }
 
-type RegisterPlayerErrorModel = Variant
+type RegisterErrorModel = Variant
     ( validation :: Array (Variant
         ( email ∷ Array EmailError
         , nickname ∷ Array NicknameError
@@ -98,7 +98,7 @@ _sendEmail = SProxy :: SProxy "sendEmail"
 
 _other = SProxy :: SProxy "other"
 
-fromRegisterPlayerErrors :: RegisterError -> RegisterPlayerErrorModel
+fromRegisterPlayerErrors :: RegisterError -> RegisterErrorModel
 fromRegisterPlayerErrors = match
     { model: const $ inj _other {}
     , validation: _.errors
