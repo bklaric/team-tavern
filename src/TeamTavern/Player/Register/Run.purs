@@ -37,7 +37,7 @@ interpretRegister pool client body = register # interpret (VariantF.match
             validateIdentifiers model <#> sendIdentifiers
         GenerateToken identifiers sendToken ->
             generateToken identifiers <#> sendToken
-        AddPlayer credentials send -> do
+        AddPlayer credentials send ->
             addPlayer pool credentials <#> const send
         SendEmail credentials send ->
             case client of
