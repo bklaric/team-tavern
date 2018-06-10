@@ -55,7 +55,10 @@ errorResponse error =
         (SProxy :: SProxy "sendEmail")
         (\{ credentials: { email, nickname, token } } ->
             { statusCode: 200
-            , headers: singleton "Set-Cookie" (unwrap token)
+            , headers: singleton "Set-Cookie"
+                ("token=" <> unwrap token
+                <> "; Max-Age=" <> show (top :: Int)
+                <> "; HttpOnly; Secure")
             , content: writeJSON
                 { email: unwrap email
                 , nickname: unwrap nickname
@@ -71,7 +74,10 @@ errorResponse error =
 successResponse :: Credentials -> Response
 successResponse { email, nickname, token } =
     { statusCode: 200
-    , headers: singleton "Set-Cookie" (unwrap token) -- Set token as a cookie value
+    , headers: singleton "Set-Cookie"
+        ("token=" <> unwrap token
+        <> "; Max-Age=" <> show (top :: Int)
+        <> "; HttpOnly; Secure")
     , content: writeJSON
         { email: unwrap email
         , nickname: unwrap nickname
