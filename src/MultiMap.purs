@@ -1,6 +1,8 @@
 module MultiMap
     ( MultiMap
     , empty
+    , singleton
+    , singleton'
     , insert
     , toUnfoldable
     , toUnfoldable'
@@ -8,7 +10,7 @@ module MultiMap
 
 import Prelude
 
-import Data.List.NonEmpty (cons, singleton)
+import Data.List.NonEmpty (cons)
 import Data.List.NonEmpty as NonEmptyList
 import Data.List.Types (NonEmptyList)
 import Data.Map (Map)
@@ -22,12 +24,19 @@ newtype MultiMap key value = MultiMap (Map key (NonEmptyList value))
 empty :: forall key value. MultiMap key value
 empty = MultiMap Map.empty
 
+singleton :: forall key value. key -> value -> MultiMap key value
+singleton key value = MultiMap $
+    Map.singleton key (NonEmptyList.singleton value)
+
+singleton' :: forall key value. key -> NonEmptyList value -> MultiMap key value
+singleton' key values = MultiMap $ Map.singleton key values
+
 insert :: forall key value. Ord key =>
     key -> value -> MultiMap key value -> MultiMap key value
 insert key value (MultiMap map) =
     MultiMap $ Map.alter
         (case _ of
-        Nothing -> Just $ singleton value
+        Nothing -> Just $ NonEmptyList.singleton value
         Just values -> Just $ cons value values)
         key
         map
