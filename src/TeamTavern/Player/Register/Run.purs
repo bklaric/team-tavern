@@ -7,6 +7,7 @@ import Control.Monad.Eff.Console (log)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
 import Data.Variant (SProxy(..), on)
+import MultiMap (empty, singleton)
 import Perun.Request.Body (Body)
 import Perun.Response (Response)
 import Postgres.Pool (Pool)
@@ -20,9 +21,9 @@ import TeamTavern.Player.Register (RegisterF(..), register)
 import TeamTavern.Player.Register.AddPlayer (addPlayer)
 import TeamTavern.Player.Register.Error (RegisterError, logError)
 import TeamTavern.Player.Register.ErrorModel (fromRegisterPlayerErrors)
+import TeamTavern.Player.Register.GenerateToken (generateToken)
 import TeamTavern.Player.Register.ReadIdentifiers (readIdentifiers)
 import TeamTavern.Player.Register.SendEmail (sendRegistrationEmail)
-import TeamTavern.Player.Register.GenerateToken (generateToken)
 import TeamTavern.Player.Register.ValidateIdentifiers (validateIdentifiers)
 import Unsafe.Coerce (unsafeCoerce)
 
@@ -52,25 +53,28 @@ errorResponse error =
     fromRegisterPlayerErrors error
     # on
         (SProxy :: SProxy "sendEmail")
-        (\{ credentials } ->
+        (\{ credentials: { email, nickname, token } } ->
             { statusCode: 200
+            , headers: singleton "Set-Cookie" (unwrap token)
             , content: writeJSON
-                { email: unwrap credentials.email
-                , nickname: unwrap credentials.nickname
+                { email: unwrap email
+                , nickname: unwrap nickname
                 , sendEmailError: true
                 }
             })
         (\rest ->
             { statusCode: 400
+            , headers: empty
             , content: writeJSON rest
             })
 
 successResponse :: Credentials -> Response
-successResponse credentials =
+successResponse { email, nickname, token } =
     { statusCode: 200
+    , headers: singleton "Set-Cookie" (unwrap token) -- Set token as a cookie value
     , content: writeJSON
-        { email: unwrap credentials.email
-        , nickname: unwrap credentials.nickname
+        { email: unwrap email
+        , nickname: unwrap nickname
         }
     }
 
