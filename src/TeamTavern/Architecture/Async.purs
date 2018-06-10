@@ -2,8 +2,9 @@ module TeamTavern.Architecture.Async where
 
 import Prelude
 
-import Async (Async(..), fromEffect, runAsync)
-import Control.Monad.Except (withExceptT)
+import Async (Async(..), runAsync)
+import Control.Monad.Cont (ContT(..))
+import Control.Monad.Except (ExceptT(..), withExceptT)
 import Data.Either (Either(..))
 import Data.Symbol (class IsSymbol, SProxy)
 import Data.Variant (Variant, inj)
@@ -21,9 +22,10 @@ label label' (Async exceptT) =
 
 examineErrorWith :: forall left right.
     (left -> Effect Unit) -> Async left right -> Async left right
-examineErrorWith logger async = do
-    fromEffect $ runAsync async
+examineErrorWith logger async = Async $ ExceptT $ ContT $ \callback ->
+    runAsync async
         case _ of
-        Left error -> logger error
-        Right _ -> pure unit
-    async
+        Left error -> do
+            logger error
+            callback $ Left error
+        Right result -> callback $ Right result
