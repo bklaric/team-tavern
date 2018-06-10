@@ -81,6 +81,7 @@ successResponse { email, nickname, token } =
     , content: writeJSON
         { email: unwrap email
         , nickname: unwrap nickname
+        , sendEmailError: false
         }
     }
 
