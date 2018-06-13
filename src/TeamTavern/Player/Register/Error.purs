@@ -9,14 +9,16 @@ import Effect (Effect)
 import Error.Class (message, name)
 import Node.Errors.Class (code)
 import TeamTavern.Player.Register.AddPlayer (AddPlayerError)
+import TeamTavern.Player.Register.EnsureNotSignedIn (EnsureNotSignedInError)
+import TeamTavern.Player.Register.GenerateToken (GenerateTokenError)
 import TeamTavern.Player.Register.ReadIdentifiers (ReadIdentifiersError)
 import TeamTavern.Player.Register.SendEmail (SendEmailError)
-import TeamTavern.Player.Register.GenerateToken (GenerateTokenError)
 import TeamTavern.Player.Register.ValidateIdentifiers (ValidateIdentifiersError)
 import Unsafe.Coerce (unsafeCoerce)
 
 type RegisterError = Variant
-    ( readIdentifiers :: ReadIdentifiersError
+    ( ensureNotSignedIn :: EnsureNotSignedInError
+    , readIdentifiers :: ReadIdentifiersError
     , validateIdentifiers :: ValidateIdentifiersError
     , generateToken :: GenerateTokenError
     , addPlayer :: AddPlayerError
@@ -27,7 +29,9 @@ logError :: RegisterError -> Effect Unit
 logError registerError = unsafeCoerce do
     log "Error registering player"
     registerError # match
-        { readIdentifiers: \{ errors, body } -> do
+        { ensureNotSignedIn: \{ token } -> do
+            log $ "\tThe request came with the following token: " <> token
+        , readIdentifiers: \{ errors, body } -> do
             log $ "\tCouldn't read identifiers from body: " <> show body
             log $ "\tParsing resulted in these errors: " <> show errors
         , validateIdentifiers: \{ errors, model } ->

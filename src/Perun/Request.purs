@@ -6,12 +6,13 @@ import Data.Array (mapMaybe)
 import Data.Bifunctor (lmap)
 import Data.Either (Either)
 import Data.HTTP.Method (CustomMethod, Method, fromString)
-import Data.Map (Map, fromFoldable)
-import Data.Maybe (Maybe(..))
+import Data.Map (Map, empty, fromFoldable)
+import Data.Maybe (Maybe(..), maybe)
 import Data.StrMap (lookup, toUnfoldable)
 import Data.String (Pattern(..), split)
 import Data.Traversable (traverse)
 import Data.Tuple (Tuple(..))
+import Debug.Trace (spy, traceAnyM)
 import Either (swap)
 import Foreign (readStringMaybe)
 import Node.Http.IncomingMessage (headers)
@@ -24,7 +25,7 @@ type Request =
     { method :: Either CustomMethod Method
     , url :: Either String Url
     , headers :: Map String String
-    , cookies :: Maybe (Map String String)
+    , cookies :: Map String String
     , body :: Body
     }
 
@@ -41,21 +42,20 @@ readHeaders request =
     # mapMaybe (traverse readStringMaybe)
     # fromFoldable
 
-parseCookies :: String -> Maybe (Array (Tuple String String))
+parseCookies :: String -> Array (Tuple String String)
 parseCookies string =
     split (Pattern "; ") string
     <#> split (Pattern "=")
-    # traverse case _ of
+    # mapMaybe case _ of
         [name, value] -> Just $ Tuple name value
         _ -> Nothing
 
-readCookies :: Node.Request -> Maybe (Map String String)
+readCookies :: Node.Request -> Map String String
 readCookies request =
     headers request
     # lookup "cookie"
-    >>= (readStringMaybe)
-    >>= parseCookies
-    <#> fromFoldable
+    >>= readStringMaybe
+    # maybe empty (parseCookies >>> fromFoldable)
 
 readRequest :: Node.Request -> Request
 readRequest request =

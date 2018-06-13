@@ -4,10 +4,12 @@ import Prelude
 
 import Async (Async, alwaysRight, fromEffect)
 import Control.Monad.Eff.Console (log)
+import Data.Map (Map)
 import Data.Maybe (Maybe(..))
+import Data.Monoid (mempty)
 import Data.Newtype (unwrap)
-import Data.Variant (SProxy(..), on)
-import MultiMap (empty, singleton)
+import Data.Variant (onMatch)
+import MultiMap (MultiMap, empty, singleton)
 import Perun.Request.Body (Body)
 import Perun.Response (Response)
 import Postgres.Pool (Pool)
@@ -19,18 +21,22 @@ import TeamTavern.Architecture.Async (examineErrorWith)
 import TeamTavern.Player.Credentials (Credentials)
 import TeamTavern.Player.Register (RegisterF(..), register)
 import TeamTavern.Player.Register.AddPlayer (addPlayer)
+import TeamTavern.Player.Register.EnsureNotSignedIn (cookieName, ensureNotSignedIn)
 import TeamTavern.Player.Register.Error (RegisterError, logError)
 import TeamTavern.Player.Register.ErrorModel (fromRegisterPlayerErrors)
 import TeamTavern.Player.Register.GenerateToken (generateToken)
 import TeamTavern.Player.Register.ReadIdentifiers (readIdentifiers)
 import TeamTavern.Player.Register.SendEmail (sendRegistrationEmail)
 import TeamTavern.Player.Register.ValidateIdentifiers (validateIdentifiers)
+import TeamTavern.Player.Token (Token)
 import Unsafe.Coerce (unsafeCoerce)
 
 interpretRegister ::
-    Pool -> Maybe Client -> Body -> Async RegisterError Credentials
-interpretRegister pool client body = register # interpret (VariantF.match
+    Pool -> Maybe Client -> Map String String -> Body -> Async RegisterError Credentials
+interpretRegister pool client cookies body = register # interpret (VariantF.match
     { register: case _ of
+        EnsureNotSignedIn send ->
+            ensureNotSignedIn cookies <#> const send
         ReadIdentifiers sendModel ->
             readIdentifiers body <#> sendModel
         ValidateIdentifiers model sendIdentifiers ->
@@ -48,23 +54,34 @@ interpretRegister pool client body = register # interpret (VariantF.match
                 # unsafeCoerce log # fromEffect <#> const send
     })
 
+setCookieValue :: Token -> String
+setCookieValue token =
+    cookieName <> "=" <> unwrap token
+    <> "; Max-Age=" <> show (top :: Int)
+    <> "; HttpOnly; Secure"
+
+setCookieHeader :: Token -> MultiMap String String
+setCookieHeader token = singleton "Set-Cookie" (setCookieValue token)
+
 errorResponse :: RegisterError -> Response
 errorResponse error =
     fromRegisterPlayerErrors error
-    # on
-        (SProxy :: SProxy "sendEmail")
-        (\{ credentials: { email, nickname, token } } ->
+    # onMatch
+        { ensureNotSignedIn: \error' ->
+            { statusCode: 403
+            , headers: empty
+            , content: mempty
+            }
+        , sendEmail: \{ credentials: { email, nickname, token } } ->
             { statusCode: 200
-            , headers: singleton "Set-Cookie"
-                ("token=" <> unwrap token
-                <> "; Max-Age=" <> show (top :: Int)
-                <> "; HttpOnly; Secure")
+            , headers: setCookieHeader token
             , content: writeJSON
                 { email: unwrap email
                 , nickname: unwrap nickname
                 , sendEmailError: true
                 }
-            })
+            }
+        }
         (\rest ->
             { statusCode: 400
             , headers: empty
@@ -74,10 +91,7 @@ errorResponse error =
 successResponse :: Credentials -> Response
 successResponse { email, nickname, token } =
     { statusCode: 200
-    , headers: singleton "Set-Cookie"
-        ("token=" <> unwrap token
-        <> "; Max-Age=" <> show (top :: Int)
-        <> "; HttpOnly; Secure")
+    , headers: setCookieHeader token
     , content: writeJSON
         { email: unwrap email
         , nickname: unwrap nickname
@@ -90,8 +104,8 @@ respondRegister ::
 respondRegister = alwaysRight errorResponse successResponse
 
 handleRegister ::
-    Pool -> Maybe Client -> Body -> (forall left. Async left Response)
-handleRegister pool client body =
-    interpretRegister pool client body
+    Pool -> Maybe Client -> Map String String -> Body -> (forall left. Async left Response)
+handleRegister pool client cookies body =
+    interpretRegister pool client cookies body
     # examineErrorWith logError
     # respondRegister

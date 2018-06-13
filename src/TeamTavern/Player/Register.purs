@@ -9,7 +9,8 @@ import TeamTavern.Player.Identifiers (IdentifiersModel, Identifiers)
 import TeamTavern.Player.Token (Token)
 
 data RegisterF result
-    = ReadIdentifiers (IdentifiersModel -> result)
+    = EnsureNotSignedIn result
+    | ReadIdentifiers (IdentifiersModel -> result)
     | ValidateIdentifiers IdentifiersModel (Identifiers -> result)
     | GenerateToken Identifiers (Token -> result)
     | AddPlayer Credentials result
@@ -18,6 +19,10 @@ data RegisterF result
 derive instance functorRegisterF :: Functor RegisterF
 
 _register = SProxy :: SProxy "register"
+
+ensureNotSignedIn :: forall computations.
+    Run (register :: FProxy RegisterF | computations) Unit
+ensureNotSignedIn = lift _register (EnsureNotSignedIn unit)
 
 readIdentifiers :: forall computations.
     Run (register :: FProxy RegisterF | computations) IdentifiersModel
@@ -44,6 +49,7 @@ sendEmail credentials = lift _register (SendEmail credentials unit)
 register :: forall computations.
     Run (register :: FProxy RegisterF | computations) Credentials
 register = do
+    ensureNotSignedIn
     model <- readIdentifiers
     { email, nickname } <- validateIdentifiers model
     token <- generateToken { email, nickname }

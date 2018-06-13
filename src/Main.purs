@@ -10,6 +10,7 @@ import Control.Monad.Maybe.Trans (lift)
 import Data.Either (Either(..), either, note)
 import Data.HTTP.Method (CustomMethod, Method)
 import Data.Int (fromString)
+import Data.Map (Map)
 import Data.Maybe (Maybe(..))
 import Data.Monoid (mempty)
 import Data.Options (Options, (:=))
@@ -107,20 +108,20 @@ createPostmarkClient =
 
 teamTavernRoutes = JunctionProxy :: JunctionProxy TeamTavernRoutes
 
-handleRequest :: Pool -> Maybe Client -> Either CustomMethod Method -> Url -> Body -> (forall left. Async left Response)
-handleRequest pool client method url body =
+handleRequest :: Pool -> Maybe Client -> Either CustomMethod Method -> Url -> Map String String -> Body -> (forall left. Async left Response)
+handleRequest pool client method url cookies body =
     case junctionRouter' teamTavernRoutes method (pathSegments url) (queryPairs url) of
     Left _ -> pure { statusCode: 404, headers: empty, content: "404 Not Found" }
     Right routeValues -> routeValues # match
         { viewPlayers: const $ pure { statusCode: 200, headers: empty, content: "You're viewing all players." }
         , viewPlayer: \{nickname} -> pure { statusCode: 200, headers: empty, content: "You're viewing player " <> toString nickname <> "." }
-        , registerPlayer: const $ handleRegister pool client body
+        , registerPlayer: const $ handleRegister pool client cookies body
         }
 
 handleInvalidUrl :: Pool -> Maybe Client -> Request -> (forall left. Async left Response)
-handleInvalidUrl pool client { method, url, body } =
+handleInvalidUrl pool client { method, url, cookies, body } =
     case url of
-    Right url' -> handleRequest pool client method url' body
+    Right url' -> handleRequest pool client method url' cookies body
     Left url' -> pure { statusCode: 400, headers: empty, content: "Couldn't parse url '" <> url' <> "'." }
 
 main :: Effect Unit

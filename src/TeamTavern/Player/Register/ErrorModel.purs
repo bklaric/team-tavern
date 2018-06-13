@@ -10,7 +10,8 @@ import TeamTavern.Player.Nickname (NicknameError)
 import TeamTavern.Player.Register.Error (RegisterError)
 
 type RegisterErrorModel = Variant
-    ( validation :: Array (Variant
+    ( ensureNotSignedIn :: {}
+    , validation :: Array (Variant
         ( email ∷ Array EmailError
         , nickname ∷ Array NicknameError
         ))
@@ -19,6 +20,8 @@ type RegisterErrorModel = Variant
     , sendEmail :: { credentials :: Credentials }
     , other :: {}
     )
+
+_ensureNotSignedIn = SProxy :: SProxy "ensureNotSignedIn"
 
 _validation = SProxy :: SProxy "validation"
 
@@ -36,7 +39,8 @@ _other = SProxy :: SProxy "other"
 
 fromRegisterPlayerErrors :: RegisterError -> RegisterErrorModel
 fromRegisterPlayerErrors = match
-    { readIdentifiers: const $ inj _other {}
+    { ensureNotSignedIn: const $ inj _ensureNotSignedIn {}
+    , readIdentifiers: const $ inj _other {}
     , validateIdentifiers: _.errors
         >>> fromFoldable
         >>> map (match
