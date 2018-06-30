@@ -1,26 +1,30 @@
-module TeamTavern.Player.Token (Token, create) where
+module TeamTavern.Player.Token (Token, TokenError, tokenCharCount, create) where
 
 import Prelude
 
 import Data.Either (Either)
+import Data.List.Types (NonEmptyList)
 import Data.Newtype (class Newtype)
-import Data.Traversable (traverse)
-import Effect (Effect)
-import Node.Buffer (Buffer, toString__)
-import Node.Crypto (randomBytes)
-import Node.Encoding (Encoding(..))
-import Node.Errors (Error)
+import Data.String (toUpper, trim)
+import Data.Variant (Variant)
+import Wrapped as Wrapped
+import Wrapped.String (NotExactlyLong, NotHex, notExactlyLong, notHex)
 
 newtype Token = Token String
 
 derive instance newtypeToken :: Newtype Token _
 
-tokenByteSize :: Int
-tokenByteSize = 20
+type TokenError = Variant
+    ( notExactlyLong :: NotExactlyLong
+    , notHex :: NotHex
+    )
 
-bufferToToken :: Buffer -> Effect Token
-bufferToToken buffer = buffer # toString__ Hex <#> Token
+tokenCharCount :: Int
+tokenCharCount = 40
 
-create :: (Either Error Token -> Effect Unit) -> Effect Unit
-create callback =
-    randomBytes tokenByteSize (traverse bufferToToken >=> callback)
+create :: forall errors. String -> Either (NonEmptyList TokenError) Token
+create token =
+    Wrapped.create
+        (trim >>> toUpper)
+        [notExactlyLong tokenCharCount, notHex]
+        Token token

@@ -1,6 +1,5 @@
 module TeamTavern.Player.Nickname (Nickname, NicknameError, create) where
 
-
 import Data.List.Types (NonEmptyList)
 import Data.Newtype (class Newtype)
 import Data.String (trim)

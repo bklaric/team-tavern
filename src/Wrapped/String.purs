@@ -1,9 +1,8 @@
 module Wrapped.String where
 
-
 import Prelude
 
-import Data.Char.Unicode (isPrint, isSpace)
+import Data.Char.Unicode (isHexDigit, isPrint, isSpace)
 import Data.Foldable (all)
 import Data.Maybe (Maybe(..))
 import Data.String (length, null, toCharArray)
@@ -27,8 +26,22 @@ tooLong maxLength string = let
     if actualLength <= maxLength
     then Nothing
     else Just
-    $ inj (SProxy :: SProxy "tooLong")
-    { original: string, maxLength, actualLength }
+        $ inj (SProxy :: SProxy "tooLong")
+        { original: string, maxLength, actualLength }
+
+type NotExactlyLong =
+    { original :: String, exactLength :: Int, actualLength :: Int }
+
+notExactlyLong :: forall errors.
+    Int -> String -> Maybe (Variant (notExactlyLong :: NotExactlyLong | errors))
+notExactlyLong exactLength string = let
+    actualLength = length string
+    in
+    if actualLength == exactLength
+    then Nothing
+    else Just
+        $ inj (SProxy :: SProxy "notExactlyLong")
+        { original: string, exactLength, actualLength }
 
 type NotPrintable = { original :: String }
 
@@ -48,3 +61,12 @@ containsWhitespace string =
     if string # toCharArray # all (not <<< isSpace)
     then Nothing
     else Just $ inj (SProxy :: SProxy "containsWhitespace") { original: string }
+
+type NotHex = { original :: String }
+
+notHex :: forall errors.
+    String -> Maybe (Variant (notHex :: NotHex | errors))
+notHex string =
+    if string # toCharArray # all isHexDigit
+    then Nothing
+    else Just $ inj (SProxy :: SProxy "notHex") { original: string }

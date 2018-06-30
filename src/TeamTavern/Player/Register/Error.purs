@@ -37,13 +37,19 @@ logError registerError = unsafeCoerce do
         , validateIdentifiers: \{ errors, model } ->
             log $ "\tFailed identifiers validation for identifiers: "
                 <> model.email <> ", " <> model.nickname
-        , generateToken: \{ error, identifiers } -> do
-            log $ "\tCouldn't generate token for identifiers: "
-                <> unwrap identifiers.email <> ", "
-                <> unwrap identifiers.nickname
-            log $ "\tGenerating token resulted in this error: "
-                <> code error <> ", " <> name error <> ", "
-                <> message error
+        , generateToken: match
+            { random: \{ error, identifiers } -> do
+                log $ "\tCouldn't generate random bytes for identifiers: "
+                    <> unwrap identifiers.email <> ", "
+                    <> unwrap identifiers.nickname
+                log $ "\tGenerating random bytes resulted in this error: "
+                    <> code error <> ", " <> name error <> ", "
+                    <> message error
+            , token: \{ errors, identifiers } -> do
+                log $ "\tFailed token validation for identifiers: "
+                    <> unwrap identifiers.email <> ", "
+                    <> unwrap identifiers.nickname
+            }
         , addPlayer: match
             { other: \{ error, credentials } -> do
                 log $ "\tCouldn't add to database player with credentials: "
