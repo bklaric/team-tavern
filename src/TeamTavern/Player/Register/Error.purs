@@ -51,15 +51,7 @@ logError registerError = unsafeCoerce do
                     <> unwrap identifiers.nickname
             }
         , addPlayer: match
-            { other: \{ error, credentials } -> do
-                log $ "\tCouldn't add to database player with credentials: "
-                    <> unwrap credentials.email <> ", "
-                    <> unwrap credentials.nickname <> ", "
-                    <> unwrap credentials.token
-                log $ "\tAdding to database resulted in this error: "
-                    <> code error <> ", " <> name error <> ", "
-                    <> message error
-            , emailTaken: \{ error, credentials } ->
+            { emailTaken: \{ error, credentials } ->
                 log $ "\tEmail is already taken for credentials: "
                     <> unwrap credentials.email <> ", "
                     <> unwrap credentials.nickname <> ", "
@@ -69,6 +61,27 @@ logError registerError = unsafeCoerce do
                     <> unwrap credentials.email <> ", "
                     <> unwrap credentials.nickname <> ", "
                     <> unwrap credentials.token
+            , noSingleInsertResult: \{ result, credentials } -> do
+                log $ "\tCouldn't add to database player with credentials: "
+                    <> unwrap credentials.email <> ", "
+                    <> unwrap credentials.nickname <> ", "
+                    <> unwrap credentials.token
+                log $ "\tInsert player query returned no single result"
+            , cantReadPlayerId: \{ errors, credentials } -> do
+                log $ "\tCouldn't add to database player with credentials: "
+                    <> unwrap credentials.email <> ", "
+                    <> unwrap credentials.nickname <> ", "
+                    <> unwrap credentials.token
+                log $ "\tCouldn't read player id from insert result: "
+                    <> show errors
+            , other: \{ error, credentials } -> do
+                log $ "\tCouldn't add to database player with credentials: "
+                    <> unwrap credentials.email <> ", "
+                    <> unwrap credentials.nickname <> ", "
+                    <> unwrap credentials.token
+                log $ "\tAdding to database resulted in this error: "
+                    <> code error <> ", " <> name error <> ", "
+                    <> message error
             }
         , sendEmail: \{ error, credentials } -> do
             log $ "\tCouldn't send email to player with credentials: "

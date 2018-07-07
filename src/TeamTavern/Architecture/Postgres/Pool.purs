@@ -17,10 +17,15 @@ create :: forall left.
 create poolConfig clientConfig =
     Pool.create poolConfig clientConfig # fromEffect
 
-withTransaction :: forall result.
-    (Client -> Async Error result) -> Pool -> Async Error result
-withTransaction callback pool = fromEitherCont \continue ->
+withTransaction
+    :: forall error result
+    .  (Error -> error)
+    -> (Client -> Async error result)
+    -> Pool
+    -> Async error result
+withTransaction constructError callback pool = fromEitherCont \continue ->
     Pool.withTransaction
+        constructError
         (\callbackCont client -> runAsync (callback client) callbackCont)
         continue
         pool
