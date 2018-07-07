@@ -22,7 +22,7 @@ type TokenError = Variant
 tokenCharCount :: Int
 tokenCharCount = 40
 
-create :: forall errors. String -> Either (NonEmptyList TokenError) Token
+create :: String -> Either (NonEmptyList TokenError) Token
 create token =
     Wrapped.create
         (trim >>> toUpper)
