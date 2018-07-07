@@ -5,7 +5,7 @@ import Prelude
 import Data.Either (Either)
 import Data.List.Types (NonEmptyList)
 import Data.Newtype (class Newtype)
-import Data.String (toUpper, trim)
+import Data.String (toLower, trim)
 import Data.Variant (Variant)
 import Wrapped as Wrapped
 import Wrapped.String (NotExactlyLong, NotHex, notExactlyLong, notHex)
@@ -25,6 +25,6 @@ tokenCharCount = 40
 create :: String -> Either (NonEmptyList TokenError) Token
 create token =
     Wrapped.create
-        (trim >>> toUpper)
+        (trim >>> toLower)
         [notExactlyLong tokenCharCount, notHex]
         Token token
