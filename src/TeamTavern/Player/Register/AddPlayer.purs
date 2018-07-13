@@ -3,10 +3,8 @@ module TeamTavern.Player.Register.AddPlayer where
 import Prelude
 
 import Async (Async, fromEither)
-import Data.Array (head)
 import Data.Bifunctor (lmap)
-import Data.Either (Either, note)
-import Data.Foreign (MultipleErrors)
+import Data.Either (note)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
 import Data.Variant (SProxy(..), Variant, inj)
@@ -15,8 +13,7 @@ import Postgres.Error (Error, constraint)
 import Postgres.Error.Codes (unique_violation)
 import Postgres.Pool (Pool)
 import Postgres.Query (Query(..), QueryParameter(..))
-import Postgres.Result (Result, rows)
-import Simple.JSON (read)
+import Postgres.Result (Result, readScalar)
 import TeamTavern.Architecture.Async (label)
 import TeamTavern.Architecture.Either as Either
 import TeamTavern.Architecture.Postgres.Pool (withTransaction)
@@ -46,10 +43,8 @@ type AddPlayerError = Variant
         { error :: Error, credentials :: Credentials }
     , nicknameTaken ::
         { error :: Error, credentials :: Credentials }
-    , noSingleInsertResult ::
-        { result :: Result, credentials :: Credentials }
     , cantReadPlayerId ::
-        { errors :: MultipleErrors, credentials :: Credentials }
+        { result :: Result, credentials :: Credentials }
     , other ::
         { error :: Error, credentials :: Credentials }
     )
@@ -65,17 +60,11 @@ _cantReadPlayerId = SProxy :: SProxy "cantReadPlayerId"
 _other = SProxy :: SProxy "other"
 
 readPlayerId :: Result -> Credentials -> Async AddPlayerError Int
-readPlayerId result credentials = fromEither do
-    playerIdForeign <-
-        result
-        # rows
-        # head
-        # note { result, credentials }
-        # Either.label _noSingleInsertResult
-    (read playerIdForeign :: Either MultipleErrors { id :: Int })
-        <#> _.id
-        # lmap { errors: _, credentials }
-        # Either.label _cantReadPlayerId
+readPlayerId result credentials =
+    readScalar result
+    # note { result, credentials }
+    # Either.label _cantReadPlayerId
+    # fromEither
 
 wrapError
     :: forall errors

@@ -13,7 +13,7 @@ import Data.String (Pattern(..), split)
 import Data.Traversable (traverse)
 import Data.Tuple (Tuple(..))
 import Either (swap)
-import Foreign (readStringMaybe)
+import Foreign (readString')
 import Node.Http.IncomingMessage (headers)
 import Node.Http.Server.Request (method, url)
 import Node.Http.Server.Request as Node
@@ -38,7 +38,7 @@ readHeaders :: Node.Request -> Map String String
 readHeaders request =
     headers request
     # toUnfoldable
-    # mapMaybe (traverse readStringMaybe)
+    # mapMaybe (traverse readString')
     # fromFoldable
 
 parseCookies :: String -> Array (Tuple String String)
@@ -53,7 +53,7 @@ readCookies :: Node.Request -> Map String String
 readCookies request =
     headers request
     # lookup "cookie"
-    >>= readStringMaybe
+    >>= readString'
     # maybe empty (parseCookies >>> fromFoldable)
 
 readRequest :: Node.Request -> Request

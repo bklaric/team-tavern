@@ -3,13 +3,20 @@ module Foreign where
 import Prelude
 
 import Control.Monad.Except (runExcept)
-import Data.Either (Either, hush)
-import Data.Foreign (Foreign, ForeignError, readString)
-import Data.List.Types (NonEmptyList)
+import Data.Either (hush)
+import Data.Foreign (Foreign, readArray, readString)
+import Data.Foreign.Class (class Decode, decode)
+import Data.Foreign.Index (readProp)
 import Data.Maybe (Maybe)
 
-readString' :: Foreign -> Either (NonEmptyList ForeignError) String
-readString' = readString >>> runExcept
+decode' :: forall value. Decode value => Foreign -> Maybe value
+decode' = decode >>> runExcept >>> hush
 
-readStringMaybe :: Foreign -> Maybe String
-readStringMaybe = readString' >>> hush
+readString' :: Foreign -> Maybe String
+readString' = readString >>> runExcept >>> hush
+
+readArray' :: Foreign -> Maybe (Array Foreign)
+readArray' = readArray >>> runExcept >>> hush
+
+readProp' :: String -> Foreign -> Maybe Foreign
+readProp' property = readProp property >>> runExcept >>> hush

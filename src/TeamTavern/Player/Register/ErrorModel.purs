@@ -52,7 +52,6 @@ fromRegisterPlayerErrors = match
     , addPlayer: match
         { emailTaken: const $ inj _emailTaken {}
         , nicknameTaken: const $ inj _nicknameTaken {}
-        , noSingleInsertResult: const $ inj _other {}
         , cantReadPlayerId: const $ inj _other {}
         , other: const $ inj _other {}
         }

@@ -61,19 +61,12 @@ logError registerError = unsafeCoerce do
                     <> unwrap credentials.email <> ", "
                     <> unwrap credentials.nickname <> ", "
                     <> unwrap credentials.token
-            , noSingleInsertResult: \{ result, credentials } -> do
+            , cantReadPlayerId: \{ result, credentials } -> do
                 log $ "\tCouldn't add to database player with credentials: "
                     <> unwrap credentials.email <> ", "
                     <> unwrap credentials.nickname <> ", "
                     <> unwrap credentials.token
-                log $ "\tInsert player query returned no single result"
-            , cantReadPlayerId: \{ errors, credentials } -> do
-                log $ "\tCouldn't add to database player with credentials: "
-                    <> unwrap credentials.email <> ", "
-                    <> unwrap credentials.nickname <> ", "
-                    <> unwrap credentials.token
-                log $ "\tCouldn't read player id from insert result: "
-                    <> show errors
+                log $ "\tCouldn't read player id from insert result"
             , other: \{ error, credentials } -> do
                 log $ "\tCouldn't add to database player with credentials: "
                     <> unwrap credentials.email <> ", "
