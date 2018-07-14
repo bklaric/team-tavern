@@ -9,7 +9,7 @@ import Data.Maybe (Maybe(..))
 import Data.Monoid (mempty)
 import Data.Newtype (unwrap)
 import Data.Variant (onMatch)
-import MultiMap (MultiMap, empty, singleton)
+import MultiMap (empty)
 import Perun.Request.Body (Body)
 import Perun.Response (Response)
 import Postgres.Pool (Pool)
@@ -18,7 +18,7 @@ import Run (interpret)
 import Run as VariantF
 import Simple.JSON (writeJSON)
 import TeamTavern.Architecture.Async (examineErrorWith)
-import TeamTavern.Infrastructure.Cookie (cookieName)
+import TeamTavern.Infrastructure.Cookie (setCookieHeader)
 import TeamTavern.Infrastructure.EnsureNotSignedIn (EnsureNotSignedInF(..))
 import TeamTavern.Infrastructure.EnsureNotSignedIn.Run (ensureNotSignedIn)
 import TeamTavern.Player.Credentials (Credentials)
@@ -30,7 +30,6 @@ import TeamTavern.Player.Register.GenerateToken (generateToken)
 import TeamTavern.Player.Register.ReadIdentifiers (readIdentifiers)
 import TeamTavern.Player.Register.SendEmail (sendRegistrationEmail)
 import TeamTavern.Player.Register.ValidateIdentifiers (validateIdentifiers)
-import TeamTavern.Player.Token (Token)
 import Unsafe.Coerce (unsafeCoerce)
 
 interpretRegister ::
@@ -56,15 +55,6 @@ interpretRegister pool client cookies body = register # interpret (VariantF.matc
                 "Sent email *wink wink* to " <> unwrap credentials.email
                 # unsafeCoerce log # fromEffect <#> const send
     })
-
-setCookieValue :: Token -> String
-setCookieValue token =
-    cookieName <> "=" <> unwrap token
-    <> "; Max-Age=" <> show (top :: Int)
-    <> "; HttpOnly; Secure"
-
-setCookieHeader :: Token -> MultiMap String String
-setCookieHeader token = singleton "Set-Cookie" (setCookieValue token)
 
 errorResponse :: RegisterError -> Response
 errorResponse error =

@@ -35,6 +35,7 @@ import TeamTavern.Architecture.Deployment (Deployment(..))
 import TeamTavern.Architecture.Deployment as Deployment
 import TeamTavern.Player.Register.Run (handleRegister)
 import TeamTavern.Player.Routes (TeamTavernRoutes)
+import TeamTavern.Player.SignIn.Run (handleSignIn)
 import Unsafe.Coerce (unsafeCoerce)
 
 listenOptions :: ListenOptions
@@ -116,6 +117,7 @@ handleRequest pool client method url cookies body =
         { viewPlayers: const $ pure { statusCode: 200, headers: empty, content: "You're viewing all players." }
         , viewPlayer: \{nickname} -> pure { statusCode: 200, headers: empty, content: "You're viewing player " <> toString nickname <> "." }
         , registerPlayer: const $ handleRegister pool client cookies body
+        , signInPlayer: \{ nickname } -> handleSignIn pool nickname cookies body
         }
 
 handleInvalidUrl :: Pool -> Maybe Client -> Request -> (forall left. Async left Response)

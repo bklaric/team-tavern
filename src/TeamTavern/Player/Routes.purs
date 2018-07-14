@@ -16,7 +16,15 @@ type ViewPlayer = Route Get
 
 type RegisterPlayer = Route Post (Literal "players" :> End) NoQuery
 
+type SignInPlayer = Route Post
+    (Literal "players"
+    :> Capture "nickname" NonEmptyString
+    :> Literal "sessions"
+    :> End)
+    NoQuery
+
 type TeamTavernRoutes
     =    "viewPlayers"    := ViewPlavers
     :<|> "viewPlayer"     := ViewPlayer
     :<|> "registerPlayer" := RegisterPlayer
+    :<|> "signInPlayer"   := SignInPlayer
