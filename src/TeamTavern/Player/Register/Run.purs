@@ -18,10 +18,11 @@ import Run (interpret)
 import Run as VariantF
 import Simple.JSON (writeJSON)
 import TeamTavern.Architecture.Async (examineErrorWith)
+import TeamTavern.Infrastructure.EnsureNotSignedIn (EnsureNotSignedInF(..))
+import TeamTavern.Infrastructure.EnsureNotSignedIn.Run (cookieName, ensureNotSignedIn)
 import TeamTavern.Player.Credentials (Credentials)
 import TeamTavern.Player.Register (RegisterF(..), register)
 import TeamTavern.Player.Register.AddPlayer (addPlayer)
-import TeamTavern.Player.Register.EnsureNotSignedIn (cookieName, ensureNotSignedIn)
 import TeamTavern.Player.Register.Error (RegisterError, logError)
 import TeamTavern.Player.Register.ErrorModel (fromRegisterPlayerErrors)
 import TeamTavern.Player.Register.GenerateToken (generateToken)
@@ -34,9 +35,10 @@ import Unsafe.Coerce (unsafeCoerce)
 interpretRegister ::
     Pool -> Maybe Client -> Map String String -> Body -> Async RegisterError Credentials
 interpretRegister pool client cookies body = register # interpret (VariantF.match
-    { register: case _ of
+    { ensureNotSignedIn: case _ of
         EnsureNotSignedIn send ->
             ensureNotSignedIn cookies <#> const send
+    , register: case _ of
         ReadIdentifiers sendModel ->
             readIdentifiers body <#> sendModel
         ValidateIdentifiers model sendIdentifiers ->

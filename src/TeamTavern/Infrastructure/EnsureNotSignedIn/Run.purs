@@ -1,4 +1,4 @@
-module TeamTavern.Player.Register.EnsureNotSignedIn where
+module TeamTavern.Infrastructure.EnsureNotSignedIn.Run where
 
 import Prelude
 
