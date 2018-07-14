@@ -43,8 +43,7 @@ sendEmail :: forall run.
     Credentials -> Run (register :: FProxy RegisterF | run) Unit
 sendEmail credentials = lift _register (SendEmail credentials unit)
 
-register :: forall run.
-    Run (register :: FProxy RegisterF | run) Credentials
+register :: forall run. Run (register :: FProxy RegisterF | run) Credentials
 register = do
     ensureNotSignedIn
     model <- readIdentifiers
