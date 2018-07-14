@@ -4,12 +4,10 @@ import Prelude
 
 import Async (Async, fromEither)
 import Data.Either (Either(..))
-import Data.Map (Map, lookup)
+import Data.Map (Map)
 import Data.Maybe (Maybe(..))
 import Data.Variant (SProxy(..), Variant, inj)
-
-cookieName :: String
-cookieName = "teamtavern-token"
+import TeamTavern.Infrastructure.Cookie (lookupCookie)
 
 type EnsureNotSignedInError = { token :: String }
 
@@ -20,7 +18,7 @@ ensureNotSignedIn
         (Variant (ensureNotSignedIn :: EnsureNotSignedInError | errors))
         Unit
 ensureNotSignedIn cookies =
-    lookup cookieName cookies
+    lookupCookie cookies
     # case _ of
         Nothing -> Right unit
         Just token ->
