@@ -1,11 +1,11 @@
 module TeamTavern.Player.SignIn.ReadToken where
 
 import Prelude
-
+ 
 import Async (Async, fromEither)
 import Data.Bifunctor (lmap)
 import Data.Either (Either(..))
-import Data.Foreign (MultipleErrors)
+import Foreign (MultipleErrors)
 import Data.List.Types (NonEmptyList)
 import Data.Symbol (SProxy(..))
 import Data.Variant (Variant)

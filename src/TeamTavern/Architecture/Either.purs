@@ -5,10 +5,11 @@ import Prelude
 import Data.Either (Either(..))
 import Data.Symbol (class IsSymbol)
 import Data.Variant (SProxy, Variant, inj)
+import Prim.Row (class Cons)
 
 label
     :: forall errors errors' left label right
-    .  RowCons label left errors' errors
+    .  Cons label left errors' errors
     => IsSymbol label
     => SProxy label
     -> Either left right

@@ -17,7 +17,6 @@ import Prelude
 import Control.Apply (lift2)
 import Data.Either (Either(..))
 import Data.Foldable (class Foldable)
-import Data.Monoid (class Monoid, mempty)
 import Data.Traversable (class Traversable)
 
 data Validated invalid valid = Invalid invalid | Valid valid
@@ -74,7 +73,7 @@ lmap
     => (oldInvalid -> newInvalid)
     -> Validated oldInvalid valid
     -> Validated newInvalid valid
-lmap invalidFunction validated' = bimap invalidFunction id validated'
+lmap invalidFunction validated' = bimap invalidFunction identity validated'
 
 rmap
     :: forall invalid newValid oldValid
@@ -82,7 +81,7 @@ rmap
     => (oldValid -> newValid)
     -> Validated invalid oldValid
     -> Validated invalid newValid
-rmap validFunction validated' = bimap id validFunction validated'
+rmap validFunction validated' = bimap identity validFunction validated'
 
 derive instance eqValidated :: (Eq invalid, Eq valid) =>
     Eq (Validated invalid valid)

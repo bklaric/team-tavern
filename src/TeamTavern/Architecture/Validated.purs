@@ -5,11 +5,12 @@ import Prelude
 import Data.List.NonEmpty (NonEmptyList, singleton)
 import Data.Symbol (class IsSymbol, SProxy)
 import Data.Variant (Variant, inj)
+import Prim.Row (class Cons)
 import Validated (Validated, lmap)
 
 label
     :: forall errors errors' left label right
-    .  RowCons label left errors' errors
+    .  Cons label left errors' errors
     => IsSymbol label
     => SProxy label
     -> Validated left right

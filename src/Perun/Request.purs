@@ -8,17 +8,17 @@ import Data.Either (Either)
 import Data.HTTP.Method (CustomMethod, Method, fromString)
 import Data.Map (Map, empty, fromFoldable)
 import Data.Maybe (Maybe(..), maybe)
-import Data.StrMap (lookup, toUnfoldable)
 import Data.String (Pattern(..), split)
 import Data.Traversable (traverse)
 import Data.Tuple (Tuple(..))
 import Either (swap)
-import Foreign (readString')
+import Foreign.Object (lookup, toUnfoldable)
 import Node.Http.IncomingMessage (headers)
 import Node.Http.Server.Request (method, url)
 import Node.Http.Server.Request as Node
 import Perun.Request.Body (Body, fromRequest)
 import Perun.Url (Url, parseUrl)
+import Postgres.Result (readString')
 
 type Request =
     { method :: Either CustomMethod Method

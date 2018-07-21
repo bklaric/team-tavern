@@ -8,7 +8,7 @@ import TeamTavern.Infrastructure.EnsureNotSignedIn (EnsureNotSignedInF, ensureNo
 import TeamTavern.Player.Credentials (Credentials)
 import TeamTavern.Player.Identifiers (IdentifiersModel, Identifiers)
 import TeamTavern.Player.Token (Token)
-
+ 
 data RegisterF result
     = ReadIdentifiers (IdentifiersModel -> result)
     | ValidateIdentifiers IdentifiersModel (Identifiers -> result)
@@ -22,15 +22,15 @@ _register = SProxy :: SProxy "register"
 
 readIdentifiers :: forall run.
     Run (register :: FProxy RegisterF | run) IdentifiersModel
-readIdentifiers = lift _register (ReadIdentifiers id)
+readIdentifiers = lift _register (ReadIdentifiers identity)
 
 validateIdentifiers :: forall run.
     IdentifiersModel -> Run (register :: FProxy RegisterF | run) Identifiers
-validateIdentifiers model = lift _register (ValidateIdentifiers model id)
+validateIdentifiers model = lift _register (ValidateIdentifiers model identity)
 
 generateToken :: forall run.
     Identifiers -> Run (register :: FProxy RegisterF | run) Token
-generateToken identifiers = lift _register (GenerateToken identifiers id)
+generateToken identifiers = lift _register (GenerateToken identifiers identity)
 
 addPlayer :: forall run.
     Credentials -> Run (register :: FProxy RegisterF | run) Unit

@@ -1,12 +1,11 @@
 module TeamTavern.Player.Register.Run where
 
 import Prelude
-
+ 
 import Async (Async, alwaysRight, fromEffect)
-import Control.Monad.Eff.Console (log)
+import Effect.Console (log)
 import Data.Map (Map)
 import Data.Maybe (Maybe(..))
-import Data.Monoid (mempty)
 import Data.Newtype (unwrap)
 import Data.Variant (onMatch)
 import MultiMap (empty)

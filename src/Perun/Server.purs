@@ -2,7 +2,6 @@ module Perun.Server (RequestHandler, create, create_, run, run_) where
 
 import Prelude
 
-import Data.Monoid (mempty)
 import Effect (Effect)
 import Node.Errors (Error)
 import Node.Http.Server (HttpServer)

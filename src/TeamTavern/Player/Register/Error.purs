@@ -2,7 +2,7 @@ module TeamTavern.Player.Register.Error where
 
 import Prelude
 
-import Control.Monad.Eff.Console (log)
+import Effect.Console (log)
 import Data.Newtype (unwrap)
 import Data.Variant (Variant, match)
 import Effect (Effect)

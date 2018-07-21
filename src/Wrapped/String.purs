@@ -5,7 +5,8 @@ import Prelude
 import Data.Char.Unicode (isHexDigit, isPrint, isSpace)
 import Data.Foldable (all)
 import Data.Maybe (Maybe(..))
-import Data.String (length, null, toCharArray)
+import Data.String (length, null)
+import Data.String.CodeUnits (toCharArray)
 import Data.Variant (SProxy(..), Variant, inj)
 
 type Empty = { }

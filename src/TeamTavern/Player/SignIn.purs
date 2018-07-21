@@ -18,10 +18,10 @@ derive instance functorSignInF :: Functor SignInF
 _signIn = SProxy :: SProxy "signIn"
 
 readNickname :: forall run. Run (signIn :: FProxy SignInF | run) Nickname
-readNickname = lift _signIn (ReadNickname id)
+readNickname = lift _signIn (ReadNickname identity)
 
 readToken :: forall run. Run (signIn :: FProxy SignInF | run) Token
-readToken = lift _signIn (ReadToken id)
+readToken = lift _signIn (ReadToken identity)
 
 consumeToken :: forall run.
     Nickname -> Token -> Run (signIn :: FProxy SignInF | run) Unit

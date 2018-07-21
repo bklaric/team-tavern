@@ -1,0 +1,31 @@
+{
+  "name": "purescript-team-tavern-server",
+  "description": "",
+  "main": "index.js",
+  "authors": [
+    "Branimir Klarić <branimir.klaric.bk@gmail.com>"
+  ],
+  "license": "AGPL-3.0",
+  "homepage": "",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "purescript-debug": "^4.0.0",
+    "purescript-run": "^2.0.0",
+    "purescript-idiomatic-node-crypto": "^0.2.0",
+    "purescript-simple-json": "^4.1.0",
+    "purescript-unicode": "^4.0.1",
+    "purescript-idiomatic-node-http": "^0.4.0",
+    "purescript-jarilo": "^0.5.0",
+    "purescript-pg": "^0.4.0",
+    "purescript-foreign-generic": "^7.0.0",
+    "purescript-idiomatic-node-process": "^0.3.0",
+    "purescript-console": "^4.1.0",
+    "purescript-foreign-object": "^1.0.0"
+  }
+}

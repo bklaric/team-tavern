@@ -3,7 +3,7 @@ module Postmark.Client where
 import Prelude
 
 import Data.Either (Either(..))
-import Data.Foreign (Foreign)
+import Foreign (Foreign)
 import Effect (Effect)
 import Postmark.Error (Error)
 import Postmark.Message (Message)

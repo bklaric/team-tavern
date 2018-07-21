@@ -4,7 +4,6 @@ import Prelude
 
 import Async (Async, alwaysRight)
 import Data.Map (Map)
-import Data.Monoid (mempty)
 import Data.String.NonEmpty (NonEmptyString)
 import Data.Variant (match)
 import MultiMap (empty)

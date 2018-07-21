@@ -4,7 +4,7 @@ import Prelude
 
 import Async (Async)
 import Control.Bind (bindFlipped)
-import Control.Monad.Eff.Console (log)
+import Effect.Console (log)
 import Control.Monad.Except (ExceptT(..), runExceptT)
 import Control.Monad.Maybe.Trans (lift)
 import Data.Either (Either(..), either, note)
@@ -12,7 +12,6 @@ import Data.HTTP.Method (CustomMethod, Method)
 import Data.Int (fromString)
 import Data.Map (Map)
 import Data.Maybe (Maybe(..))
-import Data.Monoid (mempty)
 import Data.Options (Options, (:=))
 import Data.String.NonEmpty (toString)
 import Data.Variant (match)
@@ -30,7 +29,7 @@ import Postgres.Pool (Pool)
 import Postgres.Pool as Pool
 import Postmark.Client (Client)
 import Postmark.Client as Postmark
-import Routing.Junction (JunctionProxy(..), junctionRouter')
+import Jarilo.Junction (JunctionProxy(..), router)
 import TeamTavern.Architecture.Deployment (Deployment(..))
 import TeamTavern.Architecture.Deployment as Deployment
 import TeamTavern.Player.Register.Run (handleRegister)
@@ -111,7 +110,7 @@ teamTavernRoutes = JunctionProxy :: JunctionProxy TeamTavernRoutes
 
 handleRequest :: Pool -> Maybe Client -> Either CustomMethod Method -> Url -> Map String String -> Body -> (forall left. Async left Response)
 handleRequest pool client method url cookies body =
-    case junctionRouter' teamTavernRoutes method (pathSegments url) (queryPairs url) of
+    case router teamTavernRoutes method (pathSegments url) (queryPairs url) of
     Left _ -> pure { statusCode: 404, headers: empty, content: "404 Not Found" }
     Right routeValues -> routeValues # match
         { viewPlayers: const $ pure { statusCode: 200, headers: empty, content: "You're viewing all players." }

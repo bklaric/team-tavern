@@ -29,8 +29,8 @@ invalid :: forall errors.
     String -> Maybe (Variant (invalid :: Invalid | errors))
 invalid email =
     case match emailRegex email of
-    Just [Just matchedEmail] -> Nothing
-    _ -> Just $ inj (SProxy :: SProxy "invalid") { original: email }
+    Just _ -> Nothing
+    Nothing -> Just $ inj (SProxy :: SProxy "invalid") { original: email }
 
 type EmailError = Variant (tooLong :: TooLong, invalid :: Invalid)
 
