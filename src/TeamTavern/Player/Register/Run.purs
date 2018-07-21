@@ -1,7 +1,7 @@
 module TeamTavern.Player.Register.Run where
 
 import Prelude
- 
+
 import Async (Async, alwaysRight, fromEffect)
 import Effect.Console (log)
 import Data.Map (Map)
@@ -46,7 +46,7 @@ interpretRegister pool client cookies body = register # interpret (VariantF.matc
             generateToken identifiers <#> sendToken
         AddPlayer credentials send ->
             addPlayer pool credentials <#> const send
-        SendEmail credentials send ->
+        NotifyPlayer credentials send ->
             case client of
             Just client' ->
                 sendRegistrationEmail client' credentials <#> const send

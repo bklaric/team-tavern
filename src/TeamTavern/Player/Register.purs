@@ -8,13 +8,13 @@ import TeamTavern.Infrastructure.EnsureNotSignedIn (EnsureNotSignedInF, ensureNo
 import TeamTavern.Player.Credentials (Credentials)
 import TeamTavern.Player.Identifiers (IdentifiersModel, Identifiers)
 import TeamTavern.Player.Token (Token)
- 
+
 data RegisterF result
     = ReadIdentifiers (IdentifiersModel -> result)
     | ValidateIdentifiers IdentifiersModel (Identifiers -> result)
     | GenerateToken Identifiers (Token -> result)
     | AddPlayer Credentials result
-    | SendEmail Credentials result
+    | NotifyPlayer Credentials result
 
 derive instance functorRegisterF :: Functor RegisterF
 
@@ -38,7 +38,7 @@ addPlayer credentials = lift _register (AddPlayer credentials unit)
 
 sendEmail :: forall run.
     Credentials -> Run (register :: FProxy RegisterF | run) Unit
-sendEmail credentials = lift _register (SendEmail credentials unit)
+sendEmail credentials = lift _register (NotifyPlayer credentials unit)
 
 register :: forall run. Run
     ( ensureNotSignedIn :: FProxy EnsureNotSignedInF
