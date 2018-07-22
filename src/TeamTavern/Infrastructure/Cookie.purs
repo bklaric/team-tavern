@@ -6,19 +6,23 @@ import Data.Map (Map, lookup)
 import Data.Maybe (Maybe)
 import Data.Newtype (unwrap)
 import MultiMap (MultiMap, singleton)
-import TeamTavern.Player.Token (Token)
+import TeamTavern.Player.Domain.PlayerId (PlayerId)
+import TeamTavern.Player.Domain.Token (Token)
 
-cookieName :: String
-cookieName = "teamtavern-token"
+tokenCookieName :: String
+tokenCookieName = "teamtavern-token"
 
-lookupCookie :: Map String String -> Maybe String
-lookupCookie = lookup cookieName
+idCookieName :: String
+idCookieName = "teamtavern-id"
 
-setCookieValue :: Token -> String
-setCookieValue token =
-    cookieName <> "=" <> unwrap token
+lookupTokenCookie :: Map String String -> Maybe String
+lookupTokenCookie = lookup tokenCookieName
+
+setCookieValue :: PlayerId -> Token -> String
+setCookieValue id token =
+    tokenCookieName <> "=" <> unwrap token
     <> "; Max-Age=" <> show (top :: Int)
     <> "; HttpOnly; Secure"
 
-setCookieHeader :: Token -> MultiMap String String
-setCookieHeader token = singleton "Set-Cookie" (setCookieValue token)
+setCookieHeader :: PlayerId -> Token -> MultiMap String String
+setCookieHeader id token = singleton "Set-Cookie" (setCookieValue id token)

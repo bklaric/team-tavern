@@ -1,4 +1,4 @@
-module Either where
+module Data.Either.Swap where
 
 import Data.Either (Either(..))
 

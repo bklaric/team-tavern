@@ -1,4 +1,4 @@
-module TeamTavern.Player.Register.SendEmail where
+module TeamTavern.Player.Register.NotifyPlayer where
 
 import Prelude
 
@@ -14,10 +14,10 @@ import Postmark.Error (Error)
 import Postmark.Message (Message)
 import TeamTavern.Architecture.Async (label)
 import TeamTavern.Architecture.Postmark.Client (sendEmail)
-import TeamTavern.Player.Credentials (Credentials)
+import TeamTavern.Player.Register.Types.Credentials (IdentifiedCredentials)
 
-message :: Credentials -> Message
-message { email, nickname, token } =
+message :: IdentifiedCredentials -> Message
+message { id, email, nickname, token } =
         { to: unwrap email
         , from: "branimir.klaric1@xnet.hr"
         , subject: toNullable $ Just "TeamTavern registration"
@@ -26,12 +26,12 @@ message { email, nickname, token } =
             <> "Your registration token is " <> unwrap token <> "."
         }
 
-type SendEmailError = { error :: Error, credentials :: Credentials }
+type SendEmailError = { error :: Error, credentials :: IdentifiedCredentials }
 
 sendRegistrationEmail
     :: forall errors
     .  Client
-    -> Credentials
+    -> IdentifiedCredentials
     -> Async (Variant (sendEmail :: SendEmailError | errors)) Unit
 sendRegistrationEmail client credentials =
     client

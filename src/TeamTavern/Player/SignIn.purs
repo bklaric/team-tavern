@@ -1,40 +1,38 @@
-module TeamTavern.Player.SignIn where
+module TeamTavern.Player.SignIn
+    ( SignInF(..)
+    , signIn
+    ) where
 
 import Prelude
 
 import Data.Symbol (SProxy(..))
 import Run (FProxy, Run, lift)
 import TeamTavern.Infrastructure.EnsureNotSignedIn (EnsureNotSignedInF, ensureNotSignedIn)
-import TeamTavern.Player.Nickname (Nickname)
-import TeamTavern.Player.Token (Token)
+import TeamTavern.Player.SignIn.Types.IdentifiedToken (IdentifiedToken)
+import TeamTavern.Player.SignIn.Types.NicknamedNonce (NicknamedNonce)
 
 data SignInF result
-    = ReadNickname (Nickname -> result)
-    | ReadToken (Token -> result)
-    | ConsumeToken Nickname Token result
+    = ReadNicknamedNonce (NicknamedNonce -> result)
+    | ConsumeToken NicknamedNonce (IdentifiedToken -> result)
 
 derive instance functorSignInF :: Functor SignInF
 
 _signIn = SProxy :: SProxy "signIn"
 
-readNickname :: forall run. Run (signIn :: FProxy SignInF | run) Nickname
-readNickname = lift _signIn (ReadNickname identity)
-
-readToken :: forall run. Run (signIn :: FProxy SignInF | run) Token
-readToken = lift _signIn (ReadToken identity)
+readNicknamedNonce :: forall run.
+    Run (signIn :: FProxy SignInF | run) NicknamedNonce
+readNicknamedNonce = lift _signIn (ReadNicknamedNonce identity)
 
 consumeToken :: forall run.
-    Nickname -> Token -> Run (signIn :: FProxy SignInF | run) Unit
-consumeToken nickname token = lift _signIn (ConsumeToken nickname token unit)
+    NicknamedNonce -> Run (signIn :: FProxy SignInF | run) IdentifiedToken
+consumeToken nonce = lift _signIn (ConsumeToken nonce identity)
 
 signIn :: forall run. Run
     ( ensureNotSignedIn :: FProxy EnsureNotSignedInF
     , signIn :: FProxy SignInF
     | run)
-    Token
+    IdentifiedToken
 signIn = do
     ensureNotSignedIn
-    nickname <- readNickname
-    token <- readToken
-    consumeToken nickname token
-    pure token
+    nonce <- readNicknamedNonce
+    consumeToken nonce

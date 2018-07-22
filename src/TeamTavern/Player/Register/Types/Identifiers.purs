@@ -1,14 +1,14 @@
-module TeamTavern.Player.Identifiers where
+module TeamTavern.Player.Register.Types.Identifiers where
 
 import Prelude
 
 import Data.List.Types (NonEmptyList)
 import Data.Variant (SProxy(..), Variant)
 import TeamTavern.Architecture.Validated (label)
-import TeamTavern.Player.Email (Email, EmailError)
-import TeamTavern.Player.Email as Email
-import TeamTavern.Player.Nickname (Nickname, NicknameError)
-import TeamTavern.Player.Nickname as Nickname
+import TeamTavern.Player.Domain.Email (Email, EmailError)
+import TeamTavern.Player.Domain.Email as Email
+import TeamTavern.Player.Domain.Nickname (Nickname, NicknameError)
+import TeamTavern.Player.Domain.Nickname as Nickname
 import Validated (Validated)
 
 type IdentifiersModel = { email :: String, nickname :: String }

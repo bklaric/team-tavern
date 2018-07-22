@@ -1,4 +1,4 @@
-module TeamTavern.Player.SignIn.ErrorModel
+module TeamTavern.Player.SignIn.Types.ErrorModel
     ( SignInErrorModel
     , fromSignInError
     ) where
@@ -6,12 +6,12 @@ module TeamTavern.Player.SignIn.ErrorModel
 import Prelude
 
 import Data.Variant (SProxy(..), Variant, inj, match)
-import TeamTavern.Player.SignIn.Error (SignInError)
+import TeamTavern.Player.SignIn.Types.Error (SignInError)
 
 type SignInErrorModel = Variant
     ( signedIn :: {}
     , invalidNickname :: {}
-    , invalidToken :: {}
+    , invalidNonce :: {}
     , noTokenToConsume :: {}
     , other :: {}
     )
@@ -20,7 +20,7 @@ _signedIn = SProxy :: SProxy "signedIn"
 
 _invalidNickname = SProxy :: SProxy "invalidNickname"
 
-_invalidToken = SProxy :: SProxy "invalidToken"
+_invalidNonce = SProxy :: SProxy "invalidNonce"
 
 _noTokenToConsume = SProxy :: SProxy "noTokenToConsume"
 
@@ -30,12 +30,13 @@ fromSignInError :: SignInError -> SignInErrorModel
 fromSignInError = match
     { ensureNotSignedIn: const $ inj _signedIn {}
     , readNickname: const $ inj _invalidNickname {}
-    , readToken: match
+    , readNonce: match
         { invalidBody: const $ inj _other {}
-        , invalidToken: const $ inj _invalidToken {}
+        , invalidNonce: const $ inj _invalidNonce {}
         }
     , consumeToken: match
         { noTokenToConsume: const $ inj _noTokenToConsume {}
+        , cantReadIdentifiedToken: const $ inj _other {}
         , other: const $ inj _other {}
         }
     }

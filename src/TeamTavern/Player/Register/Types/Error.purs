@@ -1,4 +1,4 @@
-module TeamTavern.Player.Register.Error where
+module TeamTavern.Player.Register.Types.Error where
 
 import Prelude
 
@@ -12,7 +12,7 @@ import TeamTavern.Infrastructure.EnsureNotSignedIn.Run (EnsureNotSignedInError)
 import TeamTavern.Player.Register.AddPlayer (AddPlayerError)
 import TeamTavern.Player.Register.GenerateToken (GenerateTokenError)
 import TeamTavern.Player.Register.ReadIdentifiers (ReadIdentifiersError)
-import TeamTavern.Player.Register.SendEmail (SendEmailError)
+import TeamTavern.Player.Register.NotifyPlayer (SendEmailError)
 import TeamTavern.Player.Register.ValidateIdentifiers (ValidateIdentifiersError)
 import Unsafe.Coerce (unsafeCoerce)
 
@@ -47,6 +47,10 @@ logError registerError = unsafeCoerce do
                     <> message error
             , token: \{ errors, identifiers } -> do
                 log $ "\tFailed token validation for identifiers: "
+                    <> unwrap identifiers.email <> ", "
+                    <> unwrap identifiers.nickname
+            , nonce: \{ errors, identifiers } -> do
+                log $ "\tFailed nonce validation for identifiers: "
                     <> unwrap identifiers.email <> ", "
                     <> unwrap identifiers.nickname
             }

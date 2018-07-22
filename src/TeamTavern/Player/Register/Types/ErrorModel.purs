@@ -1,13 +1,16 @@
-module TeamTavern.Player.Register.ErrorModel where
+module TeamTavern.Player.Register.Types.ErrorModel
+    ( RegisterErrorModel
+    , fromRegisterPlayerErrors
+    ) where
 
 import Prelude
 
 import Data.Array (fromFoldable)
 import Data.Variant (SProxy(..), Variant, inj, match)
-import TeamTavern.Player.Credentials (Credentials)
-import TeamTavern.Player.Email (EmailError)
-import TeamTavern.Player.Nickname (NicknameError)
-import TeamTavern.Player.Register.Error (RegisterError)
+import TeamTavern.Player.Register.Types.Credentials (IdentifiedCredentials)
+import TeamTavern.Player.Domain.Email (EmailError)
+import TeamTavern.Player.Domain.Nickname (NicknameError)
+import TeamTavern.Player.Register.Types.Error (RegisterError)
 
 type RegisterErrorModel = Variant
     ( ensureNotSignedIn :: {}
@@ -17,7 +20,7 @@ type RegisterErrorModel = Variant
         ))
     , emailTaken :: {}
     , nicknameTaken :: {}
-    , sendEmail :: { credentials :: Credentials }
+    , sendEmail :: { credentials :: IdentifiedCredentials }
     , other :: {}
     )
 

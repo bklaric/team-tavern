@@ -1,4 +1,4 @@
-module TeamTavern.Player.Register.AddPlayer where
+module TeamTavern.Player.Register.AddPlayer (AddPlayerError, addPlayer) where
 
 import Prelude
 
@@ -18,25 +18,29 @@ import TeamTavern.Architecture.Async (label)
 import TeamTavern.Architecture.Either as Either
 import TeamTavern.Architecture.Postgres.Pool (withTransaction)
 import TeamTavern.Architecture.Postgres.Query (query)
-import TeamTavern.Player.Credentials (Credentials)
-import TeamTavern.Player.Email (Email)
-import TeamTavern.Player.Nickname (Nickname)
-import TeamTavern.Player.Token (Token)
+import TeamTavern.Player.Register.Types.Credentials (Credentials, IdentifiedCredentials)
+import TeamTavern.Player.Domain.Email (Email)
+import TeamTavern.Player.Domain.Nickname (Nickname)
+import TeamTavern.Player.Domain.Nonce (Nonce)
+import TeamTavern.Player.Domain.PlayerId (PlayerId)
+import TeamTavern.Player.Domain.PlayerId as PlayerId
+import TeamTavern.Player.Domain.Token (Token)
 
 insertPlayerQuery :: Query
 insertPlayerQuery =
     Query "insert into player (email, nickname) values ($1, $2) returning id"
 
 insertTokenQuery :: Query
-insertTokenQuery = Query "insert into token (player_id, value) values ($1, $2)"
+insertTokenQuery =
+    Query "insert into token (player_id, value, nonce) values ($1, $2, $3)"
 
 insertPlayerParameters :: Email -> Nickname -> Array QueryParameter
 insertPlayerParameters email nickname =
     [unwrap email, unwrap nickname] <#> QueryParameter
 
-insertTokenParameters :: Int -> Token -> Array QueryParameter
-insertTokenParameters playerId token =
-    [show playerId, unwrap token] <#> QueryParameter
+insertTokenParameters :: PlayerId -> Token -> Nonce -> Array QueryParameter
+insertTokenParameters playerId token nonce =
+    [show playerId, unwrap token, unwrap nonce] <#> QueryParameter
 
 type AddPlayerError = Variant
     ( emailTaken ::
@@ -59,9 +63,10 @@ _cantReadPlayerId = SProxy :: SProxy "cantReadPlayerId"
 
 _other = SProxy :: SProxy "other"
 
-readPlayerId :: Result -> Credentials -> Async AddPlayerError Int
+readPlayerId :: Result -> Credentials -> Async AddPlayerError PlayerId
 readPlayerId result credentials =
     readScalar result
+    >>= PlayerId.create
     # note { result, credentials }
     # Either.label _cantReadPlayerId
     # fromEither
@@ -78,8 +83,10 @@ addPlayer
     :: forall errors
     .  Pool
     -> Credentials
-    -> Async (Variant (addPlayer :: AddPlayerError | errors)) Unit
-addPlayer pool credentials@{ email, nickname, token } =
+    -> Async
+        (Variant (addPlayer :: AddPlayerError | errors))
+        IdentifiedCredentials
+addPlayer pool credentials@{ email, nickname, token, nonce } =
     pool # withTransaction (wrapError credentials) (\client -> do
         result <-
             query
@@ -91,8 +98,9 @@ addPlayer pool credentials@{ email, nickname, token } =
                     true | constraint error == Just "player_nickname_key" ->
                         inj _nicknameTaken { error, credentials }
                     _ -> inj _other { error, credentials })
-        playerId <- readPlayerId result credentials
-        query insertTokenQuery (insertTokenParameters playerId token) client
-            # lmap (wrapError credentials))
+        id <- readPlayerId result credentials
+        query insertTokenQuery (insertTokenParameters id token nonce) client
+            # lmap (wrapError credentials)
             # void
+        pure { id, email, nickname, token, nonce })
     # label (SProxy :: SProxy "addPlayer")

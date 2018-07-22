@@ -17,31 +17,29 @@ import TeamTavern.Architecture.Async (examineErrorWith)
 import TeamTavern.Infrastructure.Cookie (setCookieHeader)
 import TeamTavern.Infrastructure.EnsureNotSignedIn (EnsureNotSignedInF(..))
 import TeamTavern.Infrastructure.EnsureNotSignedIn.Run (ensureNotSignedIn)
+import TeamTavern.Player.Domain.PlayerId (PlayerId)
 import TeamTavern.Player.SignIn (SignInF(..), signIn)
 import TeamTavern.Player.SignIn.ConsumeToken (consumeToken)
-import TeamTavern.Player.SignIn.Error (SignInError, logError)
-import TeamTavern.Player.SignIn.ErrorModel (fromSignInError)
-import TeamTavern.Player.SignIn.ReadNickname (readNickname)
-import TeamTavern.Player.SignIn.ReadToken (readToken)
-import TeamTavern.Player.Token (Token)
+import TeamTavern.Player.SignIn.Types.Error (SignInError, logError)
+import TeamTavern.Player.SignIn.Types.ErrorModel (fromSignInError)
+import TeamTavern.Player.SignIn.ReadNicknamedNonce (readNicknamedNonce)
+import TeamTavern.Player.Domain.Token (Token)
 
 interpretSignIn
     :: Pool
     -> NonEmptyString
     -> Map String String
     -> Body
-    -> Async SignInError Token
-interpretSignIn pool nickname' cookies body = signIn # interpret (VariantF.match
+    -> Async SignInError { id :: PlayerId, token :: Token }
+interpretSignIn pool nickname cookies body = signIn # interpret (VariantF.match
     { ensureNotSignedIn: case _ of
         EnsureNotSignedIn send ->
             ensureNotSignedIn cookies <#> const send
     , signIn: case _ of
-        ReadNickname send ->
-            readNickname nickname' <#> send
-        ReadToken send ->
-            readToken body <#> send
-        ConsumeToken nickname token send ->
-            consumeToken pool nickname token <#> const send
+        ReadNicknamedNonce send ->
+            readNicknamedNonce nickname body <#> send
+        ConsumeToken nonce send ->
+            consumeToken pool nonce <#> send
     })
 
 errorResponse :: SignInError -> Response
@@ -59,7 +57,7 @@ errorResponse error = let
             , headers: empty
             , content: writeJSON errorModel
             }
-        , invalidToken: const $
+        , invalidNonce: const $
             { statusCode: 400
             , headers: empty
             , content: writeJSON errorModel
@@ -76,15 +74,16 @@ errorResponse error = let
             }
         }
 
-successResponse :: Token -> Response
-successResponse token =
+successResponse :: { id :: PlayerId, token :: Token} -> Response
+successResponse { id, token } =
     { statusCode: 204
-    , headers: setCookieHeader token
+    , headers: setCookieHeader id token
     , content: mempty
     }
 
-respondSignIn ::
-    Async SignInError Token -> (forall left. Async left Response)
+respondSignIn
+    :: Async SignInError { id :: PlayerId, token :: Token}
+    -> (forall left. Async left Response)
 respondSignIn = alwaysRight errorResponse successResponse
 
 handleSignIn

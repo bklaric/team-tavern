@@ -1,4 +1,4 @@
-module TeamTavern.Player.Email (Email, EmailError, Invalid, create) where
+module TeamTavern.Player.Domain.Email (Email, EmailError, Invalid, create) where
 
 import Prelude
 

@@ -1,4 +1,4 @@
-module TeamTavern.Player.Nickname (Nickname, NicknameError, create) where
+module TeamTavern.Player.Domain.Nickname (Nickname, NicknameError, create) where
 
 import Data.List.Types (NonEmptyList)
 import Data.Newtype (class Newtype)

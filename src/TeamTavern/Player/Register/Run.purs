@@ -3,11 +3,11 @@ module TeamTavern.Player.Register.Run where
 import Prelude
 
 import Async (Async, alwaysRight, fromEffect)
-import Effect.Console (log)
 import Data.Map (Map)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
 import Data.Variant (onMatch)
+import Effect.Console (log)
 import MultiMap (empty)
 import Perun.Request.Body (Body)
 import Perun.Response (Response)
@@ -20,19 +20,19 @@ import TeamTavern.Architecture.Async (examineErrorWith)
 import TeamTavern.Infrastructure.Cookie (setCookieHeader)
 import TeamTavern.Infrastructure.EnsureNotSignedIn (EnsureNotSignedInF(..))
 import TeamTavern.Infrastructure.EnsureNotSignedIn.Run (ensureNotSignedIn)
-import TeamTavern.Player.Credentials (Credentials)
+import TeamTavern.Player.Register.Types.Credentials (IdentifiedCredentials)
 import TeamTavern.Player.Register (RegisterF(..), register)
 import TeamTavern.Player.Register.AddPlayer (addPlayer)
-import TeamTavern.Player.Register.Error (RegisterError, logError)
-import TeamTavern.Player.Register.ErrorModel (fromRegisterPlayerErrors)
+import TeamTavern.Player.Register.Types.Error (RegisterError, logError)
+import TeamTavern.Player.Register.Types.ErrorModel (fromRegisterPlayerErrors)
 import TeamTavern.Player.Register.GenerateToken (generateToken)
+import TeamTavern.Player.Register.NotifyPlayer (sendRegistrationEmail)
 import TeamTavern.Player.Register.ReadIdentifiers (readIdentifiers)
-import TeamTavern.Player.Register.SendEmail (sendRegistrationEmail)
 import TeamTavern.Player.Register.ValidateIdentifiers (validateIdentifiers)
 import Unsafe.Coerce (unsafeCoerce)
 
 interpretRegister ::
-    Pool -> Maybe Client -> Map String String -> Body -> Async RegisterError Credentials
+    Pool -> Maybe Client -> Map String String -> Body -> Async RegisterError IdentifiedCredentials
 interpretRegister pool client cookies body = register # interpret (VariantF.match
     { ensureNotSignedIn: case _ of
         EnsureNotSignedIn send ->
@@ -45,7 +45,7 @@ interpretRegister pool client cookies body = register # interpret (VariantF.matc
         GenerateToken identifiers sendToken ->
             generateToken identifiers <#> sendToken
         AddPlayer credentials send ->
-            addPlayer pool credentials <#> const send
+            addPlayer pool credentials <#> send
         NotifyPlayer credentials send ->
             case client of
             Just client' ->
@@ -64,9 +64,9 @@ errorResponse error =
             , headers: empty
             , content: mempty
             }
-        , sendEmail: \{ credentials: { email, nickname, token } } ->
+        , sendEmail: \{ credentials: { id, email, nickname, token } } ->
             { statusCode: 200
-            , headers: setCookieHeader token
+            , headers: setCookieHeader id token
             , content: writeJSON
                 { email: unwrap email
                 , nickname: unwrap nickname
@@ -80,10 +80,10 @@ errorResponse error =
             , content: writeJSON rest
             })
 
-successResponse :: Credentials -> Response
-successResponse { email, nickname, token } =
+successResponse :: IdentifiedCredentials -> Response
+successResponse { id, email, nickname, token } =
     { statusCode: 200
-    , headers: setCookieHeader token
+    , headers: setCookieHeader id token
     , content: writeJSON
         { email: unwrap email
         , nickname: unwrap nickname
@@ -92,7 +92,7 @@ successResponse { email, nickname, token } =
     }
 
 respondRegister ::
-    Async RegisterError Credentials -> (forall left. Async left Response)
+    Async RegisterError IdentifiedCredentials -> (forall left. Async left Response)
 respondRegister = alwaysRight errorResponse successResponse
 
 handleRegister ::

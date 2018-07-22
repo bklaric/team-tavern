@@ -16,8 +16,10 @@ type ViewPlayer = Route Get
 
 type RegisterPlayer = Route Post (Literal "players" :> End) NoQuery
 
-type SignInPlayer = Route Post
+type SignInPlayer = Route
+    Post
     (Literal "players"
+    :> Literal "by-nickname"
     :> Capture "nickname" NonEmptyString
     :> Literal "sessions"
     :> End)

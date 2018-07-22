@@ -1,24 +1,23 @@
-module TeamTavern.Player.SignIn.Error where
+module TeamTavern.Player.SignIn.Types.Error where
 
 import Prelude
 
-import Effect.Console (log)
 import Data.Newtype (unwrap)
 import Data.String.NonEmpty (toString)
 import Data.Variant (Variant, match)
 import Effect (Effect)
+import Effect.Console (log)
 import Error.Class (message, name)
 import Node.Errors.Class (code)
 import TeamTavern.Infrastructure.EnsureNotSignedIn.Run (EnsureNotSignedInError)
 import TeamTavern.Player.SignIn.ConsumeToken (ConsumeTokenError)
-import TeamTavern.Player.SignIn.ReadNickname (ReadNicknameError)
-import TeamTavern.Player.SignIn.ReadToken (ReadTokenError)
+import TeamTavern.Player.SignIn.ReadNicknamedNonce (ReadNicknameError, ReadNonceError)
 import Unsafe.Coerce (unsafeCoerce)
 
 type SignInError = Variant
     ( ensureNotSignedIn :: EnsureNotSignedInError
     , readNickname :: ReadNicknameError
-    , readToken :: ReadTokenError
+    , readNonce :: ReadNonceError
     , consumeToken :: ConsumeTokenError
     )
 
@@ -30,20 +29,24 @@ logError signInError = unsafeCoerce do
             log $ "\tThe request came with the following token: " <> token
         , readNickname: \{ errors, nickname } ->
             log $ "\tCouldn't read nickname from segment: " <> toString nickname
-        , readToken: match
+        , readNonce: match
             { invalidBody: \{ errors, body } -> do
-                log $ "\tCouldn't read token from body: " <> body
+                log $ "\tCouldn't read nonce from body: " <> body
                 log $ "\tParsing resulted in these errors: " <> show errors
-            , invalidToken: \{ errors, token } ->
-                log $ "\tCouldn't validate token from body: " <> token
+            , invalidNonce: \{ errors, nonce } ->
+                log $ "\tCouldn't validate nonce from body: " <> nonce
             }
         , consumeToken: match
-            { noTokenToConsume: \{ nickname, token } ->
+            { noTokenToConsume: \{ nickname, nonce } ->
                 log $ "\tNo valid token to consume for credentials: "
-                    <> unwrap nickname <> ", " <> unwrap token
-            , other: \{ error, nickname, token } -> do
+                    <> unwrap nickname <> ", " <> unwrap nonce
+            , cantReadIdentifiedToken: \{ result, nickname, nonce } ->
+                log $ "\tCouldn't read player id and token "
+                    <> "from update response for credentials: "
+                    <> unwrap nickname <> ", " <> unwrap nonce
+            , other: \{ error, nickname, nonce } -> do
                 log $ "\tCouldn't consume token for credentials: "
-                    <> unwrap nickname <> ", " <> unwrap token
+                    <> unwrap nickname <> ", " <> unwrap nonce
                 log $ "\tConsuming resulted in this database error: "
                     <> code error <> ", " <> name error <> ", "
                     <> message error

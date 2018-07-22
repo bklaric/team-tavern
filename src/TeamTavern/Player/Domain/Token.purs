@@ -1,4 +1,4 @@
-module TeamTavern.Player.Token (Token, TokenError, tokenCharCount, create) where
+module TeamTavern.Player.Domain.Token (Token, TokenError, tokenCharCount, create) where
 
 import Prelude
 
