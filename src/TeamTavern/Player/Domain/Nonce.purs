@@ -24,7 +24,7 @@ type NonceError = Variant
     )
 
 nonceCharCount :: CharCount
-nonceCharCount = CharCount.create 40 # unsafePartial fromJust
+nonceCharCount = CharCount.create 20 # unsafePartial fromJust
 
 create :: String -> Either (NonEmptyList NonceError) Nonce
 create token =
