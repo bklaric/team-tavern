@@ -5,6 +5,7 @@ import Prelude
 import Async (Async, fromEitherCont, fromEitherEffect)
 import Data.Bifunctor (lmap)
 import Data.List.Types (NonEmptyList)
+import Data.Newtype (unwrap)
 import Data.Symbol (SProxy(..))
 import Data.Variant (Variant)
 import Node.Buffer (Buffer, toString__)
@@ -12,11 +13,12 @@ import Node.Crypto (randomBytes)
 import Node.Encoding (Encoding(..))
 import Node.Errors (Error)
 import TeamTavern.Architecture.Async (label)
-import TeamTavern.Player.Register.Types.Identifiers (Identifiers)
+import TeamTavern.Player.Domain.CharCount (CharCount, toByteCount)
 import TeamTavern.Player.Domain.Nonce (Nonce, NonceError, nonceCharCount)
 import TeamTavern.Player.Domain.Nonce as Nonce
 import TeamTavern.Player.Domain.Token (Token, TokenError, tokenCharCount)
 import TeamTavern.Player.Domain.Token as Token
+import TeamTavern.Player.Register.Types.Identifiers (Identifiers)
 
 type GenerateTokenError = Variant
     ( token :: { errors :: NonEmptyList TokenError, identifiers :: Identifiers }
@@ -24,15 +26,12 @@ type GenerateTokenError = Variant
     , random :: { error :: Error, identifiers :: Identifiers }
     )
 
-tokenByteCount :: Int
-tokenByteCount = tokenCharCount / 2
-
-nonceByteCount :: Int
-nonceByteCount = nonceCharCount / 2
-
-generateRandomBytes :: Identifiers -> Int -> Async GenerateTokenError Buffer
-generateRandomBytes identifiers byteCount =
-    randomBytes byteCount
+generateRandomBytes :: Identifiers -> CharCount -> Async GenerateTokenError Buffer
+generateRandomBytes identifiers charCount =
+    charCount
+    # toByteCount
+    # unwrap
+    # randomBytes
     # fromEitherCont
     # lmap { error: _, identifiers }
     # label (SProxy :: SProxy "random")
@@ -62,8 +61,8 @@ generateToken
         (Variant (generateToken :: GenerateTokenError | errors))
         { token :: Token, nonce :: Nonce }
 generateToken identifiers = label (SProxy :: SProxy "generateToken") $ do
-    token <- generateRandomBytes identifiers tokenByteCount
+    token <- generateRandomBytes identifiers tokenCharCount
         >>= bufferToToken identifiers
-    nonce <- generateRandomBytes identifiers nonceByteCount
+    nonce <- generateRandomBytes identifiers nonceCharCount
         >>= bufferToNonce identifiers
     pure { token, nonce }

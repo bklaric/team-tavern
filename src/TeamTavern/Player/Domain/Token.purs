@@ -4,9 +4,13 @@ import Prelude
 
 import Data.Either (Either)
 import Data.List.Types (NonEmptyList)
-import Data.Newtype (class Newtype)
+import Data.Maybe (fromJust)
+import Data.Newtype (class Newtype, unwrap)
 import Data.String (toLower, trim)
 import Data.Variant (Variant)
+import Partial.Unsafe (unsafePartial)
+import TeamTavern.Player.Domain.CharCount (CharCount)
+import TeamTavern.Player.Domain.CharCount as CharCount
 import Wrapped as Wrapped
 import Wrapped.String (NotExactlyLong, NotHex, notExactlyLong, notHex)
 
@@ -19,12 +23,12 @@ type TokenError = Variant
     , notHex :: NotHex
     )
 
-tokenCharCount :: Int
-tokenCharCount = 40
+tokenCharCount :: CharCount
+tokenCharCount = CharCount.create 40 # unsafePartial fromJust
 
 create :: String -> Either (NonEmptyList TokenError) Token
 create token =
     Wrapped.create
         (trim >>> toLower)
-        [notExactlyLong tokenCharCount, notHex]
+        [notExactlyLong (unwrap tokenCharCount), notHex]
         Token token
