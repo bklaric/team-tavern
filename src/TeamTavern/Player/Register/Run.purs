@@ -17,7 +17,6 @@ import Run (interpret)
 import Run as VariantF
 import Simple.JSON (writeJSON)
 import TeamTavern.Architecture.Async (examineErrorWith)
-import TeamTavern.Infrastructure.Cookie (setCookieHeader)
 import TeamTavern.Infrastructure.EnsureNotSignedIn (EnsureNotSignedInF(..))
 import TeamTavern.Infrastructure.EnsureNotSignedIn.Run (ensureNotSignedIn)
 import TeamTavern.Player.Register.Types.Credentials (IdentifiedCredentials)
@@ -66,7 +65,7 @@ errorResponse error =
             }
         , sendEmail: \{ credentials: { id, email, nickname, token } } ->
             { statusCode: 200
-            , headers: setCookieHeader id token
+            , headers: empty
             , content: writeJSON
                 { email: unwrap email
                 , nickname: unwrap nickname
@@ -83,7 +82,7 @@ errorResponse error =
 successResponse :: IdentifiedCredentials -> Response
 successResponse { id, email, nickname, token } =
     { statusCode: 200
-    , headers: setCookieHeader id token
+    , headers: empty
     , content: writeJSON
         { email: unwrap email
         , nickname: unwrap nickname
