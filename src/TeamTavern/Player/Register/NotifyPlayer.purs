@@ -17,13 +17,13 @@ import TeamTavern.Architecture.Postmark.Client (sendEmail)
 import TeamTavern.Player.Register.Types.Credentials (IdentifiedCredentials)
 
 message :: IdentifiedCredentials -> Message
-message { id, email, nickname, token } =
+message { id, email, nickname, token, nonce } =
         { to: unwrap email
         , from: "branimir.klaric1@xnet.hr"
         , subject: toNullable $ Just "TeamTavern registration"
         , textBody: toNullable $ Just $
             "Hi " <> unwrap nickname <> ",\n\n"
-            <> "Your registration token is " <> unwrap token <> "."
+            <> "Your registration nonce is " <> unwrap nonce <> "."
         }
 
 type SendEmailError = { error :: Error, credentials :: IdentifiedCredentials }
