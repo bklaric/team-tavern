@@ -1,4 +1,4 @@
-module TeamTavern.Player.SignIn.ConsumeToken where
+module TeamTavern.Player.StartSession.ConsumeToken where
 
 import Prelude
 
@@ -23,8 +23,8 @@ import TeamTavern.Player.Domain.Nickname (Nickname)
 import TeamTavern.Player.Domain.Nonce (Nonce)
 import TeamTavern.Player.Domain.PlayerId as PlayerId
 import TeamTavern.Player.Domain.Token as Token
-import TeamTavern.Player.SignIn.Types.IdentifiedToken (IdentifiedToken)
-import TeamTavern.Player.SignIn.Types.NicknamedNonce (NicknamedNonce)
+import TeamTavern.Player.StartSession.Types.IdentifiedToken (IdentifiedToken)
+import TeamTavern.Player.StartSession.Types.NicknamedNonce (NicknamedNonce)
 
 updateTokenQuery :: Query
 updateTokenQuery = Query """

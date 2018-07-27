@@ -21,7 +21,7 @@
     "purescript-simple-json": "^4.1.0",
     "purescript-unicode": "^4.0.1",
     "purescript-idiomatic-node-http": "^0.4.0",
-    "purescript-jarilo": "^0.5.0",
+    "purescript-jarilo": "^0.5.1",
     "purescript-pg": "^0.4.0",
     "purescript-foreign-generic": "^7.0.0",
     "purescript-idiomatic-node-process": "^0.3.0",

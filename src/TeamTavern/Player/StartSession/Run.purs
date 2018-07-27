@@ -1,4 +1,4 @@
-module TeamTavern.Player.SignIn.Run where
+module TeamTavern.Player.StartSession.Run where
 
 import Prelude
 
@@ -18,11 +18,11 @@ import TeamTavern.Infrastructure.Cookie (setCookieHeader)
 import TeamTavern.Infrastructure.EnsureNotSignedIn (EnsureNotSignedInF(..))
 import TeamTavern.Infrastructure.EnsureNotSignedIn.Run (ensureNotSignedIn)
 import TeamTavern.Player.Domain.PlayerId (PlayerId)
-import TeamTavern.Player.SignIn (SignInF(..), signIn)
-import TeamTavern.Player.SignIn.ConsumeToken (consumeToken)
-import TeamTavern.Player.SignIn.Types.Error (SignInError, logError)
-import TeamTavern.Player.SignIn.Types.ErrorModel (fromSignInError)
-import TeamTavern.Player.SignIn.ReadNicknamedNonce (readNicknamedNonce)
+import TeamTavern.Player.StartSession (SignInF(..), signIn)
+import TeamTavern.Player.StartSession.ConsumeToken (consumeToken)
+import TeamTavern.Player.StartSession.Types.Error (SignInError, logError)
+import TeamTavern.Player.StartSession.Types.ErrorModel (fromSignInError)
+import TeamTavern.Player.StartSession.ReadNicknamedNonce (readNicknamedNonce)
 import TeamTavern.Player.Domain.Token (Token)
 
 interpretSignIn

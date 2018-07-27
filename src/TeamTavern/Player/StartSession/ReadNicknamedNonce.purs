@@ -1,4 +1,4 @@
-module TeamTavern.Player.SignIn.ReadNicknamedNonce
+module TeamTavern.Player.StartSession.ReadNicknamedNonce
     ( ReadNicknameError
     , ReadNonceError
     , readNicknamedNonce

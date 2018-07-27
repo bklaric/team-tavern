@@ -1,4 +1,4 @@
-module TeamTavern.Player.SignIn
+module TeamTavern.Player.StartSession
     ( SignInF(..)
     , signIn
     ) where
@@ -8,8 +8,8 @@ import Prelude
 import Data.Symbol (SProxy(..))
 import Run (FProxy, Run, lift)
 import TeamTavern.Infrastructure.EnsureNotSignedIn (EnsureNotSignedInF, ensureNotSignedIn)
-import TeamTavern.Player.SignIn.Types.IdentifiedToken (IdentifiedToken)
-import TeamTavern.Player.SignIn.Types.NicknamedNonce (NicknamedNonce)
+import TeamTavern.Player.StartSession.Types.IdentifiedToken (IdentifiedToken)
+import TeamTavern.Player.StartSession.Types.NicknamedNonce (NicknamedNonce)
 
 data SignInF result
     = ReadNicknamedNonce (NicknamedNonce -> result)

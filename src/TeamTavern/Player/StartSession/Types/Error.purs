@@ -1,4 +1,4 @@
-module TeamTavern.Player.SignIn.Types.Error where
+module TeamTavern.Player.StartSession.Types.Error where
 
 import Prelude
 
@@ -10,8 +10,8 @@ import Effect.Console (log)
 import Error.Class (message, name)
 import Node.Errors.Class (code)
 import TeamTavern.Infrastructure.EnsureNotSignedIn.Run (EnsureNotSignedInError)
-import TeamTavern.Player.SignIn.ConsumeToken (ConsumeTokenError)
-import TeamTavern.Player.SignIn.ReadNicknamedNonce (ReadNicknameError, ReadNonceError)
+import TeamTavern.Player.StartSession.ConsumeToken (ConsumeTokenError)
+import TeamTavern.Player.StartSession.ReadNicknamedNonce (ReadNicknameError, ReadNonceError)
 import Unsafe.Coerce (unsafeCoerce)
 
 type SignInError = Variant
