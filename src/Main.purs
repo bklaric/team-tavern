@@ -4,7 +4,6 @@ import Prelude
 
 import Async (Async)
 import Control.Bind (bindFlipped)
-import Effect.Console (log)
 import Control.Monad.Except (ExceptT(..), runExceptT)
 import Control.Monad.Maybe.Trans (lift)
 import Data.Either (Either(..), either, note)
@@ -16,6 +15,8 @@ import Data.Options (Options, (:=))
 import Data.String.NonEmpty (toString)
 import Data.Variant (match)
 import Effect (Effect)
+import Effect.Console (log)
+import Jarilo.Junction (JunctionProxy(..), router)
 import MultiMap (empty)
 import Node.Process (lookupEnv)
 import Node.Server (ListenOptions(..))
@@ -29,12 +30,11 @@ import Postgres.Pool (Pool)
 import Postgres.Pool as Pool
 import Postmark.Client (Client)
 import Postmark.Client as Postmark
-import Jarilo.Junction (JunctionProxy(..), router)
 import TeamTavern.Architecture.Deployment (Deployment(..))
 import TeamTavern.Architecture.Deployment as Deployment
 import TeamTavern.Player.Register.Run (handleRegister)
-import TeamTavern.Player.Routes (TeamTavernRoutes)
-import TeamTavern.Player.StartSession.Run (handleSignIn)
+import TeamTavern.Player.Session.Start.Run (handleStart)
+import TeamTavern.Routes (TeamTavernRoutes)
 import Unsafe.Coerce (unsafeCoerce)
 
 listenOptions :: ListenOptions
@@ -117,7 +117,7 @@ handleRequest pool client method url cookies body =
         , viewPlayer: \{nickname} -> pure { statusCode: 200, headers: empty, content: "You're viewing player " <> toString nickname <> "." }
         , registerPlayer: const $ handleRegister pool client cookies body
         , prepareSession: const $ pure { statusCode: 200, headers: empty, content: "You're viewing all players." }
-        , startSession: \{ nickname } -> handleSignIn pool nickname cookies body
+        , startSession: \{ nickname } -> handleStart pool nickname cookies body
         }
 
 handleInvalidUrl :: Pool -> Maybe Client -> Request -> (forall left. Async left Response)

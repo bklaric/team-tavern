@@ -1,4 +1,4 @@
-module TeamTavern.Player.StartSession.Types.IdentifiedToken where
+module TeamTavern.Player.Session.Start.Types.IdentifiedToken where
 
 import TeamTavern.Player.Domain.PlayerId (PlayerId)
 import TeamTavern.Player.Domain.Token (Token)

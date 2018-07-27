@@ -1,4 +1,4 @@
-module TeamTavern.Player.StartSession.Types.NicknamedNonce where
+module TeamTavern.Player.Session.Start.Types.NicknamedNonce where
 
 import TeamTavern.Player.Domain.Nickname (Nickname)
 import TeamTavern.Player.Domain.Nonce (Nonce)

@@ -1,4 +1,4 @@
-module TeamTavern.Player.StartSession.Types.ErrorModel
+module TeamTavern.Player.Session.Start.Types.ErrorModel
     ( SignInErrorModel
     , fromSignInError
     ) where
@@ -6,7 +6,7 @@ module TeamTavern.Player.StartSession.Types.ErrorModel
 import Prelude
 
 import Data.Variant (SProxy(..), Variant, inj, match)
-import TeamTavern.Player.StartSession.Types.Error (SignInError)
+import TeamTavern.Player.Session.Start.Types.Error (SignInError)
 
 type SignInErrorModel = Variant
     ( signedIn :: {}

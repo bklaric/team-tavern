@@ -1,4 +1,4 @@
-module TeamTavern.Player.StartSession.Run where
+module TeamTavern.Player.Session.Start.Run (handleStart) where
 
 import Prelude
 
@@ -18,24 +18,24 @@ import TeamTavern.Infrastructure.Cookie (setCookieHeader)
 import TeamTavern.Infrastructure.EnsureNotSignedIn (EnsureNotSignedInF(..))
 import TeamTavern.Infrastructure.EnsureNotSignedIn.Run (ensureNotSignedIn)
 import TeamTavern.Player.Domain.PlayerId (PlayerId)
-import TeamTavern.Player.StartSession (SignInF(..), signIn)
-import TeamTavern.Player.StartSession.ConsumeToken (consumeToken)
-import TeamTavern.Player.StartSession.Types.Error (SignInError, logError)
-import TeamTavern.Player.StartSession.Types.ErrorModel (fromSignInError)
-import TeamTavern.Player.StartSession.ReadNicknamedNonce (readNicknamedNonce)
+import TeamTavern.Player.Session.Start (StartF(..), start)
+import TeamTavern.Player.Session.Start.ConsumeToken (consumeToken)
+import TeamTavern.Player.Session.Start.Types.Error (SignInError, logError)
+import TeamTavern.Player.Session.Start.Types.ErrorModel (fromSignInError)
+import TeamTavern.Player.Session.Start.ReadNicknamedNonce (readNicknamedNonce)
 import TeamTavern.Player.Domain.Token (Token)
 
-interpretSignIn
+interpretStart
     :: Pool
     -> NonEmptyString
     -> Map String String
     -> Body
     -> Async SignInError { id :: PlayerId, token :: Token }
-interpretSignIn pool nickname cookies body = signIn # interpret (VariantF.match
+interpretStart pool nickname cookies body = start # interpret (VariantF.match
     { ensureNotSignedIn: case _ of
         EnsureNotSignedIn send ->
             ensureNotSignedIn cookies <#> const send
-    , signIn: case _ of
+    , start: case _ of
         ReadNicknamedNonce send ->
             readNicknamedNonce nickname body <#> send
         ConsumeToken nonce send ->
@@ -81,18 +81,18 @@ successResponse { id, token } =
     , content: mempty
     }
 
-respondSignIn
+respondStart
     :: Async SignInError { id :: PlayerId, token :: Token}
     -> (forall left. Async left Response)
-respondSignIn = alwaysRight errorResponse successResponse
+respondStart = alwaysRight errorResponse successResponse
 
-handleSignIn
+handleStart
     :: Pool
     -> NonEmptyString
     -> Map String String
     -> Body
     -> (forall left. Async left Response)
-handleSignIn pool nickname cookies body =
-    interpretSignIn pool nickname cookies body
+handleStart pool nickname cookies body =
+    interpretStart pool nickname cookies body
     # examineErrorWith logError
-    # respondSignIn
+    # respondStart
