@@ -1,4 +1,4 @@
-module TeamTavern.Domain.Id where
+module TeamTavern.Domain.Id (Id, create) where
 
 import Prelude
 

@@ -1,8 +1,5 @@
 module TeamTavern.Player.Session.Start.ReadNicknamedNonce
-    ( ReadNicknameError
-    , ReadNonceError
-    , readNicknamedNonce
-    ) where
+    (ReadNonceError, readNicknamedNonce) where
 
 import Prelude
 
@@ -10,7 +7,7 @@ import Async (Async, fromEither)
 import Data.Bifunctor (lmap)
 import Data.Either (Either(..))
 import Data.List.Types (NonEmptyList)
-import Data.String.NonEmpty (NonEmptyString, toString)
+import Data.String.NonEmpty (NonEmptyString)
 import Data.Symbol (SProxy(..))
 import Data.Variant (Variant)
 import Foreign (MultipleErrors)
@@ -19,31 +16,11 @@ import Simple.JSON (readJSON)
 import TeamTavern.Architecture.Async as Async
 import TeamTavern.Architecture.Either (label)
 import TeamTavern.Architecture.Perun.Request.Body (readBody)
-import TeamTavern.Player.Domain.Nickname (Nickname, NicknameError)
-import TeamTavern.Player.Domain.Nickname as Nickname
+import TeamTavern.Player.Domain.Nickname (Nickname)
 import TeamTavern.Player.Domain.Nonce (Nonce, NonceError)
 import TeamTavern.Player.Domain.Nonce as Nonce
-import Validated (toEither)
-
-type ReadNicknameError =
-    { errors :: NonEmptyList NicknameError
-    , nickname :: NonEmptyString
-    }
-
-_readNickname = SProxy :: SProxy "readNickname"
-
-readNickname
-    :: forall errors
-    .  NonEmptyString
-    -> Async (Variant (readNickname :: ReadNicknameError | errors)) Nickname
-readNickname nickname =
-    nickname
-    # toString
-    # Nickname.create
-    # toEither
-    # lmap { errors: _, nickname}
-    # label _readNickname
-    # fromEither
+import TeamTavern.Player.Infrastructure (ReadNicknameError)
+import TeamTavern.Player.Infrastructure as Infrastructure
 
 type ReadNonceError = Variant
     ( invalidBody ::
@@ -51,6 +28,14 @@ type ReadNonceError = Variant
     , invalidNonce ::
         { errors :: NonEmptyList NonceError, nonce :: String }
     )
+
+readNickname
+    :: forall errors
+    .  NonEmptyString
+    -> Async (Variant (readNickname :: ReadNicknameError | errors)) Nickname
+readNickname nickname =
+    Infrastructure.readNickname nickname
+    # Async.label (SProxy :: SProxy "readNickname")
 
 readNonce
     :: forall errors

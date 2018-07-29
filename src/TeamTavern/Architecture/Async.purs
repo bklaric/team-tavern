@@ -2,7 +2,7 @@ module TeamTavern.Architecture.Async where
 
 import Prelude
 
-import Async (Async(..), runAsync)
+import Async (Async(..), fromEither, runAsync)
 import Control.Monad.Cont (ContT(..))
 import Control.Monad.Except (ExceptT(..), withExceptT)
 import Data.Either (Either(..), either)
@@ -10,6 +10,7 @@ import Data.Symbol (class IsSymbol, SProxy)
 import Data.Variant (Variant, inj)
 import Effect (Effect)
 import Prim.Row (class Cons)
+import Validated (Validated, toEither)
 
 label
     :: forall errors errors' left label right
@@ -43,3 +44,6 @@ examineErrorWith' logger async = Async $ ExceptT $ ContT $ \callback ->
             runAsync (logger error) (either absurd pure)
             callback $ Left error
         Right result -> callback $ Right result
+
+fromValidated :: forall left right. Validated left right -> Async left right
+fromValidated = toEither >>> fromEither

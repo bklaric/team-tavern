@@ -16,6 +16,7 @@ import Data.String.NonEmpty (toString)
 import Data.Variant (match)
 import Effect (Effect)
 import Effect.Console (log)
+import Global.Unsafe (unsafeStringify)
 import Jarilo.Junction (JunctionProxy(..), router)
 import MultiMap (empty)
 import Node.Process (lookupEnv)
@@ -33,6 +34,7 @@ import Postmark.Client as Postmark
 import TeamTavern.Architecture.Deployment (Deployment(..))
 import TeamTavern.Architecture.Deployment as Deployment
 import TeamTavern.Player.Register.Run (handleRegister)
+import TeamTavern.Player.Session.Prepare.Run (handlePrepare)
 import TeamTavern.Player.Session.Start.Run (handleStart)
 import TeamTavern.Routes (TeamTavernRoutes)
 import Unsafe.Coerce (unsafeCoerce)
@@ -108,27 +110,53 @@ createPostmarkClient =
 
 teamTavernRoutes = JunctionProxy :: JunctionProxy TeamTavernRoutes
 
-handleRequest :: Pool -> Maybe Client -> Either CustomMethod Method -> Url -> Map String String -> Body -> (forall left. Async left Response)
+handleRequest
+    :: Pool
+    -> Maybe Client
+    -> Either CustomMethod Method
+    -> Url
+    -> Map String String
+    -> Body
+    -> (forall left. Async left Response)
 handleRequest pool client method url cookies body =
     case router teamTavernRoutes method (pathSegments url) (queryPairs url) of
-    Left _ -> pure { statusCode: 404, headers: empty, content: "404 Not Found" }
+    Left errors -> pure { statusCode: 404, headers: empty, content: unsafeStringify errors }
     Right routeValues -> routeValues # match
-        { viewPlayers: const $ pure { statusCode: 200, headers: empty, content: "You're viewing all players." }
-        , viewPlayer: \{nickname} -> pure { statusCode: 200, headers: empty, content: "You're viewing player " <> toString nickname <> "." }
-        , registerPlayer: const $ handleRegister pool client cookies body
-        , prepareSession: const $ pure { statusCode: 200, headers: empty, content: "You're viewing all players." }
-        , startSession: \{ nickname } -> handleStart pool nickname cookies body
+        { viewPlayers: const $ pure
+            { statusCode: 200
+            , headers: empty
+            , content: "You're viewing all players."
+            }
+        , viewPlayer: \{nickname} -> pure
+            { statusCode: 200
+            , headers: empty
+            , content: "You're viewing player " <> toString nickname <> "."
+            }
+        , registerPlayer:
+            const $ handleRegister pool client cookies body
+        , prepareSession: \{ nickname } ->
+            handlePrepare pool client nickname cookies
+        , startSession: \{ nickname } ->
+            handleStart pool nickname cookies body
         }
 
-handleInvalidUrl :: Pool -> Maybe Client -> Request -> (forall left. Async left Response)
+handleInvalidUrl
+    :: Pool
+    -> Maybe Client
+    -> Request
+    -> (forall left. Async left Response)
 handleInvalidUrl pool client { method, url, cookies, body } =
     case url of
     Right url' -> handleRequest pool client method url' cookies body
-    Left url' -> pure { statusCode: 400, headers: empty, content: "Couldn't parse url '" <> url' <> "'." }
+    Left url' -> pure
+        { statusCode: 400
+        , headers: empty
+        , content: "Couldn't parse url '" <> url' <> "'."
+        }
 
 main :: Effect Unit
 main = either (unsafeCoerce log) pure =<< runExceptT do
     deployment <- loadDeployment
     pool <- createPostgresPool
-    client <- createPostmarkClient deployment -- "d763b189-d006-4e4a-9d89-02212ccd87f5"
+    client <- createPostmarkClient deployment
     lift $ run_ listenOptions (handleInvalidUrl pool client)

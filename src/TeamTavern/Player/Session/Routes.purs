@@ -1,6 +1,7 @@
 module TeamTavern.Player.Session.Routes where
 
 import Data.String.NonEmpty (NonEmptyString)
+import Jarilo.Junction (type (:<|>), type (:=))
 import Jarilo.Method (Patch, Post)
 import Jarilo.Path (type (:>), End)
 import Jarilo.Query (NoQuery)
@@ -24,3 +25,7 @@ type StartSession = Route
     :> Literal "sessions"
     :> End)
     NoQuery
+
+type SessionRoutes
+    =    "prepareSession" := PrepareSession
+    :<|> "startSession"   := StartSession

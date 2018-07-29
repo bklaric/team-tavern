@@ -1,4 +1,5 @@
-module TeamTavern.Player.Session.Start.ConsumeToken where
+module TeamTavern.Player.Session.Start.ConsumeToken
+    (ConsumeTokenError, consumeToken) where
 
 import Prelude
 
@@ -23,35 +24,35 @@ import TeamTavern.Player.Domain.Nickname (Nickname)
 import TeamTavern.Player.Domain.Nonce (Nonce)
 import TeamTavern.Player.Domain.PlayerId as PlayerId
 import TeamTavern.Player.Domain.Token as Token
-import TeamTavern.Player.Session.Start.Types.IdentifiedToken (IdentifiedToken)
-import TeamTavern.Player.Session.Start.Types.NicknamedNonce (NicknamedNonce)
+import TeamTavern.Player.Domain.Types (NicknamedNonce, IdentifiedToken)
 
 updateTokenQuery :: Query
 updateTokenQuery = Query """
-    update token
+    update session
     set consumed = true
     from player
     where player.nickname = $1
-        and token.player_id = player.id
-        and token.nonce = $2
-        and token.consumed = false
-        and token.revoked = false
-        and token.generated > (now() - interval '15 minutes')
-    returning player.id as id, token.value as token
+        and session.player_id = player.id
+        and session.nonce = $2
+        and session.consumed = false
+        and session.revoked = false
+        and session.generated > (now() - interval '15 minutes')
+    returning player.id as id, session.token as token
     """
 
 updateTokenParameters :: Nickname -> Nonce -> Array QueryParameter
 updateTokenParameters nickname nonce =
     [unwrap nickname, unwrap nonce] <#> QueryParameter
 
-type ConsumeTokenError = Variant
-    ( noTokenToConsume ::
-        { nickname :: Nickname, nonce :: Nonce }
-    , cantReadIdentifiedToken ::
-        { result :: Result, nickname :: Nickname, nonce :: Nonce }
-    , other ::
-        { error :: Error, nickname :: Nickname, nonce :: Nonce }
-    )
+type ConsumeTokenError =
+    { nickname :: Nickname
+    , nonce :: Nonce
+    , error :: Variant
+        ( noTokenToConsume :: Result
+        , cantReadIdentifiedToken :: Result
+        , other :: Error
+        )
+    }
 
 _noTokenToConsume = SProxy :: SProxy "noTokenToConsume"
 
@@ -70,12 +71,16 @@ readIdentifiedToken { nickname, nonce } result =
         :: Foreign
         -> Either (NonEmptyList ForeignError) { id :: Int, token :: String })
     # case _ of
-        Right tokens | Just { id, token } <- head tokens ->
-            note (inj _cantReadIdentifiedToken { result, nickname, nonce }) do
-                id' <- PlayerId.create id
-                token' <- Token.create token # hush
-                pure { id: id', token: token' }
-        _ -> Left $ inj _cantReadIdentifiedToken { result, nickname, nonce }
+        Right tokens ->
+            case head tokens of
+            Just { id, token } ->
+                note (inj _cantReadIdentifiedToken result) do
+                    id' <- PlayerId.create id
+                    token' <- Token.create token # hush
+                    pure { id: id', token: token' }
+            Nothing -> Left $ inj _noTokenToConsume result
+        _ -> Left $ inj _cantReadIdentifiedToken result
+    # lmap { error: _, nickname, nonce }
     # fromEither
 
 consumeToken
@@ -87,6 +92,6 @@ consumeToken
         IdentifiedToken
 consumeToken pool nicknamedNonce@{ nickname, nonce } = label _consumeToken do
     result <- query updateTokenQuery (updateTokenParameters nickname nonce) pool
-        # lmap { error: _, nickname, nonce }
         # label _other
+        # lmap { error: _, nickname, nonce }
     readIdentifiedToken nicknamedNonce result

@@ -1,23 +1,20 @@
 module TeamTavern.Player.Register
-    ( RegisterF(..)
-    , register
-    ) where
+    ( RegisterF(..), register) where
 
 import Prelude
 
 import Data.Variant (SProxy(..))
 import Run (FProxy, Run, lift)
 import TeamTavern.Infrastructure.EnsureNotSignedIn (EnsureNotSignedInF, ensureNotSignedIn)
-import TeamTavern.Player.Register.Types.Credentials (Credentials, IdentifiedCredentials)
-import TeamTavern.Player.Register.Types.Identifiers (IdentifiersModel, Identifiers)
-import TeamTavern.Player.Register.Types.NoncedToken (NoncedToken)
+import TeamTavern.Player.Domain.Types (Credentials, Identifiers, NoncedIdentifiers, Secrets)
+import TeamTavern.Player.Infrastructure.Types (IdentifiersModel)
 
 data RegisterF result
     = ReadIdentifiers (IdentifiersModel -> result)
     | ValidateIdentifiers IdentifiersModel (Identifiers -> result)
-    | GenerateToken Identifiers (NoncedToken -> result)
-    | AddPlayer Credentials (IdentifiedCredentials -> result)
-    | NotifyPlayer IdentifiedCredentials result
+    | GenerateSecrets Identifiers (Secrets -> result)
+    | AddPlayer Credentials result
+    | NotifyPlayer NoncedIdentifiers result
 
 derive instance functorRegisterF :: Functor RegisterF
 
@@ -31,32 +28,31 @@ validateIdentifiers :: forall run.
     IdentifiersModel -> Run (register :: FProxy RegisterF | run) Identifiers
 validateIdentifiers model = lift _register (ValidateIdentifiers model identity)
 
-generateToken :: forall run.
-    Identifiers -> Run (register :: FProxy RegisterF | run) NoncedToken
-generateToken identifiers = lift _register (GenerateToken identifiers identity)
+generateSecrets :: forall run.
+    Identifiers -> Run (register :: FProxy RegisterF | run) Secrets
+generateSecrets identifiers = lift _register (GenerateSecrets identifiers identity)
 
-addPlayer
-    :: forall run
-    .  Credentials
-    -> Run (register :: FProxy RegisterF | run) IdentifiedCredentials
-addPlayer credentials = lift _register (AddPlayer credentials identity)
+addPlayer :: forall run.
+    Credentials -> Run (register :: FProxy RegisterF | run) Unit
+addPlayer credentials = lift _register (AddPlayer credentials unit)
 
 notifyPlayer :: forall run.
-    IdentifiedCredentials -> Run (register :: FProxy RegisterF | run) Unit
-notifyPlayer credentials =
-    lift _register (NotifyPlayer credentials unit)
+    NoncedIdentifiers -> Run (register :: FProxy RegisterF | run) Unit
+notifyPlayer identifiers =
+    lift _register (NotifyPlayer identifiers unit)
 
 register :: forall run. Run
     ( ensureNotSignedIn :: FProxy EnsureNotSignedInF
     , register :: FProxy RegisterF
     | run
     )
-    IdentifiedCredentials
+    Credentials
 register = do
     ensureNotSignedIn
     model <- readIdentifiers
     { email, nickname } <- validateIdentifiers model
-    { token, nonce } <- generateToken { email, nickname }
-    credentials <- addPlayer { email, nickname, token, nonce }
-    notifyPlayer credentials
+    { token, nonce } <- generateSecrets { email, nickname }
+    let credentials = { email, nickname, token, nonce }
+    addPlayer credentials
+    notifyPlayer { email, nickname, nonce }
     pure credentials

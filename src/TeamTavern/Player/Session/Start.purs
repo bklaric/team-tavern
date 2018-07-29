@@ -1,15 +1,11 @@
-module TeamTavern.Player.Session.Start
-    ( StartF(..)
-    , start
-    ) where
+module TeamTavern.Player.Session.Start (StartF(..), start) where
 
 import Prelude
 
 import Data.Symbol (SProxy(..))
 import Run (FProxy, Run, lift)
 import TeamTavern.Infrastructure.EnsureNotSignedIn (EnsureNotSignedInF, ensureNotSignedIn)
-import TeamTavern.Player.Session.Start.Types.IdentifiedToken (IdentifiedToken)
-import TeamTavern.Player.Session.Start.Types.NicknamedNonce (NicknamedNonce)
+import TeamTavern.Player.Domain.Types (NicknamedNonce, IdentifiedToken)
 
 data StartF result
     = ReadNicknamedNonce (NicknamedNonce -> result)

@@ -1,5 +1,5 @@
-module TeamTavern.Player.Register.NotifyPlayer
-    (SendEmailError, sendRegistrationEmail) where
+module TeamTavern.Player.Session.Prepare.NotifyPlayer
+    (NotifyPlayerError, notifyPlayer) where
 
 import Prelude
 
@@ -18,28 +18,27 @@ import TeamTavern.Architecture.Postmark.Client (sendEmail)
 import TeamTavern.Player.Domain.Types (NoncedIdentifiers)
 
 message :: NoncedIdentifiers -> Message
-message { email, nickname, nonce } =
+message { nickname, email, nonce } =
     { to: unwrap email
     , from: "branimir.klaric1@xnet.hr"
-    , subject: toNullable $ Just "TeamTavern registration"
+    , subject: toNullable $ Just "TeamTavern sign in"
     , textBody: toNullable $ Just $
         "Hi " <> unwrap nickname <> ",\n\n"
-        <> "Your sign in code is " <> unwrap nonce <> ". "
-        <> "Thank you for registering to TeamTavern."
+        <> "Your sign in code is " <> unwrap nonce <> "."
     }
 
-type SendEmailError =
-    { error :: Error
-    , identifiers :: NoncedIdentifiers
+type NotifyPlayerError =
+    { identifiers :: NoncedIdentifiers
+    , error :: Error
     }
 
-sendRegistrationEmail
+notifyPlayer
     :: forall errors
     .  Client
     -> NoncedIdentifiers
-    -> Async (Variant (sendEmail :: SendEmailError | errors)) Unit
-sendRegistrationEmail client identifiers =
+    -> Async (Variant (notifyPlayer :: NotifyPlayerError | errors)) Unit
+notifyPlayer client identifiers =
     client
     # sendEmail (message identifiers)
-    # lmap { error: _, identifiers}
-    # label (SProxy :: SProxy "sendEmail")
+    # lmap { error: _, identifiers }
+    # label (SProxy :: SProxy "notifyPlayer")

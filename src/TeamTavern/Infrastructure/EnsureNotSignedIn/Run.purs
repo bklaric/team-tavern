@@ -7,9 +7,9 @@ import Data.Either (Either(..))
 import Data.Map (Map)
 import Data.Maybe (Maybe(..))
 import Data.Variant (SProxy(..), Variant, inj)
-import TeamTavern.Infrastructure.Cookie (lookupTokenCookie)
+import TeamTavern.Infrastructure.Cookie (lookupIdCookie)
 
-type EnsureNotSignedInError = { token :: String }
+type EnsureNotSignedInError = { playerId :: String }
 
 ensureNotSignedIn
     :: forall errors
@@ -18,9 +18,9 @@ ensureNotSignedIn
         (Variant (ensureNotSignedIn :: EnsureNotSignedInError | errors))
         Unit
 ensureNotSignedIn cookies =
-    lookupTokenCookie cookies
+    lookupIdCookie cookies
     # case _ of
         Nothing -> Right unit
-        Just token ->
-            Left $ inj (SProxy :: SProxy "ensureNotSignedIn") { token }
+        Just playerId ->
+            Left $ inj (SProxy :: SProxy "ensureNotSignedIn") { playerId }
     # fromEither

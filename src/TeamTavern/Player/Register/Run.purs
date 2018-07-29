@@ -1,38 +1,40 @@
-module TeamTavern.Player.Register.Run where
+module TeamTavern.Player.Register.Run (handleRegister) where
 
 import Prelude
 
-import Async (Async, alwaysRight, fromEffect)
+import Async (Async, fromEffect)
 import Data.Map (Map)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
-import Data.Variant (onMatch)
 import Effect.Console (log)
-import MultiMap (empty)
 import Perun.Request.Body (Body)
 import Perun.Response (Response)
 import Postgres.Pool (Pool)
 import Postmark.Client (Client)
 import Run (interpret)
 import Run as VariantF
-import Simple.JSON (writeJSON)
 import TeamTavern.Architecture.Async (examineErrorWith)
 import TeamTavern.Infrastructure.EnsureNotSignedIn (EnsureNotSignedInF(..))
 import TeamTavern.Infrastructure.EnsureNotSignedIn.Run (ensureNotSignedIn)
-import TeamTavern.Player.Register.Types.Credentials (IdentifiedCredentials)
+import TeamTavern.Player.Domain.Types (Credentials)
 import TeamTavern.Player.Register (RegisterF(..), register)
 import TeamTavern.Player.Register.AddPlayer (addPlayer)
-import TeamTavern.Player.Register.Types.Error (RegisterError, logError)
-import TeamTavern.Player.Register.Types.ErrorModel (fromRegisterPlayerErrors)
-import TeamTavern.Player.Register.GenerateToken (generateToken)
+import TeamTavern.Player.Register.GenerateSecrets (generateSecrets)
 import TeamTavern.Player.Register.NotifyPlayer (sendRegistrationEmail)
 import TeamTavern.Player.Register.ReadIdentifiers (readIdentifiers)
+import TeamTavern.Player.Register.Run.CreateResponse (registerResponse)
+import TeamTavern.Player.Register.Run.LogError (logError)
+import TeamTavern.Player.Register.Run.Types (RegisterError)
 import TeamTavern.Player.Register.ValidateIdentifiers (validateIdentifiers)
-import Unsafe.Coerce (unsafeCoerce)
 
-interpretRegister ::
-    Pool -> Maybe Client -> Map String String -> Body -> Async RegisterError IdentifiedCredentials
-interpretRegister pool client cookies body = register # interpret (VariantF.match
+interpretRegister
+    :: Pool
+    -> Maybe Client
+    -> Map String String
+    -> Body
+    -> Async RegisterError Credentials
+interpretRegister pool client cookies body =
+    register # interpret (VariantF.match
     { ensureNotSignedIn: case _ of
         EnsureNotSignedIn send ->
             ensureNotSignedIn cookies <#> const send
@@ -41,62 +43,31 @@ interpretRegister pool client cookies body = register # interpret (VariantF.matc
             readIdentifiers body <#> sendModel
         ValidateIdentifiers model sendIdentifiers ->
             validateIdentifiers model <#> sendIdentifiers
-        GenerateToken identifiers sendToken ->
-            generateToken identifiers <#> sendToken
+        GenerateSecrets identifiers sendToken ->
+            generateSecrets identifiers <#> sendToken
         AddPlayer credentials send ->
-            addPlayer pool credentials <#> send
-        NotifyPlayer credentials send ->
+            addPlayer pool credentials <#> const send
+        NotifyPlayer identifiers send ->
             case client of
             Just client' ->
-                sendRegistrationEmail client' credentials <#> const send
+                sendRegistrationEmail client' identifiers <#> const send
             Nothing ->
-                "Sent email *wink wink* to " <> unwrap credentials.email
-                # unsafeCoerce log # fromEffect <#> const send
+                "Sent registration email *wink wink* to "
+                <> unwrap identifiers.nickname <> ", "
+                <> unwrap identifiers.email
+                <> " with nonce " <> unwrap identifiers.nonce
+                # log
+                # fromEffect
+                <#> const send
     })
 
-errorResponse :: RegisterError -> Response
-errorResponse error =
-    fromRegisterPlayerErrors error
-    # onMatch
-        { ensureNotSignedIn: \error' ->
-            { statusCode: 403
-            , headers: empty
-            , content: mempty
-            }
-        , sendEmail: \{ credentials: { id, email, nickname, token } } ->
-            { statusCode: 200
-            , headers: empty
-            , content: writeJSON
-                { email: unwrap email
-                , nickname: unwrap nickname
-                , sendEmailError: true
-                }
-            }
-        }
-        (\rest ->
-            { statusCode: 400
-            , headers: empty
-            , content: writeJSON rest
-            })
-
-successResponse :: IdentifiedCredentials -> Response
-successResponse { id, email, nickname, token } =
-    { statusCode: 200
-    , headers: empty
-    , content: writeJSON
-        { email: unwrap email
-        , nickname: unwrap nickname
-        , sendEmailError: false
-        }
-    }
-
-respondRegister ::
-    Async RegisterError IdentifiedCredentials -> (forall left. Async left Response)
-respondRegister = alwaysRight errorResponse successResponse
-
-handleRegister ::
-    Pool -> Maybe Client -> Map String String -> Body -> (forall left. Async left Response)
+handleRegister
+    :: Pool
+    -> Maybe Client
+    -> Map String String
+    -> Body
+    -> (forall left. Async left Response)
 handleRegister pool client cookies body =
     interpretRegister pool client cookies body
     # examineErrorWith logError
-    # respondRegister
+    # registerResponse
