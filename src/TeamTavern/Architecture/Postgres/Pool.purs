@@ -26,6 +26,6 @@ withTransaction
 withTransaction constructError callback pool = fromEitherCont \continue ->
     Pool.withTransaction
         constructError
-        (\callbackCont client -> runAsync (callback client) callbackCont)
+        (\callbackCont client -> runAsync callbackCont (callback client))
         continue
         pool

@@ -1,24 +1,26 @@
-module Main where
+module ServerMain where
 
 import Prelude
 
-import Async (Async)
+import Async (Async, fromEffect)
 import Control.Bind (bindFlipped)
 import Control.Monad.Except (ExceptT(..), runExceptT)
 import Control.Monad.Maybe.Trans (lift)
 import Data.Either (Either(..), either, note)
-import Data.HTTP.Method (CustomMethod, Method)
+import Data.HTTP.Method (CustomMethod, Method(..))
 import Data.Int (fromString)
+import Data.List.NonEmpty as NEL
 import Data.Map (Map)
 import Data.Maybe (Maybe(..))
 import Data.Options (Options, (:=))
 import Data.String.NonEmpty (toString)
+import Data.Tuple (Tuple(..))
 import Data.Variant (match)
 import Effect (Effect)
 import Effect.Console (log)
 import Global.Unsafe (unsafeStringify)
 import Jarilo.Junction (JunctionProxy(..), router)
-import MultiMap (empty)
+import MultiMap as MultiMap
 import Node.Process (lookupEnv)
 import Node.Server (ListenOptions(..))
 import Perun.Async.Server (run_)
@@ -37,7 +39,6 @@ import TeamTavern.Player.Register.Run (handleRegister)
 import TeamTavern.Player.Session.Prepare.Run (handlePrepare)
 import TeamTavern.Player.Session.Start.Run (handleStart)
 import TeamTavern.Routes (TeamTavernRoutes)
-import Unsafe.Coerce (unsafeCoerce)
 
 listenOptions :: ListenOptions
 listenOptions = TcpListenOptions
@@ -120,16 +121,32 @@ handleRequest
     -> (forall left. Async left Response)
 handleRequest pool client method url cookies body =
     case router teamTavernRoutes method (pathSegments url) (queryPairs url) of
-    Left errors -> pure { statusCode: 404, headers: empty, content: unsafeStringify errors }
+    Left errors ->
+        if method == Right OPTIONS
+        then pure
+            { statusCode: 200
+            , headers: MultiMap.fromFoldable
+                [ Tuple "Access-Control-Allow-Origin" $ NEL.singleton "null"
+                , Tuple "Access-Control-Allow-Methods" $ NEL.singleton "GET, POST, DELETE, PUT, PATCH, HEAD, OPTIONS"
+                , Tuple "Access-Control-Max-Age" $ NEL.singleton $ show $ (top :: Int)
+                , Tuple "Access-Control-Allow-Credentials" $ NEL.singleton "true"
+                ]
+            , content: mempty
+            }
+        else do
+            fromEffect $ log $
+                "404 for method " <> show method <> " and url " <> show url
+            fromEffect $ log $ unsafeStringify errors
+            pure { statusCode: 404, headers: MultiMap.empty, content: unsafeStringify errors }
     Right routeValues -> routeValues # match
         { viewPlayers: const $ pure
             { statusCode: 200
-            , headers: empty
+            , headers: MultiMap.empty
             , content: "You're viewing all players."
             }
         , viewPlayer: \{nickname} -> pure
             { statusCode: 200
-            , headers: empty
+            , headers: MultiMap.empty
             , content: "You're viewing player " <> toString nickname <> "."
             }
         , registerPlayer:
@@ -139,6 +156,12 @@ handleRequest pool client method url cookies body =
         , startSession: \{ nickname } ->
             handleStart pool nickname cookies body
         }
+        <#> (\response -> response { headers = response.headers <> MultiMap.fromFoldable
+                [ Tuple "Access-Control-Allow-Origin" $ NEL.singleton "null"
+                , Tuple "Access-Control-Allow-Methods" $ NEL.singleton "GET, POST, DELETE, PUT, PATCH, HEAD, OPTIONS"
+                , Tuple "Access-Control-Max-Age" $ NEL.singleton $ show $ (top :: Int)
+                , Tuple "Access-Control-Allow-Credentials" $ NEL.singleton "true"
+                ]})
 
 handleInvalidUrl
     :: Pool
@@ -150,12 +173,12 @@ handleInvalidUrl pool client { method, url, cookies, body } =
     Right url' -> handleRequest pool client method url' cookies body
     Left url' -> pure
         { statusCode: 400
-        , headers: empty
+        , headers: MultiMap.empty
         , content: "Couldn't parse url '" <> url' <> "'."
         }
 
 main :: Effect Unit
-main = either (unsafeCoerce log) pure =<< runExceptT do
+main = either log pure =<< runExceptT do
     deployment <- loadDeployment
     pool <- createPostgresPool
     client <- createPostmarkClient deployment

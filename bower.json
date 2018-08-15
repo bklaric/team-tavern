@@ -26,6 +26,7 @@
     "purescript-foreign-generic": "^7.0.0",
     "purescript-idiomatic-node-process": "^0.3.0",
     "purescript-console": "^4.1.0",
-    "purescript-foreign-object": "^1.0.0"
+    "purescript-foreign-object": "^1.0.0",
+    "purescript-halogen": "master"
   }
 }

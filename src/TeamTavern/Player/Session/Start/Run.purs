@@ -2,7 +2,7 @@ module TeamTavern.Player.Session.Start.Run (handleStart) where
 
 import Prelude
 
-import Async (Async)
+import Async (Async, examineLeftWithEffect)
 import Data.Map (Map)
 import Data.String.NonEmpty (NonEmptyString)
 import Perun.Request.Body (Body)
@@ -10,7 +10,6 @@ import Perun.Response (Response)
 import Postgres.Pool (Pool)
 import Run (interpret)
 import Run as VariantF
-import TeamTavern.Architecture.Async (examineErrorWith)
 import TeamTavern.Infrastructure.EnsureNotSignedIn (EnsureNotSignedInF(..))
 import TeamTavern.Infrastructure.EnsureNotSignedIn.Run (ensureNotSignedIn)
 import TeamTavern.Player.Domain.PlayerId (PlayerId)
@@ -47,5 +46,5 @@ handleStart
     -> (forall left. Async left Response)
 handleStart pool nickname cookies body =
     interpretStart pool nickname cookies body
-    # examineErrorWith logStartError
+    # examineLeftWithEffect logStartError
     # startResponse

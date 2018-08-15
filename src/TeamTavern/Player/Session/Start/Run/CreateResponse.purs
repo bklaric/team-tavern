@@ -1,4 +1,7 @@
-module TeamTavern.Player.Session.Start.Run.CreateResponse (startResponse) where
+module TeamTavern.Player.Session.Start.Run.CreateResponse
+    ( BadRequestResponseContent
+    , startResponse
+    ) where
 
 import Prelude
 
@@ -12,20 +15,24 @@ import TeamTavern.Player.Domain.PlayerId (PlayerId)
 import TeamTavern.Player.Domain.Token (Token)
 import TeamTavern.Player.Session.Start.Run.Types (StartError)
 
-type ErrorResponseContent = Variant
+type BadRequestResponseContent = Variant
     ( invalidNickname :: {}
     , invalidNonce :: {}
     , noTokenToConsume :: {}
+    , other :: {}
     )
 
-invalidNickname :: ErrorResponseContent
+invalidNickname :: BadRequestResponseContent
 invalidNickname = inj (SProxy :: SProxy "invalidNickname") {}
 
-invalidNonce :: ErrorResponseContent
+invalidNonce :: BadRequestResponseContent
 invalidNonce = inj (SProxy :: SProxy "invalidNonce") {}
 
-noTokenToConsume :: ErrorResponseContent
+noTokenToConsume :: BadRequestResponseContent
 noTokenToConsume = inj (SProxy :: SProxy "noTokenToConsume") {}
+
+other :: BadRequestResponseContent
+other = inj (SProxy :: SProxy "other") {}
 
 errorResponse :: StartError -> Response
 errorResponse = match
@@ -39,10 +46,17 @@ errorResponse = match
         , headers: empty
         , content: writeJSON invalidNickname
         }
-    , readNonce: const
-        { statusCode: 400
-        , headers: empty
-        , content: writeJSON invalidNonce
+    , readNonce: match
+        { invalidBody: const
+            { statusCode: 400
+            , headers: empty
+            , content: writeJSON other
+            }
+        , invalidNonce: const
+            { statusCode: 400
+            , headers: empty
+            , content: writeJSON invalidNonce
+            }
         }
     , consumeToken: _.error >>> match
         { noTokenToConsume: const

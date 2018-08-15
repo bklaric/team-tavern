@@ -2,7 +2,7 @@ module TeamTavern.Player.Session.Prepare.Run (handlePrepare) where
 
 import Prelude
 
-import Async (Async, fromEffect)
+import Async (Async, examineLeftWithEffect, fromEffect)
 import Data.Map (Map)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
@@ -13,7 +13,6 @@ import Postgres.Pool (Pool)
 import Postmark.Client (Client)
 import Run (interpret)
 import Run as VariantF
-import TeamTavern.Architecture.Async (examineErrorWith)
 import TeamTavern.Infrastructure.EnsureNotSignedIn (EnsureNotSignedInF(..))
 import TeamTavern.Infrastructure.EnsureNotSignedIn.Run (ensureNotSignedIn)
 import TeamTavern.Player.Session.Prepare (PrepareF(..), prepare)
@@ -64,5 +63,5 @@ handlePrepare
     -> (forall left. Async left Response)
 handlePrepare pool client nickname cookies =
     interpretPrepare pool client nickname cookies
-    # examineErrorWith logError
+    # examineLeftWithEffect logError
     # prepareResponse

@@ -1,0 +1,88 @@
+$primary-color: hsl(0, 0%, 7%);
+$disabled-color: rgb(221, 221, 221);
+$error-color: orangered;
+body {
+    font-family: sans-serif;
+    color: $primary-color;
+}
+
+h1,
+h2 {
+    margin-bottom: 1.7em
+}
+
+%bordered {
+    border-style: solid;
+    border-radius: 0.25em;
+    border-width: 1px;
+    border-color: $primary-color;
+}
+
+button {
+    @extend %bordered;
+    font-size: 1em;
+    padding: 0.2em 0.7em;
+    color: $primary-color;
+    background-color: white;
+    cursor: pointer;
+}
+
+button[disabled] {
+    @extend button;
+    color: $disabled-color;
+    border-color: $disabled-color;
+    cursor: not-allowed;
+}
+
+label {
+    font-size: 1em;
+    margin-bottom: 0.5em;
+}
+
+input {
+    @extend %bordered;
+    font-size: 1em;
+    padding: 5px;
+    color: $primary-color;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    max-width: 20em;
+    margin: auto;
+    h1,
+    h2 {
+        text-align: center;
+    }
+    div {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 2em;
+    }
+    button {
+        margin: auto;
+    }
+}
+
+.hidden {
+    display: none;
+}
+
+.error {
+    color: $error-color;
+    border-color: $error-color;
+}
+
+.input-error {
+    @extend .error;
+    font-size: 0.85em;
+    margin: 0.3em 0 0 0;
+}
+
+.other-error {
+    @extend .error;
+    transition: 5s;
+    font-size: 0.85em;
+    margin: 1em 0 0 0;
+}

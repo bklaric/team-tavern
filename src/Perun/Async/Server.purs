@@ -14,7 +14,7 @@ import Perun.Server as Perun
 
 fromAsync :: (Request -> (forall left. Async left Response)) -> RequestHandler
 fromAsync handler = \request respond ->
-    runAsync (handler request) (either absurd respond)
+    runAsync (either absurd respond) (handler request)
 
 run
     :: ListenOptions
