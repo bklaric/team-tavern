@@ -36,12 +36,7 @@ other = inj (SProxy :: SProxy "other") {}
 
 errorResponse :: StartError -> Response
 errorResponse = match
-    { ensureNotSignedIn: const
-        { statusCode: 403
-        , headers: empty
-        , content: mempty
-        }
-    , readNickname: const
+    { readNickname: const
         { statusCode: 400
         , headers: empty
         , content: writeJSON invalidNickname

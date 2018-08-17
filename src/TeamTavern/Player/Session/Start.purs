@@ -4,7 +4,6 @@ import Prelude
 
 import Data.Symbol (SProxy(..))
 import Run (FProxy, Run, lift)
-import TeamTavern.Infrastructure.EnsureNotSignedIn (EnsureNotSignedInF, ensureNotSignedIn)
 import TeamTavern.Player.Domain.Types (NicknamedNonce, IdentifiedToken)
 
 data StartF result
@@ -23,12 +22,7 @@ consumeToken :: forall run.
     NicknamedNonce -> Run (start :: FProxy StartF | run) IdentifiedToken
 consumeToken nonce = lift _start (ConsumeToken nonce identity)
 
-start :: forall run. Run
-    ( ensureNotSignedIn :: FProxy EnsureNotSignedInF
-    , start :: FProxy StartF
-    | run)
-    IdentifiedToken
+start :: forall run. Run (start :: FProxy StartF | run) IdentifiedToken
 start = do
-    ensureNotSignedIn
     nonce <- readNicknamedNonce
     consumeToken nonce

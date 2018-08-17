@@ -35,7 +35,6 @@ type State =
     , nonceError :: Boolean
     , noTokenToConsume :: Boolean
     , otherError :: Boolean
-    , alreadySignedIn :: Boolean
     }
 
 data Message = SignedIn
@@ -48,7 +47,6 @@ initialState =
     , nonceError: false
     , noTokenToConsume: false
     , otherError: false
-    , alreadySignedIn: false
     }
 
 errorClass :: Boolean -> ClassName
@@ -70,7 +68,6 @@ render
     , nonceError
     , noTokenToConsume
     , otherError
-    , alreadySignedIn
     } = HH.form
     [ HE.onSubmit $ HE.input SignIn ]
     [ HH.h2_ [ HH.text "Sign in to TeamTavern" ]
@@ -115,9 +112,6 @@ render
         [ HP.class_ $ otherErrorClass noTokenToConsume ]
         [ HH.text "Credentials don't appear to be valid. Please request another sign in code."]
     , HH.p
-        [ HP.class_ $ otherErrorClass alreadySignedIn ]
-        [ HH.text "You're already signed in. Please sign out to sign in."]
-    , HH.p
         [ HP.class_ $ otherErrorClass otherError ]
         [ HH.text "Lmao, something else got fucked and you're shit out of luck, mate!"]
     ]
@@ -135,7 +129,6 @@ eval = case _ of
         setNonceError       = _ { nonceError       = true }
         setNoTokenToConsume = _ { noTokenToConsume = true }
         setOtherError       = _ { otherError       = true }
-        setAlreadySignedIn  = _ { alreadySignedIn  = true }
         in do
         H.liftEffect $ preventDefault event
         resetState @ { nickname, nonce } <- H.gets (_
@@ -143,7 +136,6 @@ eval = case _ of
             , nonceError       = false
             , noTokenToConsume = false
             , otherError       = false
-            , alreadySignedIn  = false
             })
         response' <- H.lift $ A.attempt $ FA.fetch
             ("http://localhost:8080/players/by-nickname/" <> nickname <> "/sessions")
@@ -176,7 +168,6 @@ eval = case _ of
                             }
                             error
                             # pure
-                403 -> pure $ setAlreadySignedIn resetState
                 _ -> pure $ setOtherError resetState
         H.put resetState'
         pure send

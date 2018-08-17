@@ -15,9 +15,7 @@ logStartError :: StartError -> Effect Unit
 logStartError startError = do
     log "Error starting session"
     startError # match
-        { ensureNotSignedIn: \{ playerId } ->
-            log $ "\tThe request came with this player id: " <> playerId
-        , readNickname: \{ errors, nickname } -> do
+        { readNickname: \{ errors, nickname } -> do
             log $ "\tFailed nickname validation for segment: "
                 <> toString nickname
             log $ "\tValidation resulted in these errors: "
