@@ -10,7 +10,9 @@ import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..))
 import Data.Options ((:=))
+import Data.Variant (SProxy(..))
 import Data.Variant as V
+import Effect.Class (class MonadEffect)
 import Effect.Class.Console (log)
 import Error.Class as E
 import Halogen (ClassName(..))
@@ -19,6 +21,8 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Simple.JSON as J
+import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
+import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Player.Session.Start.Run.CreateResponse (BadRequestResponseContent)
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
@@ -38,6 +42,17 @@ type State =
     }
 
 data Message = SignedIn
+
+type Slot = H.Slot Query Message
+
+type ChildSlots =
+    ( codeAnchor :: NavigationAnchor.Slot Unit
+    , registerAnchor :: NavigationAnchor.Slot Unit
+    )
+
+_codeAnchor = SProxy :: SProxy "codeAnchor"
+
+_registerAnchor = SProxy :: SProxy "registerAnchor"
 
 initialState :: State
 initialState =
@@ -60,7 +75,7 @@ otherErrorClass :: Boolean -> ClassName
 otherErrorClass hasError = ClassName
     if hasError then "other-error" else "hidden"
 
-render :: forall m. State -> H.ComponentHTML Query () m
+render :: forall m. MonadEffect m => State -> H.ComponentHTML Query ChildSlots m
 render
     { nickname
     , nonce
@@ -114,16 +129,19 @@ render
     , HH.p
         [ HP.class_ $ otherErrorClass otherError ]
         [ HH.text "Lmao, something else got fucked and you're shit out of luck, mate!"]
+    , HH.slot _codeAnchor unit navigationAnchor
+        { path: "/code", text: "Get a sign in code" } absurd
+    , HH.slot _registerAnchor unit navigationAnchor
+        { path: "/register", text: "Register" } absurd
     ]
 
-eval :: forall void. Query ~> H.HalogenM State Query () Message (Async void)
+eval :: forall void.
+    Query ~> H.HalogenM State Query ChildSlots Message (Async void)
 eval = case _ of
-    NicknameInput nickname send -> do
-        H.modify_ (_ { nickname = nickname })
-        pure send
-    NonceInput nonce send -> do
-        H.modify_ (_ { nonce = nonce })
-        pure send
+    NicknameInput nickname send ->
+        H.modify_ (_ { nickname = nickname }) <#> const send
+    NonceInput nonce send ->
+        H.modify_ (_ { nonce = nonce }) <#> const send
     SignIn event send -> let
         setNicknameError    = _ { nicknameError    = true }
         setNonceError       = _ { nonceError       = true }
