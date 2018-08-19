@@ -1,7 +1,9 @@
 module Browser.Fetch
     ( FetchOptions
+    , Credentials(..)
     , method
     , body
+    , credentials
     , fetch
     , fetch_
     ) where
@@ -21,6 +23,17 @@ import Undefined (undefined)
 
 data FetchOptions
 
+data Credentials = Omit | SameOrigin | Include
+
+toString :: Credentials -> String
+toString Omit = "omit"
+toString SameOrigin = "same-origin"
+toString Include = "include"
+
+optCredentials :: forall options. String -> Op (Options options) Credentials
+optCredentials key = Op \value ->
+    Options [Tuple key (unsafeToForeign $ toString value)]
+
 optShow :: forall value key. Show value => String -> Option key value
 optShow key = Op \value -> Options [Tuple key (unsafeToForeign $ show value)]
 
@@ -29,6 +42,9 @@ method = optShow "method"
 
 body :: Option FetchOptions String
 body = opt "body"
+
+credentials :: Option FetchOptions Credentials
+credentials = optCredentials "credentials"
 
 foreign import fetchImpl
     :: String

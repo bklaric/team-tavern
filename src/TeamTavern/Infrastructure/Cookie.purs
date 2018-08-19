@@ -23,12 +23,16 @@ lookupIdCookie :: Map String String -> Maybe String
 lookupIdCookie = lookup idCookieName
 
 idCookie :: PlayerId -> String
-idCookie id = idCookieName <> "=" <> PlayerId.toString id
+idCookie id =
+    idCookieName <> "=" <> PlayerId.toString id
+    <> "; Max-Age=" <> show (top :: Int)
+    <> "; Path=/"
 
 tokenCookie :: Token -> String
 tokenCookie token =
     tokenCookieName <> "=" <> unwrap token
     <> "; Max-Age=" <> show (top :: Int)
+    <> "; Path=/"
     <> "; HttpOnly; Secure"
 
 setCookieHeader :: PlayerId -> Token -> MultiMap String String

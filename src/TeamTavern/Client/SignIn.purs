@@ -13,7 +13,7 @@ import Data.Options ((:=))
 import Data.Variant (SProxy(..))
 import Data.Variant as V
 import Effect.Class (class MonadEffect)
-import Effect.Class.Console (log)
+import Effect.Class.Console (logShow)
 import Error.Class as E
 import Halogen (ClassName(..))
 import Halogen as H
@@ -23,6 +23,7 @@ import Halogen.HTML.Properties as HP
 import Simple.JSON as J
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
+import TeamTavern.Client.Script.Navigate (navigate_)
 import TeamTavern.Player.Session.Start.Run.CreateResponse (BadRequestResponseContent)
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
@@ -41,7 +42,7 @@ type State =
     , otherError :: Boolean
     }
 
-data Message = SignedIn
+type Message = Void
 
 type Slot = H.Slot Query Message
 
@@ -129,10 +130,10 @@ render
     , HH.p
         [ HP.class_ $ otherErrorClass otherError ]
         [ HH.text "Lmao, something else got fucked and you're shit out of luck, mate!"]
-    , HH.slot _codeAnchor unit navigationAnchor
-        { path: "/code", text: "Get a sign in code" } absurd
     , HH.slot _registerAnchor unit navigationAnchor
         { path: "/register", text: "Register" } absurd
+    , HH.slot _codeAnchor unit navigationAnchor
+        { path: "/code", text: "Get a sign in code" } absurd
     ]
 
 eval :: forall void.
@@ -157,37 +158,36 @@ eval = case _ of
             })
         response' <- H.lift $ A.attempt $ FA.fetch
             ("http://localhost:8080/players/by-nickname/" <> nickname <> "/sessions")
-            (FA.method := PATCH <> FA.body := J.writeJSON { nickname, nonce } )
-        resetState' <- case response' of
+            (  FA.method := PATCH
+            <> FA.body := J.writeJSON { nickname, nonce }
+            <> FA.credentials := FA.Include
+            )
+        newState <- case response' of
             Left error -> do
-                H.liftEffect $ log $ show $ E.message error
+                H.liftEffect $ logShow $ E.message error
                 pure $ setOtherError resetState
             Right response ->
                 case FARes.status response of
                 204 -> do
-                    H.liftEffect $ log $ "Signed in"
-                    H.raise SignedIn
+                    H.liftEffect $ navigate_ "/"
                     pure resetState
-                400 -> do
-                    content <- H.lift $ FARes.text response
-                    case J.readJSON content of
-                        Left errors -> do
-                            H.liftEffect $ log $ show errors
-                            pure $ setOtherError resetState
-                        Right (error :: BadRequestResponseContent) -> V.match
-                            { invalidNickname:
-                                const $ setNicknameError resetState
-                            , invalidNonce:
-                                const $ setNonceError resetState
-                            , noTokenToConsume:
-                                const $ setNoTokenToConsume resetState
-                            , other:
-                                const $ setOtherError resetState
-                            }
-                            error
-                            # pure
+                400 -> H.lift $ FARes.text response <#> J.readJSON >>=
+                    case _ of
+                    Left errors -> do
+                        H.liftEffect $ logShow errors
+                        pure $ setOtherError resetState
+                    Right (error :: BadRequestResponseContent) -> V.match
+                        { invalidNickname:
+                            const $ setNicknameError resetState
+                        , invalidNonce:
+                            const $ setNonceError resetState
+                        , noTokenToConsume:
+                            const $ setNoTokenToConsume resetState
+                        }
+                        error
+                        # pure
                 _ -> pure $ setOtherError resetState
-        H.put resetState'
+        H.put newState
         pure send
 
 signIn :: forall input void.

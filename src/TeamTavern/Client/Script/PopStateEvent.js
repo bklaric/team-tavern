@@ -1,5 +1,7 @@
 "use strict";
 
-exports.create = function () {
-    return new PopStateEvent("popstate", {})
+exports.create = function (state) {
+    return function () {
+        return new PopStateEvent("popstate", { state: state })
+    }
 }

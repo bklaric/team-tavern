@@ -10,7 +10,7 @@ import Halogen.HTML (HTML, a)
 import Halogen.HTML as Html
 import Halogen.HTML.Events (input, onClick)
 import Halogen.HTML.Properties (href)
-import TeamTavern.Client.Script.Navigate (navigate)
+import TeamTavern.Client.Script.Navigate (navigate_)
 import Web.Event.Event (preventDefault)
 import Web.UIEvent.MouseEvent (MouseEvent, toEvent)
 
@@ -31,7 +31,7 @@ eval :: forall m. MonadEffect m => Query ~> HalogenM State Query () Message m
 eval (Navigate event send) = do
     liftEffect $ preventDefault $ toEvent event
     { path } <- get
-    liftEffect $ navigate path
+    liftEffect $ navigate_ path
     pure send
 
 navigationAnchor :: forall m. MonadEffect m => Component HTML Query State Void m

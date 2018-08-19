@@ -126,7 +126,7 @@ handleRequest pool client method url cookies body =
         then pure
             { statusCode: 200
             , headers: MultiMap.fromFoldable
-                [ Tuple "Access-Control-Allow-Origin" $ NEL.singleton "null"
+                [ Tuple "Access-Control-Allow-Origin" $ NEL.singleton "http://localhost:1337"
                 , Tuple "Access-Control-Allow-Methods" $ NEL.singleton "GET, POST, DELETE, PUT, PATCH, HEAD, OPTIONS"
                 , Tuple "Access-Control-Max-Age" $ NEL.singleton $ show $ (top :: Int)
                 , Tuple "Access-Control-Allow-Credentials" $ NEL.singleton "true"
@@ -157,7 +157,7 @@ handleRequest pool client method url cookies body =
             handleStart pool nickname cookies body
         }
         <#> (\response -> response { headers = response.headers <> MultiMap.fromFoldable
-                [ Tuple "Access-Control-Allow-Origin" $ NEL.singleton "null"
+                [ Tuple "Access-Control-Allow-Origin" $ NEL.singleton "http://localhost:1337"
                 , Tuple "Access-Control-Allow-Methods" $ NEL.singleton "GET, POST, DELETE, PUT, PATCH, HEAD, OPTIONS"
                 , Tuple "Access-Control-Max-Age" $ NEL.singleton $ show $ (top :: Int)
                 , Tuple "Access-Control-Allow-Credentials" $ NEL.singleton "true"

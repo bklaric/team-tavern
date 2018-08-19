@@ -1,4 +1,8 @@
-module TeamTavern.Player.Register.Run.CreateResponse (registerResponse) where
+module TeamTavern.Player.Register.Run.CreateResponse
+    ( OkResponseContent
+    , BadRequestResponseContent
+    , IdentifiersErrorResponseContent
+    , registerResponse) where
 
 import Prelude
 
@@ -12,17 +16,21 @@ import Simple.JSON (writeJSON)
 import TeamTavern.Player.Domain.Types (Credentials)
 import TeamTavern.Player.Register.Run.Types (RegisterError)
 
+type OkResponseContent =
+    { email :: String
+    , nickname :: String
+    , emailSent :: Boolean
+    }
+
 type IdentifiersErrorResponseContent = Variant
     ( invalidEmail :: {}
     , invalidNickname :: {}
     )
 
-type ErrorResponseContent = Variant
+type BadRequestResponseContent = Variant
     ( invalidIdentifiers :: Array IdentifiersErrorResponseContent
     , emailTaken :: {}
     , nicknameTaken :: {}
-    , couldntSendEmail :: {}
-    , other :: {}
     )
 
 invalidEmail :: IdentifiersErrorResponseContent
@@ -32,20 +40,14 @@ invalidNickname :: IdentifiersErrorResponseContent
 invalidNickname = inj (SProxy :: SProxy "invalidNickname") {}
 
 invalidIdentifiers ::
-    Array (IdentifiersErrorResponseContent) -> ErrorResponseContent
+    Array (IdentifiersErrorResponseContent) -> BadRequestResponseContent
 invalidIdentifiers = inj (SProxy :: SProxy "invalidIdentifiers")
 
-emailTaken :: ErrorResponseContent
+emailTaken :: BadRequestResponseContent
 emailTaken = inj (SProxy :: SProxy "emailTaken") {}
 
-nicknameTaken :: ErrorResponseContent
+nicknameTaken :: BadRequestResponseContent
 nicknameTaken = inj (SProxy :: SProxy "nicknameTaken") {}
-
-couldntSendEmail :: ErrorResponseContent
-couldntSendEmail = inj (SProxy :: SProxy "couldntSendEmail") {}
-
-other :: ErrorResponseContent
-other = inj (SProxy :: SProxy "other") {}
 
 errorResponse :: RegisterError -> Response
 errorResponse = match
@@ -57,7 +59,7 @@ errorResponse = match
     , readIdentifiers: const
         { statusCode: 400
         , headers: empty
-        , content: writeJSON other
+        , content: mempty
         }
     , validateIdentifiers: \{ errors } ->
         { statusCode: 400
@@ -92,10 +94,14 @@ errorResponse = match
             , content: mempty
             }
        }
-    , sendEmail: const
-        { statusCode: 500
+    , sendEmail: _.identifiers >>> \{ email, nickname } ->
+        { statusCode: 200
         , headers: empty
-        , content: writeJSON couldntSendEmail
+        , content: writeJSON
+            { email: unwrap email
+            , nickname: unwrap nickname
+            , emailSent: false
+            }
         }
     }
 
@@ -106,7 +112,7 @@ successResponse { email, nickname } =
     , content: writeJSON
         { email: unwrap email
         , nickname: unwrap nickname
-        , sendEmailError: false
+        , emailSent: true
         }
     }
 

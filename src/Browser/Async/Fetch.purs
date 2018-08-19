@@ -1,15 +1,15 @@
-module Browser.Async.Fetch (module Browser.Fetch, fetch, fetch_) where
+module Browser.Async.Fetch (module Fetch, fetch, fetch_) where
 
 import Prelude
 
 import Async (Async, fromEitherCont)
-import Browser.Fetch (FetchOptions, body, method)
+import Browser.Fetch (FetchOptions, Credentials(..), body, credentials, method) as Fetch
 import Browser.Fetch as F
 import Browser.Fetch.Response (Response)
 import Data.Options (Options)
 import Error (Error)
 
-fetch :: String -> Options FetchOptions -> Async Error Response
+fetch :: String -> Options F.FetchOptions -> Async Error Response
 fetch url options = F.fetch url options # fromEitherCont
 
 fetch_ :: String -> Async Error Response

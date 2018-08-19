@@ -19,7 +19,6 @@ type BadRequestResponseContent = Variant
     ( invalidNickname :: {}
     , invalidNonce :: {}
     , noTokenToConsume :: {}
-    , other :: {}
     )
 
 invalidNickname :: BadRequestResponseContent
@@ -30,9 +29,6 @@ invalidNonce = inj (SProxy :: SProxy "invalidNonce") {}
 
 noTokenToConsume :: BadRequestResponseContent
 noTokenToConsume = inj (SProxy :: SProxy "noTokenToConsume") {}
-
-other :: BadRequestResponseContent
-other = inj (SProxy :: SProxy "other") {}
 
 errorResponse :: StartError -> Response
 errorResponse = match
@@ -45,7 +41,7 @@ errorResponse = match
         { invalidBody: const
             { statusCode: 400
             , headers: empty
-            , content: writeJSON other
+            , content: mempty
             }
         , invalidNonce: const
             { statusCode: 400
