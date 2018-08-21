@@ -5,7 +5,7 @@ import Prelude
 import Data.Array (fromFoldable)
 import Data.Tuple (Tuple(..))
 import Effect (Effect, foreachE)
-import MultiMap (MultiMap, toUnfoldable)
+import MultiMap (MultiMap, empty, toUnfoldable)
 import Node.Http.Server.Response (setHeader', setStatusCode)
 import Node.Http.Server.Response as Node
 import Node.Stream.Writable (endString__)
@@ -15,6 +15,45 @@ type Response =
     , headers :: MultiMap String String
     , content :: String
     }
+
+ok :: MultiMap String String -> String -> Response
+ok headers content = { statusCode: 200, headers, content }
+
+ok_ :: String -> Response
+ok_ = ok empty
+
+noContent :: MultiMap String String -> Response
+noContent headers = { statusCode: 204, headers, content: mempty }
+
+noContent_ :: Response
+noContent_ = noContent empty
+
+badRequest :: MultiMap String String -> String -> Response
+badRequest headers content = { statusCode: 400, headers, content }
+
+badRequest_ :: String -> Response
+badRequest_ = badRequest empty
+
+badRequest__ :: Response
+badRequest__ = badRequest_ mempty
+
+forbidden :: MultiMap String String -> String -> Response
+forbidden headers content = { statusCode: 403, headers, content }
+
+forbidden_ :: String -> Response
+forbidden_ = forbidden empty
+
+forbidden__ :: Response
+forbidden__ = forbidden_ mempty
+
+internalServerError :: MultiMap String String -> String -> Response
+internalServerError headers content = { statusCode: 500, headers, content }
+
+internalServerError_ :: String -> Response
+internalServerError_ = internalServerError empty
+
+internalServerError__ :: Response
+internalServerError__ = internalServerError_ mempty
 
 respond :: Node.Response -> Response -> Effect Unit
 respond response { statusCode, headers, content } = do

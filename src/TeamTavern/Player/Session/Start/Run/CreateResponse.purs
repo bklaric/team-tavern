@@ -7,8 +7,7 @@ import Prelude
 
 import Async (Async, alwaysRight)
 import Data.Variant (SProxy(..), Variant, inj, match)
-import MultiMap (empty)
-import Perun.Response (Response)
+import Perun.Response (Response, badRequest_, badRequest__, internalServerError__, noContent)
 import Simple.JSON (writeJSON)
 import TeamTavern.Infrastructure.Cookie (setCookieHeader)
 import TeamTavern.Player.Domain.PlayerId (PlayerId)
@@ -32,48 +31,20 @@ noTokenToConsume = inj (SProxy :: SProxy "noTokenToConsume") {}
 
 errorResponse :: StartError -> Response
 errorResponse = match
-    { readNickname: const
-        { statusCode: 400
-        , headers: empty
-        , content: writeJSON invalidNickname
-        }
+    { readNickname: const $ badRequest_ $ writeJSON invalidNickname
     , readNonce: match
-        { invalidBody: const
-            { statusCode: 400
-            , headers: empty
-            , content: mempty
-            }
-        , invalidNonce: const
-            { statusCode: 400
-            , headers: empty
-            , content: writeJSON invalidNonce
-            }
+        { invalidBody: const badRequest__
+        , invalidNonce: const $ badRequest_ $ writeJSON invalidNonce
         }
     , consumeToken: _.error >>> match
-        { noTokenToConsume: const
-            { statusCode: 400
-            , headers: empty
-            , content: writeJSON noTokenToConsume
-            }
-        , cantReadIdentifiedToken: const
-            { statusCode: 500
-            , headers: empty
-            , content: mempty
-            }
-        , other: const
-            { statusCode: 500
-            , headers: empty
-            , content: mempty
-            }
+        { noTokenToConsume: const $ badRequest_ $ writeJSON noTokenToConsume
+        , cantReadIdentifiedToken: const internalServerError__
+        , other: const internalServerError__
         }
     }
 
 successResponse :: { id :: PlayerId, token :: Token} -> Response
-successResponse { id, token } =
-    { statusCode: 204
-    , headers: setCookieHeader id token
-    , content: mempty
-    }
+successResponse { id, token } = noContent $ setCookieHeader id token
 
 startResponse
     :: Async StartError { id :: PlayerId, token :: Token}

@@ -10,8 +10,7 @@ import Async (Async, alwaysRight)
 import Data.Array (fromFoldable)
 import Data.Newtype (unwrap)
 import Data.Variant (SProxy(..), Variant, inj, match)
-import MultiMap (empty)
-import Perun.Response (Response)
+import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, ok_)
 import Simple.JSON (writeJSON)
 import TeamTavern.Player.Domain.Types (Credentials)
 import TeamTavern.Player.Register.Run.Types (RegisterError)
@@ -51,69 +50,38 @@ nicknameTaken = inj (SProxy :: SProxy "nicknameTaken") {}
 
 errorResponse :: RegisterError -> Response
 errorResponse = match
-    { ensureNotSignedIn: const
-        { statusCode: 403
-        , headers: empty
-        , content: mempty
-        }
-    , readIdentifiers: const
-        { statusCode: 400
-        , headers: empty
-        , content: mempty
-        }
+    { ensureNotSignedIn: const forbidden__
+    , readIdentifiers: const badRequest__
     , validateIdentifiers: \{ errors } ->
-        { statusCode: 400
-        , headers: empty
-        , content: errors <#> (match
+        errors
+        <#> (match
             { email: const invalidEmail
             , nickname: const invalidNickname
             })
-            # fromFoldable
-            # invalidIdentifiers
-            # writeJSON
-        }
-    , generateSecrets: const
-        { statusCode: 500
-        , headers: empty
-        , content: mempty
-        }
+        # fromFoldable
+        # invalidIdentifiers
+        # writeJSON
+        # badRequest_
+    , generateSecrets: const internalServerError__
     , addPlayer: _.error >>> match
-        { emailTaken: const
-            { statusCode: 400
-            , headers: empty
-            , content: writeJSON emailTaken
-            }
-        , nicknameTaken: const
-            { statusCode: 400
-            , headers: empty
-            , content: writeJSON nicknameTaken
-            }
-        , other: const
-            { statusCode: 500
-            , headers: empty
-            , content: mempty
-            }
+        { emailTaken: const $ badRequest_ $ writeJSON emailTaken
+        , nicknameTaken: const $ badRequest_ $ writeJSON nicknameTaken
+        , other: const internalServerError__
        }
     , sendEmail: _.identifiers >>> \{ email, nickname } ->
-        { statusCode: 200
-        , headers: empty
-        , content: writeJSON
-            { email: unwrap email
-            , nickname: unwrap nickname
-            , emailSent: false
-            }
+        ok_ $ writeJSON
+        { email: unwrap email
+        , nickname: unwrap nickname
+        , emailSent: false
         }
     }
 
 successResponse :: Credentials -> Response
 successResponse { email, nickname } =
-    { statusCode: 200
-    , headers: empty
-    , content: writeJSON
-        { email: unwrap email
-        , nickname: unwrap nickname
-        , emailSent: true
-        }
+    ok_ $ writeJSON
+    { email: unwrap email
+    , nickname: unwrap nickname
+    , emailSent: true
     }
 
 registerResponse ::

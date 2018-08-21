@@ -9,8 +9,7 @@ import Prelude
 import Async (Async, alwaysRight)
 import Data.Array (fromFoldable)
 import Data.Variant (SProxy(..), Variant, inj, match)
-import MultiMap (empty)
-import Perun.Response (Response)
+import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, noContent_)
 import Simple.JSON (writeJSON)
 import TeamTavern.Player.Session.Prepare.Run.Types (PrepareError)
 
@@ -39,57 +38,27 @@ unknownIdentifiers = inj (SProxy :: SProxy "unknownIdentifiers") {}
 
 errorResponse :: PrepareError -> Response
 errorResponse = match
-    { ensureNotSignedIn: const
-        { statusCode: 403
-        , headers: empty
-        , content: mempty
-        }
-    , readIdentifiers: const
-        { statusCode: 400
-        , headers: empty
-        , content: mempty
-        }
+    { ensureNotSignedIn: const forbidden__
+    , readIdentifiers: const badRequest__
     , validateIdentifiers: \{ errors } ->
-        { statusCode: 400
-        , headers: empty
-        , content: errors <#> (match
+        errors <#> (match
             { email: const invalidEmail
             , nickname: const invalidNickname
             })
-            # fromFoldable
-            # invalidIdentifiers
-            # writeJSON
-        }
-    , generateSecrets: const
-        { statusCode: 500
-        , headers: empty
-        , content: mempty
-        }
+        # fromFoldable
+        # invalidIdentifiers
+        # writeJSON
+        # badRequest_
+    , generateSecrets: const internalServerError__
     , createSession: _.error >>> match
-        { unknownIdentifiers : const
-            { statusCode: 400
-            , headers: empty
-            , content: writeJSON unknownIdentifiers
-            }
-        , other: const
-            { statusCode: 500
-            , headers: empty
-            , content: mempty
-            }
+        { unknownIdentifiers: const $ badRequest_ $ writeJSON unknownIdentifiers
+        , other: const internalServerError__
         }
-    , notifyPlayer: const
-        { statusCode: 500
-        , headers: empty
-        , content: mempty
-        }
+    , notifyPlayer: const internalServerError__
     }
 
 successResponse :: Response
-successResponse =
-    { statusCode: 204
-    , headers: empty
-    , content: mempty
-    }
+successResponse = noContent_
 
 prepareResponse ::
     Async PrepareError Unit -> (forall left. Async left Response)
