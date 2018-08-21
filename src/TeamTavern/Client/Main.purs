@@ -10,6 +10,7 @@ import Foreign (Foreign)
 import Halogen as H
 import Halogen.HTML as HH
 import Simple.JSON (read)
+import TeamTavern.Client.Code as Code
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Register as Register
@@ -28,6 +29,7 @@ data State
 type ChildSlots =
   ( signIn :: SignIn.Slot Unit
   , register :: Register.Slot Unit
+  , code :: Code.Slot Unit
   , signInAnchor :: NavigationAnchor.Slot Unit
   )
 
@@ -36,6 +38,8 @@ _signIn = SProxy :: SProxy "signIn"
 _register = SProxy :: SProxy "register"
 
 _signInAnchor = SProxy :: SProxy "signInAnchor"
+
+_code = SProxy :: SProxy "code"
 
 type Message = Void
 
@@ -54,7 +58,7 @@ render (Welcome { email, nickname, emailSent }) = HH.p_
         then HH.text $ "Registration email with your sign in code has been sent to " <> email
         else HH.text $ "Registration email has NOT been sent to " <> email
     ]
-render Code = HH.p_ [ HH.text "Prepare to get spammed." ]
+render Code = HH.slot _code unit Code.code unit absurd
 render NotFound = HH.p_ [ HH.text "You're fucken lost, mate." ]
 
 eval :: forall void.

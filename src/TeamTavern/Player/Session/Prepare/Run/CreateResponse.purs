@@ -1,25 +1,41 @@
 module TeamTavern.Player.Session.Prepare.Run.CreateResponse
-    (prepareResponse) where
+    ( IdentifiersErrorResponseContent
+    , BadRequestResponseContent
+    , prepareResponse
+    ) where
 
 import Prelude
 
 import Async (Async, alwaysRight)
+import Data.Array (fromFoldable)
 import Data.Variant (SProxy(..), Variant, inj, match)
 import MultiMap (empty)
 import Perun.Response (Response)
 import Simple.JSON (writeJSON)
 import TeamTavern.Player.Session.Prepare.Run.Types (PrepareError)
 
-type ErrorResponseContent = Variant
-    ( invalidNickname :: {}
-    , unknownNickname :: {}
+type IdentifiersErrorResponseContent = Variant
+    ( invalidEmail :: {}
+    , invalidNickname :: {}
     )
 
-invalidNickname :: ErrorResponseContent
+type BadRequestResponseContent = Variant
+    ( invalidIdentifiers :: Array IdentifiersErrorResponseContent
+    , unknownIdentifiers :: {}
+    )
+
+invalidEmail :: IdentifiersErrorResponseContent
+invalidEmail = inj (SProxy :: SProxy "invalidEmail") {}
+
+invalidNickname :: IdentifiersErrorResponseContent
 invalidNickname = inj (SProxy :: SProxy "invalidNickname") {}
 
-unknownNickname :: ErrorResponseContent
-unknownNickname = inj (SProxy :: SProxy "unknownNickname") {}
+invalidIdentifiers ::
+    Array (IdentifiersErrorResponseContent) -> BadRequestResponseContent
+invalidIdentifiers = inj (SProxy :: SProxy "invalidIdentifiers")
+
+unknownIdentifiers :: BadRequestResponseContent
+unknownIdentifiers = inj (SProxy :: SProxy "unknownIdentifiers") {}
 
 errorResponse :: PrepareError -> Response
 errorResponse = match
@@ -28,10 +44,21 @@ errorResponse = match
         , headers: empty
         , content: mempty
         }
-    , readNickname: const
+    , readIdentifiers: const
         { statusCode: 400
         , headers: empty
-        , content: writeJSON invalidNickname
+        , content: mempty
+        }
+    , validateIdentifiers: \{ errors } ->
+        { statusCode: 400
+        , headers: empty
+        , content: errors <#> (match
+            { email: const invalidEmail
+            , nickname: const invalidNickname
+            })
+            # fromFoldable
+            # invalidIdentifiers
+            # writeJSON
         }
     , generateSecrets: const
         { statusCode: 500
@@ -39,15 +66,10 @@ errorResponse = match
         , content: mempty
         }
     , createSession: _.error >>> match
-        { unknownNickname : const
+        { unknownIdentifiers : const
             { statusCode: 400
             , headers: empty
-            , content: writeJSON unknownNickname
-            }
-        , invalidEmail: const
-            { statusCode: 500
-            , headers: empty
-            , content: mempty
+            , content: writeJSON unknownIdentifiers
             }
         , other: const
             { statusCode: 500

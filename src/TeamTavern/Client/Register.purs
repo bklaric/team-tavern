@@ -164,7 +164,10 @@ eval (Register event send) = let
         })
     response' <- H.lift $ A.attempt $ FA.fetch
         ("http://localhost:8080/players")
-        (FA.method := POST <> FA.body := J.writeJSON { email, nickname })
+        (  FA.method := POST
+        <> FA.body := J.writeJSON { email, nickname }
+        <> FA.credentials := FA.Include
+        )
     newState <- case response' of
         Left error -> do
             log $ E.message error

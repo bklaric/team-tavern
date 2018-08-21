@@ -17,11 +17,13 @@ logError prepareError = do
     prepareError # match
         { ensureNotSignedIn: \{ playerId } ->
             log $ "\tThe request came with this player id: " <> playerId
-        , readNickname: \{ errors, nickname } -> do
-            log $ "\tFailed nickname validation for segment: "
-                <> toString nickname
-            log $ "\tValidation resulted in these errors: "
-                <> show errors
+        , readIdentifiers: \{ errors, nickname, body } -> do
+            log $ "\tCouldn't read identifiers from nickname and body: "
+                <> toString nickname <> ", " <> show body
+            log $ "\tParsing resulted in these errors: " <> show errors
+        , validateIdentifiers: \{ errors, model } ->
+            log $ "\tFailed identifiers validation for identifiers: "
+                <> model.email <> ", " <> model.nickname
         , generateSecrets: \{ error, nickname } -> do
             log $ "\tError generating token for nickname: " <> unwrap nickname
             error # match
@@ -36,16 +38,14 @@ logError prepareError = do
                     log $ "\tNonce validation resulted in these errors: "
                         <> show errors
                 }
-        , createSession: \{ secrets: { nickname, token, nonce }, error } -> do
-            log $ "\tError adding session to database for nickname "
-                <> unwrap nickname <> " and secrets: "
+        , createSession:
+            \{ credentials: { email, nickname, token, nonce }, error } -> do
+            log $ "\tError adding session to database for credentials "
+                <> unwrap email <> ", " <> unwrap nickname <> ", "
                 <> unwrap token <> ", " <> unwrap nonce
             error # match
-                { unknownNickname: \result ->
-                    log $ "\tNickname seems to be unknown"
-                , invalidEmail: \errors ->
-                    log $ "\tEmail validation resulted in these errors: "
-                        <> show errors
+                { unknownIdentifiers: \result ->
+                    log $ "\tIdentifiers seem to be unknown"
                 , other: \error' ->
                     log $ "\tAdding to database resulted in this error: "
                         <> code error' <> ", " <> name error' <> ", "

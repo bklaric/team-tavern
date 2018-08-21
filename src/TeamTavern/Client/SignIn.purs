@@ -138,57 +138,56 @@ render
 
 eval :: forall void.
     Query ~> H.HalogenM State Query ChildSlots Message (Async void)
-eval = case _ of
-    NicknameInput nickname send ->
-        H.modify_ (_ { nickname = nickname }) <#> const send
-    NonceInput nonce send ->
-        H.modify_ (_ { nonce = nonce }) <#> const send
-    SignIn event send -> let
-        setNicknameError    = _ { nicknameError    = true }
-        setNonceError       = _ { nonceError       = true }
-        setNoTokenToConsume = _ { noTokenToConsume = true }
-        setOtherError       = _ { otherError       = true }
-        in do
-        H.liftEffect $ preventDefault event
-        resetState @ { nickname, nonce } <- H.gets (_
-            { nicknameError    = false
-            , nonceError       = false
-            , noTokenToConsume = false
-            , otherError       = false
-            })
-        response' <- H.lift $ A.attempt $ FA.fetch
-            ("http://localhost:8080/players/by-nickname/" <> nickname <> "/sessions")
-            (  FA.method := PATCH
-            <> FA.body := J.writeJSON { nickname, nonce }
-            <> FA.credentials := FA.Include
-            )
-        newState <- case response' of
-            Left error -> do
-                H.liftEffect $ logShow $ E.message error
-                pure $ setOtherError resetState
-            Right response ->
-                case FARes.status response of
-                204 -> do
-                    H.liftEffect $ navigate_ "/"
-                    pure resetState
-                400 -> H.lift $ FARes.text response <#> J.readJSON >>=
-                    case _ of
-                    Left errors -> do
-                        H.liftEffect $ logShow errors
-                        pure $ setOtherError resetState
-                    Right (error :: BadRequestResponseContent) -> V.match
-                        { invalidNickname:
-                            const $ setNicknameError resetState
-                        , invalidNonce:
-                            const $ setNonceError resetState
-                        , noTokenToConsume:
-                            const $ setNoTokenToConsume resetState
-                        }
-                        error
-                        # pure
-                _ -> pure $ setOtherError resetState
-        H.put newState
-        pure send
+eval (NicknameInput nickname send) =
+    H.modify_ (_ { nickname = nickname }) <#> const send
+eval (NonceInput nonce send) =
+    H.modify_ (_ { nonce = nonce }) <#> const send
+eval (SignIn event send) = let
+    setNicknameError    = _ { nicknameError    = true }
+    setNonceError       = _ { nonceError       = true }
+    setNoTokenToConsume = _ { noTokenToConsume = true }
+    setOtherError       = _ { otherError       = true }
+    in do
+    H.liftEffect $ preventDefault event
+    resetState @ { nickname, nonce } <- H.gets (_
+        { nicknameError    = false
+        , nonceError       = false
+        , noTokenToConsume = false
+        , otherError       = false
+        })
+    response' <- H.lift $ A.attempt $ FA.fetch
+        ("http://localhost:8080/players/by-nickname/" <> nickname <> "/sessions")
+        (  FA.method := PATCH
+        <> FA.body := J.writeJSON { nickname, nonce }
+        <> FA.credentials := FA.Include
+        )
+    newState <- case response' of
+        Left error -> do
+            H.liftEffect $ logShow $ E.message error
+            pure $ setOtherError resetState
+        Right response ->
+            case FARes.status response of
+            204 -> do
+                H.liftEffect $ navigate_ "/"
+                pure resetState
+            400 -> H.lift $ FARes.text response <#> J.readJSON >>=
+                case _ of
+                Left errors -> do
+                    H.liftEffect $ logShow errors
+                    pure $ setOtherError resetState
+                Right (error :: BadRequestResponseContent) -> V.match
+                    { invalidNickname:
+                        const $ setNicknameError resetState
+                    , invalidNonce:
+                        const $ setNonceError resetState
+                    , noTokenToConsume:
+                        const $ setNoTokenToConsume resetState
+                    }
+                    error
+                    # pure
+            _ -> pure $ setOtherError resetState
+    H.put newState
+    pure send
 
 signIn :: forall input void.
     H.Component HH.HTML Query input Message (Async void)

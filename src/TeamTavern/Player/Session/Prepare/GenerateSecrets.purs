@@ -4,25 +4,27 @@ import Prelude
 
 import Async (Async)
 import Data.Bifunctor (lmap)
-import Data.Symbol (SProxy(..))
 import Data.Variant (Variant)
 import TeamTavern.Architecture.Async (label)
+import TeamTavern.Player.Domain.Email (Email)
 import TeamTavern.Player.Domain.Nickname (Nickname)
 import TeamTavern.Player.Domain.Types (Secrets)
 import TeamTavern.Player.Infrastructure.GenerateSecrets as Infrastructure
 
 type GenerateSecretsError =
     { error :: Infrastructure.GenerateSecretsError
+    , email :: Email
     , nickname :: Nickname
     }
 
 generateSecrets
     :: forall errors
-    .  Nickname
+    .  Email
+    -> Nickname
     -> Async
         (Variant (generateSecrets :: GenerateSecretsError | errors))
         Secrets
-generateSecrets nickname =
-    Infrastructure.generateSecrets
-    # lmap { error: _, nickname }
-    # label (SProxy :: SProxy "generateSecrets")
+generateSecrets email nickname =
+    Infrastructure.generateSecrets'
+    # lmap { error: _, email, nickname }
+    # label Infrastructure._generateSecrets

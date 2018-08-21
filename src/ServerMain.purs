@@ -152,7 +152,7 @@ handleRequest pool client method url cookies body =
         , registerPlayer:
             const $ handleRegister pool client cookies body
         , prepareSession: \{ nickname } ->
-            handlePrepare pool client nickname cookies
+            handlePrepare pool client nickname body cookies
         , startSession: \{ nickname } ->
             handleStart pool nickname cookies body
         }

@@ -36,6 +36,12 @@ fromEffectCont :: forall left right.
     ((right -> Effect Unit) -> Effect Unit) -> Async left right
 fromEffectCont = ContT >>> map Right >>> ExceptT >>> Async
 
+rightAsync :: forall left right. right -> Async left right
+rightAsync = fromEither <<< Right
+
+leftAsync :: forall left right. left -> Async left right
+leftAsync = fromEither <<< Left
+
 alwaysRight
     :: forall inLeft inRight outRight
     .  (inLeft -> outRight)
@@ -103,7 +109,7 @@ instance applyAsync :: Apply (Async left) where
     apply = ap
 
 instance applicativeAsync :: Applicative (Async left) where
-    pure = fromEither <<< Right
+    pure = rightAsync
 
 instance bindAsync :: Bind (Async left) where
     bind (Async exceptT) functionA = Async do

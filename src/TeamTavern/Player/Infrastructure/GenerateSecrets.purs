@@ -1,5 +1,9 @@
 module TeamTavern.Player.Infrastructure.GenerateSecrets
-    (GenerateSecretsError, generateSecrets) where
+    ( GenerateSecretsError
+    , _generateSecrets
+    , generateSecrets'
+    , generateSecrets
+    ) where
 
 import Prelude
 
@@ -50,8 +54,14 @@ bufferToNonce buffer =
     # fromEitherEffect
     # label (SProxy :: SProxy "nonce")
 
-generateSecrets :: Async GenerateSecretsError Secrets
-generateSecrets = do
+generateSecrets' :: Async GenerateSecretsError Secrets
+generateSecrets' = do
     token <- generateRandomBytes tokenCharCount >>= bufferToToken
     nonce <- generateRandomBytes nonceCharCount >>= bufferToNonce
     pure { token, nonce }
+
+_generateSecrets = SProxy :: SProxy "generateSecrets"
+
+generateSecrets :: forall errors.
+    Async (Variant (generateSecrets :: GenerateSecretsError | errors)) Secrets
+generateSecrets = label _generateSecrets generateSecrets'

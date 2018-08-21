@@ -7,30 +7,36 @@ import Run (FProxy, Run, lift)
 import TeamTavern.Infrastructure.EnsureNotSignedIn (EnsureNotSignedInF, ensureNotSignedIn)
 import TeamTavern.Player.Domain.Email (Email)
 import TeamTavern.Player.Domain.Nickname (Nickname)
-import TeamTavern.Player.Domain.Types (NicknamedSecrets, Secrets, NoncedIdentifiers)
+import TeamTavern.Player.Domain.Types (Credentials, NoncedIdentifiers, Secrets, Identifiers)
+import TeamTavern.Player.Infrastructure.Types (IdentifiersModel)
 
 data PrepareF result
-    = ReadNickname (Nickname -> result)
-    | GenerateSecrets Nickname (Secrets -> result)
-    | CreateSession NicknamedSecrets (Email -> result)
+    = ReadIdentifiers (IdentifiersModel -> result)
+    | ValidateIdentifiers IdentifiersModel (Identifiers -> result)
+    | GenerateSecrets Email Nickname (Secrets -> result)
+    | CreateSession Credentials result
     | NotifyPlayer NoncedIdentifiers result
 
 derive instance functor :: Functor PrepareF
 
 _prepare = SProxy :: SProxy "prepare"
 
-readNickname :: forall run.
-    Run (prepare :: FProxy PrepareF | run) Nickname
-readNickname = lift _prepare (ReadNickname identity)
+readIdentifiers :: forall run.
+    Run (prepare :: FProxy PrepareF | run) IdentifiersModel
+readIdentifiers = lift _prepare (ReadIdentifiers identity)
+
+validateIdentifiers :: forall run.
+    IdentifiersModel -> Run (prepare :: FProxy PrepareF | run) Identifiers
+validateIdentifiers model = lift _prepare (ValidateIdentifiers model identity)
 
 generateSecrets :: forall run.
-    Nickname -> Run (prepare :: FProxy PrepareF | run) Secrets
-generateSecrets nickname = lift _prepare (GenerateSecrets nickname identity)
+    Email -> Nickname -> Run (prepare :: FProxy PrepareF | run) Secrets
+generateSecrets email nickname =
+    lift _prepare (GenerateSecrets email nickname identity)
 
 createSession :: forall run.
-    NicknamedSecrets -> Run (prepare :: FProxy PrepareF | run) Email
-createSession secrets =
-    lift _prepare (CreateSession secrets identity)
+    Credentials -> Run (prepare :: FProxy PrepareF | run) Unit
+createSession credentials = lift _prepare (CreateSession credentials unit)
 
 notifyPlayer :: forall run.
     NoncedIdentifiers -> Run (prepare :: FProxy PrepareF | run) Unit
@@ -44,7 +50,8 @@ prepare :: forall run. Run
     Unit
 prepare = do
     ensureNotSignedIn
-    nickname <- readNickname
-    { token, nonce } <- generateSecrets nickname
-    email <- createSession { nickname, token, nonce }
-    notifyPlayer { nickname, email, nonce }
+    identifiersModel <- readIdentifiers
+    { email, nickname } <- validateIdentifiers identifiersModel
+    { token, nonce } <- generateSecrets email nickname
+    createSession { email, nickname, token, nonce }
+    notifyPlayer { email, nickname, nonce }

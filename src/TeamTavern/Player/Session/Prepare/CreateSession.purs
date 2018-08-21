@@ -3,45 +3,35 @@ module TeamTavern.Player.Session.Prepare.CreateSession
 
 import Prelude
 
-import Async (Async, fromEither)
+import Async (Async, leftAsync)
 import Data.Bifunctor (lmap)
-import Data.Either (note)
-import Data.List.Types (NonEmptyList)
 import Data.Newtype (unwrap)
-import Data.Variant (SProxy(..), Variant)
+import Data.Variant (SProxy(..), Variant, inj)
 import Postgres.Error (Error)
 import Postgres.Pool (Pool)
 import Postgres.Query (Query(..), QueryParameter(..))
-import Postgres.Result (Result, readScalar)
-import TeamTavern.Architecture.Async (fromValidated, label)
+import Postgres.Result (Result, rowCount)
+import TeamTavern.Architecture.Async (label)
 import TeamTavern.Architecture.Postgres.Query (query)
-import TeamTavern.Player.Domain.Email (Email, EmailError)
-import TeamTavern.Player.Domain.Email as Email
-import TeamTavern.Player.Domain.Types (NicknamedSecrets)
+import TeamTavern.Player.Domain.Types (Credentials)
 
 createSessionQuery :: Query
 createSessionQuery = Query """
-    with insert_result (player_id) as
-    (   insert into session (player_id, token, nonce)
-        select player.id, $2, $3
-        from player
-        where player.nickname = $1
-        returning player_id
-    )
-    select player.email
-    from insert_result
-        join player on player.id = insert_result.player_id
+    insert into session (player_id, token, nonce)
+    select player.id, $3, $4
+    from player
+    where player.email = $1 and player.nickname = $2
     """
 
-createSessionParameters :: NicknamedSecrets -> Array QueryParameter
-createSessionParameters { nickname, token, nonce } =
-    [unwrap nickname, unwrap token, unwrap nonce] <#> QueryParameter
+createSessionParameters :: Credentials -> Array QueryParameter
+createSessionParameters { email, nickname, token, nonce } =
+    [unwrap email, unwrap nickname, unwrap token, unwrap nonce]
+    <#> QueryParameter
 
 type CreateSessionError =
-    { secrets :: NicknamedSecrets
+    { credentials :: Credentials
     , error :: Variant
-        ( unknownNickname :: Result
-        , invalidEmail :: NonEmptyList EmailError
+        ( unknownIdentifiers :: Result
         , other :: Error
         )
     }
@@ -49,19 +39,16 @@ type CreateSessionError =
 createSession
     :: forall errors
     .  Pool
-    -> NicknamedSecrets
-    -> Async (Variant (createSession :: CreateSessionError | errors)) Email
-createSession pool secrets = label (SProxy :: SProxy "createSession") do
+    -> Credentials
+    -> Async (Variant (createSession :: CreateSessionError | errors)) Unit
+createSession pool credentials = label (SProxy :: SProxy "createSession") do
     result <- pool
-        # query createSessionQuery (createSessionParameters secrets)
+        # query createSessionQuery (createSessionParameters credentials)
         # label (SProxy :: SProxy "other")
-        # lmap { error: _, secrets }
-    email <- readScalar result
-        # note result
-        # fromEither
-        # label (SProxy :: SProxy "unknownNickname")
-        # lmap { error: _, secrets }
-    Email.create email
-        # fromValidated
-        # label (SProxy :: SProxy "invalidEmail")
-        # lmap { error: _, secrets }
+        # lmap { error: _, credentials }
+    case rowCount result of
+        1 -> pure unit
+        _ -> leftAsync
+            { error: inj (SProxy :: SProxy "unknownIdentifiers") result
+            , credentials
+            }
