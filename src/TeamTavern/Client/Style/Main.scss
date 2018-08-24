@@ -1,14 +1,20 @@
+@import "TopBar";
 $primary-color: hsl(0, 0%, 7%);
 $disabled-color: rgb(221, 221, 221);
 $error-color: orangered;
 body {
     font-family: sans-serif;
     color: $primary-color;
+    margin: 0;
 }
 
 h1,
 h2 {
     margin-bottom: 1.7em
+}
+
+a {
+    text-decoration: none;
 }
 
 %bordered {

@@ -3,55 +3,56 @@ module TeamTavern.Client.TopBar where
 import Prelude
 
 import Data.Maybe (Maybe(..))
-import Effect.Aff (Aff)
+import Data.Symbol (SProxy(..))
+import Effect.Class (class MonadEffect)
 import Halogen as H
 import Halogen.HTML as HH
-import Halogen.HTML.Events (onSubmit)
-import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import Web.Event.Event (preventDefault)
-import Web.Event.Internal.Types (Event)
-import Web.HTML (window)
-import Web.HTML.Window (alert)
+import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
+import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 
-data Query send
-    = SignIn Event send
-    | SignOut Event send
+data Query send = Void Void
 
-type State = { signedIn :: Boolean }
+type State = Unit
 
-initialState :: { signedIn :: Boolean }
-initialState = { signedIn: false }
+type Message = Void
 
-render :: forall t7. State -> HH.HTML t7 (Query Unit)
-render { signedIn } = HH.div_
-    [ HH.p_ [ HH.text "This is the top bar, bitch!" ]
-    , HH.form
-        [ onSubmit $ if signedIn then HE.input SignOut else HE.input SignIn ]
-        [ HH.input []
-        , HH.button
-            [ HP.type_ HP.ButtonSubmit ]
-            [ HH.text $ if signedIn then "Sign out" else "Sign in" ]
+type Slot = H.Slot Query Message
+
+type ChildSlots =
+    ( homeAnchor :: NavigationAnchor.Slot Unit
+    , signInAnchor :: NavigationAnchor.Slot Unit
+    , registerAnchor :: NavigationAnchor.Slot Unit
+    )
+
+_homeAnchor = SProxy :: SProxy "homeAnchor"
+
+_signInAnchor = SProxy :: SProxy "signInAnchor"
+
+_registerAnchor = SProxy :: SProxy "registerAnchor"
+
+render :: forall m. MonadEffect m => State -> H.ComponentHTML Query ChildSlots m
+render _ = HH.div [ HP.id_ "top-bar" ]
+    [ HH.span [HP.id_ "top-bar-title" ]
+        [ HH.slot _homeAnchor unit navigationAnchor
+            { path: "/", text: "TeamTavern" } absurd
+        ]
+    , HH.div_
+        [ HH.slot _signInAnchor unit navigationAnchor
+            { path: "/signin", text: "Sign in" } absurd
+        , HH.slot _registerAnchor unit navigationAnchor
+            { path: "/register", text: "Register" } absurd
         ]
     ]
 
-eval :: Query ~> H.HalogenM State Query () Void Aff
-eval = case _ of
-    SignIn event send -> do
-        H.liftEffect $ preventDefault event
-        H.liftEffect $ window >>= alert "signin in"
-        H.modify_ not
-        pure send
-    SignOut event send -> do
-        H.liftEffect $ preventDefault event
-        H.liftEffect $ window >>= alert "signin out"
-        H.modify_ not
-        pure send
+eval :: forall m. Query ~> H.HalogenM State Query ChildSlots Message m
+eval (Void void) = absurd void
 
-topBar :: forall t107. H.Component HH.HTML Query t107 Void Aff
+topBar :: forall m input. MonadEffect m =>
+    H.Component HH.HTML Query input Message m
 topBar =
     H.component
-        { initialState: const initialState
+        { initialState: const unit
         , render
         , eval
         , receiver: const Nothing
