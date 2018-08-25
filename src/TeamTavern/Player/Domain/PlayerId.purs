@@ -16,5 +16,8 @@ derive newtype instance showPlayerId :: Show PlayerId
 create :: Int -> Maybe PlayerId
 create id = id # Id.create <#> PlayerId
 
+toInt :: PlayerId -> Int
+toInt = unwrap >>> unwrap
+
 toString :: PlayerId -> String
-toString = unwrap >>> unwrap >>> show
+toString = toInt >>> show

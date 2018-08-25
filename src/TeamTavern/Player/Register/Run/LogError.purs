@@ -22,23 +22,22 @@ logError registerError = do
         , validateIdentifiers: \{ errors, model } ->
             log $ "\tFailed identifiers validation for identifiers: "
                 <> model.email <> ", " <> model.nickname
-        , generateSecrets: \{ error, identifiers} -> error # match
-            { random: \error' -> do
-                log $ "\tCouldn't generate random bytes for identifiers: "
-                    <> unwrap identifiers.email <> ", "
-                    <> unwrap identifiers.nickname
-                log $ "\tGenerating random bytes resulted in this error: "
-                    <> code error' <> ", " <> name error' <> ", "
-                    <> message error'
-            , token: \errors -> do
-                log $ "\tFailed token validation for identifiers: "
-                    <> unwrap identifiers.email <> ", "
-                    <> unwrap identifiers.nickname
-            , nonce: \errors -> do
-                log $ "\tFailed nonce validation for identifiers: "
-                    <> unwrap identifiers.email <> ", "
-                    <> unwrap identifiers.nickname
-            }
+        , generateSecrets: \{ error, identifiers} -> do
+            log $ "\tCouldn't generate secret for identifiers: "
+                <> unwrap identifiers.email <> ", "
+                <> unwrap identifiers.nickname
+            error # match
+                { random: \error' ->
+                    log $ "\tGenerating random bytes resulted in this error: "
+                        <> code error' <> ", " <> name error' <> ", "
+                        <> message error'
+                , token: \errors -> do
+                    log $ "\tToken validation failed with these errors: "
+                        <> show errors
+                , nonce: \errors -> do
+                    log $ "\tNonce validation failed with these errors: "
+                        <> show errors
+                }
         , addPlayer: \{ credentials, error } -> do
             log $ "\tCouldn't add to database player with credentials: "
                 <> unwrap credentials.email <> ", "

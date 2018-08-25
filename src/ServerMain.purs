@@ -13,7 +13,6 @@ import Data.List.NonEmpty as NEL
 import Data.Map (Map)
 import Data.Maybe (Maybe(..))
 import Data.Options (Options, (:=))
-import Data.String.NonEmpty (toString)
 import Data.Tuple (Tuple(..))
 import Data.Variant (match)
 import Effect (Effect)
@@ -38,6 +37,7 @@ import TeamTavern.Architecture.Deployment as Deployment
 import TeamTavern.Player.Register.Run (handleRegister)
 import TeamTavern.Player.Session.Prepare.Run (handlePrepare)
 import TeamTavern.Player.Session.Start.Run (handleStart)
+import TeamTavern.Player.View.Run (handleView)
 import TeamTavern.Routes (TeamTavernRoutes)
 
 listenOptions :: ListenOptions
@@ -144,11 +144,8 @@ handleRequest pool client method url cookies body =
             , headers: MultiMap.empty
             , content: "You're viewing all players."
             }
-        , viewPlayer: \{nickname} -> pure
-            { statusCode: 200
-            , headers: MultiMap.empty
-            , content: "You're viewing player " <> toString nickname <> "."
-            }
+        , viewPlayer: \{ nickname } ->
+            handleView pool nickname
         , registerPlayer:
             const $ handleRegister pool client cookies body
         , prepareSession: \{ nickname } ->

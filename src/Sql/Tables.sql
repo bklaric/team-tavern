@@ -2,6 +2,7 @@ create table player
     ( id serial not null primary key
     , email varchar(254) not null unique
     , nickname varchar(40) not null unique
+    , about varchar(2000) not null default ''
     , registered timestamptz not null default current_timestamp
     );
 

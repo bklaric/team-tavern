@@ -19,8 +19,7 @@ import TeamTavern.Architecture.Perun.Request.Body (readBody)
 import TeamTavern.Player.Domain.Nickname (Nickname)
 import TeamTavern.Player.Domain.Nonce (Nonce, NonceError)
 import TeamTavern.Player.Domain.Nonce as Nonce
-import TeamTavern.Player.Infrastructure (ReadNicknameError)
-import TeamTavern.Player.Infrastructure as Infrastructure
+import TeamTavern.Player.Infrastructure (ReadNicknameError, readNickname)
 
 type ReadNonceError = Variant
     ( invalidBody ::
@@ -28,14 +27,6 @@ type ReadNonceError = Variant
     , invalidNonce ::
         { errors :: NonEmptyList NonceError, nonce :: String }
     )
-
-readNickname
-    :: forall errors
-    .  NonEmptyString
-    -> Async (Variant (readNickname :: ReadNicknameError | errors)) Nickname
-readNickname nickname =
-    Infrastructure.readNickname nickname
-    # Async.label (SProxy :: SProxy "readNickname")
 
 readNonce
     :: forall errors

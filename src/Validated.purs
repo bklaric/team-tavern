@@ -7,6 +7,7 @@ module Validated
     , isInvalid
     , toEither
     , fromEither
+    , hush
     , bimap
     , lmap
     , rmap
@@ -17,6 +18,7 @@ import Prelude
 import Control.Apply (lift2)
 import Data.Either (Either(..))
 import Data.Foldable (class Foldable)
+import Data.Maybe (Maybe(..))
 import Data.Traversable (class Traversable)
 
 data Validated invalid valid = Invalid invalid | Valid valid
@@ -54,6 +56,9 @@ fromEither :: forall invalid valid. Semigroup invalid =>
     Either invalid valid -> Validated invalid valid
 fromEither (Right valid') = Valid valid'
 fromEither (Left invalid') = Invalid invalid'
+
+hush :: forall left right. Validated left right -> Maybe right
+hush = validated (const Nothing) Just
 
 bimap
     :: forall oldValid oldInvalid newValid newInvalid

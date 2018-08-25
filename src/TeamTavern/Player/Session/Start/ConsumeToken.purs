@@ -6,13 +6,10 @@ import Prelude
 import Async (Async, fromEither)
 import Data.Array (head)
 import Data.Bifunctor (lmap)
-import Data.Either (Either(..), hush, note)
-import Data.List.Types (NonEmptyList)
-import Data.Maybe (Maybe(..))
+import Data.Either (hush, note)
 import Data.Newtype (unwrap)
 import Data.Traversable (traverse)
 import Data.Variant (SProxy(..), Variant, inj)
-import Foreign (Foreign, ForeignError)
 import Postgres.Error (Error)
 import Postgres.Pool (Pool)
 import Postgres.Query (Query(..), QueryParameter(..))
@@ -65,23 +62,15 @@ _consumeToken = SProxy :: SProxy "consumeToken"
 readIdentifiedToken ::
     NicknamedNonce -> Result -> Async ConsumeTokenError IdentifiedToken'
 readIdentifiedToken { nickname, nonce } result =
-    result
-    # rows
-    # traverse (read
-        :: Foreign
-        -> Either (NonEmptyList ForeignError) { id :: Int, token :: String })
-    # case _ of
-        Right tokens ->
-            case head tokens of
-            Just { id, token } ->
-                note (inj _cantReadIdentifiedToken result) do
-                    id' <- PlayerId.create id
-                    token' <- Token.create token # hush
-                    pure { id: id', nickname, token: token' }
-            Nothing -> Left $ inj _noTokenToConsume result
-        _ -> Left $ inj _cantReadIdentifiedToken result
-    # lmap { error: _, nickname, nonce }
-    # fromEither
+    fromEither $ lmap { error: _, nickname, nonce } do
+    tokens <- rows result # traverse read
+        # lmap (const $ inj _cantReadIdentifiedToken result)
+    { id, token } :: { id :: Int, token :: String } <- head tokens
+        # note (inj _noTokenToConsume result)
+    note (inj _cantReadIdentifiedToken result) do
+        id' <- PlayerId.create id
+        token' <- Token.create token # hush
+        pure { id: id', nickname, token: token' }
 
 consumeToken
     :: forall errors

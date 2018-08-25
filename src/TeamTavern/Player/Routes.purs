@@ -17,6 +17,7 @@ type ViewPlayers = Route
 type ViewPlayer = Route
     Get
     (  Literal "players"
+    :> Literal "by-nickname"
     :> Capture "nickname" NonEmptyString
     :> End)
     NoQuery

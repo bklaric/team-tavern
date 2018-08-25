@@ -6,6 +6,9 @@ import Async (Async, fromEither)
 import Data.Bifunctor (lmap)
 import Data.List.Types (NonEmptyList)
 import Data.String.NonEmpty (NonEmptyString, toString)
+import Data.Symbol (SProxy(..))
+import Data.Variant (Variant)
+import TeamTavern.Architecture.Async (label)
 import TeamTavern.Player.Domain.Nickname (Nickname, NicknameError)
 import TeamTavern.Player.Domain.Nickname as Nickname
 import Validated (toEither)
@@ -15,11 +18,17 @@ type ReadNicknameError =
     , nickname :: NonEmptyString
     }
 
-readNickname :: NonEmptyString -> Async ReadNicknameError Nickname
-readNickname nickname =
+readNickname' :: NonEmptyString -> Async ReadNicknameError Nickname
+readNickname' nickname =
     nickname
     # toString
     # Nickname.create
     # toEither
     # lmap { errors: _, nickname}
     # fromEither
+
+readNickname
+    :: forall errors
+    .  NonEmptyString
+    -> Async (Variant (readNickname :: ReadNicknameError | errors)) Nickname
+readNickname = readNickname' >>> label (SProxy :: SProxy "readNickname")

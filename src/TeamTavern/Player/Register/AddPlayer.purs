@@ -48,9 +48,6 @@ _nicknameTaken = SProxy :: SProxy "nicknameTaken"
 
 _other = SProxy :: SProxy "other"
 
-wrapError :: Credentials -> Error -> AddPlayerError
-wrapError credentials error = { error: inj _other error, credentials }
-
 addPlayer
     :: forall errors
     .  Pool
