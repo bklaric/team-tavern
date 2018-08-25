@@ -1,23 +1,20 @@
 module TeamTavern.Client.Script.Cookie
     ( PlayerInfo
     , hasPlayerIdCookie
-    , getPlayerId
-    , getNickname
     , getPlayerInfo
+    , deletePlayerInfo
     ) where
 
 import Prelude
 
 import Control.Monad.Maybe.Trans (MaybeT(..), runMaybeT)
 import Data.Array ((!!))
-import Data.Maybe (Maybe, fromMaybe)
+import Data.Maybe (Maybe, fromMaybe, isJust)
 import Data.String (Pattern(..), split, trim)
 import Data.Tuple (Tuple(..))
 import Effect (Effect)
 import Foreign.Object (Object, fromFoldable, lookup)
 import TeamTavern.Infrastructure.Cookie (idCookieName, nicknameCookieName)
-
-foreign import hasPlayerIdCookie :: Effect Boolean
 
 foreign import cookies :: Effect String
 
@@ -45,6 +42,9 @@ getCookie key = getCookies <#> lookup key
 getPlayerId :: Effect (Maybe String)
 getPlayerId = getCookie idCookieName
 
+hasPlayerIdCookie :: Effect Boolean
+hasPlayerIdCookie = getPlayerId <#> isJust
+
 getNickname :: Effect (Maybe String)
 getNickname = getCookie nicknameCookieName
 
@@ -55,3 +55,10 @@ getPlayerInfo = runMaybeT do
     id <- MaybeT getPlayerId
     nickname <- MaybeT getNickname
     pure { id, nickname }
+
+foreign import deleteCookie :: String -> Effect Unit
+
+deletePlayerInfo :: Effect Unit
+deletePlayerInfo = do
+    deleteCookie idCookieName
+    deleteCookie nicknameCookieName

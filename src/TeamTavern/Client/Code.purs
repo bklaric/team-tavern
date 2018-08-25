@@ -118,8 +118,13 @@ render
         ]
         [ HH.text "Send the code" ]
     , HH.p
+        [ HP.class_ $ otherErrorClass unknownIdentifiers ]
+        [ HH.text $ "This isn't a known combination of nickname and email. "
+            <> "Please check if they are correct."
+        ]
+    , HH.p
         [ HP.class_ $ otherErrorClass otherError ]
-        [ HH.text "Lmao, something else got fucked and you're shit out of luck, mate!"]
+        [ HH.text "Lmao, something else got fucked and you're shit out of luck, mate!" ]
     , HH.slot _signInAnchor unit navigationAnchor
         { path: "/signin", text: "Sign in" } absurd
     , HH.slot _registerAnchor unit navigationAnchor
