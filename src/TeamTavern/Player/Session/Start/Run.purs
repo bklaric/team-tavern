@@ -10,8 +10,7 @@ import Perun.Response (Response)
 import Postgres.Pool (Pool)
 import Run (interpret)
 import Run as VariantF
-import TeamTavern.Player.Domain.PlayerId (PlayerId)
-import TeamTavern.Player.Domain.Token (Token)
+import TeamTavern.Player.Domain.Types (IdentifiedToken')
 import TeamTavern.Player.Session.Start (StartF(..), start)
 import TeamTavern.Player.Session.Start.ConsumeToken (consumeToken)
 import TeamTavern.Player.Session.Start.ReadNicknamedNonce (readNicknamedNonce)
@@ -24,7 +23,7 @@ interpretStart
     -> NonEmptyString
     -> Map String String
     -> Body
-    -> Async StartError { id :: PlayerId, token :: Token }
+    -> Async StartError IdentifiedToken'
 interpretStart pool nickname cookies body = start # interpret (VariantF.match
     { start: case _ of
         ReadNicknamedNonce send ->

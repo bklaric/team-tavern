@@ -10,8 +10,7 @@ import Data.Variant (SProxy(..), Variant, inj, match)
 import Perun.Response (Response, badRequest_, badRequest__, internalServerError__, noContent)
 import Simple.JSON (writeJSON)
 import TeamTavern.Infrastructure.Cookie (setCookieHeader)
-import TeamTavern.Player.Domain.PlayerId (PlayerId)
-import TeamTavern.Player.Domain.Token (Token)
+import TeamTavern.Player.Domain.Types (IdentifiedToken')
 import TeamTavern.Player.Session.Start.Run.Types (StartError)
 
 type BadRequestResponseContent = Variant
@@ -43,10 +42,10 @@ errorResponse = match
         }
     }
 
-successResponse :: { id :: PlayerId, token :: Token} -> Response
-successResponse { id, token } = noContent $ setCookieHeader id token
+successResponse :: IdentifiedToken' -> Response
+successResponse { id, nickname, token } =
+    noContent $ setCookieHeader id nickname token
 
-startResponse
-    :: Async StartError { id :: PlayerId, token :: Token}
-    -> (forall left. Async left Response)
+startResponse ::
+    Async StartError IdentifiedToken' -> (forall left. Async left Response)
 startResponse = alwaysRight errorResponse successResponse

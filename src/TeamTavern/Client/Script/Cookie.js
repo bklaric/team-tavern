@@ -5,3 +5,7 @@ exports.hasPlayerIdCookie = function () {
         return item.indexOf('teamtavern-id=') >= 0
     }).length
 }
+
+exports.cookies = function () {
+    return document.cookie;
+}

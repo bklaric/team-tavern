@@ -4,11 +4,11 @@ import Prelude
 
 import Data.Symbol (SProxy(..))
 import Run (FProxy, Run, lift)
-import TeamTavern.Player.Domain.Types (NicknamedNonce, IdentifiedToken)
+import TeamTavern.Player.Domain.Types (IdentifiedToken', NicknamedNonce)
 
 data StartF result
     = ReadNicknamedNonce (NicknamedNonce -> result)
-    | ConsumeToken NicknamedNonce (IdentifiedToken -> result)
+    | ConsumeToken NicknamedNonce (IdentifiedToken' -> result)
 
 derive instance functorSignInF :: Functor StartF
 
@@ -19,10 +19,10 @@ readNicknamedNonce :: forall run.
 readNicknamedNonce = lift _start (ReadNicknamedNonce identity)
 
 consumeToken :: forall run.
-    NicknamedNonce -> Run (start :: FProxy StartF | run) IdentifiedToken
-consumeToken nonce = lift _start (ConsumeToken nonce identity)
+    NicknamedNonce -> Run (start :: FProxy StartF | run) IdentifiedToken'
+consumeToken nicknamedNonce = lift _start (ConsumeToken nicknamedNonce identity)
 
-start :: forall run. Run (start :: FProxy StartF | run) IdentifiedToken
+start :: forall run. Run (start :: FProxy StartF | run) IdentifiedToken'
 start = do
-    nonce <- readNicknamedNonce
-    consumeToken nonce
+    nicknamedNonce <- readNicknamedNonce
+    consumeToken nicknamedNonce

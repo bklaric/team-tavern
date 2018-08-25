@@ -24,7 +24,7 @@ import TeamTavern.Player.Domain.Nickname (Nickname)
 import TeamTavern.Player.Domain.Nonce (Nonce)
 import TeamTavern.Player.Domain.PlayerId as PlayerId
 import TeamTavern.Player.Domain.Token as Token
-import TeamTavern.Player.Domain.Types (NicknamedNonce, IdentifiedToken)
+import TeamTavern.Player.Domain.Types (IdentifiedToken', NicknamedNonce)
 
 updateTokenQuery :: Query
 updateTokenQuery = Query """
@@ -63,7 +63,7 @@ _other = SProxy :: SProxy "other"
 _consumeToken = SProxy :: SProxy "consumeToken"
 
 readIdentifiedToken ::
-    NicknamedNonce -> Result -> Async ConsumeTokenError IdentifiedToken
+    NicknamedNonce -> Result -> Async ConsumeTokenError IdentifiedToken'
 readIdentifiedToken { nickname, nonce } result =
     result
     # rows
@@ -77,7 +77,7 @@ readIdentifiedToken { nickname, nonce } result =
                 note (inj _cantReadIdentifiedToken result) do
                     id' <- PlayerId.create id
                     token' <- Token.create token # hush
-                    pure { id: id', token: token' }
+                    pure { id: id', nickname, token: token' }
             Nothing -> Left $ inj _noTokenToConsume result
         _ -> Left $ inj _cantReadIdentifiedToken result
     # lmap { error: _, nickname, nonce }
@@ -89,7 +89,7 @@ consumeToken
     -> NicknamedNonce
     -> Async
         (Variant (consumeToken :: ConsumeTokenError | errors))
-        IdentifiedToken
+        IdentifiedToken'
 consumeToken pool nicknamedNonce@{ nickname, nonce } = label _consumeToken do
     result <- query updateTokenQuery (updateTokenParameters nickname nonce) pool
         # label _other

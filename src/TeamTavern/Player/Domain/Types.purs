@@ -21,6 +21,12 @@ type IdentifiedToken =
     , token :: Token
     }
 
+type IdentifiedToken' =
+    { id :: PlayerId
+    , nickname :: Nickname
+    , token :: Token
+    }
+
 type NicknamedNonce =
     { nickname :: Nickname
     , nonce :: Nonce
