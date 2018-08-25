@@ -25,6 +25,7 @@ data State
     | Register
     | Welcome { email :: String, nickname :: String, emailSent :: Boolean }
     | Code
+    | CodeSent { email :: String, nickname :: String }
     | NotFound
 
 type ChildSlots =
@@ -56,6 +57,11 @@ render (Welcome { email, nickname, emailSent }) = HH.p_
         else HH.text $ "Registration email has NOT been sent to " <> email
     ]
 render Code = HH.slot _code unit Code.code unit absurd
+render (CodeSent { email, nickname }) = HH.p_
+    [ HH.text $ "Hello, " <> nickname <> "!"
+    , HH.br_
+    , HH.text $ "An email with your sign in code has been sent to " <> email
+    ]
 render NotFound = HH.p_ [ HH.text "You're fucken lost, mate." ]
 
 eval :: forall void.
@@ -71,6 +77,10 @@ eval (ChangeRoute state route send) = do
             Left _ -> Home playerInfo
             Right identifiers -> Welcome identifiers
         "/code" -> Code
+        "/codesent" ->
+            case read state of
+            Left _ -> Home playerInfo
+            Right identifiers -> CodeSent identifiers
         _ -> NotFound
     pure send
 
