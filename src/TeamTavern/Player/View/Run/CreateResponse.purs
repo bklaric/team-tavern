@@ -6,7 +6,7 @@ import Prelude
 import Async (Async, alwaysRight)
 import Data.Newtype (unwrap)
 import Data.Variant (match)
-import Perun.Response (Response, badRequest__, internalServerError__, ok_)
+import Perun.Response (Response, badRequest__, internalServerError__, notFound__, ok_)
 import Simple.JSON (writeJSON)
 import TeamTavern.Player.Domain.PlayerId (toInt)
 import TeamTavern.Player.View (PlayerView)
@@ -21,7 +21,11 @@ type OkResponseContent =
 errorResponse :: ViewError -> Response
 errorResponse = match
     { readNickname: const $ badRequest__
-    , loadPlayer: const $ internalServerError__
+    , loadPlayer: _.error >>> match
+        { notFound: const notFound__
+        , cantReadView: const internalServerError__
+        , other: const internalServerError__
+        }
     }
 
 successResponse :: PlayerView -> Response

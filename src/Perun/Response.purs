@@ -46,6 +46,15 @@ forbidden_ = forbidden empty
 forbidden__ :: Response
 forbidden__ = forbidden_ mempty
 
+notFound :: MultiMap String String -> String -> Response
+notFound headers content = { statusCode: 404, headers, content }
+
+notFound_ :: String -> Response
+notFound_ = notFound empty
+
+notFound__ :: Response
+notFound__ = notFound_ mempty
+
 internalServerError :: MultiMap String String -> String -> Response
 internalServerError headers content = { statusCode: 500, headers, content }
 
