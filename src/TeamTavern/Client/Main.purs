@@ -12,6 +12,7 @@ import Halogen.HTML as HH
 import Simple.JSON (read)
 import TeamTavern.Client.Code as Code
 import TeamTavern.Client.Register as Register
+import TeamTavern.Client.Script.Cookie (PlayerInfo, getPlayerInfo)
 import TeamTavern.Client.SignIn as SignIn
 import TeamTavern.Client.TopBar (topBar)
 import TeamTavern.Client.TopBar as TopBar
@@ -19,7 +20,7 @@ import TeamTavern.Client.TopBar as TopBar
 data Query send = ChangeRoute Foreign String send
 
 data State
-    = Home
+    = Home (Maybe PlayerInfo)
     | SignIn
     | Register
     | Welcome { email :: String, nickname :: String, emailSent :: Boolean }
@@ -44,7 +45,7 @@ _code = SProxy :: SProxy "code"
 type Message = Void
 
 render :: forall void. State -> H.ComponentHTML Query ChildSlots (A.Async void)
-render Home = HH.slot _topBar unit topBar unit absurd
+render (Home playerInfo) = HH.slot _topBar unit topBar playerInfo absurd
 render SignIn = HH.slot _signIn unit SignIn.signIn unit absurd
 render Register = HH.slot _register unit Register.register unit absurd
 render (Welcome { email, nickname, emailSent }) = HH.p_
@@ -59,22 +60,24 @@ render NotFound = HH.p_ [ HH.text "You're fucken lost, mate." ]
 
 eval :: forall void.
     Query ~> H.HalogenM State Query ChildSlots Message (A.Async void)
-eval (ChangeRoute state route send) =
-    const send <$> H.put case route of
-    "/" -> Home
-    "/signin" -> SignIn
-    "/register" -> Register
-    "/welcome" ->
-        case read state of
-        Left _ -> Home
-        Right identifiers -> Welcome identifiers
-    "/code" -> Code
-    _ -> NotFound
+eval (ChangeRoute state route send) = do
+    playerInfo <- getPlayerInfo # H.liftEffect
+    H.put case route of
+        "/" -> Home playerInfo
+        "/signin" -> SignIn
+        "/register" -> Register
+        "/welcome" ->
+            case read state of
+            Left _ -> Home playerInfo
+            Right identifiers -> Welcome identifiers
+        "/code" -> Code
+        _ -> NotFound
+    pure send
 
-main :: forall input void.
-    H.Component HH.HTML Query input Message (A.Async void)
+main :: forall void.
+    H.Component HH.HTML Query (Maybe PlayerInfo) Message (A.Async void)
 main = H.component
-    { initialState: const Home
+    { initialState: Home
     , render
     , eval
     , receiver: const Nothing

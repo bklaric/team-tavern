@@ -12,6 +12,7 @@ import Halogen.Aff as HA
 import Halogen.VDom.Driver (runUI)
 import Partial.Unsafe (unsafePartial)
 import TeamTavern.Client.Main as Main
+import TeamTavern.Client.Script.Cookie (getPlayerInfo)
 import Web.Event.EventTarget (addEventListener)
 import Web.Event.EventTarget as DOM
 import Web.HTML (window)
@@ -32,7 +33,8 @@ asyncToAff toError async = async # lmap toError # flip runAsync # (\cont ->
 main :: Effect Unit
 main = HA.runHalogenAff do
     body <- HA.awaitBody
-    { query } <- runUI (hoist (asyncToAff absurd) Main.main) unit body
+    playerInfo <- getPlayerInfo # liftEffect
+    { query } <- runUI (hoist (asyncToAff absurd) Main.main) playerInfo body
     listener <- liftEffect $ DOM.eventListener \event -> do
         let eventState = PSE.fromEvent event # unsafePartial fromJust # state
         path <- window >>= Window.location >>= Location.pathname

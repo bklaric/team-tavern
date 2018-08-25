@@ -1,8 +1,14 @@
 module TeamTavern.Client.Script.Cookie
-    (hasPlayerIdCookie, getPlayerId, getNickname) where
+    ( PlayerInfo
+    , hasPlayerIdCookie
+    , getPlayerId
+    , getNickname
+    , getPlayerInfo
+    ) where
 
 import Prelude
 
+import Control.Monad.Maybe.Trans (MaybeT(..), runMaybeT)
 import Data.Array ((!!))
 import Data.Maybe (Maybe, fromMaybe)
 import Data.String (Pattern(..), split, trim)
@@ -41,3 +47,11 @@ getPlayerId = getCookie idCookieName
 
 getNickname :: Effect (Maybe String)
 getNickname = getCookie nicknameCookieName
+
+type PlayerInfo = { id :: String, nickname :: String }
+
+getPlayerInfo :: Effect (Maybe PlayerInfo)
+getPlayerInfo = runMaybeT do
+    id <- MaybeT getPlayerId
+    nickname <- MaybeT getNickname
+    pure { id, nickname }
