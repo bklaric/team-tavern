@@ -13,6 +13,7 @@ import Simple.JSON (read)
 import TeamTavern.Client.Code as Code
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
+import TeamTavern.Client.Player as Player
 import TeamTavern.Client.Register as Register
 import TeamTavern.Client.Script.Cookie (PlayerInfo, getPlayerInfo)
 import TeamTavern.Client.SignIn as SignIn
@@ -28,6 +29,7 @@ data State
     | Welcome { email :: String, nickname :: String, emailSent :: Boolean }
     | Code
     | CodeSent { email :: String, nickname :: String }
+    | Player (Maybe PlayerInfo) String
     | NotFound
 
 type ChildSlots =
@@ -35,6 +37,7 @@ type ChildSlots =
   , signIn :: SignIn.Slot Unit
   , register :: Register.Slot Unit
   , code :: Code.Slot Unit
+  , player :: Player.Slot Unit
   , signInAnchor :: NavigationAnchor.Slot Unit
   )
 
@@ -45,6 +48,8 @@ _signIn = SProxy :: SProxy "signIn"
 _register = SProxy :: SProxy "register"
 
 _code = SProxy :: SProxy "code"
+
+_player = SProxy :: SProxy "player"
 
 _signInAnchor = SProxy :: SProxy "signInAnchor"
 
@@ -67,6 +72,10 @@ render (CodeSent { email, nickname }) = HH.div_
     , HH.p_ [ HH.text $ "An email with your sign in code has been sent to " <> email ]
     , HH.p_ [ HH.slot _signInAnchor unit navigationAnchor { path: "/signin", text: "Sign in" } absurd ]
     ]
+render (Player playerInfo nickname) = HH.div_
+    [ HH.slot _topBar unit topBar playerInfo absurd
+    , HH.slot _player unit Player.player nickname absurd
+    ]
 render NotFound = HH.p_ [ HH.text "You're fucken lost, mate." ]
 
 eval :: forall void.
@@ -86,6 +95,7 @@ eval (ChangeRoute state route send) = do
             case read state of
             Left _ -> Home playerInfo
             Right identifiers -> CodeSent identifiers
+        "/players/bklaric" -> Player playerInfo "bklaric"
         _ -> NotFound
     pure send
 

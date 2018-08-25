@@ -38,24 +38,27 @@ _registerAnchor = SProxy :: SProxy "registerAnchor"
 _profileAnchor = SProxy :: SProxy "profileAnchor"
 
 render :: forall m. MonadEffect m => State -> H.ComponentHTML Query ChildSlots m
-render playerInfo = HH.div [ HP.id_ "top-bar" ]
-    [ HH.span [HP.id_ "top-bar-title" ]
-        [ HH.slot _homeAnchor unit navigationAnchor
-            { path: "/", text: "TeamTavern" } absurd
+render playerInfo = HH.div_
+    [ HH.div [ HP.id_ "top-bar-filler" ] []
+    , HH.div [ HP.id_ "top-bar" ]
+        [ HH.span [HP.id_ "top-bar-title" ]
+            [ HH.slot _homeAnchor unit navigationAnchor
+                { path: "/", text: "TeamTavern" } absurd
+            ]
+        , HH.div_ case playerInfo of
+            Nothing ->
+                [ HH.slot _registerAnchor unit navigationAnchor
+                    { path: "/register", text: "Register" } absurd
+                , HH.slot _signInAnchor unit navigationAnchor
+                    { path: "/signin", text: "Sign in" } absurd
+                ]
+            Just { id, nickname } ->
+                [ HH.slot _profileAnchor unit navigationAnchor
+                    { path: "/players/" <> nickname, text: nickname } absurd
+                , HH.button [ HE.onClick $ HE.input_ SignOut ]
+                    [ HH.text "Sign out" ]
+                ]
         ]
-    , HH.div_ case playerInfo of
-        Nothing ->
-            [ HH.slot _registerAnchor unit navigationAnchor
-                { path: "/register", text: "Register" } absurd
-            , HH.slot _signInAnchor unit navigationAnchor
-                { path: "/signin", text: "Sign in" } absurd
-            ]
-        Just { id, nickname } ->
-            [ HH.slot _profileAnchor unit navigationAnchor
-                { path: "/players/" <> nickname, text: nickname } absurd
-            , HH.button [ HE.onClick $ HE.input_ SignOut ]
-                [ HH.text "Sign out" ]
-            ]
     ]
 
 eval :: forall m. MonadEffect m =>
