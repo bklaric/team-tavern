@@ -3,7 +3,7 @@ module TeamTavern.Player.Session.Prepare.CreateSession
 
 import Prelude
 
-import Async (Async, leftAsync)
+import Async (Async, left)
 import Data.Bifunctor (lmap)
 import Data.Newtype (unwrap)
 import Data.Variant (SProxy(..), Variant, inj)
@@ -48,7 +48,7 @@ createSession pool credentials = label (SProxy :: SProxy "createSession") do
         # lmap { error: _, credentials }
     case rowCount result of
         1 -> pure unit
-        _ -> leftAsync
+        _ -> left
             { error: inj (SProxy :: SProxy "unknownIdentifiers") result
             , credentials
             }

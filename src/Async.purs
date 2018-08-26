@@ -6,7 +6,9 @@ import Control.Monad.Cont (ContT(..), lift)
 import Control.Monad.Except (ExceptT(..), withExceptT)
 import Data.Bifunctor (class Bifunctor)
 import Data.Either (Either(..), either)
-import Data.Either.AlwaysRight as Either
+import Data.Either (note) as Either
+import Data.Either.AlwaysRight (alwaysRight) as Either
+import Data.Maybe (Maybe)
 import Data.Newtype (class Newtype, unwrap)
 import Effect (Effect)
 import Effect.Class (class MonadEffect)
@@ -36,11 +38,11 @@ fromEffectCont :: forall left right.
     ((right -> Effect Unit) -> Effect Unit) -> Async left right
 fromEffectCont = ContT >>> map Right >>> ExceptT >>> Async
 
-rightAsync :: forall left right. right -> Async left right
-rightAsync = fromEither <<< Right
+right :: forall left right. right -> Async left right
+right = fromEither <<< Right
 
-leftAsync :: forall left right. left -> Async left right
-leftAsync = fromEither <<< Left
+left :: forall left right. left -> Async left right
+left = fromEither <<< Left
 
 alwaysRight
     :: forall inLeft inRight outRight
@@ -79,6 +81,9 @@ attempt
     -> (forall voidLeft. Async voidLeft (Either left right))
 attempt = alwaysRight Left Right
 
+note :: forall right left. left -> Maybe right -> Async left right
+note left' maybe = maybe # Either.note left' # fromEither
+
 examineLeftWithAsync
     :: forall left right
     .  (left -> (forall voidLeft. Async voidLeft Unit))
@@ -95,7 +100,7 @@ examineLeftWithAsync examiner async = Async $ ExceptT $ ContT $ \callback ->
 examineLeftWithEffect :: forall left right.
     (left -> Effect Unit) -> Async left right -> Async left right
 examineLeftWithEffect examiner async =
-    examineLeftWithAsync (\left -> fromEffect $ examiner left) async
+    examineLeftWithAsync (\left' -> fromEffect $ examiner left') async
 
 derive instance newtypeAsync :: Newtype (Async left right) _
 
@@ -109,12 +114,12 @@ instance applyAsync :: Apply (Async left) where
     apply = ap
 
 instance applicativeAsync :: Applicative (Async left) where
-    pure = rightAsync
+    pure = right
 
 instance bindAsync :: Bind (Async left) where
     bind (Async exceptT) functionA = Async do
-        right <- exceptT
-        functionA right # unwrap
+        right' <- exceptT
+        functionA right' # unwrap
 
 instance monadAsync :: Monad (Async left)
 

@@ -37,6 +37,7 @@ import TeamTavern.Architecture.Deployment as Deployment
 import TeamTavern.Player.Register.Run (handleRegister)
 import TeamTavern.Player.Session.Prepare.Run (handlePrepare)
 import TeamTavern.Player.Session.Start.Run (handleStart)
+import TeamTavern.Player.Update (handleUpdate)
 import TeamTavern.Player.View.Run (handleView)
 import TeamTavern.Routes (TeamTavernRoutes)
 
@@ -152,6 +153,8 @@ handleRequest pool client method url cookies body =
             handlePrepare pool client nickname body cookies
         , startSession: \{ nickname } ->
             handleStart pool nickname cookies body
+        , updatePlayer: \{ nickname } ->
+            handleUpdate pool nickname cookies body
         }
         <#> (\response -> response { headers = response.headers <> MultiMap.fromFoldable
                 [ Tuple "Access-Control-Allow-Origin" $ NEL.singleton "http://localhost:1337"

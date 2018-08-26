@@ -1,5 +1,6 @@
 module TeamTavern.Player.Domain.Types where
 
+import TeamTavern.Player.Domain.About (About)
 import TeamTavern.Player.Domain.Email (Email)
 import TeamTavern.Player.Domain.Nickname (Nickname)
 import TeamTavern.Player.Domain.Nonce (Nonce)
@@ -32,6 +33,11 @@ type NicknamedNonce =
     , nonce :: Nonce
     }
 
+type NicknamedToken =
+    { nickname :: Nickname
+    , token :: Token
+    }
+
 type NicknamedSecrets =
     { nickname :: Nickname
     , token :: Token
@@ -57,4 +63,9 @@ type IdentifiedCredentials =
     , nickname :: Nickname
     , token :: Token
     , nonce :: Nonce
+    }
+
+type Update =
+    { nickname :: Nickname
+    , about :: About
     }

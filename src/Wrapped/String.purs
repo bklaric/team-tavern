@@ -9,15 +9,15 @@ import Data.String (length, null)
 import Data.String.CodeUnits (toCharArray)
 import Data.Variant (SProxy(..), Variant, inj)
 
-type Empty = { }
+type Empty = {}
 
 empty :: forall errors. String -> Maybe (Variant (empty :: Empty | errors))
 empty string =
     if null string
-    then Just $ inj (SProxy :: SProxy "empty") { }
+    then Just $ inj (SProxy :: SProxy "empty") {}
     else Nothing
 
-type TooLong = { original :: String, maxLength :: Int, actualLength :: Int }
+type TooLong = { maxLength :: Int, actualLength :: Int }
 
 tooLong :: forall errors.
     Int -> String -> Maybe (Variant (tooLong :: TooLong | errors))
@@ -28,7 +28,7 @@ tooLong maxLength string = let
     then Nothing
     else Just
         $ inj (SProxy :: SProxy "tooLong")
-        { original: string, maxLength, actualLength }
+        { maxLength, actualLength }
 
 type NotExactlyLong =
     { original :: String, exactLength :: Int, actualLength :: Int }
@@ -44,16 +44,16 @@ notExactlyLong exactLength string = let
         $ inj (SProxy :: SProxy "notExactlyLong")
         { original: string, exactLength, actualLength }
 
-type NotPrintable = { original :: String }
+type NotPrintable = {}
 
 notPrintable :: forall errors.
     String -> Maybe (Variant ( notPrintable :: NotPrintable | errors))
 notPrintable string =
     if string # toCharArray # all isPrint
     then Nothing
-    else Just $ inj (SProxy :: SProxy "notPrintable") { original: string }
+    else Just $ inj (SProxy :: SProxy "notPrintable") {}
 
-type ContainsWhitespace = { original :: String }
+type ContainsWhitespace = {}
 
 containsWhitespace :: forall errors.
     String
@@ -61,7 +61,7 @@ containsWhitespace :: forall errors.
 containsWhitespace string =
     if string # toCharArray # all (not <<< isSpace)
     then Nothing
-    else Just $ inj (SProxy :: SProxy "containsWhitespace") { original: string }
+    else Just $ inj (SProxy :: SProxy "containsWhitespace") {}
 
 type NotHex = { original :: String }
 

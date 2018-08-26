@@ -2,6 +2,7 @@ module TeamTavern.Infrastructure.Cookie where
 
 import Prelude
 
+import Data.Either as Either
 import Data.List (List(..), (:))
 import Data.List.Types (NonEmptyList(..))
 import Data.Map (Map, lookup)
@@ -10,9 +11,13 @@ import Data.Newtype (unwrap)
 import Data.NonEmpty ((:|))
 import MultiMap (MultiMap, singleton')
 import TeamTavern.Player.Domain.Nickname (Nickname)
+import TeamTavern.Player.Domain.Nickname as Nickname
 import TeamTavern.Player.Domain.PlayerId (PlayerId)
 import TeamTavern.Player.Domain.PlayerId as PlayerId
 import TeamTavern.Player.Domain.Token (Token)
+import TeamTavern.Player.Domain.Token as Token
+import TeamTavern.Player.Domain.Types (NicknamedToken)
+import Validated as Validated
 
 idCookieName :: String
 idCookieName = "teamtavern-id"
@@ -25,6 +30,14 @@ tokenCookieName = "teamtavern-token"
 
 lookupIdCookie :: Map String String -> Maybe String
 lookupIdCookie = lookup idCookieName
+
+lookupAuthCookies :: Map String String -> Maybe NicknamedToken
+lookupAuthCookies cookies = do
+    nickname <- lookup nicknameCookieName cookies
+        >>= (Nickname.create >>> Validated.hush)
+    token <- lookup tokenCookieName cookies
+        >>= (Token.create >>> Either.hush)
+    pure { nickname, token }
 
 idCookie :: PlayerId -> String
 idCookie id =
