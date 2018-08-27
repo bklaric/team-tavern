@@ -15,7 +15,9 @@ type AboutErrorResponseContent = Variant
     )
 
 type BadRequestResponseContent = Variant
-    ( invalidIdentifiers :: Array AboutErrorResponseContent )
+    ( invalidIdentifiers :: Array AboutErrorResponseContent
+    , nicknameTaken :: {}
+    )
 
 errorResponse :: UpdateError -> Response
 errorResponse = match
@@ -33,6 +35,9 @@ errorResponse = match
         # inj (SProxy :: SProxy "invalidIdentifiers")
         # (writeJSON :: BadRequestResponseContent -> String)
         # badRequest_
+    , nicknameTaken: const $ badRequest_
+        $ (writeJSON :: BadRequestResponseContent -> String)
+        $ inj (SProxy :: SProxy "nicknameTaken") {}
     , databaseError: const $ internalServerError__
     , notAuthorized: const $ forbidden__
     }

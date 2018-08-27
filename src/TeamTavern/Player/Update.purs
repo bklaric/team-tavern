@@ -4,13 +4,18 @@ import Prelude
 
 import Async (Async, examineLeftWithEffect)
 import Async (fromEither, left, note) as Async
+import Data.Bifunctor (lmap)
 import Data.List.Types (NonEmptyList)
 import Data.Map (Map)
+import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
 import Data.String.NonEmpty (NonEmptyString, toString)
 import Data.Variant (SProxy(..), inj)
+import Node.Errors.Class (code)
 import Perun.Request.Body (Body)
 import Perun.Response (Response)
+import Postgres.Error (constraint)
+import Postgres.Error.Codes (unique_violation)
 import Postgres.Pool (Pool)
 import Postgres.Query (Query(..), QueryParameter(..))
 import Postgres.Result (rowCount)
@@ -97,7 +102,12 @@ updatePlayer pool nicknamedToken update = do
     result <- pool
         # query updatePlayerQuery
             (updatePlayerQueryParameters nicknamedToken update)
-        # Async.label (SProxy :: SProxy "databaseError")
+        # lmap (\error ->
+            case code error == unique_violation of
+            true | constraint error == Just "player_nickname_key" ->
+                inj (SProxy :: SProxy "nicknameTaken")
+                { nickname: nicknamedToken.nickname, error }
+            _ -> inj (SProxy :: SProxy "databaseError") error)
     if rowCount result == 1
         then pure unit
         else Async.left $ inj (SProxy :: SProxy "notAuthorized") unit

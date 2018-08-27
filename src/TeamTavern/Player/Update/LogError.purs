@@ -2,6 +2,7 @@ module TeamTavern.Player.Update.LogError where
 
 import Prelude
 
+import Data.Newtype (unwrap)
 import Data.Variant (match)
 import Effect (Effect)
 import Effect.Console (log)
@@ -35,6 +36,9 @@ logError updateError = do
         , cantValidateUpdate: \errors ->
             logt $ "Validating update resulted in these errors: "
                 <> show errors
+        , nicknameTaken: \{ nickname, error } ->
+            logt $ "Nickname '" <> unwrap nickname <> "' is already taken: "
+                <> print error
         , databaseError: \error ->
             logt $ "Database error occured: " <> print error
         , notAuthorized: const $

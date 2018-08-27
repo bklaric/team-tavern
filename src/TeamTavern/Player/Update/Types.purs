@@ -7,7 +7,7 @@ import Data.Variant (Variant)
 import Foreign (ForeignError)
 import Postgres.Error (Error)
 import TeamTavern.Player.Domain.About (AboutError)
-import TeamTavern.Player.Domain.Nickname (NicknameError)
+import TeamTavern.Player.Domain.Nickname (Nickname, NicknameError)
 
 -- Error for the Update type.
 type UpdateError' = Variant
@@ -22,6 +22,7 @@ type UpdateError = Variant
     , nicknamesNotSame :: Unit
     , cantReadUpdateModel :: NonEmptyList ForeignError
     , cantValidateUpdate :: NonEmptyList UpdateError'
+    , nicknameTaken :: { nickname :: Nickname, error :: Error }
     , databaseError :: Error
     , notAuthorized :: Unit
     )
