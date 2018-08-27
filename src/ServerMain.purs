@@ -38,7 +38,7 @@ import TeamTavern.Player.Register.Run (handleRegister)
 import TeamTavern.Player.Session.Prepare.Run (handlePrepare)
 import TeamTavern.Player.Session.Start.Run (handleStart)
 import TeamTavern.Player.Update (handleUpdate)
-import TeamTavern.Player.View.Run (handleView)
+import TeamTavern.Player.View (handleView)
 import TeamTavern.Routes (TeamTavernRoutes)
 
 listenOptions :: ListenOptions

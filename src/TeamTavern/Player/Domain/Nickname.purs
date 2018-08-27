@@ -1,5 +1,11 @@
 module TeamTavern.Player.Domain.Nickname
-    (Nickname, NicknameError, create, create') where
+    ( Nickname
+    , NicknameError
+    , create
+    , create'
+    , fromNonEmpty
+    , fromNonEmpty'
+    ) where
 
 import Prelude
 
@@ -7,6 +13,7 @@ import Data.Either (Either)
 import Data.List.Types (NonEmptyList)
 import Data.Newtype (class Newtype)
 import Data.String (trim)
+import Data.String.NonEmpty (NonEmptyString, toString)
 import Data.Variant (Variant)
 import Validated (Validated, toEither)
 import Wrapped.String (ContainsWhitespace, NotPrintable, TooLong, Empty, containsWhitespace, empty, notPrintable, tooLong)
@@ -33,3 +40,11 @@ create nickname =
 
 create' :: String -> Either (NonEmptyList NicknameError) Nickname
 create' = create >>> toEither
+
+fromNonEmpty ::
+    NonEmptyString -> Validated (NonEmptyList NicknameError) Nickname
+fromNonEmpty = toString >>> create
+
+fromNonEmpty' ::
+    NonEmptyString -> Either (NonEmptyList NicknameError) Nickname
+fromNonEmpty' = toString >>> create'

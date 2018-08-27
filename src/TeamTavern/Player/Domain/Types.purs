@@ -65,6 +65,11 @@ type IdentifiedCredentials =
     , nonce :: Nonce
     }
 
+type NicknamedAbout =
+    { nickname :: Nickname
+    , about :: About
+    }
+
 type Update =
     { nickname :: Nickname
     , about :: About

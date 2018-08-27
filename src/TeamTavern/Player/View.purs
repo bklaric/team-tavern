@@ -2,32 +2,68 @@ module TeamTavern.Player.View where
 
 import Prelude
 
-import Data.Newtype (class Newtype)
+import Async (Async, examineLeftWithEffect)
+import Async (fromEither, note) as Async
+import Data.Array (head)
+import Data.Bifunctor (lmap)
+import Data.Newtype (unwrap)
+import Data.String.NonEmpty (NonEmptyString)
 import Data.Symbol (SProxy(..))
-import Run (FProxy, Run, lift)
+import Data.Traversable (traverse)
+import Data.Variant (inj)
+import Perun.Response (Response)
+import Postgres.Pool (Pool)
+import Postgres.Query (Query(..), QueryParameter(..))
+import Postgres.Result (rows)
+import Simple.JSON (read)
+import TeamTavern.Architecture.Async (label) as Async
+import TeamTavern.Architecture.Postgres.Query (query)
+import TeamTavern.Player.Domain.About as About
 import TeamTavern.Player.Domain.Nickname (Nickname)
-import TeamTavern.Player.Domain.PlayerId (PlayerId)
+import TeamTavern.Player.Domain.Nickname as Nickname
+import TeamTavern.Player.Domain.Types (NicknamedAbout)
+import TeamTavern.Player.View.LogError (logError) as View
+import TeamTavern.Player.View.Response (response) as View
+import TeamTavern.Player.View.Types (ViewError)
+import Validated as Validated
 
-newtype About = About String
+readNickname :: NonEmptyString -> Async ViewError Nickname
+readNickname nickname =
+    nickname
+    # Nickname.fromNonEmpty'
+    # lmap ({ nickname, errors: _} >>> inj (SProxy :: SProxy "nicknameInvalid"))
+    # Async.fromEither
 
-derive instance newtypeAbout :: Newtype About _
+loadPlayerQuery :: Query
+loadPlayerQuery = Query """
+    select about
+    from player
+    where nickname = $1
+    """
 
-type PlayerView = { id :: PlayerId, nickname :: Nickname, about :: About }
+loadPlayerQueryParameters :: Nickname -> Array QueryParameter
+loadPlayerQueryParameters nickname = [unwrap nickname] <#> QueryParameter
 
-data ViewF result
-    = ReadNickname (Nickname -> result)
-    | LoadPlayer Nickname (PlayerView -> result)
+loadPlayer :: Pool -> Nickname -> Async ViewError NicknamedAbout
+loadPlayer pool nickname = do
+    result <- pool
+        # query loadPlayerQuery (loadPlayerQueryParameters nickname)
+        # Async.label (SProxy :: SProxy "databaseError")
+    views <- rows result
+        # traverse read
+        # lmap (inj (SProxy :: SProxy "unreadableResult"))
+        # Async.fromEither
+    { about } :: { about :: String } <- head views
+        # Async.note (inj (SProxy :: SProxy "notFound") nickname)
+    { about: _, nickname }
+        <$> (About.create about # Validated.hush)
+        # Async.note (inj (SProxy :: SProxy "invalidView") { nickname, about })
 
-derive instance functorViewF :: Functor ViewF
+handleView :: forall left. Pool -> NonEmptyString -> Async left Response
+handleView pool nickname' =
+    View.response $ examineLeftWithEffect View.logError do
+    -- Read player nickname from route.
+    nickname <- readNickname nickname'
 
-_view = SProxy :: SProxy "view"
-
-readNickname :: forall run. Run (view :: FProxy ViewF | run) Nickname
-readNickname = lift _view (ReadNickname identity)
-
-loadPlayer :: forall run.
-    Nickname -> Run (view :: FProxy ViewF | run) PlayerView
-loadPlayer nickname = lift _view (LoadPlayer nickname identity)
-
-view :: forall run. Run (view :: FProxy ViewF | run) PlayerView
-view = readNickname >>= loadPlayer
+    -- Load player from database.
+    loadPlayer pool nickname

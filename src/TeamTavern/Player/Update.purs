@@ -9,7 +9,7 @@ import Data.List.Types (NonEmptyList)
 import Data.Map (Map)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
-import Data.String.NonEmpty (NonEmptyString, toString)
+import Data.String.NonEmpty (NonEmptyString)
 import Data.Variant (SProxy(..), inj)
 import Node.Errors.Class (code)
 import Perun.Request.Body (Body)
@@ -39,8 +39,7 @@ import Validated (Validated)
 readTargetNickname :: NonEmptyString -> Async UpdateError Nickname
 readTargetNickname nickname' =
     nickname'
-    # toString
-    # Nickname.create'
+    # Nickname.fromNonEmpty'
     # Either.label (SProxy :: SProxy "cantValidateTargetNickname")
     # Async.fromEither
 
