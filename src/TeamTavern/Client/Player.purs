@@ -20,7 +20,7 @@ data Query send = Init send
 
 data State
     = Nickname String
-    | View { id :: Int, nickname :: String, about :: String }
+    | View { nickname :: String, about :: String }
     | NotFound String
     | Error String
 
@@ -33,7 +33,7 @@ type ChildSlots = ()
 render :: forall m. State -> H.ComponentHTML Query ChildSlots m
 render (Nickname nickname) = HH.p_
     [ HH.text $ "Loading player " <> nickname ]
-render (View { id, nickname, about }) = HH.div_
+render (View { nickname, about }) = HH.div_
     [ HH.h2_ [ HH.text nickname ]
     , HH.p_ [ HH.text about ]
     ]

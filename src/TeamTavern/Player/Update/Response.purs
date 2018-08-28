@@ -5,7 +5,7 @@ import Prelude
 import Async (Async, alwaysRight)
 import Data.Array (fromFoldable)
 import Data.Variant (SProxy(..), Variant, inj, match)
-import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, noContent_, notFound__)
+import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, noContent_, notFound__, unauthorized__)
 import Simple.JSON (writeJSON)
 import TeamTavern.Player.Update.Types (UpdateError)
 
@@ -22,7 +22,7 @@ type BadRequestResponseContent = Variant
 errorResponse :: UpdateError -> Response
 errorResponse = match
     { cantValidateTargetNickname: const $ notFound__
-    , cookiesNotPresent: const $ forbidden__
+    , cookiesNotPresent: const $ unauthorized__
     , nicknamesNotSame: const $ forbidden__
     , cantReadUpdateModel: const $ badRequest__
     , cantValidateUpdate: \errors ->

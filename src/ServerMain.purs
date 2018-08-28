@@ -34,6 +34,7 @@ import Postmark.Client (Client)
 import Postmark.Client as Postmark
 import TeamTavern.Architecture.Deployment (Deployment(..))
 import TeamTavern.Architecture.Deployment as Deployment
+import TeamTavern.Game.Create (handleCreate)
 import TeamTavern.Player.Register.Run (handleRegister)
 import TeamTavern.Player.Session.Prepare.Run (handlePrepare)
 import TeamTavern.Player.Session.Start.Run (handleStart)
@@ -155,6 +156,7 @@ handleRequest pool client method url cookies body =
             handleStart pool nickname cookies body
         , updatePlayer: \{ nickname } ->
             handleUpdate pool nickname cookies body
+        , createGame: const $ handleCreate pool cookies body
         }
         <#> (\response -> response { headers = response.headers <> MultiMap.fromFoldable
                 [ Tuple "Access-Control-Allow-Origin" $ NEL.singleton "http://localhost:1337"

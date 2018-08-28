@@ -15,3 +15,11 @@ create table session
     , revoked boolean not null default false
     , generated timestamptz not null default current_timestamp
     );
+
+create table game
+    ( id serial not null primary key
+    , administrator_id integer not null references player(id)
+    , name varchar(50) not null unique
+    , description varchar(2000) not null
+    , created timestamptz not null default current_timestamp
+    );

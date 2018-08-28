@@ -37,6 +37,15 @@ badRequest_ = badRequest empty
 badRequest__ :: Response
 badRequest__ = badRequest_ mempty
 
+unauthorized :: MultiMap String String -> String -> Response
+unauthorized headers content = { statusCode: 401, headers, content }
+
+unauthorized_ :: String -> Response
+unauthorized_ = unauthorized empty
+
+unauthorized__ :: Response
+unauthorized__ = unauthorized_ mempty
+
 forbidden :: MultiMap String String -> String -> Response
 forbidden headers content = { statusCode: 403, headers, content }
 

@@ -19,5 +19,16 @@ label
 label label' (Async exceptT) =
     exceptT # withExceptT (inj label') # Async
 
+labelMap
+    :: forall leftIn leftOut errors errors' label right
+    .  Cons label leftOut errors' errors
+    => IsSymbol label
+    => SProxy label
+    -> (leftIn -> leftOut)
+    -> Async leftIn right
+    -> Async (Variant errors) right
+labelMap label' mapper (Async exceptT) =
+    exceptT # withExceptT (mapper >>> inj label') # Async
+
 fromValidated :: forall left right. Validated left right -> Async left right
 fromValidated = toEither >>> fromEither
