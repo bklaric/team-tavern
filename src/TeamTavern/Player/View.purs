@@ -16,7 +16,7 @@ import Postgres.Pool (Pool)
 import Postgres.Query (Query(..), QueryParameter(..))
 import Postgres.Result (rows)
 import Simple.JSON (read)
-import TeamTavern.Architecture.Async (label) as Async
+import Data.Bifunctor.Label (label) as Async
 import TeamTavern.Architecture.Postgres.Query (query)
 import TeamTavern.Player.Domain.About as About
 import TeamTavern.Player.Domain.Nickname (Nickname)

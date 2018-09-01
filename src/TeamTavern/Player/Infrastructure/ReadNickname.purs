@@ -8,7 +8,7 @@ import Data.List.Types (NonEmptyList)
 import Data.String.NonEmpty (NonEmptyString, toString)
 import Data.Symbol (SProxy(..))
 import Data.Variant (Variant)
-import TeamTavern.Architecture.Async (label)
+import Data.Bifunctor.Label (label)
 import TeamTavern.Player.Domain.Nickname (Nickname, NicknameError)
 import TeamTavern.Player.Domain.Nickname as Nickname
 import Validated (toEither)

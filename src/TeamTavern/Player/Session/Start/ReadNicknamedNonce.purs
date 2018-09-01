@@ -5,6 +5,7 @@ import Prelude
 
 import Async (Async, fromEither)
 import Data.Bifunctor (lmap)
+import Data.Bifunctor.Label (label)
 import Data.Either (Either(..))
 import Data.List.Types (NonEmptyList)
 import Data.String.NonEmpty (NonEmptyString)
@@ -13,8 +14,6 @@ import Data.Variant (Variant)
 import Foreign (MultipleErrors)
 import Perun.Request.Body (Body)
 import Simple.JSON (readJSON)
-import TeamTavern.Architecture.Async as Async
-import TeamTavern.Architecture.Either (label)
 import TeamTavern.Architecture.Perun.Request.Body (readBody)
 import TeamTavern.Player.Domain.Nickname (Nickname)
 import TeamTavern.Player.Domain.Nonce (Nonce, NonceError)
@@ -32,7 +31,7 @@ readNonce
     :: forall errors
     .  Body
     -> Async (Variant (readNonce :: ReadNonceError | errors)) Nonce
-readNonce body = Async.label (SProxy :: SProxy "readNonce") do
+readNonce body = label (SProxy :: SProxy "readNonce") do
     content <- readBody body
     case readJSON content of
         Left errors ->

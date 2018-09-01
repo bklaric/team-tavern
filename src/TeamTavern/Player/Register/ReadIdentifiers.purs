@@ -9,7 +9,7 @@ import Data.Variant (SProxy(..), Variant)
 import Foreign (ForeignError)
 import Perun.Request.Body (Body)
 import Simple.JSON (readJSON)
-import TeamTavern.Architecture.Async (label)
+import Data.Bifunctor.Label (label)
 import TeamTavern.Architecture.Perun.Request.Body (readBody)
 import TeamTavern.Player.Infrastructure.Types (IdentifiersModel)
 

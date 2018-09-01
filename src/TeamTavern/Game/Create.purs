@@ -4,7 +4,9 @@ import Prelude
 
 import Async (Async)
 import Async (examineLeftWithEffect, left, note) as Async
+import Async.Validated (fromValidated) as Async
 import Data.Bifunctor (lmap)
+import Data.Bifunctor.Label (labelMap)
 import Data.List.Types (NonEmptyList)
 import Data.Map (Map)
 import Data.Maybe (Maybe(..))
@@ -20,7 +22,6 @@ import Postgres.Pool (Pool)
 import Postgres.Query (Query(..), QueryParameter(..))
 import Postgres.Result as PgR
 import Simple.JSON.Async (readJSON) as Async
-import TeamTavern.Architecture.Async (fromValidated, labelMap) as Async
 import TeamTavern.Architecture.Perun.Request.Body as Perun
 import TeamTavern.Architecture.Postgres.Query as Pg
 import TeamTavern.Architecture.Validated as Validated
@@ -59,14 +60,14 @@ readDetails body = do
     content <- Perun.readBody body
     { name, handle, description } ::
         { name :: String, handle :: String, description :: String } <-
-        Async.readJSON content # Async.labelMap
+        Async.readJSON content # labelMap
             (SProxy :: SProxy "cantReadDetailsModel") { content, errors: _ }
     { name: _, handle: _, description: _ }
         <$> validateName name
         <*> validateHandle handle
         <*> validateDescription description
         # Async.fromValidated
-        # Async.labelMap (SProxy :: SProxy "cantValidateDetails")
+        # labelMap (SProxy :: SProxy "cantValidateDetails")
             { name, handle, description, errors: _ }
 
 addGameQuery :: Query

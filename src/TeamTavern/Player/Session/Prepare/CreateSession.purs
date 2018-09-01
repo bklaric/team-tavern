@@ -11,7 +11,7 @@ import Postgres.Error (Error)
 import Postgres.Pool (Pool)
 import Postgres.Query (Query(..), QueryParameter(..))
 import Postgres.Result (Result, rowCount)
-import TeamTavern.Architecture.Async (label)
+import Data.Bifunctor.Label (label)
 import TeamTavern.Architecture.Postgres.Query (query)
 import TeamTavern.Player.Domain.Types (Credentials)
 

@@ -13,7 +13,7 @@ import Data.Variant (Variant)
 import Postmark.Client (Client)
 import Postmark.Error (Error)
 import Postmark.Message (Message)
-import TeamTavern.Architecture.Async (label)
+import Data.Bifunctor.Label (label)
 import TeamTavern.Architecture.Postmark.Client (sendEmail)
 import TeamTavern.Player.Domain.Types (NoncedIdentifiers)
 

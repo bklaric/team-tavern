@@ -5,7 +5,7 @@ import Prelude
 import Async (Async)
 import Data.Bifunctor (lmap)
 import Data.Variant (Variant)
-import TeamTavern.Architecture.Async (label)
+import Data.Bifunctor.Label (label)
 import TeamTavern.Player.Domain.Email (Email)
 import TeamTavern.Player.Domain.Nickname (Nickname)
 import TeamTavern.Player.Domain.Types (Secrets)

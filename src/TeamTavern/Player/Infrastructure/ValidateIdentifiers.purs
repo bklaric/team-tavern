@@ -8,11 +8,11 @@ module TeamTavern.Player.Infrastructure.ValidateIdentifiers
 import Prelude
 
 import Async (Async)
+import Async.Validated (fromValidated)
 import Data.Bifunctor (lmap)
+import Data.Bifunctor.Label (label)
 import Data.List.Types (NonEmptyList)
 import Data.Variant (SProxy(..), Variant)
-import TeamTavern.Architecture.Async (fromValidated)
-import TeamTavern.Architecture.Async as Async
 import TeamTavern.Architecture.Validated as Validated
 import TeamTavern.Player.Domain.Email (Email, EmailError)
 import TeamTavern.Player.Domain.Email as Email
@@ -60,4 +60,4 @@ validateIdentifiers
         Identifiers
 validateIdentifiers =
     validateIdentifiers'
-    >>> Async.label (SProxy :: SProxy "validateIdentifiers")
+    >>> label (SProxy :: SProxy "validateIdentifiers")

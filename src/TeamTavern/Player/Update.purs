@@ -4,7 +4,9 @@ import Prelude
 
 import Async (Async, examineLeftWithEffect)
 import Async (fromEither, left, note) as Async
+import Async.Validated (fromValidated) as Async
 import Data.Bifunctor (lmap)
+import Data.Bifunctor.Label (label)
 import Data.List.Types (NonEmptyList)
 import Data.Map (Map)
 import Data.Maybe (Maybe(..))
@@ -20,7 +22,6 @@ import Postgres.Pool (Pool)
 import Postgres.Query (Query(..), QueryParameter(..))
 import Postgres.Result (rowCount)
 import Simple.JSON (readJSON)
-import TeamTavern.Architecture.Async (fromValidated, label) as Async
 import TeamTavern.Architecture.Either as Either
 import TeamTavern.Architecture.Perun.Request.Body (readBody)
 import TeamTavern.Architecture.Postgres.Query (query)
@@ -72,7 +73,7 @@ readUpdate body = do
         <$> validateNickname nickname
         <*> validateAbout about
         # Async.fromValidated
-        # Async.label (SProxy :: SProxy "cantValidateUpdate")
+        # label (SProxy :: SProxy "cantValidateUpdate")
 
 updatePlayerQuery :: Query
 updatePlayerQuery = Query """

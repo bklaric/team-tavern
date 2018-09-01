@@ -15,7 +15,7 @@ import Node.Buffer (Buffer, toString__)
 import Node.Crypto (randomBytes)
 import Node.Encoding (Encoding(..))
 import Node.Errors (Error)
-import TeamTavern.Architecture.Async (label)
+import Data.Bifunctor.Label (label)
 import TeamTavern.Player.Domain.CharCount (CharCount, toByteCount)
 import TeamTavern.Player.Domain.Nonce (Nonce, NonceError, nonceCharCount)
 import TeamTavern.Player.Domain.Nonce as Nonce
