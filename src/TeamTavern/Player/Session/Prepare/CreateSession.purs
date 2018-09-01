@@ -12,7 +12,7 @@ import Postgres.Pool (Pool)
 import Postgres.Query (Query(..), QueryParameter(..))
 import Postgres.Result (Result, rowCount)
 import Data.Bifunctor.Label (label)
-import TeamTavern.Architecture.Postgres.Query (query)
+import Postgres.Async.Query (query)
 import TeamTavern.Player.Domain.Types (Credentials)
 
 createSessionQuery :: Query

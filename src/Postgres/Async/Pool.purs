@@ -1,4 +1,4 @@
-module TeamTavern.Architecture.Postgres.Pool where
+module Postgres.Async.Pool where
 
 import Prelude
 

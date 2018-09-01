@@ -15,7 +15,7 @@ import Postgres.Pool (Pool)
 import Postgres.Query (Query(..), QueryParameter(..))
 import Postgres.Result (rows)
 import Simple.JSON.Async (read)
-import TeamTavern.Architecture.Postgres.Query (query)
+import Postgres.Async.Query (query)
 import TeamTavern.Game.Domain.Description as Description
 import TeamTavern.Game.Domain.Handle (Handle)
 import TeamTavern.Game.Domain.Handle as Handle

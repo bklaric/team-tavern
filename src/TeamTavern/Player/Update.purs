@@ -23,7 +23,7 @@ import Postgres.Query (Query(..), QueryParameter(..))
 import Postgres.Result (rowCount)
 import Simple.JSON (readJSON)
 import TeamTavern.Architecture.Perun.Request.Body (readBody)
-import TeamTavern.Architecture.Postgres.Query (query)
+import Postgres.Async.Query (query)
 import Data.Validated.Label as Validated
 import TeamTavern.Infrastructure.Cookie (lookupAuthCookies)
 import TeamTavern.Player.Domain.About (About)

@@ -23,7 +23,7 @@ import Postgres.Query (Query(..), QueryParameter(..))
 import Postgres.Result as PgR
 import Simple.JSON.Async (readJSON) as Async
 import TeamTavern.Architecture.Perun.Request.Body as Perun
-import TeamTavern.Architecture.Postgres.Query as Pg
+import Postgres.Async.Query as Pg
 import Data.Validated.Label as Validated
 import TeamTavern.Game.Create.LogError (logError) as Create
 import TeamTavern.Game.Create.Response (response) as Create

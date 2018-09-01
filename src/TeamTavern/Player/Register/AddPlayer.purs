@@ -13,7 +13,7 @@ import Postgres.Error.Codes (unique_violation)
 import Postgres.Pool (Pool)
 import Postgres.Query (Query(..), QueryParameter(..))
 import Data.Bifunctor.Label (label)
-import TeamTavern.Architecture.Postgres.Query (query)
+import Postgres.Async.Query (query)
 import TeamTavern.Player.Domain.Types (Credentials)
 
 addPlayerQuery :: Query
