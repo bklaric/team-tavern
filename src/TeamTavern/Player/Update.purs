@@ -22,7 +22,6 @@ import Postgres.Pool (Pool)
 import Postgres.Query (Query(..), QueryParameter(..))
 import Postgres.Result (rowCount)
 import Simple.JSON (readJSON)
-import TeamTavern.Architecture.Either as Either
 import TeamTavern.Architecture.Perun.Request.Body (readBody)
 import TeamTavern.Architecture.Postgres.Query (query)
 import TeamTavern.Architecture.Validated as Validated
@@ -41,7 +40,7 @@ readTargetNickname :: NonEmptyString -> Async UpdateError Nickname
 readTargetNickname nickname' =
     nickname'
     # Nickname.fromNonEmpty'
-    # Either.label (SProxy :: SProxy "cantValidateTargetNickname")
+    # label (SProxy :: SProxy "cantValidateTargetNickname")
     # Async.fromEither
 
 readRequestor :: Map String String -> Async UpdateError NicknamedToken
@@ -67,7 +66,7 @@ readUpdate body = do
     content <- readBody body
     { nickname, about } :: { nickname :: String, about :: String } <-
         readJSON content
-        # Either.label (SProxy :: SProxy "cantReadUpdateModel")
+        # label (SProxy :: SProxy "cantReadUpdateModel")
         # Async.fromEither
     { nickname: _, about: _ }
         <$> validateNickname nickname
