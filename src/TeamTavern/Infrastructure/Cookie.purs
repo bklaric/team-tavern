@@ -9,7 +9,7 @@ import Data.Map (Map, lookup)
 import Data.Maybe (Maybe)
 import Data.Newtype (unwrap)
 import Data.NonEmpty ((:|))
-import MultiMap (MultiMap, singleton')
+import Data.MultiMap (MultiMap, singleton')
 import TeamTavern.Player.Domain.Nickname (Nickname)
 import TeamTavern.Player.Domain.Nickname as Nickname
 import TeamTavern.Player.Domain.PlayerId (PlayerId)

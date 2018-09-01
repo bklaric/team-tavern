@@ -1,4 +1,4 @@
-module MultiMap
+module Data.MultiMap
     ( MultiMap
     , empty
     , singleton

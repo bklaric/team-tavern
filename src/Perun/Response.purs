@@ -5,7 +5,7 @@ import Prelude
 import Data.Array (fromFoldable)
 import Data.Tuple (Tuple(..))
 import Effect (Effect, foreachE)
-import MultiMap (MultiMap, empty, toUnfoldable)
+import Data.MultiMap (MultiMap, empty, toUnfoldable)
 import Node.Http.Server.Response (setHeader', setStatusCode)
 import Node.Http.Server.Response as Node
 import Node.Stream.Writable (endString__)

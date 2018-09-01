@@ -19,7 +19,7 @@ import Effect (Effect)
 import Effect.Console (log)
 import Global.Unsafe (unsafeStringify)
 import Jarilo.Junction (JunctionProxy(..), router)
-import MultiMap as MultiMap
+import Data.MultiMap as MultiMap
 import Node.Process (lookupEnv)
 import Node.Server (ListenOptions(..))
 import Perun.Async.Server (run_)
