@@ -29,6 +29,8 @@ import TeamTavern.Game.Create.Response (response) as Create
 import TeamTavern.Game.Create.Types (CreateError, DetailsError)
 import TeamTavern.Game.Domain.Description (Description)
 import TeamTavern.Game.Domain.Description as Description
+import TeamTavern.Game.Domain.Handle (Handle)
+import TeamTavern.Game.Domain.Handle as Handle
 import TeamTavern.Game.Domain.Name (Name)
 import TeamTavern.Game.Domain.Name as Name
 import TeamTavern.Game.Domain.Types (Details)
@@ -43,6 +45,10 @@ readAdmin cookies = Cookie.lookupAuthCookies cookies
 validateName :: String -> Validated (NonEmptyList DetailsError) Name
 validateName name = Name.create name # Validated.label (SProxy :: SProxy "name")
 
+validateHandle :: String -> Validated (NonEmptyList DetailsError) Handle
+validateHandle handle = Handle.create handle
+    # Validated.label (SProxy :: SProxy "handle")
+
 validateDescription ::
     String -> Validated (NonEmptyList DetailsError) Description
 validateDescription description = Description.create description
@@ -51,20 +57,22 @@ validateDescription description = Description.create description
 readDetails :: Body -> Async CreateError Details
 readDetails body = do
     content <- Perun.readBody body
-    { name, description } :: { name :: String, description :: String } <-
+    { name, handle, description } ::
+        { name :: String, handle :: String, description :: String } <-
         Async.readJSON content # Async.labelMap
             (SProxy :: SProxy "cantReadDetailsModel") { content, errors: _ }
-    { name: _, description: _ }
+    { name: _, handle: _, description: _ }
         <$> validateName name
+        <*> validateHandle handle
         <*> validateDescription description
         # Async.fromValidated
         # Async.labelMap (SProxy :: SProxy "cantValidateDetails")
-            { name, description, errors: _ }
+            { name, handle, description, errors: _ }
 
 addGameQuery :: Query
 addGameQuery = Query """
-    insert into game (administrator_id, name, description)
-    select player.id, $3, $4
+    insert into game (administrator_id, name, handle, description)
+    select player.id, $3, $4, $5
     from player
     join session on session.player_id = player.id
     where player.nickname = $1
@@ -74,8 +82,13 @@ addGameQuery = Query """
     """
 
 addGameQueryParameters :: NicknamedToken -> Details -> Array QueryParameter
-addGameQueryParameters { nickname, token } { name, description } =
-    [unwrap nickname, unwrap token, unwrap name, unwrap description]
+addGameQueryParameters { nickname, token } { name, handle, description } =
+    [ unwrap nickname
+    , unwrap token
+    , unwrap name
+    , unwrap handle
+    , unwrap description
+    ]
     <#> QueryParameter
 
 addGame :: Pool -> NicknamedToken -> Details -> Async CreateError Unit

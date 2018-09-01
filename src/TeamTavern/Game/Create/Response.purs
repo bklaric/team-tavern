@@ -11,6 +11,7 @@ import TeamTavern.Game.Create.Types (CreateError)
 
 type DetailsErrorResponseContent = Variant
     ( invalidName :: {}
+    , invalidHandle :: {}
     , invalidDescription :: {}
     )
 
@@ -27,6 +28,7 @@ errorResponse = match
         errors
         <#> (match
             { name: const $ inj (SProxy :: SProxy "invalidName") {}
+            , handle: const $ inj (SProxy :: SProxy "invalidHandle") {}
             , description: const $
                 inj (SProxy :: SProxy "invalidDescription") {}
             })

@@ -18,4 +18,4 @@ GET http://localhost:8080/players/by-nickname/bklaric HTTP/1.1
 POST http://localhost:8080/games HTTP/1.1
 Cookie: teamtavern-nickname=bklaric; teamtavern-token=d2efd3b02e405fa486a28c3b3a076f19123028bd
 
-{ "name": "Unreal カ", "description": "Team deathmatch." }
+{ "name": "Unreal カ", "handle": "Unrealćs__", "description": "Team deathmatch." }

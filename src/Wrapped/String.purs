@@ -61,9 +61,23 @@ isAsciiAlpha ch = between 'a' 'z' (toLower ch)
 notAsciiAlphaNum :: forall errors.
     String -> Maybe (Variant (notAsciiAlphaNum :: NotAsciiAlphaNum | errors))
 notAsciiAlphaNum string =
-    if string # toCharArray # all (\char -> isAsciiAlpha char && isDigit char)
+    if string # toCharArray # all (\char -> isAsciiAlpha char || isDigit char)
     then Nothing
     else Just $ inj (SProxy :: SProxy "notAsciiAlphaNum") {}
+
+type NotAsciiAlphaNumUnderscore = {}
+
+notAsciiAlphaNumUnderscore :: forall errors.
+  String
+  -> Maybe (Variant
+    ( notAsciiAlphaNumUnderscore :: NotAsciiAlphaNumUnderscore
+    | errors
+    ))
+notAsciiAlphaNumUnderscore string =
+    if string # toCharArray # all
+        (\char -> isAsciiAlpha char || isDigit char || char == '_')
+    then Nothing
+    else Just $ inj (SProxy :: SProxy "notAsciiAlphaNumUnderscore") {}
 
 type ContainsWhitespace = {}
 

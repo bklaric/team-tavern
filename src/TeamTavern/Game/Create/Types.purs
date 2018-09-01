@@ -8,10 +8,12 @@ import Data.Variant (Variant)
 import Foreign (ForeignError)
 import Postgres.Error (Error)
 import TeamTavern.Game.Domain.Description (DescriptionError)
+import TeamTavern.Game.Domain.Handle (HandleError)
 import TeamTavern.Game.Domain.Name (Name, NameError)
 
 type DetailsError = Variant
     ( name :: NonEmptyList NameError
+    , handle :: NonEmptyList HandleError
     , description :: NonEmptyList DescriptionError
     )
 
@@ -23,6 +25,7 @@ type CreateError = Variant
         }
     , cantValidateDetails ::
         { name :: String
+        , handle :: String
         , description :: String
         , errors :: NonEmptyList DetailsError
         }
