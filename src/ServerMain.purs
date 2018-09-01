@@ -35,11 +35,12 @@ import Postmark.Client as Postmark
 import TeamTavern.Architecture.Deployment (Deployment(..))
 import TeamTavern.Architecture.Deployment as Deployment
 import TeamTavern.Game.Create (handleCreate)
+import TeamTavern.Game.View as Game
 import TeamTavern.Player.Register.Run (handleRegister)
 import TeamTavern.Player.Session.Prepare.Run (handlePrepare)
 import TeamTavern.Player.Session.Start.Run (handleStart)
 import TeamTavern.Player.Update (handleUpdate)
-import TeamTavern.Player.View (handleView)
+import TeamTavern.Player.View as Player
 import TeamTavern.Routes (TeamTavernRoutes)
 
 listenOptions :: ListenOptions
@@ -147,7 +148,7 @@ handleRequest pool client method url cookies body =
             , content: "You're viewing all players."
             }
         , viewPlayer: \{ nickname } ->
-            handleView pool nickname
+            Player.handleView pool nickname
         , registerPlayer:
             const $ handleRegister pool client cookies body
         , prepareSession: \{ nickname } ->
@@ -156,7 +157,10 @@ handleRequest pool client method url cookies body =
             handleStart pool nickname cookies body
         , updatePlayer: \{ nickname } ->
             handleUpdate pool nickname cookies body
-        , createGame: const $ handleCreate pool cookies body
+        , createGame:
+            const $ handleCreate pool cookies body
+        , viewGame: \{ handle } ->
+            Game.handleView pool handle
         }
         <#> (\response -> response { headers = response.headers <> MultiMap.fromFoldable
                 [ Tuple "Access-Control-Allow-Origin" $ NEL.singleton "http://localhost:1337"

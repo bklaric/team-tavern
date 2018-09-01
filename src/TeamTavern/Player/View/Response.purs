@@ -28,6 +28,5 @@ successResponse :: NicknamedAbout -> Response
 successResponse { nickname, about } = ok_ $ writeJSON
     { nickname: unwrap nickname, about: unwrap about }
 
-response ::
-    Async ViewError NicknamedAbout -> (forall left. Async left Response)
+response :: Async ViewError NicknamedAbout -> (forall left. Async left Response)
 response = alwaysRight errorResponse successResponse
