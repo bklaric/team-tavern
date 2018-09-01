@@ -28,5 +28,8 @@
     "purescript-console": "^4.1.0",
     "purescript-foreign-object": "^1.0.0",
     "purescript-halogen": "master"
+  },
+  "devDependencies": {
+    "purescript-psci-support": "^4.0.0"
   }
 }

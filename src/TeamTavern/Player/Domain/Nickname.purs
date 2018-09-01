@@ -1,6 +1,7 @@
 module TeamTavern.Player.Domain.Nickname
     ( Nickname
     , NicknameError
+    , maxLength
     , create
     , create'
     , fromNonEmpty
@@ -16,7 +17,7 @@ import Data.String (trim)
 import Data.String.NonEmpty (NonEmptyString, toString)
 import Data.Variant (Variant)
 import Validated (Validated, toEither)
-import Wrapped.String (ContainsWhitespace, NotPrintable, TooLong, Empty, containsWhitespace, empty, notPrintable, tooLong)
+import Wrapped.String (Empty, NotAsciiAlphaNum, TooLong, empty, notAsciiAlphaNum, tooLong)
 import Wrapped.Validated as Wrapped
 
 newtype Nickname = Nickname String
@@ -28,15 +29,16 @@ derive instance newtypeNickname :: Newtype Nickname _
 type NicknameError = Variant
     ( empty :: Empty
     , tooLong :: TooLong
-    , notPrintable :: NotPrintable
-    , containsWhitespace :: ContainsWhitespace
+    , notAsciiAlphaNum :: NotAsciiAlphaNum
     )
+
+maxLength :: Int
+maxLength = 40
 
 create :: String -> Validated (NonEmptyList NicknameError) Nickname
 create nickname =
-    Wrapped.create
-        trim [empty, tooLong 40, notPrintable, containsWhitespace]
-        Nickname nickname
+    Wrapped.create trim [empty, tooLong maxLength, notAsciiAlphaNum]
+    Nickname nickname
 
 create' :: String -> Either (NonEmptyList NicknameError) Nickname
 create' = create >>> toEither

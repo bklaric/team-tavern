@@ -2,10 +2,10 @@ module Wrapped.String where
 
 import Prelude
 
-import Data.Char.Unicode (isHexDigit, isPrint, isSpace)
-import Data.Foldable (all)
+import Data.Char.Unicode (isDigit, isHexDigit, isPrint, toLower)
+import Data.Foldable (all, any)
 import Data.Maybe (Maybe(..))
-import Data.String (length, null)
+import Data.String (Pattern(..), length, null, split)
 import Data.String.CodeUnits (toCharArray)
 import Data.Variant (SProxy(..), Variant, inj)
 
@@ -31,7 +31,7 @@ tooLong maxLength string = let
         { maxLength, actualLength }
 
 type NotExactlyLong =
-    { original :: String, exactLength :: Int, actualLength :: Int }
+    { exactLength :: Int, actualLength :: Int }
 
 notExactlyLong :: forall errors.
     Int -> String -> Maybe (Variant (notExactlyLong :: NotExactlyLong | errors))
@@ -42,7 +42,7 @@ notExactlyLong exactLength string = let
     then Nothing
     else Just
         $ inj (SProxy :: SProxy "notExactlyLong")
-        { original: string, exactLength, actualLength }
+        { exactLength, actualLength }
 
 type NotPrintable = {}
 
@@ -53,21 +53,36 @@ notPrintable string =
     then Nothing
     else Just $ inj (SProxy :: SProxy "notPrintable") {}
 
+type NotAsciiAlphaNum = {}
+
+isAsciiAlpha :: Char -> Boolean
+isAsciiAlpha ch = between 'a' 'z' (toLower ch)
+
+notAsciiAlphaNum :: forall errors.
+    String -> Maybe (Variant (notAsciiAlphaNum :: NotAsciiAlphaNum | errors))
+notAsciiAlphaNum string =
+    if string # toCharArray # all (\char -> isAsciiAlpha char && isDigit char)
+    then Nothing
+    else Just $ inj (SProxy :: SProxy "notAsciiAlphaNum") {}
+
 type ContainsWhitespace = {}
+
+isSpace :: String -> Boolean
+isSpace char = any (char == _)  ["\t", "\n", "\r", "\f", "\v", " "]
 
 containsWhitespace :: forall errors.
     String
     -> Maybe (Variant (containsWhitespace :: ContainsWhitespace | errors))
 containsWhitespace string =
-    if string # toCharArray # all (not <<< isSpace)
+    if string # split (Pattern "") # all (not <<< isSpace)
     then Nothing
     else Just $ inj (SProxy :: SProxy "containsWhitespace") {}
 
-type NotHex = { original :: String }
+type NotHex = {}
 
 notHex :: forall errors.
     String -> Maybe (Variant (notHex :: NotHex | errors))
 notHex string =
     if string # toCharArray # all isHexDigit
     then Nothing
-    else Just $ inj (SProxy :: SProxy "notHex") { original: string }
+    else Just $ inj (SProxy :: SProxy "notHex") {}
