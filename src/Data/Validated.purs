@@ -1,4 +1,4 @@
-module Validated
+module Data.Validated
     ( Validated
     , valid
     , invalid

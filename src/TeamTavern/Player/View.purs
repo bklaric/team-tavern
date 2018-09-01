@@ -25,7 +25,7 @@ import TeamTavern.Player.Domain.Types (NicknamedAbout)
 import TeamTavern.Player.View.LogError (logError) as View
 import TeamTavern.Player.View.Response (response) as View
 import TeamTavern.Player.View.Types (ViewError)
-import Validated as Validated
+import Data.Validated as Validated
 
 readNickname :: NonEmptyString -> Async ViewError Nickname
 readNickname nickname =

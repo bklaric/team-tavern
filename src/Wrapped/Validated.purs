@@ -5,7 +5,7 @@ import Prelude
 import Data.Foldable (class Foldable)
 import Data.List.Types (NonEmptyList)
 import Data.Maybe (Maybe)
-import Validated (Validated, fromEither)
+import Data.Validated (Validated, fromEither)
 import Wrapped as Wrapped
 
 create

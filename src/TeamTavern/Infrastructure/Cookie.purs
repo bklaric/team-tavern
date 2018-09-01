@@ -17,7 +17,7 @@ import TeamTavern.Player.Domain.PlayerId as PlayerId
 import TeamTavern.Player.Domain.Token (Token)
 import TeamTavern.Player.Domain.Token as Token
 import TeamTavern.Player.Domain.Types (NicknamedToken)
-import Validated as Validated
+import Data.Validated as Validated
 
 idCookieName :: String
 idCookieName = "teamtavern-id"

@@ -24,7 +24,7 @@ import Postgres.Result as PgR
 import Simple.JSON.Async (readJSON) as Async
 import TeamTavern.Architecture.Perun.Request.Body as Perun
 import TeamTavern.Architecture.Postgres.Query as Pg
-import TeamTavern.Architecture.Validated as Validated
+import Data.Validated.Label as Validated
 import TeamTavern.Game.Create.LogError (logError) as Create
 import TeamTavern.Game.Create.Response (response) as Create
 import TeamTavern.Game.Create.Types (CreateError, DetailsError)
@@ -37,7 +37,7 @@ import TeamTavern.Game.Domain.Name as Name
 import TeamTavern.Game.Domain.Types (Details)
 import TeamTavern.Infrastructure.Cookie as Cookie
 import TeamTavern.Player.Domain.Types (NicknamedToken)
-import Validated (Validated)
+import Data.Validated (Validated)
 
 readAdmin :: Map String String -> Async CreateError NicknamedToken
 readAdmin cookies = Cookie.lookupAuthCookies cookies

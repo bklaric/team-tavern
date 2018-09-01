@@ -13,14 +13,14 @@ import Data.Bifunctor (lmap)
 import Data.Bifunctor.Label (label)
 import Data.List.Types (NonEmptyList)
 import Data.Variant (SProxy(..), Variant)
-import TeamTavern.Architecture.Validated as Validated
+import Data.Validated.Label as Validated
 import TeamTavern.Player.Domain.Email (Email, EmailError)
 import TeamTavern.Player.Domain.Email as Email
 import TeamTavern.Player.Domain.Nickname (Nickname, NicknameError)
 import TeamTavern.Player.Domain.Nickname as Nickname
 import TeamTavern.Player.Domain.Types (Identifiers)
 import TeamTavern.Player.Infrastructure.Types (IdentifiersModel)
-import Validated (Validated)
+import Data.Validated (Validated)
 
 type IdentifiersError = Variant
     ( email :: NonEmptyList EmailError

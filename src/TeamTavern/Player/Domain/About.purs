@@ -8,7 +8,7 @@ import Data.List.Types (NonEmptyList)
 import Data.Newtype (class Newtype)
 import Data.String (trim)
 import Data.Variant (Variant)
-import Validated (Validated, toEither)
+import Data.Validated (Validated, toEither)
 import Wrapped.String (NotPrintable, TooLong, notPrintable, tooLong)
 import Wrapped.Validated as Wrapped
 

@@ -11,7 +11,7 @@ import Data.String.Regex (Regex, match, regex)
 import Data.String.Regex.Flags (unicode)
 import Data.Variant (SProxy(..), Variant, inj)
 import Partial.Unsafe (unsafePartial)
-import Validated (Validated)
+import Data.Validated (Validated)
 import Wrapped.String (TooLong, tooLong)
 import Wrapped.Validated as Wrapped
 

@@ -11,7 +11,7 @@ import Data.Variant (Variant)
 import Data.Bifunctor.Label (label)
 import TeamTavern.Player.Domain.Nickname (Nickname, NicknameError)
 import TeamTavern.Player.Domain.Nickname as Nickname
-import Validated (toEither)
+import Data.Validated (toEither)
 
 type ReadNicknameError =
     { errors :: NonEmptyList NicknameError

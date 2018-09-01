@@ -1,4 +1,4 @@
-module TeamTavern.Architecture.Validated where
+module Data.Validated.Label where
 
 import Prelude
 
@@ -6,7 +6,7 @@ import Data.List.NonEmpty (NonEmptyList, singleton)
 import Data.Symbol (class IsSymbol, SProxy)
 import Data.Variant (Variant, inj)
 import Prim.Row (class Cons)
-import Validated (Validated, lmap)
+import Data.Validated (Validated, lmap)
 
 label
     :: forall errors errors' left label right

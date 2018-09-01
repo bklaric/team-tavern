@@ -24,7 +24,7 @@ import Postgres.Result (rowCount)
 import Simple.JSON (readJSON)
 import TeamTavern.Architecture.Perun.Request.Body (readBody)
 import TeamTavern.Architecture.Postgres.Query (query)
-import TeamTavern.Architecture.Validated as Validated
+import Data.Validated.Label as Validated
 import TeamTavern.Infrastructure.Cookie (lookupAuthCookies)
 import TeamTavern.Player.Domain.About (About)
 import TeamTavern.Player.Domain.About as About
@@ -34,7 +34,7 @@ import TeamTavern.Player.Domain.Types (Update, NicknamedToken)
 import TeamTavern.Player.Update.LogError (logError) as Update
 import TeamTavern.Player.Update.Response (response) as Update
 import TeamTavern.Player.Update.Types (UpdateError', UpdateError)
-import Validated (Validated)
+import Data.Validated (Validated)
 
 readTargetNickname :: NonEmptyString -> Async UpdateError Nickname
 readTargetNickname nickname' =

@@ -25,7 +25,7 @@ import TeamTavern.Game.View.LogError (logError) as View
 import TeamTavern.Game.View.Response (response) as View
 import TeamTavern.Game.View.Types (ViewError)
 import TeamTavern.Player.Domain.PlayerId as PlayerId
-import Validated as Validated
+import Data.Validated as Validated
 
 validateHandle :: String -> Async ViewError Handle
 validateHandle handle =
