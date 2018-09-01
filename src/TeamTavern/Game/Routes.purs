@@ -13,6 +13,12 @@ type CreateGame = Route
     :> End)
     NoQuery
 
+type ViewAllGames = Route
+    Get
+    (  Literal "games"
+    :> End)
+    NoQuery
+
 type ViewGame = Route
     Get
     (  Literal "games"
@@ -21,5 +27,6 @@ type ViewGame = Route
     NoQuery
 
 type GameRoutes
-    =    "createGame" := CreateGame
-    :<|> "viewGame" := ViewGame
+    =    "createGame"   := CreateGame
+    :<|> "viewAllGames" := ViewAllGames
+    :<|> "viewGame"     := ViewGame

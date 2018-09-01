@@ -12,6 +12,7 @@ import Data.Int (fromString)
 import Data.List.NonEmpty as NEL
 import Data.Map (Map)
 import Data.Maybe (Maybe(..))
+import Data.MultiMap as MultiMap
 import Data.Options (Options, (:=))
 import Data.Tuple (Tuple(..))
 import Data.Variant (match)
@@ -19,7 +20,6 @@ import Effect (Effect)
 import Effect.Console (log)
 import Global.Unsafe (unsafeStringify)
 import Jarilo.Junction (JunctionProxy(..), router)
-import Data.MultiMap as MultiMap
 import Node.Process (lookupEnv)
 import Node.Server (ListenOptions(..))
 import Perun.Async.Server (run_)
@@ -36,6 +36,7 @@ import TeamTavern.Architecture.Deployment (Deployment(..))
 import TeamTavern.Architecture.Deployment as Deployment
 import TeamTavern.Game.Create (handleCreate)
 import TeamTavern.Game.View as Game
+import TeamTavern.Game.ViewAll (handleViewAll)
 import TeamTavern.Player.Register.Run (handleRegister)
 import TeamTavern.Player.Session.Prepare.Run (handlePrepare)
 import TeamTavern.Player.Session.Start.Run (handleStart)
@@ -159,6 +160,8 @@ handleRequest pool client method url cookies body =
             handleUpdate pool nickname cookies body
         , createGame:
             const $ handleCreate pool cookies body
+        , viewAllGames:
+            const $ handleViewAll pool
         , viewGame: \{ handle } ->
             Game.handleView pool handle
         }
