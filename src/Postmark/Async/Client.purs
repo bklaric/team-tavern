@@ -1,4 +1,4 @@
-module TeamTavern.Architecture.Postmark.Client where
+module Postmark.Async.Client where
 
 import Prelude
 
