@@ -18,6 +18,7 @@ type DetailsErrorResponseContent = Variant
 type BadRequestResponseContent = Variant
     ( invalidDetails :: Array DetailsErrorResponseContent
     , nameTaken :: {}
+    , handleTaken :: {}
     )
 
 errorResponse :: CreateError -> Response
@@ -39,6 +40,9 @@ errorResponse = match
     , nameTaken: const $ badRequest_
         $ (writeJSON :: BadRequestResponseContent -> String)
         $ inj (SProxy :: SProxy "nameTaken") {}
+    , handleTaken: const $ badRequest_
+        $ (writeJSON :: BadRequestResponseContent -> String)
+        $ inj (SProxy :: SProxy "handleTaken") {}
     , databaseError: const $ internalServerError__
     , notAuthorized: const $ forbidden__
     }

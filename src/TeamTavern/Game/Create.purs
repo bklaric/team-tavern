@@ -101,6 +101,9 @@ addGame pool nicknamedToken details = do
             true | PgE.constraint error == Just "game_name_key" ->
                 Variant.inj (SProxy :: SProxy "nameTaken")
                 { name: details.name, error }
+            true | PgE.constraint error == Just "game_handle_key" ->
+                Variant.inj (SProxy :: SProxy "handleTaken")
+                { handle: details.handle, error }
             _ -> Variant.inj (SProxy :: SProxy "databaseError") error)
     if PgR.rowCount result == 1
         then pure unit

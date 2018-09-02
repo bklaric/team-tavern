@@ -24,6 +24,9 @@ logError createError = do
         , nameTaken: \{ name, error } ->
             logt $ "Name '" <> unwrap name <> "' is already taken: "
                 <> print error
+        , handleTaken: \{ handle, error } ->
+            logt $ "Game handle '" <> unwrap handle <> "' is already taken "
+                <> "according to this error: " <> print error
         , databaseError: \error ->
             logt $ "Database error occured: " <> print error
         , notAuthorized: const $
