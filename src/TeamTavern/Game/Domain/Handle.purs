@@ -4,11 +4,13 @@ module TeamTavern.Game.Domain.Handle
 import Prelude
 
 import Data.Either (Either)
+import Data.Generic.Rep (class Generic)
+import Data.Generic.Rep.Show (genericShow)
 import Data.List.Types (NonEmptyList)
 import Data.Newtype (class Newtype)
 import Data.String (trim)
-import Data.Variant (Variant)
 import Data.Validated (Validated, toEither)
+import Data.Variant (Variant)
 import Wrapped.String (Empty, NotAsciiAlphaNumUnderscore, TooLong, empty, notAsciiAlphaNumUnderscore, tooLong)
 import Wrapped.Validated as Wrapped
 
@@ -17,6 +19,11 @@ newtype Handle = Handle String
 derive instance eqHandle :: Eq Handle
 
 derive instance newtypeHandle :: Newtype Handle _
+
+derive instance genericHandle :: Generic Handle _
+
+instance showHandle :: Show Handle where
+    show = genericShow
 
 type HandleError = Variant
     ( empty :: Empty

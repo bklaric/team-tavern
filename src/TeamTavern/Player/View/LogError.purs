@@ -7,7 +7,7 @@ import Data.String.NonEmpty (toString)
 import Data.Variant (match)
 import Effect (Effect)
 import Effect.Console (log)
-import TeamTavern.Player.Update.LogError (logt, print)
+import TeamTavern.Infrastructure.Log (logt, print)
 import TeamTavern.Player.View.Types (ViewError)
 
 logError :: ViewError -> Effect Unit

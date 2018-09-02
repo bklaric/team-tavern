@@ -36,3 +36,10 @@ Cookie: teamtavern-id=1; teamtavern-nickname=bklaric; teamtavern-token=d2efd3b02
 , "handle": "unreal_tournament"
 , "description": "Best unreal."
 }
+
+###
+
+POST http://localhost:8080/players/bklaric/profiles/unreal_tournament HTTP/1.1
+Cookie: teamtavern-id=1; teamtavern-nickname=bklaric; teamtavern-token=d2efd3b02e405fa486a28c3b3a076f19123028bd
+
+{ "summary": "aoeuaoeuaoeuaoeu" }

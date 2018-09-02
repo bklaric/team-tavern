@@ -6,7 +6,7 @@ import Data.Newtype (unwrap)
 import Data.Variant (match)
 import Effect (Effect)
 import TeamTavern.Game.View.Types (ViewError)
-import TeamTavern.Player.Update.LogError (logt, print)
+import TeamTavern.Infrastructure.Log (logt, print)
 
 logError :: ViewError -> Effect Unit
 logError viewError = do

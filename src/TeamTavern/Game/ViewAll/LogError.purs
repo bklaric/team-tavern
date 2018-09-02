@@ -5,7 +5,7 @@ import Prelude
 import Data.Variant (match)
 import Effect (Effect)
 import TeamTavern.Game.ViewAll.Types (ViewAllError)
-import TeamTavern.Player.Update.LogError (logt, print)
+import TeamTavern.Infrastructure.Log (logt, print)
 
 logError :: ViewAllError -> Effect Unit
 logError viewAllError = do

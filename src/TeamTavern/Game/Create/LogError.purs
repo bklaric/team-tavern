@@ -7,7 +7,7 @@ import Data.Variant (match)
 import Effect (Effect)
 import Effect.Console (log)
 import TeamTavern.Game.Create.Types (CreateError)
-import TeamTavern.Player.Update.LogError (logt, print)
+import TeamTavern.Infrastructure.Log (logt, print)
 
 logError :: CreateError -> Effect Unit
 logError createError = do

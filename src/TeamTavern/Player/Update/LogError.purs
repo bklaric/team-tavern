@@ -6,18 +6,8 @@ import Data.Newtype (unwrap)
 import Data.Variant (match)
 import Effect (Effect)
 import Effect.Console (log)
-import Error.Class (message, name)
-import Node.Errors.Class (class NodeError, code)
+import TeamTavern.Infrastructure.Log (logt, print)
 import TeamTavern.Player.Update.Types (UpdateError)
-
-logt :: String -> Effect Unit
-logt string = log $ "\t" <> string
-
-print :: forall error. NodeError error => error -> String
-print error =
-    "Code: " <> code error
-    <> "; Name: " <> name error
-    <> "; Message: " <> message error
 
 logError :: UpdateError -> Effect Unit
 logError updateError = do

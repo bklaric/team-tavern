@@ -7,7 +7,7 @@ import Data.Variant (match)
 import Effect (Effect)
 import TeamTavern.Game.Update.Types (UpdateError)
 import TeamTavern.Player.Domain.PlayerId (toString)
-import TeamTavern.Player.Update.LogError (logt, print)
+import TeamTavern.Infrastructure.Log (logt, print)
 
 logError :: UpdateError -> Effect Unit
 logError updateError = do

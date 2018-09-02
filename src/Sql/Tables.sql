@@ -24,3 +24,12 @@ create table game
     , description varchar(2000) not null
     , created timestamptz not null default current_timestamp
     );
+
+create table profile
+    ( id serial not null primary key
+    , player_id integer not null references player(id)
+    , game_id integer not null references game(id)
+    , summary varchar(2000) not null
+    , created timestamptz not null default current_timestamp
+    , unique (game_id, player_id)
+    );
