@@ -12,10 +12,13 @@ import Data.Map (Map)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
 import Data.String.NonEmpty (NonEmptyString)
+import Data.Validated (Validated)
+import Data.Validated.Label as Validated
 import Data.Variant (SProxy(..), inj)
 import Node.Errors.Class (code)
 import Perun.Request.Body (Body)
 import Perun.Response (Response)
+import Postgres.Async.Query (query)
 import Postgres.Error (constraint)
 import Postgres.Error.Codes (unique_violation)
 import Postgres.Pool (Pool)
@@ -23,18 +26,15 @@ import Postgres.Query (Query(..), QueryParameter(..))
 import Postgres.Result (rowCount)
 import Simple.JSON (readJSON)
 import TeamTavern.Architecture.Perun.Request.Body (readBody)
-import Postgres.Async.Query (query)
-import Data.Validated.Label as Validated
 import TeamTavern.Infrastructure.Cookie (lookupAuthCookies)
 import TeamTavern.Player.Domain.About (About)
 import TeamTavern.Player.Domain.About as About
 import TeamTavern.Player.Domain.Nickname (Nickname)
 import TeamTavern.Player.Domain.Nickname as Nickname
-import TeamTavern.Player.Domain.Types (Update, NicknamedToken)
+import TeamTavern.Player.Domain.Types (IdentifiedToken', Update)
 import TeamTavern.Player.Update.LogError (logError) as Update
 import TeamTavern.Player.Update.Response (response) as Update
 import TeamTavern.Player.Update.Types (UpdateError', UpdateError)
-import Data.Validated (Validated)
 
 readTargetNickname :: NonEmptyString -> Async UpdateError Nickname
 readTargetNickname nickname' =
@@ -43,7 +43,7 @@ readTargetNickname nickname' =
     # label (SProxy :: SProxy "cantValidateTargetNickname")
     # Async.fromEither
 
-readRequestor :: Map String String -> Async UpdateError NicknamedToken
+readRequestor :: Map String String -> Async UpdateError IdentifiedToken'
 readRequestor cookies = lookupAuthCookies cookies
     # Async.note (inj (SProxy :: SProxy "cookiesNotPresent") unit)
 
@@ -87,7 +87,7 @@ updatePlayerQuery = Query """
     """
 
 updatePlayerQueryParameters ::
-    NicknamedToken -> Update -> Array QueryParameter
+    IdentifiedToken' -> Update -> Array QueryParameter
 updatePlayerQueryParameters nicknamedToken update =
     [ unwrap nicknamedToken.nickname
     , unwrap nicknamedToken.token
@@ -96,7 +96,7 @@ updatePlayerQueryParameters nicknamedToken update =
     ]
     <#> QueryParameter
 
-updatePlayer :: Pool -> NicknamedToken -> Update -> Async UpdateError Unit
+updatePlayer :: Pool -> IdentifiedToken' -> Update -> Async UpdateError Unit
 updatePlayer pool nicknamedToken update = do
     result <- pool
         # query updatePlayerQuery
@@ -111,12 +111,8 @@ updatePlayer pool nicknamedToken update = do
         then pure unit
         else Async.left $ inj (SProxy :: SProxy "notAuthorized") unit
 
-handleUpdate
-    :: Pool
-    -> NonEmptyString
-    -> Map String String
-    -> Body
-    -> (forall left. Async left Response)
+handleUpdate :: forall left.
+    Pool -> NonEmptyString -> Map String String -> Body -> Async left Response
 handleUpdate pool targetNickname' cookies body =
     Update.response $ examineLeftWithEffect Update.logError do
     -- Read target nickname from route.

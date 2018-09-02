@@ -1,7 +1,7 @@
 module TeamTavern.Game.Routes where
 
 import Jarilo.Junction (type (:<|>), type (:=))
-import Jarilo.Method (Get, Post)
+import Jarilo.Method (Get, Post, Put)
 import Jarilo.Path (type (:>), End)
 import Jarilo.Query (NoQuery)
 import Jarilo.Route (Route)
@@ -26,7 +26,15 @@ type ViewGame = Route
     :> End)
     NoQuery
 
+type UpdateGame = Route
+    Put
+    (  Literal "games"
+    :> Capture "handle" String
+    :> End)
+    NoQuery
+
 type GameRoutes
     =    "createGame"   := CreateGame
     :<|> "viewAllGames" := ViewAllGames
     :<|> "viewGame"     := ViewGame
+    :<|> "updateGame"   := UpdateGame

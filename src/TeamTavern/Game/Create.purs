@@ -11,11 +11,14 @@ import Data.List.Types (NonEmptyList)
 import Data.Map (Map)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
+import Data.Validated (Validated)
+import Data.Validated.Label as Validated
 import Data.Variant (SProxy(..))
 import Data.Variant as Variant
 import Node.Errors.Class (code)
 import Perun.Request.Body (Body)
 import Perun.Response (Response)
+import Postgres.Async.Query as Pg
 import Postgres.Error as PgE
 import Postgres.Error.Codes as PgEC
 import Postgres.Pool (Pool)
@@ -23,8 +26,6 @@ import Postgres.Query (Query(..), QueryParameter(..))
 import Postgres.Result as PgR
 import Simple.JSON.Async (readJSON) as Async
 import TeamTavern.Architecture.Perun.Request.Body as Perun
-import Postgres.Async.Query as Pg
-import Data.Validated.Label as Validated
 import TeamTavern.Game.Create.LogError (logError) as Create
 import TeamTavern.Game.Create.Response (response) as Create
 import TeamTavern.Game.Create.Types (CreateError, DetailsError)
@@ -36,10 +37,9 @@ import TeamTavern.Game.Domain.Name (Name)
 import TeamTavern.Game.Domain.Name as Name
 import TeamTavern.Game.Domain.Types (Details)
 import TeamTavern.Infrastructure.Cookie as Cookie
-import TeamTavern.Player.Domain.Types (NicknamedToken)
-import Data.Validated (Validated)
+import TeamTavern.Player.Domain.Types (IdentifiedToken')
 
-readAdmin :: Map String String -> Async CreateError NicknamedToken
+readAdmin :: Map String String -> Async CreateError IdentifiedToken'
 readAdmin cookies = Cookie.lookupAuthCookies cookies
     # Async.note (Variant.inj (SProxy :: SProxy "cookiesNotPresent") cookies)
 
@@ -82,7 +82,7 @@ addGameQuery = Query """
     and session.revoked = false
     """
 
-addGameQueryParameters :: NicknamedToken -> Details -> Array QueryParameter
+addGameQueryParameters :: IdentifiedToken' -> Details -> Array QueryParameter
 addGameQueryParameters { nickname, token } { name, handle, description } =
     [ unwrap nickname
     , unwrap token
@@ -92,7 +92,7 @@ addGameQueryParameters { nickname, token } { name, handle, description } =
     ]
     <#> QueryParameter
 
-addGame :: Pool -> NicknamedToken -> Details -> Async CreateError Unit
+addGame :: Pool -> IdentifiedToken' -> Details -> Async CreateError Unit
 addGame pool nicknamedToken details = do
     result <- pool
         # Pg.query addGameQuery (addGameQueryParameters nicknamedToken details)

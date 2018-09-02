@@ -26,4 +26,13 @@ GET http://localhost:8080/games HTTP/1.1
 
 ###
 
-GET http://localhost:8080/games/Unreal__ HTTP/1.1
+GET http://localhost:8080/games/unreal_tournament HTTP/1.1
+
+###
+PUT http://localhost:8080/games/Unreal__ HTTP/1.1
+Cookie: teamtavern-id=1; teamtavern-nickname=bklaric; teamtavern-token=d2efd3b02e405fa486a28c3b3a076f19123028bd
+
+{ "name": "Unreal Tournament"
+, "handle": "unreal_tournament"
+, "description": "Best unreal."
+}
