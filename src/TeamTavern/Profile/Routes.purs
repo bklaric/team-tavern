@@ -1,7 +1,7 @@
 module TeamTavern.Profile.Routes where
 
-import Jarilo.Junction (type (:=))
-import Jarilo.Method (Post)
+import Jarilo.Junction (type (:<|>), type (:=))
+import Jarilo.Method (Get, Post)
 import Jarilo.Path (type (:>), End)
 import Jarilo.Query (NoQuery)
 import Jarilo.Route (Route)
@@ -16,5 +16,14 @@ type CreateProfile = Route
     :> End)
     NoQuery
 
+type ViewProfilesByGame = Route
+    Get
+    (  Literal "games"
+    :> Capture "handle" String
+    :> Literal "profiles"
+    :> End)
+    NoQuery
+
 type ProfileRoutes
-    =    "createProfile" := CreateProfile
+    =    "createProfile"      := CreateProfile
+    :<|> "viewProfilesByGame" := ViewProfilesByGame

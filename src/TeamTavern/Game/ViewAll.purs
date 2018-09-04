@@ -44,7 +44,7 @@ validateViews
     -> Async
         (Variant (invalidViews :: NonEmptyList ViewModel | errors))
         (Array View)
-validateViews views= let
+validateViews views = let
     validateView :: ViewModel -> Validated (NonEmptyList ViewModel) View
     validateView view @ { administratorId, name, handle, description } =
         { administratorId: _, name: _, handle: _, description: _ }

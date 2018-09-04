@@ -43,7 +43,8 @@ import TeamTavern.Player.Session.Prepare.Run (handlePrepare)
 import TeamTavern.Player.Session.Start.Run (handleStart)
 import TeamTavern.Player.Update (handleUpdate)
 import TeamTavern.Player.View as Player
-import TeamTavern.Profile.Create as Profile
+import TeamTavern.Profile.Create (create) as Profile
+import TeamTavern.Profile.ViewByGame (viewByGame) as Profile
 import TeamTavern.Routes (TeamTavernRoutes)
 
 listenOptions :: ListenOptions
@@ -170,6 +171,7 @@ handleRequest pool client method url cookies body =
             Game.handleUpdate pool handle cookies body
         , createProfile: \identifiers ->
             Profile.create pool identifiers cookies body
+        , viewProfilesByGame: \{ handle } -> Profile.viewByGame pool handle
         }
         <#> (\response -> response { headers = response.headers <> MultiMap.fromFoldable
                 [ Tuple "Access-Control-Allow-Origin" $ NEL.singleton "http://localhost:1337"
