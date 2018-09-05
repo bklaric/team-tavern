@@ -7,12 +7,17 @@ import Data.Newtype (unwrap)
 import Data.Variant (match)
 import Perun.Response (Response, internalServerError__, notFound__, ok_)
 import Simple.JSON (writeJSON)
-import TeamTavern.Player.Domain.Types (NicknamedAbout)
+import TeamTavern.Player.Domain.Types (View)
 import TeamTavern.Player.View.Types (ViewError)
 
 type OkResponseContent =
     { nickname :: String
     , about :: String
+    , profiles :: Array
+        { handle :: String
+        , name :: String
+        , summary :: String
+        }
     }
 
 errorResponse :: ViewError -> Response
@@ -24,9 +29,16 @@ errorResponse = match
     , invalidView: const $ internalServerError__
     }
 
-successResponse :: NicknamedAbout -> Response
-successResponse { nickname, about } = ok_ $ writeJSON
-    { nickname: unwrap nickname, about: unwrap about }
+successResponse :: View -> Response
+successResponse { nickname, about, profiles } = ok_ $ writeJSON (
+    { nickname: unwrap nickname
+    , about: unwrap about
+    , profiles: profiles <#> \{ handle, name, summary } ->
+        { handle: unwrap handle
+        , name: unwrap name
+        , summary: unwrap summary
+        }
+    } :: OkResponseContent)
 
-response :: Async ViewError NicknamedAbout -> (forall left. Async left Response)
+response :: Async ViewError View -> (forall left. Async left Response)
 response = alwaysRight errorResponse successResponse

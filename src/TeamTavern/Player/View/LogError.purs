@@ -23,7 +23,7 @@ logError viewError = do
             logt $ "Reading view resulted in these errors: " <> show errors
         , notFound: \nickname ->
             logt $ "Player '" <> unwrap nickname <> "' wasn't found"
-        , invalidView: \{ nickname, about } ->
+        , invalidView: \{ nickname, view } ->
             logt $ "View of player '" <> unwrap nickname <> "' is invalid: "
-                <> about
+                <> show view
         }

@@ -15,5 +15,15 @@ type ViewError = Variant
     , databaseError :: Error
     , unreadableResult :: NonEmptyList ForeignError
     , notFound :: Nickname
-    , invalidView :: { nickname :: Nickname, about :: String }
+    , invalidView ::
+        { nickname :: Nickname
+        , view ::
+            { about :: String
+            , profiles :: Array
+                { handle :: String
+                , name :: String
+                , summary :: String
+                }
+            }
+        }
     )
