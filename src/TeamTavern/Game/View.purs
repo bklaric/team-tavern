@@ -25,7 +25,6 @@ import TeamTavern.Game.View.LogError (logError) as View
 import TeamTavern.Game.View.Response (response) as View
 import TeamTavern.Game.View.Types (ViewError)
 import TeamTavern.Player.Domain.PlayerId as PlayerId
-import Data.Validated as Validated
 
 validateHandle :: String -> Async ViewError Handle
 validateHandle handle =
@@ -62,8 +61,8 @@ loadGame pool handle = do
         # Async.note (inj (SProxy :: SProxy "notFound") handle)
     { administratorId: _, name: _, handle, description: _ }
         <$> PlayerId.create administratorId
-        <*> (Name.create name # Validated.hush)
-        <*> (Description.create description # Validated.hush)
+        <*> Name.create'' name
+        <*> Description.create'' description
         # Async.note (inj (SProxy :: SProxy "invalidView")
             { administratorId, name, handle, description })
 

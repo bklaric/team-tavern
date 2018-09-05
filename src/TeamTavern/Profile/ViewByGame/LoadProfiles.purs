@@ -58,8 +58,8 @@ validateProfiles profiles = let
         ByGameViewModel -> Validated (NonEmptyList ByGameViewModel) ByGameView
     validateProfile profile @ { nickname, summary } =
         { nickname: _, summary: _ }
-        <$> (Nickname.create nickname # Validated.hush)
-        <*> (Summary.create summary # Validated.hush)
+        <$> Nickname.create'' nickname
+        <*> Summary.create'' summary
         # Validated.note' profile
     in
     profiles

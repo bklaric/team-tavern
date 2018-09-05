@@ -3,7 +3,7 @@ module TeamTavern.Player.View where
 import Prelude
 
 import Async (Async, examineLeftWithEffect)
-import Async (fromEffect, fromEither, note) as Async
+import Async (fromEither, note) as Async
 import Data.Array (head)
 import Data.Bifunctor (lmap)
 import Data.Bifunctor.Label (label) as Async
@@ -11,10 +11,7 @@ import Data.Newtype (unwrap)
 import Data.String.NonEmpty (NonEmptyString)
 import Data.Symbol (SProxy(..))
 import Data.Traversable (traverse)
-import Data.Validated as Validated
 import Data.Variant (inj)
-import Effect.Console (log)
-import Global.Unsafe (unsafeStringify)
 import Perun.Response (Response)
 import Postgres.Async.Query (query)
 import Postgres.Pool (Pool)
@@ -72,7 +69,6 @@ loadPlayer pool nickname = do
     result <- pool
         # query loadPlayerQuery (loadPlayerQueryParameters nickname)
         # Async.label (SProxy :: SProxy "databaseError")
-    Async.fromEffect $ log $ unsafeStringify $ rows result
     views <- rows result
         # traverse read
         # lmap (inj (SProxy :: SProxy "unreadableResult"))
@@ -80,12 +76,12 @@ loadPlayer pool nickname = do
     view @ { about, profiles } :: PlayerViewModel <- head views
         # Async.note (inj (SProxy :: SProxy "notFound") nickname)
     { nickname, about: _, profiles: _ }
-        <$> (About.create about # Validated.hush)
+        <$> About.create'' about
         <*> (profiles # traverse \{ handle, name, summary } ->
             { handle: _, name: _, summary: _ }
-            <$> (Handle.create handle # Validated.hush)
-            <*> (Name.create name # Validated.hush)
-            <*> (Summary.create summary # Validated.hush))
+            <$> Handle.create'' handle
+            <*> Name.create'' name
+            <*> Summary.create'' summary)
         # Async.note (inj (SProxy :: SProxy "invalidView") { nickname, view })
 
 handleView :: forall left. Pool -> NonEmptyString -> Async left Response

@@ -1,14 +1,16 @@
 module TeamTavern.Game.Domain.Name
-    (Name, NameError, maxLength, create, create') where
+    (Name, NameError, maxLength, create, create', create'') where
 
 import Prelude
 
 import Data.Either (Either)
 import Data.List.Types (NonEmptyList)
+import Data.Maybe (Maybe)
 import Data.Newtype (class Newtype)
 import Data.String (trim)
-import Data.Variant (Variant)
 import Data.Validated (Validated, toEither)
+import Data.Validated as Validated
+import Data.Variant (Variant)
 import Wrapped.String (Empty, NotPrintable, TooLong, empty, notPrintable, tooLong)
 import Wrapped.Validated as Wrapped
 
@@ -33,3 +35,6 @@ create name =
 
 create' :: String -> Either (NonEmptyList NameError) Name
 create' = create >>> toEither
+
+create'' :: String -> Maybe Name
+create'' = create >>> Validated.hush
