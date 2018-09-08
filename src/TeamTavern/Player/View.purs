@@ -40,14 +40,14 @@ loadPlayerQuery :: Query
 loadPlayerQuery = Query """
     select
         player.about,
-        json_agg(json_build_object(
+        coalesce(json_agg(json_build_object(
             'handle', game.handle,
             'name', game.name,
             'summary', profile.summary
-        )) as profiles
+        )) filter (where game.handle is not null), '[]'::json) as profiles
     from profile
-    join player on player.id = profile.player_id
-    join game on game.id = profile.game_id
+    right join player on player.id = profile.player_id
+    left join game on game.id = profile.game_id
     where player.nickname = $1
     group by player.about
     """
