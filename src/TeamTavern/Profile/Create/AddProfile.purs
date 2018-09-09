@@ -1,4 +1,5 @@
-module TeamTavern.Profile.Create.AddProfile where
+module TeamTavern.Profile.Create.AddProfile
+    (AddProfileError, addProfile) where
 
 import Prelude
 
@@ -12,14 +13,14 @@ import Postgres.Pool (Pool)
 import Postgres.Query (Query(..), QueryParameter(..))
 import Postgres.Result (rowCount)
 import TeamTavern.Player.Domain.PlayerId (toString)
-import TeamTavern.Player.Domain.Types (IdentifiedToken')
+import TeamTavern.Player.Domain.Types (AuthInfo)
 import TeamTavern.Profile.Domain.Summary (Summary)
 import TeamTavern.Profile.Domain.Types (Identifiers)
 
 type AddProfileError errors = Variant
     ( databaseError :: Error
     , notAuthorized ::
-        { auth :: IdentifiedToken'
+        { auth :: AuthInfo
         , identifiers :: Identifiers
         }
     | errors )
@@ -39,7 +40,7 @@ addProfileQuery = Query """
     """
 
 addProfileParameters ::
-    IdentifiedToken' -> Identifiers -> Summary -> Array QueryParameter
+    AuthInfo -> Identifiers -> Summary -> Array QueryParameter
 addProfileParameters { id, token } { nickname, handle } summary =
     [ toString id
     , unwrap token
@@ -52,7 +53,7 @@ addProfileParameters { id, token } { nickname, handle } summary =
 addProfile
     :: forall errors
     .  Pool
-    -> IdentifiedToken'
+    -> AuthInfo
     -> Identifiers
     -> Summary
     -> Async (AddProfileError errors) Unit

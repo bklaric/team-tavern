@@ -24,7 +24,7 @@ import Simple.JSON as J
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Script.Navigate (navigate_)
-import TeamTavern.Player.Session.Start.Run.CreateResponse (BadRequestResponseContent)
+import TeamTavern.Session.Start.Response (BadRequestContent)
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
@@ -175,7 +175,7 @@ eval (SignIn event send) = let
                 Left errors -> do
                     H.liftEffect $ logShow errors
                     pure $ setOtherError resetState
-                Right (error :: BadRequestResponseContent) -> V.match
+                Right (error :: BadRequestContent) -> V.match
                     { invalidNickname:
                         const $ setNicknameError resetState
                     , invalidNonce:

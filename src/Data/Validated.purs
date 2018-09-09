@@ -114,7 +114,9 @@ instance showValidated :: (Show invalid, Show valid) =>
     show (Valid valid') = "(valid " <> show valid' <> ")"
     show (Invalid invalid') = "(invalid " <> show invalid' <> ")"
 
-derive instance functorValidated :: Functor (Validated invalid)
+instance functorValidated :: Semigroup invalid =>
+    Functor (Validated invalid) where
+    map = rmap
 
 instance applyValidated :: Semigroup invalid => Apply (Validated invalid) where
     apply (Invalid leftInvalid) (Invalid rightInvalid ) =
@@ -143,11 +145,11 @@ instance monoidValidated :: (Semigroup invalid, Monoid valid) =>
     Monoid (Validated invalid valid) where
     mempty = pure mempty
 
-instance foldableValidated :: Foldable (Validated invalid) where
+instance foldableValidated :: Semigroup invalid => Foldable (Validated invalid) where
     foldMap = validated (const mempty)
     foldr folder default = validated (const default) (flip folder default)
     foldl folder default = validated (const default) (folder default)
 
-instance traversableValidated :: Traversable (Validated invalid) where
+instance traversableValidated :: Semigroup invalid => Traversable (Validated invalid) where
     sequence = validated (pure <<< Invalid) (map Valid)
     traverse function = validated (pure <<< Invalid) (map Valid <<< function)

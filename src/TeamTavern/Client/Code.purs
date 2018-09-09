@@ -27,8 +27,8 @@ import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Script.Cookie (hasPlayerIdCookie)
 import TeamTavern.Client.Script.Navigate (navigate, navigate_)
-import TeamTavern.Client.SignIn (errorClass, inputErrorClass, otherErrorClass)
-import TeamTavern.Player.Session.Prepare.Run.CreateResponse (BadRequestResponseContent)
+-- import TeamTavern.Client.SignIn (errorClass, inputErrorClass, otherErrorClass)
+import TeamTavern.Session.Prepare.Response (BadRequestContent)
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
@@ -180,7 +180,7 @@ eval (RequestCode event send) = let
                 Left errors -> do
                     logShow errors
                     pure $ setOtherError resetState
-                Right (error :: BadRequestResponseContent) -> V.match
+                Right (error :: BadRequestContent) -> V.match
                     { invalidIdentifiers: foldl (\state -> V.match
                         { invalidEmail:
                             const $ setEmailError state

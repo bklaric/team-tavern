@@ -3,7 +3,7 @@ module TeamTavern.Routes where
 import Jarilo.Junction (type (:<|>))
 import TeamTavern.Game.Routes (GameRoutes)
 import TeamTavern.Player.Routes (PlayerRoutes)
-import TeamTavern.Player.Session.Routes (SessionRoutes)
+import TeamTavern.Session.Routes (SessionRoutes)
 import TeamTavern.Profile.Routes (ProfileRoutes)
 
 type TeamTavernRoutes

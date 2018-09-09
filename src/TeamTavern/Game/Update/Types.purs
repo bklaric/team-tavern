@@ -8,8 +8,8 @@ import Postgres.Error (Error)
 import TeamTavern.Game.Domain.Description (DescriptionError)
 import TeamTavern.Game.Domain.Handle (Handle, HandleError)
 import TeamTavern.Game.Domain.Name (Name, NameError)
-import TeamTavern.Player.Domain.PlayerId (PlayerId)
-import TeamTavern.Player.Domain.Token (Token)
+import TeamTavern.Game.Infrastructure.Types (DetailsModel)
+import TeamTavern.Player.Domain.Types (AuthInfo)
 
 type DetailsError = Variant
     ( name :: NonEmptyList NameError
@@ -18,19 +18,17 @@ type DetailsError = Variant
     )
 
 type UpdateError = Variant
-    ( invalidTargetHandle ::
+    ( invalidHandle ::
         { handle :: String
         , errors :: NonEmptyList HandleError
         }
-    , cookiesNotPresent :: Map String String
-    , unreadableDetailsModel ::
+    , authNotPresent :: Map String String
+    , unreadableDetails ::
         { content :: String
         , errors :: NonEmptyList ForeignError
         }
     , invalidDetails ::
-        { name :: String
-        , handle :: String
-        , description :: String
+        { details :: DetailsModel
         , errors :: NonEmptyList DetailsError
         }
     , nameTaken ::
@@ -42,9 +40,5 @@ type UpdateError = Variant
         , error :: Error
         }
     , databaseError :: Error
-    , notAuthorized ::
-        { id :: PlayerId
-        , token :: Token
-        , handle :: Handle
-        }
+    , notAuthorized :: AuthInfo
     )

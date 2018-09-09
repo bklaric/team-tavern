@@ -1,28 +1,36 @@
 module TeamTavern.Player.Update.Types where
 
-import Prelude
-
 import Data.List.Types (NonEmptyList)
+import Data.Map (Map)
 import Data.Variant (Variant)
 import Foreign (ForeignError)
 import Postgres.Error (Error)
-import TeamTavern.Player.Domain.About (AboutError)
 import TeamTavern.Player.Domain.Nickname (Nickname, NicknameError)
+import TeamTavern.Player.Domain.Types (AuthInfo)
+import TeamTavern.Player.Infrastructure.Types (NicknamedAboutModel)
+import TeamTavern.Player.Update.ReadUpdate (NicknamedAboutError)
 
--- Error for the Update type.
-type UpdateError' = Variant
-    ( nickname :: NonEmptyList NicknameError
-    , about :: NonEmptyList AboutError
-    )
-
--- Error for the update use case.
 type UpdateError = Variant
-    ( cantValidateTargetNickname :: NonEmptyList NicknameError
-    , cookiesNotPresent :: Unit
-    , nicknamesNotSame :: Unit
-    , cantReadUpdateModel :: NonEmptyList ForeignError
-    , cantValidateUpdate :: NonEmptyList UpdateError'
-    , nicknameTaken :: { nickname :: Nickname, error :: Error }
+    ( invalidNickname ::
+        { nickname :: String
+        , errors :: NonEmptyList NicknameError
+        }
+    , authNotPresent :: Map String String
+    , unreadableUpdate ::
+        { content :: String
+        , errors :: NonEmptyList ForeignError
+        }
+    , invalidUpdate ::
+        { nicknamedAbout :: NicknamedAboutModel
+        , errors :: NonEmptyList NicknamedAboutError
+        }
+    , nicknameTaken ::
+        { nickname :: Nickname
+        , error :: Error
+        }
     , databaseError :: Error
-    , notAuthorized :: Unit
+    , notAuthorized ::
+        { authInfo :: AuthInfo
+        , nickname :: Nickname
+        }
     )

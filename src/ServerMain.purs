@@ -34,19 +34,19 @@ import Postmark.Client (Client)
 import Postmark.Client as Postmark
 import TeamTavern.Architecture.Deployment (Deployment(..))
 import TeamTavern.Architecture.Deployment as Deployment
-import TeamTavern.Game.Create (handleCreate)
+import TeamTavern.Game.Create (create) as Game
 import TeamTavern.Game.Update (handleUpdate) as Game
 import TeamTavern.Game.View (handleView) as Game
-import TeamTavern.Game.ViewAll (handleViewAll)
-import TeamTavern.Player.Register.Run (handleRegister)
-import TeamTavern.Player.Session.Prepare.Run (handlePrepare)
-import TeamTavern.Player.Session.Start.Run (handleStart)
-import TeamTavern.Player.Update (handleUpdate)
-import TeamTavern.Player.View as Player
+import TeamTavern.Game.ViewAll (handleViewAll) as Game
+import TeamTavern.Player.View (view) as Player
+import TeamTavern.Player.Register (register) as Player
+import TeamTavern.Player.Update (update) as Player
 import TeamTavern.Profile.Create (create) as Profile
 import TeamTavern.Profile.Update (update) as Profile
 import TeamTavern.Profile.ViewByGame (viewByGame) as Profile
 import TeamTavern.Routes (TeamTavernRoutes)
+import TeamTavern.Session.Prepare (prepare) as Session
+import TeamTavern.Session.Start (start) as Session
 
 listenOptions :: ListenOptions
 listenOptions = TcpListenOptions
@@ -147,25 +147,20 @@ handleRequest pool client method url cookies body =
             fromEffect $ log $ unsafeStringify errors
             pure { statusCode: 404, headers: MultiMap.empty, content: unsafeStringify errors }
     Right routeValues -> routeValues # match
-        { viewPlayers: const $ pure
-            { statusCode: 200
-            , headers: MultiMap.empty
-            , content: "You're viewing all players."
-            }
+        { registerPlayer: const $
+            Player.register pool client cookies body
         , viewPlayer: \{ nickname } ->
-            Player.handleView pool nickname
-        , registerPlayer:
-            const $ handleRegister pool client cookies body
-        , prepareSession: \{ nickname } ->
-            handlePrepare pool client nickname body cookies
-        , startSession: \{ nickname } ->
-            handleStart pool nickname cookies body
+            Player.view pool nickname
         , updatePlayer: \{ nickname } ->
-            handleUpdate pool nickname cookies body
-        , createGame:
-            const $ handleCreate pool cookies body
-        , viewAllGames:
-            const $ handleViewAll pool
+            Player.update pool nickname cookies body
+        , prepareSession: const $
+            Session.prepare pool client cookies body
+        , startSession: const $
+            Session.start pool body
+        , createGame: const $
+            Game.create pool cookies body
+        , viewAllGames: const $
+            Game.handleViewAll pool
         , viewGame: \{ handle } ->
             Game.handleView pool handle
         , updateGame: \{ handle } ->

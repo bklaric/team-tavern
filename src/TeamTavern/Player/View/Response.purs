@@ -1,4 +1,4 @@
-module TeamTavern.Player.View.Response where
+module TeamTavern.Player.View.Response (OkContent, response) where
 
 import Prelude
 
@@ -10,7 +10,7 @@ import Simple.JSON (writeJSON)
 import TeamTavern.Player.Domain.Types (View)
 import TeamTavern.Player.View.Types (ViewError)
 
-type OkResponseContent =
+type OkContent =
     { nickname :: String
     , about :: String
     , profiles :: Array
@@ -22,7 +22,7 @@ type OkResponseContent =
 
 errorResponse :: ViewError -> Response
 errorResponse = match
-    { nicknameInvalid: const $ notFound__
+    { invalidNickname: const $ notFound__
     , databaseError: const $ internalServerError__
     , unreadableResult: const $ internalServerError__
     , notFound: const $ notFound__
@@ -38,7 +38,7 @@ successResponse { nickname, about, profiles } = ok_ $ writeJSON (
         , name: unwrap name
         , summary: unwrap summary
         }
-    } :: OkResponseContent)
+    } :: OkContent)
 
 response :: Async ViewError View -> (forall left. Async left Response)
 response = alwaysRight errorResponse successResponse

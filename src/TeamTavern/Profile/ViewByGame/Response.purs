@@ -1,4 +1,4 @@
-module TeamTavern.Profile.ViewByGame.Response where
+module TeamTavern.Profile.ViewByGame.Response (OkContent, response) where
 
 import Prelude
 
@@ -11,16 +11,21 @@ import Simple.JSON (writeJSON)
 import TeamTavern.Profile.Domain.Types (ByGameView)
 import TeamTavern.Profile.ViewByGame.Types (ViewByGameError)
 
+type OkContent = Array
+    { nickname :: String
+    , summary :: String
+    }
+
 errorResponse :: ViewByGameError -> Response
 errorResponse = match
     { invalidHandle: const notFound__
     , databaseError: const internalServerError__
-    , unreadableResult: const internalServerError__
+    , unreadableViews: const internalServerError__
     , invalidViews: const internalServerError__
     }
 
 successResponse :: Array ByGameView -> Response
-successResponse profiles = ok_ $ writeJSON $
+successResponse profiles = ok_ $ (writeJSON :: OkContent -> String) $
     mapFlipped profiles \{ nickname, summary } ->
         { nickname: unwrap nickname
         , summary: unwrap summary

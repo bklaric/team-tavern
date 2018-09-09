@@ -4,6 +4,8 @@ module TeamTavern.Game.Domain.Name
 import Prelude
 
 import Data.Either (Either)
+import Data.Generic.Rep (class Generic)
+import Data.Generic.Rep.Show (genericShow)
 import Data.List.Types (NonEmptyList)
 import Data.Maybe (Maybe)
 import Data.Newtype (class Newtype)
@@ -19,6 +21,11 @@ newtype Name = Name String
 derive instance eqName :: Eq Name
 
 derive instance newtypeName :: Newtype Name _
+
+derive instance genericName :: Generic Name _
+
+instance showName :: Show Name where
+    show = genericShow
 
 type NameError = Variant
     ( empty :: Empty

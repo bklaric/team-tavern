@@ -1,4 +1,5 @@
-module TeamTavern.Profile.Update.UpdateProfile where
+module TeamTavern.Profile.Update.UpdateProfile
+    (UpdateProfileError, updateProfile) where
 
 import Prelude
 
@@ -12,14 +13,14 @@ import Postgres.Pool (Pool)
 import Postgres.Query (Query(..), QueryParameter(..))
 import Postgres.Result (rowCount)
 import TeamTavern.Player.Domain.PlayerId (toString)
-import TeamTavern.Player.Domain.Types (IdentifiedToken')
+import TeamTavern.Player.Domain.Types (AuthInfo)
 import TeamTavern.Profile.Domain.Summary (Summary)
 import TeamTavern.Profile.Domain.Types (Identifiers)
 
 type UpdateProfileError errors = Variant
     ( databaseError :: Error
     , notAuthorized ::
-        { auth :: IdentifiedToken'
+        { auth :: AuthInfo
         , identifiers :: Identifiers
         }
     | errors )
@@ -41,7 +42,7 @@ updateProfileQuery = Query """
     """
 
 updateProfileParameters ::
-    IdentifiedToken' -> Identifiers -> Summary -> Array QueryParameter
+    AuthInfo -> Identifiers -> Summary -> Array QueryParameter
 updateProfileParameters { id, token } { nickname, handle } summary =
     [ toString id
     , unwrap token
@@ -54,7 +55,7 @@ updateProfileParameters { id, token } { nickname, handle } summary =
 updateProfile
     :: forall errors
     .  Pool
-    -> IdentifiedToken'
+    -> AuthInfo
     -> Identifiers
     -> Summary
     -> Async (UpdateProfileError errors) Unit

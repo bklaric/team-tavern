@@ -14,11 +14,11 @@ import TeamTavern.Game.Domain.Handle as Handle
 import TeamTavern.Player.Domain.Nickname (NicknameError)
 import TeamTavern.Player.Domain.Nickname as Nickname
 import TeamTavern.Profile.Domain.Types (Identifiers)
+import TeamTavern.Profile.Infrastructure.Types (IdentifiersModel)
 
 type ReadIdentifiersError errors = Variant
     ( invalidIdentifiers ::
-        { nickname :: String
-        , handle :: String
+        { identifiers :: IdentifiersModel
         , errors :: NonEmptyList (Variant
             ( invalidNickname :: NonEmptyList NicknameError
             , invalidHandle :: NonEmptyList HandleError
@@ -30,7 +30,7 @@ readIdentifiers
     :: forall errors
     .  { nickname :: String, handle :: String }
     -> Async (ReadIdentifiersError errors) Identifiers
-readIdentifiers { nickname, handle } =
+readIdentifiers identifiers @ { nickname, handle } =
     { nickname: _, handle: _ }
     <$> (Nickname.create nickname
         # Validated.label (SProxy :: SProxy "invalidNickname"))
@@ -38,4 +38,4 @@ readIdentifiers { nickname, handle } =
         # Validated.label (SProxy :: SProxy "invalidHandle"))
     # Async.fromValidated
     # Label.labelMap (SProxy :: SProxy "invalidIdentifiers")
-        { nickname, handle, errors: _ }
+        { identifiers, errors: _ }

@@ -4,20 +4,23 @@ import Data.List.Types (NonEmptyList)
 import Data.Variant (Variant)
 import Foreign (ForeignError)
 import Postgres.Error (Error)
+import Postgres.Result (Result)
 import TeamTavern.Game.Domain.Handle (Handle, HandleError)
+import TeamTavern.Game.View.LoadGame (GameViewModel)
 
 type ViewError = Variant
-    ( handleInvalid ::
+    ( invalidHandle ::
         { handle :: String
         , errors :: NonEmptyList HandleError
         }
     , databaseError :: Error
-    , unreadableResult :: NonEmptyList ForeignError
+    , unreadableView ::
+        { result :: Result
+        , errors :: NonEmptyList ForeignError
+        }
     , notFound :: Handle
     , invalidView ::
-        { administratorId :: Int
-        , name :: String
-        , handle :: Handle
-        , description :: String
+        { handle :: Handle
+        , view :: GameViewModel
         }
     )

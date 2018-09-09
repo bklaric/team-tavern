@@ -1,4 +1,5 @@
-module TeamTavern.Game.Create.Response where
+module TeamTavern.Game.Create.Response
+    (DetailsErrorContent, BadRequestContent, response) where
 
 import Prelude
 
@@ -9,23 +10,23 @@ import Perun.Response (Response, badRequest_, badRequest__, forbidden__, interna
 import Simple.JSON (writeJSON)
 import TeamTavern.Game.Create.Types (CreateError)
 
-type DetailsErrorResponseContent = Variant
+type DetailsErrorContent = Variant
     ( invalidName :: {}
     , invalidHandle :: {}
     , invalidDescription :: {}
     )
 
-type BadRequestResponseContent = Variant
-    ( invalidDetails :: Array DetailsErrorResponseContent
+type BadRequestContent = Variant
+    ( invalidDetails :: Array DetailsErrorContent
     , nameTaken :: {}
     , handleTaken :: {}
     )
 
 errorResponse :: CreateError -> Response
 errorResponse = match
-    { cookiesNotPresent: const $ unauthorized__
-    , cantReadDetailsModel: const $ badRequest__
-    , cantValidateDetails: \{ errors } ->
+    { authNotPresent: const $ unauthorized__
+    , unreadableDetails: const $ badRequest__
+    , invalidDetails: \{ errors } ->
         errors
         <#> (match
             { name: const $ inj (SProxy :: SProxy "invalidName") {}
@@ -35,13 +36,13 @@ errorResponse = match
             })
         # fromFoldable
         # inj (SProxy :: SProxy "invalidDetails")
-        # (writeJSON :: BadRequestResponseContent -> String)
+        # (writeJSON :: BadRequestContent -> String)
         # badRequest_
     , nameTaken: const $ badRequest_
-        $ (writeJSON :: BadRequestResponseContent -> String)
+        $ (writeJSON :: BadRequestContent -> String)
         $ inj (SProxy :: SProxy "nameTaken") {}
     , handleTaken: const $ badRequest_
-        $ (writeJSON :: BadRequestResponseContent -> String)
+        $ (writeJSON :: BadRequestContent -> String)
         $ inj (SProxy :: SProxy "handleTaken") {}
     , databaseError: const $ internalServerError__
     , notAuthorized: const $ forbidden__

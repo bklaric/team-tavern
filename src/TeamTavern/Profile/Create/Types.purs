@@ -1,6 +1,5 @@
 module TeamTavern.Profile.Create.Types where
 
-
 import Data.List.Types (NonEmptyList)
 import Data.Map (Map)
 import Data.Variant (Variant)
@@ -8,14 +7,14 @@ import Foreign (ForeignError)
 import Postgres.Error (Error)
 import TeamTavern.Game.Domain.Handle (HandleError)
 import TeamTavern.Player.Domain.Nickname (NicknameError)
-import TeamTavern.Player.Domain.Types (IdentifiedToken')
+import TeamTavern.Player.Domain.Types (AuthInfo)
 import TeamTavern.Profile.Domain.Summary (SummaryError)
 import TeamTavern.Profile.Domain.Types (Identifiers)
+import TeamTavern.Profile.Infrastructure.Types (IdentifiersModel)
 
 type CreateError = Variant
     ( invalidIdentifiers ::
-        { nickname :: String
-        , handle :: String
+        { identifiers :: IdentifiersModel
         , errors :: NonEmptyList (Variant
             ( invalidNickname :: NonEmptyList NicknameError
             , invalidHandle :: NonEmptyList HandleError
@@ -32,7 +31,7 @@ type CreateError = Variant
         }
     , databaseError :: Error
     , notAuthorized ::
-        { auth :: IdentifiedToken'
+        { auth :: AuthInfo
         , identifiers :: Identifiers
         }
     )

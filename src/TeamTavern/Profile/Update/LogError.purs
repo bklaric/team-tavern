@@ -9,12 +9,11 @@ import TeamTavern.Infrastructure.Log (logt, print)
 import TeamTavern.Profile.Update.Types (UpdateError)
 
 logError :: UpdateError -> Effect Unit
-logError createError = do
-    log "Error creating profile"
-    createError # match
-        { invalidIdentifiers: \{ nickname, handle, errors } -> do
-            logt $ "Couldn't validate identifiers: "
-                <> show { nickname, handle }
+logError updateError = do
+    log "Error updating profile"
+    updateError # match
+        { invalidIdentifiers: \{ identifiers, errors } -> do
+            logt $ "Couldn't validate identifiers: " <> show identifiers
             logt $ "Validation resulted in these errors: " <> show errors
         , authNotPresent: \cookies ->
             logt $ "Couldn't read auth info from cookies: " <> show cookies
@@ -28,6 +27,6 @@ logError createError = do
             logt $ "Unknown database error ocurred: " <> print error
         , notAuthorized: \{ auth, identifiers } -> do
             logt $ "Player with auth: " <> show auth
-            logt $ "Not authorized to create profile for identifiers: "
+            logt $ "Not authorized to update profile for identifiers: "
                 <> show identifiers
         }

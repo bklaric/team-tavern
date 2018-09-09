@@ -2,15 +2,25 @@ module TeamTavern.Infrastructure.EnsureNotSignedIn where
 
 import Prelude
 
-import Data.Variant (SProxy(..))
-import Run (FProxy, Run, lift)
+import Async (Async)
+import Async as Async
+import Data.Map (Map)
+import Data.Maybe (Maybe(..))
+import Data.Variant (SProxy(..), Variant, inj)
+import TeamTavern.Infrastructure.Cookie (lookupIdCookie)
 
-data EnsureNotSignedInF result = EnsureNotSignedIn result
+type EnsureNotSignedInError errors = Variant
+    ( signedIn ::
+        { playerId :: String
+        , cookies :: Map String String
+        }
+    | errors )
 
-derive instance functorEnsureNotSignedInF :: Functor EnsureNotSignedInF
-
-_ensureNotSignedIn = SProxy :: SProxy "ensureNotSignedIn"
-
-ensureNotSignedIn :: forall run.
-    Run (ensureNotSignedIn :: FProxy EnsureNotSignedInF | run) Unit
-ensureNotSignedIn = lift _ensureNotSignedIn (EnsureNotSignedIn unit)
+ensureNotSignedIn :: forall errors.
+    Map String String -> Async (EnsureNotSignedInError errors) Unit
+ensureNotSignedIn cookies =
+    lookupIdCookie cookies
+    # case _ of
+        Nothing -> Async.right unit
+        Just playerId ->
+            Async.left $ inj (SProxy :: SProxy "signedIn") { playerId, cookies }

@@ -1,6 +1,7 @@
 module TeamTavern.Profile.Domain.Types where
 
 import TeamTavern.Game.Domain.Handle (Handle)
+import TeamTavern.Game.Domain.Name (Name)
 import TeamTavern.Player.Domain.Nickname (Nickname)
 import TeamTavern.Profile.Domain.Summary (Summary)
 
@@ -11,5 +12,11 @@ type Identifiers =
 
 type ByGameView =
     { nickname :: Nickname
+    , summary :: Summary
+    }
+
+type ByPlayerView =
+    { handle :: Handle
+    , name :: Name
     , summary :: Summary
     }

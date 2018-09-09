@@ -2,11 +2,11 @@ module TeamTavern.Player.View.LogError where
 
 import Prelude
 
-import Data.Newtype (unwrap)
-import Data.String.NonEmpty (toString)
 import Data.Variant (match)
 import Effect (Effect)
 import Effect.Console (log)
+import Global.Unsafe (unsafeStringify)
+import Postgres.Result (rows)
 import TeamTavern.Infrastructure.Log (logt, print)
 import TeamTavern.Player.View.Types (ViewError)
 
@@ -14,16 +14,17 @@ logError :: ViewError -> Effect Unit
 logError viewError = do
     log "Error viewing player"
     viewError # match
-        { nicknameInvalid: \{ nickname, errors } ->
-            logt $ "Validating nickname '" <> toString nickname <> "' "
-                <> "resulted in these errors: " <> show errors
+        { invalidNickname: \{ nickname, errors } -> do
+            logt $ "Couldn't validate nickname: " <> show nickname
+            logt $ "Validation resulted in these errors: " <> show errors
         , databaseError: \error ->
-            logt $ "Database error occured: " <> print error
-        , unreadableResult: \errors ->
-            logt $ "Reading view resulted in these errors: " <> show errors
+            logt $ "Unknown database error ocurred: " <> print error
+        , unreadableResult: \{ result, errors} -> do
+            logt $ "Couldn't read views: " <> (unsafeStringify $ rows result)
+            logt $ "Reading views resulted in these errors: " <> show errors
         , notFound: \nickname ->
-            logt $ "Player '" <> unwrap nickname <> "' wasn't found"
+            logt $ "Player wasn't found: " <> show nickname
         , invalidView: \{ nickname, view } ->
-            logt $ "View of player '" <> unwrap nickname <> "' is invalid: "
+            logt $ "View of player " <> show nickname <> " is invalid: "
                 <> show view
         }

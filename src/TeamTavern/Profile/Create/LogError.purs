@@ -12,9 +12,8 @@ logError :: CreateError -> Effect Unit
 logError createError = do
     log "Error creating profile"
     createError # match
-        { invalidIdentifiers: \{ nickname, handle, errors } -> do
-            logt $ "Couldn't validate identifiers: "
-                <> show { nickname, handle }
+        { invalidIdentifiers: \{ identifiers, errors } -> do
+            logt $ "Couldn't validate identifiers: " <> show identifiers
             logt $ "Validation resulted in these errors: " <> show errors
         , authNotPresent: \cookies ->
             logt $ "Couldn't read auth info from cookies: " <> show cookies

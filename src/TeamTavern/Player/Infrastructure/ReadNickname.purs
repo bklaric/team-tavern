@@ -1,34 +1,27 @@
-module TeamTavern.Player.Infrastructure where
+module TeamTavern.Player.Infrastructure.ReadNickname where
 
 import Prelude
 
-import Async (Async, fromEither)
-import Data.Bifunctor (lmap)
+import Async (Async)
+import Async as Async
+import Data.Bifunctor.Label (labelMap)
 import Data.List.Types (NonEmptyList)
-import Data.String.NonEmpty (NonEmptyString, toString)
 import Data.Symbol (SProxy(..))
 import Data.Variant (Variant)
-import Data.Bifunctor.Label (label)
 import TeamTavern.Player.Domain.Nickname (Nickname, NicknameError)
 import TeamTavern.Player.Domain.Nickname as Nickname
-import Data.Validated (toEither)
 
-type ReadNicknameError =
-    { errors :: NonEmptyList NicknameError
-    , nickname :: NonEmptyString
-    }
+type ReadNicknameError errors = Variant
+    ( invalidNickname ::
+        { nickname :: String
+        , errors :: NonEmptyList NicknameError
+        }
+    | errors )
 
-readNickname' :: NonEmptyString -> Async ReadNicknameError Nickname
-readNickname' nickname =
+readNickname :: forall errors.
+    String -> Async (ReadNicknameError errors) Nickname
+readNickname nickname =
     nickname
-    # toString
-    # Nickname.create
-    # toEither
-    # lmap { errors: _, nickname}
-    # fromEither
-
-readNickname
-    :: forall errors
-    .  NonEmptyString
-    -> Async (Variant (readNickname :: ReadNicknameError | errors)) Nickname
-readNickname = readNickname' >>> label (SProxy :: SProxy "readNickname")
+    # Nickname.create'
+    # labelMap (SProxy :: SProxy "invalidNickname") { nickname, errors: _ }
+    # Async.fromEither

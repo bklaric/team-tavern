@@ -2,7 +2,6 @@ module TeamTavern.Player.Update.LogError where
 
 import Prelude
 
-import Data.Newtype (unwrap)
 import Data.Variant (match)
 import Effect (Effect)
 import Effect.Console (log)
@@ -13,24 +12,23 @@ logError :: UpdateError -> Effect Unit
 logError updateError = do
     log "Error updating player"
     updateError # match
-        { cantValidateTargetNickname: \errors ->
-            logt $ "Validating target nickname resulted in these errors: "
-                <> show errors
-        , cookiesNotPresent: const $
-            logt $ "Couldn't read requestor cookies"
-        , nicknamesNotSame: const $
-            logt $ "Target and requestor nicknames weren't same"
-        , cantReadUpdateModel: \errors ->
-            logt $ "Reading update model resulted in these errors: "
-                <> show errors
-        , cantValidateUpdate: \errors ->
-            logt $ "Validating update resulted in these errors: "
-                <> show errors
-        , nicknameTaken: \{ nickname, error } ->
-            logt $ "Nickname '" <> unwrap nickname <> "' is already taken: "
-                <> print error
+        { invalidNickname: \{ nickname, errors } -> do
+            logt $ "Couldn't validate nickname: " <> show nickname
+            logt $ "Validation resulted in these errors: " <> show errors
+        , authNotPresent: \cookies ->
+            logt $ "Couldn't read auth info out of cookies: " <> show cookies
+        , unreadableUpdate: \{ content, errors } -> do
+            logt $ "Couldn't read update from body: " <> show content
+            logt $ "Reading resulted in these errors: " <> show errors
+        , invalidUpdate: \{ nicknamedAbout, errors } -> do
+            logt $ "Couldn't validate update: " <> show nicknamedAbout
+            logt $ "Validation resulted in these errors: " <> show errors
+        , nicknameTaken: \{ nickname, error } -> do
+            logt $ "Nickname is already taken: " <> show nickname
+            logt $ "According to this error: " <> print error
         , databaseError: \error ->
-            logt $ "Database error occured: " <> print error
-        , notAuthorized: const $
-            logt $ "Player update isn't authorized"
+            logt $ "Unknown database error ocurred: " <> print error
+        , notAuthorized: \{ authInfo, nickname } -> do
+            logt $ "Player with auth: " <> show authInfo
+            logt $ "Not authorized to update player: " <> show nickname
         }

@@ -1,4 +1,5 @@
-module TeamTavern.Profile.ViewByGame.LoadProfiles where
+module TeamTavern.Profile.ViewByGame.LoadProfiles
+    (ByGameViewModel, LoadProfilesError, loadProfiles) where
 
 import Prelude
 
@@ -12,30 +13,28 @@ import Data.Traversable (traverse)
 import Data.Validated (Validated)
 import Data.Validated as Validated
 import Data.Variant (Variant)
-import Foreign (Foreign, ForeignError)
+import Foreign (ForeignError)
 import Postgres.Async.Query (query)
 import Postgres.Error (Error)
 import Postgres.Pool (Pool)
 import Postgres.Query (Query(..), QueryParameter(..))
-import Postgres.Result (rows)
+import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
 import TeamTavern.Game.Domain.Handle (Handle)
 import TeamTavern.Player.Domain.Nickname as Nickname
 import TeamTavern.Profile.Domain.Summary as Summary
 import TeamTavern.Profile.Domain.Types (ByGameView)
 
+type ByGameViewModel = { nickname :: String, summary :: String }
+
 type LoadProfilesError errors = Variant
-    ( invalidViews :: NonEmptyList
-        { nickname :: String
-        , summary :: String
-        }
+    ( invalidViews :: NonEmptyList ByGameViewModel
     , databaseError :: Error
-    , unreadableResult ::
-        { rows :: Array Foreign
+    , unreadableViews ::
+        { result :: Result
         , errors :: NonEmptyList ForeignError
         }
-    | errors
-    )
+    | errors )
 
 loadProfilesQuery :: Query
 loadProfilesQuery = Query """
@@ -44,12 +43,11 @@ loadProfilesQuery = Query """
     join player on player.id = profile.player_id
     join game on game.id = profile.game_id
     where game.handle = $1
+    order by profile.created desc
     """
 
 loadProfilesParameters :: Handle -> Array QueryParameter
 loadProfilesParameters handle = [unwrap handle] <#> QueryParameter
-
-type ByGameViewModel = { nickname :: String, summary :: String }
 
 validateProfiles :: forall errors.
     Array ByGameViewModel -> Async (LoadProfilesError errors) (Array ByGameView)
@@ -75,6 +73,5 @@ loadProfiles pool handle = do
         # label (SProxy :: SProxy "databaseError")
     profiles <- rows result
         # traverse read
-        # labelMap (SProxy :: SProxy "unreadableResult")
-            { rows: rows result, errors: _ }
+        # labelMap (SProxy :: SProxy "unreadableViews") { result, errors: _ }
     validateProfiles profiles

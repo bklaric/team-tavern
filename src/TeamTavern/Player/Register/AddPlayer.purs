@@ -8,12 +8,13 @@ import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
 import Data.Variant (SProxy(..), Variant, inj)
 import Node.Errors.Class (code)
+import Postgres.Async.Query (execute)
 import Postgres.Error (Error, constraint)
 import Postgres.Error.Codes (unique_violation)
 import Postgres.Pool (Pool)
 import Postgres.Query (Query(..), QueryParameter(..))
-import Data.Bifunctor.Label (label)
-import Postgres.Async.Query (query)
+import TeamTavern.Player.Domain.Email (Email)
+import TeamTavern.Player.Domain.Nickname (Nickname)
 import TeamTavern.Player.Domain.Types (Credentials)
 
 addPlayerQuery :: Query
@@ -33,35 +34,30 @@ addPlayerQueryParameters { email, nickname, token, nonce } =
     [unwrap email, unwrap nickname, unwrap token, unwrap nonce]
     <#> QueryParameter
 
-type AddPlayerError =
-    { credentials :: Credentials
-    , error :: Variant
-        ( emailTaken :: Error
-        , nicknameTaken :: Error
-        , other :: Error
-        )
-    }
-
-_emailTaken = SProxy :: SProxy "emailTaken"
-
-_nicknameTaken = SProxy :: SProxy "nicknameTaken"
-
-_other = SProxy :: SProxy "other"
+type AddPlayerError errors = Variant
+    ( emailTaken ::
+        { email :: Email
+        , error :: Error
+        }
+    , nicknameTaken ::
+        { nickname :: Nickname
+        , error :: Error
+        }
+    , databaseError :: Error
+    | errors )
 
 addPlayer
     :: forall errors
     .  Pool
     -> Credentials
-    -> Async (Variant (addPlayer :: AddPlayerError | errors)) Unit
+    -> Async (AddPlayerError errors) Unit
 addPlayer pool credentials@{ email, nickname, token, nonce } =
     pool
-    # query addPlayerQuery (addPlayerQueryParameters credentials)
+    # execute addPlayerQuery (addPlayerQueryParameters credentials)
     # lmap (\error ->
         case code error == unique_violation of
         true | constraint error == Just "player_email_key" ->
-            { error: inj _emailTaken error, credentials }
+            inj (SProxy :: SProxy "emailTaken") { email, error }
         true | constraint error == Just "player_nickname_key" ->
-            { error: inj _nicknameTaken error, credentials }
-        _ -> { error: inj _other error, credentials })
-    # label (SProxy :: SProxy "addPlayer")
-    # void
+            inj (SProxy :: SProxy "nicknameTaken") { nickname, error }
+        _ -> inj (SProxy :: SProxy "databaseError") error )

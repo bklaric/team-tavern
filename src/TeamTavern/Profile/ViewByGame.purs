@@ -7,12 +7,12 @@ import Perun.Response (Response)
 import Postgres.Pool (Pool)
 import TeamTavern.Game.Infrastructure.ReadHandle (readHandle)
 import TeamTavern.Profile.ViewByGame.LoadProfiles (loadProfiles)
-import TeamTavern.Profile.ViewByGame.LogError (logError) as ViewByGame
-import TeamTavern.Profile.ViewByGame.Response (response) as ViewByGame
+import TeamTavern.Profile.ViewByGame.LogError (logError)
+import TeamTavern.Profile.ViewByGame.Response (response)
 
 viewByGame :: forall left. Pool -> String -> Async left Response
 viewByGame pool handle' =
-    ViewByGame.response $ examineLeftWithEffect ViewByGame.logError do
+    response $ examineLeftWithEffect logError do
     -- Read handle from route.
     handle <- readHandle handle'
 

@@ -1,4 +1,4 @@
-module TeamTavern.Profile.Update.Response where
+module TeamTavern.Profile.Update.Response (BadRequestContent, response) where
 
 import Prelude
 

@@ -1,29 +1,26 @@
 module TeamTavern.Player.View.Types where
 
 import Data.List.Types (NonEmptyList)
-import Data.String.NonEmpty (NonEmptyString)
 import Data.Variant (Variant)
 import Foreign (ForeignError)
 import Postgres.Error (Error)
+import Postgres.Result (Result)
 import TeamTavern.Player.Domain.Nickname (Nickname, NicknameError)
+import TeamTavern.Player.View.LoadPlayer (PlayerViewModel)
 
 type ViewError = Variant
-    ( nicknameInvalid ::
-        { nickname :: NonEmptyString
+    ( invalidNickname ::
+        { nickname :: String
         , errors :: NonEmptyList NicknameError
         }
     , databaseError :: Error
-    , unreadableResult :: NonEmptyList ForeignError
+    , unreadableResult ::
+        { result :: Result
+        , errors :: NonEmptyList ForeignError
+        }
     , notFound :: Nickname
     , invalidView ::
         { nickname :: Nickname
-        , view ::
-            { about :: String
-            , profiles :: Array
-                { handle :: String
-                , name :: String
-                , summary :: String
-                }
-            }
+        , view :: PlayerViewModel
         }
     )

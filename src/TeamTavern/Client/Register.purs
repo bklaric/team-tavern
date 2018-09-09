@@ -26,8 +26,8 @@ import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Script.Cookie (hasPlayerIdCookie)
 import TeamTavern.Client.Script.Navigate (navigate, navigate_)
-import TeamTavern.Client.SignIn (errorClass, inputErrorClass, otherErrorClass)
-import TeamTavern.Player.Register.Run.CreateResponse (BadRequestResponseContent, OkResponseContent)
+-- import TeamTavern.Client.SignIn (errorClass, inputErrorClass, otherErrorClass)
+-- import TeamTavern.Player.Register.Run.CreateResponse (BadRequestContent, OkContent)
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
@@ -179,7 +179,7 @@ eval (Register event send) = let
                 Left errors -> do
                     logShow errors
                     pure $ setOtherError resetState
-                Right (content :: OkResponseContent) -> do
+                Right (content :: OkContent) -> do
                     H.liftEffect $ navigate content "/welcome"
                     pure resetState
             400 -> FARes.text response <#> J.readJSON >>=
@@ -187,7 +187,7 @@ eval (Register event send) = let
                 Left errors -> do
                     logShow errors
                     pure $ setOtherError resetState
-                Right (error :: BadRequestResponseContent) -> V.match
+                Right (error :: BadRequestContent) -> V.match
                     { invalidIdentifiers: foldl (\state -> V.match
                         { invalidEmail:
                             const $ setEmailError state

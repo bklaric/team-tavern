@@ -1,4 +1,4 @@
-module TeamTavern.Game.ViewAll.Response where
+module TeamTavern.Game.ViewAll.Response (OkContent, response) where
 
 import Prelude
 
@@ -12,15 +12,22 @@ import TeamTavern.Game.Domain.Types (View)
 import TeamTavern.Game.ViewAll.Types (ViewAllError)
 import TeamTavern.Player.Domain.PlayerId (toInt)
 
+type OkContent = Array
+    { administratorId :: Int
+    , name :: String
+    , handle :: String
+    , description :: String
+    }
+
 errorResponse :: ViewAllError -> Response
 errorResponse = match
-    { invalidViews: const $ internalServerError__
+    { unreadableViews: const $ internalServerError__
+    , invalidViews: const $ internalServerError__
     , databaseError: const $ internalServerError__
-    , unreadableResult: const $ internalServerError__
     }
 
 successResponse :: Array View -> Response
-successResponse views  = ok_ $ writeJSON $
+successResponse views  = ok_ $ (writeJSON :: OkContent -> String) $
     mapFlipped views \{ administratorId, name, handle, description } ->
         { administratorId: toInt administratorId
         , name: unwrap name

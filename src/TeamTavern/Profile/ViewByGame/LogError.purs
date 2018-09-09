@@ -6,6 +6,7 @@ import Data.Variant (match)
 import Effect (Effect)
 import Effect.Console (log)
 import Global.Unsafe (unsafeStringify)
+import Postgres.Result (rows)
 import TeamTavern.Infrastructure.Log (logt, print)
 import TeamTavern.Profile.ViewByGame.Types (ViewByGameError)
 
@@ -18,9 +19,9 @@ logError viewError = do
             logt $ "Validation resulted in these errors: " <> show errors
         , databaseError: \error ->
             logt $ "Unknown database error ocurred: " <> print error
-        , unreadableResult: \{ rows, errors } -> do
+        , unreadableViews: \{ result, errors } -> do
             logt $ "Couldn't read profiles out of rows: "
-                <> unsafeStringify rows
+                <> (unsafeStringify $ rows result)
             logt $ "Reading resulted in these errors: " <> show errors
         , invalidViews: \views -> do
             logt $ "Couldn't validate profiles: " <> show views

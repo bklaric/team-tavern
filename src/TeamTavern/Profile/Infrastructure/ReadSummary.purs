@@ -25,8 +25,7 @@ type ReadSummaryError errors = Variant
         }
     | errors )
 
-readSummary :: forall errors.
-    Body -> Async (ReadSummaryError errors) Summary
+readSummary :: forall errors. Body -> Async (ReadSummaryError errors) Summary
 readSummary body = do
     content <- readBody body
     { summary } :: { summary :: String } <-

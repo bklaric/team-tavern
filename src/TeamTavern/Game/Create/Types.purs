@@ -1,32 +1,24 @@
 module TeamTavern.Game.Create.Types where
 
-import Prelude
-
 import Data.List.Types (NonEmptyList)
 import Data.Map (Map)
 import Data.Variant (Variant)
 import Foreign (ForeignError)
 import Postgres.Error (Error)
-import TeamTavern.Game.Domain.Description (DescriptionError)
-import TeamTavern.Game.Domain.Handle (Handle, HandleError)
-import TeamTavern.Game.Domain.Name (Name, NameError)
-
-type DetailsError = Variant
-    ( name :: NonEmptyList NameError
-    , handle :: NonEmptyList HandleError
-    , description :: NonEmptyList DescriptionError
-    )
+import TeamTavern.Game.Domain.Handle (Handle)
+import TeamTavern.Game.Domain.Name (Name)
+import TeamTavern.Game.Infrastructure.ReadDetails (DetailsError)
+import TeamTavern.Game.Infrastructure.Types (DetailsModel)
+import TeamTavern.Player.Domain.Types (AuthInfo)
 
 type CreateError = Variant
-    ( cookiesNotPresent :: Map String String
-    , cantReadDetailsModel ::
+    ( authNotPresent :: Map String String
+    , unreadableDetails ::
         { content :: String
         , errors :: NonEmptyList ForeignError
         }
-    , cantValidateDetails ::
-        { name :: String
-        , handle :: String
-        , description :: String
+    , invalidDetails ::
+        { details :: DetailsModel
         , errors :: NonEmptyList DetailsError
         }
     , nameTaken ::
@@ -38,5 +30,5 @@ type CreateError = Variant
         , error :: Error
         }
     , databaseError :: Error
-    , notAuthorized :: Unit
+    , notAuthorized :: AuthInfo
     )
