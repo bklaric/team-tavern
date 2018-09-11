@@ -1,4 +1,4 @@
-module TeamTavern.Client.Register where
+module TeamTavern.Client.SignInCode where
 
 -- import Prelude
 
@@ -11,6 +11,7 @@ module TeamTavern.Client.Register where
 -- import Data.HTTP.Method (Method(..))
 -- import Data.Maybe (Maybe(..))
 -- import Data.Options ((:=))
+-- import Data.String (trim)
 -- import Data.Symbol (SProxy(..))
 -- import Data.Variant as V
 -- import Effect.Class (class MonadEffect)
@@ -27,7 +28,7 @@ module TeamTavern.Client.Register where
 -- import TeamTavern.Client.Script.Cookie (hasPlayerIdCookie)
 -- import TeamTavern.Client.Script.Navigate (navigate, navigate_)
 -- -- import TeamTavern.Client.SignIn (errorClass, inputErrorClass, otherErrorClass)
--- -- import TeamTavern.Player.Register.Run.CreateResponse (BadRequestContent, OkContent)
+-- import TeamTavern.Session.Prepare.Response (BadRequestContent)
 -- import Web.Event.Event (preventDefault)
 -- import Web.Event.Internal.Types (Event)
 
@@ -35,15 +36,14 @@ module TeamTavern.Client.Register where
 --     = Init send
 --     | EmailInput String send
 --     | NicknameInput String send
---     | Register Event send
+--     | RequestCode Event send
 
 -- type State =
 --     { email :: String
 --     , nickname :: String
 --     , emailError :: Boolean
 --     , nicknameError :: Boolean
---     , emailTaken :: Boolean
---     , nicknameTaken :: Boolean
+--     , unknownIdentifiers :: Boolean
 --     , otherError :: Boolean
 --     }
 
@@ -53,12 +53,12 @@ module TeamTavern.Client.Register where
 
 -- type ChildSlots =
 --     ( signInAnchor :: NavigationAnchor.Slot Unit
---     , codeAnchor :: NavigationAnchor.Slot Unit
+--     , registerAnchor :: NavigationAnchor.Slot Unit
 --     )
 
 -- _signInAnchor = SProxy :: SProxy "signInAnchor"
 
--- _codeAnchor = SProxy :: SProxy "codeAnchor"
+-- _registerAnchor = SProxy :: SProxy "registerAnchor"
 
 -- initialState :: State
 -- initialState =
@@ -66,8 +66,7 @@ module TeamTavern.Client.Register where
 --     , nickname: ""
 --     , emailError: false
 --     , nicknameError: false
---     , emailTaken: false
---     , nicknameTaken: false
+--     , unknownIdentifiers: false
 --     , otherError: false
 --     }
 
@@ -77,12 +76,11 @@ module TeamTavern.Client.Register where
 --     , nickname
 --     , emailError
 --     , nicknameError
---     , emailTaken
---     , nicknameTaken
+--     , unknownIdentifiers
 --     , otherError
 --     } = HH.form
---     [ HE.onSubmit $ HE.input Register ]
---     [ HH.h2_ [ HH.text "Register to TeamTavern" ]
+--     [ HE.onSubmit $ HE.input RequestCode ]
+--     [ HH.h2_ [ HH.text "Get a sign in code for TeamTavern" ]
 --     , HH.div_
 --         [ HH.label
 --             [ HP.class_ $ errorClass nicknameError, HP.for "nickname" ]
@@ -100,9 +98,6 @@ module TeamTavern.Client.Register where
 --             [ HH.li_ [ HH.text "Have no spaces" ]
 --             , HH.li_ [ HH.text "Be some shit I forgot" ]
 --             ]
---         , HH.p
---             [ HP.class_ $ inputErrorClass nicknameTaken ]
---             [ HH.text "This nickname is taken, pick another one." ]
 --         ]
 --     , HH.div_
 --         [ HH.label
@@ -116,22 +111,24 @@ module TeamTavern.Client.Register where
 --         , HH.p
 --             [ HP.class_ $ inputErrorClass emailError ]
 --             [ HH.text "This does not look like a valid email. Jesus Christ, how dense are you?" ]
---         , HH.p
---             [ HP.class_ $ inputErrorClass emailTaken ]
---             [ HH.text "This email is taken, pick another one." ]
 --         ]
 --     , HH.button
 --         [ HP.class_ $ ClassName "primary"
 --         , HP.disabled $ email == "" || nickname == ""
 --         ]
---         [ HH.text "Register" ]
+--         [ HH.text "Send the code" ]
+--     , HH.p
+--         [ HP.class_ $ otherErrorClass unknownIdentifiers ]
+--         [ HH.text $ "This isn't a known combination of nickname and email. "
+--             <> "Please check if they are correct."
+--         ]
 --     , HH.p
 --         [ HP.class_ $ otherErrorClass otherError ]
---         [ HH.text "Lmao, something else got fucked and you're shit out of luck, mate!"]
+--         [ HH.text "Lmao, something else got fucked and you're shit out of luck, mate!" ]
 --     , HH.slot _signInAnchor unit navigationAnchor
 --         { path: "/signin", text: "Sign in" } absurd
---     , HH.slot _codeAnchor unit navigationAnchor
---         { path: "/code", text: "Get a sign in code" } absurd
+--     , HH.slot _registerAnchor unit navigationAnchor
+--         { path: "/register", text: "Register" } absurd
 --     ]
 
 -- eval :: forall void.
@@ -146,26 +143,23 @@ module TeamTavern.Client.Register where
 --     H.modify_ (_ { email = email }) <#> const send
 -- eval (NicknameInput nickname send) =
 --     H.modify_ (_ { nickname = nickname }) <#> const send
--- eval (Register event send) = let
---     setEmailError       = _ { emailError       = true }
---     setNicknameError    = _ { nicknameError    = true }
---     setEmailTaken       = _ { emailTaken       = true }
---     setNicknameTaken    = _ { nicknameTaken    = true }
---     setSendEmailError   = _ { sendEmailError   = true }
---     setOtherError       = _ { otherError       = true }
+-- eval (RequestCode event send) = let
+--     setEmailError         = _ { emailError         = true }
+--     setNicknameError      = _ { nicknameError      = true }
+--     setUnknownIdentifiers = _ { unknownIdentifiers = true }
+--     setOtherError         = _ { otherError         = true }
 --     in do
 --     H.liftEffect $ preventDefault event
 --     resetState @ { email, nickname } <- H.gets (_
---         { emailError     = false
---         , nicknameError  = false
---         , emailTaken     = false
---         , nicknameTaken  = false
---         , otherError     = false
+--         { emailError         = false
+--         , nicknameError      = false
+--         , unknownIdentifiers = false
+--         , otherError         = false
 --         })
 --     response' <- H.lift $ A.attempt $ FA.fetch
---         ("http://localhost:8080/players")
+--         ("http://localhost:8080/players/by-nickname/" <> nickname <> "/sessions")
 --         (  FA.method := POST
---         <> FA.body := J.writeJSON { email, nickname }
+--         <> FA.body := J.writeJSON { email }
 --         <> FA.credentials := FA.Include
 --         )
 --     newState <- case response' of
@@ -174,14 +168,13 @@ module TeamTavern.Client.Register where
 --             pure $ setOtherError resetState
 --         Right response -> H.lift
 --             case FARes.status response of
---             200 -> FARes.text response <#> J.readJSON >>=
---                 case _ of
---                 Left errors -> do
---                     logShow errors
---                     pure $ setOtherError resetState
---                 Right (content :: OkContent) -> do
---                     H.liftEffect $ navigate content "/welcome"
---                     pure resetState
+--             204 -> do
+--                 H.liftEffect $ navigate
+--                     { email: trim email
+--                     , nickname: trim nickname
+--                     }
+--                     "/codesent"
+--                 pure resetState
 --             400 -> FARes.text response <#> J.readJSON >>=
 --                 case _ of
 --                 Left errors -> do
@@ -195,10 +188,8 @@ module TeamTavern.Client.Register where
 --                             const $ setNicknameError state
 --                         })
 --                         resetState
---                     , emailTaken:
---                         const $ setEmailTaken resetState
---                     , nicknameTaken:
---                         const $ setNicknameTaken resetState
+--                     , unknownIdentifiers:
+--                         const $ setUnknownIdentifiers resetState
 --                     }
 --                     error
 --                     # pure
@@ -206,9 +197,9 @@ module TeamTavern.Client.Register where
 --     H.put newState
 --     pure send
 
--- register :: forall input void.
+-- code :: forall input void.
 --     H.Component HH.HTML Query input Message (Async void)
--- register = H.component
+-- code = H.component
 --     { initialState: const initialState
 --     , render
 --     , eval

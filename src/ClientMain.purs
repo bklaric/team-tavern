@@ -11,7 +11,7 @@ import Halogen (hoist, liftEffect)
 import Halogen.Aff as HA
 import Halogen.VDom.Driver (runUI)
 import Partial.Unsafe (unsafePartial)
-import TeamTavern.Client.Main as Main
+import TeamTavern.Client.Router as Main
 import TeamTavern.Client.Script.Cookie (getPlayerInfo)
 import Web.Event.EventTarget (addEventListener)
 import Web.Event.EventTarget as DOM

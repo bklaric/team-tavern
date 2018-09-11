@@ -1,4 +1,4 @@
-module TeamTavern.Client.TopBar where
+module TeamTavern.Client.Components.TopBar where
 
 import Prelude
 
