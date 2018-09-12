@@ -5,5 +5,5 @@ cp index.html ~/team-tavern-nginx/index.html
 sass src/TeamTavern/Client/Style/Main.scss \
     | cleancss -o ~/team-tavern-nginx/style.min.css
 pulp build --main ClientMain --optimise \
-    | uglifyjs --compress --mangle --mangle-props \
+    | uglifyjs --compress --mangle \
     > ~/team-tavern-nginx/app.min.js
