@@ -10,15 +10,14 @@ import Foreign (Foreign)
 import Halogen as H
 import Halogen.HTML as HH
 import Simple.JSON (read)
--- import TeamTavern.Client.SignInCode as Code
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
-import TeamTavern.Client.Player as Player
--- import TeamTavern.Client.Register as Register
-import TeamTavern.Client.Script.Cookie (PlayerInfo, getPlayerInfo)
--- import TeamTavern.Client.SignIn as SignIn
 import TeamTavern.Client.Components.TopBar (topBar)
 import TeamTavern.Client.Components.TopBar as TopBar
+import TeamTavern.Client.Home (home)
+import TeamTavern.Client.Home as Home
+import TeamTavern.Client.Player as Player
+import TeamTavern.Client.Script.Cookie (PlayerInfo, getPlayerInfo)
 
 data Query send = ChangeRoute Foreign String send
 
@@ -34,6 +33,7 @@ data State
 
 type ChildSlots =
   ( topBar :: TopBar.Slot Unit
+  , home :: Home.Slot Unit
 --   , signIn :: SignIn.Slot Unit
 --   , register :: Register.Slot Unit
 --   , code :: Code.Slot Unit
@@ -56,7 +56,10 @@ _signInAnchor = SProxy :: SProxy "signInAnchor"
 type Message = Void
 
 render :: forall void. State -> H.ComponentHTML Query ChildSlots (A.Async void)
-render (Home playerInfo) = HH.slot _topBar unit topBar playerInfo absurd
+render (Home playerInfo) = HH.div_
+    [ HH.slot _topBar unit topBar playerInfo absurd
+    , home (SProxy :: SProxy "home")
+    ]
 -- render SignIn = HH.slot _signIn unit SignIn.signIn unit absurd
 -- render Register = HH.slot _register unit Register.register unit absurd
 -- render (Welcome { email, nickname, emailSent }) = HH.div_
