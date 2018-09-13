@@ -5,6 +5,7 @@ import Prelude
 import Async as A
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
+import Data.String (Pattern(..), split)
 import Data.Symbol (SProxy(..))
 import Foreign (Foreign)
 import Halogen as H
@@ -14,6 +15,8 @@ import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Components.TopBar (topBar)
 import TeamTavern.Client.Components.TopBar as TopBar
+import TeamTavern.Client.Game (game)
+import TeamTavern.Client.Game as Game
 import TeamTavern.Client.Home (home)
 import TeamTavern.Client.Home as Home
 import TeamTavern.Client.Player as Player
@@ -23,6 +26,7 @@ data Query send = ChangeRoute Foreign String send
 
 data State
     = Home (Maybe PlayerInfo)
+    | Game { handle :: String, playerInfo :: (Maybe PlayerInfo) }
     -- | SignIn
     -- | Register
     -- | Welcome { email :: String, nickname :: String, emailSent :: Boolean }
@@ -34,6 +38,7 @@ data State
 type ChildSlots =
   ( topBar :: TopBar.Slot Unit
   , home :: Home.Slot Unit
+  , game :: Game.Slot Unit
 --   , signIn :: SignIn.Slot Unit
 --   , register :: Register.Slot Unit
 --   , code :: Code.Slot Unit
@@ -59,6 +64,10 @@ render :: forall void. State -> H.ComponentHTML Query ChildSlots (A.Async void)
 render (Home playerInfo) = HH.div_
     [ HH.slot _topBar unit topBar playerInfo absurd
     , home (SProxy :: SProxy "home")
+    ]
+render (Game { handle, playerInfo }) = HH.div_
+    [ HH.slot _topBar unit topBar playerInfo absurd
+    , game (SProxy :: SProxy "game") handle
     ]
 -- render SignIn = HH.slot _signIn unit SignIn.signIn unit absurd
 -- render Register = HH.slot _register unit Register.register unit absurd
@@ -99,7 +108,12 @@ eval (ChangeRoute state route send) = do
         --     Left _ -> Home playerInfo
         --     Right identifiers -> CodeSent identifiers
         -- "/players/bklaric" -> Player playerInfo "bklaric"
-        _ -> NotFound
+        game -> let
+            parts = split (Pattern "/") game
+            in
+            case parts of
+            ["", "games", handle] -> Game { handle, playerInfo }
+            _ -> NotFound
     pure send
 
 main :: forall void.
