@@ -13,6 +13,8 @@ import Halogen.HTML as HH
 import Simple.JSON (read)
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
+import TeamTavern.Client.Components.ProfilesByGame (profilesByGame)
+import TeamTavern.Client.Components.ProfilesByGame as ProfilesByGame
 import TeamTavern.Client.Components.TopBar (topBar)
 import TeamTavern.Client.Components.TopBar as TopBar
 import TeamTavern.Client.Game (game)
@@ -39,6 +41,7 @@ type ChildSlots =
   ( topBar :: TopBar.Slot Unit
   , home :: Home.Slot Unit
   , game :: Game.Slot Unit
+  , profiles :: ProfilesByGame.Slot Unit
 --   , signIn :: SignIn.Slot Unit
 --   , register :: Register.Slot Unit
 --   , code :: Code.Slot Unit
@@ -67,7 +70,9 @@ render (Home playerInfo) = HH.div_
     ]
 render (Game { handle, playerInfo }) = HH.div_
     [ HH.slot _topBar unit topBar playerInfo absurd
-    , game (SProxy :: SProxy "game") handle
+    , HH.slot (SProxy :: SProxy "game") unit game handle absurd
+    , HH.slot (SProxy :: SProxy "profiles") unit profilesByGame handle absurd
+    -- , profilesByGame handle
     ]
 -- render SignIn = HH.slot _signIn unit SignIn.signIn unit absurd
 -- render Register = HH.slot _register unit Register.register unit absurd

@@ -75,6 +75,9 @@ alwaysRightWithEffect leftFunction rightFunction async =
         (\inRight -> fromEffect $ rightFunction inRight)
         async
 
+unify :: forall right. Async right right -> (forall left. Async left right)
+unify = alwaysRight identity identity
+
 attempt
     :: forall left right
     .  Async left right

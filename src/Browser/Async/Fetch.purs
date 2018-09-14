@@ -1,9 +1,9 @@
-module Browser.Async.Fetch (module Fetch, fetch, fetch_) where
+module Browser.Async.Fetch (module Browser.Fetch, fetch, fetch_) where
 
 import Prelude
 
 import Async (Async, fromEitherCont)
-import Browser.Fetch (FetchOptions, Credentials(..), body, credentials, method) as Fetch
+import Browser.Fetch (FetchOptions, Credentials(..), body, credentials, method)
 import Browser.Fetch as F
 import Browser.Fetch.Response (Response)
 import Data.Options (Options)

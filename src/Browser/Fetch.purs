@@ -19,7 +19,6 @@ import Data.Tuple (Tuple(..))
 import Effect (Effect)
 import Error (Error)
 import Foreign (Foreign, unsafeToForeign)
-import Undefined (undefined)
 
 data FetchOptions
 
@@ -62,4 +61,4 @@ fetch url options' callback =
     fetchImpl url (options options') (Right >>> callback) (Left >>> callback)
 
 fetch_ :: String -> (Either Error Response -> Effect Unit) -> Effect Unit
-fetch_ url callback = fetch url undefined callback
+fetch_ url callback = fetch url (Options []) callback
