@@ -19,6 +19,8 @@ import TeamTavern.Client.Home (home)
 import TeamTavern.Client.Home as Home
 import TeamTavern.Client.Player (player)
 import TeamTavern.Client.Player as Player
+import TeamTavern.Client.Register (register)
+import TeamTavern.Client.Register as Register
 
 data Query send = ChangeRoute Foreign String send
 
@@ -27,11 +29,11 @@ data State
     | Home
     | Game String
     | Player String
-    -- | SignIn
-    -- | Register
+    | Register
     -- | Welcome { email :: String, nickname :: String, emailSent :: Boolean }
     -- | Code
     -- | CodeSent { email :: String, nickname :: String }
+    -- | SignIn
     | NotFound
 
 type ChildSlots =
@@ -40,8 +42,8 @@ type ChildSlots =
   , game :: Game.Slot Unit
   , profiles :: ProfilesByGame.Slot Unit
   , player :: Player.Slot Unit
+  , register :: Register.Slot Unit
 --   , signIn :: SignIn.Slot Unit
---   , register :: Register.Slot Unit
 --   , code :: Code.Slot Unit
 --   , signInAnchor :: NavigationAnchor.Slot Unit
   )
@@ -61,8 +63,8 @@ render Empty = HH.div_ []
 render Home = HH.div_ [ topBar, home ]
 render (Game handle) = HH.div_ [ topBar, game handle, profilesByGame handle ]
 render (Player nickname) = HH.div_ [ topBar, player nickname ]
+render Register = register
 -- render SignIn = HH.slot _signIn unit SignIn.signIn unit absurd
--- render Register = HH.slot _register unit Register.register unit absurd
 -- render (Welcome { email, nickname, emailSent }) = HH.div_
 --     [ HH.p_ [ HH.text $ "Welcome to TeamTavern, " <> nickname <> "!" ]
 --     , HH.p_ [ if emailSent
@@ -87,8 +89,8 @@ eval :: forall void.
 eval (ChangeRoute state route send) = do
     H.put case route of
         "/" -> Home
+        "/register" -> Register
         -- "/signin" -> SignIn
-        -- "/register" -> Register
         -- "/welcome" ->
         --     case read state of
         --     Left _ -> Home playerInfo
