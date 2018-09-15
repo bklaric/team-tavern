@@ -21,6 +21,8 @@ import TeamTavern.Client.Player (player)
 import TeamTavern.Client.Player as Player
 import TeamTavern.Client.Register (register)
 import TeamTavern.Client.Register as Register
+import TeamTavern.Client.SignIn (signIn)
+import TeamTavern.Client.SignIn as SignIn
 
 data Query send = ChangeRoute Foreign String send
 
@@ -30,10 +32,10 @@ data State
     | Game String
     | Player String
     | Register
+    | SignIn
     -- | Welcome { email :: String, nickname :: String, emailSent :: Boolean }
     -- | Code
     -- | CodeSent { email :: String, nickname :: String }
-    -- | SignIn
     | NotFound
 
 type ChildSlots =
@@ -43,7 +45,7 @@ type ChildSlots =
   , profiles :: ProfilesByGame.Slot Unit
   , player :: Player.Slot Unit
   , register :: Register.Slot Unit
---   , signIn :: SignIn.Slot Unit
+  , signIn :: SignIn.Slot Unit
 --   , code :: Code.Slot Unit
 --   , signInAnchor :: NavigationAnchor.Slot Unit
   )
@@ -64,7 +66,7 @@ render Home = HH.div_ [ topBar, home ]
 render (Game handle) = HH.div_ [ topBar, game handle, profilesByGame handle ]
 render (Player nickname) = HH.div_ [ topBar, player nickname ]
 render Register = register
--- render SignIn = HH.slot _signIn unit SignIn.signIn unit absurd
+render SignIn = signIn
 -- render (Welcome { email, nickname, emailSent }) = HH.div_
 --     [ HH.p_ [ HH.text $ "Welcome to TeamTavern, " <> nickname <> "!" ]
 --     , HH.p_ [ if emailSent
@@ -90,7 +92,7 @@ eval (ChangeRoute state route send) = do
     H.put case route of
         "/" -> Home
         "/register" -> Register
-        -- "/signin" -> SignIn
+        "/signin" -> SignIn
         -- "/welcome" ->
         --     case read state of
         --     Left _ -> Home playerInfo
@@ -100,7 +102,6 @@ eval (ChangeRoute state route send) = do
         --     case read state of
         --     Left _ -> Home playerInfo
         --     Right identifiers -> CodeSent identifiers
-        -- "/players/bklaric" -> Player playerInfo "bklaric"
         other -> let
             parts = split (Pattern "/") other
             in

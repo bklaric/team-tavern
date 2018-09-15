@@ -119,7 +119,7 @@ render
 sendRegisterRequest :: forall left.
     State -> Async left (Either State Register.OkContent)
 sendRegisterRequest state @ { email, nickname } = Async.unify do
-    response <- Fetch.fetch ("/api/players")
+    response <- Fetch.fetch "/api/players"
         (  Fetch.method := POST
         <> Fetch.body := Json.writeJSON { email, nickname }
         <> Fetch.credentials := Fetch.Include
