@@ -23,6 +23,8 @@ import TeamTavern.Client.Register (register)
 import TeamTavern.Client.Register as Register
 import TeamTavern.Client.SignIn (signIn)
 import TeamTavern.Client.SignIn as SignIn
+import TeamTavern.Client.SignInCode (signInCode)
+import TeamTavern.Client.SignInCode as SignInCode
 
 data Query send = ChangeRoute Foreign String send
 
@@ -33,8 +35,8 @@ data State
     | Player String
     | Register
     | SignIn
+    | Code
     -- | Welcome { email :: String, nickname :: String, emailSent :: Boolean }
-    -- | Code
     -- | CodeSent { email :: String, nickname :: String }
     | NotFound
 
@@ -46,7 +48,7 @@ type ChildSlots =
   , player :: Player.Slot Unit
   , register :: Register.Slot Unit
   , signIn :: SignIn.Slot Unit
---   , code :: Code.Slot Unit
+  , signInCode :: SignInCode.Slot Unit
 --   , signInAnchor :: NavigationAnchor.Slot Unit
   )
 
@@ -67,6 +69,7 @@ render (Game handle) = HH.div_ [ topBar, game handle, profilesByGame handle ]
 render (Player nickname) = HH.div_ [ topBar, player nickname ]
 render Register = register
 render SignIn = signIn
+render Code = signInCode
 -- render (Welcome { email, nickname, emailSent }) = HH.div_
 --     [ HH.p_ [ HH.text $ "Welcome to TeamTavern, " <> nickname <> "!" ]
 --     , HH.p_ [ if emailSent
@@ -74,7 +77,6 @@ render SignIn = signIn
 --         else HH.text $ "Registration email has NOT been sent to " <> email ]
 --     , HH.p_ [ HH.slot _signInAnchor unit navigationAnchor { path: "/signin", text: "Sign in" } absurd ]
 --     ]
--- render Code = HH.slot _code unit Code.code unit absurd
 -- render (CodeSent { email, nickname }) = HH.div_
 --     [ HH.p_ [ HH.text $ "Hello, " <> nickname <> "!" ]
 --     , HH.p_ [ HH.text $ "An email with your sign in code has been sent to " <> email ]
@@ -93,11 +95,11 @@ eval (ChangeRoute state route send) = do
         "/" -> Home
         "/register" -> Register
         "/signin" -> SignIn
+        "/code" -> Code
         -- "/welcome" ->
         --     case read state of
         --     Left _ -> Home playerInfo
         --     Right identifiers -> Welcome identifiers
-        -- "/code" -> Code
         -- "/codesent" ->
         --     case read state of
         --     Left _ -> Home playerInfo
