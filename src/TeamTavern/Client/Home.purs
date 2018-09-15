@@ -1,7 +1,6 @@
-module TeamTavern.Client.Home (Query, State, Slot, ChildSlots, home) where
+module TeamTavern.Client.Home (Query, Slot, home) where
 
 import Prelude
-import Prim.Row
 
 import Async (Async)
 import Async as Async
@@ -12,12 +11,11 @@ import Data.FunctorWithIndex (mapWithIndex)
 import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..))
 import Data.Options ((:=))
-import Data.Symbol (class IsSymbol, SProxy(..))
+import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
-import Halogen.HTML.Properties as HP
 import Simple.JSON as Json
-import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
+import TeamTavern.Client.Components.NavigationAnchor (navigationAnchorIndexed)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
 import TeamTavern.Game.ViewAll.Response (OkContent)
 
@@ -34,7 +32,8 @@ type ChildSlots = (games :: Anchor.Slot Int)
 render :: forall left. State -> H.ComponentHTML Query ChildSlots (Async left)
 render (Games games) = HH.ul [] $
     games # mapWithIndex \index { name, handle, description } -> HH.li []
-        [ HH.h2_ [ HH.slot (SProxy :: SProxy "games") index navigationAnchor { path: "/games/" <> handle, text: name } absurd ]
+        [ HH.h2_ [ navigationAnchorIndexed (SProxy :: SProxy "games") index
+            { path: "/games/" <> handle, text: name } ]
         , HH.p_ [ HH.text description ]
         ]
 render Error = HH.h2_ [ HH.text "There has been an error loading the games." ]
@@ -67,4 +66,6 @@ component =
         , finalizer: Nothing
         }
 
-home label = HH.slot label unit component (Games []) absurd
+home :: forall query children left.
+    HH.ComponentHTML query (home :: Slot Unit | children) (Async left)
+home = HH.slot (SProxy :: SProxy "home") unit component (Games []) absurd

@@ -1,5 +1,5 @@
 module TeamTavern.Client.Components.ProfilesByGame
-    (Query, State', State, Slot, profilesByGame) where
+    (Query, Slot, profilesByGame) where
 
 import Prelude
 
@@ -14,7 +14,7 @@ import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Simple.JSON.Async as Json
-import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
+import TeamTavern.Client.Components.NavigationAnchor (navigationAnchorIndexed)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
 import TeamTavern.Profile.ViewByGame.Response as ViewByGame
 
@@ -38,11 +38,11 @@ render :: forall left. State -> H.ComponentHTML Query ChildSlots (Async left)
 render { state: Empty } = HH.div_ []
 render { state: Profiles profiles } = HH.ul_ $
     profiles # mapWithIndex \index { nickname, summary } -> HH.li_
-        [ HH.h3_ [ HH.slot (SProxy :: SProxy "players") index navigationAnchor
-            { path: "/players/" <> nickname, text: nickname } absurd ]
+        [ HH.h3_ [ navigationAnchorIndexed (SProxy :: SProxy "players") index
+            { path: "/players/" <> nickname, text: nickname } ]
         , HH.p_ [ HH.text summary ]
         ]
-render { state: Error } = HH.h2_
+render { state: Error } = HH.p_
     [ HH.text "There has been an error loading game profiles." ]
 
 loadProfiles :: forall left. String -> Async left State'
@@ -62,9 +62,9 @@ eval (Init send) = do
     H.put { handle, state }
     pure send
 
-profilesByGame :: forall left.
+component :: forall left.
     H.Component HH.HTML Query String Void (Async left)
-profilesByGame =
+component =
     H.component
         { initialState: { handle: _, state: Empty }
         , render
@@ -73,3 +73,10 @@ profilesByGame =
         , initializer: Just $ Init unit
         , finalizer: Nothing
         }
+
+profilesByGame
+    :: forall query children left
+    .  String
+    -> HH.ComponentHTML query (profiles :: Slot Unit | children) (Async left)
+profilesByGame handle =
+    HH.slot (SProxy :: SProxy "profiles") unit component handle absurd

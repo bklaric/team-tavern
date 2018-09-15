@@ -2,17 +2,13 @@ module TeamTavern.Client.Router where
 
 import Prelude
 
-import Async as A
-import Data.Either (Either(..))
+import Async (Async)
 import Data.Maybe (Maybe(..))
 import Data.String (Pattern(..), split)
 import Data.Symbol (SProxy(..))
 import Foreign (Foreign)
 import Halogen as H
 import Halogen.HTML as HH
-import Simple.JSON (read)
-import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
-import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Components.ProfilesByGame (profilesByGame)
 import TeamTavern.Client.Components.ProfilesByGame as ProfilesByGame
 import TeamTavern.Client.Components.TopBar (topBar)
@@ -21,20 +17,21 @@ import TeamTavern.Client.Game (game)
 import TeamTavern.Client.Game as Game
 import TeamTavern.Client.Home (home)
 import TeamTavern.Client.Home as Home
+import TeamTavern.Client.Player (player)
 import TeamTavern.Client.Player as Player
-import TeamTavern.Client.Script.Cookie (PlayerInfo, getPlayerInfo)
+import TeamTavern.Client.Script.Cookie (PlayerInfo)
 
 data Query send = ChangeRoute Foreign String send
 
 data State
-    = Home (Maybe PlayerInfo)
-    | Game { handle :: String, playerInfo :: (Maybe PlayerInfo) }
+    = Home
+    | Game String
+    | Player String
     -- | SignIn
     -- | Register
     -- | Welcome { email :: String, nickname :: String, emailSent :: Boolean }
     -- | Code
     -- | CodeSent { email :: String, nickname :: String }
-    -- | Player (Maybe PlayerInfo) String
     | NotFound
 
 type ChildSlots =
@@ -42,14 +39,12 @@ type ChildSlots =
   , home :: Home.Slot Unit
   , game :: Game.Slot Unit
   , profiles :: ProfilesByGame.Slot Unit
+  , player :: Player.Slot Unit
 --   , signIn :: SignIn.Slot Unit
 --   , register :: Register.Slot Unit
 --   , code :: Code.Slot Unit
---   , player :: Player.Slot Unit
 --   , signInAnchor :: NavigationAnchor.Slot Unit
   )
-
-_topBar = SProxy :: SProxy "topBar"
 
 _signIn = SProxy :: SProxy "signIn"
 
@@ -61,19 +56,10 @@ _player = SProxy :: SProxy "player"
 
 _signInAnchor = SProxy :: SProxy "signInAnchor"
 
-type Message = Void
-
-render :: forall void. State -> H.ComponentHTML Query ChildSlots (A.Async void)
-render (Home playerInfo) = HH.div_
-    [ HH.slot _topBar unit topBar playerInfo absurd
-    , home (SProxy :: SProxy "home")
-    ]
-render (Game { handle, playerInfo }) = HH.div_
-    [ HH.slot _topBar unit topBar playerInfo absurd
-    , HH.slot (SProxy :: SProxy "game") unit game handle absurd
-    , HH.slot (SProxy :: SProxy "profiles") unit profilesByGame handle absurd
-    -- , profilesByGame handle
-    ]
+render :: forall void. State -> H.ComponentHTML Query ChildSlots (Async void)
+render Home = HH.div_ [ topBar, home ]
+render (Game handle) = HH.div_ [ topBar, game handle, profilesByGame handle ]
+render (Player nickname) = HH.div_ [ topBar, player nickname ]
 -- render SignIn = HH.slot _signIn unit SignIn.signIn unit absurd
 -- render Register = HH.slot _register unit Register.register unit absurd
 -- render (Welcome { email, nickname, emailSent }) = HH.div_
@@ -96,11 +82,10 @@ render (Game { handle, playerInfo }) = HH.div_
 render NotFound = HH.p_ [ HH.text "You're fucken lost, mate." ]
 
 eval :: forall void.
-    Query ~> H.HalogenM State Query ChildSlots Message (A.Async void)
+    Query ~> H.HalogenM State Query ChildSlots Void (Async void)
 eval (ChangeRoute state route send) = do
-    playerInfo <- getPlayerInfo # H.liftEffect
     H.put case route of
-        "/" -> Home playerInfo
+        "/" -> Home
         -- "/signin" -> SignIn
         -- "/register" -> Register
         -- "/welcome" ->
@@ -113,18 +98,19 @@ eval (ChangeRoute state route send) = do
         --     Left _ -> Home playerInfo
         --     Right identifiers -> CodeSent identifiers
         -- "/players/bklaric" -> Player playerInfo "bklaric"
-        game -> let
-            parts = split (Pattern "/") game
+        other -> let
+            parts = split (Pattern "/") other
             in
             case parts of
-            ["", "games", handle] -> Game { handle, playerInfo }
+            ["", "games", handle] -> Game handle
+            ["", "players", nickname] -> Player nickname
             _ -> NotFound
     pure send
 
 main :: forall void.
-    H.Component HH.HTML Query (Maybe PlayerInfo) Message (A.Async void)
+    H.Component HH.HTML Query (Maybe PlayerInfo) Void (Async void)
 main = H.component
-    { initialState: Home
+    { initialState: const Home
     , render
     , eval
     , receiver: const Nothing
