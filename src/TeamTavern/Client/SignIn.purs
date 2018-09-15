@@ -44,7 +44,8 @@ type State =
 type Slot = H.Slot Query Void
 
 type ChildSlots =
-    ( codeAnchor :: NavigationAnchor.Slot Unit
+    ( home :: NavigationAnchor.Slot Unit
+    , codeAnchor :: NavigationAnchor.Slot Unit
     , registerAnchor :: NavigationAnchor.Slot Unit
     )
 
@@ -58,7 +59,11 @@ render
     , otherError
     } = HH.form
     [ HE.onSubmit $ HE.input SignIn ]
-    [ HH.h2_ [ HH.text "Sign in to TeamTavern" ]
+    [ HH.h2_
+        [ HH.text "Sign in to "
+        , navigationAnchor (SProxy :: SProxy "home")
+            { path: "/", text: "TeamTavern" }
+        ]
     , HH.div_
         [ HH.label
             [ HP.class_ $ errorClass nicknameError, HP.for "nickname" ]
