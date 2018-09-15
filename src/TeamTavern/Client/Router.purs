@@ -19,12 +19,12 @@ import TeamTavern.Client.Home (home)
 import TeamTavern.Client.Home as Home
 import TeamTavern.Client.Player (player)
 import TeamTavern.Client.Player as Player
-import TeamTavern.Client.Script.Cookie (PlayerInfo)
 
 data Query send = ChangeRoute Foreign String send
 
 data State
-    = Home
+    = Empty
+    | Home
     | Game String
     | Player String
     -- | SignIn
@@ -57,6 +57,7 @@ _player = SProxy :: SProxy "player"
 _signInAnchor = SProxy :: SProxy "signInAnchor"
 
 render :: forall void. State -> H.ComponentHTML Query ChildSlots (Async void)
+render Empty = HH.div_ []
 render Home = HH.div_ [ topBar, home ]
 render (Game handle) = HH.div_ [ topBar, game handle, profilesByGame handle ]
 render (Player nickname) = HH.div_ [ topBar, player nickname ]
@@ -107,13 +108,13 @@ eval (ChangeRoute state route send) = do
             _ -> NotFound
     pure send
 
-main :: forall void.
-    H.Component HH.HTML Query (Maybe PlayerInfo) Void (Async void)
-main = H.component
+router :: forall input void.
+    Foreign -> String -> H.Component HH.HTML Query input Void (Async void)
+router state route = H.component
     { initialState: const Home
     , render
     , eval
     , receiver: const Nothing
-    , initializer: Nothing
+    , initializer: Just $ ChangeRoute state route unit
     , finalizer: Nothing
     }

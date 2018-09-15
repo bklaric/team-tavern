@@ -18,34 +18,29 @@ import TeamTavern.Client.Components.NavigationAnchor (navigationAnchorIndexed)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
 import TeamTavern.Profile.ViewByGame.Response as ViewByGame
 
-data Query send = Init send
+data Query send = Init String send
 
-data State'
+data State
     = Empty
     | Profiles ViewByGame.OkContent
     | Error
-
-type State =
-    { handle :: String
-    , state :: State'
-    }
 
 type Slot = H.Slot Query Void
 
 type ChildSlots = ( players :: Anchor.Slot Int )
 
 render :: forall left. State -> H.ComponentHTML Query ChildSlots (Async left)
-render { state: Empty } = HH.div_ []
-render { state: Profiles profiles } = HH.ul_ $
+render Empty = HH.div_ []
+render (Profiles profiles) = HH.ul_ $
     profiles # mapWithIndex \index { nickname, summary } -> HH.li_
         [ HH.h3_ [ navigationAnchorIndexed (SProxy :: SProxy "players") index
             { path: "/players/" <> nickname, text: nickname } ]
         , HH.p_ [ HH.text summary ]
         ]
-render { state: Error } = HH.p_
-    [ HH.text "There has been an error loading game profiles." ]
+render Error = HH.p_ [ HH.text
+    "There has been an error loading game profiles. Please try again later." ]
 
-loadProfiles :: forall left. String -> Async left State'
+loadProfiles :: forall left. String -> Async left State
 loadProfiles handle = Async.unify do
     response <-  Fetch.fetch_ ("/api/games/" <> handle <> "/profiles")
         # lmap (const Error)
@@ -56,21 +51,20 @@ loadProfiles handle = Async.unify do
 
 eval :: forall left.
     Query ~> H.HalogenM State Query ChildSlots Void (Async left)
-eval (Init send) = do
-    { handle } <- H.get
+eval (Init handle send) = do
     state <- H.lift $ loadProfiles handle
-    H.put { handle, state }
+    H.put state
     pure send
 
-component :: forall left.
-    H.Component HH.HTML Query String Void (Async left)
-component =
+component :: forall input left.
+    String -> H.Component HH.HTML Query input Void (Async left)
+component handle =
     H.component
-        { initialState: { handle: _, state: Empty }
+        { initialState: const Empty
         , render
         , eval
         , receiver: const Nothing
-        , initializer: Just $ Init unit
+        , initializer: Just $ Init handle unit
         , finalizer: Nothing
         }
 
@@ -79,4 +73,4 @@ profilesByGame
     .  String
     -> HH.ComponentHTML query (profiles :: Slot Unit | children) (Async left)
 profilesByGame handle =
-    HH.slot (SProxy :: SProxy "profiles") unit component handle absurd
+    HH.slot (SProxy :: SProxy "profiles") unit (component handle) unit absurd

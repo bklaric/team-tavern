@@ -15,35 +15,29 @@ import Simple.JSON.Async as Json
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
 import TeamTavern.Game.View.Response as View
 
-data Query send = Init send
+data Query send = Init String send
 
-data State'
+data State
     = Empty
     | Game View.OkContent
     | NotFound
     | Error
-
-type State =
-    { handle :: String
-    , state :: State'
-    }
 
 type Slot = H.Slot Query Void
 
 type ChildSlots = (profiles :: Anchor.Slot Int)
 
 render :: forall left. State -> H.ComponentHTML Query ChildSlots (Async left)
-render { state: Empty } = HH.div_ []
-render { state: Game { name, description } } = HH.div_
+render Empty = HH.div_ []
+render (Game { name, description }) = HH.div_
     [ HH.h2_ [ HH.text name ]
     , HH.p_ [ HH.text description ]
     ]
-render { state: NotFound, handle } = HH.p_
-    [ HH.text $ "Game " <> handle <> " could not be found." ]
-render { state: Error, handle } = HH.p_
-    [ HH.text $ "There has been an error loading game " <> handle <> "." ]
+render NotFound = HH.p_ [ HH.text "Game could not be found." ]
+render Error = HH.p_ [ HH.text
+    "There has been an error loading the game. Please try again later." ]
 
-loadGame :: forall left. String -> Async left State'
+loadGame :: forall left. String -> Async left State
 loadGame handle = Async.unify do
     response <- Fetch.fetch_ ("/api/games/" <> handle) # lmap (const Error)
     content <- case FetchRes.status response of
@@ -53,23 +47,24 @@ loadGame handle = Async.unify do
 
 eval :: forall left.
     Query ~> H.HalogenM State Query ChildSlots Void (Async left)
-eval (Init send) = do
-    { handle } <- H.get
+eval (Init handle send) = do
     state <- H.lift $ loadGame handle
-    H.put { handle, state }
+    H.put state
     pure send
 
-component :: forall left. H.Component HH.HTML Query String Void (Async left)
-component =
+component :: forall input left.
+    String -> H.Component HH.HTML Query input Void (Async left)
+component handle =
     H.component
-        { initialState: { handle: _, state: Empty }
+        { initialState: const Empty
         , render
         , eval
         , receiver: const Nothing
-        , initializer: Just $ Init unit
+        , initializer: Just $ Init handle unit
         , finalizer: Nothing
         }
 
 game :: forall query children left.
     String -> HH.ComponentHTML query (game :: Slot Unit | children) (Async left)
-game handle = HH.slot (SProxy :: SProxy "game") unit component handle absurd
+game handle =
+    HH.slot (SProxy :: SProxy "game") unit (component handle) unit absurd

@@ -10,7 +10,6 @@ import Data.Bifunctor (lmap)
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
-import Effect.Class (class MonadEffect)
 import Halogen as H
 import Halogen.HTML as HH
 import Simple.JSON.Async as Json
@@ -18,27 +17,21 @@ import TeamTavern.Client.Components.NavigationAnchor (navigationAnchorIndexed)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
 import TeamTavern.Player.View.Response as View
 
-data Query send = Init send
+data Query send = Init String send
 
-data State'
+data State
     = Empty
     | Player View.OkContent
     | NotFound
     | Error
 
-type State =
-    { nickname :: String
-    , state :: State'
-    }
-
 type Slot = H.Slot Query Void
 
 type ChildSlots = ( games :: Anchor.Slot Int )
 
-render :: forall monad. MonadEffect monad =>
-    State -> H.ComponentHTML Query ChildSlots monad
-render { state: Empty }= HH.div_ []
-render { state: Player { nickname, about, profiles } } = HH.div_
+render :: forall left. State -> H.ComponentHTML Query ChildSlots (Async left)
+render Empty = HH.div_ []
+render (Player { nickname, about, profiles }) = HH.div_
     [ HH.h2_ [ HH.text nickname ]
     , HH.p_ [ HH.text about ]
     , HH.ul_ $
@@ -48,12 +41,11 @@ render { state: Player { nickname, about, profiles } } = HH.div_
             , HH.p_ [ HH.text summary ]
             ]
     ]
-render { state: NotFound, nickname } = HH.p_
-    [ HH.text $ "Player " <> nickname <> " could not be found." ]
-render { state: Error, nickname } = HH.p_
-    [ HH.text $ "Error loading player " <> nickname <> "." ]
+render NotFound = HH.p_ [ HH.text "Player could not be found." ]
+render Error = HH.p_ [ HH.text
+    "There has been an error loading the player. Please try again later." ]
 
-loadPlayer :: forall left. String -> Async left State'
+loadPlayer :: forall left. String -> Async left State
 loadPlayer nickname = Async.unify do
     response <- Fetch.fetch_ ("/api/players/" <> nickname) # lmap (const Error)
     content <- case FetchRes.status response of
@@ -62,21 +54,21 @@ loadPlayer nickname = Async.unify do
         _ -> Async.left Error
     pure $ Player content
 
-eval :: forall void.
-    Query ~> H.HalogenM State Query ChildSlots Void (Async void)
-eval (Init send) = do
-    { nickname } <- H.get
+eval :: forall left.
+    Query ~> H.HalogenM State Query ChildSlots Void (Async left)
+eval (Init nickname send) = do
     state <- H.lift $ loadPlayer nickname
-    H.put { nickname, state }
+    H.put state
     pure send
 
-component :: forall void. H.Component HH.HTML Query String Void (Async void)
-component = H.component
-    { initialState: { nickname: _, state: Empty }
+component :: forall input left.
+    String -> H.Component HH.HTML Query input Void (Async left)
+component nickname = H.component
+    { initialState: const Empty
     , render
     , eval
     , receiver: const Nothing
-    , initializer: Just $ H.action Init
+    , initializer: Just $ Init nickname unit
     , finalizer: Nothing
     }
 
@@ -85,4 +77,4 @@ player
     .  String
     -> HH.ComponentHTML query (player :: Slot Unit | children) (Async left)
 player nickname =
-    HH.slot (SProxy :: SProxy "player") unit component nickname absurd
+    HH.slot (SProxy :: SProxy "player") unit (component nickname) unit absurd
