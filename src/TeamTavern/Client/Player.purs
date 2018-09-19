@@ -61,13 +61,13 @@ eval (Init nickname send) = do
     H.put state
     pure send
 
-component :: forall input left.
-    String -> H.Component HH.HTML Query input Void (Async left)
+component :: forall left.
+    String -> H.Component HH.HTML Query String Void (Async left)
 component nickname = H.component
     { initialState: const Empty
     , render
     , eval
-    , receiver: const Nothing
+    , receiver: \nickname' -> Just $ Init nickname' unit
     , initializer: Just $ Init nickname unit
     , finalizer: Nothing
     }
@@ -76,5 +76,5 @@ player
     :: forall query children left
     .  String
     -> HH.ComponentHTML query (player :: Slot Unit | children) (Async left)
-player nickname =
-    HH.slot (SProxy :: SProxy "player") unit (component nickname) unit absurd
+player nickname = HH.slot
+    (SProxy :: SProxy "player") unit (component nickname) nickname absurd

@@ -3,12 +3,16 @@ module TeamTavern.Client.Router where
 import Prelude
 
 import Async (Async)
+import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.String (Pattern(..), split)
 import Data.Symbol (SProxy(..))
 import Foreign (Foreign)
 import Halogen as H
 import Halogen.HTML as HH
+import Simple.JSON (read)
+import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
+import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Components.ProfilesByGame (profilesByGame)
 import TeamTavern.Client.Components.ProfilesByGame as ProfilesByGame
 import TeamTavern.Client.Components.TopBar (topBar)
@@ -36,8 +40,8 @@ data State
     | Register
     | SignIn
     | Code
-    -- | Welcome { email :: String, nickname :: String, emailSent :: Boolean }
-    -- | CodeSent { email :: String, nickname :: String }
+    | Welcome { email :: String, nickname :: String, emailSent :: Boolean }
+    | CodeSent { email :: String, nickname :: String }
     | NotFound
 
 type ChildSlots =
@@ -49,18 +53,8 @@ type ChildSlots =
   , register :: Register.Slot Unit
   , signIn :: SignIn.Slot Unit
   , signInCode :: SignInCode.Slot Unit
---   , signInAnchor :: NavigationAnchor.Slot Unit
+  , signInAnchor :: NavigationAnchor.Slot Unit
   )
-
-_signIn = SProxy :: SProxy "signIn"
-
-_register = SProxy :: SProxy "register"
-
-_code = SProxy :: SProxy "code"
-
-_player = SProxy :: SProxy "player"
-
-_signInAnchor = SProxy :: SProxy "signInAnchor"
 
 render :: forall void. State -> H.ComponentHTML Query ChildSlots (Async void)
 render Empty = HH.div_ []
@@ -70,22 +64,20 @@ render (Player nickname) = HH.div_ [ topBar, player nickname ]
 render Register = register
 render SignIn = signIn
 render Code = signInCode
--- render (Welcome { email, nickname, emailSent }) = HH.div_
---     [ HH.p_ [ HH.text $ "Welcome to TeamTavern, " <> nickname <> "!" ]
---     , HH.p_ [ if emailSent
---         then HH.text $ "Registration email with your sign in code has been sent to " <> email
---         else HH.text $ "Registration email has NOT been sent to " <> email ]
---     , HH.p_ [ HH.slot _signInAnchor unit navigationAnchor { path: "/signin", text: "Sign in" } absurd ]
---     ]
--- render (CodeSent { email, nickname }) = HH.div_
---     [ HH.p_ [ HH.text $ "Hello, " <> nickname <> "!" ]
---     , HH.p_ [ HH.text $ "An email with your sign in code has been sent to " <> email ]
---     , HH.p_ [ HH.slot _signInAnchor unit navigationAnchor { path: "/signin", text: "Sign in" } absurd ]
---     ]
--- render (Player playerInfo nickname) = HH.div_
---     [ HH.slot _topBar unit topBar playerInfo absurd
---     , HH.slot _player unit Player.player nickname absurd
---     ]
+render (Welcome { email, nickname, emailSent }) = HH.div_
+    [ HH.h3_ [ HH.text $ "Welcome to TeamTavern, " <> nickname <> "!" ]
+    , HH.p_ [ if emailSent
+        then HH.text $ "Registration email with your sign in code has been sent to " <> email
+        else HH.text $ "Registration email has NOT been sent to " <> email ]
+    , HH.p_ [ navigationAnchor (SProxy :: SProxy "signInAnchor")
+        { path: "/signin", text: "Sign in" } ]
+    ]
+render (CodeSent { email, nickname }) = HH.div_
+    [ HH.h3_ [ HH.text $ "Hello, " <> nickname <> "!" ]
+    , HH.p_ [ HH.text $ "An email with your sign in code has been sent to " <> email ]
+    , HH.p_ [ navigationAnchor (SProxy :: SProxy "signInAnchor")
+        { path: "/signin", text: "Sign in" } ]
+    ]
 render NotFound = HH.p_ [ HH.text "You're fucken lost, mate." ]
 
 eval :: forall void.
@@ -96,14 +88,14 @@ eval (ChangeRoute state route send) = do
         "/register" -> Register
         "/signin" -> SignIn
         "/code" -> Code
-        -- "/welcome" ->
-        --     case read state of
-        --     Left _ -> Home playerInfo
-        --     Right identifiers -> Welcome identifiers
-        -- "/codesent" ->
-        --     case read state of
-        --     Left _ -> Home playerInfo
-        --     Right identifiers -> CodeSent identifiers
+        "/welcome" ->
+            case read state of
+            Right identifiers -> Welcome identifiers
+            Left _ -> Home
+        "/codesent" ->
+            case read state of
+            Right identifiers -> CodeSent identifiers
+            Left _ -> Home
         other -> let
             parts = split (Pattern "/") other
             in
