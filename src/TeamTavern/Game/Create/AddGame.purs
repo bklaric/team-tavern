@@ -27,7 +27,7 @@ addGameQuery = Query """
     select player.id, $3, $4, $5
     from player
     join session on session.player_id = player.id
-    where player.nickname = $1
+    where player.id = $1
     and session.token = $2
     and session.consumed = true
     and session.revoked = false
