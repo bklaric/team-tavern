@@ -20,13 +20,13 @@ import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
 import TeamTavern.Game.Domain.Description as Description
 import TeamTavern.Game.Domain.Handle (Handle)
-import TeamTavern.Game.Domain.Name as Name
+import TeamTavern.Game.Domain.Title as Name
 import TeamTavern.Game.Domain.Types (View)
 import TeamTavern.Player.Domain.PlayerId as PlayerId
 
 loadGameQuery :: Query
 loadGameQuery = Query """
-    select administrator_id as "administratorId", name, description
+    select administrator_id as "administratorId", title, description
     from game
     where handle = $1
     order by created desc
@@ -37,7 +37,7 @@ loadGameQueryParameters handle = [unwrap handle] <#> QueryParameter
 
 type GameViewModel =
     { administratorId :: Int
-    , name :: String
+    , title :: String
     , description :: String
     }
 
@@ -62,11 +62,11 @@ loadGame pool handle = do
     games <- rows result
         # traverse read
         # labelMap (SProxy :: SProxy "unreadableView") { result, errors: _ }
-    view @ { administratorId, name, description } :: GameViewModel <-
+    view @ { administratorId, title, description } :: GameViewModel <-
         head games
         # Async.note (inj (SProxy :: SProxy "notFound") handle)
-    { administratorId: _, name: _, handle, description: _ }
+    { administratorId: _, title: _, handle, description: _ }
         <$> PlayerId.create administratorId
-        <*> Name.create'' name
+        <*> Name.create'' title
         <*> Description.create'' description
         # Async.note (inj (SProxy :: SProxy "invalidView") { handle, view })

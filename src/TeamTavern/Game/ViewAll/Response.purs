@@ -14,7 +14,7 @@ import TeamTavern.Player.Domain.PlayerId (toInt)
 
 type OkContent = Array
     { administratorId :: Int
-    , name :: String
+    , title :: String
     , handle :: String
     , description :: String
     }
@@ -28,9 +28,9 @@ errorResponse = match
 
 successResponse :: Array View -> Response
 successResponse views  = ok_ $ (writeJSON :: OkContent -> String) $
-    mapFlipped views \{ administratorId, name, handle, description } ->
+    mapFlipped views \{ administratorId, title, handle, description } ->
         { administratorId: toInt administratorId
-        , name: unwrap name
+        , title: unwrap title
         , handle: unwrap handle
         , description: unwrap description
         }

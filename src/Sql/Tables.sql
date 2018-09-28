@@ -19,7 +19,7 @@ create table session
 create table game
     ( id serial not null primary key
     , administrator_id integer not null references player(id)
-    , name varchar(50) not null unique
+    , title varchar(50) not null unique
     , handle varchar(50) not null unique
     , description varchar(2000) not null
     , created timestamptz not null default current_timestamp

@@ -20,20 +20,20 @@ import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
 import TeamTavern.Game.Domain.Description as Description
 import TeamTavern.Game.Domain.Handle as Handle
-import TeamTavern.Game.Domain.Name as Name
+import TeamTavern.Game.Domain.Title as Name
 import TeamTavern.Game.Domain.Types (View)
 import TeamTavern.Player.Domain.PlayerId as PlayerId
 
 loadGamesQuery :: Query
 loadGamesQuery = Query """
-    select administrator_id as "administratorId", name, handle, description
+    select administrator_id as "administratorId", title, handle, description
     from game
     order by created desc
     """
 
 type GameViewModel =
     { administratorId :: Int
-    , name :: String
+    , title :: String
     , handle :: String
     , description :: String
     }
@@ -56,10 +56,10 @@ validateViews
 validateViews views = let
     validateView ::
         GameViewModel -> Validated (NonEmptyList GameViewModel) View
-    validateView view @ { administratorId, name, handle, description } =
-        { administratorId: _, name: _, handle: _, description: _ }
+    validateView view @ { administratorId, title, handle, description } =
+        { administratorId: _, title: _, handle: _, description: _ }
         <$> (PlayerId.create administratorId)
-        <*> (Name.create name # hush)
+        <*> (Name.create title # hush)
         <*> (Handle.create handle # hush)
         <*> (Description.create description # hush)
         # Validated.note' view

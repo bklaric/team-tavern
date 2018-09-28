@@ -20,7 +20,7 @@ create pool cookies body =
     -- Read player creating the game.
     authInfo <- readAuth cookies
 
-    -- Read game name and description.
+    -- Read game title and description.
     details <- readDetails body
 
     -- Add game to database.

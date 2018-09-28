@@ -11,14 +11,14 @@ import Simple.JSON (writeJSON)
 import TeamTavern.Game.Update.Types (UpdateError)
 
 type DetailsErrorContent = Variant
-    ( invalidName :: {}
+    ( invalidTitle :: {}
     , invalidHandle :: {}
     , invalidDescription :: {}
     )
 
 type BadRequestContent = Variant
     ( invalidDetails :: Array DetailsErrorContent
-    , nameTaken :: {}
+    , titleTaken :: {}
     , handleTaken :: {}
     )
 
@@ -30,7 +30,7 @@ errorResponse = match
     , invalidDetails: \{ errors } ->
         errors
         <#> (match
-            { name: const $ inj (SProxy :: SProxy "invalidName") {}
+            { title: const $ inj (SProxy :: SProxy "invalidTitle") {}
             , handle: const $ inj (SProxy :: SProxy "invalidHandle") {}
             , description: const $
                 inj (SProxy :: SProxy "invalidDescription") {}
@@ -39,9 +39,9 @@ errorResponse = match
         # inj (SProxy :: SProxy "invalidDetails")
         # (writeJSON :: BadRequestContent -> String)
         # badRequest_
-    , nameTaken: const $ badRequest_
+    , titleTaken: const $ badRequest_
         $ (writeJSON :: BadRequestContent -> String)
-        $ inj (SProxy :: SProxy "nameTaken") {}
+        $ inj (SProxy :: SProxy "titleTaken") {}
     , handleTaken: const $ badRequest_
         $ (writeJSON :: BadRequestContent -> String)
         $ inj (SProxy :: SProxy "handleTaken") {}

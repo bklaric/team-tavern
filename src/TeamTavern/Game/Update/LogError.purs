@@ -22,8 +22,8 @@ logError updateError = do
         , invalidDetails: \{ details, errors } -> do
             logt $ "Couldn't validate details: " <> show details
             logt $ "Validating resulted in these errors: " <> show errors
-        , nameTaken: \{ name, error } -> do
-            logt $ "Name is already taken: " <> show name
+        , titleTaken: \{ title, error } -> do
+            logt $ "Name is already taken: " <> show title
             logt $ "According to this error: " <> print error
         , handleTaken: \{ handle, error } -> do
             logt $ "Handle is already taken: " <> show handle

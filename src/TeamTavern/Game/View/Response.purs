@@ -13,7 +13,7 @@ import TeamTavern.Player.Domain.PlayerId (toInt)
 
 type OkContent =
     { administratorId :: Int
-    , name :: String
+    , title :: String
     , handle :: String
     , description :: String
     }
@@ -28,10 +28,10 @@ errorResponse = match
     }
 
 successResponse :: View -> Response
-successResponse { administratorId, name, handle, description } =
+successResponse { administratorId, title, handle, description } =
     ok_ $ writeJSON (
     { administratorId: toInt administratorId
-    , name: unwrap name
+    , title: unwrap title
     , handle: unwrap handle
     , description: unwrap description
     } :: OkContent)

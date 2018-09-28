@@ -31,9 +31,9 @@ type ChildSlots = (games :: Anchor.Slot Int)
 
 render :: forall left. State -> H.ComponentHTML Query ChildSlots (Async left)
 render (Games games) = HH.ul [] $
-    games # mapWithIndex \index { name, handle, description } -> HH.li []
+    games # mapWithIndex \index { title, handle, description } -> HH.li []
         [ HH.h2_ [ navigationAnchorIndexed (SProxy :: SProxy "games") index
-            { path: "/games/" <> handle, text: name } ]
+            { path: "/games/" <> handle, text: title } ]
         , HH.p_ [ HH.text description ]
         ]
 render Error = HH.h2_ [ HH.text "There has been an error loading the games." ]

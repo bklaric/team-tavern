@@ -1,5 +1,5 @@
-module TeamTavern.Game.Domain.Name
-    (Name, NameError, maxLength, create, create', create'') where
+module TeamTavern.Game.Domain.Title
+    (Title, TitleError, maxLength, create, create', create'') where
 
 import Prelude
 
@@ -16,18 +16,18 @@ import Data.Variant (Variant)
 import Wrapped.String (Empty, NotPrintable, TooLong, empty, notPrintable, tooLong)
 import Wrapped.Validated as Wrapped
 
-newtype Name = Name String
+newtype Title = Title String
 
-derive instance eqName :: Eq Name
+derive instance eqTitle :: Eq Title
 
-derive instance newtypeName :: Newtype Name _
+derive instance newtypeTitle :: Newtype Title _
 
-derive instance genericName :: Generic Name _
+derive instance genericTitle :: Generic Title _
 
-instance showName :: Show Name where
+instance showTitle :: Show Title where
     show = genericShow
 
-type NameError = Variant
+type TitleError = Variant
     ( empty :: Empty
     , tooLong :: TooLong
     , notPrintable :: NotPrintable
@@ -36,12 +36,12 @@ type NameError = Variant
 maxLength :: Int
 maxLength = 50
 
-create :: String -> Validated (NonEmptyList NameError) Name
-create name =
-    Wrapped.create trim [empty, tooLong maxLength, notPrintable] Name name
+create :: String -> Validated (NonEmptyList TitleError) Title
+create title =
+    Wrapped.create trim [empty, tooLong maxLength, notPrintable] Title title
 
-create' :: String -> Either (NonEmptyList NameError) Name
+create' :: String -> Either (NonEmptyList TitleError) Title
 create' = create >>> toEither
 
-create'' :: String -> Maybe Name
+create'' :: String -> Maybe Title
 create'' = create >>> Validated.hush

@@ -17,13 +17,13 @@ import TeamTavern.Game.Domain.Description (DescriptionError)
 import TeamTavern.Game.Domain.Description as Description
 import TeamTavern.Game.Domain.Handle (HandleError)
 import TeamTavern.Game.Domain.Handle as Handle
-import TeamTavern.Game.Domain.Name (NameError)
-import TeamTavern.Game.Domain.Name as Name
+import TeamTavern.Game.Domain.Title (TitleError)
+import TeamTavern.Game.Domain.Title as Name
 import TeamTavern.Game.Domain.Types (Details)
 import TeamTavern.Game.Infrastructure.Types (DetailsModel)
 
 type DetailsError = Variant
-    ( name :: NonEmptyList NameError
+    ( title :: NonEmptyList TitleError
     , handle :: NonEmptyList HandleError
     , description :: NonEmptyList DescriptionError
     )
@@ -42,10 +42,10 @@ type ReadDetailsError errors = Variant
 readDetails :: forall errors. Body -> Async (ReadDetailsError errors) Details
 readDetails body = do
     content <- readBody body
-    details @ { name, handle, description } :: DetailsModel <- readJSON content
+    details @ { title, handle, description } :: DetailsModel <- readJSON content
         # labelMap (SProxy :: SProxy "unreadableDetails") { content, errors: _ }
-    { name: _, handle: _, description: _ }
-        <$> (Name.create name # Validated.label (SProxy :: SProxy "name"))
+    { title: _, handle: _, description: _ }
+        <$> (Name.create title # Validated.label (SProxy :: SProxy "title"))
         <*> (Handle.create handle # Validated.label (SProxy :: SProxy "handle"))
         <*> (Description.create description
             # Validated.label (SProxy :: SProxy "description"))

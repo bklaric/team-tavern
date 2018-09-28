@@ -17,6 +17,8 @@ import TeamTavern.Client.Components.ProfilesByGame (profilesByGame)
 import TeamTavern.Client.Components.ProfilesByGame as ProfilesByGame
 import TeamTavern.Client.Components.TopBar (topBar)
 import TeamTavern.Client.Components.TopBar as TopBar
+import TeamTavern.Client.CreateGame (createGame)
+import TeamTavern.Client.CreateGame as CreateGame
 import TeamTavern.Client.Game (game)
 import TeamTavern.Client.Game as Game
 import TeamTavern.Client.Home (home)
@@ -36,6 +38,7 @@ data State
     = Empty
     | Home
     | Game String
+    | CreateGame
     | Player String
     | Register
     | SignIn
@@ -48,6 +51,7 @@ type ChildSlots =
   ( topBar :: TopBar.Slot Unit
   , home :: Home.Slot Unit
   , game :: Game.Slot Unit
+  , createGame :: CreateGame.Slot Unit
   , profiles :: ProfilesByGame.Slot Unit
   , player :: Player.Slot Unit
   , register :: Register.Slot Unit
@@ -60,6 +64,7 @@ render :: forall void. State -> H.ComponentHTML Query ChildSlots (Async void)
 render Empty = HH.div_ []
 render Home = HH.div_ [ topBar, home ]
 render (Game handle) = HH.div_ [ topBar, game handle, profilesByGame handle ]
+render CreateGame = HH.div_ [ topBar, createGame ]
 render (Player nickname) = HH.div_ [ topBar, player nickname ]
 render Register = register
 render SignIn = signIn
@@ -100,6 +105,7 @@ eval (ChangeRoute state route send) = do
             parts = split (Pattern "/") other
             in
             case parts of
+            ["", "games", "create" ] -> CreateGame
             ["", "games", handle] -> Game handle
             ["", "players", nickname] -> Player nickname
             _ -> NotFound
@@ -108,7 +114,7 @@ eval (ChangeRoute state route send) = do
 router :: forall input void.
     Foreign -> String -> H.Component HH.HTML Query input Void (Async void)
 router state route = H.component
-    { initialState: const Home
+    { initialState: const Empty
     , render
     , eval
     , receiver: const Nothing

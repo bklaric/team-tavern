@@ -21,7 +21,7 @@ import Postgres.Query (Query(..), QueryParameter(..))
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
 import TeamTavern.Game.Domain.Handle as Handle
-import TeamTavern.Game.Domain.Name as Name
+import TeamTavern.Game.Domain.Title as Name
 import TeamTavern.Player.Domain.About as About
 import TeamTavern.Player.Domain.Nickname (Nickname)
 import TeamTavern.Player.Domain.Types (View)
@@ -33,7 +33,7 @@ loadPlayerQuery = Query """
         player.about,
         coalesce(json_agg(json_build_object(
             'handle', game.handle,
-            'name', game.name,
+            'title', game.title,
             'summary', profile.summary
         ) order by profile.created desc)
         filter (where game.handle is not null), '[]'::json) as profiles
@@ -51,7 +51,7 @@ type PlayerViewModel =
     { about :: String
     , profiles :: Array
         { handle :: String
-        , name :: String
+        , title :: String
         , summary :: String
         }
     }
@@ -82,9 +82,9 @@ loadPlayer pool nickname = do
         # Async.note (inj (SProxy :: SProxy "notFound") nickname)
     { nickname, about: _, profiles: _ }
         <$> About.create'' about
-        <*> (profiles # traverse \{ handle, name, summary } ->
-            { handle: _, name: _, summary: _ }
+        <*> (profiles # traverse \{ handle, title, summary } ->
+            { handle: _, title: _, summary: _ }
             <$> Handle.create'' handle
-            <*> Name.create'' name
+            <*> Name.create'' title
             <*> Summary.create'' summary)
         # Async.note (inj (SProxy :: SProxy "invalidView") { nickname, view })

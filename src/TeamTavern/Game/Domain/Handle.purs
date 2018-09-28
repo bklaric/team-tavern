@@ -37,9 +37,9 @@ maxLength :: Int
 maxLength = 50
 
 create :: String -> Validated (NonEmptyList HandleError) Handle
-create name =
+create handle =
     Wrapped.create trim [empty, tooLong maxLength, notAsciiAlphaNumUnderscore]
-    Handle name
+    Handle handle
 
 create' :: String -> Either (NonEmptyList HandleError) Handle
 create' = create >>> toEither

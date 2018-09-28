@@ -7,12 +7,12 @@ import Foreign (ForeignError)
 import Postgres.Error (Error)
 import TeamTavern.Game.Domain.Description (DescriptionError)
 import TeamTavern.Game.Domain.Handle (Handle, HandleError)
-import TeamTavern.Game.Domain.Name (Name, NameError)
+import TeamTavern.Game.Domain.Title (Title, TitleError)
 import TeamTavern.Game.Infrastructure.Types (DetailsModel)
 import TeamTavern.Player.Domain.Types (AuthInfo)
 
 type DetailsError = Variant
-    ( name :: NonEmptyList NameError
+    ( title :: NonEmptyList TitleError
     , handle :: NonEmptyList HandleError
     , description :: NonEmptyList DescriptionError
     )
@@ -31,8 +31,8 @@ type UpdateError = Variant
         { details :: DetailsModel
         , errors :: NonEmptyList DetailsError
         }
-    , nameTaken ::
-        { name :: Name
+    , titleTaken ::
+        { title :: Title
         , error :: Error
         }
     , handleTaken ::

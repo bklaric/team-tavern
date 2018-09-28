@@ -1,7 +1,7 @@
 module TeamTavern.Game.Infrastructure.Types where
 
 type DetailsModel =
-    { name :: String
+    { title :: String
     , handle :: String
     , description :: String
     }

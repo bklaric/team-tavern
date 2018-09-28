@@ -29,8 +29,8 @@ type ChildSlots = (profiles :: Anchor.Slot Int)
 
 render :: forall left. State -> H.ComponentHTML Query ChildSlots (Async left)
 render Empty = HH.div_ []
-render (Game { name, description }) = HH.div_
-    [ HH.h2_ [ HH.text name ]
+render (Game { title, description }) = HH.div_
+    [ HH.h2_ [ HH.text title ]
     , HH.p_ [ HH.text description ]
     ]
 render NotFound = HH.p_ [ HH.text "Game could not be found." ]

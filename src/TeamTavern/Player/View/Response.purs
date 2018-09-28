@@ -15,7 +15,7 @@ type OkContent =
     , about :: String
     , profiles :: Array
         { handle :: String
-        , name :: String
+        , title :: String
         , summary :: String
         }
     }
@@ -33,9 +33,9 @@ successResponse :: View -> Response
 successResponse { nickname, about, profiles } = ok_ $ writeJSON (
     { nickname: unwrap nickname
     , about: unwrap about
-    , profiles: profiles <#> \{ handle, name, summary } ->
+    , profiles: profiles <#> \{ handle, title, summary } ->
         { handle: unwrap handle
-        , name: unwrap name
+        , title: unwrap title
         , summary: unwrap summary
         }
     } :: OkContent)

@@ -35,9 +35,9 @@ render (Player { nickname, about, profiles }) = HH.div_
     [ HH.h2_ [ HH.text nickname ]
     , HH.p_ [ HH.text about ]
     , HH.ul_ $
-        profiles # mapWithIndex \index { handle, name, summary } -> HH.li_
+        profiles # mapWithIndex \index { handle, title, summary } -> HH.li_
             [ HH.h3_ [ navigationAnchorIndexed (SProxy :: SProxy "games") index
-                { path: "/games/" <> handle, text: name } ]
+                { path: "/games/" <> handle, text: title } ]
             , HH.p_ [ HH.text summary ]
             ]
     ]

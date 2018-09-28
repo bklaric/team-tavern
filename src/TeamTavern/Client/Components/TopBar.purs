@@ -27,6 +27,7 @@ type ChildSlots =
     , signInAnchor :: NavigationAnchor.Slot Unit
     , registerAnchor :: NavigationAnchor.Slot Unit
     , profileAnchor :: NavigationAnchor.Slot Unit
+    , createGameAnchor :: NavigationAnchor.Slot Unit
     )
 
 render :: forall monad. MonadEffect monad =>
@@ -48,6 +49,8 @@ render playerInfo = HH.div_
             Just { id, nickname } ->
                 [ navigationAnchor (SProxy :: SProxy "profileAnchor")
                     { path: "/players/" <> nickname, text: nickname }
+                , navigationAnchor (SProxy :: SProxy "createGameAnchor")
+                    { path: "/games/create", text: "Create a game" }
                 , HH.button [ HE.onClick $ HE.input_ SignOut ]
                     [ HH.text "Sign out" ]
                 ]
