@@ -7,8 +7,10 @@ module TeamTavern.Client.Script.Cookie
 
 import Prelude
 
+import Control.Bind (bindFlipped)
 import Control.Monad.Maybe.Trans (MaybeT(..), runMaybeT)
 import Data.Array ((!!))
+import Data.Int (fromString)
 import Data.Maybe (Maybe, fromMaybe, isJust)
 import Data.String (Pattern(..), split, trim)
 import Data.Tuple (Tuple(..))
@@ -39,8 +41,8 @@ getCookies = cookies <#> parseCookies
 getCookie :: String -> Effect (Maybe String)
 getCookie key = getCookies <#> lookup key
 
-getPlayerId :: Effect (Maybe String)
-getPlayerId = getCookie idCookieName
+getPlayerId :: Effect (Maybe Int)
+getPlayerId = getCookie idCookieName <#> bindFlipped fromString
 
 hasPlayerIdCookie :: Effect Boolean
 hasPlayerIdCookie = getPlayerId <#> isJust
@@ -48,7 +50,7 @@ hasPlayerIdCookie = getPlayerId <#> isJust
 getNickname :: Effect (Maybe String)
 getNickname = getCookie nicknameCookieName
 
-type PlayerInfo = { id :: String, nickname :: String }
+type PlayerInfo = { id :: Int, nickname :: String }
 
 getPlayerInfo :: Effect (Maybe PlayerInfo)
 getPlayerInfo = runMaybeT do

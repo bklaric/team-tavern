@@ -7,31 +7,39 @@ import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
 import Data.Bifunctor (lmap)
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), maybe)
+import Data.Monoid (guard)
 import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Simple.JSON.Async as Json
+import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
+import TeamTavern.Client.Script.Cookie (getPlayerInfo)
 import TeamTavern.Game.View.Response as View
 
 data Query send = Init String send
 
 data State
     = Empty
-    | Game View.OkContent
+    | Game View.OkContent Boolean
     | NotFound
     | Error
 
 type Slot = H.Slot Query Void
 
-type ChildSlots = (profiles :: Anchor.Slot Int)
+type ChildSlots =
+    ( profiles :: Anchor.Slot Int
+    , edit :: Anchor.Slot Unit
+    )
 
 render :: forall left. State -> H.ComponentHTML Query ChildSlots (Async left)
 render Empty = HH.div_ []
-render (Game { title, description }) = HH.div_
-    [ HH.h2_ [ HH.text title ]
-    , HH.p_ [ HH.text description ]
+render (Game { title, handle, description } isAdmin) = HH.div_ $ join
+    [ pure $ HH.h2_ [ HH.text title ]
+    , guard isAdmin $ pure $ navigationAnchor (SProxy :: SProxy "edit")
+        { path: "/games/" <> handle <> "/edit", text: "Edit game" }
+    , pure $ HH.p_ [ HH.text description ]
     ]
 render NotFound = HH.p_ [ HH.text "Game could not be found." ]
 render Error = HH.p_ [ HH.text
@@ -42,8 +50,11 @@ loadGame handle = Async.unify do
     response <- Fetch.fetch_ ("/api/games/" <> handle) # lmap (const Error)
     content <- case FetchRes.status response of
         200 -> FetchRes.text response >>= Json.readJSON # lmap (const Error)
+        404 -> Async.left NotFound
         _ -> Async.left Error
+    playerInfo <- Async.fromEffect getPlayerInfo
     pure $ Game content
+        (maybe false (_.id >>> (_ == content.administratorId)) playerInfo)
 
 eval :: forall left.
     Query ~> H.HalogenM State Query ChildSlots Void (Async left)

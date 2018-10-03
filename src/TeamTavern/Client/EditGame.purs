@@ -1,4 +1,4 @@
-module TeamTavern.Client.CreateGame (Query, Slot, createGame) where
+module TeamTavern.Client.EditGame where
 
 import Prelude
 
@@ -12,7 +12,9 @@ import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..))
 import Data.Options ((:=))
 import Data.String (trim)
+import Data.Tuple (Tuple(..))
 import Data.Variant (SProxy(..), match)
+import Effect.Class.Console (log)
 import Halogen (ClassName(..))
 import Halogen as H
 import Halogen.HTML as HH
@@ -20,22 +22,26 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
-import TeamTavern.Client.Script.Cookie (hasPlayerIdCookie)
+import TeamTavern.Client.Script.Cookie (getPlayerInfo, hasPlayerIdCookie)
 import TeamTavern.Client.Script.Navigate (navigate_)
 import TeamTavern.Client.Snippets.ErrorClasses (errorClass, inputErrorClass, otherErrorClass)
-import TeamTavern.Game.Create.Response as Create
+import TeamTavern.Game.Update.Response as Update
+import TeamTavern.Game.View.Response as View
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
 data Query send
-    = Init send
+    = Init String send
     | TitleInput String send
     | HandleInput String send
     | DescriptionInput String send
-    | Create Event send
+    | Update Event send
 
-type State =
-    { title :: String
+type State' =
+    { administratorId :: Int
+    , originalTitle :: String
+    , originalHandle :: String
+    , title :: String
     , handle :: String
     , description :: String
     , titleError :: Boolean
@@ -46,11 +52,20 @@ type State =
     , otherError :: Boolean
     }
 
+data State
+    = Empty
+    | Game State'
+    | NotFound
+    | Error
+
 type Slot = H.Slot Query Void
 
 render :: forall left. State -> H.ComponentHTML Query () (Async left)
-render
-    { title
+render Empty = HH.div_ []
+render (Game
+    { originalTitle
+    , originalHandle
+    , title
     , handle
     , description
     , titleError
@@ -59,9 +74,9 @@ render
     , titleTaken
     , handleTaken
     , otherError
-    } = HH.form
-    [ HE.onSubmit $ HE.input Create ]
-    [ HH.h2_ [ HH.text "Create a new game" ]
+    }) = HH.form
+    [ HE.onSubmit $ HE.input Update ]
+    [ HH.h2_ [ HH.text $ "Edit " <> originalTitle ]
     , HH.div_
         [ HH.label
             [ HP.class_ $ errorClass titleError, HP.for "title" ]
@@ -70,6 +85,7 @@ render
             [ HP.id_ "title"
             , HP.class_ $ errorClass titleError
             , HE.onValueInput $ HE.input TitleInput
+            , HP.value title
             ]
         , HH.p
             [ HP.class_ $ inputErrorClass titleError ]
@@ -91,6 +107,7 @@ render
             [ HP.id_ "handle"
             , HP.class_ $ errorClass handleError
             , HE.onValueInput $ HE.input HandleInput
+            , HP.value handle
             ]
         , HH.p
             [ HP.class_ $ inputErrorClass handleError ]
@@ -107,6 +124,7 @@ render
             [ HP.id_ "description"
             , HP.class_ $ errorClass descriptionError
             , HE.onValueInput $ HE.input DescriptionInput
+            , HP.value description
             ]
         , HH.p
             [ HP.class_ $ inputErrorClass descriptionError ]
@@ -116,16 +134,44 @@ render
         [ HP.class_ $ ClassName "primary"
         , HP.disabled $ title == "" || handle == "" || description == ""
         ]
-        [ HH.text "Create" ]
+        [ HH.text "Edit" ]
     , HH.p
         [ HP.class_ $ otherErrorClass otherError ]
         [ HH.text "Lmao, something else got fucked and you're shit out of luck, mate!"]
     ]
+render NotFound = HH.p_ [ HH.text "Game could not be found." ]
+render Error = HH.p_ [ HH.text
+    "There has been an error loading the game. Please try again later." ]
 
-sendCreateRequest :: forall left. State -> Async left (Maybe State)
-sendCreateRequest state @ { title, handle, description } = Async.unify do
-    response <- Fetch.fetch "/api/games"
-        (  Fetch.method := POST
+loadGame :: forall left. String -> Async left State
+loadGame handle' = Async.unify do
+    response <- Fetch.fetch_ ("/api/games/" <> handle') # lmap (const Error)
+    { administratorId, title, handle, description } :: View.OkContent <-
+        case FetchRes.status response of
+        200 -> FetchRes.text response
+            >>= JsonAsync.readJSON # lmap (const Error)
+        404 -> Async.left NotFound
+        _ -> Async.left Error
+    pure $ Game
+        { administratorId
+        , originalTitle: title
+        , originalHandle: handle
+        , title
+        , handle
+        , description
+        , titleError: false
+        , handleError: false
+        , descriptionError: false
+        , titleTaken: false
+        , handleTaken: false
+        , otherError: false
+        }
+
+updateGame :: forall left. State' -> Async left (Maybe State')
+updateGame state @ { title, handle, description, originalHandle } =
+    Async.unify do
+    response <- Fetch.fetch ("/api/games/" <> originalHandle)
+        (  Fetch.method := PUT
         <> Fetch.body := Json.writeJSON { title, handle, description }
         <> Fetch.credentials := Fetch.Include
         )
@@ -134,8 +180,8 @@ sendCreateRequest state @ { title, handle, description } = Async.unify do
         204 -> pure Nothing
         400 -> FetchRes.text response >>= JsonAsync.readJSON
             # bimap
-                (const $ Just $ state { otherError = true })
-                (\(error :: Create.BadRequestContent) -> Just $ match
+                (const $ Just $ state { otherError = true})
+                (\(error :: Update.BadRequestContent) -> Just $ match
                     { invalidDetails: foldl (\state' -> match
                         { invalidTitle:
                             const $ state' { titleError = true }
@@ -152,56 +198,70 @@ sendCreateRequest state @ { title, handle, description } = Async.unify do
         _ -> pure $ Just $ state { otherError = true }
     pure newState
 
-eval :: forall void. Query ~> H.HalogenM State Query () Void (Async void)
-eval (Init send) = do
+eval :: forall left. Query ~> H.HalogenM State Query () Void (Async left)
+eval (Init handle send) = do
     isSignedIn <- H.liftEffect hasPlayerIdCookie
     if isSignedIn
-        then pure unit
-        else H.liftEffect $ navigate_ "/"
+        then do
+            state <- H.lift $ loadGame handle
+            playerInfo <- H.lift $ Async.fromEffect getPlayerInfo
+            case (Tuple state playerInfo) of
+                Tuple (Game { administratorId }) (Just { id }) ->
+                    if administratorId == id
+                    then H.put state
+                    else H.liftEffect $ navigate_ "/"
+                _ -> H.liftEffect $ navigate_ "/"
+        else H.liftEffect $ log "navigating" *> navigate_ "/"
     pure send
-eval (TitleInput title send) =
-    H.modify_ (_ { title = title }) <#> const send
-eval (HandleInput handle send) =
-    H.modify_ (_ { handle = handle }) <#> const send
-eval (DescriptionInput description send) =
-    H.modify_ (_ { description = description }) <#> const send
-eval (Create event send) = do
+eval (TitleInput title send) = do
+    H.modify_ $ case _ of
+        Game state -> Game $ state { title = title }
+        state -> state
+    pure send
+eval (HandleInput handle send) = do
+    H.modify_ $ case _ of
+        Game state -> Game $ state { handle = handle }
+        state -> state
+    pure send
+eval (DescriptionInput description send) = do
+    H.modify_ $ case _ of
+        Game state -> Game $ state { description = description }
+        state -> state
+    pure send
+eval (Update event send) = do
     H.liftEffect $ preventDefault event
-    state <- H.gets (_
-        { titleError       = false
-        , handleError      = false
-        , descriptionError = false
-        , titleTaken       = false
-        , handleTaken      = false
-        , otherError       = false
-        })
-    newState <- H.lift $ sendCreateRequest state
-    case newState of
-        Nothing -> H.liftEffect $ navigate_ $ "/games/" <> trim state.handle
-        Just newState' -> H.put newState'
+    state <- H.get
+    case state of
+        Game state' -> do
+            newState <- H.lift $ updateGame $ state'
+                { titleError       = false
+                , handleError      = false
+                , descriptionError = false
+                , titleTaken       = false
+                , handleTaken      = false
+                , otherError       = false
+                }
+            case newState of
+                Nothing -> H.liftEffect $ navigate_ $
+                    "/games/" <> trim state'.handle
+                Just newState' -> H.put $ Game newState'
+        _ -> pure unit
     pure send
 
 component :: forall input left.
-    H.Component HH.HTML Query input Void (Async left)
-component = H.component
-    { initialState: const
-        { title: ""
-        , handle: ""
-        , description: ""
-        , titleError: false
-        , handleError: false
-        , descriptionError: false
-        , titleTaken: false
-        , handleTaken: false
-        , otherError: false
-        }
+    String -> H.Component HH.HTML Query input Void (Async left)
+component handle = H.component
+    { initialState: const Empty
     , render
     , eval
     , receiver: const Nothing
-    , initializer: Just $ H.action Init
+    , initializer: Just $ H.action $ Init handle
     , finalizer: Nothing
     }
 
-createGame :: forall query children left.
-    HH.ComponentHTML query (createGame :: Slot Unit | children) (Async left)
-createGame = HH.slot (SProxy :: SProxy "createGame") unit component unit absurd
+editGame
+    :: forall query children left
+    .  String
+    -> HH.ComponentHTML query (editGame :: Slot Unit | children) (Async left)
+editGame handle =
+    HH.slot (SProxy :: SProxy "editGame") unit (component handle) unit absurd

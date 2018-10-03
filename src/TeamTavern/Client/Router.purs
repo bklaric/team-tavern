@@ -19,6 +19,8 @@ import TeamTavern.Client.Components.TopBar (topBar)
 import TeamTavern.Client.Components.TopBar as TopBar
 import TeamTavern.Client.CreateGame (createGame)
 import TeamTavern.Client.CreateGame as CreateGame
+import TeamTavern.Client.EditGame (editGame)
+import TeamTavern.Client.EditGame as EditGame
 import TeamTavern.Client.Game (game)
 import TeamTavern.Client.Game as Game
 import TeamTavern.Client.Home (home)
@@ -39,6 +41,7 @@ data State
     | Home
     | Game String
     | CreateGame
+    | EditGame String
     | Player String
     | Register
     | SignIn
@@ -52,6 +55,7 @@ type ChildSlots =
   , home :: Home.Slot Unit
   , game :: Game.Slot Unit
   , createGame :: CreateGame.Slot Unit
+  , editGame :: EditGame.Slot Unit
   , profiles :: ProfilesByGame.Slot Unit
   , player :: Player.Slot Unit
   , register :: Register.Slot Unit
@@ -65,6 +69,7 @@ render Empty = HH.div_ []
 render Home = HH.div_ [ topBar, home ]
 render (Game handle) = HH.div_ [ topBar, game handle, profilesByGame handle ]
 render CreateGame = HH.div_ [ topBar, createGame ]
+render (EditGame handle) = HH.div_ [ topBar, editGame handle ]
 render (Player nickname) = HH.div_ [ topBar, player nickname ]
 render Register = register
 render SignIn = signIn
@@ -106,6 +111,7 @@ eval (ChangeRoute state route send) = do
             in
             case parts of
             ["", "games", "create" ] -> CreateGame
+            ["", "games", handle, "edit" ] -> EditGame handle
             ["", "games", handle] -> Game handle
             ["", "players", nickname] -> Player nickname
             _ -> NotFound
