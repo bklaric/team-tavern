@@ -21,6 +21,8 @@ import TeamTavern.Client.CreateGame (createGame)
 import TeamTavern.Client.CreateGame as CreateGame
 import TeamTavern.Client.EditGame (editGame)
 import TeamTavern.Client.EditGame as EditGame
+import TeamTavern.Client.EditPlayer (editPlayer)
+import TeamTavern.Client.EditPlayer as EditPlayer
 import TeamTavern.Client.Game (game)
 import TeamTavern.Client.Game as Game
 import TeamTavern.Client.Home (home)
@@ -43,6 +45,7 @@ data State
     | CreateGame
     | EditGame String
     | Player String
+    | EditPlayer String
     | Register
     | SignIn
     | Code
@@ -51,18 +54,19 @@ data State
     | NotFound
 
 type ChildSlots =
-  ( topBar :: TopBar.Slot Unit
-  , home :: Home.Slot Unit
-  , game :: Game.Slot Unit
-  , createGame :: CreateGame.Slot Unit
-  , editGame :: EditGame.Slot Unit
-  , profiles :: ProfilesByGame.Slot Unit
-  , player :: Player.Slot Unit
-  , register :: Register.Slot Unit
-  , signIn :: SignIn.Slot Unit
-  , signInCode :: SignInCode.Slot Unit
-  , signInAnchor :: NavigationAnchor.Slot Unit
-  )
+    ( topBar :: TopBar.Slot Unit
+    , home :: Home.Slot Unit
+    , game :: Game.Slot Unit
+    , createGame :: CreateGame.Slot Unit
+    , editGame :: EditGame.Slot Unit
+    , profiles :: ProfilesByGame.Slot Unit
+    , player :: Player.Slot Unit
+    , editPlayer :: EditPlayer.Slot Unit
+    , register :: Register.Slot Unit
+    , signIn :: SignIn.Slot Unit
+    , signInCode :: SignInCode.Slot Unit
+    , signInAnchor :: NavigationAnchor.Slot Unit
+    )
 
 render :: forall void. State -> H.ComponentHTML Query ChildSlots (Async void)
 render Empty = HH.div_ []
@@ -71,6 +75,7 @@ render (Game handle) = HH.div_ [ topBar, game handle, profilesByGame handle ]
 render CreateGame = HH.div_ [ topBar, createGame ]
 render (EditGame handle) = HH.div_ [ topBar, editGame handle ]
 render (Player nickname) = HH.div_ [ topBar, player nickname ]
+render (EditPlayer nickname) = HH.div_ [ topBar, editPlayer nickname ]
 render Register = register
 render SignIn = signIn
 render Code = signInCode
@@ -110,9 +115,10 @@ eval (ChangeRoute state route send) = do
             parts = split (Pattern "/") other
             in
             case parts of
-            ["", "games", "create" ] -> CreateGame
-            ["", "games", handle, "edit" ] -> EditGame handle
+            ["", "games", "create"] -> CreateGame
+            ["", "games", handle, "edit"] -> EditGame handle
             ["", "games", handle] -> Game handle
+            ["", "players", nickname, "edit"] -> EditPlayer nickname
             ["", "players", nickname] -> Player nickname
             _ -> NotFound
     pure send

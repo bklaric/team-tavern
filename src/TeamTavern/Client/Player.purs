@@ -8,33 +8,40 @@ import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
 import Data.Bifunctor (lmap)
 import Data.FunctorWithIndex (mapWithIndex)
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), maybe)
+import Data.Monoid (guard)
 import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Simple.JSON.Async as Json
-import TeamTavern.Client.Components.NavigationAnchor (navigationAnchorIndexed)
+import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor, navigationAnchorIndexed)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
+import TeamTavern.Client.Script.Cookie (getPlayerInfo)
 import TeamTavern.Player.View.Response as View
 
 data Query send = Init String send
 
 data State
     = Empty
-    | Player View.OkContent
+    | Player View.OkContent Boolean
     | NotFound
     | Error
 
 type Slot = H.Slot Query Void
 
-type ChildSlots = ( games :: Anchor.Slot Int )
+type ChildSlots =
+    ( edit :: Anchor.Slot Unit
+    , games :: Anchor.Slot Int
+    )
 
 render :: forall left. State -> H.ComponentHTML Query ChildSlots (Async left)
 render Empty = HH.div_ []
-render (Player { nickname, about, profiles }) = HH.div_
-    [ HH.h2_ [ HH.text nickname ]
-    , HH.p_ [ HH.text about ]
-    , HH.ul_ $
+render (Player { nickname, about, profiles } isCurrentUser) = HH.div_ $ join
+    [ pure $ HH.h2_ [ HH.text nickname ]
+    , pure $ HH.p_ [ HH.text about ]
+    , guard isCurrentUser $ pure $ navigationAnchor (SProxy :: SProxy "edit")
+        { path: "/players/" <> nickname <> "/edit", text: "Edit info" }
+    , pure $ HH.ul_ $
         profiles # mapWithIndex \index { handle, title, summary } -> HH.li_
             [ HH.h3_ [ navigationAnchorIndexed (SProxy :: SProxy "games") index
                 { path: "/games/" <> handle, text: title } ]
@@ -52,7 +59,9 @@ loadPlayer nickname = Async.unify do
         200 -> FetchRes.text response >>= Json.readJSON # lmap (const Error)
         404 -> Async.left NotFound
         _ -> Async.left Error
+    playerInfo <- Async.fromEffect getPlayerInfo
     pure $ Player content
+        (maybe false (_.nickname >>> (_ == content.nickname)) playerInfo)
 
 eval :: forall left.
     Query ~> H.HalogenM State Query ChildSlots Void (Async left)

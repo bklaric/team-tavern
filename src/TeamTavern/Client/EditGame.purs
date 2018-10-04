@@ -1,4 +1,4 @@
-module TeamTavern.Client.EditGame where
+module TeamTavern.Client.EditGame (Query, Slot, editGame) where
 
 import Prelude
 
@@ -14,7 +14,6 @@ import Data.Options ((:=))
 import Data.String (trim)
 import Data.Tuple (Tuple(..))
 import Data.Variant (SProxy(..), match)
-import Effect.Class.Console (log)
 import Halogen (ClassName(..))
 import Halogen as H
 import Halogen.HTML as HH
@@ -64,7 +63,6 @@ render :: forall left. State -> H.ComponentHTML Query () (Async left)
 render Empty = HH.div_ []
 render (Game
     { originalTitle
-    , originalHandle
     , title
     , handle
     , description
@@ -134,7 +132,7 @@ render (Game
         [ HP.class_ $ ClassName "primary"
         , HP.disabled $ title == "" || handle == "" || description == ""
         ]
-        [ HH.text "Edit" ]
+        [ HH.text "Save changes" ]
     , HH.p
         [ HP.class_ $ otherErrorClass otherError ]
         [ HH.text "Lmao, something else got fucked and you're shit out of luck, mate!"]
@@ -211,7 +209,7 @@ eval (Init handle send) = do
                     then H.put state
                     else H.liftEffect $ navigate_ "/"
                 _ -> H.liftEffect $ navigate_ "/"
-        else H.liftEffect $ log "navigating" *> navigate_ "/"
+        else H.liftEffect $ navigate_ "/"
     pure send
 eval (TitleInput title send) = do
     H.modify_ $ case _ of
