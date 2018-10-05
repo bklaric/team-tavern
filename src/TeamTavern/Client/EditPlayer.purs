@@ -28,6 +28,9 @@ import TeamTavern.Player.Update.Response as Update
 import TeamTavern.Player.View.Response as View
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
+import Web.HTML (window)
+import Web.HTML.Location (setHref)
+import Web.HTML.Window (location)
 
 data Query send
     = Init String send
@@ -65,7 +68,7 @@ render (Player
     , otherError
     }) = HH.form
     [ HE.onSubmit $ HE.input Update ]
-    [ HH.h2_ [ HH.text "Edit profile" ]
+    [ HH.h2_ [ HH.text "Edit info" ]
     , HH.div_
         [ HH.label
             [ HP.class_ $ errorClass nicknameError, HP.for "nickname" ]
@@ -196,8 +199,10 @@ eval (Update event send) = do
                 , otherError    = false
                 }
             case newState of
-                Nothing -> H.liftEffect $ navigate_ $
-                    "/players/" <> trim state'.nickname
+                Nothing -> H.liftEffect $
+                    window
+                    >>= location
+                    >>= (setHref $ "/players/" <> trim state'.nickname)
                 Just newState' -> H.put $ Player newState'
         _ -> pure unit
     pure send

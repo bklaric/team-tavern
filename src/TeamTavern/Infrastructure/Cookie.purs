@@ -7,7 +7,7 @@ import Data.List (List(..), (:))
 import Data.List.Types (NonEmptyList(..))
 import Data.Map (Map, lookup)
 import Data.Maybe (Maybe)
-import Data.MultiMap (MultiMap, singleton')
+import Data.MultiMap (MultiMap, singleton, singleton')
 import Data.Newtype (unwrap)
 import Data.NonEmpty ((:|))
 import Data.Validated as Validated
@@ -59,6 +59,10 @@ tokenCookie token =
     <> "; Max-Age=" <> show (top :: Int)
     <> "; Path=/"
     <> "; HttpOnly; Secure"
+
+setNicknameCookieHeader :: Nickname -> MultiMap String String
+setNicknameCookieHeader nickname =
+    singleton "Set-Cookie" $ nicknameCookie nickname
 
 setCookieHeader :: PlayerId -> Nickname -> Token -> MultiMap String String
 setCookieHeader id nickname token =

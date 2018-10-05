@@ -5,8 +5,10 @@ import Prelude
 import Async (Async, alwaysRight)
 import Data.Array (fromFoldable)
 import Data.Variant (SProxy(..), Variant, inj, match)
-import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, noContent_, notFound__, unauthorized__)
+import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, noContent, notFound__, unauthorized__)
 import Simple.JSON (writeJSON)
+import TeamTavern.Infrastructure.Cookie (setNicknameCookieHeader)
+import TeamTavern.Player.Domain.Nickname (Nickname)
 import TeamTavern.Player.Update.Types (UpdateError)
 
 type AboutErrorResponseContent = Variant
@@ -41,8 +43,8 @@ errorResponse = match
     , notAuthorized: const $ forbidden__
     }
 
-successResponse :: Unit -> Response
-successResponse _ = noContent_
+successResponse :: Nickname -> Response
+successResponse nickname = noContent $ setNicknameCookieHeader nickname
 
-response :: Async UpdateError Unit -> (forall left. Async left Response)
+response :: Async UpdateError Nickname -> (forall left. Async left Response)
 response = alwaysRight errorResponse successResponse

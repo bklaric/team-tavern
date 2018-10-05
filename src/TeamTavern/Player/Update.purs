@@ -20,7 +20,7 @@ update pool nickname' cookies body =
     response $ examineLeftWithEffect logError do
     -- Read nickname from route.
     nickname <- readNickname nickname'
-
+ 
     -- Read requestor auth info from cookies.
     authInfo <- readAuth cookies
 
@@ -29,3 +29,5 @@ update pool nickname' cookies body =
 
     -- Update player.
     updatePlayer pool authInfo update'
+
+    pure update'.nickname
