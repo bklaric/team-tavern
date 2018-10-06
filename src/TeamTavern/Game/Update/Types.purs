@@ -3,7 +3,7 @@ module TeamTavern.Game.Update.Types where
 import Data.List.Types (NonEmptyList)
 import Data.Map (Map)
 import Data.Variant (Variant)
-import Foreign (ForeignError)
+import Foreign (MultipleErrors)
 import Postgres.Error (Error)
 import TeamTavern.Game.Domain.Description (DescriptionError)
 import TeamTavern.Game.Domain.Handle (Handle, HandleError)
@@ -25,7 +25,7 @@ type UpdateError = Variant
     , authNotPresent :: Map String String
     , unreadableDetails ::
         { content :: String
-        , errors :: NonEmptyList ForeignError
+        , errors :: MultipleErrors
         }
     , invalidDetails ::
         { details :: DetailsModel

@@ -16,6 +16,15 @@ type CreateProfile = Route
     :> End)
     NoQuery
 
+type ViewProfile = Route
+    Get
+    (  Literal "players"
+    :> Capture "nickname" String
+    :> Literal "profiles"
+    :> Capture "handle" String
+    :> End)
+    NoQuery
+
 type UpdateProfile = Route
     Put
     (  Literal "players"
@@ -35,5 +44,6 @@ type ViewProfilesByGame = Route
 
 type ProfileRoutes
     =    "createProfile"      := CreateProfile
+    :<|> "viewProfile"        := ViewProfile
     :<|> "updateProfile"      := UpdateProfile
     :<|> "viewProfilesByGame" := ViewProfilesByGame

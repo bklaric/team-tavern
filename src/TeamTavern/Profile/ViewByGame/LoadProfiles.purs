@@ -13,7 +13,7 @@ import Data.Traversable (traverse)
 import Data.Validated (Validated)
 import Data.Validated as Validated
 import Data.Variant (Variant)
-import Foreign (ForeignError)
+import Foreign (MultipleErrors)
 import Postgres.Async.Query (query)
 import Postgres.Error (Error)
 import Postgres.Pool (Pool)
@@ -32,7 +32,7 @@ type LoadProfilesError errors = Variant
     , databaseError :: Error
     , unreadableViews ::
         { result :: Result
-        , errors :: NonEmptyList ForeignError
+        , errors :: MultipleErrors
         }
     | errors )
 

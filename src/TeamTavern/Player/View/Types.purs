@@ -2,7 +2,7 @@ module TeamTavern.Player.View.Types where
 
 import Data.List.Types (NonEmptyList)
 import Data.Variant (Variant)
-import Foreign (ForeignError)
+import Foreign (MultipleErrors)
 import Postgres.Error (Error)
 import Postgres.Result (Result)
 import TeamTavern.Player.Domain.Nickname (Nickname, NicknameError)
@@ -16,7 +16,7 @@ type ViewError = Variant
     , databaseError :: Error
     , unreadableResult ::
         { result :: Result
-        , errors :: NonEmptyList ForeignError
+        , errors :: MultipleErrors
         }
     , notFound :: Nickname
     , invalidView ::

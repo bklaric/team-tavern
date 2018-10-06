@@ -3,7 +3,7 @@ module TeamTavern.Profile.Create.Types where
 import Data.List.Types (NonEmptyList)
 import Data.Map (Map)
 import Data.Variant (Variant)
-import Foreign (ForeignError)
+import Foreign (MultipleErrors)
 import Postgres.Error (Error)
 import TeamTavern.Game.Domain.Handle (HandleError)
 import TeamTavern.Player.Domain.Nickname (NicknameError)
@@ -23,7 +23,7 @@ type CreateError = Variant
     , authNotPresent :: Map String String
     , unreadableSummary ::
         { content :: String
-        , errors :: NonEmptyList ForeignError
+        , errors :: MultipleErrors
         }
     , invalidSummary ::
         { summary :: String

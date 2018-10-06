@@ -10,6 +10,10 @@ type Identifiers =
     , handle :: Handle
     }
 
+type View =
+    { summary :: Summary
+    }
+
 type ByGameView =
     { nickname :: Nickname
     , summary :: Summary

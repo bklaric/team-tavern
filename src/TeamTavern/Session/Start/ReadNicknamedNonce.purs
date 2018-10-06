@@ -9,7 +9,7 @@ import Data.List.Types (NonEmptyList)
 import Data.Symbol (SProxy(..))
 import Data.Validated.Label as Validated
 import Data.Variant (Variant)
-import Foreign (ForeignError)
+import Foreign (MultipleErrors)
 import Perun.Request.Body (Body)
 import Simple.JSON.Async (readJSON)
 import TeamTavern.Architecture.Perun.Request.Body (readBody)
@@ -28,7 +28,7 @@ type NicknamedNonceError = Variant
 type ReadNonceError errors = Variant
     ( unreadableNicknamedNonce ::
         { content :: String
-        , errors :: NonEmptyList ForeignError
+        , errors :: MultipleErrors
         }
     , invalidNicknamedNonce ::
         { nicknamedNonce :: NicknamedNonceModel

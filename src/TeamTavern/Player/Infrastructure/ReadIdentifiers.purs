@@ -8,7 +8,7 @@ import Data.Bifunctor.Label (labelMap)
 import Data.List.Types (NonEmptyList)
 import Data.Validated.Label as Validated
 import Data.Variant (SProxy(..), Variant)
-import Foreign (ForeignError)
+import Foreign (MultipleErrors)
 import Perun.Request.Body (Body)
 import Simple.JSON.Async (readJSON)
 import TeamTavern.Architecture.Perun.Request.Body (readBody)
@@ -27,7 +27,7 @@ type IdentifiersError = Variant
 type ReadIdentifiersError errors = Variant
     ( unreadableIdentifiers ::
         { content :: String
-        , errors :: NonEmptyList ForeignError
+        , errors :: MultipleErrors
         }
     , invalidIdentifiers ::
         { identifiers :: IdentifiersModel

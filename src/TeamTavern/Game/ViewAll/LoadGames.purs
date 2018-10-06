@@ -11,7 +11,7 @@ import Data.Traversable (traverse)
 import Data.Validated (Validated, hush)
 import Data.Validated as Validated
 import Data.Variant (SProxy(..), Variant)
-import Foreign (ForeignError)
+import Foreign (MultipleErrors)
 import Postgres.Async.Query (query_)
 import Postgres.Error (Error)
 import Postgres.Pool (Pool)
@@ -41,7 +41,7 @@ type GameViewModel =
 type LoadGamesError errors = Variant
     ( unreadableViews ::
         { result :: Result
-        , errors :: NonEmptyList ForeignError
+        , errors :: MultipleErrors
         }
     , invalidViews :: NonEmptyList GameViewModel
     , databaseError :: Error

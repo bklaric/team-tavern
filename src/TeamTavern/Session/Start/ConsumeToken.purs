@@ -7,11 +7,10 @@ import Async (Async)
 import Async as Async
 import Data.Array (head)
 import Data.Bifunctor.Label (label, labelMap)
-import Data.List.Types (NonEmptyList)
 import Data.Newtype (unwrap)
 import Data.Traversable (traverse)
 import Data.Variant (SProxy(..), Variant, inj)
-import Foreign (ForeignError)
+import Foreign (MultipleErrors)
 import Postgres.Async.Query (query)
 import Postgres.Error (Error)
 import Postgres.Pool (Pool)
@@ -46,7 +45,7 @@ type ConsumeTokenError errors = Variant
     , databaseError :: Error
     , unreadableIdentifiedToken ::
         { result :: Result
-        , errors :: NonEmptyList ForeignError
+        , errors :: MultipleErrors
         }
     , invalidIdentifiedToken :: IdentifiedTokenModel
     | errors )

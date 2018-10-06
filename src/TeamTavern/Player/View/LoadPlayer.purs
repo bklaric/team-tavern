@@ -8,12 +8,11 @@ import Async (note) as Async
 import Data.Array (head)
 import Data.Bifunctor.Label (label) as Async
 import Data.Bifunctor.Label (labelMap)
-import Data.List.Types (NonEmptyList)
 import Data.Newtype (unwrap)
 import Data.Symbol (SProxy(..))
 import Data.Traversable (traverse)
 import Data.Variant (Variant, inj)
-import Foreign (ForeignError)
+import Foreign (MultipleErrors)
 import Postgres.Async.Query (query)
 import Postgres.Error (Error)
 import Postgres.Pool (Pool)
@@ -60,7 +59,7 @@ type LoadPlayerError errors = Variant
     ( databaseError :: Error
     , unreadableResult ::
         { result :: Result
-        , errors :: NonEmptyList ForeignError
+        , errors :: MultipleErrors
         }
     , notFound :: Nickname
     , invalidView ::

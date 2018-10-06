@@ -3,7 +3,7 @@ module TeamTavern.Session.Prepare.Types where
 import Data.List.Types (NonEmptyList)
 import Data.Map (Map)
 import Data.Variant (Variant)
-import Foreign (ForeignError)
+import Foreign (MultipleErrors)
 import Node.Errors (Error)
 import Postgres.Error as Postgres
 import Postmark.Error as Postmark
@@ -21,7 +21,7 @@ type PrepareError = Variant
         }
     , unreadableIdentifiers ::
         { content :: String
-        , errors :: NonEmptyList ForeignError
+        , errors :: MultipleErrors
         }
     , invalidIdentifiers ::
         { identifiers :: IdentifiersModel
