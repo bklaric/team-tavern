@@ -12,6 +12,7 @@ import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..))
 import Data.Options ((:=))
 import Data.Symbol (SProxy(..))
+import Effect.Class.Console (log)
 import Halogen as H
 import Halogen.HTML as HH
 import Simple.JSON as Json
@@ -19,7 +20,7 @@ import TeamTavern.Client.Components.NavigationAnchor (navigationAnchorIndexed)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
 import TeamTavern.Game.ViewAll.Response (OkContent)
 
-data Query send = Init send
+data Query send = Init send | Receive send
 
 data State
     = Games OkContent
@@ -54,6 +55,7 @@ eval (Init send) = do
             _ -> pure Error
     H.put newState
     pure send
+eval (Receive send) = log "Lol home" *> pure send
 
 component :: forall left. H.Component HH.HTML Query State Void (Async left)
 component =
@@ -61,7 +63,7 @@ component =
         { initialState: identity
         , render
         , eval
-        , receiver: const Nothing
+        , receiver: const $ Just $ Receive unit
         , initializer: Just $ Init unit
         , finalizer: Nothing
         }

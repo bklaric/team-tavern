@@ -25,6 +25,8 @@ import TeamTavern.Client.EditGame (editGame)
 import TeamTavern.Client.EditGame as EditGame
 import TeamTavern.Client.EditPlayer (editPlayer)
 import TeamTavern.Client.EditPlayer as EditPlayer
+import TeamTavern.Client.EditProfile (editProfile)
+import TeamTavern.Client.EditProfile as EditProfile
 import TeamTavern.Client.Game (game)
 import TeamTavern.Client.Game as Game
 import TeamTavern.Client.Home (home)
@@ -49,6 +51,7 @@ data State
     | Player String
     | EditPlayer String
     | CreateProfile String
+    | EditProfile String String
     | Register
     | SignIn
     | Code
@@ -64,6 +67,7 @@ type ChildSlots =
     , editGame :: EditGame.Slot Unit
     , profiles :: ProfilesByGame.Slot Unit
     , createProfile :: CreateProfile.Slot Unit
+    , editProfile :: EditProfile.Slot Unit
     , player :: Player.Slot Unit
     , editPlayer :: EditPlayer.Slot Unit
     , register :: Register.Slot Unit
@@ -81,6 +85,7 @@ render (EditGame handle) = HH.div_ [ topBar, editGame handle ]
 render (Player nickname) = HH.div_ [ topBar, player nickname ]
 render (EditPlayer nickname) = HH.div_ [ topBar, editPlayer nickname ]
 render (CreateProfile handle) = HH.div_ [ topBar, createProfile handle ]
+render (EditProfile nickname handle) = HH.div_ [ topBar, editProfile nickname handle]
 render Register = register
 render SignIn = signIn
 render Code = signInCode
@@ -123,8 +128,9 @@ eval (ChangeRoute state route send) = do
             ["", "games", "create"] -> CreateGame
             ["", "games", handle, "edit"] -> EditGame handle
             ["", "games", handle] -> Game handle
-            ["", "players", nickname, "edit"] -> EditPlayer nickname
             ["", "games", handle, "profiles", "create"] -> CreateProfile handle
+            ["", "games", handle, "profiles", nickname, "edit"] -> EditProfile nickname handle
+            ["", "players", nickname, "edit"] -> EditPlayer nickname
             ["", "players", nickname] -> Player nickname
             _ -> NotFound
     pure send

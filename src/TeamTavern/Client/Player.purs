@@ -32,6 +32,7 @@ type Slot = H.Slot Query Void
 type ChildSlots =
     ( edit :: Anchor.Slot Unit
     , games :: Anchor.Slot Int
+    , editProfiles :: Anchor.Slot Int
     )
 
 render :: forall left. State -> H.ComponentHTML Query ChildSlots (Async left)
@@ -42,10 +43,15 @@ render (Player { nickname, about, profiles } isCurrentUser) = HH.div_ $ join
     , guard isCurrentUser $ pure $ navigationAnchor (SProxy :: SProxy "edit")
         { path: "/players/" <> nickname <> "/edit", text: "Edit info" }
     , pure $ HH.ul_ $
-        profiles # mapWithIndex \index { handle, title, summary } -> HH.li_
-            [ HH.h3_ [ navigationAnchorIndexed (SProxy :: SProxy "games") index
+        profiles # mapWithIndex \index { handle, title, summary } -> HH.li_ $ join
+            [ pure $ HH.h3_ [ navigationAnchorIndexed (SProxy :: SProxy "games") index
                 { path: "/games/" <> handle, text: title } ]
-            , HH.p_ [ HH.text summary ]
+            , guard isCurrentUser $ pure $
+                navigationAnchorIndexed (SProxy :: SProxy "editProfiles") index
+                { path: "/games/" <> handle <> "/profiles/" <> nickname <> "/edit"
+                , text: "Edit profile"
+                }
+            , pure $ HH.p_ [ HH.text summary ]
             ]
     ]
 render NotFound = HH.p_ [ HH.text "Player could not be found." ]

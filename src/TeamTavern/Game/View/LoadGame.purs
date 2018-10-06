@@ -41,7 +41,7 @@ loadGameQuery = Query """
 
 loadGameQueryParameters :: Handle -> Maybe AuthInfo -> Array QueryParameter
 loadGameQueryParameters handle auth =
-    [unwrap handle, maybe mempty (_.id >>> toString) auth] <#> QueryParameter
+    [unwrap handle, maybe "0" (_.id >>> toString) auth] <#> QueryParameter
 
 type GameViewModel =
     { administratorId :: Int
