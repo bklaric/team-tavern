@@ -12,39 +12,37 @@ import Postgres.Error (Error)
 import Postgres.Pool (Pool)
 import Postgres.Query (Query(..), QueryParameter(..))
 import Postgres.Result (rowCount)
+import TeamTavern.Game.Domain.Handle (Handle)
 import TeamTavern.Player.Domain.PlayerId (toString)
 import TeamTavern.Player.Domain.Types (AuthInfo)
 import TeamTavern.Profile.Domain.Summary (Summary)
-import TeamTavern.Profile.Domain.Types (Identifiers)
 
 type AddProfileError errors = Variant
     ( databaseError :: Error
     , notAuthorized ::
         { auth :: AuthInfo
-        , identifiers :: Identifiers
+        , handle :: Handle
         }
     | errors )
 
 addProfileQuery :: Query
 addProfileQuery = Query """
     insert into profile (player_id, game_id, summary)
-    select player.id, game.id, $5
+    select player.id, game.id, $4
     from session, player, game
     where session.player_id = $1
     and session.token = $2
     and session.consumed = true
     and session.revoked = false
     and session.player_id = player.id
-    and player.nickname = $3
-    and game.handle = $4
+    and game.handle = $3
     """
 
 addProfileParameters ::
-    AuthInfo -> Identifiers -> Summary -> Array QueryParameter
-addProfileParameters { id, token } { nickname, handle } summary =
+    AuthInfo -> Handle -> Summary -> Array QueryParameter
+addProfileParameters { id, token } handle summary =
     [ toString id
     , unwrap token
-    , unwrap nickname
     , unwrap handle
     , unwrap summary
     ]
@@ -54,13 +52,13 @@ addProfile
     :: forall errors
     .  Pool
     -> AuthInfo
-    -> Identifiers
+    -> Handle
     -> Summary
     -> Async (AddProfileError errors) Unit
-addProfile pool auth identifiers summary = do
+addProfile pool auth handle summary = do
     result <- pool
-        # query addProfileQuery (addProfileParameters auth identifiers summary)
+        # query addProfileQuery (addProfileParameters auth handle summary)
         # label (SProxy :: SProxy "databaseError")
     if rowCount result == 1
         then pure unit
-        else left $ inj (SProxy :: SProxy "notAuthorized") { auth, identifiers }
+        else left $ inj (SProxy :: SProxy "notAuthorized") { auth, handle }

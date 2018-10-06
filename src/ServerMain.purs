@@ -163,11 +163,11 @@ handleRequest pool client method url cookies body =
         , viewAllGames: const $
             Game.handleViewAll pool
         , viewGame: \{ handle } ->
-            Game.handleView pool handle
+            Game.handleView pool handle cookies
         , updateGame: \{ handle } ->
             Game.handleUpdate pool handle cookies body
-        , createProfile: \identifiers ->
-            Profile.create pool identifiers cookies body
+        , createProfile: \{ handle } ->
+            Profile.create pool handle cookies body
         , viewProfile: \identifiers ->
             Profile.view pool identifiers
         , updateProfile: \identifiers ->

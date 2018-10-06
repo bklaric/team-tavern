@@ -16,6 +16,7 @@ type OkContent =
     , title :: String
     , handle :: String
     , description :: String
+    , hasProfile :: Boolean
     }
 
 errorResponse :: ViewError -> Response
@@ -28,12 +29,13 @@ errorResponse = match
     }
 
 successResponse :: View -> Response
-successResponse { administratorId, title, handle, description } =
+successResponse { administratorId, title, handle, description, hasProfile } =
     ok_ $ writeJSON (
     { administratorId: toInt administratorId
     , title: unwrap title
     , handle: unwrap handle
     , description: unwrap description
+    , hasProfile
     } :: OkContent)
 
 response :: Async ViewError View -> (forall left. Async left Response)

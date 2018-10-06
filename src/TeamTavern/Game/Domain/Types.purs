@@ -16,4 +16,12 @@ type View =
     , title :: Title
     , handle :: Handle
     , description :: Description
+    , hasProfile :: Boolean
+    }
+
+type ViewAll =
+    { administratorId :: PlayerId
+    , title :: Title
+    , handle :: Handle
+    , description :: Description
     }

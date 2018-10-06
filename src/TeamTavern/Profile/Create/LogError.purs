@@ -12,8 +12,8 @@ logError :: CreateError -> Effect Unit
 logError createError = do
     log "Error creating profile"
     createError # match
-        { invalidIdentifiers: \{ identifiers, errors } -> do
-            logt $ "Couldn't validate identifiers: " <> show identifiers
+        { invalidHandle: \{ handle, errors } -> do
+            logt $ "Couldn't validate handle: " <> show handle
             logt $ "Validation resulted in these errors: " <> show errors
         , authNotPresent: \cookies ->
             logt $ "Couldn't read auth info from cookies: " <> show cookies
@@ -25,8 +25,8 @@ logError createError = do
             logt $ "Validation resulted in these errors: " <> show errors
         , databaseError: \error ->
             logt $ "Unknown database error ocurred: " <> print error
-        , notAuthorized: \{ auth, identifiers } -> do
+        , notAuthorized: \{ auth, handle } -> do
             logt $ "Player with auth: " <> show auth
-            logt $ "Not authorized to create profile for identifiers: "
-                <> show identifiers
+            logt $ "Not authorized to create profile for handle: "
+                <> show handle
         }

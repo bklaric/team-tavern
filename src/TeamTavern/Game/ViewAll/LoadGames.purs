@@ -21,7 +21,7 @@ import Simple.JSON.Async (read)
 import TeamTavern.Game.Domain.Description as Description
 import TeamTavern.Game.Domain.Handle as Handle
 import TeamTavern.Game.Domain.Title as Name
-import TeamTavern.Game.Domain.Types (View)
+import TeamTavern.Game.Domain.Types (ViewAll)
 import TeamTavern.Player.Domain.PlayerId as PlayerId
 
 loadGamesQuery :: Query
@@ -52,10 +52,10 @@ validateViews
     .  Array GameViewModel
     -> Async
         (Variant (invalidViews :: NonEmptyList GameViewModel | errors))
-        (Array View)
+        (Array ViewAll)
 validateViews views = let
     validateView ::
-        GameViewModel -> Validated (NonEmptyList GameViewModel) View
+        GameViewModel -> Validated (NonEmptyList GameViewModel) ViewAll
     validateView view @ { administratorId, title, handle, description } =
         { administratorId: _, title: _, handle: _, description: _ }
         <$> (PlayerId.create administratorId)
@@ -70,7 +70,7 @@ validateViews views = let
     # label (SProxy :: SProxy "invalidViews")
 
 loadGames :: forall errors.
-    Pool -> Async (LoadGamesError errors) (Array View)
+    Pool -> Async (LoadGamesError errors) (Array ViewAll)
 loadGames pool = do
     result <- pool
         # query_ loadGamesQuery

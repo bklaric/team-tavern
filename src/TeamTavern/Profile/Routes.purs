@@ -9,28 +9,27 @@ import Jarilo.Segment (Capture, Literal)
 
 type CreateProfile = Route
     Post
-    (  Literal "players"
-    :> Capture "nickname" String
-    :> Literal "profiles"
+    (  Literal "games"
     :> Capture "handle" String
+    :> Literal "profiles"
     :> End)
     NoQuery
 
 type ViewProfile = Route
     Get
-    (  Literal "players"
-    :> Capture "nickname" String
-    :> Literal "profiles"
+    (  Literal "games"
     :> Capture "handle" String
+    :> Literal "profiles"
+    :> Capture "nickname" String
     :> End)
     NoQuery
 
 type UpdateProfile = Route
     Put
-    (  Literal "players"
-    :> Capture "nickname" String
-    :> Literal "profiles"
+    (  Literal "games"
     :> Capture "handle" String
+    :> Literal "profiles"
+    :> Capture "nickname" String
     :> End)
     NoQuery
 

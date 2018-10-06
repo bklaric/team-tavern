@@ -8,7 +8,7 @@ import Data.Newtype (unwrap)
 import Data.Variant (match)
 import Perun.Response (Response, internalServerError__, ok_)
 import Simple.JSON (writeJSON)
-import TeamTavern.Game.Domain.Types (View)
+import TeamTavern.Game.Domain.Types (ViewAll)
 import TeamTavern.Game.ViewAll.Types (ViewAllError)
 import TeamTavern.Player.Domain.PlayerId (toInt)
 
@@ -26,7 +26,7 @@ errorResponse = match
     , databaseError: const $ internalServerError__
     }
 
-successResponse :: Array View -> Response
+successResponse :: Array ViewAll -> Response
 successResponse views  = ok_ $ (writeJSON :: OkContent -> String) $
     mapFlipped views \{ administratorId, title, handle, description } ->
         { administratorId: toInt administratorId
@@ -36,5 +36,5 @@ successResponse views  = ok_ $ (writeJSON :: OkContent -> String) $
         }
 
 response ::
-    Async ViewAllError (Array View) -> (forall left. Async left Response)
+    Async ViewAllError (Array ViewAll) -> (forall left. Async left Response)
 response = alwaysRight errorResponse successResponse

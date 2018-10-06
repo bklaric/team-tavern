@@ -13,7 +13,7 @@ type BadRequestContent = Variant
 
 errorResponse :: CreateError -> Response
 errorResponse = match
-    { invalidIdentifiers: const notFound__
+    { invalidHandle: const notFound__
     , authNotPresent: const unauthorized__
     , databaseError: const internalServerError__
     , unreadableSummary: const badRequest__

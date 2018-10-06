@@ -5,20 +5,14 @@ import Data.Map (Map)
 import Data.Variant (Variant)
 import Foreign (MultipleErrors)
 import Postgres.Error (Error)
-import TeamTavern.Game.Domain.Handle (HandleError)
-import TeamTavern.Player.Domain.Nickname (NicknameError)
+import TeamTavern.Game.Domain.Handle (Handle, HandleError)
 import TeamTavern.Player.Domain.Types (AuthInfo)
 import TeamTavern.Profile.Domain.Summary (SummaryError)
-import TeamTavern.Profile.Domain.Types (Identifiers)
-import TeamTavern.Profile.Infrastructure.Types (IdentifiersModel)
 
 type CreateError = Variant
-    ( invalidIdentifiers ::
-        { identifiers :: IdentifiersModel
-        , errors :: NonEmptyList (Variant
-            ( invalidNickname :: NonEmptyList NicknameError
-            , invalidHandle :: NonEmptyList HandleError
-            ))
+    ( invalidHandle ::
+        { handle :: String
+        , errors :: NonEmptyList HandleError
         }
     , authNotPresent :: Map String String
     , unreadableSummary ::
@@ -32,6 +26,6 @@ type CreateError = Variant
     , databaseError :: Error
     , notAuthorized ::
         { auth :: AuthInfo
-        , identifiers :: Identifiers
+        , handle :: Handle
         }
     )

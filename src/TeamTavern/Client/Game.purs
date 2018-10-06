@@ -30,13 +30,20 @@ type Slot = H.Slot Query Void
 
 type ChildSlots =
     ( profiles :: Anchor.Slot Int
+    , createProfile :: Anchor.Slot Unit
     , edit :: Anchor.Slot Unit
     )
 
 render :: forall left. State -> H.ComponentHTML Query ChildSlots (Async left)
 render Empty = HH.div_ []
-render (Game { title, handle, description } isAdmin) = HH.div_ $ join
+render (Game { title, handle, description, hasProfile } isAdmin) =
+    HH.div_ $ join
     [ pure $ HH.h2_ [ HH.text title ]
+    , guard (not hasProfile) $ pure $ navigationAnchor
+        (SProxy :: SProxy "createProfile")
+        { path: "/games/" <> handle <> "/profiles/create"
+        , text: "Create profile"
+        }
     , guard isAdmin $ pure $ navigationAnchor (SProxy :: SProxy "edit")
         { path: "/games/" <> handle <> "/edit", text: "Edit game" }
     , pure $ HH.p_ [ HH.text description ]
@@ -53,8 +60,8 @@ loadGame handle = Async.unify do
         404 -> Async.left NotFound
         _ -> Async.left Error
     playerInfo <- Async.fromEffect getPlayerInfo
-    pure $ Game content
-        (maybe false (_.id >>> (_ == content.administratorId)) playerInfo)
+    pure $ Game content $
+        maybe false (_.id >>> (_ == content.administratorId)) playerInfo
 
 eval :: forall left.
     Query ~> H.HalogenM State Query ChildSlots Void (Async left)
