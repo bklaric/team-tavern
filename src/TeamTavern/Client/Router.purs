@@ -10,6 +10,7 @@ import Data.Symbol (SProxy(..))
 import Foreign (Foreign)
 import Halogen as H
 import Halogen.HTML as HH
+import Halogen.HTML.Properties as HP
 import Simple.JSON (read)
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
@@ -76,20 +77,24 @@ type ChildSlots =
     , signInAnchor :: NavigationAnchor.Slot Unit
     )
 
+contentDiv = HH.div [ HP.id_ "content" ]
+
+topBarWithContent content = HH.div_ [ topBar, contentDiv content ]
+
 render :: forall void. State -> H.ComponentHTML Query ChildSlots (Async void)
 render Empty = HH.div_ []
-render Home = HH.div_ [ topBar, home ]
-render (Game handle) = HH.div_ [ topBar, game handle, profilesByGame handle ]
-render CreateGame = HH.div_ [ topBar, createGame ]
-render (EditGame handle) = HH.div_ [ topBar, editGame handle ]
-render (Player nickname) = HH.div_ [ topBar, player nickname ]
-render (EditPlayer nickname) = HH.div_ [ topBar, editPlayer nickname ]
-render (CreateProfile handle) = HH.div_ [ topBar, createProfile handle ]
-render (EditProfile nickname handle) = HH.div_ [ topBar, editProfile nickname handle]
+render Home = topBarWithContent [ home ]
+render (Game handle) = topBarWithContent [ game handle, profilesByGame handle ]
+render CreateGame = topBarWithContent [ createGame ]
+render (EditGame handle) = topBarWithContent [ editGame handle ]
+render (Player nickname) = topBarWithContent [ player nickname ]
+render (EditPlayer nickname) = topBarWithContent [ editPlayer nickname ]
+render (CreateProfile handle) = topBarWithContent [ createProfile handle ]
+render (EditProfile nickname handle) = topBarWithContent [ editProfile nickname handle]
 render Register = register
 render SignIn = signIn
 render Code = signInCode
-render (Welcome { email, nickname, emailSent }) = HH.div_
+render (Welcome { email, nickname, emailSent }) = contentDiv
     [ HH.h3_ [ HH.text $ "Welcome to TeamTavern, " <> nickname <> "!" ]
     , HH.p_ [ if emailSent
         then HH.text $ "Registration email with your sign in code has been sent to " <> email
@@ -97,13 +102,13 @@ render (Welcome { email, nickname, emailSent }) = HH.div_
     , HH.p_ [ navigationAnchor (SProxy :: SProxy "signInAnchor")
         { path: "/signin", text: "Sign in" } ]
     ]
-render (CodeSent { email, nickname }) = HH.div_
+render (CodeSent { email, nickname }) = contentDiv
     [ HH.h3_ [ HH.text $ "Hello, " <> nickname <> "!" ]
     , HH.p_ [ HH.text $ "An email with your sign in code has been sent to " <> email ]
     , HH.p_ [ navigationAnchor (SProxy :: SProxy "signInAnchor")
         { path: "/signin", text: "Sign in" } ]
     ]
-render NotFound = HH.p_ [ HH.text "You're fucken lost, mate." ]
+render NotFound = contentDiv [ HH.p_ [ HH.text "You're fucken lost, mate." ] ]
 
 eval :: forall void.
     Query ~> H.HalogenM State Query ChildSlots Void (Async void)

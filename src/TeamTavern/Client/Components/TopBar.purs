@@ -35,25 +35,27 @@ render :: forall monad. MonadEffect monad =>
 render playerInfo = HH.div_
     [ HH.div [ HP.id_ "top-bar-filler" ] []
     , HH.div [ HP.id_ "top-bar" ]
-        [ HH.span [HP.id_ "top-bar-title" ]
-            [ navigationAnchor (SProxy :: SProxy "homeAnchor")
-                { path: "/", text: "TeamTavern" }
+        [ HH.div [ HP.id_ "top-bar-content" ]
+            [ HH.span [ HP.id_ "top-bar-title" ]
+                [ navigationAnchor (SProxy :: SProxy "homeAnchor")
+                    { path: "/", text: "TeamTavern" }
+                ]
+            , HH.div_ case playerInfo of
+                Nothing ->
+                    [ navigationAnchor (SProxy :: SProxy "registerAnchor")
+                        { path: "/register", text: "Register" }
+                    , navigationAnchor (SProxy :: SProxy "signInAnchor")
+                        { path: "/signin", text: "Sign in" }
+                    ]
+                Just { id, nickname } ->
+                    [ navigationAnchor (SProxy :: SProxy "profileAnchor")
+                        { path: "/players/" <> nickname, text: nickname }
+                    , navigationAnchor (SProxy :: SProxy "createGameAnchor")
+                        { path: "/games/create", text: "Create a game" }
+                    , HH.button [ HE.onClick $ HE.input_ SignOut ]
+                        [ HH.text "Sign out" ]
+                    ]
             ]
-        , HH.div_ case playerInfo of
-            Nothing ->
-                [ navigationAnchor (SProxy :: SProxy "registerAnchor")
-                    { path: "/register", text: "Register" }
-                , navigationAnchor (SProxy :: SProxy "signInAnchor")
-                    { path: "/signin", text: "Sign in" }
-                ]
-            Just { id, nickname } ->
-                [ navigationAnchor (SProxy :: SProxy "profileAnchor")
-                    { path: "/players/" <> nickname, text: nickname }
-                , navigationAnchor (SProxy :: SProxy "createGameAnchor")
-                    { path: "/games/create", text: "Create a game" }
-                , HH.button [ HE.onClick $ HE.input_ SignOut ]
-                    [ HH.text "Sign out" ]
-                ]
         ]
     ]
 
