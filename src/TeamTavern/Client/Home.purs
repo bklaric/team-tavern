@@ -13,8 +13,10 @@ import Data.Maybe (Maybe(..))
 import Data.Options ((:=))
 import Data.Symbol (SProxy(..))
 import Effect.Class.Console (log)
+import Halogen (ClassName(..))
 import Halogen as H
 import Halogen.HTML as HH
+import Halogen.HTML.Properties as HP
 import Simple.JSON as Json
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchorIndexed)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
@@ -31,8 +33,9 @@ type Slot = H.Slot Query Void
 type ChildSlots = (games :: Anchor.Slot Int)
 
 render :: forall left. State -> H.ComponentHTML Query ChildSlots (Async left)
-render (Games games) = HH.ul [] $
-    games # mapWithIndex \index { title, handle, description } -> HH.li []
+render (Games games) = HH.div_ $
+    games # mapWithIndex \index { title, handle, description } ->
+        HH.div [ HP.class_ $ ClassName "game" ]
         [ HH.h2_ [ navigationAnchorIndexed (SProxy :: SProxy "games") index
             { path: "/games/" <> handle, text: title } ]
         , HH.p_ [ HH.text description ]

@@ -42,8 +42,8 @@ render (Player { nickname, about, profiles } isCurrentUser) = HH.div_ $ join
     , pure $ HH.p_ [ HH.text about ]
     , guard isCurrentUser $ pure $ navigationAnchor (SProxy :: SProxy "edit")
         { path: "/players/" <> nickname <> "/edit", text: "Edit info" }
-    , pure $ HH.ul_ $
-        profiles # mapWithIndex \index { handle, title, summary } -> HH.li_ $ join
+    , pure $ HH.div_ $
+        profiles # mapWithIndex \index { handle, title, summary } -> HH.div_ $ join
             [ pure $ HH.h3_ [ navigationAnchorIndexed (SProxy :: SProxy "games") index
                 { path: "/games/" <> handle, text: title } ]
             , guard isCurrentUser $ pure $
