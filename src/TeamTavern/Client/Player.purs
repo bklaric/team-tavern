@@ -11,8 +11,10 @@ import Data.FunctorWithIndex (mapWithIndex)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Monoid (guard)
 import Data.Symbol (SProxy(..))
+import Halogen (ClassName(..))
 import Halogen as H
 import Halogen.HTML as HH
+import Halogen.HTML.Properties as HP
 import Simple.JSON.Async as Json
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor, navigationAnchorIndexed)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
@@ -37,22 +39,23 @@ type ChildSlots =
 
 render :: forall left. State -> H.ComponentHTML Query ChildSlots (Async left)
 render Empty = HH.div_ []
-render (Player { nickname, about, profiles } isCurrentUser) = HH.div_ $ join
-    [ pure $ HH.h2_ [ HH.text nickname ]
-    , pure $ HH.p_ [ HH.text about ]
-    , guard isCurrentUser $ pure $ navigationAnchor (SProxy :: SProxy "edit")
-        { path: "/players/" <> nickname <> "/edit", text: "Edit info" }
-    , pure $ HH.div_ $
-        profiles # mapWithIndex \index { handle, title, summary } -> HH.div_ $ join
-            [ pure $ HH.h3_ [ navigationAnchorIndexed (SProxy :: SProxy "games") index
-                { path: "/games/" <> handle, text: title } ]
-            , guard isCurrentUser $ pure $
-                navigationAnchorIndexed (SProxy :: SProxy "editProfiles") index
-                { path: "/games/" <> handle <> "/profiles/" <> nickname <> "/edit"
-                , text: "Edit profile"
-                }
-            , pure $ HH.p_ [ HH.text summary ]
-            ]
+render (Player { nickname, about, profiles } isCurrentUser) = HH.div_ $
+    [ HH.div [ HP.id_ "player" ] $ join
+        [ pure $ HH.h2_ [ HH.text nickname ]
+        , guard isCurrentUser $ pure $ navigationAnchor (SProxy :: SProxy "edit")
+            { path: "/players/" <> nickname <> "/edit", text: "Edit info" }
+        , pure $ HH.p_ [ HH.text about ] ]
+    , HH.div_ $ [ HH.h3_ [ HH.text "Profiles" ] ] <> (profiles # mapWithIndex \index { handle, title, summary } ->
+        HH.div [ HP.class_ $ ClassName "profile-item" ] $ join
+        [ pure $ HH.h3_ [ navigationAnchorIndexed (SProxy :: SProxy "games") index
+            { path: "/games/" <> handle, text: title } ]
+        , guard isCurrentUser $ pure $
+            navigationAnchorIndexed (SProxy :: SProxy "editProfiles") index
+            { path: "/games/" <> handle <> "/profiles/" <> nickname <> "/edit"
+            , text: "Edit profile"
+            }
+        , pure $ HH.p_ [ HH.text summary ]
+        ])
     ]
 render NotFound = HH.p_ [ HH.text "Player could not be found." ]
 render Error = HH.p_ [ HH.text

@@ -9,8 +9,9 @@ body {
 }
 
 h1,
-h2 {
-    margin-bottom: 1.7em
+h2,
+h3 {
+    margin-bottom: 0.5em
 }
 
 a {
@@ -68,6 +69,8 @@ form {
     h1,
     h2 {
         text-align: center;
+        margin-top: 10px;
+        margin-bottom: 40px;
     }
     a {
         margin-top: 2em;
@@ -110,9 +113,40 @@ form {
     margin: auto;
 }
 
-.game {
-    h2 {
-        margin: 0.5em 0;
+#single-content {
+    display: flex;
+    height: 100vh;
+    background-color: rgb(230, 230, 230);
+    >form,
+    >div {
+        @extend %bordered;
+        display: flex;
+        flex-direction: column;
+        width: 320px;
+        background-color: white;
+        padding: 30px;
+        margin: auto;
+        >h3 {
+            margin-top: 0;
+        }
+        >a {
+            margin-top: 1em;
+        }
     }
-    padding: 10px 0;
+}
+
+#game,
+#player {
+    margin-bottom: 40px;
+}
+
+.game-item {
+    margin-bottom: 40px;
+}
+
+.profile-item {
+    h3 {
+        margin-top: 0.5em;
+    }
+    margin-bottom: 40px;
 }

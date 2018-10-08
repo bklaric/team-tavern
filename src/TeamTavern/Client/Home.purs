@@ -35,7 +35,7 @@ type ChildSlots = (games :: Anchor.Slot Int)
 render :: forall left. State -> H.ComponentHTML Query ChildSlots (Async left)
 render (Games games) = HH.div_ $
     games # mapWithIndex \index { title, handle, description } ->
-        HH.div [ HP.class_ $ ClassName "game" ]
+        HH.div [ HP.class_ $ ClassName "game-item" ]
         [ HH.h2_ [ navigationAnchorIndexed (SProxy :: SProxy "games") index
             { path: "/games/" <> handle, text: title } ]
         , HH.p_ [ HH.text description ]

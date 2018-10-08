@@ -11,8 +11,10 @@ import Data.Bifunctor (lmap)
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
+import Halogen (ClassName(..))
 import Halogen as H
 import Halogen.HTML as HH
+import Halogen.HTML.Properties as HP
 import Simple.JSON.Async as Json
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchorIndexed)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
@@ -31,12 +33,14 @@ type ChildSlots = ( players :: Anchor.Slot Int )
 
 render :: forall left. State -> H.ComponentHTML Query ChildSlots (Async left)
 render Empty = HH.div_ []
-render (Profiles profiles) = HH.ul_ $
-    profiles # mapWithIndex \index { nickname, summary } -> HH.li_
+render (Profiles profiles) = HH.div_ $
+    [ HH.h3_ [ HH.text "Profiles" ] ] <>
+    (profiles # mapWithIndex \index { nickname, summary } ->
+        HH.div [ HP.class_ $ ClassName "profile-item"]
         [ HH.h3_ [ navigationAnchorIndexed (SProxy :: SProxy "players") index
             { path: "/players/" <> nickname, text: nickname } ]
         , HH.p_ [ HH.text summary ]
-        ]
+        ])
 render Error = HH.p_ [ HH.text
     "There has been an error loading game profiles. Please try again later." ]
 

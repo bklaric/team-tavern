@@ -12,6 +12,7 @@ import Data.Monoid (guard)
 import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
+import Halogen.HTML.Properties as HP
 import Simple.JSON.Async as Json
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
@@ -37,7 +38,7 @@ type ChildSlots =
 render :: forall left. State -> H.ComponentHTML Query ChildSlots (Async left)
 render Empty = HH.div_ []
 render (Game { title, handle, description, hasProfile } isAdmin) =
-    HH.div_ $ join
+    HH.div [ HP.id_ "game"] $ join
     [ pure $ HH.h2_ [ HH.text title ]
     , guard (not hasProfile) $ pure $ navigationAnchor
         (SProxy :: SProxy "createProfile")
