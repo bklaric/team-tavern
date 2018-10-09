@@ -24,7 +24,7 @@ type Slot = H.Slot Query Void
 
 type ChildSlots =
     ( homeAnchor :: NavigationAnchor.Slot Unit
-    , signInAnchor :: NavigationAnchor.Slot Unit
+    , signInCodeAnchor :: NavigationAnchor.Slot Unit
     , registerAnchor :: NavigationAnchor.Slot Unit
     , profileAnchor :: NavigationAnchor.Slot Unit
     , createGameAnchor :: NavigationAnchor.Slot Unit
@@ -44,8 +44,8 @@ render playerInfo = HH.div_
                 Nothing ->
                     [ navigationAnchor (SProxy :: SProxy "registerAnchor")
                         { path: "/register", text: "Register" }
-                    , navigationAnchor (SProxy :: SProxy "signInAnchor")
-                        { path: "/signin", text: "Sign in" }
+                    , navigationAnchor (SProxy :: SProxy "signInCodeAnchor")
+                        { path: "/code", text: "Get a sign in code" }
                     ]
                 Just { id, nickname } ->
                     [ navigationAnchor (SProxy :: SProxy "profileAnchor")
