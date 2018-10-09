@@ -23,7 +23,7 @@ data Query send = Init String send
 
 data State
     = Empty
-    | Game View.OkContent Boolean
+    | Game View.OkContent Boolean Boolean
     | NotFound
     | Error
 
@@ -37,10 +37,10 @@ type ChildSlots =
 
 render :: forall left. State -> H.ComponentHTML Query ChildSlots (Async left)
 render Empty = HH.div_ []
-render (Game { title, handle, description, hasProfile } isAdmin) =
+render (Game { title, handle, description, hasProfile } isSignedIn isAdmin) =
     HH.div [ HP.id_ "game"] $ join
     [ pure $ HH.h2_ [ HH.text title ]
-    , guard (not hasProfile) $ pure $ navigationAnchor
+    , guard (not hasProfile && isSignedIn) $ pure $ navigationAnchor
         (SProxy :: SProxy "createProfile")
         { path: "/games/" <> handle <> "/profiles/create"
         , text: "Create profile"
@@ -61,8 +61,9 @@ loadGame handle = Async.unify do
         404 -> Async.left NotFound
         _ -> Async.left Error
     playerInfo <- Async.fromEffect getPlayerInfo
-    pure $ Game content $
-        maybe false (_.id >>> (_ == content.administratorId)) playerInfo
+    pure $ Game content
+        (maybe false (const true) playerInfo)
+        (maybe false (_.id >>> (_ == content.administratorId)) playerInfo)
 
 eval :: forall left.
     Query ~> H.HalogenM State Query ChildSlots Void (Async left)
