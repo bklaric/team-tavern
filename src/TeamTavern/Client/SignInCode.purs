@@ -82,8 +82,8 @@ render
             [ HH.text "Please enter a valid nickname. The nickname must: " ]
         , HH.ul
             [ HP.class_ $ inputErrorClass nicknameError ]
-            [ HH.li_ [ HH.text "Have no spaces" ]
-            , HH.li_ [ HH.text "Be some shit I forgot" ]
+            [ HH.li_ [ HH.text "Contain only alphanumeric characters." ]
+            , HH.li_ [ HH.text "Be no more than 40 characters long." ]
             ]
         ]
     , HH.div_
@@ -97,7 +97,10 @@ render
             ]
         , HH.p
             [ HP.class_ $ inputErrorClass emailError ]
-            [ HH.text "This does not look like a valid email. Jesus Christ, how dense are you?" ]
+            [ HH.text
+                $  "This does not look like a valid email. "
+                <> "Please check and try again."
+            ]
         ]
     , HH.button
         [ HP.class_ $ ClassName "primary"
@@ -106,12 +109,13 @@ render
         [ HH.text "Send the code" ]
     , HH.p
         [ HP.class_ $ otherErrorClass unknownIdentifiers ]
-        [ HH.text $ "This isn't a known combination of nickname and email. "
-            <> "Please check if they are correct."
+        [ HH.text
+            $  "This isn't a known combination of nickname and email. "
+            <> "Please check and try again."
         ]
     , HH.p
         [ HP.class_ $ otherErrorClass otherError ]
-        [ HH.text "Lmao, something else got fucked and you're shit out of luck, mate!" ]
+        [ HH.text "Something unexpected went wrong! Please try again later." ]
     , navigationAnchor (SProxy :: SProxy "signInAnchor")
         { path: "/signin", text: "Sign in" }
     , navigationAnchor (SProxy :: SProxy "registerAnchor")

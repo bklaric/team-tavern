@@ -12,7 +12,6 @@ import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..))
 import Data.Options ((:=))
 import Data.Symbol (SProxy(..))
-import Effect.Class.Console (log)
 import Halogen (ClassName(..))
 import Halogen as H
 import Halogen.HTML as HH
@@ -22,7 +21,7 @@ import TeamTavern.Client.Components.NavigationAnchor (navigationAnchorIndexed)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
 import TeamTavern.Game.ViewAll.Response (OkContent)
 
-data Query send = Init send | Receive send
+data Query send = Init send
 
 data State
     = Games OkContent
@@ -40,7 +39,8 @@ render (Games games) = HH.div_ $
             { path: "/games/" <> handle, text: title } ]
         , HH.p_ [ HH.text description ]
         ]
-render Error = HH.h2_ [ HH.text "There has been an error loading the games." ]
+render Error = HH.p_ [ HH.text
+    "There has been an error loading the games. Please try again later." ]
 
 eval :: forall left. Query ~> H.HalogenM State Query ChildSlots Void (Async left)
 eval (Init send) = do
@@ -58,7 +58,6 @@ eval (Init send) = do
             _ -> pure Error
     H.put newState
     pure send
-eval (Receive send) = log "Lol home" *> pure send
 
 component :: forall left. H.Component HH.HTML Query State Void (Async left)
 component =
@@ -66,7 +65,7 @@ component =
         { initialState: identity
         , render
         , eval
-        , receiver: const $ Just $ Receive unit
+        , receiver: const Nothing
         , initializer: Just $ Init unit
         , finalizer: Nothing
         }

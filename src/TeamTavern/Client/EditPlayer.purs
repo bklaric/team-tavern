@@ -84,12 +84,12 @@ render (Player
             [ HH.text "Please enter a valid nickname. The nickname must: " ]
         , HH.ul
             [ HP.class_ $ inputErrorClass nicknameError ]
-            [ HH.li_ [ HH.text "Have no spaces" ]
-            , HH.li_ [ HH.text "Be some shit I forgot" ]
+            [ HH.li_ [ HH.text "Contain only alphanumeric characters." ]
+            , HH.li_ [ HH.text "Be no more than 40 characters long." ]
             ]
         , HH.p
             [ HP.class_ $ inputErrorClass nicknameTaken ]
-            [ HH.text "This nickname is taken, pick another one." ]
+            [ HH.text "This nickname is taken, please pick another one." ]
         ]
     , HH.div_
         [ HH.label
@@ -103,7 +103,8 @@ render (Player
             ]
         , HH.p
             [ HP.class_ $ inputErrorClass aboutError ]
-            [ HH.text "This does not look like a valid description. Jesus Christ, how dense are you?" ]
+            [ HH.text
+                "The about entry cannot be more than 2000 characters long." ]
         ]
     , HH.button
         [ HP.class_ $ ClassName "primary"
@@ -112,11 +113,11 @@ render (Player
         [ HH.text "Save changes" ]
     , HH.p
         [ HP.class_ $ otherErrorClass otherError ]
-        [ HH.text "Lmao, something else got fucked and you're shit out of luck, mate!"]
+        [ HH.text "Something unexpected went wrong! Please try again later." ]
     ]
 render NotFound = HH.p_ [ HH.text "Game could not be found." ]
 render Error = HH.p_ [ HH.text
-    "There has been an error loading the game. Please try again later." ]
+    "There has been an error loading the player. Please try again later." ]
 
 loadPlayer :: forall left. String -> Async left State
 loadPlayer nickname' = Async.unify do

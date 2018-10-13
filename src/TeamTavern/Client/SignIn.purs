@@ -75,11 +75,11 @@ render
             ]
         , HH.p
             [ HP.class_ $ inputErrorClass nicknameError ]
-            [ HH.text "Please enter a valid nickname. The nickname must: "]
+            [ HH.text "Please enter a valid nickname. The nickname must: " ]
         , HH.ul
             [ HP.class_ $ inputErrorClass nicknameError ]
-            [ HH.li_ [ HH.text "Have no spaces" ]
-            , HH.li_ [ HH.text "Be some shit I forgot" ]
+            [ HH.li_ [ HH.text "Contain only alphanumeric characters." ]
+            , HH.li_ [ HH.text "Be no more than 40 characters long." ]
             ]
         ]
     , HH.div_
@@ -94,7 +94,10 @@ render
             ]
         , HH.p
             [ HP.class_ $ inputErrorClass nonceError ]
-            [ HH.text "This does not look like a valid nonce. Jesus Christ, how dense are you? "]
+            [ HH.text
+                $  "This does not look like a valid sign in code. "
+                <> "Please check and try again."
+            ]
         ]
     , HH.button
         [ HP.class_ $ ClassName "primary"
@@ -103,10 +106,12 @@ render
         [ HH.text "Sign in" ]
     , HH.p
         [ HP.class_ $ otherErrorClass noTokenToConsume ]
-        [ HH.text "Credentials don't appear to be valid. Please request another sign in code."]
+        [ HH.text
+            $  "Entered nickname and sign in code don't appear to be valid. "
+            <> "Please request another sign in code and try again." ]
     , HH.p
         [ HP.class_ $ otherErrorClass otherError ]
-        [ HH.text "Lmao, something else got fucked and you're shit out of luck, mate!"]
+        [ HH.text "Something unexpected went wrong! Please try again later." ]
     , navigationAnchor (SProxy :: SProxy "registerAnchor")
         { path: "/register", text: "Register" }
     , navigationAnchor (SProxy :: SProxy "codeAnchor")

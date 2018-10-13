@@ -73,12 +73,7 @@ render
             ]
         , HH.p
             [ HP.class_ $ inputErrorClass titleError ]
-            [ HH.text "Please enter a valid title. The title must: " ]
-        , HH.ul
-            [ HP.class_ $ inputErrorClass titleError ]
-            [ HH.li_ [ HH.text "Have no spaces" ]
-            , HH.li_ [ HH.text "Be some shit I forgot" ]
-            ]
+            [ HH.text "The title cannot be more than 50 characters long." ]
         , HH.p
             [ HP.class_ $ inputErrorClass titleTaken ]
             [ HH.text "This title is taken, pick another one." ]
@@ -94,10 +89,13 @@ render
             ]
         , HH.p
             [ HP.class_ $ inputErrorClass handleError ]
-            [ HH.text "This does not look like a valid handle. Jesus Christ, how dense are you?" ]
+            [ HH.text
+                $  "Please enter a valid handle. The handle can only contain "
+                <> "alphanumeric characters and cannot be more than 50 "
+                <> "characters long." ]
         , HH.p
             [ HP.class_ $ inputErrorClass handleTaken ]
-            [ HH.text "This handle is taken, pick another one." ]
+            [ HH.text "This handle is taken, please pick another one." ]
         ]
     , HH.div_
         [ HH.label
@@ -110,7 +108,8 @@ render
             ]
         , HH.p
             [ HP.class_ $ inputErrorClass descriptionError ]
-            [ HH.text "This does not look like a valid description. Jesus Christ, how dense are you?" ]
+            [ HH.text
+                "The description cannot be more than 2000 characters long." ]
         ]
     , HH.button
         [ HP.class_ $ ClassName "primary"
@@ -119,7 +118,7 @@ render
         [ HH.text "Create" ]
     , HH.p
         [ HP.class_ $ otherErrorClass otherError ]
-        [ HH.text "Lmao, something else got fucked and you're shit out of luck, mate!"]
+        [ HH.text "Something unexpected went wrong! Please try again later." ]
     ]
 
 sendCreateRequest :: forall left. State -> Async left (Maybe State)

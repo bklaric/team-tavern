@@ -87,15 +87,10 @@ render (Game
             ]
         , HH.p
             [ HP.class_ $ inputErrorClass titleError ]
-            [ HH.text "Please enter a valid title. The title must: " ]
-        , HH.ul
-            [ HP.class_ $ inputErrorClass titleError ]
-            [ HH.li_ [ HH.text "Have no spaces" ]
-            , HH.li_ [ HH.text "Be some shit I forgot" ]
-            ]
+            [ HH.text "The title cannot be more than 50 characters long." ]
         , HH.p
             [ HP.class_ $ inputErrorClass titleTaken ]
-            [ HH.text "This title is taken, pick another one." ]
+            [ HH.text "This title is taken, please pick another one." ]
         ]
     , HH.div_
         [ HH.label
@@ -109,10 +104,13 @@ render (Game
             ]
         , HH.p
             [ HP.class_ $ inputErrorClass handleError ]
-            [ HH.text "This does not look like a valid handle. Jesus Christ, how dense are you?" ]
+            [ HH.text
+                $  "Please enter a valid handle. The handle can only contain "
+                <> "alphanumeric characters and cannot be more than 50 "
+                <> "characters long." ]
         , HH.p
             [ HP.class_ $ inputErrorClass handleTaken ]
-            [ HH.text "This handle is taken, pick another one." ]
+            [ HH.text "This handle is taken, please pick another one." ]
         ]
     , HH.div_
         [ HH.label
@@ -126,7 +124,8 @@ render (Game
             ]
         , HH.p
             [ HP.class_ $ inputErrorClass descriptionError ]
-            [ HH.text "This does not look like a valid description. Jesus Christ, how dense are you?" ]
+            [ HH.text
+                "The description cannot be more than 2000 characters long." ]
         ]
     , HH.button
         [ HP.class_ $ ClassName "primary"
@@ -135,7 +134,7 @@ render (Game
         [ HH.text "Save changes" ]
     , HH.p
         [ HP.class_ $ otherErrorClass otherError ]
-        [ HH.text "Lmao, something else got fucked and you're shit out of luck, mate!"]
+        [ HH.text "Something unexpected went wrong! Please try again later." ]
     ]
 render NotFound = HH.p_ [ HH.text "Game could not be found." ]
 render Error = HH.p_ [ HH.text

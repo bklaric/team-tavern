@@ -55,7 +55,8 @@ render { summary, summaryError, otherError } = HH.form
             ]
         , HH.p
             [ HP.class_ $ inputErrorClass summaryError ]
-            [ HH.text "This does not look like a valid summary. Jesus Christ, how dense are you?" ]
+            [ HH.text
+                "The summary cannot be more than 2000 characters long." ]
         ]
     , HH.button
         [ HP.class_ $ ClassName "primary"
@@ -64,7 +65,7 @@ render { summary, summaryError, otherError } = HH.form
         [ HH.text "Create" ]
     , HH.p
         [ HP.class_ $ otherErrorClass otherError ]
-        [ HH.text "Lmao, something else got fucked and you're shit out of luck, mate!"]
+        [ HH.text "Something unexpected went wrong! Please try again later." ]
     ]
 
 sendCreateRequest :: forall left. State -> Async left (Maybe State)
