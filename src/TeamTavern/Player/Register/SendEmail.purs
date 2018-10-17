@@ -20,7 +20,7 @@ import TeamTavern.Player.Domain.Types (NoncedIdentifiers, Identifiers)
 message :: NoncedIdentifiers -> Message
 message { email, nickname, nonce } =
     { to: unwrap email
-    , from: "branimir.klaric1@xnet.hr"
+    , from: "admin@teamtavern.net"
     , subject: toNullable $ Just "TeamTavern registration"
     , textBody: toNullable $ Just $
         "Hi " <> unwrap nickname <> ",\n\n"
