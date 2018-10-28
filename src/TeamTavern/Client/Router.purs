@@ -13,6 +13,10 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import Simple.JSON (read)
+import TeamTavern.Client.Blocks.Games (games)
+import TeamTavern.Client.Blocks.Games as Games
+import TeamTavern.Client.Blocks.WelcomeBanner (welcomeBanner)
+import TeamTavern.Client.Blocks.WelcomeBanner as WelcomeBanner
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Components.ProfilesByGame (profilesByGame)
@@ -31,8 +35,6 @@ import TeamTavern.Client.EditProfile (editProfile)
 import TeamTavern.Client.EditProfile as EditProfile
 import TeamTavern.Client.Game (game)
 import TeamTavern.Client.Game as Game
-import TeamTavern.Client.Home (home)
-import TeamTavern.Client.Home as Home
 import TeamTavern.Client.Player (player)
 import TeamTavern.Client.Player as Player
 import TeamTavern.Client.Register (register)
@@ -64,7 +66,8 @@ data State
 
 type ChildSlots =
     ( topBar :: TopBar.Slot Unit
-    , home :: Home.Slot Unit
+    , welcomeBanner :: WelcomeBanner.Slot Unit
+    , games :: Games.Slot Unit
     , game :: Game.Slot Unit
     , createGame :: CreateGame.Slot Unit
     , editGame :: EditGame.Slot Unit
@@ -96,7 +99,7 @@ singleContent = HH.div [ HP.id_ "single-content" ]
 
 render :: forall void. State -> H.ComponentHTML Query ChildSlots (Async void)
 render Empty = HH.div_ []
-render Home = topBarWithContent [ home ]
+render Home = topBarWithContent [ welcomeBanner, games ]
 render (Game handle) = topBarWithContent [ game handle, profilesByGame handle ]
 render CreateGame = topBarWithContent [ createGame ]
 render (EditGame handle) = topBarWithContent [ editGame handle ]
@@ -108,9 +111,9 @@ render Register = singleContent [ register ]
 render SignIn = singleContent [ signIn ]
 render Code = singleContent [ signInCode ]
 render (Welcome { email, nickname, emailSent }) = singleContent
-    [ HH.div_ $ join
-        [ pure $ HH.h3_ [ HH.text $ "Welcome to TeamTavern, " <> nickname <> "!" ]
-        , if emailSent
+    [ HH.div_ $
+        [ HH.h3_ [ HH.text $ "Welcome to TeamTavern, " <> nickname <> "!" ] ]
+        <> if emailSent
             then
                 [ HH.p_
                     [ HH.text $ "A registration email "
@@ -135,7 +138,6 @@ render (Welcome { email, nickname, emailSent }) = singleContent
                 , navigationAnchor (SProxy :: SProxy "homeAnchor")
                     { path: "/", text: "Home" }
                 ]
-        ]
     ]
 render (CodeSent { email, nickname }) = singleContent
     [ HH.div_
