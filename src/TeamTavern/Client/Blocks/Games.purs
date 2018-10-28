@@ -6,6 +6,7 @@ import Async (Async)
 import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
+import Data.Array (length)
 import Data.Bifunctor (lmap)
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Maybe (Maybe(..))
@@ -30,13 +31,19 @@ type Slot = H.Slot Query Void
 type ChildSlots = (game :: Anchor.Slot Int)
 
 render :: forall left. State -> H.ComponentHTML Query ChildSlots (Async left)
-render (Games games') = HH.div_ $
-    games' # mapWithIndex \index { title, handle, description } ->
-        HH.div [ HP.class_ $ ClassName "game-item" ]
-        [ HH.h2_ [ navigationAnchorIndexed (SProxy :: SProxy "game") index
-            { path: "/games/" <> handle, text: title } ]
-        , HH.p_ [ HH.text description ]
-        ]
+render (Games games') =
+    if length games' > 0
+    then
+        HH.div_ $
+        games' # mapWithIndex \index { title, handle, description } ->
+            HH.div [ HP.class_ $ ClassName "game-item" ]
+            [ HH.h2_ [ navigationAnchorIndexed (SProxy :: SProxy "game") index
+                { path: "/games/" <> handle, text: title } ]
+            , HH.p_ [ HH.text description ]
+            ]
+    else HH.p_ [ HH.text $
+        "There should be a list of games here, but no game entry has been created yet. "
+        <> "How about you create one?" ]
 render Error = HH.p_ [ HH.text
     "There has been an error loading the games. Please try again later." ]
 

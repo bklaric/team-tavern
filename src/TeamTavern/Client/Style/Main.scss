@@ -115,6 +115,12 @@ form {
     max-width: 1280px;
     padding: 24px;
     margin: auto;
+    > * {
+        margin-bottom: 24px;
+    }
+    > :last-child {
+        margin-bottom: 0;
+    }
 }
 
 #single-content {
@@ -130,9 +136,6 @@ form {
         background-color: white;
         padding: 30px;
         margin: auto;
-        >h3 {
-            margin-top: 0;
-        }
         >a {
             margin-top: 1em;
         }
@@ -158,5 +161,9 @@ form {
 .welcome-banner {
     @extend %bordered;
     padding: 18px;
-    margin-bottom: 24px;
+}
+
+.empty {
+    margin: 0 !important;
+    padding: 0 !important;
 }

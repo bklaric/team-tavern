@@ -40,13 +40,14 @@ render Empty = HH.div_ []
 render (Game { title, handle, description, hasProfile } isSignedIn isAdmin) =
     HH.div [ HP.id_ "game"] $ join
     [ pure $ HH.h2_ [ HH.text title ]
-    , guard (not hasProfile && isSignedIn) $ pure $ navigationAnchor
-        (SProxy :: SProxy "createProfile")
+    , guard (not hasProfile && isSignedIn) $ pure $ HH.p_ [
+        navigationAnchor (SProxy :: SProxy "createProfile")
         { path: "/games/" <> handle <> "/profiles/create"
         , text: "Create profile"
-        }
-    , guard isAdmin $ pure $ navigationAnchor (SProxy :: SProxy "edit")
-        { path: "/games/" <> handle <> "/edit", text: "Edit game" }
+        } ]
+    , guard isAdmin $ pure $ HH.p_ [
+        navigationAnchor (SProxy :: SProxy "edit")
+        { path: "/games/" <> handle <> "/edit", text: "Edit game" } ]
     , pure $ HH.p_ [ HH.text description ]
     ]
 render NotFound = HH.p_ [ HH.text "Game could not be found." ]

@@ -33,7 +33,7 @@ render Shown = HH.div
     , HH.p_ [ HH.text "Happy playing!" ]
     , HH.button [ HE.onClick $ HE.input_ Close] [ HH.text "Close" ]
     ]
-render Closed = HH.div_ []
+render Closed = HH.div [ HP.class_ (H.ClassName "empty") ] []
 
 welcomedKey :: String
 welcomedKey = "welcomed"

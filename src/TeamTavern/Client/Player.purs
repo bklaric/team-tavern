@@ -42,18 +42,19 @@ render Empty = HH.div_ []
 render (Player { nickname, about, profiles } isCurrentUser) = HH.div_ $
     [ HH.div [ HP.id_ "player" ] $ join
         [ pure $ HH.h2_ [ HH.text nickname ]
-        , guard isCurrentUser $ pure $ navigationAnchor (SProxy :: SProxy "edit")
-            { path: "/players/" <> nickname <> "/edit", text: "Edit info" }
+        , guard isCurrentUser $ pure $ HH.p_ [
+            navigationAnchor (SProxy :: SProxy "edit")
+            { path: "/players/" <> nickname <> "/edit", text: "Edit info" } ]
         , pure $ HH.p_ [ HH.text about ] ]
     , HH.div_ $ [ HH.h3_ [ HH.text "Profiles" ] ] <> (profiles # mapWithIndex \index { handle, title, summary } ->
         HH.div [ HP.class_ $ ClassName "profile-item" ] $ join
         [ pure $ HH.h3_ [ navigationAnchorIndexed (SProxy :: SProxy "games") index
             { path: "/games/" <> handle, text: title } ]
-        , guard isCurrentUser $ pure $
+        , guard isCurrentUser $ pure $ HH.p_ [
             navigationAnchorIndexed (SProxy :: SProxy "editProfiles") index
             { path: "/games/" <> handle <> "/profiles/" <> nickname <> "/edit"
             , text: "Edit profile"
-            }
+            } ]
         , pure $ HH.p_ [ HH.text summary ]
         ])
     ]
