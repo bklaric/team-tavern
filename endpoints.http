@@ -1,0 +1,60 @@
+PUT http://localhost:8080/players/by-nickname/bklaric HTTP/1.1
+Cookie: teamtavern-nickname=bklaric; teamtavern-token=d2efd3b02e405fa486a28c3b3a076f19123028bd
+
+{ "nickname": "aoeu", "about": "Haha!" }
+
+###
+
+POST http://localhost:8080/players HTTP/1.1
+
+{ "email": "branimir.klaric@aoeuaoeu.aeou", "nickname": "자음\n/子音" }
+
+###
+
+GET http://localhost:8080/players/by-nickname/bklaric HTTP/1.1
+
+###
+
+POST http://localhost:8080/games HTTP/1.1
+Cookie: teamtavern-nickname=bklaric; teamtavern-token=d2efd3b02e405fa486a28c3b3a076f19123028bd
+
+{ "name": "Gunpoint", "handle": "Gunpoint", "description": "Fun game." }
+
+###
+
+GET http://localhost:8080/games HTTP/1.1
+
+###
+
+GET http://localhost:8080/games/unreal_tournament HTTP/1.1
+
+###
+PUT http://localhost:8080/games/Unreal__ HTTP/1.1
+Cookie: teamtavern-id=1; teamtavern-nickname=bklaric; teamtavern-token=d2efd3b02e405fa486a28c3b3a076f19123028bd
+
+{ "name": "Unreal Tournament"
+, "handle": "unreal_tournament"
+, "description": "Best unreal."
+}
+
+###
+
+POST http://localhost:8080/players/bklaric/profiles/Gunpoint HTTP/1.1
+Cookie: teamtavern-id=1; teamtavern-nickname=bklaric; teamtavern-token=d2efd3b02e405fa486a28c3b3a076f19123028bd
+
+{ "summary": "I'm the best at this game!" }
+
+###
+
+GET http://localhost:8080/games/unreal_tournament/profiles HTTP/1.1
+
+###
+
+PUT http://localhost:8080/players/bklaric/profiles/unreal_tournament HTTP/1.1
+Cookie: teamtavern-id=2; teamtavern-nickname=bklaric; teamtavern-token=d2efd3b02e405fa486a28c3b3a076f19123028bd
+
+{ "summary": "Updated summary lol!" }
+
+###
+
+GET http://localhost:8080/players/bklaric/profiles/unreal_tournament HTTP/1.1
