@@ -113,3 +113,16 @@ notHex string =
     if string # toCharArray # all isHexDigit
     then Nothing
     else Just $ inj (SProxy :: SProxy "notHex") {}
+
+
+type Invalid = { original :: String }
+
+invalid
+    :: forall errors
+    .  (String -> Boolean)
+    -> String
+    -> Maybe (Variant (invalid :: Invalid | errors))
+invalid check string =
+    if check string
+    then Nothing
+    else Just $ inj (SProxy :: SProxy "invalid") { original: string }
