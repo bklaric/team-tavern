@@ -1,4 +1,4 @@
-module Postmark.Client where
+module Postmark.Client (Client, create, sendEmail) where
 
 import Prelude
 
