@@ -17,6 +17,19 @@ empty string =
     then Just $ inj (SProxy :: SProxy "empty") {}
     else Nothing
 
+type TooShort = { minLength :: Int, actualLength :: Int }
+
+tooShort :: forall errors.
+    Int -> String -> Maybe (Variant (tooShort :: TooShort | errors))
+tooShort minLength string = let
+    actualLength = length string
+    in
+    if actualLength >= minLength
+    then Nothing
+    else Just
+        $ inj (SProxy :: SProxy "tooShort")
+        { minLength, actualLength }
+
 type TooLong = { maxLength :: Int, actualLength :: Int }
 
 tooLong :: forall errors.
