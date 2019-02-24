@@ -4,6 +4,7 @@ module Bcrypt
     , genSalt__
     , hash
     , hash'
+    , hash_
     , compare
     , getRounds
     ) where
@@ -49,6 +50,11 @@ hash' :: String -> Int -> (Either Error String -> Effect Unit) -> Effect Unit
 hash' data' rounds callback =
     hashImpl
         data' (unsafeCoerce rounds) (Left >>> callback) (Right >>> callback)
+
+hash_ :: String -> (Either Error String -> Effect Unit) -> Effect Unit
+hash_ data' callback = genSalt__ case _ of
+    Left error -> callback $ Left error
+    Right salt -> hash data' salt callback
 
 foreign import compareImpl
     :: String
