@@ -1,50 +1,55 @@
 module TeamTavern.Player.Register.SendEmail
-    (SendEmailError, sendRegistrationEmail) where
+    (SendEmailModel, SendEmailError, sendEmail) where
 
 import Prelude
 
 import Async (Async)
 import Data.Bifunctor.Label (labelMap)
 import Data.Maybe (Maybe(..))
-import Data.Newtype (unwrap)
 import Data.Nullable (toNullable)
 import Data.Symbol (SProxy(..))
 import Data.Variant (Variant)
 import Effect.Class.Console (logShow)
-import Postmark.Async.Client (sendEmail)
+import Postmark.Async.Client as Postmart
 import Postmark.Client (Client)
 import Postmark.Error (Error)
 import Postmark.Message (Message)
-import TeamTavern.Player.Domain.Types (NoncedIdentifiers, Identifiers)
+import TeamTavern.Player.Register.GenerateNonce (Nonce, unNonce)
+import TeamTavern.Player.Register.ValidateModel (Email, Nickname, unEmail, unNickname)
 
-message :: NoncedIdentifiers -> Message
-message { email, nickname, nonce } =
-    { to: unwrap email
-    , from: "admin@teamtavern.net"
-    , subject: toNullable $ Just "TeamTavern registration"
-    , textBody: toNullable $ Just $
-        "Hi " <> unwrap nickname <> ",\n\n"
-        <> "Your sign in code is " <> unwrap nonce <> ". "
-        <> "Thank you for registering to TeamTavern."
+type SendEmailModel =
+    { email :: Email
+    , nickname :: Nickname
+    , nonce :: Nonce
     }
 
 type SendEmailError errors = Variant
     ( sendEmailError ::
-        { identifiers :: Identifiers
-        , message :: Message
+        { info :: { email :: Email, nickname :: Nickname }
         , error :: Error
         }
     | errors )
 
-sendRegistrationEmail :: forall errors.
-    Maybe Client -> NoncedIdentifiers -> Async (SendEmailError errors) Unit
-sendRegistrationEmail client identifiers @ { email, nickname } = let
-    message' = message identifiers
+message :: SendEmailModel -> Message
+message { email, nickname, nonce } =
+    { to: unEmail email
+    , from: "admin@teamtavern.net"
+    , subject: toNullable $ Just "TeamTavern registration"
+    , textBody: toNullable $ Just $
+        "Hi " <> unNickname nickname <> ",\n\n"
+        <> "Your sign in code is " <> unNonce nonce <> ". "
+        <> "Thank you for registering to TeamTavern."
+    }
+
+sendEmail :: forall errors.
+    Maybe Client -> SendEmailModel -> Async (SendEmailError errors) Unit
+sendEmail client model @ { email, nickname } = let
+    message' = message model
     in
     case client of
         Nothing -> logShow message'
         Just client' ->
             client'
-            # sendEmail message'
+            # Postmart.sendEmail message'
             # labelMap (SProxy :: SProxy "sendEmailError")
-            { identifiers: { email, nickname }, message: message', error: _ }
+                { info: { email, nickname }, error: _ }

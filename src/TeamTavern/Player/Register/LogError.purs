@@ -2,11 +2,48 @@ module TeamTavern.Player.Register.LogError where
 
 import Prelude
 
-import Data.Variant (match)
+import Data.List.Types (NonEmptyList)
+import Data.Map (Map)
+import Data.Variant (Variant, match)
 import Effect (Effect)
 import Effect.Console (log)
+import Foreign (MultipleErrors)
+import Node.Errors as Node
+import Postgres.Error as Postgres
+import Postmark.Error as Postmark
 import TeamTavern.Infrastructure.Log (logt, print)
-import TeamTavern.Player.Register.Types (RegisterError)
+import TeamTavern.Player.Register.ReadDto (RegisterDto)
+import TeamTavern.Player.Register.ValidateModel (Email, Nickname, RegisterModelError, unEmail, unNickname)
+
+type RegisterError = Variant
+    ( signedIn ::
+        { playerId :: String
+        , cookies :: Map String String
+        }
+    , unreadableDto ::
+        { content :: String
+        , errors :: MultipleErrors
+        }
+    , invalidModel ::
+        { dto :: RegisterDto
+        , errors :: NonEmptyList RegisterModelError
+        }
+    , bcryptError :: Node.Error
+    , randomError :: Node.Error
+    , emailTaken ::
+        { email :: Email
+        , error :: Postgres.Error
+        }
+    , nicknameTaken ::
+        { nickname :: Nickname
+        , error :: Postgres.Error
+        }
+    , databaseError :: Postgres.Error
+    , sendEmailError ::
+        { info :: { email :: Email, nickname :: Nickname }
+        , error :: Postmark.Error
+        }
+    )
 
 logError :: RegisterError -> Effect Unit
 logError registerError = do
@@ -15,32 +52,27 @@ logError registerError = do
         { signedIn: \{ playerId, cookies } -> do
             logt $ "The request came with this player id: " <> show playerId
             logt $ "In these cookies: " <> show cookies
-        , unreadableIdentifiers: \{ content, errors } -> do
-            logt $ "Couldn't read identifiers from body: " <> show content
+        , unreadableDto: \{ content, errors } -> do
+            logt $ "Couldn't read dto from body: " <> show content
             logt $ "Reading resulted in these errors: " <> show errors
-        , invalidIdentifiers: \{ identifiers, errors } -> do
-            logt $ "Couldn't validate identifiers: " <> show identifiers
+        , invalidModel: \{ dto, errors } -> do
+            logt $ "Couldn't validate model: " <> show dto
             logt $ "Validation resulted in these errors: " <> show errors
+        , bcryptError: \error ->
+            logt $ "Password hashing resulted in this error: " <> print error
         , randomError: \error ->
             logt $ "Generating random bytes resulted in this error: "
                 <> print error
-        , invalidGeneratedNonce: \{ nonce, errors } -> do
-            logt $ "Couldn't validate generated nonce: " <> show nonce
-            logt $ "Validation resulted in these errors: " <> show errors
-        , invalidGeneratedToken: \{ token, errors } -> do
-            logt $ "Couldn't validate generated token: " <> show token
-            logt $ "Validation resulted in these errors: " <> show errors
         , emailTaken: \{ email, error } -> do
-            logt $ "Email is already taken: " <> show email
+            logt $ "Email is already taken: " <> unEmail email
             logt $ "According to this error: " <> print error
         , nicknameTaken: \{ nickname, error } -> do
-            logt $ "Nickname is already taken: " <> show nickname
+            logt $ "Nickname is already taken: " <> unNickname nickname
             logt $ "According to this error: " <> print error
         , databaseError: \error ->
             logt $ "Unknown database error ocurred: " <> print error
-        , sendEmailError: \{ identifiers, message, error } -> do
-            logt $ "Couldn't send email to player: " <> show identifiers
-            logt $ "Email message: " <> show message
+        , sendEmailError: \{ info: { email }, error } -> do
+            logt $ "Couldn't send email to address: " <> unEmail email
             logt $ "Email sending resulted in this error: "
                 <> show error.status <> ", " <> show error.code <> ", "
                 <> error.message
