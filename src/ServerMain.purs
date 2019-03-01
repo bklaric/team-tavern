@@ -157,7 +157,7 @@ handleRequest pool client method url cookies body =
         , prepareSession: const $
             Session.prepare pool client cookies body
         , startSession: const $
-            Session.start pool body
+            Session.start pool cookies body
         , createGame: const $
             Game.create pool cookies body
         , viewAllGames: const $

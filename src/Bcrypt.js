@@ -45,12 +45,12 @@ exports.compareImpl = function (data) {
         return function (errorCallback) {
             return function (successCallback) {
                 return function () {
-                    bcrypt.compare(data, encrypted, function (error, hash) {
+                    bcrypt.compare(data, encrypted, function (error, result) {
                         if (error) {
                             errorCallback(error)()
                         }
                         else {
-                            successCallback(success)()
+                            successCallback(result)()
                         }
                     })
                 }

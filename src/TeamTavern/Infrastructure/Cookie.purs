@@ -13,11 +13,15 @@ import Data.NonEmpty ((:|))
 import Data.Validated as Validated
 import TeamTavern.Player.Domain.Nickname (Nickname)
 import TeamTavern.Player.Domain.Nickname as Nickname
-import TeamTavern.Player.Domain.PlayerId (PlayerId)
 import TeamTavern.Player.Domain.PlayerId as PlayerId
-import TeamTavern.Player.Domain.Token (Token)
 import TeamTavern.Player.Domain.Token as Token
 import TeamTavern.Player.Domain.Types (AuthInfo)
+
+class PlayerId playerId where
+    fromPlayerId :: playerId -> Int
+
+class Token token where
+    fromToken :: token -> String
 
 idCookieName :: String
 idCookieName = "teamtavern-id"
@@ -41,9 +45,9 @@ lookupAuthCookies cookies = do
         >>= (Token.create >>> Validated.hush)
     pure { id, nickname, token }
 
-idCookie :: PlayerId -> String
+idCookie :: forall playerId. PlayerId playerId => playerId -> String
 idCookie id =
-    idCookieName <> "=" <> PlayerId.toString id
+    idCookieName <> "=" <> (show $ fromPlayerId id)
     <> "; Max-Age=" <> show (top :: Int)
     <> "; Path=/"
 
@@ -53,9 +57,9 @@ nicknameCookie nickname =
     <> "; Max-Age=" <> show (top :: Int)
     <> "; Path=/"
 
-tokenCookie :: Token -> String
+tokenCookie :: forall token. Token token => token -> String
 tokenCookie token =
-    tokenCookieName <> "=" <> unwrap token
+    tokenCookieName <> "=" <> fromToken token
     <> "; Max-Age=" <> show (top :: Int)
     <> "; Path=/"
     <> "; HttpOnly; Secure"
@@ -64,9 +68,9 @@ setNicknameCookieHeader :: Nickname -> MultiMap String String
 setNicknameCookieHeader nickname =
     singleton "Set-Cookie" $ nicknameCookie nickname
 
-setCookieHeader :: PlayerId -> Nickname -> Token -> MultiMap String String
-setCookieHeader id nickname token =
-    idCookie id
-    :| (nicknameCookie nickname : tokenCookie token : Nil)
+setCookieHeader :: forall playerId token. PlayerId playerId => Token token =>
+    playerId -> token -> MultiMap String String
+setCookieHeader id token =
+    idCookie id :| tokenCookie token : Nil
     # NonEmptyList
     # singleton' "Set-Cookie"

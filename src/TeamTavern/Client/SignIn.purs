@@ -7,7 +7,6 @@ import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
 import Data.Bifunctor (bimap, lmap)
-import Data.Foldable (foldl)
 import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..))
 import Data.Options ((:=))
@@ -16,28 +15,28 @@ import Halogen (ClassName(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
+import Halogen.HTML.Properties (InputType(..))
 import Halogen.HTML.Properties as HP
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Script.Navigate (navigate_)
-import TeamTavern.Client.Snippets.ErrorClasses (errorClass, inputErrorClass, otherErrorClass)
-import TeamTavern.Session.Start.Response as Start
+import TeamTavern.Client.Snippets.ErrorClasses (otherErrorClass)
+import TeamTavern.Session.Start.SendResponse as Start
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
 data Query send
-    = NicknameInput String send
-    | NonceInput String send
+    = NicknameOrEmailInput String send
+    | PasswordInput String send
     | SignIn Event send
 
 type State =
-    { nickname :: String
-    , nonce :: String
-    , nicknameError :: Boolean
-    , nonceError :: Boolean
-    , noTokenToConsume :: Boolean
+    { nicknameOrEmail :: String
+    , password :: String
+    , nothingConfirmed :: Boolean
+    , noSessionStarted :: Boolean
     , otherError :: Boolean
     }
 
@@ -51,11 +50,10 @@ type ChildSlots =
 
 render :: forall left. State -> H.ComponentHTML Query ChildSlots (Async left)
 render
-    { nickname
-    , nonce
-    , nicknameError
-    , nonceError
-    , noTokenToConsume
+    { nicknameOrEmail
+    , password
+    , nothingConfirmed
+    , noSessionStarted
     , otherError
     } = HH.form
     [ HE.onSubmit $ HE.input SignIn ]
@@ -66,49 +64,41 @@ render
         ]
     , HH.div_
         [ HH.label
-            [ HP.class_ $ errorClass nicknameError, HP.for "nickname" ]
-            [ HH.text "Nickname" ]
+            [ HP.for "nicknameOrEmail" ]
+            [ HH.text "Nickname or email address" ]
         , HH.input
-            [ HP.id_ "nickname"
-            , HP.class_ $ errorClass nicknameError
-            , HE.onValueInput $ HE.input NicknameInput
-            ]
-        , HH.p
-            [ HP.class_ $ inputErrorClass nicknameError ]
-            [ HH.text "Please enter a valid nickname. The nickname must: " ]
-        , HH.ul
-            [ HP.class_ $ inputErrorClass nicknameError ]
-            [ HH.li_ [ HH.text "Contain only alphanumeric characters." ]
-            , HH.li_ [ HH.text "Be no more than 40 characters long." ]
+            [ HP.id_ "nicknameOrEmail"
+            , HE.onValueInput $ HE.input NicknameOrEmailInput
             ]
         ]
     , HH.div_
         [ HH.label
-            [ HP.class_ $ errorClass nonceError, HP.for "nonce" ]
-            [ HH.text "Sign in code" ]
+            [ HP.for "password" ]
+            [ HH.text "Password" ]
         , HH.input
-            [ HP.id_ "nonce"
-            , HP.class_ $ errorClass nonceError
+            [ HP.id_ "password"
             , HP.autocomplete false
-            , HE.onValueInput $ HE.input NonceInput
-            ]
-        , HH.p
-            [ HP.class_ $ inputErrorClass nonceError ]
-            [ HH.text
-                $  "This does not look like a valid sign in code. "
-                <> "Please check and try again."
+            , HP.type_ InputPassword
+            , HE.onValueInput $ HE.input PasswordInput
             ]
         ]
     , HH.button
         [ HP.class_ $ ClassName "primary"
-        , HP.disabled $ nickname == "" || nonce == ""
+        , HP.disabled $ nicknameOrEmail == "" || password == ""
         ]
         [ HH.text "Sign in" ]
     , HH.p
-        [ HP.class_ $ otherErrorClass noTokenToConsume ]
+        [ HP.class_ $ otherErrorClass nothingConfirmed ]
         [ HH.text
-            $  "Entered nickname and sign in code don't appear to be valid. "
-            <> "Please request another sign in code and try again." ]
+            $  "Something went wrong with confirming your email address. "
+            <> "Please try again later or contact the administrator."
+        ]
+    , HH.p
+        [ HP.class_ $ otherErrorClass noSessionStarted ]
+        [ HH.text
+            $  "Entered credentials don't appear to be valid. "
+            <> "Please check and try again."
+        ]
     , HH.p
         [ HP.class_ $ otherErrorClass otherError ]
         [ HH.text "Something unexpected went wrong! Please try again later." ]
@@ -119,10 +109,10 @@ render
     ]
 
 sendSignInRequest :: forall left. State -> Async left (Maybe State)
-sendSignInRequest state @ { nickname, nonce } = Async.unify do
+sendSignInRequest state @ { nicknameOrEmail, password } = Async.unify do
     response <- Fetch.fetch "/api/sessions"
-        (  Fetch.method := PATCH
-        <> Fetch.body := Json.writeJSON { nickname, nonce }
+        (  Fetch.method := POST
+        <> Fetch.body := Json.writeJSON { nicknameOrEmail, password }
         <> Fetch.credentials := Fetch.Include
         )
         # lmap (const $ Just $ state { otherError = true })
@@ -132,15 +122,10 @@ sendSignInRequest state @ { nickname, nonce } = Async.unify do
             # bimap
                 (const $ Just $ state { otherError = true })
                 (\(error :: Start.BadRequestContent) -> Just $ match
-                    { invalidNicknamedNonce: foldl (\state' -> match
-                        { invalidNickname:
-                            const $ state' { nicknameError = true }
-                        , invalidNonce:
-                            const $ state' { nonceError = true }
-                        })
-                        state
-                    , noTokenToConsume:
-                        const $ state { noTokenToConsume = true }
+                    { nothingConfirmed:
+                        const $ state { nothingConfirmed = true }
+                    , noSessionStarted:
+                        const $ state { noSessionStarted = true }
                     }
                     error)
         _ -> pure $ Just $ state { otherError = true }
@@ -148,17 +133,16 @@ sendSignInRequest state @ { nickname, nonce } = Async.unify do
 
 eval :: forall left.
     Query ~> H.HalogenM State Query ChildSlots Void (Async left)
-eval (NicknameInput nickname send) =
-    H.modify_ (_ { nickname = nickname }) <#> const send
-eval (NonceInput nonce send) =
-    H.modify_ (_ { nonce = nonce }) <#> const send
+eval (NicknameOrEmailInput nicknameOrEmail send) =
+    H.modify_ (_ { nicknameOrEmail = nicknameOrEmail }) <#> const send
+eval (PasswordInput password send) =
+    H.modify_ (_ { password = password }) <#> const send
 eval (SignIn event send) = do
     H.liftEffect $ preventDefault event
     state <- H.gets (_
-        { nicknameError    = false
-        , nonceError       = false
-        , noTokenToConsume = false
-        , otherError       = false
+        { nothingConfirmed     = false
+        , noSessionStarted     = false
+        , otherError           = false
         })
     newState <- H.lift $ sendSignInRequest state
     case newState of
@@ -170,11 +154,10 @@ component :: forall input left.
     H.Component HH.HTML Query input Void (Async left)
 component = H.component
     { initialState: const
-        { nickname: ""
-        , nonce: ""
-        , nicknameError: false
-        , nonceError: false
-        , noTokenToConsume: false
+        { nicknameOrEmail: ""
+        , password: ""
+        , nothingConfirmed: false
+        , noSessionStarted: false
         , otherError: false
         }
     , render

@@ -12,7 +12,7 @@ import Postgres.Error (Error, constraint)
 import Postgres.Error.Codes (unique_violation)
 import Postgres.Pool (Pool)
 import Postgres.Query (Query(..), QueryParameter(..))
-import TeamTavern.Player.Register.GenerateHash (Hash, unHash)
+import TeamTavern.Infrastructure.GenerateHash (Hash, unHash)
 import TeamTavern.Player.Register.GenerateNonce (Nonce, unNonce)
 import TeamTavern.Player.Register.ValidateModel (Email, Nickname, unEmail, unNickname)
 

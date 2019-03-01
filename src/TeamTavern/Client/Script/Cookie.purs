@@ -1,5 +1,6 @@
 module TeamTavern.Client.Script.Cookie
     ( PlayerInfo
+    , getPlayerId
     , hasPlayerIdCookie
     , getPlayerInfo
     , deletePlayerInfo

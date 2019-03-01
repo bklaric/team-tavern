@@ -2,6 +2,11 @@ module TeamTavern.Client.Components.TopBar (Query, Slot, topBar) where
 
 import Prelude
 
+import Async (Async, fromEffect, left, unify)
+import Browser.Async.Fetch (fetch_)
+import Browser.Async.Fetch.Response (text)
+import Browser.Fetch.Response (status)
+import Data.Bifunctor (lmap)
 import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
 import Effect.Class (class MonadEffect)
@@ -9,16 +14,19 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
+import Simple.JSON.Async (readJSON)
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
-import TeamTavern.Client.Script.Cookie (PlayerInfo, deletePlayerInfo, getPlayerInfo)
+import TeamTavern.Client.Script.Cookie (deletePlayerInfo, getPlayerId)
 import TeamTavern.Client.Script.Navigate (navigate_)
 
 data Query send
     = Init send
     | SignOut send
 
-type State = Maybe PlayerInfo
+data State
+    = Header (Maybe { id :: Int, nickname :: String })
+    | Error
 
 type Slot = H.Slot Query Void
 
@@ -41,13 +49,13 @@ render playerInfo = HH.div_
                     { path: "/", text: "TeamTavern" }
                 ]
             , HH.div_ case playerInfo of
-                Nothing ->
+                Header Nothing ->
                     [ navigationAnchor (SProxy :: SProxy "registerAnchor")
                         { path: "/register", text: "Register" }
                     , navigationAnchor (SProxy :: SProxy "signInCodeAnchor")
                         { path: "/code", text: "Get a sign in code" }
                     ]
-                Just { id, nickname } ->
+                Header (Just { id, nickname }) ->
                     [ navigationAnchor (SProxy :: SProxy "profileAnchor")
                         { path: "/players/" <> nickname, text: nickname }
                     , navigationAnchor (SProxy :: SProxy "createGameAnchor")
@@ -55,27 +63,41 @@ render playerInfo = HH.div_
                     , HH.button [ HE.onClick $ HE.input_ SignOut ]
                         [ HH.text "Sign out" ]
                     ]
+                Error ->
+                    [ HH.button [ HE.onClick $ HE.input_ SignOut ]
+                        [ HH.text "Sign out" ]
+                    ]
             ]
         ]
     ]
 
-eval :: forall monad. MonadEffect monad =>
-    Query ~> H.HalogenM State Query ChildSlots Void monad
+getPlayerHeader :: forall left. Int -> Async left State
+getPlayerHeader playerId = unify do
+    response <- fetch_ ("/api/players/" <> show playerId <> "/header")
+        # lmap (const Error)
+    content <- case status response of
+        200 -> text response >>= readJSON # lmap (const Error)
+        _ -> left Error
+    pure $ Header $ Just content
+
+eval :: forall left. Query ~> H.HalogenM State Query ChildSlots Void (Async left)
 eval (Init send) = do
-    playerInfo <- getPlayerInfo # H.liftEffect
-    H.put playerInfo
+    playerId <- getPlayerId # fromEffect # H.lift
+    H.put =<< case playerId of
+        Nothing -> pure $ Header Nothing
+        Just id -> H.lift $ getPlayerHeader id
     pure send
 eval (SignOut send) = do
-    deletePlayerInfo # H.liftEffect
-    H.put Nothing
-    navigate_ "/" # H.liftEffect
+    deletePlayerInfo # fromEffect # H.lift
+    H.put $ Header Nothing
+    navigate_ "/" # fromEffect # H.lift
     pure send
 
-component :: forall input m. MonadEffect m =>
-    H.Component HH.HTML Query input Void m
+component :: forall input void.
+    H.Component HH.HTML Query input Void (Async void)
 component =
     H.component
-        { initialState: const Nothing
+        { initialState: const $ Header Nothing
         , render
         , eval
         , receiver: const Nothing
@@ -83,6 +105,6 @@ component =
         , finalizer: Nothing
         }
 
-topBar :: forall query monad children. MonadEffect monad =>
-    HH.ComponentHTML query (topBar :: Slot Unit | children) monad
+topBar :: forall query void children.
+    HH.ComponentHTML query (topBar :: Slot Unit | children) (Async void)
 topBar = HH.slot (SProxy :: SProxy "topBar") unit component unit absurd

@@ -68,7 +68,7 @@ errorResponse = match
     }
 
 successResponse :: SendResponseModel -> Response
-successResponse { email, nickname } =
+successResponse { email, nickname } = 
     ok_ $ writeJSON
     ({ email: unEmail email
     , nickname: unNickname nickname

@@ -7,7 +7,6 @@ import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.String (Pattern(..), split)
 import Data.Symbol (SProxy(..))
-import Effect.Class (class MonadEffect)
 import Foreign (Foreign)
 import Halogen as H
 import Halogen.HTML as HH
@@ -85,11 +84,9 @@ type ChildSlots =
     )
 
 topBarWithContent
-    :: forall query children monad
-    .  MonadEffect monad
-    => Array
-        (H.ComponentHTML query ( topBar :: TopBar.Slot Unit | children) monad)
-    -> H.ComponentHTML query ( topBar :: TopBar.Slot Unit | children ) monad
+    :: forall query children void
+    .  Array (H.ComponentHTML query (topBar :: TopBar.Slot Unit | children) (Async void))
+    -> H.ComponentHTML query (topBar :: TopBar.Slot Unit | children ) (Async void)
 topBarWithContent content =
     HH.div_ [ topBar, HH.div [ HP.id_ "content" ] content ]
 
