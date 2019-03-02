@@ -34,13 +34,10 @@ type StartError = Variant
         }
     , noMatchingPlayer :: NicknameOrEmail
     , passwordDoesntMatch :: NicknameOrEmail
+    , unconfirmedEmail :: NicknameOrEmail
     , nothingConfirmed ::
         { playerId :: PlayerId
         , nonce :: Nonce
-        }
-    , unreadablePlayerId ::
-        { result :: Result
-        , errors :: MultipleErrors
         }
     , noSessionStarted ::
         { playerId :: PlayerId
@@ -75,12 +72,11 @@ logError startError = do
         , passwordDoesntMatch: \nicknameOrEmail ->
             logt $ "Entered password doesn't match for player: "
                 <> show nicknameOrEmail
+        , unconfirmedEmail: \nicknameOrEmail ->
+            logt $ "Player has an unconfirmed email address: "
+                <> show nicknameOrEmail
         , nothingConfirmed: \info ->
             logt $ "No email confirmed: " <> show info
-        , unreadablePlayerId: \{ result, errors } -> do
-            logt $ "Couldn't read player id from result: "
-                <> (unsafeStringify $ rows result)
-            logt $ "Reading resulted in these errors: " <> show errors
         , noSessionStarted: \info ->
             logt $ "No session started: " <> show info
         }

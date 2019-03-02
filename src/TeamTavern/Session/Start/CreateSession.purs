@@ -7,11 +7,10 @@ import Async (Async, left)
 import Data.Bifunctor.Label (label)
 import Data.Newtype (unwrap)
 import Data.Variant (SProxy(..), Variant, inj)
-import Foreign (MultipleErrors)
 import Postgres.Async.Query (query)
 import Postgres.Error (Error)
 import Postgres.Query (class Querier, Query(..), QueryParameter(..))
-import Postgres.Result (Result, rowCount)
+import Postgres.Result (rowCount)
 import TeamTavern.Session.Start.CheckPassword (PlayerId)
 import TeamTavern.Session.Start.GenerateToken (Token, unToken)
 
@@ -22,10 +21,6 @@ type CreateSessionModel =
 
 type CreateSessionError errors = Variant
     ( databaseError :: Error
-    , unreadablePlayerId ::
-        { result :: Result
-        , errors :: MultipleErrors
-        }
     , noSessionStarted ::
         { playerId :: PlayerId
         , token :: Token

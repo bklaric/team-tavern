@@ -1,5 +1,5 @@
 module TeamTavern.Session.Start.CheckPassword
-    (PlayerId(..), CheckPasswordError, checkPassword) where
+    (PlayerId(..), CheckPasswordError, CheckPasswordResult, checkPassword) where
 
 import Prelude
 
@@ -27,6 +27,17 @@ type CheckPasswordModel =
     , password :: Password
     }
 
+type CheckPasswordDto =
+    { id :: Int
+    , hash :: String
+    , emailConfirmed :: Boolean
+    }
+
+type CheckPasswordResult =
+    { playerId :: PlayerId
+    , emailConfirmed :: Boolean
+    }
+
 newtype PlayerId = PlayerId Int
 
 derive instance newtypePlayerId :: Newtype PlayerId _
@@ -51,7 +62,7 @@ type CheckPasswordError errors = Variant
 
 checkPasswordQuery :: Query
 checkPasswordQuery = Query """
-    select id, password_hash as hash
+    select id, password_hash as hash, email_confirmed as "emailConfirmed"
     from player
     where player.email = $1 or player.nickname = $1
     """
@@ -60,24 +71,28 @@ checkPasswordParameters :: NicknameOrEmail -> Array QueryParameter
 checkPasswordParameters nicknameOrEmail =
     [unwrap nicknameOrEmail] <#> QueryParameter
 
-checkPassword :: forall querier errors. Querier querier =>
-    CheckPasswordModel -> querier -> Async (CheckPasswordError errors) PlayerId
+checkPassword
+    :: forall querier errors
+    .  Querier querier
+    => CheckPasswordModel
+    -> querier
+    -> Async (CheckPasswordError errors) CheckPasswordResult
 checkPassword model @ { nicknameOrEmail, password } querier = do
     -- Load player hash.
     result <- querier
         # query checkPasswordQuery (checkPasswordParameters nicknameOrEmail)
         # label (SProxy :: SProxy "databaseError")
-    hashes <- rows result
+    dtos <- rows result
         # traverse read
         # labelMap (SProxy :: SProxy "unreadableHash")
             { result, errors: _ }
-    { id, hash } :: { id :: Int, hash :: String } <- head hashes
+    { id, hash, emailConfirmed } :: CheckPasswordDto <- head dtos
         # note (inj (SProxy :: SProxy "noMatchingPlayer") nicknameOrEmail)
 
     -- Compare hash with password.
     matches <- Bcrypt.compare (unwrap password) hash
         # label (SProxy :: SProxy "bcryptError")
-
     when (not matches) $ left
         $ inj (SProxy :: SProxy "passwordDoesntMatch") nicknameOrEmail
-    pure $ PlayerId id
+
+    pure $ { playerId: PlayerId id, emailConfirmed }

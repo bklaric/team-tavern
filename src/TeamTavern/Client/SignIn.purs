@@ -38,6 +38,7 @@ type State =
     { nicknameOrEmail :: String
     , password :: String
     , nonce :: Maybe String
+    , unconfirmedEmail :: Boolean
     , nothingConfirmed :: Boolean
     , noSessionStarted :: Boolean
     , otherError :: Boolean
@@ -56,6 +57,7 @@ render
     { nicknameOrEmail
     , password
     , nonce
+    , unconfirmedEmail
     , nothingConfirmed
     , noSessionStarted
     , otherError
@@ -93,6 +95,10 @@ render
         ]
         [ HH.text "Sign in" ]
     , HH.p
+        [ HP.class_ $ otherErrorClass unconfirmedEmail ]
+        [ HH.text "Please confirm your email address before signing in."
+        ]
+    , HH.p
         [ HP.class_ $ otherErrorClass nothingConfirmed ]
         [ HH.text
             $  "Something went wrong with confirming your email address. "
@@ -128,7 +134,9 @@ sendSignInRequest state @ { nicknameOrEmail, password, nonce } = Async.unify do
             # bimap
                 (const $ Just $ state { otherError = true })
                 (\(error :: Start.BadRequestContent) -> Just $ match
-                    { nothingConfirmed:
+                    { unconfirmedEmail:
+                        const $ state { unconfirmedEmail = true }
+                    , nothingConfirmed:
                         const $ state { nothingConfirmed = true }
                     , noSessionStarted:
                         const $ state { noSessionStarted = true }
@@ -150,7 +158,8 @@ eval (PasswordInput password send) =
 eval (SignIn event send) = do
     H.liftEffect $ preventDefault event
     state <- H.gets (_
-        { nothingConfirmed     = false
+        { unconfirmedEmail     = false
+        , nothingConfirmed     = false
         , noSessionStarted     = false
         , otherError           = false
         })
@@ -167,6 +176,7 @@ component = H.component
         { nicknameOrEmail: ""
         , password: ""
         , nonce: Nothing
+        , unconfirmedEmail: false
         , nothingConfirmed: false
         , noSessionStarted: false
         , otherError: false

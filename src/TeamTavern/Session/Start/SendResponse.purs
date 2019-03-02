@@ -19,7 +19,8 @@ type SendResponseModel =
     }
 
 type BadRequestContent = Variant
-    ( nothingConfirmed :: {}
+    ( unconfirmedEmail :: {}
+    , nothingConfirmed :: {}
     , noSessionStarted :: {}
     )
 
@@ -37,10 +38,12 @@ errorResponse = match
     , passwordDoesntMatch: const $ badRequest
         (singleton "Content-Type" "application/json") $ writeJSON
         (inj (SProxy :: SProxy "noSessionStarted") {} :: BadRequestContent)
+    , unconfirmedEmail: const $ badRequest
+        (singleton "Content-Type" "application/json") $ writeJSON
+        (inj (SProxy :: SProxy "unconfirmedEmail") {} :: BadRequestContent)
     , nothingConfirmed: const $ badRequest
         (singleton "Content-Type" "application/json") $ writeJSON
         (inj (SProxy :: SProxy "nothingConfirmed") {} :: BadRequestContent)
-    , unreadablePlayerId: const internalServerError__
     , noSessionStarted: const $ badRequest
         (singleton "Content-Type" "application/json") $ writeJSON
         (inj (SProxy :: SProxy "noSessionStarted") {} :: BadRequestContent)

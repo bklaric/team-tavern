@@ -2,7 +2,7 @@ module TeamTavern.Session.Start where
 
 import Prelude
 
-import Async (Async, examineLeftWithEffect)
+import Async (Async, examineLeftWithEffect, left)
 import Data.Map (Map)
 import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
@@ -32,16 +32,20 @@ start pool cookies body =
     result <- pool # withTransaction (inj (SProxy :: SProxy "databaseError"))
         (\client -> do
             -- Check if password hash matches.
-            playerId <- checkPassword { nicknameOrEmail, password } client
+            { playerId, emailConfirmed } <-
+                checkPassword { nicknameOrEmail, password } client
 
             -- Generate session token.
             token <- generateToken
 
-            -- Create a new session.
+            -- Confirm email or ensure it is confirmed.
             case nonce of
+                Nothing -> when (not emailConfirmed) $ left
+                    $ inj (SProxy :: SProxy "unconfirmedEmail") nicknameOrEmail
                 Just nonce' ->
                     confirmEmail { playerId, nonce: nonce' } client
-                Nothing -> pure unit
+
+            -- Create a new session.
             createSession { playerId, token } client
 
             pure { playerId, token })
