@@ -10,7 +10,16 @@ import Jarilo.Segment (Capture, Literal)
 type ViewPlayer = Route
     Get
     (  Literal "players"
+    :> Literal "by-nickname"
     :> Capture "nickname" String
+    :> End)
+    NoQuery
+
+type ViewPlayerHeader = Route
+    Get
+    (  Literal "players"
+    :> Capture "id" Int
+    :> Literal "header"
     :> End)
     NoQuery
 
@@ -28,6 +37,7 @@ type UpdatePlayer = Route
     NoQuery
 
 type PlayerRoutes
-    =    "viewPlayer"     := ViewPlayer
-    :<|> "registerPlayer" := RegisterPlayer
-    :<|> "updatePlayer"   := UpdatePlayer
+    =    "viewPlayer"       := ViewPlayer
+    :<|> "viewPlayerHeader" := ViewPlayerHeader
+    :<|> "registerPlayer"   := RegisterPlayer
+    :<|> "updatePlayer"     := UpdatePlayer

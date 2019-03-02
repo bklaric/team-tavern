@@ -39,6 +39,7 @@ import TeamTavern.Game.Update (handleUpdate) as Game
 import TeamTavern.Game.View (handleView) as Game
 import TeamTavern.Game.ViewAll (handleViewAll) as Game
 import TeamTavern.Player.View (view) as Player
+import TeamTavern.Player.ViewHeader (viewHeader) as Player
 import TeamTavern.Player.Register (register) as Player
 import TeamTavern.Player.Update (update) as Player
 import TeamTavern.Profile.Create (create) as Profile
@@ -152,6 +153,8 @@ handleRequest pool client method url cookies body =
             Player.register pool client cookies body
         , viewPlayer: \{ nickname } ->
             Player.view pool nickname
+        , viewPlayerHeader: \{ id } ->
+            Player.viewHeader pool id
         , updatePlayer: \{ nickname } ->
             Player.update pool nickname cookies body
         , prepareSession: const $

@@ -25,14 +25,15 @@ data Query send
     | SignOut send
 
 data State
-    = Header (Maybe { id :: Int, nickname :: String })
+    = Empty
+    | Header (Maybe { nickname :: String })
     | Error
 
 type Slot = H.Slot Query Void
 
 type ChildSlots =
     ( homeAnchor :: NavigationAnchor.Slot Unit
-    , signInCodeAnchor :: NavigationAnchor.Slot Unit
+    , signInAnchor :: NavigationAnchor.Slot Unit
     , registerAnchor :: NavigationAnchor.Slot Unit
     , profileAnchor :: NavigationAnchor.Slot Unit
     , createGameAnchor :: NavigationAnchor.Slot Unit
@@ -49,13 +50,14 @@ render playerInfo = HH.div_
                     { path: "/", text: "TeamTavern" }
                 ]
             , HH.div_ case playerInfo of
+                Empty -> []
                 Header Nothing ->
                     [ navigationAnchor (SProxy :: SProxy "registerAnchor")
                         { path: "/register", text: "Register" }
-                    , navigationAnchor (SProxy :: SProxy "signInCodeAnchor")
-                        { path: "/code", text: "Get a sign in code" }
+                    , navigationAnchor (SProxy :: SProxy "signInAnchor")
+                        { path: "/signin", text: "Sign in" }
                     ]
-                Header (Just { id, nickname }) ->
+                Header (Just { nickname }) ->
                     [ navigationAnchor (SProxy :: SProxy "profileAnchor")
                         { path: "/players/" <> nickname, text: nickname }
                     , navigationAnchor (SProxy :: SProxy "createGameAnchor")
