@@ -3,11 +3,13 @@ module TeamTavern.Client.Components.TopBar (Query, Slot, topBar) where
 import Prelude
 
 import Async (Async, fromEffect, left, unify)
-import Browser.Async.Fetch (fetch_)
+import Browser.Async.Fetch (fetch, fetch_, method)
 import Browser.Async.Fetch.Response (text)
 import Browser.Fetch.Response (status)
 import Data.Bifunctor (lmap)
+import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..))
+import Data.Options ((:=))
 import Data.Symbol (SProxy(..))
 import Effect.Class (class MonadEffect)
 import Halogen as H
@@ -17,7 +19,7 @@ import Halogen.HTML.Properties as HP
 import Simple.JSON.Async (readJSON)
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
-import TeamTavern.Client.Script.Cookie (deletePlayerInfo, getPlayerId)
+import TeamTavern.Client.Script.Cookie (getPlayerId)
 import TeamTavern.Client.Script.Navigate (navigate_)
 
 data Query send
@@ -82,6 +84,12 @@ getPlayerHeader playerId = unify do
         _ -> left Error
     pure $ Header $ Just content
 
+endSession :: forall left. Async left Boolean
+endSession = unify do
+    response <- fetch ("api/sessions/current") (method := DELETE)
+        # lmap (const false)
+    pure $ status response == 204
+
 eval :: forall left. Query ~> H.HalogenM State Query ChildSlots Void (Async left)
 eval (Init send) = do
     playerId <- getPlayerId # fromEffect # H.lift
@@ -90,9 +98,13 @@ eval (Init send) = do
         Just id -> H.lift $ getPlayerHeader id
     pure send
 eval (SignOut send) = do
-    deletePlayerInfo # fromEffect # H.lift
-    H.put $ Header Nothing
-    navigate_ "/" # fromEffect # H.lift
+    success <- endSession # H.lift
+    if success
+        then do
+            H.put $ Header Nothing
+            navigate_ "/" # fromEffect # H.lift
+        else
+            pure unit
     pure send
 
 component :: forall input void.

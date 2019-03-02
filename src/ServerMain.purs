@@ -47,8 +47,8 @@ import TeamTavern.Profile.Update (update) as Profile
 import TeamTavern.Profile.View (view) as Profile
 import TeamTavern.Profile.ViewByGame (viewByGame) as Profile
 import TeamTavern.Routes (TeamTavernRoutes)
-import TeamTavern.Session.Prepare (prepare) as Session
 import TeamTavern.Session.Start (start) as Session
+import TeamTavern.Session.End (end) as Session
 
 listenOptions :: ListenOptions
 listenOptions = TcpListenOptions
@@ -157,10 +157,10 @@ handleRequest pool client method url cookies body =
             Player.viewHeader pool id
         , updatePlayer: \{ nickname } ->
             Player.update pool nickname cookies body
-        , prepareSession: const $
-            Session.prepare pool client cookies body
         , startSession: const $
             Session.start pool cookies body
+        , endSession: const
+            Session.end
         , createGame: const $
             Game.create pool cookies body
         , viewAllGames: const $

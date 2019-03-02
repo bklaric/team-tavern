@@ -1,7 +1,7 @@
 module TeamTavern.Session.Routes where
 
-import Jarilo.Junction (type (:=))
-import Jarilo.Method (Post)
+import Jarilo.Junction (type (:<|>), type (:=))
+import Jarilo.Method (Delete, Post)
 import Jarilo.Path (type (:>), End)
 import Jarilo.Query (NoQuery)
 import Jarilo.Route (Route)
@@ -13,4 +13,13 @@ type StartSession = Route
     :> End)
     NoQuery
 
-type SessionRoutes = "startSession"   := StartSession
+type EndSession = Route
+    Delete
+    (  Literal "sessions"
+    :> Literal "current"
+    :> End)
+    NoQuery
+
+type SessionRoutes
+    =    "startSession" := StartSession
+    :<|> "endSession"   := EndSession
