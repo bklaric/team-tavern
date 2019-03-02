@@ -77,8 +77,11 @@ form {
         margin-top: 10px;
         margin-bottom: 40px;
     }
-    a {
+    a,
+    p {
+        text-align: center;
         margin-top: 2em;
+        margin-bottom: 0;
     }
     div {
         display: flex;

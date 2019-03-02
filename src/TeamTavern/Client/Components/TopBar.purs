@@ -52,10 +52,10 @@ render playerInfo = HH.div_
             , HH.div_ case playerInfo of
                 Empty -> []
                 Header Nothing ->
-                    [ navigationAnchor (SProxy :: SProxy "registerAnchor")
-                        { path: "/register", text: "Register" }
-                    , navigationAnchor (SProxy :: SProxy "signInAnchor")
+                    [ navigationAnchor (SProxy :: SProxy "signInAnchor")
                         { path: "/signin", text: "Sign in" }
+                    , navigationAnchor (SProxy :: SProxy "registerAnchor")
+                        { path: "/register", text: "Register" }
                     ]
                 Header (Just { nickname }) ->
                     [ navigationAnchor (SProxy :: SProxy "profileAnchor")

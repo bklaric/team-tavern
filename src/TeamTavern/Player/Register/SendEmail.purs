@@ -10,7 +10,7 @@ import Data.Nullable (toNullable)
 import Data.Symbol (SProxy(..))
 import Data.Variant (Variant)
 import Effect.Class.Console (logShow)
-import Postmark.Async.Client as Postmart
+import Postmark.Async.Client as Postmark
 import Postmark.Client (Client)
 import Postmark.Error (Error)
 import Postmark.Message (Message)
@@ -35,10 +35,11 @@ message { email, nickname, nonce } =
     { to: unEmail email
     , from: "admin@teamtavern.net"
     , subject: toNullable $ Just "TeamTavern registration"
-    , textBody: toNullable $ Just $
-        "Hi " <> unNickname nickname <> ",\n\n"
-        <> "Your sign in code is " <> unNonce nonce <> ". "
+    , htmlBody: toNullable $ Just $
+        "Hi " <> unNickname nickname <> ",<br /><br />"
+        <> "Please <a href=\"https://www.teamtavern.net/signin?nonce=" <> unNonce nonce <> "\">click here</a> to verify your email. "
         <> "Thank you for registering to TeamTavern."
+    , textBody: toNullable Nothing
     }
 
 sendEmail :: forall errors.
@@ -50,6 +51,6 @@ sendEmail client model @ { email, nickname } = let
         Nothing -> logShow message'
         Just client' ->
             client'
-            # Postmart.sendEmail message'
+            # Postmark.sendEmail message'
             # labelMap (SProxy :: SProxy "sendEmailError")
                 { info: { email, nickname }, error: _ }

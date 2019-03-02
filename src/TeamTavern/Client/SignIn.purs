@@ -8,7 +8,7 @@ import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
 import Data.Bifunctor (bimap, lmap)
 import Data.HTTP.Method (Method(..))
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), maybe)
 import Data.Options ((:=))
 import Data.Variant (SProxy(..), match)
 import Halogen (ClassName(..))
@@ -22,19 +22,22 @@ import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Script.Navigate (navigate_)
+import TeamTavern.Client.Script.QueryParams (getQueryParam)
 import TeamTavern.Client.Snippets.ErrorClasses (otherErrorClass)
 import TeamTavern.Session.Start.SendResponse as Start
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
 data Query send
-    = NicknameOrEmailInput String send
+    = Init send
+    | NicknameOrEmailInput String send
     | PasswordInput String send
     | SignIn Event send
 
 type State =
     { nicknameOrEmail :: String
     , password :: String
+    , nonce :: Maybe String
     , nothingConfirmed :: Boolean
     , noSessionStarted :: Boolean
     , otherError :: Boolean
@@ -52,6 +55,7 @@ render :: forall left. State -> H.ComponentHTML Query ChildSlots (Async left)
 render
     { nicknameOrEmail
     , password
+    , nonce
     , nothingConfirmed
     , noSessionStarted
     , otherError
@@ -61,6 +65,7 @@ render
         [ HH.text "Sign in to "
         , navigationAnchor (SProxy :: SProxy "home")
             { path: "/", text: "TeamTavern" }
+        , HH.text $ maybe "" (const " to confirm your email address") nonce
         ]
     , HH.div_
         [ HH.label
@@ -101,18 +106,19 @@ render
         ]
     , HH.p
         [ HP.class_ $ otherErrorClass otherError ]
-        [ HH.text "Something unexpected went wrong! Please try again later." ]
-    , navigationAnchor (SProxy :: SProxy "registerAnchor")
-        { path: "/register", text: "Register" }
-    , navigationAnchor (SProxy :: SProxy "codeAnchor")
-        { path: "/code", text: "Get a sign in code" }
+        [ HH.text "Something unexpected went wrong. Please try again later." ]
+    , HH.p_
+        [ HH.text "New to TeamTavern? "
+        , navigationAnchor (SProxy :: SProxy "registerAnchor")
+            { path: "/register", text: "Create an account." }
+        ]
     ]
 
 sendSignInRequest :: forall left. State -> Async left (Maybe State)
-sendSignInRequest state @ { nicknameOrEmail, password } = Async.unify do
+sendSignInRequest state @ { nicknameOrEmail, password, nonce } = Async.unify do
     response <- Fetch.fetch "/api/sessions"
         (  Fetch.method := POST
-        <> Fetch.body := Json.writeJSON { nicknameOrEmail, password }
+        <> Fetch.body := Json.writeJSON { nicknameOrEmail, password, nonce }
         <> Fetch.credentials := Fetch.Include
         )
         # lmap (const $ Just $ state { otherError = true })
@@ -133,6 +139,10 @@ sendSignInRequest state @ { nicknameOrEmail, password } = Async.unify do
 
 eval :: forall left.
     Query ~> H.HalogenM State Query ChildSlots Void (Async left)
+eval (Init send) = do
+    nonce <- getQueryParam "nonce" # H.liftEffect
+    H.modify_ (_ { nonce = nonce })
+    pure send
 eval (NicknameOrEmailInput nicknameOrEmail send) =
     H.modify_ (_ { nicknameOrEmail = nicknameOrEmail }) <#> const send
 eval (PasswordInput password send) =
@@ -156,6 +166,7 @@ component = H.component
     { initialState: const
         { nicknameOrEmail: ""
         , password: ""
+        , nonce: Nothing
         , nothingConfirmed: false
         , noSessionStarted: false
         , otherError: false
@@ -163,7 +174,7 @@ component = H.component
     , render
     , eval
     , receiver: const Nothing
-    , initializer: Nothing
+    , initializer: Just $ Init unit
     , finalizer: Nothing
     }
 

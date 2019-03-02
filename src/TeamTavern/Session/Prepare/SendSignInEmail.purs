@@ -25,6 +25,7 @@ message { nickname, email, nonce } =
     , textBody: toNullable $ Just $
         "Hi " <> unwrap nickname <> ",\n\n"
         <> "Your sign in code is " <> unwrap nonce <> "."
+    , htmlBody: toNullable $ Nothing
     }
 
 type SendSignInEmailError errors = Variant

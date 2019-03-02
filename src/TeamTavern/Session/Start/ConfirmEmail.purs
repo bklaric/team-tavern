@@ -30,7 +30,7 @@ confirmEmailQuery :: Query
 confirmEmailQuery = Query """
     update player
     set email_confirmed = true
-    where player.id = $1 and player.confirmation_nonce = $3
+    where player.id = $1 and player.confirmation_nonce = $2
     """
 
 confirmEmailParameters :: ConfirmEmailModel -> Array QueryParameter

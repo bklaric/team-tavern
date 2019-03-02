@@ -139,10 +139,11 @@ render
     , HH.p
         [ HP.class_ $ otherErrorClass otherError ]
         [ HH.text "Something unexpected went wrong! Please try again later." ]
-    , navigationAnchor (SProxy :: SProxy "signInAnchor")
-        { path: "/signin", text: "Sign in" }
-    , navigationAnchor (SProxy :: SProxy "codeAnchor")
-        { path: "/code", text: "Get a sign in code" }
+    , HH.p_
+        [ HH.text "Already have an account?"
+        , navigationAnchor (SProxy :: SProxy "signInAnchor")
+            { path: "/signin", text: " Sign in." }
+        ]
     ]
 
 sendRegisterRequest :: forall left.
