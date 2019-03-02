@@ -64,7 +64,7 @@ render Error = HH.p_ [ HH.text
 
 loadPlayer :: forall left. String -> Async left State
 loadPlayer nickname = Async.unify do
-    response <- Fetch.fetch_ ("/api/players/" <> nickname) # lmap (const Error)
+    response <- Fetch.fetch_ ("/api/players/by-nickname/" <> nickname) # lmap (const Error)
     content <- case FetchRes.status response of
         200 -> FetchRes.text response >>= Json.readJSON # lmap (const Error)
         404 -> Async.left NotFound

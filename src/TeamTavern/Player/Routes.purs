@@ -32,6 +32,7 @@ type RegisterPlayer = Route
 type UpdatePlayer = Route
     Put
     (  Literal "players"
+    :> Literal "by-nickname"
     :> Capture "nickname" String
     :> End)
     NoQuery
