@@ -18,8 +18,8 @@ import Halogen.HTML.Properties as HP
 import Simple.JSON.Async as Json
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor, navigationAnchorIndexed)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
-import TeamTavern.Client.Script.Cookie (getPlayerInfo)
-import TeamTavern.Player.View.Response as View
+import TeamTavern.Client.Script.Cookie (getPlayerId, getPlayerInfo)
+import TeamTavern.Player.View.SendResponse as View
 
 data Query send = Init String send
 
@@ -69,9 +69,8 @@ loadPlayer nickname = Async.unify do
         200 -> FetchRes.text response >>= Json.readJSON # lmap (const Error)
         404 -> Async.left NotFound
         _ -> Async.left Error
-    playerInfo <- Async.fromEffect getPlayerInfo
-    pure $ Player content
-        (maybe false (_.nickname >>> (_ == content.nickname)) playerInfo)
+    playerId <- Async.fromEffect getPlayerId
+    pure $ Player content (maybe false (_ == content.id) playerId)
 
 eval :: forall left.
     Query ~> H.HalogenM State Query ChildSlots Void (Async left)

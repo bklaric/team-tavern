@@ -10,7 +10,7 @@ import Global.Unsafe (unsafeStringify)
 import Postgres.Error (Error)
 import Postgres.Result (Result, rows)
 import TeamTavern.Infrastructure.Log (logt, print)
-import TeamTavern.Player.ViewHeader.LoadHeader (PlayerId)
+import TeamTavern.Player.Domain.Id (Id)
 
 type ViewHeaderError = Variant
     ( databaseError :: Error
@@ -18,7 +18,7 @@ type ViewHeaderError = Variant
         { result :: Result
         , errors :: MultipleErrors
         }
-    , notFound :: PlayerId
+    , notFound :: Id
     )
 
 logError :: ViewHeaderError -> Effect Unit
@@ -31,6 +31,6 @@ logError registerError = do
             logt $ "Can't read player header from from result: "
                 <> (unsafeStringify $ rows result)
             logt $ "Reading resulted in these errors: " <> show errors
-        , notFound: \playerId ->
-            logt $ "Player wasn't found: " <> show playerId
+        , notFound: \id ->
+            logt $ "Player wasn't found: " <> show id
         }

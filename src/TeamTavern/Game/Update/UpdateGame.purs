@@ -17,9 +17,9 @@ import Postgres.Query (Query(..), QueryParameter(..))
 import Postgres.Result (rowCount)
 import TeamTavern.Game.Domain.Handle (Handle)
 import TeamTavern.Game.Domain.Title (Title)
-import TeamTavern.Game.Domain.Types (Details)
-import TeamTavern.Player.Domain.PlayerId (toString)
-import TeamTavern.Player.Domain.Types (AuthInfo)
+import TeamTavern.Game.Infrastructure.ReadModel (GameModel)
+import TeamTavern.Infrastructure.Cookie (CookieInfo)
+import TeamTavern.Player.Domain.Id (toString)
 
 updateGameQuery :: Query
 updateGameQuery = Query """
@@ -30,12 +30,11 @@ updateGameQuery = Query """
     and game.handle = $3
     and session.player_id = $1
     and session.token = $2
-    and session.consumed = true
     and session.revoked = false
     """
 
 updateGameQueryParameters ::
-    AuthInfo -> Handle -> Details -> Array QueryParameter
+    CookieInfo -> Handle -> GameModel -> Array QueryParameter
 updateGameQueryParameters
     { id, token } targetHandle { title, handle, description } =
     [ toString id
@@ -57,15 +56,15 @@ type UpdateGameError errors = Variant
         , error :: Error
         }
     , databaseError :: Error
-    , notAuthorized :: AuthInfo
+    , notAuthorized :: CookieInfo
     | errors )
 
 updateGame
     :: forall errors
     .  Pool
-    -> AuthInfo
+    -> CookieInfo
     -> Handle
-    -> Details
+    -> GameModel
     -> Async (UpdateGameError errors) Unit
 updateGame pool auth targetHandle details = do
     result <- pool

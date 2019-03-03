@@ -1,4 +1,4 @@
-module TeamTavern.Player.View.Response (OkContent, response) where
+module TeamTavern.Player.View.SendResponse (OkContent, response) where
 
 import Prelude
 
@@ -7,11 +7,12 @@ import Data.Newtype (unwrap)
 import Data.Variant (match)
 import Perun.Response (Response, internalServerError__, notFound__, ok_)
 import Simple.JSON (writeJSON)
-import TeamTavern.Player.Domain.Types (View)
-import TeamTavern.Player.View.Types (ViewError)
+import TeamTavern.Player.View.LoadPlayer (LoadPlayerResult)
+import TeamTavern.Player.View.LogError (ViewError)
 
 type OkContent =
-    { nickname :: String
+    { id :: Int
+    , nickname :: String
     , about :: String
     , profiles :: Array
         { handle :: String
@@ -22,16 +23,15 @@ type OkContent =
 
 errorResponse :: ViewError -> Response
 errorResponse = match
-    { invalidNickname: const $ notFound__
-    , databaseError: const $ internalServerError__
-    , unreadableResult: const $ internalServerError__
+    { databaseError: const $ internalServerError__
+    , unreadableDto: const $ internalServerError__
     , notFound: const $ notFound__
-    , invalidView: const $ internalServerError__
     }
 
-successResponse :: View -> Response
-successResponse { nickname, about, profiles } = ok_ $ writeJSON (
-    { nickname: unwrap nickname
+successResponse :: LoadPlayerResult -> Response
+successResponse { id, nickname, about, profiles } = ok_ $ writeJSON (
+    { id: unwrap id
+    , nickname: unwrap nickname
     , about: unwrap about
     , profiles: profiles <#> \{ handle, title, summary } ->
         { handle: unwrap handle
@@ -40,5 +40,6 @@ successResponse { nickname, about, profiles } = ok_ $ writeJSON (
         }
     } :: OkContent)
 
-response :: Async ViewError View -> (forall left. Async left Response)
+response ::
+    Async ViewError LoadPlayerResult -> (forall left. Async left Response)
 response = alwaysRight errorResponse successResponse

@@ -13,7 +13,7 @@ import Postgres.Pool (Pool)
 import Postgres.Query (Query(..), QueryParameter(..))
 import Postgres.Result (rowCount)
 import TeamTavern.Game.Domain.Handle (Handle)
-import TeamTavern.Player.Domain.PlayerId (toString)
+import TeamTavern.Player.Domain.Id (toString)
 import TeamTavern.Player.Domain.Types (AuthInfo)
 import TeamTavern.Profile.Domain.Summary (Summary)
 
@@ -32,7 +32,6 @@ addProfileQuery = Query """
     from session, player, game
     where session.player_id = $1
     and session.token = $2
-    and session.consumed = true
     and session.revoked = false
     and session.player_id = player.id
     and game.handle = $3

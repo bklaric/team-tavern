@@ -10,7 +10,7 @@ import Data.Bifunctor (lmap)
 import Error (Error)
 import Foreign (MultipleErrors)
 import Simple.JSON.Async as JsonAsync
-import TeamTavern.Player.View.Response as View
+import TeamTavern.Player.View.SendResponse as View
 
 data LoadPlayerError
     = FetchError Error

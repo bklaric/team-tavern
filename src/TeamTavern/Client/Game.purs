@@ -17,7 +17,7 @@ import Simple.JSON.Async as Json
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
 import TeamTavern.Client.Script.Cookie (getPlayerInfo)
-import TeamTavern.Game.View.Response as View
+import TeamTavern.Game.View.SendResponse as View
 
 data Query send = Init String send
 

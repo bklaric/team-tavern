@@ -24,8 +24,8 @@ import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Script.Cookie (getPlayerInfo, hasPlayerIdCookie)
 import TeamTavern.Client.Script.Navigate (navigate_)
 import TeamTavern.Client.Snippets.ErrorClasses (errorClass, inputErrorClass, otherErrorClass)
-import TeamTavern.Player.Update.Response as Update
-import TeamTavern.Player.View.Response as View
+import TeamTavern.Player.Update.SendResponse as Update
+import TeamTavern.Player.View.SendResponse as View
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 import Web.HTML (window)

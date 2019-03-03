@@ -1,4 +1,4 @@
-module TeamTavern.Game.View.Response (OkContent, response) where
+module TeamTavern.Game.View.SendResponse (OkContent, sendResponse) where
 
 import Prelude
 
@@ -7,9 +7,8 @@ import Data.Newtype (unwrap)
 import Data.Variant (match)
 import Perun.Response (Response, internalServerError__, notFound__, ok_)
 import Simple.JSON (writeJSON)
-import TeamTavern.Game.Domain.Types (View)
-import TeamTavern.Game.View.Types (ViewError)
-import TeamTavern.Player.Domain.PlayerId (toInt)
+import TeamTavern.Game.View.LoadGame (LoadGameResult)
+import TeamTavern.Game.View.LogError (ViewError)
 
 type OkContent =
     { administratorId :: Int
@@ -21,22 +20,21 @@ type OkContent =
 
 errorResponse :: ViewError -> Response
 errorResponse = match
-    { invalidHandle: const $ notFound__
-    , databaseError: const $ internalServerError__
-    , unreadableView: const $ internalServerError__
+    { databaseError: const $ internalServerError__
+    , unreadableDto: const $ internalServerError__
     , notFound: const $ notFound__
-    , invalidView: const $ internalServerError__
     }
 
-successResponse :: View -> Response
+successResponse :: LoadGameResult -> Response
 successResponse { administratorId, title, handle, description, hasProfile } =
     ok_ $ writeJSON (
-    { administratorId: toInt administratorId
+    { administratorId: unwrap administratorId
     , title: unwrap title
     , handle: unwrap handle
     , description: unwrap description
     , hasProfile
     } :: OkContent)
 
-response :: Async ViewError View -> (forall left. Async left Response)
-response = alwaysRight errorResponse successResponse
+sendResponse ::
+    Async ViewError LoadGameResult -> (forall left. Async left Response)
+sendResponse = alwaysRight errorResponse successResponse

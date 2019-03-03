@@ -4,8 +4,7 @@ import TeamTavern.Player.Domain.About (About)
 import TeamTavern.Player.Domain.Email (Email)
 import TeamTavern.Player.Domain.Nickname (Nickname)
 import TeamTavern.Player.Domain.Nonce (Nonce)
-import TeamTavern.Player.Domain.PlayerId (PlayerId)
-import TeamTavern.Player.Domain.Token (Token)
+import TeamTavern.Player.Domain.Id (Id)
 import TeamTavern.Profile.Domain.Types (ByPlayerView)
 
 type Secrets =
@@ -19,12 +18,12 @@ type Identifiers =
     }
 
 type IdentifiedToken =
-    { id :: PlayerId
+    { id :: Id
     , token :: Token
     }
 
 type AuthInfo =
-    { id :: PlayerId
+    { id :: Id
     , nickname :: Nickname
     , token :: Token
     }
@@ -59,7 +58,7 @@ type Credentials =
     }
 
 type IdentifiedCredentials =
-    { id :: PlayerId
+    { id :: Id
     , email :: Email
     , nickname :: Nickname
     , token :: Token

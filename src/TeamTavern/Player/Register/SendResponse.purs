@@ -8,11 +8,13 @@ import Prelude
 
 import Async (Async, alwaysRight)
 import Data.Array (fromFoldable)
+import Data.Newtype (unwrap)
 import Data.Variant (SProxy(..), Variant, inj, match)
 import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, ok_)
 import Simple.JSON (writeJSON)
+import TeamTavern.Player.Domain.Email (Email)
+import TeamTavern.Player.Domain.Nickname (Nickname)
 import TeamTavern.Player.Register.LogError (RegisterError)
-import TeamTavern.Player.Register.ValidateModel (Email, Nickname, unEmail, unNickname)
 
 type SendResponseModel =
     { email :: Email
@@ -61,17 +63,17 @@ errorResponse = match
     , databaseError: const internalServerError__
     , sendEmailError: _.info >>> \{ email, nickname } ->
         ok_ $ writeJSON
-        ({ email: unEmail email
-        , nickname: unNickname nickname
+        ({ email: unwrap email
+        , nickname: unwrap nickname
         , emailSent: false
         } :: OkContent)
     }
 
 successResponse :: SendResponseModel -> Response
-successResponse { email, nickname } = 
+successResponse { email, nickname } =
     ok_ $ writeJSON
-    ({ email: unEmail email
-    , nickname: unNickname nickname
+    ({ email: unwrap email
+    , nickname: unwrap nickname
     , emailSent: true
     } :: OkContent)
 

@@ -2,29 +2,35 @@ module TeamTavern.Player.View.LogError where
 
 import Prelude
 
-import Data.Variant (match)
+import Data.Variant (Variant, match)
 import Effect (Effect)
 import Effect.Console (log)
+import Foreign (MultipleErrors)
 import Global.Unsafe (unsafeStringify)
-import Postgres.Result (rows)
+import Postgres.Error (Error)
+import Postgres.Result (Result, rows)
 import TeamTavern.Infrastructure.Log (logt, print)
-import TeamTavern.Player.View.Types (ViewError)
+import TeamTavern.Player.Domain.Nickname (Nickname)
+
+type ViewError = Variant
+    ( databaseError :: Error
+    , unreadableDto ::
+        { result :: Result
+        , errors :: MultipleErrors
+        }
+    , notFound :: Nickname
+    )
 
 logError :: ViewError -> Effect Unit
 logError viewError = do
     log "Error viewing player"
     viewError # match
-        { invalidNickname: \{ nickname, errors } -> do
-            logt $ "Couldn't validate nickname: " <> show nickname
-            logt $ "Validation resulted in these errors: " <> show errors
-        , databaseError: \error ->
+        { databaseError: \error ->
             logt $ "Unknown database error ocurred: " <> print error
-        , unreadableResult: \{ result, errors} -> do
-            logt $ "Couldn't read views: " <> (unsafeStringify $ rows result)
-            logt $ "Reading views resulted in these errors: " <> show errors
+        , unreadableDto: \{ result, errors} -> do
+            logt $ "Couldn't read dtos from result: "
+                <> (unsafeStringify $ rows result)
+            logt $ "Reading dtos resulted in these errors: " <> show errors
         , notFound: \nickname ->
             logt $ "Player wasn't found: " <> show nickname
-        , invalidView: \{ nickname, view } ->
-            logt $ "View of player " <> show nickname <> " is invalid: "
-                <> show view
         }

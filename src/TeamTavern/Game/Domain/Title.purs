@@ -1,5 +1,5 @@
 module TeamTavern.Game.Domain.Title
-    (Title, TitleError, maxLength, create, create', create'') where
+    (Title(..), TitleError, maxLength, create) where
 
 import Prelude
 
@@ -40,8 +40,8 @@ create :: String -> Validated (NonEmptyList TitleError) Title
 create title =
     Wrapped.create trim [empty, tooLong maxLength, notPrintable] Title title
 
-create' :: String -> Either (NonEmptyList TitleError) Title
-create' = create >>> toEither
+-- create' :: String -> Either (NonEmptyList TitleError) Title
+-- create' = create >>> toEither
 
-create'' :: String -> Maybe Title
-create'' = create >>> Validated.hush
+-- create'' :: String -> Maybe Title
+-- create'' = create >>> Validated.hush

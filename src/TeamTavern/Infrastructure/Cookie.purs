@@ -2,78 +2,59 @@ module TeamTavern.Infrastructure.Cookie where
 
 import Prelude
 
-import Data.Int (fromString)
 import Data.List (List(..), (:))
 import Data.List.Types (NonEmptyList(..))
 import Data.Map (Map, lookup)
 import Data.Maybe (Maybe)
-import Data.MultiMap (MultiMap, singleton, singleton')
-import Data.Newtype (unwrap)
+import Data.MultiMap (MultiMap, singleton')
+import Data.Newtype (unwrap, wrap)
 import Data.NonEmpty ((:|))
-import Data.Validated as Validated
-import TeamTavern.Player.Domain.Nickname (Nickname)
-import TeamTavern.Player.Domain.Nickname as Nickname
-import TeamTavern.Player.Domain.PlayerId as PlayerId
-import TeamTavern.Player.Domain.Token as Token
-import TeamTavern.Player.Domain.Types (AuthInfo)
+import TeamTavern.Player.Domain.Id (Id, fromString, toString)
+import TeamTavern.Session.Domain.Token (Token)
 
-class PlayerId playerId where
-    fromPlayerId :: playerId -> Int
+type CookieInfo =
+    { id :: Id
+    , token :: Token
+    }
 
-class Token token where
-    fromToken :: token -> String
+-- Cookie ids.
 
 idCookieName :: String
 idCookieName = "teamtavern-id"
 
-nicknameCookieName :: String
-nicknameCookieName = "teamtavern-nickname"
-
 tokenCookieName :: String
 tokenCookieName = "teamtavern-token"
 
-lookupIdCookie :: Map String String -> Maybe String
-lookupIdCookie = lookup idCookieName
+-- Look up cookies.
 
-lookupAuthCookies :: Map String String -> Maybe AuthInfo
-lookupAuthCookies cookies = do
-    id <- lookup idCookieName cookies
-        >>= fromString >>= PlayerId.create
-    nickname <- lookup nicknameCookieName cookies
-        >>= (Nickname.create >>> Validated.hush)
-    token <- lookup tokenCookieName cookies
-        >>= (Token.create >>> Validated.hush)
-    pure { id, nickname, token }
+lookupCookieInfo :: Map String String -> Maybe CookieInfo
+lookupCookieInfo cookies = do
+    id <- lookup idCookieName cookies >>= fromString
+    token <- lookup tokenCookieName cookies <#> wrap
+    pure { id, token }
 
-idCookie :: forall playerId. PlayerId playerId => playerId -> String
-idCookie id =
-    idCookieName <> "=" <> (show $ fromPlayerId id)
+-- Set cookies.
+
+setIdCookie :: Id -> String
+setIdCookie id =
+    idCookieName <> "=" <> (toString id)
     <> "; Max-Age=" <> show (top :: Int)
     <> "; Path=/"
 
-nicknameCookie :: Nickname -> String
-nicknameCookie nickname =
-    nicknameCookieName <> "=" <> unwrap nickname
-    <> "; Max-Age=" <> show (top :: Int)
-    <> "; Path=/"
-
-tokenCookie :: forall token. Token token => token -> String
-tokenCookie token =
-    tokenCookieName <> "=" <> fromToken token
+setTokenCookie :: Token -> String
+setTokenCookie token =
+    tokenCookieName <> "=" <> unwrap token
     <> "; Max-Age=" <> show (top :: Int)
     <> "; Path=/"
     <> "; HttpOnly; Secure"
 
-setNicknameCookieHeader :: Nickname -> MultiMap String String
-setNicknameCookieHeader nickname =
-    singleton "Set-Cookie" $ nicknameCookie nickname
-
-setCookieHeader :: forall playerId token. PlayerId playerId => Token token =>
-    playerId -> token -> MultiMap String String
+setCookieHeader :: Id -> Token -> MultiMap String String
 setCookieHeader id token =
-    idCookie id :| tokenCookie token : Nil
+    setIdCookie id :| setTokenCookie token : Nil
     # NonEmptyList
     # singleton' "Set-Cookie"
+
+-- Remove cookies.
 
 removeIdCookie :: String
 removeIdCookie =

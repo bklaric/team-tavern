@@ -6,19 +6,21 @@ import Jarilo.Path (type (:>), End)
 import Jarilo.Query (NoQuery)
 import Jarilo.Route (Route)
 import Jarilo.Segment (Capture, Literal)
+import TeamTavern.Player.Domain.Id (Id)
+import TeamTavern.Player.Domain.Nickname (Nickname)
 
 type ViewPlayer = Route
     Get
     (  Literal "players"
     :> Literal "by-nickname"
-    :> Capture "nickname" String
+    :> Capture "nickname" Nickname
     :> End)
     NoQuery
 
 type ViewPlayerHeader = Route
     Get
     (  Literal "players"
-    :> Capture "id" Int
+    :> Capture "id" Id
     :> Literal "header"
     :> End)
     NoQuery
@@ -33,7 +35,7 @@ type UpdatePlayer = Route
     Put
     (  Literal "players"
     :> Literal "by-nickname"
-    :> Capture "nickname" String
+    :> Capture "nickname" Nickname
     :> End)
     NoQuery
 

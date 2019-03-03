@@ -1,5 +1,5 @@
-module TeamTavern.Game.Create.Response
-    (DetailsErrorContent, BadRequestContent, response) where
+module TeamTavern.Game.Update.SendResponse
+    (BadRequestContent, sendResponse) where
 
 import Prelude
 
@@ -8,25 +8,23 @@ import Data.Array (fromFoldable)
 import Data.Variant (SProxy(..), Variant, inj, match)
 import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, noContent_, unauthorized__)
 import Simple.JSON (writeJSON)
-import TeamTavern.Game.Create.Types (CreateError)
-
-type DetailsErrorContent = Variant
-    ( invalidTitle :: {}
-    , invalidHandle :: {}
-    , invalidDescription :: {}
-    )
+import TeamTavern.Game.Update.LogError (UpdateError)
 
 type BadRequestContent = Variant
-    ( invalidDetails :: Array DetailsErrorContent
+    ( invalidDetails :: Array (Variant
+        ( invalidTitle :: {}
+        , invalidHandle :: {}
+        , invalidDescription :: {}
+        ))
     , titleTaken :: {}
     , handleTaken :: {}
     )
 
-errorResponse :: CreateError -> Response
+errorResponse :: UpdateError -> Response
 errorResponse = match
-    { authNotPresent: const $ unauthorized__
-    , unreadableDetails: const $ badRequest__
-    , invalidDetails: \{ errors } ->
+    { cookieInfoNotPresent: const unauthorized__
+    , unreadableDto: const badRequest__
+    , invalidModel: \{ errors } ->
         errors
         <#> (match
             { title: const $ inj (SProxy :: SProxy "invalidTitle") {}
@@ -51,5 +49,5 @@ errorResponse = match
 successResponse :: Unit -> Response
 successResponse _ = noContent_
 
-response :: Async CreateError Unit -> (forall left. Async left Response)
-response = alwaysRight errorResponse successResponse
+sendResponse :: Async UpdateError Unit -> (forall left. Async left Response)
+sendResponse = alwaysRight errorResponse successResponse

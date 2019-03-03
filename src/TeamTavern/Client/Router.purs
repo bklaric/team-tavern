@@ -41,8 +41,6 @@ import TeamTavern.Client.Register as Register
 import TeamTavern.Client.Script.Navigate (navigate_)
 import TeamTavern.Client.SignIn (signIn)
 import TeamTavern.Client.SignIn as SignIn
-import TeamTavern.Client.SignInCode (signInCode)
-import TeamTavern.Client.SignInCode as SignInCode
 
 data Query send = ChangeRoute Foreign String send
 

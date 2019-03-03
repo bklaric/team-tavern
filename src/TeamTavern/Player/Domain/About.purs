@@ -1,15 +1,9 @@
-module TeamTavern.Player.Domain.About
-    (About, AboutError, maxLength, create, create', create'') where
+module TeamTavern.Player.Domain.About where
 
-import Prelude
-
-import Data.Either (Either)
 import Data.List.Types (NonEmptyList)
-import Data.Maybe (Maybe)
 import Data.Newtype (class Newtype)
 import Data.String (trim)
-import Data.Validated (Validated, toEither)
-import Data.Validated as Validated
+import Data.Validated (Validated)
 import Data.Variant (Variant)
 import Wrapped.String (NotPrintable, TooLong, notPrintable, tooLong)
 import Wrapped.Validated as Wrapped
@@ -28,9 +22,3 @@ maxLength = 2000
 
 create :: String -> Validated (NonEmptyList AboutError) About
 create about = Wrapped.create trim [tooLong maxLength, notPrintable] About about
-
-create' :: String -> Either (NonEmptyList AboutError) About
-create' = create >>> toEither
-
-create'' :: String -> Maybe About
-create'' = create >>> Validated.hush

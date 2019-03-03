@@ -4,25 +4,23 @@ import Prelude
 
 import Async (Async, fromEffect, fromEitherCont)
 import Data.Bifunctor.Label (label)
+import Data.Newtype (class Newtype)
 import Data.Variant (SProxy(..), Variant)
 import Node.Buffer (toString__)
 import Node.Crypto (randomBytes)
 import Node.Encoding (Encoding(..))
 import Node.Errors (Error)
 
-class HexString string where
-    fromHexString :: String -> string
+newtype ByteCount = ByteCount Int
 
-instance stringHexString :: HexString String where
-    fromHexString = identity
+derive instance newtypeByteCount :: Newtype ByteCount _
 
 type GenerateHexStringError errors = Variant (randomError :: Error | errors)
 
-generateHexString :: forall result errors. HexString result =>
-    Int -> Async (GenerateHexStringError errors) result
-generateHexString characterCount =
+generateHexString :: forall errors.
+    ByteCount -> Async (GenerateHexStringError errors) String
+generateHexString (ByteCount byteCount) =
     label (SProxy :: SProxy "randomError") do
-    let byteCount = characterCount / 2 -- Two hex characters per byte.
     bytes <- randomBytes byteCount # fromEitherCont
     string <- toString__ Hex bytes # fromEffect
-    pure $ fromHexString string
+    pure string

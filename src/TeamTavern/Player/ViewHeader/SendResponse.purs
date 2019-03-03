@@ -7,7 +7,7 @@ import Data.Newtype (unwrap)
 import Data.Variant (match)
 import Perun.Response (Response, internalServerError__, notFound__, ok_)
 import Simple.JSON (writeJSON)
-import TeamTavern.Player.ViewHeader.LoadHeader (LoadPlayerHeaderResult)
+import TeamTavern.Player.ViewHeader.LoadHeader (LoadHeaderResult)
 import TeamTavern.Player.ViewHeader.LogError (ViewHeaderError)
 
 type OkContent = { nickname :: String }
@@ -19,11 +19,11 @@ errorResponse = match
     , notFound: const $ notFound__
     }
 
-successResponse :: LoadPlayerHeaderResult -> Response
+successResponse :: LoadHeaderResult -> Response
 successResponse { nickname } = ok_ $ writeJSON (
     { nickname: unwrap nickname } :: OkContent)
 
 sendResponse
-    :: Async ViewHeaderError LoadPlayerHeaderResult
+    :: Async ViewHeaderError LoadHeaderResult
     -> (forall left. Async left Response)
 sendResponse = alwaysRight errorResponse successResponse

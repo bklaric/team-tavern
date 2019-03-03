@@ -1,5 +1,5 @@
 module TeamTavern.Session.Start.CheckPassword
-    (PlayerId(..), CheckPasswordError, CheckPasswordResult, checkPassword) where
+    (CheckPasswordError, CheckPasswordResult, checkPassword) where
 
 import Prelude
 
@@ -7,9 +7,7 @@ import Async (Async, left, note)
 import Bcrypt.Async as Bcrypt
 import Data.Array (head)
 import Data.Bifunctor.Label (label, labelMap)
-import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Show (genericShow)
-import Data.Newtype (class Newtype, unwrap)
+import Data.Newtype (unwrap, wrap)
 import Data.Traversable (traverse)
 import Data.Variant (SProxy(..), Variant, inj)
 import Foreign (MultipleErrors)
@@ -19,8 +17,9 @@ import Postgres.Error as Postgres
 import Postgres.Query (class Querier, Query(..), QueryParameter(..))
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
-import TeamTavern.Infrastructure.Cookie as Cookie
-import TeamTavern.Session.Start.ReadModel (NicknameOrEmail, Password)
+import TeamTavern.Player.Domain.Id (Id)
+import TeamTavern.Player.Domain.Password (Password)
+import TeamTavern.Session.Domain.NicknameOrEmail (NicknameOrEmail)
 
 type CheckPasswordModel =
     { nicknameOrEmail :: NicknameOrEmail
@@ -34,20 +33,9 @@ type CheckPasswordDto =
     }
 
 type CheckPasswordResult =
-    { playerId :: PlayerId
+    { id :: Id
     , emailConfirmed :: Boolean
     }
-
-newtype PlayerId = PlayerId Int
-
-derive instance newtypePlayerId :: Newtype PlayerId _
-
-derive instance genericPlayerId :: Generic PlayerId _
-
-instance showPlayerId :: Show PlayerId where show = genericShow
-
-instance cookiePlayerId :: Cookie.PlayerId PlayerId where
-    fromPlayerId (PlayerId playerId) = playerId
 
 type CheckPasswordError errors = Variant
     ( databaseError :: Postgres.Error
@@ -95,4 +83,4 @@ checkPassword model @ { nicknameOrEmail, password } querier = do
     when (not matches) $ left
         $ inj (SProxy :: SProxy "passwordDoesntMatch") nicknameOrEmail
 
-    pure $ { playerId: PlayerId id, emailConfirmed }
+    pure $ { id: wrap id, emailConfirmed }

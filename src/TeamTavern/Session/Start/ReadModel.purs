@@ -4,36 +4,16 @@ import Prelude
 
 import Async (Async)
 import Data.Bifunctor.Label (labelMap)
-import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Show (genericShow)
 import Data.Maybe (Maybe)
-import Data.Newtype (class Newtype)
 import Data.Symbol (SProxy(..))
 import Data.Variant (Variant)
 import Foreign (MultipleErrors)
 import Perun.Request.Body (Body)
 import Simple.JSON.Async (readJSON)
 import TeamTavern.Architecture.Perun.Request.Body (readBody)
-
-newtype NicknameOrEmail = NicknameOrEmail String
-
-derive instance newtypeNicknameOrString :: Newtype NicknameOrEmail _
-
-derive instance genericNicknameOrEmail :: Generic NicknameOrEmail _
-
-instance showNicknameOrEmail :: Show NicknameOrEmail where show = genericShow
-
-newtype Password = Password String
-
-derive instance newtypePassword :: Newtype Password _
-
-newtype Nonce = Nonce String
-
-derive instance newtypeNonce :: Newtype Nonce _
-
-derive instance genericNonce :: Generic Nonce _
-
-instance showNonce :: Show Nonce where show = genericShow
+import TeamTavern.Player.Domain.Nonce (Nonce(..))
+import TeamTavern.Player.Domain.Password (Password(..))
+import TeamTavern.Session.Domain.NicknameOrEmail (NicknameOrEmail(..))
 
 type StartDto =
     { nicknameOrEmail :: String

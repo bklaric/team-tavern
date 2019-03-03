@@ -11,14 +11,16 @@ import Global.Unsafe (unsafeStringify)
 import Node.Errors as Node
 import Postgres.Error as Postgres
 import Postgres.Result (Result, rows)
+import TeamTavern.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Infrastructure.Log (logt, print)
-import TeamTavern.Session.Start.CheckPassword (PlayerId)
-import TeamTavern.Session.Start.GenerateToken (Token)
-import TeamTavern.Session.Start.ReadModel (NicknameOrEmail, Nonce)
+import TeamTavern.Player.Domain.Id (Id)
+import TeamTavern.Player.Domain.Nonce (Nonce)
+import TeamTavern.Session.Domain.NicknameOrEmail (NicknameOrEmail)
+import TeamTavern.Session.Domain.Token (Token)
 
 type StartError = Variant
     ( signedIn ::
-        { playerId :: String
+        { cookieInfo :: CookieInfo
         , cookies :: Map String String
         }
     , unreadableDto ::
@@ -36,11 +38,11 @@ type StartError = Variant
     , passwordDoesntMatch :: NicknameOrEmail
     , unconfirmedEmail :: NicknameOrEmail
     , nothingConfirmed ::
-        { playerId :: PlayerId
+        { id :: Id
         , nonce :: Nonce
         }
     , noSessionStarted ::
-        { playerId :: PlayerId
+        { id :: Id
         , token :: Token
         }
     )
@@ -49,8 +51,8 @@ logError :: StartError -> Effect Unit
 logError startError = do
     log "Error starting session"
     startError # match
-        { signedIn: \{ playerId, cookies } -> do
-            logt $ "The request came with this player id: " <> show playerId
+        { signedIn: \{ cookieInfo, cookies } -> do
+            logt $ "The request came with this player info: " <> show cookieInfo
             logt $ "In these cookies: " <> show cookies
         , unreadableDto: \{ content, errors } -> do
             logt $ "Couldn't read dto from body: " <> show content

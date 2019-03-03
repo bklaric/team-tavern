@@ -16,9 +16,22 @@ import Postgres.Error.Codes (unique_violation)
 import Postgres.Pool (Pool)
 import Postgres.Query (Query(..), QueryParameter(..))
 import Postgres.Result (rowCount)
+import TeamTavern.Infrastructure.Cookie (CookieInfo)
+import TeamTavern.Player.Domain.Id (toString)
 import TeamTavern.Player.Domain.Nickname (Nickname)
-import TeamTavern.Player.Domain.PlayerId (toString)
-import TeamTavern.Player.Domain.Types (AuthInfo, NicknamedAbout)
+import TeamTavern.Player.Update.ReadUpdate (UpdateModel)
+
+type UpdatePlayerError errors = Variant
+  ( nicknameTaken ::
+    { nickname :: Nickname
+    , error :: Error
+    }
+  , databaseError :: Error
+  , notAuthorized ::
+    { cookieInfo :: CookieInfo
+    , nickname :: Nickname
+    }
+  | errors )
 
 updatePlayerQuery :: Query
 updatePlayerQuery = Query """
@@ -28,38 +41,25 @@ updatePlayerQuery = Query """
     where player.id = session.player_id
     and session.player_id = $1
     and session.token = $2
-    and session.consumed = true
     and session.revoked = false
     """
 
 updatePlayerQueryParameters ::
-    AuthInfo -> NicknamedAbout -> Array QueryParameter
+    CookieInfo -> UpdateModel -> Array QueryParameter
 updatePlayerQueryParameters { id, token } { nickname, about} =
     [toString id, unwrap token, unwrap nickname, unwrap about]
     <#> QueryParameter
 
-type UpdatePlayerError errors = Variant
-  ( nicknameTaken ::
-    { nickname :: Nickname
-    , error :: Error
-    }
-  , databaseError :: Error
-  , notAuthorized ::
-    { authInfo :: AuthInfo
-    , nickname :: Nickname
-    }
-  | errors )
-
 updatePlayer
     :: forall errors
     .  Pool
-    -> AuthInfo
-    -> NicknamedAbout
+    -> CookieInfo
+    -> UpdateModel
     -> Async (UpdatePlayerError errors) Unit
-updatePlayer pool authInfo nicknamedAbout = do
+updatePlayer pool cookieInfo nicknamedAbout = do
     result <- pool
         # query updatePlayerQuery
-            (updatePlayerQueryParameters authInfo nicknamedAbout)
+            (updatePlayerQueryParameters cookieInfo nicknamedAbout)
         # lmap (\error ->
             case code error == unique_violation of
             true | constraint error == Just "player_nickname_key" ->
@@ -69,4 +69,4 @@ updatePlayer pool authInfo nicknamedAbout = do
     if rowCount result == 1
         then pure unit
         else Async.left $ inj (SProxy :: SProxy "notAuthorized")
-            { authInfo, nickname: nicknamedAbout.nickname }
+            { cookieInfo, nickname: nicknamedAbout.nickname }

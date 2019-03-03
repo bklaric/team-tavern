@@ -7,11 +7,11 @@ import Async as Async
 import Data.Map (Map)
 import Data.Maybe (Maybe(..))
 import Data.Variant (SProxy(..), Variant, inj)
-import TeamTavern.Infrastructure.Cookie (lookupIdCookie)
+import TeamTavern.Infrastructure.Cookie (CookieInfo, lookupCookieInfo)
 
 type EnsureNotSignedInError errors = Variant
     ( signedIn ::
-        { playerId :: String
+        { cookieInfo :: CookieInfo
         , cookies :: Map String String
         }
     | errors )
@@ -19,8 +19,8 @@ type EnsureNotSignedInError errors = Variant
 ensureNotSignedIn :: forall errors.
     Map String String -> Async (EnsureNotSignedInError errors) Unit
 ensureNotSignedIn cookies =
-    lookupIdCookie cookies
+    lookupCookieInfo cookies
     # case _ of
         Nothing -> Async.right unit
-        Just playerId ->
-            Async.left $ inj (SProxy :: SProxy "signedIn") { playerId, cookies }
+        Just cookieInfo -> Async.left
+            $ inj (SProxy :: SProxy "signedIn") { cookieInfo, cookies }

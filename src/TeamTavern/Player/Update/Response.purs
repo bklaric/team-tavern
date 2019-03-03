@@ -1,32 +1,28 @@
-module TeamTavern.Player.Update.Response where
+module TeamTavern.Player.Update.SendResponse
+    (BadRequestContent, sendResponse) where
 
 import Prelude
 
 import Async (Async, alwaysRight)
 import Data.Array (fromFoldable)
 import Data.Variant (SProxy(..), Variant, inj, match)
-import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, noContent, notFound__, unauthorized__)
+import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, noContent_, unauthorized__)
 import Simple.JSON (writeJSON)
-import TeamTavern.Infrastructure.Cookie (setNicknameCookieHeader)
-import TeamTavern.Player.Domain.Nickname (Nickname)
-import TeamTavern.Player.Update.Types (UpdateError)
-
-type AboutErrorResponseContent = Variant
-    ( invalidNickname :: {}
-    , invalidAbout :: {}
-    )
+import TeamTavern.Player.Update.LogError (UpdateError)
 
 type BadRequestContent = Variant
-    ( invalidIdentifiers :: Array AboutErrorResponseContent
+    ( invalidIdentifiers :: Array (Variant
+        ( invalidNickname :: {}
+        , invalidAbout :: {}
+        ))
     , nicknameTaken :: {}
     )
 
 errorResponse :: UpdateError -> Response
 errorResponse = match
-    { invalidNickname: const $ notFound__
-    , authNotPresent: const $ unauthorized__
-    , unreadableUpdate: const $ badRequest__
-    , invalidUpdate: \{ errors } ->
+    { cookieInfoNotPresent: const $ unauthorized__
+    , unreadableDto: const $ badRequest__
+    , invalidModel: \{ errors } ->
         errors
         <#> (match
             { nickname: const $ inj (SProxy :: SProxy "invalidNickname") {}
@@ -43,8 +39,8 @@ errorResponse = match
     , notAuthorized: const $ forbidden__
     }
 
-successResponse :: Nickname -> Response
-successResponse nickname = noContent $ setNicknameCookieHeader nickname
+successResponse :: Unit -> Response
+successResponse _ = noContent_
 
-response :: Async UpdateError Nickname -> (forall left. Async left Response)
-response = alwaysRight errorResponse successResponse
+sendResponse :: Async UpdateError Unit -> (forall left. Async left Response)
+sendResponse = alwaysRight errorResponse successResponse

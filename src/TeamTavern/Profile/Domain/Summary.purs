@@ -1,5 +1,5 @@
 module TeamTavern.Profile.Domain.Summary
-    (Summary, SummaryError, maxLength, create, create', create'') where
+    (Summary(..), SummaryError, maxLength, create) where
 
 import Prelude
 
@@ -32,8 +32,8 @@ create summary =
     Wrapped.create trim [empty, tooLong maxLength, notPrintable]
         Summary summary
 
-create' :: String -> Either (NonEmptyList SummaryError) Summary
-create' = create >>> toEither
+-- create' :: String -> Either (NonEmptyList SummaryError) Summary
+-- create' = create >>> toEither
 
-create'' :: String -> Maybe Summary
-create'' = create >>> Validated.hush
+-- create'' :: String -> Maybe Summary
+-- create'' = create >>> Validated.hush

@@ -1,8 +1,5 @@
 module TeamTavern.Player.ViewHeader.LoadHeader
-    ( PlayerId(..)
-    , Nickname(..)
-    , LoadPlayerHeaderResult
-    , LoadHeaderError
+    ( LoadHeaderResult
     , loadHeader
     ) where
 
@@ -11,9 +8,6 @@ import Prelude
 import Async (Async, note)
 import Data.Array (head)
 import Data.Bifunctor.Label (label, labelMap)
-import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Show (genericShow)
-import Data.Newtype (class Newtype)
 import Data.Symbol (SProxy(..))
 import Data.Traversable (traverse)
 import Data.Variant (Variant, inj)
@@ -24,18 +18,10 @@ import Postgres.Pool (Pool)
 import Postgres.Query (Query(..), QueryParameter(..))
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
+import TeamTavern.Player.Domain.Id (Id, toString)
+import TeamTavern.Player.Domain.Nickname (Nickname(..))
 
-newtype PlayerId = PlayerId Int
-
-derive instance genericPlayerId :: Generic PlayerId _
-
-instance showPlayerId :: Show PlayerId where show = genericShow
-
-newtype Nickname = Nickname String
-
-derive instance newtypeNickname :: Newtype Nickname _
-
-type LoadPlayerHeaderResult = { nickname :: Nickname }
+type LoadHeaderResult = { nickname :: Nickname }
 
 type LoadHeaderError errors = Variant
     ( databaseError :: Error
@@ -43,7 +29,7 @@ type LoadHeaderError errors = Variant
         { result :: Result
         , errors :: MultipleErrors
         }
-    , notFound :: PlayerId
+    , notFound :: Id
     | errors )
 
 queryString :: Query
@@ -53,11 +39,11 @@ queryString = Query """
     where id = $1
     """
 
-queryParameters :: PlayerId -> Array QueryParameter
-queryParameters (PlayerId id) = QueryParameter <$> [show id]
+queryParameters :: Id -> Array QueryParameter
+queryParameters id = QueryParameter <$> [toString id]
 
 loadHeader :: forall errors.
-    Pool -> PlayerId -> Async (LoadHeaderError errors) LoadPlayerHeaderResult
+    Pool -> Id -> Async (LoadHeaderError errors) LoadHeaderResult
 loadHeader pool id = do
     result <- pool
         # query queryString (queryParameters id)

@@ -12,10 +12,10 @@ import Perun.Response (Response)
 import Postgres.Async.Pool (withTransaction)
 import Postgres.Pool (Pool)
 import TeamTavern.Infrastructure.EnsureNotSignedIn (ensureNotSignedIn)
+import TeamTavern.Session.Domain.Token as Token
 import TeamTavern.Session.Start.CheckPassword (checkPassword)
 import TeamTavern.Session.Start.ConfirmEmail (confirmEmail)
 import TeamTavern.Session.Start.CreateSession (createSession)
-import TeamTavern.Session.Start.GenerateToken (generateToken)
 import TeamTavern.Session.Start.LogError (logError)
 import TeamTavern.Session.Start.ReadModel (readModel)
 import TeamTavern.Session.Start.SendResponse (sendResponse)
@@ -32,22 +32,22 @@ start pool cookies body =
     result <- pool # withTransaction (inj (SProxy :: SProxy "databaseError"))
         (\client -> do
             -- Check if password hash matches.
-            { playerId, emailConfirmed } <-
+            { id, emailConfirmed } <-
                 checkPassword { nicknameOrEmail, password } client
 
             -- Generate session token.
-            token <- generateToken
+            token <- Token.generate
 
             -- Confirm email or ensure it is confirmed.
             case nonce of
                 Nothing -> when (not emailConfirmed) $ left
                     $ inj (SProxy :: SProxy "unconfirmedEmail") nicknameOrEmail
                 Just nonce' ->
-                    confirmEmail { playerId, nonce: nonce' } client
+                    confirmEmail { id, nonce: nonce' } client
 
             -- Create a new session.
-            createSession { playerId, token } client
+            createSession { id, token } client
 
-            pure { playerId, token })
+            pure { id, token })
 
     pure result

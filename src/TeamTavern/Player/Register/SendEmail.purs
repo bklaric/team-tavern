@@ -6,6 +6,7 @@ import Prelude
 import Async (Async)
 import Data.Bifunctor.Label (labelMap)
 import Data.Maybe (Maybe(..))
+import Data.Newtype (unwrap)
 import Data.Nullable (toNullable)
 import Data.Symbol (SProxy(..))
 import Data.Variant (Variant)
@@ -14,8 +15,9 @@ import Postmark.Async.Client as Postmark
 import Postmark.Client (Client)
 import Postmark.Error (Error)
 import Postmark.Message (Message)
-import TeamTavern.Player.Register.GenerateNonce (Nonce, unNonce)
-import TeamTavern.Player.Register.ValidateModel (Email, Nickname, unEmail, unNickname)
+import TeamTavern.Player.Domain.Email (Email)
+import TeamTavern.Player.Domain.Nickname (Nickname)
+import TeamTavern.Player.Domain.Nonce (Nonce)
 
 type SendEmailModel =
     { email :: Email
@@ -32,12 +34,12 @@ type SendEmailError errors = Variant
 
 message :: SendEmailModel -> Message
 message { email, nickname, nonce } =
-    { to: unEmail email
+    { to: unwrap email
     , from: "admin@teamtavern.net"
     , subject: toNullable $ Just "TeamTavern registration"
     , htmlBody: toNullable $ Just $
-        "Hi " <> unNickname nickname <> ",<br /><br />"
-        <> "Please <a href=\"https://www.teamtavern.net/signin?nonce=" <> unNonce nonce <> "\">click here</a> to verify your email. "
+        "Hi " <> unwrap nickname <> ",<br /><br />"
+        <> "Please <a href=\"https://www.teamtavern.net/signin?nonce=" <> unwrap nonce <> "\">click here</a> to verify your email. "
         <> "Thank you for registering to TeamTavern."
     , textBody: toNullable Nothing
     }

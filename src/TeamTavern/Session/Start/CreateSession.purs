@@ -11,18 +11,18 @@ import Postgres.Async.Query (query)
 import Postgres.Error (Error)
 import Postgres.Query (class Querier, Query(..), QueryParameter(..))
 import Postgres.Result (rowCount)
-import TeamTavern.Session.Start.CheckPassword (PlayerId)
-import TeamTavern.Session.Start.GenerateToken (Token, unToken)
+import TeamTavern.Player.Domain.Id (Id, toString)
+import TeamTavern.Session.Domain.Token (Token)
 
 type CreateSessionModel =
-    { playerId :: PlayerId
+    { id :: Id
     , token :: Token
     }
 
 type CreateSessionError errors = Variant
     ( databaseError :: Error
     , noSessionStarted ::
-        { playerId :: PlayerId
+        { id :: Id
         , token :: Token
         }
     | errors )
@@ -34,17 +34,17 @@ createSessionQuery = Query """
     """
 
 createSessionParameters :: CreateSessionModel -> Array QueryParameter
-createSessionParameters { playerId, token } =
-    [show $ unwrap playerId, unToken token]
+createSessionParameters { id, token } =
+    [toString id, unwrap token]
     <#> QueryParameter
 
 createSession :: forall querier errors. Querier querier =>
     CreateSessionModel -> querier -> Async (CreateSessionError errors) Unit
-createSession model @ { playerId, token } querier = do
+createSession model @ { id, token } querier = do
     result <- querier
         # query createSessionQuery (createSessionParameters model)
         # label (SProxy :: SProxy "databaseError")
     case rowCount result of
         1 -> pure unit
         _ -> left $ inj (SProxy :: SProxy "noSessionStarted")
-            { playerId, token }
+            { id, token }

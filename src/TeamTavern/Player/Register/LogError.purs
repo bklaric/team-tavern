@@ -4,6 +4,7 @@ import Prelude
 
 import Data.List.Types (NonEmptyList)
 import Data.Map (Map)
+import Data.Newtype (unwrap)
 import Data.Variant (Variant, match)
 import Effect (Effect)
 import Effect.Console (log)
@@ -11,13 +12,16 @@ import Foreign (MultipleErrors)
 import Node.Errors as Node
 import Postgres.Error as Postgres
 import Postmark.Error as Postmark
+import TeamTavern.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Infrastructure.Log (logt, print)
+import TeamTavern.Player.Domain.Email (Email)
+import TeamTavern.Player.Domain.Nickname (Nickname)
 import TeamTavern.Player.Register.ReadDto (RegisterDto)
-import TeamTavern.Player.Register.ValidateModel (Email, Nickname, RegisterModelError, unEmail, unNickname)
+import TeamTavern.Player.Register.ValidateModel (RegisterModelError)
 
 type RegisterError = Variant
     ( signedIn ::
-        { playerId :: String
+        { cookieInfo :: CookieInfo
         , cookies :: Map String String
         }
     , unreadableDto ::
@@ -49,8 +53,9 @@ logError :: RegisterError -> Effect Unit
 logError registerError = do
     log "Error registering player"
     registerError # match
-        { signedIn: \{ playerId, cookies } -> do
-            logt $ "The request came with this player id: " <> show playerId
+        { signedIn: \{ cookieInfo, cookies } -> do
+            logt $ "The request came with this player cookie info: "
+                <> show cookieInfo
             logt $ "In these cookies: " <> show cookies
         , unreadableDto: \{ content, errors } -> do
             logt $ "Couldn't read dto from body: " <> show content
@@ -64,15 +69,15 @@ logError registerError = do
             logt $ "Generating random bytes resulted in this error: "
                 <> print error
         , emailTaken: \{ email, error } -> do
-            logt $ "Email is already taken: " <> unEmail email
+            logt $ "Email is already taken: " <> unwrap email
             logt $ "According to this error: " <> print error
         , nicknameTaken: \{ nickname, error } -> do
-            logt $ "Nickname is already taken: " <> unNickname nickname
+            logt $ "Nickname is already taken: " <> unwrap nickname
             logt $ "According to this error: " <> print error
         , databaseError: \error ->
             logt $ "Unknown database error ocurred: " <> print error
         , sendEmailError: \{ info: { email }, error } -> do
-            logt $ "Couldn't send email to address: " <> unEmail email
+            logt $ "Couldn't send email to address: " <> unwrap email
             logt $ "Email sending resulted in this error: "
                 <> show error.status <> ", " <> show error.code <> ", "
                 <> error.message

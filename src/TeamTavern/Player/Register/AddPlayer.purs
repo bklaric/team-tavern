@@ -5,6 +5,7 @@ import Prelude
 import Async (Async)
 import Data.Bifunctor (lmap)
 import Data.Maybe (Maybe(..))
+import Data.Newtype (unwrap)
 import Data.Variant (SProxy(..), Variant, inj)
 import Node.Errors.Class (code)
 import Postgres.Async.Query (execute)
@@ -12,9 +13,10 @@ import Postgres.Error (Error, constraint)
 import Postgres.Error.Codes (unique_violation)
 import Postgres.Pool (Pool)
 import Postgres.Query (Query(..), QueryParameter(..))
-import TeamTavern.Infrastructure.GenerateHash (Hash, unHash)
-import TeamTavern.Player.Register.GenerateNonce (Nonce, unNonce)
-import TeamTavern.Player.Register.ValidateModel (Email, Nickname, unEmail, unNickname)
+import TeamTavern.Player.Domain.Email (Email)
+import TeamTavern.Player.Domain.Hash (Hash)
+import TeamTavern.Player.Domain.Nickname (Nickname)
+import TeamTavern.Player.Domain.Nonce (Nonce)
 
 type AddPlayerModel =
     { email :: Email
@@ -43,7 +45,7 @@ addPlayerQuery = Query """
 
 addPlayerQueryParameters :: AddPlayerModel -> Array QueryParameter
 addPlayerQueryParameters { email, nickname, hash, nonce } =
-    [unEmail email, unNickname nickname, unHash hash, unNonce nonce]
+    [unwrap email, unwrap nickname, unwrap hash, unwrap nonce]
     <#> QueryParameter
 
 addPlayer

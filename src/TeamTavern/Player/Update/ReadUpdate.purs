@@ -13,36 +13,44 @@ import Foreign (MultipleErrors)
 import Perun.Request.Body (Body)
 import Simple.JSON (readJSON)
 import TeamTavern.Architecture.Perun.Request.Body (readBody)
-import TeamTavern.Player.Domain.About (AboutError)
+import TeamTavern.Player.Domain.About (About, AboutError)
 import TeamTavern.Player.Domain.About as About
-import TeamTavern.Player.Domain.Nickname (NicknameError)
+import TeamTavern.Player.Domain.Nickname (Nickname, NicknameError)
 import TeamTavern.Player.Domain.Nickname as Nickname
-import TeamTavern.Player.Domain.Types (NicknamedAbout)
-import TeamTavern.Player.Infrastructure.Types (NicknamedAboutModel)
 
-type NicknamedAboutError = Variant
+type UpdateDto =
+    { nickname :: String
+    , about :: String
+    }
+
+type UpdateModel =
+    { nickname :: Nickname
+    , about :: About
+    }
+
+type UpdateModelError = Variant
     ( nickname :: NonEmptyList NicknameError
     , about :: NonEmptyList AboutError
     )
 
 type ReadUpdateError errors = Variant
-    ( unreadableUpdate ::
+    ( unreadableDto ::
         { content :: String
         , errors :: MultipleErrors
         }
-    , invalidUpdate ::
-        { nicknamedAbout :: NicknamedAboutModel
-        , errors :: NonEmptyList NicknamedAboutError
+    , invalidModel ::
+        { dto :: UpdateDto
+        , errors :: NonEmptyList UpdateModelError
         }
     | errors )
 
 readUpdate :: forall errors.
-    Body -> Async (ReadUpdateError errors) NicknamedAbout
+    Body -> Async (ReadUpdateError errors) UpdateModel
 readUpdate body = do
     content <- readBody body
-    nicknamedAbout @ { nickname, about } :: NicknamedAboutModel <-
+    dto @ { nickname, about } :: UpdateDto <-
         readJSON content
-        # labelMap (SProxy :: SProxy "unreadableUpdate") { content, errors: _ }
+        # labelMap (SProxy :: SProxy "unreadableDto") { content, errors: _ }
         # Async.fromEither
     { nickname: _, about: _ }
         <$> (Nickname.create nickname
@@ -50,5 +58,5 @@ readUpdate body = do
         <*> (About.create about
             # Validated.label (SProxy :: SProxy "about"))
         # Async.fromValidated
-        # labelMap (SProxy :: SProxy "invalidUpdate")
-            { nicknamedAbout, errors: _ }
+        # labelMap (SProxy :: SProxy "invalidModel")
+            { dto, errors: _ }
