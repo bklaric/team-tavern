@@ -22,7 +22,7 @@ import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Script.Cookie (hasPlayerIdCookie)
 import TeamTavern.Client.Script.Navigate (navigate_)
 import TeamTavern.Client.Snippets.ErrorClasses (errorClass, inputErrorClass, otherErrorClass)
-import TeamTavern.Profile.Create.Response as Create
+import TeamTavern.Profile.Create.SendResponse as Create
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 

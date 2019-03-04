@@ -47,7 +47,7 @@ errorResponse = match
     }
 
 successResponse :: Unit -> Response
-successResponse _ = noContent_
+successResponse = const noContent_
 
 sendResponse :: Async UpdateError Unit -> (forall left. Async left Response)
 sendResponse = alwaysRight errorResponse successResponse

@@ -21,7 +21,7 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
-import TeamTavern.Client.Script.Cookie (getPlayerInfo, hasPlayerIdCookie)
+import TeamTavern.Client.Script.Cookie (getPlayerId, hasPlayerIdCookie)
 import TeamTavern.Client.Script.Navigate (navigate_)
 import TeamTavern.Client.Snippets.ErrorClasses (errorClass, inputErrorClass, otherErrorClass)
 import TeamTavern.Player.Update.SendResponse as Update
@@ -169,7 +169,7 @@ eval (Init nickname send) = do
     if isSignedIn
         then do
             state <- H.lift $ loadPlayer nickname
-            playerInfo <- H.lift $ Async.fromEffect getPlayerInfo
+            playerInfo <- H.lift $ Async.fromEffect getPlayerId
             case (Tuple state playerInfo) of
                 Tuple (Player playerState) (Just playerInfo') ->
                     if playerState.nickname == playerInfo'.nickname

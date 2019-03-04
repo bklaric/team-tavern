@@ -16,7 +16,7 @@ import Halogen.HTML.Properties as HP
 import Simple.JSON.Async as Json
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
-import TeamTavern.Client.Script.Cookie (getPlayerInfo)
+import TeamTavern.Client.Script.Cookie (getPlayerId)
 import TeamTavern.Game.View.SendResponse as View
 
 data Query send = Init String send
@@ -61,7 +61,7 @@ loadGame handle = Async.unify do
         200 -> FetchRes.text response >>= Json.readJSON # lmap (const Error)
         404 -> Async.left NotFound
         _ -> Async.left Error
-    playerInfo <- Async.fromEffect getPlayerInfo
+    playerInfo <- Async.fromEffect getPlayerId
     pure $ Game content
         (maybe false (const true) playerInfo)
         (maybe false (_.id >>> (_ == content.administratorId)) playerInfo)

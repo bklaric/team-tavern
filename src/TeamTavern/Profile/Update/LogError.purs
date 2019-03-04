@@ -2,22 +2,42 @@ module TeamTavern.Profile.Update.LogError where
 
 import Prelude
 
-import Data.Variant (match)
+import Data.List.Types (NonEmptyList)
+import Data.Map (Map)
+import Data.Variant (Variant, match)
 import Effect (Effect)
 import Effect.Console (log)
+import Foreign (MultipleErrors)
+import Postgres.Error (Error)
+import TeamTavern.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Infrastructure.Log (logt, print)
-import TeamTavern.Profile.Update.Types (UpdateError)
+import TeamTavern.Profile.Domain.Summary (SummaryError)
+import TeamTavern.Profile.Routes (IdentifiersSingle)
+
+type UpdateError = Variant
+    ( cookieInfoNotPresent :: Map String String
+    , unreadableDto ::
+        { content :: String
+        , errors :: MultipleErrors
+        }
+    , invalidSummary ::
+        { summary :: String
+        , errors :: NonEmptyList SummaryError
+        }
+    , databaseError :: Error
+    , notAuthorized ::
+        { auth :: CookieInfo
+        , identifiers :: IdentifiersSingle
+        }
+    )
 
 logError :: UpdateError -> Effect Unit
 logError updateError = do
     log "Error updating profile"
     updateError # match
-        { invalidIdentifiers: \{ identifiers, errors } -> do
-            logt $ "Couldn't validate identifiers: " <> show identifiers
-            logt $ "Validation resulted in these errors: " <> show errors
-        , authNotPresent: \cookies ->
-            logt $ "Couldn't read auth info from cookies: " <> show cookies
-        , unreadableSummary: \{ content, errors } -> do
+        { cookieInfoNotPresent: \cookies ->
+            logt $ "Couldn't read info from cookies: " <> show cookies
+        , unreadableDto: \{ content, errors } -> do
             logt $ "Couldn't read summary out of content: " <> show content
             logt $ "Reading resulted in these errors: " <> show errors
         , invalidSummary: \{ summary, errors } -> do

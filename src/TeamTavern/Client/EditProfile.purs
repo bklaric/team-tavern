@@ -18,11 +18,11 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
-import TeamTavern.Client.Script.Cookie (getPlayerInfo)
+import TeamTavern.Client.Script.Cookie (getPlayerId)
 import TeamTavern.Client.Script.Navigate (navigate_)
 import TeamTavern.Client.Snippets.ErrorClasses (errorClass, inputErrorClass, otherErrorClass)
-import TeamTavern.Profile.Update.Response as Update
-import TeamTavern.Profile.View.Response as View
+import TeamTavern.Profile.Update.SendResponse as Update
+import TeamTavern.Profile.View.SendResponse as View
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
@@ -122,7 +122,7 @@ updateProfile state @ { nickname, handle, summary } =
 
 eval :: forall left. Query ~> H.HalogenM State Query () Void (Async left)
 eval (Init nickname' handle' send) = do
-    playerInfo <- H.liftEffect getPlayerInfo
+    playerInfo <- H.liftEffect getPlayerId
     case playerInfo of
         Just { id, nickname } -> do
             H.liftEffect $ when (nickname /= nickname') $ navigate_ "/"
