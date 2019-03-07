@@ -142,7 +142,7 @@ render Error = HH.p_ [ HH.text
 
 loadGame :: forall left. String -> Async left State
 loadGame handle' = Async.unify do
-    response <- Fetch.fetch_ ("/api/games/" <> handle') # lmap (const Error)
+    response <- Fetch.fetch_ ("/api/games/by-handle/" <> handle') # lmap (const Error)
     { administratorId, title, handle, description } :: View.OkContent <-
         case FetchRes.status response of
         200 -> FetchRes.text response
@@ -167,7 +167,7 @@ loadGame handle' = Async.unify do
 updateGame :: forall left. State' -> Async left (Maybe State')
 updateGame state @ { title, handle, description, originalHandle } =
     Async.unify do
-    response <- Fetch.fetch ("/api/games/" <> originalHandle)
+    response <- Fetch.fetch ("/api/games/by-handle/" <> originalHandle)
         (  Fetch.method := PUT
         <> Fetch.body := Json.writeJSON { title, handle, description }
         <> Fetch.credentials := Fetch.Include
@@ -201,10 +201,10 @@ eval (Init handle send) = do
     if isSignedIn
         then do
             state <- H.lift $ loadGame handle
-            playerInfo <- H.lift $ Async.fromEffect getPlayerId
-            case (Tuple state playerInfo) of
-                Tuple (Game { administratorId }) (Just { id }) ->
-                    if administratorId == id
+            id <- H.lift $ Async.fromEffect getPlayerId
+            case (Tuple state id) of
+                Tuple (Game { administratorId }) (Just playerId) ->
+                    if administratorId == playerId
                     then H.put state
                     else H.liftEffect $ navigate_ "/"
                 _ -> H.liftEffect $ navigate_ "/"

@@ -56,15 +56,15 @@ render Error = HH.p_ [ HH.text
 
 loadGame :: forall left. String -> Async left State
 loadGame handle = Async.unify do
-    response <- Fetch.fetch_ ("/api/games/" <> handle) # lmap (const Error)
+    response <- Fetch.fetch_ ("/api/games/by-handle/" <> handle) # lmap (const Error)
     content <- case FetchRes.status response of
         200 -> FetchRes.text response >>= Json.readJSON # lmap (const Error)
         404 -> Async.left NotFound
         _ -> Async.left Error
-    playerInfo <- Async.fromEffect getPlayerId
+    playerId <- Async.fromEffect getPlayerId
     pure $ Game content
-        (maybe false (const true) playerInfo)
-        (maybe false (_.id >>> (_ == content.administratorId)) playerInfo)
+        (maybe false (const true) playerId)
+        (maybe false (_ == content.administratorId) playerId)
 
 eval :: forall left.
     Query ~> H.HalogenM State Query ChildSlots Void (Async left)

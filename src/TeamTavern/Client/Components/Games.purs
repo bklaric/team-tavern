@@ -1,4 +1,4 @@
-module TeamTavern.Client.Blocks.Games (Query, Slot, games) where
+module TeamTavern.Client.Components.Games (Query, Slot, games) where
 
 import Prelude
 

@@ -39,7 +39,8 @@ data Query send
     | Update Event send
 
 type PlayerState =
-    { originalNickname :: String
+    { id :: Int
+    , originalNickname :: String
     , nickname :: String
     , about :: String
     , nicknameError :: Boolean
@@ -122,12 +123,13 @@ render Error = HH.p_ [ HH.text
 loadPlayer :: forall left. String -> Async left State
 loadPlayer nickname' = Async.unify do
     response <- Fetch.fetch_ ("/api/players/by-nickname/" <> nickname') # lmap (const Error)
-    { nickname, about } :: View.OkContent <- case FetchRes.status response of
+    { id, nickname, about } :: View.OkContent <- case FetchRes.status response of
         200 -> FetchRes.text response >>= JsonAsync.readJSON # lmap (const Error)
         404 -> Async.left NotFound
         _ -> Async.left Error
     pure $ Player
-        { originalNickname: nickname
+        { id
+        , originalNickname: nickname
         , nickname
         , about
         , nicknameError: false
@@ -138,7 +140,7 @@ loadPlayer nickname' = Async.unify do
 
 updatePlayer :: forall left. PlayerState -> Async left (Maybe PlayerState)
 updatePlayer state @ { originalNickname, nickname, about } = Async.unify do
-    response <- Fetch.fetch ("/api/players/" <> originalNickname)
+    response <- Fetch.fetch ("/api/players/by-nickname/" <> originalNickname)
         (  Fetch.method := PUT
         <> Fetch.body := Json.writeJSON { nickname, about }
         <> Fetch.credentials := Fetch.Include
@@ -169,10 +171,10 @@ eval (Init nickname send) = do
     if isSignedIn
         then do
             state <- H.lift $ loadPlayer nickname
-            playerInfo <- H.lift $ Async.fromEffect getPlayerId
-            case (Tuple state playerInfo) of
-                Tuple (Player playerState) (Just playerInfo') ->
-                    if playerState.nickname == playerInfo'.nickname
+            playerId <- H.lift $ Async.fromEffect getPlayerId
+            case (Tuple state playerId) of
+                Tuple (Player playerState) (Just playerId') ->
+                    if playerState.id == playerId'
                     then H.put state
                     else H.liftEffect $ navigate_ "/"
                 _ -> H.liftEffect $ navigate_ "/"

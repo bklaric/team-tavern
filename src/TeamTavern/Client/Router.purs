@@ -12,10 +12,10 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import Simple.JSON (read)
-import TeamTavern.Client.Blocks.Games (games)
-import TeamTavern.Client.Blocks.Games as Games
-import TeamTavern.Client.Blocks.WelcomeBanner (welcomeBanner)
-import TeamTavern.Client.Blocks.WelcomeBanner as WelcomeBanner
+import TeamTavern.Client.Components.Games (games)
+import TeamTavern.Client.Components.Games as Games
+import TeamTavern.Client.Components.WelcomeBanner (welcomeBanner)
+import TeamTavern.Client.Components.WelcomeBanner as WelcomeBanner
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Components.ProfilesByGame (profilesByGame)
@@ -56,7 +56,6 @@ data State
     | EditProfile String String
     | Register
     | SignIn
-    | Code
     | Welcome { email :: String, nickname :: String, emailSent :: Boolean }
     | CodeSent { email :: String, nickname :: String }
     | NotFound
@@ -75,10 +74,8 @@ type ChildSlots =
     , editPlayer :: EditPlayer.Slot Unit
     , register :: Register.Slot Unit
     , signIn :: SignIn.Slot Unit
-    , signInCode :: SignInCode.Slot Unit
     , homeAnchor :: NavigationAnchor.Slot Unit
     , signInAnchor :: NavigationAnchor.Slot Unit
-    , signInCodeAnchor :: NavigationAnchor.Slot Unit
     )
 
 topBarWithContent
@@ -104,7 +101,6 @@ render (CreateProfile handle) = topBarWithContent [ createProfile handle ]
 render (EditProfile nickname handle) = topBarWithContent [ editProfile nickname handle]
 render Register = singleContent [ register ]
 render SignIn = singleContent [ signIn ]
-render Code = singleContent [ signInCode ]
 render (Welcome { email, nickname, emailSent }) = singleContent
     [ HH.div_ $
         [ HH.h3_ [ HH.text $ "Welcome to TeamTavern, " <> nickname <> "!" ] ]
@@ -164,8 +160,6 @@ eval (ChangeRoute state route send) = do
             just Register
         ["", "signin"] ->
             just SignIn
-        ["", "code"] ->
-            just Code
         ["", "welcome"] ->
             case read state of
             Right identifiers -> just $ Welcome identifiers

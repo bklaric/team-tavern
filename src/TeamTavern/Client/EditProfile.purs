@@ -122,13 +122,13 @@ updateProfile state @ { nickname, handle, summary } =
 
 eval :: forall left. Query ~> H.HalogenM State Query () Void (Async left)
 eval (Init nickname' handle' send) = do
-    playerInfo <- H.liftEffect getPlayerId
-    case playerInfo of
-        Just { id, nickname } -> do
-            H.liftEffect $ when (nickname /= nickname') $ navigate_ "/"
-            state <- H.lift $ loadProfile nickname' handle'
-            H.put state
-        Nothing -> H.liftEffect $ navigate_ "/"
+    -- playerId <- H.liftEffect getPlayerId
+    -- case playerId of
+    --     Just id -> do
+    --         H.liftEffect $ when (nickname /= nickname') $ navigate_ "/"
+    --         state <- H.lift $ loadProfile nickname' handle'
+    --         H.put state
+    --     Nothing -> H.liftEffect $ navigate_ "/"
     pure send
 eval (SummaryInput summary send) = do
     H.modify_ $ case _ of

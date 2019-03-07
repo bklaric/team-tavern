@@ -1,4 +1,4 @@
-module TeamTavern.Client.Blocks.WelcomeBanner (Query, Slot, welcomeBanner) where
+module TeamTavern.Client.Components.WelcomeBanner (Query, Slot, welcomeBanner) where
 
 import Prelude
 
