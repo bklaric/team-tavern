@@ -18,33 +18,20 @@ import Postgres.Pool (Pool)
 import Postgres.Query (Query(..), QueryParameter(..))
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
-import TeamTavern.Game.Domain.Handle (Handle)
-import TeamTavern.Game.Domain.Title (Title)
 import TeamTavern.Player.Domain.About (About)
 import TeamTavern.Player.Domain.Id (Id)
 import TeamTavern.Player.Domain.Nickname (Nickname)
-import TeamTavern.Profile.Domain.Summary (Summary)
 
 type LoadPlayerDto =
     { id :: Int
     , nickname :: String
     , about :: String
-    , profiles :: Array
-        { handle :: String
-        , title :: String
-        , summary :: String
-        }
     }
 
 type LoadPlayerResult =
     { id :: Id
     , nickname :: Nickname
     , about :: About
-    , profiles :: Array
-        { handle :: Handle
-        , title :: Title
-        , summary :: Summary
-        }
     }
 
 type LoadPlayerError errors = Variant
@@ -58,21 +45,9 @@ type LoadPlayerError errors = Variant
 
 loadPlayerQuery :: Query
 loadPlayerQuery = Query """
-    select
-        player.id,
-        player.nickname,
-        player.about,
-        coalesce(json_agg(json_build_object(
-            'handle', game.handle,
-            'title', game.title,
-            'summary', profile.summary
-        ) order by profile.created desc)
-        filter (where game.handle is not null), '[]'::json) as profiles
-    from profile
-    right join player on player.id = profile.player_id
-    left join game on game.id = profile.game_id
+    select player.id, player.nickname, player.about
+    from player
     where player.nickname = $1
-    group by player.about
     """
 
 loadPlayerQueryParameters :: Nickname -> Array QueryParameter
@@ -87,14 +62,10 @@ loadPlayer pool nickname' = do
     views <- rows result
         # traverse read
         # labelMap (SProxy :: SProxy "unreadableDto") { result, errors: _ }
-    view @ { id, nickname, about, profiles } :: LoadPlayerDto <- head views
+    view @ { id, nickname, about } :: LoadPlayerDto <- head views
         # Async.note (inj (SProxy :: SProxy "notFound") nickname')
     pure
         { id: wrap id
         , nickname: wrap nickname
         , about: wrap about
-        , profiles: profiles <#> \{ handle, title, summary } ->
-            { handle: wrap handle
-            , title: wrap title
-            , summary: wrap summary}
         }

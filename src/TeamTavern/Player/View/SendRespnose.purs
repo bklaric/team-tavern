@@ -14,11 +14,6 @@ type OkContent =
     { id :: Int
     , nickname :: String
     , about :: String
-    , profiles :: Array
-        { handle :: String
-        , title :: String
-        , summary :: String
-        }
     }
 
 errorResponse :: ViewError -> Response
@@ -29,15 +24,10 @@ errorResponse = match
     }
 
 successResponse :: LoadPlayerResult -> Response
-successResponse { id, nickname, about, profiles } = ok_ $ writeJSON (
+successResponse { id, nickname, about } = ok_ $ writeJSON (
     { id: unwrap id
     , nickname: unwrap nickname
     , about: unwrap about
-    , profiles: profiles <#> \{ handle, title, summary } ->
-        { handle: unwrap handle
-        , title: unwrap title
-        , summary: unwrap summary
-        }
     } :: OkContent)
 
 response ::
