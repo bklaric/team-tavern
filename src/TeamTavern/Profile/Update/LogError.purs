@@ -12,7 +12,7 @@ import Postgres.Error (Error)
 import TeamTavern.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Infrastructure.Log (logt, print)
 import TeamTavern.Profile.Domain.Summary (SummaryError)
-import TeamTavern.Profile.Routes (IdentifiersSingle)
+import TeamTavern.Profile.Routes (Identifiers)
 
 type UpdateError = Variant
     ( cookieInfoNotPresent :: Map String String
@@ -27,7 +27,7 @@ type UpdateError = Variant
     , databaseError :: Error
     , notAuthorized ::
         { auth :: CookieInfo
-        , identifiers :: IdentifiersSingle
+        , identifiers :: Identifiers
         }
     )
 

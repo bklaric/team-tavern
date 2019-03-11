@@ -9,7 +9,7 @@ import Foreign (Foreign, MultipleErrors)
 import Global.Unsafe (unsafeStringify)
 import Postgres.Error (Error)
 import TeamTavern.Infrastructure.Log (logt, print)
-import TeamTavern.Profile.Routes (IdentifiersSingle)
+import TeamTavern.Profile.Routes (Identifiers)
 
 type ViewError = Variant
     ( databaseError :: Error
@@ -17,7 +17,7 @@ type ViewError = Variant
         { foreignDto :: Foreign
         , errors :: MultipleErrors
         }
-    , notFound :: IdentifiersSingle
+    , notFound :: Identifiers
     )
 
 logError :: ViewError -> Effect Unit

@@ -1,23 +1,17 @@
 module TeamTavern.Profile.Routes where
 
-import Data.Maybe (Maybe)
 import Jarilo.Junction (type (:<|>), type (:=))
 import Jarilo.Method (Get, Post, Put)
 import Jarilo.Path (type (:>), End)
-import Jarilo.Query (type (:?), NoQuery, Optional)
+import Jarilo.Query (Mandatory, NoQuery)
 import Jarilo.Route (Route)
 import Jarilo.Segment (Capture, Literal)
 import TeamTavern.Game.Domain.Handle (Handle)
 import TeamTavern.Player.Domain.Nickname (Nickname)
 
-type IdentifiersSingle =
+type Identifiers =
     { handle :: Handle
     , nickname :: Nickname
-    }
-
-type IdentifiersMany =
-    { handle :: Maybe Handle
-    , nickname :: Maybe Nickname
     }
 
 type CreateProfile = Route
@@ -28,12 +22,17 @@ type CreateProfile = Route
     :> End)
     NoQuery
 
-type ViewAllProfiles = Route
+type ViewProfilesByGame = Route
     Get
     (  Literal "profiles"
     :> End)
-    (  Optional "handle" Handle
-    :? Optional "nickname" Nickname)
+    (Mandatory "handle" Handle)
+
+type ViewProfilesByHandle = Route
+    Get
+    (  Literal "profiles"
+    :> End)
+    (Mandatory "nickname" Nickname)
 
 type ViewProfile = Route
     Get
@@ -54,7 +53,8 @@ type UpdateProfile = Route
     NoQuery
 
 type ProfileRoutes
-    =    "createProfile"   := CreateProfile
-    :<|> "viewAllProfiles" := ViewAllProfiles
-    :<|> "viewProfile"     := ViewProfile
-    :<|> "updateProfile"   := UpdateProfile
+    =    "createProfile"        := CreateProfile
+    :<|> "viewProfilesByGame"   := ViewProfilesByGame
+    :<|> "viewProfilesByPlayer" := ViewProfilesByHandle
+    :<|> "viewProfile"          := ViewProfile
+    :<|> "updateProfile"        := UpdateProfile

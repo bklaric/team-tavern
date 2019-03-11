@@ -27,7 +27,7 @@
     "purescript-idiomatic-node-process": "^0.3.0",
     "purescript-console": "^4.1.0",
     "purescript-foreign-object": "^1.0.0",
-    "purescript-halogen": "master"
+    "purescript-halogen": "5.0.0-rc.2"
   },
   "devDependencies": {
     "purescript-psci-support": "^4.0.0"

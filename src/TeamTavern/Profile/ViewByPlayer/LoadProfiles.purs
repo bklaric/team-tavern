@@ -1,4 +1,4 @@
-module TeamTavern.Profile.ViewByGame.LoadProfiles
+module TeamTavern.Profile.ViewByPlayer.LoadProfiles
     (LoadProfilesResult, LoadProfilesError, loadProfiles) where
 
 import Prelude
@@ -17,16 +17,19 @@ import Postgres.Query (Query(..), QueryParameter(..))
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
 import TeamTavern.Game.Domain.Handle (Handle)
+import TeamTavern.Game.Domain.Title (Title)
 import TeamTavern.Player.Domain.Nickname (Nickname)
 import TeamTavern.Profile.Domain.Summary (Summary)
 
 type LoadProfilesDto =
-    { nickname :: String
+    { handle :: String
+    , title :: String
     , summary :: String
     }
 
 type LoadProfilesResult =
-    { nickname :: Nickname
+    { handle :: Handle
+    , title :: Title
     , summary :: Summary
     }
 
@@ -40,30 +43,31 @@ type LoadProfilesError errors = Variant
 
 queryString :: Query
 queryString = Query """
-    select game.handle, player.nickname, profile.summary
+    select game.handle, game.title, profile.summary
     from profile
     join player on player.id = profile.player_id
     join game on game.id = profile.game_id
-    where game.handle = $1
+    where player.nickname = $1
     order by profile.created desc
     """
 
-queryParameters :: Handle -> Array QueryParameter
-queryParameters handle = [QueryParameter $ unwrap handle]
+queryParameters :: Nickname -> Array QueryParameter
+queryParameters nickname = [QueryParameter $ unwrap nickname]
 
 loadProfiles
     :: forall errors
     .  Pool
-    -> Handle
+    -> Nickname
     -> Async (LoadProfilesError errors) (Array LoadProfilesResult)
-loadProfiles pool handle = do
+loadProfiles pool nickname = do
     result <- pool
-        # query queryString (queryParameters handle)
+        # query queryString (queryParameters nickname)
         # label (SProxy :: SProxy "databaseError")
     profiles :: Array LoadProfilesDto <- rows result
         # traverse read
         # labelMap (SProxy :: SProxy "unreadableDtos") { result, errors: _ }
-    pure $ profiles <#> \{ nickname, summary } ->
-        { nickname: wrap nickname
+    pure $ profiles <#> \{ handle, title, summary } ->
+        { handle: wrap handle
+        , title: wrap title
         , summary: wrap summary
         }

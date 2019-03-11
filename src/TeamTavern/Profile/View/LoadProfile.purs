@@ -18,7 +18,7 @@ import Postgres.Query (Query(..), QueryParameter(..))
 import Postgres.Result (rows)
 import Simple.JSON.Async (read)
 import TeamTavern.Profile.Domain.Summary (Summary)
-import TeamTavern.Profile.Routes (IdentifiersSingle)
+import TeamTavern.Profile.Routes (Identifiers)
 
 type LoadProfileDto = { summary :: String }
 
@@ -30,7 +30,7 @@ type LoadProfileError errors = Variant
         { foreignDto :: Foreign
         , errors :: MultipleErrors
         }
-    , notFound :: IdentifiersSingle
+    , notFound :: Identifiers
     | errors )
 
 loadProfileQuery :: Query
@@ -43,14 +43,14 @@ loadProfileQuery = Query """
     and player.nickname = $2
     """
 
-loadProfileParameters :: IdentifiersSingle -> Array QueryParameter
+loadProfileParameters :: Identifiers -> Array QueryParameter
 loadProfileParameters { handle, nickname } =
     [unwrap handle, unwrap nickname] <#> QueryParameter
 
 loadProfile
     :: forall errors
     .  Pool
-    -> IdentifiersSingle
+    -> Identifiers
     -> Async (LoadProfileError errors) LoadProfileResult
 loadProfile pool identifiers = do
     result <- pool

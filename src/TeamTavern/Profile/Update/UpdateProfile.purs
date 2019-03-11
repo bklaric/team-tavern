@@ -17,7 +17,7 @@ import TeamTavern.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Player.Domain.Id (toString)
 import TeamTavern.Player.Domain.Nickname (Nickname)
 import TeamTavern.Profile.Domain.Summary (Summary)
-import TeamTavern.Profile.Routes (IdentifiersSingle)
+import TeamTavern.Profile.Routes (Identifiers)
 
 type UpdateProfileError errors = Variant
     ( databaseError :: Error
@@ -46,7 +46,7 @@ updateProfileQuery = Query """
     """
 
 updateProfileParameters ::
-    CookieInfo -> IdentifiersSingle -> Summary -> Array QueryParameter
+    CookieInfo -> Identifiers -> Summary -> Array QueryParameter
 updateProfileParameters { id, token } { nickname, handle } summary =
     [ toString id
     , unwrap token
@@ -60,7 +60,7 @@ updateProfile
     :: forall errors
     .  Pool
     -> CookieInfo
-    -> IdentifiersSingle
+    -> Identifiers
     -> Summary
     -> Async (UpdateProfileError errors) Unit
 updateProfile pool auth identifiers summary = do

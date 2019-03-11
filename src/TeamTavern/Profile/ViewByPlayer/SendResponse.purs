@@ -1,4 +1,5 @@
-module TeamTavern.Profile.ViewByGame.SendResponse (OkContent, sendResponse) where
+module TeamTavern.Profile.ViewByPlayer.SendResponse
+    (OkContent, sendResponse) where
 
 import Prelude
 
@@ -8,11 +9,12 @@ import Data.Newtype (unwrap)
 import Data.Variant (match)
 import Perun.Response (Response, internalServerError__, ok_)
 import Simple.JSON (writeJSON)
-import TeamTavern.Profile.ViewByGame.LoadProfiles (LoadProfilesResult)
-import TeamTavern.Profile.ViewByGame.LogError (ViewAllError)
+import TeamTavern.Profile.ViewByPlayer.LoadProfiles (LoadProfilesResult)
+import TeamTavern.Profile.ViewByPlayer.LogError (ViewAllError)
 
 type OkContent = Array
-    { nickname :: String
+    { handle :: String
+    , title :: String
     , summary :: String
     }
 
@@ -24,8 +26,9 @@ errorResponse = match
 
 successResponse :: Array LoadProfilesResult -> Response
 successResponse profiles = ok_ $ (writeJSON :: OkContent -> String) $
-    mapFlipped profiles \{ nickname, summary } ->
-        { nickname: unwrap nickname
+    mapFlipped profiles \{ title, handle, summary } ->
+        { handle: unwrap handle
+        , title: unwrap title
         , summary: unwrap summary
         }
 

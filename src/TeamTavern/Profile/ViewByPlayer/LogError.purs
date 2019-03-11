@@ -1,4 +1,4 @@
-module TeamTavern.Profile.ViewByGame.LogError where
+module TeamTavern.Profile.ViewByPlayer.LogError where
 
 import Prelude
 
@@ -21,7 +21,7 @@ type ViewAllError = Variant
 
 logError :: ViewAllError -> Effect Unit
 logError viewError = do
-    log "Error viewing profiles by game"
+    log "Error viewing profiles by player"
     viewError # match
         { databaseError: \error ->
             logt $ "Unknown database error ocurred: " <> print error
