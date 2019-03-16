@@ -1,4 +1,4 @@
-module TeamTavern.Client.Components.Games (Query, Slot, games) where
+module TeamTavern.Client.Components.Games (Slot, games) where
 
 import Prelude
 
@@ -8,9 +8,12 @@ import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
 import Data.Array (length)
 import Data.Bifunctor (lmap)
+import Data.Const (Const)
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
+import Effect.Class (class MonadEffect)
+import Effect.Class.Console (log)
 import Halogen (ClassName(..))
 import Halogen as H
 import Halogen.HTML as HH
@@ -20,17 +23,16 @@ import TeamTavern.Client.Components.NavigationAnchor (navigationAnchorIndexed)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
 import TeamTavern.Game.ViewAll.SendResponse (OkContent)
 
-data Query send = Init send
+data Action = Init
 
-data State
-    = Games OkContent
-    | Error
+data State = Games OkContent | Error
 
-type Slot = H.Slot Query Void
+type Slot = H.Slot (Const Void) Void
 
 type ChildSlots = (game :: Anchor.Slot Int)
 
-render :: forall left. State -> H.ComponentHTML Query ChildSlots (Async left)
+render :: forall query monad. MonadEffect monad =>
+    State -> H.ComponentHTML query ChildSlots monad
 render (Games games') =
     if length games' > 0
     then
@@ -42,10 +44,10 @@ render (Games games') =
             , HH.p_ [ HH.text description ]
             ]
     else HH.p_ [ HH.text $
-        "There should be a list of games here, but no game entry has been created yet. "
+        "There should be a list of games here, "
+        <> "but no game entry has been created yet. "
         <> "How about you create one?" ]
-render Error = HH.p_ [ HH.text
-    "There has been an error loading the games. Please try again later." ]
+render Error = HH.div_ []
 
 loadGames :: forall left. Async left State
 loadGames = Async.unify do
@@ -58,22 +60,24 @@ loadGames = Async.unify do
         _ -> Async.left Error
     pure $ Games games'
 
-eval :: forall left.
-    Query ~> H.HalogenM State Query ChildSlots Void (Async left)
-eval (Init send) = do
+handleAction :: forall output left.
+    Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
+handleAction Init = do
+    log "games"
     newState <- H.lift loadGames
     H.put newState
-    pure send
+    pure unit
 
-component :: forall left. H.Component HH.HTML Query State Void (Async left)
+component :: forall query output left.
+    H.Component HH.HTML query State output (Async left)
 component =
-    H.component
+    H.mkComponent
         { initialState: identity
         , render
-        , eval
-        , receiver: const Nothing
-        , initializer: Just $ Init unit
-        , finalizer: Nothing
+        , eval: H.mkEval $ H.defaultEval
+            { handleAction = handleAction
+            , initialize = Just Init
+            }
         }
 
 games :: forall query children left.

@@ -1,4 +1,4 @@
-module TeamTavern.Client.SignIn (Query, Slot, signIn) where
+module TeamTavern.Client.SignIn (Slot, signIn) where
 
 import Prelude
 
@@ -7,6 +7,7 @@ import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
 import Data.Bifunctor (bimap, lmap)
+import Data.Const (Const)
 import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..), maybe)
 import Data.Options ((:=))
@@ -28,11 +29,11 @@ import TeamTavern.Session.Start.SendResponse as Start
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
-data Query send
-    = Init send
-    | NicknameOrEmailInput String send
-    | PasswordInput String send
-    | SignIn Event send
+data Action
+    = Init
+    | NicknameOrEmailInput String
+    | PasswordInput String
+    | SignIn Event
 
 type State =
     { nicknameOrEmail :: String
@@ -44,7 +45,7 @@ type State =
     , otherError :: Boolean
     }
 
-type Slot = H.Slot Query Void
+type Slot = H.Slot (Const Void) Void
 
 type ChildSlots =
     ( home :: NavigationAnchor.Slot Unit
@@ -52,7 +53,7 @@ type ChildSlots =
     , registerAnchor :: NavigationAnchor.Slot Unit
     )
 
-render :: forall left. State -> H.ComponentHTML Query ChildSlots (Async left)
+render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render
     { nicknameOrEmail
     , password
@@ -62,7 +63,7 @@ render
     , noSessionStarted
     , otherError
     } = HH.form
-    [ HE.onSubmit $ HE.input SignIn ]
+    [ HE.onSubmit $ Just <<< SignIn ]
     [ HH.h2_
         [ HH.text "Sign in to "
         , navigationAnchor (SProxy :: SProxy "home")
@@ -75,7 +76,7 @@ render
             [ HH.text "Nickname or email address" ]
         , HH.input
             [ HP.id_ "nicknameOrEmail"
-            , HE.onValueInput $ HE.input NicknameOrEmailInput
+            , HE.onValueInput $ Just <<< NicknameOrEmailInput
             ]
         ]
     , HH.div_
@@ -86,7 +87,7 @@ render
             [ HP.id_ "password"
             , HP.autocomplete false
             , HP.type_ InputPassword
-            , HE.onValueInput $ HE.input PasswordInput
+            , HE.onValueInput $ Just <<< PasswordInput
             ]
         ]
     , HH.button
@@ -145,17 +146,17 @@ sendSignInRequest state @ { nicknameOrEmail, password, nonce } = Async.unify do
         _ -> pure $ Just $ state { otherError = true }
     pure newState
 
-eval :: forall left.
-    Query ~> H.HalogenM State Query ChildSlots Void (Async left)
-eval (Init send) = do
+handleAction :: forall output left.
+    Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
+handleAction Init = do
     nonce <- getQueryParam "nonce" # H.liftEffect
     H.modify_ (_ { nonce = nonce })
-    pure send
-eval (NicknameOrEmailInput nicknameOrEmail send) =
-    H.modify_ (_ { nicknameOrEmail = nicknameOrEmail }) <#> const send
-eval (PasswordInput password send) =
-    H.modify_ (_ { password = password }) <#> const send
-eval (SignIn event send) = do
+    pure unit
+handleAction (NicknameOrEmailInput nicknameOrEmail) =
+    H.modify_ (_ { nicknameOrEmail = nicknameOrEmail }) <#> const unit
+handleAction (PasswordInput password) =
+    H.modify_ (_ { password = password }) <#> const unit
+handleAction (SignIn event) = do
     H.liftEffect $ preventDefault event
     state <- H.gets (_
         { unconfirmedEmail     = false
@@ -167,11 +168,11 @@ eval (SignIn event send) = do
     case newState of
         Nothing -> H.liftEffect $ navigate_ "/"
         Just newState' -> H.put newState'
-    pure send
+    pure unit
 
-component :: forall input left.
-    H.Component HH.HTML Query input Void (Async left)
-component = H.component
+component :: forall query input output left.
+    H.Component HH.HTML query input output (Async left)
+component = H.mkComponent
     { initialState: const
         { nicknameOrEmail: ""
         , password: ""
@@ -182,10 +183,10 @@ component = H.component
         , otherError: false
         }
     , render
-    , eval
-    , receiver: const Nothing
-    , initializer: Just $ Init unit
-    , finalizer: Nothing
+    , eval: H.mkEval $ H.defaultEval
+        { handleAction = handleAction
+        , initialize = Just Init
+        }
     }
 
 signIn :: forall query children left.

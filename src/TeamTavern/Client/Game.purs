@@ -1,4 +1,4 @@
-module TeamTavern.Client.Game (Query, Slot, game) where
+module TeamTavern.Client.Game (Slot, game) where
 
 import Prelude
 
@@ -7,6 +7,7 @@ import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
 import Data.Bifunctor (lmap)
+import Data.Const (Const)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Monoid (guard)
 import Data.Symbol (SProxy(..))
@@ -19,7 +20,7 @@ import TeamTavern.Client.Components.NavigationAnchor as Anchor
 import TeamTavern.Client.Script.Cookie (getPlayerId)
 import TeamTavern.Game.View.SendResponse as View
 
-data Query send = Init String send
+data Action = Init String
 
 data State
     = Empty
@@ -27,7 +28,7 @@ data State
     | NotFound
     | Error
 
-type Slot = H.Slot Query Void
+type Slot = H.Slot (Const Void) Void
 
 type ChildSlots =
     ( profiles :: Anchor.Slot Int
@@ -35,7 +36,7 @@ type ChildSlots =
     , edit :: Anchor.Slot Unit
     )
 
-render :: forall left. State -> H.ComponentHTML Query ChildSlots (Async left)
+render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render Empty = HH.div_ []
 render (Game { title, handle, description, hasProfile } isSignedIn isAdmin) =
     HH.div [ HP.id_ "game"] $ join
@@ -66,26 +67,26 @@ loadGame handle = Async.unify do
         (maybe false (const true) playerId)
         (maybe false (_ == content.administratorId) playerId)
 
-eval :: forall left.
-    Query ~> H.HalogenM State Query ChildSlots Void (Async left)
-eval (Init handle send) = do
+handleAction :: forall output left.
+    Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
+handleAction (Init handle) = do
     state <- H.lift $ loadGame handle
     H.put state
-    pure send
+    pure unit
 
-component :: forall input left.
-    String -> H.Component HH.HTML Query input Void (Async left)
-component handle =
-    H.component
-        { initialState: const Empty
-        , render
-        , eval
-        , receiver: const Nothing
-        , initializer: Just $ Init handle unit
-        , finalizer: Nothing
+component :: forall query output left.
+    String -> H.Component HH.HTML query String output (Async left)
+component handle = H.mkComponent
+    { initialState: const Empty
+    , render
+    , eval: H.mkEval $ H.defaultEval
+        { handleAction = handleAction
+        , initialize = Just $ Init handle
+        , receive = Just <<< Init
         }
+    }
 
 game :: forall query children left.
     String -> HH.ComponentHTML query (game :: Slot Unit | children) (Async left)
 game handle =
-    HH.slot (SProxy :: SProxy "game") unit (component handle) unit absurd
+    HH.slot (SProxy :: SProxy "game") unit (component handle) handle absurd

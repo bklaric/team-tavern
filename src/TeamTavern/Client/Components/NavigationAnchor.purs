@@ -2,10 +2,10 @@ module TeamTavern.Client.Components.NavigationAnchor where
 
 import Prelude
 
-import Async (Async)
 import Data.Const (Const)
 import Data.Maybe (Maybe(..))
 import Data.Symbol (class IsSymbol, SProxy)
+import Effect.Class (class MonadEffect)
 import Halogen (defaultEval, get, liftEffect, mkComponent, mkEval)
 import Halogen as H
 import Halogen.HTML (a)
@@ -29,16 +29,16 @@ render { path, text } = a
     [ href path, onClick $ Navigate >>> Just ]
     [ Html.text text ]
 
-handleAction :: forall output left.
-    Action -> H.HalogenM State Action () output (Async left) Unit
+handleAction :: forall output monad. MonadEffect monad =>
+    Action -> H.HalogenM State Action () output monad Unit
 handleAction (Navigate event) = do
     liftEffect $ preventDefault $ toEvent event
     { path } <- get
     liftEffect $ navigate_ path
     pure unit
 
-component :: forall query output left.
-    H.Component HH.HTML query State output (Async left)
+component :: forall query output monad. MonadEffect monad =>
+    H.Component HH.HTML query State output monad
 component = mkComponent
     { initialState: identity
     , render
@@ -46,22 +46,24 @@ component = mkComponent
     }
 
 navigationAnchor
-    :: forall label children children' action left
+    :: forall label children children' action monad
     .  Cons label (Slot Unit) children' children
     => IsSymbol label
+    => MonadEffect monad
     => SProxy label
     -> State
-    -> HH.ComponentHTML action children (Async left)
+    -> HH.ComponentHTML action children monad
 navigationAnchor label state = HH.slot label unit component state absurd
 
 navigationAnchorIndexed
-    :: forall label children children' action left index
+    :: forall label children children' action monad index
     .  Cons label (Slot index) children' children
     => IsSymbol label
     => Ord index
+    => MonadEffect monad
     => SProxy label
     -> index
     -> State
-    -> HH.ComponentHTML action children (Async left)
+    -> HH.ComponentHTML action children monad
 navigationAnchorIndexed label index state =
     HH.slot label index component state absurd

@@ -1,4 +1,4 @@
-module TeamTavern.Client.Components.TopBar (Query, Slot, topBar) where
+module TeamTavern.Client.Components.TopBar (Slot, topBar) where
 
 import Prelude
 
@@ -7,6 +7,7 @@ import Browser.Async.Fetch (fetch, fetch_, method)
 import Browser.Async.Fetch.Response (text)
 import Browser.Fetch.Response (status)
 import Data.Bifunctor (lmap)
+import Data.Const (Const)
 import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..))
 import Data.Options ((:=))
@@ -22,16 +23,15 @@ import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Script.Cookie (getPlayerId)
 import TeamTavern.Client.Script.Navigate (navigate_)
 
-data Query send
-    = Init send
-    | SignOut send
+data Action
+    = Init
+    | SignOut
 
 data State
     = Empty
     | Header (Maybe { nickname :: String })
-    | Error
 
-type Slot = H.Slot Query Void
+type Slot = H.Slot (Const Void) Void
 
 type ChildSlots =
     ( homeAnchor :: NavigationAnchor.Slot Unit
@@ -42,7 +42,7 @@ type ChildSlots =
     )
 
 render :: forall monad. MonadEffect monad =>
-    State -> H.ComponentHTML Query ChildSlots monad
+    State -> H.ComponentHTML Action ChildSlots monad
 render playerInfo = HH.div_
     [ HH.div [ HP.id_ "top-bar-filler" ] []
     , HH.div [ HP.id_ "top-bar" ]
@@ -64,11 +64,7 @@ render playerInfo = HH.div_
                         { path: "/players/" <> nickname, text: nickname }
                     , navigationAnchor (SProxy :: SProxy "createGameAnchor")
                         { path: "/games/create", text: "Create a game" }
-                    , HH.button [ HE.onClick $ HE.input_ SignOut ]
-                        [ HH.text "Sign out" ]
-                    ]
-                Error ->
-                    [ HH.button [ HE.onClick $ HE.input_ SignOut ]
+                    , HH.button [ HE.onClick $ const $ Just SignOut ]
                         [ HH.text "Sign out" ]
                     ]
             ]
@@ -78,10 +74,10 @@ render playerInfo = HH.div_
 getPlayerHeader :: forall left. Int -> Async left State
 getPlayerHeader playerId = unify do
     response <- fetch_ ("/api/players/" <> show playerId <> "/header")
-        # lmap (const Error)
+        # lmap (const Empty)
     content <- case status response of
-        200 -> text response >>= readJSON # lmap (const Error)
-        _ -> left Error
+        200 -> text response >>= readJSON # lmap (const Empty)
+        _ -> left Empty
     pure $ Header $ Just content
 
 endSession :: forall left. Async left Boolean
@@ -90,14 +86,15 @@ endSession = unify do
         # lmap (const false)
     pure $ status response == 204
 
-eval :: forall left. Query ~> H.HalogenM State Query ChildSlots Void (Async left)
-eval (Init send) = do
+handleAction :: forall left output.
+    Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
+handleAction Init = do
     playerId <- getPlayerId # fromEffect # H.lift
     H.put =<< case playerId of
         Nothing -> pure $ Header Nothing
         Just id -> H.lift $ getPlayerHeader id
-    pure send
-eval (SignOut send) = do
+    pure unit
+handleAction SignOut = do
     success <- endSession # H.lift
     if success
         then do
@@ -105,18 +102,18 @@ eval (SignOut send) = do
             navigate_ "/" # fromEffect # H.lift
         else
             pure unit
-    pure send
+    pure unit
 
-component :: forall input void.
-    H.Component HH.HTML Query input Void (Async void)
+component :: forall query input output left.
+    H.Component HH.HTML query input output (Async left)
 component =
-    H.component
+    H.mkComponent
         { initialState: const $ Header Nothing
         , render
-        , eval
-        , receiver: const Nothing
-        , initializer: Just $ Init unit
-        , finalizer: Nothing
+        , eval: H.mkEval $ H.defaultEval
+            { handleAction = handleAction
+            , initialize = Just Init
+            }
         }
 
 topBar :: forall query void children.

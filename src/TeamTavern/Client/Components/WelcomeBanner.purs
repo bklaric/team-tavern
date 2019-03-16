@@ -1,11 +1,12 @@
-module TeamTavern.Client.Components.WelcomeBanner (Query, Slot, welcomeBanner) where
+module TeamTavern.Client.Components.WelcomeBanner (Slot, welcomeBanner) where
 
 import Prelude
 
-import Async (Async)
+import Data.Const (Const)
 import Data.Maybe (Maybe(..), isJust)
 import Data.Symbol (SProxy(..))
 import Effect (Effect)
+import Effect.Class (class MonadEffect)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
@@ -14,13 +15,13 @@ import Web.HTML (window)
 import Web.HTML.Window (localStorage)
 import Web.Storage.Storage (getItem, setItem)
 
-data Query send = Init send | Close send
+data Action = Init | Close
 
 data State = Shown | Closed
 
-type Slot = H.Slot Query Void
+type Slot = H.Slot (Const Void) Void
 
-render :: forall left. State -> H.ComponentHTML Query () (Async left)
+render :: forall monad. State -> H.ComponentHTML Action () monad
 render Shown = HH.div
     [ HP.class_ (H.ClassName "welcome-banner") ]
     [ HH.p_ [ HH.text "Welcome to TeamTavern!" ]
@@ -31,7 +32,7 @@ render Shown = HH.div
         <> "and find your ideal teammates. "
         <> "Or make your own profile and let them find you." ]
     , HH.p_ [ HH.text "Happy playing!" ]
-    , HH.button [ HE.onClick $ HE.input_ Close] [ HH.text "Close" ]
+    , HH.button [ HE.onClick $ const $ Just Close ] [ HH.text "Close" ]
     ]
 render Closed = HH.div [ HP.class_ (H.ClassName "empty") ] []
 
@@ -44,27 +45,28 @@ isWelcomed = window >>= localStorage >>= getItem welcomedKey <#> isJust
 setWelcomed :: Effect Unit
 setWelcomed = window >>= localStorage >>= setItem welcomedKey "true"
 
-eval :: forall left. Query ~> H.HalogenM State Query () Void (Async left)
-eval (Init send) = do
+handleAction :: forall output monad. MonadEffect monad =>
+    Action -> H.HalogenM State Action () output monad Unit
+handleAction Init = do
     isWelcomed # H.liftEffect <#> (if _ then Closed else Shown) >>= H.put
-    pure send
-eval (Close send) = do
+    pure unit
+handleAction Close = do
     H.liftEffect setWelcomed
     H.put Closed
-    pure send
+    pure unit
 
-component :: forall input left.
-    H.Component HH.HTML Query input Void (Async left)
-component = H.component
+component :: forall query input output monad. MonadEffect monad =>
+    H.Component HH.HTML query input output monad
+component = H.mkComponent
     { initialState: const Closed
     , render
-    , eval
-    , receiver: const Nothing
-    , initializer: Just $ H.action Init
-    , finalizer: Nothing
+    , eval: H.mkEval $ H.defaultEval
+        { handleAction = handleAction
+        , initialize = Just Init
+        }
     }
 
-welcomeBanner :: forall query children left.
-    HH.ComponentHTML query (welcomeBanner :: Slot Unit | children) (Async left)
+welcomeBanner :: forall query children monad. MonadEffect monad =>
+    HH.ComponentHTML query (welcomeBanner :: Slot Unit | children) monad
 welcomeBanner =
     HH.slot (SProxy :: SProxy "welcomeBanner") unit component unit absurd

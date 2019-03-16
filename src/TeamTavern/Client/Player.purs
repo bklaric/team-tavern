@@ -1,4 +1,4 @@
-module TeamTavern.Client.Player (Query, Slot, player) where
+module TeamTavern.Client.Player (Slot, player) where
 
 import Prelude
 
@@ -7,6 +7,7 @@ import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
 import Data.Bifunctor (lmap)
+import Data.Const (Const)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Monoid (guard)
 import Data.Symbol (SProxy(..))
@@ -19,7 +20,7 @@ import TeamTavern.Client.Components.NavigationAnchor as Anchor
 import TeamTavern.Client.Script.Cookie (getPlayerId)
 import TeamTavern.Player.View.SendResponse as View
 
-data Query send = Init String send
+data Action = Init String
 
 data State
     = Empty
@@ -27,7 +28,7 @@ data State
     | NotFound
     | Error
 
-type Slot = H.Slot Query Void
+type Slot = H.Slot (Const Void) Void
 
 type ChildSlots =
     ( edit :: Anchor.Slot Unit
@@ -35,7 +36,7 @@ type ChildSlots =
     , editProfiles :: Anchor.Slot Int
     )
 
-render :: forall left. State -> H.ComponentHTML Query ChildSlots (Async left)
+render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render Empty = HH.div_ []
 render (Player { nickname, about } isCurrentUser) = HH.div_ $
     [ HH.div [ HP.id_ "player" ] $ join
@@ -44,17 +45,6 @@ render (Player { nickname, about } isCurrentUser) = HH.div_ $
             navigationAnchor (SProxy :: SProxy "edit")
             { path: "/players/" <> nickname <> "/edit", text: "Edit info" } ]
         , pure $ HH.p_ [ HH.text about ] ]
-    -- , HH.div_ $ [ HH.h3_ [ HH.text "Profiles" ] ] <> (profiles # mapWithIndex \index { handle, title, summary } ->
-    --     HH.div [ HP.class_ $ ClassName "profile-item" ] $ join
-    --     [ pure $ HH.h3_ [ navigationAnchorIndexed (SProxy :: SProxy "games") index
-    --         { path: "/games/" <> handle, text: title } ]
-    --     , guard isCurrentUser $ pure $ HH.p_ [
-    --         navigationAnchorIndexed (SProxy :: SProxy "editProfiles") index
-    --         { path: "/games/" <> handle <> "/profiles/" <> nickname <> "/edit"
-    --         , text: "Edit profile"
-    --         } ]
-    --     , pure $ HH.p_ [ HH.text summary ]
-    --     ])
     ]
 render NotFound = HH.p_ [ HH.text "Player could not be found." ]
 render Error = HH.p_ [ HH.text
@@ -70,22 +60,23 @@ loadPlayer nickname = Async.unify do
     playerId <- Async.fromEffect getPlayerId
     pure $ Player content (maybe false (_ == content.id) playerId)
 
-eval :: forall left.
-    Query ~> H.HalogenM State Query ChildSlots Void (Async left)
-eval (Init nickname send) = do
+handleAction :: forall output left.
+    Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
+handleAction (Init nickname) = do
     state <- H.lift $ loadPlayer nickname
     H.put state
-    pure send
+    pure unit
 
-component :: forall left.
-    String -> H.Component HH.HTML Query String Void (Async left)
-component nickname = H.component
+component :: forall query output left.
+    String -> H.Component HH.HTML query String output (Async left)
+component nickname = H.mkComponent
     { initialState: const Empty
     , render
-    , eval
-    , receiver: \nickname' -> Just $ Init nickname' unit
-    , initializer: Just $ Init nickname unit
-    , finalizer: Nothing
+    , eval: H.mkEval $ H.defaultEval
+        { handleAction = handleAction
+        , initialize = Just $ Init nickname
+        , receive = Just <<< Init
+        }
     }
 
 player

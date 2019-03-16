@@ -58,14 +58,15 @@ handleAction (Init nickname) = do
     H.put state
     pure unit
 
-component :: forall output left initState query.
-    String -> H.Component HH.HTML query initState output (Async left)
+component :: forall output left query.
+    String -> H.Component HH.HTML query String output (Async left)
 component nickname = mkComponent
     { initialState: const Empty
     , render
     , eval: mkEval $ defaultEval
         { handleAction = handleAction
         , initialize = Just $ Init nickname
+        , receive = Just <<< Init
         }
     }
 
@@ -73,5 +74,5 @@ profilesByPlayer
     :: forall query children left
     .  String
     -> HH.ComponentHTML query (profiles :: Slot Unit | children) (Async left)
-profilesByPlayer nickname =
-    HH.slot (SProxy :: SProxy "profiles") unit (component nickname) unit absurd
+profilesByPlayer nickname = HH.slot
+    (SProxy :: SProxy "profiles") unit (component nickname) nickname absurd
