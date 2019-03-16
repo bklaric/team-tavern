@@ -6,7 +6,6 @@ import Async.Aff (asyncToAff)
 import Data.Maybe (fromJust)
 import Effect (Effect)
 import Effect.Aff (launchAff_)
-import Effect.Class.Console (log)
 import Halogen (hoist, liftEffect)
 import Halogen.Aff as HA
 import Halogen.VDom.Driver (runUI)
@@ -23,13 +22,10 @@ import Web.HTML.Window as Window
 
 main :: Effect Unit
 main = HA.runHalogenAff do
-    log "ayy app here"
     body <- HA.awaitBody
     state <- window >>= Window.history >>= History.state # liftEffect
     path <- window >>= Window.location >>= Location.pathname # liftEffect
-    log "about to run this shit"
     { query } <- runUI (hoist (asyncToAff absurd) (router state path)) unit body
-    log "bam! have some listener"
     listener <- liftEffect $ DOM.eventListener \event -> do
         let state' = PSE.fromEvent event # unsafePartial fromJust # PSE.state
         path' <- window >>= Window.location >>= Location.pathname

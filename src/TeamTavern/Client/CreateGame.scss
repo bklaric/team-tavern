@@ -1,0 +1,29 @@
+@import "Style/Base";
+.create-game-form {
+    @extend %bordered;
+    display: flex;
+    flex-direction: column;
+    width: 320px;
+    padding: 30px;
+    background-color: white;
+    h1,
+    h2 {
+        text-align: center;
+        margin-top: 10px;
+        margin-bottom: 40px;
+    }
+    a,
+    p {
+        text-align: center;
+        margin-top: 2em;
+        margin-bottom: 0;
+    }
+    div {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 2em;
+    }
+    button {
+        margin: auto;
+    }
+}

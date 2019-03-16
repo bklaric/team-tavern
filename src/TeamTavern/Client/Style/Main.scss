@@ -1,7 +1,7 @@
-@import "TopBar";
-$primary-color: hsl(0, 0%, 7%);
-$disabled-color: rgb(221, 221, 221);
-$error-color: orangered;
+@import "Base";
+@import "../Components/TopBar";
+@import "../Components/Modal";
+@import "../CreateGame";
 body {
     font-family: sans-serif;
     color: $primary-color;
@@ -22,13 +22,6 @@ p {
 a {
     text-decoration: none;
     color: hsl(244, 83%, 35%);
-}
-
-%bordered {
-    border-style: solid;
-    border-radius: 0.25em;
-    border-width: 1px;
-    border-color: $primary-color;
 }
 
 button {
@@ -71,6 +64,7 @@ form {
     flex-direction: column;
     max-width: 20em;
     margin: auto;
+    padding: 30px;
     h1,
     h2 {
         text-align: center;
@@ -118,7 +112,7 @@ form {
     max-width: 1280px;
     padding: 24px;
     margin: auto;
-    > * {
+    >* {
         margin-bottom: 24px;
     }
     > :last-child {

@@ -1,0 +1,9 @@
+$primary-color: hsl(0, 0%, 7%);
+$disabled-color: rgb(221, 221, 221);
+$error-color: orangered;
+%bordered {
+    border-style: solid;
+    border-radius: 0.25em;
+    border-width: 1px;
+    border-color: $primary-color;
+}
