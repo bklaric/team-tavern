@@ -7,3 +7,61 @@ $error-color: orangered;
     border-width: 1px;
     border-color: $primary-color;
 }
+
+body {
+    font-family: sans-serif;
+    color: $primary-color;
+    margin: 0;
+}
+
+h1,
+h2,
+h3 {
+    margin-top: 0;
+    margin-bottom: 0.5em;
+}
+
+p {
+    margin-top: 0;
+}
+
+a {
+    text-decoration: none;
+    color: hsl(244, 83%, 35%);
+}
+
+button {
+    @extend %bordered;
+    font-size: 1em;
+    padding: 0.2em 0.7em;
+    color: $primary-color;
+    background-color: white;
+    cursor: pointer;
+}
+
+button[disabled] {
+    @extend button;
+    color: $disabled-color;
+    border-color: $disabled-color;
+    cursor: not-allowed;
+}
+
+label {
+    font-size: 1em;
+    margin-bottom: 0.5em;
+}
+
+input {
+    @extend %bordered;
+    font-size: 1em;
+    padding: 5px;
+    color: $primary-color;
+}
+
+textarea {
+    @extend %bordered;
+    font-size: 1em;
+    padding: 5px;
+    color: $primary-color;
+    resize: vertical;
+}

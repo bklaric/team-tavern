@@ -27,7 +27,7 @@ import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Script.Cookie (hasPlayerIdCookie)
 import TeamTavern.Client.Script.Navigate (navigate, navigate_)
-import TeamTavern.Client.Snippets.ErrorClasses (errorClass, inputErrorClass, otherErrorClass)
+import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass, otherErrorClass)
 import TeamTavern.Player.Register.SendResponse as Register
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
@@ -71,7 +71,7 @@ render
     , nicknameTaken
     , otherError
     } = HH.form
-    [ HE.onSubmit $ Just <<< Register ]
+    [ HP.class_ $ ClassName "single-form", HE.onSubmit $ Just <<< Register ]
     [ HH.h2_
         [ HH.text "Register to "
         , navigationAnchor (SProxy :: SProxy "home")
@@ -79,32 +79,28 @@ render
         ]
     , HH.div_
         [ HH.label
-            [ HP.class_ $ errorClass nicknameError, HP.for "nickname" ]
+            [ HP.for "nickname" ]
             [ HH.text "Nickname" ]
         , HH.input
             [ HP.id_ "nickname"
-            , HP.class_ $ errorClass nicknameError
             , HE.onValueInput $ Just <<< NicknameInput
             ]
         , HH.p
             [ HP.class_ $ inputErrorClass nicknameError ]
-            [ HH.text "Please enter a valid nickname. The nickname must: " ]
-        , HH.ul
-            [ HP.class_ $ inputErrorClass nicknameError ]
-            [ HH.li_ [ HH.text "Contain only alphanumeric characters." ]
-            , HH.li_ [ HH.text "Be no more than 40 characters long." ]
-            ]
+            [ HH.text
+                $ "The nickname can contain only alphanumeric characters and "
+                <> "cannot be more than 40 characters long." ]
         , HH.p
             [ HP.class_ $ inputErrorClass nicknameTaken ]
-            [ HH.text "This nickname is taken, please pick another one." ]
+            [ HH.text
+                "This nickname is already taken, please pick another one." ]
         ]
     , HH.div_
         [ HH.label
-            [ HP.class_ $ errorClass emailError, HP.for "email" ]
-            [ HH.text "Email" ]
+            [ HP.for "email" ]
+            [ HH.text "Email address" ]
         , HH.input
             [ HP.id_ "email"
-            , HP.class_ $ errorClass emailError
             , HE.onValueInput $ Just <<< EmailInput
             ]
         , HH.p
@@ -115,15 +111,14 @@ render
             ]
         , HH.p
             [ HP.class_ $ inputErrorClass emailTaken ]
-            [ HH.text "This email is taken, please pick another one." ]
+            [ HH.text "This email is already taken, please pick another one." ]
         ]
     , HH.div_
         [ HH.label
-            [ HP.class_ $ errorClass passwordError, HP.for "password" ]
+            [ HP.for "password" ]
             [ HH.text "Password" ]
         , HH.input
             [ HP.id_ "password"
-            , HP.class_ $ errorClass passwordError
             , HP.type_ InputPassword
             , HE.onValueInput $ Just <<< PasswordInput
             ]

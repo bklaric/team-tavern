@@ -22,16 +22,14 @@ import Halogen.HTML.Properties as HP
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.Modal as Modal
-import TeamTavern.Client.Script.Cookie (hasPlayerIdCookie)
 import TeamTavern.Client.Script.Navigate (navigate_)
-import TeamTavern.Client.Snippets.ErrorClasses (errorClass, inputErrorClass, otherErrorClass)
+import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass, otherErrorClass)
 import TeamTavern.Game.Create.SendResponse as Create
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
 data Action
-    = Init
-    | TitleInput String
+    = TitleInput String
     | HandleInput String
     | DescriptionInput String
     | Create Event
@@ -64,15 +62,14 @@ render
     , handleTaken
     , otherError
     } = HH.form
-    [ HP.class_ $ ClassName "create-game-form", HE.onSubmit $ Just <<< Create ]
+    [ HP.class_ $ ClassName "single-form", HE.onSubmit $ Just <<< Create ]
     [ HH.h2_ [ HH.text "Create a new game" ]
     , HH.div_
         [ HH.label
-            [ HP.class_ $ errorClass titleError, HP.for "title" ]
+            [ HP.for "title" ]
             [ HH.text "Title" ]
         , HH.input
             [ HP.id_ "title"
-            , HP.class_ $ errorClass titleError
             , HE.onValueInput $ Just <<< TitleInput
             ]
         , HH.p
@@ -84,17 +81,16 @@ render
         ]
     , HH.div_
         [ HH.label
-            [ HP.class_ $ errorClass handleError, HP.for "handle" ]
+            [ HP.for "handle" ]
             [ HH.text "Handle" ]
         , HH.input
             [ HP.id_ "handle"
-            , HP.class_ $ errorClass handleError
             , HE.onValueInput $ Just <<< HandleInput
             ]
         , HH.p
             [ HP.class_ $ inputErrorClass handleError ]
             [ HH.text
-                $  "The handle can only contain alphanumeric characters and "
+                $  "The handle can contain only alphanumeric characters and "
                 <> "cannot be more than 50 characters long." ]
         , HH.p
             [ HP.class_ $ inputErrorClass handleTaken ]
@@ -102,11 +98,10 @@ render
         ]
     , HH.div_
         [ HH.label
-            [ HP.class_ $ errorClass descriptionError, HP.for "description" ]
+            [ HP.for "description" ]
             [ HH.text "Description" ]
         , HH.textarea
             [ HP.id_ "description"
-            , HP.class_ $ errorClass descriptionError
             , HE.onValueInput $ Just <<< DescriptionInput
             ]
         , HH.p
@@ -156,12 +151,6 @@ sendCreateRequest state @ { title, handle, description } = Async.unify do
 
 handleAction :: forall slots left.
     Action -> H.HalogenM State Action slots Message (Async left) Unit
-handleAction Init = do
-    isSignedIn <- H.liftEffect hasPlayerIdCookie
-    if isSignedIn
-        then pure unit
-        else H.liftEffect $ navigate_ "/"
-    pure unit
 handleAction (TitleInput title) =
     H.modify_ (_ { title = title }) <#> const unit
 handleAction (HandleInput handle) =
@@ -201,10 +190,7 @@ component = H.mkComponent
         , otherError: false
         }
     , render
-    , eval: H.mkEval $ H.defaultEval
-        { handleAction = handleAction
-        , initialize = Just Init
-        }
+    , eval: H.mkEval $ H.defaultEval { handleAction = handleAction }
     }
 
 createGame

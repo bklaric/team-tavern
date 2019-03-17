@@ -1,32 +1,32 @@
-@import "Style/Base";
-.create-game-form {
+@import "Base";
+form.single-form {
     @extend %bordered;
     display: flex;
     flex-direction: column;
     width: 320px;
     padding: 30px;
     background-color: white;
-    h1,
-    h2 {
+    margin: 64px auto;
+    >h1,
+    >h2 {
         text-align: center;
         margin-top: 10px;
         margin-bottom: 40px;
     }
-    a,
-    p {
+    >p {
         text-align: center;
-        margin-top: 2em;
+        margin-top: 32px;
         margin-bottom: 0;
     }
-    textarea {
-        height: 150px;
-    }
-    div {
+    >div {
         display: flex;
         flex-direction: column;
-        margin-bottom: 2em;
+        margin-bottom: 32px;
+        >textarea {
+            height: 150px;
+        }
     }
-    button {
+    >button {
         margin: auto;
     }
 }

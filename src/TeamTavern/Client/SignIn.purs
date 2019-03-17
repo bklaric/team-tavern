@@ -63,7 +63,7 @@ render
     , noSessionStarted
     , otherError
     } = HH.form
-    [ HE.onSubmit $ Just <<< SignIn ]
+    [ HP.class_ $ ClassName "single-form", HE.onSubmit $ Just <<< SignIn ]
     [ HH.h2_
         [ HH.text "Sign in to "
         , navigationAnchor (SProxy :: SProxy "home")

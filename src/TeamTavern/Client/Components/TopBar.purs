@@ -98,7 +98,7 @@ getPlayerHeader playerId = unify do
 
 endSession :: forall left. Async left Boolean
 endSession = unify do
-    response <- fetch ("api/sessions/current") (method := DELETE)
+    response <- fetch ("/api/sessions/current") (method := DELETE)
         # lmap (const false)
     pure $ status response == 204
 

@@ -25,7 +25,7 @@ import TeamTavern.Game.ViewAll.SendResponse (OkContent)
 
 data Action = Init
 
-data State = Games OkContent | Error
+data State = Empty | Games OkContent
 
 type Slot = H.Slot (Const Void) Void
 
@@ -33,6 +33,7 @@ type ChildSlots = (game :: Anchor.Slot Int)
 
 render :: forall query monad. MonadEffect monad =>
     State -> H.ComponentHTML query ChildSlots monad
+render Empty = HH.div_ []
 render (Games games') =
     if length games' > 0
     then
@@ -47,17 +48,16 @@ render (Games games') =
         "There should be a list of games here, "
         <> "but no game entry has been created yet. "
         <> "How about you create one?" ]
-render Error = HH.div_ []
 
 loadGames :: forall left. Async left State
 loadGames = Async.unify do
-    response' <- Fetch.fetch_ "/api/games" # lmap (const Error)
+    response' <- Fetch.fetch_ "/api/games" # lmap (const Empty)
     games' :: OkContent <-
         case FetchRes.status response' of
         200 -> FetchRes.text response'
             >>= JsonAsync.readJSON
-            # lmap (const Error)
-        _ -> Async.left Error
+            # lmap (const Empty)
+        _ -> Async.left Empty
     pure $ Games games'
 
 handleAction :: forall output left.
@@ -82,4 +82,4 @@ component =
 
 games :: forall query children left.
     HH.ComponentHTML query (games :: Slot Unit | children) (Async left)
-games = HH.slot (SProxy :: SProxy "games") unit component (Games []) absurd
+games = HH.slot (SProxy :: SProxy "games") unit component Empty absurd
