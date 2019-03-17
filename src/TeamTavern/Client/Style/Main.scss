@@ -57,6 +57,7 @@ textarea {
     font-size: 1em;
     padding: 5px;
     color: $primary-color;
+    resize: vertical;
 }
 
 form {
@@ -122,6 +123,8 @@ form {
 
 #single-content {
     display: flex;
+    justify-content: center;
+    align-items: center;
     height: 100vh;
     background-color: rgb(230, 230, 230);
     >form,
@@ -132,7 +135,6 @@ form {
         width: 320px;
         background-color: white;
         padding: 30px;
-        margin: auto;
         >a {
             margin-top: 1em;
         }
