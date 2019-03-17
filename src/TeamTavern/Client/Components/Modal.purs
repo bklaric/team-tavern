@@ -18,7 +18,7 @@ import Web.HTML.HTMLElement (fromEventTarget, setClassName)
 import Web.HTML.Window (document)
 import Web.UIEvent.MouseEvent (MouseEvent, toEvent)
 
-data Action output = Init | Close MouseEvent | HandleInner output
+data Action output = Init | Final | Close MouseEvent | HandleInner output
 
 data Message output = CloseModal | Inner output
 
@@ -42,20 +42,17 @@ handleAction :: forall state action slots output monad. MonadEffect monad =>
 handleAction Init =
     window >>= document >>= body
         >>= (maybe (pure unit) (setClassName "unscrollable")) # H.liftEffect
+handleAction Final =
+    window >>= document >>= body
+        >>= (maybe (pure unit) (setClassName "")) # H.liftEffect
 handleAction (Close event) = do
     background <- H.getHTMLElementRef (H.RefLabel "modal-background")
     eventTarget <- event # toEvent # target >>= fromEventTarget # pure
     case background, eventTarget of
         Just background', Just eventTarget'
-            | unsafeRefEq background' eventTarget' -> do
-                window >>= document >>= body
-                    >>= (maybe (pure unit) (setClassName "")) # H.liftEffect
-                H.raise CloseModal
+            | unsafeRefEq background' eventTarget' -> H.raise CloseModal
         _, _ -> pure unit
-handleAction (HandleInner message) = do
-    window >>= document >>= body
-        >>= (maybe (pure unit) (setClassName "")) # H.liftEffect
-    H.raise $ Inner message
+handleAction (HandleInner message) = H.raise $ Inner message
 
 component
     :: forall query input output monad
@@ -68,5 +65,6 @@ component content = H.mkComponent
     , eval: H.mkEval $ H.defaultEval
         { handleAction = handleAction
         , initialize = Just Init
+        , finalize = Just Final
         }
     }
