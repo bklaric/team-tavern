@@ -40,7 +40,7 @@ type State =
     , otherError :: Boolean
     }
 
-type Slot = H.Slot (Const Void) (Modal.Message Message)
+type Slot = H.Slot (Modal.Query (Const Void)) (Modal.Message Message)
 
 render :: forall slots. State -> HH.HTML slots Action
 render { summary, summaryError, otherError } = HH.form

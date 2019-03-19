@@ -6,7 +6,6 @@ import Async (Async, fromEffect, left, unify)
 import Browser.Async.Fetch (fetch, fetch_, method)
 import Browser.Async.Fetch.Response (text)
 import Browser.Fetch.Response (status)
-import Data.Array (singleton)
 import Data.Bifunctor (lmap)
 import Data.Const (Const)
 import Data.HTTP.Method (Method(..))
@@ -37,7 +36,7 @@ data Action
 data State
     = Empty
     | SignedOut
-    | SignedIn { nickname :: String, showCreateModal :: Boolean }
+    | SignedIn { nickname :: String }
 
 type Slot = H.Slot (Const Void) Void
 
@@ -81,8 +80,7 @@ render playerInfo = HH.div_
             ]
         ]
     , HH.div_ case playerInfo of
-        SignedIn { showCreateModal } | showCreateModal ->
-            singleton $ createGame $ Just <<< HandleModalMessage
+        SignedIn _ -> [ createGame $ Just <<< HandleModalMessage ]
         _ -> []
     ]
 
@@ -93,7 +91,7 @@ getPlayerHeader playerId = unify do
     { nickname } :: { nickname :: String } <- case status response of
         200 -> text response >>= readJSON # lmap (const Empty)
         _ -> left Empty
-    pure $ SignedIn { nickname, showCreateModal: false }
+    pure $ SignedIn { nickname }
 
 endSession :: forall left. Async left Boolean
 endSession = unify do
@@ -111,23 +109,15 @@ handleAction Init = do
     pure unit
 handleAction SignOut = do
     success <- endSession # H.lift
-    if success
-        then do
-            H.put SignedOut
-            navigate_ "/" # fromEffect # H.lift
-        else
-            pure unit
+    when success do
+        H.put SignedOut
+        navigate_ "/" # fromEffect # H.lift
     pure unit
 handleAction (ShowCreateModal event) = do
     H.liftEffect $ preventDefault $ toEvent event
-    H.modify_ $
-        case _ of
-        SignedIn player -> SignedIn $ player { showCreateModal = true }
-        other -> other
-handleAction (HandleModalMessage _) = H.modify_ $
-    case _ of
-    SignedIn player -> SignedIn $ player { showCreateModal = false }
-    other -> other
+    Modal.show (SProxy :: SProxy "createGame")
+handleAction (HandleModalMessage _) =
+    Modal.hide (SProxy :: SProxy "createGame")
 
 component :: forall query input output left.
     H.Component HH.HTML query input output (Async left)

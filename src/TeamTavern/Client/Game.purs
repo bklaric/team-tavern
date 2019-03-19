@@ -57,14 +57,9 @@ isAdmin = case _ of
     Administrator -> true
     _ -> false
 
-data EditGameModalStatus = EditShown | EditHidden
-
-data CreateProfileModalStatus = CreateShown | CreateHidden
-
 data State
     = Empty
     | Game View.OkContent PlayerStatus
-        EditGameModalStatus CreateProfileModalStatus
     | NotFound
     | Error
 
@@ -79,30 +74,26 @@ type ChildSlots =
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render Empty = HH.div_ []
 render
-    (Game { title, handle, description, hasProfile } player edit create) =
+    (Game { title, handle, description, hasProfile } playerStatus) =
     HH.div [ HP.id_ "game"] $ join
     [ pure $ HH.h2_ [ HH.text title ]
-    , guard (not hasProfile && isSignedIn player) $ pure $ HH.p_ [
+    , guard (not hasProfile && isSignedIn playerStatus) $ pure $ HH.p_ [
         HH.a
         [ HP.href ""
         , HE.onClick $ Just <<< ShowCreateProfileModal
         ]
         [ HH.text "Create profile" ] ]
-    , guard (isAdmin player) $ pure $ HH.p_ [
+    , guard (isAdmin playerStatus) $ pure $ HH.p_ [
         HH.a
         [ HP.href ""
         , HE.onClick $ Just <<< ShowEditGameModal
         ]
         [ HH.text "Edit game" ] ]
     , pure $ HH.p_ [ HH.text description ]
-    , pure $ HH.div_ case edit of
-        EditShown -> [ editGame
-            { title, handle, description } $ Just <<< HandleEditGameMessage ]
-        _ -> []
-    , pure $ HH.div_ case create of
-        CreateShown -> [ createProfile
-            handle $ Just <<< HandleCreateProfileMessage ]
-        _ -> []
+    , pure $ HH.div_ [ editGame
+        { title, handle, description } $ Just <<< HandleEditGameMessage ]
+    , pure $ HH.div_ [ createProfile
+        handle $ Just <<< HandleCreateProfileMessage ]
    ]
 render NotFound = HH.p_ [ HH.text "Game could not be found." ]
 render Error = HH.p_ [ HH.text
@@ -118,7 +109,6 @@ loadGame handle = Async.unify do
         _ -> Async.left Error
     playerId <- Async.fromEffect getPlayerId
     pure $ Game content (createPlayerStatus playerId content.administratorId)
-        EditHidden CreateHidden
 
 handleAction :: forall output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
@@ -128,32 +118,20 @@ handleAction (Init handle) = do
     pure unit
 handleAction (ShowEditGameModal event) = do
     H.liftEffect $ preventDefault $ toEvent event
-    H.modify_ $
-        case _ of
-        Game content player _ _ -> Game content player EditShown CreateHidden
-        other -> other
+    Modal.show (SProxy :: SProxy "editGame")
 handleAction (ShowCreateProfileModal event) = do
     H.liftEffect $ preventDefault $ toEvent event
-    H.modify_ $
-        case _ of
-        Game content player _ _ -> Game content player EditHidden CreateShown
-        other -> other
+    Modal.show (SProxy :: SProxy "createProfile")
 handleAction (HandleEditGameMessage message) = do
     state <- H.get
-    case state of
-        Game content player _ _ ->
-            H.put $ Game content player EditHidden CreateHidden
-        _ -> pure unit
+    Modal.hide (SProxy :: SProxy "editGame")
     case message of
         Modal.Inner (EditGame.GameUpdated handle) ->
             H.liftEffect $ navigate_ $ "/games/" <> trim handle
         _ -> pure unit
 handleAction (HandleCreateProfileMessage message) = do
     state <- H.get
-    case state of
-        Game content player _ _ ->
-            H.put $ Game content player EditHidden CreateHidden
-        _ -> pure unit
+    Modal.hide (SProxy :: SProxy "createProfile")
     case message of
         Modal.Inner (CreateProfile.ProfileCreated handle) ->
             H.liftEffect $ navigate_ $ "/games/" <> trim handle

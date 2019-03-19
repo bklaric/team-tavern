@@ -48,7 +48,7 @@ type State =
     , otherError :: Boolean
     }
 
-type Slot = H.Slot (Const Void) (Modal.Message Message)
+type Slot = H.Slot (Modal.Query (Const Void)) (Modal.Message Message)
 
 render :: forall slots. State -> HH.HTML slots Action
 render
@@ -194,9 +194,9 @@ component = H.mkComponent
     }
 
 createGame
-    :: forall query children left
-    .  (Modal.Message Message -> Maybe query)
-    -> HH.ComponentHTML query (createGame :: Slot Unit | children) (Async left)
+    :: forall action children left
+    .  (Modal.Message Message -> Maybe action)
+    -> HH.ComponentHTML action (createGame :: Slot Unit | children) (Async left)
 createGame handleMessage = HH.slot
     (SProxy :: SProxy "createGame") unit
     (Modal.component component) unit handleMessage
