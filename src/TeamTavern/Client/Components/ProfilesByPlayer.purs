@@ -38,7 +38,7 @@ render (Profiles profiles) = HH.div_ $
     (profiles # mapWithIndex \index { handle, title, summary } ->
         HH.div [ HP.class_ $ ClassName "profile-item" ]
         [ HH.h3_ [ navigationAnchorIndexed (SProxy :: SProxy "games") index
-            { path: "/game/" <> handle, text: title } ]
+            { path: "/games/" <> handle, text: title } ]
         , HH.p_ [ HH.text summary ]
         ])
 
@@ -73,6 +73,8 @@ component nickname = mkComponent
 profilesByPlayer
     :: forall query children left
     .  String
-    -> HH.ComponentHTML query (profiles :: Slot Unit | children) (Async left)
+    -> HH.ComponentHTML
+        query (profilesByPlayer :: Slot Unit | children) (Async left)
 profilesByPlayer nickname = HH.slot
-    (SProxy :: SProxy "profiles") unit (component nickname) nickname absurd
+    (SProxy :: SProxy "profilesByPlayer") unit
+    (component nickname) nickname absurd

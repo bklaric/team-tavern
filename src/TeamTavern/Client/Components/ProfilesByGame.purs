@@ -72,6 +72,7 @@ component handle = mkComponent
 profilesByGame
     :: forall query children left
     .  String
-    -> HH.ComponentHTML query (profiles :: Slot Unit | children) (Async left)
-profilesByGame handle =
-    HH.slot (SProxy :: SProxy "profiles") unit (component handle) handle absurd
+    -> HH.ComponentHTML
+        query (profilesByGame :: Slot Unit | children) (Async left)
+profilesByGame handle = HH.slot
+    (SProxy :: SProxy "profilesByGame") unit (component handle) handle absurd
