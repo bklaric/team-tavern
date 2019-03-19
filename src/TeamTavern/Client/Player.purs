@@ -10,17 +10,26 @@ import Data.Bifunctor (lmap)
 import Data.Const (Const)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Monoid (guard)
+import Data.String (trim)
 import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
+import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Simple.JSON.Async as Json
-import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
-import TeamTavern.Client.Components.NavigationAnchor as Anchor
+import TeamTavern.Client.Components.Modal as Modal
+import TeamTavern.Client.EditPlayer (editPlayer)
+import TeamTavern.Client.EditPlayer as EditPlayer
 import TeamTavern.Client.Script.Cookie (getPlayerId)
+import TeamTavern.Client.Script.Navigate (navigate_)
 import TeamTavern.Player.View.SendResponse as View
+import Web.Event.Event (preventDefault)
+import Web.UIEvent.MouseEvent (MouseEvent, toEvent)
 
-data Action = Init String
+data Action
+    = Init String
+    | ShowEditPlayerModal MouseEvent
+    | HandleEditPlayerMessage (Modal.Message EditPlayer.Message)
 
 data State
     = Empty
@@ -30,11 +39,7 @@ data State
 
 type Slot = H.Slot (Const Void) Void
 
-type ChildSlots =
-    ( edit :: Anchor.Slot Unit
-    , games :: Anchor.Slot Int
-    , editProfiles :: Anchor.Slot Int
-    )
+type ChildSlots = (editPlayer :: EditPlayer.Slot Unit)
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render Empty = HH.div_ []
@@ -42,9 +47,14 @@ render (Player { nickname, about } isCurrentUser) = HH.div_ $
     [ HH.div [ HP.id_ "player" ] $ join
         [ pure $ HH.h2_ [ HH.text nickname ]
         , guard isCurrentUser $ pure $ HH.p_ [
-            navigationAnchor (SProxy :: SProxy "edit")
-            { path: "/players/" <> nickname <> "/edit", text: "Edit info" } ]
-        , pure $ HH.p_ [ HH.text about ] ]
+            HH.a
+            [ HP.href ""
+            , HE.onClick $ Just <<< ShowEditPlayerModal
+            ]
+            [ HH.text "Edit info" ] ]
+        , pure $ HH.p_ [ HH.text about ]
+        , pure $ HH.div_ [ editPlayer
+            { nickname, about } $ Just <<< HandleEditPlayerMessage ]]
     ]
 render NotFound = HH.p_ [ HH.text "Player could not be found." ]
 render Error = HH.p_ [ HH.text
@@ -66,6 +76,16 @@ handleAction (Init nickname) = do
     state <- H.lift $ loadPlayer nickname
     H.put state
     pure unit
+handleAction (ShowEditPlayerModal event) = do
+    H.liftEffect $ preventDefault $ toEvent event
+    Modal.show (SProxy :: SProxy "editPlayer")
+handleAction (HandleEditPlayerMessage message) = do
+    state <- H.get
+    Modal.hide (SProxy :: SProxy "editPlayer")
+    case message of
+        Modal.Inner (EditPlayer.PlayerUpdated nickname) ->
+            H.liftEffect $ navigate_ $ "/players/" <> trim nickname
+        _ -> pure unit
 
 component :: forall query output left.
     String -> H.Component HH.HTML query String output (Async left)

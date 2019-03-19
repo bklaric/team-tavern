@@ -185,11 +185,11 @@ handleAction Init = do
         else pure unit
     pure unit
 handleAction (EmailInput email) =
-    H.modify_ (_ { email = email }) <#> const unit
+    H.modify_ (_ { email = email }) $> unit
 handleAction (NicknameInput nickname) =
-    H.modify_ (_ { nickname = nickname }) <#> const unit
+    H.modify_ (_ { nickname = nickname }) $> unit
 handleAction (PasswordInput password) =
-    H.modify_ (_ { password = password }) <#> const unit
+    H.modify_ (_ { password = password }) $> unit
 handleAction (Register event) = do
     H.liftEffect $ preventDefault event
     state <- H.gets (_

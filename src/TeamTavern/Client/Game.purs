@@ -18,7 +18,6 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Simple.JSON.Async as Json
 import TeamTavern.Client.Components.Modal as Modal
-import TeamTavern.Client.Components.NavigationAnchor as Anchor
 import TeamTavern.Client.CreateProfile (createProfile)
 import TeamTavern.Client.CreateProfile as CreateProfile
 import TeamTavern.Client.EditGame (editGame)
@@ -66,8 +65,7 @@ data State
 type Slot = H.Slot (Const Void) Void
 
 type ChildSlots =
-    ( profiles :: Anchor.Slot Int
-    , editGame :: EditGame.Slot Unit
+    ( editGame :: EditGame.Slot Unit
     , createProfile :: CreateProfile.Slot Unit
     )
 
