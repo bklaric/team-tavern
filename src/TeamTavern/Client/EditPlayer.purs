@@ -22,7 +22,7 @@ import Halogen.HTML.Properties as HP
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.Modal as Modal
-import TeamTavern.Client.Snippets.ErrorClasses (errorClass, inputErrorClass, otherErrorClass)
+import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass, otherErrorClass)
 import TeamTavern.Player.Update.SendResponse as Update
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
@@ -65,11 +65,10 @@ render
     [ HH.h2_ [ HH.text "Edit info" ]
     , HH.div_
         [ HH.label
-            [ HP.class_ $ errorClass nicknameError, HP.for "nickname" ]
+            [ HP.for "nickname" ]
             [ HH.text "Nickname" ]
         , HH.input
             [ HP.id_ "nickname"
-            , HP.class_ $ errorClass nicknameError
             , HE.onValueInput $ Just <<< NicknameInput
             , HP.value nickname
             ]
@@ -85,11 +84,10 @@ render
         ]
     , HH.div_
         [ HH.label
-            [ HP.class_ $ errorClass aboutError, HP.for "about" ]
+            [ HP.for "about" ]
             [ HH.text "About" ]
         , HH.textarea
             [ HP.id_ "about"
-            , HP.class_ $ errorClass aboutError
             , HE.onValueInput $ Just <<< AboutInput
             , HP.value about
             ]

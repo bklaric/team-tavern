@@ -20,7 +20,7 @@ import Halogen.HTML.Properties as HP
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.Modal as Modal
-import TeamTavern.Client.Snippets.ErrorClasses (errorClass, inputErrorClass, otherErrorClass)
+import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass, otherErrorClass)
 import TeamTavern.Profile.Update.SendResponse as Update
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
@@ -55,11 +55,10 @@ render { title, summary, summaryError, otherError } = HH.form
     [ HH.h2_ [ HH.text $ "Edit your " <> title <> " profile" ]
     , HH.div_
         [ HH.label
-            [ HP.class_ $ errorClass summaryError, HP.for "summary" ]
+            [ HP.for "summary" ]
             [ HH.text "Summary" ]
         , HH.textarea
             [ HP.id_ "summary"
-            , HP.class_ $ errorClass summaryError
             , HE.onValueInput $ Just <<< SummaryInput
             , HP.value summary
             ]
