@@ -8,21 +8,18 @@ import Data.Either (hush)
 import Data.Map (Map)
 import Perun.Response (Response)
 import Postgres.Pool (Pool)
-import TeamTavern.Game.Infrastructure.ReadHandle (readHandle)
+import TeamTavern.Game.Domain.Handle (Handle)
 import TeamTavern.Game.View.LoadGame (loadGame)
 import TeamTavern.Game.View.LogError (logError)
-import TeamTavern.Game.View.Response (response)
-import TeamTavern.Infrastructure.ReadAuth (readAuth)
+import TeamTavern.Game.View.SendResponse (sendResponse)
+import TeamTavern.Infrastructure.ReadCookieInfo (readCookieInfo)
 
 handleView :: forall left.
-    Pool -> String -> Map String String -> Async left Response
-handleView pool handle' cookies =
-    response $ examineLeftWithEffect logError do
-    -- Validate game handle from route.
-    handle <- readHandle handle'
-
-    -- Attempt to read auth info from cookies.
-    auth <- readAuth cookies # Async.attempt <#> hush
+    Pool -> Handle -> Map String String -> Async left Response
+handleView pool handle cookies =
+    sendResponse $ examineLeftWithEffect logError do
+    -- Attempt to read player info from cookies.
+    cookieInfo <- readCookieInfo cookies # Async.attempt <#> hush
 
     -- Load game from database.
-    loadGame pool handle auth
+    loadGame pool handle cookieInfo

@@ -60,11 +60,11 @@ foreign import compareImpl
     :: String
     -> String
     -> (Error -> Effect Unit)
-    -> (String -> Effect Unit)
+    -> (Boolean -> Effect Unit)
     -> Effect Unit
 
 compare
-    :: String -> String -> (Either Error String -> Effect Unit) -> Effect Unit
+    :: String -> String -> (Either Error Boolean -> Effect Unit) -> Effect Unit
 compare data' encrypted callback =
     compareImpl data' encrypted (Left >>> callback) (Right >>> callback)
 

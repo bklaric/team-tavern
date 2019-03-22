@@ -1,4 +1,4 @@
-module TeamTavern.Client.SignIn (Query, Slot, signIn) where
+module TeamTavern.Client.SignIn (Slot, signIn) where
 
 import Prelude
 
@@ -7,41 +7,45 @@ import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
 import Data.Bifunctor (bimap, lmap)
-import Data.Foldable (foldl)
+import Data.Const (Const)
 import Data.HTTP.Method (Method(..))
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), maybe)
 import Data.Options ((:=))
 import Data.Variant (SProxy(..), match)
 import Halogen (ClassName(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
+import Halogen.HTML.Properties (InputType(..))
 import Halogen.HTML.Properties as HP
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Script.Navigate (navigate_)
-import TeamTavern.Client.Snippets.ErrorClasses (errorClass, inputErrorClass, otherErrorClass)
-import TeamTavern.Session.Start.Response as Start
+import TeamTavern.Client.Script.QueryParams (getQueryParam)
+import TeamTavern.Client.Snippets.ErrorClasses (otherErrorClass)
+import TeamTavern.Session.Start.SendResponse as Start
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
-data Query send
-    = NicknameInput String send
-    | NonceInput String send
-    | SignIn Event send
+data Action
+    = Init
+    | NicknameOrEmailInput String
+    | PasswordInput String
+    | SignIn Event
 
 type State =
-    { nickname :: String
-    , nonce :: String
-    , nicknameError :: Boolean
-    , nonceError :: Boolean
-    , noTokenToConsume :: Boolean
+    { nicknameOrEmail :: String
+    , password :: String
+    , nonce :: Maybe String
+    , unconfirmedEmail :: Boolean
+    , nothingConfirmed :: Boolean
+    , noSessionStarted :: Boolean
     , otherError :: Boolean
     }
 
-type Slot = H.Slot Query Void
+type Slot = H.Slot (Const Void) Void
 
 type ChildSlots =
     ( home :: NavigationAnchor.Slot Unit
@@ -49,80 +53,79 @@ type ChildSlots =
     , registerAnchor :: NavigationAnchor.Slot Unit
     )
 
-render :: forall left. State -> H.ComponentHTML Query ChildSlots (Async left)
+render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render
-    { nickname
+    { nicknameOrEmail
+    , password
     , nonce
-    , nicknameError
-    , nonceError
-    , noTokenToConsume
+    , unconfirmedEmail
+    , nothingConfirmed
+    , noSessionStarted
     , otherError
     } = HH.form
-    [ HE.onSubmit $ HE.input SignIn ]
+    [ HP.class_ $ ClassName "single-form", HE.onSubmit $ Just <<< SignIn ]
     [ HH.h2_
         [ HH.text "Sign in to "
         , navigationAnchor (SProxy :: SProxy "home")
             { path: "/", text: "TeamTavern" }
+        , HH.text $ maybe "" (const " to confirm your email address") nonce
         ]
     , HH.div_
         [ HH.label
-            [ HP.class_ $ errorClass nicknameError, HP.for "nickname" ]
-            [ HH.text "Nickname" ]
+            [ HP.for "nicknameOrEmail" ]
+            [ HH.text "Nickname or email address" ]
         , HH.input
-            [ HP.id_ "nickname"
-            , HP.class_ $ errorClass nicknameError
-            , HE.onValueInput $ HE.input NicknameInput
-            ]
-        , HH.p
-            [ HP.class_ $ inputErrorClass nicknameError ]
-            [ HH.text "Please enter a valid nickname. The nickname must: " ]
-        , HH.ul
-            [ HP.class_ $ inputErrorClass nicknameError ]
-            [ HH.li_ [ HH.text "Contain only alphanumeric characters." ]
-            , HH.li_ [ HH.text "Be no more than 40 characters long." ]
+            [ HP.id_ "nicknameOrEmail"
+            , HE.onValueInput $ Just <<< NicknameOrEmailInput
             ]
         ]
     , HH.div_
         [ HH.label
-            [ HP.class_ $ errorClass nonceError, HP.for "nonce" ]
-            [ HH.text "Sign in code" ]
+            [ HP.for "password" ]
+            [ HH.text "Password" ]
         , HH.input
-            [ HP.id_ "nonce"
-            , HP.class_ $ errorClass nonceError
+            [ HP.id_ "password"
             , HP.autocomplete false
-            , HE.onValueInput $ HE.input NonceInput
-            ]
-        , HH.p
-            [ HP.class_ $ inputErrorClass nonceError ]
-            [ HH.text
-                $  "This does not look like a valid sign in code. "
-                <> "Please check and try again."
+            , HP.type_ InputPassword
+            , HE.onValueInput $ Just <<< PasswordInput
             ]
         ]
     , HH.button
         [ HP.class_ $ ClassName "primary"
-        , HP.disabled $ nickname == "" || nonce == ""
+        , HP.disabled $ nicknameOrEmail == "" || password == ""
         ]
         [ HH.text "Sign in" ]
     , HH.p
-        [ HP.class_ $ otherErrorClass noTokenToConsume ]
+        [ HP.class_ $ otherErrorClass unconfirmedEmail ]
+        [ HH.text "Please confirm your email address before signing in."
+        ]
+    , HH.p
+        [ HP.class_ $ otherErrorClass nothingConfirmed ]
         [ HH.text
-            $  "Entered nickname and sign in code don't appear to be valid. "
-            <> "Please request another sign in code and try again." ]
+            $  "Something went wrong with confirming your email address. "
+            <> "Please try again later or contact the administrator."
+        ]
+    , HH.p
+        [ HP.class_ $ otherErrorClass noSessionStarted ]
+        [ HH.text
+            $  "Entered credentials don't appear to be valid. "
+            <> "Please check and try again."
+        ]
     , HH.p
         [ HP.class_ $ otherErrorClass otherError ]
-        [ HH.text "Something unexpected went wrong! Please try again later." ]
-    , navigationAnchor (SProxy :: SProxy "registerAnchor")
-        { path: "/register", text: "Register" }
-    , navigationAnchor (SProxy :: SProxy "codeAnchor")
-        { path: "/code", text: "Get a sign in code" }
+        [ HH.text "Something unexpected went wrong. Please try again later." ]
+    , HH.p_
+        [ HH.text "New to TeamTavern? "
+        , navigationAnchor (SProxy :: SProxy "registerAnchor")
+            { path: "/register", text: "Create an account." }
+        ]
     ]
 
 sendSignInRequest :: forall left. State -> Async left (Maybe State)
-sendSignInRequest state @ { nickname, nonce } = Async.unify do
+sendSignInRequest state @ { nicknameOrEmail, password, nonce } = Async.unify do
     response <- Fetch.fetch "/api/sessions"
-        (  Fetch.method := PATCH
-        <> Fetch.body := Json.writeJSON { nickname, nonce }
+        (  Fetch.method := POST
+        <> Fetch.body := Json.writeJSON { nicknameOrEmail, password, nonce }
         <> Fetch.credentials := Fetch.Include
         )
         # lmap (const $ Just $ state { otherError = true })
@@ -132,56 +135,58 @@ sendSignInRequest state @ { nickname, nonce } = Async.unify do
             # bimap
                 (const $ Just $ state { otherError = true })
                 (\(error :: Start.BadRequestContent) -> Just $ match
-                    { invalidNicknamedNonce: foldl (\state' -> match
-                        { invalidNickname:
-                            const $ state' { nicknameError = true }
-                        , invalidNonce:
-                            const $ state' { nonceError = true }
-                        })
-                        state
-                    , noTokenToConsume:
-                        const $ state { noTokenToConsume = true }
+                    { unconfirmedEmail:
+                        const $ state { unconfirmedEmail = true }
+                    , nothingConfirmed:
+                        const $ state { nothingConfirmed = true }
+                    , noSessionStarted:
+                        const $ state { noSessionStarted = true }
                     }
                     error)
         _ -> pure $ Just $ state { otherError = true }
     pure newState
 
-eval :: forall left.
-    Query ~> H.HalogenM State Query ChildSlots Void (Async left)
-eval (NicknameInput nickname send) =
-    H.modify_ (_ { nickname = nickname }) <#> const send
-eval (NonceInput nonce send) =
-    H.modify_ (_ { nonce = nonce }) <#> const send
-eval (SignIn event send) = do
+handleAction :: forall output left.
+    Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
+handleAction Init = do
+    nonce <- getQueryParam "nonce" # H.liftEffect
+    H.modify_ (_ { nonce = nonce })
+    pure unit
+handleAction (NicknameOrEmailInput nicknameOrEmail) =
+    H.modify_ (_ { nicknameOrEmail = nicknameOrEmail }) <#> const unit
+handleAction (PasswordInput password) =
+    H.modify_ (_ { password = password }) <#> const unit
+handleAction (SignIn event) = do
     H.liftEffect $ preventDefault event
     state <- H.gets (_
-        { nicknameError    = false
-        , nonceError       = false
-        , noTokenToConsume = false
-        , otherError       = false
+        { unconfirmedEmail     = false
+        , nothingConfirmed     = false
+        , noSessionStarted     = false
+        , otherError           = false
         })
     newState <- H.lift $ sendSignInRequest state
     case newState of
         Nothing -> H.liftEffect $ navigate_ "/"
         Just newState' -> H.put newState'
-    pure send
+    pure unit
 
-component :: forall input left.
-    H.Component HH.HTML Query input Void (Async left)
-component = H.component
+component :: forall query input output left.
+    H.Component HH.HTML query input output (Async left)
+component = H.mkComponent
     { initialState: const
-        { nickname: ""
-        , nonce: ""
-        , nicknameError: false
-        , nonceError: false
-        , noTokenToConsume: false
+        { nicknameOrEmail: ""
+        , password: ""
+        , nonce: Nothing
+        , unconfirmedEmail: false
+        , nothingConfirmed: false
+        , noSessionStarted: false
         , otherError: false
         }
     , render
-    , eval
-    , receiver: const Nothing
-    , initializer: Nothing
-    , finalizer: Nothing
+    , eval: H.mkEval $ H.defaultEval
+        { handleAction = handleAction
+        , initialize = Just Init
+        }
     }
 
 signIn :: forall query children left.

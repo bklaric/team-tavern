@@ -1,17 +1,17 @@
 module TeamTavern.Client.Script.Cookie
-    ( PlayerInfo
+    ( getPlayerId
+    , getPlayerNickname
+    , playerHasId
+    , playerHasNickame
     , hasPlayerIdCookie
-    , getPlayerInfo
-    , deletePlayerInfo
     ) where
 
 import Prelude
 
 import Control.Bind (bindFlipped)
-import Control.Monad.Maybe.Trans (MaybeT(..), runMaybeT)
 import Data.Array ((!!))
 import Data.Int (fromString)
-import Data.Maybe (Maybe, fromMaybe, isJust)
+import Data.Maybe (Maybe, fromMaybe, isJust, maybe)
 import Data.String (Pattern(..), split, trim)
 import Data.Tuple (Tuple(..))
 import Effect (Effect)
@@ -44,23 +44,14 @@ getCookie key = getCookies <#> lookup key
 getPlayerId :: Effect (Maybe Int)
 getPlayerId = getCookie idCookieName <#> bindFlipped fromString
 
+getPlayerNickname :: Effect (Maybe String)
+getPlayerNickname = getCookie nicknameCookieName
+
+playerHasId :: Int -> Effect Boolean
+playerHasId id = getPlayerId <#> maybe false (_ == id)
+
+playerHasNickame :: String -> Effect Boolean
+playerHasNickame nickname = getPlayerNickname <#> maybe false (_ == nickname)
+
 hasPlayerIdCookie :: Effect Boolean
 hasPlayerIdCookie = getPlayerId <#> isJust
-
-getNickname :: Effect (Maybe String)
-getNickname = getCookie nicknameCookieName
-
-type PlayerInfo = { id :: Int, nickname :: String }
-
-getPlayerInfo :: Effect (Maybe PlayerInfo)
-getPlayerInfo = runMaybeT do
-    id <- MaybeT getPlayerId
-    nickname <- MaybeT getNickname
-    pure { id, nickname }
-
-foreign import deleteCookie :: String -> Effect Unit
-
-deletePlayerInfo :: Effect Unit
-deletePlayerInfo = do
-    deleteCookie idCookieName
-    deleteCookie nicknameCookieName

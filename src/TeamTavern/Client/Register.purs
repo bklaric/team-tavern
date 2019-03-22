@@ -1,4 +1,4 @@
-module TeamTavern.Client.Register (Query, Slot, register) where
+module TeamTavern.Client.Register (Slot, register) where
 
 import Prelude
 
@@ -7,6 +7,7 @@ import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
 import Data.Bifunctor (bimap, lmap)
+import Data.Const (Const)
 import Data.Either (Either(..))
 import Data.Foldable (foldl)
 import Data.HTTP.Method (Method(..))
@@ -18,6 +19,7 @@ import Halogen (ClassName(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
+import Halogen.HTML.Properties (InputType(..))
 import Halogen.HTML.Properties as HP
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
@@ -25,28 +27,31 @@ import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Script.Cookie (hasPlayerIdCookie)
 import TeamTavern.Client.Script.Navigate (navigate, navigate_)
-import TeamTavern.Client.Snippets.ErrorClasses (errorClass, inputErrorClass, otherErrorClass)
-import TeamTavern.Player.Register.Response as Register
+import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass, otherErrorClass)
+import TeamTavern.Player.Register.SendResponse as Register
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
-data Query send
-    = Init send
-    | EmailInput String send
-    | NicknameInput String send
-    | Register Event send
+data Action
+    = Init
+    | EmailInput String
+    | NicknameInput String
+    | PasswordInput String
+    | Register Event
 
 type State =
     { email :: String
     , nickname :: String
+    , password :: String
     , emailError :: Boolean
     , nicknameError :: Boolean
+    , passwordError :: Boolean
     , emailTaken :: Boolean
     , nicknameTaken :: Boolean
     , otherError :: Boolean
     }
 
-type Slot = H.Slot Query Void
+type Slot = H.Slot (Const Void) Void
 
 type ChildSlots =
     ( home :: NavigationAnchor.Slot Unit
@@ -54,17 +59,19 @@ type ChildSlots =
     , codeAnchor :: NavigationAnchor.Slot Unit
     )
 
-render :: forall left. State -> H.ComponentHTML Query ChildSlots (Async left)
+render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render
     { email
     , nickname
+    , password
     , emailError
     , nicknameError
+    , passwordError
     , emailTaken
     , nicknameTaken
     , otherError
     } = HH.form
-    [ HE.onSubmit $ HE.input Register ]
+    [ HP.class_ $ ClassName "single-form", HE.onSubmit $ Just <<< Register ]
     [ HH.h2_
         [ HH.text "Register to "
         , navigationAnchor (SProxy :: SProxy "home")
@@ -72,33 +79,29 @@ render
         ]
     , HH.div_
         [ HH.label
-            [ HP.class_ $ errorClass nicknameError, HP.for "nickname" ]
+            [ HP.for "nickname" ]
             [ HH.text "Nickname" ]
         , HH.input
             [ HP.id_ "nickname"
-            , HP.class_ $ errorClass nicknameError
-            , HE.onValueInput $ HE.input NicknameInput
+            , HE.onValueInput $ Just <<< NicknameInput
             ]
         , HH.p
             [ HP.class_ $ inputErrorClass nicknameError ]
-            [ HH.text "Please enter a valid nickname. The nickname must: " ]
-        , HH.ul
-            [ HP.class_ $ inputErrorClass nicknameError ]
-            [ HH.li_ [ HH.text "Contain only alphanumeric characters." ]
-            , HH.li_ [ HH.text "Be no more than 40 characters long." ]
-            ]
+            [ HH.text
+                $ "The nickname can contain only alphanumeric characters and "
+                <> "cannot be more than 40 characters long." ]
         , HH.p
             [ HP.class_ $ inputErrorClass nicknameTaken ]
-            [ HH.text "This nickname is taken, please pick another one." ]
+            [ HH.text
+                "This nickname is already taken, please pick another one." ]
         ]
     , HH.div_
         [ HH.label
-            [ HP.class_ $ errorClass emailError, HP.for "email" ]
-            [ HH.text "Email" ]
+            [ HP.for "email" ]
+            [ HH.text "Email address" ]
         , HH.input
             [ HP.id_ "email"
-            , HP.class_ $ errorClass emailError
-            , HE.onValueInput $ HE.input EmailInput
+            , HE.onValueInput $ Just <<< EmailInput
             ]
         , HH.p
             [ HP.class_ $ inputErrorClass emailError ]
@@ -108,28 +111,43 @@ render
             ]
         , HH.p
             [ HP.class_ $ inputErrorClass emailTaken ]
-            [ HH.text "This email is taken, please pick another one." ]
+            [ HH.text "This email is already taken, please pick another one." ]
+        ]
+    , HH.div_
+        [ HH.label
+            [ HP.for "password" ]
+            [ HH.text "Password" ]
+        , HH.input
+            [ HP.id_ "password"
+            , HP.type_ InputPassword
+            , HE.onValueInput $ Just <<< PasswordInput
+            ]
+        , HH.p
+            [ HP.class_ $ inputErrorClass passwordError ]
+            [ HH.text $ "The password mush have at least 8 characters."
+            ]
         ]
     , HH.button
         [ HP.class_ $ ClassName "primary"
-        , HP.disabled $ email == "" || nickname == ""
+        , HP.disabled $ email == "" || nickname == "" || password == ""
         ]
         [ HH.text "Register" ]
     , HH.p
         [ HP.class_ $ otherErrorClass otherError ]
         [ HH.text "Something unexpected went wrong! Please try again later." ]
-    , navigationAnchor (SProxy :: SProxy "signInAnchor")
-        { path: "/signin", text: "Sign in" }
-    , navigationAnchor (SProxy :: SProxy "codeAnchor")
-        { path: "/code", text: "Get a sign in code" }
+    , HH.p_
+        [ HH.text "Already have an account?"
+        , navigationAnchor (SProxy :: SProxy "signInAnchor")
+            { path: "/signin", text: " Sign in." }
+        ]
     ]
 
 sendRegisterRequest :: forall left.
     State -> Async left (Either State Register.OkContent)
-sendRegisterRequest state @ { email, nickname } = Async.unify do
+sendRegisterRequest state @ { email, nickname, password } = Async.unify do
     response <- Fetch.fetch "/api/players"
         (  Fetch.method := POST
-        <> Fetch.body := Json.writeJSON { email, nickname }
+        <> Fetch.body := Json.writeJSON { email, nickname, password }
         <> Fetch.credentials := Fetch.Include
         )
         # lmap (const $ Left $ state { otherError = true })
@@ -140,11 +158,13 @@ sendRegisterRequest state @ { email, nickname } = Async.unify do
             # bimap
                 (const $ Left $ state { otherError = true })
                 (\(error :: Register.BadRequestContent) -> Left $ match
-                    { invalidIdentifiers: foldl (\state' -> match
+                    { invalidModel: foldl (\state' -> match
                         { invalidEmail:
                             const $ state' { emailError = true }
                         , invalidNickname:
                             const $ state' { nicknameError = true }
+                        , invalidPassword:
+                            const $ state' { passwordError = true }
                         })
                         state
                     , emailTaken:
@@ -156,23 +176,26 @@ sendRegisterRequest state @ { email, nickname } = Async.unify do
         _ -> pure $ Left $ state { otherError = true }
     pure newState
 
-eval :: forall void.
-    Query ~> H.HalogenM State Query ChildSlots Void (Async void)
-eval (Init send) = do
+handleAction :: forall output left.
+    Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
+handleAction Init = do
     isSignedIn <- H.liftEffect hasPlayerIdCookie
     if isSignedIn
         then H.liftEffect $ navigate_ "/"
         else pure unit
-    pure send
-eval (EmailInput email send) =
-    H.modify_ (_ { email = email }) <#> const send
-eval (NicknameInput nickname send) =
-    H.modify_ (_ { nickname = nickname }) <#> const send
-eval (Register event send) = do
+    pure unit
+handleAction (EmailInput email) =
+    H.modify_ (_ { email = email }) $> unit
+handleAction (NicknameInput nickname) =
+    H.modify_ (_ { nickname = nickname }) $> unit
+handleAction (PasswordInput password) =
+    H.modify_ (_ { password = password }) $> unit
+handleAction (Register event) = do
     H.liftEffect $ preventDefault event
     state <- H.gets (_
         { emailError     = false
         , nicknameError  = false
+        , passwordError  = false
         , emailTaken     = false
         , nicknameTaken  = false
         , otherError     = false
@@ -181,25 +204,27 @@ eval (Register event send) = do
     case newState of
         Right content -> H.liftEffect $ navigate content "/welcome"
         Left newState' -> H.put newState'
-    pure send
+    pure unit
 
-component :: forall input left.
-    H.Component HH.HTML Query input Void (Async left)
-component = H.component
+component :: forall query input output left.
+    H.Component HH.HTML query input output (Async left)
+component = H.mkComponent
     { initialState: const
         { email: ""
         , nickname: ""
+        , password: ""
         , emailError: false
         , nicknameError: false
+        , passwordError: false
         , emailTaken: false
         , nicknameTaken: false
         , otherError: false
         }
     , render
-    , eval
-    , receiver: const Nothing
-    , initializer: Just $ H.action Init
-    , finalizer: Nothing
+    , eval: H.mkEval $ H.defaultEval
+        { handleAction = handleAction
+        , initialize = Just Init
+        }
     }
 
 register :: forall query children left.

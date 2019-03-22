@@ -1,4 +1,4 @@
-module TeamTavern.Client.CreateGame (Query, Slot, createGame) where
+module TeamTavern.Client.CreateGame where
 
 import Prelude
 
@@ -7,6 +7,7 @@ import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
 import Data.Bifunctor (bimap, lmap)
+import Data.Const (Const)
 import Data.Foldable (foldl)
 import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..))
@@ -20,19 +21,20 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
-import TeamTavern.Client.Script.Cookie (hasPlayerIdCookie)
+import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Script.Navigate (navigate_)
-import TeamTavern.Client.Snippets.ErrorClasses (errorClass, inputErrorClass, otherErrorClass)
-import TeamTavern.Game.Create.Response as Create
+import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass, otherErrorClass)
+import TeamTavern.Game.Create.SendResponse as Create
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
-data Query send
-    = Init send
-    | TitleInput String send
-    | HandleInput String send
-    | DescriptionInput String send
-    | Create Event send
+data Action
+    = TitleInput String
+    | HandleInput String
+    | DescriptionInput String
+    | Create Event
+
+data Message = GameCreated
 
 type State =
     { title :: String
@@ -46,9 +48,9 @@ type State =
     , otherError :: Boolean
     }
 
-type Slot = H.Slot Query Void
+type Slot = H.Slot (Modal.Query Unit (Const Void)) (Modal.Message Message)
 
-render :: forall left. State -> H.ComponentHTML Query () (Async left)
+render :: forall slots. State -> HH.HTML slots Action
 render
     { title
     , handle
@@ -60,51 +62,47 @@ render
     , handleTaken
     , otherError
     } = HH.form
-    [ HE.onSubmit $ HE.input Create ]
+    [ HP.class_ $ ClassName "single-form", HE.onSubmit $ Just <<< Create ]
     [ HH.h2_ [ HH.text "Create a new game" ]
     , HH.div_
         [ HH.label
-            [ HP.class_ $ errorClass titleError, HP.for "title" ]
+            [ HP.for "title" ]
             [ HH.text "Title" ]
         , HH.input
             [ HP.id_ "title"
-            , HP.class_ $ errorClass titleError
-            , HE.onValueInput $ HE.input TitleInput
+            , HE.onValueInput $ Just <<< TitleInput
             ]
         , HH.p
             [ HP.class_ $ inputErrorClass titleError ]
             [ HH.text "The title cannot be more than 50 characters long." ]
         , HH.p
             [ HP.class_ $ inputErrorClass titleTaken ]
-            [ HH.text "This title is taken, pick another one." ]
+            [ HH.text "This title is already taken, please pick another one." ]
         ]
     , HH.div_
         [ HH.label
-            [ HP.class_ $ errorClass handleError, HP.for "handle" ]
+            [ HP.for "handle" ]
             [ HH.text "Handle" ]
         , HH.input
             [ HP.id_ "handle"
-            , HP.class_ $ errorClass handleError
-            , HE.onValueInput $ HE.input HandleInput
+            , HE.onValueInput $ Just <<< HandleInput
             ]
         , HH.p
             [ HP.class_ $ inputErrorClass handleError ]
             [ HH.text
-                $  "Please enter a valid handle. The handle can only contain "
-                <> "alphanumeric characters and cannot be more than 50 "
-                <> "characters long." ]
+                $  "The handle can contain only alphanumeric characters and "
+                <> "cannot be more than 50 characters long." ]
         , HH.p
             [ HP.class_ $ inputErrorClass handleTaken ]
-            [ HH.text "This handle is taken, please pick another one." ]
+            [ HH.text "This handle is already taken, please pick another one." ]
         ]
     , HH.div_
         [ HH.label
-            [ HP.class_ $ errorClass descriptionError, HP.for "description" ]
+            [ HP.for "description" ]
             [ HH.text "Description" ]
         , HH.textarea
             [ HP.id_ "description"
-            , HP.class_ $ errorClass descriptionError
-            , HE.onValueInput $ HE.input DescriptionInput
+            , HE.onValueInput $ Just <<< DescriptionInput
             ]
         , HH.p
             [ HP.class_ $ inputErrorClass descriptionError ]
@@ -151,20 +149,15 @@ sendCreateRequest state @ { title, handle, description } = Async.unify do
         _ -> pure $ Just $ state { otherError = true }
     pure newState
 
-eval :: forall void. Query ~> H.HalogenM State Query () Void (Async void)
-eval (Init send) = do
-    isSignedIn <- H.liftEffect hasPlayerIdCookie
-    if isSignedIn
-        then pure unit
-        else H.liftEffect $ navigate_ "/"
-    pure send
-eval (TitleInput title send) =
-    H.modify_ (_ { title = title }) <#> const send
-eval (HandleInput handle send) =
-    H.modify_ (_ { handle = handle }) <#> const send
-eval (DescriptionInput description send) =
-    H.modify_ (_ { description = description }) <#> const send
-eval (Create event send) = do
+handleAction :: forall slots left.
+    Action -> H.HalogenM State Action slots Message (Async left) Unit
+handleAction (TitleInput title) =
+    H.modify_ (_ { title = title }) <#> const unit
+handleAction (HandleInput handle) =
+    H.modify_ (_ { handle = handle }) <#> const unit
+handleAction (DescriptionInput description) =
+    H.modify_ (_ { description = description }) <#> const unit
+handleAction (Create event) = do
     H.liftEffect $ preventDefault event
     state <- H.gets (_
         { titleError       = false
@@ -176,13 +169,15 @@ eval (Create event send) = do
         })
     newState <- H.lift $ sendCreateRequest state
     case newState of
-        Nothing -> H.liftEffect $ navigate_ $ "/games/" <> trim state.handle
+        Nothing -> do
+            H.raise GameCreated
+            H.liftEffect $ navigate_ $ "/games/" <> trim state.handle
         Just newState' -> H.put newState'
-    pure send
+    pure unit
 
-component :: forall input left.
-    H.Component HH.HTML Query input Void (Async left)
-component = H.component
+component :: forall query input left.
+    H.Component HH.HTML query input Message (Async left)
+component = H.mkComponent
     { initialState: const
         { title: ""
         , handle: ""
@@ -195,12 +190,13 @@ component = H.component
         , otherError: false
         }
     , render
-    , eval
-    , receiver: const Nothing
-    , initializer: Just $ H.action Init
-    , finalizer: Nothing
+    , eval: H.mkEval $ H.defaultEval { handleAction = handleAction }
     }
 
-createGame :: forall query children left.
-    HH.ComponentHTML query (createGame :: Slot Unit | children) (Async left)
-createGame = HH.slot (SProxy :: SProxy "createGame") unit component unit absurd
+createGame
+    :: forall action children left
+    .  (Modal.Message Message -> Maybe action)
+    -> HH.ComponentHTML action (createGame :: Slot Unit | children) (Async left)
+createGame handleMessage = HH.slot
+    (SProxy :: SProxy "createGame") unit
+    (Modal.component component) unit handleMessage

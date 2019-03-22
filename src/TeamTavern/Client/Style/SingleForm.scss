@@ -1,0 +1,32 @@
+@import "Base";
+form.single-form {
+    @extend %bordered;
+    display: flex;
+    flex-direction: column;
+    width: 320px;
+    padding: 30px;
+    background-color: white;
+    margin: 64px auto;
+    >h1,
+    >h2 {
+        text-align: center;
+        margin-top: 10px;
+        margin-bottom: 40px;
+    }
+    >p {
+        text-align: center;
+        margin-top: 32px;
+        margin-bottom: 0;
+    }
+    >div {
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 32px;
+        >textarea {
+            height: 150px;
+        }
+    }
+    >button {
+        margin: auto;
+    }
+}

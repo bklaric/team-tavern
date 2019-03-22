@@ -25,5 +25,5 @@ hash' data' rounds = Async.fromEitherCont $ Bcrypt.hash' data' rounds
 hash_ :: String -> Async Error String
 hash_ data' = Async.fromEitherCont $ Bcrypt.hash_ data'
 
-compare :: String -> String -> Async Error String
+compare :: String -> String -> Async Error Boolean
 compare data' encrypted = Async.fromEitherCont $ Bcrypt.compare data' encrypted

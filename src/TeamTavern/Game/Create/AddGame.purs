@@ -17,9 +17,9 @@ import Postgres.Query (Query(..), QueryParameter(..))
 import Postgres.Result (rowCount)
 import TeamTavern.Game.Domain.Handle (Handle)
 import TeamTavern.Game.Domain.Title (Title)
-import TeamTavern.Game.Domain.Types (Details)
-import TeamTavern.Player.Domain.PlayerId (toString)
-import TeamTavern.Player.Domain.Types (AuthInfo)
+import TeamTavern.Game.Infrastructure.ReadModel (GameModel)
+import TeamTavern.Infrastructure.Cookie (CookieInfo)
+import TeamTavern.Player.Domain.Id (toString)
 
 addGameQuery :: Query
 addGameQuery = Query """
@@ -29,11 +29,10 @@ addGameQuery = Query """
     join session on session.player_id = player.id
     where player.id = $1
     and session.token = $2
-    and session.consumed = true
     and session.revoked = false
     """
 
-addGameQueryParameters :: AuthInfo -> Details -> Array QueryParameter
+addGameQueryParameters :: CookieInfo -> GameModel -> Array QueryParameter
 addGameQueryParameters { id, token } { title, handle, description } =
     [ toString id
     , unwrap token
@@ -53,11 +52,11 @@ type AddGameError errors = Variant
         , error :: Error
         }
     , databaseError :: Error
-    , notAuthorized :: AuthInfo
+    , notAuthorized :: CookieInfo
     | errors )
 
 addGame :: forall errors.
-    Pool -> AuthInfo -> Details -> Async (AddGameError errors) Unit
+    Pool -> CookieInfo -> GameModel -> Async (AddGameError errors) Unit
 addGame pool auth details = do
     result <- pool
         # query addGameQuery (addGameQueryParameters auth details)

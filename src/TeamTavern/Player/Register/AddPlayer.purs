@@ -14,25 +14,16 @@ import Postgres.Error.Codes (unique_violation)
 import Postgres.Pool (Pool)
 import Postgres.Query (Query(..), QueryParameter(..))
 import TeamTavern.Player.Domain.Email (Email)
+import TeamTavern.Player.Domain.Hash (Hash)
 import TeamTavern.Player.Domain.Nickname (Nickname)
-import TeamTavern.Player.Domain.Types (Credentials)
+import TeamTavern.Player.Domain.Nonce (Nonce)
 
-addPlayerQuery :: Query
-addPlayerQuery = Query """
-    with insert_result (player_id) as
-    (   insert into player (email, nickname)
-        values ($1, $2)
-        returning id
-    )
-    insert into session (player_id, token, nonce)
-    select insert_result.player_id, $3, $4
-    from insert_result
-    """
-
-addPlayerQueryParameters :: Credentials -> Array QueryParameter
-addPlayerQueryParameters { email, nickname, token, nonce } =
-    [unwrap email, unwrap nickname, unwrap token, unwrap nonce]
-    <#> QueryParameter
+type AddPlayerModel =
+    { email :: Email
+    , nickname :: Nickname
+    , hash :: Hash
+    , nonce :: Nonce
+    }
 
 type AddPlayerError errors = Variant
     ( emailTaken ::
@@ -46,14 +37,25 @@ type AddPlayerError errors = Variant
     , databaseError :: Error
     | errors )
 
+addPlayerQuery :: Query
+addPlayerQuery = Query """
+    insert into player (email, nickname, password_hash, confirmation_nonce)
+    values ($1, $2, $3, $4)
+    """
+
+addPlayerQueryParameters :: AddPlayerModel -> Array QueryParameter
+addPlayerQueryParameters { email, nickname, hash, nonce } =
+    [unwrap email, unwrap nickname, unwrap hash, unwrap nonce]
+    <#> QueryParameter
+
 addPlayer
     :: forall errors
     .  Pool
-    -> Credentials
+    -> AddPlayerModel
     -> Async (AddPlayerError errors) Unit
-addPlayer pool credentials@{ email, nickname, token, nonce } =
+addPlayer pool model @ { email, nickname, nonce } =
     pool
-    # execute addPlayerQuery (addPlayerQueryParameters credentials)
+    # execute addPlayerQuery (addPlayerQueryParameters model)
     # lmap (\error ->
         case code error == unique_violation of
         true | constraint error == Just "player_email_key" ->
