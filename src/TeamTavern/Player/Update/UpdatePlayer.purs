@@ -55,7 +55,7 @@ updatePlayer
     .  Pool
     -> CookieInfo
     -> UpdateModel
-    -> Async (UpdatePlayerError errors) Unit
+    -> Async (UpdatePlayerError errors) CookieInfo
 updatePlayer pool cookieInfo nicknamedAbout = do
     result <- pool
         # query updatePlayerQuery
@@ -70,3 +70,4 @@ updatePlayer pool cookieInfo nicknamedAbout = do
         then pure unit
         else Async.left $ inj (SProxy :: SProxy "notAuthorized")
             { cookieInfo, nickname: nicknamedAbout.nickname }
+    pure $ cookieInfo { nickname = nicknamedAbout.nickname}

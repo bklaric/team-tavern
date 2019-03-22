@@ -48,7 +48,7 @@ type State =
     , otherError :: Boolean
     }
 
-type Slot = H.Slot (Modal.Query (Const Void)) (Modal.Message Message)
+type Slot = H.Slot (Modal.Query Unit (Const Void)) (Modal.Message Message)
 
 render :: forall slots. State -> HH.HTML slots Action
 render

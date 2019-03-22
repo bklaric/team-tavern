@@ -13,7 +13,6 @@ import Data.FunctorWithIndex (mapWithIndex)
 import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
 import Effect.Class (class MonadEffect)
-import Effect.Class.Console (log)
 import Halogen (ClassName(..))
 import Halogen as H
 import Halogen.HTML as HH
@@ -63,10 +62,8 @@ loadGames = Async.unify do
 handleAction :: forall output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
 handleAction Init = do
-    log "games"
     newState <- H.lift loadGames
     H.put newState
-    pure unit
 
 component :: forall query output left.
     H.Component HH.HTML query State output (Async left)

@@ -18,6 +18,7 @@ import Postgres.Query (class Querier, Query(..), QueryParameter(..))
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
 import TeamTavern.Player.Domain.Id (Id)
+import TeamTavern.Player.Domain.Nickname (Nickname)
 import TeamTavern.Player.Domain.Password (Password)
 import TeamTavern.Session.Domain.NicknameOrEmail (NicknameOrEmail)
 
@@ -28,12 +29,14 @@ type CheckPasswordModel =
 
 type CheckPasswordDto =
     { id :: Int
+    , nickname :: String
     , hash :: String
     , emailConfirmed :: Boolean
     }
 
 type CheckPasswordResult =
     { id :: Id
+    , nickname :: Nickname
     , emailConfirmed :: Boolean
     }
 
@@ -50,7 +53,8 @@ type CheckPasswordError errors = Variant
 
 checkPasswordQuery :: Query
 checkPasswordQuery = Query """
-    select id, password_hash as hash, email_confirmed as "emailConfirmed"
+    select
+        id, nickname, password_hash as hash, email_confirmed as "emailConfirmed"
     from player
     where player.email = $1 or player.nickname = $1
     """
@@ -74,7 +78,7 @@ checkPassword model @ { nicknameOrEmail, password } querier = do
         # traverse read
         # labelMap (SProxy :: SProxy "unreadableHash")
             { result, errors: _ }
-    { id, hash, emailConfirmed } :: CheckPasswordDto <- head dtos
+    { id, nickname, hash, emailConfirmed } :: CheckPasswordDto <- head dtos
         # note (inj (SProxy :: SProxy "noMatchingPlayer") nicknameOrEmail)
 
     -- Compare hash with password.
@@ -83,4 +87,4 @@ checkPassword model @ { nicknameOrEmail, password } querier = do
     when (not matches) $ left
         $ inj (SProxy :: SProxy "passwordDoesntMatch") nicknameOrEmail
 
-    pure $ { id: wrap id, emailConfirmed }
+    pure $ { id: wrap id, nickname: wrap nickname, emailConfirmed }

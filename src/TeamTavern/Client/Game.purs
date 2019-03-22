@@ -121,14 +121,12 @@ handleAction (ShowCreateProfileModal event) = do
     H.liftEffect $ preventDefault $ toEvent event
     Modal.show (SProxy :: SProxy "createProfile")
 handleAction (HandleEditGameMessage message) = do
-    state <- H.get
     Modal.hide (SProxy :: SProxy "editGame")
     case message of
         Modal.Inner (EditGame.GameUpdated handle) ->
             H.liftEffect $ navigate_ $ "/games/" <> trim handle
         _ -> pure unit
 handleAction (HandleCreateProfileMessage message) = do
-    state <- H.get
     Modal.hide (SProxy :: SProxy "createProfile")
     case message of
         Modal.Inner (CreateProfile.ProfileCreated handle) ->

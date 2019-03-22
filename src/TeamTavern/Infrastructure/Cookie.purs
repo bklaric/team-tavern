@@ -10,10 +10,12 @@ import Data.MultiMap (MultiMap, singleton')
 import Data.Newtype (unwrap, wrap)
 import Data.NonEmpty ((:|))
 import TeamTavern.Player.Domain.Id (Id, fromString, toString)
+import TeamTavern.Player.Domain.Nickname (Nickname)
 import TeamTavern.Session.Domain.Token (Token)
 
 type CookieInfo =
     { id :: Id
+    , nickname :: Nickname
     , token :: Token
     }
 
@@ -21,6 +23,9 @@ type CookieInfo =
 
 idCookieName :: String
 idCookieName = "teamtavern-id"
+
+nicknameCookieName :: String
+nicknameCookieName = "teamtavern-nickname"
 
 tokenCookieName :: String
 tokenCookieName = "teamtavern-token"
@@ -30,14 +35,21 @@ tokenCookieName = "teamtavern-token"
 lookupCookieInfo :: Map String String -> Maybe CookieInfo
 lookupCookieInfo cookies = do
     id <- lookup idCookieName cookies >>= fromString
+    nickname <- lookup nicknameCookieName cookies <#> wrap
     token <- lookup tokenCookieName cookies <#> wrap
-    pure { id, token }
+    pure { id, nickname, token }
 
 -- Set cookies.
 
 setIdCookie :: Id -> String
 setIdCookie id =
-    idCookieName <> "=" <> (toString id)
+    idCookieName <> "=" <> toString id
+    <> "; Max-Age=" <> show (top :: Int)
+    <> "; Path=/"
+
+setNicknameCookie :: Nickname -> String
+setNicknameCookie nickname =
+    nicknameCookieName <> "=" <> unwrap nickname
     <> "; Max-Age=" <> show (top :: Int)
     <> "; Path=/"
 
@@ -48,9 +60,9 @@ setTokenCookie token =
     <> "; Path=/"
     <> "; HttpOnly; Secure"
 
-setCookieHeader :: Id -> Token -> MultiMap String String
-setCookieHeader id token =
-    setIdCookie id :| setTokenCookie token : Nil
+setCookieHeader :: CookieInfo -> MultiMap String String
+setCookieHeader { id, nickname, token } =
+    setIdCookie id :| setNicknameCookie nickname : setTokenCookie token : Nil
     # NonEmptyList
     # singleton' "Set-Cookie"
 

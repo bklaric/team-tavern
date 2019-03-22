@@ -32,7 +32,7 @@ start pool cookies body =
     result <- pool # withTransaction (inj (SProxy :: SProxy "databaseError"))
         (\client -> do
             -- Check if password hash matches.
-            { id, emailConfirmed } <-
+            { id, nickname, emailConfirmed } <-
                 checkPassword { nicknameOrEmail, password } client
 
             -- Generate session token.
@@ -48,6 +48,6 @@ start pool cookies body =
             -- Create a new session.
             createSession { id, token } client
 
-            pure { id, token })
+            pure { id, nickname, token })
 
     pure result

@@ -1,5 +1,5 @@
 module TeamTavern.Client.Components.Modal
-    (Query(..), Message(..), component, hide, show) where
+    (Query(..), Message(..), component, hide, show, showWith) where
 
 import Prelude
 import Prim.Row (class Cons)
@@ -20,42 +20,37 @@ import Web.HTML.HTMLElement (fromEventTarget, setClassName)
 import Web.HTML.Window (document)
 import Web.UIEvent.MouseEvent (MouseEvent, toEvent)
 
-data State = Shown | Hidden
+data State input = Shown input | Hidden
 
 data Action output
-    = Init
-    | Final
-    | BackgroundClick MouseEvent
+    = BackgroundClick MouseEvent
     | InnerMessage output
 
-data Query inner send = Show send | Hide send | InnerQuery (inner send)
+data Query input query send
+    = Show input send
+    | Hide send
+    | InnerQuery (query send)
 
 data Message output = BackgroundClicked | Inner output
 
 type ChildSlots query output = (content :: H.Slot query output Unit)
 
 renderModal
-    :: forall query output monad
-    .  H.Component HH.HTML query Unit output monad
-    -> State
+    :: forall query input output monad
+    .  H.Component HH.HTML query input output monad
+    -> State input
     -> HH.ComponentHTML (Action output) (ChildSlots query output) monad
 renderModal _ Hidden = HH.div_ []
-renderModal content Shown = HH.div
+renderModal content (Shown input) = HH.div
     [ HP.class_ $ H.ClassName "modal-background"
     , HP.ref $ H.RefLabel "modal-background"
     , HE.onClick $ Just <<< BackgroundClick
     ]
     [ HH.slot (SProxy :: SProxy "content") unit
-        content unit (Just <<< InnerMessage) ]
+        content input (Just <<< InnerMessage) ]
 
 handleAction :: forall state action slots output monad. MonadEffect monad =>
     Action output -> H.HalogenM state action slots (Message output) monad Unit
-handleAction Init =
-    window >>= document >>= body
-        >>= (maybe (pure unit) (setClassName "unscrollable")) # H.liftEffect
-handleAction Final =
-    window >>= document >>= body
-        >>= (maybe (pure unit) (setClassName "")) # H.liftEffect
 handleAction (BackgroundClick event) = do
     background <- H.getHTMLElementRef (H.RefLabel "modal-background")
     eventTarget <- event # toEvent # target >>= fromEventTarget # pure
@@ -66,41 +61,56 @@ handleAction (BackgroundClick event) = do
 handleAction (InnerMessage message) = H.raise $ Inner message
 
 handleQuery
-  :: forall query output monad send
-   . Query query send
-  -> H.HalogenM State (Action output) (ChildSlots query output)
-    (Message output) monad (Maybe send)
-handleQuery (Show send) = H.put Shown $> Just send
-handleQuery (Hide send) = H.put Hidden $> Just send
+    :: forall query input output monad send
+    .  MonadEffect monad
+    => Query input query send
+    -> H.HalogenM (State input) (Action output) (ChildSlots query output)
+        (Message output) monad (Maybe send)
+handleQuery (Show input send) = do
+    window >>= document >>= body
+        >>= (maybe (pure unit) (setClassName "unscrollable")) # H.liftEffect
+    H.put (Shown input)
+    pure $ Just send
+handleQuery (Hide send) = do
+    window >>= document >>= body
+        >>= (maybe (pure unit) (setClassName "")) # H.liftEffect
+    H.put Hidden $> Just send
 handleQuery (InnerQuery send) = H.query (SProxy :: SProxy "content") unit send
 
 component
-    :: forall query input output monad
+    :: forall query input modalInput output monad
     .  MonadEffect monad
-    => H.Component HH.HTML query Unit output monad
-    -> H.Component HH.HTML (Query query) input (Message output) monad
+    => H.Component HH.HTML query input output monad
+    -> H.Component HH.HTML (Query input query) modalInput (Message output) monad
 component content = H.mkComponent
     { initialState: const Hidden
     , render: renderModal content
     , eval: H.mkEval $ H.defaultEval
         { handleAction = handleAction
         , handleQuery = handleQuery
-        , initialize = Just Init
-        , finalize = Just Final
         }
     }
 
 show
-    :: forall output action state inner children' index children slot monad
-    .  Cons slot (H.Slot (Query inner) index Unit) children' children
+    :: forall output action state query children' index children slot monad
+    .  Cons slot (H.Slot (Query Unit query) index Unit) children' children
     => IsSymbol slot
     => SProxy slot
     -> H.HalogenM state action children output monad Unit
-show slot = void $ H.query slot unit (Show unit)
+show slot = void $ H.query slot unit (Show unit unit)
+
+showWith
+    :: forall input output action state query children' index children slot monad
+    .  Cons slot (H.Slot (Query input query) index Unit) children' children
+    => IsSymbol slot
+    => input
+    -> SProxy slot
+    -> H.HalogenM state action children output monad Unit
+showWith input slot = void $ H.query slot unit (Show input unit)
 
 hide
-    :: forall children' index children slot monad output action state inner
-    .  Cons slot (H.Slot (Query inner) index Unit) children' children
+    :: forall input children' index children slot monad output action state query
+    .  Cons slot (H.Slot (Query input query) index Unit) children' children
     => IsSymbol slot
     => SProxy slot
     -> H.HalogenM state action children output monad Unit

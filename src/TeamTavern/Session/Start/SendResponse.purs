@@ -8,15 +8,8 @@ import Data.MultiMap (singleton)
 import Data.Variant (SProxy(..), Variant, inj, match)
 import Perun.Response (Response, badRequest, badRequest__, forbidden__, internalServerError__, noContent)
 import Simple.JSON (writeJSON)
-import TeamTavern.Infrastructure.Cookie (setCookieHeader)
-import TeamTavern.Player.Domain.Id (Id)
-import TeamTavern.Session.Domain.Token (Token)
+import TeamTavern.Infrastructure.Cookie (CookieInfo, setCookieHeader)
 import TeamTavern.Session.Start.LogError (StartError)
-
-type SendResponseModel =
-    { id :: Id
-    , token :: Token
-    }
 
 type BadRequestContent = Variant
     ( unconfirmedEmail :: {}
@@ -49,9 +42,9 @@ errorResponse = match
         (inj (SProxy :: SProxy "noSessionStarted") {} :: BadRequestContent)
     }
 
-successResponse :: SendResponseModel -> Response
-successResponse { id, token } = noContent $ setCookieHeader id token
+successResponse :: CookieInfo -> Response
+successResponse cookieInfo = noContent $ setCookieHeader cookieInfo
 
 sendResponse ::
-    Async StartError SendResponseModel -> (forall left. Async left Response)
+    Async StartError CookieInfo -> (forall left. Async left Response)
 sendResponse = alwaysRight errorResponse successResponse
