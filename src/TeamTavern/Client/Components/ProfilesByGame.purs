@@ -35,11 +35,11 @@ render Empty = HH.div_ []
 render (Profiles profiles) = HH.div_ $
     [ HH.h3_ [ HH.text "Profiles" ] ] <>
     (profiles # mapWithIndex \index { nickname, summary } ->
-        HH.div [ HP.class_ $ ClassName "profile-item" ]
+        HH.div [ HP.class_ $ ClassName "profile-item" ] $
         [ HH.h3_ [ navigationAnchorIndexed (SProxy :: SProxy "players") index
             { path: "/players/" <> nickname, text: nickname } ]
-        , HH.p_ [ HH.text summary ]
-        ])
+        ] <> (summary <#> \paragraph -> HH.p_ [ HH.text paragraph ])
+    )
 
 loadProfiles :: forall left. String -> Async left State
 loadProfiles handle = Async.unify do

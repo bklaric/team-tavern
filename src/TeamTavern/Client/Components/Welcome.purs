@@ -4,8 +4,10 @@ import Prelude
 
 import Data.Symbol (SProxy(..))
 import Effect.Class (class MonadEffect)
+import Halogen (ClassName(..))
 import Halogen as H
 import Halogen.HTML as HH
+import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 
@@ -20,7 +22,8 @@ welcome
     .  MonadEffect monad
     => { email :: String, nickname :: String, emailSent :: Boolean }
     -> H.ComponentHTML action (ChildSlots slots) monad
-welcome { email, nickname, emailSent } = HH.div_ $
+welcome { email, nickname, emailSent } =
+    HH.div [ HP.class_ $ ClassName "welcome"] $
     [ HH.h3_ [ HH.text $ "Welcome to TeamTavern, " <> nickname <> "!" ] ]
     <> if emailSent
         then

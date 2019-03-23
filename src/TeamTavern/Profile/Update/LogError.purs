@@ -9,9 +9,9 @@ import Effect (Effect)
 import Effect.Console (log)
 import Foreign (MultipleErrors)
 import Postgres.Error (Error)
+import TeamTavern.Domain.Text (TextError)
 import TeamTavern.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Infrastructure.Log (logt, print)
-import TeamTavern.Profile.Domain.Summary (SummaryError)
 import TeamTavern.Profile.Routes (Identifiers)
 
 type UpdateError = Variant
@@ -22,7 +22,7 @@ type UpdateError = Variant
         }
     , invalidSummary ::
         { summary :: String
-        , errors :: NonEmptyList SummaryError
+        , errors :: NonEmptyList TextError
         }
     , databaseError :: Error
     , notAuthorized ::

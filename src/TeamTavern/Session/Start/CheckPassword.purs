@@ -14,7 +14,7 @@ import Foreign (MultipleErrors)
 import Node.Errors as Node
 import Postgres.Async.Query (query)
 import Postgres.Error as Postgres
-import Postgres.Query (class Querier, Query(..), QueryParameter(..))
+import Postgres.Query (class Querier, Query(..), QueryParameter, toQueryParameter)
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
 import TeamTavern.Player.Domain.Id (Id)
@@ -61,7 +61,7 @@ checkPasswordQuery = Query """
 
 checkPasswordParameters :: NicknameOrEmail -> Array QueryParameter
 checkPasswordParameters nicknameOrEmail =
-    [unwrap nicknameOrEmail] <#> QueryParameter
+    [unwrap nicknameOrEmail] <#> toQueryParameter
 
 checkPassword
     :: forall querier errors

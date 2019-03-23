@@ -38,11 +38,10 @@ render (Games games') =
     then
         HH.div_ $
         games' # mapWithIndex \index { title, handle, description } ->
-            HH.div [ HP.class_ $ ClassName "game-item" ]
+            HH.div [ HP.class_ $ ClassName "game-item" ] $
             [ HH.h2_ [ navigationAnchorIndexed (SProxy :: SProxy "game") index
                 { path: "/games/" <> handle, text: title } ]
-            , HH.p_ [ HH.text description ]
-            ]
+            ] <> (description <#> \paragraph -> HH.p_ [ HH.text paragraph ])
     else HH.p_ [ HH.text $
         "There should be a list of games here, "
         <> "but no game entry has been created yet. "

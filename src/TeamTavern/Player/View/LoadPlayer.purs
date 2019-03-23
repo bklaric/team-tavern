@@ -15,7 +15,7 @@ import Foreign (MultipleErrors)
 import Postgres.Async.Query (query)
 import Postgres.Error (Error)
 import Postgres.Pool (Pool)
-import Postgres.Query (Query(..), QueryParameter(..))
+import Postgres.Query (Query(..), QueryParameter, toQueryParameter)
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
 import TeamTavern.Player.Domain.About (About)
@@ -25,7 +25,7 @@ import TeamTavern.Player.Domain.Nickname (Nickname)
 type LoadPlayerDto =
     { id :: Int
     , nickname :: String
-    , about :: String
+    , about :: Array String
     }
 
 type LoadPlayerResult =
@@ -51,7 +51,7 @@ loadPlayerQuery = Query """
     """
 
 loadPlayerQueryParameters :: Nickname -> Array QueryParameter
-loadPlayerQueryParameters nickname = [unwrap nickname] <#> QueryParameter
+loadPlayerQueryParameters nickname = [unwrap nickname] <#> toQueryParameter
 
 loadPlayer :: forall errors.
     Pool -> Nickname -> Async (LoadPlayerError errors) LoadPlayerResult
@@ -67,5 +67,5 @@ loadPlayer pool nickname' = do
     pure
         { id: wrap id
         , nickname: wrap nickname
-        , about: wrap about
+        , about: about <#> wrap # wrap
         }

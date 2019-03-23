@@ -12,7 +12,7 @@ import Postgres.Async.Query (execute)
 import Postgres.Error (Error, constraint)
 import Postgres.Error.Codes (unique_violation)
 import Postgres.Pool (Pool)
-import Postgres.Query (Query(..), QueryParameter(..))
+import Postgres.Query (Query(..), QueryParameter, toQueryParameter)
 import TeamTavern.Player.Domain.Email (Email)
 import TeamTavern.Player.Domain.Hash (Hash)
 import TeamTavern.Player.Domain.Nickname (Nickname)
@@ -46,7 +46,7 @@ addPlayerQuery = Query """
 addPlayerQueryParameters :: AddPlayerModel -> Array QueryParameter
 addPlayerQueryParameters { email, nickname, hash, nonce } =
     [unwrap email, unwrap nickname, unwrap hash, unwrap nonce]
-    <#> QueryParameter
+    <#> toQueryParameter
 
 addPlayer
     :: forall errors

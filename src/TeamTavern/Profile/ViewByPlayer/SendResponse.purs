@@ -15,7 +15,7 @@ import TeamTavern.Profile.ViewByPlayer.LogError (ViewAllError)
 type OkContent = Array
     { handle :: String
     , title :: String
-    , summary :: String
+    , summary :: Array String
     }
 
 errorResponse :: ViewAllError -> Response
@@ -29,7 +29,7 @@ successResponse profiles = ok_ $ (writeJSON :: OkContent -> String) $
     mapFlipped profiles \{ title, handle, summary } ->
         { handle: unwrap handle
         , title: unwrap title
-        , summary: unwrap summary
+        , summary: unwrap summary <#> unwrap
         }
 
 sendResponse

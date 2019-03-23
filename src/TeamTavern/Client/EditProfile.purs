@@ -8,6 +8,7 @@ import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
 import Data.Bifunctor (bimap, lmap)
 import Data.Const (Const)
+import Data.Foldable (intercalate)
 import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..))
 import Data.Options ((:=))
@@ -29,7 +30,7 @@ type Input =
     { handle :: String
     , title :: String
     , nickname :: String
-    , summary :: String
+    , summary :: Array String
     }
 
 data Action
@@ -120,7 +121,7 @@ component = H.mkComponent
         { handle
         , title
         , nickname
-        , summary
+        , summary: intercalate "\n\n" summary
         , summaryError: false
         , otherError: false
         }

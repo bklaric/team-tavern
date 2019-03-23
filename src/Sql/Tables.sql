@@ -5,7 +5,7 @@ create table player
     , password_hash character(60) not null
     , confirmation_nonce character(20) not null
     , email_confirmed boolean not null default false
-    , about varchar(2000) not null default ''
+    , about text[] not null default '{}'
     , registered timestamptz not null default current_timestamp
     );
 
@@ -22,7 +22,7 @@ create table game
     , administrator_id integer not null references player(id)
     , title varchar(50) not null unique
     , handle varchar(50) not null unique
-    , description varchar(2000) not null
+    , description text[] not null
     , created timestamptz not null default current_timestamp
     );
 
@@ -30,7 +30,7 @@ create table profile
     ( id serial not null primary key
     , player_id integer not null references player(id)
     , game_id integer not null references game(id)
-    , summary varchar(2000) not null
+    , summary text[] not null
     , created timestamptz not null default current_timestamp
     , unique (game_id, player_id)
     );

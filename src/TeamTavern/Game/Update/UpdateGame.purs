@@ -13,13 +13,14 @@ import Postgres.Async.Query (query)
 import Postgres.Error (Error, constraint)
 import Postgres.Error.Codes (unique_violation)
 import Postgres.Pool (Pool)
-import Postgres.Query (Query(..), QueryParameter(..))
+import Postgres.Query (Query(..), QueryParameter, toQueryParameter)
 import Postgres.Result (rowCount)
 import TeamTavern.Game.Domain.Handle (Handle)
 import TeamTavern.Game.Domain.Title (Title)
 import TeamTavern.Game.Infrastructure.ReadModel (GameModel)
 import TeamTavern.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Player.Domain.Id (toString)
+import Unsafe.Coerce (unsafeCoerce)
 
 updateGameQuery :: Query
 updateGameQuery = Query """
@@ -42,9 +43,9 @@ updateGameQueryParameters
     , unwrap targetHandle
     , unwrap title
     , unwrap handle
-    , unwrap description
+    , unwrap description # unsafeCoerce
     ]
-    <#> QueryParameter
+    <#> toQueryParameter
 
 type UpdateGameError errors = Variant
     ( titleTaken ::

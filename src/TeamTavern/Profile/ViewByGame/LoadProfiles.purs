@@ -13,7 +13,7 @@ import Foreign (MultipleErrors)
 import Postgres.Async.Query (query)
 import Postgres.Error (Error)
 import Postgres.Pool (Pool)
-import Postgres.Query (Query(..), QueryParameter(..))
+import Postgres.Query (Query(..), QueryParameter, toQueryParameter)
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
 import TeamTavern.Game.Domain.Handle (Handle)
@@ -22,7 +22,7 @@ import TeamTavern.Profile.Domain.Summary (Summary)
 
 type LoadProfilesDto =
     { nickname :: String
-    , summary :: String
+    , summary :: Array String
     }
 
 type LoadProfilesResult =
@@ -49,7 +49,7 @@ queryString = Query """
     """
 
 queryParameters :: Handle -> Array QueryParameter
-queryParameters handle = [QueryParameter $ unwrap handle]
+queryParameters handle = [toQueryParameter $ unwrap handle]
 
 loadProfiles
     :: forall errors
@@ -65,5 +65,5 @@ loadProfiles pool handle = do
         # labelMap (SProxy :: SProxy "unreadableDtos") { result, errors: _ }
     pure $ profiles <#> \{ nickname, summary } ->
         { nickname: wrap nickname
-        , summary: wrap summary
+        , summary: summary <#> wrap # wrap
         }

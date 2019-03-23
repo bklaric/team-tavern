@@ -1,0 +1,12 @@
+@import "../Style/Base";
+.welcome {
+    @extend %bordered;
+    width: 380px;
+    margin: 64px auto;
+    padding: 30px;
+    background-color: white;
+    text-align: center;
+    a:first-of-type {
+        margin-right: 32px;
+    }
+}

@@ -8,7 +8,7 @@ import Data.Newtype (unwrap)
 import Data.Variant (SProxy(..), Variant, inj)
 import Postgres.Async.Query (query)
 import Postgres.Error (Error)
-import Postgres.Query (class Querier, Query(..), QueryParameter(..))
+import Postgres.Query (class Querier, Query(..), QueryParameter, toQueryParameter)
 import Postgres.Result (rowCount)
 import TeamTavern.Player.Domain.Id (Id)
 import TeamTavern.Player.Domain.Nonce (Nonce)
@@ -35,7 +35,7 @@ confirmEmailQuery = Query """
 
 confirmEmailParameters :: ConfirmEmailModel -> Array QueryParameter
 confirmEmailParameters { id, nonce } =
-    [show $ unwrap id, unwrap nonce] <#> QueryParameter
+    [show $ unwrap id, unwrap nonce] <#> toQueryParameter
 
 confirmEmail :: forall querier errors. Querier querier =>
     ConfirmEmailModel -> querier -> Async (ConfirmEmailError errors) Unit

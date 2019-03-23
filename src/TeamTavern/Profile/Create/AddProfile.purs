@@ -10,12 +10,13 @@ import Data.Variant (SProxy(..), Variant, inj)
 import Postgres.Async.Query (query)
 import Postgres.Error (Error)
 import Postgres.Pool (Pool)
-import Postgres.Query (Query(..), QueryParameter(..))
+import Postgres.Query (Query(..), QueryParameter, toQueryParameter)
 import Postgres.Result (rowCount)
 import TeamTavern.Game.Domain.Handle (Handle)
 import TeamTavern.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Player.Domain.Id (toString)
 import TeamTavern.Profile.Domain.Summary (Summary)
+import Unsafe.Coerce (unsafeCoerce)
 
 type AddProfileError errors = Variant
     ( databaseError :: Error
@@ -43,9 +44,9 @@ addProfileParameters { id, token } handle summary =
     [ toString id
     , unwrap token
     , unwrap handle
-    , unwrap summary
+    , unwrap summary <#> unwrap # unsafeCoerce
     ]
-    <#> QueryParameter
+    <#> toQueryParameter
 
 addProfile
     :: forall errors

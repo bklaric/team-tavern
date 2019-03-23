@@ -14,7 +14,7 @@ type OkContent =
     { administratorId :: Int
     , title :: String
     , handle :: String
-    , description :: String
+    , description :: Array String
     , hasProfile :: Boolean
     }
 
@@ -31,7 +31,7 @@ successResponse { administratorId, title, handle, description, hasProfile } =
     { administratorId: unwrap administratorId
     , title: unwrap title
     , handle: unwrap handle
-    , description: unwrap description
+    , description: unwrap description <#> unwrap
     , hasProfile
     } :: OkContent)
 

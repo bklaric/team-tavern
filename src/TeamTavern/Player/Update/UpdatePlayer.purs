@@ -14,12 +14,13 @@ import Postgres.Async.Query (query)
 import Postgres.Error (Error, constraint)
 import Postgres.Error.Codes (unique_violation)
 import Postgres.Pool (Pool)
-import Postgres.Query (Query(..), QueryParameter(..))
+import Postgres.Query (Query(..), QueryParameter, toQueryParameter)
 import Postgres.Result (rowCount)
 import TeamTavern.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Player.Domain.Id (toString)
 import TeamTavern.Player.Domain.Nickname (Nickname)
 import TeamTavern.Player.Update.ReadUpdate (UpdateModel)
+import Unsafe.Coerce (unsafeCoerce)
 
 type UpdatePlayerError errors = Variant
   ( nicknameTaken ::
@@ -47,8 +48,8 @@ updatePlayerQuery = Query """
 updatePlayerQueryParameters ::
     CookieInfo -> UpdateModel -> Array QueryParameter
 updatePlayerQueryParameters { id, token } { nickname, about} =
-    [toString id, unwrap token, unwrap nickname, unwrap about]
-    <#> QueryParameter
+    [toString id, unwrap token, unwrap nickname, unwrap about # unsafeCoerce]
+    <#> toQueryParameter
 
 updatePlayer
     :: forall errors

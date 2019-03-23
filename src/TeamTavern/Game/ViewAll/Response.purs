@@ -15,7 +15,7 @@ type OkContent = Array
     { administratorId :: Int
     , title :: String
     , handle :: String
-    , description :: String
+    , description :: Array String
     }
 
 errorResponse :: ViewAllError -> Response
@@ -30,7 +30,7 @@ successResponse views  = ok_ $ (writeJSON :: OkContent -> String) $
         { administratorId: unwrap administratorId
         , title: unwrap title
         , handle: unwrap handle
-        , description: unwrap description
+        , description: unwrap description <#> unwrap
         }
 
 sendResponse

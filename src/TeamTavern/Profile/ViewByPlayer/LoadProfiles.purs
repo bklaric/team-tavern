@@ -13,7 +13,7 @@ import Foreign (MultipleErrors)
 import Postgres.Async.Query (query)
 import Postgres.Error (Error)
 import Postgres.Pool (Pool)
-import Postgres.Query (Query(..), QueryParameter(..))
+import Postgres.Query (Query(..), QueryParameter, toQueryParameter)
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
 import TeamTavern.Game.Domain.Handle (Handle)
@@ -24,7 +24,7 @@ import TeamTavern.Profile.Domain.Summary (Summary)
 type LoadProfilesDto =
     { handle :: String
     , title :: String
-    , summary :: String
+    , summary :: Array String
     }
 
 type LoadProfilesResult =
@@ -52,7 +52,7 @@ queryString = Query """
     """
 
 queryParameters :: Nickname -> Array QueryParameter
-queryParameters nickname = [QueryParameter $ unwrap nickname]
+queryParameters nickname = [toQueryParameter $ unwrap nickname]
 
 loadProfiles
     :: forall errors
@@ -69,5 +69,5 @@ loadProfiles pool nickname = do
     pure $ profiles <#> \{ handle, title, summary } ->
         { handle: wrap handle
         , title: wrap title
-        , summary: wrap summary
+        , summary: summary <#> wrap # wrap
         }

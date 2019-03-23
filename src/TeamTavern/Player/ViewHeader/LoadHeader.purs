@@ -15,7 +15,7 @@ import Foreign (MultipleErrors)
 import Postgres.Async.Query (query)
 import Postgres.Error (Error)
 import Postgres.Pool (Pool)
-import Postgres.Query (Query(..), QueryParameter(..))
+import Postgres.Query (Query(..), QueryParameter, toQueryParameter)
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
 import TeamTavern.Player.Domain.Id (Id, toString)
@@ -40,7 +40,7 @@ queryString = Query """
     """
 
 queryParameters :: Id -> Array QueryParameter
-queryParameters id = QueryParameter <$> [toString id]
+queryParameters id = [toQueryParameter $ toString id]
 
 loadHeader :: forall errors.
     Pool -> Id -> Async (LoadHeaderError errors) LoadHeaderResult
