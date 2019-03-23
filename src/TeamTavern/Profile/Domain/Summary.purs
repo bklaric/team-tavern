@@ -1,14 +1,18 @@
 module TeamTavern.Profile.Domain.Summary where
 
+import Prelude
+
+import Data.List.NonEmpty (singleton)
 import Data.List.Types (NonEmptyList)
 import Data.Newtype (class Newtype)
-import Data.String (trim)
-import Data.Validated (Validated)
-import Data.Variant (Variant)
-import Wrapped.String (NotPrintable, TooLong, Empty, empty, notPrintable, tooLong)
-import Wrapped.Validated as Wrapped
+import Data.Traversable (sum)
+import Data.Validated (Validated, invalid, valid)
+import Data.Variant (SProxy(..), Variant, inj)
+import TeamTavern.Domain.Paragraph (Paragraph)
+import TeamTavern.Domain.Paragraph as Paragraph
+import Wrapped.String (Empty, NotPrintable, TooLong)
 
-newtype Summary = Summary String
+newtype Summary = Summary (Array Paragraph)
 
 derive instance newtypeSummary :: Newtype Summary _
 
@@ -21,7 +25,16 @@ type SummaryError = Variant
 maxLength :: Int
 maxLength = 2000
 
+createSummary :: Array Paragraph -> Validated (NonEmptyList SummaryError) Summary
+createSummary paragraphs = let
+    actualLength = paragraphs <#> Paragraph.length # sum
+    in
+    if actualLength > maxLength
+    then invalid $ singleton $ inj (SProxy :: SProxy "tooLong")
+        { maxLength, actualLength }
+    else if actualLength == 0
+    then invalid $ singleton $ inj (SProxy :: SProxy "empty") {}
+    else valid $ Summary paragraphs
+
 create :: String -> Validated (NonEmptyList SummaryError) Summary
-create summary =
-    Wrapped.create trim [empty, tooLong maxLength, notPrintable]
-        Summary summary
+create text = text # Paragraph.create >>= createSummary

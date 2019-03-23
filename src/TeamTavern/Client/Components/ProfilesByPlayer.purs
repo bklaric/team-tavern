@@ -62,7 +62,7 @@ render (Profiles profiles nickname') = HH.div_ $
                     { handle, title, nickname, summary }
                 ]
                 [ HH.text "Edit profile" ] ]
-        , pure $ HH.p_ [ HH.text summary ]
+        , summary <#> \paragraph -> HH.p_ [ HH.text paragraph ]
         ])
     <> case nickname' of
         Nothing -> []

@@ -14,7 +14,7 @@ import Postgres.Async.Query (query)
 import Postgres.Error (Error, constraint)
 import Postgres.Error.Codes (unique_violation)
 import Postgres.Pool (Pool)
-import Postgres.Query (Query(..), QueryParameter(..))
+import Postgres.Query (Query(..), QueryParameter, toQueryParameter)
 import Postgres.Result (rowCount)
 import TeamTavern.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Player.Domain.Id (toString)
@@ -48,7 +48,7 @@ updatePlayerQueryParameters ::
     CookieInfo -> UpdateModel -> Array QueryParameter
 updatePlayerQueryParameters { id, token } { nickname, about} =
     [toString id, unwrap token, unwrap nickname, unwrap about]
-    <#> QueryParameter
+    <#> toQueryParameter
 
 updatePlayer
     :: forall errors

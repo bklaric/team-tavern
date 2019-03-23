@@ -16,7 +16,7 @@ import Foreign (MultipleErrors)
 import Postgres.Async.Query (query)
 import Postgres.Error (Error)
 import Postgres.Pool (Pool)
-import Postgres.Query (Query(..), QueryParameter(..))
+import Postgres.Query (Query(..), QueryParameter, toQueryParameter)
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
 import TeamTavern.Game.Domain.Description (Description)
@@ -66,7 +66,7 @@ loadGameQuery = Query """
 
 loadGameQueryParameters :: Handle -> Maybe CookieInfo -> Array QueryParameter
 loadGameQueryParameters handle auth =
-    [unwrap handle, maybe "0" (_.id >>> toString) auth] <#> QueryParameter
+    [unwrap handle, maybe "0" (_.id >>> toString) auth] <#> toQueryParameter
 
 loadGame
     :: forall errors

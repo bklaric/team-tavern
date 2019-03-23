@@ -13,7 +13,7 @@ import Postgres.Async.Query (query)
 import Postgres.Error (Error, constraint)
 import Postgres.Error.Codes (unique_violation)
 import Postgres.Pool (Pool)
-import Postgres.Query (Query(..), QueryParameter(..))
+import Postgres.Query (Query(..), QueryParameter, toQueryParameter)
 import Postgres.Result (rowCount)
 import TeamTavern.Game.Domain.Handle (Handle)
 import TeamTavern.Game.Domain.Title (Title)
@@ -21,8 +21,8 @@ import TeamTavern.Game.Infrastructure.ReadModel (GameModel)
 import TeamTavern.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Player.Domain.Id (toString)
 
-addGameQuery :: Query
-addGameQuery = Query """
+queryString :: Query
+queryString = Query """
     insert into game (administrator_id, title, handle, description)
     select player.id, $3, $4, $5
     from player
@@ -32,15 +32,15 @@ addGameQuery = Query """
     and session.revoked = false
     """
 
-addGameQueryParameters :: CookieInfo -> GameModel -> Array QueryParameter
-addGameQueryParameters { id, token } { title, handle, description } =
+queryParameters :: CookieInfo -> GameModel -> Array QueryParameter
+queryParameters { id, token } { title, handle, description } =
     [ toString id
     , unwrap token
     , unwrap title
     , unwrap handle
     , unwrap description
     ]
-    <#> QueryParameter
+    <#> toQueryParameter
 
 type AddGameError errors = Variant
     ( titleTaken ::
@@ -59,7 +59,7 @@ addGame :: forall errors.
     Pool -> CookieInfo -> GameModel -> Async (AddGameError errors) Unit
 addGame pool auth details = do
     result <- pool
-        # query addGameQuery (addGameQueryParameters auth details)
+        # query queryString (queryParameters auth details)
         # lmap (\error ->
             case code error == unique_violation of
             true | constraint error == Just "game_title_key" ->

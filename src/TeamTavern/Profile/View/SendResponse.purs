@@ -10,7 +10,7 @@ import Simple.JSON (writeJSON)
 import TeamTavern.Profile.View.LoadProfile (LoadProfileResult)
 import TeamTavern.Profile.View.LogError (ViewError)
 
-type OkContent = { summary :: String }
+type OkContent = { summary :: Array String }
 
 errorResponse :: ViewError -> Response
 errorResponse = match
@@ -21,7 +21,7 @@ errorResponse = match
 
 successResponse :: LoadProfileResult -> Response
 successResponse { summary } = ok_ $ writeJSON (
-    { summary: unwrap summary
+    { summary: unwrap summary <#> unwrap
     } :: OkContent)
 
 sendResponse ::

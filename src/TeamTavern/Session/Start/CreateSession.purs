@@ -9,7 +9,7 @@ import Data.Newtype (unwrap)
 import Data.Variant (SProxy(..), Variant, inj)
 import Postgres.Async.Query (query)
 import Postgres.Error (Error)
-import Postgres.Query (class Querier, Query(..), QueryParameter(..))
+import Postgres.Query (class Querier, Query(..), QueryParameter, toQueryParameter)
 import Postgres.Result (rowCount)
 import TeamTavern.Player.Domain.Id (Id, toString)
 import TeamTavern.Session.Domain.Token (Token)
@@ -36,7 +36,7 @@ createSessionQuery = Query """
 createSessionParameters :: CreateSessionModel -> Array QueryParameter
 createSessionParameters { id, token } =
     [toString id, unwrap token]
-    <#> QueryParameter
+    <#> toQueryParameter
 
 createSession :: forall querier errors. Querier querier =>
     CreateSessionModel -> querier -> Async (CreateSessionError errors) Unit

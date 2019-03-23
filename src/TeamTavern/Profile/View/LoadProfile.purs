@@ -14,13 +14,13 @@ import Foreign (Foreign, MultipleErrors)
 import Postgres.Async.Query (query)
 import Postgres.Error (Error)
 import Postgres.Pool (Pool)
-import Postgres.Query (Query(..), QueryParameter(..))
+import Postgres.Query (Query(..), QueryParameter, toQueryParameter)
 import Postgres.Result (rows)
 import Simple.JSON.Async (read)
 import TeamTavern.Profile.Domain.Summary (Summary)
 import TeamTavern.Profile.Routes (Identifiers)
 
-type LoadProfileDto = { summary :: String }
+type LoadProfileDto = { summary :: Array String }
 
 type LoadProfileResult = { summary :: Summary }
 
@@ -45,7 +45,7 @@ loadProfileQuery = Query """
 
 loadProfileParameters :: Identifiers -> Array QueryParameter
 loadProfileParameters { handle, nickname } =
-    [unwrap handle, unwrap nickname] <#> QueryParameter
+    [unwrap handle, unwrap nickname] <#> toQueryParameter
 
 loadProfile
     :: forall errors
@@ -62,4 +62,4 @@ loadProfile pool identifiers = do
     viewModel @ { summary } :: LoadProfileDto <- read foreignDto
         # labelMap (SProxy :: SProxy "unreadableDto")
             { foreignDto, errors: _ }
-    pure { summary: wrap summary }
+    pure { summary: summary <#> wrap # wrap }
