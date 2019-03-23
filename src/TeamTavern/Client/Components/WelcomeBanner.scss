@@ -1,0 +1,5 @@
+@import "../Style/Base";
+.welcome-banner {
+    @extend %bordered;
+    padding: 18px;
+}

@@ -8,7 +8,7 @@ import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
 import Data.Bifunctor (bimap, lmap)
 import Data.Const (Const)
-import Data.Foldable (foldl)
+import Data.Foldable (foldl, intercalate)
 import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..))
 import Data.Options ((:=))
@@ -29,7 +29,7 @@ import Web.Event.Internal.Types (Event)
 
 type Input =
     { nickname :: String
-    , about :: String
+    , about :: Array String
     }
 
 data Action
@@ -159,7 +159,7 @@ component { nickname, about } = H.mkComponent
     { initialState: const
         { originalNickname: nickname
         , nickname
-        , about
+        , about: intercalate "\n\n" about
         , nicknameError: false
         , aboutError: false
         , nicknameTaken: false

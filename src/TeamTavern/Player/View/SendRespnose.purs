@@ -13,7 +13,7 @@ import TeamTavern.Player.View.LogError (ViewError)
 type OkContent =
     { id :: Int
     , nickname :: String
-    , about :: String
+    , about :: Array String
     }
 
 errorResponse :: ViewError -> Response
@@ -27,7 +27,7 @@ successResponse :: LoadPlayerResult -> Response
 successResponse { id, nickname, about } = ok_ $ writeJSON (
     { id: unwrap id
     , nickname: unwrap nickname
-    , about: unwrap about
+    , about: unwrap about <#> unwrap
     } :: OkContent)
 
 response ::

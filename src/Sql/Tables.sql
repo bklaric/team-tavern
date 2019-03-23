@@ -5,7 +5,7 @@ create table player
     , password_hash character(60) not null
     , confirmation_nonce character(20) not null
     , email_confirmed boolean not null default false
-    , about varchar(2000) not null default ''
+    , about text[] not null default '{}'
     , registered timestamptz not null default current_timestamp
     );
 

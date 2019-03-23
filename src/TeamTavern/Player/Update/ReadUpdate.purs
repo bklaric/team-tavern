@@ -13,7 +13,8 @@ import Foreign (MultipleErrors)
 import Perun.Request.Body (Body)
 import Simple.JSON (readJSON)
 import TeamTavern.Architecture.Perun.Request.Body (readBody)
-import TeamTavern.Player.Domain.About (About, AboutError)
+import TeamTavern.Domain.Text (TextError)
+import TeamTavern.Player.Domain.About (About)
 import TeamTavern.Player.Domain.About as About
 import TeamTavern.Player.Domain.Nickname (Nickname, NicknameError)
 import TeamTavern.Player.Domain.Nickname as Nickname
@@ -30,7 +31,7 @@ type UpdateModel =
 
 type UpdateModelError = Variant
     ( nickname :: NonEmptyList NicknameError
-    , about :: NonEmptyList AboutError
+    , about :: NonEmptyList TextError
     )
 
 type ReadUpdateError errors = Variant

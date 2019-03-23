@@ -2,6 +2,8 @@
 @import "SingleForm";
 @import "../Components/TopBar";
 @import "../Components/Modal";
+@import "../Components/Welcome";
+@import "../Components/WelcomeBanner";
 .hidden {
     display: none;
 }
@@ -55,11 +57,6 @@
         margin-top: 0.5em;
     }
     margin-bottom: 40px;
-}
-
-.welcome-banner {
-    @extend %bordered;
-    padding: 18px;
 }
 
 .empty {

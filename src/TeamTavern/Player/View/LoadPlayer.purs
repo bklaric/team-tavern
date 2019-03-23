@@ -25,7 +25,7 @@ import TeamTavern.Player.Domain.Nickname (Nickname)
 type LoadPlayerDto =
     { id :: Int
     , nickname :: String
-    , about :: String
+    , about :: Array String
     }
 
 type LoadPlayerResult =
@@ -67,5 +67,5 @@ loadPlayer pool nickname' = do
     pure
         { id: wrap id
         , nickname: wrap nickname
-        , about: wrap about
+        , about: about <#> wrap # wrap
         }

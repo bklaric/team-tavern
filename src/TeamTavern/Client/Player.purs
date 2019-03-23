@@ -52,7 +52,7 @@ render (Player { nickname, about } isCurrentUser) = HH.div_ $
             , HE.onClick $ Just <<< ShowEditPlayerModal
             ]
             [ HH.text "Edit info" ] ]
-        , pure $ HH.p_ [ HH.text about ]
+        , about <#> \paragraph -> HH.p_ [ HH.text paragraph ]
         , pure $ HH.div_ [ editPlayer
             { nickname, about } $ Just <<< HandleEditPlayerMessage ]]
     ]
@@ -62,7 +62,8 @@ render Error = HH.p_ [ HH.text
 
 loadPlayer :: forall left. String -> Async left State
 loadPlayer nickname = Async.unify do
-    response <- Fetch.fetch_ ("/api/players/by-nickname/" <> nickname) # lmap (const Error)
+    response <- Fetch.fetch_ ("/api/players/by-nickname/" <> nickname)
+        # lmap (const Error)
     content <- case FetchRes.status response of
         200 -> FetchRes.text response >>= Json.readJSON # lmap (const Error)
         404 -> Async.left NotFound

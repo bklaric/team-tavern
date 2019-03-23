@@ -92,7 +92,7 @@ render
         { title, handle, description } $ Just <<< HandleEditGameMessage ]
     , pure $ HH.div_ [ createProfile
         handle $ Just <<< HandleCreateProfileMessage ]
-   ]
+    ]
 render NotFound = HH.p_ [ HH.text "Game could not be found." ]
 render Error = HH.p_ [ HH.text
     "There has been an error loading the game. Please try again later." ]

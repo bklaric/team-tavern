@@ -20,6 +20,7 @@ import TeamTavern.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Player.Domain.Id (toString)
 import TeamTavern.Player.Domain.Nickname (Nickname)
 import TeamTavern.Player.Update.ReadUpdate (UpdateModel)
+import Unsafe.Coerce (unsafeCoerce)
 
 type UpdatePlayerError errors = Variant
   ( nicknameTaken ::
@@ -47,7 +48,7 @@ updatePlayerQuery = Query """
 updatePlayerQueryParameters ::
     CookieInfo -> UpdateModel -> Array QueryParameter
 updatePlayerQueryParameters { id, token } { nickname, about} =
-    [toString id, unwrap token, unwrap nickname, unwrap about]
+    [toString id, unwrap token, unwrap nickname, unwrap about # unsafeCoerce]
     <#> toQueryParameter
 
 updatePlayer
