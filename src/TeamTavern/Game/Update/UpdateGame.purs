@@ -20,6 +20,7 @@ import TeamTavern.Game.Domain.Title (Title)
 import TeamTavern.Game.Infrastructure.ReadModel (GameModel)
 import TeamTavern.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Player.Domain.Id (toString)
+import Unsafe.Coerce (unsafeCoerce)
 
 updateGameQuery :: Query
 updateGameQuery = Query """
@@ -42,7 +43,7 @@ updateGameQueryParameters
     , unwrap targetHandle
     , unwrap title
     , unwrap handle
-    , unwrap description
+    , unwrap description # unsafeCoerce
     ]
     <#> toQueryParameter
 

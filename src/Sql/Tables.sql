@@ -22,7 +22,7 @@ create table game
     , administrator_id integer not null references player(id)
     , title varchar(50) not null unique
     , handle varchar(50) not null unique
-    , description varchar(2000) not null
+    , description text[] not null
     , created timestamptz not null default current_timestamp
     );
 

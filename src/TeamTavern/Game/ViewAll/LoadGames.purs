@@ -24,7 +24,7 @@ type LoadGamesDto =
     { administratorId :: Int
     , title :: String
     , handle :: String
-    , description :: String
+    , description :: Array String
     }
 
 type LoadGamesResult =
@@ -62,5 +62,5 @@ loadGames pool = do
         { administratorId: wrap administratorId
         , title: wrap title
         , handle: wrap handle
-        , description: wrap description
+        , description: description <#> wrap # wrap
         }

@@ -87,7 +87,7 @@ render
         , HE.onClick $ Just <<< ShowEditGameModal
         ]
         [ HH.text "Edit game" ] ]
-    , pure $ HH.p_ [ HH.text description ]
+    , description <#> \paragraph -> HH.p_ [ HH.text paragraph ]
     , pure $ HH.div_ [ editGame
         { title, handle, description } $ Just <<< HandleEditGameMessage ]
     , pure $ HH.div_ [ createProfile

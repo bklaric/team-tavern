@@ -29,7 +29,7 @@ type LoadGameDto =
     { administratorId :: Int
     , handle :: String
     , title :: String
-    , description :: String
+    , description :: Array String
     , hasProfile :: Boolean
     }
 
@@ -88,6 +88,6 @@ loadGame pool handle' auth = do
         { administratorId: wrap administratorId
         , title: wrap title
         , handle: wrap handle
-        , description: wrap description
+        , description: description <#> wrap # wrap
         , hasProfile
         }

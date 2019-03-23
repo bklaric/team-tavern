@@ -20,6 +20,7 @@ import TeamTavern.Game.Domain.Title (Title)
 import TeamTavern.Game.Infrastructure.ReadModel (GameModel)
 import TeamTavern.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Player.Domain.Id (toString)
+import Unsafe.Coerce (unsafeCoerce)
 
 queryString :: Query
 queryString = Query """
@@ -38,7 +39,7 @@ queryParameters { id, token } { title, handle, description } =
     , unwrap token
     , unwrap title
     , unwrap handle
-    , unwrap description
+    , unwrap description # unsafeCoerce
     ]
     <#> toQueryParameter
 
