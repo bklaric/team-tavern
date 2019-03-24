@@ -1,4 +1,4 @@
-module TeamTavern.Game.ViewAll.Response (OkContent, response) where
+module TeamTavern.Game.ViewAll.SendResponse (OkContent, sendResponse) where
 
 import Prelude
 
@@ -8,33 +8,32 @@ import Data.Newtype (unwrap)
 import Data.Variant (match)
 import Perun.Response (Response, internalServerError__, ok_)
 import Simple.JSON (writeJSON)
-import TeamTavern.Game.Domain.Types (ViewAll)
-import TeamTavern.Game.ViewAll.Types (ViewAllError)
-import TeamTavern.Player.Domain.PlayerId (toInt)
+import TeamTavern.Game.ViewAll.LoadGames (LoadGamesResult)
+import TeamTavern.Game.ViewAll.LogError (ViewAllError)
 
 type OkContent = Array
     { administratorId :: Int
     , title :: String
     , handle :: String
-    , description :: String
+    , description :: Array String
     }
 
 errorResponse :: ViewAllError -> Response
 errorResponse = match
-    { unreadableViews: const $ internalServerError__
-    , invalidViews: const $ internalServerError__
+    { unreadableDtos: const $ internalServerError__
     , databaseError: const $ internalServerError__
     }
 
-successResponse :: Array ViewAll -> Response
+successResponse :: Array LoadGamesResult -> Response
 successResponse views  = ok_ $ (writeJSON :: OkContent -> String) $
     mapFlipped views \{ administratorId, title, handle, description } ->
-        { administratorId: toInt administratorId
+        { administratorId: unwrap administratorId
         , title: unwrap title
         , handle: unwrap handle
-        , description: unwrap description
+        , description: unwrap description <#> unwrap
         }
 
-response ::
-    Async ViewAllError (Array ViewAll) -> (forall left. Async left Response)
-response = alwaysRight errorResponse successResponse
+sendResponse
+    :: Async ViewAllError (Array LoadGamesResult)
+    -> (forall left. Async left Response)
+sendResponse = alwaysRight errorResponse successResponse

@@ -1,5 +1,5 @@
 module TeamTavern.Profile.View.LoadProfile
-    (ViewModel, LoadProfileError, loadProfile) where
+    (LoadProfileResult, LoadProfileError, loadProfile) where
 
 import Prelude
 
@@ -7,58 +7,58 @@ import Async (Async)
 import Async (note) as Async
 import Data.Array (head)
 import Data.Bifunctor.Label (label, labelMap)
-import Data.Newtype (unwrap)
+import Data.Newtype (wrap)
 import Data.Symbol (SProxy(..))
 import Data.Variant (Variant, inj)
 import Foreign (Foreign, MultipleErrors)
 import Postgres.Async.Query (query)
 import Postgres.Error (Error)
 import Postgres.Pool (Pool)
-import Postgres.Query (Query(..), QueryParameter(..))
+import Postgres.Query (Query(..), QueryParameter, (:|))
 import Postgres.Result (rows)
 import Simple.JSON.Async (read)
-import TeamTavern.Profile.Domain.Summary as Summary
-import TeamTavern.Profile.Domain.Types (Identifiers)
-import TeamTavern.Profile.Domain.Types as Profile
+import TeamTavern.Profile.Domain.Summary (Summary)
+import TeamTavern.Profile.Routes (Identifiers)
 
-type ViewModel = { summary :: String }
+type LoadProfileDto = { summary :: Array String }
+
+type LoadProfileResult = { summary :: Summary }
 
 type LoadProfileError errors = Variant
     ( databaseError :: Error
-    , unreadableViewModel ::
-        { foreignViewModel :: Foreign
+    , unreadableDto ::
+        { foreignDto :: Foreign
         , errors :: MultipleErrors
         }
     , notFound :: Identifiers
-    , invalidView :: ViewModel
     | errors )
 
-loadProfileQuery :: Query
-loadProfileQuery = Query """
+queryString :: Query
+queryString = Query """
     select profile.summary
     from profile
     join player on player.id = profile.player_id
     join game on game.id = profile.game_id
-    where player.nickname = $1
-    and game.handle = $2
+    where game.handle = $1
+    and player.nickname = $2
     """
 
-loadProfileParameters :: Identifiers -> Array QueryParameter
-loadProfileParameters { nickname, handle } =
-    [unwrap nickname, unwrap handle] <#> QueryParameter
+queryParameters :: Identifiers -> Array QueryParameter
+queryParameters { handle, nickname } = handle :| nickname
 
-loadProfile :: forall errors.
-    Pool -> Identifiers -> Async (LoadProfileError errors) Profile.View
+loadProfile
+    :: forall errors
+    .  Pool
+    -> Identifiers
+    -> Async (LoadProfileError errors) LoadProfileResult
 loadProfile pool identifiers = do
     result <- pool
-        # query loadProfileQuery (loadProfileParameters identifiers)
+        # query queryString (queryParameters identifiers)
         # label (SProxy :: SProxy "databaseError")
-    foreignViewModel <- rows result
+    foreignDto <- rows result
         # head
         # Async.note (inj (SProxy :: SProxy "notFound") identifiers)
-    viewModel @ { summary } :: ViewModel <- read foreignViewModel
-        # labelMap (SProxy :: SProxy "unreadableViewModel")
-            { foreignViewModel, errors: _ }
-    { summary: _ }
-        <$> Summary.create'' summary
-        # Async.note (inj (SProxy :: SProxy "invalidView") viewModel)
+    viewModel @ { summary } :: LoadProfileDto <- read foreignDto
+        # labelMap (SProxy :: SProxy "unreadableDto")
+            { foreignDto, errors: _ }
+    pure { summary: summary <#> wrap # wrap }

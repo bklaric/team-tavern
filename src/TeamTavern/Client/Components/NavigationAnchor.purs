@@ -1,64 +1,65 @@
 module TeamTavern.Client.Components.NavigationAnchor where
 
 import Prelude
-import Prim.Row (class Cons)
 
+import Data.Const (Const)
 import Data.Maybe (Maybe(..))
 import Data.Symbol (class IsSymbol, SProxy)
 import Effect.Class (class MonadEffect)
-import Halogen (Component, ComponentHTML, get, liftEffect)
+import Halogen (defaultEval, get, liftEffect, mkComponent, mkEval)
 import Halogen as H
-import Halogen.HTML (HTML, a)
+import Halogen.HTML (a)
 import Halogen.HTML as HH
 import Halogen.HTML as Html
-import Halogen.HTML.Events (input, onClick)
+import Halogen.HTML.Events (onClick)
 import Halogen.HTML.Properties (href)
+import Prim.Row (class Cons)
 import TeamTavern.Client.Script.Navigate (navigate_)
 import Web.Event.Event (preventDefault)
 import Web.UIEvent.MouseEvent (MouseEvent, toEvent)
 
-data Query send = Navigate MouseEvent send
-
 type State = { path :: String, text :: String }
 
-type Message = Void
+data Action = Navigate MouseEvent | Receive State
 
-type Slot = H.Slot Query Message
+type Slot = H.Slot (Const Void) Void
 
-render :: forall m. State -> ComponentHTML Query () m
+render :: forall slots. State -> HH.HTML slots Action
 render { path, text } = a
-    [ href path, onClick $ input Navigate ]
+    [ href path, onClick $ Navigate >>> Just ]
     [ Html.text text ]
 
-eval :: forall m. MonadEffect m => Query ~> H.HalogenM State Query () Message m
-eval (Navigate event send) = do
+handleAction :: forall output monad. MonadEffect monad =>
+    Action -> H.HalogenM State Action () output monad Unit
+handleAction (Navigate event) = do
     liftEffect $ preventDefault $ toEvent event
     { path } <- get
     liftEffect $ navigate_ path
-    pure send
+    pure unit
+handleAction (Receive state) = H.put state
 
-component :: forall m. MonadEffect m => Component HTML Query State Void m
-component = H.component
+component :: forall query output monad. MonadEffect monad =>
+    H.Component HH.HTML query State output monad
+component = mkComponent
     { initialState: identity
     , render
-    , eval
-    , receiver: const Nothing
-    , initializer: Nothing
-    , finalizer: Nothing
+    , eval: mkEval $ defaultEval
+        { handleAction = handleAction
+        , receive = Just <<< Receive }
     }
 
 navigationAnchor
-    :: forall query monad children children' label
+    :: forall label children children' action monad
     .  Cons label (Slot Unit) children' children
     => IsSymbol label
     => MonadEffect monad
     => SProxy label
     -> State
-    -> HH.ComponentHTML query children monad
+    -> HH.ComponentHTML action children monad
 navigationAnchor label state = HH.slot label unit component state absurd
 
 navigationAnchorIndexed
-    :: forall query monad index children children' label
+    :: forall label children children' action monad index
     .  Cons label (Slot index) children' children
     => IsSymbol label
     => Ord index
@@ -66,6 +67,6 @@ navigationAnchorIndexed
     => SProxy label
     -> index
     -> State
-    -> HH.ComponentHTML query children monad
+    -> HH.ComponentHTML action children monad
 navigationAnchorIndexed label index state =
     HH.slot label index component state absurd

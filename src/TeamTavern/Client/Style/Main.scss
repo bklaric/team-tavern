@@ -1,95 +1,9 @@
-@import "TopBar";
-$primary-color: hsl(0, 0%, 7%);
-$disabled-color: rgb(221, 221, 221);
-$error-color: orangered;
-body {
-    font-family: sans-serif;
-    color: $primary-color;
-    margin: 0;
-}
-
-h1,
-h2,
-h3 {
-    margin-top: 0;
-    margin-bottom: 0.5em;
-}
-
-p {
-    margin-top: 0;
-}
-
-a {
-    text-decoration: none;
-    color: hsl(244, 83%, 35%);
-}
-
-%bordered {
-    border-style: solid;
-    border-radius: 0.25em;
-    border-width: 1px;
-    border-color: $primary-color;
-}
-
-button {
-    @extend %bordered;
-    font-size: 1em;
-    padding: 0.2em 0.7em;
-    color: $primary-color;
-    background-color: white;
-    cursor: pointer;
-}
-
-button[disabled] {
-    @extend button;
-    color: $disabled-color;
-    border-color: $disabled-color;
-    cursor: not-allowed;
-}
-
-label {
-    font-size: 1em;
-    margin-bottom: 0.5em;
-}
-
-input {
-    @extend %bordered;
-    font-size: 1em;
-    padding: 5px;
-    color: $primary-color;
-}
-
-textarea {
-    @extend %bordered;
-    font-size: 1em;
-    padding: 5px;
-    color: $primary-color;
-}
-
-form {
-    display: flex;
-    flex-direction: column;
-    max-width: 20em;
-    margin: auto;
-    h1,
-    h2 {
-        text-align: center;
-        margin-top: 10px;
-        margin-bottom: 40px;
-    }
-    a {
-        margin-top: 2em;
-    }
-    div {
-        display: flex;
-        flex-direction: column;
-        margin-bottom: 2em;
-    }
-    button {
-        margin: auto;
-    }
-}
-
+@import "Base";
+@import "SingleForm";
+@import "../Components/TopBar";
+@import "../Components/Modal";
+@import "../Components/Welcome";
+@import "../Components/WelcomeBanner";
 .hidden {
     display: none;
 }
@@ -101,21 +15,20 @@ form {
 
 .input-error {
     @extend .error;
-    font-size: 0.85em;
-    margin: 0.3em 0 0 0;
+    font-size: 14px;
+    margin: 14px 0 0 0;
 }
 
 .other-error {
     @extend .error;
-    font-size: 0.85em;
-    margin: 1em 0 0 0;
+    font-size: 14px;
 }
 
 #content {
     max-width: 1280px;
     padding: 24px;
-    margin: auto;
-    > * {
+    margin: 40px auto auto auto;
+    >* {
         margin-bottom: 24px;
     }
     > :last-child {
@@ -124,22 +37,10 @@ form {
 }
 
 #single-content {
-    display: flex;
+    width: 100vw;
     height: 100vh;
     background-color: rgb(230, 230, 230);
-    >form,
-    >div {
-        @extend %bordered;
-        display: flex;
-        flex-direction: column;
-        width: 320px;
-        background-color: white;
-        padding: 30px;
-        margin: auto;
-        >a {
-            margin-top: 1em;
-        }
-    }
+    overflow: hidden auto;
 }
 
 #game,
@@ -156,11 +57,6 @@ form {
         margin-top: 0.5em;
     }
     margin-bottom: 40px;
-}
-
-.welcome-banner {
-    @extend %bordered;
-    padding: 18px;
 }
 
 .empty {

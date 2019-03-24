@@ -3,46 +3,58 @@ module TeamTavern.Profile.Routes where
 import Jarilo.Junction (type (:<|>), type (:=))
 import Jarilo.Method (Get, Post, Put)
 import Jarilo.Path (type (:>), End)
-import Jarilo.Query (NoQuery)
+import Jarilo.Query (Mandatory, NoQuery)
 import Jarilo.Route (Route)
 import Jarilo.Segment (Capture, Literal)
+import TeamTavern.Game.Domain.Handle (Handle)
+import TeamTavern.Player.Domain.Nickname (Nickname)
+
+type Identifiers =
+    { handle :: Handle
+    , nickname :: Nickname
+    }
 
 type CreateProfile = Route
     Post
-    (  Literal "games"
-    :> Capture "handle" String
-    :> Literal "profiles"
-    :> End)
-    NoQuery
-
-type ViewProfile = Route
-    Get
-    (  Literal "games"
-    :> Capture "handle" String
-    :> Literal "profiles"
-    :> Capture "nickname" String
-    :> End)
-    NoQuery
-
-type UpdateProfile = Route
-    Put
-    (  Literal "games"
-    :> Capture "handle" String
-    :> Literal "profiles"
-    :> Capture "nickname" String
+    (  Literal "profiles"
+    :> Literal "single"
+    :> Capture "handle" Handle
     :> End)
     NoQuery
 
 type ViewProfilesByGame = Route
     Get
-    (  Literal "games"
-    :> Capture "handle" String
-    :> Literal "profiles"
+    (  Literal "profiles"
+    :> End)
+    (Mandatory "handle" Handle)
+
+type ViewProfilesByHandle = Route
+    Get
+    (  Literal "profiles"
+    :> End)
+    (Mandatory "nickname" Nickname)
+
+type ViewProfile = Route
+    Get
+    (  Literal "profiles"
+    :> Literal "single"
+    :> Capture "handle" Handle
+    :> Capture "nickname" Nickname
+    :> End)
+    NoQuery
+
+type UpdateProfile = Route
+    Put
+    (  Literal "profiles"
+    :> Literal "single"
+    :> Capture "handle" Handle
+    :> Capture "nickname" Nickname
     :> End)
     NoQuery
 
 type ProfileRoutes
-    =    "createProfile"      := CreateProfile
-    :<|> "viewProfile"        := ViewProfile
-    :<|> "updateProfile"      := UpdateProfile
-    :<|> "viewProfilesByGame" := ViewProfilesByGame
+    =    "createProfile"        := CreateProfile
+    :<|> "viewProfilesByGame"   := ViewProfilesByGame
+    :<|> "viewProfilesByPlayer" := ViewProfilesByHandle
+    :<|> "viewProfile"          := ViewProfile
+    :<|> "updateProfile"        := UpdateProfile

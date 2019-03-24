@@ -1,22 +1,21 @@
-module TeamTavern.Profile.Update.Response (BadRequestContent, response) where
+module TeamTavern.Profile.Update.SendResponse
+    (BadRequestContent, sendResponse) where
 
 import Prelude
 
 import Async (Async, alwaysRight)
 import Data.Variant (SProxy(..), Variant, inj, match)
-import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, noContent_, notFound__, unauthorized__)
+import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, noContent_, unauthorized__)
 import Simple.JSON (writeJSON)
-import TeamTavern.Profile.Update.Types (UpdateError)
+import TeamTavern.Profile.Update.LogError (UpdateError)
 
-type BadRequestContent = Variant
-    ( invalidSummary :: {} )
+type BadRequestContent = Variant (invalidSummary :: {})
 
 errorResponse :: UpdateError -> Response
 errorResponse = match
-    { invalidIdentifiers: const notFound__
-    , authNotPresent: const unauthorized__
+    { cookieInfoNotPresent: const unauthorized__
     , databaseError: const internalServerError__
-    , unreadableSummary: const badRequest__
+    , unreadableDto: const badRequest__
     , invalidSummary: const $ badRequest_ $ writeJSON $
         (inj (SProxy :: SProxy "invalidSummary") {} :: BadRequestContent)
     , notAuthorized: const forbidden__
@@ -25,5 +24,5 @@ errorResponse = match
 successResponse :: Unit -> Response
 successResponse = const noContent_
 
-response :: Async UpdateError Unit -> (forall left. Async left Response)
-response = alwaysRight errorResponse successResponse
+sendResponse :: Async UpdateError Unit -> (forall left. Async left Response)
+sendResponse = alwaysRight errorResponse successResponse

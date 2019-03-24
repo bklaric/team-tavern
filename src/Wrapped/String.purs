@@ -17,6 +17,19 @@ empty string =
     then Just $ inj (SProxy :: SProxy "empty") {}
     else Nothing
 
+type TooShort = { minLength :: Int, actualLength :: Int }
+
+tooShort :: forall errors.
+    Int -> String -> Maybe (Variant (tooShort :: TooShort | errors))
+tooShort minLength string = let
+    actualLength = length string
+    in
+    if actualLength >= minLength
+    then Nothing
+    else Just
+        $ inj (SProxy :: SProxy "tooShort")
+        { minLength, actualLength }
+
 type TooLong = { maxLength :: Int, actualLength :: Int }
 
 tooLong :: forall errors.
@@ -100,3 +113,16 @@ notHex string =
     if string # toCharArray # all isHexDigit
     then Nothing
     else Just $ inj (SProxy :: SProxy "notHex") {}
+
+
+type Invalid = { original :: String }
+
+invalid
+    :: forall errors
+    .  (String -> Boolean)
+    -> String
+    -> Maybe (Variant (invalid :: Invalid | errors))
+invalid check string =
+    if check string
+    then Nothing
+    else Just $ inj (SProxy :: SProxy "invalid") { original: string }

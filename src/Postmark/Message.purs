@@ -21,7 +21,7 @@ type Message =
     -- , replyTo :: Nullable String
     -- , tag :: Nullable String
     , subject :: Nullable String
-    -- , htmlBody :: Nullable String
+    , htmlBody :: Nullable String
     , textBody :: Nullable String
     -- , trackOpens :: Nullable Boolean
     -- , trackLinks :: Nullable String

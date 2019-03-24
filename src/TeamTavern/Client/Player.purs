@@ -1,4 +1,4 @@
-module TeamTavern.Client.Player (Query, Slot, player) where
+module TeamTavern.Client.Player (Slot, player) where
 
 import Prelude
 
@@ -7,21 +7,29 @@ import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
 import Data.Bifunctor (lmap)
-import Data.FunctorWithIndex (mapWithIndex)
+import Data.Const (Const)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Monoid (guard)
+import Data.String (trim)
 import Data.Symbol (SProxy(..))
-import Halogen (ClassName(..))
 import Halogen as H
 import Halogen.HTML as HH
+import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Simple.JSON.Async as Json
-import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor, navigationAnchorIndexed)
-import TeamTavern.Client.Components.NavigationAnchor as Anchor
-import TeamTavern.Client.Script.Cookie (getPlayerInfo)
-import TeamTavern.Player.View.Response as View
+import TeamTavern.Client.Components.Modal as Modal
+import TeamTavern.Client.EditPlayer (editPlayer)
+import TeamTavern.Client.EditPlayer as EditPlayer
+import TeamTavern.Client.Script.Cookie (getPlayerId)
+import TeamTavern.Client.Script.Navigate (navigate_)
+import TeamTavern.Player.View.SendResponse as View
+import Web.Event.Event (preventDefault)
+import Web.UIEvent.MouseEvent (MouseEvent, toEvent)
 
-data Query send = Init String send
+data Action
+    = Init String
+    | ShowEditPlayerModal MouseEvent
+    | HandleEditPlayerMessage (Modal.Message EditPlayer.Message)
 
 data State
     = Empty
@@ -29,34 +37,24 @@ data State
     | NotFound
     | Error
 
-type Slot = H.Slot Query Void
+type Slot = H.Slot (Const Void) Void
 
-type ChildSlots =
-    ( edit :: Anchor.Slot Unit
-    , games :: Anchor.Slot Int
-    , editProfiles :: Anchor.Slot Int
-    )
+type ChildSlots = (editPlayer :: EditPlayer.Slot Unit)
 
-render :: forall left. State -> H.ComponentHTML Query ChildSlots (Async left)
+render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render Empty = HH.div_ []
-render (Player { nickname, about, profiles } isCurrentUser) = HH.div_ $
+render (Player { nickname, about } isCurrentUser) = HH.div_ $
     [ HH.div [ HP.id_ "player" ] $ join
         [ pure $ HH.h2_ [ HH.text nickname ]
         , guard isCurrentUser $ pure $ HH.p_ [
-            navigationAnchor (SProxy :: SProxy "edit")
-            { path: "/players/" <> nickname <> "/edit", text: "Edit info" } ]
-        , pure $ HH.p_ [ HH.text about ] ]
-    , HH.div_ $ [ HH.h3_ [ HH.text "Profiles" ] ] <> (profiles # mapWithIndex \index { handle, title, summary } ->
-        HH.div [ HP.class_ $ ClassName "profile-item" ] $ join
-        [ pure $ HH.h3_ [ navigationAnchorIndexed (SProxy :: SProxy "games") index
-            { path: "/games/" <> handle, text: title } ]
-        , guard isCurrentUser $ pure $ HH.p_ [
-            navigationAnchorIndexed (SProxy :: SProxy "editProfiles") index
-            { path: "/games/" <> handle <> "/profiles/" <> nickname <> "/edit"
-            , text: "Edit profile"
-            } ]
-        , pure $ HH.p_ [ HH.text summary ]
-        ])
+            HH.a
+            [ HP.href ""
+            , HE.onClick $ Just <<< ShowEditPlayerModal
+            ]
+            [ HH.text "Edit info" ] ]
+        , about <#> \paragraph -> HH.p_ [ HH.text paragraph ]
+        , pure $ HH.div_ [ editPlayer
+            { nickname, about } $ Just <<< HandleEditPlayerMessage ]]
     ]
 render NotFound = HH.p_ [ HH.text "Player could not be found." ]
 render Error = HH.p_ [ HH.text
@@ -64,31 +62,42 @@ render Error = HH.p_ [ HH.text
 
 loadPlayer :: forall left. String -> Async left State
 loadPlayer nickname = Async.unify do
-    response <- Fetch.fetch_ ("/api/players/" <> nickname) # lmap (const Error)
+    response <- Fetch.fetch_ ("/api/players/by-nickname/" <> nickname)
+        # lmap (const Error)
     content <- case FetchRes.status response of
         200 -> FetchRes.text response >>= Json.readJSON # lmap (const Error)
         404 -> Async.left NotFound
         _ -> Async.left Error
-    playerInfo <- Async.fromEffect getPlayerInfo
-    pure $ Player content
-        (maybe false (_.nickname >>> (_ == content.nickname)) playerInfo)
+    playerId <- Async.fromEffect getPlayerId
+    pure $ Player content (maybe false (_ == content.id) playerId)
 
-eval :: forall left.
-    Query ~> H.HalogenM State Query ChildSlots Void (Async left)
-eval (Init nickname send) = do
+handleAction :: forall output left.
+    Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
+handleAction (Init nickname) = do
     state <- H.lift $ loadPlayer nickname
     H.put state
-    pure send
+    pure unit
+handleAction (ShowEditPlayerModal event) = do
+    H.liftEffect $ preventDefault $ toEvent event
+    Modal.show (SProxy :: SProxy "editPlayer")
+handleAction (HandleEditPlayerMessage message) = do
+    state <- H.get
+    Modal.hide (SProxy :: SProxy "editPlayer")
+    case message of
+        Modal.Inner (EditPlayer.PlayerUpdated nickname) ->
+            H.liftEffect $ navigate_ $ "/players/" <> trim nickname
+        _ -> pure unit
 
-component :: forall left.
-    String -> H.Component HH.HTML Query String Void (Async left)
-component nickname = H.component
+component :: forall query output left.
+    String -> H.Component HH.HTML query String output (Async left)
+component nickname = H.mkComponent
     { initialState: const Empty
     , render
-    , eval
-    , receiver: \nickname' -> Just $ Init nickname' unit
-    , initializer: Just $ Init nickname unit
-    , finalizer: Nothing
+    , eval: H.mkEval $ H.defaultEval
+        { handleAction = handleAction
+        , initialize = Just $ Init nickname
+        , receive = Just <<< Init
+        }
     }
 
 player

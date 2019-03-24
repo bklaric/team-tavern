@@ -2,28 +2,54 @@ module TeamTavern.Game.Update.LogError where
 
 import Prelude
 
-import Data.Variant (match)
+import Data.List.Types (NonEmptyList)
+import Data.Map (Map)
+import Data.Variant (Variant, match)
 import Effect (Effect)
-import TeamTavern.Game.Update.Types (UpdateError)
+import Foreign (MultipleErrors)
+import Postgres.Error (Error)
+import TeamTavern.Game.Domain.Handle (Handle)
+import TeamTavern.Game.Domain.Title (Title)
+import TeamTavern.Game.Infrastructure.ReadModel (GameDto, GameModelError)
+import TeamTavern.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Infrastructure.Log (logt, print)
+
+type UpdateError = Variant
+    ( cookieInfoNotPresent :: Map String String
+    , unreadableDto ::
+        { content :: String
+        , errors :: MultipleErrors
+        }
+    , invalidModel ::
+        { dto :: GameDto
+        , errors :: NonEmptyList GameModelError
+        }
+    , titleTaken ::
+        { title :: Title
+        , error :: Error
+        }
+    , handleTaken ::
+        { handle :: Handle
+        , error :: Error
+        }
+    , databaseError :: Error
+    , notAuthorized :: CookieInfo
+    )
 
 logError :: UpdateError -> Effect Unit
 logError updateError = do
     logt "Error updating game"
     updateError # match
-        { invalidHandle: \{ handle, errors } -> do
-            logt $ "Couldn't validate handle: " <> show handle
-            logt $ "Validation resulted in these errors: " <> show errors
-        , authNotPresent: \cookies ->
+        { cookieInfoNotPresent: \cookies ->
             logt $ "Couldn't read auth info out of cookies: " <> show cookies
-        , unreadableDetails: \{ content, errors } -> do
-            logt $ "Couldn't read details from content: " <> show content
+        , unreadableDto: \{ content, errors } -> do
+            logt $ "Couldn't read dto from content: " <> show content
             logt $ "Reading resulted in these errors: " <> show errors
-        , invalidDetails: \{ details, errors } -> do
-            logt $ "Couldn't validate details: " <> show details
+        , invalidModel: \{ dto, errors } -> do
+            logt $ "Couldn't validate model: " <> show dto
             logt $ "Validating resulted in these errors: " <> show errors
         , titleTaken: \{ title, error } -> do
-            logt $ "Name is already taken: " <> show title
+            logt $ "Title is already taken: " <> show title
             logt $ "According to this error: " <> print error
         , handleTaken: \{ handle, error } -> do
             logt $ "Handle is already taken: " <> show handle
@@ -31,6 +57,6 @@ logError updateError = do
         , databaseError: \error ->
             logt $ "Unknown database error occured: " <> print error
         , notAuthorized: \authInfo ->
-            logt $ "Game creation isn't authorized for this auth info: "
+            logt $ "Game creation isn't authorized for this player info: "
                 <> show authInfo
         }

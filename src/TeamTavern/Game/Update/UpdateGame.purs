@@ -1,4 +1,4 @@
-module TeamTavern.Game.Update.UpdateGame where
+module TeamTavern.Game.Update.UpdateGame (UpdateGameError, updateGame) where
 
 import Prelude
 
@@ -6,23 +6,21 @@ import Async (Async)
 import Async (left) as Async
 import Data.Bifunctor (lmap)
 import Data.Maybe (Maybe(..))
-import Data.Newtype (unwrap)
 import Data.Variant (SProxy(..), Variant, inj)
 import Node.Errors.Class (code)
 import Postgres.Async.Query (query)
 import Postgres.Error (Error, constraint)
 import Postgres.Error.Codes (unique_violation)
 import Postgres.Pool (Pool)
-import Postgres.Query (Query(..), QueryParameter(..))
+import Postgres.Query (Query(..), QueryParameter, (:), (:|))
 import Postgres.Result (rowCount)
 import TeamTavern.Game.Domain.Handle (Handle)
 import TeamTavern.Game.Domain.Title (Title)
-import TeamTavern.Game.Domain.Types (Details)
-import TeamTavern.Player.Domain.PlayerId (toString)
-import TeamTavern.Player.Domain.Types (AuthInfo)
+import TeamTavern.Game.Infrastructure.ReadModel (GameModel)
+import TeamTavern.Infrastructure.Cookie (CookieInfo)
 
-updateGameQuery :: Query
-updateGameQuery = Query """
+queryString :: Query
+queryString = Query """
     update game
     set title = $4, handle = $5, description = $6
     from session
@@ -30,22 +28,12 @@ updateGameQuery = Query """
     and game.handle = $3
     and session.player_id = $1
     and session.token = $2
-    and session.consumed = true
     and session.revoked = false
     """
 
-updateGameQueryParameters ::
-    AuthInfo -> Handle -> Details -> Array QueryParameter
-updateGameQueryParameters
-    { id, token } targetHandle { title, handle, description } =
-    [ toString id
-    , unwrap token
-    , unwrap targetHandle
-    , unwrap title
-    , unwrap handle
-    , unwrap description
-    ]
-    <#> QueryParameter
+queryParameters :: CookieInfo -> Handle -> GameModel -> Array QueryParameter
+queryParameters { id, token } targetHandle { title, handle, description } =
+    id : token : targetHandle : title : handle :| description
 
 type UpdateGameError errors = Variant
     ( titleTaken ::
@@ -57,20 +45,20 @@ type UpdateGameError errors = Variant
         , error :: Error
         }
     , databaseError :: Error
-    , notAuthorized :: AuthInfo
+    , notAuthorized :: CookieInfo
     | errors )
 
 updateGame
     :: forall errors
     .  Pool
-    -> AuthInfo
+    -> CookieInfo
     -> Handle
-    -> Details
+    -> GameModel
     -> Async (UpdateGameError errors) Unit
 updateGame pool auth targetHandle details = do
     result <- pool
-        # query updateGameQuery
-            (updateGameQueryParameters auth targetHandle details)
+        # query queryString
+            (queryParameters auth targetHandle details)
         # lmap (\error ->
             case code error == unique_violation of
             true | constraint error == Just "game_title_key" ->

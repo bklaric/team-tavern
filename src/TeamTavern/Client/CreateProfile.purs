@@ -7,10 +7,10 @@ import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
 import Data.Bifunctor (bimap, lmap)
+import Data.Const (Const)
 import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..))
 import Data.Options ((:=))
-import Data.String (trim)
 import Data.Variant (SProxy(..), match)
 import Halogen (ClassName(..))
 import Halogen as H
@@ -19,17 +19,19 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
-import TeamTavern.Client.Script.Cookie (hasPlayerIdCookie)
-import TeamTavern.Client.Script.Navigate (navigate_)
-import TeamTavern.Client.Snippets.ErrorClasses (errorClass, inputErrorClass, otherErrorClass)
-import TeamTavern.Profile.Create.Response as Create
+import TeamTavern.Client.Components.Modal as Modal
+import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass, otherErrorClass)
+import TeamTavern.Profile.Create.SendResponse as Create
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
-data Query send
-    = Init send
-    | SummaryInput String send
-    | Create Event send
+type Input = { handle :: String }
+
+data Action
+    = SummaryInput String
+    | Create Event
+
+data Message = ProfileCreated String
 
 type State =
     { handle :: String
@@ -38,20 +40,19 @@ type State =
     , otherError :: Boolean
     }
 
-type Slot = H.Slot Query Void
+type Slot = H.Slot (Modal.Query Unit (Const Void)) (Modal.Message Message)
 
-render :: forall left. State -> H.ComponentHTML Query () (Async left)
+render :: forall slots. State -> HH.HTML slots Action
 render { summary, summaryError, otherError } = HH.form
-    [ HE.onSubmit $ HE.input Create ]
+    [ HP.class_ $ ClassName "single-form", HE.onSubmit $ Just <<< Create ]
     [ HH.h2_ [ HH.text "Create a new profile" ]
     , HH.div_
         [ HH.label
-            [ HP.class_ $ errorClass summaryError, HP.for "summary" ]
+            [ HP.for "summary" ]
             [ HH.text "Summary" ]
         , HH.textarea
             [ HP.id_ "summary"
-            , HP.class_ $ errorClass summaryError
-            , HE.onValueInput $ HE.input SummaryInput
+            , HE.onValueInput $ Just <<< SummaryInput
             ]
         , HH.p
             [ HP.class_ $ inputErrorClass summaryError ]
@@ -71,7 +72,7 @@ render { summary, summaryError, otherError } = HH.form
 sendCreateRequest :: forall left. State -> Async left (Maybe State)
 sendCreateRequest state @ { handle, summary } = Async.unify do
     response <- Fetch.fetch
-        ("/api/games/" <> handle <> "/profiles")
+        ("/api/profiles/single/" <> handle)
         (  Fetch.method := POST
         <> Fetch.body := Json.writeJSON { summary }
         <> Fetch.credentials := Fetch.Include
@@ -89,16 +90,11 @@ sendCreateRequest state @ { handle, summary } = Async.unify do
         _ -> pure $ Just $ state { otherError = true }
     pure newState
 
-eval :: forall void. Query ~> H.HalogenM State Query () Void (Async void)
-eval (Init send) = do
-    isSignedIn <- H.liftEffect hasPlayerIdCookie
-    if isSignedIn
-        then pure unit
-        else H.liftEffect $ navigate_ "/"
-    pure send
-eval (SummaryInput summary send) =
-    H.modify_ (_ { summary = summary }) <#> const send
-eval (Create event send) = do
+handleAction :: forall slots left.
+    Action -> H.HalogenM State Action slots Message (Async left) Unit
+handleAction (SummaryInput summary) =
+    H.modify_ (_ { summary = summary }) $> unit
+handleAction (Create event) = do
     H.liftEffect $ preventDefault event
     state <- H.gets (_
         { summaryError = false
@@ -106,13 +102,13 @@ eval (Create event send) = do
         })
     newState <- H.lift $ sendCreateRequest state
     case newState of
-        Nothing -> H.liftEffect $ navigate_ $ "/games/" <> trim state.handle
+        Nothing -> H.raise $ ProfileCreated state.handle
         Just newState' -> H.put newState'
-    pure send
+    pure unit
 
-component :: forall input left.
-    String -> H.Component HH.HTML Query input Void (Async left)
-component handle = H.component
+component :: forall query input left.
+    String -> H.Component HH.HTML query input Message (Async left)
+component handle = H.mkComponent
     { initialState: const
         { handle
         , summary: ""
@@ -120,18 +116,16 @@ component handle = H.component
         , otherError: false
         }
     , render
-    , eval
-    , receiver: const Nothing
-    , initializer: Just $ H.action Init
-    , finalizer: Nothing
+    , eval: H.mkEval $ H.defaultEval { handleAction = handleAction }
     }
 
 createProfile
     :: forall query children left
     .  String
+    -> (Modal.Message Message -> Maybe query)
     -> HH.ComponentHTML query
         (createProfile :: Slot Unit | children)
         (Async left)
-createProfile handle =
-    HH.slot
-        (SProxy :: SProxy "createProfile") unit (component handle) unit absurd
+createProfile handle handleMessage = HH.slot
+    (SProxy :: SProxy "createProfile") unit
+    (Modal.component $ component handle) unit handleMessage

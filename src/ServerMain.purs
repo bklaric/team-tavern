@@ -39,15 +39,17 @@ import TeamTavern.Game.Update (handleUpdate) as Game
 import TeamTavern.Game.View (handleView) as Game
 import TeamTavern.Game.ViewAll (handleViewAll) as Game
 import TeamTavern.Player.View (view) as Player
+import TeamTavern.Player.ViewHeader (viewHeader) as Player
 import TeamTavern.Player.Register (register) as Player
 import TeamTavern.Player.Update (update) as Player
 import TeamTavern.Profile.Create (create) as Profile
 import TeamTavern.Profile.Update (update) as Profile
 import TeamTavern.Profile.View (view) as Profile
 import TeamTavern.Profile.ViewByGame (viewByGame) as Profile
+import TeamTavern.Profile.ViewByPlayer (viewByPlayer) as Profile
 import TeamTavern.Routes (TeamTavernRoutes)
-import TeamTavern.Session.Prepare (prepare) as Session
 import TeamTavern.Session.Start (start) as Session
+import TeamTavern.Session.End (end) as Session
 
 listenOptions :: ListenOptions
 listenOptions = TcpListenOptions
@@ -152,12 +154,14 @@ handleRequest pool client method url cookies body =
             Player.register pool client cookies body
         , viewPlayer: \{ nickname } ->
             Player.view pool nickname
+        , viewPlayerHeader: \{ id } ->
+            Player.viewHeader pool id
         , updatePlayer: \{ nickname } ->
             Player.update pool nickname cookies body
-        , prepareSession: const $
-            Session.prepare pool client cookies body
         , startSession: const $
-            Session.start pool body
+            Session.start pool cookies body
+        , endSession: const
+            Session.end
         , createGame: const $
             Game.create pool cookies body
         , viewAllGames: const $
@@ -172,7 +176,10 @@ handleRequest pool client method url cookies body =
             Profile.view pool identifiers
         , updateProfile: \identifiers ->
             Profile.update pool identifiers cookies body
-        , viewProfilesByGame: \{ handle } -> Profile.viewByGame pool handle
+        , viewProfilesByGame: \{ handle } ->
+            Profile.viewByGame pool handle
+        , viewProfilesByPlayer: \{ nickname } ->
+            Profile.viewByPlayer pool nickname
         }
         <#> (\response -> response { headers = response.headers <> MultiMap.fromFoldable
                 [ Tuple "Access-Control-Allow-Origin" $ NEL.singleton "http://localhost:1337"
