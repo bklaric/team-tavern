@@ -18,9 +18,9 @@ import TeamTavern.Client.Script.Navigate (navigate_)
 import Web.Event.Event (preventDefault)
 import Web.UIEvent.MouseEvent (MouseEvent, toEvent)
 
-data Action = Navigate MouseEvent
-
 type State = { path :: String, text :: String }
+
+data Action = Navigate MouseEvent | Receive State
 
 type Slot = H.Slot (Const Void) Void
 
@@ -36,13 +36,16 @@ handleAction (Navigate event) = do
     { path } <- get
     liftEffect $ navigate_ path
     pure unit
+handleAction (Receive state) = H.put state
 
 component :: forall query output monad. MonadEffect monad =>
     H.Component HH.HTML query State output monad
 component = mkComponent
     { initialState: identity
     , render
-    , eval: mkEval $ defaultEval { handleAction = handleAction }
+    , eval: mkEval $ defaultEval
+        { handleAction = handleAction
+        , receive = Just <<< Receive }
     }
 
 navigationAnchor
