@@ -5,14 +5,13 @@ import Prelude
 import Async (Async)
 import Data.Bifunctor (lmap)
 import Data.Maybe (Maybe(..))
-import Data.Newtype (unwrap)
 import Data.Variant (SProxy(..), Variant, inj)
 import Node.Errors.Class (code)
 import Postgres.Async.Query (execute)
 import Postgres.Error (Error, constraint)
 import Postgres.Error.Codes (unique_violation)
 import Postgres.Pool (Pool)
-import Postgres.Query (Query(..), QueryParameter, toQueryParameter)
+import Postgres.Query (Query(..), QueryParameter, (:), (:|))
 import TeamTavern.Player.Domain.Email (Email)
 import TeamTavern.Player.Domain.Hash (Hash)
 import TeamTavern.Player.Domain.Nickname (Nickname)
@@ -37,16 +36,15 @@ type AddPlayerError errors = Variant
     , databaseError :: Error
     | errors )
 
-addPlayerQuery :: Query
-addPlayerQuery = Query """
+queryString :: Query
+queryString = Query """
     insert into player (email, nickname, password_hash, confirmation_nonce)
     values ($1, $2, $3, $4)
     """
 
-addPlayerQueryParameters :: AddPlayerModel -> Array QueryParameter
-addPlayerQueryParameters { email, nickname, hash, nonce } =
-    [unwrap email, unwrap nickname, unwrap hash, unwrap nonce]
-    <#> toQueryParameter
+queryParameters :: AddPlayerModel -> Array QueryParameter
+queryParameters { email, nickname, hash, nonce } =
+    email : nickname : hash :| nonce
 
 addPlayer
     :: forall errors
@@ -55,7 +53,7 @@ addPlayer
     -> Async (AddPlayerError errors) Unit
 addPlayer pool model @ { email, nickname, nonce } =
     pool
-    # execute addPlayerQuery (addPlayerQueryParameters model)
+    # execute queryString (queryParameters model)
     # lmap (\error ->
         case code error == unique_violation of
         true | constraint error == Just "player_email_key" ->

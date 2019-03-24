@@ -5,13 +5,12 @@ import Prelude
 
 import Async (Async, left)
 import Data.Bifunctor.Label (label)
-import Data.Newtype (unwrap)
 import Data.Variant (SProxy(..), Variant, inj)
 import Postgres.Async.Query (query)
 import Postgres.Error (Error)
-import Postgres.Query (class Querier, Query(..), QueryParameter, toQueryParameter)
+import Postgres.Query (class Querier, Query(..), QueryParameter, (:|))
 import Postgres.Result (rowCount)
-import TeamTavern.Player.Domain.Id (Id, toString)
+import TeamTavern.Player.Domain.Id (Id)
 import TeamTavern.Session.Domain.Token (Token)
 
 type CreateSessionModel =
@@ -27,22 +26,20 @@ type CreateSessionError errors = Variant
         }
     | errors )
 
-createSessionQuery :: Query
-createSessionQuery = Query """
+queryString :: Query
+queryString = Query """
     insert into session (player_id, token)
     values ($1, $2)
     """
 
-createSessionParameters :: CreateSessionModel -> Array QueryParameter
-createSessionParameters { id, token } =
-    [toString id, unwrap token]
-    <#> toQueryParameter
+queryParameters :: CreateSessionModel -> Array QueryParameter
+queryParameters { id, token } = id :| token
 
 createSession :: forall querier errors. Querier querier =>
     CreateSessionModel -> querier -> Async (CreateSessionError errors) Unit
 createSession model @ { id, token } querier = do
     result <- querier
-        # query createSessionQuery (createSessionParameters model)
+        # query queryString (queryParameters model)
         # label (SProxy :: SProxy "databaseError")
     case rowCount result of
         1 -> pure unit

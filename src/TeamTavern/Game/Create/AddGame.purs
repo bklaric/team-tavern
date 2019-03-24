@@ -1,4 +1,4 @@
-module TeamTavern.Game.Create.AddGame where
+module TeamTavern.Game.Create.AddGame (AddGameError, addGame) where
 
 import Prelude
 
@@ -6,21 +6,18 @@ import Async (Async)
 import Async as Async
 import Data.Bifunctor (lmap)
 import Data.Maybe (Maybe(..))
-import Data.Newtype (unwrap)
 import Data.Variant (SProxy(..), Variant, inj)
 import Node.Errors.Class (code)
 import Postgres.Async.Query (query)
 import Postgres.Error (Error, constraint)
 import Postgres.Error.Codes (unique_violation)
 import Postgres.Pool (Pool)
-import Postgres.Query (Query(..), QueryParameter, toQueryParameter)
+import Postgres.Query (Query(..), QueryParameter, (:), (:|))
 import Postgres.Result (rowCount)
 import TeamTavern.Game.Domain.Handle (Handle)
 import TeamTavern.Game.Domain.Title (Title)
 import TeamTavern.Game.Infrastructure.ReadModel (GameModel)
 import TeamTavern.Infrastructure.Cookie (CookieInfo)
-import TeamTavern.Player.Domain.Id (toString)
-import Unsafe.Coerce (unsafeCoerce)
 
 queryString :: Query
 queryString = Query """
@@ -35,13 +32,7 @@ queryString = Query """
 
 queryParameters :: CookieInfo -> GameModel -> Array QueryParameter
 queryParameters { id, token } { title, handle, description } =
-    [ toString id
-    , unwrap token
-    , unwrap title
-    , unwrap handle
-    , unwrap description # unsafeCoerce
-    ]
-    <#> toQueryParameter
+    id : token : title : handle :| description
 
 type AddGameError errors = Variant
     ( titleTaken ::

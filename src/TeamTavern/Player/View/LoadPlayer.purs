@@ -7,7 +7,7 @@ import Async (note) as Async
 import Data.Array (head)
 import Data.Bifunctor.Label (label) as Async
 import Data.Bifunctor.Label (labelMap)
-import Data.Newtype (unwrap, wrap)
+import Data.Newtype (wrap)
 import Data.Symbol (SProxy(..))
 import Data.Traversable (traverse)
 import Data.Variant (Variant, inj)
@@ -15,7 +15,7 @@ import Foreign (MultipleErrors)
 import Postgres.Async.Query (query)
 import Postgres.Error (Error)
 import Postgres.Pool (Pool)
-import Postgres.Query (Query(..), QueryParameter, toQueryParameter)
+import Postgres.Query (Query(..), QueryParameter, (:))
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
 import TeamTavern.Player.Domain.About (About)
@@ -43,21 +43,21 @@ type LoadPlayerError errors = Variant
     , notFound :: Nickname
     | errors )
 
-loadPlayerQuery :: Query
-loadPlayerQuery = Query """
+queryString :: Query
+queryString = Query """
     select player.id, player.nickname, player.about
     from player
     where player.nickname = $1
     """
 
-loadPlayerQueryParameters :: Nickname -> Array QueryParameter
-loadPlayerQueryParameters nickname = [unwrap nickname] <#> toQueryParameter
+queryParameters :: Nickname -> Array QueryParameter
+queryParameters nickname = nickname : []
 
 loadPlayer :: forall errors.
     Pool -> Nickname -> Async (LoadPlayerError errors) LoadPlayerResult
 loadPlayer pool nickname' = do
     result <- pool
-        # query loadPlayerQuery (loadPlayerQueryParameters nickname')
+        # query queryString (queryParameters nickname')
         # Async.label (SProxy :: SProxy "databaseError")
     views <- rows result
         # traverse read

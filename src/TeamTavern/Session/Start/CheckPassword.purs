@@ -14,7 +14,7 @@ import Foreign (MultipleErrors)
 import Node.Errors as Node
 import Postgres.Async.Query (query)
 import Postgres.Error as Postgres
-import Postgres.Query (class Querier, Query(..), QueryParameter, toQueryParameter)
+import Postgres.Query (class Querier, Query(..), QueryParameter, (:))
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
 import TeamTavern.Player.Domain.Id (Id)
@@ -51,17 +51,16 @@ type CheckPasswordError errors = Variant
     , passwordDoesntMatch :: NicknameOrEmail
     | errors )
 
-checkPasswordQuery :: Query
-checkPasswordQuery = Query """
+queryString :: Query
+queryString = Query """
     select
         id, nickname, password_hash as hash, email_confirmed as "emailConfirmed"
     from player
     where player.email = $1 or player.nickname = $1
     """
 
-checkPasswordParameters :: NicknameOrEmail -> Array QueryParameter
-checkPasswordParameters nicknameOrEmail =
-    [unwrap nicknameOrEmail] <#> toQueryParameter
+queryParameters :: NicknameOrEmail -> Array QueryParameter
+queryParameters nicknameOrEmail = nicknameOrEmail : []
 
 checkPassword
     :: forall querier errors
@@ -72,7 +71,7 @@ checkPassword
 checkPassword model @ { nicknameOrEmail, password } querier = do
     -- Load player hash.
     result <- querier
-        # query checkPasswordQuery (checkPasswordParameters nicknameOrEmail)
+        # query queryString (queryParameters nicknameOrEmail)
         # label (SProxy :: SProxy "databaseError")
     dtos <- rows result
         # traverse read

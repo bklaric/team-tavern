@@ -16,14 +16,14 @@ import Foreign (MultipleErrors)
 import Postgres.Async.Query (query)
 import Postgres.Error (Error)
 import Postgres.Pool (Pool)
-import Postgres.Query (Query(..), QueryParameter, toQueryParameter)
+import Postgres.Query (Query(..), QueryParameter, (:))
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
 import TeamTavern.Game.Domain.Description (Description)
 import TeamTavern.Game.Domain.Handle (Handle)
 import TeamTavern.Game.Domain.Title (Title)
 import TeamTavern.Infrastructure.Cookie (CookieInfo)
-import TeamTavern.Player.Domain.Id (Id, toString)
+import TeamTavern.Player.Domain.Id (Id)
 
 type LoadGameDto =
     { administratorId :: Int
@@ -50,8 +50,8 @@ type LoadGameError errors = Variant
     , notFound :: Handle
     | errors )
 
-loadGameQuery :: Query
-loadGameQuery = Query """
+queryString :: Query
+queryString = Query """
     select
         game.administrator_id as "administratorId",
         game.handle,
@@ -64,9 +64,8 @@ loadGameQuery = Query """
     where game.handle = $1
     """
 
-loadGameQueryParameters :: Handle -> Maybe CookieInfo -> Array QueryParameter
-loadGameQueryParameters handle auth =
-    [unwrap handle, maybe "0" (_.id >>> toString) auth] <#> toQueryParameter
+queryParameters :: Handle -> Maybe CookieInfo -> Array QueryParameter
+queryParameters handle auth = handle : maybe 0 (_.id >>> unwrap) auth : []
 
 loadGame
     :: forall errors
@@ -76,7 +75,7 @@ loadGame
     -> Async (LoadGameError errors) LoadGameResult
 loadGame pool handle' auth = do
     result <- pool
-        # query loadGameQuery (loadGameQueryParameters handle' auth)
+        # query queryString (queryParameters handle' auth)
         # label (SProxy :: SProxy "databaseError")
     games :: Array LoadGameDto <- rows result
         # traverse read

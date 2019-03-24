@@ -7,14 +7,14 @@ import Async (Async)
 import Async (note) as Async
 import Data.Array (head)
 import Data.Bifunctor.Label (label, labelMap)
-import Data.Newtype (unwrap, wrap)
+import Data.Newtype (wrap)
 import Data.Symbol (SProxy(..))
 import Data.Variant (Variant, inj)
 import Foreign (Foreign, MultipleErrors)
 import Postgres.Async.Query (query)
 import Postgres.Error (Error)
 import Postgres.Pool (Pool)
-import Postgres.Query (Query(..), QueryParameter, toQueryParameter)
+import Postgres.Query (Query(..), QueryParameter, (:|))
 import Postgres.Result (rows)
 import Simple.JSON.Async (read)
 import TeamTavern.Profile.Domain.Summary (Summary)
@@ -33,8 +33,8 @@ type LoadProfileError errors = Variant
     , notFound :: Identifiers
     | errors )
 
-loadProfileQuery :: Query
-loadProfileQuery = Query """
+queryString :: Query
+queryString = Query """
     select profile.summary
     from profile
     join player on player.id = profile.player_id
@@ -43,9 +43,8 @@ loadProfileQuery = Query """
     and player.nickname = $2
     """
 
-loadProfileParameters :: Identifiers -> Array QueryParameter
-loadProfileParameters { handle, nickname } =
-    [unwrap handle, unwrap nickname] <#> toQueryParameter
+queryParameters :: Identifiers -> Array QueryParameter
+queryParameters { handle, nickname } = handle :| nickname
 
 loadProfile
     :: forall errors
@@ -54,7 +53,7 @@ loadProfile
     -> Async (LoadProfileError errors) LoadProfileResult
 loadProfile pool identifiers = do
     result <- pool
-        # query loadProfileQuery (loadProfileParameters identifiers)
+        # query queryString (queryParameters identifiers)
         # label (SProxy :: SProxy "databaseError")
     foreignDto <- rows result
         # head

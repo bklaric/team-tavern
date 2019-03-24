@@ -5,7 +5,7 @@ import Prelude
 
 import Async (Async)
 import Data.Bifunctor.Label (label, labelMap)
-import Data.Newtype (unwrap, wrap)
+import Data.Newtype (wrap)
 import Data.Symbol (SProxy(..))
 import Data.Traversable (traverse)
 import Data.Variant (Variant)
@@ -13,7 +13,7 @@ import Foreign (MultipleErrors)
 import Postgres.Async.Query (query)
 import Postgres.Error (Error)
 import Postgres.Pool (Pool)
-import Postgres.Query (Query(..), QueryParameter, toQueryParameter)
+import Postgres.Query (Query(..), QueryParameter, (:))
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
 import TeamTavern.Game.Domain.Handle (Handle)
@@ -52,7 +52,7 @@ queryString = Query """
     """
 
 queryParameters :: Nickname -> Array QueryParameter
-queryParameters nickname = [toQueryParameter $ unwrap nickname]
+queryParameters nickname = nickname : []
 
 loadProfiles
     :: forall errors

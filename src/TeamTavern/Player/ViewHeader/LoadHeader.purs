@@ -1,7 +1,5 @@
 module TeamTavern.Player.ViewHeader.LoadHeader
-    ( LoadHeaderResult
-    , loadHeader
-    ) where
+    (LoadHeaderResult, loadHeader) where
 
 import Prelude
 
@@ -15,10 +13,10 @@ import Foreign (MultipleErrors)
 import Postgres.Async.Query (query)
 import Postgres.Error (Error)
 import Postgres.Pool (Pool)
-import Postgres.Query (Query(..), QueryParameter, toQueryParameter)
+import Postgres.Query (Query(..), QueryParameter, (:))
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
-import TeamTavern.Player.Domain.Id (Id, toString)
+import TeamTavern.Player.Domain.Id (Id)
 import TeamTavern.Player.Domain.Nickname (Nickname(..))
 
 type LoadHeaderResult = { nickname :: Nickname }
@@ -40,7 +38,7 @@ queryString = Query """
     """
 
 queryParameters :: Id -> Array QueryParameter
-queryParameters id = [toQueryParameter $ toString id]
+queryParameters id = id : []
 
 loadHeader :: forall errors.
     Pool -> Id -> Async (LoadHeaderError errors) LoadHeaderResult

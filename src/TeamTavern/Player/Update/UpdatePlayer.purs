@@ -7,20 +7,17 @@ import Async (Async)
 import Async (left) as Async
 import Data.Bifunctor (lmap)
 import Data.Maybe (Maybe(..))
-import Data.Newtype (unwrap)
 import Data.Variant (SProxy(..), Variant, inj)
 import Node.Errors.Class (code)
 import Postgres.Async.Query (query)
 import Postgres.Error (Error, constraint)
 import Postgres.Error.Codes (unique_violation)
 import Postgres.Pool (Pool)
-import Postgres.Query (Query(..), QueryParameter, toQueryParameter)
+import Postgres.Query (Query(..), QueryParameter, (:), (:|))
 import Postgres.Result (rowCount)
 import TeamTavern.Infrastructure.Cookie (CookieInfo)
-import TeamTavern.Player.Domain.Id (toString)
 import TeamTavern.Player.Domain.Nickname (Nickname)
 import TeamTavern.Player.Update.ReadUpdate (UpdateModel)
-import Unsafe.Coerce (unsafeCoerce)
 
 type UpdatePlayerError errors = Variant
   ( nicknameTaken ::
@@ -34,8 +31,8 @@ type UpdatePlayerError errors = Variant
     }
   | errors )
 
-updatePlayerQuery :: Query
-updatePlayerQuery = Query """
+queryString :: Query
+queryString = Query """
     update player
     set nickname = $3, about = $4
     from session
@@ -45,11 +42,9 @@ updatePlayerQuery = Query """
     and session.revoked = false
     """
 
-updatePlayerQueryParameters ::
-    CookieInfo -> UpdateModel -> Array QueryParameter
-updatePlayerQueryParameters { id, token } { nickname, about} =
-    [toString id, unwrap token, unwrap nickname, unwrap about # unsafeCoerce]
-    <#> toQueryParameter
+queryParameters :: CookieInfo -> UpdateModel -> Array QueryParameter
+queryParameters { id, token } { nickname, about } =
+    id : token : nickname :| about
 
 updatePlayer
     :: forall errors
@@ -59,8 +54,7 @@ updatePlayer
     -> Async (UpdatePlayerError errors) CookieInfo
 updatePlayer pool cookieInfo nicknamedAbout = do
     result <- pool
-        # query updatePlayerQuery
-            (updatePlayerQueryParameters cookieInfo nicknamedAbout)
+        # query queryString (queryParameters cookieInfo nicknamedAbout)
         # lmap (\error ->
             case code error == unique_violation of
             true | constraint error == Just "player_nickname_key" ->
