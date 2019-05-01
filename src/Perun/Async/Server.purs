@@ -2,8 +2,7 @@ module Perun.Async.Server (run, run_) where
 
 import Prelude
 
-import Async (Async, runAsync)
-import Data.Either (either)
+import Async (Async, runSafeAsync)
 import Effect (Effect)
 import Node.Errors (Error)
 import Node.Server (ListenOptions)
@@ -14,7 +13,7 @@ import Perun.Server as Perun
 
 fromAsync :: (Request -> (forall left. Async left Response)) -> RequestHandler
 fromAsync handler = \request respond ->
-    runAsync (either absurd respond) (handler request)
+    runSafeAsync respond (handler request)
 
 run
     :: ListenOptions

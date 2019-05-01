@@ -19,6 +19,10 @@ runAsync :: forall left right.
     (Either left right -> Effect Unit) -> Async left right -> Effect Unit
 runAsync callback = \(Async (ExceptT (ContT cont))) -> cont callback
 
+runSafeAsync :: forall right.
+    (right -> Effect Unit) -> (forall left. Async left right) -> Effect Unit
+runSafeAsync callback = runAsync $ either absurd callback
+
 fromEither :: forall left right. Either left right -> Async left right
 fromEither = pure >>> ExceptT >>> Async
 
