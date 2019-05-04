@@ -49,7 +49,7 @@ type State =
     , otherError :: Boolean
     }
 
-type Slot = H.Slot (Modal.Query Unit (Const Void)) (Modal.Message Message)
+type Slot = H.Slot (Modal.Query Input (Const Void)) (Modal.Message Message)
 
 render :: forall slots. State -> HH.HTML slots Action
 render
@@ -153,10 +153,10 @@ handleAction (Update event) = do
         Just newState' -> H.put newState'
     pure unit
 
-component :: forall query input left.
-    Input -> H.Component HH.HTML query input Message (Async left)
-component { nickname, about } = H.mkComponent
-    { initialState: const
+component :: forall query left.
+    H.Component HH.HTML query Input Message (Async left)
+component = H.mkComponent
+    { initialState: \{ nickname, about } ->
         { originalNickname: nickname
         , nickname
         , about: intercalate "\n\n" about
@@ -171,9 +171,8 @@ component { nickname, about } = H.mkComponent
 
 editPlayer
     :: forall query children left
-    .  Input
-    -> (Modal.Message Message -> Maybe query)
+    .  (Modal.Message Message -> Maybe query)
     -> HH.ComponentHTML query (editPlayer :: Slot Unit | children) (Async left)
-editPlayer input handleMessage = HH.slot
+editPlayer handleMessage = HH.slot
     (SProxy :: SProxy "editPlayer") unit
-    (Modal.component $ component input) unit handleMessage
+    (Modal.component component) unit handleMessage

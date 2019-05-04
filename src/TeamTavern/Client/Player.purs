@@ -28,7 +28,7 @@ import Web.UIEvent.MouseEvent (MouseEvent, toEvent)
 
 data Action
     = Init String
-    | ShowEditPlayerModal MouseEvent
+    | ShowEditPlayerModal EditPlayer.Input MouseEvent
     | HandleEditPlayerMessage (Modal.Message EditPlayer.Message)
 
 data State
@@ -49,12 +49,11 @@ render (Player { nickname, about } isCurrentUser) = HH.div_ $
         , guard isCurrentUser $ pure $ HH.p_ [
             HH.a
             [ HP.href ""
-            , HE.onClick $ Just <<< ShowEditPlayerModal
+            , HE.onClick $ Just <<< ShowEditPlayerModal { nickname, about }
             ]
             [ HH.text "Edit info" ] ]
         , about <#> \paragraph -> HH.p_ [ HH.text paragraph ]
-        , pure $ HH.div_ [ editPlayer
-            { nickname, about } $ Just <<< HandleEditPlayerMessage ]]
+        , pure $ HH.div_ [ editPlayer $ Just <<< HandleEditPlayerMessage ]]
     ]
 render NotFound = HH.p_ [ HH.text "Player could not be found." ]
 render Error = HH.p_ [ HH.text
@@ -77,9 +76,9 @@ handleAction (Init nickname) = do
     state <- H.lift $ loadPlayer nickname
     H.put state
     pure unit
-handleAction (ShowEditPlayerModal event) = do
+handleAction (ShowEditPlayerModal input event) = do
     H.liftEffect $ preventDefault $ toEvent event
-    Modal.show (SProxy :: SProxy "editPlayer")
+    Modal.showWith input (SProxy :: SProxy "editPlayer")
 handleAction (HandleEditPlayerMessage message) = do
     state <- H.get
     Modal.hide (SProxy :: SProxy "editPlayer")
