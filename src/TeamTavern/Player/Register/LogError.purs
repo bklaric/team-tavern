@@ -79,6 +79,6 @@ logError registerError = do
         , sendEmailError: \{ info: { email }, error } -> do
             logt $ "Couldn't send email to address: " <> unwrap email
             logt $ "Email sending resulted in this error: "
-                <> show error.status <> ", " <> show error.code <> ", "
+                <> show error.statusCode <> ", " <> show error.code <> ", "
                 <> error.message
         }

@@ -1,6 +1,6 @@
 #!/bin/bash
-pulp build --main ServerMain --to dist/server.js
+pulp build --main ServerMain --to dist-server/server.js
 
 fuser -k 8080/tcp
 
-node dist/server.js > dist/log.txt &
+node dist-server/server.js > dist-server/log.txt &

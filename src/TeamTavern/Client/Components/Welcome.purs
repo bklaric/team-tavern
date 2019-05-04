@@ -12,8 +12,7 @@ import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 
 type ChildSlots slots =
-    ( signInAnchor :: NavigationAnchor.Slot Unit
-    , homeAnchor :: NavigationAnchor.Slot Unit
+    ( homeAnchor :: NavigationAnchor.Slot Unit
     | slots
     )
 
@@ -28,25 +27,22 @@ welcome { email, nickname, emailSent } =
     <> if emailSent
         then
             [ HH.p_
-                [ HH.text $ "A registration email "
-                    <> "with your sign in code has been sent to "
+                [ HH.text $ "A registration email has been sent to "
                 , HH.strong_ [ HH.text email ]
-                , HH.text "."
+                , HH.text ". Please verify your email address before signin in."
                 ]
-            , navigationAnchor (SProxy :: SProxy "signInAnchor")
-                { path: "/signin", text: "Sign in" }
             , navigationAnchor (SProxy :: SProxy "homeAnchor")
                 { path: "/", text: "Home" }
             ]
         else
             [ HH.p_
                 [ HH.text $ "Unfortunately, we're having some issues sending "
-                    <> "a registration email with your sign in code to "
+                    <> "a registration email to "
                 , HH.strong_ [ HH.text email ]
-                , HH.text ". Please try requesting a sign in code again later."
+                , HH.text ". Please contact "
+                , HH.strong_ [ HH.text "admin@teamtavern.net" ]
+                , HH.text " to verify your email address."
                 ]
-            , navigationAnchor (SProxy :: SProxy "signInAnchor")
-                { path: "/code", text: "Get a sign in code" }
             , navigationAnchor (SProxy :: SProxy "homeAnchor")
                 { path: "/", text: "Home" }
             ]

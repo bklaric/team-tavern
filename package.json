@@ -7,11 +7,9 @@
     "test": "test"
   },
   "dependencies": {
-    "bcrypt": "^3.0.4",
-    "postmark": "^1.6.1"
-  },
-  "devDependencies": {
-    "pg": "^7.4.3"
+    "bcrypt": "^3.0.6",
+    "pg": "^7.10.0",
+    "postmark": "^2.2.4"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

@@ -4,7 +4,7 @@ var postmark = require("postmark")
 
 exports.create = function (serverKey) {
     return function () {
-        return new postmark.Client(serverKey)
+        return new postmark.ServerClient(serverKey)
     }
 }
 

@@ -1,9 +1,9 @@
 #!/bin/bash
-rm -rf ~/team-tavern-nginx
-mkdir ~/team-tavern-nginx
-cp index.html ~/team-tavern-nginx/index.html
+rm -rf dist-client
+mkdir dist-client
+cp index.html dist-client/index.html
 sass src/TeamTavern/Client/Style/Main.scss \
-    | cleancss -o ~/team-tavern-nginx/style.min.css
+    | cleancss -o dist-client/style.min.css
 pulp build --main ClientMain --optimise \
     | uglifyjs --compress --mangle \
-    > ~/team-tavern-nginx/app.min.js
+    > dist-client/app.min.js
