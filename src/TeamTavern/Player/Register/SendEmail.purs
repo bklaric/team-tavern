@@ -39,8 +39,10 @@ message { email, nickname, nonce } =
     , subject: toNullable $ Just "TeamTavern registration"
     , htmlBody: toNullable $ Just $
         "Hi " <> unwrap nickname <> ",<br /><br />"
-        <> "Please <a href=\"https://www.teamtavern.net/signin?nonce=" <> unwrap nonce <> "\">click here</a> to verify your email. "
-        <> "Thank you for registering to TeamTavern."
+        <> "Thank you for registering to TeamTavern. "
+        <> "Please <a href=\"https://www.teamtavern.net/signin?nonce=" <> unwrap nonce <> "\">click here</a> to sign in and verify your email address.<br /><br />"
+        <> "Happy playing!<br />"
+        <> "TeamTavern admin"
     , textBody: toNullable Nothing
     }
 
