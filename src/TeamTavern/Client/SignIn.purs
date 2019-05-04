@@ -22,6 +22,7 @@ import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
+import TeamTavern.Client.Script.Cookie (hasPlayerIdCookie)
 import TeamTavern.Client.Script.Navigate (navigate_)
 import TeamTavern.Client.Script.QueryParams (getQueryParam)
 import TeamTavern.Client.Snippets.ErrorClasses (otherErrorClass)
@@ -149,9 +150,12 @@ sendSignInRequest state @ { nicknameOrEmail, password, nonce } = Async.unify do
 handleAction :: forall output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
 handleAction Init = do
-    nonce <- getQueryParam "nonce" # H.liftEffect
-    H.modify_ (_ { nonce = nonce })
-    pure unit
+    isSignedIn <- H.liftEffect hasPlayerIdCookie
+    if isSignedIn
+        then H.liftEffect $ navigate_ "/"
+        else do
+            nonce <- getQueryParam "nonce" # H.liftEffect
+            H.modify_ (_ { nonce = nonce })
 handleAction (NicknameOrEmailInput nicknameOrEmail) =
     H.modify_ (_ { nicknameOrEmail = nicknameOrEmail }) <#> const unit
 handleAction (PasswordInput password) =
