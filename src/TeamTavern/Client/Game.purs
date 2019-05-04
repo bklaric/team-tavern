@@ -30,7 +30,7 @@ import Web.UIEvent.MouseEvent (MouseEvent, toEvent)
 
 data Action
     = Init String
-    | ShowEditGameModal MouseEvent
+    | ShowEditGameModal EditGame.Input MouseEvent
     | ShowCreateProfileModal MouseEvent
     | HandleEditGameMessage (Modal.Message EditGame.Message)
     | HandleCreateProfileMessage (Modal.Message CreateProfile.Message)
@@ -84,12 +84,11 @@ render
     , guard (isAdmin playerStatus) $ pure $ HH.p_ [
         HH.a
         [ HP.href ""
-        , HE.onClick $ Just <<< ShowEditGameModal
+        , HE.onClick $ Just <<< ShowEditGameModal { title, handle, description }
         ]
         [ HH.text "Edit game" ] ]
     , description <#> \paragraph -> HH.p_ [ HH.text paragraph ]
-    , pure $ HH.div_ [ editGame
-        { title, handle, description } $ Just <<< HandleEditGameMessage ]
+    , pure $ HH.div_ [ editGame $ Just <<< HandleEditGameMessage ]
     , pure $ HH.div_ [ createProfile
         handle $ Just <<< HandleCreateProfileMessage ]
     ]
@@ -114,9 +113,9 @@ handleAction (Init handle) = do
     state <- H.lift $ loadGame handle
     H.put state
     pure unit
-handleAction (ShowEditGameModal event) = do
+handleAction (ShowEditGameModal input event) = do
     H.liftEffect $ preventDefault $ toEvent event
-    Modal.show (SProxy :: SProxy "editGame")
+    Modal.showWith input (SProxy :: SProxy "editGame")
 handleAction (ShowCreateProfileModal event) = do
     H.liftEffect $ preventDefault $ toEvent event
     Modal.show (SProxy :: SProxy "createProfile")
