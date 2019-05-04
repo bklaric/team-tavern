@@ -1,7 +1,7 @@
 module Postmark.Error where
 
 type Error =
-    { status :: Int
+    { code :: Int
     , message :: String
-    , code :: Int
+    , statusCode :: Int
     }
