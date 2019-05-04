@@ -41,6 +41,7 @@ message { email, nickname, nonce } =
         "Hi " <> unwrap nickname <> ",<br /><br />"
         <> "Thank you for registering to TeamTavern. "
         <> "Please <a href=\"https://www.teamtavern.net/signin?nonce=" <> unwrap nonce <> "\">click here</a> to sign in and verify your email address.<br /><br />"
+        <> "Should you have any questions or feedback, please contact <a href=\"mailto:admin@teamtavern.net\">admin@teamtavern.net</a>. Thank you for your time.<br /><br />"
         <> "Happy playing!<br />"
         <> "TeamTavern admin"
     , textBody: toNullable Nothing
