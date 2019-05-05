@@ -78,19 +78,19 @@ notAsciiAlphaNum string =
     then Nothing
     else Just $ inj (SProxy :: SProxy "notAsciiAlphaNum") {}
 
-type NotAsciiAlphaNumUnderscore = {}
+type NotAsciiAlphaNumHyphen = {}
 
-notAsciiAlphaNumUnderscore :: forall errors.
+notAsciiAlphaNumHyphen :: forall errors.
   String
   -> Maybe (Variant
-    ( notAsciiAlphaNumUnderscore :: NotAsciiAlphaNumUnderscore
+    ( notAsciiAlphaNumHyphen :: NotAsciiAlphaNumHyphen
     | errors
     ))
-notAsciiAlphaNumUnderscore string =
+notAsciiAlphaNumHyphen string =
     if string # toCharArray # all
-        (\char -> isAsciiAlpha char || isDigit char || char == '_')
+        (\char -> isAsciiAlpha char || isDigit char || char == '-')
     then Nothing
-    else Just $ inj (SProxy :: SProxy "notAsciiAlphaNumUnderscore") {}
+    else Just $ inj (SProxy :: SProxy "notAsciiAlphaNumHyphen") {}
 
 type ContainsWhitespace = {}
 

@@ -91,7 +91,7 @@ render
             [ HP.class_ $ inputErrorClass handleError ]
             [ HH.text
                 $  "The handle can contain only alphanumeric characters and "
-                <> "cannot be more than 50 characters long." ]
+                <> "hyphens and cannot be more than 50 characters long." ]
         , HH.p
             [ HP.class_ $ inputErrorClass handleTaken ]
             [ HH.text "This handle is already taken, please pick another one." ]

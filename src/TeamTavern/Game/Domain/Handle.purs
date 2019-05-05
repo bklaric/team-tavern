@@ -10,7 +10,7 @@ import Data.String (trim)
 import Data.Validated (Validated)
 import Data.Variant (Variant)
 import Jarilo.FromComponent (class FromComponent)
-import Wrapped.String (Empty, NotAsciiAlphaNumUnderscore, TooLong, empty, notAsciiAlphaNumUnderscore, tooLong)
+import Wrapped.String (Empty, NotAsciiAlphaNumHyphen, TooLong, empty, notAsciiAlphaNumHyphen, tooLong)
 import Wrapped.Validated as Wrapped
 
 newtype Handle = Handle String
@@ -28,7 +28,7 @@ derive newtype instance fromComponentHandle :: FromComponent Handle
 type HandleError = Variant
     ( empty :: Empty
     , tooLong :: TooLong
-    , notAsciiAlphaNumUnderscore :: NotAsciiAlphaNumUnderscore
+    , notAsciiAlphaNumHyphen :: NotAsciiAlphaNumHyphen
     )
 
 maxLength :: Int
@@ -36,5 +36,5 @@ maxLength = 50
 
 create :: String -> Validated (NonEmptyList HandleError) Handle
 create handle =
-    Wrapped.create trim [empty, tooLong maxLength, notAsciiAlphaNumUnderscore]
+    Wrapped.create trim [empty, tooLong maxLength, notAsciiAlphaNumHyphen]
     Handle handle
