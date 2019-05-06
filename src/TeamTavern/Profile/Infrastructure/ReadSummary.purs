@@ -11,7 +11,7 @@ import Foreign (MultipleErrors)
 import Perun.Request.Body (Body)
 import Simple.JSON.Async (readJSON)
 import TeamTavern.Architecture.Perun.Request.Body (readBody)
-import TeamTavern.Domain.Text (TextError)
+import TeamTavern.Domain.NonEmptyText (NonEmptyTextError)
 import TeamTavern.Profile.Domain.Summary (Summary)
 import TeamTavern.Profile.Domain.Summary as Summary
 
@@ -22,7 +22,7 @@ type ReadSummaryError errors = Variant
         }
     , invalidSummary ::
         { summary :: String
-        , errors :: NonEmptyList TextError
+        , errors :: NonEmptyList NonEmptyTextError
         }
     | errors )
 

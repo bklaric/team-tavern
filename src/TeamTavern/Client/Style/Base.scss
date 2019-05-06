@@ -1,6 +1,7 @@
 $primary-color: hsl(0, 0%, 7%);
 $disabled-color: rgb(221, 221, 221);
 $error-color: orangered;
+
 %bordered {
     border-style: solid;
     border-radius: 0.25em;
@@ -27,7 +28,7 @@ p {
 
 a {
     text-decoration: none;
-    color: hsl(244, 83%, 35%);
+    color: hsla(221, 80%, 41%, 1);
 }
 
 button {

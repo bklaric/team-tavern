@@ -13,7 +13,7 @@ import Foreign (MultipleErrors)
 import Perun.Request.Body (Body)
 import Simple.JSON.Async (readJSON)
 import TeamTavern.Architecture.Perun.Request.Body (readBody)
-import TeamTavern.Domain.Text (TextError)
+import TeamTavern.Domain.NonEmptyText (NonEmptyTextError)
 import TeamTavern.Game.Domain.Description (Description)
 import TeamTavern.Game.Domain.Description as Description
 import TeamTavern.Game.Domain.Handle (Handle, HandleError)
@@ -36,7 +36,7 @@ type GameModel =
 type GameModelError = Variant
     ( title :: NonEmptyList TitleError
     , handle :: NonEmptyList HandleError
-    , description :: NonEmptyList TextError
+    , description :: NonEmptyList NonEmptyTextError
     )
 
 type ReadModelError errors = Variant
