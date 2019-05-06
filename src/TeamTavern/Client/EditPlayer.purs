@@ -98,7 +98,7 @@ render
         ]
     , HH.button
         [ HP.class_ $ ClassName "primary"
-        , HP.disabled $ nickname == "" || about == ""
+        , HP.disabled $ nickname == ""
         ]
         [ HH.text "Save changes" ]
     , HH.p

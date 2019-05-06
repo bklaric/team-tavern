@@ -9,7 +9,7 @@ import Effect (Effect)
 import Effect.Console (log)
 import Foreign (MultipleErrors)
 import Postgres.Error (Error)
-import TeamTavern.Domain.Text (TextError)
+import TeamTavern.Domain.NonEmptyText (NonEmptyTextError)
 import TeamTavern.Game.Domain.Handle (Handle)
 import TeamTavern.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Infrastructure.Log (logt, print)
@@ -22,7 +22,7 @@ type CreateError = Variant
         }
     , invalidSummary ::
         { summary :: String
-        , errors :: NonEmptyList TextError
+        , errors :: NonEmptyList NonEmptyTextError
         }
     , databaseError :: Error
     , notAuthorized ::

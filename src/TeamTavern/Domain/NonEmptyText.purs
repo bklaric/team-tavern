@@ -1,4 +1,4 @@
-module TeamTavern.Domain.Text (TextError, create) where
+module TeamTavern.Domain.NonEmptyText (NonEmptyTextError, create) where
 
 import Prelude
 
@@ -9,10 +9,11 @@ import Data.Validated (Validated, invalid, valid)
 import Data.Variant (SProxy(..), Variant, inj)
 import TeamTavern.Domain.Paragraph (Paragraph)
 import TeamTavern.Domain.Paragraph as Paragraph
-import Wrapped.String (NotPrintable, TooLong)
+import Wrapped.String (Empty, NotPrintable, TooLong)
 
-type TextError = Variant
-    ( tooLong :: TooLong
+type NonEmptyTextError = Variant
+    ( empty :: Empty
+    , tooLong :: TooLong
     , notPrintable :: NotPrintable
     )
 
@@ -21,13 +22,15 @@ create'
     .  Int
     -> (Array Paragraph -> text)
     -> Array Paragraph
-    -> Validated (NonEmptyList TextError) text
+    -> Validated (NonEmptyList NonEmptyTextError) text
 create' maxLength constructor paragraphs = let
     actualLength = paragraphs <#> Paragraph.length # sum
     in
     if actualLength > maxLength
     then invalid $ singleton $ inj (SProxy :: SProxy "tooLong")
         { maxLength, actualLength }
+    else if actualLength == 0
+    then invalid $ singleton $ inj (SProxy :: SProxy "empty") {}
     else valid $ constructor paragraphs
 
 create
@@ -35,6 +38,6 @@ create
     .  Int
     -> (Array Paragraph -> text)
     -> String
-    -> Validated (NonEmptyList TextError) text
+    -> Validated (NonEmptyList NonEmptyTextError) text
 create maxLength constructor text =
     text # Paragraph.create >>= create' maxLength constructor
