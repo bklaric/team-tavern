@@ -54,7 +54,7 @@ render :: forall left.
 render playerInfo = HH.div_
     [ HH.div [ HP.id_ "top-bar" ]
         [ HH.div [ HP.id_ "top-bar-content" ]
-            [ HH.span [ HP.id_ "top-bar-title" ]
+            [ HH.h2 [ HP.id_ "top-bar-title" ]
                 [ navigationAnchor (SProxy :: SProxy "homeAnchor")
                     { path: "/", text: "TeamTavern" }
                 ]

@@ -52,7 +52,7 @@ type Slot = H.Slot (Modal.Query Input (Const Void)) (Modal.Message Message)
 
 render :: forall slots. State -> HH.HTML slots Action
 render { title, summary, summaryError, otherError } = HH.form
-    [ HP.class_ $ H.ClassName "single-form", HE.onSubmit $ Just <<< Update ]
+    [ HP.class_ $ H.ClassName "single-form-wide", HE.onSubmit $ Just <<< Update ]
     [ HH.h2_ [ HH.text $ "Edit your " <> title <> " profile" ]
     , HH.div_
         [ HH.label

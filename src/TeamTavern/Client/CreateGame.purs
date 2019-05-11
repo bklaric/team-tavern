@@ -62,7 +62,7 @@ render
     , handleTaken
     , otherError
     } = HH.form
-    [ HP.class_ $ ClassName "single-form", HE.onSubmit $ Just <<< Create ]
+    [ HP.class_ $ ClassName "single-form-wide", HE.onSubmit $ Just <<< Create ]
     [ HH.h2_ [ HH.text "Create a new game" ]
     , HH.div_
         [ HH.label
