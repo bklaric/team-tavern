@@ -61,7 +61,7 @@ render
     , nicknameTaken
     , otherError
     } = HH.form
-    [ HP.class_ $ H.ClassName "single-form", HE.onSubmit $ Just <<< Update ]
+    [ HP.class_ $ H.ClassName "single-form-wide", HE.onSubmit $ Just <<< Update ]
     [ HH.h2_ [ HH.text "Edit info" ]
     , HH.div_
         [ HH.label

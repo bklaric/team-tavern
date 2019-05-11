@@ -44,7 +44,7 @@ type Slot = H.Slot (Modal.Query Unit (Const Void)) (Modal.Message Message)
 
 render :: forall slots. State -> HH.HTML slots Action
 render { summary, summaryError, otherError } = HH.form
-    [ HP.class_ $ ClassName "single-form", HE.onSubmit $ Just <<< Create ]
+    [ HP.class_ $ ClassName "single-form-wide", HE.onSubmit $ Just <<< Create ]
     [ HH.h2_ [ HH.text "Create a new profile" ]
     , HH.div_
         [ HH.label
