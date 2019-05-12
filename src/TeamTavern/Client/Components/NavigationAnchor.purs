@@ -10,7 +10,6 @@ import Halogen (defaultEval, get, liftEffect, mkComponent, mkEval)
 import Halogen as H
 import Halogen.HTML (a)
 import Halogen.HTML as HH
-import Halogen.HTML as Html
 import Halogen.HTML.Events (onClick)
 import Halogen.HTML.Properties (href)
 import Prim.Row (class Cons)
@@ -27,7 +26,7 @@ type Slot = H.Slot (Const Void) Void
 render :: forall slots. State -> HH.HTML slots Action
 render { path, text } = a
     [ href path, onClick $ Navigate >>> Just ]
-    [ Html.text text ]
+    [ HH.text text ]
 
 handleAction :: forall output monad. MonadEffect monad =>
     Action -> H.HalogenM State Action () output monad Unit
