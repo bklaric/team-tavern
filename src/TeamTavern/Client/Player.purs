@@ -22,7 +22,7 @@ import TeamTavern.Client.EditPlayer (editPlayer)
 import TeamTavern.Client.EditPlayer as EditPlayer
 import TeamTavern.Client.Script.Cookie (getPlayerId)
 import TeamTavern.Client.Script.Navigate (navigate_)
-import TeamTavern.Player.View.SendResponse as View
+import TeamTavern.Server.Player.View.SendResponse as View
 import Web.Event.Event (preventDefault)
 import Web.UIEvent.MouseEvent (MouseEvent, toEvent)
 

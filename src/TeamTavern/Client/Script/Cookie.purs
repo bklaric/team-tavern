@@ -16,7 +16,7 @@ import Data.String (Pattern(..), split, trim)
 import Data.Tuple (Tuple(..))
 import Effect (Effect)
 import Foreign.Object (Object, fromFoldable, lookup)
-import TeamTavern.Infrastructure.Cookie (idCookieName, nicknameCookieName)
+import TeamTavern.Server.Infrastructure.Cookie (idCookieName, nicknameCookieName)
 
 foreign import cookies :: Effect String
 

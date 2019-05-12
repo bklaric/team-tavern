@@ -18,7 +18,7 @@ import Halogen.HTML.Properties as HP
 import Simple.JSON.Async as Json
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchorIndexed)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
-import TeamTavern.Profile.ViewByGame.SendResponse as ViewByGame
+import TeamTavern.Server.Profile.ViewByGame.SendResponse as ViewByGame
 
 data Action = Init String
 

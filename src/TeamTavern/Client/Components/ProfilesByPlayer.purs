@@ -24,7 +24,7 @@ import TeamTavern.Client.Components.NavigationAnchor as Anchor
 import TeamTavern.Client.EditProfile (editProfile)
 import TeamTavern.Client.EditProfile as EditProfile
 import TeamTavern.Client.Script.Cookie (getPlayerNickname)
-import TeamTavern.Profile.ViewByPlayer.SendResponse as ViewByPlayer
+import TeamTavern.Server.Profile.ViewByPlayer.SendResponse as ViewByPlayer
 import Web.Event.Event (preventDefault)
 import Web.UIEvent.MouseEvent (MouseEvent, toEvent)
 

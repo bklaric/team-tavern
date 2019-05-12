@@ -26,7 +26,7 @@ import TeamTavern.Client.Script.Cookie (hasPlayerIdCookie)
 import TeamTavern.Client.Script.Navigate (navigate_)
 import TeamTavern.Client.Script.QueryParams (getQueryParam)
 import TeamTavern.Client.Snippets.ErrorClasses (otherErrorClass)
-import TeamTavern.Session.Start.SendResponse as Start
+import TeamTavern.Server.Session.Start.SendResponse as Start
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 

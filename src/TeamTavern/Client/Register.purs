@@ -28,7 +28,7 @@ import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Script.Cookie (hasPlayerIdCookie)
 import TeamTavern.Client.Script.Navigate (navigate, navigate_)
 import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass, otherErrorClass)
-import TeamTavern.Player.Register.SendResponse as Register
+import TeamTavern.Server.Player.Register.SendResponse as Register
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
