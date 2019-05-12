@@ -1,6 +1,7 @@
 .welcome-banner {
     @extend %bordered;
-    padding: 18px;
+    background-color: white;
+    padding: 12px;
 
     button {
         margin-top: 7px;

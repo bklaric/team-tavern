@@ -1,5 +1,5 @@
 #!/bin/bash
-pulp build --main ServerMain --to dist-server/server.js
+pulp build --main TeamTavern.Server.Main --to dist-server/server.js
 
 fuser -k 8080/tcp
 

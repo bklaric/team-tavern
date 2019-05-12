@@ -22,7 +22,7 @@ import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass, otherErrorClass)
-import TeamTavern.Profile.Update.SendResponse as Update
+import TeamTavern.Server.Profile.Update.SendResponse as Update
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 

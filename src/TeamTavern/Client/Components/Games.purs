@@ -20,7 +20,7 @@ import Halogen.HTML.Properties as HP
 import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchorIndexed)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
-import TeamTavern.Game.ViewAll.SendResponse (OkContent)
+import TeamTavern.Server.Game.ViewAll.SendResponse (OkContent)
 
 data Action = Init
 
@@ -38,7 +38,7 @@ render (Games games') =
     then
         HH.div_ $
         games' # mapWithIndex \index { title, handle, description } ->
-            HH.div [ HP.class_ $ ClassName "game-item" ] $
+            HH.div [ HP.class_ $ ClassName "card" ] $
             [ HH.h2_ [ navigationAnchorIndexed (SProxy :: SProxy "game") index
                 { path: "/games/" <> handle, text: title } ]
             ] <> (description <#> \paragraph -> HH.p_ [ HH.text paragraph ])

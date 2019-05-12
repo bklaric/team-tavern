@@ -18,7 +18,7 @@ import Halogen.HTML.Properties as HP
 import Simple.JSON.Async as Json
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchorIndexed)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
-import TeamTavern.Profile.ViewByGame.SendResponse as ViewByGame
+import TeamTavern.Server.Profile.ViewByGame.SendResponse as ViewByGame
 
 data Action = Init String
 
@@ -33,9 +33,9 @@ type ChildSlots = (players :: Anchor.Slot Int)
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render Empty = HH.div_ []
 render (Profiles profiles) = HH.div_ $
-    [ HH.h2_ [ HH.text "Profiles" ] ] <>
+    [ HH.h3 [ HP.class_ $ ClassName "card-header"] [ HH.text "Profiles" ] ] <>
     (profiles # mapWithIndex \index { nickname, summary } ->
-        HH.div [ HP.class_ $ ClassName "profile-item" ] $
+        HH.div [ HP.class_ $ ClassName "card" ] $
         [ HH.h3_ [ navigationAnchorIndexed (SProxy :: SProxy "players") index
             { path: "/players/" <> nickname, text: nickname } ]
         ] <> (summary <#> \paragraph -> HH.p_ [ HH.text paragraph ])
