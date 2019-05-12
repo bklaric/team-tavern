@@ -47,9 +47,9 @@ type ChildSlots =
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render Empty = HH.div_ []
 render (Profiles profiles nickname') = HH.div_ $
-    [ HH.h2_ [ HH.text "Profiles" ] ] <>
+    [ HH.h3 [ HP.class_ $ ClassName "card-header"] [ HH.text "Profiles" ] ] <>
     (profiles # mapWithIndex \index { handle, title, summary } ->
-        HH.div [ HP.class_ $ ClassName "profile-item" ] $ join
+        HH.div [ HP.class_ $ ClassName "card" ] $ join
         [ pure $
             HH.h3_ [ navigationAnchorIndexed (SProxy :: SProxy "games") index
             { path: "/games/" <> handle, text: title } ]

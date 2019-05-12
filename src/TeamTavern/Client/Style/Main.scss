@@ -4,6 +4,7 @@
 @import "../Components/Modal";
 @import "../Components/Welcome";
 @import "../Components/WelcomeBanner";
+
 .hidden {
     display: none;
 }
@@ -26,11 +27,13 @@
 
 #content {
     max-width: $max-width;
-    padding: 24px;
-    margin: 40px auto auto auto;
+    padding: 12px;
+    margin: 36px auto auto auto;
+
     >* {
-        margin-bottom: 24px;
+        margin-bottom: 12px;
     }
+
     > :last-child {
         margin-bottom: 0;
     }
@@ -43,20 +46,15 @@
     overflow: hidden auto;
 }
 
-#game,
-#player {
-    margin-bottom: 40px;
+.card-header {
+    padding-left: 12px;
 }
 
-.game-item {
-    margin-bottom: 40px;
-}
-
-.profile-item {
-    h3 {
-        margin-top: 0.5em;
-    }
-    margin-bottom: 40px;
+.card {
+    @extend %bordered;
+    background-color: white;
+    padding: 12px;
+    margin-bottom: 12px;
 }
 
 .empty {

@@ -12,6 +12,7 @@ import Data.Maybe (Maybe(..))
 import Data.Monoid (guard)
 import Data.String (trim)
 import Data.Symbol (SProxy(..))
+import Halogen (ClassName(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
@@ -72,24 +73,26 @@ type ChildSlots =
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render Empty = HH.div_ []
 render
-    (Game { title, handle, description, hasProfile } playerStatus) =
-    HH.div [ HP.id_ "game"] $ join
-    [ pure $ HH.h2_ [ HH.text title ]
-    , guard (not hasProfile && isSignedIn playerStatus) $ pure $ HH.p_ [
-        HH.a
-        [ HP.href ""
-        , HE.onClick $ Just <<< ShowCreateProfileModal
+    (Game { title, handle, description, hasProfile } playerStatus) = HH.div_
+    [ HH.h2 [ HP.class_ $ ClassName "card-header"] [ HH.text title ]
+    , HH.div [ HP.class_ $ ClassName "card"] $ join
+        [ guard (not hasProfile && isSignedIn playerStatus) $ pure $ HH.p_ [
+            HH.a
+            [ HP.href ""
+            , HE.onClick $ Just <<< ShowCreateProfileModal
+            ]
+            [ HH.text "Create profile" ] ]
+        , guard (isAdmin playerStatus) $ pure $ HH.p_ [
+            HH.a
+            [ HP.href ""
+            , HE.onClick
+                $ Just <<< ShowEditGameModal { title, handle, description }
+            ]
+            [ HH.text "Edit game" ] ]
+        , description <#> \paragraph -> HH.p_ [ HH.text paragraph ]
         ]
-        [ HH.text "Create profile" ] ]
-    , guard (isAdmin playerStatus) $ pure $ HH.p_ [
-        HH.a
-        [ HP.href ""
-        , HE.onClick $ Just <<< ShowEditGameModal { title, handle, description }
-        ]
-        [ HH.text "Edit game" ] ]
-    , description <#> \paragraph -> HH.p_ [ HH.text paragraph ]
-    , pure $ HH.div_ [ editGame $ Just <<< HandleEditGameMessage ]
-    , pure $ HH.div_ [ createProfile
+    , HH.div_ [ editGame $ Just <<< HandleEditGameMessage ]
+    , HH.div_ [ createProfile
         handle $ Just <<< HandleCreateProfileMessage ]
     ]
 render NotFound = HH.p_ [ HH.text "Game could not be found." ]

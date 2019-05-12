@@ -1,19 +1,21 @@
-$primary-color: rgb(26, 26, 27);
+$primary-color: #b15e36;
+$text-color: rgb(26, 26, 27);
 $disabled-color: rgb(221, 221, 221);
 $error-color: orangered;
 $max-width: 960px;
 
 %bordered {
     border-style: solid;
-    border-radius: 0.25em;
+    border-radius: 4px;
     border-width: 1px;
-    border-color: $primary-color;
+    border-color: hsla(0, 0%, 80%, 1);
 }
 
 body {
     font-family: sans-serif;
     font-size: 14px;
-    color: $primary-color;
+    color: $text-color;
+    background-color: #eeeff1;
     margin: 0;
 }
 
@@ -51,13 +53,12 @@ p:last-child {
 
 a {
     text-decoration: none;
-    color: hsla(221, 80%, 41%, 1);
+    color: $primary-color;
 }
 
 button {
     @extend %bordered;
-    padding: 3px 10px;
-    color: $primary-color;
+    padding: 5px 10px;
     background-color: white;
     cursor: pointer;
 }
@@ -76,12 +77,10 @@ label {
 input {
     @extend %bordered;
     padding: 5px;
-    color: $primary-color;
 }
 
 textarea {
     @extend %bordered;
     padding: 5px;
-    color: $primary-color;
     resize: vertical;
 }

@@ -13,6 +13,7 @@ import Data.Maybe (Maybe(..))
 import Data.Options ((:=))
 import Data.Symbol (SProxy(..))
 import Halogen as H
+import Halogen.HTML (span)
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
@@ -41,7 +42,8 @@ data State
 type Slot = H.Slot (Const Void) Void
 
 type ChildSlots =
-    ( homeAnchor :: NavigationAnchor.Slot Unit
+    ( logoAnchor :: NavigationAnchor.Slot Unit
+    , homeAnchor :: NavigationAnchor.Slot Unit
     , signInAnchor :: NavigationAnchor.Slot Unit
     , registerAnchor :: NavigationAnchor.Slot Unit
     , profileAnchor :: NavigationAnchor.Slot Unit
@@ -55,7 +57,10 @@ render playerInfo = HH.div_
     [ HH.div [ HP.id_ "top-bar" ]
         [ HH.div [ HP.id_ "top-bar-content" ]
             [ HH.h2 [ HP.id_ "top-bar-title" ]
-                [ navigationAnchor (SProxy :: SProxy "homeAnchor")
+                [ span [ HP.id_ "top-bar-logo" ]
+                    [ navigationAnchor (SProxy :: SProxy "logoAnchor")
+                        { path: "/", text: "tt" } ]
+                , navigationAnchor (SProxy :: SProxy "homeAnchor")
                     { path: "/", text: "TeamTavern" }
                 ]
             , HH.div_ case playerInfo of

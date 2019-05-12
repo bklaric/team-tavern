@@ -12,6 +12,7 @@ import Data.Maybe (Maybe(..), maybe)
 import Data.Monoid (guard)
 import Data.String (trim)
 import Data.Symbol (SProxy(..))
+import Halogen (ClassName(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
@@ -43,17 +44,18 @@ type ChildSlots = (editPlayer :: EditPlayer.Slot Unit)
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render Empty = HH.div_ []
-render (Player { nickname, about } isCurrentUser) = HH.div_ $
-    [ HH.div [ HP.id_ "player" ] $ join
-        [ pure $ HH.h2_ [ HH.text nickname ]
-        , guard isCurrentUser $ pure $ HH.p_ [
+render (Player { nickname, about } isCurrentUser) = HH.div_
+    [ HH.h2 [ HP.class_ $ ClassName "card-header"] [ HH.text nickname ]
+    , HH.div [ HP.class_ $ ClassName "card" ] $ join
+        [ guard isCurrentUser $ pure $ HH.p_ [
             HH.a
             [ HP.href ""
             , HE.onClick $ Just <<< ShowEditPlayerModal { nickname, about }
             ]
             [ HH.text "Edit info" ] ]
         , about <#> \paragraph -> HH.p_ [ HH.text paragraph ]
-        , pure $ HH.div_ [ editPlayer $ Just <<< HandleEditPlayerMessage ]]
+        ]
+    , HH.div_ [ editPlayer $ Just <<< HandleEditPlayerMessage ]
     ]
 render NotFound = HH.p_ [ HH.text "Player could not be found." ]
 render Error = HH.p_ [ HH.text
