@@ -68,7 +68,7 @@ render
     [ HH.h2_
         [ HH.text "Sign in to "
         , navigationAnchor (SProxy :: SProxy "home")
-            { path: "/", text: "TeamTavern" }
+            { path: "/", content: HH.text "TeamTavern" }
         , HH.text $ maybe "" (const " to confirm your email address") nonce
         ]
     , HH.div_
@@ -118,7 +118,7 @@ render
     , HH.p_
         [ HH.text "New to TeamTavern? "
         , navigationAnchor (SProxy :: SProxy "registerAnchor")
-            { path: "/register", text: "Create an account." }
+            { path: "/register", content: HH.text "Create an account." }
         ]
     ]
 

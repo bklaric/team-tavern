@@ -52,7 +52,7 @@ render (Profiles profiles nickname') = HH.div_ $
         HH.div [ HP.class_ $ ClassName "card" ] $ join
         [ pure $
             HH.h3_ [ navigationAnchorIndexed (SProxy :: SProxy "games") index
-            { path: "/games/" <> handle, text: title } ]
+            { path: "/games/" <> handle, content: HH.text title } ]
         , case nickname' of
             Nothing -> []
             Just nickname -> pure $ HH.p_ [

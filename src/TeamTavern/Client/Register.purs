@@ -75,7 +75,7 @@ render
     [ HH.h2_
         [ HH.text "Register to "
         , navigationAnchor (SProxy :: SProxy "home")
-            { path: "/", text: "TeamTavern" }
+            { path: "/", content: HH.text "TeamTavern" }
         ]
     , HH.div_
         [ HH.label
@@ -138,7 +138,7 @@ render
     , HH.p_
         [ HH.text "Already have an account?"
         , navigationAnchor (SProxy :: SProxy "signInAnchor")
-            { path: "/signin", text: " Sign in." }
+            { path: "/signin", content: HH.text " Sign in." }
         ]
     ]
 

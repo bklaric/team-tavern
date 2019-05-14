@@ -26,16 +26,13 @@
 }
 
 #top-bar-logo {
+    color: $primary-color;
     background-color: white;
     display: inline-flex;
     justify-content: center;
     width: 26px;
     border-radius: 4px;
     margin-right: 6px;
-
-    a {
-        color: $primary-color;
-    }
 }
 
 #top-bar-title {
