@@ -60,6 +60,7 @@ a {
 
 button {
     @extend %bordered;
+    color: $text-color;
     padding: 5px 10px;
     background-color: white;
     cursor: pointer;
