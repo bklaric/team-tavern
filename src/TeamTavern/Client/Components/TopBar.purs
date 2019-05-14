@@ -13,7 +13,6 @@ import Data.Maybe (Maybe(..))
 import Data.Options ((:=))
 import Data.Symbol (SProxy(..))
 import Halogen as H
-import Halogen.HTML (span)
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
@@ -57,23 +56,27 @@ render playerInfo = HH.div_
     [ HH.div [ HP.id_ "top-bar" ]
         [ HH.div [ HP.id_ "top-bar-content" ]
             [ HH.h2 [ HP.id_ "top-bar-title" ]
-                [ span [ HP.id_ "top-bar-logo" ]
-                    [ navigationAnchor (SProxy :: SProxy "logoAnchor")
-                        { path: "/", text: "tt" } ]
-                , navigationAnchor (SProxy :: SProxy "homeAnchor")
-                    { path: "/", text: "TeamTavern" }
+                [ navigationAnchor (SProxy :: SProxy "homeAnchor")
+                    { path: "/"
+                    , content: HH.span_
+                        [ HH.span [ HP.id_ "top-bar-logo" ] [ HH.text "tt" ]
+                        , HH.text "TeamTavern"
+                        ]
+                    }
                 ]
             , HH.div_ case playerInfo of
                 Empty -> []
                 SignedOut ->
                     [ navigationAnchor (SProxy :: SProxy "signInAnchor")
-                        { path: "/signin", text: "Sign in" }
+                        { path: "/signin", content: HH.text "Sign in" }
                     , navigationAnchor (SProxy :: SProxy "registerAnchor")
-                        { path: "/register", text: "Register" }
+                        { path: "/register", content: HH.text "Register" }
                     ]
                 SignedIn { nickname } ->
                     [ navigationAnchor (SProxy :: SProxy "profileAnchor")
-                        { path: "/players/" <> nickname, text: nickname }
+                        { path: "/players/" <> nickname
+                        , content: HH.text nickname
+                        }
                     , HH.a
                         [ HP.href ""
                         , HE.onClick $ Just <<< ShowCreateModal

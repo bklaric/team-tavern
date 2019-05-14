@@ -37,7 +37,7 @@ render (Profiles profiles) = HH.div_ $
     (profiles # mapWithIndex \index { nickname, summary } ->
         HH.div [ HP.class_ $ ClassName "card" ] $
         [ HH.h3_ [ navigationAnchorIndexed (SProxy :: SProxy "players") index
-            { path: "/players/" <> nickname, text: nickname } ]
+            { path: "/players/" <> nickname, content: HH.text nickname } ]
         ] <> (summary <#> \paragraph -> HH.p_ [ HH.text paragraph ])
     )
 

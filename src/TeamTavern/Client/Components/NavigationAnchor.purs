@@ -17,19 +17,26 @@ import TeamTavern.Client.Script.Navigate (navigate_)
 import Web.Event.Event (preventDefault)
 import Web.UIEvent.MouseEvent (MouseEvent, toEvent)
 
-type State = { path :: String, text :: String }
+type State slots monad =
+    { path :: String
+    , content :: HH.ComponentHTML (Action slots monad) slots monad
+    }
 
-data Action = Navigate MouseEvent | Receive State
+data Action slots monad = Navigate MouseEvent | Receive (State slots monad)
 
 type Slot = H.Slot (Const Void) Void
 
-render :: forall slots. State -> HH.HTML slots Action
-render { path, text } = a
-    [ href path, onClick $ Navigate >>> Just ]
-    [ HH.text text ]
+render :: forall slots monad.
+  State slots monad -> HH.ComponentHTML (Action slots monad) slots monad
+render { path, content } =
+    a [ href path, onClick $ Navigate >>> Just ] [ content ]
 
-handleAction :: forall output monad. MonadEffect monad =>
-    Action -> H.HalogenM State Action () output monad Unit
+handleAction
+    :: forall slots monad output
+    .  MonadEffect monad
+    => Action slots monad
+    -> H.HalogenM (State slots monad) (Action slots monad)
+        slots output monad Unit
 handleAction (Navigate event) = do
     liftEffect $ preventDefault $ toEvent event
     { path } <- get
@@ -37,14 +44,15 @@ handleAction (Navigate event) = do
     pure unit
 handleAction (Receive state) = H.put state
 
-component :: forall query output monad. MonadEffect monad =>
-    H.Component HH.HTML query State output monad
+component :: forall query slots monad output. MonadEffect monad =>
+    H.Component HH.HTML query (State slots monad) output monad
 component = mkComponent
     { initialState: identity
     , render
     , eval: mkEval $ defaultEval
         { handleAction = handleAction
-        , receive = Just <<< Receive }
+        , receive = Just <<< Receive
+        }
     }
 
 navigationAnchor
@@ -53,7 +61,7 @@ navigationAnchor
     => IsSymbol label
     => MonadEffect monad
     => SProxy label
-    -> State
+    -> State children monad
     -> HH.ComponentHTML action children monad
 navigationAnchor label state = HH.slot label unit component state absurd
 
@@ -65,7 +73,7 @@ navigationAnchorIndexed
     => MonadEffect monad
     => SProxy label
     -> index
-    -> State
+    -> State children monad
     -> HH.ComponentHTML action children monad
 navigationAnchorIndexed label index state =
     HH.slot label index component state absurd
