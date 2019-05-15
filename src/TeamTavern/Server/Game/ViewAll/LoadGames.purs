@@ -25,6 +25,7 @@ type LoadGamesDto =
     , title :: String
     , handle :: String
     , description :: Array String
+    , profileCount :: Int
     }
 
 type LoadGamesResult =
@@ -32,6 +33,7 @@ type LoadGamesResult =
     , title :: Title
     , handle :: Handle
     , description :: Description
+    , profileCount :: Int
     }
 
 type LoadGamesError errors = Variant
@@ -40,13 +42,26 @@ type LoadGamesError errors = Variant
         , errors :: MultipleErrors
         }
     , databaseError :: Error
-    | errors )
+    | errors
+    )
 
 loadGamesQuery :: Query
 loadGamesQuery = Query """
-    select administrator_id as "administratorId", title, handle, description
+    select
+        game.administrator_id as "administratorId",
+        game.title,
+        game.handle,
+        game.description,
+        count(*)::integer as "profileCount"
     from game
-    order by created desc
+        join profile on profile.game_id = game.id
+    group by
+        game.administrator_id,
+        game.title,
+        game.handle,
+        game.description,
+        game.created
+    order by game.created desc
     """
 
 loadGames :: forall errors.
@@ -58,9 +73,11 @@ loadGames pool = do
     views :: Array LoadGamesDto <- rows result
         # traverse read
         # labelMap (SProxy :: SProxy "unreadableDtos") { result, errors: _ }
-    pure $ views <#> \{ administratorId, title, handle, description } ->
-        { administratorId: wrap administratorId
-        , title: wrap title
-        , handle: wrap handle
-        , description: description <#> wrap # wrap
-        }
+    pure $ views <#>
+        \{ administratorId, title, handle, description, profileCount } ->
+            { administratorId: wrap administratorId
+            , title: wrap title
+            , handle: wrap handle
+            , description: description <#> wrap # wrap
+            , profileCount
+            }

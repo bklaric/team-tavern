@@ -4,6 +4,7 @@ import Prelude
 
 import Data.Variant (Variant, match)
 import Effect (Effect)
+import Effect.Console (log)
 import Foreign (MultipleErrors)
 import Global.Unsafe (unsafeStringify)
 import Postgres.Error (Error)
@@ -20,7 +21,7 @@ type ViewAllError = Variant
 
 logError :: ViewAllError -> Effect Unit
 logError viewAllError = do
-    logt "Error viewing all games"
+    log "Error viewing all games"
     viewAllError # match
         { unreadableDtos: \{ result, errors } -> do
             logt $ "Couldn't read game dtos from result: "

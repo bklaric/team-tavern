@@ -37,10 +37,19 @@ render (Games games') =
     if length games' > 0
     then
         HH.div_ $
-        games' # mapWithIndex \index { title, handle, description } ->
+        games' # mapWithIndex \index { title, handle, description, profileCount } ->
             HH.div [ HP.class_ $ ClassName "card" ] $
-            [ HH.h2_ [ navigationAnchorIndexed (SProxy :: SProxy "game") index
-                { path: "/games/" <> handle, content: HH.text title } ]
+            [ HH.h2_
+                [ navigationAnchorIndexed (SProxy :: SProxy "game") index
+                    { path: "/games/" <> handle, content: HH.text title }
+                , HH.span [ HP.class_ $ ClassName "divider" ]
+                    [ HH.text "•"]
+                , navigationAnchorIndexed (SProxy :: SProxy "game") index
+                    { path: "/games/" <> handle
+                    , content: HH.span [ HP.class_ $ ClassName "profile-count" ]
+                        [ HH.text $ show profileCount <> " profiles" ]
+                    }
+                ]
             ] <> (description <#> \paragraph -> HH.p_ [ HH.text paragraph ])
     else HH.p_ [ HH.text $
         "There should be a list of games here, "
