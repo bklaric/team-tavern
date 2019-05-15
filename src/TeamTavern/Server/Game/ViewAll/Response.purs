@@ -16,6 +16,7 @@ type OkContent = Array
     , title :: String
     , handle :: String
     , description :: Array String
+    , profileCount :: Int
     }
 
 errorResponse :: ViewAllError -> Response
@@ -26,12 +27,14 @@ errorResponse = match
 
 successResponse :: Array LoadGamesResult -> Response
 successResponse views  = ok_ $ (writeJSON :: OkContent -> String) $
-    mapFlipped views \{ administratorId, title, handle, description } ->
-        { administratorId: unwrap administratorId
-        , title: unwrap title
-        , handle: unwrap handle
-        , description: unwrap description <#> unwrap
-        }
+    mapFlipped views
+        \{ administratorId, title, handle, description, profileCount } ->
+            { administratorId: unwrap administratorId
+            , title: unwrap title
+            , handle: unwrap handle
+            , description: unwrap description <#> unwrap
+            , profileCount
+            }
 
 sendResponse
     :: Async ViewAllError (Array LoadGamesResult)
