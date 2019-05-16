@@ -6,6 +6,7 @@ import Async (Async)
 import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
+import Data.Array (null)
 import Data.Bifunctor (lmap)
 import Data.Const (Const)
 import Data.Maybe (Maybe(..), maybe)
@@ -53,7 +54,10 @@ render (Player { nickname, about } isCurrentUser) = HH.div_
             , HE.onClick $ Just <<< ShowEditPlayerModal { nickname, about }
             ]
             [ HH.text "Edit info" ] ]
-        , about <#> \paragraph -> HH.p_ [ HH.text paragraph ]
+        , if null about
+            then pure $ HH.p [ HP.class_ $ ClassName "no-about" ]
+                [ HH.text "Apparently, this user prefers to keep an air of mystery about them." ]
+            else about <#> \paragraph -> HH.p_ [ HH.text paragraph ]
         ]
     , HH.div_ [ editPlayer $ Just <<< HandleEditPlayerMessage ]
     ]
