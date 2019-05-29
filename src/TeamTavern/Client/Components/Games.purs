@@ -28,7 +28,10 @@ data State = Empty | Games OkContent
 
 type Slot = H.Slot (Const Void) Void
 
-type ChildSlots = (game :: Anchor.Slot Int)
+type ChildSlots =
+    ( game :: Anchor.Slot Int
+    , profileCount :: Anchor.Slot Int
+    )
 
 render :: forall query monad. MonadEffect monad =>
     State -> H.ComponentHTML query ChildSlots monad
@@ -44,7 +47,7 @@ render (Games games') =
                     { path: "/games/" <> handle, content: HH.text title }
                 , HH.span [ HP.class_ $ ClassName "divider" ]
                     [ HH.text "•"]
-                , navigationAnchorIndexed (SProxy :: SProxy "game") index
+                , navigationAnchorIndexed (SProxy :: SProxy "profileCount") index
                     { path: "/games/" <> handle
                     , content: HH.span [ HP.class_ $ ClassName "profile-count" ]
                         [ HH.text $ show profileCount <> " profiles" ]
