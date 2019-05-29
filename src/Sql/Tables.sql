@@ -34,3 +34,24 @@ create table profile
     , created timestamptz not null default current_timestamp
     , unique (game_id, player_id)
     );
+
+create table field
+    ( id serial not null primary key
+    , game_id integer not null references game(id)
+    , type integer not null -- 1 (url), 2 (single), 3 (multi)
+    , label varchar(20) not null
+    );
+
+create table field_option
+    ( id serial not null primary key
+    , field_id integer not null references field(id)
+    , option varchar(20) not null
+    );
+
+create table field_value
+    ( id serial not null primary key
+    , profile_id integer not null references profile(id)
+    , field_id integer not null references field(id)
+    , field_option_id integer references field_option(id) -- null if field is url
+    , value varchar(100) -- null if field is option
+    );

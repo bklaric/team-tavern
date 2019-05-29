@@ -3,6 +3,7 @@ module TeamTavern.Server.Game.View.SendResponse (OkContent, sendResponse) where
 import Prelude
 
 import Async (Async, alwaysRight)
+import Data.Maybe (Maybe)
 import Data.Newtype (unwrap)
 import Data.Variant (match)
 import Perun.Response (Response, internalServerError__, notFound__, ok_)
@@ -16,6 +17,15 @@ type OkContent =
     , handle :: String
     , description :: Array String
     , hasProfile :: Boolean
+    , fields :: Array
+        { id :: Int
+        , type :: Int
+        , label :: String
+        , options :: Maybe (Array
+            { id :: Int
+            , option :: String
+            })
+        }
     }
 
 errorResponse :: ViewError -> Response
@@ -26,13 +36,15 @@ errorResponse = match
     }
 
 successResponse :: LoadGameResult -> Response
-successResponse { administratorId, title, handle, description, hasProfile } =
+successResponse
+    { administratorId, title, handle, description, hasProfile, fields } =
     ok_ $ writeJSON (
     { administratorId: unwrap administratorId
     , title: unwrap title
     , handle: unwrap handle
     , description: unwrap description <#> unwrap
     , hasProfile
+    , fields
     } :: OkContent)
 
 sendResponse ::
