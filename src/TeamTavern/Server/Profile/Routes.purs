@@ -34,15 +34,6 @@ type ViewProfilesByHandle = Route
     :> End)
     (Mandatory "nickname" Nickname)
 
-type ViewProfile = Route
-    Get
-    (  Literal "profiles"
-    :> Literal "single"
-    :> Capture "handle" Handle
-    :> Capture "nickname" Nickname
-    :> End)
-    NoQuery
-
 type UpdateProfile = Route
     Put
     (  Literal "profiles"
@@ -56,5 +47,4 @@ type ProfileRoutes
     =    "createProfile"        := CreateProfile
     :<|> "viewProfilesByGame"   := ViewProfilesByGame
     :<|> "viewProfilesByPlayer" := ViewProfilesByHandle
-    :<|> "viewProfile"          := ViewProfile
     :<|> "updateProfile"        := UpdateProfile
