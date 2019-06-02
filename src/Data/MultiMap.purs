@@ -4,6 +4,9 @@ module Data.MultiMap
     , singleton
     , singleton'
     , insert
+    , insert'
+    , values
+    , values'
     , fromFoldable
     , toUnfoldable
     , toUnfoldable'
@@ -13,7 +16,7 @@ import Prelude
 
 import Data.Eq (class Eq1)
 import Data.Foldable (class Foldable, foldMap, foldl, foldr)
-import Data.List.NonEmpty (cons, toList)
+import Data.List.NonEmpty (toList)
 import Data.List.NonEmpty as NonEmptyList
 import Data.List.Types (List, NonEmptyList)
 import Data.Map (Map)
