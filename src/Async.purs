@@ -2,16 +2,21 @@ module Async where
 
 import Prelude
 
+import Control.Alt (class Alt)
+import Control.Alternative (class Alternative)
 import Control.Monad.Cont (ContT(..), lift)
 import Control.Monad.Except (ExceptT(..), withExceptT)
+import Control.Parallel (class Parallel, parallel, sequential)
+import Control.Plus (class Plus)
 import Data.Bifunctor (class Bifunctor)
 import Data.Either (Either(..), either)
 import Data.Either (note) as Either
 import Data.Either.AlwaysRight (alwaysRight) as Either
-import Data.Maybe (Maybe)
+import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype, unwrap)
 import Effect (Effect)
 import Effect.Class (class MonadEffect)
+import Effect.Ref (new, read, write)
 
 newtype Async left right = Async (ExceptT left (ContT Unit Effect) right)
 
@@ -132,3 +137,61 @@ instance monadAsync :: Monad (Async left)
 
 instance monadEffectAsync :: MonadEffect (Async left) where
     liftEffect = fromEffect
+
+newtype ParAsync left right = ParAsync (Async left right)
+
+derive instance newtypeParAsync :: Newtype (ParAsync left right) _
+
+instance functorParAsync :: Functor (ParAsync left) where
+    map f = parallel <<< map f <<< sequential
+
+instance applyParAsync :: Apply (ParAsync left) where
+    apply (ParAsync leftAsync) (ParAsync rightAsync) =
+        ParAsync $ Async $ ExceptT $ ContT \callback -> do
+            leftResultRef <- new Nothing
+            rightResultRef <- new Nothing
+
+            leftAsync # runAsync \leftResult -> do
+                rightResultMaybe <- read rightResultRef
+                case rightResultMaybe of
+                    Nothing -> write (Just leftResult) leftResultRef
+                    Just rightResult -> callback $ leftResult <*> rightResult
+
+            rightAsync # runAsync \rightResult -> do
+                leftResultMaybe <- read leftResultRef
+                case leftResultMaybe of
+                    Nothing -> (write (Just rightResult) rightResultRef)
+                    Just leftResult -> callback $ leftResult <*> rightResult
+
+instance applicativeParAsync :: Applicative (ParAsync left) where
+    pure = parallel <<< pure
+
+instance altParAsync :: Alt (ParAsync left) where
+    alt (ParAsync leftAsync) (ParAsync rightAsync) =
+        ParAsync $ Async $ ExceptT $ ContT \callback -> do
+            doneRef <- new false
+
+            leftAsync # runAsync \leftResult -> do
+                done <- read doneRef
+                if done
+                    then pure unit
+                    else do
+                        write true doneRef
+                        callback leftResult
+
+            rightAsync # runAsync \rightResult -> do
+                done <- read doneRef
+                if done
+                    then pure unit
+                    else do
+                        write true doneRef
+                        callback rightResult
+
+instance plusParAsync :: Plus (ParAsync left) where
+    empty = ParAsync $ Async $ ExceptT $ ContT \_ -> pure unit
+
+instance alternativeParAsync :: Alternative (ParAsync left)
+
+instance monadParParAsync :: Parallel (ParAsync left) (Async left) where
+    parallel = ParAsync
+    sequential (ParAsync async) = async
