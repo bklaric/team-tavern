@@ -53,7 +53,7 @@ import TeamTavern.Server.Session.End (end) as Session
 listenOptions :: ListenOptions
 listenOptions = TcpListenOptions
     { port: Just 8080
-    , host: Nothing
+    , host: Just "localhost"
     , backlog: Nothing
     , exclusive: Nothing
     }
