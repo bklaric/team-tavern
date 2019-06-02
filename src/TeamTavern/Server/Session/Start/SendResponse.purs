@@ -4,7 +4,7 @@ module TeamTavern.Server.Session.Start.SendResponse
 import Prelude
 
 import Async (Async, alwaysRight)
-import Data.MultiMap (singleton)
+import Data.MultiMap (singleton')
 import Data.Variant (SProxy(..), Variant, inj, match)
 import Perun.Response (Response, badRequest, badRequest__, forbidden__, internalServerError__, noContent)
 import Simple.JSON (writeJSON)
@@ -26,19 +26,19 @@ errorResponse = match
     , databaseError: const internalServerError__
     , unreadableHash: const internalServerError__
     , noMatchingPlayer: const $ badRequest
-        (singleton "Content-Type" "application/json") $ writeJSON
+        (singleton' "Content-Type" "application/json") $ writeJSON
         (inj (SProxy :: SProxy "noSessionStarted") {} :: BadRequestContent)
     , passwordDoesntMatch: const $ badRequest
-        (singleton "Content-Type" "application/json") $ writeJSON
+        (singleton' "Content-Type" "application/json") $ writeJSON
         (inj (SProxy :: SProxy "noSessionStarted") {} :: BadRequestContent)
     , unconfirmedEmail: const $ badRequest
-        (singleton "Content-Type" "application/json") $ writeJSON
+        (singleton' "Content-Type" "application/json") $ writeJSON
         (inj (SProxy :: SProxy "unconfirmedEmail") {} :: BadRequestContent)
     , nothingConfirmed: const $ badRequest
-        (singleton "Content-Type" "application/json") $ writeJSON
+        (singleton' "Content-Type" "application/json") $ writeJSON
         (inj (SProxy :: SProxy "nothingConfirmed") {} :: BadRequestContent)
     , noSessionStarted: const $ badRequest
-        (singleton "Content-Type" "application/json") $ writeJSON
+        (singleton' "Content-Type" "application/json") $ writeJSON
         (inj (SProxy :: SProxy "noSessionStarted") {} :: BadRequestContent)
     }
 

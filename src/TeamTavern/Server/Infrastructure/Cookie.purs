@@ -6,7 +6,7 @@ import Data.List (List(..), (:))
 import Data.List.Types (NonEmptyList(..))
 import Data.Map (Map, lookup)
 import Data.Maybe (Maybe)
-import Data.MultiMap (MultiMap, singleton')
+import Data.MultiMap (MultiMap, singleton)
 import Data.Newtype (unwrap, wrap)
 import Data.NonEmpty ((:|))
 import TeamTavern.Server.Player.Domain.Id (Id, fromString, toString)
@@ -64,7 +64,7 @@ setCookieHeader :: CookieInfo -> MultiMap String String
 setCookieHeader { id, nickname, token } =
     setIdCookie id :| setNicknameCookie nickname : setTokenCookie token : Nil
     # NonEmptyList
-    # singleton' "Set-Cookie"
+    # singleton "Set-Cookie"
 
 -- Remove cookies.
 
@@ -80,4 +80,4 @@ removeCookieHeader :: MultiMap String String
 removeCookieHeader =
     removeIdCookie :| removeTokenCookie : Nil
     # NonEmptyList
-    # singleton' "Set-Cookie"
+    # singleton "Set-Cookie"
