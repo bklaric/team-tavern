@@ -169,8 +169,8 @@ handleRequest pool client method url cookies body =
             Game.handleView pool handle cookies
         , updateGame: \{ handle } ->
             Game.handleUpdate pool handle cookies body
-        , createProfile: \{ handle } ->
-            Profile.create pool handle cookies body
+        , createProfile: \identifiers ->
+            Profile.create pool identifiers cookies body
         , updateProfile: \identifiers ->
             Profile.update pool identifiers cookies body
         , viewProfilesByGame: \{ handle } ->

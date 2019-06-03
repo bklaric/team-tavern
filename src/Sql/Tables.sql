@@ -40,18 +40,22 @@ create table field
     , game_id integer not null references game(id)
     , type integer not null -- 1 (url), 2 (single), 3 (multi)
     , label varchar(20) not null
-    );
-
-create table field_option
-    ( id serial not null primary key
-    , field_id integer not null references field(id)
-    , option varchar(20) not null
+    -- { options :: Maybe (Array -- When field is single or multi.
+    --     { id :: Integer
+    --     , option :: String
+    --     , icon :: Maybe Buffer
+    --     })
+    -- }
+    , data jsonb not null
     );
 
 create table field_value
     ( id serial not null primary key
     , profile_id integer not null references profile(id)
     , field_id integer not null references field(id)
-    , field_option_id integer references field_option(id) -- null if field is url
-    , value varchar(100) -- null if field is option
+    -- { url :: Maybe String -- When field is url.
+    -- , optionId :: Maybe Integer -- When field is single.
+    -- , optionIds :: Maybe (Array Integer) -- When field is multi.
+    -- }
+    , data jsonb not null
     );

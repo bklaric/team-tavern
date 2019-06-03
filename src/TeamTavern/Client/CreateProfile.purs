@@ -20,8 +20,10 @@ import Halogen.HTML.Properties as HP
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.Modal as Modal
+import TeamTavern.Client.Script.Cookie (getPlayerNickname)
 import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass, otherErrorClass)
 import TeamTavern.Server.Profile.Create.SendResponse as Create
+import TeamTavern.Server.Profile.Domain.FieldValue (FieldValueDto)
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
@@ -69,12 +71,12 @@ render { summary, summaryError, otherError } = HH.form
         [ HH.text "Something unexpected went wrong! Please try again later." ]
     ]
 
-sendCreateRequest :: forall left. State -> Async left (Maybe State)
-sendCreateRequest state @ { handle, summary } = Async.unify do
+sendCreateRequest :: forall left. State -> String -> Async left (Maybe State)
+sendCreateRequest state @ { handle, summary } nickname = Async.unify do
     response <- Fetch.fetch
-        ("/api/profiles/single/" <> handle)
+        ("/api/games/by-handle/" <> handle <> "/profiles/by-nickname/" <> nickname)
         (  Fetch.method := POST
-        <> Fetch.body := Json.writeJSON { summary }
+        <> Fetch.body := Json.writeJSON { summary, fieldValues: ([] :: Array FieldValueDto) }
         <> Fetch.credentials := Fetch.Include
         )
         # lmap (const $ Just $ state { otherError = true })
@@ -100,11 +102,15 @@ handleAction (Create event) = do
         { summaryError = false
         , otherError   = false
         })
-    newState <- H.lift $ sendCreateRequest state
-    case newState of
-        Nothing -> H.raise $ ProfileCreated state.handle
-        Just newState' -> H.put newState'
-    pure unit
+    nickname <- H.liftEffect getPlayerNickname
+    case nickname of
+        Nothing -> H.put $ state { otherError = true }
+        Just nickname' -> do
+            newState <- H.lift $ sendCreateRequest state nickname'
+            case newState of
+                Nothing -> H.raise $ ProfileCreated state.handle
+                Just newState' -> H.put newState'
+            pure unit
 
 component :: forall query input left.
     String -> H.Component HH.HTML query input Message (Async left)

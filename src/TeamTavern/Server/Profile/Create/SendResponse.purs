@@ -16,10 +16,13 @@ errorResponse :: CreateError -> Response
 errorResponse = match
     { cookieInfoNotPresent: const unauthorized__
     , databaseError: const internalServerError__
-    , unreadableDto: const badRequest__
-    , invalidSummary: const $ badRequest_ $ writeJSON $
+    , unreadableFieldDtos: const internalServerError__
+    , invalidFieldModels: const internalServerError__
+    , unreadableProfileDto: const badRequest__
+    , invalidProfileModel: const $ badRequest_ $ writeJSON $
         (inj (SProxy :: SProxy "invalidSummary") {} :: BadRequestContent)
     , notAuthorized: const forbidden__
+    , unreadableProfileId: const internalServerError__
     }
 
 successResponse :: Unit -> Response

@@ -16,9 +16,12 @@ type Identifiers =
 
 type CreateProfile = Route
     Post
-    (  Literal "profiles"
-    :> Literal "single"
+    (  Literal "games"
+    :> Literal "by-handle"
     :> Capture "handle" Handle
+    :> Literal "profiles"
+    :> Literal "by-nickname"
+    :> Capture "nickname" Nickname
     :> End)
     NoQuery
 

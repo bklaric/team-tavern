@@ -35,10 +35,12 @@ type LoadGameDto =
         { id :: Int
         , type :: Int
         , label :: String
-        , options :: Maybe (Array
-            { id :: Int
-            , option :: String
-            })
+        , data ::
+            { options :: Maybe (Array
+                { id :: Int
+                , option :: String
+                })
+            }
         }
     }
 
@@ -70,21 +72,6 @@ type LoadGameError errors = Variant
 
 queryString :: Query
 queryString = Query """
-    with field_with_options as (
-        select
-            field.id,
-            field.game_id,
-            field.type,
-            field.label,
-            json_agg(field_option)
-            filter (where field_option.id is not null) as "options"
-        from field
-        left join field_option on field_option.field_id = field.id
-        group by
-            field.id,
-            field.type,
-            field.label
-    )
     select
         game.handle,
         game.title,
@@ -92,12 +79,12 @@ queryString = Query """
         game.administrator_id as "administratorId",
         profile.id is not null as "hasProfile",
         coalesce(
-            json_agg(field_with_options)
-            filter (where field_with_options.id is not null),
+            json_agg(field)
+            filter (where field.id is not null),
             '[]'
         ) as "fields"
     from game
-    left join field_with_options on field_with_options.game_id = game.id
+    left join field on field.game_id = game.id
     left join profile on profile.game_id = game.id
         and profile.player_id = $2
     where game.handle = $1
@@ -134,5 +121,6 @@ loadGame pool handle' auth = do
         , handle: wrap handle
         , description: description <#> wrap # wrap
         , hasProfile
-        , fields
+        , fields: fields <#> \{ id, type, label, data: { options } } ->
+            { id, type, label, options }
         }
