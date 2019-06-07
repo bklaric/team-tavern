@@ -39,7 +39,7 @@ create table field
     ( id serial not null primary key
     , game_id integer not null references game(id)
     , type integer not null -- 1 (url), 2 (single), 3 (multi)
-    , label varchar(20) not null
+    , label varchar(40) not null
     -- { options :: Maybe (Array -- When field is single or multi.
     --     { id :: Integer
     --     , option :: String
