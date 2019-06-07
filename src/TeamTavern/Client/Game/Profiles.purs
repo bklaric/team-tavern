@@ -1,4 +1,4 @@
-module TeamTavern.Client.Components.ProfilesByGame (Slot, profilesByGame) where
+module TeamTavern.Client.Game.Profiles (Slot, gameProfiles) where
 
 import Prelude
 
@@ -18,21 +18,22 @@ import Halogen.HTML.Properties as HP
 import Simple.JSON.Async as Json
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchorIndexed)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
+import TeamTavern.Server.Game.View.SendResponse as View
 import TeamTavern.Server.Profile.ViewByGame.SendResponse as ViewByGame
 
-data Action = Init String
+data Action = Init View.OkContent
 
 data State
-    = Empty
-    | Profiles ViewByGame.OkContent
+    = Empty View.OkContent
+    | Profiles View.OkContent ViewByGame.OkContent
 
 type Slot = H.Slot (Const Void) Void
 
 type ChildSlots = (players :: Anchor.Slot Int)
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
-render Empty = HH.div_ []
-render (Profiles profiles) = HH.div_ $
+render (Empty _) = HH.div_ []
+render (Profiles game profiles) = HH.div_ $
     [ HH.h3 [ HP.class_ $ ClassName "card-header"] [ HH.text "Profiles" ] ] <>
     (profiles # mapWithIndex \index { nickname, summary } ->
         HH.div [ HP.class_ $ ClassName "card" ] $
@@ -41,38 +42,41 @@ render (Profiles profiles) = HH.div_ $
         ] <> (summary <#> \paragraph -> HH.p_ [ HH.text paragraph ])
     )
 
-loadProfiles :: forall left. String -> Async left State
-loadProfiles handle = Async.unify do
+loadProfiles :: forall left. View.OkContent -> Async left State
+loadProfiles game @ { handle } = Async.unify do
+    let empty = Empty game
     response <-  Fetch.fetch_ ("/api/profiles?handle=" <> handle)
-        # lmap (const Empty)
+        # lmap (const empty)
     content <- case FetchRes.status response of
-        200 -> FetchRes.text response >>= Json.readJSON # lmap (const Empty)
-        _ -> Async.left Empty
-    pure $ Profiles content
+        200 -> FetchRes.text response >>= Json.readJSON # lmap (const empty)
+        _ -> Async.left empty
+    pure $ Profiles game content
 
 handleAction :: forall output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
-handleAction (Init handle) = do
-    state <- H.lift $ loadProfiles handle
+handleAction (Init game) = do
+    state <- H.lift $ loadProfiles game
     H.put state
     pure unit
 
-component :: forall output left query.
-    String -> H.Component HH.HTML query String output (Async left)
-component handle = mkComponent
-    { initialState: const Empty
+component
+    :: forall output left query
+    .  View.OkContent
+    -> H.Component HH.HTML query View.OkContent output (Async left)
+component game = mkComponent
+    { initialState: Empty
     , render
     , eval: mkEval $ defaultEval
         { handleAction = handleAction
-        , initialize = Just $ Init handle
+        , initialize = Just $ Init game
         , receive = Just <<< Init
         }
     }
 
-profilesByGame
+gameProfiles
     :: forall query children left
-    .  String
+    .  View.OkContent
     -> HH.ComponentHTML
-        query (profilesByGame :: Slot Unit | children) (Async left)
-profilesByGame handle = HH.slot
-    (SProxy :: SProxy "profilesByGame") unit (component handle) handle absurd
+        query (gameProfiles :: Slot Unit | children) (Async left)
+gameProfiles game = HH.slot
+    (SProxy :: SProxy "gameProfiles") unit (component game) game absurd
