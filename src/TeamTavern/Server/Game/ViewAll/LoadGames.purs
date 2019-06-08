@@ -52,9 +52,9 @@ loadGamesQuery = Query """
         game.title,
         game.handle,
         game.description,
-        count(*)::integer as "profileCount"
+        count(profile.id)::integer as "profileCount"
     from game
-        join profile on profile.game_id = game.id
+        left join profile on profile.game_id = game.id
     group by
         game.administrator_id,
         game.title,
