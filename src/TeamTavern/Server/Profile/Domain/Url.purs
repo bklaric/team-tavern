@@ -10,10 +10,10 @@ import Data.Newtype (class Newtype)
 import Data.String (trim)
 import Data.Variant (Variant)
 import Text.Parsing.Parser (runParser)
-import URI (Fragment, HierPath, Host, Path, Port, Query, RelPath, URIRef, UserInfo)
+import URI (Fragment, HierPath, Host, Path, Port, Query, UserInfo)
 import URI.HostPortPair (HostPortPair)
 import URI.HostPortPair as HostPortPair
-import URI.URIRef (URIRefOptions, parser)
+import URI.URI (URIOptions, parser)
 import Wrapped as Wrapped
 import Wrapped.String (Invalid, TooLong, invalid, tooLong)
 
@@ -28,11 +28,8 @@ instance showUrl :: Show Url where
 
 type UrlError = Variant (invalid :: Invalid, tooLong :: TooLong)
 
-type MyURI = URIRef
-    UserInfo (HostPortPair Host Port) Path HierPath RelPath Query Fragment
-
-options ∷ Record (URIRefOptions
-    UserInfo (HostPortPair Host Port) Path HierPath RelPath Query Fragment)
+options ∷ Record (URIOptions
+    UserInfo (HostPortPair Host Port) Path HierPath Query Fragment)
 options =
   { parseUserInfo: pure
   , printUserInfo: identity
@@ -42,8 +39,6 @@ options =
   , printPath: identity
   , parseHierPath: pure
   , printHierPath: identity
-  , parseRelPath: pure
-  , printRelPath: identity
   , parseQuery: pure
   , printQuery: identity
   , parseFragment: pure

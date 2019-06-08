@@ -22,8 +22,8 @@ import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Script.Cookie (getPlayerNickname)
 import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass, otherErrorClass)
+import TeamTavern.Server.Game.View.SendResponse as View
 import TeamTavern.Server.Profile.Create.SendResponse as Create
-import TeamTavern.Server.Profile.Domain.FieldValue (FieldValueDto)
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
@@ -31,24 +31,44 @@ type Input = { handle :: String }
 
 data Action
     = SummaryInput String
+    | UrlValueInput Int String
     | Create Event
 
 data Message = ProfileCreated String
 
 type State =
-    { handle :: String
-    , summary :: String
+    { summary :: String
     , summaryError :: Boolean
+    , fieldValues :: Array
+        { fieldId :: Int
+        , url :: Maybe String
+        , optionId :: Maybe Int
+        , optionIds :: Maybe (Array Int)
+        }
     , otherError :: Boolean
+    , game :: View.OkContent
     }
 
-type Slot = H.Slot (Modal.Query Unit (Const Void)) (Modal.Message Message)
+type Slot =
+    H.Slot (Modal.Query View.OkContent (Const Void)) (Modal.Message Message)
+
+fieldInput { id, type: 1, label } = HH.div_
+    [ HH.label [ HP.for label ] [ HH.text label ]
+    , HH.input
+        [ HP.id_ label
+        , HE.onValueInput $ Just <<< UrlValueInput id
+        ]
+    ]
+-- fieldInput { id, type: 2, label, options } = 3
+-- fieldInput { id, type: 3, label, options } = 4
+fieldInput _ = HH.div_ []
 
 render :: forall slots. State -> HH.HTML slots Action
-render { summary, summaryError, otherError } = HH.form
-    [ HP.class_ $ ClassName "single-form-wide", HE.onSubmit $ Just <<< Create ]
-    [ HH.h2_ [ HH.text "Create a new profile" ]
-    , HH.div_
+render { summary, summaryError, otherError, game } = HH.form
+    [ HP.class_ $ ClassName "single-form-wide", HE.onSubmit $ Just <<< Create ] $
+    [ HH.h2_ [ HH.text "Create a new profile" ] ]
+    <> (game.fields <#> fieldInput) <>
+    [ HH.div_
         [ HH.label
             [ HP.for "summary" ]
             [ HH.text "Summary" ]
@@ -72,11 +92,11 @@ render { summary, summaryError, otherError } = HH.form
     ]
 
 sendCreateRequest :: forall left. State -> String -> Async left (Maybe State)
-sendCreateRequest state @ { handle, summary } nickname = Async.unify do
+sendCreateRequest state @ { summary, fieldValues, game } nickname = Async.unify do
     response <- Fetch.fetch
-        ("/api/games/by-handle/" <> handle <> "/profiles/by-nickname/" <> nickname)
+        ("/api/games/by-handle/" <> game.handle <> "/profiles/by-nickname/" <> nickname)
         (  Fetch.method := POST
-        <> Fetch.body := Json.writeJSON { summary, fieldValues: ([] :: Array FieldValueDto) }
+        <> Fetch.body := Json.writeJSON { summary, fieldValues: fieldValues }
         <> Fetch.credentials := Fetch.Include
         )
         # lmap (const $ Just $ state { otherError = true })
@@ -96,6 +116,13 @@ handleAction :: forall slots left.
     Action -> H.HalogenM State Action slots Message (Async left) Unit
 handleAction (SummaryInput summary) =
     H.modify_ (_ { summary = summary }) $> unit
+handleAction (UrlValueInput fieldId url) = do
+    state @ { fieldValues } <- H.get
+    let newFieldValues = fieldValues <#> \value ->
+        if value.fieldId == fieldId
+            then value { url = Just url}
+            else value
+    H.put $ state { fieldValues = newFieldValues }
 handleAction (Create event) = do
     H.liftEffect $ preventDefault event
     state <- H.gets (_
@@ -108,18 +135,24 @@ handleAction (Create event) = do
         Just nickname' -> do
             newState <- H.lift $ sendCreateRequest state nickname'
             case newState of
-                Nothing -> H.raise $ ProfileCreated state.handle
+                Nothing -> H.raise $ ProfileCreated state.game.handle
                 Just newState' -> H.put newState'
             pure unit
 
-component :: forall query input left.
-    String -> H.Component HH.HTML query input Message (Async left)
-component handle = H.mkComponent
-    { initialState: const
-        { handle
-        , summary: ""
+component :: forall query left.
+    H.Component HH.HTML query View.OkContent Message (Async left)
+component = H.mkComponent
+    { initialState: \game ->
+        { summary: ""
         , summaryError: false
+        , fieldValues: game.fields <#> (\field ->
+            { fieldId: field.id
+            , url: Nothing
+            , optionId: Nothing
+            , optionIds: Nothing
+            })
         , otherError: false
+        , game
         }
     , render
     , eval: H.mkEval $ H.defaultEval { handleAction = handleAction }
@@ -127,11 +160,10 @@ component handle = H.mkComponent
 
 createProfile
     :: forall query children left
-    .  String
-    -> (Modal.Message Message -> Maybe query)
+    .  (Modal.Message Message -> Maybe query)
     -> HH.ComponentHTML query
         (createProfile :: Slot Unit | children)
         (Async left)
-createProfile handle handleMessage = HH.slot
+createProfile handleMessage = HH.slot
     (SProxy :: SProxy "createProfile") unit
-    (Modal.component $ component handle) unit handleMessage
+    (Modal.component component) unit handleMessage

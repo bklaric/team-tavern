@@ -11,6 +11,7 @@ import Data.Const (Const)
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
+import Global.Unsafe (unsafeStringify)
 import Halogen (ClassName(..), defaultEval, mkComponent, mkEval)
 import Halogen as H
 import Halogen.HTML as HH

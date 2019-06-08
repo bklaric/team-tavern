@@ -27,7 +27,7 @@ import Web.UIEvent.MouseEvent (MouseEvent, toEvent)
 data Action
     = Receive State
     | ShowEditGameModal Edit.Input MouseEvent
-    | ShowCreateProfileModal MouseEvent
+    | ShowCreateProfileModal View.OkContent MouseEvent
     | HandleEditGameMessage (Modal.Message Edit.Message)
     | HandleCreateProfileMessage (Modal.Message CreateProfile.Message)
 
@@ -53,13 +53,13 @@ type ChildSlots =
     )
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
-render (State { title, handle, description, hasProfile } playerStatus) = HH.div_
+render (State game @ { title, handle, description, hasProfile } playerStatus) = HH.div_
     [ HH.h2 [ HP.class_ $ ClassName "card-header"] [ HH.text title ]
     , HH.div [ HP.class_ $ ClassName "card"] $ join
         [ guard (not hasProfile && isSignedIn playerStatus)
             [ HH.p_ [ HH.a
                 [ HP.href ""
-                , HE.onClick $ Just <<< ShowCreateProfileModal
+                , HE.onClick $ Just <<< ShowCreateProfileModal game
                 ]
                 [ HH.text "Create profile" ]
             ] ]
@@ -74,7 +74,7 @@ render (State { title, handle, description, hasProfile } playerStatus) = HH.div_
         , description <#> \paragraph -> HH.p_ [ HH.text paragraph ]
         ]
     , HH.div_ [ editGame $ Just <<< HandleEditGameMessage ]
-    , HH.div_ [ createProfile handle $ Just <<< HandleCreateProfileMessage ]
+    , HH.div_ [ createProfile $ Just <<< HandleCreateProfileMessage ]
     ]
 
 handleAction :: forall output left.
@@ -84,9 +84,9 @@ handleAction (Receive state) =
 handleAction (ShowEditGameModal input event) = do
     H.liftEffect $ preventDefault $ toEvent event
     Modal.showWith input (SProxy :: SProxy "editGame")
-handleAction (ShowCreateProfileModal event) = do
+handleAction (ShowCreateProfileModal game event) = do
     H.liftEffect $ preventDefault $ toEvent event
-    Modal.show (SProxy :: SProxy "createProfile")
+    Modal.showWith game (SProxy :: SProxy "createProfile")
 handleAction (HandleEditGameMessage message) = do
     Modal.hide (SProxy :: SProxy "editGame")
     case message of
