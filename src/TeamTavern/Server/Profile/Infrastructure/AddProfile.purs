@@ -49,7 +49,8 @@ insertProfileString = Query """
     returning profile.id as "profileId";
     """
 
-insertProfileParameters :: CookieInfo -> Identifiers -> Summary -> Array QueryParameter
+insertProfileParameters ::
+    CookieInfo -> Identifiers -> Summary -> Array QueryParameter
 insertProfileParameters { id, token } { handle, nickname } summary =
     id : token : handle : nickname :| summary
 
@@ -62,7 +63,8 @@ insertFieldValuesString = Query """
 
 insertFieldValuesParameters :: Int -> List FieldValue -> Array QueryParameter
 insertFieldValuesParameters profileId fieldValues =
-    foldr (\(FieldValue fieldId type') { profileIds, fieldIds, datas } ->
+    fieldValues
+    # foldr (\(FieldValue fieldId type') { profileIds, fieldIds, datas } ->
             case type' of
             UrlValue url ->
                 { profileIds: profileId : profileIds
@@ -81,7 +83,6 @@ insertFieldValuesParameters profileId fieldValues =
                 }
             )
         { profileIds: [], fieldIds: [], datas: [] }
-        fieldValues
     # \{ profileIds, fieldIds, datas } ->
         profileIds : fieldIds :| datas
 

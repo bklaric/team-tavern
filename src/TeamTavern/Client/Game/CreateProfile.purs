@@ -37,7 +37,8 @@ data Action
 data Message = ProfileCreated String
 
 type State =
-    { summary :: String
+    { game :: View.OkContent
+    , summary :: String
     , summaryError :: Boolean
     , fieldValues :: Array
         { fieldId :: Int
@@ -46,7 +47,6 @@ type State =
         , optionIds :: Maybe (Array Int)
         }
     , otherError :: Boolean
-    , game :: View.OkContent
     }
 
 type Slot =

@@ -27,8 +27,7 @@ type LoadProfilesDto =
     , title :: String
     , summary :: Array String
     , fieldValues :: Array
-        { id :: Int
-        , fieldId :: Int
+        { fieldId :: Int
         , data ::
             { url :: Maybe String
             , optionId :: Maybe Int
@@ -53,8 +52,7 @@ type LoadProfilesResult =
     , title :: Title
     , summary :: Summary
     , fieldValues :: Array
-        { id :: Int
-        , fieldId :: Int
+        { fieldId :: Int
         , url :: Maybe String
         , optionId :: Maybe Int
         , optionIds :: Maybe (Array Int)
@@ -86,7 +84,6 @@ queryString = Query """
         profile.summary,
         coalesce(
             json_agg(json_build_object(
-                'id', field_value.id,
                 'fieldId', field_value.field_id,
                 'data', field_value.data
             ))
@@ -128,8 +125,8 @@ loadProfiles pool nickname = do
         , title: wrap title
         , summary: summary <#> wrap # wrap
         , fieldValues: fieldValues <#>
-            \{ id, fieldId, data: { url, optionId, optionIds } } ->
-                { id, fieldId, url, optionId, optionIds }
+            \{ fieldId, data: { url, optionId, optionIds } } ->
+                { fieldId, url, optionId, optionIds }
         , fields: fields <#> \{ id, type, label, data: { options } } ->
             { id, type, label, options }
         }

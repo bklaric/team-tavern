@@ -3,33 +3,45 @@ module TeamTavern.Server.Profile.Update.UpdateProfile
 
 import Prelude
 
-import Async (Async, left)
-import Data.Bifunctor.Label (label)
+import Async (Async)
+import Async as Async
+import Data.Array (head)
+import Data.Array as Array
+import Data.Bifunctor.Label (label, labelMap)
+import Data.List (List, foldr)
 import Data.Variant (SProxy(..), Variant, inj)
-import Postgres.Async.Query (query)
+import Foreign (MultipleErrors)
+import Postgres.Async.Query (execute, query)
+import Postgres.Client (Client)
 import Postgres.Error (Error)
-import Postgres.Pool (Pool)
 import Postgres.Query (Query(..), QueryParameter, (:), (:|))
-import Postgres.Result (rowCount)
+import Postgres.Result (Result, rows)
+import Simple.JSON.Async (read)
 import TeamTavern.Server.Game.Domain.Handle (Handle)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Server.Player.Domain.Nickname (Nickname)
+import TeamTavern.Server.Profile.Domain.FieldValue (FieldValue(..), FieldValueType(..))
 import TeamTavern.Server.Profile.Domain.Summary (Summary)
+import TeamTavern.Server.Profile.Infrastructure.ReadProfile (ProfileModel)
 import TeamTavern.Server.Profile.Routes (Identifiers)
 
 type UpdateProfileError errors = Variant
     ( databaseError :: Error
     , notAuthorized ::
-        { auth :: CookieInfo
+        { cookieInfo :: CookieInfo
         , identifiers ::
             { handle :: Handle
             , nickname :: Nickname
             }
         }
+    , unreadableProfileId ::
+        { result :: Result
+        , errors :: MultipleErrors
+        }
     | errors )
 
-queryString :: Query
-queryString = Query """
+updateProfileString :: Query
+updateProfileString = Query """
     update profile
     set summary = $5
     from session, player, game
@@ -41,25 +53,77 @@ queryString = Query """
     and game.id = profile.game_id
     and player.nickname = $3
     and game.handle = $4
+    returning profile.id as "profileId";
     """
 
-queryParameters ::
+updateProfileParameters ::
     CookieInfo -> Identifiers -> Summary -> Array QueryParameter
-queryParameters { id, token } { nickname, handle } summary =
+updateProfileParameters { id, token } { nickname, handle } summary =
     id : token : nickname : handle :| summary
+
+deleteFieldValuesString :: Query
+deleteFieldValuesString = Query """
+    delete from field_value
+    where profile_id = $1;
+    """
+deleteFieldValuesParameters :: Int -> Array QueryParameter
+deleteFieldValuesParameters profileId = profileId : []
+
+insertFieldValuesString :: Query
+insertFieldValuesString = Query """
+    insert into field_value (profile_id, field_id, data)
+    select *
+    from unnest ($1::int[], $2::int[], $3::jsonb[]);
+    """
+
+insertFieldValuesParameters :: Int -> List FieldValue -> Array QueryParameter
+insertFieldValuesParameters profileId fieldValues =
+    fieldValues
+    # foldr (\(FieldValue fieldId type') { profileIds, fieldIds, datas } ->
+            case type' of
+            UrlValue url ->
+                { profileIds: profileId : profileIds
+                , fieldIds: fieldId : fieldIds
+                , datas: { url } : datas
+                }
+            SingleValue optionId ->
+                { profileIds: profileId : profileIds
+                , fieldIds: fieldId : fieldIds
+                , datas: { optionId } : datas
+                }
+            MultiValue optionIds ->
+                { profileIds: profileId : profileIds
+                , fieldIds: fieldId : fieldIds
+                , datas: { optionIds: Array.fromFoldable optionIds } : datas
+                }
+            )
+        { profileIds: [], fieldIds: [], datas: [] }
+    # \{ profileIds, fieldIds, datas } ->
+        profileIds : fieldIds :| datas
 
 updateProfile
     :: forall errors
-    .  Pool
+    .  Client
     -> CookieInfo
     -> Identifiers
-    -> Summary
+    -> ProfileModel
     -> Async (UpdateProfileError errors) Unit
-updateProfile pool auth identifiers summary = do
-    result <- pool
-        # query queryString
-            (queryParameters auth identifiers summary)
+updateProfile client cookieInfo identifiers { summary, fieldValues } = do
+    result <- client
+        # query updateProfileString
+            (updateProfileParameters cookieInfo identifiers summary)
         # label (SProxy :: SProxy "databaseError")
-    if rowCount result == 1
-        then pure unit
-        else left $ inj (SProxy :: SProxy "notAuthorized") { auth, identifiers }
+    { profileId } :: { profileId :: Int } <- rows result
+        # head
+        # Async.note
+            (inj (SProxy :: SProxy "notAuthorized") { cookieInfo, identifiers })
+        >>= (read >>> labelMap (SProxy :: SProxy "unreadableProfileId")
+            { result, errors: _ })
+    client
+        # execute deleteFieldValuesString
+            (deleteFieldValuesParameters profileId)
+        # label (SProxy :: SProxy "databaseError")
+    client
+        # execute insertFieldValuesString
+            (insertFieldValuesParameters profileId fieldValues)
+        # label (SProxy :: SProxy "databaseError")

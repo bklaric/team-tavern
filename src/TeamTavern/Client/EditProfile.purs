@@ -8,9 +8,9 @@ import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
 import Data.Bifunctor (bimap, lmap)
 import Data.Const (Const)
-import Data.Foldable (intercalate)
+import Data.Foldable (find, intercalate)
 import Data.HTTP.Method (Method(..))
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), maybe)
 import Data.Options ((:=))
 import Data.Variant (SProxy(..), match)
 import Halogen (ClassName(..))
@@ -27,14 +27,30 @@ import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
 type Input =
-    { handle :: String
+    { nickname :: String
+    , handle :: String
     , title :: String
-    , nickname :: String
     , summary :: Array String
+    , fieldValues :: Array
+        { fieldId :: Int
+        , url :: Maybe String
+        , optionId :: Maybe Int
+        , optionIds :: Maybe (Array Int)
+        }
+    , fields :: Array
+        { id :: Int
+        , type :: Int
+        , label :: String
+        , options :: Maybe (Array
+            { id :: Int
+            , option :: String
+            })
+        }
     }
 
 data Action
     = SummaryInput String
+    | UrlValueInput Int String
     | Update Event
 
 data Message = ProfileUpdated String
@@ -43,18 +59,50 @@ type State =
     { nickname :: String
     , handle :: String
     , title :: String
+    , fields :: Array
+        { id :: Int
+        , type :: Int
+        , label :: String
+        , options :: Maybe (Array
+            { id :: Int
+            , option :: String
+            })
+        }
     , summary :: String
     , summaryError :: Boolean
+    , fieldValues :: Array
+        { fieldId :: Int
+        , url :: Maybe String
+        , optionId :: Maybe Int
+        , optionIds :: Maybe (Array Int)
+        }
     , otherError :: Boolean
     }
 
 type Slot = H.Slot (Modal.Query Input (Const Void)) (Modal.Message Message)
 
+fieldInput fieldValues { id, type: 1, label } = let
+    fieldValue' = fieldValues # find \{ fieldId } -> fieldId == id
+    in
+    case fieldValue' of
+    Just { url } ->
+        HH.div_
+        [ HH.label [ HP.for label ] [ HH.text label ]
+        , HH.input
+            [ HP.id_ label
+            , HE.onValueInput $ Just <<< UrlValueInput id
+            , HP.value $ maybe "" identity url
+            ]
+        ]
+    Nothing -> HH.div_ []
+fieldInput _ _ = HH.div_ []
+
 render :: forall slots. State -> HH.HTML slots Action
-render { title, summary, summaryError, otherError } = HH.form
-    [ HP.class_ $ H.ClassName "single-form-wide", HE.onSubmit $ Just <<< Update ]
-    [ HH.h2_ [ HH.text $ "Edit your " <> title <> " profile" ]
-    , HH.div_
+render { title, fields, summary, summaryError, fieldValues, otherError } = HH.form
+    [ HP.class_ $ H.ClassName "single-form-wide", HE.onSubmit $ Just <<< Update ] $
+    [ HH.h2_ [ HH.text $ "Edit your " <> title <> " profile" ] ]
+    <> (fields <#> fieldInput fieldValues) <>
+    [ HH.div_
         [ HH.label
             [ HP.for "summary" ]
             [ HH.text "Summary" ]
@@ -79,11 +127,11 @@ render { title, summary, summaryError, otherError } = HH.form
     ]
 
 updateProfile :: forall left. State -> Async left (Maybe State)
-updateProfile state @ { nickname, handle, summary } = Async.unify do
+updateProfile state @ { nickname, handle, summary, fieldValues } = Async.unify do
     response <- Fetch.fetch
         ("/api/profiles/single/" <> handle <> "/" <> nickname)
         (  Fetch.method := PUT
-        <> Fetch.body := Json.writeJSON { summary }
+        <> Fetch.body := Json.writeJSON { summary, fieldValues }
         <> Fetch.credentials := Fetch.Include
         )
         # lmap (const $ Just $ state { otherError = true })
@@ -102,6 +150,13 @@ handleAction :: forall slots left.
     Action -> H.HalogenM State Action slots Message (Async left) Unit
 handleAction (SummaryInput summary) = do
     H.modify_ (_ { summary = summary }) $> unit
+handleAction (UrlValueInput fieldId url) = do
+    state @ { fieldValues } <- H.get
+    let newFieldValues = fieldValues <#> \value ->
+        if value.fieldId == fieldId
+            then value { url = Just url}
+            else value
+    H.put $ state { fieldValues = newFieldValues }
 handleAction (Update event) = do
     H.liftEffect $ preventDefault event
     state <- H.gets (_
@@ -117,12 +172,29 @@ handleAction (Update event) = do
 component :: forall query left.
     H.Component HH.HTML query Input Message (Async left)
 component = H.mkComponent
-    { initialState: \{ handle, title, nickname, summary } ->
+    { initialState: \{ handle, title, nickname, summary, fieldValues, fields } ->
         { handle
         , title
         , nickname
+        , fields
         , summary: intercalate "\n\n" summary
         , summaryError: false
+        , fieldValues: fields <#> (\field -> let
+            fieldValue' = fieldValues # find \{ fieldId } -> fieldId == field.id
+            in
+            case fieldValue' of
+            Nothing ->
+                { fieldId: field.id
+                , url: Nothing
+                , optionId: Nothing
+                , optionIds: Nothing
+                }
+            Just { url, optionId, optionIds } ->
+                { fieldId: field.id
+                , url
+                , optionId
+                , optionIds
+                })
         , otherError: false
         }
     , render

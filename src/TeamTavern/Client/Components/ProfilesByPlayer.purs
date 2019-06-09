@@ -60,10 +60,10 @@ render (Profiles profiles nickname') = HH.div_ $
                 HH.a
                 [ HP.href ""
                 , HE.onClick $ Just <<< ShowEditProfileModal
-                    { handle, title, nickname, summary }
+                    { nickname, handle, title, summary, fieldValues, fields }
                 ]
                 [ HH.text "Edit profile" ] ]
-        , (fieldValues <#> \{ id, fieldId, url, optionId, optionIds } -> let
+        , (fieldValues <#> \{ fieldId, url, optionId, optionIds } -> let
             field' = fields # find \field'' -> field''.id == fieldId
             in
             case field' of

@@ -25,7 +25,7 @@ create pool identifiers cookies body =
     cookieInfo <- readCookieInfo cookies
 
     pool # withTransaction (inj (SProxy :: SProxy "databaseError"))
-        (\client -> do
+        \client -> do
             -- Load game fields from database.
             fields <- loadFields client identifiers.handle
 
@@ -34,4 +34,4 @@ create pool identifiers cookies body =
 
             -- Add profile to database.
             addProfile client cookieInfo identifiers profile
-        )
+        

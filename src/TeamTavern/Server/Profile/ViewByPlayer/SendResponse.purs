@@ -18,8 +18,7 @@ type OkContent = Array
     , title :: String
     , summary :: Array String
     , fieldValues :: Array
-        { id :: Int
-        , fieldId :: Int
+        { fieldId :: Int
         , url :: Maybe String
         , optionId :: Maybe Int
         , optionIds :: Maybe (Array Int)
