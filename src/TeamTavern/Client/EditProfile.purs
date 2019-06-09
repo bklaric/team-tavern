@@ -6,12 +6,14 @@ import Async (Async)
 import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
+import Data.Array as Array
 import Data.Bifunctor (bimap, lmap)
 import Data.Const (Const)
 import Data.Foldable (find, intercalate)
 import Data.HTTP.Method (Method(..))
-import Data.Maybe (Maybe(..), maybe)
+import Data.Maybe (Maybe(..), isJust, maybe)
 import Data.Options ((:=))
+import Data.String (null)
 import Data.Variant (SProxy(..), match)
 import Halogen (ClassName(..))
 import Halogen as H
@@ -131,7 +133,12 @@ updateProfile state @ { nickname, handle, summary, fieldValues } = Async.unify d
     response <- Fetch.fetch
         ("/api/profiles/single/" <> handle <> "/" <> nickname)
         (  Fetch.method := PUT
-        <> Fetch.body := Json.writeJSON { summary, fieldValues }
+        <> Fetch.body := Json.writeJSON
+            { summary
+            , fieldValues: fieldValues # Array.filter
+                \{ url, optionId, optionIds } ->
+                    isJust url || isJust optionId || isJust optionIds
+            }
         <> Fetch.credentials := Fetch.Include
         )
         # lmap (const $ Just $ state { otherError = true })
@@ -154,7 +161,10 @@ handleAction (UrlValueInput fieldId url) = do
     state @ { fieldValues } <- H.get
     let newFieldValues = fieldValues <#> \value ->
         if value.fieldId == fieldId
-            then value { url = Just url}
+            then
+                if null url
+                then value { url = Nothing }
+                else value { url = Just url }
             else value
     H.put $ state { fieldValues = newFieldValues }
 handleAction (Update event) = do
