@@ -8,10 +8,10 @@ import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
 import Data.Bifunctor (lmap)
 import Data.Const (Const)
+import Data.Foldable (find)
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
-import Global.Unsafe (unsafeStringify)
 import Halogen (ClassName(..), defaultEval, mkComponent, mkEval)
 import Halogen as H
 import Halogen.HTML as HH
@@ -36,11 +36,27 @@ render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render (Empty _) = HH.div_ []
 render (Profiles game profiles) = HH.div_ $
     [ HH.h3 [ HP.class_ $ ClassName "card-header"] [ HH.text "Profiles" ] ] <>
-    (profiles # mapWithIndex \index { nickname, summary } ->
+    (profiles # mapWithIndex \index { nickname, summary, fieldValues } ->
         HH.div [ HP.class_ $ ClassName "card" ] $
         [ HH.h3_ [ navigationAnchorIndexed (SProxy :: SProxy "players") index
             { path: "/players/" <> nickname, content: HH.text nickname } ]
-        ] <> (summary <#> \paragraph -> HH.p_ [ HH.text paragraph ])
+        ]
+        <> (fieldValues <#> \{ id, fieldId, url, optionId, optionIds } -> let
+            field' = game.fields # find \field'' -> field''.id == fieldId
+            in
+            case field' of
+            Nothing -> HH.div_ []
+            Just field ->
+                case { type: field.type, url, optionId, optionIds } of
+                { type: 1, url: Just url' } -> HH.p_
+                    [ HH.text $ field.label <> ": "
+                    , HH.a [ HP.href url' ] [ HH.text url' ]
+                    ]
+                -- 2 -> ...
+                -- 3 -> ...
+                _ -> HH.div_ []
+            )
+        <> (summary <#> \paragraph -> HH.p_ [ HH.text paragraph ])
     )
 
 loadProfiles :: forall left. View.OkContent -> Async left State

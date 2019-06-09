@@ -41,7 +41,7 @@ create table field
     , type integer not null -- 1 (url), 2 (single), 3 (multi)
     , label varchar(40) not null
     -- { options :: Maybe (Array -- When field is single or multi.
-    --     { id :: Integer
+    --     { id :: Int
     --     , option :: String
     --     , icon :: Maybe Buffer
     --     })
@@ -54,8 +54,8 @@ create table field_value
     , profile_id integer not null references profile(id)
     , field_id integer not null references field(id)
     -- { url :: Maybe String -- When field is url.
-    -- , optionId :: Maybe Integer -- When field is single.
-    -- , optionIds :: Maybe (Array Integer) -- When field is multi.
+    -- , optionId :: Maybe Int -- When field is single.
+    -- , optionIds :: Maybe (Array Int) -- When field is multi.
     -- }
     , data jsonb not null
     );

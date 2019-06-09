@@ -4,6 +4,7 @@ import Prelude
 
 import Async (Async, alwaysRight)
 import Data.Functor (mapFlipped)
+import Data.Maybe (Maybe)
 import Data.Newtype (unwrap)
 import Data.Variant (match)
 import Perun.Response (Response, internalServerError__, ok_)
@@ -14,7 +15,14 @@ import TeamTavern.Server.Profile.ViewByGame.LogError (ViewAllError)
 type OkContent = Array
     { nickname :: String
     , summary :: Array String
-    }
+    , fieldValues :: Array
+        { id :: Int
+        , fieldId :: Int
+        , url :: Maybe String
+        , optionId :: Maybe Int
+        , optionIds :: Maybe (Array Int)
+        }
+   }
 
 errorResponse :: ViewAllError -> Response
 errorResponse = match
@@ -24,9 +32,10 @@ errorResponse = match
 
 successResponse :: Array LoadProfilesResult -> Response
 successResponse profiles = ok_ $ (writeJSON :: OkContent -> String) $
-    mapFlipped profiles \{ nickname, summary } ->
+    mapFlipped profiles \{ nickname, summary, fieldValues } ->
         { nickname: unwrap nickname
         , summary: unwrap summary <#> unwrap
+        , fieldValues
         }
 
 sendResponse

@@ -34,7 +34,6 @@ import Data.Variant (SProxy(..), Variant, inj)
 import TeamTavern.Server.Player.Domain.Id (Id(..))
 import TeamTavern.Server.Profile.Domain.Url (Url, UrlError)
 import TeamTavern.Server.Profile.Domain.Url as Url
-import Undefined (undefined)
 
 type FieldDto =
     { id :: Int
