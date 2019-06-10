@@ -2,7 +2,6 @@ module TeamTavern.Client.Components.Modal
     (Query(..), Message(..), component, hide, show, showWith) where
 
 import Prelude
-import Prim.Row (class Cons)
 
 import Data.Maybe (Maybe(..), maybe)
 import Data.Symbol (class IsSymbol)
@@ -12,6 +11,7 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
+import Prim.Row (class Cons)
 import Unsafe.Reference (unsafeRefEq)
 import Web.Event.Event (target)
 import Web.HTML (window)
@@ -44,7 +44,7 @@ renderModal _ Hidden = HH.div_ []
 renderModal content (Shown input) = HH.div
     [ HP.class_ $ H.ClassName "modal-background"
     , HP.ref $ H.RefLabel "modal-background"
-    , HE.onClick $ Just <<< BackgroundClick
+    , HE.onMouseDown $ Just <<< BackgroundClick
     ]
     [ HH.slot (SProxy :: SProxy "content") unit
         content input (Just <<< InnerMessage) ]
