@@ -6,6 +6,8 @@ import Async (Async)
 import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
+import Data.Array (any, foldl)
+import Data.Array as Arary
 import Data.Array as Array
 import Data.Bifunctor (bimap, lmap)
 import Data.Const (Const)
@@ -78,13 +80,21 @@ type State =
         , optionId :: Maybe Int
         , optionIds :: Maybe (Array Int)
         }
+    , urlValueErrors :: Array { fieldId :: Int }
     , otherError :: Boolean
     }
 
 type Slot = H.Slot (Modal.Query Input (Const Void)) (Modal.Message Message)
 
-fieldInput fieldValues { id, type: 1, label } = let
+fieldInput
+    :: forall slots fieldValueProperties fieldProperties
+    .  Array { fieldId :: Int, url :: Maybe String | fieldValueProperties}
+    -> Array { fieldId :: Int }
+    -> { id :: Int, label :: String, type :: Int | fieldProperties }
+    -> HH.HTML slots Action
+fieldInput fieldValues urlValueErrors { id, type: 1, label } = let
     fieldValue' = fieldValues # find \{ fieldId } -> fieldId == id
+    urlError = urlValueErrors # any (_.fieldId >>> (_ == id))
     in
     case fieldValue' of
     Just { url } ->
@@ -95,15 +105,18 @@ fieldInput fieldValues { id, type: 1, label } = let
             , HE.onValueInput $ Just <<< UrlValueInput id
             , HP.value $ maybe "" identity url
             ]
+        , HH.p
+            [ HP.class_ $ inputErrorClass urlError ]
+            [ HH.text "This doesn't look like a valid web address." ]
         ]
     Nothing -> HH.div_ []
-fieldInput _ _ = HH.div_ []
+fieldInput _ _ _ = HH.div_ []
 
 render :: forall slots. State -> HH.HTML slots Action
-render { title, fields, summary, summaryError, fieldValues, otherError } = HH.form
+render { title, fields, summary, summaryError, fieldValues, urlValueErrors, otherError } = HH.form
     [ HP.class_ $ H.ClassName "single-form-wide", HE.onSubmit $ Just <<< Update ] $
     [ HH.h2_ [ HH.text $ "Edit your " <> title <> " profile" ] ]
-    <> (fields <#> fieldInput fieldValues) <>
+    <> (fields <#> fieldInput fieldValues urlValueErrors) <>
     [ HH.div_
         [ HH.label
             [ HP.for "summary" ]
@@ -146,9 +159,16 @@ updateProfile state @ { nickname, handle, summary, fieldValues } = Async.unify d
         204 -> pure Nothing
         400 -> FetchRes.text response >>= JsonAsync.readJSON
             # bimap
-                (const $ Just $ state { otherError = true})
+                (const $ Just $ state { otherError = true })
                 (\(error :: Update.BadRequestContent) -> Just $ match
-                    { invalidSummary: const $ state { summaryError = true } }
+                    { invalidProfile: foldl (\state' error' ->
+                        error' # match
+                            { invalidSummary: const $ state' { summaryError = true }
+                            , invalidUrl: \fieldId ->
+                                state' { urlValueErrors = Arary.cons fieldId state'.urlValueErrors }
+                            })
+                        state
+                    }
                     error)
         _ -> pure $ Just $ state { otherError = true }
     pure newState
@@ -171,6 +191,7 @@ handleAction (Update event) = do
     H.liftEffect $ preventDefault event
     state <- H.gets (_
         { summaryError = false
+        , urlValueErrors = []
         , otherError   = false
         })
     newState <- H.lift $ updateProfile state
@@ -205,6 +226,7 @@ component = H.mkComponent
                 , optionId
                 , optionIds
                 })
+        , urlValueErrors: []
         , otherError: false
         }
     , render
