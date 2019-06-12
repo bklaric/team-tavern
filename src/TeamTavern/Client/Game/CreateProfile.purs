@@ -6,6 +6,8 @@ import Async (Async)
 import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
+import Data.Array (any, foldl)
+import Data.Array as Arary
 import Data.Array as Array
 import Data.Bifunctor (bimap, lmap)
 import Data.Const (Const)
@@ -48,28 +50,41 @@ type State =
         , optionId :: Maybe Int
         , optionIds :: Maybe (Array Int)
         }
+    , urlValueErrors :: Array { fieldId :: Int }
     , otherError :: Boolean
     }
 
 type Slot =
     H.Slot (Modal.Query View.OkContent (Const Void)) (Modal.Message Message)
 
-fieldInput { id, type: 1, label } = HH.div_
+
+fieldInput
+    :: forall slots fieldProperties
+    .  Array { fieldId :: Int }
+    -> { id :: Int, label :: String, type :: Int | fieldProperties }
+    -> HH.HTML slots Action
+fieldInput urlValueErrors { id, type: 1, label } = let
+    urlError = urlValueErrors # any (_.fieldId >>> (_ == id))
+    in
+    HH.div_
     [ HH.label [ HP.for label ] [ HH.text label ]
     , HH.input
         [ HP.id_ label
         , HE.onValueInput $ Just <<< UrlValueInput id
         ]
+    , HH.p
+        [ HP.class_ $ inputErrorClass urlError ]
+        [ HH.text "This doesn't look like a valid web address." ]
     ]
 -- fieldInput { id, type: 2, label, options } = 3
 -- fieldInput { id, type: 3, label, options } = 4
-fieldInput _ = HH.div_ []
+fieldInput _ _ = HH.div_ []
 
 render :: forall slots. State -> HH.HTML slots Action
-render { summary, summaryError, otherError, game } = HH.form
+render { summary, summaryError, urlValueErrors, otherError, game } = HH.form
     [ HP.class_ $ ClassName "single-form-wide", HE.onSubmit $ Just <<< Create ] $
     [ HH.h2_ [ HH.text "Create a new profile" ] ]
-    <> (game.fields <#> fieldInput) <>
+    <> (game.fields <#> fieldInput urlValueErrors) <>
     [ HH.div_
         [ HH.label
             [ HP.for "summary" ]
@@ -113,7 +128,13 @@ sendCreateRequest state @ { summary, fieldValues, game } nickname = Async.unify 
             # bimap
                 (const $ Just $ state { otherError = true })
                 (\(error :: Create.BadRequestContent) -> Just $ match
-                    { invalidSummary: const $ state { summaryError = true }
+                    { invalidProfile: foldl (\state' error' ->
+                        error' # match
+                            { invalidSummary: const $ state' { summaryError = true }
+                            , invalidUrl: \fieldId ->
+                                state' { urlValueErrors = Arary.cons fieldId state'.urlValueErrors }
+                            })
+                        state
                     }
                     error)
         _ -> pure $ Just $ state { otherError = true }
@@ -161,6 +182,7 @@ component = H.mkComponent
             , optionId: Nothing
             , optionIds: Nothing
             })
+        , urlValueErrors: []
         , otherError: false
         , game
         }
