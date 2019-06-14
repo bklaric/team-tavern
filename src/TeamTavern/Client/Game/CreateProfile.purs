@@ -12,9 +12,11 @@ import Data.Array as Array
 import Data.Bifunctor (bimap, lmap)
 import Data.Const (Const)
 import Data.HTTP.Method (Method(..))
+import Data.Map as Map
 import Data.Maybe (Maybe(..), isJust)
 import Data.Options ((:=))
 import Data.String (null)
+import Data.Tuple (Tuple(..))
 import Data.Variant (SProxy(..), match)
 import Halogen (ClassName(..))
 import Halogen as H
@@ -24,6 +26,8 @@ import Halogen.HTML.Properties as HP
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.Modal as Modal
+import TeamTavern.Client.Components.SingleSelect (singleSelectIndexed)
+import TeamTavern.Client.Components.SingleSelect as SingleSelect
 import TeamTavern.Client.Script.Cookie (getPlayerNickname)
 import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass, otherErrorClass)
 import TeamTavern.Server.Game.View.SendResponse as View
@@ -54,15 +58,21 @@ type State =
     , otherError :: Boolean
     }
 
+type ChildSlots = ( "singleSelectField" :: SingleSelect.Slot Int)
+
 type Slot =
     H.Slot (Modal.Query View.OkContent (Const Void)) (Modal.Message Message)
 
-
+-- H.ComponentHTML Action ChildSlots (Async left)
 fieldInput
-    :: forall slots fieldProperties
+    :: forall left
     .  Array { fieldId :: Int }
-    -> { id :: Int, label :: String, type :: Int | fieldProperties }
-    -> HH.HTML slots Action
+    ->  { id :: Int
+        , label :: String
+        , type :: Int
+        , options :: Maybe (Array { id :: Int , option :: String })
+        }
+    ->  H.ComponentHTML Action ChildSlots (Async left)
 fieldInput urlValueErrors { id, type: 1, label } = let
     urlError = urlValueErrors # any (_.fieldId >>> (_ == id))
     in
@@ -76,11 +86,15 @@ fieldInput urlValueErrors { id, type: 1, label } = let
         [ HP.class_ $ inputErrorClass urlError ]
         [ HH.text "This doesn't look like a valid web address." ]
     ]
--- fieldInput { id, type: 2, label, options } = 3
+fieldInput _ { id, type: 2, label, options: Just options } =
+    HH.div_
+    [ HH.label [ HP.for label ] [ HH.text label ]
+    , singleSelectIndexed (SProxy :: SProxy "singleSelectField") id options
+    ]
 -- fieldInput { id, type: 3, label, options } = 4
 fieldInput _ _ = HH.div_ []
 
-render :: forall slots. State -> HH.HTML slots Action
+render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { summary, summaryError, urlValueErrors, otherError, game } = HH.form
     [ HP.class_ $ ClassName "single-form-wide", HE.onSubmit $ Just <<< Create ] $
     [ HH.h2_ [ HH.text "Create a new profile" ] ]
@@ -140,8 +154,8 @@ sendCreateRequest state @ { summary, fieldValues, game } nickname = Async.unify 
         _ -> pure $ Just $ state { otherError = true }
     pure newState
 
-handleAction :: forall slots left.
-    Action -> H.HalogenM State Action slots Message (Async left) Unit
+handleAction :: forall left.
+    Action -> H.HalogenM State Action ChildSlots Message (Async left) Unit
 handleAction (SummaryInput summary) =
     H.modify_ (_ { summary = summary }) $> unit
 handleAction (UrlValueInput fieldId url) = do
@@ -156,15 +170,27 @@ handleAction (UrlValueInput fieldId url) = do
     H.put $ state { fieldValues = newFieldValues }
 handleAction (Create event) = do
     H.liftEffect $ preventDefault event
-    state <- H.gets (_
+    state @ { game: { fields } } <- H.gets (_
         { summaryError = false
         , otherError   = false
         })
+    singleSelectResults <-
+        (H.queryAll (SProxy :: SProxy "singleSelectField")
+        $ SingleSelect.Selected identity)
+    let (singleSelectValues :: Array _) =
+            singleSelectResults
+            # Map.toUnfoldable
+            <#> \(Tuple fieldId option) ->
+                { fieldId
+                , url: Nothing
+                , optionId: option <#> _.id
+                , optionIds: Nothing }
+    let state' = state { fieldValues = state.fieldValues <> singleSelectValues }
     nickname <- H.liftEffect getPlayerNickname
     case nickname of
         Nothing -> H.put $ state { otherError = true }
         Just nickname' -> do
-            newState <- H.lift $ sendCreateRequest state nickname'
+            newState <- H.lift $ sendCreateRequest state' nickname'
             case newState of
                 Nothing -> H.raise $ ProfileCreated state.game.handle
                 Just newState' -> H.put newState'
