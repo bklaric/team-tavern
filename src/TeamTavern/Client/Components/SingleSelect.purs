@@ -4,6 +4,7 @@ import Prelude
 
 import Async (Async(..))
 import Data.Const (Const(..))
+import Data.Foldable (find)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Symbol (class IsSymbol)
 import Data.Variant (SProxy(..))
@@ -23,6 +24,11 @@ import Web.HTML.Window (document)
 import Web.UIEvent.MouseEvent (MouseEvent, toEvent)
 
 type Option = { id :: Int, option :: String }
+
+type Input =
+    { options :: Array Option
+    , selectedId :: Maybe Int
+    }
 
 type State =
     { options :: Array Option
@@ -83,9 +89,12 @@ handleQuery (Selected send) = do
     pure $ Just $ send selected
 
 component :: forall message left.
-    H.Component HH.HTML Query (Array Option) message (Async left)
+    H.Component HH.HTML Query Input message (Async left)
 component = H.mkComponent
-    { initialState: { options: _, selected: Nothing, optionsShown: false }
+    { initialState: \{ options, selectedId } ->
+        { options
+        , selected: options # find (\{ id } -> maybe false (_ == id) selectedId)
+        , optionsShown: false }
     , render
     , eval: H.mkEval $ H.defaultEval
         { handleAction = handleAction

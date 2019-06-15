@@ -13,9 +13,11 @@ import Data.Bifunctor (bimap, lmap)
 import Data.Const (Const)
 import Data.Foldable (find, intercalate)
 import Data.HTTP.Method (Method(..))
+import Data.Map as Map
 import Data.Maybe (Maybe(..), isJust, maybe)
 import Data.Options ((:=))
 import Data.String (null)
+import Data.Tuple (Tuple(..))
 import Data.Variant (SProxy(..), match)
 import Halogen (ClassName(..))
 import Halogen as H
@@ -25,6 +27,8 @@ import Halogen.HTML.Properties as HP
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.Modal as Modal
+import TeamTavern.Client.Components.SingleSelect (singleSelectIndexed)
+import TeamTavern.Client.Components.SingleSelect as SingleSelect
 import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass, otherErrorClass)
 import TeamTavern.Server.Profile.Update.SendResponse as Update
 import Web.Event.Event (preventDefault)
@@ -84,14 +88,25 @@ type State =
     , otherError :: Boolean
     }
 
+type ChildSlots = ("singleSelectField" :: SingleSelect.Slot Int)
+
 type Slot = H.Slot (Modal.Query Input (Const Void)) (Modal.Message Message)
 
 fieldInput
-    :: forall slots fieldValueProperties fieldProperties
-    .  Array { fieldId :: Int, url :: Maybe String | fieldValueProperties}
+    :: forall left
+    .  Array
+        { fieldId :: Int
+        , url :: Maybe String
+        , optionId :: Maybe Int
+        , optionIds :: Maybe (Array Int)
+        }
     -> Array { fieldId :: Int }
-    -> { id :: Int, label :: String, type :: Int | fieldProperties }
-    -> HH.HTML slots Action
+    ->  { id :: Int
+        , label :: String
+        , type :: Int
+        , options :: Maybe (Array { id :: Int , option :: String })
+        }
+    -> H.ComponentHTML Action ChildSlots (Async left)
 fieldInput fieldValues urlValueErrors { id, type: 1, label } = let
     fieldValue' = fieldValues # find \{ fieldId } -> fieldId == id
     urlError = urlValueErrors # any (_.fieldId >>> (_ == id))
@@ -110,9 +125,17 @@ fieldInput fieldValues urlValueErrors { id, type: 1, label } = let
             [ HH.text "This doesn't look like a valid web address." ]
         ]
     Nothing -> HH.div_ []
+fieldInput fieldValues _ { id, type: 2, label, options: Just options } = let
+    fieldValue' = fieldValues # find \{ fieldId } -> fieldId == id
+    in
+    HH.div_
+    [ HH.label [ HP.for label ] [ HH.text label ]
+    , singleSelectIndexed (SProxy :: SProxy "singleSelectField") id
+        { options, selectedId: fieldValue' >>= _.optionId }
+    ]
 fieldInput _ _ _ = HH.div_ []
 
-render :: forall slots. State -> HH.HTML slots Action
+render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { title, fields, summary, summaryError, fieldValues, urlValueErrors, otherError } = HH.form
     [ HP.class_ $ H.ClassName "single-form-wide", HE.onSubmit $ Just <<< Update ] $
     [ HH.h2_ [ HH.text $ "Edit your " <> title <> " profile" ] ]
@@ -173,8 +196,8 @@ updateProfile state @ { nickname, handle, summary, fieldValues } = Async.unify d
         _ -> pure $ Just $ state { otherError = true }
     pure newState
 
-handleAction :: forall slots left.
-    Action -> H.HalogenM State Action slots Message (Async left) Unit
+handleAction :: forall left.
+    Action -> H.HalogenM State Action ChildSlots Message (Async left) Unit
 handleAction (SummaryInput summary) = do
     H.modify_ (_ { summary = summary }) $> unit
 handleAction (UrlValueInput fieldId url) = do
@@ -189,12 +212,29 @@ handleAction (UrlValueInput fieldId url) = do
     H.put $ state { fieldValues = newFieldValues }
 handleAction (Update event) = do
     H.liftEffect $ preventDefault event
-    state <- H.gets (_
+    state @ { fields } <- H.gets (_
         { summaryError = false
         , urlValueErrors = []
         , otherError   = false
         })
-    newState <- H.lift $ updateProfile state
+    singleSelectResults <-
+        (H.queryAll (SProxy :: SProxy "singleSelectField")
+        $ SingleSelect.Selected identity)
+    let (singleSelectValues :: Array _) =
+            singleSelectResults
+            # Map.toUnfoldable
+            <#> \(Tuple fieldId option) ->
+                { fieldId
+                , url: Nothing
+                , optionId: option <#> _.id
+                , optionIds: Nothing
+                }
+    let state' = state
+            { fieldValues =
+                (state.fieldValues # Array.filter (_.url >>> isJust))
+                <> singleSelectValues
+            }
+    newState <- H.lift $ updateProfile state'
     case newState of
         Nothing -> H.raise $ ProfileUpdated state.nickname
         Just newState' -> H.put newState'

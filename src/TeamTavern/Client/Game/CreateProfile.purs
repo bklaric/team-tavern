@@ -58,12 +58,11 @@ type State =
     , otherError :: Boolean
     }
 
-type ChildSlots = ( "singleSelectField" :: SingleSelect.Slot Int)
+type ChildSlots = ("singleSelectField" :: SingleSelect.Slot Int)
 
 type Slot =
     H.Slot (Modal.Query View.OkContent (Const Void)) (Modal.Message Message)
 
--- H.ComponentHTML Action ChildSlots (Async left)
 fieldInput
     :: forall left
     .  Array { fieldId :: Int }
@@ -89,7 +88,8 @@ fieldInput urlValueErrors { id, type: 1, label } = let
 fieldInput _ { id, type: 2, label, options: Just options } =
     HH.div_
     [ HH.label [ HP.for label ] [ HH.text label ]
-    , singleSelectIndexed (SProxy :: SProxy "singleSelectField") id options
+    , singleSelectIndexed (SProxy :: SProxy "singleSelectField") id
+        { options, selectedId: Nothing }
     ]
 -- fieldInput { id, type: 3, label, options } = 4
 fieldInput _ _ = HH.div_ []
@@ -184,7 +184,8 @@ handleAction (Create event) = do
                 { fieldId
                 , url: Nothing
                 , optionId: option <#> _.id
-                , optionIds: Nothing }
+                , optionIds: Nothing
+                }
     let state' = state { fieldValues = state.fieldValues <> singleSelectValues }
     nickname <- H.liftEffect getPlayerNickname
     case nickname of
