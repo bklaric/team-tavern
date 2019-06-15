@@ -79,7 +79,7 @@ queryString = Query """
         game.administrator_id as "administratorId",
         profile.id is not null as "hasProfile",
         coalesce(
-            json_agg(field)
+            json_agg(field order by field.id)
             filter (where field.id is not null),
             '[]'
         ) as "fields"
