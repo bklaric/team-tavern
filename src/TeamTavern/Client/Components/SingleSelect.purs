@@ -36,7 +36,7 @@ type State =
     , optionsShown :: Boolean
     }
 
-data Action = Select (Maybe Option) | Toggle
+data Action = Select (Maybe Option) | Open | Close | Toggle
 
 data Query send = Selected ((Maybe Option) -> send)
 
@@ -44,11 +44,15 @@ type Slot = H.Slot Query Void
 
 render { options, selected, optionsShown } =
     HH.div
-    [ HP.class_ $ ClassName "select" ]
+    [ HP.class_ $ ClassName "select"
+    , HP.tabIndex 0
+    , HE.onFocus $ const $ Just Open
+    , HE.onBlur $ const $ Just Close
+    ]
     $ [ HH.div
         [ HP.class_ $ ClassName
             if optionsShown then "selected-open" else "selected"
-        , HE.onMouseDown $ const $ Just $ Toggle
+        , HE.onMouseDown $ const $ Just Toggle
         ]
         [ HH.text
             case selected of
@@ -81,6 +85,10 @@ handleAction :: forall slots message left.
     Action -> H.HalogenM State Action slots message (Async left) Unit
 handleAction (Select selected) =
     H.modify_ (_ { selected = selected, optionsShown = false })
+handleAction Open =
+    H.modify_ \state -> state { optionsShown = true }
+handleAction Close =
+    H.modify_ \state -> state { optionsShown = false }
 handleAction Toggle =
     H.modify_ \state -> state { optionsShown = not state.optionsShown }
 
