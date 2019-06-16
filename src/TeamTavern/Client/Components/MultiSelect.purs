@@ -82,6 +82,7 @@ render { options, selected, optionsShown } =
                     [ HH.input
                         [ HP.type_ InputCheckbox
                         , HP.checked isSelected
+                        , HP.tabIndex $ -1
                         ]
                     , HH.text option.option
                     ])
