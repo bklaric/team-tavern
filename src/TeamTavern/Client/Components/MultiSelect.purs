@@ -1,11 +1,13 @@
-module TeamTavern.Client.Components.SingleSelect where
+module TeamTavern.Client.Components.MultiSelect where
 
 import Prelude
 
 import Async (Async(..))
+import Data.Array (elem, snoc)
+import Data.Array as Array
 import Data.Const (Const(..))
-import Data.Foldable (find)
-import Data.Maybe (Maybe(..), maybe)
+import Data.Foldable (find, intercalate)
+import Data.Maybe (Maybe(..), isJust, maybe)
 import Data.Symbol (class IsSymbol)
 import Data.Variant (SProxy(..))
 import Effect.Class (class MonadEffect)
@@ -13,6 +15,7 @@ import Halogen (ClassName(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
+import Halogen.HTML.Properties (InputType(..))
 import Halogen.HTML.Properties as HP
 import Prim.Row (class Cons)
 import Unsafe.Reference (unsafeRefEq)
@@ -27,20 +30,25 @@ type Option = { id :: Int, option :: String }
 
 type Input =
     { options :: Array Option
-    , selectedId :: Maybe Int
+    , selectedIds :: Array Int
     }
 
 type State =
     { options :: Array Option
-    , selected :: Maybe Option
+    , selected :: Array Option
     , optionsShown :: Boolean
     }
 
-data Action = Select (Maybe Option) | Toggle
+data Action = Select Option | Deselect Option | Toggle
 
-data Query send = Selected ((Maybe Option) -> send)
+data Query send = Selected ((Array Option) -> send)
 
 type Slot = H.Slot Query Void
+
+optionIsSelected options option =
+    options
+    # find (\{ id } -> id == option.id)
+    # isJust
 
 render { options, selected, optionsShown } =
     HH.div
@@ -50,37 +58,35 @@ render { options, selected, optionsShown } =
             if optionsShown then "selected-open" else "selected"
         , HE.onMouseDown $ const $ Just $ Toggle
         ]
-        [ HH.text
-            case selected of
-            Nothing -> ""
-            Just { option } -> option
-        ]
+        [ HH.text $ intercalate ", " (selected # Array.sortWith _.id <#> _.option )]
     ]
     <> if optionsShown
         then
             [ HH.div
-            [ HP.class_ $ ClassName "options" ]
-            $ [ HH.div
-                [ HP.class_ $ ClassName "option"
-                , HE.onClick $ const $ Just $ Select Nothing
-                ]
-                [ HH.text "" ]
-            ]
-            <>
-            (options <#> \option ->
-                HH.div
-                [ HP.class_ $ ClassName "option"
-                , HE.onClick $ const $ Just $ Select $ Just $ option
-                ]
-                [ HH.text option.option ])
+                [ HP.class_ $ ClassName "options" ]
+                (options <#> \option -> let
+                    isSelected = optionIsSelected selected option
+                    in
+                    HH.div
+                    [ HP.class_ $ ClassName "option"
+                    , HE.onClick $ const $ Just $ (if isSelected then Deselect else Select) option
+                    ]
+                    [ HH.input
+                        [ HP.type_ InputCheckbox
+                        , HP.checked isSelected
+                        ]
+                    , HH.text option.option
+                    ])
             ]
         else
             []
 
 handleAction :: forall slots message left.
     Action -> H.HalogenM State Action slots message (Async left) Unit
-handleAction (Select selected) =
-    H.modify_ (_ { selected = selected, optionsShown = false })
+handleAction (Select option) =
+    H.modify_ (\state -> state { selected = Array.snoc state.selected option })
+handleAction (Deselect option) =
+    H.modify_ (\state -> state { selected = state.selected # Array.filter \{ id } -> id /= option.id })
 handleAction Toggle =
     H.modify_ \state -> state { optionsShown = not state.optionsShown }
 
@@ -91,9 +97,9 @@ handleQuery (Selected send) = do
 component :: forall message left.
     H.Component HH.HTML Query Input message (Async left)
 component = H.mkComponent
-    { initialState: \{ options, selectedId } ->
+    { initialState: \{ options, selectedIds } ->
         { options
-        , selected: options # find (\{ id } -> maybe false (_ == id) selectedId)
+        , selected: options # Array.filter (\{ id } -> Array.elem id selectedIds)
         , optionsShown: false
         }
     , render
@@ -103,7 +109,7 @@ component = H.mkComponent
         }
     }
 
-singleSelect label input = HH.slot label unit component input absurd
+multiSelect label input = HH.slot label unit component input absurd
 
-singleSelectIndexed label index input =
+multiSelectIndexed label index input =
     HH.slot label index component input absurd

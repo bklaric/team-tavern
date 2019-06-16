@@ -26,6 +26,8 @@ import Halogen.HTML.Properties as HP
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.Modal as Modal
+import TeamTavern.Client.Components.MultiSelect (multiSelectIndexed)
+import TeamTavern.Client.Components.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.SingleSelect (singleSelectIndexed)
 import TeamTavern.Client.Components.SingleSelect as SingleSelect
 import TeamTavern.Client.Script.Cookie (getPlayerNickname)
@@ -58,7 +60,10 @@ type State =
     , otherError :: Boolean
     }
 
-type ChildSlots = ("singleSelectField" :: SingleSelect.Slot Int)
+type ChildSlots =
+    ( "singleSelectField" :: SingleSelect.Slot Int
+    , "multiSelectField" :: MultiSelect.Slot Int
+    )
 
 type Slot =
     H.Slot (Modal.Query View.OkContent (Const Void)) (Modal.Message Message)
@@ -91,7 +96,12 @@ fieldInput _ { id, type: 2, label, options: Just options } =
     , singleSelectIndexed (SProxy :: SProxy "singleSelectField") id
         { options, selectedId: Nothing }
     ]
--- fieldInput { id, type: 3, label, options } = 4
+fieldInput _ { id, type: 3, label, options: Just options } =
+    HH.div_
+    [ HH.label [ HP.for label ] [ HH.text label ]
+    , multiSelectIndexed (SProxy :: SProxy "multiSelectField") id
+        { options, selectedIds: [] }
+    ]
 fieldInput _ _ = HH.div_ []
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
@@ -131,7 +141,11 @@ sendCreateRequest state @ { summary, fieldValues, game } nickname = Async.unify 
             { summary
             , fieldValues: fieldValues # Array.filter
                 \{ url, optionId, optionIds } ->
-                    isJust url || isJust optionId || isJust optionIds
+                    isJust url
+                    || isJust optionId
+                    || (case optionIds of
+                        Just optionIds' | not $ Array.null optionIds' -> true
+                        _ -> false)
             }
         <> Fetch.credentials := Fetch.Include
         )
@@ -186,7 +200,24 @@ handleAction (Create event) = do
                 , optionId: option <#> _.id
                 , optionIds: Nothing
                 }
-    let state' = state { fieldValues = state.fieldValues <> singleSelectValues }
+    multiSelectResults <-
+        (H.queryAll (SProxy :: SProxy "multiSelectField")
+        $ MultiSelect.Selected identity)
+    let (multiSelectValues :: Array _) =
+            multiSelectResults
+            # Map.toUnfoldable
+            <#> \(Tuple fieldId options) ->
+                { fieldId
+                , url: Nothing
+                , optionId: Nothing
+                , optionIds: Just $ options <#> _.id
+                }
+    let state' = state
+            { fieldValues =
+                state.fieldValues
+                <> singleSelectValues
+                <> multiSelectValues
+            }
     nickname <- H.liftEffect getPlayerNickname
     case nickname of
         Nothing -> H.put $ state { otherError = true }

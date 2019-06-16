@@ -7,6 +7,7 @@ import Async (Async)
 import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
+import Data.Array (intercalate)
 import Data.Array as Array
 import Data.Bifunctor (lmap)
 import Data.Const (Const)
@@ -78,7 +79,15 @@ render (Profiles profiles nickname') = HH.div_ $
                 in
                 option' <#> \{ option } ->
                     HH.p_ [ HH.text $ field.label <> ": " <> option ]
-            -- 3 -> ...
+            { type: 3, fieldValue: Just { optionIds: Just optionIds' } } -> let
+                options' = field.options <#> Array.filter \{ id } -> Array.elem id optionIds'
+                in
+                case options' of
+                Just options | not $ Array.null options -> Just $ HH.p_
+                    [ HH.text $ field.label <> ": "
+                        <> intercalate ", " (options <#> _.option)
+                    ]
+                _ -> Nothing
             _ ->  Nothing
         , summary <#> \paragraph -> HH.p_ [ HH.text paragraph ]
         ])
