@@ -26,6 +26,7 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
+import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.MultiSelect (multiSelectIndexed)
 import TeamTavern.Client.Components.MultiSelect as MultiSelect
@@ -97,6 +98,15 @@ type ChildSlots =
 
 type Slot = H.Slot (Modal.Query Input (Const Void)) (Modal.Message Message)
 
+fieldLabel :: forall t388 t389. String -> HH.HTML t389 t388
+fieldLabel label =
+    HH.label
+        [ HP.for label ]
+        [ HH.text label
+        , divider
+        , HH.span [ HP.class_ $ H.ClassName "profile-count" ] [ HH.text "optional" ]
+        ]
+
 fieldInput
     :: forall left
     .  Array
@@ -119,7 +129,7 @@ fieldInput fieldValues urlValueErrors { id, type: 1, label } = let
     case fieldValue' of
     Just { url } ->
         HH.div_
-        [ HH.label [ HP.for label ] [ HH.text label ]
+        [ fieldLabel label
         , HH.input
             [ HP.id_ label
             , HE.onValueInput $ Just <<< UrlValueInput id
@@ -134,7 +144,7 @@ fieldInput fieldValues _ { id, type: 2, label, options: Just options } = let
     fieldValue' = fieldValues # find \{ fieldId } -> fieldId == id
     in
     HH.div_
-    [ HH.label [ HP.for label ] [ HH.text label ]
+    [ fieldLabel label
     , singleSelectIndexed (SProxy :: SProxy "singleSelectField") id
         { options, selectedId: fieldValue' >>= _.optionId }
     ]
@@ -142,7 +152,7 @@ fieldInput fieldValues _ { id, type: 3, label, options: Just options } = let
     fieldValue' = fieldValues # find \{ fieldId } -> fieldId == id
     in
     HH.div_
-    [ HH.label [ HP.for label ] [ HH.text label ]
+    [ fieldLabel label
     , multiSelectIndexed (SProxy :: SProxy "multiSelectField") id
         { options, selectedIds: fromMaybe [] (fieldValue' >>= _.optionIds) }
     ]
