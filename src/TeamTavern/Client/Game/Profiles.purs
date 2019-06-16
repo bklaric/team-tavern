@@ -6,6 +6,7 @@ import Async (Async)
 import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
+import Data.Array as Array
 import Data.Bifunctor (lmap)
 import Data.Const (Const)
 import Data.Foldable (find)
@@ -41,21 +42,22 @@ render (Profiles game profiles) = HH.div_ $
         [ HH.h3_ [ navigationAnchorIndexed (SProxy :: SProxy "players") index
             { path: "/players/" <> nickname, content: HH.text nickname } ]
         ]
-        <> (fieldValues <#> \{ id, fieldId, url, optionId, optionIds } -> let
-            field' = game.fields # find \field'' -> field''.id == fieldId
+        <> (Array.catMaybes $ game.fields <#> \field -> let
+            fieldValue = fieldValues # find \ { fieldId } -> field.id == fieldId
             in
-            case field' of
-            Nothing -> HH.div_ []
-            Just field ->
-                case { type: field.type, url, optionId, optionIds } of
-                { type: 1, url: Just url' } -> HH.p_
-                    [ HH.text $ field.label <> ": "
-                    , HH.a [ HP.href url' ] [ HH.text url' ]
-                    ]
-                -- 2 -> ...
-                -- 3 -> ...
-                _ -> HH.div_ []
-            )
+            case { type: field.type, fieldValue } of
+            { type: 1, fieldValue: Just { url: Just url' } } -> Just $
+                HH.p_
+                [ HH.text $ field.label <> ": "
+                , HH.a [ HP.href url' ] [ HH.text url' ]
+                ]
+            { type: 2, fieldValue: Just { optionId: Just optionId' } } -> let
+                option' = field.options >>= find (\{ id } -> id == optionId')
+                in
+                option' <#> \{ option } ->
+                    HH.p_ [ HH.text $ field.label <> ": " <> option ]
+            -- 3 -> ...
+            _ ->  Nothing)
         <> (summary <#> \paragraph -> HH.p_ [ HH.text paragraph ])
     )
 
