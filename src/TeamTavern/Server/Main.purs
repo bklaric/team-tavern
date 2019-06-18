@@ -44,7 +44,6 @@ import TeamTavern.Server.Player.Register (register) as Player
 import TeamTavern.Server.Player.Update (update) as Player
 import TeamTavern.Server.Profile.Create (create) as Profile
 import TeamTavern.Server.Profile.Update (update) as Profile
-import TeamTavern.Server.Profile.View (view) as Profile
 import TeamTavern.Server.Profile.ViewByGame (viewByGame) as Profile
 import TeamTavern.Server.Profile.ViewByPlayer (viewByPlayer) as Profile
 import TeamTavern.Server.Routes (TeamTavernRoutes)
@@ -170,10 +169,8 @@ handleRequest pool client method url cookies body =
             Game.handleView pool handle cookies
         , updateGame: \{ handle } ->
             Game.handleUpdate pool handle cookies body
-        , createProfile: \{ handle } ->
-            Profile.create pool handle cookies body
-        , viewProfile: \identifiers ->
-            Profile.view pool identifiers
+        , createProfile: \identifiers ->
+            Profile.create pool identifiers cookies body
         , updateProfile: \identifiers ->
             Profile.update pool identifiers cookies body
         , viewProfilesByGame: \{ handle } ->

@@ -16,7 +16,7 @@ import Foreign (MultipleErrors)
 import Postgres.Async.Query (query)
 import Postgres.Error (Error)
 import Postgres.Pool (Pool)
-import Postgres.Query (Query(..), QueryParameter, (:))
+import Postgres.Query (Query(..), QueryParameter, (:|))
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
 import TeamTavern.Server.Game.Domain.Description (Description)
@@ -31,6 +31,17 @@ type LoadGameDto =
     , title :: String
     , description :: Array String
     , hasProfile :: Boolean
+    , fields :: Array
+        { id :: Int
+        , type :: Int
+        , label :: String
+        , data ::
+            { options :: Maybe (Array
+                { id :: Int
+                , option :: String
+                })
+            }
+        }
     }
 
 type LoadGameResult =
@@ -39,6 +50,15 @@ type LoadGameResult =
     , handle :: Handle
     , description :: Description
     , hasProfile :: Boolean
+    , fields :: Array
+        { id :: Int
+        , type :: Int
+        , label :: String
+        , options :: Maybe (Array
+            { id :: Int
+            , option :: String
+            })
+        }
     }
 
 type LoadGameError errors = Variant
@@ -53,19 +73,31 @@ type LoadGameError errors = Variant
 queryString :: Query
 queryString = Query """
     select
-        game.administrator_id as "administratorId",
         game.handle,
         game.title,
         game.description,
-        profile.id is not null as "hasProfile"
+        game.administrator_id as "administratorId",
+        profile.id is not null as "hasProfile",
+        coalesce(
+            json_agg(field order by field.id)
+            filter (where field.id is not null),
+            '[]'
+        ) as "fields"
     from game
+    left join field on field.game_id = game.id
     left join profile on profile.game_id = game.id
         and profile.player_id = $2
     where game.handle = $1
+    group by
+        game.handle,
+        game.title,
+        game.description,
+        game.administrator_id,
+        profile.id;
     """
 
 queryParameters :: Handle -> Maybe CookieInfo -> Array QueryParameter
-queryParameters handle auth = handle : maybe 0 (_.id >>> unwrap) auth : []
+queryParameters handle auth = handle :| maybe 0 (_.id >>> unwrap) auth
 
 loadGame
     :: forall errors
@@ -80,7 +112,7 @@ loadGame pool handle' auth = do
     games :: Array LoadGameDto <- rows result
         # traverse read
         # labelMap (SProxy :: SProxy "unreadableDto") { result, errors: _ }
-    view @ { administratorId, handle, title, description, hasProfile } <-
+    view @ { administratorId, handle, title, description, hasProfile, fields } <-
         head games
         # Async.note (inj (SProxy :: SProxy "notFound") handle')
     pure
@@ -89,4 +121,6 @@ loadGame pool handle' auth = do
         , handle: wrap handle
         , description: description <#> wrap # wrap
         , hasProfile
+        , fields: fields <#> \{ id, type, label, data: { options } } ->
+            { id, type, label, options }
         }

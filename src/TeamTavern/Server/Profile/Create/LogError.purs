@@ -8,26 +8,43 @@ import Data.Variant (Variant, match)
 import Effect (Effect)
 import Effect.Console (log)
 import Foreign (MultipleErrors)
+import Global.Unsafe (unsafeStringify)
 import Postgres.Error (Error)
-import TeamTavern.Server.Domain.NonEmptyText (NonEmptyTextError)
-import TeamTavern.Server.Game.Domain.Handle (Handle)
+import Postgres.Result (Result, rows)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Server.Infrastructure.Log (logt, print)
+import TeamTavern.Server.Profile.Infrastructure.LoadFields as LoadFields
+import TeamTavern.Server.Profile.Infrastructure.ReadProfile (ProfileDto, ProfileModelError)
+import TeamTavern.Server.Profile.Routes (Identifiers)
 
 type CreateError = Variant
+    -- Cookies.
     ( cookieInfoNotPresent :: Map String String
-    , unreadableDto ::
+    -- Fields from database.
+    , databaseError :: Error
+    , unreadableFieldDtos ::
+        { result :: Result
+        , errors :: MultipleErrors
+        }
+    , invalidFieldModels ::
+        { dtos :: Array LoadFields.FieldDto }
+    -- Profile from body.
+    , unreadableProfileDto ::
         { content :: String
         , errors :: MultipleErrors
         }
-    , invalidSummary ::
-        { summary :: String
-        , errors :: NonEmptyList NonEmptyTextError
+    , invalidProfileModel ::
+        { dto :: ProfileDto
+        , errors :: NonEmptyList ProfileModelError
         }
-    , databaseError :: Error
+    -- Profile into database.
     , notAuthorized ::
         { cookieInfo :: CookieInfo
-        , handle :: Handle
+        , identifiers :: Identifiers
+        }
+    , unreadableProfileId ::
+        { result :: Result
+        , errors :: MultipleErrors
         }
     )
 
@@ -37,16 +54,27 @@ logError createError = do
     createError # match
         { cookieInfoNotPresent: \cookies ->
             logt $ "Couldn't read info from cookies: " <> show cookies
-        , unreadableDto: \{ content, errors } -> do
-            logt $ "Couldn't read dto out of content: " <> show content
-            logt $ "Reading resulted in these errors: " <> show errors
-        , invalidSummary: \{ summary, errors } -> do
-            logt $ "Couldn't validate summary: " <> show summary
-            logt $ "Validation resulted in these errors: " <> show errors
         , databaseError: \error ->
             logt $ "Unknown database error ocurred: " <> print error
-        , notAuthorized: \{ cookieInfo, handle } -> do
+        , unreadableFieldDtos: \{ result, errors } -> do
+            logt $ "Couldn't read dto from result: "
+                <> (unsafeStringify $ rows result)
+            logt $ "Reading dto resulted in these errors: " <> show errors
+        , invalidFieldModels: \{ dtos } -> do
+            logt $ "Couldn't create valid fields of dtos from database: "
+                <> show dtos
+        , unreadableProfileDto: \{ content, errors } -> do
+            logt $ "Couldn't read dto out of content: " <> show content
+            logt $ "Reading resulted in these errors: " <> show errors
+        , invalidProfileModel: \{ dto, errors } -> do
+            logt $ "Couldn't validate profile: " <> show dto
+            logt $ "Validation resulted in these errors: " <> show errors
+        , notAuthorized: \{ cookieInfo, identifiers } -> do
             logt $ "Player with cookie info: " <> show cookieInfo
-            logt $ "Not authorized to create profile for handle: "
-                <> show handle
+            logt $ "Not authorized to create profile for identifiers: "
+                <> show identifiers
+        , unreadableProfileId: \{ result, errors } -> do
+            logt $ "Couldn't read profile id from insert result: "
+                <> (unsafeStringify $ rows result)
+            logt $ "Reading resulted in these errors: " <> show errors
         }

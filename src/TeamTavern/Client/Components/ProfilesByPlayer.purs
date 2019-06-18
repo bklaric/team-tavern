@@ -7,8 +7,11 @@ import Async (Async)
 import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
+import Data.Array (intercalate)
+import Data.Array as Array
 import Data.Bifunctor (lmap)
 import Data.Const (Const)
+import Data.Foldable (find)
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
@@ -48,7 +51,7 @@ render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render Empty = HH.div_ []
 render (Profiles profiles nickname') = HH.div_ $
     [ HH.h3 [ HP.class_ $ ClassName "card-header"] [ HH.text "Profiles" ] ] <>
-    (profiles # mapWithIndex \index { handle, title, summary } ->
+    (profiles # mapWithIndex \index { handle, title, summary, fieldValues, fields } ->
         HH.div [ HP.class_ $ ClassName "card" ] $ join
         [ pure $
             HH.h3_ [ navigationAnchorIndexed (SProxy :: SProxy "games") index
@@ -59,9 +62,33 @@ render (Profiles profiles nickname') = HH.div_ $
                 HH.a
                 [ HP.href ""
                 , HE.onClick $ Just <<< ShowEditProfileModal
-                    { handle, title, nickname, summary }
+                    { nickname, handle, title, summary, fieldValues, fields }
                 ]
                 [ HH.text "Edit profile" ] ]
+        , Array.catMaybes $ fields <#> \field -> let
+            fieldValue = fieldValues # find \ { fieldId } -> field.id == fieldId
+            in
+            case { type: field.type, fieldValue } of
+            { type: 1, fieldValue: Just { url: Just url' } } -> Just $
+                HH.p_
+                [ HH.text $ field.label <> ": "
+                , HH.a [ HP.href url' ] [ HH.text url' ]
+                ]
+            { type: 2, fieldValue: Just { optionId: Just optionId' } } -> let
+                option' = field.options >>= find (\{ id } -> id == optionId')
+                in
+                option' <#> \{ option } ->
+                    HH.p_ [ HH.text $ field.label <> ": " <> option ]
+            { type: 3, fieldValue: Just { optionIds: Just optionIds' } } -> let
+                options' = field.options <#> Array.filter \{ id } -> Array.elem id optionIds'
+                in
+                case options' of
+                Just options | not $ Array.null options -> Just $ HH.p_
+                    [ HH.text $ field.label <> ": "
+                        <> intercalate ", " (options <#> _.option)
+                    ]
+                _ -> Nothing
+            _ ->  Nothing
         , summary <#> \paragraph -> HH.p_ [ HH.text paragraph ]
         ])
     <> case nickname' of

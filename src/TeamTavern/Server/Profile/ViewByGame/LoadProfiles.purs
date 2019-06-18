@@ -5,6 +5,7 @@ import Prelude
 
 import Async (Async)
 import Data.Bifunctor.Label (label, labelMap)
+import Data.Maybe (Maybe)
 import Data.Newtype (wrap)
 import Data.Symbol (SProxy(..))
 import Data.Traversable (traverse)
@@ -23,11 +24,27 @@ import TeamTavern.Server.Profile.Domain.Summary (Summary)
 type LoadProfilesDto =
     { nickname :: String
     , summary :: Array String
+    , fieldValues :: Array
+        { id :: Int
+        , fieldId :: Int
+        , data ::
+            { url :: Maybe String
+            , optionId :: Maybe Int
+            , optionIds :: Maybe (Array Int)
+            }
+        }
     }
 
 type LoadProfilesResult =
     { nickname :: Nickname
     , summary :: Summary
+    , fieldValues :: Array
+        { id :: Int
+        , fieldId :: Int
+        , url :: Maybe String
+        , optionId :: Maybe Int
+        , optionIds :: Maybe (Array Int)
+        }
     }
 
 type LoadProfilesError errors = Variant
@@ -40,11 +57,25 @@ type LoadProfilesError errors = Variant
 
 queryString :: Query
 queryString = Query """
-    select game.handle, player.nickname, profile.summary
+    select
+        game.handle,
+        player.nickname,
+        profile.summary,
+        coalesce(
+            json_agg(json_build_object(
+                'id', field_value.id,
+                'fieldId', field_value.field_id,
+                'data', field_value.data
+            ))
+            filter (where field_value.id is not null),
+            '[]'
+        ) as "fieldValues"
     from profile
     join player on player.id = profile.player_id
     join game on game.id = profile.game_id
+    left join field_value on field_value.profile_id = profile.id
     where game.handle = $1
+    group by game.handle, player.nickname, profile.summary, profile.created
     order by profile.created desc
     """
 
@@ -63,7 +94,10 @@ loadProfiles pool handle = do
     profiles :: Array LoadProfilesDto <- rows result
         # traverse read
         # labelMap (SProxy :: SProxy "unreadableDtos") { result, errors: _ }
-    pure $ profiles <#> \{ nickname, summary } ->
+    pure $ profiles <#> \{ nickname, summary, fieldValues } ->
         { nickname: wrap nickname
         , summary: summary <#> wrap # wrap
+        , fieldValues: fieldValues <#>
+            \{ id, fieldId, data: { url, optionId, optionIds } } ->
+                { id, fieldId, url, optionId, optionIds }
         }

@@ -1,4 +1,4 @@
-module TeamTavern.Server.Profile.Create.SendResponse
+module TeamTavern.Server.Profile.Update.SendResponse
     (ProfileErrorContent, BadRequestContent, sendResponse) where
 
 import Prelude
@@ -9,7 +9,7 @@ import Data.Maybe (Maybe(..))
 import Data.Variant (SProxy(..), Variant, inj, match, on)
 import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, noContent_, unauthorized__)
 import Simple.JSON (writeJSON)
-import TeamTavern.Server.Profile.Create.LogError (CreateError)
+import TeamTavern.Server.Profile.Update.LogError (UpdateError)
 
 type ProfileErrorContent = Variant
     ( invalidSummary :: {}
@@ -19,7 +19,7 @@ type ProfileErrorContent = Variant
 type BadRequestContent = Variant
     ( invalidProfile :: Array ProfileErrorContent )
 
-errorResponse :: CreateError -> Response
+errorResponse :: UpdateError -> Response
 errorResponse = match
     { cookieInfoNotPresent: const unauthorized__
     , databaseError: const internalServerError__
@@ -46,11 +46,11 @@ errorResponse = match
         # (writeJSON :: BadRequestContent -> String)
         # badRequest_
     , notAuthorized: const forbidden__
-    , unreadableProfileId: const internalServerError__
+    , unreadableProfileId: const $ internalServerError__
     }
 
 successResponse :: Unit -> Response
 successResponse = const noContent_
 
-sendResponse :: Async CreateError Unit -> (forall left. Async left Response)
+sendResponse :: Async UpdateError Unit -> (forall left. Async left Response)
 sendResponse = alwaysRight errorResponse successResponse

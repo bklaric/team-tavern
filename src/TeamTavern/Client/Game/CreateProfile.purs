@@ -1,4 +1,4 @@
-module TeamTavern.Client.EditProfile where
+module TeamTavern.Client.Game.CreateProfile where
 
 import Prelude
 
@@ -11,10 +11,9 @@ import Data.Array as Arary
 import Data.Array as Array
 import Data.Bifunctor (bimap, lmap)
 import Data.Const (Const)
-import Data.Foldable (find, intercalate)
 import Data.HTTP.Method (Method(..))
 import Data.Map as Map
-import Data.Maybe (Maybe(..), fromMaybe, isJust, maybe)
+import Data.Maybe (Maybe(..), isJust)
 import Data.Options ((:=))
 import Data.String (null)
 import Data.Tuple (Tuple(..))
@@ -32,53 +31,24 @@ import TeamTavern.Client.Components.MultiSelect (multiSelectIndexed)
 import TeamTavern.Client.Components.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.SingleSelect (singleSelectIndexed)
 import TeamTavern.Client.Components.SingleSelect as SingleSelect
+import TeamTavern.Client.Script.Cookie (getPlayerNickname)
 import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass, otherErrorClass)
-import TeamTavern.Server.Profile.Update.SendResponse as Update
+import TeamTavern.Server.Game.View.SendResponse as View
+import TeamTavern.Server.Profile.Create.SendResponse as Create
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
-type Input =
-    { nickname :: String
-    , handle :: String
-    , title :: String
-    , summary :: Array String
-    , fieldValues :: Array
-        { fieldId :: Int
-        , url :: Maybe String
-        , optionId :: Maybe Int
-        , optionIds :: Maybe (Array Int)
-        }
-    , fields :: Array
-        { id :: Int
-        , type :: Int
-        , label :: String
-        , options :: Maybe (Array
-            { id :: Int
-            , option :: String
-            })
-        }
-    }
+type Input = { handle :: String }
 
 data Action
     = SummaryInput String
     | UrlValueInput Int String
-    | Update Event
+    | Create Event
 
-data Message = ProfileUpdated String
+data Message = ProfileCreated String
 
 type State =
-    { nickname :: String
-    , handle :: String
-    , title :: String
-    , fields :: Array
-        { id :: Int
-        , type :: Int
-        , label :: String
-        , options :: Maybe (Array
-            { id :: Int
-            , option :: String
-            })
-        }
+    { game :: View.OkContent
     , summary :: String
     , summaryError :: Boolean
     , fieldValues :: Array
@@ -96,7 +66,8 @@ type ChildSlots =
     , "multiSelectField" :: MultiSelect.Slot Int
     )
 
-type Slot = H.Slot (Modal.Query Input (Const Void)) (Modal.Message Message)
+type Slot =
+    H.Slot (Modal.Query View.OkContent (Const Void)) (Modal.Message Message)
 
 fieldLabel :: forall t388 t389. String -> HH.HTML t389 t388
 fieldLabel label =
@@ -109,60 +80,45 @@ fieldLabel label =
 
 fieldInput
     :: forall left
-    .  Array
-        { fieldId :: Int
-        , url :: Maybe String
-        , optionId :: Maybe Int
-        , optionIds :: Maybe (Array Int)
-        }
-    -> Array { fieldId :: Int }
+    .  Array { fieldId :: Int }
     ->  { id :: Int
         , label :: String
         , type :: Int
         , options :: Maybe (Array { id :: Int , option :: String })
         }
-    -> H.ComponentHTML Action ChildSlots (Async left)
-fieldInput fieldValues urlValueErrors { id, type: 1, label } = let
-    fieldValue' = fieldValues # find \{ fieldId } -> fieldId == id
+    ->  H.ComponentHTML Action ChildSlots (Async left)
+fieldInput urlValueErrors { id, type: 1, label } = let
     urlError = urlValueErrors # any (_.fieldId >>> (_ == id))
     in
-    case fieldValue' of
-    Just { url } ->
-        HH.div_
-        [ fieldLabel label
-        , HH.input
-            [ HP.id_ label
-            , HE.onValueInput $ Just <<< UrlValueInput id
-            , HP.value $ maybe "" identity url
-            ]
-        , HH.p
-            [ HP.class_ $ inputErrorClass urlError ]
-            [ HH.text "This doesn't look like a valid web address." ]
+    HH.div_
+    [ fieldLabel label
+    , HH.input
+        [ HP.id_ label
+        , HE.onValueInput $ Just <<< UrlValueInput id
         ]
-    Nothing -> HH.div_ []
-fieldInput fieldValues _ { id, type: 2, label, options: Just options } = let
-    fieldValue' = fieldValues # find \{ fieldId } -> fieldId == id
-    in
+    , HH.p
+        [ HP.class_ $ inputErrorClass urlError ]
+        [ HH.text "This doesn't look like a valid web address." ]
+    ]
+fieldInput _ { id, type: 2, label, options: Just options } =
     HH.div_
     [ fieldLabel label
     , singleSelectIndexed (SProxy :: SProxy "singleSelectField") id
-        { options, selectedId: fieldValue' >>= _.optionId }
+        { options, selectedId: Nothing }
     ]
-fieldInput fieldValues _ { id, type: 3, label, options: Just options } = let
-    fieldValue' = fieldValues # find \{ fieldId } -> fieldId == id
-    in
+fieldInput _ { id, type: 3, label, options: Just options } =
     HH.div_
     [ fieldLabel label
     , multiSelectIndexed (SProxy :: SProxy "multiSelectField") id
-        { options, selectedIds: fromMaybe [] (fieldValue' >>= _.optionIds) }
+        { options, selectedIds: [] }
     ]
-fieldInput _ _ _ = HH.div_ []
+fieldInput _ _ = HH.div_ []
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
-render { title, fields, summary, summaryError, fieldValues, urlValueErrors, otherError } = HH.form
-    [ HP.class_ $ H.ClassName "single-form-wide", HE.onSubmit $ Just <<< Update ] $
-    [ HH.h2_ [ HH.text $ "Edit your " <> title <> " profile" ] ]
-    <> (fields <#> fieldInput fieldValues urlValueErrors) <>
+render { summary, summaryError, urlValueErrors, otherError, game } = HH.form
+    [ HP.class_ $ ClassName "single-form-wide", HE.onSubmit $ Just <<< Create ] $
+    [ HH.h2_ [ HH.text "Create a new profile" ] ]
+    <> (game.fields <#> fieldInput urlValueErrors) <>
     [ HH.div_
         [ HH.label
             [ HP.for "summary" ]
@@ -170,7 +126,6 @@ render { title, fields, summary, summaryError, fieldValues, urlValueErrors, othe
         , HH.textarea
             [ HP.id_ "summary"
             , HE.onValueInput $ Just <<< SummaryInput
-            , HP.value summary
             ]
         , HH.p
             [ HP.class_ $ inputErrorClass summaryError ]
@@ -181,17 +136,17 @@ render { title, fields, summary, summaryError, fieldValues, urlValueErrors, othe
         [ HP.class_ $ ClassName "primary"
         , HP.disabled $ summary == ""
         ]
-        [ HH.text "Save changes" ]
+        [ HH.text "Create" ]
     , HH.p
         [ HP.class_ $ otherErrorClass otherError ]
         [ HH.text "Something unexpected went wrong! Please try again later." ]
     ]
 
-updateProfile :: forall left. State -> Async left (Maybe State)
-updateProfile state @ { nickname, handle, summary, fieldValues } = Async.unify do
+sendCreateRequest :: forall left. State -> String -> Async left (Maybe State)
+sendCreateRequest state @ { summary, fieldValues, game } nickname = Async.unify do
     response <- Fetch.fetch
-        ("/api/profiles/single/" <> handle <> "/" <> nickname)
-        (  Fetch.method := PUT
+        ("/api/games/by-handle/" <> game.handle <> "/profiles/by-nickname/" <> nickname)
+        (  Fetch.method := POST
         <> Fetch.body := Json.writeJSON
             { summary
             , fieldValues: fieldValues # Array.filter
@@ -210,7 +165,7 @@ updateProfile state @ { nickname, handle, summary, fieldValues } = Async.unify d
         400 -> FetchRes.text response >>= JsonAsync.readJSON
             # bimap
                 (const $ Just $ state { otherError = true })
-                (\(error :: Update.BadRequestContent) -> Just $ match
+                (\(error :: Create.BadRequestContent) -> Just $ match
                     { invalidProfile: foldl (\state' error' ->
                         error' # match
                             { invalidSummary: const $ state' { summaryError = true }
@@ -225,7 +180,7 @@ updateProfile state @ { nickname, handle, summary, fieldValues } = Async.unify d
 
 handleAction :: forall left.
     Action -> H.HalogenM State Action ChildSlots Message (Async left) Unit
-handleAction (SummaryInput summary) = do
+handleAction (SummaryInput summary) =
     H.modify_ (_ { summary = summary }) $> unit
 handleAction (UrlValueInput fieldId url) = do
     state @ { fieldValues } <- H.get
@@ -237,11 +192,10 @@ handleAction (UrlValueInput fieldId url) = do
                 else value { url = Just url }
             else value
     H.put $ state { fieldValues = newFieldValues }
-handleAction (Update event) = do
+handleAction (Create event) = do
     H.liftEffect $ preventDefault event
-    state @ { fields } <- H.gets (_
+    state @ { game: { fields } } <- H.gets (_
         { summaryError = false
-        , urlValueErrors = []
         , otherError   = false
         })
     singleSelectResults <-
@@ -270,53 +224,46 @@ handleAction (Update event) = do
                 }
     let state' = state
             { fieldValues =
-                (state.fieldValues # Array.filter (_.url >>> isJust))
+                state.fieldValues
                 <> singleSelectValues
                 <> multiSelectValues
             }
-    newState <- H.lift $ updateProfile state'
-    case newState of
-        Nothing -> H.raise $ ProfileUpdated state.nickname
-        Just newState' -> H.put newState'
-    pure unit
+    nickname <- H.liftEffect getPlayerNickname
+    case nickname of
+        Nothing -> H.put $ state { otherError = true }
+        Just nickname' -> do
+            newState <- H.lift $ sendCreateRequest state' nickname'
+            case newState of
+                Nothing -> H.raise $ ProfileCreated state.game.handle
+                Just newState' -> H.put newState'
+            pure unit
 
 component :: forall query left.
-    H.Component HH.HTML query Input Message (Async left)
+    H.Component HH.HTML query View.OkContent Message (Async left)
 component = H.mkComponent
-    { initialState: \{ handle, title, nickname, summary, fieldValues, fields } ->
-        { handle
-        , title
-        , nickname
-        , fields
-        , summary: intercalate "\n\n" summary
+    { initialState: \game ->
+        { summary: ""
         , summaryError: false
-        , fieldValues: fields <#> (\field -> let
-            fieldValue' = fieldValues # find \{ fieldId } -> fieldId == field.id
-            in
-            case fieldValue' of
-            Nothing ->
-                { fieldId: field.id
-                , url: Nothing
-                , optionId: Nothing
-                , optionIds: Nothing
-                }
-            Just { url, optionId, optionIds } ->
-                { fieldId: field.id
-                , url
-                , optionId
-                , optionIds
-                })
+        , fieldValues: game.fields <#> (\field ->
+            { fieldId: field.id
+            , url: Nothing
+            , optionId: Nothing
+            , optionIds: Nothing
+            })
         , urlValueErrors: []
         , otherError: false
+        , game
         }
     , render
     , eval: H.mkEval $ H.defaultEval { handleAction = handleAction }
     }
 
-editProfile
+createProfile
     :: forall query children left
     .  (Modal.Message Message -> Maybe query)
-    -> HH.ComponentHTML query (editProfile :: Slot Unit | children) (Async left)
-editProfile handleMessage = HH.slot
-    (SProxy :: SProxy "editProfile") unit
+    -> HH.ComponentHTML query
+        (createProfile :: Slot Unit | children)
+        (Async left)
+createProfile handleMessage = HH.slot
+    (SProxy :: SProxy "createProfile") unit
     (Modal.component component) unit handleMessage

@@ -18,6 +18,7 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import Simple.JSON.Async as JsonAsync
+import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchorIndexed)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
 import TeamTavern.Server.Game.ViewAll.SendResponse (OkContent)
@@ -45,8 +46,7 @@ render (Games games') =
             [ HH.h2_
                 [ navigationAnchorIndexed (SProxy :: SProxy "game") index
                     { path: "/games/" <> handle, content: HH.text title }
-                , HH.span [ HP.class_ $ ClassName "divider" ]
-                    [ HH.text "•"]
+                , divider
                 , navigationAnchorIndexed (SProxy :: SProxy "profileCount") index
                     { path: "/games/" <> handle
                     , content: HH.span [ HP.class_ $ ClassName "profile-count" ]

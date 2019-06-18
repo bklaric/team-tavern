@@ -4,6 +4,9 @@ module Data.MultiMap
     , singleton
     , singleton'
     , insert
+    , insert'
+    , values
+    , values'
     , fromFoldable
     , toUnfoldable
     , toUnfoldable'
@@ -12,10 +15,10 @@ module Data.MultiMap
 import Prelude
 
 import Data.Eq (class Eq1)
-import Data.Foldable (class Foldable)
-import Data.List.NonEmpty (cons)
+import Data.Foldable (class Foldable, foldMap, foldl, foldr)
+import Data.List.NonEmpty (toList)
 import Data.List.NonEmpty as NonEmptyList
-import Data.List.Types (NonEmptyList)
+import Data.List.Types (List, NonEmptyList)
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..))
@@ -48,25 +51,39 @@ derive instance functorMultiMap :: Functor (MultiMap key)
 derive newtype instance showMultiMap
     :: (Show key, Show value) => Show (MultiMap key value)
 
+instance foldableMultiMap :: Foldable (MultiMap key) where
+    foldl   function state map = foldl   function state $ values' map
+    foldr   function state map = foldr   function state $ values' map
+    foldMap function       map = foldMap function       $ values' map
+
 empty :: forall key value. MultiMap key value
 empty = MultiMap Map.empty
 
-singleton :: forall key value. key -> value -> MultiMap key value
-singleton key value = MultiMap $
-    Map.singleton key (NonEmptyList.singleton value)
+singleton :: forall key value. key -> NonEmptyList value -> MultiMap key value
+singleton key values'' = MultiMap $ Map.singleton key values''
 
-singleton' :: forall key value. key -> NonEmptyList value -> MultiMap key value
-singleton' key values = MultiMap $ Map.singleton key values
+singleton' :: forall key value. key -> value -> MultiMap key value
+singleton' key value = singleton key $ NonEmptyList.singleton value
 
 insert :: forall key value. Ord key =>
-    key -> value -> MultiMap key value -> MultiMap key value
-insert key value (MultiMap map) =
+    key -> NonEmptyList value -> MultiMap key value -> MultiMap key value
+insert key values'' (MultiMap map) =
     MultiMap $ Map.alter
         (case _ of
-        Nothing -> Just $ NonEmptyList.singleton value
-        Just values -> Just $ cons value values)
+        Nothing -> Just values''
+        Just values''' -> Just $ values''' <> values'')
         key
         map
+
+insert' :: forall key value. Ord key =>
+    key -> value -> MultiMap key value -> MultiMap key value
+insert' key value multiMap = insert key (NonEmptyList.singleton value) multiMap
+
+values :: forall key value. MultiMap key value -> List (NonEmptyList value)
+values (MultiMap map) = Map.values map
+
+values' :: forall key value. MultiMap key value -> List value
+values' = values >=> toList
 
 fromFoldable
     :: forall key value container
@@ -91,5 +108,5 @@ toUnfoldable'
     => Unfoldable values
     => MultiMap key value
     -> tuples (Tuple key (values value))
-toUnfoldable' (MultiMap map) = Map.toUnfoldable map <#> \(Tuple key values) ->
-    Tuple key (NonEmptyList.toUnfoldable values)
+toUnfoldable' (MultiMap map) = Map.toUnfoldable map <#> \(Tuple key values'') ->
+    Tuple key (NonEmptyList.toUnfoldable values'')
