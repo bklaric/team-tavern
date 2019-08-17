@@ -14,7 +14,7 @@ import Data.Const (Const)
 import Data.Foldable (find, intercalate)
 import Data.HTTP.Method (Method(..))
 import Data.Map as Map
-import Data.Maybe (Maybe(..), fromMaybe, isJust, maybe)
+import Data.Maybe (Maybe(..), isJust, maybe)
 import Data.Options ((:=))
 import Data.String (null)
 import Data.Tuple (Tuple(..))
@@ -93,7 +93,7 @@ type State =
 
 type ChildSlots =
     ( "singleSelectField" :: SingleSelect.Slot Int
-    , "multiSelectField" :: MultiSelect.Slot Int
+    , "multiSelectField" :: MultiSelect.Slot { id :: Int , option :: String } Int
     )
 
 type Slot = H.Slot (Modal.Query Input (Const Void)) (Modal.Message Message)
@@ -150,11 +150,18 @@ fieldInput fieldValues _ { id, type: 2, label, options: Just options } = let
     ]
 fieldInput fieldValues _ { id, type: 3, label, options: Just options } = let
     fieldValue' = fieldValues # find \{ fieldId } -> fieldId == id
+    selectedOptionIds' = fieldValue' >>= _.optionIds
     in
     HH.div_
     [ fieldLabel label
     , multiSelectIndexed (SProxy :: SProxy "multiSelectField") id
-        { options, selectedIds: fromMaybe [] (fieldValue' >>= _.optionIds) }
+        { options: options <#> \option ->
+            { option
+            , selected: selectedOptionIds' # maybe false \selectedOptionIds ->
+                selectedOptionIds # any (_ == option.id) }
+        , labeler: _.option
+        , comparer: \leftOption rightOption -> leftOption.id == rightOption.id
+        }
     ]
 fieldInput _ _ _ = HH.div_ []
 

@@ -30,31 +30,35 @@ import Web.HTML.Window (document)
 import Web.UIEvent.MouseEvent (MouseEvent, toEvent)
 import Web.UIEvent.MouseEvent.EventTypes (click)
 
-type Option = { id :: Int, option :: String }
-
-type Input =
-    { options :: Array Option
-    , selectedIds :: Array Int
+type Option option =
+    { option :: option
+    , selected :: Boolean
     }
 
-type State =
-    { options :: Array Option
-    , selected :: Array Option
-    , optionsShown :: Boolean
+type Input option =
+    { options :: Array (Option option)
+    , labeler :: option -> String
+    , comparer :: option -> option -> Boolean
     }
 
-data Action = Select Option | Deselect Option | Open | Close | Toggle
+type State option =
+    { options :: Array (Option option)
+    , labeler :: option -> String
+    , comparer :: option -> option -> Boolean
+    , open :: Boolean
+    }
 
-data Query send = Selected ((Array Option) -> send)
+data Action option
+    = ToggleOption option
+    | Open
+    | Close
+    | Toggle
 
-type Slot = H.Slot Query Void
+data Query option send = Selected (Array option -> send)
 
-optionIsSelected options option =
-    options
-    # find (\{ id } -> id == option.id)
-    # isJust
+type Slot option = H.Slot (Query option) Void
 
-render { options, selected, optionsShown } =
+render { options, labeler, comparer, open } =
     HH.div
     [ HP.class_ $ ClassName "select"
     , HP.tabIndex 0
@@ -63,25 +67,25 @@ render { options, selected, optionsShown } =
     ]
     $ [ HH.div
         [ HP.class_ $ ClassName
-            if optionsShown then "selected-open" else "selected"
+            if open then "selected-open" else "selected"
         , HE.onMouseDown $ const $ Just Toggle
         ]
-        [ HH.text $ intercalate ", " (selected # Array.sortWith _.id <#> _.option )]
+        [ HH.text $ intercalate ", "
+            (options # Array.filter (_.selected) <#> (_.option >>> labeler))
+        ]
     ]
-    <> if optionsShown
+    <> if open
         then
             [ HH.div
                 [ HP.class_ $ ClassName "options" ]
-                (options <#> \option -> let
-                    isSelected = optionIsSelected selected option
-                    in
+                (options <#> \{ option, selected } ->
                     HH.div
                     [ HP.class_ $ ClassName "option"
-                    , HE.onClick $ const $ Just $ (if isSelected then Deselect else Select) option
+                    , HE.onClick $ const $ Just $ ToggleOption option
                     ]
                     [ HH.input
                         [ HP.type_ InputCheckbox
-                        , HP.checked isSelected
+                        , HP.checked selected
                         , HP.tabIndex $ -1
                         ]
                     , HH.text option.option
@@ -90,31 +94,31 @@ render { options, selected, optionsShown } =
         else
             []
 
-handleAction :: forall slots message left.
-    Action -> H.HalogenM State Action slots message (Async left) Unit
-handleAction (Select option) =
-    H.modify_ (\state -> state { selected = Array.snoc state.selected option })
-handleAction (Deselect option) =
-    H.modify_ (\state -> state { selected = state.selected # Array.filter \{ id } -> id /= option.id })
+handleAction :: forall option slots message left.
+    (Action option) -> H.HalogenM (State option) (Action option) slots message (Async left) Unit
+handleAction (ToggleOption toggledOption) =
+    H.modify_ (\state -> state
+        { options = state.options <#> \{ option, selected } ->
+            if state.comparer option toggledOption
+            then { option, selected: not selected }
+            else { option, selected }
+        })
 handleAction Open =
-    H.modify_ \state -> state { optionsShown = true }
+    H.modify_ \state -> state { open = true }
 handleAction Close =
-    H.modify_ \state -> state { optionsShown = false }
+    H.modify_ \state -> state { open = false }
 handleAction Toggle =
-    H.modify_ \state -> state { optionsShown = not state.optionsShown }
+    H.modify_ \state -> state { open = not state.open }
 
 handleQuery (Selected send) = do
-    { selected } <- H.get
-    pure $ Just $ send selected
+    { options } <- H.get
+    pure $ Just $ send (options <#> _.option)
 
-component :: forall message left.
-    H.Component HH.HTML Query Input message (Async left)
+-- component :: forall option message left.
+--     H.Component HH.HTML (Query option) (Input option) message (Async left)
 component = H.mkComponent
-    { initialState: \{ options, selectedIds } ->
-        { options
-        , selected: options # Array.filter (\{ id } -> Array.elem id selectedIds)
-        , optionsShown: false
-        }
+    { initialState: \{ options, labeler, comparer } ->
+        { options, labeler, comparer, open: false }
     , render
     , eval: H.mkEval $ H.defaultEval
         { handleAction = handleAction

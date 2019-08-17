@@ -63,7 +63,7 @@ type State =
 
 type ChildSlots =
     ( "singleSelectField" :: SingleSelect.Slot Int
-    , "multiSelectField" :: MultiSelect.Slot Int
+    , "multiSelectField" :: MultiSelect.Slot { id :: Int , option :: String } Int
     )
 
 type Slot =
@@ -110,7 +110,10 @@ fieldInput _ { id, type: 3, label, options: Just options } =
     HH.div_
     [ fieldLabel label
     , multiSelectIndexed (SProxy :: SProxy "multiSelectField") id
-        { options, selectedIds: [] }
+        { options: options <#> \option -> { option, selected: false }
+        , labeler: _.option
+        , comparer: \leftOption rightOption -> leftOption.id == rightOption.id
+        }
     ]
 fieldInput _ _ = HH.div_ []
 
