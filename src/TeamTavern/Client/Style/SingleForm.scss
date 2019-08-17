@@ -35,6 +35,6 @@ form.single-form {
 }
 
 form.single-form-wide {
-    @extend form.single-form;
+    @extend .single-form;
     max-width: 480px;
 }

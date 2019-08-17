@@ -59,8 +59,8 @@ loadFields client handle = do
         # traverse read
         # labelMap (SProxy :: SProxy "unreadableFieldDtos")
             { result, errors: _ }
-    let dtos' = dtos <#> \{ id, type, data: { options } } ->
-        { id, type, options }
+    let dtos' = dtos <#> \dto ->
+            { id: dto.id, type: dto.type, options: dto.data.options }
     case traverse createField dtos' of
         Just fields -> right fields
         Nothing -> left $ inj (SProxy :: SProxy "invalidFieldModels") { dtos }

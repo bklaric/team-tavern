@@ -128,6 +128,10 @@ loadProfiles pool nickname = do
         , fieldValues: fieldValues <#>
             \{ fieldId, data: { url, optionId, optionIds } } ->
                 { fieldId, url, optionId, optionIds }
-        , fields: fields <#> \{ id, type, label, data: { options } } ->
-            { id, type, label, options }
+        , fields: fields <#> \field ->
+            { id: field.id
+            , type: field.type
+            , label: field.label
+            , options: field.data.options
+            }
         }

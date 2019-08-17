@@ -8,8 +8,8 @@
   },
   "dependencies": {
     "bcrypt": "^3.0.6",
-    "pg": "^7.10.0",
-    "postmark": "^2.2.4"
+    "pg": "^7.12.1",
+    "postmark": "^2.2.9"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

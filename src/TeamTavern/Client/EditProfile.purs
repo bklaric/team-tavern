@@ -230,12 +230,12 @@ handleAction (SummaryInput summary) = do
 handleAction (UrlValueInput fieldId url) = do
     state @ { fieldValues } <- H.get
     let newFieldValues = fieldValues <#> \value ->
-        if value.fieldId == fieldId
-            then
-                if null url
-                then value { url = Nothing }
-                else value { url = Just url }
-            else value
+            if value.fieldId == fieldId
+                then
+                    if null url
+                    then value { url = Nothing }
+                    else value { url = Just url }
+                else value
     H.put $ state { fieldValues = newFieldValues }
 handleAction (Update event) = do
     H.liftEffect $ preventDefault event

@@ -121,6 +121,10 @@ loadGame pool handle' auth = do
         , handle: wrap handle
         , description: description <#> wrap # wrap
         , hasProfile
-        , fields: fields <#> \{ id, type, label, data: { options } } ->
-            { id, type, label, options }
+        , fields: fields <#> \field ->
+            { id: field.id
+            , type: field.type
+            , label: field.label
+            , options: field.data.options
+            }
         }
