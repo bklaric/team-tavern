@@ -2,47 +2,41 @@ module TeamTavern.Client.Components.SingleSelect where
 
 import Prelude
 
-import Async (Async(..))
-import Data.Const (Const(..))
+import Control.Monad.State (class MonadState)
 import Data.Foldable (find)
-import Data.Maybe (Maybe(..), maybe)
+import Data.Maybe (Maybe(..))
 import Data.Symbol (class IsSymbol)
-import Data.Variant (SProxy(..))
-import Effect.Class (class MonadEffect)
+import Data.Variant (SProxy)
 import Halogen (ClassName(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Prim.Row (class Cons)
-import Unsafe.Reference (unsafeRefEq)
-import Web.Event.Event (target)
-import Web.HTML (window)
-import Web.HTML.HTMLDocument (body)
-import Web.HTML.HTMLElement (fromEventTarget, setClassName)
-import Web.HTML.Window (document)
-import Web.UIEvent.MouseEvent (MouseEvent, toEvent)
 
-type Option = { id :: Int, option :: String }
-
-type Input =
-    { options :: Array Option
-    , selectedId :: Maybe Int
+type Input option =
+    { options :: Array option
+    , selected :: Maybe option
+    , labeler :: option -> String
+    , comparer :: option -> option -> Boolean
     }
 
-type State =
-    { options :: Array Option
-    , selected :: Maybe Option
-    , optionsShown :: Boolean
+type State option =
+    { options :: Array option
+    , selected :: Maybe option
+    , labeler :: option -> String
+    , comparer :: option -> option -> Boolean
+    , open :: Boolean
     }
 
-data Action = Select (Maybe Option) | Open | Close | Toggle
+data Action option = Select (Maybe option) | Open | Close | Toggle
 
-data Query send = Selected ((Maybe Option) -> send)
+data Query option send = Selected (Maybe option -> send)
 
-type Slot = H.Slot Query Void
+type Slot option = H.Slot (Query option) Void
 
-render { options, selected, optionsShown } =
+render :: forall slots option. State option -> HH.HTML slots (Action option)
+render { options, selected, labeler, open } =
     HH.div
     [ HP.class_ $ ClassName "select"
     , HP.tabIndex 0
@@ -51,16 +45,16 @@ render { options, selected, optionsShown } =
     ]
     $ [ HH.div
         [ HP.class_ $ ClassName
-            if optionsShown then "selected-open" else "selected"
+            if open then "selected-open" else "selected"
         , HE.onMouseDown $ const $ Just Toggle
         ]
         [ HH.text
             case selected of
             Nothing -> ""
-            Just { option } -> option
+            Just option -> labeler option
         ]
     ]
-    <> if optionsShown
+    <> if open
         then
             [ HH.div
             [ HP.class_ $ ClassName "options" ]
@@ -76,33 +70,40 @@ render { options, selected, optionsShown } =
                 [ HP.class_ $ ClassName "option"
                 , HE.onClick $ const $ Just $ Select $ Just $ option
                 ]
-                [ HH.text option.option ])
+                [ HH.text $ labeler option ])
             ]
         else
             []
 
-handleAction :: forall slots message left.
-    Action -> H.HalogenM State Action slots message (Async left) Unit
+handleAction :: forall option slots message monad.
+    (Action option) -> H.HalogenM (State option) (Action option) slots message monad Unit
 handleAction (Select selected) =
-    H.modify_ (_ { selected = selected, optionsShown = false })
+    H.modify_ (_ { selected = selected, open = false })
 handleAction Open =
-    H.modify_ \state -> state { optionsShown = true }
+    H.modify_ \state -> state { open = true }
 handleAction Close =
-    H.modify_ \state -> state { optionsShown = false }
+    H.modify_ \state -> state { open = false }
 handleAction Toggle =
-    H.modify_ \state -> state { optionsShown = not state.optionsShown }
+    H.modify_ \state -> state { open = not state.open }
 
+handleQuery
+    :: forall option monad send
+    . Bind monad => MonadState (State option) monad
+    => Query option send -> monad (Maybe send)
 handleQuery (Selected send) = do
     { selected } <- H.get
     pure $ Just $ send selected
 
-component :: forall message left.
-    H.Component HH.HTML Query Input message (Async left)
+component :: forall option message monad.
+    H.Component HH.HTML (Query option) (Input option) message monad
 component = H.mkComponent
-    { initialState: \{ options, selectedId } ->
+    { initialState: \{ options, selected, labeler, comparer } ->
         { options
-        , selected: options # find (\{ id } -> maybe false (_ == id) selectedId)
-        , optionsShown: false
+        , selected: selected >>= \selected' ->
+            options # find (\option -> comparer option selected')
+        , labeler
+        , comparer
+        , open: false
         }
     , render
     , eval: H.mkEval $ H.defaultEval
@@ -111,7 +112,23 @@ component = H.mkComponent
         }
     }
 
+singleSelect
+    :: forall children' slot children output monad option
+    .  Cons slot (Slot option Unit) children' children
+    => IsSymbol slot
+    => SProxy slot
+    -> Input option
+    -> HH.HTML (H.ComponentSlot HH.HTML children monad output) output
 singleSelect label input = HH.slot label unit component input absurd
 
+singleSelectIndexed
+    :: forall children' slot children output monad option index
+    .  Cons slot (Slot option index) children' children
+    => IsSymbol slot
+    => Ord index
+    => SProxy slot
+    -> index
+    -> Input option
+    -> HH.HTML (H.ComponentSlot HH.HTML children monad output) output
 singleSelectIndexed label index input =
     HH.slot label index component input absurd

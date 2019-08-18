@@ -62,14 +62,14 @@ type State =
     }
 
 type ChildSlots =
-    ( "singleSelectField" :: SingleSelect.Slot Int
+    ( "singleSelectField" :: SingleSelect.Slot { id :: Int , option :: String } Int
     , "multiSelectField" :: MultiSelect.Slot { id :: Int , option :: String } Int
     )
 
 type Slot =
     H.Slot (Modal.Query View.OkContent (Const Void)) (Modal.Message Message)
 
-fieldLabel :: forall t388 t389. String -> HH.HTML t389 t388
+fieldLabel :: forall slots action. String -> HH.HTML slots action
 fieldLabel label =
     HH.label
         [ HP.for label ]
@@ -104,7 +104,11 @@ fieldInput _ { id, type: 2, label, options: Just options } =
     HH.div_
     [ fieldLabel label
     , singleSelectIndexed (SProxy :: SProxy "singleSelectField") id
-        { options, selectedId: Nothing }
+        { options
+        , selected: Nothing
+        , labeler: _.option
+        , comparer: \leftOption rightOption -> leftOption.id == rightOption.id
+        }
     ]
 fieldInput _ { id, type: 3, label, options: Just options } =
     HH.div_
