@@ -1,4 +1,4 @@
-module TeamTavern.Client.Game.Profiles (Slot, gameProfiles) where
+module TeamTavern.Client.Game.Profiles (Query(..), Slot, gameProfiles) where
 
 import Prelude
 
@@ -9,10 +9,10 @@ import Browser.Async.Fetch.Response as FetchRes
 import Data.Array (intercalate)
 import Data.Array as Array
 import Data.Bifunctor (lmap)
-import Data.Const (Const)
 import Data.Foldable (find)
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Maybe (Maybe(..))
+import Data.String as String
 import Data.Symbol (SProxy(..))
 import Halogen (ClassName(..), defaultEval, mkComponent, mkEval)
 import Halogen as H
@@ -21,6 +21,7 @@ import Halogen.HTML.Properties as HP
 import Simple.JSON.Async as Json
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchorIndexed)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
+import TeamTavern.Client.Game.FilterProfiles as FilterProfiles
 import TeamTavern.Server.Game.View.SendResponse as View
 import TeamTavern.Server.Profile.ViewByGame.SendResponse as ViewByGame
 
@@ -30,14 +31,15 @@ data State
     = Empty View.OkContent
     | Profiles View.OkContent ViewByGame.OkContent
 
-type Slot = H.Slot (Const Void) Void
+data Query send = ApplyFilters (Array FilterProfiles.Field) send
+
+type Slot = H.Slot Query Void
 
 type ChildSlots = (players :: Anchor.Slot Int)
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render (Empty _) = HH.div_ []
 render (Profiles game profiles) = HH.div_ $
-    [ HH.h3 [ HP.class_ $ ClassName "card-header"] [ HH.text "Profiles" ] ] <>
     (profiles # mapWithIndex \index { nickname, summary, fieldValues } ->
         HH.div [ HP.class_ $ ClassName "card" ] $
         [ HH.h3_ [ navigationAnchorIndexed (SProxy :: SProxy "players") index
@@ -70,10 +72,17 @@ render (Profiles game profiles) = HH.div_ $
         <> (summary <#> \paragraph -> HH.p_ [ HH.text paragraph ])
     )
 
-loadProfiles :: forall left. View.OkContent -> Async left State
-loadProfiles game @ { handle } = Async.unify do
+loadProfiles :: forall left. View.OkContent -> Array FilterProfiles.Field -> Async left State
+loadProfiles game @ { handle } fields = Async.unify do
     let empty = Empty game
-    response <-  Fetch.fetch_ ("/api/profiles?handle=" <> handle)
+    let filterPairs = fields
+            <#> (\field -> field.options
+                <#> \option -> field.key <> "=" <> option.key)
+            # join
+            # intercalate "&"
+    let filterQuery = if String.null filterPairs then "" else "&" <> filterPairs
+    response <- Fetch.fetch_
+            ("/api/profiles?handle=" <> handle <> filterQuery)
         # lmap (const empty)
     content <- case FetchRes.status response of
         200 -> FetchRes.text response >>= Json.readJSON # lmap (const empty)
@@ -83,19 +92,33 @@ loadProfiles game @ { handle } = Async.unify do
 handleAction :: forall output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
 handleAction (Init game) = do
-    state <- H.lift $ loadProfiles game
+    state <- H.lift $ loadProfiles game []
     H.put state
     pure unit
 
+handleQuery
+    :: forall output send left
+    .  Query send
+    -> H.HalogenM State Action ChildSlots output (Async left) (Maybe send)
+handleQuery (ApplyFilters fields send) = do
+    state <- H.get
+    case state of
+        Empty _ -> pure $ Just send
+        Profiles game _ -> do
+            state' <- H.lift $ loadProfiles game fields
+            H.put state'
+            pure $ Just send
+
 component
-    :: forall output left query
+    :: forall output left
     .  View.OkContent
-    -> H.Component HH.HTML query View.OkContent output (Async left)
+    -> H.Component HH.HTML Query View.OkContent output (Async left)
 component game = mkComponent
     { initialState: Empty
     , render
     , eval: mkEval $ defaultEval
         { handleAction = handleAction
+        , handleQuery = handleQuery
         , initialize = Just $ Init game
         , receive = Just <<< Init
         }

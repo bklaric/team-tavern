@@ -8,6 +8,7 @@
 @import "../Components/Welcome";
 @import "../Components/WelcomeBanner";
 @import "../Components/Games";
+@import "../Game/FilterProfiles";
 @import "../Player";
 
 .hidden {
@@ -53,6 +54,10 @@
 
 .card-header {
     padding-left: 12px;
+
+    button {
+        margin-left: 12px;
+    }
 }
 
 .card {

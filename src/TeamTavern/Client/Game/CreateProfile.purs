@@ -62,8 +62,8 @@ type State =
     }
 
 type ChildSlots =
-    ( "singleSelectField" :: SingleSelect.Slot { id :: Int , option :: String } Int
-    , "multiSelectField" :: MultiSelect.Slot { id :: Int , option :: String } Int
+    ( "singleSelectField" :: SingleSelect.Slot { id :: Int, option :: String } Int
+    , "multiSelectField" :: MultiSelect.Slot { id :: Int, option :: String } Int
     )
 
 type Slot =
