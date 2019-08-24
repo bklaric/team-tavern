@@ -18,14 +18,12 @@ import Web.Event.Event (preventDefault)
 import Web.UIEvent.MouseEvent (MouseEvent, toEvent)
 
 type Option =
-    { id :: Int
-    , key :: String
+    { key :: String
     , option :: String
     }
 
 type Field =
-    { id :: Int
-    , key :: String
+    { key :: String
     , label :: String
     , options :: Array Option
     }
@@ -60,7 +58,7 @@ fieldInput field @ { label, options } =
     , multiSelectIndexed (SProxy :: SProxy "filter") field
         { options: options <#> \option -> { option, selected: false }
         , labeler: _.option
-        , comparer: \leftOption rightOption -> leftOption.id == rightOption.id
+        , comparer: \leftOption rightOption -> leftOption.key == rightOption.key
         }
     ]
 

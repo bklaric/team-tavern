@@ -32,15 +32,13 @@ type LoadGameDto =
     , description :: Array String
     , hasProfile :: Boolean
     , fields :: Array
-        { id :: Int
-        , type :: Int
+        { type :: Int
         , label :: String
-        , data ::
-            { options :: Maybe (Array
-                { id :: Int
-                , option :: String
-                })
-            }
+        , key :: String
+        , options :: Maybe (Array
+            { key :: String
+            , option :: String
+            })
         }
     }
 
@@ -51,11 +49,11 @@ type LoadGameResult =
     , description :: Description
     , hasProfile :: Boolean
     , fields :: Array
-        { id :: Int
-        , type :: Int
+        { type :: Int
         , label :: String
+        , key :: String
         , options :: Maybe (Array
-            { id :: Int
+            { key :: String
             , option :: String
             })
         }
@@ -73,27 +71,63 @@ type LoadGameError errors = Variant
 queryString :: Query
 queryString = Query """
     select
-        game.handle,
-        game.title,
-        game.description,
-        game.administrator_id as "administratorId",
-        profile.id is not null as "hasProfile",
+        handle,
+        title,
+        description,
+        administrator_id as "administratorId",
+        has_profile as "hasProfile",
         coalesce(
-            json_agg(field order by field.id)
-            filter (where field.id is not null),
+            json_agg(
+                json_build_object(
+                    'type', field_type,
+                    'label', field_label,
+                    'key', field_key,
+                    'options', field_options
+                )
+                order by field_id
+            )
+            filter (where field_key is not null),
             '[]'
-        ) as "fields"
-    from game
-    left join field on field.game_id = game.id
-    left join profile on profile.game_id = game.id
-        and profile.player_id = $2
-    where game.handle = $1
-    group by
-        game.handle,
-        game.title,
-        game.description,
-        game.administrator_id,
-        profile.id;
+        )
+        as "fields"
+    from (
+        select
+            game.handle,
+            game.title,
+            game.description,
+            game.administrator_id,
+            profile.id is not null as has_profile,
+            field.id as field_id,
+            field.type as field_type,
+            field.label as field_label,
+            field.key as field_key,
+            json_agg(
+                json_build_object(
+                    'key', field_option.key,
+                    'option', field_option.option
+                )
+                order by field_option.id
+            )
+            filter (where field_option.id is not null)
+            as field_options
+        from game
+        left join field on field.game_id = game.id
+        left join field_option on field_option.field_id = field.id
+        left join profile on profile.game_id = game.id
+            and profile.player_id = $2
+        where game.handle = $1
+        group by
+            game.handle,
+            game.title,
+            game.description,
+            game.administrator_id,
+            profile.id,
+            field.id,
+            field.type,
+            field.label,
+            field.key
+        ) as game
+    group by handle, title, description, administrator_id, has_profile;
     """
 
 queryParameters :: Handle -> Maybe CookieInfo -> Array QueryParameter
@@ -121,10 +155,5 @@ loadGame pool handle' auth = do
         , handle: wrap handle
         , description: description <#> wrap # wrap
         , hasProfile
-        , fields: fields <#> \field ->
-            { id: field.id
-            , type: field.type
-            , label: field.label
-            , options: field.data.options
-            }
+        , fields
         }

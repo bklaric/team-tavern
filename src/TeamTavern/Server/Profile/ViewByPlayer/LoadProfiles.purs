@@ -27,23 +27,19 @@ type LoadProfilesDto =
     , title :: String
     , summary :: Array String
     , fieldValues :: Array
-        { fieldId :: Int
-        , data ::
-            { url :: Maybe String
-            , optionId :: Maybe Int
-            , optionIds :: Maybe (Array Int)
-            }
+        { fieldKey :: String
+        , url :: Maybe String
+        , optionKey :: Maybe String
+        , optionKeys :: Maybe (Array String)
         }
     , fields :: Array
-        { id :: Int
+        { key :: String
         , type :: Int
         , label :: String
-        , data ::
-            { options :: Maybe (Array
-                { id :: Int
-                , option :: String
-                })
-            }
+        , options :: Maybe (Array
+            { key :: String
+            , option :: String
+            })
         }
     }
 
@@ -52,17 +48,17 @@ type LoadProfilesResult =
     , title :: Title
     , summary :: Summary
     , fieldValues :: Array
-        { fieldId :: Int
+        { fieldKey :: String
         , url :: Maybe String
-        , optionId :: Maybe Int
-        , optionIds :: Maybe (Array Int)
+        , optionKey :: Maybe String
+        , optionKeys :: Maybe (Array String)
         }
     , fields :: Array
-        { id :: Int
+        { key :: String
         , type :: Int
         , label :: String
         , options :: Maybe (Array
-            { id :: Int
+            { key :: String
             , option :: String
             })
         }
@@ -125,13 +121,6 @@ loadProfiles pool nickname = do
         { handle: wrap handle
         , title: wrap title
         , summary: summary <#> wrap # wrap
-        , fieldValues: fieldValues <#>
-            \{ fieldId, data: { url, optionId, optionIds } } ->
-                { fieldId, url, optionId, optionIds }
-        , fields: fields <#> \field ->
-            { id: field.id
-            , type: field.type
-            , label: field.label
-            , options: field.data.options
-            }
+        , fieldValues
+        , fields
         }

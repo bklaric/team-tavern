@@ -66,7 +66,7 @@ render (Profiles profiles nickname') = HH.div_ $
                 ]
                 [ HH.text "Edit profile" ] ]
         , Array.catMaybes $ fields <#> \field -> let
-            fieldValue = fieldValues # find \ { fieldId } -> field.id == fieldId
+            fieldValue = fieldValues # find \ { fieldKey } -> field.key == fieldKey
             in
             case { type: field.type, fieldValue } of
             { type: 1, fieldValue: Just { url: Just url' } } -> Just $
@@ -74,13 +74,13 @@ render (Profiles profiles nickname') = HH.div_ $
                 [ HH.text $ field.label <> ": "
                 , HH.a [ HP.href url' ] [ HH.text url' ]
                 ]
-            { type: 2, fieldValue: Just { optionId: Just optionId' } } -> let
-                option' = field.options >>= find (\{ id } -> id == optionId')
+            { type: 2, fieldValue: Just { optionKey: Just optionKey' } } -> let
+                option' = field.options >>= find (\{ key } -> key == optionKey')
                 in
                 option' <#> \{ option } ->
                     HH.p_ [ HH.text $ field.label <> ": " <> option ]
-            { type: 3, fieldValue: Just { optionIds: Just optionIds' } } -> let
-                options' = field.options <#> Array.filter \{ id } -> Array.elem id optionIds'
+            { type: 3, fieldValue: Just { optionKeys: Just optionKeys' } } -> let
+                options' = field.options <#> Array.filter \{ key } -> Array.elem key optionKeys'
                 in
                 case options' of
                 Just options | not $ Array.null options -> Just $ HH.p_
@@ -97,7 +97,7 @@ render (Profiles profiles nickname') = HH.div_ $
 
 loadProfiles :: forall left. String -> Async left State
 loadProfiles nickname = Async.unify do
-    response <-  Fetch.fetch_ ("/api/profiles?nickname=" <> nickname)
+    response <-  Fetch.fetch_ ("/api/profiles/by-nickname/" <> nickname)
         # lmap (const Empty)
     content <- case FetchRes.status response of
         200 -> FetchRes.text response >>= Json.readJSON # lmap (const Empty)

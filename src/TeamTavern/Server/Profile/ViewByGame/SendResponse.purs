@@ -16,11 +16,10 @@ type OkContent = Array
     { nickname :: String
     , summary :: Array String
     , fieldValues :: Array
-        { id :: Int
-        , fieldId :: Int
+        { key :: String
         , url :: Maybe String
-        , optionId :: Maybe Int
-        , optionIds :: Maybe (Array Int)
+        , option :: Maybe String
+        , options :: Maybe (Array String)
         }
    }
 

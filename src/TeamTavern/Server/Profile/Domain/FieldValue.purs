@@ -36,17 +36,17 @@ import TeamTavern.Server.Profile.Domain.Url (Url, UrlError)
 import TeamTavern.Server.Profile.Domain.Url as Url
 
 type FieldDto =
-    { id :: Int
+    { key :: String
     , type :: Int
-    , options :: Maybe (Array { id :: Int })
+    , options :: Maybe (Array String)
     }
 
 data FieldType
     = Url
-    | Single (NonEmptySet Id)
-    | Multi (NonEmptySet Id)
+    | Single (NonEmptySet String)
+    | Multi (NonEmptySet String)
 
-data Field = Field Id FieldType
+data Field = Field String FieldType
 
 derive instance genericFieldType :: Generic FieldType _
 
@@ -57,34 +57,32 @@ derive instance genericField :: Generic Field _
 instance showField :: Show Field where show = genericShow
 
 createField :: FieldDto -> Maybe Field
-createField fieldDto = let
-    id = Id fieldDto.id
-    in
+createField fieldDto @ { key } =
     case Tuple fieldDto.type fieldDto.options of
-    Tuple 1 Nothing -> Just $ Field id Url
-    Tuple 2 (Just options) | optionIds <- options <#> _.id >>> Id ->
-        case NonEmptySet.fromFoldable optionIds of
-        Just nonEmptyOptions -> Just $ Field id $ Single nonEmptyOptions
+    Tuple 1 Nothing -> Just $ Field key Url
+    Tuple 2 (Just options) ->
+        case NonEmptySet.fromFoldable options of
+        Just nonEmptyOptions -> Just $ Field key $ Single nonEmptyOptions
         Nothing -> Nothing
-    Tuple 3 (Just options) | optionIds <- options <#> _.id >>> Id ->
-        case NonEmptySet.fromFoldable optionIds of
-        Just nonEmptyOptions -> Just $ Field id $ Multi nonEmptyOptions
+    Tuple 3 (Just options) ->
+        case NonEmptySet.fromFoldable options of
+        Just nonEmptyOptions -> Just $ Field key $ Multi nonEmptyOptions
         Nothing -> Nothing
     _ -> Nothing
 
 type FieldValueDto =
-    { fieldId :: Int
+    { fieldKey :: String
     , url :: Maybe String
-    , optionId :: Maybe Int
-    , optionIds :: Maybe (Array Int)
+    , option :: Maybe String
+    , options :: Maybe (Array String)
     }
 
 data FieldValueType
     = UrlValue Url
-    | SingleValue Id
-    | MultiValue (NonEmptySet Id)
+    | SingleValue String
+    | MultiValue (NonEmptySet String)
 
-data FieldValue = FieldValue Id FieldValueType
+data FieldValue = FieldValue String FieldValueType
 
 derive instance genericFieldValueType :: Generic FieldValueType _
 
@@ -123,30 +121,26 @@ type CreateFieldValuesState =
 
 checkFieldValue' :: FieldValueDto -> Field -> FieldValueCheckResult
 checkFieldValue'
-    fieldValueDto @ { fieldId, url, optionId, optionIds }
-    field @ (Field id type') = let
-    fieldId' = Id fieldId
-    in
-    if id == fieldId'
+    fieldValueDto @ { fieldKey, url, option, options }
+    field @ (Field key type') =
+    if key == fieldKey
     then
-        case tuple4 type' url optionId optionIds of
+        case tuple4 type' url option options of
         Url /\ (Just url') /\ Nothing /\ Nothing /\ unit ->
             case Url.create url' of
             Left errors -> Error $ inj (SProxy :: SProxy "invalidUrl")
                 { fieldValueDto, errors }
-            Right url'' -> Valid $ FieldValue fieldId' $ UrlValue url''
-        Single fieldOptionIds /\ Nothing /\ Just valueOptionId /\ Nothing /\ unit
-            | valueOptionId' <- Id valueOptionId ->
-            if NonEmptySet.member valueOptionId' fieldOptionIds
-            then Valid $ FieldValue fieldId' $ SingleValue valueOptionId'
+            Right url'' -> Valid $ FieldValue fieldKey $ UrlValue url''
+        Single fieldOptions /\ Nothing /\ Just valueOption /\ Nothing /\ unit ->
+            if NonEmptySet.member valueOption fieldOptions
+            then Valid $ FieldValue fieldKey $ SingleValue valueOption
             else Error $ inj (SProxy :: SProxy "invalidOption") { fieldValueDto, field }
-        Multi fieldOptionIds /\ Nothing /\ Nothing /\ Just valueOptionIds /\ unit
-            | valueOptionIds' <- map Id valueOptionIds ->
-                case NonEmptySet.fromFoldable valueOptionIds' of
-                Just valueOptionIds''
-                    | subset valueOptionIds'' fieldOptionIds
-                    && NonEmptySet.size valueOptionIds'' == Array.length valueOptionIds ->
-                    Valid $ FieldValue fieldId' $ MultiValue valueOptionIds''
+        Multi fieldOptions /\ Nothing /\ Nothing /\ Just valueOptions /\ unit ->
+                case NonEmptySet.fromFoldable valueOptions of
+                Just valueOptions'
+                    | subset valueOptions' fieldOptions
+                    && NonEmptySet.size valueOptions' == Array.length valueOptions ->
+                    Valid $ FieldValue fieldKey $ MultiValue valueOptions'
                 _ ->
                     Error $ inj (SProxy :: SProxy "invalidValue") { fieldValueDto, field }
         _ -> Error $ inj (SProxy :: SProxy "invalidValue") { fieldValueDto, field }
@@ -185,7 +179,7 @@ createFieldValue fields state fieldValueDto =
         # handleFieldValueCheckResult state
 
 checkUniqueFieldValues
-    :: MultiMap Id FieldValue
+    :: MultiMap String FieldValue
     -> Either (NonEmptyList FieldValueError) (List FieldValue)
 checkUniqueFieldValues valuesMap =
     valuesMap # MultiMap.values

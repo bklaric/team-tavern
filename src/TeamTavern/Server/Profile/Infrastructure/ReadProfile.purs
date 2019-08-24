@@ -23,10 +23,10 @@ import TeamTavern.Server.Profile.Domain.Summary as Summary
 type ProfileDto =
     { summary :: String
     , fieldValues :: Array
-        { fieldId :: Int
+        { fieldKey :: String
         , url :: Maybe String
-        , optionId :: Maybe Int
-        , optionIds :: Maybe (Array Int)
+        , option :: Maybe String
+        , options :: Maybe (Array String)
         }
     }
 

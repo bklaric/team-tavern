@@ -46,7 +46,7 @@ render (Profiles game profiles) = HH.div_ $
             { path: "/players/" <> nickname, content: HH.text nickname } ]
         ]
         <> (Array.catMaybes $ game.fields <#> \field -> let
-            fieldValue = fieldValues # find \ { fieldId } -> field.id == fieldId
+            fieldValue = fieldValues # find \ { key } -> field.key == key
             in
             case { type: field.type, fieldValue } of
             { type: 1, fieldValue: Just { url: Just url' } } -> Just $
@@ -54,18 +54,18 @@ render (Profiles game profiles) = HH.div_ $
                 [ HH.text $ field.label <> ": "
                 , HH.a [ HP.href url' ] [ HH.text url' ]
                 ]
-            { type: 2, fieldValue: Just { optionId: Just optionId' } } -> let
-                option' = field.options >>= find (\{ id } -> id == optionId')
+            { type: 2, fieldValue: Just { option: Just option' } } -> let
+                fieldOption' = field.options >>= find (\{ key } -> key == option')
                 in
-                option' <#> \{ option } ->
+                fieldOption' <#> \{ option } ->
                     HH.p_ [ HH.text $ field.label <> ": " <> option ]
-            { type: 3, fieldValue: Just { optionIds: Just optionIds' } } -> let
-                options' = field.options <#> Array.filter \{ id } -> Array.elem id optionIds'
+            { type: 3, fieldValue: Just { options: Just options' } } -> let
+                fieldOptions' = field.options <#> Array.filter \{ key } -> Array.elem key options'
                 in
-                case options' of
-                Just options | not $ Array.null options -> Just $ HH.p_
+                case fieldOptions' of
+                Just fieldOptions | not $ Array.null fieldOptions -> Just $ HH.p_
                     [ HH.text $ field.label <> ": "
-                        <> intercalate ", " (options <#> _.option)
+                        <> intercalate ", " (fieldOptions <#> _.option)
                     ]
                 _ -> Nothing
             _ ->  Nothing)
@@ -82,7 +82,7 @@ loadProfiles game @ { handle } fields = Async.unify do
             # intercalate "&"
     let filterQuery = if String.null filterPairs then "" else "&" <> filterPairs
     response <- Fetch.fetch_
-            ("/api/profiles?handle=" <> handle <> filterQuery)
+            ("/api/profiles/by-handle/" <> handle <> filterQuery)
         # lmap (const empty)
     content <- case FetchRes.status response of
         200 -> FetchRes.text response >>= Json.readJSON # lmap (const empty)

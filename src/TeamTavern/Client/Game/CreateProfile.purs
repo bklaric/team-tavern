@@ -42,7 +42,7 @@ type Input = { handle :: String }
 
 data Action
     = SummaryInput String
-    | UrlValueInput Int String
+    | UrlValueInput String String
     | Create Event
 
 data Message = ProfileCreated String
@@ -52,18 +52,18 @@ type State =
     , summary :: String
     , summaryError :: Boolean
     , fieldValues :: Array
-        { fieldId :: Int
+        { key :: String
         , url :: Maybe String
-        , optionId :: Maybe Int
-        , optionIds :: Maybe (Array Int)
+        , option :: Maybe String
+        , options :: Maybe (Array String)
         }
-    , urlValueErrors :: Array { fieldId :: Int }
+    , urlValueErrors :: Array { fieldKey :: String }
     , otherError :: Boolean
     }
 
 type ChildSlots =
-    ( "singleSelectField" :: SingleSelect.Slot { id :: Int, option :: String } Int
-    , "multiSelectField" :: MultiSelect.Slot { id :: Int, option :: String } Int
+    ( "singleSelectField" :: SingleSelect.Slot { key :: String, option :: String } String
+    , "multiSelectField" :: MultiSelect.Slot { key :: String, option :: String } String
     )
 
 type Slot =
@@ -80,43 +80,43 @@ fieldLabel label =
 
 fieldInput
     :: forall left
-    .  Array { fieldId :: Int }
-    ->  { id :: Int
+    .  Array { fieldKey :: String }
+    ->  { key :: String
         , label :: String
         , type :: Int
-        , options :: Maybe (Array { id :: Int , option :: String })
+        , options :: Maybe (Array { key :: String , option :: String })
         }
     ->  H.ComponentHTML Action ChildSlots (Async left)
-fieldInput urlValueErrors { id, type: 1, label } = let
-    urlError = urlValueErrors # any (_.fieldId >>> (_ == id))
+fieldInput urlValueErrors { key, type: 1, label } = let
+    urlError = urlValueErrors # any (_.fieldKey >>> (_ == key))
     in
     HH.div_
     [ fieldLabel label
     , HH.input
         [ HP.id_ label
-        , HE.onValueInput $ Just <<< UrlValueInput id
+        , HE.onValueInput $ Just <<< UrlValueInput key
         ]
     , HH.p
         [ HP.class_ $ inputErrorClass urlError ]
         [ HH.text "This doesn't look like a valid web address." ]
     ]
-fieldInput _ { id, type: 2, label, options: Just options } =
+fieldInput _ { key, type: 2, label, options: Just options } =
     HH.div_
     [ fieldLabel label
-    , singleSelectIndexed (SProxy :: SProxy "singleSelectField") id
+    , singleSelectIndexed (SProxy :: SProxy "singleSelectField") key
         { options
         , selected: Nothing
         , labeler: _.option
-        , comparer: \leftOption rightOption -> leftOption.id == rightOption.id
+        , comparer: \leftOption rightOption -> leftOption.key == rightOption.key
         }
     ]
-fieldInput _ { id, type: 3, label, options: Just options } =
+fieldInput _ { key, type: 3, label, options: Just options } =
     HH.div_
     [ fieldLabel label
-    , multiSelectIndexed (SProxy :: SProxy "multiSelectField") id
+    , multiSelectIndexed (SProxy :: SProxy "multiSelectField") key
         { options: options <#> \option -> { option, selected: false }
         , labeler: _.option
-        , comparer: \leftOption rightOption -> leftOption.id == rightOption.id
+        , comparer: \leftOption rightOption -> leftOption.key == rightOption.key
         }
     ]
 fieldInput _ _ = HH.div_ []
@@ -157,11 +157,11 @@ sendCreateRequest state @ { summary, fieldValues, game } nickname = Async.unify 
         <> Fetch.body := Json.writeJSON
             { summary
             , fieldValues: fieldValues # Array.filter
-                \{ url, optionId, optionIds } ->
+                \{ url, option, options } ->
                     isJust url
-                    || isJust optionId
-                    || (case optionIds of
-                        Just optionIds' | not $ Array.null optionIds' -> true
+                    || isJust option
+                    || (case options of
+                        Just options' | not $ Array.null options' -> true
                         _ -> false)
             }
         <> Fetch.credentials := Fetch.Include
@@ -189,10 +189,10 @@ handleAction :: forall left.
     Action -> H.HalogenM State Action ChildSlots Message (Async left) Unit
 handleAction (SummaryInput summary) =
     H.modify_ (_ { summary = summary }) $> unit
-handleAction (UrlValueInput fieldId url) = do
+handleAction (UrlValueInput key url) = do
     state @ { fieldValues } <- H.get
     let newFieldValues = fieldValues <#> \value ->
-            if value.fieldId == fieldId
+            if value.key == key
                 then
                     if null url
                     then value { url = Nothing }
@@ -211,11 +211,11 @@ handleAction (Create event) = do
     let (singleSelectValues :: Array _) =
             singleSelectResults
             # Map.toUnfoldable
-            <#> \(Tuple fieldId option) ->
-                { fieldId
+            <#> \(Tuple key option) ->
+                { key
                 , url: Nothing
-                , optionId: option <#> _.id
-                , optionIds: Nothing
+                , option: option <#> _.key
+                , options: Nothing
                 }
     multiSelectResults <-
         (H.queryAll (SProxy :: SProxy "multiSelectField")
@@ -223,11 +223,11 @@ handleAction (Create event) = do
     let (multiSelectValues :: Array _) =
             multiSelectResults
             # Map.toUnfoldable
-            <#> \(Tuple fieldId options) ->
-                { fieldId
+            <#> \(Tuple key options) ->
+                { key
                 , url: Nothing
-                , optionId: Nothing
-                , optionIds: Just $ options <#> _.id
+                , option: Nothing
+                , options: Just $ options <#> _.key
                 }
     let state' = state
             { fieldValues =
@@ -252,10 +252,10 @@ component = H.mkComponent
         { summary: ""
         , summaryError: false
         , fieldValues: game.fields <#> (\field ->
-            { fieldId: field.id
+            { key: field.key
             , url: Nothing
-            , optionId: Nothing
-            , optionIds: Nothing
+            , option: Nothing
+            , options: Nothing
             })
         , urlValueErrors: []
         , otherError: false

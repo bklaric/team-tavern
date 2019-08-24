@@ -20,9 +20,9 @@ import TeamTavern.Server.Game.Domain.Handle (Handle)
 import TeamTavern.Server.Profile.Domain.FieldValue (Field, createField)
 
 type FieldDto =
-    { id :: Int
+    { key :: String
     , type :: Int
-    , data :: { options :: Maybe (Array { id :: Int }) }
+    , options :: Maybe (Array String)
     }
 
 type LoadFieldsError errors = Variant
@@ -59,8 +59,6 @@ loadFields client handle = do
         # traverse read
         # labelMap (SProxy :: SProxy "unreadableFieldDtos")
             { result, errors: _ }
-    let dtos' = dtos <#> \dto ->
-            { id: dto.id, type: dto.type, options: dto.data.options }
-    case traverse createField dtos' of
+    case traverse createField dtos of
         Just fields -> right fields
         Nothing -> left $ inj (SProxy :: SProxy "invalidFieldModels") { dtos }

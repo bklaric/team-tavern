@@ -13,7 +13,7 @@ import TeamTavern.Server.Profile.Update.LogError (UpdateError)
 
 type ProfileErrorContent = Variant
     ( invalidSummary :: {}
-    , invalidUrl :: { fieldId :: Int }
+    , invalidUrl :: { fieldKey :: String }
     )
 
 type BadRequestContent = Variant
@@ -34,8 +34,8 @@ errorResponse = match
             , fieldValues: \fieldValueErrors ->
                 fieldValueErrors
                 <#> on (SProxy :: SProxy "invalidUrl")
-                    (\{ fieldValueDto: { fieldId } } ->
-                        Just $ inj (SProxy :: SProxy "invalidUrl") { fieldId })
+                    (\{ fieldValueDto: { fieldKey } } ->
+                        Just $ inj (SProxy :: SProxy "invalidUrl") { fieldKey })
                     (const Nothing)
                 # Array.fromFoldable
                 # Array.catMaybes

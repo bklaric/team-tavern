@@ -53,22 +53,21 @@ type ChildSlots =
 
 filterableFields
     :: Array
-        { id :: Int
+        { key :: String
         , label :: String
         , options :: Maybe (Array
-            { id :: Int
+            { key :: String
             , option :: String
             })
         , type :: Int
         }
     -> Array FilterProfiles.Field
 filterableFields fields = fields # Array.mapMaybe case _ of
-    { id, label, type: type', options: Just options }
+    { key, label, type: type', options: Just options }
     | type' == 2 || type' == 3 -> Just
-        { id, label, key: label, options: options
+        { key, label, options: options
             <#> \option ->
-                { id: option.id
-                , key: option.option
+                { key: option.option
                 , option: option.option
                 }
         }

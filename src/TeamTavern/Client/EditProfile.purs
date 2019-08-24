@@ -43,17 +43,17 @@ type Input =
     , title :: String
     , summary :: Array String
     , fieldValues :: Array
-        { fieldId :: Int
+        { fieldKey :: String
         , url :: Maybe String
-        , optionId :: Maybe Int
-        , optionIds :: Maybe (Array Int)
+        , optionKey :: Maybe String
+        , optionKeys :: Maybe (Array String)
         }
     , fields :: Array
-        { id :: Int
+        { key :: String
         , type :: Int
         , label :: String
         , options :: Maybe (Array
-            { id :: Int
+            { key :: String
             , option :: String
             })
         }
@@ -61,7 +61,7 @@ type Input =
 
 data Action
     = SummaryInput String
-    | UrlValueInput Int String
+    | UrlValueInput String String
     | Update Event
 
 data Message = ProfileUpdated String
@@ -71,29 +71,29 @@ type State =
     , handle :: String
     , title :: String
     , fields :: Array
-        { id :: Int
+        { key :: String
         , type :: Int
         , label :: String
         , options :: Maybe (Array
-            { id :: Int
+            { key :: String
             , option :: String
             })
         }
     , summary :: String
     , summaryError :: Boolean
     , fieldValues :: Array
-        { fieldId :: Int
+        { fieldKey :: String
         , url :: Maybe String
-        , optionId :: Maybe Int
-        , optionIds :: Maybe (Array Int)
+        , optionKey :: Maybe String
+        , optionKeys :: Maybe (Array String)
         }
-    , urlValueErrors :: Array { fieldId :: Int }
+    , urlValueErrors :: Array { fieldKey :: String }
     , otherError :: Boolean
     }
 
 type ChildSlots =
-    ( "singleSelectField" :: SingleSelect.Slot { id :: Int, option :: String } Int
-    , "multiSelectField" :: MultiSelect.Slot { id :: Int, option :: String } Int
+    ( "singleSelectField" :: SingleSelect.Slot { key :: String, option :: String } String
+    , "multiSelectField" :: MultiSelect.Slot { key :: String, option :: String } String
     )
 
 type Slot = H.Slot (Modal.Query Input (Const Void)) (Modal.Message Message)
@@ -110,21 +110,21 @@ fieldLabel label =
 fieldInput
     :: forall left
     .  Array
-        { fieldId :: Int
+        { fieldKey :: String
         , url :: Maybe String
-        , optionId :: Maybe Int
-        , optionIds :: Maybe (Array Int)
+        , optionKey :: Maybe String
+        , optionKeys :: Maybe (Array String)
         }
-    -> Array { fieldId :: Int }
-    ->  { id :: Int
+    -> Array { fieldKey :: String }
+    ->  { key :: String
         , label :: String
         , type :: Int
-        , options :: Maybe (Array { id :: Int , option :: String })
+        , options :: Maybe (Array { key :: String , option :: String })
         }
     -> H.ComponentHTML Action ChildSlots (Async left)
-fieldInput fieldValues urlValueErrors { id, type: 1, label } = let
-    fieldValue' = fieldValues # find \{ fieldId } -> fieldId == id
-    urlError = urlValueErrors # any (_.fieldId >>> (_ == id))
+fieldInput fieldValues urlValueErrors { key, type: 1, label } = let
+    fieldValue' = fieldValues # find \{ fieldKey } -> fieldKey == key
+    urlError = urlValueErrors # any (_.fieldKey >>> (_ == key))
     in
     case fieldValue' of
     Just { url } ->
@@ -132,7 +132,7 @@ fieldInput fieldValues urlValueErrors { id, type: 1, label } = let
         [ fieldLabel label
         , HH.input
             [ HP.id_ label
-            , HE.onValueInput $ Just <<< UrlValueInput id
+            , HE.onValueInput $ Just <<< UrlValueInput key
             , HP.value $ maybe "" identity url
             ]
         , HH.p
@@ -140,32 +140,32 @@ fieldInput fieldValues urlValueErrors { id, type: 1, label } = let
             [ HH.text "This doesn't look like a valid web address." ]
         ]
     Nothing -> HH.div_ []
-fieldInput fieldValues _ { id, type: 2, label, options: Just options } = let
-    fieldValue' = fieldValues # find \{ fieldId } -> fieldId == id
+fieldInput fieldValues _ { key, type: 2, label, options: Just options } = let
+    fieldValue' = fieldValues # find \{ fieldKey } -> fieldKey == key
     in
     HH.div_
     [ fieldLabel label
-    , singleSelectIndexed (SProxy :: SProxy "singleSelectField") id
+    , singleSelectIndexed (SProxy :: SProxy "singleSelectField") key
         { options
-        , selected: fieldValue' >>= _.optionId >>= \optionId ->
-            options # find \option -> optionId == option.id
+        , selected: fieldValue' >>= _.optionKey >>= \optionKey ->
+            options # find \option -> optionKey == option.key
         , labeler: _.option
-        , comparer: \leftOption rightOption -> leftOption.id == rightOption.id
+        , comparer: \leftOption rightOption -> leftOption.key == rightOption.key
         }
     ]
-fieldInput fieldValues _ { id, type: 3, label, options: Just options } = let
-    fieldValue' = fieldValues # find \{ fieldId } -> fieldId == id
-    selectedOptionIds' = fieldValue' >>= _.optionIds
+fieldInput fieldValues _ { key, type: 3, label, options: Just options } = let
+    fieldValue' = fieldValues # find \{ fieldKey } -> fieldKey == key
+    selectedOptionIds' = fieldValue' >>= _.optionKeys
     in
     HH.div_
     [ fieldLabel label
-    , multiSelectIndexed (SProxy :: SProxy "multiSelectField") id
+    , multiSelectIndexed (SProxy :: SProxy "multiSelectField") key
         { options: options <#> \option ->
             { option
             , selected: selectedOptionIds' # maybe false \selectedOptionIds ->
-                selectedOptionIds # any (_ == option.id) }
+                selectedOptionIds # any (_ == option.key) }
         , labeler: _.option
-        , comparer: \leftOption rightOption -> leftOption.id == rightOption.id
+        , comparer: \leftOption rightOption -> leftOption.key == rightOption.key
         }
     ]
 fieldInput _ _ _ = HH.div_ []
@@ -207,11 +207,11 @@ updateProfile state @ { nickname, handle, summary, fieldValues } = Async.unify d
         <> Fetch.body := Json.writeJSON
             { summary
             , fieldValues: fieldValues # Array.filter
-                \{ url, optionId, optionIds } ->
+                \{ url, optionKey, optionKeys } ->
                     isJust url
-                    || isJust optionId
-                    || (case optionIds of
-                        Just optionIds' | not $ Array.null optionIds' -> true
+                    || isJust optionKey
+                    || (case optionKeys of
+                        Just optionKeys' | not $ Array.null optionKeys' -> true
                         _ -> false)
             }
         <> Fetch.credentials := Fetch.Include
@@ -226,8 +226,8 @@ updateProfile state @ { nickname, handle, summary, fieldValues } = Async.unify d
                     { invalidProfile: foldl (\state' error' ->
                         error' # match
                             { invalidSummary: const $ state' { summaryError = true }
-                            , invalidUrl: \fieldId ->
-                                state' { urlValueErrors = Arary.cons fieldId state'.urlValueErrors }
+                            , invalidUrl: \fieldKey ->
+                                state' { urlValueErrors = Arary.cons fieldKey state'.urlValueErrors }
                             })
                         state
                     }
@@ -239,10 +239,10 @@ handleAction :: forall left.
     Action -> H.HalogenM State Action ChildSlots Message (Async left) Unit
 handleAction (SummaryInput summary) = do
     H.modify_ (_ { summary = summary }) $> unit
-handleAction (UrlValueInput fieldId url) = do
+handleAction (UrlValueInput fieldKey url) = do
     state @ { fieldValues } <- H.get
     let newFieldValues = fieldValues <#> \value ->
-            if value.fieldId == fieldId
+            if value.fieldKey == fieldKey
                 then
                     if null url
                     then value { url = Nothing }
@@ -262,11 +262,11 @@ handleAction (Update event) = do
     let (singleSelectValues :: Array _) =
             singleSelectResults
             # Map.toUnfoldable
-            <#> \(Tuple fieldId option) ->
-                { fieldId
+            <#> \(Tuple fieldKey option) ->
+                { fieldKey
                 , url: Nothing
-                , optionId: option <#> _.id
-                , optionIds: Nothing
+                , optionKey: option <#> _.key
+                , optionKeys: Nothing
                 }
     multiSelectResults <-
         (H.queryAll (SProxy :: SProxy "multiSelectField")
@@ -274,11 +274,11 @@ handleAction (Update event) = do
     let (multiSelectValues :: Array _) =
             multiSelectResults
             # Map.toUnfoldable
-            <#> \(Tuple fieldId options) ->
-                { fieldId
+            <#> \(Tuple fieldKey options) ->
+                { fieldKey
                 , url: Nothing
-                , optionId: Nothing
-                , optionIds: Just $ options <#> _.id
+                , optionKey: Nothing
+                , optionKeys: Just $ options <#> _.key
                 }
     let state' = state
             { fieldValues =
@@ -303,26 +303,26 @@ component = H.mkComponent
         , summary: intercalate "\n\n" summary
         , summaryError: false
         , fieldValues: fields <#> (\field -> let
-            fieldValue' = fieldValues # find \{ fieldId } -> fieldId == field.id
+            fieldValue' = fieldValues # find \{ fieldKey } -> fieldKey == field.key
             in
             case fieldValue' of
             Nothing ->
-                { fieldId: field.id
+                { fieldKey: field.key
                 , url: Nothing
-                , optionId: Nothing
-                , optionIds: Nothing
+                , optionKey: Nothing
+                , optionKeys: Nothing
                 }
-            Just { url, optionId, optionIds } ->
-                { fieldId: field.id
+            Just { url, optionKey, optionKeys } ->
+                { fieldKey: field.key
                 , url
-                , optionId
-                , optionIds
+                , optionKey
+                , optionKeys
                 })
         , urlValueErrors: []
         , otherError: false
         }
     , render
-    , eval: H.mkEval $ H.defaultEval { handleAction = handleAction }
+    , eval: H.mkEval $ H.defaultEval -- { handleAction = handleAction }
     }
 
 editProfile

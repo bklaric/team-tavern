@@ -39,23 +39,28 @@ create table field
     ( id serial not null primary key
     , game_id integer not null references game(id)
     , type integer not null -- 1 (url), 2 (single), 3 (multi)
+    , key varchar(40) not null
     , label varchar(40) not null
-    -- { options :: Maybe (Array -- When field is single or multi.
-    --     { id :: Int
-    --     , option :: String
-    --     , icon :: Maybe Buffer
-    --     })
-    -- }
-    , data jsonb not null
+    );
+
+create table field_option
+    ( id serial not null primary key
+    , field_id integer not null references field(id)
+    , key varchar(40) not null
+    , option varchar(40) not null
+    -- , icon file_path or binary
     );
 
 create table field_value
     ( id serial not null primary key
     , profile_id integer not null references profile(id)
     , field_id integer not null references field(id)
-    -- { url :: Maybe String -- When field is url.
-    -- , optionId :: Maybe Int -- When field is single.
-    -- , optionIds :: Maybe (Array Int) -- When field is multi.
-    -- }
-    , data jsonb not null
+    , url varchar(200) -- When field is url.
+    , field_option_id integer references field_option(id) -- When field is singe select.
+    );
+
+create table field_value_option
+    ( id serial not null primary key
+    , field_value_id integer not null references field_value(id)
+    , field_option_id integer not null references field_option(id)
     );
