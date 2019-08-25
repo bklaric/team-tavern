@@ -31,14 +31,13 @@ import Data.Tuple.Nested (tuple4, (/\))
 import Data.Validated (Validated)
 import Data.Validated as Validated
 import Data.Variant (SProxy(..), Variant, inj)
-import TeamTavern.Server.Player.Domain.Id (Id(..))
 import TeamTavern.Server.Profile.Domain.Url (Url, UrlError)
 import TeamTavern.Server.Profile.Domain.Url as Url
 
 type FieldDto =
     { key :: String
     , type :: Int
-    , options :: Maybe (Array String)
+    , optionKeys :: Maybe (Array String)
     }
 
 data FieldType
@@ -58,14 +57,14 @@ instance showField :: Show Field where show = genericShow
 
 createField :: FieldDto -> Maybe Field
 createField fieldDto @ { key } =
-    case Tuple fieldDto.type fieldDto.options of
+    case Tuple fieldDto.type fieldDto.optionKeys of
     Tuple 1 Nothing -> Just $ Field key Url
-    Tuple 2 (Just options) ->
-        case NonEmptySet.fromFoldable options of
+    Tuple 2 (Just optionKeys) ->
+        case NonEmptySet.fromFoldable optionKeys of
         Just nonEmptyOptions -> Just $ Field key $ Single nonEmptyOptions
         Nothing -> Nothing
-    Tuple 3 (Just options) ->
-        case NonEmptySet.fromFoldable options of
+    Tuple 3 (Just optionKeys) ->
+        case NonEmptySet.fromFoldable optionKeys of
         Just nonEmptyOptions -> Just $ Field key $ Multi nonEmptyOptions
         Nothing -> Nothing
     _ -> Nothing
@@ -73,8 +72,8 @@ createField fieldDto @ { key } =
 type FieldValueDto =
     { fieldKey :: String
     , url :: Maybe String
-    , option :: Maybe String
-    , options :: Maybe (Array String)
+    , optionKey :: Maybe String
+    , optionKeys :: Maybe (Array String)
     }
 
 data FieldValueType
@@ -121,11 +120,11 @@ type CreateFieldValuesState =
 
 checkFieldValue' :: FieldValueDto -> Field -> FieldValueCheckResult
 checkFieldValue'
-    fieldValueDto @ { fieldKey, url, option, options }
+    fieldValueDto @ { fieldKey, url, optionKey, optionKeys }
     field @ (Field key type') =
     if key == fieldKey
     then
-        case tuple4 type' url option options of
+        case tuple4 type' url optionKey optionKeys of
         Url /\ (Just url') /\ Nothing /\ Nothing /\ unit ->
             case Url.create url' of
             Left errors -> Error $ inj (SProxy :: SProxy "invalidUrl")

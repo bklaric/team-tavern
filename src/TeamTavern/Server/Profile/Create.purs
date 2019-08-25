@@ -12,7 +12,7 @@ import Postgres.Pool (Pool)
 import TeamTavern.Server.Infrastructure.ReadCookieInfo (readCookieInfo)
 import TeamTavern.Server.Profile.Create.LogError (logError)
 import TeamTavern.Server.Profile.Create.SendResponse (sendResponse)
-import TeamTavern.Server.Profile.Infrastructure.AddProfile (addProfile)
+import TeamTavern.Server.Profile.Create.AddProfile (addProfile)
 import TeamTavern.Server.Profile.Infrastructure.LoadFields (loadFields)
 import TeamTavern.Server.Profile.Infrastructure.ReadProfile (readProfile)
 import TeamTavern.Server.Profile.Routes (Identifiers)
@@ -34,4 +34,3 @@ create pool identifiers cookies body =
 
             -- Add profile to database.
             addProfile client cookieInfo identifiers profile
-        

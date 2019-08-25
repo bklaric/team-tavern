@@ -22,7 +22,7 @@ import TeamTavern.Server.Profile.Domain.FieldValue (Field, createField)
 type FieldDto =
     { key :: String
     , type :: Int
-    , options :: Maybe (Array String)
+    , optionKeys :: Maybe (Array String)
     }
 
 type LoadFieldsError errors = Variant

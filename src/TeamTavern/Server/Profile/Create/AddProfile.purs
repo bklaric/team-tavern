@@ -1,4 +1,4 @@
-module TeamTavern.Server.Profile.Infrastructure.AddProfile
+module TeamTavern.Server.Profile.Create.AddProfile
     (AddProfileError, addProfile) where
 
 import Prelude

@@ -46,7 +46,7 @@ render (Profiles game profiles) = HH.div_ $
             { path: "/players/" <> nickname, content: HH.text nickname } ]
         ]
         <> (Array.catMaybes $ game.fields <#> \field -> let
-            fieldValue = fieldValues # find \ { key } -> field.key == key
+            fieldValue = fieldValues # find \ { fieldKey } -> field.key == fieldKey
             in
             case { type: field.type, fieldValue } of
             { type: 1, fieldValue: Just { url: Just url' } } -> Just $
@@ -54,13 +54,13 @@ render (Profiles game profiles) = HH.div_ $
                 [ HH.text $ field.label <> ": "
                 , HH.a [ HP.href url' ] [ HH.text url' ]
                 ]
-            { type: 2, fieldValue: Just { option: Just option' } } -> let
-                fieldOption' = field.options >>= find (\{ key } -> key == option')
+            { type: 2, fieldValue: Just { optionKey: Just optionKey' } } -> let
+                fieldOption' = field.options >>= find (\{ key } -> key == optionKey')
                 in
                 fieldOption' <#> \{ option } ->
                     HH.p_ [ HH.text $ field.label <> ": " <> option ]
-            { type: 3, fieldValue: Just { options: Just options' } } -> let
-                fieldOptions' = field.options <#> Array.filter \{ key } -> Array.elem key options'
+            { type: 3, fieldValue: Just { optionKeys: Just optionKeys' } } -> let
+                fieldOptions' = field.options <#> Array.filter \{ key } -> Array.elem key optionKeys'
                 in
                 case fieldOptions' of
                 Just fieldOptions | not $ Array.null fieldOptions -> Just $ HH.p_

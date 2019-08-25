@@ -32,10 +32,10 @@ type LoadProfilesDto =
     { nickname :: String
     , summary :: Array String
     , fieldValues :: Array
-        { key :: String
+        { fieldKey :: String
         , url :: Maybe String
-        , option :: Maybe String
-        , options :: Maybe (Array String)
+        , optionKey :: Maybe String
+        , optionKeys :: Maybe (Array String)
         }
     }
 
@@ -43,10 +43,10 @@ type LoadProfilesResult =
     { nickname :: Nickname
     , summary :: Summary
     , fieldValues :: Array
-        { key :: String
+        { fieldKey :: String
         , url :: Maybe String
-        , option :: Maybe String
-        , options :: Maybe (Array String)
+        , optionKey :: Maybe String
+        , optionKeys :: Maybe (Array String)
         }
     }
 
