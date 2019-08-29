@@ -64,13 +64,7 @@ filterableFields
     -> Array FilterProfiles.Field
 filterableFields fields = fields # Array.mapMaybe case _ of
     { key, label, type: type', options: Just options }
-    | type' == 2 || type' == 3 -> Just
-        { key, label, options: options
-            <#> \option ->
-                { key: option.option
-                , option: option.option
-                }
-        }
+    | type' == 2 || type' == 3 -> Just { key, label, options }
     _ -> Nothing
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)

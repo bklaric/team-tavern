@@ -80,7 +80,7 @@ loadProfiles game @ { handle } fields = Async.unify do
                 <#> \option -> field.key <> "=" <> option.key)
             # join
             # intercalate "&"
-    let filterQuery = if String.null filterPairs then "" else "&" <> filterPairs
+    let filterQuery = if String.null filterPairs then "" else "?" <> filterPairs
     response <- Fetch.fetch_
             ("/api/profiles/by-handle/" <> handle <> filterQuery)
         # lmap (const empty)
