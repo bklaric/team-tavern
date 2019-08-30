@@ -128,7 +128,7 @@ createProfilesFilterString preparedHandle filters = let
     preparedFilters = prepareFilters filters
     in
     if Array.null preparedFilters
-    then ""
+    then "where handle = " <> preparedHandle
     else let
         -- Create filter string.
         filterString = createFilterString preparedFilters
