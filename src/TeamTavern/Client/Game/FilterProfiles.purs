@@ -35,7 +35,7 @@ type State =
     , visible :: Boolean
     }
 
-data Action = Receive Input | Apply MouseEvent
+data Action = Receive Input | Apply MouseEvent | Clear MouseEvent
 
 data Query send = ToggleFilterProfiles send
 
@@ -70,10 +70,15 @@ render ({ fields, visible: true }) = HH.div
     $ map fieldInput fields
     <>
     [ HH.button
-        [ HP.class_ $ H.ClassName "primary"
+        [ HP.class_ $ H.ClassName "apply-filters"
         , HE.onClick $ Just <<< Apply
         ]
         [ HH.text "Apply filters" ]
+    , HH.button
+        [ HP.class_ $ H.ClassName "clear-filters"
+        , HE.onClick $ Just <<< Clear
+        ]
+        [ HH.text "Clear filters" ]
     ]
 
 handleAction :: forall left.
@@ -88,6 +93,10 @@ handleAction (Apply event) = do
             # Map.toUnfoldable
             <#> \(Tuple field options) -> field { options = options }
     H.raise $ ApplyFilters filteredFields
+handleAction (Clear event) = do
+    H.liftEffect $ preventDefault $ toEvent event
+    -- Clear every multiselect child.
+    void $ H.queryAll (SProxy :: SProxy "filter") $ MultiSelect.Clear unit
 
 handleQuery
     :: forall output monad send
