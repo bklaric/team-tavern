@@ -29,7 +29,6 @@ type LoadGameDto =
     { administratorId :: Int
     , handle :: String
     , title :: String
-    , description :: Array String
     , hasProfile :: Boolean
     , fields :: Array
         { type :: Int
@@ -71,63 +70,16 @@ type LoadGameError errors = Variant
 queryString :: Query
 queryString = Query """
     select
-        handle,
-        title,
-        description,
-        administrator_id as "administratorId",
-        has_profile as "hasProfile",
-        coalesce(
-            json_agg(
-                json_build_object(
-                    'type', field_type,
-                    'label', field_label,
-                    'key', field_key,
-                    'options', field_options
-                )
-                order by field_id
-            )
-            filter (where field_key is not null),
-            '[]'
-        )
-        as "fields"
-    from (
-        select
-            game.handle,
-            game.title,
-            game.description,
-            game.administrator_id,
-            profile.id is not null as has_profile,
-            field.id as field_id,
-            field.type as field_type,
-            field.label as field_label,
-            field.key as field_key,
-            json_agg(
-                json_build_object(
-                    'key', field_option.key,
-                    'option', field_option.option
-                )
-                order by field_option.id
-            )
-            filter (where field_option.id is not null)
-            as field_options
-        from game
-        left join field on field.game_id = game.id
-        left join field_option on field_option.field_id = field.id
+        game.handle,
+        game.title,
+        game.administrator_id as "administratorId",
+        profile.id is not null as "hasProfile",
+        coalesce(fields.fields, '[]') as fields
+    from game
+        left join fields on fields.game_id = game.id
         left join profile on profile.game_id = game.id
             and profile.player_id = $2
-        where game.handle = $1
-        group by
-            game.handle,
-            game.title,
-            game.description,
-            game.administrator_id,
-            profile.id,
-            field.id,
-            field.type,
-            field.label,
-            field.key
-        ) as game
-    group by handle, title, description, administrator_id, has_profile;
+    where game.handle = $1;
     """
 
 queryParameters :: Handle -> Maybe CookieInfo -> Array QueryParameter
@@ -146,14 +98,14 @@ loadGame pool handle' auth = do
     games :: Array LoadGameDto <- rows result
         # traverse read
         # labelMap (SProxy :: SProxy "unreadableDto") { result, errors: _ }
-    view @ { administratorId, handle, title, description, hasProfile, fields } <-
+    view @ { administratorId, handle, title, hasProfile, fields } <-
         head games
         # Async.note (inj (SProxy :: SProxy "notFound") handle')
     pure
         { administratorId: wrap administratorId
         , title: wrap title
         , handle: wrap handle
-        , description: description <#> wrap # wrap
+        , description: wrap []
         , hasProfile
         , fields
         }
