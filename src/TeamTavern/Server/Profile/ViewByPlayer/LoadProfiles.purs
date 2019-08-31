@@ -78,28 +78,15 @@ queryString = Query """
         game.handle,
         game.title,
         profile.summary,
-        coalesce(
-            json_agg(json_build_object(
-                'fieldId', field_value.field_id,
-                'data', field_value.data
-            ))
-            filter (where field_value.id is not null),
-            '[]'
-        ) as "fieldValues",
-        coalesce(
-            json_agg(field order by field.id)
-            filter (where field.id is not null),
-            '[]'
-        ) as "fields"
+        fields.fields,
+        field_values.field_values as "fieldValues"
     from profile
-    join player on player.id = profile.player_id
-    join game on game.id = profile.game_id
-    left join field on field.game_id = game.id
-    left join field_value on field_value.profile_id = profile.id
-        and field_value.field_id = field.id
+        join player on player.id = profile.player_id
+        join game on game.id = profile.game_id
+        left join fields on fields.game_id = game.id
+        left join field_values on field_values.profile_id = profile.id
     where player.nickname = $1
-    group by game.handle, game.title, profile.summary, profile.created
-    order by profile.created desc
+    order by profile.created desc;
     """
 
 queryParameters :: Nickname -> Array QueryParameter

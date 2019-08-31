@@ -194,7 +194,7 @@ queryString handle (QueryPairs filters) = let
         join player on player.id = profile.player_id
         left join field_values on field_values.profile_id = profile.id
     """ <> filterString <> """
-    order by profile.created"""
+    order by profile.created desc"""
 
 loadProfiles
     :: forall errors
