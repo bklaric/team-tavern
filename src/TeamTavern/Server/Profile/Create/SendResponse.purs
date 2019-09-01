@@ -23,18 +23,17 @@ errorResponse :: CreateError -> Response
 errorResponse = match
     { cookieInfoNotPresent: const unauthorized__
     , databaseError: const internalServerError__
-    , unreadableFieldDtos: const internalServerError__
-    , invalidFieldModels: const internalServerError__
-    , unreadableProfileDto: const badRequest__
-    , invalidProfileModel: \{ errors } ->
+    , unreadableFields: const internalServerError__
+    , unreadableProfile: const badRequest__
+    , invalidProfile: \{ errors } ->
         errors
         <#> match
             { summary: const $ Array.singleton
                 $ inj (SProxy :: SProxy "invalidSummary") {}
             , fieldValues: \fieldValueErrors ->
                 fieldValueErrors
-                <#> on (SProxy :: SProxy "invalidUrl")
-                    (\{ fieldValueDto: { fieldKey } } ->
+                <#> on (SProxy :: SProxy "invalidUrlFieldValue")
+                    (\{ fieldValue: { fieldKey } } ->
                         Just $ inj (SProxy :: SProxy "invalidUrl") { fieldKey })
                     (const Nothing)
                 # Array.fromFoldable
@@ -47,6 +46,8 @@ errorResponse = match
         # badRequest_
     , notAuthorized: const forbidden__
     , unreadableProfileId: const internalServerError__
+    , emptyResult: const internalServerError__
+    , unreadableFieldValueId: const internalServerError__
     }
 
 successResponse :: Unit -> Response

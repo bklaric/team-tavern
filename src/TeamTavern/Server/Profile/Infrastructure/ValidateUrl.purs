@@ -1,4 +1,4 @@
-module TeamTavern.Server.Profile.Domain.Url (Url(..), UrlError, create) where
+module TeamTavern.Server.Profile.Infrastructure.ValidateUrl (Url, UrlError, create, toString) where
 
 import Prelude
 
@@ -6,7 +6,6 @@ import Data.Either (Either, isRight)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Data.List.Types (NonEmptyList)
-import Data.Newtype (class Newtype)
 import Data.String (trim)
 import Data.Variant (Variant)
 import Text.Parsing.Parser (runParser)
@@ -18,8 +17,6 @@ import Wrapped as Wrapped
 import Wrapped.String (Invalid, TooLong, invalid, tooLong)
 
 newtype Url = Url String
-
-derive instance newtypeUrl :: Newtype Url _
 
 derive instance genericUrl :: Generic Url _
 

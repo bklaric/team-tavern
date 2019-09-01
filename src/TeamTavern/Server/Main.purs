@@ -38,17 +38,19 @@ import TeamTavern.Server.Game.Create (create) as Game
 import TeamTavern.Server.Game.Update (handleUpdate) as Game
 import TeamTavern.Server.Game.View (handleView) as Game
 import TeamTavern.Server.Game.ViewAll (handleViewAll) as Game
-import TeamTavern.Server.Player.View (view) as Player
-import TeamTavern.Server.Player.ViewHeader (viewHeader) as Player
 import TeamTavern.Server.Player.Register (register) as Player
 import TeamTavern.Server.Player.Update (update) as Player
+import TeamTavern.Server.Player.View (view) as Player
+import TeamTavern.Server.Player.ViewHeader (viewHeader) as Player
 import TeamTavern.Server.Profile.Create (create) as Profile
 import TeamTavern.Server.Profile.Update (update) as Profile
 import TeamTavern.Server.Profile.ViewByGame (viewByGame) as Profile
 import TeamTavern.Server.Profile.ViewByPlayer (viewByPlayer) as Profile
 import TeamTavern.Server.Routes (TeamTavernRoutes)
-import TeamTavern.Server.Session.Start (start) as Session
 import TeamTavern.Server.Session.End (end) as Session
+import TeamTavern.Server.Session.Start (start) as Session
+import Undefined (undefined)
+import Unsafe.Coerce (unsafeCoerce)
 
 listenOptions :: ListenOptions
 listenOptions = TcpListenOptions
@@ -171,8 +173,8 @@ handleRequest pool client method url cookies body =
             Game.handleUpdate pool handle cookies body
         , createProfile: \identifiers ->
             Profile.create pool identifiers cookies body
-        , updateProfile: \identifiers ->
-            Profile.update pool identifiers cookies body
+        , updateProfile: \identifiers -> undefined
+            -- Profile.update pool identifiers cookies body
         , viewProfilesByGame: \{ handle, filters } ->
             Profile.viewByGame pool handle filters
         , viewProfilesByPlayer: \{ nickname } ->

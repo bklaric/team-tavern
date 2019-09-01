@@ -22,8 +22,9 @@ import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Server.Player.Domain.Nickname (Nickname)
 import TeamTavern.Server.Profile.Domain.FieldValue (FieldValue(..), FieldValueType(..))
 import TeamTavern.Server.Profile.Domain.Summary (Summary)
-import TeamTavern.Server.Profile.Infrastructure.ReadProfile (ProfileModel)
+import TeamTavern.Server.Profile.Infrastructure.ReadProfile (Profile)
 import TeamTavern.Server.Profile.Routes (Identifiers)
+import Unsafe.Coerce (unsafeCoerce)
 
 type UpdateProfileError errors = Variant
     ( databaseError :: Error
@@ -106,17 +107,17 @@ updateProfile
     .  Client
     -> CookieInfo
     -> Identifiers
-    -> ProfileModel
+    -> Profile
     -> Async (UpdateProfileError errors) Unit
 updateProfile client cookieInfo identifiers { summary, fieldValues } = do
     result <- client
         # query updateProfileString
-            (updateProfileParameters cookieInfo identifiers summary)
+            (updateProfileParameters cookieInfo (unsafeCoerce identifiers) (unsafeCoerce summary))
         # label (SProxy :: SProxy "databaseError")
     { profileId } :: { profileId :: Int } <- rows result
         # head
         # Async.note
-            (inj (SProxy :: SProxy "notAuthorized") { cookieInfo, identifiers })
+            (inj (SProxy :: SProxy "notAuthorized") { cookieInfo, identifiers: unsafeCoerce identifiers })
         >>= (read >>> labelMap (SProxy :: SProxy "unreadableProfileId")
             { result, errors: _ })
     client
@@ -125,5 +126,5 @@ updateProfile client cookieInfo identifiers { summary, fieldValues } = do
         # label (SProxy :: SProxy "databaseError")
     client
         # execute insertFieldValuesString
-            (insertFieldValuesParameters profileId fieldValues)
+            (insertFieldValuesParameters profileId (unsafeCoerce fieldValues))
         # label (SProxy :: SProxy "databaseError")

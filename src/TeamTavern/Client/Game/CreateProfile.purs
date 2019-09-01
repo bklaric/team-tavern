@@ -52,10 +52,10 @@ type State =
     , summary :: String
     , summaryError :: Boolean
     , fieldValues :: Array
-        { key :: String
+        { fieldKey :: String
         , url :: Maybe String
-        , option :: Maybe String
-        , options :: Maybe (Array String)
+        , optionKey :: Maybe String
+        , optionKeys :: Maybe (Array String)
         }
     , urlValueErrors :: Array { fieldKey :: String }
     , otherError :: Boolean
@@ -152,16 +152,16 @@ render { summary, summaryError, urlValueErrors, otherError, game } = HH.form
 sendCreateRequest :: forall left. State -> String -> Async left (Maybe State)
 sendCreateRequest state @ { summary, fieldValues, game } nickname = Async.unify do
     response <- Fetch.fetch
-        ("/api/games/by-handle/" <> game.handle <> "/profiles/by-nickname/" <> nickname)
+        ("/api/profiles/single/" <> game.handle <> "/" <> nickname)
         (  Fetch.method := POST
         <> Fetch.body := Json.writeJSON
             { summary
             , fieldValues: fieldValues # Array.filter
-                \{ url, option, options } ->
+                \{ url, optionKey, optionKeys } ->
                     isJust url
-                    || isJust option
-                    || (case options of
-                        Just options' | not $ Array.null options' -> true
+                    || isJust optionKey
+                    || (case optionKeys of
+                        Just optionKeys' | not $ Array.null optionKeys' -> true
                         _ -> false)
             }
         <> Fetch.credentials := Fetch.Include
@@ -189,10 +189,10 @@ handleAction :: forall left.
     Action -> H.HalogenM State Action ChildSlots Message (Async left) Unit
 handleAction (SummaryInput summary) =
     H.modify_ (_ { summary = summary }) $> unit
-handleAction (UrlValueInput key url) = do
+handleAction (UrlValueInput fieldKey url) = do
     state @ { fieldValues } <- H.get
     let newFieldValues = fieldValues <#> \value ->
-            if value.key == key
+            if value.fieldKey == fieldKey
                 then
                     if null url
                     then value { url = Nothing }
@@ -211,11 +211,11 @@ handleAction (Create event) = do
     let (singleSelectValues :: Array _) =
             singleSelectResults
             # Map.toUnfoldable
-            <#> \(Tuple key option) ->
-                { key
+            <#> \(Tuple fieldKey option) ->
+                { fieldKey
                 , url: Nothing
-                , option: option <#> _.key
-                , options: Nothing
+                , optionKey: option <#> _.key
+                , optionKeys: Nothing
                 }
     multiSelectResults <-
         (H.queryAll (SProxy :: SProxy "multiSelectField")
@@ -223,11 +223,11 @@ handleAction (Create event) = do
     let (multiSelectValues :: Array _) =
             multiSelectResults
             # Map.toUnfoldable
-            <#> \(Tuple key options) ->
-                { key
+            <#> \(Tuple fieldKey options) ->
+                { fieldKey
                 , url: Nothing
-                , option: Nothing
-                , options: Just $ options <#> _.key
+                , optionKey: Nothing
+                , optionKeys: Just $ options <#> _.key
                 }
     let state' = state
             { fieldValues =
@@ -252,10 +252,10 @@ component = H.mkComponent
         { summary: ""
         , summaryError: false
         , fieldValues: game.fields <#> (\field ->
-            { key: field.key
+            { fieldKey: field.key
             , url: Nothing
-            , option: Nothing
-            , options: Nothing
+            , optionKey: Nothing
+            , optionKeys: Nothing
             })
         , urlValueErrors: []
         , otherError: false

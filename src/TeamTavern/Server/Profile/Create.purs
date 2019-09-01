@@ -10,11 +10,12 @@ import Perun.Response (Response)
 import Postgres.Async.Pool (withTransaction)
 import Postgres.Pool (Pool)
 import TeamTavern.Server.Infrastructure.ReadCookieInfo (readCookieInfo)
+import TeamTavern.Server.Profile.Create.AddProfile (addProfile)
 import TeamTavern.Server.Profile.Create.LogError (logError)
 import TeamTavern.Server.Profile.Create.SendResponse (sendResponse)
-import TeamTavern.Server.Profile.Create.AddProfile (addProfile)
 import TeamTavern.Server.Profile.Infrastructure.LoadFields (loadFields)
 import TeamTavern.Server.Profile.Infrastructure.ReadProfile (readProfile)
+import TeamTavern.Server.Profile.Infrastructure.ValidateProfile (validateProfile)
 import TeamTavern.Server.Profile.Routes (Identifiers)
 
 create :: forall left.
@@ -30,7 +31,9 @@ create pool identifiers cookies body =
             fields <- loadFields client identifiers.handle
 
             -- Read profile from body.
-            profile <- readProfile fields body
+            profile <- readProfile body
+
+            profile' <- validateProfile fields profile
 
             -- Add profile to database.
-            addProfile client cookieInfo identifiers profile
+            addProfile client cookieInfo identifiers profile'

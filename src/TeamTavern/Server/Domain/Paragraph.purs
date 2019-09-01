@@ -38,3 +38,6 @@ create text = let
 
 length :: Paragraph -> Int
 length = unwrap >>> String.length
+
+toString :: Paragraph -> String
+toString (Paragraph string) = string

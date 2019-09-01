@@ -9,7 +9,7 @@ import Data.Array as Array
 import Data.Bifunctor.Label (label, labelMap)
 import Data.Maybe (Maybe)
 import Data.MultiMap as MultiMap
-import Data.Newtype (unwrap, wrap)
+import Data.Newtype (wrap)
 import Data.String (Pattern(..), Replacement(..))
 import Data.String as String
 import Data.Symbol (SProxy(..))
@@ -24,9 +24,9 @@ import Postgres.Pool (Pool)
 import Postgres.Query (Query(..))
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
-import TeamTavern.Server.Game.Domain.Handle (Handle)
 import TeamTavern.Server.Player.Domain.Nickname (Nickname)
 import TeamTavern.Server.Profile.Domain.Summary (Summary)
+import TeamTavern.Server.Profile.Routes (Handle)
 import URI.Extra.QueryPairs (Key, QueryPairs(..), Value)
 import URI.Extra.QueryPairs as Key
 import URI.Extra.QueryPairs as Value
@@ -175,7 +175,7 @@ createProfilesFilterString preparedHandle filters = let
 queryString :: Handle -> QueryPairs Key Value -> Query
 queryString handle (QueryPairs filters) = let
     -- Prepare game handle.
-    preparedHandle = sanitizeStringValue $ unwrap handle
+    preparedHandle = sanitizeStringValue handle
 
     -- Create profiles filter string.
     filterString = createProfilesFilterString preparedHandle filters
@@ -188,7 +188,7 @@ queryString handle (QueryPairs filters) = let
         game.handle,
         player.nickname,
         profile.summary,
-        field_values.field_values as "fieldValues"
+        coalesce(field_values.field_values, '[]') as "fieldValues"
     from profile
         join game on game.id = profile.game_id
         join player on player.id = profile.player_id

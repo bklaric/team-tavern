@@ -61,7 +61,7 @@ create table field_value
 
 create table field_value_option
     ( id serial not null primary key
-    , field_value_id integer not null references field_value(id)
+    , field_value_id integer not null references field_value(id) on delete cascade
     , field_option_id integer not null references field_option(id)
     );
 

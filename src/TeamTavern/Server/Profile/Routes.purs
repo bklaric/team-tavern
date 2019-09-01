@@ -6,8 +6,10 @@ import Jarilo.Path (type (:>), End)
 import Jarilo.Query (NoQuery, Rest)
 import Jarilo.Route (Route)
 import Jarilo.Segment (Capture, Literal)
-import TeamTavern.Server.Game.Domain.Handle (Handle)
-import TeamTavern.Server.Player.Domain.Nickname (Nickname)
+
+type Handle = String
+
+type Nickname = String
 
 type Identifiers =
     { handle :: Handle
