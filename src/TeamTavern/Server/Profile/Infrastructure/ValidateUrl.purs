@@ -6,7 +6,7 @@ import Data.Either (Either, isRight)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Data.List.Types (NonEmptyList)
-import Data.String (trim)
+import Data.String (Pattern(..), contains, trim)
 import Data.Variant (Variant)
 import Text.Parsing.Parser (runParser)
 import URI (Fragment, HierPath, Host, Path, Port, Query, UserInfo)
@@ -42,10 +42,16 @@ options =
   , printFragment: identity
   }
 
+prependScheme :: String -> String
+prependScheme url =
+    if contains (Pattern "http://") url || contains (Pattern "https://") url
+    then url
+    else "http://" <> url
+
 create :: String -> Either (NonEmptyList UrlError) Url
 create url =
     Wrapped.create
-        trim
+        (trim >>> prependScheme)
         [invalid ((flip runParser $ parser options) >>> isRight), tooLong 200]
         Url url
 
