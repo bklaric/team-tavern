@@ -19,6 +19,7 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Simple.JSON.Async as Json
+import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.EditPlayer (editPlayer)
 import TeamTavern.Client.EditPlayer as EditPlayer
@@ -46,18 +47,15 @@ type ChildSlots = (editPlayer :: EditPlayer.Slot Unit)
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render Empty = HH.div_ []
 render (Player { nickname, about } isCurrentUser) = HH.div_
-    [ HH.h2 [ HP.class_ $ ClassName "card-header"] [ HH.text nickname ]
-    , HH.div [ HP.class_ $ ClassName "card" ] $ join
-        [ guard isCurrentUser $ pure $ HH.p_ [
-            HH.a
-            [ HP.href ""
-            , HE.onClick $ Just <<< ShowEditPlayerModal { nickname, about }
-            ]
-            [ HH.text "Edit info" ] ]
-        , if null about
-            then pure $ HH.p [ HP.class_ $ ClassName "no-about" ]
-                [ HH.text "Apparently, this user prefers to keep an air of mystery about them." ]
-            else about <#> \paragraph -> HH.p_ [ HH.text paragraph ]
+    [ HH.h2 [ HP.class_ $ ClassName "card-header"] $ join
+        [ pure $ HH.text nickname
+        , guard isCurrentUser $ pure $
+            HH.button [ HE.onClick $ Just <<< ShowEditPlayerModal { nickname, about } ]
+                [ HH.i [ HP.class_ $ H.ClassName "fas fa-edit" ] []
+                , HH.text "Edit account"
+                ]
+        , pure $ divider
+        , pure $ HH.span [ HP.class_ $ ClassName "card-subheader" ] [ HH.text "Profiles" ]
         ]
     , HH.div_ [ editPlayer $ Just <<< HandleEditPlayerMessage ]
     ]

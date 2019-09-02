@@ -50,7 +50,6 @@ type ChildSlots =
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render Empty = HH.div_ []
 render (Profiles profiles nickname') = HH.div_ $
-    [ HH.h3 [ HP.class_ $ ClassName "card-header"] [ HH.text "Profiles" ] ] <>
     (profiles # mapWithIndex \index { handle, title, summary, fieldValues, fields } ->
         HH.div [ HP.class_ $ ClassName "card" ] $ join
         [ pure $

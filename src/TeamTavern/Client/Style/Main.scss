@@ -9,7 +9,6 @@
 @import "../Components/WelcomeBanner";
 @import "../Components/Games";
 @import "../Game/FilterProfiles";
-@import "../Player";
 
 .hidden {
     display: none;
@@ -58,6 +57,10 @@
     button {
         margin-left: 12px;
     }
+}
+
+.card-subheader {
+    font-size: 14px;
 }
 
 .card {

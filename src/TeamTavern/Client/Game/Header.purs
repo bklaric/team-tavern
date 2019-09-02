@@ -14,6 +14,7 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
+import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Game.CreateProfile (createProfile)
 import TeamTavern.Client.Game.CreateProfile as CreateProfile
@@ -68,6 +69,14 @@ render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { game: game @ { title, handle, description, hasProfile }, playerStatus, profileFilterVisible } = HH.div_
     [ HH.h2 [ HP.class_ $ ClassName "card-header"] $ join
         [ pure $ HH.text title
+        , guard (isAdmin playerStatus)
+            [ HH.button [ HE.onClick $ Just <<< ShowEditGameModal { title, handle, description } ]
+                [ HH.i [ HP.class_ $ H.ClassName "fas fa-edit" ] []
+                , HH.text "Edit game"
+                ]
+            ]
+        , pure $ divider
+        , pure $ HH.span [ HP.class_ $ ClassName "card-subheader" ] [ HH.text "Profiles" ]
         , pure $ HH.button
             [ HE.onClick $ Just <<< ToggleFilterProfilesSection
             , HP.class_ $ H.ClassName if profileFilterVisible then "secondary" else ""
@@ -79,12 +88,6 @@ render { game: game @ { title, handle, description, hasProfile }, playerStatus, 
             [ HH.button [ HE.onClick $ Just <<< ShowCreateProfileModal game ]
                 [ HH.i [ HP.class_ $ H.ClassName "fas fa-user-plus" ] []
                 , HH.text "Create profile"
-                ]
-            ]
-        , guard (isAdmin playerStatus)
-            [ HH.button [ HE.onClick $ Just <<< ShowEditGameModal { title, handle, description } ]
-                [ HH.i [ HP.class_ $ H.ClassName "fas fa-edit" ] []
-                , HH.text "Edit game"
                 ]
             ]
         ]
