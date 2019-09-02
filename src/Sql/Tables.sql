@@ -66,90 +66,88 @@ create table field_value_option
     );
 
 create view fields (game_id, fields) as
-    select
-        game_id,
-        coalesce(
-            json_agg(
-                json_build_object(
-                    'type', type,
-                    'label', label,
-                    'key', key,
-                    'options', options
-                )
-                order by id
+select
+    game_id,
+    coalesce(
+        json_agg(
+            json_build_object(
+                'type', type,
+                'label', label,
+                'key', key,
+                'options', options
             )
-            filter (where key is not null),
-            '[]'
+            order by id
         )
-        as "fields"
-    from (
-        select
-            field.id,
-            field.game_id,
-            field.type,
-            field.label,
-            field.key,
-            json_agg(
-                json_build_object(
-                    'key', field_option.key,
-                    'option', field_option.option
-                )
-                order by field_option.id
-            )
-            filter (where field_option.id is not null)
-            as options
-        from field
-            left join field_option on field_option.field_id = field.id
-        group by
-            field.id,
-            field.game_id,
-            field.type,
-            field.label,
-            field.key
-        ) as field
-    group by game_id;
-
-create view field_values (profile_id, field_values) as
+        filter (where key is not null),
+        '[]'
+    )
+    as "fields"
+from (
     select
-        id as profile_id,
-        coalesce(
-            json_agg(json_build_object(
-                'fieldKey', key,
-                case
-                    when type = 1 then 'url'
-                    when type = 2 then 'optionKey'
-                    when type = 3 then 'optionKeys'
-                end,
-                case
-                    when type = 1 then url
-                    when type = 2 then single
-                    when type = 3 then multi
-                end
-            )) filter (where field_value_id is not null),
-            '[]'
-        ) as field_values
-    from (
-        select
-            profile.id,
-            field.key,
-            field.type,
-            field_value.id as field_value_id,
-            to_json(field_value.url) as url,
-            to_json(single.key) as single,
-            json_agg(multi.key) as multi
-        from profile
-        left join field_value on field_value.profile_id = profile.id
-        join field on field.id = field_value.field_id
-        left join field_value_option on field_value_option.field_value_id = field_value.id
-        left join field_option as single on single.id = field_value.field_option_id
-        left join field_option as multi on multi.id = field_value_option.field_option_id
-        group by
-            profile.id,
-            field.key,
-            field.type,
-            field_value.id,
-            field_value.url,
-            single.key
-        order by profile.created desc
-    ) as profile
-    group by id;
+        field.id,
+        field.game_id,
+        field.type,
+        field.label,
+        field.key,
+        json_agg(
+            json_build_object(
+                'key', field_option.key,
+                'option', field_option.option
+            )
+            order by field_option.id
+        )
+        filter (where field_option.id is not null)
+        as options
+    from field
+        left join field_option on field_option.field_id = field.id
+    group by
+        field.id,
+        field.game_id,
+        field.type,
+        field.label,
+        field.key
+    ) as field
+group by game_id;
+
+create or replace view field_values (profile_id, field_values) as
+select
+    profile_id,
+    coalesce(
+        json_agg(json_build_object(
+            'fieldKey', key,
+            case
+                when type = 1 then 'url'
+                when type = 2 then 'optionKey'
+                when type = 3 then 'optionKeys'
+            end,
+            case
+                when type = 1 then url
+                when type = 2 then single
+                when type = 3 then multi
+            end
+        )) filter (where field_value_id is not null),
+        '[]'
+    ) as field_values
+from (
+    select
+        field_value.profile_id,
+        field.key,
+        field.type,
+        field_value.id as field_value_id,
+        to_json(field_value.url) as url,
+        to_json(single.key) as single,
+        json_agg(multi.key) as multi
+    from field_value
+    join field on field.id = field_value.field_id
+    left join field_value_option on field_value_option.field_value_id = field_value.id
+    left join field_option as single on single.id = field_value.field_option_id
+    left join field_option as multi on multi.id = field_value_option.field_option_id
+    group by
+        field_value.profile_id,
+        field.key,
+        field.type,
+        field_value.id,
+        field_value.url,
+        single.key
+) as profile
+group by profile_id;
