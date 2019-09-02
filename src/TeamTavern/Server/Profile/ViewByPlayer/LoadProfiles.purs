@@ -78,8 +78,8 @@ queryString = Query """
         game.handle,
         game.title,
         profile.summary,
-        fields.fields,
-        field_values.field_values as "fieldValues"
+        coalesce(fields.fields, '[]') as "fields",
+        coalesce(field_values.field_values, '[]') as "fieldValues"
     from profile
         join player on player.id = profile.player_id
         join game on game.id = profile.game_id

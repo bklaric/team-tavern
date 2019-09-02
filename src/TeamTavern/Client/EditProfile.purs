@@ -322,7 +322,7 @@ component = H.mkComponent
         , otherError: false
         }
     , render
-    , eval: H.mkEval $ H.defaultEval -- { handleAction = handleAction }
+    , eval: H.mkEval $ H.defaultEval { handleAction = handleAction }
     }
 
 editProfile

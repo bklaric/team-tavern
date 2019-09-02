@@ -33,6 +33,7 @@ create pool identifiers cookies body =
             -- Read profile from body.
             profile <- readProfile body
 
+            -- Validate profile.
             profile' <- validateProfile fields profile
 
             -- Add profile to database.

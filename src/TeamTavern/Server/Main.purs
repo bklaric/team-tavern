@@ -49,8 +49,6 @@ import TeamTavern.Server.Profile.ViewByPlayer (viewByPlayer) as Profile
 import TeamTavern.Server.Routes (TeamTavernRoutes)
 import TeamTavern.Server.Session.End (end) as Session
 import TeamTavern.Server.Session.Start (start) as Session
-import Undefined (undefined)
-import Unsafe.Coerce (unsafeCoerce)
 
 listenOptions :: ListenOptions
 listenOptions = TcpListenOptions
@@ -173,8 +171,8 @@ handleRequest pool client method url cookies body =
             Game.handleUpdate pool handle cookies body
         , createProfile: \identifiers ->
             Profile.create pool identifiers cookies body
-        , updateProfile: \identifiers -> undefined
-            -- Profile.update pool identifiers cookies body
+        , updateProfile: \identifiers ->
+            Profile.update pool identifiers cookies body
         , viewProfilesByGame: \{ handle, filters } ->
             Profile.viewByGame pool handle filters
         , viewProfilesByPlayer: \{ nickname } ->

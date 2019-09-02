@@ -12,26 +12,29 @@ import Postgres.Pool (Pool)
 import TeamTavern.Server.Infrastructure.ReadCookieInfo (readCookieInfo)
 import TeamTavern.Server.Profile.Infrastructure.LoadFields (loadFields)
 import TeamTavern.Server.Profile.Infrastructure.ReadProfile (readProfile)
+import TeamTavern.Server.Profile.Infrastructure.ValidateProfile (validateProfile)
 import TeamTavern.Server.Profile.Routes (Identifiers)
 import TeamTavern.Server.Profile.Update.LogError (logError)
 import TeamTavern.Server.Profile.Update.SendResponse (sendResponse)
 import TeamTavern.Server.Profile.Update.UpdateProfile (updateProfile)
-import Unsafe.Coerce (unsafeCoerce)
 
 update :: forall left.
     Pool -> Identifiers -> Map String String -> Body -> Async left Response
 update pool identifiers cookies body =
-    sendResponse do
+    sendResponse $ examineLeftWithEffect logError do
     -- Read cookie info from cookies.
     cookieInfo <- readCookieInfo cookies
 
     pool # withTransaction (inj (SProxy :: SProxy "databaseError"))
         \client -> do
             -- Load game fields from database.
-            fields <- loadFields client (unsafeCoerce identifiers.handle)
+            fields <- loadFields client identifiers.handle
 
             -- Read profile from body.
             profile <- readProfile body
 
+            -- Validate profile.
+            profile' <- validateProfile fields profile
+
             -- Update profile.
-            updateProfile client cookieInfo (unsafeCoerce identifiers) profile
+            updateProfile client cookieInfo identifiers profile'
