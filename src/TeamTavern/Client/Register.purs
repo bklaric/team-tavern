@@ -73,9 +73,10 @@ render
     } = HH.form
     [ HP.class_ $ ClassName "single-form", HE.onSubmit $ Just <<< Register ]
     [ HH.h2_
-        [ HH.text "Register to "
+        [ HH.text "Create a "
         , navigationAnchor (SProxy :: SProxy "home")
             { path: "/", content: HH.text "TeamTavern" }
+        , HH.text " account"
         ]
     , HH.div_
         [ HH.label
@@ -131,14 +132,14 @@ render
         [ HP.class_ $ ClassName "primary"
         , HP.disabled $ email == "" || nickname == "" || password == ""
         ]
-        [ HH.text "Register" ]
+        [ HH.text "Create account" ]
     , HH.p
         [ HP.class_ $ otherErrorClass otherError ]
         [ HH.text "Something unexpected went wrong! Please try again later." ]
     , HH.p_
-        [ HH.text "Already have an account?"
+        [ HH.text "Already have an account? "
         , navigationAnchor (SProxy :: SProxy "signInAnchor")
-            { path: "/signin", content: HH.text " Sign in." }
+            { path: "/signin", content: HH.text "Sign in." }
         ]
     ]
 

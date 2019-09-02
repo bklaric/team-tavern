@@ -70,7 +70,7 @@ render playerInfo = HH.div_
                     [ navigationAnchor (SProxy :: SProxy "signInAnchor")
                         { path: "/signin", content: HH.text "Sign in" }
                     , navigationAnchor (SProxy :: SProxy "registerAnchor")
-                        { path: "/register", content: HH.text "Register" }
+                        { path: "/register", content: HH.text "Create account" }
                     ]
                 SignedIn { nickname } ->
                     [ navigationAnchor (SProxy :: SProxy "profileAnchor")

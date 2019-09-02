@@ -59,6 +59,10 @@ a {
     word-wrap: break-word;
 }
 
+a:hover {
+    text-decoration: underline;
+}
+
 button {
     @extend %bordered;
     font-size: 14px;
