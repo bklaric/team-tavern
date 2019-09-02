@@ -12,6 +12,7 @@ import Postgres.Pool (Pool)
 import TeamTavern.Server.Infrastructure.ReadCookieInfo (readCookieInfo)
 import TeamTavern.Server.Profile.Infrastructure.LoadFields (loadFields)
 import TeamTavern.Server.Profile.Infrastructure.ReadProfile (readProfile)
+import TeamTavern.Server.Profile.Infrastructure.ValidateProfile (validateProfile)
 import TeamTavern.Server.Profile.Routes (Identifiers)
 import TeamTavern.Server.Profile.Update.LogError (logError)
 import TeamTavern.Server.Profile.Update.SendResponse (sendResponse)
@@ -30,7 +31,10 @@ update pool identifiers cookies body =
             fields <- loadFields client identifiers.handle
 
             -- Read profile from body.
-            profile <- readProfile fields body
+            profile <- readProfile body
+
+            -- Validate profile.
+            profile' <- validateProfile fields profile
 
             -- Update profile.
-            updateProfile client cookieInfo identifiers profile
+            updateProfile client cookieInfo identifiers profile'

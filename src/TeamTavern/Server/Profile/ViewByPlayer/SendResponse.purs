@@ -18,17 +18,17 @@ type OkContent = Array
     , title :: String
     , summary :: Array String
     , fieldValues :: Array
-        { fieldId :: Int
+        { fieldKey :: String
         , url :: Maybe String
-        , optionId :: Maybe Int
-        , optionIds :: Maybe (Array Int)
+        , optionKey :: Maybe String
+        , optionKeys :: Maybe (Array String)
         }
     , fields :: Array
-        { id :: Int
+        { key :: String
         , type :: Int
         , label :: String
         , options :: Maybe (Array
-            { id :: Int
+            { key :: String
             , option :: String
             })
         }

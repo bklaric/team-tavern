@@ -29,18 +29,15 @@ type LoadGameDto =
     { administratorId :: Int
     , handle :: String
     , title :: String
-    , description :: Array String
     , hasProfile :: Boolean
     , fields :: Array
-        { id :: Int
-        , type :: Int
+        { type :: Int
         , label :: String
-        , data ::
-            { options :: Maybe (Array
-                { id :: Int
-                , option :: String
-                })
-            }
+        , key :: String
+        , options :: Maybe (Array
+            { key :: String
+            , option :: String
+            })
         }
     }
 
@@ -51,11 +48,11 @@ type LoadGameResult =
     , description :: Description
     , hasProfile :: Boolean
     , fields :: Array
-        { id :: Int
-        , type :: Int
+        { type :: Int
         , label :: String
+        , key :: String
         , options :: Maybe (Array
-            { id :: Int
+            { key :: String
             , option :: String
             })
         }
@@ -75,25 +72,14 @@ queryString = Query """
     select
         game.handle,
         game.title,
-        game.description,
         game.administrator_id as "administratorId",
         profile.id is not null as "hasProfile",
-        coalesce(
-            json_agg(field order by field.id)
-            filter (where field.id is not null),
-            '[]'
-        ) as "fields"
+        coalesce(fields.fields, '[]') as fields
     from game
-    left join field on field.game_id = game.id
-    left join profile on profile.game_id = game.id
-        and profile.player_id = $2
-    where game.handle = $1
-    group by
-        game.handle,
-        game.title,
-        game.description,
-        game.administrator_id,
-        profile.id;
+        left join fields on fields.game_id = game.id
+        left join profile on profile.game_id = game.id
+            and profile.player_id = $2
+    where game.handle = $1;
     """
 
 queryParameters :: Handle -> Maybe CookieInfo -> Array QueryParameter
@@ -112,19 +98,14 @@ loadGame pool handle' auth = do
     games :: Array LoadGameDto <- rows result
         # traverse read
         # labelMap (SProxy :: SProxy "unreadableDto") { result, errors: _ }
-    view @ { administratorId, handle, title, description, hasProfile, fields } <-
+    view @ { administratorId, handle, title, hasProfile, fields } <-
         head games
         # Async.note (inj (SProxy :: SProxy "notFound") handle')
     pure
         { administratorId: wrap administratorId
         , title: wrap title
         , handle: wrap handle
-        , description: description <#> wrap # wrap
+        , description: wrap []
         , hasProfile
-        , fields: fields <#> \field ->
-            { id: field.id
-            , type: field.type
-            , label: field.label
-            , options: field.data.options
-            }
+        , fields
         }

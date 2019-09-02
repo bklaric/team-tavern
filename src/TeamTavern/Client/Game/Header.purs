@@ -1,5 +1,5 @@
 module TeamTavern.Client.Game.Header
-    (PlayerStatus(..), State(..), Slot, gameHeader) where
+    (PlayerStatus(..), State(..), Output, Slot, gameHeader) where
 
 import Prelude
 
@@ -24,8 +24,14 @@ import TeamTavern.Server.Game.View.SendResponse as View
 import Web.Event.Event (preventDefault)
 import Web.UIEvent.MouseEvent (MouseEvent, toEvent)
 
+type Input =
+    { game :: View.OkContent
+    , playerStatus :: PlayerStatus
+    }
+
 data Action
-    = Receive State
+    = Receive Input
+    | ToggleFilterProfilesSection MouseEvent
     | ShowEditGameModal Edit.Input MouseEvent
     | ShowCreateProfileModal View.OkContent MouseEvent
     | HandleEditGameMessage (Modal.Message Edit.Message)
@@ -43,9 +49,15 @@ isAdmin = case _ of
     Administrator -> true
     _ -> false
 
-data State = State View.OkContent PlayerStatus
+type State =
+    { game :: View.OkContent
+    , playerStatus :: PlayerStatus
+    , profileFilterVisible :: Boolean
+    }
 
-type Slot = H.Slot (Const Void) Void
+data Output = ToggleFilterProfiles
+
+type Slot = H.Slot (Const Void) Output
 
 type ChildSlots =
     ( editGame :: Edit.Slot Unit
@@ -53,34 +65,42 @@ type ChildSlots =
     )
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
-render (State game @ { title, handle, description, hasProfile } playerStatus) = HH.div_
-    [ HH.h2 [ HP.class_ $ ClassName "card-header"] [ HH.text title ]
-    , HH.div [ HP.class_ $ ClassName "card"] $ join
-        [ guard (not hasProfile && isSignedIn playerStatus)
-            [ HH.p_ [ HH.a
-                [ HP.href ""
-                , HE.onClick $ Just <<< ShowCreateProfileModal game
+render { game: game @ { title, handle, description, hasProfile }, playerStatus, profileFilterVisible } = HH.div_
+    [ HH.h2 [ HP.class_ $ ClassName "card-header"] $ join
+        [ pure $ HH.text title
+        , pure $ HH.button
+            [ HE.onClick $ Just <<< ToggleFilterProfilesSection
+            , HP.class_ $ H.ClassName if profileFilterVisible then "secondary" else ""
+            ]
+            [ HH.i [ HP.class_ $ H.ClassName "fas fa-filter" ] []
+            , HH.text "Filter profiles"
+            ]
+        , guard (not hasProfile && isSignedIn playerStatus)
+            [ HH.button [ HE.onClick $ Just <<< ShowCreateProfileModal game ]
+                [ HH.i [ HP.class_ $ H.ClassName "fas fa-user-plus" ] []
+                , HH.text "Create profile"
                 ]
-                [ HH.text "Create profile" ]
-            ] ]
+            ]
         , guard (isAdmin playerStatus)
-            [ HH.p_ [ HH.a
-                [ HP.href ""
-                , HE.onClick
-                    $ Just <<< ShowEditGameModal { title, handle, description }
+            [ HH.button [ HE.onClick $ Just <<< ShowEditGameModal { title, handle, description } ]
+                [ HH.i [ HP.class_ $ H.ClassName "fas fa-edit" ] []
+                , HH.text "Edit game"
                 ]
-                [ HH.text "Edit game" ]
-            ] ]
-        , description <#> \paragraph -> HH.p_ [ HH.text paragraph ]
+            ]
         ]
     , HH.div_ [ editGame $ Just <<< HandleEditGameMessage ]
     , HH.div_ [ createProfile $ Just <<< HandleCreateProfileMessage ]
     ]
 
-handleAction :: forall output left.
-    Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
-handleAction (Receive state) =
-    H.put state
+handleAction :: forall left.
+    Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
+handleAction (Receive { game, playerStatus}) =
+    H.put { game, playerStatus, profileFilterVisible: false }
+handleAction (ToggleFilterProfilesSection event) = do
+    H.liftEffect $ preventDefault $ toEvent event
+    H.modify_ \state ->
+        state { profileFilterVisible = not state.profileFilterVisible }
+    H.raise ToggleFilterProfiles
 handleAction (ShowEditGameModal input event) = do
     H.liftEffect $ preventDefault $ toEvent event
     Modal.showWith input (SProxy :: SProxy "editGame")
@@ -100,10 +120,11 @@ handleAction (HandleCreateProfileMessage message) = do
             H.liftEffect $ navigate_ $ "/games/" <> trim handle
         _ -> pure unit
 
-component :: forall query output left.
-    H.Component HH.HTML query State output (Async left)
+component :: forall query left.
+    H.Component HH.HTML query Input Output (Async left)
 component = H.mkComponent
-    { initialState: identity
+    { initialState: \{ game, playerStatus } ->
+        { game, playerStatus, profileFilterVisible: false }
     , render
     , eval: H.mkEval $ H.defaultEval
         { handleAction = handleAction
@@ -112,8 +133,9 @@ component = H.mkComponent
     }
 
 gameHeader
-    :: forall query children left
-    .  State
-    -> HH.ComponentHTML query (gameHeader :: Slot Unit | children) (Async left)
-gameHeader state =
-    HH.slot (SProxy :: SProxy "gameHeader") unit component state absurd
+    :: forall action children left
+    .  Input
+    -> (Output -> Maybe action)
+    -> HH.ComponentHTML action (gameHeader :: Slot Unit | children) (Async left)
+gameHeader input handleOutput =
+    HH.slot (SProxy :: SProxy "gameHeader") unit component input handleOutput

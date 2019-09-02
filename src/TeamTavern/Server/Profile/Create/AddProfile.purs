@@ -1,5 +1,4 @@
-module TeamTavern.Server.Profile.Update.UpdateProfile
-    (UpdateProfileError, updateProfile) where
+module TeamTavern.Server.Profile.Create.AddProfile where
 
 import Prelude
 
@@ -9,11 +8,12 @@ import Data.Array (head)
 import Data.Bifunctor.Label (label, labelMap)
 import Data.Variant (SProxy(..), Variant, inj)
 import Foreign (MultipleErrors)
-import Postgres.Async.Query (execute, query)
+import Postgres.Async.Query (query)
 import Postgres.Client (Client)
 import Postgres.Error (Error)
 import Postgres.Query (Query(..), QueryParameter, (:), (:|))
-import Postgres.Result (Result, rows)
+import Postgres.Result (Result)
+import Postgres.Result as Result
 import Simple.JSON.Async (read)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Server.Profile.Infrastructure.AddFieldValues (ProfileId, addFieldValues)
@@ -21,7 +21,7 @@ import TeamTavern.Server.Profile.Infrastructure.ValidateProfile (Profile(..))
 import TeamTavern.Server.Profile.Infrastructure.ValidateSummary (Summary)
 import TeamTavern.Server.Profile.Routes (Identifiers)
 
-type UpdateProfileError errors = Variant
+type AddProfileError errors = Variant
     ( databaseError :: Error
     , notAuthorized ::
         { cookieInfo :: CookieInfo
@@ -40,42 +40,38 @@ type UpdateProfileError errors = Variant
         }
     | errors )
 
--- Update profile row.
-
-updateProfileString :: Query
-updateProfileString = Query """
-    update profile
-    set summary = $5
+addProfileString :: Query
+addProfileString = Query """
+    insert into profile (player_id, game_id, summary)
+    select player.id, game.id, $5
     from session, player, game
     where session.player_id = $1
     and session.token = $2
     and session.revoked = false
     and session.player_id = player.id
-    and player.id = profile.player_id
-    and game.id = profile.game_id
-    and player.nickname = $3
-    and game.handle = $4
+    and game.handle = $3
+    and player.nickname = $4
     returning profile.id as "profileId";
     """
 
-updateProfileParameters ::
+addProfileParameters ::
     CookieInfo -> Identifiers -> Summary -> Array QueryParameter
-updateProfileParameters { id, token } { nickname, handle } summary =
-    id : token : nickname : handle :| summary
+addProfileParameters { id, token } { handle, nickname } summary =
+    id : token : handle : nickname :| summary
 
-updateProfile'
+addProfile'
     :: forall errors
     .  Client
     -> CookieInfo
     -> Identifiers
     -> Summary
-    -> Async (UpdateProfileError errors) ProfileId
-updateProfile' client cookieInfo identifiers summary = do
+    -> Async (AddProfileError errors) ProfileId
+addProfile' client cookieInfo identifiers summary = do
     result <- client
-        # query updateProfileString
-            (updateProfileParameters cookieInfo identifiers summary)
+        # query addProfileString
+            (addProfileParameters cookieInfo identifiers summary)
         # label (SProxy :: SProxy "databaseError")
-    { profileId } :: { profileId :: Int } <- rows result
+    { profileId } :: { profileId :: Int } <- Result.rows result
         # head
         # Async.note (inj
             (SProxy :: SProxy "notAuthorized") { cookieInfo, identifiers })
@@ -83,34 +79,14 @@ updateProfile' client cookieInfo identifiers summary = do
             (SProxy :: SProxy "unreadableProfileId") { result, errors: _ })
     pure profileId
 
--- Delete field value rows.
-
-deleteFieldValuesString :: Query
-deleteFieldValuesString = Query """
-    delete from field_value
-    where profile_id = $1;
-    """
-
-deleteFieldValues :: forall errors.
-    Client -> ProfileId -> Async (UpdateProfileError errors) Unit
-deleteFieldValues client profileId =
-    client
-    # execute deleteFieldValuesString (profileId : [])
-    # label (SProxy :: SProxy "databaseError")
-
-updateProfile
+addProfile
     :: forall errors
     .  Client
     -> CookieInfo
     -> Identifiers
     -> Profile
-    -> Async (UpdateProfileError errors) Unit
-updateProfile client cookieInfo identifiers (Profile summary fieldValues) = do
-    -- Update profile row.
-    profileId <- updateProfile' client cookieInfo identifiers summary
-
-    -- Delete all existing field values.
-    deleteFieldValues client profileId
-
-    -- Insert new field values.
+    -> Async (AddProfileError errors) Unit
+addProfile client cookieInfo identifiers (Profile summary fieldValues ) = do
+    profileId <- addProfile' client cookieInfo identifiers summary
     addFieldValues client profileId fieldValues
+    pure unit

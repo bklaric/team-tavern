@@ -18,11 +18,11 @@ type OkContent =
     , description :: Array String
     , hasProfile :: Boolean
     , fields :: Array
-        { id :: Int
-        , type :: Int
+        { type :: Int
         , label :: String
+        , key :: String
         , options :: Maybe (Array
-            { id :: Int
+            { key :: String
             , option :: String
             })
         }

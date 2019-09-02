@@ -40,7 +40,9 @@ data Action option
     | Close
     | Toggle
 
-data Query option send = Selected (Array option -> send)
+data Query option send
+    = Selected (Array option -> send)
+    | Clear send
 
 type Slot option = H.Slot (Query option) Void
 
@@ -104,6 +106,12 @@ handleQuery
 handleQuery (Selected send) = do
     { options } <- H.get
     pure $ Just $ send (options # Array.filter (_.selected) <#> _.option)
+handleQuery (Clear send) = do
+    H.modify_ \state @ { options } ->
+        state { options = options <#> \option ->
+            option { selected = false }
+        }
+    pure $ Just send
 
 component :: forall option message monad.
     H.Component HH.HTML (Query option) (Input option) message monad

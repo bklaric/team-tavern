@@ -5,7 +5,7 @@ import Prelude
 import Async (Async, examineLeftWithEffect)
 import Perun.Response (Response)
 import Postgres.Pool (Pool)
-import TeamTavern.Server.Player.Domain.Nickname (Nickname)
+import TeamTavern.Server.Profile.Routes (Nickname)
 import TeamTavern.Server.Profile.ViewByPlayer.LoadProfiles (loadProfiles)
 import TeamTavern.Server.Profile.ViewByPlayer.LogError (logError)
 import TeamTavern.Server.Profile.ViewByPlayer.SendResponse (sendResponse)

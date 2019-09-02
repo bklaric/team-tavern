@@ -14,6 +14,7 @@ import Data.Either (note) as Either
 import Data.Either.AlwaysRight (alwaysRight) as Either
 import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype, unwrap)
+import Data.Traversable (class Traversable, traverse)
 import Effect (Effect)
 import Effect.Class (class MonadEffect)
 import Effect.Ref (new, read, write)
@@ -113,6 +114,10 @@ examineLeftWithEffect :: forall left right.
     (left -> Effect Unit) -> Async left right -> Async left right
 examineLeftWithEffect examiner async =
     examineLeftWithAsync (\left' -> fromEffect $ examiner left') async
+
+foreach :: forall left right traversable. Traversable traversable =>
+    traversable right -> (right -> Async left Unit) -> Async left Unit
+foreach traversable function = void $ traverse function traversable
 
 derive instance newtypeAsync :: Newtype (Async left right) _
 

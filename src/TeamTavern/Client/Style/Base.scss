@@ -1,4 +1,5 @@
 $primary-color: #b15e36;
+$disabled-primary-color: #d8beb1;
 $text-color: rgb(26, 26, 27);
 $disabled-color: rgb(221, 221, 221);
 $error-color: orangered;
@@ -60,10 +61,26 @@ a {
 
 button {
     @extend %bordered;
+    font-size: 14px;
     color: $text-color;
     padding: 5px 10px;
     background-color: white;
     cursor: pointer;
+
+    i {
+        margin-right: 5px;
+    }
+}
+
+button.primary {
+    color: white;
+    background-color: $primary-color;
+    border-color: $primary-color;
+}
+
+button.secondary {
+    color: $primary-color;
+    border-color: $primary-color;
 }
 
 button[disabled] {
@@ -73,12 +90,26 @@ button[disabled] {
     cursor: not-allowed;
 }
 
+button[disabled].primary {
+    color: white;
+    background-color: $disabled-primary-color;
+    border-color: $disabled-primary-color;
+}
+
+button[disabled].secondary {
+    color: $disabled-primary-color;
+    border-color: $disabled-primary-color;
+}
+
+
 label {
+    display: block;
     margin-bottom: 7px;
 }
 
 input {
     @extend %bordered;
+    font-size: 14px;
     padding: 5px;
 }
 
@@ -88,3 +119,5 @@ textarea {
     padding: 5px;
     resize: vertical;
 }
+
+// disabled primary button #d8beb1
