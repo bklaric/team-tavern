@@ -53,17 +53,20 @@ render (Profiles profiles nickname') = HH.div_ $
     (profiles # mapWithIndex \index { handle, title, summary, fieldValues, fields } ->
         HH.div [ HP.class_ $ ClassName "card" ] $ join
         [ pure $
-            HH.h3_ [ navigationAnchorIndexed (SProxy :: SProxy "games") index
-            { path: "/games/" <> handle, content: HH.text title } ]
-        , case nickname' of
-            Nothing -> []
-            Just nickname -> pure $ HH.p_ [
-                HH.a
-                [ HP.href ""
-                , HE.onClick $ Just <<< ShowEditProfileModal
-                    { nickname, handle, title, summary, fieldValues, fields }
+            HH.h3 [ HP.class_ $ ClassName "card-title" ] $ join
+                [ pure $ navigationAnchorIndexed (SProxy :: SProxy "games") index
+                    { path: "/games/" <> handle, content: HH.text title }
+                , case nickname' of
+                    Nothing -> []
+                    Just nickname -> pure $
+                        HH.button
+                            [ HE.onClick $ Just <<< ShowEditProfileModal
+                                { nickname, handle, title, summary, fieldValues, fields }
+                            ]
+                            [ HH.i [ HP.class_ $ H.ClassName "fas fa-user-edit" ] []
+                            , HH.text "Edit profile"
+                            ]
                 ]
-                [ HH.text "Edit profile" ] ]
         , Array.catMaybes $ fields <#> \field -> let
             fieldValue = fieldValues # find \ { fieldKey } -> field.key == fieldKey
             in
