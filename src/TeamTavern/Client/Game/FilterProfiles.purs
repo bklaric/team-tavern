@@ -3,11 +3,11 @@ module TeamTavern.Client.Game.FilterProfiles where
 import Prelude
 
 import Async (Async)
+import Data.Const (Const)
 import Data.Map as Map
 import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..))
-import Effect.Class (class MonadEffect)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
@@ -30,23 +30,19 @@ type Field =
 
 type Input = Array Field
 
-type State =
-    { fields :: Array Field
-    , visible :: Boolean
-    }
+type State = Array Field
 
 data Action = Receive Input | Apply MouseEvent | Clear MouseEvent
 
-data Query send = ToggleFilterProfiles send
-
 data Output = ApplyFilters (Array Field)
 
-type Slot = H.Slot Query Output
+type Slot = H.Slot (Const Void) Output
 
-type ChildSlots = ( "filter" :: MultiSelect.Slot Option Field )
+type ChildSlots = (filter :: MultiSelect.Slot Option Field)
 
 fieldLabel :: forall slots action. String -> HH.HTML slots action
-fieldLabel label = HH.label [ HP.for label ] [ HH.text label ]
+fieldLabel label = HH.label
+    [ HP.class_ $ HH.ClassName "input-label", HP.for label ] [ HH.text label ]
 
 fieldInput
     :: forall monad
@@ -63,28 +59,34 @@ fieldInput field @ { label, options } =
     ]
 
 render :: forall monad. State -> H.ComponentHTML Action ChildSlots monad
-render ({ visible: false }) =
-    HH.div_ []
-render ({ fields, visible: true }) = HH.div
-    [ HP.class_ $ H.ClassName "card" ]
-    $ map fieldInput fields
-    <>
-    [ HH.button
-        [ HP.class_ $ H.ClassName "apply-filters"
-        , HE.onClick $ Just <<< Apply
+render fields = HH.div
+    [ HP.class_ $ HH.ClassName "card" ]
+    [ HH.h3 [ HP.class_ $ HH.ClassName "card-title" ]
+        [ HH.text "Profile filters" ]
+    , HH.div [ HP.class_ $ HH.ClassName "card-content" ] $
+        map fieldInput fields
+        <>
+        [ HH.button
+            [ HP.class_ $ H.ClassName "apply-filters"
+            , HE.onClick $ Just <<< Apply
+            ]
+            [ HH.i [ HP.class_ $ HH.ClassName "fas fa-filter button-icon" ] []
+            , HH.text "Apply filters"
+            ]
+        , HH.button
+            [ HP.class_ $ H.ClassName "clear-filters"
+            , HE.onClick $ Just <<< Clear
+            ]
+            [ HH.i [ HP.class_ $ HH.ClassName "fas fa-eraser button-icon" ] []
+            , HH.text "Clear filters"
+            ]
         ]
-        [ HH.text "Apply filters" ]
-    , HH.button
-        [ HP.class_ $ H.ClassName "clear-filters"
-        , HE.onClick $ Just <<< Clear
-        ]
-        [ HH.text "Clear filters" ]
     ]
 
 handleAction :: forall left.
     Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
 handleAction (Receive fields) =
-    H.put { fields, visible: false }
+    H.put fields
 handleAction (Apply event) = do
     H.liftEffect $ preventDefault $ toEvent event
     filters <- H.queryAll (SProxy :: SProxy "filter")
@@ -98,23 +100,13 @@ handleAction (Clear event) = do
     -- Clear every multiselect child.
     void $ H.queryAll (SProxy :: SProxy "filter") $ MultiSelect.Clear unit
 
-handleQuery
-    :: forall output monad send
-    .  MonadEffect monad
-    => Query send
-    -> H.HalogenM State Action ChildSlots output monad (Maybe send)
-handleQuery (ToggleFilterProfiles send) = do
-    H.modify_ \state -> state { visible = not state.visible }
-    pure $ Just send
-
-component :: forall left.
-    H.Component HH.HTML Query Input Output (Async left)
+component :: forall query left.
+    H.Component HH.HTML query Input Output (Async left)
 component = H.mkComponent
-    { initialState: { fields: _, visible: false }
+    { initialState: identity
     , render
     , eval: H.mkEval $ H.defaultEval
-        { handleQuery = handleQuery
-        , handleAction = handleAction
+        { handleAction = handleAction
         }
     }
 

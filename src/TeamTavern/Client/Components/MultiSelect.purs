@@ -51,12 +51,11 @@ render { options, labeler, comparer, open } =
     HH.div
     [ HP.class_ $ ClassName "select"
     , HP.tabIndex 0
-    , HE.onFocus $ const $ Just Open
     , HE.onBlur $ const $ Just Close
     ]
     $ [ HH.div
         [ HP.class_ $ ClassName
-            if open then "selected-open" else "selected"
+            if open then "selected-open" else "selected-closed"
         , HE.onMouseDown $ const $ Just Toggle
         ]
         [ HH.text $ intercalate ", "

@@ -1,3 +1,4 @@
+@import "Reset";
 @import "Base";
 @import "SingleForm";
 @import "../Components/Divider";
@@ -44,19 +45,19 @@
     }
 }
 
+.content-title {
+    display: block;
+    font-size: 18px;
+    line-height: 22px;
+    padding-left: 14px;
+    margin-bottom: 14px;
+}
+
 .single-content {
     width: 100vw;
     height: 100vh;
     background-color: rgb(230, 230, 230);
     overflow: hidden auto;
-}
-
-.card-header {
-    padding-left: 14px;
-
-    button {
-        margin-left: 14px;
-    }
 }
 
 .card-subheader {
@@ -66,11 +67,24 @@
 .card {
     @extend %bordered;
     background-color: white;
-    padding: 14px;
     margin-bottom: 14px;
 }
 
 .card-title {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 21px;
+    padding: 14px;
+    margin: 0;
+    border-bottom: 1px solid #ccc;
+}
+
+.card-content {
+    padding: 14px;
+}
+
+.profile-title {
     button {
         margin-left: 14px;
     }
@@ -79,4 +93,8 @@
 .empty {
     margin: 0 !important;
     padding: 0 !important;
+}
+
+.input-label {
+    line-height: 16px;
 }

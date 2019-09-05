@@ -13,11 +13,10 @@ import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
+import Halogen.HTML.Properties as HP
 import Simple.JSON.Async as Json
 import TeamTavern.Client.Game.FilterProfiles (filterProfiles)
 import TeamTavern.Client.Game.FilterProfiles as FilterProfiles
-import TeamTavern.Client.Game.Header (gameHeader)
-import TeamTavern.Client.Game.Header as Header
 import TeamTavern.Client.Game.Profiles (gameProfiles)
 import TeamTavern.Client.Game.Profiles as Profiles
 import TeamTavern.Client.Script.Cookie (getPlayerId)
@@ -25,29 +24,18 @@ import TeamTavern.Server.Game.View.SendResponse as View
 
 data Action
     = Init String
-    | ToggleFilterProfiles
     | ApplyFilters (Array FilterProfiles.Field)
-
-createPlayerStatus :: Maybe Int -> Int -> Header.PlayerStatus
-createPlayerStatus playerId administratorId =
-    case playerId of
-    Just playerId' ->
-        if playerId' == administratorId
-        then Header.Administrator
-        else Header.Player
-    _ -> Header.SignedOut
 
 data State
     = Empty
-    | Game View.OkContent Header.PlayerStatus
+    | Game View.OkContent
     | NotFound
     | Error
 
 type Slot = H.Slot (Const Void) Void
 
 type ChildSlots =
-    ( gameHeader :: Header.Slot Unit
-    , gameProfiles :: Profiles.Slot Unit
+    ( gameProfiles :: Profiles.Slot Unit
     , filterProfiles :: FilterProfiles.Slot Unit
     )
 
@@ -69,8 +57,9 @@ filterableFields fields = fields # Array.mapMaybe case _ of
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render Empty = HH.div_ []
-render (Game game' playerStatus) = HH.div_
-    [ gameHeader { game: game', playerStatus } (const $ Just ToggleFilterProfiles)
+render (Game game') = HH.div_
+    [ HH.h2 [ HP.class_ $ HH.ClassName "content-title" ]
+        [ HH.text game'.title ]
     , filterProfiles (filterableFields game'.fields)
         (\(FilterProfiles.ApplyFilters filters) -> Just $ ApplyFilters filters)
     , gameProfiles game'
@@ -88,7 +77,7 @@ loadGame handle = Async.unify do
         404 -> Async.left NotFound
         _ -> Async.left Error
     playerId <- Async.fromEffect getPlayerId
-    pure $ Game content (createPlayerStatus playerId content.administratorId)
+    pure $ Game content
 
 handleAction :: forall output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
@@ -96,9 +85,6 @@ handleAction (Init handle) = do
     state <- H.lift $ loadGame handle
     H.put state
     pure unit
-handleAction ToggleFilterProfiles =
-    void $ H.query (SProxy :: SProxy "filterProfiles") unit
-        (FilterProfiles.ToggleFilterProfiles unit)
 handleAction (ApplyFilters filters) =
     void $ H.query (SProxy :: SProxy "gameProfiles") unit
         (Profiles.ApplyFilters filters unit)

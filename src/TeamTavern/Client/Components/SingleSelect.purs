@@ -45,7 +45,7 @@ render { options, selected, labeler, open } =
     ]
     $ [ HH.div
         [ HP.class_ $ ClassName
-            if open then "selected-open" else "selected"
+            if open then "selected-open" else "selected-closed"
         , HE.onMouseDown $ const $ Just Toggle
         ]
         [ HH.text

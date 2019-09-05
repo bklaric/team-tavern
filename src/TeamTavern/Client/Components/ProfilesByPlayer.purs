@@ -53,7 +53,7 @@ render (Profiles profiles nickname') = HH.div_ $
     (profiles # mapWithIndex \index { handle, title, summary, fieldValues, fields } ->
         HH.div [ HP.class_ $ ClassName "card" ] $ join
         [ pure $
-            HH.h3 [ HP.class_ $ ClassName "card-title" ] $ join
+            HH.h3 [ HP.class_ $ ClassName "profile-title" ] $ join
                 [ pure $ navigationAnchorIndexed (SProxy :: SProxy "games") index
                     { path: "/games/" <> handle, content: HH.text title }
                 , case nickname' of
