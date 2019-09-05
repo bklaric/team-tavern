@@ -63,11 +63,11 @@ topBarWithContent
     .  Array (H.ComponentHTML query (topBar :: TopBar.Slot Unit | children) (Async left))
     -> H.ComponentHTML query (topBar :: TopBar.Slot Unit | children ) (Async left)
 topBarWithContent content =
-    HH.div_ [ topBar, HH.div [ HP.id_ "content" ] content ]
+    HH.div_ [ topBar, HH.div [ HP.class_ $ HH.ClassName "content" ] content ]
 
 singleContent :: forall slots query.
     Array (HH.HTML slots query) -> HH.HTML slots query
-singleContent = HH.div [ HP.id_ "single-content" ]
+singleContent = HH.div [ HP.class_ $ HH.ClassName "single-content" ]
 
 render :: forall action left.
     State -> H.ComponentHTML action ChildSlots (Async left)

@@ -1,33 +1,25 @@
-#top-bar {
+.top-bar {
     top: 0;
     position: fixed;
-    height: 36px;
+    height: 40px;
     width: 100%;
-    background-color: $primary-color;
-
-    a {
-        color: white;
-    }
+    background-color: white;
+    border-bottom: 1px solid #ccc;
 }
 
-#top-bar-content {
+.top-bar-content {
     display: flex;
     justify-content: space-between;
     align-items: center;
     height: 100%;
     max-width: $max-width;
-    padding: 0 12px;
+    padding: 0 14px;
     margin: auto;
-
-    a,
-    button {
-        margin-left: 24px;
-    }
 }
 
-#top-bar-logo {
-    color: $primary-color;
-    background-color: white;
+.top-bar-logo {
+    color: white;
+    background-color: $primary-color;
     display: inline-flex;
     justify-content: center;
     width: 26px;
@@ -35,11 +27,12 @@
     margin-right: 6px;
 }
 
-#top-bar-title {
+.top-bar-title {
     margin-bottom: 0;
-    font-weight: bold;
+    font-weight: 700;
+}
 
-    a {
-        margin-left: 0;
-    }
+.top-bar-link {
+    margin-left: 24px;
+    font-weight: 500;
 }

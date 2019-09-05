@@ -23,7 +23,7 @@ import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.CreateGame (createGame)
 import TeamTavern.Client.CreateGame as CreateGame
 import TeamTavern.Client.Script.Cookie (getPlayerId)
-import TeamTavern.Client.Script.Navigate (navigate_)
+import TeamTavern.Client.Script.Navigate (navigateWithEvent_, navigate_)
 import Web.Event.Event (preventDefault)
 import Web.UIEvent.MouseEvent (MouseEvent, toEvent)
 
@@ -32,6 +32,7 @@ data Action
     | SignOut
     | ShowCreateModal MouseEvent
     | HandleModalMessage (Modal.Message CreateGame.Message)
+    | Navigate String MouseEvent
 
 data State
     = Empty
@@ -41,11 +42,7 @@ data State
 type Slot = H.Slot (Const Void) Void
 
 type ChildSlots =
-    ( logoAnchor :: NavigationAnchor.Slot Unit
-    , homeAnchor :: NavigationAnchor.Slot Unit
-    , signInAnchor :: NavigationAnchor.Slot Unit
-    , registerAnchor :: NavigationAnchor.Slot Unit
-    , profileAnchor :: NavigationAnchor.Slot Unit
+    ( profileAnchor :: NavigationAnchor.Slot Unit
     , createGameAnchor :: NavigationAnchor.Slot Unit
     , createGame :: CreateGame.Slot Unit
     )
@@ -53,24 +50,29 @@ type ChildSlots =
 render :: forall left.
     State -> H.ComponentHTML Action ChildSlots (Async left)
 render playerInfo = HH.div_
-    [ HH.div [ HP.id_ "top-bar" ]
-        [ HH.div [ HP.id_ "top-bar-content" ]
-            [ HH.h2 [ HP.id_ "top-bar-title" ]
-                [ navigationAnchor (SProxy :: SProxy "homeAnchor")
-                    { path: "/"
-                    , content: HH.span_
-                        [ HH.span [ HP.id_ "top-bar-logo" ] [ HH.text "tt" ]
-                        , HH.text "TeamTavern"
-                        ]
-                    }
+    [ HH.div [ HP.class_ $ HH.ClassName "top-bar" ]
+        [ HH.div [ HP.class_ $ HH.ClassName "top-bar-content" ]
+            [ HH.h2 [ HP.class_ $ HH.ClassName "top-bar-title" ]
+                [ HH.a [ HP.href "/", HE.onClick $ Just <<< Navigate "/" ]
+                    [ HH.span [ HP.class_ $ HH.ClassName "top-bar-logo" ] [ HH.text "tt" ]
+                    , HH.text "TeamTavern"
+                    ]
                 ]
             , HH.div_ case playerInfo of
                 Empty -> []
                 SignedOut ->
-                    [ navigationAnchor (SProxy :: SProxy "signInAnchor")
-                        { path: "/signin", content: HH.text "Sign in" }
-                    , navigationAnchor (SProxy :: SProxy "registerAnchor")
-                        { path: "/register", content: HH.text "Create account" }
+                    [ HH.a
+                        [ HP.class_ $ HH.ClassName "top-bar-link"
+                        , HP.href "/signin"
+                        , HE.onClick $ Just <<< Navigate "/signin"
+                        ]
+                        [ HH.text "Sign in" ]
+                    , HH.a
+                        [ HP.class_ $ HH.ClassName "top-bar-link"
+                        , HP.href "/register"
+                        , HE.onClick $ Just <<< Navigate "/register"
+                        ]
+                        [ HH.text "Create account" ]
                     ]
                 SignedIn { nickname } ->
                     [ navigationAnchor (SProxy :: SProxy "profileAnchor")
@@ -126,6 +128,8 @@ handleAction (ShowCreateModal event) = do
     Modal.show (SProxy :: SProxy "createGame")
 handleAction (HandleModalMessage _) =
     Modal.hide (SProxy :: SProxy "createGame")
+handleAction (Navigate url event) =
+    H.liftEffect $ navigateWithEvent_ url event
 
 component :: forall query input output left.
     H.Component HH.HTML query input output (Async left)

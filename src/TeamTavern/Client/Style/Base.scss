@@ -1,6 +1,7 @@
+$font: "Roboto", sans-serif;
 $primary-color: #b15e36;
 $disabled-primary-color: #d8beb1;
-$text-color: rgb(26, 26, 27);
+$text-color: #2f2f33;
 $disabled-color: rgb(221, 221, 221);
 $error-color: orangered;
 $max-width: 960px;
@@ -13,10 +14,10 @@ $max-width: 960px;
 }
 
 body {
-    font-family: "Roboto", sans-serif;
+    font-family: $font;
     font-size: 14px;
     color: $text-color;
-    background-color: #eeeff1;
+    background-color: #f7f7fa;
     margin: 0;
 }
 
@@ -66,7 +67,7 @@ a:hover {
 
 button {
     @extend %bordered;
-    font-family: "Roboto", sans-serif;
+    font-family: $font;
     font-size: 14px;
     color: $text-color;
     padding: 5px 10px;
@@ -115,14 +116,14 @@ label {
 
 input {
     @extend %bordered;
-    font-family: "Roboto", sans-serif;
+    font-family: $font;
     font-size: 14px;
     padding: 5px;
 }
 
 textarea {
     @extend %bordered;
-    font-family: "Roboto", sans-serif;
+    font-family: $font;
     font-size: 14px;
     padding: 5px;
     resize: vertical;

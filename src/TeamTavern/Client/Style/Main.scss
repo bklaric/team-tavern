@@ -30,13 +30,13 @@
     font-size: 14px;
 }
 
-#content {
+.content {
     max-width: $max-width;
-    padding: 12px;
-    margin: 36px auto auto auto;
+    padding: 14px;
+    margin: 41px auto auto auto;
 
     >* {
-        margin-bottom: 12px;
+        margin-bottom: 14px;
     }
 
     > :last-child {
@@ -44,7 +44,7 @@
     }
 }
 
-#single-content {
+.single-content {
     width: 100vw;
     height: 100vh;
     background-color: rgb(230, 230, 230);
@@ -52,10 +52,10 @@
 }
 
 .card-header {
-    padding-left: 12px;
+    padding-left: 14px;
 
     button {
-        margin-left: 12px;
+        margin-left: 14px;
     }
 }
 
@@ -66,13 +66,13 @@
 .card {
     @extend %bordered;
     background-color: white;
-    padding: 12px;
-    margin-bottom: 12px;
+    padding: 14px;
+    margin-bottom: 14px;
 }
 
 .card-title {
     button {
-        margin-left: 12px;
+        margin-left: 14px;
     }
 }
 
