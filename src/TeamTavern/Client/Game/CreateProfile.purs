@@ -31,14 +31,14 @@ import TeamTavern.Client.Components.MultiSelect (multiSelectIndexed)
 import TeamTavern.Client.Components.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.SingleSelect (singleSelectIndexed)
 import TeamTavern.Client.Components.SingleSelect as SingleSelect
-import TeamTavern.Client.Script.Cookie (getPlayerNickname)
+import TeamTavern.Client.Script.Cookie (PlayerInfo)
 import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass, otherErrorClass)
 import TeamTavern.Server.Game.View.SendResponse as View
 import TeamTavern.Server.Profile.Create.SendResponse as Create
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
-type Input = { handle :: String }
+type Input = { game :: View.OkContent, playerInfo :: PlayerInfo }
 
 data Action
     = SummaryInput String
@@ -49,6 +49,7 @@ data Message = ProfileCreated String
 
 type State =
     { game :: View.OkContent
+    , playerInfo :: PlayerInfo
     , summary :: String
     , summaryError :: Boolean
     , fieldValues :: Array
@@ -67,15 +68,16 @@ type ChildSlots =
     )
 
 type Slot =
-    H.Slot (Modal.Query View.OkContent (Const Void)) (Modal.Message Message)
+    H.Slot (Modal.Query Input (Const Void)) (Modal.Message Message)
 
 fieldLabel :: forall slots action. String -> HH.HTML slots action
 fieldLabel label =
     HH.label
-        [ HP.for label ]
+        [ HP.class_ $ HH.ClassName "input-label", HP.for label ]
         [ HH.text label
         , divider
-        , HH.span [ HP.class_ $ H.ClassName "profile-count" ] [ HH.text "optional" ]
+        , HH.span [ HP.class_ $ H.ClassName "input-sublabel" ]
+            [ HH.text "optional" ]
         ]
 
 fieldInput
@@ -94,6 +96,7 @@ fieldInput urlValueErrors { key, type: 1, label } = let
     [ fieldLabel label
     , HH.input
         [ HP.id_ label
+        , HP.class_ $ HH.ClassName "text-line-input"
         , HE.onValueInput $ Just <<< UrlValueInput key
         ]
     , HH.p
@@ -124,7 +127,7 @@ fieldInput _ _ = HH.div_ []
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { summary, summaryError, urlValueErrors, otherError, game } = HH.form
     [ HP.class_ $ ClassName "single-form-wide", HE.onSubmit $ Just <<< Create ] $
-    [ HH.h2_ [ HH.text "Create a new profile" ] ]
+    [ HH.h2_ [ HH.text $ "Create your " <> game.title <> " profile" ] ]
     <> (game.fields <#> fieldInput urlValueErrors) <>
     [ HH.div_
         [ HH.label
@@ -132,6 +135,7 @@ render { summary, summaryError, urlValueErrors, otherError, game } = HH.form
             [ HH.text "Summary" ]
         , HH.textarea
             [ HP.id_ "summary"
+            , HP.class_ $ HH.ClassName "text-input"
             , HE.onValueInput $ Just <<< SummaryInput
             ]
         , HH.p
@@ -140,10 +144,12 @@ render { summary, summaryError, urlValueErrors, otherError, game } = HH.form
                 "The summary cannot be more than 2000 characters long." ]
         ]
     , HH.button
-        [ HP.class_ $ ClassName "primary"
+        [ HP.class_ $ ClassName "button-primary"
         , HP.disabled $ summary == ""
         ]
-        [ HH.text "Create" ]
+        [ HH.i [ HP.class_ $ HH.ClassName "fas fa-user-plus button-icon" ] []
+        , HH.text "Create profile"
+        ]
     , HH.p
         [ HP.class_ $ otherErrorClass otherError ]
         [ HH.text "Something unexpected went wrong! Please try again later." ]
@@ -201,7 +207,7 @@ handleAction (UrlValueInput fieldKey url) = do
     H.put $ state { fieldValues = newFieldValues }
 handleAction (Create event) = do
     H.liftEffect $ preventDefault event
-    state @ { game: { fields } } <- H.gets (_
+    state @ { game: { fields }, playerInfo: { nickname } } <- H.gets (_
         { summaryError = false
         , otherError   = false
         })
@@ -235,20 +241,16 @@ handleAction (Create event) = do
                 <> singleSelectValues
                 <> multiSelectValues
             }
-    nickname <- H.liftEffect getPlayerNickname
-    case nickname of
-        Nothing -> H.put $ state { otherError = true }
-        Just nickname' -> do
-            newState <- H.lift $ sendCreateRequest state' nickname'
-            case newState of
-                Nothing -> H.raise $ ProfileCreated state.game.handle
-                Just newState' -> H.put newState'
-            pure unit
+    newState <- H.lift $ sendCreateRequest state' nickname
+    case newState of
+        Nothing -> H.raise $ ProfileCreated state.game.handle
+        Just newState' -> H.put newState'
+    pure unit
 
 component :: forall query left.
-    H.Component HH.HTML query View.OkContent Message (Async left)
+    H.Component HH.HTML query Input Message (Async left)
 component = H.mkComponent
-    { initialState: \game ->
+    { initialState: \{ game, playerInfo } ->
         { summary: ""
         , summaryError: false
         , fieldValues: game.fields <#> (\field ->
@@ -260,6 +262,7 @@ component = H.mkComponent
         , urlValueErrors: []
         , otherError: false
         , game
+        , playerInfo
         }
     , render
     , eval: H.mkEval $ H.defaultEval { handleAction = handleAction }

@@ -5,7 +5,6 @@
 @import "../Components/TopBar";
 @import "../Components/Modal";
 @import "../Components/SingleSelect";
-@import "../Components/MultiSelect";
 @import "../Components/Welcome";
 @import "../Components/WelcomeBanner";
 @import "../Components/Games";
@@ -80,8 +79,20 @@
     border-bottom: 1px solid #ccc;
 }
 
+.card-title-button {
+    margin-left: 14px;
+}
+
 .card-content {
     padding: 14px;
+}
+
+.card-section {
+    @extend .card-content;
+
+    &:not(:last-child) {
+        border-bottom: 1px solid #ccc;
+    }
 }
 
 .profile-title {
@@ -97,4 +108,9 @@
 
 .input-label {
     line-height: 16px;
+}
+
+.input-sublabel {
+    font-size: 12px;
+    color: #737373;
 }

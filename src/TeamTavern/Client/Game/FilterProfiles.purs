@@ -59,8 +59,7 @@ fieldInput field @ { label, options } =
     ]
 
 render :: forall monad. State -> H.ComponentHTML Action ChildSlots monad
-render fields = HH.div
-    [ HP.class_ $ HH.ClassName "card" ]
+render fields = HH.div [ HP.class_ $ HH.ClassName "card" ]
     [ HH.h3 [ HP.class_ $ HH.ClassName "card-title" ]
         [ HH.text "Profile filters" ]
     , HH.div [ HP.class_ $ HH.ClassName "card-content" ] $

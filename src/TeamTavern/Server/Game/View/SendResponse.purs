@@ -12,8 +12,11 @@ import TeamTavern.Server.Game.View.LoadGame (LoadGameResult)
 import TeamTavern.Server.Game.View.LogError (ViewError)
 
 type OkContent =
-    { title :: String
+    { administratorId :: Int
+    , title :: String
     , handle :: String
+    , description :: Array String
+    , hasProfile :: Boolean
     , fields :: Array
         { type :: Int
         , label :: String
@@ -33,12 +36,16 @@ errorResponse = match
     }
 
 successResponse :: LoadGameResult -> Response
-successResponse { title, handle, fields } =
-    ok_ $ (writeJSON :: OkContent -> String)
-        { title: unwrap title
-        , handle: unwrap handle
-        , fields
-        }
+successResponse
+    { administratorId, title, handle, description, hasProfile, fields } =
+    ok_ $ writeJSON (
+    { administratorId: unwrap administratorId
+    , title: unwrap title
+    , handle: unwrap handle
+    , description: unwrap description <#> unwrap
+    , hasProfile
+    , fields
+    } :: OkContent)
 
 sendResponse ::
     Async ViewError LoadGameResult -> (forall left. Async left Response)

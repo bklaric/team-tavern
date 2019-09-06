@@ -1,13 +1,12 @@
 $font: "Roboto",
 sans-serif;
 $primary-color: #b15e36;
-$disabled-primary-color: #d8beb1;
+$disabled-primary-color: hsla(20, 40%, 81%, 1);
 $text-color: #2f2f33;
 $disabled-color: rgb(221, 221, 221);
 $error-color: orangered;
 $max-width: 960px;
 $border-color: #ccc;
-
 
 %bordered {
     border-style: solid;
@@ -76,6 +75,10 @@ a:hover {
     text-decoration: underline;
 }
 
+%disabled {
+    cursor: not-allowed;
+}
+
 %button {
     display: inline-block;
     font-family: $font;
@@ -91,6 +94,7 @@ a:hover {
     @extend %bordered-gray;
     color: $text-color;
     background-color: white;
+    border-color: #737373;
 }
 
 .button-primary {
@@ -98,6 +102,12 @@ a:hover {
     @extend %bordered-colored;
     color: white;
     background-color: $primary-color;
+
+    &[disabled] {
+        @extend %disabled;
+        background-color: $disabled-primary-color;
+        border-color: $disabled-primary-color;
+    }
 }
 
 .button-secondary {
@@ -136,12 +146,12 @@ button.secondary {
     border-color: $primary-color;
 }
 
-button[disabled] {
-    @extend button;
-    color: $disabled-color;
-    border-color: $disabled-color;
-    cursor: not-allowed;
-}
+// button[disabled] {
+//     @extend button;
+//     color: $disabled-color;
+//     border-color: $disabled-color;
+//     cursor: not-allowed;
+// }
 
 button[disabled].primary {
     color: white;
@@ -158,6 +168,19 @@ button[disabled].secondary {
 label {
     display: block;
     margin-bottom: 7px;
+}
+
+.text-line-input {
+    @extend %bordered-gray;
+    font-family: $font;
+    font-size: 14px;
+    line-height: 20px;
+    padding: 9px 12px;
+}
+
+.text-input {
+    @extend .text-line-input;
+    resize: vertical
 }
 
 input {
