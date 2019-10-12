@@ -1,9 +1,3 @@
-.welcome-banner {
-    @extend %bordered;
-    background-color: white;
-    padding: 12px;
-
-    button {
-        margin-top: 7px;
-    }
+.welcome-close-button {
+    margin-top: 7px;
 }

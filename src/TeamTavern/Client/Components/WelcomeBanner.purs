@@ -25,14 +25,13 @@ render :: forall monad. State -> H.ComponentHTML Action () monad
 render Shown = HH.div
     [ HP.class_ $ HH.ClassName "card" ]
     [ HH.div [ HP.class_ $ HH.ClassName "card-content"]
-        [ HH.p_ [ HH.text "Welcome to TeamTavern!" ]
+        [ HH.p_ [ HH.strong_ [ HH.text "Welcome to TeamTavern!" ] ]
         , HH.p_ [ HH.text "TeamTavern is a place to find teammates to play online games with." ]
         , HH.p_ [ HH.text "Select a game below, browse profiles of other players and find your ideal teammates." ]
-        , HH.p_ [ HH.text "To also let other players find you, register and create your own profile." ]
-        , HH.p_ [ HH.text "If a game you're looking for is not listed, you can create an entry for it after registering." ]
+        , HH.p_ [ HH.text "To also let other players find you, create an account and your own game profile." ]
         , HH.p_ [ HH.text "Happy playing!" ]
         , HH.button
-            [ HP.class_ $ HH.ClassName "button-regular"
+            [ HP.class_ $ HH.ClassName "button-regular welcome-close-button"
             , HE.onClick $ const $ Just Close
             ]
             [ HH.i [ HP.class_ $ HH.ClassName "fas fa-times button-icon" ] []
