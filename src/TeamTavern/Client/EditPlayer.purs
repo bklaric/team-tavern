@@ -62,7 +62,7 @@ render
     , otherError
     } = HH.form
     [ HP.class_ $ H.ClassName "single-form-wide", HE.onSubmit $ Just <<< Update ]
-    [ HH.h2_ [ HH.text "Edit account" ]
+    [ HH.h2_ [ HH.text "Edit your account" ]
     , HH.div_
         [ HH.label
             [ HP.class_ $ HH.ClassName "input-label", HP.for "nickname" ]

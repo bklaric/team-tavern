@@ -101,7 +101,9 @@ type Slot = H.Slot (Modal.Query Input (Const Void)) (Modal.Message Message)
 fieldLabel :: forall slots action. String -> HH.HTML slots action
 fieldLabel label =
     HH.label
-        [ HP.for label ]
+        [ HP.class_ $ HH.ClassName "input-label"
+        , HP.for label
+        ]
         [ HH.text label
         , divider
         , HH.span [ HP.class_ $ H.ClassName "profile-count" ] [ HH.text "optional" ]
@@ -132,6 +134,7 @@ fieldInput fieldValues urlValueErrors { key, type: 1, label } = let
         [ fieldLabel label
         , HH.input
             [ HP.id_ label
+            , HP.class_ $ HH.ClassName "text-line-input"
             , HE.onValueInput $ Just <<< UrlValueInput key
             , HP.value $ maybe "" identity url
             ]
@@ -177,10 +180,13 @@ render { title, fields, summary, summaryError, fieldValues, urlValueErrors, othe
     <> (fields <#> fieldInput fieldValues urlValueErrors) <>
     [ HH.div_
         [ HH.label
-            [ HP.for "summary" ]
+            [ HP.class_ $ HH.ClassName "input-label"
+            , HP.for "summary"
+            ]
             [ HH.text "Summary" ]
         , HH.textarea
             [ HP.id_ "summary"
+            , HP.class_ $ HH.ClassName "text-input"
             , HE.onValueInput $ Just <<< SummaryInput
             , HP.value summary
             ]
@@ -190,10 +196,12 @@ render { title, fields, summary, summaryError, fieldValues, urlValueErrors, othe
                 "The summary cannot be more than 2000 characters long." ]
         ]
     , HH.button
-        [ HP.class_ $ ClassName "primary"
+        [ HP.class_ $ ClassName "button-primary"
         , HP.disabled $ summary == ""
         ]
-        [ HH.text "Save changes" ]
+        [ HH.i [ HP.class_ $ HH.ClassName "fas fa-user-edit button-icon" ] []
+        , HH.text "Edit profile"
+        ]
     , HH.p
         [ HP.class_ $ otherErrorClass otherError ]
         [ HH.text "Something unexpected went wrong! Please try again later." ]
