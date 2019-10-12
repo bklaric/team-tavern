@@ -7,8 +7,11 @@ import Async (Async)
 import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
+import Data.Array (intercalate)
+import Data.Array as Array
 import Data.Bifunctor (lmap)
 import Data.Const (Const)
+import Data.Foldable (find)
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
@@ -46,31 +49,61 @@ type ChildSlots =
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render Empty = HH.div_ []
-render (Profiles profiles nickname') = HH.div_ $
-    [ HH.h3 [ HP.class_ $ ClassName "card-header"] [ HH.text "Profiles" ] ] <>
-    (profiles # mapWithIndex \index { handle, title, summary } ->
-        HH.div [ HP.class_ $ ClassName "card" ] $ join
-        [ pure $
-            HH.h3_ [ navigationAnchorIndexed (SProxy :: SProxy "games") index
-            { path: "/games/" <> handle, content: HH.text title } ]
-        , case nickname' of
-            Nothing -> []
-            Just nickname -> pure $ HH.p_ [
-                HH.a
-                [ HP.href ""
-                , HE.onClick $ Just <<< ShowEditProfileModal
-                    { handle, title, nickname, summary }
-                ]
-                [ HH.text "Edit profile" ] ]
-        , summary <#> \paragraph -> HH.p_ [ HH.text paragraph ]
-        ])
+render (Profiles profiles nickname') =
+    HH.div [ HP.class_ $ HH.ClassName "card" ] $
+    [ HH.h3 [ HP.class_ $ HH.ClassName "card-title" ] [ HH.text "Profiles" ] ]
     <> case nickname' of
         Nothing -> []
         Just _ -> [ editProfile $ Just <<< HandleEditProfileMessage ]
+    <>
+    (profiles # mapWithIndex \index { handle, title, summary, fieldValues, fields } ->
+        HH.div [ HP.class_ $ ClassName "card-section" ] $ join
+        [ pure $
+            HH.h3_ $ join
+                [ pure $ navigationAnchorIndexed (SProxy :: SProxy "games") index
+                    { path: "/games/" <> handle, content: HH.text title }
+                , case nickname' of
+                    Nothing -> []
+                    Just nickname -> pure $
+                        HH.button
+                            [ HP.class_ $ HH.ClassName "button-regular title-button"
+                            , HE.onClick $ Just <<< ShowEditProfileModal
+                                { nickname, handle, title, summary, fieldValues, fields }
+                            ]
+                            [ HH.i [ HP.class_ $ H.ClassName "fas fa-user-edit button-icon" ] []
+                            , HH.text "Edit profile"
+                            ]
+                ]
+        , Array.catMaybes $ fields <#> \field -> let
+            fieldValue = fieldValues # find \ { fieldKey } -> field.key == fieldKey
+            in
+            case { type: field.type, fieldValue } of
+            { type: 1, fieldValue: Just { url: Just url' } } -> Just $
+                HH.p_
+                [ HH.text $ field.label <> ": "
+                , HH.a [ HP.href url' ] [ HH.text url' ]
+                ]
+            { type: 2, fieldValue: Just { optionKey: Just optionKey' } } -> let
+                option' = field.options >>= find (\{ key } -> key == optionKey')
+                in
+                option' <#> \{ option } ->
+                    HH.p_ [ HH.text $ field.label <> ": " <> option ]
+            { type: 3, fieldValue: Just { optionKeys: Just optionKeys' } } -> let
+                options' = field.options <#> Array.filter \{ key } -> Array.elem key optionKeys'
+                in
+                case options' of
+                Just options | not $ Array.null options -> Just $ HH.p_
+                    [ HH.text $ field.label <> ": "
+                        <> intercalate ", " (options <#> _.option)
+                    ]
+                _ -> Nothing
+            _ ->  Nothing
+        , summary <#> \paragraph -> HH.p_ [ HH.text paragraph ]
+        ])
 
 loadProfiles :: forall left. String -> Async left State
 loadProfiles nickname = Async.unify do
-    response <-  Fetch.fetch_ ("/api/profiles?nickname=" <> nickname)
+    response <-  Fetch.fetch_ ("/api/profiles/by-nickname/" <> nickname)
         # lmap (const Empty)
     content <- case FetchRes.status response of
         200 -> FetchRes.text response >>= Json.readJSON # lmap (const Empty)

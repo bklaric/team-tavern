@@ -6,7 +6,6 @@ import Async (Async)
 import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
-import Data.Array (length)
 import Data.Bifunctor (lmap)
 import Data.Const (Const)
 import Data.FunctorWithIndex (mapWithIndex)
@@ -18,6 +17,7 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import Simple.JSON.Async as JsonAsync
+import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchorIndexed)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
 import TeamTavern.Server.Game.ViewAll.SendResponse (OkContent)
@@ -37,27 +37,24 @@ render :: forall query monad. MonadEffect monad =>
     State -> H.ComponentHTML query ChildSlots monad
 render Empty = HH.div_ []
 render (Games games') =
-    if length games' > 0
-    then
-        HH.div_ $
-        games' # mapWithIndex \index { title, handle, description, profileCount } ->
-            HH.div [ HP.class_ $ ClassName "card" ] $
-            [ HH.h2_
-                [ navigationAnchorIndexed (SProxy :: SProxy "game") index
-                    { path: "/games/" <> handle, content: HH.text title }
-                , HH.span [ HP.class_ $ ClassName "divider" ]
-                    [ HH.text "•"]
-                , navigationAnchorIndexed (SProxy :: SProxy "profileCount") index
-                    { path: "/games/" <> handle
-                    , content: HH.span [ HP.class_ $ ClassName "profile-count" ]
-                        [ HH.text $ show profileCount <> " profiles" ]
-                    }
-                ]
-            ] <> (description <#> \paragraph -> HH.p_ [ HH.text paragraph ])
-    else HH.p_ [ HH.text $
-        "There should be a list of games here, "
-        <> "but no game entry has been created yet. "
-        <> "How about you create one?" ]
+    HH.div [ HP.class_ $ HH.ClassName "card"] $
+    [ HH.h3 [ HP.class_ $ HH.ClassName "card-title" ] [ HH.text "Games" ] ]
+    <>
+    (games' # mapWithIndex \index { title, handle, description, profileCount } ->
+        HH.div [ HP.class_ $ ClassName "card-section" ] $
+        [ HH.h2_
+            [ navigationAnchorIndexed (SProxy :: SProxy "game") index
+                { path: "/games/" <> handle, content: HH.text title }
+            , divider
+            , navigationAnchorIndexed (SProxy :: SProxy "profileCount") index
+                { path: "/games/" <> handle
+                , content: HH.span [ HP.class_ $ ClassName "profile-count" ]
+                    [ HH.text $ show profileCount <> " profiles" ]
+                }
+            ]
+        ]
+        <> (description <#> \paragraph -> HH.p_ [ HH.text paragraph ])
+    )
 
 loadGames :: forall left. Async left State
 loadGames = Async.unify do

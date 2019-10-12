@@ -9,3 +9,4 @@
 /.psa*
 /.sass-cache
 /dist*
+/.spago

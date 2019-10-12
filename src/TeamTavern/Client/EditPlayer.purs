@@ -62,13 +62,14 @@ render
     , otherError
     } = HH.form
     [ HP.class_ $ H.ClassName "single-form-wide", HE.onSubmit $ Just <<< Update ]
-    [ HH.h2_ [ HH.text "Edit info" ]
+    [ HH.h2_ [ HH.text "Edit your account" ]
     , HH.div_
         [ HH.label
-            [ HP.for "nickname" ]
+            [ HP.class_ $ HH.ClassName "input-label", HP.for "nickname" ]
             [ HH.text "Nickname" ]
         , HH.input
             [ HP.id_ "nickname"
+            , HP.class_ $ HH.ClassName "text-line-input"
             , HE.onValueInput $ Just <<< NicknameInput
             , HP.value nickname
             ]
@@ -82,25 +83,27 @@ render
             [ HH.text
                 "This nickname is already taken, please pick another one." ]
         ]
-    , HH.div_
-        [ HH.label
-            [ HP.for "about" ]
-            [ HH.text "About" ]
-        , HH.textarea
-            [ HP.id_ "about"
-            , HE.onValueInput $ Just <<< AboutInput
-            , HP.value about
-            ]
-        , HH.p
-            [ HP.class_ $ inputErrorClass aboutError ]
-            [ HH.text
-                "The about entry cannot be more than 2000 characters long." ]
-        ]
+    -- , HH.div_
+    --     [ HH.label
+    --         [ HP.for "about" ]
+    --         [ HH.text "About" ]
+    --     , HH.textarea
+    --         [ HP.id_ "about"
+    --         , HE.onValueInput $ Just <<< AboutInput
+    --         , HP.value about
+    --         ]
+    --     , HH.p
+    --         [ HP.class_ $ inputErrorClass aboutError ]
+    --         [ HH.text
+    --             "The about entry cannot be more than 2000 characters long." ]
+    --     ]
     , HH.button
-        [ HP.class_ $ ClassName "primary"
+        [ HP.class_ $ ClassName "button-primary"
         , HP.disabled $ nickname == ""
         ]
-        [ HH.text "Save changes" ]
+        [ HH.i [ HP.class_ $ HH.ClassName "fas fa-edit button-icon" ] []
+        , HH.text "Edit account"
+        ]
     , HH.p
         [ HP.class_ $ otherErrorClass otherError ]
         [ HH.text "Something unexpected went wrong! Please try again later." ]

@@ -14,10 +14,6 @@ import Simple.JSON (read)
 import TeamTavern.Client.Components.Games (games)
 import TeamTavern.Client.Components.Games as Games
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
-import TeamTavern.Client.Components.ProfilesByGame (profilesByGame)
-import TeamTavern.Client.Components.ProfilesByGame as ProfilesByGame
-import TeamTavern.Client.Components.ProfilesByPlayer (profilesByPlayer)
-import TeamTavern.Client.Components.ProfilesByPlayer as ProfilesByPlayer
 import TeamTavern.Client.Components.TopBar (topBar)
 import TeamTavern.Client.Components.TopBar as TopBar
 import TeamTavern.Client.Components.Welcome (welcome)
@@ -52,8 +48,6 @@ type ChildSlots =
     , welcomeBanner :: WelcomeBanner.Slot Unit
     , games :: Games.Slot Unit
     , game :: Game.Slot Unit
-    , profilesByGame :: ProfilesByGame.Slot Unit
-    , profilesByPlayer :: ProfilesByPlayer.Slot Unit
     , player :: Player.Slot Unit
     , register :: Register.Slot Unit
     , signIn :: SignIn.Slot Unit
@@ -66,18 +60,18 @@ topBarWithContent
     .  Array (H.ComponentHTML query (topBar :: TopBar.Slot Unit | children) (Async left))
     -> H.ComponentHTML query (topBar :: TopBar.Slot Unit | children ) (Async left)
 topBarWithContent content =
-    HH.div_ [ topBar, HH.div [ HP.id_ "content" ] content ]
+    HH.div_ [ topBar, HH.div [ HP.class_ $ HH.ClassName "content" ] content ]
 
 singleContent :: forall slots query.
     Array (HH.HTML slots query) -> HH.HTML slots query
-singleContent = HH.div [ HP.id_ "single-content" ]
+singleContent = HH.div [ HP.class_ $ HH.ClassName "single-content" ]
 
 render :: forall action left.
     State -> H.ComponentHTML action ChildSlots (Async left)
 render Empty = HH.div_ []
 render Home = topBarWithContent [ welcomeBanner, games ]
-render (Game handle) = topBarWithContent [ game handle, profilesByGame handle ]
-render (Player nickname) = topBarWithContent [ player nickname, profilesByPlayer nickname ]
+render (Game handle) = topBarWithContent [ game handle ]
+render (Player nickname) = topBarWithContent [ player nickname ]
 render Register = singleContent [ register ]
 render SignIn = singleContent [ signIn ]
 render (Welcome welcomeData) = singleContent [ welcome welcomeData ]

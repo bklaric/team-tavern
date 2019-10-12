@@ -4,25 +4,37 @@ import Prelude
 
 import Async (Async, examineLeftWithEffect)
 import Data.Map (Map)
+import Data.Variant (SProxy(..), inj)
 import Perun.Request.Body (Body)
 import Perun.Response (Response)
+import Postgres.Async.Pool (withTransaction)
 import Postgres.Pool (Pool)
-import TeamTavern.Server.Game.Domain.Handle (Handle)
 import TeamTavern.Server.Infrastructure.ReadCookieInfo (readCookieInfo)
 import TeamTavern.Server.Profile.Create.AddProfile (addProfile)
 import TeamTavern.Server.Profile.Create.LogError (logError)
 import TeamTavern.Server.Profile.Create.SendResponse (sendResponse)
-import TeamTavern.Server.Profile.Infrastructure.ReadSummary (readSummary)
+import TeamTavern.Server.Profile.Infrastructure.LoadFields (loadFields)
+import TeamTavern.Server.Profile.Infrastructure.ReadProfile (readProfile)
+import TeamTavern.Server.Profile.Infrastructure.ValidateProfile (validateProfile)
+import TeamTavern.Server.Profile.Routes (Identifiers)
 
 create :: forall left.
-    Pool -> Handle -> Map String String -> Body -> Async left Response
-create pool handle cookies body =
+    Pool -> Identifiers -> Map String String -> Body -> Async left Response
+create pool identifiers cookies body =
     sendResponse $ examineLeftWithEffect logError do
     -- Read info info from cookies.
     cookieInfo <- readCookieInfo cookies
 
-    -- Read summary from body.
-    summary <- readSummary body
+    pool # withTransaction (inj (SProxy :: SProxy "databaseError"))
+        \client -> do
+            -- Load game fields from database.
+            fields <- loadFields client identifiers.handle
 
-    -- Add profile to database.
-    addProfile pool cookieInfo handle summary
+            -- Read profile from body.
+            profile <- readProfile body
+
+            -- Validate profile.
+            profile' <- validateProfile fields profile
+
+            -- Add profile to database.
+            addProfile client cookieInfo identifiers profile'

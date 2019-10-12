@@ -73,29 +73,33 @@ render
         ]
     , HH.div_
         [ HH.label
-            [ HP.for "nicknameOrEmail" ]
+            [ HP.class_ $ HH.ClassName "input-label", HP.for "nicknameOrEmail" ]
             [ HH.text "Nickname or email address" ]
         , HH.input
             [ HP.id_ "nicknameOrEmail"
+            , HP.class_ $ HH.ClassName "text-line-input"
             , HE.onValueInput $ Just <<< NicknameOrEmailInput
             ]
         ]
     , HH.div_
         [ HH.label
-            [ HP.for "password" ]
+            [ HP.class_ $ HH.ClassName "input-label", HP.for "password" ]
             [ HH.text "Password" ]
         , HH.input
             [ HP.id_ "password"
+            , HP.class_ $ HH.ClassName "text-line-input"
             , HP.autocomplete false
             , HP.type_ InputPassword
             , HE.onValueInput $ Just <<< PasswordInput
             ]
         ]
     , HH.button
-        [ HP.class_ $ ClassName "primary"
+        [ HP.class_ $ ClassName "button-primary"
         , HP.disabled $ nicknameOrEmail == "" || password == ""
         ]
-        [ HH.text "Sign in" ]
+        [ HH.i [ HP.class_ $ H.ClassName "fas fa-sign-in-alt button-icon" ] []
+        , HH.text "Sign in"
+        ]
     , HH.p
         [ HP.class_ $ otherErrorClass unconfirmedEmail ]
         [ HH.text "Please confirm your email address before signing in."

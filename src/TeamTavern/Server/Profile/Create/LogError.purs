@@ -8,26 +8,49 @@ import Data.Variant (Variant, match)
 import Effect (Effect)
 import Effect.Console (log)
 import Foreign (MultipleErrors)
+import Global.Unsafe (unsafeStringify)
 import Postgres.Error (Error)
-import TeamTavern.Server.Domain.NonEmptyText (NonEmptyTextError)
-import TeamTavern.Server.Game.Domain.Handle (Handle)
+import Postgres.Result (Result, rows)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Server.Infrastructure.Log (logt, print)
+import TeamTavern.Server.Profile.Infrastructure.ReadProfile as ReadProfile
+import TeamTavern.Server.Profile.Infrastructure.ValidateProfile as ValidateProfile
+import TeamTavern.Server.Profile.Routes (Identifiers)
 
 type CreateError = Variant
+    -- Cookies.
     ( cookieInfoNotPresent :: Map String String
-    , unreadableDto ::
+    -- Load fields from database.
+    , databaseError :: Error
+    , unreadableFields ::
+        { result :: Result
+        , errors :: MultipleErrors
+        }
+    -- Read profile from body.
+    , unreadableProfile ::
         { content :: String
         , errors :: MultipleErrors
         }
-    , invalidSummary ::
-        { summary :: String
-        , errors :: NonEmptyList NonEmptyTextError
+    -- Validate profile.
+    , invalidProfile ::
+        { profile :: ReadProfile.Profile
+        , errors :: NonEmptyList ValidateProfile.ProfileError
         }
-    , databaseError :: Error
+    -- Insert profile into database.
     , notAuthorized ::
         { cookieInfo :: CookieInfo
-        , handle :: Handle
+        , identifiers :: Identifiers
+        }
+    , unreadableProfileId ::
+        { result :: Result
+        , errors :: MultipleErrors
+        }
+    , emptyResult ::
+        { result :: Result
+        }
+    , unreadableFieldValueId ::
+        { result :: Result
+        , errors :: MultipleErrors
         }
     )
 
@@ -37,16 +60,31 @@ logError createError = do
     createError # match
         { cookieInfoNotPresent: \cookies ->
             logt $ "Couldn't read info from cookies: " <> show cookies
-        , unreadableDto: \{ content, errors } -> do
-            logt $ "Couldn't read dto out of content: " <> show content
-            logt $ "Reading resulted in these errors: " <> show errors
-        , invalidSummary: \{ summary, errors } -> do
-            logt $ "Couldn't validate summary: " <> show summary
-            logt $ "Validation resulted in these errors: " <> show errors
         , databaseError: \error ->
             logt $ "Unknown database error ocurred: " <> print error
-        , notAuthorized: \{ cookieInfo, handle } -> do
+        , unreadableFields: \{ result, errors } -> do
+            logt $ "Couldn't read dto from result: "
+                <> (unsafeStringify $ rows result)
+            logt $ "Reading dto resulted in these errors: " <> show errors
+        , unreadableProfile: \{ content, errors } -> do
+            logt $ "Couldn't read dto out of content: " <> show content
+            logt $ "Reading resulted in these errors: " <> show errors
+        , invalidProfile: \{ profile, errors } -> do
+            logt $ "Couldn't validate profile: " <> show profile
+            logt $ "Validation resulted in these errors: " <> show errors
+        , notAuthorized: \{ cookieInfo, identifiers } -> do
             logt $ "Player with cookie info: " <> show cookieInfo
-            logt $ "Not authorized to create profile for handle: "
-                <> show handle
+            logt $ "Not authorized to create profile for identifiers: "
+                <> show identifiers
+        , unreadableProfileId: \{ result, errors } -> do
+            logt $ "Couldn't read profile id from insert result: "
+                <> (unsafeStringify $ rows result)
+            logt $ "Reading resulted in these errors: " <> show errors
+        , emptyResult: \{ result } -> do
+            logt $ "Expected at least one row as insert result, got none: "
+                <> (unsafeStringify $ rows result)
+        , unreadableFieldValueId: \{ result, errors } -> do
+            logt $ "Couldn't read profile id from insert result: "
+                <> (unsafeStringify $ rows result)
+            logt $ "Reading resulted in these errors: " <> show errors
         }

@@ -17,7 +17,11 @@ derive instance genericId :: Generic Id _
 
 instance showId :: Show Id where show = genericShow
 
-derive newtype instance fromComponentPlayerId :: FromComponent Id
+derive newtype instance eqId :: Eq Id
+
+derive newtype instance ordId :: Ord Id
+
+derive newtype instance fromComponentId :: FromComponent Id
 
 fromString :: String -> Maybe Id
 fromString id = Int.fromString id <#> Id

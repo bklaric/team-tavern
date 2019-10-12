@@ -16,7 +16,7 @@ import Foreign (MultipleErrors)
 import Postgres.Async.Query (query)
 import Postgres.Error (Error)
 import Postgres.Pool (Pool)
-import Postgres.Query (Query(..), QueryParameter, (:))
+import Postgres.Query (Query(..), QueryParameter, (:|))
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
 import TeamTavern.Server.Game.Domain.Description (Description)
@@ -29,8 +29,16 @@ type LoadGameDto =
     { administratorId :: Int
     , handle :: String
     , title :: String
-    , description :: Array String
     , hasProfile :: Boolean
+    , fields :: Array
+        { type :: Int
+        , label :: String
+        , key :: String
+        , options :: Maybe (Array
+            { key :: String
+            , option :: String
+            })
+        }
     }
 
 type LoadGameResult =
@@ -39,6 +47,15 @@ type LoadGameResult =
     , handle :: Handle
     , description :: Description
     , hasProfile :: Boolean
+    , fields :: Array
+        { type :: Int
+        , label :: String
+        , key :: String
+        , options :: Maybe (Array
+            { key :: String
+            , option :: String
+            })
+        }
     }
 
 type LoadGameError errors = Variant
@@ -53,19 +70,20 @@ type LoadGameError errors = Variant
 queryString :: Query
 queryString = Query """
     select
-        game.administrator_id as "administratorId",
         game.handle,
         game.title,
-        game.description,
-        profile.id is not null as "hasProfile"
+        game.administrator_id as "administratorId",
+        profile.id is not null as "hasProfile",
+        coalesce(fields.fields, '[]') as fields
     from game
-    left join profile on profile.game_id = game.id
-        and profile.player_id = $2
-    where game.handle = $1
+        left join fields on fields.game_id = game.id
+        left join profile on profile.game_id = game.id
+            and profile.player_id = $2
+    where game.handle = $1;
     """
 
 queryParameters :: Handle -> Maybe CookieInfo -> Array QueryParameter
-queryParameters handle auth = handle : maybe 0 (_.id >>> unwrap) auth : []
+queryParameters handle auth = handle :| maybe 0 (_.id >>> unwrap) auth
 
 loadGame
     :: forall errors
@@ -80,13 +98,14 @@ loadGame pool handle' auth = do
     games :: Array LoadGameDto <- rows result
         # traverse read
         # labelMap (SProxy :: SProxy "unreadableDto") { result, errors: _ }
-    view @ { administratorId, handle, title, description, hasProfile } <-
+    view @ { administratorId, handle, title, hasProfile, fields } <-
         head games
         # Async.note (inj (SProxy :: SProxy "notFound") handle')
     pure
         { administratorId: wrap administratorId
         , title: wrap title
         , handle: wrap handle
-        , description: description <#> wrap # wrap
+        , description: wrap []
         , hasProfile
+        , fields
         }

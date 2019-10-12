@@ -95,7 +95,7 @@ notAsciiAlphaNumHyphen string =
 type ContainsWhitespace = {}
 
 isSpace :: String -> Boolean
-isSpace char = any (char == _)  ["\t", "\n", "\r", "\f", "\v", " "]
+isSpace char = any (char == _)  ["\t", "\n", "\r", "\x0c", "\x0b", " "]
 
 containsWhitespace :: forall errors.
     String

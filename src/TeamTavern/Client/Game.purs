@@ -6,94 +6,63 @@ import Async (Async)
 import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
+import Data.Array as Array
 import Data.Bifunctor (lmap)
 import Data.Const (Const)
 import Data.Maybe (Maybe(..))
-import Data.Monoid (guard)
-import Data.String (trim)
 import Data.Symbol (SProxy(..))
-import Halogen (ClassName(..))
 import Halogen as H
 import Halogen.HTML as HH
-import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Simple.JSON.Async as Json
-import TeamTavern.Client.Components.Modal as Modal
-import TeamTavern.Client.CreateProfile (createProfile)
-import TeamTavern.Client.CreateProfile as CreateProfile
-import TeamTavern.Client.EditGame (editGame)
-import TeamTavern.Client.EditGame as EditGame
+import TeamTavern.Client.Game.FilterProfiles (filterProfiles)
+import TeamTavern.Client.Game.FilterProfiles as FilterProfiles
+import TeamTavern.Client.Game.Profiles (gameProfiles)
+import TeamTavern.Client.Game.Profiles as Profiles
 import TeamTavern.Client.Script.Cookie (getPlayerId)
-import TeamTavern.Client.Script.Navigate (navigate_)
 import TeamTavern.Server.Game.View.SendResponse as View
-import Web.Event.Event (preventDefault)
-import Web.UIEvent.MouseEvent (MouseEvent, toEvent)
 
 data Action
     = Init String
-    | ShowEditGameModal EditGame.Input MouseEvent
-    | ShowCreateProfileModal MouseEvent
-    | HandleEditGameMessage (Modal.Message EditGame.Message)
-    | HandleCreateProfileMessage (Modal.Message CreateProfile.Message)
-
-data PlayerStatus = SignedOut | Player | Administrator
-
-createPlayerStatus :: Maybe Int -> Int -> PlayerStatus
-createPlayerStatus playerId administratorId =
-    case playerId of
-    Just playerId' ->
-        if playerId' == administratorId
-        then Administrator
-        else Player
-    _ -> SignedOut
-
-isSignedIn :: PlayerStatus -> Boolean
-isSignedIn = case _ of
-    SignedOut -> false
-    _ -> true
-
-isAdmin :: PlayerStatus -> Boolean
-isAdmin = case _ of
-    Administrator -> true
-    _ -> false
+    | ApplyFilters (Array FilterProfiles.Field)
 
 data State
     = Empty
-    | Game View.OkContent PlayerStatus
+    | Game View.OkContent
     | NotFound
     | Error
 
 type Slot = H.Slot (Const Void) Void
 
 type ChildSlots =
-    ( editGame :: EditGame.Slot Unit
-    , createProfile :: CreateProfile.Slot Unit
+    ( gameProfiles :: Profiles.Slot Unit
+    , filterProfiles :: FilterProfiles.Slot Unit
     )
+
+filterableFields
+    :: Array
+        { key :: String
+        , label :: String
+        , options :: Maybe (Array
+            { key :: String
+            , option :: String
+            })
+        , type :: Int
+        }
+    -> Array FilterProfiles.Field
+filterableFields fields = fields # Array.mapMaybe case _ of
+    { key, label, type: type', options: Just options }
+    | type' == 2 || type' == 3 -> Just { key, label, options }
+    _ -> Nothing
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render Empty = HH.div_ []
-render
-    (Game { title, handle, description, hasProfile } playerStatus) = HH.div_
-    [ HH.h2 [ HP.class_ $ ClassName "card-header"] [ HH.text title ]
-    , HH.div [ HP.class_ $ ClassName "card"] $ join
-        [ guard (not hasProfile && isSignedIn playerStatus) $ pure $ HH.p_ [
-            HH.a
-            [ HP.href ""
-            , HE.onClick $ Just <<< ShowCreateProfileModal
-            ]
-            [ HH.text "Create profile" ] ]
-        , guard (isAdmin playerStatus) $ pure $ HH.p_ [
-            HH.a
-            [ HP.href ""
-            , HE.onClick
-                $ Just <<< ShowEditGameModal { title, handle, description }
-            ]
-            [ HH.text "Edit game" ] ]
-        , description <#> \paragraph -> HH.p_ [ HH.text paragraph ]
-        ]
-    , HH.div_ [ editGame $ Just <<< HandleEditGameMessage ]
-    , HH.div_ [ createProfile
-        handle $ Just <<< HandleCreateProfileMessage ]
+render (Game game') = HH.div_
+    [ HH.h2 [ HP.class_ $ HH.ClassName "content-title" ]
+        [ HH.text game'.title ]
+    , filterProfiles (filterableFields game'.fields)
+        (\(FilterProfiles.ApplyFilters filters) -> Just $ ApplyFilters filters)
+    , gameProfiles game'
     ]
 render NotFound = HH.p_ [ HH.text "Game could not be found." ]
 render Error = HH.p_ [ HH.text
@@ -108,7 +77,7 @@ loadGame handle = Async.unify do
         404 -> Async.left NotFound
         _ -> Async.left Error
     playerId <- Async.fromEffect getPlayerId
-    pure $ Game content (createPlayerStatus playerId content.administratorId)
+    pure $ Game content
 
 handleAction :: forall output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
@@ -116,24 +85,9 @@ handleAction (Init handle) = do
     state <- H.lift $ loadGame handle
     H.put state
     pure unit
-handleAction (ShowEditGameModal input event) = do
-    H.liftEffect $ preventDefault $ toEvent event
-    Modal.showWith input (SProxy :: SProxy "editGame")
-handleAction (ShowCreateProfileModal event) = do
-    H.liftEffect $ preventDefault $ toEvent event
-    Modal.show (SProxy :: SProxy "createProfile")
-handleAction (HandleEditGameMessage message) = do
-    Modal.hide (SProxy :: SProxy "editGame")
-    case message of
-        Modal.Inner (EditGame.GameUpdated handle) ->
-            H.liftEffect $ navigate_ $ "/games/" <> trim handle
-        _ -> pure unit
-handleAction (HandleCreateProfileMessage message) = do
-    Modal.hide (SProxy :: SProxy "createProfile")
-    case message of
-        Modal.Inner (CreateProfile.ProfileCreated handle) ->
-            H.liftEffect $ navigate_ $ "/games/" <> trim handle
-        _ -> pure unit
+handleAction (ApplyFilters filters) =
+    void $ H.query (SProxy :: SProxy "gameProfiles") unit
+        (Profiles.ApplyFilters filters unit)
 
 component :: forall query output left.
     String -> H.Component HH.HTML query String output (Async left)

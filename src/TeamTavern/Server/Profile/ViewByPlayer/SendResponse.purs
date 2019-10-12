@@ -5,6 +5,7 @@ import Prelude
 
 import Async (Async, alwaysRight)
 import Data.Functor (mapFlipped)
+import Data.Maybe (Maybe)
 import Data.Newtype (unwrap)
 import Data.Variant (match)
 import Perun.Response (Response, internalServerError__, ok_)
@@ -16,6 +17,21 @@ type OkContent = Array
     { handle :: String
     , title :: String
     , summary :: Array String
+    , fieldValues :: Array
+        { fieldKey :: String
+        , url :: Maybe String
+        , optionKey :: Maybe String
+        , optionKeys :: Maybe (Array String)
+        }
+    , fields :: Array
+        { key :: String
+        , type :: Int
+        , label :: String
+        , options :: Maybe (Array
+            { key :: String
+            , option :: String
+            })
+        }
     }
 
 errorResponse :: ViewAllError -> Response
@@ -26,10 +42,12 @@ errorResponse = match
 
 successResponse :: Array LoadProfilesResult -> Response
 successResponse profiles = ok_ $ (writeJSON :: OkContent -> String) $
-    mapFlipped profiles \{ title, handle, summary } ->
+    mapFlipped profiles \{ title, handle, summary, fieldValues, fields } ->
         { handle: unwrap handle
         , title: unwrap title
         , summary: unwrap summary <#> unwrap
+        , fieldValues
+        , fields
         }
 
 sendResponse

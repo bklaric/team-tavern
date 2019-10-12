@@ -1,0 +1,67 @@
+.select {
+    position: relative;
+    cursor: pointer;
+}
+
+.selected-closed {
+    @extend %bordered;
+    height: 20px;
+    line-height: 20px;
+    padding: 9px 12px;
+    user-select: none;
+
+    &::after {
+        content: "";
+        position: absolute;
+        border: 6px solid transparent;
+        border-color: #1a1a1b transparent transparent transparent;
+        right: 18px;
+        top: 18px;
+    }
+}
+
+.selected-open {
+    @extend .selected-closed;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+
+    &::after {
+        border-color: transparent transparent #1a1a1b transparent;
+        top: 10px;
+    }
+}
+
+.options {
+    @extend %bordered;
+    border-top-style: none;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+    position: absolute;
+    left: 0;
+    right: 0;
+    z-index: 99;
+    background-color: white;
+}
+
+.option {
+    height: 20px;
+    padding: 9px 12px;
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    align-items: center;
+
+    &:not(:last-child) {
+        border-bottom-style: solid;
+        border-width: 1px;
+        border-color: hsla(0, 0%, 80%, 1);
+    }
+
+    >input {
+        margin: 0 9px 0 0;
+    }
+
+    &:hover {
+        background-color: #f2f2f2;
+    }
+}
