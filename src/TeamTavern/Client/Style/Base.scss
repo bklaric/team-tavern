@@ -69,10 +69,15 @@ a {
     text-decoration: none;
     color: $primary-color;
     word-wrap: break-word;
+    line-height: 21px;
 }
 
 a:hover {
     text-decoration: underline;
+}
+
+strong {
+    font-weight: 500;
 }
 
 %disabled {
