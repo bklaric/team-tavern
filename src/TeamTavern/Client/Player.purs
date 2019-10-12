@@ -20,6 +20,8 @@ import Halogen.HTML.Properties as HP
 import Simple.JSON.Async as Json
 import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.Modal as Modal
+import TeamTavern.Client.Components.ProfilesByPlayer (profilesByPlayer)
+import TeamTavern.Client.Components.ProfilesByPlayer as ProfilesByPlayer
 import TeamTavern.Client.EditPlayer (editPlayer)
 import TeamTavern.Client.EditPlayer as EditPlayer
 import TeamTavern.Client.Script.Cookie (getPlayerId)
@@ -41,7 +43,10 @@ data State
 
 type Slot = H.Slot (Const Void) Void
 
-type ChildSlots = (editPlayer :: EditPlayer.Slot Unit)
+type ChildSlots =
+    ( editPlayer :: EditPlayer.Slot Unit
+    , profilesByPlayer :: ProfilesByPlayer.Slot Unit
+    )
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render Empty = HH.div_ []
@@ -56,6 +61,7 @@ render (Player { nickname, about } isCurrentUser) = HH.div_
         , pure $ divider
         , pure $ HH.span [ HP.class_ $ ClassName "card-subheader" ] [ HH.text "Profiles" ]
         ]
+    , profilesByPlayer nickname
     , HH.div_ [ editPlayer $ Just <<< HandleEditPlayerMessage ]
     ]
 render NotFound = HH.p_ [ HH.text "Player could not be found." ]
