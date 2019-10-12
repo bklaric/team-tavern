@@ -18,7 +18,6 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Simple.JSON.Async as Json
-import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.ProfilesByPlayer (profilesByPlayer)
 import TeamTavern.Client.Components.ProfilesByPlayer as ProfilesByPlayer
@@ -54,12 +53,13 @@ render (Player { nickname, about } isCurrentUser) = HH.div_
     [ HH.h2 [ HP.class_ $ ClassName "content-title"] $ join
         [ pure $ HH.text nickname
         , guard isCurrentUser $ pure $
-            HH.button [ HE.onClick $ Just <<< ShowEditPlayerModal { nickname, about } ]
+            HH.button
+                [ HP.class_ $ HH.ClassName "button-regular title-button"
+                , HE.onClick $ Just <<< ShowEditPlayerModal { nickname, about }
+                ]
                 [ HH.i [ HP.class_ $ H.ClassName "fas fa-edit" ] []
                 , HH.text "Edit account"
                 ]
-        , pure $ divider
-        , pure $ HH.span [ HP.class_ $ ClassName "card-subheader" ] [ HH.text "Profiles" ]
         ]
     , profilesByPlayer nickname
     , HH.div_ [ editPlayer $ Just <<< HandleEditPlayerMessage ]
