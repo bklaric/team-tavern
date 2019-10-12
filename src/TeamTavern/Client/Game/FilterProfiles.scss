@@ -1,11 +1,12 @@
 .filter {
-    margin-bottom: 12px;
+    margin-bottom: 14px;
 }
 
 .apply-filters {
-    @extend button, .primary
+    @extend .button-secondary;
 }
 
 .clear-filters {
-    margin-left: 12px;
+    @extend .button-regular;
+    margin-left: 14px;
 }

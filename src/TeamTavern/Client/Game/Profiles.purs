@@ -12,38 +12,72 @@ import Data.Bifunctor (lmap)
 import Data.Foldable (find)
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Maybe (Maybe(..))
+import Data.String (trim)
 import Data.String as String
 import Data.Symbol (SProxy(..))
 import Halogen (ClassName(..), defaultEval, mkComponent, mkEval)
 import Halogen as H
 import Halogen.HTML as HH
+import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Simple.JSON.Async as Json
+import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchorIndexed)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
+import TeamTavern.Client.Game.CreateProfile (createProfile)
+import TeamTavern.Client.Game.CreateProfile as CreateProfile
 import TeamTavern.Client.Game.FilterProfiles as FilterProfiles
+import TeamTavern.Client.Script.Cookie (PlayerInfo, getPlayerInfo)
+import TeamTavern.Client.Script.Cookie as Cookie
+import TeamTavern.Client.Script.Navigate (navigate_)
 import TeamTavern.Server.Game.View.SendResponse as View
 import TeamTavern.Server.Profile.ViewByGame.SendResponse as ViewByGame
+import Web.Event.Event (preventDefault)
+import Web.UIEvent.MouseEvent (MouseEvent, toEvent)
 
-data Action = Init View.OkContent
+data Action
+    = Init View.OkContent
+    | ShowCreateProfileModal View.OkContent PlayerInfo MouseEvent
+    | HandleCreateProfileMessage (Modal.Message CreateProfile.Message)
 
 data State
     = Empty View.OkContent
-    | Profiles View.OkContent ViewByGame.OkContent
+    | Profiles View.OkContent ViewByGame.OkContent (Maybe Cookie.PlayerInfo)
 
 data Query send = ApplyFilters (Array FilterProfiles.Field) send
 
 type Slot = H.Slot Query Void
 
-type ChildSlots = (players :: Anchor.Slot Int)
+type ChildSlots =
+    ( players :: Anchor.Slot Int
+    , createProfile :: CreateProfile.Slot Unit
+    )
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render (Empty _) = HH.div_ []
-render (Profiles game profiles) = HH.div_ $
+render (Profiles game profiles playerInfo') =
+    HH.div [ HP.class_ $ HH.ClassName "card" ] $
+    [ HH.h3 [ HP.class_ $ HH.ClassName "card-title" ] $ join
+        [ pure $ HH.text "Profiles"
+        , case playerInfo' of
+            Just playerInfo | not game.hasProfile -> pure $ HH.button
+                [ HP.class_ $ ClassName "card-title-button button-primary"
+                , HE.onClick $ Just <<< ShowCreateProfileModal game playerInfo
+                ]
+                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-user-plus button-icon" ] []
+                , HH.text "Create profile"
+                ]
+            _ -> []
+        ]
+    , createProfile $ Just <<< HandleCreateProfileMessage
+    ]
+    <>
     (profiles # mapWithIndex \index { nickname, summary, fieldValues } ->
-        HH.div [ HP.class_ $ ClassName "card" ] $
-        [ HH.h3_ [ navigationAnchorIndexed (SProxy :: SProxy "players") index
-            { path: "/players/" <> nickname, content: HH.text nickname } ]
+        HH.div [ HP.class_ $ ClassName "card-section" ] $
+        [ HH.h3_
+            [ navigationAnchorIndexed (SProxy :: SProxy "players") index
+                { path: "/players/" <> nickname, content: HH.text nickname }
+            ]
         ]
         <> (Array.catMaybes $ game.fields <#> \field -> let
             fieldValue = fieldValues # find \ { fieldKey } -> field.key == fieldKey
@@ -87,7 +121,8 @@ loadProfiles game @ { handle } fields = Async.unify do
     content <- case FetchRes.status response of
         200 -> FetchRes.text response >>= Json.readJSON # lmap (const empty)
         _ -> Async.left empty
-    pure $ Profiles game content
+    playerInfo' <- H.liftEffect getPlayerInfo
+    pure $ Profiles game content playerInfo'
 
 handleAction :: forall output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
@@ -95,6 +130,15 @@ handleAction (Init game) = do
     state <- H.lift $ loadProfiles game []
     H.put state
     pure unit
+handleAction (ShowCreateProfileModal game playerInfo event) = do
+    H.liftEffect $ preventDefault $ toEvent event
+    Modal.showWith { game, playerInfo } (SProxy :: SProxy "createProfile")
+handleAction (HandleCreateProfileMessage message) = do
+    Modal.hide (SProxy :: SProxy "createProfile")
+    case message of
+        Modal.Inner (CreateProfile.ProfileCreated handle) ->
+            H.liftEffect $ navigate_ $ "/games/" <> trim handle
+        _ -> pure unit
 
 handleQuery
     :: forall output send left
@@ -104,7 +148,7 @@ handleQuery (ApplyFilters fields send) = do
     state <- H.get
     case state of
         Empty _ -> pure $ Just send
-        Profiles game _ -> do
+        Profiles game _ _ -> do
             state' <- H.lift $ loadProfiles game fields
             H.put state'
             pure $ Just send

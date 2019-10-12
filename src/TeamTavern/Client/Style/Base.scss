@@ -1,9 +1,12 @@
+$font: "Roboto",
+sans-serif;
 $primary-color: #b15e36;
-$disabled-primary-color: #d8beb1;
-$text-color: rgb(26, 26, 27);
+$disabled-primary-color: hsla(20, 40%, 81%, 1);
+$text-color: #2f2f33;
 $disabled-color: rgb(221, 221, 221);
 $error-color: orangered;
 $max-width: 960px;
+$border-color: #ccc;
 
 %bordered {
     border-style: solid;
@@ -12,11 +15,19 @@ $max-width: 960px;
     border-color: hsla(0, 0%, 80%, 1);
 }
 
+%bordered-gray {
+    border-color: $border-color;
+}
+
+%bordered-colored {
+    border-color: $primary-color;
+}
+
 body {
-    font-family: sans-serif;
+    font-family: $font;
     font-size: 14px;
     color: $text-color;
-    background-color: #eeeff1;
+    background-color: #f7f7fa;
     margin: 0;
 }
 
@@ -25,6 +36,7 @@ h2,
 h3 {
     margin-top: 0;
     margin-bottom: 0.5em;
+    font-weight: 500;
 }
 
 h1 {
@@ -57,49 +69,119 @@ a {
     text-decoration: none;
     color: $primary-color;
     word-wrap: break-word;
+    line-height: 21px;
 }
 
-button {
-    @extend %bordered;
-    font-size: 14px;
-    color: $text-color;
-    padding: 5px 10px;
-    background-color: white;
-    cursor: pointer;
-
-    i {
-        margin-right: 5px;
-    }
+a:hover {
+    text-decoration: underline;
 }
 
-button.primary {
-    color: white;
-    background-color: $primary-color;
-    border-color: $primary-color;
+strong {
+    font-weight: 500;
 }
 
-button.secondary {
-    color: $primary-color;
-    border-color: $primary-color;
-}
-
-button[disabled] {
-    @extend button;
-    color: $disabled-color;
-    border-color: $disabled-color;
+%disabled {
     cursor: not-allowed;
 }
 
-button[disabled].primary {
-    color: white;
-    background-color: $disabled-primary-color;
-    border-color: $disabled-primary-color;
+%button {
+    @extend %bordered;
+    display: inline-block;
+    font-family: $font;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
+    padding: 9px 12px;
+    cursor: pointer;
 }
 
-button[disabled].secondary {
-    color: $disabled-primary-color;
-    border-color: $disabled-primary-color;
+.button-regular {
+    @extend %button;
+    @extend %bordered-gray;
+    color: $text-color;
+    background-color: white;
+    border-color: #737373;
+
+    &:hover {
+        background-color: #efefef;
+    }
 }
+
+.button-primary {
+    @extend %button;
+    @extend %bordered-colored;
+    color: white;
+    background-color: $primary-color;
+
+    &:hover {
+        background-color: #9a451c;
+        border-color: #9a451c;
+    }
+
+    &[disabled] {
+        @extend %disabled;
+        background-color: $disabled-primary-color;
+        border-color: $disabled-primary-color;
+    }
+}
+
+.button-secondary {
+    @extend %button;
+    @extend %bordered-colored;
+    color: $primary-color;
+    background-color: white;
+}
+
+.title-button {
+    margin-left: 14px;
+}
+
+.button-icon {
+    margin-right: 6px;
+}
+
+// button {
+//     @extend %bordered;
+//     font-family: $font;
+//     font-size: 14px;
+//     color: $text-color;
+//     padding: 5px 10px;
+//     background-color: white;
+//     cursor: pointer;
+
+//     i {
+//         margin-right: 5px;
+//     }
+// }
+
+// button.primary {
+//     color: white;
+//     background-color: $primary-color;
+//     border-color: $primary-color;
+// }
+
+// button.secondary {
+//     color: $primary-color;
+//     border-color: $primary-color;
+// }
+
+// button[disabled] {
+//     @extend button;
+//     color: $disabled-color;
+//     border-color: $disabled-color;
+//     cursor: not-allowed;
+// }
+
+// button[disabled].primary {
+//     color: white;
+//     background-color: $disabled-primary-color;
+//     border-color: $disabled-primary-color;
+// }
+
+// button[disabled].secondary {
+//     color: $disabled-primary-color;
+//     border-color: $disabled-primary-color;
+// }
 
 
 label {
@@ -107,17 +189,30 @@ label {
     margin-bottom: 7px;
 }
 
+.text-line-input {
+    @extend %bordered-gray;
+    font-family: $font;
+    font-size: 14px;
+    line-height: 20px;
+    padding: 9px 12px;
+}
+
+.text-input {
+    @extend .text-line-input;
+    resize: vertical
+}
+
 input {
     @extend %bordered;
+    font-family: $font;
     font-size: 14px;
     padding: 5px;
 }
 
 textarea {
     @extend %bordered;
-    font-family: sans-serif;
+    font-family: $font;
+    font-size: 14px;
     padding: 5px;
     resize: vertical;
 }
-
-// disabled primary button #d8beb1

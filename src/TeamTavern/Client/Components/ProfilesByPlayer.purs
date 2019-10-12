@@ -49,22 +49,31 @@ type ChildSlots =
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render Empty = HH.div_ []
-render (Profiles profiles nickname') = HH.div_ $
-    [ HH.h3 [ HP.class_ $ ClassName "card-header"] [ HH.text "Profiles" ] ] <>
+render (Profiles profiles nickname') =
+    HH.div [ HP.class_ $ HH.ClassName "card" ] $
+    [ HH.h3 [ HP.class_ $ HH.ClassName "card-title" ] [ HH.text "Profiles" ] ]
+    <> case nickname' of
+        Nothing -> []
+        Just _ -> [ editProfile $ Just <<< HandleEditProfileMessage ]
+    <>
     (profiles # mapWithIndex \index { handle, title, summary, fieldValues, fields } ->
-        HH.div [ HP.class_ $ ClassName "card" ] $ join
+        HH.div [ HP.class_ $ ClassName "card-section" ] $ join
         [ pure $
-            HH.h3_ [ navigationAnchorIndexed (SProxy :: SProxy "games") index
-            { path: "/games/" <> handle, content: HH.text title } ]
-        , case nickname' of
-            Nothing -> []
-            Just nickname -> pure $ HH.p_ [
-                HH.a
-                [ HP.href ""
-                , HE.onClick $ Just <<< ShowEditProfileModal
-                    { nickname, handle, title, summary, fieldValues, fields }
+            HH.h3_ $ join
+                [ pure $ navigationAnchorIndexed (SProxy :: SProxy "games") index
+                    { path: "/games/" <> handle, content: HH.text title }
+                , case nickname' of
+                    Nothing -> []
+                    Just nickname -> pure $
+                        HH.button
+                            [ HP.class_ $ HH.ClassName "button-regular title-button"
+                            , HE.onClick $ Just <<< ShowEditProfileModal
+                                { nickname, handle, title, summary, fieldValues, fields }
+                            ]
+                            [ HH.i [ HP.class_ $ H.ClassName "fas fa-user-edit button-icon" ] []
+                            , HH.text "Edit profile"
+                            ]
                 ]
-                [ HH.text "Edit profile" ] ]
         , Array.catMaybes $ fields <#> \field -> let
             fieldValue = fieldValues # find \ { fieldKey } -> field.key == fieldKey
             in
@@ -91,9 +100,6 @@ render (Profiles profiles nickname') = HH.div_ $
             _ ->  Nothing
         , summary <#> \paragraph -> HH.p_ [ HH.text paragraph ]
         ])
-    <> case nickname' of
-        Nothing -> []
-        Just _ -> [ editProfile $ Just <<< HandleEditProfileMessage ]
 
 loadProfiles :: forall left. String -> Async left State
 loadProfiles nickname = Async.unify do

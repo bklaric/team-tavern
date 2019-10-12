@@ -73,16 +73,18 @@ render
     } = HH.form
     [ HP.class_ $ ClassName "single-form", HE.onSubmit $ Just <<< Register ]
     [ HH.h2_
-        [ HH.text "Register to "
+        [ HH.text "Create a "
         , navigationAnchor (SProxy :: SProxy "home")
             { path: "/", content: HH.text "TeamTavern" }
+        , HH.text " account"
         ]
     , HH.div_
         [ HH.label
-            [ HP.for "nickname" ]
+            [ HP.class_ $ HH.ClassName "input-label", HP.for "nickname" ]
             [ HH.text "Nickname" ]
         , HH.input
             [ HP.id_ "nickname"
+            , HP.class_ $ HH.ClassName "text-line-input"
             , HE.onValueInput $ Just <<< NicknameInput
             ]
         , HH.p
@@ -97,10 +99,11 @@ render
         ]
     , HH.div_
         [ HH.label
-            [ HP.for "email" ]
+            [ HP.class_ $ HH.ClassName "input-label", HP.for "email" ]
             [ HH.text "Email address" ]
         , HH.input
             [ HP.id_ "email"
+            , HP.class_ $ HH.ClassName "text-line-input"
             , HE.onValueInput $ Just <<< EmailInput
             ]
         , HH.p
@@ -115,10 +118,11 @@ render
         ]
     , HH.div_
         [ HH.label
-            [ HP.for "password" ]
+            [ HP.class_ $ HH.ClassName "input-label", HP.for "password" ]
             [ HH.text "Password" ]
         , HH.input
             [ HP.id_ "password"
+            , HP.class_ $ HH.ClassName "text-line-input"
             , HP.type_ InputPassword
             , HE.onValueInput $ Just <<< PasswordInput
             ]
@@ -128,17 +132,19 @@ render
             ]
         ]
     , HH.button
-        [ HP.class_ $ ClassName "primary"
+        [ HP.class_ $ ClassName "button-primary"
         , HP.disabled $ email == "" || nickname == "" || password == ""
         ]
-        [ HH.text "Register" ]
+        [ HH.i [ HP.class_ $ H.ClassName "fas fa-user-check button-icon" ] []
+        , HH.text "Create account"
+        ]
     , HH.p
         [ HP.class_ $ otherErrorClass otherError ]
         [ HH.text "Something unexpected went wrong! Please try again later." ]
     , HH.p_
-        [ HH.text "Already have an account?"
+        [ HH.text "Already have an account? "
         , navigationAnchor (SProxy :: SProxy "signInAnchor")
-            { path: "/signin", content: HH.text " Sign in." }
+            { path: "/signin", content: HH.text "Sign in." }
         ]
     ]
 

@@ -1,15 +1,14 @@
+@import "Reset";
 @import "Base";
 @import "SingleForm";
 @import "../Components/Divider";
 @import "../Components/TopBar";
 @import "../Components/Modal";
 @import "../Components/SingleSelect";
-@import "../Components/MultiSelect";
 @import "../Components/Welcome";
 @import "../Components/WelcomeBanner";
 @import "../Components/Games";
 @import "../Game/FilterProfiles";
-@import "../Player";
 
 .hidden {
     display: none;
@@ -31,13 +30,13 @@
     font-size: 14px;
 }
 
-#content {
+.content {
     max-width: $max-width;
-    padding: 12px;
-    margin: 36px auto auto auto;
+    padding: 14px;
+    margin: 41px auto auto auto;
 
     >* {
-        margin-bottom: 12px;
+        margin-bottom: 14px;
     }
 
     > :last-child {
@@ -45,29 +44,72 @@
     }
 }
 
-#single-content {
+.content-title {
+    display: block;
+    font-size: 18px;
+    line-height: 22px;
+    padding-left: 14px;
+    margin-bottom: 14px;
+}
+
+.single-content {
     width: 100vw;
     height: 100vh;
-    background-color: rgb(230, 230, 230);
     overflow: hidden auto;
 }
 
-.card-header {
-    padding-left: 12px;
-
-    button {
-        margin-left: 12px;
-    }
+.card-subheader {
+    font-size: 14px;
 }
 
 .card {
     @extend %bordered;
     background-color: white;
-    padding: 12px;
-    margin-bottom: 12px;
+    margin-bottom: 14px;
+}
+
+.card-title {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 21px;
+    padding: 14px;
+    margin: 0;
+    border-bottom: 1px solid #ccc;
+}
+
+.card-title-button {
+    margin-left: 14px;
+}
+
+.card-content {
+    padding: 14px;
+}
+
+.card-section {
+    @extend .card-content;
+
+    &:not(:last-child) {
+        border-bottom: 1px solid #ccc;
+    }
+}
+
+.profile-title {
+    button {
+        margin-left: 14px;
+    }
 }
 
 .empty {
     margin: 0 !important;
     padding: 0 !important;
+}
+
+.input-label {
+    line-height: 16px;
+}
+
+.input-sublabel {
+    font-size: 12px;
+    color: #737373;
 }
