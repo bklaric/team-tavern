@@ -101,6 +101,10 @@ strong {
     color: $text-color;
     background-color: white;
     border-color: #737373;
+
+    &:hover {
+        background-color: #efefef;
+    }
 }
 
 .button-primary {
@@ -108,6 +112,11 @@ strong {
     @extend %bordered-colored;
     color: white;
     background-color: $primary-color;
+
+    &:hover {
+        background-color: #9a451c;
+        border-color: #9a451c;
+    }
 
     &[disabled] {
         @extend %disabled;
