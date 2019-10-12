@@ -97,7 +97,7 @@ render
         [ HP.class_ $ ClassName "button-primary"
         , HP.disabled $ nicknameOrEmail == "" || password == ""
         ]
-        [ HH.i [ HP.class_ $ H.ClassName "fas fa-sign-in-alt" ] []
+        [ HH.i [ HP.class_ $ H.ClassName "fas fa-sign-in-alt button-icon" ] []
         , HH.text "Sign in"
         ]
     , HH.p

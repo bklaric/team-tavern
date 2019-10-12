@@ -70,7 +70,7 @@ render (Profiles profiles nickname') =
                             , HE.onClick $ Just <<< ShowEditProfileModal
                                 { nickname, handle, title, summary, fieldValues, fields }
                             ]
-                            [ HH.i [ HP.class_ $ H.ClassName "fas fa-user-edit" ] []
+                            [ HH.i [ HP.class_ $ H.ClassName "fas fa-user-edit button-icon" ] []
                             , HH.text "Edit profile"
                             ]
                 ]

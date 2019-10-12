@@ -36,3 +36,16 @@
     margin-left: 24px;
     font-weight: 500;
 }
+
+.top-bar-button {
+    @extend %button;
+    background-color: white;
+    border: 1px solid white;
+    border-radius: 0;
+    margin-left: 24px;
+}
+
+.top-bar-button:hover {
+    background-color: #efefef;
+    border: 1px solid #efefef;
+}

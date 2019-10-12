@@ -6,7 +6,7 @@ $text-color: #2f2f33;
 $disabled-color: rgb(221, 221, 221);
 $error-color: orangered;
 $max-width: 960px;
-$border-color: #ccc;
+$border-color: #737373;
 
 %bordered {
     border-style: solid;
@@ -85,6 +85,7 @@ strong {
 }
 
 %button {
+    @extend %bordered;
     display: inline-block;
     font-family: $font;
     font-size: 14px;
@@ -99,7 +100,6 @@ strong {
     @extend %bordered-gray;
     color: $text-color;
     background-color: white;
-    border-color: #737373;
 }
 
 .button-primary {
@@ -130,30 +130,30 @@ strong {
     margin-right: 6px;
 }
 
-button {
-    @extend %bordered;
-    font-family: $font;
-    font-size: 14px;
-    color: $text-color;
-    padding: 5px 10px;
-    background-color: white;
-    cursor: pointer;
+// button {
+//     @extend %bordered;
+//     font-family: $font;
+//     font-size: 14px;
+//     color: $text-color;
+//     padding: 5px 10px;
+//     background-color: white;
+//     cursor: pointer;
 
-    i {
-        margin-right: 5px;
-    }
-}
+//     i {
+//         margin-right: 5px;
+//     }
+// }
 
-button.primary {
-    color: white;
-    background-color: $primary-color;
-    border-color: $primary-color;
-}
+// button.primary {
+//     color: white;
+//     background-color: $primary-color;
+//     border-color: $primary-color;
+// }
 
-button.secondary {
-    color: $primary-color;
-    border-color: $primary-color;
-}
+// button.secondary {
+//     color: $primary-color;
+//     border-color: $primary-color;
+// }
 
 // button[disabled] {
 //     @extend button;
@@ -162,16 +162,16 @@ button.secondary {
 //     cursor: not-allowed;
 // }
 
-button[disabled].primary {
-    color: white;
-    background-color: $disabled-primary-color;
-    border-color: $disabled-primary-color;
-}
+// button[disabled].primary {
+//     color: white;
+//     background-color: $disabled-primary-color;
+//     border-color: $disabled-primary-color;
+// }
 
-button[disabled].secondary {
-    color: $disabled-primary-color;
-    border-color: $disabled-primary-color;
-}
+// button[disabled].secondary {
+//     color: $disabled-primary-color;
+//     border-color: $disabled-primary-color;
+// }
 
 
 label {

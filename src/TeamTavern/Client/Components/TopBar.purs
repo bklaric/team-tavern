@@ -75,17 +75,24 @@ render playerInfo = HH.div_
                         [ HH.text "Create account" ]
                     ]
                 SignedIn { nickname } ->
-                    [ navigationAnchor (SProxy :: SProxy "profileAnchor")
-                        { path: "/players/" <> nickname
-                        , content: HH.text nickname
-                        }
-                    , HH.a
-                        [ HP.href ""
-                        , HE.onClick $ Just <<< ShowCreateModal
+                    [ HH.a
+                        [ HP.class_ $ HH.ClassName "top-bar-link"
+                        , HP.href $ "/players/" <> nickname
+                        , HE.onClick $ Just <<< Navigate ("/players/" <> nickname)
                         ]
-                        [ HH.text "Create a game" ]
-                    , HH.button [ HE.onClick $ const $ Just SignOut ]
-                        [ HH.text "Sign out" ]
+                        [ HH.text nickname ]
+                    -- , HH.a
+                    --     [ HP.href ""
+                    --     , HE.onClick $ Just <<< ShowCreateModal
+                    --     ]
+                    --     [ HH.text "Create a game" ]
+                    , HH.button
+                        [ HP.class_ $ HH.ClassName "top-bar-button"
+                        , HE.onClick $ const $ Just SignOut
+                        ]
+                        [ HH.i [ HP.class_ $ H.ClassName "fas fa-sign-out-alt button-icon" ] []
+                        , HH.text "Sign out"
+                        ]
                     ]
             ]
         ]

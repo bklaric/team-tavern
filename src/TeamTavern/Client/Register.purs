@@ -135,7 +135,7 @@ render
         [ HP.class_ $ ClassName "button-primary"
         , HP.disabled $ email == "" || nickname == "" || password == ""
         ]
-        [ HH.i [ HP.class_ $ H.ClassName "fas fa-user-check" ] []
+        [ HH.i [ HP.class_ $ H.ClassName "fas fa-user-check button-icon" ] []
         , HH.text "Create account"
         ]
     , HH.p
