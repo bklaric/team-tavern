@@ -85,21 +85,21 @@ render (Profiles game profiles playerInfo') =
             case { type: field.type, fieldValue } of
             { type: 1, fieldValue: Just { url: Just url' } } -> Just $
                 HH.p_
-                [ HH.text $ field.label <> ": "
+                [ HH.strong_ [ HH.text $ field.label <> ": " ]
                 , HH.a [ HP.href url' ] [ HH.text url' ]
                 ]
             { type: 2, fieldValue: Just { optionKey: Just optionKey' } } -> let
                 fieldOption' = field.options >>= find (\{ key } -> key == optionKey')
                 in
                 fieldOption' <#> \{ option } ->
-                    HH.p_ [ HH.text $ field.label <> ": " <> option ]
+                    HH.p_ [ HH.strong_ [ HH.text $ field.label <> ": " ], HH.text option ]
             { type: 3, fieldValue: Just { optionKeys: Just optionKeys' } } -> let
                 fieldOptions' = field.options <#> Array.filter \{ key } -> Array.elem key optionKeys'
                 in
                 case fieldOptions' of
                 Just fieldOptions | not $ Array.null fieldOptions -> Just $ HH.p_
-                    [ HH.text $ field.label <> ": "
-                        <> intercalate ", " (fieldOptions <#> _.option)
+                    [ HH.strong_ [ HH.text $ field.label <> ": " ]
+                    , HH.text $ intercalate ", " (fieldOptions <#> _.option)
                     ]
                 _ -> Nothing
             _ ->  Nothing)

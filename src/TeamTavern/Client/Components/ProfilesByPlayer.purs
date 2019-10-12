@@ -80,21 +80,21 @@ render (Profiles profiles nickname') =
             case { type: field.type, fieldValue } of
             { type: 1, fieldValue: Just { url: Just url' } } -> Just $
                 HH.p_
-                [ HH.text $ field.label <> ": "
+                [ HH.strong_ [ HH.text $ field.label <> ": " ]
                 , HH.a [ HP.href url' ] [ HH.text url' ]
                 ]
             { type: 2, fieldValue: Just { optionKey: Just optionKey' } } -> let
                 option' = field.options >>= find (\{ key } -> key == optionKey')
                 in
                 option' <#> \{ option } ->
-                    HH.p_ [ HH.text $ field.label <> ": " <> option ]
+                    HH.p_ [ HH.strong_ [ HH.text $ field.label <> ": " ],  HH.text option ]
             { type: 3, fieldValue: Just { optionKeys: Just optionKeys' } } -> let
                 options' = field.options <#> Array.filter \{ key } -> Array.elem key optionKeys'
                 in
                 case options' of
                 Just options | not $ Array.null options -> Just $ HH.p_
-                    [ HH.text $ field.label <> ": "
-                        <> intercalate ", " (options <#> _.option)
+                    [ HH.strong_  [ HH.text $ field.label <> ": " ]
+                    , HH.text $ intercalate ", " (options <#> _.option)
                     ]
                 _ -> Nothing
             _ ->  Nothing
