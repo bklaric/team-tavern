@@ -53,8 +53,15 @@ render playerInfo = HH.div_
     [ HH.div [ HP.class_ $ HH.ClassName "top-bar" ]
         [ HH.div [ HP.class_ $ HH.ClassName "top-bar-content" ]
             [ HH.h2 [ HP.class_ $ HH.ClassName "top-bar-title" ]
-                [ HH.a [ HP.href "/", HE.onClick $ Just <<< Navigate "/" ]
-                    [ HH.span [ HP.class_ $ HH.ClassName "top-bar-logo" ] [ HH.text "tt" ]
+                [ HH.a
+                    [ HP.class_ $ HH.ClassName "top-bar-title-link"
+                    , HP.href "/"
+                    , HE.onClick $ Just <<< Navigate "/"
+                    ]
+                    [ HH.img
+                        [ HP.class_ $ HH.ClassName "top-bar-logo"
+                        , HP.src "/favicon-32x32.png"
+                        ]
                     , HH.text "TeamTavern"
                     ]
                 ]
