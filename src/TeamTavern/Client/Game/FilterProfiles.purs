@@ -25,6 +25,7 @@ type Option =
 type Field =
     { key :: String
     , label :: String
+    , domain :: Maybe String
     , options :: Array Option
     }
 
