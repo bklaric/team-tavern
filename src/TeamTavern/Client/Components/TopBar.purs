@@ -18,7 +18,6 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Simple.JSON.Async (readJSON)
 import TeamTavern.Client.Components.Modal as Modal
-import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.CreateGame (createGame)
 import TeamTavern.Client.CreateGame as CreateGame

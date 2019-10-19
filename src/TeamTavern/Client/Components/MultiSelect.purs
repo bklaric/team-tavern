@@ -8,6 +8,7 @@ import Data.Foldable (intercalate)
 import Data.Maybe (Maybe(..))
 import Data.Symbol (class IsSymbol)
 import Data.Variant (SProxy)
+import Effect.Class (class MonadEffect)
 import Halogen (ClassName(..))
 import Halogen as H
 import Halogen.HTML as HH
@@ -15,6 +16,9 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties (InputType(..))
 import Halogen.HTML.Properties as HP
 import Prim.Row (class Cons)
+import Web.Event.Event (preventDefault)
+import Web.UIEvent.MouseEvent (MouseEvent)
+import Web.UIEvent.MouseEvent as MouseEvent
 
 type Option option =
     { option :: option
@@ -39,6 +43,7 @@ data Action option
     | Open
     | Close
     | Toggle
+    | PreventDefault MouseEvent
 
 data Query option send
     = Selected (Array option -> send)
@@ -75,6 +80,8 @@ render { options, labeler, comparer, open } =
                         [ HP.type_ InputCheckbox
                         , HP.checked selected
                         , HP.tabIndex $ -1
+                        , HE.onMouseDown $ Just <<< PreventDefault
+                        , HP.class_ $ HH.ClassName "option-checkbok"
                         ]
                     , HH.text $ labeler option
                     ])
@@ -82,7 +89,7 @@ render { options, labeler, comparer, open } =
         else
             []
 
-handleAction :: forall option slots message monad.
+handleAction :: forall option slots message monad. MonadEffect monad =>
     (Action option) -> H.HalogenM (State option) (Action option) slots message monad Unit
 handleAction (ToggleOption toggledOption) =
     H.modify_ (\state -> state
@@ -97,6 +104,8 @@ handleAction Close =
     H.modify_ \state -> state { open = false }
 handleAction Toggle =
     H.modify_ \state -> state { open = not state.open }
+handleAction (PreventDefault mouseEvent) =
+    H.liftEffect $ preventDefault (MouseEvent.toEvent mouseEvent)
 
 handleQuery
     :: forall option monad send
@@ -112,7 +121,7 @@ handleQuery (Clear send) = do
         }
     pure $ Just send
 
-component :: forall option message monad.
+component :: forall option message monad. MonadEffect monad =>
     H.Component HH.HTML (Query option) (Input option) message monad
 component = H.mkComponent
     { initialState: \{ options, labeler, comparer } ->
@@ -128,6 +137,7 @@ multiSelect
     :: forall children' slot children output monad option
     .  Cons slot (Slot option Unit) children' children
     => IsSymbol slot
+    => MonadEffect monad
     => SProxy slot
     -> Input option
     -> HH.HTML (H.ComponentSlot HH.HTML children monad output) output
@@ -138,6 +148,7 @@ multiSelectIndexed
     .  Cons slot (Slot option index) children' children
     => IsSymbol slot
     => Ord index
+    => MonadEffect monad
     => SProxy slot
     -> index
     -> Input option

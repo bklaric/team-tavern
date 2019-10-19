@@ -8,6 +8,7 @@ import Data.Map as Map
 import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..))
+import Effect.Class (class MonadEffect)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
@@ -25,6 +26,7 @@ type Option =
 type Field =
     { key :: String
     , label :: String
+    , domain :: Maybe String
     , options :: Array Option
     }
 
@@ -46,7 +48,8 @@ fieldLabel label = HH.label
 
 fieldInput
     :: forall monad
-    .  Field
+    .  MonadEffect monad
+    => Field
     -> H.ComponentHTML Action ChildSlots monad
 fieldInput field @ { label, options } =
     HH.div [ HP.class_ $ H.ClassName "filter" ]
@@ -58,7 +61,8 @@ fieldInput field @ { label, options } =
         }
     ]
 
-render :: forall monad. State -> H.ComponentHTML Action ChildSlots monad
+render :: forall monad. MonadEffect monad =>
+    State -> H.ComponentHTML Action ChildSlots monad
 render fields = HH.div [ HP.class_ $ HH.ClassName "card" ]
     [ HH.h3 [ HP.class_ $ HH.ClassName "card-title" ]
         [ HH.text "Profile filters" ]

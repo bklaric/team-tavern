@@ -22,6 +22,7 @@ type Handle = String
 type Option =
     { id :: Int
     , key :: String
+    , domain :: Maybe String
     , option :: String
     }
 
@@ -29,6 +30,8 @@ type Field =
     { id :: Int
     , type :: Int
     , key :: String
+    , required :: Boolean
+    , domain :: Maybe String
     , options :: Maybe (Array Option)
     }
 
@@ -46,6 +49,8 @@ queryString = Query """
         field.id,
         field.type,
         field.key,
+        field.required,
+        field.domain,
         json_agg(
             json_build_object(
                 'id', field_option.id,
