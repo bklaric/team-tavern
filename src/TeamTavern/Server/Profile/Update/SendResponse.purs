@@ -6,14 +6,24 @@ import Prelude
 import Async (Async, alwaysRight)
 import Data.Array as Array
 import Data.Maybe (Maybe(..))
-import Data.Variant (SProxy(..), Variant, inj, match, on)
+import Data.Variant (SProxy(..), Variant, inj, match, onMatch)
 import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, noContent_, unauthorized__)
 import Simple.JSON (writeJSON)
 import TeamTavern.Server.Profile.Update.LogError (UpdateError)
+import TeamTvaern.Server.Profile.Infrastructure.ValidateFieldValues (Field(..))
 
 type ProfileErrorContent = Variant
     ( invalidSummary :: {}
-    , invalidUrl :: { fieldKey :: String }
+    , invalidUrl ::
+        { fieldKey :: String
+        , errors :: Array (Variant
+            ( invalid :: { original :: String }
+            , tooLong :: { maxLength :: Int, actualLength :: Int }
+            ))
+        }
+    , missing ::
+        { fieldKey :: String
+        }
     )
 
 type BadRequestContent = Variant
@@ -32,9 +42,12 @@ errorResponse = match
                 $ inj (SProxy :: SProxy "invalidSummary") {}
             , fieldValues: \fieldValueErrors ->
                 fieldValueErrors
-                <#> on (SProxy :: SProxy "invalidUrlFieldValue")
-                    (\{ fieldValue: { fieldKey } } ->
-                        Just $ inj (SProxy :: SProxy "invalidUrl") { fieldKey })
+                <#> onMatch
+                    { invalidUrlFieldValue: \{ fieldValue: { fieldKey }, errors } ->
+                        Just $ inj (SProxy :: SProxy "invalidUrl") { fieldKey, errors: Array.fromFoldable errors }
+                    , missingFieldValue: \{ field: (Field _ key _ _) } ->
+                        Just $ inj (SProxy :: SProxy "missing") { fieldKey: key }
+                    }
                     (const Nothing)
                 # Array.fromFoldable
                 # Array.catMaybes

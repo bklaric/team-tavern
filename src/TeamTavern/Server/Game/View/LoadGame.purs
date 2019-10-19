@@ -34,6 +34,7 @@ type LoadGameDto =
         { type :: Int
         , label :: String
         , key :: String
+        , required :: Boolean
         , domain :: Maybe String
         , options :: Maybe (Array
             { key :: String
@@ -52,6 +53,7 @@ type LoadGameResult =
         { type :: Int
         , label :: String
         , key :: String
+        , required :: Boolean
         , domain :: Maybe String
         , options :: Maybe (Array
             { key :: String

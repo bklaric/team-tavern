@@ -59,6 +59,7 @@ type State =
         , optionKeys :: Maybe (Array String)
         }
     , urlValueErrors :: Array { fieldKey :: String }
+    , missingErrors :: Array { fieldKey :: String }
     , otherError :: Boolean
     }
 
@@ -70,8 +71,8 @@ type ChildSlots =
 type Slot =
     H.Slot (Modal.Query Input (Const Void)) (Modal.Message Message)
 
-fieldLabel :: forall slots action. String -> String -> Maybe String -> HH.HTML slots action
-fieldLabel key label domain =
+fieldLabel :: forall slots action. String -> String -> Boolean -> Maybe String -> HH.HTML slots action
+fieldLabel key label required domain =
     HH.label
         [ HP.class_ $ HH.ClassName "input-label", HP.for key ] $
         [ HH.text label ]
@@ -83,25 +84,31 @@ fieldLabel key label domain =
             ]
         Nothing -> [])
         <>
-        [ divider
-        , HH.span [ HP.class_ $ H.ClassName "profile-count" ] [ HH.text "optional" ]
-        ]
+        (if required
+        then []
+        else
+            [ divider
+            , HH.span [ HP.class_ $ H.ClassName "profile-count" ] [ HH.text "optional" ]
+            ])
 
 fieldInput
     :: forall left
     .  Array { fieldKey :: String }
+    -> Array { fieldKey :: String }
     ->  { key :: String
         , label :: String
         , type :: Int
+        , required :: Boolean
         , domain :: Maybe String
         , options :: Maybe (Array { key :: String , option :: String })
         }
     ->  H.ComponentHTML Action ChildSlots (Async left)
-fieldInput urlValueErrors { key, type: 1, label, domain: Just domain } = let
+fieldInput urlValueErrors missingErrors { key, type: 1, label, required, domain: Just domain } = let
     urlError = urlValueErrors # any (_.fieldKey >>> (_ == key))
+    missingError = missingErrors # any (_.fieldKey >>> (_ == key))
     in
     HH.div_
-    [ fieldLabel key label (Just domain)
+    [ fieldLabel key label required (Just domain)
     , HH.input
         [ HP.id_ key
         , HP.class_ $ HH.ClassName "text-line-input"
@@ -110,10 +117,13 @@ fieldInput urlValueErrors { key, type: 1, label, domain: Just domain } = let
     , HH.p
         [ HP.class_ $ inputErrorClass urlError ]
         [ HH.text $ "This doesn't look like a valid " <> label <> " (" <> domain <> ") address." ]
+    , HH.p
+        [ HP.class_ $ inputErrorClass missingError ]
+        [ HH.text $ label <> " is required." ]
     ]
-fieldInput _ { key, type: 2, label, options: Just options } =
+fieldInput _ _ { key, type: 2, label, required, options: Just options } =
     HH.div_
-    [ fieldLabel key label Nothing
+    [ fieldLabel key label required Nothing
     , singleSelectIndexed (SProxy :: SProxy "singleSelectField") key
         { options
         , selected: Nothing
@@ -121,22 +131,22 @@ fieldInput _ { key, type: 2, label, options: Just options } =
         , comparer: \leftOption rightOption -> leftOption.key == rightOption.key
         }
     ]
-fieldInput _ { key, type: 3, label, options: Just options } =
+fieldInput _ _ { key, type: 3, label, required, options: Just options } =
     HH.div_
-    [ fieldLabel key label Nothing
+    [ fieldLabel key label required Nothing
     , multiSelectIndexed (SProxy :: SProxy "multiSelectField") key
         { options: options <#> \option -> { option, selected: false }
         , labeler: _.option
         , comparer: \leftOption rightOption -> leftOption.key == rightOption.key
         }
     ]
-fieldInput _ _ = HH.div_ []
+fieldInput _ _ _ = HH.div_ []
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
-render { summary, summaryError, urlValueErrors, otherError, game } = HH.form
+render { summary, summaryError, urlValueErrors, missingErrors, otherError, game } = HH.form
     [ HP.class_ $ ClassName "single-form-wide", HE.onSubmit $ Just <<< Create ] $
     [ HH.h2_ [ HH.text $ "Create your " <> game.title <> " profile" ] ]
-    <> (game.fields <#> fieldInput urlValueErrors) <>
+    <> (game.fields <#> fieldInput urlValueErrors missingErrors) <>
     [ HH.div_
         [ HH.label
             [ HP.for "summary" ]
@@ -190,8 +200,10 @@ sendCreateRequest state @ { summary, fieldValues, game } nickname = Async.unify 
                     { invalidProfile: foldl (\state' error' ->
                         error' # match
                             { invalidSummary: const $ state' { summaryError = true }
-                            , invalidUrl: \fieldId ->
-                                state' { urlValueErrors = Arary.cons fieldId state'.urlValueErrors }
+                            , invalidUrl: \{ fieldKey, errors } ->
+                                state' { urlValueErrors = Arary.cons { fieldKey } state'.urlValueErrors }
+                            , missing: \{ fieldKey } ->
+                                state' { missingErrors = Arary.cons { fieldKey } state'.missingErrors }
                             })
                         state
                     }
@@ -216,8 +228,10 @@ handleAction (UrlValueInput fieldKey url) = do
 handleAction (Create event) = do
     H.liftEffect $ preventDefault event
     state @ { game: { fields }, playerInfo: { nickname } } <- H.gets (_
-        { summaryError = false
-        , otherError   = false
+        { summaryError   = false
+        , otherError     = false
+        , urlValueErrors = []
+        , missingErrors  = []
         })
     singleSelectResults <-
         (H.queryAll (SProxy :: SProxy "singleSelectField")
@@ -268,6 +282,7 @@ component = H.mkComponent
             , optionKeys: Nothing
             })
         , urlValueErrors: []
+        , missingErrors: []
         , otherError: false
         , game
         , playerInfo
