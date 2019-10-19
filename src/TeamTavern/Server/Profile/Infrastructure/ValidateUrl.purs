@@ -2,19 +2,28 @@ module TeamTavern.Server.Profile.Infrastructure.ValidateUrl (Url, UrlError, crea
 
 import Prelude
 
-import Data.Either (Either, isRight)
+import Data.Array ((!!))
+import Data.Either (Either(..), isRight)
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Data.List.Types (NonEmptyList)
-import Data.String (Pattern(..), contains, trim)
+import Data.Maybe (Maybe(..))
+import Data.String (trim)
+import Data.String.Utils (endsWith, startsWith)
 import Data.Variant (Variant)
-import Text.Parsing.Parser (runParser)
-import URI (Fragment, HierPath, Host, Path, Port, Query, UserInfo)
-import URI.HostPortPair (HostPortPair)
-import URI.HostPortPair as HostPortPair
-import URI.URI (URIOptions, parser)
+import Text.Parsing.Parser (Parser)
+import Text.Parsing.Parser (runParser) as Parser
+import Text.Parsing.Parser.String (string)
+import URI (Path(..), RegName, Scheme)
+import URI.Common (URIPartParseError(..), wrapParser)
+import URI.Host.RegName as RegName
+import URI.Path as Path
+import URI.Path.Segment as Segment
+import URI.Scheme as Scheme
 import Wrapped as Wrapped
 import Wrapped.String (Invalid, TooLong, invalid, tooLong)
+
+type Domain = String
 
 newtype Url = Url String
 
@@ -25,34 +34,53 @@ instance showUrl :: Show Url where
 
 type UrlError = Variant (invalid :: Invalid, tooLong :: TooLong)
 
-options ∷ Record (URIOptions
-    UserInfo (HostPortPair Host Port) Path HierPath Query Fragment)
-options =
-  { parseUserInfo: pure
-  , printUserInfo: identity
-  , parseHosts: HostPortPair.parser pure pure
-  , printHosts: HostPortPair.print identity identity
-  , parsePath: pure
-  , printPath: identity
-  , parseHierPath: pure
-  , printHierPath: identity
-  , parseQuery: pure
-  , printQuery: identity
-  , parseFragment: pure
-  , printFragment: identity
-  }
+type ParsedUrl =
+    { scheme :: Scheme
+    , host :: RegName
+    , path :: Path
+    }
 
 prependScheme :: String -> String
 prependScheme url =
-    if contains (Pattern "http://") url || contains (Pattern "https://") url
+    if startsWith "http://" url || startsWith "https://" url
     then url
-    else "http://" <> url
+    else "https://" <> url
 
-create :: String -> Either (NonEmptyList UrlError) Url
-create url =
+parseScheme :: Parser String Scheme
+parseScheme = flip wrapParser Scheme.parser
+    \scheme ->
+        case Scheme.print scheme of
+        "https:" -> Right scheme
+        "http:" -> Right scheme
+        scheme' -> Left $ URIPartParseError $ "Unsupported scheme: " <> scheme'
+
+parseHost :: Domain -> Parser String RegName
+parseHost domain = flip wrapParser RegName.parser
+    \host ->
+        if RegName.print host # endsWith domain
+        then Right host
+        else Left $ URIPartParseError $ "Wrong domain: " <> RegName.print host
+
+parsePath :: Parser String Path
+parsePath = flip wrapParser Path.parser
+    \path @ (Path segments) ->
+        case segments !! 0 of
+        Just segment | Segment.printSegment segment /= "" -> Right path
+        _ -> Left $ URIPartParseError $ "Invalid path: " <> Path.print path
+
+parser :: Domain -> Parser String ParsedUrl
+parser domain = do
+  scheme <- parseScheme
+  _ <- string "//"
+  host <- parseHost domain
+  path <- parsePath
+  pure { scheme, host, path }
+
+create :: Domain -> String -> Either (NonEmptyList UrlError) Url
+create domain url =
     Wrapped.create
         (trim >>> prependScheme)
-        [invalid ((flip runParser $ parser options) >>> isRight), tooLong 200]
+        [invalid ((flip Parser.runParser $ parser domain) >>> isRight), tooLong 200]
         Url url
 
 toString :: Url -> String

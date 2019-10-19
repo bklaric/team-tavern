@@ -16,7 +16,7 @@ import Data.Maybe (Maybe(..))
 import Data.Set as Set
 import Data.Traversable (find, traverse)
 import Data.Tuple (Tuple(..))
-import Data.Tuple.Nested (tuple4, (/\))
+import Data.Tuple.Nested (tuple3, tuple4, (/\))
 import Data.Validated (Validated)
 import Data.Validated as Validated
 import Data.Variant (SProxy(..), Variant)
@@ -47,8 +47,10 @@ type FieldId = Int
 
 type FieldKey = String
 
+type FieldDomain = String
+
 data FieldType
-    = UrlField
+    = UrlField FieldDomain
     | SingleField (Map OptionKey Option)
     | MultiField (Map OptionKey Option)
 
@@ -108,12 +110,12 @@ prepareOptions options = options
 prepareFields :: Array LoadFields.Field -> Array Field
 prepareFields fields =
     fields # Array.mapMaybe \field ->
-        case Tuple field.type field.options of
-        Tuple 1 Nothing -> Just $
-            Field field.id field.key UrlField
-        Tuple 2 (Just options) -> Just $
+        case tuple3 field.type field.domain field.options of
+        1 /\ Just domain /\  Nothing /\ unit -> Just $
+            Field field.id field.key $ UrlField domain
+        2 /\ _ /\ (Just options) /\ unit -> Just $
             Field field.id field.key $ SingleField (prepareOptions options)
-        Tuple 3 (Just options) -> Just $
+        3 /\ _ /\ (Just options) /\ unit -> Just $
             Field field.id field.key $ MultiField (prepareOptions options)
         _ -> Nothing
 
@@ -127,8 +129,8 @@ validateFieldValue fields fieldValue @ { fieldKey, url, optionKey, optionKeys } 
     case find (\(Field _ key _) -> key == fieldKey) fields of
     Just field @ (Field fieldId _ type') ->
         case tuple4 type' url optionKey optionKeys of
-        UrlField /\ Just url' /\ Nothing /\ Nothing /\ unit ->
-            case ValidateUrl.create url' of
+        UrlField domain /\ Just url' /\ Nothing /\ Nothing /\ unit ->
+            case ValidateUrl.create domain url' of
             Right url'' -> Right $
                 FieldValue fieldId $ Url $ url''
             Left errors -> Left $ Variant.inj (SProxy :: SProxy "invalidUrlFieldValue") { field, fieldValue, errors }
