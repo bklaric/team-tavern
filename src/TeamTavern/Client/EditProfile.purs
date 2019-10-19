@@ -216,7 +216,7 @@ render { title, fields, summary, summaryError, fieldValues, urlValueErrors, miss
         , HH.p
             [ HP.class_ $ inputErrorClass summaryError ]
             [ HH.text
-                "The summary cannot be more than 2000 characters long." ]
+                "The summary cannot be empty and cannot be more than 2000 characters long." ]
         ]
     , HH.button
         [ HP.class_ $ ClassName "button-primary"
