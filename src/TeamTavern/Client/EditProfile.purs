@@ -92,6 +92,7 @@ type State =
         , optionKeys :: Maybe (Array String)
         }
     , urlValueErrors :: Array { fieldKey :: String }
+    , missingErrors :: Array { fieldKey :: String }
     , otherError :: Boolean
     }
 
@@ -133,6 +134,7 @@ fieldInput
         , optionKeys :: Maybe (Array String)
         }
     -> Array { fieldKey :: String }
+    -> Array { fieldKey :: String }
     ->  { key :: String
         , label :: String
         , type :: Int
@@ -141,9 +143,10 @@ fieldInput
         , options :: Maybe (Array { key :: String , option :: String })
         }
     -> H.ComponentHTML Action ChildSlots (Async left)
-fieldInput fieldValues urlValueErrors { key, type: 1, label, required, domain: Just domain } = let
+fieldInput fieldValues urlValueErrors missingErrors { key, type: 1, label, required, domain: Just domain } = let
     fieldValue' = fieldValues # find \{ fieldKey } -> fieldKey == key
     urlError = urlValueErrors # any (_.fieldKey >>> (_ == key))
+    missingError = missingErrors # any (_.fieldKey >>> (_ == key))
     in
     case fieldValue' of
     Just { url } ->
@@ -158,9 +161,12 @@ fieldInput fieldValues urlValueErrors { key, type: 1, label, required, domain: J
         , HH.p
             [ HP.class_ $ inputErrorClass urlError ]
             [ HH.text $ "This doesn't look like a valid " <> label <> " (" <> domain <> ") address." ]
+        , HH.p
+            [ HP.class_ $ inputErrorClass missingError ]
+            [ HH.text $ label <> " is required." ]
         ]
     Nothing -> HH.div_ []
-fieldInput fieldValues _ { key, type: 2, label, required, options: Just options } = let
+fieldInput fieldValues _ _ { key, type: 2, label, required, options: Just options } = let
     fieldValue' = fieldValues # find \{ fieldKey } -> fieldKey == key
     in
     HH.div_
@@ -173,7 +179,7 @@ fieldInput fieldValues _ { key, type: 2, label, required, options: Just options 
         , comparer: \leftOption rightOption -> leftOption.key == rightOption.key
         }
     ]
-fieldInput fieldValues _ { key, type: 3, label, required, options: Just options } = let
+fieldInput fieldValues _ _ { key, type: 3, label, required, options: Just options } = let
     fieldValue' = fieldValues # find \{ fieldKey } -> fieldKey == key
     selectedOptionIds' = fieldValue' >>= _.optionKeys
     in
@@ -188,13 +194,13 @@ fieldInput fieldValues _ { key, type: 3, label, required, options: Just options 
         , comparer: \leftOption rightOption -> leftOption.key == rightOption.key
         }
     ]
-fieldInput _ _ _ = HH.div_ []
+fieldInput _ _ _ _ = HH.div_ []
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
-render { title, fields, summary, summaryError, fieldValues, urlValueErrors, otherError } = HH.form
+render { title, fields, summary, summaryError, fieldValues, urlValueErrors, missingErrors, otherError } = HH.form
     [ HP.class_ $ H.ClassName "single-form-wide", HE.onSubmit $ Just <<< Update ] $
     [ HH.h2_ [ HH.text $ "Edit your " <> title <> " profile" ] ]
-    <> (fields <#> fieldInput fieldValues urlValueErrors) <>
+    <> (fields <#> fieldInput fieldValues urlValueErrors missingErrors) <>
     [ HH.div_
         [ HH.label
             [ HP.class_ $ HH.ClassName "input-label"
@@ -251,8 +257,10 @@ updateProfile state @ { nickname, handle, summary, fieldValues } = Async.unify d
                     { invalidProfile: foldl (\state' error' ->
                         error' # match
                             { invalidSummary: const $ state' { summaryError = true }
-                            , invalidUrl: \fieldKey ->
-                                state' { urlValueErrors = Arary.cons fieldKey state'.urlValueErrors }
+                            , invalidUrl: \{ fieldKey, errors } ->
+                                state' { urlValueErrors = Arary.cons { fieldKey } state'.urlValueErrors }
+                            , missing: \{ fieldKey } ->
+                                state' { missingErrors = Arary.cons { fieldKey } state'.missingErrors }
                             })
                         state
                     }
@@ -277,9 +285,10 @@ handleAction (UrlValueInput fieldKey url) = do
 handleAction (Update event) = do
     H.liftEffect $ preventDefault event
     state @ { fields } <- H.gets (_
-        { summaryError = false
+        { summaryError   = false
+        , otherError     = false
         , urlValueErrors = []
-        , otherError   = false
+        , missingErrors  = []
         })
     singleSelectResults <-
         (H.queryAll (SProxy :: SProxy "singleSelectField")
@@ -307,7 +316,7 @@ handleAction (Update event) = do
                 }
     let state' = state
             { fieldValues =
-                (state.fieldValues # Array.filter (_.url >>> isJust))
+                (state.fieldValues)
                 <> singleSelectValues
                 <> multiSelectValues
             }
@@ -344,6 +353,7 @@ component = H.mkComponent
                 , optionKeys
                 })
         , urlValueErrors: []
+        , missingErrors: []
         , otherError: false
         }
     , render
