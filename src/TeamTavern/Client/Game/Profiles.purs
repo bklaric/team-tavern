@@ -72,39 +72,44 @@ render (Profiles game profiles playerInfo') =
     , createProfile $ Just <<< HandleCreateProfileMessage
     ]
     <>
-    (profiles # mapWithIndex \index { nickname, summary, fieldValues } ->
-        HH.div [ HP.class_ $ ClassName "card-section" ] $
-        [ HH.h3_
-            [ navigationAnchorIndexed (SProxy :: SProxy "players") index
-                { path: "/players/" <> nickname, content: HH.text nickname }
-            ]
-        ]
-        <> (Array.catMaybes $ game.fields <#> \field -> let
-            fieldValue = fieldValues # find \ { fieldKey } -> field.key == fieldKey
-            in
-            case { type: field.type, fieldValue } of
-            { type: 1, fieldValue: Just { url: Just url' } } -> Just $
-                HH.p_
-                [ HH.strong_ [ HH.text $ field.label <> ": " ]
-                , HH.a [ HP.href url' ] [ HH.text url' ]
+    if Array.null profiles
+    then pure $
+        HH.div [ HP.class_ $ ClassName "card-section" ]
+        [ HH.p_ [ HH.text "No profiles satisfy specified filters." ] ]
+    else
+        (profiles # mapWithIndex \index { nickname, summary, fieldValues } ->
+            HH.div [ HP.class_ $ ClassName "card-section" ] $
+            [ HH.h3_
+                [ navigationAnchorIndexed (SProxy :: SProxy "players") index
+                    { path: "/players/" <> nickname, content: HH.text nickname }
                 ]
-            { type: 2, fieldValue: Just { optionKey: Just optionKey' } } -> let
-                fieldOption' = field.options >>= find (\{ key } -> key == optionKey')
+            ]
+            <> (Array.catMaybes $ game.fields <#> \field -> let
+                fieldValue = fieldValues # find \ { fieldKey } -> field.key == fieldKey
                 in
-                fieldOption' <#> \{ option } ->
-                    HH.p_ [ HH.strong_ [ HH.text $ field.label <> ": " ], HH.text option ]
-            { type: 3, fieldValue: Just { optionKeys: Just optionKeys' } } -> let
-                fieldOptions' = field.options <#> Array.filter \{ key } -> Array.elem key optionKeys'
-                in
-                case fieldOptions' of
-                Just fieldOptions | not $ Array.null fieldOptions -> Just $ HH.p_
+                case { type: field.type, fieldValue } of
+                { type: 1, fieldValue: Just { url: Just url' } } -> Just $
+                    HH.p_
                     [ HH.strong_ [ HH.text $ field.label <> ": " ]
-                    , HH.text $ intercalate ", " (fieldOptions <#> _.option)
+                    , HH.a [ HP.href url' ] [ HH.text url' ]
                     ]
-                _ -> Nothing
-            _ ->  Nothing)
-        <> (summary <#> \paragraph -> HH.p_ [ HH.text paragraph ])
-    )
+                { type: 2, fieldValue: Just { optionKey: Just optionKey' } } -> let
+                    fieldOption' = field.options >>= find (\{ key } -> key == optionKey')
+                    in
+                    fieldOption' <#> \{ option } ->
+                        HH.p_ [ HH.strong_ [ HH.text $ field.label <> ": " ], HH.text option ]
+                { type: 3, fieldValue: Just { optionKeys: Just optionKeys' } } -> let
+                    fieldOptions' = field.options <#> Array.filter \{ key } -> Array.elem key optionKeys'
+                    in
+                    case fieldOptions' of
+                    Just fieldOptions | not $ Array.null fieldOptions -> Just $ HH.p_
+                        [ HH.strong_ [ HH.text $ field.label <> ": " ]
+                        , HH.text $ intercalate ", " (fieldOptions <#> _.option)
+                        ]
+                    _ -> Nothing
+                _ ->  Nothing)
+            <> (summary <#> \paragraph -> HH.p_ [ HH.text paragraph ])
+        )
 
 loadProfiles :: forall left. View.OkContent -> Array FilterProfiles.Field -> Async left State
 loadProfiles game @ { handle } fields = Async.unify do
