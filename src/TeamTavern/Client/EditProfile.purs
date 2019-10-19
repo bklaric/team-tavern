@@ -52,6 +52,7 @@ type Input =
         { key :: String
         , type :: Int
         , label :: String
+        , required :: Boolean
         , domain :: Maybe String
         , options :: Maybe (Array
             { key :: String
@@ -75,6 +76,7 @@ type State =
         { key :: String
         , type :: Int
         , label :: String
+        , required :: Boolean
         , domain :: Maybe String
         , options :: Maybe (Array
             { key :: String
@@ -100,8 +102,8 @@ type ChildSlots =
 
 type Slot = H.Slot (Modal.Query Input (Const Void)) (Modal.Message Message)
 
-fieldLabel :: forall slots action. String -> String -> Maybe String -> HH.HTML slots action
-fieldLabel key label domain =
+fieldLabel :: forall slots action. String -> String -> Boolean -> Maybe String -> HH.HTML slots action
+fieldLabel key label required domain =
     HH.label
         [ HP.class_ $ HH.ClassName "input-label"
         , HP.for key
@@ -115,9 +117,12 @@ fieldLabel key label domain =
             ]
         Nothing -> [])
         <>
-        [ divider
-        , HH.span [ HP.class_ $ H.ClassName "profile-count" ] [ HH.text "optional" ]
-        ]
+        (if required
+        then []
+        else
+            [ divider
+            , HH.span [ HP.class_ $ H.ClassName "profile-count" ] [ HH.text "optional" ]
+            ])
 
 fieldInput
     :: forall left
@@ -131,18 +136,19 @@ fieldInput
     ->  { key :: String
         , label :: String
         , type :: Int
+        , required :: Boolean
         , domain :: Maybe String
         , options :: Maybe (Array { key :: String , option :: String })
         }
     -> H.ComponentHTML Action ChildSlots (Async left)
-fieldInput fieldValues urlValueErrors { key, type: 1, label, domain: Just domain } = let
+fieldInput fieldValues urlValueErrors { key, type: 1, label, required, domain: Just domain } = let
     fieldValue' = fieldValues # find \{ fieldKey } -> fieldKey == key
     urlError = urlValueErrors # any (_.fieldKey >>> (_ == key))
     in
     case fieldValue' of
     Just { url } ->
         HH.div_
-        [ fieldLabel key label (Just domain)
+        [ fieldLabel key label required (Just domain)
         , HH.input
             [ HP.id_ key
             , HP.class_ $ HH.ClassName "text-line-input"
@@ -154,11 +160,11 @@ fieldInput fieldValues urlValueErrors { key, type: 1, label, domain: Just domain
             [ HH.text $ "This doesn't look like a valid " <> label <> " (" <> domain <> ") address." ]
         ]
     Nothing -> HH.div_ []
-fieldInput fieldValues _ { key, type: 2, label, options: Just options } = let
+fieldInput fieldValues _ { key, type: 2, label, required, options: Just options } = let
     fieldValue' = fieldValues # find \{ fieldKey } -> fieldKey == key
     in
     HH.div_
-    [ fieldLabel key label Nothing
+    [ fieldLabel key label required Nothing
     , singleSelectIndexed (SProxy :: SProxy "singleSelectField") key
         { options
         , selected: fieldValue' >>= _.optionKey >>= \optionKey ->
@@ -167,12 +173,12 @@ fieldInput fieldValues _ { key, type: 2, label, options: Just options } = let
         , comparer: \leftOption rightOption -> leftOption.key == rightOption.key
         }
     ]
-fieldInput fieldValues _ { key, type: 3, label, options: Just options } = let
+fieldInput fieldValues _ { key, type: 3, label, required, options: Just options } = let
     fieldValue' = fieldValues # find \{ fieldKey } -> fieldKey == key
     selectedOptionIds' = fieldValue' >>= _.optionKeys
     in
     HH.div_
-    [ fieldLabel key label Nothing
+    [ fieldLabel key label required Nothing
     , multiSelectIndexed (SProxy :: SProxy "multiSelectField") key
         { options: options <#> \option ->
             { option

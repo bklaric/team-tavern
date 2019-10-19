@@ -43,6 +43,7 @@ filterableFields
     :: Array
         { key :: String
         , label :: String
+        , required :: Boolean
         , domain :: Maybe String
         , options :: Maybe (Array
             { key :: String

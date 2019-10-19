@@ -41,6 +41,7 @@ create table field
     , type integer not null -- 1 (url), 2 (single), 3 (multi)
     , key varchar(40) not null
     , label varchar(40) not null
+    , required boolean not null default false
     , domain varchar(40)
     );
 
@@ -75,6 +76,7 @@ select
                 'type', type,
                 'label', label,
                 'key', key,
+                'required', required,
                 'domain', domain,
                 'options', options
             )
@@ -91,6 +93,7 @@ from (
         field.type,
         field.label,
         field.key,
+        field.required,
         field.domain,
         json_agg(
             json_build_object(
@@ -104,11 +107,7 @@ from (
     from field
         left join field_option on field_option.field_id = field.id
     group by
-        field.id,
-        field.game_id,
-        field.type,
-        field.label,
-        field.key
+        field.id
     ) as field
 group by game_id;
 
@@ -146,11 +145,8 @@ from (
     left join field_option as single on single.id = field_value.field_option_id
     left join field_option as multi on multi.id = field_value_option.field_option_id
     group by
-        field_value.profile_id,
-        field.key,
-        field.type,
+        field.id,
         field_value.id,
-        field_value.url,
-        single.key
+        single.id
 ) as profile
 group by profile_id;
