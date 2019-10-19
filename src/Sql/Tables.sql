@@ -41,6 +41,7 @@ create table field
     , type integer not null -- 1 (url), 2 (single), 3 (multi)
     , key varchar(40) not null
     , label varchar(40) not null
+    , domain varchar(40)
     );
 
 create table field_option
@@ -65,7 +66,7 @@ create table field_value_option
     , field_option_id integer not null references field_option(id)
     );
 
-create view fields (game_id, fields) as
+create or replace view fields (game_id, fields) as
 select
     game_id,
     coalesce(
@@ -74,6 +75,7 @@ select
                 'type', type,
                 'label', label,
                 'key', key,
+                'domain', domain,
                 'options', options
             )
             order by id
@@ -89,6 +91,7 @@ from (
         field.type,
         field.label,
         field.key,
+        field.domain,
         json_agg(
             json_build_object(
                 'key', field_option.key,
