@@ -5,6 +5,7 @@ import Prelude
 import Async (Async)
 import Data.Bifunctor.Label (labelMap)
 import Data.Maybe (Maybe)
+import Data.String (trim)
 import Data.Symbol (SProxy(..))
 import Data.Variant (Variant)
 import Foreign (MultipleErrors)
@@ -41,7 +42,7 @@ readModel body = do
     model @ { nicknameOrEmail, password, nonce } :: StartDto <- readJSON content
         # labelMap (SProxy :: SProxy "unreadableDto") { content, errors: _ }
     pure
-        { nicknameOrEmail: NicknameOrEmail nicknameOrEmail
+        { nicknameOrEmail: NicknameOrEmail $ trim nicknameOrEmail
         , password: Password password
         , nonce: Nonce <$> nonce
         }
