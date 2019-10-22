@@ -5,14 +5,13 @@ import Prelude
 import Data.Map (Map)
 import Data.Variant (Variant, match)
 import Effect (Effect)
-import Effect.Console (log)
 import Foreign (MultipleErrors)
 import Global.Unsafe (unsafeStringify)
 import Node.Errors as Node
 import Postgres.Error as Postgres
 import Postgres.Result (Result, rows)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
-import TeamTavern.Server.Infrastructure.Log (logt, print)
+import TeamTavern.Server.Infrastructure.Log (logStamped, logt, print)
 import TeamTavern.Server.Player.Domain.Id (Id)
 import TeamTavern.Server.Player.Domain.Nonce (Nonce)
 import TeamTavern.Server.Session.Domain.NicknameOrEmail (NicknameOrEmail)
@@ -49,7 +48,7 @@ type StartError = Variant
 
 logError :: StartError -> Effect Unit
 logError startError = do
-    log "Error starting session"
+    logStamped "Error starting session"
     startError # match
         { signedIn: \{ cookieInfo, cookies } -> do
             logt $ "The request came with this player info: " <> show cookieInfo

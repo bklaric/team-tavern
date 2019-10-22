@@ -12,7 +12,7 @@ import TeamTavern.Server.Game.Domain.Handle (Handle)
 import TeamTavern.Server.Game.Domain.Title (Title)
 import TeamTavern.Server.Game.Infrastructure.ReadModel (GameDto, GameModelError)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
-import TeamTavern.Server.Infrastructure.Log (logt, print)
+import TeamTavern.Server.Infrastructure.Log (logStamped, logt, print)
 
 type UpdateError = Variant
     ( cookieInfoNotPresent :: Map String String
@@ -38,7 +38,7 @@ type UpdateError = Variant
 
 logError :: UpdateError -> Effect Unit
 logError updateError = do
-    logt "Error updating game"
+    logStamped "Error updating game"
     updateError # match
         { cookieInfoNotPresent: \cookies ->
             logt $ "Couldn't read auth info out of cookies: " <> show cookies

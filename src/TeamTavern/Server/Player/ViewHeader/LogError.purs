@@ -4,12 +4,11 @@ import Prelude
 
 import Data.Variant (Variant, match)
 import Effect (Effect)
-import Effect.Console (log)
 import Foreign (MultipleErrors)
 import Global.Unsafe (unsafeStringify)
 import Postgres.Error (Error)
 import Postgres.Result (Result, rows)
-import TeamTavern.Server.Infrastructure.Log (logt, print)
+import TeamTavern.Server.Infrastructure.Log (logStamped, logt, print)
 import TeamTavern.Server.Player.Domain.Id (Id)
 
 type ViewHeaderError = Variant
@@ -23,7 +22,7 @@ type ViewHeaderError = Variant
 
 logError :: ViewHeaderError -> Effect Unit
 logError registerError = do
-    log "Error registering player"
+    logStamped "Error registering player"
     registerError # match
         { databaseError: \error ->
             logt $ "Unknown database error ocurred: " <> print error

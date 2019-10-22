@@ -6,13 +6,12 @@ import Data.List.Types (NonEmptyList)
 import Data.Map (Map)
 import Data.Variant (Variant, match)
 import Effect (Effect)
-import Effect.Console (log)
 import Foreign (MultipleErrors)
 import Global.Unsafe (unsafeStringify)
 import Postgres.Error (Error)
 import Postgres.Result (Result, rows)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
-import TeamTavern.Server.Infrastructure.Log (logt, print)
+import TeamTavern.Server.Infrastructure.Log (logStamped, logt, print)
 import TeamTavern.Server.Profile.Infrastructure.ReadProfile as ReadProfile
 import TeamTavern.Server.Profile.Infrastructure.ValidateProfile as ValidateProfile
 import TeamTavern.Server.Profile.Routes (Identifiers)
@@ -56,7 +55,7 @@ type UpdateError = Variant
 
 logError :: UpdateError -> Effect Unit
 logError updateError = do
-    log "Error updating profile"
+    logStamped "Error updating profile"
     updateError # match
         { cookieInfoNotPresent: \cookies ->
             logt $ "Couldn't read info from cookies: " <> show cookies

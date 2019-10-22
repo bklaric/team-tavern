@@ -10,6 +10,7 @@ You can edit this file as you like.
     , "effect"
     , "foreign-generic"
     , "foreign-object"
+    , "formatters"
     , "halogen"
     , "idiomatic-node-crypto"
     , "idiomatic-node-http"

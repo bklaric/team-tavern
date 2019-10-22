@@ -6,11 +6,10 @@ import Data.List.Types (NonEmptyList)
 import Data.Map (Map)
 import Data.Variant (Variant, match)
 import Effect (Effect)
-import Effect.Console (log)
 import Foreign (MultipleErrors)
 import Postgres.Error (Error)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
-import TeamTavern.Server.Infrastructure.Log (logt, print)
+import TeamTavern.Server.Infrastructure.Log (logStamped, logt, print)
 import TeamTavern.Server.Player.Domain.Nickname (Nickname)
 import TeamTavern.Server.Player.Update.ReadUpdate (UpdateDto, UpdateModelError)
 
@@ -37,7 +36,7 @@ type UpdateError = Variant
 
 logError :: UpdateError -> Effect Unit
 logError updateError = do
-    log "Error updating player"
+    logStamped "Error updating player"
     updateError # match
         { cookieInfoNotPresent: \cookies ->
             logt $ "Couldn't read player info out of cookies: " <> show cookies

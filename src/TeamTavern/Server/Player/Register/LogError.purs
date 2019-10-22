@@ -7,13 +7,12 @@ import Data.Map (Map)
 import Data.Newtype (unwrap)
 import Data.Variant (Variant, match)
 import Effect (Effect)
-import Effect.Console (log)
 import Foreign (MultipleErrors)
 import Node.Errors as Node
 import Postgres.Error as Postgres
 import Postmark.Error as Postmark
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
-import TeamTavern.Server.Infrastructure.Log (logt, print)
+import TeamTavern.Server.Infrastructure.Log (logStamped, logt, print)
 import TeamTavern.Server.Player.Domain.Email (Email)
 import TeamTavern.Server.Player.Domain.Nickname (Nickname)
 import TeamTavern.Server.Player.Register.ReadDto (RegisterDto)
@@ -51,7 +50,7 @@ type RegisterError = Variant
 
 logError :: RegisterError -> Effect Unit
 logError registerError = do
-    log "Error registering player"
+    logStamped "Error registering player"
     registerError # match
         { signedIn: \{ cookieInfo, cookies } -> do
             logt $ "The request came with this player cookie info: "

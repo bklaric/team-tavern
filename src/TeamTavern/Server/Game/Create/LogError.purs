@@ -6,14 +6,13 @@ import Data.List.Types (NonEmptyList)
 import Data.Map (Map)
 import Data.Variant (Variant, match)
 import Effect (Effect)
-import Effect.Console (log)
 import Foreign (MultipleErrors)
 import Postgres.Error (Error)
 import TeamTavern.Server.Game.Domain.Handle (Handle)
 import TeamTavern.Server.Game.Domain.Title (Title)
 import TeamTavern.Server.Game.Infrastructure.ReadModel (GameDto, GameModelError)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
-import TeamTavern.Server.Infrastructure.Log (logt, print)
+import TeamTavern.Server.Infrastructure.Log (logStamped, logt, print)
 
 type CreateError = Variant
     ( cookieInfoNotPresent :: Map String String
@@ -39,7 +38,7 @@ type CreateError = Variant
 
 logError :: CreateError -> Effect Unit
 logError createError = do
-    log "Error creating game"
+    logStamped "Error creating game"
     createError # match
         { cookieInfoNotPresent: \cookies ->
             logt $ "Couldn't read auth info out of cookies: " <> show cookies

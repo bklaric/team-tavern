@@ -4,12 +4,11 @@ import Prelude
 
 import Data.Variant (Variant, match)
 import Effect (Effect)
-import Effect.Console (log)
 import Foreign (MultipleErrors)
 import Global.Unsafe (unsafeStringify)
 import Postgres.Error (Error)
 import Postgres.Result (Result, rows)
-import TeamTavern.Server.Infrastructure.Log (logt, print)
+import TeamTavern.Server.Infrastructure.Log (logStamped, logt, print)
 
 type ViewAllError = Variant
     ( databaseError :: Error
@@ -21,7 +20,7 @@ type ViewAllError = Variant
 
 logError :: ViewAllError -> Effect Unit
 logError viewError = do
-    log "Error viewing profiles by game"
+    logStamped "Error viewing profiles by game"
     viewError # match
         { databaseError: \error ->
             logt $ "Unknown database error ocurred: " <> print error
