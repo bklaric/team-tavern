@@ -11,7 +11,6 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import Simple.JSON (read)
-import TeamTavern.Client.Home.Games as Games
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Components.RegisterForm as RegisterForm
 import TeamTavern.Client.Components.TopBar (topBar)
@@ -21,6 +20,8 @@ import TeamTavern.Client.Components.WelcomeBanner as WelcomeBanner
 import TeamTavern.Client.Game (game)
 import TeamTavern.Client.Game as Game
 import TeamTavern.Client.Home (home)
+import TeamTavern.Client.Home as Home
+import TeamTavern.Client.Home.Games as Games
 import TeamTavern.Client.Player (player)
 import TeamTavern.Client.Player as Player
 import TeamTavern.Client.Register (register)
@@ -45,6 +46,7 @@ data State
 
 type ChildSlots =
     ( topBar :: TopBar.Slot Unit
+    , home :: Home.Slot Unit
     , welcomeBanner :: WelcomeBanner.Slot Unit
     , games :: Games.Slot Unit
     , game :: Game.Slot Unit
@@ -71,15 +73,7 @@ render :: forall action left.
     State -> H.ComponentHTML action ChildSlots (Async left)
 render Empty = HH.div_ []
 render Home = home
--- Easily find your ideal esports teammates | TeamTavern
--- h1
--- Easily find your ideal (esports | Dota 2 | League of Legends | Overwatch) teammates
--- h2
--- Tired of random matchmaking that results in ruined games and wasted time?
--- TeamTavern connects you with other esports players (and teams?).
--- Browse player profiles and find your ideal teammates for the games you play.
--- Create your own game profile and let them find you.
-render (Game handle) = topBarWithContent [ game handle ] -- Find Dota 2 players | TeamTavern
+render (Game handle) = topBarWithContent [ game handle ]
 render (Player nickname) = topBarWithContent [ player nickname ]
 render Register = singleContent [ register ]
 render SignIn = singleContent [ signIn ]
@@ -92,8 +86,8 @@ just = pure <<< Just
 nothing :: forall t1 t3. Applicative t1 => t1 (Maybe t3)
 nothing = pure Nothing
 
-handleAction :: forall action output wut left.
-    Action -> H.HalogenM State action wut output (Async left) Unit
+handleAction :: forall action output slots left.
+    Action -> H.HalogenM State action slots output (Async left) Unit
 handleAction (Init state route) = do
     newState <- H.liftEffect $ case split (Pattern "/") route of
         ["", ""] ->

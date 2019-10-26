@@ -27,6 +27,7 @@ import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Script.Cookie (hasPlayerIdCookie)
 import TeamTavern.Client.Script.Navigate (navigate, navigate_)
+import TeamTavern.Client.Script.Title (setWindowTitle)
 import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass, otherErrorClass)
 import TeamTavern.Server.Player.Register.SendResponse as Register
 import Web.Event.Event (preventDefault)
@@ -189,7 +190,8 @@ handleAction Init = do
     if isSignedIn
         then H.liftEffect $ navigate_ "/"
         else pure unit
-    pure unit
+    H.liftEffect $ setWindowTitle "Create account | TeamTavern"
+
 handleAction (EmailInput email) =
     H.modify_ (_ { email = email }) $> unit
 handleAction (NicknameInput nickname) =

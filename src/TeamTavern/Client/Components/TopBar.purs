@@ -22,8 +22,11 @@ import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.CreateGame (createGame)
 import TeamTavern.Client.CreateGame as CreateGame
 import TeamTavern.Client.Script.Cookie (getPlayerId)
-import TeamTavern.Client.Script.Navigate (navigateWithEvent_, navigate_)
+import TeamTavern.Client.Script.Navigate (navigateWithEvent_)
 import Web.Event.Event (preventDefault)
+import Web.HTML (window)
+import Web.HTML.Location (setPathname)
+import Web.HTML.Window (location)
 import Web.UIEvent.MouseEvent (MouseEvent, toEvent)
 
 data Action
@@ -102,6 +105,7 @@ render playerInfo = HH.div_
                     ]
             ]
         ]
+    , HH.div [ HP.class_ $ HH.ClassName "top-bar-filler" ] []
     , HH.div_ case playerInfo of
         SignedIn _ -> [ createGame $ Just <<< HandleModalMessage ]
         _ -> []
@@ -134,8 +138,7 @@ handleAction SignOut = do
     success <- endSession # H.lift
     when success do
         H.put SignedOut
-        navigate_ "/" # fromEffect # H.lift
-    pure unit
+        window >>= location >>= setPathname "/" # H.liftEffect
 handleAction (ShowCreateModal event) = do
     H.liftEffect $ preventDefault $ toEvent event
     Modal.show (SProxy :: SProxy "createGame")

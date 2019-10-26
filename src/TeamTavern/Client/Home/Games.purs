@@ -18,34 +18,43 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.Divider (whiteDivider)
+import TeamTavern.Client.Script.Cookie (Nickname)
 import TeamTavern.Client.Script.Navigate (navigateWithEvent_)
 import TeamTavern.Server.Game.ViewAll.SendResponse (OkContent)
+import Web.Event.Event (stopPropagation)
 import Web.UIEvent.MouseEvent (MouseEvent)
+import Web.UIEvent.MouseEvent as MouseEvent
 
-data Action = Init | Navigate String MouseEvent
+data Action = Init (Maybe Nickname) | Navigate String Boolean MouseEvent
 
-data State = Empty | Games OkContent
+data State = Empty | Games (Maybe Nickname) OkContent
 
 type Slot = H.Slot (Const Void) Void
 
 render :: forall slots monad. MonadEffect monad =>
     State -> H.ComponentHTML Action slots monad
 render Empty = HH.div_ []
-render (Games games') = HH.div [ HP.class_ $ HH.ClassName "games" ] $
+render (Games nickname games') = HH.div [ HP.class_ $ HH.ClassName "games" ] $
     [ HH.h2 [ HP.class_ $ HH.ClassName "choose-game" ]
-        [ HH.text "Choose a game below and browse player profiles" ]
+        [ HH.text
+            case nickname of
+            Nothing -> "Choose a game below and browse player profiles"
+            Just nickname' ->
+                "Hi " <> nickname'
+                <> ", choose a game below and browse player profiles"
+        ]
     ]
     <>
     (games' <#> \{ title, handle, description, profileCount } ->
         HH.div
         [ HP.class_ $ HH.ClassName "game-card"
-        , HE.onClick $ Just <<< Navigate ("/games/" <> handle)
+        , HE.onClick $ Just <<< Navigate ("/games/" <> handle) false
         ] $
         [ HH.h2 [ HP.class_ $ HH.ClassName "game-card-heading" ]
             [ HH.a
                 [ HP.class_ $ ClassName "game-card-name"
                 , HP.href $ "/games/" <> handle
-                , HE.onClick $ Just <<< Navigate ("/games/" <> handle)
+                , HE.onClick $ Just <<< Navigate ("/games/" <> handle) true
                 ]
                 [ HH.img
                     [ HP.class_ $ HH.ClassName "game-card-logo"
@@ -58,7 +67,7 @@ render (Games games') = HH.div [ HP.class_ $ HH.ClassName "games" ] $
             , HH.a
                 [ HP.class_ $ ClassName "game-card-profile-count"
                 , HP.href $ "/games/" <> handle
-                , HE.onClick $ Just <<< Navigate ("/games/" <> handle)
+                , HE.onClick $ Just <<< Navigate ("/games/" <> handle) true
                 ]
                 [ HH.text $ show profileCount <> " profiles" ]
             ]
@@ -69,8 +78,8 @@ render (Games games') = HH.div [ HP.class_ $ HH.ClassName "games" ] $
         )
     )
 
-loadGames :: forall left. Async left State
-loadGames = Async.unify do
+loadGames :: forall left. Maybe Nickname -> Async left State
+loadGames nickname = Async.unify do
     response' <- Fetch.fetch_ "/api/games" # lmap (const Empty)
     games' :: OkContent <-
         case FetchRes.status response' of
@@ -78,28 +87,34 @@ loadGames = Async.unify do
             >>= JsonAsync.readJSON
             # lmap (const Empty)
         _ -> Async.left Empty
-    pure $ Games games'
+    pure $ Games nickname games'
 
 handleAction :: forall slots output left.
     Action -> H.HalogenM State Action slots output (Async left) Unit
-handleAction Init = do
-    newState <- H.lift loadGames
+handleAction (Init nickname) = do
+    newState <- H.lift $ loadGames nickname
     H.put newState
-handleAction (Navigate url event) =
+handleAction (Navigate url stopBubble event) = do
+    H.liftEffect if stopBubble
+        then stopPropagation $ MouseEvent.toEvent event
+        else pure unit
     H.liftEffect $ navigateWithEvent_ url event
 
 component :: forall query output left.
-    H.Component HH.HTML query State output (Async left)
-component =
+    Maybe Nickname -> H.Component HH.HTML query State output (Async left)
+component nickname =
     H.mkComponent
         { initialState: identity
         , render
         , eval: H.mkEval $ H.defaultEval
             { handleAction = handleAction
-            , initialize = Just Init
+            , initialize = Just $ Init nickname
             }
         }
 
-games :: forall query children left.
-    HH.ComponentHTML query (games :: Slot Unit | children) (Async left)
-games = HH.slot (SProxy :: SProxy "games") unit component Empty absurd
+games
+    :: forall query children left
+    .  Maybe Nickname
+    -> HH.ComponentHTML query (games :: Slot Unit | children) (Async left)
+games nickname =
+    HH.slot (SProxy :: SProxy "games") unit (component nickname) Empty absurd

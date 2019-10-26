@@ -21,9 +21,9 @@
 
     @media screen and (min-width: 768px) {
         height: 150px;
-        background: linear-gradient(to right, #b15e36, white), linear-gradient(to right, #b15e36, black), url(/static/dota2-background.png);
-        background-blend-mode: color, lighten;
-        background-position-x: 0, 0, 170px;
+        background: linear-gradient(to right, #b15e36, black), url(/static/dota2-background.png);
+        background-blend-mode: lighten;
+        background-position-x: 0, 170px;
         background-repeat: no-repeat;
     }
 }

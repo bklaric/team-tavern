@@ -19,7 +19,7 @@ import TeamTavern.Client.Game.FilterProfiles (filterProfiles)
 import TeamTavern.Client.Game.FilterProfiles as FilterProfiles
 import TeamTavern.Client.Game.Profiles (gameProfiles)
 import TeamTavern.Client.Game.Profiles as Profiles
-import TeamTavern.Client.Script.Cookie (getPlayerId)
+import TeamTavern.Client.Script.Title (setWindowTitle)
 import TeamTavern.Server.Game.View.SendResponse as View
 
 data Action
@@ -61,7 +61,7 @@ render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render Empty = HH.div_ []
 render (Game game') = HH.div_
     [ HH.h2 [ HP.class_ $ HH.ClassName "content-title" ]
-        [ HH.text game'.title ]
+        [ HH.text $ "Find " <> game'.title <> " teammates" ]
     , filterProfiles (filterableFields game'.fields)
         (\(FilterProfiles.ApplyFilters filters) -> Just $ ApplyFilters filters)
     , gameProfiles game'
@@ -78,7 +78,6 @@ loadGame handle = Async.unify do
         200 -> FetchRes.text response >>= Json.readJSON # lmap (const Error)
         404 -> Async.left NotFound
         _ -> Async.left Error
-    playerId <- Async.fromEffect getPlayerId
     pure $ Game content
 
 handleAction :: forall output left.
@@ -86,7 +85,9 @@ handleAction :: forall output left.
 handleAction (Init handle) = do
     state <- H.lift $ loadGame handle
     H.put state
-    pure unit
+    H.lift $ Async.fromEffect $ setWindowTitle case state of
+        Game { title } -> "Find " <> title <> " teammates | TeamTavern"
+        _ -> "Find " <> handle <> " teammates | TeamTavern"
 handleAction (ApplyFilters filters) =
     void $ H.query (SProxy :: SProxy "gameProfiles") unit
         (Profiles.ApplyFilters filters unit)
