@@ -61,7 +61,7 @@ render (Profiles game profiles playerInfo') =
         [ pure $ HH.text "Profiles"
         , case playerInfo' of
             Just playerInfo | not game.hasProfile -> pure $ HH.button
-                [ HP.class_ $ ClassName "card-title-button button-primary"
+                [ HP.class_ $ ClassName "card-title-button primary-button"
                 , HE.onClick $ Just <<< ShowCreateProfileModal game playerInfo
                 ]
                 [ HH.i [ HP.class_ $ HH.ClassName "fas fa-user-plus button-icon" ] []

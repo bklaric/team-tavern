@@ -3,10 +3,10 @@
 }
 
 .apply-filters {
-    @extend .button-secondary;
+    @extend .secondary-button;
 }
 
 .clear-filters {
-    @extend .button-regular;
+    @extend .regular-button;
     margin-left: 14px;
 }

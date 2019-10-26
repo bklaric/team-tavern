@@ -1,5 +1,9 @@
 @import "Reset";
 @import "Base";
+@import "Error";
+@import "Input";
+@import "Button";
+@import "Form";
 @import "SingleForm";
 @import "../Components/Divider";
 @import "../Components/TopBar";
@@ -8,27 +12,9 @@
 @import "../Components/Welcome";
 @import "../Components/WelcomeBanner";
 @import "../Components/Games";
+@import "../Components/RegisterForm";
+@import "../Home/CallToAction";
 @import "../Game/FilterProfiles";
-
-.hidden {
-    display: none;
-}
-
-.error {
-    color: $error-color;
-    border-color: $error-color;
-}
-
-.input-error {
-    @extend .error;
-    font-size: 14px;
-    margin: 14px 0 0 0;
-}
-
-.other-error {
-    @extend .error;
-    font-size: 14px;
-}
 
 .content {
     max-width: $max-width;
@@ -98,18 +84,4 @@
     button {
         margin-left: 14px;
     }
-}
-
-.empty {
-    margin: 0 !important;
-    padding: 0 !important;
-}
-
-.input-label {
-    line-height: 16px;
-}
-
-.input-sublabel {
-    font-size: 12px;
-    color: #737373;
 }

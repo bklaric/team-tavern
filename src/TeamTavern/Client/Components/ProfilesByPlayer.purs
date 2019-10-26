@@ -71,7 +71,7 @@ render (Profiles profiles nickname') =
                         Nothing -> []
                         Just nickname -> pure $
                             HH.button
-                                [ HP.class_ $ HH.ClassName "button-regular title-button"
+                                [ HP.class_ $ HH.ClassName "regular-button title-button"
                                 , HE.onClick $ Just <<< ShowEditProfileModal
                                     { nickname, handle, title, summary, fieldValues, fields }
                                 ]

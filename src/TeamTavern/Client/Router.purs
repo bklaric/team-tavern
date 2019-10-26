@@ -14,6 +14,7 @@ import Simple.JSON (read)
 import TeamTavern.Client.Components.Games (games)
 import TeamTavern.Client.Components.Games as Games
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
+import TeamTavern.Client.Components.RegisterForm as RegisterForm
 import TeamTavern.Client.Components.TopBar (topBar)
 import TeamTavern.Client.Components.TopBar as TopBar
 import TeamTavern.Client.Components.Welcome (welcome)
@@ -21,6 +22,7 @@ import TeamTavern.Client.Components.WelcomeBanner (welcomeBanner)
 import TeamTavern.Client.Components.WelcomeBanner as WelcomeBanner
 import TeamTavern.Client.Game (game)
 import TeamTavern.Client.Game as Game
+import TeamTavern.Client.Home.CallToAction (callToAction)
 import TeamTavern.Client.Player (player)
 import TeamTavern.Client.Player as Player
 import TeamTavern.Client.Register (register)
@@ -53,6 +55,7 @@ type ChildSlots =
     , signIn :: SignIn.Slot Unit
     , homeAnchor :: NavigationAnchor.Slot Unit
     , signInAnchor :: NavigationAnchor.Slot Unit
+    , registerForm :: RegisterForm.Slot Unit
     )
 
 topBarWithContent
@@ -69,8 +72,15 @@ singleContent = HH.div [ HP.class_ $ HH.ClassName "single-content" ]
 render :: forall action left.
     State -> H.ComponentHTML action ChildSlots (Async left)
 render Empty = HH.div_ []
-render Home = topBarWithContent [ welcomeBanner, games ]
-render (Game handle) = topBarWithContent [ game handle ]
+render Home = HH.div_ [ topBar, callToAction, HH.div [ HP.class_ $ HH.ClassName "content" ] [ games ] ] -- Easily find your ideal esports teammates | TeamTavern
+-- h1
+-- Easily find your ideal (esports | Dota 2 | League of Legends | Overwatch) teammates
+-- h2
+-- Tired of random matchmaking that results in ruined games and wasted time?
+-- TeamTavern connects you with other esports players (and teams?).
+-- Browse player profiles and find your ideal teammates for the games you play.
+-- Create your own game profile and let them find you.
+render (Game handle) = topBarWithContent [ game handle ] -- Find Dota 2 players | TeamTavern
 render (Player nickname) = topBarWithContent [ player nickname ]
 render Register = singleContent [ register ]
 render SignIn = singleContent [ signIn ]
@@ -102,11 +112,10 @@ handleAction (Init state route) = do
         ["", "players", nickname] ->
             just $ Player nickname
         _ ->
-            just NotFound
+            navigate_ "/" *> nothing
     case newState of
         Just newState' -> H.put newState'
         Nothing -> pure unit
-    pure unit
 
 handleQuery
     :: forall send action output wut left

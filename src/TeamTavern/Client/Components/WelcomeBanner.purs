@@ -31,7 +31,7 @@ render Shown = HH.div
         , HH.p_ [ HH.text "To also let other players find you, create an account and your own game profile." ]
         , HH.p_ [ HH.text "Happy playing!" ]
         , HH.button
-            [ HP.class_ $ HH.ClassName "button-regular welcome-close-button"
+            [ HP.class_ $ HH.ClassName "regular-button welcome-close-button"
             , HE.onClick $ const $ Just Close
             ]
             [ HH.i [ HP.class_ $ HH.ClassName "fas fa-times button-icon" ] []

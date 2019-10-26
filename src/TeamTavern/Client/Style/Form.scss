@@ -1,0 +1,18 @@
+.form-heading {
+    text-align: center;
+    margin-top: 14px;
+    margin-bottom: 28px;
+    font-size: 20px;
+    line-height: 25px;
+}
+
+.form-submit-button {
+    @extend .primary-button;
+    margin: auto;
+}
+
+.form-bottom-text {
+    text-align: center;
+    margin-top: 28px;
+    margin-bottom: 0;
+}

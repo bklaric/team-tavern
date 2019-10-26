@@ -1,0 +1,12 @@
+.register-form {
+    @extend %bordered;
+    display: flex;
+    flex-direction: column;
+    padding: 28px;
+    background-color: white;
+    color: $text-color;
+
+    @media screen and (min-width: 768px) {
+        flex-basis: 320px;
+    }
+}

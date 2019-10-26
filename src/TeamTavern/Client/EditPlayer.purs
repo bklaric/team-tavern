@@ -98,7 +98,7 @@ render
     --             "The about entry cannot be more than 2000 characters long." ]
     --     ]
     , HH.button
-        [ HP.class_ $ ClassName "button-primary"
+        [ HP.class_ $ ClassName "primary-button"
         , HP.disabled $ nickname == ""
         ]
         [ HH.i [ HP.class_ $ HH.ClassName "fas fa-edit button-icon" ] []

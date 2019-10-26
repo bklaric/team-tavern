@@ -1,0 +1,49 @@
+.call-to-action {
+    margin-top: 41px;
+    background-color: #b15e36;
+    color: white;
+    padding: 60px 28px;
+    border-bottom: 1px solid #ccc;
+}
+
+.call-to-action-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 960px;
+    margin: auto;
+
+    @media screen and (min-width: 768px) {
+        flex-direction: row;
+    }
+}
+
+.call-to-action-text {
+    margin-bottom: 28px;
+    flex-shrink: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+
+    @media screen and (min-width: 768px) {
+        flex-basis: 500px;
+        text-align: left;
+        margin-bottom: 0;
+        margin-right: 28px;
+    }
+}
+
+.call-to-action-heading {
+    font-size: 54px;
+    line-height: 1em;
+}
+
+.call-to-action-paragraph {
+    font-size: 20px;
+    line-height: 1.5em;
+    font-weight: 400;
+    margin-bottom: 0;
+}

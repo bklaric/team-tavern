@@ -219,7 +219,7 @@ render { title, fields, summary, summaryError, fieldValues, urlValueErrors, miss
                 "The summary cannot be empty and cannot be more than 2000 characters long." ]
         ]
     , HH.button
-        [ HP.class_ $ ClassName "button-primary"
+        [ HP.class_ $ ClassName "primary-button"
         , HP.disabled $ summary == ""
         ]
         [ HH.i [ HP.class_ $ HH.ClassName "fas fa-user-edit button-icon" ] []

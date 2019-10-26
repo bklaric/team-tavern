@@ -54,7 +54,7 @@ render (Player { nickname, about } isCurrentUser) = HH.div_
         [ pure $ HH.text nickname
         , guard isCurrentUser $ pure $
             HH.button
-                [ HP.class_ $ HH.ClassName "button-regular title-button"
+                [ HP.class_ $ HH.ClassName "regular-button title-button"
                 , HE.onClick $ Just <<< ShowEditPlayerModal { nickname, about }
                 ]
                 [ HH.i [ HP.class_ $ H.ClassName "fas fa-edit button-icon" ] []
