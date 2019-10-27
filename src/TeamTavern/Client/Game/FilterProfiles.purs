@@ -26,6 +26,7 @@ type Option =
 type Field =
     { key :: String
     , label :: String
+    , icon :: String
     , domain :: Maybe String
     , options :: Array Option
     }
@@ -42,18 +43,21 @@ type Slot = H.Slot (Const Void) Output
 
 type ChildSlots = (filter :: MultiSelect.Slot Option Field)
 
-fieldLabel :: forall slots action. String -> HH.HTML slots action
-fieldLabel label = HH.label
-    [ HP.class_ $ HH.ClassName "input-label", HP.for label ] [ HH.text label ]
+fieldLabel :: forall slots action. String -> String -> HH.HTML slots action
+fieldLabel label icon = HH.label
+    [ HP.class_ $ HH.ClassName "input-label", HP.for label ]
+    [ HH.i [ HP.class_ $ HH.ClassName $ icon <> " filter-field-icon" ] []
+    , HH.span [ HP.class_ $ HH.ClassName "filter-field-label" ] [ HH.text label ]
+    ]
 
 fieldInput
     :: forall monad
     .  MonadEffect monad
     => Field
     -> H.ComponentHTML Action ChildSlots monad
-fieldInput field @ { label, options } =
-    HH.div [ HP.class_ $ H.ClassName "filter" ]
-    [ fieldLabel label
+fieldInput field @ { label, icon, options } =
+    HH.div [ HP.class_ $ H.ClassName "input-group" ]
+    [ fieldLabel label icon
     , multiSelectIndexed (SProxy :: SProxy "filter") field
         { options: options <#> \option -> { option, selected: false }
         , labeler: _.option
@@ -64,7 +68,7 @@ fieldInput field @ { label, options } =
 render :: forall monad. MonadEffect monad =>
     State -> H.ComponentHTML Action ChildSlots monad
 render fields = HH.div [ HP.class_ $ HH.ClassName "card" ]
-    [ HH.h3 [ HP.class_ $ HH.ClassName "card-title" ]
+    [ HH.h2 [ HP.class_ $ HH.ClassName "card-title" ]
         [ HH.text "Profile filters" ]
     , HH.div [ HP.class_ $ HH.ClassName "card-content" ] $
         map fieldInput fields

@@ -98,6 +98,7 @@ fieldInput
     ->  { key :: String
         , label :: String
         , type :: Int
+        , icon :: String
         , required :: Boolean
         , domain :: Maybe String
         , options :: Maybe (Array { key :: String , option :: String })

@@ -43,6 +43,7 @@ filterableFields
     :: Array
         { key :: String
         , label :: String
+        , icon :: String
         , required :: Boolean
         , domain :: Maybe String
         , options :: Maybe (Array
@@ -53,8 +54,8 @@ filterableFields
         }
     -> Array FilterProfiles.Field
 filterableFields fields = fields # Array.mapMaybe case _ of
-    { key, label, type: type', domain, options: Just options }
-    | type' == 2 || type' == 3 -> Just { key, label, domain, options }
+    { key, label, icon, type: type', domain, options: Just options }
+    | type' == 2 || type' == 3 -> Just { key, label, icon, domain, options }
     _ -> Nothing
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)

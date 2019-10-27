@@ -1,0 +1,32 @@
+.profile-title {
+    display: block;
+    font-size: 14px;
+    line-height: 21px;
+    font-weight: 500;
+    margin-bottom: 14px;
+}
+
+.profile-field {
+    display: block;
+    font-size: 14px;
+    line-height: 21px;
+    margin-bottom: 14px;
+}
+
+.profile-field-icon {
+    position: absolute;
+    font-size: 20px;
+}
+
+.profile-field-label {
+    font-weight: 500;
+    margin-left: 28px;
+}
+
+.profile-summary {
+    margin-bottom: 14px;
+
+    &:last-child {
+        margin-bottom: 0;
+    }
+}

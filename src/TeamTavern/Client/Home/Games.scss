@@ -44,15 +44,24 @@
     &:hover {
         text-decoration: underline;
     }
+
+    &:active {
+        color: #f7f7fa;
+    }
 }
 
 .game-card-profile-count {
     font-size: 14px;
     font-weight: 400;
     color: white;
+    vertical-align: 1px;
 
     &:hover {
         text-decoration: underline;
+    }
+
+    &:active {
+        color: #f7f7fa;
     }
 }
 
