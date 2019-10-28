@@ -64,7 +64,7 @@ render (Profiles profiles nickname') =
         (profiles # mapWithIndex \index { handle, title, summary, fieldValues, fields } ->
             HH.div [ HP.class_ $ ClassName "card-section" ] $ join
             [ pure $
-                HH.h3_ $ join
+                HH.h3 [ HP.class_ $ ClassName "profile-title" ] $ join
                     [ pure $ navigationAnchorIndexed (SProxy :: SProxy "games") index
                         { path: "/games/" <> handle, content: HH.text title }
                     , case nickname' of
@@ -84,22 +84,28 @@ render (Profiles profiles nickname') =
                 in
                 case { type: field.type, fieldValue } of
                 { type: 1, fieldValue: Just { url: Just url' } } -> Just $
-                    HH.p_
-                    [ HH.strong_ [ HH.text $ field.label <> ": " ]
-                    , HH.a [ HP.href url' ] [ HH.text url' ]
+                    HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
+                    [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
+                    , HH.a [ HP.class_ $ HH.ClassName "profile-field-label", HP.href url' ] [ HH.text field.label ]
                     ]
                 { type: 2, fieldValue: Just { optionKey: Just optionKey' } } -> let
                     option' = field.options >>= find (\{ key } -> key == optionKey')
                     in
                     option' <#> \{ option } ->
-                        HH.p_ [ HH.strong_ [ HH.text $ field.label <> ": " ],  HH.text option ]
+                        HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
+                        [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
+                        , HH.span [ HP.class_ $ HH.ClassName "profile-field-label" ] [ HH.text $ field.label <> ": " ]
+                        , HH.text option
+                        ]
                 { type: 3, fieldValue: Just { optionKeys: Just optionKeys' } } -> let
-                    options' = field.options <#> Array.filter \{ key } -> Array.elem key optionKeys'
+                    fieldOptions' = field.options <#> Array.filter \{ key } -> Array.elem key optionKeys'
                     in
-                    case options' of
-                    Just options | not $ Array.null options -> Just $ HH.p_
-                        [ HH.strong_  [ HH.text $ field.label <> ": " ]
-                        , HH.text $ intercalate ", " (options <#> _.option)
+                    case fieldOptions' of
+                    Just fieldOptions | not $ Array.null fieldOptions -> Just $
+                        HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
+                        [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
+                        , HH.span [ HP.class_ $ HH.ClassName "profile-field-label" ] [ HH.text $ field.label <> ": " ]
+                        , HH.text $ intercalate ", " (fieldOptions <#> _.option)
                         ]
                     _ -> Nothing
                 _ ->  Nothing

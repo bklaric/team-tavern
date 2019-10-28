@@ -52,6 +52,7 @@ type Input =
         { key :: String
         , type :: Int
         , label :: String
+        , icon :: String
         , required :: Boolean
         , domain :: Maybe String
         , options :: Maybe (Array
@@ -76,6 +77,7 @@ type State =
         { key :: String
         , type :: Int
         , label :: String
+        , icon :: String
         , required :: Boolean
         , domain :: Maybe String
         , options :: Maybe (Array
@@ -135,9 +137,10 @@ fieldInput
         }
     -> Array { fieldKey :: String }
     -> Array { fieldKey :: String }
-    ->  { key :: String
+    ->  { type :: Int
+        , key :: String
         , label :: String
-        , type :: Int
+        , icon :: String
         , required :: Boolean
         , domain :: Maybe String
         , options :: Maybe (Array { key :: String , option :: String })

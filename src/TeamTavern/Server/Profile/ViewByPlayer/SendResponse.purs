@@ -27,6 +27,7 @@ type OkContent = Array
         { key :: String
         , type :: Int
         , label :: String
+        , icon :: String
         , required :: Boolean
         , domain :: Maybe String
         , options :: Maybe (Array
