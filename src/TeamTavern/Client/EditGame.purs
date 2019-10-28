@@ -70,9 +70,10 @@ render
     , handleTaken
     , otherError
     } = HH.form
-    [ HP.class_ $ H.ClassName "single-form-wide", HE.onSubmit $ Just <<< Update ]
-    [ HH.h2_ [ HH.text $ "Edit " <> originalTitle ]
-    , HH.div_
+    [ HP.class_ $ H.ClassName "wide-single-form", HE.onSubmit $ Just <<< Update ]
+    [ HH.h2 [ HP.class_ $ HH.ClassName "form-heading" ]
+        [ HH.text $ "Edit " <> originalTitle ]
+    , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
         [ HH.label
             [ HP.for "title" ]
             [ HH.text "Title" ]
@@ -88,7 +89,7 @@ render
             [ HP.class_ $ inputErrorClass titleTaken ]
             [ HH.text "This title is already taken, please pick another one." ]
         ]
-    , HH.div_
+    , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
         [ HH.label
             [ HP.for "handle" ]
             [ HH.text "Handle" ]
@@ -106,7 +107,7 @@ render
             [ HP.class_ $ inputErrorClass handleTaken ]
             [ HH.text "This handle is already taken, please pick another one." ]
         ]
-    , HH.div_
+    , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
         [ HH.label
             [ HP.for "description" ]
             [ HH.text "Description" ]
@@ -121,7 +122,7 @@ render
                 "The description cannot be more than 2000 characters long." ]
         ]
     , HH.button
-        [ HP.class_ $ ClassName "primary"
+        [ HP.class_ $ ClassName "form-submit-button"
         , HP.disabled $ title == "" || handle == "" || description == ""
         ]
         [ HH.text "Save changes" ]

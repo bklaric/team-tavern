@@ -61,9 +61,10 @@ render
     , nicknameTaken
     , otherError
     } = HH.form
-    [ HP.class_ $ H.ClassName "single-form-wide", HE.onSubmit $ Just <<< Update ]
-    [ HH.h2_ [ HH.text "Edit your account" ]
-    , HH.div_
+    [ HP.class_ $ H.ClassName "wide-single-form", HE.onSubmit $ Just <<< Update ]
+    [ HH.h2  [ HP.class_ $ HH.ClassName "form-heading" ]
+        [ HH.text "Edit your account" ]
+    , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
         [ HH.label
             [ HP.class_ $ HH.ClassName "input-label", HP.for "nickname" ]
             [ HH.text "Nickname" ]
@@ -98,7 +99,7 @@ render
     --             "The about entry cannot be more than 2000 characters long." ]
     --     ]
     , HH.button
-        [ HP.class_ $ ClassName "primary-button"
+        [ HP.class_ $ ClassName "form-submit-button"
         , HP.disabled $ nickname == ""
         ]
         [ HH.i [ HP.class_ $ HH.ClassName "fas fa-edit button-icon" ] []

@@ -1,40 +1,14 @@
-form.single-form {
+.single-form {
     @extend %bordered;
     display: flex;
     flex-direction: column;
-    max-width: 320px;
-    padding: 24px;
+    padding: 28px;
     background-color: white;
     margin: 64px auto;
-
-    >h2 {
-        text-align: center;
-        margin-top: 10px;
-        margin-bottom: 24px;
-    }
-
-    >p {
-        text-align: center;
-        margin-top: 24px;
-        margin-bottom: 0;
-    }
-
-    >div {
-        display: flex;
-        flex-direction: column;
-        margin-bottom: 24px;
-
-        >textarea {
-            height: 160px;
-        }
-    }
-
-    >button {
-        margin: auto;
-    }
+    max-width: 320px;
 }
 
-form.single-form-wide {
+.wide-single-form {
     @extend .single-form;
     max-width: 480px;
 }

@@ -12,6 +12,7 @@ import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import Simple.JSON (read)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
+import TeamTavern.Client.Components.RegisterForm (registerForm)
 import TeamTavern.Client.Components.RegisterForm as RegisterForm
 import TeamTavern.Client.Components.TopBar (topBar)
 import TeamTavern.Client.Components.TopBar as TopBar
@@ -24,8 +25,6 @@ import TeamTavern.Client.Home as Home
 import TeamTavern.Client.Home.Games as Games
 import TeamTavern.Client.Player (player)
 import TeamTavern.Client.Player as Player
-import TeamTavern.Client.Register (register)
-import TeamTavern.Client.Register as Register
 import TeamTavern.Client.Script.Navigate (navigate_)
 import TeamTavern.Client.SignIn (signIn)
 import TeamTavern.Client.SignIn as SignIn
@@ -51,7 +50,6 @@ type ChildSlots =
     , games :: Games.Slot Unit
     , game :: Game.Slot Unit
     , player :: Player.Slot Unit
-    , register :: Register.Slot Unit
     , signIn :: SignIn.Slot Unit
     , homeAnchor :: NavigationAnchor.Slot Unit
     , signInAnchor :: NavigationAnchor.Slot Unit
@@ -72,11 +70,11 @@ singleContent = HH.div [ HP.class_ $ HH.ClassName "single-content" ]
 render :: forall action left.
     State -> H.ComponentHTML action ChildSlots (Async left)
 render Empty = HH.div_ []
-render Home = home
+render Home = HH.div_ [ topBar, home ]
 render (Game handle) = topBarWithContent [ game handle ]
 render (Player nickname) = topBarWithContent [ player nickname ]
-render Register = singleContent [ register ]
-render SignIn = singleContent [ signIn ]
+render Register = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ registerForm ] ]
+render SignIn = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ signIn ] ]
 render (Welcome welcomeData) = singleContent [ welcome welcomeData ]
 render NotFound = HH.p_ [ HH.text "You're fucken lost, mate." ]
 

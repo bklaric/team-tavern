@@ -20,6 +20,6 @@ callToAction =
                     <> "Create your own player profile and let them find you."
                 ]
             ]
-        , registerForm
+        , HH.div [ HP.class_ $ HH.ClassName "call-to-action-form-container" ] [ registerForm ]
         ]
     ]

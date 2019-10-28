@@ -150,7 +150,7 @@ fieldInput fieldValues urlValueErrors missingErrors { key, type: 1, label, requi
     in
     case fieldValue' of
     Just { url } ->
-        HH.div_
+        HH.div [ HP.class_ $ HH.ClassName "input-group" ]
         [ fieldLabel key label required (Just domain)
         , HH.input
             [ HP.id_ key
@@ -169,7 +169,7 @@ fieldInput fieldValues urlValueErrors missingErrors { key, type: 1, label, requi
 fieldInput fieldValues _ _ { key, type: 2, label, required, options: Just options } = let
     fieldValue' = fieldValues # find \{ fieldKey } -> fieldKey == key
     in
-    HH.div_
+    HH.div [ HP.class_ $ HH.ClassName "input-group" ]
     [ fieldLabel key label required Nothing
     , singleSelectIndexed (SProxy :: SProxy "singleSelectField") key
         { options
@@ -183,7 +183,7 @@ fieldInput fieldValues _ _ { key, type: 3, label, required, options: Just option
     fieldValue' = fieldValues # find \{ fieldKey } -> fieldKey == key
     selectedOptionIds' = fieldValue' >>= _.optionKeys
     in
-    HH.div_
+    HH.div [ HP.class_ $ HH.ClassName "input-group" ]
     [ fieldLabel key label required Nothing
     , multiSelectIndexed (SProxy :: SProxy "multiSelectField") key
         { options: options <#> \option ->
@@ -198,10 +198,11 @@ fieldInput _ _ _ _ = HH.div_ []
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { title, fields, summary, summaryError, fieldValues, urlValueErrors, missingErrors, otherError } = HH.form
-    [ HP.class_ $ H.ClassName "single-form-wide", HE.onSubmit $ Just <<< Update ] $
-    [ HH.h2_ [ HH.text $ "Edit your " <> title <> " profile" ] ]
+    [ HP.class_ $ H.ClassName "wide-single-form", HE.onSubmit $ Just <<< Update ] $
+    [ HH.h2  [ HP.class_ $ HH.ClassName "form-heading" ]
+        [ HH.text $ "Edit your " <> title <> " profile" ] ]
     <> (fields <#> fieldInput fieldValues urlValueErrors missingErrors) <>
-    [ HH.div_
+    [ HH.div [ HP.class_ $ HH.ClassName "input-group" ]
         [ HH.label
             [ HP.class_ $ HH.ClassName "input-label"
             , HP.for "summary"
@@ -219,7 +220,7 @@ render { title, fields, summary, summaryError, fieldValues, urlValueErrors, miss
                 "The summary cannot be empty and cannot be more than 2000 characters long." ]
         ]
     , HH.button
-        [ HP.class_ $ ClassName "primary-button"
+        [ HP.class_ $ ClassName "form-submit-button"
         , HP.disabled $ summary == ""
         ]
         [ HH.i [ HP.class_ $ HH.ClassName "fas fa-user-edit button-icon" ] []

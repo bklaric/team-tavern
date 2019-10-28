@@ -9,8 +9,6 @@ import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.RegisterForm as RegisterForm
-import TeamTavern.Client.Components.TopBar (topBar)
-import TeamTavern.Client.Components.TopBar as TopBar
 import TeamTavern.Client.Home.CallToAction (callToAction)
 import TeamTavern.Client.Home.Games (games)
 import TeamTavern.Client.Home.Games as Games
@@ -26,15 +24,13 @@ type Slot = H.Slot (Const Void) Void
 type ChildSlots =
     ( games :: Games.Slot Unit
     , registerForm :: RegisterForm.Slot Unit
-    , topBar :: TopBar.Slot Unit
     )
 
 render :: forall left.
     State -> H.ComponentHTML Action ChildSlots (Async left)
 render Empty = HH.div_ []
 render (Loaded playerInfo) = HH.div_ $
-    [ topBar ]
-    <> case playerInfo of
+    case playerInfo of
         Nothing -> [ callToAction, games Nothing ]
         Just { nickname } -> [ games $ Just nickname ]
 

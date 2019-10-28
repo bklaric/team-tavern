@@ -108,7 +108,7 @@ fieldInput urlValueErrors missingErrors { key, type: 1, label, required, domain:
     urlError = urlValueErrors # any (_.fieldKey >>> (_ == key))
     missingError = missingErrors # any (_.fieldKey >>> (_ == key))
     in
-    HH.div_
+    HH.div [ HP.class_ $ HH.ClassName "input-group" ]
     [ fieldLabel key label required (Just domain)
     , HH.input
         [ HP.id_ key
@@ -123,7 +123,7 @@ fieldInput urlValueErrors missingErrors { key, type: 1, label, required, domain:
         [ HH.text $ label <> " is required." ]
     ]
 fieldInput _ _ { key, type: 2, label, required, options: Just options } =
-    HH.div_
+    HH.div [ HP.class_ $ HH.ClassName "input-group" ]
     [ fieldLabel key label required Nothing
     , singleSelectIndexed (SProxy :: SProxy "singleSelectField") key
         { options
@@ -133,7 +133,7 @@ fieldInput _ _ { key, type: 2, label, required, options: Just options } =
         }
     ]
 fieldInput _ _ { key, type: 3, label, required, options: Just options } =
-    HH.div_
+    HH.div [ HP.class_ $ HH.ClassName "input-group" ]
     [ fieldLabel key label required Nothing
     , multiSelectIndexed (SProxy :: SProxy "multiSelectField") key
         { options: options <#> \option -> { option, selected: false }
@@ -145,12 +145,13 @@ fieldInput _ _ _ = HH.div_ []
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { summary, summaryError, urlValueErrors, missingErrors, otherError, game } = HH.form
-    [ HP.class_ $ ClassName "single-form-wide", HE.onSubmit $ Just <<< Create ] $
-    [ HH.h2_ [ HH.text $ "Create your " <> game.title <> " profile" ] ]
+    [ HP.class_ $ ClassName "wide-single-form", HE.onSubmit $ Just <<< Create ] $
+    [ HH.h2 [ HP.class_ $ HH.ClassName "form-heading" ]
+        [ HH.text $ "Create your " <> game.title <> " profile" ] ]
     <> (game.fields <#> fieldInput urlValueErrors missingErrors) <>
-    [ HH.div_
+    [ HH.div [ HP.class_ $ HH.ClassName "input-group" ]
         [ HH.label
-            [ HP.for "summary" ]
+            [ HP.class_ $ HH.ClassName "input-label", HP.for "summary" ]
             [ HH.text "Summary" ]
         , HH.textarea
             [ HP.id_ "summary"
@@ -163,7 +164,7 @@ render { summary, summaryError, urlValueErrors, missingErrors, otherError, game 
                 "The summary cannot be empty and cannot be more than 2000 characters long." ]
         ]
     , HH.button
-        [ HP.class_ $ ClassName "primary-button"
+        [ HP.class_ $ ClassName "form-submit-button"
         , HP.disabled $ summary == ""
         ]
         [ HH.i [ HP.class_ $ HH.ClassName "fas fa-user-plus button-icon" ] []

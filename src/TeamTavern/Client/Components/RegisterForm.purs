@@ -62,7 +62,7 @@ render
     , nicknameTaken
     , otherError
     } = HH.form
-    [ HP.class_ $ HH.ClassName "register-form"
+    [ HP.class_ $ HH.ClassName "form"
     , HE.onSubmit $ Just <<< Register
     ]
     [ HH.h2 [ HP.class_ $ HH.ClassName "form-heading" ]
