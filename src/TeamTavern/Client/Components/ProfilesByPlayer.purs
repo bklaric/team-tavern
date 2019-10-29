@@ -51,7 +51,7 @@ render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render Empty = HH.div_ []
 render (Profiles profiles nickname') =
     HH.div [ HP.class_ $ HH.ClassName "card" ] $
-    [ HH.h3 [ HP.class_ $ HH.ClassName "card-title" ] [ HH.text "Profiles" ] ]
+    [ HH.h2 [ HP.class_ $ HH.ClassName "card-title" ] [ HH.text "Profiles" ] ]
     <> case nickname' of
         Nothing -> []
         Just _ -> [ editProfile $ Just <<< HandleEditProfileMessage ]

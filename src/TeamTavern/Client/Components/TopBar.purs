@@ -54,7 +54,7 @@ render :: forall left.
 render playerInfo = HH.div_
     [ HH.div [ HP.class_ $ HH.ClassName "top-bar" ]
         [ HH.div [ HP.class_ $ HH.ClassName "top-bar-content" ]
-            [ HH.h2 [ HP.class_ $ HH.ClassName "top-bar-title" ]
+            [ HH.span [ HP.class_ $ HH.ClassName "top-bar-title" ]
                 [ HH.a
                     [ HP.class_ $ HH.ClassName "top-bar-title-link"
                     , HP.href "/"

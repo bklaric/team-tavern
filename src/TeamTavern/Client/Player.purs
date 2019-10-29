@@ -51,7 +51,7 @@ type ChildSlots =
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render Empty = HH.div_ []
 render (Player { nickname, about } isCurrentUser) = HH.div_
-    [ HH.h2 [ HP.class_ $ ClassName "content-title"] $ join
+    [ HH.h1 [ HP.class_ $ ClassName "content-title"] $ join
         [ pure $ HH.text nickname
         , guard isCurrentUser $ pure $
             HH.button

@@ -61,8 +61,8 @@ filterableFields fields = fields # Array.mapMaybe case _ of
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render Empty = HH.div_ []
 render (Game game') = HH.div_
-    [ HH.h2 [ HP.class_ $ HH.ClassName "content-title" ]
-        [ HH.text $ "Find " <> game'.title <> " teammates" ]
+    [ HH.h1 [ HP.class_ $ HH.ClassName "content-title" ]
+        [ HH.text $ "Find " <> game'.title <> " players" ]
     , filterProfiles (filterableFields game'.fields)
         (\(FilterProfiles.ApplyFilters filters) -> Just $ ApplyFilters filters)
     , gameProfiles game'
@@ -87,8 +87,8 @@ handleAction (Init handle) = do
     state <- H.lift $ loadGame handle
     H.put state
     H.lift $ Async.fromEffect $ setWindowTitle case state of
-        Game { title } -> "Find " <> title <> " teammates | TeamTavern"
-        _ -> "Find " <> handle <> " teammates | TeamTavern"
+        Game { title } -> "Find " <> title <> " players | TeamTavern"
+        _ -> "Find " <> handle <> " players | TeamTavern"
 handleAction (ApplyFilters filters) =
     void $ H.query (SProxy :: SProxy "gameProfiles") unit
         (Profiles.ApplyFilters filters unit)

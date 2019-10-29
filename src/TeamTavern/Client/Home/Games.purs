@@ -38,7 +38,7 @@ render (Games nickname games') = HH.div [ HP.class_ $ HH.ClassName "games" ] $
     [ HH.h2 [ HP.class_ $ HH.ClassName "choose-game" ]
         [ HH.text
             case nickname of
-            Nothing -> "Choose a game below and browse player profiles"
+            Nothing -> "Looking for players? Choose a game below and browse player profiles"
             Just nickname' ->
                 "Hi " <> nickname'
                 <> ", choose a game below and browse player profiles"
@@ -50,7 +50,7 @@ render (Games nickname games') = HH.div [ HP.class_ $ HH.ClassName "games" ] $
         [ HP.class_ $ HH.ClassName "game-card"
         , HE.onClick $ Just <<< Navigate ("/games/" <> handle) false
         ] $
-        [ HH.h2 [ HP.class_ $ HH.ClassName "game-card-heading" ]
+        [ HH.h3 [ HP.class_ $ HH.ClassName "game-card-heading" ]
             [ HH.a
                 [ HP.class_ $ ClassName "game-card-name"
                 , HP.href $ "/games/" <> handle
