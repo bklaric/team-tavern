@@ -1,7 +1,7 @@
 .card {
     @extend %bordered;
     background-color: white;
-    margin-bottom: 28px;
+    margin-bottom: 21px;
 }
 
 .card-title {
@@ -9,7 +9,7 @@
     font-size: 14px;
     font-weight: 500;
     line-height: 40px;
-    padding: 14px 28px;
+    padding: 7px 21px;
     margin: 0;
     border-bottom: 1px solid #ccc;
 }
@@ -19,7 +19,7 @@
 }
 
 .card-content {
-    padding: 28px;
+    padding: 21px;
 }
 
 .card-section {
