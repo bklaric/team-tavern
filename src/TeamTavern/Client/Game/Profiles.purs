@@ -57,11 +57,11 @@ render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render (Empty _) = HH.div_ []
 render (Profiles game profiles playerInfo') =
     HH.div [ HP.class_ $ HH.ClassName "card" ] $
-    [ HH.h3 [ HP.class_ $ HH.ClassName "card-title" ] $ join
+    [ HH.h2 [ HP.class_ $ HH.ClassName "card-title" ] $ join
         [ pure $ HH.text "Profiles"
         , case playerInfo' of
             Just playerInfo | not game.hasProfile -> pure $ HH.button
-                [ HP.class_ $ ClassName "card-title-button button-primary"
+                [ HP.class_ $ ClassName "card-title-button primary-button"
                 , HE.onClick $ Just <<< ShowCreateProfileModal game playerInfo
                 ]
                 [ HH.i [ HP.class_ $ HH.ClassName "fas fa-user-plus button-icon" ] []
@@ -79,7 +79,7 @@ render (Profiles game profiles playerInfo') =
     else
         (profiles # mapWithIndex \index { nickname, summary, fieldValues } ->
             HH.div [ HP.class_ $ ClassName "card-section" ] $
-            [ HH.h3_
+            [ HH.h3 [ HP.class_ $ ClassName "profile-title" ]
                 [ navigationAnchorIndexed (SProxy :: SProxy "players") index
                     { path: "/players/" <> nickname, content: HH.text nickname }
                 ]
@@ -89,26 +89,32 @@ render (Profiles game profiles playerInfo') =
                 in
                 case { type: field.type, fieldValue } of
                 { type: 1, fieldValue: Just { url: Just url' } } -> Just $
-                    HH.p_
-                    [ HH.strong_ [ HH.text $ field.label <> ": " ]
-                    , HH.a [ HP.href url' ] [ HH.text url' ]
+                    HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
+                    [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
+                    , HH.a [ HP.class_ $ HH.ClassName "profile-field-label", HP.href url' ] [ HH.text field.label ]
                     ]
                 { type: 2, fieldValue: Just { optionKey: Just optionKey' } } -> let
                     fieldOption' = field.options >>= find (\{ key } -> key == optionKey')
                     in
                     fieldOption' <#> \{ option } ->
-                        HH.p_ [ HH.strong_ [ HH.text $ field.label <> ": " ], HH.text option ]
+                        HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
+                        [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
+                        , HH.span [ HP.class_ $ HH.ClassName "profile-field-label" ] [ HH.text $ field.label <> ": " ]
+                        , HH.text option
+                        ]
                 { type: 3, fieldValue: Just { optionKeys: Just optionKeys' } } -> let
                     fieldOptions' = field.options <#> Array.filter \{ key } -> Array.elem key optionKeys'
                     in
                     case fieldOptions' of
-                    Just fieldOptions | not $ Array.null fieldOptions -> Just $ HH.p_
-                        [ HH.strong_ [ HH.text $ field.label <> ": " ]
+                    Just fieldOptions | not $ Array.null fieldOptions -> Just $
+                        HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
+                        [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
+                        , HH.span [ HP.class_ $ HH.ClassName "profile-field-label" ] [ HH.text $ field.label <> ": " ]
                         , HH.text $ intercalate ", " (fieldOptions <#> _.option)
                         ]
                     _ -> Nothing
                 _ ->  Nothing)
-            <> (summary <#> \paragraph -> HH.p_ [ HH.text paragraph ])
+            <> (summary <#> \paragraph -> HH.p [ HP.class_ $ HH.ClassName "profile-summary" ] [ HH.text paragraph ])
         )
 
 loadProfiles :: forall left. View.OkContent -> Array FilterProfiles.Field -> Async left State

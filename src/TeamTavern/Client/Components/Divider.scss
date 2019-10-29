@@ -1,6 +1,14 @@
 .divider {
     font-size: 8px;
-    color: hsl(0, 0, 40%);
+    color: hsl(0, 0%, 40%);
+    font-weight: initial;
+    margin: 0 6px;
+    vertical-align: 2px;
+}
+
+.white-divider {
+    font-size: 8px;
+    color: white;
     font-weight: initial;
     margin: 0 6px;
     vertical-align: 2px;

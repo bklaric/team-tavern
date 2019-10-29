@@ -25,6 +25,7 @@ import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Script.Cookie (hasPlayerIdCookie)
 import TeamTavern.Client.Script.Navigate (navigate_)
 import TeamTavern.Client.Script.QueryParams (getQueryParam)
+import TeamTavern.Client.Script.Title (setWindowTitle)
 import TeamTavern.Client.Snippets.ErrorClasses (otherErrorClass)
 import TeamTavern.Server.Session.Start.SendResponse as Start
 import Web.Event.Event (preventDefault)
@@ -64,14 +65,14 @@ render
     , noSessionStarted
     , otherError
     } = HH.form
-    [ HP.class_ $ ClassName "single-form", HE.onSubmit $ Just <<< SignIn ]
-    [ HH.h2_
+    [ HP.class_ $ ClassName "form", HE.onSubmit $ Just <<< SignIn ]
+    [ HH.h2 [ HP.class_ $ HH.ClassName "form-heading" ]
         [ HH.text "Sign in to "
         , navigationAnchor (SProxy :: SProxy "home")
             { path: "/", content: HH.text "TeamTavern" }
         , HH.text $ maybe "" (const " to confirm your email address") nonce
         ]
-    , HH.div_
+    , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
         [ HH.label
             [ HP.class_ $ HH.ClassName "input-label", HP.for "nicknameOrEmail" ]
             [ HH.text "Nickname or email address" ]
@@ -81,7 +82,7 @@ render
             , HE.onValueInput $ Just <<< NicknameOrEmailInput
             ]
         ]
-    , HH.div_
+    , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
         [ HH.label
             [ HP.class_ $ HH.ClassName "input-label", HP.for "password" ]
             [ HH.text "Password" ]
@@ -94,7 +95,7 @@ render
             ]
         ]
     , HH.button
-        [ HP.class_ $ ClassName "button-primary"
+        [ HP.class_ $ ClassName "form-submit-button"
         , HP.disabled $ nicknameOrEmail == "" || password == ""
         ]
         [ HH.i [ HP.class_ $ H.ClassName "fas fa-sign-in-alt button-icon" ] []
@@ -119,7 +120,8 @@ render
     , HH.p
         [ HP.class_ $ otherErrorClass otherError ]
         [ HH.text "Something unexpected went wrong. Please try again later." ]
-    , HH.p_
+    , HH.p
+        [ HP.class_ $ HH.ClassName "form-bottom-text"]
         [ HH.text "New to TeamTavern? "
         , navigationAnchor (SProxy :: SProxy "registerAnchor")
             { path: "/register", content: HH.text "Create an account." }
@@ -160,6 +162,7 @@ handleAction Init = do
         else do
             nonce <- getQueryParam "nonce" # H.liftEffect
             H.modify_ (_ { nonce = nonce })
+    H.liftEffect $ setWindowTitle "Sign in | TeamTavern"
 handleAction (NicknameOrEmailInput nicknameOrEmail) =
     H.modify_ (_ { nicknameOrEmail = nicknameOrEmail }) <#> const unit
 handleAction (PasswordInput password) =

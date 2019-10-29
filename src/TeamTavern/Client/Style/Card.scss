@@ -1,0 +1,31 @@
+.card {
+    @extend %bordered;
+    background-color: white;
+    margin-bottom: 21px;
+}
+
+.card-title {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 40px;
+    padding: 7px 21px;
+    margin: 0;
+    border-bottom: 1px solid #ccc;
+}
+
+.card-title-button {
+    margin-left: 14px;
+}
+
+.card-content {
+    padding: 21px;
+}
+
+.card-section {
+    @extend .card-content;
+
+    &:not(:last-child) {
+        border-bottom: 1px solid #ccc;
+    }
+}

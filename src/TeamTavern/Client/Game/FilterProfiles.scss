@@ -1,12 +1,17 @@
-.filter {
-    margin-bottom: 14px;
+.filter-field-icon {
+    position: absolute;
+    font-size: 20px;
+}
+
+.filter-field-label {
+    margin-left: 28px;
 }
 
 .apply-filters {
-    @extend .button-secondary;
+    @extend .secondary-button;
 }
 
 .clear-filters {
-    @extend .button-regular;
+    @extend .regular-button;
     margin-left: 14px;
 }

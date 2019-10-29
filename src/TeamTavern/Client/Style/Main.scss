@@ -1,115 +1,19 @@
 @import "Reset";
 @import "Base";
+@import "Error";
+@import "Input";
+@import "Button";
+@import "Form";
 @import "SingleForm";
+@import "Content";
+@import "Card";
 @import "../Components/Divider";
 @import "../Components/TopBar";
 @import "../Components/Modal";
 @import "../Components/SingleSelect";
 @import "../Components/Welcome";
 @import "../Components/WelcomeBanner";
-@import "../Components/Games";
+@import "../Home/CallToAction";
 @import "../Game/FilterProfiles";
-
-.hidden {
-    display: none;
-}
-
-.error {
-    color: $error-color;
-    border-color: $error-color;
-}
-
-.input-error {
-    @extend .error;
-    font-size: 14px;
-    margin: 14px 0 0 0;
-}
-
-.other-error {
-    @extend .error;
-    font-size: 14px;
-}
-
-.content {
-    max-width: $max-width;
-    padding: 14px;
-    margin: 41px auto auto auto;
-
-    >* {
-        margin-bottom: 14px;
-    }
-
-    > :last-child {
-        margin-bottom: 0;
-    }
-}
-
-.content-title {
-    display: block;
-    font-size: 18px;
-    line-height: 22px;
-    padding-left: 14px;
-    margin-bottom: 14px;
-}
-
-.single-content {
-    width: 100vw;
-    height: 100vh;
-    overflow: hidden auto;
-}
-
-.card-subheader {
-    font-size: 14px;
-}
-
-.card {
-    @extend %bordered;
-    background-color: white;
-    margin-bottom: 14px;
-}
-
-.card-title {
-    display: block;
-    font-size: 14px;
-    font-weight: 500;
-    line-height: 21px;
-    padding: 14px;
-    margin: 0;
-    border-bottom: 1px solid #ccc;
-}
-
-.card-title-button {
-    margin-left: 14px;
-}
-
-.card-content {
-    padding: 14px;
-}
-
-.card-section {
-    @extend .card-content;
-
-    &:not(:last-child) {
-        border-bottom: 1px solid #ccc;
-    }
-}
-
-.profile-title {
-    button {
-        margin-left: 14px;
-    }
-}
-
-.empty {
-    margin: 0 !important;
-    padding: 0 !important;
-}
-
-.input-label {
-    line-height: 16px;
-}
-
-.input-sublabel {
-    font-size: 12px;
-    color: #737373;
-}
+@import "../Game/Profiles";
+@import "../Home/Games";

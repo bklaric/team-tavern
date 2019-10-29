@@ -1,0 +1,37 @@
+.form {
+    @extend %bordered;
+    display: flex;
+    flex-direction: column;
+    padding: 21px;
+    background-color: white;
+    color: $text-color;
+}
+
+.form-heading {
+    text-align: center;
+    margin-top: 14px;
+    margin-bottom: 28px;
+    font-size: 20px;
+    line-height: 25px;
+}
+
+.form-submit-button {
+    @extend .primary-button;
+    margin: auto;
+}
+
+.form-bottom-text {
+    text-align: center;
+    margin-top: 28px;
+    margin-bottom: 0;
+}
+
+.single-form-container {
+    margin: 64px auto;
+    max-width: 380px;
+}
+
+.wide-single-form-container {
+    margin: 64px auto;
+    max-width: 540px;
+}

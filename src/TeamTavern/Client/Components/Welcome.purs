@@ -32,7 +32,7 @@ welcome { email, nickname, emailSent } =
                 , HH.text ". Please verify your email address before signin in."
                 ]
             , navigationAnchor (SProxy :: SProxy "homeAnchor")
-                { path: "/", content: HH.text "Home" }
+                { path: "/", content: HH.text "Back to home page" }
             ]
         else
             [ HH.p_
@@ -44,5 +44,5 @@ welcome { email, nickname, emailSent } =
                 , HH.text " to verify your email address."
                 ]
             , navigationAnchor (SProxy :: SProxy "homeAnchor")
-                { path: "/", content: HH.text "Home" }
+                { path: "/", content: HH.text "Back to home page" }
             ]

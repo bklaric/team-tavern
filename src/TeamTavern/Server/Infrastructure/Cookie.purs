@@ -72,12 +72,16 @@ removeIdCookie :: String
 removeIdCookie =
     idCookieName <> "=; expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/"
 
+removeNicknameCookie :: String
+removeNicknameCookie =
+    nicknameCookieName <> "=; expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/"
+
 removeTokenCookie :: String
 removeTokenCookie =
     tokenCookieName <> "=; expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/"
 
 removeCookieHeader :: MultiMap String String
 removeCookieHeader =
-    removeIdCookie :| removeTokenCookie : Nil
+    removeIdCookie :| removeNicknameCookie : removeTokenCookie : Nil
     # NonEmptyList
     # singleton "Set-Cookie"

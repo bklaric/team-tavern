@@ -1,0 +1,72 @@
+%button {
+    @extend %bordered;
+    display: inline-block;
+    font-family: $font;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 20px;
+    padding: 9px 12px;
+    cursor: pointer;
+}
+
+.regular-button {
+    @extend %button;
+    @extend %bordered;
+    color: $text-color;
+    background-color: white;
+    border-color: #737373;
+
+    &:hover {
+        background-color: #f2f2f2;
+    }
+
+    &:active {
+        background-color: #e6e6e6;
+    }
+}
+
+.primary-button {
+    @extend %button;
+    @extend %bordered-colored;
+    color: white;
+    background-color: $primary-color;
+
+    &:hover {
+        background-color: #bd6941;
+        border-color: #bd6941;
+    }
+
+    &:active {
+        background-color: #a14d23;
+        border-color: #a14d23;
+    }
+
+    &[disabled] {
+        cursor: not-allowed;
+        background-color: $disabled-primary-color;
+        border-color: $disabled-primary-color;
+    }
+}
+
+.secondary-button {
+    @extend %button;
+    @extend %bordered-colored;
+    color: $primary-color;
+    background-color: white;
+
+    &:hover {
+        background-color: #f7f2f2;
+    }
+
+    &:active {
+        background-color: #f2e3e3;
+    }
+}
+
+.title-button {
+    margin-left: 14px;
+}
+
+.button-icon {
+    margin-right: 6px;
+}

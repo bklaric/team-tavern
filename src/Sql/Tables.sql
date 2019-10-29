@@ -41,6 +41,7 @@ create table field
     , type integer not null -- 1 (url), 2 (single), 3 (multi)
     , key varchar(40) not null
     , label varchar(40) not null
+    , icon varchar(40) not null
     , required boolean not null default false
     , domain varchar(40)
     );
@@ -76,6 +77,7 @@ select
                 'type', type,
                 'label', label,
                 'key', key,
+                'icon', icon,
                 'required', required,
                 'domain', domain,
                 'options', options
@@ -93,6 +95,7 @@ from (
         field.type,
         field.label,
         field.key,
+        field.icon,
         field.required,
         field.domain,
         json_agg(

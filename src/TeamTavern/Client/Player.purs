@@ -25,6 +25,7 @@ import TeamTavern.Client.EditPlayer (editPlayer)
 import TeamTavern.Client.EditPlayer as EditPlayer
 import TeamTavern.Client.Script.Cookie (getPlayerId)
 import TeamTavern.Client.Script.Navigate (navigate_)
+import TeamTavern.Client.Script.Title (setWindowTitle)
 import TeamTavern.Server.Player.View.SendResponse as View
 import Web.Event.Event (preventDefault)
 import Web.UIEvent.MouseEvent (MouseEvent, toEvent)
@@ -50,11 +51,11 @@ type ChildSlots =
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render Empty = HH.div_ []
 render (Player { nickname, about } isCurrentUser) = HH.div_
-    [ HH.h2 [ HP.class_ $ ClassName "content-title"] $ join
+    [ HH.h1 [ HP.class_ $ ClassName "content-title"] $ join
         [ pure $ HH.text nickname
         , guard isCurrentUser $ pure $
             HH.button
-                [ HP.class_ $ HH.ClassName "button-regular title-button"
+                [ HP.class_ $ HH.ClassName "regular-button title-button"
                 , HE.onClick $ Just <<< ShowEditPlayerModal { nickname, about }
                 ]
                 [ HH.i [ HP.class_ $ H.ClassName "fas fa-edit button-icon" ] []
@@ -81,10 +82,12 @@ loadPlayer nickname = Async.unify do
 
 handleAction :: forall output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
-handleAction (Init nickname) = do
-    state <- H.lift $ loadPlayer nickname
+handleAction (Init nickname') = do
+    state <- H.lift $ loadPlayer nickname'
     H.put state
-    pure unit
+    H.lift $ Async.fromEffect $ setWindowTitle case state of
+        Player { nickname } _ -> nickname <> " | TeamTavern"
+        _ -> nickname' <> " | TeamTavern"
 handleAction (ShowEditPlayerModal input event) = do
     H.liftEffect $ preventDefault $ toEvent event
     Modal.showWith input (SProxy :: SProxy "editPlayer")

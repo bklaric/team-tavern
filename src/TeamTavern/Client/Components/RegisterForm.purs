@@ -1,4 +1,4 @@
-module TeamTavern.Client.Register (Slot, register) where
+module TeamTavern.Client.Components.RegisterForm where
 
 import Prelude
 
@@ -15,7 +15,6 @@ import Data.Maybe (Maybe(..))
 import Data.Options ((:=))
 import Data.Symbol (SProxy(..))
 import Data.Variant (match)
-import Halogen (ClassName(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
@@ -23,22 +22,19 @@ import Halogen.HTML.Properties (InputType(..))
 import Halogen.HTML.Properties as HP
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
-import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
-import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
-import TeamTavern.Client.Script.Cookie (hasPlayerIdCookie)
-import TeamTavern.Client.Script.Navigate (navigate, navigate_)
-import TeamTavern.Client.Script.Title (setWindowTitle)
+import TeamTavern.Client.Script.Navigate (navigate, navigateWithEvent_)
 import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass, otherErrorClass)
 import TeamTavern.Server.Player.Register.SendResponse as Register
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
+import Web.UIEvent.MouseEvent (MouseEvent)
 
 data Action
-    = Init
-    | EmailInput String
+    = EmailInput String
     | NicknameInput String
     | PasswordInput String
     | Register Event
+    | Navigate String MouseEvent
 
 type State =
     { email :: String
@@ -54,13 +50,7 @@ type State =
 
 type Slot = H.Slot (Const Void) Void
 
-type ChildSlots =
-    ( home :: NavigationAnchor.Slot Unit
-    , signInAnchor :: NavigationAnchor.Slot Unit
-    , codeAnchor :: NavigationAnchor.Slot Unit
-    )
-
-render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
+render :: forall left slots. State -> H.ComponentHTML Action slots (Async left)
 render
     { email
     , nickname
@@ -72,14 +62,19 @@ render
     , nicknameTaken
     , otherError
     } = HH.form
-    [ HP.class_ $ ClassName "single-form", HE.onSubmit $ Just <<< Register ]
-    [ HH.h2_
-        [ HH.text "Create a "
-        , navigationAnchor (SProxy :: SProxy "home")
-            { path: "/", content: HH.text "TeamTavern" }
+    [ HP.class_ $ HH.ClassName "form"
+    , HE.onSubmit $ Just <<< Register
+    ]
+    [ HH.h2 [ HP.class_ $ HH.ClassName "form-heading" ]
+        [ HH.text "Create your "
+        , HH.a
+            [ HP.href "/"
+            , HE.onClick $ Just <<< Navigate "/"
+            ]
+            [ HH.text "TeamTavern" ]
         , HH.text " account"
         ]
-    , HH.div_
+    , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
         [ HH.label
             [ HP.class_ $ HH.ClassName "input-label", HP.for "nickname" ]
             [ HH.text "Nickname" ]
@@ -98,7 +93,7 @@ render
             [ HH.text
                 "This nickname is already taken, please pick another one." ]
         ]
-    , HH.div_
+    , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
         [ HH.label
             [ HP.class_ $ HH.ClassName "input-label", HP.for "email" ]
             [ HH.text "Email address" ]
@@ -117,7 +112,7 @@ render
             [ HP.class_ $ inputErrorClass emailTaken ]
             [ HH.text "This email is already taken, please pick another one." ]
         ]
-    , HH.div_
+    , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
         [ HH.label
             [ HP.class_ $ HH.ClassName "input-label", HP.for "password" ]
             [ HH.text "Password" ]
@@ -133,19 +128,23 @@ render
             ]
         ]
     , HH.button
-        [ HP.class_ $ ClassName "primary-button"
+        [ HP.class_ $ HH.ClassName "form-submit-button"
         , HP.disabled $ email == "" || nickname == "" || password == ""
         ]
-        [ HH.i [ HP.class_ $ H.ClassName "fas fa-user-check button-icon" ] []
+        [ HH.i [ HP.class_ $ HH.ClassName "fas fa-user-check button-icon" ] []
         , HH.text "Create account"
         ]
     , HH.p
         [ HP.class_ $ otherErrorClass otherError ]
         [ HH.text "Something unexpected went wrong! Please try again later." ]
-    , HH.p_
+    , HH.p
+        [ HP.class_ $ HH.ClassName "form-bottom-text" ]
         [ HH.text "Already have an account? "
-        , navigationAnchor (SProxy :: SProxy "signInAnchor")
-            { path: "/signin", content: HH.text "Sign in." }
+        , HH.a
+            [ HP.href "/signin"
+            , HE.onClick $ Just <<< Navigate "/signin"
+            ]
+            [ HH.text "Sign in." ]
         ]
     ]
 
@@ -183,15 +182,8 @@ sendRegisterRequest state @ { email, nickname, password } = Async.unify do
         _ -> pure $ Left $ state { otherError = true }
     pure newState
 
-handleAction :: forall output left.
-    Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
-handleAction Init = do
-    isSignedIn <- H.liftEffect hasPlayerIdCookie
-    if isSignedIn
-        then H.liftEffect $ navigate_ "/"
-        else pure unit
-    H.liftEffect $ setWindowTitle "Create account | TeamTavern"
-
+handleAction :: forall slots output left.
+    Action -> H.HalogenM State Action slots output (Async left) Unit
 handleAction (EmailInput email) =
     H.modify_ (_ { email = email }) $> unit
 handleAction (NicknameInput nickname) =
@@ -213,6 +205,8 @@ handleAction (Register event) = do
         Right content -> H.liftEffect $ navigate content "/welcome"
         Left newState' -> H.put newState'
     pure unit
+handleAction (Navigate url event) =
+    H.liftEffect $ navigateWithEvent_ url event
 
 component :: forall query input output left.
     H.Component HH.HTML query input output (Async left)
@@ -231,10 +225,10 @@ component = H.mkComponent
     , render
     , eval: H.mkEval $ H.defaultEval
         { handleAction = handleAction
-        , initialize = Just Init
         }
     }
 
-register :: forall query children left.
-    HH.ComponentHTML query (register :: Slot Unit | children) (Async left)
-register = HH.slot (SProxy :: SProxy "register") unit component unit absurd
+registerForm :: forall query children left.
+    HH.ComponentHTML query (registerForm :: Slot Unit | children) (Async left)
+registerForm =
+    HH.slot (SProxy :: SProxy "registerForm") unit component unit absurd

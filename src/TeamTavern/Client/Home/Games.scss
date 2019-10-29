@@ -1,0 +1,71 @@
+.games {
+    padding: 40px 28px 28px 28px;
+}
+
+.choose-game {
+    font-size: 20px;
+    text-align: center;
+    margin-bottom: 28px;
+}
+
+.game-card {
+    @extend %bordered;
+    max-width: 904px;
+    display: flex;
+    flex-flow: column;
+    justify-content: center;
+    margin: auto;
+    padding: 28px;
+    cursor: pointer;
+    background: #b15e36;
+
+    @media screen and (min-width: 768px) {
+        height: 150px;
+        background: linear-gradient(to right, #b15e36, black), url(/static/dota2-background.png);
+        background-blend-mode: lighten;
+        background-position-x: 0, 170px;
+        background-repeat: no-repeat;
+    }
+}
+
+.game-card-heading {
+    font-size: 20px;
+}
+
+.game-card-logo {
+    height: 20px;
+    vertical-align: -2px;
+    margin-right: 7px;
+}
+
+.game-card-name {
+    color: white;
+
+    &:hover {
+        text-decoration: underline;
+    }
+
+    &:active {
+        color: #f7f7fa;
+    }
+}
+
+.game-card-profile-count {
+    font-size: 14px;
+    font-weight: 400;
+    color: white;
+    vertical-align: 1px;
+
+    &:hover {
+        text-decoration: underline;
+    }
+
+    &:active {
+        color: #f7f7fa;
+    }
+}
+
+.game-card-description {
+    max-width: 300px;
+    color: white;
+}

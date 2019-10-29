@@ -36,6 +36,7 @@ type LoadProfilesDto =
         { key :: String
         , type :: Int
         , label :: String
+        , icon :: String
         , required :: Boolean
         , domain :: Maybe String
         , options :: Maybe (Array
@@ -59,6 +60,7 @@ type LoadProfilesResult =
         { key :: String
         , type :: Int
         , label :: String
+        , icon :: String
         , required :: Boolean
         , domain :: Maybe String
         , options :: Maybe (Array

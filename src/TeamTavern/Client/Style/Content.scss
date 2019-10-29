@@ -1,0 +1,19 @@
+.content {
+    max-width: $max-width;
+    padding: 21px;
+    margin: auto;
+}
+
+.content-title {
+    display: block;
+    font-size: 20px;
+    line-height: 1em;
+    padding-left: 21px;
+    margin-bottom: 21px;
+}
+
+.single-content {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden auto;
+}

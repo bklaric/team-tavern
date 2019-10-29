@@ -5,8 +5,6 @@ module TeamTavern.Client.Script.Cookie
     , getPlayerId
     , getPlayerNickname
     , getPlayerInfo
-    , playerHasId
-    , playerHasNickame
     , hasPlayerIdCookie
     ) where
 
@@ -15,7 +13,7 @@ import Prelude
 import Control.Bind (bindFlipped)
 import Data.Array ((!!))
 import Data.Int (fromString)
-import Data.Maybe (Maybe(..), fromMaybe, isJust, maybe)
+import Data.Maybe (Maybe, fromMaybe, isJust)
 import Data.String (Pattern(..), split, trim)
 import Data.Tuple (Tuple(..))
 import Effect (Effect)
@@ -59,17 +57,9 @@ getPlayerNickname = getCookie nicknameCookieName
 
 getPlayerInfo :: Effect (Maybe PlayerInfo)
 getPlayerInfo = do
-    id' <- getPlayerId
-    nickname' <- getPlayerNickname
-    pure $ case Tuple id' nickname' of
-        Tuple (Just id) (Just nickname) -> Just $ { id, nickname }
-        _ -> Nothing
-
-playerHasId :: Int -> Effect Boolean
-playerHasId id = getPlayerId <#> maybe false (_ == id)
-
-playerHasNickame :: String -> Effect Boolean
-playerHasNickame nickname = getPlayerNickname <#> maybe false (_ == nickname)
+    id <- getPlayerId
+    nickname <- getPlayerNickname
+    pure $ { id: _, nickname: _ } <$> id <*> nickname
 
 hasPlayerIdCookie :: Effect Boolean
 hasPlayerIdCookie = getPlayerId <#> isJust

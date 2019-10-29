@@ -71,16 +71,19 @@ type ChildSlots =
 type Slot =
     H.Slot (Modal.Query Input (Const Void)) (Modal.Message Message)
 
-fieldLabel :: forall slots action. String -> String -> Boolean -> Maybe String -> HH.HTML slots action
-fieldLabel key label required domain =
+fieldLabel :: forall slots action.
+    String -> String -> String -> Boolean -> Maybe String -> HH.HTML slots action
+fieldLabel key label icon required domain =
     HH.label
         [ HP.class_ $ HH.ClassName "input-label", HP.for key ] $
-        [ HH.text label ]
+        [ HH.i [ HP.class_ $ HH.ClassName $ icon <> " filter-field-icon" ] []
+        , HH.span [ HP.class_ $ HH.ClassName "filter-field-label" ] [ HH.text label ]
+        ]
         <>
         (case domain of
         Just domain' ->
             [ divider
-            , HH.span [ HP.class_ $ H.ClassName "profile-count" ] [ HH.text domain' ]
+            , HH.span [ HP.class_ $ H.ClassName "input-sublabel" ] [ HH.text domain' ]
             ]
         Nothing -> [])
         <>
@@ -88,7 +91,7 @@ fieldLabel key label required domain =
         then []
         else
             [ divider
-            , HH.span [ HP.class_ $ H.ClassName "profile-count" ] [ HH.text "optional" ]
+            , HH.span [ HP.class_ $ H.ClassName "input-sublabel" ] [ HH.text "optional" ]
             ])
 
 fieldInput
@@ -98,17 +101,18 @@ fieldInput
     ->  { key :: String
         , label :: String
         , type :: Int
+        , icon :: String
         , required :: Boolean
         , domain :: Maybe String
         , options :: Maybe (Array { key :: String , option :: String })
         }
     ->  H.ComponentHTML Action ChildSlots (Async left)
-fieldInput urlValueErrors missingErrors { key, type: 1, label, required, domain: Just domain } = let
+fieldInput urlValueErrors missingErrors { key, type: 1, label, icon, required, domain: Just domain } = let
     urlError = urlValueErrors # any (_.fieldKey >>> (_ == key))
     missingError = missingErrors # any (_.fieldKey >>> (_ == key))
     in
-    HH.div_
-    [ fieldLabel key label required (Just domain)
+    HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+    [ fieldLabel key label icon required (Just domain)
     , HH.input
         [ HP.id_ key
         , HP.class_ $ HH.ClassName "text-line-input"
@@ -121,9 +125,9 @@ fieldInput urlValueErrors missingErrors { key, type: 1, label, required, domain:
         [ HP.class_ $ inputErrorClass missingError ]
         [ HH.text $ label <> " is required." ]
     ]
-fieldInput _ _ { key, type: 2, label, required, options: Just options } =
-    HH.div_
-    [ fieldLabel key label required Nothing
+fieldInput _ _ { key, type: 2, label, icon, required, options: Just options } =
+    HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+    [ fieldLabel key label icon required Nothing
     , singleSelectIndexed (SProxy :: SProxy "singleSelectField") key
         { options
         , selected: Nothing
@@ -131,9 +135,9 @@ fieldInput _ _ { key, type: 2, label, required, options: Just options } =
         , comparer: \leftOption rightOption -> leftOption.key == rightOption.key
         }
     ]
-fieldInput _ _ { key, type: 3, label, required, options: Just options } =
-    HH.div_
-    [ fieldLabel key label required Nothing
+fieldInput _ _ { key, type: 3, label, icon, required, options: Just options } =
+    HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+    [ fieldLabel key label icon required Nothing
     , multiSelectIndexed (SProxy :: SProxy "multiSelectField") key
         { options: options <#> \option -> { option, selected: false }
         , labeler: _.option
@@ -144,12 +148,13 @@ fieldInput _ _ _ = HH.div_ []
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { summary, summaryError, urlValueErrors, missingErrors, otherError, game } = HH.form
-    [ HP.class_ $ ClassName "single-form-wide", HE.onSubmit $ Just <<< Create ] $
-    [ HH.h2_ [ HH.text $ "Create your " <> game.title <> " profile" ] ]
+    [ HP.class_ $ ClassName "wide-single-form", HE.onSubmit $ Just <<< Create ] $
+    [ HH.h2 [ HP.class_ $ HH.ClassName "form-heading" ]
+        [ HH.text $ "Create your " <> game.title <> " profile" ] ]
     <> (game.fields <#> fieldInput urlValueErrors missingErrors) <>
-    [ HH.div_
+    [ HH.div [ HP.class_ $ HH.ClassName "input-group" ]
         [ HH.label
-            [ HP.for "summary" ]
+            [ HP.class_ $ HH.ClassName "input-label", HP.for "summary" ]
             [ HH.text "Summary" ]
         , HH.textarea
             [ HP.id_ "summary"
@@ -162,7 +167,7 @@ render { summary, summaryError, urlValueErrors, missingErrors, otherError, game 
                 "The summary cannot be empty and cannot be more than 2000 characters long." ]
         ]
     , HH.button
-        [ HP.class_ $ ClassName "button-primary"
+        [ HP.class_ $ ClassName "form-submit-button"
         , HP.disabled $ summary == ""
         ]
         [ HH.i [ HP.class_ $ HH.ClassName "fas fa-user-plus button-icon" ] []
