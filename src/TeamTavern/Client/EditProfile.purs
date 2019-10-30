@@ -151,25 +151,23 @@ fieldInput fieldValues urlValueErrors missingErrors { key, type: 1, label, icon,
     fieldValue' = fieldValues # find \{ fieldKey } -> fieldKey == key
     urlError = urlValueErrors # any (_.fieldKey >>> (_ == key))
     missingError = missingErrors # any (_.fieldKey >>> (_ == key))
+    url = fieldValue' >>= _.url
     in
-    case fieldValue' of
-    Just { url } ->
-        HH.div [ HP.class_ $ HH.ClassName "input-group" ]
-        [ fieldLabel key label icon required (Just domain)
-        , HH.input
-            [ HP.id_ key
-            , HP.class_ $ HH.ClassName "text-line-input"
-            , HE.onValueInput $ Just <<< UrlValueInput key
-            , HP.value $ maybe "" identity url
-            ]
-        , HH.p
-            [ HP.class_ $ inputErrorClass urlError ]
-            [ HH.text $ "This doesn't look like a valid " <> label <> " (" <> domain <> ") address." ]
-        , HH.p
-            [ HP.class_ $ inputErrorClass missingError ]
-            [ HH.text $ label <> " is required." ]
+    HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+    [ fieldLabel key label icon required (Just domain)
+    , HH.input
+        [ HP.id_ key
+        , HP.class_ $ HH.ClassName "text-line-input"
+        , HE.onValueInput $ Just <<< UrlValueInput key
+        , HP.value $ maybe "" identity url
         ]
-    Nothing -> HH.div_ []
+    , HH.p
+        [ HP.class_ $ inputErrorClass urlError ]
+        [ HH.text $ "This doesn't look like a valid " <> label <> " (" <> domain <> ") address." ]
+    , HH.p
+        [ HP.class_ $ inputErrorClass missingError ]
+        [ HH.text $ label <> " is required." ]
+    ]
 fieldInput fieldValues _ _ { key, type: 2, label, icon, required, options: Just options } = let
     fieldValue' = fieldValues # find \{ fieldKey } -> fieldKey == key
     in
@@ -277,14 +275,30 @@ handleAction :: forall left.
     Action -> H.HalogenM State Action ChildSlots Message (Async left) Unit
 handleAction (SummaryInput summary) = do
     H.modify_ (_ { summary = summary }) $> unit
-handleAction (UrlValueInput fieldKey url) = do
-    state @ { fieldValues } <- H.get
-    let newFieldValues = fieldValues <#> \value ->
+handleAction (UrlValueInput fieldKey inputUrl) = do
+    state @ { fields, fieldValues } <- H.get
+    let allFieldValues = fields <#> (\field -> let
+            fieldValue' = fieldValues # find \fieldValue -> fieldValue.fieldKey == field.key
+            in
+            case fieldValue' of
+            Nothing ->
+                { fieldKey: field.key
+                , url: Nothing
+                , optionKey: Nothing
+                , optionKeys: Nothing
+                }
+            Just { url, optionKey, optionKeys } ->
+                { fieldKey: field.key
+                , url
+                , optionKey
+                , optionKeys
+                })
+    let newFieldValues = allFieldValues <#> \value ->
             if value.fieldKey == fieldKey
                 then
-                    if null url
+                    if null inputUrl
                     then value { url = Nothing }
-                    else value { url = Just url }
+                    else value { url = Just inputUrl }
                 else value
     H.put $ state { fieldValues = newFieldValues }
 handleAction (Update event) = do
@@ -321,7 +335,7 @@ handleAction (Update event) = do
                 }
     let state' = state
             { fieldValues =
-                (state.fieldValues)
+                (state.fieldValues # Array.filter (_.url >>> isJust))
                 <> singleSelectValues
                 <> multiSelectValues
             }
