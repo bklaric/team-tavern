@@ -42,6 +42,7 @@ create table field
     , key varchar(40) not null
     , label varchar(40) not null
     , icon varchar(40) not null
+    , order int not null
     , required boolean not null default false
     , domain varchar(40)
     );
@@ -51,6 +52,7 @@ create table field_option
     , field_id integer not null references field(id)
     , key varchar(40) not null
     , option varchar(40) not null
+    , ordinal int not null
     -- , icon file_path or binary
     );
 
@@ -82,7 +84,7 @@ select
                 'domain', domain,
                 'options', options
             )
-            order by id
+            order by ordinal
         )
         filter (where key is not null),
         '[]'
@@ -96,6 +98,7 @@ from (
         field.label,
         field.key,
         field.icon,
+        field.ordinal,
         field.required,
         field.domain,
         json_agg(
@@ -103,7 +106,7 @@ from (
                 'key', field_option.key,
                 'option', field_option.option
             )
-            order by field_option.id
+            order by field_option.ordinal
         )
         filter (where field_option.id is not null)
         as options
