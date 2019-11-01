@@ -25,7 +25,7 @@ import TeamTavern.Client.EditPlayer (editPlayer)
 import TeamTavern.Client.EditPlayer as EditPlayer
 import TeamTavern.Client.Script.Cookie (getPlayerId)
 import TeamTavern.Client.Script.Navigate (navigate_)
-import TeamTavern.Client.Script.Title (setWindowTitle)
+import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
 import TeamTavern.Server.Player.View.SendResponse as View
 import Web.Event.Event (preventDefault)
 import Web.UIEvent.MouseEvent (MouseEvent, toEvent)
@@ -85,9 +85,14 @@ handleAction :: forall output left.
 handleAction (Init nickname') = do
     state <- H.lift $ loadPlayer nickname'
     H.put state
-    H.lift $ Async.fromEffect $ setWindowTitle case state of
-        Player { nickname } _ -> nickname <> " | TeamTavern"
-        _ -> nickname' <> " | TeamTavern"
+    let metaNickname =
+            case state of
+            Player { nickname } _ -> nickname
+            _ -> nickname'
+    H.lift $ Async.fromEffect do
+        setMetaTitle $ metaNickname <> " | TeamTavern"
+        setMetaDescription $ "View profiles by player " <> metaNickname <> " on TeamTavern."
+        setMetaUrl
 handleAction (ShowEditPlayerModal input event) = do
     H.liftEffect $ preventDefault $ toEvent event
     Modal.showWith input (SProxy :: SProxy "editPlayer")

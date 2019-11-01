@@ -13,7 +13,7 @@ import TeamTavern.Client.Home.CallToAction (callToAction)
 import TeamTavern.Client.Home.Games (games)
 import TeamTavern.Client.Home.Games as Games
 import TeamTavern.Client.Script.Cookie (PlayerInfo, getPlayerInfo)
-import TeamTavern.Client.Script.Title (setWindowTitle)
+import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
 
 data Action = Init
 
@@ -37,8 +37,12 @@ render (Loaded playerInfo) = HH.div_ $
 handleAction :: forall action output slots left.
     Action -> H.HalogenM State action slots output (Async left) Unit
 handleAction Init = do
-    H.liftEffect $
-        setWindowTitle "Easily find your ideal esports teammates | TeamTavern"
+    H.liftEffect do
+        setMetaTitle "Easily find your ideal esports teammates | TeamTavern"
+        setMetaDescription $
+            "Tired of random matchmaking that results in ruined matches and wasted time? "
+            <> "TeamTavern lets you easily find your ideal teammates for the games you play."
+        setMetaUrl
     playerInfo <- H.liftEffect $ getPlayerInfo
     H.put $ Loaded playerInfo
 

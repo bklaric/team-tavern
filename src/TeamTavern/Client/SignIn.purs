@@ -25,7 +25,7 @@ import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Script.Cookie (hasPlayerIdCookie)
 import TeamTavern.Client.Script.Navigate (navigate_)
 import TeamTavern.Client.Script.QueryParams (getQueryParam)
-import TeamTavern.Client.Script.Title (setWindowTitle)
+import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
 import TeamTavern.Client.Snippets.ErrorClasses (otherErrorClass)
 import TeamTavern.Server.Session.Start.SendResponse as Start
 import Web.Event.Event (preventDefault)
@@ -162,7 +162,10 @@ handleAction Init = do
         else do
             nonce <- getQueryParam "nonce" # H.liftEffect
             H.modify_ (_ { nonce = nonce })
-    H.liftEffect $ setWindowTitle "Sign in | TeamTavern"
+    H.liftEffect do
+        setMetaTitle "Sign in | TeamTavern"
+        setMetaDescription "Sign in to TeamTavern."
+        setMetaUrl
 handleAction (NicknameOrEmailInput nicknameOrEmail) =
     H.modify_ (_ { nicknameOrEmail = nicknameOrEmail }) <#> const unit
 handleAction (PasswordInput password) =

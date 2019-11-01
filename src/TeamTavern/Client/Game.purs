@@ -19,7 +19,7 @@ import TeamTavern.Client.Game.FilterProfiles (filterProfiles)
 import TeamTavern.Client.Game.FilterProfiles as FilterProfiles
 import TeamTavern.Client.Game.Profiles (gameProfiles)
 import TeamTavern.Client.Game.Profiles as Profiles
-import TeamTavern.Client.Script.Title (setWindowTitle)
+import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
 import TeamTavern.Server.Game.View.SendResponse as View
 
 data Action
@@ -86,9 +86,14 @@ handleAction :: forall output left.
 handleAction (Init handle) = do
     state <- H.lift $ loadGame handle
     H.put state
-    H.lift $ Async.fromEffect $ setWindowTitle case state of
-        Game { title } -> "Find " <> title <> " players | TeamTavern"
-        _ -> "Find " <> handle <> " players | TeamTavern"
+    let handleOrTitle =
+            case state of
+            Game { title } -> title
+            _ -> handle
+    H.lift $ Async.fromEffect do
+        setMetaTitle $ "Find " <> handleOrTitle <> " players | TeamTavern"
+        setMetaDescription $ "Browse and filter " <> handleOrTitle <> " players on TeamTavern and find your ideal teammates."
+        setMetaUrl
 handleAction (ApplyFilters filters) =
     void $ H.query (SProxy :: SProxy "gameProfiles") unit
         (Profiles.ApplyFilters filters unit)
