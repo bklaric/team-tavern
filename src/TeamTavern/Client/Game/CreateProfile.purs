@@ -147,8 +147,9 @@ fieldInput _ _ { key, type: 3, label, icon, required, options: Just options } =
 fieldInput _ _ _ = HH.div_ []
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
-render { summary, summaryError, urlValueErrors, missingErrors, otherError, game } = HH.form
-    [ HP.class_ $ ClassName "wide-single-form", HE.onSubmit $ Just <<< Create ] $
+render { summary, summaryError, urlValueErrors, missingErrors, otherError, game } =
+    HH.div [ HP.class_ $ HH.ClassName "wide-single-form-container" ] $ pure $ HH.form
+    [ HP.class_ $ ClassName "form", HE.onSubmit $ Just <<< Create ] $
     [ HH.h2 [ HP.class_ $ HH.ClassName "form-heading" ]
         [ HH.text $ "Create your " <> game.title <> " profile" ] ]
     <> (game.fields <#> fieldInput urlValueErrors missingErrors) <>

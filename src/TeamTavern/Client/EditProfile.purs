@@ -199,8 +199,9 @@ fieldInput fieldValues _ _ { key, type: 3, label, icon, required, options: Just 
 fieldInput _ _ _ _ = HH.div_ []
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
-render { title, fields, summary, summaryError, fieldValues, urlValueErrors, missingErrors, otherError } = HH.form
-    [ HP.class_ $ H.ClassName "wide-single-form", HE.onSubmit $ Just <<< Update ] $
+render { title, fields, summary, summaryError, fieldValues, urlValueErrors, missingErrors, otherError } =
+    HH.div [ HP.class_ $ HH.ClassName "wide-single-form-container" ] $ pure $ HH.form
+    [ HP.class_ $ H.ClassName "form", HE.onSubmit $ Just <<< Update ] $
     [ HH.h2  [ HP.class_ $ HH.ClassName "form-heading" ]
         [ HH.text $ "Edit your " <> title <> " profile" ] ]
     <> (fields <#> fieldInput fieldValues urlValueErrors missingErrors) <>

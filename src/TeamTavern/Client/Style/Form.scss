@@ -27,11 +27,13 @@
 }
 
 .single-form-container {
-    margin: 64px auto;
     max-width: 380px;
+    padding: 0 21px;
+    margin: 64px auto;
 }
 
 .wide-single-form-container {
+    max-width: 480px;
+    padding: 0 21px;
     margin: 64px auto;
-    max-width: 540px;
 }

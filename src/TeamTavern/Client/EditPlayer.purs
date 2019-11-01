@@ -60,8 +60,8 @@ render
     , aboutError
     , nicknameTaken
     , otherError
-    } = HH.form
-    [ HP.class_ $ H.ClassName "wide-single-form", HE.onSubmit $ Just <<< Update ]
+    } = HH.div [ HP.class_ $ HH.ClassName "wide-single-form-container" ] $ pure $ HH.form
+    [ HP.class_ $ H.ClassName "form", HE.onSubmit $ Just <<< Update ]
     [ HH.h2  [ HP.class_ $ HH.ClassName "form-heading" ]
         [ HH.text "Edit your account" ]
     , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
