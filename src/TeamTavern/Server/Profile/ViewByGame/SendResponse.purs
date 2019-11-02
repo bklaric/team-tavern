@@ -21,6 +21,8 @@ type OkContent = Array
         , optionKey :: Maybe String
         , optionKeys :: Maybe (Array String)
         }
+    , updated :: String
+    , updatedSeconds :: Number
    }
 
 errorResponse :: ViewAllError -> Response
@@ -31,10 +33,12 @@ errorResponse = match
 
 successResponse :: Array LoadProfilesResult -> Response
 successResponse profiles = ok_ $ (writeJSON :: OkContent -> String) $
-    mapFlipped profiles \{ nickname, summary, fieldValues } ->
+    mapFlipped profiles \{ nickname, summary, fieldValues, updated, updatedSeconds } ->
         { nickname: unwrap nickname
         , summary: unwrap summary <#> unwrap
         , fieldValues
+        , updated
+        , updatedSeconds
         }
 
 sendResponse

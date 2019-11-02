@@ -28,6 +28,7 @@ create table game
     , handle varchar(50) not null unique
     , description text[] not null
     , created timestamptz not null default current_timestamp
+    , updated timestamptz not null default current_timestamp
     );
 
 create table profile

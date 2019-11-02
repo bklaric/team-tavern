@@ -11,6 +11,7 @@ import Data.Array as Array
 import Data.Bifunctor (lmap)
 import Data.Foldable (find)
 import Data.FunctorWithIndex (mapWithIndex)
+import Data.Int (floor)
 import Data.Maybe (Maybe(..))
 import Data.String (trim)
 import Data.String as String
@@ -21,6 +22,7 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Simple.JSON.Async as Json
+import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchorIndexed)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
@@ -53,6 +55,40 @@ type ChildSlots =
     , createProfile :: CreateProfile.Slot Unit
     )
 
+yearSeconds :: Number
+yearSeconds = 60.0 * 60.0 * 24.0 * 365.0
+
+monthSeconds :: Number
+monthSeconds = 60.0 * 60.0 * 24.0 * 30.0
+
+daySeconds :: Number
+daySeconds = 60.0 * 60.0 * 24.0
+
+hourSeconds :: Number
+hourSeconds = 60.0 * 60.0
+
+minuteSeconds :: Number
+minuteSeconds = 60.0
+
+lastUpdated :: Number -> String
+lastUpdated updatedSeconds = let
+    yearsAgo = floor(updatedSeconds / yearSeconds)
+    monthsAgo = floor(updatedSeconds / monthSeconds)
+    daysAgo = floor(updatedSeconds / daySeconds)
+    hoursAgo = floor(updatedSeconds / hourSeconds)
+    minutesAgo = floor(updatedSeconds / minuteSeconds)
+    interval =
+        if yearsAgo > 0 then Just { unit: "year", count: yearsAgo } else
+        if monthsAgo > 0 then Just { unit: "month", count: monthsAgo } else
+        if daysAgo > 0 then Just { unit: "day", count: daysAgo } else
+        if hoursAgo > 0 then Just { unit: "hour", count: hoursAgo } else
+        if minutesAgo > 0 then Just { unit: "minute", count: minutesAgo } else
+        Nothing
+    in
+    case interval of
+    Just { unit, count } -> show count <> " " <> unit <> if count == 1 then "" else "s" <> " ago"
+    Nothing -> "less than a minute ago"
+
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render (Empty _) = HH.div_ []
 render (Profiles game profiles playerInfo') =
@@ -77,11 +113,14 @@ render (Profiles game profiles playerInfo') =
         HH.div [ HP.class_ $ ClassName "card-section" ]
         [ HH.p_ [ HH.text "No profiles satisfy specified filters." ] ]
     else
-        (profiles # mapWithIndex \index { nickname, summary, fieldValues } ->
+        (profiles # mapWithIndex \index { nickname, summary, fieldValues, updated, updatedSeconds } ->
             HH.div [ HP.class_ $ ClassName "card-section" ] $
             [ HH.h3 [ HP.class_ $ ClassName "profile-title" ]
                 [ navigationAnchorIndexed (SProxy :: SProxy "players") index
                     { path: "/players/" <> nickname, content: HH.text nickname }
+                , divider
+                , HH.span [ HP.class_ $ HH.ClassName "profile-updated" ]
+                    [ HH.text $ "Updated " <> lastUpdated updatedSeconds ]
                 ]
             ]
             <> (Array.catMaybes $ game.fields <#> \field -> let

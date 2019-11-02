@@ -44,6 +44,8 @@ type LoadProfilesDto =
             , option :: String
             })
         }
+    , updated :: String
+    , updatedSeconds :: Number
     }
 
 type LoadProfilesResult =
@@ -68,6 +70,8 @@ type LoadProfilesResult =
             , option :: String
             })
         }
+    , updated :: String
+    , updatedSeconds :: Number
     }
 
 type LoadProfilesError errors = Variant
@@ -85,14 +89,16 @@ queryString = Query """
         game.title,
         profile.summary,
         coalesce(fields.fields, '[]') as "fields",
-        coalesce(field_values.field_values, '[]') as "fieldValues"
+        coalesce(field_values.field_values, '[]') as "fieldValues",
+        profile.updated::text,
+        extract(epoch from (now() - updated)) as "updatedSeconds"
     from profile
         join player on player.id = profile.player_id
         join game on game.id = profile.game_id
         left join fields on fields.game_id = game.id
         left join field_values on field_values.profile_id = profile.id
     where lower(player.nickname) = lower($1)
-    order by profile.created desc;
+    order by profile.updated desc;
     """
 
 queryParameters :: Nickname -> Array QueryParameter
@@ -110,10 +116,12 @@ loadProfiles pool nickname = do
     profiles :: Array LoadProfilesDto <- rows result
         # traverse read
         # labelMap (SProxy :: SProxy "unreadableDtos") { result, errors: _ }
-    pure $ profiles <#> \{ handle, title, summary, fieldValues, fields } ->
+    pure $ profiles <#> \{ handle, title, summary, fieldValues, fields, updated, updatedSeconds } ->
         { handle: wrap handle
         , title: wrap title
         , summary: summary <#> wrap # wrap
         , fieldValues
         , fields
+        , updated
+        , updatedSeconds
         }

@@ -45,7 +45,7 @@ type UpdateProfileError errors = Variant
 updateProfileString :: Query
 updateProfileString = Query """
     update profile
-    set summary = $5
+    set summary = $5, updated = now()
     from session, player, game
     where session.player_id = $1
     and session.token = $2
