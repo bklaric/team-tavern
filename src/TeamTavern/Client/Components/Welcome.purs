@@ -22,11 +22,12 @@ welcome
     => { email :: String, nickname :: String, emailSent :: Boolean }
     -> H.ComponentHTML action (ChildSlots slots) monad
 welcome { email, nickname, emailSent } =
+    HH.div [ HP.class_ $ HH.ClassName "welcome-container" ] $ pure $
     HH.div [ HP.class_ $ ClassName "welcome"] $
-    [ HH.h3_ [ HH.text $ "Welcome to TeamTavern, " <> nickname <> "!" ] ]
+    [ HH.h1 [ HP.class_ $ HH.ClassName "welcome-heading" ] [ HH.text $ "Welcome to TeamTavern, " <> nickname <> "!" ] ]
     <> if emailSent
         then
-            [ HH.p_
+            [ HH.p [ HP.class_ $ HH.ClassName "welcome-text" ]
                 [ HH.text $ "A registration email has been sent to "
                 , HH.strong_ [ HH.text email ]
                 , HH.text ". Please verify your email address before signin in."
@@ -35,7 +36,7 @@ welcome { email, nickname, emailSent } =
                 { path: "/", content: HH.text "Back to home page" }
             ]
         else
-            [ HH.p_
+            [ HH.p [ HP.class_ $ HH.ClassName "welcome-text" ]
                 [ HH.text $ "Unfortunately, we're having some issues sending "
                     <> "a registration email to "
                 , HH.strong_ [ HH.text email ]
