@@ -54,9 +54,13 @@ type CheckPasswordError errors = Variant
 queryString :: Query
 queryString = Query """
     select
-        id, nickname, password_hash as hash, email_confirmed as "emailConfirmed"
+        player.id,
+        player.nickname,
+        player.password_hash as hash,
+        player.email_confirmed as "emailConfirmed"
     from player
-    where player.email = $1 or player.nickname = $1
+    where lower(player.email) = lower($1)
+        or lower(player.nickname) = lower($1)
     """
 
 queryParameters :: NicknameOrEmail -> Array QueryParameter

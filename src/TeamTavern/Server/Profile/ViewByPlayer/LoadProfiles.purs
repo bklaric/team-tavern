@@ -91,7 +91,7 @@ queryString = Query """
         join game on game.id = profile.game_id
         left join fields on fields.game_id = game.id
         left join field_values on field_values.profile_id = profile.id
-    where player.nickname = $1
+    where lower(player.nickname) = lower($1)
     order by profile.created desc;
     """
 

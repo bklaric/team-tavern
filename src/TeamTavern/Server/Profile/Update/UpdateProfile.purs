@@ -53,7 +53,7 @@ updateProfileString = Query """
     and session.player_id = player.id
     and player.id = profile.player_id
     and game.id = profile.game_id
-    and player.nickname = $3
+    and lower(player.nickname) = lower($3)
     and game.handle = $4
     returning profile.id as "profileId";
     """

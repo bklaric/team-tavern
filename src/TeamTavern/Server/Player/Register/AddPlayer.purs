@@ -56,8 +56,8 @@ addPlayer pool model @ { email, nickname, nonce } =
     # execute queryString (queryParameters model)
     # lmap (\error ->
         case code error == unique_violation of
-        true | constraint error == Just "player_email_key" ->
+        true | constraint error == Just "player_lower_email_key" ->
             inj (SProxy :: SProxy "emailTaken") { email, error }
-        true | constraint error == Just "player_nickname_key" ->
+        true | constraint error == Just "player_lower_nickname_key" ->
             inj (SProxy :: SProxy "nicknameTaken") { nickname, error }
         _ -> inj (SProxy :: SProxy "databaseError") error )

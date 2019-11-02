@@ -50,7 +50,7 @@ addProfileString = Query """
     and session.revoked = false
     and session.player_id = player.id
     and game.handle = $3
-    and player.nickname = $4
+    and lower(player.nickname) = lower($4)
     returning profile.id as "profileId";
     """
 

@@ -47,7 +47,7 @@ queryString :: Query
 queryString = Query """
     select player.id, player.nickname, player.about
     from player
-    where player.nickname = $1
+    where lower(player.nickname) = lower($1)
     """
 
 queryParameters :: Nickname -> Array QueryParameter
