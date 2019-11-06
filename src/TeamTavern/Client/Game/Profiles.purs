@@ -28,7 +28,7 @@ import TeamTavern.Client.Components.NavigationAnchor (navigationAnchorIndexed)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
 import TeamTavern.Client.Game.CreateProfile (createProfile)
 import TeamTavern.Client.Game.CreateProfile as CreateProfile
-import TeamTavern.Client.Game.FilterProfiles as FilterProfiles
+import TeamTavern.Client.Profile.ProfileFilters as FilterProfiles
 import TeamTavern.Client.Script.Cookie (PlayerInfo, getPlayerInfo)
 import TeamTavern.Client.Script.Cookie as Cookie
 import TeamTavern.Client.Script.Navigate (navigate_)

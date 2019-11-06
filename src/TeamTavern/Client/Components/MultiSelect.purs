@@ -44,6 +44,7 @@ data Action option
     | Close
     | Toggle
     | PreventDefault MouseEvent
+    | Receive (Input option)
 
 data Query option send
     = Selected (Array option -> send)
@@ -106,6 +107,8 @@ handleAction Toggle =
     H.modify_ \state -> state { open = not state.open }
 handleAction (PreventDefault mouseEvent) =
     H.liftEffect $ preventDefault (MouseEvent.toEvent mouseEvent)
+handleAction (Receive { options, labeler, comparer }) =
+    H.put { options, labeler, comparer, open: false }
 
 handleQuery
     :: forall option monad send
@@ -130,6 +133,7 @@ component = H.mkComponent
     , eval: H.mkEval $ H.defaultEval
         { handleAction = handleAction
         , handleQuery = handleQuery
+        , receive = Just <<< Receive
         }
     }
 

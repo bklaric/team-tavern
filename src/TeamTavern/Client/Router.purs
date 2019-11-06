@@ -20,6 +20,7 @@ import TeamTavern.Client.Components.Welcome (welcome)
 import TeamTavern.Client.Components.WelcomeBanner as WelcomeBanner
 import TeamTavern.Client.Game (game)
 import TeamTavern.Client.Game as Game
+import TeamTavern.Client.Game.GameHeader as GameHeader
 import TeamTavern.Client.Home (home)
 import TeamTavern.Client.Home as Home
 import TeamTavern.Client.Home.Games as Games
@@ -36,7 +37,7 @@ data Action = Init Foreign String
 data State
     = Empty
     | Home
-    | Game String
+    | Game GameHeader.Handle GameHeader.Tab
     | Player String
     | Register
     | SignIn
@@ -71,7 +72,7 @@ render :: forall action left.
     State -> H.ComponentHTML action ChildSlots (Async left)
 render Empty = HH.div_ []
 render Home = HH.div_ [ topBar, home ]
-render (Game handle) = topBarWithContent [ game handle ]
+render (Game handle tab) = topBarWithContent [ game handle tab ]
 render (Player nickname) = topBarWithContent [ player nickname ]
 render Register = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ registerForm ] ]
 render SignIn = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ signIn ] ]
@@ -99,7 +100,11 @@ handleAction (Init state route) = do
             Right identifiers -> just $ Welcome identifiers
             Left _ -> navigate_ "/" *> nothing
         ["", "games", handle] ->
-            just $ Game handle
+            (navigate_ $ "/games/" <> handle <> "/players") *> nothing
+        ["", "games", handle, "players" ] ->
+            just $ Game handle GameHeader.Players
+        ["", "games", handle, "teams" ] ->
+            just $ Game handle GameHeader.Teams
         ["", "players", nickname] ->
             just $ Player nickname
         _ ->

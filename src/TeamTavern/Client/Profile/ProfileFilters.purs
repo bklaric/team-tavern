@@ -1,4 +1,4 @@
-module TeamTavern.Client.Game.FilterProfiles where
+module TeamTavern.Client.Profile.ProfileFilters where
 
 import Prelude
 
@@ -114,6 +114,7 @@ component = H.mkComponent
     , render
     , eval: H.mkEval $ H.defaultEval
         { handleAction = handleAction
+        , receive = Just <<< Receive
         }
     }
 
