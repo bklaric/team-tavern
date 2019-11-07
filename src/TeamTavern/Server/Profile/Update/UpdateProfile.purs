@@ -45,7 +45,7 @@ type UpdateProfileError errors = Variant
 updateProfileString :: Query
 updateProfileString = Query """
     update profile
-    set summary = $5, updated = now()
+    set summary = $6, updated = now()
     from session, player, game
     where session.player_id = $1
     and session.token = $2
@@ -55,25 +55,27 @@ updateProfileString = Query """
     and game.id = profile.game_id
     and lower(player.nickname) = lower($3)
     and game.handle = $4
+    and profile.type = $5
     returning profile.id as "profileId";
     """
 
 updateProfileParameters ::
-    CookieInfo -> Identifiers -> Summary -> Array QueryParameter
-updateProfileParameters { id, token } { nickname, handle } summary =
-    id : token : nickname : handle :| summary
+    CookieInfo -> Identifiers -> Int -> Summary -> Array QueryParameter
+updateProfileParameters { id, token } { nickname, handle } profileType summary =
+    id : token : nickname : handle : profileType :| summary
 
 updateProfile'
     :: forall errors
     .  Client
     -> CookieInfo
     -> Identifiers
+    -> Int
     -> Summary
     -> Async (UpdateProfileError errors) ProfileId
-updateProfile' client cookieInfo identifiers summary = do
+updateProfile' client cookieInfo identifiers profileType summary = do
     result <- client
         # query updateProfileString
-            (updateProfileParameters cookieInfo identifiers summary)
+            (updateProfileParameters cookieInfo identifiers profileType summary)
         # label (SProxy :: SProxy "databaseError")
     { profileId } :: { profileId :: Int } <- rows result
         # head
@@ -105,9 +107,9 @@ updateProfile
     -> Identifiers
     -> Profile
     -> Async (UpdateProfileError errors) Unit
-updateProfile client cookieInfo identifiers (Profile summary fieldValues) = do
+updateProfile client cookieInfo identifiers (Profile profileType summary fieldValues) = do
     -- Update profile row.
-    profileId <- updateProfile' client cookieInfo identifiers summary
+    profileId <- updateProfile' client cookieInfo identifiers profileType summary
 
     -- Delete all existing field values.
     deleteFieldValues client profileId

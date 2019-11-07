@@ -173,8 +173,8 @@ handleRequest pool client method url cookies body =
             Profile.create pool identifiers cookies body
         , updateProfile: \identifiers ->
             Profile.update pool identifiers cookies body
-        , viewProfilesByGame: \{ handle, filters } ->
-            Profile.viewByGame pool handle filters
+        , viewProfilesByGame: \{ handle, ilk, filters } ->
+            Profile.viewByGame pool handle ilk filters
         , viewProfilesByPlayer: \{ nickname } ->
             Profile.viewByPlayer pool nickname
         }

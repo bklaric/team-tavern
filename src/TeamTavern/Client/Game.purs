@@ -73,7 +73,7 @@ render (Game game' tab) = let
     [ gameHeader
     , filterProfiles (filterableFields game'.fields)
         (\(FilterProfiles.ApplyFilters filters) -> Just $ ApplyFilters filters)
-    , gameProfiles game'
+    , gameProfiles game' tab
     ]
 render NotFound = HH.p_ [ HH.text "Game could not be found." ]
 render Error = HH.p_ [ HH.text
