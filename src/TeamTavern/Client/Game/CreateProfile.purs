@@ -197,7 +197,10 @@ render { summary, summaryError, urlValueErrors, missingErrors, otherError, game,
         , HP.disabled $ summary == ""
         ]
         [ HH.i [ HP.class_ $ HH.ClassName "fas fa-user-plus button-icon" ] []
-        , HH.text "Create profile"
+        , HH.text
+            case tab of
+            GameHeader.Players -> "Create player profile"
+            GameHeader.Teams -> "Create team profile"
         ]
     , HH.p
         [ HP.class_ $ otherErrorClass otherError ]

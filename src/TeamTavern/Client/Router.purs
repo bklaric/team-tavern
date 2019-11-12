@@ -26,7 +26,7 @@ import TeamTavern.Client.Home as Home
 import TeamTavern.Client.Home.Games as Games
 import TeamTavern.Client.Player (player)
 import TeamTavern.Client.Player as Player
-import TeamTavern.Client.Script.Navigate (navigate_)
+import TeamTavern.Client.Script.Navigate (navigateReplace_, navigate_)
 import TeamTavern.Client.SignIn (signIn)
 import TeamTavern.Client.SignIn as SignIn
 
@@ -100,7 +100,7 @@ handleAction (Init state route) = do
             Right identifiers -> just $ Welcome identifiers
             Left _ -> navigate_ "/" *> nothing
         ["", "games", handle] ->
-            (navigate_ $ "/games/" <> handle <> "/players") *> nothing
+            (navigateReplace_ $ "/games/" <> handle <> "/players") *> nothing
         ["", "games", handle, "players" ] ->
             just $ Game handle GameHeader.Players
         ["", "games", handle, "teams" ] ->
