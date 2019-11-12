@@ -16,6 +16,7 @@ import Data.Maybe (Maybe(..))
 import Data.String (trim)
 import Data.String as String
 import Data.Symbol (SProxy(..))
+import Data.Tuple (Tuple(..))
 import Halogen (ClassName(..), defaultEval, mkComponent, mkEval)
 import Halogen as H
 import Halogen.HTML as HH
@@ -102,16 +103,20 @@ render (Profiles game tab profiles playerInfo') =
             case tab of
             GameHeader.Players -> "Players looking for a team"
             GameHeader.Teams -> "Teams looking for players"
-        , case playerInfo' of
-            Just playerInfo | not game.hasProfile -> pure $ HH.button
+        , case Tuple tab playerInfo' of
+            Tuple GameHeader.Players (Just playerInfo) | not game.hasPlayerProfile -> pure $ HH.button
                 [ HP.class_ $ ClassName "card-title-button primary-button"
                 , HE.onClick $ Just <<< ShowCreateProfileModal game tab playerInfo
                 ]
                 [ HH.i [ HP.class_ $ HH.ClassName "fas fa-user-plus button-icon" ] []
-                , HH.text
-                    case tab of
-                    GameHeader.Players -> "Create your profile"
-                    GameHeader.Teams -> "Create team profile"
+                , HH.text "Create your profile"
+                ]
+            Tuple GameHeader.Teams (Just playerInfo) | not game.hasTeamProfile -> pure $ HH.button
+                [ HP.class_ $ ClassName "card-title-button primary-button"
+                , HE.onClick $ Just <<< ShowCreateProfileModal game tab playerInfo
+                ]
+                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-user-plus button-icon" ] []
+                , HH.text "Create team profile"
                 ]
             _ -> []
         ]

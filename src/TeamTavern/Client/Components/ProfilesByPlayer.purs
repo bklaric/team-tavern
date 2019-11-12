@@ -125,7 +125,10 @@ render (Profiles profiles nickname' profileIlk) =
                                     { nickname, handle, title, profileIlk, summary, fieldValues, fields }
                                 ]
                                 [ HH.i [ HP.class_ $ H.ClassName "fas fa-user-edit button-icon" ] []
-                                , HH.text "Edit profile"
+                                , HH.text
+                                    case profileIlk of
+                                    Players -> "Edit player profile"
+                                    Teams -> "Edit team profile"
                                 ]
                     , pure $ divider
                     , pure $ HH.span [ HP.class_ $ HH.ClassName "profile-updated" ]

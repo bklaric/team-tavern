@@ -29,7 +29,8 @@ type LoadGameDto =
     { administratorId :: Int
     , handle :: String
     , title :: String
-    , hasProfile :: Boolean
+    , hasPlayerProfile :: Boolean
+    , hasTeamProfile :: Boolean
     , fields :: Array
         { type :: Int
         , label :: String
@@ -49,7 +50,8 @@ type LoadGameResult =
     , title :: Title
     , handle :: Handle
     , description :: Description
-    , hasProfile :: Boolean
+    , hasPlayerProfile :: Boolean
+    , hasTeamProfile :: Boolean
     , fields :: Array
         { type :: Int
         , label :: String
@@ -79,12 +81,15 @@ queryString = Query """
         game.handle,
         game.title,
         game.administrator_id as "administratorId",
-        profile.id is not null as "hasProfile",
+        player_profile.id is not null as "hasPlayerProfile",
+        team_profile.id is not null as "hasTeamProfile",
         coalesce(fields.fields, '[]') as fields
     from game
         left join fields on fields.game_id = game.id
-        left join profile on profile.game_id = game.id
-            and profile.player_id = $2
+        left join profile as player_profile on player_profile.game_id = game.id
+            and player_profile.player_id = $2 and player_profile.type = 1
+        left join profile as team_profile on team_profile.game_id = game.id
+            and team_profile.player_id = $2 and team_profile.type = 2
     where game.handle = $1;
     """
 
@@ -104,7 +109,7 @@ loadGame pool handle' auth = do
     games :: Array LoadGameDto <- rows result
         # traverse read
         # labelMap (SProxy :: SProxy "unreadableDto") { result, errors: _ }
-    view @ { administratorId, handle, title, hasProfile, fields } <-
+    view @ { administratorId, handle, title, hasPlayerProfile, hasTeamProfile, fields } <-
         head games
         # Async.note (inj (SProxy :: SProxy "notFound") handle')
     pure
@@ -112,6 +117,7 @@ loadGame pool handle' auth = do
         , title: wrap title
         , handle: wrap handle
         , description: wrap []
-        , hasProfile
+        , hasPlayerProfile
+        , hasTeamProfile
         , fields
         }

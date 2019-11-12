@@ -16,7 +16,8 @@ type OkContent =
     , title :: String
     , handle :: String
     , description :: Array String
-    , hasProfile :: Boolean
+    , hasPlayerProfile :: Boolean
+    , hasTeamProfile :: Boolean
     , fields :: Array
         { type :: Int
         , label :: String
@@ -40,13 +41,14 @@ errorResponse = match
 
 successResponse :: LoadGameResult -> Response
 successResponse
-    { administratorId, title, handle, description, hasProfile, fields } =
+    { administratorId, title, handle, description, hasPlayerProfile, hasTeamProfile, fields } =
     ok_ $ writeJSON (
     { administratorId: unwrap administratorId
     , title: unwrap title
     , handle: unwrap handle
     , description: unwrap description <#> unwrap
-    , hasProfile
+    , hasPlayerProfile
+    , hasTeamProfile
     , fields
     } :: OkContent)
 
