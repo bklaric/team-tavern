@@ -35,13 +35,13 @@ teamsPath handle = "/games/" <> handle <> "/teams"
 renderTabs :: forall slots. String -> Tab -> Array (HH.HTML slots Action)
 renderTabs handle Players =
     [ HH.span [ HP.class_ $ HH.ClassName "content-title-tab" ]
-        [ HH.text "Find players" ]
+        [ HH.text "Looking for team" ]
     , HH.a
         [ HP.class_ $ HH.ClassName "content-title-tab"
         , HP.href $ teamsPath handle
         , HE.onClick $ Just <<< Navigate (teamsPath handle)
         ]
-        [ HH.text "Find teams" ]
+        [ HH.text "Looking for players" ]
     ]
 renderTabs handle Teams =
     [ HH.a
@@ -49,9 +49,9 @@ renderTabs handle Teams =
         , HP.href $ playersPath handle
         , HE.onClick $ Just <<< Navigate (playersPath handle)
         ]
-        [ HH.text "Find players" ]
+        [ HH.text "Looking for team" ]
     , HH.span [ HP.class_ $ HH.ClassName "content-title-tab" ]
-        [ HH.text "Find teams" ]
+        [ HH.text "Looking for players" ]
     ]
 
 render :: forall slots. Input -> HH.HTML slots Action

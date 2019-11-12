@@ -101,8 +101,8 @@ render (Profiles game tab profiles playerInfo') =
     [ HH.h2 [ HP.class_ $ HH.ClassName "card-title" ] $ join
         [ pure $ HH.text
             case tab of
-            GameHeader.Players -> "Players looking for a team"
-            GameHeader.Teams -> "Teams looking for players"
+            GameHeader.Players -> "Player profiles"
+            GameHeader.Teams -> "Team profiles"
         , case Tuple tab playerInfo' of
             Tuple GameHeader.Players (Just playerInfo) | not game.hasPlayerProfile -> pure $ HH.button
                 [ HP.class_ $ ClassName "card-title-button primary-button"

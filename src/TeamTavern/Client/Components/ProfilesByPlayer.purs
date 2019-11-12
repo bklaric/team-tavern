@@ -94,8 +94,8 @@ render (Profiles profiles nickname' profileIlk) =
     HH.div [ HP.class_ $ HH.ClassName "card" ] $
     [ HH.h2 [ HP.class_ $ HH.ClassName "card-title" ] [ HH.text
         case profileIlk of
-        Players -> "Looking for team"
-        Teams -> "Looking for players" ] ]
+        Players -> "Player profiles"
+        Teams -> "Team profiles" ] ]
     <> case nickname' of
         Nothing -> []
         Just _ -> [ editProfile $ Just <<< HandleEditProfileMessage ]
