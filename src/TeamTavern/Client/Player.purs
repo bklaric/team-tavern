@@ -23,9 +23,10 @@ import TeamTavern.Client.Components.ProfilesByPlayer (profilesByPlayer)
 import TeamTavern.Client.Components.ProfilesByPlayer as ProfilesByPlayer
 import TeamTavern.Client.EditPlayer (editPlayer)
 import TeamTavern.Client.EditPlayer as EditPlayer
+import TeamTavern.Client.EditProfile (ProfileIlk(..))
 import TeamTavern.Client.Script.Cookie (getPlayerId)
-import TeamTavern.Client.Script.Navigate (navigate_)
 import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
+import TeamTavern.Client.Script.Navigate (navigate_)
 import TeamTavern.Server.Player.View.SendResponse as View
 import Web.Event.Event (preventDefault)
 import Web.UIEvent.MouseEvent (MouseEvent, toEvent)
@@ -62,7 +63,8 @@ render (Player { nickname, about } isCurrentUser) = HH.div_
                 , HH.text "Edit account"
                 ]
         ]
-    , profilesByPlayer nickname
+    , profilesByPlayer nickname Players
+    , profilesByPlayer nickname Teams
     , HH.div_ [ editPlayer $ Just <<< HandleEditPlayerMessage ]
     ]
 render NotFound = HH.p_ [ HH.text "Player could not be found." ]

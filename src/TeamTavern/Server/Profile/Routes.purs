@@ -42,7 +42,7 @@ type ViewProfilesByPlayer = Route
     :> Literal "by-nickname"
     :> Capture "nickname" Nickname
     :> End)
-    NoQuery
+    (Mandatory "ilk" ProfileIlk)
 
 type UpdateProfile = Route
     Put

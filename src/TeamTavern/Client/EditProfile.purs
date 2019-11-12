@@ -37,10 +37,13 @@ import TeamTavern.Server.Profile.Update.SendResponse as Update
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
+data ProfileIlk = Players | Teams
+
 type Input =
     { nickname :: String
     , handle :: String
     , title :: String
+    , profileIlk :: ProfileIlk
     , summary :: Array String
     , fieldValues :: Array
         { fieldKey :: String
@@ -67,12 +70,13 @@ data Action
     | UrlValueInput String String
     | Update Event
 
-data Message = ProfileUpdated String
+data Message = ProfileUpdated String ProfileIlk
 
 type State =
     { nickname :: String
     , handle :: String
     , title :: String
+    , profileIlk :: ProfileIlk
     , fields :: Array
         { key :: String
         , type :: Int
@@ -130,7 +134,8 @@ fieldLabel key label icon required domain =
 
 fieldInput
     :: forall left
-    .  Array
+    .  ProfileIlk
+    -> Array
         { fieldKey :: String
         , url :: Maybe String
         , optionKey :: Maybe String
@@ -147,7 +152,7 @@ fieldInput
         , options :: Maybe (Array { key :: String , option :: String })
         }
     -> H.ComponentHTML Action ChildSlots (Async left)
-fieldInput fieldValues urlValueErrors missingErrors { key, type: 1, label, icon, required, domain: Just domain } = let
+fieldInput Players fieldValues urlValueErrors missingErrors { key, type: 1, label, icon, required, domain: Just domain } = let
     fieldValue' = fieldValues # find \{ fieldKey } -> fieldKey == key
     urlError = urlValueErrors # any (_.fieldKey >>> (_ == key))
     missingError = missingErrors # any (_.fieldKey >>> (_ == key))
@@ -168,7 +173,7 @@ fieldInput fieldValues urlValueErrors missingErrors { key, type: 1, label, icon,
         [ HP.class_ $ inputErrorClass missingError ]
         [ HH.text $ label <> " is required." ]
     ]
-fieldInput fieldValues _ _ { key, type: 2, label, icon, required, options: Just options } = let
+fieldInput Players fieldValues _ _ { key, type: 2, label, icon, required, options: Just options } = let
     fieldValue' = fieldValues # find \{ fieldKey } -> fieldKey == key
     in
     HH.div [ HP.class_ $ HH.ClassName "input-group" ]
@@ -181,7 +186,7 @@ fieldInput fieldValues _ _ { key, type: 2, label, icon, required, options: Just 
         , comparer: \leftOption rightOption -> leftOption.key == rightOption.key
         }
     ]
-fieldInput fieldValues _ _ { key, type: 3, label, icon, required, options: Just options } = let
+fieldInput Teams fieldValues _ _ { key, type: 2, label, icon, required, options: Just options } = let
     fieldValue' = fieldValues # find \{ fieldKey } -> fieldKey == key
     selectedOptionIds' = fieldValue' >>= _.optionKeys
     in
@@ -196,15 +201,45 @@ fieldInput fieldValues _ _ { key, type: 3, label, icon, required, options: Just 
         , comparer: \leftOption rightOption -> leftOption.key == rightOption.key
         }
     ]
-fieldInput _ _ _ _ = HH.div_ []
+fieldInput Players fieldValues _ _ { key, type: 3, label, icon, required, options: Just options } = let
+    fieldValue' = fieldValues # find \{ fieldKey } -> fieldKey == key
+    selectedOptionIds' = fieldValue' >>= _.optionKeys
+    in
+    HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+    [ fieldLabel key label icon required Nothing
+    , multiSelectIndexed (SProxy :: SProxy "multiSelectField") key
+        { options: options <#> \option ->
+            { option
+            , selected: selectedOptionIds' # maybe false \selectedOptionIds ->
+                selectedOptionIds # any (_ == option.key) }
+        , labeler: _.option
+        , comparer: \leftOption rightOption -> leftOption.key == rightOption.key
+        }
+    ]
+fieldInput Teams fieldValues _ _ { key, type: 3, label, icon, required, options: Just options } = let
+    fieldValue' = fieldValues # find \{ fieldKey } -> fieldKey == key
+    selectedOptionIds' = fieldValue' >>= _.optionKeys
+    in
+    HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+    [ fieldLabel key label icon required Nothing
+    , multiSelectIndexed (SProxy :: SProxy "multiSelectField") key
+        { options: options <#> \option ->
+            { option
+            , selected: selectedOptionIds' # maybe false \selectedOptionIds ->
+                selectedOptionIds # any (_ == option.key) }
+        , labeler: _.option
+        , comparer: \leftOption rightOption -> leftOption.key == rightOption.key
+        }
+    ]
+fieldInput _ _ _ _ _ = HH.div_ []
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
-render { title, fields, summary, summaryError, fieldValues, urlValueErrors, missingErrors, otherError } =
+render { title, profileIlk, fields, summary, summaryError, fieldValues, urlValueErrors, missingErrors, otherError } =
     HH.div [ HP.class_ $ HH.ClassName "wide-single-form-container" ] $ pure $ HH.form
     [ HP.class_ $ H.ClassName "form", HE.onSubmit $ Just <<< Update ] $
     [ HH.h2  [ HP.class_ $ HH.ClassName "form-heading" ]
         [ HH.text $ "Edit your " <> title <> " profile" ] ]
-    <> (fields <#> fieldInput fieldValues urlValueErrors missingErrors) <>
+    <> (fields <#> fieldInput profileIlk fieldValues urlValueErrors missingErrors) <>
     [ HH.div [ HP.class_ $ HH.ClassName "input-group" ]
         [ HH.label
             [ HP.class_ $ HH.ClassName "input-label"
@@ -235,7 +270,7 @@ render { title, fields, summary, summaryError, fieldValues, urlValueErrors, miss
     ]
 
 updateProfile :: forall left. State -> Async left (Maybe State)
-updateProfile state @ { nickname, handle, summary, fieldValues } = Async.unify do
+updateProfile state @ { nickname, handle, profileIlk, summary, fieldValues } = Async.unify do
     response <- Fetch.fetch
         ("/api/profiles/single/" <> handle <> "/" <> nickname)
         (  Fetch.method := PUT
@@ -248,6 +283,10 @@ updateProfile state @ { nickname, handle, summary, fieldValues } = Async.unify d
                     || (case optionKeys of
                         Just optionKeys' | not $ Array.null optionKeys' -> true
                         _ -> false)
+            , type:
+                case profileIlk of
+                Players -> 1
+                Teams -> 2
             }
         <> Fetch.credentials := Fetch.Include
         )
@@ -342,17 +381,18 @@ handleAction (Update event) = do
             }
     newState <- H.lift $ updateProfile state'
     case newState of
-        Nothing -> H.raise $ ProfileUpdated state.nickname
+        Nothing -> H.raise $ ProfileUpdated state.nickname state.profileIlk
         Just newState' -> H.put newState'
     pure unit
 
 component :: forall query left.
     H.Component HH.HTML query Input Message (Async left)
 component = H.mkComponent
-    { initialState: \{ handle, title, nickname, summary, fieldValues, fields } ->
+    { initialState: \{ handle, title, nickname, profileIlk, summary, fieldValues, fields } ->
         { handle
         , title
         , nickname
+        , profileIlk
         , fields
         , summary: intercalate "\n\n" summary
         , summaryError: false
