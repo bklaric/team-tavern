@@ -45,7 +45,7 @@ data Action
     = Init
     | Receive Input
     | ShowCreateProfileModal View.OkContent GameHeader.Tab PlayerInfo MouseEvent
-    | HandleCreateProfileMessage (Modal.Message CreateProfile.Message)
+    | HandleCreateProfileMessage GameHeader.Tab (Modal.Message CreateProfile.Message)
 
 data State
     = Empty Input
@@ -120,7 +120,7 @@ render (Profiles game tab profiles playerInfo') =
                 ]
             _ -> []
         ]
-    , createProfile $ Just <<< HandleCreateProfileMessage
+    , createProfile $ Just <<< HandleCreateProfileMessage tab
     ]
     <>
     if Array.null profiles
@@ -232,11 +232,14 @@ handleAction (Receive (Input game tab)) = do
 handleAction (ShowCreateProfileModal game tab playerInfo event) = do
     H.liftEffect $ preventDefault $ toEvent event
     Modal.showWith { game, tab, playerInfo } (SProxy :: SProxy "createProfile")
-handleAction (HandleCreateProfileMessage message) = do
+handleAction (HandleCreateProfileMessage tab message) = do
     Modal.hide (SProxy :: SProxy "createProfile")
     case message of
         Modal.Inner (CreateProfile.ProfileCreated handle) ->
-            H.liftEffect $ navigate_ $ "/games/" <> trim handle
+            H.liftEffect $ navigate_ $ "/games/" <> trim handle <>
+                case tab of
+                GameHeader.Players -> "/players"
+                GameHeader.Teams -> "/teams"
         _ -> pure unit
 
 handleQuery

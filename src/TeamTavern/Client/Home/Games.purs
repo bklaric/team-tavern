@@ -45,16 +45,16 @@ render (Games nickname games') = HH.div [ HP.class_ $ HH.ClassName "games" ] $
         ]
     ]
     <>
-    (games' <#> \{ title, handle, description, profileCount } ->
+    (games' <#> \{ title, handle, description, playerCount, teamCount } ->
         HH.div
         [ HP.class_ $ HH.ClassName "game-card"
-        , HE.onClick $ Just <<< Navigate ("/games/" <> handle) false
+        , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/players") false
         ] $
         [ HH.h3 [ HP.class_ $ HH.ClassName "game-card-heading" ]
             [ HH.a
                 [ HP.class_ $ ClassName "game-card-name"
-                , HP.href $ "/games/" <> handle
-                , HE.onClick $ Just <<< Navigate ("/games/" <> handle) true
+                , HP.href $ "/games/" <> handle <> "/players"
+                , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/players") true
                 ]
                 [ HH.img
                     [ HP.class_ $ HH.ClassName "game-card-logo"
@@ -66,10 +66,17 @@ render (Games nickname games') = HH.div [ HP.class_ $ HH.ClassName "games" ] $
             , whiteDivider
             , HH.a
                 [ HP.class_ $ ClassName "game-card-profile-count"
-                , HP.href $ "/games/" <> handle
-                , HE.onClick $ Just <<< Navigate ("/games/" <> handle) true
+                , HP.href $ "/games/" <> handle <> "/players"
+                , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/players") true
                 ]
-                [ HH.text $ show profileCount <> " profiles" ]
+                [ HH.text $ show playerCount <> " players" ]
+            , whiteDivider
+            , HH.a
+                [ HP.class_ $ ClassName "game-card-profile-count"
+                , HP.href $ "/games/" <> handle <> "/teams"
+                , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/teams") true
+                ]
+                [ HH.text $ show teamCount <> " teams" ]
             ]
         ]
         <> (description <#> \paragraph ->
