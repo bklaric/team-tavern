@@ -6,10 +6,30 @@
 
 .content-title {
     display: block;
-    font-size: 20px;
-    line-height: 1em;
     padding-left: 21px;
     margin-bottom: 21px;
+}
+
+.content-title-text {
+    display: inline;
+    font-size: 20px;
+    line-height: 1em;
+    margin-right: 21px;
+}
+
+.content-title-tabs {
+    display: inline-block;
+    line-height: 20px;
+
+    .content-title-tab:first-child {
+        margin-left: 0;
+    }
+}
+
+.content-title-tab {
+    display: inline;
+    font-weight: 500;
+    margin-left: 21px;
 }
 
 .single-content {

@@ -14,13 +14,13 @@ import Foreign (MultipleErrors)
 import Postgres.Async.Query (query)
 import Postgres.Error (Error)
 import Postgres.Pool (Pool)
-import Postgres.Query (Query(..), QueryParameter, (:))
+import Postgres.Query (Query(..), QueryParameter, (:), (:|))
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
 import TeamTavern.Server.Game.Domain.Handle (Handle)
 import TeamTavern.Server.Game.Domain.Title (Title)
 import TeamTavern.Server.Profile.Domain.Summary (Summary)
-import TeamTavern.Server.Profile.Routes (Nickname)
+import TeamTavern.Server.Profile.Routes (Nickname, ProfileIlk)
 
 type LoadProfilesDto =
     { handle :: String
@@ -98,20 +98,19 @@ queryString = Query """
         left join fields on fields.game_id = game.id
         left join field_values on field_values.profile_id = profile.id
     where lower(player.nickname) = lower($1)
+        and profile.type = $2
     order by profile.updated desc;
     """
-
-queryParameters :: Nickname -> Array QueryParameter
-queryParameters nickname = nickname : []
 
 loadProfiles
     :: forall errors
     .  Pool
     -> Nickname
+    -> ProfileIlk
     -> Async (LoadProfilesError errors) (Array LoadProfilesResult)
-loadProfiles pool nickname = do
+loadProfiles pool nickname ilk = do
     result <- pool
-        # query queryString (queryParameters nickname)
+        # query queryString (nickname :| ilk)
         # label (SProxy :: SProxy "databaseError")
     profiles :: Array LoadProfilesDto <- rows result
         # traverse read

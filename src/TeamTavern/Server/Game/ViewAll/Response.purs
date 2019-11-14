@@ -16,7 +16,8 @@ type OkContent = Array
     , title :: String
     , handle :: String
     , description :: Array String
-    , profileCount :: Int
+    , playerCount :: Int
+    , teamCount :: Int
     }
 
 errorResponse :: ViewAllError -> Response
@@ -28,12 +29,13 @@ errorResponse = match
 successResponse :: Array LoadGamesResult -> Response
 successResponse views  = ok_ $ (writeJSON :: OkContent -> String) $
     mapFlipped views
-        \{ administratorId, title, handle, description, profileCount } ->
+        \{ administratorId, title, handle, description, playerCount, teamCount } ->
             { administratorId: unwrap administratorId
             , title: unwrap title
             , handle: unwrap handle
             , description: unwrap description <#> unwrap
-            , profileCount
+            , playerCount
+            , teamCount
             }
 
 sendResponse

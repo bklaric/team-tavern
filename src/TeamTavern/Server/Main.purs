@@ -173,10 +173,10 @@ handleRequest pool client method url cookies body =
             Profile.create pool identifiers cookies body
         , updateProfile: \identifiers ->
             Profile.update pool identifiers cookies body
-        , viewProfilesByGame: \{ handle, filters } ->
-            Profile.viewByGame pool handle filters
-        , viewProfilesByPlayer: \{ nickname } ->
-            Profile.viewByPlayer pool nickname
+        , viewProfilesByGame: \{ handle, ilk, filters } ->
+            Profile.viewByGame pool handle ilk filters
+        , viewProfilesByPlayer: \{ nickname, ilk } ->
+            Profile.viewByPlayer pool nickname ilk
         }
         <#> (\response -> response { headers = response.headers <> MultiMap.fromFoldable
                 [ Tuple "Access-Control-Allow-Origin" $ NEL.singleton "http://localhost:1337"

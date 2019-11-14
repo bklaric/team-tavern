@@ -26,7 +26,7 @@ import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
 import TeamTavern.Server.Player.Domain.Nickname (Nickname)
 import TeamTavern.Server.Profile.Domain.Summary (Summary)
-import TeamTavern.Server.Profile.Routes (Handle)
+import TeamTavern.Server.Profile.Routes (Handle, ProfileIlk)
 import URI.Extra.QueryPairs (Key, QueryPairs(..), Value)
 import URI.Extra.QueryPairs as Key
 import URI.Extra.QueryPairs as Value
@@ -126,13 +126,13 @@ createCrosstabFieldsFilter filters =
     # intercalate ", "
     # \crosstabFieldsFilter -> "(" <> crosstabFieldsFilter <> ")"
 
-createProfilesFilterString :: String -> Array (Tuple Key (Maybe Value)) -> String
-createProfilesFilterString preparedHandle filters = let
+createProfilesFilterString :: String -> ProfileIlk -> Array (Tuple Key (Maybe Value)) -> String
+createProfilesFilterString preparedHandle ilk filters = let
     -- Prepare Array (Tuple String (Array String)) as filters.
     preparedFilters = prepareFilters filters
     in
     if Array.null preparedFilters
-    then "where handle = " <> preparedHandle
+    then "where game.handle = " <> preparedHandle <> " and profile.type = " <> show ilk
     else let
         -- Create filter string.
         filterString = createFilterString preparedFilters
@@ -159,7 +159,7 @@ createProfilesFilterString preparedHandle filters = let
                 join field on field.id = field_value.field_id
                 join field_option on field_option.id = field_value.field_option_id
                     or field_option.id = field_value_option.field_option_id
-                where game.handle = """ <> preparedHandle <> """
+                where game.handle = """ <> preparedHandle <> """ and profile.type = """ <> show ilk <> """
                 group by profile.id, field.key
                 order by profile.created;
                 $$,
@@ -176,13 +176,13 @@ createProfilesFilterString preparedHandle filters = let
             """ <> filterString <> """
         )"""
 
-queryString :: Handle -> QueryPairs Key Value -> Query
-queryString handle (QueryPairs filters) = let
+queryString :: Handle -> ProfileIlk -> QueryPairs Key Value -> Query
+queryString handle ilk (QueryPairs filters) = let
     -- Prepare game handle.
     preparedHandle = sanitizeStringValue handle
 
     -- Create profiles filter string.
-    filterString = createProfilesFilterString preparedHandle filters
+    filterString = createProfilesFilterString preparedHandle ilk filters
 
     -- Insert it into the rest of the query.
     in
@@ -206,11 +206,12 @@ loadProfiles
     :: forall errors
     .  Pool
     -> Handle
+    -> ProfileIlk
     -> QueryPairs Key Value
     -> Async (LoadProfilesError errors) (Array LoadProfilesResult)
-loadProfiles pool handle filters = do
+loadProfiles pool handle ilk filters = do
     result <- pool
-        # query_ (queryString handle filters)
+        # query_ (queryString handle ilk filters)
         # label (SProxy :: SProxy "databaseError")
     profiles :: Array LoadProfilesDto <- rows result
         # traverse read

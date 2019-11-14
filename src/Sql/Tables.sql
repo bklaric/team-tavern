@@ -36,8 +36,9 @@ create table profile
     , player_id integer not null references player(id)
     , game_id integer not null references game(id)
     , summary text[] not null
+    , type integer not null -- 1 (player), 2 (team)
     , created timestamptz not null default current_timestamp
-    , unique (game_id, player_id)
+    , unique (game_id, player_id, type)
     );
 
 create table field
@@ -124,21 +125,25 @@ group by game_id;
 
 create or replace view field_values (profile_id, field_values) as
 select
-    profile_id,
+    profile.id,
     coalesce(
         json_agg(json_build_object(
-            'fieldKey', key,
+            'fieldKey', profile_value.key,
             case
-                when type = 1 then 'url'
-                when type = 2 then 'optionKey'
-                when type = 3 then 'optionKeys'
+                when profile.type = 1 and profile_value.type = 1 then 'url'
+                when profile.type = 1 and profile_value.type = 2 then 'optionKey'
+                when profile.type = 2 and profile_value.type = 2 then 'optionKeys'
+                when profile.type = 1 and profile_value.type = 3 then 'optionKeys'
+                when profile.type = 2 and profile_value.type = 3 then 'optionKeys'
             end,
             case
-                when type = 1 then url
-                when type = 2 then single
-                when type = 3 then multi
+                when profile.type = 1 and profile_value.type = 1 then url
+                when profile.type = 1 and profile_value.type = 2 then single
+                when profile.type = 2 and profile_value.type = 2 then multi
+                when profile.type = 1 and profile_value.type = 3 then multi
+                when profile.type = 2 and profile_value.type = 3 then multi
             end
-        )) filter (where field_value_id is not null),
+        )) filter (where profile_value.field_value_id is not null),
         '[]'
     ) as field_values
 from (
@@ -159,5 +164,6 @@ from (
         field.id,
         field_value.id,
         single.id
-) as profile
-group by profile_id;
+) as profile_value
+join profile on profile.id = profile_value.profile_id
+group by profile.id;
