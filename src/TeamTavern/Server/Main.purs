@@ -34,6 +34,8 @@ import Postmark.Client (Client)
 import Postmark.Client as Postmark
 import TeamTavern.Server.Architecture.Deployment (Deployment(..))
 import TeamTavern.Server.Architecture.Deployment as Deployment
+import TeamTavern.Server.Conversation.ViewAll (viewAll) as Conversation
+import TeamTavern.Server.Conversation.View (view) as Conversation
 import TeamTavern.Server.Game.Create (create) as Game
 import TeamTavern.Server.Game.Update (handleUpdate) as Game
 import TeamTavern.Server.Game.View (handleView) as Game
@@ -177,6 +179,10 @@ handleRequest pool client method url cookies body =
             Profile.viewByGame pool handle ilk filters
         , viewProfilesByPlayer: \{ nickname, ilk } ->
             Profile.viewByPlayer pool nickname ilk
+        , viewAllConversations: const $
+            Conversation.viewAll pool cookies
+        , viewConversation: \{ nickname } ->
+            Conversation.view pool nickname cookies
         }
         <#> (\response -> response { headers = response.headers <> MultiMap.fromFoldable
                 [ Tuple "Access-Control-Allow-Origin" $ NEL.singleton "http://localhost:1337"

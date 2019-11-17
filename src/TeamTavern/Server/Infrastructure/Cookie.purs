@@ -13,6 +13,8 @@ import TeamTavern.Server.Player.Domain.Id (Id, fromString, toString)
 import TeamTavern.Server.Player.Domain.Nickname (Nickname)
 import TeamTavern.Server.Session.Domain.Token (Token)
 
+type Cookies = Map String String
+
 type CookieInfo =
     { id :: Id
     , nickname :: Nickname

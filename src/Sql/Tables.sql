@@ -28,7 +28,6 @@ create table game
     , handle varchar(50) not null unique
     , description text[] not null
     , created timestamptz not null default current_timestamp
-    , updated timestamptz not null default current_timestamp
     );
 
 create table profile
@@ -38,6 +37,7 @@ create table profile
     , summary text[] not null
     , type integer not null -- 1 (player), 2 (team)
     , created timestamptz not null default current_timestamp
+    , updated timestamptz not null default current_timestamp
     , unique (game_id, player_id, type)
     );
 
@@ -167,3 +167,18 @@ from (
 ) as profile_value
 join profile on profile.id = profile_value.profile_id
 group by profile.id;
+
+create table conversation
+    ( id serial not null primary key
+    , left_interlocutor_id int not null references player(id) on delete cascade
+    , right_interlocutor_id int not null references player(id) on delete cascade
+    );
+
+create table message
+    ( id serial not null primary key
+    , conversation_id int not null references conversation(id)
+    , interlocutor_id int not null references player(id)
+    , content text not null
+    , read boolean not null default false
+    , created timestamptz not null default current_timestamp
+    );
