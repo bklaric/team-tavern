@@ -29,7 +29,7 @@ type LoadConversationsError errors = Variant
         , errors :: MultipleErrors
         }
     , databaseError :: Error
-    | errors)
+    | errors )
 
 queryString :: Query
 queryString = Query """

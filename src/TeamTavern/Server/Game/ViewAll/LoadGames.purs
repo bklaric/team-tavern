@@ -44,7 +44,7 @@ type LoadGamesError errors = Variant
         , errors :: MultipleErrors
         }
     , databaseError :: Error
-    | errors)
+    | errors )
 
 loadGamesQuery :: Query
 loadGamesQuery = Query """

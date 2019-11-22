@@ -25,12 +25,6 @@ type ViewConversation = Route
 type StartConversation = Route
     Post
     (  Literal "conversations"
-    :> End)
-    NoQuery
-
-type ContinueConversation = Route
-    Post
-    (  Literal "conversations"
     :> Capture "nickname" Nickname
     :> End)
     NoQuery
@@ -38,5 +32,4 @@ type ContinueConversation = Route
 type ConversationRoutes
     =    "viewAllConversations" := ViewAllConversations
     :<|> "viewConversation"     := ViewConversation
-    -- :<|> "startConversation"    := StartConversation
-    -- :<|> "continueConversation" := ContinueConversation
+    :<|> "startConversation"    := StartConversation

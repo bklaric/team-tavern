@@ -36,6 +36,7 @@ import TeamTavern.Server.Architecture.Deployment (Deployment(..))
 import TeamTavern.Server.Architecture.Deployment as Deployment
 import TeamTavern.Server.Conversation.ViewAll (viewAll) as Conversation
 import TeamTavern.Server.Conversation.View (view) as Conversation
+import TeamTavern.Server.Conversation.Start (start) as Conversation
 import TeamTavern.Server.Game.Create (create) as Game
 import TeamTavern.Server.Game.Update (handleUpdate) as Game
 import TeamTavern.Server.Game.View (handleView) as Game
@@ -183,6 +184,8 @@ handleRequest pool client method url cookies body =
             Conversation.viewAll pool cookies
         , viewConversation: \{ nickname } ->
             Conversation.view pool nickname cookies
+        , startConversation: \{ nickname } ->
+            Conversation.start pool nickname cookies body
         }
         <#> (\response -> response { headers = response.headers <> MultiMap.fromFoldable
                 [ Tuple "Access-Control-Allow-Origin" $ NEL.singleton "http://localhost:1337"

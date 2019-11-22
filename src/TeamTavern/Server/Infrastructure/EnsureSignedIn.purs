@@ -9,8 +9,7 @@ import Data.Maybe (Maybe(..))
 import Data.Variant (SProxy(..), Variant, inj)
 import Postgres.Async.Query (query)
 import Postgres.Error (Error)
-import Postgres.Pool (Pool)
-import Postgres.Query (Query(..), (:), (:|))
+import Postgres.Query (class Querier, Query(..), (:), (:|))
 import Postgres.Result (rowCount)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo, Cookies, lookupCookieInfo)
 
@@ -31,13 +30,13 @@ queryString = Query """
         and revoked = false
     """
 
-ensureSignedIn :: forall errors.
-    Pool -> Cookies -> Async (EnsureSignedInError errors) CookieInfo
-ensureSignedIn pool cookies =
+ensureSignedIn :: forall querier errors. Querier querier =>
+    querier -> Cookies -> Async (EnsureSignedInError errors) CookieInfo
+ensureSignedIn querier cookies =
     case lookupCookieInfo cookies of
     Nothing -> Async.left $ inj (SProxy :: SProxy "noCookieInfo") { cookies }
     Just cookieInfo @ { id, nickname, token } -> do
-        result <- pool
+        result <- querier
             # query queryString (id : nickname :| token)
             # label (SProxy :: SProxy "databaseError")
         if rowCount result == 0
