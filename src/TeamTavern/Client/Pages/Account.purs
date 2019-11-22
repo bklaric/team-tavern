@@ -1,4 +1,4 @@
-module TeamTavern.Client.Player (Slot, player) where
+module TeamTavern.Client.Pages.Account (Slot, ChildSlots, account) where
 
 import Prelude
 
@@ -24,25 +24,27 @@ import TeamTavern.Client.Components.ProfilesByPlayer as ProfilesByPlayer
 import TeamTavern.Client.EditPlayer (editPlayer)
 import TeamTavern.Client.EditPlayer as EditPlayer
 import TeamTavern.Client.EditProfile (ProfileIlk(..))
-import TeamTavern.Client.Script.Cookie (getPlayerId)
+import TeamTavern.Client.Script.Cookie (getPlayerId, getPlayerInfo)
 import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
 import TeamTavern.Client.Script.Navigate (navigateReplace_, navigate_)
 import TeamTavern.Server.Player.View.SendResponse as View
 import Web.Event.Event (preventDefault)
 import Web.UIEvent.MouseEvent (MouseEvent, toEvent)
 
+type Nickname = String
+
 data Action
-    = Init String
+    = Init
     | ShowEditPlayerModal EditPlayer.Input MouseEvent
     | HandleEditPlayerMessage (Modal.Message EditPlayer.Message)
 
 data State
     = Empty
-    | Player View.OkContent Boolean
+    | Player Nickname
     | NotFound
     | Error
 
-type Slot = H.Slot (Const Void) Void
+type Slot = H.Slot (Const Void) Void Unit
 
 type ChildSlots =
     ( editPlayer :: EditPlayer.Slot Unit
@@ -51,17 +53,16 @@ type ChildSlots =
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render Empty = HH.div_ []
-render (Player { nickname, about } isCurrentUser) = HH.div_
-    [ HH.h1 [ HP.class_ $ ClassName "content-title"] $ join
-        [ pure $ HH.text nickname
-        , guard isCurrentUser $ pure $
-            HH.button
-                [ HP.class_ $ HH.ClassName "regular-button title-button"
-                , HE.onClick $ Just <<< ShowEditPlayerModal { nickname, about }
-                ]
-                [ HH.i [ HP.class_ $ H.ClassName "fas fa-edit button-icon" ] []
-                , HH.text "Edit account"
-                ]
+render (Player nickname) = HH.div_
+    [ HH.h1 [ HP.class_ $ ClassName "content-title"]
+        [ HH.text nickname
+        , HH.button
+            [ HP.class_ $ HH.ClassName "regular-button title-button"
+            , HE.onClick $ Just <<< ShowEditPlayerModal { nickname, about: [] }
+            ]
+            [ HH.i [ HP.class_ $ H.ClassName "fas fa-edit button-icon" ] []
+            , HH.text "Edit account"
+            ]
         ]
     , profilesByPlayer nickname Players
     , profilesByPlayer nickname Teams
@@ -71,36 +72,18 @@ render NotFound = HH.p_ [ HH.text "Player could not be found." ]
 render Error = HH.p_ [ HH.text
     "There has been an error loading the player. Please try again later." ]
 
-loadPlayer :: forall left. String -> Async left State
-loadPlayer nickname = Async.unify do
-    response <- Fetch.fetch_ ("/api/players/by-nickname/" <> nickname)
-        # lmap (const Error)
-    content <- case FetchRes.status response of
-        200 -> FetchRes.text response >>= Json.readJSON # lmap (const Error)
-        404 -> Async.left NotFound
-        _ -> Async.left Error
-    playerId <- Async.fromEffect getPlayerId
-    let isCurrentPlayer = maybe false (_ == content.id) playerId
-    if isCurrentPlayer
-        then do
-            Async.fromEffect $ navigateReplace_ "/account"
-            pure Empty
-        else
-            pure $ Player content isCurrentPlayer
-
 handleAction :: forall output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
-handleAction (Init nickname') = do
-    state <- H.lift $ loadPlayer nickname'
-    H.put state
-    let metaNickname =
-            case state of
-            Player { nickname } _ -> nickname
-            _ -> nickname'
-    H.lift $ Async.fromEffect do
-        setMetaTitle $ metaNickname <> " | TeamTavern"
-        setMetaDescription $ "View profiles by player " <> metaNickname <> " on TeamTavern."
-        setMetaUrl
+handleAction Init = do
+    playerInfo <- H.liftEffect getPlayerInfo
+    case playerInfo of
+        Nothing -> H.liftEffect $ navigate_ "/"
+        Just { id, nickname } -> do
+            H.put $ Player nickname
+            H.liftEffect do
+                setMetaTitle "Account | TeamTavern"
+                setMetaDescription $ "View your account on TeamTavern."
+                setMetaUrl
 handleAction (ShowEditPlayerModal input event) = do
     H.liftEffect $ preventDefault $ toEvent event
     Modal.showWith input (SProxy :: SProxy "editPlayer")
@@ -112,21 +95,19 @@ handleAction (HandleEditPlayerMessage message) = do
             H.liftEffect $ navigate_ $ "/players/" <> trim nickname
         _ -> pure unit
 
-component :: forall query output left.
-    String -> H.Component HH.HTML query String output (Async left)
-component nickname = H.mkComponent
+component :: forall query input output left.
+    H.Component HH.HTML query input output (Async left)
+component = H.mkComponent
     { initialState: const Empty
     , render
     , eval: H.mkEval $ H.defaultEval
         { handleAction = handleAction
-        , initialize = Just $ Init nickname
-        , receive = Just <<< Init
+        , initialize = Just $ Init
+        , receive = const $ Just Init
         }
     }
 
-player
+account
     :: forall query children left
-    .  String
-    -> HH.ComponentHTML query (player :: Slot Unit | children) (Async left)
-player nickname = HH.slot
-    (SProxy :: SProxy "player") unit (component nickname) nickname absurd
+    . HH.ComponentHTML query (account :: Slot | children) (Async left)
+account = HH.slot (SProxy :: SProxy "account") unit component unit absurd

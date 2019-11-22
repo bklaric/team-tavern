@@ -86,8 +86,8 @@ render playerInfo = HH.div_
                 SignedIn { nickname } ->
                     [ HH.a
                         [ HP.class_ $ HH.ClassName "top-bar-link"
-                        , HP.href $ "/players/" <> nickname
-                        , HE.onClick $ Just <<< Navigate ("/players/" <> nickname)
+                        , HP.href $ "/account"
+                        , HE.onClick $ Just <<< Navigate ("/account")
                         ]
                         [ HH.text nickname ]
                     -- , HH.a

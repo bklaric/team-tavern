@@ -24,6 +24,8 @@ import TeamTavern.Client.Game.GameHeader as GameHeader
 import TeamTavern.Client.Home (home)
 import TeamTavern.Client.Home as Home
 import TeamTavern.Client.Home.Games as Games
+import TeamTavern.Client.Pages.Account (account)
+import TeamTavern.Client.Pages.Account as Account
 import TeamTavern.Client.Player (player)
 import TeamTavern.Client.Player as Player
 import TeamTavern.Client.Script.Navigate (navigateReplace_, navigate_)
@@ -37,6 +39,7 @@ data Action = Init Foreign String
 data State
     = Empty
     | Home
+    | Account
     | Game GameHeader.Handle GameHeader.Tab
     | Player String
     | Register
@@ -48,6 +51,7 @@ type ChildSlots =
     ( topBar :: TopBar.Slot Unit
     , home :: Home.Slot Unit
     , welcomeBanner :: WelcomeBanner.Slot Unit
+    , account :: Account.Slot
     , games :: Games.Slot Unit
     , game :: Game.Slot Unit
     , player :: Player.Slot Unit
@@ -73,6 +77,7 @@ render :: forall action left.
 render Empty = HH.div_ []
 render Home = HH.div_ [ topBar, home ]
 render (Game handle tab) = topBarWithContent [ game handle tab ]
+render Account = topBarWithContent [ account ]
 render (Player nickname) = topBarWithContent [ player nickname ]
 render Register = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ registerForm ] ]
 render SignIn = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ signIn ] ]
@@ -99,6 +104,8 @@ handleAction (Init state route) = do
             case read state of
             Right identifiers -> just $ Welcome identifiers
             Left _ -> navigate_ "/" *> nothing
+        ["", "account"] ->
+            just $ Account
         ["", "games", handle] ->
             (navigateReplace_ $ "/games/" <> handle <> "/players") *> nothing
         ["", "games", handle, "players" ] ->
