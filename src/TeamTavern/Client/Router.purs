@@ -1,4 +1,4 @@
-module TeamTavern.Client.Router where
+module TeamTavern.Client.Router (Query(..), router) where
 
 import Prelude
 
@@ -11,6 +11,7 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import Simple.JSON (read)
+import TeamTavern.Client.Components.Account.AccountHeader as AccountHeader
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Components.RegisterForm (registerForm)
 import TeamTavern.Client.Components.RegisterForm as RegisterForm
@@ -39,7 +40,7 @@ data Action = Init Foreign String
 data State
     = Empty
     | Home
-    | Account
+    | Account AccountHeader.Tab
     | Game GameHeader.Handle GameHeader.Tab
     | Player String
     | Register
@@ -77,7 +78,7 @@ render :: forall action left.
 render Empty = HH.div_ []
 render Home = HH.div_ [ topBar, home ]
 render (Game handle tab) = topBarWithContent [ game handle tab ]
-render Account = topBarWithContent [ account ]
+render (Account tab) = topBarWithContent [ account tab ]
 render (Player nickname) = topBarWithContent [ player nickname ]
 render Register = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ registerForm ] ]
 render SignIn = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ signIn ] ]
@@ -105,7 +106,11 @@ handleAction (Init state route) = do
             Right identifiers -> just $ Welcome identifiers
             Left _ -> navigate_ "/" *> nothing
         ["", "account"] ->
-            just $ Account
+            (navigateReplace_ $ "/account/profiles") *> nothing
+        ["", "account", "profiles"] ->
+            just $ Account AccountHeader.Profiles
+        ["", "account", "conversations"] ->
+            just $ Account AccountHeader.Conversations
         ["", "games", handle] ->
             (navigateReplace_ $ "/games/" <> handle <> "/players") *> nothing
         ["", "games", handle, "players" ] ->

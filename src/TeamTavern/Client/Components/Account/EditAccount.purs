@@ -1,4 +1,5 @@
-module TeamTavern.Client.EditPlayer where
+module TeamTavern.Client.Components.Account.EditAccount
+    (Input, Message(..), Slot, editAccount) where
 
 import Prelude
 
@@ -37,7 +38,7 @@ data Action
     | AboutInput String
     | Update Event
 
-data Message = PlayerUpdated String
+data Message = AccountUpdated String
 
 type State =
     { originalNickname :: String
@@ -49,7 +50,7 @@ type State =
     , otherError :: Boolean
     }
 
-type Slot = H.Slot (Modal.Query Input (Const Void)) (Modal.Message Message)
+type Slot = H.Slot (Modal.Query Input (Const Void)) (Modal.Message Message) Unit
 
 render :: forall slots. State -> HH.HTML slots Action
 render
@@ -153,7 +154,7 @@ handleAction (Update event) = do
         })
     newState <- H.lift $ updatePlayer state
     case newState of
-        Nothing -> H.raise $ PlayerUpdated $ trim state.nickname
+        Nothing -> H.raise $ AccountUpdated $ trim state.nickname
         Just newState' -> H.put newState'
     pure unit
 
@@ -173,10 +174,10 @@ component = H.mkComponent
     , eval: H.mkEval $ H.defaultEval { handleAction = handleAction }
     }
 
-editPlayer
+editAccount
     :: forall query children left
     .  (Modal.Message Message -> Maybe query)
-    -> HH.ComponentHTML query (editPlayer :: Slot Unit | children) (Async left)
-editPlayer handleMessage = HH.slot
-    (SProxy :: SProxy "editPlayer") unit
+    -> HH.ComponentHTML query (editAccount :: Slot | children) (Async left)
+editAccount handleMessage = HH.slot
+    (SProxy :: SProxy "editAccount") unit
     (Modal.component component) unit handleMessage

@@ -15,7 +15,7 @@ import Data.Foldable (find)
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Int (floor)
 import Data.Maybe (Maybe(..))
-import Data.Symbol (SProxy(..))
+import Data.Symbol (class IsSymbol, SProxy(..))
 import Halogen (ClassName(..), defaultEval, mkComponent, mkEval)
 import Halogen as H
 import Halogen.HTML as HH
@@ -32,6 +32,7 @@ import TeamTavern.Client.Script.Cookie (getPlayerNickname)
 import TeamTavern.Server.Profile.ViewByPlayer.SendResponse as ViewByPlayer
 import Web.Event.Event (preventDefault)
 import Web.UIEvent.MouseEvent (MouseEvent, toEvent)
+import Prim.Row (class Cons)
 
 type Nickname = String
 
@@ -47,7 +48,7 @@ data State
     = Empty Input
     | Profiles ViewByPlayer.OkContent (Maybe Nickname) ProfileIlk
 
-type Slot = H.Slot (Const Void) Void
+type Slot = H.Slot (Const Void) Void Unit
 
 type ChildSlots =
     ( games :: Anchor.Slot Int
@@ -246,12 +247,5 @@ component = mkComponent
         }
     }
 
-profilesByPlayer
-    :: forall query children left
-    .  String
-    -> ProfileIlk
-    -> HH.ComponentHTML
-        query (profilesByPlayer :: Slot Unit | children) (Async left)
-profilesByPlayer nickname profileIlk = HH.slot
-    (SProxy :: SProxy "profilesByPlayer") unit
-    component (Input nickname profileIlk) absurd
+profilesByPlayer nickname profileIlk slot =
+    HH.slot slot unit component (Input nickname profileIlk) absurd
