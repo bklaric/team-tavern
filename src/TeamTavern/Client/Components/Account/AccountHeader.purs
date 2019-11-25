@@ -22,7 +22,7 @@ import Web.UIEvent.MouseEvent (MouseEvent, toEvent)
 
 type Nickname = String
 
-data Tab = Profiles | Conversations
+data Tab = Profiles | Conversations | Conversation Nickname
 
 data Input = Input Nickname Tab
 
@@ -49,13 +49,17 @@ conversationsPath = "/account/conversations"
 renderTabs :: forall slots. Tab -> Array (HH.HTML slots Action)
 renderTabs Profiles =
     [ HH.span [ HP.class_ $ HH.ClassName "content-title-tab" ]
-        [ HH.text "View profiles" ]
+        [ HH.i [ HP.class_ $ H.ClassName "fas fa-address-card button-icon" ] []
+        , HH.text "View profiles"
+        ]
     , HH.a
         [ HP.class_ $ HH.ClassName "content-title-tab"
         , HP.href conversationsPath
         , HE.onClick $ Just <<< Navigate conversationsPath
         ]
-        [ HH.text "View conversations" ]
+        [ HH.i [ HP.class_ $ H.ClassName "fas fa-envelope button-icon" ] []
+        , HH.text "View conversations"
+        ]
     ]
 renderTabs Conversations =
     [ HH.a
@@ -63,9 +67,31 @@ renderTabs Conversations =
         , HP.href profilesPath
         , HE.onClick $ Just <<< Navigate profilesPath
         ]
-        [ HH.text "View profiles" ]
+        [ HH.i [ HP.class_ $ H.ClassName "fas fa-address-card button-icon" ] []
+        , HH.text "View profiles"
+        ]
     , HH.span [ HP.class_ $ HH.ClassName "content-title-tab" ]
-        [ HH.text "View conversations" ]
+        [ HH.i [ HP.class_ $ H.ClassName "fas fa-envelope button-icon" ] []
+        , HH.text "View conversations"
+        ]
+    ]
+renderTabs (Conversation _) =
+    [ HH.a
+        [ HP.class_ $ HH.ClassName "content-title-tab"
+        , HP.href profilesPath
+        , HE.onClick $ Just <<< Navigate profilesPath
+        ]
+        [ HH.i [ HP.class_ $ H.ClassName "fas fa-address-card button-icon" ] []
+        , HH.text "View profiles"
+        ]
+    , HH.a
+        [ HP.class_ $ HH.ClassName "content-title-tab"
+        , HP.href conversationsPath
+        , HE.onClick $ Just <<< Navigate conversationsPath
+        ]
+        [ HH.i [ HP.class_ $ H.ClassName "fas fa-envelope button-icon" ] []
+        , HH.text "View conversations"
+        ]
     ]
 
 render :: forall left. Input -> H.ComponentHTML Action ChildSlots (Async left)

@@ -11,6 +11,10 @@ import Halogen as H
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Account.AccountHeader (accountHeader)
 import TeamTavern.Client.Components.Account.AccountHeader as AccountHeader
+import TeamTavern.Client.Components.Conversation.Conversation (conversation)
+import TeamTavern.Client.Components.Conversation.Conversation as Conversation
+import TeamTavern.Client.Components.Conversation.Conversations (conversations)
+import TeamTavern.Client.Components.Conversation.Conversations as Conversations
 import TeamTavern.Client.Components.ProfilesByPlayer (profilesByPlayer)
 import TeamTavern.Client.Components.ProfilesByPlayer as ProfilesByPlayer
 import TeamTavern.Client.EditProfile (ProfileIlk(..))
@@ -32,15 +36,24 @@ type ChildSlots =
     ( accountHeader :: AccountHeader.Slot
     , playerProfiles :: ProfilesByPlayer.Slot
     , teamProfiles :: ProfilesByPlayer.Slot
+    , conversations :: Conversations.Slot
+    , conversation :: Conversation.Slot
     )
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render (Empty _) = HH.div_ []
-render (Player nickname tab) = HH.div_
-    [ accountHeader nickname tab
-    , profilesByPlayer nickname Players (SProxy :: SProxy "playerProfiles")
-    , profilesByPlayer nickname Teams (SProxy :: SProxy "teamProfiles")
-    ]
+render (Player nickname tab) = HH.div_ $
+    [ accountHeader nickname tab ]
+    <>
+    case tab of
+    AccountHeader.Profiles ->
+        [ profilesByPlayer nickname Players (SProxy :: SProxy "playerProfiles")
+        , profilesByPlayer nickname Teams (SProxy :: SProxy "teamProfiles")
+        ]
+    AccountHeader.Conversations ->
+        [ conversations ]
+    AccountHeader.Conversation nickname' ->
+        [ conversation nickname' ]
 
 handleAction :: forall output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit

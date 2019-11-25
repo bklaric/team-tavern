@@ -104,13 +104,15 @@ handleAction (Init state route) = do
         ["", "welcome"] ->
             case read state of
             Right identifiers -> just $ Welcome identifiers
-            Left _ -> navigate_ "/" *> nothing
+            Left _ -> navigateReplace_ "/" *> nothing
         ["", "account"] ->
             (navigateReplace_ $ "/account/profiles") *> nothing
         ["", "account", "profiles"] ->
             just $ Account AccountHeader.Profiles
         ["", "account", "conversations"] ->
             just $ Account AccountHeader.Conversations
+        ["", "account", "conversations", nickname] ->
+            just $ Account $ AccountHeader.Conversation nickname
         ["", "games", handle] ->
             (navigateReplace_ $ "/games/" <> handle <> "/players") *> nothing
         ["", "games", handle, "players" ] ->
@@ -120,7 +122,7 @@ handleAction (Init state route) = do
         ["", "players", nickname] ->
             just $ Player nickname
         _ ->
-            navigate_ "/" *> nothing
+            navigateReplace_ "/" *> nothing
     case newState of
         Just newState' -> H.put newState'
         Nothing -> pure unit

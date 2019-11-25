@@ -28,5 +28,5 @@ addMessage :: forall querier errors. Querier querier =>
     querier -> CookieInfo -> ConversationId -> Message -> Async (AddMessageError errors) Unit
 addMessage querier { id } conversationId message = do
     void $ querier
-        # execute queryString (id : conversationId :| message)
+        # execute queryString (conversationId : id :| message)
         # label (SProxy :: SProxy "databaseError")

@@ -43,7 +43,7 @@ insertConversationString :: Query
 insertConversationString = Query """
     insert into conversation (left_interlocutor_id, right_interlocutor_id)
     values ($1, (select player.id from player where player.nickname = $2))
-    returning conversation.id as "coneversationId"
+    returning conversation.id as "conversationId"
     """
 
 createConversation :: forall querier errors. Querier querier =>

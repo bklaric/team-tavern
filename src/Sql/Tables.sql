@@ -178,7 +178,7 @@ create table message
     ( id serial not null primary key
     , conversation_id int not null references conversation(id)
     , interlocutor_id int not null references player(id)
-    , content text not null
+    , content text[] not null
     , read boolean not null default false
     , created timestamptz not null default current_timestamp
     );

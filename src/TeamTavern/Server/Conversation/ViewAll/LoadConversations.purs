@@ -21,6 +21,7 @@ type LoadConversationsResult = Array
     { nickname :: String
     , unreadMessagesCount :: Int
     , lastMessageCreated :: String
+    , lastMessageCreatedSeconds :: Number
     }
 
 type LoadConversationsError errors = Variant
@@ -39,7 +40,8 @@ queryString = Query """
             not message.read
             and message.interlocutor_id = conversation.right_interlocutor_id
         ))::integer as "unreadMessagesCount",
-        max(message.created)::text as "lastMessageCreated"
+        max(message.created)::text as "lastMessageCreated",
+        extract(epoch from (now() - max(message.created))) as "lastMessageCreatedSeconds"
     from conversation
         join player on player.id = conversation.right_interlocutor_id
         join message on message.conversation_id = conversation.id
@@ -52,7 +54,8 @@ queryString = Query """
             not message.read
             and message.interlocutor_id = conversation.left_interlocutor_id
         ))::integer as "unreadMessagesCount",
-        max(message.created)::text as "lastMessageCreated"
+        max(message.created)::text as "lastMessageCreated",
+        extract(epoch from (now() - max(message.created))) as "lastMessageCreatedSeconds"
     from conversation
         join player on player.id = conversation.left_interlocutor_id
         join message on message.conversation_id = conversation.id

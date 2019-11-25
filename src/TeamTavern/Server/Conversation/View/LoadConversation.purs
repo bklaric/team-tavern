@@ -20,8 +20,9 @@ import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
 
 type LoadConversationResult = Array
     { nickname :: String
-    , content :: String
+    , content :: Array String
     , created :: String
+    , createdSeconds :: Number
     }
 
 type LoadConversationError errors = Variant
@@ -37,7 +38,8 @@ queryString = Query """
     select
         interlocutor.nickname,
         message.content,
-        message.created::text
+        message.created::text,
+        extract(epoch from (now() - message.created)) as "createdSeconds"
     from conversation
         join player as left_interlocutor on left_interlocutor.id = conversation.left_interlocutor_id
         join player as right_interlocutor on right_interlocutor.id = conversation.right_interlocutor_id
