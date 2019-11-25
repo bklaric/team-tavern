@@ -185,7 +185,7 @@ handleRequest pool client method url cookies body =
         , viewConversation: \{ nickname } ->
             Conversation.view pool nickname cookies
         , startConversation: \{ nickname } ->
-            Conversation.start pool nickname cookies body
+            Conversation.start pool client nickname cookies body
         }
         <#> (\response -> response { headers = response.headers <> MultiMap.fromFoldable
                 [ Tuple "Access-Control-Allow-Origin" $ NEL.singleton "http://localhost:1337"

@@ -9,6 +9,7 @@ import Foreign (MultipleErrors)
 import Global.Unsafe (unsafeStringify)
 import Postgres.Error (Error)
 import Postgres.Result (Result, rows)
+import Postmark.Error as Postmark
 import TeamTavern.Server.Domain.NonEmptyText (NonEmptyTextError)
 import TeamTavern.Server.Infrastructure.Cookie (Cookies, CookieInfo)
 import TeamTavern.Server.Infrastructure.Log (logStamped, logt, print)
@@ -36,6 +37,12 @@ type StartError = Variant
         { message :: String
         , errors :: NonEmptyList NonEmptyTextError
         }
+    , unreadableResult ::
+        { errors :: MultipleErrors
+        , result :: Result
+        }
+    , notFound :: String
+    , sendEmailError :: Postmark.Error
     )
 
 logError :: StartError -> Effect Unit
@@ -60,4 +67,11 @@ logError startError = do
         , invalidMessage: \{ message, errors } -> do
             logt $ "Couldn't validate message: " <> message
             logt $ "Validating message resulted in these errors: " <> show errors
+        , unreadableResult: \{ result, errors } -> do
+            logt $ "Couldn't read receiver info from result: " <> (unsafeStringify $ rows result)
+            logt $ "Reading resulted in these errors: " <> show errors
+        , notFound: \nickname ->
+            logt $ "Couldn't find receiver info when loading from database for player: " <> nickname
+        , sendEmailError: \error ->
+            logt $ "Email sending error occured: " <> show error
         }

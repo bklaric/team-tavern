@@ -6,6 +6,7 @@ create table player
     , confirmation_nonce character(20) not null
     , email_confirmed boolean not null default false
     , about text[] not null default '{}'
+    , notify boolean not null default true
     , registered timestamptz not null default current_timestamp
     );
 
