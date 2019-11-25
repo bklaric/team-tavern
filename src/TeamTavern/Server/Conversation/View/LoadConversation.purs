@@ -10,8 +10,8 @@ import Data.Traversable (traverse)
 import Data.Variant (Variant)
 import Foreign (MultipleErrors)
 import Postgres.Async.Query (query)
+import Postgres.Client (Client)
 import Postgres.Error (Error)
-import Postgres.Pool (Pool)
 import Postgres.Query (Query(..), (:|))
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
@@ -52,12 +52,12 @@ queryString = Query """
 
 loadConversation
     :: forall errors
-    .  Pool
+    .  Client
     -> Nickname
     -> CookieInfo
     -> Async (LoadConversationError errors) LoadConversationResult
-loadConversation pool nickname { id } = do
-    result <- pool
+loadConversation client nickname { id } = do
+    result <- client
         # query queryString (id :| nickname)
         # label (SProxy :: SProxy "databaseError")
     conversation :: LoadConversationResult <- rows result
