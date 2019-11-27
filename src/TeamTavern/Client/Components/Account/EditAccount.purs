@@ -60,8 +60,7 @@ type Slot = H.Slot (Modal.Query Unit (Const Void)) (Modal.Message Message) Unit
 
 render :: forall slots. State -> HH.HTML slots Action
 render Empty = HH.div [ HP.class_ $ HH.ClassName "wide-single-form-container" ] []
-render Error = HH.div [ HP.class_ $ HH.ClassName "wide-single-form-container" ]
-    [ HH.p_ [ HH.text "There was an error while loading account details. Please try again later." ] ]
+render Error = HH.div [ HP.class_ $ HH.ClassName "wide-single-form-container" ] []
 render (Loaded
     { originalNickname
     , nickname
