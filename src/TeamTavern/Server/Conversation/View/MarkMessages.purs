@@ -37,11 +37,11 @@ queryString = Query """
         and interlocutor.id = message.interlocutor_id
         -- Find correct conversation.
         and (
-            (conversation.left_interlocutor_id = $1 and right_interlocutor.nickname = $2)
-            or (conversation.right_interlocutor_id = $1 and left_interlocutor.nickname = $2)
+            (conversation.left_interlocutor_id = $1 and lower(right_interlocutor.nickname) = lower($2))
+            or (conversation.right_interlocutor_id = $1 and lower(left_interlocutor.nickname) = lower($2))
         )
         -- Find messages sent by the other interlocutor, not the one loading the conversation.
-        and interlocutor.nickname = $2
+        and lower(interlocutor.nickname) = lower($2)
     """
 
 markMessages :: forall errors.

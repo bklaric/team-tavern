@@ -29,7 +29,7 @@ import TeamTavern.Client.Pages.Account (account)
 import TeamTavern.Client.Pages.Account as Account
 import TeamTavern.Client.Player (player)
 import TeamTavern.Client.Player as Player
-import TeamTavern.Client.Script.Navigate (navigateReplace_, navigate_)
+import TeamTavern.Client.Script.Navigate (navigateReplace_)
 import TeamTavern.Client.SignIn (signIn)
 import TeamTavern.Client.SignIn as SignIn
 

@@ -34,9 +34,9 @@ import Postmark.Client (Client)
 import Postmark.Client as Postmark
 import TeamTavern.Server.Architecture.Deployment (Deployment(..))
 import TeamTavern.Server.Architecture.Deployment as Deployment
-import TeamTavern.Server.Conversation.ViewAll (viewAll) as Conversation
-import TeamTavern.Server.Conversation.View (view) as Conversation
 import TeamTavern.Server.Conversation.Start (start) as Conversation
+import TeamTavern.Server.Conversation.View (view) as Conversation
+import TeamTavern.Server.Conversation.ViewAll (viewAll) as Conversation
 import TeamTavern.Server.Game.Create (create) as Game
 import TeamTavern.Server.Game.Update (handleUpdate) as Game
 import TeamTavern.Server.Game.View (handleView) as Game
@@ -44,6 +44,7 @@ import TeamTavern.Server.Game.ViewAll (handleViewAll) as Game
 import TeamTavern.Server.Player.Register (register) as Player
 import TeamTavern.Server.Player.Update (update) as Player
 import TeamTavern.Server.Player.View (view) as Player
+import TeamTavern.Server.Player.ViewAccount (viewAccount) as Player
 import TeamTavern.Server.Player.ViewHeader (viewHeader) as Player
 import TeamTavern.Server.Profile.Create (create) as Profile
 import TeamTavern.Server.Profile.Update (update) as Profile
@@ -158,6 +159,8 @@ handleRequest pool client method url cookies body =
             Player.view pool nickname
         , viewPlayerHeader: \{ id } ->
             Player.viewHeader pool id
+        , viewPlayerAccount: \{ nickname } ->
+            Player.viewAccount pool nickname cookies
         , updatePlayer: \{ nickname } ->
             Player.update pool nickname cookies body
         , startSession: const $

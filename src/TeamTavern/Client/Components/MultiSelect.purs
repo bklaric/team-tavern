@@ -81,7 +81,7 @@ render { options, labeler, comparer, open } =
                         , HP.checked selected
                         , HP.tabIndex $ -1
                         , HE.onMouseDown $ Just <<< PreventDefault
-                        , HP.class_ $ HH.ClassName "option-checkbok"
+                        , HP.class_ $ HH.ClassName "checkbox-input"
                         ]
                     , HH.text $ labeler option
                     ])

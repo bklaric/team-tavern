@@ -6,7 +6,6 @@ import Prelude
 import Async (Async)
 import Data.Const (Const)
 import Data.Maybe (Maybe(..))
-import Data.String (trim)
 import Data.Symbol (SProxy(..))
 import Effect.Class (liftEffect)
 import Halogen as H
@@ -18,6 +17,9 @@ import TeamTavern.Client.Components.Account.EditAccount as EditAccount
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Script.Navigate (navigate_)
 import Web.Event.Event (preventDefault)
+import Web.HTML (window)
+import Web.HTML.Location (reload)
+import Web.HTML.Window (location)
 import Web.UIEvent.MouseEvent (MouseEvent, toEvent)
 
 type Nickname = String
@@ -33,7 +35,7 @@ type Path = String
 data Action
     = Navigate Path MouseEvent
     | Receive Input
-    | ShowEditAccountModal EditAccount.Input MouseEvent
+    | ShowEditAccountModal MouseEvent
     | HandleEditAccountMessage (Modal.Message EditAccount.Message)
 
 type ChildSlots = (editAccount :: EditAccount.Slot)
@@ -103,7 +105,7 @@ render (Input nickname tab) =
             (renderTabs tab)
         , HH.button
             [ HP.class_ $ HH.ClassName "regular-button title-button"
-            , HE.onClick $ Just <<< ShowEditAccountModal { nickname, about: [] }
+            , HE.onClick $ Just <<< ShowEditAccountModal
             ]
             [ HH.i [ HP.class_ $ H.ClassName "fas fa-edit button-icon" ] []
             , HH.text "Edit account"
@@ -118,15 +120,15 @@ handleAction (Navigate path mouseEvent) = do
     liftEffect $ navigate_ path
 handleAction (Receive input) =
     H.put input
-handleAction (ShowEditAccountModal input event) = do
+handleAction (ShowEditAccountModal event) = do
     H.liftEffect $ preventDefault $ toEvent event
-    Modal.showWith input (SProxy :: SProxy "editAccount")
+    Modal.show (SProxy :: SProxy "editAccount")
 handleAction (HandleEditAccountMessage message) = do
     state <- H.get
     Modal.hide (SProxy :: SProxy "editAccount")
     case message of
         Modal.Inner (EditAccount.AccountUpdated nickname) ->
-            H.liftEffect $ navigate_ $ "/players/" <> trim nickname
+            window >>= location >>= reload # H.liftEffect
         _ -> pure unit
 
 component :: forall query output left.

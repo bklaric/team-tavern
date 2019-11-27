@@ -45,8 +45,8 @@ queryString = Query """
         join player as right_interlocutor on right_interlocutor.id = conversation.right_interlocutor_id
         join message on message.conversation_id = conversation.id
         join player as interlocutor on interlocutor.id = message.interlocutor_id
-    where (conversation.left_interlocutor_id = $1 and right_interlocutor.nickname = $2)
-        or (conversation.right_interlocutor_id = $1 and left_interlocutor.nickname = $2)
+    where (conversation.left_interlocutor_id = $1 and lower(right_interlocutor.nickname) = lower($2))
+        or (conversation.right_interlocutor_id = $1 and lower(left_interlocutor.nickname) = lower($2))
     order by message.created
     """
 
