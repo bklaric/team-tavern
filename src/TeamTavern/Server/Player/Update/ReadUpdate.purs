@@ -22,11 +22,13 @@ import TeamTavern.Server.Player.Domain.Nickname as Nickname
 type UpdateDto =
     { nickname :: String
     , about :: String
+    , notify :: Boolean
     }
 
 type UpdateModel =
     { nickname :: Nickname
     , about :: About
+    , notify :: Boolean
     }
 
 type UpdateModelError = Variant
@@ -49,11 +51,11 @@ readUpdate :: forall errors.
     Body -> Async (ReadUpdateError errors) UpdateModel
 readUpdate body = do
     content <- readBody body
-    dto @ { nickname, about } :: UpdateDto <-
+    dto @ { nickname, about, notify } :: UpdateDto <-
         readJSON content
         # labelMap (SProxy :: SProxy "unreadableDto") { content, errors: _ }
         # Async.fromEither
-    { nickname: _, about: _ }
+    { nickname: _, about: _, notify }
         <$> (Nickname.create nickname
             # Validated.label (SProxy :: SProxy "nickname"))
         <*> (About.create about

@@ -1,4 +1,4 @@
-module TeamTavern.Client.Router where
+module TeamTavern.Client.Router (Query(..), router) where
 
 import Prelude
 
@@ -11,6 +11,7 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import Simple.JSON (read)
+import TeamTavern.Client.Components.Account.AccountHeader as AccountHeader
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Components.RegisterForm (registerForm)
 import TeamTavern.Client.Components.RegisterForm as RegisterForm
@@ -24,9 +25,11 @@ import TeamTavern.Client.Game.GameHeader as GameHeader
 import TeamTavern.Client.Home (home)
 import TeamTavern.Client.Home as Home
 import TeamTavern.Client.Home.Games as Games
+import TeamTavern.Client.Pages.Account (account)
+import TeamTavern.Client.Pages.Account as Account
 import TeamTavern.Client.Player (player)
 import TeamTavern.Client.Player as Player
-import TeamTavern.Client.Script.Navigate (navigateReplace_, navigate_)
+import TeamTavern.Client.Script.Navigate (navigateReplace_)
 import TeamTavern.Client.SignIn (signIn)
 import TeamTavern.Client.SignIn as SignIn
 
@@ -37,6 +40,7 @@ data Action = Init Foreign String
 data State
     = Empty
     | Home
+    | Account AccountHeader.Tab
     | Game GameHeader.Handle GameHeader.Tab
     | Player String
     | Register
@@ -48,6 +52,7 @@ type ChildSlots =
     ( topBar :: TopBar.Slot Unit
     , home :: Home.Slot Unit
     , welcomeBanner :: WelcomeBanner.Slot Unit
+    , account :: Account.Slot
     , games :: Games.Slot Unit
     , game :: Game.Slot Unit
     , player :: Player.Slot Unit
@@ -73,6 +78,7 @@ render :: forall action left.
 render Empty = HH.div_ []
 render Home = HH.div_ [ topBar, home ]
 render (Game handle tab) = topBarWithContent [ game handle tab ]
+render (Account tab) = topBarWithContent [ account tab ]
 render (Player nickname) = topBarWithContent [ player nickname ]
 render Register = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ registerForm ] ]
 render SignIn = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ signIn ] ]
@@ -98,7 +104,15 @@ handleAction (Init state route) = do
         ["", "welcome"] ->
             case read state of
             Right identifiers -> just $ Welcome identifiers
-            Left _ -> navigate_ "/" *> nothing
+            Left _ -> navigateReplace_ "/" *> nothing
+        ["", "account"] ->
+            (navigateReplace_ $ "/account/profiles") *> nothing
+        ["", "account", "profiles"] ->
+            just $ Account AccountHeader.Profiles
+        ["", "account", "conversations"] ->
+            just $ Account AccountHeader.Conversations
+        ["", "account", "conversations", nickname] ->
+            just $ Account $ AccountHeader.Conversation nickname
         ["", "games", handle] ->
             (navigateReplace_ $ "/games/" <> handle <> "/players") *> nothing
         ["", "games", handle, "players" ] ->
@@ -108,7 +122,7 @@ handleAction (Init state route) = do
         ["", "players", nickname] ->
             just $ Player nickname
         _ ->
-            navigate_ "/" *> nothing
+            navigateReplace_ "/" *> nothing
     case newState of
         Just newState' -> H.put newState'
         Nothing -> pure unit

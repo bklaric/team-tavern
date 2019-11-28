@@ -31,6 +31,15 @@ type RegisterPlayer = Route
     :> End)
     NoQuery
 
+type ViewPlayerAccount = Route
+    Get
+    (  Literal "players"
+    :> Literal "by-nickname"
+    :> Capture "nickname" Nickname
+    :> Literal "account"
+    :> End)
+    NoQuery
+
 type UpdatePlayer = Route
     Put
     (  Literal "players"
@@ -40,7 +49,8 @@ type UpdatePlayer = Route
     NoQuery
 
 type PlayerRoutes
-    =    "viewPlayer"       := ViewPlayer
-    :<|> "viewPlayerHeader" := ViewPlayerHeader
-    :<|> "registerPlayer"   := RegisterPlayer
-    :<|> "updatePlayer"     := UpdatePlayer
+    =    "viewPlayer"        := ViewPlayer
+    :<|> "viewPlayerHeader"  := ViewPlayerHeader
+    :<|> "registerPlayer"    := RegisterPlayer
+    :<|> "viewPlayerAccount" := ViewPlayerAccount
+    :<|> "updatePlayer"      := UpdatePlayer

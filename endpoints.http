@@ -58,3 +58,14 @@ Cookie: teamtavern-id=2; teamtavern-nickname=bklaric; teamtavern-token=d2efd3b02
 ###
 
 GET http://localhost:8080/players/bklaric/profiles/unreal_tournament HTTP/1.1
+
+
+### Conversations
+
+GET http://localhost:8080/conversations HTTP/1.1
+Cookie: teamtavern-id=1; teamtavern-nickname=bklaric; teamtavern-token=1f3e90c82e9e6704d950bfa78dd7413914fd091d
+
+###
+
+GET http://localhost:8080/conversations/houndolon HTTP/1.1
+Cookie: teamtavern-id=1; teamtavern-nickname=bklaric; teamtavern-token=1f3e90c82e9e6704d950bfa78dd7413914fd091d

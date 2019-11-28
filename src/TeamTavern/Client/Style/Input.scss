@@ -5,7 +5,7 @@
 }
 
 .input-label {
-    display: block;
+    display: flex;
     margin-bottom: 7px;
     line-height: 21px;
 }
@@ -27,4 +27,11 @@
     @extend .text-line-input;
     resize: vertical;
     height: 160px;
+}
+
+.checkbox-input {
+    width: 20px;
+    height: 20px;
+    margin: 0 7px 0 0;
+    cursor: pointer;
 }
