@@ -1,5 +1,5 @@
 module TeamTavern.Server.Profile.ViewByGame.LoadProfiles
-    (LoadProfilesResult, LoadProfilesError, loadProfiles) where
+    (LoadProfilesResult, LoadProfilesError, sanitizeStringValue, createProfilesFilterString, loadProfiles) where
 
 import Prelude
 
@@ -19,8 +19,8 @@ import Data.Tuple as Tuple
 import Data.Variant (Variant)
 import Foreign (MultipleErrors)
 import Postgres.Async.Query (query_)
+import Postgres.Client (Client)
 import Postgres.Error (Error)
-import Postgres.Pool (Pool)
 import Postgres.Query (Query(..))
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
@@ -204,13 +204,13 @@ queryString handle ilk (QueryPairs filters) = let
 
 loadProfiles
     :: forall errors
-    .  Pool
+    .  Client
     -> Handle
     -> ProfileIlk
     -> QueryPairs Key Value
     -> Async (LoadProfilesError errors) (Array LoadProfilesResult)
-loadProfiles pool handle ilk filters = do
-    result <- pool
+loadProfiles client handle ilk filters = do
+    result <- client
         # query_ (queryString handle ilk filters)
         # label (SProxy :: SProxy "databaseError")
     profiles :: Array LoadProfilesDto <- rows result

@@ -96,7 +96,7 @@ lastUpdated updatedSeconds = let
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render (Empty _) = HH.div_ []
-render (Profiles game tab profiles playerInfo') =
+render (Profiles game tab response playerInfo') =
     HH.div [ HP.class_ $ HH.ClassName "card" ] $
     [ HH.h2 [ HP.class_ $ HH.ClassName "card-title" ] $ join
         [ pure $ HH.text
@@ -123,12 +123,12 @@ render (Profiles game tab profiles playerInfo') =
     , createProfile $ Just <<< HandleCreateProfileMessage tab
     ]
     <>
-    if Array.null profiles
+    if Array.null response.profiles
     then pure $
         HH.div [ HP.class_ $ ClassName "card-section" ]
         [ HH.p_ [ HH.text "No profiles satisfy specified filters." ] ]
     else
-        (profiles # mapWithIndex \index { nickname, summary, fieldValues, updated, updatedSeconds } ->
+        (response.profiles # mapWithIndex \index { nickname, summary, fieldValues, updated, updatedSeconds } ->
             HH.div [ HP.class_ $ ClassName "card-section" ] $
             [ HH.h3 [ HP.class_ $ ClassName "profile-title" ]
                 [ navigationAnchorIndexed (SProxy :: SProxy "players") index
