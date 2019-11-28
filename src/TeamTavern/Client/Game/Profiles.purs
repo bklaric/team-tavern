@@ -200,12 +200,14 @@ loadProfiles game tab fields = Async.unify do
             case tab of
             GameHeader.Players -> "ilk=1"
             GameHeader.Teams -> "ilk=2"
+    let pagePair = "page=0"
     let filterPairs = fields
             <#> (\field -> field.options
                 <#> \option -> field.key <> "=" <> option.key)
             # join
             # intercalate "&"
-    let filterQuery = "?" <> tabPair <> if String.null filterPairs then "" else "&" <> filterPairs
+    let filterQuery = "?" <> tabPair <> "&" <> pagePair
+            <> if String.null filterPairs then "" else "&" <> filterPairs
     response <- Fetch.fetch_
             ("/api/profiles/by-handle/" <> game.handle <> filterQuery)
         # lmap (const empty)

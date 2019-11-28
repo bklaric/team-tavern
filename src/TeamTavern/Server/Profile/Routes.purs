@@ -9,6 +9,8 @@ import Jarilo.Segment (Capture, Literal)
 
 type ProfileIlk = Int
 
+type ProfilePage = Int
+
 type Handle = String
 
 type Nickname = String
@@ -34,6 +36,7 @@ type ViewProfilesByGame = Route
     :> Capture "handle" Handle
     :> End)
     (  Mandatory "ilk" ProfileIlk
+    :? Mandatory "page" ProfilePage
     :? Rest "filters")
 
 type ViewProfilesByPlayer = Route
