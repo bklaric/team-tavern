@@ -11,7 +11,7 @@ import Data.Array as Array
 import Data.Bifunctor (lmap)
 import Data.Foldable (find)
 import Data.FunctorWithIndex (mapWithIndex)
-import Data.Int (floor)
+import Data.Int (ceil, floor, toNumber)
 import Data.Maybe (Maybe(..))
 import Data.String (trim)
 import Data.String as String
@@ -35,21 +35,27 @@ import TeamTavern.Client.Script.Cookie (PlayerInfo, getPlayerInfo)
 import TeamTavern.Client.Script.Cookie as Cookie
 import TeamTavern.Client.Script.Navigate (navigate_)
 import TeamTavern.Server.Game.View.SendResponse as View
+import TeamTavern.Server.Profile.ViewByGame.LoadProfiles (pageSize')
 import TeamTavern.Server.Profile.ViewByGame.SendResponse as ViewByGame
 import Web.Event.Event (preventDefault)
+import Web.Event.Event as Event
 import Web.UIEvent.MouseEvent (MouseEvent, toEvent)
+import Web.UIEvent.MouseEvent as MouseEvent
+
+type ProfilePage = Int
 
 data Input = Input View.OkContent GameHeader.Tab
 
 data Action
     = Init
     | Receive Input
+    | ChangePage ProfilePage MouseEvent
     | ShowCreateProfileModal View.OkContent GameHeader.Tab PlayerInfo MouseEvent
     | HandleCreateProfileMessage GameHeader.Tab (Modal.Message CreateProfile.Message)
 
 data State
     = Empty Input
-    | Profiles View.OkContent GameHeader.Tab ViewByGame.OkContent (Maybe Cookie.PlayerInfo)
+    | Profiles View.OkContent GameHeader.Tab ProfilePage ViewByGame.OkContent (Maybe Cookie.PlayerInfo)
 
 data Query send = ApplyFilters (Array FilterProfiles.Field) send
 
@@ -94,9 +100,12 @@ lastUpdated updatedSeconds = let
     Just { unit, count } -> show count <> " " <> unit <> if count == 1 then "" else "s" <> " ago"
     Nothing -> "less than a minute ago"
 
+totalPages :: Int -> Int
+totalPages count = ceil (toNumber count / pageSize')
+
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render (Empty _) = HH.div_ []
-render (Profiles game tab response playerInfo') =
+render (Profiles game tab page response playerInfo') =
     HH.div [ HP.class_ $ HH.ClassName "card" ] $
     [ HH.h2 [ HP.class_ $ HH.ClassName "card-title" ] $ join
         [ pure $ HH.text
@@ -192,15 +201,46 @@ render (Profiles game tab response playerInfo') =
                 _ ->  Nothing)
             <> (summary <#> \paragraph -> HH.p [ HP.class_ $ HH.ClassName "profile-summary" ] [ HH.text paragraph ])
         )
+    <> (pure $
+        HH.div [ HP.class_ $ HH.ClassName "card-section" ]
+            [ HH.div [ HP.class_$ HH.ClassName "pagination" ]
+                [ HH.button
+                    [ HP.class_ $ HH.ClassName "pagination-button"
+                    , HP.disabled $ page == 1
+                    , HE.onClick $ Just <<< ChangePage 1
+                    ]
+                    [ HH.text "First" ]
+                , HH.button
+                    [ HP.class_ $ HH.ClassName "pagination-button"
+                    , HP.disabled $ page == 1
+                    , HE.onClick $ Just <<< ChangePage (page - 1)
+                    ]
+                    [ HH.text "Previous" ]
+                , HH.span [ HP.class_ $ HH.ClassName "pagination-page" ] [ HH.text $ show page <> "/" <> show (totalPages response.count) ]
+                , HH.button
+                    [ HP.class_ $ HH.ClassName "pagination-button"
+                    , HP.disabled $ page == (totalPages response.count)
+                    , HE.onClick $ Just <<< ChangePage (page + 1)
+                    ]
+                    [ HH.text "Next" ]
+                , HH.button
+                    [ HP.class_ $ HH.ClassName "pagination-button"
+                    , HP.disabled $ page == (totalPages response.count)
+                    , HE.onClick $ Just <<< ChangePage (totalPages response.count)
+                    ]
+                    [ HH.text "Last" ]
+                ]
+            ]
+        )
 
-loadProfiles :: forall left. View.OkContent -> GameHeader.Tab -> Array FilterProfiles.Field -> Async left State
-loadProfiles game tab fields = Async.unify do
+loadProfiles :: forall left. View.OkContent -> GameHeader.Tab -> ProfilePage -> Array FilterProfiles.Field -> Async left State
+loadProfiles game tab page fields = Async.unify do
     let empty = Empty (Input game tab)
     let tabPair =
             case tab of
             GameHeader.Players -> "ilk=1"
             GameHeader.Teams -> "ilk=2"
-    let pagePair = "page=0"
+    let pagePair = "page=" <> show page
     let filterPairs = fields
             <#> (\field -> field.options
                 <#> \option -> field.key <> "=" <> option.key)
@@ -215,7 +255,7 @@ loadProfiles game tab fields = Async.unify do
         200 -> FetchRes.text response >>= Json.readJSON # lmap (const empty)
         _ -> Async.left empty
     playerInfo' <- H.liftEffect getPlayerInfo
-    pure $ Profiles game tab content playerInfo'
+    pure $ Profiles game tab page content playerInfo'
 
 handleAction :: forall output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
@@ -223,14 +263,21 @@ handleAction Init = do
     state <- H.get
     case state of
         Empty (Input game tab) -> do
-            state' <- H.lift $ loadProfiles game tab []
+            state' <- H.lift $ loadProfiles game tab 1 []
             H.put state'
-            pure unit
         _ -> pure unit
 handleAction (Receive (Input game tab)) = do
-    state' <- H.lift $ loadProfiles game tab []
+    state' <- H.lift $ loadProfiles game tab 1 []
     H.put state'
     pure unit
+handleAction (ChangePage page mouseEvent) = do
+    state <- H.get
+    case state of
+        Profiles game tab _ _ playerInfo -> do
+            newState <- H.lift $ loadProfiles game tab page []
+            H.put newState
+        _ -> pure unit
+
 handleAction (ShowCreateProfileModal game tab playerInfo event) = do
     H.liftEffect $ preventDefault $ toEvent event
     Modal.showWith { game, tab, playerInfo } (SProxy :: SProxy "createProfile")
@@ -252,8 +299,8 @@ handleQuery (ApplyFilters fields send) = do
     state <- H.get
     case state of
         Empty _ -> pure $ Just send
-        Profiles game tab _ _ -> do
-            state' <- H.lift $ loadProfiles game tab fields
+        Profiles game tab _ _ _ -> do
+            state' <- H.lift $ loadProfiles game tab 1 fields
             H.put state'
             pure $ Just send
 

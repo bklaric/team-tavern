@@ -1,5 +1,5 @@
 module TeamTavern.Server.Profile.ViewByGame.LoadProfiles
-    (LoadProfilesResult, LoadProfilesError, sanitizeStringValue, createProfilesFilterString, loadProfiles) where
+    (pageSize, pageSize', LoadProfilesResult, LoadProfilesError, sanitizeStringValue, createProfilesFilterString, loadProfiles) where
 
 import Prelude
 
@@ -7,6 +7,7 @@ import Async (Async)
 import Data.Array (foldl, intercalate)
 import Data.Array as Array
 import Data.Bifunctor.Label (label, labelMap)
+import Data.Int (toNumber)
 import Data.Maybe (Maybe)
 import Data.MultiMap as MultiMap
 import Data.Newtype (wrap)
@@ -30,6 +31,12 @@ import TeamTavern.Server.Profile.Routes (Handle, ProfileIlk, ProfilePage)
 import URI.Extra.QueryPairs (Key, QueryPairs(..), Value)
 import URI.Extra.QueryPairs as Key
 import URI.Extra.QueryPairs as Value
+
+pageSize :: Int
+pageSize = 20
+
+pageSize' :: Number
+pageSize' = toNumber pageSize
 
 type LoadProfilesDto =
     { nickname :: String
@@ -201,7 +208,7 @@ queryString handle ilk page (QueryPairs filters) = let
         left join field_values on field_values.profile_id = profile.id
     """ <> filterString <> """
     order by profile.updated desc
-    limit 20 offset """ <> show (page * 20)
+    limit """ <> show pageSize <> """ offset """ <> show ((page - 1) * pageSize)
 
 loadProfiles
     :: forall errors
