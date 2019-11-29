@@ -88,7 +88,7 @@ lastUpdated updatedSeconds = let
         Nothing
     in
     case interval of
-    Just { unit, count } -> show count <> " " <> unit <> if count == 1 then "" else "s" <> " ago"
+    Just { unit, count } -> show count <> " " <> unit <> (if count == 1 then "" else "s") <> " ago"
     Nothing -> "less than a minute ago"
 
 render (Empty _) = HH.div_ []
