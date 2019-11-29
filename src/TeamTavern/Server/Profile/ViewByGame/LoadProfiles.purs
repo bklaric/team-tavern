@@ -1,5 +1,5 @@
 module TeamTavern.Server.Profile.ViewByGame.LoadProfiles
-    (LoadProfilesResult, LoadProfilesError, loadProfiles) where
+    (pageSize, pageSize', LoadProfilesResult, LoadProfilesError, sanitizeStringValue, createProfilesFilterString, loadProfiles) where
 
 import Prelude
 
@@ -7,6 +7,7 @@ import Async (Async)
 import Data.Array (foldl, intercalate)
 import Data.Array as Array
 import Data.Bifunctor.Label (label, labelMap)
+import Data.Int (toNumber)
 import Data.Maybe (Maybe)
 import Data.MultiMap as MultiMap
 import Data.Newtype (wrap)
@@ -19,17 +20,23 @@ import Data.Tuple as Tuple
 import Data.Variant (Variant)
 import Foreign (MultipleErrors)
 import Postgres.Async.Query (query_)
+import Postgres.Client (Client)
 import Postgres.Error (Error)
-import Postgres.Pool (Pool)
 import Postgres.Query (Query(..))
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
 import TeamTavern.Server.Player.Domain.Nickname (Nickname)
 import TeamTavern.Server.Profile.Domain.Summary (Summary)
-import TeamTavern.Server.Profile.Routes (Handle, ProfileIlk)
+import TeamTavern.Server.Profile.Routes (Handle, ProfileIlk, ProfilePage)
 import URI.Extra.QueryPairs (Key, QueryPairs(..), Value)
 import URI.Extra.QueryPairs as Key
 import URI.Extra.QueryPairs as Value
+
+pageSize :: Int
+pageSize = 20
+
+pageSize' :: Number
+pageSize' = toNumber pageSize
 
 type LoadProfilesDto =
     { nickname :: String
@@ -176,8 +183,8 @@ createProfilesFilterString preparedHandle ilk filters = let
             """ <> filterString <> """
         )"""
 
-queryString :: Handle -> ProfileIlk -> QueryPairs Key Value -> Query
-queryString handle ilk (QueryPairs filters) = let
+queryString :: Handle -> ProfileIlk -> ProfilePage -> QueryPairs Key Value -> Query
+queryString handle ilk page (QueryPairs filters) = let
     -- Prepare game handle.
     preparedHandle = sanitizeStringValue handle
 
@@ -200,18 +207,20 @@ queryString handle ilk (QueryPairs filters) = let
         join player on player.id = profile.player_id
         left join field_values on field_values.profile_id = profile.id
     """ <> filterString <> """
-    order by profile.updated desc"""
+    order by profile.updated desc
+    limit """ <> show pageSize <> """ offset """ <> show ((page - 1) * pageSize)
 
 loadProfiles
     :: forall errors
-    .  Pool
+    .  Client
     -> Handle
     -> ProfileIlk
+    -> ProfilePage
     -> QueryPairs Key Value
     -> Async (LoadProfilesError errors) (Array LoadProfilesResult)
-loadProfiles pool handle ilk filters = do
-    result <- pool
-        # query_ (queryString handle ilk filters)
+loadProfiles client handle ilk page filters = do
+    result <- client
+        # query_ (queryString handle ilk page filters)
         # label (SProxy :: SProxy "databaseError")
     profiles :: Array LoadProfilesDto <- rows result
         # traverse read

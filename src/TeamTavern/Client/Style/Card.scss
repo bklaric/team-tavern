@@ -14,6 +14,13 @@
     border-bottom: 1px solid #ccc;
 }
 
+.card-subtitle {
+    font-size: 12px;
+    line-height: 14px;
+    color: #888;
+    font-weight: 400;
+}
+
 .card-title-button {
     margin-left: 14px;
 }
@@ -28,4 +35,10 @@
     &:not(:last-child) {
         border-bottom: 1px solid #ccc;
     }
+}
+
+.card-footer {
+    display: block;
+    line-height: 40px;
+    padding: 7px 21px;
 }
