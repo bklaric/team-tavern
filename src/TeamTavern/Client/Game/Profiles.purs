@@ -35,12 +35,10 @@ import TeamTavern.Client.Script.Cookie (PlayerInfo, getPlayerInfo)
 import TeamTavern.Client.Script.Cookie as Cookie
 import TeamTavern.Client.Script.Navigate (navigate_)
 import TeamTavern.Server.Game.View.SendResponse as View
-import TeamTavern.Server.Profile.ViewByGame.LoadProfiles (pageSize')
+import TeamTavern.Server.Profile.ViewByGame.LoadProfiles (pageSize, pageSize')
 import TeamTavern.Server.Profile.ViewByGame.SendResponse as ViewByGame
 import Web.Event.Event (preventDefault)
-import Web.Event.Event as Event
 import Web.UIEvent.MouseEvent (MouseEvent, toEvent)
-import Web.UIEvent.MouseEvent as MouseEvent
 
 type ProfilePage = Int
 
@@ -112,6 +110,15 @@ render (Profiles game tab page response playerInfo') =
             case tab of
             GameHeader.Players -> "Player profiles"
             GameHeader.Teams -> "Team profiles"
+        , pure divider
+        , pure $ HH.span [ HP.class_ $ HH.ClassName "card-subtitle" ]
+            [ HH.text $
+                "Showing " <> show (1 + ((page - 1) * pageSize))
+                <> "-" <> show (min response.count (page * pageSize))
+                <> " out of " <> show response.count
+                <> case tab of
+                    GameHeader.Players -> " players"
+                    GameHeader.Teams -> " teams" ]
         , case Tuple tab playerInfo' of
             Tuple GameHeader.Players (Just playerInfo) | not game.hasPlayerProfile -> pure $ HH.button
                 [ HP.class_ $ ClassName "card-title-button primary-button"
@@ -202,7 +209,7 @@ render (Profiles game tab page response playerInfo') =
             <> (summary <#> \paragraph -> HH.p [ HP.class_ $ HH.ClassName "profile-summary" ] [ HH.text paragraph ])
         )
     <> (pure $
-        HH.div [ HP.class_ $ HH.ClassName "card-section" ]
+        HH.div [ HP.class_ $ HH.ClassName "card-footer" ]
             [ HH.div [ HP.class_$ HH.ClassName "pagination" ]
                 [ HH.button
                     [ HP.class_ $ HH.ClassName "pagination-button"
