@@ -23,6 +23,13 @@
     &:active {
         background-color: #e6e6e6;
     }
+
+    &[disabled] {
+        cursor: not-allowed;
+        background-color: white;
+        border-color: #ccc;
+        color: #ccc;
+    }
 }
 
 .primary-button {
