@@ -24,11 +24,13 @@ import TeamTavern.Client.Components.WelcomeBanner as WelcomeBanner
 import TeamTavern.Client.Game (game)
 import TeamTavern.Client.Game as Game
 import TeamTavern.Client.Game.GameHeader as GameHeader
-import TeamTavern.Client.Pages.Home (home)
-import TeamTavern.Client.Pages.Home as Home
 import TeamTavern.Client.Home.Games as Games
+import TeamTavern.Client.Pages.About (about)
+import TeamTavern.Client.Pages.About as About
 import TeamTavern.Client.Pages.Account (account)
 import TeamTavern.Client.Pages.Account as Account
+import TeamTavern.Client.Pages.Home (home)
+import TeamTavern.Client.Pages.Home as Home
 import TeamTavern.Client.Player (player)
 import TeamTavern.Client.Player as Player
 import TeamTavern.Client.Script.Navigate (navigateReplace_)
@@ -42,6 +44,7 @@ data Action = Init Foreign String
 data State
     = Empty
     | Home
+    | About
     | Account AccountHeader.Tab
     | Game GameHeader.Handle GameHeader.Tab
     | Player String
@@ -53,6 +56,7 @@ data State
 type ChildSlots = Footer.ChildSlots
     ( topBar :: TopBar.Slot Unit
     , home :: Home.Slot Unit
+    , about :: About.Slot
     , welcomeBanner :: WelcomeBanner.Slot Unit
     , account :: Account.Slot
     , games :: Games.Slot Unit
@@ -79,6 +83,7 @@ render :: forall action left.
     State -> H.ComponentHTML action ChildSlots (Async left)
 render Empty = HH.div_ []
 render Home = HH.div_ [ topBar, home, footer ]
+render About = topBarWithContent [ about ]
 render (Game handle tab) = topBarWithContent [ game handle tab ]
 render (Account tab) = topBarWithContent [ account tab ]
 render (Player nickname) = topBarWithContent [ player nickname ]
@@ -99,6 +104,8 @@ handleAction (Init state route) = do
     newState <- H.liftEffect $ case split (Pattern "/") route of
         ["", ""] ->
             just Home
+        ["", "about"] ->
+            just About
         ["", "register"] ->
             just Register
         ["", "signin"] ->

@@ -26,26 +26,14 @@ footer = HH.div [ HP.class_ $ HH.ClassName "footer" ]
         [ navigationAnchor (SProxy :: SProxy "aboutAnchor")
             { path: "/about", content: HH.text "About" }
         , HH.div_
-            [ navigationAnchor (SProxy :: SProxy "discordAnchor")
-                { path: discordUrl
-                , content: HH.i
-                    [ HP.class_ $ H.ClassName "fab fa-discord footer-icon" ] []
-                }
-            , navigationAnchor (SProxy :: SProxy "redditAnchor")
-                { path: redditUrl
-                , content: HH.i
-                    [ HP.class_ $ H.ClassName "fab fa-reddit footer-icon" ] []
-                }
-            , navigationAnchor (SProxy :: SProxy "steamAnchor")
-                { path: steamUrl
-                , content: HH.i
-                    [ HP.class_ $ H.ClassName "fab fa-steam footer-icon" ] []
-                }
-            , navigationAnchor (SProxy :: SProxy "twitterAnchor")
-                { path: twitterUrl
-                , content: HH.i
-                    [ HP.class_ $ H.ClassName "fab fa-twitter footer-icon" ] []
-                }
+            [ HH.a [ HP.href discordUrl ]
+                [ HH.i [ HP.class_ $ H.ClassName "fab fa-discord footer-icon" ] [] ]
+            , HH.a [ HP.href redditUrl ]
+                [ HH.i [ HP.class_ $ H.ClassName "fab fa-reddit footer-icon" ] [] ]
+            , HH.a [ HP.href steamUrl ]
+                [ HH.i [ HP.class_ $ H.ClassName "fab fa-steam footer-icon" ] [] ]
+            , HH.a [ HP.href twitterUrl ]
+                [ HH.i [ HP.class_ $ H.ClassName "fab fa-twitter footer-icon" ] [] ]
             ]
         ]
     ]

@@ -10,4 +10,4 @@ steamUrl :: String
 steamUrl = "https://steamcommunity.com/groups/teamtavern"
 
 twitterUrl :: String
-twitterUrl = "https://twitter.com/teamtavernnet"
+twitterUrl = "https://twitter.com/TeamTavernNet"
