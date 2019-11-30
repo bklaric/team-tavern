@@ -33,7 +33,7 @@ render = HH.div_
             <> "with a common meeting place where they can find each other and form teams. "
             <> "It currently features "
         , navigationAnchor (SProxy :: SProxy "dotaAnchor")
-            { path: "/games/dota2/", content: HH.text "Dota 2" }
+            { path: "/games/dota2", content: HH.text "Dota 2" }
         , HH.text " with more games planned in the future."
         ]
     , HH.h2 [ HP.class_ $ HH.ClassName "about-heading" ] [ HH.text "How does TeamTavern work?" ]
