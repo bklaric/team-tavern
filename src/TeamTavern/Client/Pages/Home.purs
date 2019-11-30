@@ -1,4 +1,4 @@
-module TeamTavern.Client.Home where
+module TeamTavern.Client.Pages.Home where
 
 import Prelude
 
@@ -8,6 +8,7 @@ import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
+import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Components.RegisterForm as RegisterForm
 import TeamTavern.Client.Home.CallToAction (callToAction)
 import TeamTavern.Client.Home.Games (games)
@@ -28,8 +29,8 @@ type ChildSlots =
 
 render :: forall left.
     State -> H.ComponentHTML Action ChildSlots (Async left)
-render Empty = HH.div_ []
-render (Loaded playerInfo) = HH.div_ $
+render Empty = HH.div [ HP.class_ $ HH.ClassName "home" ] []
+render (Loaded playerInfo) = HH.div [ HP.class_ $ HH.ClassName "home" ] $
     case playerInfo of
         Nothing -> [ callToAction, games Nothing ]
         Just { nickname } -> [ games $ Just nickname ]

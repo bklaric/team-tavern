@@ -1,0 +1,24 @@
+.footer {
+    display: block;
+    height: 60px;
+    background: white;
+    border-top: 1px solid #ccc;
+    width: 100%;
+}
+
+.footer-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: $primary-color;
+    font-weight: 500;
+    max-width: 960px;
+    height: 100%;
+    padding: 0 21px;
+    margin: auto;
+}
+
+.footer-icon {
+    font-size: 28px;
+    margin-left: 14px;
+}

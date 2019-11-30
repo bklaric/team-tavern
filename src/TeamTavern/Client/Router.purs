@@ -12,6 +12,8 @@ import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import Simple.JSON (read)
 import TeamTavern.Client.Components.Account.AccountHeader as AccountHeader
+import TeamTavern.Client.Components.Footer (footer)
+import TeamTavern.Client.Components.Footer as Footer
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Components.RegisterForm (registerForm)
 import TeamTavern.Client.Components.RegisterForm as RegisterForm
@@ -22,8 +24,8 @@ import TeamTavern.Client.Components.WelcomeBanner as WelcomeBanner
 import TeamTavern.Client.Game (game)
 import TeamTavern.Client.Game as Game
 import TeamTavern.Client.Game.GameHeader as GameHeader
-import TeamTavern.Client.Home (home)
-import TeamTavern.Client.Home as Home
+import TeamTavern.Client.Pages.Home (home)
+import TeamTavern.Client.Pages.Home as Home
 import TeamTavern.Client.Home.Games as Games
 import TeamTavern.Client.Pages.Account (account)
 import TeamTavern.Client.Pages.Account as Account
@@ -48,7 +50,7 @@ data State
     | Welcome { email :: String, nickname :: String, emailSent :: Boolean }
     | NotFound
 
-type ChildSlots =
+type ChildSlots = Footer.ChildSlots
     ( topBar :: TopBar.Slot Unit
     , home :: Home.Slot Unit
     , welcomeBanner :: WelcomeBanner.Slot Unit
@@ -64,10 +66,10 @@ type ChildSlots =
 
 topBarWithContent
     :: forall query children left
-    .  Array (H.ComponentHTML query (topBar :: TopBar.Slot Unit | children) (Async left))
-    -> H.ComponentHTML query (topBar :: TopBar.Slot Unit | children ) (Async left)
+    .  Array (H.ComponentHTML query (Footer.ChildSlots (topBar :: TopBar.Slot Unit | children)) (Async left))
+    -> H.ComponentHTML query (Footer.ChildSlots (topBar :: TopBar.Slot Unit | children)) (Async left)
 topBarWithContent content =
-    HH.div_ [ topBar, HH.div [ HP.class_ $ HH.ClassName "content" ] content ]
+    HH.div_ [ topBar, HH.div [ HP.class_ $ HH.ClassName "content" ] content, footer ]
 
 singleContent :: forall slots query.
     Array (HH.HTML slots query) -> HH.HTML slots query
@@ -76,7 +78,7 @@ singleContent = HH.div [ HP.class_ $ HH.ClassName "single-content" ]
 render :: forall action left.
     State -> H.ComponentHTML action ChildSlots (Async left)
 render Empty = HH.div_ []
-render Home = HH.div_ [ topBar, home ]
+render Home = HH.div_ [ topBar, home, footer ]
 render (Game handle tab) = topBarWithContent [ game handle tab ]
 render (Account tab) = topBarWithContent [ account tab ]
 render (Player nickname) = topBarWithContent [ player nickname ]
