@@ -2,6 +2,10 @@
     @extend %bordered;
     background-color: white;
     margin-bottom: 21px;
+
+    &:last-child {
+        margin-bottom: 0;
+    }
 }
 
 .card-title {

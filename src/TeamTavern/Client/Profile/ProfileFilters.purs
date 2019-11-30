@@ -68,7 +68,7 @@ fieldInput field @ { label, icon, options } =
 render :: forall monad. MonadEffect monad =>
     State -> H.ComponentHTML Action ChildSlots monad
 render fields = HH.div [ HP.class_ $ HH.ClassName "card" ]
-    [ HH.h2 [ HP.class_ $ HH.ClassName "card-title" ]
+    [ HH.span [ HP.class_ $ HH.ClassName "card-title" ]
         [ HH.text "Profile filters" ]
     , HH.div [ HP.class_ $ HH.ClassName "card-content" ] $
         map fieldInput fields

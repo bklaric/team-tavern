@@ -52,7 +52,7 @@ renderTabs :: forall slots. Tab -> Array (HH.HTML slots Action)
 renderTabs Profiles =
     [ HH.span [ HP.class_ $ HH.ClassName "content-title-tab" ]
         [ HH.i [ HP.class_ $ H.ClassName "fas fa-address-card button-icon" ] []
-        , HH.text "View profiles"
+        , HH.text "Profiles"
         ]
     , HH.a
         [ HP.class_ $ HH.ClassName "content-title-tab"
@@ -60,7 +60,7 @@ renderTabs Profiles =
         , HE.onClick $ Just <<< Navigate conversationsPath
         ]
         [ HH.i [ HP.class_ $ H.ClassName "fas fa-envelope button-icon" ] []
-        , HH.text "View conversations"
+        , HH.text "Conversations"
         ]
     ]
 renderTabs Conversations =
@@ -70,11 +70,11 @@ renderTabs Conversations =
         , HE.onClick $ Just <<< Navigate profilesPath
         ]
         [ HH.i [ HP.class_ $ H.ClassName "fas fa-address-card button-icon" ] []
-        , HH.text "View profiles"
+        , HH.text "Profiles"
         ]
     , HH.span [ HP.class_ $ HH.ClassName "content-title-tab" ]
         [ HH.i [ HP.class_ $ H.ClassName "fas fa-envelope button-icon" ] []
-        , HH.text "View conversations"
+        , HH.text "Conversations"
         ]
     ]
 renderTabs (Conversation _) =
@@ -84,7 +84,7 @@ renderTabs (Conversation _) =
         , HE.onClick $ Just <<< Navigate profilesPath
         ]
         [ HH.i [ HP.class_ $ H.ClassName "fas fa-address-card button-icon" ] []
-        , HH.text "View profiles"
+        , HH.text "Profiles"
         ]
     , HH.a
         [ HP.class_ $ HH.ClassName "content-title-tab"
@@ -92,7 +92,7 @@ renderTabs (Conversation _) =
         , HE.onClick $ Just <<< Navigate conversationsPath
         ]
         [ HH.i [ HP.class_ $ H.ClassName "fas fa-envelope button-icon" ] []
-        , HH.text "View conversations"
+        , HH.text "Conversations"
         ]
     ]
 

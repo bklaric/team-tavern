@@ -11,14 +11,15 @@ import Data.Bifunctor (lmap)
 import Data.Const (Const)
 import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
+import Effect (Effect)
 import Halogen as H
 import Halogen.HTML as HH
 import Simple.JSON.Async as Json
-import TeamTavern.Client.Profile.ProfileFilters (filterProfiles)
-import TeamTavern.Client.Profile.ProfileFilters as FilterProfiles
 import TeamTavern.Client.Game.GameHeader as GameHeader
 import TeamTavern.Client.Game.Profiles (gameProfiles)
 import TeamTavern.Client.Game.Profiles as Profiles
+import TeamTavern.Client.Profile.ProfileFilters (filterProfiles)
+import TeamTavern.Client.Profile.ProfileFilters as FilterProfiles
 import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
 import TeamTavern.Server.Game.View.SendResponse as View
 
@@ -89,27 +90,39 @@ loadGame handle tab = Async.unify do
         _ -> Async.left Error
     pure $ Game content tab
 
+setMetaTags :: String -> GameHeader.Tab -> Effect Unit
+setMetaTags handleOrTitle tab =
+    case tab of
+    GameHeader.Players -> do
+        setMetaTitle $ handleOrTitle <> " players - looking for team | TeamTavern"
+        setMetaDescription $ "Browse and filter " <> handleOrTitle <> " players looking for a team on TeamTavern."
+        setMetaUrl
+    GameHeader.Teams -> do
+        setMetaTitle $ handleOrTitle <> " teams - looking for players | TeamTavern"
+        setMetaDescription $ "Browse and filter " <> handleOrTitle <> " teams looking for players on TeamTavern."
+        setMetaUrl
+
 handleAction :: forall output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
 handleAction Init = do
     state <- H.get
     case state of
         Empty (Input handle tab) -> do
-            state <- H.lift $ loadGame handle tab
-            H.put state
+            newState <- H.lift $ loadGame handle tab
+            H.put newState
             let handleOrTitle =
-                    case state of
+                    case newState of
                     Game { title } _ -> title
                     _ -> handle
-            H.lift $ Async.fromEffect do
-                setMetaTitle $ "Find " <> handleOrTitle <> " players | TeamTavern"
-                setMetaDescription $ "Browse and filter " <> handleOrTitle <> " players on TeamTavern and find your ideal teammates."
-                setMetaUrl
+            H.liftEffect $ setMetaTags handleOrTitle tab
         _ -> pure unit
-handleAction (Receive (Input handle tab)) =
-    H.modify_ case _ of
-        Game content _ -> Game content tab
-        state -> state
+handleAction (Receive (Input handle tab)) = do
+    state <- H.get
+    case state of
+        Game content _ -> do
+            H.put $ Game content tab
+            H.liftEffect $ setMetaTags content.title tab
+        _ -> pure unit
 handleAction (ApplyFilters filters) =
     void $ H.query (SProxy :: SProxy "gameProfiles") unit
         (Profiles.ApplyFilters filters unit)

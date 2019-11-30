@@ -9,18 +9,17 @@
 .content-title {
     display: block;
     margin-bottom: 21px;
+    line-height: 30px;
 }
 
 .content-title-text {
     display: inline;
     font-size: 20px;
-    line-height: 1em;
     margin-right: 21px;
 }
 
 .content-title-tabs {
     display: inline-block;
-    line-height: 20px;
 
     .content-title-tab:first-child {
         margin-left: 0;
@@ -29,6 +28,7 @@
 
 .content-title-tab {
     display: inline;
+    font-size: 14px;
     font-weight: 500;
     margin-left: 21px;
 }

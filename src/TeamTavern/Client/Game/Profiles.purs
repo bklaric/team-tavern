@@ -105,7 +105,7 @@ render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render (Empty _) = HH.div_ []
 render (Profiles game tab page response playerInfo') =
     HH.div [ HP.class_ $ HH.ClassName "card" ] $
-    [ HH.h2 [ HP.class_ $ HH.ClassName "card-title" ] $ join
+    [ HH.span [ HP.class_ $ HH.ClassName "card-title" ] $ join
         [ pure $ HH.text
             case tab of
             GameHeader.Players -> "Player profiles"
