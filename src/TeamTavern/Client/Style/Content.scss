@@ -1,5 +1,7 @@
 .content {
     max-width: $max-width;
+    // calc(100vh - topBar - footer - padding);
+    min-height: calc(100vh - 41px - 41px - 42px);
     padding: 21px;
     margin: auto;
 }
