@@ -41,6 +41,7 @@ import TeamTavern.Server.Game.Create (create) as Game
 import TeamTavern.Server.Game.Update (handleUpdate) as Game
 import TeamTavern.Server.Game.View (handleView) as Game
 import TeamTavern.Server.Game.ViewAll (handleViewAll) as Game
+import TeamTavern.Server.Infrastructure.Log (logStamped, logt)
 import TeamTavern.Server.Player.Register (register) as Player
 import TeamTavern.Server.Player.Update (update) as Player
 import TeamTavern.Server.Player.View (view) as Player
@@ -148,9 +149,10 @@ handleRequest pool client method url cookies body =
             , content: mempty
             }
         else do
-            fromEffect $ log $
-                "404 for method " <> show method <> " and url " <> show url
-            fromEffect $ log $ unsafeStringify errors
+            fromEffect $ logStamped $ "Endpoint 404 Not Found"
+            fromEffect $ logt $
+                "Not found for method " <> show method <> " and url " <> show url
+            fromEffect $ logt $ "Routing resulted in these errors: " <> unsafeStringify errors
             pure { statusCode: 404, headers: MultiMap.empty, content: unsafeStringify errors }
     Right routeValues -> routeValues # match
         { registerPlayer: const $
