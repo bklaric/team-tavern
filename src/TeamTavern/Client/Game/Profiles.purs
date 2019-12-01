@@ -53,7 +53,13 @@ data Action
 
 data State
     = Empty Input
-    | Profiles View.OkContent GameHeader.Tab ProfilePage ViewByGame.OkContent (Maybe Cookie.PlayerInfo)
+    | Profiles
+        View.OkContent
+        GameHeader.Tab
+        ProfilePage
+        (Array FilterProfiles.Field)
+        ViewByGame.OkContent
+        (Maybe Cookie.PlayerInfo)
 
 data Query send = ApplyFilters (Array FilterProfiles.Field) send
 
@@ -103,7 +109,7 @@ totalPages count = ceil (toNumber count / pageSize')
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render (Empty _) = HH.div_ []
-render (Profiles game tab page response playerInfo') =
+render (Profiles game tab page _ response playerInfo') =
     HH.div [ HP.class_ $ HH.ClassName "card" ] $
     [ HH.span [ HP.class_ $ HH.ClassName "card-title" ] $ join
         [ pure $ HH.text
@@ -241,14 +247,14 @@ render (Profiles game tab page response playerInfo') =
         )
 
 loadProfiles :: forall left. View.OkContent -> GameHeader.Tab -> ProfilePage -> Array FilterProfiles.Field -> Async left State
-loadProfiles game tab page fields = Async.unify do
+loadProfiles game tab page filters = Async.unify do
     let empty = Empty (Input game tab)
     let tabPair =
             case tab of
             GameHeader.Players -> "ilk=1"
             GameHeader.Teams -> "ilk=2"
     let pagePair = "page=" <> show page
-    let filterPairs = fields
+    let filterPairs = filters
             <#> (\field -> field.options
                 <#> \option -> field.key <> "=" <> option.key)
             # join
@@ -262,7 +268,7 @@ loadProfiles game tab page fields = Async.unify do
         200 -> FetchRes.text response >>= Json.readJSON # lmap (const empty)
         _ -> Async.left empty
     playerInfo' <- H.liftEffect getPlayerInfo
-    pure $ Profiles game tab page content playerInfo'
+    pure $ Profiles game tab page filters content playerInfo'
 
 handleAction :: forall output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
@@ -280,8 +286,8 @@ handleAction (Receive (Input game tab)) = do
 handleAction (ChangePage page mouseEvent) = do
     state <- H.get
     case state of
-        Profiles game tab _ _ playerInfo -> do
-            newState <- H.lift $ loadProfiles game tab page []
+        Profiles game tab _ filters _ playerInfo -> do
+            newState <- H.lift $ loadProfiles game tab page filters
             H.put newState
         _ -> pure unit
 
@@ -306,7 +312,7 @@ handleQuery (ApplyFilters fields send) = do
     state <- H.get
     case state of
         Empty _ -> pure $ Just send
-        Profiles game tab _ _ _ -> do
+        Profiles game tab _ _ _ _ -> do
             state' <- H.lift $ loadProfiles game tab 1 fields
             H.put state'
             pure $ Just send
