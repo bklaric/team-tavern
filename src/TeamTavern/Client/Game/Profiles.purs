@@ -119,9 +119,12 @@ render (Profiles game tab page _ response playerInfo') =
         , pure divider
         , pure $ HH.span [ HP.class_ $ HH.ClassName "card-subtitle" ]
             [ HH.text $
-                "Showing " <> show (1 + ((page - 1) * pageSize))
-                <> "-" <> show (min response.count (page * pageSize))
-                <> " out of " <> show response.count
+                (if response.count == 0
+                then "Showing 0"
+                else
+                    "Showing " <> show (1 + ((page - 1) * pageSize))
+                    <> "-" <> show (min response.count (page * pageSize))
+                    <> " out of " <> show response.count)
                 <> case tab of
                     GameHeader.Players -> " players"
                     GameHeader.Teams -> " teams" ]
