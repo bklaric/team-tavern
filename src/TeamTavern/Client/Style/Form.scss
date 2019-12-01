@@ -15,6 +15,11 @@
     line-height: 25px;
 }
 
+.form-subheading {
+    text-align: center;
+    margin-bottom: 28px;
+}
+
 .form-submit-button {
     @extend .primary-button;
     margin: auto;

@@ -176,7 +176,18 @@ render { summary, summaryError, urlValueErrors, missingErrors, otherError, game,
     HH.div [ HP.class_ $ HH.ClassName "wide-single-form-container" ] $ pure $ HH.form
     [ HP.class_ $ ClassName "form", HE.onSubmit $ Just <<< Create ] $
     [ HH.h2 [ HP.class_ $ HH.ClassName "form-heading" ]
-        [ HH.text $ "Create your " <> game.title <> " profile" ] ]
+        [ HH.text
+            case tab of
+            GameHeader.Players -> "Create your " <> game.title <> " profile"
+            GameHeader.Teams -> "Create your " <> game.title <> " team profile"
+        ]
+    , HH.p [ HP.class_ $ HH.ClassName "form-subheading" ]
+        [ HH.text
+            case tab of
+            GameHeader.Players -> "Describe yourself as a player and let other players find you."
+            GameHeader.Teams -> "Describe players you are looking for and let them find your team."
+        ]
+    ]
     <> (game.fields <#> fieldInput tab urlValueErrors missingErrors) <>
     [ HH.div [ HP.class_ $ HH.ClassName "input-group" ]
         [ HH.label

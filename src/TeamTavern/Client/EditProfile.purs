@@ -237,8 +237,19 @@ render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { title, profileIlk, fields, summary, summaryError, fieldValues, urlValueErrors, missingErrors, otherError } =
     HH.div [ HP.class_ $ HH.ClassName "wide-single-form-container" ] $ pure $ HH.form
     [ HP.class_ $ H.ClassName "form", HE.onSubmit $ Just <<< Update ] $
-    [ HH.h2  [ HP.class_ $ HH.ClassName "form-heading" ]
-        [ HH.text $ "Edit your " <> title <> " profile" ] ]
+    [ HH.h2 [ HP.class_ $ HH.ClassName "form-heading" ]
+        [ HH.text
+            case profileIlk of
+            Players -> "Edit your " <> title <> " profile"
+            Teams -> "Edit your " <> title <> " team profile"
+        ]
+    , HH.p [ HP.class_ $ HH.ClassName "form-subheading" ]
+        [ HH.text
+            case profileIlk of
+            Players -> "Describe yourself as a player and let other players find you."
+            Teams -> "Describe players you are looking for and let them find your team."
+        ]
+    ]
     <> (fields <#> fieldInput profileIlk fieldValues urlValueErrors missingErrors) <>
     [ HH.div [ HP.class_ $ HH.ClassName "input-group" ]
         [ HH.label
