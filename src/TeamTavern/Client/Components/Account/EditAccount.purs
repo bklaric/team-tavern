@@ -104,7 +104,8 @@ render (Loaded
                 , HE.onChecked $ Just <<< NotifyInput
                 , HP.checked notify
                 ]
-            , HH.text "Send an email when someone messages you"
+            , HH.span [ HP.class_ $ HH.ClassName "checkbox-input-label" ]
+                [ HH.text "Send an email when someone messages you" ]
             ]
         ]
     -- , HH.div_

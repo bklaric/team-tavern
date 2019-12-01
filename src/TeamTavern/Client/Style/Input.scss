@@ -5,7 +5,7 @@
 }
 
 .input-label {
-    display: flex;
+    display: block;
     margin-bottom: 7px;
     line-height: 21px;
 }
@@ -34,4 +34,9 @@
     height: 20px;
     margin: 0 7px 0 0;
     cursor: pointer;
+    vertical-align: middle;
+}
+
+.checkbox-input-label {
+    vertical-align: middle;
 }
