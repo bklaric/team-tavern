@@ -35,7 +35,7 @@ type SendEmailError errors = Variant
 message :: SendEmailModel -> Message
 message { email, nickname, nonce } =
     { to: unwrap email
-    , from: "admin@teamtavern.net"
+    , from: "TeamTavern admin@teamtavern.net"
     , subject: toNullable $ Just "TeamTavern registration"
     , htmlBody: toNullable $ Just $
         "Hi " <> unwrap nickname <> ",<br /><br />"
@@ -43,8 +43,7 @@ message { email, nickname, nonce } =
         <> "Please open the link below to sign in and verify your email address:<br /><br />"
         <> "<a href=\"https://www.teamtavern.net/signin?nonce=" <> unwrap nonce <> "\">https://www.teamtavern.net/signin?nonce=" <> unwrap nonce <> "</a><br /><br />"
         <> "Should you have any questions or feedback, please contact <a href=\"mailto:admin@teamtavern.net\">admin@teamtavern.net</a>. Thank you for your time.<br /><br />"
-        <> "Happy playing!<br />"
-        <> "TeamTavern admin"
+        <> "Happy playing!"
     , textBody: toNullable Nothing
     }
 
