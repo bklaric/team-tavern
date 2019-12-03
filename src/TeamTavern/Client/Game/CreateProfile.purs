@@ -25,6 +25,7 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
+import TeamTavern.Client.Components.CloseButton (closeButton)
 import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.MultiSelect (multiSelectIndexed)
@@ -49,8 +50,9 @@ data Action
     = SummaryInput String
     | UrlValueInput String String
     | Create Event
+    | Close
 
-data Message = ProfileCreated String
+data Message = ProfileCreated String | CloseClicked
 
 type State =
     { game :: View.OkContent
@@ -175,7 +177,8 @@ render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { summary, summaryError, urlValueErrors, missingErrors, otherError, game, tab } =
     HH.div [ HP.class_ $ HH.ClassName "wide-single-form-container" ] $ pure $ HH.form
     [ HP.class_ $ ClassName "form", HE.onSubmit $ Just <<< Create ] $
-    [ HH.h2 [ HP.class_ $ HH.ClassName "form-heading" ]
+    [ closeButton Close
+    , HH.h2 [ HP.class_ $ HH.ClassName "form-heading" ]
         [ HH.text
             case tab of
             GameHeader.Players -> "Create your " <> game.title <> " profile"
@@ -316,7 +319,7 @@ handleAction (Create event) = do
     case newState of
         Nothing -> H.raise $ ProfileCreated state.game.handle
         Just newState' -> H.put newState'
-    pure unit
+handleAction Close = H.raise $ CloseClicked
 
 component :: forall query left.
     H.Component HH.HTML query Input Message (Async left)

@@ -22,6 +22,7 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
+import TeamTavern.Client.Components.CloseButton (closeButton)
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Script.Cookie (getPlayerInfo)
 import TeamTavern.Client.Script.Navigate (navigate_)
@@ -37,8 +38,9 @@ data Action
     | AboutInput String
     | NotifyInput Boolean
     | Update Event
+    | Close
 
-data Message = AccountUpdated String
+data Message = AccountUpdated String | CloseClicked
 
 type LoadedState =
     { originalNickname :: String
@@ -72,7 +74,8 @@ render (Loaded
     , otherError
     }) = HH.div [ HP.class_ $ HH.ClassName "wide-single-form-container" ] $ pure $ HH.form
     [ HP.class_ $ H.ClassName "form", HE.onSubmit $ Just <<< Update ]
-    [ HH.h2  [ HP.class_ $ HH.ClassName "form-heading" ]
+    [ closeButton Close
+    , HH.h2  [ HP.class_ $ HH.ClassName "form-heading" ]
         [ HH.text "Edit your account" ]
     , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
         [ HH.label
@@ -218,6 +221,7 @@ handleAction (Update event) = do
                 Nothing -> H.raise $ AccountUpdated $ trim loadedState.nickname
                 Just newState' -> H.put $ Loaded newState'
         otherState -> pure unit
+handleAction Close = H.raise CloseClicked
 
 component :: forall query input left.
     H.Component HH.HTML query input Message (Async left)

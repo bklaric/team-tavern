@@ -26,6 +26,7 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
+import TeamTavern.Client.Components.CloseButton (closeButton)
 import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.MultiSelect (multiSelectIndexed)
@@ -69,8 +70,9 @@ data Action
     = SummaryInput String
     | UrlValueInput String String
     | Update Event
+    | Close
 
-data Message = ProfileUpdated String ProfileIlk
+data Message = ProfileUpdated String ProfileIlk | CloseClicked
 
 type State =
     { nickname :: String
@@ -237,7 +239,8 @@ render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { title, profileIlk, fields, summary, summaryError, fieldValues, urlValueErrors, missingErrors, otherError } =
     HH.div [ HP.class_ $ HH.ClassName "wide-single-form-container" ] $ pure $ HH.form
     [ HP.class_ $ H.ClassName "form", HE.onSubmit $ Just <<< Update ] $
-    [ HH.h2 [ HP.class_ $ HH.ClassName "form-heading" ]
+    [ closeButton Close
+    , HH.h2 [ HP.class_ $ HH.ClassName "form-heading" ]
         [ HH.text
             case profileIlk of
             Players -> "Edit your " <> title <> " profile"
@@ -394,7 +397,7 @@ handleAction (Update event) = do
     case newState of
         Nothing -> H.raise $ ProfileUpdated state.nickname state.profileIlk
         Just newState' -> H.put newState'
-    pure unit
+handleAction Close = H.raise CloseClicked
 
 component :: forall query left.
     H.Component HH.HTML query Input Message (Async left)
