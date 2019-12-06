@@ -38,6 +38,9 @@ import TeamTavern.Server.Game.View.SendResponse as View
 import TeamTavern.Server.Profile.ViewByGame.LoadProfiles (pageSize, pageSize')
 import TeamTavern.Server.Profile.ViewByGame.SendResponse as ViewByGame
 import Web.Event.Event (preventDefault)
+import Web.HTML (window)
+import Web.HTML.Location (reload)
+import Web.HTML.Window (location)
 import Web.UIEvent.MouseEvent (MouseEvent, toEvent)
 
 type ProfilePage = Int
@@ -301,10 +304,7 @@ handleAction (HandleCreateProfileMessage tab message) = do
     Modal.hide (SProxy :: SProxy "createProfile")
     case message of
         Modal.Inner (CreateProfile.ProfileCreated handle) ->
-            H.liftEffect $ navigate_ $ "/games/" <> trim handle <>
-                case tab of
-                GameHeader.Players -> "/players"
-                GameHeader.Teams -> "/teams"
+            window >>= location >>= reload # H.liftEffect
         _ -> pure unit
 
 handleQuery
