@@ -1,15 +1,36 @@
 .content {
     max-width: $max-width;
+    // calc(100vh - topBar - footer - padding);
+    min-height: calc(100vh - 41px - 41px - 42px);
     padding: 21px;
     margin: auto;
 }
 
 .content-title {
     display: block;
-    font-size: 20px;
-    line-height: 1em;
-    padding-left: 21px;
     margin-bottom: 21px;
+    line-height: 30px;
+}
+
+.content-title-text {
+    display: inline;
+    font-size: 20px;
+    margin-right: 21px;
+}
+
+.content-title-tabs {
+    display: inline-block;
+
+    .content-title-tab:first-child {
+        margin-left: 0;
+    }
+}
+
+.content-title-tab {
+    display: inline;
+    font-size: 14px;
+    font-weight: 500;
+    margin-left: 21px;
 }
 
 .single-content {

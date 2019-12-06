@@ -34,7 +34,7 @@ type UpdatePlayerError errors = Variant
 queryString :: Query
 queryString = Query """
     update player
-    set nickname = $3, about = $4
+    set nickname = $3, about = $4, notify = $5
     from session
     where player.id = session.player_id
     and session.player_id = $1
@@ -43,8 +43,8 @@ queryString = Query """
     """
 
 queryParameters :: CookieInfo -> UpdateModel -> Array QueryParameter
-queryParameters { id, token } { nickname, about } =
-    id : token : nickname :| about
+queryParameters { id, token } { nickname, about, notify } =
+    id : token : nickname : about :| notify
 
 updatePlayer
     :: forall errors

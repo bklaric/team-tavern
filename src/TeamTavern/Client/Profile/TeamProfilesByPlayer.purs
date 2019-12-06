@@ -1,0 +1,1 @@
+module TeamTavern.Client.Profile.TeamProfilesByPlayer where

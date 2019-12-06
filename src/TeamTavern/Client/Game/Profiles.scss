@@ -6,6 +6,10 @@
     margin-bottom: 14px;
 }
 
+.profile-title-button {
+    margin-left: 14px;
+}
+
 .profile-updated {
     font-size: 12px;
     line-height: 14px;
@@ -36,4 +40,24 @@
     &:last-child {
         margin-bottom: 0;
     }
+}
+
+.pagination {
+    display: flex;
+    justify-content: space-between;
+    max-width: 500px;
+    margin: auto;
+}
+
+.pagination-button {
+    @extend .regular-button;
+    flex: 1 1 25%;
+    max-width: 100px;
+}
+
+.pagination-page {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 40px;
 }

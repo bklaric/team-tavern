@@ -12,7 +12,7 @@
 
 .input-sublabel {
     font-size: 12px;
-    color: #737373;
+    color: #888;
 }
 
 .text-line-input {
@@ -27,4 +27,16 @@
     @extend .text-line-input;
     resize: vertical;
     height: 160px;
+}
+
+.checkbox-input {
+    width: 20px;
+    height: 20px;
+    margin: 0 7px 0 0;
+    cursor: pointer;
+    vertical-align: middle;
+}
+
+.checkbox-input-label {
+    vertical-align: middle;
 }

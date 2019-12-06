@@ -4,7 +4,7 @@ import Prelude
 
 import Data.Variant (Variant, match)
 import Effect (Effect)
-import Foreign (MultipleErrors)
+import Foreign (Foreign, MultipleErrors)
 import Global.Unsafe (unsafeStringify)
 import Postgres.Error (Error)
 import Postgres.Result (Result, rows)
@@ -16,6 +16,11 @@ type ViewAllError = Variant
         { result :: Result
         , errors :: MultipleErrors
         }
+    , unreadableCount ::
+        { count :: Foreign
+        , errors :: MultipleErrors
+        }
+    , noRowsSomehow :: Result
     )
 
 logError :: ViewAllError -> Effect Unit
@@ -28,4 +33,12 @@ logError viewError = do
             logt $ "Couldn't read dtos out of rows: "
                 <> (unsafeStringify $ rows result)
             logt $ "Reading resulted in these errors: " <> show errors
+        , unreadableCount: \{ count, errors } -> do
+            logt $ "Couldn't read profile count from foreign: "
+                <> unsafeStringify count
+            logt $ "Reading profile count resulted in these errors: "
+                <> show errors
+        , noRowsSomehow: \result ->
+            logt $ "Profile count query somehow returned no rows: "
+                <> (unsafeStringify $ rows result)
         }

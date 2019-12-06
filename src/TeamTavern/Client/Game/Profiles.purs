@@ -11,11 +11,12 @@ import Data.Array as Array
 import Data.Bifunctor (lmap)
 import Data.Foldable (find)
 import Data.FunctorWithIndex (mapWithIndex)
-import Data.Int (floor)
+import Data.Int (ceil, floor, toNumber)
 import Data.Maybe (Maybe(..))
 import Data.String (trim)
 import Data.String as String
 import Data.Symbol (SProxy(..))
+import Data.Tuple (Tuple(..))
 import Halogen (ClassName(..), defaultEval, mkComponent, mkEval)
 import Halogen as H
 import Halogen.HTML as HH
@@ -28,23 +29,37 @@ import TeamTavern.Client.Components.NavigationAnchor (navigationAnchorIndexed)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
 import TeamTavern.Client.Game.CreateProfile (createProfile)
 import TeamTavern.Client.Game.CreateProfile as CreateProfile
-import TeamTavern.Client.Game.FilterProfiles as FilterProfiles
+import TeamTavern.Client.Game.GameHeader as GameHeader
+import TeamTavern.Client.Profile.ProfileFilters as FilterProfiles
 import TeamTavern.Client.Script.Cookie (PlayerInfo, getPlayerInfo)
 import TeamTavern.Client.Script.Cookie as Cookie
 import TeamTavern.Client.Script.Navigate (navigate_)
 import TeamTavern.Server.Game.View.SendResponse as View
+import TeamTavern.Server.Profile.ViewByGame.LoadProfiles (pageSize, pageSize')
 import TeamTavern.Server.Profile.ViewByGame.SendResponse as ViewByGame
 import Web.Event.Event (preventDefault)
 import Web.UIEvent.MouseEvent (MouseEvent, toEvent)
 
+type ProfilePage = Int
+
+data Input = Input View.OkContent GameHeader.Tab
+
 data Action
-    = Init View.OkContent
-    | ShowCreateProfileModal View.OkContent PlayerInfo MouseEvent
-    | HandleCreateProfileMessage (Modal.Message CreateProfile.Message)
+    = Init
+    | Receive Input
+    | ChangePage ProfilePage MouseEvent
+    | ShowCreateProfileModal View.OkContent GameHeader.Tab PlayerInfo MouseEvent
+    | HandleCreateProfileMessage GameHeader.Tab (Modal.Message CreateProfile.Message)
 
 data State
-    = Empty View.OkContent
-    | Profiles View.OkContent ViewByGame.OkContent (Maybe Cookie.PlayerInfo)
+    = Empty Input
+    | Profiles
+        View.OkContent
+        GameHeader.Tab
+        ProfilePage
+        (Array FilterProfiles.Field)
+        ViewByGame.OkContent
+        (Maybe Cookie.PlayerInfo)
 
 data Query send = ApplyFilters (Array FilterProfiles.Field) send
 
@@ -86,34 +101,59 @@ lastUpdated updatedSeconds = let
         Nothing
     in
     case interval of
-    Just { unit, count } -> show count <> " " <> unit <> if count == 1 then "" else "s" <> " ago"
+    Just { unit, count } -> show count <> " " <> unit <> (if count == 1 then "" else "s") <> " ago"
     Nothing -> "less than a minute ago"
+
+totalPages :: Int -> Int
+totalPages count = ceil (toNumber count / pageSize')
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render (Empty _) = HH.div_ []
-render (Profiles game profiles playerInfo') =
+render (Profiles game tab page _ response playerInfo') =
     HH.div [ HP.class_ $ HH.ClassName "card" ] $
-    [ HH.h2 [ HP.class_ $ HH.ClassName "card-title" ] $ join
-        [ pure $ HH.text "Profiles"
-        , case playerInfo' of
-            Just playerInfo | not game.hasProfile -> pure $ HH.button
+    [ HH.span [ HP.class_ $ HH.ClassName "card-title" ] $ join
+        [ pure $ HH.text
+            case tab of
+            GameHeader.Players -> "Player profiles"
+            GameHeader.Teams -> "Team profiles"
+        , pure divider
+        , pure $ HH.span [ HP.class_ $ HH.ClassName "card-subtitle" ]
+            [ HH.text $
+                (if response.count == 0
+                then "Showing 0"
+                else
+                    "Showing " <> show (1 + ((page - 1) * pageSize))
+                    <> "-" <> show (min response.count (page * pageSize))
+                    <> " out of " <> show response.count)
+                <> case tab of
+                    GameHeader.Players -> " players"
+                    GameHeader.Teams -> " teams" ]
+        , case Tuple tab playerInfo' of
+            Tuple GameHeader.Players (Just playerInfo) | not game.hasPlayerProfile -> pure $ HH.button
                 [ HP.class_ $ ClassName "card-title-button primary-button"
-                , HE.onClick $ Just <<< ShowCreateProfileModal game playerInfo
+                , HE.onClick $ Just <<< ShowCreateProfileModal game tab playerInfo
                 ]
                 [ HH.i [ HP.class_ $ HH.ClassName "fas fa-user-plus button-icon" ] []
-                , HH.text "Create profile"
+                , HH.text "Create your profile"
+                ]
+            Tuple GameHeader.Teams (Just playerInfo) | not game.hasTeamProfile -> pure $ HH.button
+                [ HP.class_ $ ClassName "card-title-button primary-button"
+                , HE.onClick $ Just <<< ShowCreateProfileModal game tab playerInfo
+                ]
+                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-user-plus button-icon" ] []
+                , HH.text "Create team profile"
                 ]
             _ -> []
         ]
-    , createProfile $ Just <<< HandleCreateProfileMessage
+    , createProfile $ Just <<< HandleCreateProfileMessage tab
     ]
     <>
-    if Array.null profiles
+    if Array.null response.profiles
     then pure $
         HH.div [ HP.class_ $ ClassName "card-section" ]
         [ HH.p_ [ HH.text "No profiles satisfy specified filters." ] ]
     else
-        (profiles # mapWithIndex \index { nickname, summary, fieldValues, updated, updatedSeconds } ->
+        (response.profiles # mapWithIndex \index { nickname, summary, fieldValues, updated, updatedSeconds } ->
             HH.div [ HP.class_ $ ClassName "card-section" ] $
             [ HH.h3 [ HP.class_ $ ClassName "profile-title" ]
                 [ navigationAnchorIndexed (SProxy :: SProxy "players") index
@@ -126,13 +166,13 @@ render (Profiles game profiles playerInfo') =
             <> (Array.catMaybes $ game.fields <#> \field -> let
                 fieldValue = fieldValues # find \ { fieldKey } -> field.key == fieldKey
                 in
-                case { type: field.type, fieldValue } of
-                { type: 1, fieldValue: Just { url: Just url' } } -> Just $
+                case { tab, type: field.type, fieldValue } of
+                { tab: GameHeader.Players, type: 1, fieldValue: Just { url: Just url' } } -> Just $
                     HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
                     [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
                     , HH.a [ HP.class_ $ HH.ClassName "profile-field-label", HP.href url' ] [ HH.text field.label ]
                     ]
-                { type: 2, fieldValue: Just { optionKey: Just optionKey' } } -> let
+                { tab: GameHeader.Players, type: 2, fieldValue: Just { optionKey: Just optionKey' } } -> let
                     fieldOption' = field.options >>= find (\{ key } -> key == optionKey')
                     in
                     fieldOption' <#> \{ option } ->
@@ -141,7 +181,29 @@ render (Profiles game profiles playerInfo') =
                         , HH.span [ HP.class_ $ HH.ClassName "profile-field-label" ] [ HH.text $ field.label <> ": " ]
                         , HH.text option
                         ]
-                { type: 3, fieldValue: Just { optionKeys: Just optionKeys' } } -> let
+                { tab: GameHeader.Teams, type: 2, fieldValue: Just { optionKeys: Just optionKeys' } } -> let
+                    fieldOptions' = field.options <#> Array.filter \{ key } -> Array.elem key optionKeys'
+                    in
+                    case fieldOptions' of
+                    Just fieldOptions | not $ Array.null fieldOptions -> Just $
+                        HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
+                        [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
+                        , HH.span [ HP.class_ $ HH.ClassName "profile-field-label" ] [ HH.text $ field.label <> ": " ]
+                        , HH.text $ intercalate ", " (fieldOptions <#> _.option)
+                        ]
+                    _ -> Nothing
+                { tab: GameHeader.Players, type: 3, fieldValue: Just { optionKeys: Just optionKeys' } } -> let
+                    fieldOptions' = field.options <#> Array.filter \{ key } -> Array.elem key optionKeys'
+                    in
+                    case fieldOptions' of
+                    Just fieldOptions | not $ Array.null fieldOptions -> Just $
+                        HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
+                        [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
+                        , HH.span [ HP.class_ $ HH.ClassName "profile-field-label" ] [ HH.text $ field.label <> ": " ]
+                        , HH.text $ intercalate ", " (fieldOptions <#> _.option)
+                        ]
+                    _ -> Nothing
+                { tab: GameHeader.Teams, type: 3, fieldValue: Just { optionKeys: Just optionKeys' } } -> let
                     fieldOptions' = field.options <#> Array.filter \{ key } -> Array.elem key optionKeys'
                     in
                     case fieldOptions' of
@@ -155,39 +217,94 @@ render (Profiles game profiles playerInfo') =
                 _ ->  Nothing)
             <> (summary <#> \paragraph -> HH.p [ HP.class_ $ HH.ClassName "profile-summary" ] [ HH.text paragraph ])
         )
+    <> (pure $
+        HH.div [ HP.class_ $ HH.ClassName "card-footer" ]
+            [ HH.div [ HP.class_$ HH.ClassName "pagination" ]
+                [ HH.button
+                    [ HP.class_ $ HH.ClassName "pagination-button"
+                    , HP.disabled $ page == 1
+                    , HE.onClick $ Just <<< ChangePage 1
+                    ]
+                    [ HH.text "First" ]
+                , HH.button
+                    [ HP.class_ $ HH.ClassName "pagination-button"
+                    , HP.disabled $ page == 1
+                    , HE.onClick $ Just <<< ChangePage (page - 1)
+                    ]
+                    [ HH.text "Previous" ]
+                , HH.span [ HP.class_ $ HH.ClassName "pagination-page" ] [ HH.text $ show page <> "/" <> show (totalPages response.count) ]
+                , HH.button
+                    [ HP.class_ $ HH.ClassName "pagination-button"
+                    , HP.disabled $ page == (totalPages response.count)
+                    , HE.onClick $ Just <<< ChangePage (page + 1)
+                    ]
+                    [ HH.text "Next" ]
+                , HH.button
+                    [ HP.class_ $ HH.ClassName "pagination-button"
+                    , HP.disabled $ page == (totalPages response.count)
+                    , HE.onClick $ Just <<< ChangePage (totalPages response.count)
+                    ]
+                    [ HH.text "Last" ]
+                ]
+            ]
+        )
 
-loadProfiles :: forall left. View.OkContent -> Array FilterProfiles.Field -> Async left State
-loadProfiles game @ { handle } fields = Async.unify do
-    let empty = Empty game
-    let filterPairs = fields
+loadProfiles :: forall left. View.OkContent -> GameHeader.Tab -> ProfilePage -> Array FilterProfiles.Field -> Async left State
+loadProfiles game tab page filters = Async.unify do
+    let empty = Empty (Input game tab)
+    let tabPair =
+            case tab of
+            GameHeader.Players -> "ilk=1"
+            GameHeader.Teams -> "ilk=2"
+    let pagePair = "page=" <> show page
+    let filterPairs = filters
             <#> (\field -> field.options
                 <#> \option -> field.key <> "=" <> option.key)
             # join
             # intercalate "&"
-    let filterQuery = if String.null filterPairs then "" else "?" <> filterPairs
+    let filterQuery = "?" <> tabPair <> "&" <> pagePair
+            <> if String.null filterPairs then "" else "&" <> filterPairs
     response <- Fetch.fetch_
-            ("/api/profiles/by-handle/" <> handle <> filterQuery)
+            ("/api/profiles/by-handle/" <> game.handle <> filterQuery)
         # lmap (const empty)
     content <- case FetchRes.status response of
         200 -> FetchRes.text response >>= Json.readJSON # lmap (const empty)
         _ -> Async.left empty
     playerInfo' <- H.liftEffect getPlayerInfo
-    pure $ Profiles game content playerInfo'
+    pure $ Profiles game tab page filters content playerInfo'
 
 handleAction :: forall output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
-handleAction (Init game) = do
-    state <- H.lift $ loadProfiles game []
-    H.put state
+handleAction Init = do
+    state <- H.get
+    case state of
+        Empty (Input game tab) -> do
+            state' <- H.lift $ loadProfiles game tab 1 []
+            H.put state'
+        _ -> pure unit
+handleAction (Receive (Input game tab)) = do
+    state' <- H.lift $ loadProfiles game tab 1 []
+    H.put state'
     pure unit
-handleAction (ShowCreateProfileModal game playerInfo event) = do
+handleAction (ChangePage page mouseEvent) = do
+    state <- H.get
+    case state of
+        Profiles game tab _ filters _ playerInfo -> do
+            newState <- H.lift $ loadProfiles game tab page filters
+            H.put newState
+        _ -> pure unit
+
+handleAction (ShowCreateProfileModal game tab playerInfo event) = do
     H.liftEffect $ preventDefault $ toEvent event
-    Modal.showWith { game, playerInfo } (SProxy :: SProxy "createProfile")
-handleAction (HandleCreateProfileMessage message) = do
+    Modal.showWith { game, tab, playerInfo } (SProxy :: SProxy "createProfile")
+handleAction (HandleCreateProfileMessage tab message) = do
     Modal.hide (SProxy :: SProxy "createProfile")
     case message of
         Modal.Inner (CreateProfile.ProfileCreated handle) ->
-            H.liftEffect $ navigate_ $ "/games/" <> trim handle
+            H.liftEffect $ navigate_ $ "/games/" <> trim handle <>
+                case tab of
+                GameHeader.Players -> "/players"
+                GameHeader.Teams -> "/teams"
         _ -> pure unit
 
 handleQuery
@@ -198,30 +315,29 @@ handleQuery (ApplyFilters fields send) = do
     state <- H.get
     case state of
         Empty _ -> pure $ Just send
-        Profiles game _ _ -> do
-            state' <- H.lift $ loadProfiles game fields
+        Profiles game tab _ _ _ _ -> do
+            state' <- H.lift $ loadProfiles game tab 1 fields
             H.put state'
             pure $ Just send
 
-component
-    :: forall output left
-    .  View.OkContent
-    -> H.Component HH.HTML Query View.OkContent output (Async left)
-component game = mkComponent
+component :: forall output left.
+    H.Component HH.HTML Query Input output (Async left)
+component = mkComponent
     { initialState: Empty
     , render
     , eval: mkEval $ defaultEval
         { handleAction = handleAction
         , handleQuery = handleQuery
-        , initialize = Just $ Init game
-        , receive = Just <<< Init
+        , initialize = Just $ Init
+        , receive = Just <<< Receive
         }
     }
 
 gameProfiles
     :: forall query children left
     .  View.OkContent
+    -> GameHeader.Tab
     -> HH.ComponentHTML
         query (gameProfiles :: Slot Unit | children) (Async left)
-gameProfiles game = HH.slot
-    (SProxy :: SProxy "gameProfiles") unit (component game) game absurd
+gameProfiles game tab = HH.slot
+    (SProxy :: SProxy "gameProfiles") unit component (Input game tab) absurd

@@ -25,12 +25,14 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
+import TeamTavern.Client.Components.CloseButton (closeButton)
 import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.MultiSelect (multiSelectIndexed)
 import TeamTavern.Client.Components.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.SingleSelect (singleSelectIndexed)
 import TeamTavern.Client.Components.SingleSelect as SingleSelect
+import TeamTavern.Client.Game.GameHeader as GameHeader
 import TeamTavern.Client.Script.Cookie (PlayerInfo)
 import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass, otherErrorClass)
 import TeamTavern.Server.Game.View.SendResponse as View
@@ -38,17 +40,23 @@ import TeamTavern.Server.Profile.Create.SendResponse as Create
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
-type Input = { game :: View.OkContent, playerInfo :: PlayerInfo }
+type Input =
+    { game :: View.OkContent
+    , tab :: GameHeader.Tab
+    , playerInfo :: PlayerInfo
+    }
 
 data Action
     = SummaryInput String
     | UrlValueInput String String
     | Create Event
+    | Close
 
-data Message = ProfileCreated String
+data Message = ProfileCreated String | CloseClicked
 
 type State =
     { game :: View.OkContent
+    , tab :: GameHeader.Tab
     , playerInfo :: PlayerInfo
     , summary :: String
     , summaryError :: Boolean
@@ -96,7 +104,8 @@ fieldLabel key label icon required domain =
 
 fieldInput
     :: forall left
-    .  Array { fieldKey :: String }
+    .  GameHeader.Tab
+    -> Array { fieldKey :: String }
     -> Array { fieldKey :: String }
     ->  { key :: String
         , label :: String
@@ -107,7 +116,7 @@ fieldInput
         , options :: Maybe (Array { key :: String , option :: String })
         }
     ->  H.ComponentHTML Action ChildSlots (Async left)
-fieldInput urlValueErrors missingErrors { key, type: 1, label, icon, required, domain: Just domain } = let
+fieldInput GameHeader.Players urlValueErrors missingErrors { key, type: 1, label, icon, required, domain: Just domain } = let
     urlError = urlValueErrors # any (_.fieldKey >>> (_ == key))
     missingError = missingErrors # any (_.fieldKey >>> (_ == key))
     in
@@ -125,7 +134,7 @@ fieldInput urlValueErrors missingErrors { key, type: 1, label, icon, required, d
         [ HP.class_ $ inputErrorClass missingError ]
         [ HH.text $ label <> " is required." ]
     ]
-fieldInput _ _ { key, type: 2, label, icon, required, options: Just options } =
+fieldInput GameHeader.Players _ _ { key, type: 2, label, icon, required, options: Just options } =
     HH.div [ HP.class_ $ HH.ClassName "input-group" ]
     [ fieldLabel key label icon required Nothing
     , singleSelectIndexed (SProxy :: SProxy "singleSelectField") key
@@ -135,7 +144,7 @@ fieldInput _ _ { key, type: 2, label, icon, required, options: Just options } =
         , comparer: \leftOption rightOption -> leftOption.key == rightOption.key
         }
     ]
-fieldInput _ _ { key, type: 3, label, icon, required, options: Just options } =
+fieldInput GameHeader.Teams _ _ { key, type: 2, label, icon, required, options: Just options } =
     HH.div [ HP.class_ $ HH.ClassName "input-group" ]
     [ fieldLabel key label icon required Nothing
     , multiSelectIndexed (SProxy :: SProxy "multiSelectField") key
@@ -144,15 +153,45 @@ fieldInput _ _ { key, type: 3, label, icon, required, options: Just options } =
         , comparer: \leftOption rightOption -> leftOption.key == rightOption.key
         }
     ]
-fieldInput _ _ _ = HH.div_ []
+fieldInput GameHeader.Players _ _ { key, type: 3, label, icon, required, options: Just options } =
+    HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+    [ fieldLabel key label icon required Nothing
+    , multiSelectIndexed (SProxy :: SProxy "multiSelectField") key
+        { options: options <#> \option -> { option, selected: false }
+        , labeler: _.option
+        , comparer: \leftOption rightOption -> leftOption.key == rightOption.key
+        }
+    ]
+fieldInput GameHeader.Teams _ _ { key, type: 3, label, icon, required, options: Just options } =
+    HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+    [ fieldLabel key label icon required Nothing
+    , multiSelectIndexed (SProxy :: SProxy "multiSelectField") key
+        { options: options <#> \option -> { option, selected: false }
+        , labeler: _.option
+        , comparer: \leftOption rightOption -> leftOption.key == rightOption.key
+        }
+    ]
+fieldInput _ _ _ _ = HH.div_ []
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
-render { summary, summaryError, urlValueErrors, missingErrors, otherError, game } =
+render { summary, summaryError, urlValueErrors, missingErrors, otherError, game, tab } =
     HH.div [ HP.class_ $ HH.ClassName "wide-single-form-container" ] $ pure $ HH.form
     [ HP.class_ $ ClassName "form", HE.onSubmit $ Just <<< Create ] $
-    [ HH.h2 [ HP.class_ $ HH.ClassName "form-heading" ]
-        [ HH.text $ "Create your " <> game.title <> " profile" ] ]
-    <> (game.fields <#> fieldInput urlValueErrors missingErrors) <>
+    [ closeButton Close
+    , HH.h2 [ HP.class_ $ HH.ClassName "form-heading" ]
+        [ HH.text
+            case tab of
+            GameHeader.Players -> "Create your " <> game.title <> " profile"
+            GameHeader.Teams -> "Create your " <> game.title <> " team profile"
+        ]
+    , HH.p [ HP.class_ $ HH.ClassName "form-subheading" ]
+        [ HH.text
+            case tab of
+            GameHeader.Players -> "Describe yourself as a player and let other players find you."
+            GameHeader.Teams -> "Describe players you are looking for and let them find your team."
+        ]
+    ]
+    <> (game.fields <#> fieldInput tab urlValueErrors missingErrors) <>
     [ HH.div [ HP.class_ $ HH.ClassName "input-group" ]
         [ HH.label
             [ HP.class_ $ HH.ClassName "input-label", HP.for "summary" ]
@@ -172,7 +211,10 @@ render { summary, summaryError, urlValueErrors, missingErrors, otherError, game 
         , HP.disabled $ summary == ""
         ]
         [ HH.i [ HP.class_ $ HH.ClassName "fas fa-user-plus button-icon" ] []
-        , HH.text "Create profile"
+        , HH.text
+            case tab of
+            GameHeader.Players -> "Create player profile"
+            GameHeader.Teams -> "Create team profile"
         ]
     , HH.p
         [ HP.class_ $ otherErrorClass otherError ]
@@ -180,7 +222,7 @@ render { summary, summaryError, urlValueErrors, missingErrors, otherError, game 
     ]
 
 sendCreateRequest :: forall left. State -> String -> Async left (Maybe State)
-sendCreateRequest state @ { summary, fieldValues, game } nickname = Async.unify do
+sendCreateRequest state @ { summary, fieldValues, game, tab } nickname = Async.unify do
     response <- Fetch.fetch
         ("/api/profiles/single/" <> game.handle <> "/" <> nickname)
         (  Fetch.method := POST
@@ -193,6 +235,10 @@ sendCreateRequest state @ { summary, fieldValues, game } nickname = Async.unify 
                     || (case optionKeys of
                         Just optionKeys' | not $ Array.null optionKeys' -> true
                         _ -> false)
+            , type:
+                case tab of
+                GameHeader.Players -> 1
+                GameHeader.Teams -> 2
             }
         <> Fetch.credentials := Fetch.Include
         )
@@ -273,12 +319,12 @@ handleAction (Create event) = do
     case newState of
         Nothing -> H.raise $ ProfileCreated state.game.handle
         Just newState' -> H.put newState'
-    pure unit
+handleAction Close = H.raise $ CloseClicked
 
 component :: forall query left.
     H.Component HH.HTML query Input Message (Async left)
 component = H.mkComponent
-    { initialState: \{ game, playerInfo } ->
+    { initialState: \{ game, tab, playerInfo } ->
         { summary: ""
         , summaryError: false
         , fieldValues: game.fields <#> (\field ->
@@ -291,6 +337,7 @@ component = H.mkComponent
         , missingErrors: []
         , otherError: false
         , game
+        , tab
         , playerInfo
         }
     , render

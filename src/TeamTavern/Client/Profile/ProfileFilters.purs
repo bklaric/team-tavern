@@ -1,4 +1,4 @@
-module TeamTavern.Client.Game.FilterProfiles where
+module TeamTavern.Client.Profile.ProfileFilters where
 
 import Prelude
 
@@ -68,7 +68,7 @@ fieldInput field @ { label, icon, options } =
 render :: forall monad. MonadEffect monad =>
     State -> H.ComponentHTML Action ChildSlots monad
 render fields = HH.div [ HP.class_ $ HH.ClassName "card" ]
-    [ HH.h2 [ HP.class_ $ HH.ClassName "card-title" ]
+    [ HH.span [ HP.class_ $ HH.ClassName "card-title" ]
         [ HH.text "Profile filters" ]
     , HH.div [ HP.class_ $ HH.ClassName "card-content" ] $
         map fieldInput fields
@@ -114,6 +114,7 @@ component = H.mkComponent
     , render
     , eval: H.mkEval $ H.defaultEval
         { handleAction = handleAction
+        , receive = Just <<< Receive
         }
     }
 

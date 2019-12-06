@@ -1,4 +1,4 @@
-module TeamTavern.Client.Router where
+module TeamTavern.Client.Router (Query(..), router) where
 
 import Prelude
 
@@ -11,6 +11,9 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import Simple.JSON (read)
+import TeamTavern.Client.Components.Account.AccountHeader as AccountHeader
+import TeamTavern.Client.Components.Footer (footer)
+import TeamTavern.Client.Components.Footer as Footer
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Components.RegisterForm (registerForm)
 import TeamTavern.Client.Components.RegisterForm as RegisterForm
@@ -20,12 +23,17 @@ import TeamTavern.Client.Components.Welcome (welcome)
 import TeamTavern.Client.Components.WelcomeBanner as WelcomeBanner
 import TeamTavern.Client.Game (game)
 import TeamTavern.Client.Game as Game
-import TeamTavern.Client.Home (home)
-import TeamTavern.Client.Home as Home
+import TeamTavern.Client.Game.GameHeader as GameHeader
 import TeamTavern.Client.Home.Games as Games
+import TeamTavern.Client.Pages.About (about)
+import TeamTavern.Client.Pages.About as About
+import TeamTavern.Client.Pages.Account (account)
+import TeamTavern.Client.Pages.Account as Account
+import TeamTavern.Client.Pages.Home (home)
+import TeamTavern.Client.Pages.Home as Home
 import TeamTavern.Client.Player (player)
 import TeamTavern.Client.Player as Player
-import TeamTavern.Client.Script.Navigate (navigate_)
+import TeamTavern.Client.Script.Navigate (navigateReplace_)
 import TeamTavern.Client.SignIn (signIn)
 import TeamTavern.Client.SignIn as SignIn
 
@@ -36,17 +44,21 @@ data Action = Init Foreign String
 data State
     = Empty
     | Home
-    | Game String
+    | About
+    | Account AccountHeader.Tab
+    | Game GameHeader.Handle GameHeader.Tab
     | Player String
     | Register
     | SignIn
     | Welcome { email :: String, nickname :: String, emailSent :: Boolean }
     | NotFound
 
-type ChildSlots =
+type ChildSlots = Footer.ChildSlots
     ( topBar :: TopBar.Slot Unit
     , home :: Home.Slot Unit
+    , about :: About.Slot
     , welcomeBanner :: WelcomeBanner.Slot Unit
+    , account :: Account.Slot
     , games :: Games.Slot Unit
     , game :: Game.Slot Unit
     , player :: Player.Slot Unit
@@ -58,10 +70,10 @@ type ChildSlots =
 
 topBarWithContent
     :: forall query children left
-    .  Array (H.ComponentHTML query (topBar :: TopBar.Slot Unit | children) (Async left))
-    -> H.ComponentHTML query (topBar :: TopBar.Slot Unit | children ) (Async left)
+    .  Array (H.ComponentHTML query (Footer.ChildSlots (topBar :: TopBar.Slot Unit | children)) (Async left))
+    -> H.ComponentHTML query (Footer.ChildSlots (topBar :: TopBar.Slot Unit | children)) (Async left)
 topBarWithContent content =
-    HH.div_ [ topBar, HH.div [ HP.class_ $ HH.ClassName "content" ] content ]
+    HH.div_ [ topBar, HH.div [ HP.class_ $ HH.ClassName "content" ] content, footer ]
 
 singleContent :: forall slots query.
     Array (HH.HTML slots query) -> HH.HTML slots query
@@ -70,8 +82,10 @@ singleContent = HH.div [ HP.class_ $ HH.ClassName "single-content" ]
 render :: forall action left.
     State -> H.ComponentHTML action ChildSlots (Async left)
 render Empty = HH.div_ []
-render Home = HH.div_ [ topBar, home ]
-render (Game handle) = topBarWithContent [ game handle ]
+render Home = HH.div_ [ topBar, home, footer ]
+render About = topBarWithContent [ about ]
+render (Game handle tab) = topBarWithContent [ game handle tab ]
+render (Account tab) = topBarWithContent [ account tab ]
 render (Player nickname) = topBarWithContent [ player nickname ]
 render Register = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ registerForm ] ]
 render SignIn = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ signIn ] ]
@@ -90,6 +104,8 @@ handleAction (Init state route) = do
     newState <- H.liftEffect $ case split (Pattern "/") route of
         ["", ""] ->
             just Home
+        ["", "about"] ->
+            just About
         ["", "register"] ->
             just Register
         ["", "signin"] ->
@@ -97,13 +113,25 @@ handleAction (Init state route) = do
         ["", "welcome"] ->
             case read state of
             Right identifiers -> just $ Welcome identifiers
-            Left _ -> navigate_ "/" *> nothing
+            Left _ -> navigateReplace_ "/" *> nothing
+        ["", "account"] ->
+            (navigateReplace_ $ "/account/profiles") *> nothing
+        ["", "account", "profiles"] ->
+            just $ Account AccountHeader.Profiles
+        ["", "account", "conversations"] ->
+            just $ Account AccountHeader.Conversations
+        ["", "account", "conversations", nickname] ->
+            just $ Account $ AccountHeader.Conversation nickname
         ["", "games", handle] ->
-            just $ Game handle
+            (navigateReplace_ $ "/games/" <> handle <> "/players") *> nothing
+        ["", "games", handle, "players" ] ->
+            just $ Game handle GameHeader.Players
+        ["", "games", handle, "teams" ] ->
+            just $ Game handle GameHeader.Teams
         ["", "players", nickname] ->
             just $ Player nickname
         _ ->
-            navigate_ "/" *> nothing
+            navigateReplace_ "/" *> nothing
     case newState of
         Just newState' -> H.put newState'
         Nothing -> pure unit

@@ -42,8 +42,8 @@ type AddProfileError errors = Variant
 
 addProfileString :: Query
 addProfileString = Query """
-    insert into profile (player_id, game_id, summary)
-    select player.id, game.id, $5
+    insert into profile (player_id, game_id, type, summary)
+    select player.id, game.id, $5, $6
     from session, player, game
     where session.player_id = $1
     and session.token = $2
@@ -55,21 +55,22 @@ addProfileString = Query """
     """
 
 addProfileParameters ::
-    CookieInfo -> Identifiers -> Summary -> Array QueryParameter
-addProfileParameters { id, token } { handle, nickname } summary =
-    id : token : handle : nickname :| summary
+    CookieInfo -> Identifiers -> Int -> Summary -> Array QueryParameter
+addProfileParameters { id, token } { handle, nickname } profileType summary =
+    id : token : handle : nickname : profileType :| summary
 
 addProfile'
     :: forall errors
     .  Client
     -> CookieInfo
     -> Identifiers
+    -> Int
     -> Summary
     -> Async (AddProfileError errors) ProfileId
-addProfile' client cookieInfo identifiers summary = do
+addProfile' client cookieInfo identifiers profileType summary = do
     result <- client
         # query addProfileString
-            (addProfileParameters cookieInfo identifiers summary)
+            (addProfileParameters cookieInfo identifiers profileType summary)
         # label (SProxy :: SProxy "databaseError")
     { profileId } :: { profileId :: Int } <- Result.rows result
         # head
@@ -86,7 +87,7 @@ addProfile
     -> Identifiers
     -> Profile
     -> Async (AddProfileError errors) Unit
-addProfile client cookieInfo identifiers (Profile summary fieldValues ) = do
-    profileId <- addProfile' client cookieInfo identifiers summary
+addProfile client cookieInfo identifiers (Profile profileType summary fieldValues) = do
+    profileId <- addProfile' client cookieInfo identifiers profileType summary
     addFieldValues client profileId fieldValues
     pure unit

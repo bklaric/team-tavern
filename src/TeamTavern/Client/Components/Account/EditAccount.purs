@@ -1,4 +1,5 @@
-module TeamTavern.Client.EditPlayer where
+module TeamTavern.Client.Components.Account.EditAccount
+    (Message(..), Slot, editAccount) where
 
 import Prelude
 
@@ -21,48 +22,60 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
+import TeamTavern.Client.Components.CloseButton (closeButton)
 import TeamTavern.Client.Components.Modal as Modal
+import TeamTavern.Client.Script.Cookie (getPlayerInfo)
+import TeamTavern.Client.Script.Navigate (navigate_)
 import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass, otherErrorClass)
 import TeamTavern.Server.Player.Update.SendResponse as Update
+import TeamTavern.Server.Player.ViewAccount.SendResponse as ViewAccount
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
-type Input =
-    { nickname :: String
-    , about :: Array String
-    }
-
 data Action
-    = NicknameInput String
+    = Init
+    | NicknameInput String
     | AboutInput String
+    | NotifyInput Boolean
     | Update Event
+    | Close
 
-data Message = PlayerUpdated String
+data Message = AccountUpdated String | CloseClicked
 
-type State =
+type LoadedState =
     { originalNickname :: String
     , nickname :: String
     , about :: String
+    , notify :: Boolean
     , nicknameError :: Boolean
     , aboutError :: Boolean
     , nicknameTaken :: Boolean
     , otherError :: Boolean
     }
 
-type Slot = H.Slot (Modal.Query Input (Const Void)) (Modal.Message Message)
+data State
+    = Empty
+    | Error
+    | Loaded LoadedState
+
+type Slot = H.Slot (Modal.Query Unit (Const Void)) (Modal.Message Message) Unit
 
 render :: forall slots. State -> HH.HTML slots Action
-render
+render Empty = HH.div [ HP.class_ $ HH.ClassName "wide-single-form-container" ] []
+render Error = HH.div [ HP.class_ $ HH.ClassName "wide-single-form-container" ] []
+render (Loaded
     { originalNickname
     , nickname
     , about
+    , notify
     , nicknameError
     , aboutError
     , nicknameTaken
     , otherError
-    } = HH.div [ HP.class_ $ HH.ClassName "wide-single-form-container" ] $ pure $ HH.form
+    }) = HH.div [ HP.class_ $ HH.ClassName "wide-single-form-container" ] $ pure $ HH.form
     [ HP.class_ $ H.ClassName "form", HE.onSubmit $ Just <<< Update ]
-    [ HH.h2  [ HP.class_ $ HH.ClassName "form-heading" ]
+    [ closeButton Close
+    , HH.h2  [ HP.class_ $ HH.ClassName "form-heading" ]
         [ HH.text "Edit your account" ]
     , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
         [ HH.label
@@ -83,6 +96,20 @@ render
             [ HP.class_ $ inputErrorClass nicknameTaken ]
             [ HH.text
                 "This nickname is already taken, please pick another one." ]
+        ]
+    , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+        [ HH.label
+            [ HP.class_ $ HH.ClassName "input-label", HP.for "notify" ]
+            [ HH.input
+                [ HP.id_ "notify"
+                , HP.class_ $ HH.ClassName "checkbox-input"
+                , HP.type_ HP.InputCheckbox
+                , HE.onChecked $ Just <<< NotifyInput
+                , HP.checked notify
+                ]
+            , HH.span [ HP.class_ $ HH.ClassName "checkbox-input-label" ]
+                [ HH.text "Send an email when someone messages you" ]
+            ]
         ]
     -- , HH.div_
     --     [ HH.label
@@ -110,11 +137,31 @@ render
         [ HH.text "Something unexpected went wrong! Please try again later." ]
     ]
 
-updatePlayer :: forall left. State -> Async left (Maybe State)
-updatePlayer state @ { originalNickname, nickname, about } = Async.unify do
-    response <- Fetch.fetch ("/api/players/by-nickname/" <> originalNickname)
+loadAccount :: forall left. String -> Async left State
+loadAccount nickname = Async.unify do
+    response <- Fetch.fetch
+        ("/api/players/by-nickname/" <> nickname <> "/account")
+        (Fetch.credentials := Fetch.Include)
+        # lmap (const Error)
+    content :: ViewAccount.OkContent <- case FetchRes.status response of
+        200 -> FetchRes.text response >>= JsonAsync.readJSON # lmap (const Error)
+        _ -> Async.left Error
+    pure $ Loaded
+        { originalNickname: content.nickname
+        , nickname: content.nickname
+        , about: intercalate "\n\n" content.about
+        , notify: content.notify
+        , nicknameError: false
+        , aboutError: false
+        , nicknameTaken: false
+        , otherError: false
+        }
+
+updateAccount :: forall left. LoadedState -> Async left (Maybe LoadedState)
+updateAccount state @ { originalNickname, nickname, about, notify } = Async.unify do
+    response <- Fetch.fetch ("/api/players/by-nickname/" <> nickname)
         (  Fetch.method := PUT
-        <> Fetch.body := Json.writeJSON { nickname, about }
+        <> Fetch.body := Json.writeJSON { nickname, about, notify }
         <> Fetch.credentials := Fetch.Include
         )
         # lmap (const $ Just $ state { otherError = true })
@@ -139,44 +186,58 @@ updatePlayer state @ { originalNickname, nickname, about } = Async.unify do
 
 handleAction :: forall slots left.
     Action -> H.HalogenM State Action slots Message (Async left) Unit
+handleAction Init = do
+    playerInfo <- H.liftEffect getPlayerInfo
+    case playerInfo of
+        Nothing -> H.liftEffect $ navigate_ "/"
+        Just { nickname } -> do
+            state <- H.lift $ loadAccount nickname
+            H.put state
 handleAction (NicknameInput nickname) =
-    H.modify_ (_ { nickname = nickname }) $> unit
+    H.modify_ case _ of
+        Loaded state -> Loaded $ state { nickname = nickname }
+        state -> state
 handleAction (AboutInput about) = do
-    H.modify_ (_ { about = about }) $> unit
+    H.modify_ case _ of
+        Loaded state -> Loaded $ state { about = about }
+        state -> state
+handleAction (NotifyInput notify) = do
+    H.modify_ case _ of
+        Loaded state -> Loaded $ state { notify = notify }
+        state -> state
 handleAction (Update event) = do
     H.liftEffect $ preventDefault event
-    state <- H.gets (_
-        { nicknameError = false
-        , aboutError    = false
-        , nicknameTaken = false
-        , otherError    = false
-        })
-    newState <- H.lift $ updatePlayer state
-    case newState of
-        Nothing -> H.raise $ PlayerUpdated $ trim state.nickname
-        Just newState' -> H.put newState'
-    pure unit
+    state <- H.get
+    case state of
+        Loaded loadedState -> do
+            let resetState = loadedState
+                    { nicknameError = false
+                    , aboutError    = false
+                    , nicknameTaken = false
+                    , otherError    = false
+                    }
+            newState <- H.lift $ updateAccount resetState
+            case newState of
+                Nothing -> H.raise $ AccountUpdated $ trim loadedState.nickname
+                Just newState' -> H.put $ Loaded newState'
+        otherState -> pure unit
+handleAction Close = H.raise CloseClicked
 
-component :: forall query left.
-    H.Component HH.HTML query Input Message (Async left)
+component :: forall query input left.
+    H.Component HH.HTML query input Message (Async left)
 component = H.mkComponent
-    { initialState: \{ nickname, about } ->
-        { originalNickname: nickname
-        , nickname
-        , about: intercalate "\n\n" about
-        , nicknameError: false
-        , aboutError: false
-        , nicknameTaken: false
-        , otherError: false
-        }
+    { initialState: const Empty
     , render
-    , eval: H.mkEval $ H.defaultEval { handleAction = handleAction }
+    , eval: H.mkEval $ H.defaultEval
+        { handleAction = handleAction
+        , initialize = Just Init
+        }
     }
 
-editPlayer
+editAccount
     :: forall query children left
     .  (Modal.Message Message -> Maybe query)
-    -> HH.ComponentHTML query (editPlayer :: Slot Unit | children) (Async left)
-editPlayer handleMessage = HH.slot
-    (SProxy :: SProxy "editPlayer") unit
+    -> HH.ComponentHTML query (editAccount :: Slot | children) (Async left)
+editAccount handleMessage = HH.slot
+    (SProxy :: SProxy "editAccount") unit
     (Modal.component component) unit handleMessage

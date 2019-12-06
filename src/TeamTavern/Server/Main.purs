@@ -34,13 +34,18 @@ import Postmark.Client (Client)
 import Postmark.Client as Postmark
 import TeamTavern.Server.Architecture.Deployment (Deployment(..))
 import TeamTavern.Server.Architecture.Deployment as Deployment
+import TeamTavern.Server.Conversation.Start (start) as Conversation
+import TeamTavern.Server.Conversation.View (view) as Conversation
+import TeamTavern.Server.Conversation.ViewAll (viewAll) as Conversation
 import TeamTavern.Server.Game.Create (create) as Game
 import TeamTavern.Server.Game.Update (handleUpdate) as Game
 import TeamTavern.Server.Game.View (handleView) as Game
 import TeamTavern.Server.Game.ViewAll (handleViewAll) as Game
+import TeamTavern.Server.Infrastructure.Log (logStamped, logt)
 import TeamTavern.Server.Player.Register (register) as Player
 import TeamTavern.Server.Player.Update (update) as Player
 import TeamTavern.Server.Player.View (view) as Player
+import TeamTavern.Server.Player.ViewAccount (viewAccount) as Player
 import TeamTavern.Server.Player.ViewHeader (viewHeader) as Player
 import TeamTavern.Server.Profile.Create (create) as Profile
 import TeamTavern.Server.Profile.Update (update) as Profile
@@ -144,9 +149,10 @@ handleRequest pool client method url cookies body =
             , content: mempty
             }
         else do
-            fromEffect $ log $
-                "404 for method " <> show method <> " and url " <> show url
-            fromEffect $ log $ unsafeStringify errors
+            fromEffect $ logStamped $ "Endpoint 404 Not Found"
+            fromEffect $ logt $
+                "Not found for method " <> show method <> " and url " <> show url
+            fromEffect $ logt $ "Routing resulted in these errors: " <> unsafeStringify errors
             pure { statusCode: 404, headers: MultiMap.empty, content: unsafeStringify errors }
     Right routeValues -> routeValues # match
         { registerPlayer: const $
@@ -155,6 +161,8 @@ handleRequest pool client method url cookies body =
             Player.view pool nickname
         , viewPlayerHeader: \{ id } ->
             Player.viewHeader pool id
+        , viewPlayerAccount: \{ nickname } ->
+            Player.viewAccount pool nickname cookies
         , updatePlayer: \{ nickname } ->
             Player.update pool nickname cookies body
         , startSession: const $
@@ -173,10 +181,16 @@ handleRequest pool client method url cookies body =
             Profile.create pool identifiers cookies body
         , updateProfile: \identifiers ->
             Profile.update pool identifiers cookies body
-        , viewProfilesByGame: \{ handle, filters } ->
-            Profile.viewByGame pool handle filters
-        , viewProfilesByPlayer: \{ nickname } ->
-            Profile.viewByPlayer pool nickname
+        , viewProfilesByGame: \{ handle, ilk, page, filters } ->
+            Profile.viewByGame pool handle ilk page filters
+        , viewProfilesByPlayer: \{ nickname, ilk } ->
+            Profile.viewByPlayer pool nickname ilk
+        , viewAllConversations: const $
+            Conversation.viewAll pool cookies
+        , viewConversation: \{ nickname } ->
+            Conversation.view pool nickname cookies
+        , startConversation: \{ nickname } ->
+            Conversation.start pool client nickname cookies body
         }
         <#> (\response -> response { headers = response.headers <> MultiMap.fromFoldable
                 [ Tuple "Access-Control-Allow-Origin" $ NEL.singleton "http://localhost:1337"

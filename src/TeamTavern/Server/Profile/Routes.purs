@@ -3,9 +3,13 @@ module TeamTavern.Server.Profile.Routes where
 import Jarilo.Junction (type (:<|>), type (:=))
 import Jarilo.Method (Get, Post, Put)
 import Jarilo.Path (type (:>), End)
-import Jarilo.Query (NoQuery, Rest)
+import Jarilo.Query (type (:?), Mandatory, NoQuery, Rest)
 import Jarilo.Route (Route)
 import Jarilo.Segment (Capture, Literal)
+
+type ProfileIlk = Int
+
+type ProfilePage = Int
 
 type Handle = String
 
@@ -31,7 +35,9 @@ type ViewProfilesByGame = Route
     :> Literal "by-handle"
     :> Capture "handle" Handle
     :> End)
-    (Rest "filters")
+    (  Mandatory "ilk" ProfileIlk
+    :? Mandatory "page" ProfilePage
+    :? Rest "filters")
 
 type ViewProfilesByPlayer = Route
     Get
@@ -39,7 +45,7 @@ type ViewProfilesByPlayer = Route
     :> Literal "by-nickname"
     :> Capture "nickname" Nickname
     :> End)
-    NoQuery
+    (Mandatory "ilk" ProfileIlk)
 
 type UpdateProfile = Route
     Put

@@ -5,6 +5,7 @@
     padding: 21px;
     background-color: white;
     color: $text-color;
+    position: relative;
 }
 
 .form-heading {
@@ -13,6 +14,11 @@
     margin-bottom: 28px;
     font-size: 20px;
     line-height: 25px;
+}
+
+.form-subheading {
+    text-align: center;
+    margin-bottom: 28px;
 }
 
 .form-submit-button {
