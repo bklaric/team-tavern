@@ -16,7 +16,6 @@ import Halogen (ClassName(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
-import Halogen.HTML.Properties (InputType(..))
 import Halogen.HTML.Properties as HP
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
@@ -35,11 +34,13 @@ data Action
     = Init
     | NicknameOrEmailInput String
     | PasswordInput String
+    | TogglePasswordVisibility
     | SignIn Event
 
 type State =
     { nicknameOrEmail :: String
     , password :: String
+    , passwordShown :: Boolean
     , nonce :: Maybe String
     , unconfirmedEmail :: Boolean
     , nothingConfirmed :: Boolean
@@ -59,6 +60,7 @@ render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render
     { nicknameOrEmail
     , password
+    , passwordShown
     , nonce
     , unconfirmedEmail
     , nothingConfirmed
@@ -86,12 +88,33 @@ render
         [ HH.label
             [ HP.class_ $ HH.ClassName "input-label", HP.for "password" ]
             [ HH.text "Password" ]
-        , HH.input
-            [ HP.id_ "password"
-            , HP.class_ $ HH.ClassName "text-line-input"
-            , HP.autocomplete false
-            , HP.type_ InputPassword
-            , HE.onValueInput $ Just <<< PasswordInput
+        , HH.div [ HP.class_ $ HH.ClassName "password-input-container" ]
+            [ HH.input
+                [ HP.id_ "password"
+                , HP.class_ $ HH.ClassName "password-input"
+                , HP.type_
+                    if passwordShown
+                    then HP.InputText
+                    else HP.InputPassword
+                , HE.onValueInput $ Just <<< PasswordInput
+                ]
+            , HH.button
+                [ HP.class_ $ HH.ClassName "password-input-button"
+                , HP.type_ HP.ButtonButton
+                , HP.title
+                    if passwordShown
+                    then "Hide password"
+                    else "Show password"
+                , HE.onClick $ Just <<< const TogglePasswordVisibility
+                ]
+                [ HH.i
+                    [ HP.class_ $ HH.ClassName
+                        if passwordShown
+                        then "fas fa-eye-slash"
+                        else "fas fa-eye"
+                    ]
+                    []
+                ]
             ]
         ]
     , HH.button
@@ -170,6 +193,8 @@ handleAction (NicknameOrEmailInput nicknameOrEmail) =
     H.modify_ (_ { nicknameOrEmail = nicknameOrEmail }) <#> const unit
 handleAction (PasswordInput password) =
     H.modify_ (_ { password = password }) <#> const unit
+handleAction TogglePasswordVisibility =
+    H.modify_ (\state -> state { passwordShown = not state.passwordShown })
 handleAction (SignIn event) = do
     H.liftEffect $ preventDefault event
     state <- H.gets (_
@@ -190,6 +215,7 @@ component = H.mkComponent
     { initialState: const
         { nicknameOrEmail: ""
         , password: ""
+        , passwordShown: false
         , nonce: Nothing
         , unconfirmedEmail: false
         , nothingConfirmed: false

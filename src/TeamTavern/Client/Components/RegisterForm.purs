@@ -18,7 +18,7 @@ import Data.Variant (match)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
-import Halogen.HTML.Properties (InputType(..))
+import Halogen.HTML.Properties (ButtonType(..), InputType(..))
 import Halogen.HTML.Properties as HP
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
@@ -33,6 +33,7 @@ data Action
     = EmailInput String
     | NicknameInput String
     | PasswordInput String
+    | TogglePasswordVisibility
     | Register Event
     | Navigate String MouseEvent
 
@@ -40,6 +41,7 @@ type State =
     { email :: String
     , nickname :: String
     , password :: String
+    , passwordShown :: Boolean
     , emailError :: Boolean
     , nicknameError :: Boolean
     , passwordError :: Boolean
@@ -55,6 +57,7 @@ render
     { email
     , nickname
     , password
+    , passwordShown
     , emailError
     , nicknameError
     , passwordError
@@ -116,11 +119,33 @@ render
         [ HH.label
             [ HP.class_ $ HH.ClassName "input-label", HP.for "password" ]
             [ HH.text "Password" ]
-        , HH.input
-            [ HP.id_ "password"
-            , HP.class_ $ HH.ClassName "text-line-input"
-            , HP.type_ InputPassword
-            , HE.onValueInput $ Just <<< PasswordInput
+        , HH.div [ HP.class_ $ HH.ClassName "password-input-container" ]
+            [ HH.input
+                [ HP.id_ "password"
+                , HP.class_ $ HH.ClassName "password-input"
+                , HP.type_
+                    if passwordShown
+                    then InputText
+                    else InputPassword
+                , HE.onValueInput $ Just <<< PasswordInput
+                ]
+            , HH.button
+                [ HP.class_ $ HH.ClassName "password-input-button"
+                , HP.type_ ButtonButton
+                , HP.title
+                    if passwordShown
+                    then "Hide password"
+                    else "Show password"
+                , HE.onClick $ Just <<< const TogglePasswordVisibility
+                ]
+                [ HH.i
+                    [ HP.class_ $ HH.ClassName
+                        if passwordShown
+                        then "fas fa-eye-slash"
+                        else "fas fa-eye"
+                    ]
+                    []
+                ]
             ]
         , HH.p
             [ HP.class_ $ inputErrorClass passwordError ]
@@ -185,11 +210,13 @@ sendRegisterRequest state @ { email, nickname, password } = Async.unify do
 handleAction :: forall slots output left.
     Action -> H.HalogenM State Action slots output (Async left) Unit
 handleAction (EmailInput email) =
-    H.modify_ (_ { email = email }) $> unit
+    H.modify_ (_ { email = email })
 handleAction (NicknameInput nickname) =
-    H.modify_ (_ { nickname = nickname }) $> unit
+    H.modify_ (_ { nickname = nickname })
 handleAction (PasswordInput password) =
-    H.modify_ (_ { password = password }) $> unit
+    H.modify_ (_ { password = password })
+handleAction TogglePasswordVisibility =
+    H.modify_ (\state -> state { passwordShown = not state.passwordShown })
 handleAction (Register event) = do
     H.liftEffect $ preventDefault event
     state <- H.gets (_
@@ -204,7 +231,6 @@ handleAction (Register event) = do
     case newState of
         Right content -> H.liftEffect $ navigate content "/welcome"
         Left newState' -> H.put newState'
-    pure unit
 handleAction (Navigate url event) =
     H.liftEffect $ navigateWithEvent_ url event
 
@@ -215,6 +241,7 @@ component = H.mkComponent
         { email: ""
         , nickname: ""
         , password: ""
+        , passwordShown: false
         , emailError: false
         , nicknameError: false
         , passwordError: false
