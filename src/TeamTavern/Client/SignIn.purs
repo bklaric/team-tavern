@@ -12,19 +12,18 @@ import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..), maybe)
 import Data.Options ((:=))
 import Data.Variant (SProxy(..), match)
-import Halogen (ClassName(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
-import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
+import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor, navigationAnchorClassed)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Script.Cookie (hasPlayerIdCookie)
+import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
 import TeamTavern.Client.Script.Navigate (navigate_)
 import TeamTavern.Client.Script.QueryParams (getQueryParam)
-import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
 import TeamTavern.Client.Snippets.ErrorClasses (otherErrorClass)
 import TeamTavern.Server.Session.Start.SendResponse as Start
 import Web.Event.Event (preventDefault)
@@ -52,7 +51,7 @@ type Slot = H.Slot (Const Void) Void
 
 type ChildSlots =
     ( home :: NavigationAnchor.Slot Unit
-    , codeAnchor :: NavigationAnchor.Slot Unit
+    , forgotPasswordAnchor :: NavigationAnchor.Slot Unit
     , registerAnchor :: NavigationAnchor.Slot Unit
     )
 
@@ -67,7 +66,7 @@ render
     , noSessionStarted
     , otherError
     } = HH.form
-    [ HP.class_ $ ClassName "form", HE.onSubmit $ Just <<< SignIn ]
+    [ HP.class_ $ HH.ClassName "form", HE.onSubmit $ Just <<< SignIn ]
     [ HH.h2 [ HP.class_ $ HH.ClassName "form-heading" ]
         [ HH.text "Sign in to "
         , navigationAnchor (SProxy :: SProxy "home")
@@ -87,7 +86,13 @@ render
     , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
         [ HH.label
             [ HP.class_ $ HH.ClassName "input-label", HP.for "password" ]
-            [ HH.text "Password" ]
+            [ HH.text "Password"
+            , navigationAnchorClassed (SProxy :: SProxy "forgotPasswordAnchor")
+                { class_: "forgot-password"
+                , path: "/forgot-password"
+                , content: HH.text "Forgot password?"
+                }
+            ]
         , HH.div [ HP.class_ $ HH.ClassName "password-input-container" ]
             [ HH.input
                 [ HP.id_ "password"
@@ -118,10 +123,10 @@ render
             ]
         ]
     , HH.button
-        [ HP.class_ $ ClassName "form-submit-button"
+        [ HP.class_ $ HH.ClassName "form-submit-button"
         , HP.disabled $ nicknameOrEmail == "" || password == ""
         ]
-        [ HH.i [ HP.class_ $ H.ClassName "fas fa-sign-in-alt button-icon" ] []
+        [ HH.i [ HP.class_ $ HH.ClassName "fas fa-sign-in-alt button-icon" ] []
         , HH.text "Sign in"
         ]
     , HH.p
