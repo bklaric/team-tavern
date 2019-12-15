@@ -19,6 +19,7 @@ import TeamTavern.Client.Components.ForgotPassword as ForgotPAssword
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Components.RegisterForm (registerForm)
 import TeamTavern.Client.Components.RegisterForm as RegisterForm
+import TeamTavern.Client.Components.ResetPasswordSent (resetPasswordSent)
 import TeamTavern.Client.Components.TopBar (topBar)
 import TeamTavern.Client.Components.TopBar as TopBar
 import TeamTavern.Client.Components.Welcome (welcome)
@@ -53,6 +54,7 @@ data State
     | Register
     | SignIn
     | ForgotPassword
+    | ResetPasswordSent { email :: String }
     | Welcome { email :: String, nickname :: String, emailSent :: Boolean }
     | NotFound
 
@@ -94,6 +96,7 @@ render (Player nickname) = topBarWithContent [ player nickname ]
 render Register = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ registerForm ] ]
 render SignIn = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ signIn ] ]
 render ForgotPassword = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ forgotPassword ] ]
+render (ResetPasswordSent resetPasswordData) = singleContent [ resetPasswordSent resetPasswordData ]
 render (Welcome welcomeData) = singleContent [ welcome welcomeData ]
 render NotFound = HH.p_ [ HH.text "You're fucken lost, mate." ]
 
@@ -117,6 +120,10 @@ handleAction (Init state route) = do
             just SignIn
         ["", "forgot-password"] ->
             just ForgotPassword
+        ["", "reset-password-sent"] ->
+            case read state of
+            Right email -> just $ ResetPasswordSent email
+            Left _ -> navigateReplace_ "/" *> nothing
         ["", "welcome"] ->
             case read state of
             Right identifiers -> just $ Welcome identifiers

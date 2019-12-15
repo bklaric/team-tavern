@@ -24,7 +24,7 @@ import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Script.Cookie (hasPlayerIdCookie)
 import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
-import TeamTavern.Client.Script.Navigate (navigate_)
+import TeamTavern.Client.Script.Navigate (navigate, navigate_)
 import TeamTavern.Client.Snippets.ErrorClasses (otherErrorClass)
 import TeamTavern.Server.Password.Forgot.SendResponse as Forgot
 import Web.Event.Event as Event
@@ -132,7 +132,8 @@ handleAction (ResetPassword event) = do
         })
     newState <- H.lift $ sendPasswordResetRequest state
     case newState of
-        Nothing -> H.liftEffect $ navigate_ "/"
+        Nothing -> H.liftEffect $
+            navigate { email: state.email } "/reset-password-sent"
         Just newState' -> H.put newState'
     pure unit
 
