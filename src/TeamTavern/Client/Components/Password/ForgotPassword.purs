@@ -1,4 +1,4 @@
-module TeamTavern.Client.Components.ForgotPassword (Slot, forgotPassword) where
+module TeamTavern.Client.Components.Password.ForgotPassword (Slot, forgotPassword) where
 
 import Prelude
 

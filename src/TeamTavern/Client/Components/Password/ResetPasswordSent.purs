@@ -1,4 +1,4 @@
-module TeamTavern.Client.Components.ResetPasswordSent where
+module TeamTavern.Client.Components.Password.ResetPasswordSent where
 
 import Prelude
 

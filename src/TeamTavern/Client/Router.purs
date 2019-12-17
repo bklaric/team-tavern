@@ -14,15 +14,15 @@ import Simple.JSON (read)
 import TeamTavern.Client.Components.Account.AccountHeader as AccountHeader
 import TeamTavern.Client.Components.Footer (footer)
 import TeamTavern.Client.Components.Footer as Footer
-import TeamTavern.Client.Components.ForgotPassword (forgotPassword)
-import TeamTavern.Client.Components.ForgotPassword as ForgotPassword
+import TeamTavern.Client.Components.Password.ForgotPassword (forgotPassword)
+import TeamTavern.Client.Components.Password.ForgotPassword as ForgotPassword
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Components.RegisterForm (registerForm)
 import TeamTavern.Client.Components.RegisterForm as RegisterForm
-import TeamTavern.Client.Components.ResetPassword (resetPassword)
-import TeamTavern.Client.Components.ResetPassword as ResetPassword
-import TeamTavern.Client.Components.ResetPasswordSent (resetPasswordSent)
-import TeamTavern.Client.Components.ResetPasswordSuccess (resetPasswordSuccess)
+import TeamTavern.Client.Components.Password.ResetPassword (resetPassword)
+import TeamTavern.Client.Components.Password.ResetPassword as ResetPassword
+import TeamTavern.Client.Components.Password.ResetPasswordSent (resetPasswordSent)
+import TeamTavern.Client.Components.Password.ResetPasswordSuccess (resetPasswordSuccess)
 import TeamTavern.Client.Components.TopBar (topBar)
 import TeamTavern.Client.Components.TopBar as TopBar
 import TeamTavern.Client.Components.Welcome (welcome)
