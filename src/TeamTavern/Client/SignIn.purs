@@ -12,19 +12,18 @@ import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..), maybe)
 import Data.Options ((:=))
 import Data.Variant (SProxy(..), match)
-import Halogen (ClassName(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
-import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
+import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor, navigationAnchorClassed)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Script.Cookie (hasPlayerIdCookie)
+import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
 import TeamTavern.Client.Script.Navigate (navigate_)
 import TeamTavern.Client.Script.QueryParams (getQueryParam)
-import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
 import TeamTavern.Client.Snippets.ErrorClasses (otherErrorClass)
 import TeamTavern.Server.Session.Start.SendResponse as Start
 import Web.Event.Event (preventDefault)
@@ -52,7 +51,7 @@ type Slot = H.Slot (Const Void) Void
 
 type ChildSlots =
     ( home :: NavigationAnchor.Slot Unit
-    , codeAnchor :: NavigationAnchor.Slot Unit
+    , forgotPasswordAnchor :: NavigationAnchor.Slot Unit
     , registerAnchor :: NavigationAnchor.Slot Unit
     )
 
@@ -67,7 +66,7 @@ render
     , noSessionStarted
     , otherError
     } = HH.form
-    [ HP.class_ $ ClassName "form", HE.onSubmit $ Just <<< SignIn ]
+    [ HP.class_ $ HH.ClassName "form", HE.onSubmit $ Just <<< SignIn ]
     [ HH.h2 [ HP.class_ $ HH.ClassName "form-heading" ]
         [ HH.text "Sign in to "
         , navigationAnchor (SProxy :: SProxy "home")
@@ -87,7 +86,13 @@ render
     , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
         [ HH.label
             [ HP.class_ $ HH.ClassName "input-label", HP.for "password" ]
-            [ HH.text "Password" ]
+            [ HH.text "Password"
+            , navigationAnchorClassed (SProxy :: SProxy "forgotPasswordAnchor")
+                { class_: "forgot-password"
+                , path: "/forgot-password"
+                , content: HH.text "Forgot password?"
+                }
+            ]
         , HH.div [ HP.class_ $ HH.ClassName "password-input-container" ]
             [ HH.input
                 [ HP.id_ "password"
@@ -118,10 +123,10 @@ render
             ]
         ]
     , HH.button
-        [ HP.class_ $ ClassName "form-submit-button"
+        [ HP.class_ $ HH.ClassName "form-submit-button"
         , HP.disabled $ nicknameOrEmail == "" || password == ""
         ]
-        [ HH.i [ HP.class_ $ H.ClassName "fas fa-sign-in-alt button-icon" ] []
+        [ HH.i [ HP.class_ $ HH.ClassName "fas fa-sign-in-alt button-icon" ] []
         , HH.text "Sign in"
         ]
     , HH.p
@@ -179,20 +184,17 @@ sendSignInRequest state @ { nicknameOrEmail, password, nonce } = Async.unify do
 handleAction :: forall output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
 handleAction Init = do
-    isSignedIn <- H.liftEffect hasPlayerIdCookie
-    if isSignedIn
-        then H.liftEffect $ navigate_ "/"
-        else do
-            nonce <- getQueryParam "nonce" # H.liftEffect
-            H.modify_ (_ { nonce = nonce })
+    H.liftEffect $ whenM hasPlayerIdCookie $ navigate_ "/"
+    nonce <- H.liftEffect $ getQueryParam "nonce"
+    H.modify_ (_ { nonce = nonce })
     H.liftEffect do
         setMetaTitle "Sign in | TeamTavern"
         setMetaDescription "Sign in to TeamTavern."
         setMetaUrl
 handleAction (NicknameOrEmailInput nicknameOrEmail) =
-    H.modify_ (_ { nicknameOrEmail = nicknameOrEmail }) <#> const unit
+    H.modify_ (_ { nicknameOrEmail = nicknameOrEmail })
 handleAction (PasswordInput password) =
-    H.modify_ (_ { password = password }) <#> const unit
+    H.modify_ (_ { password = password })
 handleAction TogglePasswordVisibility =
     H.modify_ (\state -> state { passwordShown = not state.passwordShown })
 handleAction (SignIn event) = do
@@ -207,7 +209,6 @@ handleAction (SignIn event) = do
     case newState of
         Nothing -> H.liftEffect $ navigate_ "/"
         Just newState' -> H.put newState'
-    pure unit
 
 component :: forall query input output left.
     H.Component HH.HTML query input output (Async left)

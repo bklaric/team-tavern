@@ -14,9 +14,15 @@ import Simple.JSON (read)
 import TeamTavern.Client.Components.Account.AccountHeader as AccountHeader
 import TeamTavern.Client.Components.Footer (footer)
 import TeamTavern.Client.Components.Footer as Footer
+import TeamTavern.Client.Components.Password.ForgotPassword (forgotPassword)
+import TeamTavern.Client.Components.Password.ForgotPassword as ForgotPassword
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Components.RegisterForm (registerForm)
 import TeamTavern.Client.Components.RegisterForm as RegisterForm
+import TeamTavern.Client.Components.Password.ResetPassword (resetPassword)
+import TeamTavern.Client.Components.Password.ResetPassword as ResetPassword
+import TeamTavern.Client.Components.Password.ResetPasswordSent (resetPasswordSent)
+import TeamTavern.Client.Components.Password.ResetPasswordSuccess (resetPasswordSuccess)
 import TeamTavern.Client.Components.TopBar (topBar)
 import TeamTavern.Client.Components.TopBar as TopBar
 import TeamTavern.Client.Components.Welcome (welcome)
@@ -50,6 +56,10 @@ data State
     | Player String
     | Register
     | SignIn
+    | ForgotPassword
+    | ResetPasswordSent { email :: String }
+    | ResetPassword
+    | ResetPasswordSuccess
     | Welcome { email :: String, nickname :: String, emailSent :: Boolean }
     | NotFound
 
@@ -66,6 +76,8 @@ type ChildSlots = Footer.ChildSlots
     , homeAnchor :: NavigationAnchor.Slot Unit
     , signInAnchor :: NavigationAnchor.Slot Unit
     , registerForm :: RegisterForm.Slot Unit
+    , forgotPassword :: ForgotPassword.Slot
+    , resetPassword :: ResetPassword.Slot
     )
 
 topBarWithContent
@@ -89,6 +101,10 @@ render (Account tab) = topBarWithContent [ account tab ]
 render (Player nickname) = topBarWithContent [ player nickname ]
 render Register = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ registerForm ] ]
 render SignIn = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ signIn ] ]
+render ForgotPassword = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ forgotPassword ] ]
+render (ResetPasswordSent resetPasswordData) = singleContent [ resetPasswordSent resetPasswordData ]
+render ResetPassword = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ resetPassword ] ]
+render ResetPasswordSuccess = singleContent [ resetPasswordSuccess ]
 render (Welcome welcomeData) = singleContent [ welcome welcomeData ]
 render NotFound = HH.p_ [ HH.text "You're fucken lost, mate." ]
 
@@ -110,6 +126,16 @@ handleAction (Init state route) = do
             just Register
         ["", "signin"] ->
             just SignIn
+        ["", "forgot-password"] ->
+            just ForgotPassword
+        ["", "reset-password-sent"] ->
+            case read state of
+            Right email -> just $ ResetPasswordSent email
+            Left _ -> navigateReplace_ "/" *> nothing
+        ["", "reset-password"] ->
+            just ResetPassword
+        ["", "reset-password-success"] ->
+            just ResetPasswordSuccess
         ["", "welcome"] ->
             case read state of
             Right identifiers -> just $ Welcome identifiers

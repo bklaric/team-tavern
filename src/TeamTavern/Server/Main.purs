@@ -42,6 +42,8 @@ import TeamTavern.Server.Game.Update (handleUpdate) as Game
 import TeamTavern.Server.Game.View (handleView) as Game
 import TeamTavern.Server.Game.ViewAll (handleViewAll) as Game
 import TeamTavern.Server.Infrastructure.Log (logStamped, logt)
+import TeamTavern.Server.Password.Forgot (forgot) as Password
+import TeamTavern.Server.Password.Reset (reset) as Password
 import TeamTavern.Server.Player.Register (register) as Player
 import TeamTavern.Server.Player.Update (update) as Player
 import TeamTavern.Server.Player.View (view) as Player
@@ -165,6 +167,10 @@ handleRequest pool client method url cookies body =
             Player.viewAccount pool nickname cookies
         , updatePlayer: \{ nickname } ->
             Player.update pool nickname cookies body
+        , forgotPassword: const $
+            Password.forgot pool client cookies body
+        , resetPassword: const $
+            Password.reset pool cookies body
         , startSession: const $
             Session.start pool cookies body
         , endSession: const
