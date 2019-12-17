@@ -69,14 +69,14 @@ render (Games nickname games') = HH.div [ HP.class_ $ HH.ClassName "games" ] $
                 , HP.href $ "/games/" <> handle <> "/players"
                 , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/players") true
                 ]
-                [ HH.text $ show playerCount <> " players" ]
+                [ HH.text $ show playerCount <> if playerCount == 1 then " player" else " players" ]
             , whiteDivider
             , HH.a
                 [ HP.class_ $ ClassName "game-card-profile-count"
                 , HP.href $ "/games/" <> handle <> "/teams"
                 , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/teams") true
                 ]
-                [ HH.text $ show teamCount <> " teams" ]
+                [ HH.text $ show teamCount <> if teamCount == 1 then " team" else " teams" ]
             ]
         ]
         <> (description <#> \paragraph ->
