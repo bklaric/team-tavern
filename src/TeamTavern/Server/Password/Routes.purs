@@ -5,8 +5,7 @@ import Jarilo.Method (Post)
 import Jarilo.Path (type (:>), End)
 import Jarilo.Query (NoQuery)
 import Jarilo.Route (Route)
-import Jarilo.Segment (Capture, Literal)
-import TeamTavern.Server.Player.Domain.Id (Id)
+import Jarilo.Segment (Literal)
 
 type ForgotPassword = Route
     Post
@@ -17,11 +16,9 @@ type ForgotPassword = Route
 type ResetPassword = Route
     Post
     (  Literal "reset-password"
-    :> Capture "id" Id
-    :> Literal "header"
     :> End)
     NoQuery
 
 type PasswordRoutes
-    =    "forgotPassword"    := ForgotPassword
-    -- :<|> "resetPassword"     := ResetPassword
+    =    "forgotPassword" := ForgotPassword
+    :<|> "resetPassword"  := ResetPassword

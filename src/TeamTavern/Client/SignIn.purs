@@ -184,20 +184,17 @@ sendSignInRequest state @ { nicknameOrEmail, password, nonce } = Async.unify do
 handleAction :: forall output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
 handleAction Init = do
-    isSignedIn <- H.liftEffect hasPlayerIdCookie
-    if isSignedIn
-        then H.liftEffect $ navigate_ "/"
-        else do
-            nonce <- getQueryParam "nonce" # H.liftEffect
-            H.modify_ (_ { nonce = nonce })
+    H.liftEffect $ whenM hasPlayerIdCookie $ navigate_ "/"
+    nonce <- H.liftEffect $ getQueryParam "nonce"
+    H.modify_ (_ { nonce = nonce })
     H.liftEffect do
         setMetaTitle "Sign in | TeamTavern"
         setMetaDescription "Sign in to TeamTavern."
         setMetaUrl
 handleAction (NicknameOrEmailInput nicknameOrEmail) =
-    H.modify_ (_ { nicknameOrEmail = nicknameOrEmail }) <#> const unit
+    H.modify_ (_ { nicknameOrEmail = nicknameOrEmail })
 handleAction (PasswordInput password) =
-    H.modify_ (_ { password = password }) <#> const unit
+    H.modify_ (_ { password = password })
 handleAction TogglePasswordVisibility =
     H.modify_ (\state -> state { passwordShown = not state.passwordShown })
 handleAction (SignIn event) = do
@@ -212,7 +209,6 @@ handleAction (SignIn event) = do
     case newState of
         Nothing -> H.liftEffect $ navigate_ "/"
         Just newState' -> H.put newState'
-    pure unit
 
 component :: forall query input output left.
     H.Component HH.HTML query input output (Async left)

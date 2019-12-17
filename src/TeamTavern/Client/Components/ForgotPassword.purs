@@ -1,6 +1,5 @@
 module TeamTavern.Client.Components.ForgotPassword (Slot, forgotPassword) where
 
-
 import Prelude
 
 import Async (Async)
@@ -119,8 +118,8 @@ handleAction :: forall output left.
 handleAction Init = do
     H.liftEffect $ whenM hasPlayerIdCookie $ navigate_ "/"
     H.liftEffect do
-        setMetaTitle "Reset your password | TeamTavern"
-        setMetaDescription "Reset your TeamTavern password."
+        setMetaTitle "Forgot password | TeamTavern"
+        setMetaDescription "Request a password reset email."
         setMetaUrl
 handleAction (EmailInput email) =
     H.modify_ (_ { email = email }) <#> const unit
