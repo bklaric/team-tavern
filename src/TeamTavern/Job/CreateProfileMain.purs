@@ -1,4 +1,4 @@
-module TeamTavern.Job.Main (main) where
+module TeamTavern.Job.CreateProfileMain (main) where
 
 import Prelude
 
@@ -75,7 +75,7 @@ createProfileNotify pool client = do
             , message:
                 { to: email
                 , from: "TeamTavern admin@teamtavern.net"
-                , subject: notNull "Is everything alright?"
+                , subject: notNull "Create a profile"
                 , htmlBody: notNull $
                     "Hi " <> nickname <> ",<br /><br />"
                     <> "You have successfully registered to TeamTavern, "

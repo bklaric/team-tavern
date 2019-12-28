@@ -7,7 +7,9 @@ create table player
     , email_confirmed boolean not null default false
     , about text[] not null default '{}'
     , notify boolean not null default true
+    , confirm_email_notified timestamptz
     , create_profile_notified timestamptz
+    , update_profile_notified timestamptz
     , registered timestamptz not null default current_timestamp
     );
 
