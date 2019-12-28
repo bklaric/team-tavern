@@ -8,7 +8,7 @@ import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 import Data.List.Types (NonEmptyList)
 import Data.Maybe (Maybe(..))
-import Data.String (trim)
+import Data.String (toLower, trim)
 import Data.String.Utils (endsWith, startsWith)
 import Data.Variant (Variant)
 import Text.Parsing.Parser (Parser)
@@ -57,7 +57,7 @@ parseScheme = flip wrapParser Scheme.parser
 parseHost :: Domain -> Parser String RegName
 parseHost domain = flip wrapParser RegName.parser
     \host ->
-        if RegName.print host # endsWith domain
+        if RegName.print host # toLower # endsWith domain
         then Right host
         else Left $ URIPartParseError $ "Wrong domain: " <> RegName.print host
 
