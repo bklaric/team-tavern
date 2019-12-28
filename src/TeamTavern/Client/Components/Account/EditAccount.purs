@@ -51,6 +51,7 @@ type LoadedState =
     , aboutError :: Boolean
     , nicknameTaken :: Boolean
     , otherError :: Boolean
+    , submitting :: Boolean
     }
 
 data State
@@ -72,6 +73,7 @@ render (Loaded
     , aboutError
     , nicknameTaken
     , otherError
+    , submitting
     }) = HH.div [ HP.class_ $ HH.ClassName "wide-single-form-container" ] $ pure $ HH.form
     [ HP.class_ $ H.ClassName "form", HE.onSubmit $ Just <<< Update ]
     [ closeButton Close
@@ -127,10 +129,13 @@ render (Loaded
     --     ]
     , HH.button
         [ HP.class_ $ ClassName "form-submit-button"
-        , HP.disabled $ nickname == ""
+        , HP.disabled $ nickname == "" || submitting
         ]
         [ HH.i [ HP.class_ $ HH.ClassName "fas fa-edit button-icon" ] []
-        , HH.text "Edit account"
+        , HH.text
+            if submitting
+            then "Editting account..."
+            else "Edit account"
         ]
     , HH.p
         [ HP.class_ $ otherErrorClass otherError ]
@@ -155,6 +160,7 @@ loadAccount nickname = Async.unify do
         , aboutError: false
         , nicknameTaken: false
         , otherError: false
+        , submitting: false
         }
 
 updateAccount :: forall left. LoadedState -> Async left (Maybe LoadedState)
@@ -215,11 +221,13 @@ handleAction (Update event) = do
                     , aboutError    = false
                     , nicknameTaken = false
                     , otherError    = false
+                    , submitting    = true
                     }
+            H.put $ Loaded resetState
             newState <- H.lift $ updateAccount resetState
             case newState of
                 Nothing -> H.raise $ AccountUpdated $ trim loadedState.nickname
-                Just newState' -> H.put $ Loaded newState'
+                Just newState' -> H.put $ Loaded newState' { submitting = false }
         otherState -> pure unit
 handleAction Close = H.raise CloseClicked
 

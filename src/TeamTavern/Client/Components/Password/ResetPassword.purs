@@ -43,6 +43,7 @@ type LoadedState =
     , nonce :: String
     , invalidNonce :: Boolean
     , otherError :: Boolean
+    , submitting :: Boolean
     }
 
 data State = Empty | Loaded LoadedState
@@ -53,7 +54,15 @@ type ChildSlots = (home :: NavigationAnchor.Slot Unit)
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render Empty = HH.div_ []
-render (Loaded state @ { password, passwordShown, invalidPassword, nonce, invalidNonce, otherError }) =
+render (Loaded state @
+    { password
+    , passwordShown
+    , invalidPassword
+    , nonce
+    , invalidNonce
+    , otherError
+    , submitting
+    }) =
     HH.form
     [ HP.class_ $ HH.ClassName "form", HE.onSubmit $ Just <<< ResetPassword state ]
     [ HH.h2 [ HP.class_ $ HH.ClassName "form-heading" ]
@@ -100,10 +109,13 @@ render (Loaded state @ { password, passwordShown, invalidPassword, nonce, invali
         ]
     , HH.button
         [ HP.class_ $ ClassName "form-submit-button"
-        , HP.disabled $ password == ""
+        , HP.disabled $ password == "" || submitting
         ]
         [ HH.i [ HP.class_ $ H.ClassName "fas fa-key button-icon" ] []
-        , HH.text "Reset password"
+        , HH.text
+            if submitting
+            then "Reseting password..."
+            else "Reset password"
         ]
     , HH.p
         [ HP.class_ $ otherErrorClass invalidNonce ]
@@ -154,6 +166,7 @@ handleAction Init = do
                     , nonce: nonce'
                     , invalidNonce: false
                     , otherError: false
+                    , submitting: false
                     }
                 _ -> pure unit
     H.liftEffect do
@@ -170,12 +183,14 @@ handleAction (ResetPassword state event) = do
             { invalidPassword = false
             , invalidNonce    = false
             , otherError      = false
+            , submitting      = true
             }
+    H.put $ Loaded state'
     newState <- H.lift $ sendPasswordResetRequest state'
     case newState of
         Nothing -> H.liftEffect $
             navigate { password: state.password } "/reset-password-success"
-        Just newState' -> H.put $ Loaded newState'
+        Just newState' -> H.put $ Loaded newState' { submitting = false }
 
 component :: forall query input output left.
     H.Component HH.HTML query input output (Async left)

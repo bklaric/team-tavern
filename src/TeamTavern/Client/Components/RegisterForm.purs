@@ -48,6 +48,7 @@ type State =
     , emailTaken :: Boolean
     , nicknameTaken :: Boolean
     , otherError :: Boolean
+    , submitting :: Boolean
     }
 
 type Slot = H.Slot (Const Void) Void
@@ -64,6 +65,7 @@ render
     , emailTaken
     , nicknameTaken
     , otherError
+    , submitting
     } = HH.form
     [ HP.class_ $ HH.ClassName "form"
     , HE.onSubmit $ Just <<< Register
@@ -154,10 +156,14 @@ render
         ]
     , HH.button
         [ HP.class_ $ HH.ClassName "form-submit-button"
-        , HP.disabled $ email == "" || nickname == "" || password == ""
+        , HP.disabled $
+            email == "" || nickname == "" || password == "" || submitting
         ]
         [ HH.i [ HP.class_ $ HH.ClassName "fas fa-user-check button-icon" ] []
-        , HH.text "Create account"
+        , HH.text $
+            if submitting
+            then "Creating account..."
+            else "Create account"
         ]
     , HH.p
         [ HP.class_ $ otherErrorClass otherError ]
@@ -226,11 +232,13 @@ handleAction (Register event) = do
         , emailTaken     = false
         , nicknameTaken  = false
         , otherError     = false
+        , submitting     = true
         })
+    H.put state
     newState <- H.lift $ sendRegisterRequest state
     case newState of
         Right content -> H.liftEffect $ navigate content "/welcome"
-        Left newState' -> H.put newState'
+        Left newState' -> H.put newState' { submitting = false }
 handleAction (Navigate url event) =
     H.liftEffect $ navigateWithEvent_ url event
 
@@ -248,6 +256,7 @@ component = H.mkComponent
         , emailTaken: false
         , nicknameTaken: false
         , otherError: false
+        , submitting: false
         }
     , render
     , eval: H.mkEval $ H.defaultEval

@@ -45,6 +45,7 @@ type State =
     , nothingConfirmed :: Boolean
     , noSessionStarted :: Boolean
     , otherError :: Boolean
+    , submitting :: Boolean
     }
 
 type Slot = H.Slot (Const Void) Void
@@ -65,6 +66,7 @@ render
     , nothingConfirmed
     , noSessionStarted
     , otherError
+    , submitting
     } = HH.form
     [ HP.class_ $ HH.ClassName "form", HE.onSubmit $ Just <<< SignIn ]
     [ HH.h2 [ HP.class_ $ HH.ClassName "form-heading" ]
@@ -124,10 +126,13 @@ render
         ]
     , HH.button
         [ HP.class_ $ HH.ClassName "form-submit-button"
-        , HP.disabled $ nicknameOrEmail == "" || password == ""
+        , HP.disabled $ nicknameOrEmail == "" || password == "" || submitting
         ]
         [ HH.i [ HP.class_ $ HH.ClassName "fas fa-sign-in-alt button-icon" ] []
-        , HH.text "Sign in"
+        , HH.text
+            if submitting
+            then "Signing in..."
+            else "Sign in"
         ]
     , HH.p
         [ HP.class_ $ otherErrorClass unconfirmedEmail ]
@@ -200,15 +205,17 @@ handleAction TogglePasswordVisibility =
 handleAction (SignIn event) = do
     H.liftEffect $ preventDefault event
     state <- H.gets (_
-        { unconfirmedEmail     = false
-        , nothingConfirmed     = false
-        , noSessionStarted     = false
-        , otherError           = false
+        { unconfirmedEmail = false
+        , nothingConfirmed = false
+        , noSessionStarted = false
+        , otherError       = false
+        , submitting       = true
         })
+    H.put state
     newState <- H.lift $ sendSignInRequest state
     case newState of
         Nothing -> H.liftEffect $ navigate_ "/"
-        Just newState' -> H.put newState'
+        Just newState' -> H.put newState' { submitting = false }
 
 component :: forall query input output left.
     H.Component HH.HTML query input output (Async left)
@@ -222,6 +229,7 @@ component = H.mkComponent
         , nothingConfirmed: false
         , noSessionStarted: false
         , otherError: false
+        , submitting: false
         }
     , render
     , eval: H.mkEval $ H.defaultEval

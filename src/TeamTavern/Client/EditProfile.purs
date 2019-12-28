@@ -102,6 +102,7 @@ type State =
     , urlValueErrors :: Array { fieldKey :: String }
     , missingErrors :: Array { fieldKey :: String }
     , otherError :: Boolean
+    , submitting :: Boolean
     }
 
 type ChildSlots =
@@ -236,7 +237,18 @@ fieldInput Teams fieldValues _ _ { key, type: 3, label, icon, required, options:
 fieldInput _ _ _ _ _ = HH.div_ []
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
-render { title, profileIlk, fields, summary, summaryError, fieldValues, urlValueErrors, missingErrors, otherError } =
+render
+    { title
+    , profileIlk
+    , fields
+    , summary
+    , summaryError
+    , fieldValues
+    , urlValueErrors
+    , missingErrors
+    , otherError
+    , submitting
+    } =
     HH.div [ HP.class_ $ HH.ClassName "wide-single-form-container" ] $ pure $ HH.form
     [ HP.class_ $ H.ClassName "form", HE.onSubmit $ Just <<< Update ] $
     [ closeButton Close
@@ -273,10 +285,13 @@ render { title, profileIlk, fields, summary, summaryError, fieldValues, urlValue
         ]
     , HH.button
         [ HP.class_ $ ClassName "form-submit-button"
-        , HP.disabled $ summary == ""
+        , HP.disabled $ summary == "" || submitting
         ]
         [ HH.i [ HP.class_ $ HH.ClassName "fas fa-user-edit button-icon" ] []
-        , HH.text "Edit profile"
+        , HH.text
+            if submitting
+            then "Editting profile..."
+            else "Edit profile"
         ]
     , HH.p
         [ HP.class_ $ otherErrorClass otherError ]
@@ -362,7 +377,9 @@ handleAction (Update event) = do
         , otherError     = false
         , urlValueErrors = []
         , missingErrors  = []
+        , submitting     = true
         })
+    H.put state
     singleSelectResults <-
         (H.queryAll (SProxy :: SProxy "singleSelectField")
         $ SingleSelect.Selected identity)
@@ -396,7 +413,7 @@ handleAction (Update event) = do
     newState <- H.lift $ updateProfile state'
     case newState of
         Nothing -> H.raise $ ProfileUpdated state.nickname state.profileIlk
-        Just newState' -> H.put newState'
+        Just newState' -> H.put newState' { submitting = false }
 handleAction Close = H.raise CloseClicked
 
 component :: forall query left.
@@ -429,6 +446,7 @@ component = H.mkComponent
         , urlValueErrors: []
         , missingErrors: []
         , otherError: false
+        , submitting: false
         }
     , render
     , eval: H.mkEval $ H.defaultEval { handleAction = handleAction }

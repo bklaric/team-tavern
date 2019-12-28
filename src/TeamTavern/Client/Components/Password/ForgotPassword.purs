@@ -38,6 +38,7 @@ type State =
     { email :: String
     , unknownEmail :: Boolean
     , otherError :: Boolean
+    , submitting :: Boolean
     }
 
 type Slot = H.Slot (Const Void) Void Unit
@@ -48,7 +49,7 @@ type ChildSlots =
     )
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
-render { email, unknownEmail, otherError } = HH.form
+render { email, unknownEmail, otherError, submitting } = HH.form
     [ HP.class_ $ HH.ClassName "form", HE.onSubmit $ Just <<< ResetPassword ]
     [ HH.h2 [ HP.class_ $ HH.ClassName "form-heading" ]
         [ HH.text "Reset your "
@@ -72,10 +73,13 @@ render { email, unknownEmail, otherError } = HH.form
         ]
     , HH.button
         [ HP.class_ $ ClassName "form-submit-button"
-        , HP.disabled $ email == ""
+        , HP.disabled $ email == "" || submitting
         ]
         [ HH.i [ HP.class_ $ H.ClassName "fas fa-key button-icon" ] []
-        , HH.text "Send password reset email"
+        , HH.text
+            if submitting
+            then "Sending password reset email..."
+            else "Send password reset email"
         ]
     , HH.p
         [ HP.class_ $ otherErrorClass unknownEmail ]
@@ -128,12 +132,14 @@ handleAction (ResetPassword event) = do
     state <- H.gets (_
         { unknownEmail = false
         , otherError   = false
+        , submitting   = true
         })
+    H.put state
     newState <- H.lift $ sendPasswordResetRequest state
     case newState of
         Nothing -> H.liftEffect $
             navigate { email: state.email } "/reset-password-sent"
-        Just newState' -> H.put newState'
+        Just newState' -> H.put newState' { submitting = false }
     pure unit
 
 component :: forall query input output left.
@@ -143,6 +149,7 @@ component = H.mkComponent
         { email: ""
         , unknownEmail: false
         , otherError: false
+        , submitting: false
         }
     , render
     , eval: H.mkEval $ H.defaultEval

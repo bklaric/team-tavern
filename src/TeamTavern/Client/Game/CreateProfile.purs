@@ -69,6 +69,7 @@ type State =
     , urlValueErrors :: Array { fieldKey :: String }
     , missingErrors :: Array { fieldKey :: String }
     , otherError :: Boolean
+    , submitting :: Boolean
     }
 
 type ChildSlots =
@@ -174,7 +175,16 @@ fieldInput GameHeader.Teams _ _ { key, type: 3, label, icon, required, options: 
 fieldInput _ _ _ _ = HH.div_ []
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
-render { summary, summaryError, urlValueErrors, missingErrors, otherError, game, tab } =
+render
+    { summary
+    , summaryError
+    , urlValueErrors
+    , missingErrors
+    , otherError
+    , game
+    , tab
+    , submitting
+    } =
     HH.div [ HP.class_ $ HH.ClassName "wide-single-form-container" ] $ pure $ HH.form
     [ HP.class_ $ ClassName "form", HE.onSubmit $ Just <<< Create ] $
     [ closeButton Close
@@ -208,13 +218,19 @@ render { summary, summaryError, urlValueErrors, missingErrors, otherError, game,
         ]
     , HH.button
         [ HP.class_ $ ClassName "form-submit-button"
-        , HP.disabled $ summary == ""
+        , HP.disabled $ summary == "" || submitting
         ]
         [ HH.i [ HP.class_ $ HH.ClassName "fas fa-user-plus button-icon" ] []
         , HH.text
             case tab of
-            GameHeader.Players -> "Create player profile"
-            GameHeader.Teams -> "Create team profile"
+            GameHeader.Players ->
+                if submitting
+                then "Creating player profile..."
+                else "Create player profile"
+            GameHeader.Teams ->
+                if submitting
+                then "Creating team profile..."
+                else "Create team profile"
         ]
     , HH.p
         [ HP.class_ $ otherErrorClass otherError ]
@@ -284,7 +300,9 @@ handleAction (Create event) = do
         , otherError     = false
         , urlValueErrors = []
         , missingErrors  = []
+        , submitting     = true
         })
+    H.put state
     singleSelectResults <-
         (H.queryAll (SProxy :: SProxy "singleSelectField")
         $ SingleSelect.Selected identity)
@@ -318,7 +336,7 @@ handleAction (Create event) = do
     newState <- H.lift $ sendCreateRequest state' nickname
     case newState of
         Nothing -> H.raise $ ProfileCreated state.game.handle
-        Just newState' -> H.put newState'
+        Just newState' -> H.put newState' { submitting = false }
 handleAction Close = H.raise $ CloseClicked
 
 component :: forall query left.
@@ -339,6 +357,7 @@ component = H.mkComponent
         , game
         , tab
         , playerInfo
+        , submitting: false
         }
     , render
     , eval: H.mkEval $ H.defaultEval { handleAction = handleAction }
