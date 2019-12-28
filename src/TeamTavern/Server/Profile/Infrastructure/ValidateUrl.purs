@@ -42,14 +42,14 @@ type ParsedUrl =
 
 prependScheme :: String -> String
 prependScheme url =
-    if startsWith "http://" url || startsWith "https://" url
+    if startsWith "http://" (toLower url) || startsWith "https://" (toLower url)
     then url
     else "https://" <> url
 
 parseScheme :: Parser String Scheme
 parseScheme = flip wrapParser Scheme.parser
     \scheme ->
-        case Scheme.print scheme of
+        case toLower $ Scheme.print scheme of
         "https:" -> Right scheme
         "http:" -> Right scheme
         scheme' -> Left $ URIPartParseError $ "Unsupported scheme: " <> scheme'
