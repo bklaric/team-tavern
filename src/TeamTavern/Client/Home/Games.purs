@@ -38,10 +38,10 @@ render (Games nickname games') = HH.div [ HP.class_ $ HH.ClassName "games" ] $
     [ HH.h2 [ HP.class_ $ HH.ClassName "choose-game" ]
         [ HH.text
             case nickname of
-            Nothing -> "Looking for players? Choose a game below and browse player profiles"
+            Nothing -> "Choose a game below and browse player and team profiles"
             Just nickname' ->
                 "Hi " <> nickname'
-                <> ", choose a game below and browse player profiles"
+                <> ", choose a game below and browse player and team profiles"
         ]
     ]
     <>

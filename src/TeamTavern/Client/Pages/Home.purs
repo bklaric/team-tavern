@@ -9,7 +9,7 @@ import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
-import TeamTavern.Client.Components.RegisterForm as RegisterForm
+import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Home.CallToAction (callToAction)
 import TeamTavern.Client.Home.Games (games)
 import TeamTavern.Client.Home.Games as Games
@@ -24,7 +24,7 @@ type Slot = H.Slot (Const Void) Void
 
 type ChildSlots =
     ( games :: Games.Slot Unit
-    , registerForm :: RegisterForm.Slot Unit
+    , callToActionButton :: NavigationAnchor.Slot Unit
     )
 
 render :: forall left.

@@ -17,11 +17,11 @@
     margin: auto;
     padding: 28px;
     cursor: pointer;
-    background: #b15e36;
+    background: #5f260b;
 
     @media screen and (min-width: 768px) {
         height: 150px;
-        background: linear-gradient(to right, #b15e36, black), url(/static/dota2-background.png);
+        background: linear-gradient(to right, #5f260b, black), url(/static/dota2-background.png);
         background-blend-mode: lighten;
         background-position-x: 0, 170px;
         background-repeat: no-repeat;
