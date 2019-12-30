@@ -29,12 +29,14 @@
     justify-content: center;
     height: calc(100% - 56px);
     padding: 28px;
-    background: #5f260b;
     vertical-align: top;
+    background-image: linear-gradient(to right,#5f260bdd,#5f260bdd),url(/static/dota2-background.png);
+    background-position-x: center;
 
     @media screen and (min-width: 600px) {
         display: inline-flex;
         width: 320px;
+        background: #5f260b;
     }
 
     @media screen and (min-width: 960px) {
