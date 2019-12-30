@@ -101,15 +101,15 @@ render (Input nickname tab) =
     HH.div [ HP.class_ $ HH.ClassName "content-title" ]
         [ HH.h1 [ HP.class_ $ HH.ClassName "content-title-text" ]
             [ HH.text nickname ]
-        , HH.div [ HP.class_ $ HH.ClassName "content-title-tabs" ]
-            (renderTabs tab)
         , HH.button
-            [ HP.class_ $ HH.ClassName "regular-button title-button"
+            [ HP.class_ $ HH.ClassName "regular-button content-title-button"
             , HE.onClick $ Just <<< ShowEditAccountModal
             ]
             [ HH.i [ HP.class_ $ H.ClassName "fas fa-edit button-icon" ] []
             , HH.text "Edit account"
             ]
+        , HH.div [ HP.class_ $ HH.ClassName "content-title-tabs" ]
+            (renderTabs tab)
         , HH.div_ [ editAccount $ Just <<< HandleEditAccountMessage ]
         ]
 

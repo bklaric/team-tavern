@@ -16,21 +16,27 @@
     display: inline;
     font-size: 20px;
     margin-right: 21px;
+    overflow-wrap: break-word;
+}
+
+.content-title-button {
+    margin-right: 21px;
 }
 
 .content-title-tabs {
     display: inline-block;
 
-    .content-title-tab:first-child {
-        margin-left: 0;
+    .content-title-tab:last-child {
+        margin-right: 0;
     }
 }
 
 .content-title-tab {
-    display: inline;
+    display: inline-block;
     font-size: 14px;
     font-weight: 500;
-    margin-left: 21px;
+    margin-right: 21px;
+    margin-bottom: 0;
 }
 
 .single-content {
