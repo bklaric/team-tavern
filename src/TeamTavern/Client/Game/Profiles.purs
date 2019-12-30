@@ -124,21 +124,21 @@ render (Profiles game tab page _ response playerInfo') =
                 then "Showing 0"
                 else
                     "Showing " <> show (1 + ((page - 1) * pageSize))
-                    <> "-" <> show (min response.count (page * pageSize))
+                    <> " - " <> show (min response.count (page * pageSize))
                     <> " out of " <> show response.count)
                 <> case tab of
                     GameHeader.Players -> " players"
                     GameHeader.Teams -> " teams" ]
         , case Tuple tab playerInfo' of
             Tuple GameHeader.Players (Just playerInfo) | not game.hasPlayerProfile -> pure $ HH.button
-                [ HP.class_ $ ClassName "card-title-button primary-button"
+                [ HP.class_ $ ClassName "primary-button"
                 , HE.onClick $ Just <<< ShowCreateProfileModal game tab playerInfo
                 ]
                 [ HH.i [ HP.class_ $ HH.ClassName "fas fa-user-plus button-icon" ] []
                 , HH.text "Create your profile"
                 ]
             Tuple GameHeader.Teams (Just playerInfo) | not game.hasTeamProfile -> pure $ HH.button
-                [ HP.class_ $ ClassName "card-title-button primary-button"
+                [ HP.class_ $ ClassName "primary-button"
                 , HE.onClick $ Just <<< ShowCreateProfileModal game tab playerInfo
                 ]
                 [ HH.i [ HP.class_ $ HH.ClassName "fas fa-user-plus button-icon" ] []

@@ -16,24 +16,25 @@
 }
 
 .card-title {
-    display: block;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
     font-size: 14px;
     font-weight: 500;
-    line-height: 40px;
+    line-height: 2;
+    min-height: 40px;
     padding: 7px 21px;
     margin: 0;
     border-bottom: 1px solid #ccc;
+    white-space: pre-wrap;
 }
 
 .card-subtitle {
     font-size: 12px;
-    line-height: 14px;
+    line-height: 2;
     color: #888;
     font-weight: 400;
-}
-
-.card-title-button {
-    margin-left: 14px;
+    margin-right: 14px;
 }
 
 .card-content {
