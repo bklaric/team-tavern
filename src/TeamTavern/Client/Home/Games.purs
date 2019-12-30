@@ -49,40 +49,44 @@ render (Games nickname games') = HH.div [ HP.class_ $ HH.ClassName "games" ] $
         HH.div
         [ HP.class_ $ HH.ClassName "game-card"
         , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/players") false
-        ] $
-        [ HH.h3 [ HP.class_ $ HH.ClassName "game-card-heading" ]
-            [ HH.a
-                [ HP.class_ $ ClassName "game-card-name"
-                , HP.href $ "/games/" <> handle <> "/players"
-                , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/players") true
-                ]
-                [ HH.img
-                    [ HP.class_ $ HH.ClassName "game-card-logo"
-                    , HP.src "/static/dota2-icon.svg"
-                    , HP.alt "Dota 2 icon"
-                    ]
-                , HH.text title
-                ]
-            , whiteDivider
-            , HH.a
-                [ HP.class_ $ ClassName "game-card-profile-count"
-                , HP.href $ "/games/" <> handle <> "/players"
-                , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/players") true
-                ]
-                [ HH.text $ show playerCount <> if playerCount == 1 then " player" else " players" ]
-            , whiteDivider
-            , HH.a
-                [ HP.class_ $ ClassName "game-card-profile-count"
-                , HP.href $ "/games/" <> handle <> "/teams"
-                , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/teams") true
-                ]
-                [ HH.text $ show teamCount <> if teamCount == 1 then " team" else " teams" ]
-            ]
         ]
-        <> (description <#> \paragraph ->
-            HH.p [ HP.class_ $ HH.ClassName "game-card-description" ]
-            [ HH.text paragraph ]
-        )
+        [ HH.div [ HP.class_ $ HH.ClassName "game-card-text" ] $
+            [ HH.h3 [ HP.class_ $ HH.ClassName "game-card-heading" ]
+                [ HH.a
+                    [ HP.class_ $ ClassName "game-card-name"
+                    , HP.href $ "/games/" <> handle <> "/players"
+                    , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/players") true
+                    ]
+                    [ HH.img
+                        [ HP.class_ $ HH.ClassName "game-card-logo"
+                        , HP.src "/static/dota2-icon.svg"
+                        , HP.alt "Dota 2 icon"
+                        ]
+                    , HH.text title
+                    ]
+                ]
+            , HH.span [ HP.class_ $ HH.ClassName "game-card-profiles" ]
+                [ HH.a
+                    [ HP.class_ $ ClassName "game-card-profile-count"
+                    , HP.href $ "/games/" <> handle <> "/players"
+                    , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/players") true
+                    ]
+                    [ HH.text $ show playerCount <> if playerCount == 1 then " player" else " players" ]
+                , whiteDivider
+                , HH.a
+                    [ HP.class_ $ ClassName "game-card-profile-count"
+                    , HP.href $ "/games/" <> handle <> "/teams"
+                    , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/teams") true
+                    ]
+                    [ HH.text $ show teamCount <> if teamCount == 1 then " team" else " teams" ]
+                ]
+            ]
+            <> (description <#> \paragraph ->
+                HH.p [ HP.class_ $ HH.ClassName "game-card-description" ]
+                [ HH.text paragraph ]
+            )
+        , HH.div [ HP.class_ $ HH.ClassName "game-card-image" ] []
+        ]
     )
 
 loadGames :: forall left. Maybe Nickname -> Async left State
