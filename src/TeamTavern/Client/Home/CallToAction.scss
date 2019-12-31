@@ -1,5 +1,5 @@
 .call-to-action {
-    background-color: #5f260b;
+    background-color: #472b15;
     color: white;
     padding: 60px 21px;
     border-bottom: 1px solid #ccc;
@@ -36,6 +36,7 @@
     @extend .primary-button;
     padding: 18px 24px;
     font-size: 16px;
+
     &:active {
         color: white;
     }
