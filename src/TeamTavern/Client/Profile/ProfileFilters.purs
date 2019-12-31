@@ -56,7 +56,7 @@ fieldInput
     => Field
     -> H.ComponentHTML Action ChildSlots monad
 fieldInput field @ { label, icon, options } =
-    HH.div [ HP.class_ $ H.ClassName "input-group" ]
+    HH.div [ HP.class_ $ HH.ClassName "input-group" ]
     [ fieldLabel label icon
     , multiSelectIndexed (SProxy :: SProxy "filter") field
         { options: options <#> \option -> { option, selected: false }
@@ -70,18 +70,18 @@ render :: forall monad. MonadEffect monad =>
 render fields = HH.div [ HP.class_ $ HH.ClassName "card" ]
     [ HH.span [ HP.class_ $ HH.ClassName "card-title" ]
         [ HH.text "Profile filters" ]
-    , HH.div [ HP.class_ $ HH.ClassName "card-content" ] $
-        map fieldInput fields
-        <>
-        [ HH.button
-            [ HP.class_ $ H.ClassName "apply-filters"
+    , HH.div [ HP.class_ $ HH.ClassName "card-content" ]
+        [ HH.div [ HP.class_ $ HH.ClassName "responsive-input-groups" ]
+            (map fieldInput fields)
+        , HH.button
+            [ HP.class_ $ HH.ClassName "apply-filters"
             , HE.onClick $ Just <<< Apply
             ]
             [ HH.i [ HP.class_ $ HH.ClassName "fas fa-filter button-icon" ] []
             , HH.text "Apply filters"
             ]
         , HH.button
-            [ HP.class_ $ H.ClassName "clear-filters"
+            [ HP.class_ $ HH.ClassName "clear-filters"
             , HE.onClick $ Just <<< Clear
             ]
             [ HH.i [ HP.class_ $ HH.ClassName "fas fa-eraser button-icon" ] []

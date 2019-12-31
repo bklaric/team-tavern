@@ -200,9 +200,9 @@ render
             GameHeader.Players -> "Describe yourself as a player and let other players find you."
             GameHeader.Teams -> "Describe players you are looking for and let them find your team."
         ]
-    ]
-    <> (game.fields <#> fieldInput tab urlValueErrors missingErrors) <>
-    [ HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+    , HH.div [ HP.class_ $ HH.ClassName "responsive-input-groups" ]
+        (game.fields <#> fieldInput tab urlValueErrors missingErrors)
+    , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
         [ HH.label
             [ HP.class_ $ HH.ClassName "input-label", HP.for "summary" ]
             [ HH.text "Summary" ]

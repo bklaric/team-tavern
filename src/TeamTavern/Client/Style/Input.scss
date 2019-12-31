@@ -4,6 +4,28 @@
     margin-bottom: 28px;
 }
 
+.responsive-input-groups {
+    display: flex;
+    flex-wrap: wrap;
+
+    @media screen and (min-width: 630px) {
+        margin-right: -21px;
+    }
+
+    .input-group {
+        flex-basis: 100%;
+
+        @media screen and (min-width: 630px) {
+            flex-basis: calc(50% - 21px);
+            margin-right: 21px;
+        }
+
+        @media screen and (min-width: 930px) {
+            flex-basis: calc(33.33% - 21px);
+        }
+    }
+}
+
 .input-label {
     display: block;
     margin-bottom: 7px;
