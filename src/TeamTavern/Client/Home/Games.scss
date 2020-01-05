@@ -30,13 +30,13 @@
     height: calc(100% - 56px);
     padding: 28px;
     vertical-align: top;
-    background-image: linear-gradient(to right,#472b15dd,#472b15dd),url(/static/dota2-background.png);
+    // background-image: set during runtime in style
     background-position-x: center;
 
     @media screen and (min-width: 600px) {
         display: inline-flex;
         width: 320px;
-        background: #472b15;
+        background: #533a28 !important;
     }
 
     @media screen and (min-width: 960px) {
@@ -95,11 +95,12 @@
 }
 
 .game-card-image {
+    // background-image: set during runtime in style
+
     @media screen and (min-width: 600px) {
         display: inline-block;
         height: 100%;
         width: calc(100% - 376px);
-        background-image: linear-gradient(to right, #472b15, #0000 10px), url(/static/dota2-background.png);
         background-blend-mode: normal;
         background-position-x: center;
     }

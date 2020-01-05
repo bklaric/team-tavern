@@ -12,6 +12,7 @@ You can edit this file as you like.
     , "foreign-object"
     , "formatters"
     , "halogen"
+    , "halogen-css"
     , "idiomatic-node-crypto"
     , "idiomatic-node-http"
     , "idiomatic-node-process"
