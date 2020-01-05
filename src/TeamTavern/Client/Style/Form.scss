@@ -1,11 +1,11 @@
 .form {
-    @extend %bordered;
     display: flex;
     flex-direction: column;
     padding: 21px;
     background-color: white;
     color: $text-color;
     position: relative;
+    border-radius: inherit;
 }
 
 .form-heading {
@@ -33,13 +33,25 @@
 }
 
 .single-form-container {
+    border-top: 1px solid #ccc;
+    border-bottom: 1px solid #ccc;
     max-width: 380px;
-    padding: 0 21px;
     margin: 64px auto;
+
+    @media screen and (min-width: 380px) {
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
 }
 
 .wide-single-form-container {
-    max-width: 480px;
-    padding: 0 21px;
+    border-top: 1px solid #ccc;
+    border-bottom: 1px solid #ccc;
+    max-width: 960px;
     margin: 64px auto;
+
+    @media screen and (min-width: 960px) {
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
 }

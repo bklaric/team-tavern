@@ -3,7 +3,7 @@ module TeamTavern.Client.Components.Modal
 
 import Prelude
 
-import Data.Maybe (Maybe(..), maybe)
+import Data.Maybe (Maybe(..))
 import Data.Symbol (class IsSymbol)
 import Data.Variant (SProxy(..))
 import Effect.Class (class MonadEffect)
@@ -12,12 +12,10 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Prim.Row (class Cons)
+import TeamTavern.Client.Script.Unscrollable (makeWindowScrollable, makeWindowUnscrollable)
 import Unsafe.Reference (unsafeRefEq)
 import Web.Event.Event (target)
-import Web.HTML (window)
-import Web.HTML.HTMLDocument (body)
-import Web.HTML.HTMLElement (fromEventTarget, setClassName)
-import Web.HTML.Window (document)
+import Web.HTML.HTMLElement (fromEventTarget)
 import Web.UIEvent.MouseEvent (MouseEvent, toEvent)
 
 data State input = Shown input | Hidden
@@ -67,13 +65,11 @@ handleQuery
     -> H.HalogenM (State input) (Action output) (ChildSlots query output)
         (Message output) monad (Maybe send)
 handleQuery (Show input send) = do
-    window >>= document >>= body
-        >>= (maybe (pure unit) (setClassName "unscrollable")) # H.liftEffect
+    makeWindowUnscrollable
     H.put (Shown input)
     pure $ Just send
 handleQuery (Hide send) = do
-    window >>= document >>= body
-        >>= (maybe (pure unit) (setClassName "")) # H.liftEffect
+    makeWindowScrollable
     H.put Hidden $> Just send
 handleQuery (InnerQuery send) = H.query (SProxy :: SProxy "content") unit send
 

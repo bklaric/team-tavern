@@ -22,7 +22,9 @@ import Halogen.HTML.Properties (ButtonType(..), InputType(..))
 import Halogen.HTML.Properties as HP
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
-import TeamTavern.Client.Script.Navigate (navigate, navigateWithEvent_)
+import TeamTavern.Client.Script.Cookie (hasPlayerIdCookie)
+import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
+import TeamTavern.Client.Script.Navigate (navigate, navigateReplace_, navigateWithEvent_)
 import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass, otherErrorClass)
 import TeamTavern.Server.Player.Register.SendResponse as Register
 import Web.Event.Event (preventDefault)
@@ -30,7 +32,8 @@ import Web.Event.Internal.Types (Event)
 import Web.UIEvent.MouseEvent (MouseEvent)
 
 data Action
-    = EmailInput String
+    = Init
+    | EmailInput String
     | NicknameInput String
     | PasswordInput String
     | TogglePasswordVisibility
@@ -215,6 +218,15 @@ sendRegisterRequest state @ { email, nickname, password } = Async.unify do
 
 handleAction :: forall slots output left.
     Action -> H.HalogenM State Action slots output (Async left) Unit
+handleAction Init = do
+    isSignedIn <- H.liftEffect hasPlayerIdCookie
+    if isSignedIn
+        then H.liftEffect $ navigateReplace_ "/"
+        else pure unit
+    H.liftEffect do
+        setMetaTitle "Create account | TeamTavern"
+        setMetaDescription "Create your TeamTavern account."
+        setMetaUrl
 handleAction (EmailInput email) =
     H.modify_ (_ { email = email })
 handleAction (NicknameInput nickname) =
@@ -260,7 +272,8 @@ component = H.mkComponent
         }
     , render
     , eval: H.mkEval $ H.defaultEval
-        { handleAction = handleAction
+        { initialize = Just Init
+        , handleAction = handleAction
         }
     }
 

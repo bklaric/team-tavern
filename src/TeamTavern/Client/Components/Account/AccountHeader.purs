@@ -97,21 +97,31 @@ renderTabs (Conversation _) =
     ]
 
 render :: forall left. Input -> H.ComponentHTML Action ChildSlots (Async left)
-render (Input nickname tab) =
-    HH.div [ HP.class_ $ HH.ClassName "content-title" ]
+render (Input nickname tab) = HH.div_ $
+    [ HH.div [ HP.class_ $ HH.ClassName "content-title" ]
         [ HH.h1 [ HP.class_ $ HH.ClassName "content-title-text" ]
             [ HH.text nickname ]
-        , HH.div [ HP.class_ $ HH.ClassName "content-title-tabs" ]
-            (renderTabs tab)
         , HH.button
-            [ HP.class_ $ HH.ClassName "regular-button title-button"
+            [ HP.class_ $ HH.ClassName "regular-button content-title-button"
             , HE.onClick $ Just <<< ShowEditAccountModal
             ]
             [ HH.i [ HP.class_ $ H.ClassName "fas fa-edit button-icon" ] []
             , HH.text "Edit account"
             ]
+        , HH.div [ HP.class_ $ HH.ClassName "content-title-tabs" ]
+            (renderTabs tab)
         , HH.div_ [ editAccount $ Just <<< HandleEditAccountMessage ]
         ]
+    ]
+    <>
+    case tab of
+    Profiles -> pure $
+        HH.p [ HP.class_ $ HH.ClassName "content-description" ]
+            [ HH.text "View and edit all your player and team profiles." ]
+    Conversations -> pure $
+        HH.p [ HP.class_ $ HH.ClassName "content-description" ]
+            [ HH.text "View all your conversations with other players." ]
+    Conversation _ -> []
 
 handleAction :: forall output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit

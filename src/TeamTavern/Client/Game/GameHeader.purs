@@ -63,14 +63,20 @@ renderTabs handle Teams =
     ]
 
 render :: forall slots. Input -> HH.HTML slots Action
-render (Input handle title tab) =
-    HH.div [ HP.class_ $ HH.ClassName "content-title" ]
+render (Input handle title tab) = HH.div_
+    [ HH.div [ HP.class_ $ HH.ClassName "content-title" ]
         [ HH.h1 [ HP.class_ $ HH.ClassName "content-title-text" ]
             [ HH.text title ]
         , HH.div [ HP.class_ $ HH.ClassName "content-title-tabs" ]
             (renderTabs handle tab)
         ]
-
+    , HH.p [ HP.class_ $ HH.ClassName "content-description" ]
+        [ HH.text
+            case tab of
+            Players -> "Browse and filter " <> title <> " players looking for a team."
+            Teams -> "Browse and filter " <> title <> " teams looking for players."
+        ]
+    ]
 handleAction :: forall monad.
     Bind monad => MonadEffect monad => MonadState Input monad =>
     Action -> monad Unit

@@ -39,6 +39,8 @@ create table game
     , title varchar(50) not null unique
     , handle varchar(50) not null unique
     , description text[] not null
+    , icon_path text not null
+    , banner_path text not null
     , created timestamptz not null default current_timestamp
     );
 
@@ -60,7 +62,7 @@ create table field
     , key varchar(40) not null
     , label varchar(40) not null
     , icon varchar(40) not null
-    , order int not null
+    , ordinal int not null
     , required boolean not null default false
     , domain varchar(40)
     );

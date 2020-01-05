@@ -6,6 +6,7 @@ import Async (Async)
 import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
+import CSS as CSS
 import Data.Bifunctor (lmap)
 import Data.Const (Const)
 import Data.Maybe (Maybe(..))
@@ -14,13 +15,15 @@ import Effect.Class (class MonadEffect)
 import Halogen (ClassName(..))
 import Halogen as H
 import Halogen.HTML as HH
+import Halogen.HTML.CSS (style) as HP
 import Halogen.HTML.Events as HE
-import Halogen.HTML.Properties as HP
+import Halogen.HTML.Properties (alt, class_, href, src) as HP
 import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.Divider (whiteDivider)
 import TeamTavern.Client.Script.Cookie (Nickname)
 import TeamTavern.Client.Script.Navigate (navigateWithEvent_)
 import TeamTavern.Server.Game.ViewAll.SendResponse (OkContent)
+import Unsafe.Coerce (unsafeCoerce)
 import Web.Event.Event (stopPropagation)
 import Web.UIEvent.MouseEvent (MouseEvent)
 import Web.UIEvent.MouseEvent as MouseEvent
@@ -38,51 +41,64 @@ render (Games nickname games') = HH.div [ HP.class_ $ HH.ClassName "games" ] $
     [ HH.h2 [ HP.class_ $ HH.ClassName "choose-game" ]
         [ HH.text
             case nickname of
-            Nothing -> "Looking for players? Choose a game below and browse player profiles"
+            Nothing -> "Choose a game below and browse player and team profiles"
             Just nickname' ->
                 "Hi " <> nickname'
-                <> ", choose a game below and browse player profiles"
+                <> ", choose a game below and browse player and team profiles"
         ]
     ]
     <>
-    (games' <#> \{ title, handle, description, playerCount, teamCount } ->
+    (games' <#> \{ title, handle, description, iconPath, bannerPath, playerCount, teamCount } ->
         HH.div
         [ HP.class_ $ HH.ClassName "game-card"
         , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/players") false
-        ] $
-        [ HH.h3 [ HP.class_ $ HH.ClassName "game-card-heading" ]
-            [ HH.a
-                [ HP.class_ $ ClassName "game-card-name"
-                , HP.href $ "/games/" <> handle <> "/players"
-                , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/players") true
-                ]
-                [ HH.img
-                    [ HP.class_ $ HH.ClassName "game-card-logo"
-                    , HP.src "/static/dota2-icon.svg"
-                    , HP.alt "Dota 2 icon"
-                    ]
-                , HH.text title
-                ]
-            , whiteDivider
-            , HH.a
-                [ HP.class_ $ ClassName "game-card-profile-count"
-                , HP.href $ "/games/" <> handle <> "/players"
-                , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/players") true
-                ]
-                [ HH.text $ show playerCount <> if playerCount == 1 then " player" else " players" ]
-            , whiteDivider
-            , HH.a
-                [ HP.class_ $ ClassName "game-card-profile-count"
-                , HP.href $ "/games/" <> handle <> "/teams"
-                , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/teams") true
-                ]
-                [ HH.text $ show teamCount <> if teamCount == 1 then " team" else " teams" ]
-            ]
         ]
-        <> (description <#> \paragraph ->
-            HH.p [ HP.class_ $ HH.ClassName "game-card-description" ]
-            [ HH.text paragraph ]
-        )
+        [ HH.div
+            [ HP.class_ $ HH.ClassName "game-card-text"
+            , HP.style (CSS.backgroundImage $ unsafeCoerce $ CSS.Value $ CSS.Plain $
+                "linear-gradient(to right,#533a28dd,#533a28dd), url(" <> bannerPath <> ")")
+            ] $
+            [ HH.h3 [ HP.class_ $ HH.ClassName "game-card-heading" ]
+                [ HH.a
+                    [ HP.class_ $ ClassName "game-card-name"
+                    , HP.href $ "/games/" <> handle <> "/players"
+                    , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/players") true
+                    ]
+                    [ HH.img
+                        [ HP.class_ $ HH.ClassName "game-card-logo"
+                        , HP.src iconPath -- "/static/dota2-icon.svg"
+                        , HP.alt "Dota 2 icon"
+                        ]
+                    , HH.text title
+                    ]
+                ]
+            , HH.span [ HP.class_ $ HH.ClassName "game-card-profiles" ]
+                [ HH.a
+                    [ HP.class_ $ ClassName "game-card-profile-count"
+                    , HP.href $ "/games/" <> handle <> "/players"
+                    , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/players") true
+                    ]
+                    [ HH.text $ show playerCount <> if playerCount == 1 then " player" else " players" ]
+                , whiteDivider
+                , HH.a
+                    [ HP.class_ $ ClassName "game-card-profile-count"
+                    , HP.href $ "/games/" <> handle <> "/teams"
+                    , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/teams") true
+                    ]
+                    [ HH.text $ show teamCount <> if teamCount == 1 then " team" else " teams" ]
+                ]
+            ]
+            <> (description <#> \paragraph ->
+                HH.p [ HP.class_ $ HH.ClassName "game-card-description" ]
+                [ HH.text paragraph ]
+            )
+        , HH.div
+            [ HP.class_ $ HH.ClassName "game-card-image"
+            , HP.style (CSS.backgroundImage $ unsafeCoerce $ CSS.Value $ CSS.Plain $
+                "linear-gradient(to right, #533a28, #0000 3px), url(" <> bannerPath <> ")")
+            ]
+            []
+        ]
     )
 
 loadGames :: forall left. Maybe Nickname -> Async left State
