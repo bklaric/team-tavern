@@ -23,7 +23,6 @@ import TeamTavern.Client.CreateGame (createGame)
 import TeamTavern.Client.CreateGame as CreateGame
 import TeamTavern.Client.Script.Cookie (getPlayerId)
 import TeamTavern.Client.Script.Navigate (navigateWithEvent_)
-import TeamTavern.Client.Script.Unscrollable (makeWindowScrollable, makeWindowUnscrollable)
 import Web.Event.Event (preventDefault)
 import Web.HTML (window)
 import Web.HTML.Location (setPathname)
@@ -166,12 +165,8 @@ handleAction (Navigate url loaded event) = do
     case loaded of
         Nothing -> pure unit
         Just loaded' -> H.put $ Loaded false loaded'
-handleAction (ToggleMenu menuVisible loaded) = do
-    let nextMenuVisible = not menuVisible
-    if nextMenuVisible
-        then makeWindowUnscrollable
-        else makeWindowScrollable
-    H.put $ Loaded nextMenuVisible loaded
+handleAction (ToggleMenu menuVisible loaded) =
+    H.put $ Loaded (not menuVisible) loaded
 handleAction (CloseMenu loaded) =
     H.put $ Loaded false loaded
 
