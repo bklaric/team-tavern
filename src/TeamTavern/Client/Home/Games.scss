@@ -1,5 +1,9 @@
 .games {
     padding: 40px 0;
+
+    .game-card:not(:last-child) {
+        margin-bottom: 21px;
+    }
 }
 
 .choose-game {

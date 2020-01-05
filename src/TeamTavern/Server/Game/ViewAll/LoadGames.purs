@@ -65,7 +65,7 @@ loadGamesQuery = Query """
         left join profile on profile.game_id = game.id
     group by
         game.id
-    order by game.created desc
+    order by "playerCount" desc
     """
 
 loadGames :: forall errors.

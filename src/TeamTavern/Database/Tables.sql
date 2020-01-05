@@ -62,7 +62,7 @@ create table field
     , key varchar(40) not null
     , label varchar(40) not null
     , icon varchar(40) not null
-    , order int not null
+    , ordinal int not null
     , required boolean not null default false
     , domain varchar(40)
     );
