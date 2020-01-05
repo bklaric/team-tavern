@@ -13,7 +13,6 @@ import Data.Foldable (find)
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Int (ceil, floor, toNumber)
 import Data.Maybe (Maybe(..))
-import Data.String (trim)
 import Data.String as String
 import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..))
@@ -33,7 +32,6 @@ import TeamTavern.Client.Game.GameHeader as GameHeader
 import TeamTavern.Client.Profile.ProfileFilters as FilterProfiles
 import TeamTavern.Client.Script.Cookie (PlayerInfo, getPlayerInfo)
 import TeamTavern.Client.Script.Cookie as Cookie
-import TeamTavern.Client.Script.Navigate (navigate_)
 import TeamTavern.Server.Game.View.SendResponse as View
 import TeamTavern.Server.Profile.ViewByGame.LoadProfiles (pageSize, pageSize')
 import TeamTavern.Server.Profile.ViewByGame.SendResponse as ViewByGame
@@ -126,21 +124,21 @@ render (Profiles game tab page _ response playerInfo') =
                 then "Showing 0"
                 else
                     "Showing " <> show (1 + ((page - 1) * pageSize))
-                    <> "-" <> show (min response.count (page * pageSize))
+                    <> " - " <> show (min response.count (page * pageSize))
                     <> " out of " <> show response.count)
                 <> case tab of
                     GameHeader.Players -> " players"
                     GameHeader.Teams -> " teams" ]
         , case Tuple tab playerInfo' of
             Tuple GameHeader.Players (Just playerInfo) | not game.hasPlayerProfile -> pure $ HH.button
-                [ HP.class_ $ ClassName "card-title-button primary-button"
+                [ HP.class_ $ ClassName "primary-button"
                 , HE.onClick $ Just <<< ShowCreateProfileModal game tab playerInfo
                 ]
                 [ HH.i [ HP.class_ $ HH.ClassName "fas fa-user-plus button-icon" ] []
                 , HH.text "Create your profile"
                 ]
             Tuple GameHeader.Teams (Just playerInfo) | not game.hasTeamProfile -> pure $ HH.button
-                [ HP.class_ $ ClassName "card-title-button primary-button"
+                [ HP.class_ $ ClassName "primary-button"
                 , HE.onClick $ Just <<< ShowCreateProfileModal game tab playerInfo
                 ]
                 [ HH.i [ HP.class_ $ HH.ClassName "fas fa-user-plus button-icon" ] []
@@ -234,14 +232,14 @@ render (Profiles game tab page _ response playerInfo') =
                     , HP.disabled $ page == 1
                     , HE.onClick $ Just <<< ChangePage (page - 1)
                     ]
-                    [ HH.text "Previous" ]
+                    [ HH.text "<" ]
                 , HH.span [ HP.class_ $ HH.ClassName "pagination-page" ] [ HH.text $ show page <> "/" <> show (totalPages response.count) ]
                 , HH.button
                     [ HP.class_ $ HH.ClassName "pagination-button"
                     , HP.disabled $ page == (totalPages response.count)
                     , HE.onClick $ Just <<< ChangePage (page + 1)
                     ]
-                    [ HH.text "Next" ]
+                    [ HH.text ">" ]
                 , HH.button
                     [ HP.class_ $ HH.ClassName "pagination-button"
                     , HP.disabled $ page == (totalPages response.count)

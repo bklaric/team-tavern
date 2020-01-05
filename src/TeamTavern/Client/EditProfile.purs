@@ -264,9 +264,9 @@ render
             Players -> "Describe yourself as a player and let other players find you."
             Teams -> "Describe players you are looking for and let them find your team."
         ]
-    ]
-    <> (fields <#> fieldInput profileIlk fieldValues urlValueErrors missingErrors) <>
-    [ HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+    , HH.div [ HP.class_ $ HH.ClassName "responsive-input-groups" ]
+        (fields <#> fieldInput profileIlk fieldValues urlValueErrors missingErrors)
+    , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
         [ HH.label
             [ HP.class_ $ HH.ClassName "input-label"
             , HP.for "summary"

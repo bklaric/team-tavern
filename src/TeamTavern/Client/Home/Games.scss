@@ -1,35 +1,53 @@
 .games {
-    padding: 40px 21px;
+    padding: 40px 0;
 }
 
 .choose-game {
     font-size: 20px;
     text-align: center;
     margin-bottom: 28px;
+    padding: 0 21px;
 }
 
 .game-card {
-    @extend %bordered;
-    max-width: 904px;
+    height: 200px;
+    border-top: 1px solid #ccc;
+    border-bottom: 1px solid #ccc;
+    max-width: 960px;
+    margin: auto;
+    cursor: pointer;
+
+    @media screen and (min-width: 960px) {
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
+}
+
+.game-card-text {
     display: flex;
     flex-flow: column;
     justify-content: center;
-    margin: auto;
+    height: calc(100% - 56px);
     padding: 28px;
-    cursor: pointer;
-    background: #b15e36;
+    vertical-align: top;
+    background-image: linear-gradient(to right,#472b15dd,#472b15dd),url(/static/dota2-background.png);
+    background-position-x: center;
 
-    @media screen and (min-width: 768px) {
-        height: 150px;
-        background: linear-gradient(to right, #b15e36, black), url(/static/dota2-background.png);
-        background-blend-mode: lighten;
-        background-position-x: 0, 170px;
-        background-repeat: no-repeat;
+    @media screen and (min-width: 600px) {
+        display: inline-flex;
+        width: 320px;
+        background: #472b15;
+    }
+
+    @media screen and (min-width: 960px) {
+        border-radius: 4px 0 0 4px;
     }
 }
 
 .game-card-heading {
     font-size: 20px;
+    margin-bottom: 10px;
+    line-height: 1.5;
 }
 
 .game-card-logo {
@@ -65,7 +83,28 @@
     }
 }
 
+.game-card-profiles {
+    display: block;
+    margin-bottom: 10px;
+    line-height: 1.5;
+}
+
 .game-card-description {
-    max-width: 300px;
     color: white;
+    line-height: 1.5;
+}
+
+.game-card-image {
+    @media screen and (min-width: 600px) {
+        display: inline-block;
+        height: 100%;
+        width: calc(100% - 376px);
+        background-image: linear-gradient(to right, #472b15, #0000 10px), url(/static/dota2-background.png);
+        background-blend-mode: normal;
+        background-position-x: center;
+    }
+
+    @media screen and (min-width: 960px) {
+        border-radius: 0 4px 4px 0;
+    }
 }

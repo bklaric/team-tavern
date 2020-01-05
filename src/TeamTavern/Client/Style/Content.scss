@@ -1,8 +1,8 @@
 .content {
-    max-width: $max-width;
+    max-width: 1002px;
     // calc(100vh - topBar - footer - padding);
     min-height: calc(100vh - 41px - 41px - 42px);
-    padding: 21px;
+    padding: 21px 0;
     margin: auto;
 }
 
@@ -10,27 +10,42 @@
     display: block;
     margin-bottom: 21px;
     line-height: 30px;
+    padding: 0 21px;
 }
 
 .content-title-text {
     display: inline;
     font-size: 20px;
     margin-right: 21px;
+    overflow-wrap: break-word;
+}
+
+.content-title-button {
+    margin-right: 21px;
 }
 
 .content-title-tabs {
     display: inline-block;
 
-    .content-title-tab:first-child {
-        margin-left: 0;
+    .content-title-tab:last-child {
+        margin-right: 0;
     }
 }
 
 .content-title-tab {
-    display: inline;
+    display: inline-block;
     font-size: 14px;
     font-weight: 500;
-    margin-left: 21px;
+    margin-right: 21px;
+    margin-bottom: 0;
+}
+
+.content-description {
+    display: block;
+    padding-left: 21px;
+    margin-top: -7px;
+    margin-bottom: 21px !important;
+    font-size: 14px;
 }
 
 .single-content {

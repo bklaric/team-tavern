@@ -94,11 +94,11 @@ setMetaTags :: String -> GameHeader.Tab -> Effect Unit
 setMetaTags handleOrTitle tab =
     case tab of
     GameHeader.Players -> do
-        setMetaTitle $ handleOrTitle <> " players - looking for team | TeamTavern"
+        setMetaTitle $ handleOrTitle <> " players - Looking for team | TeamTavern"
         setMetaDescription $ "Browse and filter " <> handleOrTitle <> " players looking for a team on TeamTavern."
         setMetaUrl
     GameHeader.Teams -> do
-        setMetaTitle $ handleOrTitle <> " teams - looking for players | TeamTavern"
+        setMetaTitle $ handleOrTitle <> " teams - Looking for players | TeamTavern"
         setMetaDescription $ "Browse and filter " <> handleOrTitle <> " teams looking for players on TeamTavern."
         setMetaUrl
 

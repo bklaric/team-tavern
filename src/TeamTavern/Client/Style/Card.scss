@@ -1,32 +1,40 @@
 .card {
-    @extend %bordered;
+    border-top: 1px solid #ccc;
+    border-bottom: 1px solid #ccc;
     background-color: white;
-    margin-bottom: 21px;
+    margin: 0 auto 21px;
+    max-width: 960px;
 
     &:last-child {
         margin-bottom: 0;
     }
+
+    @media screen and (min-width: 960px) {
+        border: 1px solid #ccc;
+        border-radius: 4px;
+    }
 }
 
 .card-title {
-    display: block;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
     font-size: 14px;
     font-weight: 500;
-    line-height: 40px;
+    line-height: 2;
+    min-height: 40px;
     padding: 7px 21px;
     margin: 0;
     border-bottom: 1px solid #ccc;
+    white-space: pre-wrap;
 }
 
 .card-subtitle {
     font-size: 12px;
-    line-height: 14px;
+    line-height: 2;
     color: #888;
     font-weight: 400;
-}
-
-.card-title-button {
-    margin-left: 14px;
+    margin-right: 14px;
 }
 
 .card-content {

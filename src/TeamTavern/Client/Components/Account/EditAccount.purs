@@ -62,8 +62,8 @@ data State
 type Slot = H.Slot (Modal.Query Unit (Const Void)) (Modal.Message Message) Unit
 
 render :: forall slots. State -> HH.HTML slots Action
-render Empty = HH.div [ HP.class_ $ HH.ClassName "wide-single-form-container" ] []
-render Error = HH.div [ HP.class_ $ HH.ClassName "wide-single-form-container" ] []
+render Empty = HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] []
+render Error = HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] []
 render (Loaded
     { originalNickname
     , nickname
@@ -74,7 +74,7 @@ render (Loaded
     , nicknameTaken
     , otherError
     , submitting
-    }) = HH.div [ HP.class_ $ HH.ClassName "wide-single-form-container" ] $ pure $ HH.form
+    }) = HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] $ pure $ HH.form
     [ HP.class_ $ H.ClassName "form", HE.onSubmit $ Just <<< Update ]
     [ closeButton Close
     , HH.h2  [ HP.class_ $ HH.ClassName "form-heading" ]

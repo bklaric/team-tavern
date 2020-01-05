@@ -9,7 +9,7 @@ import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
-import TeamTavern.Client.Components.RegisterForm as RegisterForm
+import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Home.CallToAction (callToAction)
 import TeamTavern.Client.Home.Games (games)
 import TeamTavern.Client.Home.Games as Games
@@ -24,7 +24,7 @@ type Slot = H.Slot (Const Void) Void
 
 type ChildSlots =
     ( games :: Games.Slot Unit
-    , registerForm :: RegisterForm.Slot Unit
+    , callToActionButton :: NavigationAnchor.Slot Unit
     )
 
 render :: forall left.
@@ -39,10 +39,10 @@ handleAction :: forall action output slots left.
     Action -> H.HalogenM State action slots output (Async left) Unit
 handleAction Init = do
     H.liftEffect do
-        setMetaTitle "Easily find your ideal esports teammates | TeamTavern"
+        setMetaTitle "Find your esports teammates | TeamTavern"
         setMetaDescription $
-            "Tired of random matchmaking that results in ruined matches and wasted time? "
-            <> "TeamTavern lets you easily find your ideal teammates for the games you play."
+            "TeamTavern is an online platform for finding esports teammates. "
+            <> "Choose a game, browse player and team profiles and find your ideal teammates."
         setMetaUrl
     playerInfo <- H.liftEffect $ getPlayerInfo
     H.put $ Loaded playerInfo
