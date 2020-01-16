@@ -95,7 +95,7 @@ render (Games nickname games') = HH.div [ HP.class_ $ HH.ClassName "games" ] $
         , HH.div
             [ HP.class_ $ HH.ClassName "game-card-image"
             , HP.style (CSS.backgroundImage $ unsafeCoerce $ CSS.Value $ CSS.Plain $
-                "linear-gradient(to right, #533a28, #0000 3px), url(" <> bannerPath <> ")")
+                "linear-gradient(to right, #523823, #0000 3px), url(" <> bannerPath <> ")")
             ]
             []
         ]

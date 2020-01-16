@@ -62,7 +62,7 @@ render (Player { nickname, about } isCurrentUser isSignedIn) = HH.div_
             else []
         ]
     , HH.p [ HP.class_ $ HH.ClassName "content-description" ]
-            [ HH.text "View all player and team profiles of player bklaric." ]
+            [ HH.text $ "View all player and team profiles of player " <> nickname <> "." ]
     , profilesByPlayer nickname Players (SProxy :: SProxy "playerProfiles")
     , profilesByPlayer nickname Teams (SProxy :: SProxy "teamProfiles")
     ]
