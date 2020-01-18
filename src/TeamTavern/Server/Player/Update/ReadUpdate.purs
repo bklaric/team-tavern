@@ -7,6 +7,7 @@ import Async (fromEither) as Async
 import Async.Validated (fromValidated) as Async
 import Data.Bifunctor.Label (labelMap)
 import Data.List.Types (NonEmptyList)
+import Data.Maybe (Maybe)
 import Data.Validated.Label as Validated
 import Data.Variant (SProxy(..), Variant)
 import Foreign (MultipleErrors)
@@ -18,21 +19,25 @@ import TeamTavern.Server.Player.Domain.About (About)
 import TeamTavern.Server.Player.Domain.About as About
 import TeamTavern.Server.Player.Domain.Nickname (Nickname, NicknameError)
 import TeamTavern.Server.Player.Domain.Nickname as Nickname
+import TeamTavern.Server.Player.Update.ValidateDiscordTag (DiscordTag, DiscordTagError, validateOptionalDiscordTag)
 
 type UpdateDto =
     { nickname :: String
+    , discordTag :: Maybe String
     , about :: String
     , notify :: Boolean
     }
 
 type UpdateModel =
     { nickname :: Nickname
+    , discordTag :: Maybe DiscordTag
     , about :: About
     , notify :: Boolean
     }
 
 type UpdateModelError = Variant
     ( nickname :: NonEmptyList NicknameError
+    , discordTag :: NonEmptyList DiscordTagError
     , about :: NonEmptyList TextError
     )
 
@@ -51,13 +56,15 @@ readUpdate :: forall errors.
     Body -> Async (ReadUpdateError errors) UpdateModel
 readUpdate body = do
     content <- readBody body
-    dto @ { nickname, about, notify } :: UpdateDto <-
+    dto @ { nickname, discordTag, about, notify } :: UpdateDto <-
         readJSON content
         # labelMap (SProxy :: SProxy "unreadableDto") { content, errors: _ }
         # Async.fromEither
-    { nickname: _, about: _, notify }
+    { nickname: _, discordTag: _, about: _, notify }
         <$> (Nickname.create nickname
             # Validated.label (SProxy :: SProxy "nickname"))
+        <*> (validateOptionalDiscordTag discordTag
+            # Validated.label (SProxy :: SProxy "discordTag"))
         <*> (About.create about
             # Validated.label (SProxy :: SProxy "about"))
         # Async.fromValidated

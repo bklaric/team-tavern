@@ -14,6 +14,7 @@ import TeamTavern.Server.Player.Update.LogError (UpdateError)
 type BadRequestContent = Variant
     ( invalidIdentifiers :: Array (Variant
         ( invalidNickname :: {}
+        , invalidDiscordTag :: {}
         , invalidAbout :: {}
         ))
     , nicknameTaken :: {}
@@ -27,6 +28,7 @@ errorResponse = match
         errors
         <#> (match
             { nickname: const $ inj (SProxy :: SProxy "invalidNickname") {}
+            , discordTag: const $ inj (SProxy :: SProxy "invalidDiscordTag") {}
             , about: const $ inj (SProxy :: SProxy "invalidAbout") {}
             })
         # fromFoldable

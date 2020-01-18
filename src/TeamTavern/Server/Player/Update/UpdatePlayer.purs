@@ -7,6 +7,7 @@ import Async (Async)
 import Async (left) as Async
 import Data.Bifunctor (lmap)
 import Data.Maybe (Maybe(..))
+import Data.Nullable (toNullable)
 import Data.Variant (SProxy(..), Variant, inj)
 import Node.Errors.Class (code)
 import Postgres.Async.Query (query)
@@ -34,7 +35,7 @@ type UpdatePlayerError errors = Variant
 queryString :: Query
 queryString = Query """
     update player
-    set nickname = $3, about = $4, notify = $5
+    set nickname = $3, discord_tag = $4, about = $5, notify = $6
     from session
     where player.id = session.player_id
     and session.player_id = $1
@@ -43,8 +44,8 @@ queryString = Query """
     """
 
 queryParameters :: CookieInfo -> UpdateModel -> Array QueryParameter
-queryParameters { id, token } { nickname, about, notify } =
-    id : token : nickname : about :| notify
+queryParameters { id, token } { nickname, discordTag, about, notify } =
+    id : token : nickname : toNullable discordTag : about :| notify
 
 updatePlayer
     :: forall errors
@@ -52,17 +53,17 @@ updatePlayer
     -> CookieInfo
     -> UpdateModel
     -> Async (UpdatePlayerError errors) CookieInfo
-updatePlayer pool cookieInfo nicknamedAbout = do
+updatePlayer pool cookieInfo updateModel = do
     result <- pool
-        # query queryString (queryParameters cookieInfo nicknamedAbout)
+        # query queryString (queryParameters cookieInfo updateModel)
         # lmap (\error ->
             case code error == unique_violation of
             true | constraint error == Just "player_nickname_key" ->
                 inj (SProxy :: SProxy "nicknameTaken")
-                { nickname: nicknamedAbout.nickname, error }
+                { nickname: updateModel.nickname, error }
             _ -> inj (SProxy :: SProxy "databaseError") error)
     if rowCount result == 1
         then pure unit
         else Async.left $ inj (SProxy :: SProxy "notAuthorized")
-            { cookieInfo, nickname: nicknamedAbout.nickname }
-    pure $ cookieInfo { nickname = nicknamedAbout.nickname}
+            { cookieInfo, nickname: updateModel.nickname }
+    pure $ cookieInfo { nickname = updateModel.nickname}

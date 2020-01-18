@@ -6,6 +6,7 @@ import Async (Async)
 import Async as Async
 import Data.Array as Array
 import Data.Bifunctor.Label (label, labelMap)
+import Data.Maybe (Maybe)
 import Data.Symbol (SProxy(..))
 import Data.Variant (Variant, inj)
 import Foreign (Foreign, MultipleErrors)
@@ -19,6 +20,7 @@ import Simple.JSON.Async (read)
 type LoadAccountResult =
     { id :: Int
     , nickname :: String
+    , discordTag :: Maybe String
     , about :: Array String
     , notify :: Boolean
     }
@@ -37,6 +39,7 @@ queryString = Query """
     select
         player.id,
         player.nickname,
+        player.discord_tag as "discordTag",
         player.about,
         player.notify
     from player

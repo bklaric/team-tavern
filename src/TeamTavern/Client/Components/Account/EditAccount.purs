@@ -11,7 +11,7 @@ import Data.Bifunctor (bimap, lmap)
 import Data.Const (Const)
 import Data.Foldable (foldl, intercalate)
 import Data.HTTP.Method (Method(..))
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), maybe)
 import Data.Options ((:=))
 import Data.String (trim)
 import Data.Variant (SProxy(..), match)
@@ -24,6 +24,8 @@ import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.CloseButton (closeButton)
 import TeamTavern.Client.Components.Modal as Modal
+import TeamTavern.Client.Components.TextLineInput (textLineInput)
+import TeamTavern.Client.Components.TextLineInput as TextLineInput
 import TeamTavern.Client.Script.Cookie (getPlayerInfo)
 import TeamTavern.Client.Script.Navigate (navigate_)
 import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass, otherErrorClass)
@@ -37,7 +39,7 @@ data Action
     | NicknameInput String
     | AboutInput String
     | NotifyInput Boolean
-    | Update Event
+    | Update LoadedState Event
     | Close
 
 data Message = AccountUpdated String | CloseClicked
@@ -45,9 +47,11 @@ data Message = AccountUpdated String | CloseClicked
 type LoadedState =
     { originalNickname :: String
     , nickname :: String
+    , discordTag :: Maybe String
     , about :: String
     , notify :: Boolean
     , nicknameError :: Boolean
+    , discordTagError :: Boolean
     , aboutError :: Boolean
     , nicknameTaken :: Boolean
     , otherError :: Boolean
@@ -59,23 +63,30 @@ data State
     | Error
     | Loaded LoadedState
 
+type ChildSlots =
+    ( discordTagInput :: TextLineInput.Slot
+    )
+
 type Slot = H.Slot (Modal.Query Unit (Const Void)) (Modal.Message Message) Unit
 
-render :: forall slots. State -> HH.HTML slots Action
+render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render Empty = HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] []
 render Error = HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] []
-render (Loaded
+render (Loaded loadedState @
     { originalNickname
     , nickname
+    , discordTag
     , about
     , notify
     , nicknameError
+    , discordTagError
     , aboutError
     , nicknameTaken
     , otherError
     , submitting
-    }) = HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] $ pure $ HH.form
-    [ HP.class_ $ H.ClassName "form", HE.onSubmit $ Just <<< Update ]
+    }) = HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] $ pure $
+    HH.form
+    [ HP.class_ $ H.ClassName "form", HE.onSubmit $ Just <<< Update loadedState ]
     [ closeButton Close
     , HH.h2  [ HP.class_ $ HH.ClassName "form-heading" ]
         [ HH.text "Edit your account" ]
@@ -98,6 +109,19 @@ render (Loaded
             [ HP.class_ $ inputErrorClass nicknameTaken ]
             [ HH.text
                 "This nickname is already taken, please pick another one." ]
+        ]
+    , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+        [ HH.label
+            [ HP.class_ $ HH.ClassName "input-label", HP.for "discord-tag" ]
+            [ HH.text "Discord tag" ]
+        , textLineInput (SProxy :: SProxy "discordTagInput")
+            { id: "discord-tag", value: maybe "" identity discordTag }
+        , HH.label
+            [ HP.class_ $ HH.ClassName "input-underlabel" ]
+            [ HH.text "Example: username#1234" ]
+        , HH.p
+            [ HP.class_ $ inputErrorClass discordTagError ]
+            [ HH.text $ "This does not look like a valid discord tag." ]
         ]
     , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
         [ HH.label
@@ -154,9 +178,11 @@ loadAccount nickname = Async.unify do
     pure $ Loaded
         { originalNickname: content.nickname
         , nickname: content.nickname
+        , discordTag: content.discordTag
         , about: intercalate "\n\n" content.about
         , notify: content.notify
         , nicknameError: false
+        , discordTagError: false
         , aboutError: false
         , nicknameTaken: false
         , otherError: false
@@ -164,10 +190,10 @@ loadAccount nickname = Async.unify do
         }
 
 updateAccount :: forall left. LoadedState -> Async left (Maybe LoadedState)
-updateAccount state @ { originalNickname, nickname, about, notify } = Async.unify do
+updateAccount state @ { originalNickname, nickname, discordTag, about, notify } = Async.unify do
     response <- Fetch.fetch ("/api/players/by-nickname/" <> nickname)
         (  Fetch.method := PUT
-        <> Fetch.body := Json.writeJSON { nickname, about, notify }
+        <> Fetch.body := Json.writeJSON { nickname, discordTag, about, notify }
         <> Fetch.credentials := Fetch.Include
         )
         # lmap (const $ Just $ state { otherError = true })
@@ -180,6 +206,8 @@ updateAccount state @ { originalNickname, nickname, about, notify } = Async.unif
                     { invalidIdentifiers: foldl (\state' -> match
                         { invalidNickname:
                             const $ state' { nicknameError = true }
+                        , invalidDiscordTag:
+                            const $ state' { discordTagError = true }
                         , invalidAbout:
                             const $ state' { aboutError = true }
                         })
@@ -190,8 +218,8 @@ updateAccount state @ { originalNickname, nickname, about, notify } = Async.unif
         _ -> pure $ Just $ state { otherError = true }
     pure newState
 
-handleAction :: forall slots left.
-    Action -> H.HalogenM State Action slots Message (Async left) Unit
+handleAction :: forall left.
+    Action -> H.HalogenM State Action ChildSlots Message (Async left) Unit
 handleAction Init = do
     playerInfo <- H.liftEffect getPlayerInfo
     case playerInfo of
@@ -211,24 +239,28 @@ handleAction (NotifyInput notify) = do
     H.modify_ case _ of
         Loaded state -> Loaded $ state { notify = notify }
         state -> state
-handleAction (Update event) = do
+handleAction (Update loadedState event) = do
     H.liftEffect $ preventDefault event
-    state <- H.get
-    case state of
-        Loaded loadedState -> do
-            let resetState = loadedState
-                    { nicknameError = false
-                    , aboutError    = false
-                    , nicknameTaken = false
-                    , otherError    = false
-                    , submitting    = true
-                    }
-            H.put $ Loaded resetState
-            newState <- H.lift $ updateAccount resetState
-            case newState of
-                Nothing -> H.raise $ AccountUpdated $ trim loadedState.nickname
-                Just newState' -> H.put $ Loaded newState' { submitting = false }
-        otherState -> pure unit
+    discordTag <- H.query (SProxy :: SProxy "discordTagInput") unit
+        (TextLineInput.GetValue identity)
+    let resetState = loadedState
+            { discordTag      =
+                discordTag >>=
+                case _ of
+                "" -> Nothing
+                discordTag' -> Just discordTag'
+            , nicknameError   = false
+            , discordTagError = false
+            , aboutError      = false
+            , nicknameTaken   = false
+            , otherError      = false
+            , submitting      = true
+            }
+    H.put $ Loaded resetState
+    newState <- H.lift $ updateAccount resetState
+    case newState of
+        Nothing -> H.raise $ AccountUpdated $ trim loadedState.nickname
+        Just newState' -> H.put $ Loaded newState' { submitting = false }
 handleAction Close = H.raise CloseClicked
 
 component :: forall query input left.

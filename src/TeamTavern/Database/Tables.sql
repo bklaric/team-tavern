@@ -2,6 +2,7 @@ create table player
     ( id serial not null primary key
     , email varchar(254) not null unique
     , nickname varchar(40) not null unique
+    , discord_tag varchar(37)
     , password_hash character(60) not null
     , confirmation_nonce character(20) not null
     , email_confirmed boolean not null default false

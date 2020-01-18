@@ -40,6 +40,12 @@
     color: #888;
 }
 
+.input-underlabel {
+    @extend .input-sublabel;
+    line-height: 1.5;
+    margin-top: 5px;
+}
+
 .text-line-input {
     @extend %bordered;
     font-family: $font;
