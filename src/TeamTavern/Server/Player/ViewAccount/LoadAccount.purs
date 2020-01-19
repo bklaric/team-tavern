@@ -21,6 +21,7 @@ type LoadAccountResult =
     { id :: Int
     , nickname :: String
     , discordTag :: Maybe String
+    , hasMicrophone :: Boolean
     , about :: Array String
     , notify :: Boolean
     }
@@ -40,6 +41,7 @@ queryString = Query """
         player.id,
         player.nickname,
         player.discord_tag as "discordTag",
+        player.has_microphone as "hasMicrophone",
         player.about,
         player.notify
     from player

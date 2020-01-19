@@ -22,6 +22,8 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
+import TeamTavern.Client.Components.CheckboxInput (checkboxInput)
+import TeamTavern.Client.Components.CheckboxInput as CheckboxInput
 import TeamTavern.Client.Components.CloseButton (closeButton)
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.TextLineInput (textLineInput)
@@ -48,6 +50,7 @@ type LoadedState =
     { originalNickname :: String
     , nickname :: String
     , discordTag :: Maybe String
+    , hasMicrophone :: Boolean
     , about :: String
     , notify :: Boolean
     , nicknameError :: Boolean
@@ -65,6 +68,7 @@ data State
 
 type ChildSlots =
     ( discordTagInput :: TextLineInput.Slot
+    , hasMicrophoneInput :: CheckboxInput.Slot
     )
 
 type Slot = H.Slot (Modal.Query Unit (Const Void)) (Modal.Message Message) Unit
@@ -76,6 +80,7 @@ render (Loaded loadedState @
     { originalNickname
     , nickname
     , discordTag
+    , hasMicrophone
     , about
     , notify
     , nicknameError
@@ -121,11 +126,20 @@ render (Loaded loadedState @
             [ HH.text "Example: username#1234" ]
         , HH.p
             [ HP.class_ $ inputErrorClass discordTagError ]
-            [ HH.text $ "This does not look like a valid discord tag." ]
+            [ HH.text $ "This does not look like a valid Discord tag." ]
         ]
     , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
         [ HH.label
-            [ HP.class_ $ HH.ClassName "input-label", HP.for "notify" ]
+            [ HP.class_ $ HH.ClassName "checkbox-input-label", HP.for "has-microphone" ]
+            [ checkboxInput (SProxy :: SProxy "hasMicrophoneInput")
+                { id: "has-microphone", value: hasMicrophone }
+            , HH.span [ HP.class_ $ HH.ClassName "checkbox-input-label" ]
+                [ HH.text "I have a microphone and I'm willing to communicate." ]
+            ]
+        ]
+    , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+        [ HH.label
+            [ HP.class_ $ HH.ClassName "checkbox-input-label", HP.for "notify" ]
             [ HH.input
                 [ HP.id_ "notify"
                 , HP.class_ $ HH.ClassName "checkbox-input"
@@ -134,7 +148,7 @@ render (Loaded loadedState @
                 , HP.checked notify
                 ]
             , HH.span [ HP.class_ $ HH.ClassName "checkbox-input-label" ]
-                [ HH.text "Send an email when someone messages you" ]
+                [ HH.text "Send me an email when someone messages me." ]
             ]
         ]
     -- , HH.div_
@@ -179,6 +193,7 @@ loadAccount nickname = Async.unify do
         { originalNickname: content.nickname
         , nickname: content.nickname
         , discordTag: content.discordTag
+        , hasMicrophone: content.hasMicrophone
         , about: intercalate "\n\n" content.about
         , notify: content.notify
         , nicknameError: false
@@ -190,10 +205,18 @@ loadAccount nickname = Async.unify do
         }
 
 updateAccount :: forall left. LoadedState -> Async left (Maybe LoadedState)
-updateAccount state @ { originalNickname, nickname, discordTag, about, notify } = Async.unify do
+updateAccount state @
+    { originalNickname
+    , nickname
+    , discordTag
+    , hasMicrophone
+    , about
+    , notify
+    } = Async.unify do
     response <- Fetch.fetch ("/api/players/by-nickname/" <> nickname)
         (  Fetch.method := PUT
-        <> Fetch.body := Json.writeJSON { nickname, discordTag, about, notify }
+        <> Fetch.body := Json.writeJSON
+            { nickname, discordTag, hasMicrophone, about, notify }
         <> Fetch.credentials := Fetch.Include
         )
         # lmap (const $ Just $ state { otherError = true })
@@ -243,12 +266,15 @@ handleAction (Update loadedState event) = do
     H.liftEffect $ preventDefault event
     discordTag <- H.query (SProxy :: SProxy "discordTagInput") unit
         (TextLineInput.GetValue identity)
+    hasMicrophone <- H.query (SProxy :: SProxy "hasMicrophoneInput") unit
+        (CheckboxInput.GetValue identity)
     let resetState = loadedState
             { discordTag      =
                 discordTag >>=
                 case _ of
                 "" -> Nothing
                 discordTag' -> Just discordTag'
+            , hasMicrophone   = maybe false identity hasMicrophone
             , nicknameError   = false
             , discordTagError = false
             , aboutError      = false

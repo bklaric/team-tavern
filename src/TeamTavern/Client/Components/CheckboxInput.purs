@@ -1,5 +1,5 @@
-module TeamTavern.Client.Components.TextLineInput
-    (Value, Query(..), Slot, textLineInput) where
+module TeamTavern.Client.Components.CheckboxInput
+    (Value, Query(..), Slot, checkboxInput) where
 
 import Prelude
 
@@ -15,7 +15,7 @@ import Prim.Row (class Cons)
 
 type Id = String
 
-type Value = String
+type Value = Boolean
 
 type State = { id :: Id, value :: Value }
 
@@ -29,9 +29,10 @@ render :: forall slots. State -> HH.HTML slots Action
 render { id, value } =
     HH.input
     [ HP.id_ id
-    , HP.class_ $ HH.ClassName "text-line-input"
-    , HE.onValueInput $ Just <<< ValueInput
-    , HP.value value
+    , HP.class_ $ HH.ClassName "checkbox-input"
+    , HP.type_ HP.InputCheckbox
+    , HE.onChecked $ Just <<< ValueInput
+    , HP.checked value
     ]
 
 handleAction :: forall monad. MonadState State monad => Action -> monad Unit
@@ -53,11 +54,11 @@ component = H.mkComponent
         }
     }
 
-textLineInput
+checkboxInput
     :: forall children' label monad children action
     .  Cons label Slot children' children
     => IsSymbol label
     => SProxy label
     -> State
     -> HH.ComponentHTML action children monad
-textLineInput label state = HH.slot label unit component state absurd
+checkboxInput label state = HH.slot label unit component state absurd

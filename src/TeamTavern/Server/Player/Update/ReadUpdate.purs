@@ -24,6 +24,7 @@ import TeamTavern.Server.Player.Update.ValidateDiscordTag (DiscordTag, DiscordTa
 type UpdateDto =
     { nickname :: String
     , discordTag :: Maybe String
+    , hasMicrophone :: Boolean
     , about :: String
     , notify :: Boolean
     }
@@ -31,6 +32,7 @@ type UpdateDto =
 type UpdateModel =
     { nickname :: Nickname
     , discordTag :: Maybe DiscordTag
+    , hasMicrophone :: Boolean
     , about :: About
     , notify :: Boolean
     }
@@ -56,11 +58,11 @@ readUpdate :: forall errors.
     Body -> Async (ReadUpdateError errors) UpdateModel
 readUpdate body = do
     content <- readBody body
-    dto @ { nickname, discordTag, about, notify } :: UpdateDto <-
+    dto @ { nickname, discordTag, hasMicrophone, about, notify } :: UpdateDto <-
         readJSON content
         # labelMap (SProxy :: SProxy "unreadableDto") { content, errors: _ }
         # Async.fromEither
-    { nickname: _, discordTag: _, about: _, notify }
+    { nickname: _, discordTag: _, about: _, hasMicrophone, notify }
         <$> (Nickname.create nickname
             # Validated.label (SProxy :: SProxy "nickname"))
         <*> (validateOptionalDiscordTag discordTag

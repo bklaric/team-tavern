@@ -3,6 +3,7 @@ create table player
     , email varchar(254) not null unique
     , nickname varchar(40) not null unique
     , discord_tag varchar(37)
+    , has_microphone boolean not null default false
     , password_hash character(60) not null
     , confirmation_nonce character(20) not null
     , email_confirmed boolean not null default false
