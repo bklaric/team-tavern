@@ -11,7 +11,9 @@ import Data.Bifunctor (bimap, lmap)
 import Data.Const (Const)
 import Data.Foldable (foldl, intercalate)
 import Data.HTTP.Method (Method(..))
-import Data.Maybe (Maybe(..), maybe)
+import Data.Int (fromNumber)
+import Data.JSDate (getDate, getFullYear, getMonth, now)
+import Data.Maybe (Maybe(..), fromJust, maybe)
 import Data.Options ((:=))
 import Data.String (trim)
 import Data.Variant (SProxy(..), match)
@@ -20,6 +22,7 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
+import Partial.Unsafe (unsafePartial)
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.CheckboxInput (checkboxInput)
@@ -50,6 +53,9 @@ type LoadedState =
     { originalNickname :: String
     , nickname :: String
     , discordTag :: Maybe String
+    , birthday :: Maybe String
+    , minDate :: String
+    , maxDate :: String
     , hasMicrophone :: Boolean
     , about :: String
     , notify :: Boolean
@@ -68,6 +74,7 @@ data State
 
 type ChildSlots =
     ( discordTagInput :: TextLineInput.Slot
+    , birthdayInput :: TextLineInput.Slot
     , hasMicrophoneInput :: CheckboxInput.Slot
     )
 
@@ -80,6 +87,9 @@ render (Loaded loadedState @
     { originalNickname
     , nickname
     , discordTag
+    , birthday
+    , minDate
+    , maxDate
     , hasMicrophone
     , about
     , notify
@@ -120,7 +130,7 @@ render (Loaded loadedState @
             [ HP.class_ $ HH.ClassName "input-label", HP.for "discord-tag" ]
             [ HH.text "Discord tag" ]
         , textLineInput (SProxy :: SProxy "discordTagInput")
-            { id: "discord-tag", value: maybe "" identity discordTag }
+            { id: "discord-tag", value: maybe "" identity discordTag, type_: TextLineInput.Text }
         , HH.label
             [ HP.class_ $ HH.ClassName "input-underlabel" ]
             [ HH.text "Example: username#1234" ]
@@ -130,11 +140,31 @@ render (Loaded loadedState @
         ]
     , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
         [ HH.label
+            [ HP.class_ $ HH.ClassName "input-label", HP.for "birthday" ]
+            [ HH.text "Birthday" ]
+        , textLineInput (SProxy :: SProxy "birthdayInput")
+            { id: "birthday", value: maybe "" identity birthday, type_: TextLineInput.Date (Just minDate) (Just maxDate) }
+        , HH.label
+            [ HP.class_ $ HH.ClassName "input-underlabel" ]
+            [ HH.text $ "Your birthday will be used to calculate your age "
+                <> "and will not be shown to anyone."
+            ]
+        , HH.p
+            [ HP.class_ $ inputErrorClass nicknameError ]
+            [ HH.text
+                $ "The nickname can contain only alphanumeric characters and "
+                <> "cannot be more than 40 characters long." ]
+        , HH.p
+            [ HP.class_ $ inputErrorClass nicknameTaken ]
+            [ HH.text
+                "This nickname is already taken, please pick another one." ]
+        ]
+    , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+        [ HH.label
             [ HP.class_ $ HH.ClassName "checkbox-input-label", HP.for "has-microphone" ]
             [ checkboxInput (SProxy :: SProxy "hasMicrophoneInput")
                 { id: "has-microphone", value: hasMicrophone }
-            , HH.span [ HP.class_ $ HH.ClassName "checkbox-input-label" ]
-                [ HH.text "I have a microphone and I'm willing to communicate." ]
+            , HH.text "I have a microphone and I'm willing to communicate."
             ]
         ]
     , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
@@ -147,8 +177,7 @@ render (Loaded loadedState @
                 , HE.onChecked $ Just <<< NotifyInput
                 , HP.checked notify
                 ]
-            , HH.span [ HP.class_ $ HH.ClassName "checkbox-input-label" ]
-                [ HH.text "Send me an email when someone messages me." ]
+            , HH.text "Send me an email when someone messages me."
             ]
         ]
     -- , HH.div_
@@ -189,10 +218,21 @@ loadAccount nickname = Async.unify do
     content :: ViewAccount.OkContent <- case FetchRes.status response of
         200 -> FetchRes.text response >>= JsonAsync.readJSON # lmap (const Error)
         _ -> Async.left Error
+    currentDate <- H.liftEffect now
+    currentDay <- H.liftEffect $ unsafePartial fromJust <$> fromNumber <$> getDate currentDate
+    currentMonth <- H.liftEffect $ unsafePartial fromJust <$> fromNumber <$> getMonth currentDate
+    currentYear <- H.liftEffect $ unsafePartial fromJust <$> fromNumber <$> getFullYear currentDate
+    let thirteenYearsAgo =
+            show (currentYear - 13) <> "-"
+            <> (if currentMonth + 1 < 10 then "0" <> show (currentMonth + 1) else show (currentMonth + 1)) <> "-"
+            <> (if currentDay < 10 then "0" <> show currentDay else show currentDay)
     pure $ Loaded
         { originalNickname: content.nickname
         , nickname: content.nickname
         , discordTag: content.discordTag
+        , birthday: content.birthday
+        , minDate: "1900-01-01"
+        , maxDate: thirteenYearsAgo
         , hasMicrophone: content.hasMicrophone
         , about: intercalate "\n\n" content.about
         , notify: content.notify
@@ -209,14 +249,15 @@ updateAccount state @
     { originalNickname
     , nickname
     , discordTag
+    , birthday
     , hasMicrophone
     , about
     , notify
     } = Async.unify do
-    response <- Fetch.fetch ("/api/players/by-nickname/" <> nickname)
+    response <- Fetch.fetch ("/api/players/by-nickname/" <> originalNickname)
         (  Fetch.method := PUT
         <> Fetch.body := Json.writeJSON
-            { nickname, discordTag, hasMicrophone, about, notify }
+            { nickname, discordTag, birthday, hasMicrophone, about, notify }
         <> Fetch.credentials := Fetch.Include
         )
         # lmap (const $ Just $ state { otherError = true })
@@ -266,14 +307,21 @@ handleAction (Update loadedState event) = do
     H.liftEffect $ preventDefault event
     discordTag <- H.query (SProxy :: SProxy "discordTagInput") unit
         (TextLineInput.GetValue identity)
+    birthday <- H.query (SProxy :: SProxy "birthdayInput") unit
+        (TextLineInput.GetValue identity)
     hasMicrophone <- H.query (SProxy :: SProxy "hasMicrophoneInput") unit
         (CheckboxInput.GetValue identity)
     let resetState = loadedState
-            { discordTag      =
+            { discordTag =
                 discordTag >>=
                 case _ of
                 "" -> Nothing
                 discordTag' -> Just discordTag'
+            , birthday =
+                birthday >>=
+                case _ of
+                "" -> Nothing
+                birthday' -> Just birthday'
             , hasMicrophone   = maybe false identity hasMicrophone
             , nicknameError   = false
             , discordTagError = false
