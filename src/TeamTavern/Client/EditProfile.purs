@@ -202,6 +202,7 @@ fieldInput Teams fieldValues _ _ { key, type: 2, label, icon, required, options:
                 selectedOptionIds # any (_ == option.key) }
         , labeler: _.option
         , comparer: \leftOption rightOption -> leftOption.key == rightOption.key
+        , showFilter: Nothing
         }
     ]
 fieldInput Players fieldValues _ _ { key, type: 3, label, icon, required, options: Just options } = let
@@ -217,6 +218,7 @@ fieldInput Players fieldValues _ _ { key, type: 3, label, icon, required, option
                 selectedOptionIds # any (_ == option.key) }
         , labeler: _.option
         , comparer: \leftOption rightOption -> leftOption.key == rightOption.key
+        , showFilter: Nothing
         }
     ]
 fieldInput Teams fieldValues _ _ { key, type: 3, label, icon, required, options: Just options } = let
@@ -232,6 +234,7 @@ fieldInput Teams fieldValues _ _ { key, type: 3, label, icon, required, options:
                 selectedOptionIds # any (_ == option.key) }
         , labeler: _.option
         , comparer: \leftOption rightOption -> leftOption.key == rightOption.key
+        , showFilter: Nothing
         }
     ]
 fieldInput _ _ _ _ _ = HH.div_ []

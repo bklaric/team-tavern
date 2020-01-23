@@ -29,11 +29,14 @@ import TeamTavern.Client.Components.CheckboxInput (checkboxInput)
 import TeamTavern.Client.Components.CheckboxInput as CheckboxInput
 import TeamTavern.Client.Components.CloseButton (closeButton)
 import TeamTavern.Client.Components.Modal as Modal
+import TeamTavern.Client.Components.MultiSelect (multiSelect)
+import TeamTavern.Client.Components.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.TextLineInput (textLineInput)
 import TeamTavern.Client.Components.TextLineInput as TextLineInput
 import TeamTavern.Client.Script.Cookie (getPlayerInfo)
 import TeamTavern.Client.Script.Navigate (navigate_)
 import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass, otherErrorClass)
+import TeamTavern.Client.Snippets.Languages (languages)
 import TeamTavern.Server.Player.Update.SendResponse as Update
 import TeamTavern.Server.Player.ViewAccount.SendResponse as ViewAccount
 import Web.Event.Event (preventDefault)
@@ -75,6 +78,7 @@ data State
 type ChildSlots =
     ( discordTagInput :: TextLineInput.Slot
     , birthdayInput :: TextLineInput.Slot
+    , languageInput :: MultiSelect.Slot String Unit
     , hasMicrophoneInput :: CheckboxInput.Slot
     )
 
@@ -149,15 +153,17 @@ render (Loaded loadedState @
             [ HH.text $ "Your birthday will be used to calculate your age "
                 <> "and will not be shown to anyone."
             ]
-        , HH.p
-            [ HP.class_ $ inputErrorClass nicknameError ]
-            [ HH.text
-                $ "The nickname can contain only alphanumeric characters and "
-                <> "cannot be more than 40 characters long." ]
-        , HH.p
-            [ HP.class_ $ inputErrorClass nicknameTaken ]
-            [ HH.text
-                "This nickname is already taken, please pick another one." ]
+        ]
+    , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+        [ HH.label
+            [ HP.class_ $ HH.ClassName "input-label", HP.for "language" ]
+            [ HH.text "Language" ]
+        , multiSelect (SProxy :: SProxy "languageInput")
+            { options: languages <#> { option: _, selected: false }
+            , labeler: identity
+            , comparer: (==)
+            , showFilter: Just "Search languages"
+            }
         ]
     , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
         [ HH.label

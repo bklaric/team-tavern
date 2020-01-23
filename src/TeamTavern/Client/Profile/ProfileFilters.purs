@@ -62,6 +62,7 @@ fieldInput field @ { label, icon, options } =
         { options: options <#> \option -> { option, selected: false }
         , labeler: _.option
         , comparer: \leftOption rightOption -> leftOption.key == rightOption.key
+        , showFilter: Nothing
         }
     ]
 

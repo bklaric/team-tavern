@@ -152,6 +152,7 @@ fieldInput GameHeader.Teams _ _ { key, type: 2, label, icon, required, options: 
         { options: options <#> \option -> { option, selected: false }
         , labeler: _.option
         , comparer: \leftOption rightOption -> leftOption.key == rightOption.key
+        , showFilter: Nothing
         }
     ]
 fieldInput GameHeader.Players _ _ { key, type: 3, label, icon, required, options: Just options } =
@@ -161,6 +162,7 @@ fieldInput GameHeader.Players _ _ { key, type: 3, label, icon, required, options
         { options: options <#> \option -> { option, selected: false }
         , labeler: _.option
         , comparer: \leftOption rightOption -> leftOption.key == rightOption.key
+        , showFilter: Nothing
         }
     ]
 fieldInput GameHeader.Teams _ _ { key, type: 3, label, icon, required, options: Just options } =
@@ -170,6 +172,7 @@ fieldInput GameHeader.Teams _ _ { key, type: 3, label, icon, required, options: 
         { options: options <#> \option -> { option, selected: false }
         , labeler: _.option
         , comparer: \leftOption rightOption -> leftOption.key == rightOption.key
+        , showFilter: Nothing
         }
     ]
 fieldInput _ _ _ _ = HH.div_ []
