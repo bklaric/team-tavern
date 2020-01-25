@@ -22,6 +22,7 @@ type LoadAccountResult =
     , nickname :: String
     , discordTag :: Maybe String
     , birthday :: Maybe String
+    , languages :: Array String
     , hasMicrophone :: Boolean
     , about :: Array String
     , notify :: Boolean
@@ -43,6 +44,7 @@ queryString = Query """
         player.nickname,
         player.discord_tag as "discordTag",
         to_char(player.birthday, 'yyyy-mm-dd') as birthday,
+        player.languages,
         player.has_microphone as "hasMicrophone",
         player.about,
         player.notify

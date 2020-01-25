@@ -4,6 +4,7 @@ create table player
     , nickname varchar(40) not null unique
     , discord_tag varchar(37)
     , birthday date
+    , languages text[] not null default '{}'
     , has_microphone boolean not null default false
     , password_hash character(60) not null
     , confirmation_nonce character(20) not null

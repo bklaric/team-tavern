@@ -20,11 +20,13 @@ import TeamTavern.Server.Player.Domain.About as About
 import TeamTavern.Server.Player.Domain.Nickname (Nickname, NicknameError)
 import TeamTavern.Server.Player.Domain.Nickname as Nickname
 import TeamTavern.Server.Player.Update.ValidateDiscordTag (DiscordTag, DiscordTagError, validateOptionalDiscordTag)
+import TeamTavern.Server.Player.Update.ValidateLangugase (Language, validateLanguages)
 
 type UpdateDto =
     { nickname :: String
     , discordTag :: Maybe String
     , birthday :: Maybe String
+    , languages :: Array String
     , hasMicrophone :: Boolean
     , about :: String
     , notify :: Boolean
@@ -34,6 +36,7 @@ type UpdateModel =
     { nickname :: Nickname
     , discordTag :: Maybe DiscordTag
     , birthday :: Maybe String
+    , languages :: Array Language
     , hasMicrophone :: Boolean
     , about :: About
     , notify :: Boolean
@@ -60,11 +63,18 @@ readUpdate :: forall errors.
     Body -> Async (ReadUpdateError errors) UpdateModel
 readUpdate body = do
     content <- readBody body
-    dto @ { nickname, discordTag, birthday, hasMicrophone, about, notify } :: UpdateDto <-
+    dto @ { nickname, discordTag, birthday, languages, hasMicrophone, about, notify } :: UpdateDto <-
         readJSON content
         # labelMap (SProxy :: SProxy "unreadableDto") { content, errors: _ }
         # Async.fromEither
-    { nickname: _, discordTag: _, birthday, hasMicrophone, about: _, notify }
+    { nickname: _
+    , discordTag: _
+    , birthday
+    , languages: validateLanguages languages
+    , hasMicrophone
+    , about: _
+    , notify
+    }
         <$> (Nickname.create nickname
             # Validated.label (SProxy :: SProxy "nickname"))
         <*> (validateOptionalDiscordTag discordTag

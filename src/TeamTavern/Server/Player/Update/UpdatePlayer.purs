@@ -39,9 +39,10 @@ queryString = Query """
         nickname = $3,
         discord_tag = $4,
         birthday = $5,
-        has_microphone = $6,
-        about = $7,
-        notify = $8
+        languages = $6,
+        has_microphone = $7,
+        about = $8,
+        notify = $9
     from session
     where player.id = session.player_id
     and session.player_id = $1
@@ -50,8 +51,8 @@ queryString = Query """
     """
 
 queryParameters :: CookieInfo -> UpdateModel -> Array QueryParameter
-queryParameters { id, token } { nickname, discordTag, birthday, hasMicrophone, about, notify } =
-    id : token : nickname : toNullable discordTag : toNullable birthday : hasMicrophone : about :| notify
+queryParameters { id, token } { nickname, discordTag, birthday, languages, hasMicrophone, about, notify } =
+    id : token : nickname : toNullable discordTag : toNullable birthday : languages : hasMicrophone : about :| notify
 
 updatePlayer
     :: forall errors

@@ -9,7 +9,7 @@ import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
 import Data.Bifunctor (bimap, lmap)
 import Data.Const (Const)
-import Data.Foldable (foldl, intercalate)
+import Data.Foldable (any, foldl, intercalate)
 import Data.HTTP.Method (Method(..))
 import Data.Int (fromNumber)
 import Data.JSDate (getDate, getFullYear, getMonth, now)
@@ -36,7 +36,7 @@ import TeamTavern.Client.Components.TextLineInput as TextLineInput
 import TeamTavern.Client.Script.Cookie (getPlayerInfo)
 import TeamTavern.Client.Script.Navigate (navigate_)
 import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass, otherErrorClass)
-import TeamTavern.Client.Snippets.Languages (languages)
+import TeamTavern.Server.Infrastructure.Languages (allLanguages)
 import TeamTavern.Server.Player.Update.SendResponse as Update
 import TeamTavern.Server.Player.ViewAccount.SendResponse as ViewAccount
 import Web.Event.Event (preventDefault)
@@ -59,6 +59,7 @@ type LoadedState =
     , birthday :: Maybe String
     , minDate :: String
     , maxDate :: String
+    , languages :: Array String
     , hasMicrophone :: Boolean
     , about :: String
     , notify :: Boolean
@@ -94,6 +95,7 @@ render (Loaded loadedState @
     , birthday
     , minDate
     , maxDate
+    , languages
     , hasMicrophone
     , about
     , notify
@@ -159,7 +161,10 @@ render (Loaded loadedState @
             [ HP.class_ $ HH.ClassName "input-label", HP.for "language" ]
             [ HH.text "Language" ]
         , multiSelect (SProxy :: SProxy "languageInput")
-            { options: languages <#> { option: _, selected: false }
+            { options: allLanguages <#> \allLanguage ->
+                { option: allLanguage
+                , selected: languages # any (_ == allLanguage)
+                }
             , labeler: identity
             , comparer: (==)
             , showFilter: Just "Search languages"
@@ -239,6 +244,7 @@ loadAccount nickname = Async.unify do
         , birthday: content.birthday
         , minDate: "1900-01-01"
         , maxDate: thirteenYearsAgo
+        , languages: content.languages
         , hasMicrophone: content.hasMicrophone
         , about: intercalate "\n\n" content.about
         , notify: content.notify
@@ -256,6 +262,7 @@ updateAccount state @
     , nickname
     , discordTag
     , birthday
+    , languages
     , hasMicrophone
     , about
     , notify
@@ -263,7 +270,14 @@ updateAccount state @
     response <- Fetch.fetch ("/api/players/by-nickname/" <> originalNickname)
         (  Fetch.method := PUT
         <> Fetch.body := Json.writeJSON
-            { nickname, discordTag, birthday, hasMicrophone, about, notify }
+            { nickname
+            , discordTag
+            , birthday
+            , languages
+            , hasMicrophone
+            , about
+            , notify
+            }
         <> Fetch.credentials := Fetch.Include
         )
         # lmap (const $ Just $ state { otherError = true })
@@ -315,6 +329,8 @@ handleAction (Update loadedState event) = do
         (TextLineInput.GetValue identity)
     birthday <- H.query (SProxy :: SProxy "birthdayInput") unit
         (TextLineInput.GetValue identity)
+    languages <- H.query (SProxy :: SProxy "languageInput") unit
+        (MultiSelect.Selected identity)
     hasMicrophone <- H.query (SProxy :: SProxy "hasMicrophoneInput") unit
         (CheckboxInput.GetValue identity)
     let resetState = loadedState
@@ -328,6 +344,7 @@ handleAction (Update loadedState event) = do
                 case _ of
                 "" -> Nothing
                 birthday' -> Just birthday'
+            , languages       = maybe [] identity languages
             , hasMicrophone   = maybe false identity hasMicrophone
             , nicknameError   = false
             , discordTagError = false

@@ -1,7 +1,7 @@
-module TeamTavern.Client.Snippets.Languages where
+module TeamTavern.Server.Infrastructure.Languages where
 
-languages :: Array String
-languages =
+allLanguages :: Array String
+allLanguages =
     [ "Abkhaz"
     , "Afrikaans"
     , "Albanian"
