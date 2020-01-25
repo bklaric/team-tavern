@@ -3,8 +3,10 @@ module TeamTavern.Client.Components.SingleSelect where
 import Prelude
 
 import Control.Monad.State (class MonadState)
+import Data.Array as Array
 import Data.Foldable (find)
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), isJust)
+import Data.String (Pattern(..), contains, toLower, trim)
 import Data.Symbol (class IsSymbol)
 import Data.Variant (SProxy)
 import Halogen (ClassName(..))
@@ -14,39 +16,55 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Prim.Row (class Cons)
 
+type Option option =
+    { option :: option
+    , shown :: Boolean
+    }
+
 type Input option =
     { options :: Array option
     , selected :: Maybe option
     , labeler :: option -> String
     , comparer :: option -> option -> Boolean
+    , showFilter :: Maybe String
     }
 
 type State option =
-    { options :: Array option
+    { options :: Array (Option option)
     , selected :: Maybe option
     , labeler :: option -> String
     , comparer :: option -> option -> Boolean
+    , showFilter :: Maybe String
     , open :: Boolean
+    , keepOpenInput :: Boolean
+    , keepOpenOptions :: Boolean
     }
 
-data Action option = Select (Maybe option) | Open | Close | Toggle
+data Action option
+    = Select (Maybe option)
+    | Open
+    | Close
+    | TryClose
+    | KeepOpenInput Boolean
+    | KeepOpenOptions Boolean
+    | FilterInput String
 
 data Query option send = Selected (Maybe option -> send)
 
 type Slot option = H.Slot (Query option) Void
 
 render :: forall slots option. State option -> HH.HTML slots (Action option)
-render { options, selected, labeler, open } =
+render { options, selected, labeler, showFilter, open } =
     HH.div
     [ HP.class_ $ ClassName "select"
     , HP.tabIndex 0
     , HE.onFocus $ const $ Just Open
-    , HE.onBlur $ const $ Just Close
+    , HE.onFocusOut $ const $ Just TryClose
     ]
     $ [ HH.div
         [ HP.class_ $ ClassName
             if open then "selected-open" else "selected-closed"
-        , HE.onMouseDown $ const $ Just Toggle
+        , HE.onMouseDown $ const $ Just if open then Close else Open
         ]
         [ HH.text
             case selected of
@@ -56,21 +74,40 @@ render { options, selected, labeler, open } =
     ]
     <> if open
         then
-            [ HH.div
-            [ HP.class_ $ ClassName "options" ]
-            $ [ HH.div
-                [ HP.class_ $ ClassName "option"
-                , HE.onClick $ const $ Just $ Select Nothing
-                ]
-                [ HH.text "" ]
-            ]
+            (case showFilter of
+            Nothing -> []
+            Just placeholder ->
+                [ HH.input
+                    [ HP.class_ $ HH.ClassName "select-filter"
+                    , HP.placeholder placeholder
+                    , HE.onMouseDown $ const $ Just $ KeepOpenInput true
+                    , HE.onBlur $ const $ Just $ KeepOpenInput false
+                    , HE.onValueInput $ Just <<< FilterInput
+                    ]
+                ])
             <>
-            (options <#> \option ->
-                HH.div
-                [ HP.class_ $ ClassName "option"
-                , HE.onClick $ const $ Just $ Select $ Just $ option
+            [ HH.div
+                [ HP.class_ $ HH.ClassName
+                    if isJust showFilter
+                    then "filterable-options"
+                    else "options"
+                , HP.tabIndex $ -1
+                , HE.onMouseDown $ const $ Just $ KeepOpenOptions true
+                , HE.onBlur $ const $ Just $ KeepOpenOptions false
+                ] $
+                [ HH.div
+                    [ HP.class_ $ ClassName "option"
+                    , HE.onClick $ const $ Just $ Select Nothing
+                    ]
+                    [ HH.text "" ]
                 ]
-                [ HH.text $ labeler option ])
+                <>
+                (options # Array.filter _.shown <#> \option ->
+                    HH.div
+                    [ HP.class_ $ ClassName "option"
+                    , HE.onClick $ const $ Just $ Select $ Just $ option.option
+                    ]
+                    [ HH.text $ labeler option.option ])
             ]
         else
             []
@@ -80,11 +117,29 @@ handleAction :: forall option slots message monad.
 handleAction (Select selected) =
     H.modify_ (_ { selected = selected, open = false })
 handleAction Open =
-    H.modify_ \state -> state { open = true }
+    H.modify_ \state -> state
+        { options = state.options <#> (_ { shown = true })
+        , open = true
+        }
 handleAction Close =
     H.modify_ \state -> state { open = false }
-handleAction Toggle =
-    H.modify_ \state -> state { open = not state.open }
+handleAction TryClose = do
+    H.modify_ \state ->
+        if state.keepOpenInput || state.keepOpenOptions
+        then state
+        else state { open = false }
+handleAction (KeepOpenInput keepOpen) =
+    H.modify_ (_ { keepOpenInput = keepOpen })
+handleAction (KeepOpenOptions keepOpen) = do
+    H.modify_ (_ { keepOpenOptions = keepOpen })
+handleAction (FilterInput filter) = do
+    H.modify_ \state -> state
+        { options = state.options <#> \option -> option
+            { shown = contains
+                (Pattern $ toLower $ trim filter)
+                (toLower $ state.labeler option.option)
+            }
+        }
 
 handleQuery
     :: forall option monad send
@@ -97,13 +152,16 @@ handleQuery (Selected send) = do
 component :: forall option message monad.
     H.Component HH.HTML (Query option) (Input option) message monad
 component = H.mkComponent
-    { initialState: \{ options, selected, labeler, comparer } ->
-        { options
+    { initialState: \{ options, selected, labeler, comparer, showFilter } ->
+        { options: options <#> { option: _, shown: true }
         , selected: selected >>= \selected' ->
             options # find (\option -> comparer option selected')
         , labeler
         , comparer
+        , showFilter
         , open: false
+        , keepOpenInput: false
+        , keepOpenOptions: false
         }
     , render
     , eval: H.mkEval $ H.defaultEval

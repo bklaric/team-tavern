@@ -187,6 +187,7 @@ fieldInput Players fieldValues _ _ { key, type: 2, label, icon, required, option
             options # find \option -> optionKey == option.key
         , labeler: _.option
         , comparer: \leftOption rightOption -> leftOption.key == rightOption.key
+        , showFilter: Nothing
         }
     ]
 fieldInput Teams fieldValues _ _ { key, type: 2, label, icon, required, options: Just options } = let

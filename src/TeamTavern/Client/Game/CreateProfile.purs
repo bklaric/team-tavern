@@ -143,6 +143,7 @@ fieldInput GameHeader.Players _ _ { key, type: 2, label, icon, required, options
         , selected: Nothing
         , labeler: _.option
         , comparer: \leftOption rightOption -> leftOption.key == rightOption.key
+        , showFilter: Nothing
         }
     ]
 fieldInput GameHeader.Teams _ _ { key, type: 2, label, icon, required, options: Just options } =

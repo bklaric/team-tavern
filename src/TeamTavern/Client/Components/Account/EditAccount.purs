@@ -31,11 +31,14 @@ import TeamTavern.Client.Components.CloseButton (closeButton)
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.MultiSelect (multiSelect)
 import TeamTavern.Client.Components.MultiSelect as MultiSelect
+import TeamTavern.Client.Components.SingleSelect (singleSelect)
+import TeamTavern.Client.Components.SingleSelect as SingleSelect
 import TeamTavern.Client.Components.TextLineInput (textLineInput)
 import TeamTavern.Client.Components.TextLineInput as TextLineInput
 import TeamTavern.Client.Script.Cookie (getPlayerInfo)
 import TeamTavern.Client.Script.Navigate (navigate_)
 import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass, otherErrorClass)
+import TeamTavern.Server.Infrastructure.Countries (allCountries)
 import TeamTavern.Server.Infrastructure.Languages (allLanguages)
 import TeamTavern.Server.Player.Update.SendResponse as Update
 import TeamTavern.Server.Player.ViewAccount.SendResponse as ViewAccount
@@ -60,6 +63,7 @@ type LoadedState =
     , minDate :: String
     , maxDate :: String
     , languages :: Array String
+    , country :: Maybe String
     , hasMicrophone :: Boolean
     , about :: String
     , notify :: Boolean
@@ -80,6 +84,7 @@ type ChildSlots =
     ( discordTagInput :: TextLineInput.Slot
     , birthdayInput :: TextLineInput.Slot
     , languageInput :: MultiSelect.Slot String Unit
+    , countryInput :: SingleSelect.Slot String Unit
     , hasMicrophoneInput :: CheckboxInput.Slot
     )
 
@@ -96,6 +101,7 @@ render (Loaded loadedState @
     , minDate
     , maxDate
     , languages
+    , country
     , hasMicrophone
     , about
     , notify
@@ -168,6 +174,18 @@ render (Loaded loadedState @
             , labeler: identity
             , comparer: (==)
             , showFilter: Just "Search languages"
+            }
+        ]
+    , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+        [ HH.label
+            [ HP.class_ $ HH.ClassName "input-label", HP.for "country" ]
+            [ HH.text "Country" ]
+        , singleSelect (SProxy :: SProxy "countryInput")
+            { options: allCountries
+            , selected: country
+            , labeler: identity
+            , comparer: (==)
+            , showFilter: Just "Search countries"
             }
         ]
     , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
@@ -245,6 +263,7 @@ loadAccount nickname = Async.unify do
         , minDate: "1900-01-01"
         , maxDate: thirteenYearsAgo
         , languages: content.languages
+        , country: content.country
         , hasMicrophone: content.hasMicrophone
         , about: intercalate "\n\n" content.about
         , notify: content.notify
@@ -263,6 +282,7 @@ updateAccount state @
     , discordTag
     , birthday
     , languages
+    , country
     , hasMicrophone
     , about
     , notify
@@ -274,6 +294,7 @@ updateAccount state @
             , discordTag
             , birthday
             , languages
+            , country
             , hasMicrophone
             , about
             , notify
@@ -331,6 +352,8 @@ handleAction (Update loadedState event) = do
         (TextLineInput.GetValue identity)
     languages <- H.query (SProxy :: SProxy "languageInput") unit
         (MultiSelect.Selected identity)
+    country <- H.query (SProxy :: SProxy "countryInput") unit
+        (SingleSelect.Selected identity)
     hasMicrophone <- H.query (SProxy :: SProxy "hasMicrophoneInput") unit
         (CheckboxInput.GetValue identity)
     let resetState = loadedState
@@ -345,6 +368,7 @@ handleAction (Update loadedState event) = do
                 "" -> Nothing
                 birthday' -> Just birthday'
             , languages       = maybe [] identity languages
+            , country         = join country
             , hasMicrophone   = maybe false identity hasMicrophone
             , nicknameError   = false
             , discordTagError = false
