@@ -22,6 +22,7 @@ import TeamTavern.Server.Player.Domain.Nickname as Nickname
 import TeamTavern.Server.Player.Update.ValidateCountry (Country, validateOptionalCountry)
 import TeamTavern.Server.Player.Update.ValidateDiscordTag (DiscordTag, DiscordTagError, validateOptionalDiscordTag)
 import TeamTavern.Server.Player.Update.ValidateLangugase (Language, validateLanguages)
+import TeamTavern.Server.Player.Update.ValidateTimezone (Timezone, validateOptionalTimezone)
 
 type UpdateDto =
     { nickname :: String
@@ -29,6 +30,7 @@ type UpdateDto =
     , birthday :: Maybe String
     , languages :: Array String
     , country :: Maybe String
+    , timezone :: Maybe String
     , hasMicrophone :: Boolean
     , about :: String
     , notify :: Boolean
@@ -40,6 +42,7 @@ type UpdateModel =
     , birthday :: Maybe String
     , languages :: Array Language
     , country :: Maybe Country
+    , timezone :: Maybe Timezone
     , hasMicrophone :: Boolean
     , about :: About
     , notify :: Boolean
@@ -66,7 +69,7 @@ readUpdate :: forall errors.
     Body -> Async (ReadUpdateError errors) UpdateModel
 readUpdate body = do
     content <- readBody body
-    dto @ { nickname, discordTag, birthday, languages, country, hasMicrophone, about, notify } :: UpdateDto <-
+    dto @ { nickname, discordTag, birthday, languages, country, timezone, hasMicrophone, about, notify } :: UpdateDto <-
         readJSON content
         # labelMap (SProxy :: SProxy "unreadableDto") { content, errors: _ }
         # Async.fromEither
@@ -75,6 +78,7 @@ readUpdate body = do
     , birthday
     , languages: validateLanguages languages
     , country: validateOptionalCountry country
+    , timezone: validateOptionalTimezone timezone
     , hasMicrophone
     , about: _
     , notify

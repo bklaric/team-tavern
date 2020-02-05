@@ -7,9 +7,10 @@ import Async (Async)
 import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
+import Data.Array (sortBy)
 import Data.Bifunctor (bimap, lmap)
 import Data.Const (Const)
-import Data.Foldable (any, foldl, intercalate)
+import Data.Foldable (any, find, foldl, intercalate)
 import Data.HTTP.Method (Method(..))
 import Data.Int (fromNumber)
 import Data.JSDate (getDate, getFullYear, getMonth, now)
@@ -40,6 +41,7 @@ import TeamTavern.Client.Script.Navigate (navigate_)
 import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass, otherErrorClass)
 import TeamTavern.Server.Infrastructure.Countries (allCountries)
 import TeamTavern.Server.Infrastructure.Languages (allLanguages)
+import TeamTavern.Server.Infrastructure.Timezones (Timezone, allTimezones)
 import TeamTavern.Server.Player.Update.SendResponse as Update
 import TeamTavern.Server.Player.ViewAccount.SendResponse as ViewAccount
 import Web.Event.Event (preventDefault)
@@ -64,6 +66,7 @@ type LoadedState =
     , maxDate :: String
     , languages :: Array String
     , country :: Maybe String
+    , timezone :: Maybe String
     , hasMicrophone :: Boolean
     , about :: String
     , notify :: Boolean
@@ -85,6 +88,7 @@ type ChildSlots =
     , birthdayInput :: TextLineInput.Slot
     , languageInput :: MultiSelect.Slot String Unit
     , countryInput :: SingleSelect.Slot String Unit
+    , timezoneInput :: SingleSelect.Slot Timezone Unit
     , hasMicrophoneInput :: CheckboxInput.Slot
     )
 
@@ -102,6 +106,7 @@ render (Loaded loadedState @
     , maxDate
     , languages
     , country
+    , timezone
     , hasMicrophone
     , about
     , notify
@@ -190,6 +195,23 @@ render (Loaded loadedState @
         ]
     , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
         [ HH.label
+            [ HP.class_ $ HH.ClassName "input-label", HP.for "timezone" ]
+            [ HH.text "Timezone" ]
+        , singleSelect (SProxy :: SProxy "timezoneInput")
+            { options: allTimezones # sortBy \leftTimezone rightTimezone -> let
+                countryComparison = leftTimezone.country `compare` rightTimezone.country
+                in
+                case countryComparison of
+                EQ -> leftTimezone.city `compare` rightTimezone.city
+                other -> other
+            , selected: timezone >>= \timezone' -> allTimezones # find (_.name >>> (_ == timezone'))
+            , labeler: \{ city, country: country' } -> country' <> ", " <> city
+            , comparer: \leftTimezone rightTimezone -> leftTimezone.name == rightTimezone.name
+            , showFilter: Just "Search timezones"
+            }
+        ]
+   , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+        [ HH.label
             [ HP.class_ $ HH.ClassName "checkbox-input-label", HP.for "has-microphone" ]
             [ checkboxInput (SProxy :: SProxy "hasMicrophoneInput")
                 { id: "has-microphone", value: hasMicrophone }
@@ -264,6 +286,7 @@ loadAccount nickname = Async.unify do
         , maxDate: thirteenYearsAgo
         , languages: content.languages
         , country: content.country
+        , timezone: content.timezone
         , hasMicrophone: content.hasMicrophone
         , about: intercalate "\n\n" content.about
         , notify: content.notify
@@ -283,6 +306,7 @@ updateAccount state @
     , birthday
     , languages
     , country
+    , timezone
     , hasMicrophone
     , about
     , notify
@@ -295,6 +319,7 @@ updateAccount state @
             , birthday
             , languages
             , country
+            , timezone
             , hasMicrophone
             , about
             , notify
@@ -354,6 +379,8 @@ handleAction (Update loadedState event) = do
         (MultiSelect.Selected identity)
     country <- H.query (SProxy :: SProxy "countryInput") unit
         (SingleSelect.Selected identity)
+    timezone <- H.query (SProxy :: SProxy "timezoneInput") unit
+        (SingleSelect.Selected $ map _.name)
     hasMicrophone <- H.query (SProxy :: SProxy "hasMicrophoneInput") unit
         (CheckboxInput.GetValue identity)
     let resetState = loadedState
@@ -369,6 +396,7 @@ handleAction (Update loadedState event) = do
                 birthday' -> Just birthday'
             , languages       = maybe [] identity languages
             , country         = join country
+            , timezone        = join timezone
             , hasMicrophone   = maybe false identity hasMicrophone
             , nicknameError   = false
             , discordTagError = false

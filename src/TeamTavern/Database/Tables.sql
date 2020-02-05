@@ -6,6 +6,7 @@ create table player
     , birthday date
     , languages text[] not null default '{}'
     , country varchar(100)
+    , timezone varchar(50)
     , has_microphone boolean not null default false
     , password_hash character(60) not null
     , confirmation_nonce character(20) not null

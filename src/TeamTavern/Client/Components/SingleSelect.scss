@@ -70,8 +70,11 @@
     padding: 9px 12px;
     cursor: pointer;
     user-select: none;
-    display: flex;
-    align-items: center;
+    display: block;
+    line-height: 20px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 
     &:not(:last-child) {
         border-bottom-style: solid;
