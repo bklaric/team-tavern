@@ -168,6 +168,7 @@ allCountries =
     , "Saint Kitts and Nevis"
     , "Saint Lucia"
     , "Saint Martin"
+    , "Saint Pierre and Miquelon"
     , "Saint Vincent and the Grenadines"
     , "Samoa"
     , "Saudi Arabia"

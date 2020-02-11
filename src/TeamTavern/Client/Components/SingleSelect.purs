@@ -51,7 +51,9 @@ data Action option
 
 data Query option send = Selected (Maybe option -> send)
 
-type Slot option = H.Slot (Query option) Void
+data Message option = SelectedChanged (Maybe option)
+
+type Slot option = H.Slot (Query option) (Message option)
 
 render :: forall slots option. State option -> HH.HTML slots (Action option)
 render { options, selected, labeler, showFilter, open } =
@@ -112,10 +114,11 @@ render { options, selected, labeler, showFilter, open } =
         else
             []
 
-handleAction :: forall option slots message monad.
-    (Action option) -> H.HalogenM (State option) (Action option) slots message monad Unit
-handleAction (Select selected) =
+handleAction :: forall option slots monad.
+    (Action option) -> H.HalogenM (State option) (Action option) slots (Message option) monad Unit
+handleAction (Select selected) = do
     H.modify_ (_ { selected = selected, open = false })
+    H.raise $ SelectedChanged selected
 handleAction Open =
     H.modify_ \state -> state
         { options = state.options <#> (_ { shown = true })
@@ -149,8 +152,8 @@ handleQuery (Selected send) = do
     { selected } <- H.get
     pure $ Just $ send selected
 
-component :: forall option message monad.
-    H.Component HH.HTML (Query option) (Input option) message monad
+component :: forall option monad.
+    H.Component HH.HTML (Query option) (Input option) (Message option) monad
 component = H.mkComponent
     { initialState: \{ options, selected, labeler, comparer, showFilter } ->
         { options: options <#> { option: _, shown: true }
@@ -171,22 +174,33 @@ component = H.mkComponent
     }
 
 singleSelect
-    :: forall children' slot children output monad option
+    :: forall children' slot children action monad option
     .  Cons slot (Slot option Unit) children' children
     => IsSymbol slot
     => SProxy slot
     -> Input option
-    -> HH.HTML (H.ComponentSlot HH.HTML children monad output) output
-singleSelect label input = HH.slot label unit component input absurd
+    -> HH.HTML (H.ComponentSlot HH.HTML children monad action) action
+singleSelect label input = HH.slot label unit component input (const Nothing)
+
+singleSelect'
+    :: forall children' slot children action monad option
+    .  Cons slot (Slot option Unit) children' children
+    => IsSymbol slot
+    => SProxy slot
+    -> Input option
+    -> (Message option -> Maybe action)
+    -> HH.HTML (H.ComponentSlot HH.HTML children monad action) action
+singleSelect' label input handleMessage =
+    HH.slot label unit component input handleMessage
 
 singleSelectIndexed
-    :: forall children' slot children output monad option index
+    :: forall children' slot children action monad option index
     .  Cons slot (Slot option index) children' children
     => IsSymbol slot
     => Ord index
     => SProxy slot
     -> index
     -> Input option
-    -> HH.HTML (H.ComponentSlot HH.HTML children monad output) output
+    -> HH.HTML (H.ComponentSlot HH.HTML children monad action) action
 singleSelectIndexed label index input =
-    HH.slot label index component input absurd
+    HH.slot label index component input (const Nothing)

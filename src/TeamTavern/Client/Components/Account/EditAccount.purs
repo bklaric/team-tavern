@@ -14,7 +14,7 @@ import Data.Foldable (any, find, foldl, intercalate)
 import Data.HTTP.Method (Method(..))
 import Data.Int (fromNumber)
 import Data.JSDate (getDate, getFullYear, getMonth, now)
-import Data.Maybe (Maybe(..), fromJust, maybe)
+import Data.Maybe (Maybe(..), fromJust, isNothing, maybe)
 import Data.Options ((:=))
 import Data.String (trim)
 import Data.Variant (SProxy(..), match)
@@ -32,7 +32,7 @@ import TeamTavern.Client.Components.CloseButton (closeButton)
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.MultiSelect (multiSelect)
 import TeamTavern.Client.Components.MultiSelect as MultiSelect
-import TeamTavern.Client.Components.SingleSelect (singleSelect)
+import TeamTavern.Client.Components.SingleSelect (singleSelect, singleSelect')
 import TeamTavern.Client.Components.SingleSelect as SingleSelect
 import TeamTavern.Client.Components.TextLineInput (textLineInput)
 import TeamTavern.Client.Components.TextLineInput as TextLineInput
@@ -52,6 +52,7 @@ data Action
     | NicknameInput String
     | AboutInput String
     | NotifyInput Boolean
+    | TimezoneInput LoadedState (Maybe Timezone)
     | Update LoadedState Event
     | Close
 
@@ -89,10 +90,18 @@ type ChildSlots =
     , languageInput :: MultiSelect.Slot String Unit
     , countryInput :: SingleSelect.Slot String Unit
     , timezoneInput :: SingleSelect.Slot Timezone Unit
+    , weekdayFromInput :: TextLineInput.Slot
+    , weekdayToInput :: TextLineInput.Slot
+    , weekendFromInput :: TextLineInput.Slot
+    , weekendToInput :: TextLineInput.Slot
     , hasMicrophoneInput :: CheckboxInput.Slot
     )
 
 type Slot = H.Slot (Modal.Query Unit (Const Void)) (Modal.Message Message) Unit
+
+-- setTimeout' = ES.effectEventSource \emmiter -> do
+--     timeoutId <- setTimeout 5000 $ ES.emit emmiter unit
+--     pure $ ES.Finalizer $ clearTimeout timeoutId
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render Empty = HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] []
@@ -116,135 +125,192 @@ render (Loaded loadedState @
     , nicknameTaken
     , otherError
     , submitting
-    }) = HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] $ pure $
+    }) = HH.div [ HP.class_ $ HH.ClassName "wide-single-form-container" ] $ pure $
     HH.form
     [ HP.class_ $ H.ClassName "form", HE.onSubmit $ Just <<< Update loadedState ]
     [ closeButton Close
     , HH.h2  [ HP.class_ $ HH.ClassName "form-heading" ]
         [ HH.text "Edit your account" ]
-    , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
-        [ HH.label
-            [ HP.class_ $ HH.ClassName "input-label", HP.for "nickname" ]
-            [ HH.text "Nickname" ]
-        , HH.input
-            [ HP.id_ "nickname"
-            , HP.class_ $ HH.ClassName "text-line-input"
-            , HE.onValueInput $ Just <<< NicknameInput
-            , HP.value nickname
-            ]
-        , HH.p
-            [ HP.class_ $ inputErrorClass nicknameError ]
-            [ HH.text
-                $ "The nickname can contain only alphanumeric characters and "
-                <> "cannot be more than 40 characters long." ]
-        , HH.p
-            [ HP.class_ $ inputErrorClass nicknameTaken ]
-            [ HH.text
-                "This nickname is already taken, please pick another one." ]
-        ]
-    , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
-        [ HH.label
-            [ HP.class_ $ HH.ClassName "input-label", HP.for "discord-tag" ]
-            [ HH.text "Discord tag" ]
-        , textLineInput (SProxy :: SProxy "discordTagInput")
-            { id: "discord-tag", value: maybe "" identity discordTag, type_: TextLineInput.Text }
-        , HH.label
-            [ HP.class_ $ HH.ClassName "input-underlabel" ]
-            [ HH.text "Example: username#1234" ]
-        , HH.p
-            [ HP.class_ $ inputErrorClass discordTagError ]
-            [ HH.text $ "This does not look like a valid Discord tag." ]
-        ]
-    , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
-        [ HH.label
-            [ HP.class_ $ HH.ClassName "input-label", HP.for "birthday" ]
-            [ HH.text "Birthday" ]
-        , textLineInput (SProxy :: SProxy "birthdayInput")
-            { id: "birthday", value: maybe "" identity birthday, type_: TextLineInput.Date (Just minDate) (Just maxDate) }
-        , HH.label
-            [ HP.class_ $ HH.ClassName "input-underlabel" ]
-            [ HH.text $ "Your birthday will be used to calculate your age "
-                <> "and will not be shown to anyone."
-            ]
-        ]
-    , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
-        [ HH.label
-            [ HP.class_ $ HH.ClassName "input-label", HP.for "language" ]
-            [ HH.text "Language" ]
-        , multiSelect (SProxy :: SProxy "languageInput")
-            { options: allLanguages <#> \allLanguage ->
-                { option: allLanguage
-                , selected: languages # any (_ == allLanguage)
-                }
-            , labeler: identity
-            , comparer: (==)
-            , showFilter: Just "Search languages"
-            }
-        ]
-    , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
-        [ HH.label
-            [ HP.class_ $ HH.ClassName "input-label", HP.for "country" ]
-            [ HH.text "Country" ]
-        , singleSelect (SProxy :: SProxy "countryInput")
-            { options: allCountries
-            , selected: country
-            , labeler: identity
-            , comparer: (==)
-            , showFilter: Just "Search countries"
-            }
-        ]
-    , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
-        [ HH.label
-            [ HP.class_ $ HH.ClassName "input-label", HP.for "timezone" ]
-            [ HH.text "Timezone" ]
-        , singleSelect (SProxy :: SProxy "timezoneInput")
-            { options: allTimezones # sortBy \leftTimezone rightTimezone -> let
-                countryComparison = leftTimezone.country `compare` rightTimezone.country
-                in
-                case countryComparison of
-                EQ -> leftTimezone.city `compare` rightTimezone.city
-                other -> other
-            , selected: timezone >>= \timezone' -> allTimezones # find (_.name >>> (_ == timezone'))
-            , labeler: \{ city, country: country' } -> country' <> ", " <> city
-            , comparer: \leftTimezone rightTimezone -> leftTimezone.name == rightTimezone.name
-            , showFilter: Just "Search timezones"
-            }
-        ]
-   , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
-        [ HH.label
-            [ HP.class_ $ HH.ClassName "checkbox-input-label", HP.for "has-microphone" ]
-            [ checkboxInput (SProxy :: SProxy "hasMicrophoneInput")
-                { id: "has-microphone", value: hasMicrophone }
-            , HH.text "I have a microphone and I'm willing to communicate."
-            ]
-        ]
-    , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
-        [ HH.label
-            [ HP.class_ $ HH.ClassName "checkbox-input-label", HP.for "notify" ]
-            [ HH.input
-                [ HP.id_ "notify"
-                , HP.class_ $ HH.ClassName "checkbox-input"
-                , HP.type_ HP.InputCheckbox
-                , HE.onChecked $ Just <<< NotifyInput
-                , HP.checked notify
+    , HH.div [ HP.class_ $ HH.ClassName "responsive-input-groups" ]
+        [ HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+            [ HH.label
+                [ HP.class_ $ HH.ClassName "input-label", HP.for "nickname" ]
+                [ HH.text "Nickname" ]
+            , HH.input
+                [ HP.id_ "nickname"
+                , HP.class_ $ HH.ClassName "text-line-input"
+                , HE.onValueInput $ Just <<< NicknameInput
+                , HP.value nickname
                 ]
-            , HH.text "Send me an email when someone messages me."
+            , HH.p
+                [ HP.class_ $ inputErrorClass nicknameError ]
+                [ HH.text
+                    $ "The nickname can contain only alphanumeric characters and "
+                    <> "cannot be more than 40 characters long." ]
+            , HH.p
+                [ HP.class_ $ inputErrorClass nicknameTaken ]
+                [ HH.text
+                    "This nickname is already taken, please pick another one." ]
             ]
+        , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+            [ HH.label
+                [ HP.class_ $ HH.ClassName "input-label", HP.for "discord-tag" ]
+                [ HH.text "Discord tag" ]
+            , textLineInput (SProxy :: SProxy "discordTagInput")
+                { id: "discord-tag", class_: "", value: maybe "" identity discordTag, type_: TextLineInput.Text }
+            , HH.label
+                [ HP.class_ $ HH.ClassName "input-underlabel" ]
+                [ HH.text "Example: username#1234" ]
+            , HH.p
+                [ HP.class_ $ inputErrorClass discordTagError ]
+                [ HH.text $ "This does not look like a valid Discord tag." ]
+            ]
+        , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+            [ HH.label
+                [ HP.class_ $ HH.ClassName "input-label", HP.for "birthday" ]
+                [ HH.text "Birthday" ]
+            , textLineInput (SProxy :: SProxy "birthdayInput")
+                { id: "birthday", class_: "", value: maybe "" identity birthday, type_: TextLineInput.Date (Just minDate) (Just maxDate) }
+            , HH.label
+                [ HP.class_ $ HH.ClassName "input-underlabel" ]
+                [ HH.text $ "Your birthday will be used to calculate your age "
+                    <> "and will not be shown to anyone."
+                ]
+            ]
+        , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+            [ HH.label
+                [ HP.class_ $ HH.ClassName "input-label", HP.for "language" ]
+                [ HH.text "Language" ]
+            , multiSelect (SProxy :: SProxy "languageInput")
+                { options: allLanguages <#> \allLanguage ->
+                    { option: allLanguage
+                    , selected: languages # any (_ == allLanguage)
+                    }
+                , labeler: identity
+                , comparer: (==)
+                , showFilter: Just "Search languages"
+                }
+            ]
+        , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+            [ HH.label
+                [ HP.class_ $ HH.ClassName "input-label", HP.for "country" ]
+                [ HH.text "Country" ]
+            , singleSelect (SProxy :: SProxy "countryInput")
+                { options: allCountries
+                , selected: country
+                , labeler: identity
+                , comparer: (==)
+                , showFilter: Just "Search countries"
+                }
+            ]
+        , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+            [ HH.label
+                [ HP.class_ $ HH.ClassName "input-label", HP.for "timezone" ]
+                [ HH.text "Timezone" ]
+            , singleSelect' (SProxy :: SProxy "timezoneInput")
+                { options: allTimezones # sortBy \leftTimezone rightTimezone -> let
+                    countryComparison = leftTimezone.country `compare` rightTimezone.country
+                    in
+                    case countryComparison of
+                    EQ -> leftTimezone.city `compare` rightTimezone.city
+                    other -> other
+                , selected: timezone >>= \timezone' -> allTimezones # find (_.name >>> (_ == timezone'))
+                , labeler: \{ city, country: country' } -> country' <> ", " <> city
+                , comparer: \leftTimezone rightTimezone -> leftTimezone.name == rightTimezone.name
+                , showFilter: Just "Search timezones"
+                }
+                (\(SingleSelect.SelectedChanged option) -> Just $ TimezoneInput loadedState option)
+            ]
+        , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+            [ HH.label
+                [ HP.class_ $ HH.ClassName "input-label" ]
+                [ HH.text "Online on weekdays" ]
+            , HH.div [ HP.class_ $ HH.ClassName "timespan-group" ]
+                [ HH.span [ HP.class_ $ HH.ClassName "timespan-group-from" ] [ HH.text "From" ]
+                -- , textLineInput (SProxy :: SProxy "weekdayFromInput")
+                --     { id: "weekday-start", class_: "timespan-group-input", value: maybe "" identity birthday, type_: TextLineInput.Time }
+                , HH.input
+                    [ HP.id_ "weekday-start"
+                    , HP.class_ $ HH.ClassName $ "text-line-input timespan-group-input"
+                    , HP.ref $ H.RefLabel "weekday-start"
+                    , HP.disabled $ isNothing timezone
+                    , HP.type_ HP.InputTime
+                    ]
+                , HH.span [ HP.class_ $ HH.ClassName "timespan-group-to" ] [ HH.text "to" ]
+                -- , textLineInput (SProxy :: SProxy "weekdayToInput")
+                --     { id: "weekday-end", class_: "timespan-group-input", value: maybe "" identity birthday, type_: TextLineInput.Time }
+                 , HH.input
+                    [ HP.id_ "weekday-end"
+                    , HP.class_ $ HH.ClassName $ "text-line-input timespan-group-input"
+                    , HP.ref $ H.RefLabel "weekday-end"
+                    , HP.disabled $ isNothing timezone
+                    , HP.type_ HP.InputTime
+                    ]
+               ]
+            ]
+        , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+            [ HH.label
+                [ HP.class_ $ HH.ClassName "input-label" ]
+                [ HH.text "Online on weekends" ]
+            , HH.div [ HP.class_ $ HH.ClassName "timespan-group" ]
+                [ HH.span [ HP.class_ $ HH.ClassName "timespan-group-from" ] [ HH.text "From" ]
+                -- , textLineInput (SProxy :: SProxy "weekendFromInput")
+                --     { id: "weekend-start", class_: "timespan-group-input", value: maybe "" identity birthday, type_: TextLineInput.Time }
+                , HH.input
+                    [ HP.id_ "weekend-start"
+                    , HP.class_ $ HH.ClassName $ "text-line-input timespan-group-input"
+                    , HP.ref $ H.RefLabel "weekend-start"
+                    , HP.disabled $ isNothing timezone
+                    , HP.type_ HP.InputTime
+                    ]
+                , HH.span [ HP.class_ $ HH.ClassName "timespan-group-to" ] [ HH.text "to" ]
+                -- , textLineInput (SProxy :: SProxy "weekendToInput")
+                --     { id: "weekend-end", class_: "timespan-group-input", value: maybe "" identity birthday, type_: TextLineInput.Time }
+                , HH.input
+                    [ HP.id_ "weekend-start"
+                    , HP.class_ $ HH.ClassName $ "text-line-input timespan-group-input"
+                    , HP.ref $ H.RefLabel "weekend-start"
+                    , HP.disabled $ isNothing timezone
+                    , HP.type_ HP.InputTime
+                    ]
+                ]
+            ]
+    , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+            [ HH.label
+                [ HP.class_ $ HH.ClassName "checkbox-input-label", HP.for "has-microphone" ]
+                [ checkboxInput (SProxy :: SProxy "hasMicrophoneInput")
+                    { id: "has-microphone", value: hasMicrophone }
+                , HH.text "I have a microphone and I'm willing to communicate."
+                ]
+            ]
+        , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+            [ HH.label
+                [ HP.class_ $ HH.ClassName "checkbox-input-label", HP.for "notify" ]
+                [ HH.input
+                    [ HP.id_ "notify"
+                    , HP.class_ $ HH.ClassName "checkbox-input"
+                    , HP.type_ HP.InputCheckbox
+                    , HE.onChecked $ Just <<< NotifyInput
+                    , HP.checked notify
+                    ]
+                , HH.text "Send me an email when someone messages me."
+                ]
+            ]
+        -- , HH.div_
+        --     [ HH.label
+        --         [ HP.for "about" ]
+        --         [ HH.text "About" ]
+        --     , HH.textarea
+        --         [ HP.id_ "about"
+        --         , HE.onValueInput $ Just <<< AboutInput
+        --         , HP.value about
+        --         ]
+        --     , HH.p
+        --         [ HP.class_ $ inputErrorClass aboutError ]
+        --         [ HH.text
+        --             "The about entry cannot be more than 2000 characters long." ]
+        --     ]
         ]
-    -- , HH.div_
-    --     [ HH.label
-    --         [ HP.for "about" ]
-    --         [ HH.text "About" ]
-    --     , HH.textarea
-    --         [ HP.id_ "about"
-    --         , HE.onValueInput $ Just <<< AboutInput
-    --         , HP.value about
-    --         ]
-    --     , HH.p
-    --         [ HP.class_ $ inputErrorClass aboutError ]
-    --         [ HH.text
-    --             "The about entry cannot be more than 2000 characters long." ]
-    --     ]
     , HH.button
         [ HP.class_ $ ClassName "form-submit-button"
         , HP.disabled $ nickname == "" || submitting
@@ -369,6 +435,8 @@ handleAction (NotifyInput notify) = do
     H.modify_ case _ of
         Loaded state -> Loaded $ state { notify = notify }
         state -> state
+handleAction (TimezoneInput loadedState timezone) =
+    H.put $ Loaded $ loadedState { timezone = timezone <#> _.name }
 handleAction (Update loadedState event) = do
     H.liftEffect $ preventDefault event
     discordTag <- H.query (SProxy :: SProxy "discordTagInput") unit
