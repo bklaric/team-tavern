@@ -6,6 +6,7 @@ import Async (Async)
 import Async as Async
 import Data.Array as Array
 import Data.Bifunctor.Label (label, labelMap)
+import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
 import Data.Variant (Variant, inj)
 import Foreign (Foreign, MultipleErrors)
@@ -15,6 +16,7 @@ import Postgres.Error (Error)
 import Postgres.Query (Query(..))
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
+import TeamTavern.Server.Profile.Routes (Age)
 import TeamTavern.Server.Profile.ViewByGame.LoadProfiles (createProfilesFilterString, sanitizeStringValue)
 import URI.Extra.QueryPairs (Key, QueryPairs(..), Value)
 
@@ -29,13 +31,13 @@ type LoadProfileCountError errors = Variant
     , databaseError :: Error
     | errors )
 
-queryString :: String -> Int -> QueryPairs Key Value -> Query
-queryString handle ilk (QueryPairs filters) = let
+queryString :: String -> Int -> Maybe Age -> Maybe Age -> QueryPairs Key Value -> Query
+queryString handle ilk ageFrom ageTo (QueryPairs filters) = let
         -- Prepare game handle.
     preparedHandle = sanitizeStringValue handle
 
     -- Create profiles filter string.
-    filterString = createProfilesFilterString preparedHandle ilk filters
+    filterString = createProfilesFilterString preparedHandle ilk ageFrom ageTo filters
 
     -- Insert it into the rest of the query.
     in
@@ -43,6 +45,7 @@ queryString handle ilk (QueryPairs filters) = let
     select count(*)::int as "count"
     from profile
         join game on game.id = profile.game_id
+        join player on player.id = profile.player_id
     """ <> filterString
 
 loadProfileCount
@@ -50,11 +53,13 @@ loadProfileCount
     .  Client
     -> String
     -> Int
+    -> Maybe Age
+    -> Maybe Age
     -> QueryPairs Key Value
     -> Async (LoadProfileCountError errors) Int
-loadProfileCount client handle ilk filters = do
+loadProfileCount client handle ilk ageFrom ageTo filters = do
     result <- client
-        # query (queryString handle ilk filters) []
+        # query (queryString handle ilk ageFrom ageTo filters) []
         # label (SProxy :: SProxy "databaseError")
     count <- rows result
         # Array.head

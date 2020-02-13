@@ -64,8 +64,9 @@ handleAction (ValueInput value) = H.modify_ (_ { value = value })
 handleQuery (GetValue send) = do
     element <- getRef $ H.RefLabel "huehue"
     value' <- element >>= HTMLInputElement.fromElement # traverse HTMLInputElement.value # H.liftEffect
-    { value } <- H.get
-    pure $ Just $ send value
+    -- { value } <- H.get
+    -- pure $ Just $ send value
+    pure $ Just $ send $ maybe "" identity value'
 
 -- component :: forall t44 t45. H.Component HH.HTML Query State t45 t44
 component = H.mkComponent

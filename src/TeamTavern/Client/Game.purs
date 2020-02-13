@@ -28,7 +28,7 @@ data Input = Input GameHeader.Handle GameHeader.Tab
 data Action
     = Init
     | Receive Input
-    | ApplyFilters (Array FilterProfiles.Field)
+    | ApplyFilters { from :: Maybe Int, to :: Maybe Int } (Array FilterProfiles.Field)
 
 data State
     = Empty Input
@@ -73,7 +73,7 @@ render (Game game' tab) = let
     HH.div_
     [ gameHeader
     , filterProfiles (filterableFields game'.fields)
-        (\(FilterProfiles.ApplyFilters filters) -> Just $ ApplyFilters filters)
+        (\(FilterProfiles.ApplyFilters age filters) -> Just $ ApplyFilters age filters)
     , gameProfiles game' tab
     ]
 render NotFound = HH.p_ [ HH.text "Game could not be found." ]
@@ -123,9 +123,9 @@ handleAction (Receive (Input handle tab)) = do
             H.put $ Game content tab
             H.liftEffect $ setMetaTags content.title tab
         _ -> pure unit
-handleAction (ApplyFilters filters) =
+handleAction (ApplyFilters age filters) =
     void $ H.query (SProxy :: SProxy "gameProfiles") unit
-        (Profiles.ApplyFilters filters unit)
+        (Profiles.ApplyFilters age filters unit)
 
 component :: forall query output left.
     H.Component HH.HTML query Input output (Async left)
