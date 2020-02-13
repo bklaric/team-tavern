@@ -25,6 +25,10 @@ type LoadAccountResult =
     , languages :: Array String
     , country :: Maybe String
     , timezone :: Maybe String
+    , weekdayStart :: Maybe String
+    , weekdayEnd :: Maybe String
+    , weekendStart :: Maybe String
+    , weekendEnd :: Maybe String
     , hasMicrophone :: Boolean
     , about :: Array String
     , notify :: Boolean
@@ -49,6 +53,10 @@ queryString = Query """
         player.languages,
         player.country,
         player.timezone,
+        to_char(player.weekday_start, 'HH24:MI') as "weekdayStart",
+        to_char(player.weekday_end, 'HH24:MI') as "weekdayEnd",
+        to_char(player.weekend_start, 'HH24:MI') as "weekendStart",
+        to_char(player.weekend_end, 'HH24:MI') as "weekendEnd",
         player.has_microphone as "hasMicrophone",
         player.about,
         player.notify

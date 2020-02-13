@@ -7,6 +7,10 @@ create table player
     , languages text[] not null default '{}'
     , country varchar(100)
     , timezone varchar(50)
+    , weekday_start time
+    , weekday_end time
+    , weekend_start time
+    , weekend_end time
     , has_microphone boolean not null default false
     , password_hash character(60) not null
     , confirmation_nonce character(20) not null

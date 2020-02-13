@@ -22,6 +22,7 @@ import TeamTavern.Server.Player.Domain.Nickname as Nickname
 import TeamTavern.Server.Player.Update.ValidateCountry (Country, validateOptionalCountry)
 import TeamTavern.Server.Player.Update.ValidateDiscordTag (DiscordTag, DiscordTagError, validateOptionalDiscordTag)
 import TeamTavern.Server.Player.Update.ValidateLangugase (Language, validateLanguages)
+import TeamTavern.Server.Player.Update.ValidateTimespan (Timespan, validateTimespan)
 import TeamTavern.Server.Player.Update.ValidateTimezone (Timezone, validateOptionalTimezone)
 
 type UpdateDto =
@@ -31,6 +32,10 @@ type UpdateDto =
     , languages :: Array String
     , country :: Maybe String
     , timezone :: Maybe String
+    , weekdayStart :: Maybe String
+    , weekdayEnd :: Maybe String
+    , weekendStart :: Maybe String
+    , weekendEnd :: Maybe String
     , hasMicrophone :: Boolean
     , about :: String
     , notify :: Boolean
@@ -43,6 +48,8 @@ type UpdateModel =
     , languages :: Array Language
     , country :: Maybe Country
     , timezone :: Maybe Timezone
+    , onlineWeekday :: Maybe Timespan
+    , onlineWeekend :: Maybe Timespan
     , hasMicrophone :: Boolean
     , about :: About
     , notify :: Boolean
@@ -69,7 +76,7 @@ readUpdate :: forall errors.
     Body -> Async (ReadUpdateError errors) UpdateModel
 readUpdate body = do
     content <- readBody body
-    dto @ { nickname, discordTag, birthday, languages, country, timezone, hasMicrophone, about, notify } :: UpdateDto <-
+    dto @ { nickname, discordTag, birthday, languages, country, timezone, weekdayStart, weekdayEnd, weekendStart, weekendEnd, hasMicrophone, about, notify } :: UpdateDto <-
         readJSON content
         # labelMap (SProxy :: SProxy "unreadableDto") { content, errors: _ }
         # Async.fromEither
@@ -79,6 +86,8 @@ readUpdate body = do
     , languages: validateLanguages languages
     , country: validateOptionalCountry country
     , timezone: validateOptionalTimezone timezone
+    , onlineWeekday: validateTimespan weekdayStart weekdayEnd
+    , onlineWeekend: validateTimespan weekendStart weekendEnd
     , hasMicrophone
     , about: _
     , notify

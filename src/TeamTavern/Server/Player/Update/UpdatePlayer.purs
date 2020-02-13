@@ -19,6 +19,7 @@ import Postgres.Result (rowCount)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Server.Player.Domain.Nickname (Nickname)
 import TeamTavern.Server.Player.Update.ReadUpdate (UpdateModel)
+import TeamTavern.Server.Player.Update.ValidateTimespan (endTime, startTime, toString)
 
 type UpdatePlayerError errors = Variant
   ( nicknameTaken ::
@@ -42,9 +43,13 @@ queryString = Query """
         languages = $6,
         country = $7,
         timezone = $8,
-        has_microphone = $9,
-        about = $10,
-        notify = $11
+        weekday_start = $9::time,
+        weekday_end = $10::time,
+        weekend_start = $11::time,
+        weekend_end = $12::time,
+        has_microphone = $13,
+        about = $14,
+        notify = $15
     from session
     where player.id = session.player_id
     and session.player_id = $1
@@ -53,8 +58,21 @@ queryString = Query """
     """
 
 queryParameters :: CookieInfo -> UpdateModel -> Array QueryParameter
-queryParameters { id, token } { nickname, discordTag, birthday, languages, country, timezone, hasMicrophone, about, notify } =
-    id : token : nickname : toNullable discordTag : toNullable birthday : languages : toNullable country : toNullable timezone : hasMicrophone : about :| notify
+queryParameters { id, token } { nickname, discordTag, birthday, languages, country, timezone, onlineWeekday, onlineWeekend, hasMicrophone, about, notify } =
+    id
+    : token
+    : nickname
+    : toNullable discordTag
+    : toNullable birthday
+    : languages
+    : toNullable country
+    : toNullable timezone
+    : (toNullable $ toString <$> startTime <$> onlineWeekday)
+    : (toNullable $ toString <$> endTime <$> onlineWeekday)
+    : (toNullable $ toString <$> startTime <$> onlineWeekend)
+    : (toNullable $ toString <$> endTime <$> onlineWeekend)
+    : hasMicrophone
+    : about :| notify
 
 updatePlayer
     :: forall errors

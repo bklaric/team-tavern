@@ -17,6 +17,7 @@ import Data.JSDate (getDate, getFullYear, getMonth, now)
 import Data.Maybe (Maybe(..), fromJust, isNothing, maybe)
 import Data.Options ((:=))
 import Data.String (trim)
+import Data.Traversable (traverse)
 import Data.Variant (SProxy(..), match)
 import Halogen (ClassName(..))
 import Halogen as H
@@ -46,6 +47,7 @@ import TeamTavern.Server.Player.Update.SendResponse as Update
 import TeamTavern.Server.Player.ViewAccount.SendResponse as ViewAccount
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
+import Web.HTML.HTMLInputElement as HTMLInputElement
 
 data Action
     = Init
@@ -68,6 +70,10 @@ type LoadedState =
     , languages :: Array String
     , country :: Maybe String
     , timezone :: Maybe String
+    , weekdayStart :: Maybe String
+    , weekdayEnd :: Maybe String
+    , weekendStart :: Maybe String
+    , weekendEnd :: Maybe String
     , hasMicrophone :: Boolean
     , about :: String
     , notify :: Boolean
@@ -116,6 +122,10 @@ render (Loaded loadedState @
     , languages
     , country
     , timezone
+    , weekdayStart
+    , weekdayEnd
+    , weekendStart
+    , weekendEnd
     , hasMicrophone
     , about
     , notify
@@ -227,24 +237,22 @@ render (Loaded loadedState @
                 [ HH.text "Online on weekdays" ]
             , HH.div [ HP.class_ $ HH.ClassName "timespan-group" ]
                 [ HH.span [ HP.class_ $ HH.ClassName "timespan-group-from" ] [ HH.text "From" ]
-                -- , textLineInput (SProxy :: SProxy "weekdayFromInput")
-                --     { id: "weekday-start", class_: "timespan-group-input", value: maybe "" identity birthday, type_: TextLineInput.Time }
                 , HH.input
                     [ HP.id_ "weekday-start"
                     , HP.class_ $ HH.ClassName $ "text-line-input timespan-group-input"
                     , HP.ref $ H.RefLabel "weekday-start"
                     , HP.disabled $ isNothing timezone
                     , HP.type_ HP.InputTime
+                    , HP.value $ maybe "" identity weekdayStart
                     ]
                 , HH.span [ HP.class_ $ HH.ClassName "timespan-group-to" ] [ HH.text "to" ]
-                -- , textLineInput (SProxy :: SProxy "weekdayToInput")
-                --     { id: "weekday-end", class_: "timespan-group-input", value: maybe "" identity birthday, type_: TextLineInput.Time }
                  , HH.input
                     [ HP.id_ "weekday-end"
                     , HP.class_ $ HH.ClassName $ "text-line-input timespan-group-input"
                     , HP.ref $ H.RefLabel "weekday-end"
                     , HP.disabled $ isNothing timezone
                     , HP.type_ HP.InputTime
+                    , HP.value $ maybe "" identity weekdayEnd
                     ]
                ]
             ]
@@ -254,24 +262,22 @@ render (Loaded loadedState @
                 [ HH.text "Online on weekends" ]
             , HH.div [ HP.class_ $ HH.ClassName "timespan-group" ]
                 [ HH.span [ HP.class_ $ HH.ClassName "timespan-group-from" ] [ HH.text "From" ]
-                -- , textLineInput (SProxy :: SProxy "weekendFromInput")
-                --     { id: "weekend-start", class_: "timespan-group-input", value: maybe "" identity birthday, type_: TextLineInput.Time }
                 , HH.input
                     [ HP.id_ "weekend-start"
                     , HP.class_ $ HH.ClassName $ "text-line-input timespan-group-input"
                     , HP.ref $ H.RefLabel "weekend-start"
                     , HP.disabled $ isNothing timezone
                     , HP.type_ HP.InputTime
+                    , HP.value $ maybe "" identity weekendStart
                     ]
                 , HH.span [ HP.class_ $ HH.ClassName "timespan-group-to" ] [ HH.text "to" ]
-                -- , textLineInput (SProxy :: SProxy "weekendToInput")
-                --     { id: "weekend-end", class_: "timespan-group-input", value: maybe "" identity birthday, type_: TextLineInput.Time }
                 , HH.input
-                    [ HP.id_ "weekend-start"
+                    [ HP.id_ "weekend-end"
                     , HP.class_ $ HH.ClassName $ "text-line-input timespan-group-input"
-                    , HP.ref $ H.RefLabel "weekend-start"
+                    , HP.ref $ H.RefLabel "weekend-end"
                     , HP.disabled $ isNothing timezone
                     , HP.type_ HP.InputTime
+                    , HP.value $ maybe "" identity weekendEnd
                     ]
                 ]
             ]
@@ -353,6 +359,10 @@ loadAccount nickname = Async.unify do
         , languages: content.languages
         , country: content.country
         , timezone: content.timezone
+        , weekdayStart: content.weekdayStart
+        , weekdayEnd: content.weekdayEnd
+        , weekendStart: content.weekendStart
+        , weekendEnd: content.weekendEnd
         , hasMicrophone: content.hasMicrophone
         , about: intercalate "\n\n" content.about
         , notify: content.notify
@@ -373,6 +383,10 @@ updateAccount state @
     , languages
     , country
     , timezone
+    , weekdayStart
+    , weekdayEnd
+    , weekendStart
+    , weekendEnd
     , hasMicrophone
     , about
     , notify
@@ -386,6 +400,10 @@ updateAccount state @
             , languages
             , country
             , timezone
+            , weekdayStart
+            , weekdayEnd
+            , weekendStart
+            , weekendEnd
             , hasMicrophone
             , about
             , notify
@@ -413,6 +431,13 @@ updateAccount state @
                     error)
         _ -> pure $ Just $ state { otherError = true }
     pure newState
+
+getTime label = do
+    input <- H.getRef label
+    input
+        >>= HTMLInputElement.fromElement
+        # traverse HTMLInputElement.value
+        # H.liftEffect
 
 handleAction :: forall left.
     Action -> H.HalogenM State Action ChildSlots Message (Async left) Unit
@@ -451,6 +476,10 @@ handleAction (Update loadedState event) = do
         (SingleSelect.Selected $ map _.name)
     hasMicrophone <- H.query (SProxy :: SProxy "hasMicrophoneInput") unit
         (CheckboxInput.GetValue identity)
+    weekdayStart <- getTime $ H.RefLabel "weekday-start"
+    weekdayEnd <- getTime $ H.RefLabel "weekday-end"
+    weekendStart <- getTime $ H.RefLabel "weekend-start"
+    weekendEnd <- getTime $ H.RefLabel "weekend-end"
     let resetState = loadedState
             { discordTag =
                 discordTag >>=
@@ -465,6 +494,10 @@ handleAction (Update loadedState event) = do
             , languages       = maybe [] identity languages
             , country         = join country
             , timezone        = join timezone
+            , weekdayStart    = timezone >>= const weekdayStart
+            , weekdayEnd      = timezone >>= const weekdayEnd
+            , weekendStart    = timezone >>= const weekendStart
+            , weekendEnd      = timezone >>= const weekendEnd
             , hasMicrophone   = maybe false identity hasMicrophone
             , nicknameError   = false
             , discordTagError = false
