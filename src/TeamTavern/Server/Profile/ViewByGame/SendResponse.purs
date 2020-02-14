@@ -15,6 +15,7 @@ type OkContent =
     { profiles :: Array
         { nickname :: String
         , age :: Maybe Int
+        , languages :: Array String
         , summary :: Array String
         , fieldValues :: Array
             { fieldKey :: String

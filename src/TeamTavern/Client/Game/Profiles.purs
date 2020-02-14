@@ -155,7 +155,7 @@ render (Profiles game tab page _ _ response playerInfo') =
         HH.div [ HP.class_ $ ClassName "card-section" ]
         [ HH.p_ [ HH.text "No profiles satisfy specified filters." ] ]
     else
-        (response.profiles # mapWithIndex \index { nickname, age, summary, fieldValues, updated, updatedSeconds } ->
+        (response.profiles # mapWithIndex \index { nickname, age, languages, summary, fieldValues, updated, updatedSeconds } ->
             HH.div [ HP.class_ $ ClassName "card-section" ] $
             [ HH.h3 [ HP.class_ $ ClassName "profile-title" ]
                 [ navigationAnchorIndexed (SProxy :: SProxy "players") index
@@ -172,6 +172,14 @@ render (Profiles game tab page _ _ response playerInfo') =
                     , HH.span [ HP.class_ $ HH.ClassName "profile-field-label" ] [ HH.text "Age: " ]
                     , HH.text $ show age'
                     ]
+                , case languages of
+                    [] -> Nothing
+                    languages' -> Just $
+                        HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
+                        [ HH.i [ HP.class_ $ HH.ClassName "fas fa-comments profile-field-icon" ] []
+                        , HH.span [ HP.class_ $ HH.ClassName "profile-field-label" ] [ HH.text "Languages: " ]
+                        , HH.text $ intercalate ", " languages'
+                        ]
                 ]
             <> (Array.catMaybes $ game.fields <#> \field -> let
                 fieldValue = fieldValues # find \ { fieldKey } -> field.key == fieldKey
