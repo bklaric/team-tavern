@@ -6,7 +6,7 @@ import Async (Async)
 import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
-import Data.Array (intercalate)
+import Data.Array (catMaybes, intercalate)
 import Data.Array as Array
 import Data.Bifunctor (lmap)
 import Data.Foldable (find)
@@ -155,7 +155,7 @@ render (Profiles game tab page _ _ response playerInfo') =
         HH.div [ HP.class_ $ ClassName "card-section" ]
         [ HH.p_ [ HH.text "No profiles satisfy specified filters." ] ]
     else
-        (response.profiles # mapWithIndex \index { nickname, summary, fieldValues, updated, updatedSeconds } ->
+        (response.profiles # mapWithIndex \index { nickname, age, summary, fieldValues, updated, updatedSeconds } ->
             HH.div [ HP.class_ $ ClassName "card-section" ] $
             [ HH.h3 [ HP.class_ $ ClassName "profile-title" ]
                 [ navigationAnchorIndexed (SProxy :: SProxy "players") index
@@ -165,6 +165,14 @@ render (Profiles game tab page _ _ response playerInfo') =
                     [ HH.text $ "Updated " <> lastUpdated updatedSeconds ]
                 ]
             ]
+            <> catMaybes
+                [ age <#> \age' ->
+                    HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
+                    [ HH.i [ HP.class_ $ HH.ClassName "fas fa-calendar-alt profile-field-icon" ] []
+                    , HH.span [ HP.class_ $ HH.ClassName "profile-field-label" ] [ HH.text "Age: " ]
+                    , HH.text $ show age'
+                    ]
+                ]
             <> (Array.catMaybes $ game.fields <#> \field -> let
                 fieldValue = fieldValues # find \ { fieldKey } -> field.key == fieldKey
                 in

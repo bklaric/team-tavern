@@ -14,6 +14,7 @@ import Unsafe.Coerce (unsafeCoerce)
 type OkContent =
     { profiles :: Array
         { nickname :: String
+        , age :: Maybe Int
         , summary :: Array String
         , fieldValues :: Array
             { fieldKey :: String

@@ -40,6 +40,7 @@ pageSize' = toNumber pageSize
 
 type LoadProfilesDto =
     { nickname :: String
+    , age :: Maybe Int
     , summary :: Array String
     , fieldValues :: Array
         { fieldKey :: String
@@ -53,6 +54,7 @@ type LoadProfilesDto =
 
 type LoadProfilesResult =
     { nickname :: Nickname
+    , age :: Maybe Int
     , summary :: Summary
     , fieldValues :: Array
         { fieldKey :: String
@@ -203,6 +205,7 @@ queryString handle ilk page ageFrom ageTo (QueryPairs filters) = let
     Query $ """
     select
         profile.id,
+        extract(year from age(player.birthday))::int as age,
         game.handle,
         player.nickname,
         profile.summary,
@@ -234,8 +237,9 @@ loadProfiles client handle ilk page ageFrom ageTo filters = do
     profiles :: Array LoadProfilesDto <- rows result
         # traverse read
         # labelMap (SProxy :: SProxy "unreadableDtos") { result, errors: _ }
-    pure $ profiles <#> \{ nickname, summary, fieldValues, updated, updatedSeconds } ->
+    pure $ profiles <#> \{ nickname, age, summary, fieldValues, updated, updatedSeconds } ->
         { nickname: wrap nickname
+        , age
         , summary: summary <#> wrap # wrap
         , fieldValues
         , updated
