@@ -7,7 +7,7 @@ import Control.Bind (bindFlipped)
 import Data.Const (Const)
 import Data.Int as Int
 import Data.Map as Map
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), maybe)
 import Data.Symbol (SProxy(..))
 import Data.Traversable (traverse)
 import Data.Tuple (Tuple(..))
@@ -16,8 +16,9 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import TeamTavern.Client.Components.MultiSelect (multiSelectIndexed)
+import TeamTavern.Client.Components.MultiSelect (multiSelect, multiSelectIndexed)
 import TeamTavern.Client.Components.MultiSelect as MultiSelect
+import TeamTavern.Server.Infrastructure.Languages (allLanguages)
 import Web.Event.Event (preventDefault)
 import Web.HTML.HTMLInputElement as HTMLInputElement
 import Web.UIEvent.MouseEvent (MouseEvent, toEvent)
@@ -41,12 +42,13 @@ type State = Array Field
 
 data Action = Receive Input | Apply MouseEvent | Clear MouseEvent
 
-data Output = ApplyFilters { from :: Maybe Int, to :: Maybe Int } (Array Field)
+data Output = ApplyFilters { from :: Maybe Int, to :: Maybe Int } (Array String) (Array Field)
 
 type Slot = H.Slot (Const Void) Output
 
 type ChildSlots =
-    ( filter :: MultiSelect.Slot Option Field
+    ( language :: MultiSelect.Slot String Unit
+    , filter :: MultiSelect.Slot Option Field
     )
 
 fieldLabel :: forall slots action. String -> String -> HH.HTML slots action
@@ -65,7 +67,7 @@ fieldInput field @ { label, icon, options } =
     HH.div [ HP.class_ $ HH.ClassName "input-group" ]
     [ fieldLabel label icon
     , multiSelectIndexed (SProxy :: SProxy "filter") field
-        { options: options <#> \option -> { option, selected: false }
+        { options: options <#> { option: _, selected: false }
         , labeler: _.option
         , comparer: \leftOption rightOption -> leftOption.key == rightOption.key
         , showFilter: Nothing
@@ -95,6 +97,15 @@ render fields = HH.div [ HP.class_ $ HH.ClassName "card" ]
                         , HP.type_ HP.InputNumber
                         ]
                     ]
+                ]
+            , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+                [ fieldLabel "Language" "fas fa-comments"
+                , multiSelect (SProxy :: SProxy "language")
+                    { options: allLanguages <#> { option: _, selected: false }
+                    , labeler: identity
+                    , comparer: (==)
+                    , showFilter: Just "Search languages"
+                    }
                 ]
             ]
             <>
@@ -127,9 +138,6 @@ getAge label = do
 clearAge label = do
     input <- H.getRef label
     input' <- input >>= HTMLInputElement.fromElement # pure
-        -- # traverse HTMLInputElement.value
-        -- <#> bindFlipped Int.fromString
-        -- # H.liftEffect
     case input' of
         Nothing -> pure unit
         Just input'' -> H.liftEffect $ HTMLInputElement.setValue "" input''
@@ -142,16 +150,19 @@ handleAction (Apply event) = do
     H.liftEffect $ preventDefault $ toEvent event
     ageFrom <- getAge $ H.RefLabel "ageFrom"
     ageTo <- getAge $ H.RefLabel "ageTo"
+    languages <- H.query (SProxy :: SProxy "language") unit
+        $ MultiSelect.Selected identity
     filters <- H.queryAll (SProxy :: SProxy "filter")
         $ MultiSelect.Selected identity
     let (filteredFields :: Array _) = filters
             # Map.toUnfoldable
             <#> \(Tuple field options) -> field { options = options }
-    H.raise $ ApplyFilters { from: ageFrom, to: ageTo } filteredFields
+    H.raise $ ApplyFilters { from: ageFrom, to: ageTo } (maybe [] identity languages) filteredFields
 handleAction (Clear event) = do
     H.liftEffect $ preventDefault $ toEvent event
     clearAge $ H.RefLabel "ageFrom"
     clearAge $ H.RefLabel "ageTo"
+    void $ H.query (SProxy :: SProxy "language") unit $ MultiSelect.Clear unit
     -- Clear every multiselect child.
     void $ H.queryAll (SProxy :: SProxy "filter") $ MultiSelect.Clear unit
 

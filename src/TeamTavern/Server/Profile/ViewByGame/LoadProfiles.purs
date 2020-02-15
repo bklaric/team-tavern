@@ -27,7 +27,7 @@ import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
 import TeamTavern.Server.Player.Domain.Nickname (Nickname)
 import TeamTavern.Server.Profile.Domain.Summary (Summary)
-import TeamTavern.Server.Profile.Routes (Handle, ProfileIlk, ProfilePage, Age)
+import TeamTavern.Server.Profile.Routes (Age, Handle, ProfileIlk, ProfilePage, Language)
 import URI.Extra.QueryPairs (Key, QueryPairs(..), Value)
 import URI.Extra.QueryPairs as Key
 import URI.Extra.QueryPairs as Value
@@ -137,6 +137,7 @@ createCrosstabFieldsFilter filters =
     # intercalate ", "
     # \crosstabFieldsFilter -> "(" <> crosstabFieldsFilter <> ")"
 
+createAgeFilter :: Maybe Age -> Maybe Age -> String
 createAgeFilter Nothing Nothing = ""
 createAgeFilter (Just ageFrom) Nothing = " and player.birthday < (current_timestamp - interval '" <> show ageFrom <> " years')"
 createAgeFilter Nothing (Just ageTo) = " and player.birthday > (current_timestamp - interval '" <> show ageTo <> " years')"
@@ -144,13 +145,17 @@ createAgeFilter (Just ageFrom) (Just ageTo) =
     " and player.birthday < (current_timestamp - interval '" <> show ageFrom <> " years') "
     <> "and player.birthday > (current_timestamp - interval '" <> show ageTo <> " years')"
 
-createProfilesFilterString :: String -> ProfileIlk -> Maybe Age -> Maybe Age -> Array (Tuple Key (Maybe Value)) -> String
-createProfilesFilterString preparedHandle ilk ageFrom ageTo filters = let
+createLanguagesFilter :: Array Language -> Language
+createLanguagesFilter [] = ""
+createLanguagesFilter languages = "and player.languages && (array[" <> (languages <#> sanitizeStringValue # intercalate ", ") <> "])"
+
+createProfilesFilterString :: String -> ProfileIlk -> Maybe Age -> Maybe Age -> Array Language -> Array (Tuple Key (Maybe Value)) -> String
+createProfilesFilterString preparedHandle ilk ageFrom ageTo languages filters = let
     -- Prepare Array (Tuple String (Array String)) as filters.
     preparedFilters = prepareFilters filters
     in
     if Array.null preparedFilters
-    then "where game.handle = " <> preparedHandle <> " and profile.type = " <> show ilk <> createAgeFilter ageFrom ageTo
+    then "where game.handle = " <> preparedHandle <> " and profile.type = " <> show ilk <> createAgeFilter ageFrom ageTo <> createLanguagesFilter languages
     else let
         -- Create filter string.
         filterString = createFilterString preparedFilters
@@ -177,7 +182,7 @@ createProfilesFilterString preparedHandle ilk ageFrom ageTo filters = let
                 join field on field.id = field_value.field_id
                 join field_option on field_option.id = field_value.field_option_id
                     or field_option.id = field_value_option.field_option_id
-                where game.handle = """ <> preparedHandle <> """ and profile.type = """ <> show ilk <> createAgeFilter ageFrom ageTo <> """
+                where game.handle = """ <> preparedHandle <> """ and profile.type = """ <> show ilk <> createAgeFilter ageFrom ageTo <> createLanguagesFilter languages <> """
                 group by profile.id, field.key
                 order by profile.created;
                 $$,
@@ -194,13 +199,13 @@ createProfilesFilterString preparedHandle ilk ageFrom ageTo filters = let
             """ <> filterString <> """
         )"""
 
-queryString :: Handle -> ProfileIlk -> ProfilePage -> Maybe Age -> Maybe Age -> QueryPairs Key Value -> Query
-queryString handle ilk page ageFrom ageTo (QueryPairs filters) = let
+queryString :: Handle -> ProfileIlk -> ProfilePage -> Maybe Age -> Maybe Age -> Array Language -> QueryPairs Key Value -> Query
+queryString handle ilk page ageFrom ageTo languages (QueryPairs filters) = let
     -- Prepare game handle.
     preparedHandle = sanitizeStringValue handle
 
     -- Create profiles filter string.
-    filterString = createProfilesFilterString preparedHandle ilk ageFrom ageTo filters
+    filterString = createProfilesFilterString preparedHandle ilk ageFrom ageTo languages filters
 
     -- Insert it into the rest of the query.
     in
@@ -231,11 +236,12 @@ loadProfiles
     -> ProfilePage
     -> Maybe Age
     -> Maybe Age
+    -> Array Language
     -> QueryPairs Key Value
     -> Async (LoadProfilesError errors) (Array LoadProfilesResult)
-loadProfiles client handle ilk page ageFrom ageTo filters = do
+loadProfiles client handle ilk page ageFrom ageTo languagesFilter filters = do
     result <- client
-        # query_ (queryString handle ilk page ageFrom ageTo filters)
+        # query_ (queryString handle ilk page ageFrom ageTo languagesFilter filters)
         # label (SProxy :: SProxy "databaseError")
     profiles :: Array LoadProfilesDto <- rows result
         # traverse read

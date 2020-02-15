@@ -59,11 +59,12 @@ data State
         GameHeader.Tab
         ProfilePage
         { from :: Maybe Int, to :: Maybe Int }
+        (Array String)
         (Array FilterProfiles.Field)
         ViewByGame.OkContent
         (Maybe Cookie.PlayerInfo)
 
-data Query send = ApplyFilters { from :: Maybe Int, to :: Maybe Int } (Array FilterProfiles.Field) send
+data Query send = ApplyFilters { from :: Maybe Int, to :: Maybe Int } (Array String) (Array FilterProfiles.Field) send
 
 type Slot = H.Slot Query Void
 
@@ -111,7 +112,7 @@ totalPages count = ceil (toNumber count / pageSize')
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render (Empty _) = HH.div_ []
-render (Profiles game tab page _ _ response playerInfo') =
+render (Profiles game tab page _ _ _ response playerInfo') =
     HH.div [ HP.class_ $ HH.ClassName "card" ] $
     [ HH.span [ HP.class_ $ HH.ClassName "card-title" ] $ join
         [ pure $ HH.text
@@ -267,8 +268,8 @@ render (Profiles game tab page _ _ response playerInfo') =
             ]
         )
 
-loadProfiles :: forall left. View.OkContent -> GameHeader.Tab -> ProfilePage -> { from :: Maybe Int, to :: Maybe Int } -> Array FilterProfiles.Field -> Async left State
-loadProfiles game tab page age filters = Async.unify do
+loadProfiles :: forall left. View.OkContent -> GameHeader.Tab -> ProfilePage -> { from :: Maybe Int, to :: Maybe Int } -> Array String -> Array FilterProfiles.Field -> Async left State
+loadProfiles game tab page age languages filters = Async.unify do
     let empty = Empty (Input game tab)
     let tabPair =
             case tab of
@@ -277,13 +278,17 @@ loadProfiles game tab page age filters = Async.unify do
     let pagePair = "page=" <> show page
     let ageFromPair = maybe "" ("&ageFrom=" <> _) (show <$> age.from)
     let ageToPair = maybe "" ("&ageTo=" <> _) (show <$> age.to)
+    let languagePairs =
+            languages
+            <#> (\language -> "&languages=" <> language)
+            # intercalate ""
     let filterPairs = filters
             <#> (\field -> field.options
                 <#> \option -> field.key <> "=" <> option.key)
             # join
             # intercalate "&"
     let filterQuery = "?" <> tabPair <> "&" <> pagePair
-            <> ageFromPair <> ageToPair
+            <> ageFromPair <> ageToPair <> languagePairs
             <> if String.null filterPairs then "" else "&" <> filterPairs
     response <- Fetch.fetch_
             ("/api/profiles/by-handle/" <> game.handle <> filterQuery)
@@ -292,7 +297,7 @@ loadProfiles game tab page age filters = Async.unify do
         200 -> FetchRes.text response >>= Json.readJSON # lmap (const empty)
         _ -> Async.left empty
     playerInfo' <- H.liftEffect getPlayerInfo
-    pure $ Profiles game tab page age filters content playerInfo'
+    pure $ Profiles game tab page age languages filters content playerInfo'
 
 handleAction :: forall output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
@@ -300,18 +305,18 @@ handleAction Init = do
     state <- H.get
     case state of
         Empty (Input game tab) -> do
-            state' <- H.lift $ loadProfiles game tab 1 { from: Nothing, to: Nothing } []
+            state' <- H.lift $ loadProfiles game tab 1 { from: Nothing, to: Nothing } [] []
             H.put state'
         _ -> pure unit
 handleAction (Receive (Input game tab)) = do
-    state' <- H.lift $ loadProfiles game tab 1 { from: Nothing, to: Nothing } []
+    state' <- H.lift $ loadProfiles game tab 1 { from: Nothing, to: Nothing } [] []
     H.put state'
     pure unit
 handleAction (ChangePage page mouseEvent) = do
     state <- H.get
     case state of
-        Profiles game tab _ age filters _ playerInfo -> do
-            newState <- H.lift $ loadProfiles game tab page age filters
+        Profiles game tab _ age languages filters _ playerInfo -> do
+            newState <- H.lift $ loadProfiles game tab page age languages filters
             H.put newState
         _ -> pure unit
 
@@ -329,12 +334,12 @@ handleQuery
     :: forall output send left
     .  Query send
     -> H.HalogenM State Action ChildSlots output (Async left) (Maybe send)
-handleQuery (ApplyFilters age fields send) = do
+handleQuery (ApplyFilters age languages fields send) = do
     state <- H.get
     case state of
         Empty _ -> pure $ Just send
-        Profiles game tab _ _ _ _ _ -> do
-            state' <- H.lift $ loadProfiles game tab 1 age fields
+        Profiles game tab _ _ _ _ _ _ -> do
+            state' <- H.lift $ loadProfiles game tab 1 age languages fields
             H.put state'
             pure $ Just send
 

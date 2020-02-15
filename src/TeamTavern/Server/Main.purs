@@ -187,8 +187,8 @@ handleRequest pool client method url cookies body =
             Profile.create pool identifiers cookies body
         , updateProfile: \identifiers ->
             Profile.update pool identifiers cookies body
-        , viewProfilesByGame: \{ handle, ilk, page, ageFrom, ageTo, filters } ->
-            Profile.viewByGame pool handle ilk page ageFrom ageTo filters
+        , viewProfilesByGame: \{ handle, ilk, page, ageFrom, ageTo, languages, filters } ->
+            Profile.viewByGame pool handle ilk page ageFrom ageTo languages filters
         , viewProfilesByPlayer: \{ nickname, ilk } ->
             Profile.viewByPlayer pool nickname ilk
         , viewAllConversations: const $
