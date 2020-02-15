@@ -38,7 +38,9 @@
 .checkbox-input-label {
     display: flex;
     margin: 0;
-    line-height: 21px;
+    line-height: 1.5;
+    align-items: center;
+    height: 40px;
 }
 
 .input-sublabel {

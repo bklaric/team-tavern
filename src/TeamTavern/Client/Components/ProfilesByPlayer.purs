@@ -21,6 +21,7 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
+import Prim.Row (class Cons)
 import Simple.JSON.Async as Json
 import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.Modal as Modal
@@ -32,7 +33,6 @@ import TeamTavern.Client.Script.Cookie (getPlayerNickname)
 import TeamTavern.Server.Profile.ViewByPlayer.SendResponse as ViewByPlayer
 import Web.Event.Event (preventDefault)
 import Web.UIEvent.MouseEvent (MouseEvent, toEvent)
-import Prim.Row (class Cons)
 
 type Nickname = String
 
@@ -247,5 +247,13 @@ component = mkComponent
         }
     }
 
+profilesByPlayer
+    :: forall children' name children action left
+    .  Cons name (Slot) children' children
+    => IsSymbol name
+    => String
+    -> ProfileIlk
+    -> SProxy name
+    -> HH.ComponentHTML action children (Async left)
 profilesByPlayer nickname profileIlk slot =
     HH.slot slot unit component (Input nickname profileIlk) absurd

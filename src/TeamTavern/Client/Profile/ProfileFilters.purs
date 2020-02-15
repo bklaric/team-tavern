@@ -16,12 +16,20 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
+import TeamTavern.Client.Components.CheckboxInput as CheckboxInput
 import TeamTavern.Client.Components.MultiSelect (multiSelect, multiSelectIndexed)
 import TeamTavern.Client.Components.MultiSelect as MultiSelect
 import TeamTavern.Server.Infrastructure.Languages (allLanguages)
 import Web.Event.Event (preventDefault)
 import Web.HTML.HTMLInputElement as HTMLInputElement
 import Web.UIEvent.MouseEvent (MouseEvent, toEvent)
+
+type Filters =
+    { age :: { from :: Maybe Int, to :: Maybe Int }
+    , languages :: Array String
+    , microphone :: Boolean
+    , fields :: Array Field
+    }
 
 type Option =
     { key :: String
@@ -42,12 +50,13 @@ type State = Array Field
 
 data Action = Receive Input | Apply MouseEvent | Clear MouseEvent
 
-data Output = ApplyFilters { from :: Maybe Int, to :: Maybe Int } (Array String) (Array Field)
+data Output = ApplyFilters Filters
 
 type Slot = H.Slot (Const Void) Output
 
 type ChildSlots =
     ( language :: MultiSelect.Slot String Unit
+    , microphone :: CheckboxInput.Slot
     , filter :: MultiSelect.Slot Option Field
     )
 
@@ -107,6 +116,18 @@ render fields = HH.div [ HP.class_ $ HH.ClassName "card" ]
                     , showFilter: Just "Search languages"
                     }
                 ]
+            , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+                [ fieldLabel "Microphone" "fas fa-microphone"
+                , HH.label
+                    [ HP.class_ $ HH.ClassName "checkbox-input-label" ]
+                    [ HH.input
+                        [ HP.class_ $ HH.ClassName "checkbox-input"
+                        , HP.type_ HP.InputCheckbox
+                        , HP.ref $ H.RefLabel "microphone"
+                        ]
+                    , HH.text "Must have a microphone and be willing to communicate."
+                    ]
+                ]
             ]
             <>
             (map fieldInput fields)
@@ -127,6 +148,8 @@ render fields = HH.div [ HP.class_ $ HH.ClassName "card" ]
         ]
     ]
 
+getAge :: forall state action slots message monad. MonadEffect monad =>
+    H.RefLabel -> H.HalogenM state action slots message monad (Maybe Int)
 getAge label = do
     input <- H.getRef label
     input
@@ -135,12 +158,32 @@ getAge label = do
         <#> bindFlipped Int.fromString
         # H.liftEffect
 
+clearAge :: forall state action slots message monad. MonadEffect monad =>
+    H.RefLabel -> H.HalogenM state action slots message monad Unit
 clearAge label = do
     input <- H.getRef label
     input' <- input >>= HTMLInputElement.fromElement # pure
     case input' of
         Nothing -> pure unit
         Just input'' -> H.liftEffect $ HTMLInputElement.setValue "" input''
+
+getMicrophone :: forall state action slots message monad. MonadEffect monad =>
+    H.HalogenM state action slots message monad (Maybe Boolean)
+getMicrophone = do
+    input <- H.getRef $ H.RefLabel "microphone"
+    input
+        >>= HTMLInputElement.fromElement
+        # traverse HTMLInputElement.checked
+        # H.liftEffect
+
+clearMicrophone :: forall state action slots message monad. MonadEffect monad =>
+    H.HalogenM state action slots message monad Unit
+clearMicrophone = do
+    input <- H.getRef $ H.RefLabel "microphone"
+    input' <- input >>= HTMLInputElement.fromElement # pure
+    case input' of
+        Nothing -> pure unit
+        Just input'' -> H.liftEffect $ HTMLInputElement.setChecked false input''
 
 handleAction :: forall left.
     Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
@@ -150,6 +193,7 @@ handleAction (Apply event) = do
     H.liftEffect $ preventDefault $ toEvent event
     ageFrom <- getAge $ H.RefLabel "ageFrom"
     ageTo <- getAge $ H.RefLabel "ageTo"
+    microphone <- getMicrophone
     languages <- H.query (SProxy :: SProxy "language") unit
         $ MultiSelect.Selected identity
     filters <- H.queryAll (SProxy :: SProxy "filter")
@@ -157,11 +201,17 @@ handleAction (Apply event) = do
     let (filteredFields :: Array _) = filters
             # Map.toUnfoldable
             <#> \(Tuple field options) -> field { options = options }
-    H.raise $ ApplyFilters { from: ageFrom, to: ageTo } (maybe [] identity languages) filteredFields
+    H.raise $ ApplyFilters
+        { age: { from: ageFrom, to: ageTo }
+        , languages: maybe [] identity languages
+        , microphone: maybe false identity microphone
+        , fields: filteredFields
+        }
 handleAction (Clear event) = do
     H.liftEffect $ preventDefault $ toEvent event
     clearAge $ H.RefLabel "ageFrom"
     clearAge $ H.RefLabel "ageTo"
+    clearMicrophone
     void $ H.query (SProxy :: SProxy "language") unit $ MultiSelect.Clear unit
     -- Clear every multiselect child.
     void $ H.queryAll (SProxy :: SProxy "filter") $ MultiSelect.Clear unit

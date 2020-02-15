@@ -29,7 +29,7 @@ import TeamTavern.Client.Components.NavigationAnchor as Anchor
 import TeamTavern.Client.Game.CreateProfile (createProfile)
 import TeamTavern.Client.Game.CreateProfile as CreateProfile
 import TeamTavern.Client.Game.GameHeader as GameHeader
-import TeamTavern.Client.Profile.ProfileFilters as FilterProfiles
+import TeamTavern.Client.Profile.ProfileFilters (Filters)
 import TeamTavern.Client.Script.Cookie (PlayerInfo, getPlayerInfo)
 import TeamTavern.Client.Script.Cookie as Cookie
 import TeamTavern.Server.Game.View.SendResponse as View
@@ -58,13 +58,11 @@ data State
         View.OkContent
         GameHeader.Tab
         ProfilePage
-        { from :: Maybe Int, to :: Maybe Int }
-        (Array String)
-        (Array FilterProfiles.Field)
+        Filters
         ViewByGame.OkContent
         (Maybe Cookie.PlayerInfo)
 
-data Query send = ApplyFilters { from :: Maybe Int, to :: Maybe Int } (Array String) (Array FilterProfiles.Field) send
+data Query send = ApplyFilters Filters send
 
 type Slot = H.Slot Query Void
 
@@ -112,7 +110,7 @@ totalPages count = ceil (toNumber count / pageSize')
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render (Empty _) = HH.div_ []
-render (Profiles game tab page _ _ _ response playerInfo') =
+render (Profiles game tab page _ response playerInfo') =
     HH.div [ HP.class_ $ HH.ClassName "card" ] $
     [ HH.span [ HP.class_ $ HH.ClassName "card-title" ] $ join
         [ pure $ HH.text
@@ -268,27 +266,28 @@ render (Profiles game tab page _ _ _ response playerInfo') =
             ]
         )
 
-loadProfiles :: forall left. View.OkContent -> GameHeader.Tab -> ProfilePage -> { from :: Maybe Int, to :: Maybe Int } -> Array String -> Array FilterProfiles.Field -> Async left State
-loadProfiles game tab page age languages filters = Async.unify do
+loadProfiles :: forall left. View.OkContent -> GameHeader.Tab -> ProfilePage -> Filters -> Async left State
+loadProfiles game tab page filters = Async.unify do
     let empty = Empty (Input game tab)
     let tabPair =
             case tab of
             GameHeader.Players -> "ilk=1"
             GameHeader.Teams -> "ilk=2"
     let pagePair = "page=" <> show page
-    let ageFromPair = maybe "" ("&ageFrom=" <> _) (show <$> age.from)
-    let ageToPair = maybe "" ("&ageTo=" <> _) (show <$> age.to)
+    let ageFromPair = maybe "" ("&ageFrom=" <> _) (show <$> filters.age.from)
+    let ageToPair = maybe "" ("&ageTo=" <> _) (show <$> filters.age.to)
+    let microphonePair = if filters.microphone then "&microphone=true" else ""
     let languagePairs =
-            languages
+            filters.languages
             <#> (\language -> "&languages=" <> language)
             # intercalate ""
-    let filterPairs = filters
+    let filterPairs = filters.fields
             <#> (\field -> field.options
                 <#> \option -> field.key <> "=" <> option.key)
             # join
             # intercalate "&"
     let filterQuery = "?" <> tabPair <> "&" <> pagePair
-            <> ageFromPair <> ageToPair <> languagePairs
+            <> ageFromPair <> ageToPair <> microphonePair <> languagePairs
             <> if String.null filterPairs then "" else "&" <> filterPairs
     response <- Fetch.fetch_
             ("/api/profiles/by-handle/" <> game.handle <> filterQuery)
@@ -297,7 +296,15 @@ loadProfiles game tab page age languages filters = Async.unify do
         200 -> FetchRes.text response >>= Json.readJSON # lmap (const empty)
         _ -> Async.left empty
     playerInfo' <- H.liftEffect getPlayerInfo
-    pure $ Profiles game tab page age languages filters content playerInfo'
+    pure $ Profiles game tab page filters content playerInfo'
+
+emptyFilters :: Filters
+emptyFilters =
+    { age: { from: Nothing, to: Nothing }
+    , languages: []
+    , microphone: false
+    , fields: []
+    }
 
 handleAction :: forall output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
@@ -305,18 +312,18 @@ handleAction Init = do
     state <- H.get
     case state of
         Empty (Input game tab) -> do
-            state' <- H.lift $ loadProfiles game tab 1 { from: Nothing, to: Nothing } [] []
+            state' <- H.lift $ loadProfiles game tab 1 emptyFilters
             H.put state'
         _ -> pure unit
 handleAction (Receive (Input game tab)) = do
-    state' <- H.lift $ loadProfiles game tab 1 { from: Nothing, to: Nothing } [] []
+    state' <- H.lift $ loadProfiles game tab 1 emptyFilters
     H.put state'
     pure unit
 handleAction (ChangePage page mouseEvent) = do
     state <- H.get
     case state of
-        Profiles game tab _ age languages filters _ playerInfo -> do
-            newState <- H.lift $ loadProfiles game tab page age languages filters
+        Profiles game tab _ filters _ playerInfo -> do
+            newState <- H.lift $ loadProfiles game tab page filters
             H.put newState
         _ -> pure unit
 
@@ -334,12 +341,12 @@ handleQuery
     :: forall output send left
     .  Query send
     -> H.HalogenM State Action ChildSlots output (Async left) (Maybe send)
-handleQuery (ApplyFilters age languages fields send) = do
+handleQuery (ApplyFilters filters send) = do
     state <- H.get
     case state of
         Empty _ -> pure $ Just send
-        Profiles game tab _ _ _ _ _ _ -> do
-            state' <- H.lift $ loadProfiles game tab 1 age languages fields
+        Profiles game tab _ _ _ _ -> do
+            state' <- H.lift $ loadProfiles game tab 1 filters
             H.put state'
             pure $ Just send
 

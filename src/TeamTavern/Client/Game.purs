@@ -18,7 +18,7 @@ import Simple.JSON.Async as Json
 import TeamTavern.Client.Game.GameHeader as GameHeader
 import TeamTavern.Client.Game.Profiles (gameProfiles)
 import TeamTavern.Client.Game.Profiles as Profiles
-import TeamTavern.Client.Profile.ProfileFilters (filterProfiles)
+import TeamTavern.Client.Profile.ProfileFilters (Filters, filterProfiles)
 import TeamTavern.Client.Profile.ProfileFilters as FilterProfiles
 import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
 import TeamTavern.Server.Game.View.SendResponse as View
@@ -28,7 +28,7 @@ data Input = Input GameHeader.Handle GameHeader.Tab
 data Action
     = Init
     | Receive Input
-    | ApplyFilters { from :: Maybe Int, to :: Maybe Int } (Array String) (Array FilterProfiles.Field)
+    | ApplyFilters Filters
 
 data State
     = Empty Input
@@ -73,7 +73,7 @@ render (Game game' tab) = let
     HH.div_
     [ gameHeader
     , filterProfiles (filterableFields game'.fields)
-        (\(FilterProfiles.ApplyFilters age languages filters) -> Just $ ApplyFilters age languages filters)
+        (\(FilterProfiles.ApplyFilters filters) -> Just $ ApplyFilters filters)
     , gameProfiles game' tab
     ]
 render NotFound = HH.p_ [ HH.text "Game could not be found." ]
@@ -123,9 +123,9 @@ handleAction (Receive (Input handle tab)) = do
             H.put $ Game content tab
             H.liftEffect $ setMetaTags content.title tab
         _ -> pure unit
-handleAction (ApplyFilters age languages filters) =
+handleAction (ApplyFilters filters) =
     void $ H.query (SProxy :: SProxy "gameProfiles") unit
-        (Profiles.ApplyFilters age languages filters unit)
+        (Profiles.ApplyFilters filters unit)
 
 component :: forall query output left.
     H.Component HH.HTML query Input output (Async left)

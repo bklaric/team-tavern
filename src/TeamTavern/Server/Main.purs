@@ -11,7 +11,7 @@ import Data.HTTP.Method (CustomMethod, Method(..))
 import Data.Int (fromString)
 import Data.List.NonEmpty as NEL
 import Data.Map (Map)
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), maybe)
 import Data.MultiMap as MultiMap
 import Data.Options (Options, (:=))
 import Data.Tuple (Tuple(..))
@@ -187,8 +187,8 @@ handleRequest pool client method url cookies body =
             Profile.create pool identifiers cookies body
         , updateProfile: \identifiers ->
             Profile.update pool identifiers cookies body
-        , viewProfilesByGame: \{ handle, ilk, page, ageFrom, ageTo, languages, filters } ->
-            Profile.viewByGame pool handle ilk page ageFrom ageTo languages filters
+        , viewProfilesByGame: \{ handle, ilk, page, ageFrom, ageTo, microphone, languages, fields } ->
+            Profile.viewByGame pool handle ilk page { age: { ageFrom, ageTo }, microphone: maybe false identity microphone, languages, fields }
         , viewProfilesByPlayer: \{ nickname, ilk } ->
             Profile.viewByPlayer pool nickname ilk
         , viewAllConversations: const $

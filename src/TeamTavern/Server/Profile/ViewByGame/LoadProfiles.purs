@@ -27,7 +27,7 @@ import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
 import TeamTavern.Server.Player.Domain.Nickname (Nickname)
 import TeamTavern.Server.Profile.Domain.Summary (Summary)
-import TeamTavern.Server.Profile.Routes (Age, Handle, ProfileIlk, ProfilePage, Language)
+import TeamTavern.Server.Profile.Routes (Age, Filters, Handle, Language, ProfileIlk, ProfilePage, HasMicrophone)
 import URI.Extra.QueryPairs (Key, QueryPairs(..), Value)
 import URI.Extra.QueryPairs as Key
 import URI.Extra.QueryPairs as Value
@@ -86,9 +86,8 @@ sanitizeStringValue stringValue = "'"
     <> (String.replace (String.Pattern "'") (String.Replacement "") stringValue)
     <> "'"
 
-prepareFilters ::
-    Array (Tuple Key (Maybe Value)) -> Array (Tuple String (Array String))
-prepareFilters filters = let
+prepareFilters :: QueryPairs Key Value -> Array (Tuple String (Array String))
+prepareFilters (QueryPairs filters) = let
     prepareFilter fieldKey optionKey = let
         preparedFieldKey = sanitizeTableName $ Key.keyToString fieldKey
         preparedOptionKey = sanitizeStringValue $ Value.valueToString optionKey
@@ -145,17 +144,28 @@ createAgeFilter (Just ageFrom) (Just ageTo) =
     " and player.birthday < (current_timestamp - interval '" <> show ageFrom <> " years') "
     <> "and player.birthday > (current_timestamp - interval '" <> show ageTo <> " years')"
 
-createLanguagesFilter :: Array Language -> Language
-createLanguagesFilter [] = ""
-createLanguagesFilter languages = "and player.languages && (array[" <> (languages <#> sanitizeStringValue # intercalate ", ") <> "])"
+createMicrophoneFilter :: HasMicrophone -> String
+createMicrophoneFilter false = ""
+createMicrophoneFilter true = " and player.has_microphone"
 
-createProfilesFilterString :: String -> ProfileIlk -> Maybe Age -> Maybe Age -> Array Language -> Array (Tuple Key (Maybe Value)) -> String
-createProfilesFilterString preparedHandle ilk ageFrom ageTo languages filters = let
+createLanguagesFilter :: Array Language -> String
+createLanguagesFilter [] = ""
+createLanguagesFilter languages = " and player.languages && (array[" <> (languages <#> sanitizeStringValue # intercalate ", ") <> "])"
+
+createProfilesFilterString :: Handle -> ProfileIlk -> Filters -> String
+createProfilesFilterString handle ilk filters = let
+    -- Prepare game handle.
+    preparedHandle = sanitizeStringValue handle
+
     -- Prepare Array (Tuple String (Array String)) as filters.
-    preparedFilters = prepareFilters filters
+    preparedFilters = prepareFilters filters.fields
     in
     if Array.null preparedFilters
-    then "where game.handle = " <> preparedHandle <> " and profile.type = " <> show ilk <> createAgeFilter ageFrom ageTo <> createLanguagesFilter languages
+    then "where game.handle = " <> preparedHandle
+        <> " and profile.type = " <> show ilk
+        <> createAgeFilter filters.age.ageFrom filters.age.ageTo
+        <> createMicrophoneFilter filters.microphone
+        <> createLanguagesFilter filters.languages
     else let
         -- Create filter string.
         filterString = createFilterString preparedFilters
@@ -182,7 +192,11 @@ createProfilesFilterString preparedHandle ilk ageFrom ageTo languages filters = 
                 join field on field.id = field_value.field_id
                 join field_option on field_option.id = field_value.field_option_id
                     or field_option.id = field_value_option.field_option_id
-                where game.handle = """ <> preparedHandle <> """ and profile.type = """ <> show ilk <> createAgeFilter ageFrom ageTo <> createLanguagesFilter languages <> """
+                where game.handle = """ <> preparedHandle
+                    <> """ and profile.type = """ <> show ilk
+                    <> createAgeFilter filters.age.ageFrom filters.age.ageTo
+                    <> createMicrophoneFilter filters.microphone
+                    <> createLanguagesFilter filters.languages <> """
                 group by profile.id, field.key
                 order by profile.created;
                 $$,
@@ -199,13 +213,10 @@ createProfilesFilterString preparedHandle ilk ageFrom ageTo languages filters = 
             """ <> filterString <> """
         )"""
 
-queryString :: Handle -> ProfileIlk -> ProfilePage -> Maybe Age -> Maybe Age -> Array Language -> QueryPairs Key Value -> Query
-queryString handle ilk page ageFrom ageTo languages (QueryPairs filters) = let
-    -- Prepare game handle.
-    preparedHandle = sanitizeStringValue handle
-
+queryString :: Handle -> ProfileIlk -> ProfilePage -> Filters -> Query
+queryString handle ilk page filters = let
     -- Create profiles filter string.
-    filterString = createProfilesFilterString preparedHandle ilk ageFrom ageTo languages filters
+    filterString = createProfilesFilterString handle ilk filters
 
     -- Insert it into the rest of the query.
     in
@@ -234,14 +245,11 @@ loadProfiles
     -> Handle
     -> ProfileIlk
     -> ProfilePage
-    -> Maybe Age
-    -> Maybe Age
-    -> Array Language
-    -> QueryPairs Key Value
+    -> Filters
     -> Async (LoadProfilesError errors) (Array LoadProfilesResult)
-loadProfiles client handle ilk page ageFrom ageTo languagesFilter filters = do
+loadProfiles client handle ilk page filters = do
     result <- client
-        # query_ (queryString handle ilk page ageFrom ageTo languagesFilter filters)
+        # query_ (queryString handle ilk page filters)
         # label (SProxy :: SProxy "databaseError")
     profiles :: Array LoadProfilesDto <- rows result
         # traverse read

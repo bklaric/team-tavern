@@ -283,6 +283,9 @@ render (Loaded loadedState @
             ]
     , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
             [ HH.label
+                [ HP.class_ $ HH.ClassName "input-label" ]
+                [ HH.text "Microphone" ]
+            , HH.label
                 [ HP.class_ $ HH.ClassName "checkbox-input-label", HP.for "has-microphone" ]
                 [ checkboxInput (SProxy :: SProxy "hasMicrophoneInput")
                     { id: "has-microphone", value: hasMicrophone }
@@ -291,6 +294,9 @@ render (Loaded loadedState @
             ]
         , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
             [ HH.label
+                [ HP.class_ $ HH.ClassName "input-label" ]
+                [ HH.text "Message notifications" ]
+            , HH.label
                 [ HP.class_ $ HH.ClassName "checkbox-input-label", HP.for "notify" ]
                 [ HH.input
                     [ HP.id_ "notify"
