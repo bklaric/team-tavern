@@ -6,7 +6,7 @@ import Async (Async)
 import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
-import Data.Array (catMaybes, intercalate)
+import Data.Array (foldr, intercalate)
 import Data.Array as Array
 import Data.Bifunctor (lmap)
 import Data.Foldable (find)
@@ -154,7 +154,7 @@ render (Profiles game tab page _ response playerInfo') =
         HH.div [ HP.class_ $ ClassName "card-section" ]
         [ HH.p_ [ HH.text "No profiles satisfy specified filters." ] ]
     else
-        (response.profiles # mapWithIndex \index { nickname, age, languages, summary, fieldValues, updated, updatedSeconds } ->
+        (response.profiles # mapWithIndex \index { nickname, age, languages, hasMicrophone, summary, fieldValues, updated, updatedSeconds } ->
             HH.div [ HP.class_ $ ClassName "card-section" ] $
             [ HH.h3 [ HP.class_ $ ClassName "profile-title" ]
                 [ navigationAnchorIndexed (SProxy :: SProxy "players") index
@@ -164,21 +164,41 @@ render (Profiles game tab page _ response playerInfo') =
                     [ HH.text $ "Updated " <> lastUpdated updatedSeconds ]
                 ]
             ]
-            <> catMaybes
+            <> Array.catMaybes
                 [ age <#> \age' ->
                     HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
                     [ HH.i [ HP.class_ $ HH.ClassName "fas fa-calendar-alt profile-field-icon" ] []
-                    , HH.span [ HP.class_ $ HH.ClassName "profile-field-label" ] [ HH.text "Age: " ]
-                    , HH.text $ show age'
+                    , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless profile-field-emphasize" ] [ HH.text $ show age' ]
+                    , HH.text $ " years old"
                     ]
                 , case languages of
                     [] -> Nothing
                     languages' -> Just $
-                        HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
+                        HH.p [ HP.class_ $ HH.ClassName "profile-field" ] $
                         [ HH.i [ HP.class_ $ HH.ClassName "fas fa-comments profile-field-icon" ] []
-                        , HH.span [ HP.class_ $ HH.ClassName "profile-field-label" ] [ HH.text "Languages: " ]
-                        , HH.text $ intercalate ", " languages'
+                        , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text "Speaks " ]
                         ]
+                        <>
+                        ( foldr
+                            (\language state ->
+                                if not state.firstLanguage
+                                then state { firstLanguage = true, languagesSoFar = [ HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text language ] ] }
+                                else if not state.secondLanguage
+                                then state { secondLanguage = true, languagesSoFar = [ HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text language ], HH.text " and " ] <> state.languagesSoFar }
+                                else state { languagesSoFar = [ HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text language ], HH.text ", " ] <> state.languagesSoFar }
+                            )
+                            { firstLanguage: false, secondLanguage: false, languagesSoFar: [] }
+                            languages'
+                            # _.languagesSoFar
+                        )
+                , if hasMicrophone
+                    then Just $
+                        HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
+                        [ HH.i [ HP.class_ $ HH.ClassName "fas fa-microphone profile-field-icon" ] []
+                        , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless profile-field-emphasize" ] [ HH.text "Has microphone" ]
+                        , HH.text $ " and is willing to communicate"
+                        ]
+                    else Nothing
                 ]
             <> (Array.catMaybes $ game.fields <#> \field -> let
                 fieldValue = fieldValues # find \ { fieldKey } -> field.key == fieldKey

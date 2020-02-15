@@ -16,6 +16,7 @@ type OkContent =
         { nickname :: String
         , age :: Maybe Int
         , languages :: Array String
+        , hasMicrophone :: Boolean
         , summary :: Array String
         , fieldValues :: Array
             { fieldKey :: String

@@ -42,6 +42,7 @@ type LoadProfilesDto =
     { nickname :: String
     , age :: Maybe Int
     , languages :: Array String
+    , hasMicrophone :: Boolean
     , summary :: Array String
     , fieldValues :: Array
         { fieldKey :: String
@@ -57,6 +58,7 @@ type LoadProfilesResult =
     { nickname :: Nickname
     , age :: Maybe Int
     , languages :: Array String
+    , hasMicrophone :: Boolean
     , summary :: Summary
     , fieldValues :: Array
         { fieldKey :: String
@@ -225,6 +227,7 @@ queryString handle ilk page filters = let
         profile.id,
         extract(year from age(player.birthday))::int as age,
         player.languages,
+        player.has_microphone as "hasMicrophone",
         game.handle,
         player.nickname,
         profile.summary,
@@ -254,10 +257,11 @@ loadProfiles client handle ilk page filters = do
     profiles :: Array LoadProfilesDto <- rows result
         # traverse read
         # labelMap (SProxy :: SProxy "unreadableDtos") { result, errors: _ }
-    pure $ profiles <#> \{ nickname, age, languages, summary, fieldValues, updated, updatedSeconds } ->
+    pure $ profiles <#> \{ nickname, age, languages, hasMicrophone, summary, fieldValues, updated, updatedSeconds } ->
         { nickname: wrap nickname
         , age
         , languages
+        , hasMicrophone
         , summary: summary <#> wrap # wrap
         , fieldValues
         , updated
