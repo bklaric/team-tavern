@@ -10,7 +10,6 @@ import Data.Bifunctor.Label (label, labelMap)
 import Data.Int (toNumber)
 import Data.Maybe (Maybe(..))
 import Data.MultiMap as MultiMap
-import Data.Newtype (wrap)
 import Data.String (Pattern(..), Replacement(..))
 import Data.String as String
 import Data.Symbol (SProxy(..))
@@ -25,8 +24,6 @@ import Postgres.Error (Error)
 import Postgres.Query (Query(..))
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
-import TeamTavern.Server.Player.Domain.Nickname (Nickname)
-import TeamTavern.Server.Profile.Domain.Summary (Summary)
 import TeamTavern.Server.Profile.Routes (Age, Filters, Handle, HasMicrophone, Language, ProfileIlk, ProfilePage, Time)
 import URI.Extra.QueryPairs (Key, QueryPairs(..), Value)
 import URI.Extra.QueryPairs as Key
@@ -38,28 +35,14 @@ pageSize = 20
 pageSize' :: Number
 pageSize' = toNumber pageSize
 
-type LoadProfilesDto =
+type LoadProfilesResult =
     { nickname :: String
     , age :: Maybe Int
     , languages :: Array String
     , hasMicrophone :: Boolean
+    , weekdayOnline :: Maybe { from :: String, to :: String }
+    , weekendOnline :: Maybe { from :: String, to :: String }
     , summary :: Array String
-    , fieldValues :: Array
-        { fieldKey :: String
-        , url :: Maybe String
-        , optionKey :: Maybe String
-        , optionKeys :: Maybe (Array String)
-        }
-    , updated :: String
-    , updatedSeconds :: Number
-    }
-
-type LoadProfilesResult =
-    { nickname :: Nickname
-    , age :: Maybe Int
-    , languages :: Array String
-    , hasMicrophone :: Boolean
-    , summary :: Summary
     , fieldValues :: Array
         { fieldKey :: String
         , url :: Maybe String
@@ -248,6 +231,20 @@ queryString handle ilk page filters = let
         extract(year from age(player.birthday))::int as age,
         player.languages,
         player.has_microphone as "hasMicrophone",
+        case
+            when player.weekday_start is not null
+            then json_build_object(
+                'from', to_char(player.weekday_start, 'HH24:MI'),
+                'to', to_char(player.weekday_end, 'HH24:MI')
+            )
+        end as "weekdayOnline",
+        case
+            when player.weekend_start is not null
+            then json_build_object(
+                'from', to_char(player.weekend_start, 'HH24:MI'),
+                'to', to_char(player.weekend_end, 'HH24:MI')
+            )
+        end as "weekendOnline",
         game.handle,
         player.nickname,
         profile.summary,
@@ -274,16 +271,7 @@ loadProfiles client handle ilk page filters = do
     result <- client
         # query_ (queryString handle ilk page filters)
         # label (SProxy :: SProxy "databaseError")
-    profiles :: Array LoadProfilesDto <- rows result
+    profiles <- rows result
         # traverse read
         # labelMap (SProxy :: SProxy "unreadableDtos") { result, errors: _ }
-    pure $ profiles <#> \{ nickname, age, languages, hasMicrophone, summary, fieldValues, updated, updatedSeconds } ->
-        { nickname: wrap nickname
-        , age
-        , languages
-        , hasMicrophone
-        , summary: summary <#> wrap # wrap
-        , fieldValues
-        , updated
-        , updatedSeconds
-        }
+    pure $ profiles

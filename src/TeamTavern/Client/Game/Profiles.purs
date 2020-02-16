@@ -153,7 +153,7 @@ render (Profiles game tab page _ response playerInfo') =
         HH.div [ HP.class_ $ ClassName "card-section" ]
         [ HH.p_ [ HH.text "No profiles satisfy specified filters." ] ]
     else
-        (response.profiles # mapWithIndex \index { nickname, age, languages, hasMicrophone, summary, fieldValues, updated, updatedSeconds } ->
+        (response.profiles # mapWithIndex \index { nickname, age, languages, hasMicrophone, weekdayOnline, weekendOnline, summary, fieldValues, updated, updatedSeconds } ->
             HH.div [ HP.class_ $ ClassName "card-section" ] $
             [ HH.h3 [ HP.class_ $ ClassName "profile-title" ]
                 [ navigationAnchorIndexed (SProxy :: SProxy "players") index
@@ -198,6 +198,26 @@ render (Profiles game tab page _ response playerInfo') =
                         , HH.text $ " and is willing to communicate"
                         ]
                     else Nothing
+                , weekdayOnline <#> \{ from, to } ->
+                    HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
+                    [ HH.i [ HP.class_ $ HH.ClassName "fas fa-clock profile-field-icon" ] []
+                    , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text $ "Online on " ]
+                    , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text "weekdays" ]
+                    , HH.text " from "
+                    , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text from ]
+                    , HH.text " to "
+                    , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text to ]
+                    ]
+                , weekendOnline <#> \{ from, to } ->
+                    HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
+                    [ HH.i [ HP.class_ $ HH.ClassName "fas fa-clock profile-field-icon" ] []
+                    , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text $ "Online on " ]
+                    , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text "weekends" ]
+                    , HH.text " from "
+                    , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text from ]
+                    , HH.text " to "
+                    , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text to ]
+                    ]
                 ]
             <> (Array.catMaybes $ game.fields <#> \field -> let
                 fieldValue = fieldValues # find \ { fieldKey } -> field.key == fieldKey
