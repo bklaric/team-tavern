@@ -8,6 +8,7 @@ import Data.Const (Const)
 import Data.Int as Int
 import Data.Map as Map
 import Data.Maybe (Maybe(..), maybe)
+import Data.String (null)
 import Data.Symbol (SProxy(..))
 import Data.Traversable (traverse)
 import Data.Tuple (Tuple(..))
@@ -28,6 +29,8 @@ type Filters =
     { age :: { from :: Maybe Int, to :: Maybe Int }
     , languages :: Array String
     , microphone :: Boolean
+    , weekdayOnline :: { from :: Maybe String, to :: Maybe String }
+    , weekendOnline :: { from :: Maybe String, to :: Maybe String }
     , fields :: Array Field
     }
 
@@ -128,6 +131,40 @@ render fields = HH.div [ HP.class_ $ HH.ClassName "card" ]
                     , HH.text "Must have a microphone and be willing to communicate."
                     ]
                 ]
+            , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+                [ fieldLabel "Online on weekdays" "fas fa-clock"
+                , HH.div [ HP.class_ $ HH.ClassName "timespan-group" ]
+                    [ HH.span [ HP.class_ $ HH.ClassName "timespan-group-from" ] [ HH.text "From" ]
+                    , HH.input
+                        [ HP.class_ $ HH.ClassName $ "text-line-input timespan-group-input"
+                        , HP.ref $ H.RefLabel "weekdayFrom"
+                        , HP.type_ HP.InputTime
+                        ]
+                    , HH.span [ HP.class_ $ HH.ClassName "timespan-group-to" ] [ HH.text "to" ]
+                    , HH.input
+                        [ HP.class_ $ HH.ClassName $ "text-line-input timespan-group-input"
+                        , HP.ref $ H.RefLabel "weekdayTo"
+                        , HP.type_ HP.InputTime
+                        ]
+                    ]
+                ]
+            , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+                [ fieldLabel "Online on weekends" "fas fa-clock"
+                , HH.div [ HP.class_ $ HH.ClassName "timespan-group" ]
+                    [ HH.span [ HP.class_ $ HH.ClassName "timespan-group-from" ] [ HH.text "From" ]
+                    , HH.input
+                        [ HP.class_ $ HH.ClassName $ "text-line-input timespan-group-input"
+                        , HP.ref $ H.RefLabel "weekendFrom"
+                        , HP.type_ HP.InputTime
+                        ]
+                    , HH.span [ HP.class_ $ HH.ClassName "timespan-group-to" ] [ HH.text "to" ]
+                    , HH.input
+                        [ HP.class_ $ HH.ClassName $ "text-line-input timespan-group-input"
+                        , HP.ref $ H.RefLabel "weekendTo"
+                        , HP.type_ HP.InputTime
+                        ]
+                    ]
+                ]
             ]
             <>
             (map fieldInput fields)
@@ -148,38 +185,42 @@ render fields = HH.div [ HP.class_ $ HH.ClassName "card" ]
         ]
     ]
 
-getAge :: forall state action slots message monad. MonadEffect monad =>
-    H.RefLabel -> H.HalogenM state action slots message monad (Maybe Int)
-getAge label = do
+getStringValue :: forall state action slots message monad. MonadEffect monad =>
+    H.RefLabel -> H.HalogenM state action slots message monad (Maybe String)
+getStringValue label = do
     input <- H.getRef label
     input
         >>= HTMLInputElement.fromElement
         # traverse HTMLInputElement.value
-        <#> bindFlipped Int.fromString
+        <#> bindFlipped (\value -> if null value then Nothing else Just value)
         # H.liftEffect
 
-clearAge :: forall state action slots message monad. MonadEffect monad =>
+getIntValue :: forall state action slots message monad. MonadEffect monad =>
+    H.RefLabel -> H.HalogenM state action slots message monad (Maybe Int)
+getIntValue label = getStringValue label <#> bindFlipped Int.fromString
+
+clearValue :: forall state action slots message monad. MonadEffect monad =>
     H.RefLabel -> H.HalogenM state action slots message monad Unit
-clearAge label = do
+clearValue label = do
     input <- H.getRef label
     input' <- input >>= HTMLInputElement.fromElement # pure
     case input' of
         Nothing -> pure unit
         Just input'' -> H.liftEffect $ HTMLInputElement.setValue "" input''
 
-getMicrophone :: forall state action slots message monad. MonadEffect monad =>
-    H.HalogenM state action slots message monad (Maybe Boolean)
-getMicrophone = do
-    input <- H.getRef $ H.RefLabel "microphone"
+getChecked :: forall state action slots message monad. MonadEffect monad =>
+    H.RefLabel -> H.HalogenM state action slots message monad (Maybe Boolean)
+getChecked label = do
+    input <- H.getRef label
     input
         >>= HTMLInputElement.fromElement
         # traverse HTMLInputElement.checked
         # H.liftEffect
 
-clearMicrophone :: forall state action slots message monad. MonadEffect monad =>
-    H.HalogenM state action slots message monad Unit
-clearMicrophone = do
-    input <- H.getRef $ H.RefLabel "microphone"
+clearChecked :: forall state action slots message monad. MonadEffect monad =>
+    H.RefLabel -> H.HalogenM state action slots message monad Unit
+clearChecked label = do
+    input <- H.getRef label
     input' <- input >>= HTMLInputElement.fromElement # pure
     case input' of
         Nothing -> pure unit
@@ -191,9 +232,13 @@ handleAction (Receive fields) =
     H.put fields
 handleAction (Apply event) = do
     H.liftEffect $ preventDefault $ toEvent event
-    ageFrom <- getAge $ H.RefLabel "ageFrom"
-    ageTo <- getAge $ H.RefLabel "ageTo"
-    microphone <- getMicrophone
+    ageFrom <- getIntValue $ H.RefLabel "ageFrom"
+    ageTo <- getIntValue $ H.RefLabel "ageTo"
+    microphone <- getChecked $ H.RefLabel "microphone"
+    weekdayFrom <- getStringValue $ H.RefLabel "weekdayFrom"
+    weekdayTo <- getStringValue $ H.RefLabel "weekdayTo"
+    weekendFrom <- getStringValue $ H.RefLabel "weekendFrom"
+    weekendTo <- getStringValue $ H.RefLabel "weekendTo"
     languages <- H.query (SProxy :: SProxy "language") unit
         $ MultiSelect.Selected identity
     filters <- H.queryAll (SProxy :: SProxy "filter")
@@ -205,13 +250,19 @@ handleAction (Apply event) = do
         { age: { from: ageFrom, to: ageTo }
         , languages: maybe [] identity languages
         , microphone: maybe false identity microphone
+        , weekdayOnline: { from: weekdayFrom, to: weekdayTo }
+        , weekendOnline: { from: weekendFrom, to: weekendTo }
         , fields: filteredFields
         }
 handleAction (Clear event) = do
     H.liftEffect $ preventDefault $ toEvent event
-    clearAge $ H.RefLabel "ageFrom"
-    clearAge $ H.RefLabel "ageTo"
-    clearMicrophone
+    clearValue $ H.RefLabel "ageFrom"
+    clearValue $ H.RefLabel "ageTo"
+    clearChecked $ H.RefLabel "microphone"
+    clearValue $ H.RefLabel "weekdayFrom"
+    clearValue $ H.RefLabel "weekdayTo"
+    clearValue $ H.RefLabel "weekendFrom"
+    clearValue $ H.RefLabel "weekendTo"
     void $ H.query (SProxy :: SProxy "language") unit $ MultiSelect.Clear unit
     -- Clear every multiselect child.
     void $ H.queryAll (SProxy :: SProxy "filter") $ MultiSelect.Clear unit

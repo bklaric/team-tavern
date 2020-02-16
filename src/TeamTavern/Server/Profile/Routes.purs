@@ -1,6 +1,8 @@
 module TeamTavern.Server.Profile.Routes where
 
-import Data.Maybe (Maybe)
+import Prelude
+
+import Data.Maybe (Maybe, maybe)
 import Jarilo.Junction (type (:<|>), type (:=))
 import Jarilo.Method (Get, Post, Put)
 import Jarilo.Path (type (:>), End)
@@ -17,13 +19,38 @@ type Age = Int
 
 type HasMicrophone = Boolean
 
+type Time = String
+
 type Language = String
 
 type Filters =
-    { age :: { ageFrom :: Maybe Age, ageTo :: Maybe Age }
+    { age :: { from :: Maybe Age, to :: Maybe Age }
     , microphone :: HasMicrophone
     , languages :: Array Language
+    , weekdayOnline :: { from :: Maybe String, to :: Maybe String }
+    , weekendOnline :: { from :: Maybe String, to :: Maybe String }
     , fields :: QueryPairs Key Value
+    }
+
+bundleFilters :: forall other.
+    { ageFrom :: Maybe Int
+    , ageTo :: Maybe Int
+    , fields :: QueryPairs Key Value
+    , languages :: Array String
+    , microphone :: Maybe Boolean
+    , weekdayFrom :: Maybe String
+    , weekdayTo :: Maybe String
+    , weekendFrom :: Maybe String
+    , weekendTo :: Maybe String
+    | other }
+    -> Filters
+bundleFilters filters =
+    { age: { from: filters.ageFrom, to: filters.ageTo }
+    , microphone: maybe false identity filters.microphone
+    , languages: filters.languages
+    , weekdayOnline: { from: filters.weekdayFrom, to: filters.weekdayTo }
+    , weekendOnline: { from: filters.weekendFrom, to: filters.weekendTo }
+    , fields: filters.fields
     }
 
 type Handle = String
@@ -55,6 +82,10 @@ type ViewProfilesByGame = Route
     :? Optional "ageFrom" Age
     :? Optional "ageTo" Age
     :? Optional "microphone" HasMicrophone
+    :? Optional "weekdayFrom" Time
+    :? Optional "weekdayTo" Time
+    :? Optional "weekendFrom" Time
+    :? Optional "weekendTo" Time
     :? Many "languages" Language
     :? Rest "fields")
 

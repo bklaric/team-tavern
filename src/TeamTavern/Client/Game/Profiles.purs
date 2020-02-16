@@ -6,14 +6,13 @@ import Async (Async)
 import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
-import Data.Array (foldr, intercalate)
+import Data.Array (catMaybes, foldr, intercalate)
 import Data.Array as Array
 import Data.Bifunctor (lmap)
 import Data.Foldable (find)
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Int (ceil, floor, toNumber)
-import Data.Maybe (Maybe(..), maybe)
-import Data.String as String
+import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..))
 import Halogen (ClassName(..), defaultEval, mkComponent, mkEval)
@@ -294,21 +293,20 @@ loadProfiles game tab page filters = Async.unify do
             GameHeader.Players -> "ilk=1"
             GameHeader.Teams -> "ilk=2"
     let pagePair = "page=" <> show page
-    let ageFromPair = maybe "" ("&ageFrom=" <> _) (show <$> filters.age.from)
-    let ageToPair = maybe "" ("&ageTo=" <> _) (show <$> filters.age.to)
-    let microphonePair = if filters.microphone then "&microphone=true" else ""
-    let languagePairs =
-            filters.languages
-            <#> (\language -> "&languages=" <> language)
-            # intercalate ""
-    let filterPairs = filters.fields
-            <#> (\field -> field.options
-                <#> \option -> field.key <> "=" <> option.key)
-            # join
-            # intercalate "&"
-    let filterQuery = "?" <> tabPair <> "&" <> pagePair
-            <> ageFromPair <> ageToPair <> microphonePair <> languagePairs
-            <> if String.null filterPairs then "" else "&" <> filterPairs
+    let ageFromPair = filters.age.from <#> show <#> ("ageFrom=" <> _)
+    let ageToPair = filters.age.to <#> show <#> ("ageTo=" <> _)
+    let microphonePair = if filters.microphone then Just "microphone=true"else Nothing
+    let languagePairs = filters.languages <#> (\language -> "languages=" <> language)
+    let weekdayFromPair = filters.weekdayOnline.from <#> ("weekdayFrom=" <> _)
+    let weekdayToPair = filters.weekdayOnline.to <#> ("weekdayTo=" <> _)
+    let weekendFromPair = filters.weekendOnline.from <#> ("weekendFrom=" <> _)
+    let weekendToPair = filters.weekendOnline.to <#> ("weekendTo=" <> _)
+    let fieldPairs = filters.fields <#> (\field -> field.options <#> \option -> field.key <> "=" <> option.key) # join
+    let allPairs = [tabPair, pagePair] <> languagePairs <> fieldPairs <> catMaybes
+            ([ ageFromPair, ageToPair, microphonePair
+            ,  weekdayFromPair, weekdayToPair, weekendFromPair, weekendToPair
+            ])
+    let filterQuery = "?" <> intercalate "&" allPairs
     response <- Fetch.fetch_
             ("/api/profiles/by-handle/" <> game.handle <> filterQuery)
         # lmap (const empty)
@@ -323,6 +321,8 @@ emptyFilters =
     { age: { from: Nothing, to: Nothing }
     , languages: []
     , microphone: false
+    , weekdayOnline: { from: Nothing, to: Nothing }
+    , weekendOnline: { from: Nothing, to: Nothing }
     , fields: []
     }
 

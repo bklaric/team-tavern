@@ -27,7 +27,7 @@ import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
 import TeamTavern.Server.Player.Domain.Nickname (Nickname)
 import TeamTavern.Server.Profile.Domain.Summary (Summary)
-import TeamTavern.Server.Profile.Routes (Age, Filters, Handle, Language, ProfileIlk, ProfilePage, HasMicrophone)
+import TeamTavern.Server.Profile.Routes (Age, Filters, Handle, HasMicrophone, Language, ProfileIlk, ProfilePage, Time)
 import URI.Extra.QueryPairs (Key, QueryPairs(..), Value)
 import URI.Extra.QueryPairs as Key
 import URI.Extra.QueryPairs as Value
@@ -154,6 +154,22 @@ createLanguagesFilter :: Array Language -> String
 createLanguagesFilter [] = ""
 createLanguagesFilter languages = " and player.languages && (array[" <> (languages <#> sanitizeStringValue # intercalate ", ") <> "])"
 
+createWeekdayOnlineFilter :: Maybe Time -> Maybe Time -> String
+createWeekdayOnlineFilter Nothing Nothing = ""
+createWeekdayOnlineFilter (Just weekdayFrom) Nothing = " and '" <> weekdayFrom <> "'::time < player.weekday_end"
+createWeekdayOnlineFilter Nothing (Just weekdayTo) = " and player.weekday_start < '" <> weekdayTo <> "'::time"
+createWeekdayOnlineFilter (Just weekdayFrom) (Just weekdayTo) =
+    " and '" <> weekdayFrom <> "'::time < player.weekday_end"
+    <> " and  player.weekday_start < '" <> weekdayTo <> "'::time"
+
+createWeekendOnlineFilter :: Maybe Time -> Maybe Time -> String
+createWeekendOnlineFilter Nothing Nothing = ""
+createWeekendOnlineFilter (Just weekdayFrom) Nothing = " and '" <> weekdayFrom <> "'::time < player.weekend_end"
+createWeekendOnlineFilter Nothing (Just weekdayTo) = " and player.weekend_start < '" <> weekdayTo <> "'::time"
+createWeekendOnlineFilter (Just weekdayFrom) (Just weekdayTo) =
+    " and '" <> weekdayFrom <> "'::time < player.weekend_end"
+    <> " and  player.weekend_start < '" <> weekdayTo <> "'::time"
+
 createProfilesFilterString :: Handle -> ProfileIlk -> Filters -> String
 createProfilesFilterString handle ilk filters = let
     -- Prepare game handle.
@@ -165,9 +181,11 @@ createProfilesFilterString handle ilk filters = let
     if Array.null preparedFilters
     then "where game.handle = " <> preparedHandle
         <> " and profile.type = " <> show ilk
-        <> createAgeFilter filters.age.ageFrom filters.age.ageTo
+        <> createAgeFilter filters.age.from filters.age.to
         <> createMicrophoneFilter filters.microphone
         <> createLanguagesFilter filters.languages
+        <> createWeekdayOnlineFilter filters.weekdayOnline.from filters.weekdayOnline.to
+        <> createWeekendOnlineFilter filters.weekendOnline.from filters.weekendOnline.to
     else let
         -- Create filter string.
         filterString = createFilterString preparedFilters
@@ -196,9 +214,11 @@ createProfilesFilterString handle ilk filters = let
                     or field_option.id = field_value_option.field_option_id
                 where game.handle = """ <> preparedHandle
                     <> """ and profile.type = """ <> show ilk
-                    <> createAgeFilter filters.age.ageFrom filters.age.ageTo
+                    <> createAgeFilter filters.age.from filters.age.to
                     <> createMicrophoneFilter filters.microphone
-                    <> createLanguagesFilter filters.languages <> """
+                    <> createLanguagesFilter filters.languages
+                    <> createWeekdayOnlineFilter filters.weekdayOnline.from filters.weekdayOnline.to
+                    <> createWeekendOnlineFilter filters.weekendOnline.from filters.weekendOnline.to <> """
                 group by profile.id, field.key
                 order by profile.created;
                 $$,
