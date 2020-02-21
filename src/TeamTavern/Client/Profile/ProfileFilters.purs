@@ -70,11 +70,7 @@ fieldLabel label icon = HH.label
     , HH.span [ HP.class_ $ HH.ClassName "filter-field-label" ] [ HH.text label ]
     ]
 
-fieldInput
-    :: forall monad
-    .  MonadEffect monad
-    => Field
-    -> H.ComponentHTML Action ChildSlots monad
+fieldInput :: forall left. Field -> H.ComponentHTML Action ChildSlots (Async left)
 fieldInput field @ { label, icon, options } =
     HH.div [ HP.class_ $ HH.ClassName "input-group" ]
     [ fieldLabel label icon
@@ -86,8 +82,7 @@ fieldInput field @ { label, icon, options } =
         }
     ]
 
-render :: forall monad. MonadEffect monad =>
-    State -> H.ComponentHTML Action ChildSlots monad
+render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render fields = HH.div [ HP.class_ $ HH.ClassName "card" ]
     [ HH.span [ HP.class_ $ HH.ClassName "card-title" ]
         [ HH.text "Profile filters" ]

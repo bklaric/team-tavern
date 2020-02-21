@@ -2,6 +2,8 @@ module TeamTavern.Client.Components.MultiSelect where
 
 import Prelude
 
+import Async (Async)
+import Async.Aff (affToAsync)
 import Control.Monad.State (class MonadState)
 import Data.Array as Array
 import Data.Foldable (intercalate)
@@ -9,13 +11,16 @@ import Data.Maybe (Maybe(..), isJust)
 import Data.String (Pattern(..), contains, toLower, trim)
 import Data.Symbol (class IsSymbol)
 import Data.Variant (SProxy)
-import Effect.Class (class MonadEffect)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
+import Halogen.Query.EventSource as ES
 import Prim.Row (class Cons)
 import Web.Event.Event (preventDefault)
+import Web.Event.Event as E
+import Web.HTML (window)
+import Web.HTML.Window as Window
 import Web.UIEvent.MouseEvent (MouseEvent)
 import Web.UIEvent.MouseEvent as MouseEvent
 
@@ -43,19 +48,20 @@ type State option =
     , comparer :: option -> option -> Boolean
     , showFilter :: Maybe String
     , open :: Boolean
-    , keepOpenInput :: Boolean
-    , keepOpenOptions :: Boolean
+    , keepOpen :: Boolean
+    , windowSubscription :: Maybe (H.SubscriptionId)
     }
 
 data Action option
-    = ToggleOption option
+    = Init
+    | ToggleOption option
     | Open
     | Close
     | TryClose
+    | KeepOpen
     | PreventDefault MouseEvent
-    | KeepOpenInput Boolean
-    | KeepOpenOptions Boolean
     | FilterInput String
+    | Finalize
 
 data Query option send
     = Selected (Array option -> send)
@@ -68,7 +74,6 @@ render { options, labeler, comparer, showFilter, open } =
     HH.div
     [ HP.class_ $ HH.ClassName "select"
     , HP.tabIndex 0
-    , HE.onFocusOut $ const $ Just TryClose
     ]
     $ [ HH.div
         [ HP.class_ $ HH.ClassName
@@ -87,8 +92,7 @@ render { options, labeler, comparer, showFilter, open } =
                 [ HH.input
                     [ HP.class_ $ HH.ClassName "select-filter"
                     , HP.placeholder placeholder
-                    , HE.onMouseDown $ const $ Just $ KeepOpenInput true
-                    , HE.onBlur $ const $ Just $ KeepOpenInput false
+                    , HE.onMouseDown $ const $ Just $ KeepOpen
                     , HE.onValueInput $ Just <<< FilterInput
                     ]
                 ])
@@ -98,9 +102,7 @@ render { options, labeler, comparer, showFilter, open } =
                     if isJust showFilter
                     then "filterable-options"
                     else "options"
-                , HP.tabIndex $ -1
-                , HE.onMouseDown $ const $ Just $ KeepOpenOptions true
-                , HE.onBlur $ const $ Just $ KeepOpenOptions false
+                , HE.onMouseDown $ const $ Just $ KeepOpen
                 ]
                 (options # Array.filter _.shown <#> \{ option, selected } ->
                     HH.div
@@ -120,8 +122,20 @@ render { options, labeler, comparer, showFilter, open } =
         else
             []
 
-handleAction :: forall option slots message monad. MonadEffect monad =>
-    (Action option) -> H.HalogenM (State option) (Action option) slots message monad Unit
+handleAction :: forall option slots message left.
+    (Action option) -> H.HalogenM (State option) (Action option) slots message (Async left) Unit
+handleAction Init = do
+    window <- H.liftEffect $ Window.toEventTarget <$> window
+    let windowEventSource = ES.eventListenerEventSource
+            (E.EventType "mousedown") window \_ -> Just TryClose
+    windowSubscription <- H.subscribe $ ES.hoist affToAsync windowEventSource
+    H.modify_ (_ { windowSubscription = Just windowSubscription })
+    pure unit
+handleAction Finalize = do
+    { windowSubscription } <- H.get
+    case windowSubscription of
+        Just windowSubscription' -> H.unsubscribe windowSubscription'
+        Nothing -> pure unit
 handleAction (ToggleOption toggledOption) =
     H.modify_ (\state -> state
         { options = state.options <#> \{ option, selected, shown } ->
@@ -133,20 +147,19 @@ handleAction Open =
     H.modify_ \state -> state
         { options = state.options <#> (_ { shown = true })
         , open = true
+        , keepOpen = true
         }
 handleAction Close =
     H.modify_ \state -> state { open = false }
-handleAction TryClose = do
+handleAction TryClose =
     H.modify_ \state ->
-        if state.keepOpenInput || state.keepOpenOptions
-        then state
+        if state.keepOpen
+        then state { keepOpen = false }
         else state { open = false }
+handleAction KeepOpen =
+    H.modify_ (_ { keepOpen = true })
 handleAction (PreventDefault mouseEvent) =
     H.liftEffect $ preventDefault (MouseEvent.toEvent mouseEvent)
-handleAction (KeepOpenInput keepOpen) =
-    H.modify_ (_ { keepOpenInput = keepOpen })
-handleAction (KeepOpenOptions keepOpen) = do
-    H.modify_ (_ { keepOpenOptions = keepOpen })
 handleAction (FilterInput filter) = do
     H.modify_ \state -> state
         { options = state.options <#> \option -> option
@@ -170,8 +183,8 @@ handleQuery (Clear send) = do
         }
     pure $ Just send
 
-component :: forall option message monad. MonadEffect monad =>
-    H.Component HH.HTML (Query option) (Input option) message monad
+component :: forall option message left.
+    H.Component HH.HTML (Query option) (Input option) message (Async left)
 component = H.mkComponent
     { initialState: \{ options, labeler, comparer, showFilter } ->
         { options: options <#> \{ option, selected } ->
@@ -180,35 +193,35 @@ component = H.mkComponent
         , comparer
         , showFilter
         , open: false
-        , keepOpenInput: false
-        , keepOpenOptions: false
+        , keepOpen: false
+        , windowSubscription: Nothing
         }
     , render
     , eval: H.mkEval $ H.defaultEval
         { handleAction = handleAction
         , handleQuery = handleQuery
+        , initialize = Just Init
+        , finalize = Just Finalize
         }
     }
 
 multiSelect
-    :: forall children' slot children output monad option
+    :: forall children' slot children output left option
     .  Cons slot (Slot option Unit) children' children
     => IsSymbol slot
-    => MonadEffect monad
     => SProxy slot
     -> Input option
-    -> HH.HTML (H.ComponentSlot HH.HTML children monad output) output
+    -> HH.HTML (H.ComponentSlot HH.HTML children (Async left) output) output
 multiSelect label input = HH.slot label unit component input absurd
 
 multiSelectIndexed
-    :: forall children' slot children output monad option index
+    :: forall children' slot children output left option index
     .  Cons slot (Slot option index) children' children
     => IsSymbol slot
     => Ord index
-    => MonadEffect monad
     => SProxy slot
     -> index
     -> Input option
-    -> HH.HTML (H.ComponentSlot HH.HTML children monad output) output
+    -> HH.HTML (H.ComponentSlot HH.HTML children (Async left) output) output
 multiSelectIndexed label index input =
     HH.slot label index component input absurd

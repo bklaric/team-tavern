@@ -144,7 +144,7 @@ handleAction TryClose =
     H.modify_ \state ->
         if state.keepOpen
         then state { keepOpen = false }
-        else state { keepOpen = false, open = false }
+        else state { open = false }
 handleAction KeepOpen =
     H.modify_ (_ { keepOpen = true })
 handleAction (FilterInput filter) = do
