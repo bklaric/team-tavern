@@ -41,8 +41,20 @@
     border-right: 1px solid #ccc;
     border-bottom: 1px solid #ccc;
     border-top: 0;
+    height: 39px;
+    position: absolute;
+    top: 40px;
+    left: 0;
+    right: 0;
+    z-index: 1;
+    background-color: #fff;
+}
+
+.select-filter-input {
     height: 21px;
+    width: calc(100% - 24px);
     padding: 9px 12px;
+    border: 0;
 }
 
 .options {

@@ -63,10 +63,7 @@ type Slot option = H.Slot (Query option) (Message option)
 
 render :: forall slots option. State option -> HH.HTML slots (Action option)
 render { options, selected, labeler, showFilter, open } =
-    HH.div
-    [ HP.class_ $ HH.ClassName "select"
-    , HP.tabIndex 0
-    ]
+    HH.div [ HP.class_ $ HH.ClassName "select" ]
     $ [ HH.div
         [ HP.class_ $ HH.ClassName
             if open then "selected-open" else "selected-closed"
@@ -83,8 +80,9 @@ render { options, selected, labeler, showFilter, open } =
             (case showFilter of
             Nothing -> []
             Just placeholder ->
-                [ HH.input
-                    [ HP.class_ $ HH.ClassName "select-filter"
+                [ HH.div [ HP.class_ $ HH.ClassName "select-filter" ] $ pure $
+                HH.input
+                    [ HP.class_ $ HH.ClassName "select-filter-input"
                     , HP.placeholder placeholder
                     , HE.onMouseDown $ const $ Just $ KeepOpen
                     , HE.onValueInput $ Just <<< FilterInput
