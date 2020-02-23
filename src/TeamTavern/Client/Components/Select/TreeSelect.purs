@@ -1,12 +1,12 @@
 module TeamTavern.Client.Components.Select.TreeSelect
-     (Option(..), Labeler, Comparer, Input, Slot, treeSelect) where
+     (Option(..), Labeler, Comparer, Input, Query(..), Slot, treeSelect) where
 
 import Prelude
 
 import Async (Async)
 import Async.Aff (affToAsync)
+import Control.Monad.State (class MonadState)
 import Data.Array as Array
-import Data.Const (Const)
 import Data.Foldable (all, any, intercalate)
 import Data.Maybe (Maybe(..), maybe)
 import Data.String (Pattern(..), contains, toLower, trim)
@@ -47,7 +47,6 @@ newtype Entry option = Entry
     , shown :: Boolean
     , expanded :: Boolean
     , subEntries :: Array (Entry option)
-    -- , subEntries :: Maybe { expanded: Boolean, subEntries: NonEmptyArray (Entry option) }
     }
 
 type Entries option = Array (Entry option)
@@ -85,7 +84,11 @@ data Action option
     | ToggleEntryExpanded option
     | PreventDefault MouseEvent
 
-type Slot = H.Slot (Const Void) Void Unit
+data Query option send
+    = Selected (Array option -> send)
+    | Clear send
+
+type Slot option = H.Slot (Query option) Void Unit
 
 selectedEntriesText :: forall option. Labeler option -> Entries option -> String
 selectedEntriesText labeler entries =
@@ -106,7 +109,6 @@ renderEntry
     -> Maybe (Array (HH.HTML slots (Action option)))
 renderEntry level labeler (Entry { shown: false }) = Nothing
 renderEntry level labeler (Entry { option, state, expanded, subEntries }) = let
-    -- optionClass = (maybe "" identity $ repeat level "sub-") <> "option"
     hasSubEntries = not $ Array.null subEntries
     optionClass =
             (if hasSubEntries then "collapsible-" else "")
@@ -343,6 +345,37 @@ handleAction (ToggleEntryExpanded option) = do
 handleAction (PreventDefault mouseEvent) =
     H.liftEffect $ preventDefault (MouseEvent.toEvent mouseEvent)
 
+getSelectedEntries :: forall option. Entries option -> Array option
+getSelectedEntries entries =
+    entries
+    <#> (\(Entry entry) ->
+        case entry.state of
+        Checked -> Array.singleton entry.option
+        Indeterminate -> getSelectedEntries entry.subEntries
+        Unchecked -> [])
+    # join
+
+clearEntries :: forall option. Entries option -> Entries option
+clearEntries entries = entries <#> \(Entry entry) ->
+    Entry entry
+        { state = Unchecked
+        , subEntries = clearEntries entry.subEntries
+        }
+
+handleQuery
+    :: forall option monad send
+    .  Bind monad
+    => MonadState (State option) monad
+    => Query option send
+    -> monad (Maybe send)
+handleQuery (Selected send) = do
+    { entries } <- H.get
+    pure $ Just $ send $ getSelectedEntries entries
+handleQuery (Clear send) = do
+    H.modify_ \state @ { entries } ->
+        state { entries = clearEntries entries }
+    pure $ Just send
+
 createEntry :: forall option. Option option -> Entry option
 createEntry (Option { option, subOptions }) = Entry
     { option: option
@@ -352,8 +385,8 @@ createEntry (Option { option, subOptions }) = Entry
     , subEntries: subOptions <#> createEntry
     }
 
-component :: forall option query message left.
-    H.Component HH.HTML query (Input option) message (Async left)
+component :: forall option message left.
+    H.Component HH.HTML (Query option) (Input option) message (Async left)
 component = H.mkComponent
     { initialState: \{ options, labeler, comparer, placeholder } ->
         { entries: options <#> createEntry
@@ -367,6 +400,7 @@ component = H.mkComponent
     , render
     , eval: H.mkEval $ H.defaultEval
         { handleAction = handleAction
+        , handleQuery = handleQuery
         , initialize = Just Init
         , finalize = Just Finalize
         }
@@ -374,7 +408,7 @@ component = H.mkComponent
 
 treeSelect
     :: forall children' slot children output left option
-    .  Cons slot Slot children' children
+    .  Cons slot (Slot option) children' children
     => IsSymbol slot
     => SProxy slot
     -> Input option

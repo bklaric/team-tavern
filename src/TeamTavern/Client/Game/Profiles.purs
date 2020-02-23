@@ -317,15 +317,17 @@ loadProfiles game tab page filters = Async.unify do
     let ageToPair = filters.age.to <#> show <#> ("ageTo=" <> _)
     let microphonePair = if filters.microphone then Just "microphone=true"else Nothing
     let languagePairs = filters.languages <#> (\language -> "languages=" <> language)
+    let countryPairs = filters.countries <#> (\country -> "countries=" <> country)
     let weekdayFromPair = filters.weekdayOnline.from <#> ("weekdayFrom=" <> _)
     let weekdayToPair = filters.weekdayOnline.to <#> ("weekdayTo=" <> _)
     let weekendFromPair = filters.weekendOnline.from <#> ("weekendFrom=" <> _)
     let weekendToPair = filters.weekendOnline.to <#> ("weekendTo=" <> _)
     let fieldPairs = filters.fields <#> (\field -> field.options <#> \option -> field.key <> "=" <> option.key) # join
-    let allPairs = [tabPair, pagePair] <> languagePairs <> fieldPairs <> catMaybes
-            ([ ageFromPair, ageToPair, microphonePair
+    let allPairs = [tabPair, pagePair]
+            <> languagePairs <> countryPairs <> fieldPairs <> catMaybes
+            [ ageFromPair, ageToPair, microphonePair
             ,  weekdayFromPair, weekdayToPair, weekendFromPair, weekendToPair
-            ])
+            ]
     let filterQuery = "?" <> intercalate "&" allPairs
     response <- Fetch.fetch_
             ("/api/profiles/by-handle/" <> game.handle <> filterQuery)
@@ -340,6 +342,7 @@ emptyFilters :: Filters
 emptyFilters =
     { age: { from: Nothing, to: Nothing }
     , languages: []
+    , countries: []
     , microphone: false
     , weekdayOnline: { from: Nothing, to: Nothing }
     , weekendOnline: { from: Nothing, to: Nothing }

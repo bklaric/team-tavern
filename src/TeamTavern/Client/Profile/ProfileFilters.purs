@@ -31,6 +31,7 @@ import Web.UIEvent.MouseEvent (MouseEvent, toEvent)
 type Filters =
     { age :: { from :: Maybe Int, to :: Maybe Int }
     , languages :: Array String
+    , countries :: Array String
     , microphone :: Boolean
     , weekdayOnline :: { from :: Maybe String, to :: Maybe String }
     , weekendOnline :: { from :: Maybe String, to :: Maybe String }
@@ -64,7 +65,7 @@ type ChildSlots =
     ( language :: MultiSelect.Slot String Unit
     , microphone :: CheckboxInput.Slot
     , filter :: MultiSelect.Slot Option Field
-    , country :: TreeSelect.Slot
+    , country :: TreeSelect.Slot String
     )
 
 fieldLabel :: forall slots action. String -> String -> HH.HTML slots action
@@ -255,6 +256,8 @@ handleAction (Apply event) = do
     weekendTo <- getStringValue $ H.RefLabel "weekendTo"
     languages <- H.query (SProxy :: SProxy "language") unit
         $ MultiSelect.Selected identity
+    countries <- H.query (SProxy :: SProxy "country") unit
+        $ TreeSelect.Selected identity
     filters <- H.queryAll (SProxy :: SProxy "filter")
         $ MultiSelect.Selected identity
     let (filteredFields :: Array _) = filters
@@ -263,6 +266,7 @@ handleAction (Apply event) = do
     H.raise $ ApplyFilters
         { age: { from: ageFrom, to: ageTo }
         , languages: maybe [] identity languages
+        , countries: maybe [] identity countries
         , microphone: maybe false identity microphone
         , weekdayOnline: { from: weekdayFrom, to: weekdayTo }
         , weekendOnline: { from: weekendFrom, to: weekendTo }
@@ -278,6 +282,7 @@ handleAction (Clear event) = do
     clearValue $ H.RefLabel "weekendFrom"
     clearValue $ H.RefLabel "weekendTo"
     void $ H.query (SProxy :: SProxy "language") unit $ MultiSelect.Clear unit
+    void $ H.query (SProxy :: SProxy "country") unit $ TreeSelect.Clear unit
     -- Clear every multiselect child.
     void $ H.queryAll (SProxy :: SProxy "filter") $ MultiSelect.Clear unit
 
