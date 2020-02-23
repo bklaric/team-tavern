@@ -20,7 +20,10 @@ import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Components.CheckboxInput as CheckboxInput
 import TeamTavern.Client.Components.MultiSelect (multiSelect, multiSelectIndexed)
 import TeamTavern.Client.Components.MultiSelect as MultiSelect
+import TeamTavern.Client.Components.Select.TreeSelect (treeSelect)
+import TeamTavern.Client.Components.Select.TreeSelect as TreeSelect
 import TeamTavern.Server.Infrastructure.Languages (allLanguages)
+import TeamTavern.Server.Infrastructure.Regions (Region(..), allRegions)
 import Web.Event.Event (preventDefault)
 import Web.HTML.HTMLInputElement as HTMLInputElement
 import Web.UIEvent.MouseEvent (MouseEvent, toEvent)
@@ -61,6 +64,7 @@ type ChildSlots =
     ( language :: MultiSelect.Slot String Unit
     , microphone :: CheckboxInput.Slot
     , filter :: MultiSelect.Slot Option Field
+    , country :: TreeSelect.Slot
     )
 
 fieldLabel :: forall slots action. String -> String -> HH.HTML slots action
@@ -81,6 +85,12 @@ fieldInput field @ { label, icon, options } =
         , showFilter: Nothing
         }
     ]
+
+regionToOption :: Region -> TreeSelect.Option String
+regionToOption (Region region subRegions) = TreeSelect.Option
+    { option: region
+    , subOptions: subRegions <#> regionToOption
+    }
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render fields = HH.div [ HP.class_ $ HH.ClassName "card" ]
@@ -159,6 +169,15 @@ render fields = HH.div [ HP.class_ $ HH.ClassName "card" ]
                         , HP.type_ HP.InputTime
                         ]
                     ]
+                ]
+            , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+                [ fieldLabel "Country" "fas fa-globe-europe"
+                , treeSelect (SProxy :: SProxy "country")
+                    { options: allRegions <#> regionToOption
+                    , labeler: identity
+                    , comparer: (==)
+                    , placeholder: "Search countries"
+                    }
                 ]
             ]
             <>
