@@ -4,41 +4,61 @@ module TeamTavern.Client.Components.Account.AccountHeader
 import Prelude
 
 import Async (Async)
+import Async.Aff (affToAsync)
+import Data.Array as Array
 import Data.Const (Const)
 import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
-import Effect.Class (liftEffect)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
+import Halogen.Query.EventSource as ES
+import TeamTavern.Client.Components.Account.ChangeNickname (changeNickname)
+import TeamTavern.Client.Components.Account.ChangeNickname as ChangeNickname
 import TeamTavern.Client.Components.Account.EditAccount (editAccount)
 import TeamTavern.Client.Components.Account.EditAccount as EditAccount
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Script.Navigate (navigate_)
-import Web.Event.Event (preventDefault)
+import Web.Event.Event (preventDefault, stopPropagation)
+import Web.Event.Event as E
 import Web.HTML (window)
 import Web.HTML.Location (reload)
 import Web.HTML.Window (location)
+import Web.HTML.Window as Window
 import Web.UIEvent.MouseEvent (MouseEvent, toEvent)
 
 type Nickname = String
 
+type EditPopoverShown = Boolean
+
 data Tab = Profiles | Conversations | Conversation Nickname
 
-data Input = Input Nickname Tab
+type Input =
+    { nickname :: Nickname
+    , tab :: Tab
+    }
 
-type State = Input
+type State =
+    { nickname :: Nickname
+    , tab :: Tab
+    , editPopoverShown :: EditPopoverShown
+    , windowSubscription :: Maybe (H.SubscriptionId)
+    }
 
 type Path = String
 
 data Action
-    = Navigate Path MouseEvent
+    = Init
+    | Finalize
+    | Navigate Path MouseEvent
     | Receive Input
+    | ToggleEditAccountPopover MouseEvent
+    | CloseEditAccountPopover
     | ShowEditAccountModal MouseEvent
-    | HandleEditAccountMessage (Modal.Message EditAccount.Message)
+    | HandleChangeNicknameMessage (Modal.Message ChangeNickname.Message)
 
-type ChildSlots = (editAccount :: EditAccount.Slot)
+type ChildSlots = (editAccount :: EditAccount.Slot, changeNickname :: ChangeNickname.Slot)
 
 type Slot = H.Slot (Const Void) Void Unit
 
@@ -96,23 +116,52 @@ renderTabs (Conversation _) =
         ]
     ]
 
-render :: forall left. Input -> H.ComponentHTML Action ChildSlots (Async left)
-render (Input nickname tab) = HH.div_ $
+renderEditAccountButton :: forall slots.
+    EditPopoverShown -> HH.HTML slots Action
+renderEditAccountButton editPopoverShown =
+    HH.button
+    [ HP.class_ $ HH.ClassName "popover-button"
+    , HE.onClick $ Just <<< ToggleEditAccountPopover
+    ] $
+    [ HH.i [ HP.class_ $ HH.ClassName "fas fa-edit button-icon" ] []
+    , HH.text "Edit account"
+    , HH.i
+        [ HP.class_ $ HH.ClassName $ "fas popover-button-caret "
+            <> if editPopoverShown then "fa-caret-up" else "fa-caret-down"
+        ]
+        []
+    ]
+    <> (Array.catMaybes $ Array.singleton
+    if editPopoverShown
+    then Just $
+        HH.div [ HP.class_ $ HH.ClassName "popover" ]
+        [ HH.div
+            [ HP.class_ $ HH.ClassName "popover-item"
+            , HE.onClick $ Just <<< ShowEditAccountModal]
+            [ HH.text "Change nickname" ]
+        , HH.div [ HP.class_ $ HH.ClassName "popover-item" ]
+            [ HH.text "Edit account settings" ]
+        , HH.div [ HP.class_ $ HH.ClassName "popover-item" ]
+            [ HH.text "Edit player details" ]
+        ]
+    else Nothing)
+
+
+render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
+render { nickname, tab, editPopoverShown } = HH.div_ $
     [ HH.div [ HP.class_ $ HH.ClassName "content-title" ]
-        [ HH.h1 [ HP.class_ $ HH.ClassName "content-title-text" ]
-            [ HH.text nickname ]
-        , HH.button
-            [ HP.class_ $ HH.ClassName "regular-button content-title-button"
-            , HE.onClick $ Just <<< ShowEditAccountModal
+        [ HH.div [ HP.class_ $ HH.ClassName "content-title-left" ]
+            [ HH.h1 [ HP.class_ $ HH.ClassName "content-title-text" ]
+                [ HH.text nickname ]
+            , HH.div [ HP.class_ $ HH.ClassName "content-title-tabs" ]
+                (renderTabs tab)
             ]
-            [ HH.i [ HP.class_ $ H.ClassName "fas fa-edit button-icon" ] []
-            , HH.text "Edit account"
-            ]
-        , HH.div [ HP.class_ $ HH.ClassName "content-title-tabs" ]
-            (renderTabs tab)
-        , HH.div_ [ editAccount $ Just <<< HandleEditAccountMessage ]
+        , HH.div [ HP.class_ $ HH.ClassName "content-title-right" ]
+            [ renderEditAccountButton editPopoverShown ]
         ]
     ]
+    -- <> [ HH.div_ [ editAccount $ Just <<< HandleChangeNicknameMessage ] ]
+    <> [ HH.div_ [ changeNickname $ Just <<< HandleChangeNicknameMessage ] ]
     <>
     case tab of
     Profiles -> pure $
@@ -125,33 +174,54 @@ render (Input nickname tab) = HH.div_ $
 
 handleAction :: forall output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
-handleAction (Navigate path mouseEvent) = do
-    liftEffect $ preventDefault $ toEvent mouseEvent
-    liftEffect $ navigate_ path
-handleAction (Receive input) =
-    H.put input
+handleAction Init = do
+    window <- H.liftEffect $ Window.toEventTarget <$> window
+    let windowEventSource = ES.eventListenerEventSource
+            (E.EventType "click") window \_ -> Just CloseEditAccountPopover
+    windowSubscription <- H.subscribe $ ES.hoist affToAsync windowEventSource
+    H.modify_ (_ { windowSubscription = Just windowSubscription })
+    pure unit
+handleAction Finalize = do
+    { windowSubscription } <- H.get
+    case windowSubscription of
+        Just windowSubscription' -> H.unsubscribe windowSubscription'
+        Nothing -> pure unit
+handleAction (Navigate path event) = do
+    H.liftEffect $ preventDefault $ toEvent event
+    H.liftEffect $ navigate_ path
+handleAction (Receive { nickname, tab }) = H.put
+    { nickname, tab, editPopoverShown: false, windowSubscription: Nothing }
 handleAction (ShowEditAccountModal event) = do
     H.liftEffect $ preventDefault $ toEvent event
-    Modal.show (SProxy :: SProxy "editAccount")
-handleAction (HandleEditAccountMessage message) = do
+    Modal.show (SProxy :: SProxy "changeNickname")
+handleAction (ToggleEditAccountPopover event) = do
+    H.liftEffect $ preventDefault $ toEvent event
+    H.liftEffect $ stopPropagation $ toEvent event
+    H.modify_ \state -> state { editPopoverShown = not state.editPopoverShown }
+handleAction CloseEditAccountPopover =
+    H.modify_ (_ { editPopoverShown = false })
+handleAction (HandleChangeNicknameMessage message) = do
     state <- H.get
-    Modal.hide (SProxy :: SProxy "editAccount")
+    Modal.hide (SProxy :: SProxy "changeNickname")
     case message of
-        Modal.Inner (EditAccount.AccountUpdated nickname) ->
+        Modal.Inner ChangeNickname.NicknameChanged ->
             window >>= location >>= reload # H.liftEffect
         _ -> pure unit
 
 component :: forall query output left.
     H.Component HH.HTML query Input output (Async left)
 component = H.mkComponent
-    { initialState: identity
+    { initialState: \{ nickname, tab } ->
+        { nickname, tab, editPopoverShown: false, windowSubscription: Nothing }
     , render
     , eval: H.mkEval $ H.defaultEval
         { handleAction = handleAction
         , receive = Just <<< Receive
+        , initialize = Just Init
+        , finalize = Just Finalize
         }
     }
 
 accountHeader :: forall query children left.
     Nickname -> Tab -> HH.ComponentHTML query (accountHeader :: Slot | children) (Async left)
-accountHeader nickname tab = HH.slot (SProxy :: SProxy "accountHeader") unit component (Input nickname tab) absurd
+accountHeader nickname tab = HH.slot (SProxy :: SProxy "accountHeader") unit component { nickname, tab } absurd

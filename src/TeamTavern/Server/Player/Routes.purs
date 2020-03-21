@@ -40,6 +40,15 @@ type ViewPlayerAccount = Route
     :> End)
     NoQuery
 
+type ChangeNickname = Route
+    Put
+    (  Literal "players"
+    :> Literal "by-nickname"
+    :> Capture "nickname" String
+    :> Literal "nickname"
+    :> End)
+    NoQuery
+
 type UpdatePlayer = Route
     Put
     (  Literal "players"
@@ -53,4 +62,5 @@ type PlayerRoutes
     :<|> "viewPlayerHeader"  := ViewPlayerHeader
     :<|> "registerPlayer"    := RegisterPlayer
     :<|> "viewPlayerAccount" := ViewPlayerAccount
+    :<|> "changeNickname"    := ChangeNickname
     :<|> "updatePlayer"      := UpdatePlayer

@@ -105,10 +105,6 @@ type ChildSlots =
 
 type Slot = H.Slot (Modal.Query Unit (Const Void)) (Modal.Message Message) Unit
 
--- setTimeout' = ES.effectEventSource \emmiter -> do
---     timeoutId <- setTimeout 5000 $ ES.emit emmiter unit
---     pure $ ES.Finalizer $ clearTimeout timeoutId
-
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render Empty = HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] []
 render Error = HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] []
@@ -281,7 +277,7 @@ render (Loaded loadedState @
                     ]
                 ]
             ]
-    , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+        , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
             [ HH.label
                 [ HP.class_ $ HH.ClassName "input-label" ]
                 [ HH.text "Microphone" ]
