@@ -4,64 +4,39 @@ module TeamTavern.Server.Player.Update.UpdatePlayer
 import Prelude
 
 import Async (Async)
-import Async (left) as Async
 import Data.Bifunctor (lmap)
-import Data.Maybe (Maybe(..))
 import Data.Nullable (toNullable)
 import Data.Variant (SProxy(..), Variant, inj)
-import Node.Errors.Class (code)
-import Postgres.Async.Query (query)
-import Postgres.Error (Error, constraint)
-import Postgres.Error.Codes (unique_violation)
+import Postgres.Async.Query (execute)
+import Postgres.Error (Error)
 import Postgres.Pool (Pool)
 import Postgres.Query (Query(..), QueryParameter, (:), (:|))
-import Postgres.Result (rowCount)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
-import TeamTavern.Server.Player.Domain.Nickname (Nickname)
 import TeamTavern.Server.Player.Update.ReadUpdate (UpdateModel)
 import TeamTavern.Server.Player.Update.ValidateTimespan (endTime, startTime, toString)
 
-type UpdatePlayerError errors = Variant
-  ( nicknameTaken ::
-    { nickname :: Nickname
-    , error :: Error
-    }
-  , databaseError :: Error
-  , notAuthorized ::
-    { cookieInfo :: CookieInfo
-    , nickname :: Nickname
-    }
-  | errors )
+type UpdatePlayerError errors = Variant (databaseError :: Error | errors)
 
 queryString :: Query
 queryString = Query """
     update player
     set
-        nickname = $3,
-        discord_tag = $4,
-        birthday = $5,
-        languages = $6,
-        country = $7,
-        timezone = $8,
-        weekday_start = $9::time,
-        weekday_end = $10::time,
-        weekend_start = $11::time,
-        weekend_end = $12::time,
-        has_microphone = $13,
-        about = $14,
-        notify = $15
-    from session
-    where player.id = session.player_id
-    and session.player_id = $1
-    and session.token = $2
-    and session.revoked = false
+        discord_tag = $2,
+        birthday = $3,
+        languages = $4,
+        country = $5,
+        timezone = $6,
+        weekday_start = $7::time,
+        weekday_end = $8::time,
+        weekend_start = $9::time,
+        weekend_end = $10::time,
+        has_microphone = $11
+    where player.id = $1
     """
 
 queryParameters :: CookieInfo -> UpdateModel -> Array QueryParameter
-queryParameters { id, token } { nickname, discordTag, birthday, languages, country, timezone, onlineWeekday, onlineWeekend, hasMicrophone, about, notify } =
+queryParameters { id } { discordTag, birthday, languages, country, timezone, onlineWeekday, onlineWeekend, hasMicrophone } =
     id
-    : token
-    : nickname
     : toNullable discordTag
     : toNullable birthday
     : languages
@@ -71,26 +46,16 @@ queryParameters { id, token } { nickname, discordTag, birthday, languages, count
     : (toNullable $ toString <$> endTime <$> onlineWeekday)
     : (toNullable $ toString <$> startTime <$> onlineWeekend)
     : (toNullable $ toString <$> endTime <$> onlineWeekend)
-    : hasMicrophone
-    : about :| notify
+    :| hasMicrophone
 
 updatePlayer
     :: forall errors
     .  Pool
     -> CookieInfo
     -> UpdateModel
-    -> Async (UpdatePlayerError errors) CookieInfo
+    -> Async (UpdatePlayerError errors) Unit
 updatePlayer pool cookieInfo updateModel = do
-    result <- pool
-        # query queryString (queryParameters cookieInfo updateModel)
-        # lmap (\error ->
-            case code error == unique_violation of
-            true | constraint error == Just "player_nickname_key" ->
-                inj (SProxy :: SProxy "nicknameTaken")
-                { nickname: updateModel.nickname, error }
-            _ -> inj (SProxy :: SProxy "databaseError") error)
-    if rowCount result == 1
-        then pure unit
-        else Async.left $ inj (SProxy :: SProxy "notAuthorized")
-            { cookieInfo, nickname: updateModel.nickname }
-    pure $ cookieInfo { nickname = updateModel.nickname}
+    pool
+        # execute queryString (queryParameters cookieInfo updateModel)
+        # lmap (inj (SProxy :: SProxy "databaseError"))
+    pure unit

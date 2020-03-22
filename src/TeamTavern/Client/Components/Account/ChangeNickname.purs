@@ -109,8 +109,8 @@ render (Loaded loadedState @
         [ HH.text "Something unexpected went wrong! Please try again later." ]
     ]
 
-updateAccount :: forall left. LoadedState -> Async left (Maybe LoadedState)
-updateAccount state @ { originalNickname, nickname } = Async.unify do
+changeNickname' :: forall left. LoadedState -> Async left (Maybe LoadedState)
+changeNickname' state @ { originalNickname, nickname } = Async.unify do
     response <- Fetch.fetch
         ("/api/players/by-nickname/" <> originalNickname <> "/nickname")
         (  Fetch.method := PUT
@@ -174,7 +174,7 @@ handleAction (Update loadedState event) = do
             , submitting      = true
             }
     H.put $ Loaded resetState
-    newState <- H.lift $ updateAccount resetState
+    newState <- H.lift $ changeNickname' resetState
     case newState of
         Nothing -> H.raise NicknameChanged
         Just newState' -> H.put $ Loaded newState' { submitting = false }

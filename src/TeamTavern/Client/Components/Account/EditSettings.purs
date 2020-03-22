@@ -93,7 +93,7 @@ render (Loaded loadedState @ { otherError, submitting }) =
         [ HH.text "Something unexpected went wrong! Please try again later." ]
     ]
 
-loadSettings :: forall left. String -> Async left (Maybe { notify :: Boolean})
+loadSettings :: forall left. String -> Async left (Maybe ViewSettings.OkContent)
 loadSettings nickname = Async.unify do
     response <-
         Fetch.fetch
@@ -104,11 +104,11 @@ loadSettings nickname = Async.unify do
         case FetchRes.status response of
         200 -> FetchRes.text response >>= JsonAsync.readJSON # lmap (const Nothing)
         _ -> Async.left Nothing
-    pure $ Just { notify: content.notify }
+    pure $ Just content
 
-updateAccount :: forall left.
-    LoadedState -> { notify :: Boolean } -> Async left (Maybe LoadedState)
-updateAccount state { notify } = Async.unify do
+editSettings' :: forall left.
+    LoadedState -> ViewSettings.OkContent -> Async left (Maybe LoadedState)
+editSettings' state { notify } = Async.unify do
     response <-
         Fetch.fetch
         ("/api/players/by-nickname/" <> state.nickname <> "/settings")
@@ -177,7 +177,7 @@ handleAction (Update loadedState event) = do
                     , submitting = true
                     }
             H.put $ Loaded resetState
-            newState <- H.lift $ updateAccount resetState { notify: notify' }
+            newState <- H.lift $ editSettings' resetState { notify: notify' }
             case newState of
                 Nothing -> H.raise SettingsEdited
                 Just newState' -> H.put $ Loaded newState' { submitting = false }

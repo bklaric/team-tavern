@@ -18,9 +18,7 @@ import Postgres.Result (rows)
 import Simple.JSON.Async (read)
 
 type LoadAccountResult =
-    { id :: Int
-    , nickname :: String
-    , discordTag :: Maybe String
+    { discordTag :: Maybe String
     , birthday :: Maybe String
     , languages :: Array String
     , country :: Maybe String
@@ -30,8 +28,6 @@ type LoadAccountResult =
     , weekendStart :: Maybe String
     , weekendEnd :: Maybe String
     , hasMicrophone :: Boolean
-    , about :: Array String
-    , notify :: Boolean
     }
 
 type LoadAccountError errors = Variant
@@ -46,8 +42,6 @@ type LoadAccountError errors = Variant
 queryString :: Query
 queryString = Query """
     select
-        player.id,
-        player.nickname,
         player.discord_tag as "discordTag",
         to_char(player.birthday, 'yyyy-mm-dd') as birthday,
         player.languages,
@@ -57,9 +51,7 @@ queryString = Query """
         to_char(player.weekday_end, 'HH24:MI') as "weekdayEnd",
         to_char(player.weekend_start, 'HH24:MI') as "weekendStart",
         to_char(player.weekend_end, 'HH24:MI') as "weekendEnd",
-        player.has_microphone as "hasMicrophone",
-        player.about,
-        player.notify
+        player.has_microphone as "hasMicrophone"
     from player
     where lower(player.nickname) = lower($1)
     """

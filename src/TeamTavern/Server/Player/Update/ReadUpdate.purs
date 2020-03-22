@@ -14,11 +14,6 @@ import Foreign (MultipleErrors)
 import Perun.Request.Body (Body)
 import Simple.JSON (readJSON)
 import TeamTavern.Server.Architecture.Perun.Request.Body (readBody)
-import TeamTavern.Server.Domain.Text (TextError)
-import TeamTavern.Server.Player.Domain.About (About)
-import TeamTavern.Server.Player.Domain.About as About
-import TeamTavern.Server.Player.Domain.Nickname (Nickname, NicknameError)
-import TeamTavern.Server.Player.Domain.Nickname as Nickname
 import TeamTavern.Server.Player.Update.ValidateCountry (Country, validateOptionalCountry)
 import TeamTavern.Server.Player.Update.ValidateDiscordTag (DiscordTag, DiscordTagError, validateOptionalDiscordTag)
 import TeamTavern.Server.Player.Update.ValidateLangugase (Language, validateLanguages)
@@ -26,8 +21,7 @@ import TeamTavern.Server.Player.Update.ValidateTimespan (Timespan, validateTimes
 import TeamTavern.Server.Player.Update.ValidateTimezone (Timezone, validateOptionalTimezone)
 
 type UpdateDto =
-    { nickname :: String
-    , discordTag :: Maybe String
+    { discordTag :: Maybe String
     , birthday :: Maybe String
     , languages :: Array String
     , country :: Maybe String
@@ -37,13 +31,10 @@ type UpdateDto =
     , weekendStart :: Maybe String
     , weekendEnd :: Maybe String
     , hasMicrophone :: Boolean
-    , about :: String
-    , notify :: Boolean
     }
 
 type UpdateModel =
-    { nickname :: Nickname
-    , discordTag :: Maybe DiscordTag
+    { discordTag :: Maybe DiscordTag
     , birthday :: Maybe String
     , languages :: Array Language
     , country :: Maybe Country
@@ -51,15 +42,9 @@ type UpdateModel =
     , onlineWeekday :: Maybe Timespan
     , onlineWeekend :: Maybe Timespan
     , hasMicrophone :: Boolean
-    , about :: About
-    , notify :: Boolean
     }
 
-type UpdateModelError = Variant
-    ( nickname :: NonEmptyList NicknameError
-    , discordTag :: NonEmptyList DiscordTagError
-    , about :: NonEmptyList TextError
-    )
+type UpdateModelError = Variant (discordTag :: NonEmptyList DiscordTagError)
 
 type ReadUpdateError errors = Variant
     ( unreadableDto ::
@@ -76,12 +61,11 @@ readUpdate :: forall errors.
     Body -> Async (ReadUpdateError errors) UpdateModel
 readUpdate body = do
     content <- readBody body
-    dto @ { nickname, discordTag, birthday, languages, country, timezone, weekdayStart, weekdayEnd, weekendStart, weekendEnd, hasMicrophone, about, notify } :: UpdateDto <-
+    dto @ { discordTag, birthday, languages, country, timezone, weekdayStart, weekdayEnd, weekendStart, weekendEnd, hasMicrophone } :: UpdateDto <-
         readJSON content
         # labelMap (SProxy :: SProxy "unreadableDto") { content, errors: _ }
         # Async.fromEither
-    { nickname: _
-    , discordTag: _
+    { discordTag: _
     , birthday
     , languages: validateLanguages languages
     , country: validateOptionalCountry country
@@ -89,15 +73,9 @@ readUpdate body = do
     , onlineWeekday: validateTimespan weekdayStart weekdayEnd
     , onlineWeekend: validateTimespan weekendStart weekendEnd
     , hasMicrophone
-    , about: _
-    , notify
     }
-        <$> (Nickname.create nickname
-            # Validated.label (SProxy :: SProxy "nickname"))
-        <*> (validateOptionalDiscordTag discordTag
+        <$> (validateOptionalDiscordTag discordTag
             # Validated.label (SProxy :: SProxy "discordTag"))
-        <*> (About.create about
-            # Validated.label (SProxy :: SProxy "about"))
         # Async.fromValidated
         # labelMap (SProxy :: SProxy "invalidModel")
             { dto, errors: _ }

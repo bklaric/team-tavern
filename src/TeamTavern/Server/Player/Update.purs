@@ -4,10 +4,11 @@ import Prelude
 
 import Async (Async, examineLeftWithEffect)
 import Data.Map (Map)
+import Data.Newtype (unwrap)
 import Perun.Request.Body (Body)
 import Perun.Response (Response)
 import Postgres.Pool (Pool)
-import TeamTavern.Server.Infrastructure.ReadCookieInfo (readCookieInfo)
+import TeamTavern.Server.Infrastructure.EnsureSignedInAs (ensureSignedInAs)
 import TeamTavern.Server.Player.Domain.Nickname (Nickname)
 import TeamTavern.Server.Player.Update.LogError (logError)
 import TeamTavern.Server.Player.Update.ReadUpdate (readUpdate)
@@ -19,7 +20,7 @@ update :: forall left.
 update pool nickname cookies body =
     sendResponse $ examineLeftWithEffect logError do
     -- Read requestor info from cookies.
-    cookieInfo <- readCookieInfo cookies
+    cookieInfo <- ensureSignedInAs pool cookies (unwrap nickname)
 
     -- Read update from body.
     update' <- readUpdate body

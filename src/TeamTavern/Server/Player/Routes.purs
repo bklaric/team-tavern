@@ -36,7 +36,7 @@ type ViewPlayerAccount = Route
     (  Literal "players"
     :> Literal "by-nickname"
     :> Capture "nickname" Nickname
-    :> Literal "account"
+    :> Literal "details"
     :> End)
     NoQuery
 
@@ -72,6 +72,7 @@ type UpdatePlayer = Route
     (  Literal "players"
     :> Literal "by-nickname"
     :> Capture "nickname" Nickname
+    :> Literal "details"
     :> End)
     NoQuery
 

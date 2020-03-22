@@ -13,9 +13,7 @@ import Postgres.Query (Query(..), QueryParameter, (:|))
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Server.Player.EditSettings.ReadSettings (EditSettingsModel)
 
-type UpdateSettingsError errors = Variant
-  ( databaseError :: Error
-  | errors )
+type UpdateSettingsError errors = Variant (databaseError :: Error | errors)
 
 queryString :: Query
 queryString = Query """

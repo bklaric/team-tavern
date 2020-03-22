@@ -6,45 +6,42 @@ import Prelude
 import Async (Async, alwaysRight)
 import Data.Array (fromFoldable)
 import Data.Variant (SProxy(..), Variant, inj, match)
-import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, noContent, unauthorized__)
+import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, noContent_, unauthorized__)
 import Simple.JSON (writeJSON)
-import TeamTavern.Server.Infrastructure.Cookie (CookieInfo, setCookieHeader)
 import TeamTavern.Server.Player.Update.LogError (UpdateError)
 
 type BadRequestContent = Variant
-    ( invalidIdentifiers :: Array (Variant
-        ( invalidNickname :: {}
-        , invalidDiscordTag :: {}
-        , invalidAbout :: {}
+    ( invalidModel ::
+        Array (Variant
+        ( invalidDiscordTag :: {}
         ))
     , nicknameTaken :: {}
     )
 
 errorResponse :: UpdateError -> Response
 errorResponse = match
-    { cookieInfoNotPresent: const $ unauthorized__
+    { noCookieInfo: const unauthorized__
+    , databaseError: const $ internalServerError__
+    , invalidSession: const unauthorized__
+    , nicknameDoesntMatch: const unauthorized__
     , unreadableDto: const $ badRequest__
     , invalidModel: \{ errors } ->
         errors
         <#> (match
-            { nickname: const $ inj (SProxy :: SProxy "invalidNickname") {}
-            , discordTag: const $ inj (SProxy :: SProxy "invalidDiscordTag") {}
-            , about: const $ inj (SProxy :: SProxy "invalidAbout") {}
+            { discordTag: const $ inj (SProxy :: SProxy "invalidDiscordTag") {}
             })
         # fromFoldable
-        # inj (SProxy :: SProxy "invalidIdentifiers")
+        # inj (SProxy :: SProxy "invalidModel")
         # (writeJSON :: BadRequestContent -> String)
         # badRequest_
     , nicknameTaken: const $ badRequest_
         $ (writeJSON :: BadRequestContent -> String)
         $ inj (SProxy :: SProxy "nicknameTaken") {}
-    , databaseError: const $ internalServerError__
     , notAuthorized: const $ forbidden__
     }
 
-successResponse :: CookieInfo -> Response
-successResponse cookieInfo = noContent $ setCookieHeader cookieInfo
+successResponse :: Unit -> Response
+successResponse _ = noContent_
 
-sendResponse ::
-    Async UpdateError CookieInfo -> (forall left. Async left Response)
+sendResponse :: Async UpdateError Unit -> (forall left. Async left Response)
 sendResponse = alwaysRight errorResponse successResponse
