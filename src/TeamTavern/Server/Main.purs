@@ -45,6 +45,8 @@ import TeamTavern.Server.Infrastructure.Log (logStamped, logt)
 import TeamTavern.Server.Password.Forgot (forgot) as Password
 import TeamTavern.Server.Password.Reset (reset) as Password
 import TeamTavern.Server.Player.ChangeNickname (changeNickname) as Player
+import TeamTavern.Server.Player.ViewSettings (viewSettings) as Player
+import TeamTavern.Server.Player.EditSettings (editSettings) as Player
 import TeamTavern.Server.Player.Register (register) as Player
 import TeamTavern.Server.Player.Update (update) as Player
 import TeamTavern.Server.Player.View (view) as Player
@@ -169,6 +171,10 @@ handleRequest pool client method url cookies body =
             Player.viewAccount pool nickname cookies
         , changeNickname: \{ nickname } ->
             Player.changeNickname pool nickname cookies body
+        , viewSettings: \{ nickname } ->
+            Player.viewSettings pool nickname cookies
+        , editSettings: \{ nickname } ->
+            Player.editSettings pool nickname cookies body
         , updatePlayer: \{ nickname } ->
             Player.update pool nickname cookies body
         , forgotPassword: const $

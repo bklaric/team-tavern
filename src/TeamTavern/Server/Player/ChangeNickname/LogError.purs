@@ -45,7 +45,8 @@ logError updateError = do
             logt $ "Player has invalid session info in cookies: " <> show cookieInfo
         , nicknameDoesntMatch: \{ nickname, cookieInfo } -> do
             logt $ "Signed in user: " <> show cookieInfo
-            logt $ "Doesn't have requested nickname: " <> nickname        , unreadableDto: \{ content, errors } -> do
+            logt $ "Doesn't have requested nickname: " <> nickname
+        , unreadableDto: \{ content, errors } -> do
             logt $ "Couldn't read dto from body: " <> show content
             logt $ "Reading resulted in these errors: " <> show errors
         , invalidModel: \{ dto, errors } -> do

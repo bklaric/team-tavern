@@ -18,11 +18,8 @@ import TeamTavern.Server.Player.ViewAccount.SendResponse (sendResponse)
 viewAccount :: forall left. Pool -> Nickname -> Cookies -> Async left Response
 viewAccount pool nickname cookies =
     sendResponse $ examineLeftWithEffect logError do
+    -- Ensure player is signed in as requested nickname.
+    cookieInfo <- ensureSignedInAs pool cookies (unwrap nickname)
 
-    pool # withTransaction (inj (SProxy :: SProxy "databaseError"))
-        \client -> do
-            -- Ensure player is signed in as requested nickname.
-            cookieInfo <- ensureSignedInAs client cookies (unwrap nickname)
-
-            -- Load account.
-            loadAccount client (unwrap nickname)
+    -- Load account.
+    loadAccount pool (unwrap nickname)

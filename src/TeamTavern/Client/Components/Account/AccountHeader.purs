@@ -18,6 +18,8 @@ import TeamTavern.Client.Components.Account.ChangeNickname (changeNickname)
 import TeamTavern.Client.Components.Account.ChangeNickname as ChangeNickname
 import TeamTavern.Client.Components.Account.EditAccount (editAccount)
 import TeamTavern.Client.Components.Account.EditAccount as EditAccount
+import TeamTavern.Client.Components.Account.EditSettings (editSettings)
+import TeamTavern.Client.Components.Account.EditSettings as EditSettings
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Script.Navigate (navigate_)
 import Web.Event.Event (preventDefault, stopPropagation)
@@ -55,10 +57,16 @@ data Action
     | Receive Input
     | ToggleEditAccountPopover MouseEvent
     | CloseEditAccountPopover
-    | ShowEditAccountModal MouseEvent
+    | ShowChangeNicknameModal MouseEvent
+    | ShowEditSettingsModal MouseEvent
     | HandleChangeNicknameMessage (Modal.Message ChangeNickname.Message)
+    | HandleEditSettingsMessage (Modal.Message EditSettings.Message)
 
-type ChildSlots = (editAccount :: EditAccount.Slot, changeNickname :: ChangeNickname.Slot)
+type ChildSlots =
+    ( editAccount :: EditAccount.Slot
+    , changeNickname :: ChangeNickname.Slot
+    , editSettings :: EditSettings.Slot
+    )
 
 type Slot = H.Slot (Const Void) Void Unit
 
@@ -137,9 +145,13 @@ renderEditAccountButton editPopoverShown =
         HH.div [ HP.class_ $ HH.ClassName "popover" ]
         [ HH.div
             [ HP.class_ $ HH.ClassName "popover-item"
-            , HE.onClick $ Just <<< ShowEditAccountModal]
+            , HE.onClick $ Just <<< ShowChangeNicknameModal
+            ]
             [ HH.text "Change nickname" ]
-        , HH.div [ HP.class_ $ HH.ClassName "popover-item" ]
+        , HH.div
+            [ HP.class_ $ HH.ClassName "popover-item"
+            , HE.onClick $ Just <<< ShowEditSettingsModal
+            ]
             [ HH.text "Edit account settings" ]
         , HH.div [ HP.class_ $ HH.ClassName "popover-item" ]
             [ HH.text "Edit player details" ]
@@ -162,6 +174,7 @@ render { nickname, tab, editPopoverShown } = HH.div_ $
     ]
     -- <> [ HH.div_ [ editAccount $ Just <<< HandleChangeNicknameMessage ] ]
     <> [ HH.div_ [ changeNickname $ Just <<< HandleChangeNicknameMessage ] ]
+    <> [ HH.div_ [ editSettings $ Just <<< HandleEditSettingsMessage ] ]
     <>
     case tab of
     Profiles -> pure $
@@ -191,9 +204,12 @@ handleAction (Navigate path event) = do
     H.liftEffect $ navigate_ path
 handleAction (Receive { nickname, tab }) = H.put
     { nickname, tab, editPopoverShown: false, windowSubscription: Nothing }
-handleAction (ShowEditAccountModal event) = do
+handleAction (ShowChangeNicknameModal event) = do
     H.liftEffect $ preventDefault $ toEvent event
     Modal.show (SProxy :: SProxy "changeNickname")
+handleAction (ShowEditSettingsModal event) = do
+    H.liftEffect $ preventDefault $ toEvent event
+    Modal.show (SProxy :: SProxy "editSettings")
 handleAction (ToggleEditAccountPopover event) = do
     H.liftEffect $ preventDefault $ toEvent event
     H.liftEffect $ stopPropagation $ toEvent event
@@ -201,12 +217,14 @@ handleAction (ToggleEditAccountPopover event) = do
 handleAction CloseEditAccountPopover =
     H.modify_ (_ { editPopoverShown = false })
 handleAction (HandleChangeNicknameMessage message) = do
-    state <- H.get
     Modal.hide (SProxy :: SProxy "changeNickname")
+    state <- H.get
     case message of
         Modal.Inner ChangeNickname.NicknameChanged ->
             window >>= location >>= reload # H.liftEffect
         _ -> pure unit
+handleAction (HandleEditSettingsMessage message) = do
+    Modal.hide (SProxy :: SProxy "editSettings")
 
 component :: forall query output left.
     H.Component HH.HTML query Input output (Async left)

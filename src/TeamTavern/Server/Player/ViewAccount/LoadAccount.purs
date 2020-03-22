@@ -11,8 +11,8 @@ import Data.Symbol (SProxy(..))
 import Data.Variant (Variant, inj)
 import Foreign (Foreign, MultipleErrors)
 import Postgres.Async.Query (query)
-import Postgres.Client (Client)
 import Postgres.Error (Error)
+import Postgres.Pool (Pool)
 import Postgres.Query (Query(..), (:))
 import Postgres.Result (rows)
 import Simple.JSON.Async (read)
@@ -66,11 +66,11 @@ queryString = Query """
 
 loadAccount
     :: forall errors
-    .  Client
+    .  Pool
     -> String
     -> Async (LoadAccountError errors) LoadAccountResult
-loadAccount client nickname = do
-    result <- client
+loadAccount pool nickname = do
+    result <- pool
         # query queryString (nickname : [])
         # label (SProxy :: SProxy "databaseError")
     account <- rows result

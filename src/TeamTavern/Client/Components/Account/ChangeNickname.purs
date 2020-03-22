@@ -14,7 +14,6 @@ import Data.Maybe (Maybe(..))
 import Data.Options ((:=))
 import Data.Variant (SProxy(..), match)
 import Effect.Class (class MonadEffect)
-import Effect.Class.Console (log)
 import Halogen (ClassName(..))
 import Halogen as H
 import Halogen.HTML as HH
@@ -142,7 +141,7 @@ setStringValue value label = do
     element <- H.getRef label
     let inputElement = element >>= HTMLInputElement.fromElement
     case inputElement of
-        Nothing -> log "FUCK"
+        Nothing -> pure unit
         Just inputElement' -> H.liftEffect $
             HTMLInputElement.setValue value inputElement'
 

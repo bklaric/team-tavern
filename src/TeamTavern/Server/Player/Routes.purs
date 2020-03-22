@@ -49,6 +49,24 @@ type ChangeNickname = Route
     :> End)
     NoQuery
 
+type ViewSettings = Route
+    Get
+    (  Literal "players"
+    :> Literal "by-nickname"
+    :> Capture "nickname" String
+    :> Literal "settings"
+    :> End)
+    NoQuery
+
+type EditSettings = Route
+    Put
+    (  Literal "players"
+    :> Literal "by-nickname"
+    :> Capture "nickname" String
+    :> Literal "settings"
+    :> End)
+    NoQuery
+
 type UpdatePlayer = Route
     Put
     (  Literal "players"
@@ -63,4 +81,6 @@ type PlayerRoutes
     :<|> "registerPlayer"    := RegisterPlayer
     :<|> "viewPlayerAccount" := ViewPlayerAccount
     :<|> "changeNickname"    := ChangeNickname
+    :<|> "viewSettings"      := ViewSettings
+    :<|> "editSettings"      := EditSettings
     :<|> "updatePlayer"      := UpdatePlayer
