@@ -1,10 +1,14 @@
+.popover-container {
+    position: relative;
+}
+
 .popover-button {
     @extend %button;
-    position: relative;
     color: $text-color;
     background-color: inherit;
     border: 0;
-    padding: 9px 0;
+    padding: 9px 12px;
+    margin-left: -12px;
 }
 
 .popover-button-caret {

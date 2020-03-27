@@ -129,17 +129,20 @@ renderTabs (Conversation _) =
 renderEditAccountButton :: forall slots.
     EditPopoverShown -> HH.HTML slots Action
 renderEditAccountButton editPopoverShown =
-    HH.button
-    [ HP.class_ $ HH.ClassName "popover-button"
-    , HE.onClick $ Just <<< ToggleEditAccountPopover
-    ] $
-    [ HH.i [ HP.class_ $ HH.ClassName "fas fa-edit button-icon" ] []
-    , HH.text "Edit account"
-    , HH.i
-        [ HP.class_ $ HH.ClassName $ "fas popover-button-caret "
-            <> if editPopoverShown then "fa-caret-up" else "fa-caret-down"
+    HH.div
+    [ HP.class_ $ HH.ClassName "popover-container" ] $
+    [ HH.button
+        [ HP.class_ $ HH.ClassName "popover-button"
+        , HE.onClick $ Just <<< ToggleEditAccountPopover
+        ] $
+        [ HH.i [ HP.class_ $ HH.ClassName "fas fa-edit button-icon" ] []
+        , HH.text "Edit account"
+        , HH.i
+            [ HP.class_ $ HH.ClassName $ "fas popover-button-caret "
+                <> if editPopoverShown then "fa-caret-up" else "fa-caret-down"
+            ]
+            []
         ]
-        []
     ]
     <> (Array.catMaybes $ Array.singleton
     if editPopoverShown
