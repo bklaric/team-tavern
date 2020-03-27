@@ -294,7 +294,7 @@ render
         [ HH.i [ HP.class_ $ HH.ClassName "fas fa-user-edit button-icon" ] []
         , HH.text
             if submitting
-            then "Editting profile..."
+            then "Editing profile..."
             else "Edit profile"
         ]
     , HH.p

@@ -80,7 +80,7 @@ render (Loaded loadedState @ { discordTagError, otherError, submitting }) =
     [ HP.class_ $ H.ClassName "form", HE.onSubmit $ Just <<< Update loadedState ]
     [ closeButton Close
     , HH.h2  [ HP.class_ $ HH.ClassName "form-heading" ]
-        [ HH.text "Edit your account" ]
+        [ HH.text "Edit player details" ]
     , HH.div [ HP.class_ $ HH.ClassName "responsive-input-groups" ]
         [ HH.div [ HP.class_ $ HH.ClassName "input-group" ]
             [ HH.label
@@ -197,8 +197,8 @@ render (Loaded loadedState @ { discordTagError, otherError, submitting }) =
         [ HH.i [ HP.class_ $ HH.ClassName "fas fa-edit button-icon" ] []
         , HH.text
             if submitting
-            then "Editting account..."
-            else "Edit account"
+            then "Editing details..."
+            else "Edit details"
         ]
     , HH.p
         [ HP.class_ $ otherErrorClass otherError ]

@@ -85,7 +85,7 @@ render (Loaded loadedState @ { otherError, submitting }) =
         [ HH.i [ HP.class_ $ HH.ClassName "fas fa-edit button-icon" ] []
         , HH.text
             if submitting
-            then "Editting settings..."
+            then "Editing settings..."
             else "Edit settings"
         ]
     , HH.p
