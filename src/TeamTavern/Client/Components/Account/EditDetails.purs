@@ -105,7 +105,7 @@ render (Loaded loadedState @ { discordTagError, otherError, submitting }) =
             , HH.input
                 [ HP.ref $ H.RefLabel "birthday"
                 , HP.class_ $ HH.ClassName "text-line-input"
-                , HP.type_ HP.InputText
+                , HP.type_ HP.InputDate
                 ]
             , HH.label
                 [ HP.class_ $ HH.ClassName "input-underlabel" ]
