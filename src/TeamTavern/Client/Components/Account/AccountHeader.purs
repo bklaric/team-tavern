@@ -144,9 +144,9 @@ renderEditAccountButton editPopoverShown =
             []
         ]
     ]
-    <> (Array.catMaybes $ Array.singleton
+    <> (
     if editPopoverShown
-    then Just $
+    then Array.singleton $
         HH.div [ HP.class_ $ HH.ClassName "popover" ]
         [ HH.div
             [ HP.class_ $ HH.ClassName "popover-item"
@@ -164,7 +164,7 @@ renderEditAccountButton editPopoverShown =
             ]
             [ HH.text "Edit player details" ]
         ]
-    else Nothing)
+    else [])
 
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
