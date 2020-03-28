@@ -5,9 +5,8 @@ import Prelude
 
 import Data.Int (fromString)
 import Data.Maybe (Maybe(..))
-import Data.Ord (lessThan)
 import Data.String (Pattern(..), Replacement(..), replace, split)
-import Data.String.Utils (padEnd, padStart)
+import Data.String.Utils (padStart)
 
 type Hours = Int
 
@@ -52,9 +51,5 @@ validateTime time =
     _ -> Nothing
 
 validateTimespan :: Maybe String -> Maybe String -> Maybe Timespan
-validateTimespan start end = do
-    start' <- start >>= validateTime
-    end' <- end >>= validateTime
-    if lessThan start' end'
-        then Just $ Timespan start' end'
-        else Nothing
+validateTimespan start end =
+    Timespan <$> (start >>= validateTime) <*> (end >>= validateTime)
