@@ -38,6 +38,7 @@ pageSize' = toNumber pageSize
 type LoadProfilesResult =
     { nickname :: String
     , age :: Maybe Int
+    , country :: Maybe String
     , languages :: Array String
     , hasMicrophone :: Boolean
     , weekdayOnline :: Maybe { from :: String, to :: String }
@@ -262,6 +263,7 @@ queryString handle ilk page filters = let
     select
         profile.id,
         extract(year from age(player.birthday))::int as age,
+        player.country,
         player.languages,
         player.has_microphone as "hasMicrophone",
         case
@@ -307,4 +309,4 @@ loadProfiles client handle ilk page filters = do
     profiles <- rows result
         # traverse read
         # labelMap (SProxy :: SProxy "unreadableDtos") { result, errors: _ }
-    pure $ profiles
+    pure profiles
