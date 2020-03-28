@@ -147,7 +147,7 @@ insert into region (name, superregion_name) values ('Africa', null);
         insert into region (name, superregion_name) values ('Eswatini (Swaziland)', 'South Africa');
         insert into region (name, superregion_name) values ('Lesotho', 'South Africa');
         insert into region (name, superregion_name) values ('Namibia', 'South Africa');
-        insert into region (name, superregion_name) values ('South Africa', 'South Africa');
+        insert into region (name, superregion_name) values ('South Africa, Republic of', 'South Africa');
     insert into region (name, superregion_name) values ('West Africa', 'Africa');
         insert into region (name, superregion_name) values ('Benin', 'West Africa');
         insert into region (name, superregion_name) values ('Burkina Faso', 'West Africa');

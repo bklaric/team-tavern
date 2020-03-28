@@ -182,7 +182,7 @@ allCountries =
     , "Slovenia"
     , "Solomon Islands"
     , "Somalia"
-    , "South Africa"
+    , "South Africa, Republic of"
     , "South Korea"
     , "South Sudan"
     , "Spain"

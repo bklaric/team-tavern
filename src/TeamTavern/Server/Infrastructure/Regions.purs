@@ -164,7 +164,7 @@ allRegions =
             , Region "Eswatini (Swaziland)" []
             , Region "Lesotho" []
             , Region "Namibia" []
-            , Region "South Africa" []
+            , Region "South Africa, Republic of" []
             ]
         , Region "West Africa"
             [ Region "Benin" []
