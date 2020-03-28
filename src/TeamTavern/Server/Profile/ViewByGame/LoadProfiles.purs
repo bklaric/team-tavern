@@ -124,10 +124,10 @@ createCrosstabFieldsFilter filters =
 createAgeFilter :: Maybe Age -> Maybe Age -> String
 createAgeFilter Nothing Nothing = ""
 createAgeFilter (Just ageFrom) Nothing = " and player.birthday < (current_timestamp - interval '" <> show ageFrom <> " years')"
-createAgeFilter Nothing (Just ageTo) = " and player.birthday > (current_timestamp - interval '" <> show ageTo <> " years')"
+createAgeFilter Nothing (Just ageTo) = " and player.birthday > (current_timestamp - interval '" <> show (ageTo + 1) <> " years')"
 createAgeFilter (Just ageFrom) (Just ageTo) =
     " and player.birthday < (current_timestamp - interval '" <> show ageFrom <> " years') "
-    <> "and player.birthday > (current_timestamp - interval '" <> show ageTo <> " years')"
+    <> "and player.birthday > (current_timestamp - interval '" <> show (ageTo + 1) <> " years')"
 
 createMicrophoneFilter :: HasMicrophone -> String
 createMicrophoneFilter false = ""
