@@ -138,20 +138,40 @@ createLanguagesFilter [] = ""
 createLanguagesFilter languages = " and player.languages && (array[" <> (languages <#> sanitizeStringValue # intercalate ", ") <> "])"
 
 createWeekdayOnlineFilter :: Maybe Time -> Maybe Time -> String
-createWeekdayOnlineFilter Nothing Nothing = ""
-createWeekdayOnlineFilter (Just weekdayFrom) Nothing = " and '" <> weekdayFrom <> "'::time < player.weekday_end"
-createWeekdayOnlineFilter Nothing (Just weekdayTo) = " and player.weekday_start < '" <> weekdayTo <> "'::time"
-createWeekdayOnlineFilter (Just weekdayFrom) (Just weekdayTo) =
-    " and '" <> weekdayFrom <> "'::time < player.weekday_end"
-    <> " and  player.weekday_start < '" <> weekdayTo <> "'::time"
+createWeekdayOnlineFilter (Just from) (Just to) =
+    let fromTime = "'" <> from <> "'::time"
+        toTime   = "'" <> to   <> "'::time" in
+    """ and
+    case
+        when player.weekday_start < player.weekday_end and """ <> fromTime <> """ < """ <> toTime <> """ then
+            """ <> fromTime <> """ < player.weekday_end and player.weekday_start < """ <> toTime <> """
+        when player.weekday_start > player.weekday_end and """ <> fromTime <> """ < """ <> toTime <> """ then
+            """ <> fromTime <> """ < player.weekday_end or player.weekday_start < """ <> toTime <> """
+        when player.weekday_start < player.weekday_end and """ <> fromTime <> """ > """ <> toTime <> """ then
+            """ <> fromTime <> """ < player.weekday_end or player.weekday_start < """ <> toTime <> """
+        when player.weekday_start > player.weekday_end and """ <> fromTime <> """ > """ <> toTime <> """ then
+            true
+    end
+    """
+createWeekdayOnlineFilter _ _ = ""
 
 createWeekendOnlineFilter :: Maybe Time -> Maybe Time -> String
-createWeekendOnlineFilter Nothing Nothing = ""
-createWeekendOnlineFilter (Just weekdayFrom) Nothing = " and '" <> weekdayFrom <> "'::time < player.weekend_end"
-createWeekendOnlineFilter Nothing (Just weekdayTo) = " and player.weekend_start < '" <> weekdayTo <> "'::time"
-createWeekendOnlineFilter (Just weekdayFrom) (Just weekdayTo) =
-    " and '" <> weekdayFrom <> "'::time < player.weekend_end"
-    <> " and  player.weekend_start < '" <> weekdayTo <> "'::time"
+createWeekendOnlineFilter (Just from) (Just to) =
+    let fromTime = "'" <> from <> "'::time"
+        toTime   = "'" <> to   <> "'::time" in
+    """ and
+    case
+        when player.weekend_start < player.weekend_end and """ <> fromTime <> """ < """ <> toTime <> """ then
+            """ <> fromTime <> """ < player.weekend_end and player.weekend_start < """ <> toTime <> """
+        when player.weekend_start > player.weekend_end and """ <> fromTime <> """ < """ <> toTime <> """ then
+            """ <> fromTime <> """ < player.weekend_end or player.weekend_start < """ <> toTime <> """
+        when player.weekend_start < player.weekend_end and """ <> fromTime <> """ > """ <> toTime <> """ then
+            """ <> fromTime <> """ < player.weekend_end or player.weekend_start < """ <> toTime <> """
+        when player.weekend_start > player.weekend_end and """ <> fromTime <> """ > """ <> toTime <> """ then
+            true
+    end
+    """
+createWeekendOnlineFilter _ _ = ""
 
 createProfilesFilterString :: Handle -> ProfileIlk -> Filters -> String
 createProfilesFilterString handle ilk filters = let
