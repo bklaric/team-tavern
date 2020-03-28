@@ -17,18 +17,21 @@ type ProfilePage = Int
 
 type Age = Int
 
-type HasMicrophone = Boolean
+type Language = String
+
+type Country = String
 
 type Time = String
 
-type Language = String
+type HasMicrophone = Boolean
 
 type Filters =
     { age :: { from :: Maybe Age, to :: Maybe Age }
-    , microphone :: HasMicrophone
     , languages :: Array Language
-    , weekdayOnline :: { from :: Maybe String, to :: Maybe String }
-    , weekendOnline :: { from :: Maybe String, to :: Maybe String }
+    , countries :: Array Country
+    , weekdayOnline :: { from :: Maybe Time, to :: Maybe Time }
+    , weekendOnline :: { from :: Maybe Time, to :: Maybe Time }
+    , microphone :: HasMicrophone
     , fields :: QueryPairs Key Value
     }
 
@@ -37,19 +40,21 @@ bundleFilters :: forall other.
     , ageTo :: Maybe Int
     , fields :: QueryPairs Key Value
     , languages :: Array String
-    , microphone :: Maybe Boolean
+    , countries :: Array String
     , weekdayFrom :: Maybe String
     , weekdayTo :: Maybe String
     , weekendFrom :: Maybe String
     , weekendTo :: Maybe String
+    , microphone :: Maybe Boolean
     | other }
     -> Filters
 bundleFilters filters =
     { age: { from: filters.ageFrom, to: filters.ageTo }
-    , microphone: maybe false identity filters.microphone
     , languages: filters.languages
+    , countries: filters.countries
     , weekdayOnline: { from: filters.weekdayFrom, to: filters.weekdayTo }
     , weekendOnline: { from: filters.weekendFrom, to: filters.weekendTo }
+    , microphone: maybe false identity filters.microphone
     , fields: filters.fields
     }
 
@@ -81,12 +86,13 @@ type ViewProfilesByGame = Route
     :? Mandatory "page" ProfilePage
     :? Optional "ageFrom" Age
     :? Optional "ageTo" Age
-    :? Optional "microphone" HasMicrophone
+    :? Many "languages" Language
+    :? Many "countries" Country
     :? Optional "weekdayFrom" Time
     :? Optional "weekdayTo" Time
     :? Optional "weekendFrom" Time
     :? Optional "weekendTo" Time
-    :? Many "languages" Language
+    :? Optional "microphone" HasMicrophone
     :? Rest "fields")
 
 type ViewProfilesByPlayer = Route

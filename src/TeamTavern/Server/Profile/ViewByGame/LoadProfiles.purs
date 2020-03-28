@@ -24,7 +24,7 @@ import Postgres.Error (Error)
 import Postgres.Query (Query(..))
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
-import TeamTavern.Server.Profile.Routes (Age, Filters, Handle, HasMicrophone, Language, ProfileIlk, ProfilePage, Time)
+import TeamTavern.Server.Profile.Routes (Age, Filters, Handle, HasMicrophone, Language, ProfileIlk, ProfilePage, Time, Country)
 import URI.Extra.QueryPairs (Key, QueryPairs(..), Value)
 import URI.Extra.QueryPairs as Key
 import URI.Extra.QueryPairs as Value
@@ -129,13 +129,20 @@ createAgeFilter (Just ageFrom) (Just ageTo) =
     " and player.birthday < (current_timestamp - interval '" <> show ageFrom <> " years') "
     <> "and player.birthday > (current_timestamp - interval '" <> show (ageTo + 1) <> " years')"
 
-createMicrophoneFilter :: HasMicrophone -> String
-createMicrophoneFilter false = ""
-createMicrophoneFilter true = " and player.has_microphone"
-
 createLanguagesFilter :: Array Language -> String
 createLanguagesFilter [] = ""
 createLanguagesFilter languages = " and player.languages && (array[" <> (languages <#> sanitizeStringValue # intercalate ", ") <> "])"
+
+createCountriesFilter :: Array Country -> String
+createCountriesFilter [] = ""
+createCountriesFilter countries = """ and player.country in (
+    with recursive region_rec(name) as (
+        select region.name from region where region.name = any(array[""" <> (countries <#> sanitizeStringValue # intercalate ", ") <> """])
+        union all
+        select subregion.name from region as subregion join region_rec on subregion.superregion_name = region_rec.name
+    )
+    select * from region_rec)
+"""
 
 createWeekdayOnlineFilter :: Maybe Time -> Maybe Time -> String
 createWeekdayOnlineFilter (Just from) (Just to) =
@@ -173,6 +180,10 @@ createWeekendOnlineFilter (Just from) (Just to) =
     """
 createWeekendOnlineFilter _ _ = ""
 
+createMicrophoneFilter :: HasMicrophone -> String
+createMicrophoneFilter false = ""
+createMicrophoneFilter true = " and player.has_microphone"
+
 createProfilesFilterString :: Handle -> ProfileIlk -> Filters -> String
 createProfilesFilterString handle ilk filters = let
     -- Prepare game handle.
@@ -185,10 +196,11 @@ createProfilesFilterString handle ilk filters = let
     then "where game.handle = " <> preparedHandle
         <> " and profile.type = " <> show ilk
         <> createAgeFilter filters.age.from filters.age.to
-        <> createMicrophoneFilter filters.microphone
         <> createLanguagesFilter filters.languages
+        <> createCountriesFilter filters.countries
         <> createWeekdayOnlineFilter filters.weekdayOnline.from filters.weekdayOnline.to
         <> createWeekendOnlineFilter filters.weekendOnline.from filters.weekendOnline.to
+        <> createMicrophoneFilter filters.microphone
     else let
         -- Create filter string.
         filterString = createFilterString preparedFilters
@@ -218,10 +230,11 @@ createProfilesFilterString handle ilk filters = let
                 where game.handle = """ <> preparedHandle
                     <> """ and profile.type = """ <> show ilk
                     <> createAgeFilter filters.age.from filters.age.to
-                    <> createMicrophoneFilter filters.microphone
                     <> createLanguagesFilter filters.languages
+                    <> createCountriesFilter filters.countries
                     <> createWeekdayOnlineFilter filters.weekdayOnline.from filters.weekdayOnline.to
-                    <> createWeekendOnlineFilter filters.weekendOnline.from filters.weekendOnline.to <> """
+                    <> createWeekendOnlineFilter filters.weekendOnline.from filters.weekendOnline.to
+                    <> createMicrophoneFilter filters.microphone <> """
                 group by profile.id, field.key
                 order by profile.created;
                 $$,
