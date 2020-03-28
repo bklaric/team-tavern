@@ -65,13 +65,14 @@ readUpdate body = do
         readJSON content
         # labelMap (SProxy :: SProxy "unreadableDto") { content, errors: _ }
         # Async.fromEither
+    let timezone' = validateOptionalTimezone timezone
     { discordTag: _
     , birthday
     , languages: validateLanguages languages
     , country: validateOptionalCountry country
-    , timezone: validateOptionalTimezone timezone
-    , onlineWeekday: validateTimespan weekdayStart weekdayEnd
-    , onlineWeekend: validateTimespan weekendStart weekendEnd
+    , timezone: timezone'
+    , onlineWeekday: timezone' >>= (const $ validateTimespan weekdayStart weekdayEnd)
+    , onlineWeekend: timezone' >>= (const $ validateTimespan weekendStart weekendEnd)
     , hasMicrophone
     }
         <$> (validateOptionalDiscordTag discordTag
