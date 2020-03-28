@@ -126,16 +126,13 @@ render fields = HH.div [ HP.class_ $ HH.ClassName "card" ]
                     }
                 ]
             , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
-                [ fieldLabel "Microphone" "fas fa-microphone"
-                , HH.label
-                    [ HP.class_ $ HH.ClassName "checkbox-input-label" ]
-                    [ HH.input
-                        [ HP.class_ $ HH.ClassName "checkbox-input"
-                        , HP.type_ HP.InputCheckbox
-                        , HP.ref $ H.RefLabel "microphone"
-                        ]
-                    , HH.text "Must have a microphone and be willing to communicate."
-                    ]
+                [ fieldLabel "Country" "fas fa-globe-europe"
+                , treeSelect (SProxy :: SProxy "country")
+                    { options: allRegions <#> regionToOption
+                    , labeler: identity
+                    , comparer: (==)
+                    , placeholder: "Search countries"
+                    }
                 ]
             , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
                 [ fieldLabel "Online on weekdays" "fas fa-clock"
@@ -172,13 +169,16 @@ render fields = HH.div [ HP.class_ $ HH.ClassName "card" ]
                     ]
                 ]
             , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
-                [ fieldLabel "Country" "fas fa-globe-europe"
-                , treeSelect (SProxy :: SProxy "country")
-                    { options: allRegions <#> regionToOption
-                    , labeler: identity
-                    , comparer: (==)
-                    , placeholder: "Search countries"
-                    }
+                [ fieldLabel "Microphone" "fas fa-microphone"
+                , HH.label
+                    [ HP.class_ $ HH.ClassName "checkbox-input-label" ]
+                    [ HH.input
+                        [ HP.class_ $ HH.ClassName "checkbox-input"
+                        , HP.type_ HP.InputCheckbox
+                        , HP.ref $ H.RefLabel "microphone"
+                        ]
+                    , HH.text "Must have a microphone and be willing to communicate."
+                    ]
                 ]
             ]
             <>
