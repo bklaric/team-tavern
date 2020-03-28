@@ -4,11 +4,12 @@ import Prelude
 
 import Async (Async)
 import Control.Bind (bindFlipped)
+import Data.Array as Array
 import Data.Const (Const)
 import Data.Int as Int
 import Data.Map as Map
 import Data.Maybe (Maybe(..), maybe)
-import Data.String (null)
+import Data.String as String
 import Data.Symbol (SProxy(..))
 import Data.Traversable (traverse)
 import Data.Tuple (Tuple(..))
@@ -53,9 +54,22 @@ type Field =
 
 type Input = Array Field
 
-type State = Array Field
+type State =
+    { fields :: Array Field
+    , weekdayFrom :: String
+    , weekdayTo :: String
+    , weekendFrom :: String
+    , weekendTo :: String
+    }
 
-data Action = Receive Input | Apply MouseEvent | Clear MouseEvent
+data Action
+    = Receive Input
+    | Apply MouseEvent
+    | Clear MouseEvent
+    | WeekdayFromInput String
+    | WeekdayToInput String
+    | WeekendFromInput String
+    | WeekendToInput String
 
 data Output = ApplyFilters Filters
 
@@ -94,7 +108,7 @@ regionToOption (Region region subRegions) = TreeSelect.Option
     }
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
-render fields = HH.div [ HP.class_ $ HH.ClassName "card" ]
+render state = HH.div [ HP.class_ $ HH.ClassName "card" ]
     [ HH.span [ HP.class_ $ HH.ClassName "card-title" ]
         [ HH.text "Profile filters" ]
     , HH.div [ HP.class_ $ HH.ClassName "card-content" ]
@@ -134,7 +148,7 @@ render fields = HH.div [ HP.class_ $ HH.ClassName "card" ]
                     , placeholder: "Search countries"
                     }
                 ]
-            , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+            , HH.div [ HP.class_ $ HH.ClassName "input-group" ] $
                 [ fieldLabel "Online on weekdays" "fas fa-clock"
                 , HH.div [ HP.class_ $ HH.ClassName "timespan-group" ]
                     [ HH.span [ HP.class_ $ HH.ClassName "timespan-group-from" ] [ HH.text "From" ]
@@ -142,16 +156,27 @@ render fields = HH.div [ HP.class_ $ HH.ClassName "card" ]
                         [ HP.class_ $ HH.ClassName $ "text-line-input timespan-group-input"
                         , HP.ref $ H.RefLabel "weekdayFrom"
                         , HP.type_ HP.InputTime
+                        , HE.onValueChange $ Just <<< WeekdayFromInput
                         ]
                     , HH.span [ HP.class_ $ HH.ClassName "timespan-group-to" ] [ HH.text "to" ]
                     , HH.input
                         [ HP.class_ $ HH.ClassName $ "text-line-input timespan-group-input"
                         , HP.ref $ H.RefLabel "weekdayTo"
                         , HP.type_ HP.InputTime
+                        , HE.onValueChange $ Just <<< WeekdayToInput
                         ]
                     ]
                 ]
-            , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+                <>
+                if String.null state.weekdayFrom && (not $ String.null state.weekdayTo)
+                    || (not $ String.null state.weekdayFrom) && String.null state.weekdayTo
+                then Array.singleton $
+                    HH.label
+                    [ HP.class_ $ HH.ClassName "input-underlabel" ]
+                    [ HH.text $ "Enter both times for the filter to have effect."
+                    ]
+                else []
+            , HH.div [ HP.class_ $ HH.ClassName "input-group" ] $
                 [ fieldLabel "Online on weekends" "fas fa-clock"
                 , HH.div [ HP.class_ $ HH.ClassName "timespan-group" ]
                     [ HH.span [ HP.class_ $ HH.ClassName "timespan-group-from" ] [ HH.text "From" ]
@@ -159,15 +184,26 @@ render fields = HH.div [ HP.class_ $ HH.ClassName "card" ]
                         [ HP.class_ $ HH.ClassName $ "text-line-input timespan-group-input"
                         , HP.ref $ H.RefLabel "weekendFrom"
                         , HP.type_ HP.InputTime
+                        , HE.onValueChange $ Just <<< WeekendFromInput
                         ]
                     , HH.span [ HP.class_ $ HH.ClassName "timespan-group-to" ] [ HH.text "to" ]
                     , HH.input
                         [ HP.class_ $ HH.ClassName $ "text-line-input timespan-group-input"
                         , HP.ref $ H.RefLabel "weekendTo"
                         , HP.type_ HP.InputTime
+                        , HE.onValueChange $ Just <<< WeekendToInput
                         ]
                     ]
                 ]
+                <>
+                if String.null state.weekendFrom && (not $ String.null state.weekendTo)
+                    || (not $ String.null state.weekendFrom) && String.null state.weekendTo
+                then Array.singleton $
+                    HH.label
+                    [ HP.class_ $ HH.ClassName "input-underlabel" ]
+                    [ HH.text $ "Enter both times for the filter to have effect."
+                    ]
+                else []
             , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
                 [ fieldLabel "Microphone" "fas fa-microphone"
                 , HH.label
@@ -182,7 +218,7 @@ render fields = HH.div [ HP.class_ $ HH.ClassName "card" ]
                 ]
             ]
             <>
-            (map fieldInput fields)
+            (map fieldInput state.fields)
         , HH.button
             [ HP.class_ $ HH.ClassName "apply-filters"
             , HE.onClick $ Just <<< Apply
@@ -207,7 +243,7 @@ getStringValue label = do
     input
         >>= HTMLInputElement.fromElement
         # traverse HTMLInputElement.value
-        <#> bindFlipped (\value -> if null value then Nothing else Just value)
+        <#> bindFlipped (\value -> if String.null value then Nothing else Just value)
         # H.liftEffect
 
 getIntValue :: forall state action slots message monad. MonadEffect monad =>
@@ -244,7 +280,7 @@ clearChecked label = do
 handleAction :: forall left.
     Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
 handleAction (Receive fields) =
-    H.put fields
+    H.modify_ (_ { fields = fields })
 handleAction (Apply event) = do
     H.liftEffect $ preventDefault $ toEvent event
     ageFrom <- getIntValue $ H.RefLabel "ageFrom"
@@ -285,11 +321,25 @@ handleAction (Clear event) = do
     void $ H.query (SProxy :: SProxy "country") unit $ TreeSelect.Clear unit
     -- Clear every multiselect child.
     void $ H.queryAll (SProxy :: SProxy "filter") $ MultiSelect.Clear unit
+handleAction (WeekdayFromInput time) =
+    H.modify_ (_ { weekdayFrom = time })
+handleAction (WeekdayToInput time) =
+    H.modify_ (_ { weekdayTo = time })
+handleAction (WeekendFromInput time) =
+    H.modify_ (_ { weekendFrom = time })
+handleAction (WeekendToInput time) =
+    H.modify_ (_ { weekendTo = time })
 
 component :: forall query left.
     H.Component HH.HTML query Input Output (Async left)
 component = H.mkComponent
-    { initialState: identity
+    { initialState: \fields ->
+        { fields
+        , weekdayFrom: ""
+        , weekdayTo: ""
+        , weekendFrom: ""
+        , weekendTo: ""
+        }
     , render
     , eval: H.mkEval $ H.defaultEval
         { handleAction = handleAction
