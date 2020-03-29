@@ -24,7 +24,7 @@ import Postgres.Error (Error)
 import Postgres.Query (Query(..))
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
-import TeamTavern.Server.Profile.Routes (Age, Filters, Handle, HasMicrophone, Language, ProfileIlk, ProfilePage, Time, Country)
+import TeamTavern.Server.Profile.Routes (Age, Country, Filters, Handle, HasMicrophone, Language, ProfileIlk, ProfilePage, Time, Timezone)
 import URI.Extra.QueryPairs (Key, QueryPairs(..), Value)
 import URI.Extra.QueryPairs as Key
 import URI.Extra.QueryPairs as Value
@@ -145,48 +145,59 @@ createCountriesFilter countries = """ and player.country in (
     select * from region_rec)
 """
 
-createWeekdayOnlineFilter :: Maybe Time -> Maybe Time -> String
-createWeekdayOnlineFilter (Just from) (Just to) =
-    let fromTime = "'" <> from <> "'::time"
-        toTime   = "'" <> to   <> "'::time" in
-    """ and
-    case
-        when player.weekday_start < player.weekday_end and """ <> fromTime <> """ < """ <> toTime <> """ then
-            """ <> fromTime <> """ < player.weekday_end and player.weekday_start < """ <> toTime <> """
-        when player.weekday_start > player.weekday_end and """ <> fromTime <> """ < """ <> toTime <> """ then
-            """ <> fromTime <> """ < player.weekday_end or player.weekday_start < """ <> toTime <> """
-        when player.weekday_start < player.weekday_end and """ <> fromTime <> """ > """ <> toTime <> """ then
-            """ <> fromTime <> """ < player.weekday_end or player.weekday_start < """ <> toTime <> """
-        when player.weekday_start > player.weekday_end and """ <> fromTime <> """ > """ <> toTime <> """ then
-            true
-    end
-    """
-createWeekdayOnlineFilter _ _ = ""
+timezoneAdjustedTime :: Timezone -> String -> String
+timezoneAdjustedTime timezone timeColumn =
+    """((current_date || ' ' || """ <> timeColumn <> """ || ' ' || player.timezone)::timestamptz
+    at time zone """ <> sanitizeStringValue timezone <> """)::time"""
 
-createWeekendOnlineFilter :: Maybe Time -> Maybe Time -> String
-createWeekendOnlineFilter (Just from) (Just to) =
+createWeekdayOnlineFilter :: Timezone -> Maybe Time -> Maybe Time -> String
+createWeekdayOnlineFilter timezone (Just from) (Just to) =
     let fromTime = "'" <> from <> "'::time"
-        toTime   = "'" <> to   <> "'::time" in
+        toTime   = "'" <> to   <> "'::time"
+        playerStart = timezoneAdjustedTime timezone "player.weekday_start"
+        playerEnd   = timezoneAdjustedTime timezone "player.weekday_end"
+    in
     """ and
     case
-        when player.weekend_start < player.weekend_end and """ <> fromTime <> """ < """ <> toTime <> """ then
-            """ <> fromTime <> """ < player.weekend_end and player.weekend_start < """ <> toTime <> """
-        when player.weekend_start > player.weekend_end and """ <> fromTime <> """ < """ <> toTime <> """ then
-            """ <> fromTime <> """ < player.weekend_end or player.weekend_start < """ <> toTime <> """
-        when player.weekend_start < player.weekend_end and """ <> fromTime <> """ > """ <> toTime <> """ then
-            """ <> fromTime <> """ < player.weekend_end or player.weekend_start < """ <> toTime <> """
-        when player.weekend_start > player.weekend_end and """ <> fromTime <> """ > """ <> toTime <> """ then
+        when """ <> playerStart <> """ < """ <> playerEnd <> """ and """ <> fromTime <> """ < """ <> toTime <> """ then
+            """ <> fromTime <> """ < """ <> playerEnd <> """ and """ <> playerStart <> """ < """ <> toTime <> """
+        when """ <> playerStart <> """ > """ <> playerEnd <> """ and """ <> fromTime <> """ < """ <> toTime <> """ then
+            """ <> fromTime <> """ < """ <> playerEnd <> """ or """ <> playerStart <> """ < """ <> toTime <> """
+        when """ <> playerStart <> """ < """ <> playerEnd <> """ and """ <> fromTime <> """ > """ <> toTime <> """ then
+            """ <> fromTime <> """ < """ <> playerEnd <> """ or """ <> playerStart <> """ < """ <> toTime <> """
+        when """ <> playerStart <> """ > """ <> playerEnd <> """ and """ <> fromTime <> """ > """ <> toTime <> """ then
             true
     end
     """
-createWeekendOnlineFilter _ _ = ""
+createWeekdayOnlineFilter _ _ _ = ""
+
+createWeekendOnlineFilter :: Timezone -> Maybe Time -> Maybe Time -> String
+createWeekendOnlineFilter timezone (Just from) (Just to) =
+    let fromTime = "'" <> from <> "'::time"
+        toTime   = "'" <> to   <> "'::time"
+        playerStart = timezoneAdjustedTime timezone "player.weekend_start"
+        playerEnd   = timezoneAdjustedTime timezone "player.weekend_end"
+    in
+    """ and
+    case
+        when """ <> playerStart <> """ < """ <> playerEnd <> """ and """ <> fromTime <> """ < """ <> toTime <> """ then
+            """ <> fromTime <> """ < """ <> playerEnd <> """ and """ <> playerStart <> """ < """ <> toTime <> """
+        when """ <> playerStart <> """ > """ <> playerEnd <> """ and """ <> fromTime <> """ < """ <> toTime <> """ then
+            """ <> fromTime <> """ < """ <> playerEnd <> """ or """ <> playerStart <> """ < """ <> toTime <> """
+        when """ <> playerStart <> """ < """ <> playerEnd <> """ and """ <> fromTime <> """ > """ <> toTime <> """ then
+            """ <> fromTime <> """ < """ <> playerEnd <> """ or """ <> playerStart <> """ < """ <> toTime <> """
+        when """ <> playerStart <> """ > """ <> playerEnd <> """ and """ <> fromTime <> """ > """ <> toTime <> """ then
+            true
+    end
+    """
+createWeekendOnlineFilter _ _ _ = ""
 
 createMicrophoneFilter :: HasMicrophone -> String
 createMicrophoneFilter false = ""
 createMicrophoneFilter true = " and player.has_microphone"
 
-createProfilesFilterString :: Handle -> ProfileIlk -> Filters -> String
-createProfilesFilterString handle ilk filters = let
+createProfilesFilterString :: Handle -> ProfileIlk -> Timezone -> Filters -> String
+createProfilesFilterString handle ilk timezone filters = let
     -- Prepare game handle.
     preparedHandle = sanitizeStringValue handle
 
@@ -199,8 +210,8 @@ createProfilesFilterString handle ilk filters = let
         <> createAgeFilter filters.age.from filters.age.to
         <> createLanguagesFilter filters.languages
         <> createCountriesFilter filters.countries
-        <> createWeekdayOnlineFilter filters.weekdayOnline.from filters.weekdayOnline.to
-        <> createWeekendOnlineFilter filters.weekendOnline.from filters.weekendOnline.to
+        <> createWeekdayOnlineFilter timezone filters.weekdayOnline.from filters.weekdayOnline.to
+        <> createWeekendOnlineFilter timezone filters.weekendOnline.from filters.weekendOnline.to
         <> createMicrophoneFilter filters.microphone
     else let
         -- Create filter string.
@@ -233,8 +244,8 @@ createProfilesFilterString handle ilk filters = let
                     <> createAgeFilter filters.age.from filters.age.to
                     <> createLanguagesFilter filters.languages
                     <> createCountriesFilter filters.countries
-                    <> createWeekdayOnlineFilter filters.weekdayOnline.from filters.weekdayOnline.to
-                    <> createWeekendOnlineFilter filters.weekendOnline.from filters.weekendOnline.to
+                    <> createWeekdayOnlineFilter timezone filters.weekdayOnline.from filters.weekdayOnline.to
+                    <> createWeekendOnlineFilter timezone filters.weekendOnline.from filters.weekendOnline.to
                     <> createMicrophoneFilter filters.microphone <> """
                 group by profile.id, field.key
                 order by profile.created;
@@ -252,10 +263,10 @@ createProfilesFilterString handle ilk filters = let
             """ <> filterString <> """
         )"""
 
-queryString :: Handle -> ProfileIlk -> ProfilePage -> Filters -> Query
-queryString handle ilk page filters = let
+queryString :: Handle -> ProfileIlk -> ProfilePage -> Timezone -> Filters -> Query
+queryString handle ilk page timezone filters = let
     -- Create profiles filter string.
-    filterString = createProfilesFilterString handle ilk filters
+    filterString = createProfilesFilterString handle ilk timezone filters
 
     -- Insert it into the rest of the query.
     in
@@ -267,17 +278,17 @@ queryString handle ilk page filters = let
         player.languages,
         player.has_microphone as "hasMicrophone",
         case
-            when player.weekday_start is not null
+            when player.weekday_start is not null and player.weekday_end is not null
             then json_build_object(
-                'from', to_char(player.weekday_start, 'HH24:MI'),
-                'to', to_char(player.weekday_end, 'HH24:MI')
+                'from', to_char(""" <> timezoneAdjustedTime timezone "player.weekday_start" <> """, 'HH24:MI'),
+                'to', to_char(""" <> timezoneAdjustedTime timezone "player.weekday_end" <> """, 'HH24:MI')
             )
         end as "weekdayOnline",
         case
-            when player.weekend_start is not null
+            when player.weekend_start is not null and player.weekend_end is not null
             then json_build_object(
-                'from', to_char(player.weekend_start, 'HH24:MI'),
-                'to', to_char(player.weekend_end, 'HH24:MI')
+                'from', to_char(""" <> timezoneAdjustedTime timezone "player.weekend_start" <> """, 'HH24:MI'),
+                'to', to_char(""" <> timezoneAdjustedTime timezone "player.weekend_end" <> """, 'HH24:MI')
             )
         end as "weekendOnline",
         game.handle,
@@ -300,11 +311,12 @@ loadProfiles
     -> Handle
     -> ProfileIlk
     -> ProfilePage
+    -> Timezone
     -> Filters
     -> Async (LoadProfilesError errors) (Array LoadProfilesResult)
-loadProfiles client handle ilk page filters = do
+loadProfiles client handle ilk page timezone filters = do
     result <- client
-        # query_ (queryString handle ilk page filters)
+        # query_ (queryString handle ilk page timezone filters)
         # label (SProxy :: SProxy "databaseError")
     profiles <- rows result
         # traverse read

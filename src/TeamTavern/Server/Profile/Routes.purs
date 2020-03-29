@@ -15,6 +15,8 @@ type ProfileIlk = Int
 
 type ProfilePage = Int
 
+type Timezone = String
+
 type Age = Int
 
 type Language = String
@@ -84,6 +86,7 @@ type ViewProfilesByGame = Route
     :> End)
     (  Mandatory "ilk" ProfileIlk
     :? Mandatory "page" ProfilePage
+    :? Mandatory "timezone" Timezone
     :? Optional "ageFrom" Age
     :? Optional "ageTo" Age
     :? Many "languages" Language

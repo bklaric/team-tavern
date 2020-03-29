@@ -31,6 +31,7 @@ import TeamTavern.Client.Game.GameHeader as GameHeader
 import TeamTavern.Client.Profile.ProfileFilters (Filters)
 import TeamTavern.Client.Script.Cookie (PlayerInfo, getPlayerInfo)
 import TeamTavern.Client.Script.Cookie as Cookie
+import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Server.Game.View.SendResponse as View
 import TeamTavern.Server.Profile.ViewByGame.LoadProfiles (pageSize, pageSize')
 import TeamTavern.Server.Profile.ViewByGame.SendResponse as ViewByGame
@@ -314,28 +315,30 @@ render (Profiles game tab page _ response playerInfo') =
 
 loadProfiles :: forall left. View.OkContent -> GameHeader.Tab -> ProfilePage -> Filters -> Async left State
 loadProfiles game tab page filters = Async.unify do
+    timezone <- H.liftEffect getClientTimezone
     let empty = Empty (Input game tab)
-    let tabPair =
+        tabPair =
             case tab of
             GameHeader.Players -> "ilk=1"
             GameHeader.Teams -> "ilk=2"
-    let pagePair = "page=" <> show page
-    let ageFromPair = filters.age.from <#> show <#> ("ageFrom=" <> _)
-    let ageToPair = filters.age.to <#> show <#> ("ageTo=" <> _)
-    let microphonePair = if filters.microphone then Just "microphone=true"else Nothing
-    let languagePairs = filters.languages <#> (\language -> "languages=" <> language)
-    let countryPairs = filters.countries <#> (\country -> "countries=" <> country)
-    let weekdayFromPair = filters.weekdayOnline.from <#> ("weekdayFrom=" <> _)
-    let weekdayToPair = filters.weekdayOnline.to <#> ("weekdayTo=" <> _)
-    let weekendFromPair = filters.weekendOnline.from <#> ("weekendFrom=" <> _)
-    let weekendToPair = filters.weekendOnline.to <#> ("weekendTo=" <> _)
-    let fieldPairs = filters.fields <#> (\field -> field.options <#> \option -> field.key <> "=" <> option.key) # join
-    let allPairs = [tabPair, pagePair]
+        pagePair = "page=" <> show page
+        timezonePair = "timezone=" <> timezone
+        ageFromPair = filters.age.from <#> show <#> ("ageFrom=" <> _)
+        ageToPair = filters.age.to <#> show <#> ("ageTo=" <> _)
+        microphonePair = if filters.microphone then Just "microphone=true"else Nothing
+        languagePairs = filters.languages <#> (\language -> "languages=" <> language)
+        countryPairs = filters.countries <#> (\country -> "countries=" <> country)
+        weekdayFromPair = filters.weekdayOnline.from <#> ("weekdayFrom=" <> _)
+        weekdayToPair = filters.weekdayOnline.to <#> ("weekdayTo=" <> _)
+        weekendFromPair = filters.weekendOnline.from <#> ("weekendFrom=" <> _)
+        weekendToPair = filters.weekendOnline.to <#> ("weekendTo=" <> _)
+        fieldPairs = filters.fields <#> (\field -> field.options <#> \option -> field.key <> "=" <> option.key) # join
+        allPairs = [tabPair, pagePair, timezonePair]
             <> languagePairs <> countryPairs <> fieldPairs <> catMaybes
             [ ageFromPair, ageToPair, microphonePair
             ,  weekdayFromPair, weekdayToPair, weekendFromPair, weekendToPair
             ]
-    let filterQuery = "?" <> intercalate "&" allPairs
+        filterQuery = "?" <> intercalate "&" allPairs
     response <- Fetch.fetch_
             ("/api/profiles/by-handle/" <> game.handle <> filterQuery)
         # lmap (const empty)
