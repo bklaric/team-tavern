@@ -35,6 +35,7 @@ import TeamTavern.Client.Components.SelectImperative.SingleSelect (singleSelect,
 import TeamTavern.Client.Components.SelectImperative.SingleSelect as SingleSelect
 import TeamTavern.Client.Script.Cookie (getPlayerInfo)
 import TeamTavern.Client.Script.Navigate (navigate_)
+import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass, otherErrorClass)
 import TeamTavern.Server.Infrastructure.Countries (allCountries)
 import TeamTavern.Server.Infrastructure.Languages (allLanguages)
@@ -353,9 +354,10 @@ setChecked checked label = do
 setInputValues
     :: forall monad message action state
     .  MonadEffect monad
-    => ViewAccount.OkContent
+    => Maybe Timezone
+    -> ViewAccount.OkContent
     -> H.HalogenM state action ChildSlots message monad Unit
-setInputValues details = do
+setInputValues selectedTimezone details = do
     setValue (maybe "" identity details.discordTag) $ H.RefLabel "discord-tag"
     setValue (maybe "" identity details.birthday) $ H.RefLabel "birthday"
     void $ H.query (SProxy :: SProxy "languageInput") unit $
@@ -387,8 +389,7 @@ setInputValues details = do
             case countryComparison of
             EQ -> leftTimezone.city `compare` rightTimezone.city
             other -> other
-        , selected: details.timezone >>= \timezone' ->
-            allTimezones # find (_.name >>> (_ == timezone'))
+        , selected: selectedTimezone
         , labeler: \{ city, country: country' } ->
             country' <> ", " <> city
         , comparer: \leftTimezone rightTimezone ->
@@ -417,9 +418,15 @@ handleAction Init = do
             case details of
                 Nothing -> H.put Error
                 Just details' -> do
+                    selectedTimezoneName <-
+                        case details'.timezone of
+                        Nothing -> H.liftEffect getClientTimezone
+                        Just timezone' -> pure timezone'
+                    let selectedTimezone = allTimezones
+                            # find (_.name >>> (_ == selectedTimezoneName))
                     H.put $ Loaded
                         { nickname
-                        , timezoneSet: isJust details'.timezone
+                        , timezoneSet: isJust selectedTimezone
                         , weekdayFrom: maybe "" identity details'.weekdayStart
                         , weekdayTo: maybe "" identity details'.weekdayEnd
                         , weekendFrom: maybe "" identity details'.weekendStart
@@ -428,7 +435,7 @@ handleAction Init = do
                         , otherError: false
                         , submitting: false
                         }
-                    setInputValues details'
+                    setInputValues selectedTimezone details'
 handleAction (TimezoneInput loadedState timezone) =
     H.put $ Loaded loadedState { timezoneSet = isJust timezone }
 handleAction (WeekdayFromInput time) =
