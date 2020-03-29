@@ -16,6 +16,7 @@ import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..), isJust, maybe)
 import Data.Options ((:=))
 import Data.String (trim)
+import Data.String as String
 import Data.Traversable (traverse)
 import Data.Variant (SProxy(..), match)
 import Effect.Class (class MonadEffect)
@@ -47,6 +48,10 @@ import Web.HTML.HTMLInputElement as HTMLInputElement
 data Action
     = Init
     | TimezoneInput LoadedState (Maybe Timezone)
+    | WeekdayFromInput String
+    | WeekdayToInput String
+    | WeekendFromInput String
+    | WeekendToInput String
     | Update LoadedState Event
     | Close
 
@@ -55,6 +60,10 @@ data Message = DetailsEditted String | CloseClicked
 type LoadedState =
     { nickname :: String
     , timezoneSet :: Boolean
+    , weekdayFrom :: String
+    , weekdayTo :: String
+    , weekendFrom :: String
+    , weekendTo :: String
     , discordTagError :: Boolean
     , otherError :: Boolean
     , submitting :: Boolean
@@ -76,10 +85,10 @@ type Slot = H.Slot (Modal.Query Unit (Const Void)) (Modal.Message Message) Unit
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render Empty = HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] []
 render Error = HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] []
-render (Loaded loadedState @ { timezoneSet, discordTagError, otherError, submitting }) =
+render (Loaded state @ { timezoneSet, discordTagError, otherError, submitting }) =
     HH.div [ HP.class_ $ HH.ClassName "wide-single-form-container" ] $ pure $
     HH.form
-    [ HP.class_ $ H.ClassName "form", HE.onSubmit $ Just <<< Update loadedState ]
+    [ HP.class_ $ H.ClassName "form", HE.onSubmit $ Just <<< Update state ]
     [ closeButton Close
     , HH.h2  [ HP.class_ $ HH.ClassName "form-heading" ]
         [ HH.text "Edit player details" ]
@@ -133,7 +142,7 @@ render (Loaded loadedState @ { timezoneSet, discordTagError, otherError, submitt
                 [ HH.text "Timezone" ]
             , singleSelect' (SProxy :: SProxy "timezoneInput")
                 (\(SingleSelect.SelectedChanged option) ->
-                    Just $ TimezoneInput loadedState option)
+                    Just $ TimezoneInput state option)
             ]
         , HH.div [ HP.class_ $ HH.ClassName "input-group" ] $
             [ HH.label
@@ -147,6 +156,7 @@ render (Loaded loadedState @ { timezoneSet, discordTagError, otherError, submitt
                     , HP.ref $ H.RefLabel "weekday-start"
                     , HP.type_ HP.InputTime
                     , HP.disabled $ not timezoneSet
+                    , HE.onValueChange $ Just <<< WeekdayFromInput
                     ]
                 , HH.span [ HP.class_ $ HH.ClassName "timespan-group-to" ] [ HH.text "to" ]
                 , HH.input
@@ -155,17 +165,24 @@ render (Loaded loadedState @ { timezoneSet, discordTagError, otherError, submitt
                     , HP.ref $ H.RefLabel "weekday-end"
                     , HP.type_ HP.InputTime
                     , HP.disabled $ not timezoneSet
+                    , HE.onValueChange $ Just <<< WeekdayToInput
                     ]
                ]
-            ]   
+            ]
             <>
-            if timezoneSet
-            then []
-            else Array.singleton $
+            (if not timezoneSet
+            then Array.singleton $
                 HH.label
                     [ HP.class_ $ HH.ClassName "input-underlabel" ]
                     [ HH.text $ "Set your timezone to unlock this field." ]
-
+            else if String.null state.weekdayFrom && (not $ String.null state.weekdayTo)
+                || (not $ String.null state.weekdayFrom) && String.null state.weekdayTo
+            then Array.singleton $
+                HH.label
+                [ HP.class_ $ HH.ClassName "input-underlabel" ]
+                [ HH.text $ "Enter both times for the field to have effect."
+                ]
+            else [])
         , HH.div [ HP.class_ $ HH.ClassName "input-group" ] $
             [ HH.label
                 [ HP.class_ $ HH.ClassName "input-label" ]
@@ -178,6 +195,7 @@ render (Loaded loadedState @ { timezoneSet, discordTagError, otherError, submitt
                     , HP.ref $ H.RefLabel "weekend-start"
                     , HP.type_ HP.InputTime
                     , HP.disabled $ not timezoneSet
+                    , HE.onValueChange $ Just <<< WeekendFromInput
                     ]
                 , HH.span [ HP.class_ $ HH.ClassName "timespan-group-to" ] [ HH.text "to" ]
                 , HH.input
@@ -186,17 +204,24 @@ render (Loaded loadedState @ { timezoneSet, discordTagError, otherError, submitt
                     , HP.ref $ H.RefLabel "weekend-end"
                     , HP.type_ HP.InputTime
                     , HP.disabled $ not timezoneSet
+                    , HE.onValueChange $ Just <<< WeekendToInput
                     ]
                 ]
             ]
             <>
-            if timezoneSet
-            then []
-            else Array.singleton $
+            (if not timezoneSet
+            then Array.singleton $
                 HH.label
                     [ HP.class_ $ HH.ClassName "input-underlabel" ]
                     [ HH.text $ "Set your timezone to unlock this field." ]
-
+            else if String.null state.weekendFrom && (not $ String.null state.weekendTo)
+                || (not $ String.null state.weekendFrom) && String.null state.weekendTo
+            then Array.singleton $
+                HH.label
+                [ HP.class_ $ HH.ClassName "input-underlabel" ]
+                [ HH.text $ "Enter both times for the field to have effect."
+                ]
+            else [])
         , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
             [ HH.label
                 [ HP.class_ $ HH.ClassName "input-label" ]
@@ -395,6 +420,10 @@ handleAction Init = do
                     H.put $ Loaded
                         { nickname
                         , timezoneSet: isJust details'.timezone
+                        , weekdayFrom: maybe "" identity details'.weekdayStart
+                        , weekdayTo: maybe "" identity details'.weekdayEnd
+                        , weekendFrom: maybe "" identity details'.weekendStart
+                        , weekendTo: maybe "" identity details'.weekendEnd
                         , discordTagError: false
                         , otherError: false
                         , submitting: false
@@ -402,6 +431,22 @@ handleAction Init = do
                     setInputValues details'
 handleAction (TimezoneInput loadedState timezone) =
     H.put $ Loaded loadedState { timezoneSet = isJust timezone }
+handleAction (WeekdayFromInput time) =
+    H.modify_ case _ of
+        Loaded state -> Loaded state { weekdayFrom = time }
+        state -> state
+handleAction (WeekdayToInput time) =
+    H.modify_ case _ of
+        Loaded state -> Loaded state { weekdayTo = time }
+        state -> state
+handleAction (WeekendFromInput time) =
+    H.modify_ case _ of
+        Loaded state -> Loaded state { weekendFrom = time }
+        state -> state
+handleAction (WeekendToInput time) =
+    H.modify_ case _ of
+        Loaded state -> Loaded state { weekendTo = time }
+        state -> state
 handleAction (Update loadedState event) = do
     H.liftEffect $ preventDefault event
     discordTag <- getValue $ H.RefLabel "discord-tag"
