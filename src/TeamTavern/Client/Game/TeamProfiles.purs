@@ -1,4 +1,4 @@
-module TeamTavern.Client.Game.Profiles (Message(..), Slot, playerProfiles) where
+module TeamTavern.Client.Game.TeamProfiles (Message(..), Slot, teamProfiles) where
 
 import Prelude
 
@@ -20,23 +20,20 @@ import TeamTavern.Client.Components.NavigationAnchor as Anchor
 import TeamTavern.Client.Script.Cookie (PlayerInfo)
 import TeamTavern.Server.Profile.ViewByGame.LoadProfiles (pageSize, pageSize')
 
-type PlayerProfile =
+type TeamProfile =
     { nickname :: String
-    , age :: Maybe Int
-    , country :: Maybe String
+    , age :: Maybe { from :: Int, to :: Int }
+    , countries :: Array String
     , languages :: Array String
     , hasMicrophone :: Boolean
     , weekdayOnline :: Maybe { from :: String, to :: String }
     , weekendOnline :: Maybe { from :: String, to :: String }
     , fieldValues :: Array
         { field ::
-            { type :: Int
-            , label :: String
+            { label :: String
             , icon :: String
             }
-        , url :: Maybe String
-        , option :: Maybe String
-        , options :: Maybe (Array String)
+        , options :: Array String
         }
     , summary :: Array String
     , updated :: String
@@ -44,7 +41,7 @@ type PlayerProfile =
     }
 
 type Input =
-    { profiles :: Array PlayerProfile
+    { profiles :: Array TeamProfile
     , profileCount :: Int
     , player :: Maybe
         { info :: PlayerInfo
@@ -109,7 +106,7 @@ render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { profiles, profileCount, player, page } =
     HH.div [ HP.class_ $ HH.ClassName "card" ] $
     [ HH.span [ HP.class_ $ HH.ClassName "card-title" ] $
-        [ HH.text "Player profiles"
+        [ HH.text "Team profiles"
         , divider
         , HH.span [ HP.class_ $ HH.ClassName "card-subtitle" ]
             [ HH.text $
@@ -119,7 +116,7 @@ render { profiles, profileCount, player, page } =
                         "Showing " <> show (1 + ((page - 1) * pageSize))
                         <> " - " <> show (min profileCount (page * pageSize))
                         <> " out of " <> show profileCount)
-                <> " players"
+                <> " teams"
             ]
         ]
         <>
@@ -130,7 +127,7 @@ render { profiles, profileCount, player, page } =
             , HE.onClick $ const $ Just CreateProfileAction
             ]
             [ HH.i [ HP.class_ $ HH.ClassName "fas fa-user-plus button-icon" ] []
-            , HH.text "Create your profile"
+            , HH.text "Create team profile"
             ]
         _ -> []
     ]
@@ -150,19 +147,35 @@ render { profiles, profileCount, player, page } =
             ]
         ]
         <> Array.catMaybes
-        [ profile.age <#> \age ->
+        [ profile.age <#> \{ from, to } ->
             HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
             [ HH.i [ HP.class_ $ HH.ClassName "fas fa-calendar-alt profile-field-icon" ] []
-            , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text "Is " ]
-            , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text $ show age ]
+            , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text "Are between " ]
+            , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text $ show from ]
+            , HH.text " and "
+            , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text $ show to ]
             , HH.text " years old"
             ]
-        , profile.country <#> \country ->
-            HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
-            [ HH.i [ HP.class_ $ HH.ClassName "fas fa-globe-europe profile-field-icon" ] []
-            , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text "Lives in " ]
-            , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text country ]
-            ]
+        , if Array.null profile.countries
+            then Nothing
+            else Just $
+                HH.p [ HP.class_ $ HH.ClassName "profile-field" ] $
+                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-globe-europe profile-field-icon" ] []
+                , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text "Live in " ]
+                ]
+                <>
+                (foldr
+                    (\country state ->
+                        if not state.firstCountry
+                        then state { firstCountry = true, countriesSoFar = [ HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text country ] ] }
+                        else if not state.secondCountry
+                        then state { secondCountry = true, countriesSoFar = [ HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text country ], HH.text " and " ] <> state.countriesSoFar }
+                        else state { countriesSoFar = [ HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text country ], HH.text ", " ] <> state.countriesSoFar }
+                    )
+                    { firstCountry: false, secondCountry: false, countriesSoFar: [] }
+                    profile.countries
+                    # _.countriesSoFar
+                )
         , if Array.null profile.languages
             then Nothing
             else Just $
@@ -187,8 +200,8 @@ render { profiles, profileCount, player, page } =
             then Just $
                 HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
                 [ HH.i [ HP.class_ $ HH.ClassName "fas fa-microphone profile-field-icon" ] []
-                , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless profile-field-emphasize" ] [ HH.text "Has microphone" ]
-                , HH.text $ " and is willing to communicate"
+                , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless profile-field-emphasize" ] [ HH.text "Have a microphone" ]
+                , HH.text $ " and are willing to communicate."
                 ]
             else Nothing
         , profile.weekdayOnline <#> \{ from, to } ->
@@ -212,26 +225,12 @@ render { profiles, profileCount, player, page } =
             , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text to ]
             ]
         ]
-        <> Array.catMaybes (profile.fieldValues <#> \{ field, url, option, options } ->
-            case field.type, url, option, options of
-            1, Just url', _, _ -> Just $
-                HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
-                [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
-                , HH.a [ HP.class_ $ HH.ClassName "profile-field-label", HP.href url' ] [ HH.text field.label ]
-                ]
-            2, _, Just option', _ -> Just $
-                HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
-                [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
-                , HH.span [ HP.class_ $ HH.ClassName "profile-field-label" ] [ HH.text $ field.label <> ": " ]
-                , HH.text option'
-                ]
-            3, _, _, Just options' | not $ Array.null options' -> Just $
-                HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
-                [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
-                , HH.span [ HP.class_ $ HH.ClassName "profile-field-label" ] [ HH.text $ field.label <> ": " ]
-                , HH.text $ intercalate ", " options'
-                ]
-            _, _, _, _ ->  Nothing)
+        <> (profile.fieldValues <#> \{ field, options } ->
+            HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
+            [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
+            , HH.span [ HP.class_ $ HH.ClassName "profile-field-label" ] [ HH.text $ field.label <> ": " ]
+            , HH.text $ intercalate ", " options
+            ])
         <> (profile.summary <#> \paragraph ->
             HH.p [ HP.class_ $ HH.ClassName "profile-summary" ] [ HH.text paragraph ]))
     <> (Array.singleton $
@@ -282,10 +281,10 @@ component = H.mkComponent
         }
     }
 
-playerProfiles
+teamProfiles
     :: forall children action left
     .  Input
     -> (Message -> Maybe action)
-    -> HH.ComponentHTML action (playerProfiles :: Slot | children) (Async left)
-playerProfiles input handleOutput =
-    HH.slot (SProxy :: SProxy "playerProfiles") unit component input handleOutput
+    -> HH.ComponentHTML action (teamProfiles :: Slot | children) (Async left)
+teamProfiles input handleOutput =
+    HH.slot (SProxy :: SProxy "teamProfiles") unit component input handleOutput

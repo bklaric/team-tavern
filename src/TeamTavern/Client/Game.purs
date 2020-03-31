@@ -16,7 +16,7 @@ import Halogen as H
 import Halogen.HTML as HH
 import Simple.JSON.Async as Json
 import TeamTavern.Client.Game.GameHeader as GameHeader
-import TeamTavern.Client.Game.Profiles (gameProfiles)
+import TeamTavern.Client.Game.Profiles (playerProfiles)
 import TeamTavern.Client.Game.Profiles as Profiles
 import TeamTavern.Client.Profile.ProfileFilters (Filters, filterProfiles)
 import TeamTavern.Client.Profile.ProfileFilters as FilterProfiles
@@ -40,8 +40,8 @@ type Slot = H.Slot (Const Void) Void
 
 type ChildSlots =
     ( gameHeader :: H.Slot (Const Void) Void Unit
-    , gameProfiles :: Profiles.Slot Unit
-    , filterProfiles :: FilterProfiles.Slot Unit
+    , playerProfiles :: Profiles.Slot
+    , filterProfiles :: FilterProfiles.Slot
     )
 
 filterableFields
@@ -58,9 +58,10 @@ filterableFields
         , type :: Int
         }
     -> Array FilterProfiles.Field
-filterableFields fields = fields # Array.mapMaybe case _ of
-    { key, label, icon, type: type', domain, options: Just options }
-    | type' == 2 || type' == 3 -> Just { key, label, icon, domain, options }
+filterableFields fields = fields # Array.mapMaybe
+    case _ of
+    { key, label, icon, type: type', options: Just options }
+        | type' == 2 || type' == 3 -> Just { key, label, icon, options }
     _ -> Nothing
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
@@ -73,8 +74,14 @@ render (Game game' tab) = let
     HH.div_
     [ gameHeader
     , filterProfiles (filterableFields game'.fields)
-        (\(FilterProfiles.ApplyFilters filters) -> Just $ ApplyFilters filters)
-    , gameProfiles game' tab
+        (\(FilterProfiles.Apply filters) -> Just $ ApplyFilters filters)
+    , playerProfiles
+        { profiles: []
+        , profileCount: 0
+        , player: Nothing
+        , page: 0
+        }
+        (const Nothing)
     ]
 render NotFound = HH.p_ [ HH.text "Game could not be found." ]
 render Error = HH.p_ [ HH.text
@@ -124,8 +131,9 @@ handleAction (Receive (Input handle tab)) = do
             H.liftEffect $ setMetaTags content.title tab
         _ -> pure unit
 handleAction (ApplyFilters filters) =
-    void $ H.query (SProxy :: SProxy "gameProfiles") unit
-        (Profiles.ApplyFilters filters unit)
+    -- void $ H.query (SProxy :: SProxy "playerProfiles") unit
+    --     (Profiles.Apply filters unit)
+    pure unit
 
 component :: forall query output left.
     H.Component HH.HTML query Input output (Async left)
