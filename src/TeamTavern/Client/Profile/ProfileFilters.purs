@@ -5,6 +5,7 @@ import Prelude
 import Async (Async)
 import Data.Array as Array
 import Data.Const (Const)
+import Data.Int as Int
 import Data.Maybe (Maybe(..))
 import Data.String as String
 import Data.Symbol (SProxy(..))
@@ -35,6 +36,24 @@ type Field =
     }
 
 type Filters =
+    { ageFrom :: Maybe Int
+    , ageTo :: Maybe Int
+    , languages :: Array String
+    -- , countries :: Array String
+    , microphone :: Boolean
+    , weekdayFrom :: Maybe String
+    , weekdayTo :: Maybe String
+    , weekendFrom :: Maybe String
+    , weekendTo :: Maybe String
+    , fields :: Array
+        { fieldKey :: String
+        , optionKey :: String
+        }
+    }
+
+type Input = Array Field
+
+type State =
     { ageFrom :: String
     , ageTo :: String
     , languages :: MultiSelect.Input String
@@ -49,10 +68,6 @@ type Filters =
         , field :: Field
         }
     }
-
-type Input = Array Field
-
-type State = Filters
 
 data Action
     = ApplyAction
@@ -78,6 +93,19 @@ type ChildSlots =
     , microphone :: CheckboxInput.Slot
     , field :: MultiSelect.Slot Option Field
     )
+
+emptyFilters :: Filters
+emptyFilters =
+    { ageFrom: Nothing
+    , ageTo: Nothing
+    , languages: []
+    , microphone: false
+    , weekdayFrom: Nothing
+    , weekdayTo: Nothing
+    , weekendFrom: Nothing
+    , weekendTo: Nothing
+    , fields: []
+    }
 
 fieldLabel :: forall slots action. String -> String -> HH.HTML slots action
 fieldLabel label icon = HH.label
@@ -227,7 +255,31 @@ handleAction :: forall left.
     Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
 handleAction ApplyAction = do
     state <- H.get
-    H.raise $ Apply state
+    let nothingIfNull string = if String.null string then Nothing else Just string
+    let ageFrom = Int.fromString state.ageFrom
+        ageTo = Int.fromString state.ageTo
+        languages =
+            state.languages.options
+            # Array.filter _.selected
+            <#> _.option
+        -- countries = state.countries.options <#> ...
+        microphone = state.microphone
+        weekdayFrom = nothingIfNull state.weekdayFrom
+        weekdayTo = nothingIfNull state.weekdayTo
+        weekendFrom = nothingIfNull state.weekendFrom
+        weekendTo = nothingIfNull state.weekendTo
+        fields =
+            state.fields
+            <#> (\{ input, field } ->
+                input.options
+                # Array.filter _.selected
+                <#> \{ option } ->
+                    { optionKey: option.key, fieldKey: field.key })
+            # join
+    H.raise $ Apply
+        { ageFrom, ageTo, languages, microphone
+        , weekdayFrom, weekdayTo, weekendFrom, weekendTo, fields
+        }
 handleAction Clear = do
     H.modify_ \state -> state
         { ageFrom = ""

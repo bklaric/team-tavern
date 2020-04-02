@@ -1,4 +1,4 @@
-module TeamTavern.Client.Game.Profiles (Message(..), Slot, playerProfiles) where
+module TeamTavern.Client.Game.Profiles (PlayerProfile, Input, Message(..), Slot, emptyInput, playerProfiles) where
 
 import Prelude
 
@@ -67,6 +67,14 @@ data Message
 type Slot = H.Slot (Const Void) Message Unit
 
 type ChildSlots = (players :: Anchor.Slot Int)
+
+emptyInput :: Input
+emptyInput =
+    { profiles: []
+    , profileCount: 0
+    , player: Nothing
+    , page: 0
+    }
 
 yearSeconds :: Number
 yearSeconds = 60.0 * 60.0 * 24.0 * 365.0

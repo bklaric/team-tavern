@@ -20,6 +20,8 @@ type Title = String
 
 data Tab = Players | Teams
 
+derive instance eqTab :: Eq Tab
+
 data Input = Input Handle Title Tab
 
 type State = Input
