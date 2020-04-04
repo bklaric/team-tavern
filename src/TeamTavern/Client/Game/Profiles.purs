@@ -30,13 +30,20 @@ type PlayerProfile =
     , weekendOnline :: Maybe { from :: String, to :: String }
     , fieldValues :: Array
         { field ::
-            { type :: Int
+            { key :: String
             , label :: String
             , icon :: String
+            , ilk :: Int
             }
         , url :: Maybe String
-        , option :: Maybe String
-        , options :: Maybe (Array String)
+        , option :: Maybe
+            { key :: String
+            , label :: String
+            }
+        , options :: Maybe (Array
+            { key :: String
+            , label :: String
+            })
         }
     , summary :: Array String
     , updated :: String
@@ -221,7 +228,7 @@ render { profiles, profileCount, player, page } =
             ]
         ]
         <> Array.catMaybes (profile.fieldValues <#> \{ field, url, option, options } ->
-            case field.type, url, option, options of
+            case field.ilk, url, option, options of
             1, Just url', _, _ -> Just $
                 HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
                 [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
@@ -231,13 +238,13 @@ render { profiles, profileCount, player, page } =
                 HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
                 [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
                 , HH.span [ HP.class_ $ HH.ClassName "profile-field-label" ] [ HH.text $ field.label <> ": " ]
-                , HH.text option'
+                , HH.text option'.label
                 ]
             3, _, _, Just options' | not $ Array.null options' -> Just $
                 HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
                 [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
                 , HH.span [ HP.class_ $ HH.ClassName "profile-field-label" ] [ HH.text $ field.label <> ": " ]
-                , HH.text $ intercalate ", " options'
+                , HH.text $ intercalate ", " $ map _.label options'
                 ]
             _, _, _, _ ->  Nothing)
         <> (profile.summary <#> \paragraph ->

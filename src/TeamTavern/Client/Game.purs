@@ -27,7 +27,7 @@ import TeamTavern.Client.Profile.ProfileFilters as FilterProfiles
 import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Server.Game.View.SendResponse as View
-import TeamTavern.Server.Profile.ViewByGame.SendResponse (OkContent) as Profiles
+import TeamTavern.Server.Profile.ViewGamePlayers.SendResponse (OkContent) as Profiles
 
 data Input = Input GameHeader.Handle GameHeader.Tab
 
@@ -166,10 +166,15 @@ handleAction Init = do
                 $ sequential
                 $ { gameContent: _, profilesContent: _}
                 <$> parallel (loadGame handle)
-                <*> parallel (loadProfiles handle tab 0 FilterProfiles.emptyFilters)
+                <*> parallel (loadProfiles handle tab 1 FilterProfiles.emptyFilters)
             case gameContent, profilesContent of
                 Just gameContent', Just profilesContent' -> do
-                    H.put $ Game gameContent' tab profilesContent'
+                    H.put $ Game gameContent' tab
+                        { profiles: profilesContent'.profiles
+                        , profileCount: profilesContent'.count
+                        , page: 1
+                        , player: Nothing
+                        }
                     H.liftEffect $ setMetaTags gameContent'.title tab
                 _, _ -> do
                     H.put Error

@@ -45,18 +45,19 @@ import TeamTavern.Server.Infrastructure.Log (logStamped, logt)
 import TeamTavern.Server.Password.Forgot (forgot) as Password
 import TeamTavern.Server.Password.Reset (reset) as Password
 import TeamTavern.Server.Player.ChangeNickname (changeNickname) as Player
-import TeamTavern.Server.Player.ViewSettings (viewSettings) as Player
 import TeamTavern.Server.Player.EditSettings (editSettings) as Player
 import TeamTavern.Server.Player.Register (register) as Player
 import TeamTavern.Server.Player.Update (update) as Player
 import TeamTavern.Server.Player.View (view) as Player
 import TeamTavern.Server.Player.ViewAccount (viewAccount) as Player
 import TeamTavern.Server.Player.ViewHeader (viewHeader) as Player
+import TeamTavern.Server.Player.ViewSettings (viewSettings) as Player
 import TeamTavern.Server.Profile.Create (create) as Profile
 import TeamTavern.Server.Profile.Routes (bundleFilters)
 import TeamTavern.Server.Profile.Update (update) as Profile
 import TeamTavern.Server.Profile.ViewByGame (viewByGame) as Profile
 import TeamTavern.Server.Profile.ViewByPlayer (viewByPlayer) as Profile
+import TeamTavern.Server.Profile.ViewGamePlayers (viewGamePlayers) as Profile
 import TeamTavern.Server.Routes (TeamTavernRoutes)
 import TeamTavern.Server.Session.End (end) as Session
 import TeamTavern.Server.Session.Start (start) as Session
@@ -198,7 +199,7 @@ handleRequest pool client method url cookies body =
         , updateProfile: \identifiers ->
             Profile.update pool identifiers cookies body
         , viewProfilesByGame: \filters @ { handle, ilk, page, timezone } ->
-            Profile.viewByGame pool handle ilk page timezone $ bundleFilters filters
+            Profile.viewGamePlayers pool handle ilk page timezone $ bundleFilters filters
         , viewProfilesByPlayer: \{ nickname, ilk } ->
             Profile.viewByPlayer pool nickname ilk
         , viewAllConversations: const $

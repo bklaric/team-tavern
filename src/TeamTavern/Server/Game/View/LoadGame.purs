@@ -86,10 +86,10 @@ queryString = Query """
         coalesce(fields.fields, '[]') as fields
     from game
         left join fields on fields.game_id = game.id
-        left join profile as player_profile on player_profile.game_id = game.id
-            and player_profile.player_id = $2 and player_profile.type = 1
-        left join profile as team_profile on team_profile.game_id = game.id
-            and team_profile.player_id = $2 and team_profile.type = 2
+        left join player_profile on player_profile.game_id = game.id
+            and player_profile.player_id = $2
+        left join team_profile on team_profile.game_id = game.id
+            and team_profile.player_id = $2
     where game.handle = $1;
     """
 
