@@ -1,4 +1,4 @@
-module TeamTavern.Server.Player.Update.ValidateCountry
+module TeamTavern.Server.Player.UpdateDetails.ValidateCountry
     (Country, validateCountry, validateOptionalCountry) where
 
 import Prelude

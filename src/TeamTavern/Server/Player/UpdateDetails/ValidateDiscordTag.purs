@@ -1,4 +1,4 @@
-module TeamTavern.Server.Player.Update.ValidateDiscordTag
+module TeamTavern.Server.Player.UpdateDetails.ValidateDiscordTag
     (DiscordTag, DiscordTagError, validateDiscordTag, validateOptionalDiscordTag) where
 
 import Prelude

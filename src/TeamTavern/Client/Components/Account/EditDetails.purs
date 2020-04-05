@@ -40,8 +40,8 @@ import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass, otherErrorClass
 import TeamTavern.Server.Infrastructure.Countries (allCountries)
 import TeamTavern.Server.Infrastructure.Languages (allLanguages)
 import TeamTavern.Server.Infrastructure.Timezones (Timezone, allTimezones)
-import TeamTavern.Server.Player.Update.SendResponse as Update
-import TeamTavern.Server.Player.ViewAccount.SendResponse as ViewAccount
+import TeamTavern.Server.Player.UpdateDetails.SendResponse as Update
+import TeamTavern.Server.Player.ViewDetails.SendResponse as ViewAccount
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 import Web.HTML.HTMLInputElement as HTMLInputElement
@@ -278,10 +278,10 @@ editDetails' state details = Async.unify do
             , languages: details.languages
             , country: details.country
             , timezone: details.timezone
-            , weekdayStart: details.weekdayStart
-            , weekdayEnd: details.weekdayEnd
-            , weekendStart: details.weekendStart
-            , weekendEnd: details.weekendEnd
+            , weekdayFrom: details.weekdayFrom
+            , weekdayTo: details.weekdayTo
+            , weekendFrom: details.weekendFrom
+            , weekendTo: details.weekendTo
             , hasMicrophone: details.hasMicrophone
             }
         <> Fetch.credentials := Fetch.Include
@@ -397,13 +397,13 @@ setInputValues selectedTimezone details = do
         , showFilter: Just "Search timezones"
         }
         unit
-    setValue (maybe "" identity details.weekdayStart) $
+    setValue (maybe "" identity details.weekdayFrom) $
         H.RefLabel "weekday-start"
-    setValue (maybe "" identity details.weekdayEnd) $
+    setValue (maybe "" identity details.weekdayTo) $
         H.RefLabel "weekday-end"
-    setValue (maybe "" identity details.weekendStart) $
+    setValue (maybe "" identity details.weekendFrom) $
         H.RefLabel "weekend-start"
-    setValue (maybe "" identity details.weekendEnd) $
+    setValue (maybe "" identity details.weekendTo) $
         H.RefLabel "weekend-end"
     setChecked details.hasMicrophone $ H.RefLabel "has-microphone"
 
@@ -427,10 +427,10 @@ handleAction Init = do
                     H.put $ Loaded
                         { nickname
                         , timezoneSet: isJust selectedTimezone
-                        , weekdayFrom: maybe "" identity details'.weekdayStart
-                        , weekdayTo: maybe "" identity details'.weekdayEnd
-                        , weekendFrom: maybe "" identity details'.weekendStart
-                        , weekendTo: maybe "" identity details'.weekendEnd
+                        , weekdayFrom: maybe "" identity details'.weekdayFrom
+                        , weekdayTo: maybe "" identity details'.weekdayTo
+                        , weekendFrom: maybe "" identity details'.weekendFrom
+                        , weekendTo: maybe "" identity details'.weekendTo
                         , discordTagError: false
                         , otherError: false
                         , submitting: false
@@ -464,10 +464,10 @@ handleAction (Update loadedState event) = do
         (SingleSelect.GetSelected identity)
     timezone <- H.query (SProxy :: SProxy "timezoneInput") unit
         (SingleSelect.GetSelected identity)
-    weekdayStart <- getValue $ H.RefLabel "weekday-start"
-    weekdayEnd <- getValue $ H.RefLabel "weekday-end"
-    weekendStart <- getValue $ H.RefLabel "weekend-start"
-    weekendEnd <- getValue $ H.RefLabel "weekend-end"
+    weekdayFrom <- getValue $ H.RefLabel "weekday-start"
+    weekdayTo <- getValue $ H.RefLabel "weekday-end"
+    weekendFrom <- getValue $ H.RefLabel "weekend-start"
+    weekendTo <- getValue $ H.RefLabel "weekend-end"
     hasMicrophone <- getChecked $ H.RefLabel "has-microphone"
     let resetState = loadedState
             { discordTagError = false
@@ -489,10 +489,10 @@ handleAction (Update loadedState event) = do
         , languages    : maybe [] identity languages
         , country      : join country
         , timezone     : join timezone <#> _.name
-        , weekdayStart : join timezone >>= const weekdayStart
-        , weekdayEnd   : join timezone >>= const weekdayEnd
-        , weekendStart : join timezone >>= const weekendStart
-        , weekendEnd   : join timezone >>= const weekendEnd
+        , weekdayFrom : join timezone >>= const weekdayFrom
+        , weekdayTo   : join timezone >>= const weekdayTo
+        , weekendFrom : join timezone >>= const weekendFrom
+        , weekendTo   : join timezone >>= const weekendTo
         , hasMicrophone: maybe false identity hasMicrophone
         }
     case newState of

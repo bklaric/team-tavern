@@ -1,4 +1,4 @@
-module TeamTavern.Server.Player.Update.LogError where
+module TeamTavern.Server.Player.UpdateDetails.LogError where
 
 import Prelude
 
@@ -10,9 +10,9 @@ import Postgres.Error (Error)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo, Cookies)
 import TeamTavern.Server.Infrastructure.Log (logStamped, logt, print)
 import TeamTavern.Server.Player.Domain.Nickname (Nickname)
-import TeamTavern.Server.Player.Update.ReadUpdate (UpdateDto, UpdateModelError)
+import TeamTavern.Server.Player.UpdateDetails.ReadUpdate (UpdateDetailsDto, UpdateDetailsModelError)
 
-type UpdateError = Variant
+type UpdateDetailsError = Variant
     ( noCookieInfo :: { cookies :: Cookies }
     , databaseError :: Error
     , invalidSession :: { cookieInfo :: CookieInfo }
@@ -22,8 +22,8 @@ type UpdateError = Variant
         , errors :: MultipleErrors
         }
     , invalidModel ::
-        { dto :: UpdateDto
-        , errors :: NonEmptyList UpdateModelError
+        { dto :: UpdateDetailsDto
+        , errors :: NonEmptyList UpdateDetailsModelError
         }
     , nicknameTaken ::
         { nickname :: Nickname
@@ -35,7 +35,7 @@ type UpdateError = Variant
         }
     )
 
-logError :: UpdateError -> Effect Unit
+logError :: UpdateDetailsError -> Effect Unit
 logError updateError = do
     logStamped "Error updating player"
     updateError # match

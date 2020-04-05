@@ -1,4 +1,4 @@
-module TeamTavern.Server.Player.Update.ReadUpdate where
+module TeamTavern.Server.Player.UpdateDetails.ReadUpdate where
 
 import Prelude
 
@@ -14,26 +14,26 @@ import Foreign (MultipleErrors)
 import Perun.Request.Body (Body)
 import Simple.JSON (readJSON)
 import TeamTavern.Server.Architecture.Perun.Request.Body (readBody)
-import TeamTavern.Server.Player.Update.ValidateCountry (Country, validateOptionalCountry)
-import TeamTavern.Server.Player.Update.ValidateDiscordTag (DiscordTag, DiscordTagError, validateOptionalDiscordTag)
-import TeamTavern.Server.Player.Update.ValidateLangugase (Language, validateLanguages)
-import TeamTavern.Server.Player.Update.ValidateTimespan (Timespan, validateTimespan)
-import TeamTavern.Server.Player.Update.ValidateTimezone (Timezone, validateOptionalTimezone)
+import TeamTavern.Server.Player.UpdateDetails.ValidateCountry (Country, validateOptionalCountry)
+import TeamTavern.Server.Player.UpdateDetails.ValidateDiscordTag (DiscordTag, DiscordTagError, validateOptionalDiscordTag)
+import TeamTavern.Server.Player.UpdateDetails.ValidateLangugase (Language, validateLanguages)
+import TeamTavern.Server.Player.UpdateDetails.ValidateTimespan (Timespan, validateTimespan)
+import TeamTavern.Server.Player.UpdateDetails.ValidateTimezone (Timezone, validateOptionalTimezone)
 
-type UpdateDto =
+type UpdateDetailsDto =
     { discordTag :: Maybe String
     , birthday :: Maybe String
     , languages :: Array String
     , country :: Maybe String
     , timezone :: Maybe String
-    , weekdayStart :: Maybe String
-    , weekdayEnd :: Maybe String
-    , weekendStart :: Maybe String
-    , weekendEnd :: Maybe String
+    , weekdayFrom :: Maybe String
+    , weekdayTo :: Maybe String
+    , weekendFrom :: Maybe String
+    , weekendTo :: Maybe String
     , hasMicrophone :: Boolean
     }
 
-type UpdateModel =
+type UpdateDetailsModel =
     { discordTag :: Maybe DiscordTag
     , birthday :: Maybe String
     , languages :: Array Language
@@ -44,7 +44,8 @@ type UpdateModel =
     , hasMicrophone :: Boolean
     }
 
-type UpdateModelError = Variant (discordTag :: NonEmptyList DiscordTagError)
+type UpdateDetailsModelError = Variant
+    (discordTag :: NonEmptyList DiscordTagError)
 
 type ReadUpdateError errors = Variant
     ( unreadableDto ::
@@ -52,30 +53,30 @@ type ReadUpdateError errors = Variant
         , errors :: MultipleErrors
         }
     , invalidModel ::
-        { dto :: UpdateDto
-        , errors :: NonEmptyList UpdateModelError
+        { dto :: UpdateDetailsDto
+        , errors :: NonEmptyList UpdateDetailsModelError
         }
     | errors )
 
 readUpdate :: forall errors.
-    Body -> Async (ReadUpdateError errors) UpdateModel
+    Body -> Async (ReadUpdateError errors) UpdateDetailsModel
 readUpdate body = do
     content <- readBody body
-    dto @ { discordTag, birthday, languages, country, timezone, weekdayStart, weekdayEnd, weekendStart, weekendEnd, hasMicrophone } :: UpdateDto <-
+    dto :: UpdateDetailsDto <-
         readJSON content
         # labelMap (SProxy :: SProxy "unreadableDto") { content, errors: _ }
         # Async.fromEither
-    let timezone' = validateOptionalTimezone timezone
+    let timezone' = validateOptionalTimezone dto.timezone
     { discordTag: _
-    , birthday
-    , languages: validateLanguages languages
-    , country: validateOptionalCountry country
+    , birthday: dto.birthday
+    , languages: validateLanguages dto.languages
+    , country: validateOptionalCountry dto.country
     , timezone: timezone'
-    , onlineWeekday: timezone' >>= (const $ validateTimespan weekdayStart weekdayEnd)
-    , onlineWeekend: timezone' >>= (const $ validateTimespan weekendStart weekendEnd)
-    , hasMicrophone
+    , onlineWeekday: timezone' >>= (const $ validateTimespan dto.weekdayFrom dto.weekdayTo)
+    , onlineWeekend: timezone' >>= (const $ validateTimespan dto.weekendFrom dto.weekendTo)
+    , hasMicrophone: dto.hasMicrophone
     }
-        <$> (validateOptionalDiscordTag discordTag
+        <$> (validateOptionalDiscordTag dto.discordTag
             # Validated.label (SProxy :: SProxy "discordTag"))
         # Async.fromValidated
         # labelMap (SProxy :: SProxy "invalidModel")

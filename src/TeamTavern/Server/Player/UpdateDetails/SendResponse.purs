@@ -1,4 +1,4 @@
-module TeamTavern.Server.Player.Update.SendResponse
+module TeamTavern.Server.Player.UpdateDetails.SendResponse
     (BadRequestContent, sendResponse) where
 
 import Prelude
@@ -8,7 +8,7 @@ import Data.Array (fromFoldable)
 import Data.Variant (SProxy(..), Variant, inj, match)
 import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, noContent_, unauthorized__)
 import Simple.JSON (writeJSON)
-import TeamTavern.Server.Player.Update.LogError (UpdateError)
+import TeamTavern.Server.Player.UpdateDetails.LogError (UpdateDetailsError)
 
 type BadRequestContent = Variant
     ( invalidModel ::
@@ -18,7 +18,7 @@ type BadRequestContent = Variant
     , nicknameTaken :: {}
     )
 
-errorResponse :: UpdateError -> Response
+errorResponse :: UpdateDetailsError -> Response
 errorResponse = match
     { noCookieInfo: const unauthorized__
     , databaseError: const $ internalServerError__
@@ -43,5 +43,6 @@ errorResponse = match
 successResponse :: Unit -> Response
 successResponse _ = noContent_
 
-sendResponse :: Async UpdateError Unit -> (forall left. Async left Response)
+sendResponse ::
+    Async UpdateDetailsError Unit -> (forall left. Async left Response)
 sendResponse = alwaysRight errorResponse successResponse

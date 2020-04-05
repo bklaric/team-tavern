@@ -1,25 +1,23 @@
-module TeamTavern.Server.Player.ViewAccount where
+module TeamTavern.Server.Player.ViewDetails where
 
 import Prelude
 
 import Async (Async, examineLeftWithEffect)
 import Data.Newtype (unwrap)
-import Data.Variant (SProxy(..), inj)
 import Perun.Response (Response)
-import Postgres.Async.Pool (withTransaction)
 import Postgres.Pool (Pool)
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.EnsureSignedInAs (ensureSignedInAs)
 import TeamTavern.Server.Player.Domain.Nickname (Nickname)
-import TeamTavern.Server.Player.ViewAccount.LoadAccount (loadAccount)
-import TeamTavern.Server.Player.ViewAccount.LogError (logError)
-import TeamTavern.Server.Player.ViewAccount.SendResponse (sendResponse)
+import TeamTavern.Server.Player.ViewDetails.LoadDetails (loadDetails)
+import TeamTavern.Server.Player.ViewDetails.LogError (logError)
+import TeamTavern.Server.Player.ViewDetails.SendResponse (sendResponse)
 
-viewAccount :: forall left. Pool -> Nickname -> Cookies -> Async left Response
-viewAccount pool nickname cookies =
+viewDetails :: forall left. Pool -> Nickname -> Cookies -> Async left Response
+viewDetails pool nickname cookies =
     sendResponse $ examineLeftWithEffect logError do
     -- Ensure player is signed in as requested nickname.
     cookieInfo <- ensureSignedInAs pool cookies (unwrap nickname)
 
     -- Load account.
-    loadAccount pool (unwrap nickname)
+    loadDetails pool (unwrap nickname)

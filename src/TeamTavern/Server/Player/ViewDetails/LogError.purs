@@ -1,4 +1,4 @@
-module TeamTavern.Server.Player.ViewAccount.LogError where
+module TeamTavern.Server.Player.ViewDetails.LogError where
 
 import Prelude
 
@@ -11,7 +11,7 @@ import Postgres.Error (Error)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Server.Infrastructure.Log (logStamped, logt, print)
 
-type ViewAccountError = Variant
+type ViewDetailsError = Variant
     ( noCookieInfo :: { cookies :: Map String String }
     , invalidSession :: { cookieInfo :: CookieInfo }
     , nicknameDoesntMatch ::
@@ -26,7 +26,7 @@ type ViewAccountError = Variant
     , databaseError :: Error
     )
 
-logError :: ViewAccountError -> Effect Unit
+logError :: ViewDetailsError -> Effect Unit
 logError viewError = do
     logStamped "Error viewing player account"
     viewError # match

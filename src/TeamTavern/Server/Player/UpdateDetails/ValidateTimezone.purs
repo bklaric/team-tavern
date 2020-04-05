@@ -1,4 +1,4 @@
-module TeamTavern.Server.Player.Update.ValidateTimezone
+module TeamTavern.Server.Player.UpdateDetails.ValidateTimezone
     (Timezone, validateTimezone, validateOptionalTimezone) where
 
 import Prelude
