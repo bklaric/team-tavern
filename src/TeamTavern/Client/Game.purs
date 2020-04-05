@@ -19,15 +19,15 @@ import Halogen as H
 import Halogen.HTML as HH
 import Simple.JSON.Async as Json
 import TeamTavern.Client.Game.GameHeader as GameHeader
-import TeamTavern.Client.Game.PlayerProfiles (Input, Message(..), Slot) as Profiles
+import TeamTavern.Client.Game.PlayerProfiles (Input, Message(..), Slot) as PlayerProfiles
 import TeamTavern.Client.Game.PlayerProfiles (playerProfiles)
 import TeamTavern.Client.Profile.ProfileFilters (Filters, filterProfiles)
-import TeamTavern.Client.Profile.ProfileFilters as FilterProfiles
+import TeamTavern.Client.Profile.ProfileFilters as ProfileFilters
 import TeamTavern.Client.Script.Cookie (hasPlayerIdCookie)
 import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Server.Game.View.SendResponse as View
-import TeamTavern.Server.Profile.ViewGamePlayers.SendResponse (OkContent) as Profiles
+import TeamTavern.Server.Profile.ViewGamePlayers.SendResponse (OkContent) as ViewGamePlayers
 
 data Input = Input GameHeader.Handle GameHeader.Tab
 
@@ -35,12 +35,12 @@ data Action
     = Init
     | Receive Input
     | ApplyFilters Filters
-    | CreateProfile
+    | CreatePlayerProfile
     | ChangePage Int
 
 data State
     = Empty Input
-    | Game View.OkContent GameHeader.Tab Profiles.Input
+    | Game View.OkContent GameHeader.Tab PlayerProfiles.Input
     | NotFound
     | Error
 
@@ -48,8 +48,8 @@ type Slot = H.Slot (Const Void) Void
 
 type ChildSlots =
     ( gameHeader :: H.Slot (Const Void) Void Unit
-    , playerProfiles :: Profiles.Slot
-    , filterProfiles :: FilterProfiles.Slot
+    , playerProfiles :: PlayerProfiles.Slot
+    , filterProfiles :: ProfileFilters.Slot
     )
 
 filterableFields
@@ -65,7 +65,7 @@ filterableFields
             , label :: String
             })
         }
-    -> Array FilterProfiles.Field
+    -> Array ProfileFilters.Field
 filterableFields fields = fields # Array.mapMaybe
     case _ of
     { key, label, icon, ilk, options: Just options }
@@ -82,12 +82,12 @@ render (Game game' tab profilesInput) = let
     HH.div_
     [ gameHeader
     , filterProfiles (filterableFields game'.fields)
-        (\(FilterProfiles.Apply filters) -> Just $ ApplyFilters filters)
+        (\(ProfileFilters.Apply filters) -> Just $ ApplyFilters filters)
     , playerProfiles
         profilesInput
         case _ of
-        Profiles.CreateProfile -> Just CreateProfile
-        Profiles.ChangePage page -> Just $ ChangePage page
+        PlayerProfiles.CreateProfile -> Just CreatePlayerProfile
+        PlayerProfiles.ChangePage page -> Just $ ChangePage page
     ]
 render NotFound = HH.p_ [ HH.text "Game could not be found." ]
 render Error = HH.p_ [ HH.text
@@ -105,20 +105,8 @@ loadGame handle = Async.unify do
         _ -> Async.left Nothing
     pure $ Just content
 
-setMetaTags :: String -> GameHeader.Tab -> Effect Unit
-setMetaTags handleOrTitle tab =
-    case tab of
-    GameHeader.Players -> do
-        setMetaTitle $ handleOrTitle <> " players - Looking for team | TeamTavern"
-        setMetaDescription $ "Browse and filter " <> handleOrTitle <> " players looking for a team."
-        setMetaUrl
-    GameHeader.Teams -> do
-        setMetaTitle $ handleOrTitle <> " teams - Looking for players | TeamTavern"
-        setMetaDescription $ "Browse and filter " <> handleOrTitle <> " teams looking for players."
-        setMetaUrl
-
 loadProfiles :: forall left.
-    String -> Int -> FilterProfiles.Filters -> Async left (Maybe Profiles.OkContent)
+    String -> Int -> ProfileFilters.Filters -> Async left (Maybe ViewGamePlayers.OkContent)
 loadProfiles handle page filters = Async.unify do
     timezone <- H.liftEffect getClientTimezone
     let nothingIfNull string = if String.null string then Nothing else Just string
@@ -151,6 +139,18 @@ loadProfiles handle page filters = Async.unify do
         _ -> Async.left Nothing
     pure content
 
+setMetaTags :: String -> GameHeader.Tab -> Effect Unit
+setMetaTags handleOrTitle tab =
+    case tab of
+    GameHeader.Players -> do
+        setMetaTitle $ handleOrTitle <> " players - Looking for team | TeamTavern"
+        setMetaDescription $ "Browse and filter " <> handleOrTitle <> " players looking for a team."
+        setMetaUrl
+    GameHeader.Teams -> do
+        setMetaTitle $ handleOrTitle <> " teams - Looking for players | TeamTavern"
+        setMetaDescription $ "Browse and filter " <> handleOrTitle <> " teams looking for players."
+        setMetaUrl
+
 handleAction :: forall output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
 handleAction Init = do
@@ -162,7 +162,7 @@ handleAction Init = do
                 $ sequential
                 $ { gameContent: _, profilesContent: _}
                 <$> parallel (loadGame handle)
-                <*> parallel (loadProfiles handle 1 FilterProfiles.emptyFilters)
+                <*> parallel (loadProfiles handle 1 ProfileFilters.emptyFilters)
             case gameContent, profilesContent of
                 Just gameContent', Just profilesContent' -> do
                     signedIn <- H.liftEffect hasPlayerIdCookie
@@ -207,7 +207,7 @@ handleAction (ApplyFilters filters) = do
                         }
                 Nothing -> pure unit
         _ -> pure unit
-handleAction CreateProfile =
+handleAction CreatePlayerProfile =
     pure unit
 handleAction (ChangePage page) =
     pure unit

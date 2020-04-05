@@ -69,11 +69,22 @@ type Identifiers =
     , nickname :: Nickname
     }
 
-type CreateProfile = Route
+type CreateGamePlayer = Route
     Post
     (  Literal "profiles"
-    :> Literal "single"
+    :> Literal "by-handle"
     :> Capture "handle" Handle
+    :> Literal "players"
+    :> Capture "nickname" Nickname
+    :> End)
+    NoQuery
+
+type UpdateGamePlayer = Route
+    Put
+    (  Literal "profiles"
+    :> Literal "by-handle"
+    :> Capture "handle" Handle
+    :> Literal "players"
     :> Capture "nickname" Nickname
     :> End)
     NoQuery
@@ -106,17 +117,8 @@ type ViewProfilesByPlayer = Route
     :> End)
     (Mandatory "ilk" ProfileIlk)
 
-type UpdateProfile = Route
-    Put
-    (  Literal "profiles"
-    :> Literal "single"
-    :> Capture "handle" Handle
-    :> Capture "nickname" Nickname
-    :> End)
-    NoQuery
-
 type ProfileRoutes
-    =    "createProfile"        := CreateProfile
+    =    "createProfile"        := CreateGamePlayer
+    :<|> "updateProfile"        := UpdateGamePlayer
     :<|> "viewProfilesByGame"   := ViewGamePlayers
     :<|> "viewProfilesByPlayer" := ViewProfilesByPlayer
-    :<|> "updateProfile"        := UpdateProfile

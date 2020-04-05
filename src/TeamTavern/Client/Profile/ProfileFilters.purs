@@ -14,7 +14,6 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import TeamTavern.Client.Components.CheckboxInput as CheckboxInput
 import TeamTavern.Client.Components.Select.TreeSelect (treeSelect)
 import TeamTavern.Client.Components.Select.TreeSelect as TreeSelect
 import TeamTavern.Client.Components.SelectDeclarative.MultiSelect (multiSelect, multiSelectIndexed)
@@ -74,14 +73,14 @@ data Action
     | Clear
     | AgeFromInput String
     | AgeToInput String
-    | LanguagesMessage (MultiSelect.Message String)
+    | LanguagesMessage (MultiSelect.Output String)
     -- | CountriesInput (TreeSelect.Message String)
     | MicrophoneInput Boolean
     | WeekdayFromInput String
     | WeekdayToInput String
     | WeekendFromInput String
     | WeekendToInput String
-    | FieldMessage Field (MultiSelect.Message Option)
+    | FieldInput String (Array (MultiSelect.InputEntry Option))
 
 data Output = Apply Filters
 
@@ -90,8 +89,7 @@ type Slot = H.Slot (Const Void) Output Unit
 type ChildSlots =
     ( language :: MultiSelect.Slot String Unit
     , country :: TreeSelect.Slot String
-    , microphone :: CheckboxInput.Slot
-    , field :: MultiSelect.Slot Option Field
+    , field :: MultiSelect.Slot Option String
     )
 
 emptyFilters :: Filters
@@ -118,10 +116,13 @@ fieldInput
     :: forall left
     .  { input :: MultiSelect.Input Option, field :: Field }
     -> H.ComponentHTML Action ChildSlots (Async left)
-fieldInput { input, field } =
+fieldInput { input, field: { key, label, icon } } =
     HH.div [ HP.class_ $ HH.ClassName "input-group" ]
-    [ fieldLabel field.label field.icon
-    , multiSelectIndexed (SProxy :: SProxy "field") field input (Just <<< FieldMessage field)
+    [ fieldLabel label icon
+    , multiSelectIndexed (SProxy :: SProxy "field") key input
+        case _ of
+        MultiSelect.SelectedChanged entries -> Just $ FieldInput key entries
+        MultiSelect.FilterChanged _ -> Nothing
     ]
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
@@ -259,7 +260,7 @@ handleAction ApplyAction = do
     let ageFrom = Int.fromString state.ageFrom
         ageTo = Int.fromString state.ageTo
         languages =
-            state.languages.options
+            state.languages.entries
             # Array.filter _.selected
             <#> _.option
         -- countries = state.countries.options <#> ...
@@ -271,7 +272,7 @@ handleAction ApplyAction = do
         fields =
             state.fields
             <#> (\{ input, field } ->
-                input.options
+                input.entries
                 # Array.filter _.selected
                 <#> \{ option } ->
                     { optionKey: option.key, fieldKey: field.key })
@@ -285,7 +286,7 @@ handleAction Clear = do
         { ageFrom = ""
         , ageTo = ""
         , languages = state.languages
-            { options = state.languages.options <#> (_ { selected = false }) }
+            { entries = state.languages.entries <#> (_ { selected = false }) }
         , microphone = false
         , weekdayFrom = ""
         , weekdayTo = ""
@@ -293,7 +294,7 @@ handleAction Clear = do
         , weekendTo = ""
         , fields = state.fields <#> \stateField -> stateField
             { input = stateField.input
-                { options = stateField.input.options
+                { entries = stateField.input.entries
                     <#> (_ { selected = false })
                 }
             }
@@ -304,10 +305,10 @@ handleAction (AgeFromInput ageFrom) =
     H.modify_ (_ { ageFrom = ageFrom })
 handleAction (AgeToInput ageTo) =
     H.modify_ (_ { ageTo = ageTo })
-handleAction (LanguagesMessage (MultiSelect.SelectedChange languages)) =
+handleAction (LanguagesMessage (MultiSelect.SelectedChanged entries)) =
     H.modify_ \state -> state
-        { languages = state.languages { options = languages } }
-handleAction (LanguagesMessage (MultiSelect.FilterChange text)) =
+        { languages = state.languages { entries = entries } }
+handleAction (LanguagesMessage (MultiSelect.FilterChanged text)) =
     H.modify_ \state -> state
         { languages = state.languages
             { filter = state.languages.filter <#> (_ { text = text }) }
@@ -322,16 +323,12 @@ handleAction (WeekendFromInput time) =
     H.modify_ (_ { weekendFrom = time })
 handleAction (WeekendToInput time) =
     H.modify_ (_ { weekendTo = time })
-handleAction (FieldMessage messageField (MultiSelect.SelectedChange options)) =
+handleAction (FieldInput fieldKey entries) =
     H.modify_ \state -> state
         { fields = state.fields <#> \stateField ->
-            if stateField.field.key == messageField.key
-            then stateField { input = stateField.input { options = options } }
+            if stateField.field.key == fieldKey
+            then stateField { input = stateField.input { entries = entries } }
             else stateField
-        }
-handleAction (FieldMessage field (MultiSelect.FilterChange text)) =
-    H.modify_ \state -> state
-        { fields = state.fields <#> identity
         }
 
 regionToOption :: Region -> TreeSelect.Option String
@@ -345,7 +342,7 @@ initialState fields =
     { ageFrom: ""
     , ageTo: ""
     , languages:
-        { options: allLanguages <#> { option: _, selected: false }
+        { entries: allLanguages <#> { option: _, selected: false }
         , labeler: identity
         , comparer: (==)
         , filter: Just { placeholder: "Search languages", text: "" }
@@ -363,7 +360,7 @@ initialState fields =
     , weekendTo: ""
     , fields: fields <#> \field ->
         { input:
-            { options: field.options <#> { option: _, selected: false }
+            { entries: field.options <#> { option: _, selected: false }
             , labeler: _.label
             , comparer: \leftOption rightOption ->
                 leftOption.key == rightOption.key

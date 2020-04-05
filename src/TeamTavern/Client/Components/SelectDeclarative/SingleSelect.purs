@@ -1,4 +1,4 @@
-module TeamTavern.Client.Components.SelectDeclarative.MultiSelect where
+module TeamTavern.Client.Components.SelectDeclarative.SingleSelect where
 
 import Prelude
 
@@ -6,7 +6,7 @@ import Async (Async)
 import Async.Aff (affToAsync)
 import Data.Array as Array
 import Data.Const (Const)
-import Data.Foldable (intercalate)
+import Data.Foldable (find)
 import Data.Maybe (Maybe(..), isJust)
 import Data.String (Pattern(..), contains, toLower, trim)
 import Data.Symbol (class IsSymbol)
@@ -21,19 +21,14 @@ import Web.Event.Event as E
 import Web.HTML (window)
 import Web.HTML.Window as Window
 
-type InputEntry option =
-    { option :: option
-    , selected :: Boolean
-    }
-
 type Entry option =
     { option :: option
-    , selected :: Boolean
     , shown :: Boolean
     }
 
 type Input option =
-    { entries :: Array (InputEntry option)
+    { options :: Array option
+    , selected :: Maybe option
     , labeler :: option -> String
     , comparer :: option -> option -> Boolean
     , filter :: Maybe { placeholder :: String, text :: String }
@@ -41,19 +36,20 @@ type Input option =
 
 type State option =
     { entries :: Array (Entry option)
+    , selected :: Maybe option
     , labeler :: option -> String
     , comparer :: option -> option -> Boolean
     , filter :: Maybe { placeholder :: String, text :: String }
     , open :: Boolean
     , keepOpen :: Boolean
-    , windowSubscription :: Maybe (H.SubscriptionId)
+    , windowSubscription :: Maybe H.SubscriptionId
     }
 
 data Action option
     = Init
     | Receive (Input option)
     | Finalize
-    | ToggleOption option
+    | Select (Maybe option)
     | Open
     | Close
     | TryClose
@@ -61,61 +57,63 @@ data Action option
     | FilterInput String
 
 data Output option
-    = SelectedChanged (Array (InputEntry option))
+    = SelectedChanged (Maybe option)
     | FilterChanged String
 
 type Slot option = H.Slot (Const Void) (Output option)
 
 render :: forall slots option. State option -> HH.HTML slots (Action option)
-render { entries, labeler, comparer, filter, open } =
-    HH.div [ HP.class_ $ HH.ClassName "select" ] $
-    [ HH.div
+render { entries, selected, labeler, filter, open } =
+    HH.div [ HP.class_ $ HH.ClassName "select" ]
+    $ [ HH.div
         [ HP.class_ $ HH.ClassName
             if open then "selected-open" else "selected-closed"
         , HE.onMouseDown $ const $ Just if open then Close else Open
         ]
-        [ HH.text $ intercalate ", "
-            (entries # Array.filter (_.selected) <#> (_.option >>> labeler))
+        [ HH.text
+            case selected of
+            Nothing -> ""
+            Just option -> labeler option
         ]
     ]
-    <>
-    if open
-    then
-        (case filter of
-        Nothing -> []
-        Just { placeholder, text } -> Array.singleton $
-            HH.div [ HP.class_ $ HH.ClassName "select-filter" ] $
-            Array.singleton $
-            HH.input
-                [ HP.class_ $ HH.ClassName "select-filter-input"
-                , HP.placeholder placeholder
-                , HP.value text
-                , HE.onMouseDown $ const $ Just $ KeepOpen
-                , HE.onValueInput $ Just <<< FilterInput
-                ])
-        <>
-        [ HH.div
-            [ HP.class_ $ HH.ClassName
-                if isJust filter
-                then "filterable-options"
-                else "options"
-            , HE.onMouseDown $ const $ Just $ KeepOpen
-            ]
-            (entries # Array.filter _.shown <#> \{ option, selected } ->
-                HH.div
-                [ HP.class_ $ HH.ClassName "option"
-                , HE.onClick $ const $ Just $ ToggleOption option
-                ]
-                [ HH.input
-                    [ HP.type_ HP.InputCheckbox
-                    , HP.checked selected
-                    , HP.tabIndex $ -1
-                    , HP.class_ $ HH.ClassName "checkbox-input"
+    <> if open
+        then
+            (case filter of
+            Nothing -> []
+            Just { placeholder, text } ->
+                [ HH.div [ HP.class_ $ HH.ClassName "select-filter" ] $
+                Array.singleton $
+                HH.input
+                    [ HP.class_ $ HH.ClassName "select-filter-input"
+                    , HP.placeholder placeholder
+                    , HP.value text
+                    , HE.onMouseDown $ const $ Just $ KeepOpen
+                    , HE.onValueInput $ Just <<< FilterInput
                     ]
-                , HH.text $ labeler option
                 ])
-        ]
-    else []
+            <>
+            [ HH.div
+                [ HP.class_ $ HH.ClassName
+                    if isJust filter
+                    then "filterable-options"
+                    else "options"
+                , HE.onMouseDown $ const $ Just $ KeepOpen
+                ] $
+                [ HH.div
+                    [ HP.class_ $ HH.ClassName "option"
+                    , HE.onClick $ const $ Just $ Select Nothing
+                    ]
+                    [ HH.text "" ]
+                ]
+                <>
+                (entries # Array.filter _.shown <#> \option ->
+                    HH.div
+                    [ HP.class_ $ HH.ClassName "option"
+                    , HE.onClick $ const $ Just $ Select $ Just $ option.option
+                    ]
+                    [ HH.text $ labeler option.option ])
+            ]
+        else []
 
 handleAction
     :: forall option slots left
@@ -128,12 +126,12 @@ handleAction Init = do
             (E.EventType "mousedown") window \_ -> Just TryClose
     windowSubscription <- H.subscribe $ ES.hoist affToAsync windowEventSource
     H.modify_ (_ { windowSubscription = Just windowSubscription })
-handleAction (Receive { entries, labeler, comparer, filter }) =
+handleAction (Receive { options, selected, labeler, comparer, filter }) =
     H.modify_ \state -> state
-        { entries = entries <#> \{ option, selected } ->
+        { entries = options <#> \option ->
             { option
-            , selected
-            , shown: case filter of
+            , shown:
+                case filter of
                 Nothing -> true
                 Just { text } ->
                     contains
@@ -143,19 +141,15 @@ handleAction (Receive { entries, labeler, comparer, filter }) =
         , labeler = labeler
         , comparer = comparer
         , filter = filter
+        , open = false
         }
 handleAction Finalize = do
     { windowSubscription } <- H.get
     case windowSubscription of
         Just windowSubscription' -> H.unsubscribe windowSubscription'
         Nothing -> pure unit
-handleAction (ToggleOption toggledOption) = do
-    nextEntries <- H.gets \state ->
-        state.entries <#> \{ option, selected } ->
-            if state.comparer option toggledOption
-            then { option, selected: not selected }
-            else { option, selected }
-    H.raise $ SelectedChanged nextEntries
+handleAction (Select selected) = do
+    H.raise $ SelectedChanged selected
 handleAction Open =
     H.modify_ (_ { open = true, keepOpen = true })
 handleAction Close =
@@ -173,9 +167,10 @@ handleAction (FilterInput filter) =
 component :: forall option query left.
     H.Component HH.HTML query (Input option) (Output option) (Async left)
 component = H.mkComponent
-    { initialState: \{ entries, labeler, comparer, filter } ->
-        { entries: entries <#> \{ option, selected } ->
-            { option, selected, shown: true }
+    { initialState: \{ options, selected, labeler, comparer, filter } ->
+        { entries: options <#> { option: _, shown: true }
+        , selected: selected >>= \selected' ->
+            options # find (\option -> comparer option selected')
         , labeler
         , comparer
         , filter
@@ -192,7 +187,7 @@ component = H.mkComponent
         }
     }
 
-multiSelect
+singleSelect
     :: forall children' slot children action left option
     .  Cons slot (Slot option Unit) children' children
     => IsSymbol slot
@@ -200,10 +195,10 @@ multiSelect
     -> Input option
     -> (Output option -> Maybe action)
     -> HH.HTML (H.ComponentSlot HH.HTML children (Async left) action) action
-multiSelect label input handleOutput =
+singleSelect label input handleOutput =
     HH.slot label unit component input handleOutput
 
-multiSelectIndexed
+singleSelectIndexed
     :: forall children' slot children action left option index
     .  Cons slot (Slot option index) children' children
     => IsSymbol slot
@@ -213,5 +208,5 @@ multiSelectIndexed
     -> Input option
     -> (Output option -> Maybe action)
     -> HH.HTML (H.ComponentSlot HH.HTML children (Async left) action) action
-multiSelectIndexed label index input handleOutput =
+singleSelectIndexed label index input handleOutput =
     HH.slot label index component input handleOutput
