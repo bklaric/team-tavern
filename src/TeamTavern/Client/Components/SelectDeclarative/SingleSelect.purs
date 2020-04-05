@@ -138,6 +138,8 @@ handleAction (Receive { options, selected, labeler, comparer, filter }) =
                     (Pattern $ toLower $ trim text)
                     (toLower $ labeler option)
             }
+        , selected = selected >>= \selected' ->
+            options # find (\option -> comparer option selected')
         , labeler = labeler
         , comparer = comparer
         , filter = filter

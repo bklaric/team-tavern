@@ -373,7 +373,7 @@ initialState fields =
 component :: forall query left.
     H.Component HH.HTML query Input Output (Async left)
 component = H.mkComponent
-    { initialState: initialState
+    { initialState
     , render
     , eval: H.mkEval $ H.defaultEval
         { handleAction = handleAction

@@ -224,7 +224,7 @@ sendCreateRequest handle nickname summary fieldValues = Async.unify do
         (  Fetch.method := POST
         <> Fetch.body := Json.writeJSON
             { summary
-            , fieldValues: fieldValues <#>
+            , fieldValues: fieldValues # Array.mapMaybe
                 case _ of
                 Url field url _ _ | not $ String.null url -> Just
                     { fieldKey: field.key
@@ -238,11 +238,13 @@ sendCreateRequest handle nickname summary fieldValues = Async.unify do
                     , optionKey: Just selected.key
                     , optionKeys: Nothing
                     }
-                Multi field input | not $ Array.null input.entries -> Just
+                Multi field input
+                | entries <- Array.filter _.selected input.entries
+                , not $ Array.null entries -> Just
                     { fieldKey: field.key
                     , url: Nothing
                     , optionKey: Nothing
-                    , optionKeys: Just $ input.entries <#> (_.option >>> _.key)
+                    , optionKeys: Just $ entries <#> (_.option >>> _.key)
                     }
                 _ -> Nothing
             }
