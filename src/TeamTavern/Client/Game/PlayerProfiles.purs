@@ -1,4 +1,4 @@
-module TeamTavern.Client.Game.Profiles (PlayerProfile, Input, Message(..), Slot, emptyInput, playerProfiles) where
+module TeamTavern.Client.Game.PlayerProfiles (PlayerProfile, Input, Message(..), Slot, playerProfiles) where
 
 import Prelude
 
@@ -17,7 +17,6 @@ import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchorIndexed)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
-import TeamTavern.Client.Script.Cookie (PlayerInfo)
 import TeamTavern.Server.Profile.ViewByGame.LoadProfiles (pageSize, pageSize')
 
 type PlayerProfile =
@@ -53,10 +52,7 @@ type PlayerProfile =
 type Input =
     { profiles :: Array PlayerProfile
     , profileCount :: Int
-    , player :: Maybe
-        { info :: PlayerInfo
-        , hasProfile :: Boolean
-        }
+    , showCreateProfile :: Boolean
     , page :: Int
     }
 
@@ -74,14 +70,6 @@ data Message
 type Slot = H.Slot (Const Void) Message Unit
 
 type ChildSlots = (players :: Anchor.Slot Int)
-
-emptyInput :: Input
-emptyInput =
-    { profiles: []
-    , profileCount: 0
-    , player: Nothing
-    , page: 0
-    }
 
 yearSeconds :: Number
 yearSeconds = 60.0 * 60.0 * 24.0 * 365.0
@@ -121,7 +109,7 @@ totalPages :: Int -> Int
 totalPages count = ceil (toNumber count / pageSize')
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
-render { profiles, profileCount, player, page } =
+render { profiles, profileCount, showCreateProfile, page } =
     HH.div [ HP.class_ $ HH.ClassName "card" ] $
     [ HH.span [ HP.class_ $ HH.ClassName "card-title" ] $
         [ HH.text "Player profiles"
@@ -138,8 +126,8 @@ render { profiles, profileCount, player, page } =
             ]
         ]
         <>
-        case player of
-        Just { info, hasProfile } | not hasProfile -> Array.singleton $
+        if showCreateProfile
+        then Array.singleton $
             HH.button
             [ HP.class_ $ HH.ClassName "primary-button"
             , HE.onClick $ const $ Just CreateProfileAction
@@ -147,7 +135,7 @@ render { profiles, profileCount, player, page } =
             [ HH.i [ HP.class_ $ HH.ClassName "fas fa-user-plus button-icon" ] []
             , HH.text "Create your profile"
             ]
-        _ -> []
+        else []
     ]
     <>
     if Array.null profiles

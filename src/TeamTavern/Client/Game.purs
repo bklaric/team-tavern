@@ -19,11 +19,11 @@ import Halogen as H
 import Halogen.HTML as HH
 import Simple.JSON.Async as Json
 import TeamTavern.Client.Game.GameHeader as GameHeader
-import TeamTavern.Client.Game.Profiles (Input, Message(..), Slot) as Profiles
-import TeamTavern.Client.Game.Profiles (playerProfiles)
+import TeamTavern.Client.Game.PlayerProfiles (Input, Message(..), Slot) as Profiles
+import TeamTavern.Client.Game.PlayerProfiles (playerProfiles)
 import TeamTavern.Client.Profile.ProfileFilters (Filters, filterProfiles)
 import TeamTavern.Client.Profile.ProfileFilters as FilterProfiles
-import TeamTavern.Client.Script.Cookie (getPlayerInfo)
+import TeamTavern.Client.Script.Cookie (hasPlayerIdCookie)
 import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Server.Game.View.SendResponse as View
@@ -165,15 +165,13 @@ handleAction Init = do
                 <*> parallel (loadProfiles handle 1 FilterProfiles.emptyFilters)
             case gameContent, profilesContent of
                 Just gameContent', Just profilesContent' -> do
-                    playerInfo <- H.liftEffect getPlayerInfo
+                    signedIn <- H.liftEffect hasPlayerIdCookie
                     H.put $ Game gameContent' tab
                         { profiles: profilesContent'.profiles
                         , profileCount: profilesContent'.count
                         , page: 1
-                        , player: playerInfo <#>
-                            { info: _
-                            , hasProfile: gameContent'.hasPlayerProfile
-                            }
+                        , showCreateProfile:
+                            signedIn && not gameContent'.hasPlayerProfile
                         }
                     H.liftEffect $ setMetaTags gameContent'.title tab
                 _, _ -> do
@@ -205,7 +203,7 @@ handleAction (ApplyFilters filters) = do
                         { profiles: profilesContent'.profiles
                         , profileCount: profilesContent'.count
                         , page: 1
-                        , player: profilesInput.player
+                        , showCreateProfile: profilesInput.showCreateProfile
                         }
                 Nothing -> pure unit
         _ -> pure unit
