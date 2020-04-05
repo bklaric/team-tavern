@@ -28,7 +28,7 @@ type Option =
 
 type Field =
     { id :: Int
-    , type :: Int
+    , ilk :: Int
     , key :: String
     , required :: Boolean
     , domain :: Maybe String
@@ -47,7 +47,7 @@ queryString :: Query
 queryString = Query """
     select
         field.id,
-        field.type,
+        field.ilk,
         field.key,
         field.required,
         field.domain,
@@ -55,7 +55,7 @@ queryString = Query """
             json_build_object(
                 'id', field_option.id,
                 'key', field_option.key,
-                'option', field_option.option
+                'option', field_option.label
             )
             order by field_option.id
         )
@@ -65,10 +65,7 @@ queryString = Query """
         join game on game.id = field.game_id
         left join field_option on field_option.field_id = field.id
     where game.handle = $1
-    group by
-        field.id,
-        field.type,
-        field.key;
+    group by field.id
     """
 
 loadFields :: forall errors.

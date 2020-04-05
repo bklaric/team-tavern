@@ -42,8 +42,8 @@ type AddProfileError errors = Variant
 
 addProfileString :: Query
 addProfileString = Query """
-    insert into profile (player_id, game_id, type, summary)
-    select player.id, game.id, $5, $6
+    insert into player_profile (player_id, game_id, summary)
+    select player.id, game.id, $5
     from session, player, game
     where session.player_id = $1
     and session.token = $2
@@ -51,26 +51,25 @@ addProfileString = Query """
     and session.player_id = player.id
     and game.handle = $3
     and lower(player.nickname) = lower($4)
-    returning profile.id as "profileId";
+    returning player_profile.id as "profileId";
     """
 
 addProfileParameters ::
-    CookieInfo -> Identifiers -> Int -> Summary -> Array QueryParameter
-addProfileParameters { id, token } { handle, nickname } profileType summary =
-    id : token : handle : nickname : profileType :| summary
+    CookieInfo -> Identifiers -> Summary -> Array QueryParameter
+addProfileParameters { id, token } { handle, nickname } summary =
+    id : token : handle : nickname :| summary
 
 addProfile'
     :: forall errors
     .  Client
     -> CookieInfo
     -> Identifiers
-    -> Int
     -> Summary
     -> Async (AddProfileError errors) ProfileId
-addProfile' client cookieInfo identifiers profileType summary = do
+addProfile' client cookieInfo identifiers summary = do
     result <- client
         # query addProfileString
-            (addProfileParameters cookieInfo identifiers profileType summary)
+            (addProfileParameters cookieInfo identifiers summary)
         # label (SProxy :: SProxy "databaseError")
     { profileId } :: { profileId :: Int } <- Result.rows result
         # head
@@ -87,7 +86,7 @@ addProfile
     -> Identifiers
     -> Profile
     -> Async (AddProfileError errors) Unit
-addProfile client cookieInfo identifiers (Profile profileType summary fieldValues) = do
-    profileId <- addProfile' client cookieInfo identifiers profileType summary
+addProfile client cookieInfo identifiers (Profile summary fieldValues) = do
+    profileId <- addProfile' client cookieInfo identifiers summary
     addFieldValues client profileId fieldValues
     pure unit

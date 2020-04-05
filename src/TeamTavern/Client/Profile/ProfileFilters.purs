@@ -9,7 +9,6 @@ import Data.Int as Int
 import Data.Maybe (Maybe(..))
 import Data.String as String
 import Data.Symbol (SProxy(..))
-import Effect.Class.Console (log)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
@@ -20,7 +19,6 @@ import TeamTavern.Client.Components.SelectDeclarative.MultiSelect (multiSelect, 
 import TeamTavern.Client.Components.SelectDeclarative.MultiSelect as MultiSelect
 import TeamTavern.Server.Infrastructure.Languages (allLanguages)
 import TeamTavern.Server.Infrastructure.Regions (Region(..), allRegions)
-import Unsafe.Coerce (unsafeCoerce)
 
 type Option =
     { key :: String
@@ -281,7 +279,7 @@ handleAction ApplyAction = do
         { ageFrom, ageTo, languages, microphone
         , weekdayFrom, weekdayTo, weekendFrom, weekendTo, fields
         }
-handleAction Clear = do
+handleAction Clear =
     H.modify_ \state -> state
         { ageFrom = ""
         , ageTo = ""
@@ -299,8 +297,6 @@ handleAction Clear = do
                 }
             }
         }
-    state <- H.get
-    log $ unsafeCoerce state
 handleAction (AgeFromInput ageFrom) =
     H.modify_ (_ { ageFrom = ageFrom })
 handleAction (AgeToInput ageTo) =

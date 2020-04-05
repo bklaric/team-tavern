@@ -18,7 +18,7 @@ import TeamTvaern.Server.Profile.Infrastructure.ValidateFieldValues (ValidateFie
 import TeamTvaern.Server.Profile.Infrastructure.ValidateFieldValues as ValidateFieldValues
 
 data Profile =
-    Profile Int ValidateSummary.Summary (List ValidateFieldValues.FieldValue)
+    Profile ValidateSummary.Summary (List ValidateFieldValues.FieldValue)
 
 type ProfileError = Variant
     ( summary :: NonEmptyList NonEmptyTextError
@@ -37,12 +37,11 @@ validateProfile
     .  Array LoadFields.Field
     -> ReadProfile.Profile
     -> Async (ValidateProfileError errors) Profile
-validateProfile fields profile @ { type: type', summary, fieldValues } =
+validateProfile fields profile @ { summary, fieldValues } =
     Profile
-    <$> pure type'
-    <*> (ValidateSummary.validate summary
+    <$> (ValidateSummary.validate summary
         # Validated.label (SProxy :: SProxy "summary"))
-    <*> (ValidateFieldValues.validateFieldValues type' fields fieldValues
+    <*> (ValidateFieldValues.validateFieldValues fields fieldValues
         # Validated.label (SProxy :: SProxy "fieldValues"))
     # Async.fromValidated
     # Label.labelMap (SProxy :: SProxy "invalidProfile") { profile, errors: _ }

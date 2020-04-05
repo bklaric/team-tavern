@@ -19,8 +19,7 @@ type FieldValue =
     }
 
 type Profile =
-    { type :: Int
-    , summary :: String
+    { summary :: String
     , fieldValues :: Array FieldValue
     }
 

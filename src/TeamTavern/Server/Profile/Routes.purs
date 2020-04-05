@@ -69,7 +69,7 @@ type Identifiers =
     , nickname :: Nickname
     }
 
-type CreateGamePlayer = Route
+type AddGamePlayer = Route
     Post
     (  Literal "profiles"
     :> Literal "by-handle"
@@ -118,7 +118,7 @@ type ViewProfilesByPlayer = Route
     (Mandatory "ilk" ProfileIlk)
 
 type ProfileRoutes
-    =    "createProfile"        := CreateGamePlayer
+    =    "createProfile"        := AddGamePlayer
     :<|> "updateProfile"        := UpdateGamePlayer
     :<|> "viewProfilesByGame"   := ViewGamePlayers
     :<|> "viewProfilesByPlayer" := ViewProfilesByPlayer

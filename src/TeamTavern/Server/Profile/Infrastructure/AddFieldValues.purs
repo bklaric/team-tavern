@@ -37,7 +37,7 @@ type AddFieldValuesError errors = Variant
 
 insertUrlValueString :: Query
 insertUrlValueString = Query """
-    insert into field_value (profile_id, field_id, url, field_option_id)
+    insert into player_profile_field_value (player_profile_id, field_id, url, field_option_id)
     values ($1, $2, $3, null);
     """
 
@@ -52,7 +52,7 @@ insertUrlValue client profileId fieldId url =
 
 insertSingleValueString :: Query
 insertSingleValueString = Query """
-    insert into field_value (profile_id, field_id, url, field_option_id)
+    insert into player_profile_field_value (player_profile_id, field_id, url, field_option_id)
     values ($1, $2, null, $3);
     """
 
@@ -67,7 +67,7 @@ insertSingleValue client profileId fieldId optionId =
 
 insertMultiValueOptionString :: Query
 insertMultiValueOptionString = Query """
-    insert into field_value_option (field_value_id, field_option_id)
+    insert into player_profile_field_value_option (player_profile_field_value_id, field_option_id)
     values ($1, $2);
     """
 
@@ -80,9 +80,9 @@ insertMultiValueOption client fieldValueId optionId =
 
 insertMultiValueString :: Query
 insertMultiValueString = Query """
-    insert into field_value (profile_id, field_id, url, field_option_id)
+    insert into player_profile_field_value (player_profile_id, field_id, url, field_option_id)
     values ($1, $2, null, null)
-    returning field_value.id as "fieldValueId";
+    returning player_profile_field_value.id as "fieldValueId";
     """
 
 insertMultiValue :: forall errors.

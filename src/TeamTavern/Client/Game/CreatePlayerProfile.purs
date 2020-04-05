@@ -337,7 +337,7 @@ handleAction (Create event) = do
                 other -> other
             , submitting = false
             }
-handleAction Close = H.raise $ CloseClicked
+handleAction Close = H.raise CloseClicked
 
 component :: forall query left.
     H.Component HH.HTML query Input Output (Async left)
