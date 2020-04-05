@@ -15,7 +15,7 @@ import Postgres.Error (Error)
 import Postgres.Query (Query(..))
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
-import TeamTavern.Server.Profile.Routes (Filters, Handle, ProfileIlk, Timezone)
+import TeamTavern.Server.Profile.Routes (Filters, Handle, Timezone)
 import TeamTavern.Server.Profile.ViewGamePlayers.LoadProfiles (queryStringWithoutPagination)
 
 type LoadProfileCountResult = { count :: Int }
@@ -29,10 +29,10 @@ type LoadProfileCountError errors = Variant
     , databaseError :: Error
     | errors )
 
-queryString :: Handle -> ProfileIlk -> Timezone -> Filters -> Query
-queryString handle ilk timezone filters = let
+queryString :: Handle -> Timezone -> Filters -> Query
+queryString handle timezone filters = let
     Query profilesQueryString =
-        queryStringWithoutPagination handle ilk timezone filters
+        queryStringWithoutPagination handle timezone filters
     in
     Query $ """
     select count(*)::int as "count"
@@ -44,13 +44,12 @@ loadProfileCount
     :: forall errors
     .  Client
     -> Handle
-    -> ProfileIlk
     -> Timezone
     -> Filters
     -> Async (LoadProfileCountError errors) Int
-loadProfileCount client handle ilk timezone filters = do
+loadProfileCount client handle timezone filters = do
     result <- client
-        # query (queryString handle ilk timezone filters) []
+        # query (queryString handle timezone filters) []
         # label (SProxy :: SProxy "databaseError")
     count <- rows result
         # Array.head

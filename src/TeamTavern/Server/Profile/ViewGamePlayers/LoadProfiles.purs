@@ -21,7 +21,7 @@ import Postgres.Error (Error)
 import Postgres.Query (Query(..))
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
-import TeamTavern.Server.Profile.Routes (Age, Country, Filters, Handle, HasMicrophone, Language, ProfileIlk, ProfilePage, Time, Timezone)
+import TeamTavern.Server.Profile.Routes (Age, Country, Filters, Handle, HasMicrophone, Language, ProfilePage, Time, Timezone)
 import URI.Extra.QueryPairs (Key, QueryPairs(..), Value)
 import URI.Extra.QueryPairs as Key
 import URI.Extra.QueryPairs as Value
@@ -202,8 +202,8 @@ createFieldsFilterString fields = let
         else "where " <> filterString
 
 queryStringWithoutPagination ::
-    Handle -> ProfileIlk -> Timezone -> Filters -> Query
-queryStringWithoutPagination handle ilk timezone filters = Query $ """
+    Handle -> Timezone -> Filters -> Query
+queryStringWithoutPagination handle timezone filters = Query $ """
     select profile.*
     from
         (select
@@ -302,23 +302,22 @@ queryStringWithoutPagination handle ilk timezone filters = Query $ """
     """ <> createFieldsFilterString filters.fields <> """
     order by profile.updated desc"""
 
-queryString :: Handle -> ProfileIlk -> ProfilePage -> Timezone -> Filters -> Query
-queryString handle ilk page timezone filters =
-    queryStringWithoutPagination handle ilk timezone filters
+queryString :: Handle -> ProfilePage -> Timezone -> Filters -> Query
+queryString handle page timezone filters =
+    queryStringWithoutPagination handle timezone filters
     <> (Query $ """ limit """ <> show pageSize <> """ offset """ <> show ((page - 1) * pageSize))
 
 loadProfiles
     :: forall errors
     .  Client
     -> Handle
-    -> ProfileIlk
     -> ProfilePage
     -> Timezone
     -> Filters
     -> Async (LoadProfilesError errors) (Array LoadProfilesResult)
-loadProfiles client handle ilk page timezone filters = do
+loadProfiles client handle page timezone filters = do
     result <- client
-        # query_ (queryString handle ilk page timezone filters)
+        # query_ (queryString handle page timezone filters)
         # label (SProxy :: SProxy "databaseError")
     profiles <- rows result
         # traverse read

@@ -121,11 +121,7 @@ loadProfiles :: forall left.
 loadProfiles handle tab page filters = Async.unify do
     timezone <- H.liftEffect getClientTimezone
     let nothingIfNull string = if String.null string then Nothing else Just string
-    let tabPair =
-            case tab of
-            GameHeader.Players -> "ilk=1"
-            GameHeader.Teams -> "ilk=2"
-        pagePair = "page=" <> show page
+    let pagePair = "page=" <> show page
         timezonePair = "timezone=" <> timezone
         ageFromPair = filters.ageFrom <#> show <#> ("ageFrom=" <> _)
         ageToPair = filters.ageTo <#> show <#> ("ageTo=" <> _)
@@ -139,14 +135,14 @@ loadProfiles handle tab page filters = Async.unify do
         fieldPairs =
             filters.fields
             <#> (\{ fieldKey, optionKey } -> fieldKey <> "=" <> optionKey)
-        allPairs = [tabPair, pagePair, timezonePair]
+        allPairs = [pagePair, timezonePair]
             <> languagePairs <> fieldPairs <> Array.catMaybes
             [ ageFromPair, ageToPair, microphonePair
             ,  weekdayFromPair, weekdayToPair, weekendFromPair, weekendToPair
             ]
         filterQuery = "?" <> intercalate "&" allPairs
     response <-
-        Fetch.fetch_ ("/api/profiles/by-handle/" <> handle <> filterQuery)
+        Fetch.fetch_ ("/api/profiles/by-handle/" <> handle <> "/players" <> filterQuery)
         # lmap (const Nothing)
     content <-
         case FetchRes.status response of

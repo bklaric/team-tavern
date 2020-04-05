@@ -78,14 +78,14 @@ type CreateProfile = Route
     :> End)
     NoQuery
 
-type ViewProfilesByGame = Route
+type ViewGamePlayers = Route
     Get
     (  Literal "profiles"
     :> Literal "by-handle"
     :> Capture "handle" Handle
+    :> Literal "players"
     :> End)
-    (  Mandatory "ilk" ProfileIlk
-    :? Mandatory "page" ProfilePage
+    (  Mandatory "page" ProfilePage
     :? Mandatory "timezone" Timezone
     :? Optional "ageFrom" Age
     :? Optional "ageTo" Age
@@ -117,6 +117,6 @@ type UpdateProfile = Route
 
 type ProfileRoutes
     =    "createProfile"        := CreateProfile
-    :<|> "viewProfilesByGame"   := ViewProfilesByGame
+    :<|> "viewProfilesByGame"   := ViewGamePlayers
     :<|> "viewProfilesByPlayer" := ViewProfilesByPlayer
     :<|> "updateProfile"        := UpdateProfile
