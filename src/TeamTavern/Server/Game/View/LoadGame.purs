@@ -32,7 +32,7 @@ type LoadGameDto =
     , hasPlayerProfile :: Boolean
     , hasTeamProfile :: Boolean
     , fields :: Array
-        { type :: Int
+        { ilk :: Int
         , label :: String
         , key :: String
         , icon :: String
@@ -40,7 +40,7 @@ type LoadGameDto =
         , domain :: Maybe String
         , options :: Maybe (Array
             { key :: String
-            , option :: String
+            , label :: String
             })
         }
     }
@@ -53,7 +53,7 @@ type LoadGameResult =
     , hasPlayerProfile :: Boolean
     , hasTeamProfile :: Boolean
     , fields :: Array
-        { type :: Int
+        { ilk :: Int
         , label :: String
         , key :: String
         , icon :: String
@@ -61,7 +61,7 @@ type LoadGameResult =
         , domain :: Maybe String
         , options :: Maybe (Array
             { key :: String
-            , option :: String
+            , label :: String
             })
         }
     }
@@ -83,14 +83,44 @@ queryString = Query """
         game.administrator_id as "administratorId",
         player_profile.id is not null as "hasPlayerProfile",
         team_profile.id is not null as "hasTeamProfile",
-        coalesce(fields.fields, '[]') as fields
+        coalesce(
+            json_agg(
+                json_build_object(
+                    'ilk', field.ilk,
+                    'label', field.label,
+                    'key', field.key,
+                    'icon', field.icon,
+                    'required', field.required,
+                    'domain', field.domain,
+                    'options', field.options
+                ) order by field.ordinal
+            ) filter (where field.id is not null),
+            '[]'
+        ) as fields
     from game
-        left join fields on fields.game_id = game.id
         left join player_profile on player_profile.game_id = game.id
             and player_profile.player_id = $2
         left join team_profile on team_profile.game_id = game.id
             and team_profile.player_id = $2
-    where game.handle = $1;
+        left join (
+            select
+                field.*,
+                coalesce(
+                    json_agg(
+                        json_build_object(
+                            'key', field_option.key,
+                            'label', field_option.label
+                        ) order by field_option.ordinal
+                    ) filter (where field_option.id is not null),
+                    '[]'
+                ) as options
+            from field
+                left join field_option on field_option.field_id = field.id
+            group by
+                field.id
+            ) as field on field.game_id = game.id
+    where game.handle = $1
+    group by game.id, player_profile.id, team_profile.id;
     """
 
 queryParameters :: Handle -> Maybe CookieInfo -> Array QueryParameter

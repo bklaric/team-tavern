@@ -276,7 +276,7 @@ queryStringWithoutPagination handle ilk timezone filters = Query $ """
                             'key', multi.key,
                             'label', multi.label
                         )) filter (where multi.label is not null),
-                        '{}'
+                        '[]'
                     ) as multi
                 from field
                     join player_profile_field_value as field_value on field_value.field_id = field.id

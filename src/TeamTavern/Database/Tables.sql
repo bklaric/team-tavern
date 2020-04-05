@@ -130,53 +130,6 @@ create table team_profile_field_value_option
     , field_option_id integer not null references field_option(id)
     );
 
-create or replace view fields (game_id, fields) as
-select
-    game_id,
-    coalesce(
-        json_agg(
-            json_build_object(
-                'type', type,
-                'label', label,
-                'key', key,
-                'icon', icon,
-                'required', required,
-                'domain', domain,
-                'options', options
-            )
-            order by ordinal
-        )
-        filter (where key is not null),
-        '[]'
-    )
-    as "fields"
-from (
-    select
-        field.id,
-        field.game_id,
-        field.type,
-        field.label,
-        field.key,
-        field.icon,
-        field.ordinal,
-        field.required,
-        field.domain,
-        json_agg(
-            json_build_object(
-                'key', field_option.key,
-                'option', field_option.option
-            )
-            order by field_option.ordinal
-        )
-        filter (where field_option.id is not null)
-        as options
-    from field
-        left join field_option on field_option.field_id = field.id
-    group by
-        field.id
-    ) as field
-group by game_id;
-
 create table conversation
     ( id serial not null primary key
     , left_interlocutor_id int not null references player(id) on delete cascade

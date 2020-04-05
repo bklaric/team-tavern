@@ -25,7 +25,7 @@ import Unsafe.Coerce (unsafeCoerce)
 
 type Option =
     { key :: String
-    , option :: String
+    , label :: String
     }
 
 type Field =
@@ -364,7 +364,7 @@ initialState fields =
     , fields: fields <#> \field ->
         { input:
             { options: field.options <#> { option: _, selected: false }
-            , labeler: _.option
+            , labeler: _.label
             , comparer: \leftOption rightOption ->
                 leftOption.key == rightOption.key
             , filter: Nothing

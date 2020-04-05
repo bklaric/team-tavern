@@ -73,8 +73,8 @@ type State =
     }
 
 type ChildSlots =
-    ( "singleSelectField" :: SingleSelect.Slot { key :: String, option :: String } String
-    , "multiSelectField" :: MultiSelect.Slot { key :: String, option :: String } String
+    ( "singleSelectField" :: SingleSelect.Slot { key :: String, label :: String } String
+    , "multiSelectField" :: MultiSelect.Slot { key :: String, label :: String } String
     )
 
 type Slot =
@@ -110,14 +110,14 @@ fieldInput
     -> Array { fieldKey :: String }
     ->  { key :: String
         , label :: String
-        , type :: Int
+        , ilk :: Int
         , icon :: String
         , required :: Boolean
         , domain :: Maybe String
-        , options :: Maybe (Array { key :: String , option :: String })
+        , options :: Maybe (Array { key :: String , label :: String })
         }
     ->  H.ComponentHTML Action ChildSlots (Async left)
-fieldInput GameHeader.Players urlValueErrors missingErrors { key, type: 1, label, icon, required, domain: Just domain } = let
+fieldInput GameHeader.Players urlValueErrors missingErrors { key, ilk: 1, label, icon, required, domain: Just domain } = let
     urlError = urlValueErrors # any (_.fieldKey >>> (_ == key))
     missingError = missingErrors # any (_.fieldKey >>> (_ == key))
     in
@@ -135,43 +135,43 @@ fieldInput GameHeader.Players urlValueErrors missingErrors { key, type: 1, label
         [ HP.class_ $ inputErrorClass missingError ]
         [ HH.text $ label <> " is required." ]
     ]
-fieldInput GameHeader.Players _ _ { key, type: 2, label, icon, required, options: Just options } =
+fieldInput GameHeader.Players _ _ { key, ilk: 2, label, icon, required, options: Just options } =
     HH.div [ HP.class_ $ HH.ClassName "input-group" ]
     [ fieldLabel key label icon required Nothing
     , singleSelectIndexed (SProxy :: SProxy "singleSelectField") key
         { options
         , selected: Nothing
-        , labeler: _.option
+        , labeler: _.label
         , comparer: \leftOption rightOption -> leftOption.key == rightOption.key
         , showFilter: Nothing
         }
     ]
-fieldInput GameHeader.Teams _ _ { key, type: 2, label, icon, required, options: Just options } =
+fieldInput GameHeader.Teams _ _ { key, ilk: 2, label, icon, required, options: Just options } =
     HH.div [ HP.class_ $ HH.ClassName "input-group" ]
     [ fieldLabel key label icon required Nothing
     , multiSelectIndexed (SProxy :: SProxy "multiSelectField") key
         { options: options <#> \option -> { option, selected: false }
-        , labeler: _.option
+        , labeler: _.label
         , comparer: \leftOption rightOption -> leftOption.key == rightOption.key
         , showFilter: Nothing
         }
     ]
-fieldInput GameHeader.Players _ _ { key, type: 3, label, icon, required, options: Just options } =
+fieldInput GameHeader.Players _ _ { key, ilk: 3, label, icon, required, options: Just options } =
     HH.div [ HP.class_ $ HH.ClassName "input-group" ]
     [ fieldLabel key label icon required Nothing
     , multiSelectIndexed (SProxy :: SProxy "multiSelectField") key
         { options: options <#> \option -> { option, selected: false }
-        , labeler: _.option
+        , labeler: _.label
         , comparer: \leftOption rightOption -> leftOption.key == rightOption.key
         , showFilter: Nothing
         }
     ]
-fieldInput GameHeader.Teams _ _ { key, type: 3, label, icon, required, options: Just options } =
+fieldInput GameHeader.Teams _ _ { key, ilk: 3, label, icon, required, options: Just options } =
     HH.div [ HP.class_ $ HH.ClassName "input-group" ]
     [ fieldLabel key label icon required Nothing
     , multiSelectIndexed (SProxy :: SProxy "multiSelectField") key
         { options: options <#> \option -> { option, selected: false }
-        , labeler: _.option
+        , labeler: _.label
         , comparer: \leftOption rightOption -> leftOption.key == rightOption.key
         , showFilter: Nothing
         }

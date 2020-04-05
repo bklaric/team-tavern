@@ -11,7 +11,6 @@ import Data.Array (intercalate)
 import Data.Array as Array
 import Data.Bifunctor (lmap)
 import Data.Const (Const)
-import Data.Int as Int
 import Data.Maybe (Maybe(..))
 import Data.String as String
 import Data.Symbol (SProxy(..))
@@ -20,7 +19,7 @@ import Halogen as H
 import Halogen.HTML as HH
 import Simple.JSON.Async as Json
 import TeamTavern.Client.Game.GameHeader as GameHeader
-import TeamTavern.Client.Game.Profiles (Input, Message(..), Slot, emptyInput) as Profiles
+import TeamTavern.Client.Game.Profiles (Input, Message(..), Slot) as Profiles
 import TeamTavern.Client.Game.Profiles (playerProfiles)
 import TeamTavern.Client.Profile.ProfileFilters (Filters, filterProfiles)
 import TeamTavern.Client.Profile.ProfileFilters as FilterProfiles
@@ -54,22 +53,22 @@ type ChildSlots =
 
 filterableFields
     :: Array
-        { key :: String
+        { ilk :: Int
+        , key :: String
         , label :: String
         , icon :: String
         , required :: Boolean
         , domain :: Maybe String
         , options :: Maybe (Array
             { key :: String
-            , option :: String
+            , label :: String
             })
-        , type :: Int
         }
     -> Array FilterProfiles.Field
 filterableFields fields = fields # Array.mapMaybe
     case _ of
-    { key, label, icon, type: type', options: Just options }
-        | type' == 2 || type' == 3 -> Just { key, label, icon, options }
+    { key, label, icon, ilk, options: Just options }
+        | ilk == 2 || ilk == 3 -> Just { key, label, icon, options }
     _ -> Nothing
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
