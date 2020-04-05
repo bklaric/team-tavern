@@ -23,6 +23,7 @@ import TeamTavern.Client.Game.Profiles (Input, Message(..), Slot) as Profiles
 import TeamTavern.Client.Game.Profiles (playerProfiles)
 import TeamTavern.Client.Profile.ProfileFilters (Filters, filterProfiles)
 import TeamTavern.Client.Profile.ProfileFilters as FilterProfiles
+import TeamTavern.Client.Script.Cookie (getPlayerInfo)
 import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Server.Game.View.SendResponse as View
@@ -117,8 +118,8 @@ setMetaTags handleOrTitle tab =
         setMetaUrl
 
 loadProfiles :: forall left.
-    String -> GameHeader.Tab -> Int -> FilterProfiles.Filters -> Async left (Maybe Profiles.OkContent)
-loadProfiles handle tab page filters = Async.unify do
+    String -> Int -> FilterProfiles.Filters -> Async left (Maybe Profiles.OkContent)
+loadProfiles handle page filters = Async.unify do
     timezone <- H.liftEffect getClientTimezone
     let nothingIfNull string = if String.null string then Nothing else Just string
     let pagePair = "page=" <> show page
@@ -161,14 +162,18 @@ handleAction Init = do
                 $ sequential
                 $ { gameContent: _, profilesContent: _}
                 <$> parallel (loadGame handle)
-                <*> parallel (loadProfiles handle tab 1 FilterProfiles.emptyFilters)
+                <*> parallel (loadProfiles handle 1 FilterProfiles.emptyFilters)
             case gameContent, profilesContent of
                 Just gameContent', Just profilesContent' -> do
+                    playerInfo <- H.liftEffect getPlayerInfo
                     H.put $ Game gameContent' tab
                         { profiles: profilesContent'.profiles
                         , profileCount: profilesContent'.count
                         , page: 1
-                        , player: Nothing
+                        , player: playerInfo <#>
+                            { info: _
+                            , hasProfile: gameContent'.hasPlayerProfile
+                            }
                         }
                     H.liftEffect $ setMetaTags gameContent'.title tab
                 _, _ -> do
@@ -191,10 +196,19 @@ handleAction (Receive (Input inputHandle inputTab)) = do
     pure unit
 handleAction (ApplyFilters filters) = do
     state <- H.get
-
-    -- void $ H.query (SProxy :: SProxy "playerProfiles") unit
-    --     (Profiles.Apply filters unit)
-    pure unit
+    case state of
+        Game game' tab profilesInput -> do
+            profilesContent <- H.lift $ loadProfiles game'.handle 1 filters
+            case profilesContent of
+                Just profilesContent' ->
+                    H.put $ Game game' tab
+                        { profiles: profilesContent'.profiles
+                        , profileCount: profilesContent'.count
+                        , page: 1
+                        , player: profilesInput.player
+                        }
+                Nothing -> pure unit
+        _ -> pure unit
 handleAction CreateProfile =
     pure unit
 handleAction (ChangePage page) =

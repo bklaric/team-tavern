@@ -73,29 +73,6 @@ prepareString stringValue =
     <> (String.replace (String.Pattern "'") (String.Replacement "") stringValue)
     <> "'"
 
-prepareJsonString :: String -> String
-prepareJsonString stringValue =
-       "\""
-    <> (String.replace (String.Pattern "\"") (String.Replacement "") stringValue)
-    <> "\""
-
-prepareFilters :: QueryPairs Key Value -> Array (Tuple String (Array String))
-prepareFilters (QueryPairs filters) = let
-    prepareFilter fieldKey optionKey = let
-        preparedFieldKey = prepareJsonString $ Key.keyToString fieldKey
-        preparedOptionKey = prepareJsonString $ Value.valueToString optionKey
-        in
-        Tuple preparedFieldKey preparedOptionKey
-    preparedFilters =
-        filters # Array.mapMaybe \(Tuple fieldKey optionKey') ->
-            optionKey' <#> \optionKey -> prepareFilter fieldKey optionKey
-    groupedFilters = preparedFilters
-        # foldl (\groupedFiltersSoFar (Tuple fieldKey optionKey) ->
-            MultiMap.insert' fieldKey optionKey groupedFiltersSoFar)
-            MultiMap.empty
-    in
-    groupedFilters # MultiMap.toUnfoldable'
-
 createAgeFilter :: Maybe Age -> Maybe Age -> String
 createAgeFilter Nothing Nothing = ""
 createAgeFilter (Just ageFrom) Nothing = " and player.birthday < (current_timestamp - interval '" <> show ageFrom <> " years')"
@@ -181,6 +158,29 @@ createPlayerFilterString timezone filters =
         timezone filters.weekendOnline.from filters.weekendOnline.to
     <> createMicrophoneFilter filters.microphone
 
+prepareJsonString :: String -> String
+prepareJsonString stringValue =
+       "\""
+    <> (String.replace (String.Pattern "\"") (String.Replacement "") stringValue)
+    <> "\""
+
+prepareFields :: QueryPairs Key Value -> Array (Tuple String (Array String))
+prepareFields (QueryPairs filters) = let
+    preparedField fieldKey optionKey = let
+        preparedFieldKey = prepareJsonString $ Key.keyToString fieldKey
+        preparedOptionKey = prepareJsonString $ Value.valueToString optionKey
+        in
+        Tuple preparedFieldKey preparedOptionKey
+    preparedFields =
+        filters # Array.mapMaybe \(Tuple fieldKey optionKey') ->
+            optionKey' <#> \optionKey -> preparedField fieldKey optionKey
+    groupeFields = preparedFields
+        # foldl (\groupedFiltersSoFar (Tuple fieldKey optionKey) ->
+            MultiMap.insert' fieldKey optionKey groupedFiltersSoFar)
+            MultiMap.empty
+    in
+    groupeFields # MultiMap.toUnfoldable'
+
 -- Example:
 -- jsonb_path_exists(player_profile."fieldValues", '$[*] ? (@.field.key == "rank") ? (@.option.key == "guardian" || @.option.key == "herald" || @.options[*].key == "guardian" || @.options[*].key == "herald")')
 -- and jsonb_path_exists(player_profile."fieldValues", '$[*] ? (@.field.label == "Region") ? (@.option.key == "eu-east" || @.options[*].key == "eu-east")')
@@ -188,12 +188,12 @@ createFieldsFilterString :: QueryPairs Key Value -> String
 createFieldsFilterString fields = let
     fieldFilterString (Tuple fieldKey optionKeys) =
         optionKeys
-        <#> (\optionKey -> "@.option.key == \"" <> optionKey <> "\" || @.options[*].key == \"" <> optionKey <> "\"")
+        <#> (\optionKey -> "@.option.key == " <> optionKey <> " || @.options[*].key == " <> optionKey)
         # intercalate " || "
-        # \filterString -> "jsonb_path_exists(profile.\"fieldValues\", '$[*] ? (@.field.key == \"" <> fieldKey <> "\") ? (" <> filterString <> ")')"
+        # \filterString -> "jsonb_path_exists(profile.\"fieldValues\", '$[*] ? (@.field.key == " <> fieldKey <> ") ? (" <> filterString <> ")')"
     in
     fields
-    # prepareFilters
+    # prepareFields
     <#> fieldFilterString
     # intercalate " and "
     # \filterString ->
