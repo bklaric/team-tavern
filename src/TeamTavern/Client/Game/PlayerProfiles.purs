@@ -1,4 +1,4 @@
-module TeamTavern.Client.Game.PlayerProfiles (PlayerProfile, Input, Message(..), Slot, playerProfiles) where
+    module TeamTavern.Client.Game.PlayerProfiles (PlayerProfile, Input, Message(..), Slot, playerProfiles) where
 
 import Prelude
 
@@ -29,10 +29,10 @@ type PlayerProfile =
     , weekendOnline :: Maybe { from :: String, to :: String }
     , fieldValues :: Array
         { field ::
-            { key :: String
+            { ilk :: Int
+            , key :: String
             , label :: String
             , icon :: String
-            , ilk :: Int
             }
         , url :: Maybe String
         , option :: Maybe

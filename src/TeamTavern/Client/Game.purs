@@ -24,18 +24,29 @@ import TeamTavern.Client.Game.CreatePlayerProfile as CreatePlayerProfile
 import TeamTavern.Client.Game.GameHeader as GameHeader
 import TeamTavern.Client.Game.PlayerProfiles (Input, Message(..), Slot) as PlayerProfiles
 import TeamTavern.Client.Game.PlayerProfiles (playerProfiles)
+import TeamTavern.Client.Game.TeamProfiles (teamProfiles)
+import TeamTavern.Client.Game.TeamProfiles as TeamProfiles
 import TeamTavern.Client.Profile.ProfileFilters (Filters, filterProfiles)
 import TeamTavern.Client.Profile.ProfileFilters as ProfileFilters
 import TeamTavern.Client.Script.Cookie (PlayerInfo, getPlayerInfo)
 import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
-import TeamTavern.Server.Game.View.SendResponse as View
+import TeamTavern.Server.Game.View.SendResponse as ViewGame
 import TeamTavern.Server.Profile.ViewGamePlayers.SendResponse (OkContent) as ViewGamePlayers
+import TeamTavern.Server.Profile.ViewGameTeams.SendResponse as ViewGameTeams
 import Web.HTML (window)
 import Web.HTML.Location (reload)
 import Web.HTML.Window (location)
 
-type ShowCreatePlayerProfile = Boolean
+type ShowCreateModal = Boolean
+
+data Tab
+    = Players PlayerProfiles.Input ShowCreateModal
+    | Teams TeamProfiles.Input ShowCreateModal
+
+toHeaderTab :: Tab -> GameHeader.Tab
+toHeaderTab (Players _ _) = GameHeader.Players
+toHeaderTab (Teams _ _) = GameHeader.Teams
 
 data Input = Input GameHeader.Handle GameHeader.Tab
 
@@ -43,19 +54,14 @@ data Action
     = Init
     | Receive Input
     | ApplyFilters Filters
-    | ShowCreatePlayerProfile
-    | HideCreatePlayerProfile
+    | ShowCreateProfileModal
+    | HideCreateProfileModal
     | ReloadPage
     | ChangePage Int
 
 data State
     = Empty Input
-    | Game
-        View.OkContent
-        GameHeader.Tab
-        (Maybe PlayerInfo)
-        ShowCreatePlayerProfile
-        PlayerProfiles.Input
+    | Game ViewGame.OkContent (Maybe PlayerInfo) Tab
     | NotFound
     | Error
 
@@ -64,6 +70,7 @@ type Slot = H.Slot (Const Void) Void
 type ChildSlots =
     ( gameHeader :: H.Slot (Const Void) Void Unit
     , playerProfiles :: PlayerProfiles.Slot
+    , teamProfiles :: TeamProfiles.Slot
     , filterProfiles :: ProfileFilters.Slot
     , createPlayerProfile :: CreatePlayerProfile.Slot
     )
@@ -90,36 +97,44 @@ filterableFields fields = fields # Array.mapMaybe
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render (Empty _) = HH.div_ []
-render (Game game' tab player showCreatePlayerProfile profilesInput) = let
+render (Game game' player tab) = let
     gameHeader =
         HH.slot (SProxy :: SProxy "gameHeader") unit GameHeader.component
-        (GameHeader.Input game'.handle game'.title tab) absurd
+        (GameHeader.Input game'.handle game'.title $ toHeaderTab tab) absurd
     in
     HH.div_ $
     [ gameHeader
     , filterProfiles (filterableFields game'.fields)
         (\(ProfileFilters.Apply filters) -> Just $ ApplyFilters filters)
-    , playerProfiles
-        profilesInput
-        case _ of
-        PlayerProfiles.CreateProfile -> Just ShowCreatePlayerProfile
-        PlayerProfiles.ChangePage page -> Just $ ChangePage page
+    , case tab of
+        Players input _ ->
+            playerProfiles
+            input
+            case _ of
+            PlayerProfiles.CreateProfile -> Just ShowCreateProfileModal
+            PlayerProfiles.ChangePage page -> Just $ ChangePage page
+        Teams input _ ->
+            teamProfiles
+            input
+            case _ of
+            TeamProfiles.CreateProfile -> Just ShowCreateProfileModal
+            TeamProfiles.ChangePage page -> Just $ ChangePage page
     ]
     <>
-    case player, showCreatePlayerProfile of
-    Just player', true -> Array.singleton $
+    case player, tab of
+    Just player', (Players _ true) -> Array.singleton $
         createPlayerProfile
         { game: game', player: player' }
         case _ of
-        Modal.BackgroundClicked -> Just HideCreatePlayerProfile
-        Modal.OutputRaised (CreatePlayerProfile.CloseClicked) -> Just HideCreatePlayerProfile
+        Modal.BackgroundClicked -> Just HideCreateProfileModal
+        Modal.OutputRaised (CreatePlayerProfile.CloseClicked) -> Just HideCreateProfileModal
         Modal.OutputRaised (CreatePlayerProfile.ProfileCreated) -> Just ReloadPage
     _, _ -> []
 render NotFound = HH.p_ [ HH.text "Game could not be found." ]
 render Error = HH.p_ [ HH.text
     "There has been an error loading the game. Please try again later." ]
 
-loadGame :: forall left. String -> Async left (Maybe View.OkContent)
+loadGame :: forall left. String -> Async left (Maybe ViewGame.OkContent)
 loadGame handle = Async.unify do
     response <-
         Fetch.fetch_ ("/api/games/by-handle/" <> handle)
@@ -131,9 +146,9 @@ loadGame handle = Async.unify do
         _ -> Async.left Nothing
     pure $ Just content
 
-loadProfiles :: forall left.
+loadPlayerProfiles :: forall left.
     String -> Int -> ProfileFilters.Filters -> Async left (Maybe ViewGamePlayers.OkContent)
-loadProfiles handle page filters = Async.unify do
+loadPlayerProfiles handle page filters = Async.unify do
     timezone <- H.liftEffect getClientTimezone
     let nothingIfNull string = if String.null string then Nothing else Just string
     let pagePair = "page=" <> show page
@@ -165,6 +180,87 @@ loadProfiles handle page filters = Async.unify do
         _ -> Async.left Nothing
     pure content
 
+loadTeamProfiles :: forall left.
+    String -> Int -> ProfileFilters.Filters -> Async left (Maybe ViewGameTeams.OkContent)
+loadTeamProfiles handle page filters = Async.unify do
+    timezone <- H.liftEffect getClientTimezone
+    let nothingIfNull string = if String.null string then Nothing else Just string
+    let pagePair = "page=" <> show page
+        timezonePair = "timezone=" <> timezone
+        ageFromPair = filters.ageFrom <#> show <#> ("ageFrom=" <> _)
+        ageToPair = filters.ageTo <#> show <#> ("ageTo=" <> _)
+        languagePairs = filters.languages <#> ("languages=" <> _)
+    --     countryPairs = filters.countries <#> (\country -> "countries=" <> country)
+        microphonePair = if filters.microphone then Just "microphone=true" else Nothing
+        weekdayFromPair = filters.weekdayFrom <#> ("weekdayFrom=" <> _)
+        weekdayToPair = filters.weekdayTo <#> ("weekdayTo=" <> _)
+        weekendFromPair = filters.weekendFrom <#> ("weekendFrom=" <> _)
+        weekendToPair = filters.weekendTo <#> ("weekendTo=" <> _)
+        fieldPairs =
+            filters.fields
+            <#> (\{ fieldKey, optionKey } -> fieldKey <> "=" <> optionKey)
+        allPairs = [pagePair, timezonePair]
+            <> languagePairs <> fieldPairs <> Array.catMaybes
+            [ ageFromPair, ageToPair, microphonePair
+            ,  weekdayFromPair, weekdayToPair, weekendFromPair, weekendToPair
+            ]
+        filterQuery = "?" <> intercalate "&" allPairs
+    response <-
+        Fetch.fetch_ ("/api/profiles/by-handle/" <> handle <> "/teams" <> filterQuery)
+        # lmap (const Nothing)
+    content <-
+        case FetchRes.status response of
+        200 -> FetchRes.text response >>= Json.readJSON # lmap (const Nothing)
+        _ -> Async.left Nothing
+    pure content
+
+loadTab :: forall output left.
+    String -> GameHeader.Tab -> H.HalogenM State Action ChildSlots output (Async left) Unit
+loadTab handle GameHeader.Players = do
+    { gameContent, profilesContent } <-
+        H.lift
+        $ sequential
+        $ { gameContent: _, profilesContent: _}
+        <$> parallel (loadGame handle)
+        <*> parallel (loadPlayerProfiles handle 1 ProfileFilters.emptyFilters)
+    case gameContent, profilesContent of
+        Just gameContent', Just profilesContent' -> do
+            player <- H.liftEffect getPlayerInfo
+            H.put $ Game gameContent' player $ Players
+                { profiles: profilesContent'.profiles
+                , profileCount: profilesContent'.count
+                , page: 1
+                , showCreateProfile:
+                    isJust player && not gameContent'.hasPlayerProfile
+                }
+                false
+            H.liftEffect $ setMetaTags gameContent'.title GameHeader.Players
+        _, _ -> do
+            H.put Error
+            H.liftEffect $ setMetaTags handle GameHeader.Players
+loadTab handle GameHeader.Teams = do
+    { gameContent, profilesContent } <-
+        H.lift
+        $ sequential
+        $ { gameContent: _, profilesContent: _}
+        <$> parallel (loadGame handle)
+        <*> parallel (loadTeamProfiles handle 1 ProfileFilters.emptyFilters)
+    case gameContent, profilesContent of
+        Just gameContent', Just profilesContent' -> do
+            player <- H.liftEffect getPlayerInfo
+            H.put $ Game gameContent' player $ Teams
+                { profiles: profilesContent'.profiles
+                , profileCount: profilesContent'.count
+                , page: 1
+                , showCreateProfile:
+                    isJust player && not gameContent'.hasPlayerProfile
+                }
+                false
+            H.liftEffect $ setMetaTags gameContent'.title GameHeader.Players
+        _, _ -> do
+            H.put Error
+            H.liftEffect $ setMetaTags handle GameHeader.Players
+
 setMetaTags :: String -> GameHeader.Tab -> Effect Unit
 setMetaTags handleOrTitle tab =
     case tab of
@@ -182,68 +278,87 @@ handleAction :: forall output left.
 handleAction Init = do
     state <- H.get
     case state of
-        Empty (Input handle tab) -> do
-            { gameContent, profilesContent } <-
-                H.lift
-                $ sequential
-                $ { gameContent: _, profilesContent: _}
-                <$> parallel (loadGame handle)
-                <*> parallel (loadProfiles handle 1 ProfileFilters.emptyFilters)
-            case gameContent, profilesContent of
-                Just gameContent', Just profilesContent' -> do
-                    player <- H.liftEffect getPlayerInfo
-                    H.put $ Game gameContent' tab player false
+        Empty (Input handle tab) -> loadTab handle tab
+        _ -> pure unit
+handleAction (Receive (Input _ inputTab)) = do
+    state <- H.get
+    case state, inputTab of
+        Game content player _, GameHeader.Players -> do
+            profilesContent <- H.lift $
+                loadPlayerProfiles content.handle 1 ProfileFilters.emptyFilters
+            case profilesContent of
+                Just profilesContent' -> do
+                    H.put $ Game content player $ Players
                         { profiles: profilesContent'.profiles
                         , profileCount: profilesContent'.count
                         , page: 1
                         , showCreateProfile:
-                            isJust player && not gameContent'.hasPlayerProfile
+                            isJust player && not content.hasPlayerProfile
                         }
-                    H.liftEffect $ setMetaTags gameContent'.title tab
-                _, _ -> do
-                    H.put Error
-                    H.liftEffect $ setMetaTags handle tab
-        _ -> pure unit
-handleAction (Receive (Input inputHandle inputTab)) = do
-    state <- H.get
-    case state of
-        Game content stateTab _ _ profilesInput ->
-            if content.handle == inputHandle && stateTab == inputTab
-            then pure unit
-            else pure unit
-        _ -> pure unit
-    -- case state of
-    --     Game content _ _ -> do
-    --         H.put $ Game content tab
-    --         H.liftEffect $ setMetaTags content.title tab
-    --     _ -> pure unit
-    pure unit
-handleAction (ApplyFilters filters) = do
-    state <- H.get
-    case state of
-        Game game' tab player showCreatePlayerProfile profilesInput -> do
-            profilesContent <- H.lift $ loadProfiles game'.handle 1 filters
+                        false
+                    H.liftEffect $ setMetaTags content.title inputTab
+                Nothing -> pure unit
+        Game content player _, GameHeader.Teams -> do
+            profilesContent <- H.lift $
+                loadTeamProfiles content.handle 1 ProfileFilters.emptyFilters
             case profilesContent of
-                Just profilesContent' ->
-                    H.put $ Game game' tab player showCreatePlayerProfile
+                Just profilesContent' -> do
+                    H.put $ Game content player $ Teams
                         { profiles: profilesContent'.profiles
                         , profileCount: profilesContent'.count
                         , page: 1
-                        , showCreateProfile: profilesInput.showCreateProfile
+                        , showCreateProfile:
+                            isJust player && not content.hasTeamProfile
                         }
+                        false
+                    H.liftEffect $ setMetaTags content.title inputTab
+                Nothing -> pure unit
+        _, _ -> pure unit
+handleAction (ApplyFilters filters) = do
+    state <- H.get
+    case state of
+        Game game' player (Players input _) -> do
+            profilesContent <- H.lift $
+                loadPlayerProfiles game'.handle 1 filters
+            case profilesContent of
+                Just profilesContent' ->
+                    H.put $ Game game' player $ Players
+                        { profiles: profilesContent'.profiles
+                        , profileCount: profilesContent'.count
+                        , page: 1
+                        , showCreateProfile: input.showCreateProfile
+                        }
+                        false
+                Nothing -> pure unit
+        Game game' player (Teams input _) -> do
+            profilesContent <- H.lift $
+                loadTeamProfiles game'.handle 1 filters
+            case profilesContent of
+                Just profilesContent' ->
+                    H.put $ Game game' player $ Teams
+                        { profiles: profilesContent'.profiles
+                        , profileCount: profilesContent'.count
+                        , page: 1
+                        , showCreateProfile: input.showCreateProfile
+                        }
+                        false
                 Nothing -> pure unit
         _ -> pure unit
-handleAction ShowCreatePlayerProfile =
+handleAction ShowCreateProfileModal =
     H.modify_
     case _ of
-    Game game' tab player showCreatePlayerProfile profilesInput ->
-        Game game' tab player true profilesInput
+    Game game' player (Players input _) ->
+        Game game' player $ Players input true
+    Game game' player (Teams input _) ->
+        Game game' player $ Teams input true
     other -> other
-handleAction HideCreatePlayerProfile =
+handleAction HideCreateProfileModal =
     H.modify_
     case _ of
-    Game game' tab player showCreatePlayerProfile profilesInput ->
-        Game game' tab player false profilesInput
+    Game game' player (Players input _) ->
+        Game game' player $ Players input false
+    Game game' player (Teams input _) ->
+        Game game' player $ Teams input false
     other -> other
 handleAction ReloadPage =
     window >>= location >>= reload # H.liftEffect

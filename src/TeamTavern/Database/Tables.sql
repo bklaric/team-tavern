@@ -102,8 +102,8 @@ create table team_profile
     ( id serial not null primary key
     , player_id integer not null references player(id)
     , game_id integer not null references game(id)
-    , birthday_from date
-    , birthday_to date
+    , age_from integer
+    , age_to integer
     , languages text[] not null default '{}'
     , regions text[] not null default '{}'
     , timezone text

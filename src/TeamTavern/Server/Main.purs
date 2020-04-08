@@ -55,9 +55,9 @@ import TeamTavern.Server.Player.ViewSettings (viewSettings) as Player
 import TeamTavern.Server.Profile.Create (create) as Profile
 import TeamTavern.Server.Profile.Routes (bundleFilters)
 import TeamTavern.Server.Profile.Update (update) as Profile
-import TeamTavern.Server.Profile.ViewByGame (viewByGame) as Profile
 import TeamTavern.Server.Profile.ViewByPlayer (viewByPlayer) as Profile
 import TeamTavern.Server.Profile.ViewGamePlayers (viewGamePlayers) as Profile
+import TeamTavern.Server.Profile.ViewGameTeams (viewGameTeams) as Profile
 import TeamTavern.Server.Routes (TeamTavernRoutes)
 import TeamTavern.Server.Session.End (end) as Session
 import TeamTavern.Server.Session.Start (start) as Session
@@ -198,8 +198,10 @@ handleRequest pool client method url cookies body =
             Profile.create pool identifiers cookies body
         , updateProfile: \identifiers ->
             Profile.update pool identifiers cookies body
-        , viewProfilesByGame: \filters @ { handle, page, timezone } ->
+        , viewGamePlayers: \filters @ { handle, page, timezone } ->
             Profile.viewGamePlayers pool handle page timezone $ bundleFilters filters
+        , viewGameTeams: \filters @ { handle, page, timezone } ->
+            Profile.viewGameTeams pool handle page timezone $ bundleFilters filters
         , viewProfilesByPlayer: \{ nickname, ilk } ->
             Profile.viewByPlayer pool nickname ilk
         , viewAllConversations: const $

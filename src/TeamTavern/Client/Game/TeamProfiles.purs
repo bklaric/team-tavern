@@ -1,4 +1,4 @@
-module TeamTavern.Client.Game.TeamProfiles (Message(..), Slot, teamProfiles) where
+module TeamTavern.Client.Game.TeamProfiles (TeamProfile, Input, Message(..), Slot, teamProfiles) where
 
 import Prelude
 
@@ -17,12 +17,11 @@ import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchorIndexed)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
-import TeamTavern.Client.Script.Cookie (PlayerInfo)
 import TeamTavern.Server.Profile.ViewByGame.LoadProfiles (pageSize, pageSize')
 
 type TeamProfile =
     { nickname :: String
-    , age :: Maybe { from :: Int, to :: Int }
+    , age :: { from :: Maybe Int, to :: Maybe Int }
     , countries :: Array String
     , languages :: Array String
     , hasMicrophone :: Boolean
@@ -30,10 +29,15 @@ type TeamProfile =
     , weekendOnline :: Maybe { from :: String, to :: String }
     , fieldValues :: Array
         { field ::
-            { label :: String
+            { ilk :: Int
+            , key :: String
+            , label :: String
             , icon :: String
             }
-        , options :: Array String
+        , options :: Array
+            { key :: String
+            , label :: String
+            }
         }
     , summary :: Array String
     , updated :: String
@@ -43,10 +47,7 @@ type TeamProfile =
 type Input =
     { profiles :: Array TeamProfile
     , profileCount :: Int
-    , player :: Maybe
-        { info :: PlayerInfo
-        , hasProfile :: Boolean
-        }
+    , showCreateProfile :: Boolean
     , page :: Int
     }
 
@@ -103,7 +104,7 @@ totalPages :: Int -> Int
 totalPages count = ceil (toNumber count / pageSize')
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
-render { profiles, profileCount, player, page } =
+render { profiles, profileCount, showCreateProfile, page } =
     HH.div [ HP.class_ $ HH.ClassName "card" ] $
     [ HH.span [ HP.class_ $ HH.ClassName "card-title" ] $
         [ HH.text "Team profiles"
@@ -120,8 +121,8 @@ render { profiles, profileCount, player, page } =
             ]
         ]
         <>
-        case player of
-        Just { info, hasProfile } | not hasProfile -> Array.singleton $
+        if showCreateProfile
+        then Array.singleton $
             HH.button
             [ HP.class_ $ HH.ClassName "primary-button"
             , HE.onClick $ const $ Just CreateProfileAction
@@ -129,7 +130,7 @@ render { profiles, profileCount, player, page } =
             [ HH.i [ HP.class_ $ HH.ClassName "fas fa-user-plus button-icon" ] []
             , HH.text "Create team profile"
             ]
-        _ -> []
+        else []
     ]
     <>
     if Array.null profiles
@@ -147,15 +148,29 @@ render { profiles, profileCount, player, page } =
             ]
         ]
         <> Array.catMaybes
-        [ profile.age <#> \{ from, to } ->
-            HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
-            [ HH.i [ HP.class_ $ HH.ClassName "fas fa-calendar-alt profile-field-icon" ] []
-            , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text "Are between " ]
-            , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text $ show from ]
-            , HH.text " and "
-            , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text $ show to ]
-            , HH.text " years old"
-            ]
+        [ case profile.age.from, profile.age.to of
+            Nothing, Nothing -> Nothing
+            Just from, Nothing -> Just $
+                HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
+                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-calendar-alt profile-field-icon" ] []
+                , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text "Are older than " ]
+                , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text $ show from ]
+                ]
+            Nothing, Just to -> Just $
+                HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
+                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-calendar-alt profile-field-icon" ] []
+                , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text "Are younger than " ]
+                , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text $ show to ]
+                ]
+            Just from, Just to -> Just $
+                HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
+                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-calendar-alt profile-field-icon" ] []
+                , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text "Are between " ]
+                , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text $ show from ]
+                , HH.text " and "
+                , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text $ show to ]
+                , HH.text " years old"
+                ]
         , if Array.null profile.countries
             then Nothing
             else Just $
@@ -229,7 +244,7 @@ render { profiles, profileCount, player, page } =
             HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
             [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
             , HH.span [ HP.class_ $ HH.ClassName "profile-field-label" ] [ HH.text $ field.label <> ": " ]
-            , HH.text $ intercalate ", " options
+            , HH.text $ intercalate ", " (options <#> _.label)
             ])
         <> (profile.summary <#> \paragraph ->
             HH.p [ HP.class_ $ HH.ClassName "profile-summary" ] [ HH.text paragraph ]))

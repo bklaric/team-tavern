@@ -109,6 +109,26 @@ type ViewGamePlayers = Route
     :? Optional "microphone" HasMicrophone
     :? Rest "fields")
 
+type ViewGameTeams = Route
+    Get
+    (  Literal "profiles"
+    :> Literal "by-handle"
+    :> Capture "handle" Handle
+    :> Literal "teams"
+    :> End)
+    (  Mandatory "page" ProfilePage
+    :? Mandatory "timezone" Timezone
+    :? Optional "ageFrom" Age
+    :? Optional "ageTo" Age
+    :? Many "languages" Language
+    :? Many "countries" Country
+    :? Optional "weekdayFrom" Time
+    :? Optional "weekdayTo" Time
+    :? Optional "weekendFrom" Time
+    :? Optional "weekendTo" Time
+    :? Optional "microphone" HasMicrophone
+    :? Rest "fields")
+
 type ViewProfilesByPlayer = Route
     Get
     (  Literal "profiles"
@@ -120,5 +140,6 @@ type ViewProfilesByPlayer = Route
 type ProfileRoutes
     =    "createProfile"        := AddGamePlayer
     :<|> "updateProfile"        := UpdateGamePlayer
-    :<|> "viewProfilesByGame"   := ViewGamePlayers
+    :<|> "viewGamePlayers"      := ViewGamePlayers
+    :<|> "viewGameTeams"        := ViewGameTeams
     :<|> "viewProfilesByPlayer" := ViewProfilesByPlayer
