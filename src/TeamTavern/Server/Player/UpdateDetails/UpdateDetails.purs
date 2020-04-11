@@ -13,7 +13,7 @@ import Postgres.Pool (Pool)
 import Postgres.Query (Query(..), QueryParameter, (:), (:|))
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Server.Player.UpdateDetails.ReadUpdate (UpdateDetailsModel)
-import TeamTavern.Server.Player.UpdateDetails.ValidateTimespan (endTime, startTime, toString)
+import TeamTavern.Server.Player.UpdateDetails.ValidateTimespan (nullableTimeFrom, nullableTimeTo)
 
 type UpdateDetailsError errors = Variant (databaseError :: Error | errors)
 
@@ -42,10 +42,10 @@ queryParameters info model =
     : model.languages
     : toNullable model.country
     : toNullable model.timezone
-    : (toNullable $ toString <$> startTime <$> model.onlineWeekday)
-    : (toNullable $ toString <$> endTime <$> model.onlineWeekday)
-    : (toNullable $ toString <$> startTime <$> model.onlineWeekend)
-    : (toNullable $ toString <$> endTime <$> model.onlineWeekend)
+    : nullableTimeFrom model.onlineWeekday
+    : nullableTimeTo model.onlineWeekday
+    : nullableTimeFrom model.onlineWeekend
+    : nullableTimeTo model.onlineWeekend
     :| model.hasMicrophone
 
 updateDetails

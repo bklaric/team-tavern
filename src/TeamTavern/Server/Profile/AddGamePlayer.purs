@@ -1,4 +1,4 @@
-module TeamTavern.Server.Profile.Create where
+module TeamTavern.Server.Profile.AddGamePlayer where
 
 import Prelude
 
@@ -10,17 +10,17 @@ import Perun.Response (Response)
 import Postgres.Async.Pool (withTransaction)
 import Postgres.Pool (Pool)
 import TeamTavern.Server.Infrastructure.ReadCookieInfo (readCookieInfo)
-import TeamTavern.Server.Profile.Create.AddProfile (addProfile)
-import TeamTavern.Server.Profile.Create.LogError (logError)
-import TeamTavern.Server.Profile.Create.SendResponse (sendResponse)
+import TeamTavern.Server.Profile.AddGamePlayer.AddProfile (addProfile)
+import TeamTavern.Server.Profile.AddGamePlayer.LogError (logError)
+import TeamTavern.Server.Profile.AddGamePlayer.SendResponse (sendResponse)
 import TeamTavern.Server.Profile.Infrastructure.LoadFields (loadFields)
 import TeamTavern.Server.Profile.Infrastructure.ReadProfile (readProfile)
 import TeamTavern.Server.Profile.Infrastructure.ValidateProfile (validateProfile)
 import TeamTavern.Server.Profile.Routes (Identifiers)
 
-create :: forall left.
+addGamePlayer :: forall left.
     Pool -> Identifiers -> Map String String -> Body -> Async left Response
-create pool identifiers cookies body =
+addGamePlayer pool identifiers cookies body =
     sendResponse $ examineLeftWithEffect logError do
     -- Read info info from cookies.
     cookieInfo <- readCookieInfo cookies

@@ -52,7 +52,8 @@ import TeamTavern.Server.Player.View (view) as Player
 import TeamTavern.Server.Player.ViewDetails (viewDetails) as Player
 import TeamTavern.Server.Player.ViewHeader (viewHeader) as Player
 import TeamTavern.Server.Player.ViewSettings (viewSettings) as Player
-import TeamTavern.Server.Profile.Create (create) as Profile
+import TeamTavern.Server.Profile.AddGamePlayer (addGamePlayer) as Profile
+import TeamTavern.Server.Profile.AddGameTeam (addGameTeam) as Profile
 import TeamTavern.Server.Profile.Routes (bundleFilters)
 import TeamTavern.Server.Profile.Update (update) as Profile
 import TeamTavern.Server.Profile.ViewByPlayer (viewByPlayer) as Profile
@@ -194,8 +195,10 @@ handleRequest pool client method url cookies body =
             Game.handleView pool handle cookies
         , updateGame: \{ handle } ->
             Game.handleUpdate pool handle cookies body
-        , createProfile: \identifiers ->
-            Profile.create pool identifiers cookies body
+        , addGamePlayer: \identifiers ->
+            Profile.addGamePlayer pool identifiers cookies body
+        , addGameTeam: \identifiers ->
+            Profile.addGameTeam pool identifiers cookies body
         , updateProfile: \identifiers ->
             Profile.update pool identifiers cookies body
         , viewGamePlayers: \filters @ { handle, page, timezone } ->

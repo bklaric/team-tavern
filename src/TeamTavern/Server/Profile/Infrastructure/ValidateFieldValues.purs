@@ -1,4 +1,4 @@
-module TeamTvaern.Server.Profile.Infrastructure.ValidateFieldValues where
+module TeamTavern.Server.Profile.Infrastructure.ValidateFieldValues where
 
 import Prelude
 

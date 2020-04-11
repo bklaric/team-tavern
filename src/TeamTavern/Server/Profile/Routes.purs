@@ -79,6 +79,16 @@ type AddGamePlayer = Route
     :> End)
     NoQuery
 
+type AddGameTeam = Route
+    Post
+    (  Literal "profiles"
+    :> Literal "by-handle"
+    :> Capture "handle" Handle
+    :> Literal "teams"
+    :> Capture "nickname" Nickname
+    :> End)
+    NoQuery
+
 type UpdateGamePlayer = Route
     Put
     (  Literal "profiles"
@@ -138,7 +148,8 @@ type ViewProfilesByPlayer = Route
     (Mandatory "ilk" ProfileIlk)
 
 type ProfileRoutes
-    =    "createProfile"        := AddGamePlayer
+    =    "addGamePlayer"        := AddGamePlayer
+    :<|> "addGameTeam"          := AddGameTeam
     :<|> "updateProfile"        := UpdateGamePlayer
     :<|> "viewGamePlayers"      := ViewGamePlayers
     :<|> "viewGameTeams"        := ViewGameTeams

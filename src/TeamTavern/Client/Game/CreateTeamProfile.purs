@@ -6,17 +6,13 @@ import Async (Async)
 import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
-import Data.Array (any, foldl)
-import Data.Array as Arary
+import Data.Array (foldl)
 import Data.Array as Array
 import Data.Bifunctor (bimap, lmap)
 import Data.Const (Const)
 import Data.HTTP.Method (Method(..))
-import Data.Map as Map
-import Data.Maybe (Maybe(..), isJust)
+import Data.Maybe (Maybe(..))
 import Data.Options ((:=))
-import Data.String (null)
-import Data.Tuple (Tuple(..))
 import Data.Variant (SProxy(..), match)
 import Halogen (ClassName(..))
 import Halogen as H
@@ -27,58 +23,56 @@ import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.CloseButton (closeButton)
 import TeamTavern.Client.Components.Divider (divider)
-import TeamTavern.Client.Components.Modal as Modal
-import TeamTavern.Client.Components.MultiSelect (multiSelectIndexed)
-import TeamTavern.Client.Components.MultiSelect as MultiSelect
-import TeamTavern.Client.Components.SingleSelect (singleSelectIndexed)
-import TeamTavern.Client.Components.SingleSelect as SingleSelect
-import TeamTavern.Client.Game.GameHeader as GameHeader
+import TeamTavern.Client.Components.ModalDeclarative as Modal
+import TeamTavern.Client.Components.SelectDeclarative.MultiSelect (multiSelectIndexed)
+import TeamTavern.Client.Components.SelectDeclarative.MultiSelect as MultiSelect
 import TeamTavern.Client.Script.Cookie (PlayerInfo)
 import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass, otherErrorClass)
-import TeamTavern.Server.Game.View.SendResponse as View
-import TeamTavern.Server.Profile.Create.SendResponse as Create
+import TeamTavern.Server.Game.View.SendResponse as ViewGame
+import TeamTavern.Server.Profile.AddGamePlayer.SendResponse as Create
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
-type Input =
-    { game :: View.OkContent
-    , tab :: GameHeader.Tab
-    , playerInfo :: PlayerInfo
+type Option =
+    { key :: String
+    , label :: String
     }
 
-data Action
-    = SummaryInput String
-    | UrlValueInput String String
-    | Create Event
-    | Close
+type Field =
+    { key :: String
+    , label :: String
+    , icon :: String
+    , options :: Array Option
+    }
 
-data Message = ProfileCreated String | CloseClicked
+data FieldValue = FieldValue Field (MultiSelect.Input Option)
+
+type Input =
+    { game :: ViewGame.OkContent
+    , player :: PlayerInfo
+    }
 
 type State =
-    { game :: View.OkContent
-    , tab :: GameHeader.Tab
-    , playerInfo :: PlayerInfo
+    { game :: ViewGame.OkContent
+    , player :: PlayerInfo
     , summary :: String
+    , fieldValues :: Array FieldValue
     , summaryError :: Boolean
-    , fieldValues :: Array
-        { fieldKey :: String
-        , url :: Maybe String
-        , optionKey :: Maybe String
-        , optionKeys :: Maybe (Array String)
-        }
-    , urlValueErrors :: Array { fieldKey :: String }
-    , missingErrors :: Array { fieldKey :: String }
     , otherError :: Boolean
     , submitting :: Boolean
     }
 
-type ChildSlots =
-    ( "singleSelectField" :: SingleSelect.Slot { key :: String, label :: String } String
-    , "multiSelectField" :: MultiSelect.Slot { key :: String, label :: String } String
-    )
+data Action
+    = SummaryInput String
+    | FieldValueInput String (Array (MultiSelect.InputEntry Option))
+    | Create Event
+    | Close
 
-type Slot =
-    H.Slot (Modal.Query Input (Const Void)) (Modal.Message Message)
+data Output = ProfileCreated | CloseClicked
+
+type Slot = H.Slot (Const Void) (Modal.Output Output) Unit
+
+type ChildSlots = ("multiSelectField" :: MultiSelect.Slot Option String)
 
 fieldLabel :: forall slots action.
     String -> String -> String -> Boolean -> Maybe String -> HH.HTML slots action
@@ -103,109 +97,37 @@ fieldLabel key label icon required domain =
             , HH.span [ HP.class_ $ H.ClassName "input-sublabel" ] [ HH.text "optional" ]
             ])
 
-fieldInput
-    :: forall left
-    .  GameHeader.Tab
-    -> Array { fieldKey :: String }
-    -> Array { fieldKey :: String }
-    ->  { key :: String
-        , label :: String
-        , ilk :: Int
-        , icon :: String
-        , required :: Boolean
-        , domain :: Maybe String
-        , options :: Maybe (Array { key :: String , label :: String })
-        }
-    ->  H.ComponentHTML Action ChildSlots (Async left)
-fieldInput GameHeader.Players urlValueErrors missingErrors { key, ilk: 1, label, icon, required, domain: Just domain } = let
-    urlError = urlValueErrors # any (_.fieldKey >>> (_ == key))
-    missingError = missingErrors # any (_.fieldKey >>> (_ == key))
-    in
+fieldInput :: forall left.
+    FieldValue -> H.ComponentHTML Action ChildSlots (Async left)
+fieldInput (FieldValue { key, label, icon } input) =
     HH.div [ HP.class_ $ HH.ClassName "input-group" ]
-    [ fieldLabel key label icon required (Just domain)
-    , HH.input
-        [ HP.id_ key
-        , HP.class_ $ HH.ClassName "text-line-input"
-        , HE.onValueInput $ Just <<< UrlValueInput key
-        ]
-    , HH.p
-        [ HP.class_ $ inputErrorClass urlError ]
-        [ HH.text $ "This doesn't look like a valid " <> label <> " (" <> domain <> ") address." ]
-    , HH.p
-        [ HP.class_ $ inputErrorClass missingError ]
-        [ HH.text $ label <> " is required." ]
+    [ fieldLabel key label icon false Nothing
+    , multiSelectIndexed (SProxy :: SProxy "multiSelectField") key input
+        case _ of
+        MultiSelect.SelectedChanged entries -> Just $ FieldValueInput key entries
+        MultiSelect.FilterChanged text -> Nothing
     ]
-fieldInput GameHeader.Players _ _ { key, ilk: 2, label, icon, required, options: Just options } =
-    HH.div [ HP.class_ $ HH.ClassName "input-group" ]
-    [ fieldLabel key label icon required Nothing
-    , singleSelectIndexed (SProxy :: SProxy "singleSelectField") key
-        { options
-        , selected: Nothing
-        , labeler: _.label
-        , comparer: \leftOption rightOption -> leftOption.key == rightOption.key
-        , showFilter: Nothing
-        }
-    ]
-fieldInput GameHeader.Teams _ _ { key, ilk: 2, label, icon, required, options: Just options } =
-    HH.div [ HP.class_ $ HH.ClassName "input-group" ]
-    [ fieldLabel key label icon required Nothing
-    , multiSelectIndexed (SProxy :: SProxy "multiSelectField") key
-        { options: options <#> \option -> { option, selected: false }
-        , labeler: _.label
-        , comparer: \leftOption rightOption -> leftOption.key == rightOption.key
-        , showFilter: Nothing
-        }
-    ]
-fieldInput GameHeader.Players _ _ { key, ilk: 3, label, icon, required, options: Just options } =
-    HH.div [ HP.class_ $ HH.ClassName "input-group" ]
-    [ fieldLabel key label icon required Nothing
-    , multiSelectIndexed (SProxy :: SProxy "multiSelectField") key
-        { options: options <#> \option -> { option, selected: false }
-        , labeler: _.label
-        , comparer: \leftOption rightOption -> leftOption.key == rightOption.key
-        , showFilter: Nothing
-        }
-    ]
-fieldInput GameHeader.Teams _ _ { key, ilk: 3, label, icon, required, options: Just options } =
-    HH.div [ HP.class_ $ HH.ClassName "input-group" ]
-    [ fieldLabel key label icon required Nothing
-    , multiSelectIndexed (SProxy :: SProxy "multiSelectField") key
-        { options: options <#> \option -> { option, selected: false }
-        , labeler: _.label
-        , comparer: \leftOption rightOption -> leftOption.key == rightOption.key
-        , showFilter: Nothing
-        }
-    ]
-fieldInput _ _ _ _ = HH.div_ []
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render
-    { summary
+    { game
+    , summary
+    , fieldValues
     , summaryError
-    , urlValueErrors
-    , missingErrors
     , otherError
-    , game
-    , tab
     , submitting
     } =
-    HH.div [ HP.class_ $ HH.ClassName "wide-single-form-container" ] $ pure $ HH.form
+    HH.div [ HP.class_ $ HH.ClassName "wide-single-form-container" ] $
+    Array.singleton $
+    HH.form
     [ HP.class_ $ ClassName "form", HE.onSubmit $ Just <<< Create ] $
     [ closeButton Close
     , HH.h2 [ HP.class_ $ HH.ClassName "form-heading" ]
-        [ HH.text
-            case tab of
-            GameHeader.Players -> "Create your " <> game.title <> " profile"
-            GameHeader.Teams -> "Create your " <> game.title <> " team profile"
-        ]
+        [ HH.text $ "Create your " <> game.title <> " profile" ]
     , HH.p [ HP.class_ $ HH.ClassName "form-subheading" ]
-        [ HH.text
-            case tab of
-            GameHeader.Players -> "Describe yourself as a player and let other players find you."
-            GameHeader.Teams -> "Describe players you are looking for and let them find your team."
-        ]
+        [ HH.text "Describe players you are looking for and let them find your team" ]
     , HH.div [ HP.class_ $ HH.ClassName "responsive-input-groups" ]
-        (game.fields <#> fieldInput tab urlValueErrors missingErrors)
+        (fieldValues <#> fieldInput)
     , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
         [ HH.label
             [ HP.class_ $ HH.ClassName "input-label", HP.for "summary" ]
@@ -226,153 +148,157 @@ render
         ]
         [ HH.i [ HP.class_ $ HH.ClassName "fas fa-user-plus button-icon" ] []
         , HH.text
-            case tab of
-            GameHeader.Players ->
-                if submitting
-                then "Creating player profile..."
-                else "Create player profile"
-            GameHeader.Teams ->
-                if submitting
-                then "Creating team profile..."
-                else "Create team profile"
+            if submitting
+            then "Creating team profile..."
+            else "Create team profile"
         ]
     , HH.p
         [ HP.class_ $ otherErrorClass otherError ]
         [ HH.text "Something unexpected went wrong! Please try again later." ]
     ]
 
-sendCreateRequest :: forall left. State -> String -> Async left (Maybe State)
-sendCreateRequest state @ { summary, fieldValues, game, tab } nickname = Async.unify do
-    response <- Fetch.fetch
-        ("/api/profiles/single/" <> game.handle <> "/" <> nickname)
+data CreateError
+    = Other
+    | Content { summary :: Boolean }
+
+sendCreateRequest :: forall left.
+    String -> String -> String -> Array FieldValue -> Async left (Maybe CreateError)
+sendCreateRequest handle nickname summary fieldValues = Async.unify do
+    response <-
+        Fetch.fetch
+        ("/api/profiles/by-handle/" <> handle <> "/teams/" <> nickname)
         (  Fetch.method := POST
         <> Fetch.body := Json.writeJSON
             { summary
-            , fieldValues: fieldValues # Array.filter
-                \{ url, optionKey, optionKeys } ->
-                    isJust url
-                    || isJust optionKey
-                    || (case optionKeys of
-                        Just optionKeys' | not $ Array.null optionKeys' -> true
-                        _ -> false)
-            , type:
-                case tab of
-                GameHeader.Players -> 1
-                GameHeader.Teams -> 2
+            , languages: ([] :: Array String)
+            , regions: ([] :: Array String)
+            , hasMicrophone: false
+            , fieldValues: fieldValues # Array.mapMaybe
+                case _ of
+                FieldValue field input
+                | entries <- Array.filter _.selected input.entries
+                , not $ Array.null entries -> Just
+                    { fieldKey: field.key
+                    , optionKeys: entries <#> (_.option >>> _.key)
+                    }
+                _ -> Nothing
             }
         <> Fetch.credentials := Fetch.Include
         )
-        # lmap (const $ Just $ state { otherError = true })
-    newState <- case FetchRes.status response of
+        # lmap (const $ Just Other)
+    result <-
+        case FetchRes.status response of
         204 -> pure Nothing
-        400 -> FetchRes.text response >>= JsonAsync.readJSON
+        400 ->
+            FetchRes.text response
+            >>= JsonAsync.readJSON
             # bimap
-                (const $ Just $ state { otherError = true })
-                (\(error :: Create.BadRequestContent) -> Just $ match
-                    { invalidProfile: foldl (\state' error' ->
-                        error' # match
-                            { invalidSummary: const $ state' { summaryError = true }
-                            , invalidUrl: \{ fieldKey, errors } ->
-                                state' { urlValueErrors = Arary.cons { fieldKey } state'.urlValueErrors }
-                            , missing: \{ fieldKey } ->
-                                state' { missingErrors = Arary.cons { fieldKey } state'.missingErrors }
-                            })
-                        state
+                (const $ Just Other)
+                (\(error :: Create.BadRequestContent) -> Just $ Content $
+                    match
+                    { invalidProfile:
+                        foldl
+                        (\errors error' ->
+                            error' # match
+                                { invalidSummary: const $
+                                    errors { summary = true }
+                                , invalidUrl: const errors
+                                , missing: const errors
+                                }
+                        )
+                        ({ summary: false })
                     }
                     error)
-        _ -> pure $ Just $ state { otherError = true }
-    pure newState
+        _ -> pure $ Just Other
+    pure result
 
 handleAction :: forall left.
-    Action -> H.HalogenM State Action ChildSlots Message (Async left) Unit
+    Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
 handleAction (SummaryInput summary) =
-    H.modify_ (_ { summary = summary }) $> unit
-handleAction (UrlValueInput fieldKey url) = do
-    state @ { fieldValues } <- H.get
-    let newFieldValues = fieldValues <#> \value ->
-            if value.fieldKey == fieldKey
-                then
-                    if null url
-                    then value { url = Nothing }
-                    else value { url = Just url }
-                else value
-    H.put $ state { fieldValues = newFieldValues }
+    H.modify_ (_ { summary = summary })
+handleAction (FieldValueInput fieldKey entries) =
+    H.modify_ \state -> state
+        { fieldValues = state.fieldValues <#>
+            case _ of
+            FieldValue field input | field.key == fieldKey ->
+                FieldValue field input { entries = entries }
+            other -> other
+        }
 handleAction (Create event) = do
     H.liftEffect $ preventDefault event
-    state @ { game: { fields }, playerInfo: { nickname } } <- H.gets (_
-        { summaryError   = false
-        , otherError     = false
-        , urlValueErrors = []
-        , missingErrors  = []
-        , submitting     = true
-        })
-    H.put state
-    singleSelectResults <-
-        (H.queryAll (SProxy :: SProxy "singleSelectField")
-        $ SingleSelect.Selected identity)
-    let (singleSelectValues :: Array _) =
-            singleSelectResults
-            # Map.toUnfoldable
-            <#> \(Tuple fieldKey option) ->
-                { fieldKey
-                , url: Nothing
-                , optionKey: option <#> _.key
-                , optionKeys: Nothing
-                }
-    multiSelectResults <-
-        (H.queryAll (SProxy :: SProxy "multiSelectField")
-        $ MultiSelect.Selected identity)
-    let (multiSelectValues :: Array _) =
-            multiSelectResults
-            # Map.toUnfoldable
-            <#> \(Tuple fieldKey options) ->
-                { fieldKey
-                , url: Nothing
-                , optionKey: Nothing
-                , optionKeys: Just $ options <#> _.key
-                }
-    let state' = state
-            { fieldValues =
-                state.fieldValues
-                <> singleSelectValues
-                <> multiSelectValues
+    resetState @ { game, player, summary, fieldValues } <-
+        H.modify (\state -> state
+            { summaryError = false
+            , otherError   = false
+            , submitting   = true
+            })
+    result <- H.lift $
+        sendCreateRequest game.handle player.nickname summary fieldValues
+    case result of
+        Nothing -> H.raise ProfileCreated
+        Just Other -> H.put $ resetState
+            { otherError = true
+            , submitting = false
             }
-    newState <- H.lift $ sendCreateRequest state' nickname
-    case newState of
-        Nothing -> H.raise $ ProfileCreated state.game.handle
-        Just newState' -> H.put newState' { submitting = false }
-handleAction Close = H.raise $ CloseClicked
+        Just (Content errors) -> H.put $ resetState
+            { summaryError = errors.summary
+            , submitting = false
+            }
+handleAction Close = H.raise CloseClicked
 
 component :: forall query left.
-    H.Component HH.HTML query Input Message (Async left)
+    H.Component HH.HTML query Input Output (Async left)
 component = H.mkComponent
-    { initialState: \{ game, tab, playerInfo } ->
-        { summary: ""
+    { initialState: \{ game, player } ->
+        { game
+        , player
+        , summary: ""
+        , fieldValues:
+            game.fields
+            <#> (\field ->
+                case field.ilk of
+                2 | Just options <- field.options -> Just $ FieldValue
+                    { key: field.key
+                    , label: field.label
+                    , icon: field.icon
+                    , options
+                    }
+                    { entries: options <#> \option ->
+                        { option, selected: false }
+                    , labeler: _.label
+                    , comparer: \leftOption rightOption ->
+                        leftOption.key == rightOption.key
+                    , filter: Nothing
+                    }
+                3 | Just options <- field.options -> Just $ FieldValue
+                    { key: field.key
+                    , label: field.label
+                    , icon: field.icon
+                    , options
+                    }
+                    { entries: options <#> \option ->
+                        { option, selected: false }
+                    , labeler: _.label
+                    , comparer: \leftOption rightOption ->
+                        leftOption.key == rightOption.key
+                    , filter: Nothing
+                    }
+                _ -> Nothing)
+            # Array.catMaybes
         , summaryError: false
-        , fieldValues: game.fields <#> (\field ->
-            { fieldKey: field.key
-            , url: Nothing
-            , optionKey: Nothing
-            , optionKeys: Nothing
-            })
-        , urlValueErrors: []
-        , missingErrors: []
         , otherError: false
-        , game
-        , tab
-        , playerInfo
         , submitting: false
         }
     , render
     , eval: H.mkEval $ H.defaultEval { handleAction = handleAction }
     }
 
-createProfile
-    :: forall query children left
-    .  (Modal.Message Message -> Maybe query)
-    -> HH.ComponentHTML query
-        (createProfile :: Slot Unit | children)
-        (Async left)
-createProfile handleMessage = HH.slot
-    (SProxy :: SProxy "createProfile") unit
-    (Modal.component component) unit handleMessage
+createTeamProfile
+    :: forall children action left
+    .  Input
+    -> (Modal.Output Output -> Maybe action)
+    -> HH.ComponentHTML action
+        (createTeamProfile :: Slot | children) (Async left)
+createTeamProfile input handleMessage =
+    HH.slot (SProxy :: SProxy "createTeamProfile") unit
+    (Modal.component component) input handleMessage

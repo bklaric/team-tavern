@@ -32,7 +32,7 @@ pageSize = 20
 type LoadProfilesResult =
     { nickname :: String
     , age :: { from :: Maybe Int, to :: Maybe Int }
-    , countries :: Array String
+    , regions :: Array String
     , languages :: Array String
     , hasMicrophone :: Boolean
     , weekdayOnline :: Maybe { from :: String, to :: String }

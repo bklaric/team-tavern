@@ -1,10 +1,11 @@
 module TeamTavern.Server.Player.UpdateDetails.ValidateTimespan
-    (Hours, Minutes, Time, Timespan, toString, startTime, endTime, validateTimespan) where
+    (Hours, Minutes, Time, Timespan, toString, nullableTimeFrom, nullableTimeTo, validateTimespan) where
 
 import Prelude
 
 import Data.Int (fromString)
 import Data.Maybe (Maybe(..))
+import Data.Nullable (Nullable, notNull, null)
 import Data.String (Pattern(..), Replacement(..), replace, split)
 import Data.String.Utils (padStart)
 
@@ -31,11 +32,13 @@ toString (Time hours minutes) =
 
 data Timespan = Timespan Time Time
 
-startTime :: Timespan -> Time
-startTime (Timespan time _) = time
+nullableTimeFrom :: Maybe Timespan -> Nullable String
+nullableTimeFrom (Just (Timespan from _)) = notNull $ toString from
+nullableTimeFrom Nothing = null
 
-endTime :: Timespan -> Time
-endTime (Timespan _ time) = time
+nullableTimeTo :: Maybe Timespan -> Nullable String
+nullableTimeTo (Just (Timespan from _)) = notNull $ toString from
+nullableTimeTo Nothing = null
 
 validateTime :: String -> Maybe Time
 validateTime time =

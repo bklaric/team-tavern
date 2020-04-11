@@ -1,4 +1,4 @@
-module TeamTavern.Server.Profile.Create.SendResponse
+module TeamTavern.Server.Profile.AddGamePlayer.SendResponse
     (ProfileErrorContent, BadRequestContent, sendResponse) where
 
 import Prelude
@@ -9,8 +9,8 @@ import Data.Maybe (Maybe(..))
 import Data.Variant (SProxy(..), Variant, inj, match, onMatch)
 import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, noContent_, unauthorized__)
 import Simple.JSON (writeJSON)
-import TeamTavern.Server.Profile.Create.LogError (CreateError)
-import TeamTvaern.Server.Profile.Infrastructure.ValidateFieldValues (Field(..))
+import TeamTavern.Server.Profile.AddGamePlayer.LogError (CreateError)
+import TeamTavern.Server.Profile.Infrastructure.ValidateFieldValues (Field(..))
 
 type ProfileErrorContent = Variant
     ( invalidSummary :: {}

@@ -14,8 +14,8 @@ import TeamTavern.Server.Domain.NonEmptyText (NonEmptyTextError)
 import TeamTavern.Server.Profile.Infrastructure.LoadFields as LoadFields
 import TeamTavern.Server.Profile.Infrastructure.ReadProfile as ReadProfile
 import TeamTavern.Server.Profile.Infrastructure.ValidateSummary as ValidateSummary
-import TeamTvaern.Server.Profile.Infrastructure.ValidateFieldValues (ValidateFieldValuesError)
-import TeamTvaern.Server.Profile.Infrastructure.ValidateFieldValues as ValidateFieldValues
+import TeamTavern.Server.Profile.Infrastructure.ValidateFieldValues (ValidateFieldValuesError)
+import TeamTavern.Server.Profile.Infrastructure.ValidateFieldValues as ValidateFieldValues
 
 data Profile =
     Profile ValidateSummary.Summary (List ValidateFieldValues.FieldValue)

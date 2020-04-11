@@ -22,7 +22,7 @@ import TeamTavern.Server.Profile.ViewByGame.LoadProfiles (pageSize, pageSize')
 type TeamProfile =
     { nickname :: String
     , age :: { from :: Maybe Int, to :: Maybe Int }
-    , countries :: Array String
+    , regions :: Array String
     , languages :: Array String
     , hasMicrophone :: Boolean
     , weekdayOnline :: Maybe { from :: String, to :: String }
@@ -171,7 +171,7 @@ render { profiles, profileCount, showCreateProfile, page } =
                 , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text $ show to ]
                 , HH.text " years old"
                 ]
-        , if Array.null profile.countries
+        , if Array.null profile.regions
             then Nothing
             else Just $
                 HH.p [ HP.class_ $ HH.ClassName "profile-field" ] $
@@ -182,21 +182,21 @@ render { profiles, profileCount, showCreateProfile, page } =
                 (foldr
                     (\country state ->
                         if not state.firstCountry
-                        then state { firstCountry = true, countriesSoFar = [ HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text country ] ] }
+                        then state { firstCountry = true, regionsSoFar = [ HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text country ] ] }
                         else if not state.secondCountry
-                        then state { secondCountry = true, countriesSoFar = [ HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text country ], HH.text " and " ] <> state.countriesSoFar }
-                        else state { countriesSoFar = [ HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text country ], HH.text ", " ] <> state.countriesSoFar }
+                        then state { secondCountry = true, regionsSoFar = [ HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text country ], HH.text " or " ] <> state.regionsSoFar }
+                        else state { regionsSoFar = [ HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text country ], HH.text ", " ] <> state.regionsSoFar }
                     )
-                    { firstCountry: false, secondCountry: false, countriesSoFar: [] }
-                    profile.countries
-                    # _.countriesSoFar
+                    { firstCountry: false, secondCountry: false, regionsSoFar: [] }
+                    profile.regions
+                    # _.regionsSoFar
                 )
         , if Array.null profile.languages
             then Nothing
             else Just $
                 HH.p [ HP.class_ $ HH.ClassName "profile-field" ] $
                 [ HH.i [ HP.class_ $ HH.ClassName "fas fa-comments profile-field-icon" ] []
-                , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text "Speaks " ]
+                , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text "Speak " ]
                 ]
                 <>
                 ( foldr
@@ -204,7 +204,7 @@ render { profiles, profileCount, showCreateProfile, page } =
                         if not state.firstLanguage
                         then state { firstLanguage = true, languagesSoFar = [ HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text language ] ] }
                         else if not state.secondLanguage
-                        then state { secondLanguage = true, languagesSoFar = [ HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text language ], HH.text " and " ] <> state.languagesSoFar }
+                        then state { secondLanguage = true, languagesSoFar = [ HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text language ], HH.text " or " ] <> state.languagesSoFar }
                         else state { languagesSoFar = [ HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text language ], HH.text ", " ] <> state.languagesSoFar }
                     )
                     { firstLanguage: false, secondLanguage: false, languagesSoFar: [] }

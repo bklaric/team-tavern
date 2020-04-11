@@ -21,6 +21,8 @@ import Simple.JSON.Async as Json
 import TeamTavern.Client.Components.ModalDeclarative as Modal
 import TeamTavern.Client.Game.CreatePlayerProfile (createPlayerProfile)
 import TeamTavern.Client.Game.CreatePlayerProfile as CreatePlayerProfile
+import TeamTavern.Client.Game.CreateTeamProfile (createTeamProfile)
+import TeamTavern.Client.Game.CreateTeamProfile as CreateTeamProfile
 import TeamTavern.Client.Game.GameHeader as GameHeader
 import TeamTavern.Client.Game.PlayerProfiles (Input, Message(..), Slot) as PlayerProfiles
 import TeamTavern.Client.Game.PlayerProfiles (playerProfiles)
@@ -73,6 +75,7 @@ type ChildSlots =
     , teamProfiles :: TeamProfiles.Slot
     , filterProfiles :: ProfileFilters.Slot
     , createPlayerProfile :: CreatePlayerProfile.Slot
+    , createTeamProfile :: CreateTeamProfile.Slot
     )
 
 filterableFields
@@ -129,6 +132,13 @@ render (Game game' player tab) = let
         Modal.BackgroundClicked -> Just HideCreateProfileModal
         Modal.OutputRaised (CreatePlayerProfile.CloseClicked) -> Just HideCreateProfileModal
         Modal.OutputRaised (CreatePlayerProfile.ProfileCreated) -> Just ReloadPage
+    Just player', (Teams _ true) -> Array.singleton $
+        createTeamProfile
+        { game: game', player: player' }
+        case _ of
+        Modal.BackgroundClicked -> Just HideCreateProfileModal
+        Modal.OutputRaised (CreateTeamProfile.CloseClicked) -> Just HideCreateProfileModal
+        Modal.OutputRaised (CreateTeamProfile.ProfileCreated) -> Just ReloadPage
     _, _ -> []
 render NotFound = HH.p_ [ HH.text "Game could not be found." ]
 render Error = HH.p_ [ HH.text
@@ -253,7 +263,7 @@ loadTab handle GameHeader.Teams = do
                 , profileCount: profilesContent'.count
                 , page: 1
                 , showCreateProfile:
-                    isJust player && not gameContent'.hasPlayerProfile
+                    isJust player && not gameContent'.hasTeamProfile
                 }
                 false
             H.liftEffect $ setMetaTags gameContent'.title GameHeader.Players

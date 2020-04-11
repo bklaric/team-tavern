@@ -18,7 +18,7 @@ import Postgres.Result (Result)
 import Postgres.Result as Result
 import Simple.JSON.Async (read)
 import TeamTavern.Server.Profile.Infrastructure.ValidateUrl (Url)
-import TeamTvaern.Server.Profile.Infrastructure.ValidateFieldValues (FieldId, FieldValue(..), FieldValueId, FieldValueType(..), OptionId)
+import TeamTavern.Server.Profile.Infrastructure.ValidateFieldValues (FieldId, FieldValue(..), FieldValueId, FieldValueType(..), OptionId)
 
 type ProfileId = Int
 

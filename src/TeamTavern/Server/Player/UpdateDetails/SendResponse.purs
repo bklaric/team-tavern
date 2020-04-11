@@ -23,7 +23,7 @@ errorResponse = match
     { noCookieInfo: const unauthorized__
     , databaseError: const $ internalServerError__
     , invalidSession: const unauthorized__
-    , nicknameDoesntMatch: const unauthorized__
+    , nicknameDoesntMatch: const forbidden__
     , unreadableDto: const $ badRequest__
     , invalidModel: \{ errors } ->
         errors

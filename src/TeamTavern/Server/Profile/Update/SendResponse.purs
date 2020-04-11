@@ -10,7 +10,7 @@ import Data.Variant (SProxy(..), Variant, inj, match, onMatch)
 import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, noContent_, unauthorized__)
 import Simple.JSON (writeJSON)
 import TeamTavern.Server.Profile.Update.LogError (UpdateError)
-import TeamTvaern.Server.Profile.Infrastructure.ValidateFieldValues (Field(..))
+import TeamTavern.Server.Profile.Infrastructure.ValidateFieldValues (Field(..))
 
 type ProfileErrorContent = Variant
     ( invalidSummary :: {}

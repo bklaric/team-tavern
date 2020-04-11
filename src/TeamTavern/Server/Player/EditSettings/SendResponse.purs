@@ -4,7 +4,7 @@ import Prelude
 
 import Async (Async, alwaysRight)
 import Data.Variant (match)
-import Perun.Response (Response, badRequest__, internalServerError__, noContent_, unauthorized__)
+import Perun.Response (Response, badRequest__, forbidden__, internalServerError__, noContent_, unauthorized__)
 import TeamTavern.Server.Player.EditSettings.LogError (EditSettingsError)
 
 errorResponse :: EditSettingsError -> Response
@@ -12,7 +12,7 @@ errorResponse = match
     { noCookieInfo: const unauthorized__
     , databaseError: const $ internalServerError__
     , invalidSession: const unauthorized__
-    , nicknameDoesntMatch: const unauthorized__
+    , nicknameDoesntMatch: const forbidden__
     , unreadableModel: const $ badRequest__
     }
 

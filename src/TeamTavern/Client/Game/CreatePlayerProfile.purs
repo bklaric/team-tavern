@@ -7,7 +7,6 @@ import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
 import Data.Array (foldl)
-import Data.Array as Arary
 import Data.Array as Array
 import Data.Bifunctor (bimap, lmap)
 import Data.Const (Const)
@@ -33,7 +32,7 @@ import TeamTavern.Client.Components.SelectDeclarative.SingleSelect as SingleSele
 import TeamTavern.Client.Script.Cookie (PlayerInfo)
 import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass, otherErrorClass)
 import TeamTavern.Server.Game.View.SendResponse as ViewGame
-import TeamTavern.Server.Profile.Create.SendResponse as Create
+import TeamTavern.Server.Profile.AddGamePlayer.SendResponse as Create
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
@@ -175,7 +174,7 @@ render
     , HH.h2 [ HP.class_ $ HH.ClassName "form-heading" ]
         [ HH.text $ "Create your " <> game.title <> " profile" ]
     , HH.p [ HP.class_ $ HH.ClassName "form-subheading" ]
-        [ HH.text "Describe yourself as a player and let other players find you." ]
+        [ HH.text "Describe yourself as a player and let other players find you" ]
     , HH.div [ HP.class_ $ HH.ClassName "responsive-input-groups" ]
         (fieldValues <#> fieldInput)
     , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
@@ -268,9 +267,9 @@ sendCreateRequest handle nickname summary fieldValues = Async.unify do
                                 { invalidSummary: const $
                                     errors { summary = true }
                                 , invalidUrl: \{ fieldKey } ->
-                                    errors { url = Arary.cons fieldKey errors.url }
+                                    errors { url = Array.cons fieldKey errors.url }
                                 , missing: \{ fieldKey } ->
-                                    errors { missing = Arary.cons fieldKey errors.missing }
+                                    errors { missing = Array.cons fieldKey errors.missing }
                                 }
                         )
                         ({ summary: false, url: [], missing: [] })

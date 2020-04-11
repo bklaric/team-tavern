@@ -19,7 +19,7 @@ errorResponse :: UpdateError -> Response
 errorResponse = match
     { noCookieInfo: const unauthorized__
     , invalidSession: const unauthorized__
-    , nicknameDoesntMatch: const unauthorized__
+    , nicknameDoesntMatch: const forbidden__
     , unreadableDto: const $ badRequest__
     , invalidModel: const $ badRequest_
         $ (writeJSON :: BadRequestContent -> String)
