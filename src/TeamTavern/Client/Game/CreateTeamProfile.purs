@@ -11,6 +11,7 @@ import Data.Array as Array
 import Data.Bifunctor (bimap, lmap)
 import Data.Const (Const)
 import Data.HTTP.Method (Method(..))
+import Data.Int as Int
 import Data.Maybe (Maybe(..))
 import Data.Options ((:=))
 import Data.Variant (SProxy(..), match)
@@ -56,6 +57,8 @@ type State =
     { game :: ViewGame.OkContent
     , player :: PlayerInfo
     , summary :: String
+    , ageFrom :: String
+    , ageTo :: String
     , fieldValues :: Array FieldValue
     , summaryError :: Boolean
     , otherError :: Boolean
@@ -64,6 +67,8 @@ type State =
 
 data Action
     = SummaryInput String
+    | AgeFromInput String
+    | AgeToInput String
     | FieldValueInput String (Array (MultiSelect.InputEntry Option))
     | Create Event
     | Close
@@ -73,6 +78,13 @@ data Output = ProfileCreated | CloseClicked
 type Slot = H.Slot (Const Void) (Modal.Output Output) Unit
 
 type ChildSlots = ("multiSelectField" :: MultiSelect.Slot Option String)
+
+inputLabel :: forall slots action. String -> String -> HH.HTML slots action
+inputLabel label icon = HH.label
+    [ HP.class_ $ HH.ClassName "input-label", HP.for label ]
+    [ HH.i [ HP.class_ $ HH.ClassName $ icon <> " filter-field-icon" ] []
+    , HH.span [ HP.class_ $ HH.ClassName "filter-field-label" ] [ HH.text label ]
+    ]
 
 fieldLabel :: forall slots action.
     String -> String -> String -> Boolean -> Maybe String -> HH.HTML slots action
@@ -112,6 +124,8 @@ render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render
     { game
     , summary
+    , ageFrom
+    , ageTo
     , fieldValues
     , summaryError
     , otherError
@@ -126,7 +140,28 @@ render
         [ HH.text $ "Create your " <> game.title <> " profile" ]
     , HH.p [ HP.class_ $ HH.ClassName "form-subheading" ]
         [ HH.text "Describe players you are looking for and let them find your team" ]
-    , HH.div [ HP.class_ $ HH.ClassName "responsive-input-groups" ]
+    , HH.div [ HP.class_ $ HH.ClassName "responsive-input-groups" ] $
+        [ HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+            [ inputLabel "Age" "fas fa-calendar-alt"
+            , HH.div [ HP.class_ $ HH.ClassName "timespan-group" ]
+                [ HH.span [ HP.class_ $ HH.ClassName "timespan-group-from" ] [ HH.text "From" ]
+                , HH.input
+                    [ HP.class_ $ HH.ClassName $ "text-line-input timespan-group-input"
+                    , HP.type_ HP.InputNumber
+                    , HP.value ageFrom
+                    , HE.onValueChange $ Just <<< AgeFromInput
+                    ]
+                , HH.span [ HP.class_ $ HH.ClassName "timespan-group-to" ] [ HH.text "to" ]
+                , HH.input
+                    [ HP.class_ $ HH.ClassName $ "text-line-input timespan-group-input"
+                    , HP.type_ HP.InputNumber
+                    , HP.value ageTo
+                    , HE.onValueChange $ Just <<< AgeToInput
+                    ]
+                ]
+            ]
+        ]
+        <>
         (fieldValues <#> fieldInput)
     , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
         [ HH.label
@@ -162,18 +197,22 @@ data CreateError
     | Content { summary :: Boolean }
 
 sendCreateRequest :: forall left.
-    String -> String -> String -> Array FieldValue -> Async left (Maybe CreateError)
-sendCreateRequest handle nickname summary fieldValues = Async.unify do
+    State -> Async left (Maybe CreateError)
+sendCreateRequest state @ { game, player } = Async.unify do
     response <-
         Fetch.fetch
-        ("/api/profiles/by-handle/" <> handle <> "/teams/" <> nickname)
+        (  "/api/profiles/by-handle/" <> game.handle
+        <> "/teams/" <> player.nickname
+        )
         (  Fetch.method := POST
         <> Fetch.body := Json.writeJSON
-            { summary
+            { summary: state.summary
+            , ageFrom: Int.fromString state.ageFrom
+            , ageTo: Int.fromString state.ageTo
             , languages: ([] :: Array String)
             , regions: ([] :: Array String)
             , hasMicrophone: false
-            , fieldValues: fieldValues # Array.mapMaybe
+            , fieldValues: state.fieldValues # Array.mapMaybe
                 case _ of
                 FieldValue field input
                 | entries <- Array.filter _.selected input.entries
@@ -216,6 +255,10 @@ handleAction :: forall left.
     Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
 handleAction (SummaryInput summary) =
     H.modify_ (_ { summary = summary })
+handleAction (AgeFromInput ageFrom) =
+    H.modify_ (_ { ageFrom = ageFrom })
+handleAction (AgeToInput ageTo) =
+    H.modify_ (_ { ageTo = ageTo })
 handleAction (FieldValueInput fieldKey entries) =
     H.modify_ \state -> state
         { fieldValues = state.fieldValues <#>
@@ -226,14 +269,14 @@ handleAction (FieldValueInput fieldKey entries) =
         }
 handleAction (Create event) = do
     H.liftEffect $ preventDefault event
-    resetState @ { game, player, summary, fieldValues } <-
+    resetState <-
         H.modify (\state -> state
             { summaryError = false
             , otherError   = false
             , submitting   = true
             })
     result <- H.lift $
-        sendCreateRequest game.handle player.nickname summary fieldValues
+        sendCreateRequest resetState
     case result of
         Nothing -> H.raise ProfileCreated
         Just Other -> H.put $ resetState
@@ -253,6 +296,8 @@ component = H.mkComponent
         { game
         , player
         , summary: ""
+        , ageFrom: ""
+        , ageTo: ""
         , fieldValues:
             game.fields
             <#> (\field ->

@@ -86,7 +86,7 @@ create table player_profile
 
 create table player_profile_field_value
     ( id serial not null primary key
-    , player_profile_id integer not null references player_profile(id)
+    , player_profile_id integer not null references player_profile(id) on delete cascade
     , field_id integer not null references field(id)
     , url varchar(200) -- When field is url.
     , field_option_id integer references field_option(id) -- When field is singe select.
@@ -120,7 +120,7 @@ create table team_profile
 
 create table team_profile_field_value
     ( id serial not null primary key
-    , team_profile_id integer not null references team_profile(id)
+    , team_profile_id integer not null references team_profile(id) on delete cascade
     , field_id integer not null references field(id)
     );
 
