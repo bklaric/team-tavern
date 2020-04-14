@@ -27,9 +27,12 @@ import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.ModalDeclarative as Modal
 import TeamTavern.Client.Components.SelectDeclarative.MultiSelect (multiSelectIndexed)
 import TeamTavern.Client.Components.SelectDeclarative.MultiSelect as MultiSelect
+import TeamTavern.Client.Components.SelectDeclarative.TreeSelect (treeSelect)
+import TeamTavern.Client.Components.SelectDeclarative.TreeSelect as TreeSelect
 import TeamTavern.Client.Script.Cookie (PlayerInfo)
 import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass, otherErrorClass)
 import TeamTavern.Server.Game.View.SendResponse as ViewGame
+import TeamTavern.Server.Infrastructure.Regions (Region(..), allRegions)
 import TeamTavern.Server.Profile.AddGamePlayer.SendResponse as Create
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
@@ -59,6 +62,8 @@ type State =
     , summary :: String
     , ageFrom :: String
     , ageTo :: String
+    , regions :: Array String
+    , regionsInput :: TreeSelect.Input String
     , fieldValues :: Array FieldValue
     , summaryError :: Boolean
     , otherError :: Boolean
@@ -69,6 +74,7 @@ data Action
     = SummaryInput String
     | AgeFromInput String
     | AgeToInput String
+    | RegionInput (TreeSelect.Output String)
     | FieldValueInput String (Array (MultiSelect.InputEntry Option))
     | Create Event
     | Close
@@ -77,7 +83,10 @@ data Output = ProfileCreated | CloseClicked
 
 type Slot = H.Slot (Const Void) (Modal.Output Output) Unit
 
-type ChildSlots = ("multiSelectField" :: MultiSelect.Slot Option String)
+type ChildSlots =
+    ( "country" :: TreeSelect.Slot String
+    , "multiSelectField" :: MultiSelect.Slot Option String
+    )
 
 inputLabel :: forall slots action. String -> String -> HH.HTML slots action
 inputLabel label icon = HH.label
@@ -126,6 +135,7 @@ render
     , summary
     , ageFrom
     , ageTo
+    , regionsInput
     , fieldValues
     , summaryError
     , otherError
@@ -159,6 +169,11 @@ render
                     , HE.onValueChange $ Just <<< AgeToInput
                     ]
                 ]
+            ]
+        , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+            [ inputLabel "Country" "fas fa-globe-europe"
+            , treeSelect (SProxy :: SProxy "country") regionsInput $
+                Just <<< RegionInput
             ]
         ]
         <>
@@ -210,7 +225,7 @@ sendCreateRequest state @ { game, player } = Async.unify do
             , ageFrom: Int.fromString state.ageFrom
             , ageTo: Int.fromString state.ageTo
             , languages: ([] :: Array String)
-            , regions: ([] :: Array String)
+            , regions: state.regions
             , hasMicrophone: false
             , fieldValues: state.fieldValues # Array.mapMaybe
                 case _ of
@@ -259,6 +274,8 @@ handleAction (AgeFromInput ageFrom) =
     H.modify_ (_ { ageFrom = ageFrom })
 handleAction (AgeToInput ageTo) =
     H.modify_ (_ { ageTo = ageTo })
+handleAction (RegionInput (TreeSelect.SelectedChanged regions)) =
+    H.modify_ (_ { regions = regions })
 handleAction (FieldValueInput fieldKey entries) =
     H.modify_ \state -> state
         { fieldValues = state.fieldValues <#>
@@ -289,6 +306,12 @@ handleAction (Create event) = do
             }
 handleAction Close = H.raise CloseClicked
 
+regionToOption :: Region -> TreeSelect.Option String
+regionToOption (Region region subRegions) = TreeSelect.Option
+    { option: region
+    , subOptions: subRegions <#> regionToOption
+    }
+
 component :: forall query left.
     H.Component HH.HTML query Input Output (Async left)
 component = H.mkComponent
@@ -298,6 +321,13 @@ component = H.mkComponent
         , summary: ""
         , ageFrom: ""
         , ageTo: ""
+        , regions: []
+        , regionsInput: TreeSelect.Initial
+            { options: allRegions <#> regionToOption
+            , labeler: identity
+            , comparer: (==)
+            , placeholder: "Search countries"
+            }
         , fieldValues:
             game.fields
             <#> (\field ->
