@@ -66,6 +66,7 @@ type State =
     , ageTo :: Maybe Int
     , languages :: Array String
     , regions :: Array String
+    , hasMicrophone :: Boolean
     , fieldValues :: Array FieldValue
     , summaryError :: Boolean
     , otherError :: Boolean
@@ -78,6 +79,7 @@ data Action
     | AgeToInput String
     | LanguageInput (MultiSelect2.Output String)
     | RegionInput (TreeSelect.Output String)
+    | MicrophoneInput Boolean
     | FieldValueInput String (Array (MultiSelect.InputEntry Option))
     | Create Event
     | Close
@@ -92,18 +94,11 @@ type ChildSlots =
     , "multiSelectField" :: MultiSelect.Slot Option String
     )
 
-inputLabel :: forall slots action. String -> String -> HH.HTML slots action
-inputLabel label icon = HH.label
-    [ HP.class_ $ HH.ClassName "input-label", HP.for label ]
-    [ HH.i [ HP.class_ $ HH.ClassName $ icon <> " filter-field-icon" ] []
-    , HH.span [ HP.class_ $ HH.ClassName "filter-field-label" ] [ HH.text label ]
-    ]
-
 fieldLabel :: forall slots action.
-    String -> String -> String -> Boolean -> Maybe String -> HH.HTML slots action
-fieldLabel key label icon required domain =
+    String -> String -> Boolean -> Maybe String -> HH.HTML slots action
+fieldLabel label icon required domain =
     HH.label
-        [ HP.class_ $ HH.ClassName "input-label", HP.for key ] $
+        [ HP.class_ $ HH.ClassName "input-label" ] $
         [ HH.i [ HP.class_ $ HH.ClassName $ icon <> " filter-field-icon" ] []
         , HH.span [ HP.class_ $ HH.ClassName "filter-field-label" ] [ HH.text label ]
         ]
@@ -122,11 +117,14 @@ fieldLabel key label icon required domain =
             , HH.span [ HP.class_ $ H.ClassName "input-sublabel" ] [ HH.text "optional" ]
             ])
 
+inputLabel :: forall action slots. String -> String -> HH.HTML slots action
+inputLabel label icon = fieldLabel label icon false Nothing
+
 fieldInput :: forall left.
     FieldValue -> H.ComponentHTML Action ChildSlots (Async left)
 fieldInput (FieldValue { key, label, icon } input) =
     HH.div [ HP.class_ $ HH.ClassName "input-group" ]
-    [ fieldLabel key label icon false Nothing
+    [ fieldLabel label icon false Nothing
     , multiSelectIndexed (SProxy :: SProxy "multiSelectField") key input
         case _ of
         MultiSelect.SelectedChanged entries -> Just $ FieldValueInput key entries
@@ -137,8 +135,6 @@ render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render
     { game
     , summary
-    , ageFrom
-    , ageTo
     , fieldValues
     , summaryError
     , otherError
@@ -191,6 +187,18 @@ render
                 }
                 (Just <<< RegionInput)
             ]
+        , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+            [ inputLabel "Microphone" "fas fa-microphone"
+            , HH.label
+                [ HP.class_ $ HH.ClassName "checkbox-input-label" ]
+                [ HH.input
+                    [ HP.class_ $ HH.ClassName "checkbox-input"
+                    , HP.type_ HP.InputCheckbox
+                    , HE.onChecked $ Just <<< MicrophoneInput
+                    ]
+                , HH.text "Must have a microphone and be willing to communicate."
+                ]
+            ]
         ]
         <>
         (fieldValues <#> fieldInput)
@@ -242,7 +250,7 @@ sendCreateRequest state @ { game, player } = Async.unify do
             , ageTo: state.ageTo
             , languages: state.languages
             , regions: state.regions
-            , hasMicrophone: false
+            , hasMicrophone: state.hasMicrophone
             , fieldValues: state.fieldValues # Array.mapMaybe
                 case _ of
                 FieldValue field input
@@ -294,6 +302,8 @@ handleAction (LanguageInput (MultiSelect2.SelectedChanged languages)) =
     H.modify_ (_ { languages = languages })
 handleAction (RegionInput (TreeSelect.SelectedChanged regions)) =
     H.modify_ (_ { regions = regions })
+handleAction (MicrophoneInput hasMicrophone) =
+    H.modify_ (_ { hasMicrophone = hasMicrophone })
 handleAction (FieldValueInput fieldKey entries) =
     H.modify_ \state -> state
         { fieldValues = state.fieldValues <#>
@@ -341,6 +351,7 @@ component = H.mkComponent
         , ageTo: Nothing
         , languages: []
         , regions: []
+        , hasMicrophone: false
         , fieldValues:
             game.fields
             <#> (\field ->
