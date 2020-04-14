@@ -37,7 +37,7 @@ nullableTimeFrom (Just (Timespan from _)) = notNull $ toString from
 nullableTimeFrom Nothing = null
 
 nullableTimeTo :: Maybe Timespan -> Nullable String
-nullableTimeTo (Just (Timespan from _)) = notNull $ toString from
+nullableTimeTo (Just (Timespan _ to)) = notNull $ toString to
 nullableTimeTo Nothing = null
 
 validateTime :: String -> Maybe Time

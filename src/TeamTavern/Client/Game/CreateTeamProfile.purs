@@ -12,8 +12,9 @@ import Data.Bifunctor (bimap, lmap)
 import Data.Const (Const)
 import Data.HTTP.Method (Method(..))
 import Data.Int as Int
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), isJust, isNothing)
 import Data.Options ((:=))
+import Data.String as String
 import Data.Variant (SProxy(..), match)
 import Halogen (ClassName(..))
 import Halogen as H
@@ -28,6 +29,7 @@ import TeamTavern.Client.Components.ModalDeclarative as Modal
 import TeamTavern.Client.Components.SelectDeclarative.MultiSelect (multiSelectIndexed)
 import TeamTavern.Client.Components.SelectDeclarative.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.SelectDeclarative.MultiSelect2 as MultiSelect2
+import TeamTavern.Client.Components.SelectDeclarative.SingleSelect2 as SingleSelect2
 import TeamTavern.Client.Components.SelectDeclarative.TreeSelect (treeSelect)
 import TeamTavern.Client.Components.SelectDeclarative.TreeSelect as TreeSelect
 import TeamTavern.Client.Script.Cookie (PlayerInfo)
@@ -35,6 +37,7 @@ import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass, otherErrorClass
 import TeamTavern.Server.Game.View.SendResponse as ViewGame
 import TeamTavern.Server.Infrastructure.Languages (allLanguages)
 import TeamTavern.Server.Infrastructure.Regions (Region(..), allRegions)
+import TeamTavern.Server.Infrastructure.Timezones (Timezone, allTimezones)
 import TeamTavern.Server.Profile.AddGamePlayer.SendResponse as Create
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
@@ -56,17 +59,24 @@ data FieldValue = FieldValue Field (MultiSelect.Input Option)
 type Input =
     { game :: ViewGame.OkContent
     , player :: PlayerInfo
+    , timezone :: String
     }
 
 type State =
     { game :: ViewGame.OkContent
     , player :: PlayerInfo
+    , inputTimezone :: Maybe Timezone
     , summary :: String
     , ageFrom :: Maybe Int
     , ageTo :: Maybe Int
     , languages :: Array String
     , regions :: Array String
     , hasMicrophone :: Boolean
+    , timezone :: Maybe String
+    , weekdayFrom :: Maybe String
+    , weekdayTo :: Maybe String
+    , weekendFrom :: Maybe String
+    , weekendTo :: Maybe String
     , fieldValues :: Array FieldValue
     , summaryError :: Boolean
     , otherError :: Boolean
@@ -80,6 +90,11 @@ data Action
     | LanguageInput (MultiSelect2.Output String)
     | RegionInput (TreeSelect.Output String)
     | MicrophoneInput Boolean
+    | TimezoneInput (SingleSelect2.Output Timezone)
+    | WeekdayFromInput String
+    | WeekdayToInput String
+    | WeekendFromInput String
+    | WeekendToInput String
     | FieldValueInput String (Array (MultiSelect.InputEntry Option))
     | Create Event
     | Close
@@ -91,6 +106,7 @@ type Slot = H.Slot (Const Void) (Modal.Output Output) Unit
 type ChildSlots =
     ( "language" :: MultiSelect2.Slot String Unit
     , "country" :: TreeSelect.Slot String
+    , "timezone" :: SingleSelect2.Slot Timezone Unit
     , "multiSelectField" :: MultiSelect.Slot Option String
     )
 
@@ -132,7 +148,7 @@ fieldInput (FieldValue { key, label, icon } input) =
     ]
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
-render
+render state @
     { game
     , summary
     , fieldValues
@@ -199,6 +215,91 @@ render
                 , HH.text "Must have a microphone and be willing to communicate."
                 ]
             ]
+        , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+            [ HH.label
+                [ HP.class_ $ HH.ClassName "input-label" ]
+                [ HH.text "Timezone" ]
+            , SingleSelect2.singleSelect (SProxy :: SProxy "timezone")
+                { options: allTimezones # Array.sortBy \leftTimezone rightTimezone -> let
+                    countryComparison =
+                        leftTimezone.country `compare` rightTimezone.country
+                    in
+                    case countryComparison of
+                    EQ -> leftTimezone.city `compare` rightTimezone.city
+                    other -> other
+                , selected: state.inputTimezone
+                , labeler: \{ city, country: country' } ->
+                    country' <> ", " <> city
+                , comparer: \leftTimezone rightTimezone ->
+                    leftTimezone.name == rightTimezone.name
+                , filter: Just "Search timezones"
+                }
+                (Just <<< TimezoneInput)
+            ]
+        , HH.div [ HP.class_ $ HH.ClassName "input-group" ] $
+            [ inputLabel "Online on weekdays" "fas fa-clock"
+            , HH.div [ HP.class_ $ HH.ClassName "timespan-group" ]
+                [ HH.span [ HP.class_ $ HH.ClassName "timespan-group-from" ] [ HH.text "From" ]
+                , HH.input
+                    [ HP.class_ $ HH.ClassName $ "text-line-input timespan-group-input"
+                    , HP.type_ HP.InputTime
+                    , HP.disabled $ isNothing state.timezone
+                    , HE.onValueChange $ Just <<< WeekdayFromInput
+                    ]
+                , HH.span [ HP.class_ $ HH.ClassName "timespan-group-to" ] [ HH.text "to" ]
+                , HH.input
+                    [ HP.class_ $ HH.ClassName $ "text-line-input timespan-group-input"
+                    , HP.type_ HP.InputTime
+                    , HP.disabled $ isNothing state.timezone
+                    , HE.onValueChange $ Just <<< WeekdayToInput
+                    ]
+                ]
+            ]
+            <>
+            if isNothing state.timezone
+            then Array.singleton $
+                HH.label
+                    [ HP.class_ $ HH.ClassName "input-underlabel" ]
+                    [ HH.text $ "Set your timezone to unlock this field." ]
+            else if isNothing state.weekdayFrom && isJust state.weekdayTo
+                || isJust state.weekdayFrom && isNothing state.weekdayTo
+            then Array.singleton $
+                HH.label
+                [ HP.class_ $ HH.ClassName "input-underlabel" ]
+                [ HH.text $ "Enter both times for the field to have effect." ]
+            else []
+        , HH.div [ HP.class_ $ HH.ClassName "input-group" ] $
+            [ inputLabel "Online on weekends" "fas fa-clock"
+            , HH.div [ HP.class_ $ HH.ClassName "timespan-group" ]
+                [ HH.span [ HP.class_ $ HH.ClassName "timespan-group-from" ] [ HH.text "From" ]
+                , HH.input
+                    [ HP.class_ $ HH.ClassName $ "text-line-input timespan-group-input"
+                    , HP.type_ HP.InputTime
+                    , HP.disabled $ isNothing state.timezone
+                    , HE.onValueChange $ Just <<< WeekendFromInput
+                    ]
+                , HH.span [ HP.class_ $ HH.ClassName "timespan-group-to" ] [ HH.text "to" ]
+                , HH.input
+                    [ HP.class_ $ HH.ClassName $ "text-line-input timespan-group-input"
+                    , HP.type_ HP.InputTime
+                    , HP.disabled $ isNothing state.timezone
+                    , HE.onValueChange $ Just <<< WeekendToInput
+                    ]
+                ]
+            ]
+            <>
+            if isNothing state.timezone
+            then Array.singleton $
+                HH.label
+                    [ HP.class_ $ HH.ClassName "input-underlabel" ]
+                    [ HH.text $ "Set your timezone to unlock this field." ]
+            else if isNothing state.weekendFrom && isJust state.weekendTo
+                || isJust state.weekendFrom && isNothing state.weekendTo
+            then Array.singleton $
+                HH.label
+                [ HP.class_ $ HH.ClassName "input-underlabel" ]
+                [ HH.text $ "Enter both times for the field to have effect." ]
+            else []
         ]
         <>
         (fieldValues <#> fieldInput)
@@ -251,6 +352,11 @@ sendCreateRequest state @ { game, player } = Async.unify do
             , languages: state.languages
             , regions: state.regions
             , hasMicrophone: state.hasMicrophone
+            , timezone: state.timezone
+            , weekdayFrom: state.weekdayFrom
+            , weekdayTo: state.weekdayTo
+            , weekendFrom: state.weekendFrom
+            , weekendTo: state.weekendTo
             , fieldValues: state.fieldValues # Array.mapMaybe
                 case _ of
                 FieldValue field input
@@ -304,6 +410,16 @@ handleAction (RegionInput (TreeSelect.SelectedChanged regions)) =
     H.modify_ (_ { regions = regions })
 handleAction (MicrophoneInput hasMicrophone) =
     H.modify_ (_ { hasMicrophone = hasMicrophone })
+handleAction (TimezoneInput (SingleSelect2.SelectedChanged timezone)) =
+    H.modify_ (_ { timezone = timezone <#> _.name })
+handleAction (WeekdayFromInput time) =
+    H.modify_ (_ { weekdayFrom = if String.null time then Nothing else Just time })
+handleAction (WeekdayToInput time) =
+    H.modify_ (_ { weekdayTo = if String.null time then Nothing else Just time })
+handleAction (WeekendFromInput time) =
+    H.modify_ (_ { weekendFrom = if String.null time then Nothing else Just time })
+handleAction (WeekendToInput time) =
+    H.modify_ (_ { weekendTo = if String.null time then Nothing else Just time })
 handleAction (FieldValueInput fieldKey entries) =
     H.modify_ \state -> state
         { fieldValues = state.fieldValues <#>
@@ -343,15 +459,23 @@ regionToEntry (Region region subRegions) = TreeSelect.InputEntry
 component :: forall query left.
     H.Component HH.HTML query Input Output (Async left)
 component = H.mkComponent
-    { initialState: \{ game, player } ->
+    { initialState: \{ game, player, timezone } -> let
+        inputTimezone = allTimezones # Array.find \{ name } -> name == timezone
+        in
         { game
         , player
+        , inputTimezone: inputTimezone
         , summary: ""
         , ageFrom: Nothing
         , ageTo: Nothing
         , languages: []
         , regions: []
         , hasMicrophone: false
+        , timezone: inputTimezone <#> _.name
+        , weekdayFrom: Nothing
+        , weekdayTo: Nothing
+        , weekendFrom: Nothing
+        , weekendTo: Nothing
         , fieldValues:
             game.fields
             <#> (\field ->

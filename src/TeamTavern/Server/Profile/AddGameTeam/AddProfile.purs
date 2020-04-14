@@ -6,6 +6,7 @@ import Async (Async)
 import Async as Async
 import Data.Array (head)
 import Data.Bifunctor.Label (label, labelMap)
+import Data.Nullable (toNullable)
 import Data.Variant (SProxy(..), Variant, inj)
 import Foreign (MultipleErrors)
 import Postgres.Async.Query (query)
@@ -73,7 +74,7 @@ queryParameters { id } handle profile =
     : nullableAgeTo profile.ageSpan
     : profile.languages
     : profile.regions
-    : profile.timezone
+    : toNullable profile.timezone
     : nullableTimeFrom profile.onlineWeekday
     : nullableTimeTo profile.onlineWeekday
     : nullableTimeFrom profile.onlineWeekend

@@ -44,11 +44,11 @@ type ShowCreateModal = Boolean
 
 data Tab
     = Players PlayerProfiles.Input ShowCreateModal
-    | Teams TeamProfiles.Input ShowCreateModal
+    | Teams TeamProfiles.Input ShowCreateModal String
 
 toHeaderTab :: Tab -> GameHeader.Tab
 toHeaderTab (Players _ _) = GameHeader.Players
-toHeaderTab (Teams _ _) = GameHeader.Teams
+toHeaderTab (Teams _ _ _) = GameHeader.Teams
 
 data Input = Input GameHeader.Handle GameHeader.Tab
 
@@ -116,7 +116,7 @@ render (Game game' player tab) = let
             case _ of
             PlayerProfiles.CreateProfile -> Just ShowCreateProfileModal
             PlayerProfiles.ChangePage page -> Just $ ChangePage page
-        Teams input _ ->
+        Teams input _ _ ->
             teamProfiles
             input
             case _ of
@@ -132,9 +132,9 @@ render (Game game' player tab) = let
         Modal.BackgroundClicked -> Just HideCreateProfileModal
         Modal.OutputRaised (CreatePlayerProfile.CloseClicked) -> Just HideCreateProfileModal
         Modal.OutputRaised (CreatePlayerProfile.ProfileCreated) -> Just ReloadPage
-    Just player', (Teams _ true) -> Array.singleton $
+    Just player', (Teams _ true timezone) -> Array.singleton $
         createTeamProfile
-        { game: game', player: player' }
+        { game: game', player: player', timezone }
         case _ of
         Modal.BackgroundClicked -> Just HideCreateProfileModal
         Modal.OutputRaised (CreateTeamProfile.CloseClicked) -> Just HideCreateProfileModal
@@ -258,6 +258,7 @@ loadTab handle GameHeader.Teams = do
     case gameContent, profilesContent of
         Just gameContent', Just profilesContent' -> do
             player <- H.liftEffect getPlayerInfo
+            timezone <- H.liftEffect getClientTimezone
             H.put $ Game gameContent' player $ Teams
                 { profiles: profilesContent'.profiles
                 , profileCount: profilesContent'.count
@@ -266,6 +267,7 @@ loadTab handle GameHeader.Teams = do
                     isJust player && not gameContent'.hasTeamProfile
                 }
                 false
+                timezone
             H.liftEffect $ setMetaTags gameContent'.title GameHeader.Players
         _, _ -> do
             H.put Error
@@ -313,6 +315,7 @@ handleAction (Receive (Input _ inputTab)) = do
                 loadTeamProfiles content.handle 1 ProfileFilters.emptyFilters
             case profilesContent of
                 Just profilesContent' -> do
+                    timezone <- H.liftEffect getClientTimezone
                     H.put $ Game content player $ Teams
                         { profiles: profilesContent'.profiles
                         , profileCount: profilesContent'.count
@@ -321,6 +324,7 @@ handleAction (Receive (Input _ inputTab)) = do
                             isJust player && not content.hasTeamProfile
                         }
                         false
+                        timezone
                     H.liftEffect $ setMetaTags content.title inputTab
                 Nothing -> pure unit
         _, _ -> pure unit
@@ -340,7 +344,7 @@ handleAction (ApplyFilters filters) = do
                         }
                         false
                 Nothing -> pure unit
-        Game game' player (Teams input _) -> do
+        Game game' player (Teams input _ timezone) -> do
             profilesContent <- H.lift $
                 loadTeamProfiles game'.handle 1 filters
             case profilesContent of
@@ -352,6 +356,7 @@ handleAction (ApplyFilters filters) = do
                         , showCreateProfile: input.showCreateProfile
                         }
                         false
+                        timezone
                 Nothing -> pure unit
         _ -> pure unit
 handleAction ShowCreateProfileModal =
@@ -359,16 +364,16 @@ handleAction ShowCreateProfileModal =
     case _ of
     Game game' player (Players input _) ->
         Game game' player $ Players input true
-    Game game' player (Teams input _) ->
-        Game game' player $ Teams input true
+    Game game' player (Teams input _ timezone) ->
+        Game game' player $ Teams input true timezone
     other -> other
 handleAction HideCreateProfileModal =
     H.modify_
     case _ of
     Game game' player (Players input _) ->
         Game game' player $ Players input false
-    Game game' player (Teams input _) ->
-        Game game' player $ Teams input false
+    Game game' player (Teams input _ timezone) ->
+        Game game' player $ Teams input false timezone
     other -> other
 handleAction ReloadPage =
     window >>= location >>= reload # H.liftEffect

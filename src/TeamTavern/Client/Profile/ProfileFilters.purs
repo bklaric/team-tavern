@@ -199,8 +199,7 @@ render state = HH.div [ HP.class_ $ HH.ClassName "card" ]
                 then Array.singleton $
                     HH.label
                     [ HP.class_ $ HH.ClassName "input-underlabel" ]
-                    [ HH.text $ "Enter both times for the filter to have effect."
-                    ]
+                    [ HH.text $ "Enter both times for the filter to have effect." ]
                 else []
             , HH.div [ HP.class_ $ HH.ClassName "input-group" ] $
                 [ fieldLabel "Online on weekends" "fas fa-clock"
@@ -227,8 +226,7 @@ render state = HH.div [ HP.class_ $ HH.ClassName "card" ]
                 then Array.singleton $
                     HH.label
                     [ HP.class_ $ HH.ClassName "input-underlabel" ]
-                    [ HH.text $ "Enter both times for the filter to have effect."
-                    ]
+                    [ HH.text $ "Enter both times for the filter to have effect." ]
                 else []
             ]
             <>
