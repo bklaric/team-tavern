@@ -27,11 +27,13 @@ import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.ModalDeclarative as Modal
 import TeamTavern.Client.Components.SelectDeclarative.MultiSelect (multiSelectIndexed)
 import TeamTavern.Client.Components.SelectDeclarative.MultiSelect as MultiSelect
+import TeamTavern.Client.Components.SelectDeclarative.MultiSelect2 as MultiSelect2
 import TeamTavern.Client.Components.SelectDeclarative.TreeSelect (treeSelect)
 import TeamTavern.Client.Components.SelectDeclarative.TreeSelect as TreeSelect
 import TeamTavern.Client.Script.Cookie (PlayerInfo)
 import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass, otherErrorClass)
 import TeamTavern.Server.Game.View.SendResponse as ViewGame
+import TeamTavern.Server.Infrastructure.Languages (allLanguages)
 import TeamTavern.Server.Infrastructure.Regions (Region(..), allRegions)
 import TeamTavern.Server.Profile.AddGamePlayer.SendResponse as Create
 import Web.Event.Event (preventDefault)
@@ -60,10 +62,10 @@ type State =
     { game :: ViewGame.OkContent
     , player :: PlayerInfo
     , summary :: String
-    , ageFrom :: String
-    , ageTo :: String
+    , ageFrom :: Maybe Int
+    , ageTo :: Maybe Int
+    , languages :: Array String
     , regions :: Array String
-    , regionsInput :: TreeSelect.Input String
     , fieldValues :: Array FieldValue
     , summaryError :: Boolean
     , otherError :: Boolean
@@ -74,6 +76,7 @@ data Action
     = SummaryInput String
     | AgeFromInput String
     | AgeToInput String
+    | LanguageInput (MultiSelect2.Output String)
     | RegionInput (TreeSelect.Output String)
     | FieldValueInput String (Array (MultiSelect.InputEntry Option))
     | Create Event
@@ -84,7 +87,8 @@ data Output = ProfileCreated | CloseClicked
 type Slot = H.Slot (Const Void) (Modal.Output Output) Unit
 
 type ChildSlots =
-    ( "country" :: TreeSelect.Slot String
+    ( "language" :: MultiSelect2.Slot String Unit
+    , "country" :: TreeSelect.Slot String
     , "multiSelectField" :: MultiSelect.Slot Option String
     )
 
@@ -135,7 +139,6 @@ render
     , summary
     , ageFrom
     , ageTo
-    , regionsInput
     , fieldValues
     , summaryError
     , otherError
@@ -158,22 +161,35 @@ render
                 , HH.input
                     [ HP.class_ $ HH.ClassName $ "text-line-input timespan-group-input"
                     , HP.type_ HP.InputNumber
-                    , HP.value ageFrom
                     , HE.onValueChange $ Just <<< AgeFromInput
                     ]
                 , HH.span [ HP.class_ $ HH.ClassName "timespan-group-to" ] [ HH.text "to" ]
                 , HH.input
                     [ HP.class_ $ HH.ClassName $ "text-line-input timespan-group-input"
                     , HP.type_ HP.InputNumber
-                    , HP.value ageTo
                     , HE.onValueChange $ Just <<< AgeToInput
                     ]
                 ]
             ]
         , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+            [ inputLabel "Language" "fas fa-comments"
+            , MultiSelect2.multiSelect (SProxy :: SProxy "language")
+                { entries: allLanguages <#> { option: _, selected: false }
+                , labeler: identity
+                , comparer: (==)
+                , filter: Just "Search languages"
+                }
+                (Just <<< LanguageInput)
+            ]
+        , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
             [ inputLabel "Country" "fas fa-globe-europe"
-            , treeSelect (SProxy :: SProxy "country") regionsInput $
-                Just <<< RegionInput
+            , treeSelect (SProxy :: SProxy "country")
+                { entries: allRegions <#> regionToEntry
+                , labeler: identity
+                , comparer: (==)
+                , placeHolder: "Search countries"
+                }
+                (Just <<< RegionInput)
             ]
         ]
         <>
@@ -222,9 +238,9 @@ sendCreateRequest state @ { game, player } = Async.unify do
         (  Fetch.method := POST
         <> Fetch.body := Json.writeJSON
             { summary: state.summary
-            , ageFrom: Int.fromString state.ageFrom
-            , ageTo: Int.fromString state.ageTo
-            , languages: ([] :: Array String)
+            , ageFrom: state.ageFrom
+            , ageTo: state.ageTo
+            , languages: state.languages
             , regions: state.regions
             , hasMicrophone: false
             , fieldValues: state.fieldValues # Array.mapMaybe
@@ -271,9 +287,11 @@ handleAction :: forall left.
 handleAction (SummaryInput summary) =
     H.modify_ (_ { summary = summary })
 handleAction (AgeFromInput ageFrom) =
-    H.modify_ (_ { ageFrom = ageFrom })
+    H.modify_ (_ { ageFrom = Int.fromString ageFrom })
 handleAction (AgeToInput ageTo) =
-    H.modify_ (_ { ageTo = ageTo })
+    H.modify_ (_ { ageTo = Int.fromString ageTo })
+handleAction (LanguageInput (MultiSelect2.SelectedChanged languages)) =
+    H.modify_ (_ { languages = languages })
 handleAction (RegionInput (TreeSelect.SelectedChanged regions)) =
     H.modify_ (_ { regions = regions })
 handleAction (FieldValueInput fieldKey entries) =
@@ -306,10 +324,10 @@ handleAction (Create event) = do
             }
 handleAction Close = H.raise CloseClicked
 
-regionToOption :: Region -> TreeSelect.Option String
-regionToOption (Region region subRegions) = TreeSelect.Option
+regionToEntry :: Region -> TreeSelect.InputEntry String
+regionToEntry (Region region subRegions) = TreeSelect.InputEntry
     { option: region
-    , subOptions: subRegions <#> regionToOption
+    , subEntries: subRegions <#> regionToEntry
     }
 
 component :: forall query left.
@@ -319,15 +337,10 @@ component = H.mkComponent
         { game
         , player
         , summary: ""
-        , ageFrom: ""
-        , ageTo: ""
+        , ageFrom: Nothing
+        , ageTo: Nothing
+        , languages: []
         , regions: []
-        , regionsInput: TreeSelect.Initial
-            { options: allRegions <#> regionToOption
-            , labeler: identity
-            , comparer: (==)
-            , placeholder: "Search countries"
-            }
         , fieldValues:
             game.fields
             <#> (\field ->

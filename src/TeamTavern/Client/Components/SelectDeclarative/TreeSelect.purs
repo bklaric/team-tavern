@@ -1,5 +1,5 @@
 module TeamTavern.Client.Components.SelectDeclarative.TreeSelect
-    (Labeler, Comparer, Option(..), Input(..), Output(..), Slot, treeSelect) where
+    (Labeler, Comparer, PlaceHolder, InputEntry(..), Input, Query(..), Output(..), Slot, treeSelect) where
 
 import Prelude
 
@@ -31,19 +31,10 @@ import Web.HTML.HTMLInputElement as HTMLInputElement
 import Web.HTML.Window (document)
 import Web.HTML.Window as Window
 
-newtype Option option = Option
+newtype InputEntry option = InputEntry
     { option :: option
-    , subOptions :: Array (Option option)
+    , subEntries :: Array (InputEntry option)
     }
-
-data Input option
-    = Initial
-        { options :: Array (Option option)
-        , labeler :: Labeler option
-        , comparer :: Comparer option
-        , placeholder :: String
-        }
-    | Clear
 
 data EntryState = Checked | Unchecked | Indeterminate
 
@@ -61,11 +52,20 @@ type Labeler option = option -> String
 
 type Comparer option = option -> option -> Boolean
 
+type PlaceHolder = String
+
+type Input option =
+    { entries :: Array (InputEntry option)
+    , labeler :: Labeler option
+    , comparer :: Comparer option
+    , placeHolder :: PlaceHolder
+    }
+
 type State option =
     { entries :: Entries option
     , labeler :: Labeler option
     , comparer :: Comparer option
-    , placeholder :: String
+    , placeHolder :: PlaceHolder
     , open :: Boolean
     , keepOpen :: Boolean
     , windowSubscription :: Maybe SubscriptionId
@@ -73,7 +73,6 @@ type State option =
 
 data Action option
     = Initialize
-    | Receive (Input option)
     | Finalize
     | Open
     | Close
@@ -82,6 +81,8 @@ data Action option
     | Filter String
     | ToggleEntryState option
     | ToggleEntryExpanded option
+
+data Query option send = Clear send
 
 data Output option = SelectedChanged (Array option)
 
@@ -153,7 +154,7 @@ renderEntries level labeler entries =
     entries <#> renderEntry level labeler # Array.catMaybes # join
 
 render :: forall option slots. State option -> HH.HTML slots (Action option)
-render { entries, labeler, comparer, placeholder, open } = let
+render { entries, labeler, comparer, placeHolder, open } = let
     selectedClass = if open then "selected-open" else "selected-closed"
     openOrClose = if open then Close else Open
     in
@@ -170,7 +171,7 @@ render { entries, labeler, comparer, placeholder, open } = let
         [ HH.div [ HP.class_ $ HH.ClassName "select-filter" ] $ pure $
             HH.input
             [ HP.class_ $ HH.ClassName "select-filter-input"
-            , HP.placeholder placeholder
+            , HP.placeholder placeHolder
             , HE.onMouseDown $ const $ Just $ KeepOpen
             , HE.onValueInput $ Just <<< Filter
             ]
@@ -298,13 +299,6 @@ getSelectedEntries entries =
         Unchecked -> [])
     # join
 
-clearEntries :: forall option. Entries option -> Entries option
-clearEntries entries = entries <#> \(Entry entry) ->
-    Entry entry
-        { state = Unchecked
-        , subEntries = clearEntries entry.subEntries
-        }
-
 handleAction
     :: forall option slots left
     .  (Action option)
@@ -316,12 +310,6 @@ handleAction Initialize = do
             (E.EventType "mousedown") window \_ -> Just TryClose
     windowSubscription <- H.subscribe $ ES.hoist affToAsync windowEventSource
     H.modify_ (_ { windowSubscription = Just windowSubscription })
-handleAction (Receive (Initial { options, labeler, comparer, placeholder })) =
-    pure unit
-handleAction (Receive Clear) = do
-    { entries } <- H.modify \state @ { entries } ->
-        state { entries = clearEntries entries }
-    H.raise $ SelectedChanged $ getSelectedEntries entries
 handleAction Finalize = do
     { windowSubscription } <- H.get
     case windowSubscription of
@@ -363,44 +351,48 @@ handleAction (ToggleEntryExpanded option) = do
         state { entries = toggleEntriesExpanded comparer option entries }
     updateCheckboxes state.labeler state.entries
 
-createEntry :: forall option. Option option -> Entry option
-createEntry (Option { option, subOptions }) = Entry
+clearEntries :: forall option. Entries option -> Entries option
+clearEntries entries = entries <#> \(Entry entry) ->
+    Entry entry
+        { state = Unchecked
+        , subEntries = clearEntries entry.subEntries
+        }
+
+handleQuery
+    :: forall option monad slots action send
+    .  Query option send
+    -> H.HalogenM (State option) action slots (Output option) monad (Maybe send)
+handleQuery (Clear send) = do
+    { entries } <- H.modify \state @ { entries } ->
+        state { entries = clearEntries entries }
+    H.raise $ SelectedChanged $ getSelectedEntries entries
+    pure $ Just send
+
+createEntry :: forall option. InputEntry option -> Entry option
+createEntry (InputEntry { option, subEntries }) = Entry
     { option: option
     , state: Unchecked
     , shown: true
     , expanded: false
-    , subEntries: subOptions <#> createEntry
-    }
-
-initialState :: forall option. Input option -> State option
-initialState (Initial { options, labeler, comparer, placeholder }) =
-    { entries: options <#> createEntry
-    , labeler
-    , comparer
-    , placeholder
-    , open: false
-    , keepOpen: false
-    , windowSubscription: Nothing
-    }
-initialState Clear =
-    { entries: []
-    , labeler: const ""
-    , comparer: const $ const true
-    , placeholder: ""
-    , open: false
-    , keepOpen: false
-    , windowSubscription: Nothing
+    , subEntries: subEntries <#> createEntry
     }
 
 component :: forall query option left.
     H.Component HH.HTML query (Input option) (Output option) (Async left)
 component = H.mkComponent
-    { initialState
+    { initialState: \{ entries, labeler, comparer, placeHolder } ->
+        { entries: entries <#> createEntry
+        , labeler
+        , comparer
+        , placeHolder
+        , open: false
+        , keepOpen: false
+        , windowSubscription: Nothing
+        }
     , render
     , eval: H.mkEval $ H.defaultEval
         { handleAction = handleAction
         , initialize = Just Initialize
-        , receive = Just <<< Receive
         , finalize = Just Finalize
         }
     }
