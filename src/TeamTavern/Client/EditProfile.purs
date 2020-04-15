@@ -54,14 +54,14 @@ type Input =
         }
     , fields :: Array
         { key :: String
-        , type :: Int
+        , ilk :: Int
         , label :: String
         , icon :: String
         , required :: Boolean
         , domain :: Maybe String
         , options :: Maybe (Array
             { key :: String
-            , option :: String
+            , label :: String
             })
         }
     }
@@ -81,14 +81,14 @@ type State =
     , profileIlk :: ProfileIlk
     , fields :: Array
         { key :: String
-        , type :: Int
+        , ilk :: Int
         , label :: String
         , icon :: String
         , required :: Boolean
         , domain :: Maybe String
         , options :: Maybe (Array
             { key :: String
-            , option :: String
+            , label :: String
             })
         }
     , summary :: String
@@ -146,13 +146,13 @@ fieldInput
         }
     -> Array { fieldKey :: String }
     -> Array { fieldKey :: String }
-    ->  { type :: Int
+    ->  { ilk :: Int
         , key :: String
         , label :: String
         , icon :: String
         , required :: Boolean
         , domain :: Maybe String
-        , options :: Maybe (Array { key :: String , option :: String })
+        , options :: Maybe (Array { key :: String , label :: String })
         }
     -> H.ComponentHTML Action ChildSlots (Async left)
 fieldInput Players fieldValues urlValueErrors missingErrors { key, type: 1, label, icon, required, domain: Just domain } = let

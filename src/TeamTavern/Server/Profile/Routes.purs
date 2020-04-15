@@ -154,6 +154,7 @@ type ViewPlayerProfilesByPlayer = Route
     (  Literal "profiles"
     :> Literal "by-nickname"
     :> Capture "nickname" Nickname
+    :> Literal "players"
     :> End)
     NoQuery
 
@@ -162,6 +163,7 @@ type ViewTeamProfilesByPlayer = Route
     (  Literal "profiles"
     :> Literal "by-nickname"
     :> Capture "nickname" Nickname
+    :> Literal "teams"
     :> End)
     NoQuery
 

@@ -30,7 +30,7 @@ import TeamTavern.Client.Components.NavigationAnchor as Anchor
 import TeamTavern.Client.EditProfile (ProfileIlk(..), editProfile)
 import TeamTavern.Client.EditProfile as EditProfile
 import TeamTavern.Client.Script.Cookie (getPlayerNickname)
-import TeamTavern.Server.Profile.ViewByPlayer.SendResponse as ViewByPlayer
+import TeamTavern.Server.Profile.ViewPlayerProfilesByPlayer.SendResponse as ViewByPlayer
 import Web.Event.Event (preventDefault)
 import Web.UIEvent.MouseEvent (MouseEvent, toEvent)
 
@@ -144,53 +144,53 @@ render (Profiles profiles nickname' profileIlk) =
                 fieldValue = fieldValues # find \ { fieldKey } -> field.key == fieldKey
                 in
                 case { profileIlk, type: field.type, fieldValue } of
-                { profileIlk: Players, type: 1, fieldValue: Just { url: Just url' } } -> Just $
-                    HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
-                    [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
-                    , HH.a [ HP.class_ $ HH.ClassName "profile-field-label", HP.href url' ] [ HH.text field.label ]
-                    ]
-                { profileIlk: Players, type: 2, fieldValue: Just { optionKey: Just optionKey' } } -> let
-                    option' = field.options >>= find (\{ key } -> key == optionKey')
-                    in
-                    option' <#> \{ option } ->
-                        HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
-                        [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
-                        , HH.span [ HP.class_ $ HH.ClassName "profile-field-label" ] [ HH.text $ field.label <> ": " ]
-                        , HH.text option
-                        ]
-                { profileIlk: Teams, type: 2, fieldValue: Just { optionKeys: Just optionKeys' } } -> let
-                    fieldOptions' = field.options <#> Array.filter \{ key } -> Array.elem key optionKeys'
-                    in
-                    case fieldOptions' of
-                    Just fieldOptions | not $ Array.null fieldOptions -> Just $
-                        HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
-                        [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
-                        , HH.span [ HP.class_ $ HH.ClassName "profile-field-label" ] [ HH.text $ field.label <> ": " ]
-                        , HH.text $ intercalate ", " (fieldOptions <#> _.option)
-                        ]
-                    _ -> Nothing
-                { profileIlk: Players, type: 3, fieldValue: Just { optionKeys: Just optionKeys' } } -> let
-                    fieldOptions' = field.options <#> Array.filter \{ key } -> Array.elem key optionKeys'
-                    in
-                    case fieldOptions' of
-                    Just fieldOptions | not $ Array.null fieldOptions -> Just $
-                        HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
-                        [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
-                        , HH.span [ HP.class_ $ HH.ClassName "profile-field-label" ] [ HH.text $ field.label <> ": " ]
-                        , HH.text $ intercalate ", " (fieldOptions <#> _.option)
-                        ]
-                    _ -> Nothing
-                { profileIlk: Teams, type: 3, fieldValue: Just { optionKeys: Just optionKeys' } } -> let
-                    fieldOptions' = field.options <#> Array.filter \{ key } -> Array.elem key optionKeys'
-                    in
-                    case fieldOptions' of
-                    Just fieldOptions | not $ Array.null fieldOptions -> Just $
-                        HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
-                        [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
-                        , HH.span [ HP.class_ $ HH.ClassName "profile-field-label" ] [ HH.text $ field.label <> ": " ]
-                        , HH.text $ intercalate ", " (fieldOptions <#> _.option)
-                        ]
-                    _ -> Nothing
+                -- { profileIlk: Players, type: 1, fieldValue: Just { url: Just url' } } -> Just $
+                --     HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
+                --     [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
+                --     , HH.a [ HP.class_ $ HH.ClassName "profile-field-label", HP.href url' ] [ HH.text field.label ]
+                --     ]
+                -- { profileIlk: Players, type: 2, fieldValue: Just { optionKey: Just optionKey' } } -> let
+                --     option' = field.options >>= find (\{ key } -> key == optionKey')
+                --     in
+                --     option' <#> \{ option } ->
+                --         HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
+                --         [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
+                --         , HH.span [ HP.class_ $ HH.ClassName "profile-field-label" ] [ HH.text $ field.label <> ": " ]
+                --         , HH.text option
+                --         ]
+                -- { profileIlk: Teams, type: 2, fieldValue: Just { optionKeys: Just optionKeys' } } -> let
+                --     fieldOptions' = field.options <#> Array.filter \{ key } -> Array.elem key optionKeys'
+                --     in
+                --     case fieldOptions' of
+                --     Just fieldOptions | not $ Array.null fieldOptions -> Just $
+                --         HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
+                --         [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
+                --         , HH.span [ HP.class_ $ HH.ClassName "profile-field-label" ] [ HH.text $ field.label <> ": " ]
+                --         , HH.text $ intercalate ", " (fieldOptions <#> _.option)
+                --         ]
+                --     _ -> Nothing
+                -- { profileIlk: Players, type: 3, fieldValue: Just { optionKeys: Just optionKeys' } } -> let
+                --     fieldOptions' = field.options <#> Array.filter \{ key } -> Array.elem key optionKeys'
+                --     in
+                --     case fieldOptions' of
+                --     Just fieldOptions | not $ Array.null fieldOptions -> Just $
+                --         HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
+                --         [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
+                --         , HH.span [ HP.class_ $ HH.ClassName "profile-field-label" ] [ HH.text $ field.label <> ": " ]
+                --         , HH.text $ intercalate ", " (fieldOptions <#> _.option)
+                --         ]
+                --     _ -> Nothing
+                -- { profileIlk: Teams, type: 3, fieldValue: Just { optionKeys: Just optionKeys' } } -> let
+                --     fieldOptions' = field.options <#> Array.filter \{ key } -> Array.elem key optionKeys'
+                --     in
+                --     case fieldOptions' of
+                --     Just fieldOptions | not $ Array.null fieldOptions -> Just $
+                --         HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
+                --         [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
+                --         , HH.span [ HP.class_ $ HH.ClassName "profile-field-label" ] [ HH.text $ field.label <> ": " ]
+                --         , HH.text $ intercalate ", " (fieldOptions <#> _.option)
+                --         ]
+                --     _ -> Nothing
                 _ ->  Nothing
             , summary <#> \paragraph -> HH.p_ [ HH.text paragraph ]
             ])
