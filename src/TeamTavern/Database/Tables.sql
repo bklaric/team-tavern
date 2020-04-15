@@ -105,7 +105,7 @@ create table team_profile
     , age_from integer
     , age_to integer
     , languages text[] not null default '{}'
-    , regions text[] not null default '{}'
+    , countries text[] not null default '{}'
     , timezone text
     , weekday_from time
     , weekday_to time

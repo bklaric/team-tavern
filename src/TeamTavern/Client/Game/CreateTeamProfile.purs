@@ -70,7 +70,7 @@ type State =
     , ageFrom :: Maybe Int
     , ageTo :: Maybe Int
     , languages :: Array String
-    , regions :: Array String
+    , countries :: Array String
     , hasMicrophone :: Boolean
     , timezone :: Maybe String
     , weekdayFrom :: Maybe String
@@ -348,7 +348,7 @@ sendCreateRequest state @ { game, player } = Async.unify do
             , ageFrom: state.ageFrom
             , ageTo: state.ageTo
             , languages: state.languages
-            , regions: state.regions
+            , countries: state.countries
             , hasMicrophone: state.hasMicrophone
             , timezone: state.timezone
             , weekdayFrom: state.weekdayFrom
@@ -404,8 +404,8 @@ handleAction (AgeToInput ageTo) =
     H.modify_ (_ { ageTo = Int.fromString ageTo })
 handleAction (LanguageInput (MultiSelect2.SelectedChanged languages)) =
     H.modify_ (_ { languages = languages })
-handleAction (RegionInput (TreeSelect.SelectedChanged regions)) =
-    H.modify_ (_ { regions = regions })
+handleAction (RegionInput (TreeSelect.SelectedChanged countries)) =
+    H.modify_ (_ { countries = countries })
 handleAction (MicrophoneInput hasMicrophone) =
     H.modify_ (_ { hasMicrophone = hasMicrophone })
 handleAction (TimezoneInput (SingleSelect2.SelectedChanged timezone)) =
@@ -467,7 +467,7 @@ component = H.mkComponent
         , ageFrom: Nothing
         , ageTo: Nothing
         , languages: []
-        , regions: []
+        , countries: []
         , hasMicrophone: false
         , timezone: inputTimezone <#> _.name
         , weekdayFrom: Nothing

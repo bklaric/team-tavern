@@ -32,7 +32,7 @@ pageSize = 20
 type LoadProfilesResult =
     { nickname :: String
     , age :: { from :: Maybe Int, to :: Maybe Int }
-    , regions :: Array String
+    , countries :: Array String
     , languages :: Array String
     , hasMicrophone :: Boolean
     , weekdayOnline :: Maybe { from :: String, to :: String }
@@ -81,13 +81,24 @@ createLanguagesFilter languages = " and profile.languages && (array[" <> (langua
 
 createCountriesFilter :: Array Country -> String
 createCountriesFilter [] = ""
-createCountriesFilter countries = """ and profile.country in (
-    with recursive region_rec(name) as (
-        select region.name from region where region.name = any(array[""" <> (countries <#> prepareString # intercalate ", ") <> """])
-        union all
-        select subregion.name from region as subregion join region_rec on subregion.superregion_name = region_rec.name
+createCountriesFilter countries = """ and exists (
+    (
+        with recursive region_rec(name) as (
+            select region.name from region where region.name = any(profile.countries)
+            union all
+            select subregion.name from region as subregion join region_rec on subregion.superregion_name = region_rec.name
+        )
+        select * from region_rec
     )
-    select * from region_rec)
+    intersect (
+        with recursive region_rec(name) as (
+            select region.name from region where region.name = any(array[""" <> (countries <#> prepareString # intercalate ", ") <> """])
+            union all
+            select subregion.name from region as subregion join region_rec on subregion.superregion_name = region_rec.name
+        )
+        select * from region_rec
+    )
+)
 """
 
 timezoneAdjustedTime :: Timezone -> String -> String
@@ -206,7 +217,7 @@ queryStringWithoutPagination handle timezone filters = Query $ """
                 'from', profile.age_from,
                 'to', profile.age_to
             ) as age,
-            profile.regions,
+            profile.countries,
             profile.languages,
             profile.has_microphone as "hasMicrophone",
             case

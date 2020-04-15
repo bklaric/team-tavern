@@ -26,7 +26,7 @@ type Profile =
     { summary :: ValidateSummary.Summary
     , ageSpan :: AgeSpan
     , languages :: Array Language
-    , regions :: Array Region
+    , countries :: Array Region
     , timezone :: Maybe Timezone
     , onlineWeekday :: Maybe Timespan
     , onlineWeekend :: Maybe Timespan
@@ -51,7 +51,7 @@ validateProfile
 validateProfile fields profile @ { summary } = let
     ageSpan = validateAgeSpan profile.ageFrom profile.ageTo
     languages = validateLanguages profile.languages
-    regions = validateRegions profile.regions
+    countries = validateRegions profile.countries
     timezone = validateOptionalTimezone profile.timezone
     onlineWeekday = timezone >>=
         (const $ validateTimespan profile.weekdayFrom profile.weekdayTo)
@@ -60,7 +60,7 @@ validateProfile fields profile @ { summary } = let
     hasMicrophone = profile.hasMicrophone
     fieldValues = validateFieldValues fields profile.fieldValues
     in
-    { summary: _, ageSpan, languages, regions, timezone
+    { summary: _, ageSpan, languages, countries, timezone
     , onlineWeekday, onlineWeekend, hasMicrophone, fieldValues
     }
     <$> (ValidateSummary.validate summary

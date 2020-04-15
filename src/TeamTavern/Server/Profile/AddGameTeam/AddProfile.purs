@@ -51,7 +51,7 @@ queryString = Query """
         , age_from
         , age_to
         , languages
-        , regions
+        , countries
         , timezone
         , weekday_from
         , weekday_to
@@ -73,7 +73,7 @@ queryParameters { id } handle profile =
     : nullableAgeFrom profile.ageSpan
     : nullableAgeTo profile.ageSpan
     : profile.languages
-    : profile.regions
+    : profile.countries
     : toNullable profile.timezone
     : nullableTimeFrom profile.onlineWeekday
     : nullableTimeTo profile.onlineWeekday

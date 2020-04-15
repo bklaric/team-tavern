@@ -22,7 +22,7 @@ import TeamTavern.Server.Profile.ViewByGame.LoadProfiles (pageSize, pageSize')
 type TeamProfile =
     { nickname :: String
     , age :: { from :: Maybe Int, to :: Maybe Int }
-    , regions :: Array String
+    , countries :: Array String
     , languages :: Array String
     , hasMicrophone :: Boolean
     , weekdayOnline :: Maybe { from :: String, to :: String }
@@ -171,7 +171,7 @@ render { profiles, profileCount, showCreateProfile, page } =
                 , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text $ show to ]
                 , HH.text " years old"
                 ]
-        , if Array.null profile.regions
+        , if Array.null profile.countries
             then Nothing
             else Just $
                 HH.p [ HP.class_ $ HH.ClassName "profile-field" ] $
@@ -188,7 +188,7 @@ render { profiles, profileCount, showCreateProfile, page } =
                         else state { regionsSoFar = [ HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text country ], HH.text ", " ] <> state.regionsSoFar }
                     )
                     { firstCountry: false, secondCountry: false, regionsSoFar: [] }
-                    profile.regions
+                    profile.countries
                     # _.regionsSoFar
                 )
         , if Array.null profile.languages

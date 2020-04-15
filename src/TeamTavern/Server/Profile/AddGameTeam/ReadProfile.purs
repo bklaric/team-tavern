@@ -21,7 +21,7 @@ type Profile =
     , ageFrom :: Maybe Int
     , ageTo :: Maybe Int
     , languages :: Array String
-    , regions :: Array String
+    , countries :: Array String
     , timezone :: Maybe String
     , weekdayFrom :: Maybe String
     , weekdayTo :: Maybe String
