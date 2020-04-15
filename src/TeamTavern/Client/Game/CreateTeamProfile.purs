@@ -199,7 +199,7 @@ render state @
                 { entries: allRegions <#> regionToEntry
                 , labeler: identity
                 , comparer: (==)
-                , placeHolder: "Search countries"
+                , filter: "Search countries"
                 }
                 (Just <<< RegionInput)
             ]
@@ -216,9 +216,7 @@ render state @
                 ]
             ]
         , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
-            [ HH.label
-                [ HP.class_ $ HH.ClassName "input-label" ]
-                [ HH.text "Timezone" ]
+            [ inputLabel "Timezone" "fas fa-globe"
             , SingleSelect2.singleSelect (SProxy :: SProxy "timezone")
                 { options: allTimezones # Array.sortBy \leftTimezone rightTimezone -> let
                     countryComparison =

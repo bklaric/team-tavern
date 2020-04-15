@@ -1,5 +1,5 @@
 module TeamTavern.Client.Components.SelectDeclarative.TreeSelect
-    (Labeler, Comparer, PlaceHolder, InputEntry(..), Input, Query(..), Output(..), Slot, treeSelect) where
+    (Labeler, Comparer, InputEntry(..), Input, Query(..), Output(..), Slot, treeSelect) where
 
 import Prelude
 
@@ -51,20 +51,18 @@ type Labeler option = option -> String
 
 type Comparer option = option -> option -> Boolean
 
-type PlaceHolder = String
-
 type Input option =
     { entries :: Array (InputEntry option)
     , labeler :: Labeler option
     , comparer :: Comparer option
-    , placeHolder :: PlaceHolder
+    , filter :: String
     }
 
 type State option =
     { entries :: Entries option
     , labeler :: Labeler option
     , comparer :: Comparer option
-    , placeHolder :: PlaceHolder
+    , filter :: { placeHolder :: String, text :: String }
     , open :: Boolean
     , keepOpen :: Boolean
     , windowSubscription :: Maybe SubscriptionId
@@ -153,7 +151,7 @@ renderEntries level labeler entries =
     entries <#> renderEntry level labeler # Array.catMaybes # join
 
 render :: forall option slots. State option -> HH.HTML slots (Action option)
-render { entries, labeler, comparer, placeHolder, open } = let
+render { entries, labeler, comparer, filter, open } = let
     selectedClass = if open then "selected-open" else "selected-closed"
     openOrClose = if open then Close else Open
     in
@@ -170,7 +168,8 @@ render { entries, labeler, comparer, placeHolder, open } = let
         [ HH.div [ HP.class_ $ HH.ClassName "select-filter" ] $ pure $
             HH.input
             [ HP.class_ $ HH.ClassName "select-filter-input"
-            , HP.placeholder placeHolder
+            , HP.placeholder filter.placeHolder
+            , HP.value filter.text
             , HE.onMouseDown $ const $ Just $ KeepOpen
             , HE.onValueInput $ Just <<< Filter
             ]
@@ -314,19 +313,9 @@ handleAction Finalize = do
     case windowSubscription of
         Just windowSubscription' -> H.unsubscribe windowSubscription'
         Nothing -> pure unit
-handleAction Open = let
-    resetEntries entries = entries <#> \(Entry entry) -> Entry $ entry
-        { shown = true
-        , expanded = false
-        , subEntries = resetEntries entry.subEntries
-        }
-    in do
-    state <- H.modify \state -> state
-        { entries = resetEntries state.entries
-        , open = true
-        , keepOpen = true
-        }
-    updateCheckboxes state.labeler state.entries
+handleAction Open = do
+    { labeler, entries } <- H.modify (_ { open = true, keepOpen = true })
+    updateCheckboxes labeler entries
 handleAction Close =
     H.modify_ (_ { open = false })
 handleAction KeepOpen =
@@ -336,9 +325,12 @@ handleAction TryClose =
         if state.keepOpen
         then state { keepOpen = false }
         else state { open = false }
-handleAction (Filter filter) = do
-    state <- H.modify \state @ { entries, labeler } ->
-        state { entries = filterEntries filter labeler entries }
+handleAction (Filter text) = do
+    state <- H.modify \state @ { entries, labeler, filter } ->
+        state
+        { entries = filterEntries text labeler entries
+        , filter = filter { text = text }
+        }
     updateCheckboxes state.labeler state.entries
 handleAction (ToggleEntryState option) = do
     state <- H.modify \state @ { entries, comparer } ->
@@ -382,11 +374,11 @@ component :: forall option left.
     H.Component HH.HTML (Query option)
         (Input option) (Output option) (Async left)
 component = H.mkComponent
-    { initialState: \{ entries, labeler, comparer, placeHolder } ->
+    { initialState: \{ entries, labeler, comparer, filter } ->
         { entries: entries <#> createEntry
         , labeler
         , comparer
-        , placeHolder
+        , filter: { placeHolder: filter, text: "" }
         , open: false
         , keepOpen: false
         , windowSubscription: Nothing

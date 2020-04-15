@@ -1,5 +1,5 @@
 module TeamTavern.Client.Components.SelectDeclarative.MultiSelect2
-    (InputEntry(..), PlaceHolder, Input, Query(..), Output(..), Slot, multiSelect, multiSelectIndexed) where
+    (InputEntry(..), Input, Query(..), Output(..), Slot, multiSelect, multiSelectIndexed) where
 
 import Prelude
 
@@ -32,20 +32,18 @@ type Entry option =
     , shown :: Boolean
     }
 
-type PlaceHolder = String
-
 type Input option =
     { entries :: Array (InputEntry option)
     , labeler :: option -> String
     , comparer :: option -> option -> Boolean
-    , filter :: Maybe PlaceHolder
+    , filter :: Maybe String
     }
 
 type State option =
     { entries :: Array (Entry option)
     , labeler :: option -> String
     , comparer :: option -> option -> Boolean
-    , filter :: Maybe PlaceHolder
+    , filter :: Maybe { placeHolder :: String, text :: String }
     , open :: Boolean
     , keepOpen :: Boolean
     , windowSubscription :: Maybe (H.SubscriptionId)
@@ -84,12 +82,13 @@ render { entries, labeler, comparer, filter, open } =
     then
         (case filter of
         Nothing -> []
-        Just placeHolder -> Array.singleton $
+        Just { placeHolder, text } -> Array.singleton $
             HH.div [ HP.class_ $ HH.ClassName "select-filter" ] $
             Array.singleton $
             HH.input
                 [ HP.class_ $ HH.ClassName "select-filter-input"
                 , HP.placeholder placeHolder
+                , HP.value text
                 , HE.onMouseDown $ const $ Just $ KeepOpen
                 , HE.onValueInput $ Just <<< FilterInput
                 ])
@@ -164,6 +163,7 @@ handleAction (FilterInput text) =
                 (Pattern $ toLower $ trim text)
                 (toLower $ labeler option)
             }
+        , filter = state.filter <#> (_ { text = text })
         }
 
 handleQuery
@@ -185,7 +185,7 @@ component = H.mkComponent
             { option, selected, shown: true }
         , labeler
         , comparer
-        , filter
+        , filter: filter <#> { placeHolder: _, text: "" }
         , open: false
         , keepOpen: false
         , windowSubscription: Nothing

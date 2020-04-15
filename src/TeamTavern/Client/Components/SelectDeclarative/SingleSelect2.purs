@@ -1,5 +1,5 @@
 module TeamTavern.Client.Components.SelectDeclarative.SingleSelect2
-    (PlaceHolder, Input, Output(..), Slot, singleSelect, singleSelectIndexed) where
+    (Input, Output(..), Slot, singleSelect, singleSelectIndexed) where
 
 import Prelude
 
@@ -27,14 +27,12 @@ type Entry option =
     , shown :: Boolean
     }
 
-type PlaceHolder = String
-
 type Input option =
     { options :: Array option
     , selected :: Maybe option
     , labeler :: option -> String
     , comparer :: option -> option -> Boolean
-    , filter :: Maybe PlaceHolder
+    , filter :: Maybe String
     }
 
 type State option =
@@ -42,7 +40,7 @@ type State option =
     , selected :: Maybe option
     , labeler :: option -> String
     , comparer :: option -> option -> Boolean
-    , filter :: Maybe PlaceHolder
+    , filter :: Maybe { placeHolder :: String, text :: String }
     , open :: Boolean
     , keepOpen :: Boolean
     , windowSubscription :: Maybe H.SubscriptionId
@@ -50,7 +48,6 @@ type State option =
 
 data Action option
     = Initialize
-    -- -- | Receive (Input option)
     | Finalize
     | Select (Maybe option)
     | Open
@@ -59,9 +56,7 @@ data Action option
     | KeepOpen
     | FilterInput String
 
-data Output option
-    = SelectedChanged (Maybe option)
-    -- | FilterChanged String
+data Output option = SelectedChanged (Maybe option)
 
 type Slot option = H.Slot (Const Void) (Output option)
 
@@ -83,12 +78,13 @@ render { entries, selected, labeler, filter, open } =
         then
             (case filter of
             Nothing -> []
-            Just placeHolder ->
+            Just { placeHolder, text } ->
                 [ HH.div [ HP.class_ $ HH.ClassName "select-filter" ] $
                 Array.singleton $
                 HH.input
                     [ HP.class_ $ HH.ClassName "select-filter-input"
                     , HP.placeholder placeHolder
+                    , HP.value text
                     , HE.onMouseDown $ const $ Just $ KeepOpen
                     , HE.onValueInput $ Just <<< FilterInput
                     ]
@@ -128,32 +124,13 @@ handleAction Initialize = do
             (E.EventType "mousedown") window \_ -> Just TryClose
     windowSubscription <- H.subscribe $ ES.hoist affToAsync windowEventSource
     H.modify_ (_ { windowSubscription = Just windowSubscription })
--- handleAction (Receive { options, selected, labeler, comparer, filter }) =
---     H.modify_ \state -> state
---         { entries = options <#> \option ->
---             { option
---             , shown:
---                 case filter of
---                 Nothing -> true
---                 Just { text } ->
---                     contains
---                     (Pattern $ toLower $ trim text)
---                     (toLower $ labeler option)
---             }
---         , selected = selected >>= \selected' ->
---             options # find (\option -> comparer option selected')
---         , labeler = labeler
---         , comparer = comparer
---         , filter = filter
---         , open = false
---         }
 handleAction Finalize = do
     { windowSubscription } <- H.get
     case windowSubscription of
         Just windowSubscription' -> H.unsubscribe windowSubscription'
         Nothing -> pure unit
 handleAction (Select selected) = do
-    H.modify_ (_ { selected = selected })
+    H.modify_ (_ { selected = selected, open = false })
     H.raise $ SelectedChanged selected
 handleAction Open =
     H.modify_ (_ { open = true, keepOpen = true })
@@ -175,8 +152,8 @@ handleAction (FilterInput text) =
                 (Pattern $ toLower $ trim text)
                 (toLower $ labeler option)
             }
+        , filter = state.filter <#> (_ { text = text })
         }
-    -- H.raise $ FilterChanged filter
 
 component :: forall option query left.
     H.Component HH.HTML query (Input option) (Output option) (Async left)
@@ -187,7 +164,7 @@ component = H.mkComponent
             options # find (\option -> comparer option selected')
         , labeler
         , comparer
-        , filter
+        , filter: filter <#> { placeHolder: _, text: "" }
         , open: false
         , keepOpen: false
         , windowSubscription: Nothing
@@ -196,7 +173,6 @@ component = H.mkComponent
     , eval: H.mkEval $ H.defaultEval
         { handleAction = handleAction
         , initialize = Just Initialize
-        -- , receive = Just <<< Receive
         , finalize = Just Finalize
         }
     }

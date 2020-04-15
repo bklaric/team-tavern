@@ -159,7 +159,7 @@ render state = HH.div [ HP.class_ $ HH.ClassName "card" ]
                     { entries: allRegions <#> regionToOption
                     , labeler: identity
                     , comparer: (==)
-                    , placeHolder: "Search countries"
+                    , filter: "Search countries"
                     }
                     (Just <<< CountriesInput)
                 ]
