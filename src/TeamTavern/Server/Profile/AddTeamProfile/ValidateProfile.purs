@@ -1,4 +1,4 @@
-module TeamTavern.Server.Profile.AddGameTeam.ValidateProfile where
+module TeamTavern.Server.Profile.AddTeamProfile.ValidateProfile where
 
 import Prelude
 
@@ -14,12 +14,12 @@ import TeamTavern.Server.Domain.NonEmptyText (NonEmptyTextError)
 import TeamTavern.Server.Player.UpdateDetails.ValidateLangugase (Language, validateLanguages)
 import TeamTavern.Server.Player.UpdateDetails.ValidateTimespan (Timespan, validateTimespan)
 import TeamTavern.Server.Player.UpdateDetails.ValidateTimezone (Timezone, validateOptionalTimezone)
-import TeamTavern.Server.Profile.AddGameTeam.LoadFields as LoadFields
-import TeamTavern.Server.Profile.AddGameTeam.ReadProfile as ReadProfile
-import TeamTavern.Server.Profile.AddGameTeam.ValidateAgeSpan (AgeSpan, validateAgeSpan)
-import TeamTavern.Server.Profile.AddGameTeam.ValidateFieldValues (validateFieldValues)
-import TeamTavern.Server.Profile.AddGameTeam.ValidateFieldValues as ValidateFieldValues
-import TeamTavern.Server.Profile.AddGameTeam.ValidateRegions (Region, validateRegions)
+import TeamTavern.Server.Profile.AddTeamProfile.LoadFields as LoadFields
+import TeamTavern.Server.Profile.AddTeamProfile.ReadProfile as ReadProfile
+import TeamTavern.Server.Profile.AddTeamProfile.ValidateAgeSpan (AgeSpan, validateAgeSpan)
+import TeamTavern.Server.Profile.AddTeamProfile.ValidateFieldValues (validateFieldValues)
+import TeamTavern.Server.Profile.AddTeamProfile.ValidateFieldValues as ValidateFieldValues
+import TeamTavern.Server.Profile.AddTeamProfile.ValidateRegions (Region, validateRegions)
 import TeamTavern.Server.Profile.Infrastructure.ValidateSummary as ValidateSummary
 
 type Profile =

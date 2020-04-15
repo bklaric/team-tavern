@@ -1,4 +1,4 @@
-module TeamTavern.Server.Profile.ViewGameTeams where
+module TeamTavern.Server.Profile.ViewPlayerProfilesByGame where
 
 import Prelude
 
@@ -8,12 +8,12 @@ import Perun.Response (Response)
 import Postgres.Async.Pool (withTransaction)
 import Postgres.Pool (Pool)
 import TeamTavern.Server.Profile.Routes (Filters, Handle, ProfilePage, Timezone)
-import TeamTavern.Server.Profile.ViewGameTeams.LoadProfileCount (loadProfileCount)
-import TeamTavern.Server.Profile.ViewGameTeams.LoadProfiles (loadProfiles)
-import TeamTavern.Server.Profile.ViewGameTeams.LogError (logError)
-import TeamTavern.Server.Profile.ViewGameTeams.SendResponse (sendResponse)
+import TeamTavern.Server.Profile.ViewPlayerProfilesByGame.LoadProfileCount (loadProfileCount)
+import TeamTavern.Server.Profile.ViewPlayerProfilesByGame.LoadProfiles (loadProfiles)
+import TeamTavern.Server.Profile.ViewPlayerProfilesByGame.LogError (logError)
+import TeamTavern.Server.Profile.ViewPlayerProfilesByGame.SendResponse (sendResponse)
 
-viewGameTeams
+viewPlayerProfilesByGame
     :: forall left
     .  Pool
     -> Handle
@@ -21,7 +21,7 @@ viewGameTeams
     -> Timezone
     -> Filters
     -> Async left Response
-viewGameTeams pool handle page timezone filters =
+viewPlayerProfilesByGame pool handle page timezone filters =
     sendResponse $ examineLeftWithEffect logError do
     pool # withTransaction (inj (SProxy :: SProxy "databaseError"))
         \client -> do

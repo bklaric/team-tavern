@@ -69,7 +69,7 @@ type Identifiers =
     , nickname :: Nickname
     }
 
-type AddGamePlayer = Route
+type AddPlayerProfile = Route
     Post
     (  Literal "profiles"
     :> Literal "by-handle"
@@ -79,7 +79,7 @@ type AddGamePlayer = Route
     :> End)
     NoQuery
 
-type AddGameTeam = Route
+type AddTeamProfile = Route
     Post
     (  Literal "profiles"
     :> Literal "by-handle"
@@ -89,7 +89,7 @@ type AddGameTeam = Route
     :> End)
     NoQuery
 
-type UpdateGamePlayer = Route
+type UpdatePlayerProfile = Route
     Put
     (  Literal "profiles"
     :> Literal "by-handle"
@@ -99,7 +99,17 @@ type UpdateGamePlayer = Route
     :> End)
     NoQuery
 
-type ViewGamePlayers = Route
+type UpdateTeamProfile = Route
+    Put
+    (  Literal "profiles"
+    :> Literal "by-handle"
+    :> Capture "handle" Handle
+    :> Literal "teams"
+    :> Capture "nickname" Nickname
+    :> End)
+    NoQuery
+
+type ViewPlayerProfilesByGame = Route
     Get
     (  Literal "profiles"
     :> Literal "by-handle"
@@ -119,7 +129,7 @@ type ViewGamePlayers = Route
     :? Optional "microphone" HasMicrophone
     :? Rest "fields")
 
-type ViewGameTeams = Route
+type ViewTeamProfilesByGame = Route
     Get
     (  Literal "profiles"
     :> Literal "by-handle"
@@ -139,18 +149,28 @@ type ViewGameTeams = Route
     :? Optional "microphone" HasMicrophone
     :? Rest "fields")
 
-type ViewProfilesByPlayer = Route
+type ViewPlayerProfilesByPlayer = Route
     Get
     (  Literal "profiles"
     :> Literal "by-nickname"
     :> Capture "nickname" Nickname
     :> End)
-    (Mandatory "ilk" ProfileIlk)
+    NoQuery
+
+type ViewTeamProfilesByPlayer = Route
+    Get
+    (  Literal "profiles"
+    :> Literal "by-nickname"
+    :> Capture "nickname" Nickname
+    :> End)
+    NoQuery
 
 type ProfileRoutes
-    =    "addGamePlayer"        := AddGamePlayer
-    :<|> "addGameTeam"          := AddGameTeam
-    :<|> "updateProfile"        := UpdateGamePlayer
-    :<|> "viewGamePlayers"      := ViewGamePlayers
-    :<|> "viewGameTeams"        := ViewGameTeams
-    :<|> "viewProfilesByPlayer" := ViewProfilesByPlayer
+    =    "addPlayerProfile"           := AddPlayerProfile
+    :<|> "addTeamProfile"             := AddTeamProfile
+    :<|> "updatePlayerProfile"        := UpdatePlayerProfile
+    :<|> "updateTeamProfile"          := UpdateTeamProfile
+    :<|> "viewPlayerProfilesByGame"   := ViewPlayerProfilesByGame
+    :<|> "viewTeamProfilesByGame"     := ViewTeamProfilesByGame
+    :<|> "viewPlayerProfilesByPlayer" := ViewPlayerProfilesByPlayer
+    :<|> "viewTeamProfilesByPlayer"   := ViewTeamProfilesByPlayer

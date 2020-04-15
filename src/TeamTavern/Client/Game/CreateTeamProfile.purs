@@ -38,7 +38,7 @@ import TeamTavern.Server.Game.View.SendResponse as ViewGame
 import TeamTavern.Server.Infrastructure.Languages (allLanguages)
 import TeamTavern.Server.Infrastructure.Regions (Region(..), allRegions)
 import TeamTavern.Server.Infrastructure.Timezones (Timezone, allTimezones)
-import TeamTavern.Server.Profile.AddGamePlayer.SendResponse as Create
+import TeamTavern.Server.Profile.AddPlayerProfile.SendResponse as Create
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 

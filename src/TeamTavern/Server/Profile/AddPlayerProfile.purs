@@ -1,4 +1,4 @@
-module TeamTavern.Server.Profile.AddGameTeam where
+module TeamTavern.Server.Profile.AddPlayerProfile where
 
 import Prelude
 
@@ -9,21 +9,21 @@ import Perun.Request.Body (Body)
 import Perun.Response (Response)
 import Postgres.Async.Pool (withTransaction)
 import Postgres.Pool (Pool)
-import TeamTavern.Server.Infrastructure.EnsureSignedInAs (ensureSignedInAs)
-import TeamTavern.Server.Profile.AddGameTeam.AddProfile (addProfile)
-import TeamTavern.Server.Profile.AddGameTeam.LoadFields (loadFields)
-import TeamTavern.Server.Profile.AddGameTeam.LogError (logError)
-import TeamTavern.Server.Profile.AddGameTeam.ReadProfile (readProfile)
-import TeamTavern.Server.Profile.AddGameTeam.SendResponse (sendResponse)
-import TeamTavern.Server.Profile.AddGameTeam.ValidateProfile (validateProfile)
+import TeamTavern.Server.Infrastructure.ReadCookieInfo (readCookieInfo)
+import TeamTavern.Server.Profile.AddPlayerProfile.AddProfile (addProfile)
+import TeamTavern.Server.Profile.AddPlayerProfile.LogError (logError)
+import TeamTavern.Server.Profile.AddPlayerProfile.SendResponse (sendResponse)
+import TeamTavern.Server.Profile.Infrastructure.LoadFields (loadFields)
+import TeamTavern.Server.Profile.Infrastructure.ReadProfile (readProfile)
+import TeamTavern.Server.Profile.Infrastructure.ValidateProfile (validateProfile)
 import TeamTavern.Server.Profile.Routes (Identifiers)
 
-addGameTeam :: forall left.
+addPlayerProfile :: forall left.
     Pool -> Identifiers -> Map String String -> Body -> Async left Response
-addGameTeam pool identifiers cookies body =
+addPlayerProfile pool identifiers cookies body =
     sendResponse $ examineLeftWithEffect logError do
     -- Read info info from cookies.
-    cookieInfo <- ensureSignedInAs pool cookies identifiers.nickname
+    cookieInfo <- readCookieInfo cookies
 
     pool # withTransaction (inj (SProxy :: SProxy "databaseError"))
         \client -> do
@@ -37,4 +37,4 @@ addGameTeam pool identifiers cookies body =
             profile' <- validateProfile fields profile
 
             -- Add profile to database.
-            addProfile client cookieInfo identifiers.handle profile'
+            addProfile client cookieInfo identifiers profile'

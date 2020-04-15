@@ -1,4 +1,4 @@
-module TeamTavern.Server.Profile.AddGameTeam.ValidateFieldValues where
+module TeamTavern.Server.Profile.AddTeamProfile.ValidateFieldValues where
 
 import Prelude
 
@@ -8,8 +8,8 @@ import Data.Map as Map
 import Data.Maybe (Maybe(..))
 import Data.Traversable (find)
 import Data.Tuple (Tuple(..))
-import TeamTavern.Server.Profile.AddGameTeam.LoadFields as LoadFields
-import TeamTavern.Server.Profile.AddGameTeam.ReadProfile as ReadProfile
+import TeamTavern.Server.Profile.AddTeamProfile.LoadFields as LoadFields
+import TeamTavern.Server.Profile.AddTeamProfile.ReadProfile as ReadProfile
 
 -- Field types.
 

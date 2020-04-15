@@ -1,4 +1,4 @@
-module TeamTavern.Server.Profile.AddGameTeam.SendResponse where
+module TeamTavern.Server.Profile.AddTeamProfile.SendResponse where
 
 import Prelude
 
@@ -7,7 +7,7 @@ import Data.Array as Array
 import Data.Variant (SProxy(..), Variant, inj, match)
 import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, noContent_, unauthorized__)
 import Simple.JSON (writeJSON)
-import TeamTavern.Server.Profile.AddGameTeam.LogError (AddGameTeamError)
+import TeamTavern.Server.Profile.AddTeamProfile.LogError (AddGameTeamError)
 
 type ProfileErrorContent = Variant
     ( invalidSummary :: {} )

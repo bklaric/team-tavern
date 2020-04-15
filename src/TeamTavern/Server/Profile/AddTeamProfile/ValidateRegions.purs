@@ -1,4 +1,4 @@
-module TeamTavern.Server.Profile.AddGameTeam.ValidateRegions
+module TeamTavern.Server.Profile.AddTeamProfile.ValidateRegions
     (Region, validateRegions) where
 
 import Prelude

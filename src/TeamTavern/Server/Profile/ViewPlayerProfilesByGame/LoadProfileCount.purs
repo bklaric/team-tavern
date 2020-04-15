@@ -1,4 +1,4 @@
-module TeamTavern.Server.Profile.ViewGameTeams.LoadProfileCount where
+module TeamTavern.Server.Profile.ViewPlayerProfilesByGame.LoadProfileCount where
 
 import Prelude
 
@@ -16,7 +16,7 @@ import Postgres.Query (Query(..))
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
 import TeamTavern.Server.Profile.Routes (Filters, Handle, Timezone)
-import TeamTavern.Server.Profile.ViewGameTeams.LoadProfiles (queryStringWithoutPagination)
+import TeamTavern.Server.Profile.ViewPlayerProfilesByGame.LoadProfiles (queryStringWithoutPagination)
 
 type LoadProfileCountResult = { count :: Int }
 

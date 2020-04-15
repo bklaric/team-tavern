@@ -1,4 +1,4 @@
-module TeamTavern.Server.Profile.AddGameTeam.AddProfile where
+module TeamTavern.Server.Profile.AddTeamProfile.AddProfile where
 
 import Prelude
 
@@ -18,9 +18,9 @@ import Postgres.Result as Result
 import Simple.JSON.Async (read)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Server.Player.UpdateDetails.ValidateTimespan (nullableTimeFrom, nullableTimeTo)
-import TeamTavern.Server.Profile.AddGameTeam.AddFieldValues (ProfileId, addFieldValues)
-import TeamTavern.Server.Profile.AddGameTeam.ValidateAgeSpan (nullableAgeFrom, nullableAgeTo)
-import TeamTavern.Server.Profile.AddGameTeam.ValidateProfile (Profile)
+import TeamTavern.Server.Profile.AddTeamProfile.AddFieldValues (ProfileId, addFieldValues)
+import TeamTavern.Server.Profile.AddTeamProfile.ValidateAgeSpan (nullableAgeFrom, nullableAgeTo)
+import TeamTavern.Server.Profile.AddTeamProfile.ValidateProfile (Profile)
 import TeamTavern.Server.Profile.Routes (Handle)
 
 type AddProfileError errors = Variant

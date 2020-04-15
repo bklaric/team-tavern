@@ -32,7 +32,7 @@ import TeamTavern.Client.Components.SelectDeclarative.SingleSelect as SingleSele
 import TeamTavern.Client.Script.Cookie (PlayerInfo)
 import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass, otherErrorClass)
 import TeamTavern.Server.Game.View.SendResponse as ViewGame
-import TeamTavern.Server.Profile.AddGamePlayer.SendResponse as Create
+import TeamTavern.Server.Profile.AddPlayerProfile.SendResponse as Create
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 

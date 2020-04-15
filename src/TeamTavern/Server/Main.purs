@@ -52,13 +52,13 @@ import TeamTavern.Server.Player.View (view) as Player
 import TeamTavern.Server.Player.ViewDetails (viewDetails) as Player
 import TeamTavern.Server.Player.ViewHeader (viewHeader) as Player
 import TeamTavern.Server.Player.ViewSettings (viewSettings) as Player
-import TeamTavern.Server.Profile.AddGamePlayer (addGamePlayer) as Profile
-import TeamTavern.Server.Profile.AddGameTeam (addGameTeam) as Profile
+import TeamTavern.Server.Profile.AddPlayerProfile (addPlayerProfile) as Profile
+import TeamTavern.Server.Profile.AddTeamProfile (addTeamProfile) as Profile
 import TeamTavern.Server.Profile.Routes (bundleFilters)
 import TeamTavern.Server.Profile.Update (update) as Profile
 import TeamTavern.Server.Profile.ViewByPlayer (viewByPlayer) as Profile
-import TeamTavern.Server.Profile.ViewGamePlayers (viewGamePlayers) as Profile
-import TeamTavern.Server.Profile.ViewGameTeams (viewGameTeams) as Profile
+import TeamTavern.Server.Profile.ViewPlayerProfilesByGame (viewPlayerProfilesByGame) as Profile
+import TeamTavern.Server.Profile.ViewTeamProfilesByGame (viewTeamProfilesByGame) as Profile
 import TeamTavern.Server.Routes (TeamTavernRoutes)
 import TeamTavern.Server.Session.End (end) as Session
 import TeamTavern.Server.Session.Start (start) as Session
@@ -195,18 +195,22 @@ handleRequest pool client method url cookies body =
             Game.handleView pool handle cookies
         , updateGame: \{ handle } ->
             Game.handleUpdate pool handle cookies body
-        , addGamePlayer: \identifiers ->
-            Profile.addGamePlayer pool identifiers cookies body
-        , addGameTeam: \identifiers ->
-            Profile.addGameTeam pool identifiers cookies body
-        , updateProfile: \identifiers ->
+        , addPlayerProfile: \identifiers ->
+            Profile.addPlayerProfile pool identifiers cookies body
+        , addTeamProfile: \identifiers ->
+            Profile.addTeamProfile pool identifiers cookies body
+        , updatePlayerProfile: \identifiers ->
             Profile.update pool identifiers cookies body
-        , viewGamePlayers: \filters @ { handle, page, timezone } ->
-            Profile.viewGamePlayers pool handle page timezone $ bundleFilters filters
-        , viewGameTeams: \filters @ { handle, page, timezone } ->
-            Profile.viewGameTeams pool handle page timezone $ bundleFilters filters
-        , viewProfilesByPlayer: \{ nickname, ilk } ->
-            Profile.viewByPlayer pool nickname ilk
+        , updateTeamProfile: \identifiers ->
+            Profile.update pool identifiers cookies body
+        , viewPlayerProfilesByGame: \filters @ { handle, page, timezone } ->
+            Profile.viewPlayerProfilesByGame pool handle page timezone $ bundleFilters filters
+        , viewTeamProfilesByGame: \filters @ { handle, page, timezone } ->
+            Profile.viewTeamProfilesByGame pool handle page timezone $ bundleFilters filters
+        , viewPlayerProfilesByPlayer: \{ nickname } ->
+            Profile.viewByPlayer pool nickname 1
+        , viewTeamProfilesByPlayer: \{ nickname } ->
+            Profile.viewByPlayer pool nickname 2
         , viewAllConversations: const $
             Conversation.viewAll pool cookies
         , viewConversation: \{ nickname } ->

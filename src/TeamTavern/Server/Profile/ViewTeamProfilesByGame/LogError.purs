@@ -1,4 +1,4 @@
-module TeamTavern.Server.Profile.ViewGameTeams.LogError where
+module TeamTavern.Server.Profile.ViewTeamProfilesByGame.LogError where
 
 import Prelude
 

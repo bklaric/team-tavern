@@ -1,4 +1,4 @@
-module TeamTavern.Server.Profile.ViewGameTeams.LoadProfiles
+module TeamTavern.Server.Profile.ViewPlayerProfilesByGame.LoadProfiles
     (pageSize, LoadProfilesResult, LoadProfilesError, prepareString, queryStringWithoutPagination, loadProfiles) where
 
 import Prelude
@@ -31,8 +31,8 @@ pageSize = 20
 
 type LoadProfilesResult =
     { nickname :: String
-    , age :: { from :: Maybe Int, to :: Maybe Int }
-    , countries :: Array String
+    , age :: Maybe Int
+    , country :: Maybe String
     , languages :: Array String
     , hasMicrophone :: Boolean
     , weekdayOnline :: Maybe { from :: String, to :: String }
@@ -44,10 +44,15 @@ type LoadProfilesResult =
             , label :: String
             , icon :: String
             }
-        , options :: Array
+        , url :: Maybe String
+        , option :: Maybe
             { key :: String
             , label :: String
             }
+        , options :: Maybe (Array
+            { key :: String
+            , label :: String
+            })
         }
     , summary :: Array String
     , updated :: String
@@ -70,48 +75,38 @@ prepareString stringValue =
 
 createAgeFilter :: Maybe Age -> Maybe Age -> String
 createAgeFilter Nothing Nothing = ""
-createAgeFilter (Just ageFrom) Nothing = " and profile.age_to > " <> show ageFrom
-createAgeFilter Nothing (Just ageTo) = " and profile.age_from < " <> show ageTo
+createAgeFilter (Just ageFrom) Nothing = " and player.birthday < (current_timestamp - interval '" <> show ageFrom <> " years')"
+createAgeFilter Nothing (Just ageTo) = " and player.birthday > (current_timestamp - interval '" <> show (ageTo + 1) <> " years')"
 createAgeFilter (Just ageFrom) (Just ageTo) =
-    " and (profile.age_to > " <> show ageFrom <> " and profile.age_from < " <> show ageTo <> ")"
+    " and player.birthday < (current_timestamp - interval '" <> show ageFrom <> " years') "
+    <> "and player.birthday > (current_timestamp - interval '" <> show (ageTo + 1) <> " years')"
 
 createLanguagesFilter :: Array Language -> String
 createLanguagesFilter [] = ""
-createLanguagesFilter languages = " and profile.languages && (array[" <> (languages <#> prepareString # intercalate ", ") <> "])"
+createLanguagesFilter languages = " and player.languages && (array[" <> (languages <#> prepareString # intercalate ", ") <> "])"
 
 createCountriesFilter :: Array Country -> String
 createCountriesFilter [] = ""
-createCountriesFilter countries = """ and exists (
-    (
-        with recursive region_rec(name) as (
-            select region.name from region where region.name = any(profile.countries)
-            union all
-            select subregion.name from region as subregion join region_rec on subregion.superregion_name = region_rec.name
-        )
-        select * from region_rec
+createCountriesFilter countries = """ and player.country in (
+    with recursive region_rec(name) as (
+        select region.name from region where region.name = any(array[""" <> (countries <#> prepareString # intercalate ", ") <> """])
+        union all
+        select subregion.name from region as subregion join region_rec on subregion.superregion_name = region_rec.name
     )
-    intersect (
-        with recursive region_rec(name) as (
-            select region.name from region where region.name = any(array[""" <> (countries <#> prepareString # intercalate ", ") <> """])
-            union all
-            select subregion.name from region as subregion join region_rec on subregion.superregion_name = region_rec.name
-        )
-        select * from region_rec
-    )
-)
+    select * from region_rec)
 """
 
 timezoneAdjustedTime :: Timezone -> String -> String
 timezoneAdjustedTime timezone timeColumn =
-    """((current_date || ' ' || """ <> timeColumn <> """ || ' ' || profile.timezone)::timestamptz
+    """((current_date || ' ' || """ <> timeColumn <> """ || ' ' || player.timezone)::timestamptz
     at time zone """ <> prepareString timezone <> """)::time"""
 
 createWeekdayOnlineFilter :: Timezone -> Maybe Time -> Maybe Time -> String
 createWeekdayOnlineFilter timezone (Just from) (Just to) =
     let fromTime = "'" <> from <> "'::time"
         toTime   = "'" <> to   <> "'::time"
-        playerStart = timezoneAdjustedTime timezone "profile.weekday_from"
-        playerEnd   = timezoneAdjustedTime timezone "profile.weekday_to"
+        playerStart = timezoneAdjustedTime timezone "player.weekday_from"
+        playerEnd   = timezoneAdjustedTime timezone "player.weekday_to"
     in
     """ and
     case
@@ -131,8 +126,8 @@ createWeekendOnlineFilter :: Timezone -> Maybe Time -> Maybe Time -> String
 createWeekendOnlineFilter timezone (Just from) (Just to) =
     let fromTime = "'" <> from <> "'::time"
         toTime   = "'" <> to   <> "'::time"
-        playerStart = timezoneAdjustedTime timezone "profile.weekend_from"
-        playerEnd   = timezoneAdjustedTime timezone "profile.weekend_to"
+        playerStart = timezoneAdjustedTime timezone "player.weekend_from"
+        playerEnd   = timezoneAdjustedTime timezone "player.weekend_to"
     in
     """ and
     case
@@ -150,10 +145,10 @@ createWeekendOnlineFilter _ _ _ = ""
 
 createMicrophoneFilter :: HasMicrophone -> String
 createMicrophoneFilter false = ""
-createMicrophoneFilter true = " and profile.has_microphone"
+createMicrophoneFilter true = " and player.has_microphone"
 
-createProfileFilterString :: Timezone -> Filters -> String
-createProfileFilterString timezone filters =
+createPlayerFilterString :: Timezone -> Filters -> String
+createPlayerFilterString timezone filters =
     createAgeFilter filters.age.from filters.age.to
     <> createLanguagesFilter filters.languages
     <> createCountriesFilter filters.countries
@@ -187,13 +182,13 @@ prepareFields (QueryPairs filters) = let
     groupeFields # MultiMap.toUnfoldable'
 
 -- Example:
--- jsonb_path_exists(team_profile."fieldValues", '$[*] ? (@.field.key == "rank") ? (@.options[*].key == "guardian" || @.options[*].key == "herald")')
--- and jsonb_path_exists(team_profile."fieldValues", '$[*] ? (@.field.label == "Region") ? (@.options[*].key == "eu-east")')
+-- jsonb_path_exists(player_profile."fieldValues", '$[*] ? (@.field.key == "rank") ? (@.option.key == "guardian" || @.option.key == "herald" || @.options[*].key == "guardian" || @.options[*].key == "herald")')
+-- and jsonb_path_exists(player_profile."fieldValues", '$[*] ? (@.field.label == "Region") ? (@.option.key == "eu-east" || @.options[*].key == "eu-east")')
 createFieldsFilterString :: QueryPairs Key Value -> String
 createFieldsFilterString fields = let
     fieldFilterString (Tuple fieldKey optionKeys) =
         optionKeys
-        <#> (\optionKey -> "@.options[*].key == " <> optionKey)
+        <#> (\optionKey -> "@.option.key == " <> optionKey <> " || @.options[*].key == " <> optionKey)
         # intercalate " || "
         # \filterString -> "jsonb_path_exists(profile.\"fieldValues\", '$[*] ? (@.field.key == " <> fieldKey <> ") ? (" <> filterString <> ")')"
     in
@@ -213,25 +208,22 @@ queryStringWithoutPagination handle timezone filters = Query $ """
     from
         (select
             player.nickname,
-            json_build_object(
-                'from', profile.age_from,
-                'to', profile.age_to
-            ) as age,
-            profile.countries,
-            profile.languages,
-            profile.has_microphone as "hasMicrophone",
+            extract(year from age(player.birthday))::int as age,
+            player.country,
+            player.languages,
+            player.has_microphone as "hasMicrophone",
             case
-                when profile.weekday_from is not null and profile.weekday_to is not null
+                when player.weekday_from is not null and player.weekday_to is not null
                 then json_build_object(
-                    'from', to_char(""" <> timezoneAdjustedTime timezone "profile.weekday_from" <> """, 'HH24:MI'),
-                    'to', to_char(""" <> timezoneAdjustedTime timezone "profile.weekday_to" <> """, 'HH24:MI')
+                    'from', to_char(""" <> timezoneAdjustedTime timezone "player.weekday_from" <> """, 'HH24:MI'),
+                    'to', to_char(""" <> timezoneAdjustedTime timezone "player.weekday_to" <> """, 'HH24:MI')
                 )
             end as "weekdayOnline",
             case
-                when profile.weekend_from is not null and profile.weekend_to is not null
+                when player.weekend_from is not null and player.weekend_to is not null
                 then json_build_object(
-                    'from', to_char(""" <> timezoneAdjustedTime timezone "profile.weekend_from" <> """, 'HH24:MI'),
-                    'to', to_char(""" <> timezoneAdjustedTime timezone "profile.weekend_to" <> """, 'HH24:MI')
+                    'from', to_char(""" <> timezoneAdjustedTime timezone "player.weekend_from" <> """, 'HH24:MI'),
+                    'to', to_char(""" <> timezoneAdjustedTime timezone "player.weekend_to" <> """, 'HH24:MI')
                 )
             end as "weekendOnline",
             coalesce(
@@ -243,24 +235,42 @@ queryStringWithoutPagination handle timezone filters = Query $ """
                             'label', field_values.label,
                             'icon', field_values.icon
                         ),
-                        'options', field_values.multi
+                        case
+                            when field_values.ilk = 1 then 'url'
+                            when field_values.ilk = 2 then 'option'
+                            when field_values.ilk = 2 then 'options'
+                            when field_values.ilk = 3 then 'options'
+                            when field_values.ilk = 3 then 'options'
+                        end,
+                        case
+                            when field_values.ilk = 1 then field_values.url
+                            when field_values.ilk = 2 then field_values.single
+                            when field_values.ilk = 2 then field_values.multi
+                            when field_values.ilk = 3 then field_values.multi
+                            when field_values.ilk = 3 then field_values.multi
+                        end
                     ) order by field_values.ordinal
-                ) filter (where field_values.team_profile_id is not null),
+                ) filter (where field_values.player_profile_id is not null),
                 '[]'
             ) as "fieldValues",
             profile.summary,
             profile.updated::text,
             extract(epoch from (now() - updated)) as "updatedSeconds"
-        from team_profile as profile
+        from player_profile as profile
             join game on game.id = profile.game_id
             join player on player.id = profile.player_id
             left join (
-                select field_value.team_profile_id,
+                select field_value.player_profile_id,
                     field.ilk,
                     field.label,
                     field.key,
                     field.icon,
                     field.ordinal,
+                    to_jsonb(field_value.url) as url,
+                    jsonb_build_object(
+                        'key', single.key,
+                        'label', single.label
+                    ) as single,
                     coalesce(
                         jsonb_agg(jsonb_build_object(
                             'key', multi.key,
@@ -269,19 +279,22 @@ queryStringWithoutPagination handle timezone filters = Query $ """
                         '[]'
                     ) as multi
                 from field
-                    join team_profile_field_value as field_value on field_value.field_id = field.id
-                    left join team_profile_field_value_option as field_value_option
-                        on field_value_option.team_profile_field_value_id = field_value.id
+                    join player_profile_field_value as field_value on field_value.field_id = field.id
+                    left join player_profile_field_value_option as field_value_option
+                        on field_value_option.player_profile_field_value_id = field_value.id
+                    left join field_option as single
+                        on single.id = field_value.field_option_id
                     left join field_option as multi
                         on multi.id = field_value_option.field_option_id
                 group by
                     field.id,
-                    field_value.id
+                    field_value.id,
+                    single.id
             ) as field_values
-                on field_values.team_profile_id = profile.id
+                on field_values.player_profile_id = profile.id
         where
             game.handle = """ <> prepareString handle
-            <> createProfileFilterString timezone filters <> """
+            <> createPlayerFilterString timezone filters <> """
         group by player.id, profile.id
         ) as profile
     """ <> createFieldsFilterString filters.fields <> """

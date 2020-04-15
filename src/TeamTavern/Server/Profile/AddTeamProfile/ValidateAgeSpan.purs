@@ -1,4 +1,4 @@
-module TeamTavern.Server.Profile.AddGameTeam.ValidateAgeSpan
+module TeamTavern.Server.Profile.AddTeamProfile.ValidateAgeSpan
     (Age, AgeSpan, nullableAgeFrom, nullableAgeTo, validateAgeSpan) where
 
 import Prelude

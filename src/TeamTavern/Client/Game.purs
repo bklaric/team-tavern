@@ -34,8 +34,8 @@ import TeamTavern.Client.Script.Cookie (PlayerInfo, getPlayerInfo)
 import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Server.Game.View.SendResponse as ViewGame
-import TeamTavern.Server.Profile.ViewGamePlayers.SendResponse (OkContent) as ViewGamePlayers
-import TeamTavern.Server.Profile.ViewGameTeams.SendResponse as ViewGameTeams
+import TeamTavern.Server.Profile.ViewPlayerProfilesByGame.SendResponse (OkContent) as ViewGamePlayers
+import TeamTavern.Server.Profile.ViewTeamProfilesByGame.SendResponse as ViewGameTeams
 import Web.HTML (window)
 import Web.HTML.Location (reload)
 import Web.HTML.Window (location)
