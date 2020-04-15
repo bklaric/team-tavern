@@ -73,7 +73,7 @@ createAgeFilter Nothing Nothing = ""
 createAgeFilter (Just ageFrom) Nothing = " and profile.age_to > " <> show ageFrom
 createAgeFilter Nothing (Just ageTo) = " and profile.age_from < " <> show ageTo
 createAgeFilter (Just ageFrom) (Just ageTo) =
-    " and (profile.age_to > " <> show ageFrom <> " or profile.age_from < " <> show ageTo <> ")"
+    " and (profile.age_to > " <> show ageFrom <> " and profile.age_from < " <> show ageTo <> ")"
 
 createLanguagesFilter :: Array Language -> String
 createLanguagesFilter [] = ""
