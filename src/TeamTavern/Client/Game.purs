@@ -166,7 +166,7 @@ loadPlayerProfiles handle page filters = Async.unify do
         ageFromPair = filters.ageFrom <#> show <#> ("ageFrom=" <> _)
         ageToPair = filters.ageTo <#> show <#> ("ageTo=" <> _)
         languagePairs = filters.languages <#> ("languages=" <> _)
-    --     countryPairs = filters.countries <#> (\country -> "countries=" <> country)
+        countryPairs = filters.countries <#> (\country -> "countries=" <> country)
         microphonePair = if filters.microphone then Just "microphone=true" else Nothing
         weekdayFromPair = filters.weekdayFrom <#> ("weekdayFrom=" <> _)
         weekdayToPair = filters.weekdayTo <#> ("weekdayTo=" <> _)
@@ -176,7 +176,7 @@ loadPlayerProfiles handle page filters = Async.unify do
             filters.fields
             <#> (\{ fieldKey, optionKey } -> fieldKey <> "=" <> optionKey)
         allPairs = [pagePair, timezonePair]
-            <> languagePairs <> fieldPairs <> Array.catMaybes
+            <> languagePairs <> countryPairs <> fieldPairs <> Array.catMaybes
             [ ageFromPair, ageToPair, microphonePair
             ,  weekdayFromPair, weekdayToPair, weekendFromPair, weekendToPair
             ]

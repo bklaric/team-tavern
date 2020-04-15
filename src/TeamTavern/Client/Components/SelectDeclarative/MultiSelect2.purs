@@ -6,7 +6,6 @@ import Prelude
 import Async (Async)
 import Async.Aff (affToAsync)
 import Data.Array as Array
-import Data.Const (Const)
 import Data.Foldable (intercalate)
 import Data.Maybe (Maybe(..), isJust)
 import Data.String (Pattern(..), contains, toLower, trim)
@@ -66,7 +65,7 @@ data Query option send = Clear send
 
 data Output option = SelectedChanged (Array option)
 
-type Slot option = H.Slot (Const Void) (Output option)
+type Slot option = H.Slot (Query option) (Output option)
 
 render :: forall slots option. State option -> HH.HTML slots (Action option)
 render { entries, labeler, comparer, filter, open } =
@@ -177,8 +176,9 @@ handleQuery (Clear send) = do
     H.raise $ SelectedChanged $ selectedOptions entries
     pure $ Just send
 
-component :: forall option query left.
-    H.Component HH.HTML query (Input option) (Output option) (Async left)
+component :: forall option left.
+    H.Component HH.HTML
+        (Query option) (Input option) (Output option) (Async left)
 component = H.mkComponent
     { initialState: \{ entries, labeler, comparer, filter } ->
         { entries: entries <#> \{ option, selected } ->
@@ -193,6 +193,7 @@ component = H.mkComponent
     , render
     , eval: H.mkEval $ H.defaultEval
         { handleAction = handleAction
+        , handleQuery = handleQuery
         , initialize = Just Initialize
         , finalize = Just Finalize
         }

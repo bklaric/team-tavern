@@ -13,10 +13,10 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import TeamTavern.Client.Components.Select.TreeSelect (treeSelect)
-import TeamTavern.Client.Components.Select.TreeSelect as TreeSelect
 import TeamTavern.Client.Components.SelectDeclarative.MultiSelect (multiSelect, multiSelectIndexed)
 import TeamTavern.Client.Components.SelectDeclarative.MultiSelect as MultiSelect
+import TeamTavern.Client.Components.SelectDeclarative.TreeSelect (treeSelect)
+import TeamTavern.Client.Components.SelectDeclarative.TreeSelect as TreeSelect
 import TeamTavern.Server.Infrastructure.Languages (allLanguages)
 import TeamTavern.Server.Infrastructure.Regions (Region(..), allRegions)
 
@@ -36,7 +36,7 @@ type Filters =
     { ageFrom :: Maybe Int
     , ageTo :: Maybe Int
     , languages :: Array String
-    -- , countries :: Array String
+    , countries :: Array String
     , microphone :: Boolean
     , weekdayFrom :: Maybe String
     , weekdayTo :: Maybe String
@@ -54,7 +54,7 @@ type State =
     { ageFrom :: String
     , ageTo :: String
     , languages :: MultiSelect.Input String
-    , countries :: TreeSelect.Input String
+    , countries :: Array String
     , microphone :: Boolean
     , weekdayFrom :: String
     , weekdayTo :: String
@@ -72,7 +72,7 @@ data Action
     | AgeFromInput String
     | AgeToInput String
     | LanguagesMessage (MultiSelect.Output String)
-    -- | CountriesInput (TreeSelect.Message String)
+    | CountriesInput (TreeSelect.Output String)
     | MicrophoneInput Boolean
     | WeekdayFromInput String
     | WeekdayToInput String
@@ -95,6 +95,7 @@ emptyFilters =
     { ageFrom: Nothing
     , ageTo: Nothing
     , languages: []
+    , countries: []
     , microphone: false
     , weekdayFrom: Nothing
     , weekdayTo: Nothing
@@ -155,11 +156,12 @@ render state = HH.div [ HP.class_ $ HH.ClassName "card" ]
             , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
                 [ fieldLabel "Country" "fas fa-globe-europe"
                 , treeSelect (SProxy :: SProxy "country")
-                    { options: allRegions <#> regionToOption
+                    { entries: allRegions <#> regionToOption
                     , labeler: identity
                     , comparer: (==)
-                    , placeholder: "Search countries"
+                    , placeHolder: "Search countries"
                     }
+                    (Just <<< CountriesInput)
                 ]
             , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
                 [ fieldLabel "Microphone" "fas fa-microphone"
@@ -259,7 +261,7 @@ handleAction ApplyAction = do
             state.languages.entries
             # Array.filter _.selected
             <#> _.option
-        -- countries = state.countries.options <#> ...
+        countries = state.countries
         microphone = state.microphone
         weekdayFrom = nothingIfNull state.weekdayFrom
         weekdayTo = nothingIfNull state.weekdayTo
@@ -274,10 +276,10 @@ handleAction ApplyAction = do
                     { optionKey: option.key, fieldKey: field.key })
             # join
     H.raise $ Apply
-        { ageFrom, ageTo, languages, microphone
+        { ageFrom, ageTo, languages, countries, microphone
         , weekdayFrom, weekdayTo, weekendFrom, weekendTo, fields
         }
-handleAction Clear =
+handleAction Clear = do
     H.modify_ \state -> state
         { ageFrom = ""
         , ageTo = ""
@@ -295,6 +297,7 @@ handleAction Clear =
                 }
             }
         }
+    void $ H.query (SProxy :: SProxy "country") unit $ TreeSelect.Clear unit
 handleAction (AgeFromInput ageFrom) =
     H.modify_ (_ { ageFrom = ageFrom })
 handleAction (AgeToInput ageTo) =
@@ -307,6 +310,8 @@ handleAction (LanguagesMessage (MultiSelect.FilterChanged text)) =
         { languages = state.languages
             { filter = state.languages.filter <#> (_ { text = text }) }
         }
+handleAction (CountriesInput (TreeSelect.SelectedChanged countries)) =
+    H.modify_ (_ { countries = countries })
 handleAction (MicrophoneInput microphone) =
     H.modify_ (_ { microphone = microphone })
 handleAction (WeekdayFromInput time) =
@@ -325,10 +330,10 @@ handleAction (FieldInput fieldKey entries) =
             else stateField
         }
 
-regionToOption :: Region -> TreeSelect.Option String
-regionToOption (Region region subRegions) = TreeSelect.Option
+regionToOption :: Region -> TreeSelect.InputEntry String
+regionToOption (Region region subRegions) = TreeSelect.InputEntry
     { option: region
-    , subOptions: subRegions <#> regionToOption
+    , subEntries: subRegions <#> regionToOption
     }
 
 initialState :: Array Field -> State
@@ -341,12 +346,7 @@ initialState fields =
         , comparer: (==)
         , filter: Just { placeholder: "Search languages", text: "" }
         }
-    , countries:
-        { options: allRegions <#> regionToOption
-        , labeler: identity
-        , comparer: (==)
-        , placeholder: "Search countries"
-        }
+    , countries: []
     , microphone: false
     , weekdayFrom: ""
     , weekdayTo: ""

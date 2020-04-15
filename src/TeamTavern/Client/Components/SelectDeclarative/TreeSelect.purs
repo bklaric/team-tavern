@@ -6,7 +6,6 @@ import Prelude
 import Async (Async)
 import Async.Aff (affToAsync)
 import Data.Array as Array
-import Data.Const (Const)
 import Data.Foldable (all, any, intercalate)
 import Data.Maybe (Maybe(..), maybe)
 import Data.String (Pattern(..), contains, toLower, trim)
@@ -86,7 +85,7 @@ data Query option send = Clear send
 
 data Output option = SelectedChanged (Array option)
 
-type Slot option = H.Slot (Const Void) (Output option) Unit
+type Slot option = H.Slot (Query option) (Output option) Unit
 
 selectedEntriesText :: forall option. Labeler option -> Entries option -> String
 selectedEntriesText labeler entries =
@@ -360,11 +359,13 @@ clearEntries entries = entries <#> \(Entry entry) ->
 
 handleQuery
     :: forall option monad slots action send
-    .  Query option send
+    .  MonadEffect monad
+    => Query option send
     -> H.HalogenM (State option) action slots (Output option) monad (Maybe send)
 handleQuery (Clear send) = do
-    { entries } <- H.modify \state @ { entries } ->
+    { entries, labeler } <- H.modify \state @ { entries } ->
         state { entries = clearEntries entries }
+    updateCheckboxes labeler entries
     H.raise $ SelectedChanged $ getSelectedEntries entries
     pure $ Just send
 
@@ -377,8 +378,9 @@ createEntry (InputEntry { option, subEntries }) = Entry
     , subEntries: subEntries <#> createEntry
     }
 
-component :: forall query option left.
-    H.Component HH.HTML query (Input option) (Output option) (Async left)
+component :: forall option left.
+    H.Component HH.HTML (Query option)
+        (Input option) (Output option) (Async left)
 component = H.mkComponent
     { initialState: \{ entries, labeler, comparer, placeHolder } ->
         { entries: entries <#> createEntry
@@ -392,6 +394,7 @@ component = H.mkComponent
     , render
     , eval: H.mkEval $ H.defaultEval
         { handleAction = handleAction
+        , handleQuery = handleQuery
         , initialize = Just Initialize
         , finalize = Just Finalize
         }
