@@ -59,13 +59,17 @@ loadGamesQuery = Query """
         game.description,
         game.icon_path as "iconPath",
         game.banner_path as "bannerPath",
-        count(player_profile.id)::integer as "playerCount",
-        count(team_profile.id)::integer as "teamCount"
+        (
+            select count(*)::integer
+            from player_profile
+            where player_profile.game_id = game.id
+        ) as "playerCount",
+        (
+            select count(*)::integer
+            from team_profile
+            where team_profile.game_id = game.id
+        ) as "teamCount"
     from game
-        left join player_profile on player_profile.game_id = game.id
-        left join team_profile on team_profile.game_id = game.id
-    group by
-        game.id
     order by "playerCount" desc
     """
 
