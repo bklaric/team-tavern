@@ -1,4 +1,4 @@
-module TeamTavern.Server.Profile.Infrastructure.ValidateFieldValues where
+module TeamTavern.Server.Profile.AddPlayerProfile.ValidateFieldValues where
 
 import Prelude
 
@@ -22,8 +22,8 @@ import Data.Validated (Validated)
 import Data.Validated as Validated
 import Data.Variant (SProxy(..), Variant)
 import Data.Variant as Variant
-import TeamTavern.Server.Profile.Infrastructure.LoadFields as LoadFields
-import TeamTavern.Server.Profile.Infrastructure.ReadProfile as ReadProfile
+import TeamTavern.Server.Profile.AddPlayerProfile.LoadFields as LoadFields
+import TeamTavern.Server.Profile.AddPlayerProfile.ReadProfile as ReadProfile
 import TeamTavern.Server.Profile.Infrastructure.ValidateUrl as ValidateUrl
 
 -- Profile types.

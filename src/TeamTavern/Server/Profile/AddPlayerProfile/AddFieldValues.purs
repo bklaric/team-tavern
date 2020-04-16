@@ -1,4 +1,4 @@
-module TeamTavern.Server.Profile.Infrastructure.AddFieldValues where
+module TeamTavern.Server.Profile.AddPlayerProfile.AddFieldValues where
 
 import Prelude
 
@@ -18,7 +18,7 @@ import Postgres.Result (Result)
 import Postgres.Result as Result
 import Simple.JSON.Async (read)
 import TeamTavern.Server.Profile.Infrastructure.ValidateUrl (Url)
-import TeamTavern.Server.Profile.Infrastructure.ValidateFieldValues (FieldId, FieldValue(..), FieldValueId, FieldValueType(..), OptionId)
+import TeamTavern.Server.Profile.AddPlayerProfile.ValidateFieldValues (FieldId, FieldValue(..), FieldValueId, FieldValueType(..), OptionId)
 
 type ProfileId = Int
 

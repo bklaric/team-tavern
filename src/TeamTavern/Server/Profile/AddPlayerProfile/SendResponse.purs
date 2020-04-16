@@ -10,7 +10,7 @@ import Data.Variant (SProxy(..), Variant, inj, match, onMatch)
 import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, noContent_, unauthorized__)
 import Simple.JSON (writeJSON)
 import TeamTavern.Server.Profile.AddPlayerProfile.LogError (CreateError)
-import TeamTavern.Server.Profile.Infrastructure.ValidateFieldValues (Field(..))
+import TeamTavern.Server.Profile.AddPlayerProfile.ValidateFieldValues (Field(..))
 
 type ProfileErrorContent = Variant
     ( invalidSummary :: {}
@@ -43,8 +43,8 @@ errorResponse = match
             , fieldValues: \fieldValueErrors ->
                 fieldValueErrors
                 <#> onMatch
-                    { invalidUrlFieldValue: \{ fieldValue: { fieldKey }, errors } ->
-                        Just $ inj (SProxy :: SProxy "invalidUrl") { fieldKey, errors: Array.fromFoldable errors }
+                    { invalidUrlFieldValue: \{ fieldValue: { fieldKey }, errors: errors' } ->
+                        Just $ inj (SProxy :: SProxy "invalidUrl") { fieldKey, errors: Array.fromFoldable errors' }
                     , missingFieldValue: \{ field: (Field _ key _ _) } ->
                         Just $ inj (SProxy :: SProxy "missing") { fieldKey: key }
                     }

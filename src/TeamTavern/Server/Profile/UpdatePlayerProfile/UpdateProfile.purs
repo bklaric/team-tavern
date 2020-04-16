@@ -1,4 +1,4 @@
-module TeamTavern.Server.Profile.Update.UpdateProfile
+module TeamTavern.Server.Profile.UpdatePlayerProfile.UpdateProfile
     (UpdateProfileError, updateProfile) where
 
 import Prelude
@@ -87,8 +87,8 @@ updateProfile' client cookieInfo identifiers summary = do
 
 deleteFieldValuesString :: Query
 deleteFieldValuesString = Query """
-    delete from field_value
-    where profile_id = $1;
+    delete from player_profile_field_value
+    where player_profile_id = $1;
     """
 
 deleteFieldValues :: forall errors.

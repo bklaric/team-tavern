@@ -12,8 +12,8 @@ import Postgres.Error (Error)
 import Postgres.Result (Result, rows)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Server.Infrastructure.Log (logStamped, logt, print)
-import TeamTavern.Server.Profile.Infrastructure.ReadProfile as ReadProfile
-import TeamTavern.Server.Profile.Infrastructure.ValidateProfile as ValidateProfile
+import TeamTavern.Server.Profile.AddPlayerProfile.ReadProfile as ReadProfile
+import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile as ValidateProfile
 import TeamTavern.Server.Profile.Routes (Identifiers)
 
 type CreateError = Variant

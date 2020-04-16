@@ -1,4 +1,4 @@
-module TeamTavern.Server.Profile.Update.LogError where
+module TeamTavern.Server.Profile.UpdatePlayerProfile.LogError where
 
 import Prelude
 

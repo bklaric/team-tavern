@@ -1,4 +1,4 @@
-module TeamTavern.Server.Profile.Update where
+module TeamTavern.Server.Profile.UpdatePlayerProfile where
 
 import Prelude
 
@@ -14,13 +14,13 @@ import TeamTavern.Server.Profile.AddPlayerProfile.LoadFields (loadFields)
 import TeamTavern.Server.Profile.AddPlayerProfile.ReadProfile (readProfile)
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile (validateProfile)
 import TeamTavern.Server.Profile.Routes (Identifiers)
-import TeamTavern.Server.Profile.Update.LogError (logError)
-import TeamTavern.Server.Profile.Update.SendResponse (sendResponse)
-import TeamTavern.Server.Profile.Update.UpdateProfile (updateProfile)
+import TeamTavern.Server.Profile.UpdatePlayerProfile.LogError (logError)
+import TeamTavern.Server.Profile.UpdatePlayerProfile.SendResponse (sendResponse)
+import TeamTavern.Server.Profile.UpdatePlayerProfile.UpdateProfile (updateProfile)
 
-update :: forall left.
+updatePlayerProfile :: forall left.
     Pool -> Identifiers -> Map String String -> Body -> Async left Response
-update pool identifiers cookies body =
+updatePlayerProfile pool identifiers cookies body =
     sendResponse $ examineLeftWithEffect logError do
     -- Read cookie info from cookies.
     cookieInfo <- readCookieInfo cookies

@@ -1,4 +1,4 @@
-module TeamTavern.Server.Profile.Infrastructure.ValidateProfile where
+module TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile where
 
 import Prelude
 
@@ -11,11 +11,11 @@ import Data.Symbol (SProxy(..))
 import Data.Validated.Label as Validated
 import Data.Variant (Variant)
 import TeamTavern.Server.Domain.NonEmptyText (NonEmptyTextError)
-import TeamTavern.Server.Profile.Infrastructure.LoadFields as LoadFields
-import TeamTavern.Server.Profile.Infrastructure.ReadProfile as ReadProfile
+import TeamTavern.Server.Profile.AddPlayerProfile.LoadFields as LoadFields
+import TeamTavern.Server.Profile.AddPlayerProfile.ReadProfile as ReadProfile
 import TeamTavern.Server.Profile.Infrastructure.ValidateSummary as ValidateSummary
-import TeamTavern.Server.Profile.Infrastructure.ValidateFieldValues (ValidateFieldValuesError)
-import TeamTavern.Server.Profile.Infrastructure.ValidateFieldValues as ValidateFieldValues
+import TeamTavern.Server.Profile.AddPlayerProfile.ValidateFieldValues (ValidateFieldValuesError)
+import TeamTavern.Server.Profile.AddPlayerProfile.ValidateFieldValues as ValidateFieldValues
 
 data Profile =
     Profile ValidateSummary.Summary (List ValidateFieldValues.FieldValue)

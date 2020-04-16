@@ -1,4 +1,4 @@
-module TeamTavern.Server.Profile.Update.SendResponse
+module TeamTavern.Server.Profile.UpdatePlayerProfile.SendResponse
     (ProfileErrorContent, BadRequestContent, sendResponse) where
 
 import Prelude
@@ -9,25 +9,16 @@ import Data.Maybe (Maybe(..))
 import Data.Variant (SProxy(..), Variant, inj, match, onMatch)
 import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, noContent_, unauthorized__)
 import Simple.JSON (writeJSON)
-import TeamTavern.Server.Profile.Update.LogError (UpdateError)
+import TeamTavern.Server.Profile.UpdatePlayerProfile.LogError (UpdateError)
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateFieldValues (Field(..))
 
 type ProfileErrorContent = Variant
     ( invalidSummary :: {}
-    , invalidUrl ::
-        { fieldKey :: String
-        , errors :: Array (Variant
-            ( invalid :: { original :: String }
-            , tooLong :: { maxLength :: Int, actualLength :: Int }
-            ))
-        }
-    , missing ::
-        { fieldKey :: String
-        }
+    , invalidUrl :: { fieldKey :: String }
+    , missing :: { fieldKey :: String }
     )
 
-type BadRequestContent = Variant
-    ( invalidProfile :: Array ProfileErrorContent )
+type BadRequestContent = Variant (invalidProfile :: Array ProfileErrorContent)
 
 errorResponse :: UpdateError -> Response
 errorResponse = match
@@ -43,8 +34,8 @@ errorResponse = match
             , fieldValues: \fieldValueErrors ->
                 fieldValueErrors
                 <#> onMatch
-                    { invalidUrlFieldValue: \{ fieldValue: { fieldKey }, errors } ->
-                        Just $ inj (SProxy :: SProxy "invalidUrl") { fieldKey, errors: Array.fromFoldable errors }
+                    { invalidUrlFieldValue: \{ field: (Field _ key _ _) } ->
+                        Just $ inj (SProxy :: SProxy "invalidUrl") { fieldKey: key }
                     , missingFieldValue: \{ field: (Field _ key _ _) } ->
                         Just $ inj (SProxy :: SProxy "missing") { fieldKey: key }
                     }

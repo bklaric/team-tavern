@@ -1,4 +1,4 @@
-module TeamTavern.Server.Profile.Infrastructure.LoadFields
+module TeamTavern.Server.Profile.AddPlayerProfile.LoadFields
     (Option, Field, LoadFieldsError, loadFields) where
 
 import Prelude

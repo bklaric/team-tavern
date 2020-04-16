@@ -7,7 +7,6 @@ import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
 import Data.Array (any, foldl)
-import Data.Array as Arary
 import Data.Array as Array
 import Data.Bifunctor (bimap, lmap)
 import Data.Const (Const)
@@ -35,7 +34,7 @@ import TeamTavern.Client.Components.SingleSelect (singleSelectIndexed)
 import TeamTavern.Client.Components.SingleSelect as SingleSelect
 import TeamTavern.Client.Pages.Account.Types (Nickname)
 import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass, otherErrorClass)
-import TeamTavern.Server.Profile.Update.SendResponse as Update
+import TeamTavern.Server.Profile.UpdatePlayerProfile.SendResponse as Update
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
@@ -275,9 +274,9 @@ updateProfile handle nickname summary fieldValues = Async.unify do
                             match
                             { invalidSummary: const $ errors { summary = true }
                             , invalidUrl: \{ fieldKey } ->
-                                errors { url = Arary.cons fieldKey errors.url }
+                                errors { url = Array.cons fieldKey errors.url }
                             , missing: \{ fieldKey } ->
-                                errors { missing = Arary.cons fieldKey errors.missing }
+                                errors { missing = Array.cons fieldKey errors.missing }
                             }
                             error
                         )
@@ -364,6 +363,8 @@ handleAction (Update event) = do
         Just Other -> H.put $ state' { otherError = true, submitting = false }
         Just (Content errors) -> H.put $ state'
             { summaryError = errors.summary
+            , urlValueErrors = errors.url
+            , missingErrors = errors.missing
             , submitting = false
             }
 handleAction Close = H.raise CloseClicked

@@ -16,8 +16,8 @@ import Postgres.Result (Result)
 import Postgres.Result as Result
 import Simple.JSON.Async (read)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
-import TeamTavern.Server.Profile.Infrastructure.AddFieldValues (ProfileId, addFieldValues)
-import TeamTavern.Server.Profile.Infrastructure.ValidateProfile (Profile(..))
+import TeamTavern.Server.Profile.AddPlayerProfile.AddFieldValues (ProfileId, addFieldValues)
+import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile (Profile(..))
 import TeamTavern.Server.Profile.Infrastructure.ValidateSummary (Summary)
 import TeamTavern.Server.Profile.Routes (Identifiers)
 

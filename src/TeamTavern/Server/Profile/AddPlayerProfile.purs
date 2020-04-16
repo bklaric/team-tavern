@@ -13,9 +13,9 @@ import TeamTavern.Server.Infrastructure.ReadCookieInfo (readCookieInfo)
 import TeamTavern.Server.Profile.AddPlayerProfile.AddProfile (addProfile)
 import TeamTavern.Server.Profile.AddPlayerProfile.LogError (logError)
 import TeamTavern.Server.Profile.AddPlayerProfile.SendResponse (sendResponse)
-import TeamTavern.Server.Profile.Infrastructure.LoadFields (loadFields)
-import TeamTavern.Server.Profile.Infrastructure.ReadProfile (readProfile)
-import TeamTavern.Server.Profile.Infrastructure.ValidateProfile (validateProfile)
+import TeamTavern.Server.Profile.AddPlayerProfile.LoadFields (loadFields)
+import TeamTavern.Server.Profile.AddPlayerProfile.ReadProfile (readProfile)
+import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile (validateProfile)
 import TeamTavern.Server.Profile.Routes (Identifiers)
 
 addPlayerProfile :: forall left.
