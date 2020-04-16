@@ -39,13 +39,15 @@ renderModal
     -> State input
     -> HH.ComponentHTML (Action output) (ChildSlots query output) monad
 renderModal _ Hidden = HH.div_ []
-renderModal content (Shown input) = HH.div
+renderModal content (Shown input) =
+    HH.div
     [ HP.class_ $ H.ClassName "modal-background"
     , HP.ref $ H.RefLabel "modal-background"
     , HE.onMouseDown $ Just <<< BackgroundClick
     ]
     [ HH.slot (SProxy :: SProxy "content") unit
-        content input (Just <<< InnerMessage) ]
+        content input (Just <<< InnerMessage)
+    ]
 
 handleAction :: forall state action slots output monad. MonadEffect monad =>
     Action output -> H.HalogenM state action slots (Message output) monad Unit
@@ -56,7 +58,8 @@ handleAction (BackgroundClick event) = do
         Just background', Just eventTarget'
             | unsafeRefEq background' eventTarget' -> H.raise BackgroundClicked
         _, _ -> pure unit
-handleAction (InnerMessage message) = H.raise $ Inner message
+handleAction (InnerMessage message) =
+    H.raise $ Inner message
 
 handleQuery
     :: forall query input output monad send
@@ -70,8 +73,10 @@ handleQuery (Show input send) = do
     pure $ Just send
 handleQuery (Hide send) = do
     makeWindowScrollable
-    H.put Hidden $> Just send
-handleQuery (InnerQuery send) = H.query (SProxy :: SProxy "content") unit send
+    H.put Hidden
+    pure $ Just send
+handleQuery (InnerQuery send) =
+    H.query (SProxy :: SProxy "content") unit send
 
 component
     :: forall query input modalInput output monad

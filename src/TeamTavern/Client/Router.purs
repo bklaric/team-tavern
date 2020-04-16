@@ -11,7 +11,7 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import Simple.JSON (read)
-import TeamTavern.Client.Components.Account.AccountHeader as AccountHeader
+import TeamTavern.Client.Pages.Account.AccountHeader as AccountHeader
 import TeamTavern.Client.Components.Footer (footer)
 import TeamTavern.Client.Components.Footer as Footer
 import TeamTavern.Client.Components.Password.ForgotPassword (forgotPassword)
@@ -37,8 +37,8 @@ import TeamTavern.Client.Pages.Account (account)
 import TeamTavern.Client.Pages.Account as Account
 import TeamTavern.Client.Pages.Home (home)
 import TeamTavern.Client.Pages.Home as Home
-import TeamTavern.Client.Player (player)
-import TeamTavern.Client.Player as Player
+-- import TeamTavern.Client.Player (player)
+-- import TeamTavern.Client.Player as Player
 import TeamTavern.Client.Script.Navigate (navigateReplace_)
 import TeamTavern.Client.SignIn (signIn)
 import TeamTavern.Client.SignIn as SignIn
@@ -71,7 +71,7 @@ type ChildSlots = Footer.ChildSlots
     , account :: Account.Slot
     , games :: Games.Slot Unit
     , game :: Game.Slot Unit
-    , player :: Player.Slot Unit
+    -- , player :: Player.Slot Unit
     , signIn :: SignIn.Slot Unit
     , homeAnchor :: NavigationAnchor.Slot Unit
     , signInAnchor :: NavigationAnchor.Slot Unit
@@ -98,7 +98,7 @@ render Home = HH.div_ [ topBar, home, footer ]
 render About = topBarWithContent [ about ]
 render (Game handle tab) = topBarWithContent [ game handle tab ]
 render (Account tab) = topBarWithContent [ account tab ]
-render (Player nickname) = topBarWithContent [ player nickname ]
+render (Player nickname) = topBarWithContent [] -- [ player nickname ]
 render Register = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ registerForm ] ]
 render SignIn = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ signIn ] ]
 render ForgotPassword = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ forgotPassword ] ]

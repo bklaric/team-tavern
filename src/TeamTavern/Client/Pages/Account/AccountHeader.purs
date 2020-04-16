@@ -1,5 +1,5 @@
-module TeamTavern.Client.Components.Account.AccountHeader
-    (Nickname, Tab(..), Slot, accountHeader) where
+module TeamTavern.Client.Pages.Account.AccountHeader
+    (Tab(..), Slot, accountHeader) where
 
 import Prelude
 
@@ -14,13 +14,14 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Halogen.Query.EventSource as ES
-import TeamTavern.Client.Components.Account.ChangeNickname (changeNickname)
-import TeamTavern.Client.Components.Account.ChangeNickname as ChangeNickname
-import TeamTavern.Client.Components.Account.EditDetails (editDetails)
-import TeamTavern.Client.Components.Account.EditDetails as EditDetails
-import TeamTavern.Client.Components.Account.EditSettings (editSettings)
-import TeamTavern.Client.Components.Account.EditSettings as EditSettings
 import TeamTavern.Client.Components.Modal as Modal
+import TeamTavern.Client.Pages.Account.ChangeNickname (changeNickname)
+import TeamTavern.Client.Pages.Account.ChangeNickname as ChangeNickname
+import TeamTavern.Client.Pages.Account.EditDetails (editDetails)
+import TeamTavern.Client.Pages.Account.EditDetails as EditDetails
+import TeamTavern.Client.Pages.Account.EditSettings (editSettings)
+import TeamTavern.Client.Pages.Account.EditSettings as EditSettings
+import TeamTavern.Client.Pages.Account.Types (Nickname)
 import TeamTavern.Client.Script.Navigate (navigate_)
 import Web.Event.Event (preventDefault, stopPropagation)
 import Web.Event.Event as E
@@ -29,8 +30,6 @@ import Web.HTML.Location (reload)
 import Web.HTML.Window (location)
 import Web.HTML.Window as Window
 import Web.UIEvent.MouseEvent (MouseEvent, toEvent)
-
-type Nickname = String
 
 type EditPopoverShown = Boolean
 

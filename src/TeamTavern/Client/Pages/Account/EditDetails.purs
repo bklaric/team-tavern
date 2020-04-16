@@ -1,4 +1,4 @@
-module TeamTavern.Client.Components.Account.EditDetails
+module TeamTavern.Client.Pages.Account.EditDetails
     (Message(..), Slot, editDetails) where
 
 import Prelude

@@ -1,4 +1,4 @@
-module TeamTavern.Client.Components.Account.ChangeNickname
+module TeamTavern.Client.Pages.Account.ChangeNickname
     (Message(..), Slot, changeNickname) where
 
 import Prelude

@@ -253,28 +253,29 @@ sendCreateRequest handle nickname summary fieldValues = Async.unify do
     result <-
         case FetchRes.status response of
         204 -> pure Nothing
-        400 ->
-            FetchRes.text response
+        400 ->  FetchRes.text response
             >>= JsonAsync.readJSON
-            # bimap
+            #   bimap
                 (const $ Just Other)
-                (\(error :: Create.BadRequestContent) -> Just $ Content $
+                (\(content :: Create.BadRequestContent) -> Just $ Content $
                     match
                     { invalidProfile:
                         foldl
-                        (\errors error' ->
-                            error' # match
-                                { invalidSummary: const $
-                                    errors { summary = true }
-                                , invalidUrl: \{ fieldKey } ->
-                                    errors { url = Array.cons fieldKey errors.url }
-                                , missing: \{ fieldKey } ->
-                                    errors { missing = Array.cons fieldKey errors.missing }
-                                }
+                        (\errors error ->
+                            match
+                            { invalidSummary: const $
+                                errors { summary = true }
+                            , invalidUrl: \{ fieldKey } ->
+                                errors { url = Array.cons fieldKey errors.url }
+                            , missing: \{ fieldKey } ->
+                                errors { missing = Array.cons fieldKey errors.missing }
+                            }
+                            error
                         )
                         ({ summary: false, url: [], missing: [] })
                     }
-                    error)
+                    content
+                )
         _ -> pure $ Just Other
     pure result
 
