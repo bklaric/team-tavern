@@ -268,12 +268,16 @@ queryStringWithoutPagination handle timezone filters = Query $ """
                         )) filter (where multi.label is not null),
                         '[]'
                     ) as multi
-                from field
-                    join team_profile_field_value as field_value on field_value.field_id = field.id
+                from
+                    field
+                    join team_profile_field_value as field_value
+                        on field_value.field_id = field.id
                     left join team_profile_field_value_option as field_value_option
                         on field_value_option.team_profile_field_value_id = field_value.id
                     left join field_option as multi
                         on multi.id = field_value_option.field_option_id
+                where
+                    field.ilk = 2 or field.ilk = 3
                 group by
                     field.id,
                     field_value.id

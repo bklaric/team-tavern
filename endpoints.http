@@ -75,3 +75,6 @@ Cookie: teamtavern-id=1; teamtavern-nickname=bklaric; teamtavern-token=1f3e90c82
 
 GET http://localhost:8080/profiles/by-nickname/bklaric/players HTTP/1.1
 
+###
+
+GET http://localhost:8080/profiles/by-nickname/bklaric/teams?timezone=Europe/Zagreb HTTP/1.1

@@ -165,7 +165,7 @@ type ViewTeamProfilesByPlayer = Route
     :> Capture "nickname" Nickname
     :> Literal "teams"
     :> End)
-    NoQuery
+    (Mandatory "timezone" Timezone)
 
 type ProfileRoutes
     =    "addPlayerProfile"           := AddPlayerProfile
