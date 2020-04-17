@@ -1,5 +1,5 @@
 module TeamTavern.Server.Profile.ViewTeamProfilesByPlayer.SendResponse
-    (OkContent, sendResponse) where
+    (OkContent, OkContent', sendResponse) where
 
 import Prelude
 
@@ -11,6 +11,8 @@ import TeamTavern.Server.Profile.ViewTeamProfilesByPlayer.LoadProfiles (LoadProf
 import TeamTavern.Server.Profile.ViewTeamProfilesByPlayer.LogError (ViewAllError)
 
 type OkContent = Array LoadProfilesResult
+
+type OkContent' = LoadProfilesResult
 
 errorResponse :: ViewAllError -> Response
 errorResponse = match

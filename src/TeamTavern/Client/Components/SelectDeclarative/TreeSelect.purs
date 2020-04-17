@@ -53,6 +53,7 @@ type Comparer option = option -> option -> Boolean
 
 type Input option =
     { entries :: Array (InputEntry option)
+    , selected :: Array option
     , labeler :: Labeler option
     , comparer :: Comparer option
     , filter :: String
@@ -374,8 +375,12 @@ component :: forall option left.
     H.Component HH.HTML (Query option)
         (Input option) (Output option) (Async left)
 component = H.mkComponent
-    { initialState: \{ entries, labeler, comparer, filter } ->
-        { entries: entries <#> createEntry
+    { initialState: \{ entries, selected, labeler, comparer, filter } ->
+        { entries:
+            Array.foldr
+            (toggleEntriesState comparer)
+            (entries <#> createEntry)
+            selected
         , labeler
         , comparer
         , filter: { placeHolder: filter, text: "" }

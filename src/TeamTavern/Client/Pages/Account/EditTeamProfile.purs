@@ -12,10 +12,11 @@ import Data.Bifunctor (bimap, lmap)
 import Data.Const (Const)
 import Data.Foldable (find, intercalate)
 import Data.HTTP.Method (Method(..))
+import Data.Int as Int
 import Data.Map as Map
-import Data.Maybe (Maybe(..), isJust, maybe)
+import Data.Maybe (Maybe(..), isJust, isNothing, maybe)
 import Data.Options ((:=))
-import Data.String (null)
+import Data.String as String
 import Data.Tuple (Tuple(..))
 import Data.Variant (SProxy(..), match)
 import Halogen (ClassName(..))
@@ -30,143 +31,140 @@ import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.MultiSelect (multiSelectIndexed)
 import TeamTavern.Client.Components.MultiSelect as MultiSelect
-import TeamTavern.Client.Components.SingleSelect (singleSelectIndexed)
+import TeamTavern.Client.Components.SelectDeclarative.MultiSelect2 as MultiSelect2
+import TeamTavern.Client.Components.SelectDeclarative.SingleSelect2 as SingleSelect2
+import TeamTavern.Client.Components.SelectDeclarative.TreeSelect (treeSelect)
+import TeamTavern.Client.Components.SelectDeclarative.TreeSelect as TreeSelect
 import TeamTavern.Client.Components.SingleSelect as SingleSelect
 import TeamTavern.Client.Pages.Account.Types (Nickname)
 import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass, otherErrorClass)
+import TeamTavern.Server.Infrastructure.Languages (allLanguages)
+import TeamTavern.Server.Infrastructure.Regions (Region(..), allRegions)
+import TeamTavern.Server.Infrastructure.Timezones (Timezone, allTimezones)
 import TeamTavern.Server.Profile.UpdatePlayerProfile.SendResponse as Update
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
+type Option =
+    { key :: String
+    , label :: String
+    }
+
 type Field =
     { key :: String
-    , ilk :: Int
     , label :: String
     , icon :: String
-    , required :: Boolean
-    , domain :: Maybe String
-    , options :: Maybe (Array
-        { key :: String
-        , label :: String
-        })
+    , options :: Array Option
     }
 
 type FieldValue =
     { fieldKey :: String
-    , url :: Maybe String
-    , optionKey :: Maybe String
-    , optionKeys :: Maybe (Array String)
+    , optionKeys :: Array String
     }
 
 type Input =
     { nickname :: Nickname
     , handle :: String
     , title :: String
+    , age :: { from :: Maybe Int, to :: Maybe Int }
+    , countries :: Array String
+    , languages :: Array String
+    , hasMicrophone :: Boolean
+    , timezone :: Maybe String
+    , weekdayOnline :: Maybe
+        { clientFrom :: String
+        , clientTo :: String
+        , sourceFrom :: String
+        , sourceTo :: String
+        }
+    , weekendOnline :: Maybe
+        { clientFrom :: String
+        , clientTo :: String
+        , sourceFrom :: String
+        , sourceTo :: String
+        }
     , fields :: Array Field
     , fieldValues :: Array FieldValue
     , summary :: Array String
     }
 
+type State =
+    { nickname :: Nickname
+    , handle :: String
+    , title :: String
+    , ageFrom :: Maybe Int
+    , ageTo :: Maybe Int
+    , languages :: Array String
+    , countries :: Array String
+    , hasMicrophone :: Boolean
+    , timezone :: Maybe String
+    , weekdayFrom :: Maybe String
+    , weekdayTo :: Maybe String
+    , weekendFrom :: Maybe String
+    , weekendTo :: Maybe String
+    , fields :: Array Field
+    , fieldValues :: Array FieldValue
+    , summary :: String
+    , summaryError :: Boolean
+    , otherError :: Boolean
+    , submitting :: Boolean
+    }
+
 data Action
     = SummaryInput String
-    | UrlValueInput String String
+    | AgeFromInput String
+    | AgeToInput String
+    | LanguageInput (MultiSelect2.Output String)
+    | RegionInput (TreeSelect.Output String)
+    | MicrophoneInput Boolean
+    | TimezoneInput (SingleSelect2.Output Timezone)
+    | WeekdayFromInput String
+    | WeekdayToInput String
+    | WeekendFromInput String
+    | WeekendToInput String
     | Update Event
     | Close
 
 data Output = ProfileUpdated Nickname | CloseClicked
 
-type State =
-    { nickname :: Nickname
-    , handle :: String
-    , title :: String
-    , fields :: Array Field
-    , fieldValues :: Array FieldValue
-    , summary :: String
-    , summaryError :: Boolean
-    , urlValueErrors :: Array String
-    , missingErrors :: Array String
-    , otherError :: Boolean
-    , submitting :: Boolean
-    }
-
 type ChildSlots =
-    ( "singleSelectField" :: SingleSelect.Slot { key :: String, label :: String } String
-    , "multiSelectField" :: MultiSelect.Slot { key :: String, label :: String } String
+    ( "language" :: MultiSelect2.Slot String Unit
+    , "country" :: TreeSelect.Slot String
+    , "timezone" :: SingleSelect2.Slot Timezone Unit
+    , "singleSelectField" :: SingleSelect.Slot Option String
+    , "multiSelectField" :: MultiSelect.Slot Option String
     )
 
 type Slot = H.Slot (Modal.Query Input (Const Void)) (Modal.Message Output)
 
+regionToEntry :: Region -> TreeSelect.InputEntry String
+regionToEntry (Region region subRegions) = TreeSelect.InputEntry
+    { option: region
+    , subEntries: subRegions <#> regionToEntry
+    }
+
 fieldLabel :: forall slots action.
-    String -> String -> String -> Boolean -> Maybe String -> HH.HTML slots action
-fieldLabel key label icon required domain =
+    String -> String -> HH.HTML slots action
+fieldLabel label icon =
     HH.label
-        [ HP.class_ $ HH.ClassName "input-label", HP.for key ] $
-        [ HH.i [ HP.class_ $ HH.ClassName $ icon <> " filter-field-icon" ] []
-        , HH.span [ HP.class_ $ HH.ClassName "filter-field-label" ] [ HH.text label ]
-        ]
-        <>
-        (case domain of
-        Just domain' ->
-            [ divider
-            , HH.span [ HP.class_ $ H.ClassName "input-sublabel" ] [ HH.text domain' ]
-            ]
-        Nothing -> [])
-        <>
-        (if required
-        then []
-        else
-            [ divider
-            , HH.span [ HP.class_ $ H.ClassName "input-sublabel" ] [ HH.text "optional" ]
-            ])
+    [ HP.class_ $ HH.ClassName "input-label" ]
+    [ HH.i [ HP.class_ $ HH.ClassName $ icon <> " filter-field-icon" ] []
+    , HH.span [ HP.class_ $ HH.ClassName "filter-field-label" ] [ HH.text label ]
+    , divider
+    , HH.span [ HP.class_ $ H.ClassName "input-sublabel" ] [ HH.text "optional" ]
+    ]
 
 fieldInput
     :: forall left
     .  Array FieldValue
-    -> Array String
-    -> Array String
     -> Field
     -> H.ComponentHTML Action ChildSlots (Async left)
-fieldInput fieldValues urlValueErrors missingErrors { key, ilk: 1, label, icon, required, domain: Just domain } = let
+fieldInput fieldValues { key, label, icon, options } = let
     fieldValue' = fieldValues # find \{ fieldKey } -> fieldKey == key
-    urlError = urlValueErrors # any (_ == key)
-    missingError = missingErrors # any (_ == key)
-    url = fieldValue' >>= _.url
+    selectedOptionIds' = fieldValue' <#> _.optionKeys
     in
     HH.div [ HP.class_ $ HH.ClassName "input-group" ]
-    [ fieldLabel key label icon required (Just domain)
-    , HH.input
-        [ HP.id_ key
-        , HP.class_ $ HH.ClassName "text-line-input"
-        , HE.onValueInput $ Just <<< UrlValueInput key
-        , HP.value $ maybe "" identity url
-        ]
-    , HH.p
-        [ HP.class_ $ inputErrorClass urlError ]
-        [ HH.text $ "This doesn't look like a valid " <> label <> " (" <> domain <> ") address." ]
-    , HH.p
-        [ HP.class_ $ inputErrorClass missingError ]
-        [ HH.text $ label <> " is required." ]
-    ]
-fieldInput fieldValues _ _ { key, ilk: 2, label, icon, required, options: Just options } = let
-    fieldValue' = fieldValues # find \{ fieldKey } -> fieldKey == key
-    in
-    HH.div [ HP.class_ $ HH.ClassName "input-group" ]
-    [ fieldLabel key label icon required Nothing
-    , singleSelectIndexed (SProxy :: SProxy "singleSelectField") key
-        { options
-        , selected: fieldValue' >>= _.optionKey >>= \optionKey ->
-            options # find \option -> optionKey == option.key
-        , labeler: _.label
-        , comparer: \leftOption rightOption -> leftOption.key == rightOption.key
-        , showFilter: Nothing
-        }
-    ]
-fieldInput fieldValues _ _ { key, ilk: 3, label, icon, required, options: Just options } = let
-    fieldValue' = fieldValues # find \{ fieldKey } -> fieldKey == key
-    selectedOptionIds' = fieldValue' >>= _.optionKeys
-    in
-    HH.div [ HP.class_ $ HH.ClassName "input-group" ]
-    [ fieldLabel key label icon required Nothing
+    [ fieldLabel label icon
     , multiSelectIndexed (SProxy :: SProxy "multiSelectField") key
         { options: options <#> \option ->
             { option
@@ -177,17 +175,14 @@ fieldInput fieldValues _ _ { key, ilk: 3, label, icon, required, options: Just o
         , showFilter: Nothing
         }
     ]
-fieldInput _ _ _ _ = HH.div_ []
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
-render
+render state @
     { title
     , fields
     , summary
     , summaryError
     , fieldValues
-    , urlValueErrors
-    , missingErrors
     , otherError
     , submitting
     } =
@@ -198,8 +193,154 @@ render
         [ HH.text $ "Edit your " <> title <> " profile" ]
     , HH.p [ HP.class_ $ HH.ClassName "form-subheading" ]
         [ HH.text "Describe yourself as a player and let other players find you." ]
-    , HH.div [ HP.class_ $ HH.ClassName "responsive-input-groups" ]
-        (fields <#> fieldInput fieldValues urlValueErrors missingErrors)
+    , HH.div [ HP.class_ $ HH.ClassName "responsive-input-groups" ] $
+        [ HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+            [ fieldLabel "Age" "fas fa-calendar-alt"
+            , HH.div [ HP.class_ $ HH.ClassName "timespan-group" ]
+                [ HH.span [ HP.class_ $ HH.ClassName "timespan-group-from" ] [ HH.text "From" ]
+                , HH.input
+                    [ HP.class_ $ HH.ClassName $ "text-line-input timespan-group-input"
+                    , HP.type_ HP.InputNumber
+                    , HP.value $ maybe "" show state.ageFrom
+                    , HE.onValueChange $ Just <<< AgeFromInput
+                    ]
+                , HH.span [ HP.class_ $ HH.ClassName "timespan-group-to" ] [ HH.text "to" ]
+                , HH.input
+                    [ HP.class_ $ HH.ClassName $ "text-line-input timespan-group-input"
+                    , HP.type_ HP.InputNumber
+                    , HP.value $ maybe "" show state.ageTo
+                    , HE.onValueChange $ Just <<< AgeToInput
+                    ]
+                ]
+            ]
+        , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+            [ fieldLabel "Language" "fas fa-comments"
+            , MultiSelect2.multiSelect (SProxy :: SProxy "language")
+                { entries: allLanguages <#> \language ->
+                    { option: language
+                    , selected: state.languages # Array.any (_ == language)
+                    }
+                , labeler: identity
+                , comparer: (==)
+                , filter: Just "Search languages"
+                }
+                (Just <<< LanguageInput)
+            ]
+        , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+            [ fieldLabel "Country" "fas fa-globe-europe"
+            , treeSelect (SProxy :: SProxy "country")
+                { entries: allRegions <#> regionToEntry
+                , selected: state.countries
+                , labeler: identity
+                , comparer: (==)
+                , filter: "Search countries"
+                }
+                (Just <<< RegionInput)
+            ]
+        , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+            [ fieldLabel "Microphone" "fas fa-microphone"
+            , HH.label
+                [ HP.class_ $ HH.ClassName "checkbox-input-label" ]
+                [ HH.input
+                    [ HP.class_ $ HH.ClassName "checkbox-input"
+                    , HP.type_ HP.InputCheckbox
+                    , HP.checked state.hasMicrophone
+                    , HE.onChecked $ Just <<< MicrophoneInput
+                    ]
+                , HH.text "Must have a microphone and be willing to communicate."
+                ]
+            ]
+        , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+            [ fieldLabel "Timezone" "fas fa-globe"
+            , SingleSelect2.singleSelect (SProxy :: SProxy "timezone")
+                { options: allTimezones # Array.sortBy \leftTimezone rightTimezone -> let
+                    countryComparison =
+                        leftTimezone.country `compare` rightTimezone.country
+                    in
+                    case countryComparison of
+                    EQ -> leftTimezone.city `compare` rightTimezone.city
+                    other -> other
+                , selected: state.timezone >>= \timezone ->
+                    allTimezones # Array.find (_.name >>> (_ == timezone))
+                , labeler: \{ city, country: country' } ->
+                    country' <> ", " <> city
+                , comparer: \leftTimezone rightTimezone ->
+                    leftTimezone.name == rightTimezone.name
+                , filter: Just "Search timezones"
+                }
+                (Just <<< TimezoneInput)
+            ]
+        , HH.div [ HP.class_ $ HH.ClassName "input-group" ] $
+            [ fieldLabel "Online on weekdays" "fas fa-clock"
+            , HH.div [ HP.class_ $ HH.ClassName "timespan-group" ]
+                [ HH.span [ HP.class_ $ HH.ClassName "timespan-group-from" ] [ HH.text "From" ]
+                , HH.input
+                    [ HP.class_ $ HH.ClassName $ "text-line-input timespan-group-input"
+                    , HP.type_ HP.InputTime
+                    , HP.disabled $ isNothing state.timezone
+                    , HP.value $ maybe "" identity state.weekdayFrom
+                    , HE.onValueChange $ Just <<< WeekdayFromInput
+                    ]
+                , HH.span [ HP.class_ $ HH.ClassName "timespan-group-to" ] [ HH.text "to" ]
+                , HH.input
+                    [ HP.class_ $ HH.ClassName $ "text-line-input timespan-group-input"
+                    , HP.type_ HP.InputTime
+                    , HP.disabled $ isNothing state.timezone
+                    , HP.value $ maybe "" identity state.weekdayTo
+                    , HE.onValueChange $ Just <<< WeekdayToInput
+                    ]
+                ]
+            ]
+            <>
+            if isNothing state.timezone
+            then Array.singleton $
+                HH.label
+                    [ HP.class_ $ HH.ClassName "input-underlabel" ]
+                    [ HH.text $ "Set your timezone to unlock this field." ]
+            else if isNothing state.weekdayFrom && isJust state.weekdayTo
+                || isJust state.weekdayFrom && isNothing state.weekdayTo
+            then Array.singleton $
+                HH.label
+                [ HP.class_ $ HH.ClassName "input-underlabel" ]
+                [ HH.text $ "Enter both times for the field to have effect." ]
+            else []
+        , HH.div [ HP.class_ $ HH.ClassName "input-group" ] $
+            [ fieldLabel "Online on weekends" "fas fa-clock"
+            , HH.div [ HP.class_ $ HH.ClassName "timespan-group" ]
+                [ HH.span [ HP.class_ $ HH.ClassName "timespan-group-from" ] [ HH.text "From" ]
+                , HH.input
+                    [ HP.class_ $ HH.ClassName $ "text-line-input timespan-group-input"
+                    , HP.type_ HP.InputTime
+                    , HP.disabled $ isNothing state.timezone
+                    , HP.value $ maybe "" identity state.weekendFrom
+                    , HE.onValueChange $ Just <<< WeekendFromInput
+                    ]
+                , HH.span [ HP.class_ $ HH.ClassName "timespan-group-to" ] [ HH.text "to" ]
+                , HH.input
+                    [ HP.class_ $ HH.ClassName $ "text-line-input timespan-group-input"
+                    , HP.type_ HP.InputTime
+                    , HP.disabled $ isNothing state.timezone
+                    , HP.value $ maybe "" identity state.weekendTo
+                    , HE.onValueChange $ Just <<< WeekendToInput
+                    ]
+                ]
+            ]
+            <>
+            if isNothing state.timezone
+            then Array.singleton $
+                HH.label
+                    [ HP.class_ $ HH.ClassName "input-underlabel" ]
+                    [ HH.text $ "Set your timezone to unlock this field." ]
+            else if isNothing state.weekendFrom && isJust state.weekendTo
+                || isJust state.weekendFrom && isNothing state.weekendTo
+            then Array.singleton $
+                HH.label
+                [ HP.class_ $ HH.ClassName "input-underlabel" ]
+                [ HH.text $ "Enter both times for the field to have effect." ]
+            else []
+        ]
+        <>
+        (fields <#> fieldInput fieldValues)
     , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
         [ HH.label
             [ HP.class_ $ HH.ClassName "input-label"
@@ -241,21 +382,26 @@ data UpdateError
         }
 
 updateProfile :: forall left.
-    String -> Nickname -> String -> Array FieldValue -> Async left (Maybe UpdateError)
-updateProfile handle nickname summary fieldValues = Async.unify do
+    State -> Async left (Maybe UpdateError)
+updateProfile state @ { handle, nickname } = Async.unify do
     response <-
         Fetch.fetch
-        ("/api/profiles/by-handle/" <> handle <> "/players/" <> nickname)
+        ("/api/profiles/by-handle/" <> handle <> "/teams/" <> nickname)
         (  Fetch.method := PUT
         <> Fetch.body := Json.writeJSON
-            { summary
-            , fieldValues: fieldValues # Array.filter
-                \{ url, optionKey, optionKeys } ->
-                    isJust url
-                    || isJust optionKey
-                    || (case optionKeys of
-                        Just optionKeys' | not $ Array.null optionKeys' -> true
-                        _ -> false)
+            { summary: state.summary
+            , ageFrom: state.ageFrom
+            , ageTo: state.ageTo
+            , countries: state.countries
+            , languages: state.languages
+            , hasMicrophone: state.hasMicrophone
+            , timezone: state.timezone
+            , weekdayFrom: state.weekdayFrom
+            , weekdayTo: state.weekdayTo
+            , weekendFrom: state.weekendFrom
+            , weekendTo: state.weekendTo
+            , fieldValues: state.fieldValues # Array.filter
+                \{ optionKeys } -> not $ Array.null optionKeys
             }
         <> Fetch.credentials := Fetch.Include
         )
@@ -289,56 +435,35 @@ updateProfile handle nickname summary fieldValues = Async.unify do
 
 handleAction :: forall left.
     Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
-handleAction (SummaryInput summary) = do
+handleAction (SummaryInput summary) =
     H.modify_ (_ { summary = summary })
-handleAction (UrlValueInput fieldKey inputUrl) = do
-    state @ { fields, fieldValues } <- H.get
-    let allFieldValues = fields <#> (\field -> let
-            fieldValue' = fieldValues # find \fieldValue -> fieldValue.fieldKey == field.key
-            in
-            case fieldValue' of
-            Nothing ->
-                { fieldKey: field.key
-                , url: Nothing
-                , optionKey: Nothing
-                , optionKeys: Nothing
-                }
-            Just { url, optionKey, optionKeys } ->
-                { fieldKey: field.key
-                , url
-                , optionKey
-                , optionKeys
-                })
-    let newFieldValues = allFieldValues <#> \value ->
-            if value.fieldKey == fieldKey
-                then
-                    if null inputUrl
-                    then value { url = Nothing }
-                    else value { url = Just inputUrl }
-                else value
-    H.put $ state { fieldValues = newFieldValues }
+handleAction (AgeFromInput ageFrom) =
+    H.modify_ (_ { ageFrom = Int.fromString ageFrom })
+handleAction (AgeToInput ageTo) =
+    H.modify_ (_ { ageTo = Int.fromString ageTo })
+handleAction (LanguageInput (MultiSelect2.SelectedChanged languages)) =
+    H.modify_ (_ { languages = languages })
+handleAction (RegionInput (TreeSelect.SelectedChanged countries)) =
+    H.modify_ (_ { countries = countries })
+handleAction (MicrophoneInput hasMicrophone) =
+    H.modify_ (_ { hasMicrophone = hasMicrophone })
+handleAction (TimezoneInput (SingleSelect2.SelectedChanged timezone)) =
+    H.modify_ (_ { timezone = timezone <#> _.name })
+handleAction (WeekdayFromInput time) =
+    H.modify_ (_ { weekdayFrom = if String.null time then Nothing else Just time })
+handleAction (WeekdayToInput time) =
+    H.modify_ (_ { weekdayTo = if String.null time then Nothing else Just time })
+handleAction (WeekendFromInput time) =
+    H.modify_ (_ { weekendFrom = if String.null time then Nothing else Just time })
+handleAction (WeekendToInput time) =
+    H.modify_ (_ { weekendTo = if String.null time then Nothing else Just time })
 handleAction (Update event) = do
     H.liftEffect $ preventDefault event
-    state @ { fields } <- H.gets (_
+    state @ { fields } <- H.modify (_
         { summaryError   = false
         , otherError     = false
-        , urlValueErrors = []
-        , missingErrors  = []
         , submitting     = true
         })
-    H.put state
-    singleSelectResults <-
-        (H.queryAll (SProxy :: SProxy "singleSelectField")
-        $ SingleSelect.Selected identity)
-    let (singleSelectValues :: Array _) =
-            singleSelectResults
-            # Map.toUnfoldable
-            <#> \(Tuple fieldKey option) ->
-                { fieldKey
-                , url: Nothing
-                , optionKey: option <#> _.key
-                , optionKeys: Nothing
-                }
     multiSelectResults <-
         (H.queryAll (SProxy :: SProxy "multiSelectField")
         $ MultiSelect.Selected identity)
@@ -347,24 +472,15 @@ handleAction (Update event) = do
             # Map.toUnfoldable
             <#> \(Tuple fieldKey options) ->
                 { fieldKey
-                , url: Nothing
-                , optionKey: Nothing
-                , optionKeys: Just $ options <#> _.key
+                , optionKeys: options <#> _.key
                 }
-    let state' = state
-            { fieldValues =
-                (state.fieldValues # Array.filter (_.url >>> isJust))
-                <> singleSelectValues
-                <> multiSelectValues
-            }
-    result <- H.lift $ updateProfile state'.handle state'.nickname state'.summary state'.fieldValues
+    let state' = state { fieldValues = multiSelectValues }
+    result <- H.lift $ updateProfile state'
     case result of
         Nothing -> H.raise $ ProfileUpdated state.nickname
         Just Other -> H.put $ state' { otherError = true, submitting = false }
         Just (Content errors) -> H.put $ state'
             { summaryError = errors.summary
-            , urlValueErrors = errors.url
-            , missingErrors = errors.missing
             , submitting = false
             }
 handleAction Close = H.raise CloseClicked
@@ -372,31 +488,47 @@ handleAction Close = H.raise CloseClicked
 component :: forall query left.
     H.Component HH.HTML query Input Output (Async left)
 component = H.mkComponent
-    { initialState: \{ handle, title, nickname, summary, fieldValues, fields } ->
+    { initialState: \
         { handle
         , title
         , nickname
+        , age
+        , countries
+        , languages
+        , hasMicrophone
+        , timezone
+        , weekdayOnline
+        , weekendOnline
+        , summary
+        , fieldValues
+        , fields
+        } ->
+        { handle
+        , title
+        , nickname
+        , ageFrom: age.from
+        , ageTo: age.to
+        , countries
+        , languages
+        , hasMicrophone
+        , timezone
+        , weekdayFrom: weekdayOnline <#> _.sourceFrom
+        , weekdayTo: weekdayOnline <#> _.sourceTo
+        , weekendFrom: weekendOnline <#> _.sourceFrom
+        , weekendTo: weekendOnline <#> _.sourceTo
         , fields
         , summary: intercalate "\n\n" summary
         , summaryError: false
-        , fieldValues: fields <#> (\field -> let
-            fieldValue' = fieldValues # find \{ fieldKey } -> fieldKey == field.key
-            in
-            case fieldValue' of
+        , fieldValues: fields <#> (\field ->
+            case fieldValues # find \{ fieldKey } -> fieldKey == field.key of
             Nothing ->
                 { fieldKey: field.key
-                , url: Nothing
-                , optionKey: Nothing
-                , optionKeys: Nothing
+                , optionKeys: []
                 }
-            Just { url, optionKey, optionKeys } ->
+            Just { optionKeys } ->
                 { fieldKey: field.key
-                , url
-                , optionKey
                 , optionKeys
                 })
-        , urlValueErrors: []
-        , missingErrors: []
         , otherError: false
         , submitting: false
         }

@@ -157,6 +157,7 @@ render state = HH.div [ HP.class_ $ HH.ClassName "card" ]
                 [ fieldLabel "Country" "fas fa-globe-europe"
                 , treeSelect (SProxy :: SProxy "country")
                     { entries: allRegions <#> regionToOption
+                    , selected: []
                     , labeler: identity
                     , comparer: (==)
                     , filter: "Search countries"

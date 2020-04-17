@@ -26,8 +26,19 @@ type LoadProfilesResult =
     , countries :: Array String
     , languages :: Array String
     , hasMicrophone :: Boolean
-    , weekdayOnline :: Maybe { from :: String, to :: String }
-    , weekendOnline :: Maybe { from :: String, to :: String }
+    , timezone :: Maybe String
+    , weekdayOnline :: Maybe
+        { clientFrom :: String
+        , clientTo :: String
+        , sourceFrom :: String
+        , sourceTo :: String
+        }
+    , weekendOnline :: Maybe
+        { clientFrom :: String
+        , clientTo :: String
+        , sourceFrom :: String
+        , sourceTo :: String
+        }
     , fields :: Array
         { key :: String
         , label :: String
@@ -56,8 +67,8 @@ type LoadProfilesError errors
     | errors )
 
 prepareString :: String -> String
-prepareString stringValue =
-       "'"
+prepareString stringValue
+    =  "'"
     <> (String.replace (String.Pattern "'") (String.Replacement "") stringValue)
     <> "'"
 
@@ -78,18 +89,23 @@ queryString timezone = Query $ """
             profile.countries,
             profile.languages,
             profile.has_microphone as "hasMicrophone",
+            profile.timezone,
             case
                 when profile.weekday_from is not null and profile.weekday_to is not null
                 then json_build_object(
-                    'from', to_char(""" <> timezoneAdjustedTime timezone "profile.weekday_from" <> """, 'HH24:MI'),
-                    'to', to_char(""" <> timezoneAdjustedTime timezone "profile.weekday_to" <> """, 'HH24:MI')
+                    'clientFrom', to_char(""" <> timezoneAdjustedTime timezone "profile.weekday_from" <> """, 'HH24:MI'),
+                    'clientTo', to_char(""" <> timezoneAdjustedTime timezone "profile.weekday_to" <> """, 'HH24:MI'),
+                    'sourceFrom', to_char(profile.weekday_from, 'HH24:MI'),
+                    'sourceTo', to_char(profile.weekday_to, 'HH24:MI')
                 )
             end as "weekdayOnline",
             case
                 when profile.weekend_from is not null and profile.weekend_to is not null
                 then json_build_object(
-                    'from', to_char(""" <> timezoneAdjustedTime timezone "profile.weekend_from" <> """, 'HH24:MI'),
-                    'to', to_char(""" <> timezoneAdjustedTime timezone "profile.weekend_to" <> """, 'HH24:MI')
+                    'clientFrom', to_char(""" <> timezoneAdjustedTime timezone "profile.weekend_from" <> """, 'HH24:MI'),
+                    'clientTo', to_char(""" <> timezoneAdjustedTime timezone "profile.weekend_to" <> """, 'HH24:MI'),
+                    'sourceFrom', to_char(profile.weekend_from, 'HH24:MI'),
+                    'sourceTo', to_char(profile.weekend_to, 'HH24:MI')
                 )
             end as "weekendOnline",
         coalesce(fields.fields, '[]') as "fields",

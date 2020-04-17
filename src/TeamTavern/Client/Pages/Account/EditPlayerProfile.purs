@@ -38,6 +38,11 @@ import TeamTavern.Server.Profile.UpdatePlayerProfile.SendResponse as Update
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
+type Option =
+    { key :: String
+    , label :: String
+    }
+
 type Field =
     { key :: String
     , ilk :: Int
@@ -45,10 +50,7 @@ type Field =
     , icon :: String
     , required :: Boolean
     , domain :: Maybe String
-    , options :: Maybe (Array
-        { key :: String
-        , label :: String
-        })
+    , options :: Maybe (Array Option)
     }
 
 type FieldValue =
@@ -90,17 +92,17 @@ type State =
     }
 
 type ChildSlots =
-    ( "singleSelectField" :: SingleSelect.Slot { key :: String, label :: String } String
-    , "multiSelectField" :: MultiSelect.Slot { key :: String, label :: String } String
+    ( "singleSelectField" :: SingleSelect.Slot Option String
+    , "multiSelectField" :: MultiSelect.Slot Option String
     )
 
 type Slot = H.Slot (Modal.Query Input (Const Void)) (Modal.Message Output)
 
 fieldLabel :: forall slots action.
-    String -> String -> String -> Boolean -> Maybe String -> HH.HTML slots action
-fieldLabel key label icon required domain =
+    String -> String -> Boolean -> Maybe String -> HH.HTML slots action
+fieldLabel label icon required domain =
     HH.label
-        [ HP.class_ $ HH.ClassName "input-label", HP.for key ] $
+        [ HP.class_ $ HH.ClassName "input-label" ] $
         [ HH.i [ HP.class_ $ HH.ClassName $ icon <> " filter-field-icon" ] []
         , HH.span [ HP.class_ $ HH.ClassName "filter-field-label" ] [ HH.text label ]
         ]
@@ -133,7 +135,7 @@ fieldInput fieldValues urlValueErrors missingErrors { key, ilk: 1, label, icon, 
     url = fieldValue' >>= _.url
     in
     HH.div [ HP.class_ $ HH.ClassName "input-group" ]
-    [ fieldLabel key label icon required (Just domain)
+    [ fieldLabel label icon required (Just domain)
     , HH.input
         [ HP.id_ key
         , HP.class_ $ HH.ClassName "text-line-input"
@@ -151,7 +153,7 @@ fieldInput fieldValues _ _ { key, ilk: 2, label, icon, required, options: Just o
     fieldValue' = fieldValues # find \{ fieldKey } -> fieldKey == key
     in
     HH.div [ HP.class_ $ HH.ClassName "input-group" ]
-    [ fieldLabel key label icon required Nothing
+    [ fieldLabel label icon required Nothing
     , singleSelectIndexed (SProxy :: SProxy "singleSelectField") key
         { options
         , selected: fieldValue' >>= _.optionKey >>= \optionKey ->
@@ -166,7 +168,7 @@ fieldInput fieldValues _ _ { key, ilk: 3, label, icon, required, options: Just o
     selectedOptionIds' = fieldValue' >>= _.optionKeys
     in
     HH.div [ HP.class_ $ HH.ClassName "input-group" ]
-    [ fieldLabel key label icon required Nothing
+    [ fieldLabel label icon required Nothing
     , multiSelectIndexed (SProxy :: SProxy "multiSelectField") key
         { options: options <#> \option ->
             { option
@@ -379,10 +381,8 @@ component = H.mkComponent
         , fields
         , summary: intercalate "\n\n" summary
         , summaryError: false
-        , fieldValues: fields <#> (\field -> let
-            fieldValue' = fieldValues # find \{ fieldKey } -> fieldKey == field.key
-            in
-            case fieldValue' of
+        , fieldValues: fields <#> (\field ->
+            case fieldValues # find \{ fieldKey } -> fieldKey == field.key of
             Nothing ->
                 { fieldKey: field.key
                 , url: Nothing

@@ -26,7 +26,8 @@ import TeamTavern.Client.Components.NavigationAnchor as Anchor
 import TeamTavern.Client.Pages.Account.EditTeamProfile (editTeamProfile)
 import TeamTavern.Client.Pages.Account.EditTeamProfile as EditProfile
 import TeamTavern.Client.Pages.Account.Types (Nickname, PlayerStatus(..))
-import TeamTavern.Server.Profile.ViewPlayerProfilesByPlayer.SendResponse as ViewPlayerProfilesByPlayer
+import TeamTavern.Client.Script.Timezone (getClientTimezone)
+import TeamTavern.Server.Profile.ViewTeamProfilesByPlayer.SendResponse as ViewTeamProfilesByPlayer
 
 data Input = Input Nickname PlayerStatus
 
@@ -38,7 +39,7 @@ data Action
 
 data State
     = Empty Input
-    | Profiles Nickname PlayerStatus ViewPlayerProfilesByPlayer.OkContent
+    | Profiles Nickname PlayerStatus ViewTeamProfilesByPlayer.OkContent
 
 type Slot = H.Slot (Const Void) Void Unit
 
@@ -81,25 +82,25 @@ lastUpdated updatedSeconds = let
     Just { unit, count } -> show count <> " " <> unit <> (if count == 1 then "" else "s") <> " ago"
     Nothing -> "less than a minute ago"
 
+modalInput ::
+    Nickname -> ViewTeamProfilesByPlayer.OkContent' -> EditProfile.Input
 modalInput
-    :: forall other
-    .  Nickname
-    -> { fieldValues :: Array EditProfile.FieldValue
-       , fields :: Array EditProfile.Field
-       , handle :: String
-       , summary :: Array String
-       , title :: String
-       | other }
-    -> EditProfile.Input
-modalInput nickname { handle, title, fields, fieldValues, summary } =
-    { nickname, handle, title, fields, fieldValues, summary }
+    nickname
+    { handle, title, fields, fieldValues, summary
+    , age, countries, languages, hasMicrophone
+    , timezone, weekdayOnline, weekendOnline
+    } =
+    { nickname, handle, title, fields, fieldValues, summary
+    , age, countries, languages, hasMicrophone
+    , timezone, weekdayOnline, weekendOnline
+    }
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render (Empty _) = HH.div_ []
 render (Profiles nickname playerStatus profiles) =
     HH.div [ HP.class_ $ HH.ClassName "card" ] $
     [ HH.h2 [ HP.class_ $ HH.ClassName "card-title" ]
-        [ HH.text "Player profiles" ]
+        [ HH.text "Team profiles" ]
     ]
     <>
     case playerStatus of
@@ -112,8 +113,8 @@ render (Profiles nickname playerStatus profiles) =
         [ HH.p_
             [ HH.text
                 case playerStatus of
-                SamePlayer -> "You haven't created any player profiles."
-                _ -> "This player hasn't created any player profiles."
+                SamePlayer -> "You haven't created any team profiles."
+                _ -> "This player hasn't created any team profiles."
             ]
         ]
     else (profiles # Array.mapWithIndex \index profile ->
@@ -132,7 +133,7 @@ render (Profiles nickname playerStatus profiles) =
                 , HE.onClick $ const $ Just $ ShowModal $ modalInput nickname profile
                 ]
                 [ HH.i [ HP.class_ $ H.ClassName "fas fa-user-edit button-icon" ] []
-                , HH.text "Edit player profile"
+                , HH.text "Edit team profile"
                 ]
             _ -> []
             <>
@@ -142,42 +143,126 @@ render (Profiles nickname playerStatus profiles) =
             ]
         ]
         <> Array.catMaybes
+        [ case profile.age.from, profile.age.to of
+            Nothing, Nothing -> Nothing
+            Just from, Nothing -> Just $
+                HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
+                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-calendar-alt profile-field-icon" ] []
+                , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text "Are older than " ]
+                , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text $ show from ]
+                ]
+            Nothing, Just to -> Just $
+                HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
+                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-calendar-alt profile-field-icon" ] []
+                , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text "Are younger than " ]
+                , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text $ show to ]
+                ]
+            Just from, Just to -> Just $
+                HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
+                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-calendar-alt profile-field-icon" ] []
+                , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text "Are between " ]
+                , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text $ show from ]
+                , HH.text " and "
+                , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text $ show to ]
+                , HH.text " years old"
+                ]
+        , if Array.null profile.countries
+            then Nothing
+            else Just $
+                HH.p [ HP.class_ $ HH.ClassName "profile-field" ] $
+                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-globe-europe profile-field-icon" ] []
+                , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text "Live in " ]
+                ]
+                <>
+                (Array.foldr
+                    (\country state ->
+                        if not state.firstCountry
+                        then state { firstCountry = true, regionsSoFar = [ HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text country ] ] }
+                        else if not state.secondCountry
+                        then state { secondCountry = true, regionsSoFar = [ HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text country ], HH.text " or " ] <> state.regionsSoFar }
+                        else state { regionsSoFar = [ HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text country ], HH.text ", " ] <> state.regionsSoFar }
+                    )
+                    { firstCountry: false, secondCountry: false, regionsSoFar: [] }
+                    profile.countries
+                    # _.regionsSoFar
+                )
+        , if Array.null profile.languages
+            then Nothing
+            else Just $
+                HH.p [ HP.class_ $ HH.ClassName "profile-field" ] $
+                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-comments profile-field-icon" ] []
+                , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text "Speak " ]
+                ]
+                <>
+                (Array.foldr
+                    (\language state ->
+                        if not state.firstLanguage
+                        then state { firstLanguage = true, languagesSoFar = [ HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text language ] ] }
+                        else if not state.secondLanguage
+                        then state { secondLanguage = true, languagesSoFar = [ HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text language ], HH.text " or " ] <> state.languagesSoFar }
+                        else state { languagesSoFar = [ HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text language ], HH.text ", " ] <> state.languagesSoFar }
+                    )
+                    { firstLanguage: false, secondLanguage: false, languagesSoFar: [] }
+                    profile.languages
+                    # _.languagesSoFar
+                )
+        , if profile.hasMicrophone
+            then Just $
+                HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
+                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-microphone profile-field-icon" ] []
+                , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless profile-field-emphasize" ] [ HH.text "Have a microphone" ]
+                , HH.text $ " and are willing to communicate."
+                ]
+            else Nothing
+        , profile.weekdayOnline <#> \{ clientFrom, clientTo } ->
+            HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
+            [ HH.i [ HP.class_ $ HH.ClassName "fas fa-clock profile-field-icon" ] []
+            , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text $ "Online on " ]
+            , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text "weekdays" ]
+            , HH.text " from "
+            , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text clientFrom ]
+            , HH.text " to "
+            , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text clientTo ]
+            ]
+        , profile.weekendOnline <#> \{ clientFrom, clientTo } ->
+            HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
+            [ HH.i [ HP.class_ $ HH.ClassName "fas fa-clock profile-field-icon" ] []
+            , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text $ "Online on " ]
+            , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text "weekends" ]
+            , HH.text " from "
+            , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text clientFrom ]
+            , HH.text " to "
+            , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text clientTo ]
+            ]
+        ]
+        <> Array.catMaybes
         (profile.fields <#> \field -> let
             fieldValue = profile.fieldValues # Array.find \{ fieldKey } -> field.key == fieldKey
             in
-            case field.ilk, fieldValue of
-            1, Just { url: Just url } -> Just $
-                HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
-                [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
-                , HH.a [ HP.class_ $ HH.ClassName "profile-field-label", HP.href url ] [ HH.text field.label ]
-                ]
-            2, Just { optionKey: Just optionKey } ->
-                field.options >>= Array.find (\{ key } -> key == optionKey) <#> \option ->
-                    HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
-                    [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
-                    , HH.span [ HP.class_ $ HH.ClassName "profile-field-label" ] [ HH.text $ field.label <> ": " ]
-                    , HH.text option.label
-                    ]
-            3, Just { optionKeys: Just optionKeys } ->
-                case field.options <#> Array.filter \{ key } -> Array.elem key optionKeys of
-                Just fieldOptions | not $ Array.null fieldOptions -> Just $
+            case fieldValue of
+            Just { optionKeys } -> let
+                fieldOptions = field.options # Array.filter \{ key } -> Array.elem key optionKeys
+                in
+                if not $ Array.null fieldOptions
+                then Just $
                     HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
                     [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
                     , HH.span [ HP.class_ $ HH.ClassName "profile-field-label" ] [ HH.text $ field.label <> ": " ]
                     , HH.text $ Array.intercalate ", " (fieldOptions <#> _.label)
                     ]
-                _ -> Nothing
-            _, _ -> Nothing
+                else Nothing
+            _ -> Nothing
         )
         <>
         (profile.summary <#> \paragraph -> HH.p_ [ HH.text paragraph ])
     )
 
 loadProfiles :: forall left.
-    String -> Async left (Maybe ViewPlayerProfilesByPlayer.OkContent)
+    String -> Async left (Maybe ViewTeamProfilesByPlayer.OkContent)
 loadProfiles nickname = Async.unify do
+    timezone <- H.liftEffect $ getClientTimezone
     response
-        <- Fetch.fetch_ ("/api/profiles/by-nickname/" <> nickname <> "/players")
+        <- Fetch.fetch_ ("/api/profiles/by-nickname/" <> nickname <> "/teams?timezone=" <> timezone)
         #  lmap (const Nothing)
     content <-
         case FetchRes.status response of

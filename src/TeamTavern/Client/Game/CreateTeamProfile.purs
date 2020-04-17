@@ -110,37 +110,23 @@ type ChildSlots =
     , "multiSelectField" :: MultiSelect.Slot Option String
     )
 
-fieldLabel :: forall slots action.
-    String -> String -> Boolean -> Maybe String -> HH.HTML slots action
-fieldLabel label icon required domain =
-    HH.label
-        [ HP.class_ $ HH.ClassName "input-label" ] $
-        [ HH.i [ HP.class_ $ HH.ClassName $ icon <> " filter-field-icon" ] []
-        , HH.span [ HP.class_ $ HH.ClassName "filter-field-label" ] [ HH.text label ]
-        ]
-        <>
-        (case domain of
-        Just domain' ->
-            [ divider
-            , HH.span [ HP.class_ $ H.ClassName "input-sublabel" ] [ HH.text domain' ]
-            ]
-        Nothing -> [])
-        <>
-        (if required
-        then []
-        else
-            [ divider
-            , HH.span [ HP.class_ $ H.ClassName "input-sublabel" ] [ HH.text "optional" ]
-            ])
 
-inputLabel :: forall action slots. String -> String -> HH.HTML slots action
-inputLabel label icon = fieldLabel label icon false Nothing
+fieldLabel :: forall slots action.
+    String -> String -> HH.HTML slots action
+fieldLabel label icon =
+    HH.label
+    [ HP.class_ $ HH.ClassName "input-label" ]
+    [ HH.i [ HP.class_ $ HH.ClassName $ icon <> " filter-field-icon" ] []
+    , HH.span [ HP.class_ $ HH.ClassName "filter-field-label" ] [ HH.text label ]
+    , divider
+    , HH.span [ HP.class_ $ H.ClassName "input-sublabel" ] [ HH.text "optional" ]
+    ]
 
 fieldInput :: forall left.
     FieldValue -> H.ComponentHTML Action ChildSlots (Async left)
 fieldInput (FieldValue { key, label, icon } input) =
     HH.div [ HP.class_ $ HH.ClassName "input-group" ]
-    [ fieldLabel label icon false Nothing
+    [ fieldLabel label icon
     , multiSelectIndexed (SProxy :: SProxy "multiSelectField") key input
         case _ of
         MultiSelect.SelectedChanged entries -> Just $ FieldValueInput key entries
@@ -167,7 +153,7 @@ render state @
         [ HH.text "Describe players you are looking for and let them find your team" ]
     , HH.div [ HP.class_ $ HH.ClassName "responsive-input-groups" ] $
         [ HH.div [ HP.class_ $ HH.ClassName "input-group" ]
-            [ inputLabel "Age" "fas fa-calendar-alt"
+            [ fieldLabel "Age" "fas fa-calendar-alt"
             , HH.div [ HP.class_ $ HH.ClassName "timespan-group" ]
                 [ HH.span [ HP.class_ $ HH.ClassName "timespan-group-from" ] [ HH.text "From" ]
                 , HH.input
@@ -184,7 +170,7 @@ render state @
                 ]
             ]
         , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
-            [ inputLabel "Language" "fas fa-comments"
+            [ fieldLabel "Language" "fas fa-comments"
             , MultiSelect2.multiSelect (SProxy :: SProxy "language")
                 { entries: allLanguages <#> { option: _, selected: false }
                 , labeler: identity
@@ -194,9 +180,10 @@ render state @
                 (Just <<< LanguageInput)
             ]
         , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
-            [ inputLabel "Country" "fas fa-globe-europe"
+            [ fieldLabel "Country" "fas fa-globe-europe"
             , treeSelect (SProxy :: SProxy "country")
                 { entries: allRegions <#> regionToEntry
+                , selected: []
                 , labeler: identity
                 , comparer: (==)
                 , filter: "Search countries"
@@ -204,7 +191,7 @@ render state @
                 (Just <<< RegionInput)
             ]
         , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
-            [ inputLabel "Microphone" "fas fa-microphone"
+            [ fieldLabel "Microphone" "fas fa-microphone"
             , HH.label
                 [ HP.class_ $ HH.ClassName "checkbox-input-label" ]
                 [ HH.input
@@ -216,7 +203,7 @@ render state @
                 ]
             ]
         , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
-            [ inputLabel "Timezone" "fas fa-globe"
+            [ fieldLabel "Timezone" "fas fa-globe"
             , SingleSelect2.singleSelect (SProxy :: SProxy "timezone")
                 { options: allTimezones # Array.sortBy \leftTimezone rightTimezone -> let
                     countryComparison =
@@ -235,7 +222,7 @@ render state @
                 (Just <<< TimezoneInput)
             ]
         , HH.div [ HP.class_ $ HH.ClassName "input-group" ] $
-            [ inputLabel "Online on weekdays" "fas fa-clock"
+            [ fieldLabel "Online on weekdays" "fas fa-clock"
             , HH.div [ HP.class_ $ HH.ClassName "timespan-group" ]
                 [ HH.span [ HP.class_ $ HH.ClassName "timespan-group-from" ] [ HH.text "From" ]
                 , HH.input
@@ -267,7 +254,7 @@ render state @
                 [ HH.text $ "Enter both times for the field to have effect." ]
             else []
         , HH.div [ HP.class_ $ HH.ClassName "input-group" ] $
-            [ inputLabel "Online on weekends" "fas fa-clock"
+            [ fieldLabel "Online on weekends" "fas fa-clock"
             , HH.div [ HP.class_ $ HH.ClassName "timespan-group" ]
                 [ HH.span [ HP.class_ $ HH.ClassName "timespan-group-from" ] [ HH.text "From" ]
                 , HH.input
