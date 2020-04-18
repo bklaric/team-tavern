@@ -15,6 +15,8 @@ import TeamTavern.Client.Components.Conversation.Conversations (conversations)
 import TeamTavern.Client.Components.Conversation.Conversations as Conversations
 import TeamTavern.Client.Pages.Account.AccountHeader (accountHeader)
 import TeamTavern.Client.Pages.Account.AccountHeader as AccountHeader
+import TeamTavern.Client.Pages.Account.Details (details)
+import TeamTavern.Client.Pages.Account.Details as Details
 import TeamTavern.Client.Pages.Account.PlayerProfiles (playerProfiles)
 import TeamTavern.Client.Pages.Account.PlayerProfiles as PlayerProfiles
 import TeamTavern.Client.Pages.Account.TeamProfiles (teamProfiles)
@@ -36,6 +38,7 @@ type Slot = H.Slot (Const Void) Void Unit
 
 type ChildSlots =
     ( accountHeader :: AccountHeader.Slot
+    , details :: Details.Slot
     , playerProfiles :: PlayerProfiles.Slot
     , teamProfiles :: TeamProfiles.Slot
     , conversations :: Conversations.Slot
@@ -49,7 +52,8 @@ render (Player nickname tab) = HH.div_ $
     <>
     case tab of
     AccountHeader.Profiles ->
-        [ playerProfiles nickname SamePlayer (SProxy :: SProxy "playerProfiles")
+        [ details nickname SamePlayer (SProxy :: SProxy "details")
+        , playerProfiles nickname SamePlayer (SProxy :: SProxy "playerProfiles")
         , teamProfiles nickname SamePlayer (SProxy :: SProxy "teamProfiles")
         ]
     AccountHeader.Conversations ->

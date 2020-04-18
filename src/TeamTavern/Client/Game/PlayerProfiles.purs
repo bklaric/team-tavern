@@ -112,17 +112,19 @@ render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { profiles, profileCount, showCreateProfile, page } =
     HH.div [ HP.class_ $ HH.ClassName "card" ] $
     [ HH.span [ HP.class_ $ HH.ClassName "card-title" ] $
-        [ HH.text "Player profiles"
-        , divider
-        , HH.span [ HP.class_ $ HH.ClassName "card-subtitle" ]
-            [ HH.text $
-                (if profileCount == 0
-                    then "Showing 0"
-                    else
-                        "Showing " <> show (1 + ((page - 1) * pageSize))
-                        <> " - " <> show (min profileCount (page * pageSize))
-                        <> " out of " <> show profileCount)
-                <> " players"
+        [ HH.span [ HP.class_ $ HH.ClassName "card-title-text" ]
+            [ HH.text "Player profiles"
+            , divider
+            , HH.span [ HP.class_ $ HH.ClassName "card-subtitle" ]
+                [ HH.text $
+                    (if profileCount == 0
+                        then "Showing 0"
+                        else
+                            "Showing " <> show (1 + ((page - 1) * pageSize))
+                            <> " - " <> show (min profileCount (page * pageSize))
+                            <> " out of " <> show profileCount)
+                    <> " players"
+                ]
             ]
         ]
         <>

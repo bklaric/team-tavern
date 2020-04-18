@@ -17,6 +17,8 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Simple.JSON.Async as Json
+import TeamTavern.Client.Pages.Account.Details (details)
+import TeamTavern.Client.Pages.Account.Details as Details
 import TeamTavern.Client.Pages.Account.PlayerProfiles (playerProfiles)
 import TeamTavern.Client.Pages.Account.PlayerProfiles as PlayerProfiles
 import TeamTavern.Client.Pages.Account.TeamProfiles (teamProfiles)
@@ -41,7 +43,8 @@ data State
 type Slot = H.Slot (Const Void) Void
 
 type ChildSlots =
-    ( playerProfiles :: PlayerProfiles.Slot
+    ( details :: Details.Slot
+    , playerProfiles :: PlayerProfiles.Slot
     , teamProfiles :: TeamProfiles.Slot
     )
 
@@ -65,6 +68,7 @@ render (Player { nickname, about } playerStatus) = HH.div_
         ]
     , HH.p [ HP.class_ $ HH.ClassName "content-description" ]
             [ HH.text $ "View all player and team profiles of player " <> nickname <> "." ]
+    , details nickname playerStatus (SProxy :: SProxy "details")
     , playerProfiles nickname playerStatus (SProxy :: SProxy "playerProfiles")
     , teamProfiles nickname playerStatus (SProxy :: SProxy "teamProfiles")
     ]

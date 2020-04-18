@@ -3,7 +3,7 @@ module TeamTavern.Server.Player.Routes where
 import Jarilo.Junction (type (:<|>), type (:=))
 import Jarilo.Method (Get, Post, Put)
 import Jarilo.Path (type (:>), End)
-import Jarilo.Query (NoQuery)
+import Jarilo.Query (Mandatory, NoQuery)
 import Jarilo.Route (Route)
 import Jarilo.Segment (Capture, Literal)
 import TeamTavern.Server.Player.Domain.Id (Id)
@@ -38,7 +38,7 @@ type ViewDetails = Route
     :> Capture "nickname" Nickname
     :> Literal "details"
     :> End)
-    NoQuery
+    (Mandatory "timezone" String)
 
 type ChangeNickname = Route
     Put

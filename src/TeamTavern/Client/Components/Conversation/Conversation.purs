@@ -96,11 +96,13 @@ render Error = HH.p_ [ HH.text "There has been an error loading this conversatio
 render (Conversation state) =
     HH.div [ HP.class_ $ HH.ClassName "card" ] $
     [ HH.h2 [ HP.class_ $ HH.ClassName "card-title" ]
-        [ HH.text $ "Conversation with "
-        , HH.a
-            [ HP.href $ playerPath state.nickname
-            , HE.onClick $ Just <<< Navigate (playerPath state.nickname)]
-            [ HH.text $ state.nickname ]
+        [ HH.span [ HP.class_ $ HH.ClassName "card-title-text" ]
+            [ HH.text $ "Conversation with "
+            , HH.a
+                [ HP.href $ playerPath state.nickname
+                , HE.onClick $ Just <<< Navigate (playerPath state.nickname)]
+                [ HH.text $ state.nickname ]
+            ]
         ]
     , HH.div [ HP.class_ $ HH.ClassName "card-section" ]
         if Array.null state.conversation

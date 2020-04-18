@@ -171,8 +171,8 @@ handleRequest pool client method url cookies body =
             Player.view pool nickname
         , viewPlayerHeader: \{ id } ->
             Player.viewHeader pool id
-        , viewDetails: \{ nickname } ->
-            Player.viewDetails pool nickname cookies
+        , viewDetails: \{ nickname, timezone } ->
+            Player.viewDetails pool nickname timezone cookies
         , changeNickname: \{ nickname } ->
             Player.changeNickname pool nickname cookies body
         , viewSettings: \{ nickname } ->

@@ -58,15 +58,12 @@ data Action
     | CloseEditAccountPopover
     | ShowChangeNicknameModal MouseEvent
     | ShowEditSettingsModal MouseEvent
-    | ShowEditDetailsModal MouseEvent
     | HandleChangeNicknameMessage (Modal.Message ChangeNickname.Message)
     | HandleEditSettingsMessage
-    | HandleEditDetailsMessage
 
 type ChildSlots =
     ( changeNickname :: ChangeNickname.Slot
     , editSettings :: EditSettings.Slot
-    , editDetails :: EditDetails.Slot
     )
 
 type Slot = H.Slot (Const Void) Void Unit
@@ -157,11 +154,6 @@ renderEditAccountButton editPopoverShown =
             , HE.onClick $ Just <<< ShowEditSettingsModal
             ]
             [ HH.text "Edit account settings" ]
-        , HH.div
-            [ HP.class_ $ HH.ClassName "popover-item"
-            , HE.onClick $ Just <<< ShowEditDetailsModal
-            ]
-            [ HH.text "Edit player details" ]
         ]
     else [])
 
@@ -181,7 +173,6 @@ render { nickname, tab, editPopoverShown } = HH.div_ $
     ]
     <> [ HH.div_ [ changeNickname $ Just <<< HandleChangeNicknameMessage ] ]
     <> [ HH.div_ [ editSettings $ const $ Just HandleEditSettingsMessage ] ]
-    <> [ HH.div_ [ editDetails $ const $ Just HandleEditDetailsMessage ] ]
     <>
     case tab of
     Profiles -> pure $
@@ -217,9 +208,6 @@ handleAction (ShowChangeNicknameModal event) = do
 handleAction (ShowEditSettingsModal event) = do
     H.liftEffect $ preventDefault $ toEvent event
     Modal.show (SProxy :: SProxy "editSettings")
-handleAction (ShowEditDetailsModal event) = do
-    H.liftEffect $ preventDefault $ toEvent event
-    Modal.show (SProxy :: SProxy "editDetails")
 handleAction (ToggleEditAccountPopover event) = do
     H.liftEffect $ preventDefault $ toEvent event
     H.liftEffect $ stopPropagation $ toEvent event
@@ -235,8 +223,6 @@ handleAction (HandleChangeNicknameMessage message) = do
         _ -> pure unit
 handleAction HandleEditSettingsMessage = do
     Modal.hide (SProxy :: SProxy "editSettings")
-handleAction HandleEditDetailsMessage = do
-    Modal.hide (SProxy :: SProxy "editDetails")
 
 component :: forall query output left.
     H.Component HH.HTML query Input output (Async left)

@@ -1,5 +1,5 @@
 module TeamTavern.Client.Pages.Account.EditDetails
-    (Message(..), Slot, editDetails) where
+    (Input(..), Output(..), Slot, editDetails) where
 
 import Prelude
 
@@ -15,7 +15,6 @@ import Data.Foldable (any, find, foldl)
 import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..), isJust, maybe)
 import Data.Options ((:=))
-import Data.String (trim)
 import Data.String as String
 import Data.Traversable (traverse)
 import Data.Variant (SProxy(..), match)
@@ -33,8 +32,7 @@ import TeamTavern.Client.Components.SelectImperative.MultiSelect (multiSelect)
 import TeamTavern.Client.Components.SelectImperative.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.SelectImperative.SingleSelect (singleSelect, singleSelect')
 import TeamTavern.Client.Components.SelectImperative.SingleSelect as SingleSelect
-import TeamTavern.Client.Script.Cookie (getPlayerInfo)
-import TeamTavern.Client.Script.Navigate (navigate_)
+import TeamTavern.Client.Pages.Account.Types (Nickname)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass, otherErrorClass)
 import TeamTavern.Server.Infrastructure.Countries (allCountries)
@@ -46,19 +44,21 @@ import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 import Web.HTML.HTMLInputElement as HTMLInputElement
 
+data Input = Input Nickname ViewAccount.OkContent
+
 data Action
-    = Init
-    | TimezoneInput LoadedState (Maybe Timezone)
+    = Initialize
+    | TimezoneInput (Maybe Timezone)
     | WeekdayFromInput String
     | WeekdayToInput String
     | WeekendFromInput String
     | WeekendToInput String
-    | Update LoadedState Event
+    | Update Event
     | Close
 
-data Message = DetailsEditted String | CloseClicked
+data Output = DetailsEditted String | CloseClicked
 
-type LoadedState =
+type State =
     { nickname :: String
     , timezoneSet :: Boolean
     , weekdayFrom :: String
@@ -68,12 +68,8 @@ type LoadedState =
     , discordTagError :: Boolean
     , otherError :: Boolean
     , submitting :: Boolean
+    , details :: ViewAccount.OkContent
     }
-
-data State
-    = Empty
-    | Error
-    | Loaded LoadedState
 
 type ChildSlots =
     ( languageInput :: MultiSelect.Slot String
@@ -81,15 +77,13 @@ type ChildSlots =
     , timezoneInput :: SingleSelect.Slot Timezone
     )
 
-type Slot = H.Slot (Modal.Query Unit (Const Void)) (Modal.Message Message) Unit
+type Slot = H.Slot (Modal.Query Input (Const Void)) (Modal.Message Output) Unit
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
-render Empty = HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] []
-render Error = HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] []
-render (Loaded state @ { timezoneSet, discordTagError, otherError, submitting }) =
+render state @ { timezoneSet, discordTagError, otherError, submitting } =
     HH.div [ HP.class_ $ HH.ClassName "wide-single-form-container" ] $ pure $
     HH.form
-    [ HP.class_ $ H.ClassName "form", HE.onSubmit $ Just <<< Update state ]
+    [ HP.class_ $ H.ClassName "form", HE.onSubmit $ Just <<< Update ]
     [ closeButton Close
     , HH.h2  [ HP.class_ $ HH.ClassName "form-heading" ]
         [ HH.text "Edit player details" ]
@@ -143,7 +137,7 @@ render (Loaded state @ { timezoneSet, discordTagError, otherError, submitting })
                 [ HH.text "Timezone" ]
             , singleSelect' (SProxy :: SProxy "timezoneInput")
                 (\(SingleSelect.SelectedChanged option) ->
-                    Just $ TimezoneInput state option)
+                    Just $ TimezoneInput option)
             ]
         , HH.div [ HP.class_ $ HH.ClassName "input-group" ] $
             [ HH.label
@@ -253,37 +247,27 @@ render (Loaded state @ { timezoneSet, discordTagError, otherError, submitting })
         [ HH.text "Something unexpected went wrong! Please try again later." ]
     ]
 
-loadDetails :: forall left. String -> Async left (Maybe ViewAccount.OkContent)
-loadDetails nickname = Async.unify do
-    response <-
-        Fetch.fetch
-        ("/api/players/by-nickname/" <> nickname <> "/details")
-        (Fetch.credentials := Fetch.Include)
-        # lmap (const Nothing)
-    content :: ViewAccount.OkContent <- case FetchRes.status response of
-        200 -> FetchRes.text response >>= JsonAsync.readJSON # lmap (const Nothing)
-        _ -> Async.left Nothing
-    pure $ Just content
+type EditDetailsBody =
+    { discordTag :: Maybe String
+    , birthday :: Maybe String
+    , languages :: Array String
+    , country :: Maybe String
+    , timezone :: Maybe String
+    , weekdayFrom :: Maybe String
+    , weekdayTo :: Maybe String
+    , weekendFrom :: Maybe String
+    , weekendTo :: Maybe String
+    , hasMicrophone :: Boolean
+    }
 
 editDetails' :: forall left.
-    LoadedState -> ViewAccount.OkContent -> Async left (Maybe LoadedState)
+    State -> EditDetailsBody -> Async left (Maybe State)
 editDetails' state details = Async.unify do
     response <-
         Fetch.fetch
         ("/api/players/by-nickname/" <> state.nickname <> "/details")
         (  Fetch.method := PUT
-        <> Fetch.body := Json.writeJSON
-            { discordTag: details.discordTag
-            , birthday: details.birthday
-            , languages: details.languages
-            , country: details.country
-            , timezone: details.timezone
-            , weekdayFrom: details.weekdayFrom
-            , weekdayTo: details.weekdayTo
-            , weekendFrom: details.weekendFrom
-            , weekendTo: details.weekendTo
-            , hasMicrophone: details.hasMicrophone
-            }
+        <> Fetch.body := Json.writeJSON details
         <> Fetch.credentials := Fetch.Include
         )
         # lmap (const $ Just $ state { otherError = true })
@@ -397,65 +381,41 @@ setInputValues selectedTimezone details = do
         , showFilter: Just "Search timezones"
         }
         unit
-    setValue (maybe "" identity details.weekdayFrom) $
+    setValue (maybe "" identity $ _.from <$> details.sourceWeekdayOnline) $
         H.RefLabel "weekday-start"
-    setValue (maybe "" identity details.weekdayTo) $
+    setValue (maybe "" identity $ _.to <$> details.sourceWeekdayOnline) $
         H.RefLabel "weekday-end"
-    setValue (maybe "" identity details.weekendFrom) $
+    setValue (maybe "" identity $ _.from <$> details.sourceWeekendOnline) $
         H.RefLabel "weekend-start"
-    setValue (maybe "" identity details.weekendTo) $
+    setValue (maybe "" identity $ _.to <$> details.sourceWeekendOnline) $
         H.RefLabel "weekend-end"
     setChecked details.hasMicrophone $ H.RefLabel "has-microphone"
 
 handleAction :: forall left.
-    Action -> H.HalogenM State Action ChildSlots Message (Async left) Unit
-handleAction Init = do
-    playerInfo <- H.liftEffect getPlayerInfo
-    case playerInfo of
-        Nothing -> H.liftEffect $ navigate_ "/"
-        Just { nickname } -> do
-            details <- H.lift $ loadDetails nickname
-            case details of
-                Nothing -> H.put Error
-                Just details' -> do
-                    selectedTimezoneName <-
-                        case details'.timezone of
-                        Nothing -> H.liftEffect getClientTimezone
-                        Just timezone' -> pure timezone'
-                    let selectedTimezone = allTimezones
-                            # find (_.name >>> (_ == selectedTimezoneName))
-                    H.put $ Loaded
-                        { nickname
-                        , timezoneSet: isJust selectedTimezone
-                        , weekdayFrom: maybe "" identity details'.weekdayFrom
-                        , weekdayTo: maybe "" identity details'.weekdayTo
-                        , weekendFrom: maybe "" identity details'.weekendFrom
-                        , weekendTo: maybe "" identity details'.weekendTo
-                        , discordTagError: false
-                        , otherError: false
-                        , submitting: false
-                        }
-                    setInputValues selectedTimezone details'
-handleAction (TimezoneInput loadedState timezone) =
-    H.put $ Loaded loadedState { timezoneSet = isJust timezone }
+    Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
+handleAction Initialize = do
+    state <- H.get
+    selectedTimezoneName <-
+        case state.details.timezone of
+        Nothing -> H.liftEffect getClientTimezone
+        Just timezone' -> pure timezone'
+    let selectedTimezone = allTimezones
+            # find (_.name >>> (_ == selectedTimezoneName))
+    setInputValues selectedTimezone state.details
+    H.modify_ (_ { timezoneSet = isJust selectedTimezone })
+handleAction (TimezoneInput timezone) =
+    H.modify_ (_ { timezoneSet = isJust timezone })
 handleAction (WeekdayFromInput time) =
-    H.modify_ case _ of
-        Loaded state -> Loaded state { weekdayFrom = time }
-        state -> state
+    H.modify_ (_ { weekdayFrom = time })
 handleAction (WeekdayToInput time) =
-    H.modify_ case _ of
-        Loaded state -> Loaded state { weekdayTo = time }
-        state -> state
+    H.modify_ (_ { weekdayTo = time })
 handleAction (WeekendFromInput time) =
-    H.modify_ case _ of
-        Loaded state -> Loaded state { weekendFrom = time }
-        state -> state
+    H.modify_ (_ { weekendFrom = time })
 handleAction (WeekendToInput time) =
-    H.modify_ case _ of
-        Loaded state -> Loaded state { weekendTo = time }
-        state -> state
-handleAction (Update loadedState event) = do
+    H.modify_ (_ { weekendTo = time })
+handleAction (Update event) = do
     H.liftEffect $ preventDefault event
+    state <- H.get
     discordTag <- getValue $ H.RefLabel "discord-tag"
     birthday <- getValue $ H.RefLabel "birthday"
     languages <- H.query (SProxy :: SProxy "languageInput") unit
@@ -469,12 +429,12 @@ handleAction (Update loadedState event) = do
     weekendFrom <- getValue $ H.RefLabel "weekend-start"
     weekendTo <- getValue $ H.RefLabel "weekend-end"
     hasMicrophone <- getChecked $ H.RefLabel "has-microphone"
-    let resetState = loadedState
+    let resetState = state
             { discordTagError = false
             , otherError      = false
             , submitting      = true
             }
-    H.put $ Loaded resetState
+    H.put resetState
     newState <- H.lift $ editDetails' resetState
         { discordTag:
             discordTag >>=
@@ -496,25 +456,36 @@ handleAction (Update loadedState event) = do
         , hasMicrophone: maybe false identity hasMicrophone
         }
     case newState of
-        Nothing -> H.raise $ DetailsEditted $ trim loadedState.nickname
-        Just newState' -> H.put $ Loaded newState' { submitting = false }
+        Nothing -> H.raise $ DetailsEditted $ state.nickname
+        Just newState' -> H.put $ newState' { submitting = false }
 handleAction Close = H.raise CloseClicked
 
-component :: forall query input left.
-    H.Component HH.HTML query input Message (Async left)
+component :: forall query left.
+    H.Component HH.HTML query Input Output (Async left)
 component = H.mkComponent
-    { initialState: const Empty
+    { initialState: \(Input nickname details) ->
+        { nickname
+        , details
+        , timezoneSet: isJust details.timezone
+        , weekdayFrom: maybe "" identity $ _.from <$> details.sourceWeekdayOnline
+        , weekdayTo: maybe "" identity $ _.to <$> details.sourceWeekdayOnline
+        , weekendFrom: maybe "" identity $ _.from <$> details.sourceWeekendOnline
+        , weekendTo: maybe "" identity $ _.to <$> details.sourceWeekendOnline
+        , discordTagError: false
+        , otherError: false
+        , submitting: false
+        }
     , render
     , eval: H.mkEval $ H.defaultEval
         { handleAction = handleAction
-        , initialize = Just Init
+        , initialize = Just Initialize
         }
     }
 
 editDetails
-    :: forall query children left
-    .  (Modal.Message Message -> Maybe query)
-    -> HH.ComponentHTML query (editDetails :: Slot | children) (Async left)
+    :: forall action children left
+    .  (Modal.Message Output -> Maybe action)
+    -> HH.ComponentHTML action (editDetails :: Slot | children) (Async left)
 editDetails handleMessage = HH.slot
     (SProxy :: SProxy "editDetails") unit
     (Modal.component component) unit handleMessage

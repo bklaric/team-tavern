@@ -60,7 +60,7 @@ Cookie: teamtavern-id=2; teamtavern-nickname=bklaric; teamtavern-token=1f3e90c82
 GET http://localhost:8080/players/bklaric/profiles/unreal_tournament HTTP/1.1
 
 
-### Conversations
+###### Conversations ######
 
 GET http://localhost:8080/conversations HTTP/1.1
 Cookie: teamtavern-id=1; teamtavern-nickname=bklaric; teamtavern-token=1f3e90c82e9e6704d950bfa78dd7413914fd091d
@@ -71,10 +71,15 @@ GET http://localhost:8080/conversations/houndolon HTTP/1.1
 Cookie: teamtavern-id=1; teamtavern-nickname=bklaric; teamtavern-token=1f3e90c82e9e6704d950bfa78dd7413914fd091d
 
 
-### Profiles.
+###### Profiles ######
 
 GET http://localhost:8080/profiles/by-nickname/bklaric/players HTTP/1.1
 
 ###
 
 GET http://localhost:8080/profiles/by-nickname/bklaric/teams?timezone=Europe/Zagreb HTTP/1.1
+
+###### Player ######
+
+GET http://localhost:8080/players/by-nickname/bklaric/details?timezone=Europe/London HTTP/1.1
+Cookie: teamtavern-id=1; teamtavern-nickname=bklaric; teamtavern-token=1f3e90c82e9e6704d950bfa78dd7413914fd091d
