@@ -9,6 +9,7 @@ import Browser.Async.Fetch.Response as FetchRes
 import Data.Array as Array
 import Data.Bifunctor (lmap)
 import Data.Const (Const)
+import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.Options ((:=))
 import Data.Symbol (class IsSymbol, SProxy(..))
@@ -23,6 +24,7 @@ import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Pages.Account.EditDetails (editDetails)
 import TeamTavern.Client.Pages.Account.EditDetails as EditDetails
 import TeamTavern.Client.Pages.Account.Types (Nickname, PlayerStatus(..))
+import TeamTavern.Client.Script.Clipboard (writeTextAsync)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Server.Player.ViewDetails.SendResponse as ViewDetails
 
@@ -33,10 +35,13 @@ data Action
     | Receive Input
     | ShowModal EditDetails.Input
     | HandleModalOutput (Modal.Message EditDetails.Output)
+    | CopyDiscordTag String
+
+type DiscordTagCopied = Boolean
 
 data State
     = Empty Input
-    | Details Nickname PlayerStatus ViewDetails.OkContent
+    | Details Nickname PlayerStatus ViewDetails.OkContent DiscordTagCopied
 
 type Slot = H.Slot (Const Void) Void Unit
 
@@ -47,7 +52,7 @@ ifNull replacement array = if Array.null array then replacement else array
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render (Empty _) = HH.div_ []
-render (Details nickname playerStatus details') =
+render (Details nickname playerStatus details' discordTagCopied) =
     HH.div [ HP.class_ $ HH.ClassName "card" ] $
     [ HH.h2 [ HP.class_ $ HH.ClassName "card-title" ] $
         [ HH.span [ HP.class_ $ HH.ClassName "card-title-text" ]
@@ -141,6 +146,19 @@ render (Details nickname playerStatus details') =
             , HH.text " to "
             , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text to ]
             ]
+        , details'.discordTag <#> \discordTag ->
+            HH.p [ HP.class_ $ HH.ClassName "profile-field" ] $
+            [ HH.i [ HP.class_ $ HH.ClassName "fab fa-discord profile-field-icon" ] []
+            , HH.span [ HP.class_ $ HH.ClassName "profile-field-label" ] [ HH.text "Discord tag: " ]
+            , HH.a
+                [ HP.class_ $ HH.ClassName "discord-tag"
+                , HE.onClick $ const $ Just $ CopyDiscordTag discordTag ]
+                [ HH.text discordTag ]
+            ]
+            <>
+            if discordTagCopied
+            then Array.singleton $ HH.span [ HP.class_ $ HH.ClassName "discord-tag-copied" ] [ HH.text "Copied!" ]
+            else []
         ]
     ]
 
@@ -167,13 +185,13 @@ handleAction Initialize = do
             details' <- H.lift $ loadDetails nickname
             case details' of
                 Just details'' ->
-                    H.put $ Details nickname playerStatus details''
+                    H.put $ Details nickname playerStatus details'' false
                 Nothing -> pure unit
         _ -> pure unit
 handleAction (Receive (Input nickname playerStatus)) = do
     profiles <- H.lift $ loadDetails nickname
     case profiles of
-        Just profiles' -> H.put $ Details nickname playerStatus profiles'
+        Just profiles' -> H.put $ Details nickname playerStatus profiles' false
         Nothing -> pure unit
 handleAction (ShowModal input) =
     Modal.showWith input (SProxy :: SProxy "editDetails")
@@ -182,6 +200,15 @@ handleAction (HandleModalOutput message) = do
     case message of
         Modal.Inner (EditDetails.DetailsEditted nickname) ->
             handleAction $ Receive $ Input nickname SamePlayer
+        _ -> pure unit
+handleAction (CopyDiscordTag discordTag) = do
+    result <- H.lift $ Async.attempt $ writeTextAsync discordTag
+    case result of
+        Right _ -> H.modify_
+            case _ of
+            Details nickname playerStates details' _ ->
+                Details nickname playerStates details' true
+            other -> other
         _ -> pure unit
 
 component :: forall output left query.
