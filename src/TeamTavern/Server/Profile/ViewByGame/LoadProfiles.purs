@@ -8,9 +8,8 @@ import Data.Array (foldl, intercalate)
 import Data.Array as Array
 import Data.Bifunctor.Label (label, labelMap)
 import Data.Int (toNumber)
-import Data.Maybe (Maybe)
+import Data.Maybe (Maybe(..))
 import Data.MultiMap as MultiMap
-import Data.Newtype (wrap)
 import Data.String (Pattern(..), Replacement(..))
 import Data.String as String
 import Data.Symbol (SProxy(..))
@@ -25,9 +24,7 @@ import Postgres.Error (Error)
 import Postgres.Query (Query(..))
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
-import TeamTavern.Server.Player.Domain.Nickname (Nickname)
-import TeamTavern.Server.Profile.Domain.Summary (Summary)
-import TeamTavern.Server.Profile.Routes (Handle, ProfileIlk, ProfilePage)
+import TeamTavern.Server.Profile.Routes (Age, Country, Filters, Handle, HasMicrophone, Language, ProfileIlk, ProfilePage, Time, Timezone)
 import URI.Extra.QueryPairs (Key, QueryPairs(..), Value)
 import URI.Extra.QueryPairs as Key
 import URI.Extra.QueryPairs as Value
@@ -38,22 +35,15 @@ pageSize = 20
 pageSize' :: Number
 pageSize' = toNumber pageSize
 
-type LoadProfilesDto =
-    { nickname :: String
-    , summary :: Array String
-    , fieldValues :: Array
-        { fieldKey :: String
-        , url :: Maybe String
-        , optionKey :: Maybe String
-        , optionKeys :: Maybe (Array String)
-        }
-    , updated :: String
-    , updatedSeconds :: Number
-    }
-
 type LoadProfilesResult =
-    { nickname :: Nickname
-    , summary :: Summary
+    { nickname :: String
+    , age :: Maybe Int
+    , country :: Maybe String
+    , languages :: Array String
+    , hasMicrophone :: Boolean
+    , weekdayOnline :: Maybe { from :: String, to :: String }
+    , weekendOnline :: Maybe { from :: String, to :: String }
+    , summary :: Array String
     , fieldValues :: Array
         { fieldKey :: String
         , url :: Maybe String
@@ -82,9 +72,8 @@ sanitizeStringValue stringValue = "'"
     <> (String.replace (String.Pattern "'") (String.Replacement "") stringValue)
     <> "'"
 
-prepareFilters ::
-    Array (Tuple Key (Maybe Value)) -> Array (Tuple String (Array String))
-prepareFilters filters = let
+prepareFilters :: QueryPairs Key Value -> Array (Tuple String (Array String))
+prepareFilters (QueryPairs filters) = let
     prepareFilter fieldKey optionKey = let
         preparedFieldKey = sanitizeTableName $ Key.keyToString fieldKey
         preparedOptionKey = sanitizeStringValue $ Value.valueToString optionKey
@@ -133,13 +122,97 @@ createCrosstabFieldsFilter filters =
     # intercalate ", "
     # \crosstabFieldsFilter -> "(" <> crosstabFieldsFilter <> ")"
 
-createProfilesFilterString :: String -> ProfileIlk -> Array (Tuple Key (Maybe Value)) -> String
-createProfilesFilterString preparedHandle ilk filters = let
+createAgeFilter :: Maybe Age -> Maybe Age -> String
+createAgeFilter Nothing Nothing = ""
+createAgeFilter (Just ageFrom) Nothing = " and player.birthday < (current_timestamp - interval '" <> show ageFrom <> " years')"
+createAgeFilter Nothing (Just ageTo) = " and player.birthday > (current_timestamp - interval '" <> show (ageTo + 1) <> " years')"
+createAgeFilter (Just ageFrom) (Just ageTo) =
+    " and player.birthday < (current_timestamp - interval '" <> show ageFrom <> " years') "
+    <> "and player.birthday > (current_timestamp - interval '" <> show (ageTo + 1) <> " years')"
+
+createLanguagesFilter :: Array Language -> String
+createLanguagesFilter [] = ""
+createLanguagesFilter languages = " and player.languages && (array[" <> (languages <#> sanitizeStringValue # intercalate ", ") <> "])"
+
+createCountriesFilter :: Array Country -> String
+createCountriesFilter [] = ""
+createCountriesFilter countries = """ and player.country in (
+    with recursive region_rec(name) as (
+        select region.name from region where region.name = any(array[""" <> (countries <#> sanitizeStringValue # intercalate ", ") <> """])
+        union all
+        select subregion.name from region as subregion join region_rec on subregion.superregion_name = region_rec.name
+    )
+    select * from region_rec)
+"""
+
+timezoneAdjustedTime :: Timezone -> String -> String
+timezoneAdjustedTime timezone timeColumn =
+    """((current_date || ' ' || """ <> timeColumn <> """ || ' ' || player.timezone)::timestamptz
+    at time zone """ <> sanitizeStringValue timezone <> """)::time"""
+
+createWeekdayOnlineFilter :: Timezone -> Maybe Time -> Maybe Time -> String
+createWeekdayOnlineFilter timezone (Just from) (Just to) =
+    let fromTime = "'" <> from <> "'::time"
+        toTime   = "'" <> to   <> "'::time"
+        playerStart = timezoneAdjustedTime timezone "player.weekday_start"
+        playerEnd   = timezoneAdjustedTime timezone "player.weekday_end"
+    in
+    """ and
+    case
+        when """ <> playerStart <> """ < """ <> playerEnd <> """ and """ <> fromTime <> """ < """ <> toTime <> """ then
+            """ <> fromTime <> """ < """ <> playerEnd <> """ and """ <> playerStart <> """ < """ <> toTime <> """
+        when """ <> playerStart <> """ > """ <> playerEnd <> """ and """ <> fromTime <> """ < """ <> toTime <> """ then
+            """ <> fromTime <> """ < """ <> playerEnd <> """ or """ <> playerStart <> """ < """ <> toTime <> """
+        when """ <> playerStart <> """ < """ <> playerEnd <> """ and """ <> fromTime <> """ > """ <> toTime <> """ then
+            """ <> fromTime <> """ < """ <> playerEnd <> """ or """ <> playerStart <> """ < """ <> toTime <> """
+        when """ <> playerStart <> """ > """ <> playerEnd <> """ and """ <> fromTime <> """ > """ <> toTime <> """ then
+            true
+    end
+    """
+createWeekdayOnlineFilter _ _ _ = ""
+
+createWeekendOnlineFilter :: Timezone -> Maybe Time -> Maybe Time -> String
+createWeekendOnlineFilter timezone (Just from) (Just to) =
+    let fromTime = "'" <> from <> "'::time"
+        toTime   = "'" <> to   <> "'::time"
+        playerStart = timezoneAdjustedTime timezone "player.weekend_start"
+        playerEnd   = timezoneAdjustedTime timezone "player.weekend_end"
+    in
+    """ and
+    case
+        when """ <> playerStart <> """ < """ <> playerEnd <> """ and """ <> fromTime <> """ < """ <> toTime <> """ then
+            """ <> fromTime <> """ < """ <> playerEnd <> """ and """ <> playerStart <> """ < """ <> toTime <> """
+        when """ <> playerStart <> """ > """ <> playerEnd <> """ and """ <> fromTime <> """ < """ <> toTime <> """ then
+            """ <> fromTime <> """ < """ <> playerEnd <> """ or """ <> playerStart <> """ < """ <> toTime <> """
+        when """ <> playerStart <> """ < """ <> playerEnd <> """ and """ <> fromTime <> """ > """ <> toTime <> """ then
+            """ <> fromTime <> """ < """ <> playerEnd <> """ or """ <> playerStart <> """ < """ <> toTime <> """
+        when """ <> playerStart <> """ > """ <> playerEnd <> """ and """ <> fromTime <> """ > """ <> toTime <> """ then
+            true
+    end
+    """
+createWeekendOnlineFilter _ _ _ = ""
+
+createMicrophoneFilter :: HasMicrophone -> String
+createMicrophoneFilter false = ""
+createMicrophoneFilter true = " and player.has_microphone"
+
+createProfilesFilterString :: Handle -> ProfileIlk -> Timezone -> Filters -> String
+createProfilesFilterString handle ilk timezone filters = let
+    -- Prepare game handle.
+    preparedHandle = sanitizeStringValue handle
+
     -- Prepare Array (Tuple String (Array String)) as filters.
-    preparedFilters = prepareFilters filters
+    preparedFilters = prepareFilters filters.fields
     in
     if Array.null preparedFilters
-    then "where game.handle = " <> preparedHandle <> " and profile.type = " <> show ilk
+    then "where game.handle = " <> preparedHandle
+        <> " and profile.type = " <> show ilk
+        <> createAgeFilter filters.age.from filters.age.to
+        <> createLanguagesFilter filters.languages
+        <> createCountriesFilter filters.countries
+        <> createWeekdayOnlineFilter timezone filters.weekdayOnline.from filters.weekdayOnline.to
+        <> createWeekendOnlineFilter timezone filters.weekendOnline.from filters.weekendOnline.to
+        <> createMicrophoneFilter filters.microphone
     else let
         -- Create filter string.
         filterString = createFilterString preparedFilters
@@ -166,7 +239,14 @@ createProfilesFilterString preparedHandle ilk filters = let
                 join field on field.id = field_value.field_id
                 join field_option on field_option.id = field_value.field_option_id
                     or field_option.id = field_value_option.field_option_id
-                where game.handle = """ <> preparedHandle <> """ and profile.type = """ <> show ilk <> """
+                where game.handle = """ <> preparedHandle
+                    <> """ and profile.type = """ <> show ilk
+                    <> createAgeFilter filters.age.from filters.age.to
+                    <> createLanguagesFilter filters.languages
+                    <> createCountriesFilter filters.countries
+                    <> createWeekdayOnlineFilter timezone filters.weekdayOnline.from filters.weekdayOnline.to
+                    <> createWeekendOnlineFilter timezone filters.weekendOnline.from filters.weekendOnline.to
+                    <> createMicrophoneFilter filters.microphone <> """
                 group by profile.id, field.key
                 order by profile.created;
                 $$,
@@ -183,19 +263,34 @@ createProfilesFilterString preparedHandle ilk filters = let
             """ <> filterString <> """
         )"""
 
-queryString :: Handle -> ProfileIlk -> ProfilePage -> QueryPairs Key Value -> Query
-queryString handle ilk page (QueryPairs filters) = let
-    -- Prepare game handle.
-    preparedHandle = sanitizeStringValue handle
-
+queryString :: Handle -> ProfileIlk -> ProfilePage -> Timezone -> Filters -> Query
+queryString handle ilk page timezone filters = let
     -- Create profiles filter string.
-    filterString = createProfilesFilterString preparedHandle ilk filters
+    filterString = createProfilesFilterString handle ilk timezone filters
 
     -- Insert it into the rest of the query.
     in
     Query $ """
     select
         profile.id,
+        extract(year from age(player.birthday))::int as age,
+        player.country,
+        player.languages,
+        player.has_microphone as "hasMicrophone",
+        case
+            when player.weekday_start is not null and player.weekday_end is not null
+            then json_build_object(
+                'from', to_char(""" <> timezoneAdjustedTime timezone "player.weekday_start" <> """, 'HH24:MI'),
+                'to', to_char(""" <> timezoneAdjustedTime timezone "player.weekday_end" <> """, 'HH24:MI')
+            )
+        end as "weekdayOnline",
+        case
+            when player.weekend_start is not null and player.weekend_end is not null
+            then json_build_object(
+                'from', to_char(""" <> timezoneAdjustedTime timezone "player.weekend_start" <> """, 'HH24:MI'),
+                'to', to_char(""" <> timezoneAdjustedTime timezone "player.weekend_end" <> """, 'HH24:MI')
+            )
+        end as "weekendOnline",
         game.handle,
         player.nickname,
         profile.summary,
@@ -216,19 +311,14 @@ loadProfiles
     -> Handle
     -> ProfileIlk
     -> ProfilePage
-    -> QueryPairs Key Value
+    -> Timezone
+    -> Filters
     -> Async (LoadProfilesError errors) (Array LoadProfilesResult)
-loadProfiles client handle ilk page filters = do
+loadProfiles client handle ilk page timezone filters = do
     result <- client
-        # query_ (queryString handle ilk page filters)
+        # query_ (queryString handle ilk page timezone filters)
         # label (SProxy :: SProxy "databaseError")
-    profiles :: Array LoadProfilesDto <- rows result
+    profiles <- rows result
         # traverse read
         # labelMap (SProxy :: SProxy "unreadableDtos") { result, errors: _ }
-    pure $ profiles <#> \{ nickname, summary, fieldValues, updated, updatedSeconds } ->
-        { nickname: wrap nickname
-        , summary: summary <#> wrap # wrap
-        , fieldValues
-        , updated
-        , updatedSeconds
-        }
+    pure profiles

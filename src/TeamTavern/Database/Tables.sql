@@ -2,6 +2,16 @@ create table player
     ( id serial not null primary key
     , email varchar(254) not null unique
     , nickname varchar(40) not null unique
+    , discord_tag varchar(37)
+    , birthday date
+    , languages text[] not null default '{}'
+    , country varchar(100)
+    , timezone varchar(50)
+    , weekday_from time
+    , weekday_to time
+    , weekend_from time
+    , weekend_to time
+    , has_microphone boolean not null default false
     , password_hash character(60) not null
     , confirmation_nonce character(20) not null
     , email_confirmed boolean not null default false
@@ -44,21 +54,10 @@ create table game
     , created timestamptz not null default current_timestamp
     );
 
-create table profile
-    ( id serial not null primary key
-    , player_id integer not null references player(id)
-    , game_id integer not null references game(id)
-    , summary text[] not null
-    , type integer not null -- 1 (player), 2 (team)
-    , created timestamptz not null default current_timestamp
-    , updated timestamptz not null default current_timestamp
-    , unique (game_id, player_id, type)
-    );
-
 create table field
     ( id serial not null primary key
     , game_id integer not null references game(id)
-    , type integer not null -- 1 (url), 2 (single), 3 (multi)
+    , ilk integer not null -- 1 (url), 2 (single), 3 (multi)
     , key varchar(40) not null
     , label varchar(40) not null
     , icon varchar(40) not null
@@ -71,116 +70,65 @@ create table field_option
     ( id serial not null primary key
     , field_id integer not null references field(id)
     , key varchar(40) not null
-    , option varchar(40) not null
+    , label varchar(40) not null
     , ordinal int not null
-    -- , icon file_path or binary
     );
 
-create table field_value
+create table player_profile
     ( id serial not null primary key
-    , profile_id integer not null references profile(id)
+    , player_id integer not null references player(id)
+    , game_id integer not null references game(id)
+    , summary text[] not null
+    , created timestamptz not null default current_timestamp
+    , updated timestamptz not null default current_timestamp
+    , unique (game_id, player_id)
+    );
+
+create table player_profile_field_value
+    ( id serial not null primary key
+    , player_profile_id integer not null references player_profile(id) on delete cascade
     , field_id integer not null references field(id)
     , url varchar(200) -- When field is url.
     , field_option_id integer references field_option(id) -- When field is singe select.
     );
 
-create table field_value_option
+create table player_profile_field_value_option
     ( id serial not null primary key
-    , field_value_id integer not null references field_value(id) on delete cascade
+    , player_profile_field_value_id integer not null references player_profile_field_value(id) on delete cascade
     , field_option_id integer not null references field_option(id)
     );
 
-create or replace view fields (game_id, fields) as
-select
-    game_id,
-    coalesce(
-        json_agg(
-            json_build_object(
-                'type', type,
-                'label', label,
-                'key', key,
-                'icon', icon,
-                'required', required,
-                'domain', domain,
-                'options', options
-            )
-            order by ordinal
-        )
-        filter (where key is not null),
-        '[]'
-    )
-    as "fields"
-from (
-    select
-        field.id,
-        field.game_id,
-        field.type,
-        field.label,
-        field.key,
-        field.icon,
-        field.ordinal,
-        field.required,
-        field.domain,
-        json_agg(
-            json_build_object(
-                'key', field_option.key,
-                'option', field_option.option
-            )
-            order by field_option.ordinal
-        )
-        filter (where field_option.id is not null)
-        as options
-    from field
-        left join field_option on field_option.field_id = field.id
-    group by
-        field.id
-    ) as field
-group by game_id;
+create table team_profile
+    ( id serial not null primary key
+    , player_id integer not null references player(id)
+    , game_id integer not null references game(id)
+    , age_from integer
+    , age_to integer
+    , languages text[] not null default '{}'
+    , countries text[] not null default '{}'
+    , timezone text
+    , weekday_from time
+    , weekday_to time
+    , weekend_from time
+    , weekend_to time
+    , has_microphone boolean not null default false
+    , summary text[] not null
+    , created timestamptz not null default current_timestamp
+    , updated timestamptz not null default current_timestamp
+    , unique (game_id, player_id)
+    );
 
-create or replace view field_values (profile_id, field_values) as
-select
-    profile.id,
-    coalesce(
-        json_agg(json_build_object(
-            'fieldKey', profile_value.key,
-            case
-                when profile.type = 1 and profile_value.type = 1 then 'url'
-                when profile.type = 1 and profile_value.type = 2 then 'optionKey'
-                when profile.type = 2 and profile_value.type = 2 then 'optionKeys'
-                when profile.type = 1 and profile_value.type = 3 then 'optionKeys'
-                when profile.type = 2 and profile_value.type = 3 then 'optionKeys'
-            end,
-            case
-                when profile.type = 1 and profile_value.type = 1 then url
-                when profile.type = 1 and profile_value.type = 2 then single
-                when profile.type = 2 and profile_value.type = 2 then multi
-                when profile.type = 1 and profile_value.type = 3 then multi
-                when profile.type = 2 and profile_value.type = 3 then multi
-            end
-        )) filter (where profile_value.field_value_id is not null),
-        '[]'
-    ) as field_values
-from (
-    select
-        field_value.profile_id,
-        field.key,
-        field.type,
-        field_value.id as field_value_id,
-        to_json(field_value.url) as url,
-        to_json(single.key) as single,
-        json_agg(multi.key) as multi
-    from field_value
-    join field on field.id = field_value.field_id
-    left join field_value_option on field_value_option.field_value_id = field_value.id
-    left join field_option as single on single.id = field_value.field_option_id
-    left join field_option as multi on multi.id = field_value_option.field_option_id
-    group by
-        field.id,
-        field_value.id,
-        single.id
-) as profile_value
-join profile on profile.id = profile_value.profile_id
-group by profile.id;
+create table team_profile_field_value
+    ( id serial not null primary key
+    , team_profile_id integer not null references team_profile(id) on delete cascade
+    , field_id integer not null references field(id)
+    );
+
+create table team_profile_field_value_option
+    ( id serial not null primary key
+    , team_profile_field_value_id integer not null references team_profile_field_value(id) on delete cascade
+    , field_option_id integer not null references field_option(id)
+    );
 
 create table conversation
     ( id serial not null primary key

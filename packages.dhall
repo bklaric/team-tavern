@@ -121,7 +121,23 @@ let additions =
 let upstream =
       https://github.com/purescript/package-sets/releases/download/psc-0.13.2-20190815/packages.dhall sha256:6ca4c07251e87e4e688609af4c9dfbf01e77a225f2b5001ba321cfdc39bf1c0f
 
-let overrides = {=}
+let overrides = {
+    stringutils =
+        { dependencies =
+            [ "arrays"
+            , "either"
+            , "integers"
+            , "maybe"
+            , "partial"
+            , "prelude"
+            , "strings"
+            ]
+        , repo =
+            "https://github.com/menelaos/purescript-stringutils.git"
+        , version =
+            "v0.0.10"
+        }
+    }
 
 let additions =
     { jarilo =

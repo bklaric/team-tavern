@@ -1,4 +1,6 @@
 .select {
+    display: flex;
+    flex-direction: column;
     position: relative;
     cursor: pointer;
 }
@@ -34,18 +36,47 @@
     }
 }
 
+.select-filter {
+    border-left: 1px solid #ccc;
+    border-right: 1px solid #ccc;
+    border-bottom: 1px solid #ccc;
+    border-top: 0;
+    height: 39px;
+    position: absolute;
+    top: 40px;
+    left: 0;
+    right: 0;
+    z-index: 1;
+    background-color: #fff;
+}
+
+.select-filter-input {
+    height: 21px;
+    width: calc(100% - 24px);
+    padding: 9px 12px;
+    border: 0;
+}
+
 .options {
     @extend %bordered;
     border-top-style: none;
     border-top-left-radius: 0;
     border-top-right-radius: 0;
     position: absolute;
+    top: 40px;
     left: 0;
     right: 0;
     z-index: 1;
     background-color: white;
     max-height: 203px;
     overflow-y: auto;
+    display: flex;
+    flex-flow: wrap;
+}
+
+.filterable-options {
+    @extend .options;
+    top: 80px;
 }
 
 .option {
@@ -53,8 +84,12 @@
     padding: 9px 12px;
     cursor: pointer;
     user-select: none;
-    display: flex;
-    align-items: center;
+    display: block;
+    line-height: 20px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    flex: 0 1 100%;
 
     &:not(:last-child) {
         border-bottom-style: solid;
@@ -65,6 +100,39 @@
     >input {
         margin: 0 9px 0 0;
     }
+
+    &:hover {
+        background-color: #f2f2f2;
+    }
+}
+
+.sub-option {
+    @extend .option;
+    padding-left: 34px;
+}
+
+.sub-sub-option {
+    @extend .option;
+    padding-left: 54px;
+}
+
+.collapsible-option {
+    @extend .option;
+    flex-basis: calc(100% - 40px - 24px);
+}
+
+.collapsible-sub-option {
+    @extend .sub-option;
+    flex-basis: calc(100% - 40px - 46px);
+}
+
+.collapsible-option-caret {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 20px;
+    flex: 0 0 40px;
+    border-bottom: 1px solid #ccc;
 
     &:hover {
         background-color: #f2f2f2;

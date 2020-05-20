@@ -19,7 +19,7 @@ type OkContent =
     , hasPlayerProfile :: Boolean
     , hasTeamProfile :: Boolean
     , fields :: Array
-        { type :: Int
+        { ilk :: Int
         , label :: String
         , key :: String
         , icon :: String
@@ -27,7 +27,7 @@ type OkContent =
         , domain :: Maybe String
         , options :: Maybe (Array
             { key :: String
-            , option :: String
+            , label :: String
             })
         }
     }

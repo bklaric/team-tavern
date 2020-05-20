@@ -35,7 +35,7 @@ import TeamTavern.Client.Game.GameHeader as GameHeader
 import TeamTavern.Client.Script.Cookie (PlayerInfo)
 import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass, otherErrorClass)
 import TeamTavern.Server.Game.View.SendResponse as View
-import TeamTavern.Server.Profile.Create.SendResponse as Create
+import TeamTavern.Server.Profile.AddPlayerProfile.SendResponse as Create
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 

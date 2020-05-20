@@ -15,8 +15,8 @@ import Postgres.Error (Error)
 import Postgres.Query (Query(..))
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
-import TeamTavern.Server.Profile.ViewByGame.LoadProfiles (createProfilesFilterString, sanitizeStringValue)
-import URI.Extra.QueryPairs (Key, QueryPairs(..), Value)
+import TeamTavern.Server.Profile.Routes (Filters, Handle, ProfileIlk, Timezone)
+import TeamTavern.Server.Profile.ViewByGame.LoadProfiles (createProfilesFilterString)
 
 type LoadProfileCountResult = { count :: Int }
 
@@ -29,13 +29,10 @@ type LoadProfileCountError errors = Variant
     , databaseError :: Error
     | errors )
 
-queryString :: String -> Int -> QueryPairs Key Value -> Query
-queryString handle ilk (QueryPairs filters) = let
-        -- Prepare game handle.
-    preparedHandle = sanitizeStringValue handle
-
+queryString :: Handle -> ProfileIlk -> Timezone -> Filters -> Query
+queryString handle ilk timezone filters = let
     -- Create profiles filter string.
-    filterString = createProfilesFilterString preparedHandle ilk filters
+    filterString = createProfilesFilterString handle ilk timezone filters
 
     -- Insert it into the rest of the query.
     in
@@ -43,18 +40,20 @@ queryString handle ilk (QueryPairs filters) = let
     select count(*)::int as "count"
     from profile
         join game on game.id = profile.game_id
+        join player on player.id = profile.player_id
     """ <> filterString
 
 loadProfileCount
     :: forall errors
     .  Client
-    -> String
-    -> Int
-    -> QueryPairs Key Value
+    -> Handle
+    -> ProfileIlk
+    -> Timezone
+    -> Filters
     -> Async (LoadProfileCountError errors) Int
-loadProfileCount client handle ilk filters = do
+loadProfileCount client handle ilk timezone filters = do
     result <- client
-        # query (queryString handle ilk filters) []
+        # query (queryString handle ilk timezone filters) []
         # label (SProxy :: SProxy "databaseError")
     count <- rows result
         # Array.head

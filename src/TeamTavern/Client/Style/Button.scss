@@ -1,5 +1,4 @@
 %button {
-    @extend %bordered;
     display: inline-block;
     font-family: $font;
     font-size: 14px;
@@ -34,7 +33,7 @@
 
 .primary-button {
     @extend %button;
-    @extend %bordered-colored;
+    @extend %colored-bordered;
     color: white;
     background-color: $primary-color;
 
@@ -57,7 +56,7 @@
 
 .secondary-button {
     @extend %button;
-    @extend %bordered-colored;
+    @extend %colored-bordered;
     color: $primary-color;
     background-color: white;
 
@@ -68,10 +67,6 @@
     &:active {
         background-color: #f2e3e3;
     }
-}
-
-.title-button {
-    margin-left: 21px;
 }
 
 .button-icon {
