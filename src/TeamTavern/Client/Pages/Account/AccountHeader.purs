@@ -17,8 +17,6 @@ import Halogen.Query.EventSource as ES
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Pages.Account.ChangeNickname (changeNickname)
 import TeamTavern.Client.Pages.Account.ChangeNickname as ChangeNickname
-import TeamTavern.Client.Pages.Account.EditDetails (editDetails)
-import TeamTavern.Client.Pages.Account.EditDetails as EditDetails
 import TeamTavern.Client.Pages.Account.EditSettings (editSettings)
 import TeamTavern.Client.Pages.Account.EditSettings as EditSettings
 import TeamTavern.Client.Pages.Account.Types (Nickname)

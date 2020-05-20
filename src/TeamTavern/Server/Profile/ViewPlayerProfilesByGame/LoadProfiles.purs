@@ -31,6 +31,7 @@ pageSize = 20
 
 type LoadProfilesResult =
     { nickname :: String
+    , discordTag :: Maybe String
     , age :: Maybe Int
     , country :: Maybe String
     , languages :: Array String
@@ -208,6 +209,7 @@ queryStringWithoutPagination handle timezone filters = Query $ """
     from
         (select
             player.nickname,
+            player.discord_tag as "discordTag",
             extract(year from age(player.birthday))::int as age,
             player.country,
             player.languages,

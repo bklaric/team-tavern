@@ -1,11 +1,13 @@
-    module TeamTavern.Client.Game.PlayerProfiles (PlayerProfile, Input, Message(..), Slot, playerProfiles) where
+module TeamTavern.Client.Game.PlayerProfiles (PlayerProfileRow, InputPlayerProfile, Input, Message(..), Slot, playerProfiles) where
 
 import Prelude
 
 import Async (Async)
+import Async as Async
 import Data.Array (foldr, intercalate)
 import Data.Array as Array
 import Data.Const (Const)
+import Data.Either (Either(..))
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Int (ceil, floor, toNumber)
 import Data.Maybe (Maybe(..))
@@ -14,13 +16,16 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
+import Record.Builder as Record
 import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchorIndexed)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
+import TeamTavern.Client.Script.Clipboard (writeTextAsync)
 import TeamTavern.Server.Profile.ViewByGame.LoadProfiles (pageSize, pageSize')
 
-type PlayerProfile =
-    { nickname :: String
+type PlayerProfileRow other =
+    ( nickname :: String
+    , discordTag :: Maybe String
     , age :: Maybe Int
     , country :: Maybe String
     , languages :: Array String
@@ -47,21 +52,31 @@ type PlayerProfile =
     , summary :: Array String
     , updated :: String
     , updatedSeconds :: Number
-    }
+    | other)
+
+type InputPlayerProfile = Record (PlayerProfileRow ())
 
 type Input =
-    { profiles :: Array PlayerProfile
+    { profiles :: Array InputPlayerProfile
     , profileCount :: Int
     , showCreateProfile :: Boolean
     , page :: Int
     }
 
-type State = Input
+type StatePlayerProfile = Record (PlayerProfileRow (discordTagCopied :: Boolean))
+
+type State =
+    { profiles :: Array StatePlayerProfile
+    , profileCount :: Int
+    , showCreateProfile :: Boolean
+    , page :: Int
+    }
 
 data Action
     = Receive Input
     | ChangePageAction Int
     | CreateProfileAction
+    | CopyDiscordTag String String
 
 data Message
     = CreateProfile
@@ -216,6 +231,19 @@ render { profiles, profileCount, showCreateProfile, page } =
             , HH.text " to "
             , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text to ]
             ]
+        , profile.discordTag <#> \discordTag ->
+            HH.p [ HP.class_ $ HH.ClassName "profile-field" ] $
+            [ HH.i [ HP.class_ $ HH.ClassName "fab fa-discord profile-field-icon" ] []
+            , HH.span [ HP.class_ $ HH.ClassName "profile-field-label" ] [ HH.text "Discord tag: " ]
+            , HH.a
+                [ HP.class_ $ HH.ClassName "discord-tag"
+                , HE.onClick $ const $ Just $ CopyDiscordTag profile.nickname discordTag ]
+                [ HH.text discordTag ]
+            ]
+            <>
+            if profile.discordTagCopied
+            then Array.singleton $ HH.span [ HP.class_ $ HH.ClassName "discord-tag-copied" ] [ HH.text "Copied!" ]
+            else []
         ]
         <> Array.catMaybes (profile.fieldValues <#> \{ field, url, option, options } ->
             case field.ilk, url, option, options of
@@ -270,16 +298,28 @@ render { profiles, profileCount, showCreateProfile, page } =
                 ]
             ])
 
+prepareState :: Input -> State
+prepareState input = input { profiles = input.profiles <#>
+    Record.build (Record.insert (SProxy :: SProxy "discordTagCopied") false) }
+
 handleAction :: forall left.
     Action -> H.HalogenM State Action ChildSlots Message (Async left) Unit
-handleAction (Receive input) = H.put input
+handleAction (Receive input) = H.put $ prepareState input
 handleAction (ChangePageAction page) = H.raise $ ChangePage page
 handleAction CreateProfileAction = H.raise CreateProfile
+handleAction (CopyDiscordTag nickname discordTag) = do
+    result <- H.lift $ Async.attempt $ writeTextAsync discordTag
+    case result of
+        Right _ -> H.modify_ \state -> state { profiles = state.profiles <#> \profile ->
+            if profile.nickname == nickname
+            then profile { discordTagCopied = true }
+            else profile { discordTagCopied = false } }
+        _ -> pure unit
 
 component :: forall query left.
     H.Component HH.HTML query Input Message (Async left)
 component = H.mkComponent
-    { initialState: identity
+    { initialState: prepareState
     , render
     , eval: H.mkEval $ H.defaultEval
         { handleAction = handleAction

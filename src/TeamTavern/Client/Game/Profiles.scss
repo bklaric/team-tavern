@@ -69,3 +69,12 @@
     align-items: center;
     width: 40px;
 }
+
+.discord-tag {
+    cursor: pointer;
+}
+
+.discord-tag-copied {
+    @extend .profile-updated;
+    margin-left: 6px;
+}
