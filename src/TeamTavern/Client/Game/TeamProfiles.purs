@@ -243,11 +243,14 @@ render { profiles, profileCount, showCreateProfile, page } =
             ]
         ]
         <> (profile.fieldValues <#> \{ field, options } ->
-            HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
+            HH.p [ HP.class_ $ HH.ClassName "profile-field" ] $
             [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
             , HH.span [ HP.class_ $ HH.ClassName "profile-field-label" ] [ HH.text $ field.label <> ": " ]
-            , HH.text $ intercalate ", " (options <#> _.label)
-            ])
+            ]
+            <>
+            (intercalate [(HH.text ", ")] $
+                map (\{ label } -> [ HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text label ] ]) options)
+            )
         <> (profile.summary <#> \paragraph ->
             HH.p [ HP.class_ $ HH.ClassName "profile-summary" ] [ HH.text paragraph ]))
     <> (Array.singleton $

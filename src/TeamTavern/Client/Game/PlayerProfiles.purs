@@ -250,20 +250,22 @@ render { profiles, profileCount, showCreateProfile, page } =
             1, Just url', _, _ -> Just $
                 HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
                 [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
-                , HH.a [ HP.class_ $ HH.ClassName "profile-field-label", HP.href url' ] [ HH.text field.label ]
+                , HH.a [ HP.class_ $ HH.ClassName "profile-field-url", HP.href url' ] [ HH.text field.label ]
                 ]
             2, _, Just option', _ -> Just $
                 HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
                 [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
                 , HH.span [ HP.class_ $ HH.ClassName "profile-field-label" ] [ HH.text $ field.label <> ": " ]
-                , HH.text option'.label
+                , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text option'.label ]
                 ]
             3, _, _, Just options' | not $ Array.null options' -> Just $
-                HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
+                HH.p [ HP.class_ $ HH.ClassName "profile-field" ] $
                 [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
                 , HH.span [ HP.class_ $ HH.ClassName "profile-field-label" ] [ HH.text $ field.label <> ": " ]
-                , HH.text $ intercalate ", " $ map _.label options'
                 ]
+                <>
+                (intercalate [(HH.text ", ")] $
+                    map (\{ label } -> [ HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text label ] ]) options')
             _, _, _, _ ->  Nothing)
         <> (profile.summary <#> \paragraph ->
             HH.p [ HP.class_ $ HH.ClassName "profile-summary" ] [ HH.text paragraph ]))

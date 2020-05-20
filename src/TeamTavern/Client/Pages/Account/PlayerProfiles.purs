@@ -7,6 +7,7 @@ import Async (Async)
 import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
+import Data.Array (intercalate)
 import Data.Array as Array
 import Data.Bifunctor (lmap)
 import Data.Const (Const)
@@ -150,23 +151,25 @@ render (Profiles nickname playerStatus profiles) =
             1, Just { url: Just url } -> Just $
                 HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
                 [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
-                , HH.a [ HP.class_ $ HH.ClassName "profile-field-label", HP.href url ] [ HH.text field.label ]
+                , HH.a [ HP.class_ $ HH.ClassName "profile-field-url", HP.href url ] [ HH.text field.label ]
                 ]
             2, Just { optionKey: Just optionKey } ->
                 field.options >>= Array.find (\{ key } -> key == optionKey) <#> \option ->
                     HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
                     [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
                     , HH.span [ HP.class_ $ HH.ClassName "profile-field-label" ] [ HH.text $ field.label <> ": " ]
-                    , HH.text option.label
+                    , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text option.label ]
                     ]
             3, Just { optionKeys: Just optionKeys } ->
                 case field.options <#> Array.filter \{ key } -> Array.elem key optionKeys of
                 Just fieldOptions | not $ Array.null fieldOptions -> Just $
-                    HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
+                    HH.p [ HP.class_ $ HH.ClassName "profile-field" ] $
                     [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
                     , HH.span [ HP.class_ $ HH.ClassName "profile-field-label" ] [ HH.text $ field.label <> ": " ]
-                    , HH.text $ Array.intercalate ", " (fieldOptions <#> _.label)
                     ]
+                    <>
+                    (intercalate [(HH.text ", ")] $
+                        map (\{ label } -> [ HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text label ] ]) fieldOptions)
                 _ -> Nothing
             _, _ -> Nothing
         )
