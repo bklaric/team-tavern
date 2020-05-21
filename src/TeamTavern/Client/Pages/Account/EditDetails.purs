@@ -91,7 +91,9 @@ render state @ { timezoneSet, discordTagError, otherError, submitting } =
         [ HH.div [ HP.class_ $ HH.ClassName "input-group" ]
             [ HH.label
                 [ HP.class_ $ HH.ClassName "input-label"]
-                [ HH.text "Discord tag" ]
+                [ HH.i [ HP.class_ $ HH.ClassName "fab fa-discord filter-field-icon" ] []
+                , HH.span [ HP.class_ $ HH.ClassName "filter-field-label" ] [ HH.text "Discord tag" ]
+                ]
             , HH.input
                 [ HP.ref $ H.RefLabel "discord-tag"
                 , HP.class_ $ HH.ClassName "text-line-input"
@@ -107,7 +109,9 @@ render state @ { timezoneSet, discordTagError, otherError, submitting } =
         , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
             [ HH.label
                 [ HP.class_ $ HH.ClassName "input-label" ]
-                [ HH.text "Birthday" ]
+                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-calendar-alt filter-field-icon" ] []
+                , HH.span [ HP.class_ $ HH.ClassName "filter-field-label" ] [ HH.text "Birthday" ]
+                ]
             , HH.input
                 [ HP.ref $ H.RefLabel "birthday"
                 , HP.class_ $ HH.ClassName "text-line-input"
@@ -122,19 +126,25 @@ render state @ { timezoneSet, discordTagError, otherError, submitting } =
         , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
             [ HH.label
                 [ HP.class_ $ HH.ClassName "input-label" ]
-                [ HH.text "Language" ]
+                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-comments filter-field-icon" ] []
+                , HH.span [ HP.class_ $ HH.ClassName "filter-field-label" ] [ HH.text "Language" ]
+                ]
             , multiSelect (SProxy :: SProxy "languageInput")
             ]
         , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
             [ HH.label
                 [ HP.class_ $ HH.ClassName "input-label" ]
-                [ HH.text "Country" ]
+                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-globe-europe filter-field-icon" ] []
+                , HH.span [ HP.class_ $ HH.ClassName "filter-field-label" ] [ HH.text "Country" ]
+                ]
             , singleSelect (SProxy :: SProxy "countryInput")
             ]
         , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
             [ HH.label
                 [ HP.class_ $ HH.ClassName "input-label" ]
-                [ HH.text "Timezone" ]
+                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-globe filter-field-icon" ] []
+                , HH.span [ HP.class_ $ HH.ClassName "filter-field-label" ] [ HH.text "Timezone" ]
+                ]
             , singleSelect' (SProxy :: SProxy "timezoneInput")
                 (\(SingleSelect.SelectedChanged option) ->
                     Just $ TimezoneInput option)
@@ -142,7 +152,9 @@ render state @ { timezoneSet, discordTagError, otherError, submitting } =
         , HH.div [ HP.class_ $ HH.ClassName "input-group" ] $
             [ HH.label
                 [ HP.class_ $ HH.ClassName "input-label" ]
-                [ HH.text "Online on weekdays" ]
+                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-clock filter-field-icon" ] []
+                , HH.span [ HP.class_ $ HH.ClassName "filter-field-label" ] [ HH.text "Online on weekdays" ]
+                ]
             , HH.div [ HP.class_ $ HH.ClassName "timespan-group" ]
                 [ HH.span [ HP.class_ $ HH.ClassName "timespan-group-from" ] [ HH.text "From" ]
                 , HH.input
@@ -181,7 +193,9 @@ render state @ { timezoneSet, discordTagError, otherError, submitting } =
         , HH.div [ HP.class_ $ HH.ClassName "input-group" ] $
             [ HH.label
                 [ HP.class_ $ HH.ClassName "input-label" ]
-                [ HH.text "Online on weekends" ]
+                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-clock filter-field-icon" ] []
+                , HH.span [ HP.class_ $ HH.ClassName "filter-field-label" ] [ HH.text "Online on weekdays" ]
+                ]
             , HH.div [ HP.class_ $ HH.ClassName "timespan-group" ]
                 [ HH.span [ HP.class_ $ HH.ClassName "timespan-group-from" ] [ HH.text "From" ]
                 , HH.input
@@ -220,7 +234,9 @@ render state @ { timezoneSet, discordTagError, otherError, submitting } =
         , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
             [ HH.label
                 [ HP.class_ $ HH.ClassName "input-label" ]
-                [ HH.text "Microphone" ]
+                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-microphone filter-field-icon" ] []
+                , HH.span [ HP.class_ $ HH.ClassName "filter-field-label" ] [ HH.text "Microphone" ]
+                ]
             , HH.label
                 [ HP.class_ $ HH.ClassName "checkbox-input-label" ]
                 [ HH.input
