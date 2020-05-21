@@ -42,9 +42,11 @@ import Web.HTML.Window (location)
 
 type ShowCreateModal = Boolean
 
+type Timezone = String
+
 data Tab
     = Players PlayerProfiles.Input ShowCreateModal
-    | Teams TeamProfiles.Input ShowCreateModal String
+    | Teams TeamProfiles.Input ShowCreateModal Timezone
 
 toHeaderTab :: Tab -> GameHeader.Tab
 toHeaderTab (Players _ _) = GameHeader.Players
@@ -242,6 +244,7 @@ loadTab handle GameHeader.Players = do
                 , page: 1
                 , showCreateProfile:
                     isJust player && not gameContent'.hasPlayerProfile
+                , playerInfo: player
                 }
                 false
             H.liftEffect $ setMetaTags gameContent'.title GameHeader.Players
@@ -265,6 +268,7 @@ loadTab handle GameHeader.Teams = do
                 , page: 1
                 , showCreateProfile:
                     isJust player && not gameContent'.hasTeamProfile
+                , playerInfo: player
                 }
                 false
                 timezone
@@ -306,6 +310,7 @@ handleAction (Receive (Input _ inputTab)) = do
                         , page: 1
                         , showCreateProfile:
                             isJust player && not content.hasPlayerProfile
+                        , playerInfo: player
                         }
                         false
                     H.liftEffect $ setMetaTags content.title inputTab
@@ -322,6 +327,7 @@ handleAction (Receive (Input _ inputTab)) = do
                         , page: 1
                         , showCreateProfile:
                             isJust player && not content.hasTeamProfile
+                        , playerInfo: player
                         }
                         false
                         timezone
@@ -341,6 +347,7 @@ handleAction (ApplyFilters filters) = do
                         , profileCount: profilesContent'.count
                         , page: 1
                         , showCreateProfile: input.showCreateProfile
+                        , playerInfo: player
                         }
                         false
                 Nothing -> pure unit
@@ -354,6 +361,7 @@ handleAction (ApplyFilters filters) = do
                         , profileCount: profilesContent'.count
                         , page: 1
                         , showCreateProfile: input.showCreateProfile
+                        , playerInfo: player
                         }
                         false
                         timezone

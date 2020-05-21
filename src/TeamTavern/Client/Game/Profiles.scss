@@ -6,6 +6,26 @@
     margin-bottom: 14px;
 }
 
+.player-profile-title {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    font-size: 20px;
+    line-height: 21px;
+    font-weight: 500;
+    margin-right: -14px;
+    margin-bottom: 0;
+}
+
+.player-profile-title-item {
+    margin-right: 14px;
+    margin-bottom: 14px;
+}
+
+.player-profile-title-message {
+    font-size: 14px;
+}
+
 .profile-title-button {
     margin-left: 14px;
 }

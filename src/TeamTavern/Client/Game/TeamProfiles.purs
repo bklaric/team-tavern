@@ -17,6 +17,7 @@ import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchorIndexed)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
+import TeamTavern.Client.Script.Cookie (PlayerInfo)
 import TeamTavern.Server.Profile.ViewByGame.LoadProfiles (pageSize, pageSize')
 
 type TeamProfile =
@@ -48,6 +49,7 @@ type Input =
     { profiles :: Array TeamProfile
     , profileCount :: Int
     , showCreateProfile :: Boolean
+    , playerInfo :: Maybe PlayerInfo
     , page :: Int
     }
 
@@ -64,7 +66,10 @@ data Message
 
 type Slot = H.Slot (Const Void) Message Unit
 
-type ChildSlots = (players :: Anchor.Slot Int)
+type ChildSlots =
+    ( players :: Anchor.Slot Int
+    , messagePlayer :: Anchor.Slot Int
+    )
 
 yearSeconds :: Number
 yearSeconds = 60.0 * 60.0 * 24.0 * 365.0
@@ -104,7 +109,7 @@ totalPages :: Int -> Int
 totalPages count = ceil (toNumber count / pageSize')
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
-render { profiles, profileCount, showCreateProfile, page } =
+render { profiles, profileCount, showCreateProfile, playerInfo, page } =
     HH.div [ HP.class_ $ HH.ClassName "card" ] $
     [ HH.span [ HP.class_ $ HH.ClassName "card-title" ] $
         [ HH.span [ HP.class_ $ HH.ClassName "card-title-text" ]
@@ -141,13 +146,27 @@ render { profiles, profileCount, showCreateProfile, page } =
         [ HH.p_ [ HH.text "No profiles satisfy specified filters." ] ]
     else (profiles # mapWithIndex \index profile ->
         HH.div [ HP.class_ $ HH.ClassName "card-section" ] $
-        [ HH.h3 [ HP.class_ $ HH.ClassName "profile-title" ]
-            [ navigationAnchorIndexed (SProxy :: SProxy "players") index
-                { path: "/players/" <> profile.nickname, content: HH.text profile.nickname }
-            , divider
-            , HH.span [ HP.class_ $ HH.ClassName "profile-updated" ]
-                [ HH.text $ "Updated " <> lastUpdated profile.updatedSeconds ]
+        [ HH.h3 [ HP.class_ $ HH.ClassName "player-profile-title" ] $
+            [ HH.div [ HP.class_ $ HH.ClassName "player-profile-title-item" ]
+                [ navigationAnchorIndexed (SProxy :: SProxy "players") index
+                    { path: "/players/" <> profile.nickname, content: HH.text profile.nickname }
+                , divider
+                , HH.span [ HP.class_ $ HH.ClassName "profile-updated" ]
+                    [ HH.text $ "Updated " <> lastUpdated profile.updatedSeconds ]
+                ]
             ]
+            <>
+            case playerInfo of
+            Just { nickname } | nickname /= profile.nickname ->
+                [ HH.div [ HP.class_ $ HH.ClassName "player-profile-title-item" ]
+                    [ navigationAnchorIndexed (SProxy :: SProxy "messagePlayer") index
+                        { path: "/account/conversations/" <> profile.nickname
+                        , content: HH.span [ HP.class_ $ HH.ClassName "player-profile-title-message"]
+                            [ HH.i [ HP.class_ $ H.ClassName "fas fa-envelope button-icon" ] [], HH.text "Message player" ]
+                        }
+                    ]
+                ]
+            _ -> []
         ]
         <> Array.catMaybes
         [ case profile.age.from, profile.age.to of
