@@ -90,24 +90,6 @@ render state @ { timezoneSet, discordTagError, otherError, submitting } =
     , HH.div [ HP.class_ $ HH.ClassName "responsive-input-groups" ]
         [ HH.div [ HP.class_ $ HH.ClassName "input-group" ]
             [ HH.label
-                [ HP.class_ $ HH.ClassName "input-label"]
-                [ HH.i [ HP.class_ $ HH.ClassName "fab fa-discord filter-field-icon" ] []
-                , HH.span [ HP.class_ $ HH.ClassName "filter-field-label" ] [ HH.text "Discord tag" ]
-                ]
-            , HH.input
-                [ HP.ref $ H.RefLabel "discord-tag"
-                , HP.class_ $ HH.ClassName "text-line-input"
-                , HP.type_ HP.InputText
-                ]
-            , HH.label
-                [ HP.class_ $ HH.ClassName "input-underlabel" ]
-                [ HH.text "Example: username#1234" ]
-            , HH.p
-                [ HP.class_ $ inputErrorClass discordTagError ]
-                [ HH.text $ "This does not look like a valid Discord tag." ]
-            ]
-        , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
-            [ HH.label
                 [ HP.class_ $ HH.ClassName "input-label" ]
                 [ HH.i [ HP.class_ $ HH.ClassName "fas fa-calendar-alt filter-field-icon" ] []
                 , HH.span [ HP.class_ $ HH.ClassName "filter-field-label" ] [ HH.text "Birthday" ]
@@ -138,6 +120,22 @@ render state @ { timezoneSet, discordTagError, otherError, submitting } =
                 , HH.span [ HP.class_ $ HH.ClassName "filter-field-label" ] [ HH.text "Country" ]
                 ]
             , singleSelect (SProxy :: SProxy "countryInput")
+            ]
+        , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+            [ HH.label
+                [ HP.class_ $ HH.ClassName "input-label" ]
+                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-microphone filter-field-icon" ] []
+                , HH.span [ HP.class_ $ HH.ClassName "filter-field-label" ] [ HH.text "Microphone" ]
+                ]
+            , HH.label
+                [ HP.class_ $ HH.ClassName "checkbox-input-label" ]
+                [ HH.input
+                    [ HP.ref $ H.RefLabel "has-microphone"
+                    , HP.class_ $ HH.ClassName "checkbox-input"
+                    , HP.type_ HP.InputCheckbox
+                    ]
+                , HH.text "I have a microphone and I'm willing to communicate."
+                ]
             ]
         , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
             [ HH.label
@@ -233,19 +231,21 @@ render state @ { timezoneSet, discordTagError, otherError, submitting } =
             else [])
         , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
             [ HH.label
-                [ HP.class_ $ HH.ClassName "input-label" ]
-                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-microphone filter-field-icon" ] []
-                , HH.span [ HP.class_ $ HH.ClassName "filter-field-label" ] [ HH.text "Microphone" ]
+                [ HP.class_ $ HH.ClassName "input-label"]
+                [ HH.i [ HP.class_ $ HH.ClassName "fab fa-discord filter-field-icon" ] []
+                , HH.span [ HP.class_ $ HH.ClassName "filter-field-label" ] [ HH.text "Discord tag" ]
+                ]
+            , HH.input
+                [ HP.ref $ H.RefLabel "discord-tag"
+                , HP.class_ $ HH.ClassName "text-line-input"
+                , HP.type_ HP.InputText
                 ]
             , HH.label
-                [ HP.class_ $ HH.ClassName "checkbox-input-label" ]
-                [ HH.input
-                    [ HP.ref $ H.RefLabel "has-microphone"
-                    , HP.class_ $ HH.ClassName "checkbox-input"
-                    , HP.type_ HP.InputCheckbox
-                    ]
-                , HH.text "I have a microphone and I'm willing to communicate."
-                ]
+                [ HP.class_ $ HH.ClassName "input-underlabel" ]
+                [ HH.text "Example: username#1234" ]
+            , HH.p
+                [ HP.class_ $ inputErrorClass discordTagError ]
+                [ HH.text $ "This does not look like a valid Discord tag." ]
             ]
         ]
     , HH.button
