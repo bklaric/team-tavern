@@ -11,6 +11,8 @@ import Data.Array (sortBy)
 import Data.Array as Array
 import Data.Bifunctor (bimap, lmap)
 import Data.Const (Const)
+import Data.Date as Date
+import Data.Enum (fromEnum)
 import Data.Foldable (any, find, foldl)
 import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..), isJust, maybe)
@@ -19,6 +21,7 @@ import Data.String as String
 import Data.Traversable (traverse)
 import Data.Variant (SProxy(..), match)
 import Effect.Class (class MonadEffect)
+import Effect.Now (nowDate)
 import Halogen (ClassName(..))
 import Halogen as H
 import Halogen.HTML as HH
@@ -40,6 +43,7 @@ import TeamTavern.Server.Infrastructure.Languages (allLanguages)
 import TeamTavern.Server.Infrastructure.Timezones (Timezone, allTimezones)
 import TeamTavern.Server.Player.UpdateDetails.SendResponse as Update
 import TeamTavern.Server.Player.ViewDetails.SendResponse as ViewAccount
+import Unsafe.Coerce (unsafeCoerce)
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 import Web.HTML.HTMLInputElement as HTMLInputElement
@@ -69,6 +73,7 @@ type State =
     , otherError :: Boolean
     , submitting :: Boolean
     , details :: ViewAccount.OkContent
+    , thirteenYearsAgo :: String
     }
 
 type ChildSlots =
@@ -80,7 +85,7 @@ type ChildSlots =
 type Slot = H.Slot (Modal.Query Input (Const Void)) (Modal.Message Output) Unit
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
-render state @ { timezoneSet, discordTagError, otherError, submitting } =
+render state @ { timezoneSet, discordTagError, otherError, submitting, thirteenYearsAgo } =
     HH.div [ HP.class_ $ HH.ClassName "wide-single-form-container" ] $ pure $
     HH.form
     [ HP.class_ $ H.ClassName "form", HE.onSubmit $ Just <<< Update ]
@@ -98,6 +103,8 @@ render state @ { timezoneSet, discordTagError, otherError, submitting } =
                 [ HP.ref $ H.RefLabel "birthday"
                 , HP.class_ $ HH.ClassName "text-line-input"
                 , HP.type_ HP.InputDate
+                , HP.min $ unsafeCoerce "1900-01-01"
+                , HP.max $ unsafeCoerce thirteenYearsAgo
                 ]
             , HH.label
                 [ HP.class_ $ HH.ClassName "input-underlabel" ]
@@ -418,7 +425,18 @@ handleAction Initialize = do
     let selectedTimezone = allTimezones
             # find (_.name >>> (_ == selectedTimezoneName))
     setInputValues selectedTimezone state.details
-    H.modify_ (_ { timezoneSet = isJust selectedTimezone })
+    now <- H.liftEffect nowDate
+    let year = now # Date.year # fromEnum # (_ - 13)
+    let month = fromEnum $ Date.month now
+    let day = fromEnum $ Date.day now
+    let thirteenYearsAgo
+            =  show year <> "-"
+            <> (if month < 10 then "0" <> show month else show month) <> "-"
+            <> (if day < 10 then "0" <> show day else show day)
+    H.modify_ (_
+        { timezoneSet = isJust selectedTimezone
+        , thirteenYearsAgo = thirteenYearsAgo
+        })
 handleAction (TimezoneInput timezone) =
     H.modify_ (_ { timezoneSet = isJust timezone })
 handleAction (WeekdayFromInput time) =
@@ -490,6 +508,7 @@ component = H.mkComponent
         , discordTagError: false
         , otherError: false
         , submitting: false
+        , thirteenYearsAgo: ""
         }
     , render
     , eval: H.mkEval $ H.defaultEval
