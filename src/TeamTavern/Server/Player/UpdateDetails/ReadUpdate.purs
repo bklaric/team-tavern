@@ -3,7 +3,7 @@ module TeamTavern.Server.Player.UpdateDetails.ReadUpdate where
 import Prelude
 
 import Async (Async)
-import Async (fromEither) as Async
+import Async (fromEither, fromEffect) as Async
 import Async.Validated (fromValidated) as Async
 import Data.Bifunctor.Label (labelMap)
 import Data.List.Types (NonEmptyList)
@@ -14,6 +14,7 @@ import Foreign (MultipleErrors)
 import Perun.Request.Body (Body)
 import Simple.JSON (readJSON)
 import TeamTavern.Server.Architecture.Perun.Request.Body (readBody)
+import TeamTavern.Server.Player.UpdateDetails.ValidateBirthday (validateOptionalBirthday)
 import TeamTavern.Server.Player.UpdateDetails.ValidateCountry (Country, validateOptionalCountry)
 import TeamTavern.Server.Player.UpdateDetails.ValidateDiscordTag (DiscordTag, DiscordTagError, validateOptionalDiscordTag)
 import TeamTavern.Server.Player.UpdateDetails.ValidateLangugase (Language, validateLanguages)
@@ -66,9 +67,10 @@ readUpdate body = do
         readJSON content
         # labelMap (SProxy :: SProxy "unreadableDto") { content, errors: _ }
         # Async.fromEither
+    birthday' <- Async.fromEffect $ validateOptionalBirthday dto.birthday
     let timezone' = validateOptionalTimezone dto.timezone
     { discordTag: _
-    , birthday: dto.birthday
+    , birthday: birthday'
     , languages: validateLanguages dto.languages
     , country: validateOptionalCountry dto.country
     , timezone: timezone'
