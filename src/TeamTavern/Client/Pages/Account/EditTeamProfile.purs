@@ -85,6 +85,7 @@ type Input =
         }
     , fields :: Array Field
     , fieldValues :: Array FieldValue
+    , newOrReturning :: Boolean
     , summary :: Array String
     }
 
@@ -104,6 +105,7 @@ type State =
     , weekendTo :: Maybe String
     , fields :: Array Field
     , fieldValues :: Array FieldValue
+    , newOrReturning :: Boolean
     , summary :: String
     , summaryError :: Boolean
     , otherError :: Boolean
@@ -122,6 +124,7 @@ data Action
     | WeekdayToInput String
     | WeekendFromInput String
     | WeekendToInput String
+    | NewOrReturningInput Boolean
     | Update Event
     | Close
 
@@ -183,6 +186,7 @@ render state @
     , summary
     , summaryError
     , fieldValues
+    , newOrReturning
     , otherError
     , submitting
     } =
@@ -341,6 +345,25 @@ render state @
         ]
         <>
         (fields <#> fieldInput fieldValues)
+        <>
+        [ HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+            [ HH.label
+                [ HP.class_ $ HH.ClassName "input-label" ] $
+                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-book filter-field-icon" ] []
+                , HH.span [ HP.class_ $ HH.ClassName "filter-field-label" ] [ HH.text "New or returning player" ]
+                ]
+            , HH.label
+                [ HP.class_ $ HH.ClassName "checkbox-input-label" ]
+                [ HH.input
+                    [ HP.class_ $ HH.ClassName "checkbox-input"
+                    , HP.type_ HP.InputCheckbox
+                    , HP.checked newOrReturning
+                    , HE.onChecked (Just <<< NewOrReturningInput)
+                    ]
+                , HH.text "Must be new or returning players to the game."
+                ]
+            ]
+        ]
     , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
         [ HH.label
             [ HP.class_ $ HH.ClassName "input-label"
@@ -402,6 +425,7 @@ updateProfile state @ { handle, nickname } = Async.unify do
             , weekendTo: state.weekendTo
             , fieldValues: state.fieldValues # Array.filter
                 \{ optionKeys } -> not $ Array.null optionKeys
+            , newOrReturning: state.newOrReturning
             }
         <> Fetch.credentials := Fetch.Include
         )
@@ -457,6 +481,8 @@ handleAction (WeekendFromInput time) =
     H.modify_ (_ { weekendFrom = if String.null time then Nothing else Just time })
 handleAction (WeekendToInput time) =
     H.modify_ (_ { weekendTo = if String.null time then Nothing else Just time })
+handleAction (NewOrReturningInput newOrReturning) =
+    H.modify_ (_ { newOrReturning = newOrReturning })
 handleAction (Update event) = do
     H.liftEffect $ preventDefault event
     state @ { fields } <- H.modify (_
@@ -502,6 +528,7 @@ component = H.mkComponent
         , summary
         , fieldValues
         , fields
+        , newOrReturning
         } ->
         { handle
         , title
@@ -529,6 +556,7 @@ component = H.mkComponent
                 { fieldKey: field.key
                 , optionKeys
                 })
+        , newOrReturning
         , otherError: false
         , submitting: false
         }

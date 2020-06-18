@@ -58,6 +58,7 @@ updateProfileString = Query """
         weekend_from = $11,
         weekend_to = $12,
         has_microphone = $13,
+        new_or_returning = $14,
         updated = now()
     from game
     where team_profile.player_id = $1
@@ -81,7 +82,8 @@ updateProfileParameters { id } handle profile =
     : nullableTimeTo profile.onlineWeekday
     : nullableTimeFrom profile.onlineWeekend
     : nullableTimeTo profile.onlineWeekend
-    :| profile.hasMicrophone
+    : profile.hasMicrophone
+    :| profile.newOrReturning
 
 updateProfile'
     :: forall errors

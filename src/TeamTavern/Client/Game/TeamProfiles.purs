@@ -40,6 +40,7 @@ type TeamProfile =
             , label :: String
             }
         }
+    , newOrReturning :: Boolean
     , summary :: Array String
     , updated :: String
     , updatedSeconds :: Number
@@ -237,7 +238,7 @@ render { profiles, profileCount, showCreateProfile, playerInfo, page } =
                 HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
                 [ HH.i [ HP.class_ $ HH.ClassName "fas fa-microphone profile-field-icon" ] []
                 , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless profile-field-emphasize" ] [ HH.text "Have a microphone" ]
-                , HH.text $ " and are willing to communicate."
+                , HH.text $ " and are willing to communicate"
                 ]
             else Nothing
         , profile.weekdayOnline <#> \{ from, to } ->
@@ -270,6 +271,15 @@ render { profiles, profileCount, showCreateProfile, playerInfo, page } =
             (intercalate [(HH.text ", ")] $
                 map (\{ label } -> [ HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text label ] ]) options)
             )
+        <> (if profile.newOrReturning
+            then Array.singleton $
+                HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
+                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-book profile-field-icon" ] []
+                , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text "Are"]
+                , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text " new or returning players" ]
+                , HH.text $ " to the game"
+                ]
+            else [])
         <> (profile.summary <#> \paragraph ->
             HH.p [ HP.class_ $ HH.ClassName "profile-summary" ] [ HH.text paragraph ]))
     <> (Array.singleton $
