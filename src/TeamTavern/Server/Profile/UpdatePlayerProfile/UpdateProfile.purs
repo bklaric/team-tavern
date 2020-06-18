@@ -45,7 +45,7 @@ type UpdateProfileError errors = Variant
 updateProfileString :: Query
 updateProfileString = Query """
     update player_profile
-    set summary = $5, updated = now()
+    set summary = $5, new_or_returning = $6, updated = now()
     from session, player, game
     where session.player_id = $1
     and session.token = $2
@@ -59,9 +59,9 @@ updateProfileString = Query """
     """
 
 updateProfileParameters ::
-    CookieInfo -> Identifiers -> Summary -> Array QueryParameter
-updateProfileParameters { id, token } { nickname, handle } summary =
-    id : token : nickname : handle :| summary
+    CookieInfo -> Identifiers -> Summary -> Boolean -> Array QueryParameter
+updateProfileParameters { id, token } { nickname, handle } summary newOrReturning =
+    id : token : nickname : handle : summary :| newOrReturning
 
 updateProfile'
     :: forall errors
@@ -69,11 +69,12 @@ updateProfile'
     -> CookieInfo
     -> Identifiers
     -> Summary
+    -> Boolean
     -> Async (UpdateProfileError errors) ProfileId
-updateProfile' client cookieInfo identifiers summary = do
+updateProfile' client cookieInfo identifiers summary newOrReturning = do
     result <- client
         # query updateProfileString
-            (updateProfileParameters cookieInfo identifiers summary)
+            (updateProfileParameters cookieInfo identifiers summary newOrReturning)
         # label (SProxy :: SProxy "databaseError")
     { profileId } :: { profileId :: Int } <- rows result
         # head
@@ -105,9 +106,9 @@ updateProfile
     -> Identifiers
     -> Profile
     -> Async (UpdateProfileError errors) Unit
-updateProfile client cookieInfo identifiers (Profile summary fieldValues) = do
+updateProfile client cookieInfo identifiers (Profile summary fieldValues newOrReturning) = do
     -- Update profile row.
-    profileId <- updateProfile' client cookieInfo identifiers summary
+    profileId <- updateProfile' client cookieInfo identifiers summary newOrReturning
 
     -- Delete all existing field values.
     deleteFieldValues client profileId

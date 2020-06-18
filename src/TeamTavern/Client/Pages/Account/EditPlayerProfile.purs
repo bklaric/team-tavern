@@ -67,11 +67,13 @@ type Input =
     , fields :: Array Field
     , fieldValues :: Array FieldValue
     , summary :: Array String
+    , newOrReturning :: Boolean
     }
 
 data Action
     = SummaryInput String
     | UrlValueInput String String
+    | NewOrReturningInput Boolean
     | Update Event
     | Close
 
@@ -84,6 +86,7 @@ type State =
     , fields :: Array Field
     , fieldValues :: Array FieldValue
     , summary :: String
+    , newOrReturning :: Boolean
     , summaryError :: Boolean
     , urlValueErrors :: Array String
     , missingErrors :: Array String
@@ -188,6 +191,7 @@ render
     , summary
     , summaryError
     , fieldValues
+    , newOrReturning
     , urlValueErrors
     , missingErrors
     , otherError
@@ -200,8 +204,27 @@ render
         [ HH.text $ "Edit your " <> title <> " profile" ]
     , HH.p [ HP.class_ $ HH.ClassName "form-subheading" ]
         [ HH.text "Describe yourself as a player and let other players find you." ]
-    , HH.div [ HP.class_ $ HH.ClassName "responsive-input-groups" ]
+    , HH.div [ HP.class_ $ HH.ClassName "responsive-input-groups" ] $
         (fields <#> fieldInput fieldValues urlValueErrors missingErrors)
+        <>
+        [ HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+            [ HH.label
+                [ HP.class_ $ HH.ClassName "input-label" ] $
+                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-book filter-field-icon" ] []
+                , HH.span [ HP.class_ $ HH.ClassName "filter-field-label" ] [ HH.text "New or returning player" ]
+                ]
+            , HH.label
+                [ HP.class_ $ HH.ClassName "checkbox-input-label" ]
+                [ HH.input
+                    [ HP.class_ $ HH.ClassName "checkbox-input"
+                    , HP.type_ HP.InputCheckbox
+                    , HP.checked newOrReturning
+                    , HE.onChecked (Just <<< NewOrReturningInput)
+                    ]
+                , HH.text "I'm a new or returning player to the game."
+                ]
+            ]
+        ]
     , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
         [ HH.label
             [ HP.class_ $ HH.ClassName "input-label"
@@ -243,8 +266,8 @@ data UpdateError
         }
 
 updateProfile :: forall left.
-    String -> Nickname -> String -> Array FieldValue -> Async left (Maybe UpdateError)
-updateProfile handle nickname summary fieldValues = Async.unify do
+    String -> Nickname -> String -> Array FieldValue -> Boolean -> Async left (Maybe UpdateError)
+updateProfile handle nickname summary fieldValues newOrReturning = Async.unify do
     response <-
         Fetch.fetch
         ("/api/profiles/by-handle/" <> handle <> "/players/" <> nickname)
@@ -258,6 +281,7 @@ updateProfile handle nickname summary fieldValues = Async.unify do
                     || (case optionKeys of
                         Just optionKeys' | not $ Array.null optionKeys' -> true
                         _ -> false)
+            , newOrReturning
             }
         <> Fetch.credentials := Fetch.Include
         )
@@ -319,6 +343,8 @@ handleAction (UrlValueInput fieldKey inputUrl) = do
                     else value { url = Just inputUrl }
                 else value
     H.put $ state { fieldValues = newFieldValues }
+handleAction (NewOrReturningInput newOrReturning) =
+    H.modify_ (_ { newOrReturning = newOrReturning })
 handleAction (Update event) = do
     H.liftEffect $ preventDefault event
     state @ { fields } <- H.gets (_
@@ -359,7 +385,7 @@ handleAction (Update event) = do
                 <> singleSelectValues
                 <> multiSelectValues
             }
-    result <- H.lift $ updateProfile state'.handle state'.nickname state'.summary state'.fieldValues
+    result <- H.lift $ updateProfile state'.handle state'.nickname state'.summary state'.fieldValues state'.newOrReturning
     case result of
         Nothing -> H.raise $ ProfileUpdated state.nickname
         Just Other -> H.put $ state' { otherError = true, submitting = false }
@@ -374,7 +400,7 @@ handleAction Close = H.raise CloseClicked
 component :: forall query left.
     H.Component HH.HTML query Input Output (Async left)
 component = H.mkComponent
-    { initialState: \{ handle, title, nickname, summary, fieldValues, fields } ->
+    { initialState: \{ handle, title, nickname, summary, fieldValues, fields, newOrReturning } ->
         { handle
         , title
         , nickname
@@ -395,6 +421,7 @@ component = H.mkComponent
                 , optionKey
                 , optionKeys
                 })
+        , newOrReturning
         , urlValueErrors: []
         , missingErrors: []
         , otherError: false

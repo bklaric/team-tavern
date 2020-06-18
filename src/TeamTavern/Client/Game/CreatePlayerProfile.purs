@@ -77,6 +77,7 @@ type State =
     , player :: PlayerInfo
     , summary :: String
     , fieldValues :: Array FieldValue
+    , newOrReturning :: Boolean
     , summaryError :: Boolean
     , otherError :: Boolean
     , submitting :: Boolean
@@ -87,6 +88,7 @@ data Action
     | UrlValueInput String UrlValue
     | SingleValueInput String (Maybe Option)
     | MultiValueInput String (Array (MultiSelect.InputEntry Option))
+    | NewOrReturningInput Boolean
     | Create Event
     | Close
 
@@ -162,6 +164,7 @@ render
     { game
     , summary
     , fieldValues
+    , newOrReturning
     , summaryError
     , otherError
     , submitting
@@ -175,8 +178,27 @@ render
         [ HH.text $ "Create your " <> game.title <> " profile" ]
     , HH.p [ HP.class_ $ HH.ClassName "form-subheading" ]
         [ HH.text "Describe yourself as a player and let other players find you" ]
-    , HH.div [ HP.class_ $ HH.ClassName "responsive-input-groups" ]
+    , HH.div [ HP.class_ $ HH.ClassName "responsive-input-groups" ] $
         (fieldValues <#> fieldInput)
+        <>
+        [ HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+            [ HH.label
+                [ HP.class_ $ HH.ClassName "input-label" ] $
+                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-book filter-field-icon" ] []
+                , HH.span [ HP.class_ $ HH.ClassName "filter-field-label" ] [ HH.text "New or returning player" ]
+                ]
+            , HH.label
+                [ HP.class_ $ HH.ClassName "checkbox-input-label" ]
+                [ HH.input
+                    [ HP.class_ $ HH.ClassName "checkbox-input"
+                    , HP.type_ HP.InputCheckbox
+                    , HP.checked newOrReturning
+                    , HE.onChecked (Just <<< NewOrReturningInput)
+                    ]
+                , HH.text "I'm a new or returning player to the game."
+                ]
+            ]
+        ]
     , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
         [ HH.label
             [ HP.class_ $ HH.ClassName "input-label", HP.for "summary" ]
@@ -215,8 +237,8 @@ data CreateError
         }
 
 sendCreateRequest :: forall left.
-    String -> String -> String -> Array FieldValue -> Async left (Maybe CreateError)
-sendCreateRequest handle nickname summary fieldValues = Async.unify do
+    String -> String -> String -> Array FieldValue -> Boolean -> Async left (Maybe CreateError)
+sendCreateRequest handle nickname summary fieldValues newOrReturning = Async.unify do
     response <-
         Fetch.fetch
         ("/api/profiles/by-handle/" <> handle <> "/players/" <> nickname)
@@ -246,6 +268,7 @@ sendCreateRequest handle nickname summary fieldValues = Async.unify do
                     , optionKeys: Just $ entries <#> (_.option >>> _.key)
                     }
                 _ -> Nothing
+            , newOrReturning
             }
         <> Fetch.credentials := Fetch.Include
         )
@@ -307,9 +330,11 @@ handleAction (MultiValueInput fieldKey entries) =
                 Multi field input { entries = entries }
             other -> other
         }
+handleAction (NewOrReturningInput newOrReturning) =
+    H.modify_ (_ { newOrReturning = newOrReturning })
 handleAction (Create event) = do
     H.liftEffect $ preventDefault event
-    resetState @ { game, player, summary, fieldValues } <-
+    resetState @ { game, player, summary, fieldValues, newOrReturning } <-
         H.modify (\state -> state
             { summaryError = false
             , otherError   = false
@@ -320,7 +345,7 @@ handleAction (Create event) = do
                 other -> other
             })
     result <- H.lift $
-        sendCreateRequest game.handle player.nickname summary fieldValues
+        sendCreateRequest game.handle player.nickname summary fieldValues newOrReturning
     case result of
         Nothing -> H.raise ProfileCreated
         Just Other -> H.put $ resetState
@@ -388,6 +413,7 @@ component = H.mkComponent
                     }
                 _ -> Nothing)
             # Array.catMaybes
+        , newOrReturning: false
         , summaryError: false
         , otherError: false
         , submitting: false

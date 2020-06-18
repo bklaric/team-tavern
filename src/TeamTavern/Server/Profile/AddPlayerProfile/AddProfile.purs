@@ -42,8 +42,8 @@ type AddProfileError errors = Variant
 
 addProfileString :: Query
 addProfileString = Query """
-    insert into player_profile (player_id, game_id, summary)
-    select player.id, game.id, $5
+    insert into player_profile (player_id, game_id, summary, new_or_returning)
+    select player.id, game.id, $5, $6
     from session, player, game
     where session.player_id = $1
     and session.token = $2
@@ -55,9 +55,9 @@ addProfileString = Query """
     """
 
 addProfileParameters ::
-    CookieInfo -> Identifiers -> Summary -> Array QueryParameter
-addProfileParameters { id, token } { handle, nickname } summary =
-    id : token : handle : nickname :| summary
+    CookieInfo -> Identifiers -> Summary -> Boolean -> Array QueryParameter
+addProfileParameters { id, token } { handle, nickname } summary newOrReturning =
+    id : token : handle : nickname : summary :| newOrReturning
 
 addProfile'
     :: forall errors
@@ -65,11 +65,12 @@ addProfile'
     -> CookieInfo
     -> Identifiers
     -> Summary
+    -> Boolean
     -> Async (AddProfileError errors) ProfileId
-addProfile' client cookieInfo identifiers summary = do
+addProfile' client cookieInfo identifiers summary newOrReturning = do
     result <- client
         # query addProfileString
-            (addProfileParameters cookieInfo identifiers summary)
+            (addProfileParameters cookieInfo identifiers summary newOrReturning)
         # label (SProxy :: SProxy "databaseError")
     { profileId } :: { profileId :: Int } <- Result.rows result
         # head
@@ -86,7 +87,7 @@ addProfile
     -> Identifiers
     -> Profile
     -> Async (AddProfileError errors) Unit
-addProfile client cookieInfo identifiers (Profile summary fieldValues) = do
-    profileId <- addProfile' client cookieInfo identifiers summary
+addProfile client cookieInfo identifiers (Profile summary fieldValues newOrReturning) = do
+    profileId <- addProfile' client cookieInfo identifiers summary newOrReturning
     addFieldValues client profileId fieldValues
     pure unit

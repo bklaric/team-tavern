@@ -18,7 +18,7 @@ import TeamTavern.Server.Profile.AddPlayerProfile.ValidateFieldValues (ValidateF
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateFieldValues as ValidateFieldValues
 
 data Profile =
-    Profile ValidateSummary.Summary (List ValidateFieldValues.FieldValue)
+    Profile ValidateSummary.Summary (List ValidateFieldValues.FieldValue) Boolean
 
 type ProfileError = Variant
     ( summary :: NonEmptyList NonEmptyTextError
@@ -37,11 +37,12 @@ validateProfile
     .  Array LoadFields.Field
     -> ReadProfile.Profile
     -> Async (ValidateProfileError errors) Profile
-validateProfile fields profile @ { summary, fieldValues } =
+validateProfile fields profile @ { summary, fieldValues, newOrReturning } =
     Profile
     <$> (ValidateSummary.validate summary
         # Validated.label (SProxy :: SProxy "summary"))
     <*> (ValidateFieldValues.validateFieldValues fields fieldValues
         # Validated.label (SProxy :: SProxy "fieldValues"))
+    <*> pure newOrReturning
     # Async.fromValidated
     # Label.labelMap (SProxy :: SProxy "invalidProfile") { profile, errors: _ }

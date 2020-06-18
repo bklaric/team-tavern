@@ -22,7 +22,7 @@ import TeamTavern.Client.Components.NavigationAnchor (navigationAnchorIndexed)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
 import TeamTavern.Client.Script.Clipboard (writeTextAsync)
 import TeamTavern.Client.Script.Cookie (PlayerInfo)
-import TeamTavern.Server.Profile.ViewByGame.LoadProfiles (pageSize, pageSize')
+import TeamTavern.Server.Profile.ViewPlayerProfilesByGame.LoadProfiles (pageSize)
 
 type PlayerProfileRow other =
     ( nickname :: String
@@ -51,6 +51,7 @@ type PlayerProfileRow other =
             })
         }
     , summary :: Array String
+    , newOrReturning :: Boolean
     , updated :: String
     , updatedSeconds :: Number
     | other)
@@ -127,7 +128,7 @@ lastUpdated updatedSeconds = let
     Nothing -> "less than a minute ago"
 
 totalPages :: Int -> Int
-totalPages count = ceil (toNumber count / pageSize')
+totalPages count = ceil (toNumber count / toNumber pageSize)
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { profiles, profileCount, showCreateProfile, playerInfo, page } =
@@ -287,6 +288,15 @@ render { profiles, profileCount, showCreateProfile, playerInfo, page } =
                 (intercalate [(HH.text ", ")] $
                     map (\{ label } -> [ HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text label ] ]) options')
             _, _, _, _ ->  Nothing)
+        <> (if profile.newOrReturning
+            then Array.singleton $
+                HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
+                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-book profile-field-icon" ] []
+                , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text "Is a"]
+                , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text " new or returning player" ]
+                , HH.text $ " to the game"
+                ]
+            else [])
         <> (profile.summary <#> \paragraph ->
             HH.p [ HP.class_ $ HH.ClassName "profile-summary" ] [ HH.text paragraph ]))
     <> (Array.singleton $

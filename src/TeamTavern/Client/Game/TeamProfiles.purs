@@ -18,7 +18,7 @@ import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchorIndexed)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
 import TeamTavern.Client.Script.Cookie (PlayerInfo)
-import TeamTavern.Server.Profile.ViewByGame.LoadProfiles (pageSize, pageSize')
+import TeamTavern.Server.Profile.ViewTeamProfilesByGame.LoadProfiles (pageSize)
 
 type TeamProfile =
     { nickname :: String
@@ -106,7 +106,7 @@ lastUpdated updatedSeconds = let
     Nothing -> "less than a minute ago"
 
 totalPages :: Int -> Int
-totalPages count = ceil (toNumber count / pageSize')
+totalPages count = ceil (toNumber count / toNumber pageSize)
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { profiles, profileCount, showCreateProfile, playerInfo, page } =
