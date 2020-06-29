@@ -177,10 +177,11 @@ loadPlayerProfiles handle page filters = Async.unify do
         fieldPairs =
             filters.fields
             <#> (\{ fieldKey, optionKey } -> fieldKey <> "=" <> optionKey)
+        newOrReturningPair = if filters.newOrReturning then Just "newOrReturning=true" else Nothing
         allPairs = [pagePair, timezonePair]
             <> languagePairs <> countryPairs <> fieldPairs <> Array.catMaybes
-            [ ageFromPair, ageToPair, microphonePair
-            ,  weekdayFromPair, weekdayToPair, weekendFromPair, weekendToPair
+            [ ageFromPair, ageToPair, microphonePair, newOrReturningPair
+            , weekdayFromPair, weekdayToPair, weekendFromPair, weekendToPair
             ]
         filterQuery = "?" <> intercalate "&" allPairs
     response <-
@@ -211,10 +212,11 @@ loadTeamProfiles handle page filters = Async.unify do
         fieldPairs =
             filters.fields
             <#> (\{ fieldKey, optionKey } -> fieldKey <> "=" <> optionKey)
+        newOrReturningPair = if filters.newOrReturning then Just "newOrReturning=true" else Nothing
         allPairs = [pagePair, timezonePair]
             <> languagePairs <> countryPairs <> fieldPairs <> Array.catMaybes
-            [ ageFromPair, ageToPair, microphonePair
-            ,  weekdayFromPair, weekdayToPair, weekendFromPair, weekendToPair
+            [ ageFromPair, ageToPair, microphonePair, newOrReturningPair
+            , weekdayFromPair, weekdayToPair, weekendFromPair, weekendToPair
             ]
         filterQuery = "?" <> intercalate "&" allPairs
     response <-

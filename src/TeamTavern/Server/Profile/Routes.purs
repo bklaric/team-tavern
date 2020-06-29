@@ -27,6 +27,8 @@ type Time = String
 
 type HasMicrophone = Boolean
 
+type NewOrReturning = Boolean
+
 type Filters =
     { age :: { from :: Maybe Age, to :: Maybe Age }
     , languages :: Array Language
@@ -35,6 +37,7 @@ type Filters =
     , weekendOnline :: { from :: Maybe Time, to :: Maybe Time }
     , microphone :: HasMicrophone
     , fields :: QueryPairs Key Value
+    , newOrReturning :: NewOrReturning
     }
 
 bundleFilters :: forall other.
@@ -48,6 +51,7 @@ bundleFilters :: forall other.
     , weekendFrom :: Maybe String
     , weekendTo :: Maybe String
     , microphone :: Maybe Boolean
+    , newOrReturning :: Maybe Boolean
     | other }
     -> Filters
 bundleFilters filters =
@@ -58,6 +62,7 @@ bundleFilters filters =
     , weekendOnline: { from: filters.weekendFrom, to: filters.weekendTo }
     , microphone: maybe false identity filters.microphone
     , fields: filters.fields
+    , newOrReturning: maybe false identity filters.newOrReturning
     }
 
 type Handle = String
@@ -127,6 +132,7 @@ type ViewPlayerProfilesByGame = Route
     :? Optional "weekendFrom" Time
     :? Optional "weekendTo" Time
     :? Optional "microphone" HasMicrophone
+    :? Optional "newOrReturning" NewOrReturning
     :? Rest "fields")
 
 type ViewTeamProfilesByGame = Route
@@ -147,6 +153,7 @@ type ViewTeamProfilesByGame = Route
     :? Optional "weekendFrom" Time
     :? Optional "weekendTo" Time
     :? Optional "microphone" HasMicrophone
+    :? Optional "newOrReturning" NewOrReturning
     :? Rest "fields")
 
 type ViewPlayerProfilesByPlayer = Route

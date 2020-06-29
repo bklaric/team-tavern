@@ -21,7 +21,7 @@ import Postgres.Error (Error)
 import Postgres.Query (Query(..))
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
-import TeamTavern.Server.Profile.Routes (Age, Country, Filters, Handle, HasMicrophone, Language, ProfilePage, Time, Timezone)
+import TeamTavern.Server.Profile.Routes (Age, Country, Filters, Handle, HasMicrophone, Language, ProfilePage, Time, Timezone, NewOrReturning)
 import URI.Extra.QueryPairs (Key, QueryPairs(..), Value)
 import URI.Extra.QueryPairs as Key
 import URI.Extra.QueryPairs as Value
@@ -153,6 +153,10 @@ createMicrophoneFilter :: HasMicrophone -> String
 createMicrophoneFilter false = ""
 createMicrophoneFilter true = " and profile.has_microphone"
 
+createNewOrReturningFilter :: NewOrReturning -> String
+createNewOrReturningFilter false = ""
+createNewOrReturningFilter true = " and profile.new_or_returning"
+
 createProfileFilterString :: Timezone -> Filters -> String
 createProfileFilterString timezone filters =
     createAgeFilter filters.age.from filters.age.to
@@ -163,6 +167,7 @@ createProfileFilterString timezone filters =
     <> createWeekendOnlineFilter
         timezone filters.weekendOnline.from filters.weekendOnline.to
     <> createMicrophoneFilter filters.microphone
+    <> createNewOrReturningFilter filters.newOrReturning
 
 prepareJsonString :: String -> String
 prepareJsonString stringValue =
