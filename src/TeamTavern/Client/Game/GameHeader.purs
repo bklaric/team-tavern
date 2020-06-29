@@ -20,6 +20,8 @@ type Title = String
 
 data Tab = Players | Teams
 
+derive instance eqTab :: Eq Tab
+
 data Input = Input Handle Title Tab
 
 type State = Input
@@ -65,10 +67,12 @@ renderTabs handle Teams =
 render :: forall slots. Input -> HH.HTML slots Action
 render (Input handle title tab) = HH.div_
     [ HH.div [ HP.class_ $ HH.ClassName "content-title" ]
-        [ HH.h1 [ HP.class_ $ HH.ClassName "content-title-text" ]
-            [ HH.text title ]
-        , HH.div [ HP.class_ $ HH.ClassName "content-title-tabs" ]
-            (renderTabs handle tab)
+        [ HH.div [ HP.class_ $ HH.ClassName "content-title-left" ]
+            [ HH.h1 [ HP.class_ $ HH.ClassName "content-title-text" ]
+                [ HH.text title ]
+            , HH.div [ HP.class_ $ HH.ClassName "content-title-tabs" ]
+                (renderTabs handle tab)
+            ]
         ]
     , HH.p [ HP.class_ $ HH.ClassName "content-description" ]
         [ HH.text

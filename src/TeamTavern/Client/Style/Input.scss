@@ -35,9 +35,23 @@
     line-height: 21px;
 }
 
+.checkbox-input-label {
+    display: flex;
+    margin: 0;
+    line-height: 1.5;
+    align-items: center;
+    height: 40px;
+}
+
 .input-sublabel {
     font-size: 12px;
     color: #888;
+}
+
+.input-underlabel {
+    @extend .input-sublabel;
+    line-height: 1.5;
+    margin-top: 5px;
 }
 
 .text-line-input {
@@ -60,8 +74,5 @@
     margin: 0 7px 0 0;
     cursor: pointer;
     vertical-align: middle;
-}
-
-.checkbox-input-label {
-    vertical-align: middle;
+    flex-shrink: 0;
 }

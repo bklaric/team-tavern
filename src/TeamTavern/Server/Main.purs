@@ -44,15 +44,23 @@ import TeamTavern.Server.Game.ViewAll (handleViewAll) as Game
 import TeamTavern.Server.Infrastructure.Log (logStamped, logt)
 import TeamTavern.Server.Password.Forgot (forgot) as Password
 import TeamTavern.Server.Password.Reset (reset) as Password
+import TeamTavern.Server.Player.ChangeNickname (changeNickname) as Player
+import TeamTavern.Server.Player.EditSettings (editSettings) as Player
 import TeamTavern.Server.Player.Register (register) as Player
-import TeamTavern.Server.Player.Update (update) as Player
+import TeamTavern.Server.Player.UpdateDetails (updateDetails) as Player
 import TeamTavern.Server.Player.View (view) as Player
-import TeamTavern.Server.Player.ViewAccount (viewAccount) as Player
+import TeamTavern.Server.Player.ViewDetails (viewDetails) as Player
 import TeamTavern.Server.Player.ViewHeader (viewHeader) as Player
-import TeamTavern.Server.Profile.Create (create) as Profile
-import TeamTavern.Server.Profile.Update (update) as Profile
-import TeamTavern.Server.Profile.ViewByGame (viewByGame) as Profile
-import TeamTavern.Server.Profile.ViewByPlayer (viewByPlayer) as Profile
+import TeamTavern.Server.Player.ViewSettings (viewSettings) as Player
+import TeamTavern.Server.Profile.AddPlayerProfile (addPlayerProfile) as Profile
+import TeamTavern.Server.Profile.AddTeamProfile (addTeamProfile) as Profile
+import TeamTavern.Server.Profile.Routes (bundleFilters)
+import TeamTavern.Server.Profile.UpdatePlayerProfile (updatePlayerProfile) as Profile
+import TeamTavern.Server.Profile.UpdateTeamProfile (updateTeamProfile) as Profile
+import TeamTavern.Server.Profile.ViewPlayerProfilesByPlayer (viewPlayerProfilesByPlayer) as Profile
+import TeamTavern.Server.Profile.ViewPlayerProfilesByGame (viewPlayerProfilesByGame) as Profile
+import TeamTavern.Server.Profile.ViewTeamProfilesByPlayer (viewTeamProfilesByPlayer) as Profile
+import TeamTavern.Server.Profile.ViewTeamProfilesByGame (viewTeamProfilesByGame) as Profile
 import TeamTavern.Server.Routes (TeamTavernRoutes)
 import TeamTavern.Server.Session.End (end) as Session
 import TeamTavern.Server.Session.Start (start) as Session
@@ -163,10 +171,16 @@ handleRequest pool client method url cookies body =
             Player.view pool nickname
         , viewPlayerHeader: \{ id } ->
             Player.viewHeader pool id
-        , viewPlayerAccount: \{ nickname } ->
-            Player.viewAccount pool nickname cookies
-        , updatePlayer: \{ nickname } ->
-            Player.update pool nickname cookies body
+        , viewDetails: \{ nickname, timezone } ->
+            Player.viewDetails pool nickname timezone cookies
+        , changeNickname: \{ nickname } ->
+            Player.changeNickname pool nickname cookies body
+        , viewSettings: \{ nickname } ->
+            Player.viewSettings pool nickname cookies
+        , editSettings: \{ nickname } ->
+            Player.editSettings pool nickname cookies body
+        , updateDetails: \{ nickname } ->
+            Player.updateDetails pool nickname cookies body
         , forgotPassword: const $
             Password.forgot pool client cookies body
         , resetPassword: const $
@@ -183,14 +197,22 @@ handleRequest pool client method url cookies body =
             Game.handleView pool handle cookies
         , updateGame: \{ handle } ->
             Game.handleUpdate pool handle cookies body
-        , createProfile: \identifiers ->
-            Profile.create pool identifiers cookies body
-        , updateProfile: \identifiers ->
-            Profile.update pool identifiers cookies body
-        , viewProfilesByGame: \{ handle, ilk, page, filters } ->
-            Profile.viewByGame pool handle ilk page filters
-        , viewProfilesByPlayer: \{ nickname, ilk } ->
-            Profile.viewByPlayer pool nickname ilk
+        , addPlayerProfile: \identifiers ->
+            Profile.addPlayerProfile pool identifiers cookies body
+        , addTeamProfile: \identifiers ->
+            Profile.addTeamProfile pool identifiers cookies body
+        , updatePlayerProfile: \identifiers ->
+            Profile.updatePlayerProfile pool identifiers cookies body
+        , updateTeamProfile: \identifiers ->
+            Profile.updateTeamProfile pool identifiers cookies body
+        , viewPlayerProfilesByGame: \filters @ { handle, page, timezone } ->
+            Profile.viewPlayerProfilesByGame pool handle page timezone $ bundleFilters filters
+        , viewTeamProfilesByGame: \filters @ { handle, page, timezone } ->
+            Profile.viewTeamProfilesByGame pool handle page timezone $ bundleFilters filters
+        , viewPlayerProfilesByPlayer: \{ nickname } ->
+            Profile.viewPlayerProfilesByPlayer pool nickname
+        , viewTeamProfilesByPlayer: \{ nickname, timezone } ->
+            Profile.viewTeamProfilesByPlayer pool nickname timezone
         , viewAllConversations: const $
             Conversation.viewAll pool cookies
         , viewConversation: \{ nickname } ->

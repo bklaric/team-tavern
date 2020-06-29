@@ -9,15 +9,19 @@ import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..))
 import Halogen as H
 import Halogen.HTML as HH
-import TeamTavern.Client.Components.Account.AccountHeader (accountHeader)
-import TeamTavern.Client.Components.Account.AccountHeader as AccountHeader
 import TeamTavern.Client.Components.Conversation.Conversation (conversation)
 import TeamTavern.Client.Components.Conversation.Conversation as Conversation
 import TeamTavern.Client.Components.Conversation.Conversations (conversations)
 import TeamTavern.Client.Components.Conversation.Conversations as Conversations
-import TeamTavern.Client.Components.ProfilesByPlayer (profilesByPlayer)
-import TeamTavern.Client.Components.ProfilesByPlayer as ProfilesByPlayer
-import TeamTavern.Client.EditProfile (ProfileIlk(..))
+import TeamTavern.Client.Pages.Account.AccountHeader (accountHeader)
+import TeamTavern.Client.Pages.Account.AccountHeader as AccountHeader
+import TeamTavern.Client.Pages.Account.Details (details)
+import TeamTavern.Client.Pages.Account.Details as Details
+import TeamTavern.Client.Pages.Account.PlayerProfiles (playerProfiles)
+import TeamTavern.Client.Pages.Account.PlayerProfiles as PlayerProfiles
+import TeamTavern.Client.Pages.Account.TeamProfiles (teamProfiles)
+import TeamTavern.Client.Pages.Account.TeamProfiles as TeamProfiles
+import TeamTavern.Client.Pages.Account.Types (PlayerStatus(..), Nickname)
 import TeamTavern.Client.Script.Cookie (getPlayerInfo)
 import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
 import TeamTavern.Client.Script.Navigate (navigate_)
@@ -28,14 +32,15 @@ data Action
 
 data State
     = Empty AccountHeader.Tab
-    | Player AccountHeader.Nickname AccountHeader.Tab
+    | Player Nickname AccountHeader.Tab
 
 type Slot = H.Slot (Const Void) Void Unit
 
 type ChildSlots =
     ( accountHeader :: AccountHeader.Slot
-    , playerProfiles :: ProfilesByPlayer.Slot
-    , teamProfiles :: ProfilesByPlayer.Slot
+    , details :: Details.Slot
+    , playerProfiles :: PlayerProfiles.Slot
+    , teamProfiles :: TeamProfiles.Slot
     , conversations :: Conversations.Slot
     , conversation :: Conversation.Slot
     )
@@ -47,8 +52,9 @@ render (Player nickname tab) = HH.div_ $
     <>
     case tab of
     AccountHeader.Profiles ->
-        [ profilesByPlayer nickname Players (SProxy :: SProxy "playerProfiles")
-        , profilesByPlayer nickname Teams (SProxy :: SProxy "teamProfiles")
+        [ details nickname SamePlayer (SProxy :: SProxy "details")
+        , playerProfiles nickname SamePlayer (SProxy :: SProxy "playerProfiles")
+        , teamProfiles nickname SamePlayer (SProxy :: SProxy "teamProfiles")
         ]
     AccountHeader.Conversations ->
         [ conversations ]

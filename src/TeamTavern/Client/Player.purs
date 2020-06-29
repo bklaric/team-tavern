@@ -1,4 +1,4 @@
-module TeamTavern.Client.Player (Slot, player) where
+module TeamTavern.Client.Player where
 
 import Prelude
 
@@ -6,9 +6,10 @@ import Async (Async)
 import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
+import Data.Array as Array
 import Data.Bifunctor (lmap)
 import Data.Const (Const)
-import Data.Maybe (Maybe(..), isJust, maybe)
+import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
 import Halogen (ClassName(..))
 import Halogen as H
@@ -16,10 +17,14 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Simple.JSON.Async as Json
-import TeamTavern.Client.Components.ProfilesByPlayer (profilesByPlayer)
-import TeamTavern.Client.Components.ProfilesByPlayer as ProfilesByPlayer
-import TeamTavern.Client.EditProfile (ProfileIlk(..))
-import TeamTavern.Client.Script.Cookie (getPlayerId)
+import TeamTavern.Client.Pages.Account.Details (details)
+import TeamTavern.Client.Pages.Account.Details as Details
+import TeamTavern.Client.Pages.Account.PlayerProfiles (playerProfiles)
+import TeamTavern.Client.Pages.Account.PlayerProfiles as PlayerProfiles
+import TeamTavern.Client.Pages.Account.TeamProfiles (teamProfiles)
+import TeamTavern.Client.Pages.Account.TeamProfiles as TeamProfiles
+import TeamTavern.Client.Pages.Account.Types (PlayerStatus(..))
+import TeamTavern.Client.Script.Cookie (getPlayerInfo)
 import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
 import TeamTavern.Client.Script.Navigate (navigateReplace_, navigate_)
 import TeamTavern.Server.Player.View.SendResponse as View
@@ -31,40 +36,41 @@ data Action = Init String | Navigate String MouseEvent
 
 data State
     = Empty
-    | Player View.OkContent Boolean Boolean
+    | Player View.OkContent PlayerStatus
     | NotFound
     | Error
 
 type Slot = H.Slot (Const Void) Void
 
 type ChildSlots =
-    ( playerProfiles :: ProfilesByPlayer.Slot
-    , teamProfiles :: ProfilesByPlayer.Slot
+    ( details :: Details.Slot
+    , playerProfiles :: PlayerProfiles.Slot
+    , teamProfiles :: TeamProfiles.Slot
     )
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render Empty = HH.div_ []
-render (Player { nickname, about } isCurrentUser isSignedIn) = HH.div_
+render (Player { nickname, about } playerStatus) = HH.div_
     [ HH.div [ HP.class_ $ ClassName "content-title" ]
         [ HH.h1 [ HP.class_ $ HH.ClassName "content-title-text" ] [ HH.text nickname ]
         , HH.div [ HP.class_ $ HH.ClassName "content-title-tabs" ]
-            if isSignedIn
-            then
-                [ HH.a
-                    [ HP.class_ $ HH.ClassName "content-title-tab"
-                    , HP.href $ "/account/conversations/" <> nickname
-                    , HE.onClick $ Just <<< Navigate ("/account/conversations/" <> nickname)
-                    ]
-                    [ HH.i [ HP.class_ $ H.ClassName "fas fa-envelope button-icon" ] []
-                    , HH.text "Message player"
-                    ]
+            case playerStatus of
+            SignedIn _ -> Array.singleton $
+                HH.a
+                [ HP.class_ $ HH.ClassName "content-title-tab"
+                , HP.href $ "/account/conversations/" <> nickname
+                , HE.onClick $ Just <<< Navigate ("/account/conversations/" <> nickname)
                 ]
-            else []
+                [ HH.i [ HP.class_ $ H.ClassName "fas fa-envelope button-icon" ] []
+                , HH.text "Message player"
+                ]
+            _ -> []
         ]
     , HH.p [ HP.class_ $ HH.ClassName "content-description" ]
             [ HH.text $ "View all player and team profiles of player " <> nickname <> "." ]
-    , profilesByPlayer nickname Players (SProxy :: SProxy "playerProfiles")
-    , profilesByPlayer nickname Teams (SProxy :: SProxy "teamProfiles")
+    , details nickname playerStatus (SProxy :: SProxy "details")
+    , playerProfiles nickname playerStatus (SProxy :: SProxy "playerProfiles")
+    , teamProfiles nickname playerStatus (SProxy :: SProxy "teamProfiles")
     ]
 render NotFound = HH.p_ [ HH.text "Player could not be found." ]
 render Error = HH.p_ [ HH.text
@@ -78,15 +84,14 @@ loadPlayer nickname = Async.unify do
         200 -> FetchRes.text response >>= Json.readJSON # lmap (const Error)
         404 -> Async.left NotFound
         _ -> Async.left Error
-    playerId <- Async.fromEffect getPlayerId
-    let isCurrentPlayer = maybe false (_ == content.id) playerId
-    let isSignedIn = isJust playerId
-    if isCurrentPlayer
-        then do
+    playerInfo <- Async.fromEffect getPlayerInfo
+    case playerInfo of
+        Just { nickname: nickname' } | content.nickname == nickname' -> do
             Async.fromEffect $ navigateReplace_ "/account"
-            pure Empty
-        else
-            pure $ Player content isCurrentPlayer isSignedIn
+            pure $ Player content SamePlayer
+        Just { nickname: nickname' } ->
+            pure $ Player content $ SignedIn nickname'
+        Nothing -> pure $ Player content SignedOut
 
 handleAction :: forall output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
@@ -95,7 +100,7 @@ handleAction (Init nickname') = do
     H.put state
     let metaNickname =
             case state of
-            Player { nickname } _ _ -> nickname
+            Player { nickname } _ -> nickname
             _ -> nickname'
     H.lift $ Async.fromEffect do
         setMetaTitle $ metaNickname <> " | TeamTavern"

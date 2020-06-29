@@ -11,7 +11,7 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import Simple.JSON (read)
-import TeamTavern.Client.Components.Account.AccountHeader as AccountHeader
+import TeamTavern.Client.Pages.Account.AccountHeader as AccountHeader
 import TeamTavern.Client.Components.Footer (footer)
 import TeamTavern.Client.Components.Footer as Footer
 import TeamTavern.Client.Components.Password.ForgotPassword (forgotPassword)
