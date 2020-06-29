@@ -32,6 +32,7 @@ type Profile =
     , onlineWeekend :: Maybe Timespan
     , hasMicrophone :: Boolean
     , fieldValues :: Array ValidateFieldValues.FieldValue
+    , newOrReturning :: Boolean
     }
 
 type ProfileError = Variant (summary :: NonEmptyList NonEmptyTextError)
@@ -59,9 +60,10 @@ validateProfile fields profile @ { summary } = let
         (const $ validateTimespan profile.weekendFrom profile.weekendTo)
     hasMicrophone = profile.hasMicrophone
     fieldValues = validateFieldValues fields profile.fieldValues
+    newOrReturning = profile.newOrReturning
     in
     { summary: _, ageSpan, languages, countries, timezone
-    , onlineWeekday, onlineWeekend, hasMicrophone, fieldValues
+    , onlineWeekday, onlineWeekend, hasMicrophone, fieldValues, newOrReturning
     }
     <$> (ValidateSummary.validate summary
         # Validated.label (SProxy :: SProxy "summary"))

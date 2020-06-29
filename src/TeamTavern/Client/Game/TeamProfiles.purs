@@ -18,7 +18,7 @@ import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchorIndexed)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
 import TeamTavern.Client.Script.Cookie (PlayerInfo)
-import TeamTavern.Server.Profile.ViewByGame.LoadProfiles (pageSize, pageSize')
+import TeamTavern.Server.Profile.ViewTeamProfilesByGame.LoadProfiles (pageSize)
 
 type TeamProfile =
     { nickname :: String
@@ -40,6 +40,7 @@ type TeamProfile =
             , label :: String
             }
         }
+    , newOrReturning :: Boolean
     , summary :: Array String
     , updated :: String
     , updatedSeconds :: Number
@@ -106,7 +107,7 @@ lastUpdated updatedSeconds = let
     Nothing -> "less than a minute ago"
 
 totalPages :: Int -> Int
-totalPages count = ceil (toNumber count / pageSize')
+totalPages count = ceil (toNumber count / toNumber pageSize)
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { profiles, profileCount, showCreateProfile, playerInfo, page } =
@@ -237,7 +238,7 @@ render { profiles, profileCount, showCreateProfile, playerInfo, page } =
                 HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
                 [ HH.i [ HP.class_ $ HH.ClassName "fas fa-microphone profile-field-icon" ] []
                 , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless profile-field-emphasize" ] [ HH.text "Have a microphone" ]
-                , HH.text $ " and are willing to communicate."
+                , HH.text $ " and are willing to communicate"
                 ]
             else Nothing
         , profile.weekdayOnline <#> \{ from, to } ->
@@ -270,6 +271,15 @@ render { profiles, profileCount, showCreateProfile, playerInfo, page } =
             (intercalate [(HH.text ", ")] $
                 map (\{ label } -> [ HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text label ] ]) options)
             )
+        <> (if profile.newOrReturning
+            then Array.singleton $
+                HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
+                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-book profile-field-icon" ] []
+                , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text "Are"]
+                , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text " new or returning players" ]
+                , HH.text $ " to the game"
+                ]
+            else [])
         <> (profile.summary <#> \paragraph ->
             HH.p [ HP.class_ $ HH.ClassName "profile-summary" ] [ HH.text paragraph ]))
     <> (Array.singleton $

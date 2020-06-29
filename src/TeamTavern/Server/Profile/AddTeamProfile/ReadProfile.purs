@@ -29,6 +29,7 @@ type Profile =
     , weekendTo :: Maybe String
     , hasMicrophone :: Boolean
     , fieldValues :: Array FieldValue
+    , newOrReturning :: Boolean
     }
 
 type ReadProfileError errors = Variant

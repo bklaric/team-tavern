@@ -78,6 +78,7 @@ type State =
     , weekendFrom :: Maybe String
     , weekendTo :: Maybe String
     , fieldValues :: Array FieldValue
+    , newOrReturning :: Boolean
     , summaryError :: Boolean
     , otherError :: Boolean
     , submitting :: Boolean
@@ -96,6 +97,7 @@ data Action
     | WeekendFromInput String
     | WeekendToInput String
     | FieldValueInput String (Array (MultiSelect.InputEntry Option))
+    | NewOrReturningInput Boolean
     | Create Event
     | Close
 
@@ -137,6 +139,7 @@ render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render state @
     { game
     , summary
+    , newOrReturning
     , fieldValues
     , summaryError
     , otherError
@@ -288,6 +291,25 @@ render state @
         ]
         <>
         (fieldValues <#> fieldInput)
+        <>
+        [ HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+            [ HH.label
+                [ HP.class_ $ HH.ClassName "input-label" ] $
+                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-book filter-field-icon" ] []
+                , HH.span [ HP.class_ $ HH.ClassName "filter-field-label" ] [ HH.text "New or returning player" ]
+                ]
+            , HH.label
+                [ HP.class_ $ HH.ClassName "checkbox-input-label" ]
+                [ HH.input
+                    [ HP.class_ $ HH.ClassName "checkbox-input"
+                    , HP.type_ HP.InputCheckbox
+                    , HP.checked newOrReturning
+                    , HE.onChecked (Just <<< NewOrReturningInput)
+                    ]
+                , HH.text "Must be new or returning players to the game."
+                ]
+            ]
+        ]
     , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
         [ HH.label
             [ HP.class_ $ HH.ClassName "input-label", HP.for "summary" ]
@@ -351,6 +373,7 @@ sendCreateRequest state @ { game, player } = Async.unify do
                     , optionKeys: entries <#> (_.option >>> _.key)
                     }
                 _ -> Nothing
+            , newOrReturning: state.newOrReturning
             }
         <> Fetch.credentials := Fetch.Include
         )
@@ -413,6 +436,8 @@ handleAction (FieldValueInput fieldKey entries) =
                 FieldValue field input { entries = entries }
             other -> other
         }
+handleAction (NewOrReturningInput newOrReturning) =
+    H.modify_ (_ { newOrReturning = newOrReturning })
 handleAction (Create event) = do
     H.liftEffect $ preventDefault event
     resetState <-
@@ -461,6 +486,7 @@ component = H.mkComponent
         , weekdayTo: Nothing
         , weekendFrom: Nothing
         , weekendTo: Nothing
+        , newOrReturning: false
         , fieldValues:
             game.fields
             <#> (\field ->

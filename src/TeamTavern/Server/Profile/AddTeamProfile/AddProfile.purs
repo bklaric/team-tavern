@@ -58,8 +58,9 @@ queryString = Query """
         , weekend_from
         , weekend_to
         , has_microphone
+        , new_or_returning
         )
-    select $1, game.id, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13
+    select $1, game.id, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
     from game
     where game.handle = $2
     returning team_profile.id as "profileId"
@@ -79,7 +80,8 @@ queryParameters { id } handle profile =
     : nullableTimeTo profile.onlineWeekday
     : nullableTimeFrom profile.onlineWeekend
     : nullableTimeTo profile.onlineWeekend
-    :| profile.hasMicrophone
+    : profile.hasMicrophone
+    :| profile.newOrReturning
 
 addProfile'
     :: forall errors

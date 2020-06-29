@@ -46,6 +46,7 @@ type Filters =
         { fieldKey :: String
         , optionKey :: String
         }
+    , newOrReturning :: Boolean
     }
 
 type Input = Array Field
@@ -64,6 +65,7 @@ type State =
         { input :: MultiSelect.Input Option
         , field :: Field
         }
+    , newOrReturning :: Boolean
     }
 
 data Action
@@ -79,6 +81,7 @@ data Action
     | WeekendFromInput String
     | WeekendToInput String
     | FieldInput String (Array (MultiSelect.InputEntry Option))
+    | NewOrReturningInput Boolean
 
 data Output = Apply Filters
 
@@ -102,6 +105,7 @@ emptyFilters =
     , weekendFrom: Nothing
     , weekendTo: Nothing
     , fields: []
+    , newOrReturning: false
     }
 
 fieldLabel :: forall slots action. String -> String -> HH.HTML slots action
@@ -234,6 +238,25 @@ render state = HH.div [ HP.class_ $ HH.ClassName "card" ]
             ]
             <>
             (map fieldInput state.fields)
+            <>
+            [ HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+                [ HH.label
+                    [ HP.class_ $ HH.ClassName "input-label" ] $
+                    [ HH.i [ HP.class_ $ HH.ClassName "fas fa-book filter-field-icon" ] []
+                    , HH.span [ HP.class_ $ HH.ClassName "filter-field-label" ] [ HH.text "New or returning player" ]
+                    ]
+                , HH.label
+                    [ HP.class_ $ HH.ClassName "checkbox-input-label" ]
+                    [ HH.input
+                        [ HP.class_ $ HH.ClassName "checkbox-input"
+                        , HP.type_ HP.InputCheckbox
+                        , HP.checked state.newOrReturning
+                        , HE.onChecked (Just <<< NewOrReturningInput)
+                        ]
+                    , HH.text "Must be new or returning players to the game."
+                    ]
+                ]
+            ]
         , HH.button
             [ HP.class_ $ HH.ClassName "apply-filters"
             , HE.onClick $ const $ Just $ ApplyAction
@@ -276,9 +299,11 @@ handleAction ApplyAction = do
                 <#> \{ option } ->
                     { optionKey: option.key, fieldKey: field.key })
             # join
+        newOrReturning = state.newOrReturning
     H.raise $ Apply
         { ageFrom, ageTo, languages, countries, microphone
-        , weekdayFrom, weekdayTo, weekendFrom, weekendTo, fields
+        , weekdayFrom, weekdayTo, weekendFrom, weekendTo
+        , fields, newOrReturning
         }
 handleAction Clear = do
     H.modify_ \state -> state
@@ -297,6 +322,7 @@ handleAction Clear = do
                     <#> (_ { selected = false })
                 }
             }
+        , newOrReturning = false
         }
     void $ H.query (SProxy :: SProxy "country") unit $ TreeSelect.Clear unit
 handleAction (AgeFromInput ageFrom) =
@@ -330,6 +356,8 @@ handleAction (FieldInput fieldKey entries) =
             then stateField { input = stateField.input { entries = entries } }
             else stateField
         }
+handleAction (NewOrReturningInput newOrReturning) =
+    H.modify_ (_ { newOrReturning = newOrReturning })
 
 regionToOption :: Region -> TreeSelect.InputEntry String
 regionToOption (Region region subRegions) = TreeSelect.InputEntry
@@ -363,6 +391,7 @@ initialState fields =
             }
         , field
         }
+    , newOrReturning: false
     }
 
 component :: forall query left.

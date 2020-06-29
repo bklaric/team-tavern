@@ -78,6 +78,7 @@ create table player_profile
     ( id serial not null primary key
     , player_id integer not null references player(id)
     , game_id integer not null references game(id)
+    , new_or_returning boolean not null
     , summary text[] not null
     , created timestamptz not null default current_timestamp
     , updated timestamptz not null default current_timestamp
@@ -112,6 +113,7 @@ create table team_profile
     , weekend_from time
     , weekend_to time
     , has_microphone boolean not null default false
+    , new_or_returning boolean not null
     , summary text[] not null
     , created timestamptz not null default current_timestamp
     , updated timestamptz not null default current_timestamp

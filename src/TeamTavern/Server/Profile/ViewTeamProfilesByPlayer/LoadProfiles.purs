@@ -52,6 +52,7 @@ type LoadProfilesResult =
         { fieldKey :: String
         , optionKeys :: Array String
         }
+    , newOrReturning :: Boolean
     , summary :: Array String
     , updated :: String
     , updatedSeconds :: Number
@@ -110,6 +111,7 @@ queryString timezone = Query $ """
             end as "weekendOnline",
         coalesce(fields.fields, '[]') as "fields",
         coalesce(field_values.field_values, '[]') as "fieldValues",
+        profile.new_or_returning as "newOrReturning",
         profile.summary,
         profile.updated::text,
         extract(epoch from (now() - updated)) as "updatedSeconds"

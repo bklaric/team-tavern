@@ -91,10 +91,11 @@ modalInput
        , handle :: String
        , summary :: Array String
        , title :: String
+       , newOrReturning :: Boolean
        | other }
     -> EditProfile.Input
-modalInput nickname { handle, title, fields, fieldValues, summary } =
-    { nickname, handle, title, fields, fieldValues, summary }
+modalInput nickname { handle, title, fields, fieldValues, summary, newOrReturning } =
+    { nickname, handle, title, fields, fieldValues, summary, newOrReturning }
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render (Empty _) = HH.div_ []
@@ -173,6 +174,15 @@ render (Profiles nickname playerStatus profiles) =
                 _ -> Nothing
             _, _ -> Nothing
         )
+        <> (if profile.newOrReturning
+            then Array.singleton $
+                HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
+                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-book profile-field-icon" ] []
+                , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text "Is a"]
+                , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text " new or returning player" ]
+                , HH.text $ " to the game"
+                ]
+            else [])
         <>
         (profile.summary <#> \paragraph -> HH.p_ [ HH.text paragraph ])
     )

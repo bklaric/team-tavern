@@ -21,6 +21,7 @@ type FieldValue =
 type Profile =
     { summary :: String
     , fieldValues :: Array FieldValue
+    , newOrReturning :: Boolean
     }
 
 type ReadProfileError errors = Variant

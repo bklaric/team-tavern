@@ -40,6 +40,7 @@ type LoadProfilesResult =
             , label :: String
             })
         }
+    , newOrReturning :: Boolean
     , updated :: String
     , updatedSeconds :: Number
     }
@@ -61,6 +62,7 @@ queryString = Query """
         profile.summary,
         coalesce(fields.fields, '[]') as "fields",
         coalesce(field_values.field_values, '[]') as "fieldValues",
+        profile.new_or_returning as "newOrReturning",
         profile.updated::text,
         extract(epoch from (now() - updated)) as "updatedSeconds"
     from player_profile as profile
