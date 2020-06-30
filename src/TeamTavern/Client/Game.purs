@@ -28,7 +28,7 @@ import TeamTavern.Client.Game.PlayerProfiles (Input, Message(..), Slot) as Playe
 import TeamTavern.Client.Game.PlayerProfiles (playerProfiles)
 import TeamTavern.Client.Game.TeamProfiles (teamProfiles)
 import TeamTavern.Client.Game.TeamProfiles as TeamProfiles
-import TeamTavern.Client.Profile.ProfileFilters (Filters, filterProfiles)
+import TeamTavern.Client.Profile.ProfileFilters (Filters, emptyFilters, filterProfiles)
 import TeamTavern.Client.Profile.ProfileFilters as ProfileFilters
 import TeamTavern.Client.Script.Cookie (PlayerInfo, getPlayerInfo)
 import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
@@ -65,7 +65,7 @@ data Action
 
 data State
     = Empty Input
-    | Game ViewGame.OkContent (Maybe PlayerInfo) Tab
+    | Game ViewGame.OkContent (Maybe PlayerInfo) Filters Tab
     | NotFound
     | Error
 
@@ -102,7 +102,7 @@ filterableFields fields = fields # Array.mapMaybe
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render (Empty _) = HH.div_ []
-render (Game game' player tab) = let
+render (Game game' player _ tab) = let
     gameHeader =
         HH.slot (SProxy :: SProxy "gameHeader") unit GameHeader.component
         (GameHeader.Input game'.handle game'.title $ toHeaderTab tab) absurd
@@ -240,7 +240,7 @@ loadTab handle GameHeader.Players = do
     case gameContent, profilesContent of
         Just gameContent', Just profilesContent' -> do
             player <- H.liftEffect getPlayerInfo
-            H.put $ Game gameContent' player $ Players
+            H.put $ Game gameContent' player emptyFilters $ Players
                 { profiles: profilesContent'.profiles
                 , profileCount: profilesContent'.count
                 , page: 1
@@ -264,7 +264,7 @@ loadTab handle GameHeader.Teams = do
         Just gameContent', Just profilesContent' -> do
             player <- H.liftEffect getPlayerInfo
             timezone <- H.liftEffect getClientTimezone
-            H.put $ Game gameContent' player $ Teams
+            H.put $ Game gameContent' player emptyFilters $ Teams
                 { profiles: profilesContent'.profiles
                 , profileCount: profilesContent'.count
                 , page: 1
@@ -301,12 +301,12 @@ handleAction Init = do
 handleAction (Receive (Input _ inputTab)) = do
     state <- H.get
     case state, inputTab of
-        Game content player _, GameHeader.Players -> do
+        Game content player _ _, GameHeader.Players -> do
             profilesContent <- H.lift $
                 loadPlayerProfiles content.handle 1 ProfileFilters.emptyFilters
             case profilesContent of
                 Just profilesContent' -> do
-                    H.put $ Game content player $ Players
+                    H.put $ Game content player emptyFilters $ Players
                         { profiles: profilesContent'.profiles
                         , profileCount: profilesContent'.count
                         , page: 1
@@ -317,13 +317,13 @@ handleAction (Receive (Input _ inputTab)) = do
                         false
                     H.liftEffect $ setMetaTags content.title inputTab
                 Nothing -> pure unit
-        Game content player _, GameHeader.Teams -> do
+        Game content player _ _, GameHeader.Teams -> do
             profilesContent <- H.lift $
                 loadTeamProfiles content.handle 1 ProfileFilters.emptyFilters
             case profilesContent of
                 Just profilesContent' -> do
                     timezone <- H.liftEffect getClientTimezone
-                    H.put $ Game content player $ Teams
+                    H.put $ Game content player emptyFilters $ Teams
                         { profiles: profilesContent'.profiles
                         , profileCount: profilesContent'.count
                         , page: 1
@@ -339,12 +339,12 @@ handleAction (Receive (Input _ inputTab)) = do
 handleAction (ApplyFilters filters) = do
     state <- H.get
     case state of
-        Game game' player (Players input _) -> do
+        Game game' player _ (Players input _) -> do
             profilesContent <- H.lift $
                 loadPlayerProfiles game'.handle 1 filters
             case profilesContent of
                 Just profilesContent' ->
-                    H.put $ Game game' player $ Players
+                    H.put $ Game game' player filters $ Players
                         { profiles: profilesContent'.profiles
                         , profileCount: profilesContent'.count
                         , page: 1
@@ -353,12 +353,12 @@ handleAction (ApplyFilters filters) = do
                         }
                         false
                 Nothing -> pure unit
-        Game game' player (Teams input _ timezone) -> do
+        Game game' player _ (Teams input _ timezone) -> do
             profilesContent <- H.lift $
                 loadTeamProfiles game'.handle 1 filters
             case profilesContent of
                 Just profilesContent' ->
-                    H.put $ Game game' player $ Teams
+                    H.put $ Game game' player filters $ Teams
                         { profiles: profilesContent'.profiles
                         , profileCount: profilesContent'.count
                         , page: 1
@@ -372,23 +372,54 @@ handleAction (ApplyFilters filters) = do
 handleAction ShowCreateProfileModal =
     H.modify_
     case _ of
-    Game game' player (Players input _) ->
-        Game game' player $ Players input true
-    Game game' player (Teams input _ timezone) ->
-        Game game' player $ Teams input true timezone
+    Game game' player filters (Players input _) ->
+        Game game' player filters $ Players input true
+    Game game' player filters (Teams input _ timezone) ->
+        Game game' player filters $ Teams input true timezone
     other -> other
 handleAction HideCreateProfileModal =
     H.modify_
     case _ of
-    Game game' player (Players input _) ->
-        Game game' player $ Players input false
-    Game game' player (Teams input _ timezone) ->
-        Game game' player $ Teams input false timezone
+    Game game' player filters (Players input _) ->
+        Game game' player filters $ Players input false
+    Game game' player filters (Teams input _ timezone) ->
+        Game game' player filters $ Teams input false timezone
     other -> other
 handleAction ReloadPage =
     window >>= location >>= reload # H.liftEffect
-handleAction (ChangePage page) =
-    pure unit
+handleAction (ChangePage page) = do
+    state <- H.get
+    case state of
+        Game game' player filters (Players input _) -> do
+            profilesContent <- H.lift $
+                loadPlayerProfiles game'.handle page filters
+            case profilesContent of
+                Just profilesContent' ->
+                    H.put $ Game game' player filters $ Players
+                        { profiles: profilesContent'.profiles
+                        , profileCount: profilesContent'.count
+                        , page
+                        , showCreateProfile: input.showCreateProfile
+                        , playerInfo: player
+                        }
+                        false
+                Nothing -> pure unit
+        Game game' player filters (Teams input _ timezone) -> do
+            profilesContent <- H.lift $
+                loadTeamProfiles game'.handle page filters
+            case profilesContent of
+                Just profilesContent' ->
+                    H.put $ Game game' player filters $ Teams
+                        { profiles: profilesContent'.profiles
+                        , profileCount: profilesContent'.count
+                        , page
+                        , showCreateProfile: input.showCreateProfile
+                        , playerInfo: player
+                        }
+                        false
+                        timezone
+                Nothing -> pure unit
+        _ -> pure unit
 
 component :: forall query output left.
     H.Component HH.HTML query Input output (Async left)
