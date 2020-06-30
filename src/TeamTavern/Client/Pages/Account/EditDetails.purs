@@ -199,7 +199,7 @@ render state @ { timezoneSet, discordTagError, otherError, submitting, thirteenY
             [ HH.label
                 [ HP.class_ $ HH.ClassName "input-label" ]
                 [ HH.i [ HP.class_ $ HH.ClassName "fas fa-clock filter-field-icon" ] []
-                , HH.span [ HP.class_ $ HH.ClassName "filter-field-label" ] [ HH.text "Online on weekdays" ]
+                , HH.span [ HP.class_ $ HH.ClassName "filter-field-label" ] [ HH.text "Online on weekends" ]
                 ]
             , HH.div [ HP.class_ $ HH.ClassName "timespan-group" ]
                 [ HH.span [ HP.class_ $ HH.ClassName "timespan-group-from" ] [ HH.text "From" ]
