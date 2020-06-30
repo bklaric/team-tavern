@@ -218,6 +218,17 @@ render state @
                 ]
             ]
         , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+            [ fieldLabel "Country" "fas fa-globe-europe"
+            , treeSelect (SProxy :: SProxy "country")
+                { entries: allRegions <#> regionToEntry
+                , selected: state.countries
+                , labeler: identity
+                , comparer: (==)
+                , filter: "Search countries"
+                }
+                (Just <<< RegionInput)
+            ]
+        , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
             [ fieldLabel "Language" "fas fa-comments"
             , MultiSelect2.multiSelect (SProxy :: SProxy "language")
                 { entries: allLanguages <#> \language ->
@@ -229,17 +240,6 @@ render state @
                 , filter: Just "Search languages"
                 }
                 (Just <<< LanguageInput)
-            ]
-        , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
-            [ fieldLabel "Country" "fas fa-globe-europe"
-            , treeSelect (SProxy :: SProxy "country")
-                { entries: allRegions <#> regionToEntry
-                , selected: state.countries
-                , labeler: identity
-                , comparer: (==)
-                , filter: "Search countries"
-                }
-                (Just <<< RegionInput)
             ]
         , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
             [ fieldLabel "Microphone" "fas fa-microphone"
