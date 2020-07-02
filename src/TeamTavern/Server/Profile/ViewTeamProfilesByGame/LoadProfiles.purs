@@ -269,10 +269,12 @@ queryStringWithoutPagination handle timezone filters = Query $ """
                     field.icon,
                     field.ordinal,
                     coalesce(
-                        jsonb_agg(jsonb_build_object(
-                            'key', multi.key,
-                            'label', multi.label
-                        )) filter (where multi.label is not null),
+                        jsonb_agg(
+                            jsonb_build_object(
+                                'key', multi.key,
+                                'label', multi.label
+                            ) order by multi.ordinal
+                        ) filter (where multi.label is not null),
                         '[]'
                     ) as multi
                 from
