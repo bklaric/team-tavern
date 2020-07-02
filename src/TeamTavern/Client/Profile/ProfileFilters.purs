@@ -154,10 +154,6 @@ render state = HH.div [ HP.class_ $ HH.ClassName "card" ]
                     ]
                 ]
             , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
-                [ fieldLabel "Language" "fas fa-comments"
-                , multiSelect (SProxy :: SProxy "language") state.languages (Just <<< LanguagesMessage)
-                ]
-            , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
                 [ fieldLabel "Country" "fas fa-globe-europe"
                 , treeSelect (SProxy :: SProxy "country")
                     { entries: allRegions <#> regionToOption
@@ -167,6 +163,10 @@ render state = HH.div [ HP.class_ $ HH.ClassName "card" ]
                     , filter: "Search countries"
                     }
                     (Just <<< CountriesInput)
+                ]
+            , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+                [ fieldLabel "Language" "fas fa-comments"
+                , multiSelect (SProxy :: SProxy "language") state.languages (Just <<< LanguagesMessage)
                 ]
             , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
                 [ fieldLabel "Microphone" "fas fa-microphone"
