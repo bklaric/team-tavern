@@ -293,11 +293,7 @@ render state @
         (fieldValues <#> fieldInput)
         <>
         [ HH.div [ HP.class_ $ HH.ClassName "input-group" ]
-            [ HH.label
-                [ HP.class_ $ HH.ClassName "input-label" ] $
-                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-book filter-field-icon" ] []
-                , HH.span [ HP.class_ $ HH.ClassName "filter-field-label" ] [ HH.text "New or returning player" ]
-                ]
+            [ fieldLabel "New or returning player" "fas fa-book"
             , HH.label
                 [ HP.class_ $ HH.ClassName "checkbox-input-label" ]
                 [ HH.input

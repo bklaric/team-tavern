@@ -102,10 +102,10 @@ type ChildSlots =
     )
 
 fieldLabel :: forall slots action.
-    String -> String -> String -> Boolean -> Maybe String -> HH.HTML slots action
-fieldLabel key label icon required domain =
+    String -> String -> Boolean -> Maybe String -> HH.HTML slots action
+fieldLabel label icon required domain =
     HH.label
-        [ HP.class_ $ HH.ClassName "input-label", HP.for key ] $
+        [ HP.class_ $ HH.ClassName "input-label" ] $
         [ HH.i [ HP.class_ $ HH.ClassName $ icon <> " filter-field-icon" ] []
         , HH.span [ HP.class_ $ HH.ClassName "filter-field-label" ] [ HH.text label ]
         ]
@@ -128,10 +128,9 @@ fieldInput :: forall left.
     FieldValue ->  H.ComponentHTML Action ChildSlots (Async left)
 fieldInput (Url { key, label, icon, required, domain } url urlError missingError) =
     HH.div [ HP.class_ $ HH.ClassName "input-group" ]
-    [ fieldLabel key label icon required (Just domain)
+    [ fieldLabel label icon required (Just domain)
     , HH.input
-        [ HP.id_ key
-        , HP.class_ $ HH.ClassName "text-line-input"
+        [ HP.class_ $ HH.ClassName "text-line-input"
         , HP.value url
         , HE.onValueInput $ Just <<< UrlValueInput key
         ]
@@ -144,7 +143,7 @@ fieldInput (Url { key, label, icon, required, domain } url urlError missingError
     ]
 fieldInput (Single { key, label, icon } input) =
     HH.div [ HP.class_ $ HH.ClassName "input-group" ]
-    [ fieldLabel key label icon false Nothing
+    [ fieldLabel label icon false Nothing
     , singleSelectIndexed (SProxy :: SProxy "singleSelectField") key input
         case _ of
         SingleSelect.SelectedChanged selected -> Just $ SingleValueInput key selected
@@ -152,7 +151,7 @@ fieldInput (Single { key, label, icon } input) =
     ]
 fieldInput (Multi { key, label, icon } input) =
     HH.div [ HP.class_ $ HH.ClassName "input-group" ]
-    [ fieldLabel key label icon false Nothing
+    [ fieldLabel label icon false Nothing
     , multiSelectIndexed (SProxy :: SProxy "multiSelectField") key input
         case _ of
         MultiSelect.SelectedChanged entries -> Just $ MultiValueInput key entries
@@ -182,11 +181,7 @@ render
         (fieldValues <#> fieldInput)
         <>
         [ HH.div [ HP.class_ $ HH.ClassName "input-group" ]
-            [ HH.label
-                [ HP.class_ $ HH.ClassName "input-label" ] $
-                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-book filter-field-icon" ] []
-                , HH.span [ HP.class_ $ HH.ClassName "filter-field-label" ] [ HH.text "New or returning player" ]
-                ]
+            [ fieldLabel "New or returning player" "fas fa-book" false Nothing
             , HH.label
                 [ HP.class_ $ HH.ClassName "checkbox-input-label" ]
                 [ HH.input
