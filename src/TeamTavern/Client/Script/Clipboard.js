@@ -5,8 +5,12 @@ exports.writeTextImpl = function (errorCallback) {
         return function (text) {
             return function () {
                 navigator.clipboard.writeText(text).then(
-                    () => successCallback(),
-                    (error) => errorCallback(error)
+                    function() {
+                        successCallback()
+                    },
+                    function(error) {
+                        errorCallback(error)
+                    }
                 )
             }
         }
