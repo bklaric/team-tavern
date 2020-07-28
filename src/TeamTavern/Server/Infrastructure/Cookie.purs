@@ -9,6 +9,7 @@ import Data.Maybe (Maybe)
 import Data.MultiMap (MultiMap, singleton)
 import Data.Newtype (unwrap, wrap)
 import Data.NonEmpty ((:|))
+import TeamTavern.Server.Architecture.Deployment (Deployment(..))
 import TeamTavern.Server.Player.Domain.Id (Id, fromString, toString)
 import TeamTavern.Server.Player.Domain.Nickname (Nickname)
 import TeamTavern.Server.Session.Domain.Token (Token)
@@ -55,16 +56,25 @@ setNicknameCookie nickname =
     <> "; Max-Age=" <> show (top :: Int)
     <> "; Path=/"
 
-setTokenCookie :: Token -> String
-setTokenCookie token =
+setTokenCookie :: Deployment -> Token -> String
+setTokenCookie deployment token =
     tokenCookieName <> "=" <> unwrap token
     <> "; Max-Age=" <> show (top :: Int)
     <> "; Path=/"
-    <> "; HttpOnly; Secure"
+    <> "; HttpOnly"
+    <> case deployment of
+        Local -> ""
+        Cloud -> "; Secure"
 
-setCookieHeader :: CookieInfo -> MultiMap String String
-setCookieHeader { id, nickname, token } =
-    setIdCookie id :| setNicknameCookie nickname : setTokenCookie token : Nil
+setCookieHeaderNickname :: CookieInfo -> MultiMap String String
+setCookieHeaderNickname { nickname } =
+    setNicknameCookie nickname :| Nil
+    # NonEmptyList
+    # singleton "Set-Cookie"
+
+setCookieHeaderFull :: Deployment -> CookieInfo -> MultiMap String String
+setCookieHeaderFull deployment { id, nickname, token } =
+    setIdCookie id :| setNicknameCookie nickname : setTokenCookie deployment token : Nil
     # NonEmptyList
     # singleton "Set-Cookie"
 

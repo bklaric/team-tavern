@@ -7,7 +7,7 @@ import Async (Async, alwaysRight)
 import Data.Variant (SProxy(..), Variant, inj, match)
 import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, noContent, unauthorized__)
 import Simple.JSON (writeJSON)
-import TeamTavern.Server.Infrastructure.Cookie (CookieInfo, setCookieHeader)
+import TeamTavern.Server.Infrastructure.Cookie (CookieInfo, setCookieHeaderNickname)
 import TeamTavern.Server.Player.ChangeNickname.LogError (UpdateError)
 
 type BadRequestContent = Variant
@@ -32,7 +32,7 @@ errorResponse = match
     }
 
 successResponse :: CookieInfo -> Response
-successResponse cookieInfo = noContent $ setCookieHeader cookieInfo
+successResponse cookieInfo = noContent $ setCookieHeaderNickname cookieInfo
 
 sendResponse ::
     Async UpdateError CookieInfo -> (forall left. Async left Response)

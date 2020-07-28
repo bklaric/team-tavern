@@ -8,7 +8,8 @@ import Data.MultiMap (singleton')
 import Data.Variant (SProxy(..), Variant, inj, match)
 import Perun.Response (Response, badRequest, badRequest__, forbidden__, internalServerError__, noContent)
 import Simple.JSON (writeJSON)
-import TeamTavern.Server.Infrastructure.Cookie (CookieInfo, setCookieHeader)
+import TeamTavern.Server.Architecture.Deployment (Deployment)
+import TeamTavern.Server.Infrastructure.Cookie (CookieInfo, setCookieHeaderFull)
 import TeamTavern.Server.Session.Start.LogError (StartError)
 
 type BadRequestContent = Variant
@@ -42,9 +43,12 @@ errorResponse = match
         (inj (SProxy :: SProxy "noSessionStarted") {} :: BadRequestContent)
     }
 
-successResponse :: CookieInfo -> Response
-successResponse cookieInfo = noContent $ setCookieHeader cookieInfo
+successResponse :: Deployment -> CookieInfo -> Response
+successResponse deployment cookieInfo =
+    noContent $ setCookieHeaderFull deployment cookieInfo
 
-sendResponse ::
-    Async StartError CookieInfo -> (forall left. Async left Response)
-sendResponse = alwaysRight errorResponse successResponse
+sendResponse
+    :: Deployment
+    -> Async StartError CookieInfo
+    -> (forall left. Async left Response)
+sendResponse deployment = alwaysRight errorResponse $ successResponse deployment

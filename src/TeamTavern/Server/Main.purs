@@ -137,14 +137,15 @@ createPostmarkClient =
 teamTavernRoutes = JunctionProxy :: JunctionProxy TeamTavernRoutes
 
 handleRequest
-    :: Pool
+    :: Deployment
+    -> Pool
     -> Maybe Client
     -> Either CustomMethod Method
     -> Url
     -> Map String String
     -> Body
     -> (forall left. Async left Response)
-handleRequest pool client method url cookies body =
+handleRequest deployment pool client method url cookies body =
     case router teamTavernRoutes method (pathSegments url) (queryPairs url) of
     Left errors ->
         if method == Right OPTIONS
@@ -186,7 +187,7 @@ handleRequest pool client method url cookies body =
         , resetPassword: const $
             Password.reset pool cookies body
         , startSession: const $
-            Session.start pool cookies body
+            Session.start deployment pool cookies body
         , endSession: const
             Session.end
         , createGame: const $
@@ -228,13 +229,14 @@ handleRequest pool client method url cookies body =
                 ]})
 
 handleInvalidUrl
-    :: Pool
+    :: Deployment
+    -> Pool
     -> Maybe Client
     -> Request
     -> (forall left. Async left Response)
-handleInvalidUrl pool client { method, url, cookies, body } =
+handleInvalidUrl deployment pool client { method, url, cookies, body } =
     case url of
-    Right url' -> handleRequest pool client method url' cookies body
+    Right url' -> handleRequest deployment pool client method url' cookies body
     Left url' -> pure
         { statusCode: 400
         , headers: MultiMap.empty
@@ -246,4 +248,4 @@ main = either log pure =<< runExceptT do
     deployment <- loadDeployment
     pool <- createPostgresPool
     client <- createPostmarkClient deployment
-    lift $ run_ listenOptions (handleInvalidUrl pool client)
+    lift $ run_ listenOptions (handleInvalidUrl deployment pool client)
