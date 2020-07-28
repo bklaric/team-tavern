@@ -33,7 +33,7 @@ create table password_reset
     , nonce character(20) not null
     , consumed boolean not null default false
     , created timestamptz not null default current_timestamp
-    )
+    );
 
 create table session
     ( id serial not null primary key
