@@ -198,7 +198,7 @@ insert into region (name, superregion_name) values ('Oceania', null);
 insert into region (name, superregion_name) values ('North America', null);
     insert into region (name, superregion_name) values ('Greenland', 'North America');
     insert into region (name, superregion_name) values ('Canada', 'North America');
-    insert into region (name, superregion_name) values ('USA', 'North America');
+    insert into region (name, superregion_name) values ('United States of America', 'North America');
     insert into region (name, superregion_name) values ('Mexico', 'North America');
     insert into region (name, superregion_name) values ('Central America', 'North America');
         insert into region (name, superregion_name) values ('Belize', 'Central America');

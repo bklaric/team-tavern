@@ -222,7 +222,7 @@ allRegions =
     , Region "North America"
         [ Region "Greenland" []
         , Region "Canada" []
-        , Region "USA" []
+        , Region "United States of America" []
         , Region "Mexico" []
         , Region "Central America"
             [ Region "Belize" []
