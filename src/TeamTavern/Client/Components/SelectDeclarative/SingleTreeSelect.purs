@@ -1,18 +1,17 @@
-module TeamTavern.Client.Components.SelectDeclarative.TreeSelect
-    (Labeler, Comparer, InputEntry(..), Input, Query(..), Output(..), Slot, treeSelect) where
+module TeamTavern.Client.Components.SelectDeclarative.SingleTreeSelect
+   (Labeler, Comparer, InputEntry(..), Input, Query(..), Output(..), Slot, singleTreeSelect) where
 
 import Prelude
 
 import Async (Async)
 import Async.Aff (affToAsync)
 import Data.Array as Array
-import Data.Foldable (all, any, intercalate)
+import Data.Foldable (any)
 import Data.Maybe (Maybe(..), maybe)
 import Data.String (Pattern(..), contains, toLower, trim)
 import Data.String as String
 import Data.String.Utils (repeat)
 import Data.Symbol (class IsSymbol)
-import Data.Traversable (traverse)
 import Data.Variant (SProxy)
 import Effect.Class (class MonadEffect)
 import Halogen as H
@@ -22,12 +21,8 @@ import Halogen.HTML.Properties as HP
 import Halogen.Query.EventSource as ES
 import Halogen.Query.HalogenM (SubscriptionId)
 import Prim.Row (class Cons)
-import Web.DOM.NonElementParentNode (getElementById)
 import Web.Event.Event as E
 import Web.HTML (window)
-import Web.HTML.HTMLDocument (toNonElementParentNode)
-import Web.HTML.HTMLInputElement as HTMLInputElement
-import Web.HTML.Window (document)
 import Web.HTML.Window as Window
 
 newtype InputEntry option = InputEntry
@@ -35,11 +30,8 @@ newtype InputEntry option = InputEntry
     , subEntries :: Array (InputEntry option)
     }
 
-data EntryState = Checked | Unchecked | Indeterminate
-
 newtype Entry option = Entry
     { option :: option
-    , state :: EntryState
     , shown :: Boolean
     , expanded :: Boolean
     , subEntries :: Array (Entry option)
@@ -53,7 +45,7 @@ type Comparer option = option -> option -> Boolean
 
 type Input option =
     { entries :: Array (InputEntry option)
-    , selected :: Array option
+    , selected :: Maybe option
     , labeler :: Labeler option
     , comparer :: Comparer option
     , filter :: String
@@ -61,6 +53,7 @@ type Input option =
 
 type State option =
     { entries :: Entries option
+    , selected :: Maybe option
     , labeler :: Labeler option
     , comparer :: Comparer option
     , filter :: { placeHolder :: String, text :: String }
@@ -77,25 +70,14 @@ data Action option
     | KeepOpen
     | TryClose
     | Filter String
-    | ToggleEntryState option
+    | SelectEntry (Maybe option)
     | ToggleEntryExpanded option
 
 data Query option send = Clear send
 
-data Output option = SelectedChanged (Array option)
+data Output option = SelectedChanged (Maybe option)
 
 type Slot option = H.Slot (Query option) (Output option) Unit
-
-selectedEntriesText :: forall option. Labeler option -> Entries option -> String
-selectedEntriesText labeler entries =
-    entries
-    <#> (\(Entry entry) ->
-        case entry.state of
-        Checked -> labeler entry.option
-        Indeterminate -> selectedEntriesText labeler entry.subEntries
-        Unchecked -> "")
-    # Array.filter (_ /= "")
-    # intercalate ", "
 
 renderEntry
     :: forall option slots
@@ -113,17 +95,9 @@ renderEntry level labeler (Entry { option, expanded, subEntries }) = let
     Just $
     [ HH.div
         [ HP.class_ $ HH.ClassName optionClass
-        , HE.onClick $ const $ Just $ ToggleEntryState option
+        , HE.onClick $ const $ Just $ SelectEntry $ Just option
         ]
-        [ HH.input
-            [ HP.type_ HP.InputCheckbox
-            , HP.tabIndex $ -1
-            , HP.class_ $ HH.ClassName "checkbox-input"
-            , HP.id_ $ "tree " <> labeler option
-            -- , HP.ref $ H.RefLabel $ labeler option
-            ]
-        , HH.text $ labeler option
-        ]
+        [ HH.text $ labeler option ]
     ]
     <> Array.catMaybes
     [ if hasSubEntries
@@ -152,7 +126,7 @@ renderEntries level labeler entries =
     entries <#> renderEntry level labeler # Array.catMaybes # join
 
 render :: forall option slots. State option -> HH.HTML slots (Action option)
-render { entries, labeler, comparer, filter, open } = let
+render { entries, selected, labeler, comparer, filter, open } = let
     selectedClass = if open then "selected-open" else "selected-closed"
     openOrClose = if open then Close else Open
     in
@@ -161,7 +135,7 @@ render { entries, labeler, comparer, filter, open } = let
         [ HP.class_ $ HH.ClassName selectedClass
         , HE.onMouseDown $ const $ Just openOrClose
         ]
-        [ HH.text $ selectedEntriesText labeler entries]
+        [ HH.text $ maybe "" labeler selected ]
     ]
     <>
     if open
@@ -177,7 +151,14 @@ render { entries, labeler, comparer, filter, open } = let
         , HH.div
             [ HP.class_ $ HH.ClassName "filterable-options"
             , HE.onMouseDown $ const $ Just KeepOpen
+            ] $
+            [ HH.div
+                [ HP.class_ $ HH.ClassName "option"
+                , HE.onClick $ const $ Just $ SelectEntry Nothing
+                ]
+                [ HH.text "" ]
             ]
+            <>
             (renderEntries 0 labeler entries)
         ]
     else []
@@ -199,57 +180,6 @@ filterEntries filter labeler entries = entries <#> \(Entry entry) -> let
         , subEntries = subEntries
         }
 
-uncheckSubEntries :: forall option. Entries option -> Entries option
-uncheckSubEntries subEntries =
-    subEntries <#> \(Entry entry) -> Entry entry
-        { state = Unchecked
-        , subEntries = uncheckSubEntries entry.subEntries
-        }
-
-checkSubEntries :: forall option. Entries option -> Entries option
-checkSubEntries subEntries =
-    subEntries <#> \(Entry entry) -> Entry entry
-        { state = Checked
-        , subEntries = checkSubEntries entry.subEntries
-        }
-
-toggleEntriesState :: forall option.
-    Comparer option -> option -> Entries option -> Entries option
-toggleEntriesState comparer option entries = entries <#> \(Entry entry) ->
-    if comparer option entry.option
-    then
-        case entry.state of
-        Checked -> Entry entry
-            { state = Unchecked
-            , subEntries = uncheckSubEntries entry.subEntries
-            }
-        _ -> Entry entry
-            { state = Checked
-            , subEntries = checkSubEntries entry.subEntries
-            }
-    else if Array.null entry.subEntries
-    then Entry entry
-    else let
-        subEntries = toggleEntriesState comparer option entry.subEntries
-        allChecked = subEntries # all \(Entry subEntry) ->
-            case subEntry.state of
-            Checked -> true
-            _ -> false
-        someChecked = subEntries # any \(Entry subEntry) ->
-            case subEntry.state of
-            Unchecked -> false
-            _ -> true
-        in
-        Entry entry
-            { state =
-                if allChecked
-                then Checked
-                else if someChecked
-                then Indeterminate
-                else Unchecked
-            , subEntries = subEntries
-            }
-
 toggleEntriesExpanded :: forall option.
     Comparer option -> option -> Entries option -> Entries option
 toggleEntriesExpanded comparer option entries = entries <#> \(Entry entry) ->
@@ -257,46 +187,6 @@ toggleEntriesExpanded comparer option entries = entries <#> \(Entry entry) ->
     then Entry $ entry { expanded = not entry.expanded }
     else Entry $ entry
         { subEntries = toggleEntriesExpanded comparer option entry.subEntries }
-
-updateCheckboxes
-    :: forall monad message slots action state option
-    .  MonadEffect monad
-    => Labeler option
-    -> Entries option
-    -> H.HalogenM state action slots message monad Unit
-updateCheckboxes labeler entries =
-    entries
-    # traverse (\(Entry entry) -> do
-        element <- window >>= document <#> toNonElementParentNode
-            >>= getElementById ("tree " <> labeler entry.option) # H.liftEffect
-        -- element <- H.getRef $ H.RefLabel $ labeler entry.option
-        case element >>= HTMLInputElement.fromElement of
-            Nothing -> pure unit
-            Just checkbox -> do
-                H.liftEffect
-                    case entry.state of
-                    Checked -> do
-                        HTMLInputElement.setChecked true checkbox
-                        HTMLInputElement.setIndeterminate false checkbox
-                    Unchecked -> do
-                        HTMLInputElement.setChecked false checkbox
-                        HTMLInputElement.setIndeterminate false checkbox
-                    Indeterminate -> do
-                        HTMLInputElement.setChecked false checkbox
-                        HTMLInputElement.setIndeterminate true checkbox
-                updateCheckboxes labeler entry.subEntries
-    )
-    # void
-
-getSelectedEntries :: forall option. Entries option -> Array option
-getSelectedEntries entries =
-    entries
-    <#> (\(Entry entry) ->
-        case entry.state of
-        Checked -> Array.singleton entry.option
-        Indeterminate -> getSelectedEntries entry.subEntries
-        Unchecked -> [])
-    # join
 
 handleAction
     :: forall option slots left
@@ -314,9 +204,8 @@ handleAction Finalize = do
     case windowSubscription of
         Just windowSubscription' -> H.unsubscribe windowSubscription'
         Nothing -> pure unit
-handleAction Open = do
-    { labeler, entries } <- H.modify (_ { open = true, keepOpen = true })
-    updateCheckboxes labeler entries
+handleAction Open =
+    H.modify_ (_ { open = true, keepOpen = true })
 handleAction Close =
     H.modify_ (_ { open = false })
 handleAction KeepOpen =
@@ -326,29 +215,18 @@ handleAction TryClose =
         if state.keepOpen
         then state { keepOpen = false }
         else state { open = false }
-handleAction (Filter text) = do
-    state <- H.modify \state @ { entries, labeler, filter } ->
+handleAction (Filter text) =
+    H.modify_ \state @ { entries, labeler, filter } ->
         state
         { entries = filterEntries text labeler entries
         , filter = filter { text = text }
         }
-    updateCheckboxes state.labeler state.entries
-handleAction (ToggleEntryState option) = do
-    state <- H.modify \state @ { entries, comparer } ->
-        state { entries = toggleEntriesState comparer option entries }
-    updateCheckboxes state.labeler state.entries
-    H.raise $ SelectedChanged $ getSelectedEntries state.entries
-handleAction (ToggleEntryExpanded option) = do
-    state <- H.modify \state @ { entries, comparer } ->
+handleAction (SelectEntry option) = do
+    state <- H.modify (_ { selected = option, open = false })
+    H.raise $ SelectedChanged state.selected
+handleAction (ToggleEntryExpanded option) =
+    H.modify_ \state @ { entries, comparer } ->
         state { entries = toggleEntriesExpanded comparer option entries }
-    updateCheckboxes state.labeler state.entries
-
-clearEntries :: forall option. Entries option -> Entries option
-clearEntries entries = entries <#> \(Entry entry) ->
-    Entry entry
-        { state = Unchecked
-        , subEntries = clearEntries entry.subEntries
-        }
 
 handleQuery
     :: forall option monad slots action send
@@ -356,16 +234,13 @@ handleQuery
     => Query option send
     -> H.HalogenM (State option) action slots (Output option) monad (Maybe send)
 handleQuery (Clear send) = do
-    { entries, labeler } <- H.modify \state @ { entries } ->
-        state { entries = clearEntries entries }
-    updateCheckboxes labeler entries
-    H.raise $ SelectedChanged $ getSelectedEntries entries
+    { selected } <- H.modify (_ { selected = Nothing })
+    H.raise $ SelectedChanged selected
     pure $ Just send
 
 createEntry :: forall option. InputEntry option -> Entry option
 createEntry (InputEntry { option, subEntries }) = Entry
     { option: option
-    , state: Unchecked
     , shown: true
     , expanded: false
     , subEntries: subEntries <#> createEntry
@@ -376,11 +251,8 @@ component :: forall option left.
         (Input option) (Output option) (Async left)
 component = H.mkComponent
     { initialState: \{ entries, selected, labeler, comparer, filter } ->
-        { entries:
-            Array.foldr
-            (toggleEntriesState comparer)
-            (entries <#> createEntry)
-            selected
+        { entries: entries <#> createEntry
+        , selected
         , labeler
         , comparer
         , filter: { placeHolder: filter, text: "" }
@@ -397,7 +269,7 @@ component = H.mkComponent
         }
     }
 
-treeSelect
+singleTreeSelect
     :: forall children' slot children action left option
     .  Cons slot (Slot option) children' children
     => IsSymbol slot
@@ -405,5 +277,5 @@ treeSelect
     -> Input option
     -> (Output option -> Maybe action)
     -> HH.ComponentHTML action children (Async left)
-treeSelect label input handleOutput =
+singleTreeSelect label input handleOutput =
     HH.slot label unit component input handleOutput

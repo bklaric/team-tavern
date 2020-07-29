@@ -31,15 +31,17 @@ import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.CloseButton (closeButton)
 import TeamTavern.Client.Components.Modal as Modal
+import TeamTavern.Client.Components.SelectDeclarative.SingleTreeSelect (singleTreeSelect)
+import TeamTavern.Client.Components.SelectDeclarative.SingleTreeSelect as SingleTreeSelect
 import TeamTavern.Client.Components.SelectImperative.MultiSelect (multiSelect)
 import TeamTavern.Client.Components.SelectImperative.MultiSelect as MultiSelect
-import TeamTavern.Client.Components.SelectImperative.SingleSelect (singleSelect, singleSelect')
+import TeamTavern.Client.Components.SelectImperative.SingleSelect (singleSelect')
 import TeamTavern.Client.Components.SelectImperative.SingleSelect as SingleSelect
 import TeamTavern.Client.Pages.Account.Types (Nickname)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass, otherErrorClass)
-import TeamTavern.Server.Infrastructure.Countries (allCountries)
 import TeamTavern.Server.Infrastructure.Languages (allLanguages)
+import TeamTavern.Server.Infrastructure.Regions (Region(..), allRegions)
 import TeamTavern.Server.Infrastructure.Timezones (Timezone, allTimezones)
 import TeamTavern.Server.Player.UpdateDetails.SendResponse as Update
 import TeamTavern.Server.Player.ViewDetails.SendResponse as ViewAccount
@@ -57,6 +59,7 @@ data Action
     | WeekdayToInput String
     | WeekendFromInput String
     | WeekendToInput String
+    | CountryInput (SingleTreeSelect.Output String)
     | Update Event
     | Close
 
@@ -64,6 +67,7 @@ data Output = DetailsEditted String | CloseClicked
 
 type State =
     { nickname :: String
+    , country :: Maybe String
     , timezoneSet :: Boolean
     , weekdayFrom :: String
     , weekdayTo :: String
@@ -78,11 +82,17 @@ type State =
 
 type ChildSlots =
     ( languageInput :: MultiSelect.Slot String
-    , countryInput :: SingleSelect.Slot String
+    , countryInput :: SingleTreeSelect.Slot String
     , timezoneInput :: SingleSelect.Slot Timezone
     )
 
 type Slot = H.Slot (Modal.Query Input (Const Void)) (Modal.Message Output) Unit
+
+regionToOption :: Region -> SingleTreeSelect.InputEntry String
+regionToOption (Region region subRegions) = SingleTreeSelect.InputEntry
+    { option: region
+    , subEntries: subRegions <#> regionToOption
+    }
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render state @ { timezoneSet, discordTagError, otherError, submitting, thirteenYearsAgo } =
@@ -116,9 +126,16 @@ render state @ { timezoneSet, discordTagError, otherError, submitting, thirteenY
             [ HH.label
                 [ HP.class_ $ HH.ClassName "input-label" ]
                 [ HH.i [ HP.class_ $ HH.ClassName "fas fa-globe-europe filter-field-icon" ] []
-                , HH.span [ HP.class_ $ HH.ClassName "filter-field-label" ] [ HH.text "Country" ]
+                , HH.span [ HP.class_ $ HH.ClassName "filter-field-label" ] [ HH.text "Location" ]
                 ]
-            , singleSelect (SProxy :: SProxy "countryInput")
+            , singleTreeSelect (SProxy :: SProxy "countryInput")
+                { entries: allRegions <#> regionToOption
+                , selected: state.country
+                , labeler: identity
+                , comparer: (==)
+                , filter: "Search locations"
+                }
+                (Just <<< CountryInput)
             ]
         , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
             [ HH.label
@@ -378,15 +395,6 @@ setInputValues selectedTimezone details = do
         , showFilter: Just "Search languages"
         }
         unit
-    void $ H.query (SProxy :: SProxy "countryInput") unit $
-        SingleSelect.SetOptions
-        { options: allCountries
-        , selected: details.country
-        , labeler: identity
-        , comparer: (==)
-        , showFilter: Just "Search countries"
-        }
-        unit
     void $ H.query (SProxy :: SProxy "timezoneInput") unit $
         SingleSelect.SetOptions
         { options: allTimezones # sortBy \leftTimezone rightTimezone -> let
@@ -447,6 +455,8 @@ handleAction (WeekendFromInput time) =
     H.modify_ (_ { weekendFrom = time })
 handleAction (WeekendToInput time) =
     H.modify_ (_ { weekendTo = time })
+handleAction (CountryInput (SingleTreeSelect.SelectedChanged option)) =
+    H.modify_ (_ { country = option })
 handleAction (Update event) = do
     H.liftEffect $ preventDefault event
     state <- H.get
@@ -454,8 +464,6 @@ handleAction (Update event) = do
     birthday <- getValue $ H.RefLabel "birthday"
     languages <- H.query (SProxy :: SProxy "languageInput") unit
         (MultiSelect.GetSelected identity)
-    country <- H.query (SProxy :: SProxy "countryInput") unit
-        (SingleSelect.GetSelected identity)
     timezone <- H.query (SProxy :: SProxy "timezoneInput") unit
         (SingleSelect.GetSelected identity)
     weekdayFrom <- getValue $ H.RefLabel "weekday-start"
@@ -480,9 +488,9 @@ handleAction (Update event) = do
             case _ of
             "" -> Nothing
             birthday' -> Just birthday'
-        , languages    : maybe [] identity languages
-        , country      : join country
-        , timezone     : join timezone <#> _.name
+        , languages   : maybe [] identity languages
+        , country     : state.country
+        , timezone    : join timezone <#> _.name
         , weekdayFrom : join timezone >>= const weekdayFrom
         , weekdayTo   : join timezone >>= const weekdayTo
         , weekendFrom : join timezone >>= const weekendFrom
@@ -500,6 +508,7 @@ component = H.mkComponent
     { initialState: \(Input nickname details) ->
         { nickname
         , details
+        , country: details.country
         , timezoneSet: isJust details.timezone
         , weekdayFrom: maybe "" identity $ _.from <$> details.sourceWeekdayOnline
         , weekdayTo: maybe "" identity $ _.to <$> details.sourceWeekdayOnline
