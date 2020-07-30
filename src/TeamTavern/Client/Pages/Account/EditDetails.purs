@@ -136,6 +136,11 @@ render state @ { timezoneSet, discordTagError, otherError, submitting, thirteenY
                 , filter: "Search locations"
                 }
                 (Just <<< CountryInput)
+            , HH.label
+                [ HP.class_ $ HH.ClassName "input-underlabel" ]
+                [ HH.text $ "You can select either a specific country or "
+                    <> "one of the containing regions."
+                ]
             ]
         , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
             [ HH.label
