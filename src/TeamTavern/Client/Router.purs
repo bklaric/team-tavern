@@ -11,18 +11,17 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import Simple.JSON (read)
-import TeamTavern.Client.Pages.Account.AccountHeader as AccountHeader
 import TeamTavern.Client.Components.Footer (footer)
 import TeamTavern.Client.Components.Footer as Footer
+import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Components.Password.ForgotPassword (forgotPassword)
 import TeamTavern.Client.Components.Password.ForgotPassword as ForgotPassword
-import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
-import TeamTavern.Client.Components.RegisterForm (registerForm)
-import TeamTavern.Client.Components.RegisterForm as RegisterForm
 import TeamTavern.Client.Components.Password.ResetPassword (resetPassword)
 import TeamTavern.Client.Components.Password.ResetPassword as ResetPassword
 import TeamTavern.Client.Components.Password.ResetPasswordSent (resetPasswordSent)
 import TeamTavern.Client.Components.Password.ResetPasswordSuccess (resetPasswordSuccess)
+import TeamTavern.Client.Components.RegisterForm (registerForm)
+import TeamTavern.Client.Components.RegisterForm as RegisterForm
 import TeamTavern.Client.Components.TopBar (topBar)
 import TeamTavern.Client.Components.TopBar as TopBar
 import TeamTavern.Client.Components.Welcome (welcome)
@@ -30,11 +29,13 @@ import TeamTavern.Client.Components.WelcomeBanner as WelcomeBanner
 import TeamTavern.Client.Game (game)
 import TeamTavern.Client.Game as Game
 import TeamTavern.Client.Game.GameHeader as GameHeader
-import TeamTavern.Client.Home.Games as Games
 import TeamTavern.Client.Pages.About (about)
 import TeamTavern.Client.Pages.About as About
 import TeamTavern.Client.Pages.Account (account)
 import TeamTavern.Client.Pages.Account as Account
+import TeamTavern.Client.Pages.Account.AccountHeader as AccountHeader
+import TeamTavern.Client.Pages.Games (games)
+import TeamTavern.Client.Pages.Games as Games
 import TeamTavern.Client.Pages.Home (home)
 import TeamTavern.Client.Pages.Home as Home
 import TeamTavern.Client.Player (player)
@@ -50,6 +51,7 @@ data Action = Init Foreign String
 data State
     = Empty
     | Home
+    | Games
     | About
     | Account AccountHeader.Tab
     | Game GameHeader.Handle GameHeader.Tab
@@ -95,6 +97,7 @@ render :: forall action left.
     State -> H.ComponentHTML action ChildSlots (Async left)
 render Empty = HH.div_ []
 render Home = HH.div_ [ topBar, home, footer ]
+render Games = topBarWithContent [ games ]
 render About = topBarWithContent [ about ]
 render (Game handle tab) = topBarWithContent [ game handle tab ]
 render (Account tab) = topBarWithContent [ account tab ]
@@ -148,6 +151,8 @@ handleAction (Init state route) = do
             just $ Account AccountHeader.Conversations
         ["", "account", "conversations", nickname] ->
             just $ Account $ AccountHeader.Conversation nickname
+        ["", "games"] ->
+            just Games
         ["", "games", handle] ->
             (navigateReplace_ $ "/games/" <> handle <> "/players") *> nothing
         ["", "games", handle, "players" ] ->

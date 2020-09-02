@@ -61,9 +61,9 @@ render :: forall left.
 render state = HH.div_
     [ HH.div [ HP.class_ $ HH.ClassName "top-bar" ]
         [ HH.div [ HP.class_ $ HH.ClassName "top-bar-content" ]
-            [ HH.span [ HP.class_ $ HH.ClassName "top-bar-title" ]
+            [ HH.div [ HP.class_ $ HH.ClassName "top-bar-left" ]
                 [ HH.a
-                    [ HP.class_ $ HH.ClassName "top-bar-title-link"
+                    [ HP.class_ $ HH.ClassName "top-bar-title top-bar-title-link"
                     , HP.href "/"
                     , HE.onClick $ Just <<< Navigate "/"
                         case state of
@@ -76,6 +76,12 @@ render state = HH.div_
                         ]
                     , HH.text "TeamTavern"
                     ]
+                , HH.a
+                    [ HP.class_ $ HH.ClassName "top-bar-games"
+                    , HP.href "/games"
+                    , HE.onClick $ Just <<< Navigate "/games" Nothing
+                    ]
+                    [ HH.text "Games"]
                 ]
             , HH.div [ HP.class_ $ HH.ClassName "top-bar-menu" ]
                 case state of

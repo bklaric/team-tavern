@@ -1,16 +1,23 @@
 .games {
-    padding: 40px 0;
-
     .game-card:not(:last-child) {
         margin-bottom: 21px;
     }
 }
 
-.choose-game {
+.games-header {
+    padding: 0 21px;
+    margin-bottom: 28px;
+}
+
+.games-header-title {
     font-size: 20px;
     text-align: center;
-    margin-bottom: 28px;
-    padding: 0 21px;
+}
+
+.games-header-subtitle {
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
 }
 
 .game-card {
@@ -112,4 +119,10 @@
     @media screen and (min-width: 960px) {
         border-radius: 0 4px 4px 0;
     }
+}
+
+.game-card-coming-soon {
+    font-size: 20px;
+    text-align: center;
+    color: white;
 }

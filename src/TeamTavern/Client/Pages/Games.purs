@@ -1,4 +1,4 @@
-module TeamTavern.Client.Home.Games (Slot, games) where
+module TeamTavern.Client.Pages.Games where
 
 import Prelude
 
@@ -20,7 +20,6 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties (alt, class_, href, src) as HP
 import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.Divider (whiteDivider)
-import TeamTavern.Client.Script.Cookie (Nickname)
 import TeamTavern.Client.Script.Navigate (navigateWithEvent_)
 import TeamTavern.Server.Game.ViewAll.SendResponse (OkContent)
 import Unsafe.Coerce (unsafeCoerce)
@@ -28,23 +27,23 @@ import Web.Event.Event (stopPropagation)
 import Web.UIEvent.MouseEvent (MouseEvent)
 import Web.UIEvent.MouseEvent as MouseEvent
 
-data Action = Init (Maybe Nickname) | Navigate String Boolean MouseEvent
+data Action = Init | Navigate String Boolean MouseEvent
 
-data State = Empty | Games (Maybe Nickname) OkContent
+data State = Empty | Games OkContent
 
 type Slot = H.Slot (Const Void) Void
 
 render :: forall slots monad. MonadEffect monad =>
     State -> H.ComponentHTML Action slots monad
 render Empty = HH.div_ []
-render (Games nickname games') = HH.div [ HP.class_ $ HH.ClassName "games" ] $
-    [ HH.h2 [ HP.class_ $ HH.ClassName "choose-game" ]
-        [ HH.text
-            case nickname of
-            Nothing -> "Choose a game below and browse player and team profiles"
-            Just nickname' ->
-                "Hi " <> nickname'
-                <> ", choose a game below and browse player and team profiles"
+render (Games games') = HH.div [ HP.class_ $ HH.ClassName "games" ] $
+    [ HH.div [ HP.class_ $ HH.ClassName "games-header"]
+        [ HH.h2 [ HP.class_ $ HH.ClassName "games-header-title" ]
+            [ HH.text "Games" ]
+        , HH.p [ HP.class_ $ HH.ClassName "games-header-subtitle" ]
+            [ HH.text "TeamTavern aims to provide a wide selection of games while carefully adjusting to every game's specifics." ]
+        , HH.p [ HP.class_ $ HH.ClassName "games-header-subtitle" ]
+            [ HH.text "Choose one of the featured games and start finding your new teammates!" ]
         ]
     ]
     <>
@@ -66,8 +65,8 @@ render (Games nickname games') = HH.div [ HP.class_ $ HH.ClassName "games" ] $
                     ]
                     [ HH.img
                         [ HP.class_ $ HH.ClassName "game-card-logo"
-                        , HP.src iconPath -- "/static/dota2-icon.svg"
-                        , HP.alt "Dota 2 icon"
+                        , HP.src iconPath
+                        , HP.alt $ title <> " icon"
                         ]
                     , HH.text title
                     ]
@@ -95,14 +94,33 @@ render (Games nickname games') = HH.div [ HP.class_ $ HH.ClassName "games" ] $
         , HH.div
             [ HP.class_ $ HH.ClassName "game-card-image"
             , HP.style (CSS.backgroundImage $ unsafeCoerce $ CSS.Value $ CSS.Plain $
-                "linear-gradient(to right, #603520, #0000 3px), url(" <> bannerPath <> ")")
+                "url(" <> bannerPath <> ")")
             ]
             []
         ]
     )
+    <>
+    [ HH.div
+        [ HP.class_ $ HH.ClassName "game-card" ]
+        [ HH.div
+            [ HP.class_ $ HH.ClassName "game-card-text"
+            , HP.style (CSS.backgroundImage $ unsafeCoerce $ CSS.Value $ CSS.Plain $
+                "linear-gradient(to right,#603520dd,#603520dd)")
+            ] $
+            [ HH.h3 [ HP.class_ $ HH.ClassName "game-card-coming-soon" ]
+                [ HH.text "More games coming soon!" ]
+            ]
+        , HH.div
+            [ HP.class_ $ HH.ClassName "game-card-image"
+            , HP.style (CSS.backgroundImage $ unsafeCoerce $ CSS.Value $ CSS.Plain $
+                "linear-gradient(to right, #f7f7fa, #f7f7fa)")
+            ]
+            []
+        ]
+    ]
 
-loadGames :: forall left. Maybe Nickname -> Async left State
-loadGames nickname = Async.unify do
+loadGames :: forall left. Async left State
+loadGames = Async.unify do
     response' <- Fetch.fetch_ "/api/games" # lmap (const Empty)
     games' :: OkContent <-
         case FetchRes.status response' of
@@ -110,12 +128,12 @@ loadGames nickname = Async.unify do
             >>= JsonAsync.readJSON
             # lmap (const Empty)
         _ -> Async.left Empty
-    pure $ Games nickname games'
+    pure $ Games games'
 
 handleAction :: forall slots output left.
     Action -> H.HalogenM State Action slots output (Async left) Unit
-handleAction (Init nickname) = do
-    newState <- H.lift $ loadGames nickname
+handleAction Init = do
+    newState <- H.lift loadGames
     H.put newState
 handleAction (Navigate url stopBubble event) = do
     H.liftEffect if stopBubble
@@ -124,20 +142,19 @@ handleAction (Navigate url stopBubble event) = do
     H.liftEffect $ navigateWithEvent_ url event
 
 component :: forall query output left.
-    Maybe Nickname -> H.Component HH.HTML query State output (Async left)
-component nickname =
+    H.Component HH.HTML query State output (Async left)
+component =
     H.mkComponent
         { initialState: identity
         , render
         , eval: H.mkEval $ H.defaultEval
             { handleAction = handleAction
-            , initialize = Just $ Init nickname
+            , initialize = Just Init
             }
         }
 
 games
     :: forall query children left
-    .  Maybe Nickname
-    -> HH.ComponentHTML query (games :: Slot Unit | children) (Async left)
-games nickname =
-    HH.slot (SProxy :: SProxy "games") unit (component nickname) Empty absurd
+    .  HH.ComponentHTML query (games :: Slot Unit | children) (Async left)
+games =
+    HH.slot (SProxy :: SProxy "games") unit component Empty absurd

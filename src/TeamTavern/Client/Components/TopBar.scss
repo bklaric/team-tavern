@@ -18,6 +18,11 @@
     margin: auto;
 }
 
+.top-bar-left {
+    display: flex;
+    align-items: center;
+}
+
 .top-bar-logo {
     color: white;
     background-color: $primary-color;
@@ -40,6 +45,11 @@
     line-height: 40px;
 }
 
+.top-bar-games {
+    margin-left: 24px;
+    font-weight: 500;
+}
+
 .top-bar-menu-button {
     @extend .top-bar-button;
 
@@ -49,7 +59,7 @@
         padding: 0;
     }
 
-    @media screen and (min-width: 391px){
+    @media screen and (min-width: 391px) {
         display: none;
     }
 }

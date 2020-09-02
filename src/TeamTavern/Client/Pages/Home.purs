@@ -11,8 +11,6 @@ import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Home.CallToAction (callToAction)
-import TeamTavern.Client.Home.Games (games)
-import TeamTavern.Client.Home.Games as Games
 import TeamTavern.Client.Script.Cookie (PlayerInfo, getPlayerInfo)
 import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
 
@@ -23,17 +21,15 @@ data State = Empty | Loaded (Maybe PlayerInfo)
 type Slot = H.Slot (Const Void) Void
 
 type ChildSlots =
-    ( games :: Games.Slot Unit
-    , callToActionButton :: NavigationAnchor.Slot Unit
-    )
+    ( callToActionButton :: NavigationAnchor.Slot Unit )
 
 render :: forall left.
     State -> H.ComponentHTML Action ChildSlots (Async left)
 render Empty = HH.div [ HP.class_ $ HH.ClassName "home" ] []
 render (Loaded playerInfo) = HH.div [ HP.class_ $ HH.ClassName "home" ] $
     case playerInfo of
-        Nothing -> [ callToAction, games Nothing ]
-        Just { nickname } -> [ games $ Just nickname ]
+        Nothing -> [ callToAction ]
+        Just { nickname } -> [ ]
 
 handleAction :: forall action output slots left.
     Action -> H.HalogenM State action slots output (Async left) Unit
