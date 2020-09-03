@@ -82,6 +82,7 @@ render state = HH.div_
                     , HE.onClick $ Just <<< Navigate "/games" Nothing
                     ]
                     [ HH.text "Games"]
+                , HH.i [ HP.class_ $ HH.ClassName "fas fa-caret-down top-bar-games-caret" ] []
                 ]
             , HH.div [ HP.class_ $ HH.ClassName "top-bar-menu" ]
                 case state of
