@@ -20,7 +20,6 @@
 
 .top-bar-left {
     display: flex;
-    align-items: center;
 }
 
 .top-bar-logo {
@@ -48,6 +47,7 @@
 .top-bar-games {
     margin-left: 24px;
     font-weight: 500;
+    line-height: 40px;
 }
 
 .top-bar-menu-button {
