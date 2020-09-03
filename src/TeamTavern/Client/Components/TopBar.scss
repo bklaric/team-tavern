@@ -53,13 +53,13 @@
 .top-bar-menu-button {
     @extend .top-bar-button;
 
-    @media screen and (max-width: 390px) {
+    @media screen and (max-width: 455px) {
         width: 40px;
         height: 40px;
         padding: 0;
     }
 
-    @media screen and (min-width: 391px) {
+    @media screen and (min-width: 456px) {
         display: none;
     }
 }
@@ -70,7 +70,7 @@
 }
 
 .top-bar-menu-items {
-    @media screen and (max-width: 390px) {
+    @media screen and (max-width: 455px) {
         position: fixed;
         top: 0;
         left: 0;
@@ -84,7 +84,7 @@
 .hidden-top-bar-menu-items {
     @extend .top-bar-menu-items;
 
-    @media screen and (max-width: 390px) {
+    @media screen and (max-width: 455px) {
         display: none;
     }
 }
@@ -95,14 +95,14 @@
     text-align: left;
     background-color: white;
 
-    @media screen and (max-width: 390px) {
+    @media screen and (max-width: 455px) {
         display: block;
         width: 100%;
         padding: 0 21px;
         border-bottom: 1px solid #ccc;
     }
 
-    @media screen and (min-width: 391px) {
+    @media screen and (min-width: 456px) {
         display: inline-block;
         padding: 0 12px;
     }
