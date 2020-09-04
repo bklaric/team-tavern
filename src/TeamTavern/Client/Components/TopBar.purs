@@ -48,7 +48,7 @@ type Nickname = String
 data PlayerStatus = Unknown | SignedOut | SignedIn Nickname
 
 type State =
-    { subscription :: Maybe H.SubscriptionId
+    { windowSubscription :: Maybe H.SubscriptionId
     , games :: Maybe Games
     , gamesVisible :: Boolean
     , menuVisible :: Boolean
@@ -56,7 +56,8 @@ type State =
     }
 
 data Action
-    = Init
+    = Initialize
+    | Finalize
     | SignOut
     | Navigate String MouseEvent
     | ToggleMenu
@@ -198,23 +199,28 @@ loadGames = Async.unify do
 
 handleAction :: forall children left output.
     Action -> H.HalogenM State Action children output (Async left) Unit
-handleAction Init = do
+handleAction Initialize = do
     nickname <- getPlayerNickname # fromEffect # H.lift
 
     window <- H.liftEffect $ Window.toEventTarget <$> window
     let windowEventSource = ES.eventListenerEventSource
             (E.EventType "click") window \_ -> Just CloseGamesPopunder
-    subscription <- H.subscribe $ ES.hoist affToAsync windowEventSource
+    windowSubscription <- H.subscribe $ ES.hoist affToAsync windowEventSource
 
     games <- H.lift loadGames
 
     H.put
-        { subscription: Just subscription
+        { windowSubscription: Just windowSubscription
         , games
         , gamesVisible: false
         , menuVisible: false
         , playerStatus: maybe SignedOut SignedIn nickname
         }
+handleAction Finalize = do
+    { windowSubscription } <- H.get
+    case windowSubscription of
+        Just windowSubscription' -> H.unsubscribe windowSubscription'
+        Nothing -> pure unit
 handleAction SignOut = do
     success <- H.lift endSession
     when success do
@@ -237,7 +243,7 @@ component :: forall query input output left.
 component =
     H.mkComponent
         { initialState: const
-            { subscription: Nothing
+            { windowSubscription: Nothing
             , games: Nothing
             , gamesVisible: false
             , menuVisible: false
@@ -246,7 +252,7 @@ component =
         , render
         , eval: H.mkEval $ H.defaultEval
             { handleAction = handleAction
-            , initialize = Just Init
+            , initialize = Just Initialize
             }
         }
 
