@@ -56,6 +56,38 @@
     padding: 0 8px;
     line-height: 40px;
     color: $primary-color;
+    cursor: pointer;
+}
+
+.top-bar-games-popover {
+    @extend .popover;
+    left: -200px;
+
+    @media screen and (min-width: 400px) {
+        left: -120px;
+    }
+}
+
+.top-bar-game {
+    padding: 9px 12px;
+}
+
+.top-bar-game-link {
+    display: block;
+    margin-bottom: 6px;
+}
+
+.top-bar-game-icon {
+    height: 16px;
+    width: 16px;
+    margin-right: 8px;
+    vertical-align: -2px;
+}
+
+.top-bar-game-title {
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1;
 }
 
 .top-bar-menu-button {
