@@ -298,10 +298,10 @@ handleAction Init = do
     case state of
         Empty (Input handle tab) -> loadTab handle tab
         _ -> pure unit
-handleAction (Receive (Input _ inputTab)) = do
+handleAction (Receive (Input handle inputTab)) = do
     state <- H.get
     case state, inputTab of
-        Game content player _ _, GameHeader.Players -> do
+        Game content player _ _, GameHeader.Players | content.handle == handle -> do
             profilesContent <- H.lift $
                 loadPlayerProfiles content.handle 1 ProfileFilters.emptyFilters
             case profilesContent of
@@ -317,7 +317,7 @@ handleAction (Receive (Input _ inputTab)) = do
                         false
                     H.liftEffect $ setMetaTags content.title inputTab
                 Nothing -> pure unit
-        Game content player _ _, GameHeader.Teams -> do
+        Game content player _ _, GameHeader.Teams | content.handle == handle -> do
             profilesContent <- H.lift $
                 loadTeamProfiles content.handle 1 ProfileFilters.emptyFilters
             case profilesContent of
@@ -335,7 +335,7 @@ handleAction (Receive (Input _ inputTab)) = do
                         timezone
                     H.liftEffect $ setMetaTags content.title inputTab
                 Nothing -> pure unit
-        _, _ -> pure unit
+        _, _ -> loadTab handle inputTab
 handleAction (ApplyFilters filters) = do
     state <- H.get
     case state of
