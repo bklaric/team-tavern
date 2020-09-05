@@ -1,4 +1,4 @@
-module TeamTavern.Server.Game.ViewAll.SendResponse (OkContent, sendResponse) where
+module TeamTavern.Server.Game.ViewAll.SendResponse (OkContent', OkContent, sendResponse) where
 
 import Prelude
 
@@ -11,7 +11,7 @@ import Simple.JSON (writeJSON)
 import TeamTavern.Server.Game.ViewAll.LoadGames (LoadGamesResult)
 import TeamTavern.Server.Game.ViewAll.LogError (ViewAllError)
 
-type OkContent = Array
+type OkContent' =
     { administratorId :: Int
     , title :: String
     , handle :: String
@@ -21,6 +21,8 @@ type OkContent = Array
     , playerCount :: Int
     , teamCount :: Int
     }
+
+type OkContent = Array OkContent'
 
 errorResponse :: ViewAllError -> Response
 errorResponse = match

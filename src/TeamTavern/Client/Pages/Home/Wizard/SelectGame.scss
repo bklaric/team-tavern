@@ -1,0 +1,34 @@
+.select-game-list {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-evenly;
+}
+
+.select-game-choice {
+    background-image: url(https://files.ftw.in/production/public/resources/uploads/games/15687438455d8121a5c32a8_game_image.png);
+    background-size: contain;
+    width: 195px;
+    height: 240px;
+    display: flex;
+    flex-direction: column-reverse;
+    border-radius: 4px;
+    margin: 14px 7px 0;
+    cursor: pointer;
+}
+
+.select-game-choice-ribbon {
+    display: flex;
+    align-items: center;
+    height: 60px;
+    padding: 0 7px;
+    background: #603520dd;
+    border-radius: inherit;
+}
+
+.select-game-choice-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: white;
+    text-align: center;
+    width: 100%;
+}

@@ -100,7 +100,7 @@ render state @ { timezoneSet, discordTagError, otherError, submitting, thirteenY
     HH.form
     [ HP.class_ $ H.ClassName "form", HE.onSubmit $ Just <<< Update ]
     [ closeButton Close
-    , HH.h2  [ HP.class_ $ HH.ClassName "form-heading" ]
+    , HH.h2 [ HP.class_ $ HH.ClassName "form-heading" ]
         [ HH.text "Edit player details" ]
     , HH.div [ HP.class_ $ HH.ClassName "responsive-input-groups" ]
         [ HH.div [ HP.class_ $ HH.ClassName "input-group" ]

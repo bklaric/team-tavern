@@ -9,8 +9,8 @@ import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
-import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Pages.Home.CallToAction (callToAction)
+import TeamTavern.Client.Pages.Home.CallToAction as CallToAction
 import TeamTavern.Client.Pages.Home.Features (features)
 import TeamTavern.Client.Pages.Home.Why (why)
 import TeamTavern.Client.Script.Cookie (PlayerInfo, getPlayerInfo)
@@ -22,8 +22,7 @@ data State = Empty | Loaded (Maybe PlayerInfo)
 
 type Slot = H.Slot (Const Void) Void
 
-type ChildSlots =
-    ( callToActionButton :: NavigationAnchor.Slot Unit )
+type ChildSlots = (callToAction :: CallToAction.Slot)
 
 render :: forall left.
     State -> H.ComponentHTML Action ChildSlots (Async left)

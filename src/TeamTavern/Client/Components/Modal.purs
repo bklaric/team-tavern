@@ -49,14 +49,16 @@ renderModal content (Shown input) =
         content input (Just <<< InnerMessage)
     ]
 
-handleAction :: forall state action slots output monad. MonadEffect monad =>
-    Action output -> H.HalogenM state action slots (Message output) monad Unit
+handleAction :: forall input action slots output monad. MonadEffect monad =>
+    Action output -> H.HalogenM (State input) action slots (Message output) monad Unit
 handleAction (BackgroundClick event) = do
     background <- H.getHTMLElementRef (H.RefLabel "modal-background")
     eventTarget <- event # toEvent # target >>= fromEventTarget # pure
     case background, eventTarget of
         Just background', Just eventTarget'
-            | unsafeRefEq background' eventTarget' -> H.raise BackgroundClicked
+            | unsafeRefEq background' eventTarget' -> do
+                H.put Hidden
+                H.raise BackgroundClicked
         _, _ -> pure unit
 handleAction (InnerMessage message) =
     H.raise $ Inner message
