@@ -18,15 +18,17 @@ import Simple.JSON.Async as Json
 import TeamTavern.Client.Pages.Home.Wizard.Shared (Ilk(..))
 import TeamTavern.Server.Game.ViewAll.SendResponse (OkContent, OkContent')
 
+type Handle = String
+
 type Game = OkContent'
 
 type Games = OkContent
 
 type Input = { ilk :: Ilk }
 
-type Output = Game
+type Output = Handle
 
-type State = { ilk :: Ilk, games :: Games }
+type State = { ilk :: Ilk, games :: Games, selectedGame :: Maybe Game }
 
 data Action = Initialize | SelectGame Game
 
@@ -37,9 +39,8 @@ profileIlk Player = "player"
 profileIlk Team = "team"
 
 render :: forall slots. State -> HH.HTML slots Action
-render { ilk, games } =
-    HH.div
-    [ HP.class_ $ HH.ClassName "form" ]
+render { ilk, games, selectedGame } =
+    HH.div [ HP.class_ $ HH.ClassName "form" ]
     [ HH.h2 [ HP.class_ $ HH.ClassName "form-heading" ]
         [ HH.text "Select game" ]
     , HH.p [ HP.class_ $ HH.ClassName "form-subheading" ]
@@ -49,7 +50,11 @@ render { ilk, games } =
     , HH.div [ HP.class_ $ HH.ClassName "select-game-list" ] $
         (games <#> \game ->
             HH.div
-            [ HP.class_ $ HH.ClassName "select-game-choice"
+            [ HP.class_ $ HH.ClassName
+                case selectedGame of
+                Just selectedGame' | game.handle == selectedGame'.handle ->
+                    "select-game-selected-choice"
+                _ -> "select-game-choice"
             , HE.onClick $ const $ Just $ SelectGame game
             ]
             [ HH.div [ HP.class_ $ HH.ClassName "select-game-choice-ribbon" ]
@@ -84,13 +89,14 @@ handleAction :: forall action slots left.
 handleAction Initialize = do
     games <- H.lift loadGames
     H.modify_ _ { games = maybe [] identity games }
-handleAction (SelectGame game) =
-    H.raise game
+handleAction (SelectGame game) = do
+    H.modify_ _ { selectedGame = Just game }
+    H.raise game.handle
 
 component :: forall query left.
     H.Component HH.HTML query Input Output (Async left)
 component = H.mkComponent
-    { initialState: \{ ilk } -> { ilk, games: [] }
+    { initialState: \{ ilk } -> { ilk, games: [], selectedGame: Nothing }
     , render
     , eval: H.mkEval $ H.defaultEval
         { handleAction = handleAction

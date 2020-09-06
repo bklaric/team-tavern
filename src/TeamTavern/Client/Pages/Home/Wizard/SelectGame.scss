@@ -14,6 +14,16 @@
     border-radius: 4px;
     margin: 14px 7px 0;
     cursor: pointer;
+    border: 4px white solid;
+
+    &:hover {
+        border-color: $primary-color;
+    }
+}
+
+.select-game-selected-choice {
+    @extend .select-game-choice;
+    border-color: $primary-color;
 }
 
 .select-game-choice-ribbon {

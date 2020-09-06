@@ -58,6 +58,7 @@ handleAction (BackgroundClick event) = do
         Just background', Just eventTarget'
             | unsafeRefEq background' eventTarget' -> do
                 H.put Hidden
+                makeWindowScrollable
                 H.raise BackgroundClicked
         _, _ -> pure unit
 handleAction (InnerMessage message) =

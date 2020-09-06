@@ -2,10 +2,10 @@
     display: flex;
     flex-direction: column;
     padding: 21px;
-    background-color: white;
+    // background-color: white;
     color: $text-color;
     position: relative;
-    border-radius: inherit;
+    // border-radius: inherit;
 }
 
 .form-heading {
@@ -26,6 +26,24 @@
     margin: auto;
 }
 
+.form-navigation {
+    display: flex;
+    justify-content: space-between;
+    flex-direction: row-reverse;
+    padding: 0 21px 21px;
+    background-color: white;
+}
+
+.form-next-button {
+    @extend .primary-button;
+    width: 100px;
+}
+
+.form-back-button {
+    @extend .secondary-button;
+    width: 100px;
+}
+
 .form-bottom-text {
     text-align: center;
     margin-top: 28px;
@@ -37,6 +55,7 @@
     border-bottom: 1px solid #ccc;
     max-width: 380px;
     margin: 64px auto;
+    background-color: white;
 
     @media screen and (min-width: 380px) {
         border: 1px solid #ccc;
@@ -49,6 +68,7 @@
     border-bottom: 1px solid #ccc;
     max-width: 960px;
     margin: 64px auto;
+    background-color: white;
 
     @media screen and (min-width: 960px) {
         border: 1px solid #ccc;
