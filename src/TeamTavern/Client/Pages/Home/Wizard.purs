@@ -64,7 +64,7 @@ render state @ { step, ilk } =
     [ HP.class_ $ HH.ClassName "wide-single-form-container" ]
     case step of
         SelectGame ->
-            [ selectGame { ilk } (Just <<< TakeSelectedGame)
+            [ selectGame { ilk, selectedHandle: state.handle } (Just <<< TakeSelectedGame)
             , HH.div [ HP.class_ $ HH.ClassName "form-navigation" ]
                 [ HH.button
                     [ HP.class_ $ HH.ClassName "form-next-button"

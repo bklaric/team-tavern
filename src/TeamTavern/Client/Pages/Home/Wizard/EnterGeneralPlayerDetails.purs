@@ -95,9 +95,9 @@ render state =
     [ HH.h2 [ HP.class_ $ HH.ClassName "form-heading" ]
         [ HH.text "Edit player details" ]
     , HH.p [ HP.class_ $ HH.ClassName "form-subheading" ]
-        [ HH.text "Fill out as much as you can so other player and teams can find you more easily." ]
+        [ HH.text "Fill out as much as you can so other players and teams can find you more easily." ]
     , HH.h3 [ HP.class_ $ HH.ClassName "input-groups-heading" ]
-        [ HH.text "Personal"]
+        [ HH.text "Personal" ]
     , HH.div [ HP.class_ $ HH.ClassName "responsive-input-groups" ]
         [ HH.div [ HP.class_ $ HH.ClassName "input-group" ]
             [ HH.label
@@ -140,7 +140,7 @@ render state =
             ]
         ]
     , HH.h3 [ HP.class_ $ HH.ClassName "input-groups-heading" ]
-        [ HH.text "Communication"]
+        [ HH.text "Communication" ]
     , HH.div [ HP.class_ $ HH.ClassName "responsive-input-groups" ]
         [ HH.div [ HP.class_ $ HH.ClassName "input-group" ]
             [ HH.label
@@ -195,7 +195,7 @@ render state =
             ]
         ]
     , HH.h3 [ HP.class_ $ HH.ClassName "input-groups-heading" ]
-        [ HH.text "Time available"]
+        [ HH.text "Time available" ]
     , HH.div [ HP.class_ $ HH.ClassName "responsive-input-groups" ]
         [ HH.div [ HP.class_ $ HH.ClassName "input-group" ]
             [ HH.label

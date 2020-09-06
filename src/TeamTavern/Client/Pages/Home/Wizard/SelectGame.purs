@@ -8,6 +8,7 @@ import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
 import Data.Bifunctor (lmap)
 import Data.Const (Const)
+import Data.Foldable (find)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Symbol (SProxy(..))
 import Halogen as H
@@ -24,11 +25,16 @@ type Game = OkContent'
 
 type Games = OkContent
 
-type Input = { ilk :: Ilk }
+type Input = { ilk :: Ilk, selectedHandle :: Maybe Handle }
 
 type Output = Handle
 
-type State = { ilk :: Ilk, games :: Games, selectedGame :: Maybe Game }
+type State =
+    { ilk :: Ilk
+    , selectedHandle :: Maybe Handle
+    , games :: Games
+    , selectedGame :: Maybe Game
+    }
 
 data Action = Initialize | SelectGame Game
 
@@ -87,8 +93,12 @@ loadGames = Async.unify do
 handleAction :: forall action slots left.
     Action -> H.HalogenM State action slots Output (Async left) Unit
 handleAction Initialize = do
-    games <- H.lift loadGames
-    H.modify_ _ { games = maybe [] identity games }
+    games <- H.lift $ maybe [] identity <$> loadGames
+    H.modify_ \state -> state
+        { games = games
+        , selectedGame = state.selectedHandle >>= \handle ->
+            games # find (_.handle >>> (_ == handle))
+        }
 handleAction (SelectGame game) = do
     H.modify_ _ { selectedGame = Just game }
     H.raise game.handle
@@ -96,7 +106,8 @@ handleAction (SelectGame game) = do
 component :: forall query left.
     H.Component HH.HTML query Input Output (Async left)
 component = H.mkComponent
-    { initialState: \{ ilk } -> { ilk, games: [], selectedGame: Nothing }
+    { initialState: \{ ilk, selectedHandle } ->
+        { ilk, selectedHandle, games: [], selectedGame: Nothing }
     , render
     , eval: H.mkEval $ H.defaultEval
         { handleAction = handleAction
