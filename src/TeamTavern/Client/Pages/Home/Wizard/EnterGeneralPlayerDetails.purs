@@ -1,5 +1,5 @@
 module TeamTavern.Client.Pages.Home.Wizard.EnterGeneralPlayerDetails
-    (Input(..), Output(..), Slot, enterGeneralPlayerDetails) where
+    (Input(..), Output(..), Slot, outputToInput, enterGeneralPlayerDetails) where
 
 import Prelude
 
@@ -111,6 +111,7 @@ render state =
                 , HP.min $ unsafeCoerce "1900-01-01"
                 , HP.max $ unsafeCoerce state.thirteenYearsAgo
                 , HP.value state.birthday
+                , HE.onValueInput $ Just <<< UpdateBirthday
                 ]
             , HH.label
                 [ HP.class_ $ HH.ClassName "input-underlabel" ]
@@ -171,6 +172,7 @@ render state =
                     [ HP.class_ $ HH.ClassName "checkbox-input"
                     , HP.type_ HP.InputCheckbox
                     , HP.checked state.microphone
+                    , HE.onChecked $ Just <<< UpdateMicrophone
                     ]
                 , HH.text "I have a microphone and I'm willing to communicate."
                 ]
@@ -185,6 +187,7 @@ render state =
                 [ HP.class_ $ HH.ClassName "text-line-input"
                 , HP.type_ HP.InputText
                 , HP.value state.discordTag
+                , HE.onValueInput $ Just <<< UpdateDiscordTag
                 ]
             , HH.label
                 [ HP.class_ $ HH.ClassName "input-underlabel" ]
@@ -302,8 +305,8 @@ render state =
         ]
     ]
 
-formatOutput :: State -> Output
-formatOutput state =
+stateToOutput :: State -> Output
+stateToOutput state =
     { birthday: if state.birthday == "" then Nothing else Just state.birthday
     , location: state.location
     , languages: state.languages
@@ -314,6 +317,27 @@ formatOutput state =
     , weekdayTo: if state.weekdayTo == "" then Nothing else Just state.weekdayTo
     , weekendFrom: if state.weekendFrom == "" then Nothing else Just state.weekendFrom
     , weekendTo: if state.weekendTo == "" then Nothing else Just state.weekendTo
+    }
+
+outputToInput :: Output -> Input
+outputToInput output = Just
+    { age: Nothing
+    , birthday: output.birthday
+    , country: output.location
+    , languages: output.languages
+    , hasMicrophone: output.microphone
+    , discordTag: output.discordTag
+    , timezone: output.timezone
+    , clientWeekdayOnline: Nothing
+    , clientWeekendOnline: Nothing
+    , sourceWeekdayOnline:
+        case output.weekdayFrom, output.weekdayTo of
+        Just from, Just to -> Just { from, to }
+        _, _ -> Nothing
+    , sourceWeekendOnline:
+        case output.weekendFrom, output.weekendTo of
+        Just from, Just to -> Just { from, to }
+        _, _ -> Nothing
     }
 
 handleAction :: forall left.
@@ -333,37 +357,37 @@ handleAction Initialize = do
         { timezone = Just timezone
         , thirteenYearsAgo = thirteenYearsAgo
         })
-    H.raise $ formatOutput state
+    H.raise $ stateToOutput state
 handleAction (UpdateBirthday birthday) = do
     state <- H.modify _ { birthday = birthday }
-    H.raise $ formatOutput state
+    H.raise $ stateToOutput state
 handleAction (UpdateLocation location) = do
     state <- H.modify _ { location = location }
-    H.raise $ formatOutput state
+    H.raise $ stateToOutput state
 handleAction (UpdateLanguages languages) = do
     state <- H.modify _ { languages = languages }
-    H.raise $ formatOutput state
+    H.raise $ stateToOutput state
 handleAction (UpdateMicrophone microphone) = do
     state <- H.modify _ { microphone = microphone }
-    H.raise $ formatOutput state
+    H.raise $ stateToOutput state
 handleAction (UpdateDiscordTag discordTag) = do
     state <- H.modify _ { discordTag = discordTag }
-    H.raise $ formatOutput state
+    H.raise $ stateToOutput state
 handleAction (UpdateTimezone timezone) = do
     state <- H.modify _ { timezone = timezone }
-    H.raise $ formatOutput state
+    H.raise $ stateToOutput state
 handleAction (UpdateWeekdayFrom weekdayFrom) = do
     state <- H.modify _ { weekdayFrom = weekdayFrom }
-    H.raise $ formatOutput state
+    H.raise $ stateToOutput state
 handleAction (UpdateWeekdayTo weekdayTo) = do
     state <- H.modify _ { weekdayTo = weekdayTo }
-    H.raise $ formatOutput state
+    H.raise $ stateToOutput state
 handleAction (UpdateWeekendFrom weekendFrom) = do
     state <- H.modify _ { weekendFrom = weekendFrom }
-    H.raise $ formatOutput state
+    H.raise $ stateToOutput state
 handleAction (UpdateWeekendTo weekendTo) = do
     state <- H.modify _ { weekendTo = weekendTo }
-    H.raise $ formatOutput state
+    H.raise $ stateToOutput state
 
 component :: forall query left.
     H.Component HH.HTML query Input Output (Async left)

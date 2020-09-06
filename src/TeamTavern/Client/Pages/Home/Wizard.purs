@@ -75,7 +75,8 @@ render state @ { step, ilk } =
                 ]
             ]
         EnterGeneralPlayerDetails ->
-            [ enterGeneralPlayerDetails Nothing
+            [ enterGeneralPlayerDetails
+                (state.generalPlayerDetailsOutput >>= EnterGeneralPlayerDetails.outputToInput)
                 (Just <<< TakeGeneralPlayerDetails)
             , HH.div [ HP.class_ $ HH.ClassName "form-navigation" ]
                 [ HH.button
