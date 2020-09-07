@@ -18,6 +18,8 @@ import Simple.JSON.Async as Json
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Pages.Home.Wizard.EnterGeneralPlayerDetails (enterGeneralPlayerDetails)
 import TeamTavern.Client.Pages.Home.Wizard.EnterGeneralPlayerDetails as EnterGeneralPlayerDetails
+import TeamTavern.Client.Pages.Home.Wizard.EnterProfilePlayerDetails (enterProfilePlayerDetails)
+import TeamTavern.Client.Pages.Home.Wizard.EnterProfilePlayerDetails as EnterProfilePlayerDetails
 import TeamTavern.Client.Pages.Home.Wizard.SelectGame (selectGame)
 import TeamTavern.Client.Pages.Home.Wizard.SelectGame as SelectGame
 import TeamTavern.Client.Pages.Home.Wizard.Shared (Ilk)
@@ -30,7 +32,7 @@ type Game = OkContent
 data Step
     = SelectGame
     | EnterGeneralPlayerDetails
-    | EnterGamePlayerDetails
+    | EnterProfilePlayerDetails
 
 type Input = { ilk :: Ilk }
 
@@ -41,13 +43,14 @@ type State =
     , step :: Step
     , handle :: Maybe String
     , game :: Maybe Game
-    , generalPlayerDetailsInput :: Maybe EnterGeneralPlayerDetails.Input
     , generalPlayerDetailsOutput :: Maybe EnterGeneralPlayerDetails.Output
+    , profilePlayerDetailsInput :: Maybe EnterProfilePlayerDetails.Input
     }
 
 data Action
     = TakeSelectedGame Handle
     | TakeGeneralPlayerDetails EnterGeneralPlayerDetails.Output
+    | TakeProfilePlayerDetails EnterProfilePlayerDetails.Output
     | SetStep Step
 
 type Slot = H.Slot (Modal.Query Input (Const Void)) (Modal.Message Output) Unit
@@ -55,6 +58,7 @@ type Slot = H.Slot (Modal.Query Input (Const Void)) (Modal.Message Output) Unit
 type Slots slots =
     ( selectGame :: SelectGame.Slot
     , enterGeneralPlayerDetails :: EnterGeneralPlayerDetails.Slot
+    , enterProfilePlayerDetails :: EnterProfilePlayerDetails.Slot
     | slots )
 
 render :: forall slots left.
@@ -81,7 +85,7 @@ render state @ { step, ilk } =
             , HH.div [ HP.class_ $ HH.ClassName "form-navigation" ]
                 [ HH.button
                     [ HP.class_ $ HH.ClassName "form-next-button"
-                    , HE.onClick $ const $ Just $ SetStep EnterGamePlayerDetails
+                    , HE.onClick $ const $ Just $ SetStep EnterProfilePlayerDetails
                     ]
                     [ HH.text "Next" ]
                 , HH.button
@@ -91,7 +95,22 @@ render state @ { step, ilk } =
                     [ HH.text "Back" ]
                 ]
             ]
-        EnterGamePlayerDetails -> []
+        EnterProfilePlayerDetails | Just input <- state.profilePlayerDetailsInput ->
+            [ enterProfilePlayerDetails input (Just <<< TakeProfilePlayerDetails)
+            , HH.div [ HP.class_ $ HH.ClassName "form-navigation" ]
+                [ HH.button
+                    [ HP.class_ $ HH.ClassName "form-next-button"
+                    -- , HE.onClick $ const $ Just $ SetStep EnterProfilePlayerDetails
+                    ]
+                    [ HH.text "Next" ]
+                , HH.button
+                    [ HP.class_ $ HH.ClassName "form-back-button"
+                    , HE.onClick $ const $ Just $ SetStep EnterGeneralPlayerDetails
+                    ]
+                    [ HH.text "Back" ]
+                ]
+            ]
+        _ -> []
 
 loadGame :: forall left. String -> Async left (Maybe Game)
 loadGame handle = Async.unify do
@@ -104,19 +123,42 @@ loadGame handle = Async.unify do
         _ -> Async.left Nothing
     pure $ Just content
 
+profilePlayerInput :: Game -> EnterProfilePlayerDetails.Input
+profilePlayerInput game =
+    { fields: game.fields
+    , fieldValues: []
+    , newOrReturning: false
+    , summary: ""
+    , urlErrors: []
+    , missingErrors: []
+    , summaryError: false
+    }
+
 handleAction :: forall action output slots left.
     Action -> H.HalogenM State action slots output (Async left) Unit
 handleAction (TakeSelectedGame handle) = do
     H.modify_ _ { handle = Just handle }
 handleAction (TakeGeneralPlayerDetails details) =
     H.modify_ _ { generalPlayerDetailsOutput = Just details }
+handleAction (TakeProfilePlayerDetails details) =
+    H.modify_ \state -> state
+        { profilePlayerDetailsInput = state.profilePlayerDetailsInput <#> _
+            { fieldValues = details.fieldValues
+            , newOrReturning = details.newOrReturning
+            , summary = details.summary
+            }
+        }
 handleAction (SetStep step) = do
     state <- H.get
     case state.step, state.handle of
         SelectGame, Just handle -> do
             game <- H.lift $ loadGame handle
             case game of
-                Just game' -> H.modify_ _ { step = step, game = Just game' }
+                Just game' -> H.modify_ _
+                    { step = step
+                    , game = Just game'
+                    , profilePlayerDetailsInput = Just $ profilePlayerInput game'
+                    }
                 Nothing -> pure unit
         _, _ -> H.modify_ _ { step = step }
 
@@ -128,8 +170,8 @@ component = H.mkComponent
         , step: SelectGame
         , handle: Nothing
         , game: Nothing
-        , generalPlayerDetailsInput: Nothing
         , generalPlayerDetailsOutput: Nothing
+        , profilePlayerDetailsInput: Nothing
         }
     , render
     , eval: H.mkEval $ H.defaultEval
