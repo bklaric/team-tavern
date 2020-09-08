@@ -48,6 +48,7 @@ type State option =
 
 data Action option
     = Initialize
+    | Receive (Input option)
     | Finalize
     | Select (Maybe option)
     | Open
@@ -124,6 +125,11 @@ handleAction Initialize = do
             (E.EventType "mousedown") window \_ -> Just TryClose
     windowSubscription <- H.subscribe $ ES.hoist affToAsync windowEventSource
     H.modify_ (_ { windowSubscription = Just windowSubscription })
+handleAction (Receive { selected }) =
+    H.modify_ \state -> state
+        { selected = selected >>= \selected' ->
+            state.entries <#> _.option # find (state.comparer selected')
+        }
 handleAction Finalize = do
     { windowSubscription } <- H.get
     case windowSubscription of
@@ -173,6 +179,7 @@ component = H.mkComponent
     , eval: H.mkEval $ H.defaultEval
         { handleAction = handleAction
         , initialize = Just Initialize
+        , receive = Just <<< Receive
         , finalize = Just Finalize
         }
     }

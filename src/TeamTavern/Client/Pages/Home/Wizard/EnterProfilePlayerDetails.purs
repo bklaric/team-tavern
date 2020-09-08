@@ -98,11 +98,12 @@ fieldLabel label icon required domain =
         Nothing -> [])
         <>
         (if required
-        then []
-        else
+        then
             [ divider
-            , HH.span [ HP.class_ $ H.ClassName "input-sublabel" ] [ HH.text "optional" ]
-            ])
+            , HH.span [ HP.class_ $ H.ClassName "input-sublabel" ] [ HH.text "required" ]
+            ]
+        else
+            [])
 
 fieldInput
     :: forall left
@@ -178,8 +179,7 @@ render
     , missingErrors
     , summaryError
     } =
-    HH.div
-    [ HP.class_ $ H.ClassName "form" ] $
+    HH.div_ $
     [ HH.div [ HP.class_ $ HH.ClassName "responsive-input-groups" ] $
         (fields <#> fieldInput fieldValues urlErrors missingErrors)
         <>
@@ -202,7 +202,10 @@ render
             [ HP.class_ $ HH.ClassName "input-label"
             , HP.for "summary"
             ]
-            [ HH.text "Summary" ]
+            [ HH.text "Summary"
+            , divider
+            , HH.span [ HP.class_ $ H.ClassName "input-sublabel" ] [ HH.text "required" ]
+            ]
         , HH.textarea
             [ HP.id_ "summary"
             , HP.class_ $ HH.ClassName "text-input"

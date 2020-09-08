@@ -30,7 +30,7 @@
     display: flex;
     justify-content: space-between;
     flex-direction: row-reverse;
-    padding: 0 21px 21px;
+    margin-top: 21px;
     background-color: white;
 }
 
@@ -55,7 +55,6 @@
     border-bottom: 1px solid #ccc;
     max-width: 380px;
     margin: 64px auto;
-    background-color: white;
 
     @media screen and (min-width: 380px) {
         border: 1px solid #ccc;
@@ -68,7 +67,6 @@
     border-bottom: 1px solid #ccc;
     max-width: 960px;
     margin: 64px auto;
-    background-color: white;
 
     @media screen and (min-width: 960px) {
         border: 1px solid #ccc;

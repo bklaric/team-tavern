@@ -16,7 +16,7 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Simple.JSON.Async as Json
-import TeamTavern.Client.Pages.Home.Wizard.Shared (Ilk(..))
+import TeamTavern.Client.Pages.Home.Wizard.Shared (Ilk)
 import TeamTavern.Server.Game.ViewAll.SendResponse (OkContent, OkContent')
 
 type Handle = String
@@ -40,20 +40,10 @@ data Action = Initialize | SelectGame Game
 
 type Slot = H.Slot (Const Void) Output Unit
 
-profileIlk :: Ilk -> String
-profileIlk Player = "player"
-profileIlk Team = "team"
-
 render :: forall slots. State -> HH.HTML slots Action
 render { ilk, games, selectedGame } =
-    HH.div [ HP.class_ $ HH.ClassName "form" ]
-    [ HH.h2 [ HP.class_ $ HH.ClassName "form-heading" ]
-        [ HH.text "Select game" ]
-    , HH.p [ HP.class_ $ HH.ClassName "form-subheading" ]
-        [ HH.text $ "Select one of the games below to start creating your "
-            <> profileIlk ilk <> " profile"
-        ]
-    , HH.div [ HP.class_ $ HH.ClassName "select-game-list" ] $
+    HH.div_
+    [ HH.div [ HP.class_ $ HH.ClassName "select-game-list" ] $
         (games <#> \game ->
             HH.div
             [ HP.class_ $ HH.ClassName

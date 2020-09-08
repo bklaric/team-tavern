@@ -11,6 +11,7 @@ import Data.Enum (fromEnum)
 import Data.Maybe (Maybe(..), isNothing, maybe)
 import Data.String as String
 import Data.Variant (SProxy(..))
+import Effect.Class.Console (log)
 import Effect.Now (nowDate)
 import Halogen as H
 import Halogen.HTML as HH
@@ -91,12 +92,8 @@ regionToOption (Region region subRegions) = SingleTreeSelect.InputEntry
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render state =
-    HH.div [ HP.class_ $ HH.ClassName "form" ]
-    [ HH.h2 [ HP.class_ $ HH.ClassName "form-heading" ]
-        [ HH.text "Edit player details" ]
-    , HH.p [ HP.class_ $ HH.ClassName "form-subheading" ]
-        [ HH.text "Fill out as much as you can so other players and teams can find you more easily." ]
-    , HH.h3 [ HP.class_ $ HH.ClassName "input-groups-heading" ]
+    HH.div_
+    [ HH.h3 [ HP.class_ $ HH.ClassName "input-groups-heading" ]
         [ HH.text "Personal" ]
     , HH.div [ HP.class_ $ HH.ClassName "responsive-input-groups" ]
         [ HH.div [ HP.class_ $ HH.ClassName "input-group" ]
@@ -345,6 +342,7 @@ handleAction :: forall left.
 handleAction Initialize = do
     state <- H.get
     timezone <- maybe (H.liftEffect getClientTimezone) pure state.timezone
+    log timezone
     now <- H.liftEffect nowDate
     let year = now # Date.year # fromEnum # (_ - 13)
     let month = fromEnum $ Date.month now

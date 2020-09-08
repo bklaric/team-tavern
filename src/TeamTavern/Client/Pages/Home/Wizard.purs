@@ -22,7 +22,7 @@ import TeamTavern.Client.Pages.Home.Wizard.EnterProfilePlayerDetails (enterProfi
 import TeamTavern.Client.Pages.Home.Wizard.EnterProfilePlayerDetails as EnterProfilePlayerDetails
 import TeamTavern.Client.Pages.Home.Wizard.SelectGame (selectGame)
 import TeamTavern.Client.Pages.Home.Wizard.SelectGame as SelectGame
-import TeamTavern.Client.Pages.Home.Wizard.Shared (Ilk)
+import TeamTavern.Client.Pages.Home.Wizard.Shared (Ilk(..))
 import TeamTavern.Server.Game.View.SendResponse (OkContent)
 
 type Handle = String
@@ -61,14 +61,24 @@ type Slots slots =
     , enterProfilePlayerDetails :: EnterProfilePlayerDetails.Slot
     | slots )
 
+profileIlk :: Ilk -> String
+profileIlk Player = "player"
+profileIlk Team = "team"
+
 render :: forall slots left.
     State -> HH.ComponentHTML Action (Slots slots) (Async left)
 render state @ { step, ilk } =
     HH.div
-    [ HP.class_ $ HH.ClassName "wide-single-form-container" ]
+    [ HP.class_ $ HH.ClassName "wide-single-form-container wizard" ]
     case step of
         SelectGame ->
-            [ selectGame { ilk, selectedHandle: state.handle } (Just <<< TakeSelectedGame)
+            [ HH.h2 [ HP.class_ $ HH.ClassName "form-heading" ]
+                [ HH.text "Select game" ]
+            , HH.p [ HP.class_ $ HH.ClassName "form-subheading" ]
+                [ HH.text $ "Select one of the games below to start creating your "
+                    <> profileIlk ilk <> " profile"
+                ]
+            , selectGame { ilk, selectedHandle: state.handle } (Just <<< TakeSelectedGame)
             , HH.div [ HP.class_ $ HH.ClassName "form-navigation" ]
                 [ HH.button
                     [ HP.class_ $ HH.ClassName "form-next-button"
@@ -79,7 +89,11 @@ render state @ { step, ilk } =
                 ]
             ]
         EnterGeneralPlayerDetails ->
-            [ enterGeneralPlayerDetails
+            [ HH.h2 [ HP.class_ $ HH.ClassName "form-heading" ]
+                [ HH.text "Enter player details" ]
+            , HH.p [ HP.class_ $ HH.ClassName "form-subheading" ]
+                [ HH.text "Fill out general details about yourself." ]
+            , enterGeneralPlayerDetails
                 (state.generalPlayerDetailsOutput >>= EnterGeneralPlayerDetails.outputToInput)
                 (Just <<< TakeGeneralPlayerDetails)
             , HH.div [ HP.class_ $ HH.ClassName "form-navigation" ]
@@ -96,7 +110,11 @@ render state @ { step, ilk } =
                 ]
             ]
         EnterProfilePlayerDetails | Just input <- state.profilePlayerDetailsInput ->
-            [ enterProfilePlayerDetails input (Just <<< TakeProfilePlayerDetails)
+            [ HH.h2 [ HP.class_ $ HH.ClassName "form-heading" ]
+                [ HH.text "Enter profile details" ]
+            , HH.p [ HP.class_ $ HH.ClassName "form-subheading" ]
+                [ HH.text "Fill out game related details about yourself." ]
+            , enterProfilePlayerDetails input (Just <<< TakeProfilePlayerDetails)
             , HH.div [ HP.class_ $ HH.ClassName "form-navigation" ]
                 [ HH.button
                     [ HP.class_ $ HH.ClassName "form-next-button"
