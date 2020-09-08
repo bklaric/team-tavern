@@ -10,6 +10,7 @@ import Data.Bifunctor (lmap)
 import Data.Const (Const)
 import Data.Maybe (Maybe(..), isNothing)
 import Data.Symbol (SProxy(..))
+import Effect.Class.Console (log)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
@@ -20,10 +21,13 @@ import TeamTavern.Client.Pages.Home.Wizard.EnterGeneralPlayerDetails (enterGener
 import TeamTavern.Client.Pages.Home.Wizard.EnterGeneralPlayerDetails as EnterGeneralPlayerDetails
 import TeamTavern.Client.Pages.Home.Wizard.EnterProfilePlayerDetails (enterProfilePlayerDetails)
 import TeamTavern.Client.Pages.Home.Wizard.EnterProfilePlayerDetails as EnterProfilePlayerDetails
+import TeamTavern.Client.Pages.Home.Wizard.EnterRegistrationDetails (enterRegistrationDetails)
+import TeamTavern.Client.Pages.Home.Wizard.EnterRegistrationDetails as EnterRegistrationDetails
 import TeamTavern.Client.Pages.Home.Wizard.SelectGame (selectGame)
 import TeamTavern.Client.Pages.Home.Wizard.SelectGame as SelectGame
 import TeamTavern.Client.Pages.Home.Wizard.Shared (Ilk(..))
 import TeamTavern.Server.Game.View.SendResponse (OkContent)
+import Unsafe.Coerce (unsafeCoerce)
 
 type Handle = String
 
@@ -33,6 +37,7 @@ data Step
     = SelectGame
     | EnterGeneralPlayerDetails
     | EnterProfilePlayerDetails
+    | EnterRegistrationDetails
 
 type Input = { ilk :: Ilk }
 
@@ -45,12 +50,14 @@ type State =
     , game :: Maybe Game
     , generalPlayerDetailsOutput :: Maybe EnterGeneralPlayerDetails.Output
     , profilePlayerDetailsInput :: Maybe EnterProfilePlayerDetails.Input
+    , registrationDetailsInput :: EnterRegistrationDetails.Input
     }
 
 data Action
     = TakeSelectedGame Handle
     | TakeGeneralPlayerDetails EnterGeneralPlayerDetails.Output
     | TakeProfilePlayerDetails EnterProfilePlayerDetails.Output
+    | TakeRegistrationDetails EnterRegistrationDetails.Output
     | SetStep Step
 
 type Slot = H.Slot (Modal.Query Input (Const Void)) (Modal.Message Output) Unit
@@ -59,6 +66,7 @@ type Slots slots =
     ( selectGame :: SelectGame.Slot
     , enterGeneralPlayerDetails :: EnterGeneralPlayerDetails.Slot
     , enterProfilePlayerDetails :: EnterProfilePlayerDetails.Slot
+    , enterRegistrationDetails :: EnterRegistrationDetails.Slot
     | slots )
 
 profileIlk :: Ilk -> String
@@ -118,12 +126,29 @@ render state @ { step, ilk } =
             , HH.div [ HP.class_ $ HH.ClassName "form-navigation" ]
                 [ HH.button
                     [ HP.class_ $ HH.ClassName "form-next-button"
-                    -- , HE.onClick $ const $ Just $ SetStep EnterProfilePlayerDetails
+                    , HE.onClick $ const $ Just $ SetStep EnterRegistrationDetails
                     ]
                     [ HH.text "Next" ]
                 , HH.button
                     [ HP.class_ $ HH.ClassName "form-back-button"
                     , HE.onClick $ const $ Just $ SetStep EnterGeneralPlayerDetails
+                    ]
+                    [ HH.text "Back" ]
+                ]
+            ]
+        EnterRegistrationDetails ->
+            [ HH.h2 [ HP.class_ $ HH.ClassName "form-heading" ]
+                [ HH.text "Enter registration details" ]
+            , enterRegistrationDetails state.registrationDetailsInput (Just <<< TakeRegistrationDetails)
+            , HH.div [ HP.class_ $ HH.ClassName "form-navigation" ]
+                [ HH.button
+                    [ HP.class_ $ HH.ClassName "form-next-button"
+                    -- , HE.onClick $ const $ Just $ SetStep EnterProfilePlayerDetails
+                    ]
+                    [ HH.text "Next" ]
+                , HH.button
+                    [ HP.class_ $ HH.ClassName "form-back-button"
+                    , HE.onClick $ const $ Just $ SetStep EnterProfilePlayerDetails
                     ]
                     [ HH.text "Back" ]
                 ]
@@ -166,6 +191,16 @@ handleAction (TakeProfilePlayerDetails details) =
             , summary = details.summary
             }
         }
+handleAction (TakeRegistrationDetails details) = do
+    log $ unsafeCoerce details
+    state <- H.modify \state -> state
+        { registrationDetailsInput = state.registrationDetailsInput
+            { email = details.email
+            , nickname = details.nickname
+            , password = details.password
+            }
+        }
+    log $ unsafeCoerce state
 handleAction (SetStep step) = do
     state <- H.get
     case state.step, state.handle of
@@ -190,6 +225,7 @@ component = H.mkComponent
         , game: Nothing
         , generalPlayerDetailsOutput: Nothing
         , profilePlayerDetailsInput: Nothing
+        , registrationDetailsInput: EnterRegistrationDetails.emptyInput
         }
     , render
     , eval: H.mkEval $ H.defaultEval
