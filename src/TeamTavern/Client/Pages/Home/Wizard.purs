@@ -10,7 +10,6 @@ import Data.Bifunctor (lmap)
 import Data.Const (Const)
 import Data.Maybe (Maybe(..), isNothing)
 import Data.Symbol (SProxy(..))
-import Effect.Class.Console (log)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
@@ -27,7 +26,6 @@ import TeamTavern.Client.Pages.Home.Wizard.SelectGame (selectGame)
 import TeamTavern.Client.Pages.Home.Wizard.SelectGame as SelectGame
 import TeamTavern.Client.Pages.Home.Wizard.Shared (Ilk(..))
 import TeamTavern.Server.Game.View.SendResponse (OkContent)
-import Unsafe.Coerce (unsafeCoerce)
 
 type Handle = String
 
@@ -191,16 +189,14 @@ handleAction (TakeProfilePlayerDetails details) =
             , summary = details.summary
             }
         }
-handleAction (TakeRegistrationDetails details) = do
-    log $ unsafeCoerce details
-    state <- H.modify \state -> state
+handleAction (TakeRegistrationDetails details) =
+    H.modify_ \state -> state
         { registrationDetailsInput = state.registrationDetailsInput
             { email = details.email
             , nickname = details.nickname
             , password = details.password
             }
         }
-    log $ unsafeCoerce state
 handleAction (SetStep step) = do
     state <- H.get
     case state.step, state.handle of
