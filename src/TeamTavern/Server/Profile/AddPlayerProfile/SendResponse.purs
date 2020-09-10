@@ -31,8 +31,10 @@ type BadRequestContent = Variant
 
 errorResponse :: CreateError -> Response
 errorResponse = match
-    { cookieInfoNotPresent: const unauthorized__
-    , databaseError: const internalServerError__
+    { noCookieInfo: const unauthorized__
+    , databaseError: const $ internalServerError__
+    , invalidSession: const unauthorized__
+    , nicknameDoesntMatch: const forbidden__
     , unreadableFields: const internalServerError__
     , unreadableProfile: const badRequest__
     , invalidProfile: \{ errors } ->

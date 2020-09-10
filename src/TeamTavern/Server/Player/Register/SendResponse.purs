@@ -61,6 +61,7 @@ errorResponse = match
     , nicknameTaken: const $ badRequest_ $ writeJSON $
         (inj (SProxy :: SProxy "nicknameTaken") {} :: BadRequestContent)
     , databaseError: const internalServerError__
+    , cantReadId: const internalServerError__
     , sendEmailError: _.info >>> \{ email, nickname } ->
         ok_ $ writeJSON
         ({ email: unwrap email

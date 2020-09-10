@@ -57,13 +57,14 @@ import TeamTavern.Server.Profile.AddTeamProfile (addTeamProfile) as Profile
 import TeamTavern.Server.Profile.Routes (bundleFilters)
 import TeamTavern.Server.Profile.UpdatePlayerProfile (updatePlayerProfile) as Profile
 import TeamTavern.Server.Profile.UpdateTeamProfile (updateTeamProfile) as Profile
-import TeamTavern.Server.Profile.ViewPlayerProfilesByPlayer (viewPlayerProfilesByPlayer) as Profile
 import TeamTavern.Server.Profile.ViewPlayerProfilesByGame (viewPlayerProfilesByGame) as Profile
-import TeamTavern.Server.Profile.ViewTeamProfilesByPlayer (viewTeamProfilesByPlayer) as Profile
+import TeamTavern.Server.Profile.ViewPlayerProfilesByPlayer (viewPlayerProfilesByPlayer) as Profile
 import TeamTavern.Server.Profile.ViewTeamProfilesByGame (viewTeamProfilesByGame) as Profile
+import TeamTavern.Server.Profile.ViewTeamProfilesByPlayer (viewTeamProfilesByPlayer) as Profile
 import TeamTavern.Server.Routes (TeamTavernRoutes)
 import TeamTavern.Server.Session.End (end) as Session
 import TeamTavern.Server.Session.Start (start) as Session
+import TeamTavern.Server.Wizard.CreateAccount as Wizard
 
 listenOptions :: ListenOptions
 listenOptions = TcpListenOptions
@@ -220,6 +221,8 @@ handleRequest deployment pool client method url cookies body =
             Conversation.view pool nickname cookies
         , startConversation: \{ nickname } ->
             Conversation.start pool client nickname cookies body
+        , createAccount: const $
+            Wizard.createAccount pool client cookies body
         }
         <#> (\response -> response { headers = response.headers <> MultiMap.fromFoldable
                 [ Tuple "Access-Control-Allow-Origin" $ NEL.singleton "http://localhost:1337"

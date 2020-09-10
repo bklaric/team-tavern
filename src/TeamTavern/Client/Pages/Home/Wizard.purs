@@ -8,6 +8,7 @@ import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
 import Data.Bifunctor (lmap)
 import Data.Const (Const)
+import Data.Either (Either(..))
 import Data.Maybe (Maybe(..), isNothing)
 import Data.Symbol (SProxy(..))
 import Halogen as H
@@ -26,6 +27,8 @@ import TeamTavern.Client.Pages.Home.Wizard.SelectGame (selectGame)
 import TeamTavern.Client.Pages.Home.Wizard.SelectGame as SelectGame
 import TeamTavern.Client.Pages.Home.Wizard.Shared (Ilk(..))
 import TeamTavern.Server.Game.View.SendResponse (OkContent)
+import TeamTavern.Server.Player.Register.SendResponse as Register
+import TeamTavern.Server.Wizard.CreateAccount as CreateAccount
 
 type Handle = String
 
@@ -163,6 +166,9 @@ loadGame handle = Async.unify do
         200 -> FetchRes.text response >>= Json.readJSON # lmap (const Nothing)
         _ -> Async.left Nothing
     pure $ Just content
+
+-- sendRequest :: forall left. State -> Async left (Either CreateAccount.BadRequestContent CreateAccount.OkContent)
+-- sendRequest state = pure $ Left {}
 
 profilePlayerInput :: Game -> EnterProfilePlayerDetails.Input
 profilePlayerInput game =

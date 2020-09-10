@@ -8,8 +8,10 @@ import Data.Newtype (unwrap)
 import Data.Variant (Variant, match)
 import Effect (Effect)
 import Foreign (MultipleErrors)
+import Global.Unsafe (unsafeStringify)
 import Node.Errors as Node
 import Postgres.Error as Postgres
+import Postgres.Result (Result, rows)
 import Postmark.Error as Postmark
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Server.Infrastructure.Log (logStamped, logt, print)
@@ -42,6 +44,7 @@ type RegisterError = Variant
         , error :: Postgres.Error
         }
     , databaseError :: Postgres.Error
+    , cantReadId :: Result
     , sendEmailError ::
         { info :: { email :: Email, nickname :: Nickname }
         , error :: Postmark.Error
@@ -75,6 +78,9 @@ logError registerError = do
             logt $ "According to this error: " <> print error
         , databaseError: \error ->
             logt $ "Unknown database error ocurred: " <> print error
+        , cantReadId: \result ->
+            logt $ "Can't read player id from response: "
+                <> (unsafeStringify $ rows result)
         , sendEmailError: \{ info: { email }, error } -> do
             logt $ "Couldn't send email to address: " <> unwrap email
             logt $ "Email sending resulted in this error: "

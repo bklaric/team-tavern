@@ -7,6 +7,7 @@ import TeamTavern.Server.Password.Routes (PasswordRoutes)
 import TeamTavern.Server.Player.Routes (PlayerRoutes)
 import TeamTavern.Server.Profile.Routes (ProfileRoutes)
 import TeamTavern.Server.Session.Routes (SessionRoutes)
+import TeamTavern.Server.Wizard.Routes (WizardRoutes)
 
 type TeamTavernRoutes
     =    PlayerRoutes
@@ -15,3 +16,4 @@ type TeamTavernRoutes
     :<|> GameRoutes
     :<|> ProfileRoutes
     :<|> ConversationRoutes
+    :<|> WizardRoutes

@@ -39,7 +39,7 @@ register pool client cookies body =
     nonce <- Nonce.generate
 
     -- Add player to database.
-    addPlayer pool { email, nickname, hash, nonce }
+    _ <- addPlayer pool { email, nickname, hash, nonce }
 
     -- Send confirmation email.
     sendEmail client { email, nickname, nonce }

@@ -18,7 +18,12 @@ import TeamTavern.Server.Profile.Routes (Identifiers)
 
 type CreateError = Variant
     -- Cookies.
-    ( cookieInfoNotPresent :: Map String String
+    ( invalidSession :: { cookieInfo :: CookieInfo }
+    , nicknameDoesntMatch ::
+        { cookieInfo :: CookieInfo
+        , nickname :: String
+        }
+    , noCookieInfo :: { cookies :: Map String String }
     -- Load fields from database.
     , databaseError :: Error
     , unreadableFields ::
@@ -37,7 +42,7 @@ type CreateError = Variant
         }
     -- Insert profile into database.
     , notAuthorized ::
-        { cookieInfo :: CookieInfo
+        { playerId :: Int
         , identifiers :: Identifiers
         }
     , unreadableProfileId ::
@@ -57,10 +62,16 @@ logError :: CreateError -> Effect Unit
 logError createError = do
     logStamped "Error creating profile"
     createError # match
-        { cookieInfoNotPresent: \cookies ->
-            logt $ "Couldn't read info from cookies: " <> show cookies
+        { noCookieInfo: \{ cookies } ->
+            logt $ "No player info present in cookies: " <> show cookies
         , databaseError: \error ->
             logt $ "Unknown database error ocurred: " <> print error
+        , invalidSession: \{ cookieInfo } ->
+            logt $ "Player has invalid session info in cookies: "
+                <> show cookieInfo
+        , nicknameDoesntMatch: \{ nickname, cookieInfo } -> do
+            logt $ "Signed in user: " <> show cookieInfo
+            logt $ "Doesn't have requested nickname: " <> nickname
         , unreadableFields: \{ result, errors } -> do
             logt $ "Couldn't read dto from result: "
                 <> (unsafeStringify $ rows result)
@@ -71,8 +82,8 @@ logError createError = do
         , invalidProfile: \{ profile, errors } -> do
             logt $ "Couldn't validate profile: " <> show profile
             logt $ "Validation resulted in these errors: " <> show errors
-        , notAuthorized: \{ cookieInfo, identifiers } -> do
-            logt $ "Player with cookie info: " <> show cookieInfo
+        , notAuthorized: \{ playerId, identifiers } -> do
+            logt $ "Player with id: " <> show playerId
             logt $ "Not authorized to create profile for identifiers: "
                 <> show identifiers
         , unreadableProfileId: \{ result, errors } -> do

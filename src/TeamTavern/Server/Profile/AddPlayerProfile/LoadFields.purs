@@ -11,9 +11,8 @@ import Data.Traversable (traverse)
 import Data.Variant (Variant)
 import Foreign (MultipleErrors)
 import Postgres.Async.Query (query)
-import Postgres.Client (Client)
 import Postgres.Error (Error)
-import Postgres.Query (Query(..), (:))
+import Postgres.Query (class Querier, Query(..), (:))
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
 
@@ -68,8 +67,8 @@ queryString = Query """
     group by field.id
     """
 
-loadFields :: forall errors.
-    Client -> Handle -> Async (LoadFieldsError errors) (Array Field)
+loadFields :: forall querier errors. Querier querier =>
+    querier -> Handle -> Async (LoadFieldsError errors) (Array Field)
 loadFields client handle = do
     result <- client
         # query queryString (handle : [])
