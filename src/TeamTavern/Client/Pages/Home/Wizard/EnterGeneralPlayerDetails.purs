@@ -1,5 +1,5 @@
 module TeamTavern.Client.Pages.Home.Wizard.EnterGeneralPlayerDetails
-    (Input(..), Output(..), Slot, outputToInput, enterGeneralPlayerDetails) where
+    (Input(..), Output(..), Slot, enterGeneralPlayerDetails) where
 
 import Prelude
 
@@ -11,12 +11,12 @@ import Data.Enum (fromEnum)
 import Data.Maybe (Maybe(..), isNothing, maybe)
 import Data.String as String
 import Data.Variant (SProxy(..))
-import Effect.Class.Console (log)
 import Effect.Now (nowDate)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
+import Record as Record
 import TeamTavern.Client.Components.SelectDefinitive.MultiSelect (multiSelect)
 import TeamTavern.Client.Components.SelectDefinitive.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.SelectDefinitive.SingleSelect (singleSelect)
@@ -28,22 +28,33 @@ import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass)
 import TeamTavern.Server.Infrastructure.Languages (allLanguages)
 import TeamTavern.Server.Infrastructure.Regions (Region(..), allRegions)
 import TeamTavern.Server.Infrastructure.Timezones (Timezone, allTimezones)
-import TeamTavern.Server.Player.ViewDetails.SendResponse (OkContent)
 import Unsafe.Coerce (unsafeCoerce)
 
-type Input = Maybe OkContent
-
-type Output =
-    { birthday :: Maybe String
+type Input =
+    { birthday :: String
     , location :: Maybe String
     , languages :: Array String
     , microphone :: Boolean
-    , discordTag :: Maybe String
+    , discordTag :: String
     , timezone :: Maybe String
-    , weekdayFrom :: Maybe String
-    , weekdayTo :: Maybe String
-    , weekendFrom :: Maybe String
-    , weekendTo :: Maybe String
+    , weekdayFrom :: String
+    , weekdayTo :: String
+    , weekendFrom :: String
+    , weekendTo :: String
+    , discordTagError :: Boolean
+    }
+
+type Output =
+    { birthday :: String
+    , location :: Maybe String
+    , languages :: Array String
+    , microphone :: Boolean
+    , discordTag :: String
+    , timezone :: Maybe String
+    , weekdayFrom :: String
+    , weekdayTo :: String
+    , weekendFrom :: String
+    , weekendTo :: String
     }
 
 type Query send = { discordTagError :: Boolean, send :: send }
@@ -304,45 +315,15 @@ render state =
 
 stateToOutput :: State -> Output
 stateToOutput state =
-    { birthday: if state.birthday == "" then Nothing else Just state.birthday
-    , location: state.location
-    , languages: state.languages
-    , microphone: state.microphone
-    , discordTag: if state.discordTag == "" then Nothing else Just state.discordTag
-    , timezone: state.timezone
-    , weekdayFrom: if state.weekdayFrom == "" then Nothing else Just state.weekdayFrom
-    , weekdayTo: if state.weekdayTo == "" then Nothing else Just state.weekdayTo
-    , weekendFrom: if state.weekendFrom == "" then Nothing else Just state.weekendFrom
-    , weekendTo: if state.weekendTo == "" then Nothing else Just state.weekendTo
-    }
-
-outputToInput :: Output -> Input
-outputToInput output = Just
-    { age: Nothing
-    , birthday: output.birthday
-    , country: output.location
-    , languages: output.languages
-    , hasMicrophone: output.microphone
-    , discordTag: output.discordTag
-    , timezone: output.timezone
-    , clientWeekdayOnline: Nothing
-    , clientWeekendOnline: Nothing
-    , sourceWeekdayOnline:
-        case output.weekdayFrom, output.weekdayTo of
-        Just from, Just to -> Just { from, to }
-        _, _ -> Nothing
-    , sourceWeekendOnline:
-        case output.weekendFrom, output.weekendTo of
-        Just from, Just to -> Just { from, to }
-        _, _ -> Nothing
-    }
+    state
+    # Record.delete (SProxy :: SProxy "thirteenYearsAgo")
+    # Record.delete (SProxy :: SProxy "discordTagError")
 
 handleAction :: forall left.
     Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
 handleAction Initialize = do
     state <- H.get
     timezone <- maybe (H.liftEffect getClientTimezone) pure state.timezone
-    log timezone
     now <- H.liftEffect nowDate
     let year = now # Date.year # fromEnum # (_ - 13)
     let month = fromEnum $ Date.month now
@@ -390,35 +371,7 @@ handleAction (UpdateWeekendTo weekendTo) = do
 component :: forall query left.
     H.Component HH.HTML query Input Output (Async left)
 component = H.mkComponent
-    { initialState: case _ of
-        Just input ->
-            { birthday: maybe "" identity input.birthday
-            , location: input.country
-            , languages: input.languages
-            , microphone: input.hasMicrophone
-            , discordTag: maybe "" identity input.discordTag
-            , timezone: input.timezone
-            , weekdayFrom: maybe "" identity $ _.from <$> input.sourceWeekdayOnline
-            , weekdayTo: maybe "" identity $ _.to <$> input.sourceWeekdayOnline
-            , weekendFrom: maybe "" identity $ _.from <$> input.sourceWeekendOnline
-            , weekendTo: maybe "" identity $ _.to <$> input.sourceWeekendOnline
-            , thirteenYearsAgo: ""
-            , discordTagError: false
-            }
-        Nothing ->
-            { birthday: ""
-            , location: Nothing
-            , languages: []
-            , microphone: false
-            , discordTag: ""
-            , timezone: Nothing
-            , weekdayFrom: ""
-            , weekdayTo: ""
-            , weekendFrom: ""
-            , weekendTo: ""
-            , thirteenYearsAgo: ""
-            , discordTagError: false
-            }
+    { initialState: Record.insert (SProxy :: SProxy "thirteenYearsAgo") ""
     , render
     , eval: H.mkEval $ H.defaultEval
         { handleAction = handleAction

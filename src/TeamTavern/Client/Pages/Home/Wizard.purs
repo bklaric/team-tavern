@@ -6,15 +6,17 @@ import Async (Async)
 import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
-import Data.Array (filter)
+import Data.Array (filter, foldl)
+import Data.Array as Array
 import Data.Bifunctor (bimap, lmap)
 import Data.Const (Const)
 import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..), isJust, isNothing)
 import Data.Options ((:=))
+import Data.String as String
 import Data.Symbol (SProxy(..))
-import Effect.Class.Console (logShow)
+import Data.Variant (match)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
@@ -31,8 +33,8 @@ import TeamTavern.Client.Pages.Home.Wizard.EnterRegistrationDetails as EnterRegi
 import TeamTavern.Client.Pages.Home.Wizard.SelectGame (selectGame)
 import TeamTavern.Client.Pages.Home.Wizard.SelectGame as SelectGame
 import TeamTavern.Client.Pages.Home.Wizard.Shared (Ilk(..))
+import TeamTavern.Client.Snippets.ErrorClasses (otherErrorClass)
 import TeamTavern.Server.Game.View.SendResponse (OkContent)
-import TeamTavern.Server.Player.Register.SendResponse as Register
 import TeamTavern.Server.Wizard.CreateAccount as CreateAccount
 
 type Handle = String
@@ -54,9 +56,10 @@ type State =
     , step :: Step
     , handle :: Maybe String
     , game :: Maybe Game
-    , generalPlayerDetailsOutput :: Maybe EnterGeneralPlayerDetails.Output
-    , profilePlayerDetailsInput :: Maybe EnterProfilePlayerDetails.Input
+    , generalPlayerDetailsInput :: EnterGeneralPlayerDetails.Input
+    , profilePlayerDetailsInput :: EnterProfilePlayerDetails.Input
     , registrationDetailsInput :: EnterRegistrationDetails.Input
+    , otherError :: Boolean
     }
 
 data Action
@@ -108,9 +111,7 @@ render state @ { step, ilk } =
                 [ HH.text "Enter player details" ]
             , HH.p [ HP.class_ $ HH.ClassName "form-subheading" ]
                 [ HH.text "Fill out general details about yourself." ]
-            , enterGeneralPlayerDetails
-                (state.generalPlayerDetailsOutput >>= EnterGeneralPlayerDetails.outputToInput)
-                (Just <<< TakeGeneralPlayerDetails)
+            , enterGeneralPlayerDetails state.generalPlayerDetailsInput (Just <<< TakeGeneralPlayerDetails)
             , HH.div [ HP.class_ $ HH.ClassName "form-navigation" ]
                 [ HH.button
                     [ HP.class_ $ HH.ClassName "form-next-button"
@@ -124,12 +125,12 @@ render state @ { step, ilk } =
                     [ HH.text "Back" ]
                 ]
             ]
-        EnterProfilePlayerDetails | Just input <- state.profilePlayerDetailsInput ->
+        EnterProfilePlayerDetails ->
             [ HH.h2 [ HP.class_ $ HH.ClassName "form-heading" ]
                 [ HH.text "Enter profile details" ]
             , HH.p [ HP.class_ $ HH.ClassName "form-subheading" ]
                 [ HH.text "Fill out game related details about yourself." ]
-            , enterProfilePlayerDetails input (Just <<< TakeProfilePlayerDetails)
+            , enterProfilePlayerDetails state.profilePlayerDetailsInput (Just <<< TakeProfilePlayerDetails)
             , HH.div [ HP.class_ $ HH.ClassName "form-navigation" ]
                 [ HH.button
                     [ HP.class_ $ HH.ClassName "form-next-button"
@@ -147,6 +148,9 @@ render state @ { step, ilk } =
             [ HH.h2 [ HP.class_ $ HH.ClassName "form-heading" ]
                 [ HH.text "Enter registration details" ]
             , enterRegistrationDetails state.registrationDetailsInput (Just <<< TakeRegistrationDetails)
+            , HH.p
+                [ HP.class_ $ otherErrorClass state.otherError ]
+                [ HH.text "Something unexpected went wrong! Please try again later." ]
             , HH.div [ HP.class_ $ HH.ClassName "form-navigation" ]
                 [ HH.button
                     [ HP.class_ $ HH.ClassName "form-next-button"
@@ -160,7 +164,6 @@ render state @ { step, ilk } =
                     [ HH.text "Back" ]
                 ]
             ]
-        _ -> []
 
 loadGame :: forall left. String -> Async left (Maybe Game)
 loadGame handle = Async.unify do
@@ -176,10 +179,21 @@ loadGame handle = Async.unify do
 sendRequest :: forall left. State -> Async left (Maybe (Either CreateAccount.BadRequestContent CreateAccount.OkContent))
 sendRequest (state :: State) = Async.unify do
     (body :: CreateAccount.RequestBody) <-
-        case state.handle, state.generalPlayerDetailsOutput, state.profilePlayerDetailsInput, state.registrationDetailsInput of
-        Just handle, Just personalDetails, Just profileDetails, registrationDetails -> Async.right
+        case state.handle, state.generalPlayerDetailsInput, state.profilePlayerDetailsInput, state.registrationDetailsInput of
+        Just handle, personalDetails, profileDetails, registrationDetails -> Async.right
             { handle
-            , personalDetails
+            , personalDetails:
+                { birthday: if String.null personalDetails.birthday then Nothing else Just personalDetails.birthday
+                , location: personalDetails.location
+                , languages: personalDetails.languages
+                , microphone: personalDetails.microphone
+                , discordTag: if String.null personalDetails.discordTag then Nothing else Just personalDetails.discordTag
+                , timezone: personalDetails.timezone
+                , weekdayFrom: if String.null personalDetails.weekdayFrom then Nothing else Just personalDetails.weekdayFrom
+                , weekdayTo: if String.null personalDetails.weekdayTo then Nothing else Just personalDetails.weekdayTo
+                , weekendFrom: if String.null personalDetails.weekendFrom then Nothing else Just personalDetails.weekendFrom
+                , weekendTo: if String.null personalDetails.weekendTo then Nothing else Just personalDetails.weekendTo
+                }
             , profileDetails:
                 { fieldValues: profileDetails.fieldValues # filter \{ url, optionKey, optionKeys } ->
                     isJust url || isJust optionKey || isJust optionKeys
@@ -218,15 +232,55 @@ profilePlayerInput game =
     , summaryError: false
     }
 
+profilePlayerEmptyInput :: EnterProfilePlayerDetails.Input
+profilePlayerEmptyInput =
+    { fields: []
+    , fieldValues: []
+    , newOrReturning: false
+    , summary: ""
+    , urlErrors: []
+    , missingErrors: []
+    , summaryError: false
+    }
+
+generalPlayerEmptyInput :: EnterGeneralPlayerDetails.Input
+generalPlayerEmptyInput =
+    { birthday: ""
+    , location: Nothing
+    , languages: []
+    , microphone: false
+    , discordTag: ""
+    , timezone: Nothing
+    , weekdayFrom: ""
+    , weekdayTo: ""
+    , weekendFrom: ""
+    , weekendTo: ""
+    , discordTagError: false
+    }
+
+
 handleAction :: forall action output slots left.
     Action -> H.HalogenM State action slots output (Async left) Unit
 handleAction (TakeSelectedGame handle) = do
     H.modify_ _ { handle = Just handle }
 handleAction (TakeGeneralPlayerDetails details) =
-    H.modify_ _ { generalPlayerDetailsOutput = Just details }
+    H.modify_ \state -> state
+        { generalPlayerDetailsInput = state.generalPlayerDetailsInput
+            { birthday = details.birthday
+            , location = details.location
+            , languages = details.languages
+            , microphone = details.microphone
+            , discordTag = details.discordTag
+            , timezone = details.timezone
+            , weekdayFrom = details.weekdayFrom
+            , weekdayTo = details.weekdayTo
+            , weekendFrom = details.weekendFrom
+            , weekendTo = details.weekendTo
+            }
+        }
 handleAction (TakeProfilePlayerDetails details) =
     H.modify_ \state -> state
-        { profilePlayerDetailsInput = state.profilePlayerDetailsInput <#> _
+        { profilePlayerDetailsInput = state.profilePlayerDetailsInput
             { fieldValues = details.fieldValues
             , newOrReturning = details.newOrReturning
             , summary = details.summary
@@ -249,14 +303,79 @@ handleAction (SetStep step) = do
                 Just game' -> H.modify_ _
                     { step = step
                     , game = Just game'
-                    , profilePlayerDetailsInput = Just $ profilePlayerInput game'
+                    , profilePlayerDetailsInput = profilePlayerInput game'
                     }
                 Nothing -> pure unit
         _, _ -> H.modify_ _ { step = step }
 handleAction Submit = do
-    state <- H.get
-    response <- H.lift $ sendRequest state
-    logShow response
+    currentState <- H.get
+    response <- H.lift $ sendRequest currentState
+    let nextState = case response of
+            Nothing -> currentState { otherError = true }
+            Just (Left badContent) -> badContent # match
+                { invalidBody:
+                    foldl
+                    (\state bodyError ->
+                        match
+                        { invalidDiscordTag: const $ state
+                            { generalPlayerDetailsInput = state.generalPlayerDetailsInput
+                                { discordTagError = true }
+                            }
+                        , invalidProfile:
+                            foldl
+                            (\state' profileError ->
+                                match
+                                { invalidUrl: \{ fieldKey } -> state'
+                                    { profilePlayerDetailsInput = state'.profilePlayerDetailsInput
+                                        { urlErrors = Array.cons fieldKey state'.profilePlayerDetailsInput.urlErrors }
+                                    }
+                                , missing: \{ fieldKey } -> state'
+                                    { profilePlayerDetailsInput = state'.profilePlayerDetailsInput
+                                        { missingErrors = Array.cons fieldKey state'.profilePlayerDetailsInput.missingErrors }
+                                    }
+                                , summary: const $ state'
+                                    { profilePlayerDetailsInput = state'.profilePlayerDetailsInput
+                                        { summaryError = true }
+                                    }
+                                }
+                                profileError
+                            )
+                            state
+                        , invalidRegistration:
+                            foldl
+                            (\state' registrationError ->
+                                match
+                                { invalidEmail: const $ state'
+                                    { registrationDetailsInput = state'.registrationDetailsInput
+                                        { emailError = true }
+                                    }
+                                , invalidNickname: const $ state'
+                                    { registrationDetailsInput = state'.registrationDetailsInput
+                                        { nicknameError = true }
+                                    }
+                                , invalidPassword: const $ state'
+                                    { registrationDetailsInput = state'.registrationDetailsInput
+                                        { passwordError = true }
+                                    }
+                                }
+                                registrationError
+                            )
+                            state
+                        }
+                        bodyError
+                    )
+                    currentState
+                , emailTaken: const $ currentState
+                    { registrationDetailsInput = currentState.registrationDetailsInput
+                        { emailTaken = true }
+                    }
+                , nicknameTaken: const $ currentState
+                    { registrationDetailsInput = currentState.registrationDetailsInput
+                        { nicknameTaken = true }
+                    }
+                }
+            Just (Right okContent) -> currentState
+    H.put nextState
 
 component :: forall query output left.
     H.Component HH.HTML query Input output (Async left)
@@ -266,9 +385,10 @@ component = H.mkComponent
         , step: SelectGame
         , handle: Nothing
         , game: Nothing
-        , generalPlayerDetailsOutput: Nothing
-        , profilePlayerDetailsInput: Nothing
+        , generalPlayerDetailsInput: generalPlayerEmptyInput
+        , profilePlayerDetailsInput: profilePlayerEmptyInput
         , registrationDetailsInput: EnterRegistrationDetails.emptyInput
+        , otherError: false
         }
     , render
     , eval: H.mkEval $ H.defaultEval
