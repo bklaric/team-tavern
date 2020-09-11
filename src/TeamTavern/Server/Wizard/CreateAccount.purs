@@ -43,6 +43,7 @@ import TeamTavern.Server.Player.Register.AddPlayer (addPlayer)
 import TeamTavern.Server.Player.Register.SendEmail (SendEmailModel, SendEmailError)
 import TeamTavern.Server.Player.Register.ValidateModel (RegisterModel, ValidateModelError, RegisterModelError)
 import TeamTavern.Server.Player.UpdateDetails.ReadUpdate (UpdateDetailsModel)
+import TeamTavern.Server.Player.UpdateDetails.UpdateDetails (updateDetails)
 import TeamTavern.Server.Player.UpdateDetails.ValidateBirthday (validateOptionalBirthday)
 import TeamTavern.Server.Player.UpdateDetails.ValidateCountry (validateOptionalCountry)
 import TeamTavern.Server.Player.UpdateDetails.ValidateDiscordTag (validateOptionalDiscordTag)
@@ -338,6 +339,8 @@ createAccount pool emailClient cookies body =
                 , hash
                 , nonce
                 }
+
+            updateDetails client playerId validatedBody.personal
 
             -- Add profile.
             addProfile client playerId

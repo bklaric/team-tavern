@@ -9,9 +9,7 @@ import Data.Nullable (toNullable)
 import Data.Variant (SProxy(..), Variant, inj)
 import Postgres.Async.Query (execute)
 import Postgres.Error (Error)
-import Postgres.Pool (Pool)
-import Postgres.Query (Query(..), QueryParameter, (:), (:|))
-import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
+import Postgres.Query (class Querier, Query(..), QueryParameter, (:), (:|))
 import TeamTavern.Server.Player.UpdateDetails.ReadUpdate (UpdateDetailsModel)
 import TeamTavern.Server.Player.UpdateDetails.ValidateTimespan (nullableTimeFrom, nullableTimeTo)
 
@@ -34,9 +32,9 @@ queryString = Query """
     where player.id = $1
     """
 
-queryParameters :: CookieInfo -> UpdateDetailsModel -> Array QueryParameter
-queryParameters info model =
-    info.id
+queryParameters :: Int -> UpdateDetailsModel -> Array QueryParameter
+queryParameters playerId model =
+    playerId
     : toNullable model.discordTag
     : toNullable model.birthday
     : model.languages
@@ -49,12 +47,13 @@ queryParameters info model =
     :| model.hasMicrophone
 
 updateDetails
-    :: forall errors
-    .  Pool
-    -> CookieInfo
+    :: forall querier errors
+    .  Querier querier
+    => querier
+    -> Int
     -> UpdateDetailsModel
     -> Async (UpdateDetailsError errors) Unit
-updateDetails pool cookieInfo updateModel =
-    pool
-    # execute queryString (queryParameters cookieInfo updateModel)
+updateDetails querier playerId updateModel =
+    querier
+    # execute queryString (queryParameters playerId updateModel)
     # lmap (inj (SProxy :: SProxy "databaseError"))

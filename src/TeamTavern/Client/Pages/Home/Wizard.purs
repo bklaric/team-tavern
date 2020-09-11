@@ -6,16 +6,21 @@ import Async (Async)
 import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
-import Data.Bifunctor (lmap)
+import Data.Array (filter)
+import Data.Bifunctor (bimap, lmap)
 import Data.Const (Const)
 import Data.Either (Either(..))
-import Data.Maybe (Maybe(..), isNothing)
+import Data.HTTP.Method (Method(..))
+import Data.Maybe (Maybe(..), isJust, isNothing)
+import Data.Options ((:=))
 import Data.Symbol (SProxy(..))
+import Effect.Class.Console (logShow)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import Simple.JSON.Async as Json
+import Simple.JSON as Json
+import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Pages.Home.Wizard.EnterGeneralPlayerDetails (enterGeneralPlayerDetails)
 import TeamTavern.Client.Pages.Home.Wizard.EnterGeneralPlayerDetails as EnterGeneralPlayerDetails
@@ -60,6 +65,7 @@ data Action
     | TakeProfilePlayerDetails EnterProfilePlayerDetails.Output
     | TakeRegistrationDetails EnterRegistrationDetails.Output
     | SetStep Step
+    | Submit
 
 type Slot = H.Slot (Modal.Query Input (Const Void)) (Modal.Message Output) Unit
 
@@ -144,9 +150,9 @@ render state @ { step, ilk } =
             , HH.div [ HP.class_ $ HH.ClassName "form-navigation" ]
                 [ HH.button
                     [ HP.class_ $ HH.ClassName "form-next-button"
-                    -- , HE.onClick $ const $ Just $ SetStep EnterProfilePlayerDetails
+                    , HE.onClick $ const $ Just $ Submit
                     ]
-                    [ HH.text "Next" ]
+                    [ HH.text "Submit" ]
                 , HH.button
                     [ HP.class_ $ HH.ClassName "form-back-button"
                     , HE.onClick $ const $ Just $ SetStep EnterProfilePlayerDetails
@@ -163,12 +169,43 @@ loadGame handle = Async.unify do
         # lmap (const Nothing)
     content <-
         case FetchRes.status response of
-        200 -> FetchRes.text response >>= Json.readJSON # lmap (const Nothing)
+        200 -> FetchRes.text response >>= JsonAsync.readJSON # lmap (const Nothing)
         _ -> Async.left Nothing
     pure $ Just content
 
--- sendRequest :: forall left. State -> Async left (Either CreateAccount.BadRequestContent CreateAccount.OkContent)
--- sendRequest state = pure $ Left {}
+sendRequest :: forall left. State -> Async left (Maybe (Either CreateAccount.BadRequestContent CreateAccount.OkContent))
+sendRequest (state :: State) = Async.unify do
+    (body :: CreateAccount.RequestBody) <-
+        case state.handle, state.generalPlayerDetailsOutput, state.profilePlayerDetailsInput, state.registrationDetailsInput of
+        Just handle, Just personalDetails, Just profileDetails, registrationDetails -> Async.right
+            { handle
+            , personalDetails
+            , profileDetails:
+                { fieldValues: profileDetails.fieldValues # filter \{ url, optionKey, optionKeys } ->
+                    isJust url || isJust optionKey || isJust optionKeys
+                , newOrReturning: profileDetails.newOrReturning
+                , summary: profileDetails.summary
+                }
+            , registrationDetails:
+                { email: registrationDetails.email
+                , nickname: registrationDetails.nickname
+                , password: registrationDetails.password
+                }
+            }
+        _, _, _, _ -> Async.left Nothing
+    response <-
+        Fetch.fetch "/api/wizard"
+        ( Fetch.method := POST
+        <> Fetch.body := Json.writeJSON body
+        <> Fetch.credentials := Fetch.Include
+        )
+        # lmap (const Nothing)
+    content :: Either CreateAccount.BadRequestContent CreateAccount.OkContent <-
+        case FetchRes.status response of
+        200 -> FetchRes.text response >>= JsonAsync.readJSON # bimap (const Nothing) Right
+        400 -> FetchRes.text response >>= JsonAsync.readJSON # bimap (const Nothing) Left
+        _ -> Async.left Nothing
+    pure $ Just content
 
 profilePlayerInput :: Game -> EnterProfilePlayerDetails.Input
 profilePlayerInput game =
@@ -216,6 +253,10 @@ handleAction (SetStep step) = do
                     }
                 Nothing -> pure unit
         _, _ -> H.modify_ _ { step = step }
+handleAction Submit = do
+    state <- H.get
+    response <- H.lift $ sendRequest state
+    logShow response
 
 component :: forall query output left.
     H.Component HH.HTML query Input output (Async left)

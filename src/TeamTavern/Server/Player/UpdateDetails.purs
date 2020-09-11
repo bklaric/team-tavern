@@ -26,4 +26,4 @@ updateDetails pool nickname cookies body =
     update' <- readUpdate body
 
     -- Update player.
-    UpdateDetails.updateDetails pool cookieInfo update'
+    UpdateDetails.updateDetails pool (unwrap cookieInfo.id) update'

@@ -78,4 +78,5 @@ addPlayer pool model @ { email, nickname, nonce } = do
         # note (inj (SProxy :: SProxy "cantReadId") result)
         # Async.fromEither
     read id
+        <#> (_.id :: { id :: Int } -> Int)
         # labelMap (SProxy :: SProxy "cantReadId") (const result)
