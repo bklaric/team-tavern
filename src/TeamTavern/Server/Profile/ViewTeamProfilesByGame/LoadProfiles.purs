@@ -293,7 +293,8 @@ queryStringWithoutPagination handle timezone filters = Query $ """
             ) as field_values
                 on field_values.team_profile_id = profile.id
         where
-            game.handle = """ <> prepareString handle
+            player.email_confirmed
+            and game.handle = """ <> prepareString handle
             <> createProfileFilterString timezone filters <> """
         group by player.id, profile.id
         ) as profile
