@@ -3,6 +3,7 @@ module TeamTavern.Client.Pages.Home.CallToAction (Slot, callToAction) where
 import Prelude
 
 import Async (Async)
+import Data.Array as Array
 import Data.Const (Const)
 import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
@@ -17,7 +18,7 @@ import TeamTavern.Client.Pages.Home.Wizard.Shared as WizardShared
 
 data Action = OpenWizard WizardShared.Ilk
 
-type State = {}
+type State = { signedIn :: Boolean }
 
 type Input = State
 
@@ -27,10 +28,10 @@ type Slots slots = (wizard :: Wizard.Slot | slots)
 
 render :: forall slots left.
     State -> HH.ComponentHTML Action (Slots slots) (Async left)
-render state =
+render { signedIn } =
     HH.div [ HP.class_ $ HH.ClassName "call-to-action" ]
     [ HH.div [ HP.class_ $ HH.ClassName "call-to-action-content" ]
-        [ HH.div [HP.class_ $ HH.ClassName "call-to-action-text" ]
+        [ HH.div [HP.class_ $ HH.ClassName "call-to-action-text" ] $
             [ HH.h1 [ HP.class_ $ HH.ClassName "call-to-action-heading" ]
                 [ HH.text "Find your esports teammates" ]
             , HH.p [ HP.class_ $ HH.ClassName "call-to-action-paragraph" ]
@@ -38,7 +39,12 @@ render state =
                     platform. Create your player or team profile and start
                     finding your new teammates."""
                 ]
-            , HH.div [ HP.class_ $ HH.ClassName "call-to-action-buttons" ]
+            ]
+            <>
+            if signedIn
+            then []
+            else Array.singleton $
+                HH.div [ HP.class_ $ HH.ClassName "call-to-action-buttons" ]
                 [ HH.div [ HP.class_ $ HH.ClassName "call-to-action-button-group" ]
                     [ HH.button
                         [ HP.class_ $ HH.ClassName "call-to-action-button"
@@ -56,7 +62,6 @@ render state =
                     , HH.p_ [ HH.text "I want to recruit new members or grow my online community." ]
                     ]
                 ]
-            ]
         ]
     , wizard $ const Nothing
     ]
@@ -76,5 +81,6 @@ component = H.mkComponent
     }
 
 callToAction :: forall query children left.
-    HH.ComponentHTML query (callToAction :: Slot | children) (Async left)
-callToAction = HH.slot (SProxy :: SProxy "callToAction") unit component {} absurd
+    Input -> HH.ComponentHTML query (callToAction :: Slot | children) (Async left)
+callToAction input =
+    HH.slot (SProxy :: SProxy "callToAction") unit component input absurd

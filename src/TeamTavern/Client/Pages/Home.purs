@@ -4,7 +4,7 @@ import Prelude
 
 import Async (Async)
 import Data.Const (Const)
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), isJust)
 import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
@@ -32,10 +32,9 @@ type ChildSlots =
 render :: forall left.
     State -> H.ComponentHTML Action ChildSlots (Async left)
 render Empty = HH.div [ HP.class_ $ HH.ClassName "home" ] []
-render (Loaded playerInfo) = HH.div [ HP.class_ $ HH.ClassName "home" ] $
-    case playerInfo of
-        Nothing -> [ callToAction, why, features, games ]
-        Just { nickname } -> [ ]
+render (Loaded playerInfo) =
+    HH.div [ HP.class_ $ HH.ClassName "home" ]
+    [ callToAction { signedIn: isJust playerInfo }, why, features, games ]
 
 handleAction :: forall action output slots left.
     Action -> H.HalogenM State action slots output (Async left) Unit
