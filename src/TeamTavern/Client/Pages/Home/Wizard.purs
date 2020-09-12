@@ -21,9 +21,11 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
+import Record as Record
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.Modal as Modal
+import TeamTavern.Client.Components.Welcome as Welcome
 import TeamTavern.Client.Pages.Home.Wizard.EnterGeneralPlayerDetails (enterGeneralPlayerDetails)
 import TeamTavern.Client.Pages.Home.Wizard.EnterGeneralPlayerDetails as EnterGeneralPlayerDetails
 import TeamTavern.Client.Pages.Home.Wizard.EnterProfilePlayerDetails (enterProfilePlayerDetails)
@@ -33,6 +35,7 @@ import TeamTavern.Client.Pages.Home.Wizard.EnterRegistrationDetails as EnterRegi
 import TeamTavern.Client.Pages.Home.Wizard.SelectGame (selectGame)
 import TeamTavern.Client.Pages.Home.Wizard.SelectGame as SelectGame
 import TeamTavern.Client.Pages.Home.Wizard.Shared (Ilk(..))
+import TeamTavern.Client.Script.Navigate (navigate)
 import TeamTavern.Client.Snippets.ErrorClasses (otherErrorClass)
 import TeamTavern.Server.Game.View.SendResponse (OkContent)
 import TeamTavern.Server.Wizard.CreateAccount as CreateAccount
@@ -329,6 +332,12 @@ handleAction Submit = do
         , submitting = true
         }
     response <- H.lift $ sendRequest currentState
+    case response, currentState.game of
+        Just (Right okContent), Just { title } ->
+            H.liftEffect $ navigate
+                ((Record.insert (SProxy :: SProxy "profile") (Just { title }) okContent) :: Welcome.Input)
+                "/welcome"
+        _, _ -> pure unit
     let nextState = case response of
             Nothing -> currentState { otherError = true }
             Just (Left badContent) -> badContent # match

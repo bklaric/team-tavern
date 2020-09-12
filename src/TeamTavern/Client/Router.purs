@@ -25,6 +25,7 @@ import TeamTavern.Client.Components.RegisterForm as RegisterForm
 import TeamTavern.Client.Components.TopBar (topBar)
 import TeamTavern.Client.Components.TopBar as TopBar
 import TeamTavern.Client.Components.Welcome (welcome)
+import TeamTavern.Client.Components.Welcome as Welcome
 import TeamTavern.Client.Components.WelcomeBanner as WelcomeBanner
 import TeamTavern.Client.Game (game)
 import TeamTavern.Client.Game as Game
@@ -62,7 +63,7 @@ data State
     | ResetPasswordSent { email :: String }
     | ResetPassword
     | ResetPasswordSuccess
-    | Welcome { email :: String, nickname :: String, emailSent :: Boolean }
+    | Welcome Welcome.Input
     | NotFound
 
 type ChildSlots = Footer.ChildSlots
