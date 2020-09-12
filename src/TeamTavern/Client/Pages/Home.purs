@@ -4,7 +4,7 @@ import Prelude
 
 import Async (Async)
 import Data.Const (Const)
-import Data.Maybe (Maybe(..), isJust)
+import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
@@ -15,12 +15,12 @@ import TeamTavern.Client.Pages.Home.CallToAction as CallToAction
 import TeamTavern.Client.Pages.Home.Features (features)
 import TeamTavern.Client.Pages.Home.Games (games)
 import TeamTavern.Client.Pages.Home.Why (why)
-import TeamTavern.Client.Script.Cookie (PlayerInfo, getPlayerInfo)
+import TeamTavern.Client.Script.Cookie (hasPlayerIdCookie)
 import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
 
 data Action = Init
 
-data State = Empty | Loaded (Maybe PlayerInfo)
+data State = Empty | Loaded { signedIn :: Boolean }
 
 type Slot = H.Slot (Const Void) Void
 
@@ -32,9 +32,9 @@ type ChildSlots =
 render :: forall left.
     State -> H.ComponentHTML Action ChildSlots (Async left)
 render Empty = HH.div [ HP.class_ $ HH.ClassName "home" ] []
-render (Loaded playerInfo) =
+render (Loaded { signedIn }) =
     HH.div [ HP.class_ $ HH.ClassName "home" ]
-    [ callToAction { signedIn: isJust playerInfo }, why, features, games ]
+    [ callToAction { signedIn, title: Nothing }, why, features, games ]
 
 handleAction :: forall action output slots left.
     Action -> H.HalogenM State action slots output (Async left) Unit
@@ -45,8 +45,8 @@ handleAction Init = do
             "TeamTavern is an online platform for finding esports teammates. "
             <> "Choose a game, browse player and team profiles and find your ideal teammates."
         setMetaUrl
-    playerInfo <- H.liftEffect $ getPlayerInfo
-    H.put $ Loaded playerInfo
+    signedIn <- H.liftEffect hasPlayerIdCookie
+    H.put $ Loaded { signedIn }
 
 component :: forall query input output left.
     H.Component HH.HTML query input output (Async left)

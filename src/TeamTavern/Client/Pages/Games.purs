@@ -48,7 +48,7 @@ render (Games games') = HH.div [ HP.class_ $ HH.ClassName "games" ] $
     (games' <#> \{ title, handle, description, iconPath, bannerPath, playerCount, teamCount } ->
         HH.div
         [ HP.class_ $ HH.ClassName "game-card"
-        , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/players") false
+        , HE.onClick $ Just <<< Navigate ("/games/" <> handle) false
         ]
         [ HH.div
             [ HP.class_ $ HH.ClassName "game-card-text"
@@ -59,7 +59,7 @@ render (Games games') = HH.div [ HP.class_ $ HH.ClassName "games" ] $
                 [ HH.a
                     [ HP.class_ $ ClassName "game-card-name"
                     , HP.href $ "/games/" <> handle <> "/players"
-                    , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/players") true
+                    , HE.onClick $ Just <<< Navigate ("/games/" <> handle) true
                     ]
                     [ HH.img
                         [ HP.class_ $ HH.ClassName "game-card-logo"

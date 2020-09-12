@@ -434,6 +434,6 @@ component = H.mkComponent
     }
 
 game :: forall query children left.
-    String -> GameHeader.Tab -> HH.ComponentHTML query (game :: Slot Unit | children) (Async left)
+    String -> GameHeader.Tab -> HH.ComponentHTML query (profiles :: Slot Unit | children) (Async left)
 game handle tab =
-    HH.slot (SProxy :: SProxy "game") unit component (Input handle tab) absurd
+    HH.slot (SProxy :: SProxy "profiles") unit component (Input handle tab) absurd

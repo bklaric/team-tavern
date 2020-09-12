@@ -22,6 +22,7 @@
     font-size: 50px;
     line-height: 1em;
     margin-bottom: 28px;
+    max-width: 700px;
 }
 
 .call-to-action-paragraph {
@@ -37,19 +38,30 @@
     flex-direction: column;
     justify-content: space-between;
     align-items: center;
-    height: 260px;
-
-    @media screen and (min-width: 400px) {
-        flex-direction: row;
-        justify-content: space-evenly;
-        align-items: unset;
-        height: unset;
-    }
+    text-align: center;
+    max-width: 640px;
+    margin: auto;
 }
 
 .call-to-action-button-group {
     max-width: 250px;
     padding: 0 14px;
+
+    &:not(:last-child) {
+        margin-bottom: 35px;
+    }
+}
+
+@media screen and (min-width: 400px) {
+    .call-to-action-buttons {
+        flex-direction: row;
+        justify-content: space-evenly;
+        align-items: unset;
+    }
+
+    .call-to-action-button-group:not(:last-child) {
+        margin-bottom: unset;
+    }
 }
 
 .call-to-action-button {
@@ -58,6 +70,19 @@
     font-size: 16px;
     width: 150px;
     margin-bottom: 14px;
+
+    &:active {
+        color: white;
+    }
+}
+
+.call-to-action-secondary-button {
+    @extend .secondary-button;
+    padding: 18px 24px;
+    font-size: 16px;
+    width: 170px;
+    margin-bottom: 14px;
+    box-sizing: border-box;
 
     &:active {
         color: white;

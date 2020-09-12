@@ -27,14 +27,15 @@ import TeamTavern.Client.Components.TopBar as TopBar
 import TeamTavern.Client.Components.Welcome (welcome)
 import TeamTavern.Client.Components.Welcome as Welcome
 import TeamTavern.Client.Components.WelcomeBanner as WelcomeBanner
-import TeamTavern.Client.Game (game)
-import TeamTavern.Client.Game as Game
+import TeamTavern.Client.Game as Profiles
 import TeamTavern.Client.Game.GameHeader as GameHeader
 import TeamTavern.Client.Pages.About (about)
 import TeamTavern.Client.Pages.About as About
 import TeamTavern.Client.Pages.Account (account)
 import TeamTavern.Client.Pages.Account as Account
 import TeamTavern.Client.Pages.Account.AccountHeader as AccountHeader
+import TeamTavern.Client.Pages.Game (game)
+import TeamTavern.Client.Pages.Game as Game
 import TeamTavern.Client.Pages.Games (games)
 import TeamTavern.Client.Pages.Games as Games
 import TeamTavern.Client.Pages.Home (home)
@@ -55,7 +56,8 @@ data State
     | Games
     | About
     | Account AccountHeader.Tab
-    | Game GameHeader.Handle GameHeader.Tab
+    | Game { handle :: String }
+    | Profiles GameHeader.Handle GameHeader.Tab
     | Player String
     | Register
     | SignIn
@@ -73,7 +75,8 @@ type ChildSlots = Footer.ChildSlots
     , welcomeBanner :: WelcomeBanner.Slot Unit
     , account :: Account.Slot
     , games :: Games.Slot Unit
-    , game :: Game.Slot Unit
+    , game :: Game.Slot
+    , profiles :: Profiles.Slot Unit
     , player :: Player.Slot Unit
     , signIn :: SignIn.Slot Unit
     , homeAnchor :: NavigationAnchor.Slot Unit
@@ -100,7 +103,8 @@ render Empty = HH.div_ []
 render Home = HH.div_ [ topBar, home, footer ]
 render Games = topBarWithContent [ games ]
 render About = topBarWithContent [ about ]
-render (Game handle tab) = topBarWithContent [ game handle tab ]
+render (Game input) = HH.div_ [ topBar, game input, footer ]
+render (Profiles handle tab) = topBarWithContent [ Profiles.game handle tab ]
 render (Account tab) = topBarWithContent [ account tab ]
 render (Player nickname) = topBarWithContent [ player nickname ]
 render Register = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ registerForm ] ]
@@ -155,11 +159,11 @@ handleAction (Init state route) = do
         ["", "games"] ->
             just Games
         ["", "games", handle] ->
-            (navigateReplace_ $ "/games/" <> handle <> "/players") *> nothing
+            just $ Game { handle }
         ["", "games", handle, "players" ] ->
-            just $ Game handle GameHeader.Players
+            just $ Profiles handle GameHeader.Players
         ["", "games", handle, "teams" ] ->
-            just $ Game handle GameHeader.Teams
+            just $ Profiles handle GameHeader.Teams
         ["", "players", nickname] ->
             just $ Player nickname
         _ ->
