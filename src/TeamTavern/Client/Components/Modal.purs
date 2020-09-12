@@ -21,7 +21,8 @@ import Web.UIEvent.MouseEvent (MouseEvent, toEvent)
 data State input = Shown input | Hidden
 
 data Action output
-    = BackgroundClick MouseEvent
+    = Finalize
+    | BackgroundClick MouseEvent
     | InnerMessage output
 
 data Query input query send
@@ -51,6 +52,7 @@ renderModal content (Shown input) =
 
 handleAction :: forall input action slots output monad. MonadEffect monad =>
     Action output -> H.HalogenM (State input) action slots (Message output) monad Unit
+handleAction Finalize = makeWindowScrollable
 handleAction (BackgroundClick event) = do
     background <- H.getHTMLElementRef (H.RefLabel "modal-background")
     eventTarget <- event # toEvent # target >>= fromEventTarget # pure
@@ -92,6 +94,7 @@ component content = H.mkComponent
     , eval: H.mkEval $ H.defaultEval
         { handleAction = handleAction
         , handleQuery = handleQuery
+        , finalize = Just Finalize
         }
     }
 
