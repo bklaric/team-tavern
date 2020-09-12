@@ -41,8 +41,6 @@ render (Games games') = HH.div [ HP.class_ $ HH.ClassName "games" ] $
         [ HH.h2 [ HP.class_ $ HH.ClassName "games-header-title" ]
             [ HH.text "Games" ]
         , HH.p [ HP.class_ $ HH.ClassName "games-header-subtitle" ]
-            [ HH.text "TeamTavern aims to provide a wide selection of games while carefully adjusting to every game's specifics." ]
-        , HH.p [ HP.class_ $ HH.ClassName "games-header-subtitle" ]
             [ HH.text "Choose one of the featured games and start finding your new teammates!" ]
         ]
     ]
