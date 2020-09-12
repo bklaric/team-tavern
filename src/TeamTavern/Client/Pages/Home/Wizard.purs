@@ -60,6 +60,7 @@ type State =
     , profilePlayerDetailsInput :: EnterProfilePlayerDetails.Input
     , registrationDetailsInput :: EnterRegistrationDetails.Input
     , otherError :: Boolean
+    , submitting :: Boolean
     }
 
 data Action
@@ -154,11 +155,13 @@ render state @ { step, ilk } =
             , HH.div [ HP.class_ $ HH.ClassName "form-navigation" ]
                 [ HH.button
                     [ HP.class_ $ HH.ClassName "form-next-button"
+                    , HP.disabled state.submitting
                     , HE.onClick $ const $ Just $ Submit
                     ]
-                    [ HH.text "Submit" ]
+                    [ HH.text if state.submitting then "Submitting..." else "Submit" ]
                 , HH.button
                     [ HP.class_ $ HH.ClassName "form-back-button"
+                    , HP.disabled state.submitting
                     , HE.onClick $ const $ Just $ SetStep EnterProfilePlayerDetails
                     ]
                     [ HH.text "Back" ]
@@ -308,7 +311,7 @@ handleAction (SetStep step) = do
                 Nothing -> pure unit
         _, _ -> H.modify_ _ { step = step }
 handleAction Submit = do
-    currentState <- H.get
+    currentState <- H.modify _ { submitting = true }
     response <- H.lift $ sendRequest currentState
     let nextState = case response of
             Nothing -> currentState { otherError = true }
@@ -375,7 +378,7 @@ handleAction Submit = do
                     }
                 }
             Just (Right okContent) -> currentState
-    H.put nextState
+    H.put nextState { submitting = false }
 
 component :: forall query output left.
     H.Component HH.HTML query Input output (Async left)
@@ -389,6 +392,7 @@ component = H.mkComponent
         , profilePlayerDetailsInput: profilePlayerEmptyInput
         , registrationDetailsInput: EnterRegistrationDetails.emptyInput
         , otherError: false
+        , submitting: false
         }
     , render
     , eval: H.mkEval $ H.defaultEval
