@@ -394,7 +394,17 @@ handleAction Submit = do
                     }
                 }
             Just (Right okContent) -> currentState
-    H.put nextState { submitting = false }
+    H.put nextState
+        { submitting = false
+        , step =
+            if nextState.generalPlayerDetailsInput.discordTagError
+            then EnterGeneralPlayerDetails
+            else if (not $ Array.null nextState.profilePlayerDetailsInput.urlErrors)
+                || (not $ Array.null nextState.profilePlayerDetailsInput.missingErrors)
+                || nextState.profilePlayerDetailsInput.summaryError
+            then EnterProfilePlayerDetails
+            else EnterRegistrationDetails
+        }
 
 component :: forall query output left.
     H.Component HH.HTML query Input output (Async left)
