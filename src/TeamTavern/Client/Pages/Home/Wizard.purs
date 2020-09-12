@@ -311,7 +311,23 @@ handleAction (SetStep step) = do
                 Nothing -> pure unit
         _, _ -> H.modify_ _ { step = step }
 handleAction Submit = do
-    currentState <- H.modify _ { submitting = true }
+    currentState <- H.modify \state -> state
+        { generalPlayerDetailsInput = state.generalPlayerDetailsInput
+            { discordTagError = false }
+        , profilePlayerDetailsInput = state.profilePlayerDetailsInput
+            { urlErrors = []
+            , missingErrors = []
+            , summaryError = false
+            }
+        , registrationDetailsInput = state.registrationDetailsInput
+            { emailError = false
+            , nicknameError = false
+            , passwordError = false
+            , emailTaken = false
+            , nicknameTaken = false
+            }
+        , submitting = true
+        }
     response <- H.lift $ sendRequest currentState
     let nextState = case response of
             Nothing -> currentState { otherError = true }
