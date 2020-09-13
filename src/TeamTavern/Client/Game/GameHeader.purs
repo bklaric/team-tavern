@@ -38,7 +38,7 @@ renderTabs :: forall slots. String -> Tab -> Array (HH.HTML slots Action)
 renderTabs handle Players =
     [ HH.h2 [ HP.class_ $ HH.ClassName "content-title-tab" ]
         [ HH.i [ HP.class_ $ H.ClassName "fas fa-user button-icon" ] []
-        , HH.text "Players - Looking for team"
+        , HH.text "Players"
         ]
     , HH.a
         [ HP.class_ $ HH.ClassName "content-title-tab"
@@ -46,7 +46,7 @@ renderTabs handle Players =
         , HE.onClick $ Just <<< Navigate (teamsPath handle)
         ]
         [ HH.i [ HP.class_ $ H.ClassName "fas fa-users button-icon" ] []
-        , HH.text "Teams - Looking for players"
+        , HH.text "Teams"
         ]
     ]
 renderTabs handle Teams =
@@ -56,11 +56,11 @@ renderTabs handle Teams =
         , HE.onClick $ Just <<< Navigate (playersPath handle)
         ]
         [ HH.i [ HP.class_ $ H.ClassName "fas fa-user button-icon" ] []
-        , HH.text "Players - Looking for team"
+        , HH.text "Players"
         ]
     , HH.h2 [ HP.class_ $ HH.ClassName "content-title-tab" ]
         [ HH.i [ HP.class_ $ H.ClassName "fas fa-users button-icon" ] []
-        , HH.text "Teams - Looking for players"
+        , HH.text "Teams"
         ]
     ]
 
@@ -69,7 +69,12 @@ render (Input handle title tab) = HH.div_
     [ HH.div [ HP.class_ $ HH.ClassName "content-title" ]
         [ HH.div [ HP.class_ $ HH.ClassName "content-title-left" ]
             [ HH.h1 [ HP.class_ $ HH.ClassName "content-title-text" ]
-                [ HH.text title ]
+                [ HH.a
+                    [ HP.href $ "/games/" <> handle
+                    , HE.onClick $ Just <<< Navigate ("/games/" <> handle)
+                    ]
+                    [ HH.text title ]
+                ]
             , HH.div [ HP.class_ $ HH.ClassName "content-title-tabs" ]
                 (renderTabs handle tab)
             ]
