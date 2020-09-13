@@ -1,3 +1,13 @@
+.filters-title {
+    @extend .card-title;
+    cursor: pointer;
+}
+
+.filters-caret {
+    @extend .top-bar-games-caret;
+    color: $text-color;
+}
+
 .filter-field-icon {
     position: absolute;
     font-size: 20px;

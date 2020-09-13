@@ -66,6 +66,7 @@ type State =
         , field :: Field
         }
     , newOrReturning :: Boolean
+    , filtersVisible :: Boolean
     }
 
 data Action
@@ -82,6 +83,7 @@ data Action
     | WeekendToInput String
     | FieldInput String (Array (MultiSelect.InputEntry Option))
     | NewOrReturningInput Boolean
+    | ToggleFiltersVisibility
 
 data Output = Apply Filters
 
@@ -129,10 +131,23 @@ fieldInput { input, field: { key, label, icon } } =
     ]
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
-render state = HH.div [ HP.class_ $ HH.ClassName "card" ]
-    [ HH.span [ HP.class_ $ HH.ClassName "card-title" ]
-        [ HH.text "Profile filters" ]
-    , HH.div [ HP.class_ $ HH.ClassName "card-content" ]
+render state = HH.div [ HP.class_ $ HH.ClassName "card" ] $
+    [ HH.span
+        [ HP.class_ $ HH.ClassName "filters-title"
+        , HE.onClick $ const $ Just ToggleFiltersVisibility
+        ]
+        [ HH.text "Profile filters"
+        , HH.i
+            [ HP.class_ $ HH.ClassName $ "fas filters-caret "
+                <> if state.filtersVisible then "fa-caret-up" else "fa-caret-down"
+            ]
+            []
+        ]
+    ]
+    <>
+    if state.filtersVisible
+    then Array.singleton $
+        HH.div [ HP.class_ $ HH.ClassName "card-content" ]
         [ HH.div [ HP.class_ $ HH.ClassName "responsive-input-groups" ] $
             [ HH.div [ HP.class_ $ HH.ClassName "input-group" ]
                 [ fieldLabel "Age" "fas fa-calendar-alt"
@@ -272,7 +287,7 @@ render state = HH.div [ HP.class_ $ HH.ClassName "card" ]
             , HH.text "Clear filters"
             ]
         ]
-    ]
+    else []
 
 handleAction :: forall left.
     Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
@@ -358,6 +373,8 @@ handleAction (FieldInput fieldKey entries) =
         }
 handleAction (NewOrReturningInput newOrReturning) =
     H.modify_ (_ { newOrReturning = newOrReturning })
+handleAction ToggleFiltersVisibility =
+    H.modify_ \state -> state { filtersVisible = not state.filtersVisible }
 
 regionToOption :: Region -> TreeSelect.InputEntry String
 regionToOption (Region region subRegions) = TreeSelect.InputEntry
@@ -392,6 +409,7 @@ initialState fields =
         , field
         }
     , newOrReturning: false
+    , filtersVisible: false
     }
 
 component :: forall query left.
