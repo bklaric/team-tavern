@@ -241,7 +241,8 @@ loadTab handle GameHeader.Players = do
         Just gameContent', Just profilesContent' -> do
             player <- H.liftEffect getPlayerInfo
             H.put $ Game gameContent' player emptyFilters $ Players
-                { profiles: profilesContent'.profiles
+                { fields: gameContent'.fields
+                , profiles: profilesContent'.profiles
                 , profileCount: profilesContent'.count
                 , page: 1
                 , showCreateProfile:
@@ -307,7 +308,8 @@ handleAction (Receive (Input handle inputTab)) = do
             case profilesContent of
                 Just profilesContent' -> do
                     H.put $ Game content player emptyFilters $ Players
-                        { profiles: profilesContent'.profiles
+                        { fields: content.fields
+                        , profiles: profilesContent'.profiles
                         , profileCount: profilesContent'.count
                         , page: 1
                         , showCreateProfile:
@@ -345,7 +347,8 @@ handleAction (ApplyFilters filters) = do
             case profilesContent of
                 Just profilesContent' ->
                     H.put $ Game game' player filters $ Players
-                        { profiles: profilesContent'.profiles
+                        { fields: game'.fields
+                        , profiles: profilesContent'.profiles
                         , profileCount: profilesContent'.count
                         , page: 1
                         , showCreateProfile: input.showCreateProfile
@@ -396,7 +399,8 @@ handleAction (ChangePage page) = do
             case profilesContent of
                 Just profilesContent' ->
                     H.put $ Game game' player filters $ Players
-                        { profiles: profilesContent'.profiles
+                        { fields: game'.fields
+                        , profiles: profilesContent'.profiles
                         , profileCount: profilesContent'.count
                         , page
                         , showCreateProfile: input.showCreateProfile

@@ -44,6 +44,11 @@
     margin-bottom: 14px;
 }
 
+.unspecified-profile-field {
+    @extend .profile-field;
+    color: #ccc;
+}
+
 .profile-field-icon {
     position: absolute;
     font-size: 20px;
