@@ -67,6 +67,8 @@ type State =
         }
     , newOrReturning :: Boolean
     , filtersVisible :: Boolean
+    , playerFiltersVisible :: Boolean
+    , gameFiltersVisible :: Boolean
     }
 
 data Action
@@ -84,6 +86,8 @@ data Action
     | FieldInput String (Array (MultiSelect.InputEntry Option))
     | NewOrReturningInput Boolean
     | ToggleFiltersVisibility
+    | TogglePlayerFiltersVisibility
+    | ToggleGameFiltersVisibility
 
 data Output = Apply Filters
 
@@ -132,13 +136,13 @@ fieldInput { input, field: { key, label, icon } } =
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render state = HH.div [ HP.class_ $ HH.ClassName "card" ] $
-    [ HH.span
+    [ HH.h3
         [ HP.class_ $ HH.ClassName "filters-title"
         , HE.onClick $ const $ Just ToggleFiltersVisibility
         ]
         [ HH.text "Profile filters"
         , HH.i
-            [ HP.class_ $ HH.ClassName $ "fas filters-caret "
+            [ HP.class_ $ HH.ClassName $ "fas filters-title-caret "
                 <> if state.filtersVisible then "fa-caret-up" else "fa-caret-down"
             ]
             []
@@ -146,145 +150,184 @@ render state = HH.div [ HP.class_ $ HH.ClassName "card" ] $
     ]
     <>
     if state.filtersVisible
-    then Array.singleton $
-        HH.div [ HP.class_ $ HH.ClassName "card-content" ]
-        [ HH.div [ HP.class_ $ HH.ClassName "responsive-input-groups" ] $
-            [ HH.div [ HP.class_ $ HH.ClassName "input-group" ]
-                [ fieldLabel "Age" "fas fa-calendar-alt"
-                , HH.div [ HP.class_ $ HH.ClassName "timespan-group" ]
-                    [ HH.span [ HP.class_ $ HH.ClassName "timespan-group-from" ] [ HH.text "From" ]
-                    , HH.input
-                        [ HP.class_ $ HH.ClassName $ "text-line-input timespan-group-input"
-                        , HP.type_ HP.InputNumber
-                        , HP.value state.ageFrom
-                        , HE.onValueChange $ Just <<< AgeFromInput
-                        ]
-                    , HH.span [ HP.class_ $ HH.ClassName "timespan-group-to" ] [ HH.text "to" ]
-                    , HH.input
-                        [ HP.class_ $ HH.ClassName $ "text-line-input timespan-group-input"
-                        , HP.type_ HP.InputNumber
-                        , HP.value state.ageTo
-                        , HE.onValueChange $ Just <<< AgeToInput
-                        ]
-                    ]
+    then
+        [ HH.h4
+            [ HP.class_ $ HH.ClassName "card-section-title"
+            , HE.onClick $ const $ Just TogglePlayerFiltersVisibility
+            ]
+            [ HH.text "Player filters"
+            , HH.i
+                [ HP.class_ $ HH.ClassName $ "fas filters-section-title-caret "
+                    <> if state.playerFiltersVisible then "fa-caret-up" else "fa-caret-down"
                 ]
-            , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
-                [ fieldLabel "Location" "fas fa-globe-europe"
-                , treeSelect (SProxy :: SProxy "country")
-                    { entries: allRegions <#> regionToOption
-                    , selected: []
-                    , labeler: identity
-                    , comparer: (==)
-                    , filter: "Search locations"
-                    }
-                    (Just <<< CountriesInput)
-                ]
-            , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
-                [ fieldLabel "Language" "fas fa-comments"
-                , multiSelect (SProxy :: SProxy "language") state.languages (Just <<< LanguagesMessage)
-                ]
-            , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
-                [ fieldLabel "Microphone" "fas fa-microphone"
-                , HH.label
-                    [ HP.class_ $ HH.ClassName "checkbox-input-label" ]
-                    [ HH.input
-                        [ HP.class_ $ HH.ClassName "checkbox-input"
-                        , HP.type_ HP.InputCheckbox
-                        , HP.checked state.microphone
-                        , HE.onChecked $ Just <<< MicrophoneInput
-                        ]
-                    , HH.text "Must have a microphone and be willing to communicate."
-                    ]
-                ]
-            , HH.div [ HP.class_ $ HH.ClassName "input-group" ] $
-                [ fieldLabel "Online on weekdays" "fas fa-clock"
-                , HH.div [ HP.class_ $ HH.ClassName "timespan-group" ]
-                    [ HH.span [ HP.class_ $ HH.ClassName "timespan-group-from" ] [ HH.text "From" ]
-                    , HH.input
-                        [ HP.class_ $ HH.ClassName $ "text-line-input timespan-group-input"
-                        , HP.type_ HP.InputTime
-                        , HP.value state.weekdayFrom
-                        , HE.onValueChange $ Just <<< WeekdayFromInput
-                        ]
-                    , HH.span [ HP.class_ $ HH.ClassName "timespan-group-to" ] [ HH.text "to" ]
-                    , HH.input
-                        [ HP.class_ $ HH.ClassName $ "text-line-input timespan-group-input"
-                        , HP.type_ HP.InputTime
-                        , HP.value state.weekdayTo
-                        , HE.onValueChange $ Just <<< WeekdayToInput
+                []
+            ]
+        ]
+        <>
+        (if state.playerFiltersVisible
+        then Array.singleton $
+            HH.div [ HP.class_ $ HH.ClassName "card-section" ]
+            [ HH.div [ HP.class_ $ HH.ClassName "responsive-input-groups" ] $
+                [ HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+                    [ fieldLabel "Age" "fas fa-calendar-alt"
+                    , HH.div [ HP.class_ $ HH.ClassName "timespan-group" ]
+                        [ HH.span [ HP.class_ $ HH.ClassName "timespan-group-from" ] [ HH.text "From" ]
+                        , HH.input
+                            [ HP.class_ $ HH.ClassName $ "text-line-input timespan-group-input"
+                            , HP.type_ HP.InputNumber
+                            , HP.value state.ageFrom
+                            , HE.onValueChange $ Just <<< AgeFromInput
+                            ]
+                        , HH.span [ HP.class_ $ HH.ClassName "timespan-group-to" ] [ HH.text "to" ]
+                        , HH.input
+                            [ HP.class_ $ HH.ClassName $ "text-line-input timespan-group-input"
+                            , HP.type_ HP.InputNumber
+                            , HP.value state.ageTo
+                            , HE.onValueChange $ Just <<< AgeToInput
+                            ]
                         ]
                     ]
+                , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+                    [ fieldLabel "Location" "fas fa-globe-europe"
+                    , treeSelect (SProxy :: SProxy "country")
+                        { entries: allRegions <#> regionToOption
+                        , selected: []
+                        , labeler: identity
+                        , comparer: (==)
+                        , filter: "Search locations"
+                        }
+                        (Just <<< CountriesInput)
+                    ]
+                , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+                    [ fieldLabel "Language" "fas fa-comments"
+                    , multiSelect (SProxy :: SProxy "language") state.languages (Just <<< LanguagesMessage)
+                    ]
+                , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+                    [ fieldLabel "Microphone" "fas fa-microphone"
+                    , HH.label
+                        [ HP.class_ $ HH.ClassName "checkbox-input-label" ]
+                        [ HH.input
+                            [ HP.class_ $ HH.ClassName "checkbox-input"
+                            , HP.type_ HP.InputCheckbox
+                            , HP.checked state.microphone
+                            , HE.onChecked $ Just <<< MicrophoneInput
+                            ]
+                        , HH.text "Must have a microphone and be willing to communicate."
+                        ]
+                    ]
+                , HH.div [ HP.class_ $ HH.ClassName "input-group" ] $
+                    [ fieldLabel "Online on weekdays" "fas fa-clock"
+                    , HH.div [ HP.class_ $ HH.ClassName "timespan-group" ]
+                        [ HH.span [ HP.class_ $ HH.ClassName "timespan-group-from" ] [ HH.text "From" ]
+                        , HH.input
+                            [ HP.class_ $ HH.ClassName $ "text-line-input timespan-group-input"
+                            , HP.type_ HP.InputTime
+                            , HP.value state.weekdayFrom
+                            , HE.onValueChange $ Just <<< WeekdayFromInput
+                            ]
+                        , HH.span [ HP.class_ $ HH.ClassName "timespan-group-to" ] [ HH.text "to" ]
+                        , HH.input
+                            [ HP.class_ $ HH.ClassName $ "text-line-input timespan-group-input"
+                            , HP.type_ HP.InputTime
+                            , HP.value state.weekdayTo
+                            , HE.onValueChange $ Just <<< WeekdayToInput
+                            ]
+                        ]
+                    ]
+                    <>
+                    if String.null state.weekdayFrom && (not $ String.null state.weekdayTo)
+                        || (not $ String.null state.weekdayFrom) && String.null state.weekdayTo
+                    then Array.singleton $
+                        HH.label
+                        [ HP.class_ $ HH.ClassName "input-underlabel" ]
+                        [ HH.text $ "Enter both times for the filter to have effect." ]
+                    else []
+                , HH.div [ HP.class_ $ HH.ClassName "input-group" ] $
+                    [ fieldLabel "Online on weekends" "fas fa-clock"
+                    , HH.div [ HP.class_ $ HH.ClassName "timespan-group" ]
+                        [ HH.span [ HP.class_ $ HH.ClassName "timespan-group-from" ] [ HH.text "From" ]
+                        , HH.input
+                            [ HP.class_ $ HH.ClassName $ "text-line-input timespan-group-input"
+                            , HP.type_ HP.InputTime
+                            , HP.value state.weekendFrom
+                            , HE.onValueChange $ Just <<< WeekendFromInput
+                            ]
+                        , HH.span [ HP.class_ $ HH.ClassName "timespan-group-to" ] [ HH.text "to" ]
+                        , HH.input
+                            [ HP.class_ $ HH.ClassName $ "text-line-input timespan-group-input"
+                            , HP.type_ HP.InputTime
+                            , HP.value state.weekendTo
+                            , HE.onValueChange $ Just <<< WeekendToInput
+                            ]
+                        ]
+                    ]
+                    <>
+                    if String.null state.weekendFrom && (not $ String.null state.weekendTo)
+                        || (not $ String.null state.weekendFrom) && String.null state.weekendTo
+                    then Array.singleton $
+                        HH.label
+                        [ HP.class_ $ HH.ClassName "input-underlabel" ]
+                        [ HH.text $ "Enter both times for the filter to have effect." ]
+                    else []
                 ]
+            ]
+        else [])
+        <>
+        [ HH.h4
+            [ HP.class_ $ HH.ClassName "card-section-title"
+            , HE.onClick $ const $ Just ToggleGameFiltersVisibility
+            ]
+            [ HH.text "Game filters"
+            , HH.i
+                [ HP.class_ $ HH.ClassName $ "fas filters-section-title-caret "
+                    <> if state.gameFiltersVisible then "fa-caret-up" else "fa-caret-down"
+                ]
+                []
+            ]
+        ]
+        <>
+        (if state.gameFiltersVisible
+        then Array.singleton $
+            HH.div [ HP.class_ $ HH.ClassName "card-section" ]
+            [ HH.div [ HP.class_ $ HH.ClassName "responsive-input-groups" ] $
+                (map fieldInput state.fields)
                 <>
-                if String.null state.weekdayFrom && (not $ String.null state.weekdayTo)
-                    || (not $ String.null state.weekdayFrom) && String.null state.weekdayTo
-                then Array.singleton $
-                    HH.label
-                    [ HP.class_ $ HH.ClassName "input-underlabel" ]
-                    [ HH.text $ "Enter both times for the filter to have effect." ]
-                else []
-            , HH.div [ HP.class_ $ HH.ClassName "input-group" ] $
-                [ fieldLabel "Online on weekends" "fas fa-clock"
-                , HH.div [ HP.class_ $ HH.ClassName "timespan-group" ]
-                    [ HH.span [ HP.class_ $ HH.ClassName "timespan-group-from" ] [ HH.text "From" ]
-                    , HH.input
-                        [ HP.class_ $ HH.ClassName $ "text-line-input timespan-group-input"
-                        , HP.type_ HP.InputTime
-                        , HP.value state.weekendFrom
-                        , HE.onValueChange $ Just <<< WeekendFromInput
+                [ HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+                    [ HH.label
+                        [ HP.class_ $ HH.ClassName "input-label" ] $
+                        [ HH.i [ HP.class_ $ HH.ClassName "fas fa-book filter-field-icon" ] []
+                        , HH.span [ HP.class_ $ HH.ClassName "filter-field-label" ] [ HH.text "New or returning player" ]
                         ]
-                    , HH.span [ HP.class_ $ HH.ClassName "timespan-group-to" ] [ HH.text "to" ]
-                    , HH.input
-                        [ HP.class_ $ HH.ClassName $ "text-line-input timespan-group-input"
-                        , HP.type_ HP.InputTime
-                        , HP.value state.weekendTo
-                        , HE.onValueChange $ Just <<< WeekendToInput
+                    , HH.label
+                        [ HP.class_ $ HH.ClassName "checkbox-input-label" ]
+                        [ HH.input
+                            [ HP.class_ $ HH.ClassName "checkbox-input"
+                            , HP.type_ HP.InputCheckbox
+                            , HP.checked state.newOrReturning
+                            , HE.onChecked (Just <<< NewOrReturningInput)
+                            ]
+                        , HH.text "Must be new or returning players to the game."
                         ]
                     ]
                 ]
-                <>
-                if String.null state.weekendFrom && (not $ String.null state.weekendTo)
-                    || (not $ String.null state.weekendFrom) && String.null state.weekendTo
-                then Array.singleton $
-                    HH.label
-                    [ HP.class_ $ HH.ClassName "input-underlabel" ]
-                    [ HH.text $ "Enter both times for the filter to have effect." ]
-                else []
             ]
-            <>
-            (map fieldInput state.fields)
-            <>
-            [ HH.div [ HP.class_ $ HH.ClassName "input-group" ]
-                [ HH.label
-                    [ HP.class_ $ HH.ClassName "input-label" ] $
-                    [ HH.i [ HP.class_ $ HH.ClassName "fas fa-book filter-field-icon" ] []
-                    , HH.span [ HP.class_ $ HH.ClassName "filter-field-label" ] [ HH.text "New or returning player" ]
-                    ]
-                , HH.label
-                    [ HP.class_ $ HH.ClassName "checkbox-input-label" ]
-                    [ HH.input
-                        [ HP.class_ $ HH.ClassName "checkbox-input"
-                        , HP.type_ HP.InputCheckbox
-                        , HP.checked state.newOrReturning
-                        , HE.onChecked (Just <<< NewOrReturningInput)
-                        ]
-                    , HH.text "Must be new or returning players to the game."
-                    ]
+        else [])
+        <>
+        [ HH.div [ HP.class_ $ HH.ClassName "card-section" ]
+            [ HH.button
+                [ HP.class_ $ HH.ClassName "apply-filters"
+                , HE.onClick $ const $ Just $ ApplyAction
                 ]
-            ]
-        , HH.button
-            [ HP.class_ $ HH.ClassName "apply-filters"
-            , HE.onClick $ const $ Just $ ApplyAction
-            ]
-            [ HH.i [ HP.class_ $ HH.ClassName "fas fa-filter button-icon" ] []
-            , HH.text "Apply filters"
-            ]
-        , HH.button
-            [ HP.class_ $ HH.ClassName "clear-filters"
-            , HE.onClick $ const $ Just $ Clear
-            ]
-            [ HH.i [ HP.class_ $ HH.ClassName "fas fa-eraser button-icon" ] []
-            , HH.text "Clear filters"
+                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-filter button-icon" ] []
+                , HH.text "Apply filters"
+                ]
+            , HH.button
+                [ HP.class_ $ HH.ClassName "clear-filters"
+                , HE.onClick $ const $ Just $ Clear
+                ]
+                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-eraser button-icon" ] []
+                , HH.text "Clear filters"
+                ]
             ]
         ]
     else []
@@ -375,6 +418,10 @@ handleAction (NewOrReturningInput newOrReturning) =
     H.modify_ (_ { newOrReturning = newOrReturning })
 handleAction ToggleFiltersVisibility =
     H.modify_ \state -> state { filtersVisible = not state.filtersVisible }
+handleAction TogglePlayerFiltersVisibility =
+    H.modify_ \state -> state { playerFiltersVisible = not state.playerFiltersVisible }
+handleAction ToggleGameFiltersVisibility =
+    H.modify_ \state -> state { gameFiltersVisible = not state.gameFiltersVisible }
 
 regionToOption :: Region -> TreeSelect.InputEntry String
 regionToOption (Region region subRegions) = TreeSelect.InputEntry
@@ -410,6 +457,8 @@ initialState fields =
         }
     , newOrReturning: false
     , filtersVisible: false
+    , playerFiltersVisible: false
+    , gameFiltersVisible: false
     }
 
 component :: forall query left.

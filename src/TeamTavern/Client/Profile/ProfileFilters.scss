@@ -3,9 +3,14 @@
     cursor: pointer;
 }
 
-.filters-caret {
+.filters-title-caret {
     @extend .top-bar-games-caret;
     color: $text-color;
+}
+
+.filters-section-title-caret {
+    @extend .filters-title-caret;
+    line-height: 20px;
 }
 
 .filter-field-icon {

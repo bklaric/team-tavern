@@ -26,7 +26,6 @@
     min-height: 40px;
     padding: 7px 21px;
     margin: 0;
-    border-bottom: 1px solid #ccc;
     white-space: pre-wrap;
 }
 
@@ -45,16 +44,26 @@
     padding: 21px;
 }
 
+.card-section-title {
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.5;
+    padding: 7px 21px;
+    border-top: 1px solid #ccc;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+}
+
 .card-section {
     @extend .card-content;
-
-    &:not(:last-child) {
-        border-bottom: 1px solid #ccc;
-    }
+    border-top: 1px solid #ccc;
 }
 
 .card-footer {
     display: block;
     line-height: 40px;
     padding: 7px 21px;
+    border-top: 1px solid #ccc;
 }

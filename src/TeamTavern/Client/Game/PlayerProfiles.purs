@@ -133,7 +133,7 @@ totalPages count = ceil (toNumber count / toNumber pageSize)
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { profiles, profileCount, showCreateProfile, playerInfo, page } =
     HH.div [ HP.class_ $ HH.ClassName "card" ] $
-    [ HH.span [ HP.class_ $ HH.ClassName "card-title" ] $
+    [ HH.h3 [ HP.class_ $ HH.ClassName "card-title" ] $
         [ HH.span [ HP.class_ $ HH.ClassName "card-title-text" ]
             [ HH.text "Player profiles"
             , divider
@@ -168,7 +168,7 @@ render { profiles, profileCount, showCreateProfile, playerInfo, page } =
         [ HH.p_ [ HH.text "No profiles satisfy specified filters." ] ]
     else (profiles # mapWithIndex \index profile ->
         HH.div [ HP.class_ $ HH.ClassName "card-section" ] $
-        [ HH.h3 [ HP.class_ $ HH.ClassName "player-profile-title" ] $
+        [ HH.h4 [ HP.class_ $ HH.ClassName "player-profile-title" ] $
             [ HH.div [ HP.class_ $ HH.ClassName "player-profile-title-item" ]
                 [ navigationAnchorIndexed (SProxy :: SProxy "players") index
                     { path: "/players/" <> profile.nickname, content: HH.text profile.nickname }

@@ -11,6 +11,7 @@
 .responsive-input-groups {
     display: flex;
     flex-wrap: wrap;
+    margin-bottom: -28px;
 
     @media screen and (min-width: 630px) {
         margin-right: -21px;
