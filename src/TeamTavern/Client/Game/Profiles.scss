@@ -14,12 +14,13 @@
     line-height: 21px;
     font-weight: 500;
     margin-right: -14px;
+    margin-top: -14px;
     margin-bottom: 0;
 }
 
 .player-profile-title-item {
     margin-right: 14px;
-    margin-bottom: 14px;
+    margin-top: 14px;
 }
 
 .player-profile-title-message {
@@ -28,6 +29,13 @@
 
 .profile-title-button {
     margin-left: 14px;
+}
+
+.player-profile-section-title {
+    font-weight: 500;
+    margin-bottom: 14px;
+    margin-top: 28px;
+    color: #888;
 }
 
 .profile-updated {

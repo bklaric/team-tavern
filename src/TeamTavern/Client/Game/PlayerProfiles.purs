@@ -204,9 +204,9 @@ render { fields, profiles, profileCount, showCreateProfile, playerInfo, page } =
                     ]
                 ]
             _ -> []
-        ]
-        <>
-        [ case profile.age of
+        , HH.h5 [ HP.class_ $ HH.ClassName "player-profile-section-title" ]
+            [ HH.text "Player details" ]
+        , case profile.age of
             Just age ->
                 HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
                 [ HH.i [ HP.class_ $ HH.ClassName "fas fa-calendar-alt profile-field-icon" ] []
@@ -318,6 +318,8 @@ render { fields, profiles, profileCount, showCreateProfile, playerInfo, page } =
                 [ HH.i [ HP.class_ $ HH.ClassName "fas fa-clock profile-field-icon" ] []
                 , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text "Weekend time not specified" ]
                 ]
+        , HH.h5 [ HP.class_ $ HH.ClassName "player-profile-section-title" ]
+            [ HH.text "Game details" ]
         ]
         <> (fields <#> \field ->
             case field.ilk of
@@ -378,7 +380,7 @@ render { fields, profiles, profileCount, showCreateProfile, playerInfo, page } =
             else Array.singleton $
                 HH.p [ HP.class_ $ HH.ClassName "unspecified-profile-field" ]
                 [ HH.i [ HP.class_ $ HH.ClassName "fas fa-book profile-field-icon" ] []
-                , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text "Is an experienced player" ]
+                , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text "Isn't a new or returning player" ]
                 ])
         <> (profile.summary <#> \paragraph ->
             HH.p [ HP.class_ $ HH.ClassName "profile-summary" ] [ HH.text paragraph ]))
