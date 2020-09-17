@@ -23,6 +23,9 @@ import TeamTavern.Client.Components.NavigationAnchor as Anchor
 import TeamTavern.Client.Script.Clipboard (writeTextAsync)
 import TeamTavern.Client.Script.Cookie (PlayerInfo)
 import TeamTavern.Server.Profile.ViewPlayerProfilesByGame.LoadProfiles (pageSize)
+import Web.Event.Event as Event
+import Web.UIEvent.MouseEvent (MouseEvent)
+import Web.UIEvent.MouseEvent as MouseEvent
 
 type Fields = Array
     { ilk :: Int
@@ -95,7 +98,7 @@ data Action
     = Receive Input
     | ChangePageAction Int
     | CreateProfileAction
-    | CopyDiscordTag String String
+    | CopyDiscordTag String String MouseEvent
 
 data Message
     = CreateProfile
@@ -272,9 +275,9 @@ render { fields, profiles, profileCount, showCreateProfile, playerInfo, page } =
                 HH.p [ HP.class_ $ HH.ClassName "profile-field" ] $
                 [ HH.i [ HP.class_ $ HH.ClassName "fab fa-discord profile-field-icon" ] []
                 , HH.span [ HP.class_ $ HH.ClassName "profile-field-label" ] [ HH.text "Discord tag: " ]
-                , HH.a
+                , HH.span
                     [ HP.class_ $ HH.ClassName "discord-tag"
-                    , HE.onClick $ const $ Just $ CopyDiscordTag profile.nickname discordTag ]
+                    , HE.onClick $ Just <<< CopyDiscordTag profile.nickname discordTag ]
                     [ HH.text discordTag ]
                 ]
                 <>
@@ -328,7 +331,7 @@ render { fields, profiles, profileCount, showCreateProfile, playerInfo, page } =
                 Just fieldValue | Just url <- fieldValue.url ->
                     HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
                     [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
-                    , HH.a [ HP.class_ $ HH.ClassName "profile-field-url", HP.href url ] [ HH.text field.label ]
+                    , HH.a [ HP.class_ $ HH.ClassName "profile-field-url", HP.href url, HP.target "_blank" ] [ HH.text field.label ]
                     ]
                 _ ->
                     HH.p [ HP.class_ $ HH.ClassName "unspecified-profile-field" ]
@@ -424,7 +427,8 @@ handleAction :: forall left.
 handleAction (Receive input) = H.put $ prepareState input
 handleAction (ChangePageAction page) = H.raise $ ChangePage page
 handleAction CreateProfileAction = H.raise CreateProfile
-handleAction (CopyDiscordTag nickname discordTag) = do
+handleAction (CopyDiscordTag nickname discordTag mouseEvent) = do
+    H.liftEffect $ Event.preventDefault $ MouseEvent.toEvent mouseEvent
     result <- H.lift $ Async.attempt $ writeTextAsync discordTag
     case result of
         Right _ -> H.modify_ \state -> state { profiles = state.profiles <#> \profile ->
