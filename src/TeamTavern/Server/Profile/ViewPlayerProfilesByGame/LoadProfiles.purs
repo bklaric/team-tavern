@@ -38,6 +38,7 @@ type LoadProfilesResult =
     , hasMicrophone :: Boolean
     , weekdayOnline :: Maybe { from :: String, to :: String }
     , weekendOnline :: Maybe { from :: String, to :: String }
+    , about :: Array String
     , fieldValues :: Array
         { field ::
             { ilk :: Int
@@ -234,6 +235,7 @@ queryStringWithoutPagination handle timezone filters = Query $ """
                     'to', to_char(""" <> timezoneAdjustedTime timezone "player.weekend_to" <> """, 'HH24:MI')
                 )
             end as "weekendOnline",
+            player.about,
             coalesce(
                 jsonb_agg(
                     jsonb_build_object(

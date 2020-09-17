@@ -87,6 +87,11 @@
     }
 }
 
+.unspecified-profile-summary {
+    @extend .profile-summary;
+    color: #ccc;
+}
+
 .pagination {
     display: flex;
     justify-content: space-between;

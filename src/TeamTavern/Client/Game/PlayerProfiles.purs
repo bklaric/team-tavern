@@ -49,6 +49,7 @@ type PlayerProfileRow other =
     , hasMicrophone :: Boolean
     , weekdayOnline :: Maybe { from :: String, to :: String }
     , weekendOnline :: Maybe { from :: String, to :: String }
+    , about :: Array String
     , fieldValues :: Array
         { field ::
             { ilk :: Int
@@ -234,7 +235,7 @@ render { fields, profiles, profileCount, showCreateProfile, playerInfo, page } =
                 [ HH.i [ HP.class_ $ HH.ClassName "fas fa-globe-europe profile-field-icon" ] []
                 , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text "Location not specified" ]
                 ]
-       , if Array.null profile.languages
+        , if Array.null profile.languages
             then
                 HH.p [ HP.class_ $ HH.ClassName "unspecified-profile-field" ]
                 [ HH.i [ HP.class_ $ HH.ClassName "fas fa-comments profile-field-icon" ] []
@@ -321,7 +322,16 @@ render { fields, profiles, profileCount, showCreateProfile, playerInfo, page } =
                 [ HH.i [ HP.class_ $ HH.ClassName "fas fa-clock profile-field-icon" ] []
                 , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text "Weekend time not specified" ]
                 ]
-        , HH.h5 [ HP.class_ $ HH.ClassName "player-profile-section-title" ]
+        ]
+        <>
+        (if Array.null profile.about
+            then Array.singleton $
+                HH.p [ HP.class_ $ HH.ClassName "unspecified-profile-summary" ] [ HH.text "No additional information about the player provided." ]
+            else profile.about <#> \paragraph ->
+                HH.p [ HP.class_ $ HH.ClassName "profile-summary" ] [ HH.text paragraph ]
+        )
+        <>
+        [ HH.h5 [ HP.class_ $ HH.ClassName "player-profile-section-title" ]
             [ HH.text "Game details" ]
         ]
         <> (fields <#> \field ->
