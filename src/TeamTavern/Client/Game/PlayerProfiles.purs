@@ -4,13 +4,13 @@ import Prelude
 
 import Async (Async)
 import Async as Async
-import Data.Array (find, foldr, intercalate)
+import Data.Array (foldr, intercalate)
 import Data.Array as Array
 import Data.Const (Const)
 import Data.Either (Either(..))
 import Data.FunctorWithIndex (mapWithIndex)
 import Data.Int (ceil, floor, toNumber)
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), isNothing)
 import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
@@ -76,8 +76,7 @@ type PlayerProfileRow other =
 type InputPlayerProfile = Record (PlayerProfileRow ())
 
 type Input =
-    { fields :: Fields
-    , profiles :: Array InputPlayerProfile
+    { profiles :: Array InputPlayerProfile
     , profileCount :: Int
     , showCreateProfile :: Boolean
     , playerInfo :: Maybe PlayerInfo
@@ -87,8 +86,7 @@ type Input =
 type StatePlayerProfile = Record (PlayerProfileRow (discordTagCopied :: Boolean))
 
 type State =
-    { fields :: Fields
-    , profiles :: Array StatePlayerProfile
+    { profiles :: Array StatePlayerProfile
     , profileCount :: Int
     , showCreateProfile :: Boolean
     , playerInfo :: Maybe PlayerInfo
@@ -150,7 +148,7 @@ totalPages :: Int -> Int
 totalPages count = ceil (toNumber count / toNumber pageSize)
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
-render { fields, profiles, profileCount, showCreateProfile, playerInfo, page } =
+render { profiles, profileCount, showCreateProfile, playerInfo, page } =
     HH.div [ HP.class_ $ HH.ClassName "card" ] $
     [ HH.h3 [ HP.class_ $ HH.ClassName "card-title" ] $
         [ HH.span [ HP.class_ $ HH.ClassName "card-title-text" ]
@@ -208,195 +206,134 @@ render { fields, profiles, profileCount, showCreateProfile, playerInfo, page } =
                     ]
                 ]
             _ -> []
-        , HH.h5 [ HP.class_ $ HH.ClassName "player-profile-section-title" ]
-            [ HH.text "Player details" ]
-        , case profile.age of
-            Just age ->
-                HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
-                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-calendar-alt profile-field-icon" ] []
-                , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text "Is " ]
-                , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text $ show age ]
-                , HH.text " years old"
-                ]
-            Nothing ->
-                HH.p [ HP.class_ $ HH.ClassName "unspecified-profile-field" ]
-                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-calendar-alt profile-field-icon" ] []
-                , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text "Age not specified" ]
-                ]
-        , case profile.country of
-            Just country ->
-                HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
-                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-globe-europe profile-field-icon" ] []
-                , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text "Lives in " ]
-                , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text country ]
-                ]
-            Nothing ->
-                HH.p [ HP.class_ $ HH.ClassName "unspecified-profile-field" ]
-                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-globe-europe profile-field-icon" ] []
-                , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text "Location not specified" ]
-                ]
-        , if Array.null profile.languages
-            then
-                HH.p [ HP.class_ $ HH.ClassName "unspecified-profile-field" ]
-                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-comments profile-field-icon" ] []
-                , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text "Language not specified" ]
-                ]
-            else
-                HH.p [ HP.class_ $ HH.ClassName "profile-field" ] $
-                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-comments profile-field-icon" ] []
-                , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text "Speaks " ]
-                ]
-                <>
-                ( foldr
-                    (\language state ->
-                        if not state.firstLanguage
-                        then state { firstLanguage = true, languagesSoFar = [ HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text language ] ] }
-                        else if not state.secondLanguage
-                        then state { secondLanguage = true, languagesSoFar = [ HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text language ], HH.text " and " ] <> state.languagesSoFar }
-                        else state { languagesSoFar = [ HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text language ], HH.text ", " ] <> state.languagesSoFar }
-                    )
-                    { firstLanguage: false, secondLanguage: false, languagesSoFar: [] }
-                    profile.languages
-                    # _.languagesSoFar
-                )
-        , if profile.hasMicrophone
-            then
-                HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
-                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-microphone profile-field-icon" ] []
-                , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless profile-field-emphasize" ] [ HH.text "Has microphone" ]
-                , HH.text $ " and is willing to communicate"
-                ]
-            else
-                HH.p [ HP.class_ $ HH.ClassName "unspecified-profile-field" ]
-                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-microphone profile-field-icon" ] []
-                , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text "Doesn't have a microphone" ]
-                ]
-        , case profile.discordTag of
-            Just discordTag ->
-                HH.p [ HP.class_ $ HH.ClassName "profile-field" ] $
-                [ HH.i [ HP.class_ $ HH.ClassName "fab fa-discord profile-field-icon" ] []
-                , HH.span [ HP.class_ $ HH.ClassName "profile-field-label" ] [ HH.text "Discord tag: " ]
-                , HH.span
-                    [ HP.class_ $ HH.ClassName "discord-tag"
-                    , HE.onClick $ Just <<< CopyDiscordTag profile.nickname discordTag ]
-                    [ HH.text discordTag ]
-                ]
-                <>
-                if profile.discordTagCopied
-                then Array.singleton $ HH.span [ HP.class_ $ HH.ClassName "discord-tag-copied" ] [ HH.text "Copied!" ]
-                else []
-            Nothing ->
-                HH.p [ HP.class_ $ HH.ClassName "unspecified-profile-field" ]
-                [ HH.i [ HP.class_ $ HH.ClassName "fab fa-discord profile-field-icon" ] []
-                , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text "Discord tag not specified" ]
-                ]
-        , case profile.weekdayOnline of
-            Just { from, to } ->
-                HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
-                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-clock profile-field-icon" ] []
-                , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text $ "Online on " ]
-                , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text "weekdays" ]
-                , HH.text " from "
-                , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text from ]
-                , HH.text " to "
-                , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text to ]
-                ]
-            Nothing ->
-                HH.p [ HP.class_ $ HH.ClassName "unspecified-profile-field" ]
-                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-clock profile-field-icon" ] []
-                , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text "Weekday time not specified" ]
-                ]
-        , case profile.weekendOnline of
-            Just { from, to } ->
-                HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
-                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-clock profile-field-icon" ] []
-                , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text $ "Online on " ]
-                , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text "weekends" ]
-                , HH.text " from "
-                , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text from ]
-                , HH.text " to "
-                , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text to ]
-                ]
-            Nothing ->
-                HH.p [ HP.class_ $ HH.ClassName "unspecified-profile-field" ]
-                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-clock profile-field-icon" ] []
-                , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text "Weekend time not specified" ]
-                ]
-        ]
-        <>
-        (if Array.null profile.about
-            then Array.singleton $
-                HH.p [ HP.class_ $ HH.ClassName "unspecified-profile-summary" ] [ HH.text "No additional information about the player provided." ]
-            else profile.about <#> \paragraph ->
-                HH.p [ HP.class_ $ HH.ClassName "profile-summary" ] [ HH.text paragraph ]
-        )
-        <>
-        [ HH.h5 [ HP.class_ $ HH.ClassName "player-profile-section-title" ]
-            [ HH.text "Game details" ]
-        ]
-        <> (fields <#> \field ->
-            case field.ilk of
-            1 ->
-                case find (\fieldValue -> fieldValue.field.key == field.key) profile.fieldValues of
-                Just fieldValue | Just url <- fieldValue.url ->
+        , HH.div [ HP.class_ $ HH.ClassName "profile-columns" ]
+            [ HH.div [ HP.class_ $ HH.ClassName "profile-column" ] $
+                (if isNothing profile.age && isNothing profile.country && Array.null profile.languages && not profile.hasMicrophone
+                    && isNothing profile.discordTag && isNothing profile.weekdayOnline && isNothing profile.weekendOnline
+                then []
+                else  [ HH.h5 [ HP.class_ $ HH.ClassName "player-profile-section-title" ] [ HH.text "Player details" ] ])
+                <> Array.catMaybes
+                [ profile.age <#> \age ->
                     HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
-                    [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
-                    , HH.a [ HP.class_ $ HH.ClassName "profile-field-url", HP.href url, HP.target "_blank" ] [ HH.text field.label ]
+                    [ HH.i [ HP.class_ $ HH.ClassName "fas fa-calendar-alt profile-field-icon" ] []
+                    , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text "Is " ]
+                    , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text $ show age ]
+                    , HH.text " years old"
                     ]
-                _ ->
-                    HH.p [ HP.class_ $ HH.ClassName "unspecified-profile-field" ]
-                    [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
-                    , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text $ field.label <> " not specified" ]
-                    ]
-            2 ->
-                case find (\fieldValue -> fieldValue.field.key == field.key) profile.fieldValues of
-                Just fieldValue | Just option <- fieldValue.option ->
+                , profile.country <#> \country ->
                     HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
-                    [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
-                    , HH.span [ HP.class_ $ HH.ClassName "profile-field-label" ] [ HH.text $ field.label <> ": " ]
-                    , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text option.label ]
+                    [ HH.i [ HP.class_ $ HH.ClassName "fas fa-globe-europe profile-field-icon" ] []
+                    , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text "Lives in " ]
+                    , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text country ]
                     ]
-                _ ->
-                    HH.p [ HP.class_ $ HH.ClassName "unspecified-profile-field" ]
-                    [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
-                    , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text $ field.label <> " not specified" ]
-                    ]
-            3 ->
-                case find (\fieldValue -> fieldValue.field.key == field.key) profile.fieldValues of
-                Just fieldValue | Just options <- fieldValue.options, not $ Array.null options ->
+                , if Array.null profile.languages
+                    then Nothing
+                    else Just $
+                        HH.p [ HP.class_ $ HH.ClassName "profile-field" ] $
+                        [ HH.i [ HP.class_ $ HH.ClassName "fas fa-comments profile-field-icon" ] []
+                        , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text "Speaks " ]
+                        ]
+                        <>
+                        ( foldr
+                            (\language state ->
+                                if not state.firstLanguage
+                                then state { firstLanguage = true, languagesSoFar = [ HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text language ] ] }
+                                else if not state.secondLanguage
+                                then state { secondLanguage = true, languagesSoFar = [ HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text language ], HH.text " and " ] <> state.languagesSoFar }
+                                else state { languagesSoFar = [ HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text language ], HH.text ", " ] <> state.languagesSoFar }
+                            )
+                            { firstLanguage: false, secondLanguage: false, languagesSoFar: [] }
+                            profile.languages
+                            # _.languagesSoFar
+                        )
+                , if profile.hasMicrophone
+                    then Just $
+                        HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
+                        [ HH.i [ HP.class_ $ HH.ClassName "fas fa-microphone profile-field-icon" ] []
+                        , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless profile-field-emphasize" ] [ HH.text "Has microphone" ]
+                        , HH.text $ " and is willing to communicate"
+                        ]
+                    else Nothing
+                , profile.discordTag <#> \discordTag ->
                     HH.p [ HP.class_ $ HH.ClassName "profile-field" ] $
-                    [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
-                    , HH.span [ HP.class_ $ HH.ClassName "profile-field-label" ] [ HH.text $ field.label <> ": " ]
+                    [ HH.i [ HP.class_ $ HH.ClassName "fab fa-discord profile-field-icon" ] []
+                    , HH.span [ HP.class_ $ HH.ClassName "profile-field-label" ] [ HH.text "Discord tag: " ]
+                    , HH.span
+                        [ HP.class_ $ HH.ClassName "discord-tag"
+                        , HE.onClick $ Just <<< CopyDiscordTag profile.nickname discordTag ]
+                        [ HH.text discordTag ]
                     ]
                     <>
-                    (intercalate [(HH.text ", ")] $
-                        map (\{ label } -> [ HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text label ] ]) options)
-                _ ->
-                    HH.p [ HP.class_ $ HH.ClassName "unspecified-profile-field" ]
-                    [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
-                    , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text $ field.label <> " not specified" ]
+                    if profile.discordTagCopied
+                    then Array.singleton $ HH.span [ HP.class_ $ HH.ClassName "discord-tag-copied" ] [ HH.text "Copied!" ]
+                    else []
+                , profile.weekdayOnline <#> \{ from, to } ->
+                    HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
+                    [ HH.i [ HP.class_ $ HH.ClassName "fas fa-clock profile-field-icon" ] []
+                    , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text $ "Online on " ]
+                    , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text "weekdays" ]
+                    , HH.text " from "
+                    , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text from ]
+                    , HH.text " to "
+                    , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text to ]
                     ]
-            _ ->
-                HH.p [ HP.class_ $ HH.ClassName "unspecified-profile-field" ]
-                [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
-                , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text $ field.label <> " not specified" ]
+                , profile.weekendOnline <#> \{ from, to } ->
+                    HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
+                    [ HH.i [ HP.class_ $ HH.ClassName "fas fa-clock profile-field-icon" ] []
+                    , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text $ "Online on " ]
+                    , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text "weekends" ]
+                    , HH.text " from "
+                    , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text from ]
+                    , HH.text " to "
+                    , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text to ]
+                    ]
+                , Just $ HH.h5 [ HP.class_ $ HH.ClassName "player-profile-section-title" ] [ HH.text "Game details" ]
                 ]
-        )
-        <> (if profile.newOrReturning
-            then Array.singleton $
-                HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
-                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-book profile-field-icon" ] []
-                , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text "Is a"]
-                , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text " new or returning player" ]
-                , HH.text $ " to the game"
-                ]
-            else Array.singleton $
-                HH.p [ HP.class_ $ HH.ClassName "unspecified-profile-field" ]
-                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-book profile-field-icon" ] []
-                , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text "Isn't a new or returning player" ]
-                ])
-        <> (profile.summary <#> \paragraph ->
-            HH.p [ HP.class_ $ HH.ClassName "profile-summary" ] [ HH.text paragraph ]))
+                <> Array.catMaybes (profile.fieldValues <#> \{ field, url, option, options } ->
+                    case field.ilk, url, option, options of
+                    1, Just url', _, _ -> Just $
+                        HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
+                        [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
+                        , HH.a [ HP.class_ $ HH.ClassName "profile-field-url", HP.href url' ] [ HH.text field.label ]
+                        ]
+                    2, _, Just option', _ -> Just $
+                        HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
+                        [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
+                        , HH.span [ HP.class_ $ HH.ClassName "profile-field-label" ] [ HH.text $ field.label <> ": " ]
+                        , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text option'.label ]
+                        ]
+                    3, _, _, Just options' | not $ Array.null options' -> Just $
+                        HH.p [ HP.class_ $ HH.ClassName "profile-field" ] $
+                        [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
+                        , HH.span [ HP.class_ $ HH.ClassName "profile-field-label" ] [ HH.text $ field.label <> ": " ]
+                        ]
+                        <>
+                        (intercalate [(HH.text ", ")] $
+                            map (\{ label } -> [ HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text label ] ]) options')
+                    _, _, _, _ ->  Nothing)
+                <> (if profile.newOrReturning
+                    then Array.singleton $
+                        HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
+                        [ HH.i [ HP.class_ $ HH.ClassName "fas fa-book profile-field-icon" ] []
+                        , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text "Is a"]
+                        , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text " new or returning player" ]
+                        , HH.text $ " to the game"
+                        ]
+                    else [])
+            , HH.div [ HP.class_ $ HH.ClassName "profile-column" ] $
+                (if Array.null $ profile.about
+                then []
+                else [ HH.h5 [ HP.class_ $ HH.ClassName "player-profile-section-title" ] [ HH.text "About" ] ]
+                    <> (profile.about <#> \paragraph ->
+                        HH.p [ HP.class_ $ HH.ClassName "profile-summary" ] [ HH.text paragraph ]))
+                <>
+                (if Array.null $ profile.summary
+                then []
+                else [ HH.h5 [ HP.class_ $ HH.ClassName "player-profile-section-title" ] [ HH.text "Ambitions" ] ]
+                    <> (profile.summary <#> \paragraph ->
+                        HH.p [ HP.class_ $ HH.ClassName "profile-summary" ] [ HH.text paragraph ]))
+            ]
+        ])
     <> (Array.singleton $
         HH.div [ HP.class_ $ HH.ClassName "card-footer" ]
             [ HH.div [ HP.class_$ HH.ClassName "pagination" ]

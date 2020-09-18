@@ -31,6 +31,19 @@
     margin-left: 14px;
 }
 
+.profile-columns {
+    display: flex;
+    flex-direction: column;
+
+    @media screen and (min-width: 630px) {
+        flex-direction: row;
+    }
+}
+
+.profile-column {
+    flex: 0 1 100%;
+}
+
 .player-profile-section-title {
     font-weight: 500;
     margin-bottom: 14px;
@@ -50,11 +63,6 @@
     font-size: 14px;
     line-height: 21px;
     margin-bottom: 14px;
-}
-
-.unspecified-profile-field {
-    @extend .profile-field;
-    color: #ccc;
 }
 
 .profile-field-icon {
@@ -85,11 +93,6 @@
     &:last-child {
         margin-bottom: 0;
     }
-}
-
-.unspecified-profile-summary {
-    @extend .profile-summary;
-    color: #ccc;
 }
 
 .pagination {
