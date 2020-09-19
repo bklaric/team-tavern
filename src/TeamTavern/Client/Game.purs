@@ -11,12 +11,15 @@ import Data.Array (intercalate)
 import Data.Array as Array
 import Data.Bifunctor (lmap)
 import Data.Const (Const)
+import Data.Int (round)
 import Data.Maybe (Maybe(..), isJust)
 import Data.String as String
 import Data.Symbol (SProxy(..))
 import Effect (Effect)
+import Effect.Class (class MonadEffect)
 import Halogen as H
 import Halogen.HTML as HH
+import Halogen.HTML.Properties as HP
 import Simple.JSON.Async as Json
 import TeamTavern.Client.Components.ModalDeclarative as Modal
 import TeamTavern.Client.Game.CreatePlayerProfile (createPlayerProfile)
@@ -36,9 +39,15 @@ import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Server.Game.View.SendResponse as ViewGame
 import TeamTavern.Server.Profile.ViewPlayerProfilesByGame.SendResponse (OkContent) as ViewGamePlayers
 import TeamTavern.Server.Profile.ViewTeamProfilesByGame.SendResponse as ViewGameTeams
+import Web.DOM.ParentNode (QuerySelector(..))
+import Web.DOM.ParentNode as ParentNode
 import Web.HTML (window)
+import Web.HTML as Html
+import Web.HTML.HTMLDocument as HtmlDocument
+import Web.HTML.HTMLElement as HtmlElement
 import Web.HTML.Location (reload)
 import Web.HTML.Window (location)
+import Web.HTML.Window as Window
 
 type ShowCreateModal = Boolean
 
@@ -109,21 +118,23 @@ render (Game game' player _ tab) = let
     in
     HH.div_ $
     [ gameHeader
-    , filterProfiles (filterableFields game'.fields)
-        (\(ProfileFilters.Apply filters) -> Just $ ApplyFilters filters)
-    , case tab of
-        Players input _ ->
-            playerProfiles
-            input
-            case _ of
-            PlayerProfiles.CreateProfile -> Just ShowCreateProfileModal
-            PlayerProfiles.ChangePage page -> Just $ ChangePage page
-        Teams input _ _ ->
-            teamProfiles
-            input
-            case _ of
-            TeamProfiles.CreateProfile -> Just ShowCreateProfileModal
-            TeamProfiles.ChangePage page -> Just $ ChangePage page
+    , HH.div [ HP.class_ $ HH.ClassName "profiles-container" ]
+        [ filterProfiles (filterableFields game'.fields)
+            (\(ProfileFilters.Apply filters) -> Just $ ApplyFilters filters)
+        , case tab of
+            Players input _ ->
+                playerProfiles
+                input
+                case _ of
+                PlayerProfiles.CreateProfile -> Just ShowCreateProfileModal
+                PlayerProfiles.ChangePage page -> Just $ ChangePage page
+            Teams input _ _ ->
+                teamProfiles
+                input
+                case _ of
+                TeamProfiles.CreateProfile -> Just ShowCreateProfileModal
+                TeamProfiles.ChangePage page -> Just $ ChangePage page
+        ]
     ]
     <>
     case player, tab of
@@ -291,6 +302,18 @@ setMetaTags handleOrTitle tab =
         setMetaDescription $ "Browse and filter " <> handleOrTitle <> " teams looking for players."
         setMetaUrl
 
+scrollProfilesIntoView :: forall monad. Bind monad => MonadEffect monad => monad Unit
+scrollProfilesIntoView = do
+    profileCard <- Html.window >>= Window.document <#> HtmlDocument.toParentNode
+        >>= ParentNode.querySelector (QuerySelector "#profiles-card")
+        <#> (\element -> element >>= HtmlElement.fromElement)
+        # H.liftEffect
+    case profileCard of
+        Just element -> do
+            offsetTop <- H.liftEffect $ round <$> HtmlElement.offsetTop element
+            Html.window >>= Window.scroll 0 (offsetTop - 41 - 21) # H.liftEffect
+        Nothing -> pure unit
+
 handleAction :: forall output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
 handleAction Init = do
@@ -369,6 +392,7 @@ handleAction (ApplyFilters filters) = do
                         timezone
                 Nothing -> pure unit
         _ -> pure unit
+    scrollProfilesIntoView
 handleAction ShowCreateProfileModal =
     H.modify_
     case _ of
@@ -420,6 +444,7 @@ handleAction (ChangePage page) = do
                         timezone
                 Nothing -> pure unit
         _ -> pure unit
+    scrollProfilesIntoView
 
 component :: forall query output left.
     H.Component HH.HTML query Input output (Async left)

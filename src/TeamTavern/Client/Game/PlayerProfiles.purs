@@ -149,7 +149,7 @@ totalPages count = ceil (toNumber count / toNumber pageSize)
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { profiles, profileCount, showCreateProfile, playerInfo, page } =
-    HH.div [ HP.class_ $ HH.ClassName "card" ] $
+    HH.div [ HP.id_ "profiles-card", HP.class_ $ HH.ClassName "profiles-card" ] $
     [ HH.h3 [ HP.class_ $ HH.ClassName "card-title" ] $
         [ HH.span [ HP.class_ $ HH.ClassName "card-title-text" ]
             [ HH.text "Player profiles"
@@ -335,29 +335,32 @@ render { profiles, profileCount, showCreateProfile, playerInfo, page } =
             ]
         ])
     <> (Array.singleton $
-        HH.div [ HP.class_ $ HH.ClassName "card-footer" ]
-            [ HH.div [ HP.class_$ HH.ClassName "pagination" ]
+        HH.div [ HP.class_ $ HH.ClassName "pagination" ]
+            [ HH.div [ HP.class_$ HH.ClassName "pagination-left-buttons" ]
                 [ HH.button
-                    [ HP.class_ $ HH.ClassName "pagination-button"
+                    [ HP.class_ $ HH.ClassName "pagination-first-button"
                     , HP.disabled $ page == 1
                     , HE.onClick $ const $ Just $ ChangePageAction 1
                     ]
                     [ HH.text "First" ]
                 , HH.button
-                    [ HP.class_ $ HH.ClassName "pagination-button"
+                    [ HP.class_ $ HH.ClassName "pagination-previous-button"
                     , HP.disabled $ page == 1
                     , HE.onClick $ const $ Just $ ChangePageAction $ page - 1
                     ]
-                    [ HH.text "<" ]
-                , HH.span [ HP.class_ $ HH.ClassName "pagination-page" ] [ HH.text $ show page <> "/" <> show (totalPages profileCount) ]
-                , HH.button
-                    [ HP.class_ $ HH.ClassName "pagination-button"
+                    [ HH.text "Previous" ]
+                ]
+            , HH.div [ HP.class_ $ HH.ClassName "pagination-page" ]
+                [ HH.text $ show page <> "/" <> show (totalPages profileCount) ]
+            , HH.div [ HP.class_$ HH.ClassName "pagination-right-buttons" ]
+                [ HH.button
+                    [ HP.class_ $ HH.ClassName "pagination-next-button"
                     , HP.disabled $ page == (totalPages profileCount)
                     , HE.onClick $ const $ Just $ ChangePageAction $ page + 1
                     ]
-                    [ HH.text ">" ]
+                    [ HH.text "Next" ]
                 , HH.button
-                    [ HP.class_ $ HH.ClassName "pagination-button"
+                    [ HP.class_ $ HH.ClassName "pagination-last-button"
                     , HP.disabled $ page == (totalPages profileCount)
                     , HE.onClick $ const $ Just $ ChangePageAction $ totalPages profileCount
                     ]

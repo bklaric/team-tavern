@@ -27,7 +27,7 @@ import URI.Extra.QueryPairs as Key
 import URI.Extra.QueryPairs as Value
 
 pageSize :: Int
-pageSize = 20
+pageSize = 10
 
 type LoadProfilesResult =
     { nickname :: String

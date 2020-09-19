@@ -93,6 +93,13 @@ topBarWithContent
 topBarWithContent content =
     HH.div_ [ topBar, HH.div [ HP.class_ $ HH.ClassName "content" ] content, footer ]
 
+wideTopBarWithContent
+    :: forall query children left
+    .  Array (H.ComponentHTML query (Footer.ChildSlots (topBar :: TopBar.Slot Unit | children)) (Async left))
+    -> H.ComponentHTML query (Footer.ChildSlots (topBar :: TopBar.Slot Unit | children)) (Async left)
+wideTopBarWithContent content =
+    HH.div_ [ topBar, HH.div [ HP.class_ $ HH.ClassName "wide-content" ] content, footer ]
+
 singleContent :: forall slots query.
     Array (HH.HTML slots query) -> HH.HTML slots query
 singleContent = HH.div [ HP.class_ $ HH.ClassName "single-content" ]
@@ -104,7 +111,7 @@ render Home = HH.div_ [ topBar, home, footer ]
 render Games = topBarWithContent [ games ]
 render About = topBarWithContent [ about ]
 render (Game input) = HH.div_ [ topBar, game input, footer ]
-render (Profiles handle tab) = topBarWithContent [ Profiles.game handle tab ]
+render (Profiles handle tab) = wideTopBarWithContent [ Profiles.game handle tab ]
 render (Account tab) = topBarWithContent [ account tab ]
 render (Player nickname) = topBarWithContent [ player nickname ]
 render Register = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ registerForm ] ]

@@ -19,6 +19,8 @@ import TeamTavern.Client.Components.SelectDeclarative.TreeSelect (treeSelect)
 import TeamTavern.Client.Components.SelectDeclarative.TreeSelect as TreeSelect
 import TeamTavern.Server.Infrastructure.Languages (allLanguages)
 import TeamTavern.Server.Infrastructure.Regions (Region(..), allRegions)
+import Web.HTML as Html
+import Web.HTML.Window as Window
 
 type Option =
     { key :: String
@@ -72,7 +74,8 @@ type State =
     }
 
 data Action
-    = ApplyAction
+    = Initialize
+    | ApplyAction
     | Clear
     | AgeFromInput String
     | AgeToInput String
@@ -135,7 +138,7 @@ fieldInput { input, field: { key, label, icon } } =
     ]
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
-render state = HH.div [ HP.class_ $ HH.ClassName "card" ] $
+render state = HH.div [ HP.class_ $ HH.ClassName "filters-card" ] $
     [ HH.h3
         [ HP.class_ $ HH.ClassName "filters-title"
         , HE.onClick $ const $ Just ToggleFiltersVisibility
@@ -334,6 +337,14 @@ render state = HH.div [ HP.class_ $ HH.ClassName "card" ] $
 
 handleAction :: forall left.
     Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
+handleAction Initialize = do
+    windowWidth <- Html.window >>= Window.innerWidth # H.liftEffect
+    let showFilters = windowWidth >= 960
+    H.modify_ _
+        { filtersVisible = showFilters
+        , playerFiltersVisible = showFilters
+        , gameFiltersVisible = showFilters
+        }
 handleAction ApplyAction = do
     state <- H.get
     let nothingIfNull string = if String.null string then Nothing else Just string
@@ -468,6 +479,7 @@ component = H.mkComponent
     , render
     , eval: H.mkEval $ H.defaultEval
         { handleAction = handleAction
+        , initialize = Just Initialize
         }
     }
 

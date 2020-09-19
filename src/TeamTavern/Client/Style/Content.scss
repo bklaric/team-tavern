@@ -6,6 +6,13 @@
     margin: auto;
 }
 
+.wide-content {
+    @extend .content;
+    // 422 + 962 + 21 + 21 + 21
+    // profiles + filters + padding + padding + margin
+    max-width: 1447px;
+}
+
 .content-title {
     display: flex;
     justify-content: space-between;
