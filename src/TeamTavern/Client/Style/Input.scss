@@ -28,8 +28,8 @@
         }
 
         @media screen and (min-width: 960px) {
-            flex-basis: 100%;
-            max-width: 100%;
+            flex-basis: calc(33.33% - 21px);
+            max-width: calc(33.33% - 21px);
         }
     }
 }

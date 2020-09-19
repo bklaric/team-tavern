@@ -170,7 +170,7 @@ render state = HH.div [ HP.class_ $ HH.ClassName "filters-card" ] $
         (if state.playerFiltersVisible
         then Array.singleton $
             HH.div [ HP.class_ $ HH.ClassName "card-section" ]
-            [ HH.div [ HP.class_ $ HH.ClassName "responsive-input-groups" ] $
+            [ HH.div [ HP.class_ $ HH.ClassName "filter-input-groups" ] $
                 [ HH.div [ HP.class_ $ HH.ClassName "input-group" ]
                     [ fieldLabel "Age" "fas fa-calendar-alt"
                     , HH.div [ HP.class_ $ HH.ClassName "timespan-group" ]
@@ -292,7 +292,7 @@ render state = HH.div [ HP.class_ $ HH.ClassName "filters-card" ] $
         (if state.gameFiltersVisible
         then Array.singleton $
             HH.div [ HP.class_ $ HH.ClassName "card-section" ]
-            [ HH.div [ HP.class_ $ HH.ClassName "responsive-input-groups" ] $
+            [ HH.div [ HP.class_ $ HH.ClassName "filter-input-groups" ] $
                 (map fieldInput state.fields)
                 <>
                 [ HH.div [ HP.class_ $ HH.ClassName "input-group" ]

@@ -30,3 +30,14 @@
     @extend .regular-button;
     margin-left: 14px;
 }
+
+.filter-input-groups {
+    @extend .responsive-input-groups;
+
+    .input-group {
+        @media screen and (min-width: 960px) {
+            flex-basis: 100%;
+            max-width: 100%;
+        }
+    }
+}
