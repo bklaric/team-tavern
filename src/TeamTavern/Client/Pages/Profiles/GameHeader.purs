@@ -1,4 +1,4 @@
-module TeamTavern.Client.Game.GameHeader
+module TeamTavern.Client.Pages.Profiles.GameHeader
     (Handle, Title, Tab(..), Input(..), component) where
 
 import Prelude

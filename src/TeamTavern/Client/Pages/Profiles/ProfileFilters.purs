@@ -1,4 +1,4 @@
-module TeamTavern.Client.Profile.ProfileFilters where
+module TeamTavern.Client.Pages.Profiles.ProfileFilters where
 
 import Prelude
 

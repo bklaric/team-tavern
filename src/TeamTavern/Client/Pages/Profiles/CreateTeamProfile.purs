@@ -1,4 +1,4 @@
-module TeamTavern.Client.Game.CreateTeamProfile where
+module TeamTavern.Client.Pages.Profiles.CreateTeamProfile where
 
 import Prelude
 

@@ -1,4 +1,4 @@
-module TeamTavern.Client.Game.PlayerProfiles (Fields, PlayerProfileRow, InputPlayerProfile, Input, Message(..), Slot, playerProfiles) where
+module TeamTavern.Client.Pages.Profiles.PlayerProfiles (Fields, PlayerProfileRow, InputPlayerProfile, Input, Message(..), Slot, playerProfiles) where
 
 import Prelude
 

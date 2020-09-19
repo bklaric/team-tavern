@@ -1,4 +1,4 @@
-module TeamTavern.Client.Game (Slot, game) where
+module TeamTavern.Client.Pages.Profiles (Slot, profiles) where
 
 import Prelude
 
@@ -22,17 +22,17 @@ import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import Simple.JSON.Async as Json
 import TeamTavern.Client.Components.ModalDeclarative as Modal
-import TeamTavern.Client.Game.CreatePlayerProfile (createPlayerProfile)
-import TeamTavern.Client.Game.CreatePlayerProfile as CreatePlayerProfile
-import TeamTavern.Client.Game.CreateTeamProfile (createTeamProfile)
-import TeamTavern.Client.Game.CreateTeamProfile as CreateTeamProfile
-import TeamTavern.Client.Game.GameHeader as GameHeader
-import TeamTavern.Client.Game.PlayerProfiles (Input, Message(..), Slot) as PlayerProfiles
-import TeamTavern.Client.Game.PlayerProfiles (playerProfiles)
-import TeamTavern.Client.Game.TeamProfiles (teamProfiles)
-import TeamTavern.Client.Game.TeamProfiles as TeamProfiles
-import TeamTavern.Client.Profile.ProfileFilters (Filters, emptyFilters, filterProfiles)
-import TeamTavern.Client.Profile.ProfileFilters as ProfileFilters
+import TeamTavern.Client.Pages.Profiles.CreatePlayerProfile (createPlayerProfile)
+import TeamTavern.Client.Pages.Profiles.CreatePlayerProfile as CreatePlayerProfile
+import TeamTavern.Client.Pages.Profiles.CreateTeamProfile (createTeamProfile)
+import TeamTavern.Client.Pages.Profiles.CreateTeamProfile as CreateTeamProfile
+import TeamTavern.Client.Pages.Profiles.GameHeader as GameHeader
+import TeamTavern.Client.Pages.Profiles.PlayerProfiles (Input, Message(..), Slot) as PlayerProfiles
+import TeamTavern.Client.Pages.Profiles.PlayerProfiles (playerProfiles)
+import TeamTavern.Client.Pages.Profiles.TeamProfiles (teamProfiles)
+import TeamTavern.Client.Pages.Profiles.TeamProfiles as TeamProfiles
+import TeamTavern.Client.Pages.Profiles.ProfileFilters (Filters, emptyFilters, filterProfiles)
+import TeamTavern.Client.Pages.Profiles.ProfileFilters as ProfileFilters
 import TeamTavern.Client.Script.Cookie (PlayerInfo, getPlayerInfo)
 import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
@@ -458,7 +458,7 @@ component = H.mkComponent
         }
     }
 
-game :: forall query children left.
+profiles :: forall query children left.
     String -> GameHeader.Tab -> HH.ComponentHTML query (profiles :: Slot Unit | children) (Async left)
-game handle tab =
+profiles handle tab =
     HH.slot (SProxy :: SProxy "profiles") unit component (Input handle tab) absurd

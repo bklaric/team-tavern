@@ -27,8 +27,8 @@ import TeamTavern.Client.Components.TopBar as TopBar
 import TeamTavern.Client.Components.Welcome (welcome)
 import TeamTavern.Client.Components.Welcome as Welcome
 import TeamTavern.Client.Components.WelcomeBanner as WelcomeBanner
-import TeamTavern.Client.Game as Profiles
-import TeamTavern.Client.Game.GameHeader as GameHeader
+import TeamTavern.Client.Pages.Profiles as Profiles
+import TeamTavern.Client.Pages.Profiles.GameHeader as GameHeader
 import TeamTavern.Client.Pages.About (about)
 import TeamTavern.Client.Pages.About as About
 import TeamTavern.Client.Pages.Account (account)
@@ -111,7 +111,7 @@ render Home = HH.div_ [ topBar, home, footer ]
 render Games = topBarWithContent [ games ]
 render About = topBarWithContent [ about ]
 render (Game input) = HH.div_ [ topBar, game input, footer ]
-render (Profiles handle tab) = wideTopBarWithContent [ Profiles.game handle tab ]
+render (Profiles handle tab) = wideTopBarWithContent [ Profiles.profiles handle tab ]
 render (Account tab) = topBarWithContent [ account tab ]
 render (Player nickname) = topBarWithContent [ player nickname ]
 render Register = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ registerForm ] ]

@@ -19,8 +19,6 @@
 @import "../Components/WelcomeBanner";
 @import "../Components/CloseButton";
 @import "../Components/PasswordInput";
-@import "../Profile/ProfileFilters";
-@import "../Game/Profiles";
 @import "../Pages/Home/CallToAction";
 @import "../Pages/Home/Why";
 @import "../Pages/Home/Features";
@@ -29,5 +27,7 @@
 @import "../Pages/Home";
 @import "../Pages/About";
 @import "../Pages/Games";
-@import "../Game";
+@import "../Pages/Profiles/PlayerProfiles";
+@import "../Pages/Profiles/ProfileFilters";
+@import "../Pages/Profiles";
 @import "../SignIn";
