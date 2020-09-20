@@ -1,11 +1,12 @@
 module TeamTavern.Client.Components.SelectDefinitive.SingleTreeSelect
-   (Labeler, Comparer, InputEntry(..), Input, Query(..), Output(..), Slot, singleTreeSelect) where
+   (Labeler, Comparer, InputEntry(..), Input, Output(..), Slot, singleTreeSelect) where
 
 import Prelude
 
 import Async (Async)
 import Async.Aff (affToAsync)
 import Data.Array as Array
+import Data.Const (Const)
 import Data.Foldable (any)
 import Data.Maybe (Maybe(..), maybe)
 import Data.String (Pattern(..), contains, toLower, trim)
@@ -13,7 +14,6 @@ import Data.String as String
 import Data.String.Utils (repeat)
 import Data.Symbol (class IsSymbol)
 import Data.Variant (SProxy)
-import Effect.Class (class MonadEffect)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
@@ -73,11 +73,9 @@ data Action option
     | SelectEntry (Maybe option)
     | ToggleEntryExpanded option
 
-data Query option send = Clear send
-
 data Output option = SelectedChanged (Maybe option)
 
-type Slot option = H.Slot (Query option) (Output option) Unit
+type Slot option = H.Slot (Const Void) (Output option) Unit
 
 renderEntry
     :: forall option slots
@@ -228,16 +226,6 @@ handleAction (ToggleEntryExpanded option) =
     H.modify_ \state @ { entries, comparer } ->
         state { entries = toggleEntriesExpanded comparer option entries }
 
-handleQuery
-    :: forall option monad slots action send
-    .  MonadEffect monad
-    => Query option send
-    -> H.HalogenM (State option) action slots (Output option) monad (Maybe send)
-handleQuery (Clear send) = do
-    { selected } <- H.modify (_ { selected = Nothing })
-    H.raise $ SelectedChanged selected
-    pure $ Just send
-
 createEntry :: forall option. InputEntry option -> Entry option
 createEntry (InputEntry { option, subEntries }) = Entry
     { option: option
@@ -246,9 +234,8 @@ createEntry (InputEntry { option, subEntries }) = Entry
     , subEntries: subEntries <#> createEntry
     }
 
-component :: forall option left.
-    H.Component HH.HTML (Query option)
-        (Input option) (Output option) (Async left)
+component :: forall query option left.
+    H.Component HH.HTML query (Input option) (Output option) (Async left)
 component = H.mkComponent
     { initialState: \{ entries, selected, labeler, comparer, filter } ->
         { entries: entries <#> createEntry
@@ -263,7 +250,6 @@ component = H.mkComponent
     , render
     , eval: H.mkEval $ H.defaultEval
         { handleAction = handleAction
-        , handleQuery = handleQuery
         , initialize = Just Initialize
         , finalize = Just Finalize
         }
