@@ -37,7 +37,7 @@
     .input-group {
         @media screen and (min-width: 960px) {
             flex-basis: 100%;
-            max-width: 100%;
+            max-width: calc(100% - 21px);
         }
     }
 }

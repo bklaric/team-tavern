@@ -1,11 +1,12 @@
 module TeamTavern.Client.Components.SelectDefinitive.MultiTreeSelect
-    (Labeler, Comparer, InputEntry(..), Input, Query(..), Output(..), Slot, multiTreeSelect) where
+    (Labeler, Comparer, InputEntry(..), Input, Output(..), Slot, multiTreeSelect) where
 
 import Prelude
 
 import Async (Async)
 import Async.Aff (affToAsync)
 import Data.Array as Array
+import Data.Const (Const)
 import Data.Foldable (all, any, intercalate)
 import Data.Maybe (Maybe(..), maybe)
 import Data.String (Pattern(..), contains, toLower, trim)
@@ -71,6 +72,7 @@ type State option =
 
 data Action option
     = Initialize
+    | Receive (Input option)
     | Finalize
     | Open
     | Close
@@ -80,11 +82,9 @@ data Action option
     | ToggleEntryState option
     | ToggleEntryExpanded option
 
-data Query option send = Clear send
-
 data Output option = SelectedChanged (Array option)
 
-type Slot option = H.Slot (Query option) (Output option) Unit
+type Slot option = H.Slot (Const Void) (Output option) Unit
 
 selectedEntriesText :: forall option. Labeler option -> Entries option -> String
 selectedEntriesText labeler entries =
@@ -103,7 +103,7 @@ renderEntry
     -> Labeler option
     -> Entry option
     -> Maybe (Array (HH.HTML slots (Action option)))
-renderEntry level labeler (Entry { shown: false }) = Nothing
+renderEntry _ _ (Entry { shown: false }) = Nothing
 renderEntry level labeler (Entry { option, expanded, subEntries }) = let
     hasSubEntries = not $ Array.null subEntries
     optionClass =
@@ -125,9 +125,9 @@ renderEntry level labeler (Entry { option, expanded, subEntries }) = let
         , HH.text $ labeler option
         ]
     ]
-    <> Array.catMaybes
-    [ if hasSubEntries
-        then Just $
+    <>
+    (if hasSubEntries
+        then Array.singleton $
             HH.i
             [ HP.class_ $ HH.ClassName $ "fas "
                 <> (if expanded then "fa-caret-up" else "fa-caret-down")
@@ -135,11 +135,10 @@ renderEntry level labeler (Entry { option, expanded, subEntries }) = let
             , HE.onMouseDown $ const $ Just $ ToggleEntryExpanded option
             ]
             []
-        else Nothing
-    ]
+        else [])
     <>
     if expanded
-    then (renderEntries (level + 1) labeler subEntries)
+    then renderEntries (level + 1) labeler subEntries
     else []
 
 renderEntries
@@ -184,8 +183,12 @@ render { entries, labeler, comparer, filter, open } = let
 
 filterEntries :: forall option.
     String -> Labeler option -> Entries option -> Entries option
-filterEntries filter _ entries | String.null $ trim filter =
-    entries <#> \(Entry entry) -> Entry entry { shown = true, expanded = false }
+filterEntries filter labeler entries | String.null $ trim filter =
+    entries <#> \(Entry entry) -> Entry entry
+        { shown = true
+        , expanded = false
+        , subEntries = filterEntries filter labeler entry.subEntries
+        }
 filterEntries filter labeler entries = entries <#> \(Entry entry) -> let
     subEntries = filterEntries filter labeler entry.subEntries
     filterMatches = contains
@@ -298,6 +301,25 @@ getSelectedEntries entries =
         Unchecked -> [])
     # join
 
+findMatchingEntry :: forall option. Comparer option -> Entry option -> Entries option -> Maybe (Entry option)
+findMatchingEntry comparer (Entry newEntry) existingEntries =
+    existingEntries # Array.findMap \(Entry existingEntry) ->
+        if comparer newEntry.option existingEntry.option
+        then Just $ Entry existingEntry
+        else findMatchingEntry comparer (Entry newEntry) existingEntry.subEntries
+
+setExistingExpanded :: forall option. Comparer option -> Entries option -> Entries option -> Entries option
+setExistingExpanded comparer newEntries existingEntries = newEntries <#> \(Entry newEntry) ->
+    let matchingEntry = findMatchingEntry comparer (Entry newEntry) existingEntries
+    in
+    case matchingEntry of
+    Nothing -> Entry newEntry
+    Just (Entry matchingEntry') ->
+        Entry newEntry
+            { expanded = if newEntry.shown then matchingEntry'.expanded else false
+            , subEntries = setExistingExpanded comparer newEntry.subEntries matchingEntry'.subEntries
+            }
+
 handleAction
     :: forall option slots left
     .  (Action option)
@@ -309,6 +331,24 @@ handleAction Initialize = do
             (E.EventType "mousedown") window \_ -> Just TryClose
     windowSubscription <- H.subscribe $ ES.hoist affToAsync windowEventSource
     H.modify_ (_ { windowSubscription = Just windowSubscription })
+handleAction (Receive input) = do
+    state <- H.modify \state -> state
+        { entries =
+            let
+            checkedEntries =
+                Array.foldr
+                (toggleEntriesState input.comparer)
+                (input.entries <#> createEntry)
+                input.selected
+            filteredEntries =
+                filterEntries state.filter.text input.labeler checkedEntries
+            in
+            setExistingExpanded input.comparer filteredEntries state.entries
+        , labeler = input.labeler
+        , comparer = input.comparer
+        , filter = { placeHolder: input.filter, text: state.filter.text }
+        }
+    updateCheckboxes state.labeler state.entries
 handleAction Finalize = do
     { windowSubscription } <- H.get
     case windowSubscription of
@@ -350,18 +390,6 @@ clearEntries entries = entries <#> \(Entry entry) ->
         , subEntries = clearEntries entry.subEntries
         }
 
-handleQuery
-    :: forall option monad slots action send
-    .  MonadEffect monad
-    => Query option send
-    -> H.HalogenM (State option) action slots (Output option) monad (Maybe send)
-handleQuery (Clear send) = do
-    { entries, labeler } <- H.modify \state @ { entries } ->
-        state { entries = clearEntries entries }
-    updateCheckboxes labeler entries
-    H.raise $ SelectedChanged $ getSelectedEntries entries
-    pure $ Just send
-
 createEntry :: forall option. InputEntry option -> Entry option
 createEntry (InputEntry { option, subEntries }) = Entry
     { option: option
@@ -371,9 +399,8 @@ createEntry (InputEntry { option, subEntries }) = Entry
     , subEntries: subEntries <#> createEntry
     }
 
-component :: forall option left.
-    H.Component HH.HTML (Query option)
-        (Input option) (Output option) (Async left)
+component :: forall query option left.
+    H.Component HH.HTML query (Input option) (Output option) (Async left)
 component = H.mkComponent
     { initialState: \{ entries, selected, labeler, comparer, filter } ->
         { entries:
@@ -391,8 +418,8 @@ component = H.mkComponent
     , render
     , eval: H.mkEval $ H.defaultEval
         { handleAction = handleAction
-        , handleQuery = handleQuery
         , initialize = Just Initialize
+        , receive = Just <<< Receive
         , finalize = Just Finalize
         }
     }

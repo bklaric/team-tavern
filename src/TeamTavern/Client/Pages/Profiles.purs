@@ -28,9 +28,9 @@ import TeamTavern.Client.Pages.Profiles.CreatePlayerProfile as CreatePlayerProfi
 import TeamTavern.Client.Pages.Profiles.CreateTeamProfile (createTeamProfile)
 import TeamTavern.Client.Pages.Profiles.CreateTeamProfile as CreateTeamProfile
 import TeamTavern.Client.Pages.Profiles.GameHeader as GameHeader
-import TeamTavern.Client.Pages.Profiles.PlayerProfiles (Input, Message(..), Slot) as PlayerProfiles
 import TeamTavern.Client.Pages.Profiles.PlayerProfiles (playerProfiles)
-import TeamTavern.Client.Pages.Profiles.ProfileFilters (Filters, filterProfiles)
+import TeamTavern.Client.Pages.Profiles.PlayerProfiles as PlayerProfiles
+import TeamTavern.Client.Pages.Profiles.ProfileFilters (profileFilters)
 import TeamTavern.Client.Pages.Profiles.ProfileFilters as ProfileFilters
 import TeamTavern.Client.Pages.Profiles.TeamProfiles (teamProfiles)
 import TeamTavern.Client.Pages.Profiles.TeamProfiles as TeamProfiles
@@ -40,7 +40,7 @@ import TeamTavern.Client.Script.Navigate (navigate_)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Script.Url as Url
 import TeamTavern.Server.Game.View.SendResponse as ViewGame
-import TeamTavern.Server.Profile.ViewPlayerProfilesByGame.SendResponse (OkContent) as ViewGamePlayers
+import TeamTavern.Server.Profile.ViewPlayerProfilesByGame.SendResponse as ViewGamePlayers
 import TeamTavern.Server.Profile.ViewTeamProfilesByGame.SendResponse as ViewGameTeams
 import Web.DOM.ParentNode (QuerySelector(..))
 import Web.DOM.ParentNode as ParentNode
@@ -70,7 +70,7 @@ data Input = Input GameHeader.Handle GameHeader.Tab
 data Action
     = Init
     | Receive Input
-    | ApplyFilters Filters
+    | ApplyFilters ProfileFilters.Filters
     | ShowCreateProfileModal
     | HideCreateProfileModal
     | ReloadPage
@@ -78,7 +78,7 @@ data Action
 
 data State
     = Empty Input
-    | Game ViewGame.OkContent (Maybe PlayerInfo) Filters Tab
+    | Game ViewGame.OkContent (Maybe PlayerInfo) ProfileFilters.Filters Tab
     | NotFound
     | Error
 
@@ -88,7 +88,7 @@ type ChildSlots =
     ( gameHeader :: H.Slot (Const Void) Void Unit
     , playerProfiles :: PlayerProfiles.Slot
     , teamProfiles :: TeamProfiles.Slot
-    , filterProfiles :: ProfileFilters.Slot
+    , profileFilters :: ProfileFilters.Slot
     , createPlayerProfile :: CreatePlayerProfile.Slot
     , createTeamProfile :: CreateTeamProfile.Slot
     )
@@ -115,7 +115,7 @@ filterableFields fields = fields # Array.mapMaybe
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render (Empty _) = HH.div_ []
-render (Game game' player _ tab) = let
+render (Game game' player filters tab) = let
     gameHeader =
         HH.slot (SProxy :: SProxy "gameHeader") unit GameHeader.component
         (GameHeader.Input game'.handle game'.title $ toHeaderTab tab) absurd
@@ -123,8 +123,8 @@ render (Game game' player _ tab) = let
     HH.div_ $
     [ gameHeader
     , HH.div [ HP.class_ $ HH.ClassName "profiles-container" ]
-        [ filterProfiles (filterableFields game'.fields)
-            (\(ProfileFilters.Apply filters) -> Just $ ApplyFilters filters)
+        [ profileFilters { fields: filterableFields game'.fields, filters }
+            (\(ProfileFilters.Apply filters') -> Just $ ApplyFilters filters')
         , case tab of
             Players input _ ->
                 playerProfiles

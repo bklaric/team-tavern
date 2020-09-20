@@ -158,10 +158,8 @@ render state =
                 , HH.span [ HP.class_ $ HH.ClassName "filter-field-label" ] [ HH.text "Language" ]
                 ]
             , multiSelect (SProxy :: SProxy "language")
-                { entries: allLanguages <#> \language ->
-                    { option: language
-                    , selected: state.languages # Array.any (_ == language)
-                    }
+                { options: allLanguages
+                , selected: state.languages
                 , labeler: identity
                 , comparer: (==)
                 , filter: Just "Search languages"

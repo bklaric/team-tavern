@@ -6,17 +6,17 @@ import Async (Async)
 import Data.Array as Array
 import Data.Const (Const)
 import Data.Int as Int
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), maybe)
 import Data.String as String
 import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import TeamTavern.Client.Components.SelectDeclarative.MultiSelect (multiSelect, multiSelectIndexed)
-import TeamTavern.Client.Components.SelectDeclarative.MultiSelect as MultiSelect
-import TeamTavern.Client.Components.SelectDeclarative.TreeSelect (treeSelect)
-import TeamTavern.Client.Components.SelectDeclarative.TreeSelect as TreeSelect
+import TeamTavern.Client.Components.SelectDefinitive.MultiSelect (multiSelect, multiSelectIndexed)
+import TeamTavern.Client.Components.SelectDefinitive.MultiSelect as MultiSelect
+import TeamTavern.Client.Components.SelectDefinitive.MultiTreeSelect (multiTreeSelect)
+import TeamTavern.Client.Components.SelectDefinitive.MultiTreeSelect as MultiTreeSelect
 import TeamTavern.Server.Infrastructure.Languages (allLanguages)
 import TeamTavern.Server.Infrastructure.Regions (Region(..), allRegions)
 import Web.HTML as Html
@@ -37,8 +37,8 @@ type Field =
 type Filters =
     { ageFrom :: Maybe Int
     , ageTo :: Maybe Int
-    , languages :: Array String
     , countries :: Array String
+    , languages :: Array String
     , microphone :: Boolean
     , weekdayFrom :: Maybe String
     , weekdayTo :: Maybe String
@@ -51,20 +51,20 @@ type Filters =
     , newOrReturning :: Boolean
     }
 
-type Input = Array Field
+type Input = { fields :: Array Field, filters :: Filters }
 
 type State =
     { ageFrom :: String
     , ageTo :: String
-    , languages :: MultiSelect.Input String
     , countries :: Array String
+    , languages :: Array String
     , microphone :: Boolean
     , weekdayFrom :: String
     , weekdayTo :: String
     , weekendFrom :: String
     , weekendTo :: String
     , fields :: Array
-        { input :: MultiSelect.Input Option
+        { selected :: Array Option
         , field :: Field
         }
     , newOrReturning :: Boolean
@@ -75,18 +75,19 @@ type State =
 
 data Action
     = Initialize
+    | Receive Input
     | ApplyAction
     | Clear
     | AgeFromInput String
     | AgeToInput String
     | LanguagesMessage (MultiSelect.Output String)
-    | CountriesInput (TreeSelect.Output String)
+    | CountriesInput (MultiTreeSelect.Output String)
     | MicrophoneInput Boolean
     | WeekdayFromInput String
     | WeekdayToInput String
     | WeekendFromInput String
     | WeekendToInput String
-    | FieldInput String (Array (MultiSelect.InputEntry Option))
+    | FieldInput String (MultiSelect.Output Option)
     | NewOrReturningInput Boolean
     | ToggleFiltersVisibility
     | TogglePlayerFiltersVisibility
@@ -98,23 +99,14 @@ type Slot = H.Slot (Const Void) Output Unit
 
 type ChildSlots =
     ( language :: MultiSelect.Slot String Unit
-    , country :: TreeSelect.Slot String
+    , country :: MultiTreeSelect.Slot String
     , field :: MultiSelect.Slot Option String
     )
 
-emptyFilters :: Filters
-emptyFilters =
-    { ageFrom: Nothing
-    , ageTo: Nothing
-    , languages: []
-    , countries: []
-    , microphone: false
-    , weekdayFrom: Nothing
-    , weekdayTo: Nothing
-    , weekendFrom: Nothing
-    , weekendTo: Nothing
-    , fields: []
-    , newOrReturning: false
+regionToOption :: Region -> MultiTreeSelect.InputEntry String
+regionToOption (Region region subRegions) = MultiTreeSelect.InputEntry
+    { option: region
+    , subEntries: subRegions <#> regionToOption
     }
 
 fieldLabel :: forall slots action. String -> String -> HH.HTML slots action
@@ -126,15 +118,20 @@ fieldLabel label icon = HH.label
 
 fieldInput
     :: forall left
-    .  { input :: MultiSelect.Input Option, field :: Field }
+    .  { field :: Field, selected :: Array Option }
     -> H.ComponentHTML Action ChildSlots (Async left)
-fieldInput { input, field: { key, label, icon } } =
+fieldInput { field: { key, label, icon, options }, selected } =
     HH.div [ HP.class_ $ HH.ClassName "input-group" ]
     [ fieldLabel label icon
-    , multiSelectIndexed (SProxy :: SProxy "field") key input
-        case _ of
-        MultiSelect.SelectedChanged entries -> Just $ FieldInput key entries
-        MultiSelect.FilterChanged _ -> Nothing
+    , multiSelectIndexed (SProxy :: SProxy "field") key
+        { options
+        , selected
+        , labeler: _.label
+        , comparer: \leftOption rightOption ->
+            leftOption.key == rightOption.key
+        , filter: Nothing
+        }
+        (Just <<< FieldInput key)
     ]
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
@@ -192,9 +189,9 @@ render state = HH.div [ HP.class_ $ HH.ClassName "filters-card" ] $
                     ]
                 , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
                     [ fieldLabel "Location" "fas fa-globe-europe"
-                    , treeSelect (SProxy :: SProxy "country")
+                    , multiTreeSelect (SProxy :: SProxy "country")
                         { entries: allRegions <#> regionToOption
-                        , selected: []
+                        , selected: state.countries
                         , labeler: identity
                         , comparer: (==)
                         , filter: "Search locations"
@@ -203,7 +200,14 @@ render state = HH.div [ HP.class_ $ HH.ClassName "filters-card" ] $
                     ]
                 , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
                     [ fieldLabel "Language" "fas fa-comments"
-                    , multiSelect (SProxy :: SProxy "language") state.languages (Just <<< LanguagesMessage)
+                    , multiSelect (SProxy :: SProxy "language")
+                        { options: allLanguages
+                        , selected: state.languages
+                        , labeler: identity
+                        , comparer: (==)
+                        , filter: Just "Search languages"
+                        }
+                        (Just <<< LanguagesMessage)
                     ]
                 , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
                     [ fieldLabel "Microphone" "fas fa-microphone"
@@ -345,28 +349,41 @@ handleAction Initialize = do
         , playerFiltersVisible = showFilters
         , gameFiltersVisible = showFilters
         }
+handleAction (Receive { fields, filters }) = do
+    H.modify_ \state -> state
+        { ageFrom = maybe "" show filters.ageFrom
+        , ageTo = maybe "" show filters.ageTo
+        , countries = filters.countries
+        , languages = filters.languages
+        , microphone = filters.microphone
+        , weekdayFrom = maybe "" identity filters.weekdayFrom
+        , weekdayTo = maybe "" identity filters.weekdayTo
+        , weekendFrom = maybe "" identity filters.weekendFrom
+        , weekendTo = maybe "" identity filters.weekendTo
+        , fields = fields <#> \field ->
+            { field
+            , selected:
+                field.options # Array.filter \option ->
+                    filters.fields # Array.any \{ fieldKey, optionKey } ->
+                        fieldKey == field.key && optionKey == option.key
+            }
+        , newOrReturning = filters.newOrReturning
+        }
 handleAction ApplyAction = do
     state <- H.get
     let nothingIfNull string = if String.null string then Nothing else Just string
     let ageFrom = Int.fromString state.ageFrom
         ageTo = Int.fromString state.ageTo
-        languages =
-            state.languages.entries
-            # Array.filter _.selected
-            <#> _.option
         countries = state.countries
+        languages = state.languages
         microphone = state.microphone
         weekdayFrom = nothingIfNull state.weekdayFrom
         weekdayTo = nothingIfNull state.weekdayTo
         weekendFrom = nothingIfNull state.weekendFrom
         weekendTo = nothingIfNull state.weekendTo
-        fields =
-            state.fields
-            <#> (\{ input, field } ->
-                input.entries
-                # Array.filter _.selected
-                <#> \{ option } ->
-                    { optionKey: option.key, fieldKey: field.key })
+        fields = state.fields
+            <#> (\{ field, selected } ->
+                selected <#> \option -> { optionKey: option.key, fieldKey: field.key })
             # join
         newOrReturning = state.newOrReturning
     H.raise $ Apply
@@ -378,36 +395,24 @@ handleAction Clear = do
     H.modify_ \state -> state
         { ageFrom = ""
         , ageTo = ""
-        , languages = state.languages
-            { entries = state.languages.entries <#> (_ { selected = false }) }
+        , countries = []
+        , languages = []
         , microphone = false
         , weekdayFrom = ""
         , weekdayTo = ""
         , weekendFrom = ""
         , weekendTo = ""
-        , fields = state.fields <#> \stateField -> stateField
-            { input = stateField.input
-                { entries = stateField.input.entries
-                    <#> (_ { selected = false })
-                }
-            }
+        , fields = state.fields <#> \field -> field { selected = [] }
         , newOrReturning = false
         }
-    void $ H.query (SProxy :: SProxy "country") unit $ TreeSelect.Clear unit
 handleAction (AgeFromInput ageFrom) =
     H.modify_ (_ { ageFrom = ageFrom })
 handleAction (AgeToInput ageTo) =
     H.modify_ (_ { ageTo = ageTo })
-handleAction (LanguagesMessage (MultiSelect.SelectedChanged entries)) =
-    H.modify_ \state -> state
-        { languages = state.languages { entries = entries } }
-handleAction (LanguagesMessage (MultiSelect.FilterChanged text)) =
-    H.modify_ \state -> state
-        { languages = state.languages
-            { filter = state.languages.filter <#> (_ { text = text }) }
-        }
-handleAction (CountriesInput (TreeSelect.SelectedChanged countries)) =
+handleAction (CountriesInput (MultiTreeSelect.SelectedChanged countries)) =
     H.modify_ (_ { countries = countries })
+handleAction (LanguagesMessage (MultiSelect.SelectedChanged languages)) =
+    H.modify_ _ { languages = languages }
 handleAction (MicrophoneInput microphone) =
     H.modify_ (_ { microphone = microphone })
 handleAction (WeekdayFromInput time) =
@@ -418,11 +423,11 @@ handleAction (WeekendFromInput time) =
     H.modify_ (_ { weekendFrom = time })
 handleAction (WeekendToInput time) =
     H.modify_ (_ { weekendTo = time })
-handleAction (FieldInput fieldKey entries) =
+handleAction (FieldInput fieldKey (MultiSelect.SelectedChanged options)) =
     H.modify_ \state -> state
         { fields = state.fields <#> \stateField ->
             if stateField.field.key == fieldKey
-            then stateField { input = stateField.input { entries = entries } }
+            then stateField { selected = options }
             else stateField
         }
 handleAction (NewOrReturningInput newOrReturning) =
@@ -434,39 +439,25 @@ handleAction TogglePlayerFiltersVisibility =
 handleAction ToggleGameFiltersVisibility =
     H.modify_ \state -> state { gameFiltersVisible = not state.gameFiltersVisible }
 
-regionToOption :: Region -> TreeSelect.InputEntry String
-regionToOption (Region region subRegions) = TreeSelect.InputEntry
-    { option: region
-    , subEntries: subRegions <#> regionToOption
-    }
-
-initialState :: Array Field -> State
-initialState fields =
-    { ageFrom: ""
-    , ageTo: ""
-    , languages:
-        { entries: allLanguages <#> { option: _, selected: false }
-        , labeler: identity
-        , comparer: (==)
-        , filter: Just { placeholder: "Search languages", text: "" }
-        }
-    , countries: []
-    , microphone: false
-    , weekdayFrom: ""
-    , weekdayTo: ""
-    , weekendFrom: ""
-    , weekendTo: ""
+initialState :: Input -> State
+initialState { fields, filters } =
+    { ageFrom: maybe "" show filters.ageFrom
+    , ageTo: maybe "" show filters.ageTo
+    , countries: filters.countries
+    , languages: filters.languages
+    , microphone: filters.microphone
+    , weekdayFrom: maybe "" identity filters.weekdayFrom
+    , weekdayTo: maybe "" identity filters.weekdayTo
+    , weekendFrom: maybe "" identity filters.weekendFrom
+    , weekendTo: maybe "" identity filters.weekendTo
     , fields: fields <#> \field ->
-        { input:
-            { entries: field.options <#> { option: _, selected: false }
-            , labeler: _.label
-            , comparer: \leftOption rightOption ->
-                leftOption.key == rightOption.key
-            , filter: Nothing
-            }
-        , field
+        { field
+        , selected:
+            field.options # Array.filter \option ->
+                filters.fields # Array.any \{ fieldKey, optionKey } ->
+                    fieldKey == field.key && optionKey == option.key
         }
-    , newOrReturning: false
+    , newOrReturning: filters.newOrReturning
     , filtersVisible: false
     , playerFiltersVisible: false
     , gameFiltersVisible: false
@@ -480,13 +471,14 @@ component = H.mkComponent
     , eval: H.mkEval $ H.defaultEval
         { handleAction = handleAction
         , initialize = Just Initialize
+        , receive = Just <<< Receive
         }
     }
 
-filterProfiles
-    :: forall query children left
-    .  (Array Field)
-    -> (Output -> Maybe query)
-    -> HH.ComponentHTML query (filterProfiles :: Slot | children) (Async left)
-filterProfiles fields handleOutput =
-    HH.slot (SProxy :: SProxy "filterProfiles") unit component fields handleOutput
+profileFilters
+    :: forall action children left
+    .  Input
+    -> (Output -> Maybe action)
+    -> HH.ComponentHTML action (profileFilters :: Slot | children) (Async left)
+profileFilters input handleOutput =
+    HH.slot (SProxy :: SProxy "profileFilters") unit component input handleOutput

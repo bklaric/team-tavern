@@ -3,7 +3,7 @@ module TeamTavern.Client.Pages.Home.Wizard.EnterProfilePlayerDetails where
 import Prelude
 
 import Async (Async)
-import Data.Array (any)
+import Data.Array as Array
 import Data.Const (Const)
 import Data.Foldable (find)
 import Data.Maybe (Maybe(..), maybe)
@@ -114,8 +114,8 @@ fieldInput
     -> H.ComponentHTML Action ChildSlots (Async left)
 fieldInput fieldValues urlValueErrors missingErrors { key, ilk: 1, label, icon, required, domain: Just domain } = let
     fieldValue' = fieldValues # find \{ fieldKey } -> fieldKey == key
-    urlError = urlValueErrors # any (_ == key)
-    missingError = missingErrors # any (_ == key)
+    urlError = urlValueErrors # Array.any (_ == key)
+    missingError = missingErrors # Array.any (_ == key)
     url = fieldValue' >>= _.url
     in
     HH.div [ HP.class_ $ HH.ClassName "input-group" ]
@@ -151,15 +151,14 @@ fieldInput fieldValues _ _ { key, ilk: 2, label, icon, required, options: Just o
     ]
 fieldInput fieldValues _ _ { key, ilk: 3, label, icon, required, options: Just options } = let
     fieldValue' = fieldValues # find \{ fieldKey } -> fieldKey == key
-    selectedOptionIds' = fieldValue' >>= _.optionKeys
+    selectedOptionKeys' = fieldValue' >>= _.optionKeys
     in
     HH.div [ HP.class_ $ HH.ClassName "input-group" ]
     [ fieldLabel label icon required Nothing
     , multiSelectIndexed (SProxy :: SProxy "multiSelectField") key
-        { entries: options <#> \option ->
-            { option
-            , selected: selectedOptionIds' # maybe false \selectedOptionIds ->
-                selectedOptionIds # any (_ == option.key) }
+        { options: options
+        , selected:  selectedOptionKeys' # maybe [] \selectedOptionKeys ->
+            options # Array.filter (\option -> Array.any (_ == option.key) selectedOptionKeys)
         , labeler: _.label
         , comparer: \leftOption rightOption -> leftOption.key == rightOption.key
         , filter: Nothing

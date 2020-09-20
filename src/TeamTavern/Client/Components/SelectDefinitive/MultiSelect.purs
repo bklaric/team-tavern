@@ -1,13 +1,14 @@
 module TeamTavern.Client.Components.SelectDefinitive.MultiSelect
-    (InputEntry(..), Input, Query(..), Output(..), Slot, multiSelect, multiSelectIndexed) where
+    (Input, Output(..), Slot, multiSelect, multiSelectIndexed) where
 
 import Prelude
 
 import Async (Async)
 import Async.Aff (affToAsync)
 import Data.Array as Array
+import Data.Const (Const)
 import Data.Foldable (intercalate)
-import Data.Maybe (Maybe(..), isJust)
+import Data.Maybe (Maybe(..), isJust, maybe)
 import Data.String (Pattern(..), contains, toLower, trim)
 import Data.Symbol (class IsSymbol)
 import Data.Variant (SProxy)
@@ -21,22 +22,18 @@ import Web.Event.Event as E
 import Web.HTML (window)
 import Web.HTML.Window as Window
 
-type InputEntry option =
-    { option :: option
-    , selected :: Boolean
+type Input option =
+    { options :: Array option
+    , selected :: Array option
+    , labeler :: option -> String
+    , comparer :: option -> option -> Boolean
+    , filter :: Maybe String
     }
 
 type Entry option =
     { option :: option
     , selected :: Boolean
     , shown :: Boolean
-    }
-
-type Input option =
-    { entries :: Array (InputEntry option)
-    , labeler :: option -> String
-    , comparer :: option -> option -> Boolean
-    , filter :: Maybe String
     }
 
 type State option =
@@ -51,6 +48,7 @@ type State option =
 
 data Action option
     = Initialize
+    | Receive (Input option)
     | Finalize
     | ToggleOption option
     | Open
@@ -59,11 +57,9 @@ data Action option
     | KeepOpen
     | FilterInput String
 
-data Query option send = Clear send
-
 data Output option = SelectedChanged (Array option)
 
-type Slot option = H.Slot (Query option) (Output option)
+type Slot option = H.Slot (Const Void) (Output option)
 
 render :: forall slots option. State option -> HH.HTML slots (Action option)
 render { entries, labeler, comparer, filter, open } =
@@ -116,9 +112,6 @@ render { entries, labeler, comparer, filter, open } =
         ]
     else []
 
-selectedOptions :: forall option. Array (Entry option) -> Array option
-selectedOptions entries = entries # Array.filter _.selected <#> _.option
-
 handleAction
     :: forall option slots left
     .  (Action option)
@@ -130,6 +123,24 @@ handleAction Initialize = do
             (E.EventType "mousedown") window \_ -> Just TryClose
     windowSubscription <- H.subscribe $ ES.hoist affToAsync windowEventSource
     H.modify_ (_ { windowSubscription = Just windowSubscription })
+handleAction (Receive input) =
+    H.modify_ \state -> state
+        { entries = input.options <#> \option ->
+            { option
+            , selected: Array.any (input.comparer option) input.selected
+            , shown:
+                case state.filter of
+                Just { text } ->
+                    contains
+                    (Pattern $ toLower $ trim text)
+                    (toLower $ input.labeler option)
+                Nothing -> true
+            }
+        , labeler = input.labeler
+        , comparer = input.comparer
+        , filter = input.filter
+            <#> { placeHolder: _, text: maybe "" _.text state.filter }
+        }
 handleAction Finalize = do
     { windowSubscription } <- H.get
     case windowSubscription of
@@ -142,7 +153,7 @@ handleAction (ToggleOption toggledOption) = do
             then entry { selected = not entry.selected }
             else entry
         }
-    H.raise $ SelectedChanged $ selectedOptions entries
+    H.raise $ SelectedChanged (entries # Array.filter _.selected <#> _.option)
 handleAction Open =
     H.modify_ (_ { open = true, keepOpen = true })
 handleAction Close =
@@ -166,23 +177,15 @@ handleAction (FilterInput text) =
         , filter = state.filter <#> (_ { text = text })
         }
 
-handleQuery
-    :: forall option monad slots action send
-    .  Query option send
-    -> H.HalogenM (State option) action slots (Output option) monad (Maybe send)
-handleQuery (Clear send) = do
-    { entries } <- H.modify \state @ { entries } ->
-        state { entries = entries <#> (_ { selected = false }) }
-    H.raise $ SelectedChanged $ selectedOptions entries
-    pure $ Just send
-
-component :: forall option left.
-    H.Component HH.HTML
-        (Query option) (Input option) (Output option) (Async left)
+component :: forall query option left.
+    H.Component HH.HTML query (Input option) (Output option) (Async left)
 component = H.mkComponent
-    { initialState: \{ entries, labeler, comparer, filter } ->
-        { entries: entries <#> \{ option, selected } ->
-            { option, selected, shown: true }
+    { initialState: \{ options, selected, labeler, comparer, filter } ->
+        { entries: options <#> \option ->
+            { option
+            , selected: Array.any (comparer option) selected
+            , shown: true
+            }
         , labeler
         , comparer
         , filter: filter <#> { placeHolder: _, text: "" }
@@ -193,8 +196,8 @@ component = H.mkComponent
     , render
     , eval: H.mkEval $ H.defaultEval
         { handleAction = handleAction
-        , handleQuery = handleQuery
         , initialize = Just Initialize
+        , receive = Just <<< Receive
         , finalize = Just Finalize
         }
     }
