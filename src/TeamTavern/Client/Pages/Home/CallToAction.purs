@@ -62,7 +62,9 @@ render { signedIn, title } =
                         [ HP.class_ $ HH.ClassName "call-to-action-button"
                         , HE.onClick $ const $ Just $ OpenWizard WizardShared.Player
                         ]
-                        [ HH.text "I'm a player" ]
+                        [ HH.i [ HP.class_ $ HH.ClassName "fas fa-user call-to-action-icon" ] []
+                        , HH.text "I'm a player"
+                        ]
                     , HH.p_ [ HH.text "I want to find a team or other players to play with." ]
                     ]
                 , HH.div [ HP.class_ $ HH.ClassName "call-to-action-button-group" ]
@@ -70,7 +72,9 @@ render { signedIn, title } =
                         [ HP.class_ $ HH.ClassName "call-to-action-button"
                         , HE.onClick $ const $ Just $ OpenWizard WizardShared.Team
                         ]
-                        [ HH.text "I have a team" ]
+                        [ HH.i [ HP.class_ $ HH.ClassName "fas fa-users call-to-action-icon" ] []
+                        , HH.text "I have a team"
+                        ]
                     , HH.p_ [ HH.text "I want to recruit new members or grow my online community." ]
                     ]
                 ]
