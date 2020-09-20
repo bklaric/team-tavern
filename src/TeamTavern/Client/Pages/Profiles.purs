@@ -6,16 +6,17 @@ import Async (Async)
 import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
-import Control.Parallel (parallel, sequential)
 import Data.Array (intercalate)
 import Data.Array as Array
 import Data.Bifunctor (lmap)
 import Data.Const (Const)
 import Data.Int (round)
-import Data.Maybe (Maybe(..), isJust)
+import Data.Int as Int
+import Data.Maybe (Maybe(..), isJust, maybe)
 import Data.String as String
 import Data.Symbol (SProxy(..))
-import Effect (Effect)
+import Data.Traversable (traverse)
+import Effect (Effect, foreachE)
 import Effect.Class (class MonadEffect)
 import Halogen as H
 import Halogen.HTML as HH
@@ -29,13 +30,15 @@ import TeamTavern.Client.Pages.Profiles.CreateTeamProfile as CreateTeamProfile
 import TeamTavern.Client.Pages.Profiles.GameHeader as GameHeader
 import TeamTavern.Client.Pages.Profiles.PlayerProfiles (Input, Message(..), Slot) as PlayerProfiles
 import TeamTavern.Client.Pages.Profiles.PlayerProfiles (playerProfiles)
+import TeamTavern.Client.Pages.Profiles.ProfileFilters (Filters, filterProfiles)
+import TeamTavern.Client.Pages.Profiles.ProfileFilters as ProfileFilters
 import TeamTavern.Client.Pages.Profiles.TeamProfiles (teamProfiles)
 import TeamTavern.Client.Pages.Profiles.TeamProfiles as TeamProfiles
-import TeamTavern.Client.Pages.Profiles.ProfileFilters (Filters, emptyFilters, filterProfiles)
-import TeamTavern.Client.Pages.Profiles.ProfileFilters as ProfileFilters
 import TeamTavern.Client.Script.Cookie (PlayerInfo, getPlayerInfo)
 import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
+import TeamTavern.Client.Script.Navigate (navigate_)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
+import TeamTavern.Client.Script.Url as Url
 import TeamTavern.Server.Game.View.SendResponse as ViewGame
 import TeamTavern.Server.Profile.ViewPlayerProfilesByGame.SendResponse (OkContent) as ViewGamePlayers
 import TeamTavern.Server.Profile.ViewTeamProfilesByGame.SendResponse as ViewGameTeams
@@ -46,6 +49,7 @@ import Web.HTML as Html
 import Web.HTML.HTMLDocument as HtmlDocument
 import Web.HTML.HTMLElement as HtmlElement
 import Web.HTML.Location (reload)
+import Web.HTML.Location as Location
 import Web.HTML.Window (location)
 import Web.HTML.Window as Window
 
@@ -242,51 +246,55 @@ loadTeamProfiles handle page filters = Async.unify do
 loadTab :: forall output left.
     String -> GameHeader.Tab -> H.HalogenM State Action ChildSlots output (Async left) Unit
 loadTab handle GameHeader.Players = do
-    { gameContent, profilesContent } <-
-        H.lift
-        $ sequential
-        $ { gameContent: _, profilesContent: _}
-        <$> parallel (loadGame handle)
-        <*> parallel (loadPlayerProfiles handle 1 ProfileFilters.emptyFilters)
-    case gameContent, profilesContent of
-        Just gameContent', Just profilesContent' -> do
-            player <- H.liftEffect getPlayerInfo
-            H.put $ Game gameContent' player emptyFilters $ Players
-                { profiles: profilesContent'.profiles
-                , profileCount: profilesContent'.count
-                , page: 1
-                , showCreateProfile:
-                    isJust player && not gameContent'.hasPlayerProfile
-                , playerInfo: player
-                }
-                false
-            H.liftEffect $ setMetaTags gameContent'.title GameHeader.Players
-        _, _ -> do
+    game <- H.lift $ loadGame handle
+    case game of
+        Just game' -> do
+            { page, filters } <- H.liftEffect $ readQueryParams game'.fields
+            playerProfiles' <- H.lift $ loadPlayerProfiles handle page filters
+            case playerProfiles' of
+                Just playerProfiles'' -> do
+                    player <- H.liftEffect getPlayerInfo
+                    H.put $ Game game' player filters $ Players
+                        { profiles: playerProfiles''.profiles
+                        , profileCount: playerProfiles''.count
+                        , page
+                        , showCreateProfile:
+                            isJust player && not game'.hasPlayerProfile
+                        , playerInfo: player
+                        }
+                        false
+                    H.liftEffect $ setMetaTags game'.title GameHeader.Players
+                Nothing -> do
+                    H.put Error
+                    H.liftEffect $ setMetaTags handle GameHeader.Players
+        Nothing -> do
             H.put Error
             H.liftEffect $ setMetaTags handle GameHeader.Players
 loadTab handle GameHeader.Teams = do
-    { gameContent, profilesContent } <-
-        H.lift
-        $ sequential
-        $ { gameContent: _, profilesContent: _}
-        <$> parallel (loadGame handle)
-        <*> parallel (loadTeamProfiles handle 1 ProfileFilters.emptyFilters)
-    case gameContent, profilesContent of
-        Just gameContent', Just profilesContent' -> do
-            player <- H.liftEffect getPlayerInfo
-            timezone <- H.liftEffect getClientTimezone
-            H.put $ Game gameContent' player emptyFilters $ Teams
-                { profiles: profilesContent'.profiles
-                , profileCount: profilesContent'.count
-                , page: 1
-                , showCreateProfile:
-                    isJust player && not gameContent'.hasTeamProfile
-                , playerInfo: player
-                }
-                false
-                timezone
-            H.liftEffect $ setMetaTags gameContent'.title GameHeader.Players
-        _, _ -> do
+    game <- H.lift $ loadGame handle
+    case game of
+        Just game' -> do
+            { page, filters } <- H.liftEffect $ readQueryParams game'.fields
+            teamProfiles' <- H.lift $ loadTeamProfiles handle page filters
+            case teamProfiles' of
+                Just teamProfiles'' -> do
+                    player <- H.liftEffect getPlayerInfo
+                    timezone <- H.liftEffect getClientTimezone
+                    H.put $ Game game' player filters $ Teams
+                        { profiles: teamProfiles''.profiles
+                        , profileCount: teamProfiles''.count
+                        , page
+                        , showCreateProfile:
+                            isJust player && not game'.hasPlayerProfile
+                        , playerInfo: player
+                        }
+                        false
+                        timezone
+                    H.liftEffect $ setMetaTags game'.title GameHeader.Players
+                Nothing -> do
+                    H.put Error
+                    H.liftEffect $ setMetaTags handle GameHeader.Players
+        Nothing -> do
             H.put Error
             H.liftEffect $ setMetaTags handle GameHeader.Players
 
@@ -314,85 +322,137 @@ scrollProfilesIntoView = do
             Html.window >>= Window.scroll 0 (offsetTop - 41 - 21) # H.liftEffect
         Nothing -> pure unit
 
+readQueryParams
+    :: forall fields
+    .  Array { key :: String | fields }
+    -> Effect { filters :: ProfileFilters.Filters, page :: Int }
+readQueryParams fields' = do
+    searchParams <- Html.window >>= Window.location >>= Location.href
+        >>= Url.url >>= Url.searchParams
+    page <- Url.get "page" searchParams <#> maybe 1 (Int.fromString >>> maybe 1 identity)
+    ageFrom <- Url.get "age-from" searchParams <#> (\ageFrom -> ageFrom >>= Int.fromString)
+    ageTo <- Url.get "age-to" searchParams <#> (\ageTo -> ageTo >>= Int.fromString)
+    countries <- Url.getAll "location" searchParams
+    languages <- Url.getAll "language" searchParams
+    microphone <- Url.get "microphone" searchParams <#> isJust
+    weekdayFrom <- Url.get "weekday-from" searchParams
+    weekdayTo <- Url.get "weekday-to" searchParams
+    weekendFrom <- Url.get "weekend-from" searchParams
+    weekendTo <- Url.get "weekend-to" searchParams
+    (fields :: Array { fieldKey :: String, optionKey :: String }) <-
+        fields'
+        # traverse (\field ->
+            Url.getAll field.key searchParams
+            <#> \values -> values <#> { fieldKey: field.key, optionKey: _ })
+        <#> join
+    newOrReturning <- Url.get "new-or-returning" searchParams <#> isJust
+    pure
+        { page
+        , filters:
+            { ageFrom
+            , ageTo
+            , countries
+            , languages
+            , microphone
+            , weekdayFrom
+            , weekdayTo
+            , weekendFrom
+            , weekendTo
+            , fields
+            , newOrReturning
+            }
+        }
+
 handleAction :: forall output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
 handleAction Init = do
     state <- H.get
     case state of
-        Empty (Input handle tab) -> loadTab handle tab
+        Empty (Input handle tab) -> handleAction $ Receive $ Input handle tab
         _ -> pure unit
-handleAction (Receive (Input handle inputTab)) = do
+handleAction (Receive (Input handle tab)) = do
     state <- H.get
-    case state, inputTab of
-        Game content player _ _, GameHeader.Players | content.handle == handle -> do
-            profilesContent <- H.lift $
-                loadPlayerProfiles content.handle 1 ProfileFilters.emptyFilters
-            case profilesContent of
-                Just profilesContent' -> do
-                    H.put $ Game content player emptyFilters $ Players
-                        { profiles: profilesContent'.profiles
-                        , profileCount: profilesContent'.count
-                        , page: 1
+    case state, tab of
+        Game game player _ _, GameHeader.Players | game.handle == handle -> do
+            { page, filters } <- H.liftEffect $ readQueryParams game.fields
+            playerProfiles <- H.lift $ loadPlayerProfiles handle page filters
+            case playerProfiles of
+                Just playerProfiles' -> do
+                    H.put $ Game game player filters $ Players
+                        { profiles: playerProfiles'.profiles
+                        , profileCount: playerProfiles'.count
+                        , page: page
                         , showCreateProfile:
-                            isJust player && not content.hasPlayerProfile
+                            isJust player && not game.hasPlayerProfile
                         , playerInfo: player
                         }
                         false
-                    H.liftEffect $ setMetaTags content.title inputTab
+                    H.liftEffect $ setMetaTags game.title tab
                 Nothing -> pure unit
-        Game content player _ _, GameHeader.Teams | content.handle == handle -> do
-            profilesContent <- H.lift $
-                loadTeamProfiles content.handle 1 ProfileFilters.emptyFilters
-            case profilesContent of
-                Just profilesContent' -> do
+        Game game player _ _, GameHeader.Teams | game.handle == handle -> do
+            { page, filters } <- H.liftEffect $ readQueryParams game.fields
+            teamProfiles <- H.lift $ loadTeamProfiles handle page filters
+            case teamProfiles of
+                Just teamProfiles' -> do
                     timezone <- H.liftEffect getClientTimezone
-                    H.put $ Game content player emptyFilters $ Teams
-                        { profiles: profilesContent'.profiles
-                        , profileCount: profilesContent'.count
-                        , page: 1
+                    H.put $ Game game player filters $ Teams
+                        { profiles: teamProfiles'.profiles
+                        , profileCount: teamProfiles'.count
+                        , page: page
                         , showCreateProfile:
-                            isJust player && not content.hasTeamProfile
+                            isJust player && not game.hasTeamProfile
                         , playerInfo: player
                         }
                         false
                         timezone
-                    H.liftEffect $ setMetaTags content.title inputTab
+                    H.liftEffect $ setMetaTags game.title tab
                 Nothing -> pure unit
-        _, _ -> loadTab handle inputTab
+        _, _ -> loadTab handle tab
 handleAction (ApplyFilters filters) = do
-    state <- H.get
-    case state of
-        Game game' player _ (Players input _) -> do
-            profilesContent <- H.lift $
-                loadPlayerProfiles game'.handle 1 filters
-            case profilesContent of
-                Just profilesContent' ->
-                    H.put $ Game game' player filters $ Players
-                        { profiles: profilesContent'.profiles
-                        , profileCount: profilesContent'.count
-                        , page: 1
-                        , showCreateProfile: input.showCreateProfile
-                        , playerInfo: player
-                        }
-                        false
-                Nothing -> pure unit
-        Game game' player _ (Teams input _ timezone) -> do
-            profilesContent <- H.lift $
-                loadTeamProfiles game'.handle 1 filters
-            case profilesContent of
-                Just profilesContent' ->
-                    H.put $ Game game' player filters $ Teams
-                        { profiles: profilesContent'.profiles
-                        , profileCount: profilesContent'.count
-                        , page: 1
-                        , showCreateProfile: input.showCreateProfile
-                        , playerInfo: player
-                        }
-                        false
-                        timezone
-                Nothing -> pure unit
-        _ -> pure unit
     scrollProfilesIntoView
+
+    H.liftEffect do
+        url <- Html.window >>= Window.location >>= Location.href >>= Url.url
+        searchParams <- Url.searchParams url
+
+        keys <- Url.keys searchParams
+        foreachE keys \key -> Url.delete key searchParams
+
+        Url.set "page" "1" searchParams
+        case filters.ageFrom of
+            Nothing -> pure unit
+            Just ageFrom -> Url.set "age-from" (show ageFrom) searchParams
+        case filters.ageTo of
+            Nothing -> pure unit
+            Just ageTo -> Url.set "age-to" (show ageTo) searchParams
+        foreachE filters.countries \location ->
+            Url.append "location" location searchParams
+        foreachE filters.languages \language ->
+            Url.append "language" language searchParams
+        if filters.microphone
+            then Url.set "microphone" "true" searchParams
+            else pure unit
+        case filters.weekdayFrom of
+            Nothing -> pure unit
+            Just weekdayFrom -> Url.set "weekday-from" weekdayFrom searchParams
+        case filters.weekdayTo of
+            Nothing -> pure unit
+            Just weekdayTo -> Url.set "weekday-to" weekdayTo searchParams
+        case filters.weekendFrom of
+            Nothing -> pure unit
+            Just weekendFrom -> Url.set "weekend-from" weekendFrom searchParams
+        case filters.weekendTo of
+            Nothing -> pure unit
+            Just weekendTo -> Url.set "weekend-to" weekendTo searchParams
+        foreachE filters.fields \{fieldKey, optionKey } ->
+            Url.append fieldKey optionKey searchParams
+        if filters.newOrReturning
+            then Url.set "new-or-returning" "true" searchParams
+            else pure unit
+
+        href <- Url.href url
+        navigate_ href
+
 handleAction ShowCreateProfileModal =
     H.modify_
     case _ of
@@ -412,39 +472,13 @@ handleAction HideCreateProfileModal =
 handleAction ReloadPage =
     window >>= location >>= reload # H.liftEffect
 handleAction (ChangePage page) = do
-    state <- H.get
-    case state of
-        Game game' player filters (Players input _) -> do
-            profilesContent <- H.lift $
-                loadPlayerProfiles game'.handle page filters
-            case profilesContent of
-                Just profilesContent' ->
-                    H.put $ Game game' player filters $ Players
-                        { profiles: profilesContent'.profiles
-                        , profileCount: profilesContent'.count
-                        , page
-                        , showCreateProfile: input.showCreateProfile
-                        , playerInfo: player
-                        }
-                        false
-                Nothing -> pure unit
-        Game game' player filters (Teams input _ timezone) -> do
-            profilesContent <- H.lift $
-                loadTeamProfiles game'.handle page filters
-            case profilesContent of
-                Just profilesContent' ->
-                    H.put $ Game game' player filters $ Teams
-                        { profiles: profilesContent'.profiles
-                        , profileCount: profilesContent'.count
-                        , page
-                        , showCreateProfile: input.showCreateProfile
-                        , playerInfo: player
-                        }
-                        false
-                        timezone
-                Nothing -> pure unit
-        _ -> pure unit
     scrollProfilesIntoView
+    H.liftEffect do
+        url <- Html.window >>= Window.location >>= Location.href >>= Url.url
+        searchParams <- Url.searchParams url
+        Url.set "page" (show page) searchParams
+        href <- Url.href url
+        navigate_ href
 
 component :: forall query output left.
     H.Component HH.HTML query Input output (Async left)
