@@ -20,8 +20,8 @@ import TeamTavern.Client.Components.Password.ResetPassword (resetPassword)
 import TeamTavern.Client.Components.Password.ResetPassword as ResetPassword
 import TeamTavern.Client.Components.Password.ResetPasswordSent (resetPasswordSent)
 import TeamTavern.Client.Components.Password.ResetPasswordSuccess (resetPasswordSuccess)
-import TeamTavern.Client.Components.RegisterForm (registerForm)
-import TeamTavern.Client.Components.RegisterForm as RegisterForm
+import TeamTavern.Client.Pages.Register (register)
+import TeamTavern.Client.Pages.Register as Register
 import TeamTavern.Client.Components.TopBar (topBar)
 import TeamTavern.Client.Components.TopBar as TopBar
 import TeamTavern.Client.Components.Welcome (welcome)
@@ -40,11 +40,11 @@ import TeamTavern.Client.Pages.Games (games)
 import TeamTavern.Client.Pages.Games as Games
 import TeamTavern.Client.Pages.Home (home)
 import TeamTavern.Client.Pages.Home as Home
-import TeamTavern.Client.Player (player)
-import TeamTavern.Client.Player as Player
+import TeamTavern.Client.Pages.Player (player)
+import TeamTavern.Client.Pages.Player as Player
 import TeamTavern.Client.Script.Navigate (navigateReplace_)
-import TeamTavern.Client.SignIn (signIn)
-import TeamTavern.Client.SignIn as SignIn
+import TeamTavern.Client.Pages.SignIn (signIn)
+import TeamTavern.Client.Pages.SignIn as SignIn
 
 data Query send = ChangeRoute Foreign String send
 
@@ -81,7 +81,7 @@ type ChildSlots = Footer.ChildSlots
     , signIn :: SignIn.Slot Unit
     , homeAnchor :: NavigationAnchor.Slot Unit
     , signInAnchor :: NavigationAnchor.Slot Unit
-    , registerForm :: RegisterForm.Slot Unit
+    , register :: Register.Slot Unit
     , forgotPassword :: ForgotPassword.Slot
     , resetPassword :: ResetPassword.Slot
     )
@@ -114,7 +114,7 @@ render (Game input) = HH.div_ [ topBar, game input, footer ]
 render (Profiles handle tab) = wideTopBarWithContent [ Profiles.profiles handle tab ]
 render (Account tab) = topBarWithContent [ account tab ]
 render (Player nickname) = topBarWithContent [ player nickname ]
-render Register = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ registerForm ] ]
+render Register = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ register ] ]
 render SignIn = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ signIn ] ]
 render ForgotPassword = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ forgotPassword ] ]
 render (ResetPasswordSent resetPasswordData) = singleContent [ resetPasswordSent resetPasswordData ]

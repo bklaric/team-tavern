@@ -1,4 +1,4 @@
-module TeamTavern.Client.Player where
+module TeamTavern.Client.Pages.Player where
 
 import Prelude
 

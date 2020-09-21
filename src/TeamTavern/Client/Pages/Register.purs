@@ -1,4 +1,4 @@
-module TeamTavern.Client.Register (Slot, register) where
+module TeamTavern.Client.Pages.Register where
 
 import Prelude
 
@@ -15,71 +15,74 @@ import Data.Maybe (Maybe(..))
 import Data.Options ((:=))
 import Data.Symbol (SProxy(..))
 import Data.Variant (match)
-import Halogen (ClassName(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
-import Halogen.HTML.Properties (InputType(..))
+import Halogen.HTML.Properties (ButtonType(..), InputType(..))
 import Halogen.HTML.Properties as HP
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
-import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
-import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Script.Cookie (hasPlayerIdCookie)
-import TeamTavern.Client.Script.Navigate (navigate, navigate_)
 import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
+import TeamTavern.Client.Script.Navigate (navigate, navigateReplace_, navigateWithEvent_)
 import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass, otherErrorClass)
 import TeamTavern.Server.Player.Register.SendResponse as Register
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
+import Web.UIEvent.MouseEvent (MouseEvent)
 
 data Action
     = Init
     | EmailInput String
     | NicknameInput String
     | PasswordInput String
+    | TogglePasswordVisibility
     | Register Event
+    | Navigate String MouseEvent
 
 type State =
     { email :: String
     , nickname :: String
     , password :: String
+    , passwordShown :: Boolean
     , emailError :: Boolean
     , nicknameError :: Boolean
     , passwordError :: Boolean
     , emailTaken :: Boolean
     , nicknameTaken :: Boolean
     , otherError :: Boolean
+    , submitting :: Boolean
     }
 
 type Slot = H.Slot (Const Void) Void
 
-type ChildSlots =
-    ( home :: NavigationAnchor.Slot Unit
-    , signInAnchor :: NavigationAnchor.Slot Unit
-    , codeAnchor :: NavigationAnchor.Slot Unit
-    )
-
-render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
+render :: forall left slots. State -> H.ComponentHTML Action slots (Async left)
 render
     { email
     , nickname
     , password
+    , passwordShown
     , emailError
     , nicknameError
     , passwordError
     , emailTaken
     , nicknameTaken
     , otherError
+    , submitting
     } = HH.form
-    [ HP.class_ $ ClassName "single-form", HE.onSubmit $ Just <<< Register ]
-    [ HH.h2_
-        [ HH.text "Create a "
-        , navigationAnchor (SProxy :: SProxy "home")
-            { path: "/", content: HH.text "TeamTavern" }
+    [ HP.class_ $ HH.ClassName "form"
+    , HE.onSubmit $ Just <<< Register
+    ]
+    [ HH.h2 [ HP.class_ $ HH.ClassName "form-heading" ]
+        [ HH.text "Create your "
+        , HH.a
+            [ HP.href "/"
+            , HE.onClick $ Just <<< Navigate "/"
+            ]
+            [ HH.text "TeamTavern" ]
         , HH.text " account"
         ]
-    , HH.div_
+    , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
         [ HH.label
             [ HP.class_ $ HH.ClassName "input-label", HP.for "nickname" ]
             [ HH.text "Nickname" ]
@@ -98,7 +101,7 @@ render
             [ HH.text
                 "This nickname is already taken, please pick another one." ]
         ]
-    , HH.div_
+    , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
         [ HH.label
             [ HP.class_ $ HH.ClassName "input-label", HP.for "email" ]
             [ HH.text "Email address" ]
@@ -117,15 +120,37 @@ render
             [ HP.class_ $ inputErrorClass emailTaken ]
             [ HH.text "This email is already taken, please pick another one." ]
         ]
-    , HH.div_
+    , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
         [ HH.label
             [ HP.class_ $ HH.ClassName "input-label", HP.for "password" ]
             [ HH.text "Password" ]
-        , HH.input
-            [ HP.id_ "password"
-            , HP.class_ $ HH.ClassName "text-line-input"
-            , HP.type_ InputPassword
-            , HE.onValueInput $ Just <<< PasswordInput
+        , HH.div [ HP.class_ $ HH.ClassName "password-input-container" ]
+            [ HH.input
+                [ HP.id_ "password"
+                , HP.class_ $ HH.ClassName "password-input"
+                , HP.type_
+                    if passwordShown
+                    then InputText
+                    else InputPassword
+                , HE.onValueInput $ Just <<< PasswordInput
+                ]
+            , HH.button
+                [ HP.class_ $ HH.ClassName "password-input-button"
+                , HP.type_ ButtonButton
+                , HP.title
+                    if passwordShown
+                    then "Hide password"
+                    else "Show password"
+                , HE.onClick $ Just <<< const TogglePasswordVisibility
+                ]
+                [ HH.i
+                    [ HP.class_ $ HH.ClassName
+                        if passwordShown
+                        then "fas fa-eye-slash"
+                        else "fas fa-eye"
+                    ]
+                    []
+                ]
             ]
         , HH.p
             [ HP.class_ $ inputErrorClass passwordError ]
@@ -133,19 +158,27 @@ render
             ]
         ]
     , HH.button
-        [ HP.class_ $ ClassName "primary-button"
-        , HP.disabled $ email == "" || nickname == "" || password == ""
+        [ HP.class_ $ HH.ClassName "form-submit-button"
+        , HP.disabled $
+            email == "" || nickname == "" || password == "" || submitting
         ]
-        [ HH.i [ HP.class_ $ H.ClassName "fas fa-user-check button-icon" ] []
-        , HH.text "Create account"
+        [ HH.i [ HP.class_ $ HH.ClassName "fas fa-user-check button-icon" ] []
+        , HH.text $
+            if submitting
+            then "Creating account..."
+            else "Create account"
         ]
     , HH.p
         [ HP.class_ $ otherErrorClass otherError ]
         [ HH.text "Something unexpected went wrong! Please try again later." ]
-    , HH.p_
+    , HH.p
+        [ HP.class_ $ HH.ClassName "form-bottom-text" ]
         [ HH.text "Already have an account? "
-        , navigationAnchor (SProxy :: SProxy "signInAnchor")
-            { path: "/signin", content: HH.text "Sign in." }
+        , HH.a
+            [ HP.href "/signin"
+            , HE.onClick $ Just <<< Navigate "/signin"
+            ]
+            [ HH.text "Sign in." ]
         ]
     ]
 
@@ -183,23 +216,25 @@ sendRegisterRequest state @ { email, nickname, password } = Async.unify do
         _ -> pure $ Left $ state { otherError = true }
     pure newState
 
-handleAction :: forall output left.
-    Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
+handleAction :: forall slots output left.
+    Action -> H.HalogenM State Action slots output (Async left) Unit
 handleAction Init = do
     isSignedIn <- H.liftEffect hasPlayerIdCookie
     if isSignedIn
-        then H.liftEffect $ navigate_ "/"
+        then H.liftEffect $ navigateReplace_ "/"
         else pure unit
     H.liftEffect do
         setMetaTitle "Create account | TeamTavern"
         setMetaDescription "Create your TeamTavern account."
         setMetaUrl
 handleAction (EmailInput email) =
-    H.modify_ (_ { email = email }) $> unit
+    H.modify_ (_ { email = email })
 handleAction (NicknameInput nickname) =
-    H.modify_ (_ { nickname = nickname }) $> unit
+    H.modify_ (_ { nickname = nickname })
 handleAction (PasswordInput password) =
-    H.modify_ (_ { password = password }) $> unit
+    H.modify_ (_ { password = password })
+handleAction TogglePasswordVisibility =
+    H.modify_ (\state -> state { passwordShown = not state.passwordShown })
 handleAction (Register event) = do
     H.liftEffect $ preventDefault event
     state <- H.gets (_
@@ -209,12 +244,15 @@ handleAction (Register event) = do
         , emailTaken     = false
         , nicknameTaken  = false
         , otherError     = false
+        , submitting     = true
         })
+    H.put state
     newState <- H.lift $ sendRegisterRequest state
     case newState of
         Right content -> H.liftEffect $ navigate content "/welcome"
-        Left newState' -> H.put newState'
-    pure unit
+        Left newState' -> H.put newState' { submitting = false }
+handleAction (Navigate url event) =
+    H.liftEffect $ navigateWithEvent_ url event
 
 component :: forall query input output left.
     H.Component HH.HTML query input output (Async left)
@@ -223,20 +261,23 @@ component = H.mkComponent
         { email: ""
         , nickname: ""
         , password: ""
+        , passwordShown: false
         , emailError: false
         , nicknameError: false
         , passwordError: false
         , emailTaken: false
         , nicknameTaken: false
         , otherError: false
+        , submitting: false
         }
     , render
     , eval: H.mkEval $ H.defaultEval
-        { handleAction = handleAction
-        , initialize = Just Init
+        { initialize = Just Init
+        , handleAction = handleAction
         }
     }
 
 register :: forall query children left.
     HH.ComponentHTML query (register :: Slot Unit | children) (Async left)
-register = HH.slot (SProxy :: SProxy "register") unit component unit absurd
+register =
+    HH.slot (SProxy :: SProxy "register") unit component unit absurd

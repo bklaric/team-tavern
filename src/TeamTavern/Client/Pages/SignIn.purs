@@ -1,4 +1,4 @@
-module TeamTavern.Client.SignIn (Slot, signIn) where
+module TeamTavern.Client.Pages.SignIn (Slot, signIn) where
 
 import Prelude
 
