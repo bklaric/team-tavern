@@ -20,15 +20,10 @@ import TeamTavern.Client.Components.Password.ResetPassword (resetPassword)
 import TeamTavern.Client.Components.Password.ResetPassword as ResetPassword
 import TeamTavern.Client.Components.Password.ResetPasswordSent (resetPasswordSent)
 import TeamTavern.Client.Components.Password.ResetPasswordSuccess (resetPasswordSuccess)
-import TeamTavern.Client.Pages.Register (register)
-import TeamTavern.Client.Pages.Register as Register
 import TeamTavern.Client.Components.TopBar (topBar)
 import TeamTavern.Client.Components.TopBar as TopBar
 import TeamTavern.Client.Components.Welcome (welcome)
 import TeamTavern.Client.Components.Welcome as Welcome
-import TeamTavern.Client.Components.WelcomeBanner as WelcomeBanner
-import TeamTavern.Client.Pages.Profiles as Profiles
-import TeamTavern.Client.Pages.Profiles.GameHeader as GameHeader
 import TeamTavern.Client.Pages.About (about)
 import TeamTavern.Client.Pages.About as About
 import TeamTavern.Client.Pages.Account (account)
@@ -42,9 +37,15 @@ import TeamTavern.Client.Pages.Home (home)
 import TeamTavern.Client.Pages.Home as Home
 import TeamTavern.Client.Pages.Player (player)
 import TeamTavern.Client.Pages.Player as Player
-import TeamTavern.Client.Script.Navigate (navigateReplace_)
+import TeamTavern.Client.Pages.Profiles as Profiles
+import TeamTavern.Client.Pages.Profiles.GameHeader as GameHeader
+import TeamTavern.Client.Pages.Register (register)
+import TeamTavern.Client.Pages.Register as Register
 import TeamTavern.Client.Pages.SignIn (signIn)
 import TeamTavern.Client.Pages.SignIn as SignIn
+import TeamTavern.Client.Pages.Wizard (wizard)
+import TeamTavern.Client.Pages.Wizard as Wizard
+import TeamTavern.Client.Script.Navigate (navigateReplace_)
 
 data Query send = ChangeRoute Foreign String send
 
@@ -61,6 +62,7 @@ data State
     | Player String
     | Register
     | SignIn
+    | Wizard
     | ForgotPassword
     | ResetPasswordSent { email :: String }
     | ResetPassword
@@ -72,12 +74,12 @@ type ChildSlots = Footer.ChildSlots
     ( topBar :: TopBar.Slot Unit
     , home :: Home.Slot Unit
     , about :: About.Slot
-    , welcomeBanner :: WelcomeBanner.Slot Unit
     , account :: Account.Slot
     , games :: Games.Slot Unit
     , game :: Game.Slot
     , profiles :: Profiles.Slot Unit
     , player :: Player.Slot Unit
+    , wizard :: Wizard.Slot
     , signIn :: SignIn.Slot Unit
     , homeAnchor :: NavigationAnchor.Slot Unit
     , signInAnchor :: NavigationAnchor.Slot Unit
@@ -116,6 +118,7 @@ render (Account tab) = topBarWithContent [ account tab ]
 render (Player nickname) = topBarWithContent [ player nickname ]
 render Register = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ register ] ]
 render SignIn = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ signIn ] ]
+render Wizard = wizard { nickname: "Bruh" }
 render ForgotPassword = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ forgotPassword ] ]
 render (ResetPasswordSent resetPasswordData) = singleContent [ resetPasswordSent resetPasswordData ]
 render ResetPassword = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ resetPassword ] ]
@@ -141,6 +144,8 @@ handleAction (Init state route) = do
             just Register
         ["", "signin"] ->
             just SignIn
+        ["", "wizard"] ->
+            just Wizard
         ["", "forgot-password"] ->
             just ForgotPassword
         ["", "reset-password-sent"] ->

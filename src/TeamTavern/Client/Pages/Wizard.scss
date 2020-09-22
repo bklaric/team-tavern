@@ -1,0 +1,26 @@
+.page-wizard {
+    background-color: white;
+    width: fit-content;
+    margin: 64px auto;
+    border-top: 1px solid #ccc;
+    border-bottom: 1px solid #ccc;
+
+    @media screen and (min-width: 380px) {
+        border-left: 1px solid #ccc;
+        border-right: 1px solid #ccc;
+        border-radius: 4px;
+    }
+}
+
+.page-wizard-step {
+    padding: 21px;
+    text-align: center;
+}
+
+.page-wizard-step-title {
+    margin-bottom: 21px;
+}
+
+.page-wizard-step-description {
+    margin-bottom: 14px;
+}

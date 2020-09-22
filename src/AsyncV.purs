@@ -6,15 +6,14 @@ import Async (Async(..))
 import Control.Monad.Cont (class MonadTrans, ContT(..), lift)
 import Control.Monad.Except (ExceptT(..))
 import Data.List.NonEmpty (singleton)
-import Data.List.Types (NonEmptyList(..))
+import Data.List.Types (NonEmptyList)
 import Data.Newtype (class Newtype, unwrap)
 import Data.Symbol (class IsSymbol)
 import Data.Validated (Validated, validated)
 import Data.Validated as Validated
-import Data.Variant (SProxy(..), Variant, inj)
+import Data.Variant (SProxy, Variant, inj)
 import Effect (Effect)
 import Prim.Row (class Cons)
-import Undefined (undefined)
 
 newtype ValidatedT invalid monad valid = ValidatedT (monad (Validated invalid valid))
 
