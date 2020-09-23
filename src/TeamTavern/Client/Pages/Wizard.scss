@@ -1,6 +1,7 @@
 .page-wizard {
     background-color: white;
     width: fit-content;
+    max-width: 960px;
     margin: 64px auto;
     border-top: 1px solid #ccc;
     border-bottom: 1px solid #ccc;
@@ -14,13 +15,29 @@
 
 .page-wizard-step {
     padding: 21px;
-    text-align: center;
 }
 
 .page-wizard-step-title {
     margin-bottom: 21px;
+    text-align: center;
 }
 
 .page-wizard-step-description {
     margin-bottom: 14px;
+    text-align: center;
+}
+
+.page-wizard-step-buttons {
+    display: flex;
+    justify-content: space-between;
+    padding: 14px;
+    border-top: 1px solid #ccc;
+
+    button {
+        width: 100px;
+    }
+}
+
+.enter-player-details {
+    margin-top: -21px;
 }

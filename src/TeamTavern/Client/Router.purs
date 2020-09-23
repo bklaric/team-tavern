@@ -35,6 +35,7 @@ import TeamTavern.Client.Pages.Games (games)
 import TeamTavern.Client.Pages.Games as Games
 import TeamTavern.Client.Pages.Home (home)
 import TeamTavern.Client.Pages.Home as Home
+import TeamTavern.Client.Pages.Wizard.EnterPlayerDetails (emptyPlayerDetails)
 import TeamTavern.Client.Pages.Player (player)
 import TeamTavern.Client.Pages.Player as Player
 import TeamTavern.Client.Pages.Profiles as Profiles
@@ -62,7 +63,7 @@ data State
     | Player String
     | Register
     | SignIn
-    | Wizard
+    | Wizard Wizard.Input
     | ForgotPassword
     | ResetPasswordSent { email :: String }
     | ResetPassword
@@ -118,7 +119,7 @@ render (Account tab) = topBarWithContent [ account tab ]
 render (Player nickname) = topBarWithContent [ player nickname ]
 render Register = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ register ] ]
 render SignIn = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ signIn ] ]
-render Wizard = wizard { nickname: "Bruh" }
+render (Wizard input) = wizard input
 render ForgotPassword = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ forgotPassword ] ]
 render (ResetPasswordSent resetPasswordData) = singleContent [ resetPasswordSent resetPasswordData ]
 render ResetPassword = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ resetPassword ] ]
@@ -144,8 +145,10 @@ handleAction (Init state route) = do
             just Register
         ["", "signin"] ->
             just SignIn
-        ["", "wizard"] ->
-            just Wizard
+        ["", "wizard", "greeting"] ->
+            just $ Wizard { step: Wizard.Greeting, nickname: "Bruh", playerDetails: emptyPlayerDetails }
+        ["", "wizard", "player"] ->
+            just $ Wizard { step: Wizard.PlayerDetails, nickname: "Bruh", playerDetails: emptyPlayerDetails }
         ["", "forgot-password"] ->
             just ForgotPassword
         ["", "reset-password-sent"] ->
