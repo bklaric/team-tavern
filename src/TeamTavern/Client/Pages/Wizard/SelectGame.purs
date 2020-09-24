@@ -86,12 +86,16 @@ handleAction Initialize = do
     games <- H.lift $ maybe [] identity <$> loadGames
     H.modify_ _ { games = games }
 handleAction (SelectGame game) = do
-    game' <- H.lift $ loadGame game.handle
-    case game' of
-        Nothing -> pure unit
-        Just game'' -> do
-            H.modify_ _ { selected = Just game'' }
-            H.raise game''
+    { selected } <- H.get
+    case selected of
+        Just selected' | selected'.handle == game.handle -> pure unit
+        _ -> do
+            game' <- H.lift $ loadGame game.handle
+            case game' of
+                Just game'' -> do
+                    H.modify_ _ { selected = Just game'' }
+                    H.raise game''
+                Nothing -> pure unit
 
 component :: forall query left.
     H.Component HH.HTML query Input Output (Async left)

@@ -150,6 +150,8 @@ handleAction (Init state route) = do
             just $ Wizard { step: Wizard.PlayerDetails, nickname: "Bruh" }
         ["", "wizard", "game"] ->
             just $ Wizard { step: Wizard.Game, nickname: "Bruh" }
+        ["", "wizard", "profile"] ->
+            just $ Wizard { step: Wizard.PlayerProfileDetails, nickname: "Bruh" }
         ["", "forgot-password"] ->
             just ForgotPassword
         ["", "reset-password-sent"] ->

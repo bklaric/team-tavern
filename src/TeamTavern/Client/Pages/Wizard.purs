@@ -3,7 +3,7 @@ module TeamTavern.Client.Pages.Wizard where
 import Prelude
 
 import Data.Const (Const)
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), isNothing)
 import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
@@ -12,15 +12,23 @@ import Halogen.HTML.Properties as HP
 import Record as Record
 import TeamTavern.Client.Pages.Wizard.EnterPlayerDetails (enterPlayerDetails)
 import TeamTavern.Client.Pages.Wizard.EnterPlayerDetails as EnterPlayerDetails
+import TeamTavern.Client.Pages.Wizard.EnterPlayerProfileDetails (enterPlayerProfileDetails)
+import TeamTavern.Client.Pages.Wizard.EnterPlayerProfileDetails as EnterPlayerProfileDetails
 import TeamTavern.Client.Pages.Wizard.SelectGame (selectGame)
 import TeamTavern.Client.Pages.Wizard.SelectGame as SelectGame
 import TeamTavern.Client.Script.Navigate (navigate_)
 
-data Step = Greeting | PlayerDetails | Game
+data Step = Greeting | PlayerDetails | Game | PlayerProfileDetails
 
 type Input = { step :: Step, nickname :: String }
 
-type State = { step :: Step, nickname :: String, playerDetails :: EnterPlayerDetails.Input, game :: SelectGame.Input }
+type State =
+    { step :: Step
+    , nickname :: String
+    , playerDetails :: EnterPlayerDetails.Input
+    , game :: SelectGame.Input
+    , playerProfileDetails :: EnterPlayerProfileDetails.Input
+    }
 
 data Action
     = Receive Input
@@ -28,6 +36,8 @@ data Action
     | SetStep Step
     | UpdatePlayerDetails EnterPlayerDetails.Output
     | UpdateGame SelectGame.Output
+    | UpdatePlayerProfileDetails EnterPlayerProfileDetails.Output
+    | SetUpAccount
 
 type Slot = H.Slot (Const Void) Void Unit
 
@@ -92,9 +102,31 @@ renderPage { step: Game, game } =
             [ HH.text "Back" ]
         , HH.button
             [ HP.class_ $ HH.ClassName "primary-button page-wizard-step-button"
-            , HE.onClick $ const $ Just $ SetStep Game
+            , HP.disabled $ isNothing game
+            , HE.onClick $ const $ Just $ SetStep PlayerProfileDetails
             ]
             [ HH.text "Next" ]
+        ]
+    ]
+renderPage { step: PlayerProfileDetails, playerProfileDetails } =
+    [ HH.div [ HP.class_ $ HH.ClassName "page-wizard-step" ]
+        [ HH.h1 [ HP.class_ $ HH.ClassName "page-wizard-step-title" ]
+                [ HH.text "Profile details" ]
+        , HH.p [ HP.class_ $ HH.ClassName "page-wizard-step-description" ]
+            [ HH.text """Enter details about your gameplay. Fill out everything."""
+            ]
+        , enterPlayerProfileDetails playerProfileDetails (Just <<< UpdatePlayerProfileDetails)
+        ]
+    , HH.div [ HP.class_ $ HH.ClassName "page-wizard-step-buttons" ]
+        [ HH.button
+            [ HP.class_ $ HH.ClassName "secondary-button page-wizard-step-button"
+            , HE.onClick $ const $ Just $ SetStep Game ]
+            [ HH.text "Back" ]
+        , HH.button
+            [ HP.class_ $ HH.ClassName "primary-button page-wizard-step-button"
+            , HE.onClick $ const $ Just SetUpAccount
+            ]
+            [ HH.text "Done" ]
         ]
     ]
 
@@ -113,6 +145,7 @@ handleAction (SetStep step) =
         Greeting -> "/wizard/greeting"
         PlayerDetails -> "/wizard/player"
         Game -> "/wizard/game"
+        PlayerProfileDetails -> "/wizard/profile"
 handleAction (UpdatePlayerDetails details) =
     H.modify_ \state -> state
         { playerDetails = state.playerDetails
@@ -130,14 +163,33 @@ handleAction (UpdatePlayerDetails details) =
             }
         }
 handleAction (UpdateGame game) =
-    H.modify_ _ { game = Just game }
+    H.modify_ \state -> state
+        { game = Just game
+        , playerProfileDetails = state.playerProfileDetails
+            { fields = game.fields
+            , fieldValues = []
+            , newOrReturning = false
+            , summary = ""
+            }
+        }
+handleAction (UpdatePlayerProfileDetails details) =
+    H.modify_ \state -> state
+        { playerProfileDetails = state.playerProfileDetails
+            { fieldValues = details.fieldValues
+            , newOrReturning = details.newOrReturning
+            , summary = details.summary
+            }
+        }
+handleAction SetUpAccount =
+    pure unit
 
 -- component :: forall query output monad.
 --     H.Component HH.HTML query Input output (Async monad)
 component = H.mkComponent
     { initialState:
-        Record.insert (SProxy :: SProxy "playerDetails") EnterPlayerDetails.emptyPlayerDetails
+        Record.insert (SProxy :: SProxy "playerDetails") EnterPlayerDetails.emptyInput
         >>> Record.insert (SProxy :: SProxy "game") Nothing
+        >>> Record.insert (SProxy :: SProxy "playerProfileDetails") EnterPlayerProfileDetails.emptyInput
     , render
     , eval: H.mkEval H.defaultEval
         { handleAction = handleAction

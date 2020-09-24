@@ -398,8 +398,8 @@ component = H.mkComponent
         }
     }
 
-emptyPlayerDetails :: Input
-emptyPlayerDetails =
+emptyInput :: Input
+emptyInput =
     { birthday: ""
     , location: Nothing
     , languages: []
