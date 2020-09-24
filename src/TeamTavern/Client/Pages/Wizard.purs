@@ -5,7 +5,6 @@ import Prelude
 import Data.Const (Const)
 import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
-import Effect.Class (class MonadEffect)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
@@ -13,19 +12,22 @@ import Halogen.HTML.Properties as HP
 import Record as Record
 import TeamTavern.Client.Pages.Wizard.EnterPlayerDetails (enterPlayerDetails)
 import TeamTavern.Client.Pages.Wizard.EnterPlayerDetails as EnterPlayerDetails
+import TeamTavern.Client.Pages.Wizard.SelectGame (selectGame)
+import TeamTavern.Client.Pages.Wizard.SelectGame as SelectGame
 import TeamTavern.Client.Script.Navigate (navigate_)
 
-data Step = Greeting | PlayerDetails
+data Step = Greeting | PlayerDetails | Game
 
-type Input = { step :: Step, nickname :: String, playerDetails :: EnterPlayerDetails.Input }
+type Input = { step :: Step, nickname :: String }
 
-type State = { step :: Step, nickname :: String, playerDetails :: EnterPlayerDetails.Input }
+type State = { step :: Step, nickname :: String, playerDetails :: EnterPlayerDetails.Input, game :: SelectGame.Input }
 
 data Action
     = Receive Input
     | Skip
     | SetStep Step
     | UpdatePlayerDetails EnterPlayerDetails.Output
+    | UpdateGame SelectGame.Output
 
 type Slot = H.Slot (Const Void) Void Unit
 
@@ -52,7 +54,7 @@ renderPage { step: Greeting, nickname } =
         ]
     ]
 renderPage { step: PlayerDetails, playerDetails } =
-    [HH.div [ HP.class_ $ HH.ClassName "page-wizard-step" ]
+    [ HH.div [ HP.class_ $ HH.ClassName "page-wizard-step" ]
         [ HH.h1 [ HP.class_ $ HH.ClassName "page-wizard-step-title" ]
                 [ HH.text "Player details" ]
         , HH.p [ HP.class_ $ HH.ClassName "page-wizard-step-description" ]
@@ -69,7 +71,28 @@ renderPage { step: PlayerDetails, playerDetails } =
             [ HH.text "Back" ]
         , HH.button
             [ HP.class_ $ HH.ClassName "primary-button page-wizard-step-button"
-            , HE.onClick $ const $ Just $ SetStep PlayerDetails
+            , HE.onClick $ const $ Just $ SetStep Game
+            ]
+            [ HH.text "Next" ]
+        ]
+    ]
+renderPage { step: Game, game } =
+    [ HH.div [ HP.class_ $ HH.ClassName "page-wizard-step" ]
+        [ HH.h1 [ HP.class_ $ HH.ClassName "page-wizard-step-title" ]
+                [ HH.text "Game" ]
+        , HH.p [ HP.class_ $ HH.ClassName "page-wizard-step-description" ]
+            [ HH.text """Select a game to create your first profile muhfugga."""
+            ]
+        , selectGame game (Just <<< UpdateGame)
+        ]
+    , HH.div [ HP.class_ $ HH.ClassName "page-wizard-step-buttons" ]
+        [ HH.button
+            [ HP.class_ $ HH.ClassName "secondary-button page-wizard-step-button"
+            , HE.onClick $ const $ Just $ SetStep PlayerDetails ]
+            [ HH.text "Back" ]
+        , HH.button
+            [ HP.class_ $ HH.ClassName "primary-button page-wizard-step-button"
+            , HE.onClick $ const $ Just $ SetStep Game
             ]
             [ HH.text "Next" ]
         ]
@@ -79,8 +102,8 @@ renderPage { step: PlayerDetails, playerDetails } =
 render state = HH.div [ HP.class_ $ HH.ClassName "page-wizard"]
     $ renderPage state
 
-handleAction (Receive input) =
-    H.put input
+handleAction (Receive { step }) =
+    H.modify_ _ { step = step }
 handleAction Skip = do
     { nickname } <- H.get
     H.liftEffect $ navigate_ $ "/players/" <> nickname
@@ -89,6 +112,7 @@ handleAction (SetStep step) =
         case step of
         Greeting -> "/wizard/greeting"
         PlayerDetails -> "/wizard/player"
+        Game -> "/wizard/game"
 handleAction (UpdatePlayerDetails details) =
     H.modify_ \state -> state
         { playerDetails = state.playerDetails
@@ -105,11 +129,15 @@ handleAction (UpdatePlayerDetails details) =
             , about = details.about
             }
         }
+handleAction (UpdateGame game) =
+    H.modify_ _ { game = Just game }
 
--- component :: forall query output monad. MonadEffect monad =>
---     H.Component HH.HTML query Input output monad
+-- component :: forall query output monad.
+--     H.Component HH.HTML query Input output (Async monad)
 component = H.mkComponent
-    { initialState: identity
+    { initialState:
+        Record.insert (SProxy :: SProxy "playerDetails") EnterPlayerDetails.emptyPlayerDetails
+        >>> Record.insert (SProxy :: SProxy "game") Nothing
     , render
     , eval: H.mkEval H.defaultEval
         { handleAction = handleAction

@@ -35,7 +35,6 @@ import TeamTavern.Client.Pages.Games (games)
 import TeamTavern.Client.Pages.Games as Games
 import TeamTavern.Client.Pages.Home (home)
 import TeamTavern.Client.Pages.Home as Home
-import TeamTavern.Client.Pages.Wizard.EnterPlayerDetails (emptyPlayerDetails)
 import TeamTavern.Client.Pages.Player (player)
 import TeamTavern.Client.Pages.Player as Player
 import TeamTavern.Client.Pages.Profiles as Profiles
@@ -146,9 +145,11 @@ handleAction (Init state route) = do
         ["", "signin"] ->
             just SignIn
         ["", "wizard", "greeting"] ->
-            just $ Wizard { step: Wizard.Greeting, nickname: "Bruh", playerDetails: emptyPlayerDetails }
+            just $ Wizard { step: Wizard.Greeting, nickname: "Bruh" }
         ["", "wizard", "player"] ->
-            just $ Wizard { step: Wizard.PlayerDetails, nickname: "Bruh", playerDetails: emptyPlayerDetails }
+            just $ Wizard { step: Wizard.PlayerDetails, nickname: "Bruh" }
+        ["", "wizard", "game"] ->
+            just $ Wizard { step: Wizard.Game, nickname: "Bruh" }
         ["", "forgot-password"] ->
             just ForgotPassword
         ["", "reset-password-sent"] ->
