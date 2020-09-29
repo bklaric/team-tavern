@@ -30,11 +30,36 @@
 .page-wizard-step-buttons {
     display: flex;
     justify-content: space-between;
+    align-items: flex-start;
     padding: 14px;
     border-top: 1px solid #ccc;
 
     button {
         width: 100px;
+    }
+}
+
+.page-wizard-skip-button-group {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.page-wizard-skip-button-underlabel {
+    @extend .input-underlabel;
+    margin-top: 7px;
+    max-width: 200px;
+}
+
+@media screen and (min-width: 380px) {
+    .page-wizard-skip-button-group {
+        align-items: center;
+        flex-direction: row;
+    }
+
+    .page-wizard-skip-button-underlabel {
+        margin-top: 0;
+        margin-left: 7px;
     }
 }
 

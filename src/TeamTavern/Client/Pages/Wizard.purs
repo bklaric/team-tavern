@@ -65,11 +65,15 @@ renderPage { step: Greeting, nickname } =
             ]
         ]
     , HH.div [ HP.class_ $ HH.ClassName "page-wizard-step-buttons" ]
-        [ HH.button
-            [ HP.class_ $ HH.ClassName "secondary-button"
-            , HE.onClick $ const $ Just Skip
+        [ HH.div [ HP.class_ $ HH.ClassName "page-wizard-skip-button-group" ]
+            [ HH.button
+                [ HP.class_ $ HH.ClassName "secondary-button"
+                , HE.onClick $ const $ Just Skip
+                ]
+                [ HH.text "Skip" ]
+            , HH.p [ HP.class_ $ HH.ClassName "page-wizard-skip-button-underlabel" ]
+                [ HH.text "I don't want to set up", HH.br_, HH.text "my account right now." ]
             ]
-            [ HH.text "Skip" ]
         , HH.button
             [ HP.class_ $ HH.ClassName "primary-button"
             , HE.onClick $ const $ Just $ SetStep PlayerDetails
