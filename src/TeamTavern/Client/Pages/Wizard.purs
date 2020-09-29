@@ -2,14 +2,27 @@ module TeamTavern.Client.Pages.Wizard where
 
 import Prelude
 
+import Async (Async(..))
+import Async as Async
+import Browser.Async.Fetch as Fetch
+import Browser.Async.Fetch.Response as FetchRes
+import Data.Array as Array
+import Data.Bifunctor (bimap, lmap)
 import Data.Const (Const)
-import Data.Maybe (Maybe(..), isNothing)
+import Data.Either (Either(..))
+import Data.HTTP.Method (Method(..))
+import Data.Maybe (Maybe(..), isJust, isNothing)
+import Data.Options ((:=))
+import Data.String as String
 import Data.Symbol (SProxy(..))
+import Effect.Class.Console (logShow)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Record as Record
+import Simple.JSON as Json
+import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Pages.Wizard.EnterPlayerDetails (enterPlayerDetails)
 import TeamTavern.Client.Pages.Wizard.EnterPlayerDetails as EnterPlayerDetails
 import TeamTavern.Client.Pages.Wizard.EnterPlayerProfileDetails (enterPlayerProfileDetails)
@@ -17,6 +30,7 @@ import TeamTavern.Client.Pages.Wizard.EnterPlayerProfileDetails as EnterPlayerPr
 import TeamTavern.Client.Pages.Wizard.SelectGame (selectGame)
 import TeamTavern.Client.Pages.Wizard.SelectGame as SelectGame
 import TeamTavern.Client.Script.Navigate (navigate_)
+import TeamTavern.Server.Wizard.Onboard as Onboard
 
 data Step = Greeting | PlayerDetails | Game | PlayerProfileDetails
 
@@ -134,6 +148,49 @@ renderPage { step: PlayerProfileDetails, playerProfileDetails } =
 render state = HH.div [ HP.class_ $ HH.ClassName "page-wizard"]
     $ renderPage state
 
+sendRequest :: forall left. State -> Async left (Maybe (Either Onboard.BadRequestContent Unit))
+sendRequest (state :: State) = Async.unify do
+    (body :: Onboard.RequestBody) <-
+        case state.game, state.playerDetails, state.playerProfileDetails of
+        Just game, personalDetails, profileDetails -> Async.right
+            { handle: game.handle
+            , personalDetails:
+                { birthday: if String.null personalDetails.birthday then Nothing else Just personalDetails.birthday
+                , location: personalDetails.location
+                , languages: personalDetails.languages
+                , microphone: personalDetails.microphone
+                , discordTag: if String.null personalDetails.discordTag then Nothing else Just personalDetails.discordTag
+                , timezone: personalDetails.timezone
+                , weekdayFrom: if String.null personalDetails.weekdayFrom then Nothing else Just personalDetails.weekdayFrom
+                , weekdayTo: if String.null personalDetails.weekdayTo then Nothing else Just personalDetails.weekdayTo
+                , weekendFrom: if String.null personalDetails.weekendFrom then Nothing else Just personalDetails.weekendFrom
+                , weekendTo: if String.null personalDetails.weekendTo then Nothing else Just personalDetails.weekendTo
+                , about: personalDetails.about
+                }
+            , profileDetails:
+                { fieldValues: profileDetails.fieldValues # Array.filter \{ url, optionKey, optionKeys } ->
+                    isJust url || isJust optionKey || isJust optionKeys
+                , newOrReturning: profileDetails.newOrReturning
+                , summary: profileDetails.summary
+                }
+            }
+        _, _, _ -> Async.left Nothing
+    response <-
+        Fetch.fetch "/api/wizard/onboard"
+        ( Fetch.method := POST
+        <> Fetch.body := Json.writeJSON body
+        <> Fetch.credentials := Fetch.Include
+        )
+        # lmap (const Nothing)
+    content :: Either Onboard.BadRequestContent Unit <-
+        case FetchRes.status response of
+        204 -> pure $ Right unit
+        400 -> FetchRes.text response >>= JsonAsync.readJSON # bimap (const Nothing) Left
+        _ -> Async.left Nothing
+    pure $ Just content
+
+handleAction :: forall action output slots left.
+    Action -> H.HalogenM State action slots output (Async left) Unit
 handleAction (Receive { step }) =
     H.modify_ _ { step = step }
 handleAction Skip = do
@@ -180,8 +237,12 @@ handleAction (UpdatePlayerProfileDetails details) =
             , summary = details.summary
             }
         }
-handleAction SetUpAccount =
-    pure unit
+handleAction SetUpAccount = do
+    state <- H.get
+    response <- H.lift $ sendRequest state
+    case response of
+        Just (Right _) -> H.liftEffect $ navigate_ "/account"
+        _ -> logShow response
 
 -- component :: forall query output monad.
 --     H.Component HH.HTML query Input output (Async monad)

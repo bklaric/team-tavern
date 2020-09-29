@@ -65,6 +65,7 @@ import TeamTavern.Server.Routes (TeamTavernRoutes)
 import TeamTavern.Server.Session.End (end) as Session
 import TeamTavern.Server.Session.Start (start) as Session
 import TeamTavern.Server.Wizard.CreateAccount as Wizard
+import TeamTavern.Server.Wizard.Onboard as Onboard
 
 listenOptions :: ListenOptions
 listenOptions = TcpListenOptions
@@ -223,6 +224,8 @@ handleRequest deployment pool client method url cookies body =
             Conversation.start pool client nickname cookies body
         , createAccount: const $
             Wizard.createAccount pool client cookies body
+        , onboard: const $
+            Onboard.onboard pool cookies body
         }
         <#> (\response -> response { headers = response.headers <> MultiMap.fromFoldable
                 [ Tuple "Access-Control-Allow-Origin" $ NEL.singleton "http://localhost:1337"
