@@ -38,6 +38,7 @@ type Input = { step :: Step, nickname :: String }
 
 type State =
     { step :: Step
+    , confirmSkip :: Boolean
     , nickname :: String
     , playerDetails :: EnterPlayerDetails.Input
     , game :: SelectGame.Input
@@ -47,6 +48,7 @@ type State =
 data Action
     = Receive Input
     | Skip
+    | ConfirmSkip
     | SetStep Step
     | UpdatePlayerDetails EnterPlayerDetails.Output
     | UpdateGame SelectGame.Output
@@ -55,7 +57,7 @@ data Action
 
 type Slot = H.Slot (Const Void) Void Unit
 
-renderPage { step: Greeting, nickname } =
+renderPage { step: Greeting, nickname, confirmSkip } =
     [ HH.div [ HP.class_ $ HH.ClassName "page-wizard-step" ]
         [ HH.h1 [ HP.class_ $ HH.ClassName "page-wizard-step-title" ]
             [ HH.text $ "Hi, " <> nickname <> "!" ]
@@ -66,14 +68,25 @@ renderPage { step: Greeting, nickname } =
         ]
     , HH.div [ HP.class_ $ HH.ClassName "page-wizard-step-buttons" ]
         [ HH.div [ HP.class_ $ HH.ClassName "page-wizard-skip-button-group" ]
-            [ HH.button
-                [ HP.class_ $ HH.ClassName "secondary-button"
-                , HE.onClick $ const $ Just Skip
+            if confirmSkip
+            then
+                [ HH.button
+                    [ HP.class_ $ HH.ClassName "secondary-button"
+                    , HE.onClick $ const $ Just ConfirmSkip
+                    ]
+                    [ HH.text "Yes, I'm sure" ]
+                , HH.p [ HP.class_ $ HH.ClassName "page-wizard-confirm-skip-button-underlabel" ]
+                    [ HH.text "Are you sure? Setting up your account allows you to get the most out of TeamTavern." ]
                 ]
-                [ HH.text "Skip" ]
-            , HH.p [ HP.class_ $ HH.ClassName "page-wizard-skip-button-underlabel" ]
-                [ HH.text "I don't want to set up", HH.br_, HH.text "my account right now." ]
-            ]
+            else
+                [ HH.button
+                    [ HP.class_ $ HH.ClassName "secondary-button"
+                    , HE.onClick $ const $ Just Skip
+                    ]
+                    [ HH.text "Skip" ]
+                , HH.p [ HP.class_ $ HH.ClassName "page-wizard-skip-button-underlabel" ]
+                    [ HH.text "I don't want to set up", HH.br_, HH.text "my account right now." ]
+                ]
         , HH.button
             [ HP.class_ $ HH.ClassName "primary-button"
             , HE.onClick $ const $ Just $ SetStep PlayerDetails
@@ -196,8 +209,10 @@ sendRequest (state :: State) = Async.unify do
 handleAction :: forall action output slots left.
     Action -> H.HalogenM State action slots output (Async left) Unit
 handleAction (Receive { step }) =
-    H.modify_ _ { step = step }
-handleAction Skip = do
+    H.modify_ _ { step = step, confirmSkip = false }
+handleAction Skip =
+    H.modify_ _ { confirmSkip = true }
+handleAction ConfirmSkip = do
     { nickname } <- H.get
     H.liftEffect $ navigate_ $ "/players/" <> nickname
 handleAction (SetStep step) =
@@ -251,10 +266,14 @@ handleAction SetUpAccount = do
 -- component :: forall query output monad.
 --     H.Component HH.HTML query Input output (Async monad)
 component = H.mkComponent
-    { initialState:
-        Record.insert (SProxy :: SProxy "playerDetails") EnterPlayerDetails.emptyInput
-        >>> Record.insert (SProxy :: SProxy "game") Nothing
-        >>> Record.insert (SProxy :: SProxy "playerProfileDetails") EnterPlayerProfileDetails.emptyInput
+    { initialState: \{ step, nickname } ->
+        { step
+        , nickname
+        , confirmSkip: false
+        , playerDetails: EnterPlayerDetails.emptyInput
+        , game: Nothing
+        , playerProfileDetails: EnterPlayerProfileDetails.emptyInput
+        }
     , render
     , eval: H.mkEval H.defaultEval
         { handleAction = handleAction

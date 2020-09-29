@@ -35,7 +35,8 @@
     border-top: 1px solid #ccc;
 
     button {
-        width: 100px;
+        width: 110px;
+        height: 45px;
     }
 }
 
@@ -51,9 +52,13 @@
     max-width: 200px;
 }
 
-@media screen and (min-width: 380px) {
+.page-wizard-confirm-skip-button-underlabel {
+    @extend .page-wizard-skip-button-underlabel;
+    color: hsl(54, 100%, 35%);
+}
+
+@media screen and (min-width: 500px) {
     .page-wizard-skip-button-group {
-        align-items: center;
         flex-direction: row;
     }
 
