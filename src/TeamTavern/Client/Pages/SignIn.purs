@@ -9,7 +9,7 @@ import Browser.Async.Fetch.Response as FetchRes
 import Data.Bifunctor (bimap, lmap)
 import Data.Const (Const)
 import Data.HTTP.Method (Method(..))
-import Data.Maybe (Maybe(..), maybe)
+import Data.Maybe (Maybe(..), isJust, maybe)
 import Data.Options ((:=))
 import Data.Variant (SProxy(..), match)
 import Halogen as H
@@ -214,7 +214,10 @@ handleAction (SignIn event) = do
     H.put state
     newState <- H.lift $ sendSignInRequest state
     case newState of
-        Nothing -> H.liftEffect $ navigate_ "/"
+        Nothing -> H.liftEffect
+            if isJust state.nonce
+            then navigate_ "/wizard/greeting"
+            else navigate_ "/"
         Just newState' -> H.put newState' { submitting = false }
 
 component :: forall query input output left.

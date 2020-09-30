@@ -2,7 +2,7 @@ module TeamTavern.Client.Pages.Wizard where
 
 import Prelude
 
-import Async (Async(..))
+import Async (Async)
 import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
@@ -20,7 +20,6 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import Record as Record
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Pages.Wizard.EnterPlayerDetails (enterPlayerDetails)
@@ -29,12 +28,13 @@ import TeamTavern.Client.Pages.Wizard.EnterPlayerProfileDetails (enterPlayerProf
 import TeamTavern.Client.Pages.Wizard.EnterPlayerProfileDetails as EnterPlayerProfileDetails
 import TeamTavern.Client.Pages.Wizard.SelectGame (selectGame)
 import TeamTavern.Client.Pages.Wizard.SelectGame as SelectGame
-import TeamTavern.Client.Script.Navigate (navigate_)
+import TeamTavern.Client.Script.Cookie (getPlayerNickname)
+import TeamTavern.Client.Script.Navigate (navigateReplace_, navigate_)
 import TeamTavern.Server.Wizard.Onboard as Onboard
 
 data Step = Greeting | PlayerDetails | Game | PlayerProfileDetails
 
-type Input = { step :: Step, nickname :: String }
+type Input = { step :: Step }
 
 type State =
     { step :: Step
@@ -46,7 +46,8 @@ type State =
     }
 
 data Action
-    = Receive Input
+    = Initialize
+    | Receive Input
     | Skip
     | ConfirmSkip
     | SetStep Step
@@ -57,6 +58,14 @@ data Action
 
 type Slot = H.Slot (Const Void) Void Unit
 
+type ChildSlots slots =
+    ( enterPlayerDetails :: EnterPlayerDetails.Slot
+    , enterPlayerProfileDetails :: EnterPlayerProfileDetails.Slot
+    , selectGame :: SelectGame.Slot
+    | slots )
+
+renderPage :: forall slots left.
+    State -> Array (HH.ComponentHTML Action (ChildSlots slots) (Async left))
 renderPage { step: Greeting, nickname, confirmSkip } =
     [ HH.div [ HP.class_ $ HH.ClassName "page-wizard-step" ]
         [ HH.h1 [ HP.class_ $ HH.ClassName "page-wizard-step-title" ]
@@ -161,9 +170,9 @@ renderPage { step: PlayerProfileDetails, playerProfileDetails } =
         ]
     ]
 
--- render :: forall slots. State -> HH.HTML slots Action
-render state = HH.div [ HP.class_ $ HH.ClassName "page-wizard"]
-    $ renderPage state
+render :: forall slots left.
+    State -> HH.ComponentHTML Action (ChildSlots slots) (Async left)
+render state = HH.div [ HP.class_ $ HH.ClassName "page-wizard"] $ renderPage state
 
 sendRequest :: forall left. State -> Async left (Maybe (Either Onboard.BadRequestContent Unit))
 sendRequest (state :: State) = Async.unify do
@@ -208,13 +217,17 @@ sendRequest (state :: State) = Async.unify do
 
 handleAction :: forall action output slots left.
     Action -> H.HalogenM State action slots output (Async left) Unit
+handleAction Initialize = do
+    nickname <- H.liftEffect getPlayerNickname
+    case nickname of
+        Just nickname' -> H.modify_ _ { nickname = nickname' }
+        Nothing -> H.liftEffect $ navigateReplace_ "/"
 handleAction (Receive { step }) =
     H.modify_ _ { step = step, confirmSkip = false }
 handleAction Skip =
     H.modify_ _ { confirmSkip = true }
-handleAction ConfirmSkip = do
-    { nickname } <- H.get
-    H.liftEffect $ navigate_ $ "/players/" <> nickname
+handleAction ConfirmSkip =
+    H.liftEffect $ navigate_ "/"
 handleAction (SetStep step) =
     H.liftEffect $ navigate_
         case step of
@@ -263,12 +276,12 @@ handleAction SetUpAccount = do
         Just (Right _) -> H.liftEffect $ navigate_ "/account"
         _ -> logShow response
 
--- component :: forall query output monad.
---     H.Component HH.HTML query Input output (Async monad)
+component :: forall query output left.
+    H.Component HH.HTML query Input output (Async left)
 component = H.mkComponent
-    { initialState: \{ step, nickname } ->
+    { initialState: \{ step } ->
         { step
-        , nickname
+        , nickname: ""
         , confirmSkip: false
         , playerDetails: EnterPlayerDetails.emptyInput
         , game: Nothing
@@ -277,10 +290,11 @@ component = H.mkComponent
     , render
     , eval: H.mkEval H.defaultEval
         { handleAction = handleAction
+        , initialize = Just Initialize
         , receive = Just <<< Receive
         }
     }
 
--- wizard :: forall action slots monad. MonadEffect monad =>
---     Input -> HH.ComponentHTML action (wizard :: Slot | slots) monad
+wizard :: forall action slots left.
+    Input -> HH.ComponentHTML action (wizard :: Slot | slots) (Async left)
 wizard input = HH.slot (SProxy :: SProxy "wizard") unit component input absurd
