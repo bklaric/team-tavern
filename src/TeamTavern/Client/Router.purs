@@ -45,7 +45,7 @@ import TeamTavern.Client.Pages.SignIn (signIn)
 import TeamTavern.Client.Pages.SignIn as SignIn
 import TeamTavern.Client.Pages.Wizard (wizard)
 import TeamTavern.Client.Pages.Wizard as Wizard
-import TeamTavern.Client.Script.Navigate (navigateReplace_)
+import TeamTavern.Client.Script.Navigate (navigateReplace_, navigate_)
 
 data Query send = ChangeRoute Foreign String send
 
@@ -144,13 +144,16 @@ handleAction (Init state route) = do
             just Register
         ["", "signin"] ->
             just SignIn
-        ["", "wizard", "greeting"] ->
-            just $ Wizard { step: Wizard.Greeting }
-        ["", "wizard", "player"] ->
+        ["", "onboarding", "start"] ->
+            case read state of
+            Right ({ firstSignIn: true } :: { firstSignIn :: Boolean}) ->
+                just $ Wizard { step: Wizard.Greeting }
+            _ -> navigate_ "/" *> nothing
+        ["", "onboarding", "player"] ->
             just $ Wizard { step: Wizard.PlayerDetails }
-        ["", "wizard", "game"] ->
+        ["", "onboarding", "game"] ->
             just $ Wizard { step: Wizard.Game }
-        ["", "wizard", "profile"] ->
+        ["", "onboarding", "profile"] ->
             just $ Wizard { step: Wizard.PlayerProfileDetails }
         ["", "forgot-password"] ->
             just ForgotPassword

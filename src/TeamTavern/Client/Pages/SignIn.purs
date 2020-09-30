@@ -22,7 +22,7 @@ import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor, navigati
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Script.Cookie (hasPlayerIdCookie)
 import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
-import TeamTavern.Client.Script.Navigate (navigate_)
+import TeamTavern.Client.Script.Navigate (navigate, navigate_)
 import TeamTavern.Client.Script.QueryParams (getQueryParam)
 import TeamTavern.Client.Snippets.ErrorClasses (otherErrorClass)
 import TeamTavern.Server.Session.Start.SendResponse as Start
@@ -216,7 +216,7 @@ handleAction (SignIn event) = do
     case newState of
         Nothing -> H.liftEffect
             if isJust state.nonce
-            then navigate_ "/wizard/greeting"
+            then navigate { firstSignIn: true } "/onboarding/start"
             else navigate_ "/"
         Just newState' -> H.put newState' { submitting = false }
 

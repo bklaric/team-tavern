@@ -30,7 +30,8 @@ import TeamTavern.Client.Pages.Wizard.EnterPlayerProfileDetails as EnterPlayerPr
 import TeamTavern.Client.Pages.Wizard.SelectGame (selectGame)
 import TeamTavern.Client.Pages.Wizard.SelectGame as SelectGame
 import TeamTavern.Client.Script.Cookie (getPlayerNickname)
-import TeamTavern.Client.Script.Navigate (navigateReplace_, navigate_)
+import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
+import TeamTavern.Client.Script.Navigate (navigate, navigate_)
 import TeamTavern.Server.Wizard.Onboard as Onboard
 
 data Step = Greeting | PlayerDetails | Game | PlayerProfileDetails
@@ -230,10 +231,18 @@ sendRequest (state :: State) = Async.unify do
 handleAction :: forall action output slots left.
     Action -> H.HalogenM State action slots output (Async left) Unit
 handleAction Initialize = do
+    state <- H.get
+    case state.step of
+        Greeting -> pure unit
+        _ -> H.liftEffect $ navigate_ "/"
     nickname <- H.liftEffect getPlayerNickname
     case nickname of
         Just nickname' -> H.modify_ _ { nickname = nickname' }
-        Nothing -> H.liftEffect $ navigateReplace_ "/"
+        Nothing -> H.liftEffect $ navigate_ "/"
+    H.liftEffect do
+        setMetaTitle "Onboarding | TeamTavern"
+        setMetaDescription "TeamTavern onboarding."
+        setMetaUrl
 handleAction (Receive { step }) =
     H.modify_ _ { step = step, confirmSkip = false }
 handleAction Skip =
@@ -241,12 +250,12 @@ handleAction Skip =
 handleAction ConfirmSkip =
     H.liftEffect $ navigate_ "/"
 handleAction (SetStep step) =
-    H.liftEffect $ navigate_
+    H.liftEffect
         case step of
-        Greeting -> "/wizard/greeting"
-        PlayerDetails -> "/wizard/player"
-        Game -> "/wizard/game"
-        PlayerProfileDetails -> "/wizard/profile"
+        Greeting -> navigate { firstSignIn: true } "/onboarding/start"
+        PlayerDetails -> navigate_ "/onboarding/player"
+        Game -> navigate_ "/onboarding/game"
+        PlayerProfileDetails -> navigate_ "/onboarding/profile"
 handleAction (UpdatePlayerDetails details) =
     H.modify_ \state -> state
         { playerDetails = state.playerDetails
