@@ -10,18 +10,18 @@ import Data.List.Types (NonEmptyList)
 import Data.Symbol (SProxy(..))
 import Data.Validated.Label as Validated
 import Data.Variant (Variant)
-import TeamTavern.Server.Domain.NonEmptyText (NonEmptyTextError)
+import TeamTavern.Server.Domain.Text (TextError)
 import TeamTavern.Server.Profile.AddPlayerProfile.LoadFields as LoadFields
 import TeamTavern.Server.Profile.AddPlayerProfile.ReadProfile as ReadProfile
-import TeamTavern.Server.Profile.Infrastructure.ValidateSummary as ValidateSummary
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateFieldValues (ValidateFieldValuesError)
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateFieldValues as ValidateFieldValues
+import TeamTavern.Server.Profile.Infrastructure.ValidateSummary as ValidateSummary
 
 data Profile =
     Profile ValidateSummary.Summary (List ValidateFieldValues.FieldValue) Boolean
 
 type ProfileError = Variant
-    ( summary :: NonEmptyList NonEmptyTextError
+    ( summary :: NonEmptyList TextError
     , fieldValues :: NonEmptyList ValidateFieldValuesError
     )
 

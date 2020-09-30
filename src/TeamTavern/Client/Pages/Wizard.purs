@@ -6,6 +6,7 @@ import Async (Async)
 import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
+import Data.Array (foldl)
 import Data.Array as Array
 import Data.Bifunctor (bimap, lmap)
 import Data.Const (Const)
@@ -15,7 +16,7 @@ import Data.Maybe (Maybe(..), isJust, isNothing)
 import Data.Options ((:=))
 import Data.String as String
 import Data.Symbol (SProxy(..))
-import Effect.Class.Console (logShow)
+import Data.Variant (match)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
@@ -43,6 +44,8 @@ type State =
     , playerDetails :: EnterPlayerDetails.Input
     , game :: SelectGame.Input
     , playerProfileDetails :: EnterPlayerProfileDetails.Input
+    , otherError :: Boolean
+    , submitting :: Boolean
     }
 
 data Action
@@ -148,7 +151,7 @@ renderPage { step: Game, game } =
             [ HH.text "Next" ]
         ]
     ]
-renderPage { step: PlayerProfileDetails, playerProfileDetails } =
+renderPage { step: PlayerProfileDetails, playerProfileDetails, otherError, submitting } =
     [ HH.div [ HP.class_ $ HH.ClassName "page-wizard-step" ]
         [ HH.h1 [ HP.class_ $ HH.ClassName "page-wizard-step-title" ]
                 [ HH.text "Profile details" ]
@@ -162,11 +165,20 @@ renderPage { step: PlayerProfileDetails, playerProfileDetails } =
             [ HP.class_ $ HH.ClassName "secondary-button page-wizard-step-button"
             , HE.onClick $ const $ Just $ SetStep Game ]
             [ HH.text "Back" ]
-        , HH.button
-            [ HP.class_ $ HH.ClassName "primary-button page-wizard-step-button"
-            , HE.onClick $ const $ Just SetUpAccount
+        , HH.div [ HP.class_ $ HH.ClassName "page-wizard-submit-button-group" ] $
+            [ HH.button
+                [ HP.class_ $ HH.ClassName "primary-button page-wizard-step-button"
+                , HP.disabled submitting
+                , HE.onClick $ const $ Just SetUpAccount
+                ]
+                [ HH.text if submitting then "Submitting..." else "Submit" ]
             ]
-            [ HH.text "Done" ]
+            <>
+            if otherError
+            then Array.singleton $
+                HH.p [ HP.class_ $ HH.ClassName "page-wizard-submit-button-underlabel" ]
+                [ HH.text "There has been an unexpected error setting up your account. Please try again later." ]
+            else []
         ]
     ]
 
@@ -270,11 +282,50 @@ handleAction (UpdatePlayerProfileDetails details) =
             }
         }
 handleAction SetUpAccount = do
-    state <- H.get
-    response <- H.lift $ sendRequest state
+    currentState <- H.modify \state -> state
+        { submitting = true }
+    response <- H.lift $ sendRequest currentState
     case response of
-        Just (Right _) -> H.liftEffect $ navigate_ "/account"
-        _ -> logShow response
+        Just (Right _) -> H.liftEffect $ navigate_ "/"
+        Just (Left errors) ->
+            H.put $
+                foldl
+                (\state error ->
+                    match
+                    { invalidDiscordTag: const $ state
+                        { playerDetails = state.playerDetails
+                            { discordTagError = true }
+                        }
+                    , invalidUrl: \{ fieldKey } -> state
+                        { playerProfileDetails = state.playerProfileDetails
+                            { urlErrors = Array.cons fieldKey state.playerProfileDetails.urlErrors }
+                        }
+                    , missing: \{ fieldKey } -> state
+                        { playerProfileDetails = state.playerProfileDetails
+                            { missingErrors = Array.cons fieldKey state.playerProfileDetails.missingErrors }
+                        }
+                    , summary: const $ state
+                        { playerProfileDetails = state.playerProfileDetails
+                            { summaryError = true }
+                        }
+                    }
+                    error
+                )
+                (currentState
+                    { submitting = false
+                    , playerDetails = currentState.playerDetails { discordTagError = false }
+                    , playerProfileDetails = currentState.playerProfileDetails
+                        { urlErrors = [], missingErrors = [], summaryError = false }
+                    , otherError = false
+                    })
+                errors
+        Nothing -> H.put currentState
+            { submitting = false
+            , playerDetails = currentState.playerDetails { discordTagError = false }
+            , playerProfileDetails = currentState.playerProfileDetails
+                { urlErrors = [], missingErrors = [], summaryError = false }
+            , otherError = true
+            }
 
 component :: forall query output left.
     H.Component HH.HTML query Input output (Async left)
@@ -286,6 +337,8 @@ component = H.mkComponent
         , playerDetails: EnterPlayerDetails.emptyInput
         , game: Nothing
         , playerProfileDetails: EnterPlayerProfileDetails.emptyInput
+        , otherError: false
+        , submitting: false
         }
     , render
     , eval: H.mkEval H.defaultEval

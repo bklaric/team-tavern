@@ -54,6 +54,11 @@
     color: #888;
 }
 
+.input-primary-sublabel {
+    font-size: 12px;
+    color: $primary-color;
+}
+
 .input-underlabel {
     @extend .input-sublabel;
     display: block;

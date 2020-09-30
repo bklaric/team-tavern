@@ -68,7 +68,8 @@ type State =
     }
 
 data Action
-    = UpdateUrl String String
+    = Receive Input
+    | UpdateUrl String String
     | UpdateSingleSelect String (Maybe String)
     | UpdateMultiSelect String (Array String)
     | UpdateNewOrReturning Boolean
@@ -100,7 +101,7 @@ fieldLabel label icon required domain =
         (if required
         then
             [ divider
-            , HH.span [ HP.class_ $ H.ClassName "input-sublabel" ] [ HH.text "required" ]
+            , HH.span [ HP.class_ $ H.ClassName "input-primary-sublabel" ] [ HH.text "required" ]
             ]
         else
             [])
@@ -221,6 +222,19 @@ raiseMessage { fieldValues, newOrReturning, summary } =
 
 handleAction :: forall left.
     Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
+handleAction (Receive input) =
+    H.put $
+        input
+        { fieldValues = input.fields <#> \field ->
+            case input.fieldValues # find \fieldValue -> fieldValue.fieldKey == field.key of
+            Just fieldValue -> fieldValue
+            Nothing ->
+                { fieldKey: field.key
+                , url: Nothing
+                , optionKey: Nothing
+                , optionKeys: Nothing
+                }
+        }
 handleAction (UpdateUrl fieldKey url) = do
     state <- H.modify \state -> state
         { fieldValues = state.fieldValues <#> \fieldValue ->
@@ -267,7 +281,10 @@ component = H.mkComponent
                 }
         }
     , render
-    , eval: H.mkEval $ H.defaultEval { handleAction = handleAction }
+    , eval: H.mkEval $ H.defaultEval
+        { handleAction = handleAction
+        , receive = Just <<< Receive
+        }
     }
 
 emptyInput :: Input

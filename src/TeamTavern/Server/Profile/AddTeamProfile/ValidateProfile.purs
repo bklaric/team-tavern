@@ -10,7 +10,7 @@ import Data.Maybe (Maybe)
 import Data.Symbol (SProxy(..))
 import Data.Validated.Label as Validated
 import Data.Variant (Variant)
-import TeamTavern.Server.Domain.NonEmptyText (NonEmptyTextError)
+import TeamTavern.Server.Domain.Text (TextError)
 import TeamTavern.Server.Player.UpdateDetails.ValidateLangugase (Language, validateLanguages)
 import TeamTavern.Server.Player.UpdateDetails.ValidateTimespan (Timespan, validateTimespan)
 import TeamTavern.Server.Player.UpdateDetails.ValidateTimezone (Timezone, validateOptionalTimezone)
@@ -35,7 +35,7 @@ type Profile =
     , newOrReturning :: Boolean
     }
 
-type ProfileError = Variant (summary :: NonEmptyList NonEmptyTextError)
+type ProfileError = Variant (summary :: NonEmptyList TextError)
 
 type ValidateProfileError errors = Variant
     ( invalidProfile ::

@@ -145,31 +145,19 @@ validateProfileDetails fields details = do
     # AsyncV.fromValidated
     # AsyncV.labelMap (SProxy :: SProxy "invalidProfile") { profile: details, errors: _ }
 
-type IdentifiersErrorContent = Variant
-    ( invalidEmail :: {}
-    , invalidNickname :: {}
-    , invalidPassword :: {}
-    )
-
-type BadRequestContent = Variant
-    ( invalidBody :: Array (Variant
-        ( invalidDiscordTag :: {}
-        , invalidProfile :: Array
-            (Variant
-                ( summary :: {}
-                , invalidUrl :: { fieldKey :: String }
-                , missing :: { fieldKey :: String }
-                )
-            )
-        ))
-    )
+type BadRequestContent = Array (Variant
+    ( invalidDiscordTag :: {}
+    , summary :: {}
+    , invalidUrl :: { fieldKey :: String }
+    , missing :: { fieldKey :: String }
+    ))
 
 -- errorResponse :: RegisterError -> Response
 errorResponse = onMatch
     { invalidBody: \errors ->
             errors
             <#> match
-                { invalidDiscordTag: const $ inj (SProxy :: SProxy "invalidDiscordTag") {}
+                { invalidDiscordTag: const [ inj (SProxy :: SProxy "invalidDiscordTag") {} ]
                 , invalidProfile: \profileErrors ->
                     (profileErrors.errors :: NonEmptyList ProfileError)
                     <#> (match
@@ -185,14 +173,12 @@ errorResponse = onMatch
                                 (const Nothing)
                             # fromFoldable
                             # catMaybes
-                            -- # inj (SProxy :: SProxy "fieldValues")
                         })
                     # fromFoldable
                     # join
-                    # inj (SProxy :: SProxy "invalidProfile")
                 }
             # fromFoldable
-            # inj (SProxy :: SProxy "invalidBody")
+            # join
             # (writeJSON :: BadRequestContent -> String)
             # badRequest_
     }
@@ -205,13 +191,7 @@ successResponse = const noContent_
 --     Async RegisterError SendResponseModel -> (forall left. Async left Response)
 sendResponse = alwaysRight errorResponse successResponse
 
-onboard ::
-  Pool
-     -> Cookies
-        -> Body
-           -> Async
-                _
-                Response
+onboard :: Pool -> Cookies -> Body -> Async _ Response
 onboard pool cookies body =
     -- sendResponse $ examineLeftWithEffect logError do
     sendResponse $ examineLeftWithEffect (unsafeStringify >>> log) do
