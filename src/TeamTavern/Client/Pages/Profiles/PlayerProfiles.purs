@@ -287,7 +287,7 @@ render { profiles, profileCount, showCreateProfile, playerInfo, page } =
                     , HH.text " to "
                     , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text to ]
                     ]
-                , Just $ HH.h5 [ HP.class_ $ HH.ClassName "player-profile-section-title" ] [ HH.text "Game details" ]
+                , Just $ HH.h5 [ HP.class_ $ HH.ClassName "player-profile-section-title" ] [ HH.text "Profile details" ]
                 ]
                 <> Array.catMaybes (profile.fieldValues <#> \{ field, url, option, options } ->
                     case field.ilk, url, option, options of
