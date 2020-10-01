@@ -302,11 +302,13 @@ handleAction SetUpAccount = do
                 (\state error ->
                     match
                     { invalidDiscordTag: const $ state
-                        { playerDetails = state.playerDetails
+                        { step = PlayerDetails
+                        , playerDetails = state.playerDetails
                             { discordTagError = true }
                         }
                     , invalidAbout: const $ state
-                        { playerDetails = state.playerDetails
+                        { step = PlayerDetails
+                        , playerDetails = state.playerDetails
                             { aboutError = true }}
                     , invalidUrl: \{ fieldKey } -> state
                         { playerProfileDetails = state.playerProfileDetails
