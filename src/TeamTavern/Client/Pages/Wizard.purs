@@ -75,8 +75,8 @@ renderPage { step: Greeting, nickname, confirmSkip } =
         [ HH.h1 [ HP.class_ $ HH.ClassName "page-wizard-step-title" ]
             [ HH.text $ "Hi, " <> nickname <> "!" ]
         , HH.p [ HP.class_ $ HH.ClassName "page-wizard-step-description" ]
-            [ HH.text """Let's start with setting up your TeamTavern account and
-                your first game profile."""
+            [ HH.text """Welcome to TeamTavern. Let's start with setting up your
+                account and your first game profile."""
             ]
         ]
     , HH.div [ HP.class_ $ HH.ClassName "page-wizard-step-buttons" ]
@@ -305,6 +305,9 @@ handleAction SetUpAccount = do
                         { playerDetails = state.playerDetails
                             { discordTagError = true }
                         }
+                    , invalidAbout: const $ state
+                        { playerDetails = state.playerDetails
+                            { aboutError = true }}
                     , invalidUrl: \{ fieldKey } -> state
                         { playerProfileDetails = state.playerProfileDetails
                             { urlErrors = Array.cons fieldKey state.playerProfileDetails.urlErrors }

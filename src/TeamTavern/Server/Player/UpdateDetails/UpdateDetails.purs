@@ -28,7 +28,8 @@ queryString = Query """
         weekday_to = $8::time,
         weekend_from = $9::time,
         weekend_to = $10::time,
-        has_microphone = $11
+        has_microphone = $11,
+        about = $12
     where player.id = $1
     """
 
@@ -44,7 +45,8 @@ queryParameters playerId model =
     : nullableTimeTo model.onlineWeekday
     : nullableTimeFrom model.onlineWeekend
     : nullableTimeTo model.onlineWeekend
-    :| model.hasMicrophone
+    : model.hasMicrophone
+    :| model.about
 
 updateDetails
     :: forall querier errors

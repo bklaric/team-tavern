@@ -14,6 +14,7 @@ type BadRequestContent = Variant
     ( invalidModel ::
         Array (Variant
         ( invalidDiscordTag :: {}
+        , invalidAbout :: {}
         ))
     , nicknameTaken :: {}
     )
@@ -29,6 +30,7 @@ errorResponse = match
         errors
         <#> (match
             { discordTag: const $ inj (SProxy :: SProxy "invalidDiscordTag") {}
+            , about: const $ inj (SProxy :: SProxy "invalidAbout") {}
             })
         # fromFoldable
         # inj (SProxy :: SProxy "invalidModel")

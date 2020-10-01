@@ -14,6 +14,9 @@ import Foreign (MultipleErrors)
 import Perun.Request.Body (Body)
 import Simple.JSON (readJSON)
 import TeamTavern.Server.Architecture.Perun.Request.Body (readBody)
+import TeamTavern.Server.Domain.Text (TextError)
+import TeamTavern.Server.Player.Domain.About (About)
+import TeamTavern.Server.Player.Domain.About as About
 import TeamTavern.Server.Player.UpdateDetails.ValidateBirthday (validateOptionalBirthday)
 import TeamTavern.Server.Player.UpdateDetails.ValidateCountry (Country, validateOptionalCountry)
 import TeamTavern.Server.Player.UpdateDetails.ValidateDiscordTag (DiscordTag, DiscordTagError, validateOptionalDiscordTag)
@@ -32,6 +35,7 @@ type UpdateDetailsDto =
     , weekendFrom :: Maybe String
     , weekendTo :: Maybe String
     , hasMicrophone :: Boolean
+    , about :: String
     }
 
 type UpdateDetailsModel =
@@ -43,10 +47,13 @@ type UpdateDetailsModel =
     , onlineWeekday :: Maybe Timespan
     , onlineWeekend :: Maybe Timespan
     , hasMicrophone :: Boolean
+    , about :: About
     }
 
 type UpdateDetailsModelError = Variant
-    (discordTag :: NonEmptyList DiscordTagError)
+    ( discordTag :: NonEmptyList DiscordTagError
+    , about :: NonEmptyList TextError
+    )
 
 type ReadUpdateError errors = Variant
     ( unreadableDto ::
@@ -77,9 +84,12 @@ readUpdate body = do
     , onlineWeekday: timezone' >>= (const $ validateTimespan dto.weekdayFrom dto.weekdayTo)
     , onlineWeekend: timezone' >>= (const $ validateTimespan dto.weekendFrom dto.weekendTo)
     , hasMicrophone: dto.hasMicrophone
+    , about: _
     }
         <$> (validateOptionalDiscordTag dto.discordTag
             # Validated.label (SProxy :: SProxy "discordTag"))
+        <*> (About.create dto.about
+            # Validated.label (SProxy :: SProxy "about"))
         # Async.fromValidated
         # labelMap (SProxy :: SProxy "invalidModel")
             { dto, errors: _ }

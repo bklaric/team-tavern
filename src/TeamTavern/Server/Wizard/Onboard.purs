@@ -35,6 +35,7 @@ import TeamTavern.Server.Architecture.Perun.Request.Body (readBody)
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.EnsureNotSignedIn (ensureNotSignedIn)
 import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
+import TeamTavern.Server.Player.Domain.About as About
 import TeamTavern.Server.Player.Domain.Email as Email
 import TeamTavern.Server.Player.Domain.Hash as Hash
 import TeamTavern.Server.Player.Domain.Nickname as Nickname
@@ -107,7 +108,11 @@ validatePlayerDetails
     :: forall errors
     .  PlayerDetails
     -> AsyncV
-        (NonEmptyList (Variant (invalidDiscordTag :: { message :: Array String } | errors)))
+        (NonEmptyList (Variant
+            ( invalidDiscordTag :: { message :: Array String }
+            , invalidAbout :: { message :: Array String }
+            | errors ))
+        )
         UpdateDetailsModel
 validatePlayerDetails details = do
     birthday <- AsyncV.fromEffect $ validateOptionalBirthday details.birthday
@@ -126,9 +131,14 @@ validatePlayerDetails details = do
     let timezone = validateOptionalTimezone details.timezone
         onlineWeekday = timezone >>= (const $ validateTimespan details.weekdayFrom details.weekdayTo)
         onlineWeekend = timezone >>= (const $ validateTimespan details.weekendFrom details.weekendTo)
+    about <- About.create details.about
+        # AsyncV.fromValidated
+        # AsyncV.labelMap (SProxy :: SProxy "invalidAbout") \error ->
+            { message: [ "About is too long or something: ", show error ] }
     pure { birthday, country
          , languages, hasMicrophone, discordTag
          , timezone, onlineWeekday, onlineWeekend
+         , about
          }
 
 validateProfileDetails
@@ -147,6 +157,7 @@ validateProfileDetails fields details = do
 
 type BadRequestContent = Array (Variant
     ( invalidDiscordTag :: {}
+    , invalidAbout :: {}
     , summary :: {}
     , invalidUrl :: { fieldKey :: String }
     , missing :: { fieldKey :: String }
@@ -158,6 +169,7 @@ errorResponse = onMatch
             errors
             <#> match
                 { invalidDiscordTag: const [ inj (SProxy :: SProxy "invalidDiscordTag") {} ]
+                , invalidAbout: const [ inj (SProxy :: SProxy "invalidAbout") {} ]
                 , invalidProfile: \profileErrors ->
                     (profileErrors.errors :: NonEmptyList ProfileError)
                     <#> (match

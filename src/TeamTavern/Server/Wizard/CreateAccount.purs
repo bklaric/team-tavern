@@ -34,6 +34,8 @@ import Simple.JSON.Async (readJSON)
 import TeamTavern.Server.Architecture.Perun.Request.Body (readBody)
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.EnsureNotSignedIn (ensureNotSignedIn)
+import TeamTavern.Server.Player.Domain.About (About(..))
+import TeamTavern.Server.Player.Domain.About as About
 import TeamTavern.Server.Player.Domain.Email as Email
 import TeamTavern.Server.Player.Domain.Hash as Hash
 import TeamTavern.Server.Player.Domain.Nickname as Nickname
@@ -134,6 +136,7 @@ validatePersonalDetails details = do
     pure { birthday, country
          , languages, hasMicrophone, discordTag
          , timezone, onlineWeekday, onlineWeekend
+         , about: About []
          }
 
 validateProfileDetails

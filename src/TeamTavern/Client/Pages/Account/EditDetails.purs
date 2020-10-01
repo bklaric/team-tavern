@@ -326,6 +326,8 @@ editDetails' state details = Async.unify do
                         foldl (\state' -> match
                         { invalidDiscordTag:
                             const $ state' { discordTagError = true }
+                        , invalidAbout:
+                            const $ state'
                         })
                         state
                     , nicknameTaken: const $ state { discordTagError = true }
