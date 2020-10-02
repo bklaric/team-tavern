@@ -140,7 +140,7 @@ render state = HH.div [ HP.class_ $ HH.ClassName "filters-card" ] $
         [ HP.class_ $ HH.ClassName "filters-title"
         , HE.onClick $ const $ Just ToggleFiltersVisibility
         ]
-        [ HH.text "Profile filters"
+        [ HH.text "Filters"
         , HH.i
             [ HP.class_ $ HH.ClassName $ "fas filters-title-caret "
                 <> if state.filtersVisible then "fa-caret-up" else "fa-caret-down"
@@ -155,7 +155,7 @@ render state = HH.div [ HP.class_ $ HH.ClassName "filters-card" ] $
             [ HP.class_ $ HH.ClassName "card-section-title"
             , HE.onClick $ const $ Just TogglePlayerFiltersVisibility
             ]
-            [ HH.text "Player filters"
+            [ HH.text "Player details"
             , HH.i
                 [ HP.class_ $ HH.ClassName $ "fas filters-section-title-caret "
                     <> if state.playerFiltersVisible then "fa-caret-up" else "fa-caret-down"
@@ -284,7 +284,7 @@ render state = HH.div [ HP.class_ $ HH.ClassName "filters-card" ] $
             [ HP.class_ $ HH.ClassName "card-section-title"
             , HE.onClick $ const $ Just ToggleGameFiltersVisibility
             ]
-            [ HH.text "Game filters"
+            [ HH.text "Profile details"
             , HH.i
                 [ HP.class_ $ HH.ClassName $ "fas filters-section-title-caret "
                     <> if state.gameFiltersVisible then "fa-caret-up" else "fa-caret-down"
