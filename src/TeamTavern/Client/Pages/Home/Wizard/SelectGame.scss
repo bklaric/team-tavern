@@ -4,8 +4,7 @@
     justify-content: space-evenly;
 }
 
-.select-game-choice {
-    background-image: url(https://files.ftw.in/production/public/resources/uploads/games/15687438455d8121a5c32a8_game_image.png);
+.select-game-base-choice {
     background-size: contain;
     width: 195px;
     height: 240px;
@@ -13,9 +12,13 @@
     flex-direction: column-reverse;
     border-radius: 8px;
     margin: 14px 7px 0;
-    cursor: pointer;
     border: 4px white solid;
     overflow: auto;
+}
+
+.select-game-choice {
+    @extend .select-game-base-choice;
+    cursor: pointer;
 
     &:hover {
         border-color: $primary-color;

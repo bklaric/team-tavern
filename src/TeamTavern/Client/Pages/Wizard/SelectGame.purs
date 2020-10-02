@@ -6,12 +6,14 @@ import Async (Async)
 import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
+import CSS as CSS
 import Data.Bifunctor (lmap)
 import Data.Const (Const)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
+import Halogen.HTML.CSS as HC
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Simple.JSON.Async as Json
@@ -44,6 +46,7 @@ render { games, selected } =
                 Just selected' | game.handle == selected'.handle ->
                     "select-game-selected-choice"
                 _ -> "select-game-choice"
+            , HC.style $ CSS.backgroundImage $ CSS.url $ "/static/" <> game.handle <> "-tile.jpg"
             , HE.onClick $ const $ Just $ SelectGame game
             ]
             [ HH.div [ HP.class_ $ HH.ClassName "select-game-choice-ribbon" ]
@@ -57,7 +60,10 @@ render { games, selected } =
                 ]
             ])
         <>
-        [ HH.div [ HP.class_ $ HH.ClassName "select-game-choice" ]
+        [ HH.div
+            [ HP.class_ $ HH.ClassName "select-game-base-choice"
+            , HC.style $ CSS.backgroundImage $ CSS.url $ "/static/soon-tile.png"
+            ]
             [ HH.div [ HP.class_ $ HH.ClassName "select-game-choice-ribbon" ]
                 [ HH.span [ HP.class_ $ HH.ClassName "select-game-choice-title" ]
                     [ HH.text "More games coming soon!" ]
