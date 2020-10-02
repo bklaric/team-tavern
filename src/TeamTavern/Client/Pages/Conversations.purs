@@ -1,4 +1,4 @@
-module TeamTavern.Client.Components.Conversation.Conversations (Slot, conversations) where
+module TeamTavern.Client.Pages.Conversations (Slot, conversations) where
 
 import Prelude
 
@@ -31,7 +31,7 @@ type Nickname = String
 type Path = String
 
 conversationPath :: Nickname -> Path
-conversationPath nickname = "/account/conversations/" <> nickname
+conversationPath nickname = "/conversations/" <> nickname
 
 data Action = Init | Navigate Path MouseEvent
 

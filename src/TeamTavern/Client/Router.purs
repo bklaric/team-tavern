@@ -29,6 +29,10 @@ import TeamTavern.Client.Pages.About as About
 import TeamTavern.Client.Pages.Account (account)
 import TeamTavern.Client.Pages.Account as Account
 import TeamTavern.Client.Pages.Account.AccountHeader as AccountHeader
+import TeamTavern.Client.Pages.Conversation (conversation)
+import TeamTavern.Client.Pages.Conversation as Conversation
+import TeamTavern.Client.Pages.Conversations (conversations)
+import TeamTavern.Client.Pages.Conversations as Conversations
 import TeamTavern.Client.Pages.Game (game)
 import TeamTavern.Client.Pages.Game as Game
 import TeamTavern.Client.Pages.Games (games)
@@ -60,6 +64,8 @@ data State
     | Game { handle :: String }
     | Profiles GameHeader.Handle GameHeader.Tab
     | Player String
+    | Conversations
+    | Conversation String
     | Register
     | SignIn
     | Wizard Wizard.Input
@@ -79,6 +85,8 @@ type ChildSlots = Footer.ChildSlots
     , game :: Game.Slot
     , profiles :: Profiles.Slot Unit
     , player :: Player.Slot Unit
+    , conversations :: Conversations.Slot
+    , conversation :: Conversation.Slot
     , wizard :: Wizard.Slot
     , signIn :: SignIn.Slot Unit
     , homeAnchor :: NavigationAnchor.Slot Unit
@@ -116,6 +124,8 @@ render (Game input) = HH.div_ [ topBar, game input, footer ]
 render (Profiles handle tab) = wideTopBarWithContent [ Profiles.profiles handle tab ]
 render (Account tab) = topBarWithContent [ account tab ]
 render (Player nickname) = topBarWithContent [ player nickname ]
+render Conversations = topBarWithContent [ conversations ]
+render (Conversation nickname) = topBarWithContent [ conversation nickname]
 render Register = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ register ] ]
 render SignIn = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ signIn ] ]
 render (Wizard input) = wizard input
@@ -173,10 +183,10 @@ handleAction (Init state route) = do
             (navigateReplace_ $ "/account/profiles") *> nothing
         ["", "account", "profiles"] ->
             just $ Account AccountHeader.Profiles
-        ["", "account", "conversations"] ->
-            just $ Account AccountHeader.Conversations
-        ["", "account", "conversations", nickname] ->
-            just $ Account $ AccountHeader.Conversation nickname
+        ["", "conversations"] ->
+            just $ Conversations
+        ["", "conversations", nickname] ->
+            just $ Conversation nickname
         ["", "games"] ->
             just Games
         ["", "games", handle] ->

@@ -9,10 +9,6 @@ import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..))
 import Halogen as H
 import Halogen.HTML as HH
-import TeamTavern.Client.Components.Conversation.Conversation (conversation)
-import TeamTavern.Client.Components.Conversation.Conversation as Conversation
-import TeamTavern.Client.Components.Conversation.Conversations (conversations)
-import TeamTavern.Client.Components.Conversation.Conversations as Conversations
 import TeamTavern.Client.Pages.Account.AccountHeader (accountHeader)
 import TeamTavern.Client.Pages.Account.AccountHeader as AccountHeader
 import TeamTavern.Client.Pages.Account.Details (details)
@@ -41,8 +37,6 @@ type ChildSlots =
     , details :: Details.Slot
     , playerProfiles :: PlayerProfiles.Slot
     , teamProfiles :: TeamProfiles.Slot
-    , conversations :: Conversations.Slot
-    , conversation :: Conversation.Slot
     )
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
@@ -57,9 +51,9 @@ render (Player nickname tab) = HH.div_ $
         , teamProfiles nickname SamePlayer (SProxy :: SProxy "teamProfiles")
         ]
     AccountHeader.Conversations ->
-        [ conversations ]
+        [ ]
     AccountHeader.Conversation nickname' ->
-        [ conversation nickname' ]
+        [ ]
 
 handleAction :: forall output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit

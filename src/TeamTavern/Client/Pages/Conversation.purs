@@ -1,5 +1,4 @@
-module TeamTavern.Client.Components.Conversation.Conversation
-    (Slot, conversation) where
+module TeamTavern.Client.Pages.Conversation (Slot, conversation) where
 
 import Prelude
 
@@ -102,6 +101,14 @@ render (Conversation state) =
                 [ HP.href $ playerPath state.nickname
                 , HE.onClick $ Just <<< Navigate (playerPath state.nickname)]
                 [ HH.text $ state.nickname ]
+            ]
+        , HH.a
+            [ HP.class_ $ HH.ClassName "conversation-back"
+            , HP.href "/conversations"
+            , HE.onClick $ Just <<< Navigate "/conversations"
+            ]
+            [ HH.i [ HP.class_ $ HH.ClassName "fas fa-arrow-left button-icon" ] []
+            , HH.text "Back to conversations"
             ]
         ]
     , HH.div [ HP.class_ $ HH.ClassName "card-section" ]
