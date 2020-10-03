@@ -102,7 +102,7 @@ render (Empty _) = HH.div_ []
 render (Profiles nickname playerStatus profiles) =
     HH.div [ HP.class_ $ HH.ClassName "card" ] $
     [ HH.h2 [ HP.class_ $ HH.ClassName "card-title" ]
-        [ HH.text "Player profiles" ]
+        [ HH.text "Profiles" ]
     ]
     <>
     case playerStatus of
@@ -121,70 +121,80 @@ render (Profiles nickname playerStatus profiles) =
         ]
     else (profiles # Array.mapWithIndex \index profile ->
         HH.div [ HP.class_ $ HH.ClassName "card-section" ] $
-        [ HH.h3 [ HP.class_ $ HH.ClassName "profile-title" ] $
-            [ navigationAnchorIndexed (SProxy :: SProxy "games") index
-                { path: "/games/" <> profile.handle <> "/players"
-                , content: HH.text profile.title
-                }
-            ]
-            <>
-            case playerStatus of
-            SamePlayer -> Array.singleton $
-                HH.button
-                [ HP.class_ $ HH.ClassName "regular-button profile-title-button"
-                , HE.onClick $ const $ Just $ ShowModal $ modalInput nickname profile
+        [ HH.h3 [ HP.class_ $ HH.ClassName "player-profile-title" ]
+            [ HH.div [ HP.class_ $ HH.ClassName "player-profile-title-item" ] $
+                [ navigationAnchorIndexed (SProxy :: SProxy "games") index
+                    { path: "/games/" <> profile.handle <> "/players"
+                    , content: HH.text profile.title
+                    }
+                , divider
+                , HH.span [ HP.class_ $ HH.ClassName "profile-updated" ]
+                    [ HH.text $ "Updated " <> lastUpdated profile.updatedSeconds ]
                 ]
-                [ HH.i [ HP.class_ $ H.ClassName "fas fa-user-edit button-icon" ] []
-                , HH.text "Edit player profile"
-                ]
-            _ -> []
-            <>
-            [ divider
-            , HH.span [ HP.class_ $ HH.ClassName "profile-updated" ]
-                [ HH.text $ "Updated " <> lastUpdated profile.updatedSeconds ]
+            , HH.div [ HP.class_ $ HH.ClassName "player-profile-title-item" ]
+                case playerStatus of
+                SamePlayer -> Array.singleton $
+                    HH.button
+                    [ HP.class_ $ HH.ClassName "regular-button"
+                    , HE.onClick $ const $ Just $ ShowModal $ modalInput nickname profile
+                    ]
+                    [ HH.i [ HP.class_ $ H.ClassName "fas fa-user-edit button-icon" ] []
+                    , HH.text "Edit player profile"
+                    ]
+                _ -> []
+
             ]
+        , HH.div [ HP.class_ $ HH.ClassName "profile-columns" ]
+            [ HH.div [ HP.class_ $ HH.ClassName "profile-column" ] $
+                [ HH.h4 [ HP.class_ $ HH.ClassName "player-profile-section-title" ] [ HH.text "Profile details" ] ]
+                <> Array.catMaybes
+                (profile.fields <#> \field -> let
+                    fieldValue = profile.fieldValues # Array.find \{ fieldKey } -> field.key == fieldKey
+                    in
+                    case field.ilk, fieldValue of
+                    1, Just { url: Just url } -> Just $
+                        HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
+                        [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
+                        , HH.a [ HP.class_ $ HH.ClassName "profile-field-url", HP.target "_blank", HP.href url ] [ HH.text field.label ]
+                        ]
+                    2, Just { optionKey: Just optionKey } ->
+                        field.options >>= Array.find (\{ key } -> key == optionKey) <#> \option ->
+                            HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
+                            [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
+                            , HH.span [ HP.class_ $ HH.ClassName "profile-field-label" ] [ HH.text $ field.label <> ": " ]
+                            , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text option.label ]
+                            ]
+                    3, Just { optionKeys: Just optionKeys } ->
+                        case field.options <#> Array.filter \{ key } -> Array.elem key optionKeys of
+                        Just fieldOptions | not $ Array.null fieldOptions -> Just $
+                            HH.p [ HP.class_ $ HH.ClassName "profile-field" ] $
+                            [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
+                            , HH.span [ HP.class_ $ HH.ClassName "profile-field-label" ] [ HH.text $ field.label <> ": " ]
+                            ]
+                            <>
+                            (intercalate [(HH.text ", ")] $
+                                map (\{ label } -> [ HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text label ] ]) fieldOptions)
+                        _ -> Nothing
+                    _, _ -> Nothing
+                )
+                <> (if profile.newOrReturning
+                    then Array.singleton $
+                        HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
+                        [ HH.i [ HP.class_ $ HH.ClassName "fas fa-book profile-field-icon" ] []
+                        , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text "Is a"]
+                        , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text " new or returning player" ]
+                        , HH.text $ " to the game"
+                        ]
+                    else [])
+            , HH.div [ HP.class_ $ HH.ClassName "profile-column" ] $
+                (if Array.null $ profile.summary
+                then []
+                else [ HH.h4 [ HP.class_ $ HH.ClassName "player-profile-section-title" ] [ HH.text "Ambitions" ] ]
+                    <> (profile.summary <#> \paragraph ->
+                        HH.p [ HP.class_ $ HH.ClassName "profile-summary" ] [ HH.text paragraph ]))
+            ]
+
         ]
-        <> Array.catMaybes
-        (profile.fields <#> \field -> let
-            fieldValue = profile.fieldValues # Array.find \{ fieldKey } -> field.key == fieldKey
-            in
-            case field.ilk, fieldValue of
-            1, Just { url: Just url } -> Just $
-                HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
-                [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
-                , HH.a [ HP.class_ $ HH.ClassName "profile-field-url", HP.target "_blank", HP.href url ] [ HH.text field.label ]
-                ]
-            2, Just { optionKey: Just optionKey } ->
-                field.options >>= Array.find (\{ key } -> key == optionKey) <#> \option ->
-                    HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
-                    [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
-                    , HH.span [ HP.class_ $ HH.ClassName "profile-field-label" ] [ HH.text $ field.label <> ": " ]
-                    , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text option.label ]
-                    ]
-            3, Just { optionKeys: Just optionKeys } ->
-                case field.options <#> Array.filter \{ key } -> Array.elem key optionKeys of
-                Just fieldOptions | not $ Array.null fieldOptions -> Just $
-                    HH.p [ HP.class_ $ HH.ClassName "profile-field" ] $
-                    [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
-                    , HH.span [ HP.class_ $ HH.ClassName "profile-field-label" ] [ HH.text $ field.label <> ": " ]
-                    ]
-                    <>
-                    (intercalate [(HH.text ", ")] $
-                        map (\{ label } -> [ HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text label ] ]) fieldOptions)
-                _ -> Nothing
-            _, _ -> Nothing
-        )
-        <> (if profile.newOrReturning
-            then Array.singleton $
-                HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
-                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-book profile-field-icon" ] []
-                , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text "Is a"]
-                , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text " new or returning player" ]
-                , HH.text $ " to the game"
-                ]
-            else [])
-        <>
-        (profile.summary <#> \paragraph -> HH.p_ [ HH.text paragraph ])
     )
 
 loadProfiles :: forall left.

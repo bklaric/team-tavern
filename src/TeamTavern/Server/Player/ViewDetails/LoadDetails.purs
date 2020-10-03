@@ -46,6 +46,7 @@ type LoadDetailsResult =
         , to :: String
         }
     , hasMicrophone :: Boolean
+    , about :: Array String
     }
 
 type LoadDetailsError errors = Variant
@@ -105,7 +106,8 @@ queryString timezone = Query $ """
                 'to', to_char(player.weekend_to, 'HH24:MI')
             )
         end as "sourceWeekendOnline",
-        player.has_microphone as "hasMicrophone"
+        player.has_microphone as "hasMicrophone",
+        player.about
     from player
     where lower(player.nickname) = lower($1)
     """
