@@ -1,4 +1,4 @@
-module TeamTavern.Client.Pages.Account.ChangeNickname
+module TeamTavern.Client.Pages.Player.ChangeNickname
     (Message(..), Slot, changeNickname) where
 
 import Prelude
@@ -12,6 +12,7 @@ import Data.Const (Const)
 import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..))
 import Data.Options ((:=))
+import Data.String (trim)
 import Data.Variant (SProxy(..), match)
 import Effect.Class (class MonadEffect)
 import Halogen (ClassName(..))
@@ -23,6 +24,7 @@ import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.CloseButton (closeButton)
 import TeamTavern.Client.Components.Modal as Modal
+import TeamTavern.Client.Pages.Player.Types (Nickname)
 import TeamTavern.Client.Script.Cookie (getPlayerInfo)
 import TeamTavern.Client.Script.Navigate (navigate_)
 import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass, otherErrorClass)
@@ -37,7 +39,7 @@ data Action
     | Update LoadedState Event
     | Close
 
-data Message = NicknameChanged | CloseClicked
+data Message = NicknameChanged Nickname | CloseClicked
 
 type LoadedState =
     { originalNickname :: String
@@ -176,7 +178,7 @@ handleAction (Update loadedState event) = do
     H.put $ Loaded resetState
     newState <- H.lift $ changeNickname' resetState
     case newState of
-        Nothing -> H.raise NicknameChanged
+        Nothing -> H.raise $ NicknameChanged $ trim resetState.nickname
         Just newState' -> H.put $ Loaded newState' { submitting = false }
 handleAction Close = H.raise CloseClicked
 

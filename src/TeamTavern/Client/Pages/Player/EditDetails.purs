@@ -1,4 +1,4 @@
-module TeamTavern.Client.Pages.Account.EditDetails
+module TeamTavern.Client.Pages.Player.EditDetails
     (Input(..), Output(..), Slot, editDetails) where
 
 import Prelude
@@ -37,7 +37,7 @@ import TeamTavern.Client.Components.SelectImperative.MultiSelect (multiSelect)
 import TeamTavern.Client.Components.SelectImperative.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.SelectImperative.SingleSelect (singleSelect')
 import TeamTavern.Client.Components.SelectImperative.SingleSelect as SingleSelect
-import TeamTavern.Client.Pages.Account.Types (Nickname)
+import TeamTavern.Client.Pages.Player.Types (Nickname)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass, otherErrorClass)
 import TeamTavern.Server.Infrastructure.Languages (allLanguages)

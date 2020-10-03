@@ -1,4 +1,4 @@
-module TeamTavern.Client.Pages.Account.EditPlayerProfile where
+module TeamTavern.Client.Pages.Player.EditPlayerProfile where
 
 import Prelude
 
@@ -32,7 +32,7 @@ import TeamTavern.Client.Components.MultiSelect (multiSelectIndexed)
 import TeamTavern.Client.Components.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.SingleSelect (singleSelectIndexed)
 import TeamTavern.Client.Components.SingleSelect as SingleSelect
-import TeamTavern.Client.Pages.Account.Types (Nickname)
+import TeamTavern.Client.Pages.Player.Types (Nickname)
 import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass, otherErrorClass)
 import TeamTavern.Server.Profile.UpdatePlayerProfile.SendResponse as Update
 import Web.Event.Event (preventDefault)

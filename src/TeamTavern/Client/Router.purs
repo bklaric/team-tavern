@@ -26,9 +26,6 @@ import TeamTavern.Client.Components.Welcome (welcome)
 import TeamTavern.Client.Components.Welcome as Welcome
 import TeamTavern.Client.Pages.About (about)
 import TeamTavern.Client.Pages.About as About
-import TeamTavern.Client.Pages.Account (account)
-import TeamTavern.Client.Pages.Account as Account
-import TeamTavern.Client.Pages.Account.AccountHeader as AccountHeader
 import TeamTavern.Client.Pages.Conversation (conversation)
 import TeamTavern.Client.Pages.Conversation as Conversation
 import TeamTavern.Client.Pages.Conversations (conversations)
@@ -60,7 +57,6 @@ data State
     | Home
     | Games
     | About
-    | Account AccountHeader.Tab
     | Game { handle :: String }
     | Profiles GameHeader.Handle GameHeader.Tab
     | Player String
@@ -80,7 +76,6 @@ type ChildSlots = Footer.ChildSlots
     ( topBar :: TopBar.Slot Unit
     , home :: Home.Slot Unit
     , about :: About.Slot
-    , account :: Account.Slot
     , games :: Games.Slot Unit
     , game :: Game.Slot
     , profiles :: Profiles.Slot Unit
@@ -122,7 +117,6 @@ render Games = topBarWithContent [ games ]
 render About = topBarWithContent [ about ]
 render (Game input) = HH.div_ [ topBar, game input, footer ]
 render (Profiles handle tab) = wideTopBarWithContent [ Profiles.profiles handle tab ]
-render (Account tab) = topBarWithContent [ account tab ]
 render (Player nickname) = topBarWithContent [ player nickname ]
 render Conversations = topBarWithContent [ conversations ]
 render (Conversation nickname) = topBarWithContent [ conversation nickname]
@@ -179,10 +173,6 @@ handleAction (Init state route) = do
             case read state of
             Right identifiers -> just $ Welcome identifiers
             Left _ -> navigateReplace_ "/" *> nothing
-        ["", "account"] ->
-            (navigateReplace_ $ "/account/profiles") *> nothing
-        ["", "account", "profiles"] ->
-            just $ Account AccountHeader.Profiles
         ["", "conversations"] ->
             just $ Conversations
         ["", "conversations", nickname] ->

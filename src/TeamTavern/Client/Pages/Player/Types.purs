@@ -1,4 +1,4 @@
-module TeamTavern.Client.Pages.Account.Types where
+module TeamTavern.Client.Pages.Player.Types where
 
 type Nickname = String
 

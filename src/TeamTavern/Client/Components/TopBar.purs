@@ -168,8 +168,8 @@ render state = HH.div_ $
                             [ HH.text "Conversations" ]
                         , HH.a
                             [ HP.class_ $ HH.ClassName "top-bar-menu-item"
-                            , HP.href $ "/account"
-                            , HE.onClick $ Just <<< Navigate "/account"
+                            , HP.href $ "/players/" <> nickname
+                            , HE.onClick $ Just <<< Navigate ("/players/" <> nickname)
                             ]
                             [ HH.text "Account" ]
                         , HH.button

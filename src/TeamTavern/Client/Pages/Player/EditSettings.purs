@@ -1,4 +1,4 @@
-module TeamTavern.Client.Pages.Account.EditSettings where
+module TeamTavern.Client.Pages.Player.EditSettings where
 
 import Prelude
 

@@ -1,4 +1,4 @@
-module TeamTavern.Client.Pages.Account.EditTeamProfile where
+module TeamTavern.Client.Pages.Player.EditTeamProfile where
 
 import Prelude
 
@@ -36,7 +36,7 @@ import TeamTavern.Client.Components.SelectDeclarative.SingleSelect2 as SingleSel
 import TeamTavern.Client.Components.SelectDeclarative.TreeSelect (treeSelect)
 import TeamTavern.Client.Components.SelectDeclarative.TreeSelect as TreeSelect
 import TeamTavern.Client.Components.SingleSelect as SingleSelect
-import TeamTavern.Client.Pages.Account.Types (Nickname)
+import TeamTavern.Client.Pages.Player.Types (Nickname)
 import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass, otherErrorClass)
 import TeamTavern.Server.Infrastructure.Languages (allLanguages)
 import TeamTavern.Server.Infrastructure.Regions (Region(..), allRegions)

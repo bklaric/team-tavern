@@ -1,4 +1,4 @@
-module TeamTavern.Client.Pages.Account.PlayerProfiles
+module TeamTavern.Client.Pages.Player.PlayerProfiles
     (Slot, playerProfiles) where
 
 import Prelude
@@ -25,9 +25,9 @@ import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchorIndexed)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
-import TeamTavern.Client.Pages.Account.EditPlayerProfile (editProfile)
-import TeamTavern.Client.Pages.Account.EditPlayerProfile as EditProfile
-import TeamTavern.Client.Pages.Account.Types (Nickname, PlayerStatus(..))
+import TeamTavern.Client.Pages.Player.EditPlayerProfile (editProfile)
+import TeamTavern.Client.Pages.Player.EditPlayerProfile as EditProfile
+import TeamTavern.Client.Pages.Player.Types (Nickname, PlayerStatus(..))
 import TeamTavern.Server.Profile.ViewPlayerProfilesByPlayer.SendResponse as ViewPlayerProfilesByPlayer
 
 data Input = Input Nickname PlayerStatus
@@ -212,10 +212,14 @@ handleAction Initialize = do
                 Nothing -> pure unit
         _ -> pure unit
 handleAction (Receive (Input nickname playerStatus)) = do
-    profiles <- H.lift $ loadProfiles nickname
-    case profiles of
-        Just profiles' -> H.put $ Profiles nickname playerStatus profiles'
-        Nothing -> pure unit
+    state <- H.get
+    case state of
+        Profiles currentNickname _ _ | nickname == currentNickname -> pure unit
+        _ -> do
+            profiles <- H.lift $ loadProfiles nickname
+            case profiles of
+                Just profiles' -> H.put $ Profiles nickname playerStatus profiles'
+                Nothing -> pure unit
 handleAction (ShowModal profile) =
     Modal.showWith profile (SProxy :: SProxy "editProfile")
 handleAction (HandleModalOutput message) = do

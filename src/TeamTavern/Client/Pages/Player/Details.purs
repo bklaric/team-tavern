@@ -1,4 +1,4 @@
-module TeamTavern.Client.Pages.Account.Details where
+module TeamTavern.Client.Pages.Player.Details where
 
 import Prelude
 
@@ -21,9 +21,9 @@ import Halogen.HTML.Properties as HP
 import Prim.Row (class Cons)
 import Simple.JSON.Async as Json
 import TeamTavern.Client.Components.Modal as Modal
-import TeamTavern.Client.Pages.Account.EditDetails (editDetails)
-import TeamTavern.Client.Pages.Account.EditDetails as EditDetails
-import TeamTavern.Client.Pages.Account.Types (Nickname, PlayerStatus(..))
+import TeamTavern.Client.Pages.Player.EditDetails (editDetails)
+import TeamTavern.Client.Pages.Player.EditDetails as EditDetails
+import TeamTavern.Client.Pages.Player.Types (Nickname, PlayerStatus(..))
 import TeamTavern.Client.Script.Clipboard (writeTextAsync)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Server.Player.ViewDetails.SendResponse as ViewDetails
@@ -189,10 +189,14 @@ handleAction Initialize = do
                 Nothing -> pure unit
         _ -> pure unit
 handleAction (Receive (Input nickname playerStatus)) = do
-    profiles <- H.lift $ loadDetails nickname
-    case profiles of
-        Just profiles' -> H.put $ Details nickname playerStatus profiles' false
-        Nothing -> pure unit
+    state <- H.get
+    case state of
+        Details currentNickname _ _ _ | nickname == currentNickname -> pure unit
+        _ -> do
+            profiles <- H.lift $ loadDetails nickname
+            case profiles of
+                Just profiles' -> H.put $ Details nickname playerStatus profiles' false
+                Nothing -> pure unit
 handleAction (ShowModal input) =
     Modal.showWith input (SProxy :: SProxy "editDetails")
 handleAction (HandleModalOutput message) = do
