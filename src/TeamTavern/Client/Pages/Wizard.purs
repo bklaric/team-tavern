@@ -291,48 +291,47 @@ handleAction (UpdatePlayerProfileDetails details) =
             }
         }
 handleAction SetUpAccount = do
-    currentState <- H.modify \state -> state
-        { submitting = true }
+    currentState <- H.modify _ { submitting = true }
     response <- H.lift $ sendRequest currentState
     case response of
         Just (Right _) -> H.liftEffect $ navigate_ "/"
-        Just (Left errors) ->
-            H.put $
-                foldl
-                (\state error ->
-                    match
-                    { invalidDiscordTag: const $ state
-                        { step = PlayerDetails
-                        , playerDetails = state.playerDetails
-                            { discordTagError = true }
-                        }
-                    , invalidAbout: const $ state
-                        { step = PlayerDetails
-                        , playerDetails = state.playerDetails
-                            { aboutError = true }}
-                    , invalidUrl: \{ fieldKey } -> state
-                        { playerProfileDetails = state.playerProfileDetails
-                            { urlErrors = Array.cons fieldKey state.playerProfileDetails.urlErrors }
-                        }
-                    , missing: \{ fieldKey } -> state
-                        { playerProfileDetails = state.playerProfileDetails
-                            { missingErrors = Array.cons fieldKey state.playerProfileDetails.missingErrors }
-                        }
-                    , summary: const $ state
-                        { playerProfileDetails = state.playerProfileDetails
-                            { summaryError = true }
-                        }
+        Just (Left errors) -> H.put $
+            foldl
+            (\state error ->
+                match
+                { invalidDiscordTag: const $ state
+                    { step = PlayerDetails
+                    , playerDetails = state.playerDetails
+                        { discordTagError = true }
                     }
-                    error
-                )
-                (currentState
-                    { submitting = false
-                    , playerDetails = currentState.playerDetails { discordTagError = false }
-                    , playerProfileDetails = currentState.playerProfileDetails
-                        { urlErrors = [], missingErrors = [], summaryError = false }
-                    , otherError = false
-                    })
-                errors
+                , invalidAbout: const $ state
+                    { step = PlayerDetails
+                    , playerDetails = state.playerDetails
+                        { aboutError = true }}
+                , invalidUrl: \{ fieldKey } -> state
+                    { playerProfileDetails = state.playerProfileDetails
+                        { urlErrors = Array.cons fieldKey state.playerProfileDetails.urlErrors }
+                    }
+                , missing: \{ fieldKey } -> state
+                    { playerProfileDetails = state.playerProfileDetails
+                        { missingErrors = Array.cons fieldKey state.playerProfileDetails.missingErrors }
+                    }
+                , summary: const $ state
+                    { playerProfileDetails = state.playerProfileDetails
+                        { summaryError = true }
+                    }
+                }
+                error
+            )
+            (currentState
+                { submitting = false
+                , playerDetails = currentState.playerDetails
+                    { discordTagError = false, aboutError = false }
+                , playerProfileDetails = currentState.playerProfileDetails
+                    { urlErrors = [], missingErrors = [], summaryError = false }
+                , otherError = false
+                })
+            errors
         Nothing -> H.put currentState
             { submitting = false
             , playerDetails = currentState.playerDetails { discordTagError = false }

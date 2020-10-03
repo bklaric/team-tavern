@@ -64,10 +64,10 @@ render (Details nickname playerStatus details' discordTagCopied) =
         SamePlayer -> Array.singleton $
             HH.button
             [ HP.class_ $ HH.ClassName "regular-button"
-            , HE.onClick $ const $ Just $ ShowModal $ EditDetails.Input nickname details'
+            , HE.onClick $ const $ Just $ ShowModal { nickname, details: details' }
             ]
             [ HH.i [ HP.class_ $ HH.ClassName "fas fa-edit button-icon" ] []
-            , HH.text "Edit player details"
+            , HH.text "Edit details"
             ]
         _ -> []
     ]
@@ -226,8 +226,15 @@ handleAction (ShowModal input) =
 handleAction (HandleModalOutput message) = do
     Modal.hide (SProxy :: SProxy "editDetails")
     case message of
-        Modal.Inner (EditDetails.DetailsEditted nickname) ->
-            handleAction $ Receive $ Input nickname SamePlayer
+        Modal.Inner (EditDetails.DetailsEditted _) -> do
+            state <- H.get
+            case state of
+                Details nickname status _ _ -> do
+                    details' <- H.lift $ loadDetails nickname
+                    case details' of
+                        Just details'' -> H.put $ Details nickname status details'' false
+                        Nothing -> pure unit
+                _ -> pure unit
         _ -> pure unit
 handleAction (CopyDiscordTag discordTag) = do
     result <- H.lift $ Async.attempt $ writeTextAsync discordTag

@@ -139,7 +139,7 @@ render (Profiles nickname playerStatus profiles) =
                     , HE.onClick $ const $ Just $ ShowModal $ modalInput nickname profile
                     ]
                     [ HH.i [ HP.class_ $ H.ClassName "fas fa-user-edit button-icon" ] []
-                    , HH.text "Edit player profile"
+                    , HH.text "Edit profile"
                     ]
                 _ -> []
 

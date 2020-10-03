@@ -25,16 +25,16 @@ import TeamTavern.Server.Player.UpdateDetails.ValidateTimespan (Timespan, valida
 import TeamTavern.Server.Player.UpdateDetails.ValidateTimezone (Timezone, validateOptionalTimezone)
 
 type UpdateDetailsDto =
-    { discordTag :: Maybe String
-    , birthday :: Maybe String
-    , languages :: Array String
+    { birthday :: Maybe String
     , country :: Maybe String
+    , languages :: Array String
+    , hasMicrophone :: Boolean
+    , discordTag :: Maybe String
     , timezone :: Maybe String
     , weekdayFrom :: Maybe String
     , weekdayTo :: Maybe String
     , weekendFrom :: Maybe String
     , weekendTo :: Maybe String
-    , hasMicrophone :: Boolean
     , about :: String
     }
 

@@ -23,11 +23,12 @@ import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Server.Profile.Routes (Timezone)
 
 type LoadDetailsResult =
-    { discordTag :: Maybe String
-    , birthday :: Maybe String
+    { birthday :: Maybe String
     , age :: Maybe Int
-    , languages :: Array String
     , country :: Maybe String
+    , languages :: Array String
+    , hasMicrophone :: Boolean
+    , discordTag :: Maybe String
     , timezone :: Maybe String
     , clientWeekdayOnline :: Maybe
         { from :: String
@@ -45,7 +46,6 @@ type LoadDetailsResult =
         { from :: String
         , to :: String
         }
-    , hasMicrophone :: Boolean
     , about :: Array String
     }
 

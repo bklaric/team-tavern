@@ -65,10 +65,10 @@
 .wide-single-form-container {
     border-top: 1px solid #ccc;
     border-bottom: 1px solid #ccc;
-    max-width: 960px;
+    max-width: 1000px;
     margin: 64px auto;
 
-    @media screen and (min-width: 960px) {
+    @media screen and (min-width: 1000px) {
         border: 1px solid #ccc;
         border-radius: 4px;
     }

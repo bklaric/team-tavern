@@ -25,10 +25,6 @@ type UpdateDetailsError = Variant
         { dto :: UpdateDetailsDto
         , errors :: NonEmptyList UpdateDetailsModelError
         }
-    , nicknameTaken ::
-        { nickname :: Nickname
-        , error :: Error
-        }
     , notAuthorized ::
         { cookieInfo :: CookieInfo
         , nickname :: Nickname
@@ -53,9 +49,6 @@ logError updateError = do
         , invalidModel: \{ dto, errors } -> do
             logt $ "Couldn't validate model from dto: " <> show dto
             logt $ "Validation resulted in these errors: " <> show errors
-        , nicknameTaken: \{ nickname, error } -> do
-            logt $ "Nickname is already taken: " <> show nickname
-            logt $ "According to this error: " <> print error
         , databaseError: \error ->
             logt $ "Unknown database error ocurred: " <> print error
         , notAuthorized: \{ cookieInfo, nickname } -> do

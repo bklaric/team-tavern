@@ -10,14 +10,10 @@ import Perun.Response (Response, badRequest_, badRequest__, forbidden__, interna
 import Simple.JSON (writeJSON)
 import TeamTavern.Server.Player.UpdateDetails.LogError (UpdateDetailsError)
 
-type BadRequestContent = Variant
-    ( invalidModel ::
-        Array (Variant
-        ( invalidDiscordTag :: {}
-        , invalidAbout :: {}
-        ))
-    , nicknameTaken :: {}
-    )
+type BadRequestContent = Array (Variant
+    ( invalidDiscordTag :: {}
+    , invalidAbout :: {}
+    ))
 
 errorResponse :: UpdateDetailsError -> Response
 errorResponse = match
@@ -33,12 +29,8 @@ errorResponse = match
             , about: const $ inj (SProxy :: SProxy "invalidAbout") {}
             })
         # fromFoldable
-        # inj (SProxy :: SProxy "invalidModel")
         # (writeJSON :: BadRequestContent -> String)
         # badRequest_
-    , nicknameTaken: const $ badRequest_
-        $ (writeJSON :: BadRequestContent -> String)
-        $ inj (SProxy :: SProxy "nicknameTaken") {}
     , notAuthorized: const $ forbidden__
     }
 
