@@ -294,7 +294,7 @@ render { profiles, profileCount, showCreateProfile, playerInfo, page } =
                     1, Just url', _, _ -> Just $
                         HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
                         [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
-                        , HH.a [ HP.class_ $ HH.ClassName "profile-field-url", HP.href url' ] [ HH.text field.label ]
+                        , HH.a [ HP.class_ $ HH.ClassName "profile-field-url", HP.target "_blank", HP.href url' ] [ HH.text field.label ]
                         ]
                     2, _, Just option', _ -> Just $
                         HH.p [ HP.class_ $ HH.ClassName "profile-field" ]

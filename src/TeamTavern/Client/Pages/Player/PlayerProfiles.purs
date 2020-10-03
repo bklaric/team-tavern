@@ -152,7 +152,7 @@ render (Profiles nickname playerStatus profiles) =
             1, Just { url: Just url } -> Just $
                 HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
                 [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
-                , HH.a [ HP.class_ $ HH.ClassName "profile-field-url", HP.href url ] [ HH.text field.label ]
+                , HH.a [ HP.class_ $ HH.ClassName "profile-field-url", HP.target "_blank", HP.href url ] [ HH.text field.label ]
                 ]
             2, Just { optionKey: Just optionKey } ->
                 field.options >>= Array.find (\{ key } -> key == optionKey) <#> \option ->
