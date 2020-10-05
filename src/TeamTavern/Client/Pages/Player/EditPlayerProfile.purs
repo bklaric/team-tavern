@@ -243,7 +243,7 @@ render
         [ HH.text "Ambitions text cannot be more than 2000 characters long." ]
     , HH.button
         [ HP.class_ $ ClassName "form-submit-button"
-        , HP.disabled $ summary == "" || submitting
+        , HP.disabled submitting
         , HC.style $ CSS.marginTop $ CSS.px 21.0
         ]
         [ HH.i [ HP.class_ $ HH.ClassName "fas fa-user-edit button-icon" ] []
