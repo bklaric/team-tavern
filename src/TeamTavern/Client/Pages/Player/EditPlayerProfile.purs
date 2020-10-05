@@ -6,6 +6,7 @@ import Async (Async)
 import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
+import CSS as CSS
 import Data.Array (any, foldl)
 import Data.Array as Array
 import Data.Bifunctor (bimap, lmap)
@@ -21,6 +22,7 @@ import Data.Variant (SProxy(..), match)
 import Halogen (ClassName(..))
 import Halogen as H
 import Halogen.HTML as HH
+import Halogen.HTML.CSS as HC
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Simple.JSON as Json
@@ -118,11 +120,12 @@ fieldLabel label icon required domain =
         Nothing -> [])
         <>
         (if required
-        then []
-        else
+        then
             [ divider
-            , HH.span [ HP.class_ $ H.ClassName "input-sublabel" ] [ HH.text "optional" ]
-            ])
+            , HH.span [ HP.class_ $ H.ClassName "input-primary-sublabel" ] [ HH.text "required" ]
+            ]
+        else
+            [])
 
 fieldInput
     :: forall left
@@ -202,8 +205,10 @@ render
     [ closeButton Close
     , HH.h2 [ HP.class_ $ HH.ClassName "form-heading" ]
         [ HH.text $ "Edit your " <> title <> " profile" ]
-    , HH.p [ HP.class_ $ HH.ClassName "form-subheading" ]
+    , HH.p [ HP.class_ $ HH.ClassName "form-subheading", HC.style $ CSS.marginBottom $ CSS.px 0.0 ]
         [ HH.text "Describe yourself as a player and let other players find you." ]
+    , HH.h3 [ HP.class_ $ HH.ClassName "input-groups-heading" ]
+        [ HH.text "Details" ]
     , HH.div [ HP.class_ $ HH.ClassName "responsive-input-groups" ] $
         (fields <#> fieldInput fieldValues urlValueErrors missingErrors)
         <>
@@ -221,26 +226,25 @@ render
                 ]
             ]
         ]
-    , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
-        [ HH.label
-            [ HP.class_ $ HH.ClassName "input-label"
-            , HP.for "summary"
-            ]
-            [ HH.text "Summary" ]
-        , HH.textarea
-            [ HP.id_ "summary"
-            , HP.class_ $ HH.ClassName "text-input"
-            , HE.onValueInput $ Just <<< SummaryInput
-            , HP.value summary
-            ]
-        , HH.p
-            [ HP.class_ $ inputErrorClass summaryError ]
-            [ HH.text
-                "The summary cannot be empty and cannot be more than 2000 characters long." ]
+    , HH.h3 [ HP.class_ $ HH.ClassName "input-groups-heading" ]
+        [ HH.text "Ambitions" ]
+    , HH.textarea
+        [ HP.id_ "summary"
+        , HP.class_ $ HH.ClassName "text-input"
+        , HE.onValueInput $ Just <<< SummaryInput
+        , HP.value summary
         ]
+    , HH.label [ HP.class_ $ HH.ClassName "input-underlabel" ]
+        [ HH.text """Why are you even playing this game, cunt? What do you want
+            do get from it? Do you have any specific goals you want to achieve?"""
+        ]
+    , HH.p
+        [ HP.class_ $ inputErrorClass summaryError ]
+        [ HH.text "Ambitions text cannot be more than 2000 characters long." ]
     , HH.button
         [ HP.class_ $ ClassName "form-submit-button"
         , HP.disabled $ summary == "" || submitting
+        , HC.style $ CSS.marginTop $ CSS.px 21.0
         ]
         [ HH.i [ HP.class_ $ HH.ClassName "fas fa-user-edit button-icon" ] []
         , HH.text

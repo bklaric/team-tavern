@@ -212,7 +212,7 @@ render
         ]
     , HH.p
         [ HP.class_ $ inputErrorClass summaryError ]
-        [ HH.text "Ambitions text cannot be empty and cannot be more than 2000 characters long." ]
+        [ HH.text "Ambitions text cannot be more than 2000 characters long." ]
     ]
 
 raiseMessage :: forall left.

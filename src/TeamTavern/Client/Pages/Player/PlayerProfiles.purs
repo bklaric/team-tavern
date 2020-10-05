@@ -235,8 +235,15 @@ handleAction (ShowModal profile) =
 handleAction (HandleModalOutput message) = do
     Modal.hide (SProxy :: SProxy "editProfile")
     case message of
-        Modal.Inner (EditProfile.ProfileUpdated nickname) ->
-            handleAction $ Receive $ Input nickname SamePlayer
+        Modal.Inner (EditProfile.ProfileUpdated _) -> do
+            state <- H.get
+            case state of
+                Profiles nickname status _ -> do
+                    profiles <- H.lift $ loadProfiles nickname
+                    case profiles of
+                        Just profiles' -> H.put $ Profiles nickname status profiles'
+                        Nothing -> pure unit
+                _ -> pure unit
         _ -> pure unit
 
 component :: forall output left query.
