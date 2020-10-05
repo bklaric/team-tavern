@@ -161,7 +161,7 @@ render { profiles, profileCount, showCreateProfile, playerInfo, page } =
             Just { nickname } | nickname /= profile.nickname ->
                 [ HH.div [ HP.class_ $ HH.ClassName "player-profile-title-item" ]
                     [ navigationAnchorIndexed (SProxy :: SProxy "messagePlayer") index
-                        { path: "/account/conversations/" <> profile.nickname
+                        { path: "/conversations/" <> profile.nickname
                         , content: HH.span [ HP.class_ $ HH.ClassName "player-profile-title-message"]
                             [ HH.i [ HP.class_ $ H.ClassName "fas fa-envelope button-icon" ] [], HH.text "Message player" ]
                         }
