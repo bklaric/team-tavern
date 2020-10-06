@@ -255,7 +255,7 @@ render state @
                 ]
             ]
         , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
-            [ fieldLabel "Timezone" "fas fa-globe"
+            [ fieldLabel "Timezone" "fas fa-user-clock"
             , SingleSelect2.singleSelect (SProxy :: SProxy "timezone")
                 { options: allTimezones # Array.sortBy \leftTimezone rightTimezone -> let
                     countryComparison =

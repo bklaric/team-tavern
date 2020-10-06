@@ -212,7 +212,7 @@ render state =
         [ HH.div [ HP.class_ $ HH.ClassName "input-group" ]
             [ HH.label
                 [ HP.class_ $ HH.ClassName "input-label" ]
-                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-globe filter-field-icon" ] []
+                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-user-clock filter-field-icon" ] []
                 , HH.span [ HP.class_ $ HH.ClassName "filter-field-label" ] [ HH.text "Timezone" ]
                 ]
             , singleSelect (SProxy :: SProxy "timezone")

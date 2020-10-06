@@ -52,9 +52,7 @@ type State =
     , details :: EnterPlayerDetails.Input
     }
 
-type ChildSlots =
-    ( enterPlayerDetails :: EnterPlayerDetails.Slot
-    )
+type ChildSlots = (enterPlayerDetails :: EnterPlayerDetails.Slot)
 
 type Slot = H.Slot (Modal.Query Input (Const Void)) (Modal.Message Output) Unit
 
@@ -87,19 +85,6 @@ render { details, submitting, otherError } =
         [ HP.class_ $ otherErrorClass otherError ]
         [ HH.text "Something unexpected went wrong! Please try again later." ]
     ]
-
-type EditDetailsBody =
-    { discordTag :: Maybe String
-    , birthday :: Maybe String
-    , languages :: Array String
-    , country :: Maybe String
-    , timezone :: Maybe String
-    , weekdayFrom :: Maybe String
-    , weekdayTo :: Maybe String
-    , weekendFrom :: Maybe String
-    , weekendTo :: Maybe String
-    , hasMicrophone :: Boolean
-    }
 
 sendRequest :: forall left.
     String -> EnterPlayerDetails.Input -> Async left (Maybe (Either Update.BadRequestContent Unit))
