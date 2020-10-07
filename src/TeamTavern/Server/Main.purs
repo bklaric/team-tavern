@@ -64,6 +64,7 @@ import TeamTavern.Server.Profile.ViewTeamProfilesByPlayer (viewTeamProfilesByPla
 import TeamTavern.Server.Routes (TeamTavernRoutes)
 import TeamTavern.Server.Session.End (end) as Session
 import TeamTavern.Server.Session.Start (start) as Session
+import TeamTavern.Server.Team.ViewByOwner as Team
 import TeamTavern.Server.Wizard.CreateAccount as Wizard
 import TeamTavern.Server.Wizard.Onboard as Onboard
 
@@ -184,6 +185,8 @@ handleRequest deployment pool client method url cookies body =
             Player.editSettings pool nickname cookies body
         , updateDetails: \{ nickname } ->
             Player.updateDetails pool nickname cookies body
+        , viewTeamsByOwner:
+            Team.viewByOwner pool
         , forgotPassword: const $
             Password.forgot pool client cookies body
         , resetPassword: const $

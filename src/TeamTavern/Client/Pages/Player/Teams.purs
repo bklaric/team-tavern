@@ -10,6 +10,7 @@ import Data.Array (intercalate)
 import Data.Array as Array
 import Data.Bifunctor (lmap)
 import Data.Const (Const)
+import Data.Either (Either(..))
 import Data.Int (floor)
 import Data.Maybe (Maybe(..))
 import Data.Symbol (class IsSymbol, SProxy(..))
@@ -57,19 +58,30 @@ data Action
 
 type Slot = H.Slot (Const Void) Void Unit
 
-renderTeams (teams' :: Array { handle :: String, name :: String }) =
-    teams' <#> \team ->
+renderTeams teams' status =
+    if Array.null teams'
+    then Array.singleton $
         HH.div [ HS.class_ "card-section" ]
-        [ HH.h3 [ HS.class_ "team-heading" ]
-            [ navigationAnchorIndexed (SProxy :: SProxy "team") team.handle
-                { path: "/teams/" <> team.handle
-                , content: HH.text team.name
-                }
-            , divider
-            , HH.span [ HP.class_ $ HH.ClassName "profile-updated" ]
-                [ HH.text $ "Updated 12 days ago" ]
+        [ HH.p_
+            [ HH.text
+                case status of
+                SamePlayer -> "You haven't created any teams."
+                _ -> "This player hasn't created any teams."
             ]
         ]
+    else
+        teams' <#> \team ->
+            HH.div [ HS.class_ "card-section" ]
+            [ HH.h3 [ HS.class_ "team-heading" ]
+                [ navigationAnchorIndexed (SProxy :: SProxy "team") team.handle
+                    { path: "/teams/" <> team.handle
+                    , content: HH.text team.name
+                    }
+                , divider
+                , HH.span [ HP.class_ $ HH.ClassName "profile-updated" ]
+                    [ HH.text $ "Updated 12 days ago" ]
+                ]
+            ]
 
 render (Empty _) = HH.div_ []
 render (Loaded state) =
@@ -86,22 +98,37 @@ render (Loaded state) =
             ]
         ]
     ]
-    <> renderTeams state.teams
+    <> renderTeams state.teams state.status
     <>
     if state.modalShown
     then [ createTeam { nickname: state.nickname } (Just <<< HandleModalOutput) ]
     else []
 
-handleAction Initialize =
-    H.put $ Loaded
-        { nickname: ""
-        , status: SignedOut
-        , modalShown: false
-        , teams:
-            [ { handle: "niggaz", name: "Niggaz from da hood" }
-            , { handle: "cunts", name: "Aussie cunts" }
-            ]
-        }
+get url = Async.unify do
+    response <- Fetch.fetch_ url # lmap (const Nothing)
+    case FetchRes.status response of
+        200 -> FetchRes.text response >>= Json.readJSON # lmap (const Nothing)
+        _ -> Async.left Nothing
+
+loadTeams nickname = get $ "/api/teams/by-owner/" <> nickname
+
+handleAction :: forall action slots output left.
+    Action -> H.HalogenM State action slots output (Async left) Unit
+handleAction Initialize = do
+    state <- H.get
+    case state of
+        Empty { nickname } -> do
+            teams' <- H.lift $ loadTeams nickname
+            case teams' of
+                Just teams'' ->
+                    H.put $ Loaded
+                        { nickname: ""
+                        , status: SignedOut
+                        , modalShown: false
+                        , teams: teams''
+                        }
+                _ -> pure unit
+        _ -> pure unit
 handleAction ShowModal =
     H.modify_ case _ of
         Loaded state -> Loaded state { modalShown = true }

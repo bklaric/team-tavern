@@ -27,6 +27,27 @@ create unique index player_lower_email_key on player (lower(email));
 
 create unique index player_lower_nickname_key on player (lower(nickname));
 
+create table team
+    ( id serial not null primary key
+    , owner_id int not null references player(id)
+    , handle text not null
+    , name text not null
+    , website text
+    , age_from integer
+    , age_to integer
+    , locations text[] not null default '{}'
+    , languages text[] not null default '{}'
+    , has_microphone boolean not null default false
+    , discord_server text
+    , timezone text
+    , weekday_from time
+    , weekday_to time
+    , weekend_from time
+    , weekend_to time
+    , about text[] not null default '{}'
+    , created timestamptz not null default current_timestamp
+    );
+
 create table password_reset
     ( id serial not null primary key
     , player_id integer not null references player(id)
@@ -101,23 +122,13 @@ create table player_profile_field_value_option
 
 create table team_profile
     ( id serial not null primary key
-    , player_id integer not null references player(id)
+    , team_id integer not null references team(id)
     , game_id integer not null references game(id)
-    , age_from integer
-    , age_to integer
-    , languages text[] not null default '{}'
-    , countries text[] not null default '{}'
-    , timezone text
-    , weekday_from time
-    , weekday_to time
-    , weekend_from time
-    , weekend_to time
-    , has_microphone boolean not null default false
     , new_or_returning boolean not null
     , summary text[] not null
     , created timestamptz not null default current_timestamp
     , updated timestamptz not null default current_timestamp
-    , unique (game_id, player_id)
+    , unique (game_id, team_id)
     );
 
 create table team_profile_field_value
