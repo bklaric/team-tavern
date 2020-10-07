@@ -82,7 +82,7 @@ queryString = Query """
         game.title,
         game.administrator_id as "administratorId",
         player_profile.id is not null as "hasPlayerProfile",
-        team_profile.id is not null as "hasTeamProfile",
+        false as "hasTeamProfile",
         coalesce(
             json_agg(
                 json_build_object(
@@ -100,8 +100,6 @@ queryString = Query """
     from game
         left join player_profile on player_profile.game_id = game.id
             and player_profile.player_id = $2
-        left join team_profile on team_profile.game_id = game.id
-            and team_profile.player_id = $2
         left join (
             select
                 field.*,
@@ -120,7 +118,7 @@ queryString = Query """
                 field.id
             ) as field on field.game_id = game.id
     where game.handle = $1
-    group by game.id, player_profile.id, team_profile.id;
+    group by game.id, player_profile.id;
     """
 
 queryParameters :: Handle -> Maybe CookieInfo -> Array QueryParameter
