@@ -1,0 +1,10 @@
+.copyable {
+    @extend a;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.copyable-copied {
+    @extend .profile-updated;
+    margin-left: 6px;
+}

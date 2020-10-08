@@ -50,7 +50,7 @@ queryString = Query """
     select team.name, team.handle
     from team
         join player on player.id = team.owner_id
-    where player.nickname = $1;
+    where lower(player.nickname) = lower($1);
     """
 
 loadTeams pool nickname = queryMany pool queryString (nickname : [])

@@ -44,6 +44,8 @@ import TeamTavern.Client.Pages.Register (register)
 import TeamTavern.Client.Pages.Register as Register
 import TeamTavern.Client.Pages.SignIn (signIn)
 import TeamTavern.Client.Pages.SignIn as SignIn
+import TeamTavern.Client.Pages.Team (team)
+import TeamTavern.Client.Pages.Team as Team
 import TeamTavern.Client.Pages.Wizard (wizard)
 import TeamTavern.Client.Pages.Wizard as Wizard
 import TeamTavern.Client.Script.Navigate (navigateReplace_, navigate_)
@@ -62,6 +64,7 @@ data State
     | Player String
     | Conversations
     | Conversation String
+    | Team { handle :: String }
     | Register
     | SignIn
     | Wizard Wizard.Input
@@ -82,6 +85,7 @@ type ChildSlots = Footer.ChildSlots
     , player :: Player.Slot Unit
     , conversations :: Conversations.Slot
     , conversation :: Conversation.Slot
+    , team :: Team.Slot
     , wizard :: Wizard.Slot
     , signIn :: SignIn.Slot Unit
     , homeAnchor :: NavigationAnchor.Slot Unit
@@ -120,6 +124,7 @@ render (Profiles handle tab) = wideTopBarWithContent [ Profiles.profiles handle 
 render (Player nickname) = topBarWithContent [ player nickname ]
 render Conversations = topBarWithContent [ conversations ]
 render (Conversation nickname) = topBarWithContent [ conversation nickname]
+render (Team input) = topBarWithContent [ team input ]
 render Register = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ register ] ]
 render SignIn = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ signIn ] ]
 render (Wizard input) = wizard input
@@ -177,6 +182,8 @@ handleAction (Init state route) = do
             just $ Conversations
         ["", "conversations", nickname] ->
             just $ Conversation nickname
+        ["", "teams", handle] ->
+            just $ Team { handle }
         ["", "games"] ->
             just Games
         ["", "games", handle] ->
