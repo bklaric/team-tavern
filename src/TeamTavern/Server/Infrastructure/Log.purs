@@ -4,7 +4,7 @@ import Prelude
 
 import Data.Formatter.DateTime (FormatterCommand(..), format)
 import Data.List (List(..), (:))
-import Effect (Effect)
+import Effect (Effect, foreachE)
 import Effect.Console (log)
 import Effect.Now (nowDateTime)
 import Error.Class (message, name)
@@ -27,6 +27,9 @@ logStamped string =
 
 logt :: String -> Effect Unit
 logt string = log $ "    " <> string
+
+logLines :: Array String -> Effect Unit
+logLines lines = foreachE lines logt
 
 print :: forall error. NodeError error => error -> String
 print error =

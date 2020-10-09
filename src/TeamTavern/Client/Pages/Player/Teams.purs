@@ -6,34 +6,24 @@ import Async (Async)
 import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
-import Data.Array (intercalate)
 import Data.Array as Array
 import Data.Bifunctor (lmap)
 import Data.Const (Const)
-import Data.Either (Either(..))
-import Data.Int (floor)
 import Data.Maybe (Maybe(..))
-import Data.Symbol (class IsSymbol, SProxy(..))
-import Halogen (defaultEval, mkComponent, mkEval)
+import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import Prim.Row (class Cons)
 import Simple.JSON.Async as Json
 import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.ModalDeclarative as Modal
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchorIndexed)
-import TeamTavern.Client.Components.NavigationAnchor as Anchor
 import TeamTavern.Client.Pages.Player.CreateTeam (createTeam)
 import TeamTavern.Client.Pages.Player.CreateTeam as CreateTeam
-import TeamTavern.Client.Pages.Player.EditTeamProfile (editTeamProfile)
-import TeamTavern.Client.Pages.Player.EditTeamProfile as EditProfile
-import TeamTavern.Client.Pages.Player.Types (Nickname, PlayerStatus(..))
+import TeamTavern.Client.Pages.Player.Types (PlayerStatus(..))
 import TeamTavern.Client.Script.Navigate (navigate_)
-import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Snippets.Class as HS
-import TeamTavern.Server.Profile.ViewTeamProfilesByPlayer.SendResponse as ViewTeamProfilesByPlayer
 
 type Team = { handle :: String, name :: String }
 

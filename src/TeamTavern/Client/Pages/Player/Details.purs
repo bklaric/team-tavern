@@ -78,7 +78,7 @@ render (Details nickname playerStatus details' discordTagCopied) =
     <>
     [ HH.div [ HP.class_ $ HH.ClassName "card-section" ]
         if isNothing details'.age && isNothing details'.country && Array.null details'.languages && not details'.hasMicrophone
-            && isNothing details'.discordTag && isNothing details'.clientWeekdayOnline && isNothing details'.clientWeekendOnline
+            && isNothing details'.discordTag && isNothing details'.weekdayOnline && isNothing details'.weekendOnline
             && Array.null details'.about
         then
             [ HH.p_
@@ -91,7 +91,7 @@ render (Details nickname playerStatus details' discordTagCopied) =
         else
         [ HH.div [ HP.class_ $ HH.ClassName "profile-columns details-container" ] $
             (if isNothing details'.age && isNothing details'.country && Array.null details'.languages && not details'.hasMicrophone
-                && isNothing details'.discordTag && isNothing details'.clientWeekdayOnline && isNothing details'.clientWeekendOnline
+                && isNothing details'.discordTag && isNothing details'.weekdayOnline && isNothing details'.weekendOnline
             then []
             else
             [ HH.div [ HP.class_ $ HH.ClassName "profile-column" ] $
@@ -151,25 +151,25 @@ render (Details nickname playerStatus details' discordTagCopied) =
                     if discordTagCopied
                     then Array.singleton $ HH.span [ HP.class_ $ HH.ClassName "discord-tag-copied" ] [ HH.text "Copied!" ]
                     else []
-                , details'.clientWeekdayOnline <#> \{ from, to } ->
+                , details'.weekdayOnline <#> \{ clientFrom, clientTo } ->
                     HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
                     [ HH.i [ HP.class_ $ HH.ClassName "fas fa-clock profile-field-icon" ] []
                     , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text $ "Online on " ]
                     , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text "weekdays" ]
                     , HH.text " from "
-                    , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text from ]
+                    , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text clientFrom ]
                     , HH.text " to "
-                    , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text to ]
+                    , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text clientTo ]
                     ]
-                , details'.clientWeekendOnline <#> \{ from, to } ->
+                , details'.weekendOnline <#> \{ clientFrom, clientTo } ->
                     HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
                     [ HH.i [ HP.class_ $ HH.ClassName "fas fa-clock profile-field-icon" ] []
                     , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text $ "Online on " ]
                     , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text "weekends" ]
                     , HH.text " from "
-                    , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text from ]
+                    , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text clientFrom ]
                     , HH.text " to "
-                    , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text to ]
+                    , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text clientTo ]
                     ]
                 ]
             ])

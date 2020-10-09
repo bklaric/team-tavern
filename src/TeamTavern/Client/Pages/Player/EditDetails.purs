@@ -178,10 +178,10 @@ component = H.mkComponent
             , microphone: details.hasMicrophone
             , discordTag: maybe "" identity details.discordTag
             , timezone: details.timezone
-            , weekdayFrom: maybe "" identity $ _.from <$> details.sourceWeekdayOnline
-            , weekdayTo: maybe "" identity $ _.to <$> details.sourceWeekdayOnline
-            , weekendFrom: maybe "" identity $ _.from <$> details.sourceWeekendOnline
-            , weekendTo: maybe "" identity $ _.to <$> details.sourceWeekendOnline
+            , weekdayFrom: maybe "" identity $ _.sourceFrom <$> details.weekdayOnline
+            , weekdayTo: maybe "" identity $ _.sourceTo <$> details.weekdayOnline
+            , weekendFrom: maybe "" identity $ _.sourceFrom <$> details.weekendOnline
+            , weekendTo: maybe "" identity $ _.sourceTo <$> details.weekendOnline
             , about: intercalate "\n\n" details.about
             , discordTagError: false
             , aboutError: false

@@ -9,7 +9,6 @@ import Data.Array as Array
 import Data.Bifunctor.Label (label, labelMap)
 import Data.Maybe (Maybe, maybe)
 import Data.Newtype (unwrap)
-import Data.String as String
 import Data.Symbol (SProxy(..))
 import Data.Variant (Variant, inj)
 import Foreign (Foreign, MultipleErrors)
@@ -20,6 +19,7 @@ import Postgres.Query (Query(..), (:|))
 import Postgres.Result (rows)
 import Simple.JSON.Async (read)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
+import TeamTavern.Server.Infrastructure.Postgres (playerAdjustedWeekdayFrom, playerAdjustedWeekdayTo, playerAdjustedWeekendFrom, playerAdjustedWeekendTo)
 import TeamTavern.Server.Profile.Routes (Timezone)
 
 type LoadDetailsResult =
@@ -30,21 +30,17 @@ type LoadDetailsResult =
     , hasMicrophone :: Boolean
     , discordTag :: Maybe String
     , timezone :: Maybe String
-    , clientWeekdayOnline :: Maybe
-        { from :: String
-        , to :: String
+    , weekdayOnline :: Maybe
+        { clientFrom :: String
+        , clientTo :: String
+        , sourceFrom :: String
+        , sourceTo :: String
         }
-    , clientWeekendOnline :: Maybe
-        { from :: String
-        , to :: String
-        }
-    , sourceWeekdayOnline :: Maybe
-        { from :: String
-        , to :: String
-        }
-    , sourceWeekendOnline :: Maybe
-        { from :: String
-        , to :: String
+    , weekendOnline :: Maybe
+        { clientFrom :: String
+        , clientTo :: String
+        , sourceFrom :: String
+        , sourceTo :: String
         }
     , about :: Array String
     }
@@ -58,17 +54,6 @@ type LoadDetailsError errors = Variant
     , databaseError :: Error
     | errors )
 
-prepareString :: String -> String
-prepareString stringValue
-    =  "'"
-    <> (String.replace (String.Pattern "'") (String.Replacement "") stringValue)
-    <> "'"
-
-timezoneAdjustedTime :: Timezone -> String -> String
-timezoneAdjustedTime timezone timeColumn =
-    """((current_date || ' ' || """ <> timeColumn <> """ || ' ' || player.timezone)::timestamptz
-    at time zone """ <> prepareString timezone <> """)::time"""
-
 queryString :: Timezone -> Query
 queryString timezone = Query $ """
     select
@@ -81,24 +66,21 @@ queryString timezone = Query $ """
         case
             when player.weekday_from is not null and player.weekday_to is not null
             then json_build_object(
-                'from', to_char(""" <> timezoneAdjustedTime timezone "player.weekday_from" <> """, 'HH24:MI'),
-                'to', to_char(""" <> timezoneAdjustedTime timezone "player.weekday_to" <> """, 'HH24:MI')
+                'clientFrom', to_char(""" <> playerAdjustedWeekdayFrom timezone <> """, 'HH24:MI'),
+                'clientTo', to_char(""" <> playerAdjustedWeekdayTo timezone <> """, 'HH24:MI'),
+                'sourceFrom', to_char(player.weekday_from, 'HH24:MI'),
+                'sourceTo', to_char(player.weekday_to, 'HH24:MI')
             )
-        end as "clientWeekdayOnline",
+        end as "weekdayOnline",
         case
             when player.weekend_from is not null and player.weekend_to is not null
             then json_build_object(
-                'from', to_char(""" <> timezoneAdjustedTime timezone "player.weekend_from" <> """, 'HH24:MI'),
-                'to', to_char(""" <> timezoneAdjustedTime timezone "player.weekend_to" <> """, 'HH24:MI')
+                'clientFrom', to_char(""" <> playerAdjustedWeekendFrom timezone <> """, 'HH24:MI'),
+                'clientTo', to_char(""" <> playerAdjustedWeekendTo timezone <> """, 'HH24:MI'),
+                'sourceFrom', to_char(player.weekend_from, 'HH24:MI'),
+                'sourceTo', to_char(player.weekend_to, 'HH24:MI')
             )
-        end as "clientWeekendOnline",
-        case
-            when $2 and player.weekday_from is not null and player.weekday_to is not null
-            then json_build_object(
-                'from', to_char(player.weekday_from, 'HH24:MI'),
-                'to', to_char(player.weekday_to, 'HH24:MI')
-            )
-        end as "sourceWeekdayOnline",
+        end as "weekendOnline",
         case
             when $2 and player.weekend_from is not null and player.weekend_to is not null
             then json_build_object(

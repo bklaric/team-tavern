@@ -28,7 +28,7 @@ import TeamTavern.Client.Pages.Player.EditTeamProfile (editTeamProfile)
 import TeamTavern.Client.Pages.Player.EditTeamProfile as EditProfile
 import TeamTavern.Client.Pages.Player.Types (Nickname, PlayerStatus(..))
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
-import TeamTavern.Server.Profile.ViewTeamProfilesByPlayer.SendResponse as ViewTeamProfilesByPlayer
+import TeamTavern.Server.Profile.ViewTeamProfilesByTeam.SendResponse as ViewTeamProfilesByPlayer
 
 data Input = Input Nickname PlayerStatus
 

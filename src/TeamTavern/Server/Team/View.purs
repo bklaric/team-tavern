@@ -2,35 +2,15 @@ module TeamTavern.Server.Team.View where
 
 import Prelude
 
-import Async (alwaysRight, examineLeftWithEffect, note)
-import Data.Array (head)
-import Data.Bifunctor (lmap)
-import Data.Bifunctor.Label (label, labelMap)
-import Data.Functor (mapFlipped)
-import Data.Maybe (Maybe, maybe)
-import Data.Newtype (unwrap)
-import Data.Semigroup.Foldable (intercalateMap)
-import Data.String as String
-import Data.Symbol (SProxy(..))
-import Data.Traversable (traverse)
-import Data.Variant (inj, match)
-import Effect (foreachE)
-import Effect.Console (log)
-import Error.Class (message, name)
-import Node.Errors.Class (code)
+import Async (alwaysRight, examineLeftWithEffect)
+import Data.Maybe (Maybe)
+import Data.Variant (match)
 import Perun.Response (internalServerError__, ok_)
-import Postgres.Async.Query (query)
-import Postgres.Error (constraint, detail, schema, severity, table)
-import Postgres.Query (Query(..), (:), (:|))
-import Postgres.Result (rows)
+import Postgres.Query (Query(..), (:|))
 import Simple.JSON (writeJSON)
-import Simple.JSON.Async (read)
 import TeamTavern.Server.Infrastructure.CheckSignedIn (checkSignedIn)
-import TeamTavern.Server.Infrastructure.Log (logStamped, logt)
-import TeamTavern.Server.Infrastructure.ReadCookieInfo (readCookieInfo)
-import TeamTavern.Server.Player.UpdateDetails.ValidateTimezone (Timezone)
-import TeamTavern.Server.Team.ViewByOwner (logLines, queryMany)
-import Web.HTML.HTMLMediaElement.CanPlayType (CanPlayType(..))
+import TeamTavern.Server.Infrastructure.Log (logLines, logStamped)
+import TeamTavern.Server.Infrastructure.Postgres (queryFirst, teamAdjustedWeekdayFrom, teamAdjustedWeekdayTo, teamAdjustedWeekendFrom, teamAdjustedWeekendTo)
 
 type Team =
     { owner :: String
@@ -59,17 +39,6 @@ type Team =
     , about :: Array String
     }
 
-prepareString :: String -> String
-prepareString stringValue
-    =  "'"
-    <> (String.replace (String.Pattern "'") (String.Replacement "") stringValue)
-    <> "'"
-
-timezoneAdjustedTime :: String -> String -> String
-timezoneAdjustedTime timezone timeColumn =
-    """((current_date || ' ' || """ <> timeColumn <> """ || ' ' || team.timezone)::timestamptz
-    at time zone """ <> prepareString timezone <> """)::time"""
-
 queryString :: String -> Query
 queryString timezone = Query $ """
     select
@@ -87,8 +56,8 @@ queryString timezone = Query $ """
         case
             when team.weekday_from is not null and team.weekday_to is not null
             then json_build_object(
-                'clientFrom', to_char(""" <> timezoneAdjustedTime timezone "team.weekday_from" <> """, 'HH24:MI'),
-                'clientTo', to_char(""" <> timezoneAdjustedTime timezone "team.weekday_to" <> """, 'HH24:MI'),
+                'clientFrom', to_char(""" <> teamAdjustedWeekdayFrom timezone <> """, 'HH24:MI'),
+                'clientTo', to_char(""" <> teamAdjustedWeekdayTo timezone <> """, 'HH24:MI'),
                 'sourceFrom', to_char(team.weekday_from, 'HH24:MI'),
                 'sourceTo', to_char(team.weekday_to, 'HH24:MI')
             )
@@ -96,8 +65,8 @@ queryString timezone = Query $ """
         case
             when team.weekend_from is not null and team.weekend_to is not null
             then json_build_object(
-                'clientFrom', to_char(""" <> timezoneAdjustedTime timezone "team.weekend_from" <> """, 'HH24:MI'),
-                'clientTo', to_char(""" <> timezoneAdjustedTime timezone "team.weekend_to" <> """, 'HH24:MI'),
+                'clientFrom', to_char(""" <> teamAdjustedWeekendFrom timezone <> """, 'HH24:MI'),
+                'clientTo', to_char(""" <> teamAdjustedWeekendTo timezone <> """, 'HH24:MI'),
                 'sourceFrom', to_char(team.weekend_from, 'HH24:MI'),
                 'sourceTo', to_char(team.weekend_to, 'HH24:MI')
             )
@@ -108,17 +77,12 @@ queryString timezone = Query $ """
     where lower(team.handle) = lower($1);
     """
 
-queryFirst pool queryString parameters = do
-    rows <- queryMany pool queryString parameters
-    rows # head # note (inj (SProxy :: SProxy "internal")
-        [ "Expected at least one row from database, got none." ])
-
 loadTeam pool { handle, timezone } cookieInfo =
     queryFirst pool (queryString timezone) (handle :| (cookieInfo <#> _.nickname))
 
 logError error = do
     logStamped "Error viewing team"
-    error # match { internal: logLines, lol: logLines }
+    error # match { internal: logLines }
 
 sendResponse = alwaysRight (const internalServerError__) (ok_ <<< writeJSON)
 

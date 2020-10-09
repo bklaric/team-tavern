@@ -1,5 +1,5 @@
 module TeamTavern.Server.Profile.ViewPlayerProfilesByGame.LoadProfiles
-    (pageSize, LoadProfilesResult, LoadProfilesError, prepareString, queryStringWithoutPagination, loadProfiles) where
+    (pageSize, LoadProfilesResult, LoadProfilesError, queryStringWithoutPagination, loadProfiles) where
 
 import Prelude
 
@@ -21,6 +21,7 @@ import Postgres.Error (Error)
 import Postgres.Query (Query(..))
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
+import TeamTavern.Server.Infrastructure.Postgres (playerAdjustedWeekdayFrom, playerAdjustedWeekdayTo, playerAdjustedWeekendFrom, playerAdjustedWeekendTo, prepareJsonString, prepareString)
 import TeamTavern.Server.Profile.Routes (Age, Country, Filters, Handle, HasMicrophone, Language, ProfilePage, Time, Timezone, NewOrReturning)
 import URI.Extra.QueryPairs (Key, QueryPairs(..), Value)
 import URI.Extra.QueryPairs as Key
@@ -70,12 +71,6 @@ type LoadProfilesError errors = Variant
         }
     | errors )
 
-prepareString :: String -> String
-prepareString stringValue =
-       "'"
-    <> (String.replace (String.Pattern "'") (String.Replacement "") stringValue)
-    <> "'"
-
 createAgeFilter :: Maybe Age -> Maybe Age -> String
 createAgeFilter Nothing Nothing = ""
 createAgeFilter (Just ageFrom) Nothing = " and player.birthday < (current_timestamp - interval '" <> show ageFrom <> " years')"
@@ -99,17 +94,12 @@ createCountriesFilter countries = """ and player.country in (
     select * from region_rec)
 """
 
-timezoneAdjustedTime :: Timezone -> String -> String
-timezoneAdjustedTime timezone timeColumn =
-    """((current_date || ' ' || """ <> timeColumn <> """ || ' ' || player.timezone)::timestamptz
-    at time zone """ <> prepareString timezone <> """)::time"""
-
 createWeekdayOnlineFilter :: Timezone -> Maybe Time -> Maybe Time -> String
 createWeekdayOnlineFilter timezone (Just from) (Just to) =
     let fromTime = "'" <> from <> "'::time"
         toTime   = "'" <> to   <> "'::time"
-        playerStart = timezoneAdjustedTime timezone "player.weekday_from"
-        playerEnd   = timezoneAdjustedTime timezone "player.weekday_to"
+        playerStart = playerAdjustedWeekdayFrom timezone
+        playerEnd   = playerAdjustedWeekdayTo timezone
     in
     """ and
     case
@@ -129,8 +119,8 @@ createWeekendOnlineFilter :: Timezone -> Maybe Time -> Maybe Time -> String
 createWeekendOnlineFilter timezone (Just from) (Just to) =
     let fromTime = "'" <> from <> "'::time"
         toTime   = "'" <> to   <> "'::time"
-        playerStart = timezoneAdjustedTime timezone "player.weekend_from"
-        playerEnd   = timezoneAdjustedTime timezone "player.weekend_to"
+        playerStart = playerAdjustedWeekendFrom timezone
+        playerEnd   = playerAdjustedWeekendTo timezone
     in
     """ and
     case
@@ -165,12 +155,6 @@ createPlayerFilterString timezone filters =
         timezone filters.weekendOnline.from filters.weekendOnline.to
     <> createMicrophoneFilter filters.microphone
     <> createNewOrReturningFilter filters.newOrReturning
-
-prepareJsonString :: String -> String
-prepareJsonString stringValue =
-       "\""
-    <> (String.replace (String.Pattern "\"") (String.Replacement "") stringValue)
-    <> "\""
 
 prepareFields :: QueryPairs Key Value -> Array (Tuple String (Array String))
 prepareFields (QueryPairs filters) = let
@@ -224,15 +208,15 @@ queryStringWithoutPagination handle timezone filters = Query $ """
             case
                 when player.weekday_from is not null and player.weekday_to is not null
                 then json_build_object(
-                    'from', to_char(""" <> timezoneAdjustedTime timezone "player.weekday_from" <> """, 'HH24:MI'),
-                    'to', to_char(""" <> timezoneAdjustedTime timezone "player.weekday_to" <> """, 'HH24:MI')
+                    'from', to_char(""" <> playerAdjustedWeekdayFrom timezone <> """, 'HH24:MI'),
+                    'to', to_char(""" <> playerAdjustedWeekdayTo timezone <> """, 'HH24:MI')
                 )
             end as "weekdayOnline",
             case
                 when player.weekend_from is not null and player.weekend_to is not null
                 then json_build_object(
-                    'from', to_char(""" <> timezoneAdjustedTime timezone "player.weekend_from" <> """, 'HH24:MI'),
-                    'to', to_char(""" <> timezoneAdjustedTime timezone "player.weekend_to" <> """, 'HH24:MI')
+                    'from', to_char(""" <> playerAdjustedWeekendFrom timezone <> """, 'HH24:MI'),
+                    'to', to_char(""" <> playerAdjustedWeekendTo timezone <> """, 'HH24:MI')
                 )
             end as "weekendOnline",
             player.about,

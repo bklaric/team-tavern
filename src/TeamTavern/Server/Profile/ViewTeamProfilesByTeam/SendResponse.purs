@@ -1,4 +1,4 @@
-module TeamTavern.Server.Profile.ViewTeamProfilesByPlayer.SendResponse
+module TeamTavern.Server.Profile.ViewTeamProfilesByTeam.SendResponse
     (OkContent, OkContent', sendResponse) where
 
 import Prelude
@@ -7,8 +7,8 @@ import Async (Async, alwaysRight)
 import Data.Variant (match)
 import Perun.Response (Response, internalServerError__, ok_)
 import Simple.JSON (writeJSON)
-import TeamTavern.Server.Profile.ViewTeamProfilesByPlayer.LoadProfiles (LoadProfilesResult)
-import TeamTavern.Server.Profile.ViewTeamProfilesByPlayer.LogError (ViewAllError)
+import TeamTavern.Server.Profile.ViewTeamProfilesByTeam.LoadProfiles (LoadProfilesResult)
+import TeamTavern.Server.Profile.ViewTeamProfilesByTeam.LogError (ViewAllError)
 
 type OkContent = Array LoadProfilesResult
 
