@@ -41,24 +41,20 @@ type Team =
     , ageTo :: Maybe Int
     , locations :: Array String
     , languages :: Array String
-    , hasMicrophone :: Boolean
+    , microphone :: Boolean
     , discordServer :: Maybe String
     , timezone :: Maybe String
-    , clientWeekdayOnline :: Maybe
-        { from :: String
-        , to :: String
+    , weekdayOnline :: Maybe
+        { clientFrom :: String
+        , clientTo :: String
+        , sourceFrom :: String
+        , sourceTo :: String
         }
-    , clientWeekendOnline :: Maybe
-        { from :: String
-        , to :: String
-        }
-    , sourceWeekdayOnline :: Maybe
-        { from :: String
-        , to :: String
-        }
-    , sourceWeekendOnline :: Maybe
-        { from :: String
-        , to :: String
+    , weekendOnline :: Maybe
+        { clientFrom :: String
+        , clientTo :: String
+        , sourceFrom :: String
+        , sourceTo :: String
         }
     , about :: Array String
     }
@@ -85,37 +81,27 @@ queryString timezone = Query $ """
         team.age_to as "ageTo",
         team.locations,
         team.languages,
-        team.has_microphone as "hasMicrophone",
+        team.has_microphone as "microphone",
         team.discord_server as "discordServer",
         case when (player.nickname = $2) then team.timezone end as timezone,
         case
             when team.weekday_from is not null and team.weekday_to is not null
             then json_build_object(
-                'from', to_char(""" <> timezoneAdjustedTime timezone "team.weekday_from" <> """, 'HH24:MI'),
-                'to', to_char(""" <> timezoneAdjustedTime timezone "team.weekday_to" <> """, 'HH24:MI')
+                'clientFrom', to_char(""" <> timezoneAdjustedTime timezone "team.weekday_from" <> """, 'HH24:MI'),
+                'clientTo', to_char(""" <> timezoneAdjustedTime timezone "team.weekday_to" <> """, 'HH24:MI'),
+                'sourceFrom', to_char(team.weekday_from, 'HH24:MI'),
+                'sourceTo', to_char(team.weekday_to, 'HH24:MI')
             )
-        end as "clientWeekdayOnline",
+        end as "weekdayOnline",
         case
             when team.weekend_from is not null and team.weekend_to is not null
             then json_build_object(
-                'from', to_char(""" <> timezoneAdjustedTime timezone "team.weekend_from" <> """, 'HH24:MI'),
-                'to', to_char(""" <> timezoneAdjustedTime timezone "team.weekend_to" <> """, 'HH24:MI')
+                'clientFrom', to_char(""" <> timezoneAdjustedTime timezone "team.weekend_from" <> """, 'HH24:MI'),
+                'clientTo', to_char(""" <> timezoneAdjustedTime timezone "team.weekend_to" <> """, 'HH24:MI'),
+                'sourceFrom', to_char(team.weekend_from, 'HH24:MI'),
+                'sourceTo', to_char(team.weekend_to, 'HH24:MI')
             )
-        end as "clientWeekendOnline",
-        case
-            when (player.nickname = $2) and team.weekday_from is not null and team.weekday_to is not null
-            then json_build_object(
-                'from', to_char(team.weekday_from, 'HH24:MI'),
-                'to', to_char(team.weekday_to, 'HH24:MI')
-            )
-        end as "sourceWeekdayOnline",
-        case
-            when (player.nickname = $2) and team.weekend_from is not null and team.weekend_to is not null
-            then json_build_object(
-                'from', to_char(team.weekend_from, 'HH24:MI'),
-                'to', to_char(team.weekend_to, 'HH24:MI')
-            )
-        end as "sourceWeekendOnline",
+        end as "weekendOnline",
         team.about
     from team
         join player on player.id = team.owner_id

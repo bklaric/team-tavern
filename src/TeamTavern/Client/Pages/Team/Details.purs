@@ -15,10 +15,9 @@ import TeamTavern.Server.Team.View (Team)
 
 noDetails :: Team -> Boolean
 noDetails team =
-    isNothing team.website && isNothing team.ageFrom && isNothing team.ageTo
-    && null team.locations && null team.languages && not team.hasMicrophone
-    && isNothing team.discordServer && isNothing team.clientWeekdayOnline
-    && isNothing team.clientWeekendOnline
+    isNothing team.website && isNothing team.ageFrom && isNothing team.ageTo && null team.locations
+    && null team.languages && not team.microphone && isNothing team.discordServer
+    && isNothing team.weekdayOnline && isNothing team.weekendOnline
 
 noAbout :: Team -> Boolean
 noAbout team = null team.about
@@ -96,22 +95,22 @@ teamMicrophoneDetail true = Just $
 teamDiscordServerDetail :: forall slots actions. Maybe String -> Maybe (HH.HTML slots actions)
 teamDiscordServerDetail discordServer = urlDetail "fab fa-discord" "Dicord server" discordServer
 
-onlineDetail :: forall slots actions. String -> Maybe { from :: String, to :: String } -> Maybe (HH.HTML slots actions)
+onlineDetail :: forall slots actions fields. String -> Maybe { clientFrom :: String, clientTo :: String | fields } -> Maybe (HH.HTML slots actions)
 onlineDetail _ Nothing = Nothing
-onlineDetail frame (Just { from, to }) = Just $
+onlineDetail frame (Just { clientFrom, clientTo }) = Just $
     detail "fas fa-clock"
     [ HH.span [ HS.class_ "profile-field-labelless" ] [ HH.text $ "Online on " ]
     , HH.span [ HS.class_ "profile-field-emphasize" ] [ HH.text frame ]
     , HH.text " from "
-    , HH.span [ HS.class_ "profile-field-emphasize" ] [ HH.text from ]
+    , HH.span [ HS.class_ "profile-field-emphasize" ] [ HH.text clientFrom ]
     , HH.text " to "
-    , HH.span [ HS.class_ "profile-field-emphasize" ] [ HH.text to ]
+    , HH.span [ HS.class_ "profile-field-emphasize" ] [ HH.text clientTo ]
     ]
 
-weekdaysOnlineDetail :: forall slots actions. Maybe { from :: String, to :: String } -> Maybe (HH.HTML slots actions)
+weekdaysOnlineDetail :: forall slots actions fields. Maybe { clientFrom :: String, clientTo :: String | fields } -> Maybe (HH.HTML slots actions)
 weekdaysOnlineDetail fromTo = onlineDetail "weekdays" fromTo
 
-weekendsOnlineDetail :: forall slots actions. Maybe { from :: String, to :: String } -> Maybe (HH.HTML slots actions)
+weekendsOnlineDetail :: forall slots actions fields. Maybe { clientFrom :: String, clientTo :: String | fields } -> Maybe (HH.HTML slots actions)
 weekendsOnlineDetail fromTo = onlineDetail "weekends" fromTo
 
 teamDetailsColumn :: forall slots action. Team -> Array (HH.HTML slots action)
@@ -124,10 +123,10 @@ teamDetailsColumn team = Array.singleton $
     , teamAgeDetail team.ageFrom team.ageTo
     , teamLocationsDetail team.locations
     , teamLanguagesDetail team.languages
-    , teamMicrophoneDetail team.hasMicrophone
+    , teamMicrophoneDetail team.microphone
     , teamDiscordServerDetail team.discordServer
-    , weekdaysOnlineDetail team.clientWeekdayOnline
-    , weekendsOnlineDetail team.clientWeekendOnline
+    , weekdaysOnlineDetail team.weekdayOnline
+    , weekendsOnlineDetail team.weekendOnline
     ]
 
 teamAboutColumn :: forall slots action. Team -> Array (HH.HTML slots action)
