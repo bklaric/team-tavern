@@ -11,6 +11,7 @@ import Data.Maybe (Maybe(..), isNothing)
 import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
+import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Server.Team.View (Team)
 
@@ -46,7 +47,12 @@ details team =
             [ HH.div [ HS.class_ "profile-column" ] $
                 [ HH.h4 [ HS.class_ "player-profile-section-title" ] [ HH.text "Team details" ] ]
                 <> Array.catMaybes
-                [ case team.ageFrom, team.ageTo of
+                [ team.website <#> \website ->
+                    HH.p [ HS.class_ "profile-field" ]
+                    [ HH.i [ HS.class_ "fas fa-globe profile-field-icon" ] []
+                    , HH.a [ HS.class_ "profile-field-url", HP.target "_blank", HP.href website ] [ HH.text "Website" ]
+                    ]
+                , case team.ageFrom, team.ageTo of
                     Nothing, Nothing -> Nothing
                     Just from, Nothing -> Just $
                         HH.p [ HS.class_ "profile-field" ]
@@ -118,7 +124,7 @@ details team =
                 , team.discordServer <#> \discordServer ->
                     HH.p [ HS.class_ "profile-field" ] $
                     [ HH.i [ HS.class_ "fab fa-discord profile-field-icon" ] []
-                    , HH.span [ HS.class_ "profile-field-label" ] [ HH.text "Discord tag: " ]
+                    , HH.span [ HS.class_ "profile-field-label" ] [ HH.text "Discord server: " ]
                     , copyable (SProxy :: SProxy "discordServer") discordServer
                     ]
                 , team.clientWeekdayOnline <#> \{ from, to } ->
