@@ -75,7 +75,7 @@ render Error = HH.p_ [ HH.text "There has been an error loading the team. Please
 
 loadTeam :: forall left. String -> Async left (Maybe Team)
 loadTeam handle = do
-    timezone <- H.liftEffect getClientTimezone
+    timezone <- getClientTimezone
     get $ "/api/teams/by-handle/" <> handle <> "?timezone=" <> timezone
 
 handleAction :: forall output left.
@@ -87,7 +87,7 @@ handleAction Initialize = do
             team' <- H.lift $ loadTeam handle
             case team' of
                 Just team'' -> do
-                    status <- H.liftEffect $ getStatus team''.owner
+                    status <- getStatus team''.owner
                     H.put $ Loaded { team: team'', status }
                 _ -> pure unit
         _ -> pure unit

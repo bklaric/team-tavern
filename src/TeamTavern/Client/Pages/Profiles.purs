@@ -176,7 +176,7 @@ loadGame handle = Async.unify do
 loadPlayerProfiles :: forall left.
     String -> Int -> ProfileFilters.Filters -> Async left (Maybe ViewGamePlayers.OkContent)
 loadPlayerProfiles handle page filters = Async.unify do
-    timezone <- H.liftEffect getClientTimezone
+    timezone <- getClientTimezone
     let nothingIfNull string = if String.null string then Nothing else Just string
     let pagePair = "page=" <> show page
         timezonePair = "timezone=" <> timezone
@@ -211,7 +211,7 @@ loadPlayerProfiles handle page filters = Async.unify do
 loadTeamProfiles :: forall left.
     String -> Int -> ProfileFilters.Filters -> Async left (Maybe ViewGameTeams.OkContent)
 loadTeamProfiles handle page filters = Async.unify do
-    timezone <- H.liftEffect getClientTimezone
+    timezone <- getClientTimezone
     let nothingIfNull string = if String.null string then Nothing else Just string
     let pagePair = "page=" <> show page
         timezonePair = "timezone=" <> timezone
@@ -279,7 +279,7 @@ loadTab handle GameHeader.Teams = do
             case teamProfiles' of
                 Just teamProfiles'' -> do
                     player <- getPlayerInfo
-                    timezone <- H.liftEffect getClientTimezone
+                    timezone <- getClientTimezone
                     H.put $ Game game' player filters $ Teams
                         { profiles: teamProfiles''.profiles
                         , profileCount: teamProfiles''.count
@@ -394,7 +394,7 @@ handleAction (Receive (Input handle tab)) = do
             teamProfiles <- H.lift $ loadTeamProfiles handle page filters
             case teamProfiles of
                 Just teamProfiles' -> do
-                    timezone <- H.liftEffect getClientTimezone
+                    timezone <- getClientTimezone
                     H.put $ Game game player filters $ Teams
                         { profiles: teamProfiles'.profiles
                         , profileCount: teamProfiles'.count

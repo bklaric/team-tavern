@@ -1,5 +1,5 @@
 "use strict";
 
-exports.getClientTimezone = function () {
+exports.getClientTimezoneImpl = function () {
     return Intl.DateTimeFormat().resolvedOptions().timeZone;
 }

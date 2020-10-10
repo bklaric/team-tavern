@@ -188,7 +188,7 @@ render (Details nickname playerStatus details' discordTagCopied) =
 
 loadDetails :: forall left. Nickname -> Async left (Maybe ViewDetails.OkContent)
 loadDetails nickname = Async.unify do
-    timezone <- H.liftEffect getClientTimezone
+    timezone <- getClientTimezone
     response
         <- Fetch.fetch
            ("/api/players/by-nickname/" <> nickname <> "/details?timezone=" <> timezone)

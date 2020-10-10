@@ -321,7 +321,7 @@ handleAction :: forall left.
     Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
 handleAction Initialize = do
     state <- H.get
-    timezone <- maybe (H.liftEffect getClientTimezone) pure state.timezone
+    timezone <- maybe getClientTimezone pure state.timezone
     now <- H.liftEffect nowDate
     let year = now # Date.year # fromEnum # (_ - 13)
     let month = fromEnum $ Date.month now
