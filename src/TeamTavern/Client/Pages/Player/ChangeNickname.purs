@@ -150,7 +150,7 @@ setStringValue value label = do
 handleAction :: forall children left.
     Action -> H.HalogenM State Action children Message (Async left) Unit
 handleAction Init = do
-    playerInfo <- H.liftEffect getPlayerInfo
+    playerInfo <- getPlayerInfo
     case playerInfo of
         Nothing -> H.liftEffect $ navigate_ "/"
         Just { nickname } -> do

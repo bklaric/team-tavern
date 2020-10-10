@@ -3,12 +3,12 @@ module TeamTavern.Client.Pages.Team.Status where
 import Prelude
 
 import Data.Maybe (Maybe(..))
-import Effect (Effect)
+import Effect.Class (class MonadEffect)
 import TeamTavern.Client.Script.Cookie (getPlayerNickname)
 
 data Status = SignedInOwner | SignedInOther | SignedOut
 
-getStatus :: String -> Effect Status
+getStatus :: forall effect. MonadEffect effect => String -> effect Status
 getStatus owner = do
     nickname <- getPlayerNickname
     pure $ case nickname of

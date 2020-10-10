@@ -17,6 +17,7 @@ import Data.Maybe (Maybe, fromMaybe, isJust)
 import Data.String (Pattern(..), split, trim)
 import Data.Tuple (Tuple(..))
 import Effect (Effect)
+import Effect.Class (class MonadEffect, liftEffect)
 import Foreign.Object (Object, fromFoldable, lookup)
 import TeamTavern.Server.Infrastructure.Cookie (idCookieName, nicknameCookieName)
 
@@ -43,23 +44,23 @@ parseCookies unparsedCookies =
     <#> (trim >>> toTuple)
     # fromFoldable
 
-getCookies :: Effect (Object String)
-getCookies = cookies <#> parseCookies
+getCookies :: forall effect. MonadEffect effect => effect (Object String)
+getCookies = cookies <#> parseCookies # liftEffect
 
-getCookie :: String -> Effect (Maybe String)
+getCookie :: forall effect. MonadEffect effect => String -> effect (Maybe String)
 getCookie key = getCookies <#> lookup key
 
-getPlayerId :: Effect (Maybe Int)
+getPlayerId :: forall effect. MonadEffect effect => effect (Maybe Int)
 getPlayerId = getCookie idCookieName <#> bindFlipped fromString
 
-getPlayerNickname :: Effect (Maybe String)
+getPlayerNickname :: forall effect. MonadEffect effect => effect (Maybe String)
 getPlayerNickname = getCookie nicknameCookieName
 
-getPlayerInfo :: Effect (Maybe PlayerInfo)
+getPlayerInfo :: forall effect. MonadEffect effect => effect (Maybe PlayerInfo)
 getPlayerInfo = do
     id <- getPlayerId
     nickname <- getPlayerNickname
     pure $ { id: _, nickname: _ } <$> id <*> nickname
 
-hasPlayerIdCookie :: Effect Boolean
+hasPlayerIdCookie :: forall effect. MonadEffect effect => effect Boolean
 hasPlayerIdCookie = getPlayerId <#> isJust

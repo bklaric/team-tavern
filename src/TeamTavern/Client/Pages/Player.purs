@@ -159,7 +159,7 @@ loadPlayer nickname windowSubscription = Async.unify do
         200 -> FetchRes.text response >>= Json.readJSON # lmap (const Error)
         404 -> Async.left NotFound
         _ -> Async.left Error
-    playerInfo <- Async.fromEffect getPlayerInfo
+    playerInfo <- getPlayerInfo
     case playerInfo of
         Just { nickname: nickname' } | content.nickname == nickname' ->
             pure $ Player { player: content, status: SamePlayer, editPopoverShown: false, windowSubscription }

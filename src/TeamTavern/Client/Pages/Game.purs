@@ -70,7 +70,7 @@ handleAction Initialize = do
     state <- H.get
     case state of
         Empty { handle } -> do
-            signedIn <- H.liftEffect $ hasPlayerIdCookie
+            signedIn <- hasPlayerIdCookie
             game' <- H.lift $ loadGame handle
             case game' of
                 Just { title } -> H.put $ Loaded { signedIn, handle, title }

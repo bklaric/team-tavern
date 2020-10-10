@@ -45,7 +45,7 @@ handleAction Init = do
             "TeamTavern is an online platform for finding esports teammates. "
             <> "Choose a game, browse player and team profiles and find your ideal teammates."
         setMetaUrl
-    signedIn <- H.liftEffect hasPlayerIdCookie
+    signedIn <- hasPlayerIdCookie
     H.put $ Loaded { signedIn }
 
 component :: forall query input output left.

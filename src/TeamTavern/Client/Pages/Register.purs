@@ -219,7 +219,7 @@ sendRegisterRequest state @ { email, nickname, password } = Async.unify do
 handleAction :: forall slots output left.
     Action -> H.HalogenM State Action slots output (Async left) Unit
 handleAction Init = do
-    isSignedIn <- H.liftEffect hasPlayerIdCookie
+    isSignedIn <- hasPlayerIdCookie
     if isSignedIn
         then H.liftEffect $ navigateReplace_ "/"
         else pure unit

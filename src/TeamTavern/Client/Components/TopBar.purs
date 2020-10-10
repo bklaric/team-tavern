@@ -2,7 +2,7 @@ module TeamTavern.Client.Components.TopBar (Slot, topBar) where
 
 import Prelude
 
-import Async (Async, fromEffect, unify)
+import Async (Async, unify)
 import Async as Async
 import Async.Aff (affToAsync)
 import Browser.Async.Fetch (fetch, method)
@@ -206,7 +206,7 @@ loadGames = Async.unify do
 handleAction :: forall children left output.
     Action -> H.HalogenM State Action children output (Async left) Unit
 handleAction Initialize = do
-    nickname <- getPlayerNickname # fromEffect # H.lift
+    nickname <- getPlayerNickname
 
     window <- H.liftEffect $ Window.toEventTarget <$> window
     let windowEventSource = ES.eventListenerEventSource

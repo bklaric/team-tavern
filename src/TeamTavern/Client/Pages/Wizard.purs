@@ -235,7 +235,7 @@ handleAction Initialize = do
     case state.step of
         Greeting -> pure unit
         _ -> H.liftEffect $ navigate_ "/"
-    nickname <- H.liftEffect getPlayerNickname
+    nickname <- getPlayerNickname
     case nickname of
         Just nickname' -> H.modify_ _ { nickname = nickname' }
         Nothing -> H.liftEffect $ navigate_ "/"

@@ -253,7 +253,7 @@ loadTab handle GameHeader.Players = do
             playerProfiles' <- H.lift $ loadPlayerProfiles handle page filters
             case playerProfiles' of
                 Just playerProfiles'' -> do
-                    player <- H.liftEffect getPlayerInfo
+                    player <- getPlayerInfo
                     H.put $ Game game' player filters $ Players
                         { profiles: playerProfiles''.profiles
                         , profileCount: playerProfiles''.count
@@ -278,7 +278,7 @@ loadTab handle GameHeader.Teams = do
             teamProfiles' <- H.lift $ loadTeamProfiles handle page filters
             case teamProfiles' of
                 Just teamProfiles'' -> do
-                    player <- H.liftEffect getPlayerInfo
+                    player <- getPlayerInfo
                     timezone <- H.liftEffect getClientTimezone
                     H.put $ Game game' player filters $ Teams
                         { profiles: teamProfiles''.profiles
