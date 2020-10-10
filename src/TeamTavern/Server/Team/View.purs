@@ -1,16 +1,15 @@
-module TeamTavern.Server.Team.View where
+module TeamTavern.Server.Team.View (Team, view) where
 
 import Prelude
 
 import Async (alwaysRight, examineLeftWithEffect)
 import Data.Maybe (Maybe)
-import Data.Variant (match)
 import Perun.Response (internalServerError__, ok_)
 import Postgres.Query (Query(..), (:|))
 import Simple.JSON (writeJSON)
 import TeamTavern.Server.Infrastructure.CheckSignedIn (checkSignedIn)
-import TeamTavern.Server.Infrastructure.Log (logLines, logStamped)
-import TeamTavern.Server.Infrastructure.Postgres (queryFirst, teamAdjustedWeekdayFrom, teamAdjustedWeekdayTo, teamAdjustedWeekendFrom, teamAdjustedWeekendTo)
+import TeamTavern.Server.Infrastructure.Log as Log
+import TeamTavern.Server.Infrastructure.Postgres (internalHandler, queryFirst, teamAdjustedWeekdayFrom, teamAdjustedWeekdayTo, teamAdjustedWeekendFrom, teamAdjustedWeekendTo)
 
 type Team =
     { owner :: String
@@ -80,9 +79,7 @@ queryString timezone = Query $ """
 loadTeam pool { handle, timezone } cookieInfo =
     queryFirst pool (queryString timezone) (handle :| (cookieInfo <#> _.nickname))
 
-logError error = do
-    logStamped "Error viewing team"
-    error # match { internal: logLines }
+logError = Log.logError "Error viewing team" internalHandler
 
 sendResponse = alwaysRight (const internalServerError__) (ok_ <<< writeJSON)
 

@@ -1,14 +1,13 @@
-module TeamTavern.Server.Team.ViewByOwner where
+module TeamTavern.Server.Team.ViewByOwner (Team, viewByOwner) where
 
 import Prelude
 
 import Async (alwaysRight, examineLeftWithEffect)
-import Data.Variant (match)
 import Perun.Response (internalServerError__, ok_)
 import Postgres.Query (Query(..), (:))
 import Simple.JSON (writeJSON)
-import TeamTavern.Server.Infrastructure.Log (logLines, logStamped)
-import TeamTavern.Server.Infrastructure.Postgres (queryMany)
+import TeamTavern.Server.Infrastructure.Log as Log
+import TeamTavern.Server.Infrastructure.Postgres (internalHandler, queryMany)
 
 type Team = { name :: String, handle :: String }
 
@@ -22,9 +21,7 @@ queryString = Query """
 
 loadTeams pool nickname = queryMany pool queryString (nickname : [])
 
-logError error = do
-    logStamped "Error viewing teams by owner"
-    error # match { internal: logLines }
+logError = Log.logError "Error viewing teams by owner" internalHandler
 
 sendResponse = alwaysRight (const internalServerError__) (ok_ <<< writeJSON)
 
