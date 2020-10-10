@@ -6,8 +6,8 @@ import Async (alwaysRight, examineLeftWithEffect)
 import Perun.Response (internalServerError__, ok_)
 import Postgres.Query (Query(..), (:))
 import Simple.JSON (writeJSON)
-import TeamTavern.Server.Infrastructure.Log as Log
-import TeamTavern.Server.Infrastructure.Postgres (internalHandler, queryMany)
+import TeamTavern.Server.Infrastructure.Log (logInternalError)
+import TeamTavern.Server.Infrastructure.Postgres (queryMany)
 
 type Team = { name :: String, handle :: String }
 
@@ -21,7 +21,7 @@ queryString = Query """
 
 loadTeams pool nickname = queryMany pool queryString (nickname : [])
 
-logError = Log.logError "Error viewing teams by owner" internalHandler
+logError = logInternalError "Error viewing teams by owner"
 
 sendResponse = alwaysRight (const internalServerError__) (ok_ <<< writeJSON)
 

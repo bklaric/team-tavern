@@ -28,8 +28,6 @@ import TeamTavern.Client.Pages.Player.EditSettings (editSettings)
 import TeamTavern.Client.Pages.Player.EditSettings as EditSettings
 import TeamTavern.Client.Pages.Player.PlayerProfiles (playerProfiles)
 import TeamTavern.Client.Pages.Player.PlayerProfiles as PlayerProfiles
-import TeamTavern.Client.Pages.Player.TeamProfiles (teamProfiles)
-import TeamTavern.Client.Pages.Player.TeamProfiles as TeamProfiles
 import TeamTavern.Client.Pages.Player.Teams (teams)
 import TeamTavern.Client.Pages.Player.Teams as Teams
 import TeamTavern.Client.Pages.Player.Types (PlayerStatus(..))
@@ -147,7 +145,7 @@ render (Player { player: { nickname, about }, status, editPopoverShown }) =
         ]
     , details nickname status (SProxy :: SProxy "details")
     , playerProfiles nickname status (SProxy :: SProxy "playerProfiles")
-    , teams { nickname, status } -- (SProxy :: SProxy "teamProfiles")
+    , teams { nickname, status }
     ]
 render NotFound = HH.p_ [ HH.text "Player could not be found." ]
 render Error = HH.p_ [ HH.text

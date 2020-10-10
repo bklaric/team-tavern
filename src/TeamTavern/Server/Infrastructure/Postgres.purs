@@ -9,20 +9,16 @@ import Data.Maybe (maybe)
 import Data.String as String
 import Data.Symbol (SProxy(..))
 import Data.Traversable (traverse)
-import Data.Variant (Variant, inj)
-import Effect (Effect)
+import Data.Variant (inj)
 import Error.Class (message, name)
 import Node.Errors.Class (code)
 import Postgres.Async.Query (query)
 import Postgres.Error (Error, constraint, detail, schema, severity, table)
 import Postgres.Query (class Querier, Query, QueryParameter)
 import Postgres.Result (rows)
-import Prim.Row (class Lacks)
-import Record.Builder (Builder)
-import Record.Builder as Builder
 import Simple.JSON (class ReadForeign)
 import Simple.JSON.Async (read)
-import TeamTavern.Server.Infrastructure.Log (logLines)
+import TeamTavern.Server.Infrastructure.Error (InternalError, LoadSingleError)
 
 prepareString :: String -> String
 prepareString string
@@ -71,12 +67,6 @@ teamAdjustedWeekendFrom = teamAdjustedTime "team.weekend_from"
 teamAdjustedWeekendTo :: String -> String
 teamAdjustedWeekendTo = teamAdjustedTime "team.weekend_to"
 
-type InternalError errors = Variant (internal :: Array String | errors)
-
-internalHandler :: forall fields. Lacks "internal" fields =>
-    Builder (Record fields) { internal :: Array String -> Effect Unit | fields }
-internalHandler = Builder.insert (SProxy :: SProxy "internal") logLines
-
 reportDatabaseError :: forall right errors.
     Async Error right -> Async (InternalError errors) right
 reportDatabaseError = labelMap (SProxy :: SProxy "internal") \error ->
@@ -98,8 +88,8 @@ queryMany pool queryString parameters = do
         [ "Error reading result from database: " <> show errors ]
 
 queryFirst :: forall row errors querier. Querier querier => ReadForeign row =>
-    querier -> Query -> Array QueryParameter -> Async (InternalError errors) row
+    querier -> Query -> Array QueryParameter -> Async (LoadSingleError errors) row
 queryFirst pool queryString parameters = do
     rows <- queryMany pool queryString parameters
-    rows # head # note (inj (SProxy :: SProxy "internal")
+    rows # head # note (inj (SProxy :: SProxy "notFound")
         [ "Expected at least one row from database, got none." ])

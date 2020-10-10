@@ -4,16 +4,17 @@ import Prelude
 
 import Data.Formatter.DateTime (FormatterCommand(..), format)
 import Data.List (List(..), (:))
-import Data.Variant (class VariantMatchCases, Variant, match)
+import Data.Variant (class VariantMatchCases, SProxy(..), Variant, match)
 import Effect (Effect, foreachE)
 import Effect.Console (log)
 import Effect.Now (nowDateTime)
 import Error.Class (message, name)
 import Node.Errors.Class (class NodeError, code)
-import Prim.Row (class Union)
+import Prim.Row (class Lacks, class Union)
 import Prim.RowList (class RowToList)
 import Record.Builder (Builder)
 import Record.Builder as Builder
+import TeamTavern.Server.Infrastructure.Error (InternalError, LoadSingleError)
 
 datetimeFormat :: List FormatterCommand
 datetimeFormat =
@@ -48,6 +49,21 @@ logError
 logError heading handler error = do
     logStamped heading
     match (Builder.build handler {}) error
+
+internalHandler :: forall fields. Lacks "internal" fields =>
+    Builder (Record fields) { internal :: Array String -> Effect Unit | fields }
+internalHandler = Builder.insert (SProxy :: SProxy "internal") logLines
+
+notFoundHandler :: forall fields. Lacks "notFound" fields =>
+    Builder (Record fields) { notFound :: Array String -> Effect Unit | fields }
+notFoundHandler = Builder.insert (SProxy :: SProxy "notFound") logLines
+
+logInternalError :: String -> InternalError () -> Effect Unit
+logInternalError heading error = logError heading internalHandler error
+
+logLoadSingleError :: String -> LoadSingleError () -> Effect Unit
+logLoadSingleError heading error =
+    logError heading (internalHandler >>> notFoundHandler) error
 
 print :: forall error. NodeError error => error -> String
 print error =

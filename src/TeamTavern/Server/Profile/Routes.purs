@@ -165,15 +165,6 @@ type ViewPlayerProfilesByPlayer = Route
     :> End)
     NoQuery
 
-type ViewTeamProfilesByPlayer = Route
-    Get
-    (  Literal "profiles"
-    :> Literal "by-nickname"
-    :> Capture "nickname" Nickname
-    :> Literal "teams"
-    :> End)
-    (Mandatory "timezone" Timezone)
-
 type ProfileRoutes
     =    "addPlayerProfile"           := AddPlayerProfile
     :<|> "addTeamProfile"             := AddTeamProfile
@@ -182,4 +173,3 @@ type ProfileRoutes
     :<|> "viewPlayerProfilesByGame"   := ViewPlayerProfilesByGame
     :<|> "viewTeamProfilesByGame"     := ViewTeamProfilesByGame
     :<|> "viewPlayerProfilesByPlayer" := ViewPlayerProfilesByPlayer
-    :<|> "viewTeamProfilesByPlayer"   := ViewTeamProfilesByPlayer
