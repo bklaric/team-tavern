@@ -191,9 +191,7 @@ render state @
     } =
     HH.div [ HP.class_ $ HH.ClassName "wide-single-form-container" ] $ pure $ HH.form
     [ HP.class_ $ H.ClassName "form", HE.onSubmit $ Just <<< Update ] $
-    [ HH.h2 [ HP.class_ $ HH.ClassName "form-heading" ]
-        [ HH.text $ "Edit your " <> title <> " profile" ]
-    , HH.p [ HP.class_ $ HH.ClassName "form-subheading" ]
+    [ HH.p [ HP.class_ $ HH.ClassName "form-subheading" ]
         [ HH.text "Describe yourself as a player and let other players find you." ]
     , HH.div [ HP.class_ $ HH.ClassName "responsive-input-groups" ] $
         [ HH.div [ HP.class_ $ HH.ClassName "input-group" ]
@@ -565,4 +563,4 @@ editTeamProfile
     -> HH.ComponentHTML query (editProfile :: Slot Unit | children) (Async left)
 editTeamProfile input handleMessage = HH.slot
     (SProxy :: SProxy "editProfile") unit
-    (Modal.component component) input handleMessage
+    (Modal.component ("Edit your " <> input.title <> " profile") component) input handleMessage

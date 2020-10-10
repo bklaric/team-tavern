@@ -61,10 +61,7 @@ render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { details, submitting, otherError } =
     HH.form
     [ HS.class_ "form", HE.onSubmit $ Just <<< SendRequest ]
-    [ HH.h1 [ HS.class_ "form-heading" ] [ HH.text "Create a team" ]
-    , HH.p [ HS.class_ "form-subheading", HC.style $ CSS.marginBottom $ CSS.px 0.0 ]
-        [ HH.text """Yo, write about your team and what are your members like.""" ]
-    , enterTeamDetails details (Just <<< UpdateDetails)
+    [ enterTeamDetails details (Just <<< UpdateDetails)
     , HH.button
         [ HP.class_ $ ClassName "form-submit-button"
         , HP.disabled submitting
@@ -155,4 +152,4 @@ createTeam
     -> HH.ComponentHTML action (createTeam :: Slot | children) (Async left)
 createTeam input handleMessage = HH.slot
     (SProxy :: SProxy "createTeam") unit
-    (Modal.component component) input handleMessage
+    (Modal.component "Create a team" component) input handleMessage

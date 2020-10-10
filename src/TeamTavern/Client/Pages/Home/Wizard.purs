@@ -441,4 +441,4 @@ wizard
     -> HH.ComponentHTML action (wizard :: Slot | slots) (Async left)
 wizard input handleOutput = HH.slot
     (SProxy :: SProxy "wizard") unit
-    (Modal.component component) input handleOutput
+    (Modal.component "Wizard" component) input handleOutput

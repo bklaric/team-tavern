@@ -148,9 +148,7 @@ render state @
     Array.singleton $
     HH.form
     [ HP.class_ $ ClassName "form", HE.onSubmit $ Just <<< Create ] $
-    [ HH.h2 [ HP.class_ $ HH.ClassName "form-heading" ]
-        [ HH.text $ "Create your " <> game.title <> " profile" ]
-    , HH.p [ HP.class_ $ HH.ClassName "form-subheading" ]
+    [ HH.p [ HP.class_ $ HH.ClassName "form-subheading" ]
         [ HH.text "Describe players you are looking for and let them find your team" ]
     , HH.div [ HP.class_ $ HH.ClassName "responsive-input-groups" ] $
         [ HH.div [ HP.class_ $ HH.ClassName "input-group" ]
@@ -529,4 +527,4 @@ createTeamProfile
         (createTeamProfile :: Slot | children) (Async left)
 createTeamProfile input handleMessage =
     HH.slot (SProxy :: SProxy "createTeamProfile") unit
-    (Modal.component component) input handleMessage
+    (Modal.component ("Create your " <> input.game.title <> " profile") component) input handleMessage

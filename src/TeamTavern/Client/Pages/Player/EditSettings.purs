@@ -58,9 +58,7 @@ render (Loaded loadedState @ { otherError, submitting }) =
     HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] $ pure $
     HH.form
     [ HP.class_ $ H.ClassName "form", HE.onSubmit $ Just <<< Update loadedState ]
-    [ HH.h2  [ HP.class_ $ HH.ClassName "form-heading" ]
-        [ HH.text "Edit your account settings" ]
-    , HH.div [ HP.class_ $ HH.ClassName "input-groups" ]
+    [ HH.div [ HP.class_ $ HH.ClassName "input-groups" ]
         [ HH.div [ HP.class_ $ HH.ClassName "input-group" ]
             [ HH.label
                 [ HP.class_ $ HH.ClassName "input-label" ]
@@ -198,4 +196,4 @@ editSettings
     -> HH.ComponentHTML query (editSettings :: Slot | children) (Async left)
 editSettings handleMessage = HH.slot
     (SProxy :: SProxy "editSettings") unit
-    (Modal.component component) unit handleMessage
+    (Modal.component "Edit your account settings" component) unit handleMessage

@@ -60,9 +60,7 @@ render { details, submitting, otherError } =
     HH.div [ HP.class_ $ HH.ClassName "wide-single-form-container" ] $ pure $
     HH.form
     [ HP.class_ $ H.ClassName "form", HE.onSubmit $ Just <<< Update ]
-    [ HH.h1 [ HP.class_ $ HH.ClassName "form-heading" ]
-                [ HH.text "Edit player details" ]
-    , HH.p [ HP.class_ $ HH.ClassName "form-subheading", HC.style $ CSS.marginBottom $ CSS.px 0.0 ]
+    [ HH.p [ HP.class_ $ HH.ClassName "form-subheading", HC.style $ CSS.marginBottom $ CSS.px 0.0 ]
         [ HH.text """Enter details about yourself so your new gay gamer friends
             can find you, faggot. Fill out as much as you can to ensure the
             gayest gamers find you. All fields are optional, bitch."""
@@ -198,4 +196,4 @@ editDetails
     -> HH.ComponentHTML action (editDetails :: Slot | children) (Async left)
 editDetails input handleMessage = HH.slot
     (SProxy :: SProxy "editDetails") unit
-    (Modal.component component) input handleMessage
+    (Modal.component "Edit player details" component) input handleMessage

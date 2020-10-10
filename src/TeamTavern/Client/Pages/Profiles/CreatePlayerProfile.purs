@@ -174,9 +174,7 @@ render
     Array.singleton $
     HH.form
     [ HP.class_ $ ClassName "form", HE.onSubmit $ Just <<< Create ] $
-    [ HH.h2 [ HP.class_ $ HH.ClassName "form-heading" ]
-        [ HH.text $ "Create your " <> game.title <> " profile" ]
-    , HH.p [ HP.class_ $ HH.ClassName "form-subheading", HC.style $ CSS.marginBottom $ CSS.px 0.0 ]
+    [ HH.p [ HP.class_ $ HH.ClassName "form-subheading", HC.style $ CSS.marginBottom $ CSS.px 0.0 ]
         [ HH.text "Describe yourself as a player and let other players find you" ]
     , HH.h3 [ HP.class_ $ HH.ClassName "input-groups-heading" ]
         [ HH.text "Details" ]
@@ -429,4 +427,4 @@ createPlayerProfile
         (createPlayerProfile :: Slot | children) (Async left)
 createPlayerProfile input handleMessage =
     HH.slot (SProxy :: SProxy "createPlayerProfile") unit
-    (Modal.component component) input handleMessage
+    (Modal.component ("Create your " <> input.game.title <> " profile") component) input handleMessage

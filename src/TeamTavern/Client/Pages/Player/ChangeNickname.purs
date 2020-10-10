@@ -71,9 +71,7 @@ render (Loaded loadedState @
     [ HP.class_ $ HH.ClassName "form"
     , HE.onSubmit $ Just <<< Update loadedState
     ]
-    [ HH.h2 [ HP.class_ $ HH.ClassName "form-heading" ]
-        [ HH.text "Change your nickname" ]
-    , HH.div [ HP.class_ $ HH.ClassName "input-groups" ]
+    [ HH.div [ HP.class_ $ HH.ClassName "input-groups" ]
         [ HH.div [ HP.class_ $ HH.ClassName "input-group" ]
             [ HH.label
                 [ HP.class_ $ HH.ClassName "input-label" ]
@@ -197,4 +195,4 @@ changeNickname
     -> HH.ComponentHTML query (changeNickname :: Slot | children) (Async left)
 changeNickname handleMessage = HH.slot
     (SProxy :: SProxy "changeNickname") unit
-    (Modal.component component) unit handleMessage
+    (Modal.component "Change your nickname" component) unit handleMessage

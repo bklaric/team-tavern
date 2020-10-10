@@ -36,22 +36,26 @@ type Slot output = H.Slot (Const Void) output Unit
 
 render
     :: forall query input output monad
-    .  H.Component HH.HTML query input output monad
+    .  String
+    -> H.Component HH.HTML query input output monad
     -> State input
     -> HH.ComponentHTML (Action output) (ChildSlots query output) monad
-render content input =
+render title content input =
     HH.div
     [ HP.class_ $ H.ClassName "modal-background"
     , HP.ref $ H.RefLabel "modal-background"
     , HE.onClick $ Just <<< BackgroundClose
     ]
     [ HH.div [ HS.class_ "modal-content" ]
-        [ HH.slot (SProxy :: SProxy "content") unit content input (Just <<< OutputRaise)
-        , HH.button
-            [ HS.class_ "modal-close-button"
-            , HE.onClick $ const $ Just ButtonClose
+        [ HH.h2 [ HS.class_ "modal-title" ]
+            [ HH.text title
+            , HH.button
+                [ HS.class_ "modal-close-button"
+                , HE.onClick $ const $ Just ButtonClose
+                ]
+                [ HH.i [ HS.class_ "fas fa-times modal-close-button-icon" ] [] ]
             ]
-            [ HH.i [ HS.class_ "fas fa-times modal-close-button-icon" ] [] ]
+        , HH.slot (SProxy :: SProxy "content") unit content input (Just <<< OutputRaise)
         ]
     ]
 
@@ -74,11 +78,12 @@ handleAction (OutputRaise message) = H.raise $ OutputRaised message
 component
     :: forall query input output monad
     .  MonadEffect monad
-    => H.Component HH.HTML query input output monad
+    => String
+    -> H.Component HH.HTML query input output monad
     -> H.Component HH.HTML query input (Output output) monad
-component content = H.mkComponent
+component title content = H.mkComponent
     { initialState: identity
-    , render: render content
+    , render: render title content
     , eval: H.mkEval $ H.defaultEval
         { handleAction = handleAction
         , initialize = Just Init
