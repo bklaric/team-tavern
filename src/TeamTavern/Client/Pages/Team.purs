@@ -4,27 +4,32 @@ import Prelude
 
 import Async (Async)
 import Async as Async
+import CSS as CSS
 import Client.Components.Copyable as Copyable
 import Data.Const (Const)
 import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
-import Halogen (ClassName(..))
 import Halogen as H
 import Halogen.HTML as HH
+import Halogen.HTML.CSS as HC
 import Halogen.HTML.Properties as HP
+import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
+import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Pages.Player.Teams (get)
 import TeamTavern.Client.Pages.Team.Details (details)
 import TeamTavern.Client.Pages.Team.Profiles (profiles)
+import TeamTavern.Client.Pages.Team.Status (Status(..), getStatus)
 import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
+import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Server.Team.View (Team)
 
 type Input = { handle :: String }
 
 data State
     = Empty Input
-    | Loaded { team :: Team }
+    | Loaded { team :: Team, status :: Status }
     | NotFound
     | Error
 
@@ -33,21 +38,34 @@ data Action = Initialize
 type Slot = H.Slot (Const Void) Void Unit
 
 type ChildSlots =
-    ( discordServer :: Copyable.Slot
+    ( messageOwner :: NavigationAnchor.Slot Unit
+    , discordServer :: Copyable.Slot
     , games :: Anchor.Slot String
     )
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render (Empty _) = HH.div_ []
-render (Loaded { team: team' } ) =
+render (Loaded { team: team', status } ) =
     HH.div_  $
-    [ HH.div [ HP.class_ $ ClassName "content-title" ]
-        [ HH.div [ HP.class_ $ HH.ClassName "content-title-left"]
-            [ HH.h1 [ HP.class_ $ HH.ClassName "content-title-text" ]
+    [ HH.div [ HS.class_ "content-title" ]
+        [ HH.div [ HS.class_ "content-title-left" ]
+            [ HH.h1 [ HS.class_ "content-title-text" ]
                 [ HH.text team'.name ]
             ]
+        , HH.div [ HS.class_ "content-title-right" ]
+            case status of
+            SignedInOwner -> []
+            _ ->
+                [ navigationAnchor (SProxy :: SProxy "messageOwner")
+                    { path: "/conversations/" <> team'.owner
+                    , content: HH.span [ HC.style $ CSS.fontWeight $ CSS.weight 500.0 ]
+                        [ HH.i [ HP.class_ $ H.ClassName "fas fa-envelope button-icon" ] []
+                        , HH.text "Message team owner"
+                        ]
+                    }
+                ]
         ]
-    , HH.p [ HP.class_ $ HH.ClassName "content-description" ]
+    , HH.p [ HS.class_ "content-description" ]
         [ HH.text "This is a team, lmao!" ]
     , details team'
     , profiles team'.profiles
@@ -68,7 +86,9 @@ handleAction Initialize = do
         Empty { handle } -> do
             team' <- H.lift $ loadTeam handle
             case team' of
-                Just team'' -> H.put $ Loaded { team: team'' }
+                Just team'' -> do
+                    status <- H.liftEffect $ getStatus team''.owner
+                    H.put $ Loaded { team: team'', status }
                 _ -> pure unit
         _ -> pure unit
     H.lift $ Async.fromEffect do
