@@ -2,15 +2,13 @@ module TeamTavern.Client.Pages.Conversations (Slot, conversations) where
 
 import Prelude
 
-import Async (Async(..))
+import Async (Async)
 import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
 import Data.Array as Array
 import Data.Bifunctor (lmap)
-import Data.Const (Const(..))
-import Data.Either (Either(..))
-import Data.Int (floor)
+import Data.Const (Const)
 import Data.Maybe (Maybe(..))
 import Data.Options ((:=))
 import Data.Symbol (SProxy(..))
@@ -20,6 +18,7 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Simple.JSON.Async as Json
 import TeamTavern.Client.Components.Divider (divider)
+import TeamTavern.Client.Script.LastUpdated (lastUpdated)
 import TeamTavern.Client.Script.Navigate (navigate_)
 import TeamTavern.Server.Conversation.ViewAll.SendResponse as ViewAll
 import Web.Event.Event as Event
@@ -41,40 +40,6 @@ data State
     | Error
 
 type Slot = H.Slot (Const Void) Void Unit
-
-yearSeconds :: Number
-yearSeconds = 60.0 * 60.0 * 24.0 * 365.0
-
-monthSeconds :: Number
-monthSeconds = 60.0 * 60.0 * 24.0 * 30.0
-
-daySeconds :: Number
-daySeconds = 60.0 * 60.0 * 24.0
-
-hourSeconds :: Number
-hourSeconds = 60.0 * 60.0
-
-minuteSeconds :: Number
-minuteSeconds = 60.0
-
-lastUpdated :: Number -> String
-lastUpdated updatedSeconds = let
-    yearsAgo = floor(updatedSeconds / yearSeconds)
-    monthsAgo = floor(updatedSeconds / monthSeconds)
-    daysAgo = floor(updatedSeconds / daySeconds)
-    hoursAgo = floor(updatedSeconds / hourSeconds)
-    minutesAgo = floor(updatedSeconds / minuteSeconds)
-    interval =
-        if yearsAgo > 0 then Just { unit: "year", count: yearsAgo } else
-        if monthsAgo > 0 then Just { unit: "month", count: monthsAgo } else
-        if daysAgo > 0 then Just { unit: "day", count: daysAgo } else
-        if hoursAgo > 0 then Just { unit: "hour", count: hoursAgo } else
-        if minutesAgo > 0 then Just { unit: "minute", count: minutesAgo } else
-        Nothing
-    in
-    case interval of
-    Just { unit, count } -> show count <> " " <> unit <> (if count == 1 then "" else "s") <> " ago"
-    Nothing -> "less than a minute ago"
 
 render Empty = HH.div_ []
 render (Conversations conversations') =
