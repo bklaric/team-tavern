@@ -26,7 +26,7 @@ import Halogen.HTML.Properties as HP
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.CloseButton (closeButton)
-import TeamTavern.Client.Components.ModalDeclarative as Modal
+import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Pages.Wizard.EnterPlayerDetails (enterPlayerDetails)
 import TeamTavern.Client.Pages.Wizard.EnterPlayerDetails as EnterPlayerDetails
 import TeamTavern.Client.Pages.Wizard.EnterTeamDetails (enterTeamDetails)

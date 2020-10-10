@@ -13,7 +13,7 @@ import Data.Const (Const)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..), isNothing)
 import Data.Options ((:=))
-import Data.Symbol (class IsSymbol, SProxy(..))
+import Data.Symbol (class IsSymbol, SProxy)
 import Halogen (defaultEval, mkComponent, mkEval)
 import Halogen as H
 import Halogen.HTML as HH
@@ -28,6 +28,7 @@ import TeamTavern.Client.Pages.Player.Types (Nickname, PlayerStatus(..))
 import TeamTavern.Client.Script.Clipboard (writeTextAsync)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Server.Player.ViewDetails.SendResponse as ViewDetails
+import Undefined (undefined)
 
 data Input = Input Nickname PlayerStatus
 
@@ -35,7 +36,7 @@ data Action
     = Initialize
     | Receive Input
     | ShowModal EditDetails.Input
-    | HandleModalOutput (Modal.Message EditDetails.Output)
+    | HandleModalOutput (Modal.Output EditDetails.Output)
     | CopyDiscordTag String
 
 type DiscordTagCopied = Boolean
@@ -71,10 +72,10 @@ render (Details nickname playerStatus details' discordTagCopied) =
             ]
         _ -> []
     ]
-    <>
-    case playerStatus of
-    SamePlayer -> [ editDetails (Just <<< HandleModalOutput) ]
-    _ -> []
+    -- <>
+    -- case playerStatus of
+    -- SamePlayer -> [ editDetails undefined (Just <<< HandleModalOutput) ]
+    -- _ -> []
     <>
     [ HH.div [ HP.class_ $ HH.ClassName "card-section" ]
         if isNothing details'.age && isNothing details'.country && Array.null details'.languages && not details'.hasMicrophone
@@ -222,11 +223,12 @@ handleAction (Receive (Input nickname playerStatus)) = do
                 Just profiles' -> H.put $ Details nickname playerStatus profiles' false
                 Nothing -> pure unit
 handleAction (ShowModal input) =
-    Modal.showWith input (SProxy :: SProxy "editDetails")
-handleAction (HandleModalOutput message) = do
-    Modal.hide (SProxy :: SProxy "editDetails")
-    case message of
-        Modal.Inner (EditDetails.DetailsEditted _) -> do
+    -- Modal.showWith input (SProxy :: SProxy "editDetails")
+    pure unit
+handleAction (HandleModalOutput output) = do
+    -- Modal.hide (SProxy :: SProxy "editDetails")
+    case output of
+        Modal.OutputRaised (EditDetails.DetailsEditted _) -> do
             state <- H.get
             case state of
                 Details nickname status _ _ -> do

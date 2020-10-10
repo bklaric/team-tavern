@@ -29,6 +29,7 @@ import TeamTavern.Client.Pages.Player.EditPlayerProfile as EditProfile
 import TeamTavern.Client.Pages.Player.Types (Nickname, PlayerStatus(..))
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
 import TeamTavern.Server.Profile.ViewPlayerProfilesByPlayer.SendResponse as ViewPlayerProfilesByPlayer
+import Undefined (undefined)
 
 data Input = Input Nickname PlayerStatus
 
@@ -36,7 +37,7 @@ data Action
     = Initialize
     | Receive Input
     | ShowModal EditProfile.Input
-    | HandleModalOutput (Modal.Message EditProfile.Output)
+    | HandleModalOutput (Modal.Output EditProfile.Output)
 
 data State
     = Empty Input
@@ -70,10 +71,10 @@ render (Profiles nickname playerStatus profiles) =
     [ HH.h2 [ HP.class_ $ HH.ClassName "card-title" ]
         [ HH.text "Profiles" ]
     ]
-    <>
-    case playerStatus of
-    SamePlayer -> [ editProfile $ Just <<< HandleModalOutput ]
-    _ -> []
+    -- <>
+    -- case playerStatus of
+    -- SamePlayer -> [ editProfile undefined $ Just <<< HandleModalOutput ]
+    -- _ -> []
     <>
     if Array.null profiles
     then Array.singleton $
@@ -197,11 +198,12 @@ handleAction (Receive (Input nickname playerStatus)) = do
                 Just profiles' -> H.put $ Profiles nickname playerStatus profiles'
                 Nothing -> pure unit
 handleAction (ShowModal profile) =
-    Modal.showWith profile (SProxy :: SProxy "editProfile")
-handleAction (HandleModalOutput message) = do
-    Modal.hide (SProxy :: SProxy "editProfile")
-    case message of
-        Modal.Inner (EditProfile.ProfileUpdated _) -> do
+    -- Modal.showWith profile (SProxy :: SProxy "editProfile")
+    pure unit
+handleAction (HandleModalOutput output) = do
+    -- Modal.hide (SProxy :: SProxy "editProfile")
+    case output of
+        Modal.OutputRaised (EditProfile.ProfileUpdated _) -> do
             state <- H.get
             case state of
                 Profiles nickname status _ -> do

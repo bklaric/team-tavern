@@ -49,7 +49,7 @@ data State
     | Error
     | Loaded LoadedState
 
-type Slot = H.Slot (Modal.Query Unit (Const Void)) (Modal.Message Message) Unit
+type Slot = H.Slot (Const Void) (Modal.Output Message) Unit
 
 render :: forall children left.
     State -> H.ComponentHTML Action children (Async left)
@@ -196,7 +196,7 @@ component = H.mkComponent
 
 editSettings
     :: forall query children left
-    .  (Modal.Message Message -> Maybe query)
+    .  (Modal.Output Message -> Maybe query)
     -> HH.ComponentHTML query (editSettings :: Slot | children) (Async left)
 editSettings handleMessage = HH.slot
     (SProxy :: SProxy "editSettings") unit

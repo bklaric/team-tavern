@@ -138,7 +138,7 @@ type ChildSlots =
     , "multiSelectField" :: MultiSelect.Slot Option String
     )
 
-type Slot = H.Slot (Modal.Query Input (Const Void)) (Modal.Message Output)
+type Slot = H.Slot (Const Void) (Modal.Output Output)
 
 regionToEntry :: Region -> TreeSelect.InputEntry String
 regionToEntry (Region region subRegions) = TreeSelect.InputEntry
@@ -562,8 +562,9 @@ component = H.mkComponent
 
 editTeamProfile
     :: forall query children left
-    .  (Modal.Message Output -> Maybe query)
+    .  Input
+    -> (Modal.Output Output -> Maybe query)
     -> HH.ComponentHTML query (editProfile :: Slot Unit | children) (Async left)
-editTeamProfile handleMessage = HH.slot
+editTeamProfile input handleMessage = HH.slot
     (SProxy :: SProxy "editProfile") unit
-    (Modal.component component) unit handleMessage
+    (Modal.component component) input handleMessage

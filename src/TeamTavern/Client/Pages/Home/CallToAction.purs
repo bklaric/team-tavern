@@ -12,7 +12,6 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Pages.Home.Wizard (wizard)
 import TeamTavern.Client.Pages.Home.Wizard as Wizard
 import TeamTavern.Client.Pages.Home.Wizard.Shared as WizardShared
@@ -79,15 +78,15 @@ render { signedIn, title } =
                     ]
                 ]
         ]
-    , wizard $ const Nothing
+    -- , wizard { ilk: WizardShared.Player } (const Nothing)
     ]
 
 handleAction :: forall action output slots left.
     Action -> H.HalogenM State action (Slots slots) output (Async left) Unit
 handleAction (Receive input) =
     H.put input
-handleAction (OpenWizard ilk) = do
-    void $ H.query (SProxy :: SProxy "wizard") unit (Modal.Show { ilk } unit)
+handleAction (OpenWizard ilk) =
+    pure unit
 
 component :: forall query output left.
     H.Component HH.HTML query Input output (Async left)

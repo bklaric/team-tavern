@@ -74,7 +74,7 @@ data Action
     | SetStep Step
     | Submit
 
-type Slot = H.Slot (Modal.Query Input (Const Void)) (Modal.Message Output) Unit
+type Slot = H.Slot (Const Void) (Modal.Output Output) Unit
 
 type Slots slots =
     ( selectGame :: SelectGame.Slot
@@ -436,8 +436,9 @@ component = H.mkComponent
 
 wizard
     :: forall action slots left
-    .  (Modal.Message Output -> Maybe action)
+    .  Input
+    -> (Modal.Output Output -> Maybe action)
     -> HH.ComponentHTML action (wizard :: Slot | slots) (Async left)
-wizard handleOutput = HH.slot
+wizard input handleOutput = HH.slot
     (SProxy :: SProxy "wizard") unit
-    (Modal.component component) unit handleOutput
+    (Modal.component component) input handleOutput

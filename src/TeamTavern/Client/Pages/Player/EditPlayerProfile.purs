@@ -101,7 +101,7 @@ type ChildSlots =
     , "multiSelectField" :: MultiSelect.Slot Option String
     )
 
-type Slot = H.Slot (Modal.Query Input (Const Void)) (Modal.Message Output)
+type Slot = H.Slot (Const Void) (Modal.Output Output)
 
 fieldLabel :: forall slots action.
     String -> String -> Boolean -> Maybe String -> HH.HTML slots action
@@ -433,8 +433,9 @@ component = H.mkComponent
 
 editProfile
     :: forall query children left
-    .  (Modal.Message Output -> Maybe query)
+    .  Input
+    -> (Modal.Output Output -> Maybe query)
     -> HH.ComponentHTML query (editProfile :: Slot Unit | children) (Async left)
-editProfile handleMessage = HH.slot
+editProfile input handleMessage = HH.slot
     (SProxy :: SProxy "editProfile") unit
-    (Modal.component component) unit handleMessage
+    (Modal.component component) input handleMessage

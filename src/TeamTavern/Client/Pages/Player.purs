@@ -50,7 +50,7 @@ data Action
     | CloseEditAccountPopover
     | ShowChangeNicknameModal MouseEvent
     | ShowEditSettingsModal MouseEvent
-    | HandleChangeNicknameMessage (Modal.Message ChangeNickname.Message)
+    | HandleChangeNicknameMessage (Modal.Output ChangeNickname.Message)
     | HandleEditSettingsMessage
 
 data State
@@ -135,8 +135,8 @@ render (Player { player: { nickname, about }, status, editPopoverShown }) =
                 ]
             _ -> []
         ]
-    , HH.div_ [ changeNickname $ Just <<< HandleChangeNicknameMessage ]
-    , HH.div_ [ editSettings $ const $ Just HandleEditSettingsMessage ]
+    -- , HH.div_ [ changeNickname $ Just <<< HandleChangeNicknameMessage ]
+    -- , HH.div_ [ editSettings $ const $ Just HandleEditSettingsMessage ]
     , HH.p [ HP.class_ $ HH.ClassName "content-description" ]
         [ HH.text
             case status of
@@ -198,18 +198,19 @@ handleAction (CloseEditAccountPopover) =
         state -> state
 handleAction (ShowChangeNicknameModal mouseEvent) = do
     H.liftEffect $ E.preventDefault $ ME.toEvent mouseEvent
-    Modal.show (SProxy :: SProxy "changeNickname")
+    -- Modal.show (SProxy :: SProxy "changeNickname")
 handleAction (ShowEditSettingsModal mouseEvent) = do
     H.liftEffect $ E.preventDefault $ ME.toEvent mouseEvent
-    Modal.show (SProxy :: SProxy "editSettings")
-handleAction (HandleChangeNicknameMessage message) = do
-    Modal.hide (SProxy :: SProxy "changeNickname")
-    case message of
-        Modal.Inner (ChangeNickname.NicknameChanged nickname) ->
+    -- Modal.show (SProxy :: SProxy "editSettings")
+handleAction (HandleChangeNicknameMessage output) = do
+    -- Modal.hide (SProxy :: SProxy "changeNickname")
+    case output of
+        Modal.OutputRaised (ChangeNickname.NicknameChanged nickname) ->
             window >>= location >>= setHref ("/players/" <> nickname) # H.liftEffect
         _ -> pure unit
-handleAction HandleEditSettingsMessage = do
-    Modal.hide (SProxy :: SProxy "editSettings")
+handleAction HandleEditSettingsMessage =
+    -- Modal.hide (SProxy :: SProxy "editSettings")
+    pure unit
 
 component :: forall query output left.
     String -> H.Component HH.HTML query String output (Async left)

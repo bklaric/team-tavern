@@ -55,7 +55,7 @@ data State
     | Error
     | Loaded LoadedState
 
-type Slot = H.Slot (Modal.Query Unit (Const Void)) (Modal.Message Message) Unit
+type Slot = H.Slot (Const Void) (Modal.Output Message) Unit
 
 render :: forall left children.
     State -> H.ComponentHTML Action children (Async left)
@@ -195,7 +195,7 @@ component = H.mkComponent
 
 changeNickname
     :: forall query children left
-    .  (Modal.Message Message -> Maybe query)
+    .  (Modal.Output Message -> Maybe query)
     -> HH.ComponentHTML query (changeNickname :: Slot | children) (Async left)
 changeNickname handleMessage = HH.slot
     (SProxy :: SProxy "changeNickname") unit

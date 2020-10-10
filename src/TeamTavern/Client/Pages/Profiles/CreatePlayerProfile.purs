@@ -26,7 +26,7 @@ import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.CloseButton (closeButton)
 import TeamTavern.Client.Components.Divider (divider)
-import TeamTavern.Client.Components.ModalDeclarative as Modal
+import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.SelectDeclarative.MultiSelect (multiSelectIndexed)
 import TeamTavern.Client.Components.SelectDeclarative.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.SelectDeclarative.SingleSelect (singleSelectIndexed)

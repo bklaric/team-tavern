@@ -54,7 +54,7 @@ type State =
 
 type ChildSlots = (enterPlayerDetails :: EnterPlayerDetails.Slot)
 
-type Slot = H.Slot (Modal.Query Input (Const Void)) (Modal.Message Output) Unit
+type Slot = H.Slot (Const Void) (Modal.Output Output) Unit
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { details, submitting, otherError } =
@@ -195,8 +195,9 @@ component = H.mkComponent
 
 editDetails
     :: forall action children left
-    .  (Modal.Message Output -> Maybe action)
+    .  Input
+    -> (Modal.Output Output -> Maybe action)
     -> HH.ComponentHTML action (editDetails :: Slot | children) (Async left)
-editDetails handleMessage = HH.slot
+editDetails input handleMessage = HH.slot
     (SProxy :: SProxy "editDetails") unit
-    (Modal.component component) unit handleMessage
+    (Modal.component component) input handleMessage
