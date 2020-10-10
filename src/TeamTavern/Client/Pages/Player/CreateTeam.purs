@@ -25,6 +25,7 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
+import TeamTavern.Client.Components.Form (form, formError, otherFormError, submitButton)
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Pages.Wizard.EnterPlayerDetails (enterPlayerDetails)
 import TeamTavern.Client.Pages.Wizard.EnterPlayerDetails as EnterPlayerDetails
@@ -59,23 +60,12 @@ type Slot = H.Slot (Const Void) (Modal.Output Output) Unit
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { details, submitting, otherError } =
-    HH.form
-    [ HS.class_ "form", HE.onSubmit $ Just <<< SendRequest ]
+    form SendRequest $
     [ enterTeamDetails details (Just <<< UpdateDetails)
-    , HH.button
-        [ HP.class_ $ ClassName "form-submit-button"
-        , HP.disabled submitting
-        , HC.style $ CSS.marginTop $ CSS.px 21.0
-        ]
-        [ HH.i [ HS.class_ "fas fa-user-plus button-icon" ] []
-        , HH.text
-            if submitting
-            then "Creating team..."
-            else "Create team"
-        ]
-    , HH.p [ HP.class_ $ otherErrorClass otherError ]
-        [ HH.text "Something unexpected went wrong! Please try again later." ]
+    , submitButton "fas fa-user-plus" "Create team" "Creating team..." submitting
     ]
+    <>
+    otherFormError otherError
 
 handleAction :: forall left.
     Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
