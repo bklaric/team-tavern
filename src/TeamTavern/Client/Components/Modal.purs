@@ -49,7 +49,6 @@ render content input =
         [ HH.slot (SProxy :: SProxy "content") unit content input (Just <<< OutputRaise)
         , HH.button
             [ HS.class_ "modal-close-button"
-            , HP.type_ HP.ButtonButton
             , HE.onClick $ const $ Just ButtonClose
             ]
             [ HH.i [ HS.class_ "fas fa-times modal-close-button-icon" ] [] ]
