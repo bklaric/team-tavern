@@ -24,7 +24,6 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
-import TeamTavern.Client.Components.CloseButton (closeButton)
 import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.SelectDeclarative.MultiSelect (multiSelectIndexed)
@@ -175,8 +174,7 @@ render
     Array.singleton $
     HH.form
     [ HP.class_ $ ClassName "form", HE.onSubmit $ Just <<< Create ] $
-    [ closeButton Close
-    , HH.h2 [ HP.class_ $ HH.ClassName "form-heading" ]
+    [ HH.h2 [ HP.class_ $ HH.ClassName "form-heading" ]
         [ HH.text $ "Create your " <> game.title <> " profile" ]
     , HH.p [ HP.class_ $ HH.ClassName "form-subheading", HC.style $ CSS.marginBottom $ CSS.px 0.0 ]
         [ HH.text "Describe yourself as a player and let other players find you" ]

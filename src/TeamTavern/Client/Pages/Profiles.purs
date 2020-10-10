@@ -146,14 +146,14 @@ render (Game game' player filters tab) = let
         createPlayerProfile
         { game: game', player: player' }
         case _ of
-        Modal.BackgroundClicked -> Just HideCreateProfileModal
+        Modal.CloseClicked -> Just HideCreateProfileModal
         Modal.OutputRaised (CreatePlayerProfile.CloseClicked) -> Just HideCreateProfileModal
         Modal.OutputRaised (CreatePlayerProfile.ProfileCreated) -> Just ReloadPage
     Just player', (Teams _ true timezone) -> Array.singleton $
         createTeamProfile
         { game: game', player: player', timezone }
         case _ of
-        Modal.BackgroundClicked -> Just HideCreateProfileModal
+        Modal.CloseClicked -> Just HideCreateProfileModal
         Modal.OutputRaised (CreateTeamProfile.CloseClicked) -> Just HideCreateProfileModal
         Modal.OutputRaised (CreateTeamProfile.ProfileCreated) -> Just ReloadPage
     _, _ -> []

@@ -26,7 +26,6 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
-import TeamTavern.Client.Components.CloseButton (closeButton)
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Pages.Wizard.EnterPlayerDetails (enterPlayerDetails)
 import TeamTavern.Client.Pages.Wizard.EnterPlayerDetails as EnterPlayerDetails
@@ -61,8 +60,7 @@ render { details, submitting, otherError } =
     HH.div [ HP.class_ $ HH.ClassName "wide-single-form-container" ] $ pure $
     HH.form
     [ HP.class_ $ H.ClassName "form", HE.onSubmit $ Just <<< Update ]
-    [ closeButton Close
-    , HH.h1 [ HP.class_ $ HH.ClassName "form-heading" ]
+    [ HH.h1 [ HP.class_ $ HH.ClassName "form-heading" ]
                 [ HH.text "Edit player details" ]
     , HH.p [ HP.class_ $ HH.ClassName "form-subheading", HC.style $ CSS.marginBottom $ CSS.px 0.0 ]
         [ HH.text """Enter details about yourself so your new gay gamer friends

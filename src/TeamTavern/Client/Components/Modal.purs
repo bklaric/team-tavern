@@ -24,10 +24,11 @@ type State input = Input input
 data Action output
     = Init
     | Finalize
-    | BackgroundClick MouseEvent
+    | BackgroundClose MouseEvent
+    | ButtonClose
     | OutputRaise output
 
-data Output output = BackgroundClicked | OutputRaised output
+data Output output = CloseClicked | OutputRaised output
 
 type ChildSlots query output = (content :: H.Slot query output Unit)
 
@@ -42,10 +43,17 @@ render content input =
     HH.div
     [ HP.class_ $ H.ClassName "modal-background"
     , HP.ref $ H.RefLabel "modal-background"
-    , HE.onMouseDown $ Just <<< BackgroundClick
+    , HE.onClick $ Just <<< BackgroundClose
     ]
     [ HH.div [ HS.class_ "modal-content" ]
-        [ HH.slot (SProxy :: SProxy "content") unit content input (Just <<< OutputRaise) ]
+        [ HH.slot (SProxy :: SProxy "content") unit content input (Just <<< OutputRaise)
+        , HH.button
+            [ HS.class_ "modal-close-button"
+            , HP.type_ HP.ButtonButton
+            , HE.onClick $ const $ Just ButtonClose
+            ]
+            [ HH.i [ HS.class_ "fas fa-times modal-close-button-icon" ] [] ]
+        ]
     ]
 
 handleAction :: forall state action slots output monad. MonadEffect monad =>
@@ -54,13 +62,14 @@ handleAction Init =
     makeWindowUnscrollable
 handleAction Finalize =
     makeWindowScrollable
-handleAction (BackgroundClick event) = do
+handleAction (BackgroundClose event) = do
     background <- H.getHTMLElementRef (H.RefLabel "modal-background")
     eventTarget <- event # toEvent # target >>= fromEventTarget # pure
     case background, eventTarget of
         Just background', Just eventTarget'
-            | unsafeRefEq background' eventTarget' -> H.raise BackgroundClicked
+            | unsafeRefEq background' eventTarget' -> H.raise CloseClicked
         _, _ -> pure unit
+handleAction ButtonClose = H.raise CloseClicked
 handleAction (OutputRaise message) = H.raise $ OutputRaised message
 
 component

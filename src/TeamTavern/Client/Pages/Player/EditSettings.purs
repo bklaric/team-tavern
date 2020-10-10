@@ -21,7 +21,6 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
-import TeamTavern.Client.Components.CloseButton (closeButton)
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Script.Cookie (getPlayerInfo)
 import TeamTavern.Client.Script.Navigate (navigate_)
@@ -61,7 +60,6 @@ render (Loaded loadedState @ { otherError, submitting }) =
     [ HP.class_ $ H.ClassName "form", HE.onSubmit $ Just <<< Update loadedState ]
     [ HH.h2  [ HP.class_ $ HH.ClassName "form-heading" ]
         [ HH.text "Edit your account settings" ]
-    , closeButton Close
     , HH.div [ HP.class_ $ HH.ClassName "input-groups" ]
         [ HH.div [ HP.class_ $ HH.ClassName "input-group" ]
             [ HH.label

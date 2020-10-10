@@ -9,6 +9,42 @@
     z-index: 3;
 }
 
+.modal-content {
+    border-top: $border;
+    border-bottom: $border;
+    background-color: white;
+    margin: 64px auto;
+    width: 100%;
+    position: relative;
+
+    @media screen and (min-width: 1020px) {
+        border: $border;
+        border-radius: $border-radius;
+        max-width: 1000px;
+    }
+}
+
+.modal-close-button {
+    width: 30px;
+    height: 30px;
+    border-radius: 4px;
+    border: none;
+    background-color: white;
+    position: absolute;
+    right: 5px;
+    top: 5px;
+    padding: 0;
+
+    &:hover {
+        background-color: #f2f2f2;
+        cursor: pointer;
+    }
+}
+
+.modal-close-button-icon {
+    font-size: 14px;
+}
+
 .unscrollable {
     overflow: hidden;
 }

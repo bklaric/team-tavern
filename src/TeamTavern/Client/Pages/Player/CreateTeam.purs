@@ -25,12 +25,12 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
-import TeamTavern.Client.Components.CloseButton (closeButton)
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Pages.Wizard.EnterPlayerDetails (enterPlayerDetails)
 import TeamTavern.Client.Pages.Wizard.EnterPlayerDetails as EnterPlayerDetails
 import TeamTavern.Client.Pages.Wizard.EnterTeamDetails (enterTeamDetails)
 import TeamTavern.Client.Pages.Wizard.EnterTeamDetails as EnterTeamDetails
+import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Client.Snippets.ErrorClasses (otherErrorClass)
 import TeamTavern.Server.Player.UpdateDetails.SendResponse as Update
 import TeamTavern.Server.Player.ViewDetails.SendResponse as ViewAccount
@@ -59,29 +59,24 @@ type Slot = H.Slot (Const Void) (Modal.Output Output) Unit
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { details, submitting, otherError } =
-    HH.div [ HP.class_ $ HH.ClassName "wide-single-form-container" ] $ pure $
     HH.form
-    [ HP.class_ $ H.ClassName "form", HE.onSubmit $ Just <<< SendRequest ]
-    [ closeButton Close
-    , HH.h1 [ HP.class_ $ HH.ClassName "form-heading" ]
-                [ HH.text "Create team" ]
-    , HH.p [ HP.class_ $ HH.ClassName "form-subheading", HC.style $ CSS.marginBottom $ CSS.px 0.0 ]
-        [ HH.text """Yo, write about your team and what are your members like."""
-        ]
+    [ HS.class_ "form", HE.onSubmit $ Just <<< SendRequest ]
+    [ HH.h1 [ HS.class_ "form-heading" ] [ HH.text "Create a team" ]
+    , HH.p [ HS.class_ "form-subheading", HC.style $ CSS.marginBottom $ CSS.px 0.0 ]
+        [ HH.text """Yo, write about your team and what are your members like.""" ]
     , enterTeamDetails details (Just <<< UpdateDetails)
     , HH.button
         [ HP.class_ $ ClassName "form-submit-button"
         , HP.disabled submitting
         , HC.style $ CSS.marginTop $ CSS.px 21.0
         ]
-        [ HH.i [ HP.class_ $ HH.ClassName "fas fa-user-plus button-icon" ] []
+        [ HH.i [ HS.class_ "fas fa-user-plus button-icon" ] []
         , HH.text
             if submitting
             then "Creating team..."
             else "Create team"
         ]
-    , HH.p
-        [ HP.class_ $ otherErrorClass otherError ]
+    , HH.p [ HP.class_ $ otherErrorClass otherError ]
         [ HH.text "Something unexpected went wrong! Please try again later." ]
     ]
 
