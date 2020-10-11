@@ -3,7 +3,6 @@ module TeamTavern.Server.Profile.AddPlayerProfile.LogError where
 import Prelude
 
 import Data.List.Types (NonEmptyList)
-import Data.Map (Map)
 import Data.Variant (Variant, match)
 import Effect (Effect)
 import Foreign (MultipleErrors)
@@ -11,19 +10,19 @@ import Global.Unsafe (unsafeStringify)
 import Postgres.Error (Error)
 import Postgres.Result (Result, rows)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
-import TeamTavern.Server.Infrastructure.Log (logStamped, logt, print)
+import TeamTavern.Server.Infrastructure.Log (logLines, logStamped, logt, print)
 import TeamTavern.Server.Profile.AddPlayerProfile.ReadProfile as ReadProfile
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile as ValidateProfile
 import TeamTavern.Server.Profile.Routes (Identifiers)
 
 type CreateError = Variant
     -- Cookies.
-    ( invalidSession :: { cookieInfo :: CookieInfo }
+    ( internal :: Array String
+    , client :: Array String
     , nicknameDoesntMatch ::
         { cookieInfo :: CookieInfo
         , nickname :: String
         }
-    , noCookieInfo :: { cookies :: Map String String }
     -- Load fields from database.
     , databaseError :: Error
     , unreadableFields ::
@@ -62,13 +61,10 @@ logError :: CreateError -> Effect Unit
 logError createError = do
     logStamped "Error creating profile"
     createError # match
-        { noCookieInfo: \{ cookies } ->
-            logt $ "No player info present in cookies: " <> show cookies
+        { internal: logLines
+        , client: logLines
         , databaseError: \error ->
             logt $ "Unknown database error ocurred: " <> print error
-        , invalidSession: \{ cookieInfo } ->
-            logt $ "Player has invalid session info in cookies: "
-                <> show cookieInfo
         , nicknameDoesntMatch: \{ nickname, cookieInfo } -> do
             logt $ "Signed in user: " <> show cookieInfo
             logt $ "Doesn't have requested nickname: " <> nickname

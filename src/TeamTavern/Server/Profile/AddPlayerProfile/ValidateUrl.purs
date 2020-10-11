@@ -1,15 +1,15 @@
-module TeamTavern.Server.Profile.Infrastructure.ValidateUrl (Url, UrlError, create, toString) where
+module TeamTavern.Server.Profile.Infrastructure.ValidateUrl (Url, UrlError, UrlErrors, validateUrl, validateUrlV, validateUrl_, validateUrlV_) where
 
 import Prelude
 
 import Data.Array ((!!))
 import Data.Either (Either(..), isRight)
-import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Show (genericShow)
 import Data.List.Types (NonEmptyList)
 import Data.Maybe (Maybe(..))
 import Data.String (toLower, trim)
 import Data.String.Utils (endsWith, startsWith)
+import Data.Validated (Validated)
+import Data.Validated as Validated
 import Data.Variant (Variant)
 import Text.Parsing.Parser (Parser)
 import Text.Parsing.Parser (runParser) as Parser
@@ -27,12 +27,11 @@ type Domain = String
 
 newtype Url = Url String
 
-derive instance genericUrl :: Generic Url _
-
-instance showUrl :: Show Url where
-    show = genericShow
+derive newtype instance showUrl :: Show Url
 
 type UrlError = Variant (invalid :: Invalid, tooLong :: TooLong)
+
+type UrlErrors = NonEmptyList UrlError
 
 type ParsedUrl =
     { scheme :: Scheme
@@ -61,6 +60,9 @@ parseHost domain = flip wrapParser RegName.parser
         then Right host
         else Left $ URIPartParseError $ "Wrong domain: " <> RegName.print host
 
+parseHost_ :: Parser String RegName
+parseHost_ = wrapParser Right RegName.parser
+
 parsePath :: Parser String Path
 parsePath = flip wrapParser Path.parser
     \path @ (Path segments) ->
@@ -76,12 +78,30 @@ parser domain = do
   path <- parsePath
   pure { scheme, host, path }
 
-create :: Domain -> String -> Either (NonEmptyList UrlError) Url
-create domain url =
+parser_ :: Parser String ParsedUrl
+parser_ = do
+    scheme <- parseScheme
+    _ <- string "//"
+    host <- parseHost_
+    path <- parsePath
+    pure { scheme, host, path }
+
+validateUrl :: Domain -> String -> Either (NonEmptyList UrlError) Url
+validateUrl domain url =
     Wrapped.create
         (trim >>> prependScheme)
         [invalid ((flip Parser.runParser $ parser domain) >>> isRight), tooLong 200]
         Url url
 
-toString :: Url -> String
-toString (Url url) = url
+validateUrlV :: String -> String -> Validated (NonEmptyList UrlError) Url
+validateUrlV domain url = validateUrl domain url # Validated.fromEither
+
+validateUrl_ :: String -> Either (NonEmptyList UrlError) Url
+validateUrl_ url =
+    Wrapped.create
+        (trim >>> prependScheme)
+        [invalid ((flip Parser.runParser parser_) >>> isRight), tooLong 200]
+        Url url
+
+validateUrlV_ :: String -> Validated (NonEmptyList UrlError) Url
+validateUrlV_ url = validateUrl_ url # Validated.fromEither

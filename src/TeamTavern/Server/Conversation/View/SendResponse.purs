@@ -13,8 +13,8 @@ type OkContent = LoadConversationResult
 
 errorResponse :: ViewError -> Response
 errorResponse = match
-    { noCookieInfo: const $ badRequest__
-    , invalidSession: const $ badRequest__
+    { internal: const internalServerError__
+    , client: const badRequest__
     , unreadableResult: const $ internalServerError__
     , databaseError: const $ internalServerError__
     }

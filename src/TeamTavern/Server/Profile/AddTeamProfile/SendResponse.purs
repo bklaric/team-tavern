@@ -5,7 +5,7 @@ import Prelude
 import Async (Async, alwaysRight)
 import Data.Array as Array
 import Data.Variant (SProxy(..), Variant, inj, match)
-import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, noContent_, unauthorized__)
+import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, noContent_)
 import Simple.JSON (writeJSON)
 import TeamTavern.Server.Profile.AddTeamProfile.LogError (AddGameTeamError)
 
@@ -16,9 +16,9 @@ type BadRequestContent = Variant (invalidProfile :: Array ProfileErrorContent)
 
 errorResponse :: AddGameTeamError -> Response
 errorResponse = match
-    { noCookieInfo: const unauthorized__
+    { internal: const internalServerError__
+    , client: const badRequest__
     , databaseError: const $ internalServerError__
-    , invalidSession: const unauthorized__
     , nicknameDoesntMatch: const forbidden__
     , unreadableFields: const internalServerError__
     , unreadableProfile: const badRequest__

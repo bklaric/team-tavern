@@ -1,5 +1,5 @@
 module TeamTavern.Server.Player.UpdateDetails.ValidateTimezone
-    (Timezone, validateTimezone, validateOptionalTimezone) where
+    (Timezone, validateTimezone) where
 
 import Prelude
 
@@ -9,11 +9,9 @@ import TeamTavern.Server.Infrastructure.Timezones (allTimezones)
 
 newtype Timezone = Timezone String
 
-validateTimezone :: String -> Maybe Timezone
-validateTimezone timezone =
+validateTimezone :: Maybe String -> Maybe Timezone
+validateTimezone Nothing = Nothing
+validateTimezone (Just timezone) =
     if allTimezones # Array.any \{ name } -> name == timezone
     then Just $ Timezone timezone
     else Nothing
-
-validateOptionalTimezone :: Maybe String -> Maybe Timezone
-validateOptionalTimezone timezone = timezone >>= validateTimezone

@@ -22,7 +22,7 @@ addTeamProfile :: forall left.
     Pool -> Identifiers -> Map String String -> Body -> Async left Response
 addTeamProfile pool identifiers cookies body =
     sendResponse $ examineLeftWithEffect logError do
-    -- Read info info from cookies.
+    -- Read info from cookies.
     cookieInfo <- ensureSignedInAs pool cookies identifiers.nickname
 
     pool # withTransaction (inj (SProxy :: SProxy "databaseError"))

@@ -2,18 +2,17 @@ module TeamTavern.Server.Player.ViewSettings.LogError where
 
 import Prelude
 
-import Data.Map (Map)
 import Data.Variant (Variant, match)
 import Effect (Effect)
 import Foreign (Foreign, MultipleErrors)
 import Global.Unsafe (unsafeStringify)
 import Postgres.Error (Error)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
-import TeamTavern.Server.Infrastructure.Log (logStamped, logt, print)
+import TeamTavern.Server.Infrastructure.Log (logLines, logStamped, logt, print)
 
 type ViewSettingsError = Variant
-    ( noCookieInfo :: { cookies :: Map String String }
-    , invalidSession :: { cookieInfo :: CookieInfo }
+    ( internal :: Array String
+    , client :: Array String
     , nicknameDoesntMatch ::
         { nickname :: String
         , cookieInfo :: CookieInfo
@@ -30,11 +29,8 @@ logError :: ViewSettingsError -> Effect Unit
 logError viewError = do
     logStamped "Error viewing player account"
     viewError # match
-        { noCookieInfo: \{ cookies } ->
-            logt $ "No player info present in cookies: " <> show cookies
-        , invalidSession: \{ cookieInfo } ->
-            logt $ "Player has invalid session info in cookies: "
-                <> show cookieInfo
+        { internal: logLines
+        , client: logLines
         , nicknameDoesntMatch: \{ nickname, cookieInfo } -> do
             logt $ "Signed in user: " <> show cookieInfo
             logt $ "Doesn't have requested nickname: " <> nickname

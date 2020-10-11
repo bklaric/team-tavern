@@ -4,7 +4,7 @@ import Prelude
 
 import Async (Async, alwaysRight)
 import Data.Variant (match)
-import Perun.Response (Response, badRequest__, forbidden__, internalServerError__, ok_, unauthorized__)
+import Perun.Response (Response, badRequest__, forbidden__, internalServerError__, ok_)
 import Simple.JSON (writeJSON)
 import TeamTavern.Server.Player.ViewSettings.LoadSettings (LoadSettingsResult)
 import TeamTavern.Server.Player.ViewSettings.LogError (ViewSettingsError)
@@ -13,8 +13,8 @@ type OkContent = LoadSettingsResult
 
 errorResponse :: ViewSettingsError -> Response
 errorResponse = match
-    { noCookieInfo: const unauthorized__
-    , invalidSession: const unauthorized__
+    { internal: const internalServerError__
+    , client: const badRequest__
     , nicknameDoesntMatch: const forbidden__
     , notFound: const badRequest__
     , unreadableSettings: const internalServerError__

@@ -22,7 +22,7 @@ import TeamTavern.Server.Player.UpdateDetails.ValidateCountry (Country, validate
 import TeamTavern.Server.Player.UpdateDetails.ValidateDiscordTag (DiscordTag, DiscordTagError, validateOptionalDiscordTag)
 import TeamTavern.Server.Player.UpdateDetails.ValidateLangugase (Language, validateLanguages)
 import TeamTavern.Server.Player.UpdateDetails.ValidateTimespan (Timespan, validateTimespan)
-import TeamTavern.Server.Player.UpdateDetails.ValidateTimezone (Timezone, validateOptionalTimezone)
+import TeamTavern.Server.Player.UpdateDetails.ValidateTimezone (Timezone, validateTimezone)
 
 type UpdateDetailsDto =
     { birthday :: Maybe String
@@ -75,7 +75,7 @@ readUpdate body = do
         # labelMap (SProxy :: SProxy "unreadableDto") { content, errors: _ }
         # Async.fromEither
     birthday' <- Async.fromEffect $ validateOptionalBirthday dto.birthday
-    let timezone' = validateOptionalTimezone dto.timezone
+    let timezone' = validateTimezone dto.timezone
     { discordTag: _
     , birthday: birthday'
     , languages: validateLanguages dto.languages

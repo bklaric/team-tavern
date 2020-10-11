@@ -37,7 +37,7 @@ create table team
     , age_to integer
     , locations text[] not null default '{}'
     , languages text[] not null default '{}'
-    , has_microphone boolean not null default false
+    , microphone boolean not null default false
     , discord_server text
     , timezone text
     , weekday_from time

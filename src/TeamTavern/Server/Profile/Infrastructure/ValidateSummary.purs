@@ -1,11 +1,8 @@
-module TeamTavern.Server.Profile.Infrastructure.ValidateSummary (Summary, validate, toStringArray) where
-
-import Prelude
+module TeamTavern.Server.Profile.Infrastructure.ValidateSummary (Summary, validate) where
 
 import Data.List.Types (NonEmptyList)
 import Data.Validated (Validated)
 import TeamTavern.Server.Domain.Paragraph (Paragraph)
-import TeamTavern.Server.Domain.Paragraph as Paragraph
 import TeamTavern.Server.Domain.Text (TextError)
 import TeamTavern.Server.Domain.Text as Text
 
@@ -16,6 +13,3 @@ maxLength = 2000
 
 validate :: String -> Validated (NonEmptyList TextError) Summary
 validate = Text.create maxLength Summary
-
-toStringArray :: Summary -> Array String
-toStringArray (Summary paragraphs) = paragraphs <#> Paragraph.toString

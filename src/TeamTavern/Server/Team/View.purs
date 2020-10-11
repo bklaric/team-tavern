@@ -12,7 +12,7 @@ import Postgres.Query (Query(..), (:))
 import Simple.JSON (writeJSON)
 import TeamTavern.Server.Infrastructure.Error (LoadSingleError)
 import TeamTavern.Server.Infrastructure.Log (logLoadSingleError)
-import TeamTavern.Server.Infrastructure.Postgres (queryFirst, teamAdjustedWeekdayFrom, teamAdjustedWeekdayTo, teamAdjustedWeekendFrom, teamAdjustedWeekendTo)
+import TeamTavern.Server.Infrastructure.Postgres (queryFirstClient, teamAdjustedWeekdayFrom, teamAdjustedWeekdayTo, teamAdjustedWeekendFrom, teamAdjustedWeekendTo)
 
 type RouteParams = { handle :: String, timezone :: String }
 
@@ -215,7 +215,7 @@ queryString timezone = Query $ """
     """
 
 loadTeam :: forall errors. Pool -> RouteParams -> Async (LoadSingleError errors) Team
-loadTeam pool { handle, timezone } = queryFirst pool (queryString timezone) (handle : [])
+loadTeam pool { handle, timezone } = queryFirstClient pool (queryString timezone) (handle : [])
 
 logError :: LoadSingleError () -> Effect Unit
 logError = logLoadSingleError "Error viewing team"

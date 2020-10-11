@@ -13,9 +13,9 @@ type BadRequestContent = Variant (invalidMessage :: {})
 
 errorResponse :: StartError -> Response
 errorResponse = match
-    { noCookieInfo: const badRequest__
+    { internal: const internalServerError__
+    , client: const badRequest__
     , databaseError: const internalServerError__
-    , invalidSession: const badRequest__
     , unreadableConversationId: const badRequest__
     , nothingInsertedSomehow: const internalServerError__
     , unreadableMessage: const badRequest__

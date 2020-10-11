@@ -13,7 +13,7 @@ import Data.Variant (Variant)
 import TeamTavern.Server.Domain.Text (TextError)
 import TeamTavern.Server.Player.UpdateDetails.ValidateLangugase (Language, validateLanguages)
 import TeamTavern.Server.Player.UpdateDetails.ValidateTimespan (Timespan, validateTimespan)
-import TeamTavern.Server.Player.UpdateDetails.ValidateTimezone (Timezone, validateOptionalTimezone)
+import TeamTavern.Server.Player.UpdateDetails.ValidateTimezone (Timezone, validateTimezone)
 import TeamTavern.Server.Profile.AddTeamProfile.LoadFields as LoadFields
 import TeamTavern.Server.Profile.AddTeamProfile.ReadProfile as ReadProfile
 import TeamTavern.Server.Profile.AddTeamProfile.ValidateAgeSpan (AgeSpan, validateAgeSpan)
@@ -53,7 +53,7 @@ validateProfile fields profile @ { summary } = let
     ageSpan = validateAgeSpan profile.ageFrom profile.ageTo
     languages = validateLanguages profile.languages
     countries = validateRegions profile.countries
-    timezone = validateOptionalTimezone profile.timezone
+    timezone = validateTimezone profile.timezone
     onlineWeekday = timezone >>=
         (const $ validateTimespan profile.weekdayFrom profile.weekdayTo)
     onlineWeekend = timezone >>=

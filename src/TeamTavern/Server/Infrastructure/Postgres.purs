@@ -7,7 +7,7 @@ import Data.Array (head)
 import Data.Bifunctor.Label (labelMap)
 import Data.Maybe (maybe)
 import Data.String as String
-import Data.Symbol (SProxy(..))
+import Data.Symbol (class IsSymbol, SProxy(..))
 import Data.Traversable (traverse)
 import Data.Variant (inj)
 import Error.Class (message, name)
@@ -16,9 +16,10 @@ import Postgres.Async.Query (query)
 import Postgres.Error (Error, constraint, detail, schema, severity, table)
 import Postgres.Query (class Querier, Query, QueryParameter)
 import Postgres.Result (rows)
+import Prim.Row (class Cons)
 import Simple.JSON (class ReadForeign)
 import Simple.JSON.Async (read)
-import TeamTavern.Server.Infrastructure.Error (InternalError, LoadSingleError)
+import TeamTavern.Server.Infrastructure.Error (InternalRow, LoadSingleError, InternalError)
 
 prepareString :: String -> String
 prepareString string
@@ -87,9 +88,25 @@ queryMany pool queryString parameters = do
     rows result # traverse read # labelMap (SProxy :: SProxy "internal") \errors ->
         [ "Error reading result from database: " <> show errors ]
 
-queryFirst :: forall row errors querier. Querier querier => ReadForeign row =>
-    querier -> Query -> Array QueryParameter -> Async (LoadSingleError errors) row
-queryFirst pool queryString parameters = do
+queryFirst
+    :: forall row errors querier errors' label
+    .  Querier querier
+    => ReadForeign row
+    => Cons label (Array String) errors' (InternalRow errors)
+    => IsSymbol label
+    => SProxy label
+    -> querier
+    -> Query
+    -> Array QueryParameter
+    -> Async (InternalError errors) row
+queryFirst label pool queryString parameters = do
     rows <- queryMany pool queryString parameters
-    rows # head # note (inj (SProxy :: SProxy "notFound")
-        [ "Expected at least one row from database, got none." ])
+    rows # head # note (inj label [ "Expected at least one row from database, got none." ])
+
+queryFirstInternal :: forall row errors querier. Querier querier => ReadForeign row =>
+    querier -> Query -> Array QueryParameter -> Async (InternalError errors) row
+queryFirstInternal = queryFirst (SProxy :: SProxy "internal")
+
+queryFirstClient :: forall row errors querier. Querier querier => ReadForeign row =>
+    querier -> Query -> Array QueryParameter -> Async (LoadSingleError errors) row
+queryFirstClient = queryFirst (SProxy :: SProxy "notFound")

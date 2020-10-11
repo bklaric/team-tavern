@@ -5,7 +5,7 @@ import Prelude
 
 import Async (Async, alwaysRight)
 import Data.Variant (SProxy(..), Variant, inj, match)
-import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, noContent, unauthorized__)
+import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, noContent)
 import Simple.JSON (writeJSON)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo, setCookieHeaderNickname)
 import TeamTavern.Server.Player.ChangeNickname.LogError (UpdateError)
@@ -17,8 +17,8 @@ type BadRequestContent = Variant
 
 errorResponse :: UpdateError -> Response
 errorResponse = match
-    { noCookieInfo: const unauthorized__
-    , invalidSession: const unauthorized__
+    { internal: const internalServerError__
+    , client: const badRequest__
     , nicknameDoesntMatch: const forbidden__
     , unreadableDto: const $ badRequest__
     , invalidModel: const $ badRequest_

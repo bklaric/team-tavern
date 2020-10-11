@@ -6,6 +6,8 @@ type InternalRow errors = (internal :: Array String | errors)
 
 type NotFoundRow errors = (notFound :: Array String | errors)
 
+type ClientRow errors = (client :: Array String | errors)
+
 type InternalError errors = Variant (internal :: Array String | errors)
 
 type LoadSingleError errors = Variant (InternalRow (NotFoundRow errors))

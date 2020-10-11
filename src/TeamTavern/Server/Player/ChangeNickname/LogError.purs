@@ -7,15 +7,15 @@ import Data.Variant (Variant, match)
 import Effect (Effect)
 import Foreign (MultipleErrors)
 import Postgres.Error (Error)
-import TeamTavern.Server.Infrastructure.Cookie (CookieInfo, Cookies)
-import TeamTavern.Server.Infrastructure.Log (logStamped, logt, print)
+import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
+import TeamTavern.Server.Infrastructure.Log (logLines, logStamped, logt, print)
 import TeamTavern.Server.Player.ChangeNickname.ReadNickname (ChangeNicknameDto)
 import TeamTavern.Server.Player.Domain.Nickname (Nickname, NicknameError)
 
 type UpdateError = Variant
-    ( noCookieInfo :: { cookies :: Cookies }
+    ( internal :: Array String
+    , client :: Array String
     , databaseError :: Error
-    , invalidSession :: { cookieInfo :: CookieInfo }
     , nicknameDoesntMatch :: { nickname :: String, cookieInfo :: CookieInfo }
     , unreadableDto ::
         { content :: String
@@ -39,10 +39,8 @@ logError :: UpdateError -> Effect Unit
 logError updateError = do
     logStamped "Error updating player"
     updateError # match
-        { noCookieInfo: \{ cookies } ->
-            logt $ "No player info present in cookies: " <> show cookies
-        , invalidSession: \{ cookieInfo } ->
-            logt $ "Player has invalid session info in cookies: " <> show cookieInfo
+        { internal: logLines
+        , client: logLines
         , nicknameDoesntMatch: \{ nickname, cookieInfo } -> do
             logt $ "Signed in user: " <> show cookieInfo
             logt $ "Doesn't have requested nickname: " <> nickname

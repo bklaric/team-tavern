@@ -11,7 +11,6 @@ import Data.Variant (Variant)
 import TeamTavern.Server.Domain.NonEmptyText (NonEmptyTextError)
 import TeamTavern.Server.Domain.NonEmptyText as NonEmptyText
 import TeamTavern.Server.Domain.Paragraph (Paragraph)
-import TeamTavern.Server.Domain.Paragraph as Paragraph
 
 newtype Message = Message (Array Paragraph)
 
@@ -27,6 +26,3 @@ validateMessage :: forall errors.
 validateMessage message = NonEmptyText.create maxLength Message message
     # Async.fromValidated
     # Label.labelMap (SProxy :: SProxy "invalidMessage") { message, errors: _ }
-
-toStringArray :: Message -> Array String
-toStringArray (Message paragraphs) = paragraphs <#> Paragraph.toString

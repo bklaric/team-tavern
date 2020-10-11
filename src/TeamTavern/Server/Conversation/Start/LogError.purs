@@ -11,17 +11,12 @@ import Postgres.Error (Error)
 import Postgres.Result (Result, rows)
 import Postmark.Error as Postmark
 import TeamTavern.Server.Domain.NonEmptyText (NonEmptyTextError)
-import TeamTavern.Server.Infrastructure.Cookie (Cookies, CookieInfo)
-import TeamTavern.Server.Infrastructure.Log (logStamped, logt, print)
+import TeamTavern.Server.Infrastructure.Log (logLines, logStamped, logt, print)
 
 type StartError = Variant
-    ( noCookieInfo ::
-        { cookies :: Cookies
-        }
+    ( internal :: Array String
+    , client :: Array String
     , databaseError :: Error
-    , invalidSession ::
-        { cookieInfo :: CookieInfo
-        }
     , unreadableConversationId ::
         { result :: Result
         , errors :: MultipleErrors
@@ -49,12 +44,10 @@ logError :: StartError -> Effect Unit
 logError startError = do
     logStamped "Error viewing conversation"
     startError # match
-        { noCookieInfo: \{ cookies } ->
-            logt $ "No player info present in cookies: " <> show cookies
+        { internal: logLines
+        , client: logLines
         , databaseError: \error ->
             logt $ "Unknown database error occured: " <> print error
-        , invalidSession: \{ cookieInfo } ->
-            logt $ "Player has invalid session info in cookies: " <> show cookieInfo
         , unreadableConversationId: \{ result, errors } -> do
             logt $ "Couldn't read conversation id from result: "
                 <> (unsafeStringify $ rows result)

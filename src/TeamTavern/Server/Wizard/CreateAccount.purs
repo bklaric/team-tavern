@@ -51,7 +51,7 @@ import TeamTavern.Server.Player.UpdateDetails.ValidateCountry (validateOptionalC
 import TeamTavern.Server.Player.UpdateDetails.ValidateDiscordTag (validateOptionalDiscordTag)
 import TeamTavern.Server.Player.UpdateDetails.ValidateLangugase (validateLanguages)
 import TeamTavern.Server.Player.UpdateDetails.ValidateTimespan (validateTimespan)
-import TeamTavern.Server.Player.UpdateDetails.ValidateTimezone (validateOptionalTimezone)
+import TeamTavern.Server.Player.UpdateDetails.ValidateTimezone (validateTimezone)
 import TeamTavern.Server.Profile.AddPlayerProfile.AddProfile (addProfile)
 import TeamTavern.Server.Profile.AddPlayerProfile.LoadFields (loadFields)
 import TeamTavern.Server.Profile.AddPlayerProfile.LoadFields as LoadFields
@@ -130,7 +130,7 @@ validatePersonalDetails details = do
                 , "Error: ", show error
                 ]
             }
-    let timezone = validateOptionalTimezone details.timezone
+    let timezone = validateTimezone details.timezone
         onlineWeekday = timezone >>= (const $ validateTimespan details.weekdayFrom details.weekdayTo)
         onlineWeekend = timezone >>= (const $ validateTimespan details.weekendFrom details.weekendTo)
     pure { birthday, country

@@ -40,7 +40,7 @@ import Web.Event.Internal.Types (Event)
 
 type Input = { nickname :: String }
 
-data Output = TeamCreated { handle :: String } | CloseClicked
+type Output = { handle :: String }
 
 type State =
     { nickname :: String
@@ -52,7 +52,6 @@ type State =
 data Action
     = UpdateDetails EnterTeamDetails.Output
     | SendRequest Event
-    | Close
 
 type ChildSlots = (enterTeamDetails :: EnterTeamDetails.Slot)
 
@@ -66,6 +65,59 @@ render { details, submitting, otherError } =
     ]
     <>
     otherFormError otherError
+
+data CreateError
+    = Other
+    | Content { summary :: Boolean }
+
+-- sendRequest :: forall left.
+--     State -> Async left (Maybe Unit)
+-- sendRequest state @ { nickname, details } = Async.unify do
+--     response <- Fetch.fetch ("/api/teams")
+--         (  Fetch.method := POST
+--         <> Fetch.body := Json.writeJSON
+--             { name: details.name
+--             , website: details.website
+--             , ageFrom: details.ageFrom
+--             , ageTo: details.ageTo
+--             , locations: details.locations
+--             , languages: details.languages
+--             , microphone: details.microphone
+--             , discordServer: details.discordServer
+--             , timezone: details.timezone
+--             , weekdayFrom: details.weekdayFrom
+--             , weekdayTo: details.weekdayTo
+--             , weekendFrom: details.weekendFrom
+--             , weekendTo: details.weekendTo
+--             }
+--         <> Fetch.credentials := Fetch.Include
+--         )
+--         # lmap (const $ Just Other)
+--     result <-
+--         case FetchRes.status response of
+--         204 -> pure Nothing
+--         400 ->
+--             FetchRes.text response
+--             >>= JsonAsync.readJSON
+--             # bimap
+--                 (const $ Just Other)
+--                 (\(error :: Create.BadRequestContent) -> Just $ Content $
+--                     match
+--                     { invalidProfile:
+--                         foldl
+--                         (\errors error' ->
+--                             error' # match
+--                                 { invalidSummary: const $
+--                                     errors { summary = true }
+--                                 , invalidUrl: const errors
+--                                 , missing: const errors
+--                                 }
+--                         )
+--                         ({ summary: false })
+--                     }
+--                     error)
+--         _ -> pure $ Just Other
+--     pure result
 
 handleAction :: forall left.
     Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
@@ -90,7 +142,7 @@ handleAction (UpdateDetails details) =
         }
 handleAction (SendRequest event) = do
     H.liftEffect $ preventDefault event
-    H.raise $ TeamCreated { handle: "dota-gang" }
+    -- H.raise $ TeamCreated { handle: "dota-gang" }
     -- currentState <- H.modify _ { submitting = true }
     -- response <- H.lift $ sendRequest currentState.nickname currentState.details
     -- case response of
@@ -120,7 +172,6 @@ handleAction (SendRequest event) = do
     --             { discordTagError = false, aboutError = false }
     --         , otherError = true
     --         }
-handleAction Close = H.raise CloseClicked
 
 component :: forall query left.
     H.Component HH.HTML query Input Output (Async left)

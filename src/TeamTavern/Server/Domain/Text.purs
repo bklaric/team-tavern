@@ -1,4 +1,4 @@
-module TeamTavern.Server.Domain.Text (TextError, create) where
+module TeamTavern.Server.Domain.Text (Text, TextErrorRow, TextError, TextErrors, create, validateText) where
 
 import Prelude
 
@@ -11,10 +11,13 @@ import TeamTavern.Server.Domain.Paragraph (Paragraph)
 import TeamTavern.Server.Domain.Paragraph as Paragraph
 import Wrapped.String (NotPrintable, TooLong)
 
-type TextError = Variant
-    ( tooLong :: TooLong
-    , notPrintable :: NotPrintable
-    )
+newtype Text = Text (Array Paragraph)
+
+type TextErrorRow = (tooLong :: TooLong, notPrintable :: NotPrintable)
+
+type TextError = Variant TextErrorRow
+
+type TextErrors = NonEmptyList TextError
 
 create'
     :: forall text
@@ -30,11 +33,10 @@ create' maxLength constructor paragraphs = let
         { maxLength, actualLength }
     else valid $ constructor paragraphs
 
-create
-    :: forall text
-    .  Int
-    -> (Array Paragraph -> text)
-    -> String
-    -> Validated (NonEmptyList TextError) text
+create :: forall text.
+    Int -> (Array Paragraph -> text) -> String -> Validated TextErrors text
 create maxLength constructor text =
     text # Paragraph.create >>= create' maxLength constructor
+
+validateText :: String -> Validated TextErrors Text
+validateText = create 2000 Text

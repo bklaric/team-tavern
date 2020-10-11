@@ -24,6 +24,7 @@ import Data.Variant (SProxy(..), Variant)
 import Data.Variant as Variant
 import TeamTavern.Server.Profile.AddPlayerProfile.LoadFields as LoadFields
 import TeamTavern.Server.Profile.AddPlayerProfile.ReadProfile as ReadProfile
+import TeamTavern.Server.Profile.Infrastructure.ValidateUrl (validateUrl)
 import TeamTavern.Server.Profile.Infrastructure.ValidateUrl as ValidateUrl
 
 -- Profile types.
@@ -141,7 +142,7 @@ validateFieldValue fields fieldValue @ { fieldKey, url, optionKey, optionKeys } 
     Just field @ (Field fieldId _ _ fieldType) ->
         case fieldType, url, optionKey, optionKeys of
         UrlField domain, Just url', Nothing, Nothing ->
-            case ValidateUrl.create domain url' of
+            case validateUrl domain url' of
             Right url'' -> Right $
                 FieldValue fieldId $ Url $ url''
             Left errors -> Left $ Variant.inj (SProxy :: SProxy "invalidUrlFieldValue") { field, fieldValue, errors }
