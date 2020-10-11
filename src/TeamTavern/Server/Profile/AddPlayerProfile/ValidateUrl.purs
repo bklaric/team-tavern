@@ -2,26 +2,32 @@ module TeamTavern.Server.Profile.Infrastructure.ValidateUrl (Url, UrlError, UrlE
 
 import Prelude
 
-import Data.Array ((!!))
-import Data.Either (Either(..), isRight)
+import Data.Array (intercalate, (!!))
+import Data.Bifunctor (lmap)
+import Data.Either (Either(..))
+import Data.List.NonEmpty as NonEmptyList
 import Data.List.Types (NonEmptyList)
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), maybe)
 import Data.String (toLower, trim)
-import Data.String.Utils (endsWith, startsWith)
+import Data.String as String
+import Data.String.NonEmpty as NEL
+import Data.String.Utils (startsWith)
 import Data.Validated (Validated)
 import Data.Validated as Validated
-import Data.Variant (Variant)
+import Data.Variant (SProxy(..), Variant, inj)
 import Text.Parsing.Parser (Parser)
 import Text.Parsing.Parser (runParser) as Parser
+import Text.Parsing.Parser.Combinators (optionMaybe)
 import Text.Parsing.Parser.String (string)
 import URI (Path(..), RegName, Scheme)
 import URI.Common (URIPartParseError(..), wrapParser)
+import URI.Host.RegName as Host
 import URI.Host.RegName as RegName
 import URI.Path as Path
+import URI.Path.Segment (segmentToString)
 import URI.Path.Segment as Segment
 import URI.Scheme as Scheme
-import Wrapped as Wrapped
-import Wrapped.String (Invalid, TooLong, invalid, tooLong)
+import Wrapped.String (Invalid, TooLong)
 
 type Domain = String
 
@@ -36,7 +42,7 @@ type UrlErrors = NonEmptyList UrlError
 type ParsedUrl =
     { scheme :: Scheme
     , host :: RegName
-    , path :: Path
+    , path :: Maybe Path
     }
 
 prependScheme :: String -> String
@@ -55,13 +61,15 @@ parseScheme = flip wrapParser Scheme.parser
 
 parseHost :: Domain -> Parser String RegName
 parseHost domain = flip wrapParser RegName.parser
-    \host ->
-        if RegName.print host # toLower # endsWith domain
+    \host -> let
+        printedHost = RegName.print host # toLower
+        in
+        if printedHost == domain || printedHost == ("www." <> domain)
         then Right host
         else Left $ URIPartParseError $ "Wrong domain: " <> RegName.print host
 
 parseHost_ :: Parser String RegName
-parseHost_ = wrapParser Right RegName.parser
+parseHost_ = RegName.parser
 
 parsePath :: Parser String Path
 parsePath = flip wrapParser Path.parser
@@ -70,38 +78,49 @@ parsePath = flip wrapParser Path.parser
         Just segment | Segment.printSegment segment /= "" -> Right path
         _ -> Left $ URIPartParseError $ "Invalid path: " <> Path.print path
 
+parsePath_ :: Parser String (Maybe Path)
+parsePath_ = optionMaybe parsePath
+
 parser :: Domain -> Parser String ParsedUrl
 parser domain = do
   scheme <- parseScheme
   _ <- string "//"
   host <- parseHost domain
   path <- parsePath
-  pure { scheme, host, path }
+  pure { scheme, host, path: Just path }
 
 parser_ :: Parser String ParsedUrl
 parser_ = do
     scheme <- parseScheme
     _ <- string "//"
     host <- parseHost_
-    path <- parsePath
+    path <- parsePath_
     pure { scheme, host, path }
 
 validateUrl :: Domain -> String -> Either (NonEmptyList UrlError) Url
 validateUrl domain url =
-    Wrapped.create
-        (trim >>> prependScheme)
-        [invalid ((flip Parser.runParser $ parser domain) >>> isRight), tooLong 200]
-        Url url
+    case Parser.runParser (url # trim # prependScheme) (parser domain)
+        <#> (\{ scheme, host, path } -> (NEL.toString $ Scheme.toString scheme) <> "://" <> (NEL.toString $ Host.toString host) <> (maybe "" (\(Path segments) -> "/" <> intercalate "/" (segments <#> segmentToString) ) path))
+        # lmap (const $ NonEmptyList.singleton $ inj (SProxy :: SProxy "invalid") { original: url }) of
+    Left errors -> Left errors
+    Right url' ->
+        if String.length url' <= 200
+        then Right $ Url url'
+        else Left $ NonEmptyList.singleton $ inj (SProxy :: SProxy "tooLong") { actualLength: String.length url, maxLength: 200 }
 
 validateUrlV :: String -> String -> Validated (NonEmptyList UrlError) Url
 validateUrlV domain url = validateUrl domain url # Validated.fromEither
 
 validateUrl_ :: String -> Either (NonEmptyList UrlError) Url
 validateUrl_ url =
-    Wrapped.create
-        (trim >>> prependScheme)
-        [invalid ((flip Parser.runParser parser_) >>> isRight), tooLong 200]
-        Url url
+    case Parser.runParser (url # trim # prependScheme) (parser_)
+        <#> (\{ scheme, host, path } -> (NEL.toString $ Scheme.toString scheme) <> "://" <> (NEL.toString $ Host.toString host) <> (maybe "" (\(Path segments) -> "/" <> intercalate "/" (segments <#> segmentToString) ) path))
+        # lmap (const $ NonEmptyList.singleton $ inj (SProxy :: SProxy "invalid") { original: url }) of
+    Left errors -> Left errors
+    Right url' ->
+        if String.length url' <= 200
+        then Right $ Url url'
+        else Left $ NonEmptyList.singleton $ inj (SProxy :: SProxy "tooLong") { actualLength: String.length url, maxLength: 200 }
 
 validateUrlV_ :: String -> Validated (NonEmptyList UrlError) Url
 validateUrlV_ url = validateUrl_ url # Validated.fromEither

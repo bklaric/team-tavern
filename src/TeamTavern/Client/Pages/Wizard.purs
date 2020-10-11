@@ -14,7 +14,6 @@ import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..), isJust, isNothing)
 import Data.Options ((:=))
-import Data.String as String
 import Data.Symbol (SProxy(..))
 import Data.Variant (match)
 import Halogen as H
@@ -32,6 +31,7 @@ import TeamTavern.Client.Pages.Wizard.SelectGame as SelectGame
 import TeamTavern.Client.Script.Cookie (getPlayerNickname)
 import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
 import TeamTavern.Client.Script.Navigate (navigate, navigate_)
+import TeamTavern.Client.Script.Request (nothingIfEmpty)
 import TeamTavern.Server.Wizard.Onboard as Onboard
 
 data Step = Greeting | PlayerDetails | Game | PlayerProfileDetails
@@ -194,16 +194,16 @@ sendRequest (state :: State) = Async.unify do
         Just game, personalDetails, profileDetails -> Async.right
             { handle: game.handle
             , personalDetails:
-                { birthday: if String.null personalDetails.birthday then Nothing else Just personalDetails.birthday
+                { birthday: nothingIfEmpty personalDetails.birthday
                 , location: personalDetails.location
                 , languages: personalDetails.languages
                 , microphone: personalDetails.microphone
-                , discordTag: if String.null personalDetails.discordTag then Nothing else Just personalDetails.discordTag
+                , discordTag: nothingIfEmpty personalDetails.discordTag
                 , timezone: personalDetails.timezone
-                , weekdayFrom: if String.null personalDetails.weekdayFrom then Nothing else Just personalDetails.weekdayFrom
-                , weekdayTo: if String.null personalDetails.weekdayTo then Nothing else Just personalDetails.weekdayTo
-                , weekendFrom: if String.null personalDetails.weekendFrom then Nothing else Just personalDetails.weekendFrom
-                , weekendTo: if String.null personalDetails.weekendTo then Nothing else Just personalDetails.weekendTo
+                , weekdayFrom: nothingIfEmpty personalDetails.weekdayFrom
+                , weekdayTo: nothingIfEmpty personalDetails.weekdayTo
+                , weekendFrom: nothingIfEmpty personalDetails.weekendFrom
+                , weekendTo: nothingIfEmpty personalDetails.weekendTo
                 , about: personalDetails.about
                 }
             , profileDetails:

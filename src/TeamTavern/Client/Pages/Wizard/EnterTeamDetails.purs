@@ -34,7 +34,7 @@ type Input =
     , ageTo :: String
     , locations :: Array String
     , languages :: Array String
-    , hasMicrophone :: Boolean
+    , microphone :: Boolean
     , discordServer :: String
     , timezone :: Maybe String
     , weekdayFrom :: String
@@ -55,7 +55,7 @@ type Output =
     , ageTo :: String
     , locations :: Array String
     , languages :: Array String
-    , hasMicrophone :: Boolean
+    , microphone :: Boolean
     , discordServer :: String
     , timezone :: Maybe String
     , weekdayFrom :: String
@@ -72,7 +72,7 @@ type State =
     , ageTo :: String
     , locations :: Array String
     , languages :: Array String
-    , hasMicrophone :: Boolean
+    , microphone :: Boolean
     , discordServer :: String
     , timezone :: Maybe String
     , weekdayFrom :: String
@@ -87,13 +87,14 @@ type State =
     }
 
 data Action
-    = UpdateName String
+    = Receive Input
+    | UpdateName String
     | UpdateWebsite String
     | UpdateAgeFrom String
     | UpdateAgeTo String
     | UpdateLocations (Array String)
     | UpdateLanguages (Array String)
-    | UpdateHasMicrophone Boolean
+    | UpdateMicrophone Boolean
     | UpdateDiscordServer String
     | UpdateTimezone (Maybe String)
     | UpdateWeekdayFrom String
@@ -153,7 +154,7 @@ render state =
                 , HE.onValueInput $ Just <<< UpdateWebsite
                 ]
             , HH.p
-                [ HS.class_ $ unwrap $ inputErrorClass state.nameError ]
+                [ HS.class_ $ unwrap $ inputErrorClass state.websiteError ]
                 [ HH.text $ "This isn't a valid website, you moron." ]
             ]
         ]
@@ -228,8 +229,8 @@ render state =
                 [ HH.input
                     [ HS.class_ "checkbox-input"
                     , HP.type_ HP.InputCheckbox
-                    , HP.checked state.hasMicrophone
-                    , HE.onChecked $ Just <<< UpdateHasMicrophone
+                    , HP.checked state.microphone
+                    , HE.onChecked $ Just <<< UpdateMicrophone
                     ]
                 , HH.text "Must have a microphone and be willing to communicate."
                 ]
@@ -386,6 +387,8 @@ stateToOutput state =
 
 handleAction :: forall left.
     Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
+handleAction (Receive input) =
+    H.put input
 handleAction (UpdateName name) = do
     state <- H.modify _ { name = name }
     H.raise $ stateToOutput state
@@ -404,8 +407,8 @@ handleAction (UpdateLocations locations) = do
 handleAction (UpdateLanguages languages) = do
     state <- H.modify _ { languages = languages }
     H.raise $ stateToOutput state
-handleAction (UpdateHasMicrophone hasMicrophone) = do
-    state <- H.modify _ { hasMicrophone = hasMicrophone }
+handleAction (UpdateMicrophone microphone) = do
+    state <- H.modify _ { microphone = microphone }
     H.raise $ stateToOutput state
 handleAction (UpdateDiscordServer discordServer) = do
     state <- H.modify _ { discordServer = discordServer }
@@ -435,7 +438,9 @@ component = H.mkComponent
     { initialState: identity
     , render
     , eval: H.mkEval $ H.defaultEval
-        { handleAction = handleAction }
+        { handleAction = handleAction
+        , receive = Just <<< Receive
+        }
     }
 
 emptyInput :: Input
@@ -446,7 +451,7 @@ emptyInput =
     , ageTo: ""
     , locations: []
     , languages: []
-    , hasMicrophone: false
+    , microphone: false
     , discordServer: ""
     , timezone: Nothing
     , weekdayFrom: ""

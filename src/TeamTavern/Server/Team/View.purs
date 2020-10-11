@@ -77,7 +77,7 @@ queryString timezone = Query $ """
         team.age_to as "ageTo",
         team.locations,
         team.languages,
-        team.has_microphone as "microphone",
+        team.microphone as "microphone",
         team.discord_server as "discordServer",
         team.timezone,
         case

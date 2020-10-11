@@ -1,4 +1,4 @@
-module TeamTavern.Server.Team.Create (TeamError, TeamErrors, CreateError, create) where
+module TeamTavern.Server.Team.Create (TeamModel, TeamError, OkContent, BadContent, create) where
 
 import Prelude
 
@@ -236,7 +236,7 @@ queryString = Query """
             case
                 when (select count from similar_handle_count) = 0
                 then ''
-                else (select count from similar_handle_count) + 1
+                else '' || ((select count from similar_handle_count) + 1)
             end
         ) as handle
     )
@@ -270,7 +270,7 @@ queryParameters ownerId handle team
     = ownerId
     : handle
     : team.name
-    : team.website
+    : toNullable team.website
     : nullableAgeFrom team.ageSpan
     : nullableAgeTo team.ageSpan
     : team.locations
@@ -293,6 +293,10 @@ type CreateError = Variant (internal :: Array String, client :: Array String, te
 
 logError :: CreateError -> Effect Unit
 logError = Log.logError "Error creating team" (internalHandler >>> clientHandler >>> teamHandler)
+
+type OkContent = { handle :: String }
+
+type BadContent = Array TeamError
 
 sendResponse :: Async CreateError { handle :: String } -> (forall voidLeft. Async voidLeft Response)
 sendResponse = alwaysRight
