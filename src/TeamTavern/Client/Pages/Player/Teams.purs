@@ -1,13 +1,9 @@
-module TeamTavern.Client.Pages.Player.Teams where
+module TeamTavern.Client.Pages.Player.Teams (Input, Slot, teams) where
 
 import Prelude
 
 import Async (Async)
-import Async as Async
-import Browser.Async.Fetch as Fetch
-import Browser.Async.Fetch.Response as FetchRes
 import Data.Array as Array
-import Data.Bifunctor (lmap)
 import Data.Const (Const)
 import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
@@ -15,7 +11,6 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import Simple.JSON.Async as Json
 import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchorIndexed)
@@ -23,6 +18,7 @@ import TeamTavern.Client.Pages.Player.CreateTeam (createTeam)
 import TeamTavern.Client.Pages.Player.CreateTeam as CreateTeam
 import TeamTavern.Client.Pages.Player.Types (PlayerStatus(..))
 import TeamTavern.Client.Script.Navigate (navigate_)
+import TeamTavern.Client.Script.Request (get)
 import TeamTavern.Client.Snippets.Class as HS
 
 type Team = { handle :: String, name :: String }
@@ -94,12 +90,7 @@ render (Loaded state) =
     then [ createTeam { nickname: state.nickname } (Just <<< HandleModalOutput) ]
     else []
 
-get url = Async.unify do
-    response <- Fetch.fetch_ url # lmap (const Nothing)
-    case FetchRes.status response of
-        200 -> FetchRes.text response >>= Json.readJSON # lmap (const Nothing)
-        _ -> Async.left Nothing
-
+loadTeams :: forall left. String -> Async left (Maybe (Array Team))
 loadTeams nickname = get $ "/api/teams/by-owner/" <> nickname
 
 handleAction :: forall action slots output left.

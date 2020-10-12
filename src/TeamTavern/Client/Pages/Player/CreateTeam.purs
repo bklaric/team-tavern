@@ -1,4 +1,4 @@
-module TeamTavern.Client.Pages.Player.CreateTeam where
+module TeamTavern.Client.Pages.Player.CreateTeam (Input, Output, Slot, createTeam) where
 
 import Prelude
 

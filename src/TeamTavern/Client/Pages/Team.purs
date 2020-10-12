@@ -1,4 +1,4 @@
-module TeamTavern.Client.Pages.Team where
+module TeamTavern.Client.Pages.Team (Input, Slot, team) where
 
 import Prelude
 
@@ -16,11 +16,11 @@ import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
-import TeamTavern.Client.Pages.Player.Teams (get)
 import TeamTavern.Client.Pages.Team.Details (details)
 import TeamTavern.Client.Pages.Team.Profiles (profiles)
 import TeamTavern.Client.Pages.Team.Status (Status(..), getStatus)
 import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
+import TeamTavern.Client.Script.Request (get)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Server.Team.View (Team)

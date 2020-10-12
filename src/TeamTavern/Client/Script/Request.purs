@@ -23,6 +23,13 @@ nothingIfEmpty string = if String.null string then Nothing else Just string
 justIfInt :: String -> Maybe Int
 justIfInt = Int.fromString
 
+get :: forall left ok. ReadForeign ok => String -> Async left (Maybe ok)
+get url = Async.unify do
+    response <- Fetch.fetch_ url # lmap (const Nothing)
+    case FetchRes.status response of
+        200 -> FetchRes.text response >>= JsonAsync.readJSON # lmap (const Nothing)
+        _ -> Async.left Nothing
+
 post :: forall body ok bad left. WriteForeign body => ReadForeign ok => ReadForeign bad =>
     body -> Async left (Maybe (Either bad ok))
 post body = Async.unify do
