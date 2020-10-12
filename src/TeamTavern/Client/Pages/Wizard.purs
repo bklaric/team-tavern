@@ -234,11 +234,11 @@ handleAction Initialize = do
     state <- H.get
     case state.step of
         Greeting -> pure unit
-        _ -> H.liftEffect $ navigate_ "/"
+        _ -> navigate_ "/"
     nickname <- getPlayerNickname
     case nickname of
         Just nickname' -> H.modify_ _ { nickname = nickname' }
-        Nothing -> H.liftEffect $ navigate_ "/"
+        Nothing -> navigate_ "/"
     H.liftEffect do
         setMetaTitle "Onboarding | TeamTavern"
         setMetaDescription "TeamTavern onboarding."
@@ -248,7 +248,7 @@ handleAction (Receive { step }) =
 handleAction Skip =
     H.modify_ _ { confirmSkip = true }
 handleAction ConfirmSkip =
-    H.liftEffect $ navigate_ "/"
+    navigate_ "/"
 handleAction (SetStep step) =
     H.liftEffect
         case step of
@@ -294,7 +294,7 @@ handleAction SetUpAccount = do
     currentState <- H.modify _ { submitting = true }
     response <- H.lift $ sendRequest currentState
     case response of
-        Just (Right _) -> H.liftEffect $ navigate_ "/"
+        Just (Right _) -> navigate_ "/"
         Just (Left errors) -> H.put $
             foldl
             (\state error ->

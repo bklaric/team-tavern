@@ -221,7 +221,7 @@ handleAction :: forall slots output left.
 handleAction Init = do
     isSignedIn <- hasPlayerIdCookie
     if isSignedIn
-        then H.liftEffect $ navigateReplace_ "/"
+        then navigateReplace_ "/"
         else pure unit
     H.liftEffect do
         setMetaTitle "Create account | TeamTavern"
@@ -249,10 +249,10 @@ handleAction (Register event) = do
     H.put state
     newState <- H.lift $ sendRegisterRequest state
     case newState of
-        Right content -> H.liftEffect $ navigate content "/welcome"
+        Right content -> navigate content "/welcome"
         Left newState' -> H.put newState' { submitting = false }
 handleAction (Navigate url event) =
-    H.liftEffect $ navigateWithEvent_ url event
+    navigateWithEvent_ url event
 
 component :: forall query input output left.
     H.Component HH.HTML query input output (Async left)

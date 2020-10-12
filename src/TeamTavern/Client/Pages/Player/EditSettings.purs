@@ -147,7 +147,7 @@ handleAction :: forall children left.
 handleAction Init = do
     playerInfo <- getPlayerInfo
     case playerInfo of
-        Nothing -> H.liftEffect $ navigate_ "/"
+        Nothing -> navigate_ "/"
         Just { nickname } -> do
             settings <- H.lift $ loadSettings nickname
             case settings of

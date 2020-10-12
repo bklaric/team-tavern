@@ -137,7 +137,7 @@ handleAction (Navigate url stopBubble event) = do
     H.liftEffect if stopBubble
         then stopPropagation $ MouseEvent.toEvent event
         else pure unit
-    H.liftEffect $ navigateWithEvent_ url event
+    navigateWithEvent_ url event
 
 component :: forall query output left.
     H.Component HH.HTML query State output (Async left)

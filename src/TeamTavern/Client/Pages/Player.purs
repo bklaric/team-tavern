@@ -185,7 +185,7 @@ handleAction (Init nickname') = do
         setMetaDescription $ "View profiles by player " <> metaNickname <> " on TeamTavern."
         setMetaUrl
 handleAction (Navigate path mouseEvent) = do
-    H.liftEffect $ navigateWithEvent_ path mouseEvent
+    navigateWithEvent_ path mouseEvent
 handleAction (ToggleEditAccountPopover mouseEvent) = do
     H.liftEffect $ E.preventDefault $ ME.toEvent mouseEvent
     H.liftEffect $ E.stopPropagation $ ME.toEvent mouseEvent

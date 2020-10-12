@@ -94,7 +94,7 @@ handleAction (SendRequest event) = do
     currentState <- H.modify _ { submitting = true }
     response <- H.lift $ sendRequest currentState
     case response of
-        Just (Right { handle }) -> H.liftEffect $ navigate_ $ "/teams/" <> handle
+        Just (Right { handle }) -> navigate_ $ "/teams/" <> handle
         Just (Left badContent) -> H.put $
             foldl
             (\state error ->

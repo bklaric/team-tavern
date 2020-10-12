@@ -124,7 +124,7 @@ handleAction ShowModal =
         Loaded state -> Loaded state { modalShown = true }
         state -> state
 handleAction (HandleModalOutput (Modal.OutputRaised { handle })) =
-    H.liftEffect $ navigate_ $ "/teams/" <> handle
+    navigate_ $ "/teams/" <> handle
 handleAction (HandleModalOutput _) =
     H.modify_ case _ of
         Loaded state -> Loaded state { modalShown = false }

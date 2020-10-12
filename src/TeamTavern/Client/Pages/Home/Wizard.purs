@@ -334,7 +334,7 @@ handleAction Submit = do
     response <- H.lift $ sendRequest currentState
     case response, currentState.game of
         Just (Right okContent), Just { title } ->
-            H.liftEffect $ navigate
+            navigate
                 ((Record.insert (SProxy :: SProxy "profile") (Just { title }) okContent) :: Welcome.Input)
                 "/welcome"
         _, _ -> pure unit

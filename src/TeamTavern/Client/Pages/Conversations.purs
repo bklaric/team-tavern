@@ -84,7 +84,7 @@ handleAction Init = do
     H.put state
 handleAction (Navigate path mouseEvent) = do
     H.liftEffect $ Event.preventDefault $ MouseEvent.toEvent mouseEvent
-    H.liftEffect $ navigate_ path
+    navigate_ path
 
 component = H.mkComponent
     { initialState: const Empty

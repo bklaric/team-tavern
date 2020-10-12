@@ -232,7 +232,7 @@ handleAction SignOut = do
     when success do
         window >>= location >>= setPathname "/" # H.liftEffect
 handleAction (Navigate url event) = do
-    H.liftEffect $ navigateWithEvent_ url event
+    navigateWithEvent_ url event
     H.modify_ (_ { gamesVisible = false, menuVisible = false })
 handleAction ToggleMenu=
     H.modify_ \state -> state { menuVisible = not state.menuVisible }

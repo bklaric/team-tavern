@@ -155,7 +155,7 @@ handleAction Init = do
     H.liftEffect $ whenM hasPlayerIdCookie $ navigateReplace_ "/"
     nonce <- H.liftEffect $ getQueryParam "nonce"
     case nonce of
-        Nothing -> H.liftEffect $ navigateReplace_ "/"
+        Nothing -> navigateReplace_ "/"
         Just nonce' -> do
             state <- H.get
             case state of
