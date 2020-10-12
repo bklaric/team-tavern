@@ -1,46 +1,35 @@
-module TeamTavern.Client.Pages.Wizard.EnterTeamDetails where
+module TeamTavern.Client.Pages.Wizard.EnterTeamDetails (Input, Output, Slot, emptyInput, enterTeamDetails) where
 
 import Prelude
 
 import Async (Async)
-import Data.Array as Array
 import Data.Const (Const)
 import Data.Maybe (Maybe(..), isNothing)
-import Data.Newtype (unwrap)
-import Data.String as String
 import Data.Variant (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
-import Halogen.HTML.Events as HE
-import Halogen.HTML.Properties as HP
 import Record as Record
-import TeamTavern.Client.Components.Divider (divider)
-import TeamTavern.Client.Components.SelectDefinitive.MultiSelect (multiSelect)
+import TeamTavern.Client.Components.Input (inputGroupsHeading, responsiveInputGroups)
 import TeamTavern.Client.Components.SelectDefinitive.MultiSelect as MultiSelect
-import TeamTavern.Client.Components.SelectDefinitive.MultiTreeSelect (multiTreeSelect)
 import TeamTavern.Client.Components.SelectDefinitive.MultiTreeSelect as MultiTreeSelect
-import TeamTavern.Client.Components.SelectDefinitive.SingleSelect (singleSelect)
 import TeamTavern.Client.Components.SelectDefinitive.SingleSelect as SingleSelect
-import TeamTavern.Client.Snippets.Class as HS
-import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass)
-import TeamTavern.Server.Infrastructure.Languages (allLanguages)
-import TeamTavern.Server.Infrastructure.Regions (Region(..), allRegions)
-import TeamTavern.Server.Infrastructure.Timezones (Timezone, allTimezones)
+import TeamTavern.Client.Components.Team.InputGroup (aboutInputGroup, ageInputGroup, discordServerInputGroup, languagesInputGroup, locationInputGroup, microphoneInputGroup, nameInputGroup, timeRangeInputGroup, timezoneInputGroup, websiteInputGroup)
+import TeamTavern.Server.Infrastructure.Timezones (Timezone)
 
 type Input =
     { name :: String
     , website :: String
-    , ageFrom :: String
-    , ageTo :: String
+    , ageFrom :: Maybe Int
+    , ageTo :: Maybe Int
     , locations :: Array String
     , languages :: Array String
     , microphone :: Boolean
     , discordServer :: String
     , timezone :: Maybe String
-    , weekdayFrom :: String
-    , weekdayTo :: String
-    , weekendFrom :: String
-    , weekendTo :: String
+    , weekdayFrom :: Maybe String
+    , weekdayTo :: Maybe String
+    , weekendFrom :: Maybe String
+    , weekendTo :: Maybe String
     , about :: String
     , nameError :: Boolean
     , websiteError :: Boolean
@@ -51,56 +40,37 @@ type Input =
 type Output =
     { name :: String
     , website :: String
-    , ageFrom :: String
-    , ageTo :: String
+    , ageFrom :: Maybe Int
+    , ageTo :: Maybe Int
     , locations :: Array String
     , languages :: Array String
     , microphone :: Boolean
     , discordServer :: String
     , timezone :: Maybe String
-    , weekdayFrom :: String
-    , weekdayTo :: String
-    , weekendFrom :: String
-    , weekendTo :: String
+    , weekdayFrom :: Maybe String
+    , weekdayTo :: Maybe String
+    , weekendFrom :: Maybe String
+    , weekendTo :: Maybe String
     , about :: String
     }
 
-type State =
-    { name :: String
-    , website :: String
-    , ageFrom :: String
-    , ageTo :: String
-    , locations :: Array String
-    , languages :: Array String
-    , microphone :: Boolean
-    , discordServer :: String
-    , timezone :: Maybe String
-    , weekdayFrom :: String
-    , weekdayTo :: String
-    , weekendFrom :: String
-    , weekendTo :: String
-    , about :: String
-    , nameError :: Boolean
-    , websiteError :: Boolean
-    , discordServerError :: Boolean
-    , aboutError :: Boolean
-    }
+type State = Input
 
 data Action
     = Receive Input
     | UpdateName String
     | UpdateWebsite String
-    | UpdateAgeFrom String
-    | UpdateAgeTo String
+    | UpdateAgeFrom (Maybe Int)
+    | UpdateAgeTo (Maybe Int)
     | UpdateLocations (Array String)
     | UpdateLanguages (Array String)
     | UpdateMicrophone Boolean
     | UpdateDiscordServer String
     | UpdateTimezone (Maybe String)
-    | UpdateWeekdayFrom String
-    | UpdateWeekdayTo String
-    | UpdateWeekendFrom String
-    | UpdateWeekendTo String
+    | UpdateWeekdayFrom (Maybe String)
+    | UpdateWeekdayTo (Maybe String)
+    | UpdateWeekendFrom (Maybe String)
+    | UpdateWeekendTo (Maybe String)
     | UpdateAbout String
 
 type ChildSlots =
@@ -111,270 +81,35 @@ type ChildSlots =
 
 type Slot = H.Slot (Const Void) Output Unit
 
-regionToOption :: Region -> MultiTreeSelect.InputEntry String
-regionToOption (Region region subRegions) = MultiTreeSelect.InputEntry
-    { option: region
-    , subEntries: subRegions <#> regionToOption
-    }
-
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render state =
     HH.div_
-    [ HH.h3 [ HS.class_ "input-groups-heading" ]
-        [ HH.text "General" ]
-    , HH.div [ HS.class_ "responsive-input-groups" ]
-        [ HH.div [ HS.class_ "input-group" ]
-            [ HH.label
-                [ HS.class_ "input-label"]
-                [ HH.i [ HS.class_ "fas fa-signature filter-field-icon" ] []
-                , HH.span [ HS.class_ "filter-field-label" ] [ HH.text "Name" ]
-                , divider
-                , HH.span [ HP.class_ $ H.ClassName "input-primary-sublabel" ] [ HH.text "required" ]
-                ]
-            , HH.input
-                [ HS.class_ "text-line-input"
-                , HP.type_ HP.InputText
-                , HP.value state.name
-                , HE.onValueInput $ Just <<< UpdateName
-                ]
-            , HH.p
-                [ HS.class_ $ unwrap $ inputErrorClass state.nameError ]
-                [ HH.text $ "Your name is all fucked up, what's wrong with you." ]
-            ]
-        , HH.div [ HS.class_ "input-group" ]
-            [ HH.label
-                [ HS.class_ "input-label"]
-                [ HH.i [ HS.class_ "fas fa-globe filter-field-icon" ] []
-                , HH.span [ HS.class_ "filter-field-label" ] [ HH.text "Website" ]
-                ]
-            , HH.input
-                [ HS.class_ "text-line-input"
-                , HP.type_ HP.InputText
-                , HP.value state.website
-                , HE.onValueInput $ Just <<< UpdateWebsite
-                ]
-            , HH.p
-                [ HS.class_ $ unwrap $ inputErrorClass state.websiteError ]
-                [ HH.text $ "This isn't a valid website, you moron." ]
-            ]
+    [ inputGroupsHeading "General"
+    , responsiveInputGroups
+        [ nameInputGroup state.name UpdateName state.nameError
+        , websiteInputGroup state.website UpdateWebsite state.websiteError
         ]
-    , HH.h3 [ HS.class_ "input-groups-heading" ]
-        [ HH.text "Personal" ]
-    , HH.div [ HS.class_ "responsive-input-groups" ]
-        [ HH.div [ HS.class_ "input-group" ]
-            [ HH.label
-                [ HS.class_ "input-label" ]
-                [ HH.i [ HS.class_ "fas fa-calendar-alt filter-field-icon" ] []
-                , HH.span [ HS.class_ "filter-field-label" ] [ HH.text "Age" ]
-                ]
-            , HH.div [ HS.class_ "timespan-group" ]
-                [ HH.span [ HS.class_ "timespan-group-from" ] [ HH.text "From" ]
-                , HH.input
-                    [ HS.class_ $ "text-line-input timespan-group-input"
-                    , HP.type_ HP.InputNumber
-                    , HP.value state.ageFrom
-                    , HE.onValueChange $ Just <<< UpdateAgeFrom
-                    ]
-                , HH.span [ HS.class_ "timespan-group-to" ] [ HH.text "to" ]
-                , HH.input
-                    [ HS.class_ $ "text-line-input timespan-group-input"
-                    , HP.type_ HP.InputNumber
-                    , HP.value state.ageTo
-                    , HE.onValueChange $ Just <<< UpdateAgeTo
-                    ]
-                ]
-            ]
-        , HH.div [ HS.class_ "input-group" ]
-            [ HH.label
-                [ HS.class_ "input-label" ]
-                [ HH.i [ HS.class_ "fas fa-globe-europe filter-field-icon" ] []
-                , HH.span [ HS.class_ "filter-field-label" ] [ HH.text "Location" ]
-                ]
-            , multiTreeSelect (SProxy :: SProxy "location")
-                { entries: allRegions <#> regionToOption
-                , selected: state.locations
-                , labeler: identity
-                , comparer: (==)
-                , filter: "Search locations"
-                }
-                \(MultiTreeSelect.SelectedChanged locations) -> Just $ UpdateLocations locations
-            ]
+    , inputGroupsHeading "Personal"
+    , responsiveInputGroups
+        [ ageInputGroup state.ageFrom state.ageTo UpdateAgeFrom UpdateAgeTo
+        , locationInputGroup state.locations UpdateLocations
         ]
-    , HH.h3 [ HS.class_ "input-groups-heading" ]
-        [ HH.text "Communication" ]
-    , HH.div [ HS.class_ "responsive-input-groups" ]
-        [ HH.div [ HS.class_ "input-group" ]
-            [ HH.label
-                [ HS.class_ "input-label" ]
-                [ HH.i [ HS.class_ "fas fa-comments filter-field-icon" ] []
-                , HH.span [ HS.class_ "filter-field-label" ] [ HH.text "Language" ]
-                ]
-            , multiSelect (SProxy :: SProxy "language")
-                { options: allLanguages
-                , selected: state.languages
-                , labeler: identity
-                , comparer: (==)
-                , filter: Just "Search languages"
-                }
-                \(MultiSelect.SelectedChanged languages) -> Just $ UpdateLanguages languages
-            ]
-        , HH.div [ HS.class_ "input-group" ]
-            [ HH.label
-                [ HS.class_ "input-label" ]
-                [ HH.i [ HS.class_ "fas fa-microphone filter-field-icon" ] []
-                , HH.span [ HS.class_ "filter-field-label" ] [ HH.text "Microphone" ]
-                ]
-            , HH.label
-                [ HS.class_ "checkbox-input-label" ]
-                [ HH.input
-                    [ HS.class_ "checkbox-input"
-                    , HP.type_ HP.InputCheckbox
-                    , HP.checked state.microphone
-                    , HE.onChecked $ Just <<< UpdateMicrophone
-                    ]
-                , HH.text "Must have a microphone and be willing to communicate."
-                ]
-            ]
-        , HH.div [ HS.class_ "input-group" ]
-            [ HH.label
-                [ HS.class_ "input-label"]
-                [ HH.i [ HS.class_ "fab fa-discord filter-field-icon" ] []
-                , HH.span [ HS.class_ "filter-field-label" ] [ HH.text "Discord server" ]
-                ]
-            , HH.input
-                [ HS.class_ "text-line-input"
-                , HP.type_ HP.InputText
-                , HP.value state.discordServer
-                , HE.onValueInput $ Just <<< UpdateDiscordServer
-                ]
-            , HH.label
-                [ HS.class_ "input-underlabel" ]
-                [ HH.text "Example: discord.gg/AbCdEfG" ]
-            , HH.p
-                [ HS.class_ $ unwrap $ inputErrorClass state.discordServerError ]
-                [ HH.text $ "This does not look like a valid Discord tag." ]
-            ]
+    , inputGroupsHeading "Communication"
+    , responsiveInputGroups
+        [ languagesInputGroup state.languages UpdateLanguages
+        , microphoneInputGroup state.microphone UpdateMicrophone
+        , discordServerInputGroup state.discordServer UpdateDiscordServer state.discordServerError
         ]
-    , HH.h3 [ HS.class_ "input-groups-heading" ]
-        [ HH.text "Time available" ]
-    , HH.div [ HS.class_ "responsive-input-groups" ]
-        [ HH.div [ HS.class_ "input-group" ]
-            [ HH.label
-                [ HS.class_ "input-label" ]
-                [ HH.i [ HS.class_ "fas fa-user-clock filter-field-icon" ] []
-                , HH.span [ HS.class_ "filter-field-label" ] [ HH.text "Timezone" ]
-                ]
-            , singleSelect (SProxy :: SProxy "timezone")
-                { options: allTimezones # Array.sortBy \leftTimezone rightTimezone -> let
-                    countryComparison =
-                        leftTimezone.country `compare` rightTimezone.country
-                    in
-                    case countryComparison of
-                    EQ -> leftTimezone.city `compare` rightTimezone.city
-                    other -> other
-                , selected: state.timezone >>= \timezone ->
-                    allTimezones # Array.find (_.name >>> (_ == timezone))
-                , labeler: \{ city, country } ->
-                    country <> ", " <> city
-                , comparer: \leftTimezone rightTimezone ->
-                    leftTimezone.name == rightTimezone.name
-                , filter: Just "Search timezones"
-                }
-                \(SingleSelect.SelectedChanged timezone) -> Just $ UpdateTimezone (timezone <#> _.name)
-            ]
-        , HH.div [ HS.class_ "input-group" ] $
-            [ HH.label
-                [ HS.class_ "input-label" ]
-                [ HH.i [ HS.class_ "fas fa-clock filter-field-icon" ] []
-                , HH.span [ HS.class_ "filter-field-label" ] [ HH.text "Online on weekdays" ]
-                ]
-            , HH.div [ HS.class_ "timespan-group" ]
-                [ HH.span [ HS.class_ "timespan-group-from" ] [ HH.text "From" ]
-                , HH.input
-                    [ HS.class_ $ "text-line-input timespan-group-input"
-                    , HP.type_ HP.InputTime
-                    , HP.disabled $ isNothing state.timezone
-                    , HP.value state.weekdayFrom
-                    , HE.onValueChange $ Just <<< UpdateWeekdayFrom
-                    ]
-                , HH.span [ HS.class_ "timespan-group-to" ] [ HH.text "to" ]
-                , HH.input
-                    [ HS.class_ $ "text-line-input timespan-group-input"
-                    , HP.type_ HP.InputTime
-                    , HP.disabled $ isNothing state.timezone
-                    , HP.value state.weekdayTo
-                    , HE.onValueChange $ Just <<< UpdateWeekdayTo
-                    ]
-                ]
-            ]
-            <>
-            (if isNothing state.timezone
-            then Array.singleton $
-                HH.label
-                    [ HS.class_ "input-underlabel" ]
-                    [ HH.text $ "Set your timezone to unlock this field." ]
-            else if String.null state.weekdayFrom && (not $ String.null state.weekdayTo)
-                || (not $ String.null state.weekdayFrom) && String.null state.weekdayTo
-            then Array.singleton $
-                HH.label
-                [ HS.class_ "input-underlabel" ]
-                [ HH.text $ "Enter both times for the field to have effect."
-                ]
-            else [])
-        , HH.div [ HS.class_ "input-group" ] $
-            [ HH.label
-                [ HS.class_ "input-label" ]
-                [ HH.i [ HS.class_ "fas fa-clock filter-field-icon" ] []
-                , HH.span [ HS.class_ "filter-field-label" ] [ HH.text "Online on weekends" ]
-                ]
-            , HH.div [ HS.class_ "timespan-group" ]
-                [ HH.span [ HS.class_ "timespan-group-from" ] [ HH.text "From" ]
-                , HH.input
-                    [ HS.class_ $ "text-line-input timespan-group-input"
-                    , HP.type_ HP.InputTime
-                    , HP.disabled $ isNothing state.timezone
-                    , HP.value state.weekendFrom
-                    , HE.onValueChange $ Just <<< UpdateWeekendFrom
-                    ]
-                , HH.span [ HS.class_ "timespan-group-to" ] [ HH.text "to" ]
-                , HH.input
-                    [ HS.class_ $ "text-line-input timespan-group-input"
-                    , HP.type_ HP.InputTime
-                    , HP.disabled $ isNothing state.timezone
-                    , HP.value state.weekendTo
-                    , HE.onValueChange $ Just <<< UpdateWeekendTo
-                    ]
-                ]
-            ]
-            <>
-            (if isNothing state.timezone
-            then Array.singleton $
-                HH.label
-                    [ HS.class_ "input-underlabel" ]
-                    [ HH.text $ "Set your timezone to unlock this field." ]
-            else if String.null state.weekendFrom && (not $ String.null state.weekendTo)
-                || (not $ String.null state.weekendFrom) && String.null state.weekendTo
-            then Array.singleton $
-                HH.label
-                [ HS.class_ "input-underlabel" ]
-                [ HH.text $ "Enter both times for the field to have effect."
-                ]
-            else [])
+    , inputGroupsHeading "Time available"
+    , responsiveInputGroups
+        [ timezoneInputGroup state.timezone UpdateTimezone
+        , timeRangeInputGroup "Online on weekdays" (isNothing state.timezone)
+            state.weekdayFrom state.weekdayTo UpdateWeekdayFrom UpdateWeekdayTo
+        , timeRangeInputGroup "Online on weekends" (isNothing state.timezone)
+            state.weekendFrom state.weekendTo UpdateWeekendFrom UpdateWeekendTo
         ]
-    , HH.h3 [ HS.class_ "input-groups-heading" ]
-        [ HH.text "About" ]
-    , HH.textarea
-        [ HS.class_ "text-input"
-        , HE.onValueInput $ Just <<< UpdateAbout
-        , HP.value state.about
-        ]
-    , HH.label [ HS.class_ "input-underlabel" ]
-        [ HH.text """Yo nigga, write about yourself. What are you like? Just how
-            gay are you? What kind of faggots are you looking for?"""
-        ]
-    , HH.p
-        [ HS.class_ $ unwrap $ inputErrorClass state.aboutError ]
-        [ HH.text "About text cannot be more than 2000 characters long." ]
+    , inputGroupsHeading "About"
+    , aboutInputGroup state.about UpdateAbout state.aboutError
     ]
 
 stateToOutput :: State -> Output
@@ -447,17 +182,17 @@ emptyInput :: Input
 emptyInput =
     { name: ""
     , website: ""
-    , ageFrom: ""
-    , ageTo: ""
+    , ageFrom: Nothing
+    , ageTo: Nothing
     , locations: []
     , languages: []
     , microphone: false
     , discordServer: ""
     , timezone: Nothing
-    , weekdayFrom: ""
-    , weekdayTo: ""
-    , weekendFrom: ""
-    , weekendTo: ""
+    , weekdayFrom: Nothing
+    , weekdayTo: Nothing
+    , weekendFrom: Nothing
+    , weekendTo: Nothing
     , about: ""
     , nameError: false
     , websiteError: false

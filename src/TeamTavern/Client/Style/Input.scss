@@ -5,14 +5,12 @@
 }
 
 .input-groups-heading {
-    margin-top: 21px;
     margin-bottom: 14px;
 }
 
 .responsive-input-groups {
     display: flex;
     flex-wrap: wrap;
-    margin-bottom: -28px;
 
     @media screen and (min-width: 630px) {
         margin-right: -21px;

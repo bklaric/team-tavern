@@ -15,7 +15,7 @@ import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Pages.Wizard.EnterTeamDetails (enterTeamDetails)
 import TeamTavern.Client.Pages.Wizard.EnterTeamDetails as EnterTeamDetails
 import TeamTavern.Client.Script.Navigate (navigate_)
-import TeamTavern.Client.Script.Request (justIfInt, nothingIfEmpty, post)
+import TeamTavern.Client.Script.Request (nothingIfEmpty, post)
 import TeamTavern.Server.Team.Create (TeamModel)
 import TeamTavern.Server.Team.Create as Create
 import Web.Event.Event (preventDefault)
@@ -54,17 +54,17 @@ sendRequest state @ { nickname, details } =
     post
     ({ name: details.name
     , website: nothingIfEmpty details.website
-    , ageFrom: justIfInt details.ageFrom
-    , ageTo: justIfInt details.ageTo
+    , ageFrom: details.ageFrom
+    , ageTo: details.ageTo
     , locations: details.locations
     , languages: details.languages
     , microphone: details.microphone
     , discordServer: nothingIfEmpty details.discordServer
     , timezone: details.timezone
-    , weekdayFrom: nothingIfEmpty details.weekdayFrom
-    , weekdayTo: nothingIfEmpty details.weekdayTo
-    , weekendFrom: nothingIfEmpty details.weekendFrom
-    , weekendTo: nothingIfEmpty details.weekendTo
+    , weekdayFrom: details.weekdayFrom
+    , weekdayTo: details.weekdayTo
+    , weekendFrom: details.weekendFrom
+    , weekendTo: details.weekendTo
     , about: details.about
     } :: TeamModel)
 
