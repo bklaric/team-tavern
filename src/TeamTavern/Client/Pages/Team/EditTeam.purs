@@ -14,8 +14,8 @@ import TeamTavern.Client.Components.Form (form, otherFormError, submitButton)
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Pages.Wizard.EnterTeamDetails (enterTeamDetails)
 import TeamTavern.Client.Pages.Wizard.EnterTeamDetails as EnterTeamDetails
-import TeamTavern.Client.Script.Navigate (navigate_)
-import TeamTavern.Client.Script.Request (put)
+import TeamTavern.Client.Script.Navigate (hardNavigate)
+import TeamTavern.Client.Script.Request (putNoContent)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Server.Team.Create (TeamModel)
 import TeamTavern.Server.Team.Create as Create
@@ -74,9 +74,9 @@ render { details, submitting, otherError } =
     <>
     otherFormError otherError
 
-sendRequest :: forall left. State -> Async left (Maybe (Either Create.BadContent Create.OkContent))
+sendRequest :: forall left. State -> Async left (Maybe (Either Create.BadContent Unit))
 sendRequest state @ { handle, details } = do
-    put
+    putNoContent
         ("/api/teams/" <> handle)
         ({ name: details.name
         , website: details.website
@@ -127,7 +127,7 @@ handleAction (SendRequest event) = do
     currentState <- H.modify _ { submitting = true }
     response <- H.lift $ sendRequest currentState
     case response of
-        Just (Right { handle }) -> navigate_ $ "/teams/" <> handle
+        Just (Right _) -> hardNavigate $ "/teams/" <> currentState.handle
         Just (Left badContent) -> H.put $
             foldl
             (\state error ->

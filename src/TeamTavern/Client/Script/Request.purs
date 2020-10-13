@@ -54,3 +54,28 @@ post = withBody POST
 put :: forall body ok bad left. WriteForeign body => ReadForeign ok => ReadForeign bad =>
     String -> body -> Async left (Maybe (Either bad ok))
 put = withBody PUT
+
+withBodyNoContent :: forall body bad left. WriteForeign body => ReadForeign bad =>
+    Method -> String -> body -> Async left (Maybe (Either bad Unit))
+withBodyNoContent method url body = Async.unify do
+    response
+        <- Fetch.fetch url
+        (  Fetch.method := method
+        <> Fetch.credentials := Fetch.Include
+        <> Fetch.body := Json.writeJSON body
+        )
+        # lmap (const Nothing)
+    result <-
+        case FetchRes.status response of
+        204 -> pure $ Right unit
+        400 -> FetchRes.text response >>= JsonAsync.readJSON # bimap (const Nothing) Left
+        _ -> Async.left Nothing
+    pure $ Just result
+
+postNoContent :: forall body bad left. WriteForeign body => ReadForeign bad =>
+    String -> body -> Async left (Maybe (Either bad Unit))
+postNoContent = withBodyNoContent POST
+
+putNoContent :: forall body bad left. WriteForeign body => ReadForeign bad =>
+    String -> body -> Async left (Maybe (Either bad Unit))
+putNoContent = withBodyNoContent PUT

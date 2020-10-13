@@ -1,4 +1,4 @@
-module TeamTavern.Server.Team.Create (TeamModel, TeamError, OkContent, BadContent, create) where
+module TeamTavern.Server.Team.Update (TeamModel, TeamError, OkContent, BadContent, update) where
 
 import Prelude
 
@@ -7,9 +7,9 @@ import Async.Validated as Async
 import Data.Array as Array
 import Data.Bifunctor.Label (label, labelMap)
 import Data.List.Types (NonEmptyList)
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe)
 import Data.Nullable (toNullable)
-import Data.String (CodePoint, codePointFromChar, fromCodePointArray, toCodePointArray, trim)
+import Data.String (trim)
 import Data.Symbol (SProxy(..))
 import Data.Traversable (traverse)
 import Data.Validated.Label (VariantNel, VariantValidated)
@@ -17,7 +17,7 @@ import Data.Validated.Label as Validated
 import Data.Variant (Variant, match)
 import Effect (Effect, foreachE)
 import Perun.Request.Body (Body)
-import Perun.Response (Response, badRequest_, badRequest__, internalServerError__, ok_)
+import Perun.Response (Response, badRequest_, badRequest__, internalServerError__, noContent_)
 import Postgres.Pool (Pool)
 import Postgres.Query (class Querier, Query(..), QueryParameter, (:), (:|))
 import Prim.Row (class Lacks)
@@ -32,7 +32,7 @@ import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
 import TeamTavern.Server.Infrastructure.Error (InternalError)
 import TeamTavern.Server.Infrastructure.Log (internalHandler, logLines)
 import TeamTavern.Server.Infrastructure.Log as Log
-import TeamTavern.Server.Infrastructure.Postgres (queryFirstInternal)
+import TeamTavern.Server.Infrastructure.Postgres (queryNone)
 import TeamTavern.Server.Player.Domain.Id (Id)
 import TeamTavern.Server.Player.UpdateDetails.ValidateLangugase (Language, validateLanguages)
 import TeamTavern.Server.Player.UpdateDetails.ValidateTimespan (Timespan, nullableTimeFrom, nullableTimeTo, validateTimespan)
@@ -169,97 +169,28 @@ validateTeam (team :: TeamModel) = let
     <$> name <*> website <*> discordServer <*> about
     # Async.fromValidated # label (SProxy :: SProxy "team")
 
-newtype Handle = Handle String
-
-aPoint :: CodePoint
-aPoint = codePointFromChar 'a'
-
-aCapPoint :: CodePoint
-aCapPoint = codePointFromChar 'A'
-
-zPoint :: CodePoint
-zPoint = codePointFromChar 'z'
-
-zCapPoint :: CodePoint
-zCapPoint = codePointFromChar 'Z'
-
-onePoint :: CodePoint
-onePoint = codePointFromChar '1'
-
-ninePoint :: CodePoint
-ninePoint = codePointFromChar '9'
-
-dashPoint :: CodePoint
-dashPoint = codePointFromChar '-'
-
-underscorePoint :: CodePoint
-underscorePoint = codePointFromChar '_'
-
-apostrophePoint :: CodePoint
-apostrophePoint = codePointFromChar '\''
-
-isLetter :: CodePoint -> Boolean
-isLetter point = (aPoint <= point && point <= zPoint) || (aCapPoint <= point && point <= zCapPoint)
-
-isNumber :: CodePoint -> Boolean
-isNumber point = onePoint <= point && point <= ninePoint
-
-generateHandle :: Name -> Handle
-generateHandle name =
-    toString name
-    # toCodePointArray
-    <#> (\point ->
-        if isLetter point || isNumber point || point == dashPoint || point == underscorePoint
-        then Just point
-        else if point == apostrophePoint
-        then Nothing
-        else Just underscorePoint)
-    # Array.catMaybes
-    # fromCodePointArray
-    # Handle
-
 queryString :: Query
 queryString = Query """
-    with similar_handle_count as (
-        select count(*)
-        from team
-        where team.handle ilike ($2 || '%')
-    ),
-    unique_handle as (
-        select $2 || (
-            case
-                when (select count from similar_handle_count) = 0
-                then ''
-                else '' || ((select count from similar_handle_count) + 1)
-            end
-        ) as handle
-    )
-    insert into team
-        ( owner_id
-        , handle
-        , name
-        , website
-        , age_from
-        , age_to
-        , locations
-        , languages
-        , microphone
-        , discord_server
-        , timezone
-        , weekday_from
-        , weekday_to
-        , weekend_from
-        , weekend_to
-        , about
-        )
-    values
-        ( $1, (select handle from unique_handle)
-        , $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
-        )
-    returning team.handle;
+    update team
+    set
+        name = $3,
+        website = $4,
+        age_from = $5,
+        age_to = $6,
+        locations = $7,
+        languages = $8,
+        microphone = $9,
+        discord_server = $10,
+        timezone = $11,
+        weekday_from = $12,
+        weekday_to = $13,
+        weekend_from = $14,
+        weekend_to = $15,
+        about = $16
+    where owner_id = $1 and handle = $2
     """
 
-queryParameters :: Id -> Handle -> Team -> Array QueryParameter
+queryParameters :: Id -> String -> Team -> Array QueryParameter
 queryParameters ownerId handle team
     = ownerId
     : handle
@@ -278,10 +209,10 @@ queryParameters ownerId handle team
     : nullableTimeTo team.onlineWeekend
     :| team.about
 
-addTeam :: forall querier errors. Querier querier =>
-    querier -> Id -> Handle -> Team -> Async (InternalError errors) { handle :: String }
-addTeam pool ownerId handle team =
-    queryFirstInternal pool queryString (queryParameters ownerId handle team)
+updateTeam :: forall querier errors. Querier querier =>
+    querier -> Id -> String -> Team -> Async (InternalError errors) Unit
+updateTeam pool ownerId handle team =
+    queryNone pool queryString (queryParameters ownerId handle team)
 
 type CreateError = Variant (internal :: Array String, client :: Array String, team :: TeamErrors)
 
@@ -292,7 +223,7 @@ type OkContent = { handle :: String }
 
 type BadContent = Array TeamError
 
-sendResponse :: Async CreateError { handle :: String } -> (forall voidLeft. Async voidLeft Response)
+sendResponse :: Async CreateError Unit -> (forall voidLeft. Async voidLeft Response)
 sendResponse = alwaysRight
     (match
         { internal: const internalServerError__
@@ -300,13 +231,12 @@ sendResponse = alwaysRight
         , team: badRequest_ <<< writeJSON <<< Array.fromFoldable
         }
     )
-    (ok_ <<< writeJSON)
+    (const $ noContent_)
 
-create :: forall left. Pool -> Body -> Cookies -> Async left Response
-create pool body cookies =
+update :: forall left. Pool -> Body -> Cookies -> { handle :: String } -> Async left Response
+update pool body cookies { handle } =
     sendResponse $ examineLeftWithEffect logError do
     cookieInfo <- ensureSignedIn pool cookies
     content <- readJsonBody body
     team <- validateTeam content
-    let generatedHandle = generateHandle team.name
-    addTeam pool cookieInfo.id generatedHandle team
+    updateTeam pool cookieInfo.id handle team

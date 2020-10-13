@@ -1,7 +1,7 @@
 module TeamTavern.Server.Team.Routes where
 
 import Jarilo.Junction (type (:<|>), type (:=))
-import Jarilo.Method (Get, Post)
+import Jarilo.Method (Get, Post, Put)
 import Jarilo.Path (type (:>), End)
 import Jarilo.Query (Mandatory, NoQuery)
 import Jarilo.Route (Route)
@@ -29,7 +29,15 @@ type CreateTeam = Route
     :> End)
     NoQuery
 
+type UpdateTeam = Route
+    Put
+    (  Literal "teams"
+    :> Capture "handle" String
+    :> End)
+    NoQuery
+
 type TeamRoutes
     =    "viewTeamsByOwner" := ViewTeamsByOwner
     :<|> "viewTeam"         := ViewTeam
     :<|> "createTeam"       := CreateTeam
+    :<|> "updateTeam"       := UpdateTeam

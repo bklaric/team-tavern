@@ -5,6 +5,7 @@ module TeamTavern.Client.Script.Navigate
     , navigateWithEvent_
     , navigateReplace
     , navigateReplace_
+    , hardNavigate
     ) where
 
 import Prelude
@@ -17,7 +18,8 @@ import Web.Event.Event (preventDefault)
 import Web.Event.EventTarget (dispatchEvent)
 import Web.HTML (window)
 import Web.HTML.History (DocumentTitle(..), URL(..), pushState, replaceState)
-import Web.HTML.Window (history)
+import Web.HTML.Location (setHref)
+import Web.HTML.Window (history, location)
 import Web.HTML.Window as Window
 import Web.UIEvent.MouseEvent (MouseEvent, toEvent)
 
@@ -61,3 +63,6 @@ navigateReplace state path = liftEffect do
 
 navigateReplace_ :: forall effect. MonadEffect effect => String -> effect Unit
 navigateReplace_ path = navigateReplace {} path
+
+hardNavigate :: forall effect. MonadEffect effect => String -> effect Unit
+hardNavigate path = window >>= location >>= setHref path # liftEffect

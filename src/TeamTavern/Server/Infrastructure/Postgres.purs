@@ -12,7 +12,7 @@ import Data.Traversable (traverse)
 import Data.Variant (inj)
 import Error.Class (message, name)
 import Node.Errors.Class (code)
-import Postgres.Async.Query (query)
+import Postgres.Async.Query (execute, query)
 import Postgres.Error (Error, constraint, detail, schema, severity, table)
 import Postgres.Query (class Querier, Query, QueryParameter)
 import Postgres.Result (rows)
@@ -110,3 +110,8 @@ queryFirstInternal = queryFirst (SProxy :: SProxy "internal")
 queryFirstClient :: forall row errors querier. Querier querier => ReadForeign row =>
     querier -> Query -> Array QueryParameter -> Async (LoadSingleError errors) row
 queryFirstClient = queryFirst (SProxy :: SProxy "notFound")
+
+queryNone :: forall querier errors. Querier querier =>
+    querier -> Query -> Array QueryParameter -> Async (InternalError errors) Unit
+queryNone querier queryString parameters =
+    querier # execute queryString parameters # reportDatabaseError

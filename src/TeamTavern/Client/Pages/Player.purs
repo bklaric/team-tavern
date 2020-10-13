@@ -20,11 +20,9 @@ import Halogen.HTML.Properties as HP
 import Halogen.Query.EventSource as ES
 import Simple.JSON.Async as Json
 import TeamTavern.Client.Components.Modal as Modal
-import TeamTavern.Client.Pages.Player.ChangeNickname (changeNickname)
 import TeamTavern.Client.Pages.Player.ChangeNickname as ChangeNickname
 import TeamTavern.Client.Pages.Player.Details (details)
 import TeamTavern.Client.Pages.Player.Details as Details
-import TeamTavern.Client.Pages.Player.EditSettings (editSettings)
 import TeamTavern.Client.Pages.Player.EditSettings as EditSettings
 import TeamTavern.Client.Pages.Player.PlayerProfiles (playerProfiles)
 import TeamTavern.Client.Pages.Player.PlayerProfiles as PlayerProfiles
@@ -33,12 +31,10 @@ import TeamTavern.Client.Pages.Player.Teams as Teams
 import TeamTavern.Client.Pages.Player.Types (PlayerStatus(..))
 import TeamTavern.Client.Script.Cookie (getPlayerInfo)
 import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
-import TeamTavern.Client.Script.Navigate (navigateWithEvent_)
+import TeamTavern.Client.Script.Navigate (hardNavigate, navigateWithEvent_)
 import TeamTavern.Server.Player.View.SendResponse as View
 import Web.Event.Event as E
 import Web.HTML (window)
-import Web.HTML.Location (setHref)
-import Web.HTML.Window (location)
 import Web.HTML.Window as Window
 import Web.UIEvent.MouseEvent (MouseEvent)
 import Web.UIEvent.MouseEvent as ME
@@ -206,7 +202,7 @@ handleAction (HandleChangeNicknameMessage output) = do
     -- Modal.hide (SProxy :: SProxy "changeNickname")
     case output of
         Modal.OutputRaised (ChangeNickname.NicknameChanged nickname) ->
-            window >>= location >>= setHref ("/players/" <> nickname) # H.liftEffect
+            hardNavigate $ "/players/" <> nickname
         _ -> pure unit
 handleAction HandleEditSettingsMessage =
     -- Modal.hide (SProxy :: SProxy "editSettings")
