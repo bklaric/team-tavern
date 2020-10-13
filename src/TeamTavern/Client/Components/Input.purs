@@ -54,10 +54,8 @@ inputUnderlabel text =
     [ HH.text text ]
 
 inputError :: forall slots action. Boolean -> String -> Array (HH.HTML slots action)
-inputError error text =
-    if error
-    then [ HH.p [ HS.class_ "input-error" ] [ HH.text text ] ]
-    else []
+inputError true text = [ HH.p [ HS.class_ "input-error" ] [ HH.text text ] ]
+inputError false text = []
 
 inputGroup :: forall slots action. Array (HH.HTML slots action) -> HH.HTML slots action
 inputGroup group = HH.div [ HS.class_ "input-group" ] group
