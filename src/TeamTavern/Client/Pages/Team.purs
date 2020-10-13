@@ -13,10 +13,13 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.CSS as HC
 import Halogen.HTML.Properties as HP
+import TeamTavern.Client.Components.Button (regularIconButton)
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Pages.Team.Details (details)
+import TeamTavern.Client.Pages.Team.EditTeam (editTeam)
+import TeamTavern.Client.Pages.Team.EditTeam as EditTeam
 import TeamTavern.Client.Pages.Team.Profiles (profiles)
 import TeamTavern.Client.Pages.Team.Status (Status(..), getStatus)
 import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
@@ -29,11 +32,11 @@ type Input = { handle :: String }
 
 data State
     = Empty Input
-    | Loaded { team :: Team, status :: Status }
+    | Loaded { team :: Team, status :: Status, showEditModal :: Boolean }
     | NotFound
     | Error
 
-data Action = Initialize
+data Action = Initialize | ShowEditModal | HideEditModal
 
 type Slot = H.Slot (Const Void) Void Unit
 
@@ -41,11 +44,12 @@ type ChildSlots =
     ( messageOwner :: NavigationAnchor.Slot Unit
     , discordServer :: Copyable.Slot
     , games :: Anchor.Slot String
+    , editTeam :: EditTeam.Slot
     )
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render (Empty _) = HH.div_ []
-render (Loaded { team: team', status } ) =
+render (Loaded { team: team', status, showEditModal } ) =
     HH.div_  $
     [ HH.div [ HS.class_ "content-title" ]
         [ HH.div [ HS.class_ "content-title-left" ]
@@ -54,7 +58,9 @@ render (Loaded { team: team', status } ) =
             ]
         , HH.div [ HS.class_ "content-title-right" ]
             case status of
-            SignedInOwner -> []
+            SignedInOwner ->
+                [ regularIconButton "fas fa-edit" "Edit team" ShowEditModal
+                ]
             _ ->
                 [ navigationAnchor (SProxy :: SProxy "messageOwner")
                     { path: "/conversations/" <> team'.owner
@@ -70,6 +76,10 @@ render (Loaded { team: team', status } ) =
     , details team'
     , profiles team'.profiles
     ]
+    <>
+    if showEditModal
+    then [ editTeam team' (const $ Just HideEditModal) ]
+    else [ ]
 render NotFound = HH.p_ [ HH.text "Team could not be found." ]
 render Error = HH.p_ [ HH.text "There has been an error loading the team. Please try again later." ]
 
@@ -88,13 +98,23 @@ handleAction Initialize = do
             case team' of
                 Just team'' -> do
                     status <- getStatus team''.owner
-                    H.put $ Loaded { team: team'', status }
+                    H.put $ Loaded { team: team'', status, showEditModal: false }
                 _ -> pure unit
         _ -> pure unit
     H.lift $ Async.fromEffect do
         setMetaTitle $ "aoeu" <> " | TeamTavern"
         setMetaDescription $ "View profiles by player " <> "aoeueuue" <> " on TeamTavern."
         setMetaUrl
+handleAction ShowEditModal =
+    H.modify_
+    case _ of
+    Loaded state -> Loaded state { showEditModal = true }
+    state -> state
+handleAction HideEditModal =
+    H.modify_
+    case _ of
+    Loaded state -> Loaded state { showEditModal = false }
+    state -> state
 
 component :: forall query output left.
     H.Component HH.HTML query Input output (Async left)

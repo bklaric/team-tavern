@@ -15,9 +15,7 @@ import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchorIndexed)
 import TeamTavern.Client.Pages.Player.CreateTeam (createTeam)
-import TeamTavern.Client.Pages.Player.CreateTeam as CreateTeam
 import TeamTavern.Client.Pages.Player.Types (PlayerStatus(..))
-import TeamTavern.Client.Script.Navigate (navigate_)
 import TeamTavern.Client.Script.Request (get)
 import TeamTavern.Client.Snippets.Class as HS
 
@@ -40,7 +38,7 @@ data State
 data Action
     = Initialize
     | ShowModal
-    | HandleModalOutput (Modal.Output CreateTeam.Output)
+    | HandleModalOutput (Modal.Output Void)
 
 type Slot = H.Slot (Const Void) Void Unit
 
@@ -87,7 +85,7 @@ render (Loaded state) =
     <> renderTeams state.teams state.status
     <>
     if state.modalShown
-    then [ createTeam { nickname: state.nickname } (Just <<< HandleModalOutput) ]
+    then [ createTeam (Just <<< HandleModalOutput) ]
     else []
 
 loadTeams :: forall left. String -> Async left (Maybe (Array Team))
@@ -114,8 +112,6 @@ handleAction ShowModal =
     H.modify_ case _ of
         Loaded state -> Loaded state { modalShown = true }
         state -> state
-handleAction (HandleModalOutput (Modal.OutputRaised { handle })) =
-    navigate_ $ "/teams/" <> handle
 handleAction (HandleModalOutput _) =
     H.modify_ case _ of
         Loaded state -> Loaded state { modalShown = false }

@@ -30,12 +30,12 @@ get url = Async.unify do
         200 -> FetchRes.text response >>= JsonAsync.readJSON # lmap (const Nothing)
         _ -> Async.left Nothing
 
-post :: forall body ok bad left. WriteForeign body => ReadForeign ok => ReadForeign bad =>
-    body -> Async left (Maybe (Either bad ok))
-post body = Async.unify do
+withBody :: forall body ok bad left. WriteForeign body => ReadForeign ok => ReadForeign bad =>
+    Method -> String -> body -> Async left (Maybe (Either bad ok))
+withBody method url body = Async.unify do
     response
-        <- Fetch.fetch ("/api/teams")
-        (  Fetch.method := POST
+        <- Fetch.fetch url
+        (  Fetch.method := method
         <> Fetch.credentials := Fetch.Include
         <> Fetch.body := Json.writeJSON body
         )
@@ -46,3 +46,11 @@ post body = Async.unify do
         400 -> FetchRes.text response >>= JsonAsync.readJSON # bimap (const Nothing) Left
         _ -> Async.left Nothing
     pure $ Just result
+
+post :: forall body ok bad left. WriteForeign body => ReadForeign ok => ReadForeign bad =>
+    String -> body -> Async left (Maybe (Either bad ok))
+post = withBody POST
+
+put :: forall body ok bad left. WriteForeign body => ReadForeign ok => ReadForeign bad =>
+    String -> body -> Async left (Maybe (Either bad ok))
+put = withBody PUT

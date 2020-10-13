@@ -7,7 +7,7 @@ import Data.Array as Array
 import Data.Maybe (Maybe(..))
 import Data.Variant (SProxy(..))
 import Halogen.HTML (HTML, ComponentHTML)
-import TeamTavern.Client.Components.Input (checkboxInput, inputError, inputGroup, inputLabel, inputUnderlabel, numberRangeInput, requiredInputLabel, textInput, textLineInput, timeRangeInput, timeRangeInputUnderlabel)
+import TeamTavern.Client.Components.Input (checkboxInput, inputError, inputGroup, inputLabel, inputUnderlabel, numberRangeInput, requiredInputLabel, requiredTextLineInput, textInput, textLineInput, timeRangeInput, timeRangeInputUnderlabel)
 import TeamTavern.Client.Components.SelectDefinitive.MultiSelect (multiSelect)
 import TeamTavern.Client.Components.SelectDefinitive.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.SelectDefinitive.MultiTreeSelect (multiTreeSelect)
@@ -28,13 +28,13 @@ nameInputGroup :: forall slots action. String -> (String -> action) -> Boolean -
 nameInputGroup value onValue error =
     inputGroup $
     [ requiredInputLabel "fas fa-signature" "Name"
-    , textLineInput value onValue
+    , requiredTextLineInput value onValue
     ]
     <>
     inputError error "Name isn't valid, kek."
 
 websiteInputGroup :: forall slots action.
-    String -> (String -> action) -> Boolean -> HTML slots action
+    Maybe String -> (Maybe String -> action) -> Boolean -> HTML slots action
 websiteInputGroup value onValue error =
     inputGroup $
     [ inputLabel "fas fa-globe" "Website"
@@ -95,7 +95,7 @@ microphoneInputGroup value onValue =
     ]
 
 discordServerInputGroup :: forall slots action.
-    String -> (String -> action) -> Boolean -> HTML slots action
+    Maybe String -> (Maybe String -> action) -> Boolean -> HTML slots action
 discordServerInputGroup value onValue error =
     inputGroup $
     [ inputLabel "fab fa-discord" "Discord server"

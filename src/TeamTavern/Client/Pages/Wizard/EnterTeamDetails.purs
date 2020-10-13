@@ -18,13 +18,13 @@ import TeamTavern.Server.Infrastructure.Timezones (Timezone)
 
 type Input =
     { name :: String
-    , website :: String
+    , website :: Maybe String
     , ageFrom :: Maybe Int
     , ageTo :: Maybe Int
     , locations :: Array String
     , languages :: Array String
     , microphone :: Boolean
-    , discordServer :: String
+    , discordServer :: Maybe String
     , timezone :: Maybe String
     , weekdayFrom :: Maybe String
     , weekdayTo :: Maybe String
@@ -39,13 +39,13 @@ type Input =
 
 type Output =
     { name :: String
-    , website :: String
+    , website :: Maybe String
     , ageFrom :: Maybe Int
     , ageTo :: Maybe Int
     , locations :: Array String
     , languages :: Array String
     , microphone :: Boolean
-    , discordServer :: String
+    , discordServer :: Maybe String
     , timezone :: Maybe String
     , weekdayFrom :: Maybe String
     , weekdayTo :: Maybe String
@@ -59,13 +59,13 @@ type State = Input
 data Action
     = Receive Input
     | UpdateName String
-    | UpdateWebsite String
+    | UpdateWebsite (Maybe String)
     | UpdateAgeFrom (Maybe Int)
     | UpdateAgeTo (Maybe Int)
     | UpdateLocations (Array String)
     | UpdateLanguages (Array String)
     | UpdateMicrophone Boolean
-    | UpdateDiscordServer String
+    | UpdateDiscordServer (Maybe String)
     | UpdateTimezone (Maybe String)
     | UpdateWeekdayFrom (Maybe String)
     | UpdateWeekdayTo (Maybe String)
@@ -181,13 +181,13 @@ component = H.mkComponent
 emptyInput :: Input
 emptyInput =
     { name: ""
-    , website: ""
+    , website: Nothing
     , ageFrom: Nothing
     , ageTo: Nothing
     , locations: []
     , languages: []
     , microphone: false
-    , discordServer: ""
+    , discordServer: Nothing
     , timezone: Nothing
     , weekdayFrom: Nothing
     , weekdayTo: Nothing

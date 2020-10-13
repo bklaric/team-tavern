@@ -66,14 +66,19 @@ responsiveInputGroups groups = HH.div [ HS.class_ "responsive-input-groups" ] gr
 inputGroupsHeading :: forall slots action. String -> HH.HTML slots action
 inputGroupsHeading text = HH.h3 [ HS.class_ "input-groups-heading" ] [ HH.text text ]
 
-textLineInput :: forall slots action. String -> (String -> action) -> HH.HTML slots action
-textLineInput input onInput =
+requiredTextLineInput :: forall slots action. String -> (String -> action) -> HH.HTML slots action
+requiredTextLineInput input onInput =
     HH.input
     [ HS.class_ "text-line-input"
     , HP.type_ HP.InputText
     , HP.value input
     , HE.onValueInput $ Just <<< onInput
     ]
+
+textLineInput :: forall slots action.
+    Maybe String -> (Maybe String -> action) -> HH.HTML slots action
+textLineInput input onInput =
+    requiredTextLineInput (maybe "" identity input) (onInput <<< nothingIfEmpty)
 
 textInput :: forall slots action. String -> (String -> action) -> HH.HTML slots action
 textInput input onInput =

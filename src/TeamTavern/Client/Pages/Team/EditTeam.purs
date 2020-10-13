@@ -1,11 +1,11 @@
-module TeamTavern.Client.Pages.Player.CreateTeam (Slot, createTeam) where
+module TeamTavern.Client.Pages.Team.EditTeam where
 
 import Prelude
 
 import Async (Async)
 import Data.Const (Const)
 import Data.Either (Either(..))
-import Data.Foldable (foldl)
+import Data.Foldable (foldl, intercalate)
 import Data.Maybe (Maybe(..))
 import Data.Variant (SProxy(..), match)
 import Halogen as H
@@ -15,15 +15,43 @@ import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Pages.Wizard.EnterTeamDetails (enterTeamDetails)
 import TeamTavern.Client.Pages.Wizard.EnterTeamDetails as EnterTeamDetails
 import TeamTavern.Client.Script.Navigate (navigate_)
-import TeamTavern.Client.Script.Request (post)
+import TeamTavern.Client.Script.Request (put)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Server.Team.Create (TeamModel)
 import TeamTavern.Server.Team.Create as Create
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
+type Input fields =
+    { handle :: String
+    , name :: String
+    , website :: Maybe String
+    , ageFrom :: Maybe Int
+    , ageTo :: Maybe Int
+    , locations :: Array String
+    , languages :: Array String
+    , microphone :: Boolean
+    , discordServer :: Maybe String
+    , timezone :: Maybe String
+    , weekdayOnline :: Maybe
+        { clientFrom :: String
+        , clientTo :: String
+        , sourceFrom :: String
+        , sourceTo :: String
+        }
+    , weekendOnline :: Maybe
+        { clientFrom :: String
+        , clientTo :: String
+        , sourceFrom :: String
+        , sourceTo :: String
+        }
+    , about :: Array String
+    | fields
+    }
+
 type State =
-    { details :: EnterTeamDetails.Input
+    { handle :: String
+    , details :: EnterTeamDetails.Input
     , otherError :: Boolean
     , submitting :: Boolean
     }
@@ -41,35 +69,40 @@ render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { details, submitting, otherError } =
     form SendRequest $
     [ enterTeamDetails details (Just <<< UpdateDetails)
-    , submitButton "fas fa-user-plus" "Create team" "Creating team..." submitting
+    , submitButton "fas fa-user-plus" "Edit team" "Editting team..." submitting
     ]
     <>
     otherFormError otherError
 
 sendRequest :: forall left. State -> Async left (Maybe (Either Create.BadContent Create.OkContent))
-sendRequest state @ { details } =
-    post "/api/teams"
-    ({ name: details.name
-    , website: details.website
-    , ageFrom: details.ageFrom
-    , ageTo: details.ageTo
-    , locations: details.locations
-    , languages: details.languages
-    , microphone: details.microphone
-    , discordServer: details.discordServer
-    , timezone: details.timezone
-    , weekdayFrom: details.weekdayFrom
-    , weekdayTo: details.weekdayTo
-    , weekendFrom: details.weekendFrom
-    , weekendTo: details.weekendTo
-    , about: details.about
-    } :: TeamModel)
+sendRequest state @ { handle, details } = do
+    put
+        ("/api/teams/" <> handle)
+        ({ name: details.name
+        , website: details.website
+        , ageFrom: details.ageFrom
+        , ageTo: details.ageTo
+        , locations: details.locations
+        , languages: details.languages
+        , microphone: details.microphone
+        , discordServer: details.discordServer
+        , timezone: details.timezone
+        , weekdayFrom: details.weekdayFrom
+        , weekdayTo: details.weekdayTo
+        , weekendFrom: details.weekendFrom
+        , weekendTo: details.weekendTo
+        , about: details.about
+        } :: TeamModel)
 
 handleAction :: forall output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
 handleAction Initialize = do
-    timezone <- getClientTimezone
-    H.modify_ \state -> state { details = state.details { timezone = Just timezone } }
+    state <- H.get
+    case state.details.timezone of
+        Just timezone -> pure unit
+        Nothing -> do
+            timezone <- getClientTimezone
+            H.put state { details = state.details { timezone = Just timezone } }
 handleAction (UpdateDetails details) =
     H.modify_ \state -> state
         { details = state.details
@@ -129,11 +162,27 @@ handleAction (SendRequest event) = do
                 }
             }
 
-component :: forall query input output left.
-    H.Component HH.HTML query input output (Async left)
+component :: forall query output fields left.
+    H.Component HH.HTML query (Input fields) output (Async left)
 component = H.mkComponent
-    { initialState: const
-        { details: EnterTeamDetails.emptyInput
+    { initialState: \team ->
+        { handle: team.handle
+        , details: EnterTeamDetails.emptyInput
+            { name = team.name
+            , website = team.website
+            , ageFrom = team.ageFrom
+            , ageTo = team.ageTo
+            , locations = team.locations
+            , languages = team.languages
+            , microphone = team.microphone
+            , discordServer = team.discordServer
+            , timezone = team.timezone
+            , weekdayFrom = team.weekdayOnline <#> _.sourceFrom
+            , weekdayTo = team.weekdayOnline <#> _.sourceTo
+            , weekendFrom = team.weekendOnline <#> _.sourceFrom
+            , weekendTo = team.weekendOnline <#> _.sourceTo
+            , about = intercalate "\n\n" team.about
+            }
         , otherError: false
         , submitting: false
         }
@@ -144,10 +193,11 @@ component = H.mkComponent
         }
     }
 
-createTeam
-    :: forall action children left
-    .  (Modal.Output Void -> Maybe action)
-    -> HH.ComponentHTML action (createTeam :: Slot | children) (Async left)
-createTeam handleMessage = HH.slot
-    (SProxy :: SProxy "createTeam") unit
-    (Modal.component "Create team" component) unit handleMessage
+editTeam
+    :: forall fields action children left
+    .  (Input fields)
+    -> (Modal.Output Void -> Maybe action)
+    -> HH.ComponentHTML action (editTeam :: Slot | children) (Async left)
+editTeam input handleMessage = HH.slot
+    (SProxy :: SProxy "editTeam") unit
+    (Modal.component "Edit team" component) input handleMessage
