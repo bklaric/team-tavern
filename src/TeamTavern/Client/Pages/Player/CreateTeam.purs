@@ -16,6 +16,7 @@ import TeamTavern.Client.Pages.Wizard.EnterTeamDetails (enterTeamDetails)
 import TeamTavern.Client.Pages.Wizard.EnterTeamDetails as EnterTeamDetails
 import TeamTavern.Client.Script.Navigate (navigate_)
 import TeamTavern.Client.Script.Request (nothingIfEmpty, post)
+import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Server.Team.Create (TeamModel)
 import TeamTavern.Server.Team.Create as Create
 import Web.Event.Event (preventDefault)
@@ -33,7 +34,8 @@ type State =
     }
 
 data Action
-    = UpdateDetails EnterTeamDetails.Output
+    = Initialize
+    | UpdateDetails EnterTeamDetails.Output
     | SendRequest Event
 
 type ChildSlots = (enterTeamDetails :: EnterTeamDetails.Slot)
@@ -70,6 +72,9 @@ sendRequest state @ { nickname, details } =
 
 handleAction :: forall left.
     Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
+handleAction Initialize = do
+    timezone <- getClientTimezone
+    H.modify_ \state -> state { details = state.details { timezone = Just timezone } }
 handleAction (UpdateDetails details) =
     H.modify_ \state -> state
         { details = state.details
@@ -139,7 +144,10 @@ component = H.mkComponent
         , submitting: false
         }
     , render
-    , eval: H.mkEval $ H.defaultEval { handleAction = handleAction }
+    , eval: H.mkEval $ H.defaultEval
+        { handleAction = handleAction
+        , initialize = Just Initialize
+        }
     }
 
 createTeam
