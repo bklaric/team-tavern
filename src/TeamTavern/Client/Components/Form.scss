@@ -1,0 +1,23 @@
+.form {
+    display: flex;
+    flex-direction: column;
+    padding: 21px;
+    background-color: white;
+    color: $text-color;
+    position: relative;
+    border-radius: inherit;
+}
+
+.form-submit-button {
+    @extend .primary-button;
+    margin: auto;
+}
+
+.form-error {
+    color: $error-color;
+    font-size: 14px;
+    line-height: 1.5;
+    text-align: center;
+    margin-top: 28px;
+    margin-bottom: 0;
+}

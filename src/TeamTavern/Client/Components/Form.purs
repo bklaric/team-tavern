@@ -21,8 +21,8 @@ submitButton icon text submittingText submitting =
     ]
 
 formError :: forall slots action. String -> Boolean -> Array (HH.HTML slots action)
+formError text true = [ HH.p [ HS.class_ "form-error" ] [ HH.text text ] ]
 formError text false = []
-formError text true = [ HH.p [ HS.class_ "other-error" ] [ HH.text text ] ]
 
 otherFormError :: forall slots action. Boolean -> Array (HH.HTML slots action)
 otherFormError = formError "Something unexpected went wrong! Please try again later."
