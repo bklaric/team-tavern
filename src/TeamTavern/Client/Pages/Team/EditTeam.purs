@@ -69,7 +69,7 @@ render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { details, submitting, otherError } =
     form SendRequest $
     [ enterTeamDetails details (Just <<< UpdateDetails)
-    , submitButton "fas fa-user-plus" "Edit team" "Editting team..." submitting
+    , submitButton "fas fa-edit" "Edit team" "Editting team..." submitting
     ]
     <>
     otherFormError otherError
