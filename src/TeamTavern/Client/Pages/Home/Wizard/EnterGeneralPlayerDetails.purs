@@ -236,18 +236,18 @@ render state =
                 [ HH.i [ HP.class_ $ HH.ClassName "fas fa-clock filter-field-icon" ] []
                 , HH.span [ HP.class_ $ HH.ClassName "filter-field-label" ] [ HH.text "Online on weekdays" ]
                 ]
-            , HH.div [ HP.class_ $ HH.ClassName "timespan-group" ]
-                [ HH.span [ HP.class_ $ HH.ClassName "timespan-group-from" ] [ HH.text "From" ]
+            , HH.div [ HP.class_ $ HH.ClassName "range-input" ]
+                [ HH.span [ HP.class_ $ HH.ClassName "range-input-from" ] [ HH.text "From" ]
                 , HH.input
-                    [ HP.class_ $ HH.ClassName $ "text-line-input timespan-group-input"
+                    [ HP.class_ $ HH.ClassName $ "range-input-part"
                     , HP.type_ HP.InputTime
                     , HP.disabled $ isNothing state.timezone
                     , HP.value state.weekdayFrom
                     , HE.onValueChange $ Just <<< UpdateWeekdayFrom
                     ]
-                , HH.span [ HP.class_ $ HH.ClassName "timespan-group-to" ] [ HH.text "to" ]
+                , HH.span [ HP.class_ $ HH.ClassName "range-input-to" ] [ HH.text "to" ]
                 , HH.input
-                    [ HP.class_ $ HH.ClassName $ "text-line-input timespan-group-input"
+                    [ HP.class_ $ HH.ClassName $ "range-input-part"
                     , HP.type_ HP.InputTime
                     , HP.disabled $ isNothing state.timezone
                     , HP.value state.weekdayTo
@@ -275,18 +275,18 @@ render state =
                 [ HH.i [ HP.class_ $ HH.ClassName "fas fa-clock filter-field-icon" ] []
                 , HH.span [ HP.class_ $ HH.ClassName "filter-field-label" ] [ HH.text "Online on weekends" ]
                 ]
-            , HH.div [ HP.class_ $ HH.ClassName "timespan-group" ]
-                [ HH.span [ HP.class_ $ HH.ClassName "timespan-group-from" ] [ HH.text "From" ]
+            , HH.div [ HP.class_ $ HH.ClassName "range-input" ]
+                [ HH.span [ HP.class_ $ HH.ClassName "range-input-from" ] [ HH.text "From" ]
                 , HH.input
-                    [ HP.class_ $ HH.ClassName $ "text-line-input timespan-group-input"
+                    [ HP.class_ $ HH.ClassName $ "range-input-part"
                     , HP.type_ HP.InputTime
                     , HP.disabled $ isNothing state.timezone
                     , HP.value state.weekendFrom
                     , HE.onValueChange $ Just <<< UpdateWeekendFrom
                     ]
-                , HH.span [ HP.class_ $ HH.ClassName "timespan-group-to" ] [ HH.text "to" ]
+                , HH.span [ HP.class_ $ HH.ClassName "range-input-to" ] [ HH.text "to" ]
                 , HH.input
-                    [ HP.class_ $ HH.ClassName $ "text-line-input timespan-group-input"
+                    [ HP.class_ $ HH.ClassName $ "range-input-part"
                     , HP.type_ HP.InputTime
                     , HP.disabled $ isNothing state.timezone
                     , HP.value state.weekendTo

@@ -11,22 +11,13 @@ import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Script.Request (justIfInt, nothingIfEmpty)
 import TeamTavern.Client.Snippets.Class as HS
 
-inputGroupsHeading :: forall slots action. String -> HH.HTML slots action
-inputGroupsHeading text = HH.h3 [ HS.class_ "input-groups-heading" ] [ HH.text text ]
-
-responsiveInputGroups :: forall slots action. Array (HH.HTML slots action) -> HH.HTML slots action
-responsiveInputGroups groups = HH.div [ HS.class_ "responsive-input-groups" ] groups
-
-inputGroup :: forall slots action. Array (HH.HTML slots action) -> HH.HTML slots action
-inputGroup group = HH.div [ HS.class_ "input-group" ] group
-
 inputLabel' :: forall slots action.
     String -> String -> Maybe String -> Boolean -> HH.HTML slots action
 inputLabel' icon label domain required =
     HH.label
     [ HS.class_ "input-label"] $
-    [ HH.i [ HS.class_ $ icon <> " filter-field-icon" ] []
-    , HH.span [ HS.class_ "filter-field-label" ] [ HH.text label ]
+    [ HH.i [ HS.class_ $ icon <> " input-label-icon" ] []
+    , HH.span [ HS.class_ "input-label-text" ] [ HH.text label ]
     ]
     <>
     (case domain of
@@ -56,6 +47,27 @@ requiredInputLabel icon label = inputLabel' icon label Nothing true
 inputLabel :: forall slots action. String -> String -> HH.HTML slots action
 inputLabel icon label = inputLabel' icon label Nothing false
 
+inputUnderlabel :: forall slots action. String -> HH.HTML slots action
+inputUnderlabel text =
+    HH.label
+    [ HS.class_ "input-underlabel" ]
+    [ HH.text text ]
+
+inputError :: forall slots action. Boolean -> String -> Array (HH.HTML slots action)
+inputError error text =
+    if error
+    then [ HH.p [ HS.class_ "input-error" ] [ HH.text text ] ]
+    else []
+
+inputGroup :: forall slots action. Array (HH.HTML slots action) -> HH.HTML slots action
+inputGroup group = HH.div [ HS.class_ "input-group" ] group
+
+responsiveInputGroups :: forall slots action. Array (HH.HTML slots action) -> HH.HTML slots action
+responsiveInputGroups groups = HH.div [ HS.class_ "responsive-input-groups" ] groups
+
+inputGroupsHeading :: forall slots action. String -> HH.HTML slots action
+inputGroupsHeading text = HH.h3 [ HS.class_ "input-groups-heading" ] [ HH.text text ]
+
 textLineInput :: forall slots action. String -> (String -> action) -> HH.HTML slots action
 textLineInput input onInput =
     HH.input
@@ -65,24 +77,12 @@ textLineInput input onInput =
     , HE.onValueInput $ Just <<< onInput
     ]
 
-numberInput :: forall slots action. Maybe Int -> (Maybe Int -> action) -> HH.HTML slots action
-numberInput (input :: Maybe Int) onInput =
-    HH.input
-    [ HS.class_ $ "text-line-input timespan-group-input"
-    , HP.type_ HP.InputNumber
-    , HP.value $ maybe "" show input
-    , HE.onValueChange $ Just <<< onInput <<< justIfInt
-    ]
-
-numberRangeInput :: forall slots action.
-    Maybe Int -> Maybe Int -> (Maybe Int -> action) -> (Maybe Int -> action) -> HH.HTML slots action
-numberRangeInput fromInput toInput onFromInput onToInput =
-    HH.div
-    [ HS.class_ "timespan-group" ]
-    [ HH.span [ HS.class_ "timespan-group-from" ] [ HH.text "From" ]
-    , numberInput fromInput onFromInput
-    , HH.span [ HS.class_ "timespan-group-to" ] [ HH.text "to" ]
-    , numberInput toInput onToInput
+textInput :: forall slots action. String -> (String -> action) -> HH.HTML slots action
+textInput input onInput =
+    HH.textarea
+    [ HS.class_ "text-input"
+    , HP.value input
+    , HE.onValueInput $ Just <<< onInput
     ]
 
 checkboxInput :: forall slots action.
@@ -99,11 +99,31 @@ checkboxInput input onInput label =
     , HH.text label
     ]
 
+numberInput :: forall slots action. Maybe Int -> (Maybe Int -> action) -> HH.HTML slots action
+numberInput (input :: Maybe Int) onInput =
+    HH.input
+    [ HS.class_ $ "range-input-part"
+    , HP.type_ HP.InputNumber
+    , HP.value $ maybe "" show input
+    , HE.onValueChange $ Just <<< onInput <<< justIfInt
+    ]
+
+numberRangeInput :: forall slots action.
+    Maybe Int -> Maybe Int -> (Maybe Int -> action) -> (Maybe Int -> action) -> HH.HTML slots action
+numberRangeInput fromInput toInput onFromInput onToInput =
+    HH.div
+    [ HS.class_ "range-input" ]
+    [ HH.span [ HS.class_ "range-input-from" ] [ HH.text "From" ]
+    , numberInput fromInput onFromInput
+    , HH.span [ HS.class_ "range-input-to" ] [ HH.text "to" ]
+    , numberInput toInput onToInput
+    ]
+
 timeInput :: forall slots action.
     Boolean -> Maybe String -> (Maybe String -> action) -> HH.HTML slots action
 timeInput disabled input onInput =
     HH.input
-    [ HS.class_ $ "text-line-input timespan-group-input"
+    [ HS.class_ $ "range-input-part"
     , HP.type_ HP.InputTime
     , HP.disabled disabled
     , HP.value $ maybe "" identity input
@@ -120,10 +140,10 @@ timeRangeInput
     -> HH.HTML slots action
 timeRangeInput disabled fromInput toInput onFromInput onToInput =
     HH.div
-    [ HS.class_ "timespan-group" ]
-    [ HH.span [ HS.class_ "timespan-group-from" ] [ HH.text "From" ]
+    [ HS.class_ "range-input" ]
+    [ HH.span [ HS.class_ "range-input-from" ] [ HH.text "From" ]
     , timeInput disabled fromInput onFromInput
-    , HH.span [ HS.class_ "timespan-group-to" ] [ HH.text "to" ]
+    , HH.span [ HS.class_ "range-input-to" ] [ HH.text "to" ]
     , timeInput disabled toInput onToInput
     ]
 
@@ -134,24 +154,4 @@ timeRangeInputUnderlabel disabled fromInput toInput =
     then [ inputUnderlabel "Set your timezone to unlock this field." ]
     else if isNothing fromInput && isJust toInput || isJust fromInput && isNothing toInput
     then [ inputUnderlabel "Enter both times for the field to have effect." ]
-    else []
-
-textInput :: forall slots action. String -> (String -> action) -> HH.HTML slots action
-textInput input onInput =
-    HH.textarea
-    [ HS.class_ "text-input"
-    , HP.value input
-    , HE.onValueInput $ Just <<< onInput
-    ]
-
-inputUnderlabel :: forall slots action. String -> HH.HTML slots action
-inputUnderlabel text =
-    HH.label
-    [ HS.class_ "input-underlabel" ]
-    [ HH.text text ]
-
-inputError :: forall slots action. Boolean -> String -> Array (HH.HTML slots action)
-inputError error text =
-    if error
-    then [ HH.p [ HS.class_ "input-error" ] [ HH.text text ] ]
     else []
