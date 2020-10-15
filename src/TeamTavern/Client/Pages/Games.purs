@@ -103,7 +103,7 @@ render (Games games') = HH.div [ HP.class_ $ HH.ClassName "games" ] $
         [ HH.div
             [ HP.class_ $ HH.ClassName "game-card-text"
             , HP.style (CSS.backgroundImage $ unsafeCoerce $ CSS.Value $ CSS.Plain $
-                "linear-gradient(to right,#603520dd,#603520dd), url(/static/soon-banner.png)")
+                "linear-gradient(to right,#603520dd,#603520dd), url(/images/soon-banner.png)")
             ] $
             [ HH.h3 [ HP.class_ $ HH.ClassName "game-card-coming-soon" ]
                 [ HH.text "More games coming soon!" ]
@@ -111,7 +111,7 @@ render (Games games') = HH.div [ HP.class_ $ HH.ClassName "games" ] $
         , HH.div
             [ HP.class_ $ HH.ClassName "game-card-image"
             , HP.style (CSS.backgroundImage $ unsafeCoerce $ CSS.Value $ CSS.Plain $
-                "url(/static/soon-banner.png)")
+                "url(/images/soon-banner.png)")
             ]
             []
         ]

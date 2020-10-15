@@ -4,10 +4,8 @@ import Prelude
 
 import Async (Async)
 import Async as Async
-import Async.Aff (affToAsync)
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
-import Data.Array as Array
 import Data.Bifunctor (lmap)
 import Data.Const (Const)
 import Data.Maybe (Maybe(..))
@@ -17,9 +15,9 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import Halogen.Query.EventSource as ES
 import Simple.JSON.Async as Json
 import TeamTavern.Client.Components.Modal as Modal
+import TeamTavern.Client.Components.Popover (popoverBody, popoverButtonCaret, popoverContainer, subscribeToWindowClick)
 import TeamTavern.Client.Pages.Player.ChangeNickname as ChangeNickname
 import TeamTavern.Client.Pages.Player.Details (details)
 import TeamTavern.Client.Pages.Player.Details as Details
@@ -34,8 +32,6 @@ import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaU
 import TeamTavern.Client.Script.Navigate (hardNavigate, navigateWithEvent_)
 import TeamTavern.Server.Player.View.SendResponse as View
 import Web.Event.Event as E
-import Web.HTML (window)
-import Web.HTML.Window as Window
 import Web.UIEvent.MouseEvent (MouseEvent)
 import Web.UIEvent.MouseEvent as ME
 
@@ -73,25 +69,18 @@ type ChildSlots =
 renderEditAccountButton :: forall slots.
     Boolean -> HH.HTML slots Action
 renderEditAccountButton editPopoverShown =
-    HH.div
-    [ HP.class_ $ HH.ClassName "popover-container" ] $
+    popoverContainer $
     [ HH.button
         [ HP.class_ $ HH.ClassName "popover-button"
         , HE.onClick $ Just <<< ToggleEditAccountPopover
         ] $
         [ HH.i [ HP.class_ $ HH.ClassName "fas fa-edit button-icon" ] []
         , HH.text "Edit account"
-        , HH.i
-            [ HP.class_ $ HH.ClassName $ "fas popover-button-caret "
-                <> if editPopoverShown then "fa-caret-up" else "fa-caret-down"
-            ]
-            []
+        , popoverButtonCaret editPopoverShown
         ]
     ]
-    <> (
-    if editPopoverShown
-    then Array.singleton $
-        HH.div [ HP.class_ $ HH.ClassName "popover" ]
+    <>
+    popoverBody editPopoverShown
         [ HH.div
             [ HP.class_ $ HH.ClassName "popover-item"
             , HE.onClick $ Just <<< ShowChangeNicknameModal
@@ -103,7 +92,6 @@ renderEditAccountButton editPopoverShown =
             ]
             [ HH.text "Edit account settings" ]
         ]
-    else [])
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render Empty = HH.div_ []
@@ -166,10 +154,7 @@ loadPlayer nickname windowSubscription = Async.unify do
 handleAction :: forall output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
 handleAction (Init nickname') = do
-    window <- H.liftEffect $ Window.toEventTarget <$> window
-    let windowEventSource = ES.eventListenerEventSource
-            (E.EventType "click") window \_ -> Just CloseEditAccountPopover
-    windowSubscription <- H.subscribe $ ES.hoist affToAsync windowEventSource
+    windowSubscription <- subscribeToWindowClick CloseEditAccountPopover
     state <- H.lift $ loadPlayer nickname' windowSubscription
     H.put state
     let metaNickname =

@@ -11,9 +11,11 @@ import Halogen.HTML as HH
 import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchorIndexed)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
+import TeamTavern.Client.Components.Popover (primaryButtonPopover)
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Server.Team.View (Profile)
+import Web.UIEvent.MouseEvent (MouseEvent)
 
 type ChildSlots children = (games :: Anchor.Slot String | children)
 
@@ -89,13 +91,19 @@ profileDetailsColumn profile = let
         [ HH.h4 [ HS.class_ "player-profile-section-title" ] [ HH.text "Profile details" ] ]
         <> details
 
-profiles :: forall action children left.
-    Array Profile -> H.ComponentHTML action (ChildSlots children) (Async left)
-profiles profiles' =
+profiles
+    :: forall action children left
+    .  Boolean
+    -> (MouseEvent -> action)
+    -> Array Profile
+    -> H.ComponentHTML action (ChildSlots children) (Async left)
+profiles popoverShown showPopover profiles' =
     HH.div [ HS.class_ "card" ] $
     [ HH.h2 [ HS.class_ "card-title" ]
         [ HH.span [ HS.class_ "card-title-text" ]
             [ HH.text "Profiles" ]
+        , primaryButtonPopover popoverShown "fas fa-user-plus" "Create team profile"
+            showPopover [ HH.text "Bruh"]
         ]
     ]
     <>

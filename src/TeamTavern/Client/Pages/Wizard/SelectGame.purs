@@ -46,14 +46,14 @@ render { games, selected } =
                 Just selected' | game.handle == selected'.handle ->
                     "select-game-selected-choice"
                 _ -> "select-game-choice"
-            , HC.style $ CSS.backgroundImage $ CSS.url $ "/static/" <> game.handle <> "-tile.jpg"
+            , HC.style $ CSS.backgroundImage $ CSS.url $ "/images/" <> game.handle <> "-tile.jpg"
             , HE.onClick $ const $ Just $ SelectGame game
             ]
             [ HH.div [ HP.class_ $ HH.ClassName "select-game-choice-ribbon" ]
                 [ HH.span [ HP.class_ $ HH.ClassName "select-game-choice-title" ]
                     [ HH.img
                         [ HP.class_ $ HH.ClassName "top-bar-game-icon"
-                        , HP.src $ "/static/" <> game.handle <> "-icon.png"
+                        , HP.src $ "/images/" <> game.handle <> "-icon.png"
                         ]
                     , HH.text game.title
                     ]
@@ -62,7 +62,7 @@ render { games, selected } =
         <>
         [ HH.div
             [ HP.class_ $ HH.ClassName "select-game-base-choice"
-            , HC.style $ CSS.backgroundImage $ CSS.url $ "/static/soon-tile.png"
+            , HC.style $ CSS.backgroundImage $ CSS.url $ "/images/soon-tile.png"
             ]
             [ HH.div [ HP.class_ $ HH.ClassName "select-game-choice-ribbon" ]
                 [ HH.span [ HP.class_ $ HH.ClassName "select-game-choice-title" ]

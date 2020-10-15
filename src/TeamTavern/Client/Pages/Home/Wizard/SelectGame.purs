@@ -57,7 +57,7 @@ render { ilk, games, selectedGame } =
                 [ HH.span [ HP.class_ $ HH.ClassName "select-game-choice-title" ]
                     [ HH.img
                         [ HP.class_ $ HH.ClassName "top-bar-game-icon"
-                        , HP.src $ "/static/" <> game.handle <> "-icon.png"
+                        , HP.src $ "/images/" <> game.handle <> "-icon.png"
                         ]
                     , HH.text game.title
                     ]
