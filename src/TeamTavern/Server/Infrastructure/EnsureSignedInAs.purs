@@ -4,16 +4,11 @@ import Prelude
 
 import Async (Async)
 import Async as Async
-import Data.Bifunctor.Label (label)
-import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
 import Data.String (toLower)
-import Data.Variant (SProxy(..), Variant, inj)
-import Postgres.Async.Query (query)
-import Postgres.Error (Error)
-import Postgres.Query (class Querier, Query(..), (:), (:|))
-import Postgres.Result (rowCount)
-import TeamTavern.Server.Infrastructure.Cookie (CookieInfo, Cookies, lookupCookieInfo)
+import Data.Variant (SProxy(..), inj)
+import Postgres.Query (class Querier)
+import TeamTavern.Server.Infrastructure.Cookie (CookieInfo, Cookies)
 import TeamTavern.Server.Infrastructure.EnsureSignedIn (EnsureSignedInError, ensureSignedIn)
 
 type EnsureSignedInAsError errors = EnsureSignedInError
