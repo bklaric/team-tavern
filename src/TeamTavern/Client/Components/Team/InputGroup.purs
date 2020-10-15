@@ -7,7 +7,7 @@ import Data.Array as Array
 import Data.Maybe (Maybe(..))
 import Data.Variant (SProxy(..))
 import Halogen.HTML (HTML, ComponentHTML)
-import TeamTavern.Client.Components.Input (checkboxInput, inputError, inputGroup, inputLabel, inputUnderlabel, numberRangeInput, requiredInputLabel, requiredTextLineInput, textInput, textLineInput, timeRangeInput, timeRangeInputUnderlabel)
+import TeamTavern.Client.Components.Input (checkboxInput, inputError, inputGroup, inputLabel, inputUnderlabel, numberRangeInput, requiredInputLabel, requiredTextLineInput, textInput_, textLineInput, timeRangeInput, timeRangeInputUnderlabel)
 import TeamTavern.Client.Components.SelectDefinitive.MultiSelect (multiSelect)
 import TeamTavern.Client.Components.SelectDefinitive.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.SelectDefinitive.MultiTreeSelect (multiTreeSelect)
@@ -152,7 +152,7 @@ timeRangeInputGroup label disabled fromValue toValue onFromValue onToValue =
 aboutInputGroup :: forall slots action. String -> (String -> action) -> Boolean -> HTML slots action
 aboutInputGroup value onValue error =
     inputGroup $
-    [ textInput value onValue
+    [ textInput_ value onValue
     , inputUnderlabel """Yo nigga, write about yourself. What are you like? Just how
         gay are you? What kind of faggots are you looking for?"""
     ]

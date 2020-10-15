@@ -2,6 +2,7 @@ module TeamTavern.Client.Pages.Conversation (Slot, conversation) where
 
 import Prelude
 
+import Async (Async)
 import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
@@ -20,9 +21,10 @@ import Halogen.HTML.Properties as HP
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.Divider (divider)
-import TeamTavern.Client.Components.Textarea (Message(..), Query(..), Text, textarea) as Textarea
+import TeamTavern.Client.Components.Input (inputError, inputGroup, textInput)
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
 import TeamTavern.Client.Script.Navigate (navigate_)
+import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass)
 import TeamTavern.Server.Conversation.Start.SendResponse as Conversation
 import TeamTavern.Server.Conversation.View.SendResponse as View
@@ -39,7 +41,7 @@ playerPath nickname = "/players/" <> nickname
 
 data Action
     = Init
-    | MessageChanged Textarea.Text
+    | UpdateMessage String
     | SendMessage MouseEvent
     | Navigate Path MouseEvent
 
@@ -49,7 +51,7 @@ data State
     | Conversation
         { nickname :: Nickname
         , conversation :: View.OkContent
-        , message ::  Textarea.Text
+        , message ::  String
         , messageError :: Boolean
         , otherError :: Boolean
         }
@@ -96,15 +98,11 @@ render (Conversation state) =
                     (content <#> \paragraph -> HH.p [ HP.class_ $ HH.ClassName "conversation-message-content-paragraph" ] [ HH.text paragraph ])
                 ])
     , HH.div [ HP.class_ $ HH.ClassName "card-section" ]
-        [ HH.div [ HP.class_ $ HH.ClassName "input-group" ]
-            [ Textarea.textarea
-                (SProxy :: SProxy "newMessage")
-                { text: "", placeholder: "Write a message..." }
-                \(Textarea.TextChanged message) -> Just $ MessageChanged message
-            , HH.p
-                [ HP.class_ $ inputErrorClass state.messageError ]
-                [ HH.text "The message cannot be empty and cannot be more than 2000 characters long." ]
+        [ inputGroup $
+            [ textInput "Write a message..." state.message UpdateMessage
             ]
+            <> inputError state.messageError
+                "The message cannot be empty and cannot be more than 2000 characters long."
         , HH.button
             [ HP.class_ $ HH.ClassName "primary-button"
             , HP.disabled $ state.message == ""
@@ -150,6 +148,8 @@ sendMessage state @ { nickname, message } = Async.unify do
                     error)
         _ -> Async.left $ Just $ state { otherError = true }
 
+handleAction :: forall slots output left.
+    Action -> H.HalogenM State Action slots output (Async left) Unit
 handleAction Init = do
     state <- H.get
     case state of
@@ -160,7 +160,7 @@ handleAction Init = do
             newState <- H.lift $ loadConversation nickname
             H.put newState
         _ -> pure unit
-handleAction (MessageChanged message) =
+handleAction (UpdateMessage message) =
     H.modify_ case _ of
         Conversation conversationState -> Conversation conversationState { message = message}
         state -> state
@@ -176,7 +176,6 @@ handleAction (SendMessage mouseEvent) = do
             newState <- H.lift $ sendMessage resetState
             case newState of
                 Nothing -> do
-                    void $ H.query (SProxy :: SProxy "newMessage") unit (Textarea.Clear unit)
                     handleAction Init
                 Just newState' -> H.put $ Conversation newState'
         otherState -> pure unit

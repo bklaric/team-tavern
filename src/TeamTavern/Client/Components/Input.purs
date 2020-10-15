@@ -80,13 +80,17 @@ textLineInput :: forall slots action.
 textLineInput input onInput =
     requiredTextLineInput (maybe "" identity input) (onInput <<< nothingIfEmpty)
 
-textInput :: forall slots action. String -> (String -> action) -> HH.HTML slots action
-textInput input onInput =
+textInput :: forall slots action. String -> String -> (String -> action) -> HH.HTML slots action
+textInput placeholder input onInput =
     HH.textarea
     [ HS.class_ "text-input"
+    , HP.placeholder placeholder
     , HP.value input
     , HE.onValueInput $ Just <<< onInput
     ]
+
+textInput_ :: forall slots action. String -> (String -> action) -> HH.HTML slots action
+textInput_ = textInput ""
 
 checkboxInput :: forall slots action.
     Boolean -> (Boolean -> action) -> String -> HH.HTML slots action

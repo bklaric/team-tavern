@@ -168,7 +168,7 @@ prepareFields (QueryPairs filters) = let
             optionKey' <#> \optionKey -> preparedField fieldKey optionKey
     groupeFields = preparedFields
         # foldl (\groupedFiltersSoFar (Tuple fieldKey optionKey) ->
-            MultiMap.insert' fieldKey optionKey groupedFiltersSoFar)
+            MultiMap.insertOrAppend' fieldKey optionKey groupedFiltersSoFar)
             MultiMap.empty
     in
     groupeFields # MultiMap.toUnfoldable'
