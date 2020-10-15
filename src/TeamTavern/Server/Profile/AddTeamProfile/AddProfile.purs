@@ -1,114 +1,59 @@
-module TeamTavern.Server.Profile.AddTeamProfile.AddProfile where
+module TeamTavern.Server.Profile.AddTeamProfile.AddProfile (addProfile) where
 
 import Prelude
 
 import Async (Async)
-import Async as Async
-import Data.Array (head)
-import Data.Bifunctor.Label (label, labelMap)
-import Data.Nullable (toNullable)
-import Data.Variant (SProxy(..), Variant, inj)
-import Foreign (MultipleErrors)
-import Postgres.Async.Query (query)
 import Postgres.Client (Client)
-import Postgres.Error (Error)
 import Postgres.Query (Query(..), QueryParameter, (:), (:|))
-import Postgres.Result (Result)
-import Postgres.Result as Result
-import Simple.JSON.Async (read)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
-import TeamTavern.Server.Player.UpdateDetails.ValidateTimespan (nullableTimeFrom, nullableTimeTo)
-import TeamTavern.Server.Profile.AddTeamProfile.AddFieldValues (ProfileId, addFieldValues)
-import TeamTavern.Server.Profile.AddTeamProfile.ValidateAgeSpan (nullableAgeFrom, nullableAgeTo)
+import TeamTavern.Server.Infrastructure.Error (ChangeSingleError)
+import TeamTavern.Server.Infrastructure.Postgres (queryFirstNotAuthorized)
+import TeamTavern.Server.Profile.AddTeamProfile.AddFieldValues (addFieldValues)
 import TeamTavern.Server.Profile.AddTeamProfile.ValidateProfile (Profile)
 import TeamTavern.Server.Profile.Routes (Handle)
-
-type AddProfileError errors = Variant
-    ( databaseError :: Error
-    , nothingInserted ::
-        { cookieInfo :: CookieInfo
-        , handle :: Handle
-        }
-    , unreadableProfileId ::
-        { result :: Result
-        , errors :: MultipleErrors
-        }
-    , emptyResult ::
-        { result :: Result
-        }
-    , unreadableFieldValueId ::
-        { result :: Result
-        , errors :: MultipleErrors
-        }
-    | errors )
 
 queryString :: Query
 queryString = Query """
     insert into team_profile
-        ( player_id
+        ( team_id
         , game_id
-        , summary
-        , age_from
-        , age_to
-        , languages
-        , countries
-        , timezone
-        , weekday_from
-        , weekday_to
-        , weekend_from
-        , weekend_to
-        , has_microphone
         , new_or_returning
+        , summary
         )
-    select $1, game.id, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
-    from game
-    where game.handle = $2
+    select team.id, game.id, $4, $5
+    from player, team, game
+    where player.id = $1 and team.handle = $2 and game.handle = $3 and team.owner_id = player.id
     returning team_profile.id as "profileId"
     """
 
-queryParameters :: CookieInfo -> Handle -> Profile -> Array QueryParameter
-queryParameters { id } handle profile =
+queryParameters :: CookieInfo -> Handle -> Handle -> Profile -> Array QueryParameter
+queryParameters { id } teamHandle gameHandle profile =
     id
-    : handle
-    : profile.summary
-    : nullableAgeFrom profile.ageSpan
-    : nullableAgeTo profile.ageSpan
-    : profile.languages
-    : profile.countries
-    : toNullable profile.timezone
-    : nullableTimeFrom profile.onlineWeekday
-    : nullableTimeTo profile.onlineWeekday
-    : nullableTimeFrom profile.onlineWeekend
-    : nullableTimeTo profile.onlineWeekend
-    : profile.hasMicrophone
-    :| profile.newOrReturning
+    : teamHandle
+    : gameHandle
+    : profile.newOrReturning
+    :| profile.ambitions
 
 addProfile'
     :: forall errors
     .  Client
     -> CookieInfo
     -> Handle
+    -> Handle
     -> Profile
-    -> Async (AddProfileError errors) ProfileId
-addProfile' client cookieInfo handle profile = do
-    result <- client
-        # query queryString (queryParameters cookieInfo handle profile)
-        # label (SProxy :: SProxy "databaseError")
-    { profileId } :: { profileId :: Int } <- Result.rows result
-        # head
-        # Async.note (inj
-            (SProxy :: SProxy "nothingInserted") { cookieInfo, handle })
-        >>= (read >>> labelMap
-            (SProxy :: SProxy "unreadableProfileId") { result, errors: _ })
-    pure profileId
+    -> Async (ChangeSingleError errors) { profileId :: Int }
+addProfile' client cookieInfo teamHandle gameHandle profile = do
+    queryFirstNotAuthorized client queryString
+        (queryParameters cookieInfo teamHandle gameHandle profile)
 
 addProfile
     :: forall errors
     .  Client
     -> CookieInfo
     -> Handle
+    -> Handle
     -> Profile
-    -> Async (AddProfileError errors) Unit
-addProfile client cookieInfo handle profile = do
-    profileId <- addProfile' client cookieInfo handle profile
+    -> Async (ChangeSingleError errors) Unit
+addProfile client cookieInfo teamHandle gameHandle profile = do
+    { profileId } <- addProfile' client cookieInfo teamHandle gameHandle profile
     addFieldValues client profileId profile.fieldValues

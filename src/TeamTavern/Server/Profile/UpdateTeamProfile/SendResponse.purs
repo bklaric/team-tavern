@@ -5,7 +5,7 @@ import Prelude
 
 import Async (Async, alwaysRight)
 import Data.Array as Array
-import Data.Variant (SProxy(..), Variant, inj, match)
+import Data.Variant (Variant, match)
 import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, noContent_)
 import Simple.JSON (writeJSON)
 import TeamTavern.Server.Profile.UpdateTeamProfile.LogError (AddGameTeamError)
@@ -19,21 +19,11 @@ errorResponse :: AddGameTeamError -> Response
 errorResponse = match
     { internal: const internalServerError__
     , client: const badRequest__
+    , profile: badRequest_ <<< writeJSON <<< Array.fromFoldable
     , databaseError: const $ internalServerError__
     , nicknameDoesntMatch: const forbidden__
     , unreadableFields: const internalServerError__
     , unreadableProfile: const badRequest__
-    , invalidProfile: \{ errors } ->
-        errors
-        # Array.fromFoldable
-        <#> match
-            { summary: const $ Array.singleton
-                $ inj (SProxy :: SProxy "invalidSummary") {}
-            }
-        # join
-        # inj (SProxy :: SProxy "invalidProfile")
-        # (writeJSON :: BadRequestContent -> String)
-        # badRequest_
     , nothingInserted: const internalServerError__
     , unreadableProfileId: const internalServerError__
     , emptyResult: const internalServerError__

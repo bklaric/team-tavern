@@ -58,6 +58,14 @@ notFoundHandler :: forall fields. Lacks "notFound" fields =>
     Builder (Record fields) { notFound :: Array String -> Effect Unit | fields }
 notFoundHandler = Builder.insert (SProxy :: SProxy "notFound") logLines
 
+notAuthorizedHandler :: forall fields. Lacks "notAuthorized" fields =>
+    Builder (Record fields) { notAuthorized :: Array String -> Effect Unit | fields }
+notAuthorizedHandler = Builder.insert (SProxy :: SProxy "notAuthorized") logLines
+
+clientHandler :: forall handlers. Lacks "client" handlers =>
+    Builder (Record handlers) { client :: Array String -> Effect Unit | handlers }
+clientHandler = Builder.insert (SProxy :: SProxy "client") logLines
+
 logInternalError :: String -> InternalError () -> Effect Unit
 logInternalError heading error = logError heading internalHandler error
 

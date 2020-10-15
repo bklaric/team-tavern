@@ -5,7 +5,7 @@ import Prelude
 import Async (Async, alwaysRight, examineLeftWithEffect)
 import Async.Validated as Async
 import Data.Array as Array
-import Data.Bifunctor.Label (label, labelMap)
+import Data.Bifunctor.Label (label)
 import Data.List.Types (NonEmptyList)
 import Data.Maybe (Maybe(..))
 import Data.Nullable (toNullable)
@@ -23,16 +23,15 @@ import Postgres.Query (class Querier, Query(..), QueryParameter, (:), (:|))
 import Prim.Row (class Lacks)
 import Record.Builder (Builder)
 import Record.Builder as Builder
-import Simple.JSON (class ReadForeign, writeJSON)
-import Simple.JSON.Async (readJSON)
-import TeamTavern.Server.Architecture.Perun.Request.Body (readBody)
+import Simple.JSON (writeJSON)
 import TeamTavern.Server.Domain.Text (Text, TextErrors, validateText)
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
 import TeamTavern.Server.Infrastructure.Error (InternalError)
-import TeamTavern.Server.Infrastructure.Log (internalHandler, logLines)
+import TeamTavern.Server.Infrastructure.Log (clientHandler, internalHandler, logLines)
 import TeamTavern.Server.Infrastructure.Log as Log
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstInternal)
+import TeamTavern.Server.Infrastructure.ReadJsonBody (readJsonBody)
 import TeamTavern.Server.Player.Domain.Id (Id)
 import TeamTavern.Server.Player.UpdateDetails.ValidateLangugase (Language, validateLanguages)
 import TeamTavern.Server.Player.UpdateDetails.ValidateTimespan (Timespan, nullableTimeFrom, nullableTimeTo, validateTimespan)
@@ -59,17 +58,6 @@ type TeamModel =
     , weekendTo :: Maybe String
     , about :: String
     }
-
-clientHandler :: forall handlers. Lacks "client" handlers =>
-    Builder (Record handlers) { client :: Array String -> Effect Unit | handlers }
-clientHandler = Builder.insert (SProxy :: SProxy "client") logLines
-
-readJsonBody :: forall errors result. ReadForeign result =>
-    Body -> Async (Variant (client :: Array String | errors)) result
-readJsonBody body = do
-    content <- readBody body
-    readJSON content # labelMap (SProxy :: SProxy "client") \errors ->
-        [ "Error reading request body: " <> show errors ]
 
 -- Name
 

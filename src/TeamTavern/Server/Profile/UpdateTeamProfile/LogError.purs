@@ -2,17 +2,16 @@ module TeamTavern.Server.Profile.UpdateTeamProfile.LogError where
 
 import Prelude
 
-import Data.List.Types (NonEmptyList)
+import Data.Array as Array
 import Data.Variant (Variant, match)
-import Effect (Effect)
+import Effect (Effect, foreachE)
 import Foreign (MultipleErrors)
 import Global.Unsafe (unsafeStringify)
 import Postgres.Error (Error)
 import Postgres.Result (Result, rows)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Server.Infrastructure.Log (logLines, logStamped, logt, print)
-import TeamTavern.Server.Profile.AddTeamProfile.ReadProfile as ReadProfile
-import TeamTavern.Server.Profile.AddTeamProfile.ValidateProfile as ValidateProfile
+import TeamTavern.Server.Profile.AddTeamProfile.ValidateProfile (ProfileErrors)
 import TeamTavern.Server.Profile.Routes (Handle)
 
 type AddGameTeamError = Variant
@@ -36,10 +35,7 @@ type AddGameTeamError = Variant
         , errors :: MultipleErrors
         }
     -- Validate profile.
-    , invalidProfile ::
-        { profile :: ReadProfile.Profile
-        , errors :: NonEmptyList ValidateProfile.ProfileError
-        }
+    , profile :: ProfileErrors
     -- Insert profile into database.
     , nothingInserted ::
         { cookieInfo :: CookieInfo
@@ -76,9 +72,8 @@ logError addError = do
         , unreadableProfile: \{ content, errors } -> do
             logt $ "Couldn't read dto out of content: " <> show content
             logt $ "Reading resulted in these errors: " <> show errors
-        , invalidProfile: \{ profile, errors } -> do
-            logt $ "Couldn't validate profile: " <> show profile
-            logt $ "Validation resulted in these errors: " <> show errors
+        , profile: \errors ->
+            foreachE (Array.fromFoldable errors) $ match { ambitions: logLines }
         , nothingInserted: \{ cookieInfo, handle } -> do
             logt $ "Player with cookie info: " <> show cookieInfo
             logt $ "Nothing inserted into profile table for game: " <> handle

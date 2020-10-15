@@ -12,14 +12,17 @@ import Data.Traversable (traverse)
 import Data.Variant (inj)
 import Error.Class (message, name)
 import Node.Errors.Class (code)
+import Postgres.Async.Pool (withTransaction)
 import Postgres.Async.Query (execute, query)
+import Postgres.Client (Client)
 import Postgres.Error (Error, constraint, detail, schema, severity, table)
+import Postgres.Pool (Pool)
 import Postgres.Query (class Querier, Query, QueryParameter)
 import Postgres.Result (rows)
 import Prim.Row (class Cons)
 import Simple.JSON (class ReadForeign)
 import Simple.JSON.Async (read)
-import TeamTavern.Server.Infrastructure.Error (InternalRow, LoadSingleError, InternalError)
+import TeamTavern.Server.Infrastructure.Error (InternalError, InternalRow, LoadSingleError, ChangeSingleError)
 
 prepareString :: String -> String
 prepareString string
@@ -68,9 +71,8 @@ teamAdjustedWeekendFrom = teamAdjustedTime "team.weekend_from"
 teamAdjustedWeekendTo :: String -> String
 teamAdjustedWeekendTo = teamAdjustedTime "team.weekend_to"
 
-reportDatabaseError :: forall right errors.
-    Async Error right -> Async (InternalError errors) right
-reportDatabaseError = labelMap (SProxy :: SProxy "internal") \error ->
+reportDatabaseError :: Error -> Array String
+reportDatabaseError error =
     [ "Name: " <> name error
     , "Message: " <> message error
     , "Code: " <> code error
@@ -81,10 +83,14 @@ reportDatabaseError = labelMap (SProxy :: SProxy "internal") \error ->
     , "Constraint: " <> maybe "-" identity (constraint error)
     ]
 
+reportDatabaseError' :: forall right errors.
+    Async Error right -> Async (InternalError errors) right
+reportDatabaseError' = labelMap (SProxy :: SProxy "internal") reportDatabaseError
+
 queryMany :: forall querier errors rows. Querier querier => ReadForeign rows =>
     querier -> Query -> Array QueryParameter -> Async (InternalError errors) (Array rows)
 queryMany pool queryString parameters = do
-    result <- pool # query queryString parameters # reportDatabaseError
+    result <- pool # query queryString parameters # reportDatabaseError'
     rows result # traverse read # labelMap (SProxy :: SProxy "internal") \errors ->
         [ "Error reading result from database: " <> show errors ]
 
@@ -107,11 +113,19 @@ queryFirstInternal :: forall row errors querier. Querier querier => ReadForeign 
     querier -> Query -> Array QueryParameter -> Async (InternalError errors) row
 queryFirstInternal = queryFirst (SProxy :: SProxy "internal")
 
-queryFirstClient :: forall row errors querier. Querier querier => ReadForeign row =>
+queryFirstNotFound :: forall row errors querier. Querier querier => ReadForeign row =>
     querier -> Query -> Array QueryParameter -> Async (LoadSingleError errors) row
-queryFirstClient = queryFirst (SProxy :: SProxy "notFound")
+queryFirstNotFound = queryFirst (SProxy :: SProxy "notFound")
+
+queryFirstNotAuthorized :: forall row errors querier. Querier querier => ReadForeign row =>
+    querier -> Query -> Array QueryParameter -> Async (ChangeSingleError errors) row
+queryFirstNotAuthorized = queryFirst (SProxy :: SProxy "notAuthorized")
 
 queryNone :: forall querier errors. Querier querier =>
     querier -> Query -> Array QueryParameter -> Async (InternalError errors) Unit
 queryNone querier queryString parameters =
-    querier # execute queryString parameters # reportDatabaseError
+    querier # execute queryString parameters # reportDatabaseError'
+
+transaction :: forall result errors.
+    (Client -> Async (InternalError errors) result) -> Pool -> Async (InternalError errors) result
+transaction = withTransaction (inj (SProxy :: SProxy "internal") <<< reportDatabaseError)

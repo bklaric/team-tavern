@@ -86,11 +86,10 @@ type AddPlayerProfile = Route
 
 type AddTeamProfile = Route
     Post
-    (  Literal "profiles"
-    :> Literal "by-handle"
-    :> Capture "handle" Handle
-    :> Literal "teams"
-    :> Capture "nickname" Nickname
+    (  Literal "teams"
+    :> Capture "teamHandle" Handle
+    :> Literal "profiles"
+    :> Capture "gameHandle" Handle
     :> End)
     NoQuery
 

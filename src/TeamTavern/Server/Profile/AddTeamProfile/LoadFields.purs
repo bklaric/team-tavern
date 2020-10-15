@@ -1,22 +1,10 @@
-module TeamTavern.Server.Profile.AddTeamProfile.LoadFields
-    (Option, Field, LoadFieldsError, loadFields) where
-
-import Prelude
+module TeamTavern.Server.Profile.AddTeamProfile.LoadFields (Option, Field, loadFields) where
 
 import Async (Async)
-import Data.Bifunctor.Label (label, labelMap)
-import Data.Symbol (SProxy(..))
-import Data.Traversable (traverse)
-import Data.Variant (Variant)
-import Foreign (MultipleErrors)
-import Postgres.Async.Query (query)
 import Postgres.Client (Client)
-import Postgres.Error (Error)
 import Postgres.Query (Query(..), (:))
-import Postgres.Result (Result, rows)
-import Simple.JSON.Async (read)
-
-type Handle = String
+import TeamTavern.Server.Infrastructure.Error (InternalError)
+import TeamTavern.Server.Infrastructure.Postgres (queryMany)
 
 type Option =
     { id :: Int
@@ -29,14 +17,6 @@ type Field =
     , key :: String
     , options :: Array Option
     }
-
-type LoadFieldsError errors = Variant
-    ( databaseError :: Error
-    , unreadableFields ::
-        { result :: Result
-        , errors :: MultipleErrors
-        }
-    | errors )
 
 queryString :: Query
 queryString = Query """
@@ -61,13 +41,5 @@ queryString = Query """
     group by field.id
     """
 
-loadFields :: forall errors.
-    Client -> Handle -> Async (LoadFieldsError errors) (Array Field)
-loadFields client handle = do
-    result <- client
-        # query queryString (handle : [])
-        # label (SProxy :: SProxy "databaseError")
-    fields <- rows result
-        # traverse read
-        # labelMap (SProxy :: SProxy "unreadableFields") { result, errors: _ }
-    pure fields
+loadFields :: forall errors. Client -> String -> Async (InternalError errors) (Array Field)
+loadFields client handle = queryMany client queryString (handle : [])

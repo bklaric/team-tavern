@@ -7,7 +7,6 @@ import Async (Async)
 import Async as Async
 import Data.Array (head)
 import Data.Bifunctor.Label (label, labelMap)
-import Data.Nullable (toNullable)
 import Data.Variant (SProxy(..), Variant, inj)
 import Foreign (MultipleErrors)
 import Postgres.Async.Query (execute, query)
@@ -17,14 +16,13 @@ import Postgres.Query (Query(..), QueryParameter, (:), (:|))
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
-import TeamTavern.Server.Player.UpdateDetails.ValidateTimespan (nullableTimeFrom, nullableTimeTo)
 import TeamTavern.Server.Profile.AddTeamProfile.AddFieldValues (ProfileId, addFieldValues)
-import TeamTavern.Server.Profile.AddTeamProfile.ValidateAgeSpan (nullableAgeFrom, nullableAgeTo)
 import TeamTavern.Server.Profile.AddTeamProfile.ValidateProfile (Profile)
 import TeamTavern.Server.Profile.Routes (Handle)
 
 type UpdateProfileError errors = Variant
-    ( databaseError :: Error
+    ( internal :: Array String
+    , databaseError :: Error
     , nothingInserted ::
         { cookieInfo :: CookieInfo
         , handle :: Handle
@@ -72,17 +70,7 @@ updateProfileParameters ::
 updateProfileParameters { id } handle profile =
     id
     : handle
-    : profile.summary
-    : nullableAgeFrom profile.ageSpan
-    : nullableAgeTo profile.ageSpan
-    : profile.languages
-    : profile.countries
-    : toNullable profile.timezone
-    : nullableTimeFrom profile.onlineWeekday
-    : nullableTimeTo profile.onlineWeekday
-    : nullableTimeFrom profile.onlineWeekend
-    : nullableTimeTo profile.onlineWeekend
-    : profile.hasMicrophone
+    : profile.ambitions
     :| profile.newOrReturning
 
 updateProfile'

@@ -10,7 +10,7 @@ import Postgres.Async.Query (query)
 import Postgres.Query (class Querier, Query(..), (:), (:|))
 import Postgres.Result (rowCount)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo, Cookies, lookupCookieInfo)
-import TeamTavern.Server.Infrastructure.Postgres (reportDatabaseError)
+import TeamTavern.Server.Infrastructure.Postgres (reportDatabaseError')
 
 type EnsureSignedInError errors = Variant
     ( internal :: Array String
@@ -36,7 +36,7 @@ ensureSignedIn querier cookies =
     Nothing -> Async.left $ inj (SProxy :: SProxy "client")
         [ "No cookie info has been found in cookies: " <> show cookies]
     Just cookieInfo @ { id, nickname, token } -> do
-        result <- querier # query queryString (id : nickname :| token) # reportDatabaseError
+        result <- querier # query queryString (id : nickname :| token) # reportDatabaseError'
         if rowCount result == 0
         then Async.left $ inj (SProxy :: SProxy "client")
             [ "Client session in cookies is invalid: " <> show cookies ]

@@ -213,8 +213,8 @@ handleRequest deployment pool client method url cookies body =
             Game.handleUpdate pool handle cookies body
         , addPlayerProfile: \identifiers ->
             Profile.addPlayerProfile pool identifiers cookies body
-        , addTeamProfile: \identifiers ->
-            Profile.addTeamProfile pool identifiers cookies body
+        , addTeamProfile:
+            Profile.addTeamProfile pool cookies body
         , updatePlayerProfile: \identifiers ->
             Profile.updatePlayerProfile pool identifiers cookies body
         , updateTeamProfile: \identifiers ->
