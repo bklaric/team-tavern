@@ -4,27 +4,23 @@ import Prelude
 
 import Async (Async)
 import Async.Aff (affToAsync)
-import Data.Array as Array
-import Data.Maybe (Maybe(..), maybe)
+import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
-import Effect.Class (liftEffect)
-import Halogen (SubscriptionId, lift)
+import Effect.Class (class MonadEffect, liftEffect)
+import Halogen (SubscriptionId)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
-import Halogen.HTML.Properties as HP
 import Halogen.Hooks as Hooks
 import Halogen.Query.EventSource as ES
-import TeamTavern.Client.Pages.Team.CreateProfile (createProfile)
-import TeamTavern.Client.Script.Request (get)
 import TeamTavern.Client.Snippets.Class as HS
-import TeamTavern.Server.Game.View.SendResponse as View
-import TeamTavern.Server.Game.ViewAll.SendResponse as ViewAll
 import Web.Event.Event as E
 import Web.HTML (window)
 import Web.HTML.Window as Window
 import Web.UIEvent.MouseEvent (MouseEvent)
 import Web.UIEvent.MouseEvent as ME
+
+-- HTML
 
 popoverContainer :: forall slots action. Array (HH.HTML slots action) -> HH.HTML slots action
 popoverContainer content = HH.div [ HS.class_ "popover-container" ] content
@@ -42,6 +38,8 @@ popoverBody popoverShown content =
     then [ HH.div [ HS.class_ "popover" ] content ]
     else []
 
+popoverItem :: forall slots action.
+    (MouseEvent -> action) -> Array (HH.HTML slots action) -> HH.HTML slots action
 popoverItem onClick content =
     HH.div [ HS.class_ "popover-item", HE.onClick $ Just <<< onClick ] content
 
@@ -72,6 +70,8 @@ primaryButtonPopover popoverShown icon text showPopover popoverContent =
     ]
     popoverContent
 
+-- Component
+
 subscribeToWindowClick :: forall output slots action state left.
     action -> H.HalogenM state action slots output (Async left) SubscriptionId
 subscribeToWindowClick onClick = do
@@ -79,6 +79,8 @@ subscribeToWindowClick onClick = do
     let windowEventSource = ES.eventListenerEventSource
             (E.EventType "click") window \_ -> Just onClick
     H.subscribe $ ES.hoist affToAsync windowEventSource
+
+-- Hook
 
 type UsePopover state = Hooks.UseEffect (Hooks.UseState Boolean state)
 
@@ -96,6 +98,8 @@ usePopover = Hooks.do
 
     Hooks.pure state
 
+togglePopover :: forall monad. MonadEffect monad =>
+    Hooks.StateId Boolean -> MouseEvent -> Hooks.HookM monad Unit
 togglePopover shownId mouseEvent = do
     mouseEvent # ME.toEvent # E.stopPropagation # liftEffect
     Hooks.modify_ shownId not

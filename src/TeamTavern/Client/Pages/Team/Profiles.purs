@@ -12,9 +12,9 @@ import Halogen.HTML as HH
 import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchorIndexed)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
-import TeamTavern.Client.Components.Popover (createProfileButton)
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
 import TeamTavern.Client.Snippets.Class as HS
+import TeamTavern.Client.Team.CreateProfileButton (createProfileButton)
 import TeamTavern.Server.Team.View (Profile)
 
 type ChildSlots children =
@@ -104,7 +104,8 @@ profiles teamHandle profiles' =
     [ HH.h2 [ HS.class_ "card-title" ]
         [ HH.span [ HS.class_ "card-title-text" ]
             [ HH.text "Profiles" ]
-        , HH.slot (SProxy :: SProxy "createProfile") unit createProfileButton { teamHandle } absurd
+        , HH.slot (SProxy :: SProxy "createProfile") unit createProfileButton
+            { teamHandle, profileGameHandles: profiles' <#> _.handle } absurd
         ]
     ]
     <>
