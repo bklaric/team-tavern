@@ -90,8 +90,7 @@ microphoneInputGroup :: forall slots action. Boolean -> (Boolean -> action) -> H
 microphoneInputGroup value onValue =
     inputGroup
     [ inputLabel "fas fa-microphone" "Microphone"
-    , checkboxInput value onValue
-        "Must have a microphone and be willing to communicate."
+    , checkboxInput value onValue "Must have a microphone and be willing to communicate."
     ]
 
 discordServerInputGroup :: forall slots action.

@@ -62,6 +62,7 @@ type ChildSlots =
     ( messageOwner :: NavigationAnchor.Slot Unit
     , discordServer :: Copyable.Slot
     , games :: Anchor.Slot String
+    , createProfile :: H.Slot (Const Void) Void Unit
     , editTeam :: EditTeam.Slot
     )
 
@@ -92,7 +93,7 @@ render (Loaded { team: team', status, showEditTeamModal, showCreateProfilePopove
     , HH.p [ HS.class_ "content-description" ]
         [ HH.text "This is a team, lmao!" ]
     , details team'
-    , profiles showCreateProfilePopover ToggleCreateProfilePopover team'.profiles
+    , profiles team'.handle team'.profiles
     ]
     <>
     if showEditTeamModal

@@ -111,7 +111,7 @@ render state = HH.div_ $
                                 ]
                                 [ HH.img
                                     [ HP.class_ $ HH.ClassName "top-bar-game-icon"
-                                    , HP.src $ String.replace (Pattern "icon") (Replacement "icon-orange") game.iconPath
+                                    , HP.src $ String.replace (Pattern "icon") (Replacement "icon-orange") ("/images/" <> game.handle <> "-icon.png")
                                     ]
                                 , HH.span [ HP.class_ $ HH.ClassName "top-bar-game-title" ]
                                     [ HH.text game.title ]

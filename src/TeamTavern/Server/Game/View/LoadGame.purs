@@ -103,15 +103,12 @@ queryString = Query """
         left join (
             select
                 field.*,
-                coalesce(
-                    json_agg(
-                        json_build_object(
-                            'key', field_option.key,
-                            'label', field_option.label
-                        ) order by field_option.ordinal
-                    ) filter (where field_option.id is not null),
-                    '[]'
-                ) as options
+                json_agg(
+                    json_build_object(
+                        'key', field_option.key,
+                        'label', field_option.label
+                    ) order by field_option.ordinal
+                ) filter (where field_option.id is not null) as options
             from field
                 left join field_option on field_option.field_id = field.id
             group by

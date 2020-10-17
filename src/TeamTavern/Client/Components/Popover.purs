@@ -4,18 +4,27 @@ import Prelude
 
 import Async (Async)
 import Async.Aff (affToAsync)
-import Data.Maybe (Maybe(..))
+import Data.Array as Array
+import Data.Maybe (Maybe(..), maybe)
+import Data.Tuple (Tuple(..))
 import Effect.Class (liftEffect)
-import Halogen (SubscriptionId)
+import Halogen (SubscriptionId, lift)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
+import Halogen.HTML.Properties as HP
+import Halogen.Hooks as Hooks
 import Halogen.Query.EventSource as ES
+import TeamTavern.Client.Pages.Team.CreateProfile (createProfile)
+import TeamTavern.Client.Script.Request (get)
 import TeamTavern.Client.Snippets.Class as HS
+import TeamTavern.Server.Game.View.SendResponse as View
+import TeamTavern.Server.Game.ViewAll.SendResponse as ViewAll
 import Web.Event.Event as E
 import Web.HTML (window)
 import Web.HTML.Window as Window
 import Web.UIEvent.MouseEvent (MouseEvent)
+import Web.UIEvent.MouseEvent as ME
 
 popoverContainer :: forall slots action. Array (HH.HTML slots action) -> HH.HTML slots action
 popoverContainer content = HH.div [ HS.class_ "popover-container" ] content
@@ -32,6 +41,9 @@ popoverBody popoverShown content =
     if popoverShown
     then [ HH.div [ HS.class_ "popover" ] content ]
     else []
+
+popoverItem onClick content =
+    HH.div [ HS.class_ "popover-item", HE.onClick $ Just <<< onClick ] content
 
 popover :: forall slots action.
     Boolean -> Array (HH.HTML slots action) -> Array (HH.HTML slots action) -> HH.HTML slots action
@@ -67,3 +79,23 @@ subscribeToWindowClick onClick = do
     let windowEventSource = ES.eventListenerEventSource
             (E.EventType "click") window \_ -> Just onClick
     H.subscribe $ ES.hoist affToAsync windowEventSource
+
+type UsePopover state = Hooks.UseEffect (Hooks.UseState Boolean state)
+
+usePopover :: forall left.
+    Hooks.Hook (Async left) UsePopover (Tuple Boolean (Hooks.StateId Boolean))
+usePopover = Hooks.do
+    state @ (Tuple shown shownId) <- Hooks.useState false
+
+    Hooks.useLifecycleEffect do
+        window <- window <#> Window.toEventTarget # liftEffect
+        let windowEventSource = ES.eventListenerEventSource
+                (E.EventType "click") window (const $ Just $ Hooks.put shownId false)
+        subscriptionId <- Hooks.subscribe $ ES.hoist affToAsync windowEventSource
+        pure $ Just $ Hooks.unsubscribe subscriptionId
+
+    Hooks.pure state
+
+togglePopover shownId mouseEvent = do
+    mouseEvent # ME.toEvent # E.stopPropagation # liftEffect
+    Hooks.modify_ shownId not

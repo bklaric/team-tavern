@@ -4,6 +4,7 @@ import Prelude
 
 import Async (Async)
 import Data.Array as Array
+import Data.Const (Const)
 import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
 import Halogen as H
@@ -11,13 +12,15 @@ import Halogen.HTML as HH
 import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchorIndexed)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
-import TeamTavern.Client.Components.Popover (primaryButtonPopover)
+import TeamTavern.Client.Components.Popover (createProfileButton)
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Server.Team.View (Profile)
-import Web.UIEvent.MouseEvent (MouseEvent)
 
-type ChildSlots children = (games :: Anchor.Slot String | children)
+type ChildSlots children =
+    ( games :: Anchor.Slot String
+    , createProfile :: H.Slot (Const Void) Void Unit
+    | children)
 
 profileDetails :: forall fieldOptionFields fieldValueFields fieldFields slots action.
     Array
@@ -93,17 +96,15 @@ profileDetailsColumn profile = let
 
 profiles
     :: forall action children left
-    .  Boolean
-    -> (MouseEvent -> action)
+    .  String
     -> Array Profile
     -> H.ComponentHTML action (ChildSlots children) (Async left)
-profiles popoverShown showPopover profiles' =
+profiles teamHandle profiles' =
     HH.div [ HS.class_ "card" ] $
     [ HH.h2 [ HS.class_ "card-title" ]
         [ HH.span [ HS.class_ "card-title-text" ]
             [ HH.text "Profiles" ]
-        , primaryButtonPopover popoverShown "fas fa-user-plus" "Create team profile"
-            showPopover [ HH.text "Bruh"]
+        , HH.slot (SProxy :: SProxy "createProfile") unit createProfileButton { teamHandle } absurd
         ]
     ]
     <>
@@ -116,7 +117,7 @@ profiles popoverShown showPopover profiles' =
         [ HH.h3 [ HS.class_ "player-profile-title" ]
             [ HH.div [ HS.class_ "player-profile-title-item" ] $
                 [ navigationAnchorIndexed (SProxy :: SProxy "games") profile.handle
-                    { path: "/games/" <> profile.handle <> "/players"
+                    { path: "/games/" <> profile.handle <> "/teams"
                     , content: HH.text profile.title
                     }
                 ]

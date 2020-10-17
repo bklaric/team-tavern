@@ -56,7 +56,10 @@ fieldInputGroup fieldValues onValue field
 newOrReturningInputGroup :: forall slots action.
     Boolean -> (Boolean -> action) -> HH.HTML slots action
 newOrReturningInputGroup value onValue =
-    checkboxInput value onValue "Must be new or returning players to the game."
+    inputGroup
+    [ inputLabel "fas fa-book" "Microphone"
+    , checkboxInput value onValue "Must be new or returning players to the game."
+    ]
 
 ambitionsInputGroup :: forall slots action.
     String -> (String -> action) -> Boolean -> HH.HTML slots action

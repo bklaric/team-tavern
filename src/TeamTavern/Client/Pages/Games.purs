@@ -45,7 +45,7 @@ render (Games games') = HH.div [ HP.class_ $ HH.ClassName "games" ] $
         ]
     ]
     <>
-    (games' <#> \{ title, handle, description, iconPath, bannerPath, playerCount, teamCount } ->
+    (games' <#> \{ title, handle, description, playerCount, teamCount } ->
         HH.div
         [ HP.class_ $ HH.ClassName "game-card"
         , HE.onClick $ Just <<< Navigate ("/games/" <> handle) false
@@ -53,7 +53,7 @@ render (Games games') = HH.div [ HP.class_ $ HH.ClassName "games" ] $
         [ HH.div
             [ HP.class_ $ HH.ClassName "game-card-text"
             , HP.style (CSS.backgroundImage $ unsafeCoerce $ CSS.Value $ CSS.Plain $
-                "linear-gradient(to right,#603520dd,#603520dd), url(" <> bannerPath <> ")")
+                "linear-gradient(to right,#603520dd,#603520dd), url(/images/" <> handle <> "-banner.jpg)")
             ] $
             [ HH.h3 [ HP.class_ $ HH.ClassName "game-card-heading" ]
                 [ HH.a
@@ -63,7 +63,7 @@ render (Games games') = HH.div [ HP.class_ $ HH.ClassName "games" ] $
                     ]
                     [ HH.img
                         [ HP.class_ $ HH.ClassName "game-card-logo"
-                        , HP.src iconPath
+                        , HP.src $ "/images/" <> handle <> "-icon.png"
                         , HP.alt $ title <> " icon"
                         ]
                     , HH.text title
@@ -92,7 +92,7 @@ render (Games games') = HH.div [ HP.class_ $ HH.ClassName "games" ] $
         , HH.div
             [ HP.class_ $ HH.ClassName "game-card-image"
             , HP.style (CSS.backgroundImage $ unsafeCoerce $ CSS.Value $ CSS.Plain $
-                "url(" <> bannerPath <> ")")
+                "url(/images/" <> handle <> "-banner.jpg)")
             ]
             []
         ]
