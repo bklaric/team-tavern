@@ -105,11 +105,10 @@ type UpdatePlayerProfile = Route
 
 type UpdateTeamProfile = Route
     Put
-    (  Literal "profiles"
-    :> Literal "by-handle"
-    :> Capture "handle" Handle
-    :> Literal "teams"
-    :> Capture "nickname" Nickname
+    (  Literal "teams"
+    :> Capture "teamHandle" Handle
+    :> Literal "profiles"
+    :> Capture "gameHandle" Nickname
     :> End)
     NoQuery
 

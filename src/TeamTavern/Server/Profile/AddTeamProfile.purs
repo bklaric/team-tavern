@@ -23,16 +23,15 @@ addTeamProfile pool cookies body { teamHandle, gameHandle } =
     -- Read info from cookies.
     cookieInfo <- ensureSignedIn pool cookies
 
-    pool # transaction
-        \client -> do
-            -- Load game fields from database.
-            fields <- loadFields client gameHandle
+    pool # transaction \client -> do
+        -- Load game fields from database.
+        fields <- loadFields client gameHandle
 
-            -- Read profile from body.
-            profile <- readProfile body
+        -- Read profile from body.
+        profile <- readProfile body
 
-            -- Validate profile.
-            profile' <- validateProfile fields profile
+        -- Validate profile.
+        profile' <- validateProfile fields profile
 
-            -- Add profile to database.
-            addProfile client cookieInfo teamHandle gameHandle profile'
+        -- Add profile to database.
+        addProfile client cookieInfo teamHandle gameHandle profile'

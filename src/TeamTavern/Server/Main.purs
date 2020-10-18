@@ -217,8 +217,8 @@ handleRequest deployment pool client method url cookies body =
             Profile.addTeamProfile pool cookies body
         , updatePlayerProfile: \identifiers ->
             Profile.updatePlayerProfile pool identifiers cookies body
-        , updateTeamProfile: \identifiers ->
-            Profile.updateTeamProfile pool identifiers cookies body
+        , updateTeamProfile:
+            Profile.updateTeamProfile pool cookies body
         , viewPlayerProfilesByGame: \filters @ { handle, page, timezone } ->
             Profile.viewPlayerProfilesByGame pool handle page timezone $ bundleFilters filters
         , viewTeamProfilesByGame: \filters @ { handle, page, timezone } ->

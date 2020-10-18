@@ -22,7 +22,10 @@ queryString = Query """
         )
     select team.id, game.id, $4, $5
     from player, team, game
-    where player.id = $1 and team.handle = $2 and game.handle = $3 and team.owner_id = player.id
+    where player.id = $1
+        and team.handle = $2
+        and game.handle = $3
+        and team.owner_id = player.id
     returning team_profile.id as "profileId"
     """
 

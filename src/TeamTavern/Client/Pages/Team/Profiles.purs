@@ -9,6 +9,7 @@ import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
+import Halogen.HTML.Events as HE
 import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchorIndexed)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
@@ -98,8 +99,9 @@ profiles
     :: forall action children left
     .  String
     -> Array Profile
+    -> (Profile -> action)
     -> H.ComponentHTML action (ChildSlots children) (Async left)
-profiles teamHandle profiles' =
+profiles teamHandle profiles' showEditProfileModal =
     HH.div [ HS.class_ "card" ] $
     [ HH.h2 [ HS.class_ "card-title" ]
         [ HH.span [ HS.class_ "card-title-text" ]
@@ -126,6 +128,19 @@ profiles teamHandle profiles' =
                 [ divider
                 , HH.span [ HS.class_ "profile-updated" ]
                     [ HH.text $ "Updated " <> lastUpdated profile.updatedSeconds ]
+                ]
+            , HH.div [ HS.class_ "player-profile-title-item" ] $
+                [ HH.button
+                    [ HS.class_ "regular-button"
+                    , HE.onClick $ const $ Just $ showEditProfileModal profile
+                    ]
+                    [ HH.i [ HS.class_ "fas fa-user-edit button-icon" ] []
+                    , HH.text "Edit profile"
+                    ]
+                ]
+                <>
+                [
+
                 ]
             ]
         , HH.div [ HS.class_ "profile-columns" ] $

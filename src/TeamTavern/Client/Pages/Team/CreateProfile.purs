@@ -18,7 +18,7 @@ import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.Team.EnterProfile (enterProfile)
 import TeamTavern.Client.Components.Team.EnterProfile as EnterProfile
 import TeamTavern.Client.Components.Team.ProfileInputGroup (Field)
-import TeamTavern.Client.Script.Navigate (navigate_)
+import TeamTavern.Client.Script.Navigate (hardNavigate)
 import TeamTavern.Client.Script.Request (postNoContent)
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
@@ -88,7 +88,7 @@ handleAction (SendRequest event) = do
     currentState <- H.modify _ { submitting = true }
     response <- H.lift $ sendRequest currentState
     case response of
-        Just (Right _) -> navigate_ $ "/teams/" <> currentState.teamHandle
+        Just (Right _) -> hardNavigate $ "/teams/" <> currentState.teamHandle
         Just (Left badContent) -> H.put $
             foldl
             (\state error ->

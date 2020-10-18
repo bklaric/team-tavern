@@ -7,8 +7,15 @@ import Async as Async
 import CSS as CSS
 import Client.Components.Copyable as Copyable
 import Control.Monad.State (class MonadState)
+import Data.Array (intercalate)
+import Data.Array as Array
 import Data.Const (Const)
+import Data.Foldable (foldl)
+import Data.List as List
+import Data.List.Types (NonEmptyList(..))
 import Data.Maybe (Maybe(..))
+import Data.MultiMap as MultiMap
+import Data.NonEmpty (NonEmpty(..))
 import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
@@ -18,8 +25,9 @@ import TeamTavern.Client.Components.Button (regularIconButton)
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
-import TeamTavern.Client.Components.Popover (subscribeToWindowClick)
 import TeamTavern.Client.Pages.Team.Details (details)
+import TeamTavern.Client.Pages.Team.EditProfile (editProfile)
+import TeamTavern.Client.Pages.Team.EditProfile as EditProfile
 import TeamTavern.Client.Pages.Team.EditTeam (editTeam)
 import TeamTavern.Client.Pages.Team.EditTeam as EditTeam
 import TeamTavern.Client.Pages.Team.Profiles (profiles)
@@ -28,10 +36,7 @@ import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaU
 import TeamTavern.Client.Script.Request (get)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Snippets.Class as HS
-import TeamTavern.Server.Team.View (Team)
-import Web.Event.Event as E
-import Web.UIEvent.MouseEvent (MouseEvent)
-import Web.UIEvent.MouseEvent as ME
+import TeamTavern.Server.Team.View (Team, Profile)
 
 type Input = { handle :: String }
 
@@ -39,8 +44,7 @@ type Loaded =
     { team :: Team
     , status :: Status
     , showEditTeamModal :: Boolean
-    , showCreateProfilePopover :: Boolean
-    , subscriptionId :: H.SubscriptionId
+    , showEditProfileModal :: Maybe Profile
     }
 
 data State
@@ -53,8 +57,8 @@ data Action
     = Initialize
     | ShowEditTeamModal
     | HideEditTeamModal
-    | ToggleCreateProfilePopover MouseEvent
-    | HideCreateProfilePopover
+    | ShowEditProfileModal Profile
+    | HideEditProfileModal
 
 type Slot = H.Slot (Const Void) Void Unit
 
@@ -64,11 +68,12 @@ type ChildSlots =
     , games :: Anchor.Slot String
     , createProfile :: H.Slot (Const Void) Void Unit
     , editTeam :: EditTeam.Slot
+    , editProfile :: EditProfile.Slot
     )
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render (Empty _) = HH.div_ []
-render (Loaded { team: team', status, showEditTeamModal, showCreateProfilePopover } ) =
+render (Loaded { team: team', status, showEditTeamModal, showEditProfileModal } ) =
     HH.div_  $
     [ HH.div [ HS.class_ "content-title" ]
         [ HH.div [ HS.class_ "content-title-left" ]
@@ -93,12 +98,38 @@ render (Loaded { team: team', status, showEditTeamModal, showCreateProfilePopove
     , HH.p [ HS.class_ "content-description" ]
         [ HH.text "This is a team, lmao!" ]
     , details team'
-    , profiles team'.handle team'.profiles
+    , profiles team'.handle team'.profiles ShowEditProfileModal
     ]
     <>
-    if showEditTeamModal
+    (if showEditTeamModal
     then [ editTeam team' (const $ Just HideEditTeamModal) ]
-    else [ ]
+    else [])
+    <>
+    case showEditProfileModal of
+    Nothing -> []
+    Just profile -> Array.singleton $
+        editProfile
+        { teamHandle: team'.handle
+        , gameHandle: profile.handle
+        , title: profile.title
+        , fields: profile.fields
+        , profile:
+            { fieldValues:
+                foldl
+                (\fieldValues { fieldKey, optionKeys } ->
+                    case Array.uncons optionKeys of
+                    Nothing -> fieldValues
+                    Just { head, tail } ->
+                        MultiMap.insertOrReplace fieldKey
+                        (NonEmptyList $ NonEmpty head $ List.fromFoldable tail) fieldValues
+                )
+                MultiMap.empty
+                profile.fieldValues
+            , newOrReturning: profile.newOrReturning
+            , ambitions: intercalate "\n\n" profile.summary
+            }
+        }
+        (const $ Just HideEditProfileModal)
 render NotFound = HH.p_ [ HH.text "Team could not be found." ]
 render Error = HH.p_ [ HH.text "There has been an error loading the team. Please try again later." ]
 
@@ -117,7 +148,6 @@ modifyLoaded_ mod =
 handleAction :: forall output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
 handleAction Initialize = do
-    subscriptionId <- subscribeToWindowClick HideCreateProfilePopover
     state <- H.get
     case state of
         Empty { handle } -> do
@@ -129,8 +159,7 @@ handleAction Initialize = do
                         { team: team''
                         , status
                         , showEditTeamModal: false
-                        , showCreateProfilePopover: false
-                        , subscriptionId
+                        , showEditProfileModal: Nothing
                         }
                 _ -> pure unit
         _ -> pure unit
@@ -142,11 +171,10 @@ handleAction ShowEditTeamModal =
     modifyLoaded_ _ { showEditTeamModal = true }
 handleAction HideEditTeamModal =
     modifyLoaded_ _ { showEditTeamModal = false }
-handleAction (ToggleCreateProfilePopover mouseEvent) = do
-    H.liftEffect $ E.stopPropagation $ ME.toEvent mouseEvent
-    modifyLoaded_  \state -> state { showCreateProfilePopover = not state.showCreateProfilePopover }
-handleAction HideCreateProfilePopover =
-    modifyLoaded_ _ { showCreateProfilePopover = false }
+handleAction (ShowEditProfileModal profile) =
+    modifyLoaded_ _ { showEditProfileModal = Just profile }
+handleAction HideEditProfileModal =
+    modifyLoaded_ _ { showEditProfileModal = Nothing }
 
 component :: forall query output left.
     H.Component HH.HTML query Input output (Async left)
