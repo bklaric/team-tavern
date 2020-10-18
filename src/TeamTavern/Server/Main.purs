@@ -18,7 +18,6 @@ import Data.Tuple (Tuple(..))
 import Data.Variant (match)
 import Effect (Effect)
 import Effect.Console (log)
-import Global.Unsafe (unsafeStringify)
 import Jarilo.Junction (JunctionProxy(..), router)
 import Node.Process (lookupEnv)
 import Node.Server (ListenOptions(..))
@@ -168,8 +167,8 @@ handleRequest deployment pool client method url cookies body =
             fromEffect $ logStamped $ "Endpoint 404 Not Found"
             fromEffect $ logt $
                 "Not found for method " <> show method <> " and url " <> show url
-            fromEffect $ logt $ "Routing resulted in these errors: " <> unsafeStringify errors
-            pure { statusCode: 404, headers: MultiMap.empty, content: unsafeStringify errors }
+            fromEffect $ logt $ "Routing resulted in these errors: " <> show errors
+            pure { statusCode: 404, headers: MultiMap.empty, content: show errors }
     Right routeValues -> routeValues # match
         { registerPlayer: const $
             Player.register pool client cookies body
