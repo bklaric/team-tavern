@@ -174,7 +174,8 @@ queryString = Query """
         weekday_to = $13,
         weekend_from = $14,
         weekend_to = $15,
-        about = $16
+        about = $16,
+        updated = now()
     where owner_id = $1 and handle = $2
     """
 

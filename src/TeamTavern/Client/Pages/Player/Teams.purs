@@ -16,10 +16,10 @@ import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchorIndexed)
 import TeamTavern.Client.Pages.Player.CreateTeam (createTeam)
 import TeamTavern.Client.Pages.Player.Types (PlayerStatus(..))
+import TeamTavern.Client.Script.LastUpdated (lastUpdated)
 import TeamTavern.Client.Script.Request (get)
 import TeamTavern.Client.Snippets.Class as HS
-
-type Team = { handle :: String, name :: String }
+import TeamTavern.Server.Team.ViewByOwner (Team)
 
 type Input =
     { nickname :: String
@@ -63,7 +63,7 @@ renderTeams teams' status =
                     }
                 , divider
                 , HH.span [ HP.class_ $ HH.ClassName "profile-updated" ]
-                    [ HH.text $ "Updated 12 days ago" ]
+                    [ HH.text $ lastUpdated team.updatedSeconds ]
                 ]
             ]
 

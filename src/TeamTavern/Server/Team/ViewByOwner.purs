@@ -9,14 +9,24 @@ import Simple.JSON (writeJSON)
 import TeamTavern.Server.Infrastructure.Log (logInternalError)
 import TeamTavern.Server.Infrastructure.Postgres (queryMany)
 
-type Team = { name :: String, handle :: String }
+type Team =
+    { name :: String
+    , handle :: String
+    , updated :: String
+    , updatedSeconds :: Number
+    }
 
 queryString :: Query
 queryString = Query """
-    select team.name, team.handle
+    select
+        team.name,
+        team.handle,
+        team.updated::text,
+        extract(epoch from (now() - team.updated)) as "updatedSeconds"
     from team
         join player on player.id = team.owner_id
-    where lower(player.nickname) = lower($1);
+    where lower(player.nickname) = lower($1)
+    order by updated desc
     """
 
 loadTeams pool nickname = queryMany pool queryString (nickname : [])

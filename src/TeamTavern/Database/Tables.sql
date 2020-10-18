@@ -46,6 +46,7 @@ create table team
     , weekend_to time
     , about text[] not null default '{}'
     , created timestamptz not null default current_timestamp
+    , updated timestamptz not null default current_timestamp
     );
 
 create table password_reset
