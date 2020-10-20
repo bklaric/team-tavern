@@ -1,0 +1,43 @@
+.card {
+    border-top: $border;
+    border-bottom: $border;
+    background-color: white;
+    margin: 0 auto 21px;
+    width: 100%;
+    max-width: 960px;
+
+    &:last-child {
+        margin-bottom: 0;
+    }
+
+    @media screen and (min-width: 960px) {
+        border: $border;
+        border-radius: 4px;
+    }
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    min-height: 40px;
+    padding: 7px 21px;
+}
+
+.card-heading {
+    display: inline;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.card-subheading {
+    font-size: 12px;
+    line-height: 1.5;
+    color: #888;
+}
+
+.card-section {
+    padding: 21px;
+    border-top: $border;
+}

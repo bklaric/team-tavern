@@ -88,8 +88,8 @@ render (Profiles nickname playerStatus profiles) =
         ]
     else (profiles # Array.mapWithIndex \index profile ->
         HH.div [ HP.class_ $ HH.ClassName "card-section" ] $
-        [ HH.h3 [ HP.class_ $ HH.ClassName "player-profile-title" ]
-            [ HH.div [ HP.class_ $ HH.ClassName "player-profile-title-item" ] $
+        [ HH.h3 [ HP.class_ $ HH.ClassName "profile-header" ]
+            [ HH.div [ HP.class_ $ HH.ClassName "profile-header-item" ] $
                 [ navigationAnchorIndexed (SProxy :: SProxy "games") index
                     { path: "/games/" <> profile.handle <> "/players"
                     , content: HH.text profile.title
@@ -98,7 +98,7 @@ render (Profiles nickname playerStatus profiles) =
                 , HH.span [ HP.class_ $ HH.ClassName "profile-updated" ]
                     [ HH.text $ "Updated " <> lastUpdated profile.updatedSeconds ]
                 ]
-            , HH.div [ HP.class_ $ HH.ClassName "player-profile-title-item" ]
+            , HH.div [ HP.class_ $ HH.ClassName "profile-header-item" ]
                 case playerStatus of
                 SamePlayer -> Array.singleton $
                     HH.button

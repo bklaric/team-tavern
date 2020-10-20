@@ -1,0 +1,49 @@
+.detail-columns {
+    display: flex;
+    flex-direction: column;
+    margin-right: -21px;
+
+    @media screen and (min-width: 630px) {
+        flex-direction: row;
+    }
+}
+
+.detail-column {
+    flex: 0 1 100%;
+    margin-right: 21px;
+}
+
+.detail-column-heading {
+    font-weight: 500;
+    color: #888;
+    margin-bottom: 14px;
+}
+
+.detail {
+    display: block;
+    font-size: 14px;
+    line-height: 21px;
+    margin-bottom: 14px;
+}
+
+.detail-icon {
+    position: absolute;
+    font-size: 20px;
+}
+
+.detail-label {
+    margin-left: 28px;
+}
+
+.detail-url {
+    @extend .detail-label;
+    font-weight: 500;
+}
+
+.detail-labelless {
+    margin-left: 28px;
+}
+
+.detail-emphasize {
+    font-weight: 500;
+}

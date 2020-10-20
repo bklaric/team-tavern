@@ -152,8 +152,8 @@ render { profiles, profileCount, showCreateProfile, playerInfo, page } =
         [ HH.p_ [ HH.text "No profiles satisfy specified filters." ] ]
     else (profiles # mapWithIndex \index profile ->
         HH.div [ HP.class_ $ HH.ClassName "card-section" ] $
-        [ HH.h4 [ HP.class_ $ HH.ClassName "player-profile-title" ] $
-            [ HH.div [ HP.class_ $ HH.ClassName "player-profile-title-item" ]
+        [ HH.h4 [ HP.class_ $ HH.ClassName "profile-header" ] $
+            [ HH.div [ HP.class_ $ HH.ClassName "profile-header-item" ]
                 [ navigationAnchorIndexed (SProxy :: SProxy "players") index
                     { path: "/players/" <> profile.nickname, content: HH.text profile.nickname }
                 , divider
@@ -164,10 +164,10 @@ render { profiles, profileCount, showCreateProfile, playerInfo, page } =
             <>
             case playerInfo of
             Just { nickname } | nickname /= profile.nickname ->
-                [ HH.div [ HP.class_ $ HH.ClassName "player-profile-title-item" ]
+                [ HH.div [ HP.class_ $ HH.ClassName "profile-header-item" ]
                     [ navigationAnchorIndexed (SProxy :: SProxy "messagePlayer") index
                         { path: "/conversations/" <> profile.nickname
-                        , content: HH.span [ HP.class_ $ HH.ClassName "player-profile-title-message"]
+                        , content: HH.span [ HP.class_ $ HH.ClassName "profile-header-message"]
                             [ HH.i [ HP.class_ $ H.ClassName "fas fa-envelope button-icon" ] [], HH.text "Message player" ]
                         }
                     ]

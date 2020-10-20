@@ -1,50 +1,9 @@
-.profile-title {
-    display: block;
-    font-size: 20px;
-    line-height: 21px;
-    font-weight: 500;
-    margin-bottom: 14px;
-}
-
-.player-profile-title {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    font-size: 20px;
-    line-height: 21px;
-    font-weight: 500;
-    margin-right: -14px;
-    margin-top: -14px;
-    margin-bottom: 0;
-}
-
-.player-profile-title-item {
-    margin-right: 14px;
-    margin-top: 14px;
-}
-
-.player-profile-title-message {
+.profile-header-message {
     font-size: 14px;
 }
 
 .profile-title-button {
     margin-left: 14px;
-}
-
-.profile-columns {
-    display: flex;
-    flex-direction: column;
-    margin-right: -21px;
-
-    @media screen and (min-width: 630px) {
-        flex-direction: row;
-    }
-}
-
-.profile-column {
-    flex: 0 1 100%;
-    margin-right: 21px;
 }
 
 .player-profile-section-title {
@@ -59,35 +18,6 @@
     line-height: 14px;
     color: #888;
     font-weight: 400;
-}
-
-.profile-field {
-    display: block;
-    font-size: 14px;
-    line-height: 21px;
-    margin-bottom: 14px;
-}
-
-.profile-field-icon {
-    position: absolute;
-    font-size: 20px;
-}
-
-.profile-field-label {
-    margin-left: 28px;
-}
-
-.profile-field-url {
-    @extend .profile-field-label;
-    font-weight: 500;
-}
-
-.profile-field-labelless {
-    margin-left: 28px;
-}
-
-.profile-field-emphasize {
-    font-weight: 500;
 }
 
 .profile-summary {

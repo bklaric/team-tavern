@@ -28,16 +28,28 @@ import URI.Extra.QueryPairs as Key
 import URI.Extra.QueryPairs as Value
 
 pageSize :: Int
-pageSize = 20
+pageSize = 10
 
 type LoadProfilesResult =
-    { nickname :: String
-    , age :: { from :: Maybe Int, to :: Maybe Int }
-    , countries :: Array String
+    { owner :: String
+    , handle :: String
+    , name :: String
+    , website :: Maybe String
+    , ageFrom :: Maybe Int
+    , ageTo :: Maybe Int
+    , locations :: Array String
     , languages :: Array String
-    , hasMicrophone :: Boolean
-    , weekdayOnline :: Maybe { from :: String, to :: String }
-    , weekendOnline :: Maybe { from :: String, to :: String }
+    , microphone :: Boolean
+    , discordServer :: Maybe String
+    , weekdayOnline :: Maybe
+        { from :: String
+        , to :: String
+        }
+    , weekendOnline :: Maybe
+        { from :: String
+        , to :: String
+        }
+    , about :: Array String
     , fieldValues :: Array
         { field ::
             { ilk :: Int
@@ -202,23 +214,24 @@ queryStringWithoutPagination handle timezone filters = Query $ """
     select profile.*
     from
         (select
-            player.nickname,
-            json_build_object(
-                'from', profile.age_from,
-                'to', profile.age_to
-            ) as age,
-            profile.countries,
-            profile.languages,
-            profile.has_microphone as "hasMicrophone",
+            player.nickname as owner,
+            team.handle,
+            team.name,
+            team.website,
+            team.age_from as "ageFrom",
+            team.age_to as "ageTo",
+            team.locations,
+            team.languages,
+            team.microphone,
             case
-                when profile.weekday_from is not null and profile.weekday_to is not null
+                when team.weekday_from is not null and team.weekday_to is not null
                 then json_build_object(
                     'from', to_char(""" <> teamAdjustedWeekdayFrom timezone <> """, 'HH24:MI'),
                     'to', to_char(""" <> teamAdjustedWeekdayTo timezone <> """, 'HH24:MI')
                 )
             end as "weekdayOnline",
             case
-                when profile.weekend_from is not null and profile.weekend_to is not null
+                when team.weekend_from is not null and team.weekend_to is not null
                 then json_build_object(
                     'from', to_char(""" <> teamAdjustedWeekendFrom timezone <> """, 'HH24:MI'),
                     'to', to_char(""" <> teamAdjustedWeekendTo timezone <> """, 'HH24:MI')
@@ -238,13 +251,15 @@ queryStringWithoutPagination handle timezone filters = Query $ """
                 ) filter (where field_values.team_profile_id is not null),
                 '[]'
             ) as "fieldValues",
+            team.about,
             profile.new_or_returning as "newOrReturning",
             profile.summary,
             profile.updated::text,
-            extract(epoch from (now() - updated)) as "updatedSeconds"
+            extract(epoch from (now() - profile.updated)) as "updatedSeconds"
         from team_profile as profile
             join game on game.id = profile.game_id
-            join player on player.id = profile.player_id
+            join team on team.id = profile.team_id
+            join player on player.id = team.owner_id
             left join (
                 select field_value.team_profile_id,
                     field.ilk,
@@ -280,7 +295,7 @@ queryStringWithoutPagination handle timezone filters = Query $ """
             player.email_confirmed
             and game.handle = """ <> prepareString handle
             <> createProfileFilterString timezone filters <> """
-        group by player.id, profile.id
+        group by player.id, team.id, profile.id
         ) as profile
     """ <> createFieldsFilterString filters.fields <> """
     order by profile.updated desc"""
