@@ -14,12 +14,12 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Components.Card (card, cardHeader, cardHeading, cardSection, cardSubheading)
-import TeamTavern.Client.Components.Detail (detailColumn, detailColumnHeading, detailColumns)
+import TeamTavern.Client.Components.Detail (detailColumn, detailColumnHeading, detailColumns, textDetail)
 import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchorIndexed)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
 import TeamTavern.Client.Components.Profile (profileHeader, profileHeaderItem, profileHeading, profileSubheading)
-import TeamTavern.Client.Components.Team.ProfileDetail (profileDetails, profileDetails')
+import TeamTavern.Client.Components.Team.ProfileDetail (profileDetails')
 import TeamTavern.Client.Components.Team.TeamDetail (teamDetails)
 import TeamTavern.Client.Script.Cookie (PlayerInfo)
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
@@ -131,14 +131,14 @@ render { profiles, profileCount, showCreateProfile, playerInfo, page } =
     (profiles # mapWithIndex \index profile -> let
         teamDetails' = teamDetails profile
         profileDetails'' = profileDetails' profile.fieldValues profile.newOrReturning
-        about = []
-        ambitions = []
+        about = textDetail profile.about
+        ambitions = textDetail profile.summary
         in
         cardSection $
         [ profileHeader $
             [ profileHeaderItem
                 [ profileHeading (SProxy :: SProxy "teams") profile.handle
-                    ("/teams/" <> profile.name) profile.name
+                    ("/teams/" <> profile.handle) profile.name
                 , divider
                 , profileSubheading $ "Updated " <> lastUpdated profile.updatedSeconds
                 ]
@@ -157,10 +157,6 @@ render { profiles, profileCount, showCreateProfile, playerInfo, page } =
                     ]
                 ]
             _ -> []
-        , detailColumns
-            [
-
-            ]
         ]
         <>
         if (not $ Array.null teamDetails') || (not $ Array.null profileDetails'')
@@ -182,11 +178,22 @@ render { profiles, profileCount, showCreateProfile, playerInfo, page } =
                         ]
                     else []
                 )
-                -- <>
-                -- ( if (not $ Array.null about) || (not $ Array.null ambitions)
-                --     then
-                --         [ detailsColumn ""]
-                -- )
+                <>
+                ( if (not $ Array.null about) || (not $ Array.null ambitions)
+                    then
+                        [ detailColumn $
+                            ( if not $ Array.null about
+                                then [ detailColumnHeading "About" ] <> about
+                                else []
+                            )
+                            <>
+                            ( if not $ Array.null ambitions
+                                then [ detailColumnHeading "Ambitions" ] <> ambitions
+                                else []
+                            )
+                        ]
+                    else []
+                )
             ]
         else []
         -- <> Array.catMaybes

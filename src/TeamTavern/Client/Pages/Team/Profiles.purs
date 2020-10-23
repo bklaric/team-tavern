@@ -5,7 +5,7 @@ import Prelude
 import Async (Async)
 import Data.Array as Array
 import Data.Const (Const)
-import Data.Maybe (Maybe(..), maybe)
+import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
@@ -30,7 +30,7 @@ profileAmbitionsColumn profile | Array.null profile.summary = []
 profileAmbitionsColumn profile = Array.singleton $
     HH.div [ HS.class_ "profile-column" ] $
     [ HH.h4 [ HS.class_ "player-profile-section-title" ] [ HH.text "Ambitions" ] ]
-    <> maybe [] identity (textDetail profile.summary)
+    <> textDetail profile.summary
 
 profileDetailsColumn :: forall slots action. Profile -> Array (HH.HTML slots action)
 profileDetailsColumn profile = let

@@ -6,7 +6,7 @@ import Async (Async)
 import Client.Components.Copyable as Copyable
 import Data.Array (null)
 import Data.Array as Array
-import Data.Maybe (Maybe(..), isNothing, maybe)
+import Data.Maybe (Maybe(..), isNothing)
 import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
@@ -47,7 +47,7 @@ teamAboutColumn team | noAbout team = []
 teamAboutColumn team = Array.singleton $
     HH.div [ HS.class_ "profile-column" ] $
     [ HH.h4 [ HS.class_ "player-profile-section-title" ] [ HH.text "About" ] ]
-    <> maybe [] identity (textDetail team.about)
+    <> textDetail team.about
 
 details :: forall action children left.
     Team -> H.ComponentHTML action (discordServer :: Copyable.Slot | children) (Async left)

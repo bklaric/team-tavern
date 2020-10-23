@@ -104,7 +104,6 @@ weekendsOnlineDetail :: forall slots actions.
     Maybe { from :: String, to :: String } -> Maybe (HH.HTML slots actions)
 weekendsOnlineDetail fromTo = onlineDetail "weekends" fromTo
 
-textDetail :: forall slots action. Array String -> Maybe (Array (HH.HTML slots action))
-textDetail paragraphs | Array.null paragraphs = Nothing
-textDetail paragraphs = Just $
+textDetail :: forall slots action. Array String -> Array (HH.HTML slots action)
+textDetail paragraphs =
     paragraphs <#> \paragraph -> HH.p [ HS.class_ "detail-paragraph" ] [ HH.text paragraph ]
