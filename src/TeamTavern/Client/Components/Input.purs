@@ -10,6 +10,7 @@ import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Script.Request (justIfInt, nothingIfEmpty)
 import TeamTavern.Client.Snippets.Class as HS
+import Unsafe.Coerce (unsafeCoerce)
 
 inputLabel' :: forall slots action.
     String -> String -> Maybe String -> Boolean -> HH.HTML slots action
@@ -162,3 +163,15 @@ timeRangeInputUnderlabel disabled fromInput toInput =
     else if isNothing fromInput && isJust toInput || isJust fromInput && isNothing toInput
     then [ inputUnderlabel "Enter both times for the field to have effect." ]
     else []
+
+dateInput :: forall slots action.
+    String -> String -> (Maybe String) -> (Maybe String -> action) -> HH.HTML slots action
+dateInput min max value onValue =
+    HH.input
+    [ HS.class_ "text-line-input"
+    , HP.type_ HP.InputDate
+    , HP.min $ unsafeCoerce min
+    , HP.max $ unsafeCoerce max
+    , HP.value $ maybe "" identity value
+    , HE.onValueInput $ Just <<< onValue <<< nothingIfEmpty
+    ]

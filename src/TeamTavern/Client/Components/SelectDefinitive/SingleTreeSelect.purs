@@ -1,5 +1,5 @@
 module TeamTavern.Client.Components.SelectDefinitive.SingleTreeSelect
-   (Labeler, Comparer, InputEntry(..), Input, Output(..), Slot, singleTreeSelect) where
+   (Labeler, Comparer, InputEntry(..), Input, Output, Slot, singleTreeSelect) where
 
 import Prelude
 
@@ -73,7 +73,7 @@ data Action option
     | SelectEntry (Maybe option)
     | ToggleEntryExpanded option
 
-data Output option = SelectedChanged (Maybe option)
+type Output option = Maybe option
 
 type Slot option = H.Slot (Const Void) (Output option) Unit
 
@@ -221,7 +221,7 @@ handleAction (Filter text) =
         }
 handleAction (SelectEntry option) = do
     state <- H.modify (_ { selected = option, open = false })
-    H.raise $ SelectedChanged state.selected
+    H.raise state.selected
 handleAction (ToggleEntryExpanded option) =
     H.modify_ \state @ { entries, comparer } ->
         state { entries = toggleEntriesExpanded comparer option entries }

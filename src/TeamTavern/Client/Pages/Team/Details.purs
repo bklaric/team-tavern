@@ -12,7 +12,7 @@ import Halogen as H
 import Halogen.HTML as HH
 import Record as Record
 import TeamTavern.Client.Components.Detail (textDetail)
-import TeamTavern.Client.Components.Team.TeamDetail (teamDetails)
+import TeamTavern.Client.Components.Team.TeamDetails (teamDetails)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Server.Team.View (Team)
 

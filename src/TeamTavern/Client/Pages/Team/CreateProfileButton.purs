@@ -1,4 +1,4 @@
-module TeamTavern.Client.Team.CreateProfileButton where
+module TeamTavern.Client.Pages.Team.CreateProfileButton where
 
 import Prelude
 
@@ -42,7 +42,7 @@ createProfileButton = Hooks.component $ \_ { teamHandle, profileGameHandles } ->
     Hooks.pure $
         if Array.null games
         then HH.div_ []
-        else 
+        else
         popover
         shown
         ([ HH.button

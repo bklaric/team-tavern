@@ -1,5 +1,5 @@
 module TeamTavern.Client.Components.SelectDefinitive.SingleSelect
-    (Input, Output(..), Slot, singleSelect, singleSelectIndexed) where
+    (Input, Output, Slot, singleSelect, singleSelectIndexed) where
 
 import Prelude
 
@@ -57,7 +57,7 @@ data Action option
     | KeepOpen
     | FilterInput String
 
-data Output option = SelectedChanged (Maybe option)
+type Output option = Maybe option
 
 type Slot option = H.Slot (Const Void) (Output option)
 
@@ -137,7 +137,7 @@ handleAction Finalize = do
         Nothing -> pure unit
 handleAction (Select selected) = do
     H.modify_ (_ { selected = selected, open = false })
-    H.raise $ SelectedChanged selected
+    H.raise selected
 handleAction Open =
     H.modify_ (_ { open = true, keepOpen = true })
 handleAction Close =

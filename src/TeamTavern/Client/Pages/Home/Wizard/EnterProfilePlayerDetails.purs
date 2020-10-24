@@ -146,8 +146,7 @@ fieldInput fieldValues _ _ { key, ilk: 2, label, icon, required, options: Just o
         , comparer: \leftOption rightOption -> leftOption.key == rightOption.key
         , filter: Nothing
         }
-        \(SingleSelect.SelectedChanged option) ->
-            Just $ UpdateSingleSelect key (option <#> _.key)
+        \option -> Just $ UpdateSingleSelect key (option <#> _.key)
     ]
 fieldInput fieldValues _ _ { key, ilk: 3, label, icon, required, options: Just options } = let
     fieldValue' = fieldValues # find \{ fieldKey } -> fieldKey == key
@@ -163,8 +162,7 @@ fieldInput fieldValues _ _ { key, ilk: 3, label, icon, required, options: Just o
         , comparer: \leftOption rightOption -> leftOption.key == rightOption.key
         , filter: Nothing
         }
-        \(MultiSelect.SelectedChanged options') ->
-            Just $ UpdateMultiSelect key (options' <#> _.key)
+        \options' -> Just $ UpdateMultiSelect key (options' <#> _.key)
     ]
 fieldInput _ _ _ _ = HH.div_ []
 

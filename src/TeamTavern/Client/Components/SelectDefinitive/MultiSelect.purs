@@ -1,5 +1,5 @@
 module TeamTavern.Client.Components.SelectDefinitive.MultiSelect
-    (Input, Output(..), Slot, multiSelect, multiSelectIndexed) where
+    (Input, Output, Slot, multiSelect, multiSelectIndexed) where
 
 import Prelude
 
@@ -57,7 +57,7 @@ data Action option
     | KeepOpen
     | FilterInput String
 
-data Output option = SelectedChanged (Array option)
+type Output option = Array option
 
 type Slot option = H.Slot (Const Void) (Output option)
 
@@ -153,7 +153,7 @@ handleAction (ToggleOption toggledOption) = do
             then entry { selected = not entry.selected }
             else entry
         }
-    H.raise $ SelectedChanged (entries # Array.filter _.selected <#> _.option)
+    H.raise (entries # Array.filter _.selected <#> _.option)
 handleAction Open =
     H.modify_ (_ { open = true, keepOpen = true })
 handleAction Close =

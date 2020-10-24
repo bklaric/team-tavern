@@ -1,25 +1,22 @@
-module TeamTavern.Client.Components.Team.InputGroup where
+module TeamTavern.Client.Components.Team.TeamInputGroup where
 
 import Prelude
 
 import Async (Async)
-import Data.Array as Array
 import Data.Maybe (Maybe(..))
 import Data.Variant (SProxy(..))
 import Halogen.HTML (HTML, ComponentHTML)
-import TeamTavern.Client.Components.Input (checkboxInput, inputError, inputGroup, inputLabel, inputUnderlabel, numberRangeInput, requiredInputLabel, requiredTextLineInput, textInput_, textLineInput, timeRangeInput, timeRangeInputUnderlabel)
+import TeamTavern.Client.Components.Input (checkboxInput, inputError, inputGroup, inputLabel, inputUnderlabel, numberRangeInput, requiredInputLabel, requiredTextLineInput, textInput_, textLineInput)
 import TeamTavern.Client.Components.SelectDefinitive.MultiSelect (multiSelect)
 import TeamTavern.Client.Components.SelectDefinitive.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.SelectDefinitive.MultiTreeSelect (multiTreeSelect)
 import TeamTavern.Client.Components.SelectDefinitive.MultiTreeSelect as MultiTreeSelect
-import TeamTavern.Client.Components.SelectDefinitive.SingleSelect (singleSelect)
-import TeamTavern.Client.Components.SelectDefinitive.SingleSelect as SingleSelect
 import TeamTavern.Server.Infrastructure.Languages (allLanguages)
 import TeamTavern.Server.Infrastructure.Regions (Region(..), allRegions)
-import TeamTavern.Server.Infrastructure.Timezones (Timezone, allTimezones)
 
 locationToEntry :: Region -> MultiTreeSelect.InputEntry String
-locationToEntry (Region region subRegions) = MultiTreeSelect.InputEntry
+locationToEntry (Region region subRegions) =
+    MultiTreeSelect.InputEntry
     { option: region
     , subEntries: subRegions <#> locationToEntry
     }
@@ -65,7 +62,7 @@ locationInputGroup value onValue =
         , comparer: (==)
         , filter: "Search locations"
         }
-        \(MultiTreeSelect.SelectedChanged locations) -> Just $ onValue locations
+        \locations -> Just $ onValue locations
     ]
 
 languagesInputGroup
@@ -83,7 +80,7 @@ languagesInputGroup value onValue =
         , comparer: (==)
         , filter: Just "Search languages"
         }
-        \(MultiSelect.SelectedChanged languages) -> Just $ onValue languages
+        \languages -> Just $ onValue languages
     ]
 
 microphoneInputGroup :: forall slots action. Boolean -> (Boolean -> action) -> HTML slots action
@@ -104,56 +101,12 @@ discordServerInputGroup value onValue error =
     <>
     inputError error "This does not look like a valid Discord tag."
 
-timezoneInputGroup
-    :: forall slots action left
-    .  Maybe String
-    -> (Maybe String -> action)
-    -> ComponentHTML action (timezone :: SingleSelect.Slot Timezone Unit | slots) (Async left)
-timezoneInputGroup value onValue =
-    inputGroup
-    [ inputLabel "fas fa-user-clock" "Timezone"
-    , singleSelect (SProxy :: SProxy "timezone")
-        { options: allTimezones # Array.sortBy \leftTimezone rightTimezone -> let
-            countryComparison =
-                leftTimezone.country `compare` rightTimezone.country
-            in
-            case countryComparison of
-            EQ -> leftTimezone.city `compare` rightTimezone.city
-            other -> other
-        , selected: value >>= \timezone ->
-            allTimezones # Array.find (_.name >>> (_ == timezone))
-        , labeler: \{ city, country } ->
-            country <> ", " <> city
-        , comparer: \leftTimezone rightTimezone ->
-            leftTimezone.name == rightTimezone.name
-        , filter: Just "Search timezones"
-        }
-        \(SingleSelect.SelectedChanged timezone) -> Just $ onValue (timezone <#> _.name)
-    ]
-
-timeRangeInputGroup
-    :: forall slots action
-    .  String
-    -> Boolean
-    -> Maybe String
-    -> Maybe String
-    -> (Maybe String -> action)
-    -> (Maybe String -> action)
-    -> HTML slots action
-timeRangeInputGroup label disabled fromValue toValue onFromValue onToValue =
-    inputGroup $
-    [ inputLabel "fas fa-clock" label
-    , timeRangeInput disabled fromValue toValue onFromValue onToValue
-    ]
-    <>
-    timeRangeInputUnderlabel disabled fromValue toValue
-
 aboutInputGroup :: forall slots action. String -> (String -> action) -> Boolean -> HTML slots action
 aboutInputGroup value onValue error =
     inputGroup $
     [ textInput_ value onValue
-    , inputUnderlabel """Yo nigga, write about yourself. What are you like? Just how
-        gay are you? What kind of faggots are you looking for?"""
+    , inputUnderlabel """Yo bruha, write about yourself. What are you like? Just how
+        bruh are you? What kind of bruhs are you looking for?"""
     ]
     <>
     inputError error "About text cannot be more than 2000 characters long."

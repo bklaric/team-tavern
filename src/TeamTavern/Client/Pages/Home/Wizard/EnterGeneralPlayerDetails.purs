@@ -140,7 +140,7 @@ render state =
                 , comparer: (==)
                 , filter: "Search locations"
                 }
-                \(SingleTreeSelect.SelectedChanged location) -> Just $ UpdateLocation location
+                \location -> Just $ UpdateLocation location
             , HH.label
                 [ HP.class_ $ HH.ClassName "input-underlabel" ]
                 [ HH.text $ "You can select either a specific country or "
@@ -164,7 +164,7 @@ render state =
                 , comparer: (==)
                 , filter: Just "Search languages"
                 }
-                \(MultiSelect.SelectedChanged languages) -> Just $ UpdateLanguages languages
+                \languages -> Just $ UpdateLanguages languages
             ]
         , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
             [ HH.label
@@ -228,7 +228,7 @@ render state =
                     leftTimezone.name == rightTimezone.name
                 , filter: Just "Search timezones"
                 }
-                \(SingleSelect.SelectedChanged timezone) -> Just $ UpdateTimezone (timezone <#> _.name)
+                \timezone -> Just $ UpdateTimezone (timezone <#> _.name)
             ]
         , HH.div [ HP.class_ $ HH.ClassName "input-group" ] $
             [ HH.label

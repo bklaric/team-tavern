@@ -14,10 +14,10 @@ import TeamTavern.Client.Components.Detail (textDetail)
 import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchorIndexed)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
-import TeamTavern.Client.Components.Team.ProfileDetail (profileDetails)
+import TeamTavern.Client.Components.Team.ProfileDetails (profileDetails)
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
 import TeamTavern.Client.Snippets.Class as HS
-import TeamTavern.Client.Team.CreateProfileButton (createProfileButton)
+import TeamTavern.Client.Pages.Team.CreateProfileButton (createProfileButton)
 import TeamTavern.Server.Team.View (Profile)
 
 type ChildSlots children =

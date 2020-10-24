@@ -23,8 +23,6 @@ import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import Simple.JSON.Async as Json
 import TeamTavern.Client.Components.Modal as Modal
-import TeamTavern.Client.Pages.Profiles.CreatePlayerProfile (createPlayerProfile)
-import TeamTavern.Client.Pages.Profiles.CreatePlayerProfile as CreatePlayerProfile
 import TeamTavern.Client.Pages.Profiles.CreateTeamProfile (createTeamProfile)
 import TeamTavern.Client.Pages.Profiles.CreateTeamProfile as CreateTeamProfile
 import TeamTavern.Client.Pages.Profiles.GameHeader as GameHeader
@@ -89,8 +87,8 @@ type ChildSlots =
     , playerProfiles :: PlayerProfiles.Slot
     , teamProfiles :: TeamProfiles.Slot
     , profileFilters :: ProfileFilters.Slot
-    , createPlayerProfile :: CreatePlayerProfile.Slot
-    , createTeamProfile :: CreateTeamProfile.Slot
+    -- , createPlayerProfile :: CreatePlayerProfile.Slot
+    -- , createTeamProfile :: CreateTeamProfile.Slot
     )
 
 filterableFields
@@ -140,23 +138,23 @@ render (Game game' player filters tab) = let
                 TeamProfiles.ChangePage page -> Just $ ChangePage page
         ]
     ]
-    <>
-    case player, tab of
-    Just player', (Players _ true) -> Array.singleton $
-        createPlayerProfile
-        { game: game', player: player' }
-        case _ of
-        Modal.CloseClicked -> Just HideCreateProfileModal
-        Modal.OutputRaised (CreatePlayerProfile.CloseClicked) -> Just HideCreateProfileModal
-        Modal.OutputRaised (CreatePlayerProfile.ProfileCreated) -> Just ReloadPage
-    Just player', (Teams _ true timezone) -> Array.singleton $
-        createTeamProfile
-        { game: game', player: player', timezone }
-        case _ of
-        Modal.CloseClicked -> Just HideCreateProfileModal
-        Modal.OutputRaised (CreateTeamProfile.CloseClicked) -> Just HideCreateProfileModal
-        Modal.OutputRaised (CreateTeamProfile.ProfileCreated) -> Just ReloadPage
-    _, _ -> []
+    -- <>
+    -- case player, tab of
+    -- Just player', (Players _ true) -> Array.singleton $
+    --     createPlayerProfile
+    --     { game: game', player: player' }
+    --     case _ of
+    --     Modal.CloseClicked -> Just HideCreateProfileModal
+    --     Modal.OutputRaised (CreatePlayerProfile.CloseClicked) -> Just HideCreateProfileModal
+    --     Modal.OutputRaised (CreatePlayerProfile.ProfileCreated) -> Just ReloadPage
+    -- Just player', (Teams _ true timezone) -> Array.singleton $
+    --     createTeamProfile
+    --     { game: game', player: player', timezone }
+    --     case _ of
+    --     Modal.CloseClicked -> Just HideCreateProfileModal
+    --     Modal.OutputRaised (CreateTeamProfile.CloseClicked) -> Just HideCreateProfileModal
+    --     Modal.OutputRaised (CreateTeamProfile.ProfileCreated) -> Just ReloadPage
+    -- _, _ -> []
 render NotFound = HH.p_ [ HH.text "Game could not be found." ]
 render Error = HH.p_ [ HH.text
     "There has been an error loading the game. Please try again later." ]

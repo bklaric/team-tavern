@@ -16,8 +16,8 @@ import Halogen.HTML as HH
 import Record as Record
 import TeamTavern.Client.Components.Form (form, otherFormError, submitButton)
 import TeamTavern.Client.Components.Modal as Modal
-import TeamTavern.Client.Components.Team.EnterProfile (enterProfile)
-import TeamTavern.Client.Components.Team.EnterProfile as EnterProfile
+import TeamTavern.Client.Components.Team.ProfileFormInput (profileFormInput)
+import TeamTavern.Client.Components.Team.ProfileFormInput as EnterProfile
 import TeamTavern.Client.Components.Team.ProfileInputGroup (Field, FieldValues)
 import TeamTavern.Client.Script.Navigate (hardNavigate)
 import TeamTavern.Client.Script.Request (putNoContent)
@@ -49,14 +49,14 @@ data Action
     = UpdateProfile EnterProfile.Output
     | SendRequest Event
 
-type ChildSlots = (enterProfile :: EnterProfile.Slot)
+type ChildSlots = (profileFormInput :: EnterProfile.Slot)
 
 type Slot = H.Slot (Const Void) (Modal.Output Void) Unit
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { profile, submitting, otherError } =
     form SendRequest $
-    [ enterProfile profile UpdateProfile
+    [ profileFormInput profile UpdateProfile
     , submitButton "fas fa-user-edit" "Edit team profile" "Editting team profile..." submitting
     ]
     <>

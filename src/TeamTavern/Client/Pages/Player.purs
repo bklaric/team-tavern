@@ -22,8 +22,8 @@ import TeamTavern.Client.Pages.Player.ChangeNickname as ChangeNickname
 import TeamTavern.Client.Pages.Player.Details (details)
 import TeamTavern.Client.Pages.Player.Details as Details
 import TeamTavern.Client.Pages.Player.EditSettings as EditSettings
-import TeamTavern.Client.Pages.Player.PlayerProfiles (playerProfiles)
-import TeamTavern.Client.Pages.Player.PlayerProfiles as PlayerProfiles
+import TeamTavern.Client.Pages.Player.Profiles (profiles)
+import TeamTavern.Client.Pages.Player.Profiles as PlayerProfiles
 import TeamTavern.Client.Pages.Player.Teams (teams)
 import TeamTavern.Client.Pages.Player.Teams as Teams
 import TeamTavern.Client.Pages.Player.Types (PlayerStatus(..))
@@ -60,7 +60,7 @@ type Slot = H.Slot (Const Void) Void
 
 type ChildSlots =
     ( details :: Details.Slot
-    , playerProfiles :: PlayerProfiles.Slot
+    , profiles :: PlayerProfiles.Slot
     , teams :: Teams.Slot
     , changeNickname :: ChangeNickname.Slot
     , editSettings :: EditSettings.Slot
@@ -128,7 +128,7 @@ render (Player { player: { nickname, about }, status, editPopoverShown }) =
             _ -> "View all player and team profiles of player " <> nickname <> "."
         ]
     , details nickname status (SProxy :: SProxy "details")
-    , playerProfiles nickname status (SProxy :: SProxy "playerProfiles")
+    , profiles nickname status
     , teams { nickname, status }
     ]
 render NotFound = HH.p_ [ HH.text "Player could not be found." ]

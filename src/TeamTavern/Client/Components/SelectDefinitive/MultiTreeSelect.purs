@@ -1,5 +1,5 @@
 module TeamTavern.Client.Components.SelectDefinitive.MultiTreeSelect
-    (Labeler, Comparer, InputEntry(..), Input, Output(..), Slot, multiTreeSelect) where
+    (Labeler, Comparer, InputEntry(..), Input, Output, Slot, multiTreeSelect) where
 
 import Prelude
 
@@ -82,7 +82,7 @@ data Action option
     | ToggleEntryState option
     | ToggleEntryExpanded option
 
-data Output option = SelectedChanged (Array option)
+type Output option = Array option
 
 type Slot option = H.Slot (Const Void) (Output option) Unit
 
@@ -377,7 +377,7 @@ handleAction (ToggleEntryState option) = do
     state <- H.modify \state @ { entries, comparer } ->
         state { entries = toggleEntriesState comparer option entries }
     updateCheckboxes state.labeler state.entries
-    H.raise $ SelectedChanged $ getSelectedEntries state.entries
+    H.raise $ getSelectedEntries state.entries
 handleAction (ToggleEntryExpanded option) = do
     state <- H.modify \state @ { entries, comparer } ->
         state { entries = toggleEntriesExpanded comparer option entries }

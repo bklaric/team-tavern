@@ -1,4 +1,4 @@
-module TeamTavern.Client.Components.Team.TeamDetail where
+module TeamTavern.Client.Components.Team.TeamDetails where
 
 import Prelude
 

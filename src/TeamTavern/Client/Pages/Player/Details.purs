@@ -22,13 +22,11 @@ import Halogen.HTML.Properties as HP
 import Prim.Row (class Cons)
 import Simple.JSON.Async as Json
 import TeamTavern.Client.Components.Modal as Modal
-import TeamTavern.Client.Pages.Player.EditDetails (editDetails)
 import TeamTavern.Client.Pages.Player.EditDetails as EditDetails
 import TeamTavern.Client.Pages.Player.Types (Nickname, PlayerStatus(..))
 import TeamTavern.Client.Script.Clipboard (writeTextAsync)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Server.Player.ViewDetails.SendResponse as ViewDetails
-import Undefined (undefined)
 
 data Input = Input Nickname PlayerStatus
 
@@ -48,9 +46,6 @@ data State
 type Slot = H.Slot (Const Void) Void Unit
 
 type ChildSlots = (editDetails :: EditDetails.Slot)
-
-ifNull :: forall a. Array a -> Array a -> Array a
-ifNull replacement array = if Array.null array then replacement else array
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render (Empty _) = HH.div_ []

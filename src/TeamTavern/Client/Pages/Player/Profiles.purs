@@ -1,5 +1,4 @@
-module TeamTavern.Client.Pages.Player.PlayerProfiles
-    (Slot, playerProfiles) where
+module TeamTavern.Client.Pages.Player.Profiles (Slot, profiles) where
 
 import Prelude
 
@@ -226,13 +225,10 @@ component = mkComponent
         }
     }
 
-playerProfiles
-    :: forall children' name children action left
-    .  Cons name (Slot) children' children
-    => IsSymbol name
-    => Nickname
+profiles
+    :: forall children action left
+    .  Nickname
     -> PlayerStatus
-    -> SProxy name
-    -> HH.ComponentHTML action children (Async left)
-playerProfiles nickname playerStatus slot =
-    HH.slot slot unit component (Input nickname playerStatus) absurd
+    -> HH.ComponentHTML action (profiles :: Slot | children) (Async left)
+profiles nickname playerStatus =
+    HH.slot (SProxy :: SProxy "profiles") unit component (Input nickname playerStatus) absurd

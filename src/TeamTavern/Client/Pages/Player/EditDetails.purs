@@ -14,9 +14,8 @@ import Data.Const (Const)
 import Data.Either (Either(..))
 import Data.Foldable (foldl)
 import Data.HTTP.Method (Method(..))
-import Data.Maybe (Maybe(..), maybe)
+import Data.Maybe (Maybe(..))
 import Data.Options ((:=))
-import Data.String as String
 import Data.Variant (SProxy(..), match)
 import Halogen (ClassName(..))
 import Halogen as H
@@ -27,8 +26,8 @@ import Halogen.HTML.Properties as HP
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.Modal as Modal
-import TeamTavern.Client.Pages.Wizard.EnterPlayerDetails (enterPlayerDetails)
-import TeamTavern.Client.Pages.Wizard.EnterPlayerDetails as EnterPlayerDetails
+import TeamTavern.Client.Components.Player.PlayerFormInput (playerFormInput)
+import TeamTavern.Client.Components.Player.PlayerFormInput as EnterPlayerDetails
 import TeamTavern.Client.Snippets.ErrorClasses (otherErrorClass)
 import TeamTavern.Server.Player.UpdateDetails.SendResponse as Update
 import TeamTavern.Server.Player.ViewDetails.SendResponse as ViewAccount
@@ -51,7 +50,7 @@ type State =
     , details :: EnterPlayerDetails.Input
     }
 
-type ChildSlots = (enterPlayerDetails :: EnterPlayerDetails.Slot)
+type ChildSlots = (playerFormInput :: EnterPlayerDetails.Slot)
 
 type Slot = H.Slot (Const Void) (Modal.Output Output) Unit
 
@@ -61,11 +60,11 @@ render { details, submitting, otherError } =
     HH.form
     [ HP.class_ $ H.ClassName "form", HE.onSubmit $ Just <<< Update ]
     [ HH.p [ HP.class_ $ HH.ClassName "form-subheading", HC.style $ CSS.marginBottom $ CSS.px 0.0 ]
-        [ HH.text """Enter details about yourself so your new gay gamer friends
-            can find you, faggot. Fill out as much as you can to ensure the
-            gayest gamers find you. All fields are optional, bitch."""
+        [ HH.text """Enter details about yourself so your new bruh gamer friends
+            can find you, bruh. Fill out as much as you can to ensure the
+            bruhest gamers find you. All fields are optional, bruh."""
         ]
-    , enterPlayerDetails details (Just <<< UpdatePlayerDetails)
+    , playerFormInput details (Just <<< UpdatePlayerDetails)
     , HH.button
         [ HP.class_ $ ClassName "form-submit-button"
         , HP.disabled submitting
@@ -90,16 +89,16 @@ sendRequest nickname details = Async.unify do
         ("/api/players/by-nickname/" <> nickname <> "/details")
         (  Fetch.method := PUT
         <> Fetch.body := Json.writeJSON
-            { birthday: if String.null details.birthday then Nothing else Just details.birthday
+            { birthday: details.birthday
             , country: details.location
             , languages: details.languages
             , hasMicrophone: details.microphone
-            , discordTag: if String.null details.discordTag then Nothing else Just details.discordTag
+            , discordTag: details.discordTag
             , timezone: details.timezone
-            , weekdayFrom: if String.null details.weekdayFrom then Nothing else Just details.weekdayFrom
-            , weekdayTo: if String.null details.weekdayTo then Nothing else Just details.weekdayTo
-            , weekendFrom: if String.null details.weekendFrom then Nothing else Just details.weekendFrom
-            , weekendTo: if String.null details.weekendTo then Nothing else Just details.weekendTo
+            , weekdayFrom: details.weekdayFrom
+            , weekdayTo: details.weekdayTo
+            , weekendFrom: details.weekendFrom
+            , weekendTo: details.weekendTo
             , about: details.about
             }
         <> Fetch.credentials := Fetch.Include
@@ -168,16 +167,16 @@ component = H.mkComponent
     { initialState: \{ nickname, details } ->
         { nickname
         , details:
-            { birthday: maybe "" identity details.birthday
+            { birthday: details.birthday
             , location: details.country
             , languages: details.languages
             , microphone: details.hasMicrophone
-            , discordTag: maybe "" identity details.discordTag
+            , discordTag: details.discordTag
             , timezone: details.timezone
-            , weekdayFrom: maybe "" identity $ _.sourceFrom <$> details.weekdayOnline
-            , weekdayTo: maybe "" identity $ _.sourceTo <$> details.weekdayOnline
-            , weekendFrom: maybe "" identity $ _.sourceFrom <$> details.weekendOnline
-            , weekendTo: maybe "" identity $ _.sourceTo <$> details.weekendOnline
+            , weekdayFrom: details.weekdayOnline <#> _.sourceFrom
+            , weekdayTo: details.weekdayOnline <#> _.sourceTo
+            , weekendFrom: details.weekendOnline <#> _.sourceFrom
+            , weekendTo: details.weekendOnline <#> _.sourceTo
             , about: intercalate "\n\n" details.about
             , discordTagError: false
             , aboutError: false

@@ -1,4 +1,4 @@
-module TeamTavern.Client.Components.Team.EnterProfile (Input, Output, Slot, emptyInput, enterProfile) where
+module TeamTavern.Client.Components.Team.ProfileFormInput (Input, Output, Slot, emptyInput, profileFormInput) where
 
 import Prelude
 
@@ -13,7 +13,6 @@ import Data.NonEmpty (NonEmpty(..))
 import Data.Variant (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
-import Record as Record
 import TeamTavern.Client.Components.Input (inputGroupsHeading, responsiveInputGroups)
 import TeamTavern.Client.Components.SelectDefinitive.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.Team.ProfileInputGroup (Field, FieldValues, Option, ambitionsInputGroup, fieldInputGroup, newOrReturningInputGroup)
@@ -24,15 +23,6 @@ type Input =
     , newOrReturning :: Boolean
     , ambitions :: String
     , ambitionsError :: Boolean
-    }
-
-emptyInput :: Array Field -> Input
-emptyInput fields =
-    { fields
-    , fieldValues: MultiMap.empty
-    , newOrReturning: false
-    , ambitions: ""
-    , ambitionsError: false
     }
 
 type Output =
@@ -71,17 +61,14 @@ render { fields, fieldValues, newOrReturning, ambitions, ambitionsError } =
     , ambitionsInputGroup ambitions UpdateAmbitions ambitionsError
     ]
 
-stateToOutput :: State -> Output
-stateToOutput state =
-    state
-    # Record.delete (SProxy :: SProxy "ambitionsError")
-    # Record.delete (SProxy :: SProxy "fields")
+raiseOutput :: forall left. State -> H.HalogenM State Action ChildSlots Output (Async left) Unit
+raiseOutput { fieldValues, newOrReturning, ambitions } =
+    H.raise { fieldValues, newOrReturning, ambitions }
 
-handleAction :: forall left.
-    Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
+handleAction :: forall left. Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
 handleAction (Receive input) =
     H.put input
-handleAction (UpdateFieldValue fieldKey (MultiSelect.SelectedChanged options)) = do
+handleAction (UpdateFieldValue fieldKey options) = do
     state <- H.modify \state -> state
         { fieldValues =
             case Array.uncons options of
@@ -92,13 +79,13 @@ handleAction (UpdateFieldValue fieldKey (MultiSelect.SelectedChanged options)) =
                 (NonEmptyList $ NonEmpty head.key (List.fromFoldable $ _.key <$> tail))
                 state.fieldValues
         }
-    H.raise $ stateToOutput state
+    raiseOutput state
 handleAction (UpdateNewOrReturning newOrReturning) = do
     state <- H.modify _ { newOrReturning = newOrReturning }
-    H.raise $ stateToOutput state
+    raiseOutput state
 handleAction (UpdateAmbitions ambitions) = do
     state <- H.modify _ { ambitions = ambitions }
-    H.raise $ stateToOutput state
+    raiseOutput state
 
 component :: forall query left. H.Component HH.HTML query Input Output (Async left)
 component = H.mkComponent
@@ -110,10 +97,19 @@ component = H.mkComponent
         }
     }
 
-enterProfile
+emptyInput :: Array Field -> Input
+emptyInput fields =
+    { fields
+    , fieldValues: MultiMap.empty
+    , newOrReturning: false
+    , ambitions: ""
+    , ambitionsError: false
+    }
+
+profileFormInput
     :: forall children action left
     .  Input
     -> (Output -> action)
-    -> HH.ComponentHTML action (enterProfile :: Slot | children) (Async left)
-enterProfile input handleMessage =
-    HH.slot (SProxy :: SProxy "enterProfile") unit component input (Just <<< handleMessage)
+    -> HH.ComponentHTML action (profileFormInput :: Slot | children) (Async left)
+profileFormInput input handleMessage =
+    HH.slot (SProxy :: SProxy "profileFormInput") unit component input (Just <<< handleMessage)

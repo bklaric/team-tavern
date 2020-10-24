@@ -1,4 +1,4 @@
-module TeamTavern.Client.Pages.Wizard.EnterTeamDetails (Input, Output, Slot, emptyInput, enterTeamDetails) where
+module TeamTavern.Client.Components.Team.TeamFormInput (Input, Output, Slot, emptyInput, teamFormInput) where
 
 import Prelude
 
@@ -10,10 +10,11 @@ import Halogen as H
 import Halogen.HTML as HH
 import Record as Record
 import TeamTavern.Client.Components.Input (inputGroupsHeading, responsiveInputGroups)
+import TeamTavern.Client.Components.InputGroup (timeRangeInputGroup, timezoneInputGroup)
 import TeamTavern.Client.Components.SelectDefinitive.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.SelectDefinitive.MultiTreeSelect as MultiTreeSelect
 import TeamTavern.Client.Components.SelectDefinitive.SingleSelect as SingleSelect
-import TeamTavern.Client.Components.Team.InputGroup (aboutInputGroup, ageInputGroup, discordServerInputGroup, languagesInputGroup, locationInputGroup, microphoneInputGroup, nameInputGroup, timeRangeInputGroup, timezoneInputGroup, websiteInputGroup)
+import TeamTavern.Client.Components.Team.TeamInputGroup (aboutInputGroup, ageInputGroup, discordServerInputGroup, languagesInputGroup, locationInputGroup, microphoneInputGroup, nameInputGroup, websiteInputGroup)
 import TeamTavern.Server.Infrastructure.Timezones (Timezone)
 
 type Input =
@@ -112,63 +113,62 @@ render state =
     , aboutInputGroup state.about UpdateAbout state.aboutError
     ]
 
-stateToOutput :: State -> Output
-stateToOutput state =
-    state
+raiseOutput :: forall left. State -> H.HalogenM State Action ChildSlots Output (Async left) Unit
+raiseOutput state
+    = state
     # Record.delete (SProxy :: SProxy "nameError")
     # Record.delete (SProxy :: SProxy "websiteError")
     # Record.delete (SProxy :: SProxy "discordServerError")
     # Record.delete (SProxy :: SProxy "aboutError")
+    # H.raise
 
-handleAction :: forall left.
-    Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
+handleAction :: forall left. Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
 handleAction (Receive input) =
     H.put input
 handleAction (UpdateName name) = do
     state <- H.modify _ { name = name }
-    H.raise $ stateToOutput state
+    raiseOutput state
 handleAction (UpdateWebsite website) = do
     state <- H.modify _ { website = website }
-    H.raise $ stateToOutput state
+    raiseOutput state
 handleAction (UpdateAgeFrom ageFrom) = do
     state <- H.modify _ { ageFrom = ageFrom }
-    H.raise $ stateToOutput state
+    raiseOutput state
 handleAction (UpdateAgeTo ageTo) = do
     state <- H.modify _ { ageTo = ageTo }
-    H.raise $ stateToOutput state
+    raiseOutput state
 handleAction (UpdateLocations locations) = do
     state <- H.modify _ { locations = locations }
-    H.raise $ stateToOutput state
+    raiseOutput state
 handleAction (UpdateLanguages languages) = do
     state <- H.modify _ { languages = languages }
-    H.raise $ stateToOutput state
+    raiseOutput state
 handleAction (UpdateMicrophone microphone) = do
     state <- H.modify _ { microphone = microphone }
-    H.raise $ stateToOutput state
+    raiseOutput state
 handleAction (UpdateDiscordServer discordServer) = do
     state <- H.modify _ { discordServer = discordServer }
-    H.raise $ stateToOutput state
+    raiseOutput state
 handleAction (UpdateTimezone timezone) = do
     state <- H.modify _ { timezone = timezone }
-    H.raise $ stateToOutput state
+    raiseOutput state
 handleAction (UpdateWeekdayFrom weekdayFrom) = do
     state <- H.modify _ { weekdayFrom = weekdayFrom }
-    H.raise $ stateToOutput state
+    raiseOutput state
 handleAction (UpdateWeekdayTo weekdayTo) = do
     state <- H.modify _ { weekdayTo = weekdayTo }
-    H.raise $ stateToOutput state
+    raiseOutput state
 handleAction (UpdateWeekendFrom weekendFrom) = do
     state <- H.modify _ { weekendFrom = weekendFrom }
-    H.raise $ stateToOutput state
+    raiseOutput state
 handleAction (UpdateWeekendTo weekendTo) = do
     state <- H.modify _ { weekendTo = weekendTo }
-    H.raise $ stateToOutput state
+    raiseOutput state
 handleAction (UpdateAbout about) = do
     state <- H.modify _ { about = about }
-    H.raise $ stateToOutput state
+    raiseOutput state
 
-component :: forall query left.
-    H.Component HH.HTML query Input Output (Async left)
+component :: forall query left. H.Component HH.HTML query Input Output (Async left)
 component = H.mkComponent
     { initialState: identity
     , render
@@ -200,10 +200,10 @@ emptyInput =
     , aboutError: false
     }
 
-enterTeamDetails
+teamFormInput
     :: forall action children left
     .  Input
     -> (Output -> Maybe action)
-    -> HH.ComponentHTML action (enterTeamDetails :: Slot | children) (Async left)
-enterTeamDetails input handleMessage =
-    HH.slot (SProxy :: SProxy "enterTeamDetails") unit component input handleMessage
+    -> HH.ComponentHTML action (teamFormInput :: Slot | children) (Async left)
+teamFormInput input handleMessage =
+    HH.slot (SProxy :: SProxy "teamFormInput") unit component input handleMessage

@@ -22,16 +22,15 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
-import TeamTavern.Client.Pages.Wizard.EnterPlayerDetails (enterPlayerDetails)
-import TeamTavern.Client.Pages.Wizard.EnterPlayerDetails as EnterPlayerDetails
-import TeamTavern.Client.Pages.Wizard.EnterPlayerProfileDetails (enterPlayerProfileDetails)
-import TeamTavern.Client.Pages.Wizard.EnterPlayerProfileDetails as EnterPlayerProfileDetails
+import TeamTavern.Client.Components.Player.PlayerFormInput (playerFormInput)
+import TeamTavern.Client.Components.Player.PlayerFormInput as EnterPlayerDetails
+import TeamTavern.Client.Components.Player.ProfileFormInput (profileFormInput)
+import TeamTavern.Client.Components.Player.ProfileFormInput as EnterPlayerProfileDetails
 import TeamTavern.Client.Pages.Wizard.SelectGame (selectGame)
 import TeamTavern.Client.Pages.Wizard.SelectGame as SelectGame
 import TeamTavern.Client.Script.Cookie (getPlayerNickname)
 import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
 import TeamTavern.Client.Script.Navigate (navigate, navigate_)
-import TeamTavern.Client.Script.Request (nothingIfEmpty)
 import TeamTavern.Server.Wizard.Onboard as Onboard
 
 data Step = Greeting | PlayerDetails | Game | PlayerProfileDetails
@@ -63,8 +62,8 @@ data Action
 type Slot = H.Slot (Const Void) Void Unit
 
 type ChildSlots slots =
-    ( enterPlayerDetails :: EnterPlayerDetails.Slot
-    , enterPlayerProfileDetails :: EnterPlayerProfileDetails.Slot
+    ( playerFormInput :: EnterPlayerDetails.Slot
+    , profileFormInput :: EnterPlayerProfileDetails.Slot
     , selectGame :: SelectGame.Slot
     | slots )
 
@@ -116,7 +115,7 @@ renderPage { step: PlayerDetails, playerDetails } =
                 can find you, bruh. Fill out as much as you can to ensure the
                 bruhest gamers find you. All fields are optional, bruh."""
             ]
-        , enterPlayerDetails playerDetails (Just <<< UpdatePlayerDetails)
+        , playerFormInput playerDetails (Just <<< UpdatePlayerDetails)
         ]
     , HH.div [ HP.class_ $ HH.ClassName "page-wizard-step-buttons" ]
         [ HH.button
@@ -159,7 +158,7 @@ renderPage { step: PlayerProfileDetails, playerProfileDetails, otherError, submi
         , HH.p [ HP.class_ $ HH.ClassName "page-wizard-step-description" ]
             [ HH.text """Enter details about your gameplay. Fill out everything."""
             ]
-        , enterPlayerProfileDetails playerProfileDetails (Just <<< UpdatePlayerProfileDetails)
+        , profileFormInput playerProfileDetails (Just <<< UpdatePlayerProfileDetails)
         ]
     , HH.div [ HP.class_ $ HH.ClassName "page-wizard-step-buttons" ]
         [ HH.button
@@ -194,23 +193,23 @@ sendRequest (state :: State) = Async.unify do
         Just game, personalDetails, profileDetails -> Async.right
             { handle: game.handle
             , personalDetails:
-                { birthday: nothingIfEmpty personalDetails.birthday
+                { birthday: personalDetails.birthday
                 , location: personalDetails.location
                 , languages: personalDetails.languages
                 , microphone: personalDetails.microphone
-                , discordTag: nothingIfEmpty personalDetails.discordTag
+                , discordTag: personalDetails.discordTag
                 , timezone: personalDetails.timezone
-                , weekdayFrom: nothingIfEmpty personalDetails.weekdayFrom
-                , weekdayTo: nothingIfEmpty personalDetails.weekdayTo
-                , weekendFrom: nothingIfEmpty personalDetails.weekendFrom
-                , weekendTo: nothingIfEmpty personalDetails.weekendTo
+                , weekdayFrom: personalDetails.weekdayFrom
+                , weekdayTo: personalDetails.weekdayTo
+                , weekendFrom: personalDetails.weekendFrom
+                , weekendTo: personalDetails.weekendTo
                 , about: personalDetails.about
                 }
             , profileDetails:
                 { fieldValues: profileDetails.fieldValues # Array.filter \{ url, optionKey, optionKeys } ->
                     isJust url || isJust optionKey || isJust optionKeys
                 , newOrReturning: profileDetails.newOrReturning
-                , summary: profileDetails.summary
+                , summary: profileDetails.ambitions
                 }
             }
         _, _, _ -> Async.left Nothing
@@ -279,7 +278,7 @@ handleAction (UpdateGame game) =
             { fields = game.fields
             , fieldValues = []
             , newOrReturning = false
-            , summary = ""
+            , ambitions = ""
             }
         }
 handleAction (UpdatePlayerProfileDetails details) =
@@ -287,7 +286,7 @@ handleAction (UpdatePlayerProfileDetails details) =
         { playerProfileDetails = state.playerProfileDetails
             { fieldValues = details.fieldValues
             , newOrReturning = details.newOrReturning
-            , summary = details.summary
+            , ambitions = details.ambitions
             }
         }
 handleAction SetUpAccount = do
@@ -318,7 +317,7 @@ handleAction SetUpAccount = do
                     }
                 , summary: const $ state
                     { playerProfileDetails = state.playerProfileDetails
-                        { summaryError = true }
+                        { ambitionsError = true }
                     }
                 }
                 error
@@ -328,7 +327,7 @@ handleAction SetUpAccount = do
                 , playerDetails = currentState.playerDetails
                     { discordTagError = false, aboutError = false }
                 , playerProfileDetails = currentState.playerProfileDetails
-                    { urlErrors = [], missingErrors = [], summaryError = false }
+                    { urlErrors = [], missingErrors = [], ambitionsError = false }
                 , otherError = false
                 })
             errors
@@ -336,7 +335,7 @@ handleAction SetUpAccount = do
             { submitting = false
             , playerDetails = currentState.playerDetails { discordTagError = false }
             , playerProfileDetails = currentState.playerProfileDetails
-                { urlErrors = [], missingErrors = [], summaryError = false }
+                { urlErrors = [], missingErrors = [], ambitionsError = false }
             , otherError = true
             }
 
@@ -349,7 +348,7 @@ component = H.mkComponent
         , confirmSkip: false
         , playerDetails: EnterPlayerDetails.emptyInput
         , game: Nothing
-        , playerProfileDetails: EnterPlayerProfileDetails.emptyInput
+        , playerProfileDetails: EnterPlayerProfileDetails.emptyInput []
         , otherError: false
         , submitting: false
         }

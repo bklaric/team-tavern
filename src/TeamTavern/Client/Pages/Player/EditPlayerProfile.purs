@@ -231,7 +231,7 @@ render
         , HP.value summary
         ]
     , HH.label [ HP.class_ $ HH.ClassName "input-underlabel" ]
-        [ HH.text """Why are you even playing this game, cunt? What do you want
+        [ HH.text """Why are you even playing this game, bruh? What do you want
             do get from it? Do you have any specific goals you want to achieve?"""
         ]
     , HH.p

@@ -12,8 +12,8 @@ import Halogen as H
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Form (form, otherFormError, submitButton)
 import TeamTavern.Client.Components.Modal as Modal
-import TeamTavern.Client.Pages.Wizard.EnterTeamDetails (enterTeamDetails)
-import TeamTavern.Client.Pages.Wizard.EnterTeamDetails as EnterTeamDetails
+import TeamTavern.Client.Components.Team.TeamFormInput (teamFormInput)
+import TeamTavern.Client.Components.Team.TeamFormInput as EnterTeamDetails
 import TeamTavern.Client.Script.Navigate (hardNavigate)
 import TeamTavern.Client.Script.Request (putNoContent)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
@@ -61,14 +61,14 @@ data Action
     | UpdateDetails EnterTeamDetails.Output
     | SendRequest Event
 
-type ChildSlots = (enterTeamDetails :: EnterTeamDetails.Slot)
+type ChildSlots = (teamFormInput :: EnterTeamDetails.Slot)
 
 type Slot = H.Slot (Const Void) (Modal.Output Void) Unit
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { details, submitting, otherError } =
     form SendRequest $
-    [ enterTeamDetails details (Just <<< UpdateDetails)
+    [ teamFormInput details (Just <<< UpdateDetails)
     , submitButton "fas fa-edit" "Edit team" "Editting team..." submitting
     ]
     <>

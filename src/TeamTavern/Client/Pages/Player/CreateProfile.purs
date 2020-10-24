@@ -1,4 +1,4 @@
-module TeamTavern.Client.Pages.Profiles.CreatePlayerProfile where
+module TeamTavern.Client.Pages.Player.CreateProfile where
 
 import Prelude
 
@@ -203,7 +203,7 @@ render
         , HE.onValueInput $ Just <<< SummaryInput
         ]
     , HH.label [ HP.class_ $ HH.ClassName "input-underlabel" ]
-        [ HH.text """Why are you even playing this game, cunt? What do you want
+        [ HH.text """Why are you even playing this game, bruh? What do you want
             do get from it? Do you have any specific goals you want to achieve?"""
         ]
     , HH.p

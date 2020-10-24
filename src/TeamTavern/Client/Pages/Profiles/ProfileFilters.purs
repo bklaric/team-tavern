@@ -409,9 +409,9 @@ handleAction (AgeFromInput ageFrom) =
     H.modify_ (_ { ageFrom = ageFrom })
 handleAction (AgeToInput ageTo) =
     H.modify_ (_ { ageTo = ageTo })
-handleAction (CountriesInput (MultiTreeSelect.SelectedChanged countries)) =
+handleAction (CountriesInput countries) =
     H.modify_ (_ { countries = countries })
-handleAction (LanguagesMessage (MultiSelect.SelectedChanged languages)) =
+handleAction (LanguagesMessage languages) =
     H.modify_ _ { languages = languages }
 handleAction (MicrophoneInput microphone) =
     H.modify_ (_ { microphone = microphone })
@@ -423,7 +423,7 @@ handleAction (WeekendFromInput time) =
     H.modify_ (_ { weekendFrom = time })
 handleAction (WeekendToInput time) =
     H.modify_ (_ { weekendTo = time })
-handleAction (FieldInput fieldKey (MultiSelect.SelectedChanged options)) =
+handleAction (FieldInput fieldKey options) =
     H.modify_ \state -> state
         { fields = state.fields <#> \stateField ->
             if stateField.field.key == fieldKey
