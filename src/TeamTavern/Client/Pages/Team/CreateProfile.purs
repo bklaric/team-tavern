@@ -16,7 +16,7 @@ import Halogen.HTML as HH
 import TeamTavern.Client.Components.Form (form, otherFormError, submitButton)
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.Team.ProfileFormInput (profileFormInput)
-import TeamTavern.Client.Components.Team.ProfileFormInput as EnterProfile
+import TeamTavern.Client.Components.Team.ProfileFormInput as ProfileFormInput
 import TeamTavern.Client.Components.Team.ProfileInputGroup (Field)
 import TeamTavern.Client.Script.Navigate (hardNavigate)
 import TeamTavern.Client.Script.Request (postNoContent)
@@ -34,18 +34,18 @@ type State =
     { teamHandle :: String
     , gameHandle :: String
     , title :: String
-    , profile :: EnterProfile.Input
+    , profile :: ProfileFormInput.Input
     , otherError :: Boolean
     , submitting :: Boolean
     }
 
 data Action
-    = UpdateProfile EnterProfile.Output
+    = UpdateProfile ProfileFormInput.Output
     | SendRequest Event
 
-type ChildSlots = (profileFormInput :: EnterProfile.Slot)
-
 type Slot = H.Slot (Const Void) (Modal.Output Void) Unit
+
+type ChildSlots = (profileFormInput :: ProfileFormInput.Slot)
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { profile, submitting, otherError } =
@@ -93,32 +93,29 @@ handleAction (SendRequest event) = do
             foldl
             (\state error ->
                 match
-                { ambitions: const state { profile = state.profile { ambitionsError = true } } }
+                { ambitions: const state { profile { ambitionsError = true } } }
                 error
             )
             (currentState
                 { submitting = false
                 , otherError = false
-                , profile = currentState.profile
-                    { ambitionsError = false }
+                , profile { ambitionsError = false }
                 }
             )
             badContent
         Nothing -> H.put currentState
             { submitting = false
             , otherError = true
-            , profile = currentState.profile
-                { ambitionsError = false }
+            , profile { ambitionsError = false }
             }
 
-component :: forall query output left.
-    H.Component HH.HTML query Input output (Async left)
+component :: forall query output left. H.Component HH.HTML query Input output (Async left)
 component = H.mkComponent
     { initialState: \{ teamHandle, gameHandle, title, fields } ->
         { teamHandle
         , gameHandle
         , title
-        , profile: EnterProfile.emptyInput fields
+        , profile: ProfileFormInput.emptyInput fields
         , otherError: false
         , submitting: false
         }

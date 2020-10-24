@@ -158,7 +158,7 @@ renderPage { step: PlayerProfileDetails, playerProfileDetails, otherError, submi
         , HH.p [ HP.class_ $ HH.ClassName "page-wizard-step-description" ]
             [ HH.text """Enter details about your gameplay. Fill out everything."""
             ]
-        , profileFormInput playerProfileDetails (Just <<< UpdatePlayerProfileDetails)
+        , profileFormInput playerProfileDetails UpdatePlayerProfileDetails
         ]
     , HH.div [ HP.class_ $ HH.ClassName "page-wizard-step-buttons" ]
         [ HH.button

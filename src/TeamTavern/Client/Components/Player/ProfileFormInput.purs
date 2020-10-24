@@ -123,7 +123,7 @@ emptyInput fields =
 profileFormInput
     :: forall action children left
     .  Input
-    -> (Output -> Maybe action)
+    -> (Output -> action)
     -> HH.ComponentHTML action (profileFormInput :: Slot | children) (Async left)
 profileFormInput input handleMessage =
-    HH.slot (SProxy :: SProxy "profileFormInput") unit component input handleMessage
+    HH.slot (SProxy :: SProxy "profileFormInput") unit component input (Just <<< handleMessage)
