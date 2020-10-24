@@ -4,6 +4,7 @@ import Prelude
 
 import Async (Async)
 import Data.Array (foldl)
+import Data.Array as Array
 import Data.Const (Const)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
@@ -60,8 +61,8 @@ sendRequest
         ( Either
             ( Array (Variant
                 ( ambitions :: {}
-                , url :: Array String
-                , missing :: Array String
+                , url :: { key :: String, message :: Array String }
+                , missing :: { key :: String, message :: Array String }
                 ))
             )
             Unit
@@ -94,24 +95,30 @@ handleAction (SendRequest event) = do
             (\state error ->
                 match
                 { ambitions: const state { profile { ambitionsError = true } }
-                , url: \keys -> state { profile { urlErrors = keys } }
-                , missing: \keys -> state { profile { missingErrors = keys } }
+                , url: \{ key } -> state { profile { urlErrors = Array.cons key state.profile.urlErrors } }
+                , missing: \{ key } -> state { profile { missingErrors = Array.cons key state.profile.missingErrors } }
                 }
                 error
             )
             (currentState
                 { submitting = false
                 , otherError = false
-                , profile = currentState.profile
-                    { ambitionsError = false }
+                , profile
+                    { urlErrors = []
+                    , missingErrors = []
+                    , ambitionsError = false
+                    }
                 }
             )
             badContent
         Nothing -> H.put currentState
             { submitting = false
             , otherError = true
-            , profile = currentState.profile
-                { ambitionsError = false }
+            , profile
+                { urlErrors = []
+                , missingErrors = []
+                , ambitionsError = false
+                }
             }
 
 component :: forall query output left. H.Component HH.HTML query Input output (Async left)
