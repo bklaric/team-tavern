@@ -4,45 +4,39 @@ import Prelude
 
 import Async (Async)
 import Async.Validated as Async
-import Data.Bifunctor.Label as Label
-import Data.List (List)
+import Data.Bifunctor.Label (label)
 import Data.List.Types (NonEmptyList)
 import Data.Symbol (SProxy(..))
-import Data.Validated.Label as Validated
 import Data.Variant (Variant)
-import TeamTavern.Server.Domain.Text (TextError)
+import TeamTavern.Server.Domain.Text (Text)
 import TeamTavern.Server.Profile.AddPlayerProfile.LoadFields as LoadFields
 import TeamTavern.Server.Profile.AddPlayerProfile.ReadProfile as ReadProfile
-import TeamTavern.Server.Profile.AddPlayerProfile.ValidateFieldValues (ValidateFieldValuesError)
+import TeamTavern.Server.Profile.AddPlayerProfile.ValidateFieldValues (validateFieldValues)
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateFieldValues as ValidateFieldValues
-import TeamTavern.Server.Profile.Infrastructure.ValidateSummary as ValidateSummary
+import TeamTavern.Server.Profile.Infrastructure.ValidateAmbitions (validateAmbitions)
 
-data Profile =
-    Profile ValidateSummary.Summary (List ValidateFieldValues.FieldValue) Boolean
+type Profile =
+    { fieldValues :: Array ValidateFieldValues.FieldValue
+    , newOrReturning :: Boolean
+    , ambitions :: Text
+    }
 
 type ProfileError = Variant
-    ( summary :: NonEmptyList TextError
-    , fieldValues :: NonEmptyList ValidateFieldValuesError
+    ( url :: { message :: Array String, key :: String }
+    , missing :: { message :: Array String, key :: String }
+    , ambitions :: Array String
     )
 
-type ValidateProfileError errors = Variant
-    ( invalidProfile ::
-        { profile :: ReadProfile.Profile
-        , errors :: NonEmptyList ProfileError
-        }
-    | errors )
+type ProfileErrors = NonEmptyList ProfileError
 
 validateProfile
     :: forall errors
     .  Array LoadFields.Field
     -> ReadProfile.Profile
-    -> Async (ValidateProfileError errors) Profile
-validateProfile fields profile @ { summary, fieldValues, newOrReturning } =
-    Profile
-    <$> (ValidateSummary.validate summary
-        # Validated.label (SProxy :: SProxy "summary"))
-    <*> (ValidateFieldValues.validateFieldValues fields fieldValues
-        # Validated.label (SProxy :: SProxy "fieldValues"))
-    <*> pure newOrReturning
+    -> Async (Variant (profile :: ProfileErrors | errors)) Profile
+validateProfile fields profile @ { fieldValues, newOrReturning, ambitions } =
+    { fieldValues: _, newOrReturning, ambitions: _ }
+    <$> validateFieldValues fields fieldValues
+    <*> validateAmbitions ambitions
     # Async.fromValidated
-    # Label.labelMap (SProxy :: SProxy "invalidProfile") { profile, errors: _ }
+    # label (SProxy :: SProxy "profile")

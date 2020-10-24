@@ -17,4 +17,4 @@ type Profile =
     }
 
 readProfile :: forall errors. Body -> Async (ClientError errors) Profile
-readProfile body = readJsonBody body
+readProfile = readJsonBody

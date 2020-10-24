@@ -9,12 +9,12 @@ import Foreign (MultipleErrors)
 import Postgres.Error (Error)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Server.Infrastructure.Log (logLines, logStamped, logt, print)
-import TeamTavern.Server.Player.Domain.Nickname (Nickname)
 import TeamTavern.Server.Player.UpdateDetails.ReadUpdate (UpdateDetailsDto, UpdateDetailsModelError)
 
 type UpdateDetailsError = Variant
     ( internal :: Array String
     , client :: Array String
+    , notAuthorized :: Array String
     , databaseError :: Error
     , nicknameDoesntMatch :: { nickname :: String, cookieInfo :: CookieInfo }
     , unreadableDto ::
@@ -25,10 +25,6 @@ type UpdateDetailsError = Variant
         { dto :: UpdateDetailsDto
         , errors :: NonEmptyList UpdateDetailsModelError
         }
-    , notAuthorized ::
-        { cookieInfo :: CookieInfo
-        , nickname :: Nickname
-        }
     )
 
 logError :: UpdateDetailsError -> Effect Unit
@@ -37,6 +33,7 @@ logError updateError = do
     updateError # match
         { internal: logLines
         , client: logLines
+        , notAuthorized: logLines
         , nicknameDoesntMatch: \{ nickname, cookieInfo } -> do
             logt $ "Signed in user: " <> show cookieInfo
             logt $ "Doesn't have requested nickname: " <> nickname
@@ -48,7 +45,4 @@ logError updateError = do
             logt $ "Validation resulted in these errors: " <> show errors
         , databaseError: \error ->
             logt $ "Unknown database error ocurred: " <> print error
-        , notAuthorized: \{ cookieInfo, nickname } -> do
-            logt $ "Player with cookie info: " <> show cookieInfo
-            logt $ "Not authorized to update player: " <> show nickname
         }

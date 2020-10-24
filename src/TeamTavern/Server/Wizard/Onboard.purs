@@ -58,7 +58,8 @@ import TeamTavern.Server.Profile.AddPlayerProfile.LoadFields as LoadFields
 import TeamTavern.Server.Profile.AddPlayerProfile.ReadProfile as ReadProfile
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateFieldValues (Field(..))
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateFieldValues as ValidateFieldValues
-import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile (Profile(..), ValidateProfileError, ProfileError)
+import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile (Profile, ProfileError)
+import TeamTavern.Server.Profile.Infrastructure.ValidateAmbitions as ValidateAmbitions
 import TeamTavern.Server.Profile.Infrastructure.ValidateSummary as ValidateSummary
 
 type PlayerDetails =
@@ -83,7 +84,7 @@ type ProfileDetails =
         , optionKeys :: Maybe (Array String)
         }
     , newOrReturning :: Boolean
-    , summary :: String
+    , ambitions :: String
     }
 
 type RequestBody =
@@ -144,23 +145,20 @@ validatePlayerDetails details = do
 validateProfileDetails
     :: forall errors
     .  Array LoadFields.Field -> ReadProfile.Profile
-    -> AsyncV (NonEmptyList (ValidateProfileError errors)) Profile
+    -> AsyncV (NonEmptyList (Variant (profile :: _ | errors))) Profile
 validateProfileDetails fields details = do
-    Profile
-    <$> (ValidateSummary.validate details.summary
-        # Validated.label (SProxy :: SProxy "summary"))
-    <*> (ValidateFieldValues.validateFieldValues fields details.fieldValues
-        # Validated.label (SProxy :: SProxy "fieldValues"))
-    <*> pure details.newOrReturning
+    { fieldValues: _, newOrReturning: details.newOrReturning, ambitions: _ }
+    <$> ValidateFieldValues.validateFieldValues fields details.fieldValues
+    <*> ValidateAmbitions.validateAmbitions details.ambitions
     # AsyncV.fromValidated
-    # AsyncV.labelMap (SProxy :: SProxy "invalidProfile") { profile: details, errors: _ }
+    # AsyncV.labelMap (SProxy :: SProxy "profile") { profile: details, errors: _ }
 
 type BadRequestContent = Array (Variant
     ( invalidDiscordTag :: {}
     , invalidAbout :: {}
-    , summary :: {}
-    , invalidUrl :: { fieldKey :: String }
-    , missing :: { fieldKey :: String }
+    , ambitions :: Array String
+    , url :: { key :: String, message :: Array String }
+    , missing :: { key :: String, message :: Array String }
     ))
 
 -- errorResponse :: RegisterError -> Response
@@ -170,24 +168,26 @@ errorResponse = onMatch
             <#> match
                 { invalidDiscordTag: const [ inj (SProxy :: SProxy "invalidDiscordTag") {} ]
                 , invalidAbout: const [ inj (SProxy :: SProxy "invalidAbout") {} ]
-                , invalidProfile: \profileErrors ->
-                    (profileErrors.errors :: NonEmptyList ProfileError)
-                    <#> (match
-                        { summary: const $ Array.singleton $ inj (SProxy :: SProxy "summary") {}
-                        , fieldValues: \fieldValueErrors ->
-                            fieldValueErrors
-                            <#> onMatch
-                                { invalidUrlFieldValue: \{ fieldValue: { fieldKey }, errors: errors' } ->
-                                    Just $ inj (SProxy :: SProxy "invalidUrl") { fieldKey }
-                                , missingFieldValue: \{ field: (Field _ key _ _) } ->
-                                    Just $ inj (SProxy :: SProxy "missing") { fieldKey: key }
-                                }
-                                (const Nothing)
-                            # fromFoldable
-                            # catMaybes
-                        })
-                    # fromFoldable
-                    # join
+                , profile: \{ errors } -> Array.fromFoldable errors
+
+                    -- \profileErrors ->
+                    -- (profileErrors.errors :: NonEmptyList ProfileError)
+                    -- <#> (match
+                    --     { summary: const $ Array.singleton $ inj (SProxy :: SProxy "summary") {}
+                    --     , fieldValues: \fieldValueErrors ->
+                    --         fieldValueErrors
+                    --         <#> onMatch
+                    --             { invalidUrlFieldValue: \{ fieldValue: { fieldKey }, errors: errors' } ->
+                    --                 Just $ inj (SProxy :: SProxy "invalidUrl") { fieldKey }
+                    --             , missingFieldValue: \{ field: (Field _ key _ _) } ->
+                    --                 Just $ inj (SProxy :: SProxy "missing") { fieldKey: key }
+                    --             }
+                    --             (const Nothing)
+                    --         # fromFoldable
+                    --         # catMaybes
+                    --     })
+                    -- # fromFoldable
+                    -- # join
                 }
             # fromFoldable
             # join

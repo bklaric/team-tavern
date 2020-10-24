@@ -15,6 +15,7 @@ errorResponse :: ViewSettingsError -> Response
 errorResponse = match
     { internal: const internalServerError__
     , client: const badRequest__
+    , notAuthorized: const forbidden__
     , nicknameDoesntMatch: const forbidden__
     , notFound: const badRequest__
     , unreadableSettings: const internalServerError__

@@ -11,7 +11,7 @@ import Data.Variant (Variant)
 import TeamTavern.Server.Domain.Text (Text)
 import TeamTavern.Server.Profile.AddTeamProfile.LoadFields as LoadFields
 import TeamTavern.Server.Profile.AddTeamProfile.ReadProfile as ReadProfile
-import TeamTavern.Server.Profile.AddTeamProfile.ValidateAmbitions (validateAmbitions)
+import TeamTavern.Server.Profile.Infrastructure.ValidateAmbitions (validateAmbitions)
 import TeamTavern.Server.Profile.AddTeamProfile.ValidateFieldValues (validateFieldValues)
 import TeamTavern.Server.Profile.AddTeamProfile.ValidateFieldValues as ValidateFieldValues
 

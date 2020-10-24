@@ -204,7 +204,7 @@ sendRequest (state :: State) = Async.unify do
                 { fieldValues: profileDetails.fieldValues # filter \{ url, optionKey, optionKeys } ->
                     isJust url || isJust optionKey || isJust optionKeys
                 , newOrReturning: profileDetails.newOrReturning
-                , summary: profileDetails.summary
+                , ambitions: profileDetails.summary
                 }
             , registrationDetails:
                 { email: registrationDetails.email
@@ -353,15 +353,15 @@ handleAction Submit = do
                             foldl
                             (\state' profileError ->
                                 match
-                                { invalidUrl: \{ fieldKey } -> state'
+                                { url: \{ key } -> state'
                                     { profilePlayerDetailsInput = state'.profilePlayerDetailsInput
-                                        { urlErrors = Array.cons fieldKey state'.profilePlayerDetailsInput.urlErrors }
+                                        { urlErrors = Array.cons key state'.profilePlayerDetailsInput.urlErrors }
                                     }
-                                , missing: \{ fieldKey } -> state'
+                                , missing: \{ key } -> state'
                                     { profilePlayerDetailsInput = state'.profilePlayerDetailsInput
-                                        { missingErrors = Array.cons fieldKey state'.profilePlayerDetailsInput.missingErrors }
+                                        { missingErrors = Array.cons key state'.profilePlayerDetailsInput.missingErrors }
                                     }
-                                , summary: const $ state'
+                                , ambitions: const $ state'
                                     { profilePlayerDetailsInput = state'.profilePlayerDetailsInput
                                         { summaryError = true }
                                     }

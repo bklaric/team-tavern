@@ -76,11 +76,10 @@ type Identifiers =
 
 type AddPlayerProfile = Route
     Post
-    (  Literal "profiles"
-    :> Literal "by-handle"
-    :> Capture "handle" Handle
-    :> Literal "players"
+    (  Literal "players"
     :> Capture "nickname" Nickname
+    :> Literal "profiles"
+    :> Capture "handle" Handle
     :> End)
     NoQuery
 

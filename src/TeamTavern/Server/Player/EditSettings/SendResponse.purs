@@ -11,9 +11,10 @@ errorResponse :: EditSettingsError -> Response
 errorResponse = match
     { internal: const internalServerError__
     , client: const badRequest__
-    , databaseError: const $ internalServerError__
+    , notAuthorized: const forbidden__
+    , databaseError: const internalServerError__
     , nicknameDoesntMatch: const forbidden__
-    , unreadableModel: const $ badRequest__
+    , unreadableModel: const badRequest__
     }
 
 successResponse :: Unit -> Response

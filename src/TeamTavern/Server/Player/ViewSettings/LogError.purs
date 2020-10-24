@@ -13,6 +13,7 @@ import TeamTavern.Server.Infrastructure.Log (logLines, logStamped, logt, print)
 type ViewSettingsError = Variant
     ( internal :: Array String
     , client :: Array String
+    , notAuthorized :: Array String
     , nicknameDoesntMatch ::
         { nickname :: String
         , cookieInfo :: CookieInfo
@@ -31,6 +32,7 @@ logError viewError = do
     viewError # match
         { internal: logLines
         , client: logLines
+        , notAuthorized: logLines
         , nicknameDoesntMatch: \{ nickname, cookieInfo } -> do
             logt $ "Signed in user: " <> show cookieInfo
             logt $ "Doesn't have requested nickname: " <> nickname

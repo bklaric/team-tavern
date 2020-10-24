@@ -1,17 +1,13 @@
-module TeamTavern.Server.Profile.AddTeamProfile.SendResponse where
+module TeamTavern.Server.Profile.AddTeamProfile.SendResponse (sendResponse) where
 
 import Prelude
 
 import Async (Async, alwaysRight)
 import Data.Array as Array
-import Data.Variant (Variant, match)
+import Data.Variant (match)
 import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, noContent_)
 import Simple.JSON (writeJSON)
 import TeamTavern.Server.Profile.AddTeamProfile.LogError (AddProfileError)
-
-type ProfileErrorContent = Variant (invalidSummary :: {})
-
-type BadRequestContent = Variant (invalidProfile :: Array ProfileErrorContent)
 
 errorResponse :: AddProfileError -> Response
 errorResponse = match

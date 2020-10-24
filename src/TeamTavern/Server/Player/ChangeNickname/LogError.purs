@@ -15,6 +15,7 @@ import TeamTavern.Server.Player.Domain.Nickname (Nickname, NicknameError)
 type UpdateError = Variant
     ( internal :: Array String
     , client :: Array String
+    , notAuthorized :: Array String
     , databaseError :: Error
     , nicknameDoesntMatch :: { nickname :: String, cookieInfo :: CookieInfo }
     , unreadableDto ::
@@ -28,10 +29,6 @@ type UpdateError = Variant
     , nicknameTaken ::
         { nickname :: Nickname
         , error :: Error
-        }
-    , notAuthorized ::
-        { cookieInfo :: CookieInfo
-        , nickname :: Nickname
         }
     )
 
@@ -55,7 +52,5 @@ logError updateError = do
             logt $ "According to this error: " <> print error
         , databaseError: \error ->
             logt $ "Unknown database error ocurred: " <> print error
-        , notAuthorized: \{ cookieInfo, nickname } -> do
-            logt $ "Player with cookie info: " <> show cookieInfo
-            logt $ "Not authorized to update player: " <> show nickname
+        , notAuthorized: logLines
         }

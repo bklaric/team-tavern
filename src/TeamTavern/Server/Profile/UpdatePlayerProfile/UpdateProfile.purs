@@ -15,10 +15,10 @@ import Postgres.Error (Error)
 import Postgres.Query (Query(..), QueryParameter, (:), (:|))
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
+import TeamTavern.Server.Domain.Text (Text)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Server.Profile.AddPlayerProfile.AddFieldValues (ProfileId, addFieldValues)
-import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile (Profile(..))
-import TeamTavern.Server.Profile.Infrastructure.ValidateSummary (Summary)
+import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile (Profile)
 import TeamTavern.Server.Profile.Routes (Identifiers)
 
 type UpdateProfileError errors = Variant
@@ -38,6 +38,7 @@ type UpdateProfileError errors = Variant
         { result :: Result
         , errors :: MultipleErrors
         }
+    , internal :: Array String
     | errors )
 
 -- Update profile row.
@@ -59,7 +60,7 @@ updateProfileString = Query """
     """
 
 updateProfileParameters ::
-    CookieInfo -> Identifiers -> Summary -> Boolean -> Array QueryParameter
+    CookieInfo -> Identifiers -> Text -> Boolean -> Array QueryParameter
 updateProfileParameters { id, token } { nickname, handle } summary newOrReturning =
     id : token : nickname : handle : summary :| newOrReturning
 
@@ -68,7 +69,7 @@ updateProfile'
     .  Client
     -> CookieInfo
     -> Identifiers
-    -> Summary
+    -> Text
     -> Boolean
     -> Async (UpdateProfileError errors) ProfileId
 updateProfile' client cookieInfo identifiers summary newOrReturning = do
@@ -106,9 +107,9 @@ updateProfile
     -> Identifiers
     -> Profile
     -> Async (UpdateProfileError errors) Unit
-updateProfile client cookieInfo identifiers (Profile summary fieldValues newOrReturning) = do
+updateProfile client cookieInfo identifiers { fieldValues, newOrReturning, ambitions } = do
     -- Update profile row.
-    profileId <- updateProfile' client cookieInfo identifiers summary newOrReturning
+    profileId <- updateProfile' client cookieInfo identifiers ambitions newOrReturning
 
     -- Delete all existing field values.
     deleteFieldValues client profileId

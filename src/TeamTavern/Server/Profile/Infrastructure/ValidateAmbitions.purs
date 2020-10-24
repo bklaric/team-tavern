@@ -1,4 +1,4 @@
-module TeamTavern.Server.Profile.AddTeamProfile.ValidateAmbitions where
+module TeamTavern.Server.Profile.Infrastructure.ValidateAmbitions where
 
 import Prelude
 

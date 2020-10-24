@@ -209,7 +209,7 @@ sendRequest (state :: State) = Async.unify do
                 { fieldValues: profileDetails.fieldValues # Array.filter \{ url, optionKey, optionKeys } ->
                     isJust url || isJust optionKey || isJust optionKeys
                 , newOrReturning: profileDetails.newOrReturning
-                , summary: profileDetails.ambitions
+                , ambitions: profileDetails.ambitions
                 }
             }
         _, _, _ -> Async.left Nothing
@@ -307,15 +307,15 @@ handleAction SetUpAccount = do
                     { step = PlayerDetails
                     , playerDetails = state.playerDetails
                         { aboutError = true }}
-                , invalidUrl: \{ fieldKey } -> state
+                , url: \{ key } -> state
                     { playerProfileDetails = state.playerProfileDetails
-                        { urlErrors = Array.cons fieldKey state.playerProfileDetails.urlErrors }
+                        { urlErrors = Array.cons key state.playerProfileDetails.urlErrors }
                     }
-                , missing: \{ fieldKey } -> state
+                , missing: \{ key } -> state
                     { playerProfileDetails = state.playerProfileDetails
-                        { missingErrors = Array.cons fieldKey state.playerProfileDetails.missingErrors }
+                        { missingErrors = Array.cons key state.playerProfileDetails.missingErrors }
                     }
-                , summary: const $ state
+                , ambitions: const $ state
                     { playerProfileDetails = state.playerProfileDetails
                         { ambitionsError = true }
                     }

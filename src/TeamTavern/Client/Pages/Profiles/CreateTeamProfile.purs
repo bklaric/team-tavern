@@ -38,6 +38,7 @@ import TeamTavern.Server.Infrastructure.Languages (allLanguages)
 import TeamTavern.Server.Infrastructure.Regions (Region(..), allRegions)
 import TeamTavern.Server.Infrastructure.Timezones (Timezone, allTimezones)
 import TeamTavern.Server.Profile.AddPlayerProfile.SendResponse as Create
+import TeamTavern.Server.Profile.AddTeamProfile.ValidateProfile (ProfileErrors)
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
@@ -373,26 +374,26 @@ sendCreateRequest state @ { game, player } = Async.unify do
     result <-
         case FetchRes.status response of
         204 -> pure Nothing
-        400 ->
-            FetchRes.text response
-            >>= JsonAsync.readJSON
-            # bimap
-                (const $ Just Other)
-                (\(error :: Create.BadRequestContent) -> Just $ Content $
-                    match
-                    { invalidProfile:
-                        foldl
-                        (\errors error' ->
-                            error' # match
-                                { invalidSummary: const $
-                                    errors { summary = true }
-                                , invalidUrl: const errors
-                                , missing: const errors
-                                }
-                        )
-                        ({ summary: false })
-                    }
-                    error)
+        400 -> pure Nothing
+            -- FetchRes.text response
+            -- >>= JsonAsync.readJSON
+            -- # bimap
+            --     (const $ Just Other)
+            --     (\(error :: ProfileErrors) -> Just $ Content $
+            --         match
+            --         { invalidProfile:
+            --             foldl
+            --             (\errors error' ->
+            --                 error' # match
+            --                     { invalidSummary: const $
+            --                         errors { summary = true }
+            --                     , invalidUrl: const errors
+            --                     , missing: const errors
+            --                     }
+            --             )
+            --             ({ summary: false })
+            --         }
+            --         error)
         _ -> pure $ Just Other
     pure result
 
