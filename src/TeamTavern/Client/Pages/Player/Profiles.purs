@@ -11,24 +11,23 @@ import Data.Array as Array
 import Data.Bifunctor (lmap)
 import Data.Const (Const)
 import Data.Maybe (Maybe(..))
-import Data.Symbol (class IsSymbol, SProxy(..))
+import Data.Symbol (SProxy(..))
 import Halogen (defaultEval, mkComponent, mkEval)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import Prim.Row (class Cons)
 import Simple.JSON.Async as Json
 import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchorIndexed)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
-import TeamTavern.Client.Pages.Player.EditPlayerProfile (editProfile)
+import TeamTavern.Client.Pages.Player.CreateProfileButton (createProfileButton)
 import TeamTavern.Client.Pages.Player.EditPlayerProfile as EditProfile
 import TeamTavern.Client.Pages.Player.Types (Nickname, PlayerStatus(..))
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
+import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Server.Profile.ViewPlayerProfilesByPlayer.SendResponse as ViewPlayerProfilesByPlayer
-import Undefined (undefined)
 
 data Input = Input Nickname PlayerStatus
 
@@ -46,6 +45,7 @@ type Slot = H.Slot (Const Void) Void Unit
 
 type ChildSlots =
     ( games :: Anchor.Slot Int
+    , createProfile :: H.Slot (Const Void) Void Unit
     , editProfile :: EditProfile.Slot Unit
     )
 
@@ -66,9 +66,13 @@ modalInput nickname { handle, title, fields, fieldValues, summary, newOrReturnin
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render (Empty _) = HH.div_ []
 render (Profiles nickname playerStatus profiles) =
-    HH.div [ HP.class_ $ HH.ClassName "card" ] $
-    [ HH.h2 [ HP.class_ $ HH.ClassName "card-title" ]
-        [ HH.text "Profiles" ]
+    HH.div [ HS.class_ "card" ] $
+    [ HH.h2 [ HS.class_ "card-title" ]
+        [ HH.span [ HS.class_ "card-title-text" ]
+            [ HH.text "Profiles" ]
+        , HH.slot (SProxy :: SProxy "createProfile") unit createProfileButton
+            { nickname, profileGameHandles: profiles <#> _.handle } absurd
+        ]
     ]
     -- <>
     -- case playerStatus of
@@ -77,7 +81,7 @@ render (Profiles nickname playerStatus profiles) =
     <>
     if Array.null profiles
     then Array.singleton $
-        HH.div [ HP.class_ $ HH.ClassName "card-section" ]
+        HH.div [ HS.class_ "card-section" ]
         [ HH.p_
             [ HH.text
                 case playerStatus of
@@ -86,22 +90,22 @@ render (Profiles nickname playerStatus profiles) =
             ]
         ]
     else (profiles # Array.mapWithIndex \index profile ->
-        HH.div [ HP.class_ $ HH.ClassName "card-section" ] $
-        [ HH.h3 [ HP.class_ $ HH.ClassName "profile-header" ]
-            [ HH.div [ HP.class_ $ HH.ClassName "profile-header-item" ] $
+        HH.div [ HS.class_ "card-section" ] $
+        [ HH.h3 [ HS.class_ "profile-header" ]
+            [ HH.div [ HS.class_ "profile-header-item" ] $
                 [ navigationAnchorIndexed (SProxy :: SProxy "games") index
                     { path: "/games/" <> profile.handle <> "/players"
                     , content: HH.text profile.title
                     }
                 , divider
-                , HH.span [ HP.class_ $ HH.ClassName "profile-updated" ]
+                , HH.span [ HS.class_ "profile-updated" ]
                     [ HH.text $ "Updated " <> lastUpdated profile.updatedSeconds ]
                 ]
-            , HH.div [ HP.class_ $ HH.ClassName "profile-header-item" ]
+            , HH.div [ HS.class_ "profile-header-item" ]
                 case playerStatus of
                 SamePlayer -> Array.singleton $
                     HH.button
-                    [ HP.class_ $ HH.ClassName "regular-button"
+                    [ HS.class_ "regular-button"
                     , HE.onClick $ const $ Just $ ShowModal $ modalInput nickname profile
                     ]
                     [ HH.i [ HP.class_ $ H.ClassName "fas fa-user-edit button-icon" ] []
@@ -110,54 +114,54 @@ render (Profiles nickname playerStatus profiles) =
                 _ -> []
 
             ]
-        , HH.div [ HP.class_ $ HH.ClassName "profile-columns" ]
-            [ HH.div [ HP.class_ $ HH.ClassName "profile-column" ] $
-                [ HH.h4 [ HP.class_ $ HH.ClassName "player-profile-section-title" ] [ HH.text "Profile details" ] ]
+        , HH.div [ HS.class_ "profile-columns" ]
+            [ HH.div [ HS.class_ "profile-column" ] $
+                [ HH.h4 [ HS.class_ "player-profile-section-title" ] [ HH.text "Profile details" ] ]
                 <> Array.catMaybes
                 (profile.fields <#> \field -> let
                     fieldValue = profile.fieldValues # Array.find \{ fieldKey } -> field.key == fieldKey
                     in
                     case field.ilk, fieldValue of
                     1, Just { url: Just url } -> Just $
-                        HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
-                        [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
-                        , HH.a [ HP.class_ $ HH.ClassName "profile-field-url", HP.target "_blank", HP.href url ] [ HH.text field.label ]
+                        HH.p [ HS.class_ "profile-field" ]
+                        [ HH.i [ HS.class_ $ field.icon <> " profile-field-icon" ] []
+                        , HH.a [ HS.class_ "profile-field-url", HP.target "_blank", HP.href url ] [ HH.text field.label ]
                         ]
                     2, Just { optionKey: Just optionKey } ->
                         field.options >>= Array.find (\{ key } -> key == optionKey) <#> \option ->
-                            HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
-                            [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
-                            , HH.span [ HP.class_ $ HH.ClassName "profile-field-label" ] [ HH.text $ field.label <> ": " ]
-                            , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text option.label ]
+                            HH.p [ HS.class_ "profile-field" ]
+                            [ HH.i [ HS.class_ $ field.icon <> " profile-field-icon" ] []
+                            , HH.span [ HS.class_ "profile-field-label" ] [ HH.text $ field.label <> ": " ]
+                            , HH.span [ HS.class_ "profile-field-emphasize" ] [ HH.text option.label ]
                             ]
                     3, Just { optionKeys: Just optionKeys } ->
                         case field.options <#> Array.filter \{ key } -> Array.elem key optionKeys of
                         Just fieldOptions | not $ Array.null fieldOptions -> Just $
-                            HH.p [ HP.class_ $ HH.ClassName "profile-field" ] $
-                            [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
-                            , HH.span [ HP.class_ $ HH.ClassName "profile-field-label" ] [ HH.text $ field.label <> ": " ]
+                            HH.p [ HS.class_ "profile-field" ] $
+                            [ HH.i [ HS.class_ $ field.icon <> " profile-field-icon" ] []
+                            , HH.span [ HS.class_ "profile-field-label" ] [ HH.text $ field.label <> ": " ]
                             ]
                             <>
                             (intercalate [(HH.text ", ")] $
-                                map (\{ label } -> [ HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text label ] ]) fieldOptions)
+                                map (\{ label } -> [ HH.span [ HS.class_ "profile-field-emphasize" ] [ HH.text label ] ]) fieldOptions)
                         _ -> Nothing
                     _, _ -> Nothing
                 )
                 <> (if profile.newOrReturning
                     then Array.singleton $
-                        HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
-                        [ HH.i [ HP.class_ $ HH.ClassName "fas fa-book profile-field-icon" ] []
-                        , HH.span [ HP.class_ $ HH.ClassName "profile-field-labelless" ] [ HH.text "Is a"]
-                        , HH.span [ HP.class_ $ HH.ClassName "profile-field-emphasize" ] [ HH.text " new or returning player" ]
+                        HH.p [ HS.class_ "profile-field" ]
+                        [ HH.i [ HS.class_ "fas fa-book profile-field-icon" ] []
+                        , HH.span [ HS.class_ "profile-field-labelless" ] [ HH.text "Is a"]
+                        , HH.span [ HS.class_ "profile-field-emphasize" ] [ HH.text " new or returning player" ]
                         , HH.text $ " to the game"
                         ]
                     else [])
-            , HH.div [ HP.class_ $ HH.ClassName "profile-column" ] $
+            , HH.div [ HS.class_ "profile-column" ] $
                 (if Array.null $ profile.summary
                 then []
-                else [ HH.h4 [ HP.class_ $ HH.ClassName "player-profile-section-title" ] [ HH.text "Ambitions" ] ]
+                else [ HH.h4 [ HS.class_ "player-profile-section-title" ] [ HH.text "Ambitions" ] ]
                     <> (profile.summary <#> \paragraph ->
-                        HH.p [ HP.class_ $ HH.ClassName "profile-summary" ] [ HH.text paragraph ]))
+                        HH.p [ HS.class_ "profile-summary" ] [ HH.text paragraph ]))
             ]
 
         ]
