@@ -92,8 +92,6 @@ type ChildSlots =
 totalPages :: Int -> Int
 totalPages count = ceil (toNumber count / toNumber pageSize)
 
-
-
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { profiles, profileCount, showCreateProfile, playerInfo, page } =
     card $
@@ -112,17 +110,6 @@ render { profiles, profileCount, showCreateProfile, playerInfo, page } =
                 <> " teams"
             ]
         ]
-        -- <>
-        -- if showCreateProfile
-        -- then Array.singleton $
-        --     HH.button
-        --     [ HP.class_ $ HH.ClassName "primary-button"
-        --     , HE.onClick $ const $ Just CreateProfileAction
-        --     ]
-        --     [ HH.i [ HP.class_ $ HH.ClassName "fas fa-user-plus button-icon" ] []
-        --     , HH.text "Create team profile"
-        --     ]
-        -- else []
     ]
     <>
     if Array.null profiles
