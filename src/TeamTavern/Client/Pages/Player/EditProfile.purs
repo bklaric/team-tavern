@@ -1,9 +1,9 @@
-module TeamTavern.Client.Pages.Player.CreateProfile (Input, Slot, createProfile) where
+module TeamTavern.Client.Pages.Player.EditProfile where
 
 import Prelude
 
 import Async (Async)
-import Data.Array (foldl)
+import Data.Array (foldl, intercalate)
 import Data.Array as Array
 import Data.Const (Const)
 import Data.Either (Either(..))
@@ -15,9 +15,9 @@ import TeamTavern.Client.Components.Form (form, otherFormError, submitButton)
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.Player.ProfileFormInput (profileFormInput)
 import TeamTavern.Client.Components.Player.ProfileFormInput as ProfileFormInput
-import TeamTavern.Client.Components.Player.ProfileInputGroup (Field)
+import TeamTavern.Client.Components.Player.ProfileInputGroup (Field, FieldValue)
 import TeamTavern.Client.Script.Navigate (hardNavigate)
-import TeamTavern.Client.Script.Request (postNoContent)
+import TeamTavern.Client.Script.Request (putNoContent)
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
@@ -26,6 +26,9 @@ type Input =
     , handle :: String
     , title :: String
     , fields :: Array Field
+    , fieldValues :: Array FieldValue
+    , newOrReturning :: Boolean
+    , ambitions :: Array String
     }
 
 type State =
@@ -50,7 +53,7 @@ render { profile, otherError, submitting } =
     form SendRequest $
     [ profileFormInput profile UpdateProfile
     , submitButton "fas fa-user-plus"
-        "Create player profile" "Creating player profile..." submitting
+        "Edit player profile" "Editting player profile..." submitting
     ]
     <> otherFormError otherError
 
@@ -68,7 +71,7 @@ sendRequest
             Unit
         ))
 sendRequest state @ { nickname, handle, profile } =
-    postNoContent ("/api/players/" <> nickname <> "/profiles/" <> handle)
+    putNoContent ("/api/players/" <> nickname <> "/profiles/" <> handle)
     { fieldValues: profile.fieldValues
     , newOrReturning: profile.newOrReturning
     , ambitions: profile.ambitions
@@ -125,11 +128,15 @@ handleAction (SendRequest event) = do
 
 component :: forall query output left. H.Component HH.HTML query Input output (Async left)
 component = H.mkComponent
-    { initialState: \{ nickname, handle, title, fields } ->
+    { initialState: \{ nickname, handle, title, fields, fieldValues, newOrReturning, ambitions } ->
         { nickname
         , handle
         , title
-        , profile: ProfileFormInput.emptyInput fields
+        , profile: (ProfileFormInput.emptyInput fields)
+            { fieldValues = fieldValues
+            , newOrReturning = newOrReturning
+            , ambitions = intercalate "\n\n" ambitions
+            }
         , otherError: false
         , submitting: false
         }
@@ -137,11 +144,11 @@ component = H.mkComponent
     , eval: H.mkEval $ H.defaultEval { handleAction = handleAction }
     }
 
-createProfile
-    :: forall children action left
+editProfile
+    :: forall query children left
     .  Input
-    -> (Modal.Output Void -> Maybe action)
-    -> HH.ComponentHTML action (createProfile :: Slot | children) (Async left)
-createProfile input handleMessage = HH.slot
-    (SProxy :: SProxy "createProfile") unit
-    (Modal.component ("Create your " <> input.title <> " profile") component) input handleMessage
+    -> (Modal.Output Void -> Maybe query)
+    -> HH.ComponentHTML query (editProfile :: Slot | children) (Async left)
+editProfile input handleMessage = HH.slot
+    (SProxy :: SProxy "editProfile") unit
+    (Modal.component ("Edit your " <> input.title <> " profile") component) input handleMessage

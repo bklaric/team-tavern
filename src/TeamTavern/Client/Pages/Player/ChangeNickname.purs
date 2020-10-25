@@ -23,7 +23,6 @@ import Halogen.HTML.Properties as HP
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.Modal as Modal
-import TeamTavern.Client.Pages.Player.Types (Nickname)
 import TeamTavern.Client.Script.Cookie (getPlayerInfo)
 import TeamTavern.Client.Script.Navigate (navigate_)
 import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass, otherErrorClass)
@@ -38,7 +37,7 @@ data Action
     | Update LoadedState Event
     | Close
 
-data Message = NicknameChanged Nickname | CloseClicked
+data Message = NicknameChanged String | CloseClicked
 
 type LoadedState =
     { originalNickname :: String

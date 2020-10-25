@@ -21,7 +21,7 @@ import TeamTavern.Server.Profile.Routes (Nickname)
 type LoadProfilesResult =
     { handle :: String
     , title :: String
-    , summary :: Array String
+    , ambitions :: Array String
     , fieldValues :: Array
         { fieldKey :: String
         , url :: Maybe String
@@ -59,7 +59,7 @@ queryString = Query """
     select
         game.handle,
         game.title,
-        profile.summary,
+        profile.summary as ambitions,
         coalesce(fields.fields, '[]') as "fields",
         coalesce(field_values.field_values, '[]') as "fieldValues",
         profile.new_or_returning as "newOrReturning",

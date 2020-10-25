@@ -23,12 +23,12 @@ import Prim.Row (class Cons)
 import Simple.JSON.Async as Json
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Pages.Player.EditDetails as EditDetails
-import TeamTavern.Client.Pages.Player.Types (Nickname, PlayerStatus(..))
+import TeamTavern.Client.Pages.Player.Status (Status(..))
 import TeamTavern.Client.Script.Clipboard (writeTextAsync)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Server.Player.ViewDetails.SendResponse as ViewDetails
 
-data Input = Input Nickname PlayerStatus
+data Input = Input String Status
 
 data Action
     = Initialize
@@ -41,7 +41,7 @@ type DiscordTagCopied = Boolean
 
 data State
     = Empty Input
-    | Details Nickname PlayerStatus ViewDetails.OkContent DiscordTagCopied
+    | Details String Status ViewDetails.OkContent DiscordTagCopied
 
 type Slot = H.Slot (Const Void) Void Unit
 
@@ -57,7 +57,7 @@ render (Details nickname playerStatus details' discordTagCopied) =
         ]
         <>
         case playerStatus of
-        SamePlayer -> Array.singleton $
+        SignedInSelf -> Array.singleton $
             HH.button
             [ HP.class_ $ HH.ClassName "regular-button"
             , HE.onClick $ const $ Just $ ShowModal { nickname, details: details' }
@@ -69,7 +69,7 @@ render (Details nickname playerStatus details' discordTagCopied) =
     ]
     -- <>
     -- case playerStatus of
-    -- SamePlayer -> [ editDetails undefined (Just <<< HandleModalOutput) ]
+    -- SignedInSelf -> [ editDetails undefined (Just <<< HandleModalOutput) ]
     -- _ -> []
     <>
     [ HH.div [ HP.class_ $ HH.ClassName "card-section" ]
@@ -80,7 +80,7 @@ render (Details nickname playerStatus details' discordTagCopied) =
             [ HH.p_
                 [ HH.text
                     case playerStatus of
-                    SamePlayer -> "You haven't entered any details."
+                    SignedInSelf -> "You haven't entered any details."
                     _ -> "This player hasn't entered any details."
                 ]
             ]
@@ -182,7 +182,7 @@ render (Details nickname playerStatus details' discordTagCopied) =
         ]
     ]
 
-loadDetails :: forall left. Nickname -> Async left (Maybe ViewDetails.OkContent)
+loadDetails :: forall left. String -> Async left (Maybe ViewDetails.OkContent)
 loadDetails nickname = Async.unify do
     timezone <- getClientTimezone
     response
@@ -259,8 +259,8 @@ details
     :: forall children' name children action left
     .  Cons name (Slot) children' children
     => IsSymbol name
-    => Nickname
-    -> PlayerStatus
+    => String
+    -> Status
     -> SProxy name
     -> HH.ComponentHTML action children (Async left)
 details nickname playerStatus slot =

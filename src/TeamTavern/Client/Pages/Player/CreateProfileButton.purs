@@ -4,6 +4,7 @@ import Prelude
 
 import Async (Async)
 import Data.Array as Array
+import Data.Const (Const)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Tuple (Tuple(..))
 import Halogen (lift)
@@ -23,6 +24,8 @@ type Input =
     { nickname :: String
     , profileGameHandles :: Array String
     }
+
+type Slot = H.Slot (Const Void) Void Unit
 
 createProfileButton :: forall left output query. H.Component HH.HTML query Input output (Async left)
 createProfileButton = Hooks.component $ \_ { nickname, profileGameHandles } -> Hooks.do

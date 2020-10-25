@@ -15,7 +15,7 @@ import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchorIndexed)
 import TeamTavern.Client.Pages.Player.CreateTeam (createTeam)
-import TeamTavern.Client.Pages.Player.Types (PlayerStatus(..))
+import TeamTavern.Client.Pages.Player.Status (Status(..))
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
 import TeamTavern.Client.Script.Request (get)
 import TeamTavern.Client.Snippets.Class as HS
@@ -23,14 +23,14 @@ import TeamTavern.Server.Team.ViewByOwner (Team)
 
 type Input =
     { nickname :: String
-    , status :: PlayerStatus
+    , status :: Status
     }
 
 data State
     = Empty Input
     | Loaded
         { nickname :: String
-        , status :: PlayerStatus
+        , status :: Status
         , modalShown :: Boolean
         , teams :: Array Team
         }
@@ -49,7 +49,7 @@ renderTeams teams' status =
         [ HH.p_
             [ HH.text
                 case status of
-                SamePlayer -> "You haven't created any teams."
+                SignedInSelf -> "You haven't created any teams."
                 _ -> "This player hasn't created any teams."
             ]
         ]

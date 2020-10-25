@@ -22,46 +22,49 @@ import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchorIndexed)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
+import TeamTavern.Client.Components.Player.ProfileInputGroup (Field, FieldValue)
 import TeamTavern.Client.Pages.Player.CreateProfileButton (createProfileButton)
-import TeamTavern.Client.Pages.Player.EditPlayerProfile as EditProfile
-import TeamTavern.Client.Pages.Player.Types (Nickname, PlayerStatus(..))
+import TeamTavern.Client.Pages.Player.CreateProfileButton as CreateProfileButton
+import TeamTavern.Client.Pages.Player.EditProfile as EditProfile
+import TeamTavern.Client.Pages.Player.Status (Status(..))
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
+import TeamTavern.Client.Script.Request (get)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Server.Profile.ViewPlayerProfilesByPlayer.SendResponse as ViewPlayerProfilesByPlayer
 
-data Input = Input Nickname PlayerStatus
+data Input = Input String Status
 
 data Action
     = Initialize
     | Receive Input
     | ShowModal EditProfile.Input
-    | HandleModalOutput (Modal.Output EditProfile.Output)
+    | HandleModalOutput (Modal.Output Void)
 
 data State
     = Empty Input
-    | Profiles Nickname PlayerStatus ViewPlayerProfilesByPlayer.OkContent
+    | Profiles String Status ViewPlayerProfilesByPlayer.OkContent
 
 type Slot = H.Slot (Const Void) Void Unit
 
 type ChildSlots =
     ( games :: Anchor.Slot Int
-    , createProfile :: H.Slot (Const Void) Void Unit
-    , editProfile :: EditProfile.Slot Unit
+    , createProfile :: CreateProfileButton.Slot
+    , editProfile :: EditProfile.Slot
     )
 
 modalInput
     :: forall other
-    .  Nickname
-    -> { fieldValues :: Array EditProfile.FieldValue
-       , fields :: Array EditProfile.Field
+    .  String
+    -> { fieldValues :: Array FieldValue
+       , fields :: Array Field
        , handle :: String
-       , summary :: Array String
+       , ambitions :: Array String
        , title :: String
        , newOrReturning :: Boolean
        | other }
     -> EditProfile.Input
-modalInput nickname { handle, title, fields, fieldValues, summary, newOrReturning } =
-    { nickname, handle, title, fields, fieldValues, summary, newOrReturning }
+modalInput nickname { handle, title, fields, fieldValues, ambitions, newOrReturning } =
+    { nickname, handle, title, fields, fieldValues, ambitions, newOrReturning }
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render (Empty _) = HH.div_ []
@@ -76,7 +79,7 @@ render (Profiles nickname playerStatus profiles) =
     ]
     -- <>
     -- case playerStatus of
-    -- SamePlayer -> [ editProfile undefined $ Just <<< HandleModalOutput ]
+    -- SignedInSelf -> [ editProfile undefined $ Just <<< HandleModalOutput ]
     -- _ -> []
     <>
     if Array.null profiles
@@ -85,7 +88,7 @@ render (Profiles nickname playerStatus profiles) =
         [ HH.p_
             [ HH.text
                 case playerStatus of
-                SamePlayer -> "You haven't created any player profiles."
+                SignedInSelf -> "You haven't created any player profiles."
                 _ -> "This player hasn't created any player profiles."
             ]
         ]
@@ -103,7 +106,7 @@ render (Profiles nickname playerStatus profiles) =
                 ]
             , HH.div [ HS.class_ "profile-header-item" ]
                 case playerStatus of
-                SamePlayer -> Array.singleton $
+                SignedInSelf -> Array.singleton $
                     HH.button
                     [ HS.class_ "regular-button"
                     , HE.onClick $ const $ Just $ ShowModal $ modalInput nickname profile
@@ -157,27 +160,17 @@ render (Profiles nickname playerStatus profiles) =
                         ]
                     else [])
             , HH.div [ HS.class_ "profile-column" ] $
-                (if Array.null $ profile.summary
+                (if Array.null $ profile.ambitions
                 then []
                 else [ HH.h4 [ HS.class_ "player-profile-section-title" ] [ HH.text "Ambitions" ] ]
-                    <> (profile.summary <#> \paragraph ->
+                    <> (profile.ambitions <#> \paragraph ->
                         HH.p [ HS.class_ "profile-summary" ] [ HH.text paragraph ]))
             ]
-
         ]
     )
 
-loadProfiles :: forall left.
-    String -> Async left (Maybe ViewPlayerProfilesByPlayer.OkContent)
-loadProfiles nickname = Async.unify do
-    response
-        <- Fetch.fetch_ ("/api/profiles/by-nickname/" <> nickname <> "/players")
-        #  lmap (const Nothing)
-    content <-
-        case FetchRes.status response of
-        200 -> FetchRes.text response >>= Json.readJSON # lmap (const Nothing)
-        _   -> Async.left Nothing
-    pure $ Just content
+loadProfiles :: forall left. String -> Async left (Maybe ViewPlayerProfilesByPlayer.OkContent)
+loadProfiles nickname = get ("/api/profiles/by-nickname/" <> nickname <> "/players")
 
 handleAction :: forall output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
@@ -204,18 +197,19 @@ handleAction (ShowModal profile) =
     -- Modal.showWith profile (SProxy :: SProxy "editProfile")
     pure unit
 handleAction (HandleModalOutput output) = do
+    pure unit
     -- Modal.hide (SProxy :: SProxy "editProfile")
-    case output of
-        Modal.OutputRaised (EditProfile.ProfileUpdated _) -> do
-            state <- H.get
-            case state of
-                Profiles nickname status _ -> do
-                    profiles <- H.lift $ loadProfiles nickname
-                    case profiles of
-                        Just profiles' -> H.put $ Profiles nickname status profiles'
-                        Nothing -> pure unit
-                _ -> pure unit
-        _ -> pure unit
+    -- case output of
+    --     Modal.OutputRaised (EditProfile.ProfileUpdated _) -> do
+    --         state <- H.get
+    --         case state of
+    --             Profiles nickname status _ -> do
+    --                 profiles <- H.lift $ loadProfiles nickname
+    --                 case profiles of
+    --                     Just profiles' -> H.put $ Profiles nickname status profiles'
+    --                     Nothing -> pure unit
+    --             _ -> pure unit
+    --     _ -> pure unit
 
 component :: forall output left query.
     H.Component HH.HTML query Input output (Async left)
@@ -231,8 +225,8 @@ component = mkComponent
 
 profiles
     :: forall children action left
-    .  Nickname
-    -> PlayerStatus
+    .  String
+    -> Status
     -> HH.ComponentHTML action (profiles :: Slot | children) (Async left)
 profiles nickname playerStatus =
     HH.slot (SProxy :: SProxy "profiles") unit component (Input nickname playerStatus) absurd

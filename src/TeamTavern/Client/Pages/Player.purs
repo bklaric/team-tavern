@@ -26,7 +26,7 @@ import TeamTavern.Client.Pages.Player.Profiles (profiles)
 import TeamTavern.Client.Pages.Player.Profiles as PlayerProfiles
 import TeamTavern.Client.Pages.Player.Teams (teams)
 import TeamTavern.Client.Pages.Player.Teams as Teams
-import TeamTavern.Client.Pages.Player.Types (PlayerStatus(..))
+import TeamTavern.Client.Pages.Player.Status (Status(..))
 import TeamTavern.Client.Script.Cookie (getPlayerInfo)
 import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
 import TeamTavern.Client.Script.Navigate (hardNavigate, navigateWithEvent_)
@@ -49,7 +49,7 @@ data State
     = Empty
     | Player
         { player :: View.OkContent
-        , status :: PlayerStatus
+        , status :: Status
         , editPopoverShown :: Boolean
         , windowSubscription :: H.SubscriptionId
         }
@@ -104,8 +104,8 @@ render (Player { player: { nickname, about }, status, editPopoverShown }) =
             ]
         , HH.div [ HP.class_ $ HH.ClassName "content-title-right" ]
             case status of
-            SamePlayer -> [ renderEditAccountButton editPopoverShown ]
-            SignedIn _ ->
+            SignedInSelf -> [ renderEditAccountButton editPopoverShown ]
+            SignedInOther ->
                 [ HH.div [ HP.class_ $ HH.ClassName "content-title-tabs" ] $
                     [ HH.a
                         [ HP.class_ $ HH.ClassName "content-title-tab"
@@ -124,7 +124,7 @@ render (Player { player: { nickname, about }, status, editPopoverShown }) =
     , HH.p [ HP.class_ $ HH.ClassName "content-description" ]
         [ HH.text
             case status of
-            SamePlayer -> "View and edit all your player and team profiles."
+            SignedInSelf -> "View and edit all your player and team profiles."
             _ -> "View all player and team profiles of player " <> nickname <> "."
         ]
     , details nickname status (SProxy :: SProxy "details")
@@ -146,9 +146,9 @@ loadPlayer nickname windowSubscription = Async.unify do
     playerInfo <- getPlayerInfo
     case playerInfo of
         Just { nickname: nickname' } | content.nickname == nickname' ->
-            pure $ Player { player: content, status: SamePlayer, editPopoverShown: false, windowSubscription }
+            pure $ Player { player: content, status: SignedInSelf, editPopoverShown: false, windowSubscription }
         Just { nickname: nickname' } ->
-            pure $ Player { player: content, status: SignedIn nickname', editPopoverShown: false, windowSubscription }
+            pure $ Player { player: content, status: SignedInOther, editPopoverShown: false, windowSubscription }
         Nothing -> pure $ Player { player: content, status: SignedOut, editPopoverShown: false, windowSubscription }
 
 handleAction :: forall output left.
