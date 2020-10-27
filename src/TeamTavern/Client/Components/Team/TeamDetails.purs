@@ -1,4 +1,4 @@
-module TeamTavern.Client.Components.Team.TeamDetails where
+module TeamTavern.Client.Components.Team.TeamDetails (teamDetails) where
 
 import Prelude
 
@@ -8,8 +8,8 @@ import Halogen.HTML as HH
 import TeamTavern.Client.Components.Detail (arrangedOrDetail, detail, urlDetail, weekdaysOnlineDetail, weekendsOnlineDetail)
 import TeamTavern.Client.Snippets.Class as HS
 
-teamWebsiteDetails :: forall slots action. Maybe String -> Maybe (HH.HTML slots action)
-teamWebsiteDetails website = urlDetail "fas fa-globe" "Website" website
+teamWebsiteDetail :: forall slots action. Maybe String -> Maybe (HH.HTML slots action)
+teamWebsiteDetail website = urlDetail "fas fa-globe" "Website" website
 
 teamAgeDetail :: forall slots action. Maybe Int -> Maybe Int -> Maybe (HH.HTML slots action)
 teamAgeDetail Nothing Nothing = Nothing
@@ -71,7 +71,7 @@ teamDetails :: forall fields slots action.
     -> Array (HH.HTML slots action)
 teamDetails details =
     Array.catMaybes
-    [ teamWebsiteDetails details.website
+    [ teamWebsiteDetail details.website
     , teamAgeDetail details.ageFrom details.ageTo
     , teamLocationsDetail details.locations
     , teamLanguagesDetail details.languages

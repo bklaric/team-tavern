@@ -99,7 +99,6 @@ queryString timezone = Query $ """
             )
         end as "weekendOnline",
         team.about,
-        -- '[]'::json as profiles
         coalesce(
             json_agg(
                 json_build_object(

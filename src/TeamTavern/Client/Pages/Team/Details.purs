@@ -11,6 +11,7 @@ import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Record as Record
+import TeamTavern.Client.Components.Card (card, cardHeader, cardHeading, cardSection)
 import TeamTavern.Client.Components.Detail (textDetail)
 import TeamTavern.Client.Components.Team.TeamDetails (teamDetails)
 import TeamTavern.Client.Snippets.Class as HS
@@ -32,14 +33,14 @@ teamDetailsColumn team = Array.singleton $
     [ HH.h4 [ HS.class_ "player-profile-section-title" ] [ HH.text "Team details" ] ]
     <> teamDetails
         ( team
-            # Record.modify (SProxy :: SProxy "weekdayOnline")
-                case _ of
-                Just { clientFrom, clientTo } -> Just { from: clientFrom, to: clientTo }
-                Nothing -> Nothing
-            # Record.modify (SProxy :: SProxy "weekendOnline")
-                case _ of
-                Just { clientFrom, clientTo } -> Just { from: clientFrom, to: clientTo }
-                Nothing -> Nothing
+        # Record.modify (SProxy :: SProxy "weekdayOnline")
+            case _ of
+            Just { clientFrom, clientTo } -> Just { from: clientFrom, to: clientTo }
+            Nothing -> Nothing
+        # Record.modify (SProxy :: SProxy "weekendOnline")
+            case _ of
+            Just { clientFrom, clientTo } -> Just { from: clientFrom, to: clientTo }
+            Nothing -> Nothing
         )
 
 teamAboutColumn :: forall slots action. Team -> Array (HH.HTML slots action)
@@ -52,12 +53,9 @@ teamAboutColumn team = Array.singleton $
 details :: forall action children left.
     Team -> H.ComponentHTML action (discordServer :: Copyable.Slot | children) (Async left)
 details team =
-    HH.div [ HS.class_ "card" ] $
-    [ HH.h2 [ HS.class_ "card-title" ] $
-        [ HH.span [ HS.class_ "card-title-text" ]
-            [ HH.text "Details" ]
-        ]
-    , HH.div [ HS.class_ "card-section" ]
+    card
+    [ cardHeader [ cardHeading "Details" ]
+    , cardSection
         if noDetails team && noAbout team
         then [ HH.p_ [ HH.text "No details, kek." ] ]
         else

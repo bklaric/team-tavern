@@ -5,6 +5,7 @@ import Prelude
 import Data.Array as Array
 import Data.Maybe (Maybe(..))
 import Halogen.HTML as HH
+import TeamTavern.Client.Components.Detail (detail, fieldDetail)
 import TeamTavern.Client.Snippets.Class as HS
 
 profileDetails :: forall fieldOptionFields fieldValueFields fieldFields slots action.
@@ -65,12 +66,7 @@ profileDetails' fieldValues newOrReturning =
     <#> ( \fieldValue ->
             if not $ Array.null fieldValue.options
             then Just $
-                HH.p [ HS.class_ "detail" ] $
-                [ HH.i [ HS.class_ $ fieldValue.field.icon <> " detail-icon" ] []
-                , HH.span [ HS.class_ "detail-label" ]
-                    [ HH.text $ fieldValue.field.label <> ": " ]
-                ]
-                <>
+                fieldDetail fieldValue.field.icon fieldValue.field.label
                 ( Array.intercalate [(HH.text ", ")] $
                     map
                     (\{ label } ->
@@ -80,16 +76,14 @@ profileDetails' fieldValues newOrReturning =
                     fieldValue.options
                 )
             else Nothing
-        -- _ -> Nothing
         )
     # Array.catMaybes
     )
     <>
     ( if newOrReturning
         then Array.singleton $
-            HH.p [ HS.class_ "detail" ]
-            [ HH.i [ HS.class_ "fas fa-book detail-icon" ] []
-            , HH.span [ HS.class_ "detail-labelless" ] [ HH.text "Are"]
+            detail "fas fa-book"
+            [ HH.span [ HS.class_ "detail-labelless" ] [ HH.text "Are"]
             , HH.span [ HS.class_ "detail-emphasize" ] [ HH.text " new or returning players" ]
             , HH.text $ " to the game"
             ]

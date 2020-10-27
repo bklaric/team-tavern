@@ -25,6 +25,14 @@ detail icon children =
     [ HH.i [ HS.class_ $ icon <> " detail-icon" ] [] ]
     <> children
 
+fieldDetail :: forall slots action.
+    String -> String -> Array (HH.HTML slots action) -> HH.HTML slots action
+fieldDetail icon label children =
+    detail icon $
+    [ HH.span [ HS.class_ "detail-label" ] [ HH.text $ label <> ": " ] ]
+    <>
+    children
+
 urlDetail :: forall slots action. String -> String -> Maybe String -> Maybe (HH.HTML slots action)
 urlDetail _ _ Nothing = Nothing
 urlDetail icon text (Just href) = Just $

@@ -5,13 +5,13 @@ create table player
     , discord_tag varchar(37)
     , birthday date
     , languages text[] not null default '{}'
-    , country varchar(100)
+    , location varchar(100)
     , timezone varchar(50)
     , weekday_from time
     , weekday_to time
     , weekend_from time
     , weekend_to time
-    , has_microphone boolean not null default false
+    , microphone boolean not null default false
     , password_hash character(60) not null
     , confirmation_nonce character(20) not null
     , email_confirmed boolean not null default false
@@ -101,7 +101,7 @@ create table player_profile
     , player_id integer not null references player(id)
     , game_id integer not null references game(id)
     , new_or_returning boolean not null
-    , summary text[] not null
+    , ambitions text[] not null
     , created timestamptz not null default current_timestamp
     , updated timestamptz not null default current_timestamp
     , unique (game_id, player_id)
@@ -126,7 +126,7 @@ create table team_profile
     , team_id integer not null references team(id)
     , game_id integer not null references game(id)
     , new_or_returning boolean not null
-    , summary text[] not null
+    , ambitions text[] not null
     , created timestamptz not null default current_timestamp
     , updated timestamptz not null default current_timestamp
     , unique (game_id, team_id)

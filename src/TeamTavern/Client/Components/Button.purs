@@ -14,5 +14,5 @@ regularIconButton icon text onClick =
     , HE.onClick $ const $ Just onClick
     ]
     [ HH.i [ HS.class_ "fa fa-edit button-icon" ] []
-    , HH.text "Edit team"
+    , HH.text text
     ]

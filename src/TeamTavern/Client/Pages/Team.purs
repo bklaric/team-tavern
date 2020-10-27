@@ -20,8 +20,8 @@ import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.CSS as HC
-import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Components.Button (regularIconButton)
+import TeamTavern.Client.Components.Content (contentDescription, contentHeader, contentHeading)
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
@@ -75,28 +75,23 @@ render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render (Empty _) = HH.div_ []
 render (Loaded { team: team', status, showEditTeamModal, showEditProfileModal } ) =
     HH.div_  $
-    [ HH.div [ HS.class_ "content-title" ]
-        [ HH.div [ HS.class_ "content-title-left" ]
-            [ HH.h1 [ HS.class_ "content-title-text" ]
-                [ HH.text team'.name ]
-            ]
-        , HH.div [ HS.class_ "content-title-right" ]
+    [ contentHeader
+        [ HH.div_ [ contentHeading team'.name ]
+        , HH.div_
             case status of
-            SignedInOwner ->
-                [ regularIconButton "fas fa-edit" "Edit team" ShowEditTeamModal
-                ]
-            _ ->
+            SignedInOwner -> [ regularIconButton "fas fa-edit" "Edit team" ShowEditTeamModal ]
+            SignedInOther ->
                 [ navigationAnchor (SProxy :: SProxy "messageOwner")
                     { path: "/conversations/" <> team'.owner
                     , content: HH.span [ HC.style $ CSS.fontWeight $ CSS.weight 500.0 ]
-                        [ HH.i [ HP.class_ $ H.ClassName "fas fa-envelope button-icon" ] []
+                        [ HH.i [ HS.class_ "fas fa-envelope button-icon" ] []
                         , HH.text "Message team owner"
                         ]
                     }
                 ]
+            SignedOut -> []
         ]
-    , HH.p [ HS.class_ "content-description" ]
-        [ HH.text "This is a team, lmao!" ]
+    , contentDescription "This is a team, lmao!"
     , details team'
     , profiles team'.handle team'.profiles ShowEditProfileModal
     ]
@@ -138,8 +133,8 @@ loadTeam handle = do
     timezone <- getClientTimezone
     get $ "/api/teams/by-handle/" <> handle <> "?timezone=" <> timezone
 
-modifyLoaded_ :: forall monad. MonadState State monad => (Loaded -> Loaded) -> monad Unit
-modifyLoaded_ mod =
+modifyLoaded :: forall monad. MonadState State monad => (Loaded -> Loaded) -> monad Unit
+modifyLoaded mod =
     H.modify_
     case _ of
     Loaded state -> Loaded $ mod state
@@ -167,14 +162,10 @@ handleAction Initialize = do
         setMetaTitle $ "aoeu" <> " | TeamTavern"
         setMetaDescription $ "View profiles by player " <> "aoeueuue" <> " on TeamTavern."
         setMetaUrl
-handleAction ShowEditTeamModal =
-    modifyLoaded_ _ { showEditTeamModal = true }
-handleAction HideEditTeamModal =
-    modifyLoaded_ _ { showEditTeamModal = false }
-handleAction (ShowEditProfileModal profile) =
-    modifyLoaded_ _ { showEditProfileModal = Just profile }
-handleAction HideEditProfileModal =
-    modifyLoaded_ _ { showEditProfileModal = Nothing }
+handleAction ShowEditTeamModal = modifyLoaded _ { showEditTeamModal = true }
+handleAction HideEditTeamModal = modifyLoaded _ { showEditTeamModal = false }
+handleAction (ShowEditProfileModal profile) = modifyLoaded _ { showEditProfileModal = Just profile }
+handleAction HideEditProfileModal = modifyLoaded _ { showEditProfileModal = Nothing }
 
 component :: forall query output left.
     H.Component HH.HTML query Input output (Async left)

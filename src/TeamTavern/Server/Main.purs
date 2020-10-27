@@ -43,21 +43,16 @@ import TeamTavern.Server.Game.ViewAll (handleViewAll) as Game
 import TeamTavern.Server.Infrastructure.Log (logStamped, logt)
 import TeamTavern.Server.Password.Forgot (forgot) as Password
 import TeamTavern.Server.Password.Reset (reset) as Password
-import TeamTavern.Server.Player.ChangeNickname (changeNickname) as Player
 import TeamTavern.Server.Player.EditSettings (editSettings) as Player
 import TeamTavern.Server.Player.Register (register) as Player
 import TeamTavern.Server.Player.UpdateDetails (updateDetails) as Player
 import TeamTavern.Server.Player.View (view) as Player
-import TeamTavern.Server.Player.ViewDetails (viewDetails) as Player
-import TeamTavern.Server.Player.ViewHeader (viewHeader) as Player
-import TeamTavern.Server.Player.ViewSettings (viewSettings) as Player
 import TeamTavern.Server.Profile.AddPlayerProfile (addPlayerProfile) as Profile
 import TeamTavern.Server.Profile.AddTeamProfile (addTeamProfile) as Profile
 import TeamTavern.Server.Profile.Routes (bundleFilters)
 import TeamTavern.Server.Profile.UpdatePlayerProfile (updatePlayerProfile) as Profile
 import TeamTavern.Server.Profile.UpdateTeamProfile (updateTeamProfile) as Profile
 import TeamTavern.Server.Profile.ViewPlayerProfilesByGame (viewPlayerProfilesByGame) as Profile
-import TeamTavern.Server.Profile.ViewPlayerProfilesByPlayer (viewPlayerProfilesByPlayer) as Profile
 import TeamTavern.Server.Profile.ViewTeamProfilesByGame (viewTeamProfilesByGame) as Profile
 import TeamTavern.Server.Routes (TeamTavernRoutes)
 import TeamTavern.Server.Session.End (end) as Session
@@ -172,16 +167,8 @@ handleRequest deployment pool client method url cookies body =
     Right routeValues -> routeValues # match
         { registerPlayer: const $
             Player.register pool client cookies body
-        , viewPlayer: \{ nickname } ->
-            Player.view pool nickname
-        , viewPlayerHeader: \{ id } ->
-            Player.viewHeader pool id
-        , viewDetails: \{ nickname, timezone } ->
-            Player.viewDetails pool nickname timezone cookies
-        , changeNickname: \{ nickname } ->
-            Player.changeNickname pool nickname cookies body
-        , viewSettings: \{ nickname } ->
-            Player.viewSettings pool nickname cookies
+        , viewPlayer:
+            Player.view pool cookies
         , editSettings: \{ nickname } ->
             Player.editSettings pool nickname cookies body
         , updateDetails: \{ nickname } ->
@@ -222,8 +209,6 @@ handleRequest deployment pool client method url cookies body =
             Profile.viewPlayerProfilesByGame pool handle page timezone $ bundleFilters filters
         , viewTeamProfilesByGame: \filters @ { handle, page, timezone } ->
             Profile.viewTeamProfilesByGame pool handle page timezone $ bundleFilters filters
-        , viewPlayerProfilesByPlayer: \{ nickname } ->
-            Profile.viewPlayerProfilesByPlayer pool nickname
         , viewAllConversations: const $
             Conversation.viewAll pool cookies
         , viewConversation: \{ nickname } ->

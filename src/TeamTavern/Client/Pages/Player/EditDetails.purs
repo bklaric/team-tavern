@@ -29,12 +29,13 @@ import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.Player.PlayerFormInput (playerFormInput)
 import TeamTavern.Client.Components.Player.PlayerFormInput as EnterPlayerDetails
 import TeamTavern.Client.Snippets.ErrorClasses (otherErrorClass)
+import TeamTavern.Routes.ViewPlayer as ViewPlayer
 import TeamTavern.Server.Player.UpdateDetails.SendResponse as Update
-import TeamTavern.Server.Player.ViewDetails.SendResponse as ViewAccount
+import TeamTavern.Server.Player.View.SendResponse as ViewAccount
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
-type Input = { nickname :: String, details :: ViewAccount.OkContent }
+type Input = { nickname :: String, details :: ViewPlayer.OkContent }
 
 data Action
     = UpdatePlayerDetails EnterPlayerDetails.Output
@@ -168,9 +169,9 @@ component = H.mkComponent
         { nickname
         , details:
             { birthday: details.birthday
-            , location: details.country
+            , location: details.location
             , languages: details.languages
-            , microphone: details.hasMicrophone
+            , microphone: details.microphone
             , discordTag: details.discordTag
             , timezone: details.timezone
             , weekdayFrom: details.weekdayOnline <#> _.sourceFrom

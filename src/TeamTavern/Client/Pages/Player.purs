@@ -1,75 +1,86 @@
-module TeamTavern.Client.Pages.Player where
+module TeamTavern.Client.Pages.Player (Input, Slot, player) where
 
 import Prelude
 
 import Async (Async)
 import Async as Async
-import Browser.Async.Fetch as Fetch
-import Browser.Async.Fetch.Response as FetchRes
-import Data.Bifunctor (lmap)
+import CSS as CSS
+import Client.Components.Copyable as Copyable
+import Control.Monad.State (class MonadState)
 import Data.Const (Const)
 import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
-import Halogen (ClassName(..))
 import Halogen as H
 import Halogen.HTML as HH
+import Halogen.HTML.CSS as HC
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import Simple.JSON.Async as Json
-import TeamTavern.Client.Components.Modal as Modal
-import TeamTavern.Client.Components.Popover (popoverBody, popoverButtonCaret, popoverContainer, subscribeToWindowClick)
-import TeamTavern.Client.Pages.Player.ChangeNickname as ChangeNickname
+import TeamTavern.Client.Components.Content (contentHeader, contentHeading)
+import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
+import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
+import TeamTavern.Client.Components.Popover (popover, popoverButtonCaret, subscribeToWindowClick)
 import TeamTavern.Client.Pages.Player.Details (details)
-import TeamTavern.Client.Pages.Player.Details as Details
 import TeamTavern.Client.Pages.Player.EditSettings as EditSettings
 import TeamTavern.Client.Pages.Player.Profiles (profiles)
-import TeamTavern.Client.Pages.Player.Profiles as PlayerProfiles
+import TeamTavern.Client.Pages.Player.Status (Status(..), getStatus)
 import TeamTavern.Client.Pages.Player.Teams (teams)
-import TeamTavern.Client.Pages.Player.Teams as Teams
-import TeamTavern.Client.Pages.Player.Status (Status(..))
-import TeamTavern.Client.Script.Cookie (getPlayerInfo)
 import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
-import TeamTavern.Client.Script.Navigate (hardNavigate, navigateWithEvent_)
-import TeamTavern.Server.Player.View.SendResponse as View
+import TeamTavern.Client.Script.Request (get)
+import TeamTavern.Client.Script.Timezone (getClientTimezone)
+import TeamTavern.Client.Snippets.Class as HS
+import TeamTavern.Routes.ViewPlayer as ViewPlayer
 import Web.Event.Event as E
 import Web.UIEvent.MouseEvent (MouseEvent)
 import Web.UIEvent.MouseEvent as ME
 
-data Action
-    = Init String
-    | Navigate String MouseEvent
-    | ToggleEditAccountPopover MouseEvent
-    | CloseEditAccountPopover
-    | ShowChangeNicknameModal MouseEvent
-    | ShowEditSettingsModal MouseEvent
-    | HandleChangeNicknameMessage (Modal.Output ChangeNickname.Message)
-    | HandleEditSettingsMessage
+type Input = { nickname :: String }
+
+type Loaded =
+    { player :: ViewPlayer.OkContent
+    , status :: Status
+    , editPopoverShown :: Boolean
+    , windowSubscription :: H.SubscriptionId
+    , editPlayerModalShown :: Boolean
+    , editSettingsModalShown :: Boolean
+    , editProfileModalShown :: Maybe ViewPlayer.OkContentProfile
+    , createTeamModalShown :: Boolean
+    }
 
 data State
-    = Empty
-    | Player
-        { player :: View.OkContent
-        , status :: Status
-        , editPopoverShown :: Boolean
-        , windowSubscription :: H.SubscriptionId
-        }
+    = Empty Input
+    | Loaded Loaded
     | NotFound
     | Error
 
-type Slot = H.Slot (Const Void) Void
+data Action
+    = Initialize
+    | Receive Input
+    | ToggleEditAccountPopover MouseEvent
+    | CloseEditAccountPopover
+    | ShowEditPlayerModal
+    | HideEditPlayerModal
+    | ShowEditSettingsModal
+    | HideEditSettingsModal
+    | ShowEditProfileModal ViewPlayer.OkContentProfile
+    | HideEditProfileModal
+    | ShowCreateTeamModal
+    | HideCreateTeamModal
+
+type Slot = H.Slot (Const Void) Void Unit
 
 type ChildSlots =
-    ( details :: Details.Slot
-    , profiles :: PlayerProfiles.Slot
-    , teams :: Teams.Slot
-    , changeNickname :: ChangeNickname.Slot
+    ( discordTag :: Copyable.Slot
+    , team :: NavigationAnchor.Slot String
     , editSettings :: EditSettings.Slot
+    , messagePlayer :: NavigationAnchor.Slot Unit
+    , games :: NavigationAnchor.Slot String
+    , createProfile :: H.Slot (Const Void) Void Unit
     )
 
-renderEditAccountButton :: forall slots.
-    Boolean -> HH.HTML slots Action
+renderEditAccountButton :: forall slots. Boolean -> HH.HTML slots Action
 renderEditAccountButton editPopoverShown =
-    popoverContainer $
+    popover
+    editPopoverShown
     [ HH.button
         [ HP.class_ $ HH.ClassName "popover-button"
         , HE.onClick $ Just <<< ToggleEditAccountPopover
@@ -79,45 +90,37 @@ renderEditAccountButton editPopoverShown =
         , popoverButtonCaret editPopoverShown
         ]
     ]
-    <>
-    popoverBody editPopoverShown
-        [ HH.div
-            [ HP.class_ $ HH.ClassName "popover-item"
-            , HE.onClick $ Just <<< ShowChangeNicknameModal
-            ]
-            [ HH.text "Change nickname" ]
-        , HH.div
-            [ HP.class_ $ HH.ClassName "popover-item"
-            , HE.onClick $ Just <<< ShowEditSettingsModal
-            ]
-            [ HH.text "Edit account settings" ]
+    [ HH.div
+        [ HP.class_ $ HH.ClassName "popover-item"
+        , HE.onClick $ const $ Just ShowEditPlayerModal
         ]
+        [ HH.text "Edit player" ]
+    , HH.div
+        [ HP.class_ $ HH.ClassName "popover-item"
+        , HE.onClick $ const $ Just ShowEditSettingsModal
+        ]
+        [ HH.text "Edit account settings" ]
+    ]
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
-render Empty = HH.div_ []
-render (Player { player: { nickname, about }, status, editPopoverShown }) =
+render (Empty _) = HH.div_ []
+render (Loaded { player: player', status, editPopoverShown }) =
     HH.div_
-    [ HH.div [ HP.class_ $ ClassName "content-title" ]
-        [ HH.div [ HP.class_ $ HH.ClassName "content-title-left"]
-            [ HH.h1 [ HP.class_ $ HH.ClassName "content-title-text" ]
-                [ HH.text nickname ]
-            ]
-        , HH.div [ HP.class_ $ HH.ClassName "content-title-right" ]
+    [ contentHeader
+        [ HH.div_ [ contentHeading player'.nickname ]
+        , HH.div_
             case status of
             SignedInSelf -> [ renderEditAccountButton editPopoverShown ]
             SignedInOther ->
-                [ HH.div [ HP.class_ $ HH.ClassName "content-title-tabs" ] $
-                    [ HH.a
-                        [ HP.class_ $ HH.ClassName "content-title-tab"
-                        , HP.href $ "/conversations/" <> nickname
-                        , HE.onClick $ Just <<< Navigate ("/conversations/" <> nickname)
-                        ]
-                        [ HH.i [ HP.class_ $ H.ClassName "fas fa-envelope button-icon" ] []
+                [ navigationAnchor (SProxy :: SProxy "messagePlayer")
+                    { path: "/conversations/" <> player'.nickname
+                    , content: HH.span [ HC.style $ CSS.fontWeight $ CSS.weight 500.0 ]
+                        [ HH.i [ HS.class_ "fas fa-envelope button-icon" ] []
                         , HH.text "Message player"
                         ]
-                    ]
+                    }
                 ]
-            _ -> []
+            SignedOut -> []
         ]
     -- , HH.div_ [ changeNickname $ Just <<< HandleChangeNicknameMessage ]
     -- , HH.div_ [ editSettings $ const $ Just HandleEditSettingsMessage ]
@@ -125,89 +128,84 @@ render (Player { player: { nickname, about }, status, editPopoverShown }) =
         [ HH.text
             case status of
             SignedInSelf -> "View and edit all your player and team profiles."
-            _ -> "View all player and team profiles of player " <> nickname <> "."
+            _ -> "View all player and team profiles of player " <> player'.nickname <> "."
         ]
-    , details nickname status (SProxy :: SProxy "details")
-    , profiles nickname status
-    , teams { nickname, status }
+    , details player'
+    , profiles player' ShowEditProfileModal
+    , teams player' ShowCreateTeamModal status
     ]
 render NotFound = HH.p_ [ HH.text "Player could not be found." ]
 render Error = HH.p_ [ HH.text
     "There has been an error loading the player. Please try again later." ]
 
-loadPlayer :: forall left. String -> H.SubscriptionId -> Async left State
-loadPlayer nickname windowSubscription = Async.unify do
-    response <- Fetch.fetch_ ("/api/players/by-nickname/" <> nickname)
-        # lmap (const Error)
-    content <- case FetchRes.status response of
-        200 -> FetchRes.text response >>= Json.readJSON # lmap (const Error)
-        404 -> Async.left NotFound
-        _ -> Async.left Error
-    playerInfo <- getPlayerInfo
-    case playerInfo of
-        Just { nickname: nickname' } | content.nickname == nickname' ->
-            pure $ Player { player: content, status: SignedInSelf, editPopoverShown: false, windowSubscription }
-        Just { nickname: nickname' } ->
-            pure $ Player { player: content, status: SignedInOther, editPopoverShown: false, windowSubscription }
-        Nothing -> pure $ Player { player: content, status: SignedOut, editPopoverShown: false, windowSubscription }
+loadPlayer :: forall left. String -> Async left (Maybe ViewPlayer.OkContent)
+loadPlayer nickname = do
+    timezone <- getClientTimezone
+    get ("/api/players/" <> nickname <> "?timezone=" <> timezone)
+
+modifyLoaded :: forall monad. MonadState State monad => (Loaded -> Loaded) -> monad Unit
+modifyLoaded mod =
+    H.modify_
+    case _ of
+    Loaded state -> Loaded $ mod state
+    state -> state
 
 handleAction :: forall output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
-handleAction (Init nickname') = do
-    windowSubscription <- subscribeToWindowClick CloseEditAccountPopover
-    state <- H.lift $ loadPlayer nickname' windowSubscription
-    H.put state
-    let metaNickname =
-            case state of
-            Player { player: { nickname } } -> nickname
-            _ -> nickname'
-    H.lift $ Async.fromEffect do
-        setMetaTitle $ metaNickname <> " | TeamTavern"
-        setMetaDescription $ "View profiles by player " <> metaNickname <> " on TeamTavern."
-        setMetaUrl
-handleAction (Navigate path mouseEvent) = do
-    navigateWithEvent_ path mouseEvent
-handleAction (ToggleEditAccountPopover mouseEvent) = do
-    H.liftEffect $ E.preventDefault $ ME.toEvent mouseEvent
-    H.liftEffect $ E.stopPropagation $ ME.toEvent mouseEvent
-    H.modify_ case _ of
-        Player state -> Player state { editPopoverShown = not state.editPopoverShown }
-        state -> state
-handleAction (CloseEditAccountPopover) =
-    H.modify_ case _ of
-        Player state -> Player state { editPopoverShown = false }
-        state -> state
-handleAction (ShowChangeNicknameModal mouseEvent) = do
-    H.liftEffect $ E.preventDefault $ ME.toEvent mouseEvent
-    -- Modal.show (SProxy :: SProxy "changeNickname")
-handleAction (ShowEditSettingsModal mouseEvent) = do
-    H.liftEffect $ E.preventDefault $ ME.toEvent mouseEvent
-    -- Modal.show (SProxy :: SProxy "editSettings")
-handleAction (HandleChangeNicknameMessage output) = do
-    -- Modal.hide (SProxy :: SProxy "changeNickname")
-    case output of
-        Modal.OutputRaised (ChangeNickname.NicknameChanged nickname) ->
-            hardNavigate $ "/players/" <> nickname
+handleAction Initialize = do
+    state <- H.get
+    case state of
+        Empty input ->
+            handleAction $ Receive input
         _ -> pure unit
-handleAction HandleEditSettingsMessage =
-    -- Modal.hide (SProxy :: SProxy "editSettings")
-    pure unit
+handleAction (Receive { nickname }) = do
+    windowSubscription <- subscribeToWindowClick CloseEditAccountPopover
+    player' <- H.lift $ loadPlayer nickname
+    case player' of
+        Just player'' -> do
+            status <- getStatus player''.nickname
+            H.put $ Loaded
+                { player: player''
+                , status
+                , editPopoverShown: false
+                , windowSubscription
+                , editPlayerModalShown: false
+                , editSettingsModalShown: false
+                , editProfileModalShown: Nothing
+                , createTeamModalShown: false
+                }
+            H.lift $ Async.fromEffect do
+                setMetaTitle $ "aoeuaoeu" <> " | TeamTavern"
+                setMetaDescription $ "View profiles by player " <> "aoeuaoeu" <> " on TeamTavern."
+                setMetaUrl
+        _ -> pure unit
 
-component :: forall query output left.
-    String -> H.Component HH.HTML query String output (Async left)
-component nickname = H.mkComponent
-    { initialState: const Empty
+handleAction (ToggleEditAccountPopover mouseEvent) = do
+    H.liftEffect $ E.stopPropagation $ ME.toEvent mouseEvent
+    modifyLoaded \state -> state { editPopoverShown = not state.editPopoverShown }
+handleAction (CloseEditAccountPopover) = modifyLoaded _ { editPopoverShown = false }
+handleAction ShowEditPlayerModal = modifyLoaded _ { editPlayerModalShown = true }
+handleAction HideEditPlayerModal = modifyLoaded _ { editPlayerModalShown = false }
+handleAction ShowEditSettingsModal = modifyLoaded _ { editSettingsModalShown = true }
+handleAction HideEditSettingsModal = modifyLoaded _ { editSettingsModalShown = false }
+handleAction (ShowEditProfileModal profile) =
+    modifyLoaded _ { editProfileModalShown = Just profile }
+handleAction HideEditProfileModal =
+    modifyLoaded _ { editProfileModalShown = Nothing }
+handleAction ShowCreateTeamModal = modifyLoaded _ { createTeamModalShown = true }
+handleAction HideCreateTeamModal = modifyLoaded _ { createTeamModalShown = false }
+
+component :: forall query output left. H.Component HH.HTML query Input output (Async left)
+component = H.mkComponent
+    { initialState: Empty
     , render
     , eval: H.mkEval $ H.defaultEval
         { handleAction = handleAction
-        , initialize = Just $ Init nickname
-        , receive = Just <<< Init
+        , initialize = Just Initialize
+        , receive = Just <<< Receive
         }
     }
 
-player
-    :: forall query children left
-    .  String
-    -> HH.ComponentHTML query (player :: Slot Unit | children) (Async left)
-player nickname = HH.slot
-    (SProxy :: SProxy "player") unit (component nickname) nickname absurd
+player :: forall query children left.
+    Input -> HH.ComponentHTML query (player :: Slot | children) (Async left)
+player input = HH.slot (SProxy :: SProxy "player") unit component input absurd

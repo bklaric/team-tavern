@@ -11,6 +11,7 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import Simple.JSON (read)
+import TeamTavern.Client.Components.Content (content, singleContent, wideContent)
 import TeamTavern.Client.Components.Footer (footer)
 import TeamTavern.Client.Components.Footer as Footer
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
@@ -61,7 +62,7 @@ data State
     | About
     | Game { handle :: String }
     | Profiles GameHeader.Handle GameHeader.Tab
-    | Player String
+    | Player { nickname :: String }
     | Conversations
     | Conversation String
     | Team { handle :: String }
@@ -82,7 +83,7 @@ type ChildSlots = Footer.ChildSlots
     , games :: Games.Slot Unit
     , game :: Game.Slot
     , profiles :: Profiles.Slot Unit
-    , player :: Player.Slot Unit
+    , player :: Player.Slot
     , conversations :: Conversations.Slot
     , conversation :: Conversation.Slot
     , team :: Team.Slot
@@ -99,19 +100,13 @@ topBarWithContent
     :: forall query children left
     .  Array (H.ComponentHTML query (Footer.ChildSlots (topBar :: TopBar.Slot Unit | children)) (Async left))
     -> H.ComponentHTML query (Footer.ChildSlots (topBar :: TopBar.Slot Unit | children)) (Async left)
-topBarWithContent content =
-    HH.div_ [ topBar, HH.div [ HP.class_ $ HH.ClassName "content" ] content, footer ]
+topBarWithContent content' = HH.div_ [ topBar, content content', footer ]
 
 wideTopBarWithContent
     :: forall query children left
     .  Array (H.ComponentHTML query (Footer.ChildSlots (topBar :: TopBar.Slot Unit | children)) (Async left))
     -> H.ComponentHTML query (Footer.ChildSlots (topBar :: TopBar.Slot Unit | children)) (Async left)
-wideTopBarWithContent content =
-    HH.div_ [ topBar, HH.div [ HP.class_ $ HH.ClassName "wide-content" ] content, footer ]
-
-singleContent :: forall slots query.
-    Array (HH.HTML slots query) -> HH.HTML slots query
-singleContent = HH.div [ HP.class_ $ HH.ClassName "single-content" ]
+wideTopBarWithContent content' = HH.div_ [ topBar, wideContent content', footer ]
 
 render :: forall action left.
     State -> H.ComponentHTML action ChildSlots (Async left)
@@ -121,7 +116,7 @@ render Games = topBarWithContent [ games ]
 render About = topBarWithContent [ about ]
 render (Game input) = HH.div_ [ topBar, game input, footer ]
 render (Profiles handle tab) = wideTopBarWithContent [ Profiles.profiles handle tab ]
-render (Player nickname) = topBarWithContent [ player nickname ]
+render (Player input) = topBarWithContent [ player input ]
 render Conversations = topBarWithContent [ conversations ]
 render (Conversation nickname) = topBarWithContent [ conversation nickname]
 render (Team input) = topBarWithContent [ team input ]
@@ -193,7 +188,7 @@ handleAction (Init state route) = do
         ["", "games", handle, "teams" ] ->
             just $ Profiles handle GameHeader.Teams
         ["", "players", nickname] ->
-            just $ Player nickname
+            just $ Player { nickname }
         _ ->
             navigateReplace_ "/" *> nothing
     case newState of

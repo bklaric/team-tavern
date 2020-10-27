@@ -1,49 +1,45 @@
-module TeamTavern.Client.Pages.Player.Teams (Input, Slot, teams) where
+module TeamTavern.Client.Pages.Player.Teams (teams) where
 
 import Prelude
 
-import Async (Async)
 import Data.Array as Array
-import Data.Const (Const)
 import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
-import Halogen as H
+import Effect.Class (class MonadEffect)
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
+import TeamTavern.Client.Components.Card (card, cardHeader, cardHeading)
 import TeamTavern.Client.Components.Divider (divider)
-import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchorIndexed)
-import TeamTavern.Client.Pages.Player.CreateTeam (createTeam)
+import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Pages.Player.Status (Status(..))
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
-import TeamTavern.Client.Script.Request (get)
 import TeamTavern.Client.Snippets.Class as HS
-import TeamTavern.Server.Team.ViewByOwner (Team)
+import TeamTavern.Routes.ViewPlayer as ViewPlayer
 
-type Input =
-    { nickname :: String
-    , status :: Status
-    }
-
-data State
-    = Empty Input
-    | Loaded
-        { nickname :: String
-        , status :: Status
-        , modalShown :: Boolean
-        , teams :: Array Team
-        }
-
-data Action
-    = Initialize
-    | ShowModal
-    | HandleModalOutput (Modal.Output Void)
-
-type Slot = H.Slot (Const Void) Void Unit
-
-renderTeams teams' status =
-    if Array.null teams'
+teams
+    :: forall action monad slots
+    .  MonadEffect monad
+    => ViewPlayer.OkContent
+    -> action
+    -> Status
+    -> HH.ComponentHTML action (team :: NavigationAnchor.Slot String | slots) monad
+teams player showCreateTeamModal status =
+    card $
+    [ cardHeader $
+        [ cardHeading "Teams"
+        , HH.button
+            [ HP.class_ $ HH.ClassName "primary-button"
+            , HE.onClick $ const $ Just showCreateTeamModal
+            ]
+            [ HH.i [ HP.class_ $ HH.ClassName "fas fa-user-plus button-icon" ] []
+            , HH.text "Create team"
+            ]
+        ]
+    ]
+    <>
+    if Array.null player.teams
     then Array.singleton $
         HH.div [ HS.class_ "card-section" ]
         [ HH.p_
@@ -54,7 +50,7 @@ renderTeams teams' status =
             ]
         ]
     else
-        teams' <#> \team ->
+        player.teams <#> \team ->
             HH.div [ HS.class_ "card-section" ]
             [ HH.h3 [ HS.class_ "team-heading" ]
                 [ navigationAnchorIndexed (SProxy :: SProxy "team") team.handle
@@ -66,64 +62,3 @@ renderTeams teams' status =
                     [ HH.text $ lastUpdated team.updatedSeconds ]
                 ]
             ]
-
-render (Empty _) = HH.div_ []
-render (Loaded state) =
-    HH.div [ HS.class_ "card" ] $
-    [ HH.h2 [ HS.class_ "card-title" ] $
-        [ HH.text "Teams" ]
-        <>
-        [ HH.button
-            [ HP.class_ $ HH.ClassName "primary-button"
-            , HE.onClick $ const $ Just ShowModal
-            ]
-            [ HH.i [ HP.class_ $ HH.ClassName "fas fa-user-plus button-icon" ] []
-            , HH.text "Create team"
-            ]
-        ]
-    ]
-    <> renderTeams state.teams state.status
-    <>
-    if state.modalShown
-    then [ createTeam (Just <<< HandleModalOutput) ]
-    else []
-
-loadTeams :: forall left. String -> Async left (Maybe (Array Team))
-loadTeams nickname = get $ "/api/teams/by-owner/" <> nickname
-
-handleAction :: forall action slots output left.
-    Action -> H.HalogenM State action slots output (Async left) Unit
-handleAction Initialize = do
-    state <- H.get
-    case state of
-        Empty { nickname } -> do
-            teams' <- H.lift $ loadTeams nickname
-            case teams' of
-                Just teams'' ->
-                    H.put $ Loaded
-                        { nickname: ""
-                        , status: SignedOut
-                        , modalShown: false
-                        , teams: teams''
-                        }
-                _ -> pure unit
-        _ -> pure unit
-handleAction ShowModal =
-    H.modify_ case _ of
-        Loaded state -> Loaded state { modalShown = true }
-        state -> state
-handleAction (HandleModalOutput _) =
-    H.modify_ case _ of
-        Loaded state -> Loaded state { modalShown = false }
-        state -> state
-
-component = H.mkComponent
-    { initialState: Empty
-    , render
-    , eval: H.mkEval $ H.defaultEval
-        { handleAction = handleAction
-        , initialize = Just Initialize
-        }
-    }
-
-teams input = HH.slot (SProxy :: SProxy "teams") unit component input absurd

@@ -25,7 +25,6 @@ import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Script.Cookie (getPlayerInfo)
 import TeamTavern.Client.Script.Navigate (navigate_)
 import TeamTavern.Client.Snippets.ErrorClasses (otherErrorClass)
-import TeamTavern.Server.Player.ViewSettings.SendResponse as ViewSettings
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 import Web.HTML.HTMLInputElement as HTMLInputElement
@@ -89,21 +88,21 @@ render (Loaded loadedState @ { otherError, submitting }) =
         [ HH.text "Something unexpected went wrong! Please try again later." ]
     ]
 
-loadSettings :: forall left. String -> Async left (Maybe ViewSettings.OkContent)
+loadSettings :: forall left. String -> Async left (Maybe { notify :: Boolean })
 loadSettings nickname = Async.unify do
     response <-
         Fetch.fetch
         ("/api/players/by-nickname/" <> nickname <> "/settings")
         (Fetch.credentials := Fetch.Include)
         # lmap (const Nothing)
-    content :: ViewSettings.OkContent <-
+    content :: { notify :: Boolean } <-
         case FetchRes.status response of
         200 -> FetchRes.text response >>= JsonAsync.readJSON # lmap (const Nothing)
         _ -> Async.left Nothing
     pure $ Just content
 
 editSettings' :: forall left.
-    LoadedState -> ViewSettings.OkContent -> Async left (Maybe LoadedState)
+    LoadedState -> { notify :: Boolean } -> Async left (Maybe LoadedState)
 editSettings' state { notify } = Async.unify do
     response <-
         Fetch.fetch

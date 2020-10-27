@@ -153,15 +153,6 @@ type ViewTeamProfilesByGame = Route
     :? Optional "newOrReturning" NewOrReturning
     :? Rest "fields")
 
-type ViewPlayerProfilesByPlayer = Route
-    Get
-    (  Literal "profiles"
-    :> Literal "by-nickname"
-    :> Capture "nickname" Nickname
-    :> Literal "players"
-    :> End)
-    NoQuery
-
 type ProfileRoutes
     =    "addPlayerProfile"           := AddPlayerProfile
     :<|> "addTeamProfile"             := AddTeamProfile
@@ -169,4 +160,3 @@ type ProfileRoutes
     :<|> "updateTeamProfile"          := UpdateTeamProfile
     :<|> "viewPlayerProfilesByGame"   := ViewPlayerProfilesByGame
     :<|> "viewTeamProfilesByGame"     := ViewTeamProfilesByGame
-    :<|> "viewPlayerProfilesByPlayer" := ViewPlayerProfilesByPlayer
