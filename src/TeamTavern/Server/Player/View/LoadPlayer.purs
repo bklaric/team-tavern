@@ -43,10 +43,10 @@ queryString timezone = Query $ """
             )
         end as "weekendOnline",
         player.about,
-        player_profiles.profiles,
-        player_teams.teams
+        coalesce(player_profiles.profiles, '[]') as profiles,
+        coalesce(player_teams.teams, '[]') as teams
     from player
-        join (
+        left join (
             select
                 profile.player_id,
                 coalesce(
@@ -165,7 +165,7 @@ queryString timezone = Query $ """
             where lower(player.nickname) = lower($1)
             group by profile.player_id
         ) as player_profiles on player_profiles.player_id = player.id
-        join (
+        left join (
             select
                 team.owner_id,
                 coalesce(

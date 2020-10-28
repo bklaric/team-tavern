@@ -14,7 +14,7 @@ import TeamTavern.Server.Profile.Routes (Identifiers)
 
 queryString :: Query
 queryString = Query """
-    insert into player_profile (player_id, game_id, summary, new_or_returning)
+    insert into player_profile (player_id, game_id, ambitions, new_or_returning)
     select $1, game.id, $3, $4
     from game
     where game.handle = $2
@@ -23,8 +23,8 @@ queryString = Query """
 
 queryParameters ::
     Int -> Identifiers -> Text -> Boolean -> Array QueryParameter
-queryParameters playerId { handle, nickname } summary newOrReturning =
-    playerId : handle : summary :| newOrReturning
+queryParameters playerId { handle, nickname } ambitions newOrReturning =
+    playerId : handle : ambitions :| newOrReturning
 
 addProfile'
     :: forall errors
@@ -34,9 +34,9 @@ addProfile'
     -> Text
     -> Boolean
     -> Async (InternalError errors) ProfileId
-addProfile' client playerId identifiers summary newOrReturning = do
+addProfile' client playerId identifiers ambitions newOrReturning = do
     { profileId } :: { profileId :: Int } <- queryFirstInternal client queryString
-        (queryParameters playerId identifiers summary newOrReturning)
+        (queryParameters playerId identifiers ambitions newOrReturning)
     pure profileId
 
 addProfile

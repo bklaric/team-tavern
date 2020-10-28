@@ -32,10 +32,10 @@ profileDetails :: forall slots action.
     -> Array (HH.HTML slots action)
 profileDetails fields fieldValues newOrReturning =
     profileDetails'
-    ( fieldValues
-    <#> ( \fieldValue ->
-            case fields # Array.find \{ key } -> key == fieldValue.fieldKey of
-            Just field -> Just
+    ( fields
+    <#> ( \field ->
+            case fieldValues # Array.find \{ fieldKey } -> fieldKey == field.key of
+            Just fieldValue -> Just
                 { field:
                     { ilk: field.ilk
                     , icon: field.icon
