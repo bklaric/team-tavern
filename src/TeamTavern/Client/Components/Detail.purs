@@ -9,6 +9,9 @@ import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Snippets.Class as HS
 
+detailColumnsContainer :: forall slots action. Array (HH.HTML slots action) -> HH.HTML slots action
+detailColumnsContainer = HH.div [ HS.class_ "detail-columns-container" ]
+
 detailColumns :: forall slots action. Array (HH.HTML slots action) -> HH.HTML slots action
 detailColumns = HH.div [ HS.class_ "detail-columns" ]
 
