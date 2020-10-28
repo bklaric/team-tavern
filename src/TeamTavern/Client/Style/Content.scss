@@ -1,18 +1,3 @@
-.content {
-    max-width: 1002px;
-    // calc(100vh - topBar - footer - padding);
-    min-height: calc(100vh - 41px - 41px - 42px);
-    padding: 21px 0;
-    margin: auto;
-}
-
-.wide-content {
-    @extend .content;
-    // 422 + 962 + 21 + 21 + 21
-    // profiles + filters + padding + padding + margin
-    max-width: 1447px;
-}
-
 .content-title {
     display: flex;
     justify-content: space-between;
@@ -44,18 +29,4 @@
     font-weight: 500;
     margin-right: 21px;
     margin-bottom: 0;
-}
-
-.content-description {
-    display: block;
-    padding-left: 21px;
-    margin-top: -7px;
-    margin-bottom: 21px !important;
-    font-size: 14px;
-}
-
-.single-content {
-    width: 100vw;
-    height: 100vh;
-    overflow: hidden auto;
 }
