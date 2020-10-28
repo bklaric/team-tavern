@@ -47,7 +47,7 @@ type PlayerProfileRow other =
     , age :: Maybe Int
     , country :: Maybe String
     , languages :: Array String
-    , hasMicrophone :: Boolean
+    , microphone :: Boolean
     , weekdayOnline :: Maybe { from :: String, to :: String }
     , weekendOnline :: Maybe { from :: String, to :: String }
     , about :: Array String
@@ -175,7 +175,7 @@ render { profiles, profileCount, showCreateProfile, playerInfo, page } =
             _ -> []
         , HH.div [ HP.class_ $ HH.ClassName "profile-columns" ]
             [ HH.div [ HP.class_ $ HH.ClassName "profile-column" ] $
-                (if isNothing profile.age && isNothing profile.country && Array.null profile.languages && not profile.hasMicrophone
+                (if isNothing profile.age && isNothing profile.country && Array.null profile.languages && not profile.microphone
                     && isNothing profile.discordTag && isNothing profile.weekdayOnline && isNothing profile.weekendOnline
                 then []
                 else  [ HH.h5 [ HP.class_ $ HH.ClassName "player-profile-section-title" ] [ HH.text "Player details" ] ])
@@ -213,7 +213,7 @@ render { profiles, profileCount, showCreateProfile, playerInfo, page } =
                             profile.languages
                             # _.languagesSoFar
                         )
-                , if profile.hasMicrophone
+                , if profile.microphone
                     then Just $
                         HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
                         [ HH.i [ HP.class_ $ HH.ClassName "fas fa-microphone profile-field-icon" ] []

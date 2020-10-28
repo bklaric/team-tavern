@@ -22,13 +22,13 @@ queryString = Query """
         discord_tag = $2,
         birthday = $3,
         languages = $4,
-        country = $5,
+        location = $5,
         timezone = $6,
         weekday_from = $7::time,
         weekday_to = $8::time,
         weekend_from = $9::time,
         weekend_to = $10::time,
-        has_microphone = $11,
+        microphone = $11,
         about = $12
     where player.id = $1
     """
@@ -39,13 +39,13 @@ queryParameters playerId model =
     : toNullable model.discordTag
     : toNullable model.birthday
     : model.languages
-    : toNullable model.country
+    : toNullable model.location
     : toNullable model.timezone
     : nullableTimeFrom model.onlineWeekday
     : nullableTimeTo model.onlineWeekday
     : nullableTimeFrom model.onlineWeekend
     : nullableTimeTo model.onlineWeekend
-    : model.hasMicrophone
+    : model.microphone
     :| model.about
 
 updateDetails

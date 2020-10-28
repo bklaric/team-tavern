@@ -36,7 +36,7 @@ type LoadProfilesResult =
     , age :: Maybe Int
     , country :: Maybe String
     , languages :: Array String
-    , hasMicrophone :: Boolean
+    , microphone :: Boolean
     , weekdayOnline :: Maybe { from :: String, to :: String }
     , weekendOnline :: Maybe { from :: String, to :: String }
     , about :: Array String
@@ -138,7 +138,7 @@ createWeekendOnlineFilter _ _ _ = ""
 
 createMicrophoneFilter :: HasMicrophone -> String
 createMicrophoneFilter false = ""
-createMicrophoneFilter true = " and player.has_microphone"
+createMicrophoneFilter true = " and player.microphone"
 
 createNewOrReturningFilter :: NewOrReturning -> String
 createNewOrReturningFilter false = ""
@@ -204,7 +204,7 @@ queryStringWithoutPagination handle timezone filters = Query $ """
             extract(year from age(player.birthday))::int as age,
             player.country,
             player.languages,
-            player.has_microphone as "hasMicrophone",
+            player.microphone,
             case
                 when player.weekday_from is not null and player.weekday_to is not null
                 then json_build_object(

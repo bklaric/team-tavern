@@ -117,9 +117,9 @@ validatePlayerDetails
         UpdateDetailsModel
 validatePlayerDetails details = do
     birthday <- AsyncV.fromEffect $ validateOptionalBirthday details.birthday
-    let country = validateOptionalCountry details.location
+    let location = validateOptionalCountry details.location
         languages = validateLanguages details.languages
-        hasMicrophone = details.microphone
+        microphone = details.microphone
     discordTag <- validateOptionalDiscordTag details.discordTag
         # AsyncV.fromValidated
         # AsyncV.labelMap (SProxy :: SProxy "invalidDiscordTag") \error ->
@@ -136,8 +136,8 @@ validatePlayerDetails details = do
         # AsyncV.fromValidated
         # AsyncV.labelMap (SProxy :: SProxy "invalidAbout") \error ->
             { message: [ "About is too long or something: ", show error ] }
-    pure { birthday, country
-         , languages, hasMicrophone, discordTag
+    pure { birthday, location
+         , languages, microphone, discordTag
          , timezone, onlineWeekday, onlineWeekend
          , about
          }

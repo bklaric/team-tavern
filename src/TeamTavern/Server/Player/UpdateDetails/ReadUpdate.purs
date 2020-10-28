@@ -26,9 +26,9 @@ import TeamTavern.Server.Player.UpdateDetails.ValidateTimezone (Timezone, valida
 
 type UpdateDetailsDto =
     { birthday :: Maybe String
-    , country :: Maybe String
+    , location :: Maybe String
     , languages :: Array String
-    , hasMicrophone :: Boolean
+    , microphone :: Boolean
     , discordTag :: Maybe String
     , timezone :: Maybe String
     , weekdayFrom :: Maybe String
@@ -42,11 +42,11 @@ type UpdateDetailsModel =
     { discordTag :: Maybe DiscordTag
     , birthday :: Maybe String
     , languages :: Array Language
-    , country :: Maybe Country
+    , location :: Maybe Country
     , timezone :: Maybe Timezone
     , onlineWeekday :: Maybe Timespan
     , onlineWeekend :: Maybe Timespan
-    , hasMicrophone :: Boolean
+    , microphone :: Boolean
     , about :: About
     }
 
@@ -79,11 +79,11 @@ readUpdate body = do
     { discordTag: _
     , birthday: birthday'
     , languages: validateLanguages dto.languages
-    , country: validateOptionalCountry dto.country
+    , location: validateOptionalCountry dto.location
     , timezone: timezone'
     , onlineWeekday: timezone' >>= (const $ validateTimespan dto.weekdayFrom dto.weekdayTo)
     , onlineWeekend: timezone' >>= (const $ validateTimespan dto.weekendFrom dto.weekendTo)
-    , hasMicrophone: dto.hasMicrophone
+    , microphone: dto.microphone
     , about: _
     }
         <$> (validateOptionalDiscordTag dto.discordTag

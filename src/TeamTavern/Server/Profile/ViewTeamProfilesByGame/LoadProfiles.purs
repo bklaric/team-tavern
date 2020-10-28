@@ -153,7 +153,7 @@ createWeekendOnlineFilter _ _ _ = ""
 
 createMicrophoneFilter :: HasMicrophone -> String
 createMicrophoneFilter false = ""
-createMicrophoneFilter true = " and profile.has_microphone"
+createMicrophoneFilter true = " and profile.microphone"
 
 createNewOrReturningFilter :: NewOrReturning -> String
 createNewOrReturningFilter false = ""

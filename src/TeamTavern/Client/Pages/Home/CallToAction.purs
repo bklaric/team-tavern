@@ -12,7 +12,6 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import TeamTavern.Client.Pages.Home.Wizard (wizard)
 import TeamTavern.Client.Pages.Home.Wizard as Wizard
 import TeamTavern.Client.Pages.Home.Wizard.Shared as WizardShared
 

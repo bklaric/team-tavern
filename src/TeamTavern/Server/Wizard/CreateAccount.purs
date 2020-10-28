@@ -120,9 +120,9 @@ validatePersonalDetails
         UpdateDetailsModel
 validatePersonalDetails details = do
     birthday <- AsyncV.fromEffect $ validateOptionalBirthday details.birthday
-    let country = validateOptionalCountry details.location
+    let location = validateOptionalCountry details.location
         languages = validateLanguages details.languages
-        hasMicrophone = details.microphone
+        microphone = details.microphone
     discordTag <- validateOptionalDiscordTag details.discordTag
         # AsyncV.fromValidated
         # AsyncV.labelMap (SProxy :: SProxy "invalidDiscordTag") \error ->
@@ -135,8 +135,8 @@ validatePersonalDetails details = do
     let timezone = validateTimezone details.timezone
         onlineWeekday = timezone >>= (const $ validateTimespan details.weekdayFrom details.weekdayTo)
         onlineWeekend = timezone >>= (const $ validateTimespan details.weekendFrom details.weekendTo)
-    pure { birthday, country
-         , languages, hasMicrophone, discordTag
+    pure { birthday, location
+         , languages, microphone, discordTag
          , timezone, onlineWeekday, onlineWeekend
          , about: About []
          }
