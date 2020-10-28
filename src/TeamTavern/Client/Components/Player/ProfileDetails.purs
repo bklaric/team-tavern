@@ -87,12 +87,12 @@ profileDetails' fieldValues newOrReturning =
             1, Just url', _, _ -> urlDetail field.icon field.label (Just url')
             2, _, Just option', _ -> Just $
                 fieldDetail field.icon field.label
-                [ HH.span [ HS.class_ "profile-field-emphasize" ] [ HH.text option'.label ] ]
+                [ HH.span [ HS.class_ "detail-emphasize" ] [ HH.text option'.label ] ]
             3, _, _, Just options' | not $ Array.null options' -> Just $
                 fieldDetail field.icon field.label
                 ( intercalate [ HH.text ", " ] $ map
                     ( \{ label } ->
-                        [ HH.span [ HS.class_ "profile-field-emphasize" ] [ HH.text label ] ]
+                        [ HH.span [ HS.class_ "detail-emphasize" ] [ HH.text label ] ]
                     )
                     options'
                 )

@@ -16,8 +16,8 @@ playerAgeDetail :: forall slots action. Maybe Int -> Maybe (HH.HTML slots action
 playerAgeDetail Nothing = Nothing
 playerAgeDetail (Just age) = Just $
     detail "fas fa-calendar-alt"
-    [ HH.span [ HS.class_ "profile-field-labelless" ] [ HH.text "Is " ]
-    , HH.span [ HS.class_ "profile-field-emphasize" ] [ HH.text $ show age ]
+    [ HH.span [ HS.class_ "detail-labelless" ] [ HH.text "Is " ]
+    , HH.span [ HS.class_ "detail-emphasize" ] [ HH.text $ show age ]
     , HH.text " years old"
     ]
 
@@ -25,8 +25,8 @@ playerLocationDetail :: forall slots action. Maybe String -> Maybe (HH.HTML slot
 playerLocationDetail Nothing = Nothing
 playerLocationDetail (Just location) = Just $
     detail "fas fa-globe-europe"
-    [ HH.span [ HS.class_ "profile-field-labelless" ] [ HH.text "Lives in " ]
-    , HH.span [ HS.class_ "profile-field-emphasize" ] [ HH.text location ]
+    [ HH.span [ HS.class_ "detail-labelless" ] [ HH.text "Lives in " ]
+    , HH.span [ HS.class_ "detail-emphasize" ] [ HH.text location ]
     ]
 
 playerLanguagesDetail :: forall slots action. Array String -> Maybe (HH.HTML slots action)
@@ -36,7 +36,7 @@ playerMicrophoneDetail :: forall slots action. Boolean -> Maybe (HH.HTML slots a
 playerMicrophoneDetail false = Nothing
 playerMicrophoneDetail true = Just $
     detail "fas fa-microphone"
-    [ HH.span [ HS.class_ "profile-field-labelless profile-field-emphasize" ]
+    [ HH.span [ HS.class_ "detail-labelless detail-emphasize" ]
         [ HH.text "Has microphone" ]
     , HH.text $ " and is willing to communicate"
     ]
@@ -48,8 +48,9 @@ playerDiscordTagDetail
 playerDiscordTagDetail Nothing = Nothing
 playerDiscordTagDetail (Just discordTag) = Just $
     detail "fab fa-discord"
-    [ copyable (SProxy :: SProxy "discordTag") discordTag ]
-
+    [ HH.span [ HS.class_ "detail-labelless" ]
+       [ copyable (SProxy :: SProxy "discordTag") discordTag ]
+    ]
 playerDetails :: forall fields action slots left.
     { age :: Maybe Int
     , discordTag :: Maybe String
