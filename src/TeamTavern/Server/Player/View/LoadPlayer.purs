@@ -43,48 +43,29 @@ queryString timezone = Query $ """
             )
         end as "weekendOnline",
         player.about,
-        coalesce(
-            json_agg(
-                json_build_object(
-                    'handle', profile.handle,
-                    'title', profile.title,
-                    'fields', profile.fields,
-                    'fieldValues', profile.field_values,
-                    'newOrReturning', profile.new_or_returning,
-                    'ambitions', profile.ambitions,
-                    'updated', profile.updated,
-                    'updatedSeconds', profile.updated_seconds
-                )
-                order by profile.updated desc
-            )
-            filter (where profile.player_id is not null),
-            '[]'
-        ) as profiles,
-        coalesce(
-            json_agg(
-                json_build_object(
-                    'name', team.name,
-                    'handle', team.handle,
-                    'updated', team.updated::text,
-                    'updatedSeconds', extract(epoch from (now() - team.updated))
-                )
-                order by team.updated desc
-            )
-            filter (where team.owner_id is not null),
-            '[]'
-        ) as teams
+        player_profiles.profiles,
+        player_teams.teams
     from player
         join (
             select
-                game.handle,
-                game.title,
-                coalesce(fields.fields, '[]') as fields,
                 profile.player_id,
-                coalesce(field_values.field_values, '[]') as field_values,
-                profile.new_or_returning as new_or_returning,
-                profile.ambitions,
-                profile.updated::text,
-                extract(epoch from (now() - updated)) as updated_seconds
+                coalesce(
+                    json_agg(
+                        json_build_object(
+                            'handle', game.handle,
+                            'title', game.title,
+                            'fields', coalesce(fields.fields, '[]'),
+                            'fieldValues', coalesce(field_values.field_values, '[]'),
+                            'newOrReturning', profile.new_or_returning,
+                            'ambitions', profile.ambitions,
+                            'updated', profile.updated::text,
+                            'updatedSeconds', extract(epoch from (now() - updated))
+                        )
+                        order by profile.updated desc
+                    )
+                    filter (where profile.player_id is not null),
+                    '[]'
+                ) as profiles
             from player_profile as profile
                 join player on player.id = profile.player_id
                 join game on game.id = profile.game_id
@@ -182,10 +163,28 @@ queryString timezone = Query $ """
                     group by profile.id
                 ) as field_values on field_values.profile_id = profile.id
             where lower(player.nickname) = lower($1)
-        ) as profile on profile.player_id = player.id
-        join team on team.owner_id = player.id
+            group by profile.player_id
+        ) as player_profiles on player_profiles.player_id = player.id
+        join (
+            select
+                team.owner_id,
+                coalesce(
+                    json_agg(
+                        json_build_object(
+                            'name', team.name,
+                            'handle', team.handle,
+                            'updated', team.updated::text,
+                            'updatedSeconds', extract(epoch from (now() - team.updated))
+                        )
+                        order by team.updated desc
+                    )
+                    filter (where team.owner_id is not null),
+                    '[]'
+                ) as teams
+            from team
+            group by team.owner_id
+        ) as player_teams on player_teams.owner_id = player.id
     where lower(player.nickname) = lower($1)
-    group by player.id
     """
 
 loadPlayer
