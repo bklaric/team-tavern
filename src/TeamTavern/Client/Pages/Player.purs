@@ -22,6 +22,8 @@ import TeamTavern.Client.Components.Popover (popover, popoverButtonCaret, subscr
 import TeamTavern.Client.Pages.Player.CreateTeam (createTeam)
 import TeamTavern.Client.Pages.Player.CreateTeam as CreateTeam
 import TeamTavern.Client.Pages.Player.Details (details)
+import TeamTavern.Client.Pages.Player.EditProfile (editProfile)
+import TeamTavern.Client.Pages.Player.EditProfile as EditProfile
 import TeamTavern.Client.Pages.Player.EditSettings as EditSettings
 import TeamTavern.Client.Pages.Player.Profiles (profiles)
 import TeamTavern.Client.Pages.Player.Status (Status(..), getStatus)
@@ -77,6 +79,7 @@ type ChildSlots =
     , messagePlayer :: NavigationAnchor.Slot Unit
     , games :: NavigationAnchor.Slot String
     , createProfile :: H.Slot (Const Void) Void Unit
+    , editProfile :: EditProfile.Slot
     , createTeam :: CreateTeam.Slot
     )
 
@@ -138,9 +141,15 @@ render (Loaded state @ { player: player', status, editPopoverShown }) =
     , teams player' ShowCreateTeamModal status
     ]
     <>
-    if state.createTeamModalShown
-    then [ createTeam $ const $ Just HideCreateTeamModal ]
-    else []
+    ( if state.createTeamModalShown
+        then [ createTeam $ const $ Just HideCreateTeamModal ]
+        else []
+    )
+    <>
+    ( case state.editProfileModalShown of
+        Just profile -> [ editProfile { nickname: player'.nickname, profile } $ const $ Just HideEditProfileModal ]
+        Nothing -> []
+    )
 render NotFound = HH.p_ [ HH.text "Player could not be found." ]
 render Error = HH.p_ [ HH.text
     "There has been an error loading the player. Please try again later." ]

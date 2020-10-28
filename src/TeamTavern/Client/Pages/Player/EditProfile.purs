@@ -15,20 +15,15 @@ import TeamTavern.Client.Components.Form (form, otherFormError, submitButton)
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.Player.ProfileFormInput (profileFormInput)
 import TeamTavern.Client.Components.Player.ProfileFormInput as ProfileFormInput
-import TeamTavern.Client.Components.Player.ProfileInputGroup (Field, FieldValue)
 import TeamTavern.Client.Script.Navigate (hardNavigate)
 import TeamTavern.Client.Script.Request (putNoContent)
+import TeamTavern.Routes.ViewPlayer as ViewPlayer
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
 type Input =
     { nickname :: String
-    , handle :: String
-    , title :: String
-    , fields :: Array Field
-    , fieldValues :: Array FieldValue
-    , newOrReturning :: Boolean
-    , ambitions :: Array String
+    , profile :: ViewPlayer.OkContentProfile
     }
 
 type State =
@@ -128,7 +123,10 @@ handleAction (SendRequest event) = do
 
 component :: forall query output left. H.Component HH.HTML query Input output (Async left)
 component = H.mkComponent
-    { initialState: \{ nickname, handle, title, fields, fieldValues, newOrReturning, ambitions } ->
+    { initialState: \
+        { nickname
+        , profile: { handle, title, fields, fieldValues, newOrReturning, ambitions }
+        } ->
         { nickname
         , handle
         , title
@@ -149,6 +147,8 @@ editProfile
     .  Input
     -> (Modal.Output Void -> Maybe query)
     -> HH.ComponentHTML query (editProfile :: Slot | children) (Async left)
-editProfile input handleMessage = HH.slot
+editProfile input handleMessage =
+    HH.slot
     (SProxy :: SProxy "editProfile") unit
-    (Modal.component ("Edit your " <> input.title <> " profile") component) input handleMessage
+    (Modal.component ("Edit your " <> input.profile.title <> " profile") component)
+    input handleMessage

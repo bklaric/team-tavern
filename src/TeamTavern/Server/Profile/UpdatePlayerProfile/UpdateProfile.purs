@@ -46,7 +46,7 @@ type UpdateProfileError errors = Variant
 updateProfileString :: Query
 updateProfileString = Query """
     update player_profile
-    set summary = $5, new_or_returning = $6, updated = now()
+    set ambitions = $5, new_or_returning = $6, updated = now()
     from session, player, game
     where session.player_id = $1
     and session.token = $2
@@ -61,8 +61,8 @@ updateProfileString = Query """
 
 updateProfileParameters ::
     CookieInfo -> Identifiers -> Text -> Boolean -> Array QueryParameter
-updateProfileParameters { id, token } { nickname, handle } summary newOrReturning =
-    id : token : nickname : handle : summary :| newOrReturning
+updateProfileParameters { id, token } { nickname, handle } ambitions newOrReturning =
+    id : token : nickname : handle : ambitions :| newOrReturning
 
 updateProfile'
     :: forall errors
@@ -72,10 +72,10 @@ updateProfile'
     -> Text
     -> Boolean
     -> Async (UpdateProfileError errors) ProfileId
-updateProfile' client cookieInfo identifiers summary newOrReturning = do
+updateProfile' client cookieInfo identifiers ambitions newOrReturning = do
     result <- client
         # query updateProfileString
-            (updateProfileParameters cookieInfo identifiers summary newOrReturning)
+            (updateProfileParameters cookieInfo identifiers ambitions newOrReturning)
         # label (SProxy :: SProxy "databaseError")
     { profileId } :: { profileId :: Int } <- rows result
         # head
