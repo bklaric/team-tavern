@@ -12,10 +12,9 @@ import TeamTavern.Client.Components.Button (regularIconButton)
 import TeamTavern.Client.Components.Card (card, cardHeader, cardHeading, cardSection)
 import TeamTavern.Client.Components.Detail (detailColumn, detailColumnHeading, detailColumns, textDetail)
 import TeamTavern.Client.Components.Divider (divider)
-import TeamTavern.Client.Components.NavigationAnchor (navigationAnchorIndexed)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Components.Player.ProfileDetails (profileDetails)
-import TeamTavern.Client.Components.Profile (profileHeader, profileHeaderItem, profileSubheading)
+import TeamTavern.Client.Components.Profile (profileHeader, profileHeaderItem, profileHeading, profileSubheading)
 import TeamTavern.Client.Pages.Player.CreateProfileButton (createProfileButton)
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
 import TeamTavern.Routes.ViewPlayer as ViewPlayer
@@ -48,10 +47,8 @@ profiles { nickname, profiles: profiles' } showEditProfileModal =
         cardSection $
         [ profileHeader
             [ profileHeaderItem $
-                [ navigationAnchorIndexed (SProxy :: SProxy "games") profile.handle
-                    { path: "/games/" <> profile.handle <> "/teams"
-                    , content: HH.text profile.title
-                    }
+                [ profileHeading (SProxy :: SProxy "games") profile.handle
+                    ("/games/" <> profile.handle <> "/teams") profile.title
                 ]
                 <>
                 [ divider
