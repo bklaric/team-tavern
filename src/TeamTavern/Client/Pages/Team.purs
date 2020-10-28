@@ -121,7 +121,7 @@ render (Loaded { team: team', status, showEditTeamModal, showEditProfileModal } 
                 MultiMap.empty
                 profile.fieldValues
             , newOrReturning: profile.newOrReturning
-            , ambitions: intercalate "\n\n" profile.summary
+            , ambitions: intercalate "\n\n" profile.ambitions
             }
         }
         (const $ Just HideEditProfileModal)

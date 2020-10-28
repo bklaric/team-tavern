@@ -44,7 +44,7 @@ profiles teamHandle profiles' editProfileModalShown =
     then [ cardSection [ HH.p_ [ HH.text "No profiles, kek." ] ] ]
     else profiles' <#> \profile -> let
         profileDetails' = profileDetails profile.fields profile.fieldValues profile.newOrReturning
-        ambitions = textDetail profile.summary
+        ambitions = textDetail profile.ambitions
         in
         cardSection $
         [ profileHeader

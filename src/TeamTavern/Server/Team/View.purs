@@ -33,7 +33,7 @@ type Profile =
         , optionKeys :: Array String
         }
     , newOrReturning :: Boolean
-    , summary :: Array String
+    , ambitions :: Array String
     , updated :: String
     , updatedSeconds :: Number
     }
@@ -107,7 +107,7 @@ queryString timezone = Query $ """
                     'fields', profile.fields,
                     'fieldValues', profile.field_values,
                     'newOrReturning', profile.new_or_returning,
-                    'summary', profile.summary,
+                    'ambitions', profile.ambitions,
                     'updated', profile.updated,
                     'updatedSeconds', profile.updated_seconds
                 )
@@ -126,7 +126,7 @@ queryString timezone = Query $ """
                 coalesce(fields.fields, '[]') as fields,
                 coalesce(field_values.field_values, '[]') as field_values,
                 profile.new_or_returning,
-                profile.summary,
+                profile.ambitions,
                 profile.updated::text,
                 extract(epoch from (now() - updated)) as updated_seconds
             from team_profile as profile
