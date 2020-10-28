@@ -204,7 +204,7 @@ sendRequest (state :: State) = Async.unify do
                 { fieldValues: profileDetails.fieldValues # filter \{ url, optionKey, optionKeys } ->
                     isJust url || isJust optionKey || isJust optionKeys
                 , newOrReturning: profileDetails.newOrReturning
-                , ambitions: profileDetails.summary
+                , ambitions: profileDetails.ambitions
                 }
             , registrationDetails:
                 { email: registrationDetails.email
@@ -232,10 +232,10 @@ profilePlayerInput game =
     { fields: game.fields
     , fieldValues: []
     , newOrReturning: false
-    , summary: ""
+    , ambitions: ""
     , urlErrors: []
     , missingErrors: []
-    , summaryError: false
+    , ambitionsError: false
     }
 
 profilePlayerEmptyInput :: EnterProfilePlayerDetails.Input
@@ -243,10 +243,10 @@ profilePlayerEmptyInput =
     { fields: []
     , fieldValues: []
     , newOrReturning: false
-    , summary: ""
+    , ambitions: ""
     , urlErrors: []
     , missingErrors: []
-    , summaryError: false
+    , ambitionsError: false
     }
 
 generalPlayerEmptyInput :: EnterGeneralPlayerDetails.Input
@@ -289,7 +289,7 @@ handleAction (TakeProfilePlayerDetails details) =
         { profilePlayerDetailsInput = state.profilePlayerDetailsInput
             { fieldValues = details.fieldValues
             , newOrReturning = details.newOrReturning
-            , summary = details.summary
+            , ambitions = details.ambitions
             }
         }
 handleAction (TakeRegistrationDetails details) =
@@ -320,7 +320,7 @@ handleAction Submit = do
         , profilePlayerDetailsInput = state.profilePlayerDetailsInput
             { urlErrors = []
             , missingErrors = []
-            , summaryError = false
+            , ambitionsError = false
             }
         , registrationDetailsInput = state.registrationDetailsInput
             { emailError = false
@@ -363,7 +363,7 @@ handleAction Submit = do
                                     }
                                 , ambitions: const $ state'
                                     { profilePlayerDetailsInput = state'.profilePlayerDetailsInput
-                                        { summaryError = true }
+                                        { ambitionsError = true }
                                     }
                                 }
                                 profileError
@@ -410,7 +410,7 @@ handleAction Submit = do
             then EnterGeneralPlayerDetails
             else if (not $ Array.null nextState.profilePlayerDetailsInput.urlErrors)
                 || (not $ Array.null nextState.profilePlayerDetailsInput.missingErrors)
-                || nextState.profilePlayerDetailsInput.summaryError
+                || nextState.profilePlayerDetailsInput.ambitionsError
             then EnterProfilePlayerDetails
             else EnterRegistrationDetails
         }

@@ -45,24 +45,24 @@ type Input =
     { fields :: Array Field
     , fieldValues :: Array FieldValue
     , newOrReturning :: Boolean
-    , summary :: String
+    , ambitions :: String
     , urlErrors :: Array String
     , missingErrors :: Array String
-    , summaryError :: Boolean
+    , ambitionsError :: Boolean
     }
 
 type Output =
     { fieldValues :: Array FieldValue
-    , summary :: String
+    , ambitions :: String
     , newOrReturning :: Boolean
     }
 
 type State =
     { fields :: Array Field
     , fieldValues :: Array FieldValue
-    , summary :: String
+    , ambitions :: String
     , newOrReturning :: Boolean
-    , summaryError :: Boolean
+    , ambitionsError :: Boolean
     , urlErrors :: Array String
     , missingErrors :: Array String
     }
@@ -72,7 +72,7 @@ data Action
     | UpdateSingleSelect String (Maybe String)
     | UpdateMultiSelect String (Array String)
     | UpdateNewOrReturning Boolean
-    | UpdateSummary String
+    | UpdateAmbitions String
 
 type ChildSlots =
     ( "singleSelectField" :: SingleSelect.Slot Option String
@@ -169,12 +169,12 @@ fieldInput _ _ _ _ = HH.div_ []
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render
     { fields
-    , summary
+    , ambitions
     , fieldValues
     , newOrReturning
     , urlErrors
     , missingErrors
-    , summaryError
+    , ambitionsError
     } =
     HH.div_ $
     [ HH.div [ HP.class_ $ HH.ClassName "responsive-input-groups" ] $
@@ -197,29 +197,29 @@ render
     , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
         [ HH.label
             [ HP.class_ $ HH.ClassName "input-label"
-            , HP.for "summary"
+            , HP.for "ambitions"
             ]
-            [ HH.text "Summary"
+            [ HH.text "Ambitions"
             , divider
             , HH.span [ HP.class_ $ H.ClassName "input-sublabel" ] [ HH.text "required" ]
             ]
         , HH.textarea
-            [ HP.id_ "summary"
+            [ HP.id_ "ambitions"
             , HP.class_ $ HH.ClassName "text-input"
-            , HE.onValueInput $ Just <<< UpdateSummary
-            , HP.value summary
+            , HE.onValueInput $ Just <<< UpdateAmbitions
+            , HP.value ambitions
             ]
         , HH.p
-            [ HP.class_ $ inputErrorClass summaryError ]
+            [ HP.class_ $ inputErrorClass ambitionsError ]
             [ HH.text
-                "The summary cannot be empty and cannot be more than 2000 characters long." ]
+                "The ambitions cannot be empty and cannot be more than 2000 characters long." ]
         ]
     ]
 
 raiseMessage :: forall left.
     State -> H.HalogenM State Action ChildSlots Output (Async left) Unit
-raiseMessage { fieldValues, newOrReturning, summary } =
-    H.raise { fieldValues, newOrReturning, summary }
+raiseMessage { fieldValues, newOrReturning, ambitions } =
+    H.raise { fieldValues, newOrReturning, ambitions }
 
 handleAction :: forall left.
     Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
@@ -250,8 +250,8 @@ handleAction (UpdateMultiSelect fieldKey optionKeys) = do
 handleAction (UpdateNewOrReturning newOrReturning) = do
     state <- H.modify (_ { newOrReturning = newOrReturning })
     raiseMessage state
-handleAction (UpdateSummary summary) = do
-    state <- H.modify _ { summary = summary }
+handleAction (UpdateAmbitions ambitions) = do
+    state <- H.modify _ { ambitions = ambitions }
     raiseMessage state
 
 component :: forall query left.

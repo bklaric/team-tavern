@@ -11,7 +11,7 @@ import Simple.JSON (writeJSON)
 import TeamTavern.Server.Profile.UpdatePlayerProfile.LogError (UpdateError)
 
 type ProfileErrorContent = Variant
-    ( invalidSummary :: {}
+    ( invalidAmbitions :: {}
     , invalidUrl :: { fieldKey :: String }
     , missing :: { fieldKey :: String }
     )

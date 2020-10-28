@@ -18,7 +18,7 @@ updateProfileString :: Query
 updateProfileString = Query """
     update team_profile
     set new_or_returning = $4,
-        summary = $5,
+        ambitions = $5,
         updated = now()
     from player, team, game
     where player.id = $1

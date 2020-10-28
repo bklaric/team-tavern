@@ -18,7 +18,7 @@ queryString = Query """
         ( team_id
         , game_id
         , new_or_returning
-        , summary
+        , ambitions
         )
     select team.id, game.id, $4, $5
     from player, team, game

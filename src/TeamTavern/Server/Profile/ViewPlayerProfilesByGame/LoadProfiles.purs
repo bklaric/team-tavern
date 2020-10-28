@@ -57,7 +57,7 @@ type LoadProfilesResult =
             , label :: String
             })
         }
-    , summary :: Array String
+    , ambitions :: Array String
     , newOrReturning :: Boolean
     , updated :: String
     , updatedSeconds :: Number
@@ -247,7 +247,7 @@ queryStringWithoutPagination handle timezone filters = Query $ """
                 ) filter (where field_values.player_profile_id is not null),
                 '[]'
             ) as "fieldValues",
-            profile.summary,
+            profile.ambitions,
             profile.new_or_returning as "newOrReturning",
             profile.updated::text,
             extract(epoch from (now() - updated)) as "updatedSeconds"

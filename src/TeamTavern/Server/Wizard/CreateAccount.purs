@@ -60,7 +60,6 @@ import TeamTavern.Server.Profile.AddPlayerProfile.ValidateFieldValues (Field(..)
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateFieldValues as ValidateFieldValues
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile (Profile(..), ProfileError, ProfileErrors)
 import TeamTavern.Server.Profile.Infrastructure.ValidateAmbitions as ValidateAmbitions
-import TeamTavern.Server.Profile.Infrastructure.ValidateSummary as ValidateSummary
 import Unsafe.Coerce (unsafeCoerce)
 
 type PersonalDetails =

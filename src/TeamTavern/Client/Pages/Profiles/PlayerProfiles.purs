@@ -68,7 +68,7 @@ type PlayerProfileRow other =
             , label :: String
             })
         }
-    , summary :: Array String
+    , ambitions :: Array String
     , newOrReturning :: Boolean
     , updated :: String
     , updatedSeconds :: Number
@@ -292,13 +292,13 @@ render { profiles, profileCount, showCreateProfile, playerInfo, page } =
                 then []
                 else [ HH.h5 [ HP.class_ $ HH.ClassName "player-profile-section-title" ] [ HH.text "About" ] ]
                     <> (profile.about <#> \paragraph ->
-                        HH.p [ HP.class_ $ HH.ClassName "profile-summary" ] [ HH.text paragraph ]))
+                        HH.p [ HP.class_ $ HH.ClassName "profile-ambitions" ] [ HH.text paragraph ]))
                 <>
-                (if Array.null $ profile.summary
+                (if Array.null $ profile.ambitions
                 then []
                 else [ HH.h5 [ HP.class_ $ HH.ClassName "player-profile-section-title" ] [ HH.text "Ambitions" ] ]
-                    <> (profile.summary <#> \paragraph ->
-                        HH.p [ HP.class_ $ HH.ClassName "profile-summary" ] [ HH.text paragraph ]))
+                    <> (profile.ambitions <#> \paragraph ->
+                        HH.p [ HP.class_ $ HH.ClassName "profile-ambitions" ] [ HH.text paragraph ]))
             ]
         ])
     <> (Array.singleton $

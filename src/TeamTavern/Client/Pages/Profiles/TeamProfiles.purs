@@ -58,7 +58,7 @@ type TeamProfile =
             }
         }
     , newOrReturning :: Boolean
-    , summary :: Array String
+    , ambitions :: Array String
     , updated :: String
     , updatedSeconds :: Number
     }
@@ -119,7 +119,7 @@ render { profiles, profileCount, showCreateProfile, playerInfo, page } =
         teamDetails' = teamDetails profile
         profileDetails'' = profileDetails' profile.fieldValues profile.newOrReturning
         about = textDetail profile.about
-        ambitions = textDetail profile.summary
+        ambitions = textDetail profile.ambitions
         in
         cardSection $
         [ profileHeader $

@@ -60,7 +60,6 @@ import TeamTavern.Server.Profile.AddPlayerProfile.ValidateFieldValues (Field(..)
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateFieldValues as ValidateFieldValues
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile (Profile, ProfileError)
 import TeamTavern.Server.Profile.Infrastructure.ValidateAmbitions as ValidateAmbitions
-import TeamTavern.Server.Profile.Infrastructure.ValidateSummary as ValidateSummary
 
 type PlayerDetails =
     { birthday :: Maybe String
@@ -173,7 +172,7 @@ errorResponse = onMatch
                     -- \profileErrors ->
                     -- (profileErrors.errors :: NonEmptyList ProfileError)
                     -- <#> (match
-                    --     { summary: const $ Array.singleton $ inj (SProxy :: SProxy "summary") {}
+                    --     { ambitions: const $ Array.singleton $ inj (SProxy :: SProxy "ambitions") {}
                     --     , fieldValues: \fieldValueErrors ->
                     --         fieldValueErrors
                     --         <#> onMatch
