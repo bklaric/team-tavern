@@ -45,7 +45,7 @@ type PlayerProfileRow other =
     ( nickname :: String
     , discordTag :: Maybe String
     , age :: Maybe Int
-    , country :: Maybe String
+    , location :: Maybe String
     , languages :: Array String
     , microphone :: Boolean
     , weekdayOnline :: Maybe { from :: String, to :: String }
@@ -175,7 +175,7 @@ render { profiles, profileCount, showCreateProfile, playerInfo, page } =
             _ -> []
         , HH.div [ HP.class_ $ HH.ClassName "profile-columns" ]
             [ HH.div [ HP.class_ $ HH.ClassName "profile-column" ] $
-                (if isNothing profile.age && isNothing profile.country && Array.null profile.languages && not profile.microphone
+                (if isNothing profile.age && isNothing profile.location && Array.null profile.languages && not profile.microphone
                     && isNothing profile.discordTag && isNothing profile.weekdayOnline && isNothing profile.weekendOnline
                 then []
                 else  [ HH.h5 [ HP.class_ $ HH.ClassName "player-profile-section-title" ] [ HH.text "Player details" ] ])
@@ -187,11 +187,11 @@ render { profiles, profileCount, showCreateProfile, playerInfo, page } =
                     , HH.span [ HP.class_ $ HH.ClassName "detail-emphasize" ] [ HH.text $ show age ]
                     , HH.text " years old"
                     ]
-                , profile.country <#> \country ->
+                , profile.location <#> \location ->
                     HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
                     [ HH.i [ HP.class_ $ HH.ClassName "fas fa-globe-europe profile-field-icon" ] []
                     , HH.span [ HP.class_ $ HH.ClassName "detail-labelless" ] [ HH.text "Lives in " ]
-                    , HH.span [ HP.class_ $ HH.ClassName "detail-emphasize" ] [ HH.text country ]
+                    , HH.span [ HP.class_ $ HH.ClassName "detail-emphasize" ] [ HH.text location ]
                     ]
                 , if Array.null profile.languages
                     then Nothing

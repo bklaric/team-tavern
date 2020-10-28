@@ -22,7 +22,7 @@ import Postgres.Query (Query(..))
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
 import TeamTavern.Server.Infrastructure.Postgres (playerAdjustedWeekdayFrom, playerAdjustedWeekdayTo, playerAdjustedWeekendFrom, playerAdjustedWeekendTo, prepareJsonString, prepareString)
-import TeamTavern.Server.Profile.Routes (Age, Country, Filters, Handle, HasMicrophone, Language, ProfilePage, Time, Timezone, NewOrReturning)
+import TeamTavern.Server.Profile.Routes (Age, Location, Filters, Handle, HasMicrophone, Language, ProfilePage, Time, Timezone, NewOrReturning)
 import URI.Extra.QueryPairs (Key, QueryPairs(..), Value)
 import URI.Extra.QueryPairs as Key
 import URI.Extra.QueryPairs as Value
@@ -34,7 +34,7 @@ type LoadProfilesResult =
     { nickname :: String
     , discordTag :: Maybe String
     , age :: Maybe Int
-    , country :: Maybe String
+    , location :: Maybe String
     , languages :: Array String
     , microphone :: Boolean
     , weekdayOnline :: Maybe { from :: String, to :: String }
@@ -83,11 +83,11 @@ createLanguagesFilter :: Array Language -> String
 createLanguagesFilter [] = ""
 createLanguagesFilter languages = " and player.languages && (array[" <> (languages <#> prepareString # intercalate ", ") <> "])"
 
-createCountriesFilter :: Array Country -> String
+createCountriesFilter :: Array Location -> String
 createCountriesFilter [] = ""
-createCountriesFilter countries = """ and player.country in (
+createCountriesFilter locations = """ and player.location in (
     with recursive region_rec(name) as (
-        select region.name from region where region.name = any(array[""" <> (countries <#> prepareString # intercalate ", ") <> """])
+        select region.name from region where region.name = any(array[""" <> (locations <#> prepareString # intercalate ", ") <> """])
         union all
         select subregion.name from region as subregion join region_rec on subregion.superregion_name = region_rec.name
     )
@@ -148,7 +148,7 @@ createPlayerFilterString :: Timezone -> Filters -> String
 createPlayerFilterString timezone filters =
     createAgeFilter filters.age.from filters.age.to
     <> createLanguagesFilter filters.languages
-    <> createCountriesFilter filters.countries
+    <> createCountriesFilter filters.locations
     <> createWeekdayOnlineFilter
         timezone filters.weekdayOnline.from filters.weekdayOnline.to
     <> createWeekendOnlineFilter
@@ -202,7 +202,7 @@ queryStringWithoutPagination handle timezone filters = Query $ """
             player.nickname,
             player.discord_tag as "discordTag",
             extract(year from age(player.birthday))::int as age,
-            player.country,
+            player.location,
             player.languages,
             player.microphone,
             case

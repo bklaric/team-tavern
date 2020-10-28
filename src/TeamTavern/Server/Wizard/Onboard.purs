@@ -47,7 +47,7 @@ import TeamTavern.Server.Player.Register.ValidateModel (RegisterModel, ValidateM
 import TeamTavern.Server.Player.UpdateDetails.ReadUpdate (UpdateDetailsModel)
 import TeamTavern.Server.Player.UpdateDetails.UpdateDetails (updateDetails)
 import TeamTavern.Server.Player.UpdateDetails.ValidateBirthday (validateOptionalBirthday)
-import TeamTavern.Server.Player.UpdateDetails.ValidateCountry (validateOptionalCountry)
+import TeamTavern.Server.Player.UpdateDetails.ValidateLocation (validateLocation)
 import TeamTavern.Server.Player.UpdateDetails.ValidateDiscordTag (validateOptionalDiscordTag)
 import TeamTavern.Server.Player.UpdateDetails.ValidateLangugase (validateLanguages)
 import TeamTavern.Server.Player.UpdateDetails.ValidateTimespan (validateTimespan)
@@ -117,7 +117,7 @@ validatePlayerDetails
         UpdateDetailsModel
 validatePlayerDetails details = do
     birthday <- AsyncV.fromEffect $ validateOptionalBirthday details.birthday
-    let location = validateOptionalCountry details.location
+    let location = validateLocation details.location
         languages = validateLanguages details.languages
         microphone = details.microphone
     discordTag <- validateOptionalDiscordTag details.discordTag

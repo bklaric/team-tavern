@@ -161,7 +161,7 @@ loadPlayerProfiles handle page filters = Async.unify do
         ageFromPair = filters.ageFrom <#> show <#> ("ageFrom=" <> _)
         ageToPair = filters.ageTo <#> show <#> ("ageTo=" <> _)
         languagePairs = filters.languages <#> ("languages=" <> _)
-        countryPairs = filters.countries <#> (\country -> "countries=" <> country)
+        locationPairs = filters.locations <#> (\location -> "locations=" <> location)
         microphonePair = if filters.microphone then Just "microphone=true" else Nothing
         weekdayFromPair = filters.weekdayFrom <#> ("weekdayFrom=" <> _)
         weekdayToPair = filters.weekdayTo <#> ("weekdayTo=" <> _)
@@ -172,7 +172,7 @@ loadPlayerProfiles handle page filters = Async.unify do
             <#> (\{ fieldKey, optionKey } -> fieldKey <> "=" <> optionKey)
         newOrReturningPair = if filters.newOrReturning then Just "newOrReturning=true" else Nothing
         allPairs = [pagePair, timezonePair]
-            <> languagePairs <> countryPairs <> fieldPairs <> Array.catMaybes
+            <> languagePairs <> locationPairs <> fieldPairs <> Array.catMaybes
             [ ageFromPair, ageToPair, microphonePair, newOrReturningPair
             , weekdayFromPair, weekdayToPair, weekendFromPair, weekendToPair
             ]
@@ -196,7 +196,7 @@ loadTeamProfiles handle page filters = Async.unify do
         ageFromPair = filters.ageFrom <#> show <#> ("ageFrom=" <> _)
         ageToPair = filters.ageTo <#> show <#> ("ageTo=" <> _)
         languagePairs = filters.languages <#> ("languages=" <> _)
-        countryPairs = filters.countries <#> (\country -> "countries=" <> country)
+        locationPairs = filters.locations <#> (\location -> "locations=" <> location)
         microphonePair = if filters.microphone then Just "microphone=true" else Nothing
         weekdayFromPair = filters.weekdayFrom <#> ("weekdayFrom=" <> _)
         weekdayToPair = filters.weekdayTo <#> ("weekdayTo=" <> _)
@@ -207,7 +207,7 @@ loadTeamProfiles handle page filters = Async.unify do
             <#> (\{ fieldKey, optionKey } -> fieldKey <> "=" <> optionKey)
         newOrReturningPair = if filters.newOrReturning then Just "newOrReturning=true" else Nothing
         allPairs = [pagePair, timezonePair]
-            <> languagePairs <> countryPairs <> fieldPairs <> Array.catMaybes
+            <> languagePairs <> locationPairs <> fieldPairs <> Array.catMaybes
             [ ageFromPair, ageToPair, microphonePair, newOrReturningPair
             , weekdayFromPair, weekdayToPair, weekendFromPair, weekendToPair
             ]
@@ -310,7 +310,7 @@ readQueryParams fields' = do
     page <- Url.get "page" searchParams <#> maybe 1 (Int.fromString >>> maybe 1 identity)
     ageFrom <- Url.get "age-from" searchParams <#> (\ageFrom -> ageFrom >>= Int.fromString)
     ageTo <- Url.get "age-to" searchParams <#> (\ageTo -> ageTo >>= Int.fromString)
-    countries <- Url.getAll "location" searchParams
+    locations <- Url.getAll "location" searchParams
     languages <- Url.getAll "language" searchParams
     microphone <- Url.get "microphone" searchParams <#> isJust
     weekdayFrom <- Url.get "weekday-from" searchParams
@@ -329,7 +329,7 @@ readQueryParams fields' = do
         , filters:
             { ageFrom
             , ageTo
-            , countries
+            , locations
             , languages
             , microphone
             , weekdayFrom
@@ -403,7 +403,7 @@ handleAction (ApplyFilters filters) = do
         case filters.ageTo of
             Nothing -> pure unit
             Just ageTo -> Url.set "age-to" (show ageTo) searchParams
-        foreachE filters.countries \location ->
+        foreachE filters.locations \location ->
             Url.append "location" location searchParams
         foreachE filters.languages \language ->
             Url.append "language" language searchParams

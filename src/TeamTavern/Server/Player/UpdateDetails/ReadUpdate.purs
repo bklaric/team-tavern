@@ -18,7 +18,7 @@ import TeamTavern.Server.Domain.Text (TextError)
 import TeamTavern.Server.Player.Domain.About (About)
 import TeamTavern.Server.Player.Domain.About as About
 import TeamTavern.Server.Player.UpdateDetails.ValidateBirthday (validateOptionalBirthday)
-import TeamTavern.Server.Player.UpdateDetails.ValidateCountry (Country, validateOptionalCountry)
+import TeamTavern.Server.Player.UpdateDetails.ValidateLocation (Location, validateLocation)
 import TeamTavern.Server.Player.UpdateDetails.ValidateDiscordTag (DiscordTag, DiscordTagError, validateOptionalDiscordTag)
 import TeamTavern.Server.Player.UpdateDetails.ValidateLangugase (Language, validateLanguages)
 import TeamTavern.Server.Player.UpdateDetails.ValidateTimespan (Timespan, validateTimespan)
@@ -42,7 +42,7 @@ type UpdateDetailsModel =
     { discordTag :: Maybe DiscordTag
     , birthday :: Maybe String
     , languages :: Array Language
-    , location :: Maybe Country
+    , location :: Maybe Location
     , timezone :: Maybe Timezone
     , onlineWeekday :: Maybe Timespan
     , onlineWeekend :: Maybe Timespan
@@ -79,7 +79,7 @@ readUpdate body = do
     { discordTag: _
     , birthday: birthday'
     , languages: validateLanguages dto.languages
-    , location: validateOptionalCountry dto.location
+    , location: validateLocation dto.location
     , timezone: timezone'
     , onlineWeekday: timezone' >>= (const $ validateTimespan dto.weekdayFrom dto.weekdayTo)
     , onlineWeekend: timezone' >>= (const $ validateTimespan dto.weekendFrom dto.weekendTo)

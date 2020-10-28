@@ -21,7 +21,7 @@ type Age = Int
 
 type Language = String
 
-type Country = String
+type Location = String
 
 type Time = String
 
@@ -32,7 +32,7 @@ type NewOrReturning = Boolean
 type Filters =
     { age :: { from :: Maybe Age, to :: Maybe Age }
     , languages :: Array Language
-    , countries :: Array Country
+    , locations :: Array Location
     , weekdayOnline :: { from :: Maybe Time, to :: Maybe Time }
     , weekendOnline :: { from :: Maybe Time, to :: Maybe Time }
     , microphone :: HasMicrophone
@@ -45,7 +45,7 @@ bundleFilters :: forall other.
     , ageTo :: Maybe Int
     , fields :: QueryPairs Key Value
     , languages :: Array String
-    , countries :: Array String
+    , locations :: Array String
     , weekdayFrom :: Maybe String
     , weekdayTo :: Maybe String
     , weekendFrom :: Maybe String
@@ -57,7 +57,7 @@ bundleFilters :: forall other.
 bundleFilters filters =
     { age: { from: filters.ageFrom, to: filters.ageTo }
     , languages: filters.languages
-    , countries: filters.countries
+    , locations: filters.locations
     , weekdayOnline: { from: filters.weekdayFrom, to: filters.weekdayTo }
     , weekendOnline: { from: filters.weekendFrom, to: filters.weekendTo }
     , microphone: maybe false identity filters.microphone
@@ -122,7 +122,7 @@ type ViewPlayerProfilesByGame = Route
     :? Optional "ageFrom" Age
     :? Optional "ageTo" Age
     :? Many "languages" Language
-    :? Many "countries" Country
+    :? Many "locations" Location
     :? Optional "weekdayFrom" Time
     :? Optional "weekdayTo" Time
     :? Optional "weekendFrom" Time
@@ -143,7 +143,7 @@ type ViewTeamProfilesByGame = Route
     :? Optional "ageFrom" Age
     :? Optional "ageTo" Age
     :? Many "languages" Language
-    :? Many "countries" Country
+    :? Many "locations" Location
     :? Optional "weekdayFrom" Time
     :? Optional "weekdayTo" Time
     :? Optional "weekendFrom" Time

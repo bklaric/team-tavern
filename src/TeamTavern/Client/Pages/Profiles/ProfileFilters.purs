@@ -37,7 +37,7 @@ type Field =
 type Filters =
     { ageFrom :: Maybe Int
     , ageTo :: Maybe Int
-    , countries :: Array String
+    , locations :: Array String
     , languages :: Array String
     , microphone :: Boolean
     , weekdayFrom :: Maybe String
@@ -56,7 +56,7 @@ type Input = { fields :: Array Field, filters :: Filters }
 type State =
     { ageFrom :: String
     , ageTo :: String
-    , countries :: Array String
+    , locations :: Array String
     , languages :: Array String
     , microphone :: Boolean
     , weekdayFrom :: String
@@ -99,7 +99,7 @@ type Slot = H.Slot (Const Void) Output Unit
 
 type ChildSlots =
     ( language :: MultiSelect.Slot String Unit
-    , country :: MultiTreeSelect.Slot String
+    , location :: MultiTreeSelect.Slot String
     , field :: MultiSelect.Slot Option String
     )
 
@@ -189,9 +189,9 @@ render state = HH.div [ HP.class_ $ HH.ClassName "filters-card" ] $
                     ]
                 , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
                     [ fieldLabel "Location" "fas fa-globe-europe"
-                    , multiTreeSelect (SProxy :: SProxy "country")
+                    , multiTreeSelect (SProxy :: SProxy "location")
                         { entries: allRegions <#> regionToOption
-                        , selected: state.countries
+                        , selected: state.locations
                         , labeler: identity
                         , comparer: (==)
                         , filter: "Search locations"
@@ -353,7 +353,7 @@ handleAction (Receive { fields, filters }) = do
     H.modify_ \state -> state
         { ageFrom = maybe "" show filters.ageFrom
         , ageTo = maybe "" show filters.ageTo
-        , countries = filters.countries
+        , locations = filters.locations
         , languages = filters.languages
         , microphone = filters.microphone
         , weekdayFrom = maybe "" identity filters.weekdayFrom
@@ -374,7 +374,7 @@ handleAction ApplyAction = do
     let nothingIfNull string = if String.null string then Nothing else Just string
     let ageFrom = Int.fromString state.ageFrom
         ageTo = Int.fromString state.ageTo
-        countries = state.countries
+        locations = state.locations
         languages = state.languages
         microphone = state.microphone
         weekdayFrom = nothingIfNull state.weekdayFrom
@@ -387,7 +387,7 @@ handleAction ApplyAction = do
             # join
         newOrReturning = state.newOrReturning
     H.raise $ Apply
-        { ageFrom, ageTo, languages, countries, microphone
+        { ageFrom, ageTo, languages, locations, microphone
         , weekdayFrom, weekdayTo, weekendFrom, weekendTo
         , fields, newOrReturning
         }
@@ -395,7 +395,7 @@ handleAction Clear = do
     H.modify_ \state -> state
         { ageFrom = ""
         , ageTo = ""
-        , countries = []
+        , locations = []
         , languages = []
         , microphone = false
         , weekdayFrom = ""
@@ -409,8 +409,8 @@ handleAction (AgeFromInput ageFrom) =
     H.modify_ (_ { ageFrom = ageFrom })
 handleAction (AgeToInput ageTo) =
     H.modify_ (_ { ageTo = ageTo })
-handleAction (CountriesInput countries) =
-    H.modify_ (_ { countries = countries })
+handleAction (CountriesInput locations) =
+    H.modify_ (_ { locations = locations })
 handleAction (LanguagesMessage languages) =
     H.modify_ _ { languages = languages }
 handleAction (MicrophoneInput microphone) =
@@ -443,7 +443,7 @@ initialState :: Input -> State
 initialState { fields, filters } =
     { ageFrom: maybe "" show filters.ageFrom
     , ageTo: maybe "" show filters.ageTo
-    , countries: filters.countries
+    , locations: filters.locations
     , languages: filters.languages
     , microphone: filters.microphone
     , weekdayFrom: maybe "" identity filters.weekdayFrom

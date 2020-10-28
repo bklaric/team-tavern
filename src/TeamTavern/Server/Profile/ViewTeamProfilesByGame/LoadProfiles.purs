@@ -22,7 +22,7 @@ import Postgres.Query (Query(..))
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
 import TeamTavern.Server.Infrastructure.Postgres (prepareJsonString, prepareString, teamAdjustedWeekdayFrom, teamAdjustedWeekdayTo, teamAdjustedWeekendFrom, teamAdjustedWeekendTo)
-import TeamTavern.Server.Profile.Routes (Age, Country, Filters, Handle, HasMicrophone, Language, ProfilePage, Time, Timezone, NewOrReturning)
+import TeamTavern.Server.Profile.Routes (Age, Location, Filters, Handle, HasMicrophone, Language, ProfilePage, Time, Timezone, NewOrReturning)
 import URI.Extra.QueryPairs (Key, QueryPairs(..), Value)
 import URI.Extra.QueryPairs as Key
 import URI.Extra.QueryPairs as Value
@@ -87,12 +87,12 @@ createLanguagesFilter :: Array Language -> String
 createLanguagesFilter [] = ""
 createLanguagesFilter languages = " and profile.languages && (array[" <> (languages <#> prepareString # intercalate ", ") <> "])"
 
-createCountriesFilter :: Array Country -> String
+createCountriesFilter :: Array Location -> String
 createCountriesFilter [] = ""
-createCountriesFilter countries = """ and exists (
+createCountriesFilter locations = """ and exists (
     (
         with recursive region_rec(name) as (
-            select region.name from region where region.name = any(profile.countries)
+            select region.name from region where region.name = any(profile.locations)
             union all
             select subregion.name from region as subregion join region_rec on subregion.superregion_name = region_rec.name
         )
@@ -100,7 +100,7 @@ createCountriesFilter countries = """ and exists (
     )
     intersect (
         with recursive region_rec(name) as (
-            select region.name from region where region.name = any(array[""" <> (countries <#> prepareString # intercalate ", ") <> """])
+            select region.name from region where region.name = any(array[""" <> (locations <#> prepareString # intercalate ", ") <> """])
             union all
             select subregion.name from region as subregion join region_rec on subregion.superregion_name = region_rec.name
         )
@@ -163,7 +163,7 @@ createProfileFilterString :: Timezone -> Filters -> String
 createProfileFilterString timezone filters =
     createAgeFilter filters.age.from filters.age.to
     <> createLanguagesFilter filters.languages
-    <> createCountriesFilter filters.countries
+    <> createCountriesFilter filters.locations
     <> createWeekdayOnlineFilter
         timezone filters.weekdayOnline.from filters.weekdayOnline.to
     <> createWeekendOnlineFilter
