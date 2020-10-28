@@ -19,6 +19,8 @@ import TeamTavern.Client.Components.Content (contentHeader, contentHeading)
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Components.Popover (popover, popoverButtonCaret, subscribeToWindowClick)
+import TeamTavern.Client.Pages.Player.CreateTeam (createTeam)
+import TeamTavern.Client.Pages.Player.CreateTeam as CreateTeam
 import TeamTavern.Client.Pages.Player.Details (details)
 import TeamTavern.Client.Pages.Player.EditSettings as EditSettings
 import TeamTavern.Client.Pages.Player.Profiles (profiles)
@@ -75,6 +77,7 @@ type ChildSlots =
     , messagePlayer :: NavigationAnchor.Slot Unit
     , games :: NavigationAnchor.Slot String
     , createProfile :: H.Slot (Const Void) Void Unit
+    , createTeam :: CreateTeam.Slot
     )
 
 renderEditAccountButton :: forall slots. Boolean -> HH.HTML slots Action
@@ -104,8 +107,8 @@ renderEditAccountButton editPopoverShown =
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render (Empty _) = HH.div_ []
-render (Loaded { player: player', status, editPopoverShown }) =
-    HH.div_
+render (Loaded state @ { player: player', status, editPopoverShown }) =
+    HH.div_ $
     [ contentHeader
         [ HH.div_ [ contentHeading player'.nickname ]
         , HH.div_
@@ -134,6 +137,10 @@ render (Loaded { player: player', status, editPopoverShown }) =
     , profiles player' ShowEditProfileModal
     , teams player' ShowCreateTeamModal status
     ]
+    <>
+    if state.createTeamModalShown
+    then [ createTeam $ const $ Just HideCreateTeamModal ]
+    else []
 render NotFound = HH.p_ [ HH.text "Player could not be found." ]
 render Error = HH.p_ [ HH.text
     "There has been an error loading the player. Please try again later." ]
