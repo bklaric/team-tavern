@@ -22,8 +22,8 @@ import TeamTavern.Client.Components.Popover (popover, popoverButtonCaret, subscr
 import TeamTavern.Client.Pages.Player.CreateTeam (createTeam)
 import TeamTavern.Client.Pages.Player.CreateTeam as CreateTeam
 import TeamTavern.Client.Pages.Player.Details (details)
-import TeamTavern.Client.Pages.Player.EditDetails (editDetails)
-import TeamTavern.Client.Pages.Player.EditDetails as EditDetails
+import TeamTavern.Client.Pages.Player.EditPlayer (editPlayer)
+import TeamTavern.Client.Pages.Player.EditPlayer as EditDetails
 import TeamTavern.Client.Pages.Player.EditProfile (editProfile)
 import TeamTavern.Client.Pages.Player.EditProfile as EditProfile
 import TeamTavern.Client.Pages.Player.EditSettings as EditSettings
@@ -80,7 +80,7 @@ type ChildSlots =
     , editSettings :: EditSettings.Slot
     , messagePlayer :: NavigationAnchor.Slot Unit
     , games :: NavigationAnchor.Slot String
-    , editDetails :: EditDetails.Slot
+    , editPlayer :: EditDetails.Slot
     , createProfile :: H.Slot (Const Void) Void Unit
     , editProfile :: EditProfile.Slot
     , createTeam :: CreateTeam.Slot
@@ -145,7 +145,7 @@ render (Loaded state @ { player: player', status, editPopoverShown }) =
     ]
     <>
     ( if state.editPlayerModalShown
-        then [ editDetails player' $ const $ Just HideEditPlayerModal ]
+        then [ editPlayer player' $ const $ Just HideEditPlayerModal ]
         else []
     )
     <>

@@ -1,5 +1,4 @@
-module TeamTavern.Client.Pages.Player.EditDetails
-    (Input(..), Output(..), Slot, editDetails) where
+module TeamTavern.Client.Pages.Player.EditPlayer (Input(..), Output(..), Slot, editPlayer) where
 
 import Prelude
 
@@ -172,11 +171,11 @@ component = H.mkComponent
     , eval: H.mkEval $ H.defaultEval { handleAction = handleAction }
     }
 
-editDetails
+editPlayer
     :: forall action children left
     .  Input
     -> (Modal.Output Output -> Maybe action)
-    -> HH.ComponentHTML action (editDetails :: Slot | children) (Async left)
-editDetails input handleMessage = HH.slot
-    (SProxy :: SProxy "editDetails") unit
+    -> HH.ComponentHTML action (editPlayer :: Slot | children) (Async left)
+editPlayer input handleMessage = HH.slot
+    (SProxy :: SProxy "editPlayer") unit
     (Modal.component "Edit player details" component) input handleMessage
