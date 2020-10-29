@@ -1,4 +1,4 @@
-module TeamTavern.Server.Player.UpdateDetails.UpdateDetails
+module TeamTavern.Server.Player.UpdatePlayer.UpdateDetails
     (UpdateDetailsError, updateDetails) where
 
 import Prelude
@@ -10,8 +10,8 @@ import Data.Variant (SProxy(..), Variant, inj)
 import Postgres.Async.Query (execute)
 import Postgres.Error (Error)
 import Postgres.Query (class Querier, Query(..), QueryParameter, (:), (:|))
-import TeamTavern.Server.Player.UpdateDetails.ReadUpdate (UpdateDetailsModel)
-import TeamTavern.Server.Player.UpdateDetails.ValidateTimespan (nullableTimeFrom, nullableTimeTo)
+import TeamTavern.Server.Player.UpdatePlayer.ReadUpdate (UpdateDetailsModel)
+import TeamTavern.Server.Player.UpdatePlayer.ValidateTimespan (nullableTimeFrom, nullableTimeTo)
 
 type UpdateDetailsError errors = Variant (databaseError :: Error | errors)
 

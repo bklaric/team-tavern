@@ -1,4 +1,4 @@
-module TeamTavern.Server.Player.UpdateDetails.LogError where
+module TeamTavern.Server.Player.UpdatePlayer.LogError where
 
 import Prelude
 
@@ -9,7 +9,7 @@ import Foreign (MultipleErrors)
 import Postgres.Error (Error)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Server.Infrastructure.Log (logLines, logStamped, logt, print)
-import TeamTavern.Server.Player.UpdateDetails.ReadUpdate (UpdateDetailsDto, UpdateDetailsModelError)
+import TeamTavern.Server.Player.UpdatePlayer.ReadUpdate (UpdateDetailsDto, UpdateDetailsModelError)
 
 type UpdateDetailsError = Variant
     ( internal :: Array String

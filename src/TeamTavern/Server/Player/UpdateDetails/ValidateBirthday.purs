@@ -1,4 +1,4 @@
-module TeamTavern.Server.Player.UpdateDetails.ValidateBirthday where
+module TeamTavern.Server.Player.UpdatePlayer.ValidateBirthday where
 
 import Prelude
 

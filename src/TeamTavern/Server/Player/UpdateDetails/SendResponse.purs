@@ -1,4 +1,4 @@
-module TeamTavern.Server.Player.UpdateDetails.SendResponse
+module TeamTavern.Server.Player.UpdatePlayer.SendResponse
     (BadRequestContent, sendResponse) where
 
 import Prelude
@@ -8,7 +8,7 @@ import Data.Array (fromFoldable)
 import Data.Variant (SProxy(..), Variant, inj, match)
 import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, noContent_)
 import Simple.JSON (writeJSON)
-import TeamTavern.Server.Player.UpdateDetails.LogError (UpdateDetailsError)
+import TeamTavern.Server.Player.UpdatePlayer.LogError (UpdateDetailsError)
 
 type BadRequestContent = Array (Variant
     ( invalidDiscordTag :: {}

@@ -1,4 +1,4 @@
-module TeamTavern.Server.Player.UpdateDetails.ValidateLocation (Location, validateLocation) where
+module TeamTavern.Server.Player.UpdatePlayer.ValidateLocation (Location, validateLocation) where
 
 import Prelude
 

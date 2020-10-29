@@ -2,16 +2,15 @@ module TeamTavern.Server.Wizard.CreateAccount where
 
 import Prelude
 
-import Async (Async(..), alwaysRight, examineLeftWithEffect)
-import Async as Async
-import Async.Validated (fromValidated) as Async
-import AsyncV (AsyncV(..))
+import Async (Async, alwaysRight, examineLeftWithEffect)
+import Async (attempt) as Async
+import AsyncV (AsyncV)
 import AsyncV as AsyncV
-import Data.Array (catMaybes, fromFoldable)
+import Data.Array (fromFoldable)
 import Data.Array as Array
 import Data.Bifunctor.Label (label, labelMap)
 import Data.Either (Either(..), either, hush)
-import Data.List.Types (NonEmptyList(..))
+import Data.List.Types (NonEmptyList)
 import Data.Maybe (Maybe(..), isNothing)
 import Data.Newtype (unwrap)
 import Data.Nullable (toNullable)
@@ -22,7 +21,7 @@ import Effect.Class.Console (logShow)
 import Effect.Console (log)
 import Global.Unsafe (unsafeStringify)
 import Perun.Request.Body (Body)
-import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, ok_)
+import Perun.Response (Response, badRequest_, internalServerError__, ok_)
 import Postgres.Async.Pool (withTransaction)
 import Postgres.Pool (Pool)
 import Postmark.Async.Client as Postmark
@@ -35,32 +34,29 @@ import TeamTavern.Server.Architecture.Perun.Request.Body (readBody)
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.EnsureNotSignedIn (ensureNotSignedIn)
 import TeamTavern.Server.Player.Domain.About (About(..))
-import TeamTavern.Server.Player.Domain.About as About
 import TeamTavern.Server.Player.Domain.Email as Email
 import TeamTavern.Server.Player.Domain.Hash as Hash
 import TeamTavern.Server.Player.Domain.Nickname as Nickname
 import TeamTavern.Server.Player.Domain.Nonce as Nonce
 import TeamTavern.Server.Player.Domain.Password as Password
 import TeamTavern.Server.Player.Register.AddPlayer (addPlayer)
-import TeamTavern.Server.Player.Register.SendEmail (SendEmailModel, SendEmailError)
-import TeamTavern.Server.Player.Register.ValidateModel (RegisterModel, ValidateModelError, RegisterModelError)
-import TeamTavern.Server.Player.UpdateDetails.ReadUpdate (UpdateDetailsModel)
-import TeamTavern.Server.Player.UpdateDetails.UpdateDetails (updateDetails)
-import TeamTavern.Server.Player.UpdateDetails.ValidateBirthday (validateOptionalBirthday)
-import TeamTavern.Server.Player.UpdateDetails.ValidateLocation (validateLocation)
-import TeamTavern.Server.Player.UpdateDetails.ValidateDiscordTag (validateOptionalDiscordTag)
-import TeamTavern.Server.Player.UpdateDetails.ValidateLangugase (validateLanguages)
-import TeamTavern.Server.Player.UpdateDetails.ValidateTimespan (validateTimespan)
-import TeamTavern.Server.Player.UpdateDetails.ValidateTimezone (validateTimezone)
+import TeamTavern.Server.Player.Register.SendEmail (SendEmailModel)
+import TeamTavern.Server.Player.Register.ValidateModel (RegisterModel, RegisterModelError)
+import TeamTavern.Server.Player.UpdatePlayer.ReadUpdate (UpdateDetailsModel)
+import TeamTavern.Server.Player.UpdatePlayer.UpdateDetails (updateDetails)
+import TeamTavern.Server.Player.UpdatePlayer.ValidateBirthday (validateOptionalBirthday)
+import TeamTavern.Server.Player.UpdatePlayer.ValidateLocation (validateLocation)
+import TeamTavern.Server.Player.UpdatePlayer.ValidateDiscordTag (validateOptionalDiscordTag)
+import TeamTavern.Server.Player.UpdatePlayer.ValidateLangugase (validateLanguages)
+import TeamTavern.Server.Player.UpdatePlayer.ValidateTimespan (validateTimespan)
+import TeamTavern.Server.Player.UpdatePlayer.ValidateTimezone (validateTimezone)
 import TeamTavern.Server.Profile.AddPlayerProfile.AddProfile (addProfile)
 import TeamTavern.Server.Profile.AddPlayerProfile.LoadFields (loadFields)
 import TeamTavern.Server.Profile.AddPlayerProfile.LoadFields as LoadFields
 import TeamTavern.Server.Profile.AddPlayerProfile.ReadProfile as ReadProfile
-import TeamTavern.Server.Profile.AddPlayerProfile.ValidateFieldValues (Field(..))
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateFieldValues as ValidateFieldValues
-import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile (Profile(..), ProfileError, ProfileErrors)
+import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile (Profile)
 import TeamTavern.Server.Profile.Infrastructure.ValidateAmbitions as ValidateAmbitions
-import Unsafe.Coerce (unsafeCoerce)
 
 type PersonalDetails =
     { birthday :: Maybe String

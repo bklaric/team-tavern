@@ -11,11 +11,11 @@ import TeamTavern.Server.Infrastructure.EnsureSignedInAs (ensureSignedInAs)
 import TeamTavern.Server.Player.EditSettings.LogError (logError)
 import TeamTavern.Server.Player.EditSettings.ReadSettings (readSettings)
 import TeamTavern.Server.Player.EditSettings.SendResponse (sendResponse)
-import TeamTavern.Server.Player.EditSettings.UpdateSettings (updateSettings)
+import TeamTavern.Server.Player.EditSettings.UpdateSettings as UpdateSettings
 
-editSettings :: forall left.
+updateSettings :: forall left.
     Pool -> String -> Map String String -> Body -> Async left Response
-editSettings pool nickname cookies body =
+updateSettings pool nickname cookies body =
     sendResponse $ examineLeftWithEffect logError do
     -- Read requestor info from cookies.
     cookieInfo <- ensureSignedInAs pool cookies nickname
@@ -24,4 +24,4 @@ editSettings pool nickname cookies body =
     settings <- readSettings body
 
     -- Update settings.
-    updateSettings pool cookieInfo settings
+    UpdateSettings.updateSettings pool cookieInfo settings

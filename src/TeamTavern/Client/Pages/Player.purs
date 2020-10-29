@@ -26,6 +26,7 @@ import TeamTavern.Client.Pages.Player.EditPlayer (editPlayer)
 import TeamTavern.Client.Pages.Player.EditPlayer as EditDetails
 import TeamTavern.Client.Pages.Player.EditProfile (editProfile)
 import TeamTavern.Client.Pages.Player.EditProfile as EditProfile
+import TeamTavern.Client.Pages.Player.EditSettings (editSettings)
 import TeamTavern.Client.Pages.Player.EditSettings as EditSettings
 import TeamTavern.Client.Pages.Player.Profiles (profiles)
 import TeamTavern.Client.Pages.Player.Status (Status(..), getStatus)
@@ -131,8 +132,6 @@ render (Loaded state @ { player: player', status, editPopoverShown }) =
                 ]
             SignedOut -> []
         ]
-    -- , HH.div_ [ changeNickname $ Just <<< HandleChangeNicknameMessage ]
-    -- , HH.div_ [ editSettings $ const $ Just HandleEditSettingsMessage ]
     , HH.p [ HP.class_ $ HH.ClassName "content-description" ]
         [ HH.text
             case status of
@@ -146,6 +145,11 @@ render (Loaded state @ { player: player', status, editPopoverShown }) =
     <>
     ( if state.editPlayerModalShown
         then [ editPlayer player' $ const $ Just HideEditPlayerModal ]
+        else []
+    )
+    <>
+    ( if state.editSettingsModalShown
+        then [ editSettings player' $ const $ Just HideEditSettingsModal ]
         else []
     )
     <>

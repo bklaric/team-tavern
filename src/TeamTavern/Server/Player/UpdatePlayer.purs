@@ -1,4 +1,4 @@
-module TeamTavern.Server.Player.UpdateDetails where
+module TeamTavern.Server.Player.UpdatePlayer where
 
 import Prelude
 
@@ -10,14 +10,14 @@ import Perun.Response (Response)
 import Postgres.Pool (Pool)
 import TeamTavern.Server.Infrastructure.EnsureSignedInAs (ensureSignedInAs)
 import TeamTavern.Server.Player.Domain.Nickname (Nickname)
-import TeamTavern.Server.Player.UpdateDetails.LogError (logError)
-import TeamTavern.Server.Player.UpdateDetails.ReadUpdate (readUpdate)
-import TeamTavern.Server.Player.UpdateDetails.SendResponse (sendResponse)
-import TeamTavern.Server.Player.UpdateDetails.UpdateDetails (updateDetails) as UpdateDetails
+import TeamTavern.Server.Player.UpdatePlayer.LogError (logError)
+import TeamTavern.Server.Player.UpdatePlayer.ReadUpdate (readUpdate)
+import TeamTavern.Server.Player.UpdatePlayer.SendResponse (sendResponse)
+import TeamTavern.Server.Player.UpdatePlayer.UpdateDetails (updateDetails) as UpdateDetails
 
-updateDetails :: forall left.
+updatePlayer :: forall left.
     Pool -> Nickname -> Map String String -> Body -> Async left Response
-updateDetails pool nickname cookies body =
+updatePlayer pool nickname cookies body =
     sendResponse $ examineLeftWithEffect logError do
     -- Read requestor info from cookies.
     cookieInfo <- ensureSignedInAs pool cookies (unwrap nickname)

@@ -1,4 +1,4 @@
-module TeamTavern.Server.Player.UpdateDetails.ValidateLangugase
+module TeamTavern.Server.Player.UpdatePlayer.ValidateLangugase
     (Language, validateLanguages) where
 
 import Prelude

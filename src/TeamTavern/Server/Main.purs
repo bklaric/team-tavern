@@ -43,9 +43,9 @@ import TeamTavern.Server.Game.ViewAll (handleViewAll) as Game
 import TeamTavern.Server.Infrastructure.Log (logStamped, logt)
 import TeamTavern.Server.Password.Forgot (forgot) as Password
 import TeamTavern.Server.Password.Reset (reset) as Password
-import TeamTavern.Server.Player.EditSettings (editSettings) as Player
+import TeamTavern.Server.Player.EditSettings (updateSettings) as Player
 import TeamTavern.Server.Player.Register (register) as Player
-import TeamTavern.Server.Player.UpdateDetails (updateDetails) as Player
+import TeamTavern.Server.Player.UpdatePlayer (updatePlayer) as Player
 import TeamTavern.Server.Player.View (view) as Player
 import TeamTavern.Server.Profile.AddPlayerProfile (addPlayerProfile) as Profile
 import TeamTavern.Server.Profile.AddTeamProfile (addTeamProfile) as Profile
@@ -169,10 +169,10 @@ handleRequest deployment pool client method url cookies body =
             Player.register pool client cookies body
         , viewPlayer:
             Player.view pool cookies
-        , editSettings: \{ nickname } ->
-            Player.editSettings pool nickname cookies body
-        , updateDetails: \{ nickname } ->
-            Player.updateDetails pool nickname cookies body
+        , updatePlayer: \{ nickname } ->
+            Player.updatePlayer pool nickname cookies body
+        , updateSettings: \{ nickname } ->
+            Player.updateSettings pool nickname cookies body
         , viewTeamsByOwner:
             Team.viewByOwner pool
         , viewTeam:

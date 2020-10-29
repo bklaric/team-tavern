@@ -1,4 +1,4 @@
-module TeamTavern.Server.Player.UpdateDetails.ValidateTimespan
+module TeamTavern.Server.Player.UpdatePlayer.ValidateTimespan
     (Hours, Minutes, Time, Timespan, toString, nullableTimeFrom, nullableTimeTo, validateTimespan) where
 
 import Prelude

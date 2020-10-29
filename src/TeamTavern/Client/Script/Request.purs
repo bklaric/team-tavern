@@ -72,10 +72,34 @@ withBodyNoContent method url body = Async.unify do
         _ -> Async.left Nothing
     pure $ Just result
 
+withBodyNoContent' :: forall body left. WriteForeign body =>
+    Method -> String -> body -> Async left (Maybe Unit)
+withBodyNoContent' method url body = Async.unify do
+    response
+        <- Fetch.fetch url
+        (  Fetch.method := method
+        <> Fetch.credentials := Fetch.Include
+        <> Fetch.body := Json.writeJSON body
+        )
+        # lmap (const Nothing)
+    result <-
+        case FetchRes.status response of
+        204 -> pure unit
+        _ -> Async.left Nothing
+    pure $ Just result
+
 postNoContent :: forall body bad left. WriteForeign body => ReadForeign bad =>
     String -> body -> Async left (Maybe (Either bad Unit))
 postNoContent = withBodyNoContent POST
 
+postNoContent' :: forall body left. WriteForeign body =>
+    String -> body -> Async left (Maybe Unit)
+postNoContent' = withBodyNoContent' POST
+
 putNoContent :: forall body bad left. WriteForeign body => ReadForeign bad =>
     String -> body -> Async left (Maybe (Either bad Unit))
 putNoContent = withBodyNoContent PUT
+
+putNoContent' :: forall body left. WriteForeign body =>
+    String -> body -> Async left (Maybe Unit)
+putNoContent' = withBodyNoContent' PUT

@@ -15,26 +15,23 @@ type RegisterPlayer = Route
     :> End)
     NoQuery
 
-type EditSettings = Route
+type UpdatePlayer = Route
     Put
     (  Literal "players"
-    :> Literal "by-nickname"
+    :> Capture "nickname" Nickname
+    :> End)
+    NoQuery
+
+type UpdateSettings = Route
+    Put
+    (  Literal "players"
     :> Capture "nickname" String
     :> Literal "settings"
     :> End)
     NoQuery
 
-type UpdateDetails = Route
-    Put
-    (  Literal "players"
-    :> Literal "by-nickname"
-    :> Capture "nickname" Nickname
-    :> Literal "details"
-    :> End)
-    NoQuery
-
 type PlayerRoutes
-    =    "viewPlayer"        := ViewPlayer
-    :<|> "registerPlayer"    := RegisterPlayer
-    :<|> "editSettings"      := EditSettings
-    :<|> "updateDetails"     := UpdateDetails
+    =    "viewPlayer"     := ViewPlayer
+    :<|> "registerPlayer" := RegisterPlayer
+    :<|> "updatePlayer"   := UpdatePlayer
+    :<|> "updateSettings" := UpdateSettings

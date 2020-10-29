@@ -1,32 +1,25 @@
-module TeamTavern.Client.Pages.Player.EditPlayer (Input(..), Output(..), Slot, editPlayer) where
+module TeamTavern.Client.Pages.Player.EditPlayer (Input, Slot, editPlayer) where
 
 import Prelude
 
 import Async (Async)
-import Async as Async
-import Browser.Async.Fetch as Fetch
-import Browser.Async.Fetch.Response as FetchRes
 import Data.Array (intercalate)
-import Data.Bifunctor (bimap, lmap)
 import Data.Const (Const)
 import Data.Either (Either(..))
 import Data.Foldable (foldl)
-import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..))
-import Data.Options ((:=))
 import Data.Variant (SProxy(..), match)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
-import Simple.JSON as Json
-import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.Form (form, otherFormError, submitButton)
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.Player.PlayerFormInput (playerFormInput)
 import TeamTavern.Client.Components.Player.PlayerFormInput as EnterPlayerDetails
 import TeamTavern.Client.Script.Navigate (hardNavigate)
+import TeamTavern.Client.Script.Request (putNoContent)
 import TeamTavern.Routes.ViewPlayer as ViewPlayer
-import TeamTavern.Server.Player.UpdateDetails.SendResponse as Update
+import TeamTavern.Server.Player.UpdatePlayer.SendResponse as Update
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
@@ -35,9 +28,6 @@ type Input = ViewPlayer.OkContent
 data Action
     = UpdatePlayerDetails EnterPlayerDetails.Output
     | Update Event
-    | Close
-
-data Output = DetailsEditted String | CloseClicked
 
 type State =
     { nickname :: String
@@ -48,7 +38,7 @@ type State =
 
 type ChildSlots = (playerFormInput :: EnterPlayerDetails.Slot)
 
-type Slot = H.Slot (Const Void) (Modal.Output Output) Unit
+type Slot = H.Slot (Const Void) (Modal.Output Void) Unit
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { details, submitting, otherError } =
@@ -64,37 +54,24 @@ render { details, submitting, otherError } =
     <>
     otherFormError otherError
 
-sendRequest :: forall left.
-    String -> EnterPlayerDetails.Input -> Async left (Maybe (Either Update.BadRequestContent Unit))
-sendRequest nickname details = Async.unify do
-    response <-
-        Fetch.fetch
-        ("/api/players/by-nickname/" <> nickname <> "/details")
-        (  Fetch.method := PUT
-        <> Fetch.body := Json.writeJSON
-            { birthday: details.birthday
-            , location: details.location
-            , languages: details.languages
-            , microphone: details.microphone
-            , discordTag: details.discordTag
-            , timezone: details.timezone
-            , weekdayFrom: details.weekdayFrom
-            , weekdayTo: details.weekdayTo
-            , weekendFrom: details.weekendFrom
-            , weekendTo: details.weekendTo
-            , about: details.about
-            }
-        <> Fetch.credentials := Fetch.Include
-        )
-        # lmap (const Nothing)
-    content <- case FetchRes.status response of
-        204 -> pure $ Right unit
-        400 -> FetchRes.text response >>= JsonAsync.readJSON # bimap (const Nothing) Left
-        _ -> Async.left Nothing
-    pure $ Just content
+sendRequest :: forall left. State -> Async left (Maybe (Either Update.BadRequestContent Unit))
+sendRequest { nickname, details } =
+    putNoContent ("/api/players/" <> nickname)
+    { birthday: details.birthday
+    , location: details.location
+    , languages: details.languages
+    , microphone: details.microphone
+    , discordTag: details.discordTag
+    , timezone: details.timezone
+    , weekdayFrom: details.weekdayFrom
+    , weekdayTo: details.weekdayTo
+    , weekendFrom: details.weekendFrom
+    , weekendTo: details.weekendTo
+    , about: details.about
+    }
 
-handleAction :: forall left.
-    Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
+handleAction :: forall output left.
+    Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
 handleAction (UpdatePlayerDetails details) =
     H.modify_ \state -> state
         { details = state.details
@@ -114,7 +91,7 @@ handleAction (UpdatePlayerDetails details) =
 handleAction (Update event) = do
     H.liftEffect $ preventDefault event
     currentState <- H.modify _ { submitting = true }
-    response <- H.lift $ sendRequest currentState.nickname currentState.details
+    response <- H.lift $ sendRequest currentState
     case response of
         Just (Right _) -> hardNavigate $ "/players/" <> currentState.nickname
         Just (Left errors) -> H.put $
@@ -142,10 +119,8 @@ handleAction (Update event) = do
                 { discordTagError = false, aboutError = false }
             , otherError = true
             }
-handleAction Close = H.raise CloseClicked
 
-component :: forall query left.
-    H.Component HH.HTML query Input Output (Async left)
+component :: forall query output left. H.Component HH.HTML query Input output (Async left)
 component = H.mkComponent
     { initialState: \player ->
         { nickname: player.nickname
@@ -174,7 +149,7 @@ component = H.mkComponent
 editPlayer
     :: forall action children left
     .  Input
-    -> (Modal.Output Output -> Maybe action)
+    -> (Modal.Output Void -> Maybe action)
     -> HH.ComponentHTML action (editPlayer :: Slot | children) (Async left)
 editPlayer input handleMessage = HH.slot
     (SProxy :: SProxy "editPlayer") unit

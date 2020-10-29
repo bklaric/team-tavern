@@ -1,4 +1,4 @@
-module TeamTavern.Server.Player.UpdateDetails.ReadUpdate where
+module TeamTavern.Server.Player.UpdatePlayer.ReadUpdate where
 
 import Prelude
 
@@ -17,12 +17,12 @@ import TeamTavern.Server.Architecture.Perun.Request.Body (readBody)
 import TeamTavern.Server.Domain.Text (TextError)
 import TeamTavern.Server.Player.Domain.About (About)
 import TeamTavern.Server.Player.Domain.About as About
-import TeamTavern.Server.Player.UpdateDetails.ValidateBirthday (validateOptionalBirthday)
-import TeamTavern.Server.Player.UpdateDetails.ValidateLocation (Location, validateLocation)
-import TeamTavern.Server.Player.UpdateDetails.ValidateDiscordTag (DiscordTag, DiscordTagError, validateOptionalDiscordTag)
-import TeamTavern.Server.Player.UpdateDetails.ValidateLangugase (Language, validateLanguages)
-import TeamTavern.Server.Player.UpdateDetails.ValidateTimespan (Timespan, validateTimespan)
-import TeamTavern.Server.Player.UpdateDetails.ValidateTimezone (Timezone, validateTimezone)
+import TeamTavern.Server.Player.UpdatePlayer.ValidateBirthday (validateOptionalBirthday)
+import TeamTavern.Server.Player.UpdatePlayer.ValidateLocation (Location, validateLocation)
+import TeamTavern.Server.Player.UpdatePlayer.ValidateDiscordTag (DiscordTag, DiscordTagError, validateOptionalDiscordTag)
+import TeamTavern.Server.Player.UpdatePlayer.ValidateLangugase (Language, validateLanguages)
+import TeamTavern.Server.Player.UpdatePlayer.ValidateTimespan (Timespan, validateTimespan)
+import TeamTavern.Server.Player.UpdatePlayer.ValidateTimezone (Timezone, validateTimezone)
 
 type UpdateDetailsDto =
     { birthday :: Maybe String
