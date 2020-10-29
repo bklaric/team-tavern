@@ -137,7 +137,7 @@ render { profiles, profileCount, playerInfo, page } =
                 [ profileHeaderItem
                     [ navigationAnchorIndexed (SProxy :: SProxy "messagePlayer") profile.nickname
                         { path: "/conversations/" <> profile.nickname
-                        , content: HH.span [ HP.class_ $ HH.ClassName "profile-header-message"]
+                        , content: HH.span_
                             [ HH.i [ HP.class_ $ H.ClassName "fas fa-envelope button-icon" ] []
                             , HH.text "Message player"
                             ]
@@ -155,7 +155,7 @@ render { profiles, profileCount, playerInfo, page } =
                     then
                         [ detailColumn $
                             ( if not $ Array.null playerDetails'
-                                then [ detailColumnHeading "Team details" ] <> playerDetails'
+                                then [ detailColumnHeading "Player details" ] <> playerDetails'
                                 else []
                             )
                             <>

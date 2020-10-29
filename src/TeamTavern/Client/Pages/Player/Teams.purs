@@ -9,13 +9,12 @@ import Effect.Class (class MonadEffect)
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import TeamTavern.Client.Components.Card (card, cardHeader, cardHeading)
+import TeamTavern.Client.Components.Card (card, cardHeader, cardHeading, cardSection)
 import TeamTavern.Client.Components.Divider (divider)
-import TeamTavern.Client.Components.NavigationAnchor (navigationAnchorIndexed)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
+import TeamTavern.Client.Components.Profile (profileHeading, profileSubheading)
 import TeamTavern.Client.Pages.Player.Status (Status(..))
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
-import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.ViewPlayer as ViewPlayer
 
 teams
@@ -41,7 +40,7 @@ teams player showCreateTeamModal status =
     <>
     if Array.null player.teams
     then Array.singleton $
-        HH.div [ HS.class_ "card-section" ]
+        cardSection
         [ HH.p_
             [ HH.text
                 case status of
@@ -51,14 +50,9 @@ teams player showCreateTeamModal status =
         ]
     else
         player.teams <#> \team ->
-            HH.div [ HS.class_ "card-section" ]
-            [ HH.h3 [ HS.class_ "team-heading" ]
-                [ navigationAnchorIndexed (SProxy :: SProxy "team") team.handle
-                    { path: "/teams/" <> team.handle
-                    , content: HH.text team.name
-                    }
-                , divider
-                , HH.span [ HP.class_ $ HH.ClassName "profile-updated" ]
-                    [ HH.text $ lastUpdated team.updatedSeconds ]
-                ]
+            cardSection
+            [ profileHeading (SProxy :: SProxy "team") team.handle
+                ("/teams/" <> team.handle) team.name
+            , divider
+            , profileSubheading $ "Updated " <> lastUpdated team.updatedSeconds
             ]

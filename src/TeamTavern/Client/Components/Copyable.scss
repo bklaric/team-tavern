@@ -5,6 +5,9 @@
 }
 
 .copyable-copied {
-    @extend .profile-updated;
+    font-size: 12px;
+    line-height: 14px;
+    color: #888;
+    font-weight: 400;
     margin-left: 6px;
 }
