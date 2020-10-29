@@ -1,23 +1,21 @@
-module TeamTavern.Client.Pages.Profiles.TeamProfiles (TeamProfile, Input, Message(..), Slot, teamProfiles) where
+module TeamTavern.Client.Pages.Profiles.TeamProfiles (TeamProfile, Input, Output(..), Slot, teamProfiles) where
 
 import Prelude
 
 import Async (Async)
 import Data.Array as Array
 import Data.Const (Const)
-import Data.FunctorWithIndex (mapWithIndex)
-import Data.Int (ceil, toNumber)
 import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
-import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Components.Card (card, cardHeader, cardHeading, cardSection, cardSubheading)
 import TeamTavern.Client.Components.Detail (detailColumn, detailColumnHeading, detailColumns, textDetail)
 import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchorIndexed)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
+import TeamTavern.Client.Components.Pagination (pagination)
 import TeamTavern.Client.Components.Profile (profileHeader, profileHeaderItem, profileHeading, profileSubheading)
 import TeamTavern.Client.Components.Team.ProfileDetails (profileDetails')
 import TeamTavern.Client.Components.Team.TeamDetails (teamDetails)
@@ -66,7 +64,6 @@ type TeamProfile =
 type Input =
     { profiles :: Array TeamProfile
     , profileCount :: Int
-    , showCreateProfile :: Boolean
     , playerInfo :: Maybe PlayerInfo
     , page :: Int
     }
@@ -75,25 +72,19 @@ type State = Input
 
 data Action
     = Receive Input
-    | ChangePageAction Int
-    | CreateProfileAction
-
-data Message
-    = CreateProfile
     | ChangePage Int
 
-type Slot = H.Slot (Const Void) Message Unit
+data Output = PageChanged Int
+
+type Slot = H.Slot (Const Void) Output Unit
 
 type ChildSlots =
     ( teams :: Anchor.Slot String
     , messageOwner :: Anchor.Slot String
     )
 
-totalPages :: Int -> Int
-totalPages count = ceil (toNumber count / toNumber pageSize)
-
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
-render { profiles, profileCount, showCreateProfile, playerInfo, page } =
+render { profiles, profileCount, playerInfo, page } =
     card $
     [ cardHeader $
         [ HH.div_ $
@@ -115,7 +106,7 @@ render { profiles, profileCount, showCreateProfile, playerInfo, page } =
     if Array.null profiles
     then [ cardSection [ HH.p_ [ HH.text "No profiles satisfy specified filters." ] ] ]
     else
-    (profiles # mapWithIndex \index profile -> let
+    ( profiles <#> \profile -> let
         teamDetails' = teamDetails profile
         profileDetails'' = profileDetails' profile.fieldValues profile.newOrReturning
         about = textDetail profile.about
@@ -184,49 +175,13 @@ render { profiles, profileCount, showCreateProfile, playerInfo, page } =
             ]
         else []
     )
-    <> (Array.singleton $
-        HH.div [ HP.class_ $ HH.ClassName "pagination" ]
-            [ HH.div [ HP.class_$ HH.ClassName "pagination-left-buttons" ]
-                [ HH.button
-                    [ HP.class_ $ HH.ClassName "pagination-first-button"
-                    , HP.disabled $ page == 1
-                    , HE.onClick $ const $ Just $ ChangePageAction 1
-                    ]
-                    [ HH.text "First" ]
-                , HH.button
-                    [ HP.class_ $ HH.ClassName "pagination-previous-button"
-                    , HP.disabled $ page == 1
-                    , HE.onClick $ const $ Just $ ChangePageAction $ page - 1
-                    ]
-                    [ HH.text "Previous" ]
-                ]
-            , HH.div [ HP.class_ $ HH.ClassName "pagination-page" ]
-                [ HH.text $ show page <> "/" <> show (totalPages profileCount) ]
-            , HH.div [ HP.class_$ HH.ClassName "pagination-right-buttons" ]
-                [ HH.button
-                    [ HP.class_ $ HH.ClassName "pagination-next-button"
-                    , HP.disabled $ page == (totalPages profileCount)
-                    , HE.onClick $ const $ Just $ ChangePageAction $ page + 1
-                    ]
-                    [ HH.text "Next" ]
-                , HH.button
-                    [ HP.class_ $ HH.ClassName "pagination-last-button"
-                    , HP.disabled $ page == (totalPages profileCount)
-                    , HE.onClick $ const $ Just $ ChangePageAction $ totalPages profileCount
-                    ]
-                    [ HH.text "Last" ]
-                ]
-            ]
-        )
+    <> [ pagination page profileCount ChangePage ]
 
-handleAction :: forall left.
-    Action -> H.HalogenM State Action ChildSlots Message (Async left) Unit
+handleAction :: forall left. Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
 handleAction (Receive input) = H.put input
-handleAction (ChangePageAction page) = H.raise $ ChangePage page
-handleAction CreateProfileAction = H.raise CreateProfile
+handleAction (ChangePage page) = H.raise $ PageChanged page
 
-component :: forall query left.
-    H.Component HH.HTML query Input Message (Async left)
+component :: forall query left. H.Component HH.HTML query Input Output (Async left)
 component = H.mkComponent
     { initialState: identity
     , render
@@ -239,7 +194,7 @@ component = H.mkComponent
 teamProfiles
     :: forall children action left
     .  Input
-    -> (Message -> Maybe action)
+    -> (Output -> Maybe action)
     -> HH.ComponentHTML action (teamProfiles :: Slot | children) (Async left)
 teamProfiles input handleOutput =
     HH.slot (SProxy :: SProxy "teamProfiles") unit component input handleOutput

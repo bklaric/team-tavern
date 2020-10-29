@@ -1,32 +1,28 @@
-module TeamTavern.Client.Pages.Profiles.PlayerProfiles (Fields, PlayerProfileRow, InputPlayerProfile, Input, Message(..), Slot, playerProfiles) where
+module TeamTavern.Client.Pages.Profiles.PlayerProfiles (Fields, PlayerProfile, Input, Output(..), Slot, playerProfiles) where
 
 import Prelude
 
 import Async (Async)
-import Async as Async
-import Data.Array (foldr, intercalate)
+import Client.Components.Copyable as Copyable
 import Data.Array as Array
 import Data.Const (Const)
-import Data.Either (Either(..))
-import Data.FunctorWithIndex (mapWithIndex)
-import Data.Int (ceil, toNumber)
-import Data.Maybe (Maybe(..), isNothing)
+import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
-import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import Record.Builder as Record
+import TeamTavern.Client.Components.Card (cardHeader, cardHeading, cardSection, cardSubheading)
+import TeamTavern.Client.Components.Detail (detailColumn, detailColumnHeading, detailColumns, textDetail)
 import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchorIndexed)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
-import TeamTavern.Client.Script.Clipboard (writeTextAsync)
+import TeamTavern.Client.Components.Pagination (pagination)
+import TeamTavern.Client.Components.Player.PlayerDetails (playerDetails)
+import TeamTavern.Client.Components.Player.ProfileDetails (profileDetails')
+import TeamTavern.Client.Components.Profile (profileHeader, profileHeaderItem, profileHeading, profileSubheading)
 import TeamTavern.Client.Script.Cookie (PlayerInfo)
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
 import TeamTavern.Server.Profile.ViewPlayerProfilesByGame.LoadProfiles (pageSize)
-import Web.Event.Event as Event
-import Web.UIEvent.MouseEvent (MouseEvent)
-import Web.UIEvent.MouseEvent as MouseEvent
 
 type Fields = Array
     { ilk :: Int
@@ -41,8 +37,8 @@ type Fields = Array
         })
     }
 
-type PlayerProfileRow other =
-    ( nickname :: String
+type PlayerProfile =
+    { nickname :: String
     , discordTag :: Maybe String
     , age :: Maybe Int
     , location :: Maybe String
@@ -72,292 +68,132 @@ type PlayerProfileRow other =
     , newOrReturning :: Boolean
     , updated :: String
     , updatedSeconds :: Number
-    | other)
-
-type InputPlayerProfile = Record (PlayerProfileRow ())
+    }
 
 type Input =
-    { profiles :: Array InputPlayerProfile
+    { profiles :: Array PlayerProfile
     , profileCount :: Int
-    , showCreateProfile :: Boolean
     , playerInfo :: Maybe PlayerInfo
     , page :: Int
     }
 
-type StatePlayerProfile = Record (PlayerProfileRow (discordTagCopied :: Boolean))
-
-type State =
-    { profiles :: Array StatePlayerProfile
-    , profileCount :: Int
-    , showCreateProfile :: Boolean
-    , playerInfo :: Maybe PlayerInfo
-    , page :: Int
-    }
+type State = Input
 
 data Action
     = Receive Input
-    | ChangePageAction Int
-    | CreateProfileAction
-    | CopyDiscordTag String String MouseEvent
-
-data Message
-    = CreateProfile
     | ChangePage Int
 
-type Slot = H.Slot (Const Void) Message Unit
+data Output = PageChanged Int
+
+type Slot = H.Slot (Const Void) Output Unit
 
 type ChildSlots =
-    ( players :: Anchor.Slot Int
-    , messagePlayer :: Anchor.Slot Int
+    ( players :: Anchor.Slot String
+    , messagePlayer :: Anchor.Slot String
+    , discordTag :: Copyable.Slot
     )
 
-totalPages :: Int -> Int
-totalPages count = ceil (toNumber count / toNumber pageSize)
-
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
-render { profiles, profileCount, showCreateProfile, playerInfo, page } =
+render { profiles, profileCount, playerInfo, page } =
     HH.div [ HP.id_ "profiles-card", HP.class_ $ HH.ClassName "profiles-card" ] $
-    [ HH.h3 [ HP.class_ $ HH.ClassName "card-title" ] $
-        [ HH.span [ HP.class_ $ HH.ClassName "card-title-text" ]
-            [ HH.text "Player profiles"
+    [ cardHeader $
+        [ HH.div_
+            [ cardHeading "Player profiles"
             , divider
-            , HH.span [ HP.class_ $ HH.ClassName "card-subtitle" ]
-                [ HH.text $
-                    (if profileCount == 0
-                        then "Showing 0"
-                        else
-                            "Showing " <> show (1 + ((page - 1) * pageSize))
-                            <> " - " <> show (min profileCount (page * pageSize))
-                            <> " out of " <> show profileCount)
-                    <> " players"
-                ]
+            , cardSubheading $
+                ( if profileCount == 0
+                    then "Showing 0"
+                    else
+                        "Showing " <> show (1 + ((page - 1) * pageSize))
+                        <> " - " <> show (min profileCount (page * pageSize))
+                        <> " out of " <> show profileCount
+                )
+                <> " players"
             ]
         ]
-        <>
-        if showCreateProfile
-        then Array.singleton $
-            HH.button
-            [ HP.class_ $ HH.ClassName "primary-button"
-            , HE.onClick $ const $ Just CreateProfileAction
-            ]
-            [ HH.i [ HP.class_ $ HH.ClassName "fas fa-user-plus button-icon" ] []
-            , HH.text "Create your profile"
-            ]
-        else []
     ]
     <>
     if Array.null profiles
-    then Array.singleton $
-        HH.div [ HP.class_ $ HH.ClassName "card-section" ]
-        [ HH.p_ [ HH.text "No profiles satisfy specified filters." ] ]
-    else (profiles # mapWithIndex \index profile ->
-        HH.div [ HP.class_ $ HH.ClassName "card-section" ] $
-        [ HH.h4 [ HP.class_ $ HH.ClassName "profile-header" ] $
-            [ HH.div [ HP.class_ $ HH.ClassName "profile-header-item" ]
-                [ navigationAnchorIndexed (SProxy :: SProxy "players") index
-                    { path: "/players/" <> profile.nickname, content: HH.text profile.nickname }
+    then [ cardSection [ HH.p_ [ HH.text "No profiles satisfy specified filters." ] ] ]
+    else
+    ( profiles <#> \profile -> let
+        playerDetails' = playerDetails profile
+        profileDetails'' = profileDetails' profile.fieldValues profile.newOrReturning
+        about = textDetail profile.about
+        ambitions = textDetail profile.ambitions
+        in
+        cardSection $
+        [ profileHeader $
+            [ profileHeaderItem
+                [ profileHeading (SProxy :: SProxy "players") profile.nickname
+                    ("/players/" <> profile.nickname) profile.nickname
                 , divider
-                , HH.span [ HP.class_ $ HH.ClassName "profile-updated" ]
-                    [ HH.text $ "Updated " <> lastUpdated profile.updatedSeconds ]
+                , profileSubheading $ "Updated " <> lastUpdated profile.updatedSeconds
                 ]
             ]
             <>
             case playerInfo of
             Just { nickname } | nickname /= profile.nickname ->
-                [ HH.div [ HP.class_ $ HH.ClassName "profile-header-item" ]
-                    [ navigationAnchorIndexed (SProxy :: SProxy "messagePlayer") index
+                [ profileHeaderItem
+                    [ navigationAnchorIndexed (SProxy :: SProxy "messagePlayer") profile.nickname
                         { path: "/conversations/" <> profile.nickname
                         , content: HH.span [ HP.class_ $ HH.ClassName "profile-header-message"]
-                            [ HH.i [ HP.class_ $ H.ClassName "fas fa-envelope button-icon" ] [], HH.text "Message player" ]
+                            [ HH.i [ HP.class_ $ H.ClassName "fas fa-envelope button-icon" ] []
+                            , HH.text "Message player"
+                            ]
                         }
                     ]
                 ]
             _ -> []
-        , HH.div [ HP.class_ $ HH.ClassName "profile-columns" ]
-            [ HH.div [ HP.class_ $ HH.ClassName "profile-column" ] $
-                (if isNothing profile.age && isNothing profile.location && Array.null profile.languages && not profile.microphone
-                    && isNothing profile.discordTag && isNothing profile.weekdayOnline && isNothing profile.weekendOnline
-                then []
-                else  [ HH.h5 [ HP.class_ $ HH.ClassName "player-profile-section-title" ] [ HH.text "Player details" ] ])
-                <> Array.catMaybes
-                [ profile.age <#> \age ->
-                    HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
-                    [ HH.i [ HP.class_ $ HH.ClassName "fas fa-calendar-alt profile-field-icon" ] []
-                    , HH.span [ HP.class_ $ HH.ClassName "detail-labelless" ] [ HH.text "Is " ]
-                    , HH.span [ HP.class_ $ HH.ClassName "detail-emphasize" ] [ HH.text $ show age ]
-                    , HH.text " years old"
-                    ]
-                , profile.location <#> \location ->
-                    HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
-                    [ HH.i [ HP.class_ $ HH.ClassName "fas fa-globe-europe profile-field-icon" ] []
-                    , HH.span [ HP.class_ $ HH.ClassName "detail-labelless" ] [ HH.text "Lives in " ]
-                    , HH.span [ HP.class_ $ HH.ClassName "detail-emphasize" ] [ HH.text location ]
-                    ]
-                , if Array.null profile.languages
-                    then Nothing
-                    else Just $
-                        HH.p [ HP.class_ $ HH.ClassName "profile-field" ] $
-                        [ HH.i [ HP.class_ $ HH.ClassName "fas fa-comments profile-field-icon" ] []
-                        , HH.span [ HP.class_ $ HH.ClassName "detail-labelless" ] [ HH.text "Speaks " ]
-                        ]
-                        <>
-                        ( foldr
-                            (\language state ->
-                                if not state.firstLanguage
-                                then state { firstLanguage = true, languagesSoFar = [ HH.span [ HP.class_ $ HH.ClassName "detail-emphasize" ] [ HH.text language ] ] }
-                                else if not state.secondLanguage
-                                then state { secondLanguage = true, languagesSoFar = [ HH.span [ HP.class_ $ HH.ClassName "detail-emphasize" ] [ HH.text language ], HH.text " and " ] <> state.languagesSoFar }
-                                else state { languagesSoFar = [ HH.span [ HP.class_ $ HH.ClassName "detail-emphasize" ] [ HH.text language ], HH.text ", " ] <> state.languagesSoFar }
+        ]
+        <>
+        if (not $ Array.null playerDetails') || (not $ Array.null profileDetails'')
+            || (not $ Array.null about) || (not $ Array.null ambitions)
+        then
+            [ detailColumns $
+                ( if (not $ Array.null playerDetails') || (not $ Array.null profileDetails'')
+                    then
+                        [ detailColumn $
+                            ( if not $ Array.null playerDetails'
+                                then [ detailColumnHeading "Team details" ] <> playerDetails'
+                                else []
                             )
-                            { firstLanguage: false, secondLanguage: false, languagesSoFar: [] }
-                            profile.languages
-                            # _.languagesSoFar
-                        )
-                , if profile.microphone
-                    then Just $
-                        HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
-                        [ HH.i [ HP.class_ $ HH.ClassName "fas fa-microphone profile-field-icon" ] []
-                        , HH.span [ HP.class_ $ HH.ClassName "detail-labelless detail-emphasize" ] [ HH.text "Has microphone" ]
-                        , HH.text $ " and is willing to communicate"
+                            <>
+                            ( if not $ Array.null profileDetails''
+                                then [ detailColumnHeading "Profile details" ] <> profileDetails''
+                                else []
+                            )
                         ]
-                    else Nothing
-                , profile.discordTag <#> \discordTag ->
-                    HH.p [ HP.class_ $ HH.ClassName "profile-field" ] $
-                    [ HH.i [ HP.class_ $ HH.ClassName "fab fa-discord profile-field-icon" ] []
-                    , HH.span [ HP.class_ $ HH.ClassName "profile-field-label" ] [ HH.text "Discord tag: " ]
-                    , HH.span
-                        [ HP.class_ $ HH.ClassName "discord-tag"
-                        , HE.onClick $ Just <<< CopyDiscordTag profile.nickname discordTag ]
-                        [ HH.text discordTag ]
-                    ]
-                    <>
-                    if profile.discordTagCopied
-                    then Array.singleton $ HH.span [ HP.class_ $ HH.ClassName "discord-tag-copied" ] [ HH.text "Copied!" ]
                     else []
-                , profile.weekdayOnline <#> \{ from, to } ->
-                    HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
-                    [ HH.i [ HP.class_ $ HH.ClassName "fas fa-clock profile-field-icon" ] []
-                    , HH.span [ HP.class_ $ HH.ClassName "detail-labelless" ] [ HH.text $ "Online on " ]
-                    , HH.span [ HP.class_ $ HH.ClassName "detail-emphasize" ] [ HH.text "weekdays" ]
-                    , HH.text " from "
-                    , HH.span [ HP.class_ $ HH.ClassName "detail-emphasize" ] [ HH.text from ]
-                    , HH.text " to "
-                    , HH.span [ HP.class_ $ HH.ClassName "detail-emphasize" ] [ HH.text to ]
-                    ]
-                , profile.weekendOnline <#> \{ from, to } ->
-                    HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
-                    [ HH.i [ HP.class_ $ HH.ClassName "fas fa-clock profile-field-icon" ] []
-                    , HH.span [ HP.class_ $ HH.ClassName "detail-labelless" ] [ HH.text $ "Online on " ]
-                    , HH.span [ HP.class_ $ HH.ClassName "detail-emphasize" ] [ HH.text "weekends" ]
-                    , HH.text " from "
-                    , HH.span [ HP.class_ $ HH.ClassName "detail-emphasize" ] [ HH.text from ]
-                    , HH.text " to "
-                    , HH.span [ HP.class_ $ HH.ClassName "detail-emphasize" ] [ HH.text to ]
-                    ]
-                , Just $ HH.h5 [ HP.class_ $ HH.ClassName "player-profile-section-title" ] [ HH.text "Profile details" ]
-                ]
-                <> Array.catMaybes (profile.fieldValues <#> \{ field, url, option, options } ->
-                    case field.ilk, url, option, options of
-                    1, Just url', _, _ -> Just $
-                        HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
-                        [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
-                        , HH.a [ HP.class_ $ HH.ClassName "profile-field-url", HP.target "_blank", HP.href url' ] [ HH.text field.label ]
-                        ]
-                    2, _, Just option', _ -> Just $
-                        HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
-                        [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
-                        , HH.span [ HP.class_ $ HH.ClassName "profile-field-label" ] [ HH.text $ field.label <> ": " ]
-                        , HH.span [ HP.class_ $ HH.ClassName "detail-emphasize" ] [ HH.text option'.label ]
-                        ]
-                    3, _, _, Just options' | not $ Array.null options' -> Just $
-                        HH.p [ HP.class_ $ HH.ClassName "profile-field" ] $
-                        [ HH.i [ HP.class_ $ HH.ClassName $ field.icon <> " profile-field-icon" ] []
-                        , HH.span [ HP.class_ $ HH.ClassName "profile-field-label" ] [ HH.text $ field.label <> ": " ]
-                        ]
-                        <>
-                        (intercalate [(HH.text ", ")] $
-                            map (\{ label } -> [ HH.span [ HP.class_ $ HH.ClassName "detail-emphasize" ] [ HH.text label ] ]) options')
-                    _, _, _, _ ->  Nothing)
-                <> (if profile.newOrReturning
-                    then Array.singleton $
-                        HH.p [ HP.class_ $ HH.ClassName "profile-field" ]
-                        [ HH.i [ HP.class_ $ HH.ClassName "fas fa-book profile-field-icon" ] []
-                        , HH.span [ HP.class_ $ HH.ClassName "detail-labelless" ] [ HH.text "Is a"]
-                        , HH.span [ HP.class_ $ HH.ClassName "detail-emphasize" ] [ HH.text " new or returning player" ]
-                        , HH.text $ " to the game"
-                        ]
-                    else [])
-            , HH.div [ HP.class_ $ HH.ClassName "profile-column" ] $
-                (if Array.null $ profile.about
-                then []
-                else [ HH.h5 [ HP.class_ $ HH.ClassName "player-profile-section-title" ] [ HH.text "About" ] ]
-                    <> (profile.about <#> \paragraph ->
-                        HH.p [ HP.class_ $ HH.ClassName "profile-ambitions" ] [ HH.text paragraph ]))
+                )
                 <>
-                (if Array.null $ profile.ambitions
-                then []
-                else [ HH.h5 [ HP.class_ $ HH.ClassName "player-profile-section-title" ] [ HH.text "Ambitions" ] ]
-                    <> (profile.ambitions <#> \paragraph ->
-                        HH.p [ HP.class_ $ HH.ClassName "profile-ambitions" ] [ HH.text paragraph ]))
+                ( if (not $ Array.null about) || (not $ Array.null ambitions)
+                    then
+                        [ detailColumn $
+                            ( if not $ Array.null about
+                                then [ detailColumnHeading "About" ] <> about
+                                else []
+                            )
+                            <>
+                            ( if not $ Array.null ambitions
+                                then [ detailColumnHeading "Ambitions" ] <> ambitions
+                                else []
+                            )
+                        ]
+                    else []
+                )
             ]
-        ])
-    <> (Array.singleton $
-        HH.div [ HP.class_ $ HH.ClassName "pagination" ]
-            [ HH.div [ HP.class_$ HH.ClassName "pagination-left-buttons" ]
-                [ HH.button
-                    [ HP.class_ $ HH.ClassName "pagination-first-button"
-                    , HP.disabled $ page == 1
-                    , HE.onClick $ const $ Just $ ChangePageAction 1
-                    ]
-                    [ HH.text "First" ]
-                , HH.button
-                    [ HP.class_ $ HH.ClassName "pagination-previous-button"
-                    , HP.disabled $ page == 1
-                    , HE.onClick $ const $ Just $ ChangePageAction $ page - 1
-                    ]
-                    [ HH.text "Previous" ]
-                ]
-            , HH.div [ HP.class_ $ HH.ClassName "pagination-page" ]
-                [ HH.text $ show page <> "/" <> show (totalPages profileCount) ]
-            , HH.div [ HP.class_$ HH.ClassName "pagination-right-buttons" ]
-                [ HH.button
-                    [ HP.class_ $ HH.ClassName "pagination-next-button"
-                    , HP.disabled $ page == (totalPages profileCount)
-                    , HE.onClick $ const $ Just $ ChangePageAction $ page + 1
-                    ]
-                    [ HH.text "Next" ]
-                , HH.button
-                    [ HP.class_ $ HH.ClassName "pagination-last-button"
-                    , HP.disabled $ page == (totalPages profileCount)
-                    , HE.onClick $ const $ Just $ ChangePageAction $ totalPages profileCount
-                    ]
-                    [ HH.text "Last" ]
-                ]
-            ])
+        else []
+    )
+    <> [ pagination page profileCount ChangePage ]
 
-prepareState :: Input -> State
-prepareState input = input { profiles = input.profiles <#>
-    Record.build (Record.insert (SProxy :: SProxy "discordTagCopied") false) }
+handleAction :: forall left. Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
+handleAction (Receive input) = H.put input
+handleAction (ChangePage page) = H.raise $ PageChanged page
 
-handleAction :: forall left.
-    Action -> H.HalogenM State Action ChildSlots Message (Async left) Unit
-handleAction (Receive input) = H.put $ prepareState input
-handleAction (ChangePageAction page) = H.raise $ ChangePage page
-handleAction CreateProfileAction = H.raise CreateProfile
-handleAction (CopyDiscordTag nickname discordTag mouseEvent) = do
-    H.liftEffect $ Event.preventDefault $ MouseEvent.toEvent mouseEvent
-    result <- H.lift $ Async.attempt $ writeTextAsync discordTag
-    case result of
-        Right _ -> H.modify_ \state -> state { profiles = state.profiles <#> \profile ->
-            if profile.nickname == nickname
-            then profile { discordTagCopied = true }
-            else profile { discordTagCopied = false } }
-        _ -> pure unit
-
-component :: forall query left.
-    H.Component HH.HTML query Input Message (Async left)
+component :: forall query left. H.Component HH.HTML query Input Output (Async left)
 component = H.mkComponent
-    { initialState: prepareState
+    { initialState: identity
     , render
     , eval: H.mkEval $ H.defaultEval
         { handleAction = handleAction
@@ -368,7 +204,7 @@ component = H.mkComponent
 playerProfiles
     :: forall children action left
     .  Input
-    -> (Message -> Maybe action)
+    -> (Output -> Maybe action)
     -> HH.ComponentHTML action (playerProfiles :: Slot | children) (Async left)
 playerProfiles input handleOutput =
     HH.slot (SProxy :: SProxy "playerProfiles") unit component input handleOutput

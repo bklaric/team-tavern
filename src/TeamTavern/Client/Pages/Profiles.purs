@@ -125,14 +125,12 @@ render (Game game' player filters tab) = let
                 playerProfiles
                 input
                 case _ of
-                PlayerProfiles.CreateProfile -> Just ShowCreateProfileModal
-                PlayerProfiles.ChangePage page -> Just $ ChangePage page
+                PlayerProfiles.PageChanged page -> Just $ ChangePage page
             Teams input _ _ ->
                 teamProfiles
                 input
                 case _ of
-                TeamProfiles.CreateProfile -> Just ShowCreateProfileModal
-                TeamProfiles.ChangePage page -> Just $ ChangePage page
+                TeamProfiles.PageChanged page -> Just $ ChangePage page
         ]
     ]
 render NotFound = HH.p_ [ HH.text "Game could not be found." ]
@@ -236,8 +234,6 @@ loadTab handle GameHeader.Players = do
                         { profiles: playerProfiles''.profiles
                         , profileCount: playerProfiles''.count
                         , page
-                        , showCreateProfile:
-                            isJust player && not game'.hasPlayerProfile
                         , playerInfo: player
                         }
                         false
@@ -262,8 +258,6 @@ loadTab handle GameHeader.Teams = do
                         { profiles: teamProfiles''.profiles
                         , profileCount: teamProfiles''.count
                         , page
-                        , showCreateProfile:
-                            isJust player && not game'.hasPlayerProfile
                         , playerInfo: player
                         }
                         false
@@ -360,8 +354,6 @@ handleAction (Receive (Input handle tab)) = do
                         { profiles: playerProfiles'.profiles
                         , profileCount: playerProfiles'.count
                         , page: page
-                        , showCreateProfile:
-                            isJust player && not game.hasPlayerProfile
                         , playerInfo: player
                         }
                         false
@@ -377,8 +369,6 @@ handleAction (Receive (Input handle tab)) = do
                         { profiles: teamProfiles'.profiles
                         , profileCount: teamProfiles'.count
                         , page: page
-                        , showCreateProfile:
-                            isJust player && not game.hasTeamProfile
                         , playerInfo: player
                         }
                         false
