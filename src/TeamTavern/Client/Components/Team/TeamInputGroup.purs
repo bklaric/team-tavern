@@ -7,10 +7,10 @@ import Data.Maybe (Maybe(..))
 import Data.Variant (SProxy(..))
 import Halogen.HTML (HTML, ComponentHTML)
 import TeamTavern.Client.Components.Input (checkboxInput, inputError, inputGroup, inputLabel, inputUnderlabel, numberRangeInput, requiredInputLabel, requiredTextLineInput, textInput_, textLineInput)
-import TeamTavern.Client.Components.SelectDefinitive.MultiSelect (multiSelect)
-import TeamTavern.Client.Components.SelectDefinitive.MultiSelect as MultiSelect
-import TeamTavern.Client.Components.SelectDefinitive.MultiTreeSelect (multiTreeSelect)
-import TeamTavern.Client.Components.SelectDefinitive.MultiTreeSelect as MultiTreeSelect
+import TeamTavern.Client.Components.Select.MultiSelect (multiSelect)
+import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
+import TeamTavern.Client.Components.Select.MultiTreeSelect (multiTreeSelect)
+import TeamTavern.Client.Components.Select.MultiTreeSelect as MultiTreeSelect
 import TeamTavern.Server.Infrastructure.Languages (allLanguages)
 import TeamTavern.Server.Infrastructure.Regions (Region(..), allRegions)
 

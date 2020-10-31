@@ -1,4 +1,4 @@
-module TeamTavern.Client.Components.SelectDefinitive.MultiSelect
+module TeamTavern.Client.Components.Select.MultiSelect
     (Input, Output, Slot, multiSelect, multiSelectIndexed) where
 
 import Prelude

@@ -13,10 +13,10 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Components.Divider (divider)
-import TeamTavern.Client.Components.SelectDefinitive.MultiSelect (multiSelectIndexed)
-import TeamTavern.Client.Components.SelectDefinitive.MultiSelect as MultiSelect
-import TeamTavern.Client.Components.SelectDefinitive.SingleSelect (singleSelectIndexed)
-import TeamTavern.Client.Components.SelectDefinitive.SingleSelect as SingleSelect
+import TeamTavern.Client.Components.Select.MultiSelect (multiSelectIndexed)
+import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
+import TeamTavern.Client.Components.Select.SingleSelect (singleSelectIndexed)
+import TeamTavern.Client.Components.Select.SingleSelect as SingleSelect
 import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass)
 
 type Option =

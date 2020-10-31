@@ -15,9 +15,9 @@ import Record as Record
 import TeamTavern.Client.Components.Input (inputGroupsHeading, responsiveInputGroups)
 import TeamTavern.Client.Components.InputGroup (timeRangeInputGroup, timezoneInputGroup)
 import TeamTavern.Client.Components.Player.PlayerInputGroup (aboutInputGroup, birthdayInputGroup, discordTagInputGroup, languagesInputGroup, locationInputGroup, microphoneInputGroup)
-import TeamTavern.Client.Components.SelectDefinitive.MultiSelect as MultiSelect
-import TeamTavern.Client.Components.SelectDefinitive.SingleSelect as SingleSelect
-import TeamTavern.Client.Components.SelectDefinitive.SingleTreeSelect as SingleTreeSelect
+import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
+import TeamTavern.Client.Components.Select.SingleSelect as SingleSelect
+import TeamTavern.Client.Components.Select.SingleTreeSelect as SingleTreeSelect
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Server.Infrastructure.Timezones (Timezone)
 

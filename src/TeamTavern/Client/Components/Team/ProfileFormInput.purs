@@ -14,7 +14,7 @@ import Data.Variant (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Input (inputGroupsHeading, responsiveInputGroups)
-import TeamTavern.Client.Components.SelectDefinitive.MultiSelect as MultiSelect
+import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.Team.ProfileInputGroup (Field, FieldValues, Option, ambitionsInputGroup, fieldInputGroup, newOrReturningInputGroup)
 
 type Input =

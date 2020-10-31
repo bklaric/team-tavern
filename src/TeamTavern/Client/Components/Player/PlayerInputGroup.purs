@@ -9,9 +9,9 @@ import Data.Variant (SProxy(..))
 import Halogen (ComponentHTML, Slot)
 import Halogen.HTML (HTML)
 import TeamTavern.Client.Components.Input (checkboxInput, dateInput, inputError, inputGroup, inputLabel, inputUnderlabel, textInput_, textLineInput)
-import TeamTavern.Client.Components.SelectDefinitive.MultiSelect (multiSelect)
-import TeamTavern.Client.Components.SelectDefinitive.SingleTreeSelect (singleTreeSelect)
-import TeamTavern.Client.Components.SelectDefinitive.SingleTreeSelect as SingleTreeSelect
+import TeamTavern.Client.Components.Select.MultiSelect (multiSelect)
+import TeamTavern.Client.Components.Select.SingleTreeSelect (singleTreeSelect)
+import TeamTavern.Client.Components.Select.SingleTreeSelect as SingleTreeSelect
 import TeamTavern.Server.Infrastructure.Languages (allLanguages)
 import TeamTavern.Server.Infrastructure.Regions (Region(..), allRegions)
 

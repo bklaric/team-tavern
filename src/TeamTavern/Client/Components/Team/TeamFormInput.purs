@@ -11,9 +11,9 @@ import Halogen.HTML as HH
 import Record as Record
 import TeamTavern.Client.Components.Input (inputGroupsHeading, responsiveInputGroups)
 import TeamTavern.Client.Components.InputGroup (timeRangeInputGroup, timezoneInputGroup)
-import TeamTavern.Client.Components.SelectDefinitive.MultiSelect as MultiSelect
-import TeamTavern.Client.Components.SelectDefinitive.MultiTreeSelect as MultiTreeSelect
-import TeamTavern.Client.Components.SelectDefinitive.SingleSelect as SingleSelect
+import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
+import TeamTavern.Client.Components.Select.MultiTreeSelect as MultiTreeSelect
+import TeamTavern.Client.Components.Select.SingleSelect as SingleSelect
 import TeamTavern.Client.Components.Team.TeamInputGroup (aboutInputGroup, ageInputGroup, discordServerInputGroup, languagesInputGroup, locationInputGroup, microphoneInputGroup, nameInputGroup, websiteInputGroup)
 import TeamTavern.Server.Infrastructure.Timezones (Timezone)
 

@@ -13,10 +13,10 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import TeamTavern.Client.Components.SelectDefinitive.MultiSelect (multiSelect, multiSelectIndexed)
-import TeamTavern.Client.Components.SelectDefinitive.MultiSelect as MultiSelect
-import TeamTavern.Client.Components.SelectDefinitive.MultiTreeSelect (multiTreeSelect)
-import TeamTavern.Client.Components.SelectDefinitive.MultiTreeSelect as MultiTreeSelect
+import TeamTavern.Client.Components.Select.MultiSelect (multiSelect, multiSelectIndexed)
+import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
+import TeamTavern.Client.Components.Select.MultiTreeSelect (multiTreeSelect)
+import TeamTavern.Client.Components.Select.MultiTreeSelect as MultiTreeSelect
 import TeamTavern.Server.Infrastructure.Languages (allLanguages)
 import TeamTavern.Server.Infrastructure.Regions (Region(..), allRegions)
 import Web.HTML as Html

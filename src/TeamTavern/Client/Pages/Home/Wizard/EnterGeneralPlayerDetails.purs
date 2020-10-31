@@ -17,12 +17,12 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Record as Record
-import TeamTavern.Client.Components.SelectDefinitive.MultiSelect (multiSelect)
-import TeamTavern.Client.Components.SelectDefinitive.MultiSelect as MultiSelect
-import TeamTavern.Client.Components.SelectDefinitive.SingleSelect (singleSelect)
-import TeamTavern.Client.Components.SelectDefinitive.SingleSelect as SingleSelect
-import TeamTavern.Client.Components.SelectDefinitive.SingleTreeSelect (singleTreeSelect)
-import TeamTavern.Client.Components.SelectDefinitive.SingleTreeSelect as SingleTreeSelect
+import TeamTavern.Client.Components.Select.MultiSelect (multiSelect)
+import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
+import TeamTavern.Client.Components.Select.SingleSelect (singleSelect)
+import TeamTavern.Client.Components.Select.SingleSelect as SingleSelect
+import TeamTavern.Client.Components.Select.SingleTreeSelect (singleTreeSelect)
+import TeamTavern.Client.Components.Select.SingleTreeSelect as SingleTreeSelect
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass)
 import TeamTavern.Server.Infrastructure.Languages (allLanguages)

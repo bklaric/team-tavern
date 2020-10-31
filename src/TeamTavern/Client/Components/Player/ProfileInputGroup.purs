@@ -10,10 +10,10 @@ import Data.Variant (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Input (checkboxInput, inputError, inputGroup, inputLabel, inputLabel', inputUnderlabel, textInput_, textLineInput)
-import TeamTavern.Client.Components.SelectDefinitive.MultiSelect (multiSelectIndexed)
-import TeamTavern.Client.Components.SelectDefinitive.MultiSelect as MultiSelect
-import TeamTavern.Client.Components.SelectDefinitive.SingleSelect (singleSelectIndexed)
-import TeamTavern.Client.Components.SelectDefinitive.SingleSelect as SingleSelect
+import TeamTavern.Client.Components.Select.MultiSelect (multiSelectIndexed)
+import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
+import TeamTavern.Client.Components.Select.SingleSelect (singleSelectIndexed)
+import TeamTavern.Client.Components.Select.SingleSelect as SingleSelect
 
 type Option =
     { key :: String

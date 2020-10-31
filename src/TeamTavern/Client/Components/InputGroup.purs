@@ -8,8 +8,8 @@ import Data.Maybe (Maybe(..))
 import Data.Variant (SProxy(..))
 import Halogen.HTML (HTML, ComponentHTML)
 import TeamTavern.Client.Components.Input (inputGroup, inputLabel, timeRangeInput, timeRangeInputUnderlabel)
-import TeamTavern.Client.Components.SelectDefinitive.SingleSelect (singleSelect)
-import TeamTavern.Client.Components.SelectDefinitive.SingleSelect as SingleSelect
+import TeamTavern.Client.Components.Select.SingleSelect (singleSelect)
+import TeamTavern.Client.Components.Select.SingleSelect as SingleSelect
 import TeamTavern.Server.Infrastructure.Timezones (Timezone, allTimezones)
 
 timezoneInputGroup

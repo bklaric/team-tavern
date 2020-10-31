@@ -1,4 +1,4 @@
-module TeamTavern.Client.Components.SelectDefinitive.SingleTreeSelect
+module TeamTavern.Client.Components.Select.SingleTreeSelect
    (Labeler, Comparer, InputEntry(..), Input, Output, Slot, singleTreeSelect) where
 
 import Prelude
