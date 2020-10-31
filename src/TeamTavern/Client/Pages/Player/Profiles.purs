@@ -8,7 +8,7 @@ import Data.Const (Const)
 import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
-import TeamTavern.Client.Components.Button (regularIconButton)
+import TeamTavern.Client.Components.Button (regularButton)
 import TeamTavern.Client.Components.Card (card, cardHeader, cardHeading, cardSection)
 import TeamTavern.Client.Components.Detail (detailColumn, detailColumnHeading, detailColumns, textDetail)
 import TeamTavern.Client.Components.Divider (divider)
@@ -55,7 +55,7 @@ profiles { nickname, profiles: profiles' } showEditProfileModal =
                 , profileSubheading $ "Updated " <> lastUpdated profile.updatedSeconds
                 ]
             , profileHeaderItem
-                [ regularIconButton "fas fa-user-edit" "Edit profile"
+                [ regularButton "fas fa-user-edit" "Edit profile"
                     $ showEditProfileModal profile
                 ]
             ]

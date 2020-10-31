@@ -20,7 +20,7 @@ import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.CSS as HC
-import TeamTavern.Client.Components.Button (regularIconButton)
+import TeamTavern.Client.Components.Button (regularButton)
 import TeamTavern.Client.Components.Content (contentDescription, contentHeader, contentHeading)
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
@@ -79,7 +79,7 @@ render (Loaded { team: team', status, showEditTeamModal, showEditProfileModal } 
         [ HH.div_ [ contentHeading team'.name ]
         , HH.div_
             case status of
-            SignedInOwner -> [ regularIconButton "fas fa-edit" "Edit team" ShowEditTeamModal ]
+            SignedInOwner -> [ regularButton "fas fa-edit" "Edit team" ShowEditTeamModal ]
             SignedInOther ->
                 [ navigationAnchor (SProxy :: SProxy "messageOwner")
                     { path: "/conversations/" <> team'.owner
