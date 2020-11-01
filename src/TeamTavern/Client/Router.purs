@@ -47,8 +47,8 @@ import TeamTavern.Client.Pages.SignIn (signIn)
 import TeamTavern.Client.Pages.SignIn as SignIn
 import TeamTavern.Client.Pages.Team (team)
 import TeamTavern.Client.Pages.Team as Team
-import TeamTavern.Client.Pages.Wizard (wizard)
-import TeamTavern.Client.Pages.Wizard as Wizard
+import TeamTavern.Client.Pages.Onboarding (onboarding)
+import TeamTavern.Client.Pages.Onboarding as Onboarding
 import TeamTavern.Client.Script.Navigate (navigateReplace_, navigate_)
 
 data Query send = ChangeRoute Foreign String send
@@ -68,7 +68,7 @@ data State
     | Team { handle :: String }
     | Register
     | SignIn
-    | Wizard Wizard.Input
+    | Onboarding Onboarding.Input
     | ForgotPassword
     | ResetPasswordSent { email :: String }
     | ResetPassword
@@ -87,7 +87,7 @@ type ChildSlots = Footer.ChildSlots
     , conversations :: Conversations.Slot
     , conversation :: Conversation.Slot
     , team :: Team.Slot
-    , wizard :: Wizard.Slot
+    , onboarding :: Onboarding.Slot
     , signIn :: SignIn.Slot Unit
     , homeAnchor :: NavigationAnchor.Slot Unit
     , signInAnchor :: NavigationAnchor.Slot Unit
@@ -122,7 +122,7 @@ render (Conversation nickname) = topBarWithContent [ conversation nickname]
 render (Team input) = topBarWithContent [ team input ]
 render Register = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ register ] ]
 render SignIn = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ signIn ] ]
-render (Wizard input) = wizard input
+render (Onboarding input) = onboarding input
 render ForgotPassword = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ forgotPassword ] ]
 render (ResetPasswordSent resetPasswordData) = singleContent [ resetPasswordSent resetPasswordData ]
 render ResetPassword = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ resetPassword ] ]
@@ -149,16 +149,22 @@ handleAction (Init state route) = do
         ["", "signin"] ->
             just SignIn
         ["", "onboarding", "start"] ->
-            case read state of
-            Right ({ firstSignIn: true } :: { firstSignIn :: Boolean}) ->
-                just $ Wizard { step: Wizard.Greeting }
-            _ -> navigate_ "/" *> nothing
+            -- case read state of
+            -- Right ({ firstSignIn: true } :: { firstSignIn :: Boolean}) ->
+                just $ Onboarding { step: Onboarding.Greeting }
+            -- _ -> navigate_ "/" *> nothing
+        ["", "onboarding", "player-or-team"] ->
+            just $ Onboarding { step: Onboarding.PlayerOrTeam }
         ["", "onboarding", "player"] ->
-            just $ Wizard { step: Wizard.PlayerDetails }
+            just $ Onboarding { step: Onboarding.PlayerDetails }
+        ["", "onboarding", "team"] ->
+            just $ Onboarding { step: Onboarding.TeamDetails }
         ["", "onboarding", "game"] ->
-            just $ Wizard { step: Wizard.Game }
-        ["", "onboarding", "profile"] ->
-            just $ Wizard { step: Wizard.PlayerProfileDetails }
+            just $ Onboarding { step: Onboarding.Game }
+        ["", "onboarding", "player-profile"] ->
+            just $ Onboarding { step: Onboarding.PlayerProfileDetails }
+        ["", "onboarding", "team-profile"] ->
+            just $ Onboarding { step: Onboarding.TeamProfileDetails }
         ["", "forgot-password"] ->
             just ForgotPassword
         ["", "reset-password-sent"] ->

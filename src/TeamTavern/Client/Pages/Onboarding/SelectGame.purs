@@ -1,4 +1,4 @@
-module TeamTavern.Client.Pages.Wizard.SelectGame where
+module TeamTavern.Client.Pages.Onboarding.SelectGame where
 
 import Prelude
 

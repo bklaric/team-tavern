@@ -1,4 +1,4 @@
-.page-wizard {
+.onboarding {
     background-color: white;
     width: fit-content;
     max-width: 1000px;
@@ -13,21 +13,21 @@
     }
 }
 
-.page-wizard-step {
+.onboarding-step {
     padding: 21px;
 }
 
-.page-wizard-step-title {
+.onboarding-heading {
     margin-bottom: 21px;
     text-align: center;
 }
 
-.page-wizard-step-description {
+.onboarding-description {
     margin-bottom: 14px;
     text-align: center;
 }
 
-.page-wizard-step-buttons {
+.onboarding-buttons {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
@@ -40,30 +40,30 @@
     }
 }
 
-.page-wizard-skip-button-group {
+.onboarding-skip-button-group {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
 }
 
-.page-wizard-skip-button-underlabel {
+.onboarding-skip-button-underlabel {
     @extend .input-underlabel;
     margin-top: 7px;
     max-width: 200px;
 }
 
-.page-wizard-confirm-skip-button-underlabel {
-    @extend .page-wizard-skip-button-underlabel;
+.onboarding-confirm-skip-button-underlabel {
+    @extend .onboarding-skip-button-underlabel;
     color: hsl(54, 100%, 35%);
 }
 
-.page-wizard-submit-button-group {
+.onboarding-submit-button-group {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
 }
 
-.page-wizard-submit-button-underlabel {
+.onboarding-submit-button-underlabel {
     @extend .input-underlabel;
     margin-top: 7px;
     max-width: 200px;
@@ -72,26 +72,22 @@
 }
 
 @media screen and (min-width: 500px) {
-    .page-wizard-skip-button-group {
+    .onboarding-skip-button-group {
         flex-direction: row;
     }
 
-    .page-wizard-submit-button-group {
+    .onboarding-submit-button-group {
         flex-direction: row-reverse;
         align-items: flex-start;
     }
 
-    .page-wizard-skip-button-underlabel {
+    .onboarding-skip-button-underlabel {
         margin-top: 0;
         margin-left: 7px;
     }
 
-    .page-wizard-submit-button-underlabel {
+    .onboarding-submit-button-underlabel {
         margin-top: 0;
         margin-right: 7px;
     }
-}
-
-.enter-player-details {
-    margin-top: -21px;
 }

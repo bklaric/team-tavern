@@ -20,8 +20,17 @@ button class_ icon text onClick =
 regularButton :: forall action slots. String -> String -> action -> HH.HTML slots action
 regularButton = button "regular-button"
 
+regularButton_ :: forall action slots. String -> action -> HH.HTML slots action
+regularButton_ = button "regular-button" ""
+
 primaryButton :: forall action slots. String -> String -> action -> HH.HTML slots action
 primaryButton = button "primary-button"
 
+primaryButton_ :: forall action slots. String -> action -> HH.HTML slots action
+primaryButton_ = button "primary-button" ""
+
 secondaryButton :: forall action slots. String -> String -> action -> HH.HTML slots action
 secondaryButton = button "secondary-button"
+
+secondaryButton_ :: forall action slots. String -> action -> HH.HTML slots action
+secondaryButton_ = button "secondary-button" ""
