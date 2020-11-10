@@ -49,7 +49,7 @@ import TeamTavern.Client.Pages.Team (team)
 import TeamTavern.Client.Pages.Team as Team
 import TeamTavern.Client.Pages.Onboarding (onboarding)
 import TeamTavern.Client.Pages.Onboarding as Onboarding
-import TeamTavern.Client.Script.Navigate (navigateReplace_, navigate_)
+import TeamTavern.Client.Script.Navigate (navigateReplace_)
 
 data Query send = ChangeRoute Foreign String send
 

@@ -1,0 +1,52 @@
+.radio-buttons {
+    display: flex;
+    justify-content: space-between;
+    min-width: 450px;
+}
+
+%radio-button {
+    display: flex;
+    align-items: center;
+    font-family: Roboto;
+    font-size: 14px;
+    font-weight: 500;
+    border: 1px solid $primary-color;
+    border-radius: $border-radius;
+    padding: 14px;
+    cursor: pointer;
+}
+
+.radio-button {
+    @extend %radio-button;
+    background-color: white;
+    color: $primary-color;
+}
+
+.selected-radio-button {
+    @extend %radio-button;
+    background-color: $primary-color;
+    color: white;
+}
+
+%radio-button-check {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    font-size: 10px;
+    border: 2px solid;
+    border-radius: 50px;
+    margin-left: 14px;
+    color: white;
+}
+
+.radio-button-check {
+    @extend %radio-button-check;
+    border-color: $primary-color;
+}
+
+.selected-radio-button-check {
+    @extend %radio-button-check;
+    border-color: white;
+}

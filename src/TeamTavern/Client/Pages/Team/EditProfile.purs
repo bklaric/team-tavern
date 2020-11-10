@@ -49,7 +49,7 @@ data Action
     = UpdateProfile EnterProfile.Output
     | SendRequest Event
 
-type ChildSlots = (profileFormInput :: EnterProfile.Slot)
+type ChildSlots = (teamProfileFormInput :: EnterProfile.Slot)
 
 type Slot = H.Slot (Const Void) (Modal.Output Void) Unit
 

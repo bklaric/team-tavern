@@ -1,4 +1,4 @@
-module TeamTavern.Client.Pages.Onboarding.SelectGame where
+module TeamTavern.Client.Pages.Onboarding.SelectGame (Input, Output, Slot, selectGame) where
 
 import Prelude
 
@@ -6,21 +6,17 @@ import Async (Async)
 import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
-import CSS as CSS
 import Data.Bifunctor (lmap)
 import Data.Const (Const)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
-import Halogen.HTML.CSS as HC
-import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Simple.JSON.Async as Json
+import TeamTavern.Client.Components.RadioCard (radioCard, radioCards)
 import TeamTavern.Server.Game.View.SendResponse as View
 import TeamTavern.Server.Game.ViewAll.SendResponse as ViewAll
-
-type Handle = String
 
 type Input = Maybe View.OkContent
 
@@ -38,38 +34,19 @@ type Slot = H.Slot (Const Void) Output Unit
 render :: forall slots. State -> HH.HTML slots Action
 render { games, selected } =
     HH.div_
-    [ HH.div [ HP.class_ $ HH.ClassName "select-game-list" ] $
-        (games <#> \game ->
-            HH.div
-            [ HP.class_ $ HH.ClassName
-                case selected of
-                Just selected' | game.handle == selected'.handle ->
-                    "select-game-selected-choice"
-                _ -> "select-game-choice"
-            , HC.style $ CSS.backgroundImage $ CSS.url $ "/images/" <> game.handle <> "-tile.jpg"
-            , HE.onClick $ const $ Just $ SelectGame game
-            ]
-            [ HH.div [ HP.class_ $ HH.ClassName "select-game-choice-ribbon" ]
-                [ HH.span [ HP.class_ $ HH.ClassName "select-game-choice-title" ]
-                    [ HH.img
-                        [ HP.class_ $ HH.ClassName "top-bar-game-icon"
-                        , HP.src $ "/images/" <> game.handle <> "-icon.png"
-                        ]
-                    , HH.text game.title
-                    ]
+    [ radioCards $
+        ( games <#> \game ->
+            radioCard
+            ("/images/" <> game.handle <> "-tile.jpg")
+            (maybe false (_.handle >>> (_ == game.handle)) selected)
+            (SelectGame game)
+            [ HH.img
+                [ HP.class_ $ HH.ClassName "top-bar-game-icon"
+                , HP.src $ "/images/" <> game.handle <> "-icon.png"
                 ]
-            ])
-        <>
-        [ HH.div
-            [ HP.class_ $ HH.ClassName "select-game-base-choice"
-            , HC.style $ CSS.backgroundImage $ CSS.url $ "/images/soon-tile.png"
+            , HH.text game.title
             ]
-            [ HH.div [ HP.class_ $ HH.ClassName "select-game-choice-ribbon" ]
-                [ HH.span [ HP.class_ $ HH.ClassName "select-game-choice-title" ]
-                    [ HH.text "More games coming soon!" ]
-                ]
-            ]
-        ]
+        )
     ]
 
 loadGames :: forall left. Async left (Maybe ViewAll.OkContent)

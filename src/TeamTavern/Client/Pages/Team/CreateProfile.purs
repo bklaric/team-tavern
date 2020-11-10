@@ -45,7 +45,7 @@ data Action
 
 type Slot = H.Slot (Const Void) (Modal.Output Void) Unit
 
-type ChildSlots = (profileFormInput :: ProfileFormInput.Slot)
+type ChildSlots = (teamProfileFormInput :: ProfileFormInput.Slot)
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { profile, submitting, otherError } =

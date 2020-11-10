@@ -110,6 +110,6 @@ profileFormInput
     :: forall children action left
     .  Input
     -> (Output -> action)
-    -> HH.ComponentHTML action (profileFormInput :: Slot | children) (Async left)
+    -> HH.ComponentHTML action (teamProfileFormInput :: Slot | children) (Async left)
 profileFormInput input handleMessage =
-    HH.slot (SProxy :: SProxy "profileFormInput") unit component input (Just <<< handleMessage)
+    HH.slot (SProxy :: SProxy "teamProfileFormInput") unit component input (Just <<< handleMessage)
