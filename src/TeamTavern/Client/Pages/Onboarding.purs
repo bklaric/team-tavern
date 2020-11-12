@@ -12,9 +12,7 @@ import Data.Bifunctor (bimap, lmap)
 import Data.Const (Const)
 import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
-import Data.Maybe (Maybe(..), isJust, isNothing, maybe)
-import Data.MultiMap (MultiMap)
-import Data.MultiMap as MultiMap
+import Data.Maybe (Maybe(..), isNothing, maybe)
 import Data.Options ((:=))
 import Data.Symbol (SProxy(..))
 import Data.Variant (match)
@@ -36,6 +34,7 @@ import TeamTavern.Client.Script.Cookie (getPlayerNickname)
 import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
 import TeamTavern.Client.Script.Navigate (navigate, navigate_)
 import TeamTavern.Client.Snippets.Class as HS
+import TeamTavern.Routes.Onboarding as Onboarding
 import TeamTavern.Server.Wizard.Onboard as Onboard
 
 data Step
@@ -270,33 +269,70 @@ render state = onboarding' $ renderPage state
 
 sendRequest :: forall left. State -> Async left (Maybe (Either Onboard.BadRequestContent Unit))
 sendRequest (state :: State) = Async.unify do
-    (body :: Onboard.RequestBody) <-
-        case state.game, state.playerDetails, state.playerProfileDetails of
-        Just game, personalDetails, profileDetails -> Async.right
-            { handle: game.handle
-            , personalDetails:
-                { birthday: personalDetails.birthday
-                , location: personalDetails.location
-                , languages: personalDetails.languages
-                , microphone: personalDetails.microphone
-                , discordTag: personalDetails.discordTag
-                , timezone: personalDetails.timezone
-                , weekdayFrom: personalDetails.weekdayFrom
-                , weekdayTo: personalDetails.weekdayTo
-                , weekendFrom: personalDetails.weekendFrom
-                , weekendTo: personalDetails.weekendTo
-                , about: personalDetails.about
+    (body :: Onboarding.RequestContent) <-
+        case state of
+        { playerOrTeam: Just Player
+        , playerDetails: player
+        , game: Just game
+        , playerProfileDetails: profile
+        } -> Async.right
+            { ilk: 1
+            , player: Just
+                { birthday: player.birthday
+                , location: player.location
+                , languages: player.languages
+                , microphone: player.microphone
+                , discordTag: player.discordTag
+                , timezone: player.timezone
+                , weekdayFrom: player.weekdayFrom
+                , weekdayTo: player.weekdayTo
+                , weekendFrom: player.weekendFrom
+                , weekendTo: player.weekendTo
+                , about: player.about
                 }
-            , profileDetails:
-                { fieldValues: profileDetails.fieldValues # Array.filter \{ url, optionKey, optionKeys } ->
-                    isJust url || isJust optionKey || isJust optionKeys
-                , newOrReturning: profileDetails.newOrReturning
-                , ambitions: profileDetails.ambitions
+            , team: Nothing
+            , gameHandle: game.handle
+            , playerProfile: Just
+                { fieldValues: profile.fieldValues
+                , newOrReturning: profile.newOrReturning
+                , ambitions: profile.ambitions
+                }
+            , teamProfile: Nothing
+            }
+        { playerOrTeam: Just Team
+        , teamDetails: team
+        , game: Just game
+        , teamProfileDetails: profile
+        } -> Async.right
+            { ilk: 2
+            , player: Nothing
+            , team: Just
+                { name: team.name
+                , website: team.website
+                , ageFrom: team.ageFrom
+                , ageTo: team.ageTo
+                , locations: team.locations
+                , languages: team.languages
+                , microphone: team.microphone
+                , discordServer: team.discordServer
+                , timezone: team.timezone
+                , weekdayFrom: team.weekdayFrom
+                , weekdayTo: team.weekdayTo
+                , weekendFrom: team.weekendFrom
+                , weekendTo: team.weekendTo
+                , about: team.about
+                }
+            , gameHandle: game.handle
+            , playerProfile: Nothing
+            , teamProfile: Just
+                { fieldValues: profile.fieldValues
+                , newOrReturning: profile.newOrReturning
+                , ambitions: profile.ambitions
                 }
             }
-        _, _, _ -> Async.left Nothing
+        _ -> Async.left Nothing
     response <-
-        Fetch.fetch "/api/wizard/onboard"
+        Fetch.fetch "/api/onboarding"
         ( Fetch.method := POST
         <> Fetch.body := Json.writeJSON body
         <> Fetch.credentials := Fetch.Include
@@ -392,7 +428,7 @@ handleAction (UpdateGame game) =
                 { ilk, key, label, icon, options: Just options } | ilk == 2 || ilk == 3 ->
                     Just { key, label, icon, options }
                 _ -> Nothing
-            , fieldValues = (MultiMap.empty :: MultiMap String String)
+            , fieldValues = []
             , newOrReturning = false
             , ambitions = ""
             }

@@ -3,13 +3,10 @@ module TeamTavern.Client.Pages.Team.CreateProfile (Input, createProfile) where
 import Prelude
 
 import Async (Async)
-import Data.Array as Array
 import Data.Const (Const)
 import Data.Either (Either(..))
 import Data.Foldable (foldl)
 import Data.Maybe (Maybe(..))
-import Data.MultiMap as MultiMap
-import Data.Tuple (Tuple(..))
 import Data.Variant (SProxy(..), Variant, match)
 import Halogen as H
 import Halogen.HTML as HH
@@ -62,13 +59,7 @@ sendRequest
     -> Async left (Maybe (Either (Array (Variant (ambitions :: Array String))) Unit))
 sendRequest state @ { teamHandle, gameHandle, profile } =
     postNoContent ("/api/teams/" <> teamHandle <> "/profiles/" <> gameHandle)
-    { fieldValues:
-        profile.fieldValues
-        # (MultiMap.toUnfoldable :: _ -> Array _)
-        <#> \(Tuple fieldKey optionKeys) ->
-            { fieldKey
-            , optionKeys: Array.fromFoldable optionKeys
-            }
+    { fieldValues: profile.fieldValues
     , newOrReturning: profile.newOrReturning
     , ambitions: profile.ambitions
     }

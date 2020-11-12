@@ -10,12 +10,7 @@ import Control.Monad.State (class MonadState)
 import Data.Array (intercalate)
 import Data.Array as Array
 import Data.Const (Const)
-import Data.Foldable (foldl)
-import Data.List as List
-import Data.List.Types (NonEmptyList(..))
 import Data.Maybe (Maybe(..))
-import Data.MultiMap as MultiMap
-import Data.NonEmpty (NonEmpty(..))
 import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
@@ -109,17 +104,7 @@ render (Loaded { team: team', status, showEditTeamModal, showEditProfileModal } 
         , title: profile.title
         , fields: profile.fields
         , profile:
-            { fieldValues:
-                foldl
-                (\fieldValues { fieldKey, optionKeys } ->
-                    case Array.uncons optionKeys of
-                    Nothing -> fieldValues
-                    Just { head, tail } ->
-                        MultiMap.insertOrReplace fieldKey
-                        (NonEmptyList $ NonEmpty head $ List.fromFoldable tail) fieldValues
-                )
-                MultiMap.empty
-                profile.fieldValues
+            { fieldValues: profile.fieldValues
             , newOrReturning: profile.newOrReturning
             , ambitions: intercalate "\n\n" profile.ambitions
             }

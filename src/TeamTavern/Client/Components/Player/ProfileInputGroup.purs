@@ -5,6 +5,8 @@ import Prelude
 import Async (Async)
 import Data.Array as Array
 import Data.Foldable (find)
+import Data.Map (Map)
+import Data.Map as Map
 import Data.Maybe (Maybe(..), maybe)
 import Data.Variant (SProxy(..))
 import Halogen as H
@@ -37,6 +39,8 @@ type FieldValue =
     , optionKeys :: Maybe (Array String)
     }
 
+type FieldValues = Map String FieldValue
+
 type ChildSlots =
     ( "singleSelectField" :: SingleSelect.Slot Option String
     , "multiSelectField" :: MultiSelect.Slot Option String
@@ -44,7 +48,7 @@ type ChildSlots =
 
 fieldInputGroup
     :: forall action left
-    .  Array FieldValue
+    .  FieldValues
     -> (String -> Maybe String -> action)
     -> (String -> Maybe String -> action)
     -> (String -> Array String -> action)
@@ -55,7 +59,7 @@ fieldInputGroup
 fieldInputGroup fieldValues onValue _ _ urlValueErrors missingErrors
     { ilk: 1, key, label, icon, required, domain: Just domain } =
     let
-    fieldValue' = fieldValues # find \{ fieldKey } -> fieldKey == key
+    fieldValue' = Map.lookup key fieldValues
     url = fieldValue' >>= _.url
     urlError = urlValueErrors # Array.any (_ == key)
     missingError = missingErrors # Array.any (_ == key)
@@ -70,7 +74,7 @@ fieldInputGroup fieldValues onValue _ _ urlValueErrors missingErrors
 fieldInputGroup fieldValues _ onValue _ _ _
     { ilk: 2, key, label, icon, options: Just options } =
     let
-    fieldValue' = fieldValues # find \{ fieldKey } -> fieldKey == key
+    fieldValue' = Map.lookup key fieldValues
     selected = fieldValue' >>= _.optionKey >>= \optionKey ->
         options # find \option -> optionKey == option.key
     in

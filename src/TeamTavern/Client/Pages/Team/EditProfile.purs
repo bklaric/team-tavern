@@ -3,22 +3,19 @@ module TeamTavern.Client.Pages.Team.EditProfile where
 import Prelude
 
 import Async (Async)
-import Data.Array as Array
 import Data.Const (Const)
 import Data.Either (Either(..))
 import Data.Foldable (foldl)
 import Data.Maybe (Maybe(..))
-import Data.MultiMap as MultiMap
-import Data.Tuple (Tuple(..))
 import Data.Variant (SProxy(..), Variant, match)
 import Halogen as H
 import Halogen.HTML as HH
 import Record as Record
 import TeamTavern.Client.Components.Form (form, otherFormError, submitButton)
 import TeamTavern.Client.Components.Modal as Modal
-import TeamTavern.Client.Components.Team.ProfileFormInput (profileFormInput)
+import TeamTavern.Client.Components.Team.ProfileFormInput (FieldValues, profileFormInput)
 import TeamTavern.Client.Components.Team.ProfileFormInput as EnterProfile
-import TeamTavern.Client.Components.Team.ProfileInputGroup (Field, FieldValues)
+import TeamTavern.Client.Components.Team.ProfileInputGroup (Field)
 import TeamTavern.Client.Script.Navigate (hardNavigate)
 import TeamTavern.Client.Script.Request (putNoContent)
 import Web.Event.Event (preventDefault)
@@ -68,13 +65,7 @@ sendRequest
     -> Async left (Maybe (Either (Array (Variant (ambitions :: Array String))) Unit))
 sendRequest state @ { teamHandle, gameHandle, profile } =
     putNoContent ("/api/teams/" <> teamHandle <> "/profiles/" <> gameHandle)
-    { fieldValues:
-        profile.fieldValues
-        # (MultiMap.toUnfoldable :: _ -> Array _)
-        <#> \(Tuple fieldKey optionKeys) ->
-            { fieldKey
-            , optionKeys: Array.fromFoldable optionKeys
-            }
+    { fieldValues: profile.fieldValues
     , newOrReturning: profile.newOrReturning
     , ambitions: profile.ambitions
     }

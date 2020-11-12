@@ -1,8 +1,9 @@
-module TeamTavern.Client.Components.Team.ProfileFormInput (Input, Output, Slot, emptyInput, profileFormInput) where
+module TeamTavern.Client.Components.Team.ProfileFormInput (FieldValues, Input, Output, Slot, emptyInput, profileFormInput) where
 
 import Prelude
 
 import Async (Async)
+import Data.Array (foldl)
 import Data.Array as Array
 import Data.Const (Const)
 import Data.List as List
@@ -10,12 +11,20 @@ import Data.List.Types (NonEmptyList(..))
 import Data.Maybe (Maybe(..))
 import Data.MultiMap as MultiMap
 import Data.NonEmpty (NonEmpty(..))
+import Data.Tuple (Tuple(..))
 import Data.Variant (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
+import Record as Record
 import TeamTavern.Client.Components.Input (inputGroupsHeading, responsiveInputGroups)
 import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
-import TeamTavern.Client.Components.Team.ProfileInputGroup (Field, FieldValues, Option, ambitionsInputGroup, fieldInputGroup, newOrReturningInputGroup)
+import TeamTavern.Client.Components.Team.ProfileInputGroup (Field, Option, ambitionsInputGroup, fieldInputGroup, newOrReturningInputGroup)
+import TeamTavern.Client.Components.Team.ProfileInputGroup as Input
+
+type FieldValues = Array
+    { fieldKey :: String
+    , optionKeys :: Array String
+    }
 
 type Input =
     { fields :: Array Field
@@ -33,7 +42,7 @@ type Output =
 
 type State =
     { fields :: Array Field
-    , fieldValues :: FieldValues
+    , fieldValues :: Input.FieldValues
     , newOrReturning :: Boolean
     , ambitions :: String
     , ambitionsError :: Boolean
@@ -61,13 +70,29 @@ render { fields, fieldValues, newOrReturning, ambitions, ambitionsError } =
     , ambitionsInputGroup ambitions UpdateAmbitions ambitionsError
     ]
 
+fieldValuesToArray :: Input.FieldValues -> FieldValues
+fieldValuesToArray = (MultiMap.toUnfoldable' :: _ -> Array (Tuple _ (Array _))) >>>
+    map \(Tuple fieldKey optionKeys) -> { fieldKey, optionKeys }
+
+fieldValuesToMap :: FieldValues -> Input.FieldValues
+fieldValuesToMap =
+    foldl
+    (\fieldValues { fieldKey, optionKeys } ->
+        case Array.uncons optionKeys of
+        Nothing -> fieldValues
+        Just { head, tail } ->
+            MultiMap.insertOrReplace fieldKey
+            (NonEmptyList $ NonEmpty head $ List.fromFoldable tail) fieldValues
+    )
+    MultiMap.empty
+
 raiseOutput :: forall left. State -> H.HalogenM State Action ChildSlots Output (Async left) Unit
 raiseOutput { fieldValues, newOrReturning, ambitions } =
-    H.raise { fieldValues, newOrReturning, ambitions }
+    H.raise { fieldValues: fieldValuesToArray fieldValues, newOrReturning, ambitions }
 
 handleAction :: forall left. Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
 handleAction (Receive input) =
-    H.put input
+    H.put (Record.modify (SProxy :: SProxy "fieldValues") fieldValuesToMap input)
 handleAction (UpdateFieldValue fieldKey options) = do
     state <- H.modify \state -> state
         { fieldValues =
@@ -89,7 +114,7 @@ handleAction (UpdateAmbitions ambitions) = do
 
 component :: forall query left. H.Component HH.HTML query Input Output (Async left)
 component = H.mkComponent
-    { initialState: identity
+    { initialState: Record.modify (SProxy :: SProxy "fieldValues") fieldValuesToMap
     , render
     , eval: H.mkEval $ H.defaultEval
         { handleAction = handleAction
@@ -100,7 +125,7 @@ component = H.mkComponent
 emptyInput :: Array Field -> Input
 emptyInput fields =
     { fields
-    , fieldValues: MultiMap.empty
+    , fieldValues: []
     , newOrReturning: false
     , ambitions: ""
     , ambitionsError: false

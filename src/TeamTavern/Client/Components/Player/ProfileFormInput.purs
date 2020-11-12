@@ -1,4 +1,4 @@
-module TeamTavern.Client.Components.Player.ProfileFormInput (Input, Output, Slot, emptyInput, profileFormInput) where
+module TeamTavern.Client.Components.Player.ProfileFormInput (FieldValues, Input, Output, Slot, emptyInput, profileFormInput) where
 
 import Prelude
 
@@ -15,10 +15,13 @@ import Halogen.HTML as HH
 import Record as Record
 import TeamTavern.Client.Components.Input (inputGroupsHeading, responsiveInputGroups)
 import TeamTavern.Client.Components.Player.ProfileInputGroup (ChildSlots, Field, FieldValue, ambitionsInputGroup, fieldInputGroup, newOrReturningInputGroup)
+import TeamTavern.Client.Components.Player.ProfileInputGroup as Input
+
+type FieldValues = Array FieldValue
 
 type Input =
     { fields :: Array Field
-    , fieldValues :: Array FieldValue
+    , fieldValues :: FieldValues
     , newOrReturning :: Boolean
     , ambitions :: String
     , urlErrors :: Array String
@@ -27,14 +30,14 @@ type Input =
     }
 
 type Output =
-    { fieldValues :: Array FieldValue
+    { fieldValues :: FieldValues
     , ambitions :: String
     , newOrReturning :: Boolean
     }
 
 type State =
     { fields :: Array Field
-    , fieldValues :: Map String FieldValue
+    , fieldValues :: Input.FieldValues
     , newOrReturning :: Boolean
     , ambitions :: String
     , urlErrors :: Array String
@@ -64,7 +67,7 @@ render { fields, ambitions, fieldValues, newOrReturning, urlErrors, missingError
     = HH.div_ $
     [ inputGroupsHeading "Details"
     , responsiveInputGroups $
-        ( fields <#> fieldInputGroup (fieldValuesToArray fieldValues)
+        ( fields <#> fieldInputGroup fieldValues
             UpdateUrl UpdateSingleSelect UpdateMultiSelect urlErrors missingErrors
         )
         <>
