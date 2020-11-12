@@ -9,11 +9,8 @@ import Data.Bifunctor.Label (label)
 import Data.List.Types (NonEmptyList)
 import Data.Maybe (Maybe(..))
 import Data.Nullable (toNullable)
-import Data.String (CodePoint, codePointFromChar, fromCodePointArray, toCodePointArray, trim)
+import Data.String (CodePoint, codePointFromChar, fromCodePointArray, toCodePointArray)
 import Data.Symbol (SProxy(..))
-import Data.Traversable (traverse)
-import Data.Validated.Label (VariantNel, VariantValidated)
-import Data.Validated.Label as Validated
 import Data.Variant (Variant, match)
 import Effect (Effect, foreachE)
 import Perun.Request.Body (Body)
@@ -24,7 +21,7 @@ import Prim.Row (class Lacks)
 import Record.Builder (Builder)
 import Record.Builder as Builder
 import Simple.JSON (writeJSON)
-import TeamTavern.Server.Domain.Text (Text, TextErrors, validateText)
+import TeamTavern.Server.Domain.Text (Text)
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
 import TeamTavern.Server.Infrastructure.Error (InternalError)
@@ -32,15 +29,18 @@ import TeamTavern.Server.Infrastructure.Log (clientHandler, internalHandler, log
 import TeamTavern.Server.Infrastructure.Log as Log
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstInternal)
 import TeamTavern.Server.Infrastructure.ReadJsonBody (readJsonBody)
+import TeamTavern.Server.Infrastructure.ValidateAbout (validateAbout)
 import TeamTavern.Server.Player.Domain.Id (Id)
 import TeamTavern.Server.Player.UpdatePlayer.ValidateLangugase (Language, validateLanguages)
 import TeamTavern.Server.Player.UpdatePlayer.ValidateTimespan (Timespan, nullableTimeFrom, nullableTimeTo, validateTimespan)
 import TeamTavern.Server.Player.UpdatePlayer.ValidateTimezone (Timezone, validateTimezone)
 import TeamTavern.Server.Profile.AddTeamProfile.ValidateAgeSpan (AgeSpan, nullableAgeFrom, nullableAgeTo, validateAgeSpan)
 import TeamTavern.Server.Profile.AddTeamProfile.ValidateRegions (Region, validateRegions)
-import TeamTavern.Server.Profile.Infrastructure.ValidateUrl (Url, UrlErrors, validateUrlV, validateUrlV_)
-import Wrapped.String (Empty, NotPrintable, TooLong, empty, notPrintable, tooLong)
-import Wrapped.Validated as Wrapped
+import TeamTavern.Server.Profile.Infrastructure.ValidateUrl (Url)
+import TeamTavern.Server.Team.Infrastructure.ValidateDiscordServer (validateDiscordServer)
+import TeamTavern.Server.Team.Infrastructure.ValidateName (Name, validateName)
+import TeamTavern.Server.Team.Infrastructure.ValidateName as ValidateName
+import TeamTavern.Server.Team.Infrastructure.ValidateWebsite (validateWebsite)
 
 type TeamModel =
     { name :: String
@@ -58,52 +58,6 @@ type TeamModel =
     , weekendTo :: Maybe String
     , about :: String
     }
-
--- Name
-
-newtype Name = Name String
-
-maxLength :: Int
-maxLength = 40
-
-type NameErrors = VariantNel (empty :: Empty, notPrintable :: NotPrintable, tooLong :: TooLong)
-
-validateName :: forall errors. String -> VariantValidated (name :: Array String | errors) Name
-validateName name
-    = Wrapped.create trim [empty, tooLong maxLength, notPrintable] Name name
-    # Validated.labelMap (SProxy :: SProxy "name") \(errors :: NameErrors) ->
-        [ "Error validating name: " <> show errors ]
-
-toString :: Name -> String
-toString (Name name) = name
-
--- Website
-
-validateWebsite :: forall errors.
-    Maybe String -> VariantValidated (website :: Array String | errors) (Maybe Url)
-validateWebsite website
-    = website
-    # traverse validateUrlV_
-    # Validated.labelMap (SProxy :: SProxy "website") \(errors :: UrlErrors) ->
-        [ "Error validating website: " <> show errors]
-
--- Discord server
-
-validateDiscordServer :: forall errors.
-    Maybe String -> VariantValidated (discordServer :: Array String | errors) (Maybe Url)
-validateDiscordServer discordServer
-    = discordServer
-    # traverse (validateUrlV "discord.gg")
-    # Validated.labelMap (SProxy :: SProxy "discordServer") \(errors :: UrlErrors) ->
-        [ "Error validating Discord server: " <> show errors]
-
--- About
-
-validateAbout :: forall errors. String -> VariantValidated (about :: Array String | errors) Text
-validateAbout about
-    = validateText about
-    # Validated.labelMap (SProxy :: SProxy "about") \(errors :: TextErrors) ->
-        [ "Error validating about text: " <> show errors ]
 
 type Team =
     { name :: Name
@@ -194,7 +148,7 @@ isNumber point = onePoint <= point && point <= ninePoint
 
 generateHandle :: Name -> Handle
 generateHandle name =
-    toString name
+    ValidateName.toString name
     # toCodePointArray
     <#> (\point ->
         if isLetter point || isNumber point || point == dashPoint || point == underscorePoint
