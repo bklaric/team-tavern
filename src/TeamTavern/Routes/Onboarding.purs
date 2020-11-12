@@ -1,11 +1,13 @@
 module TeamTavern.Routes.Onboarding where
 
 import Data.Maybe (Maybe)
+import Data.Variant (Variant)
 import Jarilo.Method (Post)
 import Jarilo.Path (type (:>), End)
 import Jarilo.Query (NoQuery)
 import Jarilo.Route (Route)
 import Jarilo.Segment (Literal)
+import Type (type ($))
 
 type Onboard = Route
     Post
@@ -65,3 +67,23 @@ type RequestContent =
         , ambitions :: String
         }
     }
+
+type BadContent = Array $ Variant
+    ( player :: Array $ Variant
+        ( discordTag :: Array String
+        , about :: Array String
+        )
+    , team :: Array $ Variant
+        ( name :: Array String
+        , website :: Array String
+        , discordServer :: Array String
+        , about :: Array String
+        )
+    , playerProfile :: Array $ Variant
+        ( url :: { message :: Array String, key :: String }
+        , missing :: { message :: Array String, key :: String }
+        , ambitions :: Array String
+        )
+    , teamProfile :: Array $ Variant
+        ( ambitions :: Array String )
+    )

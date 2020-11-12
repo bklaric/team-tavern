@@ -35,7 +35,6 @@ import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaU
 import TeamTavern.Client.Script.Navigate (navigate, navigate_)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Onboarding as Onboarding
-import TeamTavern.Server.Wizard.Onboard as Onboard
 
 data Step
     = Greeting
@@ -267,7 +266,7 @@ render :: forall slots left.
     State -> HH.ComponentHTML Action (ChildSlots slots) (Async left)
 render state = onboarding' $ renderPage state
 
-sendRequest :: forall left. State -> Async left (Maybe (Either Onboard.BadRequestContent Unit))
+sendRequest :: forall left. State -> Async left (Maybe (Either Onboarding.BadContent Unit))
 sendRequest (state :: State) = Async.unify do
     (body :: Onboarding.RequestContent) <-
         case state of
@@ -338,7 +337,7 @@ sendRequest (state :: State) = Async.unify do
         <> Fetch.credentials := Fetch.Include
         )
         # lmap (const Nothing)
-    content :: Either Onboard.BadRequestContent Unit <-
+    content :: Either Onboarding.BadContent Unit <-
         case FetchRes.status response of
         204 -> pure $ Right unit
         400 -> FetchRes.text response >>= JsonAsync.readJSON # bimap (const Nothing) Left
@@ -452,52 +451,106 @@ handleAction (UpdateTeamProfileDetails details) =
 handleAction SetUpAccount = do
     currentState <- H.modify _ { submitting = true }
     response <- H.lift $ sendRequest currentState
+    let nextState = currentState
+            { submitting = false
+            , playerDetails
+                { discordTagError = false
+                , aboutError = false
+                }
+            , teamDetails
+                { nameError = false
+                , websiteError = false
+                , discordServerError = false
+                , aboutError = false
+                }
+            , playerProfileDetails
+                { urlErrors = []
+                , missingErrors = []
+                , ambitionsError = false
+                }
+            }
     case response of
         Just (Right _) -> navigate_ "/"
         Just (Left errors) -> H.put $
             foldl
             (\state error ->
                 match
-                { invalidDiscordTag: const $ state
-                    { step = PlayerDetails
-                    , playerDetails = state.playerDetails
-                        { discordTagError = true }
-                    }
-                , invalidAbout: const $ state
-                    { step = PlayerDetails
-                    , playerDetails = state.playerDetails
-                        { aboutError = true }}
-                , url: \{ key } -> state
-                    { playerProfileDetails = state.playerProfileDetails
-                        { urlErrors = Array.cons key state.playerProfileDetails.urlErrors }
-                    }
-                , missing: \{ key } -> state
-                    { playerProfileDetails = state.playerProfileDetails
-                        { missingErrors = Array.cons key state.playerProfileDetails.missingErrors }
-                    }
-                , ambitions: const $ state
-                    { playerProfileDetails = state.playerProfileDetails
-                        { ambitionsError = true }
-                    }
+                { player:
+                    foldl
+                    (\state' error' ->
+                        match
+                        { discordTag: const $ state'
+                            { step = PlayerDetails
+                            , playerDetails { discordTagError = true }
+                            }
+                        , about: const $ state'
+                            { step = PlayerDetails
+                            , playerDetails { aboutError = true }
+                            }
+                        }
+                        error'
+                    )
+                    state
+                , team:
+                    foldl
+                    (\state' error' ->
+                        match
+                        { name: const $ state'
+                            { step = TeamDetails
+                            , teamDetails { nameError = true }
+                            }
+                        , website: const $ state'
+                            { step = TeamDetails
+                            , teamDetails { websiteError = true }
+                            }
+                        , discordServer: const $ state'
+                            { step = TeamDetails
+                            , teamDetails { discordServerError = true }
+                            }
+                        , about: const $ state'
+                            { step = TeamDetails
+                            , teamDetails { aboutError = true }
+                            }
+                        }
+                        error'
+                    )
+                    state
+                , playerProfile:
+                    foldl
+                    (\state' error' ->
+                        match
+                        { url: \{ key } -> state'
+                            { playerProfileDetails
+                                { urlErrors = Array.cons key state'.playerProfileDetails.urlErrors }
+                            }
+                        , missing: \{ key } -> state'
+                            { playerProfileDetails
+                                { missingErrors =
+                                    Array.cons key state'.playerProfileDetails.missingErrors
+                                }
+                            }
+                        , ambitions: const $ state'
+                            { playerProfileDetails { ambitionsError = true } }
+                        }
+                        error'
+                    )
+                    state
+                , teamProfile:
+                    foldl
+                    (\state' error' ->
+                        match
+                        { ambitions: const $ state'
+                            { playerProfileDetails { ambitionsError = true } }
+                        }
+                        error'
+                    )
+                    state
                 }
                 error
             )
-            (currentState
-                { submitting = false
-                , playerDetails = currentState.playerDetails
-                    { discordTagError = false, aboutError = false }
-                , playerProfileDetails = currentState.playerProfileDetails
-                    { urlErrors = [], missingErrors = [], ambitionsError = false }
-                , otherError = false
-                })
+            (nextState { otherError = false })
             errors
-        Nothing -> H.put currentState
-            { submitting = false
-            , playerDetails = currentState.playerDetails { discordTagError = false }
-            , playerProfileDetails = currentState.playerProfileDetails
-                { urlErrors = [], missingErrors = [], ambitionsError = false }
-            , otherError = true
-            }
+        Nothing -> H.put nextState { otherError = true }
 
 component :: forall query output left.
     H.Component HH.HTML query Input output (Async left)
