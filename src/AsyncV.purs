@@ -41,7 +41,7 @@ newtype AsyncV invalid valid = AsyncV (ValidatedT invalid (ContT Unit Effect) va
 
 runAsyncV :: forall left right.
     (Validated left right -> Effect Unit) -> AsyncV left right -> Effect Unit
-runAsyncV callback = \(AsyncV (ValidatedT (ContT cont))) -> cont callback
+runAsyncV callback (AsyncV (ValidatedT (ContT cont))) = cont callback
 
 runSafeAsyncV :: forall right.
     (right -> Effect Unit) -> (forall left. AsyncV left right) -> Effect Unit
@@ -52,6 +52,10 @@ fromValidated = pure >>> ValidatedT >>> AsyncV
 
 fromEffect :: forall left right. Semigroup left => Effect right -> AsyncV left right
 fromEffect = lift >>> map Validated.valid >>> ValidatedT >>> AsyncV
+
+fromAsync :: forall invalid valid. Semigroup invalid => Async invalid valid -> AsyncV invalid valid
+fromAsync (Async (ExceptT (ContT cont))) = AsyncV (ValidatedT (ContT \callback ->
+    cont \value -> value # Validated.fromEither # callback))
 
 toAsync :: forall invalid valid. AsyncV invalid valid -> Async invalid valid
 toAsync (AsyncV (ValidatedT (ContT cont))) = Async (ExceptT (ContT \callback ->
