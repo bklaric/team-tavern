@@ -4,7 +4,11 @@ import Prelude
 
 import Async (Async)
 import Async.Validated as Async
+import AsyncV (AsyncV)
+import AsyncV as AsyncV
+import Data.Bifunctor (lmap)
 import Data.Bifunctor.Label (label)
+import Data.List.NonEmpty as NonEmptyList
 import Data.List.Types (NonEmptyList)
 import Data.Symbol (SProxy(..))
 import Data.Variant (Variant)
@@ -40,3 +44,11 @@ validateProfile fields profile @ { fieldValues, newOrReturning, ambitions } =
     <*> validateAmbitions ambitions
     # Async.fromValidated
     # label (SProxy :: SProxy "profile")
+
+validateProfileV
+    :: forall errors
+    .  Array LoadFields.Field
+    -> ReadProfile.Profile
+    -> AsyncV (NonEmptyList (Variant (profile :: ProfileErrors | errors))) Profile
+validateProfileV fields =
+    validateProfile fields >>> lmap NonEmptyList.singleton >>> AsyncV.fromAsync

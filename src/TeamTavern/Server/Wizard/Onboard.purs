@@ -3,12 +3,10 @@ module TeamTavern.Server.Wizard.Onboard where
 import Prelude
 
 import Async (Async, alwaysRight, examineLeftWithEffect)
-import AsyncV (AsyncV)
 import AsyncV as AsyncV
 import Data.Array (fromFoldable)
 import Data.Array as Array
 import Data.Bifunctor.Label (label, labelMap)
-import Data.List.Types (NonEmptyList)
 import Data.Maybe (Maybe)
 import Data.Newtype (unwrap)
 import Data.Symbol (SProxy(..))
@@ -28,11 +26,7 @@ import TeamTavern.Server.Player.UpdatePlayer.UpdateDetails (updateDetails)
 import TeamTavern.Server.Player.UpdatePlayer.ValidatePlayer (PlayerError, validatePlayerV)
 import TeamTavern.Server.Profile.AddPlayerProfile.AddProfile (addProfile)
 import TeamTavern.Server.Profile.AddPlayerProfile.LoadFields (loadFields)
-import TeamTavern.Server.Profile.AddPlayerProfile.LoadFields as LoadFields
-import TeamTavern.Server.Profile.AddPlayerProfile.ReadProfile as ReadProfile
-import TeamTavern.Server.Profile.AddPlayerProfile.ValidateFieldValues as ValidateFieldValues
-import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile (Profile)
-import TeamTavern.Server.Profile.Infrastructure.ValidateAmbitions as ValidateAmbitions
+import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile (ProfileError, validateProfileV)
 
 type PlayerDetails =
     { birthday :: Maybe String
@@ -77,37 +71,22 @@ readRequestBody body = do
             ]
         }
 
-validateProfileDetails
-    :: forall errors
-    .  Array LoadFields.Field -> ReadProfile.Profile
-    -> AsyncV (NonEmptyList (Variant (profile :: _ | errors))) Profile
-validateProfileDetails fields details = do
-    { fieldValues: _, newOrReturning: details.newOrReturning, ambitions: _ }
-    <$> ValidateFieldValues.validateFieldValues fields details.fieldValues
-    <*> ValidateAmbitions.validateAmbitions details.ambitions
-    # AsyncV.fromValidated
-    # AsyncV.labelMap (SProxy :: SProxy "profile") { profile: details, errors: _ }
-
 type BadRequestContent = Array (Variant
-    ( ambitions :: Array String
-    , url :: { key :: String, message :: Array String }
-    , missing :: { key :: String, message :: Array String }
-
+    ( profile :: Array ProfileError
     , player :: Array PlayerError
     ))
 
 -- errorResponse :: RegisterError -> Response
 errorResponse = onMatch
     { invalidBody: \errors ->
-            errors
-            <#> match
-                { profile: \{ errors } -> Array.fromFoldable errors
-                , player: \errors -> [ inj (SProxy :: SProxy "player") (Array.fromFoldable errors) ]
-                }
-            # fromFoldable
-            # join
-            # (writeJSON :: BadRequestContent -> String)
-            # badRequest_
+        errors
+        <#> match
+            { profile: \errors -> inj (SProxy :: SProxy "profile") (Array.fromFoldable errors)
+            , player: \errors -> inj (SProxy :: SProxy "player") (Array.fromFoldable errors)
+            }
+        # fromFoldable
+        # (writeJSON :: BadRequestContent -> String)
+        # badRequest_
     }
     (const internalServerError__)
 
@@ -138,7 +117,7 @@ onboard pool cookies body =
         (validatedBody :: _) <-
             ({ player: _, profile: _ }
             <$> validatePlayerV body'.personalDetails
-            <*> validateProfileDetails fields body'.profileDetails)
+            <*> validateProfileV fields body'.profileDetails)
             # AsyncV.toAsync
             # label (SProxy :: SProxy "invalidBody")
 

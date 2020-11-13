@@ -45,11 +45,7 @@ import TeamTavern.Server.Player.UpdatePlayer.UpdateDetails (updateDetails)
 import TeamTavern.Server.Player.UpdatePlayer.ValidatePlayer (PlayerError, validatePlayerV)
 import TeamTavern.Server.Profile.AddPlayerProfile.AddProfile (addProfile)
 import TeamTavern.Server.Profile.AddPlayerProfile.LoadFields (loadFields)
-import TeamTavern.Server.Profile.AddPlayerProfile.LoadFields as LoadFields
-import TeamTavern.Server.Profile.AddPlayerProfile.ReadProfile as ReadProfile
-import TeamTavern.Server.Profile.AddPlayerProfile.ValidateFieldValues as ValidateFieldValues
-import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile (Profile)
-import TeamTavern.Server.Profile.Infrastructure.ValidateAmbitions as ValidateAmbitions
+import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile (validateProfileV)
 
 type PersonalDetails =
     { birthday :: Maybe String
@@ -100,17 +96,6 @@ readRequestBody body = do
             , "Errors:", show errors
             ]
         }
-
-validateProfileDetails
-    :: forall errors
-    .  Array LoadFields.Field -> ReadProfile.Profile
-    -> AsyncV (NonEmptyList (Variant (profile :: _ | errors))) Profile
-validateProfileDetails fields details = do
-    { fieldValues: _, newOrReturning: details.newOrReturning, ambitions: _ }
-    <$> ValidateFieldValues.validateFieldValues fields details.fieldValues
-    <*> ValidateAmbitions.validateAmbitions details.ambitions
-    # AsyncV.fromValidated
-    # AsyncV.labelMap (SProxy :: SProxy "profile") { profile: details, errors: _ }
 
 validateRegistrationDetails :: forall errors.
     RegistrationDetails ->
@@ -175,8 +160,7 @@ type IdentifiersErrorContent = Variant
 
 type BadRequestContent = Variant
     ( invalidBody :: Array (Variant
-        ( invalidDiscordTag :: {}
-        , invalidProfile :: Array
+        ( invalidProfile :: Array
             (Variant
                 ( ambitions :: Array String
                 , url :: { key :: String, message :: Array String }
@@ -200,8 +184,8 @@ errorResponse = onMatch
     { invalidBody: \errors ->
             errors
             <#> match
-                { invalidDiscordTag: const $ inj (SProxy :: SProxy "invalidDiscordTag") {}
-                , profile: \{ errors } -> inj (SProxy :: SProxy "invalidProfile") $ Array.fromFoldable errors
+                { player: \errors -> inj (SProxy :: SProxy "player") (Array.fromFoldable errors)
+                , profile: \errors -> inj (SProxy :: SProxy "invalidProfile") $ Array.fromFoldable errors
                 , invalidRegistration: \{ errors } ->
                     errors
                     <#> (match
@@ -211,7 +195,6 @@ errorResponse = onMatch
                         })
                     # fromFoldable
                     # inj (SProxy :: SProxy "invalidRegistration")
-                , player: \errors -> inj (SProxy :: SProxy "player") (Array.fromFoldable errors)
                 }
             # fromFoldable
             # inj (SProxy :: SProxy "invalidBody")
@@ -266,7 +249,7 @@ createAccount pool emailClient cookies body =
             (validatedBody :: _) <-
                 ({ personal: _, profile: _, registration: _ }
                 <$> validatePlayerV body'.personalDetails
-                <*> validateProfileDetails fields body'.profileDetails
+                <*> validateProfileV fields body'.profileDetails
                 <*> validateRegistrationDetails body'.registrationDetails)
                 # AsyncV.toAsync
                 # label (SProxy :: SProxy "invalidBody")
