@@ -1,19 +1,14 @@
-module TeamTavern.Server.Player.UpdatePlayer.UpdateDetails
-    (UpdateDetailsError, updateDetails) where
+module TeamTavern.Server.Player.UpdatePlayer.UpdateDetails (updateDetails) where
 
 import Prelude
 
 import Async (Async)
-import Data.Bifunctor (lmap)
 import Data.Nullable (toNullable)
-import Data.Variant (SProxy(..), Variant, inj)
-import Postgres.Async.Query (execute)
-import Postgres.Error (Error)
 import Postgres.Query (class Querier, Query(..), QueryParameter, (:), (:|))
-import TeamTavern.Server.Player.UpdatePlayer.ReadUpdate (UpdateDetailsModel)
+import TeamTavern.Server.Infrastructure.Error (InternalError)
+import TeamTavern.Server.Infrastructure.Postgres (queryNone)
+import TeamTavern.Server.Player.UpdatePlayer.ValidatePlayer (Player)
 import TeamTavern.Server.Player.UpdatePlayer.ValidateTimespan (nullableTimeFrom, nullableTimeTo)
-
-type UpdateDetailsError errors = Variant (databaseError :: Error | errors)
 
 queryString :: Query
 queryString = Query """
@@ -33,7 +28,7 @@ queryString = Query """
     where player.id = $1
     """
 
-queryParameters :: Int -> UpdateDetailsModel -> Array QueryParameter
+queryParameters :: Int -> Player -> Array QueryParameter
 queryParameters playerId model =
     playerId
     : toNullable model.discordTag
@@ -48,14 +43,7 @@ queryParameters playerId model =
     : model.microphone
     :| model.about
 
-updateDetails
-    :: forall querier errors
-    .  Querier querier
-    => querier
-    -> Int
-    -> UpdateDetailsModel
-    -> Async (UpdateDetailsError errors) Unit
+updateDetails :: forall querier errors. Querier querier =>
+    querier -> Int -> Player -> Async (InternalError errors) Unit
 updateDetails querier playerId updateModel =
-    querier
-    # execute queryString (queryParameters playerId updateModel)
-    # lmap (inj (SProxy :: SProxy "databaseError"))
+    queryNone querier queryString (queryParameters playerId updateModel)

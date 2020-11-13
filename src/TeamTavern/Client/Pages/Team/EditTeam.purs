@@ -17,8 +17,8 @@ import TeamTavern.Client.Components.Team.TeamFormInput as EnterTeamDetails
 import TeamTavern.Client.Script.Navigate (hardNavigate)
 import TeamTavern.Client.Script.Request (putNoContent)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
-import TeamTavern.Server.Team.Create (TeamModel)
 import TeamTavern.Server.Team.Create as Create
+import TeamTavern.Server.Team.Infrastructure.ValidateTeam (TeamModel)
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 

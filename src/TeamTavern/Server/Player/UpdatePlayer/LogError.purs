@@ -2,47 +2,29 @@ module TeamTavern.Server.Player.UpdatePlayer.LogError where
 
 import Prelude
 
-import Data.List.Types (NonEmptyList)
-import Data.Variant (Variant, match)
-import Effect (Effect)
-import Foreign (MultipleErrors)
-import Postgres.Error (Error)
-import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
-import TeamTavern.Server.Infrastructure.Log (logLines, logStamped, logt, print)
-import TeamTavern.Server.Player.UpdatePlayer.ReadUpdate (UpdateDetailsDto, UpdateDetailsModelError)
+import Data.Array as Array
+import Data.Variant (SProxy(..), Variant, match)
+import Effect (Effect, foreachE)
+import Prim.Row (class Lacks)
+import Record.Builder (Builder)
+import Record.Builder as Builder
+import TeamTavern.Server.Infrastructure.Log (clientHandler, internalHandler, logLines, notAuthorizedHandler)
+import TeamTavern.Server.Infrastructure.Log as Log
+import TeamTavern.Server.Player.UpdatePlayer.ValidatePlayer (PlayerErrors)
 
 type UpdateDetailsError = Variant
     ( internal :: Array String
     , client :: Array String
     , notAuthorized :: Array String
-    , databaseError :: Error
-    , nicknameDoesntMatch :: { nickname :: String, cookieInfo :: CookieInfo }
-    , unreadableDto ::
-        { content :: String
-        , errors :: MultipleErrors
-        }
-    , invalidModel ::
-        { dto :: UpdateDetailsDto
-        , errors :: NonEmptyList UpdateDetailsModelError
-        }
+    , player :: PlayerErrors
     )
 
+playerHandler :: forall fields. Lacks "player" fields =>
+    Builder (Record fields) { player :: PlayerErrors -> Effect Unit | fields }
+playerHandler = Builder.insert (SProxy :: SProxy "player") \errors ->
+    foreachE (Array.fromFoldable errors) $ match
+    { discordTag: logLines, about: logLines }
+
 logError :: UpdateDetailsError -> Effect Unit
-logError updateError = do
-    logStamped "Error updating player"
-    updateError # match
-        { internal: logLines
-        , client: logLines
-        , notAuthorized: logLines
-        , nicknameDoesntMatch: \{ nickname, cookieInfo } -> do
-            logt $ "Signed in user: " <> show cookieInfo
-            logt $ "Doesn't have requested nickname: " <> nickname
-        , unreadableDto: \{ content, errors } -> do
-            logt $ "Couldn't read dto from body: " <> show content
-            logt $ "Reading resulted in these errors: " <> show errors
-        , invalidModel: \{ dto, errors } -> do
-            logt $ "Couldn't validate model from dto: " <> show dto
-            logt $ "Validation resulted in these errors: " <> show errors
-        , databaseError: \error ->
-            logt $ "Unknown database error ocurred: " <> print error
-        }
+logError = Log.logError "Error updating player"
+    (internalHandler >>> clientHandler >>> notAuthorizedHandler >>> playerHandler)

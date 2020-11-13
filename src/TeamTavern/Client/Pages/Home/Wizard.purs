@@ -199,6 +199,7 @@ sendRequest (state :: State) = Async.unify do
                 , weekdayTo: if String.null personalDetails.weekdayTo then Nothing else Just personalDetails.weekdayTo
                 , weekendFrom: if String.null personalDetails.weekendFrom then Nothing else Just personalDetails.weekendFrom
                 , weekendTo: if String.null personalDetails.weekendTo then Nothing else Just personalDetails.weekendTo
+                , about: ""
                 }
             , profileDetails:
                 { fieldValues: profileDetails.fieldValues # filter \{ url, optionKey, optionKeys } ->
@@ -389,6 +390,7 @@ handleAction Submit = do
                                 registrationError
                             )
                             state
+                        , player: const state
                         }
                         bodyError
                     )

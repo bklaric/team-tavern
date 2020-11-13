@@ -11,9 +11,10 @@ import Postgres.Pool (Pool)
 import TeamTavern.Server.Infrastructure.EnsureSignedInAs (ensureSignedInAs)
 import TeamTavern.Server.Player.Domain.Nickname (Nickname)
 import TeamTavern.Server.Player.UpdatePlayer.LogError (logError)
-import TeamTavern.Server.Player.UpdatePlayer.ReadUpdate (readUpdate)
+import TeamTavern.Server.Player.UpdatePlayer.ReadPlayer (readPlayer)
 import TeamTavern.Server.Player.UpdatePlayer.SendResponse (sendResponse)
 import TeamTavern.Server.Player.UpdatePlayer.UpdateDetails (updateDetails) as UpdateDetails
+import TeamTavern.Server.Player.UpdatePlayer.ValidatePlayer (validatePlayer)
 
 updatePlayer :: forall left.
     Pool -> Nickname -> Map String String -> Body -> Async left Response
@@ -22,8 +23,11 @@ updatePlayer pool nickname cookies body =
     -- Read requestor info from cookies.
     cookieInfo <- ensureSignedInAs pool cookies (unwrap nickname)
 
-    -- Read update from body.
-    update' <- readUpdate body
+    -- Read player from body.
+    playerModel <- readPlayer body
+
+    -- Validate player.
+    player <- validatePlayer playerModel
 
     -- Update player.
-    UpdateDetails.updateDetails pool (unwrap cookieInfo.id) update'
+    UpdateDetails.updateDetails pool (unwrap cookieInfo.id) player

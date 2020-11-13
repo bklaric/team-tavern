@@ -1,14 +1,15 @@
 module TeamTavern.Server.Player.UpdatePlayer.ValidateDiscordTag
-    (DiscordTag, DiscordTagError, validateDiscordTag, validateOptionalDiscordTag) where
+    (DiscordTag, DiscordTagError, validateDiscordTag) where
 
 import Prelude
 
 import Data.List.Types (NonEmptyList)
 import Data.Maybe (Maybe(..))
 import Data.String (Pattern(..), length, split, trim)
-import Data.Validated (Validated)
 import Data.Validated as Validated
-import Data.Variant (Variant)
+import Data.Validated.Label (VariantValidated)
+import Data.Validated.Label as ValidatedLabel
+import Data.Variant (SProxy(..), Variant)
 import Wrapped.String (Invalid, invalid)
 import Wrapped.Validated as Wrapped
 
@@ -36,15 +37,14 @@ isDiscordTagValid discordTag =
         && length discriminator == discriminatorLength
     _ -> false
 
-validateDiscordTag ::
-    String -> Validated (NonEmptyList DiscordTagError) DiscordTag
-validateDiscordTag nickname =
-    Wrapped.create trim [invalid isDiscordTagValid]
-    DiscordTag nickname
-
-validateOptionalDiscordTag ::
-    Maybe String -> Validated (NonEmptyList DiscordTagError) (Maybe DiscordTag)
-validateOptionalDiscordTag discordTag =
+validateDiscordTag :: forall errors.
+    Maybe String -> VariantValidated (discordTag :: Array String | errors) (Maybe DiscordTag)
+validateDiscordTag discordTag =
     case discordTag of
     Nothing -> Validated.valid Nothing
-    Just discordTag' -> validateDiscordTag discordTag' <#> Just
+    Just discordTag' ->
+        Wrapped.create trim [invalid isDiscordTagValid] DiscordTag discordTag'
+        <#> Just
+        # ValidatedLabel.labelMap (SProxy :: SProxy "discordTag")
+            \(errors :: NonEmptyList DiscordTagError) ->
+                [ "Error validating Discord tag: " <> show errors ]

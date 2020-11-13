@@ -1,115 +1,33 @@
-module TeamTavern.Server.Team.Create (TeamModel, TeamError, OkContent, BadContent, create) where
+module TeamTavern.Server.Team.Create (OkContent, BadContent, create) where
 
 import Prelude
 
 import Async (Async, alwaysRight, examineLeftWithEffect)
-import Async.Validated as Async
 import Data.Array as Array
-import Data.Bifunctor.Label (label)
-import Data.List.Types (NonEmptyList)
 import Data.Maybe (Maybe(..))
 import Data.Nullable (toNullable)
 import Data.String (CodePoint, codePointFromChar, fromCodePointArray, toCodePointArray)
-import Data.Symbol (SProxy(..))
 import Data.Variant (Variant, match)
-import Effect (Effect, foreachE)
+import Effect (Effect)
 import Perun.Request.Body (Body)
 import Perun.Response (Response, badRequest_, badRequest__, internalServerError__, ok_)
 import Postgres.Pool (Pool)
 import Postgres.Query (class Querier, Query(..), QueryParameter, (:), (:|))
-import Prim.Row (class Lacks)
-import Record.Builder (Builder)
-import Record.Builder as Builder
 import Simple.JSON (writeJSON)
-import TeamTavern.Server.Domain.Text (Text)
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
 import TeamTavern.Server.Infrastructure.Error (InternalError)
-import TeamTavern.Server.Infrastructure.Log (clientHandler, internalHandler, logLines)
+import TeamTavern.Server.Infrastructure.Log (clientHandler, internalHandler)
 import TeamTavern.Server.Infrastructure.Log as Log
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstInternal)
 import TeamTavern.Server.Infrastructure.ReadJsonBody (readJsonBody)
-import TeamTavern.Server.Infrastructure.ValidateAbout (validateAbout)
 import TeamTavern.Server.Player.Domain.Id (Id)
-import TeamTavern.Server.Player.UpdatePlayer.ValidateLangugase (Language, validateLanguages)
-import TeamTavern.Server.Player.UpdatePlayer.ValidateTimespan (Timespan, nullableTimeFrom, nullableTimeTo, validateTimespan)
-import TeamTavern.Server.Player.UpdatePlayer.ValidateTimezone (Timezone, validateTimezone)
-import TeamTavern.Server.Profile.AddTeamProfile.ValidateAgeSpan (AgeSpan, nullableAgeFrom, nullableAgeTo, validateAgeSpan)
-import TeamTavern.Server.Profile.AddTeamProfile.ValidateRegions (Region, validateRegions)
-import TeamTavern.Server.Profile.Infrastructure.ValidateUrl (Url)
-import TeamTavern.Server.Team.Infrastructure.ValidateDiscordServer (validateDiscordServer)
-import TeamTavern.Server.Team.Infrastructure.ValidateName (Name, validateName)
+import TeamTavern.Server.Player.UpdatePlayer.ValidateTimespan (nullableTimeFrom, nullableTimeTo)
+import TeamTavern.Server.Profile.AddTeamProfile.ValidateAgeSpan (nullableAgeFrom, nullableAgeTo)
+import TeamTavern.Server.Team.Infrastructure.LogError (teamHandler)
+import TeamTavern.Server.Team.Infrastructure.ValidateName (Name)
 import TeamTavern.Server.Team.Infrastructure.ValidateName as ValidateName
-import TeamTavern.Server.Team.Infrastructure.ValidateWebsite (validateWebsite)
-
-type TeamModel =
-    { name :: String
-    , website :: Maybe String
-    , ageFrom :: Maybe Int
-    , ageTo :: Maybe Int
-    , locations :: Array String
-    , languages :: Array String
-    , microphone :: Boolean
-    , discordServer :: Maybe String
-    , timezone :: Maybe String
-    , weekdayFrom :: Maybe String
-    , weekdayTo :: Maybe String
-    , weekendFrom :: Maybe String
-    , weekendTo :: Maybe String
-    , about :: String
-    }
-
-type Team =
-    { name :: Name
-    , website :: Maybe Url
-    , ageSpan :: AgeSpan
-    , locations :: Array Region
-    , languages :: Array Language
-    , microphone :: Boolean
-    , discordServer :: Maybe Url
-    , timezone :: Maybe Timezone
-    , onlineWeekday :: Maybe Timespan
-    , onlineWeekend :: Maybe Timespan
-    , about :: Text
-    }
-
-type TeamError = Variant
-    ( name :: Array String
-    , website :: Array String
-    , discordServer :: Array String
-    , about :: Array String
-    )
-
-type TeamErrors = NonEmptyList TeamError
-
-teamHandler :: forall fields. Lacks "team" fields =>
-    Builder (Record fields) { team :: TeamErrors -> Effect Unit | fields }
-teamHandler = Builder.insert (SProxy :: SProxy "team") \errors ->
-    foreachE (Array.fromFoldable errors) $ match
-    { name: logLines, website: logLines, discordServer: logLines, about: logLines }
-
-validateTeam :: forall errors. TeamModel -> Async (Variant (team :: TeamErrors | errors)) Team
-validateTeam (team :: TeamModel) = let
-    name = validateName team.name
-    website = validateWebsite team.website
-    ageSpan = validateAgeSpan team.ageFrom team.ageTo
-    locations = validateRegions team.locations
-    languages = validateLanguages team.languages
-    microphone = team.microphone
-    discordServer = validateDiscordServer team.discordServer
-    timezone = validateTimezone team.timezone
-    onlineWeekday = timezone >>= (const $ validateTimespan team.weekdayFrom team.weekdayTo)
-    onlineWeekend = timezone >>= (const $ validateTimespan team.weekendFrom team.weekendTo)
-    about = validateAbout team.about
-    in
-    { name: _, website: _
-    , ageSpan, locations
-    , languages, microphone, discordServer: _
-    , timezone, onlineWeekday, onlineWeekend
-    , about: _
-    }
-    <$> name <*> website <*> discordServer <*> about
-    # Async.fromValidated # label (SProxy :: SProxy "team")
+import TeamTavern.Server.Team.Infrastructure.ValidateTeam (Team, TeamError, TeamErrors, validateTeam)
 
 newtype Handle = Handle String
 

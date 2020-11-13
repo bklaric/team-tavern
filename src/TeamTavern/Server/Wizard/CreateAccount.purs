@@ -33,7 +33,6 @@ import Simple.JSON.Async (readJSON)
 import TeamTavern.Server.Architecture.Perun.Request.Body (readBody)
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.EnsureNotSignedIn (ensureNotSignedIn)
-import TeamTavern.Server.Player.Domain.About (About(..))
 import TeamTavern.Server.Player.Domain.Email as Email
 import TeamTavern.Server.Player.Domain.Hash as Hash
 import TeamTavern.Server.Player.Domain.Nickname as Nickname
@@ -42,14 +41,8 @@ import TeamTavern.Server.Player.Domain.Password as Password
 import TeamTavern.Server.Player.Register.AddPlayer (addPlayer)
 import TeamTavern.Server.Player.Register.SendEmail (SendEmailModel)
 import TeamTavern.Server.Player.Register.ValidateModel (RegisterModel, RegisterModelError)
-import TeamTavern.Server.Player.UpdatePlayer.ReadUpdate (UpdateDetailsModel)
 import TeamTavern.Server.Player.UpdatePlayer.UpdateDetails (updateDetails)
-import TeamTavern.Server.Player.UpdatePlayer.ValidateBirthday (validateOptionalBirthday)
-import TeamTavern.Server.Player.UpdatePlayer.ValidateLocation (validateLocation)
-import TeamTavern.Server.Player.UpdatePlayer.ValidateDiscordTag (validateOptionalDiscordTag)
-import TeamTavern.Server.Player.UpdatePlayer.ValidateLangugase (validateLanguages)
-import TeamTavern.Server.Player.UpdatePlayer.ValidateTimespan (validateTimespan)
-import TeamTavern.Server.Player.UpdatePlayer.ValidateTimezone (validateTimezone)
+import TeamTavern.Server.Player.UpdatePlayer.ValidatePlayer (PlayerError, validatePlayerV)
 import TeamTavern.Server.Profile.AddPlayerProfile.AddProfile (addProfile)
 import TeamTavern.Server.Profile.AddPlayerProfile.LoadFields (loadFields)
 import TeamTavern.Server.Profile.AddPlayerProfile.LoadFields as LoadFields
@@ -69,6 +62,7 @@ type PersonalDetails =
     , weekdayTo :: Maybe String
     , weekendFrom :: Maybe String
     , weekendTo :: Maybe String
+    , about :: String
     }
 
 type ProfileDetails =
@@ -106,35 +100,6 @@ readRequestBody body = do
             , "Errors:", show errors
             ]
         }
-
-validatePersonalDetails
-    :: forall errors
-    .  PersonalDetails
-    -> AsyncV
-        (NonEmptyList (Variant (invalidDiscordTag :: { message :: Array String } | errors)))
-        UpdateDetailsModel
-validatePersonalDetails details = do
-    birthday <- AsyncV.fromEffect $ validateOptionalBirthday details.birthday
-    let location = validateLocation details.location
-        languages = validateLanguages details.languages
-        microphone = details.microphone
-    discordTag <- validateOptionalDiscordTag details.discordTag
-        # AsyncV.fromValidated
-        # AsyncV.labelMap (SProxy :: SProxy "invalidDiscordTag") \error ->
-            { message:
-                [ "Discord tag could not be validated."
-                , "Discord tag:", show details.discordTag
-                , "Error: ", show error
-                ]
-            }
-    let timezone = validateTimezone details.timezone
-        onlineWeekday = timezone >>= (const $ validateTimespan details.weekdayFrom details.weekdayTo)
-        onlineWeekend = timezone >>= (const $ validateTimespan details.weekendFrom details.weekendTo)
-    pure { birthday, location
-         , languages, microphone, discordTag
-         , timezone, onlineWeekday, onlineWeekend
-         , about: About []
-         }
 
 validateProfileDetails
     :: forall errors
@@ -223,6 +188,8 @@ type BadRequestContent = Variant
             , invalidNickname :: {}
             , invalidPassword :: {}
             ))
+
+        , player :: Array PlayerError
         ))
     , emailTaken :: {}
     , nicknameTaken :: {}
@@ -244,6 +211,7 @@ errorResponse = onMatch
                         })
                     # fromFoldable
                     # inj (SProxy :: SProxy "invalidRegistration")
+                , player: \errors -> inj (SProxy :: SProxy "player") (Array.fromFoldable errors)
                 }
             # fromFoldable
             # inj (SProxy :: SProxy "invalidBody")
@@ -297,7 +265,7 @@ createAccount pool emailClient cookies body =
             -- Validate data from body.
             (validatedBody :: _) <-
                 ({ personal: _, profile: _, registration: _ }
-                <$> validatePersonalDetails body'.personalDetails
+                <$> validatePlayerV body'.personalDetails
                 <*> validateProfileDetails fields body'.profileDetails
                 <*> validateRegistrationDetails body'.registrationDetails)
                 # AsyncV.toAsync

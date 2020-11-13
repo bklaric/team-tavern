@@ -24,15 +24,8 @@ import Simple.JSON.Async (readJSON)
 import TeamTavern.Server.Architecture.Perun.Request.Body (readBody)
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
-import TeamTavern.Server.Player.Domain.About as About
-import TeamTavern.Server.Player.UpdatePlayer.ReadUpdate (UpdateDetailsModel)
 import TeamTavern.Server.Player.UpdatePlayer.UpdateDetails (updateDetails)
-import TeamTavern.Server.Player.UpdatePlayer.ValidateBirthday (validateOptionalBirthday)
-import TeamTavern.Server.Player.UpdatePlayer.ValidateLocation (validateLocation)
-import TeamTavern.Server.Player.UpdatePlayer.ValidateDiscordTag (validateOptionalDiscordTag)
-import TeamTavern.Server.Player.UpdatePlayer.ValidateLangugase (validateLanguages)
-import TeamTavern.Server.Player.UpdatePlayer.ValidateTimespan (validateTimespan)
-import TeamTavern.Server.Player.UpdatePlayer.ValidateTimezone (validateTimezone)
+import TeamTavern.Server.Player.UpdatePlayer.ValidatePlayer (PlayerError, validatePlayerV)
 import TeamTavern.Server.Profile.AddPlayerProfile.AddProfile (addProfile)
 import TeamTavern.Server.Profile.AddPlayerProfile.LoadFields (loadFields)
 import TeamTavern.Server.Profile.AddPlayerProfile.LoadFields as LoadFields
@@ -84,43 +77,6 @@ readRequestBody body = do
             ]
         }
 
-validatePlayerDetails
-    :: forall errors
-    .  PlayerDetails
-    -> AsyncV
-        (NonEmptyList (Variant
-            ( invalidDiscordTag :: { message :: Array String }
-            , invalidAbout :: { message :: Array String }
-            | errors ))
-        )
-        UpdateDetailsModel
-validatePlayerDetails details = do
-    birthday <- AsyncV.fromEffect $ validateOptionalBirthday details.birthday
-    let location = validateLocation details.location
-        languages = validateLanguages details.languages
-        microphone = details.microphone
-    discordTag <- validateOptionalDiscordTag details.discordTag
-        # AsyncV.fromValidated
-        # AsyncV.labelMap (SProxy :: SProxy "invalidDiscordTag") \error ->
-            { message:
-                [ "Discord tag could not be validated."
-                , "Discord tag:", show details.discordTag
-                , "Error: ", show error
-                ]
-            }
-    let timezone = validateTimezone details.timezone
-        onlineWeekday = timezone >>= (const $ validateTimespan details.weekdayFrom details.weekdayTo)
-        onlineWeekend = timezone >>= (const $ validateTimespan details.weekendFrom details.weekendTo)
-    about <- About.create details.about
-        # AsyncV.fromValidated
-        # AsyncV.labelMap (SProxy :: SProxy "invalidAbout") \error ->
-            { message: [ "About is too long or something: ", show error ] }
-    pure { birthday, location
-         , languages, microphone, discordTag
-         , timezone, onlineWeekday, onlineWeekend
-         , about
-         }
-
 validateProfileDetails
     :: forall errors
     .  Array LoadFields.Field -> ReadProfile.Profile
@@ -133,11 +89,11 @@ validateProfileDetails fields details = do
     # AsyncV.labelMap (SProxy :: SProxy "profile") { profile: details, errors: _ }
 
 type BadRequestContent = Array (Variant
-    ( invalidDiscordTag :: {}
-    , invalidAbout :: {}
-    , ambitions :: Array String
+    ( ambitions :: Array String
     , url :: { key :: String, message :: Array String }
     , missing :: { key :: String, message :: Array String }
+
+    , player :: Array PlayerError
     ))
 
 -- errorResponse :: RegisterError -> Response
@@ -145,28 +101,8 @@ errorResponse = onMatch
     { invalidBody: \errors ->
             errors
             <#> match
-                { invalidDiscordTag: const [ inj (SProxy :: SProxy "invalidDiscordTag") {} ]
-                , invalidAbout: const [ inj (SProxy :: SProxy "invalidAbout") {} ]
-                , profile: \{ errors } -> Array.fromFoldable errors
-
-                    -- \profileErrors ->
-                    -- (profileErrors.errors :: NonEmptyList ProfileError)
-                    -- <#> (match
-                    --     { ambitions: const $ Array.singleton $ inj (SProxy :: SProxy "ambitions") {}
-                    --     , fieldValues: \fieldValueErrors ->
-                    --         fieldValueErrors
-                    --         <#> onMatch
-                    --             { invalidUrlFieldValue: \{ fieldValue: { fieldKey }, errors: errors' } ->
-                    --                 Just $ inj (SProxy :: SProxy "invalidUrl") { fieldKey }
-                    --             , missingFieldValue: \{ field: (Field _ key _ _) } ->
-                    --                 Just $ inj (SProxy :: SProxy "missing") { fieldKey: key }
-                    --             }
-                    --             (const Nothing)
-                    --         # fromFoldable
-                    --         # catMaybes
-                    --     })
-                    -- # fromFoldable
-                    -- # join
+                { profile: \{ errors } -> Array.fromFoldable errors
+                , player: \errors -> [ inj (SProxy :: SProxy "player") (Array.fromFoldable errors) ]
                 }
             # fromFoldable
             # join
@@ -201,7 +137,7 @@ onboard pool cookies body =
         -- Validate data from body.
         (validatedBody :: _) <-
             ({ player: _, profile: _ }
-            <$> validatePlayerDetails body'.personalDetails
+            <$> validatePlayerV body'.personalDetails
             <*> validateProfileDetails fields body'.profileDetails)
             # AsyncV.toAsync
             # label (SProxy :: SProxy "invalidBody")
