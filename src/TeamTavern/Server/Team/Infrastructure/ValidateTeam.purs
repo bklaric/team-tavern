@@ -4,7 +4,11 @@ import Prelude
 
 import Async (Async)
 import Async.Validated as Async
+import AsyncV (AsyncV)
+import AsyncV as AsyncV
+import Data.Bifunctor (lmap)
 import Data.Bifunctor.Label (label)
+import Data.List.NonEmpty as NonEmptyList
 import Data.List.Types (NonEmptyList)
 import Data.Maybe (Maybe)
 import Data.Symbol (SProxy(..))
@@ -83,3 +87,7 @@ validateTeam (team :: TeamModel) = let
     }
     <$> name <*> website <*> discordServer <*> about
     # Async.fromValidated # label (SProxy :: SProxy "team")
+
+validateTeamV :: forall errors.
+    TeamModel -> AsyncV (NonEmptyList (Variant (team :: TeamErrors | errors))) Team
+validateTeamV = validateTeam >>> lmap NonEmptyList.singleton >>> AsyncV.fromAsync

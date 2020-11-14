@@ -12,7 +12,6 @@ type Option =
     { id :: Int
     , key :: String
     , domain :: Maybe String
-    , option :: String
     }
 
 type Field =
@@ -35,8 +34,7 @@ queryString = Query """
         json_agg(
             json_build_object(
                 'id', field_option.id,
-                'key', field_option.key,
-                'option', field_option.label
+                'key', field_option.key
             )
             order by field_option.id
         )

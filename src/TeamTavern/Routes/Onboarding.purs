@@ -68,6 +68,8 @@ type RequestContent =
         }
     }
 
+type OkContent = { teamHandle :: String }
+
 type BadContent = Array $ Variant
     ( player :: Array $ Variant
         ( discordTag :: Array String

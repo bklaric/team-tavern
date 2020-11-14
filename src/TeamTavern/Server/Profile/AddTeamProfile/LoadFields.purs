@@ -9,7 +9,6 @@ import TeamTavern.Server.Infrastructure.Postgres (queryMany)
 type Option =
     { id :: Int
     , key :: String
-    , label :: String
     }
 
 type Field =
@@ -26,8 +25,7 @@ queryString = Query """
         json_agg(
             json_build_object(
                 'id', field_option.id,
-                'key', field_option.key,
-                'label', field_option.label
+                'key', field_option.key
             )
             order by field_option.id
         )

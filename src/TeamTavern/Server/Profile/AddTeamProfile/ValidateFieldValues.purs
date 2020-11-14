@@ -17,9 +17,7 @@ type OptionId = Int
 
 type OptionKey = String
 
-type OptionLabel = String
-
-data Option = Option OptionId OptionKey OptionLabel
+data Option = Option OptionId OptionKey
 
 type FieldId = Int
 
@@ -40,7 +38,7 @@ data FieldValue = FieldValue FieldId FieldValueOptions
 prepareOptions :: Array LoadFields.Option -> Map OptionKey Option
 prepareOptions options =
     options
-    <#> (\{ id, key, label } -> Tuple key (Option id key label))
+    <#> (\{ id, key } -> Tuple key (Option id key))
     # Map.fromFoldable
 
 prepareFields :: Array LoadFields.Field -> Array Field
@@ -60,7 +58,7 @@ validateFieldValue fields { fieldKey, optionKeys } =
         valueOptionIds =
             optionKeys
             # Array.mapMaybe (flip Map.lookup options)
-            <#> \(Option optionId _ _) -> optionId
+            <#> \(Option optionId _) -> optionId
         in
         if not $ Array.null valueOptionIds
         then Just $ FieldValue id valueOptionIds

@@ -31,9 +31,7 @@ type OptionId = Int
 
 type OptionKey = String
 
-type OptionText = String
-
-data Option = Option OptionId OptionKey OptionText
+data Option = Option OptionId OptionKey
 
 derive instance eqOption :: Eq Option
 
@@ -95,7 +93,7 @@ type ValidateFieldValuesError errors = Variant
 
 prepareOptions :: Array LoadFields.Option -> Map OptionKey Option
 prepareOptions options = options
-    <#> (\{ id, key, option } -> Tuple key (Option id key option))
+    <#> (\{ id, key } -> Tuple key (Option id key))
     # Map.fromFoldable
 
 prepareFields :: Array LoadFields.Field -> Array Field
@@ -128,7 +126,7 @@ validateField fieldValues (Field id key _ (SingleField options)) =
     case fieldValues # Array.find \{ fieldKey } -> fieldKey == key of
     Just fieldValue | Just optionKey <- fieldValue.optionKey ->
         case Map.lookup optionKey options of
-        Just (Option optionId _ _) -> Just $ Right $ FieldValue id $ Single optionId
+        Just (Option optionId _) -> Just $ Right $ FieldValue id $ Single optionId
         Nothing -> Nothing
     _ -> Nothing
 validateField fieldValues (Field id key _ (MultiField options)) =
@@ -137,7 +135,7 @@ validateField fieldValues (Field id key _ (MultiField options)) =
         valueOptionIds =
             optionKeys
             # Array.mapMaybe (flip Map.lookup options)
-            <#> \(Option optionId _ _) -> optionId
+            <#> \(Option optionId _) -> optionId
         in
         if not $ Array.null valueOptionIds
         then Just $ Right $ FieldValue id $ Multi valueOptionIds

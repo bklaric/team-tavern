@@ -7,7 +7,7 @@ import Async.Validated as Async
 import AsyncV (AsyncV)
 import AsyncV as AsyncV
 import Data.Bifunctor (lmap)
-import Data.Bifunctor.Label (label)
+import Data.Bifunctor.Label (label, relabel)
 import Data.List.NonEmpty as NonEmptyList
 import Data.List.Types (NonEmptyList)
 import Data.Symbol (SProxy(..))
@@ -49,6 +49,9 @@ validateProfileV
     :: forall errors
     .  Array LoadFields.Field
     -> ReadProfile.Profile
-    -> AsyncV (NonEmptyList (Variant (profile :: ProfileErrors | errors))) Profile
+    -> AsyncV (NonEmptyList (Variant (playerProfile :: ProfileErrors | errors))) Profile
 validateProfileV fields =
-    validateProfile fields >>> lmap NonEmptyList.singleton >>> AsyncV.fromAsync
+    validateProfile fields
+    >>> relabel (SProxy :: SProxy "profile") (SProxy :: SProxy "playerProfile")
+    >>> lmap NonEmptyList.singleton
+    >>> AsyncV.fromAsync

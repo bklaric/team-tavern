@@ -185,7 +185,7 @@ errorResponse = onMatch
             errors
             <#> match
                 { player: \errors -> inj (SProxy :: SProxy "player") (Array.fromFoldable errors)
-                , profile: \errors -> inj (SProxy :: SProxy "invalidProfile") $ Array.fromFoldable errors
+                , playerProfile: \errors -> inj (SProxy :: SProxy "invalidProfile") $ Array.fromFoldable errors
                 , invalidRegistration: \{ errors } ->
                     errors
                     <#> (match

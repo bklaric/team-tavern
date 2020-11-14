@@ -346,11 +346,7 @@ handleAction Submit = do
                     foldl
                     (\state bodyError ->
                         match
-                        { invalidDiscordTag: const $ state
-                            { generalPlayerDetailsInput = state.generalPlayerDetailsInput
-                                { discordTagError = true }
-                            }
-                        , invalidProfile:
+                        { invalidProfile:
                             foldl
                             (\state' profileError ->
                                 match
