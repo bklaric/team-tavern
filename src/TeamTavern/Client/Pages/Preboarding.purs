@@ -1,4 +1,4 @@
-module TeamTavern.Client.Pages.Onboarding (Step(..), Input, Slot, emptyInput, onboarding) where
+module TeamTavern.Client.Pages.Preboarding (Step(..), Input, Slot, emptyInput, onboarding) where
 
 import Prelude
 

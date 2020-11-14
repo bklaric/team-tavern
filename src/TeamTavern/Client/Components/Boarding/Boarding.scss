@@ -1,4 +1,4 @@
-.onboarding {
+.boarding {
     background-color: white;
     width: fit-content;
     max-width: 1000px;
@@ -13,21 +13,21 @@
     }
 }
 
-.onboarding-step {
+.boarding-step {
     padding: 21px;
 }
 
-.onboarding-heading {
+.boarding-heading {
     margin-bottom: 21px;
     text-align: center;
 }
 
-.onboarding-description {
+.boarding-description {
     margin-bottom: 14px;
     text-align: center;
 }
 
-.onboarding-buttons {
+.boarding-buttons {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
@@ -40,30 +40,30 @@
     }
 }
 
-.onboarding-skip-button-group {
+.boarding-skip-button-group {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
 }
 
-.onboarding-skip-button-underlabel {
+.boarding-skip-button-underlabel {
     @extend .input-underlabel;
     margin-top: 7px;
     max-width: 200px;
 }
 
-.onboarding-confirm-skip-button-underlabel {
-    @extend .onboarding-skip-button-underlabel;
+.boarding-confirm-skip-button-underlabel {
+    @extend .boarding-skip-button-underlabel;
     color: hsl(54, 100%, 35%);
 }
 
-.onboarding-submit-button-group {
+.boarding-submit-button-group {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
 }
 
-.onboarding-submit-button-underlabel {
+.boarding-submit-button-underlabel {
     @extend .input-underlabel;
     margin-top: 7px;
     max-width: 200px;
@@ -72,21 +72,21 @@
 }
 
 @media screen and (min-width: 500px) {
-    .onboarding-skip-button-group {
+    .boarding-skip-button-group {
         flex-direction: row;
     }
 
-    .onboarding-submit-button-group {
+    .boarding-submit-button-group {
         flex-direction: row-reverse;
         align-items: flex-start;
     }
 
-    .onboarding-skip-button-underlabel {
+    .boarding-skip-button-underlabel {
         margin-top: 0;
         margin-left: 7px;
     }
 
-    .onboarding-submit-button-underlabel {
+    .boarding-submit-button-underlabel {
         margin-top: 0;
         margin-right: 7px;
     }

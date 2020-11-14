@@ -1,4 +1,4 @@
-module TeamTavern.Client.Pages.Onboarding.SelectGame (Input, Output, Slot, selectGame) where
+module TeamTavern.Client.Pages.Onboarding.GameInput (Input, Output, Slot, gameInput) where
 
 import Prelude
 
@@ -91,10 +91,10 @@ component = H.mkComponent
         }
     }
 
-selectGame
+gameInput
     :: forall action slots left
     .  Input
     -> (Output -> Maybe action)
-    -> HH.ComponentHTML action (selectGame :: Slot | slots) (Async left)
-selectGame input handleOutput =
-    HH.slot (SProxy :: SProxy "selectGame") unit component input handleOutput
+    -> HH.ComponentHTML action (gameInput :: Slot | slots) (Async left)
+gameInput input handleOutput =
+    HH.slot (SProxy :: SProxy "gameInput") unit component input handleOutput

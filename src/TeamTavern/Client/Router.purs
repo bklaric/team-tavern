@@ -153,11 +153,11 @@ handleAction (Init state route) = do
                     case step of
                     "start" -> Just Onboarding.Greeting
                     "player-or-team" -> Just Onboarding.PlayerOrTeam
-                    "player" -> Just Onboarding.PlayerDetails
-                    "team" -> Just Onboarding.TeamDetails
+                    "player" -> Just Onboarding.Player
+                    "team" -> Just Onboarding.Team
                     "game" -> Just Onboarding.Game
-                    "player-profile" -> Just Onboarding.PlayerProfileDetails
-                    "team-profile" -> Just Onboarding.TeamProfileDetails
+                    "player-profile" -> Just Onboarding.PlayerProfile
+                    "team-profile" -> Just Onboarding.TeamProfile
                     _ -> Nothing
             in
             case (read_ state :: Maybe Onboarding.Input), step' of
