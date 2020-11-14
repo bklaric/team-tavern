@@ -70,6 +70,7 @@ type State =
 
 data Action
     = Initialize
+    | Receive Input
     | UpdateBirthday (Maybe String)
     | UpdateLocation (Maybe String)
     | UpdateLanguages (Array String)
@@ -141,6 +142,9 @@ handleAction Initialize = do
         , thirteenYearsAgo = thirteenYearsAgo
         }
     raiseOutput state
+handleAction (Receive input) =
+    H.modify_ \state ->
+        input # Record.insert (SProxy :: SProxy "thirteenYearsAgo") state.thirteenYearsAgo
 handleAction (UpdateBirthday birthday) = do
     state <- H.modify _ { birthday = birthday }
     raiseOutput state
@@ -183,6 +187,7 @@ component = H.mkComponent
     , eval: H.mkEval $ H.defaultEval
         { handleAction = handleAction
         , initialize = Just Initialize
+        , receive = Just <<< Receive
         }
     }
 

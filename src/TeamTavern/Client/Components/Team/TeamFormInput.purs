@@ -4,7 +4,7 @@ import Prelude
 
 import Async (Async)
 import Data.Const (Const)
-import Data.Maybe (Maybe(..), isNothing)
+import Data.Maybe (Maybe(..), isNothing, maybe)
 import Data.Variant (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
@@ -15,6 +15,7 @@ import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.Select.MultiTreeSelect as MultiTreeSelect
 import TeamTavern.Client.Components.Select.SingleSelect as SingleSelect
 import TeamTavern.Client.Components.Team.TeamInputGroup (aboutInputGroup, ageInputGroup, discordServerInputGroup, languagesInputGroup, locationInputGroup, microphoneInputGroup, nameInputGroup, websiteInputGroup)
+import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Server.Infrastructure.Timezones (Timezone)
 
 type Input =
@@ -58,7 +59,8 @@ type Output =
 type State = Input
 
 data Action
-    = Receive Input
+    = Initialize
+    | Receive Input
     | UpdateName String
     | UpdateWebsite (Maybe String)
     | UpdateAgeFrom (Maybe Int)
@@ -123,6 +125,11 @@ raiseOutput state
     # H.raise
 
 handleAction :: forall left. Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
+handleAction Initialize = do
+    state <- H.get
+    timezone <- maybe getClientTimezone pure state.timezone
+    H.modify_ _ { timezone = Just timezone }
+    raiseOutput state
 handleAction (Receive input) =
     H.put input
 handleAction (UpdateName name) = do
@@ -174,6 +181,7 @@ component = H.mkComponent
     , render
     , eval: H.mkEval $ H.defaultEval
         { handleAction = handleAction
+        , initialize = Just Initialize
         , receive = Just <<< Receive
         }
     }
