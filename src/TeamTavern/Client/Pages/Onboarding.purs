@@ -34,8 +34,8 @@ import TeamTavern.Client.Components.Player.PlayerFormInput as PlayerFormInput
 import TeamTavern.Client.Components.Player.ProfileFormInput as PlayerProfileFormInput
 import TeamTavern.Client.Components.Team.ProfileFormInput as TeamProfileFormInput
 import TeamTavern.Client.Components.Team.TeamFormInput as TeamFormInput
-import TeamTavern.Client.Pages.Onboarding.GameInput (gameInput)
-import TeamTavern.Client.Pages.Onboarding.GameInput as GameInput
+import TeamTavern.Client.Components.Boarding.GameInput (gameInput)
+import TeamTavern.Client.Components.Boarding.GameInput as GameInput
 import TeamTavern.Client.Script.Cookie (getPlayerNickname)
 import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
 import TeamTavern.Client.Script.Navigate (navigate, navigateReplace, navigate_)
@@ -118,11 +118,11 @@ data Action
     | ConfirmSkip
     | SetStep Step
     | UpdatePlayerOrTeam PlayerOrTeamInput.PlayerOrTeam
-    | UpdatePlayerDetails PlayerFormInput.Output
-    | UpdateTeamDetails TeamFormInput.Output
+    | UpdatePlayer PlayerFormInput.Output
+    | UpdateTeam TeamFormInput.Output
     | UpdateGame GameInput.Output
-    | UpdatePlayerProfileDetails PlayerProfileFormInput.Output
-    | UpdateTeamProfileDetails TeamProfileFormInput.Output
+    | UpdatePlayerProfile PlayerProfileFormInput.Output
+    | UpdateTeamProfile TeamProfileFormInput.Output
     | SetUpAccount
 
 type Slot = H.Slot (Const Void) Void Unit
@@ -185,7 +185,7 @@ renderPage { step: Player, player } =
         , boardingDescription  """Enter details about yourself so your new bruh gamer friends
                 can find you, bruh. Fill out as much as you can to ensure the
                 bruhest gamers find you. All fields are optional, bruh."""
-        , PlayerFormInput.playerFormInput player (Just <<< UpdatePlayerDetails)
+        , PlayerFormInput.playerFormInput player (Just <<< UpdatePlayer)
         ]
     , boardingButtons
         [ secondaryButton_ "Back" $ SetStep PlayerOrTeam
@@ -198,7 +198,7 @@ renderPage { step: Team, team } =
         , boardingDescription  """Enter details about yourself so your new bruh gamer friends
                 can find you, bruh. Fill out as much as you can to ensure the
                 bruhest gamers find you. All fields are optional, bruh."""
-        , TeamFormInput.teamFormInput team (Just <<< UpdateTeamDetails)
+        , TeamFormInput.teamFormInput team (Just <<< UpdateTeam)
         ]
     , boardingButtons
         [ secondaryButton_ "Back" $ SetStep PlayerOrTeam
@@ -233,7 +233,7 @@ renderPage { step: PlayerProfile, playerProfile, otherError, submitting } =
     [ boardingStep
         [ boardingHeading "Player profile details"
         , boardingDescription  """Enter details about your gameplay. Fill out everything."""
-        , PlayerProfileFormInput.profileFormInput playerProfile UpdatePlayerProfileDetails
+        , PlayerProfileFormInput.profileFormInput playerProfile UpdatePlayerProfile
         ]
     , boardingButtons
         [ secondaryButton_ "Back" $ SetStep Game
@@ -257,7 +257,7 @@ renderPage { step: TeamProfile, teamProfile, otherError, submitting } =
     [ boardingStep
         [ boardingHeading "Team profile details"
         , boardingDescription  """Enter details about your gameplay. Fill out everything."""
-        , TeamProfileFormInput.profileFormInput teamProfile UpdateTeamProfileDetails
+        , TeamProfileFormInput.profileFormInput teamProfile UpdateTeamProfile
         ]
     , boardingButtons
         [ secondaryButton_ "Back" $ SetStep Game
@@ -412,7 +412,7 @@ handleAction (SetStep step) = do
 handleAction (UpdatePlayerOrTeam playerOrTeam) = do
     state <- H.modify _ { playerOrTeam = Just playerOrTeam }
     updateHistoryState state
-handleAction (UpdatePlayerDetails details) = do
+handleAction (UpdatePlayer details) = do
     state <- H.modify _
         { player
             { birthday = details.birthday
@@ -429,7 +429,7 @@ handleAction (UpdatePlayerDetails details) = do
             }
         }
     updateHistoryState state
-handleAction (UpdateTeamDetails details) = do
+handleAction (UpdateTeam details) = do
     state <- H.modify _
         { team
             { name = details.name
@@ -470,7 +470,7 @@ handleAction (UpdateGame game) = do
             }
         }
     updateHistoryState state
-handleAction (UpdatePlayerProfileDetails details) = do
+handleAction (UpdatePlayerProfile details) = do
     state <- H.modify _
         { playerProfile
             { fieldValues = details.fieldValues
@@ -479,7 +479,7 @@ handleAction (UpdatePlayerProfileDetails details) = do
             }
         }
     updateHistoryState state
-handleAction (UpdateTeamProfileDetails details) = do
+handleAction (UpdateTeamProfile details) = do
     state <- H.modify _
         { teamProfile
             { fieldValues = details.fieldValues

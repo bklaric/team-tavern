@@ -1,4 +1,4 @@
-module TeamTavern.Client.Pages.Preboarding (Step(..), Input, Slot, emptyInput, onboarding) where
+module TeamTavern.Client.Pages.Preboarding (Step(..), Input, Slot, emptyInput, preboarding) where
 
 import Prelude
 
@@ -32,15 +32,17 @@ import TeamTavern.Client.Components.Boarding.PlayerOrTeamInput as PlayerOrTeamIn
 import TeamTavern.Client.Components.Button (primaryButton_, secondaryButton_)
 import TeamTavern.Client.Components.Player.PlayerFormInput as PlayerFormInput
 import TeamTavern.Client.Components.Player.ProfileFormInput as PlayerProfileFormInput
+import TeamTavern.Client.Components.RegistrationInput (registrationInput)
+import TeamTavern.Client.Components.RegistrationInput as RegistrationInput
 import TeamTavern.Client.Components.Team.ProfileFormInput as TeamProfileFormInput
 import TeamTavern.Client.Components.Team.TeamFormInput as TeamFormInput
-import TeamTavern.Client.Pages.Onboarding.GameInput (gameInput)
-import TeamTavern.Client.Pages.Onboarding.GameInput as GameInput
+import TeamTavern.Client.Components.Boarding.GameInput (gameInput)
+import TeamTavern.Client.Components.Boarding.GameInput as GameInput
 import TeamTavern.Client.Script.Cookie (getPlayerNickname)
 import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
 import TeamTavern.Client.Script.Navigate (navigate, navigateReplace, navigate_)
 import TeamTavern.Client.Snippets.Class as HS
-import TeamTavern.Routes.Onboarding as Onboarding
+import TeamTavern.Routes.Preboarding as Preboarding
 import Type (type ($))
 
 data Step
@@ -51,6 +53,7 @@ data Step
     | Game
     | PlayerProfile
     | TeamProfile
+    | Register
 
 instance writeForeginStep :: WriteForeign Step where
     writeImpl Greeting = unsafeToForeign "Greeting"
@@ -60,6 +63,7 @@ instance writeForeginStep :: WriteForeign Step where
     writeImpl Game = unsafeToForeign "Game"
     writeImpl PlayerProfile = unsafeToForeign "PlayerProfile"
     writeImpl TeamProfile = unsafeToForeign "TeamProfile"
+    writeImpl Register = unsafeToForeign "Register"
 
 instance readForeignStep :: ReadForeign Step where
     readImpl = readString >=> case _ of
@@ -70,6 +74,7 @@ instance readForeignStep :: ReadForeign Step where
         "Game" -> pure Game
         "PlayerProfile" -> pure PlayerProfile
         "TeamProfile" -> pure TeamProfile
+        "Register" -> pure Register
         step -> fail $ ForeignError $ "Unknown step " <> step
 
 type Input =
@@ -81,6 +86,7 @@ type Input =
     , game :: GameInput.Input
     , playerProfile :: PlayerProfileFormInput.Input
     , teamProfile :: TeamProfileFormInput.Input
+    , registration :: RegistrationInput.Input
     , otherError :: Boolean
     }
 
@@ -94,6 +100,7 @@ emptyInput =
     , game: Nothing
     , playerProfile: PlayerProfileFormInput.emptyInput []
     , teamProfile: TeamProfileFormInput.emptyInput []
+    , registration: RegistrationInput.emptyInput
     , otherError: false
     }
 
@@ -107,6 +114,7 @@ type State =
     , game :: GameInput.Input
     , playerProfile :: PlayerProfileFormInput.Input
     , teamProfile :: TeamProfileFormInput.Input
+    , registration :: RegistrationInput.Input
     , otherError :: Boolean
     , submitting :: Boolean
     }
@@ -118,11 +126,12 @@ data Action
     | ConfirmSkip
     | SetStep Step
     | UpdatePlayerOrTeam PlayerOrTeamInput.PlayerOrTeam
-    | UpdatePlayerDetails PlayerFormInput.Output
-    | UpdateTeamDetails TeamFormInput.Output
+    | UpdatePlayer PlayerFormInput.Output
+    | UpdateTeam TeamFormInput.Output
     | UpdateGame GameInput.Output
-    | UpdatePlayerProfileDetails PlayerProfileFormInput.Output
-    | UpdateTeamProfileDetails TeamProfileFormInput.Output
+    | UpdatePlayerProfile PlayerProfileFormInput.Output
+    | UpdateTeamProfile TeamProfileFormInput.Output
+    | UpdateRegistration RegistrationInput.Output
     | SetUpAccount
 
 type Slot = H.Slot (Const Void) Void Unit
@@ -133,6 +142,7 @@ type ChildSlots slots =
     , gameInput :: GameInput.Slot
     , playerProfileFormInput :: PlayerProfileFormInput.Slot
     , teamProfileFormInput :: TeamProfileFormInput.Slot
+    , registrationInput :: RegistrationInput.Slot
     | slots )
 
 renderPage :: forall slots left.
@@ -185,7 +195,7 @@ renderPage { step: Player, player } =
         , boardingDescription  """Enter details about yourself so your new bruh gamer friends
                 can find you, bruh. Fill out as much as you can to ensure the
                 bruhest gamers find you. All fields are optional, bruh."""
-        , PlayerFormInput.playerFormInput player (Just <<< UpdatePlayerDetails)
+        , PlayerFormInput.playerFormInput player (Just <<< UpdatePlayer)
         ]
     , boardingButtons
         [ secondaryButton_ "Back" $ SetStep PlayerOrTeam
@@ -195,17 +205,17 @@ renderPage { step: Player, player } =
 renderPage { step: Team, team } =
     [ boardingStep
         [ boardingHeading "Team details"
+<<<<<<< HEAD
         , boardingDescription  """Enter details about yourself so your new bruh gamer friends
                 can find you, bruh. Fill out as much as you can to ensure the
                 bruhest gamers find you. All fields are optional, bruh."""
         , TeamFormInput.teamFormInput team (Just <<< UpdateTeamDetails)
-        ]
-    , boardingButtons
+=======
+        , boardingDescription  """Enter details about yourself so your new bruh gamer friends
         [ secondaryButton_ "Back" $ SetStep PlayerOrTeam
         , primaryButton_ "Next" $ SetStep Game
         ]
     ]
-renderPage { step: Game, game, playerOrTeam } =
     [ boardingStep
         [ boardingHeading "Game"
         , boardingDescription  """Select a game to create your first profile muhfugga."""
@@ -233,31 +243,29 @@ renderPage { step: PlayerProfile, playerProfile, otherError, submitting } =
     [ boardingStep
         [ boardingHeading "Player profile details"
         , boardingDescription  """Enter details about your gameplay. Fill out everything."""
-        , PlayerProfileFormInput.profileFormInput playerProfile UpdatePlayerProfileDetails
+        , PlayerProfileFormInput.profileFormInput playerProfile UpdatePlayerProfile
         ]
     , boardingButtons
         [ secondaryButton_ "Back" $ SetStep Game
-        , HH.div [ HS.class_ "boarding-submit-button-group" ] $
-            [ HH.button
-                [ HS.class_ "primary-button"
-                , HP.disabled submitting
-                , HE.onClick $ const $ Just SetUpAccount
-                ]
-                [ HH.text if submitting then "Submitting..." else "Submit" ]
-            ]
-            <>
-            if otherError
-            then Array.singleton $
-                HH.p [ HS.class_ "boarding-submit-button-underlabel" ]
-                [ HH.text "There has been an unexpected error setting up your account. Please try again later." ]
-            else []
+        , primaryButton_ "Next" $ SetStep Register
         ]
     ]
 renderPage { step: TeamProfile, teamProfile, otherError, submitting } =
     [ boardingStep
         [ boardingHeading "Team profile details"
         , boardingDescription  """Enter details about your gameplay. Fill out everything."""
-        , TeamProfileFormInput.profileFormInput teamProfile UpdateTeamProfileDetails
+        , TeamProfileFormInput.profileFormInput teamProfile UpdateTeamProfile
+        ]
+    , boardingButtons
+        [ secondaryButton_ "Back" $ SetStep Game
+        , primaryButton_ "Next" $ SetStep Register
+        ]
+    ]
+renderPage { step: Register, registration, otherError, submitting } =
+    [ boardingStep
+        [ boardingHeading "Registration details"
+        , boardingDescription  """Enter your nickname, email address and password to complete the registration process."""
+        , registrationInput registration UpdateRegistration
         ]
     , boardingButtons
         [ secondaryButton_ "Back" $ SetStep Game
@@ -283,14 +291,15 @@ render :: forall slots left.
 render state = boarding $ renderPage state
 
 sendRequest :: forall left.
-    State -> Async left (Maybe (Either Onboarding.BadContent (Maybe Onboarding.OkContent)))
+    State -> Async left (Maybe (Either Preboarding.BadContent (Maybe Preboarding.OkContent)))
 sendRequest (state :: State) = Async.unify do
-    (body :: Onboarding.RequestContent) <-
+    (body :: Preboarding.RequestContent) <-
         case state of
         { playerOrTeam: Just PlayerOrTeamInput.Player
-        , player: player
+        , player
         , game: Just game
         , playerProfile: profile
+        , registration
         } -> Async.right
             { ilk: 1
             , player: Just
@@ -314,11 +323,17 @@ sendRequest (state :: State) = Async.unify do
                 , ambitions: profile.ambitions
                 }
             , teamProfile: Nothing
+            , registration:
+                { nickname: registration.nickname
+                , email: registration.email
+                , password: registration.password
+                }
             }
         { playerOrTeam: Just PlayerOrTeamInput.Team
-        , team: team
+        , team
         , game: Just game
         , teamProfile: profile
+        , registration
         } -> Async.right
             { ilk: 2
             , player: Nothing
@@ -345,16 +360,21 @@ sendRequest (state :: State) = Async.unify do
                 , newOrReturning: profile.newOrReturning
                 , ambitions: profile.ambitions
                 }
+            , registration:
+                { nickname: registration.nickname
+                , email: registration.email
+                , password: registration.password
+                }
             }
         _ -> Async.left Nothing
     response <-
-        Fetch.fetch "/api/onboarding"
+        Fetch.fetch "/api/preboarding"
         ( Fetch.method := POST
         <> Fetch.body := Json.writeJSON body
         <> Fetch.credentials := Fetch.Include
         )
         # lmap (const Nothing)
-    content :: Either Onboarding.BadContent $ Maybe Onboarding.OkContent <-
+    content :: Either Preboarding.BadContent $ Maybe Preboarding.OkContent <-
         case FetchRes.status response of
         200 -> FetchRes.text response >>= JsonAsync.readJSON # bimap (const Nothing) (Right <<< Just)
         204 -> pure $ Right Nothing
@@ -366,13 +386,14 @@ sendRequest (state :: State) = Async.unify do
 updateHistoryState :: forall monad. MonadEffect monad => State -> monad Unit
 updateHistoryState (state :: State) = do
     case state.step of
-        Greeting -> navigateReplace state "/onboarding/start"
-        PlayerOrTeam -> navigateReplace state "/onboarding/player-or-team"
-        Player -> navigateReplace state "/onboarding/player"
-        Team -> navigateReplace state "/onboarding/team"
-        Game -> navigateReplace state "/onboarding/game"
-        PlayerProfile -> navigateReplace state "/onboarding/player-profile"
-        TeamProfile -> navigateReplace state "/onboarding/team-profile"
+        Greeting -> navigateReplace state "/preboarding/start"
+        PlayerOrTeam -> navigateReplace state "/preboarding/player-or-team"
+        Player -> navigateReplace state "/preboarding/player"
+        Team -> navigateReplace state "/preboarding/team"
+        Game -> navigateReplace state "/preboarding/game"
+        PlayerProfile -> navigateReplace state "/preboarding/player-profile"
+        TeamProfile -> navigateReplace state "/preboarding/team-profile"
+        Register -> navigateReplace state "/preboarding/register"
 
 handleAction :: forall action output slots left.
     Action -> H.HalogenM State action slots output (Async left) Unit
@@ -386,8 +407,8 @@ handleAction Initialize = do
         Just nickname' -> H.modify_ _ { nickname = nickname' }
         Nothing -> navigate_ "/"
     H.liftEffect do
-        setMetaTitle "Onboarding | TeamTavern"
-        setMetaDescription "TeamTavern onboarding."
+        setMetaTitle "Preboarding | TeamTavern"
+        setMetaDescription "TeamTavern preboarding."
         setMetaUrl
 handleAction (Receive input) =
     H.put
@@ -402,17 +423,18 @@ handleAction ConfirmSkip =
 handleAction (SetStep step) = do
     state <- H.get
     case step of
-        Greeting -> navigate state "/onboarding/start"
-        PlayerOrTeam -> navigate state "/onboarding/player-or-team"
-        Player -> navigate state "/onboarding/player"
-        Team -> navigate state "/onboarding/team"
-        Game -> navigate state "/onboarding/game"
-        PlayerProfile -> navigate state "/onboarding/player-profile"
-        TeamProfile -> navigate state "/onboarding/team-profile"
+        Greeting -> navigate state "/preboarding/start"
+        PlayerOrTeam -> navigate state "/preboarding/player-or-team"
+        Player -> navigate state "/preboarding/player"
+        Team -> navigate state "/preboarding/team"
+        Game -> navigate state "/preboarding/game"
+        PlayerProfile -> navigate state "/preboarding/player-profile"
+        TeamProfile -> navigate state "/preboarding/team-profile"
+        Register -> navigate state "/preboarding/register"
 handleAction (UpdatePlayerOrTeam playerOrTeam) = do
     state <- H.modify _ { playerOrTeam = Just playerOrTeam }
     updateHistoryState state
-handleAction (UpdatePlayerDetails details) = do
+handleAction (UpdatePlayer details) = do
     state <- H.modify _
         { player
             { birthday = details.birthday
@@ -429,7 +451,7 @@ handleAction (UpdatePlayerDetails details) = do
             }
         }
     updateHistoryState state
-handleAction (UpdateTeamDetails details) = do
+handleAction (UpdateTeam details) = do
     state <- H.modify _
         { team
             { name = details.name
@@ -470,7 +492,7 @@ handleAction (UpdateGame game) = do
             }
         }
     updateHistoryState state
-handleAction (UpdatePlayerProfileDetails details) = do
+handleAction (UpdatePlayerProfile details) = do
     state <- H.modify _
         { playerProfile
             { fieldValues = details.fieldValues
@@ -479,12 +501,21 @@ handleAction (UpdatePlayerProfileDetails details) = do
             }
         }
     updateHistoryState state
-handleAction (UpdateTeamProfileDetails details) = do
+handleAction (UpdateTeamProfile details) = do
     state <- H.modify _
         { teamProfile
             { fieldValues = details.fieldValues
             , newOrReturning = details.newOrReturning
             , ambitions = details.ambitions
+            }
+        }
+    updateHistoryState state
+handleAction (UpdateRegistration registration) = do
+    state <- H.modify _
+        { registration
+            { nickname = registration.nickname
+            , email = registration.email
+            , password = registration.password
             }
         }
     updateHistoryState state
@@ -570,8 +601,7 @@ handleAction SetUpAccount = do
                                     Array.cons key state'.playerProfile.missingErrors
                                 }
                             }
-                        , ambitions: const $ state'
-                            { playerProfile { ambitionsError = true } }
+                        , ambitions: const $ state' { playerProfile { ambitionsError = true } }
                         }
                         error'
                     )
@@ -580,12 +610,23 @@ handleAction SetUpAccount = do
                     foldl
                     (\state' error' ->
                         match
-                        { ambitions: const $ state'
-                            { playerProfile { ambitionsError = true } }
+                        { ambitions: const $ state' { playerProfile { ambitionsError = true } } }
+                        error'
+                    )
+                    state
+                , registration:
+                    foldl
+                    (\state' error' ->
+                        match
+                        { nickname: const $ state' { registration { nicknameError = true } }
+                        , email: const $ state' { registration { emailError = true } }
+                        , password: const $ state' { registration { passwordError = true } }
                         }
                         error'
                     )
                     state
+                , nicknameTaken: const $ state { registration { nicknameTaken = true } }
+                , emailTaken: const $ state { registration { emailTaken = true } }
                 }
                 error
             )
@@ -607,6 +648,6 @@ component = H.mkComponent
         }
     }
 
-onboarding :: forall action slots left.
-    Input -> HH.ComponentHTML action (onboarding :: Slot | slots) (Async left)
-onboarding input = HH.slot (SProxy :: SProxy "onboarding") unit component input absurd
+preboarding :: forall action slots left.
+    Input -> HH.ComponentHTML action (preboarding :: Slot | slots) (Async left)
+preboarding input = HH.slot (SProxy :: SProxy "preboarding") unit component input absurd

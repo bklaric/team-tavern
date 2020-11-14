@@ -1,4 +1,4 @@
-module TeamTavern.Client.Components.RegistrationInput (Input, Output, registrationInput) where
+module TeamTavern.Client.Components.RegistrationInput (Input, Output, Slot, emptyInput, registrationInput) where
 
 import Prelude
 
@@ -137,7 +137,7 @@ component = H.mkComponent
 registrationInput
     :: forall action children left
     .  Input
-    -> (Output -> Maybe action)
+    -> (Output -> action)
     -> HH.ComponentHTML action (registrationInput :: Slot | children) (Async left)
 registrationInput input handleOutput =
-    HH.slot (SProxy :: SProxy "registrationInput") unit component input handleOutput
+    HH.slot (SProxy :: SProxy "registrationInput") unit component input (Just <<< handleOutput)

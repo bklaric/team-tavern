@@ -1,4 +1,4 @@
-module TeamTavern.Client.Pages.Onboarding.GameInput (Input, Output, Slot, gameInput) where
+module TeamTavern.Client.Components.Boarding.GameInput (Input, Output, Slot, gameInput) where
 
 import Prelude
 

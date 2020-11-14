@@ -17,8 +17,8 @@ type Preboard = Route
     NoQuery
 
 type RegisterRequestContent =
-    { email :: String
-    , nickname :: String
+    { nickname :: String
+    , email :: String
     , password :: String
     }
 
@@ -52,10 +52,10 @@ type BadContent = Array $ Variant
         )
     , teamProfile :: Array $ Variant
         ( ambitions :: Array String )
-    , register :: Array $ Variant
-        ( invalidEmail :: {}
-        , invalidNickname :: {}
-        , invalidPassword :: {}
+    , registration :: Array $ Variant
+        ( nickname :: {}
+        , email :: {}
+        , password :: {}
         )
     , emailTaken :: Array String
     , nicknameTaken :: Array String
