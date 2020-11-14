@@ -14,7 +14,7 @@ import TeamTavern.Server.Infrastructure.Postgres (reportDatabaseError')
 
 type EnsureSignedInError errors = Variant
     ( internal :: Array String
-    , client :: Array String
+    , notAuthenticated :: Array String
     | errors
     )
 
@@ -33,11 +33,11 @@ ensureSignedIn :: forall querier errors. Querier querier =>
     querier -> Cookies -> Async (EnsureSignedInError errors) CookieInfo
 ensureSignedIn querier cookies =
     case lookupCookieInfo cookies of
-    Nothing -> Async.left $ inj (SProxy :: SProxy "client")
+    Nothing -> Async.left $ inj (SProxy :: SProxy "notAuthenticated")
         [ "No cookie info has been found in cookies: " <> show cookies]
     Just cookieInfo @ { id, nickname, token } -> do
         result <- querier # query queryString (id : nickname :| token) # reportDatabaseError'
         if rowCount result == 0
-        then Async.left $ inj (SProxy :: SProxy "client")
+        then Async.left $ inj (SProxy :: SProxy "notAuthenticated")
             [ "Client session in cookies is invalid: " <> show cookies ]
         else Async.right cookieInfo

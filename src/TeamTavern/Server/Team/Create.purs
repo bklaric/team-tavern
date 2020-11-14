@@ -7,12 +7,12 @@ import Data.Array as Array
 import Data.Variant (Variant, match)
 import Effect (Effect)
 import Perun.Request.Body (Body)
-import Perun.Response (Response, badRequest_, badRequest__, internalServerError__, ok_)
+import Perun.Response (Response, badRequest_, badRequest__, internalServerError__, ok_, unauthorized__)
 import Postgres.Pool (Pool)
 import Simple.JSON (writeJSON)
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
-import TeamTavern.Server.Infrastructure.Log (clientHandler, internalHandler)
+import TeamTavern.Server.Infrastructure.Log (clientHandler, internalHandler, notAuthenticatedHandler)
 import TeamTavern.Server.Infrastructure.Log as Log
 import TeamTavern.Server.Infrastructure.ReadJsonBody (readJsonBody)
 import TeamTavern.Server.Team.Create.AddTeam (addTeam)
@@ -20,10 +20,16 @@ import TeamTavern.Server.Team.Infrastructure.GenerateHandle (generateHandle)
 import TeamTavern.Server.Team.Infrastructure.LogError (teamHandler)
 import TeamTavern.Server.Team.Infrastructure.ValidateTeam (TeamError, TeamErrors, validateTeam)
 
-type CreateError = Variant (internal :: Array String, client :: Array String, team :: TeamErrors)
+type CreateError = Variant
+    ( internal :: Array String
+    , notAuthenticated :: Array String
+    , client :: Array String
+    , team :: TeamErrors
+    )
 
 logError :: CreateError -> Effect Unit
-logError = Log.logError "Error creating team" (internalHandler >>> clientHandler >>> teamHandler)
+logError = Log.logError "Error creating team"
+    (internalHandler >>> notAuthenticatedHandler >>> clientHandler >>> teamHandler)
 
 type OkContent = { handle :: String }
 
@@ -33,6 +39,7 @@ sendResponse :: Async CreateError { handle :: String } -> (forall voidLeft. Asyn
 sendResponse = alwaysRight
     (match
         { internal: const internalServerError__
+        , notAuthenticated: const unauthorized__
         , client: const badRequest__
         , team: badRequest_ <<< writeJSON <<< Array.fromFoldable
         }

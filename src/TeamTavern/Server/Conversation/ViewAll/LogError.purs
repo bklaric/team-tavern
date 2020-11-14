@@ -13,6 +13,7 @@ import TeamTavern.Server.Infrastructure.Log (logLines, logStamped, logt, print)
 type ViewAllError = Variant
     ( internal :: Array String
     , client :: Array String
+    , notAuthenticated :: Array String
     , unreadableResult ::
         { result :: Result
         , errors :: MultipleErrors
@@ -26,6 +27,7 @@ logError viewAllError = do
     viewAllError # match
         { internal: logLines
         , client: logLines
+        , notAuthenticated: logLines
         , unreadableResult: \{ result, errors } -> do
             logt $ "Couldn't read conversations from result: "
                 <> (unsafeStringify $ rows result)

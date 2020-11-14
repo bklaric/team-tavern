@@ -16,6 +16,7 @@ import TeamTavern.Server.Infrastructure.Log (logLines, logStamped, logt, print)
 type StartError = Variant
     ( internal :: Array String
     , client :: Array String
+    , notAuthenticated :: Array String
     , databaseError :: Error
     , unreadableConversationId ::
         { result :: Result
@@ -46,6 +47,7 @@ logError startError = do
     startError # match
         { internal: logLines
         , client: logLines
+        , notAuthenticated: logLines
         , databaseError: \error ->
             logt $ "Unknown database error occured: " <> print error
         , unreadableConversationId: \{ result, errors } -> do

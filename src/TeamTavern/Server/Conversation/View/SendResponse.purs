@@ -4,7 +4,7 @@ import Prelude
 
 import Async (Async, alwaysRight)
 import Data.Variant (match)
-import Perun.Response (Response, badRequest__, internalServerError__, ok_)
+import Perun.Response (Response, badRequest__, internalServerError__, ok_, unauthorized__)
 import Simple.JSON (writeJSON)
 import TeamTavern.Server.Conversation.View.LoadConversation (LoadConversationResult)
 import TeamTavern.Server.Conversation.View.LogError (ViewError)
@@ -15,6 +15,7 @@ errorResponse :: ViewError -> Response
 errorResponse = match
     { internal: const internalServerError__
     , client: const badRequest__
+    , notAuthenticated: const unauthorized__
     , unreadableResult: const $ internalServerError__
     , databaseError: const $ internalServerError__
     }

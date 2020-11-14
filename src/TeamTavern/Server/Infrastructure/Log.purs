@@ -58,6 +58,10 @@ notFoundHandler :: forall fields. Lacks "notFound" fields =>
     Builder (Record fields) { notFound :: Array String -> Effect Unit | fields }
 notFoundHandler = Builder.insert (SProxy :: SProxy "notFound") logLines
 
+notAuthenticatedHandler :: forall fields. Lacks "notAuthenticated" fields =>
+    Builder (Record fields) { notAuthenticated :: Array String -> Effect Unit | fields }
+notAuthenticatedHandler = Builder.insert (SProxy :: SProxy "notAuthenticated") logLines
+
 notAuthorizedHandler :: forall fields. Lacks "notAuthorized" fields =>
     Builder (Record fields) { notAuthorized :: Array String -> Effect Unit | fields }
 notAuthorizedHandler = Builder.insert (SProxy :: SProxy "notAuthorized") logLines

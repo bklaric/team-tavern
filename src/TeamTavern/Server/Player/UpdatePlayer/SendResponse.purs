@@ -5,7 +5,7 @@ import Prelude
 import Async (Async, alwaysRight)
 import Data.Array (fromFoldable)
 import Data.Variant (Variant, match)
-import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, noContent_)
+import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, noContent_, unauthorized__)
 import Simple.JSON (writeJSON)
 import TeamTavern.Server.Player.UpdatePlayer.LogError (UpdateDetailsError)
 
@@ -18,7 +18,8 @@ errorResponse :: UpdateDetailsError -> Response
 errorResponse = match
     { internal: const internalServerError__
     , client: const badRequest__
-    , notAuthorized: const $ forbidden__
+    , notAuthenticated: const unauthorized__
+    , notAuthorized: const forbidden__
     , player: fromFoldable >>> writeJSON >>> badRequest_
     }
 

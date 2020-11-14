@@ -8,13 +8,14 @@ import Effect (Effect, foreachE)
 import Prim.Row (class Lacks)
 import Record.Builder (Builder)
 import Record.Builder as Builder
-import TeamTavern.Server.Infrastructure.Log (clientHandler, internalHandler, logLines, notAuthorizedHandler)
+import TeamTavern.Server.Infrastructure.Log (clientHandler, internalHandler, logLines, notAuthenticatedHandler, notAuthorizedHandler)
 import TeamTavern.Server.Infrastructure.Log as Log
 import TeamTavern.Server.Profile.AddTeamProfile.ValidateProfile (ProfileErrors)
 
 type AddProfileError = Variant
     ( internal :: Array String
     , client :: Array String
+    , notAuthenticated :: Array String
     , notAuthorized :: Array String
     , profile :: ProfileErrors
     )
@@ -26,4 +27,9 @@ profileHandler = Builder.insert (SProxy :: SProxy "profile") \errors ->
 
 logError :: AddProfileError -> Effect Unit
 logError = Log.logError "Error creating team profile"
-    (internalHandler >>> clientHandler >>> notAuthorizedHandler >>> profileHandler)
+    ( internalHandler
+    >>> clientHandler
+    >>> notAuthenticatedHandler
+    >>> notAuthorizedHandler
+    >>> profileHandler
+    )

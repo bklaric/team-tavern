@@ -12,6 +12,7 @@ import TeamTavern.Server.Infrastructure.Log (logLines, logStamped, logt, print)
 type EditSettingsError = Variant
     ( internal :: Array String
     , client :: Array String
+    , notAuthenticated :: Array String
     , notAuthorized :: Array String
     , databaseError :: Error
     , nicknameDoesntMatch :: { nickname :: String, cookieInfo :: CookieInfo }
@@ -27,6 +28,7 @@ logError updateError = do
     updateError # match
         { internal: logLines
         , client: logLines
+        , notAuthenticated: logLines
         , notAuthorized: logLines
         , nicknameDoesntMatch: \{ nickname, cookieInfo } -> do
             logt $ "Signed in user: " <> show cookieInfo

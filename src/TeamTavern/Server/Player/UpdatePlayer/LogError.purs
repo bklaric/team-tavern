@@ -8,13 +8,14 @@ import Effect (Effect, foreachE)
 import Prim.Row (class Lacks)
 import Record.Builder (Builder)
 import Record.Builder as Builder
-import TeamTavern.Server.Infrastructure.Log (clientHandler, internalHandler, logLines, notAuthorizedHandler)
+import TeamTavern.Server.Infrastructure.Log (clientHandler, internalHandler, logLines, notAuthenticatedHandler, notAuthorizedHandler)
 import TeamTavern.Server.Infrastructure.Log as Log
 import TeamTavern.Server.Player.UpdatePlayer.ValidatePlayer (PlayerErrors)
 
 type UpdateDetailsError = Variant
     ( internal :: Array String
     , client :: Array String
+    , notAuthenticated :: Array String
     , notAuthorized :: Array String
     , player :: PlayerErrors
     )
@@ -27,4 +28,9 @@ playerHandler = Builder.insert (SProxy :: SProxy "player") \errors ->
 
 logError :: UpdateDetailsError -> Effect Unit
 logError = Log.logError "Error updating player"
-    (internalHandler >>> clientHandler >>> notAuthorizedHandler >>> playerHandler)
+    ( internalHandler
+    >>> clientHandler
+    >>> notAuthenticatedHandler
+    >>> notAuthorizedHandler
+    >>> playerHandler
+    )

@@ -8,14 +8,14 @@ import Data.Nullable (toNullable)
 import Data.Variant (Variant, match)
 import Effect (Effect)
 import Perun.Request.Body (Body)
-import Perun.Response (Response, badRequest_, badRequest__, internalServerError__, noContent_)
+import Perun.Response (Response, badRequest_, badRequest__, internalServerError__, noContent_, unauthorized__)
 import Postgres.Pool (Pool)
 import Postgres.Query (class Querier, Query(..), QueryParameter, (:), (:|))
 import Simple.JSON (writeJSON)
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
 import TeamTavern.Server.Infrastructure.Error (InternalError)
-import TeamTavern.Server.Infrastructure.Log (clientHandler, internalHandler)
+import TeamTavern.Server.Infrastructure.Log (clientHandler, internalHandler, notAuthenticatedHandler)
 import TeamTavern.Server.Infrastructure.Log as Log
 import TeamTavern.Server.Infrastructure.Postgres (queryNone)
 import TeamTavern.Server.Infrastructure.ReadJsonBody (readJsonBody)
@@ -71,10 +71,16 @@ updateTeam :: forall querier errors. Querier querier =>
 updateTeam pool ownerId handle team =
     queryNone pool queryString (queryParameters ownerId handle team)
 
-type CreateError = Variant (internal :: Array String, client :: Array String, team :: TeamErrors)
+type CreateError = Variant
+    ( internal :: Array String
+    , notAuthenticated :: Array String
+    , client :: Array String
+    , team :: TeamErrors
+    )
 
 logError :: CreateError -> Effect Unit
-logError = Log.logError "Error creating team" (internalHandler >>> clientHandler >>> teamHandler)
+logError = Log.logError "Error creating team"
+    (internalHandler >>> notAuthenticatedHandler >>> clientHandler >>> teamHandler)
 
 type OkContent = { handle :: String }
 
@@ -84,6 +90,7 @@ sendResponse :: Async CreateError Unit -> (forall voidLeft. Async voidLeft Respo
 sendResponse = alwaysRight
     (match
         { internal: const internalServerError__
+        , notAuthenticated: const unauthorized__
         , client: const badRequest__
         , team: badRequest_ <<< writeJSON <<< Array.fromFoldable
         }
