@@ -1,4 +1,4 @@
-module TeamTavern.Client.Pages.Onboarding (Step(..), Input, Slot, onboarding) where
+module TeamTavern.Client.Pages.Onboarding (Step(..), PlayerOrTeam(..), Input, Slot, emptyInput, onboarding) where
 
 import Prelude
 
@@ -16,10 +16,14 @@ import Data.Maybe (Maybe(..), isNothing, maybe)
 import Data.Options ((:=))
 import Data.Symbol (SProxy(..))
 import Data.Variant (match)
+import Effect.Class (class MonadEffect)
+import Foreign (ForeignError(..), fail, readString, unsafeToForeign)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
+import Record as Record
+import Simple.JSON (class ReadForeign, class WriteForeign)
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.Button (primaryButton_, secondaryButton_)
@@ -32,7 +36,7 @@ import TeamTavern.Client.Pages.Onboarding.SelectGame (selectGame)
 import TeamTavern.Client.Pages.Onboarding.SelectGame as SelectGame
 import TeamTavern.Client.Script.Cookie (getPlayerNickname)
 import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
-import TeamTavern.Client.Script.Navigate (navigate, navigate_)
+import TeamTavern.Client.Script.Navigate (navigate, navigateReplace, navigate_)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Onboarding as Onboarding
 import Type (type ($))
@@ -46,6 +50,38 @@ data Step
     | PlayerProfileDetails
     | TeamProfileDetails
 
+instance writeForeginStep :: WriteForeign Step where
+    writeImpl Greeting = unsafeToForeign "Greeting"
+    writeImpl PlayerOrTeam = unsafeToForeign "PlayerOrTeam"
+    writeImpl PlayerDetails = unsafeToForeign "PlayerDetails"
+    writeImpl TeamDetails = unsafeToForeign "TeamDetails"
+    writeImpl Game = unsafeToForeign "Game"
+    writeImpl PlayerProfileDetails = unsafeToForeign "PlayerProfileDetails"
+    writeImpl TeamProfileDetails = unsafeToForeign "TeamProfileDetails"
+
+instance readForeignStep :: ReadForeign Step where
+    readImpl = readString >=> case _ of
+        "Greeting" -> pure Greeting
+        "PlayerOrTeam" -> pure PlayerOrTeam
+        "PlayerDetails" -> pure PlayerDetails
+        "TeamDetails" -> pure TeamDetails
+        "Game" -> pure Game
+        "PlayerProfileDetails" -> pure PlayerProfileDetails
+        "TeamProfileDetails" -> pure TeamProfileDetails
+        step -> fail $ ForeignError $ "Unknown step " <> step
+
+data PlayerOrTeam = Player | Team
+
+instance writeForeignPlayerOrTeam :: WriteForeign PlayerOrTeam where
+    writeImpl Player = unsafeToForeign "Player"
+    writeImpl Team = unsafeToForeign "Team"
+
+instance readForeignPlayerOrTeam :: ReadForeign PlayerOrTeam where
+    readImpl = readString >=> case _ of
+        "Player" -> pure Player
+        "Team" -> pure Team
+        playerOrTeam -> fail $ ForeignError $ "Unknown player or team " <> playerOrTeam
+
 isPlayer :: PlayerOrTeam -> Boolean
 isPlayer Player = true
 isPlayer Team = false
@@ -54,9 +90,30 @@ isTeam :: PlayerOrTeam -> Boolean
 isTeam Player = false
 isTeam Team = true
 
-data PlayerOrTeam = Player | Team
+type Input =
+    { step :: Step
+    , nickname :: String
+    , playerOrTeam :: Maybe PlayerOrTeam
+    , playerDetails :: PlayerFormInput.Input
+    , teamDetails :: TeamFormInput.Input
+    , game :: SelectGame.Input
+    , playerProfileDetails :: PlayerProfileFormInput.Input
+    , teamProfileDetails :: TeamProfileFormInput.Input
+    , otherError :: Boolean
+    }
 
-type Input = { step :: Step }
+emptyInput :: Input
+emptyInput =
+    { step: Greeting
+    , nickname: ""
+    , playerOrTeam: Nothing
+    , playerDetails: PlayerFormInput.emptyInput
+    , teamDetails: TeamFormInput.emptyInput
+    , game: Nothing
+    , playerProfileDetails: PlayerProfileFormInput.emptyInput []
+    , teamProfileDetails: TeamProfileFormInput.emptyInput []
+    , otherError: false
+    }
 
 type State =
     { step :: Step
@@ -347,6 +404,18 @@ sendRequest (state :: State) = Async.unify do
         _ -> Async.left Nothing
     pure $ Just content
 
+-- Update state for current history entry so back button doesn't lose previous state.
+updateHistoryState :: forall monad. MonadEffect monad => State -> monad Unit
+updateHistoryState (state :: State) = do
+    case state.step of
+        Greeting -> navigateReplace state "/onboarding/start"
+        PlayerOrTeam -> navigateReplace state "/onboarding/player-or-team"
+        PlayerDetails -> navigateReplace state "/onboarding/player"
+        TeamDetails -> navigateReplace state "/onboarding/team"
+        Game -> navigateReplace state "/onboarding/game"
+        PlayerProfileDetails -> navigateReplace state "/onboarding/player-profile"
+        TeamProfileDetails -> navigateReplace state "/onboarding/team-profile"
+
 handleAction :: forall action output slots left.
     Action -> H.HalogenM State action slots output (Async left) Unit
 handleAction Initialize = do
@@ -362,26 +431,31 @@ handleAction Initialize = do
         setMetaTitle "Onboarding | TeamTavern"
         setMetaDescription "TeamTavern onboarding."
         setMetaUrl
-handleAction (Receive { step }) =
-    H.modify_ _ { step = step, confirmSkip = false }
+handleAction (Receive input) =
+    H.put
+        ( input
+        # Record.insert (SProxy :: SProxy "confirmSkip") false
+        # Record.insert (SProxy :: SProxy "submitting") false
+        )
 handleAction Skip =
     H.modify_ _ { confirmSkip = true }
 handleAction ConfirmSkip =
     navigate_ "/"
-handleAction (SetStep step) =
-    H.liftEffect
-        case step of
-        Greeting -> navigate { firstSignIn: true } "/onboarding/start"
-        PlayerOrTeam -> navigate_ "/onboarding/player-or-team"
-        PlayerDetails -> navigate_ "/onboarding/player"
-        TeamDetails -> navigate_ "/onboarding/team"
-        Game -> navigate_ "/onboarding/game"
-        PlayerProfileDetails -> navigate_ "/onboarding/player-profile"
-        TeamProfileDetails -> navigate_ "/onboarding/team-profile"
-handleAction (UpdatePlayerOrTeam playerOrTeam) =
-    H.modify_ _ { playerOrTeam = Just playerOrTeam }
-handleAction (UpdatePlayerDetails details) =
-    H.modify_ _
+handleAction (SetStep step) = do
+    state <- H.get
+    case step of
+        Greeting -> navigate state "/onboarding/start"
+        PlayerOrTeam -> navigate state "/onboarding/player-or-team"
+        PlayerDetails -> navigate state "/onboarding/player"
+        TeamDetails -> navigate state "/onboarding/team"
+        Game -> navigate state "/onboarding/game"
+        PlayerProfileDetails -> navigate state "/onboarding/player-profile"
+        TeamProfileDetails -> navigate state "/onboarding/team-profile"
+handleAction (UpdatePlayerOrTeam playerOrTeam) = do
+    state <- H.modify _ { playerOrTeam = Just playerOrTeam }
+    updateHistoryState state
+handleAction (UpdatePlayerDetails details) = do
+    state <- H.modify _
         { playerDetails
             { birthday = details.birthday
             , location = details.location
@@ -396,8 +470,9 @@ handleAction (UpdatePlayerDetails details) =
             , about = details.about
             }
         }
-handleAction (UpdateTeamDetails details) =
-    H.modify_ _
+    updateHistoryState state
+handleAction (UpdateTeamDetails details) = do
+    state <- H.modify _
         { teamDetails
             { name = details.name
             , website = details.website
@@ -415,8 +490,9 @@ handleAction (UpdateTeamDetails details) =
             , about = details.about
             }
         }
-handleAction (UpdateGame game) =
-    H.modify_ _
+    updateHistoryState state
+handleAction (UpdateGame game) = do
+    state <- H.modify _
         { game = Just game
         , playerProfileDetails
             { fields = game.fields
@@ -435,22 +511,25 @@ handleAction (UpdateGame game) =
             , ambitions = ""
             }
         }
-handleAction (UpdatePlayerProfileDetails details) =
-    H.modify_ _
+    updateHistoryState state
+handleAction (UpdatePlayerProfileDetails details) = do
+    state <- H.modify _
         { playerProfileDetails
             { fieldValues = details.fieldValues
             , newOrReturning = details.newOrReturning
             , ambitions = details.ambitions
             }
         }
-handleAction (UpdateTeamProfileDetails details) =
-    H.modify_ _
+    updateHistoryState state
+handleAction (UpdateTeamProfileDetails details) = do
+    state <- H.modify _
         { teamProfileDetails
             { fieldValues = details.fieldValues
             , newOrReturning = details.newOrReturning
             , ambitions = details.ambitions
             }
         }
+    updateHistoryState state
 handleAction SetUpAccount = do
     currentState <- H.modify _ { submitting = true }
     let nextState = currentState
@@ -559,19 +638,9 @@ handleAction SetUpAccount = do
 component :: forall query output left.
     H.Component HH.HTML query Input output (Async left)
 component = H.mkComponent
-    { initialState: \{ step } ->
-        { step
-        , nickname: ""
-        , confirmSkip: false
-        , playerOrTeam: Nothing
-        , playerDetails: PlayerFormInput.emptyInput
-        , teamDetails: TeamFormInput.emptyInput
-        , game: Nothing
-        , playerProfileDetails: PlayerProfileFormInput.emptyInput []
-        , teamProfileDetails: TeamProfileFormInput.emptyInput []
-        , otherError: false
-        , submitting: false
-        }
+    { initialState:
+        Record.insert (SProxy :: SProxy "confirmSkip") false
+        >>> Record.insert (SProxy :: SProxy "submitting") false
     , render
     , eval: H.mkEval H.defaultEval
         { handleAction = handleAction

@@ -10,7 +10,7 @@ import Foreign (Foreign)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
-import Simple.JSON (read)
+import Simple.JSON (read, read_)
 import TeamTavern.Client.Components.Content (content, singleContent, wideContent)
 import TeamTavern.Client.Components.Footer (footer)
 import TeamTavern.Client.Components.Footer as Footer
@@ -37,6 +37,8 @@ import TeamTavern.Client.Pages.Games (games)
 import TeamTavern.Client.Pages.Games as Games
 import TeamTavern.Client.Pages.Home (home)
 import TeamTavern.Client.Pages.Home as Home
+import TeamTavern.Client.Pages.Onboarding (onboarding)
+import TeamTavern.Client.Pages.Onboarding as Onboarding
 import TeamTavern.Client.Pages.Player (player)
 import TeamTavern.Client.Pages.Player as Player
 import TeamTavern.Client.Pages.Profiles as Profiles
@@ -47,8 +49,6 @@ import TeamTavern.Client.Pages.SignIn (signIn)
 import TeamTavern.Client.Pages.SignIn as SignIn
 import TeamTavern.Client.Pages.Team (team)
 import TeamTavern.Client.Pages.Team as Team
-import TeamTavern.Client.Pages.Onboarding (onboarding)
-import TeamTavern.Client.Pages.Onboarding as Onboarding
 import TeamTavern.Client.Script.Navigate (navigateReplace_)
 
 data Query send = ChangeRoute Foreign String send
@@ -139,7 +139,7 @@ nothing = pure Nothing
 handleAction :: forall action output slots left.
     Action -> H.HalogenM State action slots output (Async left) Unit
 handleAction (Init state route) = do
-    newState <- H.liftEffect $ case split (Pattern "/") route of
+    newState <- case split (Pattern "/") route of
         ["", ""] ->
             just Home
         ["", "about"] ->
@@ -148,23 +148,22 @@ handleAction (Init state route) = do
             just Register
         ["", "signin"] ->
             just SignIn
-        ["", "onboarding", "start"] ->
-            -- case read state of
-            -- Right ({ firstSignIn: true } :: { firstSignIn :: Boolean}) ->
-                just $ Onboarding { step: Onboarding.Greeting }
-            -- _ -> navigate_ "/" *> nothing
-        ["", "onboarding", "player-or-team"] ->
-            just $ Onboarding { step: Onboarding.PlayerOrTeam }
-        ["", "onboarding", "player"] ->
-            just $ Onboarding { step: Onboarding.PlayerDetails }
-        ["", "onboarding", "team"] ->
-            just $ Onboarding { step: Onboarding.TeamDetails }
-        ["", "onboarding", "game"] ->
-            just $ Onboarding { step: Onboarding.Game }
-        ["", "onboarding", "player-profile"] ->
-            just $ Onboarding { step: Onboarding.PlayerProfileDetails }
-        ["", "onboarding", "team-profile"] ->
-            just $ Onboarding { step: Onboarding.TeamProfileDetails }
+        ["", "onboarding", step] ->
+            let step' =
+                    case step of
+                    "start" -> Just Onboarding.Greeting
+                    "player-or-team" -> Just Onboarding.PlayerOrTeam
+                    "player" -> Just Onboarding.PlayerDetails
+                    "team" -> Just Onboarding.TeamDetails
+                    "game" -> Just Onboarding.Game
+                    "player-profile" -> Just Onboarding.PlayerProfileDetails
+                    "team-profile" -> Just Onboarding.TeamProfileDetails
+                    _ -> Nothing
+            in
+            case (read_ state :: Maybe Onboarding.Input), step' of
+            Just input, Just step'' -> just $ Onboarding input { step = step'' }
+            Nothing, Just step'' -> just $ Onboarding Onboarding.emptyInput { step = step'' } -- navigateReplace_ "/" *> nothing
+            _, _ -> navigateReplace_ "/" *> nothing
         ["", "forgot-password"] ->
             just ForgotPassword
         ["", "reset-password-sent"] ->

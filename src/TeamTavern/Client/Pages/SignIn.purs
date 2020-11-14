@@ -20,6 +20,7 @@ import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor, navigationAnchorClassed)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
+import TeamTavern.Client.Pages.Onboarding as Onboarding
 import TeamTavern.Client.Script.Cookie (hasPlayerIdCookie)
 import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
 import TeamTavern.Client.Script.Navigate (navigate, navigate_)
@@ -216,7 +217,7 @@ handleAction (SignIn event) = do
     case newState of
         Nothing -> H.liftEffect
             if isJust state.nonce
-            then navigate { firstSignIn: true } "/onboarding/start"
+            then navigate Onboarding.emptyInput "/onboarding/start"
             else navigate_ "/"
         Just newState' -> H.put newState' { submitting = false }
 
