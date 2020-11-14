@@ -105,7 +105,7 @@ render (Loaded state @
             ]
         , HH.p
             [ HP.class_ $ inputErrorClass invalidPassword ]
-            [ HH.text $ "The password mush have at least 8 characters." ]
+            [ HH.text $ "The password must have at least 8 characters." ]
         ]
     , HH.button
         [ HP.class_ $ ClassName "form-submit-button"
