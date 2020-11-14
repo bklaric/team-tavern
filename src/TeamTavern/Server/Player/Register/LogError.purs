@@ -2,23 +2,25 @@ module TeamTavern.Server.Player.Register.LogError where
 
 import Prelude
 
-import Data.List.Types (NonEmptyList)
+import Data.Array as Array
 import Data.Map (Map)
 import Data.Newtype (unwrap)
-import Data.Variant (Variant, match)
-import Effect (Effect)
+import Data.Variant (SProxy(..), Variant, match)
+import Effect (Effect, foreachE)
 import Foreign (MultipleErrors)
 import Global.Unsafe (unsafeStringify)
 import Node.Errors as Node
 import Postgres.Error as Postgres
 import Postgres.Result (Result, rows)
 import Postmark.Error as Postmark
+import Prim.Row (class Lacks)
+import Record.Builder (Builder)
+import Record.Builder as Builder
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
-import TeamTavern.Server.Infrastructure.Log (logStamped, logt, print)
+import TeamTavern.Server.Infrastructure.Log (logLines, logStamped, logt, print)
 import TeamTavern.Server.Player.Domain.Email (Email)
 import TeamTavern.Server.Player.Domain.Nickname (Nickname)
-import TeamTavern.Server.Player.Register.ReadDto (RegisterDto)
-import TeamTavern.Server.Player.Register.ValidateModel (RegisterModelError)
+import TeamTavern.Server.Player.Register.ValidateRegistration (RegistrationErrors)
 
 type RegisterError = Variant
     ( signedIn ::
@@ -29,11 +31,8 @@ type RegisterError = Variant
         { content :: String
         , errors :: MultipleErrors
         }
-    , invalidModel ::
-        { dto :: RegisterDto
-        , errors :: NonEmptyList RegisterModelError
-        }
-    , bcryptError :: Node.Error
+    , registration :: RegistrationErrors
+    , bcrypt :: Node.Error
     , randomError :: Node.Error
     , emailTaken ::
         { email :: Email
@@ -51,10 +50,20 @@ type RegisterError = Variant
         }
     )
 
+registrationHandler :: forall fields. Lacks "registration" fields =>
+    Builder (Record fields) { registration :: RegistrationErrors -> Effect Unit | fields }
+registrationHandler = Builder.insert (SProxy :: SProxy "registration") \errors ->
+    foreachE (Array.fromFoldable errors) $ match
+        { nickname: logLines
+        , email: logLines
+        , password: logLines
+        }
+
 logError :: RegisterError -> Effect Unit
 logError registerError = do
     logStamped "Error registering player"
     registerError # match
+        (Builder.build registrationHandler
         { signedIn: \{ cookieInfo, cookies } -> do
             logt $ "The request came with this player cookie info: "
                 <> show cookieInfo
@@ -62,10 +71,10 @@ logError registerError = do
         , unreadableDto: \{ content, errors } -> do
             logt $ "Couldn't read dto from body: " <> show content
             logt $ "Reading resulted in these errors: " <> show errors
-        , invalidModel: \{ dto, errors } -> do
-            logt $ "Couldn't validate model: " <> show dto
-            logt $ "Validation resulted in these errors: " <> show errors
-        , bcryptError: \error ->
+        -- , invalidModel: \{ dto, errors } -> do
+        --     logt $ "Couldn't validate model: " <> show dto
+        --     logt $ "Validation resulted in these errors: " <> show errors
+        , bcrypt: \error ->
             logt $ "Password hashing resulted in this error: " <> print error
         , randomError: \error ->
             logt $ "Generating random bytes resulted in this error: "
@@ -87,3 +96,4 @@ logError registerError = do
                 <> show error.statusCode <> ", " <> show error.code <> ", "
                 <> error.message
         }
+        )

@@ -20,8 +20,8 @@ derive instance genericHash :: Generic Hash _
 
 instance showHash :: Show Hash where show = genericShow
 
-type GenerateHashError errors = Variant (bcryptError :: Error | errors)
+type GenerateHashError errors = Variant (bcrypt :: Error | errors)
 
-generate :: forall errors. Password -> Async (GenerateHashError errors) Hash
-generate (Password password) =
-    password # hash_ # bimap (inj (SProxy :: SProxy "bcryptError")) Hash
+generateHash :: forall errors. Password -> Async (GenerateHashError errors) Hash
+generateHash (Password password) =
+    password # hash_ # bimap (inj (SProxy :: SProxy "bcrypt")) Hash

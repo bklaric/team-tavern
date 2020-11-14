@@ -5,9 +5,9 @@ import Prelude
 import Async (Async)
 import Postgres.Client (Client)
 import Postgres.Query (Query(..), QueryParameter, (:), (:|))
-import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Server.Infrastructure.Error (ChangeSingleError)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstNotAuthorized)
+import TeamTavern.Server.Player.Domain.Id (Id)
 import TeamTavern.Server.Profile.AddTeamProfile.AddFieldValues (addFieldValues)
 import TeamTavern.Server.Profile.AddTeamProfile.ValidateProfile (Profile)
 import TeamTavern.Server.Profile.Routes (Handle)
@@ -29,8 +29,8 @@ queryString = Query """
     returning team_profile.id as "profileId"
     """
 
-queryParameters :: CookieInfo -> Handle -> Handle -> Profile -> Array QueryParameter
-queryParameters { id } teamHandle gameHandle profile =
+queryParameters :: Id -> Handle -> Handle -> Profile -> Array QueryParameter
+queryParameters id teamHandle gameHandle profile =
     id
     : teamHandle
     : gameHandle
@@ -40,23 +40,23 @@ queryParameters { id } teamHandle gameHandle profile =
 addProfile'
     :: forall errors
     .  Client
-    -> CookieInfo
+    -> Id
     -> Handle
     -> Handle
     -> Profile
     -> Async (ChangeSingleError errors) { profileId :: Int }
-addProfile' client cookieInfo teamHandle gameHandle profile = do
+addProfile' client id teamHandle gameHandle profile = do
     queryFirstNotAuthorized client queryString
-        (queryParameters cookieInfo teamHandle gameHandle profile)
+        (queryParameters id teamHandle gameHandle profile)
 
 addProfile
     :: forall errors
     .  Client
-    -> CookieInfo
+    -> Id
     -> Handle
     -> Handle
     -> Profile
     -> Async (ChangeSingleError errors) Unit
-addProfile client cookieInfo teamHandle gameHandle profile = do
-    { profileId } <- addProfile' client cookieInfo teamHandle gameHandle profile
+addProfile client id teamHandle gameHandle profile = do
+    { profileId } <- addProfile' client id teamHandle gameHandle profile
     addFieldValues client profileId profile.fieldValues

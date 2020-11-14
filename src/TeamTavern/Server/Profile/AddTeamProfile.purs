@@ -34,4 +34,4 @@ addTeamProfile pool cookies body { teamHandle, gameHandle } =
         profile' <- validateProfile fields profile
 
         -- Add profile to database.
-        addProfile client cookieInfo teamHandle gameHandle profile'
+        addProfile client cookieInfo.id teamHandle gameHandle profile'

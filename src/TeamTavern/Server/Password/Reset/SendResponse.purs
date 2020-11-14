@@ -22,7 +22,7 @@ errorResponse = match
     , invalidPassword: const $ badRequest_
         $ (writeJSON :: BadRequestContent -> String)
         $ inj (SProxy :: SProxy "invalidPassword") {}
-    , bcryptError: const internalServerError__
+    , bcrypt: const internalServerError__
     , invalidNonce: const $ badRequest_
         $ (writeJSON :: BadRequestContent -> String)
         $ inj (SProxy :: SProxy "invalidNonce") {}

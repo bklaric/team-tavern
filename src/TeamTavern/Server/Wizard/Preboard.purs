@@ -1,4 +1,4 @@
-module TeamTavern.Server.Wizard.Onboard (onboard) where
+module TeamTavern.Server.Wizard.Preboard (preboard) where
 
 import Prelude
 
@@ -18,11 +18,16 @@ import Perun.Request.Body (Body)
 import Perun.Response (Response, badRequest_, internalServerError__, noContent_, ok_)
 import Postgres.Pool (Pool)
 import Simple.JSON (writeJSON)
-import TeamTavern.Routes.Onboarding (BadContent, RequestContent, OkContent)
+import TeamTavern.Routes.Preboarding (BadContent, RequestContent, OkContent)
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
-import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
+import TeamTavern.Server.Infrastructure.EnsureNotSignedIn (ensureNotSignedIn)
 import TeamTavern.Server.Infrastructure.Postgres (transaction)
 import TeamTavern.Server.Infrastructure.ReadJsonBody (readJsonBody)
+import TeamTavern.Server.Player.Domain.Hash (generateHash)
+import TeamTavern.Server.Player.Domain.Id (Id(..))
+import TeamTavern.Server.Player.Domain.Nonce (generateNonce)
+import TeamTavern.Server.Player.Register.AddPlayer (addPlayer)
+import TeamTavern.Server.Player.Register.ValidateRegistration (validateRegistrationV)
 import TeamTavern.Server.Player.UpdatePlayer.UpdateDetails (updateDetails)
 import TeamTavern.Server.Player.UpdatePlayer.ValidatePlayer (validatePlayerV)
 import TeamTavern.Server.Profile.AddPlayerProfile.AddProfile (addProfile)
@@ -45,6 +50,7 @@ errorResponse = onMatch
             , team: inj (SProxy :: SProxy "team") <<< Array.fromFoldable
             , playerProfile: inj (SProxy :: SProxy "playerProfile") <<< Array.fromFoldable
             , teamProfile: inj (SProxy :: SProxy "teamProfile") <<< Array.fromFoldable
+            , registration: inj (SProxy :: SProxy "registration") <<< Array.fromFoldable
             }
         # (writeJSON :: BadContent -> String)
         # badRequest_
@@ -58,13 +64,13 @@ successResponse = maybe noContent_ (ok_ <<< (writeJSON :: OkContent -> String)) 
 --     Async RegisterError SendResponseModel -> (forall left. Async left Response)
 sendResponse = alwaysRight errorResponse successResponse
 
-onboard :: Pool -> Cookies -> Body -> Async _ Response
-onboard pool cookies body =
+preboard :: Pool -> Cookies -> Body -> Async _ Response
+preboard pool cookies body =
     -- sendResponse $ examineLeftWithEffect logError do
     sendResponse $ examineLeftWithEffect (unsafeStringify >>> log) do
 
-    -- Ensure the player is signed in.
-    cookieInfo <- ensureSignedIn pool cookies
+    -- Ensure the player is not signed in.
+    ensureNotSignedIn cookies
 
     -- Read data from body.
     (content :: RequestContent) <- readJsonBody body
@@ -75,30 +81,67 @@ onboard pool cookies body =
         fields <- loadFields client content.gameHandle
 
         case content of
-            { ilk: 1, player: Just player, playerProfile: Just profile } -> do
-                { player', profile' } <-
-                    { player': _, profile': _ }
+            { ilk: 1, player: Just player, playerProfile: Just profile, registration } -> do
+                -- Validate data from body.
+                { player', profile', registration' } <-
+                    { player': _, profile': _, registration': _ }
                     <$> validatePlayerV player
                     <*> validateProfileV fields profile
+                    <*> validateRegistrationV registration
                     # AsyncV.toAsync
                     # label (SProxy :: SProxy "invalidBody")
-                updateDetails client (unwrap cookieInfo.id) player'
-                addProfile client (unwrap cookieInfo.id)
+
+                -- Generate password hash.
+                hash <- generateHash registration'.password
+
+                -- Generate email confirmation nonce.
+                nonce <- generateNonce
+
+                -- Add player.
+                playerId <- addPlayer client
+                    { email: registration'.email
+                    , nickname: registration'.nickname
+                    , hash
+                    , nonce
+                    }
+
+                updateDetails client playerId player'
+
+                addProfile client playerId
                     { handle: content.gameHandle
-                    , nickname: unwrap cookieInfo.nickname
+                    , nickname: unwrap registration'.nickname
                     }
                     profile'
+
                 pure Nothing
-            { ilk: 2, team: Just team, teamProfile: Just profile } -> do
-                { team', profile' } <-
-                    { team': _, profile': _ }
+            { ilk: 2, team: Just team, teamProfile: Just profile, registration } -> do
+                -- Validate data from body.
+                { team', profile', registration' } <-
+                    { team': _, profile': _, registration': _ }
                     <$> validateTeamV team
                     <*> TeamProfile.validateProfileV (convertFields fields) profile
+                    <*> validateRegistrationV registration
                     # AsyncV.toAsync
                     # label (SProxy :: SProxy "invalidBody")
+
+                -- Generate password hash.
+                hash <- generateHash registration'.password
+
+                -- Generate email confirmation nonce.
+                nonce <- generateNonce
+
+                -- Add player.
+                playerId <- addPlayer client
+                    { email: registration'.email
+                    , nickname: registration'.nickname
+                    , hash
+                    , nonce
+                    }
+
                 let generatedHandle = generateHandle team'.name
-                { handle } <- addTeam client cookieInfo.id generatedHandle team'
-                AddTeamProfile.addProfile
-                    client cookieInfo.id handle content.gameHandle profile'
+                { handle } <- addTeam client (Id playerId) generatedHandle team'
+
+                AddTeamProfile.addProfile client (Id playerId) handle content.gameHandle profile'
+
                 pure $ Just { teamHandle: handle }
             _ -> Async.left $ inj (SProxy :: SProxy "client") []

@@ -53,9 +53,9 @@ type BadContent = Array $ Variant
     , teamProfile :: Array $ Variant
         ( ambitions :: Array String )
     , registration :: Array $ Variant
-        ( nickname :: {}
-        , email :: {}
-        , password :: {}
+        ( nickname :: Array String
+        , email :: Array String
+        , password :: Array String
         )
     , emailTaken :: Array String
     , nicknameTaken :: Array String

@@ -4,8 +4,9 @@ import Prelude
 
 import Data.List.Types (NonEmptyList)
 import Data.Newtype (class Newtype)
-import Data.Validated (Validated)
-import Data.Variant (Variant)
+import Data.Validated.Label (VariantValidated)
+import Data.Validated.Label as Validated
+import Data.Variant (SProxy(..), Variant)
 import Wrapped.String (TooShort, tooShort)
 import Wrapped.Validated as Wrapped
 
@@ -15,9 +16,14 @@ derive instance newtypePassword :: Newtype Password _
 
 type PasswordError = Variant (tooShort :: TooShort)
 
+type PasswordErrors = NonEmptyList PasswordError
+
 minPasswordLength :: Int
 minPasswordLength = 8
 
-create :: String -> Validated (NonEmptyList PasswordError) Password
-create password =
+validatePassword :: forall errors.
+    String -> VariantValidated (password :: Array String | errors) Password
+validatePassword password =
     Wrapped.create identity [tooShort minPasswordLength] Password password
+    # Validated.labelMap (SProxy :: SProxy "password") \(errors :: PasswordErrors) ->
+        [ "Registration password is invalid: " <> show errors ]

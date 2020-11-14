@@ -15,7 +15,6 @@ import Data.Maybe (Maybe(..), isNothing)
 import Data.Newtype (unwrap)
 import Data.Nullable (toNullable)
 import Data.Symbol (SProxy(..))
-import Data.Validated.Label as Validated
 import Data.Variant (Variant, inj, match, onMatch)
 import Effect.Class.Console (logShow)
 import Effect.Console (log)
@@ -33,14 +32,14 @@ import Simple.JSON.Async (readJSON)
 import TeamTavern.Server.Architecture.Perun.Request.Body (readBody)
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.EnsureNotSignedIn (ensureNotSignedIn)
-import TeamTavern.Server.Player.Domain.Email as Email
-import TeamTavern.Server.Player.Domain.Hash as Hash
-import TeamTavern.Server.Player.Domain.Nickname as Nickname
-import TeamTavern.Server.Player.Domain.Nonce as Nonce
-import TeamTavern.Server.Player.Domain.Password as Password
+import TeamTavern.Server.Player.Domain.Email (validateEmail)
+import TeamTavern.Server.Player.Domain.Hash (generateHash)
+import TeamTavern.Server.Player.Domain.Nickname (validateNickname)
+import TeamTavern.Server.Player.Domain.Nonce (generateNonce)
+import TeamTavern.Server.Player.Domain.Password (validatePassword)
 import TeamTavern.Server.Player.Register.AddPlayer (addPlayer)
 import TeamTavern.Server.Player.Register.SendEmail (SendEmailModel)
-import TeamTavern.Server.Player.Register.ValidateModel (RegisterModel, RegisterModelError)
+import TeamTavern.Server.Player.Register.ValidateRegistration (Registration, RegistrationError)
 import TeamTavern.Server.Player.UpdatePlayer.UpdateDetails (updateDetails)
 import TeamTavern.Server.Player.UpdatePlayer.ValidatePlayer (PlayerError, validatePlayerV)
 import TeamTavern.Server.Profile.AddPlayerProfile.AddProfile (addProfile)
@@ -102,20 +101,17 @@ validateRegistrationDetails :: forall errors.
     AsyncV (NonEmptyList (Variant
         ( invalidRegistration ::
             { details :: RegistrationDetails
-            , errors :: NonEmptyList RegisterModelError }
+            , errors :: NonEmptyList RegistrationError }
         | errors )
-        )) RegisterModel
-validateRegistrationDetails details = do
+        )) Registration
+validateRegistrationDetails details =
     { email: _, nickname: _, password: _ }
-        <$> (Email.create details.email
-            # Validated.label (SProxy :: SProxy "email"))
-        <*> (Nickname.create details.nickname
-            # Validated.label (SProxy :: SProxy "nickname"))
-        <*> (Password.create details.password
-            # Validated.label (SProxy :: SProxy "password"))
-        # AsyncV.fromValidated
-        # AsyncV.labelMap (SProxy :: SProxy "invalidRegistration")
-            { details, errors: _ }
+    <$> validateEmail details.email
+    <*> validateNickname details.nickname
+    <*> validatePassword details.password
+    # AsyncV.fromValidated
+    # AsyncV.labelMap (SProxy :: SProxy "invalidRegistration")
+        { details, errors: _ }
 
 message :: SendEmailModel -> Message
 message { email, nickname, nonce } =
@@ -255,10 +251,10 @@ createAccount pool emailClient cookies body =
                 # label (SProxy :: SProxy "invalidBody")
 
             -- Generate password hash.
-            hash <- Hash.generate validatedBody.registration.password
+            hash <- generateHash validatedBody.registration.password
 
             -- Generate email confirmation nonce.
-            nonce <- Nonce.generate
+            nonce <- generateNonce
 
             -- Add player.
             playerId <- addPlayer client

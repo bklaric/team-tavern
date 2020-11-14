@@ -198,7 +198,7 @@ sendRegisterRequest state @ { email, nickname, password } = Async.unify do
             # bimap
                 (const $ Left $ state { otherError = true })
                 (\(error :: Register.BadRequestContent) -> Left $ match
-                    { invalidModel: foldl (\state' -> match
+                    { registration: foldl (\state' -> match
                         { invalidEmail:
                             const $ state' { emailError = true }
                         , invalidNickname:

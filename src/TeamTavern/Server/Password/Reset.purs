@@ -14,7 +14,7 @@ import TeamTavern.Server.Password.Reset.ReadNewPassword (readNewPassword)
 import TeamTavern.Server.Password.Reset.SendResponse (sendResponse)
 import TeamTavern.Server.Password.Reset.UpdatePassword (updatePassword)
 import TeamTavern.Server.Password.Reset.ValidatePassword (validatePassword)
-import TeamTavern.Server.Player.Domain.Hash as Hash
+import TeamTavern.Server.Player.Domain.Hash (generateHash)
 
 reset :: Pool -> Cookies  -> Body -> (forall left. Async left Response)
 reset pool cookies body =
@@ -32,7 +32,7 @@ reset pool cookies body =
     playerId <- ensureValidNonce pool nonce
 
     -- Generate password hash.
-    hash <- Hash.generate validPassword
+    hash <- generateHash validPassword
 
     -- Update the password.
     updatePassword pool playerId hash

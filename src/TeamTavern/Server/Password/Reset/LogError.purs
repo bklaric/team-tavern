@@ -2,7 +2,7 @@ module TeamTavern.Server.Password.Reset.LogError where
 
 import Prelude
 
-import Data.List.Types (NonEmptyList(..))
+import Data.List.Types (NonEmptyList)
 import Data.Variant (Variant, match)
 import Effect (Effect)
 import Foreign (Foreign, MultipleErrors)
@@ -27,7 +27,7 @@ type ResetError = Variant
         { password :: String
         , errors :: NonEmptyList PasswordError
         }
-    , bcryptError :: Node.Error
+    , bcrypt :: Node.Error
     , databaseError :: Postgres.Error
     , invalidNonce :: Nonce
     , unreadablePlayer ::
@@ -50,7 +50,7 @@ logError forgotError = do
         , invalidPassword: \{ password, errors } -> do
             logt $ "Couldn't validate password: " <> password
             logt $ "Validation resulted in these errors: " <> show errors
-        , bcryptError: \error ->
+        , bcrypt: \error ->
             logt $ "Password hashing resulted in this error: " <> print error
         , databaseError: \error ->
             logt $ "Unknown database error ocurred: " <> print error
