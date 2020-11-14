@@ -35,6 +35,7 @@ import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaU
 import TeamTavern.Client.Script.Navigate (navigate, navigate_)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Onboarding as Onboarding
+import Type (type ($))
 
 data Step
     = Greeting
@@ -266,7 +267,8 @@ render :: forall slots left.
     State -> HH.ComponentHTML Action (ChildSlots slots) (Async left)
 render state = onboarding' $ renderPage state
 
-sendRequest :: forall left. State -> Async left (Maybe (Either Onboarding.BadContent Unit))
+sendRequest :: forall left.
+    State -> Async left (Maybe (Either Onboarding.BadContent (Maybe Onboarding.OkContent)))
 sendRequest (state :: State) = Async.unify do
     (body :: Onboarding.RequestContent) <-
         case state of
@@ -337,9 +339,10 @@ sendRequest (state :: State) = Async.unify do
         <> Fetch.credentials := Fetch.Include
         )
         # lmap (const Nothing)
-    content :: Either Onboarding.BadContent Unit <-
+    content :: Either Onboarding.BadContent $ Maybe Onboarding.OkContent <-
         case FetchRes.status response of
-        204 -> pure $ Right unit
+        200 -> FetchRes.text response >>= JsonAsync.readJSON # bimap (const Nothing) (Right <<< Just)
+        204 -> pure $ Right Nothing
         400 -> FetchRes.text response >>= JsonAsync.readJSON # bimap (const Nothing) Left
         _ -> Async.left Nothing
     pure $ Just content
@@ -378,8 +381,8 @@ handleAction (SetStep step) =
 handleAction (UpdatePlayerOrTeam playerOrTeam) =
     H.modify_ _ { playerOrTeam = Just playerOrTeam }
 handleAction (UpdatePlayerDetails details) =
-    H.modify_ \state -> state
-        { playerDetails = state.playerDetails
+    H.modify_ _
+        { playerDetails
             { birthday = details.birthday
             , location = details.location
             , languages = details.languages
@@ -394,8 +397,8 @@ handleAction (UpdatePlayerDetails details) =
             }
         }
 handleAction (UpdateTeamDetails details) =
-    H.modify_ \state -> state
-        { teamDetails = state.teamDetails
+    H.modify_ _
+        { teamDetails
             { name = details.name
             , website = details.website
             , ageFrom = details.ageFrom
@@ -413,9 +416,9 @@ handleAction (UpdateTeamDetails details) =
             }
         }
 handleAction (UpdateGame game) =
-    H.modify_ \state -> state
+    H.modify_ _
         { game = Just game
-        , playerProfileDetails = state.playerProfileDetails
+        , playerProfileDetails
             { fields = game.fields
             , fieldValues = []
             , newOrReturning = false
@@ -433,16 +436,16 @@ handleAction (UpdateGame game) =
             }
         }
 handleAction (UpdatePlayerProfileDetails details) =
-    H.modify_ \state -> state
-        { playerProfileDetails = state.playerProfileDetails
+    H.modify_ _
+        { playerProfileDetails
             { fieldValues = details.fieldValues
             , newOrReturning = details.newOrReturning
             , ambitions = details.ambitions
             }
         }
 handleAction (UpdateTeamProfileDetails details) =
-    H.modify_ \state -> state
-        { teamProfileDetails = state.teamProfileDetails
+    H.modify_ _
+        { teamProfileDetails
             { fieldValues = details.fieldValues
             , newOrReturning = details.newOrReturning
             , ambitions = details.ambitions
@@ -450,7 +453,6 @@ handleAction (UpdateTeamProfileDetails details) =
         }
 handleAction SetUpAccount = do
     currentState <- H.modify _ { submitting = true }
-    response <- H.lift $ sendRequest currentState
     let nextState = currentState
             { submitting = false
             , playerDetails
@@ -469,8 +471,10 @@ handleAction SetUpAccount = do
                 , ambitionsError = false
                 }
             }
+    response <- H.lift $ sendRequest currentState
     case response of
-        Just (Right _) -> navigate_ "/"
+        Just (Right Nothing) -> navigate_ "/"
+        Just (Right (Just { teamHandle })) -> navigate_ $ "/teams/" <> teamHandle
         Just (Left errors) -> H.put $
             foldl
             (\state error ->

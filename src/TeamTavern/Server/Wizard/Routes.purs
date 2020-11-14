@@ -6,17 +6,11 @@ import Jarilo.Path (type (:>), End)
 import Jarilo.Query (NoQuery)
 import Jarilo.Route (Route)
 import Jarilo.Segment (Literal)
+import TeamTavern.Routes.Onboarding (Onboard)
 
 type CreateAccount = Route
     Post
     (  Literal "wizard"
-    :> End)
-    NoQuery
-
-type Onboard = Route
-    Post
-    (  Literal "wizard"
-    :> Literal "onboard"
     :> End)
     NoQuery
 

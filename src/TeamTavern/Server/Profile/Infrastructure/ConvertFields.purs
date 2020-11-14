@@ -12,6 +12,6 @@ import TeamTavern.Server.Profile.AddTeamProfile.LoadFields as Team
 convertFields :: Array Player.Field -> Array Team.Field
 convertFields = mapMaybe
     case _ of
-    { id, key, options: Just options } | id == 2 || id == 3 ->
+    { ilk, id, key, options: Just options } | ilk == 2 || ilk == 3 ->
         Just { id, key, options: options <#> Record.delete (SProxy :: SProxy "domain") }
     _ -> Nothing
