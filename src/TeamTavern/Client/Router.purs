@@ -41,6 +41,8 @@ import TeamTavern.Client.Pages.Onboarding (onboarding)
 import TeamTavern.Client.Pages.Onboarding as Onboarding
 import TeamTavern.Client.Pages.Player (player)
 import TeamTavern.Client.Pages.Player as Player
+import TeamTavern.Client.Pages.Preboarding (preboarding)
+import TeamTavern.Client.Pages.Preboarding as Preboarding
 import TeamTavern.Client.Pages.Profiles as Profiles
 import TeamTavern.Client.Pages.Profiles.GameHeader as GameHeader
 import TeamTavern.Client.Pages.Register (register)
@@ -69,6 +71,7 @@ data State
     | Register
     | SignIn
     | Onboarding Onboarding.Input
+    | Preboarding Preboarding.Input
     | ForgotPassword
     | ResetPasswordSent { email :: String }
     | ResetPassword
@@ -88,6 +91,7 @@ type ChildSlots = Footer.ChildSlots
     , conversation :: Conversation.Slot
     , team :: Team.Slot
     , onboarding :: Onboarding.Slot
+    , preboarding :: Preboarding.Slot
     , signIn :: SignIn.Slot Unit
     , homeAnchor :: NavigationAnchor.Slot Unit
     , signInAnchor :: NavigationAnchor.Slot Unit
@@ -108,8 +112,7 @@ wideTopBarWithContent
     -> H.ComponentHTML query (Footer.ChildSlots (topBar :: TopBar.Slot Unit | children)) (Async left)
 wideTopBarWithContent content' = HH.div_ [ topBar, wideContent content', footer ]
 
-render :: forall action left.
-    State -> H.ComponentHTML action ChildSlots (Async left)
+render :: forall action left. State -> H.ComponentHTML action ChildSlots (Async left)
 render Empty = HH.div_ []
 render Home = HH.div_ [ topBar, home, footer ]
 render Games = topBarWithContent [ games ]
@@ -123,6 +126,7 @@ render (Team input) = topBarWithContent [ team input ]
 render Register = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ register ] ]
 render SignIn = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ signIn ] ]
 render (Onboarding input) = onboarding input
+render (Preboarding input) = preboarding input
 render ForgotPassword = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ forgotPassword ] ]
 render (ResetPasswordSent resetPasswordData) = singleContent [ resetPasswordSent resetPasswordData ]
 render ResetPassword = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ resetPassword ] ]
@@ -163,6 +167,21 @@ handleAction (Init state route) = do
             case (read_ state :: Maybe Onboarding.Input), step' of
             Just input, Just step'' -> just $ Onboarding input { step = step'' }
             Nothing, Just step'' -> just $ Onboarding Onboarding.emptyInput { step = step'' } -- navigateReplace_ "/" *> nothing
+            _, _ -> navigateReplace_ "/" *> nothing
+        ["", "preboarding", step] ->
+            let step' =
+                    case step of
+                    "start" -> Just Preboarding.Greeting
+                    "player" -> Just Preboarding.Player
+                    "team" -> Just Preboarding.Team
+                    "game" -> Just Preboarding.Game
+                    "player-profile" -> Just Preboarding.PlayerProfile
+                    "team-profile" -> Just Preboarding.TeamProfile
+                    "register" -> Just Preboarding.Register
+                    _ -> Nothing
+            in
+            case (read_ state :: Maybe Preboarding.Input), step' of
+            Just input, Just step'' -> just $ Preboarding input { step = step'' }
             _, _ -> navigateReplace_ "/" *> nothing
         ["", "forgot-password"] ->
             just ForgotPassword

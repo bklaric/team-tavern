@@ -59,10 +59,11 @@ import TeamTavern.Server.Session.End (end) as Session
 import TeamTavern.Server.Session.Start (start) as Session
 import TeamTavern.Server.Team.Create (create) as Team
 import TeamTavern.Server.Team.Update (update) as Team
-import TeamTavern.Server.Team.ViewByOwner (viewByOwner) as Team
 import TeamTavern.Server.Team.View (view) as Team
+import TeamTavern.Server.Team.ViewByOwner (viewByOwner) as Team
 import TeamTavern.Server.Wizard.CreateAccount as Wizard
 import TeamTavern.Server.Wizard.Onboard as Onboard
+import TeamTavern.Server.Wizard.Preboard as Preboard
 
 listenOptions :: ListenOptions
 listenOptions = TcpListenOptions
@@ -219,6 +220,8 @@ handleRequest deployment pool client method url cookies body =
             Wizard.createAccount pool client cookies body
         , onboard: const $
             Onboard.onboard pool cookies body
+        , preboard: const $
+            Preboard.preboard pool client cookies body
         }
         <#> (\response -> response { headers = response.headers <> MultiMap.fromFoldable
                 [ Tuple "Access-Control-Allow-Origin" $ NEL.singleton "http://localhost:1337"

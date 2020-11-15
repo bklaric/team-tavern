@@ -153,7 +153,7 @@ handleAction :: forall output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
 handleAction Init = do
     H.liftEffect $ whenM hasPlayerIdCookie $ navigateReplace_ "/"
-    nonce <- H.liftEffect $ getQueryParam "nonce"
+    nonce <- getQueryParam "nonce"
     case nonce of
         Nothing -> navigateReplace_ "/"
         Just nonce' -> do

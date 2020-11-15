@@ -12,14 +12,16 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
+import TeamTavern.Client.Components.Boarding.PlayerOrTeamInput (PlayerOrTeam(..))
 import TeamTavern.Client.Pages.Home.Wizard as Wizard
-import TeamTavern.Client.Pages.Home.Wizard.Shared as WizardShared
+import TeamTavern.Client.Pages.Preboarding as Preboarding
+import TeamTavern.Client.Script.Navigate (navigate)
 
 type Input = { signedIn :: Boolean, title :: Maybe String }
 
 type State = { signedIn :: Boolean, title :: Maybe String }
 
-data Action = Receive Input | OpenWizard WizardShared.Ilk
+data Action = Receive Input | OpenWizard PlayerOrTeam
 
 type Slot = H.Slot (Const Void) Void Unit
 
@@ -58,7 +60,7 @@ render { signedIn, title } =
                 [ HH.div [ HP.class_ $ HH.ClassName "call-to-action-button-group" ]
                     [ HH.button
                         [ HP.class_ $ HH.ClassName "call-to-action-button"
-                        , HE.onClick $ const $ Just $ OpenWizard WizardShared.Player
+                        , HE.onClick $ const $ Just $ OpenWizard Player
                         ]
                         [ HH.i [ HP.class_ $ HH.ClassName "fas fa-user call-to-action-icon" ] []
                         , HH.text "I'm a player"
@@ -68,7 +70,7 @@ render { signedIn, title } =
                 , HH.div [ HP.class_ $ HH.ClassName "call-to-action-button-group" ]
                     [ HH.button
                         [ HP.class_ $ HH.ClassName "call-to-action-button"
-                        , HE.onClick $ const $ Just $ OpenWizard WizardShared.Team
+                        , HE.onClick $ const $ Just $ OpenWizard Team
                         ]
                         [ HH.i [ HP.class_ $ HH.ClassName "fas fa-users call-to-action-icon" ] []
                         , HH.text "I have a team"
@@ -84,8 +86,8 @@ handleAction :: forall action output slots left.
     Action -> H.HalogenM State action (Slots slots) output (Async left) Unit
 handleAction (Receive input) =
     H.put input
-handleAction (OpenWizard ilk) =
-    pure unit
+handleAction (OpenWizard playerOrTeam) =
+    navigate (Preboarding.emptyInput playerOrTeam) "/preboarding/start"
 
 component :: forall query output left.
     H.Component HH.HTML query Input output (Async left)

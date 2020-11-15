@@ -9,7 +9,7 @@ import Browser.Async.Fetch.Response as FetchRes
 import Data.Bifunctor (bimap, lmap)
 import Data.Const (Const)
 import Data.HTTP.Method (Method(..))
-import Data.Maybe (Maybe(..), isJust, maybe)
+import Data.Maybe (Maybe(..), maybe)
 import Data.Options ((:=))
 import Data.Variant (SProxy(..), match)
 import Halogen as H
@@ -21,7 +21,7 @@ import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor, navigationAnchorClassed)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Pages.Onboarding as Onboarding
-import TeamTavern.Client.Script.Cookie (hasPlayerIdCookie)
+import TeamTavern.Client.Script.Cookie (getPlayerNickname, hasPlayerIdCookie)
 import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
 import TeamTavern.Client.Script.Navigate (navigate, navigate_)
 import TeamTavern.Client.Script.QueryParams (getQueryParam)
@@ -191,7 +191,7 @@ handleAction :: forall output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
 handleAction Init = do
     H.liftEffect $ whenM hasPlayerIdCookie $ navigate_ "/"
-    nonce <- H.liftEffect $ getQueryParam "nonce"
+    nonce <- getQueryParam "nonce"
     H.modify_ (_ { nonce = nonce })
     H.liftEffect do
         setMetaTitle "Sign in | TeamTavern"
@@ -215,10 +215,13 @@ handleAction (SignIn event) = do
     H.put state
     newState <- H.lift $ sendSignInRequest state
     case newState of
-        Nothing -> H.liftEffect
-            if isJust state.nonce
-            then navigate Onboarding.emptyInput "/onboarding/start"
-            else navigate_ "/"
+        Nothing -> do
+            preboarded <- getQueryParam "preboarded"
+            nickname <- getPlayerNickname
+            case state.nonce, preboarded, nickname of
+                Just _, Nothing, _ -> navigate Onboarding.emptyInput "/onboarding/start"
+                _, _, Just nickname' -> navigate_ $ "/players/" <> nickname'
+                _, _, _ -> navigate_ "/"
         Just newState' -> H.put newState' { submitting = false }
 
 component :: forall query input output left.

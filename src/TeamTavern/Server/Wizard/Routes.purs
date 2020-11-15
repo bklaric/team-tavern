@@ -7,6 +7,7 @@ import Jarilo.Query (NoQuery)
 import Jarilo.Route (Route)
 import Jarilo.Segment (Literal)
 import TeamTavern.Routes.Onboarding (Onboard)
+import TeamTavern.Routes.Preboarding (Preboard)
 
 type CreateAccount = Route
     Post
@@ -17,3 +18,4 @@ type CreateAccount = Route
 type WizardRoutes
     =    "createAccount" := CreateAccount
     :<|> "onboard"       := Onboard
+    :<|> "preboard"      := Preboard

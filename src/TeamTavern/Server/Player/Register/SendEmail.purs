@@ -23,6 +23,7 @@ type SendEmailModel =
     { email :: Email
     , nickname :: Nickname
     , nonce :: Nonce
+    , preboarded :: Boolean
     }
 
 type SendEmailError errors = Variant
@@ -33,7 +34,10 @@ type SendEmailError errors = Variant
     | errors )
 
 message :: SendEmailModel -> Message
-message { email, nickname, nonce } =
+message { email, nickname, nonce, preboarded } = let
+    url = "https://www.teamtavern.net/signin?nonce="
+        <> unwrap nonce <> if preboarded then "&preboarded=true" else ""
+    in
     { to: unwrap email
     , from: "TeamTavern admin@teamtavern.net"
     , subject: toNullable $ Just "TeamTavern registration"
@@ -41,7 +45,7 @@ message { email, nickname, nonce } =
         "Hi " <> unwrap nickname <> ",<br /><br />"
         <> "Thank you for registering to TeamTavern. "
         <> "Please open the link below to sign in and verify your email address:<br /><br />"
-        <> "<a href=\"https://www.teamtavern.net/signin?nonce=" <> unwrap nonce <> "\">https://www.teamtavern.net/signin?nonce=" <> unwrap nonce <> "</a><br /><br />"
+        <> "<a href=\"" <> url <> "\">" <> url <> "</a><br /><br />"
         <> "Should you have any questions or feedback, please contact <a href=\"mailto:admin@teamtavern.net\">admin@teamtavern.net</a>. Thank you for your time.<br /><br />"
         <> "Happy playing!"
     , textBody: toNullable Nothing

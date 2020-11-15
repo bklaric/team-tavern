@@ -42,6 +42,6 @@ register pool client cookies body =
     _ <- addPlayer pool { email, nickname, hash, nonce }
 
     -- Send confirmation email.
-    sendEmail client { email, nickname, nonce }
+    sendEmail client { email, nickname, nonce, preboarded: false }
 
     pure { email, nickname }

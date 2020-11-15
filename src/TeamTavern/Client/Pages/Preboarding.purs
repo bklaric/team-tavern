@@ -27,7 +27,6 @@ import Simple.JSON (class ReadForeign, class WriteForeign)
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.Boarding.Boarding (boarding, boardingButtons, boardingDescription, boardingHeading, boardingStep)
-import TeamTavern.Client.Components.Boarding.PlayerOrTeamInput (playerOrTeamInput)
 import TeamTavern.Client.Components.Boarding.PlayerOrTeamInput as PlayerOrTeamInput
 import TeamTavern.Client.Components.Button (primaryButton_, secondaryButton_)
 import TeamTavern.Client.Components.Player.PlayerFormInput as PlayerFormInput
@@ -38,7 +37,6 @@ import TeamTavern.Client.Components.Team.ProfileFormInput as TeamProfileFormInpu
 import TeamTavern.Client.Components.Team.TeamFormInput as TeamFormInput
 import TeamTavern.Client.Components.Boarding.GameInput (gameInput)
 import TeamTavern.Client.Components.Boarding.GameInput as GameInput
-import TeamTavern.Client.Script.Cookie (getPlayerNickname)
 import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
 import TeamTavern.Client.Script.Navigate (navigate, navigateReplace, navigate_)
 import TeamTavern.Client.Snippets.Class as HS
@@ -47,7 +45,6 @@ import Type (type ($))
 
 data Step
     = Greeting
-    | PlayerOrTeam
     | Player
     | Team
     | Game
@@ -55,9 +52,12 @@ data Step
     | TeamProfile
     | Register
 
+derive instance eqStep :: Eq Step
+
+derive instance ordStep :: Ord Step
+
 instance writeForeginStep :: WriteForeign Step where
     writeImpl Greeting = unsafeToForeign "Greeting"
-    writeImpl PlayerOrTeam = unsafeToForeign "PlayerOrTeam"
     writeImpl Player = unsafeToForeign "Player"
     writeImpl Team = unsafeToForeign "Team"
     writeImpl Game = unsafeToForeign "Game"
@@ -68,7 +68,6 @@ instance writeForeginStep :: WriteForeign Step where
 instance readForeignStep :: ReadForeign Step where
     readImpl = readString >=> case _ of
         "Greeting" -> pure Greeting
-        "PlayerOrTeam" -> pure PlayerOrTeam
         "Player" -> pure Player
         "Team" -> pure Team
         "Game" -> pure Game
@@ -79,8 +78,7 @@ instance readForeignStep :: ReadForeign Step where
 
 type Input =
     { step :: Step
-    , nickname :: String
-    , playerOrTeam :: Maybe PlayerOrTeamInput.PlayerOrTeam
+    , playerOrTeam :: PlayerOrTeamInput.PlayerOrTeam
     , player :: PlayerFormInput.Input
     , team :: TeamFormInput.Input
     , game :: GameInput.Input
@@ -90,11 +88,10 @@ type Input =
     , otherError :: Boolean
     }
 
-emptyInput :: Input
-emptyInput =
+emptyInput :: PlayerOrTeamInput.PlayerOrTeam -> Input
+emptyInput playerOrTeam =
     { step: Greeting
-    , nickname: ""
-    , playerOrTeam: Nothing
+    , playerOrTeam
     , player: PlayerFormInput.emptyInput
     , team: TeamFormInput.emptyInput
     , game: Nothing
@@ -107,8 +104,7 @@ emptyInput =
 type State =
     { step :: Step
     , confirmSkip :: Boolean
-    , nickname :: String
-    , playerOrTeam :: Maybe PlayerOrTeamInput.PlayerOrTeam
+    , playerOrTeam :: PlayerOrTeamInput.PlayerOrTeam
     , player :: PlayerFormInput.Input
     , team :: TeamFormInput.Input
     , game :: GameInput.Input
@@ -125,7 +121,6 @@ data Action
     | Skip
     | ConfirmSkip
     | SetStep Step
-    | UpdatePlayerOrTeam PlayerOrTeamInput.PlayerOrTeam
     | UpdatePlayer PlayerFormInput.Output
     | UpdateTeam TeamFormInput.Output
     | UpdateGame GameInput.Output
@@ -147,9 +142,9 @@ type ChildSlots slots =
 
 renderPage :: forall slots left.
     State -> Array (HH.ComponentHTML Action (ChildSlots slots) (Async left))
-renderPage { step: Greeting, nickname, confirmSkip } =
+renderPage { step: Greeting, playerOrTeam, confirmSkip } =
     [ boardingStep
-        [ boardingHeading $ "Hi, " <> nickname <> "!"
+        [ boardingHeading $ "Hi!"
         , boardingDescription  """Welcome to TeamTavern. Let's start with setting up your
                 account and your first game profile."""
         ]
@@ -166,25 +161,12 @@ renderPage { step: Greeting, nickname, confirmSkip } =
                 , HH.p [ HS.class_ "boarding-skip-button-underlabel" ]
                     [ HH.text "I don't want to set up", HH.br_, HH.text "my account right now." ]
                 ]
-        , primaryButton_ "Let's go" $ SetStep PlayerOrTeam
-        ]
-    ]
-renderPage { step: PlayerOrTeam, playerOrTeam } =
-    [ boardingStep
-        [ boardingHeading "Player or team"
-        , boardingDescription "Do you want to create your own player profile or a team profile?"
-        , playerOrTeamInput playerOrTeam UpdatePlayerOrTeam
-        ]
-    , boardingButtons
-        [ secondaryButton_ "Back" $ SetStep Greeting
         , HH.button
             [ HP.class_ $ HH.ClassName "primary-button"
-            , HP.disabled $ isNothing playerOrTeam
-            , HE.onClick $ const
+            , HE.onClick $ const $ Just
                 case playerOrTeam of
-                Just PlayerOrTeamInput.Player -> Just $ SetStep Player
-                Just PlayerOrTeamInput.Team -> Just $ SetStep Team
-                Nothing -> Nothing
+                PlayerOrTeamInput.Player -> SetStep Player
+                PlayerOrTeamInput.Team -> SetStep Team
             ]
             [ HH.text "Next" ]
         ]
@@ -198,21 +180,20 @@ renderPage { step: Player, player } =
         , PlayerFormInput.playerFormInput player (Just <<< UpdatePlayer)
         ]
     , boardingButtons
-        [ secondaryButton_ "Back" $ SetStep PlayerOrTeam
+        [ secondaryButton_ "Back" $ SetStep Greeting
         , primaryButton_ "Next" $ SetStep Game
         ]
     ]
 renderPage { step: Team, team } =
     [ boardingStep
         [ boardingHeading "Team details"
-<<<<<<< HEAD
         , boardingDescription  """Enter details about yourself so your new bruh gamer friends
                 can find you, bruh. Fill out as much as you can to ensure the
                 bruhest gamers find you. All fields are optional, bruh."""
-        , TeamFormInput.teamFormInput team (Just <<< UpdateTeamDetails)
-=======
-        , boardingDescription  """Enter details about yourself so your new bruh gamer friends
-        [ secondaryButton_ "Back" $ SetStep PlayerOrTeam
+        , TeamFormInput.teamFormInput team (Just <<< UpdateTeam)
+        ]
+    , boardingButtons
+        [ secondaryButton_ "Back" $ SetStep Greeting
         , primaryButton_ "Next" $ SetStep Game
         ]
     ]
@@ -224,17 +205,15 @@ renderPage { step: Team, team } =
     , boardingButtons
         [ secondaryButton_ "Back"
             case playerOrTeam of
-            Just PlayerOrTeamInput.Player -> SetStep Player
-            Just PlayerOrTeamInput.Team -> SetStep Team
-            Nothing -> SetStep PlayerOrTeam
+            PlayerOrTeamInput.Player -> SetStep Player
+            PlayerOrTeamInput.Team -> SetStep Team
         , HH.button
             [ HP.class_ $ HH.ClassName "primary-button"
             , HP.disabled $ isNothing game
             , HE.onClick $ const $ Just $ SetStep
                 case playerOrTeam of
-                Just PlayerOrTeamInput.Player -> PlayerProfile
-                Just PlayerOrTeamInput.Team -> TeamProfile
-                Nothing -> PlayerProfile
+                PlayerOrTeamInput.Player -> PlayerProfile
+                PlayerOrTeamInput.Team -> TeamProfile
             ]
             [ HH.text "Next" ]
         ]
@@ -261,14 +240,17 @@ renderPage { step: TeamProfile, teamProfile, otherError, submitting } =
         , primaryButton_ "Next" $ SetStep Register
         ]
     ]
-renderPage { step: Register, registration, otherError, submitting } =
+renderPage { step: Register, registration, otherError, submitting, playerOrTeam } =
     [ boardingStep
         [ boardingHeading "Registration details"
         , boardingDescription  """Enter your nickname, email address and password to complete the registration process."""
         , registrationInput registration UpdateRegistration
         ]
     , boardingButtons
-        [ secondaryButton_ "Back" $ SetStep Game
+        [ secondaryButton_ "Back" $ SetStep
+            case playerOrTeam of
+            PlayerOrTeamInput.Player -> PlayerProfile
+            PlayerOrTeamInput.Team -> TeamProfile
         , HH.div [ HS.class_ "boarding-submit-button-group" ] $
             [ HH.button
                 [ HS.class_ "primary-button"
@@ -295,7 +277,7 @@ sendRequest :: forall left.
 sendRequest (state :: State) = Async.unify do
     (body :: Preboarding.RequestContent) <-
         case state of
-        { playerOrTeam: Just PlayerOrTeamInput.Player
+        { playerOrTeam: PlayerOrTeamInput.Player
         , player
         , game: Just game
         , playerProfile: profile
@@ -329,7 +311,7 @@ sendRequest (state :: State) = Async.unify do
                 , password: registration.password
                 }
             }
-        { playerOrTeam: Just PlayerOrTeamInput.Team
+        { playerOrTeam: PlayerOrTeamInput.Team
         , team
         , game: Just game
         , teamProfile: profile
@@ -387,7 +369,6 @@ updateHistoryState :: forall monad. MonadEffect monad => State -> monad Unit
 updateHistoryState (state :: State) = do
     case state.step of
         Greeting -> navigateReplace state "/preboarding/start"
-        PlayerOrTeam -> navigateReplace state "/preboarding/player-or-team"
         Player -> navigateReplace state "/preboarding/player"
         Team -> navigateReplace state "/preboarding/team"
         Game -> navigateReplace state "/preboarding/game"
@@ -397,15 +378,7 @@ updateHistoryState (state :: State) = do
 
 handleAction :: forall action output slots left.
     Action -> H.HalogenM State action slots output (Async left) Unit
-handleAction Initialize = do
-    state <- H.get
-    -- case state.step of
-    --     Greeting -> pure unit
-    --     _ -> navigate_ "/"
-    nickname <- getPlayerNickname
-    case nickname of
-        Just nickname' -> H.modify_ _ { nickname = nickname' }
-        Nothing -> navigate_ "/"
+handleAction Initialize =
     H.liftEffect do
         setMetaTitle "Preboarding | TeamTavern"
         setMetaDescription "TeamTavern preboarding."
@@ -424,16 +397,12 @@ handleAction (SetStep step) = do
     state <- H.get
     case step of
         Greeting -> navigate state "/preboarding/start"
-        PlayerOrTeam -> navigate state "/preboarding/player-or-team"
         Player -> navigate state "/preboarding/player"
         Team -> navigate state "/preboarding/team"
         Game -> navigate state "/preboarding/game"
         PlayerProfile -> navigate state "/preboarding/player-profile"
         TeamProfile -> navigate state "/preboarding/team-profile"
         Register -> navigate state "/preboarding/register"
-handleAction (UpdatePlayerOrTeam playerOrTeam) = do
-    state <- H.modify _ { playerOrTeam = Just playerOrTeam }
-    updateHistoryState state
 handleAction (UpdatePlayer details) = do
     state <- H.modify _
         { player
@@ -542,7 +511,7 @@ handleAction SetUpAccount = do
     response <- H.lift $ sendRequest currentState
     case response of
         Just (Right Nothing) -> navigate_ "/"
-        Just (Right (Just { teamHandle })) -> navigate_ $ "/teams/" <> teamHandle
+        Just (Right (Just input)) -> navigate input $ "/welcome"
         Just (Left errors) -> H.put $
             foldl
             (\state error ->
@@ -592,16 +561,24 @@ handleAction SetUpAccount = do
                     (\state' error' ->
                         match
                         { url: \{ key } -> state'
-                            { playerProfile
+                            { step =
+                                if state'.step > PlayerProfile then PlayerProfile else state'.step
+                            , playerProfile
                                 { urlErrors = Array.cons key state'.playerProfile.urlErrors }
                             }
                         , missing: \{ key } -> state'
-                            { playerProfile
+                            { step =
+                                if state'.step > PlayerProfile then PlayerProfile else state'.step
+                            , playerProfile
                                 { missingErrors =
                                     Array.cons key state'.playerProfile.missingErrors
                                 }
                             }
-                        , ambitions: const $ state' { playerProfile { ambitionsError = true } }
+                        , ambitions: const $ state'
+                            { step =
+                                if state'.step > PlayerProfile then PlayerProfile else state'.step
+                            , playerProfile { ambitionsError = true }
+                            }
                         }
                         error'
                     )
@@ -610,7 +587,11 @@ handleAction SetUpAccount = do
                     foldl
                     (\state' error' ->
                         match
-                        { ambitions: const $ state' { playerProfile { ambitionsError = true } } }
+                        { ambitions: const $ state'
+                            { step =
+                                if state'.step > TeamProfile then TeamProfile else state'.step
+                            , playerProfile { ambitionsError = true } }
+                            }
                         error'
                     )
                     state

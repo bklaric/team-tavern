@@ -32,7 +32,12 @@ type RequestContent =
     , registration :: RegisterRequestContent
     }
 
-type OkContent = { teamHandle :: String }
+type OkContent =
+    { nickname :: String
+    , email :: String
+    , emailSent :: Boolean
+    , teamHandle :: Maybe String
+    }
 
 type BadContent = Array $ Variant
     ( player :: Array $ Variant

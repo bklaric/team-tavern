@@ -21,8 +21,7 @@ queryString = Query """
     returning player_profile.id as "profileId";
     """
 
-queryParameters ::
-    Int -> Identifiers -> Text -> Boolean -> Array QueryParameter
+queryParameters :: Int -> Identifiers -> Text -> Boolean -> Array QueryParameter
 queryParameters playerId { handle, nickname } ambitions newOrReturning =
     playerId : handle : ambitions :| newOrReturning
 
@@ -39,13 +38,8 @@ addProfile' client playerId identifiers ambitions newOrReturning = do
         (queryParameters playerId identifiers ambitions newOrReturning)
     pure profileId
 
-addProfile
-    :: forall errors
-    .  Client
-    -> Int
-    -> Identifiers
-    -> Profile
-    -> Async (InternalError errors) Unit
+addProfile :: forall errors.
+    Client -> Int -> Identifiers -> Profile -> Async (InternalError errors) Unit
 addProfile client playerId identifiers { fieldValues, newOrReturning, ambitions } = do
     profileId <- addProfile' client playerId identifiers ambitions newOrReturning
     addFieldValues client profileId fieldValues

@@ -280,6 +280,7 @@ createAccount pool emailClient cookies body =
         { email: validatedBody.registration.email
         , nickname: validatedBody.registration.nickname
         , nonce
+        , preboarded: true
         }
 
     pure
