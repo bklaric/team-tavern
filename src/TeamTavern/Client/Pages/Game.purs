@@ -30,7 +30,7 @@ data Action = Initialize | Receive Input
 
 data State
     = Empty { handle :: String }
-    | Loaded { signedIn :: Boolean, handle :: String, title :: String }
+    | Loaded { signedIn :: Boolean, game :: Game.OkContent }
 
 type Slot = H.Slot (Const Void) Void Unit
 
@@ -43,9 +43,9 @@ type ChildSlots =
 render :: forall left.
     State -> H.ComponentHTML Action ChildSlots (Async left)
 render (Empty _) = HH.div [ HP.class_ $ HH.ClassName "home" ] []
-render (Loaded { signedIn, handle, title }) =
+render (Loaded { signedIn, game: game' @ { handle, title } }) =
     HH.div [ HP.class_ $ HH.ClassName "home" ]
-    [ callToAction { signedIn, title: Just title }, why, features, profiles { handle, title } ]
+    [ callToAction { signedIn, game: Just game' }, why, features, profiles { handle, title } ]
 
 loadGame :: forall left. String -> Async left (Maybe Game.OkContent)
 loadGame handle = Async.unify do
@@ -73,15 +73,15 @@ handleAction Initialize = do
             signedIn <- hasPlayerIdCookie
             game' <- H.lift $ loadGame handle
             case game' of
-                Just { title } -> H.put $ Loaded { signedIn, handle, title }
+                Just game'' -> H.put $ Loaded { signedIn, game: game'' }
                 Nothing -> pure unit
         _ -> pure unit
 handleAction (Receive { handle }) = do
     state <- H.get
     game' <- H.lift $ loadGame handle
     case state, game' of
-        Loaded { signedIn }, Just { title } ->
-            H.put $ Loaded { signedIn, handle, title }
+        Loaded { signedIn }, Just game'' ->
+            H.put $ Loaded { signedIn, game: game'' }
         _, _ -> pure unit
 
 component :: forall query output left.

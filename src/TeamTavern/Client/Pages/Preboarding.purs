@@ -1,4 +1,4 @@
-module TeamTavern.Client.Pages.Preboarding (Step(..), Input, Slot, emptyInput, preboarding) where
+module TeamTavern.Client.Pages.Preboarding (Game(..), Step(..), Input, Slot, emptyInput, preboarding) where
 
 import Prelude
 
@@ -6,13 +6,14 @@ import Async (Async)
 import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
-import Data.Array (foldl)
+import Control.Alt ((<|>))
+import Data.Array (foldl, mapMaybe)
 import Data.Array as Array
 import Data.Bifunctor (bimap, lmap)
 import Data.Const (Const)
 import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
-import Data.Maybe (Maybe(..), isNothing)
+import Data.Maybe (Maybe(..), isNothing, maybe)
 import Data.Options ((:=))
 import Data.Symbol (SProxy(..))
 import Data.Variant (match)
@@ -23,10 +24,12 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Record as Record
-import Simple.JSON (class ReadForeign, class WriteForeign)
+import Simple.JSON (class ReadForeign, class WriteForeign, readImpl, writeImpl)
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.Boarding.Boarding (boarding, boardingButtons, boardingDescription, boardingHeading, boardingStep)
+import TeamTavern.Client.Components.Boarding.GameInput (gameInput)
+import TeamTavern.Client.Components.Boarding.GameInput as GameInput
 import TeamTavern.Client.Components.Boarding.PlayerOrTeamInput as PlayerOrTeamInput
 import TeamTavern.Client.Components.Button (primaryButton_, secondaryButton_)
 import TeamTavern.Client.Components.Player.PlayerFormInput as PlayerFormInput
@@ -35,12 +38,11 @@ import TeamTavern.Client.Components.RegistrationInput (registrationInput)
 import TeamTavern.Client.Components.RegistrationInput as RegistrationInput
 import TeamTavern.Client.Components.Team.ProfileFormInput as TeamProfileFormInput
 import TeamTavern.Client.Components.Team.TeamFormInput as TeamFormInput
-import TeamTavern.Client.Components.Boarding.GameInput (gameInput)
-import TeamTavern.Client.Components.Boarding.GameInput as GameInput
 import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
 import TeamTavern.Client.Script.Navigate (navigate, navigateReplace, navigate_)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Preboarding as Preboarding
+import TeamTavern.Server.Game.View.SendResponse as ViewGame
 import Type (type ($))
 
 data Step
@@ -76,27 +78,56 @@ instance readForeignStep :: ReadForeign Step where
         "Register" -> pure Register
         step -> fail $ ForeignError $ "Unknown step " <> step
 
+data Game = Preselected ViewGame.OkContent | Selected GameInput.Input
+
+getGame :: Game -> Maybe ViewGame.OkContent
+getGame (Preselected game) = Just game
+getGame (Selected (Just game)) = Just game
+getGame _ = Nothing
+
+instance writeForeginGame :: WriteForeign Game where
+    writeImpl (Preselected game) = writeImpl { preselected: game }
+    writeImpl (Selected input) = writeImpl { selected: input }
+
+instance readForeignGame :: ReadForeign Game where
+    readImpl foreign' =
+        ( (readImpl foreign' :: _ { preselected :: ViewGame.OkContent })
+            <#> _.preselected <#> Preselected
+        )
+        <|>
+        ( (readImpl foreign' :: _ { selected :: Maybe ViewGame.OkContent })
+            <#> _.selected <#> Selected
+        )
+
 type Input =
     { step :: Step
     , playerOrTeam :: PlayerOrTeamInput.PlayerOrTeam
     , player :: PlayerFormInput.Input
     , team :: TeamFormInput.Input
-    , game :: GameInput.Input
+    , game :: Game
     , playerProfile :: PlayerProfileFormInput.Input
     , teamProfile :: TeamProfileFormInput.Input
     , registration :: RegistrationInput.Input
     , otherError :: Boolean
     }
 
-emptyInput :: PlayerOrTeamInput.PlayerOrTeam -> Input
-emptyInput playerOrTeam =
+emptyInput :: PlayerOrTeamInput.PlayerOrTeam -> Maybe ViewGame.OkContent -> Input
+emptyInput playerOrTeam game =
     { step: Greeting
     , playerOrTeam
     , player: PlayerFormInput.emptyInput
     , team: TeamFormInput.emptyInput
-    , game: Nothing
-    , playerProfile: PlayerProfileFormInput.emptyInput []
-    , teamProfile: TeamProfileFormInput.emptyInput []
+    , game:
+        case game of
+        Just game' -> Preselected game'
+        Nothing -> Selected Nothing
+    , playerProfile: PlayerProfileFormInput.emptyInput $ maybe [] _.fields game
+    , teamProfile: TeamProfileFormInput.emptyInput $ maybe [] (_.fields >>>
+        mapMaybe
+        case _ of
+        { ilk, key, label, icon, options: Just options } | ilk == 2 || ilk == 3 ->
+            Just { key, label, icon, options: options }
+        _ -> Nothing) game
     , registration: RegistrationInput.emptyInput
     , otherError: false
     }
@@ -107,7 +138,7 @@ type State =
     , playerOrTeam :: PlayerOrTeamInput.PlayerOrTeam
     , player :: PlayerFormInput.Input
     , team :: TeamFormInput.Input
-    , game :: GameInput.Input
+    , game :: Game
     , playerProfile :: PlayerProfileFormInput.Input
     , teamProfile :: TeamProfileFormInput.Input
     , registration :: RegistrationInput.Input
@@ -171,7 +202,7 @@ renderPage { step: Greeting, playerOrTeam, confirmSkip } =
             [ HH.text "Next" ]
         ]
     ]
-renderPage { step: Player, player } =
+renderPage { step: Player, player, game } =
     [ boardingStep
         [ boardingHeading "Player details"
         , boardingDescription  """Enter details about yourself so your new bruh gamer friends
@@ -181,10 +212,13 @@ renderPage { step: Player, player } =
         ]
     , boardingButtons
         [ secondaryButton_ "Back" $ SetStep Greeting
-        , primaryButton_ "Next" $ SetStep Game
+        , primaryButton_ "Next" $ SetStep
+            case game of
+            Preselected _ -> PlayerProfile
+            _ -> Game
         ]
     ]
-renderPage { step: Team, team } =
+renderPage { step: Team, team, game } =
     [ boardingStep
         [ boardingHeading "Team details"
         , boardingDescription  """Enter details about yourself so your new bruh gamer friends
@@ -194,13 +228,16 @@ renderPage { step: Team, team } =
         ]
     , boardingButtons
         [ secondaryButton_ "Back" $ SetStep Greeting
-        , primaryButton_ "Next" $ SetStep Game
+        , primaryButton_ "Next" $ SetStep
+            case game of
+            Preselected _ -> TeamProfile
+            _ -> Game
         ]
     ]
     [ boardingStep
         [ boardingHeading "Game"
         , boardingDescription  """Select a game to create your first profile muhfugga."""
-        , gameInput game (Just <<< UpdateGame)
+        , gameInput (getGame game) (Just <<< UpdateGame)
         ]
     , boardingButtons
         [ secondaryButton_ "Back"
@@ -209,7 +246,7 @@ renderPage { step: Team, team } =
             PlayerOrTeamInput.Team -> SetStep Team
         , HH.button
             [ HP.class_ $ HH.ClassName "primary-button"
-            , HP.disabled $ isNothing game
+            , HP.disabled $ isNothing (getGame game)
             , HE.onClick $ const $ Just $ SetStep
                 case playerOrTeam of
                 PlayerOrTeamInput.Player -> PlayerProfile
@@ -218,25 +255,31 @@ renderPage { step: Team, team } =
             [ HH.text "Next" ]
         ]
     ]
-renderPage { step: PlayerProfile, playerProfile, otherError, submitting } =
+renderPage { step: PlayerProfile, playerProfile, otherError, submitting, game } =
     [ boardingStep
         [ boardingHeading "Player profile details"
         , boardingDescription  """Enter details about your gameplay. Fill out everything."""
         , PlayerProfileFormInput.profileFormInput playerProfile UpdatePlayerProfile
         ]
     , boardingButtons
-        [ secondaryButton_ "Back" $ SetStep Game
+        [ secondaryButton_ "Back" $ SetStep
+            case game of
+            Preselected _ -> Player
+            _ -> Game
         , primaryButton_ "Next" $ SetStep Register
         ]
     ]
-renderPage { step: TeamProfile, teamProfile, otherError, submitting } =
+renderPage { step: TeamProfile, teamProfile, otherError, submitting, game } =
     [ boardingStep
         [ boardingHeading "Team profile details"
         , boardingDescription  """Enter details about your gameplay. Fill out everything."""
         , TeamProfileFormInput.profileFormInput teamProfile UpdateTeamProfile
         ]
     , boardingButtons
-        [ secondaryButton_ "Back" $ SetStep Game
+        [ secondaryButton_ "Back" $ SetStep
+            case game of
+            Preselected _ -> Team
+            _ -> Game
         , primaryButton_ "Next" $ SetStep Register
         ]
     ]
@@ -279,10 +322,9 @@ sendRequest (state :: State) = Async.unify do
         case state of
         { playerOrTeam: PlayerOrTeamInput.Player
         , player
-        , game: Just game
         , playerProfile: profile
         , registration
-        } -> Async.right
+        } | Just game <- getGame state.game -> Async.right
             { ilk: 1
             , player: Just
                 { birthday: player.birthday
@@ -313,10 +355,9 @@ sendRequest (state :: State) = Async.unify do
             }
         { playerOrTeam: PlayerOrTeamInput.Team
         , team
-        , game: Just game
         , teamProfile: profile
         , registration
-        } -> Async.right
+        } | Just game <- getGame state.game -> Async.right
             { ilk: 2
             , player: Nothing
             , team: Just
@@ -442,7 +483,7 @@ handleAction (UpdateTeam details) = do
     updateHistoryState state
 handleAction (UpdateGame game) = do
     state <- H.modify _
-        { game = Just game
+        { game = Selected $ Just game
         , playerProfile
             { fields = game.fields
             , fieldValues = []

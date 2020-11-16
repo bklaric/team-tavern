@@ -16,10 +16,11 @@ import TeamTavern.Client.Components.Boarding.PlayerOrTeamInput (PlayerOrTeam(..)
 import TeamTavern.Client.Pages.Home.Wizard as Wizard
 import TeamTavern.Client.Pages.Preboarding as Preboarding
 import TeamTavern.Client.Script.Navigate (navigate)
+import TeamTavern.Server.Game.View.SendResponse as ViewGame
 
-type Input = { signedIn :: Boolean, title :: Maybe String }
+type Input = { signedIn :: Boolean, game :: Maybe ViewGame.OkContent }
 
-type State = { signedIn :: Boolean, title :: Maybe String }
+type State = { signedIn :: Boolean, game :: Maybe ViewGame.OkContent }
 
 data Action = Receive Input | OpenWizard PlayerOrTeam
 
@@ -39,17 +40,16 @@ article (Just title) = let
     then "an"
     else "a"
 
-render :: forall slots left.
-    State -> HH.ComponentHTML Action (Slots slots) (Async left)
-render { signedIn, title } =
+render :: forall slots left. State -> HH.ComponentHTML Action (Slots slots) (Async left)
+render { signedIn, game } =
     HH.div [ HP.class_ $ HH.ClassName "call-to-action" ]
     [ HH.div [ HP.class_ $ HH.ClassName "call-to-action-content" ]
-        [ HH.div [HP.class_ $ HH.ClassName "call-to-action-text" ] $
+        [ HH.div [ HP.class_ $ HH.ClassName "call-to-action-text" ] $
             [ HH.h1 [ HP.class_ $ HH.ClassName "call-to-action-heading" ]
-                [ HH.text $ "Find your " <> titleOrGeneric title <> " teammates" ]
+                [ HH.text $ "Find your " <> titleOrGeneric (game <#> _.title) <> " teammates" ]
             , HH.p [ HP.class_ $ HH.ClassName "call-to-action-paragraph" ]
-                [ HH.text $ """TeamTavern is """ <> article title <> """
-                """ <> titleOrGeneric title <> """ team finding platform. Create
+                [ HH.text $ """TeamTavern is """ <> article (game <#> _.title) <> """
+                """ <> titleOrGeneric (game <#> _.title) <> """ team finding platform. Create
                 your player or team profile and start finding your new teammates."""]
             ]
             <>
@@ -86,8 +86,9 @@ handleAction :: forall action output slots left.
     Action -> H.HalogenM State action (Slots slots) output (Async left) Unit
 handleAction (Receive input) =
     H.put input
-handleAction (OpenWizard playerOrTeam) =
-    navigate (Preboarding.emptyInput playerOrTeam) "/preboarding/start"
+handleAction (OpenWizard playerOrTeam) = do
+    { game } <- H.get
+    navigate (Preboarding.emptyInput playerOrTeam game) "/preboarding/start"
 
 component :: forall query output left.
     H.Component HH.HTML query Input output (Async left)

@@ -34,7 +34,7 @@ render :: forall left.
 render Empty = HH.div [ HP.class_ $ HH.ClassName "home" ] []
 render (Loaded { signedIn }) =
     HH.div [ HP.class_ $ HH.ClassName "home" ]
-    [ callToAction { signedIn, title: Nothing }, why, features, games ]
+    [ callToAction { signedIn, game: Nothing }, why, features, games ]
 
 handleAction :: forall action output slots left.
     Action -> H.HalogenM State action slots output (Async left) Unit
