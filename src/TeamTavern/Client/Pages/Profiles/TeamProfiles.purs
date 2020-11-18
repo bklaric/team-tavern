@@ -3,6 +3,7 @@ module TeamTavern.Client.Pages.Profiles.TeamProfiles (TeamProfile, Input, Output
 import Prelude
 
 import Async (Async)
+import Data.Array (mapWithIndex)
 import Data.Array as Array
 import Data.Const (Const)
 import Data.Maybe (Maybe(..))
@@ -106,7 +107,7 @@ render { profiles, profileCount, playerInfo, page } =
     if Array.null profiles
     then [ cardSection [ HH.p_ [ HH.text "No profiles satisfy specified filters." ] ] ]
     else
-    ( profiles <#> \profile -> let
+    ( profiles # mapWithIndex \index profile -> let
         teamDetails' = teamDetails profile
         profileDetails'' = profileDetails' profile.fieldValues profile.newOrReturning
         about = textDetail profile.about
@@ -125,7 +126,8 @@ render { profiles, profileCount, playerInfo, page } =
             case playerInfo of
             Just { nickname } | nickname /= profile.owner ->
                 [ profileHeaderItem
-                    [ navigationAnchorIndexed (SProxy :: SProxy "messageOwner") profile.owner
+                    [ navigationAnchorIndexed (SProxy :: SProxy "messageOwner")
+                        ( profile.owner <> show index )
                         { path: "/conversations/" <> profile.owner
                         , content: HH.span_
                             [ HH.i [ HP.class_ $ H.ClassName "fas fa-envelope button-icon" ] []
