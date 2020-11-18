@@ -134,7 +134,6 @@ emptyInput playerOrTeam game =
 
 type State =
     { step :: Step
-    , confirmSkip :: Boolean
     , playerOrTeam :: PlayerOrTeamInput.PlayerOrTeam
     , player :: PlayerFormInput.Input
     , team :: TeamFormInput.Input
@@ -149,8 +148,7 @@ type State =
 data Action
     = Initialize
     | Receive Input
-    | Skip
-    | ConfirmSkip
+    | Exit
     | SetStep Step
     | UpdatePlayer PlayerFormInput.Output
     | UpdateTeam TeamFormInput.Output
@@ -173,33 +171,18 @@ type ChildSlots slots =
 
 renderPage :: forall slots left.
     State -> Array (HH.ComponentHTML Action (ChildSlots slots) (Async left))
-renderPage { step: Greeting, playerOrTeam, confirmSkip } =
+renderPage { step: Greeting, playerOrTeam } =
     [ boardingStep
         [ boardingHeading $ "Hi!"
         , boardingDescription  """Welcome to TeamTavern. Let's start with setting up your
                 account and your first game profile."""
         ]
     , boardingButtons
-        [ HH.div [ HS.class_ "boarding-skip-button-group" ]
-            if confirmSkip
-            then
-                [ secondaryButton_ "Yes, I'm sure" ConfirmSkip
-                , HH.p [ HS.class_ "boarding-confirm-skip-button-underlabel" ]
-                    [ HH.text "Are you sure? Setting up your account allows you to get the most out of TeamTavern." ]
-                ]
-            else
-                [ secondaryButton_ "Skip" Skip
-                , HH.p [ HS.class_ "boarding-skip-button-underlabel" ]
-                    [ HH.text "I don't want to set up", HH.br_, HH.text "my account right now." ]
-                ]
-        , HH.button
-            [ HP.class_ $ HH.ClassName "primary-button"
-            , HE.onClick $ const $ Just
-                case playerOrTeam of
-                PlayerOrTeamInput.Player -> SetStep Player
-                PlayerOrTeamInput.Team -> SetStep Team
-            ]
-            [ HH.text "Next" ]
+        [ secondaryButton_ "Exit" Exit
+        , primaryButton_ "Let's go"
+            case playerOrTeam of
+            PlayerOrTeamInput.Player -> SetStep Player
+            PlayerOrTeamInput.Team -> SetStep Team
         ]
     ]
 renderPage { step: Player, player, game } =
@@ -425,15 +408,13 @@ handleAction Initialize =
         setMetaDescription "TeamTavern preboarding."
         setMetaUrl
 handleAction (Receive input) =
-    H.put
-        ( input
-        # Record.insert (SProxy :: SProxy "confirmSkip") false
-        # Record.insert (SProxy :: SProxy "submitting") false
-        )
-handleAction Skip =
-    H.modify_ _ { confirmSkip = true }
-handleAction ConfirmSkip =
-    navigate_ "/"
+    H.put (input # Record.insert (SProxy :: SProxy "submitting") false)
+handleAction Exit = do
+    { game } <- H.get
+    navigate_
+        case game of
+        Selected _ -> "/"
+        Preselected { handle } -> "/games/" <> handle
 handleAction (SetStep step) = do
     state <- H.get
     case step of
@@ -659,9 +640,7 @@ handleAction SetUpAccount = do
 component :: forall query output left.
     H.Component HH.HTML query Input output (Async left)
 component = H.mkComponent
-    { initialState:
-        Record.insert (SProxy :: SProxy "confirmSkip") false
-        >>> Record.insert (SProxy :: SProxy "submitting") false
+    { initialState: Record.insert (SProxy :: SProxy "submitting") false
     , render
     , eval: H.mkEval H.defaultEval
         { handleAction = handleAction
