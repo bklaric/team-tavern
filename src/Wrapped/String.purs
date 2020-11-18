@@ -92,6 +92,20 @@ notAsciiAlphaNumHyphen string =
     then Nothing
     else Just $ inj (SProxy :: SProxy "notAsciiAlphaNumHyphen") {}
 
+type NotAsciiAlphaNumSpecial = {}
+
+notAsciiAlphaNumSpecial :: forall errors.
+  String
+  -> Maybe (Variant
+    ( notAsciiAlphaNumSpecial :: NotAsciiAlphaNumSpecial
+    | errors
+    ))
+notAsciiAlphaNumSpecial string =
+    if string # toCharArray # all
+        (\char -> isAsciiAlpha char || isDigit char || char == '-' || char == '_' || char == '.')
+    then Nothing
+    else Just $ inj (SProxy :: SProxy "notAsciiAlphaNumSpecial") {}
+
 type ContainsWhitespace = {}
 
 isSpace :: String -> Boolean
