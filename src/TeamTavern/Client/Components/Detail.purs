@@ -52,20 +52,20 @@ arrangeItems binder items =
         if not state.firstItem
         then state
             { firstItem = true
-            , itemsSoFar = [ HH.span [ HS.class_ "detail-emphasized" ] [ HH.text item ] ]
+            , itemsSoFar = [ HH.span [ HS.class_ "detail-emphasize" ] [ HH.text item ] ]
             }
         else if not state.secondItem
         then state
             { secondItem = true
             , itemsSoFar =
-                [ HH.span [ HS.class_ "detail-emphasized" ] [ HH.text item ]
+                [ HH.span [ HS.class_ "detail-emphasize" ] [ HH.text item ]
                 , HH.text $ " " <> binder <> " "
                 ]
                 <> state.itemsSoFar
             }
         else state
             { itemsSoFar =
-                [ HH.span [ HS.class_ "detail-emphasized" ] [ HH.text item ]
+                [ HH.span [ HS.class_ "detail-emphasize" ] [ HH.text item ]
                 , HH.text ", "
                 ]
                 <> state.itemsSoFar
@@ -100,11 +100,11 @@ onlineDetail _ Nothing = Nothing
 onlineDetail frame (Just { from, to }) = Just $
     detail "fas fa-clock"
     [ HH.span [ HS.class_ "detail-labelless" ] [ HH.text $ "Online on " ]
-    , HH.span [ HS.class_ "detail-emphasized" ] [ HH.text frame ]
+    , HH.span [ HS.class_ "detail-emphasize" ] [ HH.text frame ]
     , HH.text " from "
-    , HH.span [ HS.class_ "detail-emphasized" ] [ HH.text from ]
+    , HH.span [ HS.class_ "detail-emphasize" ] [ HH.text from ]
     , HH.text " to "
-    , HH.span [ HS.class_ "detail-emphasized" ] [ HH.text to ]
+    , HH.span [ HS.class_ "detail-emphasize" ] [ HH.text to ]
     ]
 
 weekdaysOnlineDetail :: forall slots actions.
