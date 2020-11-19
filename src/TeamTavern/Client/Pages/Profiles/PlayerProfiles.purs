@@ -90,7 +90,7 @@ type Slot = H.Slot (Const Void) Output Unit
 type ChildSlots =
     ( players :: Anchor.Slot String
     , messagePlayer :: Anchor.Slot String
-    , discordTag :: Copyable.Slot
+    , discordTag :: Copyable.Slot String
     )
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)

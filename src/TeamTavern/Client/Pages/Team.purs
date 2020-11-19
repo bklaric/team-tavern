@@ -5,7 +5,6 @@ import Prelude
 import Async (Async)
 import Async as Async
 import CSS as CSS
-import Client.Components.Copyable as Copyable
 import Control.Monad.State (class MonadState)
 import Data.Array (intercalate)
 import Data.Array as Array
@@ -59,7 +58,6 @@ type Slot = H.Slot (Const Void) Void Unit
 
 type ChildSlots =
     ( messageOwner :: NavigationAnchor.Slot Unit
-    , discordServer :: Copyable.Slot
     , games :: Anchor.Slot String
     , createProfile :: H.Slot (Const Void) Void Unit
     , editTeam :: EditTeam.Slot

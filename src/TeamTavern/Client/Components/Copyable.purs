@@ -22,7 +22,7 @@ type State = { text :: String, copied :: Boolean }
 
 data Action = CopyText | Receive Input
 
-type Slot = H.Slot (Const Void) Void Unit
+type Slot index = H.Slot (Const Void) Void index
 
 render :: forall children. State -> HH.HTML children Action
 render { text, copied } =
@@ -62,10 +62,12 @@ component = H.mkComponent
     }
 
 copyable
-    :: forall children' name children action left
-    .  Cons name Slot children' children
+    :: forall index children' name children action left
+    .  Cons name (Slot index) children' children
     => IsSymbol name
+    => Ord index
     => SProxy name
+    -> index
     -> Input
     -> HH.ComponentHTML action children (Async left)
-copyable label text = HH.slot label unit component text absurd
+copyable label index text = HH.slot label index component text absurd

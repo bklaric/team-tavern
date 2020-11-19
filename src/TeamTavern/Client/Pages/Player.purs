@@ -76,7 +76,7 @@ data Action
 type Slot = H.Slot (Const Void) Void Unit
 
 type ChildSlots =
-    ( discordTag :: Copyable.Slot
+    ( discordTag :: Copyable.Slot String
     , team :: NavigationAnchor.Slot String
     , editSettings :: EditSettings.Slot
     , messagePlayer :: NavigationAnchor.Slot Unit

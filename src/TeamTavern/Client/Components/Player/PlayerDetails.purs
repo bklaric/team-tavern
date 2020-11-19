@@ -43,16 +43,18 @@ playerMicrophoneDetail true = Just $
 
 playerDiscordTagDetail
     :: forall action left slots
-    .  Maybe String
-    -> Maybe (HH.ComponentHTML action ( discordTag :: Copyable.Slot | slots) (Async left))
-playerDiscordTagDetail Nothing = Nothing
-playerDiscordTagDetail (Just discordTag) = Just $
+    .  String
+    -> Maybe String
+    -> Maybe (HH.ComponentHTML action ( discordTag :: Copyable.Slot String | slots) (Async left))
+playerDiscordTagDetail _ Nothing = Nothing
+playerDiscordTagDetail nickname (Just discordTag) = Just $
     detail "fab fa-discord"
     [ HH.span [ HS.class_ "detail-labelless" ]
-       [ copyable (SProxy :: SProxy "discordTag") discordTag ]
+       [ copyable (SProxy :: SProxy "discordTag") ("discordTag-" <> nickname) discordTag ]
     ]
 playerDetails :: forall fields action slots left.
-    { age :: Maybe Int
+    { nickname :: String
+    , age :: Maybe Int
     , discordTag :: Maybe String
     , languages :: Array String
     , location :: Maybe String
@@ -67,14 +69,14 @@ playerDetails :: forall fields action slots left.
                         }
     | fields
     }
-    -> Array (HH.ComponentHTML action ( discordTag :: Copyable.Slot | slots) (Async left))
+    -> Array (HH.ComponentHTML action (discordTag :: Copyable.Slot String | slots) (Async left))
 playerDetails details =
     Array.catMaybes
     [ playerAgeDetail details.age
     , playerLocationDetail details.location
     , playerLanguagesDetail details.languages
     , playerMicrophoneDetail details.microphone
-    , playerDiscordTagDetail details.discordTag
+    , playerDiscordTagDetail details.nickname details.discordTag
     , weekdaysOnlineDetail details.weekdayOnline
     , weekendsOnlineDetail details.weekendOnline
     ]

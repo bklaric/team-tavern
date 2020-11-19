@@ -18,7 +18,7 @@ import TeamTavern.Routes.ViewPlayer as ViewPlayer
 details
     :: forall action children left
     .  ViewPlayer.OkContent
-    -> H.ComponentHTML action (discordTag :: Copyable.Slot | children) (Async left)
+    -> H.ComponentHTML action (discordTag :: Copyable.Slot String | children) (Async left)
 details player = let
     playerDetails' = playerDetails
         ( player
