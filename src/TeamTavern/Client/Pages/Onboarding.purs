@@ -378,9 +378,6 @@ handleAction :: forall action output slots left.
     Action -> H.HalogenM State action slots output (Async left) Unit
 handleAction Initialize = do
     state <- H.get
-    -- case state.step of
-    --     Greeting -> pure unit
-    --     _ -> navigate_ "/"
     nickname <- getPlayerNickname
     case nickname of
         Just nickname' -> H.modify_ _ { nickname = nickname' }

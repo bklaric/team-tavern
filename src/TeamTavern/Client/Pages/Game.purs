@@ -20,7 +20,6 @@ import TeamTavern.Client.Pages.Home.CallToAction (callToAction)
 import TeamTavern.Client.Pages.Home.CallToAction as CallToAction
 import TeamTavern.Client.Pages.Home.Features (features)
 import TeamTavern.Client.Pages.Home.Why (why)
-import TeamTavern.Client.Script.Cookie (hasPlayerIdCookie)
 import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
 import TeamTavern.Server.Game.View.SendResponse as Game
 
@@ -30,7 +29,7 @@ data Action = Initialize | Receive Input
 
 data State
     = Empty { handle :: String }
-    | Loaded { signedIn :: Boolean, game :: Game.OkContent }
+    | Loaded { game :: Game.OkContent }
 
 type Slot = H.Slot (Const Void) Void Unit
 
@@ -43,9 +42,9 @@ type ChildSlots =
 render :: forall left.
     State -> H.ComponentHTML Action ChildSlots (Async left)
 render (Empty _) = HH.div [ HP.class_ $ HH.ClassName "home" ] []
-render (Loaded { signedIn, game: game' @ { handle, title } }) =
+render (Loaded { game: game' @ { handle, title } }) =
     HH.div [ HP.class_ $ HH.ClassName "home" ]
-    [ callToAction { signedIn, game: Just game' }, why, features, profiles { handle, title } ]
+    [ callToAction { game: Just game' }, why, features, profiles { handle, title } ]
 
 loadGame :: forall left. String -> Async left (Maybe Game.OkContent)
 loadGame handle = Async.unify do
@@ -70,19 +69,17 @@ handleAction Initialize = do
     state <- H.get
     case state of
         Empty { handle } -> do
-            signedIn <- hasPlayerIdCookie
             game' <- H.lift $ loadGame handle
             case game' of
-                Just game'' -> H.put $ Loaded { signedIn, game: game'' }
+                Just game'' -> H.put $ Loaded { game: game'' }
                 Nothing -> pure unit
         _ -> pure unit
 handleAction (Receive { handle }) = do
-    state <- H.get
     game' <- H.lift $ loadGame handle
-    case state, game' of
-        Loaded { signedIn }, Just game'' ->
-            H.put $ Loaded { signedIn, game: game'' }
-        _, _ -> pure unit
+    case game' of
+        Just game'' ->
+            H.put $ Loaded { game: game'' }
+        _ -> pure unit
 
 component :: forall query output left.
     H.Component HH.HTML query Input output (Async left)

@@ -18,9 +18,9 @@ import TeamTavern.Client.Pages.Preboarding as Preboarding
 import TeamTavern.Client.Script.Navigate (navigate)
 import TeamTavern.Server.Game.View.SendResponse as ViewGame
 
-type Input = { signedIn :: Boolean, game :: Maybe ViewGame.OkContent }
+type Input = { game :: Maybe ViewGame.OkContent }
 
-type State = { signedIn :: Boolean, game :: Maybe ViewGame.OkContent }
+type State = { game :: Maybe ViewGame.OkContent }
 
 data Action = Receive Input | OpenWizard PlayerOrTeam
 
@@ -41,7 +41,7 @@ article (Just title) = let
     else "a"
 
 render :: forall slots left. State -> HH.ComponentHTML Action (Slots slots) (Async left)
-render { signedIn, game } =
+render { game } =
     HH.div [ HP.class_ $ HH.ClassName "call-to-action" ]
     [ HH.div [ HP.class_ $ HH.ClassName "call-to-action-content" ]
         [ HH.div [ HP.class_ $ HH.ClassName "call-to-action-text" ] $
@@ -51,12 +51,7 @@ render { signedIn, game } =
                 [ HH.text $ """TeamTavern is """ <> article (game <#> _.title) <> """
                 """ <> titleOrGeneric (game <#> _.title) <> """ team finding platform. Create
                 your player or team profile and start finding your new teammates."""]
-            ]
-            <>
-            if signedIn
-            then []
-            else Array.singleton $
-                HH.div [ HP.class_ $ HH.ClassName "call-to-action-buttons" ]
+            , HH.div [ HP.class_ $ HH.ClassName "call-to-action-buttons" ]
                 [ HH.div [ HP.class_ $ HH.ClassName "call-to-action-button-group" ]
                     [ HH.button
                         [ HP.class_ $ HH.ClassName "call-to-action-button"
@@ -78,8 +73,8 @@ render { signedIn, game } =
                     , HH.p_ [ HH.text "I want to recruit new members or grow my online community." ]
                     ]
                 ]
+            ]
         ]
-    -- , wizard { ilk: WizardShared.Player } (const Nothing)
     ]
 
 handleAction :: forall action output slots left.
@@ -90,8 +85,7 @@ handleAction (OpenWizard playerOrTeam) = do
     { game } <- H.get
     navigate (Preboarding.emptyInput playerOrTeam game) "/preboarding/start"
 
-component :: forall query output left.
-    H.Component HH.HTML query Input output (Async left)
+component :: forall query output left. H.Component HH.HTML query Input output (Async left)
 component = H.mkComponent
     { initialState: identity
     , render
@@ -103,5 +97,4 @@ component = H.mkComponent
 
 callToAction :: forall query children left.
     Input -> HH.ComponentHTML query (callToAction :: Slot | children) (Async left)
-callToAction input =
-    HH.slot (SProxy :: SProxy "callToAction") unit component input absurd
+callToAction input = HH.slot (SProxy :: SProxy "callToAction") unit component input absurd

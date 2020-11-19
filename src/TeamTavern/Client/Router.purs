@@ -51,6 +51,7 @@ import TeamTavern.Client.Pages.SignIn (signIn)
 import TeamTavern.Client.Pages.SignIn as SignIn
 import TeamTavern.Client.Pages.Team (team)
 import TeamTavern.Client.Pages.Team as Team
+import TeamTavern.Client.Script.Cookie (getPlayerNickname, hasPlayerIdCookie)
 import TeamTavern.Client.Script.Navigate (navigateReplace_)
 
 data Query send = ChangeRoute Foreign String send
@@ -144,8 +145,11 @@ handleAction :: forall action output slots left.
     Action -> H.HalogenM State action slots output (Async left) Unit
 handleAction (Init state route) = do
     newState <- case split (Pattern "/") route of
-        ["", ""] ->
-            just Home
+        ["", ""] -> do
+            nickname <- getPlayerNickname
+            case nickname of
+                Just nickname' -> (navigateReplace_ $ "/players/" <> nickname') *> nothing
+                Nothing -> just Home
         ["", "about"] ->
             just About
         ["", "register"] ->
@@ -205,8 +209,11 @@ handleAction (Init state route) = do
             just $ Team { handle }
         ["", "games"] ->
             just Games
-        ["", "games", handle] ->
-            just $ Game { handle }
+        ["", "games", handle] -> do
+            signedIn <- hasPlayerIdCookie
+            if signedIn
+                then (navigateReplace_ $ "/games/" <> handle <> "/players") *> nothing
+                else just $ Game { handle }
         ["", "games", handle, "players" ] ->
             just $ Profiles handle GameHeader.Players
         ["", "games", handle, "teams" ] ->
