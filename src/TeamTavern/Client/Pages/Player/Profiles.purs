@@ -16,6 +16,7 @@ import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Components.Player.ProfileDetails (profileDetails)
 import TeamTavern.Client.Components.Profile (profileHeader, profileHeaderItem, profileHeading, profileSubheading)
 import TeamTavern.Client.Pages.Player.CreateProfileButton (createProfileButton)
+import TeamTavern.Client.Pages.Player.Status (Status(..))
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
 import TeamTavern.Routes.ViewPlayer as ViewPlayer
 
@@ -27,15 +28,19 @@ type ChildSlots children =
 profiles
     :: forall action slots left
     .  ViewPlayer.OkContent
+    -> Status
     -> (ViewPlayer.OkContentProfile -> action)
     -> HH.ComponentHTML action (ChildSlots slots) (Async left)
-profiles { nickname, profiles: profiles' } showEditProfileModal =
+profiles { nickname, profiles: profiles' } status showEditProfileModal =
     card $
-    [ cardHeader
-        [ cardHeading "Profiles"
-        , HH.slot (SProxy :: SProxy "createProfile") unit createProfileButton
+    [ cardHeader $
+        [ cardHeading "Profiles" ]
+        <>
+        case status of
+        SignedInSelf -> Array.singleton $
+            HH.slot (SProxy :: SProxy "createProfile") unit createProfileButton
             { nickname, profileGameHandles: profiles' <#> _.handle } absurd
-        ]
+        _ -> []
     ]
     <>
     if Array.null profiles'
@@ -45,7 +50,7 @@ profiles { nickname, profiles: profiles' } showEditProfileModal =
         ambitions = textDetail profile.ambitions
         in
         cardSection $
-        [ profileHeader
+        [ profileHeader $
             [ profileHeaderItem $
                 [ profileHeading (SProxy :: SProxy "games") profile.handle
                     ("/games/" <> profile.handle <> "/teams") profile.title
@@ -54,11 +59,15 @@ profiles { nickname, profiles: profiles' } showEditProfileModal =
                 [ divider
                 , profileSubheading $ "Updated " <> lastUpdated profile.updatedSeconds
                 ]
-            , profileHeaderItem
+            ]
+            <>
+            case status of
+            SignedInSelf -> Array.singleton $
+                profileHeaderItem
                 [ regularButton "fas fa-user-edit" "Edit profile"
                     $ showEditProfileModal profile
                 ]
-            ]
+            _ -> []
         ]
         <>
         if Array.null profileDetails' && Array.null ambitions

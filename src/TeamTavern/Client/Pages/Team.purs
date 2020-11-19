@@ -86,7 +86,7 @@ render (Loaded { team: team', status, showEditTeamModal, showEditProfileModal } 
         ]
     , contentDescription "This is a team, lmao!"
     , details team'
-    , profiles team'.handle team'.profiles ShowEditProfileModal
+    , profiles team'.handle team'.profiles status ShowEditProfileModal
     ]
     <>
     (if showEditTeamModal

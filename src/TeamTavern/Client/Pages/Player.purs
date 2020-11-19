@@ -139,8 +139,8 @@ render (Loaded state @ { player: player', status, editPopoverShown }) =
             _ -> "View all player and team profiles of player " <> player'.nickname <> "."
         ]
     , details player'
-    , profiles player' ShowEditProfileModal
-    , teams player' ShowCreateTeamModal status
+    , profiles player' status ShowEditProfileModal
+    , teams player' status ShowCreateTeamModal
     ]
     <>
     ( if state.editPlayerModalShown

@@ -6,8 +6,8 @@ import Data.Maybe (Maybe(..))
 import Effect.Class (class MonadEffect)
 import TeamTavern.Client.Script.Cookie (getPlayerNickname)
 
-
 data Status = SignedInOwner | SignedInOther | SignedOut
+
 getStatus :: forall effect. MonadEffect effect => String -> effect Status
 getStatus owner = do
     nickname <- getPlayerNickname
