@@ -1,5 +1,15 @@
 .filters-title {
-    @extend .card-title;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 2;
+    min-height: 40px;
+    padding: 7px 21px;
+    margin: 0;
+    white-space: pre-wrap;
     cursor: pointer;
 }
 

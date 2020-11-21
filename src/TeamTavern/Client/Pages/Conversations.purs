@@ -17,6 +17,7 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Simple.JSON.Async as Json
+import TeamTavern.Client.Components.Card (card, cardHeader, cardHeading)
 import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
 import TeamTavern.Client.Script.Navigate (navigate_)
@@ -43,8 +44,8 @@ type Slot = H.Slot (Const Void) Void Unit
 
 render Empty = HH.div_ []
 render (Conversations conversations') =
-    HH.div [ HP.class_ $ HH.ClassName "card" ] $
-    [ HH.h2 [ HP.class_ $ HH.ClassName "card-title" ] [ HH.text "Conversations" ] ]
+    card $
+    [ cardHeader [ cardHeading "Conversations" ] ]
     <>
     if Array.null conversations'
     then Array.singleton $

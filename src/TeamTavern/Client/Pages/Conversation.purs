@@ -20,11 +20,11 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
+import TeamTavern.Client.Components.Card (card, cardHeader, cardHeading', cardSection)
 import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.Input (inputError, inputGroup, textInput)
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
 import TeamTavern.Client.Script.Navigate (navigate_)
-import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass)
 import TeamTavern.Server.Conversation.Start.SendResponse as Conversation
 import TeamTavern.Server.Conversation.View.SendResponse as View
@@ -61,9 +61,9 @@ type Slot = H.Slot (Const Void) Void Unit
 render (Empty _) = HH.div_ []
 render Error = HH.p_ [ HH.text "There has been an error loading this conversation. Please try again later." ]
 render (Conversation state) =
-    HH.div [ HP.class_ $ HH.ClassName "card" ] $
-    [ HH.h2 [ HP.class_ $ HH.ClassName "card-title" ]
-        [ HH.span [ HP.class_ $ HH.ClassName "card-title-text" ]
+    card $
+    [ cardHeader
+        [ cardHeading'
             [ HH.text $ "Conversation with "
             , HH.a
                 [ HP.href $ playerPath state.nickname
@@ -79,7 +79,7 @@ render (Conversation state) =
             , HH.text "Back to conversations"
             ]
         ]
-    , HH.div [ HP.class_ $ HH.ClassName "card-section" ]
+    , cardSection
         if Array.null state.conversation
         then [ HH.p_ [ HH.text "There are no messages in this conversation." ] ]
         else
@@ -97,7 +97,7 @@ render (Conversation state) =
                 , HH.div [ HP.class_ $ HH.ClassName "conversation-message-content" ]
                     (content <#> \paragraph -> HH.p [ HP.class_ $ HH.ClassName "conversation-message-content-paragraph" ] [ HH.text paragraph ])
                 ])
-    , HH.div [ HP.class_ $ HH.ClassName "card-section" ]
+    , cardSection
         [ inputGroup $
             [ textInput "Write a message..." state.message UpdateMessage
             ]

@@ -152,7 +152,7 @@ render state = HH.div [ HP.class_ $ HH.ClassName "filters-card" ] $
     if state.filtersVisible
     then
         [ HH.h4
-            [ HP.class_ $ HH.ClassName "card-section-title"
+            [ HP.class_ $ HH.ClassName "card-section-heading"
             , HE.onClick $ const $ Just TogglePlayerFiltersVisibility
             ]
             [ HH.text "Player details"
@@ -281,7 +281,7 @@ render state = HH.div [ HP.class_ $ HH.ClassName "filters-card" ] $
         else [])
         <>
         [ HH.h4
-            [ HP.class_ $ HH.ClassName "card-section-title"
+            [ HP.class_ $ HH.ClassName "card-section-heading"
             , HE.onClick $ const $ Just ToggleGameFiltersVisibility
             ]
             [ HH.text "Profile details"
