@@ -6,16 +6,11 @@ import Jarilo.Path (type (:>), End)
 import Jarilo.Query (NoQuery)
 import Jarilo.Route (Route)
 import Jarilo.Segment (Capture, Literal)
+import TeamTavern.Routes.ViewAllGames (ViewAllGames)
 import TeamTavern.Server.Game.Domain.Handle (Handle)
 
 type CreateGame = Route
     Post
-    (  Literal "games"
-    :> End)
-    NoQuery
-
-type ViewAllGames = Route
-    Get
     (  Literal "games"
     :> End)
     NoQuery

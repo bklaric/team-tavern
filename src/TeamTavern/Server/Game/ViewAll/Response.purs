@@ -1,50 +1,19 @@
-module TeamTavern.Server.Game.ViewAll.SendResponse (OkContent', OkContent, sendResponse) where
+module TeamTavern.Server.Game.ViewAll.SendResponse (sendResponse) where
 
 import Prelude
 
 import Async (Async, alwaysRight)
-import Data.Functor (mapFlipped)
-import Data.Newtype (unwrap)
 import Data.Variant (match)
 import Perun.Response (Response, internalServerError__, ok_)
 import Simple.JSON (writeJSON)
-import TeamTavern.Server.Game.ViewAll.LoadGames (LoadGamesResult)
+import TeamTavern.Routes.ViewAllGames as ViewAllGame
 import TeamTavern.Server.Game.ViewAll.LogError (ViewAllError)
 
-type OkContent' =
-    { administratorId :: Int
-    , title :: String
-    , handle :: String
-    , description :: Array String
-    , iconPath :: String
-    , bannerPath :: String
-    , playerCount :: Int
-    , teamCount :: Int
-    }
-
-type OkContent = Array OkContent'
-
 errorResponse :: ViewAllError -> Response
-errorResponse = match
-    { unreadableDtos: const $ internalServerError__
-    , databaseError: const $ internalServerError__
-    }
+errorResponse = match { internal: const $ internalServerError__ }
 
-successResponse :: Array LoadGamesResult -> Response
-successResponse views  = ok_ $ (writeJSON :: OkContent -> String) $
-    mapFlipped views
-        \{ administratorId, title, handle, description, iconPath, bannerPath, playerCount, teamCount } ->
-            { administratorId: unwrap administratorId
-            , title: unwrap title
-            , handle: unwrap handle
-            , description: unwrap description <#> unwrap
-            , iconPath
-            , bannerPath
-            , playerCount
-            , teamCount
-            }
+successResponse :: ViewAllGame.OkContent -> Response
+successResponse games  = ok_ $ writeJSON games
 
-sendResponse
-    :: Async ViewAllError (Array LoadGamesResult)
-    -> (forall left. Async left Response)
+sendResponse :: Async ViewAllError ViewAllGame.OkContent -> (forall left. Async left Response)
 sendResponse = alwaysRight errorResponse successResponse

@@ -67,12 +67,9 @@ create table session
 
 create table game
     ( id serial not null primary key
-    , administrator_id integer not null references player(id)
     , title varchar(50) not null unique
     , handle varchar(50) not null unique
     , description text[] not null
-    , icon_path text not null
-    , banner_path text not null
     , created timestamptz not null default current_timestamp
     );
 

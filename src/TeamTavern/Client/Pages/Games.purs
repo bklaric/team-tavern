@@ -21,7 +21,7 @@ import Halogen.HTML.Properties (alt, class_, href, src) as HP
 import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.Divider (whiteDivider)
 import TeamTavern.Client.Script.Navigate (navigateWithEvent_)
-import TeamTavern.Server.Game.ViewAll.SendResponse (OkContent)
+import TeamTavern.Routes.ViewAllGames as ViewAllGames
 import Unsafe.Coerce (unsafeCoerce)
 import Web.Event.Event (stopPropagation)
 import Web.UIEvent.MouseEvent (MouseEvent)
@@ -29,7 +29,7 @@ import Web.UIEvent.MouseEvent as MouseEvent
 
 data Action = Init | Navigate String Boolean MouseEvent
 
-data State = Empty | Games OkContent
+data State = Empty | Games ViewAllGames.OkContent
 
 type Slot = H.Slot (Const Void) Void
 
@@ -45,7 +45,7 @@ render (Games games') = HH.div [ HP.class_ $ HH.ClassName "games" ] $
         ]
     ]
     <>
-    (games' <#> \{ title, handle, description, playerCount, teamCount } ->
+    (games' <#> \{ title, handle, description } ->
         HH.div
         [ HP.class_ $ HH.ClassName "game-card"
         , HE.onClick $ Just <<< Navigate ("/games/" <> handle) false
@@ -75,14 +75,14 @@ render (Games games') = HH.div [ HP.class_ $ HH.ClassName "games" ] $
                     , HP.href $ "/games/" <> handle <> "/players"
                     , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/players") true
                     ]
-                    [ HH.text $ show playerCount <> if playerCount == 1 then " player" else " players" ]
+                    [ HH.text "Players" ]
                 , whiteDivider
                 , HH.a
                     [ HP.class_ $ ClassName "game-card-profile-count"
                     , HP.href $ "/games/" <> handle <> "/teams"
                     , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/teams") true
                     ]
-                    [ HH.text $ show teamCount <> if teamCount == 1 then " team" else " teams" ]
+                    [ HH.text "Teams" ]
                 ]
             ]
             <> (description <#> \paragraph ->
@@ -120,7 +120,7 @@ render (Games games') = HH.div [ HP.class_ $ HH.ClassName "games" ] $
 loadGames :: forall left. Async left State
 loadGames = Async.unify do
     response' <- Fetch.fetch_ "/api/games" # lmap (const Empty)
-    games' :: OkContent <-
+    games' :: ViewAllGames.OkContent <-
         case FetchRes.status response' of
         200 -> FetchRes.text response'
             >>= JsonAsync.readJSON

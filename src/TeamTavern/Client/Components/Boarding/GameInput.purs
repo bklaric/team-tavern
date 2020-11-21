@@ -15,19 +15,19 @@ import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import Simple.JSON.Async as Json
 import TeamTavern.Client.Components.RadioCard (radioCard, radioCards)
+import TeamTavern.Routes.ViewAllGames as ViewAllGames
 import TeamTavern.Server.Game.View.SendResponse as View
-import TeamTavern.Server.Game.ViewAll.SendResponse as ViewAll
 
 type Input = Maybe View.OkContent
 
 type Output = View.OkContent
 
 type State =
-    { games :: ViewAll.OkContent
+    { games :: ViewAllGames.OkContent
     , selected :: Maybe View.OkContent
     }
 
-data Action = Initialize | SelectGame ViewAll.OkContent'
+data Action = Initialize | SelectGame ViewAllGames.OkGameContent
 
 type Slot = H.Slot (Const Void) Output Unit
 
@@ -49,7 +49,7 @@ render { games, selected } =
         )
     ]
 
-loadGames :: forall left. Async left (Maybe ViewAll.OkContent)
+loadGames :: forall left. Async left (Maybe ViewAllGames.OkContent)
 loadGames = Async.unify do
     response <- Fetch.fetch_ "/api/games" # lmap (const Nothing)
     case FetchRes.status response of

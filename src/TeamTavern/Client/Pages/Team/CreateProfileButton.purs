@@ -16,8 +16,8 @@ import TeamTavern.Client.Components.Popover (popover, popoverButtonCaret, popove
 import TeamTavern.Client.Pages.Team.CreateProfile (createProfile)
 import TeamTavern.Client.Script.Request (get)
 import TeamTavern.Client.Snippets.Class as HS
+import TeamTavern.Routes.ViewAllGames as ViewAllGames
 import TeamTavern.Server.Game.View.SendResponse as View
-import TeamTavern.Server.Game.ViewAll.SendResponse as ViewAll
 
 type Input =
     { teamHandle :: String
@@ -28,7 +28,7 @@ createProfileButton :: forall left output query. H.Component HH.HTML query Input
 createProfileButton = Hooks.component $ \_ { teamHandle, profileGameHandles } -> Hooks.do
     (Tuple shown shownId) <- usePopover
 
-    (Tuple (games :: ViewAll.OkContent) gamesId) <- Hooks.useState []
+    (Tuple (games :: ViewAllGames.OkContent) gamesId) <- Hooks.useState []
 
     Hooks.useLifecycleEffect do
         games' <- lift $ get "/api/games"

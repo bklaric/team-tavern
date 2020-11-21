@@ -94,6 +94,10 @@ queryMany pool queryString parameters = do
     rows result # traverse read # labelMap (SProxy :: SProxy "internal") \errors ->
         [ "Error reading result from database: " <> show errors ]
 
+queryMany_ :: forall querier errors rows. Querier querier => ReadForeign rows =>
+    querier -> Query -> Async (InternalError errors) (Array rows)
+queryMany_ pool queryString = queryMany pool queryString []
+
 queryFirst
     :: forall row errors querier errors' label
     .  Querier querier

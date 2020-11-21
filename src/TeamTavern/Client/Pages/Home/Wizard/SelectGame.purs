@@ -17,13 +17,13 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Simple.JSON.Async as Json
 import TeamTavern.Client.Pages.Home.Wizard.Shared (Ilk)
-import TeamTavern.Server.Game.ViewAll.SendResponse (OkContent, OkContent')
+import TeamTavern.Routes.ViewAllGames as ViewAllGames
 
 type Handle = String
 
-type Game = OkContent'
+type Game = ViewAllGames.OkGameContent
 
-type Games = OkContent
+type Games = ViewAllGames.OkContent
 
 type Input = { ilk :: Ilk, selectedHandle :: Maybe Handle }
 

@@ -27,7 +27,7 @@ import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Script.Cookie (getPlayerNickname)
 import TeamTavern.Client.Script.Navigate (navigateWithEvent_)
-import TeamTavern.Server.Game.ViewAll.SendResponse (OkContent)
+import TeamTavern.Routes.ViewAllGames as ViewAllGames
 import Web.Event.Event (stopPropagation)
 import Web.Event.Event as E
 import Web.HTML (window)
@@ -37,7 +37,7 @@ import Web.HTML.Window as Window
 import Web.UIEvent.MouseEvent (MouseEvent)
 import Web.UIEvent.MouseEvent as MouseEvent
 
-type Games = OkContent
+type Games = ViewAllGames.OkContent
 
 type GamesVisible = Boolean
 
@@ -121,13 +121,13 @@ render state = HH.div_ $
                                     [ HP.href $ "/games/" <> game.handle <> "/players"
                                     , HE.onClick $ Just <<< Navigate ("/games/" <> game.handle <> "/players")
                                     ]
-                                    [ HH.text $ show game.playerCount <> if game.playerCount == 1 then " player" else " players" ]
+                                    [ HH.text "Players" ]
                                 , divider
                                 , HH.a
                                     [ HP.href $ "/games/" <> game.handle <> "/teams"
                                     , HE.onClick $ Just <<< Navigate ("/games/" <> game.handle <> "/teams")
                                     ]
-                                    [ HH.text $ show game.teamCount <> if game.teamCount == 1 then " team" else " teams" ]
+                                    [ HH.text "Teams" ]
                                 ]
                             ]
                         _ -> []

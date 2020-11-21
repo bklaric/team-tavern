@@ -1,95 +1,21 @@
-module TeamTavern.Server.Game.ViewAll.LoadGames
-    (LoadGamesResult, LoadGamesError, loadGames) where
-
-import Prelude
+module TeamTavern.Server.Game.ViewAll.LoadGames (loadGames) where
 
 import Async (Async)
-import Data.Bifunctor.Label (label, labelMap)
-import Data.Newtype (wrap)
-import Data.Traversable (traverse)
-import Data.Variant (SProxy(..), Variant)
-import Foreign (MultipleErrors)
-import Postgres.Async.Query (query_)
-import Postgres.Error (Error)
 import Postgres.Pool (Pool)
 import Postgres.Query (Query(..))
-import Postgres.Result (Result, rows)
-import Simple.JSON.Async (read)
-import TeamTavern.Server.Game.Domain.Description (Description)
-import TeamTavern.Server.Game.Domain.Handle (Handle)
-import TeamTavern.Server.Game.Domain.Title (Title)
-import TeamTavern.Server.Player.Domain.Id (Id)
-
-type LoadGamesDto =
-    { administratorId :: Int
-    , title :: String
-    , handle :: String
-    , description :: Array String
-    , iconPath :: String
-    , bannerPath :: String
-    , playerCount :: Int
-    , teamCount :: Int
-    }
-
-type LoadGamesResult =
-    { administratorId :: Id
-    , title :: Title
-    , handle :: Handle
-    , description :: Description
-    , iconPath :: String
-    , bannerPath :: String
-    , playerCount :: Int
-    , teamCount :: Int
-    }
-
-type LoadGamesError errors = Variant
-    ( unreadableDtos ::
-        { result :: Result
-        , errors :: MultipleErrors
-        }
-    , databaseError :: Error
-    | errors )
+import TeamTavern.Routes.ViewAllGames as ViewAllGames
+import TeamTavern.Server.Infrastructure.Error (InternalError)
+import TeamTavern.Server.Infrastructure.Postgres (queryMany_)
 
 loadGamesQuery :: Query
 loadGamesQuery = Query """
     select
-        game.administrator_id as "administratorId",
         game.title,
         game.handle,
-        game.description,
-        game.icon_path as "iconPath",
-        game.banner_path as "bannerPath",
-        (
-            select count(*)::integer
-            from player_profile
-            where player_profile.game_id = game.id
-        ) as "playerCount",
-        (
-            select count(*)::integer
-            from team_profile
-            where team_profile.game_id = game.id
-        ) as "teamCount"
+        game.description
     from game
-    order by "playerCount" desc
+    order by game.created
     """
 
-loadGames :: forall errors.
-    Pool -> Async (LoadGamesError errors) (Array LoadGamesResult)
-loadGames pool = do
-    result <- pool
-        # query_ loadGamesQuery
-        # label (SProxy :: SProxy "databaseError")
-    views :: Array LoadGamesDto <- rows result
-        # traverse read
-        # labelMap (SProxy :: SProxy "unreadableDtos") { result, errors: _ }
-    pure $ views <#>
-        \{ administratorId, title, handle, description, iconPath, bannerPath, playerCount, teamCount } ->
-            { administratorId: wrap administratorId
-            , title: wrap title
-            , handle: wrap handle
-            , description: description <#> wrap # wrap
-            , iconPath
-            , bannerPath
-            , playerCount
-            , teamCount
-            }
+loadGames :: forall errors. Pool -> Async (InternalError errors) ViewAllGames.OkContent
+loadGames pool = queryMany_ pool loadGamesQuery
