@@ -1,0 +1,55 @@
+.landing-section {
+    text-align: center;
+    padding: 42px 21px;
+
+    @media screen and (min-width: 700px) {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        text-align: left;
+        max-width: 1000px;
+        margin: auto;
+    }
+}
+
+.landing-section-text {
+    @media screen and (min-width: 700px) {
+        place-self: center;
+    }
+}
+
+.landing-section-heading {
+    font-size: 26px;
+    line-height: unset;
+}
+
+.landing-section-heading-icon {
+    font-size: 22px;
+    margin-right: 12px;
+}
+
+.landing-section-subheading {
+    font-size: 20px;
+}
+
+.landing-section-description {
+    font-size: 16px;
+    margin-bottom: 32px;
+}
+
+.landing-section-button {
+    @extend .primary-button;
+    display: block;
+    font-size: 16px;
+    margin: auto;
+    padding: 18px;
+}
+
+.landing-section-image {
+    display: none;
+
+    @media screen and (min-width: 700px) {
+        display: initial;
+        place-self: center;
+        width: 100%;
+    }
+}

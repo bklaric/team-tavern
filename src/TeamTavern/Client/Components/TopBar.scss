@@ -60,7 +60,8 @@
 
 .top-bar-games-popover {
     @extend .popover;
-    left: -200px;
+    right: calc(-100vw + 265px);
+    max-width: 100vw;
 
     @media screen and (min-width: 400px) {
         left: -120px;

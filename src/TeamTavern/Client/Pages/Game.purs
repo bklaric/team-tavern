@@ -17,15 +17,15 @@ import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Pages.Game.Profiles (profiles)
 import TeamTavern.Client.Pages.Home.CallToAction (callToAction)
-import TeamTavern.Client.Pages.Home.CallToAction as CallToAction
 import TeamTavern.Client.Pages.Home.Features (features)
 import TeamTavern.Client.Pages.Home.Why (why)
 import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
+import TeamTavern.Client.Script.Navigate (navigate_)
 import TeamTavern.Server.Game.View.SendResponse as Game
 
 type Input = { handle :: String }
 
-data Action = Initialize | Receive Input
+data Action = Initialize | Receive Input | OpenRegistration
 
 data State
     = Empty { handle :: String }
@@ -34,8 +34,7 @@ data State
 type Slot = H.Slot (Const Void) Void Unit
 
 type ChildSlots =
-    ( callToAction :: CallToAction.Slot
-    , viewAllPlayers :: NavigationAnchor.Slot Unit
+    ( viewAllPlayers :: NavigationAnchor.Slot Unit
     , viewAllTeams :: NavigationAnchor.Slot Unit
     )
 
@@ -44,7 +43,7 @@ render :: forall left.
 render (Empty _) = HH.div [ HP.class_ $ HH.ClassName "home" ] []
 render (Loaded { game: game' @ { handle, title } }) =
     HH.div [ HP.class_ $ HH.ClassName "home" ]
-    [ callToAction { game: Just game' }, why, features, profiles { handle, title } ]
+    [ callToAction (Just title) OpenRegistration, why, features, profiles { handle, title } ]
 
 loadGame :: forall left. String -> Async left (Maybe Game.OkContent)
 loadGame handle = Async.unify do
@@ -80,6 +79,7 @@ handleAction (Receive { handle }) = do
         Just game'' ->
             H.put $ Loaded { game: game'' }
         _ -> pure unit
+handleAction OpenRegistration = navigate_ "register"
 
 component :: forall query output left.
     H.Component HH.HTML query Input output (Async left)

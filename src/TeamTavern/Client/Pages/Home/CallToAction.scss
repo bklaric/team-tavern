@@ -1,8 +1,6 @@
 .call-to-action {
-    background-color: #603520;
-    color: white;
-    padding: 60px 21px;
-    border-bottom: 1px solid #ccc;
+    background-color: hsl(20, 20%, 19%);
+    padding: 100px 21px;
 }
 
 .call-to-action-content {
@@ -19,6 +17,7 @@
 }
 
 .call-to-action-heading {
+    color: #ffffffdd;
     font-size: 50px;
     line-height: 1em;
     margin-bottom: 28px;
@@ -26,7 +25,8 @@
 }
 
 .call-to-action-paragraph {
-    max-width: 640px;
+    color: #ffffffbb;
+    max-width: 700px;
     font-size: 20px;
     line-height: 1.5em;
     font-weight: 400;
