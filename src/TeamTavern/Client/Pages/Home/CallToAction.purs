@@ -18,7 +18,7 @@ callToAction title createAccount =
             [ HH.h1 [ HP.class_ $ HH.ClassName "call-to-action-heading" ]
                 [ HH.text $ "Find your " <> titleOrEsports title <> " teammates" ]
             , HH.p [ HP.class_ $ HH.ClassName "call-to-action-paragraph" ]
-                [ HH.text $ """Search through player and teams profiles to find your new """
+                [ HH.text $ """Search through player and team profiles to find your new """
                     <> titleOrEsports title <> """ teammates. Create
                     your own player or team profile and let them find you."""
                 ]

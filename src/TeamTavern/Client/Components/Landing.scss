@@ -36,6 +36,16 @@
     margin-bottom: 32px;
 }
 
+.landing-section-buttons {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 21px;
+
+    @media screen and (min-width: 450px) {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
 .landing-section-button {
     @extend .primary-button;
     display: block;

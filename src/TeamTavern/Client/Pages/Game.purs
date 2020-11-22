@@ -6,6 +6,7 @@ import Async (Async)
 import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
+import Client.Pages.Home.ForTeams (forTeams')
 import Data.Bifunctor (lmap)
 import Data.Const (Const)
 import Data.Maybe (Maybe(..))
@@ -14,18 +15,26 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import Simple.JSON.Async as JsonAsync
+import TeamTavern.Client.Components.Boarding.PlayerOrTeamInput as Boarding
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
-import TeamTavern.Client.Pages.Game.Profiles (profiles)
 import TeamTavern.Client.Pages.Home.CallToAction (callToAction)
-import TeamTavern.Client.Pages.Home.Features (features)
-import TeamTavern.Client.Pages.Home.Why (why)
+import TeamTavern.Client.Pages.Home.FindProfiles (findProfiles')
+import TeamTavern.Client.Pages.Home.ForPlayers (forPlayers')
+import TeamTavern.Client.Pages.Preboarding as Preboarding
 import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
-import TeamTavern.Client.Script.Navigate (navigate_)
+import TeamTavern.Client.Script.Navigate (navigate, navigate_)
 import TeamTavern.Server.Game.View.SendResponse as Game
 
 type Input = { handle :: String }
 
-data Action = Initialize | Receive Input | OpenRegistration
+data Action
+    = Initialize
+    | Receive Input
+    | OpenRegistration
+    | OpenPlayerPreboarding Game.OkContent
+    | OpenTeamPreboarding Game.OkContent
+    | OpenPlayerProfiles String
+    | OpenTeamProfiles String
 
 data State
     = Empty { handle :: String }
@@ -43,7 +52,11 @@ render :: forall left.
 render (Empty _) = HH.div [ HP.class_ $ HH.ClassName "home" ] []
 render (Loaded { game: game' @ { handle, title } }) =
     HH.div [ HP.class_ $ HH.ClassName "home" ]
-    [ callToAction (Just title) OpenRegistration, why, features, profiles { handle, title } ]
+    [ callToAction (Just title) OpenRegistration
+    , forPlayers' title (OpenPlayerPreboarding game')
+    , forTeams' title (OpenTeamPreboarding game')
+    , findProfiles' title (OpenPlayerProfiles handle) (OpenTeamProfiles handle)
+    ]
 
 loadGame :: forall left. String -> Async left (Maybe Game.OkContent)
 loadGame handle = Async.unify do
@@ -79,7 +92,16 @@ handleAction (Receive { handle }) = do
         Just game'' ->
             H.put $ Loaded { game: game'' }
         _ -> pure unit
-handleAction OpenRegistration = navigate_ "register"
+handleAction OpenRegistration =
+    navigate_ "register"
+handleAction (OpenPlayerPreboarding game') =
+    navigate (Preboarding.emptyInput Boarding.Player $ Just game') "/preboarding/start"
+handleAction (OpenTeamPreboarding game') =
+    navigate (Preboarding.emptyInput Boarding.Team $ Just game') "/preboarding/start"
+handleAction (OpenPlayerProfiles handle) =
+    navigate_ $ "/games/" <> handle <> "/players"
+handleAction (OpenTeamProfiles handle) =
+    navigate_ $ "/games/" <> handle <> "/teams"
 
 component :: forall query output left.
     H.Component HH.HTML query Input output (Async left)
