@@ -1,4 +1,4 @@
-module TeamTavern.Routes.Preboarding where
+module TeamTavern.Routes.Preboard where
 
 import Data.Maybe (Maybe)
 import Data.Variant (Variant)
@@ -7,7 +7,7 @@ import Jarilo.Path (type (:>), End)
 import Jarilo.Query (NoQuery)
 import Jarilo.Route (Route)
 import Jarilo.Segment (Literal)
-import TeamTavern.Routes.Onboarding (PlayerProfileRequestContent, PlayerRequestContent, TeamRequestContent, TeamProfileRequestContent)
+import TeamTavern.Routes.Onboard (PlayerProfileRequestContent, PlayerRequestContent, TeamRequestContent, TeamProfileRequestContent)
 import Type (type ($))
 
 type Preboard = Route

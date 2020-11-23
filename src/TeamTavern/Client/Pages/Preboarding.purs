@@ -41,7 +41,7 @@ import TeamTavern.Client.Components.Team.TeamFormInput as TeamFormInput
 import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
 import TeamTavern.Client.Script.Navigate (navigate, navigateReplace, navigate_)
 import TeamTavern.Client.Snippets.Class as HS
-import TeamTavern.Routes.Preboarding as Preboarding
+import TeamTavern.Routes.Preboard as Preboard
 import TeamTavern.Server.Game.View.SendResponse as ViewGame
 import Type (type ($))
 
@@ -299,9 +299,9 @@ render :: forall slots left.
 render state = boarding $ renderPage state
 
 sendRequest :: forall left.
-    State -> Async left (Maybe (Either Preboarding.BadContent (Maybe Preboarding.OkContent)))
+    State -> Async left (Maybe (Either Preboard.BadContent (Maybe Preboard.OkContent)))
 sendRequest (state :: State) = Async.unify do
-    (body :: Preboarding.RequestContent) <-
+    (body :: Preboard.RequestContent) <-
         case state of
         { playerOrTeam: PlayerOrTeamInput.Player
         , player
@@ -380,7 +380,7 @@ sendRequest (state :: State) = Async.unify do
         <> Fetch.credentials := Fetch.Include
         )
         # lmap (const Nothing)
-    content :: Either Preboarding.BadContent $ Maybe Preboarding.OkContent <-
+    content :: Either Preboard.BadContent $ Maybe Preboard.OkContent <-
         case FetchRes.status response of
         200 -> FetchRes.text response >>= JsonAsync.readJSON # bimap (const Nothing) (Right <<< Just)
         204 -> pure $ Right Nothing

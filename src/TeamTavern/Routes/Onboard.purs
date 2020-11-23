@@ -1,4 +1,4 @@
-module TeamTavern.Routes.Onboarding where
+module TeamTavern.Routes.Onboard where
 
 import Data.Maybe (Maybe)
 import Data.Variant (Variant)

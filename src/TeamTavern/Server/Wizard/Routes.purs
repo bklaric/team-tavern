@@ -6,8 +6,8 @@ import Jarilo.Path (type (:>), End)
 import Jarilo.Query (NoQuery)
 import Jarilo.Route (Route)
 import Jarilo.Segment (Literal)
-import TeamTavern.Routes.Onboarding (Onboard)
-import TeamTavern.Routes.Preboarding (Preboard)
+import TeamTavern.Routes.Onboard (Onboard)
+import TeamTavern.Routes.Preboard (Preboard)
 
 type CreateAccount = Route
     Post

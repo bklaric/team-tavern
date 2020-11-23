@@ -40,7 +40,7 @@ import TeamTavern.Client.Script.Cookie (getPlayerNickname)
 import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
 import TeamTavern.Client.Script.Navigate (navigate, navigateReplace, navigate_)
 import TeamTavern.Client.Snippets.Class as HS
-import TeamTavern.Routes.Onboarding as Onboarding
+import TeamTavern.Routes.Onboard as Onboard
 import Type (type ($))
 
 data Step
@@ -283,9 +283,9 @@ render :: forall slots left.
 render state = boarding $ renderPage state
 
 sendRequest :: forall left.
-    State -> Async left (Maybe (Either Onboarding.BadContent (Maybe Onboarding.OkContent)))
+    State -> Async left (Maybe (Either Onboard.BadContent (Maybe Onboard.OkContent)))
 sendRequest (state :: State) = Async.unify do
-    (body :: Onboarding.RequestContent) <-
+    (body :: Onboard.RequestContent) <-
         case state of
         { playerOrTeam: Just PlayerOrTeamInput.Player
         , player: player
@@ -354,7 +354,7 @@ sendRequest (state :: State) = Async.unify do
         <> Fetch.credentials := Fetch.Include
         )
         # lmap (const Nothing)
-    content :: Either Onboarding.BadContent $ Maybe Onboarding.OkContent <-
+    content :: Either Onboard.BadContent $ Maybe Onboard.OkContent <-
         case FetchRes.status response of
         200 -> FetchRes.text response >>= JsonAsync.readJSON # bimap (const Nothing) (Right <<< Just)
         204 -> pure $ Right Nothing
