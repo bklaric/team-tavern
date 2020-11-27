@@ -73,7 +73,7 @@ render
     [ HP.class_ $ HH.ClassName "form"
     , HE.onSubmit $ Just <<< Register
     ]
-    [ HH.h2 [ HP.class_ $ HH.ClassName "form-heading" ]
+    [ HH.h1 [ HP.class_ $ HH.ClassName "form-heading" ]
         [ HH.text "Create your "
         , HH.a
             [ HP.href "/"

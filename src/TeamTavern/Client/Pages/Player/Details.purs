@@ -11,7 +11,7 @@ import Halogen as H
 import Halogen.HTML as HH
 import Record as Record
 import TeamTavern.Client.Components.Card (card, cardHeader, cardHeading, cardSection)
-import TeamTavern.Client.Components.Detail (detailColumn, detailColumnHeading, detailColumns, detailColumnsContainer, textDetail)
+import TeamTavern.Client.Components.Detail (detailColumn, detailColumnHeading3, detailColumns, detailColumnsContainer, textDetail)
 import TeamTavern.Client.Components.Player.PlayerDetails (playerDetails)
 import TeamTavern.Routes.ViewPlayer as ViewPlayer
 
@@ -34,7 +34,7 @@ details player = let
     about = textDetail player.about
     in
     card
-    [ cardHeader [ cardHeading "Details" ]
+    [ cardHeader [ cardHeading "Player" ]
     , cardSection
         if Array.null playerDetails' && Array.null about
         then [ HH.p_ [ HH.text "No details, kek." ] ]
@@ -42,12 +42,12 @@ details player = let
             ( if Array.null playerDetails'
                 then []
                 else Array.singleton $ detailColumn $
-                    [ detailColumnHeading "Details" ] <> playerDetails'
+                    [ detailColumnHeading3 "Details" ] <> playerDetails'
             )
             <>
             ( if Array.null about
                 then []
                 else Array.singleton $ detailColumn $
-                    [ detailColumnHeading "About" ] <> about
+                    [ detailColumnHeading3 "About" ] <> about
             )
     ]

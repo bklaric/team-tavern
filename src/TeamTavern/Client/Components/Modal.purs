@@ -47,7 +47,7 @@ render title content input =
     , HE.onClick $ Just <<< BackgroundClose
     ]
     [ HH.div [ HS.class_ "modal-content" ]
-        [ HH.h2 [ HS.class_ "modal-title" ]
+        [ HH.h1 [ HS.class_ "modal-title" ]
             [ HH.text title
             , HH.button
                 [ HS.class_ "modal-close-button"

@@ -12,7 +12,7 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Components.Card (card, cardHeader, cardHeading, cardSection, cardSubheading)
-import TeamTavern.Client.Components.Detail (detailColumn, detailColumnHeading, detailColumns, textDetail)
+import TeamTavern.Client.Components.Detail (detailColumn, detailColumnHeading4, detailColumns, textDetail)
 import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchorIndexed)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
@@ -147,12 +147,12 @@ render { profiles, profileCount, playerInfo, page } =
                     then
                         [ detailColumn $
                             ( if not $ Array.null teamDetails'
-                                then [ detailColumnHeading "Team details" ] <> teamDetails'
+                                then [ detailColumnHeading4 "Team details" ] <> teamDetails'
                                 else []
                             )
                             <>
                             ( if not $ Array.null profileDetails''
-                                then [ detailColumnHeading "Profile details" ] <> profileDetails''
+                                then [ detailColumnHeading4 "Profile details" ] <> profileDetails''
                                 else []
                             )
                         ]
@@ -163,12 +163,12 @@ render { profiles, profileCount, playerInfo, page } =
                     then
                         [ detailColumn $
                             ( if not $ Array.null about
-                                then [ detailColumnHeading "About" ] <> about
+                                then [ detailColumnHeading4 "About" ] <> about
                                 else []
                             )
                             <>
                             ( if not $ Array.null ambitions
-                                then [ detailColumnHeading "Ambitions" ] <> ambitions
+                                then [ detailColumnHeading4 "Ambitions" ] <> ambitions
                                 else []
                             )
                         ]

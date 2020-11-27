@@ -18,8 +18,11 @@ detailColumns = HH.div [ HS.class_ "detail-columns" ]
 detailColumn :: forall slots action. Array (HH.HTML slots action) -> HH.HTML slots action
 detailColumn = HH.div [ HS.class_ "detail-column" ]
 
-detailColumnHeading :: forall slots action. String -> HH.HTML slots action
-detailColumnHeading heading = HH.h4 [ HS.class_ "detail-column-heading" ] [ HH.text heading ]
+detailColumnHeading3 :: forall slots action. String -> HH.HTML slots action
+detailColumnHeading3 heading = HH.h3 [ HS.class_ "detail-column-heading" ] [ HH.text heading ]
+
+detailColumnHeading4 :: forall slots action. String -> HH.HTML slots action
+detailColumnHeading4 heading = HH.h4 [ HS.class_ "detail-column-heading" ] [ HH.text heading ]
 
 detail :: forall slots action. String -> Array (HH.HTML slots action) -> HH.HTML slots action
 detail icon children =

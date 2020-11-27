@@ -38,7 +38,7 @@ render :: forall slots monad. MonadEffect monad =>
 render Empty = HH.div_ []
 render (Games games') = HH.div [ HP.class_ $ HH.ClassName "games" ] $
     [ HH.div [ HP.class_ $ HH.ClassName "games-header"]
-        [ HH.h2 [ HP.class_ $ HH.ClassName "games-header-title" ]
+        [ HH.h1 [ HP.class_ $ HH.ClassName "games-header-title" ]
             [ HH.text "Games" ]
         , HH.p [ HP.class_ $ HH.ClassName "games-header-subtitle" ]
             [ HH.text "Choose one of the featured games and start finding your new teammates!" ]
@@ -55,7 +55,7 @@ render (Games games') = HH.div [ HP.class_ $ HH.ClassName "games" ] $
             , HP.style (CSS.backgroundImage $ unsafeCoerce $ CSS.Value $ CSS.Plain $
                 "linear-gradient(to right,#603520dd,#603520dd), url(/images/" <> handle <> "-banner.jpg)")
             ] $
-            [ HH.h3 [ HP.class_ $ HH.ClassName "game-card-heading" ]
+            [ HH.h2 [ HP.class_ $ HH.ClassName "game-card-heading" ]
                 [ HH.a
                     [ HP.class_ $ ClassName "game-card-name"
                     , HP.href $ "/games/" <> handle <> "/players"
@@ -70,19 +70,21 @@ render (Games games') = HH.div [ HP.class_ $ HH.ClassName "games" ] $
                     ]
                 ]
             , HH.span [ HP.class_ $ HH.ClassName "game-card-profiles" ]
-                [ HH.a
-                    [ HP.class_ $ ClassName "game-card-profile-count"
-                    , HP.href $ "/games/" <> handle <> "/players"
-                    , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/players") true
+                [ HH.h3 [ HP.class_ $ ClassName "game-card-profile-count" ]
+                    [ HH.a
+                        [ HP.href $ "/games/" <> handle <> "/players"
+                        , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/players") true
+                        ]
+                        [ HH.text "Players" ]
                     ]
-                    [ HH.text "Players" ]
                 , whiteDivider
-                , HH.a
-                    [ HP.class_ $ ClassName "game-card-profile-count"
-                    , HP.href $ "/games/" <> handle <> "/teams"
-                    , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/teams") true
+                , HH.h3 [ HP.class_ $ ClassName "game-card-profile-count" ]
+                    [ HH.a
+                        [ HP.href $ "/games/" <> handle <> "/teams"
+                        , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/teams") true
+                        ]
+                        [ HH.text "Teams" ]
                     ]
-                    [ HH.text "Teams" ]
                 ]
             ]
             <> (description <#> \paragraph ->
@@ -105,7 +107,7 @@ render (Games games') = HH.div [ HP.class_ $ HH.ClassName "games" ] $
             , HP.style (CSS.backgroundImage $ unsafeCoerce $ CSS.Value $ CSS.Plain $
                 "linear-gradient(to right,#603520dd,#603520dd), url(/images/soon-banner.png)")
             ] $
-            [ HH.h3 [ HP.class_ $ HH.ClassName "game-card-coming-soon" ]
+            [ HH.h2 [ HP.class_ $ HH.ClassName "game-card-coming-soon" ]
                 [ HH.text "More games coming soon!" ]
             ]
         , HH.div

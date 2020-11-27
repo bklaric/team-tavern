@@ -10,7 +10,7 @@ import Halogen as H
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Button (regularButton)
 import TeamTavern.Client.Components.Card (card, cardHeader, cardHeading, cardSection)
-import TeamTavern.Client.Components.Detail (detailColumn, detailColumnHeading, detailColumns, textDetail)
+import TeamTavern.Client.Components.Detail (detailColumn, detailColumnHeading4, detailColumns, textDetail)
 import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Components.Player.ProfileDetails (profileDetails)
@@ -53,7 +53,7 @@ profiles { nickname, profiles: profiles' } status showEditProfileModal =
         [ profileHeader $
             [ profileHeaderItem $
                 [ profileHeading (SProxy :: SProxy "games") profile.handle
-                    ("/games/" <> profile.handle <> "/teams") profile.title
+                    ("/games/" <> profile.handle <> "/players") profile.title
                 ]
                 <>
                 [ divider
@@ -76,11 +76,11 @@ profiles { nickname, profiles: profiles' } status showEditProfileModal =
             ( if Array.null profileDetails'
                 then []
                 else Array.singleton $ detailColumn $
-                    [ detailColumnHeading "Details" ] <> profileDetails'
+                    [ detailColumnHeading4 "Details" ] <> profileDetails'
             )
             <>
             ( if Array.null ambitions
                 then []
                 else Array.singleton $ detailColumn $
-                    [ detailColumnHeading "Ambitions" ] <> ambitions
+                    [ detailColumnHeading4 "Ambitions" ] <> ambitions
             )

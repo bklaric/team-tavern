@@ -20,3 +20,9 @@ cardSubheading subheading = HH.span [ HS.class_ "card-subheading"] [ HH.text sub
 
 cardSection :: forall slots action. Array (HH.HTML slots action) -> HH.HTML slots action
 cardSection = HH.div [ HS.class_ "card-section" ]
+
+cardSectionHeader :: forall slots action. Array (HH.HTML slots action) -> HH.HTML slots action
+cardSectionHeader = HH.div [ HS.class_ "card-section-header" ]
+
+cardSectionHeading :: forall slots action. String -> HH.HTML slots action
+cardSectionHeading heading = HH.h3 [ HS.class_ "card-section-heading" ] [ HH.text heading ]

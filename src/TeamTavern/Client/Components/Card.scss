@@ -43,14 +43,18 @@
     border-top: $border;
 }
 
-.card-section-heading {
-    font-size: 14px;
-    font-weight: 500;
-    line-height: 1.5;
+.card-section-header {
     padding: 7px 21px;
     border-top: 1px solid #ccc;
     display: flex;
     justify-content: space-between;
     align-items: center;
     cursor: pointer;
+}
+
+.card-section-heading {
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.5;
+    margin: 0;
 }

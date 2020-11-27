@@ -80,18 +80,23 @@
 }
 
 .game-card-profile-count {
+    display:inline;
     font-size: 16px;
     font-weight: 400;
-    color: white;
     vertical-align: 1px;
 
-    &:hover {
-        text-decoration: underline;
+    a {
+        color: white;
+        
+        &:hover {
+            text-decoration: underline;
+        }
+
+        &:active {
+            color: #f7f7fa;
+        }
     }
 
-    &:active {
-        color: #f7f7fa;
-    }
 }
 
 .game-card-profiles {

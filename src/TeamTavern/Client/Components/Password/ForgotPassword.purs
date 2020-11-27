@@ -51,7 +51,7 @@ type ChildSlots =
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { email, unknownEmail, otherError, submitting } = HH.form
     [ HP.class_ $ HH.ClassName "form", HE.onSubmit $ Just <<< ResetPassword ]
-    [ HH.h2 [ HP.class_ $ HH.ClassName "form-heading" ]
+    [ HH.h1 [ HP.class_ $ HH.ClassName "form-heading" ]
         [ HH.text "Reset your "
         , navigationAnchor (SProxy :: SProxy "home")
             { path: "/", content: HH.text "TeamTavern" }

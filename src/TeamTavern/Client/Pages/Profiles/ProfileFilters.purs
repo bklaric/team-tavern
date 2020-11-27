@@ -1,4 +1,4 @@
-module TeamTavern.Client.Pages.Profiles.ProfileFilters where
+module TeamTavern.Client.Pages.Profiles.ProfileFilters (Option, Field, Filters, Input, Output(..), Slot, profileFilters) where
 
 import Prelude
 
@@ -13,10 +13,13 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
+import TeamTavern.Client.Components.Card (cardHeading, cardSectionHeading)
 import TeamTavern.Client.Components.Select.MultiSelect (multiSelect, multiSelectIndexed)
 import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.Select.MultiTreeSelect (multiTreeSelect)
 import TeamTavern.Client.Components.Select.MultiTreeSelect as MultiTreeSelect
+import TeamTavern.Client.Pages.Profiles.GameHeader (Tab(..))
+import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Server.Infrastructure.Languages (allLanguages)
 import TeamTavern.Server.Infrastructure.Regions (Region(..), allRegions)
 import Web.HTML as Html
@@ -51,7 +54,7 @@ type Filters =
     , newOrReturning :: Boolean
     }
 
-type Input = { fields :: Array Field, filters :: Filters }
+type Input = { fields :: Array Field, filters :: Filters, tab :: Tab }
 
 type State =
     { ageFrom :: String
@@ -71,6 +74,7 @@ type State =
     , filtersVisible :: Boolean
     , playerFiltersVisible :: Boolean
     , gameFiltersVisible :: Boolean
+    , tab :: Tab
     }
 
 data Action
@@ -111,9 +115,9 @@ regionToOption (Region region subRegions) = MultiTreeSelect.InputEntry
 
 fieldLabel :: forall slots action. String -> String -> HH.HTML slots action
 fieldLabel label icon = HH.label
-    [ HP.class_ $ HH.ClassName "input-label", HP.for label ]
-    [ HH.i [ HP.class_ $ HH.ClassName $ icon <> " filter-field-icon" ] []
-    , HH.span [ HP.class_ $ HH.ClassName "filter-field-label" ] [ HH.text label ]
+    [ HS.class_ "input-label", HP.for label ]
+    [ HH.i [ HS.class_ $ icon <> " filter-field-icon" ] []
+    , HH.span [ HS.class_ "filter-field-label" ] [ HH.text label ]
     ]
 
 fieldInput
@@ -121,7 +125,7 @@ fieldInput
     .  { field :: Field, selected :: Array Option }
     -> H.ComponentHTML Action ChildSlots (Async left)
 fieldInput { field: { key, label, icon, options }, selected } =
-    HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+    HH.div [ HS.class_ "input-group" ]
     [ fieldLabel label icon
     , multiSelectIndexed (SProxy :: SProxy "field") key
         { options
@@ -135,14 +139,15 @@ fieldInput { field: { key, label, icon, options }, selected } =
     ]
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
-render state = HH.div [ HP.class_ $ HH.ClassName "filters-card" ] $
-    [ HH.h3
-        [ HP.class_ $ HH.ClassName "filters-title"
+render state =
+    HH.div [ HS.class_ "filters-card" ] $
+    [ HH.div
+        [ HS.class_ "card-header"
         , HE.onClick $ const $ Just ToggleFiltersVisibility
         ]
-        [ HH.text "Filters"
+        [ cardHeading "Filters"
         , HH.i
-            [ HP.class_ $ HH.ClassName $ "fas filters-title-caret "
+            [ HS.class_ $ "fas filters-title-caret "
                 <> if state.filtersVisible then "fa-caret-up" else "fa-caret-down"
             ]
             []
@@ -151,13 +156,16 @@ render state = HH.div [ HP.class_ $ HH.ClassName "filters-card" ] $
     <>
     if state.filtersVisible
     then
-        [ HH.h4
-            [ HP.class_ $ HH.ClassName "card-section-heading"
+        [ HH.div
+            [ HS.class_ "card-section-header"
             , HE.onClick $ const $ Just TogglePlayerFiltersVisibility
             ]
-            [ HH.text "Player details"
+            [ cardSectionHeading
+                case state.tab of
+                Players -> "Player details"
+                Teams -> "Team details"
             , HH.i
-                [ HP.class_ $ HH.ClassName $ "fas filters-section-title-caret "
+                [ HS.class_ $ "fas filters-section-title-caret "
                     <> if state.playerFiltersVisible then "fa-caret-up" else "fa-caret-down"
                 ]
                 []
@@ -166,28 +174,28 @@ render state = HH.div [ HP.class_ $ HH.ClassName "filters-card" ] $
         <>
         (if state.playerFiltersVisible
         then Array.singleton $
-            HH.div [ HP.class_ $ HH.ClassName "card-section" ]
-            [ HH.div [ HP.class_ $ HH.ClassName "filter-input-groups" ] $
-                [ HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+            HH.div [ HS.class_ "card-section" ]
+            [ HH.div [ HS.class_ "filter-input-groups" ] $
+                [ HH.div [ HS.class_ "input-group" ]
                     [ fieldLabel "Age" "fas fa-calendar-alt"
-                    , HH.div [ HP.class_ $ HH.ClassName "range-input" ]
-                        [ HH.span [ HP.class_ $ HH.ClassName "range-input-from" ] [ HH.text "From" ]
+                    , HH.div [ HS.class_ "range-input" ]
+                        [ HH.span [ HS.class_ "range-input-from" ] [ HH.text "From" ]
                         , HH.input
-                            [ HP.class_ $ HH.ClassName $ "range-input-part"
+                            [ HS.class_ $ "range-input-part"
                             , HP.type_ HP.InputNumber
                             , HP.value state.ageFrom
                             , HE.onValueChange $ Just <<< AgeFromInput
                             ]
-                        , HH.span [ HP.class_ $ HH.ClassName "range-input-to" ] [ HH.text "to" ]
+                        , HH.span [ HS.class_ "range-input-to" ] [ HH.text "to" ]
                         , HH.input
-                            [ HP.class_ $ HH.ClassName $ "range-input-part"
+                            [ HS.class_ $ "range-input-part"
                             , HP.type_ HP.InputNumber
                             , HP.value state.ageTo
                             , HE.onValueChange $ Just <<< AgeToInput
                             ]
                         ]
                     ]
-                , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+                , HH.div [ HS.class_ "input-group" ]
                     [ fieldLabel "Location" "fas fa-globe-europe"
                     , multiTreeSelect (SProxy :: SProxy "location")
                         { entries: allRegions <#> regionToOption
@@ -198,7 +206,7 @@ render state = HH.div [ HP.class_ $ HH.ClassName "filters-card" ] $
                         }
                         (Just <<< CountriesInput)
                     ]
-                , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+                , HH.div [ HS.class_ "input-group" ]
                     [ fieldLabel "Language" "fas fa-comments"
                     , multiSelect (SProxy :: SProxy "language")
                         { options: allLanguages
@@ -209,12 +217,12 @@ render state = HH.div [ HP.class_ $ HH.ClassName "filters-card" ] $
                         }
                         (Just <<< LanguagesMessage)
                     ]
-                , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+                , HH.div [ HS.class_ "input-group" ]
                     [ fieldLabel "Microphone" "fas fa-microphone"
                     , HH.label
-                        [ HP.class_ $ HH.ClassName "checkbox-input-label" ]
+                        [ HS.class_ "checkbox-input-label" ]
                         [ HH.input
-                            [ HP.class_ $ HH.ClassName "checkbox-input"
+                            [ HS.class_ "checkbox-input"
                             , HP.type_ HP.InputCheckbox
                             , HP.checked state.microphone
                             , HE.onChecked $ Just <<< MicrophoneInput
@@ -222,19 +230,19 @@ render state = HH.div [ HP.class_ $ HH.ClassName "filters-card" ] $
                         , HH.text "Must have a microphone and be willing to communicate."
                         ]
                     ]
-                , HH.div [ HP.class_ $ HH.ClassName "input-group" ] $
+                , HH.div [ HS.class_ "input-group" ] $
                     [ fieldLabel "Online on weekdays" "fas fa-clock"
-                    , HH.div [ HP.class_ $ HH.ClassName "range-input" ]
-                        [ HH.span [ HP.class_ $ HH.ClassName "range-input-from" ] [ HH.text "From" ]
+                    , HH.div [ HS.class_ "range-input" ]
+                        [ HH.span [ HS.class_ "range-input-from" ] [ HH.text "From" ]
                         , HH.input
-                            [ HP.class_ $ HH.ClassName $ "range-input-part"
+                            [ HS.class_ $ "range-input-part"
                             , HP.type_ HP.InputTime
                             , HP.value state.weekdayFrom
                             , HE.onValueChange $ Just <<< WeekdayFromInput
                             ]
-                        , HH.span [ HP.class_ $ HH.ClassName "range-input-to" ] [ HH.text "to" ]
+                        , HH.span [ HS.class_ "range-input-to" ] [ HH.text "to" ]
                         , HH.input
-                            [ HP.class_ $ HH.ClassName $ "range-input-part"
+                            [ HS.class_ $ "range-input-part"
                             , HP.type_ HP.InputTime
                             , HP.value state.weekdayTo
                             , HE.onValueChange $ Just <<< WeekdayToInput
@@ -246,22 +254,22 @@ render state = HH.div [ HP.class_ $ HH.ClassName "filters-card" ] $
                         || (not $ String.null state.weekdayFrom) && String.null state.weekdayTo
                     then Array.singleton $
                         HH.label
-                        [ HP.class_ $ HH.ClassName "input-underlabel" ]
+                        [ HS.class_ "input-underlabel" ]
                         [ HH.text $ "Enter both times for the filter to have effect." ]
                     else []
-                , HH.div [ HP.class_ $ HH.ClassName "input-group" ] $
+                , HH.div [ HS.class_ "input-group" ] $
                     [ fieldLabel "Online on weekends" "fas fa-clock"
-                    , HH.div [ HP.class_ $ HH.ClassName "range-input" ]
-                        [ HH.span [ HP.class_ $ HH.ClassName "range-input-from" ] [ HH.text "From" ]
+                    , HH.div [ HS.class_ "range-input" ]
+                        [ HH.span [ HS.class_ "range-input-from" ] [ HH.text "From" ]
                         , HH.input
-                            [ HP.class_ $ HH.ClassName $ "range-input-part"
+                            [ HS.class_ $ "range-input-part"
                             , HP.type_ HP.InputTime
                             , HP.value state.weekendFrom
                             , HE.onValueChange $ Just <<< WeekendFromInput
                             ]
-                        , HH.span [ HP.class_ $ HH.ClassName "range-input-to" ] [ HH.text "to" ]
+                        , HH.span [ HS.class_ "range-input-to" ] [ HH.text "to" ]
                         , HH.input
-                            [ HP.class_ $ HH.ClassName $ "range-input-part"
+                            [ HS.class_ $ "range-input-part"
                             , HP.type_ HP.InputTime
                             , HP.value state.weekendTo
                             , HE.onValueChange $ Just <<< WeekendToInput
@@ -273,20 +281,20 @@ render state = HH.div [ HP.class_ $ HH.ClassName "filters-card" ] $
                         || (not $ String.null state.weekendFrom) && String.null state.weekendTo
                     then Array.singleton $
                         HH.label
-                        [ HP.class_ $ HH.ClassName "input-underlabel" ]
+                        [ HS.class_ "input-underlabel" ]
                         [ HH.text $ "Enter both times for the filter to have effect." ]
                     else []
                 ]
             ]
         else [])
         <>
-        [ HH.h4
-            [ HP.class_ $ HH.ClassName "card-section-heading"
+        [ HH.div
+            [ HS.class_ "card-section-header"
             , HE.onClick $ const $ Just ToggleGameFiltersVisibility
             ]
-            [ HH.text "Profile details"
+            [ cardSectionHeading "Profile details"
             , HH.i
-                [ HP.class_ $ HH.ClassName $ "fas filters-section-title-caret "
+                [ HS.class_ $ "fas filters-section-title-caret "
                     <> if state.gameFiltersVisible then "fa-caret-up" else "fa-caret-down"
                 ]
                 []
@@ -295,20 +303,20 @@ render state = HH.div [ HP.class_ $ HH.ClassName "filters-card" ] $
         <>
         (if state.gameFiltersVisible
         then Array.singleton $
-            HH.div [ HP.class_ $ HH.ClassName "card-section" ]
-            [ HH.div [ HP.class_ $ HH.ClassName "filter-input-groups" ] $
+            HH.div [ HS.class_ "card-section" ]
+            [ HH.div [ HS.class_ "filter-input-groups" ] $
                 (map fieldInput state.fields)
                 <>
-                [ HH.div [ HP.class_ $ HH.ClassName "input-group" ]
+                [ HH.div [ HS.class_ "input-group" ]
                     [ HH.label
-                        [ HP.class_ $ HH.ClassName "input-label" ] $
-                        [ HH.i [ HP.class_ $ HH.ClassName "fas fa-book filter-field-icon" ] []
-                        , HH.span [ HP.class_ $ HH.ClassName "filter-field-label" ] [ HH.text "New or returning player" ]
+                        [ HS.class_ "input-label" ] $
+                        [ HH.i [ HS.class_ "fas fa-book filter-field-icon" ] []
+                        , HH.span [ HS.class_ "filter-field-label" ] [ HH.text "New or returning player" ]
                         ]
                     , HH.label
-                        [ HP.class_ $ HH.ClassName "checkbox-input-label" ]
+                        [ HS.class_ "checkbox-input-label" ]
                         [ HH.input
-                            [ HP.class_ $ HH.ClassName "checkbox-input"
+                            [ HS.class_ "checkbox-input"
                             , HP.type_ HP.InputCheckbox
                             , HP.checked state.newOrReturning
                             , HE.onChecked (Just <<< NewOrReturningInput)
@@ -320,19 +328,19 @@ render state = HH.div [ HP.class_ $ HH.ClassName "filters-card" ] $
             ]
         else [])
         <>
-        [ HH.div [ HP.class_ $ HH.ClassName "card-section" ]
+        [ HH.div [ HS.class_ "card-section" ]
             [ HH.button
-                [ HP.class_ $ HH.ClassName "apply-filters"
+                [ HS.class_ "apply-filters"
                 , HE.onClick $ const $ Just $ ApplyAction
                 ]
-                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-filter button-icon" ] []
+                [ HH.i [ HS.class_ "fas fa-filter button-icon" ] []
                 , HH.text "Apply filters"
                 ]
             , HH.button
-                [ HP.class_ $ HH.ClassName "clear-filters"
+                [ HS.class_ "clear-filters"
                 , HE.onClick $ const $ Just $ Clear
                 ]
-                [ HH.i [ HP.class_ $ HH.ClassName "fas fa-eraser button-icon" ] []
+                [ HH.i [ HS.class_ "fas fa-eraser button-icon" ] []
                 , HH.text "Clear filters"
                 ]
             ]
@@ -349,8 +357,8 @@ handleAction Initialize = do
         , playerFiltersVisible = showFilters
         , gameFiltersVisible = showFilters
         }
-handleAction (Receive { fields, filters }) = do
-    H.modify_ \state -> state
+handleAction (Receive { fields, filters, tab }) = do
+    H.modify_ _
         { ageFrom = maybe "" show filters.ageFrom
         , ageTo = maybe "" show filters.ageTo
         , locations = filters.locations
@@ -368,6 +376,7 @@ handleAction (Receive { fields, filters }) = do
                         fieldKey == field.key && optionKey == option.key
             }
         , newOrReturning = filters.newOrReturning
+        , tab = tab
         }
 handleAction ApplyAction = do
     state <- H.get
@@ -440,7 +449,7 @@ handleAction ToggleGameFiltersVisibility =
     H.modify_ \state -> state { gameFiltersVisible = not state.gameFiltersVisible }
 
 initialState :: Input -> State
-initialState { fields, filters } =
+initialState { fields, filters, tab } =
     { ageFrom: maybe "" show filters.ageFrom
     , ageTo: maybe "" show filters.ageTo
     , locations: filters.locations
@@ -461,6 +470,7 @@ initialState { fields, filters } =
     , filtersVisible: false
     , playerFiltersVisible: false
     , gameFiltersVisible: false
+    , tab
     }
 
 component :: forall query left.

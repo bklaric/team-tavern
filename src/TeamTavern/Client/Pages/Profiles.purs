@@ -118,7 +118,7 @@ render (Game game' player filters tab) = let
     HH.div_ $
     [ gameHeader
     , HH.div [ HP.class_ $ HH.ClassName "profiles-container" ]
-        [ profileFilters { fields: filterableFields game'.fields, filters }
+        [ profileFilters { fields: filterableFields game'.fields, filters, tab: toHeaderTab tab }
             (\(ProfileFilters.Apply filters') -> Just $ ApplyFilters filters')
         , case tab of
             Players input _ ->

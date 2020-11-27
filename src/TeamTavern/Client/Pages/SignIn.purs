@@ -70,7 +70,7 @@ render
     , submitting
     } = HH.form
     [ HP.class_ $ HH.ClassName "form", HE.onSubmit $ Just <<< SignIn ]
-    [ HH.h2 [ HP.class_ $ HH.ClassName "form-heading" ]
+    [ HH.h1 [ HP.class_ $ HH.ClassName "form-heading" ]
         [ HH.text "Sign in to "
         , navigationAnchor (SProxy :: SProxy "home")
             { path: "/", content: HH.text "TeamTavern" }
