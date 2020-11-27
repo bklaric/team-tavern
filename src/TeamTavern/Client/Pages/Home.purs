@@ -22,7 +22,7 @@ import TeamTavern.Client.Script.Navigate (navigate, navigate_)
 
 data Action
     = Initialize
-    | OpenRegistration
+    | OpenPreboarding
     | OpenPlayerPreboarding
     | OpenTeamPreboarding
     | OpenGames
@@ -38,11 +38,11 @@ type ChildSlots =
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render _ =
     HH.div [ HP.class_ $ HH.ClassName "home" ]
-    [ callToAction Nothing OpenRegistration
+    [ callToAction Nothing OpenPreboarding
     , forPlayers OpenPlayerPreboarding
     , forTeams OpenTeamPreboarding
     , findProfiles OpenGames
-    , features OpenRegistration
+    , features OpenPreboarding
     ]
 
 handleAction :: forall action output slots left.
@@ -54,11 +54,12 @@ handleAction Initialize =
             "TeamTavern is an online platform for finding esports teammates. "
             <> "Choose a game, browse player and team profiles and find your ideal teammates."
         setMetaUrl
-handleAction OpenRegistration = navigate_ "/register"
+handleAction OpenPreboarding =
+    navigate (Preboarding.emptyInput Nothing Nothing) "/preboarding/start"
 handleAction OpenPlayerPreboarding =
-    navigate (Preboarding.emptyInput Boarding.Player Nothing) "/preboarding/start"
+    navigate (Preboarding.emptyInput (Just Boarding.Player) Nothing) "/preboarding/start"
 handleAction OpenTeamPreboarding =
-    navigate (Preboarding.emptyInput Boarding.Team Nothing) "/preboarding/start"
+    navigate (Preboarding.emptyInput (Just Boarding.Team) Nothing) "/preboarding/start"
 handleAction OpenGames = navigate_ "/games"
 
 component :: forall query input output left. H.Component HH.HTML query input output (Async left)

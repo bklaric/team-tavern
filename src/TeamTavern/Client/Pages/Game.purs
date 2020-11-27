@@ -31,7 +31,7 @@ type Input = { handle :: String }
 data Action
     = Initialize
     | Receive Input
-    | OpenRegistration
+    | OpenPreboarding Game.OkContent
     | OpenPlayerPreboarding Game.OkContent
     | OpenTeamPreboarding Game.OkContent
     | OpenPlayerProfiles String
@@ -53,11 +53,11 @@ render :: forall left.
 render (Empty _) = HH.div [ HP.class_ $ HH.ClassName "home" ] []
 render (Loaded { game: game' @ { handle, title } }) =
     HH.div [ HP.class_ $ HH.ClassName "home" ]
-    [ callToAction (Just title) OpenRegistration
+    [ callToAction (Just title) (OpenPreboarding game')
     , forPlayers' title (OpenPlayerPreboarding game')
     , forTeams' title (OpenTeamPreboarding game')
     , findProfiles' title (OpenPlayerProfiles handle) (OpenTeamProfiles handle)
-    , features' title OpenRegistration
+    , features' title (OpenPreboarding game')
     ]
 
 loadGame :: forall left. String -> Async left (Maybe Game.OkContent)
@@ -94,12 +94,12 @@ handleAction (Receive { handle }) = do
         Just game'' ->
             H.put $ Loaded { game: game'' }
         _ -> pure unit
-handleAction OpenRegistration =
-    navigate_ "/register"
+handleAction (OpenPreboarding game') =
+    navigate (Preboarding.emptyInput Nothing (Just game')) "/preboarding/start"
 handleAction (OpenPlayerPreboarding game') =
-    navigate (Preboarding.emptyInput Boarding.Player $ Just game') "/preboarding/start"
+    navigate (Preboarding.emptyInput (Just Boarding.Player) (Just game')) "/preboarding/start"
 handleAction (OpenTeamPreboarding game') =
-    navigate (Preboarding.emptyInput Boarding.Team $ Just game') "/preboarding/start"
+    navigate (Preboarding.emptyInput (Just Boarding.Team) (Just game')) "/preboarding/start"
 handleAction (OpenPlayerProfiles handle) =
     navigate_ $ "/games/" <> handle <> "/players"
 handleAction (OpenTeamProfiles handle) =

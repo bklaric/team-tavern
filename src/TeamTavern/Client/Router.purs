@@ -176,6 +176,7 @@ handleAction (Init state route) = do
             let step' =
                     case step of
                     "start" -> Just Preboarding.Greeting
+                    "player-or-team" -> Just Preboarding.PlayerOrTeam
                     "player" -> Just Preboarding.Player
                     "team" -> Just Preboarding.Team
                     "game" -> Just Preboarding.Game
