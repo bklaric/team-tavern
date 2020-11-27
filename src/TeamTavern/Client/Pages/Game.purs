@@ -18,6 +18,7 @@ import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.Boarding.PlayerOrTeamInput as Boarding
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Pages.Home.CallToAction (callToAction)
+import TeamTavern.Client.Pages.Home.Features (features')
 import TeamTavern.Client.Pages.Home.FindProfiles (findProfiles')
 import TeamTavern.Client.Pages.Home.ForPlayers (forPlayers')
 import TeamTavern.Client.Pages.Preboarding as Preboarding
@@ -56,6 +57,7 @@ render (Loaded { game: game' @ { handle, title } }) =
     , forPlayers' title (OpenPlayerPreboarding game')
     , forTeams' title (OpenTeamPreboarding game')
     , findProfiles' title (OpenPlayerProfiles handle) (OpenTeamProfiles handle)
+    , features' title OpenRegistration
     ]
 
 loadGame :: forall left. String -> Async left (Maybe Game.OkContent)
@@ -93,7 +95,7 @@ handleAction (Receive { handle }) = do
             H.put $ Loaded { game: game'' }
         _ -> pure unit
 handleAction OpenRegistration =
-    navigate_ "register"
+    navigate_ "/register"
 handleAction (OpenPlayerPreboarding game') =
     navigate (Preboarding.emptyInput Boarding.Player $ Just game') "/preboarding/start"
 handleAction (OpenTeamPreboarding game') =

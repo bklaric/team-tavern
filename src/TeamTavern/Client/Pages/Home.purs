@@ -13,6 +13,7 @@ import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Components.Boarding.PlayerOrTeamInput as Boarding
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Pages.Home.CallToAction (callToAction)
+import TeamTavern.Client.Pages.Home.Features (features)
 import TeamTavern.Client.Pages.Home.FindProfiles (findProfiles)
 import TeamTavern.Client.Pages.Home.ForPlayers (forPlayers)
 import TeamTavern.Client.Pages.Preboarding as Preboarding
@@ -41,6 +42,7 @@ render _ =
     , forPlayers OpenPlayerPreboarding
     , forTeams OpenTeamPreboarding
     , findProfiles OpenGames
+    , features OpenRegistration
     ]
 
 handleAction :: forall action output slots left.
