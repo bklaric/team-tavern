@@ -7,16 +7,17 @@ import Data.Array as Array
 import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
 import Halogen as H
-import Halogen.HTML as HH
 import Record as Record
 import TeamTavern.Client.Components.Card (card, cardHeader, cardHeading, cardSection)
 import TeamTavern.Client.Components.Detail (detailColumn, detailColumnHeading3, detailColumns, detailColumnsContainer, textDetail)
+import TeamTavern.Client.Components.Missing (missing)
 import TeamTavern.Client.Components.Team.TeamDetails (teamDetails)
+import TeamTavern.Client.Pages.Team.Status (Status(..))
 import TeamTavern.Server.Team.View (Team)
 
 details :: forall action slots left.
-    Team -> H.ComponentHTML action slots (Async left)
-details team = let
+    Team -> Status -> H.ComponentHTML action slots (Async left)
+details team status = let
     teamDetails' = teamDetails
         ( team
         # Record.modify (SProxy :: SProxy "weekdayOnline")
@@ -34,7 +35,10 @@ details team = let
     [ cardHeader [ cardHeading "Team" ]
     , cardSection
         if Array.null teamDetails' && Array.null about
-        then [ HH.p_ [ HH.text "No details, kek." ] ]
+        then Array.singleton $ missing
+            case status of
+            SignedInOwner -> "Apparently, your team prefers to keep an air of mystery about them."
+            _ -> "Apparently, this team prefers to keep an air of mystery about them."
         else Array.singleton $ detailColumnsContainer $ Array.singleton $ detailColumns $
             ( if Array.null teamDetails'
                 then []

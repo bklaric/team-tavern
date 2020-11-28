@@ -9,6 +9,7 @@ import Halogen.HTML as HH
 import TeamTavern.Client.Components.Button (primaryButton)
 import TeamTavern.Client.Components.Card (card, cardHeader, cardHeading, cardSection)
 import TeamTavern.Client.Components.Divider (divider)
+import TeamTavern.Client.Components.Missing (missing)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Components.Profile (profileHeading, profileSubheading)
 import TeamTavern.Client.Pages.Player.Status (Status(..))
@@ -36,12 +37,10 @@ teams player status showCreateTeamModal =
     if Array.null player.teams
     then Array.singleton $
         cardSection
-        [ HH.p_
-            [ HH.text
-                case status of
-                SignedInSelf -> "You haven't created any teams."
-                _ -> "This player hasn't created any teams."
-            ]
+        [ missing
+            case status of
+            SignedInSelf -> "You haven't created any teams."
+            _ -> "This player hasn't created any teams."
         ]
     else
         player.teams <#> \team ->

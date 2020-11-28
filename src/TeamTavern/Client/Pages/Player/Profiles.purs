@@ -12,6 +12,7 @@ import TeamTavern.Client.Components.Button (regularButton)
 import TeamTavern.Client.Components.Card (card, cardHeader, cardHeading, cardSection)
 import TeamTavern.Client.Components.Detail (detailColumn, detailColumnHeading4, detailColumns, textDetail)
 import TeamTavern.Client.Components.Divider (divider)
+import TeamTavern.Client.Components.Missing (missing)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Components.Player.ProfileDetails (profileDetails)
 import TeamTavern.Client.Components.Profile (profileHeader, profileHeaderItem, profileHeading, profileSubheading)
@@ -44,7 +45,10 @@ profiles { nickname, profiles: profiles' } status showEditProfileModal =
     ]
     <>
     if Array.null profiles'
-    then [ cardSection [ HH.p_ [ HH.text "No profiles, kek." ] ] ]
+    then [ cardSection [ missing
+        case status of
+        SignedInSelf -> "You haven't create any profiles."
+        _ -> "This player hasn't created any profiles." ] ]
     else profiles' <#> \profile -> let
         profileDetails' = profileDetails profile.fields profile.fieldValues profile.newOrReturning
         ambitions = textDetail profile.ambitions

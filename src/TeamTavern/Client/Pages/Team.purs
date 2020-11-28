@@ -85,7 +85,7 @@ render (Loaded { team: team', status, showEditTeamModal, showEditProfileModal } 
             SignedOut -> []
         ]
     , contentDescription "This is a team, lmao!"
-    , details team'
+    , details team' status
     , profiles team'.handle team'.profiles status ShowEditProfileModal
     ]
     <>

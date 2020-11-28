@@ -135,10 +135,10 @@ render (Loaded state @ { player: player', status, editPopoverShown }) =
     , HH.p [ HP.class_ $ HH.ClassName "content-description" ]
         [ HH.text
             case status of
-            SignedInSelf -> "View and edit all your player and team profiles."
-            _ -> "View all player and team profiles of player " <> player'.nickname <> "."
+            SignedInSelf -> "View and edit all your player profiles and teams."
+            _ -> "View all player profiles and teams of player " <> player'.nickname <> "."
         ]
-    , details player'
+    , details player' status
     , profiles player' status ShowEditProfileModal
     , teams player' status ShowCreateTeamModal
     ]

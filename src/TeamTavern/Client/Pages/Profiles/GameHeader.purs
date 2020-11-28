@@ -81,8 +81,8 @@ render (Input handle title tab) = HH.div_
     , HH.p [ HP.class_ $ HH.ClassName "content-description" ]
         [ HH.text
             case tab of
-            Players -> "Browse and filter " <> title <> " players looking for a team."
-            Teams -> "Browse and filter " <> title <> " teams looking for players."
+            Players -> "Search through " <> title <> " players looking for a team."
+            Teams -> "Search through " <> title <> " teams looking for players."
         ]
     ]
 handleAction :: forall monad.
