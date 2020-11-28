@@ -11,7 +11,6 @@ import Data.Maybe (Maybe(..))
 import Data.Variant (SProxy(..), match)
 import Halogen as H
 import Halogen.HTML as HH
-import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Components.Form (form, otherFormError, submitButton)
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.Player.PlayerFormInput (playerFormInput)
@@ -43,13 +42,8 @@ type Slot = H.Slot (Const Void) (Modal.Output Void) Unit
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { details, submitting, otherError } =
     form Update $
-    [ HH.p [ HP.class_ $ HH.ClassName "form-subheading" ]
-        [ HH.text """Enter details about yourself so your new bruh gamer friends
-            can find you, bruh. Fill out as much as you can to ensure the
-            bruhest gamers find you. All fields are optional, bruh."""
-        ]
-    , playerFormInput details (Just <<< UpdatePlayerDetails)
-    , submitButton "fas fa-edit" "Edit details" "Editing details..." submitting
+    [ playerFormInput details (Just <<< UpdatePlayerDetails)
+    , submitButton "fas fa-edit" "Edit player" "Editing player..." submitting
     ]
     <>
     otherFormError otherError
@@ -153,4 +147,4 @@ editPlayer
     -> HH.ComponentHTML action (editPlayer :: Slot | children) (Async left)
 editPlayer input handleMessage = HH.slot
     (SProxy :: SProxy "editPlayer") unit
-    (Modal.component "Edit player details" component) input handleMessage
+    (Modal.component "Edit player" component) input handleMessage

@@ -23,6 +23,7 @@ import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.Card (card, cardHeader, cardHeading', cardSection)
 import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.Input (inputError, inputGroup, textInput)
+import TeamTavern.Client.Components.Missing (missing)
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
 import TeamTavern.Client.Script.Navigate (navigate_)
 import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass)
@@ -81,7 +82,7 @@ render (Conversation state) =
         ]
     , cardSection
         if Array.null state.conversation
-        then [ HH.p_ [ HH.text "There are no messages in this conversation." ] ]
+        then [ missing "There are no messages in this conversation." ]
         else
             (state.conversation <#> \{ nickname, content, created, createdSeconds } ->
                 HH.div [ HP.class_ $ HH.ClassName "conversation-message"]
