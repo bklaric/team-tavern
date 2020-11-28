@@ -44,12 +44,9 @@
 .filter-input-groups {
     @extend .responsive-input-groups;
 
-    margin-bottom: -28px;
+    margin-bottom: 0;
 
-    .input-group {
-        @media screen and (min-width: 960px) {
-            flex-basis: 100%;
-            max-width: calc(100% - 21px);
-        }
+    @media screen and (min-width: 960px) {
+        grid-template-columns: 1fr;
     }
 }
