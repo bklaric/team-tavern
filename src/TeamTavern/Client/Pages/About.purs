@@ -11,7 +11,7 @@ import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
-import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
+import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Client.Snippets.SocialMediaUrls (discordUrl, redditUrl, steamUrl, twitterUrl)
 
@@ -59,11 +59,8 @@ render = HH.div [ HS.class_ "about" ]
     ]
 
 handleAction :: forall monad. MonadEffect monad => Action -> monad Unit
-handleAction Init = do
-    H.liftEffect do
-        setMetaTitle "About | TeamTavern"
-        setMetaDescription "TeamTavern is an online platform for finding esports teammates."
-        setMetaUrl
+handleAction Init =
+    setMeta "About | TeamTavern" "TeamTavern is an online platform for finding esports teammates."
 
 component :: forall monad output input query. MonadEffect monad =>
     H.Component HH.HTML query input output monad

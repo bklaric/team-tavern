@@ -30,7 +30,7 @@ import TeamTavern.Client.Pages.Profiles.ProfileFilters as ProfileFilters
 import TeamTavern.Client.Pages.Profiles.TeamProfiles (teamProfiles)
 import TeamTavern.Client.Pages.Profiles.TeamProfiles as TeamProfiles
 import TeamTavern.Client.Script.Cookie (PlayerInfo, getPlayerInfo)
-import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
+import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigate_)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Script.Url as Url
@@ -273,14 +273,12 @@ loadTab handle GameHeader.Teams = do
 setMetaTags :: String -> GameHeader.Tab -> Effect Unit
 setMetaTags handleOrTitle tab =
     case tab of
-    GameHeader.Players -> do
-        setMetaTitle $ handleOrTitle <> " players - Looking for team | TeamTavern"
-        setMetaDescription $ "Browse and filter " <> handleOrTitle <> " players looking for a team."
-        setMetaUrl
-    GameHeader.Teams -> do
-        setMetaTitle $ handleOrTitle <> " teams - Looking for players | TeamTavern"
-        setMetaDescription $ "Browse and filter " <> handleOrTitle <> " teams looking for players."
-        setMetaUrl
+    GameHeader.Players ->
+        setMeta ("Find " <> handleOrTitle <> " players looking for a team | TeamTavern")
+        ("Search through " <> handleOrTitle <> " players looking for a team and find your new teammates.")
+    GameHeader.Teams ->
+        setMeta ("Find " <> handleOrTitle <> " teams looking for players | TeamTavern")
+        ("Search through " <> handleOrTitle <> " teams looking for players and find your new teammates.")
 
 scrollProfilesIntoView :: forall monad. Bind monad => MonadEffect monad => monad Unit
 scrollProfilesIntoView = do

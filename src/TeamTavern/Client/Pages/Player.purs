@@ -3,7 +3,6 @@ module TeamTavern.Client.Pages.Player (Input, Slot, player) where
 import Prelude
 
 import Async (Async)
-import Async as Async
 import CSS as CSS
 import Client.Components.Copyable as Copyable
 import Control.Monad.State (class MonadState)
@@ -15,7 +14,7 @@ import Halogen.HTML as HH
 import Halogen.HTML.CSS as HC
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import TeamTavern.Client.Components.Content (contentHeader, contentHeading)
+import TeamTavern.Client.Components.Content (contentDescription, contentHeader, contentHeading)
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Components.Popover (popover, popoverButtonCaret, subscribeToWindowClick)
@@ -31,7 +30,7 @@ import TeamTavern.Client.Pages.Player.EditSettings as EditSettings
 import TeamTavern.Client.Pages.Player.Profiles (profiles)
 import TeamTavern.Client.Pages.Player.Status (Status(..), getStatus)
 import TeamTavern.Client.Pages.Player.Teams (teams)
-import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
+import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Request (get)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Snippets.Class as HS
@@ -132,12 +131,10 @@ render (Loaded state @ { player: player', status, editPopoverShown }) =
                 ]
             SignedOut -> []
         ]
-    , HH.p [ HP.class_ $ HH.ClassName "content-description" ]
-        [ HH.text
-            case status of
-            SignedInSelf -> "View and edit all your player profiles and teams."
-            _ -> "View all player profiles and teams of player " <> player'.nickname <> "."
-        ]
+    , contentDescription
+        case status of
+        SignedInSelf -> "View and edit all your details, profiles and teams."
+        _ -> "View all player's details, profiles and teams."
     , details player' status
     , profiles player' status ShowEditProfileModal
     , teams player' status ShowCreateTeamModal
@@ -202,10 +199,8 @@ handleAction (Receive { nickname }) = do
                 , editProfileModalShown: Nothing
                 , createTeamModalShown: false
                 }
-            H.lift $ Async.fromEffect do
-                setMetaTitle $ "aoeuaoeu" <> " | TeamTavern"
-                setMetaDescription $ "View profiles by player " <> "aoeuaoeu" <> " on TeamTavern."
-                setMetaUrl
+            setMeta (player''.nickname <> " | TeamTavern")
+                ("View all details, profiles and teams of player " <> player''.nickname <> ".")
         _ -> pure unit
 
 handleAction (ToggleEditAccountPopover mouseEvent) = do

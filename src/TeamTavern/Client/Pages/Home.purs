@@ -17,7 +17,7 @@ import TeamTavern.Client.Pages.Home.Features (features)
 import TeamTavern.Client.Pages.Home.FindProfiles (findProfiles)
 import TeamTavern.Client.Pages.Home.ForPlayers (forPlayers)
 import TeamTavern.Client.Pages.Preboarding as Preboarding
-import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
+import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigate, navigate_)
 
 data Action
@@ -47,13 +47,11 @@ render _ =
 
 handleAction :: forall action output slots left.
     Action -> H.HalogenM State action slots output (Async left) Unit
-handleAction Initialize =
-    H.liftEffect do
-        setMetaTitle "Find your esports teammates | TeamTavern"
-        setMetaDescription $
-            "TeamTavern is an online platform for finding esports teammates. "
-            <> "Choose a game, browse player and team profiles and find your ideal teammates."
-        setMetaUrl
+handleAction Initialize = setMeta
+    "Find your esports teammates | TeamTavern"
+    ( "Search through player and team profiles to find your new esports teammates. "
+    <> "Create your own player or team profile and let them find you."
+    )
 handleAction OpenPreboarding =
     navigate (Preboarding.emptyInput Nothing Nothing) "/preboarding/start"
 handleAction OpenPlayerPreboarding =

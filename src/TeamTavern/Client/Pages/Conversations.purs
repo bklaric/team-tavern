@@ -20,6 +20,7 @@ import Simple.JSON.Async as Json
 import TeamTavern.Client.Components.Card (card, cardHeader, cardHeading)
 import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
+import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigate_)
 import TeamTavern.Server.Conversation.ViewAll.SendResponse as ViewAll
 import Web.Event.Event as Event
@@ -83,6 +84,7 @@ handleAction :: forall slots output left.
 handleAction Init = do
     state <- H.lift $ Async.alwaysRight (const Error) Conversations loadConversations
     H.put state
+    setMeta "Conversations | TeamTavern" "View all your conversations."
 handleAction (Navigate path mouseEvent) = do
     H.liftEffect $ Event.preventDefault $ MouseEvent.toEvent mouseEvent
     navigate_ path

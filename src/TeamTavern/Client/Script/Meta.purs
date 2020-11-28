@@ -4,6 +4,7 @@ import Prelude
 
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
+import Effect.Class (class MonadEffect, liftEffect)
 import Web.DOM.NonElementParentNode (getElementById)
 import Web.HTML (window)
 import Web.HTML.HTMLDocument (setTitle, toNonElementParentNode)
@@ -45,3 +46,9 @@ setMetaUrl = do
     url <- window >>= location >>= href
     setMetaContent url "meta-og-url"
     setCanonicalUrl url
+
+setMeta :: forall monad. MonadEffect monad => String -> String -> monad Unit
+setMeta title description = liftEffect do
+    setMetaTitle title
+    setMetaDescription description
+    setMetaUrl

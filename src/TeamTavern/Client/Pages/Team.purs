@@ -3,7 +3,6 @@ module TeamTavern.Client.Pages.Team (Input, Slot, team) where
 import Prelude
 
 import Async (Async)
-import Async as Async
 import CSS as CSS
 import Control.Monad.State (class MonadState)
 import Data.Array (intercalate)
@@ -26,7 +25,7 @@ import TeamTavern.Client.Pages.Team.EditTeam (editTeam)
 import TeamTavern.Client.Pages.Team.EditTeam as EditTeam
 import TeamTavern.Client.Pages.Team.Profiles (profiles)
 import TeamTavern.Client.Pages.Team.Status (Status(..), getStatus)
-import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
+import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Request (get)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Snippets.Class as HS
@@ -84,7 +83,10 @@ render (Loaded { team: team', status, showEditTeamModal, showEditProfileModal } 
                 ]
             SignedOut -> []
         ]
-    , contentDescription "This is a team, lmao!"
+    , contentDescription
+        case status of
+        SignedInOwner -> "View and edit all your team's details and profiles."
+        _ -> "View all team's details and profiles."
     , details team' status
     , profiles team'.handle team'.profiles status ShowEditProfileModal
     ]
@@ -139,12 +141,10 @@ handleAction Initialize = do
                         , showEditTeamModal: false
                         , showEditProfileModal: Nothing
                         }
+                    setMeta (team''.name <> " | TeamTavern")
+                        ("View all details and profiles of team " <> team''.name <> ".")
                 _ -> pure unit
         _ -> pure unit
-    H.lift $ Async.fromEffect do
-        setMetaTitle $ "aoeu" <> " | TeamTavern"
-        setMetaDescription $ "View profiles by player " <> "aoeueuue" <> " on TeamTavern."
-        setMetaUrl
 handleAction ShowEditTeamModal = modifyLoaded _ { showEditTeamModal = true }
 handleAction HideEditTeamModal = modifyLoaded _ { showEditTeamModal = false }
 handleAction (ShowEditProfileModal profile) = modifyLoaded _ { showEditProfileModal = Just profile }

@@ -20,6 +20,7 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties (alt, class_, href, src) as HP
 import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.Divider (whiteDivider)
+import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigateWithEvent_)
 import TeamTavern.Routes.ViewAllGames as ViewAllGames
 import Unsafe.Coerce (unsafeCoerce)
@@ -135,6 +136,10 @@ handleAction :: forall slots output left.
 handleAction Init = do
     newState <- H.lift loadGames
     H.put newState
+    case newState of
+        Games games' -> setMeta "View all featured games | TeamTavern"
+            "Choose one of the featured games and start finding your new teammates!"
+        _ -> pure unit
 handleAction (Navigate url stopBubble event) = do
     H.liftEffect if stopBubble
         then stopPropagation $ MouseEvent.toEvent event

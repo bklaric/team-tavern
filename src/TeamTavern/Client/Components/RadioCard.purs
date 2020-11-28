@@ -25,5 +25,5 @@ radioCard backgroundUrl selected onSelect children =
         [ HH.i [ HS.class_ $ "fas fa-check" ] [] ]
     , HH.div
         [ HS.class_ if selected then "selected-radio-card-ribbon" else "radio-card-ribbon" ]
-        children
+        [ HH.span [ HS.class_ "radio-card-ribbon-text" ] children ]
     ]

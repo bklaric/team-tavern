@@ -25,6 +25,7 @@ import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.Input (inputError, inputGroup, textInput)
 import TeamTavern.Client.Components.Missing (missing)
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
+import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigate_)
 import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass)
 import TeamTavern.Server.Conversation.Start.SendResponse as Conversation
@@ -157,9 +158,8 @@ handleAction Init = do
         Empty nickname -> do
             newState <- H.lift $ loadConversation nickname
             H.put newState
-        Conversation { nickname } -> do
-            newState <- H.lift $ loadConversation nickname
-            H.put newState
+            setMeta ("Conversation with " <> nickname <> " | TeamTavern")
+                ("View your conversation with " <> nickname <> ".")
         _ -> pure unit
 handleAction (UpdateMessage message) =
     H.modify_ case _ of

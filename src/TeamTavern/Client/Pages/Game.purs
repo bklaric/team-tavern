@@ -11,6 +11,7 @@ import Data.Bifunctor (lmap)
 import Data.Const (Const)
 import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
+import Effect.Class (class MonadEffect)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
@@ -22,7 +23,7 @@ import TeamTavern.Client.Pages.Home.Features (features')
 import TeamTavern.Client.Pages.Home.FindProfiles (findProfiles')
 import TeamTavern.Client.Pages.Home.ForPlayers (forPlayers')
 import TeamTavern.Client.Pages.Preboarding as Preboarding
-import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
+import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigate, navigate_)
 import TeamTavern.Server.Game.View.SendResponse as Game
 
@@ -71,28 +72,31 @@ loadGame handle = Async.unify do
         _ -> Async.left Nothing
     pure $ Just content
 
+setMeta' :: forall monad. MonadEffect monad => String -> monad Unit
+setMeta' title = setMeta ("Find your " <> title <> " teammates | TeamTavern")
+    ( "Search through player and team profiles to find your new " <> title <> " teammates. "
+    <> "Create your own player or team profile and let them find you."
+    )
+
 handleAction :: forall action output slots left.
     Action -> H.HalogenM State action slots output (Async left) Unit
 handleAction Initialize = do
-    H.liftEffect do
-        setMetaTitle "Find your esports teammates | TeamTavern"
-        setMetaDescription $
-            "TeamTavern is an online platform for finding esports teammates. "
-            <> "Choose a game, browse player and team profiles and find your ideal teammates."
-        setMetaUrl
     state <- H.get
     case state of
         Empty { handle } -> do
             game' <- H.lift $ loadGame handle
             case game' of
-                Just game'' -> H.put $ Loaded { game: game'' }
+                Just game'' -> do
+                    H.put $ Loaded { game: game'' }
+                    setMeta' game''.title
                 Nothing -> pure unit
         _ -> pure unit
 handleAction (Receive { handle }) = do
     game' <- H.lift $ loadGame handle
     case game' of
-        Just game'' ->
+        Just game'' -> do
             H.put $ Loaded { game: game'' }
+            setMeta' game''.title
         _ -> pure unit
 handleAction (OpenPreboarding game') =
     navigate (Preboarding.emptyInput Nothing (Just game')) "/preboarding/start"
