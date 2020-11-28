@@ -277,6 +277,7 @@ renderPage { step: Team, team, playerOrTeam, game } =
             _ -> Game
         ]
     ]
+renderPage { step: Game, game, playerOrTeam } =
     [ boardingStep
         [ boardingHeading "Game"
         , boardingDescription  """Select a game to create your first profile muhfugga."""
