@@ -61,9 +61,8 @@ import TeamTavern.Server.Team.Create (create) as Team
 import TeamTavern.Server.Team.Update (update) as Team
 import TeamTavern.Server.Team.View (view) as Team
 import TeamTavern.Server.Team.ViewByOwner (viewByOwner) as Team
-import TeamTavern.Server.Wizard.CreateAccount as Wizard
-import TeamTavern.Server.Wizard.Onboard as Onboard
-import TeamTavern.Server.Wizard.Preboard as Preboard
+import TeamTavern.Server.Boarding.Onboard as Onboard
+import TeamTavern.Server.Boarding.Preboard as Preboard
 
 listenOptions :: ListenOptions
 listenOptions = TcpListenOptions
@@ -216,8 +215,6 @@ handleRequest deployment pool client method url cookies body =
             Conversation.view pool nickname cookies
         , startConversation: \{ nickname } ->
             Conversation.start pool client nickname cookies body
-        , createAccount: const $
-            Wizard.createAccount pool client cookies body
         , onboard: const $
             Onboard.onboard pool cookies body
         , preboard: const $

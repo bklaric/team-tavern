@@ -1,4 +1,4 @@
-module TeamTavern.Server.Wizard.Preboard (preboard) where
+module TeamTavern.Server.Boarding.Preboard (preboard) where
 
 import Prelude
 

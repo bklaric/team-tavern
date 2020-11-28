@@ -1,4 +1,4 @@
-module TeamTavern.Server.Wizard.Routes where
+module TeamTavern.Server.Boarding.Routes where
 
 import Jarilo.Junction (type (:<|>), type (:=))
 import Jarilo.Method (Post)
@@ -16,6 +16,5 @@ type CreateAccount = Route
     NoQuery
 
 type WizardRoutes
-    =    "createAccount" := CreateAccount
-    :<|> "onboard"       := Onboard
+    =    "onboard"       := Onboard
     :<|> "preboard"      := Preboard
