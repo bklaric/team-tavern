@@ -57,7 +57,7 @@ newOrReturningInputGroup :: forall slots action.
     Boolean -> (Boolean -> action) -> HH.HTML slots action
 newOrReturningInputGroup value onValue =
     inputGroup
-    [ inputLabel "fas fa-book" "Microphone"
+    [ inputLabel "fas fa-book" "New or returning"
     , checkboxInput value onValue "Must be new or returning players to the game."
     ]
 
@@ -66,7 +66,8 @@ ambitionsInputGroup :: forall slots action.
 ambitionsInputGroup value onValue error =
     inputGroup $
     [ textInput_ value onValue
-    , inputUnderlabel "Holy shit, why are you even playing this stupid game?"
+    , inputUnderlabel """What do you want te get out of playing as a team?
+        Any specific goals you want to achieve?"""
     ]
     <>
     inputError error "Ambitions text cannot be more than 2000 characters long."

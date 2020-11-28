@@ -1,18 +1,24 @@
 .radio-buttons {
-    display: flex;
-    justify-content: space-between;
-    min-width: 450px;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 30px;
+
+    @media screen and (min-width: 500px) {
+        grid-template-columns: 1fr 1fr;
+    }
 }
 
 %radio-button {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     font-family: Roboto;
     font-size: 14px;
     font-weight: 500;
     border: 1px solid $primary-color;
     border-radius: $border-radius;
     padding: 14px;
+    margin: auto;
     cursor: pointer;
 }
 
@@ -49,4 +55,11 @@
 .selected-radio-button-check {
     @extend %radio-button-check;
     border-color: white;
+}
+
+.radio-button-description {
+    margin: 14px auto 0;
+    text-align: center;
+    color: #888;
+    max-width: fit-content;
 }

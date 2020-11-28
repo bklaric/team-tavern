@@ -23,3 +23,6 @@ radioButton selected onSelect children =
         [ HS.class_ if selected then "selected-radio-button-check" else "radio-button-check" ]
         [ HH.i [ HS.class_ $ "fas fa-check" ] [] ]
     ]
+
+radioButtonDescription :: forall slots action. String -> HH.HTML slots action
+radioButtonDescription text = HH.p [ HS.class_ "radio-button-description" ] [ HH.text text]

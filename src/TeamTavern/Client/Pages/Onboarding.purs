@@ -181,10 +181,9 @@ renderPage { step: PlayerOrTeam, playerOrTeam } =
     ]
 renderPage { step: Player, player } =
     [ boardingStep
-        [ boardingHeading "Player details"
-        , boardingDescription  """Enter details about yourself so your new bruh gamer friends
-                can find you, bruh. Fill out as much as you can to ensure the
-                bruhest gamers find you. All fields are optional, bruh."""
+        [ boardingHeading "Player"
+        , boardingDescription  """Tell us about yourself. Fill out as much as you want to help us
+            find you the right teammates. All fields are optional."""
         , PlayerFormInput.playerFormInput player (Just <<< UpdatePlayer)
         ]
     , boardingButtons
@@ -194,10 +193,9 @@ renderPage { step: Player, player } =
     ]
 renderPage { step: Team, team } =
     [ boardingStep
-        [ boardingHeading "Team details"
-        , boardingDescription  """Enter details about yourself so your new bruh gamer friends
-                can find you, bruh. Fill out as much as you can to ensure the
-                bruhest gamers find you. All fields are optional, bruh."""
+        [ boardingHeading "Team"
+        , boardingDescription  """Tell us about your team. Fill out as much as you want to help us
+            find the right teammates for your team. All fields are optional."""
         , TeamFormInput.teamFormInput team (Just <<< UpdateTeam)
         ]
     , boardingButtons
@@ -208,7 +206,7 @@ renderPage { step: Team, team } =
 renderPage { step: Game, game, playerOrTeam } =
     [ boardingStep
         [ boardingHeading "Game"
-        , boardingDescription  """Select a game to create your first profile muhfugga."""
+        , boardingDescription  """Select a game to create your first profile."""
         , gameInput game (Just <<< UpdateGame)
         ]
     , boardingButtons
@@ -231,8 +229,9 @@ renderPage { step: Game, game, playerOrTeam } =
     ]
 renderPage { step: PlayerProfile, playerProfile, otherError, submitting } =
     [ boardingStep
-        [ boardingHeading "Player profile details"
-        , boardingDescription  """Enter details about your gameplay. Fill out everything."""
+        [ boardingHeading "Player profile"
+        , boardingDescription  """Fill out your in-game stats, achievements and ambitions to find
+            equally skilled teammates."""
         , PlayerProfileFormInput.profileFormInput playerProfile UpdatePlayerProfile
         ]
     , boardingButtons
@@ -255,8 +254,9 @@ renderPage { step: PlayerProfile, playerProfile, otherError, submitting } =
     ]
 renderPage { step: TeamProfile, teamProfile, otherError, submitting } =
     [ boardingStep
-        [ boardingHeading "Team profile details"
-        , boardingDescription  """Enter details about your gameplay. Fill out everything."""
+        [ boardingHeading "Team profile"
+        , boardingDescription  """Tell us about your team's ambitions and what you're looking for
+            skill-wise in new team members."""
         , TeamProfileFormInput.profileFormInput teamProfile UpdateTeamProfile
         ]
     , boardingButtons

@@ -105,8 +105,8 @@ aboutInputGroup :: forall slots action. String -> (String -> action) -> Boolean 
 aboutInputGroup value onValue error =
     inputGroup $
     [ textInput_ value onValue
-    , inputUnderlabel """Yo bruha, write about yourself. What are you like? Just how
-        bruh are you? What kind of bruhs are you looking for?"""
+    , inputUnderlabel """Write a bit about your team. What are you like?
+        What are you looking for in other team members?"""
     ]
     <>
     inputError error "About text cannot be more than 2000 characters long."

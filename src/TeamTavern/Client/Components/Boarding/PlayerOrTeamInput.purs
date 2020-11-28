@@ -7,7 +7,7 @@ import Foreign (ForeignError(..), fail, readString, unsafeToForeign)
 import Halogen.HTML (HTML)
 import Halogen.HTML as HH
 import Simple.JSON (class ReadForeign, class WriteForeign)
-import TeamTavern.Client.Components.RadioButton (radioButton, radioButtons)
+import TeamTavern.Client.Components.RadioButton (radioButton, radioButtonDescription, radioButtons)
 import TeamTavern.Client.Snippets.Class as HS
 
 data PlayerOrTeam = Player | Team
@@ -34,12 +34,18 @@ playerOrTeamInput :: forall slots action.
     Maybe PlayerOrTeam -> (PlayerOrTeam -> action) -> HTML slots action
 playerOrTeamInput selected onSelect =
     radioButtons
-    [ radioButton (maybe false isPlayer selected) (onSelect Player)
-        [ HH.i [ HS.class_ "fas fa-user button-icon" ] []
-        , HH.text "Create player profile"
+    [ HH.div_
+        [ radioButton (maybe false isPlayer selected) (onSelect Player)
+            [ HH.i [ HS.class_ "fas fa-user button-icon" ] []
+            , HH.text "Create player profile"
+            ]
+        , radioButtonDescription "I want to find a team or other players to play with."
         ]
-    , radioButton (maybe false isTeam selected) (onSelect Team)
-        [ HH.i [ HS.class_ "fas fa-users button-icon" ] []
-        , HH.text "Create team profile"
+    , HH.div_
+        [ radioButton (maybe false isTeam selected) (onSelect Team)
+            [ HH.i [ HS.class_ "fas fa-users button-icon" ] []
+            , HH.text "Create team profile"
+            ]
+        , radioButtonDescription "I want to recruit new members or grow my online community."
         ]
     ]

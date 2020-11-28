@@ -45,27 +45,21 @@
 }
 
 .responsive-input-groups {
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 28px 21px;
+    margin-bottom: 28px;
 
     @media screen and (min-width: 630px) {
-        margin-right: -21px;
+        grid-template-columns: 1fr 1fr;
+    }
+
+    @media screen and (min-width: 960px) {
+        grid-template-columns: 1fr 1fr 1fr;
     }
 
     .input-group {
-        flex-basis: 100%;
-        max-width: 100%;
-
-        @media screen and (min-width: 630px) {
-            flex-basis: calc(50% - 21px);
-            max-width: calc(50% - 21px);
-            margin-right: 21px;
-        }
-
-        @media screen and (min-width: 960px) {
-            flex-basis: calc(33.33% - 21px);
-            max-width: calc(33.33% - 21px);
-        }
+        margin-bottom: 0;
     }
 }
 

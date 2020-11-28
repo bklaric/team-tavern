@@ -21,7 +21,7 @@ forTeams onClick =
         , landingSectionSubheading "4. Create your account"
         , landingSectionDescription "Finish creating your account by entering your email address and password."
         , landingSectionSubheading "You're done!"
-        , landingSectionDescription "Your account, your team and your first team profile are created. You're ready to find your new teammates!"
+        , landingSectionDescription "Your account, your team and your first team profile are created. You're ready to recruit new team members!"
         , landingSectionButton "Create team profile" onClick
         ]
     ]
@@ -40,7 +40,7 @@ forTeams' title onClick =
         , landingSectionSubheading "3. Create your account"
         , landingSectionDescription "Finish creating your account by entering your email address and password."
         , landingSectionSubheading "You're done!"
-        , landingSectionDescription $ "Your account, your team and your " <> title <> " team profile are created. You're ready to find your new teammates!"
+        , landingSectionDescription $ "Your account, your team and your " <> title <> " team profile are created. You're ready to recruit new team members!"
         , landingSectionButton "Create team profile" onClick
         ]
     ]
