@@ -6,11 +6,12 @@ import Data.Maybe (Maybe, maybe)
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Components.Landing (landingSectionButton)
+import Web.UIEvent.MouseEvent (MouseEvent)
 
 titleOrEsports :: Maybe String -> String
 titleOrEsports = maybe "esports" identity
 
-callToAction :: forall action slots. Maybe String -> action -> HH.HTML slots action
+callToAction :: forall action slots. Maybe String -> (MouseEvent -> action) -> HH.HTML slots action
 callToAction title createAccount =
     HH.div [ HP.class_ $ HH.ClassName "call-to-action" ]
     [ HH.div [ HP.class_ $ HH.ClassName "call-to-action-content" ]
@@ -22,7 +23,7 @@ callToAction title createAccount =
                     <> titleOrEsports title <> """ teammates. Create
                     your own player or team profile and let them find you."""
                 ]
-            , landingSectionButton "Start finding teammates" createAccount
+            , landingSectionButton "Start finding teammates" "/preboarding/start" createAccount
             ]
         ]
     ]

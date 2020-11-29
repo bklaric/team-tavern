@@ -7,6 +7,7 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Snippets.Class as HS
+import Web.UIEvent.MouseEvent (MouseEvent)
 
 landingSection :: forall slots action. Array (HH.HTML slots action) -> HH.HTML slots action
 landingSection = HH.div [ HS.class_ "landing-section" ]
@@ -33,11 +34,13 @@ landingSectionDescription description =
 landingSectionButtons :: forall slots action. Array (HH.HTML slots action) -> HH.HTML slots action
 landingSectionButtons = HH.div [ HS.class_ "landing-section-buttons" ]
 
-landingSectionButton :: forall slots action. String -> action -> HH.HTML slots action
-landingSectionButton text onClick =
-    HH.button
+landingSectionButton :: forall slots action.
+    String -> String -> (MouseEvent -> action) -> HH.HTML slots action
+landingSectionButton text url onClick =
+    HH.a
     [ HS.class_ "landing-section-button"
-    , HE.onClick $ const $ Just onClick
+    , HP.href url
+    , HE.onClick $ Just <<< onClick
     ]
     [ HH.text text ]
 

@@ -26,17 +26,20 @@ import TeamTavern.Client.Pages.Preboarding as Preboarding
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigate, navigate_)
 import TeamTavern.Server.Game.View.SendResponse as Game
+import Web.Event.Event as E
+import Web.UIEvent.MouseEvent (MouseEvent)
+import Web.UIEvent.MouseEvent as ME
 
 type Input = { handle :: String }
 
 data Action
     = Initialize
     | Receive Input
-    | OpenPreboarding Game.OkContent
-    | OpenPlayerPreboarding Game.OkContent
-    | OpenTeamPreboarding Game.OkContent
-    | OpenPlayerProfiles String
-    | OpenTeamProfiles String
+    | OpenPreboarding Game.OkContent MouseEvent
+    | OpenPlayerPreboarding Game.OkContent MouseEvent
+    | OpenTeamPreboarding Game.OkContent MouseEvent
+    | OpenPlayerProfiles String MouseEvent
+    | OpenTeamProfiles String MouseEvent
 
 data State
     = Empty { handle :: String }
@@ -57,7 +60,7 @@ render (Loaded { game: game' @ { handle, title } }) =
     [ callToAction (Just title) (OpenPreboarding game')
     , forPlayers' title (OpenPlayerPreboarding game')
     , forTeams' title (OpenTeamPreboarding game')
-    , findProfiles' title (OpenPlayerProfiles handle) (OpenTeamProfiles handle)
+    , findProfiles' handle title (OpenPlayerProfiles handle) (OpenTeamProfiles handle)
     , features' title (OpenPreboarding game')
     ]
 
@@ -98,15 +101,20 @@ handleAction (Receive { handle }) = do
             H.put $ Loaded { game: game'' }
             setMeta' game''.title
         _ -> pure unit
-handleAction (OpenPreboarding game') =
+handleAction (OpenPreboarding game' mouseEvent) = do
+    mouseEvent # ME.toEvent # E.preventDefault # H.liftEffect
     navigate (Preboarding.emptyInput Nothing (Just game')) "/preboarding/start"
-handleAction (OpenPlayerPreboarding game') =
+handleAction (OpenPlayerPreboarding game' mouseEvent) = do
+    mouseEvent # ME.toEvent # E.preventDefault # H.liftEffect
     navigate (Preboarding.emptyInput (Just Boarding.Player) (Just game')) "/preboarding/start"
-handleAction (OpenTeamPreboarding game') =
+handleAction (OpenTeamPreboarding game' mouseEvent) = do
+    mouseEvent # ME.toEvent # E.preventDefault # H.liftEffect
     navigate (Preboarding.emptyInput (Just Boarding.Team) (Just game')) "/preboarding/start"
-handleAction (OpenPlayerProfiles handle) =
+handleAction (OpenPlayerProfiles handle mouseEvent) = do
+    mouseEvent # ME.toEvent # E.preventDefault # H.liftEffect
     navigate_ $ "/games/" <> handle <> "/players"
-handleAction (OpenTeamProfiles handle) =
+handleAction (OpenTeamProfiles handle mouseEvent) = do
+    mouseEvent # ME.toEvent # E.preventDefault # H.liftEffect
     navigate_ $ "/games/" <> handle <> "/teams"
 
 component :: forall query output left.

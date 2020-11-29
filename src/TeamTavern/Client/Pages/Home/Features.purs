@@ -5,8 +5,9 @@ import Prelude
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Landing (landingSectionButton)
 import TeamTavern.Client.Snippets.Class as HS
+import Web.UIEvent.MouseEvent (MouseEvent)
 
-features :: forall slots action. action -> HH.HTML slots action
+features :: forall slots action. (MouseEvent -> action) -> HH.HTML slots action
 features createAccount =
     HH.div [ HS.class_ "features" ]
     [ HH.h2 [ HS.class_ "features-heading" ]
@@ -56,10 +57,10 @@ features createAccount =
                 email notification whenever someone messages you.""" ]
             ]
         ]
-    , landingSectionButton "Start finding teammates" createAccount
+    , landingSectionButton "Start finding teammates" "/preboarding/start" createAccount
     ]
 
-features' :: forall slots action. String -> action -> HH.HTML slots action
+features' :: forall slots action. String -> (MouseEvent -> action) -> HH.HTML slots action
 features' title createAccount =
     HH.div [ HS.class_ "features" ]
     [ HH.h2 [ HS.class_ "features-heading" ]
@@ -109,5 +110,5 @@ features' title createAccount =
                 email notification whenever someone messages you.""" ]
             ]
         ]
-    , landingSectionButton "Start finding teammates" createAccount
+    , landingSectionButton "Start finding teammates" "/preboarding/start" createAccount
     ]

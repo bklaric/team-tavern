@@ -4,8 +4,9 @@ import Prelude
 
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Landing (landingSection, landingSectionButton, landingSectionDescription, landingSectionHeading, landingSectionImage, landingSectionSubheading, landingSectionText)
+import Web.UIEvent.MouseEvent (MouseEvent)
 
-forTeams :: forall slots action. action -> HH.HTML slots action
+forTeams :: forall slots action. (MouseEvent -> action) -> HH.HTML slots action
 forTeams onClick =
     landingSection
     [ landingSectionImage "/images/player-2.png"
@@ -22,11 +23,11 @@ forTeams onClick =
         , landingSectionDescription "Finish creating your account by entering your email address and password."
         , landingSectionSubheading "You're done!"
         , landingSectionDescription "Your account, your team and your first team profile are created. You're ready to recruit new team members!"
-        , landingSectionButton "Create team profile" onClick
+        , landingSectionButton "Create team profile" "/preboarding/start" onClick
         ]
     ]
 
-forTeams' :: forall slots action. String -> action -> HH.HTML slots action
+forTeams' :: forall slots action. String -> (MouseEvent -> action) -> HH.HTML slots action
 forTeams' title onClick =
     landingSection
     [ landingSectionImage "/images/player-2.png"
@@ -41,6 +42,6 @@ forTeams' title onClick =
         , landingSectionDescription "Finish creating your account by entering your email address and password."
         , landingSectionSubheading "You're done!"
         , landingSectionDescription $ "Your account, your team and your " <> title <> " team profile are created. You're ready to recruit new team members!"
-        , landingSectionButton "Create team profile" onClick
+        , landingSectionButton "Create team profile" "/preboarding/start" onClick
         ]
     ]
