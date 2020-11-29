@@ -92,9 +92,9 @@ handleAction (Update event) = do
             foldl
             (\state error ->
                 match
-                { invalidDiscordTag: const $ state
+                { discordTag: const $ state
                     { details = state.details { discordTagError = true } }
-                , invalidAbout: const $ state
+                , about: const $ state
                     { details = state.details { aboutError = true } }
                 }
                 error

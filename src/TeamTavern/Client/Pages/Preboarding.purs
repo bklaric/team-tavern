@@ -604,6 +604,11 @@ handleAction SetUpAccount = do
                 , missingErrors = []
                 , ambitionsError = false
                 }
+            , registration
+                { nicknameError = false
+                , emailError = false
+                , passwordError = false
+                }
             }
     response <- H.lift $ sendRequest currentState
     case response of

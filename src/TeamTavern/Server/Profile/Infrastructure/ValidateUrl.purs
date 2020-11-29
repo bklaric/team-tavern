@@ -17,8 +17,8 @@ import Data.Validated as Validated
 import Data.Variant (SProxy(..), Variant, inj)
 import Text.Parsing.Parser (Parser)
 import Text.Parsing.Parser (runParser) as Parser
-import Text.Parsing.Parser.Combinators (optionMaybe)
-import Text.Parsing.Parser.String (string)
+import Text.Parsing.Parser.Combinators (notFollowedBy, optionMaybe)
+import Text.Parsing.Parser.String (anyChar, string)
 import URI (Path(..), RegName, Scheme)
 import URI.Common (URIPartParseError(..), wrapParser)
 import URI.Host.RegName as Host
@@ -87,6 +87,7 @@ parser domain = do
   _ <- string "//"
   host <- parseHost domain
   path <- parsePath
+  notFollowedBy anyChar
   pure { scheme, host, path: Just path }
 
 parser_ :: Parser String ParsedUrl
@@ -95,6 +96,7 @@ parser_ = do
     _ <- string "//"
     host <- parseHost_
     path <- parsePath_
+    notFollowedBy anyChar
     pure { scheme, host, path }
 
 validateUrl :: Domain -> String -> Either (NonEmptyList UrlError) Url

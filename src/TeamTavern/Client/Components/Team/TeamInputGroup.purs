@@ -28,7 +28,7 @@ nameInputGroup value onValue error =
     , requiredTextLineInput value onValue
     ]
     <>
-    inputError error "Name isn't valid, kek."
+    inputError error "Name is required and cannot be more than 40 characters long."
 
 websiteInputGroup :: forall slots action.
     Maybe String -> (Maybe String -> action) -> Boolean -> HTML slots action
@@ -38,7 +38,8 @@ websiteInputGroup value onValue error =
     , textLineInput value onValue
     ]
     <>
-    inputError error "Website isn't valid, kek."
+    inputError error ("Website must be valid and cannot be more than 200 characters long. "
+        <> "Please check and try again.")
 
 ageInputGroup :: forall slots action.
     Maybe Int -> Maybe Int -> (Maybe Int -> action) -> (Maybe Int -> action) -> HTML slots action

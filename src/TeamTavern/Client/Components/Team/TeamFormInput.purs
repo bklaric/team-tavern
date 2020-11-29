@@ -128,8 +128,8 @@ handleAction :: forall left. Action -> H.HalogenM State Action ChildSlots Output
 handleAction Initialize = do
     state <- H.get
     timezone <- maybe getClientTimezone pure state.timezone
-    H.modify_ _ { timezone = Just timezone }
-    raiseOutput state
+    newState <- H.modify _ { timezone = Just timezone }
+    raiseOutput newState
 handleAction (Receive input) =
     H.put input
 handleAction (UpdateName name) = do

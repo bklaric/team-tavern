@@ -10,8 +10,8 @@ import Simple.JSON (writeJSON)
 import TeamTavern.Server.Player.UpdatePlayer.LogError (UpdateDetailsError)
 
 type BadRequestContent = Array (Variant
-    ( invalidDiscordTag :: {}
-    , invalidAbout :: {}
+    ( discordTag :: Array String
+    , about :: Array String
     ))
 
 errorResponse :: UpdateDetailsError -> Response
@@ -20,7 +20,7 @@ errorResponse = match
     , client: const badRequest__
     , notAuthenticated: const unauthorized__
     , notAuthorized: const forbidden__
-    , player: fromFoldable >>> writeJSON >>> badRequest_
+    , player: fromFoldable >>> (writeJSON :: BadRequestContent -> String) >>> badRequest_
     }
 
 successResponse :: Unit -> Response

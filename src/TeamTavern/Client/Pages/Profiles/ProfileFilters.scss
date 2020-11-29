@@ -47,6 +47,6 @@
     margin-bottom: 0;
 
     @media screen and (min-width: 960px) {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
     }
 }

@@ -83,8 +83,8 @@ profileDetails' fieldValues newOrReturning =
     ( if newOrReturning
         then Array.singleton $
             detail "fas fa-book"
-            [ HH.span [ HS.class_ "detail-labelless" ] [ HH.text "Are"]
-            , HH.span [ HS.class_ "detail-emphasize" ] [ HH.text " new or returning players" ]
+            [ HH.span [ HS.class_ "detail-labelless" ] [ HH.text "Are "]
+            , HH.span [ HS.class_ "detail-emphasize" ] [ HH.text "new or returning players" ]
             , HH.text $ " to the game"
             ]
         else []

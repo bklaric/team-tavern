@@ -14,7 +14,7 @@
     border-bottom: $border;
     background-color: white;
     margin: 64px auto;
-    width: 100%;
+    width: fit-content;
 
     @media screen and (min-width: 1020px) {
         border: $border;

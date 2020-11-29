@@ -137,11 +137,11 @@ handleAction Initialize = do
             =  show year <> "-"
             <> (if month < 10 then "0" <> show month else show month) <> "-"
             <> (if day < 10 then "0" <> show day else show day)
-    H.modify_ _
+    newState <- H.modify _
         { timezone = Just timezone
         , thirteenYearsAgo = thirteenYearsAgo
         }
-    raiseOutput state
+    raiseOutput newState
 handleAction (Receive input) =
     H.modify_ \state ->
         input # Record.insert (SProxy :: SProxy "thirteenYearsAgo") state.thirteenYearsAgo

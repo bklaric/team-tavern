@@ -37,7 +37,7 @@ playerMicrophoneDetail false = Nothing
 playerMicrophoneDetail true = Just $
     detail "fas fa-microphone"
     [ HH.span [ HS.class_ "detail-labelless detail-emphasize" ]
-        [ HH.text "Has microphone" ]
+        [ HH.text "Has a microphone" ]
     , HH.text $ " and is willing to communicate"
     ]
 

@@ -114,7 +114,7 @@ newOrReturningInputGroup :: forall slots action.
 newOrReturningInputGroup value onValue =
     inputGroup
     [ inputLabel "fas fa-book" "New or returning"
-    , checkboxInput value onValue "Must be new or returning players to the game."
+    , checkboxInput value onValue "Is a new or returning player to the game."
     ]
 
 ambitionsInputGroup :: forall slots action.

@@ -46,16 +46,16 @@
 
 .responsive-input-groups {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 28px 21px;
     margin-bottom: 28px;
 
     @media screen and (min-width: 630px) {
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     }
 
     @media screen and (min-width: 960px) {
-        grid-template-columns: 1fr 1fr 1fr;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
     }
 
     .input-group {
