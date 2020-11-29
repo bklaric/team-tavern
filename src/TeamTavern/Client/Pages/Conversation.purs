@@ -60,6 +60,7 @@ data State
 
 type Slot = H.Slot (Const Void) Void Unit
 
+render :: forall t116. State -> HH.HTML t116 Action
 render (Empty _) = HH.div_ []
 render Error = HH.p_ [ HH.text "There has been an error loading this conversation. Please try again later." ]
 render (Conversation state) =
@@ -119,20 +120,37 @@ render (Conversation state) =
         ]
     ]
 
+loadConversation :: forall t350. String -> Async t350 State
 loadConversation nickname = Async.unify do
     response <- Fetch.fetch ("/api/conversations/" <> nickname) (Fetch.credentials := Fetch.Include)
         # lmap (const Error)
-    conversation :: View.OkContent <- case FetchRes.status response of
+    conversation' :: View.OkContent <- case FetchRes.status response of
         200 -> FetchRes.text response >>= JsonAsync.readJSON # lmap (const Error)
         _ -> Async.left Error
     pure $ Conversation
         { nickname
-        , conversation
+        , conversation: conversation'                                             
         , message: ""
         , messageError: false
         , otherError: false
         }
 
+sendMessage :: forall t79 t91.
+    { message :: String
+    , messageError :: Boolean
+    , nickname :: String
+    , otherError :: Boolean
+    | t79
+    }
+    -> Async t91
+        (Maybe
+            { message :: String
+            , messageError :: Boolean
+            , nickname :: String
+            , otherError :: Boolean
+            | t79
+            }
+        )
 sendMessage state @ { nickname, message } = Async.unify do
     response <- Fetch.fetch
         ("/api/conversations/" <> nickname)
@@ -184,6 +202,7 @@ handleAction (Navigate path mouseEvent) = do
     H.liftEffect $ Event.preventDefault $ MouseEvent.toEvent mouseEvent
     navigate_ path
 
+component :: forall t440 t466 t469. H.Component HH.HTML t466 String t440 (Async t469)
 component = H.mkComponent
     { initialState: Empty
     , render
@@ -193,4 +212,15 @@ component = H.mkComponent
         }
     }
 
+conversation :: forall t474 t481 t482 t484.
+  String
+  -> HH.HTML
+       (H.ComponentSlot HH.HTML
+          ( conversation :: H.Slot t482 Void Unit
+          | t474
+          )
+          (Async t484)
+          t481
+       )
+       t481
 conversation nickname = HH.slot (SProxy :: SProxy "conversation") unit component nickname absurd

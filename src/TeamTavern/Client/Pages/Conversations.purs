@@ -43,6 +43,7 @@ data State
 
 type Slot = H.Slot (Const Void) Void Unit
 
+render :: forall t81. State -> HH.HTML t81 Action
 render Empty = HH.div_ []
 render (Conversations conversations') =
     card $
@@ -71,6 +72,7 @@ render (Conversations conversations') =
             ]
 render Error = HH.p_ [ HH.text "There has been an error loading your conversations. Please try again later." ]
 
+loadConversations :: Async Unit ViewAll.OkContent
 loadConversations = do
     response <- Fetch.fetch "/api/conversations" (Fetch.credentials := Fetch.Include)
         # lmap (const unit)
@@ -89,6 +91,7 @@ handleAction (Navigate path mouseEvent) = do
     H.liftEffect $ Event.preventDefault $ MouseEvent.toEvent mouseEvent
     navigate_ path
 
+component :: forall t174 t199 t202 t205. H.Component HH.HTML t202 t199 t174 (Async t205)
 component = H.mkComponent
     { initialState: const Empty
     , render
@@ -98,4 +101,14 @@ component = H.mkComponent
         }
     }
 
+conversations :: forall t209 t216 t217 t219.
+  HH.HTML
+    (H.ComponentSlot HH.HTML
+       ( conversations :: H.Slot t217 Void Unit
+       | t209
+       )
+       (Async t219)
+       t216
+    )
+    t216
 conversations = HH.slot (SProxy :: SProxy "conversations") unit component unit absurd
