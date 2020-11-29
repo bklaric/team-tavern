@@ -34,18 +34,20 @@ setMetaDescription description = do
     setMetaContent description "meta-twitter-description"
     setMetaContent description "meta-og-description"
 
-setCanonicalUrl :: String -> Effect Unit
-setCanonicalUrl url = do
-    canonicalElement <- window >>= document <#> toNonElementParentNode >>= getElementById "canonical-url"
-    case LinkElement.fromElement =<< canonicalElement of
-        Just canonicalElement' -> setHref url canonicalElement'
+setLink :: String -> String -> Effect Unit
+setLink id url = do
+    link <- window >>= document <#> toNonElementParentNode >>= getElementById id
+    case LinkElement.fromElement =<< link of
+        Just link' -> setHref url link'
         Nothing -> pure unit
 
 setMetaUrl :: Effect Unit
 setMetaUrl = do
     url <- window >>= location >>= href
     setMetaContent url "meta-og-url"
-    setCanonicalUrl url
+    setLink "canonical-url" url
+    setLink "hreflang-en" url
+    setLink "hreflang-default" url
 
 setMeta :: forall monad. MonadEffect monad => String -> String -> monad Unit
 setMeta title description = liftEffect do
