@@ -67,8 +67,8 @@ render
         [ inputLabel "fas fa-signature" "Nickname"
         , requiredTextLineInput nickname UpdateNickname
         ]
-        <> inputError nicknameError """The nickname can contain only alphanumeric characters and
-            cannot be more than 40 characters long."""
+        <> inputError nicknameError """Nickname cannot be more than 40 characters long
+            and can only contain alphanumeric characters, dashes, underscores and dots."""
         <> inputError nicknameTaken "This nickname is already taken, please pick another one."
     , inputGroup $
         [ inputLabel "fas fa-envelope" "Email address"
@@ -81,7 +81,7 @@ render
         [ inputLabel "fas fa-key" "Password"
         , passwordInput password passwordShown UpdatePassword TogglePasswordVisibility
         ]
-        <> inputError passwordError "The password must have at least 8 characters."
+        <> inputError passwordError "Password must have at least 8 characters."
     ]
 
 stateToOutput :: State -> Output

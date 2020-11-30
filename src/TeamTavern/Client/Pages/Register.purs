@@ -94,8 +94,8 @@ render
         , HH.p
             [ HP.class_ $ inputErrorClass nicknameError ]
             [ HH.text
-                $ "The nickname can contain only alphanumeric characters and "
-                <> "cannot be more than 40 characters long." ]
+                $ "Nickname cannot be more than 40 characters long "
+                <> "and can only contain alphanumeric characters, dashes, underscores and dots." ]
         , HH.p
             [ HP.class_ $ inputErrorClass nicknameTaken ]
             [ HH.text
@@ -154,7 +154,7 @@ render
             ]
         , HH.p
             [ HP.class_ $ inputErrorClass passwordError ]
-            [ HH.text $ "The password must have at least 8 characters."
+            [ HH.text $ "Password must have at least 8 characters."
             ]
         ]
     , HH.button
