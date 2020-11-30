@@ -78,10 +78,39 @@ type LoadProfilesError errors = Variant
 
 createAgeFilter :: Maybe Age -> Maybe Age -> String
 createAgeFilter Nothing Nothing = ""
-createAgeFilter (Just ageFrom) Nothing = " and team.age_to >= " <> show ageFrom
-createAgeFilter Nothing (Just ageTo) = " and team.age_from <= " <> show ageTo
-createAgeFilter (Just ageFrom) (Just ageTo) =
-    " and (team.age_to >= " <> show ageFrom <> " and team.age_from <= " <> show ageTo <> ")"
+createAgeFilter (Just ageFrom) Nothing = """ and
+    case
+        when team.age_from is not null and team.age_to is not null
+        then """ <> show ageFrom <> """ <= team.age_to
+        when team.age_from is not null and team.age_to is null
+        then true
+        when team.age_from is null and team.age_to is not null
+        then """ <> show ageFrom <> """ <= team.age_to
+        when team.age_from is null and team.age_to is null
+        then false
+    end"""
+createAgeFilter Nothing (Just ageTo) = """ and
+    case
+        when team.age_from is not null and team.age_to is not null
+        then team.age_from <= """ <> show ageTo <> """
+        when team.age_from is not null and team.age_to is null
+        then team.age_from <= """ <> show ageTo <> """
+        when team.age_from is null and team.age_to is not null
+        then true
+        when team.age_from is null and team.age_to is null
+        then false
+    end"""
+createAgeFilter (Just ageFrom) (Just ageTo) = """ and
+    case
+        when team.age_from is not null and team.age_to is not null
+        then """ <> show ageFrom <> """ <= team.age_to and team.age_from <= """ <> show ageTo <> """
+        when team.age_from is not null and team.age_to is null
+        then team.age_from <= """ <> show ageTo <> """
+        when team.age_from is null and team.age_to is not null
+        then """ <> show ageFrom <> """ <= team.age_to
+        when team.age_from is null and team.age_to is null
+        then false
+    end"""
 
 createLanguagesFilter :: Array Language -> String
 createLanguagesFilter [] = ""
