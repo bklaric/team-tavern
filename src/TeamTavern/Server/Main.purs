@@ -36,8 +36,6 @@ import TeamTavern.Server.Architecture.Deployment as Deployment
 import TeamTavern.Server.Conversation.Start (start) as Conversation
 import TeamTavern.Server.Conversation.View (view) as Conversation
 import TeamTavern.Server.Conversation.ViewAll (viewAll) as Conversation
-import TeamTavern.Server.Game.Create (create) as Game
-import TeamTavern.Server.Game.Update (handleUpdate) as Game
 import TeamTavern.Server.Game.View (handleView) as Game
 import TeamTavern.Server.Game.ViewAll (handleViewAll) as Game
 import TeamTavern.Server.Infrastructure.Log (logStamped, logt)
@@ -189,14 +187,10 @@ handleRequest deployment pool client method url cookies body =
             Session.start deployment pool cookies body
         , endSession: const
             Session.end
-        , createGame: const $
-            Game.create pool cookies body
         , viewAllGames: const $
             Game.handleViewAll pool
         , viewGame: \{ handle } ->
             Game.handleView pool handle cookies
-        , updateGame: \{ handle } ->
-            Game.handleUpdate pool handle cookies body
         , addPlayerProfile: \identifiers ->
             Profile.addPlayerProfile pool identifiers cookies body
         , addTeamProfile:
