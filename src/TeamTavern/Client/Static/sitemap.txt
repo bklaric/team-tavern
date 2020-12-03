@@ -1,0 +1,12 @@
+https://www.teamtavern.net
+https://www.teamtavern.net/about
+https://www.teamtavern.net/register
+https://www.teamtavern.net/signin
+https://www.teamtavern.net/forgot-password
+https://www.teamtavern.net/games
+https://www.teamtavern.net/games/dota2
+https://www.teamtavern.net/games/csgo
+https://www.teamtavern.net/games/dota2/players
+https://www.teamtavern.net/games/dota2/teams
+https://www.teamtavern.net/games/csgo/players
+https://www.teamtavern.net/games/csgo/teams

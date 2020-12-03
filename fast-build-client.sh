@@ -6,6 +6,7 @@ mkdir dist-client/favicons
 mkdir dist-client/css
 mkdir dist-client/webfonts
 cp src/TeamTavern/Client/Static/robots.txt dist-client/robots.txt
+cp src/TeamTavern/Client/Static/sitemap.txt dist-client/sitemap.txt
 cp src/TeamTavern/Client/Static/index.html dist-client/index.html
 cp src/TeamTavern/Client/Static/Images/* dist-client/images/
 cp src/TeamTavern/Client/Static/Favicons/* dist-client/favicons/
