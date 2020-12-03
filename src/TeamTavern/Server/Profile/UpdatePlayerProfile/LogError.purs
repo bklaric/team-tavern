@@ -11,8 +11,9 @@ import Global.Unsafe (unsafeStringify)
 import Postgres.Error (Error)
 import Postgres.Result (Result, rows)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
-import TeamTavern.Server.Infrastructure.Log (logStamped, logt, print)
+import TeamTavern.Server.Infrastructure.Log (logLines, logStamped, logt, print)
 import TeamTavern.Server.Profile.AddPlayerProfile.ReadProfile as ReadProfile
+import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile (ProfileErrors)
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile as ValidateProfile
 import TeamTavern.Server.Profile.Routes (Identifiers)
 
@@ -51,6 +52,9 @@ type UpdateError = Variant
         { result :: Result
         , errors :: MultipleErrors
         }
+    , internal :: Array String
+    , client :: Array String
+    , profile :: ProfileErrors
     )
 
 logError :: UpdateError -> Effect Unit
@@ -86,4 +90,7 @@ logError updateError = do
             logt $ "Couldn't read profile id from insert result: "
                 <> (unsafeStringify $ rows result)
             logt $ "Reading resulted in these errors: " <> show errors
+        , internal: logLines
+        , client: logLines
+        , profile: const $ pure unit
         }

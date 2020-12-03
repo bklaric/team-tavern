@@ -13,9 +13,12 @@
     justify-content: space-between;
     align-items: center;
     height: 100%;
-    max-width: $max-width;
     padding: 0 21px;
     margin: auto;
+}
+
+.top-bar-left {
+    display: flex;
 }
 
 .top-bar-logo {
@@ -40,16 +43,64 @@
     line-height: 40px;
 }
 
+.top-bar-games {
+    margin-left: 18px;
+    padding: 0 6px;
+    font-weight: 500;
+    line-height: 40px;
+}
+
+.top-bar-games-caret {
+    font-size: 20px;
+    padding: 0 8px;
+    line-height: 40px;
+    color: $primary-color;
+    cursor: pointer;
+}
+
+.top-bar-games-popover {
+    @extend .popover;
+    right: calc(-100vw + 265px);
+    max-width: 100vw;
+
+    @media screen and (min-width: 430px) {
+        left: -120px;
+    }
+}
+
+.top-bar-game {
+    font-size: 16px;
+    padding: 9px 12px;
+}
+
+.top-bar-game-link {
+    display: block;
+    margin-bottom: 6px;
+}
+
+.top-bar-game-icon {
+    height: 18px;
+    width: 18px;
+    margin-right: 8px;
+    vertical-align: -2px;
+}
+
+.top-bar-game-title {
+    font-size: 18px;
+    font-weight: 500;
+    line-height: 1;
+}
+
 .top-bar-menu-button {
     @extend .top-bar-button;
 
-    @media screen and (max-width: 390px) {
+    @media screen and (max-width: 580px) {
         width: 40px;
         height: 40px;
         padding: 0;
     }
 
-    @media screen and (min-width: 391px){
+    @media screen and (min-width: 581px) {
         display: none;
     }
 }
@@ -60,7 +111,7 @@
 }
 
 .top-bar-menu-items {
-    @media screen and (max-width: 390px) {
+    @media screen and (max-width: 580px) {
         position: fixed;
         top: 0;
         left: 0;
@@ -74,7 +125,7 @@
 .hidden-top-bar-menu-items {
     @extend .top-bar-menu-items;
 
-    @media screen and (max-width: 390px) {
+    @media screen and (max-width: 580px) {
         display: none;
     }
 }
@@ -85,14 +136,14 @@
     text-align: left;
     background-color: white;
 
-    @media screen and (max-width: 390px) {
+    @media screen and (max-width: 580px) {
         display: block;
         width: 100%;
         padding: 0 21px;
         border-bottom: 1px solid #ccc;
     }
 
-    @media screen and (min-width: 391px) {
+    @media screen and (min-width: 581px) {
         display: inline-block;
         padding: 0 12px;
     }

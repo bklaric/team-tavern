@@ -5,43 +5,26 @@ import Prelude
 
 import Async (Async, alwaysRight)
 import Data.Array as Array
-import Data.Variant (SProxy(..), Variant, inj, match)
+import Data.Variant (Variant, match)
 import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, noContent_, unauthorized__)
 import Simple.JSON (writeJSON)
-import TeamTavern.Server.Profile.UpdateTeamProfile.LogError (AddGameTeamError)
+import TeamTavern.Server.Profile.UpdateTeamProfile.LogError (UpdateProfileError)
 
-type ProfileErrorContent = Variant
-    ( invalidSummary :: {} )
+type ProfileErrorContent = Variant (invalidAmbitions :: {})
 
 type BadRequestContent = Variant (invalidProfile :: Array ProfileErrorContent)
 
-errorResponse :: AddGameTeamError -> Response
+errorResponse :: UpdateProfileError -> Response
 errorResponse = match
-    { noCookieInfo: const unauthorized__
-    , databaseError: const $ internalServerError__
-    , invalidSession: const unauthorized__
-    , nicknameDoesntMatch: const forbidden__
-    , unreadableFields: const internalServerError__
-    , unreadableProfile: const badRequest__
-    , invalidProfile: \{ errors } ->
-        errors
-        # Array.fromFoldable
-        <#> match
-            { summary: const $ Array.singleton
-                $ inj (SProxy :: SProxy "invalidSummary") {}
-            }
-        # join
-        # inj (SProxy :: SProxy "invalidProfile")
-        # (writeJSON :: BadRequestContent -> String)
-        # badRequest_
-    , nothingInserted: const internalServerError__
-    , unreadableProfileId: const internalServerError__
-    , emptyResult: const internalServerError__
-    , unreadableFieldValueId: const internalServerError__
+    { internal: const internalServerError__
+    , client: const badRequest__
+    , notAuthenticated: const unauthorized__
+    , notAuthorized: const forbidden__
+    , profile: badRequest_ <<< writeJSON <<< Array.fromFoldable
     }
 
 successResponse :: Unit -> Response
 successResponse = const noContent_
 
-sendResponse :: Async AddGameTeamError Unit -> (forall left. Async left Response)
+sendResponse :: Async UpdateProfileError Unit -> (forall left. Async left Response)
 sendResponse = alwaysRight errorResponse successResponse

@@ -9,11 +9,13 @@ import TeamTavern.Server.Player.EditSettings.LogError (EditSettingsError)
 
 errorResponse :: EditSettingsError -> Response
 errorResponse = match
-    { noCookieInfo: const unauthorized__
-    , databaseError: const $ internalServerError__
-    , invalidSession: const unauthorized__
+    { internal: const internalServerError__
+    , client: const badRequest__
+    , notAuthenticated: const unauthorized__
+    , notAuthorized: const forbidden__
+    , databaseError: const internalServerError__
     , nicknameDoesntMatch: const forbidden__
-    , unreadableModel: const $ badRequest__
+    , unreadableModel: const badRequest__
     }
 
 successResponse :: Unit -> Response

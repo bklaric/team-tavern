@@ -2,11 +2,13 @@ $font: "Roboto",
 sans-serif;
 $primary-color: #b15e36;
 $disabled-primary-color: hsla(20, 40%, 81%, 1);
-$text-color: #333;
+$text-color: #444;
 $disabled-color: rgb(221, 221, 221);
 $error-color: orangered;
 $max-width: 960px;
 $border-color: #ccc;
+$border: 1px solid $border-color;
+$border-radius: 4px;
 
 %bordered {
     border-style: solid;
@@ -26,7 +28,7 @@ body {
     font-family: $font;
     font-size: 14px;
     color: $text-color;
-    background-color: #f7f7fa;
+    background-color: #f7f7f7;
     margin: 0;
 }
 
@@ -55,7 +57,7 @@ h3 {
 
 p {
     margin-top: 0;
-    line-height: 21px;
+    line-height: 1.5;
     margin-bottom: 7px;
     word-wrap: break-word;
 }

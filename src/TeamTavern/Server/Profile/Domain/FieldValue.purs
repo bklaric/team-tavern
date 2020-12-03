@@ -207,7 +207,7 @@ handleCreateFieldValueResult { errors: error : otherErrors } =
 handleCreateFieldValueResult { errors: Nil, values } =
     values
         # foldl (\map value ->
-            let FieldValue id _ = value in MultiMap.insert' id value map)
+            let FieldValue id _ = value in MultiMap.insertOrAppend' id value map)
             MultiMap.empty
         # checkUniqueFieldValues
 

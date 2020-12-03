@@ -4,37 +4,34 @@ import Prelude
 
 import Async (Async, examineLeftWithEffect)
 import Data.Map (Map)
-import Data.Variant (SProxy(..), inj)
 import Perun.Request.Body (Body)
 import Perun.Response (Response)
-import Postgres.Async.Pool (withTransaction)
 import Postgres.Pool (Pool)
-import TeamTavern.Server.Infrastructure.EnsureSignedInAs (ensureSignedInAs)
+import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
+import TeamTavern.Server.Infrastructure.Postgres (transaction)
 import TeamTavern.Server.Profile.AddTeamProfile.AddProfile (addProfile)
 import TeamTavern.Server.Profile.AddTeamProfile.LoadFields (loadFields)
 import TeamTavern.Server.Profile.AddTeamProfile.LogError (logError)
 import TeamTavern.Server.Profile.AddTeamProfile.ReadProfile (readProfile)
 import TeamTavern.Server.Profile.AddTeamProfile.SendResponse (sendResponse)
 import TeamTavern.Server.Profile.AddTeamProfile.ValidateProfile (validateProfile)
-import TeamTavern.Server.Profile.Routes (Identifiers)
 
 addTeamProfile :: forall left.
-    Pool -> Identifiers -> Map String String -> Body -> Async left Response
-addTeamProfile pool identifiers cookies body =
+    Pool -> Map String String -> Body -> { teamHandle :: String, gameHandle :: String } -> Async left Response
+addTeamProfile pool cookies body { teamHandle, gameHandle } =
     sendResponse $ examineLeftWithEffect logError do
-    -- Read info info from cookies.
-    cookieInfo <- ensureSignedInAs pool cookies identifiers.nickname
+    -- Read info from cookies.
+    cookieInfo <- ensureSignedIn pool cookies
 
-    pool # withTransaction (inj (SProxy :: SProxy "databaseError"))
-        \client -> do
-            -- Load game fields from database.
-            fields <- loadFields client identifiers.handle
+    pool # transaction \client -> do
+        -- Load game fields from database.
+        fields <- loadFields client gameHandle
 
-            -- Read profile from body.
-            profile <- readProfile body
+        -- Read profile from body.
+        profile <- readProfile body
 
-            -- Validate profile.
-            profile' <- validateProfile fields profile
+        -- Validate profile.
+        profile' <- validateProfile fields profile
 
-            -- Add profile to database.
-            addProfile client cookieInfo identifiers.handle profile'
+        -- Add profile to database.
+        addProfile client cookieInfo.id teamHandle gameHandle profile'

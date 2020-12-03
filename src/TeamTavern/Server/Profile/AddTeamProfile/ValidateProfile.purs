@@ -4,68 +4,52 @@ import Prelude
 
 import Async (Async)
 import Async.Validated as Async
-import Data.Bifunctor.Label as Label
+import AsyncV (AsyncV)
+import AsyncV as AsyncV
+import Data.Bifunctor (lmap)
+import Data.Bifunctor.Label (label, relabel)
+import Data.List.NonEmpty as NonEmptyList
 import Data.List.Types (NonEmptyList)
-import Data.Maybe (Maybe)
 import Data.Symbol (SProxy(..))
-import Data.Validated.Label as Validated
 import Data.Variant (Variant)
-import TeamTavern.Server.Domain.NonEmptyText (NonEmptyTextError)
-import TeamTavern.Server.Player.UpdateDetails.ValidateLangugase (Language, validateLanguages)
-import TeamTavern.Server.Player.UpdateDetails.ValidateTimespan (Timespan, validateTimespan)
-import TeamTavern.Server.Player.UpdateDetails.ValidateTimezone (Timezone, validateOptionalTimezone)
+import TeamTavern.Server.Domain.Text (Text)
 import TeamTavern.Server.Profile.AddTeamProfile.LoadFields as LoadFields
 import TeamTavern.Server.Profile.AddTeamProfile.ReadProfile as ReadProfile
-import TeamTavern.Server.Profile.AddTeamProfile.ValidateAgeSpan (AgeSpan, validateAgeSpan)
 import TeamTavern.Server.Profile.AddTeamProfile.ValidateFieldValues (validateFieldValues)
 import TeamTavern.Server.Profile.AddTeamProfile.ValidateFieldValues as ValidateFieldValues
-import TeamTavern.Server.Profile.AddTeamProfile.ValidateRegions (Region, validateRegions)
-import TeamTavern.Server.Profile.Infrastructure.ValidateSummary as ValidateSummary
+import TeamTavern.Server.Profile.Infrastructure.ValidateAmbitions (validateAmbitions)
 
 type Profile =
-    { summary :: ValidateSummary.Summary
-    , ageSpan :: AgeSpan
-    , languages :: Array Language
-    , countries :: Array Region
-    , timezone :: Maybe Timezone
-    , onlineWeekday :: Maybe Timespan
-    , onlineWeekend :: Maybe Timespan
-    , hasMicrophone :: Boolean
-    , fieldValues :: Array ValidateFieldValues.FieldValue
+    { fieldValues :: Array ValidateFieldValues.FieldValue
     , newOrReturning :: Boolean
+    , ambitions :: Text
     }
 
-type ProfileError = Variant (summary :: NonEmptyList NonEmptyTextError)
+type ProfileError = Variant (ambitions :: Array String)
 
-type ValidateProfileError errors = Variant
-    ( invalidProfile ::
-        { profile :: ReadProfile.Profile
-        , errors :: NonEmptyList ProfileError
-        }
-    | errors )
+type ProfileErrors = NonEmptyList ProfileError
 
 validateProfile
     :: forall errors
     .  Array LoadFields.Field
     -> ReadProfile.Profile
-    -> Async (ValidateProfileError errors) Profile
-validateProfile fields profile @ { summary } = let
-    ageSpan = validateAgeSpan profile.ageFrom profile.ageTo
-    languages = validateLanguages profile.languages
-    countries = validateRegions profile.countries
-    timezone = validateOptionalTimezone profile.timezone
-    onlineWeekday = timezone >>=
-        (const $ validateTimespan profile.weekdayFrom profile.weekdayTo)
-    onlineWeekend = timezone >>=
-        (const $ validateTimespan profile.weekendFrom profile.weekendTo)
-    hasMicrophone = profile.hasMicrophone
+    -> Async (Variant (profile :: ProfileErrors | errors)) Profile
+validateProfile fields profile = let
     fieldValues = validateFieldValues fields profile.fieldValues
     newOrReturning = profile.newOrReturning
+    ambitions = validateAmbitions profile.ambitions
     in
-    { summary: _, ageSpan, languages, countries, timezone
-    , onlineWeekday, onlineWeekend, hasMicrophone, fieldValues, newOrReturning
-    }
-    <$> (ValidateSummary.validate summary
-        # Validated.label (SProxy :: SProxy "summary"))
-    # Async.fromValidated
-    # Label.labelMap (SProxy :: SProxy "invalidProfile") { profile, errors: _ }
+    { fieldValues, newOrReturning, ambitions: _ }
+    <$> ambitions
+    # Async.fromValidated # label (SProxy :: SProxy "profile")
+
+validateProfileV
+    :: forall errors
+    .  Array LoadFields.Field
+    -> ReadProfile.Profile
+    -> AsyncV (NonEmptyList (Variant (teamProfile :: ProfileErrors | errors))) Profile
+validateProfileV fields =
+    validateProfile fields
+    >>> relabel (SProxy :: SProxy "profile") (SProxy :: SProxy "teamProfile")
+    >>> lmap NonEmptyList.singleton
+    >>> AsyncV.fromAsync

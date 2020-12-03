@@ -47,7 +47,7 @@ type CheckPasswordError errors = Variant
         , errors :: MultipleErrors
         }
     , noMatchingPlayer :: NicknameOrEmail
-    , bcryptError :: Node.Error
+    , bcrypt :: Node.Error
     , passwordDoesntMatch :: NicknameOrEmail
     | errors )
 
@@ -86,7 +86,7 @@ checkPassword model @ { nicknameOrEmail, password } querier = do
 
     -- Compare hash with password.
     matches <- Bcrypt.compare (unwrap password) hash
-        # label (SProxy :: SProxy "bcryptError")
+        # label (SProxy :: SProxy "bcrypt")
     when (not matches) $ left
         $ inj (SProxy :: SProxy "passwordDoesntMatch") nicknameOrEmail
 

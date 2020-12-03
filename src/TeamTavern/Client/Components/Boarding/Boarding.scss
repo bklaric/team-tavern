@@ -1,0 +1,93 @@
+.boarding {
+    background-color: white;
+    width: fit-content;
+    max-width: 1000px;
+    margin: 64px auto;
+    border-top: 1px solid #ccc;
+    border-bottom: 1px solid #ccc;
+
+    @media screen and (min-width: 380px) {
+        border-left: 1px solid #ccc;
+        border-right: 1px solid #ccc;
+        border-radius: 4px;
+    }
+}
+
+.boarding-step {
+    padding: 21px;
+}
+
+.boarding-heading {
+    margin-bottom: 21px;
+    text-align: center;
+}
+
+.boarding-description {
+    margin-bottom: 21px;
+    text-align: center;
+}
+
+.boarding-buttons {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 14px;
+    border-top: 1px solid #ccc;
+
+    button {
+        width: 120px;
+        height: 45px;
+    }
+}
+
+.boarding-skip-button-group {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.boarding-skip-button-underlabel {
+    @extend .input-underlabel;
+    margin-top: 7px;
+    max-width: 200px;
+}
+
+.boarding-confirm-skip-button-underlabel {
+    @extend .boarding-skip-button-underlabel;
+    color: hsl(54, 100%, 35%);
+}
+
+.boarding-submit-button-group {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
+.boarding-submit-button-underlabel {
+    @extend .input-underlabel;
+    margin-top: 7px;
+    max-width: 200px;
+    color: $error-color;
+    text-align: right;
+}
+
+@media screen and (min-width: 500px) {
+    .boarding-skip-button-group {
+        flex-direction: row;
+    }
+
+    .boarding-submit-button-group {
+        flex-direction: row-reverse;
+        align-items: flex-start;
+    }
+
+    .boarding-skip-button-underlabel {
+        margin-top: 0;
+        margin-left: 7px;
+    }
+
+    .boarding-submit-button-underlabel {
+        margin-top: 0;
+        margin-right: 7px;
+    }
+}

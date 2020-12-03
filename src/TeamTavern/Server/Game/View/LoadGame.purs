@@ -7,8 +7,8 @@ import Async (Async)
 import Async as Async
 import Data.Array (head)
 import Data.Bifunctor.Label (label, labelMap)
-import Data.Maybe (Maybe, maybe)
-import Data.Newtype (unwrap, wrap)
+import Data.Maybe (Maybe)
+import Data.Newtype (wrap)
 import Data.Symbol (SProxy(..))
 import Data.Traversable (traverse)
 import Data.Variant (Variant, inj)
@@ -16,21 +16,15 @@ import Foreign (MultipleErrors)
 import Postgres.Async.Query (query)
 import Postgres.Error (Error)
 import Postgres.Pool (Pool)
-import Postgres.Query (Query(..), QueryParameter, (:|))
+import Postgres.Query (Query(..), QueryParameter, (:))
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
-import TeamTavern.Server.Game.Domain.Description (Description)
 import TeamTavern.Server.Game.Domain.Handle (Handle)
 import TeamTavern.Server.Game.Domain.Title (Title)
-import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
-import TeamTavern.Server.Player.Domain.Id (Id)
 
 type LoadGameDto =
-    { administratorId :: Int
-    , handle :: String
+    { handle :: String
     , title :: String
-    , hasPlayerProfile :: Boolean
-    , hasTeamProfile :: Boolean
     , fields :: Array
         { ilk :: Int
         , label :: String
@@ -46,12 +40,8 @@ type LoadGameDto =
     }
 
 type LoadGameResult =
-    { administratorId :: Id
-    , title :: Title
+    { title :: Title
     , handle :: Handle
-    , description :: Description
-    , hasPlayerProfile :: Boolean
-    , hasTeamProfile :: Boolean
     , fields :: Array
         { ilk :: Int
         , label :: String
@@ -80,9 +70,6 @@ queryString = Query """
     select
         game.handle,
         game.title,
-        game.administrator_id as "administratorId",
-        player_profile.id is not null as "hasPlayerProfile",
-        team_profile.id is not null as "hasTeamProfile",
         coalesce(
             json_agg(
                 json_build_object(
@@ -98,56 +85,40 @@ queryString = Query """
             '[]'
         ) as fields
     from game
-        left join player_profile on player_profile.game_id = game.id
-            and player_profile.player_id = $2
-        left join team_profile on team_profile.game_id = game.id
-            and team_profile.player_id = $2
         left join (
             select
                 field.*,
-                coalesce(
-                    json_agg(
-                        json_build_object(
-                            'key', field_option.key,
-                            'label', field_option.label
-                        ) order by field_option.ordinal
-                    ) filter (where field_option.id is not null),
-                    '[]'
-                ) as options
+                json_agg(
+                    json_build_object(
+                        'key', field_option.key,
+                        'label', field_option.label
+                    ) order by field_option.ordinal
+                ) filter (where field_option.id is not null) as options
             from field
                 left join field_option on field_option.field_id = field.id
             group by
                 field.id
             ) as field on field.game_id = game.id
     where game.handle = $1
-    group by game.id, player_profile.id, team_profile.id;
+    group by game.id;
     """
 
-queryParameters :: Handle -> Maybe CookieInfo -> Array QueryParameter
-queryParameters handle auth = handle :| maybe 0 (_.id >>> unwrap) auth
+queryParameters :: Handle -> Array QueryParameter
+queryParameters handle = handle : []
 
-loadGame
-    :: forall errors
-    .  Pool
-    -> Handle
-    -> Maybe CookieInfo
-    -> Async (LoadGameError errors) LoadGameResult
-loadGame pool handle' auth = do
+loadGame :: forall errors. Pool -> Handle -> Async (LoadGameError errors) LoadGameResult
+loadGame pool handle' = do
     result <- pool
-        # query queryString (queryParameters handle' auth)
+        # query queryString (queryParameters handle')
         # label (SProxy :: SProxy "databaseError")
     games :: Array LoadGameDto <- rows result
         # traverse read
         # labelMap (SProxy :: SProxy "unreadableDto") { result, errors: _ }
-    view @ { administratorId, handle, title, hasPlayerProfile, hasTeamProfile, fields } <-
+    view @ { handle, title, fields } <-
         head games
         # Async.note (inj (SProxy :: SProxy "notFound") handle')
     pure
-        { administratorId: wrap administratorId
-        , title: wrap title
+        { title: wrap title
         , handle: wrap handle
-        , description: wrap []
-        , hasPlayerProfile
-        , hasTeamProfile
         , fields
         }

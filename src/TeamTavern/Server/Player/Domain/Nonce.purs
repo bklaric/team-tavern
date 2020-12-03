@@ -20,5 +20,5 @@ instance showNonce :: Show Nonce where show = genericShow
 nonceByteCount :: ByteCount
 nonceByteCount = ByteCount 10
 
-generate :: forall errors. Async (GenerateHexStringError errors) Nonce
-generate = generateHexString nonceByteCount <#> Nonce
+generateNonce :: forall errors. Async (GenerateHexStringError errors) Nonce
+generateNonce = generateHexString nonceByteCount <#> Nonce

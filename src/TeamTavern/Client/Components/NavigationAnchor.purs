@@ -54,7 +54,7 @@ handleAction
 handleAction (Navigate event) = do
     H.liftEffect $ Event.preventDefault $ MouseEvent.toEvent event
     { path } <- H.get
-    H.liftEffect $ navigate_ path
+    navigate_ path
 handleAction (Receive state) = H.put state
 
 component :: forall query slots monad output. MonadEffect monad =>

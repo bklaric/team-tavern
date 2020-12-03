@@ -22,7 +22,7 @@ errorResponse :: StartError -> Response
 errorResponse = match
     { signedIn: const forbidden__
     , unreadableDto: const badRequest__
-    , bcryptError: const internalServerError__
+    , bcrypt: const internalServerError__
     , randomError: const internalServerError__
     , databaseError: const internalServerError__
     , unreadableHash: const internalServerError__

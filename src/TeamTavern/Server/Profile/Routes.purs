@@ -21,7 +21,7 @@ type Age = Int
 
 type Language = String
 
-type Country = String
+type Location = String
 
 type Time = String
 
@@ -32,7 +32,7 @@ type NewOrReturning = Boolean
 type Filters =
     { age :: { from :: Maybe Age, to :: Maybe Age }
     , languages :: Array Language
-    , countries :: Array Country
+    , locations :: Array Location
     , weekdayOnline :: { from :: Maybe Time, to :: Maybe Time }
     , weekendOnline :: { from :: Maybe Time, to :: Maybe Time }
     , microphone :: HasMicrophone
@@ -45,7 +45,7 @@ bundleFilters :: forall other.
     , ageTo :: Maybe Int
     , fields :: QueryPairs Key Value
     , languages :: Array String
-    , countries :: Array String
+    , locations :: Array String
     , weekdayFrom :: Maybe String
     , weekdayTo :: Maybe String
     , weekendFrom :: Maybe String
@@ -57,7 +57,7 @@ bundleFilters :: forall other.
 bundleFilters filters =
     { age: { from: filters.ageFrom, to: filters.ageTo }
     , languages: filters.languages
-    , countries: filters.countries
+    , locations: filters.locations
     , weekdayOnline: { from: filters.weekdayFrom, to: filters.weekdayTo }
     , weekendOnline: { from: filters.weekendFrom, to: filters.weekendTo }
     , microphone: maybe false identity filters.microphone
@@ -76,41 +76,37 @@ type Identifiers =
 
 type AddPlayerProfile = Route
     Post
-    (  Literal "profiles"
-    :> Literal "by-handle"
-    :> Capture "handle" Handle
-    :> Literal "players"
+    (  Literal "players"
     :> Capture "nickname" Nickname
+    :> Literal "profiles"
+    :> Capture "handle" Handle
     :> End)
     NoQuery
 
 type AddTeamProfile = Route
     Post
-    (  Literal "profiles"
-    :> Literal "by-handle"
-    :> Capture "handle" Handle
-    :> Literal "teams"
-    :> Capture "nickname" Nickname
+    (  Literal "teams"
+    :> Capture "teamHandle" Handle
+    :> Literal "profiles"
+    :> Capture "gameHandle" Handle
     :> End)
     NoQuery
 
 type UpdatePlayerProfile = Route
     Put
-    (  Literal "profiles"
-    :> Literal "by-handle"
-    :> Capture "handle" Handle
-    :> Literal "players"
+    (  Literal "players"
     :> Capture "nickname" Nickname
+    :> Literal "profiles"
+    :> Capture "handle" Handle
     :> End)
     NoQuery
 
 type UpdateTeamProfile = Route
     Put
-    (  Literal "profiles"
-    :> Literal "by-handle"
-    :> Capture "handle" Handle
-    :> Literal "teams"
-    :> Capture "nickname" Nickname
+    (  Literal "teams"
+    :> Capture "teamHandle" Handle
+    :> Literal "profiles"
+    :> Capture "gameHandle" Nickname
     :> End)
     NoQuery
 
@@ -126,7 +122,7 @@ type ViewPlayerProfilesByGame = Route
     :? Optional "ageFrom" Age
     :? Optional "ageTo" Age
     :? Many "languages" Language
-    :? Many "countries" Country
+    :? Many "locations" Location
     :? Optional "weekdayFrom" Time
     :? Optional "weekdayTo" Time
     :? Optional "weekendFrom" Time
@@ -147,7 +143,7 @@ type ViewTeamProfilesByGame = Route
     :? Optional "ageFrom" Age
     :? Optional "ageTo" Age
     :? Many "languages" Language
-    :? Many "countries" Country
+    :? Many "locations" Location
     :? Optional "weekdayFrom" Time
     :? Optional "weekdayTo" Time
     :? Optional "weekendFrom" Time
@@ -156,24 +152,6 @@ type ViewTeamProfilesByGame = Route
     :? Optional "newOrReturning" NewOrReturning
     :? Rest "fields")
 
-type ViewPlayerProfilesByPlayer = Route
-    Get
-    (  Literal "profiles"
-    :> Literal "by-nickname"
-    :> Capture "nickname" Nickname
-    :> Literal "players"
-    :> End)
-    NoQuery
-
-type ViewTeamProfilesByPlayer = Route
-    Get
-    (  Literal "profiles"
-    :> Literal "by-nickname"
-    :> Capture "nickname" Nickname
-    :> Literal "teams"
-    :> End)
-    (Mandatory "timezone" Timezone)
-
 type ProfileRoutes
     =    "addPlayerProfile"           := AddPlayerProfile
     :<|> "addTeamProfile"             := AddTeamProfile
@@ -181,5 +159,3 @@ type ProfileRoutes
     :<|> "updateTeamProfile"          := UpdateTeamProfile
     :<|> "viewPlayerProfilesByGame"   := ViewPlayerProfilesByGame
     :<|> "viewTeamProfilesByGame"     := ViewTeamProfilesByGame
-    :<|> "viewPlayerProfilesByPlayer" := ViewPlayerProfilesByPlayer
-    :<|> "viewTeamProfilesByPlayer"   := ViewTeamProfilesByPlayer

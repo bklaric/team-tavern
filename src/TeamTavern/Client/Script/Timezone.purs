@@ -1,5 +1,9 @@
-module TeamTavern.Client.Script.Timezone where
+module TeamTavern.Client.Script.Timezone (getClientTimezone) where
 
 import Effect (Effect)
+import Effect.Class (class MonadEffect, liftEffect)
 
-foreign import getClientTimezone :: Effect String
+foreign import getClientTimezoneImpl :: Effect String
+
+getClientTimezone :: forall effect. MonadEffect effect => effect String
+getClientTimezone = liftEffect getClientTimezoneImpl

@@ -1,0 +1,52 @@
+.filters-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 2;
+    min-height: 40px;
+    padding: 7px 21px;
+    margin: 0;
+    white-space: pre-wrap;
+    cursor: pointer;
+}
+
+.filters-title-caret {
+    @extend .top-bar-games-caret;
+    color: $text-color;
+}
+
+.filters-section-title-caret {
+    @extend .filters-title-caret;
+    line-height: 20px;
+}
+
+.filter-field-icon {
+    position: absolute;
+    font-size: 20px;
+}
+
+.filter-field-label {
+    margin-left: 28px;
+}
+
+.apply-filters {
+    @extend .secondary-button;
+}
+
+.clear-filters {
+    @extend .regular-button;
+    margin-left: 14px;
+}
+
+.filter-input-groups {
+    @extend .responsive-input-groups;
+
+    margin-bottom: 0;
+
+    @media screen and (min-width: 960px) {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}

@@ -1,0 +1,30 @@
+.profiles-container {
+    display: flex;
+    flex-direction: column;
+
+    @media screen and (min-width: 960px) {
+        flex-direction: row;
+        align-items: flex-start;
+        padding: 0 21px;
+    }
+
+}
+
+.filters-card {
+    @extend .card;
+
+    @media screen and (min-width: 960px) {
+        margin-right: 21px;
+        min-width: 300px;
+        max-width: 420px;
+        flex: 1 0 30%;
+    }
+}
+
+.profiles-card {
+    @extend .card;
+
+    @media screen and (min-width: 960px) {
+        flex: 0 1 100%;
+    }
+}

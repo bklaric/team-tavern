@@ -1,0 +1,39 @@
+.features {
+    padding: 42px 21px;
+    max-width: 1000px;
+    margin: auto;
+}
+
+.features-heading {
+    font-size: 26px;
+    line-height: 1.2;
+    text-align: center;
+    margin-bottom: 60px;
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    margin-bottom: 60px;
+    gap: 60px;
+
+    @media screen and (min-width: 700px) {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.features-feature-heading {
+    text-align: center;
+    font-size: 20px;
+}
+
+.features-feature-description {
+    font-size: 16px;
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.feature-icon {
+    margin-right: 12px;
+    color: $primary-color;
+}

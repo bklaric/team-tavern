@@ -119,10 +119,10 @@ let additions =
 
 
 let upstream =
-      https://github.com/purescript/package-sets/releases/download/psc-0.13.2-20190815/packages.dhall sha256:6ca4c07251e87e4e688609af4c9dfbf01e77a225f2b5001ba321cfdc39bf1c0f
+      https://github.com/purescript/package-sets/releases/download/psc-0.13.8-20201007/packages.dhall sha256:35633f6f591b94d216392c9e0500207bb1fec42dd355f4fecdfd186956567b6b
 
-let overrides = {
-    stringutils =
+let overrides =
+    { stringutils =
         { dependencies =
             [ "arrays"
             , "either"
@@ -132,10 +132,8 @@ let overrides = {
             , "prelude"
             , "strings"
             ]
-        , repo =
-            "https://github.com/menelaos/purescript-stringutils.git"
-        , version =
-            "v0.0.10"
+        , repo = "https://github.com/menelaos/purescript-stringutils.git"
+        , version = "v0.0.10"
         }
     }
 
@@ -143,15 +141,15 @@ let additions =
     { jarilo =
         { dependencies = [ "http-methods", "uri", "variant", "record" ]
         , repo = "https://github.com/bklaric/purescript-jarilo.git"
-        , version = "v0.5.2"
+        , version = "v0.5.3"
         }
     , undefined =
-        { dependencies = [ ] : List Text
+        { dependencies = [] : List Text
         , repo = "https://github.com/bklaric/purescript-undefined.git"
         , version = "v1.0.2"
         }
     , error =
-        { dependencies = [ ] : List Text
+        { dependencies = [] : List Text
         , repo = "https://github.com/bklaric/purescript-error.git"
         , version = "v1.0.2"
         }
@@ -200,6 +198,6 @@ let additions =
         , repo = "https://github.com/bklaric/purescript-pg.git"
         , version = "v0.5.0"
         }
-   }
+    }
 
 in  upstream // overrides // additions

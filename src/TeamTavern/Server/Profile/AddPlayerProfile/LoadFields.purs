@@ -1,21 +1,10 @@
-module TeamTavern.Server.Profile.AddPlayerProfile.LoadFields
-    (Option, Field, LoadFieldsError, loadFields) where
-
-import Prelude
+module TeamTavern.Server.Profile.AddPlayerProfile.LoadFields (Option, Field, loadFields) where
 
 import Async (Async)
-import Data.Bifunctor.Label (label, labelMap)
 import Data.Maybe (Maybe)
-import Data.Symbol (SProxy(..))
-import Data.Traversable (traverse)
-import Data.Variant (Variant)
-import Foreign (MultipleErrors)
-import Postgres.Async.Query (query)
-import Postgres.Client (Client)
-import Postgres.Error (Error)
-import Postgres.Query (Query(..), (:))
-import Postgres.Result (Result, rows)
-import Simple.JSON.Async (read)
+import Postgres.Query (class Querier, Query(..), (:))
+import TeamTavern.Server.Infrastructure.Error (InternalError)
+import TeamTavern.Server.Infrastructure.Postgres (queryMany)
 
 type Handle = String
 
@@ -23,7 +12,6 @@ type Option =
     { id :: Int
     , key :: String
     , domain :: Maybe String
-    , option :: String
     }
 
 type Field =
@@ -34,14 +22,6 @@ type Field =
     , domain :: Maybe String
     , options :: Maybe (Array Option)
     }
-
-type LoadFieldsError errors = Variant
-    ( databaseError :: Error
-    , unreadableFields ::
-        { result :: Result
-        , errors :: MultipleErrors
-        }
-    | errors )
 
 queryString :: Query
 queryString = Query """
@@ -54,8 +34,7 @@ queryString = Query """
         json_agg(
             json_build_object(
                 'id', field_option.id,
-                'key', field_option.key,
-                'option', field_option.label
+                'key', field_option.key
             )
             order by field_option.id
         )
@@ -68,13 +47,6 @@ queryString = Query """
     group by field.id
     """
 
-loadFields :: forall errors.
-    Client -> Handle -> Async (LoadFieldsError errors) (Array Field)
-loadFields client handle = do
-    result <- client
-        # query queryString (handle : [])
-        # label (SProxy :: SProxy "databaseError")
-    fields <- rows result
-        # traverse read
-        # labelMap (SProxy :: SProxy "unreadableFields") { result, errors: _ }
-    pure fields
+loadFields :: forall querier errors. Querier querier =>
+    querier -> Handle -> Async (InternalError errors) (Array Field)
+loadFields client handle = queryMany client queryString (handle : [])

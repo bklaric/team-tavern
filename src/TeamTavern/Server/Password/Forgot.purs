@@ -15,7 +15,7 @@ import TeamTavern.Server.Password.Forgot.LogError (logError)
 import TeamTavern.Server.Password.Forgot.ReadEmailAddress (readEmailAddress)
 import TeamTavern.Server.Password.Forgot.SendPasswordResetEmail (sendPasswordResetEmail)
 import TeamTavern.Server.Password.Forgot.SendResponse (sendResponse)
-import TeamTavern.Server.Player.Domain.Nonce as Nonce
+import TeamTavern.Server.Player.Domain.Nonce (generateNonce)
 
 forgot
     :: Pool
@@ -32,7 +32,7 @@ forgot pool client cookies body =
     email <- readEmailAddress body
 
     -- Generate password reset nonce.
-    nonce <- Nonce.generate
+    nonce <- generateNonce
 
     -- Save password reset nonce.
     player <- addPasswordReset pool email nonce

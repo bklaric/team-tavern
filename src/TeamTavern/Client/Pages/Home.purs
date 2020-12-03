@@ -3,58 +3,78 @@ module TeamTavern.Client.Pages.Home where
 import Prelude
 
 import Async (Async)
+import Client.Pages.Home.ForTeams (forTeams)
 import Data.Const (Const)
 import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
+import TeamTavern.Client.Components.Boarding.PlayerOrTeamInput as Boarding
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
-import TeamTavern.Client.Home.CallToAction (callToAction)
-import TeamTavern.Client.Home.Games (games)
-import TeamTavern.Client.Home.Games as Games
-import TeamTavern.Client.Script.Cookie (PlayerInfo, getPlayerInfo)
-import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
+import TeamTavern.Client.Pages.Home.CallToAction (callToAction)
+import TeamTavern.Client.Pages.Home.Features (features)
+import TeamTavern.Client.Pages.Home.FindProfiles (findProfiles)
+import TeamTavern.Client.Pages.Home.ForPlayers (forPlayers)
+import TeamTavern.Client.Pages.Preboarding as Preboarding
+import TeamTavern.Client.Script.Meta (setMeta)
+import TeamTavern.Client.Script.Navigate (navigate, navigate_)
+import Web.Event.Event as E
+import Web.UIEvent.MouseEvent (MouseEvent)
+import Web.UIEvent.MouseEvent as ME
 
-data Action = Init
+data Action
+    = Initialize
+    | OpenPreboarding MouseEvent
+    | OpenPlayerPreboarding MouseEvent
+    | OpenTeamPreboarding MouseEvent
+    | OpenGames MouseEvent
 
-data State = Empty | Loaded (Maybe PlayerInfo)
+type State = Unit
 
 type Slot = H.Slot (Const Void) Void
 
 type ChildSlots =
-    ( games :: Games.Slot Unit
-    , callToActionButton :: NavigationAnchor.Slot Unit
+    ( viewAllGames :: NavigationAnchor.Slot Unit
     )
 
-render :: forall left.
-    State -> H.ComponentHTML Action ChildSlots (Async left)
-render Empty = HH.div [ HP.class_ $ HH.ClassName "home" ] []
-render (Loaded playerInfo) = HH.div [ HP.class_ $ HH.ClassName "home" ] $
-    case playerInfo of
-        Nothing -> [ callToAction, games Nothing ]
-        Just { nickname } -> [ games $ Just nickname ]
+render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
+render _ =
+    HH.div [ HP.class_ $ HH.ClassName "home" ]
+    [ callToAction Nothing OpenPreboarding
+    , forPlayers OpenPlayerPreboarding
+    , forTeams OpenTeamPreboarding
+    , findProfiles OpenGames
+    , features OpenPreboarding
+    ]
 
 handleAction :: forall action output slots left.
     Action -> H.HalogenM State action slots output (Async left) Unit
-handleAction Init = do
-    H.liftEffect do
-        setMetaTitle "Find your esports teammates | TeamTavern"
-        setMetaDescription $
-            "TeamTavern is an online platform for finding esports teammates. "
-            <> "Choose a game, browse player and team profiles and find your ideal teammates."
-        setMetaUrl
-    playerInfo <- H.liftEffect $ getPlayerInfo
-    H.put $ Loaded playerInfo
+handleAction Initialize = setMeta
+    "Find your esports teammates | TeamTavern"
+    ( "Search through player and team profiles to find your new esports teammates. "
+    <> "Create your own player or team profile and let them find you."
+    )
+handleAction (OpenPreboarding mouseEvent) = do
+    mouseEvent # ME.toEvent # E.preventDefault # H.liftEffect
+    navigate (Preboarding.emptyInput Nothing Nothing) "/preboarding/start"
+handleAction (OpenPlayerPreboarding mouseEvent) = do
+    mouseEvent # ME.toEvent # E.preventDefault # H.liftEffect
+    navigate (Preboarding.emptyInput (Just Boarding.Player) Nothing) "/preboarding/start"
+handleAction (OpenTeamPreboarding mouseEvent) = do
+    mouseEvent # ME.toEvent # E.preventDefault # H.liftEffect
+    navigate (Preboarding.emptyInput (Just Boarding.Team) Nothing) "/preboarding/start"
+handleAction (OpenGames mouseEvent) = do
+    mouseEvent # ME.toEvent # E.preventDefault # H.liftEffect
+    navigate_ "/games"
 
-component :: forall query input output left.
-    H.Component HH.HTML query input output (Async left)
+component :: forall query input output left. H.Component HH.HTML query input output (Async left)
 component = H.mkComponent
-    { initialState: const Empty
+    { initialState: const unit
     , render
     , eval: H.mkEval $ H.defaultEval
         { handleAction = handleAction
-        , initialize = Just Init
+        , initialize = Just Initialize
         }
     }
 

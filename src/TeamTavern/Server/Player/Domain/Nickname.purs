@@ -6,9 +6,10 @@ import Data.List.Types (NonEmptyList)
 import Data.Newtype (class Newtype)
 import Data.String (trim)
 import Data.Validated (Validated)
-import Data.Variant (Variant)
+import Data.Validated.Label as Validated
+import Data.Variant (SProxy(..), Variant)
 import Jarilo.FromComponent (class FromComponent)
-import Wrapped.String (Empty, NotAsciiAlphaNum, TooLong, empty, notAsciiAlphaNum, tooLong)
+import Wrapped.String (Empty, NotAsciiAlphaNumSpecial, TooLong, empty, notAsciiAlphaNumSpecial, tooLong)
 import Wrapped.Validated as Wrapped
 
 newtype Nickname = Nickname String
@@ -22,13 +23,17 @@ derive newtype instance fromComponentNickname :: FromComponent Nickname
 type NicknameError = Variant
     ( empty :: Empty
     , tooLong :: TooLong
-    , notAsciiAlphaNum :: NotAsciiAlphaNum
+    , notAsciiAlphaNumSpecial :: NotAsciiAlphaNumSpecial
     )
+
+type NicknameErrors = NonEmptyList NicknameError
 
 maxLength :: Int
 maxLength = 40
 
-create :: String -> Validated (NonEmptyList NicknameError) Nickname
-create nickname =
-    Wrapped.create trim [empty, tooLong maxLength, notAsciiAlphaNum]
-    Nickname nickname
+validateNickname :: forall errors.
+    String -> Validated (NonEmptyList (Variant (nickname :: Array String | errors))) Nickname
+validateNickname nickname =
+    Wrapped.create trim [empty, tooLong maxLength, notAsciiAlphaNumSpecial] Nickname nickname
+    # Validated.labelMap (SProxy :: SProxy "nickname") \(errors :: NicknameErrors) ->
+        [ "Registration nickname is invalid: " <> show errors ]

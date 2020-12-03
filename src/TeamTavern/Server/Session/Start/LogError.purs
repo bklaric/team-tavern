@@ -26,7 +26,7 @@ type StartError = Variant
         { content :: String
         , errors :: MultipleErrors
         }
-    , bcryptError :: Node.Error
+    , bcrypt :: Node.Error
     , randomError :: Node.Error
     , databaseError :: Postgres.Error
     , unreadableHash ::
@@ -56,7 +56,7 @@ logError startError = do
         , unreadableDto: \{ content, errors } -> do
             logt $ "Couldn't read dto from body: " <> show content
             logt $ "Reading resulted in these errors: " <> show errors
-        , bcryptError: \error ->
+        , bcrypt: \error ->
             logt $ "Password comparing resulted in this error: " <> print error
         , randomError: \error ->
             logt $ "Generating random bytes resulted in this error: "

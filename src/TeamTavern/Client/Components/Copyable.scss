@@ -1,0 +1,13 @@
+.copyable {
+    @extend a;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.copyable-copied {
+    font-size: 12px;
+    line-height: 14px;
+    color: #888;
+    font-weight: 400;
+    margin-left: 6px;
+}

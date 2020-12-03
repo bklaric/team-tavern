@@ -1,0 +1,44 @@
+.popover-container {
+    position: relative;
+}
+
+.popover-button {
+    @extend %button;
+    color: $text-color;
+    background-color: inherit;
+    border: 0;
+    padding: 9px 12px;
+    margin-left: -12px;
+}
+
+.popover-button-caret {
+    font-size: 20px;
+    margin-left: 6px;
+    vertical-align: -2px;
+}
+
+.popover {
+    position: absolute;
+    background-color: white;
+    text-align: left;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: max-content;
+    padding: 4px 0;
+    right: 0;
+}
+
+.popover-item {
+    display: flex;
+    align-items: center;
+    padding: 9px 12px;
+    cursor: pointer;
+
+    &:hover {
+        background-color: #f2f2f2;
+    }
+
+    &:not(:last-child) {
+        margin-bottom: 4px;
+    }
+}

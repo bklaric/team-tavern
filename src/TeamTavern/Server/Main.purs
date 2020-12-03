@@ -18,7 +18,6 @@ import Data.Tuple (Tuple(..))
 import Data.Variant (match)
 import Effect (Effect)
 import Effect.Console (log)
-import Global.Unsafe (unsafeStringify)
 import Jarilo.Junction (JunctionProxy(..), router)
 import Node.Process (lookupEnv)
 import Node.Server (ListenOptions(..))
@@ -37,33 +36,31 @@ import TeamTavern.Server.Architecture.Deployment as Deployment
 import TeamTavern.Server.Conversation.Start (start) as Conversation
 import TeamTavern.Server.Conversation.View (view) as Conversation
 import TeamTavern.Server.Conversation.ViewAll (viewAll) as Conversation
-import TeamTavern.Server.Game.Create (create) as Game
-import TeamTavern.Server.Game.Update (handleUpdate) as Game
 import TeamTavern.Server.Game.View (handleView) as Game
 import TeamTavern.Server.Game.ViewAll (handleViewAll) as Game
 import TeamTavern.Server.Infrastructure.Log (logStamped, logt)
 import TeamTavern.Server.Password.Forgot (forgot) as Password
 import TeamTavern.Server.Password.Reset (reset) as Password
-import TeamTavern.Server.Player.ChangeNickname (changeNickname) as Player
-import TeamTavern.Server.Player.EditSettings (editSettings) as Player
+import TeamTavern.Server.Player.EditSettings (updateSettings) as Player
 import TeamTavern.Server.Player.Register (register) as Player
-import TeamTavern.Server.Player.UpdateDetails (updateDetails) as Player
+import TeamTavern.Server.Player.UpdatePlayer (updatePlayer) as Player
 import TeamTavern.Server.Player.View (view) as Player
-import TeamTavern.Server.Player.ViewDetails (viewDetails) as Player
-import TeamTavern.Server.Player.ViewHeader (viewHeader) as Player
-import TeamTavern.Server.Player.ViewSettings (viewSettings) as Player
 import TeamTavern.Server.Profile.AddPlayerProfile (addPlayerProfile) as Profile
 import TeamTavern.Server.Profile.AddTeamProfile (addTeamProfile) as Profile
 import TeamTavern.Server.Profile.Routes (bundleFilters)
 import TeamTavern.Server.Profile.UpdatePlayerProfile (updatePlayerProfile) as Profile
 import TeamTavern.Server.Profile.UpdateTeamProfile (updateTeamProfile) as Profile
-import TeamTavern.Server.Profile.ViewPlayerProfilesByPlayer (viewPlayerProfilesByPlayer) as Profile
 import TeamTavern.Server.Profile.ViewPlayerProfilesByGame (viewPlayerProfilesByGame) as Profile
-import TeamTavern.Server.Profile.ViewTeamProfilesByPlayer (viewTeamProfilesByPlayer) as Profile
 import TeamTavern.Server.Profile.ViewTeamProfilesByGame (viewTeamProfilesByGame) as Profile
 import TeamTavern.Server.Routes (TeamTavernRoutes)
 import TeamTavern.Server.Session.End (end) as Session
 import TeamTavern.Server.Session.Start (start) as Session
+import TeamTavern.Server.Team.Create (create) as Team
+import TeamTavern.Server.Team.Update (update) as Team
+import TeamTavern.Server.Team.View (view) as Team
+import TeamTavern.Server.Team.ViewByOwner (viewByOwner) as Team
+import TeamTavern.Server.Boarding.Onboard as Onboard
+import TeamTavern.Server.Boarding.Preboard as Preboard
 
 listenOptions :: ListenOptions
 listenOptions = TcpListenOptions
@@ -163,25 +160,25 @@ handleRequest deployment pool client method url cookies body =
             fromEffect $ logStamped $ "Endpoint 404 Not Found"
             fromEffect $ logt $
                 "Not found for method " <> show method <> " and url " <> show url
-            fromEffect $ logt $ "Routing resulted in these errors: " <> unsafeStringify errors
-            pure { statusCode: 404, headers: MultiMap.empty, content: unsafeStringify errors }
+            fromEffect $ logt $ "Routing resulted in these errors: " <> show errors
+            pure { statusCode: 404, headers: MultiMap.empty, content: show errors }
     Right routeValues -> routeValues # match
         { registerPlayer: const $
             Player.register pool client cookies body
-        , viewPlayer: \{ nickname } ->
-            Player.view pool nickname
-        , viewPlayerHeader: \{ id } ->
-            Player.viewHeader pool id
-        , viewDetails: \{ nickname, timezone } ->
-            Player.viewDetails pool nickname timezone cookies
-        , changeNickname: \{ nickname } ->
-            Player.changeNickname pool nickname cookies body
-        , viewSettings: \{ nickname } ->
-            Player.viewSettings pool nickname cookies
-        , editSettings: \{ nickname } ->
-            Player.editSettings pool nickname cookies body
-        , updateDetails: \{ nickname } ->
-            Player.updateDetails pool nickname cookies body
+        , viewPlayer:
+            Player.view pool cookies
+        , updatePlayer: \{ nickname } ->
+            Player.updatePlayer pool nickname cookies body
+        , updateSettings: \{ nickname } ->
+            Player.updateSettings pool nickname cookies body
+        , viewTeamsByOwner:
+            Team.viewByOwner pool
+        , viewTeam:
+            Team.view pool
+        , createTeam: const $
+            Team.create pool body cookies
+        , updateTeam:
+            Team.update pool body cookies
         , forgotPassword: const $
             Password.forgot pool client cookies body
         , resetPassword: const $
@@ -190,36 +187,32 @@ handleRequest deployment pool client method url cookies body =
             Session.start deployment pool cookies body
         , endSession: const
             Session.end
-        , createGame: const $
-            Game.create pool cookies body
         , viewAllGames: const $
             Game.handleViewAll pool
         , viewGame: \{ handle } ->
             Game.handleView pool handle cookies
-        , updateGame: \{ handle } ->
-            Game.handleUpdate pool handle cookies body
         , addPlayerProfile: \identifiers ->
             Profile.addPlayerProfile pool identifiers cookies body
-        , addTeamProfile: \identifiers ->
-            Profile.addTeamProfile pool identifiers cookies body
+        , addTeamProfile:
+            Profile.addTeamProfile pool cookies body
         , updatePlayerProfile: \identifiers ->
             Profile.updatePlayerProfile pool identifiers cookies body
-        , updateTeamProfile: \identifiers ->
-            Profile.updateTeamProfile pool identifiers cookies body
+        , updateTeamProfile:
+            Profile.updateTeamProfile pool cookies body
         , viewPlayerProfilesByGame: \filters @ { handle, page, timezone } ->
             Profile.viewPlayerProfilesByGame pool handle page timezone $ bundleFilters filters
         , viewTeamProfilesByGame: \filters @ { handle, page, timezone } ->
             Profile.viewTeamProfilesByGame pool handle page timezone $ bundleFilters filters
-        , viewPlayerProfilesByPlayer: \{ nickname } ->
-            Profile.viewPlayerProfilesByPlayer pool nickname
-        , viewTeamProfilesByPlayer: \{ nickname, timezone } ->
-            Profile.viewTeamProfilesByPlayer pool nickname timezone
         , viewAllConversations: const $
             Conversation.viewAll pool cookies
         , viewConversation: \{ nickname } ->
             Conversation.view pool nickname cookies
         , startConversation: \{ nickname } ->
             Conversation.start pool client nickname cookies body
+        , onboard: const $
+            Onboard.onboard pool cookies body
+        , preboard: const $
+            Preboard.preboard pool client cookies body
         }
         <#> (\response -> response { headers = response.headers <> MultiMap.fromFoldable
                 [ Tuple "Access-Control-Allow-Origin" $ NEL.singleton "http://localhost:1337"

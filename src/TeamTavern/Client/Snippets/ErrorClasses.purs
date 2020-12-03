@@ -8,4 +8,4 @@ inputErrorClass hasError = ClassName
 
 otherErrorClass :: Boolean -> ClassName
 otherErrorClass hasError = ClassName
-    if hasError then "other-error" else "hidden-error"
+    if hasError then "form-error" else "hidden-error"

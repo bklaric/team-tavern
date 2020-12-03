@@ -1,109 +1,44 @@
-module TeamTavern.Server.Profile.UpdateTeamProfile.UpdateProfile
-    (UpdateProfileError, updateProfile) where
+module TeamTavern.Server.Profile.UpdateTeamProfile.UpdateProfile (updateProfile) where
 
 import Prelude
 
 import Async (Async)
-import Async as Async
-import Data.Array (head)
-import Data.Bifunctor.Label (label, labelMap)
-import Data.Nullable (toNullable)
-import Data.Variant (SProxy(..), Variant, inj)
-import Foreign (MultipleErrors)
-import Postgres.Async.Query (execute, query)
 import Postgres.Client (Client)
-import Postgres.Error (Error)
 import Postgres.Query (Query(..), QueryParameter, (:), (:|))
-import Postgres.Result (Result, rows)
-import Simple.JSON.Async (read)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
-import TeamTavern.Server.Player.UpdateDetails.ValidateTimespan (nullableTimeFrom, nullableTimeTo)
+import TeamTavern.Server.Infrastructure.Error (InternalError, ChangeSingleError)
+import TeamTavern.Server.Infrastructure.Postgres (queryFirstNotAuthorized, queryNone)
 import TeamTavern.Server.Profile.AddTeamProfile.AddFieldValues (ProfileId, addFieldValues)
-import TeamTavern.Server.Profile.AddTeamProfile.ValidateAgeSpan (nullableAgeFrom, nullableAgeTo)
 import TeamTavern.Server.Profile.AddTeamProfile.ValidateProfile (Profile)
 import TeamTavern.Server.Profile.Routes (Handle)
-
-type UpdateProfileError errors = Variant
-    ( databaseError :: Error
-    , nothingInserted ::
-        { cookieInfo :: CookieInfo
-        , handle :: Handle
-        }
-    , unreadableProfileId ::
-        { result :: Result
-        , errors :: MultipleErrors
-        }
-    , emptyResult ::
-        { result :: Result
-        }
-    , unreadableFieldValueId ::
-        { result :: Result
-        , errors :: MultipleErrors
-        }
-    | errors )
 
 -- Update profile row.
 
 updateProfileString :: Query
 updateProfileString = Query """
     update team_profile
-    set summary = $3,
-        age_from = $4,
-        age_to = $5,
-        languages = $6,
-        countries = $7,
-        timezone = $8,
-        weekday_from = $9,
-        weekday_to = $10,
-        weekend_from = $11,
-        weekend_to = $12,
-        has_microphone = $13,
-        new_or_returning = $14,
+    set new_or_returning = $4,
+        ambitions = $5,
         updated = now()
-    from game
-    where team_profile.player_id = $1
-        and game.handle = $2
-        and game.id = team_profile.game_id
-    returning team_profile.id as "profileId";
+    from player, team, game
+    where player.id = $1
+        and team.handle = $2
+        and game.handle = $3
+        and team_profile.team_id = team.id
+        and team_profile.game_id = game.id
+        and team.owner_id = player.id
+    returning team_profile.id as "profileId"
     """
 
-updateProfileParameters ::
-    CookieInfo -> Handle -> Profile -> Array QueryParameter
-updateProfileParameters { id } handle profile =
-    id
-    : handle
-    : profile.summary
-    : nullableAgeFrom profile.ageSpan
-    : nullableAgeTo profile.ageSpan
-    : profile.languages
-    : profile.countries
-    : toNullable profile.timezone
-    : nullableTimeFrom profile.onlineWeekday
-    : nullableTimeTo profile.onlineWeekday
-    : nullableTimeFrom profile.onlineWeekend
-    : nullableTimeTo profile.onlineWeekend
-    : profile.hasMicrophone
-    :| profile.newOrReturning
+updateProfileParameters :: CookieInfo -> Handle -> Handle -> Profile -> Array QueryParameter
+updateProfileParameters { id } teamHandle gameHandle profile =
+    id : teamHandle : gameHandle : profile.newOrReturning :| profile.ambitions
 
-updateProfile'
-    :: forall errors
-    .  Client
-    -> CookieInfo
-    -> Handle
-    -> Profile
-    -> Async (UpdateProfileError errors) ProfileId
-updateProfile' client cookieInfo handle profile = do
-    result <- client
-        # query updateProfileString
-            (updateProfileParameters cookieInfo handle profile)
-        # label (SProxy :: SProxy "databaseError")
-    { profileId } :: { profileId :: Int } <- rows result
-        # head
-        # Async.note (inj
-            (SProxy :: SProxy "nothingInserted") { cookieInfo, handle })
-        >>= (read >>> labelMap
-            (SProxy :: SProxy "unreadableProfileId") { result, errors: _ })
-    pure profileId
+updateProfile' :: forall errors.
+    Client -> CookieInfo -> Handle -> Handle -> Profile -> Async (ChangeSingleError errors) { profileId :: Int }
+updateProfile' client cookieInfo teamHandle gameHandle profile =
+    queryFirstNotAuthorized client updateProfileString
+        (updateProfileParameters cookieInfo teamHandle gameHandle profile)
 
 -- Delete field value rows.
 
@@ -113,23 +48,14 @@ deleteFieldValuesString = Query """
     where team_profile_id = $1;
     """
 
-deleteFieldValues :: forall errors.
-    Client -> ProfileId -> Async (UpdateProfileError errors) Unit
-deleteFieldValues client profileId =
-    client
-    # execute deleteFieldValuesString (profileId : [])
-    # label (SProxy :: SProxy "databaseError")
+deleteFieldValues :: forall errors. Client -> ProfileId -> Async (InternalError errors) Unit
+deleteFieldValues client profileId = queryNone client deleteFieldValuesString (profileId : [])
 
-updateProfile
-    :: forall errors
-    .  Client
-    -> CookieInfo
-    -> Handle
-    -> Profile
-    -> Async (UpdateProfileError errors) Unit
-updateProfile client cookieInfo handle profile = do
+updateProfile :: forall errors.
+    Client -> CookieInfo -> Handle -> Handle -> Profile -> Async (ChangeSingleError errors) Unit
+updateProfile client cookieInfo teamHandle gameHandle profile = do
     -- Update profile row.
-    profileId <- updateProfile' client cookieInfo handle profile
+    { profileId } <- updateProfile' client cookieInfo teamHandle gameHandle profile
 
     -- Delete all existing field values.
     deleteFieldValues client profileId

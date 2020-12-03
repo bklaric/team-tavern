@@ -12,12 +12,8 @@ import TeamTavern.Server.Game.View.LoadGame (LoadGameResult)
 import TeamTavern.Server.Game.View.LogError (ViewError)
 
 type OkContent =
-    { administratorId :: Int
-    , title :: String
+    { title :: String
     , handle :: String
-    , description :: Array String
-    , hasPlayerProfile :: Boolean
-    , hasTeamProfile :: Boolean
     , fields :: Array
         { ilk :: Int
         , label :: String
@@ -41,14 +37,10 @@ errorResponse = match
 
 successResponse :: LoadGameResult -> Response
 successResponse
-    { administratorId, title, handle, description, hasPlayerProfile, hasTeamProfile, fields } =
+    { title, handle, fields } =
     ok_ $ writeJSON (
-    { administratorId: unwrap administratorId
-    , title: unwrap title
+    { title: unwrap title
     , handle: unwrap handle
-    , description: unwrap description <#> unwrap
-    , hasPlayerProfile
-    , hasTeamProfile
     , fields
     } :: OkContent)
 

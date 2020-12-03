@@ -1,5 +1,5 @@
 module TeamTavern.Server.Profile.ViewTeamProfilesByGame.LoadProfiles
-    (pageSize, LoadProfilesResult, LoadProfilesError, prepareString, queryStringWithoutPagination, loadProfiles) where
+    (pageSize, LoadProfilesResult, LoadProfilesError, queryStringWithoutPagination, loadProfiles) where
 
 import Prelude
 
@@ -21,22 +21,35 @@ import Postgres.Error (Error)
 import Postgres.Query (Query(..))
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
-import TeamTavern.Server.Profile.Routes (Age, Country, Filters, Handle, HasMicrophone, Language, ProfilePage, Time, Timezone, NewOrReturning)
+import TeamTavern.Server.Infrastructure.Postgres (prepareJsonString, prepareString, teamAdjustedWeekdayFrom, teamAdjustedWeekdayTo, teamAdjustedWeekendFrom, teamAdjustedWeekendTo)
+import TeamTavern.Server.Profile.Routes (Age, Location, Filters, Handle, HasMicrophone, Language, ProfilePage, Time, Timezone, NewOrReturning)
 import URI.Extra.QueryPairs (Key, QueryPairs(..), Value)
 import URI.Extra.QueryPairs as Key
 import URI.Extra.QueryPairs as Value
 
 pageSize :: Int
-pageSize = 20
+pageSize = 10
 
 type LoadProfilesResult =
-    { nickname :: String
-    , age :: { from :: Maybe Int, to :: Maybe Int }
-    , countries :: Array String
+    { owner :: String
+    , handle :: String
+    , name :: String
+    , website :: Maybe String
+    , ageFrom :: Maybe Int
+    , ageTo :: Maybe Int
+    , locations :: Array String
     , languages :: Array String
-    , hasMicrophone :: Boolean
-    , weekdayOnline :: Maybe { from :: String, to :: String }
-    , weekendOnline :: Maybe { from :: String, to :: String }
+    , microphone :: Boolean
+    , discordServer :: Maybe String
+    , weekdayOnline :: Maybe
+        { from :: String
+        , to :: String
+        }
+    , weekendOnline :: Maybe
+        { from :: String
+        , to :: String
+        }
+    , about :: Array String
     , fieldValues :: Array
         { field ::
             { ilk :: Int
@@ -50,7 +63,7 @@ type LoadProfilesResult =
             }
         }
     , newOrReturning :: Boolean
-    , summary :: Array String
+    , ambitions :: Array String
     , updated :: String
     , updatedSeconds :: Number
     }
@@ -63,29 +76,52 @@ type LoadProfilesError errors = Variant
         }
     | errors )
 
-prepareString :: String -> String
-prepareString stringValue =
-       "'"
-    <> (String.replace (String.Pattern "'") (String.Replacement "") stringValue)
-    <> "'"
-
 createAgeFilter :: Maybe Age -> Maybe Age -> String
 createAgeFilter Nothing Nothing = ""
-createAgeFilter (Just ageFrom) Nothing = " and profile.age_to >= " <> show ageFrom
-createAgeFilter Nothing (Just ageTo) = " and profile.age_from <= " <> show ageTo
-createAgeFilter (Just ageFrom) (Just ageTo) =
-    " and (profile.age_to >= " <> show ageFrom <> " and profile.age_from <= " <> show ageTo <> ")"
+createAgeFilter (Just ageFrom) Nothing = """ and
+    case
+        when team.age_from is not null and team.age_to is not null
+        then """ <> show ageFrom <> """ <= team.age_to
+        when team.age_from is not null and team.age_to is null
+        then true
+        when team.age_from is null and team.age_to is not null
+        then """ <> show ageFrom <> """ <= team.age_to
+        when team.age_from is null and team.age_to is null
+        then false
+    end"""
+createAgeFilter Nothing (Just ageTo) = """ and
+    case
+        when team.age_from is not null and team.age_to is not null
+        then team.age_from <= """ <> show ageTo <> """
+        when team.age_from is not null and team.age_to is null
+        then team.age_from <= """ <> show ageTo <> """
+        when team.age_from is null and team.age_to is not null
+        then true
+        when team.age_from is null and team.age_to is null
+        then false
+    end"""
+createAgeFilter (Just ageFrom) (Just ageTo) = """ and
+    case
+        when team.age_from is not null and team.age_to is not null
+        then """ <> show ageFrom <> """ <= team.age_to and team.age_from <= """ <> show ageTo <> """
+        when team.age_from is not null and team.age_to is null
+        then team.age_from <= """ <> show ageTo <> """
+        when team.age_from is null and team.age_to is not null
+        then """ <> show ageFrom <> """ <= team.age_to
+        when team.age_from is null and team.age_to is null
+        then false
+    end"""
 
 createLanguagesFilter :: Array Language -> String
 createLanguagesFilter [] = ""
-createLanguagesFilter languages = " and profile.languages && (array[" <> (languages <#> prepareString # intercalate ", ") <> "])"
+createLanguagesFilter languages = " and team.languages && (array[" <> (languages <#> prepareString # intercalate ", ") <> "])"
 
-createCountriesFilter :: Array Country -> String
+createCountriesFilter :: Array Location -> String
 createCountriesFilter [] = ""
-createCountriesFilter countries = """ and exists (
+createCountriesFilter locations = """ and exists (
     (
         with recursive region_rec(name) as (
-            select region.name from region where region.name = any(profile.countries)
+            select region.name from region where region.name = any(team.locations)
             union all
             select subregion.name from region as subregion join region_rec on subregion.superregion_name = region_rec.name
         )
@@ -93,7 +129,7 @@ createCountriesFilter countries = """ and exists (
     )
     intersect (
         with recursive region_rec(name) as (
-            select region.name from region where region.name = any(array[""" <> (countries <#> prepareString # intercalate ", ") <> """])
+            select region.name from region where region.name = any(array[""" <> (locations <#> prepareString # intercalate ", ") <> """])
             union all
             select subregion.name from region as subregion join region_rec on subregion.superregion_name = region_rec.name
         )
@@ -102,27 +138,22 @@ createCountriesFilter countries = """ and exists (
 )
 """
 
-timezoneAdjustedTime :: Timezone -> String -> String
-timezoneAdjustedTime timezone timeColumn =
-    """((current_date || ' ' || """ <> timeColumn <> """ || ' ' || profile.timezone)::timestamptz
-    at time zone """ <> prepareString timezone <> """)::time"""
-
 createWeekdayOnlineFilter :: Timezone -> Maybe Time -> Maybe Time -> String
 createWeekdayOnlineFilter timezone (Just from) (Just to) =
     let fromTime = "'" <> from <> "'::time"
         toTime   = "'" <> to   <> "'::time"
-        playerStart = timezoneAdjustedTime timezone "profile.weekday_from"
-        playerEnd   = timezoneAdjustedTime timezone "profile.weekday_to"
+        teamStart = teamAdjustedWeekdayFrom timezone
+        teamEnd   = teamAdjustedWeekdayTo timezone
     in
     """ and
     case
-        when """ <> playerStart <> """ < """ <> playerEnd <> """ and """ <> fromTime <> """ < """ <> toTime <> """ then
-            """ <> fromTime <> """ < """ <> playerEnd <> """ and """ <> playerStart <> """ < """ <> toTime <> """
-        when """ <> playerStart <> """ > """ <> playerEnd <> """ and """ <> fromTime <> """ < """ <> toTime <> """ then
-            """ <> fromTime <> """ < """ <> playerEnd <> """ or """ <> playerStart <> """ < """ <> toTime <> """
-        when """ <> playerStart <> """ < """ <> playerEnd <> """ and """ <> fromTime <> """ > """ <> toTime <> """ then
-            """ <> fromTime <> """ < """ <> playerEnd <> """ or """ <> playerStart <> """ < """ <> toTime <> """
-        when """ <> playerStart <> """ > """ <> playerEnd <> """ and """ <> fromTime <> """ > """ <> toTime <> """ then
+        when """ <> teamStart <> """ < """ <> teamEnd <> """ and """ <> fromTime <> """ < """ <> toTime <> """ then
+            """ <> fromTime <> """ < """ <> teamEnd <> """ and """ <> teamStart <> """ < """ <> toTime <> """
+        when """ <> teamStart <> """ > """ <> teamEnd <> """ and """ <> fromTime <> """ < """ <> toTime <> """ then
+            """ <> fromTime <> """ < """ <> teamEnd <> """ or """ <> teamStart <> """ < """ <> toTime <> """
+        when """ <> teamStart <> """ < """ <> teamEnd <> """ and """ <> fromTime <> """ > """ <> toTime <> """ then
+            """ <> fromTime <> """ < """ <> teamEnd <> """ or """ <> teamStart <> """ < """ <> toTime <> """
+        when """ <> teamStart <> """ > """ <> teamEnd <> """ and """ <> fromTime <> """ > """ <> toTime <> """ then
             true
     end
     """
@@ -132,18 +163,18 @@ createWeekendOnlineFilter :: Timezone -> Maybe Time -> Maybe Time -> String
 createWeekendOnlineFilter timezone (Just from) (Just to) =
     let fromTime = "'" <> from <> "'::time"
         toTime   = "'" <> to   <> "'::time"
-        playerStart = timezoneAdjustedTime timezone "profile.weekend_from"
-        playerEnd   = timezoneAdjustedTime timezone "profile.weekend_to"
+        teamStart = teamAdjustedWeekendFrom timezone
+        teamEnd   = teamAdjustedWeekendTo timezone
     in
     """ and
     case
-        when """ <> playerStart <> """ < """ <> playerEnd <> """ and """ <> fromTime <> """ < """ <> toTime <> """ then
-            """ <> fromTime <> """ < """ <> playerEnd <> """ and """ <> playerStart <> """ < """ <> toTime <> """
-        when """ <> playerStart <> """ > """ <> playerEnd <> """ and """ <> fromTime <> """ < """ <> toTime <> """ then
-            """ <> fromTime <> """ < """ <> playerEnd <> """ or """ <> playerStart <> """ < """ <> toTime <> """
-        when """ <> playerStart <> """ < """ <> playerEnd <> """ and """ <> fromTime <> """ > """ <> toTime <> """ then
-            """ <> fromTime <> """ < """ <> playerEnd <> """ or """ <> playerStart <> """ < """ <> toTime <> """
-        when """ <> playerStart <> """ > """ <> playerEnd <> """ and """ <> fromTime <> """ > """ <> toTime <> """ then
+        when """ <> teamStart <> """ < """ <> teamEnd <> """ and """ <> fromTime <> """ < """ <> toTime <> """ then
+            """ <> fromTime <> """ < """ <> teamEnd <> """ and """ <> teamStart <> """ < """ <> toTime <> """
+        when """ <> teamStart <> """ > """ <> teamEnd <> """ and """ <> fromTime <> """ < """ <> toTime <> """ then
+            """ <> fromTime <> """ < """ <> teamEnd <> """ or """ <> teamStart <> """ < """ <> toTime <> """
+        when """ <> teamStart <> """ < """ <> teamEnd <> """ and """ <> fromTime <> """ > """ <> toTime <> """ then
+            """ <> fromTime <> """ < """ <> teamEnd <> """ or """ <> teamStart <> """ < """ <> toTime <> """
+        when """ <> teamStart <> """ > """ <> teamEnd <> """ and """ <> fromTime <> """ > """ <> toTime <> """ then
             true
     end
     """
@@ -151,29 +182,23 @@ createWeekendOnlineFilter _ _ _ = ""
 
 createMicrophoneFilter :: HasMicrophone -> String
 createMicrophoneFilter false = ""
-createMicrophoneFilter true = " and profile.has_microphone"
+createMicrophoneFilter true = " and team.microphone"
 
 createNewOrReturningFilter :: NewOrReturning -> String
 createNewOrReturningFilter false = ""
 createNewOrReturningFilter true = " and profile.new_or_returning"
 
-createProfileFilterString :: Timezone -> Filters -> String
-createProfileFilterString timezone filters =
+createTeamFilterString :: Timezone -> Filters -> String
+createTeamFilterString timezone filters =
     createAgeFilter filters.age.from filters.age.to
     <> createLanguagesFilter filters.languages
-    <> createCountriesFilter filters.countries
+    <> createCountriesFilter filters.locations
     <> createWeekdayOnlineFilter
         timezone filters.weekdayOnline.from filters.weekdayOnline.to
     <> createWeekendOnlineFilter
         timezone filters.weekendOnline.from filters.weekendOnline.to
     <> createMicrophoneFilter filters.microphone
     <> createNewOrReturningFilter filters.newOrReturning
-
-prepareJsonString :: String -> String
-prepareJsonString stringValue =
-       "\""
-    <> (String.replace (String.Pattern "\"") (String.Replacement "") stringValue)
-    <> "\""
 
 prepareFields :: QueryPairs Key Value -> Array (Tuple String (Array String))
 prepareFields (QueryPairs filters) = let
@@ -187,7 +212,7 @@ prepareFields (QueryPairs filters) = let
             optionKey' <#> \optionKey -> preparedField fieldKey optionKey
     groupeFields = preparedFields
         # foldl (\groupedFiltersSoFar (Tuple fieldKey optionKey) ->
-            MultiMap.insert' fieldKey optionKey groupedFiltersSoFar)
+            MultiMap.insertOrAppend' fieldKey optionKey groupedFiltersSoFar)
             MultiMap.empty
     in
     groupeFields # MultiMap.toUnfoldable'
@@ -218,26 +243,27 @@ queryStringWithoutPagination handle timezone filters = Query $ """
     select profile.*
     from
         (select
-            player.nickname,
-            json_build_object(
-                'from', profile.age_from,
-                'to', profile.age_to
-            ) as age,
-            profile.countries,
-            profile.languages,
-            profile.has_microphone as "hasMicrophone",
+            player.nickname as owner,
+            team.handle,
+            team.name,
+            team.website,
+            team.age_from as "ageFrom",
+            team.age_to as "ageTo",
+            team.locations,
+            team.languages,
+            team.microphone,
             case
-                when profile.weekday_from is not null and profile.weekday_to is not null
+                when team.weekday_from is not null and team.weekday_to is not null
                 then json_build_object(
-                    'from', to_char(""" <> timezoneAdjustedTime timezone "profile.weekday_from" <> """, 'HH24:MI'),
-                    'to', to_char(""" <> timezoneAdjustedTime timezone "profile.weekday_to" <> """, 'HH24:MI')
+                    'from', to_char(""" <> teamAdjustedWeekdayFrom timezone <> """, 'HH24:MI'),
+                    'to', to_char(""" <> teamAdjustedWeekdayTo timezone <> """, 'HH24:MI')
                 )
             end as "weekdayOnline",
             case
-                when profile.weekend_from is not null and profile.weekend_to is not null
+                when team.weekend_from is not null and team.weekend_to is not null
                 then json_build_object(
-                    'from', to_char(""" <> timezoneAdjustedTime timezone "profile.weekend_from" <> """, 'HH24:MI'),
-                    'to', to_char(""" <> timezoneAdjustedTime timezone "profile.weekend_to" <> """, 'HH24:MI')
+                    'from', to_char(""" <> teamAdjustedWeekendFrom timezone <> """, 'HH24:MI'),
+                    'to', to_char(""" <> teamAdjustedWeekendTo timezone <> """, 'HH24:MI')
                 )
             end as "weekendOnline",
             coalesce(
@@ -254,13 +280,15 @@ queryStringWithoutPagination handle timezone filters = Query $ """
                 ) filter (where field_values.team_profile_id is not null),
                 '[]'
             ) as "fieldValues",
+            team.about,
             profile.new_or_returning as "newOrReturning",
-            profile.summary,
+            profile.ambitions,
             profile.updated::text,
-            extract(epoch from (now() - updated)) as "updatedSeconds"
+            extract(epoch from (now() - profile.updated)) as "updatedSeconds"
         from team_profile as profile
             join game on game.id = profile.game_id
-            join player on player.id = profile.player_id
+            join team on team.id = profile.team_id
+            join player on player.id = team.owner_id
             left join (
                 select field_value.team_profile_id,
                     field.ilk,
@@ -293,9 +321,10 @@ queryStringWithoutPagination handle timezone filters = Query $ """
             ) as field_values
                 on field_values.team_profile_id = profile.id
         where
-            game.handle = """ <> prepareString handle
-            <> createProfileFilterString timezone filters <> """
-        group by player.id, profile.id
+            player.email_confirmed
+            and game.handle = """ <> prepareString handle
+            <> createTeamFilterString timezone filters <> """
+        group by player.id, team.id, profile.id
         ) as profile
     """ <> createFieldsFilterString filters.fields <> """
     order by profile.updated desc"""

@@ -1,0 +1,94 @@
+.call-to-action {
+    background-color: hsl(20, 20%, 19%);
+    padding: 100px 21px;
+}
+
+.call-to-action-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 960px;
+    margin: auto;
+}
+
+.call-to-action-text {
+    text-align: center;
+}
+
+.call-to-action-heading {
+    color: #ffffffdd;
+    font-size: 50px;
+    line-height: 1em;
+    margin-bottom: 28px;
+    max-width: 700px;
+}
+
+.call-to-action-paragraph {
+    color: #ffffffbb;
+    max-width: 700px;
+    font-size: 20px;
+    line-height: 1.5em;
+    font-weight: 400;
+    margin: 0 auto 48px;
+}
+
+.call-to-action-buttons {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    text-align: center;
+    max-width: 640px;
+    margin: auto;
+}
+
+.call-to-action-button-group {
+    max-width: 250px;
+    padding: 0 14px;
+
+    &:not(:last-child) {
+        margin-bottom: 35px;
+    }
+}
+
+@media screen and (min-width: 400px) {
+    .call-to-action-buttons {
+        flex-direction: row;
+        justify-content: space-evenly;
+        align-items: unset;
+    }
+
+    .call-to-action-button-group:not(:last-child) {
+        margin-bottom: unset;
+    }
+}
+
+.call-to-action-button {
+    @extend .primary-button;
+    padding: 18px 0;
+    font-size: 16px;
+    width: 150px;
+    margin-bottom: 14px;
+
+    &:active {
+        color: white;
+    }
+}
+
+.call-to-action-secondary-button {
+    @extend .secondary-button;
+    padding: 18px 24px;
+    font-size: 16px;
+    width: 170px;
+    margin-bottom: 14px;
+    box-sizing: border-box;
+
+    &:active {
+        color: white;
+    }
+}
+
+.call-to-action-icon {
+    margin-right: 7px;
+}

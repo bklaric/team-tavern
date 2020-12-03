@@ -10,15 +10,13 @@ import Foreign (Foreign)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
-import Simple.JSON (read)
-import TeamTavern.Client.Pages.Account.AccountHeader as AccountHeader
+import Simple.JSON (read, read_)
+import TeamTavern.Client.Components.Content (content, singleContent, wideContent)
 import TeamTavern.Client.Components.Footer (footer)
 import TeamTavern.Client.Components.Footer as Footer
+import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Components.Password.ForgotPassword (forgotPassword)
 import TeamTavern.Client.Components.Password.ForgotPassword as ForgotPassword
-import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
-import TeamTavern.Client.Components.RegisterForm (registerForm)
-import TeamTavern.Client.Components.RegisterForm as RegisterForm
 import TeamTavern.Client.Components.Password.ResetPassword (resetPassword)
 import TeamTavern.Client.Components.Password.ResetPassword as ResetPassword
 import TeamTavern.Client.Components.Password.ResetPasswordSent (resetPasswordSent)
@@ -26,22 +24,35 @@ import TeamTavern.Client.Components.Password.ResetPasswordSuccess (resetPassword
 import TeamTavern.Client.Components.TopBar (topBar)
 import TeamTavern.Client.Components.TopBar as TopBar
 import TeamTavern.Client.Components.Welcome (welcome)
-import TeamTavern.Client.Components.WelcomeBanner as WelcomeBanner
-import TeamTavern.Client.Game (game)
-import TeamTavern.Client.Game as Game
-import TeamTavern.Client.Game.GameHeader as GameHeader
-import TeamTavern.Client.Home.Games as Games
+import TeamTavern.Client.Components.Welcome as Welcome
 import TeamTavern.Client.Pages.About (about)
 import TeamTavern.Client.Pages.About as About
-import TeamTavern.Client.Pages.Account (account)
-import TeamTavern.Client.Pages.Account as Account
+import TeamTavern.Client.Pages.Conversation (conversation)
+import TeamTavern.Client.Pages.Conversation as Conversation
+import TeamTavern.Client.Pages.Conversations (conversations)
+import TeamTavern.Client.Pages.Conversations as Conversations
+import TeamTavern.Client.Pages.Game (game)
+import TeamTavern.Client.Pages.Game as Game
+import TeamTavern.Client.Pages.Games (games)
+import TeamTavern.Client.Pages.Games as Games
 import TeamTavern.Client.Pages.Home (home)
 import TeamTavern.Client.Pages.Home as Home
-import TeamTavern.Client.Player (player)
-import TeamTavern.Client.Player as Player
+import TeamTavern.Client.Pages.Onboarding (onboarding)
+import TeamTavern.Client.Pages.Onboarding as Onboarding
+import TeamTavern.Client.Pages.Player (player)
+import TeamTavern.Client.Pages.Player as Player
+import TeamTavern.Client.Pages.Preboarding (preboarding)
+import TeamTavern.Client.Pages.Preboarding as Preboarding
+import TeamTavern.Client.Pages.Profiles as Profiles
+import TeamTavern.Client.Pages.Profiles.GameHeader as GameHeader
+import TeamTavern.Client.Pages.Register (register)
+import TeamTavern.Client.Pages.Register as Register
+import TeamTavern.Client.Pages.SignIn (signIn)
+import TeamTavern.Client.Pages.SignIn as SignIn
+import TeamTavern.Client.Pages.Team (team)
+import TeamTavern.Client.Pages.Team as Team
+import TeamTavern.Client.Script.Cookie (getPlayerNickname, hasPlayerIdCookie)
 import TeamTavern.Client.Script.Navigate (navigateReplace_)
-import TeamTavern.Client.SignIn (signIn)
-import TeamTavern.Client.SignIn as SignIn
 
 data Query send = ChangeRoute Foreign String send
 
@@ -50,32 +61,42 @@ data Action = Init Foreign String
 data State
     = Empty
     | Home
+    | Games
     | About
-    | Account AccountHeader.Tab
-    | Game GameHeader.Handle GameHeader.Tab
-    | Player String
+    | Game { handle :: String }
+    | Profiles GameHeader.Handle GameHeader.Tab
+    | Player { nickname :: String }
+    | Conversations
+    | Conversation String
+    | Team { handle :: String }
     | Register
     | SignIn
+    | Onboarding Onboarding.Input
+    | Preboarding Preboarding.Input
     | ForgotPassword
     | ResetPasswordSent { email :: String }
     | ResetPassword
     | ResetPasswordSuccess
-    | Welcome { email :: String, nickname :: String, emailSent :: Boolean }
+    | Welcome Welcome.Input
     | NotFound
 
 type ChildSlots = Footer.ChildSlots
     ( topBar :: TopBar.Slot Unit
     , home :: Home.Slot Unit
     , about :: About.Slot
-    , welcomeBanner :: WelcomeBanner.Slot Unit
-    , account :: Account.Slot
     , games :: Games.Slot Unit
-    , game :: Game.Slot Unit
-    , player :: Player.Slot Unit
+    , game :: Game.Slot
+    , profiles :: Profiles.Slot Unit
+    , player :: Player.Slot
+    , conversations :: Conversations.Slot
+    , conversation :: Conversation.Slot
+    , team :: Team.Slot
+    , onboarding :: Onboarding.Slot
+    , preboarding :: Preboarding.Slot
     , signIn :: SignIn.Slot Unit
     , homeAnchor :: NavigationAnchor.Slot Unit
     , signInAnchor :: NavigationAnchor.Slot Unit
-    , registerForm :: RegisterForm.Slot Unit
+    , register :: Register.Slot Unit
     , forgotPassword :: ForgotPassword.Slot
     , resetPassword :: ResetPassword.Slot
     )
@@ -84,23 +105,29 @@ topBarWithContent
     :: forall query children left
     .  Array (H.ComponentHTML query (Footer.ChildSlots (topBar :: TopBar.Slot Unit | children)) (Async left))
     -> H.ComponentHTML query (Footer.ChildSlots (topBar :: TopBar.Slot Unit | children)) (Async left)
-topBarWithContent content =
-    HH.div_ [ topBar, HH.div [ HP.class_ $ HH.ClassName "content" ] content, footer ]
+topBarWithContent content' = HH.div_ [ topBar, content content', footer ]
 
-singleContent :: forall slots query.
-    Array (HH.HTML slots query) -> HH.HTML slots query
-singleContent = HH.div [ HP.class_ $ HH.ClassName "single-content" ]
+wideTopBarWithContent
+    :: forall query children left
+    .  Array (H.ComponentHTML query (Footer.ChildSlots (topBar :: TopBar.Slot Unit | children)) (Async left))
+    -> H.ComponentHTML query (Footer.ChildSlots (topBar :: TopBar.Slot Unit | children)) (Async left)
+wideTopBarWithContent content' = HH.div_ [ topBar, wideContent content', footer ]
 
-render :: forall action left.
-    State -> H.ComponentHTML action ChildSlots (Async left)
+render :: forall action left. State -> H.ComponentHTML action ChildSlots (Async left)
 render Empty = HH.div_ []
 render Home = HH.div_ [ topBar, home, footer ]
+render Games = topBarWithContent [ games ]
 render About = topBarWithContent [ about ]
-render (Game handle tab) = topBarWithContent [ game handle tab ]
-render (Account tab) = topBarWithContent [ account tab ]
-render (Player nickname) = topBarWithContent [ player nickname ]
-render Register = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ registerForm ] ]
+render (Game input) = HH.div_ [ topBar, game input, footer ]
+render (Profiles handle tab) = wideTopBarWithContent [ Profiles.profiles handle tab ]
+render (Player input) = topBarWithContent [ player input ]
+render Conversations = topBarWithContent [ conversations ]
+render (Conversation nickname) = topBarWithContent [ conversation nickname]
+render (Team input) = topBarWithContent [ team input ]
+render Register = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ register ] ]
 render SignIn = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ signIn ] ]
+render (Onboarding input) = onboarding input
+render (Preboarding input) = preboarding input
 render ForgotPassword = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ forgotPassword ] ]
 render (ResetPasswordSent resetPasswordData) = singleContent [ resetPasswordSent resetPasswordData ]
 render ResetPassword = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ resetPassword ] ]
@@ -117,15 +144,49 @@ nothing = pure Nothing
 handleAction :: forall action output slots left.
     Action -> H.HalogenM State action slots output (Async left) Unit
 handleAction (Init state route) = do
-    newState <- H.liftEffect $ case split (Pattern "/") route of
-        ["", ""] ->
-            just Home
+    newState <- case split (Pattern "/") route of
+        ["", ""] -> do
+            nickname <- getPlayerNickname
+            case nickname of
+                Just nickname' -> (navigateReplace_ $ "/players/" <> nickname') *> nothing
+                Nothing -> just Home
         ["", "about"] ->
             just About
         ["", "register"] ->
             just Register
         ["", "signin"] ->
             just SignIn
+        ["", "onboarding", step] ->
+            let step' =
+                    case step of
+                    "start" -> Just Onboarding.Greeting
+                    "player-or-team" -> Just Onboarding.PlayerOrTeam
+                    "player" -> Just Onboarding.Player
+                    "team" -> Just Onboarding.Team
+                    "game" -> Just Onboarding.Game
+                    "player-profile" -> Just Onboarding.PlayerProfile
+                    "team-profile" -> Just Onboarding.TeamProfile
+                    _ -> Nothing
+            in
+            case (read_ state :: Maybe Onboarding.Input), step' of
+            Just input, Just step'' -> just $ Onboarding input { step = step'' }
+            _, _ -> navigateReplace_ "/" *> nothing
+        ["", "preboarding", step] ->
+            let step' =
+                    case step of
+                    "start" -> Just Preboarding.Greeting
+                    "player-or-team" -> Just Preboarding.PlayerOrTeam
+                    "player" -> Just Preboarding.Player
+                    "team" -> Just Preboarding.Team
+                    "game" -> Just Preboarding.Game
+                    "player-profile" -> Just Preboarding.PlayerProfile
+                    "team-profile" -> Just Preboarding.TeamProfile
+                    "register" -> Just Preboarding.Register
+                    _ -> Nothing
+            in
+            case (read_ state :: Maybe Preboarding.Input), step' of
+            Just input, Just step'' -> just $ Preboarding input { step = step'' }
+            _, _ -> navigateReplace_ "/" *> nothing
         ["", "forgot-password"] ->
             just ForgotPassword
         ["", "reset-password-sent"] ->
@@ -140,22 +201,25 @@ handleAction (Init state route) = do
             case read state of
             Right identifiers -> just $ Welcome identifiers
             Left _ -> navigateReplace_ "/" *> nothing
-        ["", "account"] ->
-            (navigateReplace_ $ "/account/profiles") *> nothing
-        ["", "account", "profiles"] ->
-            just $ Account AccountHeader.Profiles
-        ["", "account", "conversations"] ->
-            just $ Account AccountHeader.Conversations
-        ["", "account", "conversations", nickname] ->
-            just $ Account $ AccountHeader.Conversation nickname
-        ["", "games", handle] ->
-            (navigateReplace_ $ "/games/" <> handle <> "/players") *> nothing
+        ["", "conversations"] ->
+            just $ Conversations
+        ["", "conversations", nickname] ->
+            just $ Conversation nickname
+        ["", "teams", handle] ->
+            just $ Team { handle }
+        ["", "games"] ->
+            just Games
+        ["", "games", handle] -> do
+            signedIn <- hasPlayerIdCookie
+            if signedIn
+                then (navigateReplace_ $ "/games/" <> handle <> "/players") *> nothing
+                else just $ Game { handle }
         ["", "games", handle, "players" ] ->
-            just $ Game handle GameHeader.Players
+            just $ Profiles handle GameHeader.Players
         ["", "games", handle, "teams" ] ->
-            just $ Game handle GameHeader.Teams
+            just $ Profiles handle GameHeader.Teams
         ["", "players", nickname] ->
-            just $ Player nickname
+            just $ Player { nickname }
         _ ->
             navigateReplace_ "/" *> nothing
     case newState of

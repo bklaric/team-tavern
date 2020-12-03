@@ -12,7 +12,8 @@ import Data.String (trim)
 import Data.String.Regex (Regex, match, regex)
 import Data.String.Regex.Flags (unicode)
 import Data.Validated (Validated)
-import Data.Variant (Variant)
+import Data.Validated.Label as Validated
+import Data.Variant (SProxy(..), Variant)
 import Partial.Unsafe (unsafePartial)
 import Wrapped.String (Invalid, TooLong, invalid, tooLong)
 import Wrapped.Validated as Wrapped
@@ -28,11 +29,14 @@ instance showEmail :: Show Email where
 
 type EmailError = Variant (invalid :: Invalid, tooLong :: TooLong)
 
-emailRegex :: Regex
-emailRegex =
-    regex """^[^\s@]+@[^\s@]+\.[^\s@]+$""" unicode # unsafePartial fromRight
+type EmailErrors = NonEmptyList EmailError
 
-create :: String -> Validated (NonEmptyList EmailError) Email
-create email =
-    Wrapped.create trim [invalid (match emailRegex >>> isJust), tooLong 254]
-        Email email
+emailRegex :: Regex
+emailRegex = regex """^[^\s@]+@[^\s@]+\.[^\s@]+$""" unicode # unsafePartial fromRight
+
+validateEmail :: forall errors.
+    String -> Validated (NonEmptyList (Variant (email :: Array String | errors))) Email
+validateEmail email =
+    Wrapped.create trim [invalid (match emailRegex >>> isJust), tooLong 254] Email email
+    # Validated.labelMap (SProxy :: SProxy "email") \(errors :: EmailErrors) ->
+        [ "Registration email is invalid: " <> show errors ]

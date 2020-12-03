@@ -5,7 +5,7 @@ import Prelude
 
 import Async (Async, alwaysRight)
 import Data.Variant (SProxy(..), Variant, inj, match)
-import Perun.Response (Response, badRequest_, badRequest__, internalServerError__, noContent_)
+import Perun.Response (Response, badRequest_, badRequest__, internalServerError__, noContent_, unauthorized__)
 import Simple.JSON (writeJSON)
 import TeamTavern.Server.Conversation.Start.LogError (StartError)
 
@@ -13,9 +13,10 @@ type BadRequestContent = Variant (invalidMessage :: {})
 
 errorResponse :: StartError -> Response
 errorResponse = match
-    { noCookieInfo: const badRequest__
+    { internal: const internalServerError__
+    , client: const badRequest__
+    , notAuthenticated: const unauthorized__
     , databaseError: const internalServerError__
-    , invalidSession: const badRequest__
     , unreadableConversationId: const badRequest__
     , nothingInsertedSomehow: const internalServerError__
     , unreadableMessage: const badRequest__

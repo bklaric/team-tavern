@@ -1,5 +1,5 @@
 module TeamTavern.Server.Profile.ViewPlayerProfilesByGame.LoadProfiles
-    (pageSize, LoadProfilesResult, LoadProfilesError, prepareString, queryStringWithoutPagination, loadProfiles) where
+    (pageSize, LoadProfilesResult, LoadProfilesError, queryStringWithoutPagination, loadProfiles) where
 
 import Prelude
 
@@ -21,23 +21,25 @@ import Postgres.Error (Error)
 import Postgres.Query (Query(..))
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
-import TeamTavern.Server.Profile.Routes (Age, Country, Filters, Handle, HasMicrophone, Language, ProfilePage, Time, Timezone, NewOrReturning)
+import TeamTavern.Server.Infrastructure.Postgres (playerAdjustedWeekdayFrom, playerAdjustedWeekdayTo, playerAdjustedWeekendFrom, playerAdjustedWeekendTo, prepareJsonString, prepareString)
+import TeamTavern.Server.Profile.Routes (Age, Location, Filters, Handle, HasMicrophone, Language, ProfilePage, Time, Timezone, NewOrReturning)
 import URI.Extra.QueryPairs (Key, QueryPairs(..), Value)
 import URI.Extra.QueryPairs as Key
 import URI.Extra.QueryPairs as Value
 
 pageSize :: Int
-pageSize = 20
+pageSize = 10
 
 type LoadProfilesResult =
     { nickname :: String
     , discordTag :: Maybe String
     , age :: Maybe Int
-    , country :: Maybe String
+    , location :: Maybe String
     , languages :: Array String
-    , hasMicrophone :: Boolean
+    , microphone :: Boolean
     , weekdayOnline :: Maybe { from :: String, to :: String }
     , weekendOnline :: Maybe { from :: String, to :: String }
+    , about :: Array String
     , fieldValues :: Array
         { field ::
             { ilk :: Int
@@ -55,7 +57,7 @@ type LoadProfilesResult =
             , label :: String
             })
         }
-    , summary :: Array String
+    , ambitions :: Array String
     , newOrReturning :: Boolean
     , updated :: String
     , updatedSeconds :: Number
@@ -69,12 +71,6 @@ type LoadProfilesError errors = Variant
         }
     | errors )
 
-prepareString :: String -> String
-prepareString stringValue =
-       "'"
-    <> (String.replace (String.Pattern "'") (String.Replacement "") stringValue)
-    <> "'"
-
 createAgeFilter :: Maybe Age -> Maybe Age -> String
 createAgeFilter Nothing Nothing = ""
 createAgeFilter (Just ageFrom) Nothing = " and player.birthday < (current_timestamp - interval '" <> show ageFrom <> " years')"
@@ -87,28 +83,23 @@ createLanguagesFilter :: Array Language -> String
 createLanguagesFilter [] = ""
 createLanguagesFilter languages = " and player.languages && (array[" <> (languages <#> prepareString # intercalate ", ") <> "])"
 
-createCountriesFilter :: Array Country -> String
+createCountriesFilter :: Array Location -> String
 createCountriesFilter [] = ""
-createCountriesFilter countries = """ and player.country in (
+createCountriesFilter locations = """ and player.location in (
     with recursive region_rec(name) as (
-        select region.name from region where region.name = any(array[""" <> (countries <#> prepareString # intercalate ", ") <> """])
+        select region.name from region where region.name = any(array[""" <> (locations <#> prepareString # intercalate ", ") <> """])
         union all
         select subregion.name from region as subregion join region_rec on subregion.superregion_name = region_rec.name
     )
     select * from region_rec)
 """
 
-timezoneAdjustedTime :: Timezone -> String -> String
-timezoneAdjustedTime timezone timeColumn =
-    """((current_date || ' ' || """ <> timeColumn <> """ || ' ' || player.timezone)::timestamptz
-    at time zone """ <> prepareString timezone <> """)::time"""
-
 createWeekdayOnlineFilter :: Timezone -> Maybe Time -> Maybe Time -> String
 createWeekdayOnlineFilter timezone (Just from) (Just to) =
     let fromTime = "'" <> from <> "'::time"
         toTime   = "'" <> to   <> "'::time"
-        playerStart = timezoneAdjustedTime timezone "player.weekday_from"
-        playerEnd   = timezoneAdjustedTime timezone "player.weekday_to"
+        playerStart = playerAdjustedWeekdayFrom timezone
+        playerEnd   = playerAdjustedWeekdayTo timezone
     in
     """ and
     case
@@ -128,8 +119,8 @@ createWeekendOnlineFilter :: Timezone -> Maybe Time -> Maybe Time -> String
 createWeekendOnlineFilter timezone (Just from) (Just to) =
     let fromTime = "'" <> from <> "'::time"
         toTime   = "'" <> to   <> "'::time"
-        playerStart = timezoneAdjustedTime timezone "player.weekend_from"
-        playerEnd   = timezoneAdjustedTime timezone "player.weekend_to"
+        playerStart = playerAdjustedWeekendFrom timezone
+        playerEnd   = playerAdjustedWeekendTo timezone
     in
     """ and
     case
@@ -147,7 +138,7 @@ createWeekendOnlineFilter _ _ _ = ""
 
 createMicrophoneFilter :: HasMicrophone -> String
 createMicrophoneFilter false = ""
-createMicrophoneFilter true = " and player.has_microphone"
+createMicrophoneFilter true = " and player.microphone"
 
 createNewOrReturningFilter :: NewOrReturning -> String
 createNewOrReturningFilter false = ""
@@ -157,19 +148,13 @@ createPlayerFilterString :: Timezone -> Filters -> String
 createPlayerFilterString timezone filters =
     createAgeFilter filters.age.from filters.age.to
     <> createLanguagesFilter filters.languages
-    <> createCountriesFilter filters.countries
+    <> createCountriesFilter filters.locations
     <> createWeekdayOnlineFilter
         timezone filters.weekdayOnline.from filters.weekdayOnline.to
     <> createWeekendOnlineFilter
         timezone filters.weekendOnline.from filters.weekendOnline.to
     <> createMicrophoneFilter filters.microphone
     <> createNewOrReturningFilter filters.newOrReturning
-
-prepareJsonString :: String -> String
-prepareJsonString stringValue =
-       "\""
-    <> (String.replace (String.Pattern "\"") (String.Replacement "") stringValue)
-    <> "\""
 
 prepareFields :: QueryPairs Key Value -> Array (Tuple String (Array String))
 prepareFields (QueryPairs filters) = let
@@ -183,7 +168,7 @@ prepareFields (QueryPairs filters) = let
             optionKey' <#> \optionKey -> preparedField fieldKey optionKey
     groupeFields = preparedFields
         # foldl (\groupedFiltersSoFar (Tuple fieldKey optionKey) ->
-            MultiMap.insert' fieldKey optionKey groupedFiltersSoFar)
+            MultiMap.insertOrAppend' fieldKey optionKey groupedFiltersSoFar)
             MultiMap.empty
     in
     groupeFields # MultiMap.toUnfoldable'
@@ -217,23 +202,24 @@ queryStringWithoutPagination handle timezone filters = Query $ """
             player.nickname,
             player.discord_tag as "discordTag",
             extract(year from age(player.birthday))::int as age,
-            player.country,
+            player.location,
             player.languages,
-            player.has_microphone as "hasMicrophone",
+            player.microphone,
             case
                 when player.weekday_from is not null and player.weekday_to is not null
                 then json_build_object(
-                    'from', to_char(""" <> timezoneAdjustedTime timezone "player.weekday_from" <> """, 'HH24:MI'),
-                    'to', to_char(""" <> timezoneAdjustedTime timezone "player.weekday_to" <> """, 'HH24:MI')
+                    'from', to_char(""" <> playerAdjustedWeekdayFrom timezone <> """, 'HH24:MI'),
+                    'to', to_char(""" <> playerAdjustedWeekdayTo timezone <> """, 'HH24:MI')
                 )
             end as "weekdayOnline",
             case
                 when player.weekend_from is not null and player.weekend_to is not null
                 then json_build_object(
-                    'from', to_char(""" <> timezoneAdjustedTime timezone "player.weekend_from" <> """, 'HH24:MI'),
-                    'to', to_char(""" <> timezoneAdjustedTime timezone "player.weekend_to" <> """, 'HH24:MI')
+                    'from', to_char(""" <> playerAdjustedWeekendFrom timezone <> """, 'HH24:MI'),
+                    'to', to_char(""" <> playerAdjustedWeekendTo timezone <> """, 'HH24:MI')
                 )
             end as "weekendOnline",
+            player.about,
             coalesce(
                 jsonb_agg(
                     jsonb_build_object(
@@ -261,7 +247,7 @@ queryStringWithoutPagination handle timezone filters = Query $ """
                 ) filter (where field_values.player_profile_id is not null),
                 '[]'
             ) as "fieldValues",
-            profile.summary,
+            profile.ambitions,
             profile.new_or_returning as "newOrReturning",
             profile.updated::text,
             extract(epoch from (now() - updated)) as "updatedSeconds"
@@ -304,7 +290,8 @@ queryStringWithoutPagination handle timezone filters = Query $ """
             ) as field_values
                 on field_values.player_profile_id = profile.id
         where
-            game.handle = """ <> prepareString handle
+            player.email_confirmed
+            and game.handle = """ <> prepareString handle
             <> createPlayerFilterString timezone filters <> """
         group by player.id, profile.id
         ) as profile

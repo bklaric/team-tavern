@@ -65,7 +65,7 @@ render (Loaded state @
     }) =
     HH.form
     [ HP.class_ $ HH.ClassName "form", HE.onSubmit $ Just <<< ResetPassword state ]
-    [ HH.h2 [ HP.class_ $ HH.ClassName "form-heading" ]
+    [ HH.h1 [ HP.class_ $ HH.ClassName "form-heading" ]
         [ HH.text "Reset your "
         , navigationAnchor (SProxy :: SProxy "home")
             { path: "/", content: HH.text "TeamTavern" }
@@ -105,7 +105,7 @@ render (Loaded state @
             ]
         , HH.p
             [ HP.class_ $ inputErrorClass invalidPassword ]
-            [ HH.text $ "The password mush have at least 8 characters." ]
+            [ HH.text $ "The password must have at least 8 characters." ]
         ]
     , HH.button
         [ HP.class_ $ ClassName "form-submit-button"
@@ -153,9 +153,9 @@ handleAction :: forall output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
 handleAction Init = do
     H.liftEffect $ whenM hasPlayerIdCookie $ navigateReplace_ "/"
-    nonce <- H.liftEffect $ getQueryParam "nonce"
+    nonce <- getQueryParam "nonce"
     case nonce of
-        Nothing -> H.liftEffect $ navigateReplace_ "/"
+        Nothing -> navigateReplace_ "/"
         Just nonce' -> do
             state <- H.get
             case state of

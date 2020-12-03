@@ -34,7 +34,7 @@ type IdentifiersErrorContent = Variant
     )
 
 type BadRequestContent = Variant
-    ( invalidModel :: Array IdentifiersErrorContent
+    ( registration :: Array IdentifiersErrorContent
     , emailTaken :: {}
     , nicknameTaken :: {}
     )
@@ -43,7 +43,7 @@ errorResponse :: RegisterError -> Response
 errorResponse = match
     { signedIn: const forbidden__
     , unreadableDto: const badRequest__
-    , invalidModel: \{ errors } ->
+    , registration: \errors ->
         errors
         <#> (match
             { email: const $ inj (SProxy :: SProxy "invalidEmail") {}
@@ -51,16 +51,17 @@ errorResponse = match
             , password: const $ inj (SProxy :: SProxy "invalidPassword") {}
             })
         # fromFoldable
-        # inj (SProxy :: SProxy "invalidModel")
+        # inj (SProxy :: SProxy "registration")
         # (writeJSON :: BadRequestContent -> String)
         # badRequest_
-    , bcryptError: const internalServerError__
+    , bcrypt: const internalServerError__
     , randomError: const internalServerError__
     , emailTaken: const $ badRequest_ $ writeJSON $
         (inj (SProxy :: SProxy "emailTaken") {} :: BadRequestContent)
     , nicknameTaken: const $ badRequest_ $ writeJSON $
         (inj (SProxy :: SProxy "nicknameTaken") {} :: BadRequestContent)
     , databaseError: const internalServerError__
+    , cantReadId: const internalServerError__
     , sendEmailError: _.info >>> \{ email, nickname } ->
         ok_ $ writeJSON
         ({ email: unwrap email
