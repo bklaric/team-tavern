@@ -9,7 +9,7 @@ import Foreign (Foreign, MultipleErrors)
 import Global.Unsafe (unsafeStringify)
 import Postgres.Error (Error)
 import Postgres.Result (Result, rows)
-import TeamTavern.Server.Infrastructure.Log (logStamped, logt, print)
+import TeamTavern.Server.Infrastructure.Log (logStamped, logt)
 import TeamTavern.Server.Infrastructure.Postgres (reportDatabaseError)
 
 type ViewAllError = Variant
