@@ -170,7 +170,6 @@ handleAction (Init state route) = do
             in
             case (read_ state :: Maybe Onboarding.Input), step' of
             Just input, Just step'' -> just $ Onboarding input { step = step'' }
-            Nothing, Just step'' -> just $ Onboarding Onboarding.emptyInput { step = step'' } -- navigateReplace_ "/" *> nothing
             _, _ -> navigateReplace_ "/" *> nothing
         ["", "preboarding", step] ->
             let step' =
