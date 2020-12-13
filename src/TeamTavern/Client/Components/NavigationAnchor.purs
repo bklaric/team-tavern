@@ -14,9 +14,8 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Prim.Row (class Cons)
 import TeamTavern.Client.Script.Navigate (navigate_)
-import Web.Event.Event as Event
+import TeamTavern.Client.Snippets.PreventMouseDefault (preventMouseDefault)
 import Web.UIEvent.MouseEvent (MouseEvent)
-import Web.UIEvent.MouseEvent as MouseEvent
 
 type SimpleInput slots monad =
     { path :: String
@@ -52,7 +51,7 @@ handleAction
     -> H.HalogenM (State slots monad) (Action slots monad)
         slots output monad Unit
 handleAction (Navigate event) = do
-    H.liftEffect $ Event.preventDefault $ MouseEvent.toEvent event
+    preventMouseDefault event
     { path } <- H.get
     navigate_ path
 handleAction (Receive state) = H.put state

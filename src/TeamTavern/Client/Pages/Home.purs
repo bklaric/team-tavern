@@ -19,9 +19,8 @@ import TeamTavern.Client.Pages.Home.ForPlayers (forPlayers)
 import TeamTavern.Client.Pages.Preboarding as Preboarding
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigate, navigate_)
-import Web.Event.Event as E
+import TeamTavern.Client.Snippets.PreventMouseDefault (preventMouseDefault)
 import Web.UIEvent.MouseEvent (MouseEvent)
-import Web.UIEvent.MouseEvent as ME
 
 data Action
     = Initialize
@@ -56,16 +55,16 @@ handleAction Initialize = setMeta
     <> "Create your own player or team profile and let them find you."
     )
 handleAction (OpenPreboarding mouseEvent) = do
-    mouseEvent # ME.toEvent # E.preventDefault # H.liftEffect
+    preventMouseDefault mouseEvent
     navigate (Preboarding.emptyInput Nothing Nothing) "/preboarding/start"
 handleAction (OpenPlayerPreboarding mouseEvent) = do
-    mouseEvent # ME.toEvent # E.preventDefault # H.liftEffect
+    preventMouseDefault mouseEvent
     navigate (Preboarding.emptyInput (Just Boarding.Player) Nothing) "/preboarding/start"
 handleAction (OpenTeamPreboarding mouseEvent) = do
-    mouseEvent # ME.toEvent # E.preventDefault # H.liftEffect
+    preventMouseDefault mouseEvent
     navigate (Preboarding.emptyInput (Just Boarding.Team) Nothing) "/preboarding/start"
 handleAction (OpenGames mouseEvent) = do
-    mouseEvent # ME.toEvent # E.preventDefault # H.liftEffect
+    preventMouseDefault mouseEvent
     navigate_ "/games"
 
 component :: forall query input output left. H.Component HH.HTML query input output (Async left)

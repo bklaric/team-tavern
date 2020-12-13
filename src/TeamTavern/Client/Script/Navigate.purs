@@ -14,14 +14,14 @@ import Effect (Effect)
 import Effect.Class (class MonadEffect, liftEffect)
 import Simple.JSON (class WriteForeign, write)
 import TeamTavern.Client.Script.PopStateEvent as PopStateEvent
-import Web.Event.Event (preventDefault)
+import TeamTavern.Client.Snippets.PreventMouseDefault (preventMouseDefault)
 import Web.Event.EventTarget (dispatchEvent)
 import Web.HTML (window)
 import Web.HTML.History (DocumentTitle(..), URL(..), pushState, replaceState)
 import Web.HTML.Location (setHref)
 import Web.HTML.Window (history, location)
 import Web.HTML.Window as Window
-import Web.UIEvent.MouseEvent (MouseEvent, toEvent)
+import Web.UIEvent.MouseEvent (MouseEvent)
 
 foreign import setTimeout :: Effect Unit -> Int -> Effect Unit
 
@@ -43,7 +43,7 @@ navigate_ path = navigate {} path
 navigateWithEvent :: forall effect state. MonadEffect effect => WriteForeign state =>
     state -> String -> MouseEvent -> effect Unit
 navigateWithEvent state path event = do
-    liftEffect $ preventDefault $ toEvent event
+    preventMouseDefault event
     navigate state path
 
 navigateWithEvent_ :: forall effect. MonadEffect effect => String -> MouseEvent -> effect Unit
