@@ -22,6 +22,8 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import Simple.JSON.Async as Json
+import TeamTavern.Client.Components.Boarding.PlayerOrTeamInput as Boarding
+import TeamTavern.Client.Pages.Preboarding as Preboarding
 import TeamTavern.Client.Pages.Profiles.GameHeader as GameHeader
 import TeamTavern.Client.Pages.Profiles.PlayerProfiles (playerProfiles)
 import TeamTavern.Client.Pages.Profiles.PlayerProfiles as PlayerProfiles
@@ -31,7 +33,7 @@ import TeamTavern.Client.Pages.Profiles.TeamProfiles (teamProfiles)
 import TeamTavern.Client.Pages.Profiles.TeamProfiles as TeamProfiles
 import TeamTavern.Client.Script.Cookie (PlayerInfo, getPlayerInfo)
 import TeamTavern.Client.Script.Meta (setMeta)
-import TeamTavern.Client.Script.Navigate (navigate_)
+import TeamTavern.Client.Script.Navigate (navigate, navigate_)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Script.Url as Url
 import TeamTavern.Server.Game.View.SendResponse as ViewGame
@@ -70,6 +72,8 @@ data Action
     | HideCreateProfileModal
     | ReloadPage
     | ChangePage Int
+    | OpenPlayerPreboarding
+    | OpenTeamPreboarding
 
 data State
     = Empty Input
@@ -84,8 +88,6 @@ type ChildSlots =
     , playerProfiles :: PlayerProfiles.Slot
     , teamProfiles :: TeamProfiles.Slot
     , profileFilters :: ProfileFilters.Slot
-    -- , createPlayerProfile :: CreatePlayerProfile.Slot
-    -- , createTeamProfile :: CreateTeamProfile.Slot
     )
 
 filterableFields
@@ -126,11 +128,13 @@ render (Game game' player filters tab) = let
                 input
                 case _ of
                 PlayerProfiles.PageChanged page -> Just $ ChangePage page
+                PlayerProfiles.PreboardingClicked -> Just OpenPlayerPreboarding
             Teams input _ _ ->
                 teamProfiles
                 input
                 case _ of
                 TeamProfiles.PageChanged page -> Just $ ChangePage page
+                TeamProfiles.PreboardingClicked -> Just OpenTeamPreboarding
         ]
     ]
 render NotFound = HH.p_ [ HH.text "Game could not be found." ]
@@ -445,6 +449,17 @@ handleAction (ChangePage page) = do
         Url.set "page" (show page) searchParams
         href <- Url.href url
         navigate_ href
+handleAction OpenPlayerPreboarding = do
+    state <- H.get
+    case state of
+        Game game _ _ _ -> navigate (Preboarding.emptyInput (Just Boarding.Player) (Just game)) "/preboarding/start"
+        _ -> pure unit
+handleAction OpenTeamPreboarding = do
+    state <- H.get
+    case state of
+        Game game _ _ _ -> navigate (Preboarding.emptyInput (Just Boarding.Team) (Just game)) "/preboarding/start"
+        _ -> pure unit
+
 
 component :: forall query output left.
     H.Component HH.HTML query Input output (Async left)

@@ -6,10 +6,11 @@ import Async (Async)
 import Data.Array (mapWithIndex)
 import Data.Array as Array
 import Data.Const (Const)
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), isNothing)
 import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
+import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Components.Card (cardHeader, cardHeading, cardSection, cardSubheading)
 import TeamTavern.Client.Components.Detail (detailColumn, detailColumnHeading4, detailColumns, textDetail)
@@ -22,7 +23,10 @@ import TeamTavern.Client.Components.Team.ProfileDetails (profileDetails')
 import TeamTavern.Client.Components.Team.TeamDetails (teamDetails)
 import TeamTavern.Client.Script.Cookie (PlayerInfo)
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
+import TeamTavern.Client.Snippets.Class as HS
+import TeamTavern.Client.Snippets.PreventMouseDefault (preventMouseDefault)
 import TeamTavern.Server.Profile.ViewTeamProfilesByGame.LoadProfiles (pageSize)
+import Web.UIEvent.MouseEvent (MouseEvent)
 
 type TeamProfile =
     { owner :: String
@@ -74,8 +78,9 @@ type State = Input
 data Action
     = Receive Input
     | ChangePage Int
+    | OpenPreboarding MouseEvent
 
-data Output = PageChanged Int
+data Output = PageChanged Int | PreboardingClicked
 
 type Slot = H.Slot (Const Void) Output Unit
 
@@ -102,6 +107,12 @@ render { profiles, profileCount, playerInfo, page } =
                 <> " teams"
             ]
         ]
+        <>
+        if isNothing playerInfo
+        then Array.singleton $
+            HH.a [ HS.class_ "primary-button", HE.onClick $ Just <<< OpenPreboarding ]
+            [ HH.i [ HS.class_ "fas fa-user-plus button-icon"] [], HH.text "Create team profile" ]
+        else []
     ]
     <>
     if Array.null profiles
@@ -182,6 +193,9 @@ render { profiles, profileCount, playerInfo, page } =
 handleAction :: forall left. Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
 handleAction (Receive input) = H.put input
 handleAction (ChangePage page) = H.raise $ PageChanged page
+handleAction (OpenPreboarding mouseEvent) = do
+    preventMouseDefault mouseEvent
+    H.raise PreboardingClicked
 
 component :: forall query left. H.Component HH.HTML query Input Output (Async left)
 component = H.mkComponent
