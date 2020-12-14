@@ -22,10 +22,9 @@ import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigate_)
+import TeamTavern.Client.Snippets.PreventMouseDefault (preventMouseDefault)
 import TeamTavern.Server.Conversation.ViewAll.SendResponse as ViewAll
-import Web.Event.Event as Event
 import Web.UIEvent.MouseEvent (MouseEvent)
-import Web.UIEvent.MouseEvent as MouseEvent
 
 type Nickname = String
 
@@ -88,7 +87,7 @@ handleAction Init = do
     H.put state
     setMeta "Conversations | TeamTavern" "View all your conversations."
 handleAction (Navigate path mouseEvent) = do
-    H.liftEffect $ Event.preventDefault $ MouseEvent.toEvent mouseEvent
+    preventMouseDefault mouseEvent
     navigate_ path
 
 component :: forall t174 t199 t202 t205. H.Component HH.HTML t202 t199 t174 (Async t205)

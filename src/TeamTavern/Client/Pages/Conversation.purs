@@ -28,11 +28,10 @@ import TeamTavern.Client.Script.LastUpdated (lastUpdated)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigate_)
 import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass)
+import TeamTavern.Client.Snippets.PreventMouseDefault (preventMouseDefault)
 import TeamTavern.Server.Conversation.Start.SendResponse as Conversation
 import TeamTavern.Server.Conversation.View.SendResponse as View
-import Web.Event.Event as Event
 import Web.UIEvent.MouseEvent (MouseEvent)
-import Web.UIEvent.MouseEvent as MouseEvent
 
 type Nickname = String
 
@@ -129,7 +128,7 @@ loadConversation nickname = Async.unify do
         _ -> Async.left Error
     pure $ Conversation
         { nickname
-        , conversation: conversation'                                             
+        , conversation: conversation'
         , message: ""
         , messageError: false
         , otherError: false
@@ -184,7 +183,7 @@ handleAction (UpdateMessage message) =
         Conversation conversationState -> Conversation conversationState { message = message}
         state -> state
 handleAction (SendMessage mouseEvent) = do
-    H.liftEffect $ Event.preventDefault $ MouseEvent.toEvent mouseEvent
+    preventMouseDefault mouseEvent
     state <- H.get
     case state of
         Conversation conversationState -> do
@@ -199,7 +198,7 @@ handleAction (SendMessage mouseEvent) = do
                 Just newState' -> H.put $ Conversation newState'
         otherState -> pure unit
 handleAction (Navigate path mouseEvent) = do
-    H.liftEffect $ Event.preventDefault $ MouseEvent.toEvent mouseEvent
+    preventMouseDefault mouseEvent
     navigate_ path
 
 component :: forall t440 t466 t469. H.Component HH.HTML t466 String t440 (Async t469)

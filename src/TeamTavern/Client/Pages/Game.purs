@@ -25,10 +25,9 @@ import TeamTavern.Client.Pages.Home.ForPlayers (forPlayers')
 import TeamTavern.Client.Pages.Preboarding as Preboarding
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigate, navigate_)
+import TeamTavern.Client.Snippets.PreventMouseDefault (preventMouseDefault)
 import TeamTavern.Server.Game.View.SendResponse as Game
-import Web.Event.Event as E
 import Web.UIEvent.MouseEvent (MouseEvent)
-import Web.UIEvent.MouseEvent as ME
 
 type Input = { handle :: String }
 
@@ -102,19 +101,19 @@ handleAction (Receive { handle }) = do
             setMeta' game''.title
         _ -> pure unit
 handleAction (OpenPreboarding game' mouseEvent) = do
-    mouseEvent # ME.toEvent # E.preventDefault # H.liftEffect
+    preventMouseDefault mouseEvent
     navigate (Preboarding.emptyInput Nothing (Just game')) "/preboarding/start"
 handleAction (OpenPlayerPreboarding game' mouseEvent) = do
-    mouseEvent # ME.toEvent # E.preventDefault # H.liftEffect
+    preventMouseDefault mouseEvent
     navigate (Preboarding.emptyInput (Just Boarding.Player) (Just game')) "/preboarding/start"
 handleAction (OpenTeamPreboarding game' mouseEvent) = do
-    mouseEvent # ME.toEvent # E.preventDefault # H.liftEffect
+    preventMouseDefault mouseEvent
     navigate (Preboarding.emptyInput (Just Boarding.Team) (Just game')) "/preboarding/start"
 handleAction (OpenPlayerProfiles handle mouseEvent) = do
-    mouseEvent # ME.toEvent # E.preventDefault # H.liftEffect
+    preventMouseDefault mouseEvent
     navigate_ $ "/games/" <> handle <> "/players"
 handleAction (OpenTeamProfiles handle mouseEvent) = do
-    mouseEvent # ME.toEvent # E.preventDefault # H.liftEffect
+    preventMouseDefault mouseEvent
     navigate_ $ "/games/" <> handle <> "/teams"
 
 component :: forall query output left.
