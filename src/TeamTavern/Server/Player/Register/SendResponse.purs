@@ -41,7 +41,8 @@ type BadRequestContent = Variant
 
 errorResponse :: RegisterError -> Response
 errorResponse = match
-    { signedIn: const forbidden__
+    { internal: const internalServerError__
+    , signedIn: const forbidden__
     , unreadableDto: const badRequest__
     , registration: \errors ->
         errors
@@ -54,7 +55,6 @@ errorResponse = match
         # inj (SProxy :: SProxy "registration")
         # (writeJSON :: BadRequestContent -> String)
         # badRequest_
-    , bcrypt: const internalServerError__
     , randomError: const internalServerError__
     , emailTaken: const $ badRequest_ $ writeJSON $
         (inj (SProxy :: SProxy "emailTaken") {} :: BadRequestContent)

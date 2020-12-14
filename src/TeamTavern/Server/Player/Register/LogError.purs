@@ -17,13 +17,14 @@ import Prim.Row (class Lacks)
 import Record.Builder (Builder)
 import Record.Builder as Builder
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
-import TeamTavern.Server.Infrastructure.Log (logLines, logStamped, logt, print)
+import TeamTavern.Server.Infrastructure.Log (internalHandler, logLines, logStamped, logt, print)
 import TeamTavern.Server.Player.Domain.Email (Email)
 import TeamTavern.Server.Player.Domain.Nickname (Nickname)
 import TeamTavern.Server.Player.Register.ValidateRegistration (RegistrationErrors)
 
 type RegisterError = Variant
-    ( signedIn ::
+    ( internal :: Array String
+    , signedIn ::
         { cookieInfo :: CookieInfo
         , cookies :: Map String String
         }
@@ -32,7 +33,6 @@ type RegisterError = Variant
         , errors :: MultipleErrors
         }
     , registration :: RegistrationErrors
-    , bcrypt :: Node.Error
     , randomError :: Node.Error
     , emailTaken ::
         { email :: Email
@@ -63,7 +63,7 @@ logError :: RegisterError -> Effect Unit
 logError registerError = do
     logStamped "Error registering player"
     registerError # match
-        (Builder.build registrationHandler
+        (Builder.build (internalHandler >>> registrationHandler)
         { signedIn: \{ cookieInfo, cookies } -> do
             logt $ "The request came with this player cookie info: "
                 <> show cookieInfo
@@ -71,11 +71,6 @@ logError registerError = do
         , unreadableDto: \{ content, errors } -> do
             logt $ "Couldn't read dto from body: " <> show content
             logt $ "Reading resulted in these errors: " <> show errors
-        -- , invalidModel: \{ dto, errors } -> do
-        --     logt $ "Couldn't validate model: " <> show dto
-        --     logt $ "Validation resulted in these errors: " <> show errors
-        , bcrypt: \error ->
-            logt $ "Password hashing resulted in this error: " <> print error
         , randomError: \error ->
             logt $ "Generating random bytes resulted in this error: "
                 <> print error

@@ -8,34 +8,82 @@ import AsyncV as AsyncV
 import Data.Array (fromFoldable)
 import Data.Array as Array
 import Data.Bifunctor.Label (label)
+import Data.List.Types (NonEmptyList)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Newtype (unwrap)
 import Data.Symbol (SProxy(..))
-import Data.Variant (inj, match, onMatch)
-import Effect.Console (log)
-import Global.Unsafe (unsafeStringify)
+import Data.Variant (Variant, inj, match, onMatch)
+import Effect (Effect, foreachE)
 import Perun.Request.Body (Body)
 import Perun.Response (Response, badRequest_, internalServerError__, noContent_, ok_)
 import Postgres.Pool (Pool)
+import Prim.Row (class Lacks)
+import Record.Builder (Builder)
+import Record.Builder as Builder
 import Simple.JSON (writeJSON)
 import TeamTavern.Routes.Onboard (BadContent, RequestContent, OkContent)
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
+import TeamTavern.Server.Infrastructure.Log (clientHandler, internalHandler, logt, notAuthenticatedHandler, notAuthorizedHandler)
+import TeamTavern.Server.Infrastructure.Log as Log
 import TeamTavern.Server.Infrastructure.Postgres (transaction)
 import TeamTavern.Server.Infrastructure.ReadJsonBody (readJsonBody)
 import TeamTavern.Server.Player.UpdatePlayer.UpdateDetails (updateDetails)
-import TeamTavern.Server.Player.UpdatePlayer.ValidatePlayer (validatePlayerV)
+import TeamTavern.Server.Player.UpdatePlayer.ValidatePlayer (PlayerErrors, validatePlayerV)
 import TeamTavern.Server.Profile.AddPlayerProfile.AddProfile (addProfile)
 import TeamTavern.Server.Profile.AddPlayerProfile.LoadFields (loadFields)
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile (validateProfileV)
+import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile as PlayerProfile
 import TeamTavern.Server.Profile.AddTeamProfile.AddProfile as AddTeamProfile
 import TeamTavern.Server.Profile.AddTeamProfile.ValidateProfile as TeamProfile
 import TeamTavern.Server.Profile.Infrastructure.ConvertFields (convertFields)
 import TeamTavern.Server.Team.Create.AddTeam (addTeam)
 import TeamTavern.Server.Team.Infrastructure.GenerateHandle (generateHandle)
-import TeamTavern.Server.Team.Infrastructure.ValidateTeam (validateTeamV)
+import TeamTavern.Server.Team.Infrastructure.ValidateTeam (TeamErrors, validateTeamV)
+import Type (type ($))
 
--- errorResponse :: RegisterError -> Response
+type OnboardError = Variant
+    ( client :: Array String
+    , internal :: Array String
+    , notAuthenticated :: Array String
+    , notAuthorized :: Array String
+    , invalidBody :: NonEmptyList $ Variant
+        ( player :: PlayerErrors
+        , team :: TeamErrors
+        , playerProfile :: PlayerProfile.ProfileErrors
+        , teamProfile :: TeamProfile.ProfileErrors
+        )
+    )
+
+invalidBodyHandler :: forall fields. Lacks "invalidBody" fields =>
+    Builder (Record fields)
+    { invalidBody ::
+        NonEmptyList $ Variant
+        ( player :: PlayerErrors
+        , team :: TeamErrors
+        , playerProfile :: PlayerProfile.ProfileErrors
+        , teamProfile :: TeamProfile.ProfileErrors
+        )
+        -> Effect Unit
+    | fields }
+invalidBodyHandler = Builder.insert (SProxy :: SProxy "invalidBody") \errors ->
+    foreachE (Array.fromFoldable errors) $ match
+    { player: \errors' -> logt $ "Player errors: " <> show errors'
+    , team: \errors' -> logt $ "Team errors: " <> show errors'
+    , playerProfile: \errors' -> logt $ "Player profile errors: " <> show errors'
+    , teamProfile: \errors' -> logt $ "Team profile errors: " <> show errors'
+    }
+
+logError :: OnboardError -> Effect Unit
+logError = Log.logError "Error boarding"
+    ( internalHandler
+    >>> clientHandler
+    >>> notAuthenticatedHandler
+    >>> notAuthorizedHandler
+    >>> invalidBodyHandler
+    )
+
+errorResponse :: OnboardError -> Response
 errorResponse = onMatch
     { invalidBody: \errors ->
         errors
@@ -51,17 +99,15 @@ errorResponse = onMatch
     }
     (const internalServerError__)
 
--- successResponse :: SendResponseModel -> Response
-successResponse = maybe noContent_ (ok_ <<< (writeJSON :: OkContent -> String)) -- const noContent_
+successResponse :: Maybe OkContent -> Response
+successResponse = maybe noContent_ (ok_ <<< (writeJSON :: OkContent -> String))
 
--- sendResponse ::
---     Async RegisterError SendResponseModel -> (forall left. Async left Response)
+sendResponse :: Async OnboardError (Maybe OkContent) -> (forall left. Async left Response)
 sendResponse = alwaysRight errorResponse successResponse
 
-onboard :: Pool -> Cookies -> Body -> Async _ Response
+onboard :: forall left. Pool -> Cookies -> Body -> Async left Response
 onboard pool cookies body =
-    -- sendResponse $ examineLeftWithEffect logError do
-    sendResponse $ examineLeftWithEffect (unsafeStringify >>> log) do
+    sendResponse $ examineLeftWithEffect logError do
 
     -- Ensure the player is signed in.
     cookieInfo <- ensureSignedIn pool cookies

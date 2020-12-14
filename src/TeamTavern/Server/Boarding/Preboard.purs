@@ -9,41 +9,112 @@ import Data.Array (fromFoldable)
 import Data.Array as Array
 import Data.Bifunctor.Label (label)
 import Data.Either (isRight)
+import Data.List.Types (NonEmptyList)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
 import Data.Symbol (SProxy(..))
-import Data.Variant (inj, match, onMatch)
+import Data.Variant (Variant, inj, match, onMatch)
+import Effect (Effect, foreachE)
 import Effect.Console (log)
 import Global.Unsafe (unsafeStringify)
+import Node.Errors (Error)
 import Perun.Request.Body (Body)
 import Perun.Response (Response, badRequest_, internalServerError__, ok_)
+import Postgres.Error as Postgres
 import Postgres.Pool (Pool)
 import Postmark.Client (Client)
+import Prim.Row (class Lacks)
+import Record.Builder (Builder)
+import Record.Builder as Builder
 import Simple.JSON (writeJSON)
 import TeamTavern.Routes.Preboard (BadContent, RequestContent, OkContent)
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
-import TeamTavern.Server.Infrastructure.EnsureNotSignedIn (ensureNotSignedIn)
+import TeamTavern.Server.Infrastructure.EnsureNotSignedIn (ensureNotSignedIn')
+import TeamTavern.Server.Infrastructure.Log (clientHandler, internalHandler, logt, notAuthenticatedHandler, notAuthorizedHandler)
+import TeamTavern.Server.Infrastructure.Log as Log
 import TeamTavern.Server.Infrastructure.Postgres (transaction)
 import TeamTavern.Server.Infrastructure.ReadJsonBody (readJsonBody)
+import TeamTavern.Server.Player.Domain.Email (Email)
 import TeamTavern.Server.Player.Domain.Hash (generateHash)
 import TeamTavern.Server.Player.Domain.Id (Id(..))
+import TeamTavern.Server.Player.Domain.Nickname (Nickname)
 import TeamTavern.Server.Player.Domain.Nonce (generateNonce)
 import TeamTavern.Server.Player.Register.AddPlayer (addPlayer)
 import TeamTavern.Server.Player.Register.SendEmail (sendEmail)
-import TeamTavern.Server.Player.Register.ValidateRegistration (validateRegistrationV)
+import TeamTavern.Server.Player.Register.ValidateRegistration (RegistrationErrors, validateRegistrationV)
 import TeamTavern.Server.Player.UpdatePlayer.UpdateDetails (updateDetails)
-import TeamTavern.Server.Player.UpdatePlayer.ValidatePlayer (validatePlayerV)
+import TeamTavern.Server.Player.UpdatePlayer.ValidatePlayer (PlayerErrors, validatePlayerV)
 import TeamTavern.Server.Profile.AddPlayerProfile.AddProfile (addProfile)
 import TeamTavern.Server.Profile.AddPlayerProfile.LoadFields (loadFields)
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile (validateProfileV)
+import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile as PlayerProfile
 import TeamTavern.Server.Profile.AddTeamProfile.AddProfile as AddTeamProfile
 import TeamTavern.Server.Profile.AddTeamProfile.ValidateProfile as TeamProfile
 import TeamTavern.Server.Profile.Infrastructure.ConvertFields (convertFields)
 import TeamTavern.Server.Team.Create.AddTeam (addTeam)
 import TeamTavern.Server.Team.Infrastructure.GenerateHandle (generateHandle)
-import TeamTavern.Server.Team.Infrastructure.ValidateTeam (validateTeamV)
+import TeamTavern.Server.Team.Infrastructure.ValidateTeam (TeamErrors, validateTeamV)
+import Type (type ($))
 
--- errorResponse :: RegisterError -> Response
+type PreboardError = Variant
+    ( client :: Array String
+    , internal :: Array String
+    , signedIn :: Array String
+    , notAuthenticated :: Array String
+    , notAuthorized :: Array String
+    , invalidBody :: NonEmptyList $ Variant
+        ( player :: PlayerErrors
+        , team :: TeamErrors
+        , playerProfile :: PlayerProfile.ProfileErrors
+        , teamProfile :: TeamProfile.ProfileErrors
+        , registration :: RegistrationErrors
+        )
+    , emailTaken ::
+        { email :: Email
+        , error :: Postgres.Error
+        }
+    , nicknameTaken ::
+        { nickname :: Nickname
+        , error :: Postgres.Error
+        }
+    , randomError :: Error
+    )
+
+invalidBodyHandler :: forall fields. Lacks "invalidBody" fields =>
+    Builder (Record fields)
+    { invalidBody ::
+        NonEmptyList $ Variant
+        ( player :: PlayerErrors
+        , team :: TeamErrors
+        , playerProfile :: PlayerProfile.ProfileErrors
+        , teamProfile :: TeamProfile.ProfileErrors
+        , registration :: RegistrationErrors
+        )
+        -> Effect Unit
+    | fields }
+invalidBodyHandler = Builder.insert (SProxy :: SProxy "invalidBody") \errors ->
+    foreachE (Array.fromFoldable errors) $ match
+    { player: \errors' -> logt $ "Player errors: " <> show errors'
+    , team: \errors' -> logt $ "Team errors: " <> show errors'
+    , playerProfile: \errors' -> logt $ "Player profile errors: " <> show errors'
+    , teamProfile: \errors' -> logt $ "Team profile errors: " <> show errors'
+    , registration: \errors' -> logt $ "Registration errors: " <> show errors'
+    }
+
+logError :: PreboardError -> Effect Unit
+logError = Log.logError "Error preboarding"
+    ( internalHandler
+    >>> clientHandler
+    >>> notAuthenticatedHandler
+    >>> notAuthorizedHandler
+    >>> invalidBodyHandler
+    >>> (Builder.insert (SProxy :: SProxy "emailTaken") (unsafeStringify >>> logt))
+    >>> (Builder.insert (SProxy :: SProxy "nicknameTaken") (unsafeStringify >>> logt))
+    >>> (Builder.insert (SProxy :: SProxy "signedIn") (unsafeStringify >>> logt))
+    >>> (Builder.insert (SProxy :: SProxy "randomError") (unsafeStringify >>> logt))
+    )
+
+errorResponse :: PreboardError -> Response
 errorResponse = onMatch
     { invalidBody: \errors ->
         errors
@@ -60,20 +131,18 @@ errorResponse = onMatch
     }
     (const internalServerError__)
 
--- successResponse :: SendResponseModel -> Response
-successResponse = ok_ <<< (writeJSON :: OkContent -> String) -- const noContent_
+successResponse :: OkContent -> Response
+successResponse = ok_ <<< (writeJSON :: OkContent -> String)
 
--- sendResponse ::
---     Async RegisterError SendResponseModel -> (forall left. Async left Response)
+sendResponse :: Async PreboardError OkContent -> (forall left. Async left Response)
 sendResponse = alwaysRight errorResponse successResponse
 
-preboard :: Pool -> Maybe Client -> Cookies -> Body -> Async _ Response
+preboard :: forall left. Pool -> Maybe Client -> Cookies -> Body -> Async left Response
 preboard pool emailClient cookies body =
-    -- sendResponse $ examineLeftWithEffect logError do
-    sendResponse $ examineLeftWithEffect (unsafeStringify >>> log) do
+    sendResponse $ examineLeftWithEffect logError do
 
     -- Ensure the player is not signed in.
-    ensureNotSignedIn cookies
+    ensureNotSignedIn' cookies
 
     -- Read data from body.
     (content :: RequestContent) <- readJsonBody body

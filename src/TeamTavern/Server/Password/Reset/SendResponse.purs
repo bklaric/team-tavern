@@ -16,13 +16,13 @@ type BadRequestContent = Variant
 
 errorResponse :: ResetError -> Response
 errorResponse = match
-    { signedIn: const badRequest__
+    { internal: const internalServerError__
+    , signedIn: const badRequest__
     , unreadableNewPassword: const badRequest__
     , databaseError: const internalServerError__
     , invalidPassword: const $ badRequest_
         $ (writeJSON :: BadRequestContent -> String)
         $ inj (SProxy :: SProxy "invalidPassword") {}
-    , bcrypt: const internalServerError__
     , invalidNonce: const $ badRequest_
         $ (writeJSON :: BadRequestContent -> String)
         $ inj (SProxy :: SProxy "invalidNonce") {}
