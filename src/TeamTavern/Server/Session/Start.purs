@@ -30,8 +30,7 @@ start deployment pool cookies body =
 
     pool # withTransaction (inj (SProxy :: SProxy "databaseError")) \client -> do
         -- Check if password hash matches.
-        { id, nickname, emailConfirmed } <-
-            checkPassword { nicknameOrEmail, password } client
+        { id, nickname } <- checkPassword { nicknameOrEmail, password } client
 
         -- Generate session token.
         token <- Token.generate

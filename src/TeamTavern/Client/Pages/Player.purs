@@ -22,8 +22,6 @@ import TeamTavern.Client.Pages.Player.EditPlayer (editPlayer)
 import TeamTavern.Client.Pages.Player.EditPlayer as EditDetails
 import TeamTavern.Client.Pages.Player.EditProfile (editProfile)
 import TeamTavern.Client.Pages.Player.EditProfile as EditProfile
-import TeamTavern.Client.Pages.Player.EditSettings (editSettings)
-import TeamTavern.Client.Pages.Player.EditSettings as EditSettings
 import TeamTavern.Client.Pages.Player.Profiles (profiles)
 import TeamTavern.Client.Pages.Player.Status (Status(..), getStatus)
 import TeamTavern.Client.Pages.Player.Teams (teams)
@@ -73,7 +71,6 @@ type Slot = H.Slot (Const Void) Void Unit
 type ChildSlots =
     ( discordTag :: Copyable.Slot String
     , team :: NavigationAnchor.Slot String
-    , editSettings :: EditSettings.Slot
     , messagePlayer :: NavigationAnchor.Slot Unit
     , games :: NavigationAnchor.Slot String
     , editPlayer :: EditDetails.Slot
@@ -129,11 +126,6 @@ render (Loaded state @ { player: player', status, editPopoverShown }) =
     <>
     ( if state.editPlayerModalShown
         then [ editPlayer player' $ const $ Just HideEditPlayerModal ]
-        else []
-    )
-    <>
-    ( if state.editSettingsModalShown
-        then [ editSettings player' $ const $ Just HideEditSettingsModal ]
         else []
     )
     <>

@@ -31,13 +31,11 @@ type CheckPasswordDto =
     { id :: Int
     , nickname :: String
     , hash :: String
-    , emailConfirmed :: Boolean
     }
 
 type CheckPasswordResult =
     { id :: Id
     , nickname :: Nickname
-    , emailConfirmed :: Boolean
     }
 
 type CheckPasswordError errors = Variant
@@ -56,11 +54,9 @@ queryString = Query """
     select
         player.id,
         player.nickname,
-        player.password_hash as hash,
-        player.email_confirmed as "emailConfirmed"
+        player.password_hash as hash
     from player
-    where lower(player.email) = lower($1)
-        or lower(player.nickname) = lower($1)
+    where lower(player.nickname) = lower($1)
     """
 
 queryParameters :: NicknameOrEmail -> Array QueryParameter
@@ -81,7 +77,7 @@ checkPassword model @ { nicknameOrEmail, password } querier = do
         # traverse read
         # labelMap (SProxy :: SProxy "unreadableHash")
             { result, errors: _ }
-    { id, nickname, hash, emailConfirmed } :: CheckPasswordDto <- head dtos
+    { id, nickname, hash } :: CheckPasswordDto <- head dtos
         # note (inj (SProxy :: SProxy "noMatchingPlayer") nicknameOrEmail)
 
     -- Compare hash with password.
@@ -90,4 +86,4 @@ checkPassword model @ { nicknameOrEmail, password } querier = do
     when (not matches) $ left
         $ inj (SProxy :: SProxy "passwordDoesntMatch") nicknameOrEmail
 
-    pure $ { id: wrap id, nickname: wrap nickname, emailConfirmed }
+    pure $ { id: wrap id, nickname: wrap nickname }
