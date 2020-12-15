@@ -22,7 +22,7 @@ import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Script.Cookie (hasPlayerIdCookie)
 import TeamTavern.Client.Script.Meta (setMeta)
-import TeamTavern.Client.Script.Navigate (navigate_)
+import TeamTavern.Client.Script.Navigate (navigateReplace_, navigate_)
 import TeamTavern.Client.Snippets.ErrorClasses (otherErrorClass)
 import TeamTavern.Server.Session.Start.ReadModel (StartDto)
 import TeamTavern.Server.Session.Start.SendResponse as Start
@@ -160,7 +160,7 @@ sendSignInRequest state @ { nickname, password } = Async.unify do
 handleAction :: forall output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
 handleAction Init = do
-    H.liftEffect $ whenM hasPlayerIdCookie $ navigate_ "/"
+    H.liftEffect $ whenM hasPlayerIdCookie $ navigateReplace_ "/"
     setMeta "Sign in | TeamTavern" "Sign in to TeamTavern."
 handleAction (UpdateNickname nickname) =
     H.modify_ (_ { nickname = nickname })

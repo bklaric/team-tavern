@@ -160,7 +160,7 @@ handleRequest deployment pool client method url cookies body =
             pure { statusCode: 404, headers: MultiMap.empty, content: show errors }
     Right routeValues -> routeValues # match
         { registerPlayer: const $
-            Player.register pool client cookies body
+            Player.register deployment pool cookies body
         , viewPlayer:
             Player.view pool cookies
         , updatePlayer: \{ nickname } ->

@@ -4,14 +4,12 @@ import Prelude
 
 import Async (Async, alwaysRight)
 import Data.Array (fromFoldable)
-import Data.Newtype (unwrap)
 import Data.Variant (SProxy(..), Variant, inj, match)
-import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, ok_)
+import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, noContent)
 import Simple.JSON (writeJSON)
-import TeamTavern.Server.Player.Domain.Nickname (Nickname)
+import TeamTavern.Server.Architecture.Deployment (Deployment)
+import TeamTavern.Server.Infrastructure.Cookie (CookieInfo, setCookieHeaderFull)
 import TeamTavern.Server.Player.Register.LogError (RegisterError)
-
-type SendResponseModel = { nickname :: Nickname }
 
 type OkContent = { nickname :: String }
 
@@ -45,11 +43,11 @@ errorResponse = match
         (inj (SProxy :: SProxy "nicknameTaken") {} :: BadRequestContent)
     , databaseError: const internalServerError__
     , cantReadId: const internalServerError__
+    , noSessionStarted: const internalServerError__
     }
 
-successResponse :: SendResponseModel -> Response
-successResponse { nickname } = ok_ $ writeJSON ({ nickname: unwrap nickname } :: OkContent)
+successResponse :: Deployment -> CookieInfo -> Response
+successResponse deployment cookieInfo = noContent $ setCookieHeaderFull deployment cookieInfo
 
-sendResponse ::
-    Async RegisterError SendResponseModel -> (forall left. Async left Response)
-sendResponse = alwaysRight errorResponse successResponse
+sendResponse :: Deployment -> Async RegisterError CookieInfo -> (forall left. Async left Response)
+sendResponse deployment = alwaysRight errorResponse $ successResponse deployment

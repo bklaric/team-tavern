@@ -17,8 +17,10 @@ import Record.Builder (Builder)
 import Record.Builder as Builder
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Server.Infrastructure.Log (internalHandler, logLines, logStamped, logt, print)
+import TeamTavern.Server.Player.Domain.Id (Id)
 import TeamTavern.Server.Player.Domain.Nickname (Nickname)
 import TeamTavern.Server.Player.Register.ValidateRegistration (RegistrationErrors)
+import TeamTavern.Server.Session.Domain.Token (Token)
 
 type RegisterError = Variant
     ( internal :: Array String
@@ -38,6 +40,10 @@ type RegisterError = Variant
         }
     , databaseError :: Postgres.Error
     , cantReadId :: Result
+    , noSessionStarted ::
+        { id :: Id
+        , token :: Token
+        }
     )
 
 registrationHandler :: forall fields. Lacks "registration" fields =>
@@ -71,4 +77,6 @@ logError registerError = do
         , cantReadId: \result ->
             logt $ "Can't read player id from response: "
                 <> (unsafeStringify $ rows result)
+        , noSessionStarted: \info ->
+            logt $ "No session started: " <> show info
         })

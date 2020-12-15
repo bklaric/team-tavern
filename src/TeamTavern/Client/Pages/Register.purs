@@ -1,4 +1,4 @@
-module TeamTavern.Client.Pages.Register where
+module TeamTavern.Client.Pages.Register (Slot, register) where
 
 import Prelude
 
@@ -8,7 +8,6 @@ import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
 import Data.Bifunctor (bimap, lmap)
 import Data.Const (Const)
-import Data.Either (Either(..))
 import Data.Foldable (foldl)
 import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..))
@@ -22,33 +21,31 @@ import Halogen.HTML.Properties (ButtonType(..), InputType(..))
 import Halogen.HTML.Properties as HP
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
+import TeamTavern.Client.Pages.Onboarding as Onboarding
 import TeamTavern.Client.Script.Cookie (hasPlayerIdCookie)
-import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
+import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigate, navigateReplace_, navigateWithEvent_)
 import TeamTavern.Client.Snippets.ErrorClasses (inputErrorClass, otherErrorClass)
+import TeamTavern.Server.Player.Register.ReadDto (RegisterDto)
 import TeamTavern.Server.Player.Register.SendResponse as Register
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 import Web.UIEvent.MouseEvent (MouseEvent)
 
 data Action
-    = Init
-    | EmailInput String
-    | NicknameInput String
-    | PasswordInput String
+    = Initialize
+    | UpdateNickname String
+    | UpdatePassword String
     | TogglePasswordVisibility
     | Register Event
     | Navigate String MouseEvent
 
 type State =
-    { email :: String
-    , nickname :: String
+    { nickname :: String
     , password :: String
     , passwordShown :: Boolean
-    , emailError :: Boolean
     , nicknameError :: Boolean
     , passwordError :: Boolean
-    , emailTaken :: Boolean
     , nicknameTaken :: Boolean
     , otherError :: Boolean
     , submitting :: Boolean
@@ -58,14 +55,11 @@ type Slot = H.Slot (Const Void) Void
 
 render :: forall left slots. State -> H.ComponentHTML Action slots (Async left)
 render
-    { email
-    , nickname
+    { nickname
     , password
     , passwordShown
-    , emailError
     , nicknameError
     , passwordError
-    , emailTaken
     , nicknameTaken
     , otherError
     , submitting
@@ -89,7 +83,7 @@ render
         , HH.input
             [ HP.id_ "nickname"
             , HP.class_ $ HH.ClassName "text-line-input"
-            , HE.onValueInput $ Just <<< NicknameInput
+            , HE.onValueInput $ Just <<< UpdateNickname
             ]
         , HH.p
             [ HP.class_ $ inputErrorClass nicknameError ]
@@ -103,25 +97,6 @@ render
         ]
     , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
         [ HH.label
-            [ HP.class_ $ HH.ClassName "input-label", HP.for "email" ]
-            [ HH.text "Email address" ]
-        , HH.input
-            [ HP.id_ "email"
-            , HP.class_ $ HH.ClassName "text-line-input"
-            , HE.onValueInput $ Just <<< EmailInput
-            ]
-        , HH.p
-            [ HP.class_ $ inputErrorClass emailError ]
-            [ HH.text
-                $  "This does not look like a valid email. "
-                <> "Please check and try again."
-            ]
-        , HH.p
-            [ HP.class_ $ inputErrorClass emailTaken ]
-            [ HH.text "This email is already taken, please pick another one." ]
-        ]
-    , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
-        [ HH.label
             [ HP.class_ $ HH.ClassName "input-label", HP.for "password" ]
             [ HH.text "Password" ]
         , HH.div [ HP.class_ $ HH.ClassName "password-input-container" ]
@@ -132,7 +107,7 @@ render
                     if passwordShown
                     then InputText
                     else InputPassword
-                , HE.onValueInput $ Just <<< PasswordInput
+                , HE.onValueInput $ Just <<< UpdatePassword
                 ]
             , HH.button
                 [ HP.class_ $ HH.ClassName "password-input-button"
@@ -159,8 +134,7 @@ render
         ]
     , HH.button
         [ HP.class_ $ HH.ClassName "form-submit-button"
-        , HP.disabled $
-            email == "" || nickname == "" || password == "" || submitting
+        , HP.disabled $ nickname == "" || password == "" || submitting
         ]
         [ HH.i [ HP.class_ $ HH.ClassName "fas fa-user-check button-icon" ] []
         , HH.text $
@@ -182,22 +156,20 @@ render
         ]
     ]
 
-sendRegisterRequest :: forall left.
-    State -> Async left (Either State Register.OkContent)
-sendRegisterRequest state @ { email, nickname, password } = Async.unify do
+sendRegisterRequest :: forall left. State -> Async left (Maybe State)
+sendRegisterRequest state @ { nickname, password } = Async.unify do
     response <- Fetch.fetch "/api/players"
         (  Fetch.method := POST
-        <> Fetch.body := Json.writeJSON { email, nickname, password }
+        <> Fetch.body := Json.writeJSON ({ nickname, password } :: RegisterDto)
         <> Fetch.credentials := Fetch.Include
         )
-        # lmap (const $ Left $ state { otherError = true })
+        # lmap (const $ Just $ state { otherError = true })
     newState <- case FetchRes.status response of
-        200 -> FetchRes.text response >>= JsonAsync.readJSON
-            # bimap (const $ Left $ state { otherError = true }) Right
+        204 -> pure Nothing
         400 -> FetchRes.text response >>= JsonAsync.readJSON
             # bimap
-                (const $ Left $ state { otherError = true })
-                (\(error :: Register.BadRequestContent) -> Left $ match
+                (const $ Just $ state { otherError = true })
+                (\(error :: Register.BadRequestContent) -> Just $ match
                     { registration: foldl (\state' -> match
                         { invalidNickname:
                             const $ state' { nicknameError = true }
@@ -209,35 +181,25 @@ sendRegisterRequest state @ { email, nickname, password } = Async.unify do
                         const $ state { nicknameTaken = true }
                     }
                     error)
-        _ -> pure $ Left $ state { otherError = true }
+        _ -> pure $ Just $ state { otherError = true }
     pure newState
 
 handleAction :: forall slots output left.
     Action -> H.HalogenM State Action slots output (Async left) Unit
-handleAction Init = do
-    isSignedIn <- hasPlayerIdCookie
-    if isSignedIn
-        then navigateReplace_ "/"
-        else pure unit
-    H.liftEffect do
-        setMetaTitle "Create account | TeamTavern"
-        setMetaDescription "Create your TeamTavern account."
-        setMetaUrl
-handleAction (EmailInput email) =
-    H.modify_ (_ { email = email })
-handleAction (NicknameInput nickname) =
+handleAction Initialize = do
+    H.liftEffect $ whenM hasPlayerIdCookie $ navigateReplace_ "/"
+    setMeta "Create account | TeamTavern" "Create your TeamTavern account."
+handleAction (UpdateNickname nickname) =
     H.modify_ (_ { nickname = nickname })
-handleAction (PasswordInput password) =
+handleAction (UpdatePassword password) =
     H.modify_ (_ { password = password })
 handleAction TogglePasswordVisibility =
     H.modify_ (\state -> state { passwordShown = not state.passwordShown })
 handleAction (Register event) = do
     H.liftEffect $ preventDefault event
     state <- H.gets (_
-        { emailError     = false
-        , nicknameError  = false
+        { nicknameError  = false
         , passwordError  = false
-        , emailTaken     = false
         , nicknameTaken  = false
         , otherError     = false
         , submitting     = true
@@ -245,35 +207,30 @@ handleAction (Register event) = do
     H.put state
     newState <- H.lift $ sendRegisterRequest state
     case newState of
-        Right content -> navigate content "/welcome"
-        Left newState' -> H.put newState' { submitting = false }
+        Nothing -> navigate Onboarding.emptyInput "/onboarding/start"
+        Just newState' -> H.put newState' { submitting = false }
 handleAction (Navigate url event) =
     navigateWithEvent_ url event
 
-component :: forall query input output left.
-    H.Component HH.HTML query input output (Async left)
+component :: forall query input output left. H.Component HH.HTML query input output (Async left)
 component = H.mkComponent
     { initialState: const
-        { email: ""
-        , nickname: ""
+        { nickname: ""
         , password: ""
         , passwordShown: false
-        , emailError: false
         , nicknameError: false
         , passwordError: false
-        , emailTaken: false
         , nicknameTaken: false
         , otherError: false
         , submitting: false
         }
     , render
     , eval: H.mkEval $ H.defaultEval
-        { initialize = Just Init
+        { initialize = Just Initialize
         , handleAction = handleAction
         }
     }
 
 register :: forall query children left.
     HH.ComponentHTML query (register :: Slot Unit | children) (Async left)
-register =
-    HH.slot (SProxy :: SProxy "register") unit component unit absurd
+register = HH.slot (SProxy :: SProxy "register") unit component unit absurd

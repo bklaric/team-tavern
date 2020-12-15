@@ -34,11 +34,7 @@ errorResponse = match
     }
 
 successResponse :: Deployment -> CookieInfo -> Response
-successResponse deployment cookieInfo =
-    noContent $ setCookieHeaderFull deployment cookieInfo
+successResponse deployment cookieInfo = noContent $ setCookieHeaderFull deployment cookieInfo
 
-sendResponse
-    :: Deployment
-    -> Async StartError CookieInfo
-    -> (forall left. Async left Response)
+sendResponse :: Deployment -> Async StartError CookieInfo -> (forall left. Async left Response)
 sendResponse deployment = alwaysRight errorResponse $ successResponse deployment
