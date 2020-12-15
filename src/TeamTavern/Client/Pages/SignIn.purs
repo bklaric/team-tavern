@@ -9,7 +9,7 @@ import Browser.Async.Fetch.Response as FetchRes
 import Data.Bifunctor (bimap, lmap)
 import Data.Const (Const)
 import Data.HTTP.Method (Method(..))
-import Data.Maybe (Maybe(..), maybe)
+import Data.Maybe (Maybe(..))
 import Data.Options ((:=))
 import Data.Variant (SProxy(..), match)
 import Halogen as H
@@ -18,32 +18,28 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
-import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor, navigationAnchorClassed)
+import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
-import TeamTavern.Client.Pages.Onboarding as Onboarding
-import TeamTavern.Client.Script.Cookie (getPlayerNickname, hasPlayerIdCookie)
-import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
-import TeamTavern.Client.Script.Navigate (navigate, navigate_)
-import TeamTavern.Client.Script.QueryParams (getQueryParam)
+import TeamTavern.Client.Script.Cookie (hasPlayerIdCookie)
+import TeamTavern.Client.Script.Meta (setMeta)
+import TeamTavern.Client.Script.Navigate (navigate_)
 import TeamTavern.Client.Snippets.ErrorClasses (otherErrorClass)
+import TeamTavern.Server.Session.Start.ReadModel (StartDto)
 import TeamTavern.Server.Session.Start.SendResponse as Start
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
 data Action
     = Init
-    | NicknameOrEmailInput String
-    | PasswordInput String
+    | UpdateNickname String
+    | UpdatePassword String
     | TogglePasswordVisibility
     | SignIn Event
 
 type State =
-    { nicknameOrEmail :: String
+    { nickname :: String
     , password :: String
     , passwordShown :: Boolean
-    , nonce :: Maybe String
-    , unconfirmedEmail :: Boolean
-    , nothingConfirmed :: Boolean
     , noSessionStarted :: Boolean
     , otherError :: Boolean
     , submitting :: Boolean
@@ -59,12 +55,9 @@ type ChildSlots =
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render
-    { nicknameOrEmail
+    { nickname
     , password
     , passwordShown
-    , nonce
-    , unconfirmedEmail
-    , nothingConfirmed
     , noSessionStarted
     , otherError
     , submitting
@@ -74,28 +67,21 @@ render
         [ HH.text "Sign in to "
         , navigationAnchor (SProxy :: SProxy "home")
             { path: "/", content: HH.text "TeamTavern" }
-        , HH.text $ maybe "" (const " to confirm your email address") nonce
         ]
     , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
         [ HH.label
-            [ HP.class_ $ HH.ClassName "input-label", HP.for "nicknameOrEmail" ]
-            [ HH.text "Nickname or email address" ]
+            [ HP.class_ $ HH.ClassName "input-label", HP.for "nickname" ]
+            [ HH.text "Nickname" ]
         , HH.input
-            [ HP.id_ "nicknameOrEmail"
+            [ HP.id_ "nickname"
             , HP.class_ $ HH.ClassName "text-line-input"
-            , HE.onValueInput $ Just <<< NicknameOrEmailInput
+            , HE.onValueInput $ Just <<< UpdateNickname
             ]
         ]
     , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
         [ HH.label
             [ HP.class_ $ HH.ClassName "input-label", HP.for "password" ]
-            [ HH.text "Password"
-            , navigationAnchorClassed (SProxy :: SProxy "forgotPasswordAnchor")
-                { class_: "forgot-password"
-                , path: "/forgot-password"
-                , content: HH.text "Forgot password?"
-                }
-            ]
+            [ HH.text "Password" ]
         , HH.div [ HP.class_ $ HH.ClassName "password-input-container" ]
             [ HH.input
                 [ HP.id_ "password"
@@ -104,7 +90,7 @@ render
                     if passwordShown
                     then HP.InputText
                     else HP.InputPassword
-                , HE.onValueInput $ Just <<< PasswordInput
+                , HE.onValueInput $ Just <<< UpdatePassword
                 ]
             , HH.button
                 [ HP.class_ $ HH.ClassName "password-input-button"
@@ -127,7 +113,7 @@ render
         ]
     , HH.button
         [ HP.class_ $ HH.ClassName "form-submit-button"
-        , HP.disabled $ nicknameOrEmail == "" || password == "" || submitting
+        , HP.disabled $ nickname == "" || password == "" || submitting
         ]
         [ HH.i [ HP.class_ $ HH.ClassName "fas fa-sign-in-alt button-icon" ] []
         , HH.text
@@ -136,20 +122,8 @@ render
             else "Sign in"
         ]
     , HH.p
-        [ HP.class_ $ otherErrorClass unconfirmedEmail ]
-        [ HH.text "Please confirm your email address before signing in."
-        ]
-    , HH.p
-        [ HP.class_ $ otherErrorClass nothingConfirmed ]
-        [ HH.text
-            $  "Something went wrong with confirming your email address. "
-            <> "Please try again later or contact the administrator."
-        ]
-    , HH.p
         [ HP.class_ $ otherErrorClass noSessionStarted ]
-        [ HH.text
-            $  "Entered credentials don't appear to be valid. "
-            <> "Please check and try again."
+        [ HH.text "Entered credentials don't appear to be valid. Please check and try again."
         ]
     , HH.p
         [ HP.class_ $ otherErrorClass otherError ]
@@ -163,10 +137,10 @@ render
     ]
 
 sendSignInRequest :: forall left. State -> Async left (Maybe State)
-sendSignInRequest state @ { nicknameOrEmail, password, nonce } = Async.unify do
+sendSignInRequest state @ { nickname, password } = Async.unify do
     response <- Fetch.fetch "/api/sessions"
         (  Fetch.method := POST
-        <> Fetch.body := Json.writeJSON { nicknameOrEmail, password, nonce }
+        <> Fetch.body := Json.writeJSON ({ nickname, password } :: StartDto)
         <> Fetch.credentials := Fetch.Include
         )
         # lmap (const $ Just $ state { otherError = true })
@@ -176,11 +150,7 @@ sendSignInRequest state @ { nicknameOrEmail, password, nonce } = Async.unify do
             # bimap
                 (const $ Just $ state { otherError = true })
                 (\(error :: Start.BadRequestContent) -> Just $ match
-                    { unconfirmedEmail:
-                        const $ state { unconfirmedEmail = true }
-                    , nothingConfirmed:
-                        const $ state { nothingConfirmed = true }
-                    , noSessionStarted:
+                    { noSessionStarted:
                         const $ state { noSessionStarted = true }
                     }
                     error)
@@ -191,49 +161,33 @@ handleAction :: forall output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
 handleAction Init = do
     H.liftEffect $ whenM hasPlayerIdCookie $ navigate_ "/"
-    nonce <- getQueryParam "nonce"
-    H.modify_ (_ { nonce = nonce })
-    H.liftEffect do
-        setMetaTitle "Sign in | TeamTavern"
-        setMetaDescription "Sign in to TeamTavern."
-        setMetaUrl
-handleAction (NicknameOrEmailInput nicknameOrEmail) =
-    H.modify_ (_ { nicknameOrEmail = nicknameOrEmail })
-handleAction (PasswordInput password) =
+    setMeta "Sign in | TeamTavern" "Sign in to TeamTavern."
+handleAction (UpdateNickname nickname) =
+    H.modify_ (_ { nickname = nickname })
+handleAction (UpdatePassword password) =
     H.modify_ (_ { password = password })
 handleAction TogglePasswordVisibility =
     H.modify_ (\state -> state { passwordShown = not state.passwordShown })
 handleAction (SignIn event) = do
     H.liftEffect $ preventDefault event
     state <- H.gets (_
-        { unconfirmedEmail = false
-        , nothingConfirmed = false
-        , noSessionStarted = false
+        { noSessionStarted = false
         , otherError       = false
         , submitting       = true
         })
     H.put state
     newState <- H.lift $ sendSignInRequest state
     case newState of
-        Nothing -> do
-            preboarded <- getQueryParam "preboarded"
-            nickname <- getPlayerNickname
-            case state.nonce, preboarded, nickname of
-                Just _, Nothing, _ -> navigate Onboarding.emptyInput "/onboarding/start"
-                _, _, Just nickname' -> navigate_ $ "/players/" <> nickname'
-                _, _, _ -> navigate_ "/"
+        Nothing -> navigate_ "/"
         Just newState' -> H.put newState' { submitting = false }
 
 component :: forall query input output left.
     H.Component HH.HTML query input output (Async left)
 component = H.mkComponent
     { initialState: const
-        { nicknameOrEmail: ""
+        { nickname: ""
         , password: ""
         , passwordShown: false
-        , nonce: Nothing
-        , unconfirmedEmail: false
-        , nothingConfirmed: false
         , noSessionStarted: false
         , otherError: false
         , submitting: false

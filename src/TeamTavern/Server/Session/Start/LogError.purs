@@ -13,7 +13,6 @@ import Postgres.Result (Result, rows)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Server.Infrastructure.Log (logStamped, logt, print)
 import TeamTavern.Server.Player.Domain.Id (Id)
-import TeamTavern.Server.Session.Domain.NicknameOrEmail (NicknameOrEmail)
 import TeamTavern.Server.Session.Domain.Token (Token)
 
 type StartError = Variant
@@ -32,8 +31,8 @@ type StartError = Variant
         { result :: Result
         , errors :: MultipleErrors
         }
-    , noMatchingPlayer :: NicknameOrEmail
-    , passwordDoesntMatch :: NicknameOrEmail
+    , noMatchingPlayer :: String
+    , passwordDoesntMatch :: String
     , noSessionStarted ::
         { id :: Id
         , token :: Token

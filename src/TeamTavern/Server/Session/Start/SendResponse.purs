@@ -12,11 +12,7 @@ import TeamTavern.Server.Architecture.Deployment (Deployment)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo, setCookieHeaderFull)
 import TeamTavern.Server.Session.Start.LogError (StartError)
 
-type BadRequestContent = Variant
-    ( unconfirmedEmail :: {}
-    , nothingConfirmed :: {}
-    , noSessionStarted :: {}
-    )
+type BadRequestContent = Variant ( noSessionStarted :: {} )
 
 errorResponse :: StartError -> Response
 errorResponse = match

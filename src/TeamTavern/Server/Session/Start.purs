@@ -26,11 +26,11 @@ start deployment pool cookies body =
     ensureNotSignedIn cookies
 
     -- Read start model.
-    model @ { nicknameOrEmail, password } <- readModel body
+    model <- readModel body
 
     pool # withTransaction (inj (SProxy :: SProxy "databaseError")) \client -> do
         -- Check if password hash matches.
-        { id, nickname } <- checkPassword { nicknameOrEmail, password } client
+        { id, nickname } <- checkPassword model client
 
         -- Generate session token.
         token <- Token.generate

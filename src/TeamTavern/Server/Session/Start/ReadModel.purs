@@ -11,18 +11,13 @@ import Foreign (MultipleErrors)
 import Perun.Request.Body (Body)
 import Simple.JSON.Async (readJSON)
 import TeamTavern.Server.Architecture.Perun.Request.Body (readBody)
-import TeamTavern.Server.Player.Domain.Password (Password(..))
-import TeamTavern.Server.Session.Domain.NicknameOrEmail (NicknameOrEmail(..))
 
 type StartDto =
-    { nicknameOrEmail :: String
+    { nickname :: String
     , password :: String
     }
 
-type StartModel =
-    { nicknameOrEmail :: NicknameOrEmail
-    , password :: Password
-    }
+type StartModel = StartDto
 
 type ReadNonceError errors = Variant
     ( unreadableDto ::
@@ -31,13 +26,9 @@ type ReadNonceError errors = Variant
         }
     | errors )
 
-readModel :: forall errors.
-    Body -> Async (ReadNonceError errors) StartModel
+readModel :: forall errors. Body -> Async (ReadNonceError errors) StartModel
 readModel body = do
     content <- readBody body
-    model @ { nicknameOrEmail, password } :: StartDto <- readJSON content
+    { nickname, password } :: StartDto <- readJSON content
         # labelMap (SProxy :: SProxy "unreadableDto") { content, errors: _ }
-    pure
-        { nicknameOrEmail: NicknameOrEmail $ trim nicknameOrEmail
-        , password: Password password
-        }
+    pure { nickname: trim nickname, password }
