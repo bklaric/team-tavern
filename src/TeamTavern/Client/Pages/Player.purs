@@ -3,7 +3,6 @@ module TeamTavern.Client.Pages.Player (Input, Slot, player) where
 import Prelude
 
 import Async (Async)
-import CSS as CSS
 import Client.Components.Copyable as Copyable
 import Control.Monad.State (class MonadState)
 import Data.Const (Const)
@@ -11,11 +10,9 @@ import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
-import Halogen.HTML.CSS as HC
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Components.Content (contentDescription, contentHeader, contentHeading)
-import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Components.Popover (popover, popoverButtonCaret, subscribeToWindowClick)
 import TeamTavern.Client.Pages.Player.CreateTeam (createTeam)
@@ -33,7 +30,6 @@ import TeamTavern.Client.Pages.Player.Teams (teams)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Request (get)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
-import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.ViewPlayer as ViewPlayer
 import Web.Event.Event as E
 import Web.UIEvent.MouseEvent (MouseEvent)
@@ -120,16 +116,7 @@ render (Loaded state @ { player: player', status, editPopoverShown }) =
         , HH.div_
             case status of
             SignedInSelf -> [ renderEditAccountButton editPopoverShown ]
-            SignedInOther ->
-                [ navigationAnchor (SProxy :: SProxy "messagePlayer")
-                    { path: "/conversations/" <> player'.nickname
-                    , content: HH.span [ HC.style $ CSS.fontWeight $ CSS.weight 500.0 ]
-                        [ HH.i [ HS.class_ "fas fa-envelope button-icon" ] []
-                        , HH.text "Message player"
-                        ]
-                    }
-                ]
-            SignedOut -> []
+            _ -> []
         ]
     , contentDescription
         case status of
