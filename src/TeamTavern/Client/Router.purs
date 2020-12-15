@@ -27,10 +27,6 @@ import TeamTavern.Client.Components.Welcome (welcome)
 import TeamTavern.Client.Components.Welcome as Welcome
 import TeamTavern.Client.Pages.About (about)
 import TeamTavern.Client.Pages.About as About
-import TeamTavern.Client.Pages.Conversation (conversation)
-import TeamTavern.Client.Pages.Conversation as Conversation
-import TeamTavern.Client.Pages.Conversations (conversations)
-import TeamTavern.Client.Pages.Conversations as Conversations
 import TeamTavern.Client.Pages.Game (game)
 import TeamTavern.Client.Pages.Game as Game
 import TeamTavern.Client.Pages.Games (games)
@@ -66,8 +62,6 @@ data State
     | Game { handle :: String }
     | Profiles GameHeader.Handle GameHeader.Tab
     | Player { nickname :: String }
-    | Conversations
-    | Conversation String
     | Team { handle :: String }
     | Register
     | SignIn
@@ -88,8 +82,6 @@ type ChildSlots = Footer.ChildSlots
     , game :: Game.Slot
     , profiles :: Profiles.Slot Unit
     , player :: Player.Slot
-    , conversations :: Conversations.Slot
-    , conversation :: Conversation.Slot
     , team :: Team.Slot
     , onboarding :: Onboarding.Slot
     , preboarding :: Preboarding.Slot
@@ -121,8 +113,6 @@ render About = topBarWithContent [ about ]
 render (Game input) = HH.div_ [ topBar, game input, footer ]
 render (Profiles handle tab) = wideTopBarWithContent [ Profiles.profiles handle tab ]
 render (Player input) = topBarWithContent [ player input ]
-render Conversations = topBarWithContent [ conversations ]
-render (Conversation nickname) = topBarWithContent [ conversation nickname]
 render (Team input) = topBarWithContent [ team input ]
 render Register = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ register ] ]
 render SignIn = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ signIn ] ]
@@ -201,10 +191,6 @@ handleAction (Init state route) = do
             case read state of
             Right identifiers -> just $ Welcome identifiers
             Left _ -> navigateReplace_ "/" *> nothing
-        ["", "conversations"] ->
-            just $ Conversations
-        ["", "conversations", nickname] ->
-            just $ Conversation nickname
         ["", "teams", handle] ->
             just $ Team { handle }
         ["", "games"] ->

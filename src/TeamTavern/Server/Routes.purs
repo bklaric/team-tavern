@@ -1,7 +1,6 @@
 module TeamTavern.Server.Routes where
 
 import Jarilo.Junction (type (:<|>))
-import TeamTavern.Server.Conversation.Routes (ConversationRoutes)
 import TeamTavern.Server.Game.Routes (GameRoutes)
 import TeamTavern.Server.Password.Routes (PasswordRoutes)
 import TeamTavern.Server.Player.Routes (PlayerRoutes)
@@ -17,5 +16,4 @@ type TeamTavernRoutes
     :<|> SessionRoutes
     :<|> GameRoutes
     :<|> ProfileRoutes
-    :<|> ConversationRoutes
     :<|> WizardRoutes

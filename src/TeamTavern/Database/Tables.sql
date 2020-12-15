@@ -140,18 +140,3 @@ create table team_profile_field_value_option
     , team_profile_field_value_id integer not null references team_profile_field_value(id) on delete cascade
     , field_option_id integer not null references field_option(id)
     );
-
-create table conversation
-    ( id serial not null primary key
-    , left_interlocutor_id int not null references player(id) on delete cascade
-    , right_interlocutor_id int not null references player(id) on delete cascade
-    );
-
-create table message
-    ( id serial not null primary key
-    , conversation_id int not null references conversation(id)
-    , interlocutor_id int not null references player(id)
-    , content text[] not null
-    , read boolean not null default false
-    , created timestamptz not null default current_timestamp
-    );
