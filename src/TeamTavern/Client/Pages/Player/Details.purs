@@ -38,10 +38,12 @@ details player status showEditPlayerModal = let
     about = textDetail player.about
     in
     card
-    [ cardHeader
-        [ cardHeading "Player"
-        , regularButton "fas fa-user-edit" "Edit player" showEditPlayerModal
-        ]
+    [ cardHeader $
+        [ cardHeading "Player" ]
+        <>
+        case status of
+        SignedInSelf -> [ regularButton "fas fa-user-edit" "Edit player" showEditPlayerModal ]
+        _ -> []
     , cardSection
         if Array.null playerDetails' && Array.null about
         then Array.singleton $ missing
