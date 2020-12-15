@@ -402,7 +402,6 @@ sendRequest (state :: State) = Async.unify do
             , teamProfile: Nothing
             , registration:
                 { nickname: registration.nickname
-                , email: registration.email
                 , password: registration.password
                 }
             }
@@ -438,7 +437,6 @@ sendRequest (state :: State) = Async.unify do
                 }
             , registration:
                 { nickname: registration.nickname
-                , email: registration.email
                 , password: registration.password
                 }
             }
@@ -702,14 +700,12 @@ handleAction SetUpAccount = do
                     (\state' error' ->
                         match
                         { nickname: const $ state' { registration { nicknameError = true } }
-                        , email: const $ state' { registration { emailError = true } }
                         , password: const $ state' { registration { passwordError = true } }
                         }
                         error'
                     )
                     state
                 , nicknameTaken: const $ state { registration { nicknameTaken = true } }
-                , emailTaken: const $ state { registration { emailTaken = true } }
                 }
                 error
             )

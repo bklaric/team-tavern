@@ -36,7 +36,6 @@ import TeamTavern.Server.Architecture.Deployment as Deployment
 import TeamTavern.Server.Game.View (handleView) as Game
 import TeamTavern.Server.Game.ViewAll (handleViewAll) as Game
 import TeamTavern.Server.Infrastructure.Log (logStamped, logt)
-import TeamTavern.Server.Password.Forgot (forgot) as Password
 import TeamTavern.Server.Password.Reset (reset) as Password
 import TeamTavern.Server.Player.EditSettings (updateSettings) as Player
 import TeamTavern.Server.Player.Register (register) as Player
@@ -176,8 +175,6 @@ handleRequest deployment pool client method url cookies body =
             Team.create pool body cookies
         , updateTeam:
             Team.update pool body cookies
-        , forgotPassword: const $
-            Password.forgot pool client cookies body
         , resetPassword: const $
             Password.reset pool cookies body
         , startSession: const $

@@ -199,16 +199,12 @@ sendRegisterRequest state @ { email, nickname, password } = Async.unify do
                 (const $ Left $ state { otherError = true })
                 (\(error :: Register.BadRequestContent) -> Left $ match
                     { registration: foldl (\state' -> match
-                        { invalidEmail:
-                            const $ state' { emailError = true }
-                        , invalidNickname:
+                        { invalidNickname:
                             const $ state' { nicknameError = true }
                         , invalidPassword:
                             const $ state' { passwordError = true }
                         })
                         state
-                    , emailTaken:
-                        const $ state { emailTaken = true }
                     , nicknameTaken:
                         const $ state { nicknameTaken = true }
                     }

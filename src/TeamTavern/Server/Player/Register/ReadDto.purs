@@ -11,8 +11,7 @@ import Simple.JSON.Async (readJSON)
 import TeamTavern.Server.Architecture.Perun.Request.Body (readBody)
 
 type RegisterDto =
-    { email :: String
-    , nickname :: String
+    { nickname :: String
     , password :: String
     }
 

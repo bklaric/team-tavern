@@ -8,14 +8,12 @@ import AsyncV as AsyncV
 import Data.Array (fromFoldable)
 import Data.Array as Array
 import Data.Bifunctor.Label (label)
-import Data.Either (isRight)
 import Data.List.Types (NonEmptyList)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
 import Data.Symbol (SProxy(..))
 import Data.Variant (Variant, inj, match, onMatch)
 import Effect (Effect, foreachE)
-import Effect.Console (log)
 import Global.Unsafe (unsafeStringify)
 import Node.Errors (Error)
 import Perun.Request.Body (Body)
@@ -34,13 +32,10 @@ import TeamTavern.Server.Infrastructure.Log (clientHandler, internalHandler, log
 import TeamTavern.Server.Infrastructure.Log as Log
 import TeamTavern.Server.Infrastructure.Postgres (transaction)
 import TeamTavern.Server.Infrastructure.ReadJsonBody (readJsonBody)
-import TeamTavern.Server.Player.Domain.Email (Email)
 import TeamTavern.Server.Player.Domain.Hash (generateHash)
 import TeamTavern.Server.Player.Domain.Id (Id(..))
 import TeamTavern.Server.Player.Domain.Nickname (Nickname)
-import TeamTavern.Server.Player.Domain.Nonce (generateNonce)
 import TeamTavern.Server.Player.Register.AddPlayer (addPlayer)
-import TeamTavern.Server.Player.Register.SendEmail (sendEmail)
 import TeamTavern.Server.Player.Register.ValidateRegistration (RegistrationErrors, validateRegistrationV)
 import TeamTavern.Server.Player.UpdatePlayer.UpdateDetails (updateDetails)
 import TeamTavern.Server.Player.UpdatePlayer.ValidatePlayer (PlayerErrors, validatePlayerV)
@@ -69,10 +64,6 @@ type PreboardError = Variant
         , teamProfile :: TeamProfile.ProfileErrors
         , registration :: RegistrationErrors
         )
-    , emailTaken ::
-        { email :: Email
-        , error :: Postgres.Error
-        }
     , nicknameTaken ::
         { nickname :: Nickname
         , error :: Postgres.Error
@@ -108,7 +99,6 @@ logError = Log.logError "Error preboarding"
     >>> notAuthenticatedHandler
     >>> notAuthorizedHandler
     >>> invalidBodyHandler
-    >>> (Builder.insert (SProxy :: SProxy "emailTaken") (unsafeStringify >>> logt))
     >>> (Builder.insert (SProxy :: SProxy "nicknameTaken") (unsafeStringify >>> logt))
     >>> (Builder.insert (SProxy :: SProxy "signedIn") (unsafeStringify >>> logt))
     >>> (Builder.insert (SProxy :: SProxy "randomError") (unsafeStringify >>> logt))
@@ -148,7 +138,7 @@ preboard pool emailClient cookies body =
     (content :: RequestContent) <- readJsonBody body
 
     -- Start the transaction.
-    { teamHandle, registration, nonce } <- pool # transaction \client -> do
+    { teamHandle, registration } <- pool # transaction \client -> do
         -- Read fields from database.
         fields <- loadFields client content.gameHandle
 
@@ -166,15 +156,10 @@ preboard pool emailClient cookies body =
                 -- Generate password hash.
                 hash <- generateHash registration'.password
 
-                -- Generate email confirmation nonce.
-                nonce <- generateNonce
-
                 -- Add player.
                 playerId <- addPlayer client
-                    { email: registration'.email
-                    , nickname: registration'.nickname
+                    { nickname: registration'.nickname
                     , hash
-                    , nonce
                     }
 
                 updateDetails client playerId player'
@@ -185,7 +170,7 @@ preboard pool emailClient cookies body =
                     }
                     profile'
 
-                pure { teamHandle: Nothing, registration: registration', nonce }
+                pure { teamHandle: Nothing, registration: registration' }
             { ilk: 2, team: Just team, teamProfile: Just profile, registration } -> do
                 -- Validate data from body.
                 { team', profile', registration' } <-
@@ -199,39 +184,20 @@ preboard pool emailClient cookies body =
                 -- Generate password hash.
                 hash <- generateHash registration'.password
 
-                -- Generate email confirmation nonce.
-                nonce <- generateNonce
-
                 -- Add player.
                 playerId <- addPlayer client
-                    { email: registration'.email
-                    , nickname: registration'.nickname
+                    { nickname: registration'.nickname
                     , hash
-                    , nonce
                     }
 
                 { handle } <- addTeam client (Id playerId) (generateHandle team'.name) team'
 
                 AddTeamProfile.addProfile client (Id playerId) handle content.gameHandle profile'
 
-                pure $ { teamHandle: Just handle, registration: registration', nonce }
+                pure $ { teamHandle: Just handle, registration: registration' }
             _ -> Async.left $ inj (SProxy :: SProxy "client") []
 
-    -- Send confirmation email.
-    emailSent <-
-        sendEmail emailClient
-        { email: registration.email
-        , nickname: registration.nickname
-        , nonce
-        , preboarded: true
-        }
-        # Async.examineLeftWithEffect (log <<< unsafeStringify)
-        # Async.attempt
-        <#> isRight
-
     pure
-        { email: unwrap registration.email
-        , nickname: unwrap registration.nickname
-        , emailSent
+        { nickname: unwrap registration.nickname
         , teamHandle
         }

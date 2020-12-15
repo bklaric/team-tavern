@@ -11,11 +11,9 @@ import Postgres.Pool (Pool)
 import Postmark.Client (Client)
 import TeamTavern.Server.Infrastructure.EnsureNotSignedIn (ensureNotSignedIn)
 import TeamTavern.Server.Player.Domain.Hash (generateHash)
-import TeamTavern.Server.Player.Domain.Nonce (generateNonce)
 import TeamTavern.Server.Player.Register.AddPlayer (addPlayer)
 import TeamTavern.Server.Player.Register.LogError (logError)
 import TeamTavern.Server.Player.Register.ReadDto (readDto)
-import TeamTavern.Server.Player.Register.SendEmail (sendEmail)
 import TeamTavern.Server.Player.Register.SendResponse (sendResponse)
 import TeamTavern.Server.Player.Register.ValidateRegistration (validateRegistration)
 
@@ -30,18 +28,12 @@ register pool client cookies body =
     dto <- readDto body
 
     -- Validate register model.
-    model @ { email, nickname, password } <- validateRegistration dto
+    model @ { nickname, password } <- validateRegistration dto
 
     -- Generate password hash.
     hash <- generateHash password
 
-    -- Generate email confirmation nonce.
-    nonce <- generateNonce
-
     -- Add player to database.
-    _ <- addPlayer pool { email, nickname, hash, nonce }
+    _ <- addPlayer pool { nickname, hash }
 
-    -- Send confirmation email.
-    sendEmail client { email, nickname, nonce, preboarded: false }
-
-    pure { email, nickname }
+    pure { nickname }

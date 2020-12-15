@@ -32,12 +32,6 @@ errorResponse = match
     , passwordDoesntMatch: const $ badRequest
         (singleton' "Content-Type" "application/json") $ writeJSON
         (inj (SProxy :: SProxy "noSessionStarted") {} :: BadRequestContent)
-    , unconfirmedEmail: const $ badRequest
-        (singleton' "Content-Type" "application/json") $ writeJSON
-        (inj (SProxy :: SProxy "unconfirmedEmail") {} :: BadRequestContent)
-    , nothingConfirmed: const $ badRequest
-        (singleton' "Content-Type" "application/json") $ writeJSON
-        (inj (SProxy :: SProxy "nothingConfirmed") {} :: BadRequestContent)
     , noSessionStarted: const $ badRequest
         (singleton' "Content-Type" "application/json") $ writeJSON
         (inj (SProxy :: SProxy "noSessionStarted") {} :: BadRequestContent)

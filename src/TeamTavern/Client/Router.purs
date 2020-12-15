@@ -15,8 +15,6 @@ import TeamTavern.Client.Components.Content (content, singleContent, wideContent
 import TeamTavern.Client.Components.Footer (footer)
 import TeamTavern.Client.Components.Footer as Footer
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
-import TeamTavern.Client.Components.Password.ForgotPassword (forgotPassword)
-import TeamTavern.Client.Components.Password.ForgotPassword as ForgotPassword
 import TeamTavern.Client.Components.Password.ResetPassword (resetPassword)
 import TeamTavern.Client.Components.Password.ResetPassword as ResetPassword
 import TeamTavern.Client.Components.Password.ResetPasswordSent (resetPasswordSent)
@@ -67,7 +65,6 @@ data State
     | SignIn
     | Onboarding Onboarding.Input
     | Preboarding Preboarding.Input
-    | ForgotPassword
     | ResetPasswordSent { email :: String }
     | ResetPassword
     | ResetPasswordSuccess
@@ -89,7 +86,6 @@ type ChildSlots = Footer.ChildSlots
     , homeAnchor :: NavigationAnchor.Slot Unit
     , signInAnchor :: NavigationAnchor.Slot Unit
     , register :: Register.Slot Unit
-    , forgotPassword :: ForgotPassword.Slot
     , resetPassword :: ResetPassword.Slot
     )
 
@@ -118,7 +114,6 @@ render Register = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form
 render SignIn = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ signIn ] ]
 render (Onboarding input) = onboarding input
 render (Preboarding input) = preboarding input
-render ForgotPassword = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ forgotPassword ] ]
 render (ResetPasswordSent resetPasswordData) = singleContent [ resetPasswordSent resetPasswordData ]
 render ResetPassword = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ resetPassword ] ]
 render ResetPasswordSuccess = singleContent [ resetPasswordSuccess ]
@@ -177,8 +172,6 @@ handleAction (Init state route) = do
             case (read_ state :: Maybe Preboarding.Input), step' of
             Just input, Just step'' -> just $ Preboarding input { step = step'' }
             _, _ -> navigateReplace_ "/" *> nothing
-        ["", "forgot-password"] ->
-            just ForgotPassword
         ["", "reset-password-sent"] ->
             case read state of
             Right email -> just $ ResetPasswordSent email

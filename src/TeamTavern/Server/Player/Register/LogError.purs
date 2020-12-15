@@ -12,13 +12,11 @@ import Global.Unsafe (unsafeStringify)
 import Node.Errors as Node
 import Postgres.Error as Postgres
 import Postgres.Result (Result, rows)
-import Postmark.Error as Postmark
 import Prim.Row (class Lacks)
 import Record.Builder (Builder)
 import Record.Builder as Builder
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Server.Infrastructure.Log (internalHandler, logLines, logStamped, logt, print)
-import TeamTavern.Server.Player.Domain.Email (Email)
 import TeamTavern.Server.Player.Domain.Nickname (Nickname)
 import TeamTavern.Server.Player.Register.ValidateRegistration (RegistrationErrors)
 
@@ -34,20 +32,12 @@ type RegisterError = Variant
         }
     , registration :: RegistrationErrors
     , randomError :: Node.Error
-    , emailTaken ::
-        { email :: Email
-        , error :: Postgres.Error
-        }
     , nicknameTaken ::
         { nickname :: Nickname
         , error :: Postgres.Error
         }
     , databaseError :: Postgres.Error
     , cantReadId :: Result
-    , sendEmailError ::
-        { info :: { email :: Email, nickname :: Nickname }
-        , error :: Postmark.Error
-        }
     )
 
 registrationHandler :: forall fields. Lacks "registration" fields =>
@@ -55,7 +45,6 @@ registrationHandler :: forall fields. Lacks "registration" fields =>
 registrationHandler = Builder.insert (SProxy :: SProxy "registration") \errors ->
     foreachE (Array.fromFoldable errors) $ match
         { nickname: logLines
-        , email: logLines
         , password: logLines
         }
 
@@ -74,9 +63,6 @@ logError registerError = do
         , randomError: \error ->
             logt $ "Generating random bytes resulted in this error: "
                 <> print error
-        , emailTaken: \{ email, error } -> do
-            logt $ "Email is already taken: " <> unwrap email
-            logt $ "According to this error: " <> print error
         , nicknameTaken: \{ nickname, error } -> do
             logt $ "Nickname is already taken: " <> unwrap nickname
             logt $ "According to this error: " <> print error
@@ -85,10 +71,4 @@ logError registerError = do
         , cantReadId: \result ->
             logt $ "Can't read player id from response: "
                 <> (unsafeStringify $ rows result)
-        , sendEmailError: \{ info: { email }, error } -> do
-            logt $ "Couldn't send email to address: " <> unwrap email
-            logt $ "Email sending resulted in this error: "
-                <> show error.statusCode <> ", " <> show error.code <> ", "
-                <> error.message
-        }
-        )
+        })

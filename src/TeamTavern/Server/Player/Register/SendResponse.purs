@@ -1,8 +1,4 @@
-module TeamTavern.Server.Player.Register.SendResponse
-    ( OkContent
-    , BadRequestContent
-    , IdentifiersErrorContent
-    , sendResponse) where
+module TeamTavern.Server.Player.Register.SendResponse (OkContent, BadRequestContent, IdentifiersErrorContent, sendResponse) where
 
 import Prelude
 
@@ -12,30 +8,20 @@ import Data.Newtype (unwrap)
 import Data.Variant (SProxy(..), Variant, inj, match)
 import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, ok_)
 import Simple.JSON (writeJSON)
-import TeamTavern.Server.Player.Domain.Email (Email)
 import TeamTavern.Server.Player.Domain.Nickname (Nickname)
 import TeamTavern.Server.Player.Register.LogError (RegisterError)
 
-type SendResponseModel =
-    { email :: Email
-    , nickname :: Nickname
-    }
+type SendResponseModel = { nickname :: Nickname }
 
-type OkContent =
-    { email :: String
-    , nickname :: String
-    , emailSent :: Boolean
-    }
+type OkContent = { nickname :: String }
 
 type IdentifiersErrorContent = Variant
-    ( invalidEmail :: {}
-    , invalidNickname :: {}
+    ( invalidNickname :: {}
     , invalidPassword :: {}
     )
 
 type BadRequestContent = Variant
     ( registration :: Array IdentifiersErrorContent
-    , emailTaken :: {}
     , nicknameTaken :: {}
     )
 
@@ -47,8 +33,7 @@ errorResponse = match
     , registration: \errors ->
         errors
         <#> (match
-            { email: const $ inj (SProxy :: SProxy "invalidEmail") {}
-            , nickname: const $ inj (SProxy :: SProxy "invalidNickname") {}
+            { nickname: const $ inj (SProxy :: SProxy "invalidNickname") {}
             , password: const $ inj (SProxy :: SProxy "invalidPassword") {}
             })
         # fromFoldable
@@ -56,27 +41,14 @@ errorResponse = match
         # (writeJSON :: BadRequestContent -> String)
         # badRequest_
     , randomError: const internalServerError__
-    , emailTaken: const $ badRequest_ $ writeJSON $
-        (inj (SProxy :: SProxy "emailTaken") {} :: BadRequestContent)
     , nicknameTaken: const $ badRequest_ $ writeJSON $
         (inj (SProxy :: SProxy "nicknameTaken") {} :: BadRequestContent)
     , databaseError: const internalServerError__
     , cantReadId: const internalServerError__
-    , sendEmailError: _.info >>> \{ email, nickname } ->
-        ok_ $ writeJSON
-        ({ email: unwrap email
-        , nickname: unwrap nickname
-        , emailSent: false
-        } :: OkContent)
     }
 
 successResponse :: SendResponseModel -> Response
-successResponse { email, nickname } =
-    ok_ $ writeJSON
-    ({ email: unwrap email
-    , nickname: unwrap nickname
-    , emailSent: true
-    } :: OkContent)
+successResponse { nickname } = ok_ $ writeJSON ({ nickname: unwrap nickname } :: OkContent)
 
 sendResponse ::
     Async RegisterError SendResponseModel -> (forall left. Async left Response)
