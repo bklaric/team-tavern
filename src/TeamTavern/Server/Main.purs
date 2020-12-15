@@ -33,9 +33,6 @@ import Postmark.Client (Client)
 import Postmark.Client as Postmark
 import TeamTavern.Server.Architecture.Deployment (Deployment(..))
 import TeamTavern.Server.Architecture.Deployment as Deployment
-import TeamTavern.Server.Conversation.Start (start) as Conversation
-import TeamTavern.Server.Conversation.View (view) as Conversation
-import TeamTavern.Server.Conversation.ViewAll (viewAll) as Conversation
 import TeamTavern.Server.Game.View (handleView) as Game
 import TeamTavern.Server.Game.ViewAll (handleViewAll) as Game
 import TeamTavern.Server.Infrastructure.Log (logStamped, logt)
@@ -203,12 +200,6 @@ handleRequest deployment pool client method url cookies body =
             Profile.viewPlayerProfilesByGame pool handle page timezone $ bundleFilters filters
         , viewTeamProfilesByGame: \filters @ { handle, page, timezone } ->
             Profile.viewTeamProfilesByGame pool handle page timezone $ bundleFilters filters
-        , viewAllConversations: const $
-            Conversation.viewAll pool cookies
-        , viewConversation: \{ nickname } ->
-            Conversation.view pool nickname cookies
-        , startConversation: \{ nickname } ->
-            Conversation.start pool client nickname cookies body
         , onboard: const $
             Onboard.onboard pool cookies body
         , preboard: const $
