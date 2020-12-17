@@ -200,7 +200,7 @@ handleRequest deployment pool client method url cookies body =
         , onboard: const $
             Onboard.onboard pool cookies body
         , preboard: const $
-            Preboard.preboard pool client cookies body
+            Preboard.preboard deployment pool client cookies body
         }
         <#> (\response -> response { headers = response.headers <> MultiMap.fromFoldable
                 [ Tuple "Access-Control-Allow-Origin" $ NEL.singleton "http://localhost:1337"
