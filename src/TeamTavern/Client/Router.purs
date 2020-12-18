@@ -3,26 +3,19 @@ module TeamTavern.Client.Router (Query(..), router) where
 import Prelude
 
 import Async (Async)
-import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.String (Pattern(..), split)
 import Foreign (Foreign)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
-import Simple.JSON (read, read_)
+import Simple.JSON (read_)
 import TeamTavern.Client.Components.Content (content, singleContent, wideContent)
 import TeamTavern.Client.Components.Footer (footer)
 import TeamTavern.Client.Components.Footer as Footer
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
-import TeamTavern.Client.Components.Password.ResetPassword (resetPassword)
-import TeamTavern.Client.Components.Password.ResetPassword as ResetPassword
-import TeamTavern.Client.Components.Password.ResetPasswordSent (resetPasswordSent)
-import TeamTavern.Client.Components.Password.ResetPasswordSuccess (resetPasswordSuccess)
 import TeamTavern.Client.Components.TopBar (topBar)
 import TeamTavern.Client.Components.TopBar as TopBar
-import TeamTavern.Client.Components.Welcome (welcome)
-import TeamTavern.Client.Components.Welcome as Welcome
 import TeamTavern.Client.Pages.About (about)
 import TeamTavern.Client.Pages.About as About
 import TeamTavern.Client.Pages.Game (game)
@@ -65,10 +58,6 @@ data State
     | SignIn
     | Onboarding Onboarding.Input
     | Preboarding Preboarding.Input
-    | ResetPasswordSent { email :: String }
-    | ResetPassword
-    | ResetPasswordSuccess
-    | Welcome Welcome.Input
     | NotFound
 
 type ChildSlots = Footer.ChildSlots
@@ -86,7 +75,6 @@ type ChildSlots = Footer.ChildSlots
     , homeAnchor :: NavigationAnchor.Slot Unit
     , signInAnchor :: NavigationAnchor.Slot Unit
     , register :: Register.Slot Unit
-    , resetPassword :: ResetPassword.Slot
     )
 
 topBarWithContent
@@ -114,10 +102,6 @@ render Register = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form
 render SignIn = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ signIn ] ]
 render (Onboarding input) = onboarding input
 render (Preboarding input) = preboarding input
-render (ResetPasswordSent resetPasswordData) = singleContent [ resetPasswordSent resetPasswordData ]
-render ResetPassword = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ resetPassword ] ]
-render ResetPasswordSuccess = singleContent [ resetPasswordSuccess ]
-render (Welcome welcomeData) = singleContent [ welcome welcomeData ]
 render NotFound = HH.p_ [ HH.text "You're fucken lost, mate." ]
 
 just :: forall t5 t7. Applicative t5 => t7 -> t5 (Maybe t7)
@@ -172,18 +156,6 @@ handleAction (Init state route) = do
             case (read_ state :: Maybe Preboarding.Input), step' of
             Just input, Just step'' -> just $ Preboarding input { step = step'' }
             _, _ -> navigateReplace_ "/" *> nothing
-        ["", "reset-password-sent"] ->
-            case read state of
-            Right email -> just $ ResetPasswordSent email
-            Left _ -> navigateReplace_ "/" *> nothing
-        ["", "reset-password"] ->
-            just ResetPassword
-        ["", "reset-password-success"] ->
-            just ResetPasswordSuccess
-        ["", "welcome"] ->
-            case read state of
-            Right identifiers -> just $ Welcome identifiers
-            Left _ -> navigateReplace_ "/" *> nothing
         ["", "teams", handle] ->
             just $ Team { handle }
         ["", "games"] ->
