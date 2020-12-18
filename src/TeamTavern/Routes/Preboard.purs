@@ -18,7 +18,6 @@ type Preboard = Route
 
 type RegisterRequestContent =
     { nickname :: String
-    , email :: String
     , password :: String
     }
 
@@ -32,12 +31,7 @@ type RequestContent =
     , registration :: RegisterRequestContent
     }
 
-type OkContent =
-    { nickname :: String
-    , email :: String
-    , emailSent :: Boolean
-    , teamHandle :: Maybe String
-    }
+type OkContent = { teamHandle :: Maybe String }
 
 type BadContent = Array $ Variant
     ( player :: Array $ Variant
@@ -59,9 +53,7 @@ type BadContent = Array $ Variant
         ( ambitions :: Array String )
     , registration :: Array $ Variant
         ( nickname :: Array String
-        , email :: Array String
         , password :: Array String
         )
-    , emailTaken :: Array String
     , nicknameTaken :: Array String
     )

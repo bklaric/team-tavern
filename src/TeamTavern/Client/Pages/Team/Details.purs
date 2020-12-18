@@ -8,6 +8,7 @@ import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
 import Halogen as H
 import Record as Record
+import TeamTavern.Client.Components.Button (regularButton)
 import TeamTavern.Client.Components.Card (card, cardHeader, cardHeading, cardSection)
 import TeamTavern.Client.Components.Detail (detailColumn, detailColumnHeading3, detailColumns, detailColumnsContainer, textDetail)
 import TeamTavern.Client.Components.Missing (missing)
@@ -16,8 +17,8 @@ import TeamTavern.Client.Pages.Team.Status (Status(..))
 import TeamTavern.Server.Team.View (Team)
 
 details :: forall action slots left.
-    Team -> Status -> H.ComponentHTML action slots (Async left)
-details team status = let
+    Team -> Status -> action -> H.ComponentHTML action slots (Async left)
+details team status showEditTeamModal = let
     teamDetails' = teamDetails
         ( team
         # Record.modify (SProxy :: SProxy "weekdayOnline")
@@ -32,7 +33,12 @@ details team status = let
     about = textDetail team.about
     in
     card
-    [ cardHeader [ cardHeading "Team" ]
+    [ cardHeader $
+        [ cardHeading "Team" ]
+        <>
+        case status of
+        SignedInOwner -> [ regularButton "fas fa-edit" "Edit team" showEditTeamModal ]
+        _ -> []
     , cardSection
         if Array.null teamDetails' && Array.null about
         then Array.singleton $ missing

@@ -12,11 +12,7 @@ import TeamTavern.Server.Architecture.Deployment (Deployment)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo, setCookieHeaderFull)
 import TeamTavern.Server.Session.Start.LogError (StartError)
 
-type BadRequestContent = Variant
-    ( unconfirmedEmail :: {}
-    , nothingConfirmed :: {}
-    , noSessionStarted :: {}
-    )
+type BadRequestContent = Variant ( noSessionStarted :: {} )
 
 errorResponse :: StartError -> Response
 errorResponse = match
@@ -32,23 +28,13 @@ errorResponse = match
     , passwordDoesntMatch: const $ badRequest
         (singleton' "Content-Type" "application/json") $ writeJSON
         (inj (SProxy :: SProxy "noSessionStarted") {} :: BadRequestContent)
-    , unconfirmedEmail: const $ badRequest
-        (singleton' "Content-Type" "application/json") $ writeJSON
-        (inj (SProxy :: SProxy "unconfirmedEmail") {} :: BadRequestContent)
-    , nothingConfirmed: const $ badRequest
-        (singleton' "Content-Type" "application/json") $ writeJSON
-        (inj (SProxy :: SProxy "nothingConfirmed") {} :: BadRequestContent)
     , noSessionStarted: const $ badRequest
         (singleton' "Content-Type" "application/json") $ writeJSON
         (inj (SProxy :: SProxy "noSessionStarted") {} :: BadRequestContent)
     }
 
 successResponse :: Deployment -> CookieInfo -> Response
-successResponse deployment cookieInfo =
-    noContent $ setCookieHeaderFull deployment cookieInfo
+successResponse deployment cookieInfo = noContent $ setCookieHeaderFull deployment cookieInfo
 
-sendResponse
-    :: Deployment
-    -> Async StartError CookieInfo
-    -> (forall left. Async left Response)
+sendResponse :: Deployment -> Async StartError CookieInfo -> (forall left. Async left Response)
 sendResponse deployment = alwaysRight errorResponse $ successResponse deployment

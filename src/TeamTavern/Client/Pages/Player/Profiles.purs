@@ -4,9 +4,7 @@ import Prelude
 
 import Async (Async)
 import Data.Array as Array
-import Data.Const (Const)
 import Data.Symbol (SProxy(..))
-import Halogen as H
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Button (regularButton)
 import TeamTavern.Client.Components.Card (card, cardHeader, cardHeading, cardSection)
@@ -17,13 +15,14 @@ import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Components.Player.ProfileDetails (profileDetails)
 import TeamTavern.Client.Components.Profile (profileHeader, profileHeaderItem, profileHeading, profileSubheading)
 import TeamTavern.Client.Pages.Player.CreateProfileButton (createProfileButton)
+import TeamTavern.Client.Pages.Player.CreateProfileButton as CreateProfileButton
 import TeamTavern.Client.Pages.Player.Status (Status(..))
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
 import TeamTavern.Routes.ViewPlayer as ViewPlayer
 
 type ChildSlots children =
     ( games :: NavigationAnchor.Slot String
-    , createProfile :: H.Slot (Const Void) Void Unit
+    , createProfile :: CreateProfileButton.Slot
     | children)
 
 profiles

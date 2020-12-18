@@ -11,7 +11,6 @@ import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
-import TeamTavern.Client.Components.Button (regularButton)
 import TeamTavern.Client.Components.Content (contentDescription, contentHeader, contentHeading)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
@@ -63,18 +62,12 @@ render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render (Empty _) = HH.div_ []
 render (Loaded { team: team', status, showEditTeamModal, showEditProfileModal } ) =
     HH.div_  $
-    [ contentHeader
-        [ HH.div_ [ contentHeading team'.name ]
-        , HH.div_
-            case status of
-            SignedInOwner -> [ regularButton "fas fa-edit" "Edit team" ShowEditTeamModal ]
-            _ -> []
-        ]
+    [ contentHeader [ HH.div_ [ contentHeading team'.name ] ]
     , contentDescription
         case status of
         SignedInOwner -> "View and edit all your team's details and profiles."
         _ -> "View all team's details and profiles."
-    , details team' status
+    , details team' status ShowEditTeamModal
     , profiles team'.handle team'.profiles status ShowEditProfileModal
     ]
     <>

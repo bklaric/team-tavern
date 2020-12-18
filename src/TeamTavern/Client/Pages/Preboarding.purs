@@ -44,7 +44,6 @@ import TeamTavern.Client.Script.Navigate (navigate, navigateReplace, navigate_)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Preboard as Preboard
 import TeamTavern.Server.Game.View.SendResponse as ViewGame
-import Type (type ($))
 
 data Step
     = Greeting
@@ -369,7 +368,7 @@ render :: forall slots left.
 render state = boarding $ renderPage state
 
 sendRequest :: forall left.
-    State -> Async left (Maybe (Either Preboard.BadContent (Maybe Preboard.OkContent)))
+    State -> Async left (Maybe (Either Preboard.BadContent Preboard.OkContent))
 sendRequest (state :: State) = Async.unify do
     (body :: Preboard.RequestContent) <-
         case state of
@@ -402,7 +401,6 @@ sendRequest (state :: State) = Async.unify do
             , teamProfile: Nothing
             , registration:
                 { nickname: registration.nickname
-                , email: registration.email
                 , password: registration.password
                 }
             }
@@ -438,7 +436,6 @@ sendRequest (state :: State) = Async.unify do
                 }
             , registration:
                 { nickname: registration.nickname
-                , email: registration.email
                 , password: registration.password
                 }
             }
@@ -450,10 +447,9 @@ sendRequest (state :: State) = Async.unify do
         <> Fetch.credentials := Fetch.Include
         )
         # lmap (const Nothing)
-    content :: Either Preboard.BadContent $ Maybe Preboard.OkContent <-
+    content :: Either Preboard.BadContent Preboard.OkContent <-
         case FetchRes.status response of
-        200 -> FetchRes.text response >>= JsonAsync.readJSON # bimap (const Nothing) (Right <<< Just)
-        204 -> pure $ Right Nothing
+        200 -> FetchRes.text response >>= JsonAsync.readJSON # bimap (const Nothing) Right
         400 -> FetchRes.text response >>= JsonAsync.readJSON # bimap (const Nothing) Left
         _ -> Async.left Nothing
     pure $ Just content
@@ -580,7 +576,6 @@ handleAction (UpdateRegistration registration) = do
     state <- H.modify _
         { registration
             { nickname = registration.nickname
-            , email = registration.email
             , password = registration.password
             }
         }
@@ -606,14 +601,14 @@ handleAction SetUpAccount = do
                 }
             , registration
                 { nicknameError = false
-                , emailError = false
                 , passwordError = false
+                , nicknameTaken = false
                 }
             }
     response <- H.lift $ sendRequest currentState
     case response of
-        Just (Right Nothing) -> navigate_ "/"
-        Just (Right (Just input)) -> navigate input $ "/welcome"
+        Just (Right { teamHandle: Nothing }) -> navigate_ "/"
+        Just (Right { teamHandle: Just teamHandle }) -> navigate_ $ "/teams/" <> teamHandle
         Just (Left errors) -> H.put $
             foldl
             (\state error ->
@@ -702,14 +697,12 @@ handleAction SetUpAccount = do
                     (\state' error' ->
                         match
                         { nickname: const $ state' { registration { nicknameError = true } }
-                        , email: const $ state' { registration { emailError = true } }
                         , password: const $ state' { registration { passwordError = true } }
                         }
                         error'
                     )
                     state
                 , nicknameTaken: const $ state { registration { nicknameTaken = true } }
-                , emailTaken: const $ state { registration { emailTaken = true } }
                 }
                 error
             )

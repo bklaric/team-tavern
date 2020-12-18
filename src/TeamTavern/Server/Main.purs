@@ -36,8 +36,6 @@ import TeamTavern.Server.Architecture.Deployment as Deployment
 import TeamTavern.Server.Game.View (handleView) as Game
 import TeamTavern.Server.Game.ViewAll (handleViewAll) as Game
 import TeamTavern.Server.Infrastructure.Log (logStamped, logt)
-import TeamTavern.Server.Password.Forgot (forgot) as Password
-import TeamTavern.Server.Password.Reset (reset) as Password
 import TeamTavern.Server.Player.EditSettings (updateSettings) as Player
 import TeamTavern.Server.Player.Register (register) as Player
 import TeamTavern.Server.Player.UpdatePlayer (updatePlayer) as Player
@@ -161,7 +159,7 @@ handleRequest deployment pool client method url cookies body =
             pure { statusCode: 404, headers: MultiMap.empty, content: show errors }
     Right routeValues -> routeValues # match
         { registerPlayer: const $
-            Player.register pool client cookies body
+            Player.register deployment pool cookies body
         , viewPlayer:
             Player.view pool cookies
         , updatePlayer: \{ nickname } ->
@@ -176,10 +174,6 @@ handleRequest deployment pool client method url cookies body =
             Team.create pool body cookies
         , updateTeam:
             Team.update pool body cookies
-        , forgotPassword: const $
-            Password.forgot pool client cookies body
-        , resetPassword: const $
-            Password.reset pool cookies body
         , startSession: const $
             Session.start deployment pool cookies body
         , endSession: const
@@ -203,7 +197,7 @@ handleRequest deployment pool client method url cookies body =
         , onboard: const $
             Onboard.onboard pool cookies body
         , preboard: const $
-            Preboard.preboard pool client cookies body
+            Preboard.preboard deployment pool client cookies body
         }
         <#> (\response -> response { headers = response.headers <> MultiMap.fromFoldable
                 [ Tuple "Access-Control-Allow-Origin" $ NEL.singleton "http://localhost:1337"

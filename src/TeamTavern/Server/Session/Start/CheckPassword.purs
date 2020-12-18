@@ -7,37 +7,33 @@ import Async (Async, left, note)
 import Bcrypt.Async as Bcrypt
 import Data.Array (head)
 import Data.Bifunctor.Label (label, labelMap)
-import Data.Newtype (unwrap, wrap)
+import Data.Newtype (wrap)
 import Data.Traversable (traverse)
 import Data.Variant (SProxy(..), Variant, inj)
 import Foreign (MultipleErrors)
 import Node.Errors as Node
 import Postgres.Async.Query (query)
 import Postgres.Error as Postgres
-import Postgres.Query (class Querier, Query(..), QueryParameter, (:))
+import Postgres.Query (class Querier, Query(..), (:))
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
 import TeamTavern.Server.Player.Domain.Id (Id)
 import TeamTavern.Server.Player.Domain.Nickname (Nickname)
-import TeamTavern.Server.Player.Domain.Password (Password)
-import TeamTavern.Server.Session.Domain.NicknameOrEmail (NicknameOrEmail)
 
 type CheckPasswordModel =
-    { nicknameOrEmail :: NicknameOrEmail
-    , password :: Password
+    { nickname :: String
+    , password :: String
     }
 
 type CheckPasswordDto =
     { id :: Int
     , nickname :: String
     , hash :: String
-    , emailConfirmed :: Boolean
     }
 
 type CheckPasswordResult =
     { id :: Id
     , nickname :: Nickname
-    , emailConfirmed :: Boolean
     }
 
 type CheckPasswordError errors = Variant
@@ -46,9 +42,9 @@ type CheckPasswordError errors = Variant
         { result :: Result
         , errors :: MultipleErrors
         }
-    , noMatchingPlayer :: NicknameOrEmail
+    , noMatchingPlayer :: String
     , bcrypt :: Node.Error
-    , passwordDoesntMatch :: NicknameOrEmail
+    , passwordDoesntMatch :: String
     | errors )
 
 queryString :: Query
@@ -56,15 +52,10 @@ queryString = Query """
     select
         player.id,
         player.nickname,
-        player.password_hash as hash,
-        player.email_confirmed as "emailConfirmed"
+        player.password_hash as hash
     from player
-    where lower(player.email) = lower($1)
-        or lower(player.nickname) = lower($1)
+    where lower(player.nickname) = lower($1)
     """
-
-queryParameters :: NicknameOrEmail -> Array QueryParameter
-queryParameters nicknameOrEmail = nicknameOrEmail : []
 
 checkPassword
     :: forall querier errors
@@ -72,22 +63,20 @@ checkPassword
     => CheckPasswordModel
     -> querier
     -> Async (CheckPasswordError errors) CheckPasswordResult
-checkPassword model @ { nicknameOrEmail, password } querier = do
+checkPassword model querier = do
     -- Load player hash.
     result <- querier
-        # query queryString (queryParameters nicknameOrEmail)
+        # query queryString (model.nickname : [])
         # label (SProxy :: SProxy "databaseError")
     dtos <- rows result
         # traverse read
         # labelMap (SProxy :: SProxy "unreadableHash")
             { result, errors: _ }
-    { id, nickname, hash, emailConfirmed } :: CheckPasswordDto <- head dtos
-        # note (inj (SProxy :: SProxy "noMatchingPlayer") nicknameOrEmail)
+    { id, nickname, hash } :: CheckPasswordDto <- head dtos
+        # note (inj (SProxy :: SProxy "noMatchingPlayer") model.nickname)
 
     -- Compare hash with password.
-    matches <- Bcrypt.compare (unwrap password) hash
-        # label (SProxy :: SProxy "bcrypt")
-    when (not matches) $ left
-        $ inj (SProxy :: SProxy "passwordDoesntMatch") nicknameOrEmail
+    matches <- Bcrypt.compare model.password hash # label (SProxy :: SProxy "bcrypt")
+    when (not matches) $ left $ inj (SProxy :: SProxy "passwordDoesntMatch") nickname
 
-    pure $ { id: wrap id, nickname: wrap nickname, emailConfirmed }
+    pure $ { id: wrap id, nickname: wrap nickname }

@@ -75,7 +75,7 @@ type RequestContent =
     , teamProfile :: Maybe TeamProfileRequestContent
     }
 
-type OkContent = { teamHandle :: String }
+type OkContent = { teamHandle :: Maybe String }
 
 type BadContent = Array $ Variant
     ( player :: Array $ Variant

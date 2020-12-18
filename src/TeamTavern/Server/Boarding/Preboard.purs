@@ -8,18 +8,16 @@ import AsyncV as AsyncV
 import Data.Array (fromFoldable)
 import Data.Array as Array
 import Data.Bifunctor.Label (label)
-import Data.Either (isRight)
 import Data.List.Types (NonEmptyList)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
 import Data.Symbol (SProxy(..))
 import Data.Variant (Variant, inj, match, onMatch)
 import Effect (Effect, foreachE)
-import Effect.Console (log)
 import Global.Unsafe (unsafeStringify)
 import Node.Errors (Error)
 import Perun.Request.Body (Body)
-import Perun.Response (Response, badRequest_, internalServerError__, ok_)
+import Perun.Response (Response, badRequest_, internalServerError__, ok)
 import Postgres.Error as Postgres
 import Postgres.Pool (Pool)
 import Postmark.Client (Client)
@@ -28,19 +26,17 @@ import Record.Builder (Builder)
 import Record.Builder as Builder
 import Simple.JSON (writeJSON)
 import TeamTavern.Routes.Preboard (BadContent, RequestContent, OkContent)
-import TeamTavern.Server.Infrastructure.Cookie (Cookies)
+import TeamTavern.Server.Architecture.Deployment (Deployment)
+import TeamTavern.Server.Infrastructure.Cookie (CookieInfo, Cookies, setCookieHeaderFull)
 import TeamTavern.Server.Infrastructure.EnsureNotSignedIn (ensureNotSignedIn')
 import TeamTavern.Server.Infrastructure.Log (clientHandler, internalHandler, logt, notAuthenticatedHandler, notAuthorizedHandler)
 import TeamTavern.Server.Infrastructure.Log as Log
 import TeamTavern.Server.Infrastructure.Postgres (transaction)
 import TeamTavern.Server.Infrastructure.ReadJsonBody (readJsonBody)
-import TeamTavern.Server.Player.Domain.Email (Email)
 import TeamTavern.Server.Player.Domain.Hash (generateHash)
 import TeamTavern.Server.Player.Domain.Id (Id(..))
 import TeamTavern.Server.Player.Domain.Nickname (Nickname)
-import TeamTavern.Server.Player.Domain.Nonce (generateNonce)
 import TeamTavern.Server.Player.Register.AddPlayer (addPlayer)
-import TeamTavern.Server.Player.Register.SendEmail (sendEmail)
 import TeamTavern.Server.Player.Register.ValidateRegistration (RegistrationErrors, validateRegistrationV)
 import TeamTavern.Server.Player.UpdatePlayer.UpdateDetails (updateDetails)
 import TeamTavern.Server.Player.UpdatePlayer.ValidatePlayer (PlayerErrors, validatePlayerV)
@@ -51,6 +47,7 @@ import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile as PlayerProfi
 import TeamTavern.Server.Profile.AddTeamProfile.AddProfile as AddTeamProfile
 import TeamTavern.Server.Profile.AddTeamProfile.ValidateProfile as TeamProfile
 import TeamTavern.Server.Profile.Infrastructure.ConvertFields (convertFields)
+import TeamTavern.Server.Session.Domain.Token as Token
 import TeamTavern.Server.Team.Create.AddTeam (addTeam)
 import TeamTavern.Server.Team.Infrastructure.GenerateHandle (generateHandle)
 import TeamTavern.Server.Team.Infrastructure.ValidateTeam (TeamErrors, validateTeamV)
@@ -69,10 +66,6 @@ type PreboardError = Variant
         , teamProfile :: TeamProfile.ProfileErrors
         , registration :: RegistrationErrors
         )
-    , emailTaken ::
-        { email :: Email
-        , error :: Postgres.Error
-        }
     , nicknameTaken ::
         { nickname :: Nickname
         , error :: Postgres.Error
@@ -108,11 +101,15 @@ logError = Log.logError "Error preboarding"
     >>> notAuthenticatedHandler
     >>> notAuthorizedHandler
     >>> invalidBodyHandler
-    >>> (Builder.insert (SProxy :: SProxy "emailTaken") (unsafeStringify >>> logt))
     >>> (Builder.insert (SProxy :: SProxy "nicknameTaken") (unsafeStringify >>> logt))
     >>> (Builder.insert (SProxy :: SProxy "signedIn") (unsafeStringify >>> logt))
     >>> (Builder.insert (SProxy :: SProxy "randomError") (unsafeStringify >>> logt))
     )
+
+type PreboardResult =
+    { teamHandle :: Maybe String
+    , cookieInfo :: CookieInfo
+    }
 
 errorResponse :: PreboardError -> Response
 errorResponse = onMatch
@@ -131,15 +128,19 @@ errorResponse = onMatch
     }
     (const internalServerError__)
 
-successResponse :: OkContent -> Response
-successResponse = ok_ <<< (writeJSON :: OkContent -> String)
+successResponse :: Deployment -> PreboardResult -> Response
+successResponse deployment { teamHandle, cookieInfo } =
+    ok (setCookieHeaderFull deployment cookieInfo)
+    ((writeJSON :: OkContent -> String) { teamHandle })
 
-sendResponse :: Async PreboardError OkContent -> (forall left. Async left Response)
-sendResponse = alwaysRight errorResponse successResponse
+sendResponse ::
+    Deployment -> Async PreboardError PreboardResult -> (forall left. Async left Response)
+sendResponse deployment = alwaysRight errorResponse $ successResponse deployment
 
-preboard :: forall left. Pool -> Maybe Client -> Cookies -> Body -> Async left Response
-preboard pool emailClient cookies body =
-    sendResponse $ examineLeftWithEffect logError do
+preboard :: forall left.
+    Deployment -> Pool -> Maybe Client -> Cookies -> Body -> Async left Response
+preboard deployment pool emailClient cookies body =
+    sendResponse deployment $ examineLeftWithEffect logError do
 
     -- Ensure the player is not signed in.
     ensureNotSignedIn' cookies
@@ -148,7 +149,7 @@ preboard pool emailClient cookies body =
     (content :: RequestContent) <- readJsonBody body
 
     -- Start the transaction.
-    { teamHandle, registration, nonce } <- pool # transaction \client -> do
+    pool # transaction \client -> do
         -- Read fields from database.
         fields <- loadFields client content.gameHandle
 
@@ -166,26 +167,27 @@ preboard pool emailClient cookies body =
                 -- Generate password hash.
                 hash <- generateHash registration'.password
 
-                -- Generate email confirmation nonce.
-                nonce <- generateNonce
+                -- Generate session token.
+                token <- Token.generate
 
                 -- Add player.
-                playerId <- addPlayer client
-                    { email: registration'.email
-                    , nickname: registration'.nickname
+                id <- addPlayer client
+                    { nickname: registration'.nickname
                     , hash
-                    , nonce
                     }
 
-                updateDetails client playerId player'
+                updateDetails client id player'
 
-                addProfile client playerId
+                addProfile client id
                     { handle: content.gameHandle
                     , nickname: unwrap registration'.nickname
                     }
                     profile'
 
-                pure { teamHandle: Nothing, registration: registration', nonce }
+                pure
+                    { teamHandle: Nothing
+                    , cookieInfo: { id: Id id, nickname: registration'.nickname, token }
+                    }
             { ilk: 2, team: Just team, teamProfile: Just profile, registration } -> do
                 -- Validate data from body.
                 { team', profile', registration' } <-
@@ -199,39 +201,21 @@ preboard pool emailClient cookies body =
                 -- Generate password hash.
                 hash <- generateHash registration'.password
 
-                -- Generate email confirmation nonce.
-                nonce <- generateNonce
+                -- Generate session token.
+                token <- Token.generate
 
                 -- Add player.
-                playerId <- addPlayer client
-                    { email: registration'.email
-                    , nickname: registration'.nickname
+                id <- addPlayer client
+                    { nickname: registration'.nickname
                     , hash
-                    , nonce
                     }
 
-                { handle } <- addTeam client (Id playerId) (generateHandle team'.name) team'
+                { handle } <- addTeam client (Id id) (generateHandle team'.name) team'
 
-                AddTeamProfile.addProfile client (Id playerId) handle content.gameHandle profile'
+                AddTeamProfile.addProfile client (Id id) handle content.gameHandle profile'
 
-                pure $ { teamHandle: Just handle, registration: registration', nonce }
+                pure
+                    { teamHandle: Just handle
+                    , cookieInfo: { id: Id id, nickname: registration'.nickname, token }
+                    }
             _ -> Async.left $ inj (SProxy :: SProxy "client") []
-
-    -- Send confirmation email.
-    emailSent <-
-        sendEmail emailClient
-        { email: registration.email
-        , nickname: registration.nickname
-        , nonce
-        , preboarded: true
-        }
-        # Async.examineLeftWithEffect (log <<< unsafeStringify)
-        # Async.attempt
-        <#> isRight
-
-    pure
-        { email: unwrap registration.email
-        , nickname: unwrap registration.nickname
-        , emailSent
-        , teamHandle
-        }
