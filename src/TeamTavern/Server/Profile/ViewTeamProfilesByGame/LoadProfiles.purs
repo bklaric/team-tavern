@@ -252,6 +252,7 @@ queryStringWithoutPagination handle timezone filters = Query $ """
             team.locations,
             team.languages,
             team.microphone,
+            team.discord_server as "discordServer",
             case
                 when team.weekday_from is not null and team.weekday_to is not null
                 then json_build_object(
