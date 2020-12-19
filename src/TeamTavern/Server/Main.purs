@@ -29,9 +29,7 @@ import Perun.Url (Url, pathSegments, queryPairs)
 import Postgres.Client.Config (ClientConfig, database, host, password, port, user)
 import Postgres.Pool (Pool)
 import Postgres.Pool as Pool
-import Postmark.Client (Client)
-import Postmark.Client as Postmark
-import TeamTavern.Server.Architecture.Deployment (Deployment(..))
+import TeamTavern.Server.Architecture.Deployment (Deployment)
 import TeamTavern.Server.Architecture.Deployment as Deployment
 import TeamTavern.Server.Game.View (handleView) as Game
 import TeamTavern.Server.Game.ViewAll (handleViewAll) as Game
@@ -112,32 +110,17 @@ loadDeployment =
     <#> note "Couldn't read variable DEPLOYMENT."
     # ExceptT
 
-loadPostmarkApiKey :: ExceptT String Effect String
-loadPostmarkApiKey =
-    lookupEnv "POSTMARK"
-    <#> note "Couldn't read variable POSTMARK."
-    # ExceptT
-
-createPostmarkClient :: Deployment -> ExceptT String Effect (Maybe Client)
-createPostmarkClient =
-    case _ of
-    Local -> pure Nothing
-    Cloud -> do
-        apiKey <- loadPostmarkApiKey
-        lift $ Just <$> Postmark.create apiKey
-
 teamTavernRoutes = JunctionProxy :: JunctionProxy TeamTavernRoutes
 
 handleRequest
     :: Deployment
     -> Pool
-    -> Maybe Client
     -> Either CustomMethod Method
     -> Url
     -> Map String String
     -> Body
     -> (forall left. Async left Response)
-handleRequest deployment pool client method url cookies body =
+handleRequest deployment pool method url cookies body =
     case router teamTavernRoutes method (pathSegments url) (queryPairs url) of
     Left errors ->
         if method == Right OPTIONS
@@ -206,15 +189,10 @@ handleRequest deployment pool client method url cookies body =
                 , Tuple "Access-Control-Allow-Credentials" $ NEL.singleton "true"
                 ]})
 
-handleInvalidUrl
-    :: Deployment
-    -> Pool
-    -> Maybe Client
-    -> Request
-    -> (forall left. Async left Response)
-handleInvalidUrl deployment pool client { method, url, cookies, body } =
+handleInvalidUrl :: Deployment -> Pool -> Request -> (forall left. Async left Response)
+handleInvalidUrl deployment pool { method, url, cookies, body } =
     case url of
-    Right url' -> handleRequest deployment pool client method url' cookies body
+    Right url' -> handleRequest deployment pool method url' cookies body
     Left url' -> pure
         { statusCode: 400
         , headers: MultiMap.empty
@@ -225,5 +203,4 @@ main :: Effect Unit
 main = either log pure =<< runExceptT do
     deployment <- loadDeployment
     pool <- createPostgresPool
-    client <- createPostmarkClient deployment
-    lift $ run_ listenOptions (handleInvalidUrl deployment pool client)
+    lift $ run_ listenOptions (handleInvalidUrl deployment pool)
