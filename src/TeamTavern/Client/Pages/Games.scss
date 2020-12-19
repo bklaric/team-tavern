@@ -46,7 +46,7 @@
     @media screen and (min-width: 600px) {
         display: inline-flex;
         width: 320px;
-        background: #603520 !important;
+        background: hsl(20, 20%, 19%) !important;
     }
 
     @media screen and (min-width: 960px) {
@@ -80,14 +80,14 @@
 }
 
 .game-card-profile-count {
-    display:inline;
+    display: inline;
     font-size: 16px;
     font-weight: 400;
     vertical-align: 1px;
 
     a {
         color: white;
-        
+
         &:hover {
             text-decoration: underline;
         }
