@@ -9,19 +9,20 @@ import Web.UIEvent.MouseEvent (MouseEvent)
 findProfiles :: forall slots action. (MouseEvent -> action) -> HH.HTML slots action
 findProfiles onClick =
     landingSection
-    [ landingSectionText
+    [ landingSectionImage "/images/search.png"
+    , landingSectionText
         [ landingSectionHeading "fas fa-search" "Find your new teammates now!"
         , landingSectionDescription "Search through players and teams who have already created their profiles for featured games on TeamTavern."
         , landingSectionButton "View all games" "/games" onClick
         ]
-    , landingSectionImage "/images/search.png"
     ]
 
 findProfiles' :: forall slots action.
     String -> String -> (MouseEvent -> action) -> (MouseEvent -> action) -> HH.HTML slots action
 findProfiles' handle title onPlayersClick onTeamsClick =
     landingSection
-    [ landingSectionText
+    [ landingSectionImage "/images/search.png"
+    , landingSectionText
         [ landingSectionHeading "fas fa-search" "Find your new teammates now!"
         , landingSectionDescription $ "Search through players and teams who have already created their " <> title <> " profiles on TeamTavern."
         , landingSectionButtons
@@ -29,5 +30,4 @@ findProfiles' handle title onPlayersClick onTeamsClick =
             , landingSectionButton "View team profiles" ("/games/" <> handle <> "/teams") onTeamsClick
             ]
         ]
-    , landingSectionImage "/images/search.png"
     ]

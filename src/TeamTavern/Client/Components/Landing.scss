@@ -8,12 +8,21 @@
         text-align: left;
         max-width: 1000px;
         margin: auto;
+
+        &:nth-child(2n) {
+            grid-template-areas: "text image";
+        }
+
+        &:nth-child(2n + 1) {
+            grid-template-areas: "image text";
+        }
     }
 }
 
 .landing-section-text {
     @media screen and (min-width: 700px) {
         place-self: center;
+        grid-area: text;
     }
 }
 
@@ -57,11 +66,12 @@
 }
 
 .landing-section-image {
-    display: none;
+    width: 100%;
+    max-width: 400px;
+    place-self: center;
 
     @media screen and (min-width: 700px) {
-        display: initial;
-        place-self: center;
-        width: 100%;
+        max-width: unset;
+        grid-area: image;
     }
 }
