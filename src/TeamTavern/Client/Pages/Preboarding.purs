@@ -335,7 +335,7 @@ renderPage { step: TeamProfile, teamProfile, otherError, submitting, game } =
 renderPage { step: Register, registration, otherError, submitting, playerOrTeam } =
     [ boardingStep
         [ boardingHeading "Registration"
-        , boardingDescription  """Enter your nickname, email address and password to complete the registration process."""
+        , boardingDescription  """Enter your nickname and password to complete the registration process."""
         , registrationInput registration UpdateRegistration
         ]
     , boardingButtons

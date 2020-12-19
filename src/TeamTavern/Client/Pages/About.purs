@@ -15,16 +15,13 @@ import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Client.Snippets.SocialMediaUrls (discordUrl, redditUrl, steamUrl, twitterUrl)
 
-data Action = Init
+data Action = Initialize
 
 type Slot = H.Slot (Const Void) Void Unit
 
-type ChildSlots =
-    ( dotaAnchor :: NavigationAnchor.Slot Unit
-    , emailAnchor :: NavigationAnchor.Slot Unit
-    )
-render :: forall monad. MonadEffect monad =>
-    HH.ComponentHTML Action ChildSlots monad
+type ChildSlots = (emailAnchor :: NavigationAnchor.Slot Unit)
+
+render :: forall monad. MonadEffect monad => HH.ComponentHTML Action ChildSlots monad
 render = HH.div [ HS.class_ "about" ]
     [ HH.h1 [ HS.class_ "about-title" ] [ HH.text "About TeamTavern" ]
     , HH.h2 [ HS.class_ "about-heading" ] [ HH.text "What is TeamTavern?" ]
@@ -59,7 +56,7 @@ render = HH.div [ HS.class_ "about" ]
     ]
 
 handleAction :: forall monad. MonadEffect monad => Action -> monad Unit
-handleAction Init =
+handleAction Initialize =
     setMeta "About | TeamTavern" "TeamTavern is an online platform for finding esports teammates."
 
 component :: forall monad output input query. MonadEffect monad =>
@@ -69,7 +66,7 @@ component = H.mkComponent
     , render: const render
     , eval: H.mkEval $ H.defaultEval
         { handleAction = handleAction
-        , initialize = Just Init
+        , initialize = Just Initialize
         }
     }
 

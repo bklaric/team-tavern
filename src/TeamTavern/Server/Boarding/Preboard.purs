@@ -20,7 +20,6 @@ import Perun.Request.Body (Body)
 import Perun.Response (Response, badRequest_, internalServerError__, ok)
 import Postgres.Error as Postgres
 import Postgres.Pool (Pool)
-import Postmark.Client (Client)
 import Prim.Row (class Lacks)
 import Record.Builder (Builder)
 import Record.Builder as Builder
@@ -137,9 +136,8 @@ sendResponse ::
     Deployment -> Async PreboardError PreboardResult -> (forall left. Async left Response)
 sendResponse deployment = alwaysRight errorResponse $ successResponse deployment
 
-preboard :: forall left.
-    Deployment -> Pool -> Maybe Client -> Cookies -> Body -> Async left Response
-preboard deployment pool emailClient cookies body =
+preboard :: forall left. Deployment -> Pool -> Cookies -> Body -> Async left Response
+preboard deployment pool cookies body =
     sendResponse deployment $ examineLeftWithEffect logError do
 
     -- Ensure the player is not signed in.

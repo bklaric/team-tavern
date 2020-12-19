@@ -61,7 +61,7 @@ logError startError = do
                 <> (unsafeStringify $ rows result)
             logt $ "Reading resulted in these errors: " <> show errors
         , noMatchingPlayer: \nicknameOrEmail ->
-            logt $ "No matching player found for nickname or email: "
+            logt $ "No matching player found for nickname: "
                 <> show nicknameOrEmail
         , passwordDoesntMatch: \nicknameOrEmail ->
             logt $ "Entered password doesn't match for player: "

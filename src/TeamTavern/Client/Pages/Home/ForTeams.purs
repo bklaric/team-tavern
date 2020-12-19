@@ -20,7 +20,7 @@ forTeams onClick =
         , landingSectionSubheading "3. Fill out your team's game profile"
         , landingSectionDescription "Tell us about your team's ambitions and what you're looking for in new team members."
         , landingSectionSubheading "4. Create your account"
-        , landingSectionDescription "Finish creating your account by entering your email address and password."
+        , landingSectionDescription "Finish creating your account by choosing your nickname and password."
         , landingSectionSubheading "You're done!"
         , landingSectionDescription "Your account, your team and your first team profile are created. You're ready to recruit new team members!"
         , landingSectionButton "Create team profile" "/preboarding/start" onClick
@@ -39,7 +39,7 @@ forTeams' title onClick =
         , landingSectionSubheading $ "2. Fill out your team's " <> title <> " profile"
         , landingSectionDescription "Tell us about your team's ambitions and what you're looking for in new team members."
         , landingSectionSubheading "3. Create your account"
-        , landingSectionDescription "Finish creating your account by entering your email address and password."
+        , landingSectionDescription "Finish creating your account by choosing your nickname and password."
         , landingSectionSubheading "You're done!"
         , landingSectionDescription $ "Your account, your team and your " <> title <> " team profile are created. You're ready to recruit new team members!"
         , landingSectionButton "Create team profile" "/preboarding/start" onClick
