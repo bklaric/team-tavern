@@ -9,7 +9,8 @@ import Web.UIEvent.MouseEvent (MouseEvent)
 forPlayers :: forall slots action. (MouseEvent -> action) -> HH.HTML slots action
 forPlayers onClick =
     landingSection
-    [ landingSectionText
+    [ landingSectionImage "/images/player-1.png"
+    , landingSectionText
         [ landingSectionHeading "fas fa-user" "Looking for a team?"
         , landingSectionDescription "Let everyone know you're looking to team up in four easy steps:"
         , landingSectionSubheading "1. Tell us about yourself"
@@ -19,19 +20,19 @@ forPlayers onClick =
         , landingSectionSubheading "3. Fill out your game profile"
         , landingSectionDescription "Share your in-game stats, achievements and ambitions to find equally skilled teammates."
         , landingSectionSubheading "4. Create your account"
-        , landingSectionDescription "Finish creating your account by entering your email address and password."
+        , landingSectionDescription "Finish creating your account by choosing your nickname and password."
         , landingSectionSubheading "You're done!"
         , landingSectionDescription "Your account and your first player profile are created. You're ready to find your new teammates!"
         , landingSectionButton "Create player profile" "/preboarding/start" onClick
         ]
-    , landingSectionImage "/images/player-1.png"
     ]
 
 
 forPlayers' :: forall slots action. String -> (MouseEvent -> action) -> HH.HTML slots action
 forPlayers' title onClick =
     landingSection
-    [ landingSectionText $
+    [ landingSectionImage "/images/player-1.png"
+    , landingSectionText $
         [ landingSectionHeading "fas fa-user" "Looking for a team?"
         , landingSectionDescription "Let everyone know you're looking to team up in three easy steps:"
         , landingSectionSubheading "1. Tell us about yourself"
@@ -39,10 +40,9 @@ forPlayers' title onClick =
         , landingSectionSubheading $ "2. Fill out your " <> title <> " profile"
         , landingSectionDescription "Share your in-game stats, achievements and ambitions to find equally skilled teammates."
         , landingSectionSubheading "3. Create your account"
-        , landingSectionDescription "Finish creating your account by entering your email address and password."
+        , landingSectionDescription "Finish creating your account by choosing your nickname and password."
         , landingSectionSubheading "You're done!"
         , landingSectionDescription $ "Your account and your " <> title <> " player profile are created. You're ready to find your new teammates!"
         , landingSectionButton "Create player profile" "/preboarding/start" onClick
         ]
-    , landingSectionImage "/images/player-1.png"
     ]

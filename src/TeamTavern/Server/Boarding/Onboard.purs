@@ -9,13 +9,13 @@ import Data.Array (fromFoldable)
 import Data.Array as Array
 import Data.Bifunctor.Label (label)
 import Data.List.Types (NonEmptyList)
-import Data.Maybe (Maybe(..), maybe)
+import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
 import Data.Symbol (SProxy(..))
 import Data.Variant (Variant, inj, match, onMatch)
 import Effect (Effect, foreachE)
 import Perun.Request.Body (Body)
-import Perun.Response (Response, badRequest_, internalServerError__, noContent_, ok_)
+import Perun.Response (Response, badRequest_, internalServerError__, ok_)
 import Postgres.Pool (Pool)
 import Prim.Row (class Lacks)
 import Record.Builder (Builder)
@@ -99,10 +99,10 @@ errorResponse = onMatch
     }
     (const internalServerError__)
 
-successResponse :: Maybe OkContent -> Response
-successResponse = maybe noContent_ (ok_ <<< (writeJSON :: OkContent -> String))
+successResponse :: OkContent -> Response
+successResponse = ok_ <<< (writeJSON :: OkContent -> String)
 
-sendResponse :: Async OnboardError (Maybe OkContent) -> (forall left. Async left Response)
+sendResponse :: Async OnboardError OkContent -> (forall left. Async left Response)
 sendResponse = alwaysRight errorResponse successResponse
 
 onboard :: forall left. Pool -> Cookies -> Body -> Async left Response
@@ -134,7 +134,7 @@ onboard pool cookies body =
                     , nickname: unwrap cookieInfo.nickname
                     }
                     profile'
-                pure Nothing
+                pure { teamHandle: Nothing }
             { ilk: 2, team: Just team, teamProfile: Just profile } -> do
                 { team', profile' } <-
                     { team': _, profile': _ }
@@ -146,5 +146,5 @@ onboard pool cookies body =
                 { handle } <- addTeam client cookieInfo.id generatedHandle team'
                 AddTeamProfile.addProfile
                     client cookieInfo.id handle content.gameHandle profile'
-                pure $ Just { teamHandle: handle }
+                pure { teamHandle: Just handle }
             _ -> Async.left $ inj (SProxy :: SProxy "client") []

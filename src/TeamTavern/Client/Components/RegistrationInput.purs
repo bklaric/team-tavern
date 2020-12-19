@@ -13,37 +13,29 @@ import TeamTavern.Client.Components.Input (inputError, inputGroup, inputLabel, r
 import TeamTavern.Client.Components.PasswordInput (passwordInput)
 
 type Input =
-    { email :: String
-    , nickname :: String
+    { nickname :: String
     , password :: String
-    , emailError :: Boolean
     , nicknameError :: Boolean
     , passwordError :: Boolean
-    , emailTaken :: Boolean
     , nicknameTaken :: Boolean
     }
 
 type Output =
-    { email :: String
-    , nickname :: String
+    { nickname :: String
     , password :: String
     }
 
 type State =
-    { email :: String
-    , nickname :: String
+    { nickname :: String
     , password :: String
     , passwordShown :: Boolean
-    , emailError :: Boolean
     , nicknameError :: Boolean
     , passwordError :: Boolean
-    , emailTaken :: Boolean
     , nicknameTaken :: Boolean
     }
 
 data Action
     = Receive Input
-    | UpdateEmail String
     | UpdateNickname String
     | UpdatePassword String
     | TogglePasswordVisibility
@@ -52,14 +44,11 @@ type Slot = H.Slot (Const Void) Output Unit
 
 render :: forall left slots. State -> H.ComponentHTML Action slots (Async left)
 render
-    { email
-    , nickname
+    { nickname
     , password
     , passwordShown
-    , emailError
     , nicknameError
     , passwordError
-    , emailTaken
     , nicknameTaken
     } =
     HH.div_
@@ -71,13 +60,6 @@ render
             and can only contain alphanumeric characters, dashes, underscores and dots."""
         <> inputError nicknameTaken "This nickname is already taken, please pick another one."
     , inputGroup $
-        [ inputLabel "fas fa-envelope" "Email address"
-        , requiredTextLineInput email UpdateEmail
-        ]
-        <> inputError emailError
-            "This does not look like a valid email. Please check and try again."
-        <> inputError emailTaken "This email is already taken, please pick another one."
-    , inputGroup $
         [ inputLabel "fas fa-key" "Password"
         , passwordInput password passwordShown UpdatePassword TogglePasswordVisibility
         ]
@@ -85,23 +67,17 @@ render
     ]
 
 stateToOutput :: State -> Output
-stateToOutput { email, nickname, password } = { email, nickname, password }
+stateToOutput { nickname, password } = { nickname, password }
 
 handleAction :: forall slots left. Action -> H.HalogenM State Action slots Output (Async left) Unit
 handleAction (Receive input) =
     H.modify_ _
-        { email = input.email
-        , nickname = input.nickname
+        { nickname = input.nickname
         , password = input.password
-        , emailError = input.emailError
         , nicknameError = input.nicknameError
         , passwordError = input.passwordError
-        , emailTaken = input.emailTaken
         , nicknameTaken = input.nicknameTaken
         }
-handleAction (UpdateEmail email) = do
-    state <- H.modify _ { email = email }
-    H.raise $ stateToOutput state
 handleAction (UpdateNickname nickname) = do
     state <- H.modify _ { nickname = nickname }
     H.raise $ stateToOutput state
@@ -113,13 +89,10 @@ handleAction TogglePasswordVisibility =
 
 emptyInput :: Input
 emptyInput =
-    { email: ""
-    , nickname: ""
+    { nickname: ""
     , password: ""
-    , emailError: false
     , nicknameError: false
     , passwordError: false
-    , emailTaken: false
     , nicknameTaken: false
     }
 

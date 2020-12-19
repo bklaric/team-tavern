@@ -48,7 +48,6 @@ type OkContentTeam =
 
 type OkContent =
     { nickname :: String
-    , notify :: Boolean
     , birthday :: Maybe String
     , age :: Maybe Int
     , location :: Maybe String

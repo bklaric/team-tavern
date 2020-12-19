@@ -48,13 +48,13 @@ features createAccount =
             ]
         , HH.div_
             [ HH.h3 [ HS.class_ "features-feature-heading" ]
-                [ HH.i [ HS.class_ "fas fa-envelope feature-icon" ] []
-                , HH.text "Built-in messaging"
+                [ HH.i [ HS.class_ "fas fa-bolt feature-icon" ] []
+                , HH.text "Fast and simple setup"
                 ]
             , HH.p  [ HS.class_ "features-feature-description" ]
-                [ HH.text """Found an interesting player or team you want to play with?
-                Message them directly on TeamTavern and team up in-game. Receive an
-                email notification whenever someone messages you.""" ]
+                [ HH.text """Create your first player or team profile in seconds.
+                No email address required. Search through all existing players and teams without
+                creating an account.""" ]
             ]
         ]
     , landingSectionButton "Start finding teammates" "/preboarding/start" createAccount
@@ -101,13 +101,13 @@ features' title createAccount =
             ]
         , HH.div_
             [ HH.h3 [ HS.class_ "features-feature-heading" ]
-                [ HH.i [ HS.class_ "fas fa-envelope feature-icon" ] []
-                , HH.text "Built-in messaging"
+                [ HH.i [ HS.class_ "fas fa-bolt feature-icon" ] []
+                , HH.text "Fast and simple setup"
                 ]
             , HH.p  [ HS.class_ "features-feature-description" ]
-                [ HH.text """Found an interesting player or team you want to play with?
-                Message them directly on TeamTavern and team up in-game. Receive an
-                email notification whenever someone messages you.""" ]
+                [ HH.text """Create your first player or team profile in seconds.
+                No email address required. Search through all existing players and teams without
+                creating an account.""" ]
             ]
         ]
     , landingSectionButton "Start finding teammates" "/preboarding/start" createAccount

@@ -23,7 +23,6 @@ import TeamTavern.Client.Components.Divider (whiteDivider)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigateWithEvent_)
 import TeamTavern.Routes.ViewAllGames as ViewAllGames
-import Unsafe.Coerce (unsafeCoerce)
 import Web.Event.Event (stopPropagation)
 import Web.UIEvent.MouseEvent (MouseEvent)
 import Web.UIEvent.MouseEvent as MouseEvent
@@ -53,8 +52,8 @@ render (Games games') = HH.div [ HP.class_ $ HH.ClassName "games" ] $
         ]
         [ HH.div
             [ HP.class_ $ HH.ClassName "game-card-text"
-            , HP.style (CSS.backgroundImage $ unsafeCoerce $ CSS.Value $ CSS.Plain $
-                "linear-gradient(to right,#603520dd,#603520dd), url(/images/" <> handle <> "-banner.jpg)")
+            , HP.style $ CSS.backgroundImage $ CSS.fromString $
+                "linear-gradient(to right,hsla(20, 20%, 19%, 0.87),hsla(20, 20%, 19%, 0.87)), url(/images/" <> handle <> "-banner.jpg)"
             ] $
             [ HH.h2 [ HP.class_ $ HH.ClassName "game-card-heading" ]
                 [ HH.a
@@ -94,8 +93,7 @@ render (Games games') = HH.div [ HP.class_ $ HH.ClassName "games" ] $
             )
         , HH.div
             [ HP.class_ $ HH.ClassName "game-card-image"
-            , HP.style (CSS.backgroundImage $ unsafeCoerce $ CSS.Value $ CSS.Plain $
-                "url(/images/" <> handle <> "-banner.jpg)")
+            , HP.style $ CSS.backgroundImage $ CSS.url $ "/images/" <> handle <> "-banner.jpg"
             ]
             []
         ]
@@ -105,16 +103,15 @@ render (Games games') = HH.div [ HP.class_ $ HH.ClassName "games" ] $
         [ HP.class_ $ HH.ClassName "game-card" ]
         [ HH.div
             [ HP.class_ $ HH.ClassName "game-card-text"
-            , HP.style (CSS.backgroundImage $ unsafeCoerce $ CSS.Value $ CSS.Plain $
-                "linear-gradient(to right,#603520dd,#603520dd), url(/images/soon-banner.png)")
+            , HP.style $ CSS.backgroundImage $ CSS.fromString
+                "linear-gradient(to right,hsla(20, 20%, 19%, 0.87),hsla(20, 20%, 19%, 0.87)), url(/images/soon-banner.png)"
             ] $
             [ HH.h2 [ HP.class_ $ HH.ClassName "game-card-coming-soon" ]
                 [ HH.text "More games coming soon!" ]
             ]
         , HH.div
             [ HP.class_ $ HH.ClassName "game-card-image"
-            , HP.style (CSS.backgroundImage $ unsafeCoerce $ CSS.Value $ CSS.Plain $
-                "url(/images/soon-banner.png)")
+            , HP.style $ CSS.backgroundImage $ CSS.url "/images/soon-banner.png"
             ]
             []
         ]

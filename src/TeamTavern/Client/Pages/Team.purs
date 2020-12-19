@@ -3,7 +3,6 @@ module TeamTavern.Client.Pages.Team (Input, Slot, team) where
 import Prelude
 
 import Async (Async)
-import CSS as CSS
 import Control.Monad.State (class MonadState)
 import Data.Array (intercalate)
 import Data.Array as Array
@@ -12,10 +11,7 @@ import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
-import Halogen.HTML.CSS as HC
-import TeamTavern.Client.Components.Button (regularButton)
 import TeamTavern.Client.Components.Content (contentDescription, contentHeader, contentHeading)
-import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Pages.Team.Details (details)
@@ -28,7 +24,6 @@ import TeamTavern.Client.Pages.Team.Status (Status(..), getStatus)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Request (get)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
-import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Server.Team.View (Team, Profile)
 
 type Input = { handle :: String }
@@ -67,27 +62,12 @@ render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render (Empty _) = HH.div_ []
 render (Loaded { team: team', status, showEditTeamModal, showEditProfileModal } ) =
     HH.div_  $
-    [ contentHeader
-        [ HH.div_ [ contentHeading team'.name ]
-        , HH.div_
-            case status of
-            SignedInOwner -> [ regularButton "fas fa-edit" "Edit team" ShowEditTeamModal ]
-            SignedInOther ->
-                [ navigationAnchor (SProxy :: SProxy "messageOwner")
-                    { path: "/conversations/" <> team'.owner
-                    , content: HH.span [ HC.style $ CSS.fontWeight $ CSS.weight 500.0 ]
-                        [ HH.i [ HS.class_ "fas fa-envelope button-icon" ] []
-                        , HH.text "Message team owner"
-                        ]
-                    }
-                ]
-            SignedOut -> []
-        ]
+    [ contentHeader [ HH.div_ [ contentHeading team'.name ] ]
     , contentDescription
         case status of
         SignedInOwner -> "View and edit all your team's details and profiles."
         _ -> "View all team's details and profiles."
-    , details team' status
+    , details team' status ShowEditTeamModal
     , profiles team'.handle team'.profiles status ShowEditProfileModal
     ]
     <>

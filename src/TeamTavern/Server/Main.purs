@@ -29,18 +29,11 @@ import Perun.Url (Url, pathSegments, queryPairs)
 import Postgres.Client.Config (ClientConfig, database, host, password, port, user)
 import Postgres.Pool (Pool)
 import Postgres.Pool as Pool
-import Postmark.Client (Client)
-import Postmark.Client as Postmark
-import TeamTavern.Server.Architecture.Deployment (Deployment(..))
+import TeamTavern.Server.Architecture.Deployment (Deployment)
 import TeamTavern.Server.Architecture.Deployment as Deployment
-import TeamTavern.Server.Conversation.Start (start) as Conversation
-import TeamTavern.Server.Conversation.View (view) as Conversation
-import TeamTavern.Server.Conversation.ViewAll (viewAll) as Conversation
 import TeamTavern.Server.Game.View (handleView) as Game
 import TeamTavern.Server.Game.ViewAll (handleViewAll) as Game
 import TeamTavern.Server.Infrastructure.Log (logStamped, logt)
-import TeamTavern.Server.Password.Forgot (forgot) as Password
-import TeamTavern.Server.Password.Reset (reset) as Password
 import TeamTavern.Server.Player.EditSettings (updateSettings) as Player
 import TeamTavern.Server.Player.Register (register) as Player
 import TeamTavern.Server.Player.UpdatePlayer (updatePlayer) as Player
@@ -117,32 +110,17 @@ loadDeployment =
     <#> note "Couldn't read variable DEPLOYMENT."
     # ExceptT
 
-loadPostmarkApiKey :: ExceptT String Effect String
-loadPostmarkApiKey =
-    lookupEnv "POSTMARK"
-    <#> note "Couldn't read variable POSTMARK."
-    # ExceptT
-
-createPostmarkClient :: Deployment -> ExceptT String Effect (Maybe Client)
-createPostmarkClient =
-    case _ of
-    Local -> pure Nothing
-    Cloud -> do
-        apiKey <- loadPostmarkApiKey
-        lift $ Just <$> Postmark.create apiKey
-
 teamTavernRoutes = JunctionProxy :: JunctionProxy TeamTavernRoutes
 
 handleRequest
     :: Deployment
     -> Pool
-    -> Maybe Client
     -> Either CustomMethod Method
     -> Url
     -> Map String String
     -> Body
     -> (forall left. Async left Response)
-handleRequest deployment pool client method url cookies body =
+handleRequest deployment pool method url cookies body =
     case router teamTavernRoutes method (pathSegments url) (queryPairs url) of
     Left errors ->
         if method == Right OPTIONS
@@ -164,7 +142,7 @@ handleRequest deployment pool client method url cookies body =
             pure { statusCode: 404, headers: MultiMap.empty, content: show errors }
     Right routeValues -> routeValues # match
         { registerPlayer: const $
-            Player.register pool client cookies body
+            Player.register deployment pool cookies body
         , viewPlayer:
             Player.view pool cookies
         , updatePlayer: \{ nickname } ->
@@ -179,10 +157,6 @@ handleRequest deployment pool client method url cookies body =
             Team.create pool body cookies
         , updateTeam:
             Team.update pool body cookies
-        , forgotPassword: const $
-            Password.forgot pool client cookies body
-        , resetPassword: const $
-            Password.reset pool cookies body
         , startSession: const $
             Session.start deployment pool cookies body
         , endSession: const
@@ -203,16 +177,10 @@ handleRequest deployment pool client method url cookies body =
             Profile.viewPlayerProfilesByGame pool handle page timezone $ bundleFilters filters
         , viewTeamProfilesByGame: \filters @ { handle, page, timezone } ->
             Profile.viewTeamProfilesByGame pool handle page timezone $ bundleFilters filters
-        , viewAllConversations: const $
-            Conversation.viewAll pool cookies
-        , viewConversation: \{ nickname } ->
-            Conversation.view pool nickname cookies
-        , startConversation: \{ nickname } ->
-            Conversation.start pool client nickname cookies body
         , onboard: const $
             Onboard.onboard pool cookies body
         , preboard: const $
-            Preboard.preboard pool client cookies body
+            Preboard.preboard deployment pool cookies body
         }
         <#> (\response -> response { headers = response.headers <> MultiMap.fromFoldable
                 [ Tuple "Access-Control-Allow-Origin" $ NEL.singleton "http://localhost:1337"
@@ -221,15 +189,10 @@ handleRequest deployment pool client method url cookies body =
                 , Tuple "Access-Control-Allow-Credentials" $ NEL.singleton "true"
                 ]})
 
-handleInvalidUrl
-    :: Deployment
-    -> Pool
-    -> Maybe Client
-    -> Request
-    -> (forall left. Async left Response)
-handleInvalidUrl deployment pool client { method, url, cookies, body } =
+handleInvalidUrl :: Deployment -> Pool -> Request -> (forall left. Async left Response)
+handleInvalidUrl deployment pool { method, url, cookies, body } =
     case url of
-    Right url' -> handleRequest deployment pool client method url' cookies body
+    Right url' -> handleRequest deployment pool method url' cookies body
     Left url' -> pure
         { statusCode: 400
         , headers: MultiMap.empty
@@ -240,5 +203,4 @@ main :: Effect Unit
 main = either log pure =<< runExceptT do
     deployment <- loadDeployment
     pool <- createPostgresPool
-    client <- createPostmarkClient deployment
-    lift $ run_ listenOptions (handleInvalidUrl deployment pool client)
+    lift $ run_ listenOptions (handleInvalidUrl deployment pool)

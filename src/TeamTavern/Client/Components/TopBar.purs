@@ -162,12 +162,6 @@ render state = HH.div_ $
                     SignedIn nickname ->
                         [ HH.a
                             [ HP.class_ $ HH.ClassName "top-bar-menu-item"
-                            , HP.href $ "/conversations"
-                            , HE.onClick $ Just <<< Navigate "/conversations"
-                            ]
-                            [ HH.text "Conversations" ]
-                        , HH.a
-                            [ HP.class_ $ HH.ClassName "top-bar-menu-item"
                             , HP.href $ "/players/" <> nickname
                             , HE.onClick $ Just <<< Navigate ("/players/" <> nickname)
                             ]

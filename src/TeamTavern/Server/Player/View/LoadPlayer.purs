@@ -16,7 +16,6 @@ queryString :: String -> Query
 queryString timezone = Query $ """
     select
         player.nickname,
-        player.notify,
         case when $2 then to_char(player.birthday, 'yyyy-mm-dd') end as birthday,
         extract(year from age(player.birthday))::int as age,
         player.location,

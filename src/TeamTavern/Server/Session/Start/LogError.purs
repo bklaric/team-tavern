@@ -13,8 +13,6 @@ import Postgres.Result (Result, rows)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Server.Infrastructure.Log (logStamped, logt, print)
 import TeamTavern.Server.Player.Domain.Id (Id)
-import TeamTavern.Server.Player.Domain.Nonce (Nonce)
-import TeamTavern.Server.Session.Domain.NicknameOrEmail (NicknameOrEmail)
 import TeamTavern.Server.Session.Domain.Token (Token)
 
 type StartError = Variant
@@ -33,13 +31,8 @@ type StartError = Variant
         { result :: Result
         , errors :: MultipleErrors
         }
-    , noMatchingPlayer :: NicknameOrEmail
-    , passwordDoesntMatch :: NicknameOrEmail
-    , unconfirmedEmail :: NicknameOrEmail
-    , nothingConfirmed ::
-        { id :: Id
-        , nonce :: Nonce
-        }
+    , noMatchingPlayer :: String
+    , passwordDoesntMatch :: String
     , noSessionStarted ::
         { id :: Id
         , token :: Token
@@ -68,16 +61,11 @@ logError startError = do
                 <> (unsafeStringify $ rows result)
             logt $ "Reading resulted in these errors: " <> show errors
         , noMatchingPlayer: \nicknameOrEmail ->
-            logt $ "No matching player found for nickname or email: "
+            logt $ "No matching player found for nickname: "
                 <> show nicknameOrEmail
         , passwordDoesntMatch: \nicknameOrEmail ->
             logt $ "Entered password doesn't match for player: "
                 <> show nicknameOrEmail
-        , unconfirmedEmail: \nicknameOrEmail ->
-            logt $ "Player has an unconfirmed email address: "
-                <> show nicknameOrEmail
-        , nothingConfirmed: \info ->
-            logt $ "No email confirmed: " <> show info
         , noSessionStarted: \info ->
             logt $ "No session started: " <> show info
         }

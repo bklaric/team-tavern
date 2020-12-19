@@ -15,7 +15,6 @@ import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Components.Card (cardHeader, cardHeading, cardSection, cardSubheading)
 import TeamTavern.Client.Components.Detail (detailColumn, detailColumnHeading4, detailColumns, textDetail)
 import TeamTavern.Client.Components.Divider (divider)
-import TeamTavern.Client.Components.NavigationAnchor (navigationAnchorIndexed)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
 import TeamTavern.Client.Components.Pagination (pagination)
 import TeamTavern.Client.Components.Player.PlayerDetails (playerDetails)
@@ -134,7 +133,7 @@ render { profiles, profileCount, playerInfo, page } =
         ambitions = textDetail profile.ambitions
         in
         cardSection $
-        [ profileHeader $
+        [ profileHeader
             [ profileHeaderItem
                 [ profileHeading (SProxy :: SProxy "players") profile.nickname
                     ("/players/" <> profile.nickname) profile.nickname
@@ -142,20 +141,6 @@ render { profiles, profileCount, playerInfo, page } =
                 , profileSubheading $ "Updated " <> lastUpdated profile.updatedSeconds
                 ]
             ]
-            <>
-            case playerInfo of
-            Just { nickname } | nickname /= profile.nickname ->
-                [ profileHeaderItem
-                    [ navigationAnchorIndexed (SProxy :: SProxy "messagePlayer") profile.nickname
-                        { path: "/conversations/" <> profile.nickname
-                        , content: HH.span_
-                            [ HH.i [ HP.class_ $ H.ClassName "fas fa-envelope button-icon" ] []
-                            , HH.text "Message player"
-                            ]
-                        }
-                    ]
-                ]
-            _ -> []
         ]
         <>
         if (not $ Array.null playerDetails') || (not $ Array.null profileDetails'')

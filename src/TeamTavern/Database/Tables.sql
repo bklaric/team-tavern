@@ -1,6 +1,5 @@
 create table player
     ( id serial not null primary key
-    , email varchar(254) not null unique
     , nickname varchar(40) not null unique
     , discord_tag varchar(37)
     , birthday date
@@ -12,14 +11,8 @@ create table player
     , weekend_from time
     , weekend_to time
     , microphone boolean not null default false
-    , password_hash character(60) not null
-    , confirmation_nonce character(20) not null
-    , email_confirmed boolean not null default false
     , about text[] not null default '{}'
-    , notify boolean not null default true
-    , confirm_email_notified timestamptz
-    , create_profile_notified timestamptz
-    , update_profile_notified timestamptz
+    , password_hash character(60) not null
     , registered timestamptz not null default current_timestamp
     );
 
@@ -139,19 +132,4 @@ create table team_profile_field_value_option
     ( id serial not null primary key
     , team_profile_field_value_id integer not null references team_profile_field_value(id) on delete cascade
     , field_option_id integer not null references field_option(id)
-    );
-
-create table conversation
-    ( id serial not null primary key
-    , left_interlocutor_id int not null references player(id) on delete cascade
-    , right_interlocutor_id int not null references player(id) on delete cascade
-    );
-
-create table message
-    ( id serial not null primary key
-    , conversation_id int not null references conversation(id)
-    , interlocutor_id int not null references player(id)
-    , content text[] not null
-    , read boolean not null default false
-    , created timestamptz not null default current_timestamp
     );

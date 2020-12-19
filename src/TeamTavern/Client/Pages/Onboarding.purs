@@ -41,7 +41,6 @@ import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaU
 import TeamTavern.Client.Script.Navigate (navigate, navigateReplace, navigate_)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Onboard as Onboard
-import Type (type ($))
 
 data Step
     = Greeting
@@ -283,7 +282,7 @@ render :: forall slots left.
 render state = boarding $ renderPage state
 
 sendRequest :: forall left.
-    State -> Async left (Maybe (Either Onboard.BadContent (Maybe Onboard.OkContent)))
+    State -> Async left (Maybe (Either Onboard.BadContent Onboard.OkContent))
 sendRequest (state :: State) = Async.unify do
     (body :: Onboard.RequestContent) <-
         case state of
@@ -354,10 +353,9 @@ sendRequest (state :: State) = Async.unify do
         <> Fetch.credentials := Fetch.Include
         )
         # lmap (const Nothing)
-    content :: Either Onboard.BadContent $ Maybe Onboard.OkContent <-
+    content :: Either Onboard.BadContent Onboard.OkContent <-
         case FetchRes.status response of
-        200 -> FetchRes.text response >>= JsonAsync.readJSON # bimap (const Nothing) (Right <<< Just)
-        204 -> pure $ Right Nothing
+        200 -> FetchRes.text response >>= JsonAsync.readJSON # bimap (const Nothing) Right
         400 -> FetchRes.text response >>= JsonAsync.readJSON # bimap (const Nothing) Left
         _ -> Async.left Nothing
     pure $ Just content
@@ -507,8 +505,8 @@ handleAction SetUpAccount = do
             }
     response <- H.lift $ sendRequest currentState
     case response of
-        Just (Right Nothing) -> navigate_ "/"
-        Just (Right (Just { teamHandle })) -> navigate_ $ "/teams/" <> teamHandle
+        Just (Right { teamHandle: Nothing }) -> navigate_ "/"
+        Just (Right { teamHandle: Just teamHandle}) -> navigate_ $ "/teams/" <> teamHandle
         Just (Left errors) -> H.put $
             foldl
             (\state error ->

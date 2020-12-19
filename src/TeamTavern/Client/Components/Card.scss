@@ -38,6 +38,13 @@
     color: #888;
 }
 
+.card-header > * {
+    min-height: 40px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+}
+
 .card-section {
     padding: 21px;
     border-top: $border;

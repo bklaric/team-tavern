@@ -1,41 +1,25 @@
-module TeamTavern.Server.Player.Register.SendResponse
-    ( OkContent
-    , BadRequestContent
-    , IdentifiersErrorContent
-    , sendResponse) where
+module TeamTavern.Server.Player.Register.SendResponse (OkContent, BadRequestContent, IdentifiersErrorContent, sendResponse) where
 
 import Prelude
 
 import Async (Async, alwaysRight)
 import Data.Array (fromFoldable)
-import Data.Newtype (unwrap)
 import Data.Variant (SProxy(..), Variant, inj, match)
-import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, ok_)
+import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, noContent)
 import Simple.JSON (writeJSON)
-import TeamTavern.Server.Player.Domain.Email (Email)
-import TeamTavern.Server.Player.Domain.Nickname (Nickname)
+import TeamTavern.Server.Architecture.Deployment (Deployment)
+import TeamTavern.Server.Infrastructure.Cookie (CookieInfo, setCookieHeaderFull)
 import TeamTavern.Server.Player.Register.LogError (RegisterError)
 
-type SendResponseModel =
-    { email :: Email
-    , nickname :: Nickname
-    }
-
-type OkContent =
-    { email :: String
-    , nickname :: String
-    , emailSent :: Boolean
-    }
+type OkContent = { nickname :: String }
 
 type IdentifiersErrorContent = Variant
-    ( invalidEmail :: {}
-    , invalidNickname :: {}
+    ( invalidNickname :: {}
     , invalidPassword :: {}
     )
 
 type BadRequestContent = Variant
     ( registration :: Array IdentifiersErrorContent
-    , emailTaken :: {}
     , nicknameTaken :: {}
     )
 
@@ -47,8 +31,7 @@ errorResponse = match
     , registration: \errors ->
         errors
         <#> (match
-            { email: const $ inj (SProxy :: SProxy "invalidEmail") {}
-            , nickname: const $ inj (SProxy :: SProxy "invalidNickname") {}
+            { nickname: const $ inj (SProxy :: SProxy "invalidNickname") {}
             , password: const $ inj (SProxy :: SProxy "invalidPassword") {}
             })
         # fromFoldable
@@ -56,28 +39,15 @@ errorResponse = match
         # (writeJSON :: BadRequestContent -> String)
         # badRequest_
     , randomError: const internalServerError__
-    , emailTaken: const $ badRequest_ $ writeJSON $
-        (inj (SProxy :: SProxy "emailTaken") {} :: BadRequestContent)
     , nicknameTaken: const $ badRequest_ $ writeJSON $
         (inj (SProxy :: SProxy "nicknameTaken") {} :: BadRequestContent)
     , databaseError: const internalServerError__
     , cantReadId: const internalServerError__
-    , sendEmailError: _.info >>> \{ email, nickname } ->
-        ok_ $ writeJSON
-        ({ email: unwrap email
-        , nickname: unwrap nickname
-        , emailSent: false
-        } :: OkContent)
+    , noSessionStarted: const internalServerError__
     }
 
-successResponse :: SendResponseModel -> Response
-successResponse { email, nickname } =
-    ok_ $ writeJSON
-    ({ email: unwrap email
-    , nickname: unwrap nickname
-    , emailSent: true
-    } :: OkContent)
+successResponse :: Deployment -> CookieInfo -> Response
+successResponse deployment cookieInfo = noContent $ setCookieHeaderFull deployment cookieInfo
 
-sendResponse ::
-    Async RegisterError SendResponseModel -> (forall left. Async left Response)
-sendResponse = alwaysRight errorResponse successResponse
+sendResponse :: Deployment -> Async RegisterError CookieInfo -> (forall left. Async left Response)
+sendResponse deployment = alwaysRight errorResponse $ successResponse deployment
