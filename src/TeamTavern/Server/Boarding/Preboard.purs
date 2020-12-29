@@ -47,6 +47,7 @@ import TeamTavern.Server.Profile.AddTeamProfile.AddProfile as AddTeamProfile
 import TeamTavern.Server.Profile.AddTeamProfile.ValidateProfile as TeamProfile
 import TeamTavern.Server.Profile.Infrastructure.ConvertFields (convertFields)
 import TeamTavern.Server.Session.Domain.Token as Token
+import TeamTavern.Server.Session.Start.CreateSession (createSession)
 import TeamTavern.Server.Team.Create.AddTeam (addTeam)
 import TeamTavern.Server.Team.Infrastructure.GenerateHandle (generateHandle)
 import TeamTavern.Server.Team.Infrastructure.ValidateTeam (TeamErrors, validateTeamV)
@@ -174,6 +175,9 @@ preboard deployment pool cookies body =
                     , hash
                     }
 
+                -- Create a new session.
+                createSession { id: Id id, token } client
+
                 updateDetails client id player'
 
                 addProfile client id
@@ -207,6 +211,9 @@ preboard deployment pool cookies body =
                     { nickname: registration'.nickname
                     , hash
                     }
+
+                -- Create a new session.
+                createSession { id: Id id, token } client
 
                 { handle } <- addTeam client (Id id) (generateHandle team'.name) team'
 
