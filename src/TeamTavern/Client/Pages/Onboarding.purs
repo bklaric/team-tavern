@@ -91,7 +91,7 @@ emptyInput =
     , player: PlayerFormInput.emptyInput
     , team: TeamFormInput.emptyInput
     , game: Nothing
-    , playerProfile: PlayerProfileFormInput.emptyInput []
+    , playerProfile: PlayerProfileFormInput.emptyInput { externalIdIlk: 1, fields: [] }
     , teamProfile: TeamProfileFormInput.emptyInput []
     , otherError: false
     }

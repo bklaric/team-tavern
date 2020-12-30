@@ -19,6 +19,7 @@ You can edit this file as you like.
   , "jarilo"
   , "pg"
   , "psci-support"
+  , "record-extra"
   , "simple-json"
   , "stringutils"
   , "undefined"

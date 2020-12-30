@@ -17,7 +17,7 @@ import TeamTavern.Client.Pages.Team.CreateProfile (createProfile)
 import TeamTavern.Client.Script.Request (get)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.ViewAllGames as ViewAllGames
-import TeamTavern.Server.Game.View.SendResponse as View
+import TeamTavern.Routes.ViewGame as View
 
 type Input =
     { teamHandle :: String

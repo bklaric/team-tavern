@@ -15,6 +15,7 @@ type RouteParams =
 type OkContentProfile =
     { handle :: String
     , title :: String
+    , externalIdIlk :: Int
     , fields :: Array
         { key :: String
         , ilk :: Int
@@ -27,6 +28,7 @@ type OkContentProfile =
             , label :: String
             })
         }
+    -- , externalId :: String
     , fieldValues :: Array
         { fieldKey :: String
         , url :: Maybe String

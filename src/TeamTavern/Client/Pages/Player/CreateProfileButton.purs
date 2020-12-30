@@ -18,7 +18,7 @@ import TeamTavern.Client.Pages.Player.CreateProfile (createProfile)
 import TeamTavern.Client.Script.Request (get)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.ViewAllGames as ViewAllGames
-import TeamTavern.Server.Game.View.SendResponse as View
+import TeamTavern.Routes.ViewGame as View
 
 type Input =
     { nickname :: String
@@ -77,6 +77,7 @@ createProfileButton = Hooks.component $ \_ { nickname, profileGameHandles } -> H
                         { nickname
                         , handle: game''.handle
                         , title: game''.title
+                        , externalIdIlk: game''.externalIdIlk
                         , fields: game''.fields
                         }
             )

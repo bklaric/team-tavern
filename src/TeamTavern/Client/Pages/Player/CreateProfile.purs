@@ -25,6 +25,7 @@ type Input =
     { nickname :: String
     , handle :: String
     , title :: String
+    , externalIdIlk :: Int
     , fields :: Array Field
     }
 
@@ -125,11 +126,11 @@ handleAction (SendRequest event) = do
 
 component :: forall query output left. H.Component HH.HTML query Input output (Async left)
 component = H.mkComponent
-    { initialState: \{ nickname, handle, title, fields } ->
+    { initialState: \{ nickname, handle, title, externalIdIlk, fields } ->
         { nickname
         , handle
         , title
-        , profile: ProfileFormInput.emptyInput fields
+        , profile: ProfileFormInput.emptyInput { externalIdIlk, fields }
         , otherError: false
         , submitting: false
         }

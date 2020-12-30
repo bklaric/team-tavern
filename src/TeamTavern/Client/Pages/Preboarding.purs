@@ -24,6 +24,7 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Record as Record
+import Record.Extra (pick)
 import Simple.JSON (class ReadForeign, class WriteForeign, readImpl, writeImpl)
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
@@ -43,7 +44,7 @@ import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaU
 import TeamTavern.Client.Script.Navigate (navigate, navigateReplace, navigate_)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Preboard as Preboard
-import TeamTavern.Server.Game.View.SendResponse as ViewGame
+import TeamTavern.Routes.ViewGame as ViewGame
 
 data Step
     = Greeting
@@ -150,7 +151,8 @@ emptyInput playerOrTeam game =
         case game of
         Just game' -> Preselected game'
         Nothing -> Selected Nothing
-    , playerProfile: PlayerProfileFormInput.emptyInput $ maybe [] _.fields game
+    , playerProfile: PlayerProfileFormInput.emptyInput $
+        maybe { externalIdIlk: 0, fields: [] } pick game
     , teamProfile: TeamProfileFormInput.emptyInput $ maybe [] (_.fields >>>
         mapMaybe
         case _ of
@@ -538,6 +540,7 @@ handleAction (UpdateGame game) = do
         { game = Selected $ Just game
         , playerProfile
             { fields = game.fields
+            , externalIdIlk = game.externalIdIlk
             , fieldValues = []
             , newOrReturning = false
             , ambitions = ""
@@ -557,7 +560,8 @@ handleAction (UpdateGame game) = do
 handleAction (UpdatePlayerProfile details) = do
     state <- H.modify _
         { playerProfile
-            { fieldValues = details.fieldValues
+            { externalId = details.externalId
+            , fieldValues = details.fieldValues
             , newOrReturning = details.newOrReturning
             , ambitions = details.ambitions
             }

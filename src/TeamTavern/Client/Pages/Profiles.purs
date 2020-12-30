@@ -36,7 +36,7 @@ import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigate, navigate_)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Script.Url as Url
-import TeamTavern.Server.Game.View.SendResponse as ViewGame
+import TeamTavern.Routes.ViewGame as ViewGame
 import TeamTavern.Server.Profile.ViewPlayerProfilesByGame.SendResponse as ViewGamePlayers
 import TeamTavern.Server.Profile.ViewTeamProfilesByGame.SendResponse as ViewGameTeams
 import Web.DOM.ParentNode (QuerySelector(..))

@@ -125,12 +125,12 @@ component :: forall query output left. H.Component HH.HTML query Input output (A
 component = H.mkComponent
     { initialState: \
         { nickname
-        , profile: { handle, title, fields, fieldValues, newOrReturning, ambitions }
+        , profile: { handle, title, fields, externalIdIlk, fieldValues, newOrReturning, ambitions }
         } ->
         { nickname
         , handle
         , title
-        , profile: (ProfileFormInput.emptyInput fields)
+        , profile: (ProfileFormInput.emptyInput { externalIdIlk, fields })
             { fieldValues = fieldValues
             , newOrReturning = newOrReturning
             , ambitions = intercalate "\n\n" ambitions
