@@ -13,7 +13,6 @@ import TeamTavern.Server.Profile.UpdatePlayerProfile.LogError (UpdateError)
 type ProfileErrorContent = Variant
     ( invalidAmbitions :: {}
     , invalidUrl :: { fieldKey :: String }
-    , missing :: { fieldKey :: String }
     )
 
 type BadRequestContent = Variant (invalidProfile :: Array ProfileErrorContent)

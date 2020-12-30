@@ -11,7 +11,7 @@ import Data.Maybe (Maybe(..), maybe)
 import Data.Variant (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
-import TeamTavern.Client.Components.Input (checkboxInput, inputError, inputGroup, inputLabel, inputLabel', inputUnderlabel, textInput_, textLineInput)
+import TeamTavern.Client.Components.Input (checkboxInput, domainInputLabel, inputError, inputGroup, inputLabel, inputUnderlabel, textInput_, textLineInput)
 import TeamTavern.Client.Components.Select.MultiSelect (multiSelectIndexed)
 import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.Select.SingleSelect (singleSelectIndexed)
@@ -27,7 +27,6 @@ type Field =
     , ilk :: Int
     , label :: String
     , icon :: String
-    , required :: Boolean
     , domain :: Maybe String
     , options :: Maybe (Array Option)
     }
@@ -53,25 +52,22 @@ fieldInputGroup
     -> (String -> Maybe String -> action)
     -> (String -> Array String -> action)
     -> Array String
-    -> Array String
     -> Field
     -> H.ComponentHTML action ChildSlots (Async left)
-fieldInputGroup fieldValues onValue _ _ urlValueErrors missingErrors
-    { ilk: 1, key, label, icon, required, domain: Just domain } =
+fieldInputGroup fieldValues onValue _ _ urlValueErrors
+    { ilk: 1, key, label, icon, domain: Just domain } =
     let
     fieldValue' = Map.lookup key fieldValues
     url = fieldValue' >>= _.url
     urlError = urlValueErrors # Array.any (_ == key)
-    missingError = missingErrors # Array.any (_ == key)
     in
     inputGroup $
-    [ inputLabel' icon label (Just domain) required
+    [ domainInputLabel icon label domain
     , textLineInput url (onValue key)
     ]
     <> inputError urlError
         ("This doesn't look like a valid " <> label <> " (" <> domain <> ") address.")
-    <> inputError missingError (label <> " is required.")
-fieldInputGroup fieldValues _ onValue _ _ _
+fieldInputGroup fieldValues _ onValue _ _
     { ilk: 2, key, label, icon, options: Just options } =
     let
     fieldValue' = Map.lookup key fieldValues
@@ -89,7 +85,7 @@ fieldInputGroup fieldValues _ onValue _ _ _
         }
         \option -> Just $ onValue key (option <#> _.key)
     ]
-fieldInputGroup fieldValues _ _ onValue _ _
+fieldInputGroup fieldValues _ _ onValue _
     { ilk: 3, key, label, icon, options: Just options } =
     let
     fieldValue' = fieldValues # find \{ fieldKey } -> fieldKey == key
@@ -107,7 +103,7 @@ fieldInputGroup fieldValues _ _ onValue _ _
         }
         \options' -> Just $ onValue key (options' <#> _.key)
     ]
-fieldInputGroup _ _ _ _ _ _ _ = HH.div_ []
+fieldInputGroup _ _ _ _ _ _ = HH.div_ []
 
 newOrReturningInputGroup :: forall slots action.
     Boolean -> (Boolean -> action) -> HH.HTML slots action

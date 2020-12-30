@@ -20,7 +20,6 @@ queryString = Query """
                     'label', field.label,
                     'key', field.key,
                     'icon', field.icon,
-                    'required', field.required,
                     'domain', field.domain,
                     'options', field.options
                 ) order by field.ordinal

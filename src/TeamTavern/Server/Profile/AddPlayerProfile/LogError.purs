@@ -25,7 +25,6 @@ profileHandler :: forall fields. Lacks "profile" fields =>
 profileHandler = Builder.insert (SProxy :: SProxy "profile") \errors ->
     foreachE (Array.fromFoldable errors) $ match
         { url: _.message >>> logLines
-        , missing: _.message >>> logLines
         , ambitions: logLines
         }
 

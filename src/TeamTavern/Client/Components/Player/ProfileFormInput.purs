@@ -27,7 +27,6 @@ type Input =
     , newOrReturning :: Boolean
     , ambitions :: String
     , urlErrors :: Array String
-    , missingErrors :: Array String
     , ambitionsError :: Boolean
     }
 
@@ -46,7 +45,6 @@ type State =
     , newOrReturning :: Boolean
     , ambitions :: String
     , urlErrors :: Array String
-    , missingErrors :: Array String
     , ambitionsError :: Boolean
     }
 
@@ -72,7 +70,7 @@ render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render
     { externalIdIlk, fields
     , externalId, fieldValues, newOrReturning, ambitions
-    , urlErrors, missingErrors, ambitionsError
+    , urlErrors, ambitionsError
     }
     = HH.div_ $
     [ inputGroupsHeading "External ID"
@@ -89,7 +87,7 @@ render
     , inputGroupsHeading "Details"
     , responsiveInputGroups $
         ( fields <#> fieldInputGroup fieldValues
-            UpdateUrl UpdateSingleSelect UpdateMultiSelect urlErrors missingErrors
+            UpdateUrl UpdateSingleSelect UpdateMultiSelect urlErrors
         )
         <>
         [ newOrReturningInputGroup newOrReturning UpdateNewOrReturning ]
@@ -173,7 +171,6 @@ emptyInput { externalIdIlk, fields } =
     , newOrReturning: false
     , ambitions: ""
     , urlErrors: []
-    , missingErrors: []
     , ambitionsError: false
     }
 

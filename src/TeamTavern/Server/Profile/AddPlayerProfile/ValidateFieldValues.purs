@@ -47,8 +47,6 @@ type FieldKey = String
 
 type FieldDomain = String
 
-type FieldRequired = Boolean
-
 data FieldType
     = UrlField FieldDomain
     | SingleField (Map OptionKey Option)
@@ -58,7 +56,7 @@ derive instance genericFieldType :: Generic FieldType _
 
 instance showFieldType :: Show FieldType where show = genericShow
 
-data Field = Field FieldId FieldKey FieldRequired FieldType
+data Field = Field FieldId FieldKey FieldType
 
 derive instance genericField :: Generic Field _
 
@@ -82,10 +80,6 @@ type ValidateFieldValuesError errors = Variant
         { message :: Array String
         , key :: String
         }
-    , missing ::
-        { message :: Array String
-        , key :: String
-        }
     | errors
     )
 
@@ -101,35 +95,33 @@ prepareFields fields =
     fields # Array.mapMaybe \field ->
         case field.ilk, field.domain, field.options of
         1, Just domain, Nothing -> Just $
-            Field field.id field.key field.required $ UrlField domain
+            Field field.id field.key $ UrlField domain
         2, _, (Just options) -> Just $
-            Field field.id field.key field.required $ SingleField (prepareOptions options)
+            Field field.id field.key $ SingleField (prepareOptions options)
         3, _, (Just options) -> Just $
-            Field field.id field.key field.required $ MultiField (prepareOptions options)
+            Field field.id field.key $ MultiField (prepareOptions options)
         _, _, _ -> Nothing
 
 -- Validate field values.
 
 validateField :: forall errors.
     Array ReadProfile.FieldValue -> Field -> Maybe (Either (ValidateFieldValuesError errors) FieldValue)
-validateField fieldValues (Field id key required (UrlField domain)) =
+validateField fieldValues (Field id key (UrlField domain)) =
     case fieldValues # Array.find \{ fieldKey } -> fieldKey == key of
     Just fieldValue | Just url <- fieldValue.url ->
         case validateUrl domain url of
         Right url' -> Just $ Right $ FieldValue id $ Url url'
         Left errors -> Just $ Left $ inj (SProxy :: SProxy "url")
             { message: [ "Field value for field " <> key <> " is invalid: " <> show errors ], key }
-    _ | required -> Just $ Left $ inj (SProxy :: SProxy "missing")
-        { message: [ "Field " <> key <> " is required." ], key }
     _ -> Nothing
-validateField fieldValues (Field id key _ (SingleField options)) =
+validateField fieldValues (Field id key (SingleField options)) =
     case fieldValues # Array.find \{ fieldKey } -> fieldKey == key of
     Just fieldValue | Just optionKey <- fieldValue.optionKey ->
         case Map.lookup optionKey options of
         Just (Option optionId _) -> Just $ Right $ FieldValue id $ Single optionId
         Nothing -> Nothing
     _ -> Nothing
-validateField fieldValues (Field id key _ (MultiField options)) =
+validateField fieldValues (Field id key (MultiField options)) =
     case fieldValues # Array.find \{ fieldKey } -> fieldKey == key of
     Just fieldValue | Just optionKeys <- fieldValue.optionKeys -> let
         valueOptionIds =

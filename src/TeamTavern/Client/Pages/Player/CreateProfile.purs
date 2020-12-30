@@ -63,7 +63,6 @@ sendRequest
             ( Array (Variant
                 ( ambitions :: {}
                 , url :: { key :: String, message :: Array String }
-                , missing :: { key :: String, message :: Array String }
                 ))
             )
             Unit
@@ -98,8 +97,6 @@ handleAction (SendRequest event) = do
                 { ambitions: const state { profile { ambitionsError = true } }
                 , url: \{ key } -> state { profile
                     { urlErrors = Array.cons key state.profile.urlErrors } }
-                , missing: \{ key } -> state { profile
-                    { missingErrors = Array.cons key state.profile.missingErrors } }
                 }
                 error
             )
@@ -108,7 +105,6 @@ handleAction (SendRequest event) = do
                 , otherError = false
                 , profile
                     { urlErrors = []
-                    , missingErrors = []
                     , ambitionsError = false
                     }
                 }
@@ -119,7 +115,6 @@ handleAction (SendRequest event) = do
             , otherError = true
             , profile
                 { urlErrors = []
-                , missingErrors = []
                 , ambitionsError = false
                 }
             }

@@ -78,7 +78,6 @@ queryString timezone = Query $ """
                                     'label', label,
                                     'key', key,
                                     'icon', icon,
-                                    'required', required,
                                     'domain', domain,
                                     'options', options
                                 )
@@ -97,7 +96,6 @@ queryString timezone = Query $ """
                             field.key,
                             field.icon,
                             field.ordinal,
-                            field.required,
                             field.domain,
                             json_agg(
                                 json_build_object(

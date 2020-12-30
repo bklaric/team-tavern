@@ -73,7 +73,6 @@ create table field
     , label varchar(40) not null
     , icon varchar(40) not null
     , ordinal int not null
-    , required boolean not null default false
     , domain varchar(40)
     );
 

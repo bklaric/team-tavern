@@ -27,7 +27,6 @@ type Profile =
 
 type ProfileError = Variant
     ( url :: { message :: Array String, key :: String }
-    , missing :: { message :: Array String, key :: String }
     , ambitions :: Array String
     )
 

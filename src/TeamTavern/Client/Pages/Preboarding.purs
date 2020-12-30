@@ -600,7 +600,6 @@ handleAction SetUpAccount = do
                 }
             , playerProfile
                 { urlErrors = []
-                , missingErrors = []
                 , ambitionsError = false
                 }
             , registration
@@ -666,14 +665,6 @@ handleAction SetUpAccount = do
                                 if state'.step > PlayerProfile then PlayerProfile else state'.step
                             , playerProfile
                                 { urlErrors = Array.cons key state'.playerProfile.urlErrors }
-                            }
-                        , missing: \{ key } -> state'
-                            { step =
-                                if state'.step > PlayerProfile then PlayerProfile else state'.step
-                            , playerProfile
-                                { missingErrors =
-                                    Array.cons key state'.playerProfile.missingErrors
-                                }
                             }
                         , ambitions: const $ state'
                             { step =

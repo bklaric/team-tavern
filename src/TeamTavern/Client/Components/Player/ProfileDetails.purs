@@ -15,7 +15,6 @@ profileDetails :: forall slots action.
         , key :: String
         , label :: String
         , icon :: String
-        , required :: Boolean
         , domain :: Maybe String
         , options :: Maybe (Array
             { key :: String

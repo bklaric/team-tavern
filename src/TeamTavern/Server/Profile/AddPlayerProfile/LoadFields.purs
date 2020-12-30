@@ -18,7 +18,6 @@ type Field =
     { id :: Int
     , ilk :: Int
     , key :: String
-    , required :: Boolean
     , domain :: Maybe String
     , options :: Maybe (Array Option)
     }
@@ -29,7 +28,6 @@ queryString = Query """
         field.id,
         field.ilk,
         field.key,
-        field.required,
         field.domain,
         json_agg(
             json_build_object(

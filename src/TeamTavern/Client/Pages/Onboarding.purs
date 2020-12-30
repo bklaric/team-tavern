@@ -499,7 +499,6 @@ handleAction SetUpAccount = do
                 }
             , playerProfile
                 { urlErrors = []
-                , missingErrors = []
                 , ambitionsError = false
                 }
             }
@@ -558,12 +557,6 @@ handleAction SetUpAccount = do
                         { url: \{ key } -> state'
                             { playerProfile
                                 { urlErrors = Array.cons key state'.playerProfile.urlErrors }
-                            }
-                        , missing: \{ key } -> state'
-                            { playerProfile
-                                { missingErrors =
-                                    Array.cons key state'.playerProfile.missingErrors
-                                }
                             }
                         , ambitions: const $ state'
                             { playerProfile { ambitionsError = true } }

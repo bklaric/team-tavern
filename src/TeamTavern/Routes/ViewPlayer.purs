@@ -21,7 +21,6 @@ type OkContentProfile =
         , ilk :: Int
         , label :: String
         , icon :: String
-        , required :: Boolean
         , domain :: Maybe String
         , options :: Maybe (Array
             { key :: String
