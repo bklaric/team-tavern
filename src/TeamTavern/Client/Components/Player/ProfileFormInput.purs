@@ -13,9 +13,12 @@ import Data.Variant (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Record as Record
-import TeamTavern.Client.Components.Input (inputGroup, inputGroupsHeading, requiredDomainInputLabel, requiredInputLabel, requiredTextLineInput, responsiveInputGroups)
+import SvgInject (svgInject)
+import TeamTavern.Client.Components.Input (externalIdLabel, inputGroup, inputGroupsHeading, requiredDomainInputLabel, requiredInputLabel, requiredTextLineInput, responsiveInputGroups)
 import TeamTavern.Client.Components.Player.ProfileInputGroup (ChildSlots, Field, FieldValue, ambitionsInputGroup, fieldInputGroup, newOrReturningInputGroup)
 import TeamTavern.Client.Components.Player.ProfileInputGroup as Input
+import Web.Event.Event (target)
+import Web.Event.Internal.Types (Event)
 
 type FieldValues = Array FieldValue
 
@@ -56,6 +59,7 @@ data Action
     | UpdateMultiSelect String (Array String)
     | UpdateNewOrReturning Boolean
     | UpdateAmbitions String
+    | InjectSvg Event
 
 type Slot = H.Slot (Const Void) Output Unit
 
@@ -77,8 +81,8 @@ render
     , responsiveInputGroups $
         [ inputGroup $
             ( case externalIdIlk of
-                1 -> [ requiredDomainInputLabel "fab fa-steam" "Steam profile" "steamcommunity.com" ]
-                2 -> [ requiredInputLabel "fas fa-fist-raised" "Riot ID" ]
+                1 -> [ externalIdLabel "/brands/steam.svg" "Steam profile" (Just "steamcommunity.com") InjectSvg ]
+                2 -> [ externalIdLabel "/brands/riot.svg" "Riot ID" Nothing InjectSvg ]
                 _ -> []
             )
             <>
@@ -151,6 +155,10 @@ handleAction (UpdateNewOrReturning newOrReturning) = do
 handleAction (UpdateAmbitions ambitions) = do
     state <- H.modify _ { ambitions = ambitions }
     raiseOutput state
+handleAction (InjectSvg event) =
+    case target event of
+    Just element -> H.liftEffect $ svgInject element
+    Nothing -> pure unit
 
 component :: forall query left. H.Component HH.HTML query Input Output (Async left)
 component = H.mkComponent
