@@ -58,7 +58,8 @@ sendRequest
     -> Async left (Maybe
         ( Either
             ( Array (Variant
-                ( ambitions :: {}
+                ( externalId :: Array String
+                , ambitions :: Array String
                 , url :: { key :: String, message :: Array String }
                 ))
             )
@@ -66,7 +67,8 @@ sendRequest
         ))
 sendRequest state @ { nickname, handle, profile } =
     putNoContent ("/api/players/" <> nickname <> "/profiles/" <> handle)
-    { fieldValues: profile.fieldValues
+    { externalId: profile.externalId
+    , fieldValues: profile.fieldValues
     , newOrReturning: profile.newOrReturning
     , ambitions: profile.ambitions
     }
@@ -74,9 +76,10 @@ sendRequest state @ { nickname, handle, profile } =
 handleAction :: forall output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
 handleAction (UpdateProfile profile) =
-    H.modify_ \state -> state
-        { profile = state.profile
-            { fieldValues = profile.fieldValues
+    H.modify_ _
+        { profile
+            { externalId = profile.externalId
+            , fieldValues = profile.fieldValues
             , newOrReturning = profile.newOrReturning
             , ambitions = profile.ambitions
             }
@@ -91,7 +94,8 @@ handleAction (SendRequest event) = do
             foldl
             (\state error ->
                 match
-                { ambitions: const state { profile { ambitionsError = true } }
+                { externalId: const state { profile { externalIdError = true } }
+                , ambitions: const state { profile { ambitionsError = true } }
                 , url: \{ key } -> state { profile
                     { urlErrors = Array.cons key state.profile.urlErrors } }
                 }
@@ -101,7 +105,8 @@ handleAction (SendRequest event) = do
                 { submitting = false
                 , otherError = false
                 , profile
-                    { urlErrors = []
+                    { externalIdError = false
+                    , urlErrors = []
                     , ambitionsError = false
                     }
                 }
@@ -111,7 +116,8 @@ handleAction (SendRequest event) = do
             { submitting = false
             , otherError = true
             , profile
-                { urlErrors = []
+                { externalIdError = false
+                , urlErrors = []
                 , ambitionsError = false
                 }
             }
@@ -120,13 +126,14 @@ component :: forall query output left. H.Component HH.HTML query Input output (A
 component = H.mkComponent
     { initialState: \
         { nickname
-        , profile: { handle, title, fields, externalIdIlk, fieldValues, newOrReturning, ambitions }
+        , profile: { handle, title, externalIdIlk, fields, externalId, fieldValues, newOrReturning, ambitions }
         } ->
         { nickname
         , handle
         , title
         , profile: (ProfileFormInput.emptyInput { externalIdIlk, fields })
-            { fieldValues = fieldValues
+            { externalId = externalId
+            , fieldValues = fieldValues
             , newOrReturning = newOrReturning
             , ambitions = intercalate "\n\n" ambitions
             }

@@ -308,7 +308,8 @@ sendRequest (state :: State) = Async.unify do
             , team: Nothing
             , gameHandle: game.handle
             , playerProfile: Just
-                { fieldValues: profile.fieldValues
+                { externalId: profile.externalId
+                , fieldValues: profile.fieldValues
                 , newOrReturning: profile.newOrReturning
                 , ambitions: profile.ambitions
                 }
@@ -448,7 +449,9 @@ handleAction (UpdateGame game) = do
     state <- H.modify _
         { game = Just game
         , playerProfile
-            { fields = game.fields
+            { externalIdIlk = game.externalIdIlk
+            , fields = game.fields
+            , externalId = ""
             , fieldValues = []
             , newOrReturning = false
             , ambitions = ""
@@ -468,7 +471,8 @@ handleAction (UpdateGame game) = do
 handleAction (UpdatePlayerProfile details) = do
     state <- H.modify _
         { playerProfile
-            { fieldValues = details.fieldValues
+            { externalId = details.externalId
+            , fieldValues = details.fieldValues
             , newOrReturning = details.newOrReturning
             , ambitions = details.ambitions
             }
@@ -498,7 +502,8 @@ handleAction SetUpAccount = do
                 , aboutError = false
                 }
             , playerProfile
-                { urlErrors = []
+                { externalIdError = false
+                , urlErrors = []
                 , ambitionsError = false
                 }
             }
@@ -554,7 +559,9 @@ handleAction SetUpAccount = do
                     foldl
                     (\state' error' ->
                         match
-                        { url: \{ key } -> state'
+                        { externalId: const $ state'
+                            { playerProfile { externalIdError = true } }
+                        , url: \{ key } -> state'
                             { playerProfile
                                 { urlErrors = Array.cons key state'.playerProfile.urlErrors }
                             }

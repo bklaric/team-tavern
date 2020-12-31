@@ -92,5 +92,6 @@ logError updateError = do
             logt $ "Reading resulted in these errors: " <> show errors
         , internal: logLines
         , client: logLines
-        , profile: const $ pure unit
+        , profile: \errors ->
+            logt $ "Error validating profile: " <> show errors
         }

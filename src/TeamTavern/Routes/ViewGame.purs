@@ -15,19 +15,23 @@ type ViewGame = Route
     :> End)
     NoQuery
 
+type OkContentOption =
+    { key :: String
+    , label :: String
+    }
+
+type OkContentField =
+    { ilk :: Int
+    , label :: String
+    , key :: String
+    , icon :: String
+    , domain :: Maybe String
+    , options :: Maybe (Array OkContentOption)
+    }
+
 type OkContent =
     { title :: String
     , handle :: String
     , externalIdIlk :: Int
-    , fields :: Array
-        { ilk :: Int
-        , label :: String
-        , key :: String
-        , icon :: String
-        , domain :: Maybe String
-        , options :: Maybe (Array
-            { key :: String
-            , label :: String
-            })
-        }
+    , fields :: Array OkContentField
     }

@@ -1,21 +1,13 @@
-module TeamTavern.Server.Profile.UpdatePlayerProfile.SendResponse
-    (ProfileErrorContent, BadRequestContent, sendResponse) where
+module TeamTavern.Server.Profile.UpdatePlayerProfile.SendResponse (sendResponse) where
 
 import Prelude
 
 import Async (Async, alwaysRight)
 import Data.Array as Array
-import Data.Variant (Variant, match)
+import Data.Variant (match)
 import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, noContent_, unauthorized__)
 import Simple.JSON (writeJSON)
 import TeamTavern.Server.Profile.UpdatePlayerProfile.LogError (UpdateError)
-
-type ProfileErrorContent = Variant
-    ( invalidAmbitions :: {}
-    , invalidUrl :: { fieldKey :: String }
-    )
-
-type BadRequestContent = Variant (invalidProfile :: Array ProfileErrorContent)
 
 errorResponse :: UpdateError -> Response
 errorResponse = match

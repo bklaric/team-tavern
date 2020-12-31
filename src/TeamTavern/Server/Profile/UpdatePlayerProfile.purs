@@ -28,13 +28,13 @@ updatePlayerProfile pool identifiers cookies body =
     pool # withTransaction (inj (SProxy :: SProxy "databaseError"))
         \client -> do
             -- Load game fields from database.
-            fields <- loadFields client identifiers.handle
+            game <- loadFields client identifiers.handle
 
             -- Read profile from body.
             profile <- readProfile body
 
             -- Validate profile.
-            profile' <- validateProfile fields profile
+            profile' <- validateProfile game profile
 
             -- Update profile.
             updateProfile client cookieInfo identifiers profile'

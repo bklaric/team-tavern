@@ -14,7 +14,7 @@ import Halogen as H
 import Halogen.HTML as HH
 import Record as Record
 import SvgInject (svgInject)
-import TeamTavern.Client.Components.Input (externalIdLabel, inputGroup, inputGroupsHeading, requiredDomainInputLabel, requiredInputLabel, requiredTextLineInput, responsiveInputGroups)
+import TeamTavern.Client.Components.Input (externalIdLabel, inputError, inputGroup, inputGroupsHeading, requiredTextLineInput, responsiveInputGroups)
 import TeamTavern.Client.Components.Player.ProfileInputGroup (ChildSlots, Field, FieldValue, ambitionsInputGroup, fieldInputGroup, newOrReturningInputGroup)
 import TeamTavern.Client.Components.Player.ProfileInputGroup as Input
 import Web.Event.Event (target)
@@ -29,6 +29,7 @@ type Input =
     , fieldValues :: FieldValues
     , newOrReturning :: Boolean
     , ambitions :: String
+    , externalIdError :: Boolean
     , urlErrors :: Array String
     , ambitionsError :: Boolean
     }
@@ -47,6 +48,7 @@ type State =
     , fieldValues :: Input.FieldValues
     , newOrReturning :: Boolean
     , ambitions :: String
+    , externalIdError :: Boolean
     , urlErrors :: Array String
     , ambitionsError :: Boolean
     }
@@ -74,7 +76,7 @@ render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render
     { externalIdIlk, fields
     , externalId, fieldValues, newOrReturning, ambitions
-    , urlErrors, ambitionsError
+    , externalIdError, urlErrors, ambitionsError
     }
     = HH.div_ $
     [ inputGroupsHeading "External ID"
@@ -87,6 +89,8 @@ render
             )
             <>
             [ requiredTextLineInput externalId UpdateExternalId ]
+            <>
+            inputError externalIdError "This doesn't look like a valid external ID."
         ]
     , inputGroupsHeading "Details"
     , responsiveInputGroups $
@@ -178,6 +182,7 @@ emptyInput { externalIdIlk, fields } =
     , fieldValues: []
     , newOrReturning: false
     , ambitions: ""
+    , externalIdError: false
     , urlErrors: []
     , ambitionsError: false
     }

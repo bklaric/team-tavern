@@ -1,4 +1,4 @@
-module TeamTavern.Server.Profile.Infrastructure.ValidateUrl (Url, UrlError, UrlErrors, validateUrl, validateUrlV, validateUrl_, validateUrlV_) where
+module TeamTavern.Server.Profile.Infrastructure.ValidateUrl (Url, toString, UrlError, UrlErrors, validateUrl, validateUrlV, validateUrl_, validateUrlV_) where
 
 import Prelude
 
@@ -10,7 +10,7 @@ import Data.List.Types (NonEmptyList)
 import Data.Maybe (Maybe(..), maybe)
 import Data.String (toLower, trim)
 import Data.String as String
-import Data.String.NonEmpty as NEL
+import Data.String.NonEmpty as NES
 import Data.String.Utils (startsWith)
 import Data.Validated (Validated)
 import Data.Validated as Validated
@@ -34,6 +34,9 @@ type Domain = String
 newtype Url = Url String
 
 derive newtype instance showUrl :: Show Url
+
+toString :: Url -> String
+toString (Url url) = url
 
 type UrlError = Variant (invalid :: Invalid, tooLong :: TooLong)
 
@@ -102,7 +105,7 @@ parser_ = do
 validateUrl :: Domain -> String -> Either (NonEmptyList UrlError) Url
 validateUrl domain url =
     case Parser.runParser (url # trim # prependScheme) (parser domain)
-        <#> (\{ scheme, host, path } -> (NEL.toString $ Scheme.toString scheme) <> "://" <> (NEL.toString $ Host.toString host) <> (maybe "" (\(Path segments) -> "/" <> intercalate "/" (segments <#> segmentToString) ) path))
+        <#> (\{ scheme, host, path } -> (NES.toString $ Scheme.toString scheme) <> "://" <> (NES.toString $ Host.toString host) <> (maybe "" (\(Path segments) -> "/" <> intercalate "/" (segments <#> segmentToString) ) path))
         # lmap (const $ NonEmptyList.singleton $ inj (SProxy :: SProxy "invalid") { original: url }) of
     Left errors -> Left errors
     Right url' ->
@@ -116,7 +119,7 @@ validateUrlV domain url = validateUrl domain url # Validated.fromEither
 validateUrl_ :: String -> Either (NonEmptyList UrlError) Url
 validateUrl_ url =
     case Parser.runParser (url # trim # prependScheme) (parser_)
-        <#> (\{ scheme, host, path } -> (NEL.toString $ Scheme.toString scheme) <> "://" <> (NEL.toString $ Host.toString host) <> (maybe "" (\(Path segments) -> "/" <> intercalate "/" (segments <#> segmentToString) ) path))
+        <#> (\{ scheme, host, path } -> (NES.toString $ Scheme.toString scheme) <> "://" <> (NES.toString $ Host.toString host) <> (maybe "" (\(Path segments) -> "/" <> intercalate "/" (segments <#> segmentToString) ) path))
         # lmap (const $ NonEmptyList.singleton $ inj (SProxy :: SProxy "invalid") { original: url }) of
     Left errors -> Left errors
     Right url' ->

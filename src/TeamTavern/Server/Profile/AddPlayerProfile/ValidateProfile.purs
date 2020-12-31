@@ -15,18 +15,21 @@ import Data.Variant (Variant)
 import TeamTavern.Server.Domain.Text (Text)
 import TeamTavern.Server.Profile.AddPlayerProfile.LoadFields as LoadFields
 import TeamTavern.Server.Profile.AddPlayerProfile.ReadProfile as ReadProfile
+import TeamTavern.Server.Profile.AddPlayerProfile.ValidateExternalId (ExternalId, validateExternalId)
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateFieldValues (validateFieldValues)
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateFieldValues as ValidateFieldValues
 import TeamTavern.Server.Profile.Infrastructure.ValidateAmbitions (validateAmbitions)
 
 type Profile =
-    { fieldValues :: Array ValidateFieldValues.FieldValue
+    { externalId :: ExternalId
+    , fieldValues :: Array ValidateFieldValues.FieldValue
     , newOrReturning :: Boolean
     , ambitions :: Text
     }
 
 type ProfileError = Variant
-    ( url :: { message :: Array String, key :: String }
+    ( externalId :: Array String
+    , url :: { message :: Array String, key :: String }
     , ambitions :: Array String
     )
 
@@ -34,23 +37,24 @@ type ProfileErrors = NonEmptyList ProfileError
 
 validateProfile
     :: forall errors
-    .  Array LoadFields.Field
+    .  LoadFields.Game
     -> ReadProfile.Profile
     -> Async (Variant (profile :: ProfileErrors | errors)) Profile
-validateProfile fields profile @ { fieldValues, newOrReturning, ambitions } =
-    { fieldValues: _, newOrReturning, ambitions: _ }
-    <$> validateFieldValues fields fieldValues
+validateProfile { externalIdIlk, fields } { externalId, fieldValues, newOrReturning, ambitions } =
+    { externalId: _, fieldValues: _, newOrReturning, ambitions: _ }
+    <$> validateExternalId externalIdIlk externalId
+    <*> validateFieldValues fields fieldValues
     <*> validateAmbitions ambitions
     # Async.fromValidated
     # label (SProxy :: SProxy "profile")
 
 validateProfileV
     :: forall errors
-    .  Array LoadFields.Field
+    .  LoadFields.Game
     -> ReadProfile.Profile
     -> AsyncV (NonEmptyList (Variant (playerProfile :: ProfileErrors | errors))) Profile
-validateProfileV fields =
-    validateProfile fields
+validateProfileV game =
+    validateProfile game
     >>> relabel (SProxy :: SProxy "profile") (SProxy :: SProxy "playerProfile")
     >>> lmap NonEmptyList.singleton
     >>> AsyncV.fromAsync

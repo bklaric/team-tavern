@@ -396,7 +396,8 @@ sendRequest (state :: State) = Async.unify do
             , team: Nothing
             , gameHandle: game.handle
             , playerProfile: Just
-                { fieldValues: profile.fieldValues
+                { externalId: profile.externalId
+                , fieldValues: profile.fieldValues
                 , newOrReturning: profile.newOrReturning
                 , ambitions: profile.ambitions
                 }
@@ -660,7 +661,12 @@ handleAction SetUpAccount = do
                     foldl
                     (\state' error' ->
                         match
-                        { url: \{ key } -> state'
+                        { externalId: const $ state'
+                            { step =
+                                if state'.step > PlayerProfile then PlayerProfile else state'.step
+                            , playerProfile { externalIdError = true }
+                            }
+                        , url: \{ key } -> state'
                             { step =
                                 if state'.step > PlayerProfile then PlayerProfile else state'.step
                             , playerProfile

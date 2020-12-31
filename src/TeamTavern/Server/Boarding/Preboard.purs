@@ -150,7 +150,7 @@ preboard deployment pool cookies body =
     -- Start the transaction.
     pool # transaction \client -> do
         -- Read fields from database.
-        fields <- loadFields client content.gameHandle
+        game <- loadFields client content.gameHandle
 
         case content of
             { ilk: 1, player: Just player, playerProfile: Just profile, registration } -> do
@@ -158,7 +158,7 @@ preboard deployment pool cookies body =
                 { player', profile', registration' } <-
                     { player': _, profile': _, registration': _ }
                     <$> validatePlayerV player
-                    <*> validateProfileV fields profile
+                    <*> validateProfileV game profile
                     <*> validateRegistrationV registration
                     # AsyncV.toAsync
                     # label (SProxy :: SProxy "invalidBody")
@@ -195,7 +195,7 @@ preboard deployment pool cookies body =
                 { team', profile', registration' } <-
                     { team': _, profile': _, registration': _ }
                     <$> validateTeamV team
-                    <*> TeamProfile.validateProfileV (convertFields fields) profile
+                    <*> TeamProfile.validateProfileV (convertFields game.fields) profile
                     <*> validateRegistrationV registration
                     # AsyncV.toAsync
                     # label (SProxy :: SProxy "invalidBody")
