@@ -11,7 +11,7 @@ import Data.Maybe (Maybe(..), maybe)
 import Data.String (toLower, trim)
 import Data.String as String
 import Data.String.NonEmpty as NES
-import Data.String.Utils (startsWith)
+import Data.String.Utils (endsWith, startsWith)
 import Data.Validated (Validated)
 import Data.Validated as Validated
 import Data.Variant (SProxy(..), Variant, inj)
@@ -67,7 +67,7 @@ parseHost domain = flip wrapParser RegName.parser
     \host -> let
         printedHost = RegName.print host # toLower
         in
-        if printedHost == domain || printedHost == ("www." <> domain)
+        if printedHost # endsWith domain
         then Right host
         else Left $ URIPartParseError $ "Wrong domain: " <> RegName.print host
 
