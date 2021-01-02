@@ -1,4 +1,4 @@
-module TeamTavern.Server.Profile.AddPlayerProfile.ValidateExternalId (ExternalId, validateExternalId) where
+module TeamTavern.Server.Profile.AddPlayerProfile.ValidateExternalId (ExternalId, toString, validateExternalId) where
 
 import Prelude
 
@@ -9,10 +9,17 @@ import Data.Validated (Validated)
 import Data.Validated as Validated
 import Data.Validated.Label as ValidatedL
 import Data.Variant (Variant, inj)
-import TeamTavern.Server.Profile.Infrastructure.ValidateUrl (validateUrl)
-import TeamTavern.Server.Profile.Infrastructure.ValidateUrl as ValidateUrl
+import TeamTavern.Server.Profile.Infrastructure.ValidateRiotId (RiotId, validateRiotId)
+import TeamTavern.Server.Profile.Infrastructure.ValidateRiotId as RiotId
+import TeamTavern.Server.Profile.Infrastructure.ValidateSteamUrl (validateSteamUrl)
+import TeamTavern.Server.Profile.Infrastructure.ValidateUrl (Url)
+import TeamTavern.Server.Profile.Infrastructure.ValidateUrl as Url
 
-newtype ExternalId = ExternalId String
+data ExternalId = SteamUrl Url | RiotId RiotId
+
+toString :: ExternalId -> String
+toString (SteamUrl url) = Url.toString url
+toString (RiotId riotId) = RiotId.toString riotId
 
 validateExternalId
     :: forall errors
@@ -21,10 +28,13 @@ validateExternalId
     -> Validated (NonEmptyList (Variant (externalId :: Array String | errors))) ExternalId
 validateExternalId externalIdIlk externalId =
     case externalIdIlk of
-    1 -> validateUrl "steamcommunity.com" externalId
-        <#> (ValidateUrl.toString >>> ExternalId)
+    1 -> validateSteamUrl externalId
+        <#> SteamUrl
         # Validated.fromEither
-        # ValidatedL.labelMap (SProxy :: SProxy "externalId")
-            \errors -> [ "Invalid Steam profile URL: " <> show errors ]
-    2 -> pure $ ExternalId externalId
-    _ -> Validated.invalid $ NEL.singleton $ inj (SProxy :: SProxy "externalId") []
+        # ValidatedL.label (SProxy :: SProxy "externalId")
+    2 -> validateRiotId externalId
+        <#> RiotId
+        # Validated.fromEither
+        # ValidatedL.label (SProxy :: SProxy "externalId")
+    ilk -> Validated.invalid $ NEL.singleton $ inj (SProxy :: SProxy "externalId")
+        [ "Error validating external id, ilk is unknown: " <> show ilk ]

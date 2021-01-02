@@ -10,6 +10,7 @@ import TeamTavern.Server.Infrastructure.Error (InternalError)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstInternal)
 import TeamTavern.Server.Profile.AddPlayerProfile.AddFieldValues (ProfileId, addFieldValues)
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateExternalId (ExternalId)
+import TeamTavern.Server.Profile.AddPlayerProfile.ValidateExternalId as ExternalId
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile (Profile)
 import TeamTavern.Server.Profile.Routes (Identifiers)
 
@@ -24,7 +25,7 @@ queryString = Query """
 
 queryParameters :: Int -> Identifiers -> ExternalId -> Text -> Boolean -> Array QueryParameter
 queryParameters playerId { handle, nickname } externalId ambitions newOrReturning =
-    playerId : handle : externalId : ambitions :| newOrReturning
+    playerId : handle : ExternalId.toString externalId : ambitions :| newOrReturning
 
 addProfile'
     :: forall errors

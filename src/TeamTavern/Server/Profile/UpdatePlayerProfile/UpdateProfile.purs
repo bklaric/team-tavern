@@ -19,6 +19,7 @@ import TeamTavern.Server.Domain.Text (Text)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Server.Profile.AddPlayerProfile.AddFieldValues (ProfileId, addFieldValues)
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateExternalId (ExternalId)
+import TeamTavern.Server.Profile.AddPlayerProfile.ValidateExternalId as ExternalId
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile (Profile)
 import TeamTavern.Server.Profile.Routes (Identifiers)
 
@@ -63,7 +64,7 @@ updateProfileString = Query """
 updateProfileParameters ::
     CookieInfo -> Identifiers -> ExternalId -> Text -> Boolean -> Array QueryParameter
 updateProfileParameters { id, token } { nickname, handle } externalId ambitions newOrReturning =
-    id : token : nickname : handle : externalId : ambitions :| newOrReturning
+    id : token : nickname : handle : ExternalId.toString externalId : ambitions :| newOrReturning
 
 updateProfile'
     :: forall errors
