@@ -13,12 +13,9 @@ import Data.Variant (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Record as Record
-import SvgInject (svgInject)
-import TeamTavern.Client.Components.Input (externalIdLabel, inputError, inputGroup, inputGroupsHeading, requiredTextLineInput, responsiveInputGroups)
-import TeamTavern.Client.Components.Player.ProfileInputGroup (ChildSlots, Field, FieldValue, ambitionsInputGroup, fieldInputGroup, newOrReturningInputGroup)
+import TeamTavern.Client.Components.Input (inputGroupsHeading, responsiveInputGroups)
+import TeamTavern.Client.Components.Player.ProfileInputGroup (ChildSlots, Field, FieldValue, ambitionsInputGroup, externalIdInputGroup, fieldInputGroup, newOrReturningInputGroup)
 import TeamTavern.Client.Components.Player.ProfileInputGroup as Input
-import Web.Event.Event (target)
-import Web.Event.Internal.Types (Event)
 
 type FieldValues = Array FieldValue
 
@@ -61,7 +58,6 @@ data Action
     | UpdateMultiSelect String (Array String)
     | UpdateNewOrReturning Boolean
     | UpdateAmbitions String
-    | InjectSvg Event
 
 type Slot = H.Slot (Const Void) Output Unit
 
@@ -80,18 +76,8 @@ render
     }
     = HH.div_ $
     [ inputGroupsHeading "External ID"
-    , responsiveInputGroups $
-        [ inputGroup $
-            ( case externalIdIlk of
-                1 -> [ externalIdLabel "/brands/steam.svg" "Steam profile" (Just "steamcommunity.com") InjectSvg ]
-                2 -> [ externalIdLabel "/brands/riot.svg" "Riot ID" Nothing InjectSvg ]
-                _ -> []
-            )
-            <>
-            [ requiredTextLineInput externalId UpdateExternalId ]
-            <>
-            inputError externalIdError "This doesn't look like a valid external ID."
-        ]
+    , responsiveInputGroups
+        [ externalIdInputGroup externalIdIlk externalId UpdateExternalId externalIdError ]
     , inputGroupsHeading "Details"
     , responsiveInputGroups $
         ( fields <#> fieldInputGroup fieldValues
@@ -159,10 +145,6 @@ handleAction (UpdateNewOrReturning newOrReturning) = do
 handleAction (UpdateAmbitions ambitions) = do
     state <- H.modify _ { ambitions = ambitions }
     raiseOutput state
-handleAction (InjectSvg event) =
-    case target event of
-    Just element -> H.liftEffect $ svgInject element
-    Nothing -> pure unit
 
 component :: forall query left. H.Component HH.HTML query Input Output (Async left)
 component = H.mkComponent

@@ -48,10 +48,12 @@ requiredInputLabel icon label = inputLabel' icon label Nothing true
 inputLabel :: forall slots action. String -> String -> HH.HTML slots action
 inputLabel icon label = inputLabel' icon label Nothing false
 
-externalIdLabel icon label domain onLoad =
+externalIdLabel :: forall slots action.
+    HH.HTML slots action -> String -> Maybe String -> HH.HTML slots action
+externalIdLabel icon label domain =
     HH.label
     [ HS.class_ "input-label"] $
-    [ HH.img [ HS.class_ "input-label-icon", HP.src icon, HE.onLoad $ Just <<< onLoad ]
+    [ icon
     , HH.span [ HS.class_ "input-label-text" ] [ HH.text label ]
     ]
     <>

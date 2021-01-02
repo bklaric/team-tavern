@@ -13,6 +13,7 @@ You can edit this file as you like.
   , "halogen"
   , "halogen-css"
   , "halogen-hooks"
+  , "halogen-svg-elems"
   , "idiomatic-node-crypto"
   , "idiomatic-node-http"
   , "idiomatic-node-process"

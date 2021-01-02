@@ -6,7 +6,6 @@ mkdir dist-client/favicons
 mkdir dist-client/css
 mkdir dist-client/webfonts
 mkdir dist-client/brands
-mkdir dist-client/libraries
 cp src/TeamTavern/Client/Static/robots.txt dist-client/robots.txt
 cp src/TeamTavern/Client/Static/sitemap.txt dist-client/sitemap.txt
 cp src/TeamTavern/Client/Static/index.html dist-client/index.html
@@ -15,7 +14,6 @@ cp src/TeamTavern/Client/Static/Favicons/* dist-client/favicons/
 cp src/TeamTavern/Client/Static/Css/* dist-client/css/
 cp src/TeamTavern/Client/Static/Fonts/* dist-client/webfonts/
 cp src/TeamTavern/Client/Static/Brands/* dist-client/brands/
-cp src/TeamTavern/Client/Static/Libraries/* dist-client/libraries/
 discriminator=`openssl rand -hex 8`
 sass src/TeamTavern/Client/Style/Main.scss \
     | cleancss -o "dist-client/style.min.${discriminator}.css"

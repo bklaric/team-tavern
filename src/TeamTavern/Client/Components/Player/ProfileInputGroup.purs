@@ -11,11 +11,39 @@ import Data.Maybe (Maybe(..), maybe)
 import Data.Variant (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
-import TeamTavern.Client.Components.Input (checkboxInput, domainInputLabel, inputError, inputGroup, inputLabel, inputUnderlabel, textInput_, textLineInput)
+import TeamTavern.Client.Components.Input (checkboxInput, domainInputLabel, externalIdLabel, inputError, inputGroup, inputLabel, inputUnderlabel, requiredTextLineInput, textInput_, textLineInput)
 import TeamTavern.Client.Components.Select.MultiSelect (multiSelectIndexed)
 import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.Select.SingleSelect (singleSelectIndexed)
 import TeamTavern.Client.Components.Select.SingleSelect as SingleSelect
+import TeamTavern.Client.Snippets.Brands (riotSvg, steamSvg)
+
+externalIdInputGroup :: forall slots action.
+    Int -> String -> (String -> action) -> Boolean -> HH.HTML slots action
+externalIdInputGroup externalIdIlk externalId onValue error =
+    inputGroup $
+    ( case externalIdIlk of
+        1 -> [ externalIdLabel steamSvg "Steam profile" (Just "steamcommunity.com") ]
+        2 -> [ externalIdLabel riotSvg "Riot ID" Nothing ]
+        _ -> []
+    )
+    <>
+    [ requiredTextLineInput externalId onValue ]
+    <>
+    ( case externalIdIlk of
+        1 ->
+            [ inputUnderlabel "Example: steamcommunity.com/id/username"
+            , inputUnderlabel "Example: steamcommunity.com/profile/76561198821728791"
+            ]
+        2 -> [ inputUnderlabel "Example: username#12345" ]
+        _ -> []
+    )
+    <>
+    inputError error
+        case externalIdIlk of
+        1 -> "This doesn't look like a valid Steam profile URL."
+        2 -> "This doesn't look like a valid Riot ID."
+        _ -> "This doesn't look like a valid external ID."
 
 type Option =
     { key :: String
