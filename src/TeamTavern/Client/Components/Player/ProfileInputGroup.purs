@@ -16,15 +16,15 @@ import TeamTavern.Client.Components.Select.MultiSelect (multiSelectIndexed)
 import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.Select.SingleSelect (singleSelectIndexed)
 import TeamTavern.Client.Components.Select.SingleSelect as SingleSelect
-import TeamTavern.Client.Snippets.Brands (riotSvg, steamSvg)
+import TeamTavern.Client.Snippets.Brands (inputRiotSvg, inputSteamSvg)
 
 externalIdInputGroup :: forall slots action.
     Int -> String -> (String -> action) -> Boolean -> HH.HTML slots action
 externalIdInputGroup externalIdIlk externalId onValue error =
     inputGroup $
     ( case externalIdIlk of
-        1 -> [ externalIdLabel steamSvg "Steam profile" (Just "steamcommunity.com") ]
-        2 -> [ externalIdLabel riotSvg "Riot ID" Nothing ]
+        1 -> [ externalIdLabel inputSteamSvg "Steam profile" (Just "steamcommunity.com") ]
+        2 -> [ externalIdLabel inputRiotSvg "Riot ID" Nothing ]
         _ -> []
     )
     <>

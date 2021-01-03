@@ -2,15 +2,19 @@ module TeamTavern.Client.Components.Player.ProfileDetails where
 
 import Prelude
 
+import Async (Async)
+import Client.Components.Copyable as Copyable
 import Data.Array (intercalate)
 import Data.Array as Array
 import Data.Maybe (Maybe(..))
 import Halogen.HTML as HH
-import TeamTavern.Client.Components.Detail (detail, fieldDetail, urlDetail)
+import TeamTavern.Client.Components.Detail (detail, fieldDetail, riotIdDetail, steamUrlDetail, urlDetail)
 import TeamTavern.Client.Snippets.Class as HS
 
-profileDetails :: forall slots action.
-    Array
+profileDetails :: forall left slots action.
+    Int
+    -> String
+    -> Array
         { ilk :: Int
         , key :: String
         , label :: String
@@ -28,9 +32,9 @@ profileDetails :: forall slots action.
         , optionKeys :: Maybe (Array String)
         }
     -> Boolean
-    -> Array (HH.HTML slots action)
-profileDetails fields fieldValues newOrReturning =
-    profileDetails'
+    -> Array (HH.ComponentHTML action (riotId :: Copyable.Slot String | slots) (Async left))
+profileDetails externalIdIlk externalId fields fieldValues newOrReturning =
+    profileDetails' externalIdIlk externalId
     ( fields
     <#> ( \field ->
             case fieldValues # Array.find \{ fieldKey } -> fieldKey == field.key of
@@ -59,8 +63,10 @@ profileDetails fields fieldValues newOrReturning =
     )
     newOrReturning
 
-profileDetails' :: forall slots action.
-    Array
+profileDetails' :: forall left slots action.
+    Int
+    -> String
+    -> Array
         { field ::
             { ilk :: Int
             , key :: String
@@ -78,8 +84,13 @@ profileDetails' :: forall slots action.
             })
         }
     -> Boolean
-    -> Array (HH.HTML slots action)
-profileDetails' fieldValues newOrReturning =
+    -> Array (HH.ComponentHTML action (riotId :: Copyable.Slot String | slots) (Async left))
+profileDetails' externalIdIlk externalId fieldValues newOrReturning =
+    case externalIdIlk of
+    1 -> [ steamUrlDetail externalId ]
+    2 -> [ riotIdDetail externalId ]
+    _ -> []
+    <>
     ( fieldValues
     <#> ( \{ field, url, option, options } ->
             case field.ilk, url, option, options of

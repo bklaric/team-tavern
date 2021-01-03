@@ -40,6 +40,8 @@ type LoadProfilesResult =
     , weekdayOnline :: Maybe { from :: String, to :: String }
     , weekendOnline :: Maybe { from :: String, to :: String }
     , about :: Array String
+    , externalIdIlk :: Int
+    , externalId :: String
     , fieldValues :: Array
         { field ::
             { ilk :: Int
@@ -220,6 +222,8 @@ queryStringWithoutPagination handle timezone filters = Query $ """
                 )
             end as "weekendOnline",
             player.about,
+            game.external_id_ilk as "externalIdIlk",
+            profile.external_id as "externalId",
             coalesce(
                 jsonb_agg(
                     jsonb_build_object(
@@ -292,7 +296,7 @@ queryStringWithoutPagination handle timezone filters = Query $ """
         where
             game.handle = """ <> prepareString handle
             <> createPlayerFilterString timezone filters <> """
-        group by player.id, profile.id
+        group by player.id, game.id, profile.id
         ) as profile
     """ <> createFieldsFilterString filters.fields <> """
     order by profile.updated desc"""
