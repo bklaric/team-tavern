@@ -16,7 +16,8 @@ type BadRequestContent = Variant ( noSessionStarted :: {} )
 
 errorResponse :: StartError -> Response
 errorResponse = match
-    { signedIn: const forbidden__
+    { internal: const internalServerError__
+    , signedIn: const forbidden__
     , unreadableDto: const badRequest__
     , bcrypt: const internalServerError__
     , randomError: const internalServerError__

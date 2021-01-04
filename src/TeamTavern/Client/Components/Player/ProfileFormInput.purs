@@ -14,39 +14,45 @@ import Halogen as H
 import Halogen.HTML as HH
 import Record as Record
 import TeamTavern.Client.Components.Input (inputGroupsHeading, responsiveInputGroups)
-import TeamTavern.Client.Components.Player.ProfileInputGroup (ChildSlots, Field, FieldValue, ambitionsInputGroup, fieldInputGroup, newOrReturningInputGroup)
+import TeamTavern.Client.Components.Player.ProfileInputGroup (ChildSlots, Field, FieldValue, ambitionsInputGroup, externalIdInputGroup, fieldInputGroup, newOrReturningInputGroup)
 import TeamTavern.Client.Components.Player.ProfileInputGroup as Input
 
 type FieldValues = Array FieldValue
 
 type Input =
-    { fields :: Array Field
+    { externalIdIlk :: Int
+    , fields :: Array Field
+    , externalId :: String
     , fieldValues :: FieldValues
     , newOrReturning :: Boolean
     , ambitions :: String
+    , externalIdError :: Boolean
     , urlErrors :: Array String
-    , missingErrors :: Array String
     , ambitionsError :: Boolean
     }
 
 type Output =
-    { fieldValues :: FieldValues
+    { externalId :: String
+    , fieldValues :: FieldValues
     , ambitions :: String
     , newOrReturning :: Boolean
     }
 
 type State =
-    { fields :: Array Field
+    { externalIdIlk :: Int
+    , fields :: Array Field
+    , externalId :: String
     , fieldValues :: Input.FieldValues
     , newOrReturning :: Boolean
     , ambitions :: String
+    , externalIdError :: Boolean
     , urlErrors :: Array String
-    , missingErrors :: Array String
     , ambitionsError :: Boolean
     }
 
 data Action
     = Receive Input
+    | UpdateExternalId String
     | UpdateUrl String (Maybe String)
     | UpdateSingleSelect String (Maybe String)
     | UpdateMultiSelect String (Array String)
@@ -63,12 +69,19 @@ fieldValuesToMap :: forall fields.
 fieldValuesToMap = foldl (\map value -> Map.insert value.fieldKey value map) Map.empty
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
-render { fields, ambitions, fieldValues, newOrReturning, urlErrors, missingErrors, ambitionsError }
+render
+    { externalIdIlk, fields
+    , externalId, fieldValues, newOrReturning, ambitions
+    , externalIdError, urlErrors, ambitionsError
+    }
     = HH.div_ $
-    [ inputGroupsHeading "Details"
+    [ inputGroupsHeading "External ID"
+    , responsiveInputGroups
+        [ externalIdInputGroup externalIdIlk externalId UpdateExternalId externalIdError ]
+    , inputGroupsHeading "Details"
     , responsiveInputGroups $
         ( fields <#> fieldInputGroup fieldValues
-            UpdateUrl UpdateSingleSelect UpdateMultiSelect urlErrors missingErrors
+            UpdateUrl UpdateSingleSelect UpdateMultiSelect urlErrors
         )
         <>
         [ newOrReturningInputGroup newOrReturning UpdateNewOrReturning ]
@@ -77,12 +90,15 @@ render { fields, ambitions, fieldValues, newOrReturning, urlErrors, missingError
     ]
 
 raiseOutput :: forall left. State -> H.HalogenM State Action ChildSlots Output (Async left) Unit
-raiseOutput { fieldValues, newOrReturning, ambitions } =
-    H.raise { fieldValues: fieldValuesToArray fieldValues, newOrReturning, ambitions }
+raiseOutput { externalId, fieldValues, newOrReturning, ambitions } =
+    H.raise { externalId, fieldValues: fieldValuesToArray fieldValues, newOrReturning, ambitions }
 
 handleAction :: forall left. Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
 handleAction (Receive input) =
     H.put (Record.modify (SProxy :: SProxy "fieldValues") fieldValuesToMap input)
+handleAction (UpdateExternalId externalId) = do
+    state <- H.modify _ { externalId = externalId }
+    raiseOutput state
 handleAction (UpdateUrl fieldKey url) = do
     state <- H.modify \state -> state
         { fieldValues =
@@ -140,14 +156,16 @@ component = H.mkComponent
         }
     }
 
-emptyInput :: Array Field -> Input
-emptyInput fields =
-    { fields
+emptyInput :: forall props. { externalIdIlk :: Int, fields :: Array Field | props } -> Input
+emptyInput { externalIdIlk, fields } =
+    { externalIdIlk
+    , fields
+    , externalId: ""
     , fieldValues: []
     , newOrReturning: false
     , ambitions: ""
+    , externalIdError: false
     , urlErrors: []
-    , missingErrors: []
     , ambitionsError: false
     }
 

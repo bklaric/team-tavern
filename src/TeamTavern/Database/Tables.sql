@@ -16,8 +16,6 @@ create table player
     , registered timestamptz not null default current_timestamp
     );
 
-create unique index player_lower_email_key on player (lower(email));
-
 create unique index player_lower_nickname_key on player (lower(nickname));
 
 create table team
@@ -63,6 +61,7 @@ create table game
     , title varchar(50) not null unique
     , handle varchar(50) not null unique
     , description text[] not null
+    , external_id_ilk integer not null -- 1 (Steam profile URL), 2 (Riot ID)
     , created timestamptz not null default current_timestamp
     );
 
@@ -74,7 +73,6 @@ create table field
     , label varchar(40) not null
     , icon varchar(40) not null
     , ordinal int not null
-    , required boolean not null default false
     , domain varchar(40)
     );
 
@@ -90,6 +88,7 @@ create table player_profile
     ( id serial not null primary key
     , player_id integer not null references player(id)
     , game_id integer not null references game(id)
+    , external_id text not null
     , new_or_returning boolean not null
     , ambitions text[] not null
     , created timestamptz not null default current_timestamp
@@ -102,7 +101,7 @@ create table player_profile_field_value
     , player_profile_id integer not null references player_profile(id) on delete cascade
     , field_id integer not null references field(id)
     , url varchar(200) -- When field is url.
-    , field_option_id integer references field_option(id) -- When field is singe select.
+    , field_option_id integer references field_option(id) -- When field is single select.
     );
 
 create table player_profile_field_value_option

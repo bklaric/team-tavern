@@ -48,6 +48,27 @@ requiredInputLabel icon label = inputLabel' icon label Nothing true
 inputLabel :: forall slots action. String -> String -> HH.HTML slots action
 inputLabel icon label = inputLabel' icon label Nothing false
 
+externalIdLabel :: forall slots action.
+    HH.HTML slots action -> String -> Maybe String -> HH.HTML slots action
+externalIdLabel icon label domain =
+    HH.label
+    [ HS.class_ "input-label"] $
+    [ icon
+    , HH.span [ HS.class_ "input-label-text" ] [ HH.text label ]
+    ]
+    <>
+    (case domain of
+    Just domain' ->
+        [ divider
+        , HH.span [ HP.class_ $ H.ClassName "input-sublabel" ] [ HH.text domain' ]
+        ]
+    Nothing -> []
+    )
+    <>
+    [ divider
+    , HH.span [ HP.class_ $ H.ClassName "input-primary-sublabel" ] [ HH.text "required" ]
+    ]
+
 inputUnderlabel :: forall slots action. String -> HH.HTML slots action
 inputUnderlabel text =
     HH.label

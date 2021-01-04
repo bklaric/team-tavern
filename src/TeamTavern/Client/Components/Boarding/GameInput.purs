@@ -16,15 +16,15 @@ import Halogen.HTML.Properties as HP
 import Simple.JSON.Async as Json
 import TeamTavern.Client.Components.RadioCard (radioCard, radioCards)
 import TeamTavern.Routes.ViewAllGames as ViewAllGames
-import TeamTavern.Server.Game.View.SendResponse as View
+import TeamTavern.Routes.ViewGame as ViewGame
 
-type Input = Maybe View.OkContent
+type Input = Maybe ViewGame.OkContent
 
-type Output = View.OkContent
+type Output = ViewGame.OkContent
 
 type State =
     { games :: ViewAllGames.OkContent
-    , selected :: Maybe View.OkContent
+    , selected :: Maybe ViewGame.OkContent
     }
 
 data Action = Initialize | SelectGame ViewAllGames.OkGameContent
@@ -56,7 +56,7 @@ loadGames = Async.unify do
         200 -> FetchRes.text response >>= Json.readJSON # lmap (const Nothing)
         _ -> Async.left Nothing
 
-loadGame :: forall left. String -> Async left (Maybe View.OkContent)
+loadGame :: forall left. String -> Async left (Maybe ViewGame.OkContent)
 loadGame handle = Async.unify do
     response <- Fetch.fetch_ ("/api/games/by-handle/" <> handle) # lmap (const Nothing)
     case FetchRes.status response of

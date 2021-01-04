@@ -31,8 +31,8 @@ import Postgres.Pool (Pool)
 import Postgres.Pool as Pool
 import TeamTavern.Server.Architecture.Deployment (Deployment)
 import TeamTavern.Server.Architecture.Deployment as Deployment
-import TeamTavern.Server.Game.View (handleView) as Game
-import TeamTavern.Server.Game.ViewAll (handleViewAll) as Game
+import TeamTavern.Server.Game.View (view) as Game
+import TeamTavern.Server.Game.ViewAll (viewAll) as Game
 import TeamTavern.Server.Infrastructure.Log (logStamped, logt)
 import TeamTavern.Server.Player.EditSettings (updateSettings) as Player
 import TeamTavern.Server.Player.Register (register) as Player
@@ -162,9 +162,9 @@ handleRequest deployment pool method url cookies body =
         , endSession: const
             Session.end
         , viewAllGames: const $
-            Game.handleViewAll pool
+            Game.viewAll pool
         , viewGame: \{ handle } ->
-            Game.handleView pool handle cookies
+            Game.view pool handle cookies
         , addPlayerProfile: \identifiers ->
             Profile.addPlayerProfile pool identifiers cookies body
         , addTeamProfile:

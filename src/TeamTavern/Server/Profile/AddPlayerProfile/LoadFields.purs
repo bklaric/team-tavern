@@ -1,52 +1,64 @@
-module TeamTavern.Server.Profile.AddPlayerProfile.LoadFields (Option, Field, loadFields) where
+module TeamTavern.Server.Profile.AddPlayerProfile.LoadFields (Option, Field, Game, loadFields) where
 
 import Async (Async)
 import Data.Maybe (Maybe)
 import Postgres.Query (class Querier, Query(..), (:))
 import TeamTavern.Server.Infrastructure.Error (InternalError)
-import TeamTavern.Server.Infrastructure.Postgres (queryMany)
+import TeamTavern.Server.Infrastructure.Postgres (queryFirstInternal)
 
 type Handle = String
 
 type Option =
     { id :: Int
     , key :: String
-    , domain :: Maybe String
     }
 
 type Field =
     { id :: Int
     , ilk :: Int
     , key :: String
-    , required :: Boolean
     , domain :: Maybe String
     , options :: Maybe (Array Option)
+    }
+
+type Game =
+    { externalIdIlk :: Int
+    , fields :: Array Field
     }
 
 queryString :: Query
 queryString = Query """
     select
-        field.id,
-        field.ilk,
-        field.key,
-        field.required,
-        field.domain,
-        json_agg(
-            json_build_object(
-                'id', field_option.id,
-                'key', field_option.key
-            )
-            order by field_option.id
-        )
-        filter (where field_option.id is not null)
-        as options
-    from field
-        join game on game.id = field.game_id
-        left join field_option on field_option.field_id = field.id
+        game.external_id_ilk as "externalIdIlk",
+        coalesce(
+            json_agg(
+                json_build_object(
+                    'id', field.id,
+                    'ilk', field.ilk,
+                    'key', field.key,
+                    'domain', field.domain,
+                    'options', field.options
+                ) order by field.ordinal
+            ) filter (where field.id is not null),
+            '[]'
+        ) as fields
+    from game
+        join (
+            select
+                field.*,
+                json_agg(
+                    json_build_object(
+                        'id', field_option.id,
+                        'key', field_option.key
+                    ) order by field_option.ordinal
+                ) filter (where field_option.id is not null) as options
+            from field left join field_option on field_option.field_id = field.id
+            group by field.id
+        ) as field on field.game_id = game.id
     where game.handle = $1
-    group by field.id
+    group by game.id;
     """
 
 loadFields :: forall querier errors. Querier querier =>
-    querier -> Handle -> Async (InternalError errors) (Array Field)
-loadFields client handle = queryMany client queryString (handle : [])
+    querier -> Handle -> Async (InternalError errors) Game
+loadFields client handle = queryFirstInternal client queryString (handle : [])

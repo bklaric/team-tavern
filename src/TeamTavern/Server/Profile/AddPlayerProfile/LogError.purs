@@ -24,8 +24,8 @@ profileHandler :: forall fields. Lacks "profile" fields =>
     Builder (Record fields) { profile :: ProfileErrors -> Effect Unit | fields }
 profileHandler = Builder.insert (SProxy :: SProxy "profile") \errors ->
     foreachE (Array.fromFoldable errors) $ match
-        { url: _.message >>> logLines
-        , missing: _.message >>> logLines
+        { externalId: logLines
+        , url: _.message >>> logLines
         , ambitions: logLines
         }
 

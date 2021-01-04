@@ -9,8 +9,8 @@ import TeamTavern.Server.Game.ViewAll.LoadGames (loadGames)
 import TeamTavern.Server.Game.ViewAll.LogError (logError)
 import TeamTavern.Server.Game.ViewAll.SendResponse (sendResponse)
 
-handleViewAll :: forall left. Pool -> Async left Response
-handleViewAll pool =
-    sendResponse $ examineLeftWithEffect logError $
+viewAll :: forall left. Pool -> Async left Response
+viewAll pool =
+    sendResponse $ examineLeftWithEffect logError do
     -- Load games from database
     loadGames pool

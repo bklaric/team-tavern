@@ -32,7 +32,6 @@ type Fields = Array
     , label :: String
     , key :: String
     , icon :: String
-    , required :: Boolean
     , domain :: Maybe String
     , options :: Maybe (Array
         { key :: String
@@ -50,6 +49,8 @@ type PlayerProfile =
     , weekdayOnline :: Maybe { from :: String, to :: String }
     , weekendOnline :: Maybe { from :: String, to :: String }
     , about :: Array String
+    , externalIdIlk :: Int
+    , externalId :: String
     , fieldValues :: Array
         { field ::
             { ilk :: Int
@@ -95,6 +96,7 @@ type ChildSlots =
     ( players :: Anchor.Slot String
     , messagePlayer :: Anchor.Slot String
     , discordTag :: Copyable.Slot String
+    , riotId :: Copyable.Slot String
     )
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
@@ -128,7 +130,8 @@ render { profiles, profileCount, playerInfo, page } =
     else
     ( profiles <#> \profile -> let
         playerDetails' = playerDetails profile
-        profileDetails'' = profileDetails' profile.fieldValues profile.newOrReturning
+        profileDetails'' = profileDetails'
+            profile.externalIdIlk profile.externalId profile.fieldValues profile.newOrReturning
         about = textDetail profile.about
         ambitions = textDetail profile.ambitions
         in

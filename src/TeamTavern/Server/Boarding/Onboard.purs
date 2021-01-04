@@ -118,14 +118,14 @@ onboard pool cookies body =
     -- Start the transaction.
     pool # transaction \client -> do
         -- Read fields from database.
-        fields <- loadFields client content.gameHandle
+        game <- loadFields client content.gameHandle
 
         case content of
             { ilk: 1, player: Just player, playerProfile: Just profile } -> do
                 { player', profile' } <-
                     { player': _, profile': _ }
                     <$> validatePlayerV player
-                    <*> validateProfileV fields profile
+                    <*> validateProfileV game profile
                     # AsyncV.toAsync
                     # label (SProxy :: SProxy "invalidBody")
                 updateDetails client (unwrap cookieInfo.id) player'
@@ -139,7 +139,7 @@ onboard pool cookies body =
                 { team', profile' } <-
                     { team': _, profile': _ }
                     <$> validateTeamV team
-                    <*> TeamProfile.validateProfileV (convertFields fields) profile
+                    <*> TeamProfile.validateProfileV (convertFields game.fields) profile
                     # AsyncV.toAsync
                     # label (SProxy :: SProxy "invalidBody")
                 let generatedHandle = generateHandle team'.name

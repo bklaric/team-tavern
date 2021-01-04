@@ -3,6 +3,7 @@ module TeamTavern.Client.Pages.Player.Profiles (profiles) where
 import Prelude
 
 import Async (Async)
+import Client.Components.Copyable as Copyable
 import Data.Array as Array
 import Data.Symbol (SProxy(..))
 import Halogen.HTML as HH
@@ -23,6 +24,7 @@ import TeamTavern.Routes.ViewPlayer as ViewPlayer
 type ChildSlots children =
     ( games :: NavigationAnchor.Slot String
     , createProfile :: CreateProfileButton.Slot
+    , riotId :: Copyable.Slot String
     | children)
 
 profiles
@@ -49,7 +51,7 @@ profiles { nickname, profiles: profiles' } status showEditProfileModal =
         SignedInSelf -> "You haven't create any profiles."
         _ -> "This player hasn't created any profiles." ] ]
     else profiles' <#> \profile -> let
-        profileDetails' = profileDetails profile.fields profile.fieldValues profile.newOrReturning
+        profileDetails' = profileDetails profile.externalIdIlk profile.externalId profile.fields profile.fieldValues profile.newOrReturning
         ambitions = textDetail profile.ambitions
         in
         cardSection $

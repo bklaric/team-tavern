@@ -11,12 +11,13 @@ import Node.Errors as Node
 import Postgres.Error as Postgres
 import Postgres.Result (Result, rows)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
-import TeamTavern.Server.Infrastructure.Log (logStamped, logt, print)
+import TeamTavern.Server.Infrastructure.Log (logLines, logStamped, logt, print)
 import TeamTavern.Server.Player.Domain.Id (Id)
 import TeamTavern.Server.Session.Domain.Token (Token)
 
 type StartError = Variant
-    ( signedIn ::
+    ( internal :: Array String
+    , signedIn ::
         { cookieInfo :: CookieInfo
         , cookies :: Map String String
         }
@@ -43,7 +44,8 @@ logError :: StartError -> Effect Unit
 logError startError = do
     logStamped "Error starting session"
     startError # match
-        { signedIn: \{ cookieInfo, cookies } -> do
+        { internal: logLines
+        , signedIn: \{ cookieInfo, cookies } -> do
             logt $ "The request came with this player info: " <> show cookieInfo
             logt $ "In these cookies: " <> show cookies
         , unreadableDto: \{ content, errors } -> do

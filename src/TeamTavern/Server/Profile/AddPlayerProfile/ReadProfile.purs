@@ -14,7 +14,8 @@ type FieldValue =
     }
 
 type Profile =
-    { fieldValues :: Array FieldValue
+    { externalId :: String
+    , fieldValues :: Array FieldValue
     , newOrReturning :: Boolean
     , ambitions :: String
     }

@@ -2,11 +2,16 @@ module TeamTavern.Client.Components.Detail where
 
 import Prelude
 
+import Async (Async)
+import Client.Components.Copyable (copyable)
+import Client.Components.Copyable as Copyable
 import Data.Array as Array
 import Data.Foldable (foldr)
 import Data.Maybe (Maybe(..))
+import Data.Symbol (SProxy(..))
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
+import TeamTavern.Client.Snippets.Brands (detailRiotSvg, detailSteamSvg)
 import TeamTavern.Client.Snippets.Class as HS
 
 detailColumnsContainer :: forall slots action. Array (HH.HTML slots action) -> HH.HTML slots action
@@ -24,12 +29,28 @@ detailColumnHeading3 heading = HH.h3 [ HS.class_ "detail-column-heading" ] [ HH.
 detailColumnHeading4 :: forall slots action. String -> HH.HTML slots action
 detailColumnHeading4 heading = HH.h4 [ HS.class_ "detail-column-heading" ] [ HH.text heading ]
 
+detail' :: forall slots action.
+    HH.HTML slots action -> Array (HH.HTML slots action) -> HH.HTML slots action
+detail' icon children = HH.p [ HS.class_ "detail" ] $ [ icon ] <> children
+
 detail :: forall slots action. String -> Array (HH.HTML slots action) -> HH.HTML slots action
-detail icon children =
-    HH.p
-    [ HS.class_ "detail" ] $
-    [ HH.i [ HS.class_ $ icon <> " detail-icon" ] [] ]
-    <> children
+detail icon children = detail' (HH.i [ HS.class_ $ icon <> " detail-icon" ] []) children
+
+steamUrlDetail :: forall slots action. String -> HH.HTML slots action
+steamUrlDetail steamUrl =
+    detail' detailSteamSvg
+    [ HH.a
+        [ HS.class_ "detail-url", HP.target "_blank", HP.href steamUrl ]
+        [ HH.text "Steam profile" ]
+    ]
+
+riotIdDetail :: forall left slots action.
+    String -> HH.ComponentHTML action (riotId :: Copyable.Slot String | slots) (Async left)
+riotIdDetail riotId =
+    detail' detailRiotSvg
+    [ HH.span [ HS.class_ "detail-label" ] [ HH.text "Riot ID: " ]
+    , HH.span [ HS.class_ "detail-emphasize" ] [ copyable (SProxy :: SProxy "riotId") riotId riotId ]
+    ]
 
 fieldDetail :: forall slots action.
     String -> String -> Array (HH.HTML slots action) -> HH.HTML slots action

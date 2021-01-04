@@ -6,6 +6,12 @@ import Jarilo.Query (NoQuery)
 import Jarilo.Route (Route)
 import Jarilo.Segment (Literal)
 
+type ViewAllGames = Route
+    Get
+    (  Literal "games"
+    :> End)
+    NoQuery
+
 type OkGameContent =
     { title :: String
     , handle :: String
@@ -13,9 +19,3 @@ type OkGameContent =
     }
 
 type OkContent = Array OkGameContent
-
-type ViewAllGames = Route
-    Get
-    (  Literal "games"
-    :> End)
-    NoQuery

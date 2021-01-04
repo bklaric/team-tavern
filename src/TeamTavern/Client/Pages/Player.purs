@@ -66,6 +66,7 @@ type Slot = H.Slot (Const Void) Void Unit
 
 type ChildSlots =
     ( discordTag :: Copyable.Slot String
+    , riotId :: Copyable.Slot String
     , team :: NavigationAnchor.Slot String
     , games :: NavigationAnchor.Slot String
     , editPlayer :: EditDetails.Slot

@@ -24,6 +24,7 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Record as Record
+import Record.Extra (pick)
 import Simple.JSON (class ReadForeign, class WriteForeign, readImpl, writeImpl)
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
@@ -43,7 +44,7 @@ import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaU
 import TeamTavern.Client.Script.Navigate (navigate, navigateReplace, navigate_)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Preboard as Preboard
-import TeamTavern.Server.Game.View.SendResponse as ViewGame
+import TeamTavern.Routes.ViewGame as ViewGame
 
 data Step
     = Greeting
@@ -150,7 +151,8 @@ emptyInput playerOrTeam game =
         case game of
         Just game' -> Preselected game'
         Nothing -> Selected Nothing
-    , playerProfile: PlayerProfileFormInput.emptyInput $ maybe [] _.fields game
+    , playerProfile: PlayerProfileFormInput.emptyInput $
+        maybe { externalIdIlk: 0, fields: [] } pick game
     , teamProfile: TeamProfileFormInput.emptyInput $ maybe [] (_.fields >>>
         mapMaybe
         case _ of
@@ -394,7 +396,8 @@ sendRequest (state :: State) = Async.unify do
             , team: Nothing
             , gameHandle: game.handle
             , playerProfile: Just
-                { fieldValues: profile.fieldValues
+                { externalId: profile.externalId
+                , fieldValues: profile.fieldValues
                 , newOrReturning: profile.newOrReturning
                 , ambitions: profile.ambitions
                 }
@@ -538,6 +541,7 @@ handleAction (UpdateGame game) = do
         { game = Selected $ Just game
         , playerProfile
             { fields = game.fields
+            , externalIdIlk = game.externalIdIlk
             , fieldValues = []
             , newOrReturning = false
             , ambitions = ""
@@ -557,7 +561,8 @@ handleAction (UpdateGame game) = do
 handleAction (UpdatePlayerProfile details) = do
     state <- H.modify _
         { playerProfile
-            { fieldValues = details.fieldValues
+            { externalId = details.externalId
+            , fieldValues = details.fieldValues
             , newOrReturning = details.newOrReturning
             , ambitions = details.ambitions
             }
@@ -596,7 +601,6 @@ handleAction SetUpAccount = do
                 }
             , playerProfile
                 { urlErrors = []
-                , missingErrors = []
                 , ambitionsError = false
                 }
             , registration
@@ -657,19 +661,16 @@ handleAction SetUpAccount = do
                     foldl
                     (\state' error' ->
                         match
-                        { url: \{ key } -> state'
+                        { externalId: const $ state'
+                            { step =
+                                if state'.step > PlayerProfile then PlayerProfile else state'.step
+                            , playerProfile { externalIdError = true }
+                            }
+                        , url: \{ key } -> state'
                             { step =
                                 if state'.step > PlayerProfile then PlayerProfile else state'.step
                             , playerProfile
                                 { urlErrors = Array.cons key state'.playerProfile.urlErrors }
-                            }
-                        , missing: \{ key } -> state'
-                            { step =
-                                if state'.step > PlayerProfile then PlayerProfile else state'.step
-                            , playerProfile
-                                { missingErrors =
-                                    Array.cons key state'.playerProfile.missingErrors
-                                }
                             }
                         , ambitions: const $ state'
                             { step =

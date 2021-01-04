@@ -26,7 +26,7 @@ import TeamTavern.Client.Pages.Preboarding as Preboarding
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigate, navigate_)
 import TeamTavern.Client.Snippets.PreventMouseDefault (preventMouseDefault)
-import TeamTavern.Server.Game.View.SendResponse as Game
+import TeamTavern.Routes.ViewGame as ViewGame
 import Web.UIEvent.MouseEvent (MouseEvent)
 
 type Input = { handle :: String }
@@ -34,15 +34,15 @@ type Input = { handle :: String }
 data Action
     = Initialize
     | Receive Input
-    | OpenPreboarding Game.OkContent MouseEvent
-    | OpenPlayerPreboarding Game.OkContent MouseEvent
-    | OpenTeamPreboarding Game.OkContent MouseEvent
+    | OpenPreboarding ViewGame.OkContent MouseEvent
+    | OpenPlayerPreboarding ViewGame.OkContent MouseEvent
+    | OpenTeamPreboarding ViewGame.OkContent MouseEvent
     | OpenPlayerProfiles String MouseEvent
     | OpenTeamProfiles String MouseEvent
 
 data State
     = Empty { handle :: String }
-    | Loaded { game :: Game.OkContent }
+    | Loaded { game :: ViewGame.OkContent }
 
 type Slot = H.Slot (Const Void) Void Unit
 
@@ -63,7 +63,7 @@ render (Loaded { game: game' @ { handle, title } }) =
     , features' title (OpenPreboarding game')
     ]
 
-loadGame :: forall left. String -> Async left (Maybe Game.OkContent)
+loadGame :: forall left. String -> Async left (Maybe ViewGame.OkContent)
 loadGame handle = Async.unify do
     response <-
         Fetch.fetch_ ("/api/games/by-handle/" <> handle)
