@@ -69,11 +69,11 @@ externalIdLabel icon label domain =
     , HH.span [ HP.class_ $ H.ClassName "input-primary-sublabel" ] [ HH.text "required" ]
     ]
 
+inputUnderlabel' :: forall slots action. Array (HH.HTML slots action) -> HH.HTML slots action
+inputUnderlabel' children = HH.label [ HS.class_ "input-underlabel" ] children
+
 inputUnderlabel :: forall slots action. String -> HH.HTML slots action
-inputUnderlabel text =
-    HH.label
-    [ HS.class_ "input-underlabel" ]
-    [ HH.text text ]
+inputUnderlabel text = inputUnderlabel' [ HH.text text ]
 
 inputError :: forall slots action. Boolean -> String -> Array (HH.HTML slots action)
 inputError true text = [ HH.p [ HS.class_ "input-error" ] [ HH.text text ] ]

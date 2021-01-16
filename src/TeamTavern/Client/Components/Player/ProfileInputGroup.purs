@@ -11,7 +11,8 @@ import Data.Maybe (Maybe(..), maybe)
 import Data.Variant (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
-import TeamTavern.Client.Components.Input (checkboxInput, domainInputLabel, externalIdLabel, inputError, inputGroup, inputLabel, inputUnderlabel, requiredTextLineInput, textInput_, textLineInput)
+import Halogen.HTML.Properties as HP
+import TeamTavern.Client.Components.Input (checkboxInput, domainInputLabel, externalIdLabel, inputError, inputGroup, inputLabel, inputUnderlabel, inputUnderlabel', requiredTextLineInput, textInput_, textLineInput)
 import TeamTavern.Client.Components.Select.MultiSelect (multiSelectIndexed)
 import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.Select.SingleSelect (singleSelectIndexed)
@@ -35,7 +36,13 @@ externalIdInputGroup externalIdIlk externalId onValue error =
             [ inputUnderlabel "Example: steamcommunity.com/id/username"
             , inputUnderlabel "Example: steamcommunity.com/profile/76561198821728791"
             ]
-        2 -> [ inputUnderlabel "Example: username#12345" ]
+        2 ->
+            [ inputUnderlabel "Example: username#12345"
+            , inputUnderlabel'
+                [ HH.text "You can find out your Riot ID at "
+                , HH.a [ HP.href "https://account.riotgames.com/", HP.target "_blank" ] [ HH.text "account.riotgames.com" ]
+                ]
+            ]
         _ -> []
     )
     <>
