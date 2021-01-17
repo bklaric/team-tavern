@@ -66,7 +66,7 @@ ambitionsInputGroup :: forall slots action.
 ambitionsInputGroup value onValue error =
     inputGroup $
     [ textInput_ value onValue
-    , inputUnderlabel """What do you want te get out of playing as a team?
+    , inputUnderlabel """What do you want to get out of playing as a team?
         Any specific goals you want to achieve?"""
     ]
     <>
