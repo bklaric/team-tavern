@@ -14,33 +14,37 @@ queryString :: Query
 queryString = Query """
     update player
     set
-        discord_tag = $2,
-        birthday = $3,
+        birthday = $2,
+        location = $3,
         languages = $4,
-        location = $5,
+        microphone = $5,
         timezone = $6,
         weekday_from = $7::time,
         weekday_to = $8::time,
         weekend_from = $9::time,
         weekend_to = $10::time,
-        microphone = $11,
-        about = $12
+        discord_tag = $11,
+        steam_url = $12,
+        riot_id = $13,
+        about = $14
     where player.id = $1
     """
 
 queryParameters :: Int -> Player -> Array QueryParameter
 queryParameters playerId model =
     playerId
-    : toNullable model.discordTag
     : toNullable model.birthday
-    : model.languages
     : toNullable model.location
+    : model.languages
+    : model.microphone
     : toNullable model.timezone
     : nullableTimeFrom model.onlineWeekday
     : nullableTimeTo model.onlineWeekday
     : nullableTimeFrom model.onlineWeekend
     : nullableTimeTo model.onlineWeekend
-    : model.microphone
+    : toNullable model.discordTag
+    : toNullable model.steamUrl
+    : toNullable model.riotId
     :| model.about
 
 updateDetails :: forall querier errors. Querier querier =>

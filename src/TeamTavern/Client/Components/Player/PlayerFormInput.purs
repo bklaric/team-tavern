@@ -14,7 +14,7 @@ import Halogen.HTML as HH
 import Record as Record
 import TeamTavern.Client.Components.Input (inputGroupsHeading, responsiveInputGroups)
 import TeamTavern.Client.Components.InputGroup (timeRangeInputGroup, timezoneInputGroup)
-import TeamTavern.Client.Components.Player.PlayerInputGroup (aboutInputGroup, birthdayInputGroup, discordTagInputGroup, languagesInputGroup, locationInputGroup, microphoneInputGroup)
+import TeamTavern.Client.Components.Player.PlayerInputGroup (aboutInputGroup, birthdayInputGroup, discordTagInputGroup, languagesInputGroup, locationInputGroup, microphoneInputGroup, riotIdInputGroup, steamUrlInputGroup)
 import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.Select.SingleSelect as SingleSelect
 import TeamTavern.Client.Components.Select.SingleTreeSelect as SingleTreeSelect
@@ -26,14 +26,20 @@ type Input =
     , location :: Maybe String
     , languages :: Array String
     , microphone :: Boolean
-    , discordTag :: Maybe String
     , timezone :: Maybe String
     , weekdayFrom :: Maybe String
     , weekdayTo :: Maybe String
     , weekendFrom :: Maybe String
     , weekendTo :: Maybe String
-    , about :: String
+    , discordTag :: Maybe String
     , discordTagError :: Boolean
+    , steamUrl :: Maybe String
+    , steamUrlRequired :: Boolean
+    , steamUrlError :: Boolean
+    , riotId :: Maybe String
+    , riotIdRequired :: Boolean
+    , riotIdError :: Boolean
+    , about :: String
     , aboutError :: Boolean
     }
 
@@ -42,29 +48,37 @@ type Output =
     , location :: Maybe String
     , languages :: Array String
     , microphone :: Boolean
-    , discordTag :: Maybe String
     , timezone :: Maybe String
     , weekdayFrom :: Maybe String
     , weekdayTo :: Maybe String
     , weekendFrom :: Maybe String
     , weekendTo :: Maybe String
+    , discordTag :: Maybe String
+    , steamUrl :: Maybe String
+    , riotId :: Maybe String
     , about :: String
     }
 
 type State =
     { birthday :: Maybe String
+    , thirteenYearsAgo :: String
     , location :: Maybe String
     , languages :: Array String
     , microphone :: Boolean
-    , discordTag :: Maybe String
     , timezone :: Maybe String
     , weekdayFrom :: Maybe String
     , weekdayTo :: Maybe String
     , weekendFrom :: Maybe String
     , weekendTo :: Maybe String
-    , about :: String
-    , thirteenYearsAgo :: String
+    , discordTag :: Maybe String
     , discordTagError :: Boolean
+    , steamUrl :: Maybe String
+    , steamUrlRequired :: Boolean
+    , steamUrlError :: Boolean
+    , riotId :: Maybe String
+    , riotIdRequired :: Boolean
+    , riotIdError :: Boolean
+    , about :: String
     , aboutError :: Boolean
     }
 
@@ -75,12 +89,14 @@ data Action
     | UpdateLocation (Maybe String)
     | UpdateLanguages (Array String)
     | UpdateMicrophone Boolean
-    | UpdateDiscordTag (Maybe String)
     | UpdateTimezone (Maybe String)
     | UpdateWeekdayFrom (Maybe String)
     | UpdateWeekdayTo (Maybe String)
     | UpdateWeekendFrom (Maybe String)
     | UpdateWeekendTo (Maybe String)
+    | UpdateDiscordTag (Maybe String)
+    | UpdateSteamUrl (Maybe String)
+    | UpdateRiotId (Maybe String)
     | UpdateAbout String
 
 type ChildSlots =
@@ -103,7 +119,6 @@ render state =
     , responsiveInputGroups
         [ languagesInputGroup state.languages UpdateLanguages
         , microphoneInputGroup state.microphone UpdateMicrophone
-        , discordTagInputGroup state.discordTag UpdateDiscordTag state.discordTagError
         ]
     , inputGroupsHeading "Time available"
     , responsiveInputGroups
@@ -113,6 +128,12 @@ render state =
         , timeRangeInputGroup "Online on weekends" (isNothing state.timezone)
             state.weekendFrom state.weekendTo UpdateWeekendFrom UpdateWeekendTo
         ]
+    , inputGroupsHeading "Contact"
+    , responsiveInputGroups
+        [ discordTagInputGroup state.discordTag UpdateDiscordTag state.discordTagError
+        , steamUrlInputGroup state.steamUrl UpdateSteamUrl state.steamUrlError state.steamUrlRequired
+        , riotIdInputGroup state.riotId UpdateRiotId state.riotIdError state.riotIdRequired
+        ]
     , inputGroupsHeading "About"
     , aboutInputGroup state.about UpdateAbout state.aboutError
     ]
@@ -121,7 +142,11 @@ raiseOutput :: forall left. State -> H.HalogenM State Action ChildSlots Output (
 raiseOutput state
     = state
     # Record.delete (SProxy :: SProxy "thirteenYearsAgo")
+    # Record.delete (SProxy :: SProxy "steamUrlRequired")
+    # Record.delete (SProxy :: SProxy "riotIdRequired")
     # Record.delete (SProxy :: SProxy "discordTagError")
+    # Record.delete (SProxy :: SProxy "steamUrlError")
+    # Record.delete (SProxy :: SProxy "riotIdError")
     # Record.delete (SProxy :: SProxy "aboutError")
     # H.raise
 
@@ -157,9 +182,6 @@ handleAction (UpdateLanguages languages) = do
 handleAction (UpdateMicrophone microphone) = do
     state <- H.modify _ { microphone = microphone }
     raiseOutput state
-handleAction (UpdateDiscordTag discordTag) = do
-    state <- H.modify _ { discordTag = discordTag }
-    raiseOutput state
 handleAction (UpdateTimezone timezone) = do
     state <- H.modify _ { timezone = timezone }
     raiseOutput state
@@ -174,6 +196,15 @@ handleAction (UpdateWeekendFrom weekendFrom) = do
     raiseOutput state
 handleAction (UpdateWeekendTo weekendTo) = do
     state <- H.modify _ { weekendTo = weekendTo }
+    raiseOutput state
+handleAction (UpdateDiscordTag discordTag) = do
+    state <- H.modify _ { discordTag = discordTag }
+    raiseOutput state
+handleAction (UpdateSteamUrl steamUrl) = do
+    state <- H.modify _ { steamUrl = steamUrl }
+    raiseOutput state
+handleAction (UpdateRiotId riotId) = do
+    state <- H.modify _ { riotId = riotId }
     raiseOutput state
 handleAction (UpdateAbout about) = do
     state <- H.modify _ { about = about }
@@ -197,14 +228,20 @@ emptyInput =
     , location: Nothing
     , languages: []
     , microphone: false
-    , discordTag: Nothing
     , timezone: Nothing
     , weekdayFrom: Nothing
     , weekdayTo: Nothing
     , weekendFrom: Nothing
     , weekendTo: Nothing
-    , about: ""
+    , discordTag: Nothing
     , discordTagError: false
+    , steamUrl: Nothing
+    , steamUrlError: false
+    , steamUrlRequired: false
+    , riotId: Nothing
+    , riotIdError: false
+    , riotIdRequired: false
+    , about: ""
     , aboutError: false
     }
 

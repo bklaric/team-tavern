@@ -3,7 +3,7 @@ module TeamTavern.Client.Pages.Player.EditPlayer (Input, Slot, editPlayer) where
 import Prelude
 
 import Async (Async)
-import Data.Array (intercalate)
+import Data.Array (any, intercalate)
 import Data.Const (Const)
 import Data.Either (Either(..))
 import Data.Foldable (foldl)
@@ -55,12 +55,14 @@ sendRequest { nickname, details } =
     , location: details.location
     , languages: details.languages
     , microphone: details.microphone
-    , discordTag: details.discordTag
     , timezone: details.timezone
     , weekdayFrom: details.weekdayFrom
     , weekdayTo: details.weekdayTo
     , weekendFrom: details.weekendFrom
     , weekendTo: details.weekendTo
+    , discordTag: details.discordTag
+    , steamUrl: details.steamUrl
+    , riotId: details.riotId
     , about: details.about
     }
 
@@ -73,12 +75,14 @@ handleAction (UpdatePlayerDetails details) =
             , location = details.location
             , languages = details.languages
             , microphone = details.microphone
-            , discordTag = details.discordTag
             , timezone = details.timezone
             , weekdayFrom = details.weekdayFrom
             , weekdayTo = details.weekdayTo
             , weekendFrom = details.weekendFrom
             , weekendTo = details.weekendTo
+            , discordTag = details.discordTag
+            , steamUrl = details.steamUrl
+            , riotId = details.riotId
             , about = details.about
             }
         }
@@ -92,17 +96,21 @@ handleAction (Update event) = do
             foldl
             (\state error ->
                 match
-                { discordTag: const $ state
-                    { details = state.details { discordTagError = true } }
-                , about: const $ state
-                    { details = state.details { aboutError = true } }
+                { discordTag: const $ state { details = state.details { discordTagError = true } }
+                , steamUrl: const $ state { details = state.details { steamUrlError = true } }
+                , riotId: const $ state { details = state.details { riotIdError = true } }
+                , about: const $ state { details = state.details { aboutError = true } }
                 }
                 error
             )
             (currentState
                 { submitting = false
                 , details = currentState.details
-                    { discordTagError = false, aboutError = false }
+                    { discordTagError = false
+                    , steamUrlError = false
+                    , riotIdError = false
+                    , aboutError = false
+                    }
                 , otherError = false
                 }
             )
@@ -110,7 +118,11 @@ handleAction (Update event) = do
         Nothing -> H.put currentState
             { submitting = false
             , details = currentState.details
-                { discordTagError = false, aboutError = false }
+                { discordTagError = false
+                , steamUrlError = false
+                , riotIdError = false
+                , aboutError = false
+                }
             , otherError = true
             }
 
@@ -123,14 +135,20 @@ component = H.mkComponent
             , location: player.location
             , languages: player.languages
             , microphone: player.microphone
-            , discordTag: player.discordTag
             , timezone: player.timezone
             , weekdayFrom: player.weekdayOnline <#> _.sourceFrom
             , weekdayTo: player.weekdayOnline <#> _.sourceTo
             , weekendFrom: player.weekendOnline <#> _.sourceFrom
             , weekendTo: player.weekendOnline <#> _.sourceTo
-            , about: intercalate "\n\n" player.about
+            , discordTag: player.discordTag
             , discordTagError: false
+            , steamUrl: player.steamUrl
+            , steamUrlRequired: player.profiles # any (_.externalIdIlk >>> (_ == 1))
+            , steamUrlError: false
+            , riotId: player.riotId
+            , riotIdRequired: player.profiles # any (_.externalIdIlk >>> (_ == 2))
+            , riotIdError: false
+            , about: intercalate "\n\n" player.about
             , aboutError: false
             }
         , otherError: false

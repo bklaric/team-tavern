@@ -11,12 +11,14 @@ type PlayerModel =
     , location :: Maybe String
     , languages :: Array String
     , microphone :: Boolean
-    , discordTag :: Maybe String
     , timezone :: Maybe String
     , weekdayFrom :: Maybe String
     , weekdayTo :: Maybe String
     , weekendFrom :: Maybe String
     , weekendTo :: Maybe String
+    , discordTag :: Maybe String
+    , steamUrl :: Maybe String
+    , riotId :: Maybe String
     , about :: String
     }
 

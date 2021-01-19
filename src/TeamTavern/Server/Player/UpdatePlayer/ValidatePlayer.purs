@@ -22,21 +22,28 @@ import TeamTavern.Server.Player.UpdatePlayer.ValidateLangugase (Language, valida
 import TeamTavern.Server.Player.UpdatePlayer.ValidateLocation (Location, validateLocation)
 import TeamTavern.Server.Player.UpdatePlayer.ValidateTimespan (Timespan, validateTimespan)
 import TeamTavern.Server.Player.UpdatePlayer.ValidateTimezone (Timezone, validateTimezone)
+import TeamTavern.Server.Profile.Infrastructure.ValidateRiotId (RiotId, validateRiotId')
+import TeamTavern.Server.Profile.Infrastructure.ValidateSteamUrl (validateSteamUrl')
+import TeamTavern.Server.Profile.Infrastructure.ValidateUrl (Url)
 
 type Player =
-    { discordTag :: Maybe DiscordTag
-    , birthday :: Maybe String
+    { birthday :: Maybe String
     , languages :: Array Language
     , location :: Maybe Location
     , timezone :: Maybe Timezone
     , onlineWeekday :: Maybe Timespan
     , onlineWeekend :: Maybe Timespan
     , microphone :: Boolean
+    , discordTag :: Maybe DiscordTag
+    , steamUrl :: Maybe Url
+    , riotId :: Maybe RiotId
     , about :: Text
     }
 
 type PlayerError = Variant
     ( discordTag :: Array String
+    , steamUrl :: Array String
+    , riotId :: Array String
     , about :: Array String
     )
 
@@ -47,17 +54,21 @@ validatePlayer :: forall errors.
 validatePlayer dto = do
     birthday' <- Async.fromEffect $ validateOptionalBirthday dto.birthday
     let timezone' = validateTimezone dto.timezone
-    { discordTag: _
-    , birthday: birthday'
+    { birthday: birthday'
     , languages: validateLanguages dto.languages
     , location: validateLocation dto.location
     , timezone: timezone'
     , onlineWeekday: timezone' >>= (const $ validateTimespan dto.weekdayFrom dto.weekdayTo)
     , onlineWeekend: timezone' >>= (const $ validateTimespan dto.weekendFrom dto.weekendTo)
     , microphone: dto.microphone
+    , discordTag: _
+    , steamUrl: _
+    , riotId: _
     , about: _
     }
         <$> validateDiscordTag dto.discordTag
+        <*> validateSteamUrl' dto.steamUrl
+        <*> validateRiotId' dto.riotId
         <*> validateAbout dto.about
         # Async.fromValidated
         # label (SProxy :: SProxy "player")

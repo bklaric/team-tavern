@@ -21,7 +21,6 @@ queryString timezone = Query $ """
         player.location,
         player.languages,
         player.microphone,
-        player.discord_tag as "discordTag",
         player.timezone,
         case
             when player.weekday_from is not null and player.weekday_to is not null
@@ -41,6 +40,9 @@ queryString timezone = Query $ """
                 'sourceTo', to_char(player.weekend_to, 'HH24:MI')
             )
         end as "weekendOnline",
+        player.discord_tag as "discordTag",
+        player.steam_url as "steamUrl",
+        player.riot_id as "riotId",
         player.about,
         coalesce(player_profiles.profiles, '[]') as profiles,
         coalesce(player_teams.teams, '[]') as teams

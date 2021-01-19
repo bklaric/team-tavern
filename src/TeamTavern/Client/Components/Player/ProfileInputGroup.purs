@@ -24,8 +24,8 @@ externalIdInputGroup :: forall slots action.
 externalIdInputGroup externalIdIlk externalId onValue error =
     inputGroup $
     ( case externalIdIlk of
-        1 -> [ externalIdLabel inputSteamSvg "Steam profile" (Just "steamcommunity.com") ]
-        2 -> [ externalIdLabel inputRiotSvg "Riot ID" Nothing ]
+        1 -> [ externalIdLabel inputSteamSvg "Steam profile" (Just "steamcommunity.com") true ]
+        2 -> [ externalIdLabel inputRiotSvg "Riot ID" Nothing true ]
         _ -> []
     )
     <>

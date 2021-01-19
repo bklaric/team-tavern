@@ -1,7 +1,17 @@
+-- preboarding/onboarding
+-- 1. select game
+-- 2. enter player details, including contact. show only one of (steam url, riot id) based on selected game.
+-- 3. enter profile details
+-- introduce separate contact subsection in profiles list for both players and teams
+-- game specific contact field must be filled for players.
+-- at least one of contact fields must be filled for teams.
+
 create table player
     ( id serial not null primary key
     , nickname varchar(40) not null unique
     , discord_tag varchar(37)
+    , steam_url text -- required for dota 2, csgo
+    , riot_id text -- required for lol, valorant
     , birthday date
     , languages text[] not null default '{}'
     , location varchar(100)
@@ -30,6 +40,9 @@ create table team
     , languages text[] not null default '{}'
     , microphone boolean not null default false
     , discord_server text
+    , discord_tag text
+    , steam_url text
+    , riot_id text
     , timezone text
     , weekday_from time
     , weekday_to time
@@ -88,7 +101,6 @@ create table player_profile
     ( id serial not null primary key
     , player_id integer not null references player(id)
     , game_id integer not null references game(id)
-    , external_id text not null
     , new_or_returning boolean not null
     , ambitions text[] not null
     , created timestamptz not null default current_timestamp

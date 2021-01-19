@@ -11,6 +11,8 @@ import TeamTavern.Server.Player.UpdatePlayer.LogError (UpdateDetailsError)
 
 type BadRequestContent = Array (Variant
     ( discordTag :: Array String
+    , steamUrl :: Array String
+    , riotId :: Array String
     , about :: Array String
     ))
 

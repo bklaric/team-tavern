@@ -8,10 +8,13 @@ import Data.Maybe (Maybe(..))
 import Data.Variant (SProxy(..))
 import Halogen (ComponentHTML, Slot)
 import Halogen.HTML (HTML)
-import TeamTavern.Client.Components.Input (checkboxInput, dateInput, inputError, inputGroup, inputLabel, inputUnderlabel, textInput_, textLineInput)
+import Halogen.HTML as HH
+import Halogen.HTML.Properties as HP
+import TeamTavern.Client.Components.Input (checkboxInput, dateInput, externalIdLabel, inputError, inputGroup, inputLabel, inputUnderlabel, inputUnderlabel', textInput_, textLineInput)
 import TeamTavern.Client.Components.Select.MultiSelect (multiSelect)
 import TeamTavern.Client.Components.Select.SingleTreeSelect (singleTreeSelect)
 import TeamTavern.Client.Components.Select.SingleTreeSelect as SingleTreeSelect
+import TeamTavern.Client.Snippets.Brands (inputRiotSvg, inputSteamSvg)
 import TeamTavern.Server.Infrastructure.Languages (allLanguages)
 import TeamTavern.Server.Infrastructure.Regions (Region(..), allRegions)
 
@@ -88,6 +91,44 @@ discordTagInputGroup value onValue error =
     , inputUnderlabel "Example: username#1234"
     ]
     <> inputError error "This does not look like a valid Discord tag."
+
+steamUrlInputGroup :: forall slots action.
+    Maybe String -> (Maybe String -> action) -> Boolean -> Boolean -> HTML slots action
+steamUrlInputGroup value onValue error required =
+    inputGroup $
+    [ externalIdLabel inputSteamSvg "Steam profile" (Just "steamcommunity.com") required
+    , textLineInput value onValue
+    , inputUnderlabel "Example: steamcommunity.com/id/username"
+    , inputUnderlabel "Example: steamcommunity.com/profile/76561198821728791"
+    ]
+    <>
+    ( if required
+        then [ inputUnderlabel "Steam URL is required because some of your profiles require it." ]
+        else []
+    )
+    <>
+    inputError error "This doesn't look like a valid Steam profile URL."
+
+riotIdInputGroup :: forall slots action.
+    Maybe String -> (Maybe String -> action) -> Boolean -> Boolean -> HTML slots action
+riotIdInputGroup value onValue error required =
+    inputGroup $
+    [ externalIdLabel inputRiotSvg "Riot ID" Nothing required
+    , textLineInput value onValue
+    , inputUnderlabel "Example: username#12345"
+    , inputUnderlabel'
+        [ HH.text "You can find out your Riot ID at "
+        , HH.a [ HP.href "https://account.riotgames.com/", HP.target "_blank" ]
+            [ HH.text "account.riotgames.com" ]
+        ]
+    ]
+    <>
+    ( if required
+        then [ inputUnderlabel "Riot ID is required because some of your profiles require it." ]
+        else []
+    )
+    <>
+    inputError error "This doesn't look like a valid Riot ID."
 
 aboutInputGroup :: forall slots action. String -> (String -> action) -> Boolean -> HTML slots action
 aboutInputGroup value onValue error =

@@ -1,9 +1,14 @@
-module TeamTavern.Server.Profile.Infrastructure.ValidateRiotId (RiotId, toString, validateRiotId) where
+module TeamTavern.Server.Profile.Infrastructure.ValidateRiotId (RiotId, toString, validateRiotId, validateRiotId') where
 
 import Prelude
 
 import Data.Either (Either(..))
+import Data.List.NonEmpty as NEL
+import Data.Maybe (Maybe(..))
 import Data.String (Pattern(..), length, split, trim)
+import Data.Validated (invalid, valid)
+import Data.Validated.Label (VariantValidated)
+import Data.Variant (SProxy(..), inj)
 
 newtype RiotId = RiotId String
 
@@ -37,3 +42,12 @@ validateRiotId riotId | riotId' <- trim riotId =
     if isRiotIdValid riotId'
     then Right $ RiotId riotId'
     else Left [ "Invalid Riot ID: " <> riotId' ]
+
+validateRiotId' :: forall errors.
+    Maybe String -> VariantValidated (riotId :: Array String | errors) (Maybe RiotId)
+validateRiotId' Nothing = valid Nothing
+validateRiotId' (Just riotId) | riotId' <- trim riotId =
+    if isRiotIdValid riotId'
+    then valid $ Just $ RiotId riotId'
+    else invalid $ NEL.singleton $ inj (SProxy :: SProxy "riotId")
+        [ "Invalid Steam profile URL: " <> riotId' ]

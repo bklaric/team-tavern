@@ -385,12 +385,14 @@ sendRequest (state :: State) = Async.unify do
                 , location: player.location
                 , languages: player.languages
                 , microphone: player.microphone
-                , discordTag: player.discordTag
                 , timezone: player.timezone
                 , weekdayFrom: player.weekdayFrom
                 , weekdayTo: player.weekdayTo
                 , weekendFrom: player.weekendFrom
                 , weekendTo: player.weekendTo
+                , discordTag: player.discordTag
+                , steamUrl: player.steamUrl
+                , riotId: player.riotId
                 , about: player.about
                 }
             , team: Nothing
@@ -624,6 +626,14 @@ handleAction SetUpAccount = do
                         { discordTag: const $ state'
                             { step = Player
                             , player { discordTagError = true }
+                            }
+                        , steamUrl: const $ state'
+                            { step = Player
+                            , player { steamUrlError = true }
+                            }
+                        , riotId: const $ state'
+                            { step = Player
+                            , player { riotIdError = true }
                             }
                         , about: const $ state'
                             { step = Player

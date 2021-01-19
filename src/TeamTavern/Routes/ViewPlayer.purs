@@ -54,7 +54,6 @@ type OkContent =
     , location :: Maybe String
     , languages :: Array String
     , microphone :: Boolean
-    , discordTag :: Maybe String
     , timezone :: Maybe String
     , weekdayOnline :: Maybe
         { clientFrom :: String
@@ -68,6 +67,9 @@ type OkContent =
         , sourceFrom :: String
         , sourceTo :: String
         }
+    , discordTag :: Maybe String
+    , steamUrl :: Maybe String
+    , riotId :: Maybe String
     , about :: Array String
     , profiles :: Array OkContentProfile
     , teams :: Array OkContentTeam
