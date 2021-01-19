@@ -34,7 +34,6 @@ import TeamTavern.Server.Architecture.Deployment as Deployment
 import TeamTavern.Server.Game.View (view) as Game
 import TeamTavern.Server.Game.ViewAll (viewAll) as Game
 import TeamTavern.Server.Infrastructure.Log (logStamped, logt)
-import TeamTavern.Server.Player.EditSettings (updateSettings) as Player
 import TeamTavern.Server.Player.Register (register) as Player
 import TeamTavern.Server.Player.UpdatePlayer (updatePlayer) as Player
 import TeamTavern.Server.Player.View (view) as Player
@@ -147,8 +146,6 @@ handleRequest deployment pool method url cookies body =
             Player.view pool cookies
         , updatePlayer: \{ nickname } ->
             Player.updatePlayer pool nickname cookies body
-        , updateSettings: \{ nickname } ->
-            Player.updateSettings pool nickname cookies body
         , viewTeamsByOwner:
             Team.viewByOwner pool
         , viewTeam:
