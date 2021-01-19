@@ -25,7 +25,6 @@ type Input =
     { nickname :: String
     , handle :: String
     , title :: String
-    , externalIdIlk :: Int
     , fields :: Array Field
     }
 
@@ -61,8 +60,7 @@ sendRequest
     -> Async left (Maybe
         ( Either
             ( Array (Variant
-                ( externalId :: Array String
-                , ambitions :: Array String
+                ( ambitions :: Array String
                 , url :: { key :: String, message :: Array String }
                 ))
             )
@@ -70,8 +68,7 @@ sendRequest
         ))
 sendRequest state @ { nickname, handle, profile } =
     postNoContent ("/api/players/" <> nickname <> "/profiles/" <> handle)
-    { externalId: profile.externalId
-    , fieldValues: profile.fieldValues
+    { fieldValues: profile.fieldValues
     , newOrReturning: profile.newOrReturning
     , ambitions: profile.ambitions
     }
@@ -81,8 +78,7 @@ handleAction :: forall output left.
 handleAction (UpdateProfile profile) =
     H.modify_ _
         { profile
-            { externalId = profile.externalId
-            , fieldValues = profile.fieldValues
+            { fieldValues = profile.fieldValues
             , newOrReturning = profile.newOrReturning
             , ambitions = profile.ambitions
             }
@@ -97,8 +93,7 @@ handleAction (SendRequest event) = do
             foldl
             (\state error ->
                 match
-                { externalId: const state { profile { externalIdError = true } }
-                , ambitions: const state { profile { ambitionsError = true } }
+                { ambitions: const state { profile { ambitionsError = true } }
                 , url: \{ key } -> state { profile
                     { urlErrors = Array.cons key state.profile.urlErrors } }
                 }
@@ -108,8 +103,7 @@ handleAction (SendRequest event) = do
                 { submitting = false
                 , otherError = false
                 , profile
-                    { externalIdError = false
-                    , urlErrors = []
+                    { urlErrors = []
                     , ambitionsError = false
                     }
                 }
@@ -119,19 +113,18 @@ handleAction (SendRequest event) = do
             { submitting = false
             , otherError = true
             , profile
-                { externalIdError = false
-                , urlErrors = []
+                { urlErrors = []
                 , ambitionsError = false
                 }
             }
 
 component :: forall query output left. H.Component HH.HTML query Input output (Async left)
 component = H.mkComponent
-    { initialState: \{ nickname, handle, title, externalIdIlk, fields } ->
+    { initialState: \{ nickname, handle, title, fields } ->
         { nickname
         , handle
         , title
-        , profile: ProfileFormInput.emptyInput { externalIdIlk, fields }
+        , profile: ProfileFormInput.emptyInput fields
         , otherError: false
         , submitting: false
         }

@@ -8,13 +8,11 @@ import Data.Array (intercalate)
 import Data.Array as Array
 import Data.Maybe (Maybe(..))
 import Halogen.HTML as HH
-import TeamTavern.Client.Components.Detail (detail, fieldDetail, riotIdDetail, steamUrlDetail, urlDetail)
+import TeamTavern.Client.Components.Detail (detail, fieldDetail, urlDetail)
 import TeamTavern.Client.Snippets.Class as HS
 
 profileDetails :: forall left slots action.
-    Int
-    -> String
-    -> Array
+    Array
         { ilk :: Int
         , key :: String
         , label :: String
@@ -33,8 +31,8 @@ profileDetails :: forall left slots action.
         }
     -> Boolean
     -> Array (HH.ComponentHTML action (riotId :: Copyable.Slot String | slots) (Async left))
-profileDetails externalIdIlk externalId fields fieldValues newOrReturning =
-    profileDetails' externalIdIlk externalId
+profileDetails fields fieldValues newOrReturning =
+    profileDetails'
     ( fields
     <#> ( \field ->
             case fieldValues # Array.find \{ fieldKey } -> fieldKey == field.key of
@@ -64,9 +62,7 @@ profileDetails externalIdIlk externalId fields fieldValues newOrReturning =
     newOrReturning
 
 profileDetails' :: forall left slots action.
-    Int
-    -> String
-    -> Array
+    Array
         { field ::
             { ilk :: Int
             , key :: String
@@ -85,12 +81,7 @@ profileDetails' :: forall left slots action.
         }
     -> Boolean
     -> Array (HH.ComponentHTML action (riotId :: Copyable.Slot String | slots) (Async left))
-profileDetails' externalIdIlk externalId fieldValues newOrReturning =
-    case externalIdIlk of
-    1 -> [ steamUrlDetail externalId ]
-    2 -> [ riotIdDetail externalId ]
-    _ -> []
-    <>
+profileDetails' fieldValues newOrReturning =
     ( fieldValues
     <#> ( \{ field, url, option, options } ->
             case field.ilk, url, option, options of

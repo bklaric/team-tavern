@@ -47,8 +47,7 @@ type BadContent = Array $ Variant
         , about :: Array String
         )
     , playerProfile :: Array $ Variant
-        ( externalId :: Array String
-        , url :: { message :: Array String, key :: String }
+        ( url :: { message :: Array String, key :: String }
         , ambitions :: Array String
         )
     , teamProfile :: Array $ Variant

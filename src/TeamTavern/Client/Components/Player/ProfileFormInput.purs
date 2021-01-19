@@ -14,45 +14,37 @@ import Halogen as H
 import Halogen.HTML as HH
 import Record as Record
 import TeamTavern.Client.Components.Input (inputGroupsHeading, responsiveInputGroups)
-import TeamTavern.Client.Components.Player.ProfileInputGroup (ChildSlots, Field, FieldValue, ambitionsInputGroup, externalIdInputGroup, fieldInputGroup, newOrReturningInputGroup)
+import TeamTavern.Client.Components.Player.ProfileInputGroup (ChildSlots, Field, FieldValue, ambitionsInputGroup, fieldInputGroup, newOrReturningInputGroup)
 import TeamTavern.Client.Components.Player.ProfileInputGroup as Input
 
 type FieldValues = Array FieldValue
 
 type Input =
-    { externalIdIlk :: Int
-    , fields :: Array Field
-    , externalId :: String
+    { fields :: Array Field
     , fieldValues :: FieldValues
     , newOrReturning :: Boolean
     , ambitions :: String
-    , externalIdError :: Boolean
     , urlErrors :: Array String
     , ambitionsError :: Boolean
     }
 
 type Output =
-    { externalId :: String
-    , fieldValues :: FieldValues
+    { fieldValues :: FieldValues
     , ambitions :: String
     , newOrReturning :: Boolean
     }
 
 type State =
-    { externalIdIlk :: Int
-    , fields :: Array Field
-    , externalId :: String
+    { fields :: Array Field
     , fieldValues :: Input.FieldValues
     , newOrReturning :: Boolean
     , ambitions :: String
-    , externalIdError :: Boolean
     , urlErrors :: Array String
     , ambitionsError :: Boolean
     }
 
 data Action
     = Receive Input
-    | UpdateExternalId String
     | UpdateUrl String (Maybe String)
     | UpdateSingleSelect String (Maybe String)
     | UpdateMultiSelect String (Array String)
@@ -69,16 +61,9 @@ fieldValuesToMap :: forall fields.
 fieldValuesToMap = foldl (\map value -> Map.insert value.fieldKey value map) Map.empty
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
-render
-    { externalIdIlk, fields
-    , externalId, fieldValues, newOrReturning, ambitions
-    , externalIdError, urlErrors, ambitionsError
-    }
+render { fields, fieldValues, newOrReturning, ambitions , urlErrors, ambitionsError }
     = HH.div_ $
-    [ inputGroupsHeading "External ID"
-    , responsiveInputGroups
-        [ externalIdInputGroup externalIdIlk externalId UpdateExternalId externalIdError ]
-    , inputGroupsHeading "Details"
+    [ inputGroupsHeading "Details"
     , responsiveInputGroups $
         ( fields <#> fieldInputGroup fieldValues
             UpdateUrl UpdateSingleSelect UpdateMultiSelect urlErrors
@@ -90,15 +75,12 @@ render
     ]
 
 raiseOutput :: forall left. State -> H.HalogenM State Action ChildSlots Output (Async left) Unit
-raiseOutput { externalId, fieldValues, newOrReturning, ambitions } =
-    H.raise { externalId, fieldValues: fieldValuesToArray fieldValues, newOrReturning, ambitions }
+raiseOutput { fieldValues, newOrReturning, ambitions } =
+    H.raise { fieldValues: fieldValuesToArray fieldValues, newOrReturning, ambitions }
 
 handleAction :: forall left. Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
 handleAction (Receive input) =
     H.put (Record.modify (SProxy :: SProxy "fieldValues") fieldValuesToMap input)
-handleAction (UpdateExternalId externalId) = do
-    state <- H.modify _ { externalId = externalId }
-    raiseOutput state
 handleAction (UpdateUrl fieldKey url) = do
     state <- H.modify \state -> state
         { fieldValues =
@@ -156,15 +138,12 @@ component = H.mkComponent
         }
     }
 
-emptyInput :: forall props. { externalIdIlk :: Int, fields :: Array Field | props } -> Input
-emptyInput { externalIdIlk, fields } =
-    { externalIdIlk
-    , fields
-    , externalId: ""
+emptyInput :: Array Field -> Input
+emptyInput fields =
+    { fields
     , fieldValues: []
     , newOrReturning: false
     , ambitions: ""
-    , externalIdError: false
     , urlErrors: []
     , ambitionsError: false
     }

@@ -57,7 +57,6 @@ queryString timezone = Query $ """
                             'title', game.title,
                             'externalIdIlk', game.external_id_ilk,
                             'fields', coalesce(fields.fields, '[]'),
-                            'externalId', profile.external_id,
                             'fieldValues', coalesce(field_values.field_values, '[]'),
                             'newOrReturning', profile.new_or_returning,
                             'ambitions', profile.ambitions,

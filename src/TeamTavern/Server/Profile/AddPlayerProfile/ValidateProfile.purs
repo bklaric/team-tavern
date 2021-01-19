@@ -15,21 +15,18 @@ import Data.Variant (Variant)
 import TeamTavern.Server.Domain.Text (Text)
 import TeamTavern.Server.Profile.AddPlayerProfile.LoadFields as LoadFields
 import TeamTavern.Server.Profile.AddPlayerProfile.ReadProfile as ReadProfile
-import TeamTavern.Server.Profile.AddPlayerProfile.ValidateExternalId (ExternalId, validateExternalId)
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateFieldValues (validateFieldValues)
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateFieldValues as ValidateFieldValues
 import TeamTavern.Server.Profile.Infrastructure.ValidateAmbitions (validateAmbitions)
 
 type Profile =
-    { externalId :: ExternalId
-    , fieldValues :: Array ValidateFieldValues.FieldValue
+    { fieldValues :: Array ValidateFieldValues.FieldValue
     , newOrReturning :: Boolean
     , ambitions :: Text
     }
 
 type ProfileError = Variant
-    ( externalId :: Array String
-    , url :: { message :: Array String, key :: String }
+    ( url :: { message :: Array String, key :: String }
     , ambitions :: Array String
     )
 
@@ -40,10 +37,9 @@ validateProfile
     .  LoadFields.Game
     -> ReadProfile.Profile
     -> Async (Variant (profile :: ProfileErrors | errors)) Profile
-validateProfile { externalIdIlk, fields } { externalId, fieldValues, newOrReturning, ambitions } =
-    { externalId: _, fieldValues: _, newOrReturning, ambitions: _ }
-    <$> validateExternalId externalIdIlk externalId
-    <*> validateFieldValues fields fieldValues
+validateProfile { fields } { fieldValues, newOrReturning, ambitions } =
+    { fieldValues: _, newOrReturning, ambitions: _ }
+    <$> validateFieldValues fields fieldValues
     <*> validateAmbitions ambitions
     # Async.fromValidated
     # label (SProxy :: SProxy "profile")

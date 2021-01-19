@@ -49,8 +49,7 @@ type TeamRequestContent =
     }
 
 type PlayerProfileRequestContent =
-    { externalId :: String
-    , fieldValues :: Array
+    { fieldValues :: Array
         { fieldKey :: String
         , url :: Maybe String
         , optionKey :: Maybe String
@@ -94,8 +93,7 @@ type BadContent = Array $ Variant
         , about :: Array String
         )
     , playerProfile :: Array $ Variant
-        ( externalId :: Array String
-        , url :: { message :: Array String, key :: String }
+        ( url :: { message :: Array String, key :: String }
         , ambitions :: Array String
         )
     , teamProfile :: Array $ Variant

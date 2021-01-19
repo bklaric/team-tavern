@@ -130,8 +130,7 @@ render { profiles, profileCount, playerInfo, page } =
     else
     ( profiles <#> \profile -> let
         playerDetails' = playerDetails profile
-        profileDetails'' = profileDetails'
-            profile.externalIdIlk profile.externalId profile.fieldValues profile.newOrReturning
+        profileDetails'' = profileDetails' profile.fieldValues profile.newOrReturning
         about = textDetail profile.about
         ambitions = textDetail profile.ambitions
         in

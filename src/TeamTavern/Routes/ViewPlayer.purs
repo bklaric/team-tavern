@@ -27,7 +27,6 @@ type OkContentProfile =
             , label :: String
             })
         }
-    , externalId :: String
     , fieldValues :: Array
         { fieldKey :: String
         , url :: Maybe String

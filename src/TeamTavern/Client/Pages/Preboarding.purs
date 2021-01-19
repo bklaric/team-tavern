@@ -24,7 +24,6 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Record as Record
-import Record.Extra (pick)
 import Simple.JSON (class ReadForeign, class WriteForeign, readImpl, writeImpl)
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
@@ -129,9 +128,9 @@ instance readForeignGame :: ReadForeign Game where
 type Input =
     { step :: Step
     , playerOrTeam :: PlayerOrTeam
+    , game :: Game
     , player :: PlayerFormInput.Input
     , team :: TeamFormInput.Input
-    , game :: Game
     , playerProfile :: PlayerProfileFormInput.Input
     , teamProfile :: TeamProfileFormInput.Input
     , registration :: RegistrationInput.Input
@@ -145,14 +144,17 @@ emptyInput playerOrTeam game =
         case playerOrTeam of
         Just playerOrTeam' -> Preselected' playerOrTeam'
         Nothing -> Selected' Nothing
-    , player: PlayerFormInput.emptyInput
-    , team: TeamFormInput.emptyInput
     , game:
         case game of
         Just game' -> Preselected game'
         Nothing -> Selected Nothing
-    , playerProfile: PlayerProfileFormInput.emptyInput $
-        maybe { externalIdIlk: 0, fields: [] } pick game
+    , player:
+        case game of
+        Just game' | game'.externalIdIlk == 1 -> PlayerFormInput.emptyInput { steamUrlRequired = true }
+        Just game' | game'.externalIdIlk == 2 -> PlayerFormInput.emptyInput { riotIdRequired = true }
+        _ -> PlayerFormInput.emptyInput
+    , team: TeamFormInput.emptyInput
+    , playerProfile: PlayerProfileFormInput.emptyInput $ maybe [] _.fields  game
     , teamProfile: TeamProfileFormInput.emptyInput $ maybe [] (_.fields >>>
         mapMaybe
         case _ of
@@ -166,9 +168,9 @@ emptyInput playerOrTeam game =
 type State =
     { step :: Step
     , playerOrTeam :: PlayerOrTeam
+    , game :: Game
     , player :: PlayerFormInput.Input
     , team :: TeamFormInput.Input
-    , game :: Game
     , playerProfile :: PlayerProfileFormInput.Input
     , teamProfile :: TeamProfileFormInput.Input
     , registration :: RegistrationInput.Input
@@ -182,9 +184,9 @@ data Action
     | Exit
     | SetStep Step
     | UpdatePlayerOrTeam PlayerOrTeamInput.PlayerOrTeam
+    | UpdateGame GameInput.Output
     | UpdatePlayer PlayerFormInput.Output
     | UpdateTeam TeamFormInput.Output
-    | UpdateGame GameInput.Output
     | UpdatePlayerProfile PlayerProfileFormInput.Output
     | UpdateTeamProfile TeamProfileFormInput.Output
     | UpdateRegistration RegistrationInput.Output
@@ -203,7 +205,7 @@ type ChildSlots slots =
 
 renderPage :: forall slots left.
     State -> Array (HH.ComponentHTML Action (ChildSlots slots) (Async left))
-renderPage { step: Greeting, playerOrTeam } =
+renderPage { step: Greeting, playerOrTeam, game } =
     [ boardingStep
         [ boardingHeading $ "Hi!"
         , boardingDescription  """Welcome to TeamTavern. Let's start with setting up your
@@ -212,13 +214,14 @@ renderPage { step: Greeting, playerOrTeam } =
     , boardingButtons
         [ secondaryButton_ "Exit" Exit
         , primaryButton_ "Let's go" $ SetStep
-            case playerOrTeam of
-            Preselected' (PlayerOrTeamInput.Player) -> Player
-            Preselected' (PlayerOrTeamInput.Team) -> Team
-            Selected' _ -> PlayerOrTeam
+            case playerOrTeam, game of
+            Preselected' (PlayerOrTeamInput.Player), Preselected _ -> Player
+            Preselected' (PlayerOrTeamInput.Team), Preselected _ -> Team
+            Preselected' _, Selected _ -> Game
+            Selected' _, _ -> PlayerOrTeam
         ]
     ]
-renderPage { step: PlayerOrTeam, playerOrTeam } =
+renderPage { step: PlayerOrTeam, playerOrTeam, game } =
     [ boardingStep
         [ boardingHeading "Player or team"
         , boardingDescription "Do you want to create your own player profile or a team profile?"
@@ -229,6 +232,32 @@ renderPage { step: PlayerOrTeam, playerOrTeam } =
         , HH.button
             [ HP.class_ $ HH.ClassName "primary-button"
             , HP.disabled $ isNothing (getPlayerOrTeam playerOrTeam)
+            , HE.onClick $ const $ Just $ SetStep
+                case playerOrTeam, game of
+                Preselected' (PlayerOrTeamInput.Player), Preselected _ -> Player
+                Preselected' (PlayerOrTeamInput.Team), Preselected _ -> Team
+                Selected' (Just PlayerOrTeamInput.Player), Preselected _ -> Player
+                Selected' (Just PlayerOrTeamInput.Team), Preselected _ -> Team
+                Selected' Nothing, _ -> PlayerOrTeam
+                _, Selected _ -> Game
+            ]
+            [ HH.text "Next" ]
+        ]
+    ]
+renderPage { step: Game, game, playerOrTeam } =
+    [ boardingStep
+        [ boardingHeading "Game"
+        , boardingDescription  """Select a game to create your first profile."""
+        , gameInput (getGame game) (Just <<< UpdateGame)
+        ]
+    , boardingButtons
+        [ secondaryButton_ "Back" $ SetStep
+            case playerOrTeam of
+            Preselected' _ -> Greeting
+            Selected' _ -> PlayerOrTeam
+        , HH.button
+            [ HP.class_ $ HH.ClassName "primary-button"
+            , HP.disabled $ isNothing (getGame game)
             , HE.onClick $ const $ Just $ SetStep
                 case playerOrTeam of
                 Preselected' (PlayerOrTeamInput.Player) -> Player
@@ -249,13 +278,12 @@ renderPage { step: Player, player, playerOrTeam, game } =
         ]
     , boardingButtons
         [ secondaryButton_ "Back" $ SetStep
-            case playerOrTeam of
-            Preselected' _ -> Greeting
-            _ -> PlayerOrTeam
-        , primaryButton_ "Next" $ SetStep
-            case game of
-            Preselected _ -> PlayerProfile
-            _ -> Game
+            case playerOrTeam, game of
+            Preselected' _, Preselected _ -> Greeting
+            Preselected' _, Selected _ -> Game
+            Selected' _, Preselected _ -> PlayerOrTeam
+            Selected' _, Selected _ -> Game
+        , primaryButton_ "Next" $ SetStep PlayerProfile
         ]
     ]
 renderPage { step: Team, team, playerOrTeam, game } =
@@ -267,41 +295,12 @@ renderPage { step: Team, team, playerOrTeam, game } =
         ]
     , boardingButtons
         [ secondaryButton_ "Back" $ SetStep
-            case playerOrTeam of
-            Preselected' _ -> Greeting
-            _ -> PlayerOrTeam
-        , primaryButton_ "Next" $ SetStep
-            case game of
-            Preselected _ -> TeamProfile
-            _ -> Game
-        ]
-    ]
-renderPage { step: Game, game, playerOrTeam } =
-    [ boardingStep
-        [ boardingHeading "Game"
-        , boardingDescription  """Select a game to create your first profile."""
-        , gameInput (getGame game) (Just <<< UpdateGame)
-        ]
-    , boardingButtons
-        [ secondaryButton_ "Back" $ SetStep
-            case playerOrTeam of
-            Preselected' (PlayerOrTeamInput.Player) -> Player
-            Preselected' (PlayerOrTeamInput.Team) -> Team
-            Selected' (Just PlayerOrTeamInput.Player) -> Player
-            Selected' (Just PlayerOrTeamInput.Team) -> Team
-            Selected' Nothing -> PlayerOrTeam
-        , HH.button
-            [ HP.class_ $ HH.ClassName "primary-button"
-            , HP.disabled $ isNothing (getGame game)
-            , HE.onClick $ const $ Just $ SetStep
-                case playerOrTeam of
-                Preselected' (PlayerOrTeamInput.Player) -> PlayerProfile
-                Preselected' (PlayerOrTeamInput.Team) -> TeamProfile
-                Selected' (Just PlayerOrTeamInput.Player) -> PlayerProfile
-                Selected' (Just PlayerOrTeamInput.Team) -> TeamProfile
-                Selected' Nothing -> PlayerOrTeam
-            ]
-            [ HH.text "Next" ]
+            case playerOrTeam, game of
+            Preselected' _, Preselected _ -> Greeting
+            Preselected' _, Selected _ -> Game
+            Selected' _, Preselected _ -> PlayerOrTeam
+            Selected' _, Selected _ -> Game
+        , primaryButton_ "Next" $ SetStep TeamProfile
         ]
     ]
 renderPage { step: PlayerProfile, playerProfile, otherError, submitting, game } =
@@ -312,10 +311,7 @@ renderPage { step: PlayerProfile, playerProfile, otherError, submitting, game } 
         , PlayerProfileFormInput.profileFormInput playerProfile UpdatePlayerProfile
         ]
     , boardingButtons
-        [ secondaryButton_ "Back" $ SetStep
-            case game of
-            Preselected _ -> Player
-            _ -> Game
+        [ secondaryButton_ "Back" $ SetStep Player
         , primaryButton_ "Next" $ SetStep Register
         ]
     ]
@@ -327,10 +323,7 @@ renderPage { step: TeamProfile, teamProfile, otherError, submitting, game } =
         , TeamProfileFormInput.profileFormInput teamProfile UpdateTeamProfile
         ]
     , boardingButtons
-        [ secondaryButton_ "Back" $ SetStep
-            case game of
-            Preselected _ -> Team
-            _ -> Game
+        [ secondaryButton_ "Back" $ SetStep Team
         , primaryButton_ "Next" $ SetStep Register
         ]
     ]
@@ -398,8 +391,7 @@ sendRequest (state :: State) = Async.unify do
             , team: Nothing
             , gameHandle: game.handle
             , playerProfile: Just
-                { externalId: profile.externalId
-                , fieldValues: profile.fieldValues
+                { fieldValues: profile.fieldValues
                 , newOrReturning: profile.newOrReturning
                 , ambitions: profile.ambitions
                 }
@@ -501,6 +493,31 @@ handleAction (SetStep step) = do
 handleAction (UpdatePlayerOrTeam playerOrTeam) = do
     state <- H.modify _ { playerOrTeam = Selected' $ Just playerOrTeam }
     updateHistoryState state
+handleAction (UpdateGame game) = do
+    state <- H.modify _
+        { game = Selected $ Just game
+        , player
+            { steamUrlRequired = game.externalIdIlk == 1
+            , riotIdRequired = game.externalIdIlk == 2
+            }
+        , playerProfile
+            { fields = game.fields
+            , fieldValues = []
+            , newOrReturning = false
+            , ambitions = ""
+            }
+        , teamProfile
+            { fields = game.fields # Array.mapMaybe
+                case _ of
+                { ilk, key, label, icon, options: Just options } | ilk == 2 || ilk == 3 ->
+                    Just { key, label, icon, options }
+                _ -> Nothing
+            , fieldValues = []
+            , newOrReturning = false
+            , ambitions = ""
+            }
+        }
+    updateHistoryState state
 handleAction (UpdatePlayer details) = do
     state <- H.modify _
         { player
@@ -508,12 +525,14 @@ handleAction (UpdatePlayer details) = do
             , location = details.location
             , languages = details.languages
             , microphone = details.microphone
-            , discordTag = details.discordTag
             , timezone = details.timezone
             , weekdayFrom = details.weekdayFrom
             , weekdayTo = details.weekdayTo
             , weekendFrom = details.weekendFrom
             , weekendTo = details.weekendTo
+            , discordTag = details.discordTag
+            , steamUrl = details.steamUrl
+            , riotId = details.riotId
             , about = details.about
             }
         }
@@ -538,33 +557,10 @@ handleAction (UpdateTeam details) = do
             }
         }
     updateHistoryState state
-handleAction (UpdateGame game) = do
-    state <- H.modify _
-        { game = Selected $ Just game
-        , playerProfile
-            { fields = game.fields
-            , externalIdIlk = game.externalIdIlk
-            , fieldValues = []
-            , newOrReturning = false
-            , ambitions = ""
-            }
-        , teamProfile
-            { fields = game.fields # Array.mapMaybe
-                case _ of
-                { ilk, key, label, icon, options: Just options } | ilk == 2 || ilk == 3 ->
-                    Just { key, label, icon, options }
-                _ -> Nothing
-            , fieldValues = []
-            , newOrReturning = false
-            , ambitions = ""
-            }
-        }
-    updateHistoryState state
 handleAction (UpdatePlayerProfile details) = do
     state <- H.modify _
         { playerProfile
-            { externalId = details.externalId
-            , fieldValues = details.fieldValues
+            { fieldValues = details.fieldValues
             , newOrReturning = details.newOrReturning
             , ambitions = details.ambitions
             }
@@ -671,12 +667,7 @@ handleAction SetUpAccount = do
                     foldl
                     (\state' error' ->
                         match
-                        { externalId: const $ state'
-                            { step =
-                                if state'.step > PlayerProfile then PlayerProfile else state'.step
-                            , playerProfile { externalIdError = true }
-                            }
-                        , url: \{ key } -> state'
+                        { url: \{ key } -> state'
                             { step =
                                 if state'.step > PlayerProfile then PlayerProfile else state'.step
                             , playerProfile

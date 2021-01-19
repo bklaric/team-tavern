@@ -91,7 +91,7 @@ emptyInput =
     , player: PlayerFormInput.emptyInput
     , team: TeamFormInput.emptyInput
     , game: Nothing
-    , playerProfile: PlayerProfileFormInput.emptyInput { externalIdIlk: 1, fields: [] }
+    , playerProfile: PlayerProfileFormInput.emptyInput []
     , teamProfile: TeamProfileFormInput.emptyInput []
     , otherError: false
     }
@@ -310,8 +310,7 @@ sendRequest (state :: State) = Async.unify do
             , team: Nothing
             , gameHandle: game.handle
             , playerProfile: Just
-                { externalId: profile.externalId
-                , fieldValues: profile.fieldValues
+                { fieldValues: profile.fieldValues
                 , newOrReturning: profile.newOrReturning
                 , ambitions: profile.ambitions
                 }
@@ -451,9 +450,7 @@ handleAction (UpdateGame game) = do
     state <- H.modify _
         { game = Just game
         , playerProfile
-            { externalIdIlk = game.externalIdIlk
-            , fields = game.fields
-            , externalId = ""
+            { fields = game.fields
             , fieldValues = []
             , newOrReturning = false
             , ambitions = ""
@@ -473,8 +470,7 @@ handleAction (UpdateGame game) = do
 handleAction (UpdatePlayerProfile details) = do
     state <- H.modify _
         { playerProfile
-            { externalId = details.externalId
-            , fieldValues = details.fieldValues
+            { fieldValues = details.fieldValues
             , newOrReturning = details.newOrReturning
             , ambitions = details.ambitions
             }
@@ -504,8 +500,7 @@ handleAction SetUpAccount = do
                 , aboutError = false
                 }
             , playerProfile
-                { externalIdError = false
-                , urlErrors = []
+                { urlErrors = []
                 , ambitionsError = false
                 }
             }
@@ -569,9 +564,7 @@ handleAction SetUpAccount = do
                     foldl
                     (\state' error' ->
                         match
-                        { externalId: const $ state'
-                            { playerProfile { externalIdError = true } }
-                        , url: \{ key } -> state'
+                        { url: \{ key } -> state'
                             { playerProfile
                                 { urlErrors = Array.cons key state'.playerProfile.urlErrors }
                             }
