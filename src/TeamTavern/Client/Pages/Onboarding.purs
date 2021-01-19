@@ -75,9 +75,9 @@ type Input =
     { step :: Step
     , nickname :: String
     , playerOrTeam :: Maybe PlayerOrTeamInput.PlayerOrTeam
+    , game :: GameInput.Input
     , player :: PlayerFormInput.Input
     , team :: TeamFormInput.Input
-    , game :: GameInput.Input
     , playerProfile :: PlayerProfileFormInput.Input
     , teamProfile :: TeamProfileFormInput.Input
     , otherError :: Boolean
@@ -88,9 +88,9 @@ emptyInput =
     { step: Greeting
     , nickname: ""
     , playerOrTeam: Nothing
+    , game: Nothing
     , player: PlayerFormInput.emptyInput
     , team: TeamFormInput.emptyInput
-    , game: Nothing
     , playerProfile: PlayerProfileFormInput.emptyInput []
     , teamProfile: TeamProfileFormInput.emptyInput []
     , otherError: false
@@ -101,9 +101,9 @@ type State =
     , confirmSkip :: Boolean
     , nickname :: String
     , playerOrTeam :: Maybe PlayerOrTeamInput.PlayerOrTeam
+    , game :: GameInput.Input
     , player :: PlayerFormInput.Input
     , team :: TeamFormInput.Input
-    , game :: GameInput.Input
     , playerProfile :: PlayerProfileFormInput.Input
     , teamProfile :: TeamProfileFormInput.Input
     , otherError :: Boolean
@@ -117,9 +117,9 @@ data Action
     | ConfirmSkip
     | SetStep Step
     | UpdatePlayerOrTeam PlayerOrTeamInput.PlayerOrTeam
+    | UpdateGame GameInput.Output
     | UpdatePlayer PlayerFormInput.Output
     | UpdateTeam TeamFormInput.Output
-    | UpdateGame GameInput.Output
     | UpdatePlayerProfile PlayerProfileFormInput.Output
     | UpdateTeamProfile TeamProfileFormInput.Output
     | SetUpAccount
@@ -169,11 +169,27 @@ renderPage { step: PlayerOrTeam, playerOrTeam } =
         , HH.button
             [ HP.class_ $ HH.ClassName "primary-button"
             , HP.disabled $ isNothing playerOrTeam
-            , HE.onClick $ const
+            , HE.onClick $ const $ Just $ SetStep Game
+            ]
+            [ HH.text "Next" ]
+        ]
+    ]
+renderPage { step: Game, game, playerOrTeam } =
+    [ boardingStep
+        [ boardingHeading "Game"
+        , boardingDescription  """Select a game to create your first profile."""
+        , gameInput game (Just <<< UpdateGame)
+        ]
+    , boardingButtons
+        [ secondaryButton_ "Back" $ SetStep PlayerOrTeam
+        , HH.button
+            [ HP.class_ $ HH.ClassName "primary-button"
+            , HP.disabled $ isNothing game
+            , HE.onClick $ const $ Just $ SetStep
                 case playerOrTeam of
-                Just PlayerOrTeamInput.Player -> Just $ SetStep Player
-                Just PlayerOrTeamInput.Team -> Just $ SetStep Team
-                Nothing -> Nothing
+                Just PlayerOrTeamInput.Player -> Player
+                Just PlayerOrTeamInput.Team -> Team
+                Nothing -> PlayerOrTeam
             ]
             [ HH.text "Next" ]
         ]
@@ -186,8 +202,8 @@ renderPage { step: Player, player } =
         , PlayerFormInput.playerFormInput player (Just <<< UpdatePlayer)
         ]
     , boardingButtons
-        [ secondaryButton_ "Back" $ SetStep PlayerOrTeam
-        , primaryButton_ "Next" $ SetStep Game
+        [ secondaryButton_ "Back" $ SetStep Game
+        , primaryButton_ "Next" $ SetStep PlayerProfile
         ]
     ]
 renderPage { step: Team, team } =
@@ -198,32 +214,8 @@ renderPage { step: Team, team } =
         , TeamFormInput.teamFormInput team (Just <<< UpdateTeam)
         ]
     , boardingButtons
-        [ secondaryButton_ "Back" $ SetStep PlayerOrTeam
-        , primaryButton_ "Next" $ SetStep Game
-        ]
-    ]
-renderPage { step: Game, game, playerOrTeam } =
-    [ boardingStep
-        [ boardingHeading "Game"
-        , boardingDescription  """Select a game to create your first profile."""
-        , gameInput game (Just <<< UpdateGame)
-        ]
-    , boardingButtons
-        [ secondaryButton_ "Back"
-            case playerOrTeam of
-            Just PlayerOrTeamInput.Player -> SetStep Player
-            Just PlayerOrTeamInput.Team -> SetStep Team
-            Nothing -> SetStep PlayerOrTeam
-        , HH.button
-            [ HP.class_ $ HH.ClassName "primary-button"
-            , HP.disabled $ isNothing game
-            , HE.onClick $ const $ Just $ SetStep
-                case playerOrTeam of
-                Just PlayerOrTeamInput.Player -> PlayerProfile
-                Just PlayerOrTeamInput.Team -> TeamProfile
-                Nothing -> PlayerProfile
-            ]
-            [ HH.text "Next" ]
+        [ secondaryButton_ "Back" $ SetStep Game
+        , primaryButton_ "Next" $ SetStep TeamProfile
         ]
     ]
 renderPage { step: PlayerProfile, playerProfile, otherError, submitting } =
@@ -234,7 +226,7 @@ renderPage { step: PlayerProfile, playerProfile, otherError, submitting } =
         , PlayerProfileFormInput.profileFormInput playerProfile UpdatePlayerProfile
         ]
     , boardingButtons
-        [ secondaryButton_ "Back" $ SetStep Game
+        [ secondaryButton_ "Back" $ SetStep Player
         , HH.div [ HS.class_ "boarding-submit-button-group" ] $
             [ HH.button
                 [ HS.class_ "primary-button"
@@ -259,7 +251,7 @@ renderPage { step: TeamProfile, teamProfile, otherError, submitting } =
         , TeamProfileFormInput.profileFormInput teamProfile UpdateTeamProfile
         ]
     , boardingButtons
-        [ secondaryButton_ "Back" $ SetStep Game
+        [ secondaryButton_ "Back" $ SetStep Team
         , HH.div [ HS.class_ "boarding-submit-button-group" ] $
             [ HH.button
                 [ HS.class_ "primary-button"
@@ -409,6 +401,31 @@ handleAction (SetStep step) = do
 handleAction (UpdatePlayerOrTeam playerOrTeam) = do
     state <- H.modify _ { playerOrTeam = Just playerOrTeam }
     updateHistoryState state
+handleAction (UpdateGame game) = do
+    state <- H.modify _
+        { game = Just game
+        , player
+            { steamUrlRequired = game.externalIdIlk == 1
+            , riotIdRequired = game.externalIdIlk == 2
+            }
+        , playerProfile
+            { fields = game.fields
+            , fieldValues = []
+            , newOrReturning = false
+            , ambitions = ""
+            }
+        , teamProfile
+            { fields = game.fields # Array.mapMaybe
+                case _ of
+                { ilk, key, label, icon, options: Just options } | ilk == 2 || ilk == 3 ->
+                    Just { key, label, icon, options }
+                _ -> Nothing
+            , fieldValues = []
+            , newOrReturning = false
+            , ambitions = ""
+            }
+        }
+    updateHistoryState state
 handleAction (UpdatePlayer details) = do
     state <- H.modify _
         { player
@@ -416,12 +433,14 @@ handleAction (UpdatePlayer details) = do
             , location = details.location
             , languages = details.languages
             , microphone = details.microphone
-            , discordTag = details.discordTag
             , timezone = details.timezone
             , weekdayFrom = details.weekdayFrom
             , weekdayTo = details.weekdayTo
             , weekendFrom = details.weekendFrom
             , weekendTo = details.weekendTo
+            , discordTag = details.discordTag
+            , steamUrl = details.steamUrl
+            , riotId = details.riotId
             , about = details.about
             }
         }
@@ -443,27 +462,6 @@ handleAction (UpdateTeam details) = do
             , weekendFrom = details.weekendFrom
             , weekendTo = details.weekendTo
             , about = details.about
-            }
-        }
-    updateHistoryState state
-handleAction (UpdateGame game) = do
-    state <- H.modify _
-        { game = Just game
-        , playerProfile
-            { fields = game.fields
-            , fieldValues = []
-            , newOrReturning = false
-            , ambitions = ""
-            }
-        , teamProfile
-            { fields = game.fields # Array.mapMaybe
-                case _ of
-                { ilk, key, label, icon, options: Just options } | ilk == 2 || ilk == 3 ->
-                    Just { key, label, icon, options }
-                _ -> Nothing
-            , fieldValues = []
-            , newOrReturning = false
-            , ambitions = ""
             }
         }
     updateHistoryState state
