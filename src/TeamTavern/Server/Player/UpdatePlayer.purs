@@ -10,6 +10,7 @@ import Perun.Response (Response)
 import Postgres.Pool (Pool)
 import TeamTavern.Server.Infrastructure.EnsureSignedInAs (ensureSignedInAs)
 import TeamTavern.Server.Player.Domain.Nickname (Nickname)
+import TeamTavern.Server.Player.UpdatePlayer.LoadRequiredExternalIdIlks (loadRequiredExternalIdIlks)
 import TeamTavern.Server.Player.UpdatePlayer.LogError (logError)
 import TeamTavern.Server.Player.UpdatePlayer.ReadPlayer (readPlayer)
 import TeamTavern.Server.Player.UpdatePlayer.SendResponse (sendResponse)
@@ -26,8 +27,10 @@ updatePlayer pool nickname cookies body =
     -- Read player from body.
     playerModel <- readPlayer body
 
+    requiredExternalIdIlks <- loadRequiredExternalIdIlks pool (unwrap cookieInfo.id)
+
     -- Validate player.
-    player <- validatePlayer playerModel
+    player <- validatePlayer requiredExternalIdIlks playerModel
 
     -- Update player.
     UpdateDetails.updateDetails pool (unwrap cookieInfo.id) player

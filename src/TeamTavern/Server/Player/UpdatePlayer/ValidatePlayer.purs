@@ -9,6 +9,7 @@ import AsyncV (AsyncV)
 import AsyncV as AsyncV
 import Data.Bifunctor (lmap)
 import Data.Bifunctor.Label (label)
+import Data.List.NonEmpty (any)
 import Data.List.NonEmpty as NonEmptyList
 import Data.List.Types (NonEmptyList)
 import Data.Maybe (Maybe)
@@ -50,8 +51,8 @@ type PlayerError = Variant
 type PlayerErrors = NonEmptyList PlayerError
 
 validatePlayer :: forall errors.
-    PlayerModel -> Async (Variant (player :: PlayerErrors | errors)) Player
-validatePlayer dto = do
+    Array Int -> PlayerModel -> Async (Variant (player :: PlayerErrors | errors)) Player
+validatePlayer externalIdIlks dto = do
     birthday' <- Async.fromEffect $ validateOptionalBirthday dto.birthday
     let timezone' = validateTimezone dto.timezone
     { birthday: birthday'
@@ -67,12 +68,16 @@ validatePlayer dto = do
     , about: _
     }
         <$> validateDiscordTag dto.discordTag
-        <*> validateSteamUrl' dto.steamUrl
-        <*> validateRiotId' dto.riotId
+        <*> validateSteamUrl' dto.steamUrl (externalIdIlks # any (_ == 1))
+        <*> validateRiotId' dto.riotId (externalIdIlks # any (_ == 2 ))
         <*> validateAbout dto.about
         # Async.fromValidated
         # label (SProxy :: SProxy "player")
 
-validatePlayerV :: forall errors.
-    PlayerModel -> AsyncV (NonEmptyList (Variant (player :: PlayerErrors | errors))) Player
-validatePlayerV = validatePlayer >>> lmap NonEmptyList.singleton >>> AsyncV.fromAsync
+validatePlayerV
+    :: forall errors
+    .  Array Int
+    -> PlayerModel
+    -> AsyncV (NonEmptyList (Variant (player :: PlayerErrors | errors))) Player
+validatePlayerV externalIdIlks player =
+    validatePlayer externalIdIlks player # lmap NonEmptyList.singleton # AsyncV.fromAsync

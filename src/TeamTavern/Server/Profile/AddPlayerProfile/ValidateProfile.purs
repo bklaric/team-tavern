@@ -34,10 +34,10 @@ type ProfileErrors = NonEmptyList ProfileError
 
 validateProfile
     :: forall errors
-    .  LoadFields.Game
+    .  Array LoadFields.Field
     -> ReadProfile.Profile
     -> Async (Variant (profile :: ProfileErrors | errors)) Profile
-validateProfile { fields } { fieldValues, newOrReturning, ambitions } =
+validateProfile fields { fieldValues, newOrReturning, ambitions } =
     { fieldValues: _, newOrReturning, ambitions: _ }
     <$> validateFieldValues fields fieldValues
     <*> validateAmbitions ambitions
@@ -46,11 +46,11 @@ validateProfile { fields } { fieldValues, newOrReturning, ambitions } =
 
 validateProfileV
     :: forall errors
-    .  LoadFields.Game
+    .  Array LoadFields.Field
     -> ReadProfile.Profile
     -> AsyncV (NonEmptyList (Variant (playerProfile :: ProfileErrors | errors))) Profile
-validateProfileV game =
-    validateProfile game
+validateProfileV fields =
+    validateProfile fields
     >>> relabel (SProxy :: SProxy "profile") (SProxy :: SProxy "playerProfile")
     >>> lmap NonEmptyList.singleton
     >>> AsyncV.fromAsync

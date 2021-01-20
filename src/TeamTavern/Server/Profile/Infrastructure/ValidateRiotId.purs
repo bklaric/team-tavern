@@ -4,6 +4,7 @@ import Prelude
 
 import Data.Either (Either(..))
 import Data.List.NonEmpty as NEL
+import Data.List.NonEmpty as Nel
 import Data.Maybe (Maybe(..))
 import Data.String (Pattern(..), length, split, trim)
 import Data.Validated (invalid, valid)
@@ -44,9 +45,11 @@ validateRiotId riotId | riotId' <- trim riotId =
     else Left [ "Invalid Riot ID: " <> riotId' ]
 
 validateRiotId' :: forall errors.
-    Maybe String -> VariantValidated (riotId :: Array String | errors) (Maybe RiotId)
-validateRiotId' Nothing = valid Nothing
-validateRiotId' (Just riotId) | riotId' <- trim riotId =
+    Maybe String -> Boolean -> VariantValidated (riotId :: Array String | errors) (Maybe RiotId)
+validateRiotId' Nothing false = valid Nothing
+validateRiotId' Nothing true = invalid $ Nel.singleton $ inj (SProxy :: SProxy "riotId")
+    [ "No Riot ID provided, but it is required." ]
+validateRiotId' (Just riotId) _ | riotId' <- trim riotId =
     if isRiotIdValid riotId'
     then valid $ Just $ RiotId riotId'
     else invalid $ NEL.singleton $ inj (SProxy :: SProxy "riotId")

@@ -34,7 +34,7 @@ updatePlayerProfile pool identifiers cookies body =
             profile <- readProfile body
 
             -- Validate profile.
-            profile' <- validateProfile game profile
+            profile' <- validateProfile game.fields profile
 
             -- Update profile.
             updateProfile client cookieInfo identifiers profile'

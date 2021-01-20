@@ -124,8 +124,8 @@ onboard pool cookies body =
             { ilk: 1, player: Just player, playerProfile: Just profile } -> do
                 { player', profile' } <-
                     { player': _, profile': _ }
-                    <$> validatePlayerV player
-                    <*> validateProfileV game profile
+                    <$> validatePlayerV [ game.externalIdIlk ] player
+                    <*> validateProfileV game.fields profile
                     # AsyncV.toAsync
                     # label (SProxy :: SProxy "invalidBody")
                 updateDetails client (unwrap cookieInfo.id) player'

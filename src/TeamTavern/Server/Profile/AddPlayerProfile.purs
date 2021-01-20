@@ -28,13 +28,13 @@ addPlayerProfile pool identifiers cookies body =
         cookieInfo <- ensureSignedInAs client cookies identifiers.nickname
 
         -- Load game fields from database.
-        fields <- loadFields client identifiers.handle
+        game <- loadFields client identifiers.handle
 
         -- Read profile from body.
         profile <- readProfile body
 
         -- Validate profile.
-        profile' <- validateProfile fields profile
+        profile' <- validateProfile game.fields profile
 
         -- Add profile to database.
         addProfile client (unwrap cookieInfo.id) identifiers profile'
