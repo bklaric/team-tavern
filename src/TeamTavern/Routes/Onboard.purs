@@ -32,12 +32,13 @@ type PlayerRequestContent =
 type TeamRequestContent =
     { name :: String
     , website :: Maybe String
+    , discordTag :: Maybe String
+    , discordServer :: Maybe String
     , ageFrom :: Maybe Int
     , ageTo :: Maybe Int
     , locations :: Array String
     , languages :: Array String
     , microphone :: Boolean
-    , discordServer :: Maybe String
     , timezone :: Maybe String
     , weekdayFrom :: Maybe String
     , weekdayTo :: Maybe String
@@ -86,7 +87,9 @@ type BadContent = Array $ Variant
     , team :: Array $ Variant
         ( name :: Array String
         , website :: Array String
+        , discordTag :: Array String
         , discordServer :: Array String
+        , contact :: Array String
         , about :: Array String
         )
     , playerProfile :: Array $ Variant

@@ -3,13 +3,11 @@ module TeamTavern.Client.Components.Player.PlayerDetails (playerDetails) where
 import Prelude
 
 import Async (Async)
-import Client.Components.Copyable (copyable)
 import Client.Components.Copyable as Copyable
 import Data.Array as Array
 import Data.Maybe (Maybe(..))
-import Data.Symbol (SProxy(..))
 import Halogen.HTML as HH
-import TeamTavern.Client.Components.Detail (arrangedAndDetail, detail, weekdaysOnlineDetail, weekendsOnlineDetail)
+import TeamTavern.Client.Components.Detail (arrangedAndDetail, detail, discordTagDetail, weekdaysOnlineDetail, weekendsOnlineDetail)
 import TeamTavern.Client.Snippets.Class as HS
 
 playerAgeDetail :: forall slots action. Maybe Int -> Maybe (HH.HTML slots action)
@@ -41,17 +39,6 @@ playerMicrophoneDetail true = Just $
     , HH.text $ " and is willing to communicate"
     ]
 
-playerDiscordTagDetail
-    :: forall action left slots
-    .  String
-    -> Maybe String
-    -> Maybe (HH.ComponentHTML action ( discordTag :: Copyable.Slot String | slots) (Async left))
-playerDiscordTagDetail _ Nothing = Nothing
-playerDiscordTagDetail nickname (Just discordTag) = Just $
-    detail "fab fa-discord"
-    [ HH.span [ HS.class_ "detail-labelless" ]
-       [ copyable (SProxy :: SProxy "discordTag") ("discordTag-" <> nickname) discordTag ]
-    ]
 playerDetails :: forall fields action slots left.
     { nickname :: String
     , age :: Maybe Int
@@ -76,7 +63,7 @@ playerDetails details =
     , playerLocationDetail details.location
     , playerLanguagesDetail details.languages
     , playerMicrophoneDetail details.microphone
-    , playerDiscordTagDetail details.nickname details.discordTag
+    , discordTagDetail details.nickname details.discordTag
     , weekdaysOnlineDetail details.weekdayOnline
     , weekendsOnlineDetail details.weekendOnline
     ]

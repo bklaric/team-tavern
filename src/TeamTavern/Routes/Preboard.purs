@@ -41,7 +41,9 @@ type BadContent = Array $ Variant
     , team :: Array $ Variant
         ( name :: Array String
         , website :: Array String
+        , discordTag :: Array String
         , discordServer :: Array String
+        , contact :: Array String
         , about :: Array String
         )
     , playerProfile :: Array $ Variant

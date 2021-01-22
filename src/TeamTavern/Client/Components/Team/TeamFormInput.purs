@@ -9,8 +9,10 @@ import Data.Variant (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Record as Record
-import TeamTavern.Client.Components.Input (inputGroupsHeading, responsiveInputGroups)
+import TeamTavern.Client.Components.Divider (divider)
+import TeamTavern.Client.Components.Input (inputErrorSublabel, inputGroupsHeading, inputGroupsHeading', inputRequiredSublabel, inputSublabel, responsiveInputGroups)
 import TeamTavern.Client.Components.InputGroup (timeRangeInputGroup, timezoneInputGroup)
+import TeamTavern.Client.Components.Player.PlayerInputGroup (discordTagInputGroup)
 import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.Select.MultiTreeSelect as MultiTreeSelect
 import TeamTavern.Client.Components.Select.SingleSelect as SingleSelect
@@ -21,12 +23,13 @@ import TeamTavern.Server.Infrastructure.Timezones (Timezone)
 type Input =
     { name :: String
     , website :: Maybe String
+    , discordTag :: Maybe String
+    , discordServer :: Maybe String
     , ageFrom :: Maybe Int
     , ageTo :: Maybe Int
     , locations :: Array String
     , languages :: Array String
     , microphone :: Boolean
-    , discordServer :: Maybe String
     , timezone :: Maybe String
     , weekdayFrom :: Maybe String
     , weekdayTo :: Maybe String
@@ -35,19 +38,22 @@ type Input =
     , about :: String
     , nameError :: Boolean
     , websiteError :: Boolean
+    , discordTagError :: Boolean
     , discordServerError :: Boolean
+    , contactError :: Boolean
     , aboutError :: Boolean
     }
 
 type Output =
     { name :: String
     , website :: Maybe String
+    , discordTag :: Maybe String
+    , discordServer :: Maybe String
     , ageFrom :: Maybe Int
     , ageTo :: Maybe Int
     , locations :: Array String
     , languages :: Array String
     , microphone :: Boolean
-    , discordServer :: Maybe String
     , timezone :: Maybe String
     , weekdayFrom :: Maybe String
     , weekdayTo :: Maybe String
@@ -63,12 +69,13 @@ data Action
     | Receive Input
     | UpdateName String
     | UpdateWebsite (Maybe String)
+    | UpdateDiscordTag (Maybe String)
+    | UpdateDiscordServer (Maybe String)
     | UpdateAgeFrom (Maybe Int)
     | UpdateAgeTo (Maybe Int)
     | UpdateLocations (Array String)
     | UpdateLanguages (Array String)
     | UpdateMicrophone Boolean
-    | UpdateDiscordServer (Maybe String)
     | UpdateTimezone (Maybe String)
     | UpdateWeekdayFrom (Maybe String)
     | UpdateWeekdayTo (Maybe String)
@@ -92,6 +99,16 @@ render state =
         [ nameInputGroup state.name UpdateName state.nameError
         , websiteInputGroup state.website UpdateWebsite state.websiteError
         ]
+    , inputGroupsHeading' $
+        [ HH.text "Contact"
+        , divider, inputRequiredSublabel
+        , divider, (if state.contactError then inputErrorSublabel else inputSublabel)
+            "You must fill out at least one of the availabel contact fields."
+        ]
+    , responsiveInputGroups
+        [ discordTagInputGroup state.discordTag UpdateDiscordTag state.discordTagError
+        , discordServerInputGroup state.discordServer UpdateDiscordServer state.discordServerError
+        ]
     , inputGroupsHeading "Personal"
     , responsiveInputGroups
         [ ageInputGroup state.ageFrom state.ageTo UpdateAgeFrom UpdateAgeTo
@@ -101,7 +118,6 @@ render state =
     , responsiveInputGroups
         [ languagesInputGroup state.languages UpdateLanguages
         , microphoneInputGroup state.microphone UpdateMicrophone
-        , discordServerInputGroup state.discordServer UpdateDiscordServer state.discordServerError
         ]
     , inputGroupsHeading "Time available"
     , responsiveInputGroups
@@ -120,7 +136,9 @@ raiseOutput state
     = state
     # Record.delete (SProxy :: SProxy "nameError")
     # Record.delete (SProxy :: SProxy "websiteError")
+    # Record.delete (SProxy :: SProxy "discordTagError")
     # Record.delete (SProxy :: SProxy "discordServerError")
+    # Record.delete (SProxy :: SProxy "contactError")
     # Record.delete (SProxy :: SProxy "aboutError")
     # H.raise
 
@@ -138,6 +156,12 @@ handleAction (UpdateName name) = do
 handleAction (UpdateWebsite website) = do
     state <- H.modify _ { website = website }
     raiseOutput state
+handleAction (UpdateDiscordTag discordTag) = do
+    state <- H.modify _ { discordTag = discordTag }
+    raiseOutput state
+handleAction (UpdateDiscordServer discordServer) = do
+    state <- H.modify _ { discordServer = discordServer }
+    raiseOutput state
 handleAction (UpdateAgeFrom ageFrom) = do
     state <- H.modify _ { ageFrom = ageFrom }
     raiseOutput state
@@ -152,9 +176,6 @@ handleAction (UpdateLanguages languages) = do
     raiseOutput state
 handleAction (UpdateMicrophone microphone) = do
     state <- H.modify _ { microphone = microphone }
-    raiseOutput state
-handleAction (UpdateDiscordServer discordServer) = do
-    state <- H.modify _ { discordServer = discordServer }
     raiseOutput state
 handleAction (UpdateTimezone timezone) = do
     state <- H.modify _ { timezone = timezone }
@@ -190,12 +211,13 @@ emptyInput :: Input
 emptyInput =
     { name: ""
     , website: Nothing
+    , discordTag: Nothing
+    , discordServer: Nothing
     , ageFrom: Nothing
     , ageTo: Nothing
     , locations: []
     , languages: []
     , microphone: false
-    , discordServer: Nothing
     , timezone: Nothing
     , weekdayFrom: Nothing
     , weekdayTo: Nothing
@@ -204,7 +226,9 @@ emptyInput =
     , about: ""
     , nameError: false
     , websiteError: false
+    , discordTagError: false
     , discordServerError: false
+    , contactError: false
     , aboutError: false
     }
 

@@ -3,6 +3,7 @@ module TeamTavern.Client.Pages.Profiles.TeamProfiles (TeamProfile, Input, Output
 import Prelude
 
 import Async (Async)
+import Client.Components.Copyable as Copyable
 import Data.Array (mapWithIndex)
 import Data.Array as Array
 import Data.Const (Const)
@@ -32,12 +33,13 @@ type TeamProfile =
     , handle :: String
     , name :: String
     , website :: Maybe String
+    , discordTag :: Maybe String
+    , discordServer :: Maybe String
     , ageFrom :: Maybe Int
     , ageTo :: Maybe Int
     , locations :: Array String
     , languages :: Array String
     , microphone :: Boolean
-    , discordServer :: Maybe String
     , weekdayOnline :: Maybe
         { from :: String
         , to :: String
@@ -86,6 +88,7 @@ type Slot = H.Slot (Const Void) Output Unit
 type ChildSlots =
     ( teams :: Anchor.Slot String
     , messageOwner :: Anchor.Slot String
+    , discordTag :: Copyable.Slot String
     )
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)

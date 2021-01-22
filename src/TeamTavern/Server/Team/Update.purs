@@ -31,18 +31,19 @@ queryString = Query """
     set
         name = $3,
         website = $4,
-        age_from = $5,
-        age_to = $6,
-        locations = $7,
-        languages = $8,
-        microphone = $9,
-        discord_server = $10,
-        timezone = $11,
-        weekday_from = $12,
-        weekday_to = $13,
-        weekend_from = $14,
-        weekend_to = $15,
-        about = $16,
+        discord_tag = $5,
+        discord_server = $6,
+        age_from = $7,
+        age_to = $8,
+        locations = $9,
+        languages = $10,
+        microphone = $11,
+        timezone = $12,
+        weekday_from = $13,
+        weekday_to = $14,
+        weekend_from = $15,
+        weekend_to = $16,
+        about = $17,
         updated = now()
     where owner_id = $1 and handle = $2
     """
@@ -53,12 +54,13 @@ queryParameters ownerId handle team
     : handle
     : team.name
     : toNullable team.website
+    : toNullable team.discordTag
+    : toNullable team.discordServer
     : nullableAgeFrom team.ageSpan
     : nullableAgeTo team.ageSpan
     : team.locations
     : team.languages
     : team.microphone
-    : toNullable team.discordServer
     : toNullable team.timezone
     : nullableTimeFrom team.onlineWeekday
     : nullableTimeTo team.onlineWeekday

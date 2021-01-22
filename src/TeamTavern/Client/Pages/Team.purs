@@ -3,6 +3,7 @@ module TeamTavern.Client.Pages.Team (Input, Slot, team) where
 import Prelude
 
 import Async (Async)
+import Client.Components.Copyable as Copyable
 import Control.Monad.State (class MonadState)
 import Data.Array (intercalate)
 import Data.Array as Array
@@ -13,7 +14,6 @@ import Halogen as H
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Content (contentDescription, contentHeader, contentHeading)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
-import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Pages.Team.Details (details)
 import TeamTavern.Client.Pages.Team.EditProfile (editProfile)
 import TeamTavern.Client.Pages.Team.EditProfile as EditProfile
@@ -51,7 +51,7 @@ data Action
 type Slot = H.Slot (Const Void) Void Unit
 
 type ChildSlots =
-    ( messageOwner :: NavigationAnchor.Slot Unit
+    ( discordTag :: Copyable.Slot String
     , games :: Anchor.Slot String
     , createProfile :: H.Slot (Const Void) Void Unit
     , editTeam :: EditTeam.Slot

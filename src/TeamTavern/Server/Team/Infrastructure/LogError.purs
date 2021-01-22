@@ -16,4 +16,7 @@ teamHandler :: forall fields. Lacks "team" fields =>
     Builder (Record fields) { team :: TeamErrors -> Effect Unit | fields }
 teamHandler = Builder.insert (SProxy :: SProxy "team") \errors ->
     foreachE (Array.fromFoldable errors) $ match
-    { name: logLines, website: logLines, discordServer: logLines, about: logLines }
+    { name: logLines, website: logLines
+    , discordTag: logLines, discordServer: logLines, contact: logLines
+    , about: logLines
+    }

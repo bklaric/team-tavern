@@ -69,6 +69,16 @@ urlDetail icon text (Just href) = Just $
         [ HH.text text ]
     ]
 
+discordTagDetail
+    :: forall action left slots
+    .  String
+    -> Maybe String
+    -> Maybe (HH.ComponentHTML action ( discordTag :: Copyable.Slot String | slots) (Async left))
+discordTagDetail _ Nothing = Nothing
+discordTagDetail nickname (Just discordTag) = Just $
+    fieldDetail "fab fa-discord" "Discord tag"
+    [ copyable (SProxy :: SProxy "discordTag") ("discordTag-" <> nickname) discordTag ]
+
 arrangeItems :: forall slots action. String -> Array String -> Array (HH.HTML slots action)
 arrangeItems binder items =
     foldr

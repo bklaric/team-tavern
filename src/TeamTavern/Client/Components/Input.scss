@@ -17,12 +17,20 @@
 
 .input-sublabel {
     font-size: 12px;
+    font-weight: 400;
     color: #888;
 }
 
 .input-primary-sublabel {
     font-size: 12px;
+    font-weight: 400;
     color: $primary-color;
+}
+
+.input-error-sublabel {
+    font-size: 12px;
+    font-weight: 400;
+    color: $error-color;
 }
 
 .input-underlabel {

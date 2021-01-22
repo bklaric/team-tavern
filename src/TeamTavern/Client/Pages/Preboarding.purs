@@ -417,12 +417,13 @@ sendRequest (state :: State) = Async.unify do
             , team: Just
                 { name: team.name
                 , website: team.website
+                , discordTag: team.discordTag
+                , discordServer: team.discordServer
                 , ageFrom: team.ageFrom
                 , ageTo: team.ageTo
                 , locations: team.locations
                 , languages: team.languages
                 , microphone: team.microphone
-                , discordServer: team.discordServer
                 , timezone: team.timezone
                 , weekdayFrom: team.weekdayFrom
                 , weekdayTo: team.weekdayTo
@@ -521,12 +522,13 @@ handleAction (UpdateTeam details) = do
         { team
             { name = details.name
             , website = details.website
+            , discordTag = details.discordTag
+            , discordServer = details.discordServer
             , ageFrom = details.ageFrom
             , ageTo = details.ageTo
             , locations = details.locations
             , languages = details.languages
             , microphone = details.microphone
-            , discordServer = details.discordServer
             , timezone = details.timezone
             , weekdayFrom = details.weekdayFrom
             , weekdayTo = details.weekdayTo
@@ -596,7 +598,9 @@ handleAction SetUpAccount = do
             , team
                 { nameError = false
                 , websiteError = false
+                , discordTagError = false
                 , discordServerError = false
+                , contactError = false
                 , aboutError = false
                 }
             , playerProfile
@@ -621,14 +625,10 @@ handleAction SetUpAccount = do
                     foldl
                     (\state' error' ->
                         match
-                        { discordTag: const $ state'
-                            { step = Player
-                            , player { discordTagError = true }
-                            }
-                        , about: const $ state'
-                            { step = Player
-                            , player { aboutError = true }
-                            }
+                        { discordTag: const state'
+                            { step = Player, player { discordTagError = true } }
+                        , about: const state'
+                            { step = Player, player { aboutError = true } }
                         }
                         error'
                     )
@@ -637,22 +637,18 @@ handleAction SetUpAccount = do
                     foldl
                     (\state' error' ->
                         match
-                        { name: const $ state'
-                            { step = Team
-                            , team { nameError = true }
-                            }
-                        , website: const $ state'
-                            { step = Team
-                            , team { websiteError = true }
-                            }
-                        , discordServer: const $ state'
-                            { step = Team
-                            , team { discordServerError = true }
-                            }
-                        , about: const $ state'
-                            { step = Team
-                            , team { aboutError = true }
-                            }
+                        { name: const state'
+                            { step = Team, team { nameError = true } }
+                        , website: const state'
+                            { step = Team, team { websiteError = true } }
+                        , discordTag: const state'
+                            { step = Team, team { discordTagError = true } }
+                        , discordServer: const state'
+                            { step = Team, team { discordServerError = true } }
+                        , contact: const state'
+                            { step = Team, team { contactError = true } }
+                        , about: const state'
+                            { step = Team, team { aboutError = true } }
                         }
                         error'
                     )
@@ -661,7 +657,7 @@ handleAction SetUpAccount = do
                     foldl
                     (\state' error' ->
                         match
-                        { externalId: const $ state'
+                        { externalId: const state'
                             { step =
                                 if state'.step > PlayerProfile then PlayerProfile else state'.step
                             , playerProfile { externalIdError = true }
@@ -672,7 +668,7 @@ handleAction SetUpAccount = do
                             , playerProfile
                                 { urlErrors = Array.cons key state'.playerProfile.urlErrors }
                             }
-                        , ambitions: const $ state'
+                        , ambitions: const state'
                             { step =
                                 if state'.step > PlayerProfile then PlayerProfile else state'.step
                             , playerProfile { ambitionsError = true }
@@ -685,11 +681,11 @@ handleAction SetUpAccount = do
                     foldl
                     (\state' error' ->
                         match
-                        { ambitions: const $ state'
-                            { step =
-                                if state'.step > TeamProfile then TeamProfile else state'.step
-                            , playerProfile { ambitionsError = true } }
+                        { ambitions: const state'
+                            { step = if state'.step > TeamProfile then TeamProfile else state'.step
+                            , playerProfile { ambitionsError = true }
                             }
+                        }
                         error'
                     )
                     state
@@ -697,13 +693,13 @@ handleAction SetUpAccount = do
                     foldl
                     (\state' error' ->
                         match
-                        { nickname: const $ state' { registration { nicknameError = true } }
-                        , password: const $ state' { registration { passwordError = true } }
+                        { nickname: const state' { registration { nicknameError = true } }
+                        , password: const state' { registration { passwordError = true } }
                         }
                         error'
                     )
                     state
-                , nicknameTaken: const $ state { registration { nicknameTaken = true } }
+                , nicknameTaken: const state { registration { nicknameTaken = true } }
                 }
                 error
             )

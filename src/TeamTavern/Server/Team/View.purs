@@ -43,12 +43,13 @@ type Team =
     , handle :: String
     , name :: String
     , website :: Maybe String
+    , discordTag :: Maybe String
+    , discordServer :: Maybe String
     , ageFrom :: Maybe Int
     , ageTo :: Maybe Int
     , locations :: Array String
     , languages :: Array String
     , microphone :: Boolean
-    , discordServer :: Maybe String
     , timezone :: Maybe String
     , weekdayOnline :: Maybe
         { clientFrom :: String
@@ -73,12 +74,13 @@ queryString timezone = Query $ """
         team.handle,
         team.name,
         team.website,
+        team.discord_tag as "discordTag",
+        team.discord_server as "discordServer",
         team.age_from as "ageFrom",
         team.age_to as "ageTo",
         team.locations,
         team.languages,
         team.microphone as "microphone",
-        team.discord_server as "discordServer",
         team.timezone,
         case
             when team.weekday_from is not null and team.weekday_to is not null

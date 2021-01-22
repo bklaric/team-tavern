@@ -51,12 +51,13 @@ sendRequest state @ { details } =
     post "/api/teams"
     ({ name: details.name
     , website: details.website
+    , discordTag: details.discordTag
+    , discordServer: details.discordServer
     , ageFrom: details.ageFrom
     , ageTo: details.ageTo
     , locations: details.locations
     , languages: details.languages
     , microphone: details.microphone
-    , discordServer: details.discordServer
     , timezone: details.timezone
     , weekdayFrom: details.weekdayFrom
     , weekdayTo: details.weekdayTo
@@ -75,12 +76,13 @@ handleAction (UpdateDetails details) =
         { details = state.details
             { name = details.name
             , website = details.website
+            , discordTag = details.discordTag
+            , discordServer = details.discordServer
             , ageFrom = details.ageFrom
             , ageTo = details.ageTo
             , locations = details.locations
             , languages = details.languages
             , microphone = details.microphone
-            , discordServer = details.discordServer
             , timezone = details.timezone
             , weekdayFrom = details.weekdayFrom
             , weekdayTo = details.weekdayTo
@@ -101,7 +103,9 @@ handleAction (SendRequest event) = do
                 match
                 { name: const state { details = state.details { nameError = true } }
                 , website: const state { details = state.details { websiteError = true } }
+                , discordTag: const state { details = state.details { discordTagError = true } }
                 , discordServer: const state { details = state.details { discordServerError = true } }
+                , contact: const state { details = state.details { contactError = true } }
                 , about: const state { details = state.details { aboutError = true } }
                 }
                 error
@@ -112,7 +116,9 @@ handleAction (SendRequest event) = do
                 , details = currentState.details
                     { nameError = false
                     , websiteError = false
+                    , discordTagError = false
                     , discordServerError = false
+                    , contactError = false
                     , aboutError = false
                     }
                 }
@@ -124,7 +130,9 @@ handleAction (SendRequest event) = do
             , details = currentState.details
                 { nameError = false
                 , websiteError = false
+                , discordTagError = false
                 , discordServerError = false
+                , contactError = false
                 , aboutError = false
                 }
             }

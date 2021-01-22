@@ -24,12 +24,13 @@ create table team
     , handle text not null
     , name text not null
     , website text
+    , discord_tag text
+    , discord_server text
     , age_from integer
     , age_to integer
     , locations text[] not null default '{}'
     , languages text[] not null default '{}'
     , microphone boolean not null default false
-    , discord_server text
     , timezone text
     , weekday_from time
     , weekday_to time

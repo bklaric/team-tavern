@@ -26,12 +26,13 @@ type Input fields =
     { handle :: String
     , name :: String
     , website :: Maybe String
+    , discordTag :: Maybe String
+    , discordServer :: Maybe String
     , ageFrom :: Maybe Int
     , ageTo :: Maybe Int
     , locations :: Array String
     , languages :: Array String
     , microphone :: Boolean
-    , discordServer :: Maybe String
     , timezone :: Maybe String
     , weekdayOnline :: Maybe
         { clientFrom :: String
@@ -80,12 +81,13 @@ sendRequest state @ { handle, details } = do
         ("/api/teams/" <> handle)
         ({ name: details.name
         , website: details.website
+        , discordTag: details.discordTag
+        , discordServer: details.discordServer
         , ageFrom: details.ageFrom
         , ageTo: details.ageTo
         , locations: details.locations
         , languages: details.languages
         , microphone: details.microphone
-        , discordServer: details.discordServer
         , timezone: details.timezone
         , weekdayFrom: details.weekdayFrom
         , weekdayTo: details.weekdayTo
@@ -108,12 +110,13 @@ handleAction (UpdateDetails details) =
         { details = state.details
             { name = details.name
             , website = details.website
+            , discordTag = details.discordTag
+            , discordServer = details.discordServer
             , ageFrom = details.ageFrom
             , ageTo = details.ageTo
             , locations = details.locations
             , languages = details.languages
             , microphone = details.microphone
-            , discordServer = details.discordServer
             , timezone = details.timezone
             , weekdayFrom = details.weekdayFrom
             , weekdayTo = details.weekdayTo
@@ -132,10 +135,12 @@ handleAction (SendRequest event) = do
             foldl
             (\state error ->
                 match
-                { name: const state { details = state.details { nameError = true } }
-                , website: const state { details = state.details { websiteError = true } }
-                , discordServer: const state { details = state.details { discordServerError = true } }
-                , about: const state { details = state.details { aboutError = true } }
+                { name: const state { details { nameError = true } }
+                , website: const state { details { websiteError = true } }
+                , discordTag: const state { details { discordTagError = true } }
+                , discordServer: const state { details { discordServerError = true } }
+                , contact: const state { details { contactError = true } }
+                , about: const state { details { aboutError = true } }
                 }
                 error
             )
@@ -145,7 +150,9 @@ handleAction (SendRequest event) = do
                 , details = currentState.details
                     { nameError = false
                     , websiteError = false
+                    , discordTagError = false
                     , discordServerError = false
+                    , contactError = false
                     , aboutError = false
                     }
                 }
@@ -157,7 +164,9 @@ handleAction (SendRequest event) = do
             , details = currentState.details
                 { nameError = false
                 , websiteError = false
+                , discordTagError = false
                 , discordServerError = false
+                , contactError = false
                 , aboutError = false
                 }
             }
@@ -170,12 +179,13 @@ component = H.mkComponent
         , details: EnterTeamDetails.emptyInput
             { name = team.name
             , website = team.website
+            , discordTag = team.discordTag
+            , discordServer = team.discordServer
             , ageFrom = team.ageFrom
             , ageTo = team.ageTo
             , locations = team.locations
             , languages = team.languages
             , microphone = team.microphone
-            , discordServer = team.discordServer
             , timezone = team.timezone
             , weekdayFrom = team.weekdayOnline <#> _.sourceFrom
             , weekdayTo = team.weekdayOnline <#> _.sourceTo

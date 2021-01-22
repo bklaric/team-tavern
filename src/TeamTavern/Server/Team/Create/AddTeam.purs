@@ -33,12 +33,13 @@ queryString = Query """
         , handle
         , name
         , website
+        , discord_tag
+        , discord_server
         , age_from
         , age_to
         , locations
         , languages
         , microphone
-        , discord_server
         , timezone
         , weekday_from
         , weekday_to
@@ -48,7 +49,7 @@ queryString = Query """
         )
     values
         ( $1, (select handle from unique_handle)
-        , $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16
+        , $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17
         )
     returning team.handle;
     """
@@ -59,12 +60,13 @@ queryParameters ownerId handle team
     : handle
     : team.name
     : toNullable team.website
+    : toNullable team.discordTag
+    : toNullable team.discordServer
     : nullableAgeFrom team.ageSpan
     : nullableAgeTo team.ageSpan
     : team.locations
     : team.languages
     : team.microphone
-    : toNullable team.discordServer
     : toNullable team.timezone
     : nullableTimeFrom team.onlineWeekday
     : nullableTimeTo team.onlineWeekday

@@ -3,6 +3,7 @@ module TeamTavern.Client.Pages.Team.Details (details) where
 import Prelude
 
 import Async (Async)
+import Client.Components.Copyable as Copyable
 import Data.Array as Array
 import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
@@ -16,8 +17,12 @@ import TeamTavern.Client.Components.Team.TeamDetails (teamDetails)
 import TeamTavern.Client.Pages.Team.Status (Status(..))
 import TeamTavern.Server.Team.View (Team)
 
-details :: forall action slots left.
-    Team -> Status -> action -> H.ComponentHTML action slots (Async left)
+details
+    :: forall action slots left
+    .  Team
+    -> Status
+    -> action
+    -> H.ComponentHTML action (discordTag :: Copyable.Slot String | slots) (Async left)
 details team status showEditTeamModal = let
     teamDetails' = teamDetails
         ( team

@@ -3,7 +3,6 @@ module TeamTavern.Client.Components.Input where
 import Prelude
 
 import Data.Maybe (Maybe(..), isJust, isNothing, maybe)
-import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
@@ -22,18 +21,12 @@ inputLabel' icon label domain required =
     ]
     <>
     (case domain of
-    Just domain' ->
-        [ divider
-        , HH.span [ HP.class_ $ H.ClassName "input-sublabel" ] [ HH.text domain' ]
-        ]
+    Just domain' -> [ divider, inputSublabel domain' ]
     Nothing -> []
     )
     <>
     if required
-    then
-        [ divider
-        , HH.span [ HP.class_ $ H.ClassName "input-primary-sublabel" ] [ HH.text "required" ]
-        ]
+    then [ divider, inputRequiredSublabel ]
     else []
 
 requiredDomainInputLabel :: forall slots action. String -> String -> String -> HH.HTML slots action
@@ -58,16 +51,23 @@ externalIdLabel icon label domain =
     ]
     <>
     (case domain of
-    Just domain' ->
-        [ divider
-        , HH.span [ HP.class_ $ H.ClassName "input-sublabel" ] [ HH.text domain' ]
-        ]
+    Just domain' -> [ divider, inputSublabel domain' ]
     Nothing -> []
     )
     <>
-    [ divider
-    , HH.span [ HP.class_ $ H.ClassName "input-primary-sublabel" ] [ HH.text "required" ]
-    ]
+    [ divider, inputRequiredSublabel ]
+
+inputSublabel :: forall slots action. String -> HH.HTML slots action
+inputSublabel text = HH.span [ HS.class_ "input-sublabel" ] [ HH.text text ]
+
+inputPrimarySublabel :: forall slots action. String -> HH.HTML slots action
+inputPrimarySublabel text = HH.span [ HS.class_ "input-primary-sublabel" ] [ HH.text text ]
+
+inputRequiredSublabel :: forall slots action. HH.HTML slots action
+inputRequiredSublabel = inputPrimarySublabel "Required"
+
+inputErrorSublabel :: forall slots action. String -> HH.HTML slots action
+inputErrorSublabel text = HH.span [ HS.class_ "input-error-sublabel" ] [ HH.text text ]
 
 inputUnderlabel' :: forall slots action. Array (HH.HTML slots action) -> HH.HTML slots action
 inputUnderlabel' children = HH.label [ HS.class_ "input-underlabel" ] children
@@ -85,8 +85,11 @@ inputGroup group = HH.div [ HS.class_ "input-group" ] group
 responsiveInputGroups :: forall slots action. Array (HH.HTML slots action) -> HH.HTML slots action
 responsiveInputGroups groups = HH.div [ HS.class_ "responsive-input-groups" ] groups
 
+inputGroupsHeading' :: forall slots action. Array (HH.HTML slots action) -> HH.HTML slots action
+inputGroupsHeading' children = HH.h2 [ HS.class_ "input-groups-heading" ] children
+
 inputGroupsHeading :: forall slots action. String -> HH.HTML slots action
-inputGroupsHeading text = HH.h2 [ HS.class_ "input-groups-heading" ] [ HH.text text ]
+inputGroupsHeading text = inputGroupsHeading' [ HH.text text ]
 
 requiredTextLineInput :: forall slots action. String -> (String -> action) -> HH.HTML slots action
 requiredTextLineInput input onInput =

@@ -2,14 +2,19 @@ module TeamTavern.Client.Components.Team.TeamDetails (teamDetails) where
 
 import Prelude
 
+import Async (Async)
+import Client.Components.Copyable as Copyable
 import Data.Array as Array
 import Data.Maybe (Maybe(..))
 import Halogen.HTML as HH
-import TeamTavern.Client.Components.Detail (arrangedOrDetail, detail, urlDetail, weekdaysOnlineDetail, weekendsOnlineDetail)
+import TeamTavern.Client.Components.Detail (arrangedOrDetail, detail, discordTagDetail, urlDetail, weekdaysOnlineDetail, weekendsOnlineDetail)
 import TeamTavern.Client.Snippets.Class as HS
 
 teamWebsiteDetail :: forall slots action. Maybe String -> Maybe (HH.HTML slots action)
 teamWebsiteDetail website = urlDetail "fas fa-globe" "Website" website
+
+teamDiscordServerDetail :: forall slots actions. Maybe String -> Maybe (HH.HTML slots actions)
+teamDiscordServerDetail discordServer = urlDetail "fab fa-discord" "Discord server" discordServer
 
 teamAgeDetail :: forall slots action. Maybe Int -> Maybe Int -> Maybe (HH.HTML slots action)
 teamAgeDetail Nothing Nothing = Nothing
@@ -47,17 +52,16 @@ teamMicrophoneDetail true = Just $
     , HH.text $ " and are willing to communicate"
     ]
 
-teamDiscordServerDetail :: forall slots actions. Maybe String -> Maybe (HH.HTML slots actions)
-teamDiscordServerDetail discordServer = urlDetail "fab fa-discord" "Discord server" discordServer
-
-teamDetails :: forall fields slots action.
-    { website :: Maybe String
+teamDetails :: forall fields slots action left.
+    { handle :: String
+    , website :: Maybe String
+    , discordTag :: Maybe String
+    , discordServer :: Maybe String
     , ageFrom :: Maybe Int
     , ageTo :: Maybe Int
     , locations :: Array String
     , languages :: Array String
     , microphone :: Boolean
-    , discordServer :: Maybe String
     , weekdayOnline :: Maybe
                         { from :: String
                         , to :: String
@@ -68,15 +72,16 @@ teamDetails :: forall fields slots action.
                         }
     | fields
     }
-    -> Array (HH.HTML slots action)
+    -> Array (HH.ComponentHTML action ( discordTag :: Copyable.Slot String | slots) (Async left))
 teamDetails details =
     Array.catMaybes
     [ teamWebsiteDetail details.website
+    , discordTagDetail details.handle details.discordTag
+    , teamDiscordServerDetail details.discordServer
     , teamAgeDetail details.ageFrom details.ageTo
     , teamLocationsDetail details.locations
     , teamLanguagesDetail details.languages
     , teamMicrophoneDetail details.microphone
-    , teamDiscordServerDetail details.discordServer
     , weekdaysOnlineDetail details.weekdayOnline
     , weekendsOnlineDetail details.weekendOnline
     ]
