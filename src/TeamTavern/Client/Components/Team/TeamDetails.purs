@@ -48,7 +48,7 @@ teamMicrophoneDetail true = Just $
     ]
 
 teamDiscordServerDetail :: forall slots actions. Maybe String -> Maybe (HH.HTML slots actions)
-teamDiscordServerDetail discordServer = urlDetail "fab fa-discord" "Dicord server" discordServer
+teamDiscordServerDetail discordServer = urlDetail "fab fa-discord" "Discord server" discordServer
 
 teamDetails :: forall fields slots action.
     { website :: Maybe String
