@@ -9,7 +9,9 @@ import TeamTavern.Server.Domain.Text (Text, validateText)
 
 validateAmbitions :: forall errors.
     String -> VariantValidated (ambitions :: Array String | errors) Text
-validateAmbitions about
-    = validateText about
+validateAmbitions ambitions
+    = validateText ambitions
     # Validated.labelMap (SProxy :: SProxy "ambitions") \errors ->
-        [ "Error validating ambitions text: " <> show errors ]
+        [ "Error validating ambitions text: " <> ambitions
+        , "Failed with following errors: " <> show errors
+        ]

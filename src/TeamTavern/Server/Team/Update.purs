@@ -81,7 +81,7 @@ type CreateError = Variant
     )
 
 logError :: CreateError -> Effect Unit
-logError = Log.logError "Error creating team"
+logError = Log.logError "Error updating team"
     (internalHandler >>> notAuthenticatedHandler >>> clientHandler >>> teamHandler)
 
 type OkContent = { handle :: String }

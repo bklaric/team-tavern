@@ -18,7 +18,7 @@ type UpdateProfileError = Variant
     )
 
 logError :: UpdateProfileError -> Effect Unit
-logError = Log.logError "Error creating team profile"
+logError = Log.logError "Error updating team profile"
     ( internalHandler
     >>> clientHandler
     >>> notAuthenticatedHandler

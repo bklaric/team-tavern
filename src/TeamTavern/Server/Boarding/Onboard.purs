@@ -75,7 +75,7 @@ invalidBodyHandler = Builder.insert (SProxy :: SProxy "invalidBody") \errors ->
     }
 
 logError :: OnboardError -> Effect Unit
-logError = Log.logError "Error boarding"
+logError = Log.logError "Error onboarding"
     ( internalHandler
     >>> clientHandler
     >>> notAuthenticatedHandler

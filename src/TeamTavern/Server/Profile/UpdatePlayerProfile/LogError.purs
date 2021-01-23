@@ -59,7 +59,7 @@ type UpdateError = Variant
 
 logError :: UpdateError -> Effect Unit
 logError updateError = do
-    logStamped "Error updating profile"
+    logStamped "Error updating player profile"
     updateError # match
         { cookieInfoNotPresent: \cookies ->
             logt $ "Couldn't read info from cookies: " <> show cookies

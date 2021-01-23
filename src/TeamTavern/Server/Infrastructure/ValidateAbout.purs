@@ -11,4 +11,6 @@ validateAbout :: forall errors. String -> VariantValidated (about :: Array Strin
 validateAbout about
     = validateText about
     # Validated.labelMap (SProxy :: SProxy "about") \(errors :: TextErrors) ->
-        [ "Error validating about text: " <> show errors ]
+        [ "Error validating about text: " <> about
+        , "Failed with following errors: " <> show errors
+        ]

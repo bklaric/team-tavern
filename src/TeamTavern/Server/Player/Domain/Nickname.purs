@@ -36,4 +36,6 @@ validateNickname :: forall errors.
 validateNickname nickname =
     Wrapped.create trim [empty, tooLong maxLength, notAsciiAlphaNumSpecial] Nickname nickname
     # Validated.labelMap (SProxy :: SProxy "nickname") \(errors :: NicknameErrors) ->
-        [ "Registration nickname is invalid: " <> show errors ]
+        [ "Registration nickname is invalid: " <> nickname
+        , "Failed with following errors: " <> show errors
+        ]

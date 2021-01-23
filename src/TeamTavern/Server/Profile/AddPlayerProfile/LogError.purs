@@ -30,7 +30,7 @@ profileHandler = Builder.insert (SProxy :: SProxy "profile") \errors ->
         }
 
 logError :: CreateError -> Effect Unit
-logError = Log.logError "Error creating team profile"
+logError = Log.logError "Error creating player profile"
     ( internalHandler
     >>> clientHandler
     >>> notAuthenticatedHandler
