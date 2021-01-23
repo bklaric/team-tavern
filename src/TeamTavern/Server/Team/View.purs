@@ -185,7 +185,8 @@ queryString timezone = Query $ """
                             json_agg(json_build_object(
                                 'fieldKey', profile_value.key,
                                 'optionKeys', multi
-                            )) filter (where profile_value.field_value_id is not null),
+                            ) order by profile_value.ordinal
+                            ) filter (where profile_value.field_value_id is not null),
                             '[]'
                         ) as field_values
                     from (
@@ -193,6 +194,7 @@ queryString timezone = Query $ """
                             field_value.team_profile_id,
                             field.key,
                             field.ilk,
+                            field.ordinal,
                             field_value.id as field_value_id,
                             json_agg(multi.key) as multi
                         from
