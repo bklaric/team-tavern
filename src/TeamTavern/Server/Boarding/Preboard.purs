@@ -125,6 +125,10 @@ errorResponse = onMatch
             }
         # (writeJSON :: BadContent -> String)
         # badRequest_
+    , nicknameTaken: \error ->
+        [ inj (SProxy :: SProxy "nicknameTaken") [ unsafeStringify error ] ]
+        # (writeJSON :: BadContent -> String)
+        # badRequest_
     }
     (const internalServerError__)
 
