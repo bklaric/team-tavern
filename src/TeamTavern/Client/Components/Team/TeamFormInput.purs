@@ -103,7 +103,7 @@ render state =
         [ HH.text "Contact"
         , divider, inputRequiredSublabel
         , divider, (if state.contactError then inputErrorSublabel else inputSublabel)
-            "You must fill out at least one of the availabel contact fields."
+            "You must fill out at least one of the available contact fields."
         ]
     , responsiveInputGroups
         [ discordTagInputGroup state.discordTag UpdateDiscordTag state.discordTagError
