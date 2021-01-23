@@ -94,7 +94,10 @@ type Slot = H.Slot (Const Void) Output Unit
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render state =
     HH.div_
-    [ inputGroupsHeading "Personal"
+    [ inputGroupsHeading "Contact"
+    , responsiveInputGroups
+        [ discordTagInputGroup state.discordTag UpdateDiscordTag state.discordTagError ]
+    , inputGroupsHeading "Personal"
     , responsiveInputGroups
         [ birthdayInputGroup state.thirteenYearsAgo state.birthday UpdateBirthday
         , locationInputGroup state.location UpdateLocation
@@ -103,7 +106,6 @@ render state =
     , responsiveInputGroups
         [ languagesInputGroup state.languages UpdateLanguages
         , microphoneInputGroup state.microphone UpdateMicrophone
-        , discordTagInputGroup state.discordTag UpdateDiscordTag state.discordTagError
         ]
     , inputGroupsHeading "Time available"
     , responsiveInputGroups

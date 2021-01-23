@@ -59,11 +59,11 @@ playerDetails :: forall fields action slots left.
     -> Array (HH.ComponentHTML action (discordTag :: Copyable.Slot String | slots) (Async left))
 playerDetails details =
     Array.catMaybes
-    [ playerAgeDetail details.age
+    [ discordTagDetail details.nickname details.discordTag
+    , playerAgeDetail details.age
     , playerLocationDetail details.location
     , playerLanguagesDetail details.languages
     , playerMicrophoneDetail details.microphone
-    , discordTagDetail details.nickname details.discordTag
     , weekdaysOnlineDetail details.weekdayOnline
     , weekendsOnlineDetail details.weekendOnline
     ]
