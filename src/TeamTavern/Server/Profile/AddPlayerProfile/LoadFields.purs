@@ -43,7 +43,7 @@ queryString = Query """
             '[]'
         ) as fields
     from game
-        join (
+        left join (
             select
                 field.*,
                 json_agg(

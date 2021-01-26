@@ -11,7 +11,7 @@ import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
-import TeamTavern.Client.Snippets.Brands (detailRiotSvg, detailSteamSvg)
+import TeamTavern.Client.Snippets.Brands (detailBattleNetSvg, detailRiotSvg, detailSteamSvg)
 import TeamTavern.Client.Snippets.Class as HS
 
 detailColumnsContainer :: forall slots action. Array (HH.HTML slots action) -> HH.HTML slots action
@@ -50,6 +50,15 @@ riotIdDetail riotId =
     detail' detailRiotSvg
     [ HH.span [ HS.class_ "detail-label" ] [ HH.text "Riot ID: " ]
     , HH.span [ HS.class_ "detail-emphasize" ] [ copyable (SProxy :: SProxy "riotId") riotId riotId ]
+    ]
+
+battleTagDetail :: forall left slots action.
+    String -> HH.ComponentHTML action (battleTag :: Copyable.Slot String | slots) (Async left)
+battleTagDetail battleTag =
+    detail' detailBattleNetSvg
+    [ HH.span [ HS.class_ "detail-label" ] [ HH.text "Riot ID: " ]
+    , HH.span [ HS.class_ "detail-emphasize" ]
+        [ copyable (SProxy :: SProxy "battleTag") battleTag battleTag ]
     ]
 
 fieldDetail :: forall slots action.

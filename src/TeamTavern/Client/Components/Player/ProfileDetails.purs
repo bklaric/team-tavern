@@ -8,7 +8,7 @@ import Data.Array (intercalate)
 import Data.Array as Array
 import Data.Maybe (Maybe(..))
 import Halogen.HTML as HH
-import TeamTavern.Client.Components.Detail (detail, fieldDetail, riotIdDetail, steamUrlDetail, urlDetail)
+import TeamTavern.Client.Components.Detail (battleTagDetail, detail, fieldDetail, riotIdDetail, steamUrlDetail, urlDetail)
 import TeamTavern.Client.Snippets.Class as HS
 
 profileDetails :: forall left slots action.
@@ -32,7 +32,7 @@ profileDetails :: forall left slots action.
         , optionKeys :: Maybe (Array String)
         }
     -> Boolean
-    -> Array (HH.ComponentHTML action (riotId :: Copyable.Slot String | slots) (Async left))
+    -> Array (HH.ComponentHTML action (riotId :: Copyable.Slot String, battleTag :: Copyable.Slot String | slots) (Async left))
 profileDetails externalIdIlk externalId fields fieldValues newOrReturning =
     profileDetails' externalIdIlk externalId
     ( fields
@@ -84,11 +84,12 @@ profileDetails' :: forall left slots action.
             })
         }
     -> Boolean
-    -> Array (HH.ComponentHTML action (riotId :: Copyable.Slot String | slots) (Async left))
+    -> Array (HH.ComponentHTML action (riotId :: Copyable.Slot String, battleTag :: Copyable.Slot String | slots) (Async left))
 profileDetails' externalIdIlk externalId fieldValues newOrReturning =
     case externalIdIlk of
     1 -> [ steamUrlDetail externalId ]
     2 -> [ riotIdDetail externalId ]
+    3 -> [ battleTagDetail externalId ]
     _ -> []
     <>
     ( fieldValues

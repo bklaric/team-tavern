@@ -604,7 +604,8 @@ handleAction SetUpAccount = do
                 , aboutError = false
                 }
             , playerProfile
-                { urlErrors = []
+                { externalIdError = false
+                , urlErrors = []
                 , ambitionsError = false
                 }
             , registration

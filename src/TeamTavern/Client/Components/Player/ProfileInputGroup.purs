@@ -17,7 +17,7 @@ import TeamTavern.Client.Components.Select.MultiSelect (multiSelectIndexed)
 import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.Select.SingleSelect (singleSelectIndexed)
 import TeamTavern.Client.Components.Select.SingleSelect as SingleSelect
-import TeamTavern.Client.Snippets.Brands (inputRiotSvg, inputSteamSvg)
+import TeamTavern.Client.Snippets.Brands (inputBattleNetSvg, inputRiotSvg, inputSteamSvg)
 
 externalIdInputGroup :: forall slots action.
     Int -> String -> (String -> action) -> Boolean -> HH.HTML slots action
@@ -26,6 +26,7 @@ externalIdInputGroup externalIdIlk externalId onValue error =
     ( case externalIdIlk of
         1 -> [ externalIdLabel inputSteamSvg "Steam profile" (Just "steamcommunity.com") ]
         2 -> [ externalIdLabel inputRiotSvg "Riot ID" Nothing ]
+        3 -> [ externalIdLabel inputBattleNetSvg "BattleTag" Nothing ]
         _ -> []
     )
     <>
@@ -43,6 +44,13 @@ externalIdInputGroup externalIdIlk externalId onValue error =
                 , HH.a [ HP.href "https://account.riotgames.com/", HP.target "_blank" ] [ HH.text "account.riotgames.com" ]
                 ]
             ]
+        3 ->
+            [ inputUnderlabel "Example: username#1234"
+            , inputUnderlabel'
+                [ HH.text "You can find out your BattleTag at "
+                , HH.a [ HP.href "https://account.blizzard.com/details", HP.target "_blank" ] [ HH.text "account.blizzard.com" ]
+                ]
+            ]
         _ -> []
     )
     <>
@@ -50,6 +58,7 @@ externalIdInputGroup externalIdIlk externalId onValue error =
         case externalIdIlk of
         1 -> "This doesn't look like a valid Steam profile URL."
         2 -> "This doesn't look like a valid Riot ID."
+        3 -> "This doesn't look like a valid BattleTag."
         _ -> "This doesn't look like a valid external ID."
 
 type Option =

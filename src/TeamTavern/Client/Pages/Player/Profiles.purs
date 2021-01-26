@@ -25,6 +25,7 @@ type ChildSlots children =
     ( games :: NavigationAnchor.Slot String
     , createProfile :: CreateProfileButton.Slot
     , riotId :: Copyable.Slot String
+    , battleTag :: Copyable.Slot String
     | children)
 
 profiles

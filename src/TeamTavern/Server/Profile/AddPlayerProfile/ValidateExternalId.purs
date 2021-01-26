@@ -9,17 +9,20 @@ import Data.Validated (Validated)
 import Data.Validated as Validated
 import Data.Validated.Label as ValidatedL
 import Data.Variant (Variant, inj)
+import TeamTavern.Server.Profile.Infrastructure.ValidateBattleTag (BattleTag, validateBattleTag)
+import TeamTavern.Server.Profile.Infrastructure.ValidateBattleTag as BattleTag
 import TeamTavern.Server.Profile.Infrastructure.ValidateRiotId (RiotId, validateRiotId)
 import TeamTavern.Server.Profile.Infrastructure.ValidateRiotId as RiotId
 import TeamTavern.Server.Profile.Infrastructure.ValidateSteamUrl (validateSteamUrl)
 import TeamTavern.Server.Profile.Infrastructure.ValidateUrl (Url)
 import TeamTavern.Server.Profile.Infrastructure.ValidateUrl as Url
 
-data ExternalId = SteamUrl Url | RiotId RiotId
+data ExternalId = SteamUrl Url | RiotId RiotId | BattleTag BattleTag
 
 toString :: ExternalId -> String
 toString (SteamUrl url) = Url.toString url
 toString (RiotId riotId) = RiotId.toString riotId
+toString (BattleTag battleTag) = BattleTag.toString battleTag
 
 validateExternalId
     :: forall errors
@@ -34,6 +37,10 @@ validateExternalId externalIdIlk externalId =
         # ValidatedL.label (SProxy :: SProxy "externalId")
     2 -> validateRiotId externalId
         <#> RiotId
+        # Validated.fromEither
+        # ValidatedL.label (SProxy :: SProxy "externalId")
+    3 -> validateBattleTag externalId
+        <#> BattleTag
         # Validated.fromEither
         # ValidatedL.label (SProxy :: SProxy "externalId")
     ilk -> Validated.invalid $ NEL.singleton $ inj (SProxy :: SProxy "externalId")

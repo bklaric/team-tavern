@@ -97,6 +97,7 @@ type ChildSlots =
     , messagePlayer :: Anchor.Slot String
     , discordTag :: Copyable.Slot String
     , riotId :: Copyable.Slot String
+    , battleTag :: Copyable.Slot String
     )
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
