@@ -41,14 +41,6 @@ create table team
     , updated timestamptz not null default current_timestamp
     );
 
-create table password_reset
-    ( id serial not null primary key
-    , player_id integer not null references player(id)
-    , nonce character(20) not null
-    , consumed boolean not null default false
-    , created timestamptz not null default current_timestamp
-    );
-
 create table session
     ( id serial not null primary key
     , player_id integer not null references player(id)
