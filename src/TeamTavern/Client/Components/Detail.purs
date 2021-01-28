@@ -56,7 +56,7 @@ battleTagDetail :: forall left slots action.
     String -> HH.ComponentHTML action (battleTag :: Copyable.Slot String | slots) (Async left)
 battleTagDetail battleTag =
     detail' detailBattleNetSvg
-    [ HH.span [ HS.class_ "detail-label" ] [ HH.text "Riot ID: " ]
+    [ HH.span [ HS.class_ "detail-label" ] [ HH.text "BattleTag: " ]
     , HH.span [ HS.class_ "detail-emphasize" ]
         [ copyable (SProxy :: SProxy "battleTag") battleTag battleTag ]
     ]

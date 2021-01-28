@@ -10,9 +10,10 @@ import Data.Maybe (Maybe(..))
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Detail (battleTagDetail, detail, fieldDetail, riotIdDetail, steamUrlDetail, urlDetail)
 import TeamTavern.Client.Snippets.Class as HS
+import TeamTavern.Routes.Shared.ExternalIdIlk (ExternalIdIlk(..))
 
 profileDetails :: forall left slots action.
-    Int
+    ExternalIdIlk
     -> String
     -> Array
         { ilk :: Int
@@ -64,7 +65,7 @@ profileDetails externalIdIlk externalId fields fieldValues newOrReturning =
     newOrReturning
 
 profileDetails' :: forall left slots action.
-    Int
+    ExternalIdIlk
     -> String
     -> Array
         { field ::
@@ -87,9 +88,9 @@ profileDetails' :: forall left slots action.
     -> Array (HH.ComponentHTML action (riotId :: Copyable.Slot String, battleTag :: Copyable.Slot String | slots) (Async left))
 profileDetails' externalIdIlk externalId fieldValues newOrReturning =
     case externalIdIlk of
-    1 -> [ steamUrlDetail externalId ]
-    2 -> [ riotIdDetail externalId ]
-    3 -> [ battleTagDetail externalId ]
+    Steam -> [ steamUrlDetail externalId ]
+    Riot -> [ riotIdDetail externalId ]
+    Blizzard -> [ battleTagDetail externalId ]
     _ -> []
     <>
     ( fieldValues

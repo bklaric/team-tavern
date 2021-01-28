@@ -16,12 +16,14 @@ import Record as Record
 import TeamTavern.Client.Components.Input (inputGroupsHeading, responsiveInputGroups)
 import TeamTavern.Client.Components.Player.ProfileInputGroup (ChildSlots, Field, FieldValue, ambitionsInputGroup, externalIdInputGroup, fieldInputGroup, newOrReturningInputGroup)
 import TeamTavern.Client.Components.Player.ProfileInputGroup as Input
+import TeamTavern.Routes.Shared.ExternalIdIlk (ExternalIdIlk, ExternalIdIlks)
 
 type FieldValues = Array FieldValue
 
 type Input =
-    { externalIdIlk :: Int
+    { externalIdIlks :: ExternalIdIlks
     , fields :: Array Field
+    , externalIdIlk :: ExternalIdIlk
     , externalId :: String
     , fieldValues :: FieldValues
     , newOrReturning :: Boolean
@@ -39,8 +41,9 @@ type Output =
     }
 
 type State =
-    { externalIdIlk :: Int
+    { externalIdIlks :: ExternalIdIlks
     , fields :: Array Field
+    , externalIdIlk :: ExternalIdIlk
     , externalId :: String
     , fieldValues :: Input.FieldValues
     , newOrReturning :: Boolean
@@ -70,8 +73,8 @@ fieldValuesToMap = foldl (\map value -> Map.insert value.fieldKey value map) Map
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render
-    { externalIdIlk, fields
-    , externalId, fieldValues, newOrReturning, ambitions
+    { externalIdIlks, fields
+    , externalIdIlk, externalId, fieldValues, newOrReturning, ambitions
     , externalIdError, urlErrors, ambitionsError
     }
     = HH.div_ $
@@ -156,10 +159,12 @@ component = H.mkComponent
         }
     }
 
-emptyInput :: forall props. { externalIdIlk :: Int, fields :: Array Field | props } -> Input
-emptyInput { externalIdIlk, fields } =
-    { externalIdIlk
+emptyInput :: forall props.
+    { externalIdIlks :: ExternalIdIlks, fields :: Array Field | props } -> Input
+emptyInput { externalIdIlks, fields } =
+    { externalIdIlks
     , fields
+    , externalIdIlk: externalIdIlks.head
     , externalId: ""
     , fieldValues: []
     , newOrReturning: false

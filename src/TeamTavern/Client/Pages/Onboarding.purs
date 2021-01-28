@@ -27,6 +27,8 @@ import Simple.JSON (class ReadForeign, class WriteForeign)
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.Boarding.Boarding (boarding, boardingButtons, boardingDescription, boardingHeading, boardingStep)
+import TeamTavern.Client.Components.Boarding.GameInput (gameInput)
+import TeamTavern.Client.Components.Boarding.GameInput as GameInput
 import TeamTavern.Client.Components.Boarding.PlayerOrTeamInput (playerOrTeamInput)
 import TeamTavern.Client.Components.Boarding.PlayerOrTeamInput as PlayerOrTeamInput
 import TeamTavern.Client.Components.Button (primaryButton_, secondaryButton_)
@@ -34,13 +36,12 @@ import TeamTavern.Client.Components.Player.PlayerFormInput as PlayerFormInput
 import TeamTavern.Client.Components.Player.ProfileFormInput as PlayerProfileFormInput
 import TeamTavern.Client.Components.Team.ProfileFormInput as TeamProfileFormInput
 import TeamTavern.Client.Components.Team.TeamFormInput as TeamFormInput
-import TeamTavern.Client.Components.Boarding.GameInput (gameInput)
-import TeamTavern.Client.Components.Boarding.GameInput as GameInput
 import TeamTavern.Client.Script.Cookie (getPlayerNickname)
 import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
 import TeamTavern.Client.Script.Navigate (navigate, navigateReplace, navigate_)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Onboard as Onboard
+import TeamTavern.Routes.Shared.ExternalIdIlk (ExternalIdIlk(..))
 
 data Step
     = Greeting
@@ -91,7 +92,8 @@ emptyInput =
     , player: PlayerFormInput.emptyInput
     , team: TeamFormInput.emptyInput
     , game: Nothing
-    , playerProfile: PlayerProfileFormInput.emptyInput { externalIdIlk: 1, fields: [] }
+    , playerProfile: PlayerProfileFormInput.emptyInput
+        { externalIdIlks: { head: Steam, tail: []}, fields: [] }
     , teamProfile: TeamProfileFormInput.emptyInput []
     , otherError: false
     }
@@ -451,8 +453,9 @@ handleAction (UpdateGame game) = do
     state <- H.modify _
         { game = Just game
         , playerProfile
-            { externalIdIlk = game.externalIdIlk
+            { externalIdIlks = game.externalIdIlks
             , fields = game.fields
+            , externalIdIlk = game.externalIdIlks.head
             , externalId = ""
             , fieldValues = []
             , newOrReturning = false

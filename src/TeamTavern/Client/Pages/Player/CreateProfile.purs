@@ -18,6 +18,7 @@ import TeamTavern.Client.Components.Player.ProfileFormInput as ProfileFormInput
 import TeamTavern.Client.Components.Player.ProfileInputGroup (Field)
 import TeamTavern.Client.Script.Navigate (hardNavigate)
 import TeamTavern.Client.Script.Request (postNoContent)
+import TeamTavern.Routes.Shared.ExternalIdIlk (ExternalIdIlks)
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
@@ -25,7 +26,7 @@ type Input =
     { nickname :: String
     , handle :: String
     , title :: String
-    , externalIdIlk :: Int
+    , externalIdIlks :: ExternalIdIlks
     , fields :: Array Field
     }
 
@@ -127,11 +128,11 @@ handleAction (SendRequest event) = do
 
 component :: forall query output left. H.Component HH.HTML query Input output (Async left)
 component = H.mkComponent
-    { initialState: \{ nickname, handle, title, externalIdIlk, fields } ->
+    { initialState: \{ nickname, handle, title, externalIdIlks, fields } ->
         { nickname
         , handle
         , title
-        , profile: ProfileFormInput.emptyInput { externalIdIlk, fields }
+        , profile: ProfileFormInput.emptyInput { externalIdIlks, fields }
         , otherError: false
         , submitting: false
         }

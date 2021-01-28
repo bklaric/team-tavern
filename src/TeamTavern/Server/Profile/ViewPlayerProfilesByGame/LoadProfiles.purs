@@ -21,6 +21,7 @@ import Postgres.Error (Error)
 import Postgres.Query (Query(..))
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
+import TeamTavern.Routes.Shared.ExternalIdIlk (ExternalIdIlk)
 import TeamTavern.Server.Infrastructure.Postgres (playerAdjustedWeekdayFrom, playerAdjustedWeekdayTo, playerAdjustedWeekendFrom, playerAdjustedWeekendTo, prepareJsonString, prepareString)
 import TeamTavern.Server.Profile.Routes (Age, Location, Filters, Handle, HasMicrophone, Language, ProfilePage, Time, Timezone, NewOrReturning)
 import URI.Extra.QueryPairs (Key, QueryPairs(..), Value)
@@ -40,7 +41,7 @@ type LoadProfilesResult =
     , weekdayOnline :: Maybe { from :: String, to :: String }
     , weekendOnline :: Maybe { from :: String, to :: String }
     , about :: Array String
-    , externalIdIlk :: Int
+    , externalIdIlk :: ExternalIdIlk
     , externalId :: String
     , fieldValues :: Array
         { field ::
@@ -222,7 +223,7 @@ queryStringWithoutPagination handle timezone filters = Query $ """
                 )
             end as "weekendOnline",
             player.about,
-            game.external_id_ilk as "externalIdIlk",
+            profile.external_id_ilk as "externalIdIlk",
             profile.external_id as "externalId",
             coalesce(
                 jsonb_agg(

@@ -54,7 +54,7 @@ create table game
     , title varchar(50) not null unique
     , handle varchar(50) not null unique
     , description text[] not null
-    , external_id_ilk integer not null -- 1 (Steam profile URL), 2 (Riot ID)
+    , external_id_ilks text[] not null -- steam, riot, blizzard, playstation, xbox, switch
     , created timestamptz not null default current_timestamp
     );
 
@@ -81,6 +81,7 @@ create table player_profile
     ( id serial not null primary key
     , player_id integer not null references player(id)
     , game_id integer not null references game(id)
+    , external_id_ilk text not null
     , external_id text not null
     , new_or_returning boolean not null
     , ambitions text[] not null

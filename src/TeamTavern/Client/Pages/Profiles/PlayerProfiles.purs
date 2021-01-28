@@ -24,6 +24,7 @@ import TeamTavern.Client.Script.Cookie (PlayerInfo)
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Client.Snippets.PreventMouseDefault (preventMouseDefault)
+import TeamTavern.Routes.Shared.ExternalIdIlk (ExternalIdIlk)
 import TeamTavern.Server.Profile.ViewPlayerProfilesByGame.LoadProfiles (pageSize)
 import Web.UIEvent.MouseEvent (MouseEvent)
 
@@ -49,7 +50,7 @@ type PlayerProfile =
     , weekdayOnline :: Maybe { from :: String, to :: String }
     , weekendOnline :: Maybe { from :: String, to :: String }
     , about :: Array String
-    , externalIdIlk :: Int
+    , externalIdIlk :: ExternalIdIlk
     , externalId :: String
     , fieldValues :: Array
         { field ::

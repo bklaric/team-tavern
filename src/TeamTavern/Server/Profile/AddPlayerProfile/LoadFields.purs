@@ -29,7 +29,10 @@ type Game =
 queryString :: Query
 queryString = Query """
     select
-        game.external_id_ilk as "externalIdIlk",
+        json_build_object(
+            'head', game.external_id_ilks[1],
+            'tail', game.external_id_ilks[2:]
+        ) as "externalIdIlks",
         coalesce(
             json_agg(
                 json_build_object(

@@ -44,6 +44,7 @@ import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaU
 import TeamTavern.Client.Script.Navigate (navigate, navigateReplace, navigate_)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Preboard as Preboard
+import TeamTavern.Routes.Shared.ExternalIdIlk (ExternalIdIlk(..))
 import TeamTavern.Routes.ViewGame as ViewGame
 
 data Step
@@ -152,7 +153,7 @@ emptyInput playerOrTeam game =
         Just game' -> Preselected game'
         Nothing -> Selected Nothing
     , playerProfile: PlayerProfileFormInput.emptyInput $
-        maybe { externalIdIlk: 0, fields: [] } pick game
+        maybe { externalIdIlks: { head: Steam, tail: []}, fields: [] } pick game
     , teamProfile: TeamProfileFormInput.emptyInput $ maybe [] (_.fields >>>
         mapMaybe
         case _ of
@@ -542,8 +543,9 @@ handleAction (UpdateGame game) = do
     state <- H.modify _
         { game = Selected $ Just game
         , playerProfile
-            { fields = game.fields
-            , externalIdIlk = game.externalIdIlk
+            { externalIdIlks = game.externalIdIlks
+            , fields = game.fields
+            , externalIdIlk = game.externalIdIlks.head
             , fieldValues = []
             , newOrReturning = false
             , ambitions = ""
