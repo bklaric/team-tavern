@@ -131,3 +131,16 @@
     display: flex;
     align-items: center;
 }
+
+.external-id-heading {
+    @extend .input-groups-heading;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px 28px;
+}
+
+.external-id-radios {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 14px 28px;
+}

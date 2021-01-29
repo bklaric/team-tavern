@@ -565,7 +565,8 @@ handleAction (UpdateGame game) = do
 handleAction (UpdatePlayerProfile details) = do
     state <- H.modify _
         { playerProfile
-            { externalId = details.externalId
+            { externalIdIlk = details.externalIdIlk
+            , externalId = details.externalId
             , fieldValues = details.fieldValues
             , newOrReturning = details.newOrReturning
             , ambitions = details.ambitions

@@ -82,7 +82,8 @@ handleAction :: forall output left.
 handleAction (UpdateProfile profile) =
     H.modify_ _
         { profile
-            { externalId = profile.externalId
+            { externalIdIlk = profile.externalIdIlk
+            , externalId = profile.externalId
             , fieldValues = profile.fieldValues
             , newOrReturning = profile.newOrReturning
             , ambitions = profile.ambitions

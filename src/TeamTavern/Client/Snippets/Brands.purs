@@ -19,6 +19,9 @@ inputSteamSvg = steamSvg "input-label-icon"
 detailSteamSvg :: forall slots actions. HTML slots actions
 detailSteamSvg = steamSvg "detail-icon"
 
+radioSteamSvg :: forall slots actions. HTML slots actions
+radioSteamSvg = steamSvg "radio-icon"
+
 -- Riot
 
 riotPath :: String
@@ -33,6 +36,9 @@ inputRiotSvg = riotSvg "input-label-icon"
 detailRiotSvg :: forall slots actions. HTML slots actions
 detailRiotSvg = riotSvg "detail-icon"
 
+radioRiotSvg :: forall slots actions. HTML slots actions
+radioRiotSvg = riotSvg "radio-icon"
+
 -- Battle.net
 
 battleNetPath :: String
@@ -46,3 +52,6 @@ inputBattleNetSvg = battleNetSvg "input-label-icon"
 
 detailBattleNetSvg :: forall slots actions. HTML slots actions
 detailBattleNetSvg = battleNetSvg "detail-icon"
+
+radioBattleNetSvg :: forall slots actions. HTML slots actions
+radioBattleNetSvg = battleNetSvg "radio-icon"

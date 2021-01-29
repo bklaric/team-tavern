@@ -7,6 +7,8 @@ import Simple.JSON (class ReadForeign, class WriteForeign)
 
 data ExternalIdIlk = Steam | Riot | Blizzard | PlayStation | XBox | Switch
 
+derive instance eqExternalIdIlk :: Eq ExternalIdIlk
+
 instance readForeignExternalIdIlk :: ReadForeign ExternalIdIlk where
     readImpl ilk' =
         readString ilk' >>=

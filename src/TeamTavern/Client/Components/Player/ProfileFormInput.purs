@@ -13,7 +13,7 @@ import Data.Variant (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Record as Record
-import TeamTavern.Client.Components.Input (inputGroupsHeading, responsiveInputGroups)
+import TeamTavern.Client.Components.Input (externalIdHeading, inputGroupsHeading, responsiveInputGroups)
 import TeamTavern.Client.Components.Player.ProfileInputGroup (ChildSlots, Field, FieldValue, ambitionsInputGroup, externalIdInputGroup, fieldInputGroup, newOrReturningInputGroup)
 import TeamTavern.Client.Components.Player.ProfileInputGroup as Input
 import TeamTavern.Routes.Shared.ExternalIdIlk (ExternalIdIlk, ExternalIdIlks)
@@ -34,7 +34,8 @@ type Input =
     }
 
 type Output =
-    { externalId :: String
+    { externalIdIlk :: ExternalIdIlk
+    , externalId :: String
     , fieldValues :: FieldValues
     , ambitions :: String
     , newOrReturning :: Boolean
@@ -55,6 +56,7 @@ type State =
 
 data Action
     = Receive Input
+    | UpdateExternalIdIlk ExternalIdIlk
     | UpdateExternalId String
     | UpdateUrl String (Maybe String)
     | UpdateSingleSelect String (Maybe String)
@@ -78,7 +80,7 @@ render
     , externalIdError, urlErrors, ambitionsError
     }
     = HH.div_ $
-    [ inputGroupsHeading "External ID"
+    [ externalIdHeading externalIdIlks externalIdIlk UpdateExternalIdIlk
     , responsiveInputGroups
         [ externalIdInputGroup externalIdIlk externalId UpdateExternalId externalIdError ]
     , inputGroupsHeading "Details"
@@ -93,12 +95,18 @@ render
     ]
 
 raiseOutput :: forall left. State -> H.HalogenM State Action ChildSlots Output (Async left) Unit
-raiseOutput { externalId, fieldValues, newOrReturning, ambitions } =
-    H.raise { externalId, fieldValues: fieldValuesToArray fieldValues, newOrReturning, ambitions }
+raiseOutput { externalIdIlk, externalId, fieldValues, newOrReturning, ambitions } =
+    H.raise
+    { externalIdIlk, externalId
+    , fieldValues: fieldValuesToArray fieldValues, newOrReturning, ambitions
+    }
 
 handleAction :: forall left. Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
 handleAction (Receive input) =
     H.put (Record.modify (SProxy :: SProxy "fieldValues") fieldValuesToMap input)
+handleAction (UpdateExternalIdIlk externalIdIlk) = do
+    state <- H.modify _ { externalIdIlk = externalIdIlk, externalId = "" }
+    raiseOutput state
 handleAction (UpdateExternalId externalId) = do
     state <- H.modify _ { externalId = externalId }
     raiseOutput state

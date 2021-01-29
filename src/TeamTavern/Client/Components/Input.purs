@@ -2,13 +2,18 @@ module TeamTavern.Client.Components.Input where
 
 import Prelude
 
+import Data.Array as Array
+import Data.Functor (mapFlipped)
 import Data.Maybe (Maybe(..), isJust, isNothing, maybe)
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Components.Divider (divider)
+import TeamTavern.Client.Components.Radio (radio)
 import TeamTavern.Client.Script.Request (justIfInt, nothingIfEmpty)
+import TeamTavern.Client.Snippets.Brands (radioBattleNetSvg, radioRiotSvg, radioSteamSvg)
 import TeamTavern.Client.Snippets.Class as HS
+import TeamTavern.Routes.Shared.ExternalIdIlk (ExternalIdIlk(..), ExternalIdIlks)
 import Unsafe.Coerce (unsafeCoerce)
 
 inputLabel' :: forall slots action.
@@ -90,6 +95,26 @@ inputGroupsHeading' children = HH.h2 [ HS.class_ "input-groups-heading" ] childr
 
 inputGroupsHeading :: forall slots action. String -> HH.HTML slots action
 inputGroupsHeading text = inputGroupsHeading' [ HH.text text ]
+
+externalIdHeading :: forall action slots.
+    ExternalIdIlks -> ExternalIdIlk -> (ExternalIdIlk -> action) -> HH.HTML slots action
+externalIdHeading externalIdIlks selectedIdIlk onInput =
+    HH.h2 [ HS.class_ "external-id-heading" ]
+    [ HH.text "External ID"
+    , HH.div [ HS.class_ "external-id-radios" ] $
+        if Array.null externalIdIlks.tail
+        then []
+        else
+            mapFlipped (Array.cons externalIdIlks.head externalIdIlks.tail)
+            case _ of
+            Steam | selected <- selectedIdIlk == Steam ->
+                radio radioSteamSvg "Steam" selected $ onInput Steam
+            Riot | selected <- selectedIdIlk == Riot ->
+                radio radioRiotSvg "Riot" selected $ onInput Riot
+            Blizzard | selected <- selectedIdIlk == Blizzard ->
+                radio radioBattleNetSvg "Battle.net" selected $ onInput Blizzard
+            _ -> HH.div_ []
+    ]
 
 requiredTextLineInput :: forall slots action. String -> (String -> action) -> HH.HTML slots action
 requiredTextLineInput input onInput =
