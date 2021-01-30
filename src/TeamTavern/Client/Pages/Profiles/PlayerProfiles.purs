@@ -24,7 +24,7 @@ import TeamTavern.Client.Script.Cookie (PlayerInfo)
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Client.Snippets.PreventMouseDefault (preventMouseDefault)
-import TeamTavern.Routes.Shared.ExternalIdIlk (ExternalIdIlk)
+import TeamTavern.Routes.Shared.Platform (Platform)
 import TeamTavern.Server.Profile.ViewPlayerProfilesByGame.LoadProfiles (pageSize)
 import Web.UIEvent.MouseEvent (MouseEvent)
 
@@ -50,8 +50,8 @@ type PlayerProfile =
     , weekdayOnline :: Maybe { from :: String, to :: String }
     , weekendOnline :: Maybe { from :: String, to :: String }
     , about :: Array String
-    , externalIdIlk :: ExternalIdIlk
-    , externalId :: String
+    , platform :: Platform
+    , platformId :: String
     , fieldValues :: Array
         { field ::
             { ilk :: Int
@@ -133,7 +133,7 @@ render { profiles, profileCount, playerInfo, page } =
     ( profiles <#> \profile -> let
         playerDetails' = playerDetails profile
         profileDetails'' = profileDetails'
-            profile.externalIdIlk profile.externalId profile.fieldValues profile.newOrReturning
+            profile.platform profile.platformId profile.fieldValues profile.newOrReturning
         about = textDetail profile.about
         ambitions = textDetail profile.ambitions
         in

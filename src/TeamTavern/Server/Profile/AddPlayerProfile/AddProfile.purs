@@ -9,14 +9,14 @@ import Simple.JSON (writeImpl)
 import TeamTavern.Server.Infrastructure.Error (InternalError)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstInternal)
 import TeamTavern.Server.Profile.AddPlayerProfile.AddFieldValues (ProfileId, addFieldValues)
-import TeamTavern.Server.Profile.AddPlayerProfile.ValidateExternalId as ExternalId
+import TeamTavern.Server.Profile.AddPlayerProfile.ValidatePlatformId as PlatformId
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile (Profile)
 import TeamTavern.Server.Profile.Routes (Identifiers)
 
 queryString :: Query
 queryString = Query """
     insert into player_profile
-        (player_id, game_id, external_id_ilk, external_id, ambitions, new_or_returning)
+        (player_id, game_id, platform, platform_id, ambitions, new_or_returning)
     select $1, game.id, $3, $4, $5, $6
     from game
     where game.handle = $2
@@ -25,8 +25,8 @@ queryString = Query """
 
 queryParameters :: Int -> Identifiers -> Profile -> Array QueryParameter
 queryParameters playerId { handle, nickname }
-    { externalIdIlk, externalId, ambitions, newOrReturning } =
-    playerId : handle : writeImpl externalIdIlk : ExternalId.toString externalId
+    { platform, platformId, ambitions, newOrReturning } =
+    playerId : handle : writeImpl platform : PlatformId.toString platformId
     : ambitions :| newOrReturning
 
 addProfile' :: forall errors.

@@ -14,7 +14,7 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import TeamTavern.Client.Components.Card (cardHeading, cardSection, cardSectionHeading)
-import TeamTavern.Client.Components.Input (externalIdCheckboxes, inputGroup, inputLabel)
+import TeamTavern.Client.Components.Input (platformIdCheckboxes, inputGroup, inputLabel)
 import TeamTavern.Client.Components.InputGroup (timeRangeInputGroup)
 import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.Select.MultiTreeSelect as MultiTreeSelect
@@ -22,7 +22,7 @@ import TeamTavern.Client.Components.Team.ProfileInputGroup (FieldValues, fieldIn
 import TeamTavern.Client.Components.Team.TeamInputGroup (ageInputGroup, languagesInputGroup, locationInputGroup, microphoneInputGroup)
 import TeamTavern.Client.Pages.Profiles.GameHeader (Tab(..))
 import TeamTavern.Client.Snippets.Class as HS
-import TeamTavern.Routes.Shared.ExternalIdIlk (ExternalIdIlk, ExternalIdIlks)
+import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
 import Web.HTML as Html
 import Web.HTML.Window as Window
 
@@ -48,13 +48,13 @@ type Filters =
     , weekdayTo :: Maybe String
     , weekendFrom :: Maybe String
     , weekendTo :: Maybe String
-    , externalIdIlks :: Array ExternalIdIlk
+    , platforms :: Array Platform
     , fieldValues :: FieldValues
     , newOrReturning :: Boolean
     }
 
 type Input =
-    { externalIdIlks :: ExternalIdIlks
+    { platforms :: Platforms
     , fields :: Array Field
     , filters :: Filters
     , tab :: Tab
@@ -70,8 +70,8 @@ type State =
     , weekdayTo :: Maybe String
     , weekendFrom :: Maybe String
     , weekendTo :: Maybe String
-    , allExternalIdIlks :: ExternalIdIlks
-    , selectedExternalIdIlks :: Array ExternalIdIlk
+    , allPlatforms :: Platforms
+    , selectedPlatforms :: Array Platform
     , fields :: Array Field
     , fieldValues :: FieldValues
     , newOrReturning :: Boolean
@@ -95,7 +95,7 @@ data Action
     | UpdateWeekdayTo (Maybe String)
     | UpdateWeekendFrom (Maybe String)
     | UpdateWeekendTo (Maybe String)
-    | UpdateExternalIdIlk ExternalIdIlk
+    | UpdatePlatform Platform
     | UpdateFieldValues String (MultiSelect.Output Option)
     | UpdateNewOrReturning Boolean
     | ToggleFiltersVisibility
@@ -171,7 +171,7 @@ render state =
         then Array.singleton $
             cardSection
             [ HH.div [ HS.class_ "filter-input-groups" ] $
-                ( case externalIdCheckboxes state.allExternalIdIlks state.selectedExternalIdIlks UpdateExternalIdIlk of
+                ( case platformIdCheckboxes state.allPlatforms state.selectedPlatforms UpdatePlatform of
                     Nothing -> []
                     Just checkboxes -> [ inputGroup [ inputLabel "fas fa-laptop" "Platform", checkboxes ] ]
                 )
@@ -208,7 +208,7 @@ handleAction Initialize = do
         , playerFiltersVisible = showFilters
         , profileFiltersVisible = showFilters
         }
-handleAction (Receive { externalIdIlks, fields, filters, tab }) = do
+handleAction (Receive { platforms, fields, filters, tab }) = do
     H.modify_ _
         { ageFrom = filters.ageFrom
         , ageTo = filters.ageTo
@@ -219,8 +219,8 @@ handleAction (Receive { externalIdIlks, fields, filters, tab }) = do
         , weekdayTo = filters.weekdayTo
         , weekendFrom = filters.weekendFrom
         , weekendTo = filters.weekendTo
-        , allExternalIdIlks = externalIdIlks
-        , selectedExternalIdIlks = filters.externalIdIlks
+        , allPlatforms = platforms
+        , selectedPlatforms = filters.platforms
         , fields = fields
         , fieldValues = filters.fieldValues
         , newOrReturning = filters.newOrReturning
@@ -238,7 +238,7 @@ handleAction ApplyFilters = do
         , weekdayTo: state.weekdayTo
         , weekendFrom: state.weekendFrom
         , weekendTo: state.weekendTo
-        , externalIdIlks: state.selectedExternalIdIlks
+        , platforms: state.selectedPlatforms
         , fieldValues: state.fieldValues
         , newOrReturning: state.newOrReturning
         }
@@ -253,7 +253,7 @@ handleAction ClearFilters = do
         , weekdayTo = Nothing
         , weekendFrom = Nothing
         , weekendTo = Nothing
-        , selectedExternalIdIlks = []
+        , selectedPlatforms = []
         , fieldValues = (MultiMap.empty :: MultiMap String String)
         , newOrReturning = false
         }
@@ -275,12 +275,12 @@ handleAction (UpdateWeekendFrom time) =
     H.modify_ (_ { weekendFrom = time })
 handleAction (UpdateWeekendTo time) =
     H.modify_ (_ { weekendTo = time })
-handleAction (UpdateExternalIdIlk externalIdIlk) =
+handleAction (UpdatePlatform platform) =
     H.modify_ \state -> state
-        { selectedExternalIdIlks =
-            if Array.elem externalIdIlk state.selectedExternalIdIlks
-            then Array.delete externalIdIlk state.selectedExternalIdIlks
-            else Array.cons externalIdIlk state.selectedExternalIdIlks
+        { selectedPlatforms =
+            if Array.elem platform state.selectedPlatforms
+            then Array.delete platform state.selectedPlatforms
+            else Array.cons platform state.selectedPlatforms
         }
 handleAction (UpdateFieldValues fieldKey options) = do
     H.modify_ \state -> state
@@ -299,7 +299,7 @@ handleAction ToggleProfileFiltersVisibility =
     H.modify_ \state -> state { profileFiltersVisible = not state.profileFiltersVisible }
 
 initialState :: Input -> State
-initialState { externalIdIlks, fields, filters, tab } =
+initialState { platforms, fields, filters, tab } =
     { ageFrom: filters.ageFrom
     , ageTo: filters.ageTo
     , locations: filters.locations
@@ -309,8 +309,8 @@ initialState { externalIdIlks, fields, filters, tab } =
     , weekdayTo: filters.weekdayTo
     , weekendFrom: filters.weekendFrom
     , weekendTo: filters.weekendTo
-    , allExternalIdIlks: externalIdIlks
-    , selectedExternalIdIlks: []
+    , allPlatforms: platforms
+    , selectedPlatforms: []
     , fields
     , fieldValues: filters.fieldValues
     , newOrReturning: filters.newOrReturning

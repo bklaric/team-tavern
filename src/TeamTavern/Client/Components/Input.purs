@@ -13,7 +13,7 @@ import TeamTavern.Client.Components.Radio (radio)
 import TeamTavern.Client.Script.Request (justIfInt, nothingIfEmpty)
 import TeamTavern.Client.Snippets.Brands (radioBattleNetSvg, radioRiotSvg, radioSteamSvg)
 import TeamTavern.Client.Snippets.Class as HS
-import TeamTavern.Routes.Shared.ExternalIdIlk (ExternalIdIlk(..), ExternalIdIlks)
+import TeamTavern.Routes.Shared.Platform (Platform(..), Platforms)
 import Unsafe.Coerce (unsafeCoerce)
 
 inputLabel' :: forall slots action.
@@ -46,9 +46,9 @@ requiredInputLabel icon label = inputLabel' icon label Nothing true
 inputLabel :: forall slots action. String -> String -> HH.HTML slots action
 inputLabel icon label = inputLabel' icon label Nothing false
 
-externalIdLabel :: forall slots action.
+platformIdLabel :: forall slots action.
     HH.HTML slots action -> String -> Maybe String -> HH.HTML slots action
-externalIdLabel icon label domain =
+platformIdLabel icon label domain =
     HH.label
     [ HS.class_ "input-label"] $
     [ icon
@@ -96,40 +96,40 @@ inputGroupsHeading' children = HH.h2 [ HS.class_ "input-groups-heading" ] childr
 inputGroupsHeading :: forall slots action. String -> HH.HTML slots action
 inputGroupsHeading text = inputGroupsHeading' [ HH.text text ]
 
-externalIdCheckboxes :: forall action slots.
-    ExternalIdIlks -> Array ExternalIdIlk -> (ExternalIdIlk -> action) -> Maybe (HH.HTML slots action)
-externalIdCheckboxes allExternalIdIlks selectedExternalIdIlks onValue =
-    if Array.null allExternalIdIlks.tail
+platformIdCheckboxes :: forall action slots.
+    Platforms -> Array Platform -> (Platform -> action) -> Maybe (HH.HTML slots action)
+platformIdCheckboxes allPlatforms selectedPlatforms onValue =
+    if Array.null allPlatforms.tail
     then Nothing
     else Just $
-        HH.div [ HS.class_ "external-id-checkboxes" ] $
-        Array.cons allExternalIdIlks.head allExternalIdIlks.tail <#>
+        HH.div [ HS.class_ "platform-id-checkboxes" ] $
+        Array.cons allPlatforms.head allPlatforms.tail <#>
         case _ of
-        Steam    -> checkbox radioSteamSvg     "Steam"    (Array.elem Steam    selectedExternalIdIlks) (onValue Steam)
-        Riot     -> checkbox radioRiotSvg      "Riot"     (Array.elem Riot     selectedExternalIdIlks) (onValue Riot)
-        Blizzard -> checkbox radioBattleNetSvg "Blizzard" (Array.elem Blizzard selectedExternalIdIlks) (onValue Blizzard)
+        Steam     -> checkbox radioSteamSvg      "Steam"     (Array.elem Steam     selectedPlatforms) (onValue Steam)
+        Riot      -> checkbox radioRiotSvg       "Riot"      (Array.elem Riot      selectedPlatforms) (onValue Riot)
+        BattleNet -> checkbox radioBattleNetSvg  "BattleNet" (Array.elem BattleNet selectedPlatforms) (onValue BattleNet)
         _ -> HH.div_ []
 
-externalIdRadios :: forall action slots.
-    ExternalIdIlks -> ExternalIdIlk -> (ExternalIdIlk -> action) -> Maybe (HH.HTML slots action)
-externalIdRadios externalIdIlks selectedIdIlk onInput =
-    if Array.null externalIdIlks.tail
+platformIdRadios :: forall action slots.
+    Platforms -> Platform -> (Platform -> action) -> Maybe (HH.HTML slots action)
+platformIdRadios platforms selectedIdIlk onInput =
+    if Array.null platforms.tail
     then Nothing
     else Just $
-        HH.div [ HS.class_ "external-id-radios" ] $
-        Array.cons externalIdIlks.head externalIdIlks.tail <#>
+        HH.div [ HS.class_ "platform-id-radios" ] $
+        Array.cons platforms.head platforms.tail <#>
         case _ of
-        Steam    | selected <- selectedIdIlk == Steam    -> radio radioSteamSvg     "Steam"      selected $ onInput Steam
-        Riot     | selected <- selectedIdIlk == Riot     -> radio radioRiotSvg      "Riot"       selected $ onInput Riot
-        Blizzard | selected <- selectedIdIlk == Blizzard -> radio radioBattleNetSvg "Battle.net" selected $ onInput Blizzard
+        Steam     | selected <- selectedIdIlk == Steam     -> radio radioSteamSvg     "Steam"      selected $ onInput Steam
+        Riot      | selected <- selectedIdIlk == Riot      -> radio radioRiotSvg      "Riot"       selected $ onInput Riot
+        BattleNet | selected <- selectedIdIlk == BattleNet -> radio radioBattleNetSvg "Battle.net" selected $ onInput BattleNet
         _ -> HH.div_ []
 
-externalIdHeading :: forall action slots.
-    ExternalIdIlks -> ExternalIdIlk -> (ExternalIdIlk -> action) -> HH.HTML slots action
-externalIdHeading externalIdIlks selectedIdIlk onInput =
-    HH.h2 [ HS.class_ "external-id-heading" ] $
-    [ HH.text "External ID" ]
-    <> case externalIdRadios externalIdIlks selectedIdIlk onInput of
+platformIdHeading :: forall action slots.
+    Platforms -> Platform -> (Platform -> action) -> HH.HTML slots action
+platformIdHeading platforms selectedIdIlk onInput =
+    HH.h2 [ HS.class_ "platform-id-heading" ] $
+    [ HH.text "Platform ID" ]
+    <> case platformIdRadios platforms selectedIdIlk onInput of
         Nothing -> []
         Just radios -> [ radios ]
 

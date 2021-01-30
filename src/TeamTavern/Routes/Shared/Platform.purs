@@ -1,4 +1,4 @@
-module TeamTavern.Routes.Shared.ExternalIdIlk where
+module TeamTavern.Routes.Shared.Platform where
 
 import Prelude
 
@@ -10,59 +10,59 @@ import Foreign (ForeignError(..), fail, readString, unsafeToForeign)
 import Jarilo.FromComponent (class FromComponent)
 import Simple.JSON (class ReadForeign, class WriteForeign)
 
-data ExternalIdIlk = Steam | Riot | Blizzard | PlayStation | XBox | Switch
+data Platform = Steam | Riot | BattleNet | PlayStation | XBox | Switch
 
-derive instance eqExternalIdIlk :: Eq ExternalIdIlk
+derive instance eqPlatform :: Eq Platform
 
-derive instance genericExternalIdIlk :: Generic ExternalIdIlk _
+derive instance genericPlatform :: Generic Platform _
 
-instance showExternalIdIlk :: Show ExternalIdIlk where
+instance showPlatform :: Show Platform where
     show = genericShow
 
-instance readForeignExternalIdIlk :: ReadForeign ExternalIdIlk where
+instance readForeignPlatform :: ReadForeign Platform where
     readImpl ilk' =
         readString ilk' >>=
         case _ of
         "steam" -> pure Steam
         "riot" -> pure Riot
-        "blizzard" -> pure Blizzard
+        "battle.net" -> pure BattleNet
         "playstation" -> pure PlayStation
         "xbox" -> pure XBox
         "switch" -> pure Switch
-        ilk -> fail $ ForeignError $ "Unknown external id ilk: " <> ilk
+        ilk -> fail $ ForeignError $ "Unknown platform: " <> ilk
 
-instance writeForeignExternalIdIlk :: WriteForeign ExternalIdIlk where
+instance writeForeignPlatform :: WriteForeign Platform where
     writeImpl Steam = unsafeToForeign "steam"
     writeImpl Riot = unsafeToForeign "riot"
-    writeImpl Blizzard = unsafeToForeign "blizzard"
+    writeImpl BattleNet = unsafeToForeign "battle.net"
     writeImpl PlayStation = unsafeToForeign "playstation"
     writeImpl XBox = unsafeToForeign "xbox"
     writeImpl Switch = unsafeToForeign "switch"
 
-instance fromComponentExternalIdIlk :: FromComponent ExternalIdIlk where
+instance fromComponentPlatform :: FromComponent Platform where
     fromComponent "steam" = Right Steam
     fromComponent "riot" = Right Riot
-    fromComponent "blizzard" = Right Blizzard
+    fromComponent "battle.net" = Right BattleNet
     fromComponent "playstation" = Right PlayStation
     fromComponent "xbox" = Right XBox
     fromComponent "switch" = Right Switch
-    fromComponent externalIdIlk = Left $ "Unknown external id ilk: " <> externalIdIlk
+    fromComponent platform = Left $ "Unknown platform: " <> platform
 
-fromString :: String -> Maybe ExternalIdIlk
+fromString :: String -> Maybe Platform
 fromString "steam" = Just Steam
 fromString "riot" = Just Riot
-fromString "blizzard" = Just Blizzard
+fromString "battle.net" = Just BattleNet
 fromString "playstation" = Just PlayStation
 fromString "xbox" = Just XBox
 fromString "switch" = Just Switch
 fromString _ = Nothing
 
-toString :: ExternalIdIlk -> String
+toString :: Platform -> String
 toString Steam = "steam"
 toString Riot = "riot"
-toString Blizzard = "blizzard"
+toString BattleNet = "battle.net"
 toString PlayStation = "playstation"
 toString XBox = "xbox"
 toString Switch = "switch"
 
-type ExternalIdIlks = { head :: ExternalIdIlk, tail :: Array ExternalIdIlk }
+type Platforms = { head :: Platform, tail :: Array Platform }

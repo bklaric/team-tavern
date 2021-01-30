@@ -40,7 +40,7 @@ import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigate, navigate_)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Script.Url as Url
-import TeamTavern.Routes.Shared.ExternalIdIlk as ExternalIdIlk
+import TeamTavern.Routes.Shared.Platform as Platform
 import TeamTavern.Routes.ViewGame as ViewGame
 import TeamTavern.Server.Profile.ViewPlayerProfilesByGame.SendResponse as ViewGamePlayers
 import TeamTavern.Server.Profile.ViewTeamProfilesByGame.SendResponse as ViewGameTeams
@@ -125,7 +125,7 @@ render (Game game player filters tab) = let
     [ gameHeader
     , HH.div [ HP.class_ $ HH.ClassName "profiles-container" ]
         [ profileFilters
-            { externalIdIlks: game.externalIdIlks
+            { platforms: game.platforms
             , fields: filterableFields game.fields
             , filters
             , tab: toHeaderTab tab
@@ -178,12 +178,12 @@ loadPlayerProfiles handle page filters = Async.unify do
         weekdayToPair = filters.weekdayTo <#> ("weekdayTo=" <> _)
         weekendFromPair = filters.weekendFrom <#> ("weekendFrom=" <> _)
         weekendToPair = filters.weekendTo <#> ("weekendTo=" <> _)
-        externalIdIlkPairs = filters.externalIdIlks <#> ExternalIdIlk.toString <#> ("platform=" <> _)
+        platformPairs = filters.platforms <#> Platform.toString <#> ("platform=" <> _)
         fieldPairs = filters.fieldValues # MultiMap.toUnfoldable_
             <#> \(Tuple fieldKey optionKey) -> fieldKey <> "=" <> optionKey
         newOrReturningPair = if filters.newOrReturning then Just "newOrReturning=true" else Nothing
         allPairs = [pagePair, timezonePair]
-            <> languagePairs <> locationPairs <> externalIdIlkPairs <> fieldPairs <> Array.catMaybes
+            <> languagePairs <> locationPairs <> platformPairs <> fieldPairs <> Array.catMaybes
             [ ageFromPair, ageToPair, microphonePair, newOrReturningPair
             , weekdayFromPair, weekdayToPair, weekendFromPair, weekendToPair
             ]
@@ -213,12 +213,12 @@ loadTeamProfiles handle page filters = Async.unify do
         weekdayToPair = filters.weekdayTo <#> ("weekdayTo=" <> _)
         weekendFromPair = filters.weekendFrom <#> ("weekendFrom=" <> _)
         weekendToPair = filters.weekendTo <#> ("weekendTo=" <> _)
-        externalIdIlkPairs = filters.externalIdIlks <#> ExternalIdIlk.toString <#> ("platform=" <> _)
+        platformPairs = filters.platforms <#> Platform.toString <#> ("platform=" <> _)
         fieldPairs = filters.fieldValues # MultiMap.toUnfoldable_
             <#> \(Tuple fieldKey optionKey) -> fieldKey <> "=" <> optionKey
         newOrReturningPair = if filters.newOrReturning then Just "newOrReturning=true" else Nothing
         allPairs = [pagePair, timezonePair]
-            <> languagePairs <> locationPairs <> externalIdIlkPairs <> fieldPairs <> Array.catMaybes
+            <> languagePairs <> locationPairs <> platformPairs <> fieldPairs <> Array.catMaybes
             [ ageFromPair, ageToPair, microphonePair, newOrReturningPair
             , weekdayFromPair, weekdayToPair, weekendFromPair, weekendToPair
             ]
@@ -322,7 +322,7 @@ readQueryParams fields = do
     weekdayTo <- Url.get "weekday-to" searchParams
     weekendFrom <- Url.get "weekend-from" searchParams
     weekendTo <- Url.get "weekend-to" searchParams
-    externalIdIlks <- Url.getAll "platform" searchParams <#> Array.mapMaybe ExternalIdIlk.fromString
+    platforms <- Url.getAll "platform" searchParams <#> Array.mapMaybe Platform.fromString
     (fieldValues :: FieldValues) <- do
         (fieldValues :: Array { fieldKey :: String, optionKeys :: Array String}) <-
             fields # traverse \{ key } ->
@@ -348,7 +348,7 @@ readQueryParams fields = do
             , weekdayTo
             , weekendFrom
             , weekendTo
-            , externalIdIlks
+            , platforms
             , fieldValues
             , newOrReturning
             }
@@ -431,8 +431,8 @@ handleAction (ApplyFilters filters) = do
         case filters.weekendTo of
             Nothing -> pure unit
             Just weekendTo -> Url.set "weekend-to" weekendTo searchParams
-        foreachE filters.externalIdIlks \externalIdIlk ->
-            Url.append "platform" (ExternalIdIlk.toString externalIdIlk) searchParams
+        foreachE filters.platforms \platform ->
+            Url.append "platform" (Platform.toString platform) searchParams
         foreachE (MultiMap.toUnfoldable_ filters.fieldValues) \(Tuple fieldKey optionKey) ->
             Url.append fieldKey optionKey searchParams
         if filters.newOrReturning

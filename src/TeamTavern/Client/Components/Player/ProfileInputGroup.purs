@@ -12,28 +12,28 @@ import Data.Variant (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
-import TeamTavern.Client.Components.Input (checkboxInput, domainInputLabel, externalIdLabel, inputError, inputGroup, inputLabel, inputUnderlabel, inputUnderlabel', requiredTextLineInput, textInput_, textLineInput)
+import TeamTavern.Client.Components.Input (checkboxInput, domainInputLabel, platformIdLabel, inputError, inputGroup, inputLabel, inputUnderlabel, inputUnderlabel', requiredTextLineInput, textInput_, textLineInput)
 import TeamTavern.Client.Components.Select.MultiSelect (multiSelectIndexed)
 import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.Select.SingleSelect (singleSelectIndexed)
 import TeamTavern.Client.Components.Select.SingleSelect as SingleSelect
 import TeamTavern.Client.Snippets.Brands (inputBattleNetSvg, inputRiotSvg, inputSteamSvg)
-import TeamTavern.Routes.Shared.ExternalIdIlk (ExternalIdIlk(..))
+import TeamTavern.Routes.Shared.Platform (Platform(..))
 
-externalIdInputGroup :: forall slots action.
-    ExternalIdIlk -> String -> (String -> action) -> Boolean -> HH.HTML slots action
-externalIdInputGroup externalIdIlk externalId onValue error =
+platformIdInputGroup :: forall slots action.
+    Platform -> String -> (String -> action) -> Boolean -> HH.HTML slots action
+platformIdInputGroup platform platformId onValue error =
     inputGroup $
-    ( case externalIdIlk of
-        Steam -> [ externalIdLabel inputSteamSvg "Steam profile" (Just "steamcommunity.com") ]
-        Riot -> [ externalIdLabel inputRiotSvg "Riot ID" Nothing ]
-        Blizzard -> [ externalIdLabel inputBattleNetSvg "BattleTag" Nothing ]
+    ( case platform of
+        Steam -> [ platformIdLabel inputSteamSvg "Steam profile" (Just "steamcommunity.com") ]
+        Riot -> [ platformIdLabel inputRiotSvg "Riot ID" Nothing ]
+        BattleNet -> [ platformIdLabel inputBattleNetSvg "BattleTag" Nothing ]
         _ -> []
     )
     <>
-    [ requiredTextLineInput externalId onValue ]
+    [ requiredTextLineInput platformId onValue ]
     <>
-    ( case externalIdIlk of
+    ( case platform of
         Steam ->
             [ inputUnderlabel "Example: steamcommunity.com/id/username"
             , inputUnderlabel "Example: steamcommunity.com/profile/76561198821728791"
@@ -45,7 +45,7 @@ externalIdInputGroup externalIdIlk externalId onValue error =
                 , HH.a [ HP.href "https://account.riotgames.com/", HP.target "_blank" ] [ HH.text "account.riotgames.com" ]
                 ]
             ]
-        Blizzard ->
+        BattleNet ->
             [ inputUnderlabel "Example: username#1234"
             , inputUnderlabel'
                 [ HH.text "You can find out your BattleTag at "
@@ -56,11 +56,11 @@ externalIdInputGroup externalIdIlk externalId onValue error =
     )
     <>
     inputError error
-        case externalIdIlk of
+        case platform of
         Steam -> "This doesn't look like a valid Steam profile URL."
         Riot -> "This doesn't look like a valid Riot ID."
-        Blizzard -> "This doesn't look like a valid BattleTag."
-        _ -> "This doesn't look like a valid external ID."
+        BattleNet -> "This doesn't look like a valid BattleTag."
+        _ -> "This doesn't look like a valid platform ID."
 
 type Option =
     { key :: String

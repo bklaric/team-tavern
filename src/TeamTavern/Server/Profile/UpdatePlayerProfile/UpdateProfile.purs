@@ -18,7 +18,7 @@ import Simple.JSON (writeImpl)
 import Simple.JSON.Async (read)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Server.Profile.AddPlayerProfile.AddFieldValues (ProfileId, addFieldValues)
-import TeamTavern.Server.Profile.AddPlayerProfile.ValidateExternalId as ExternalId
+import TeamTavern.Server.Profile.AddPlayerProfile.ValidatePlatformId as PlatformId
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile (Profile)
 import TeamTavern.Server.Profile.Routes (Identifiers)
 
@@ -47,8 +47,8 @@ type UpdateProfileError errors = Variant
 updateProfileString :: Query
 updateProfileString = Query """
     update player_profile
-    set external_id_ilk = $5,
-        external_id = $6,
+    set platform = $5,
+        platform_id = $6,
         ambitions = $7,
         new_or_returning = $8,
         updated = now()
@@ -66,8 +66,8 @@ updateProfileString = Query """
 
 updateProfileParameters :: CookieInfo -> Identifiers -> Profile -> Array QueryParameter
 updateProfileParameters { id, token } { nickname, handle }
-    { externalIdIlk, externalId, ambitions, newOrReturning} =
-    id : token : nickname : handle : writeImpl externalIdIlk : ExternalId.toString externalId
+    { platform, platformId, ambitions, newOrReturning} =
+    id : token : nickname : handle : writeImpl platform : PlatformId.toString platformId
     : ambitions :| newOrReturning
 
 updateProfile' :: forall errors.

@@ -13,52 +13,52 @@ import Data.Variant (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Record as Record
-import TeamTavern.Client.Components.Input (externalIdHeading, inputGroupsHeading, responsiveInputGroups)
-import TeamTavern.Client.Components.Player.ProfileInputGroup (ChildSlots, Field, FieldValue, ambitionsInputGroup, externalIdInputGroup, fieldInputGroup, newOrReturningInputGroup)
+import TeamTavern.Client.Components.Input (platformIdHeading, inputGroupsHeading, responsiveInputGroups)
+import TeamTavern.Client.Components.Player.ProfileInputGroup (ChildSlots, Field, FieldValue, ambitionsInputGroup, platformIdInputGroup, fieldInputGroup, newOrReturningInputGroup)
 import TeamTavern.Client.Components.Player.ProfileInputGroup as Input
-import TeamTavern.Routes.Shared.ExternalIdIlk (ExternalIdIlk, ExternalIdIlks)
+import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
 
 type FieldValues = Array FieldValue
 
 type Input =
-    { externalIdIlks :: ExternalIdIlks
+    { platforms :: Platforms
     , fields :: Array Field
-    , externalIdIlk :: ExternalIdIlk
-    , externalId :: String
+    , platform :: Platform
+    , platformId :: String
     , fieldValues :: FieldValues
     , newOrReturning :: Boolean
     , ambitions :: String
-    , externalIdError :: Boolean
+    , platformIdError :: Boolean
     , urlErrors :: Array String
     , ambitionsError :: Boolean
     }
 
 type Output =
-    { externalIdIlk :: ExternalIdIlk
-    , externalId :: String
-    , externalIdError :: Boolean
+    { platform :: Platform
+    , platformId :: String
+    , platformIdError :: Boolean
     , fieldValues :: FieldValues
     , ambitions :: String
     , newOrReturning :: Boolean
     }
 
 type State =
-    { externalIdIlks :: ExternalIdIlks
+    { platforms :: Platforms
     , fields :: Array Field
-    , externalIdIlk :: ExternalIdIlk
-    , externalId :: String
+    , platform :: Platform
+    , platformId :: String
     , fieldValues :: Input.FieldValues
     , newOrReturning :: Boolean
     , ambitions :: String
-    , externalIdError :: Boolean
+    , platformIdError :: Boolean
     , urlErrors :: Array String
     , ambitionsError :: Boolean
     }
 
 data Action
     = Receive Input
-    | UpdateExternalIdIlk ExternalIdIlk
-    | UpdateExternalId String
+    | UpdatePlatform Platform
+    | UpdatePlatformId String
     | UpdateUrl String (Maybe String)
     | UpdateSingleSelect String (Maybe String)
     | UpdateMultiSelect String (Array String)
@@ -76,14 +76,14 @@ fieldValuesToMap = foldl (\map value -> Map.insert value.fieldKey value map) Map
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render
-    { externalIdIlks, fields
-    , externalIdIlk, externalId, fieldValues, newOrReturning, ambitions
-    , externalIdError, urlErrors, ambitionsError
+    { platforms, fields
+    , platform, platformId, fieldValues, newOrReturning, ambitions
+    , platformIdError, urlErrors, ambitionsError
     }
     = HH.div_ $
-    [ externalIdHeading externalIdIlks externalIdIlk UpdateExternalIdIlk
+    [ platformIdHeading platforms platform UpdatePlatform
     , responsiveInputGroups
-        [ externalIdInputGroup externalIdIlk externalId UpdateExternalId externalIdError ]
+        [ platformIdInputGroup platform platformId UpdatePlatformId platformIdError ]
     , inputGroupsHeading "Details"
     , responsiveInputGroups $
         ( fields <#> fieldInputGroup fieldValues
@@ -96,24 +96,24 @@ render
     ]
 
 raiseOutput :: forall left. State -> H.HalogenM State Action ChildSlots Output (Async left) Unit
-raiseOutput { externalIdIlk, externalId, externalIdError, fieldValues, newOrReturning, ambitions } =
+raiseOutput { platform, platformId, platformIdError, fieldValues, newOrReturning, ambitions } =
     H.raise
-    { externalIdIlk, externalId, externalIdError
+    { platform, platformId, platformIdError
     , fieldValues: fieldValuesToArray fieldValues, newOrReturning, ambitions
     }
 
 handleAction :: forall left. Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
 handleAction (Receive input) =
     H.put (Record.modify (SProxy :: SProxy "fieldValues") fieldValuesToMap input)
-handleAction (UpdateExternalIdIlk externalIdIlk) = do
+handleAction (UpdatePlatform platform) = do
     state <- H.modify _
-        { externalIdIlk = externalIdIlk
-        , externalId = ""
-        , externalIdError = false
+        { platform = platform
+        , platformId = ""
+        , platformIdError = false
         }
     raiseOutput state
-handleAction (UpdateExternalId externalId) = do
-    state <- H.modify _ { externalId = externalId }
+handleAction (UpdatePlatformId platformId) = do
+    state <- H.modify _ { platformId = platformId }
     raiseOutput state
 handleAction (UpdateUrl fieldKey url) = do
     state <- H.modify \state -> state
@@ -173,16 +173,16 @@ component = H.mkComponent
     }
 
 emptyInput :: forall props.
-    { externalIdIlks :: ExternalIdIlks, fields :: Array Field | props } -> Input
-emptyInput { externalIdIlks, fields } =
-    { externalIdIlks
+    { platforms :: Platforms, fields :: Array Field | props } -> Input
+emptyInput { platforms, fields } =
+    { platforms
     , fields
-    , externalIdIlk: externalIdIlks.head
-    , externalId: ""
+    , platform: platforms.head
+    , platformId: ""
     , fieldValues: []
     , newOrReturning: false
     , ambitions: ""
-    , externalIdError: false
+    , platformIdError: false
     , urlErrors: []
     , ambitionsError: false
     }

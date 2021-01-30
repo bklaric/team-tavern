@@ -9,7 +9,7 @@ import Jarilo.Path (type (:>), End)
 import Jarilo.Query (type (:?), Mandatory, Many, NoQuery, Optional, Rest)
 import Jarilo.Route (Route)
 import Jarilo.Segment (Capture, Literal)
-import TeamTavern.Routes.Shared.ExternalIdIlk (ExternalIdIlk)
+import TeamTavern.Routes.Shared.Platform (Platform)
 import URI.Extra.QueryPairs (Key, QueryPairs, Value)
 
 type ProfileIlk = Int
@@ -37,7 +37,7 @@ type Filters =
     , weekdayOnline :: { from :: Maybe Time, to :: Maybe Time }
     , weekendOnline :: { from :: Maybe Time, to :: Maybe Time }
     , microphone :: HasMicrophone
-    , platforms :: Array ExternalIdIlk
+    , platforms :: Array Platform
     , fields :: QueryPairs Key Value
     , newOrReturning :: NewOrReturning
     }
@@ -52,7 +52,7 @@ bundleFilters :: forall other.
     , weekendFrom :: Maybe String
     , weekendTo :: Maybe String
     , microphone :: Maybe Boolean
-    , platforms :: Array ExternalIdIlk
+    , platforms :: Array Platform
     , fields :: QueryPairs Key Value
     , newOrReturning :: Maybe Boolean
     | other }
@@ -132,7 +132,7 @@ type ViewPlayerProfilesByGame = Route
     :? Optional "weekendFrom" Time
     :? Optional "weekendTo" Time
     :? Optional "microphone" HasMicrophone
-    :? Many "platforms" ExternalIdIlk
+    :? Many "platforms" Platform
     :? Optional "newOrReturning" NewOrReturning
     :? Rest "fields")
 
@@ -154,7 +154,7 @@ type ViewTeamProfilesByGame = Route
     :? Optional "weekendFrom" Time
     :? Optional "weekendTo" Time
     :? Optional "microphone" HasMicrophone
-    :? Many "platforms" ExternalIdIlk
+    :? Many "platforms" Platform
     :? Optional "newOrReturning" NewOrReturning
     :? Rest "fields")
 

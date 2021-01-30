@@ -18,7 +18,7 @@ import TeamTavern.Client.Components.Player.ProfileFormInput as ProfileFormInput
 import TeamTavern.Client.Components.Player.ProfileInputGroup (Field)
 import TeamTavern.Client.Script.Navigate (hardNavigate)
 import TeamTavern.Client.Script.Request (postNoContent)
-import TeamTavern.Routes.Shared.ExternalIdIlk (ExternalIdIlks)
+import TeamTavern.Routes.Shared.Platform (Platforms)
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
@@ -26,7 +26,7 @@ type Input =
     { nickname :: String
     , handle :: String
     , title :: String
-    , externalIdIlks :: ExternalIdIlks
+    , platforms :: Platforms
     , fields :: Array Field
     }
 
@@ -62,7 +62,7 @@ sendRequest
     -> Async left (Maybe
         ( Either
             ( Array (Variant
-                ( externalId :: Array String
+                ( platformId :: Array String
                 , ambitions :: Array String
                 , url :: { key :: String, message :: Array String }
                 ))
@@ -71,8 +71,8 @@ sendRequest
         ))
 sendRequest state @ { nickname, handle, profile } =
     postNoContent ("/api/players/" <> nickname <> "/profiles/" <> handle)
-    { externalIdIlk: profile.externalIdIlk
-    , externalId: profile.externalId
+    { platform: profile.platform
+    , platformId: profile.platformId
     , fieldValues: profile.fieldValues
     , newOrReturning: profile.newOrReturning
     , ambitions: profile.ambitions
@@ -83,9 +83,9 @@ handleAction :: forall output left.
 handleAction (UpdateProfile profile) =
     H.modify_ _
         { profile
-            { externalIdIlk = profile.externalIdIlk
-            , externalId = profile.externalId
-            , externalIdError = profile.externalIdError
+            { platform = profile.platform
+            , platformId = profile.platformId
+            , platformIdError = profile.platformIdError
             , fieldValues = profile.fieldValues
             , newOrReturning = profile.newOrReturning
             , ambitions = profile.ambitions
@@ -101,7 +101,7 @@ handleAction (SendRequest event) = do
             foldl
             (\state error ->
                 match
-                { externalId: const state { profile { externalIdError = true } }
+                { platformId: const state { profile { platformIdError = true } }
                 , ambitions: const state { profile { ambitionsError = true } }
                 , url: \{ key } -> state { profile
                     { urlErrors = Array.cons key state.profile.urlErrors } }
@@ -112,7 +112,7 @@ handleAction (SendRequest event) = do
                 { submitting = false
                 , otherError = false
                 , profile
-                    { externalIdError = false
+                    { platformIdError = false
                     , urlErrors = []
                     , ambitionsError = false
                     }
@@ -123,7 +123,7 @@ handleAction (SendRequest event) = do
             { submitting = false
             , otherError = true
             , profile
-                { externalIdError = false
+                { platformIdError = false
                 , urlErrors = []
                 , ambitionsError = false
                 }
@@ -131,11 +131,11 @@ handleAction (SendRequest event) = do
 
 component :: forall query output left. H.Component HH.HTML query Input output (Async left)
 component = H.mkComponent
-    { initialState: \{ nickname, handle, title, externalIdIlks, fields } ->
+    { initialState: \{ nickname, handle, title, platforms, fields } ->
         { nickname
         , handle
         , title
-        , profile: ProfileFormInput.emptyInput { externalIdIlks, fields }
+        , profile: ProfileFormInput.emptyInput { platforms, fields }
         , otherError: false
         , submitting: false
         }

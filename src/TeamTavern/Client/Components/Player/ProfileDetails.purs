@@ -10,10 +10,10 @@ import Data.Maybe (Maybe(..))
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Detail (battleTagDetail, detail, fieldDetail, riotIdDetail, steamUrlDetail, urlDetail)
 import TeamTavern.Client.Snippets.Class as HS
-import TeamTavern.Routes.Shared.ExternalIdIlk (ExternalIdIlk(..))
+import TeamTavern.Routes.Shared.Platform (Platform(..))
 
 profileDetails :: forall left slots action.
-    ExternalIdIlk
+    Platform
     -> String
     -> Array
         { ilk :: Int
@@ -34,8 +34,8 @@ profileDetails :: forall left slots action.
         }
     -> Boolean
     -> Array (HH.ComponentHTML action (riotId :: Copyable.Slot String, battleTag :: Copyable.Slot String | slots) (Async left))
-profileDetails externalIdIlk externalId fields fieldValues newOrReturning =
-    profileDetails' externalIdIlk externalId
+profileDetails platform platformId fields fieldValues newOrReturning =
+    profileDetails' platform platformId
     ( fields
     <#> ( \field ->
             case fieldValues # Array.find \{ fieldKey } -> fieldKey == field.key of
@@ -65,7 +65,7 @@ profileDetails externalIdIlk externalId fields fieldValues newOrReturning =
     newOrReturning
 
 profileDetails' :: forall left slots action.
-    ExternalIdIlk
+    Platform
     -> String
     -> Array
         { field ::
@@ -86,11 +86,11 @@ profileDetails' :: forall left slots action.
         }
     -> Boolean
     -> Array (HH.ComponentHTML action (riotId :: Copyable.Slot String, battleTag :: Copyable.Slot String | slots) (Async left))
-profileDetails' externalIdIlk externalId fieldValues newOrReturning =
-    case externalIdIlk of
-    Steam -> [ steamUrlDetail externalId ]
-    Riot -> [ riotIdDetail externalId ]
-    Blizzard -> [ battleTagDetail externalId ]
+profileDetails' platform platformId fieldValues newOrReturning =
+    case platform of
+    Steam -> [ steamUrlDetail platformId ]
+    Riot -> [ riotIdDetail platformId ]
+    BattleNet -> [ battleTagDetail platformId ]
     _ -> []
     <>
     ( fieldValues

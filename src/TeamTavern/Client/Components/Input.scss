@@ -132,21 +132,21 @@
     align-items: center;
 }
 
-.external-id-heading {
+.platform-id-heading {
     @extend .input-groups-heading;
     display: flex;
     flex-wrap: wrap;
     gap: 14px 28px;
 }
 
-.external-id-checkboxes {
+.platform-id-checkboxes {
     display: inline-flex;
     flex-wrap: wrap;
     gap: 14px 28px;
     margin-top: 7px;
 }
 
-.external-id-radios {
+.platform-id-radios {
     display: inline-flex;
     flex-wrap: wrap;
     gap: 14px 28px;

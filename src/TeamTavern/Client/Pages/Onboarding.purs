@@ -41,7 +41,7 @@ import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaU
 import TeamTavern.Client.Script.Navigate (navigate, navigateReplace, navigate_)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Onboard as Onboard
-import TeamTavern.Routes.Shared.ExternalIdIlk (ExternalIdIlk(..))
+import TeamTavern.Routes.Shared.Platform (Platform(..))
 
 data Step
     = Greeting
@@ -93,7 +93,7 @@ emptyInput =
     , team: TeamFormInput.emptyInput
     , game: Nothing
     , playerProfile: PlayerProfileFormInput.emptyInput
-        { externalIdIlks: { head: Steam, tail: []}, fields: [] }
+        { platforms: { head: Steam, tail: []}, fields: [] }
     , teamProfile: TeamProfileFormInput.emptyInput []
     , otherError: false
     }
@@ -310,8 +310,8 @@ sendRequest (state :: State) = Async.unify do
             , team: Nothing
             , gameHandle: game.handle
             , playerProfile: Just
-                { externalIdIlk: profile.externalIdIlk
-                , externalId: profile.externalId
+                { platform: profile.platform
+                , platformId: profile.platformId
                 , fieldValues: profile.fieldValues
                 , newOrReturning: profile.newOrReturning
                 , ambitions: profile.ambitions
@@ -454,10 +454,10 @@ handleAction (UpdateGame game) = do
     state <- H.modify _
         { game = Just game
         , playerProfile
-            { externalIdIlks = game.externalIdIlks
+            { platforms = game.platforms
             , fields = game.fields
-            , externalIdIlk = game.externalIdIlks.head
-            , externalId = ""
+            , platform = game.platforms.head
+            , platformId = ""
             , fieldValues = []
             , newOrReturning = false
             , ambitions = ""
@@ -477,9 +477,9 @@ handleAction (UpdateGame game) = do
 handleAction (UpdatePlayerProfile details) = do
     state <- H.modify _
         { playerProfile
-            { externalIdIlk = details.externalIdIlk
-            , externalId = details.externalId
-            , externalIdError = details.externalIdError
+            { platform = details.platform
+            , platformId = details.platformId
+            , platformIdError = details.platformIdError
             , fieldValues = details.fieldValues
             , newOrReturning = details.newOrReturning
             , ambitions = details.ambitions
@@ -512,7 +512,7 @@ handleAction SetUpAccount = do
                 , aboutError = false
                 }
             , playerProfile
-                { externalIdError = false
+                { platformIdError = false
                 , urlErrors = []
                 , ambitionsError = false
                 }
@@ -561,8 +561,8 @@ handleAction SetUpAccount = do
                     foldl
                     (\state' error' ->
                         match
-                        { externalId: const state'
-                            { playerProfile { externalIdError = true } }
+                        { platformId: const state'
+                            { playerProfile { platformIdError = true } }
                         , url: \{ key } -> state'
                             { playerProfile
                                 { urlErrors = Array.cons key state'.playerProfile.urlErrors }

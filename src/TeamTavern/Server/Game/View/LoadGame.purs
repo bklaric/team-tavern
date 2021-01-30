@@ -13,9 +13,9 @@ queryString = Query """
         game.handle,
         game.title,
         json_build_object(
-            'head', game.external_id_ilks[1],
-            'tail', game.external_id_ilks[2:]
-        ) as "externalIdIlks",
+            'head', game.platforms[1],
+            'tail', game.platforms[2:]
+        ) as "platforms",
         coalesce(
             json_agg(
                 json_build_object(

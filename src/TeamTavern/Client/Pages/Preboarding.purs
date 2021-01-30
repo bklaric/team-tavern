@@ -44,7 +44,7 @@ import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaU
 import TeamTavern.Client.Script.Navigate (navigate, navigateReplace, navigate_)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Preboard as Preboard
-import TeamTavern.Routes.Shared.ExternalIdIlk (ExternalIdIlk(..))
+import TeamTavern.Routes.Shared.Platform (Platform(..))
 import TeamTavern.Routes.ViewGame as ViewGame
 
 data Step
@@ -153,7 +153,7 @@ emptyInput playerOrTeam game =
         Just game' -> Preselected game'
         Nothing -> Selected Nothing
     , playerProfile: PlayerProfileFormInput.emptyInput $
-        maybe { externalIdIlks: { head: Steam, tail: []}, fields: [] } pick game
+        maybe { platforms: { head: Steam, tail: []}, fields: [] } pick game
     , teamProfile: TeamProfileFormInput.emptyInput $ maybe [] (_.fields >>>
         mapMaybe
         case _ of
@@ -397,8 +397,8 @@ sendRequest (state :: State) = Async.unify do
             , team: Nothing
             , gameHandle: game.handle
             , playerProfile: Just
-                { externalIdIlk: profile.externalIdIlk
-                , externalId: profile.externalId
+                { platform: profile.platform
+                , platformId: profile.platformId
                 , fieldValues: profile.fieldValues
                 , newOrReturning: profile.newOrReturning
                 , ambitions: profile.ambitions
@@ -544,9 +544,9 @@ handleAction (UpdateGame game) = do
     state <- H.modify _
         { game = Selected $ Just game
         , playerProfile
-            { externalIdIlks = game.externalIdIlks
+            { platforms = game.platforms
             , fields = game.fields
-            , externalIdIlk = game.externalIdIlks.head
+            , platform = game.platforms.head
             , fieldValues = []
             , newOrReturning = false
             , ambitions = ""
@@ -566,9 +566,9 @@ handleAction (UpdateGame game) = do
 handleAction (UpdatePlayerProfile details) = do
     state <- H.modify _
         { playerProfile
-            { externalIdIlk = details.externalIdIlk
-            , externalId = details.externalId
-            , externalIdError = details.externalIdError
+            { platform = details.platform
+            , platformId = details.platformId
+            , platformIdError = details.platformIdError
             , fieldValues = details.fieldValues
             , newOrReturning = details.newOrReturning
             , ambitions = details.ambitions
@@ -609,7 +609,7 @@ handleAction SetUpAccount = do
                 , aboutError = false
                 }
             , playerProfile
-                { externalIdError = false
+                { platformIdError = false
                 , urlErrors = []
                 , ambitionsError = false
                 }
@@ -663,10 +663,10 @@ handleAction SetUpAccount = do
                     foldl
                     (\state' error' ->
                         match
-                        { externalId: const state'
+                        { platformId: const state'
                             { step =
                                 if state'.step > PlayerProfile then PlayerProfile else state'.step
-                            , playerProfile { externalIdError = true }
+                            , playerProfile { platformIdError = true }
                             }
                         , url: \{ key } -> state'
                             { step =
