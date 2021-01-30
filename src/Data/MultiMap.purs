@@ -14,6 +14,7 @@ module Data.MultiMap
     , fromFoldable
     , toUnfoldable
     , toUnfoldable'
+    , toUnfoldable_
     ) where
 
 import Prelude
@@ -102,28 +103,24 @@ values (MultiMap map) = Map.values map
 values' :: forall key value. MultiMap key value -> List value
 values' = values >=> NonEmptyList.toList
 
-fromFoldable
-    :: forall key value container
-    .  Ord key
-    => Foldable container
-    => container (Tuple key (NonEmptyList value))
-    -> MultiMap key value
+fromFoldable :: forall key value container. Ord key => Foldable container =>
+    container (Tuple key (NonEmptyList value)) -> MultiMap key value
 fromFoldable = Map.fromFoldable >>> MultiMap
 
-toUnfoldable
-    :: forall key value tuples
-    .  Functor tuples
-    => Unfoldable tuples
-    => MultiMap key value
-    -> tuples (Tuple key (NonEmptyList value))
+toUnfoldable :: forall key value tuples. Functor tuples => Unfoldable tuples =>
+    MultiMap key value -> tuples (Tuple key (NonEmptyList value))
 toUnfoldable (MultiMap map) = Map.toUnfoldable map
 
-toUnfoldable'
-    :: forall key value tuples values
-    .  Functor tuples
-    => Unfoldable tuples
-    => Unfoldable values
-    => MultiMap key value
-    -> tuples (Tuple key (values value))
-toUnfoldable' (MultiMap map) = Map.toUnfoldable map <#> \(Tuple key values'') ->
-    Tuple key (NonEmptyList.toUnfoldable values'')
+toUnfoldable' :: forall key value tuples values
+    .  Functor tuples => Unfoldable tuples => Unfoldable values
+    => MultiMap key value -> tuples (Tuple key (values value))
+toUnfoldable' (MultiMap map) =
+    Map.toUnfoldable map
+    <#> \(Tuple key values'') -> Tuple key (NonEmptyList.toUnfoldable values'')
+
+toUnfoldable_ :: forall value key tuples. Functor tuples => Unfoldable tuples => Bind tuples =>
+    MultiMap key value -> tuples (Tuple key value)
+toUnfoldable_ (MultiMap map) =
+    Map.toUnfoldable map
+    <#> (\(Tuple key values'') -> values'' <#> Tuple key # NonEmptyList.toUnfoldable)
+    # join

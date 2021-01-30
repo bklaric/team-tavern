@@ -4,13 +4,10 @@ import Prelude
 
 import Async (Async)
 import Data.Array (foldl)
-import Data.Array as Array
 import Data.Const (Const)
-import Data.List as List
-import Data.List.Types (NonEmptyList(..))
+import Data.List.NonEmpty as NonEmptyList
 import Data.Maybe (Maybe(..))
 import Data.MultiMap as MultiMap
-import Data.NonEmpty (NonEmpty(..))
 import Data.Tuple (Tuple(..))
 import Data.Variant (SProxy(..))
 import Halogen as H
@@ -50,7 +47,7 @@ type State =
 
 data Action
     = Receive Input
-    | UpdateFieldValue String (MultiSelect.Output Option)
+    | UpdateFieldValues String (MultiSelect.Output Option)
     | UpdateNewOrReturning Boolean
     | UpdateAmbitions String
 
@@ -63,7 +60,7 @@ render { fields, fieldValues, newOrReturning, ambitions, ambitionsError } =
     HH.div_ $
     [ inputGroupsHeading "Details"
     , responsiveInputGroups $
-        (fields <#> fieldInputGroup fieldValues UpdateFieldValue)
+        (fields <#> fieldInputGroup fieldValues UpdateFieldValues)
         <>
         [ newOrReturningInputGroup newOrReturning UpdateNewOrReturning ]
     , inputGroupsHeading "Ambitions"
@@ -78,11 +75,9 @@ fieldValuesToMap :: FieldValues -> Input.FieldValues
 fieldValuesToMap =
     foldl
     (\fieldValues { fieldKey, optionKeys } ->
-        case Array.uncons optionKeys of
+        case NonEmptyList.fromFoldable optionKeys of
         Nothing -> fieldValues
-        Just { head, tail } ->
-            MultiMap.insertOrReplace fieldKey
-            (NonEmptyList $ NonEmpty head $ List.fromFoldable tail) fieldValues
+        Just optionKeys' -> MultiMap.insertOrReplace fieldKey optionKeys' fieldValues
     )
     MultiMap.empty
 
@@ -93,16 +88,12 @@ raiseOutput { fieldValues, newOrReturning, ambitions } =
 handleAction :: forall left. Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
 handleAction (Receive input) =
     H.put (Record.modify (SProxy :: SProxy "fieldValues") fieldValuesToMap input)
-handleAction (UpdateFieldValue fieldKey options) = do
+handleAction (UpdateFieldValues fieldKey options) = do
     state <- H.modify \state -> state
         { fieldValues =
-            case Array.uncons options of
+            case NonEmptyList.fromFoldable options of
             Nothing -> MultiMap.delete fieldKey state.fieldValues
-            Just { head, tail } ->
-                MultiMap.insertOrReplace
-                fieldKey
-                (NonEmptyList $ NonEmpty head.key (List.fromFoldable $ _.key <$> tail))
-                state.fieldValues
+            Just options' -> MultiMap.insertOrReplace fieldKey (_.key <$> options') state.fieldValues
         }
     raiseOutput state
 handleAction (UpdateNewOrReturning newOrReturning) = do

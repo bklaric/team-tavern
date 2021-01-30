@@ -6,16 +6,19 @@ import Async (Async)
 import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
-import Data.Array (intercalate)
+import Data.Array (foldl, intercalate)
 import Data.Array as Array
 import Data.Bifunctor (lmap)
 import Data.Const (Const)
 import Data.Int (round)
 import Data.Int as Int
+import Data.List.NonEmpty as NonEmptyList
 import Data.Maybe (Maybe(..), isJust, maybe)
+import Data.MultiMap as MultiMap
 import Data.String as String
 import Data.Symbol (SProxy(..))
 import Data.Traversable (traverse)
+import Data.Tuple (Tuple(..))
 import Effect (Effect, foreachE)
 import Effect.Class (class MonadEffect)
 import Halogen as H
@@ -23,6 +26,7 @@ import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import Simple.JSON.Async as Json
 import TeamTavern.Client.Components.Boarding.PlayerOrTeamInput as Boarding
+import TeamTavern.Client.Components.Team.ProfileInputGroup (FieldValues)
 import TeamTavern.Client.Pages.Preboarding as Preboarding
 import TeamTavern.Client.Pages.Profiles.GameHeader as GameHeader
 import TeamTavern.Client.Pages.Profiles.PlayerProfiles (playerProfiles)
@@ -168,9 +172,8 @@ loadPlayerProfiles handle page filters = Async.unify do
         weekdayToPair = filters.weekdayTo <#> ("weekdayTo=" <> _)
         weekendFromPair = filters.weekendFrom <#> ("weekendFrom=" <> _)
         weekendToPair = filters.weekendTo <#> ("weekendTo=" <> _)
-        fieldPairs =
-            filters.fields
-            <#> (\{ fieldKey, optionKey } -> fieldKey <> "=" <> optionKey)
+        fieldPairs = filters.fieldValues # MultiMap.toUnfoldable_
+            <#> \(Tuple fieldKey optionKey) -> fieldKey <> "=" <> optionKey
         newOrReturningPair = if filters.newOrReturning then Just "newOrReturning=true" else Nothing
         allPairs = [pagePair, timezonePair]
             <> languagePairs <> locationPairs <> fieldPairs <> Array.catMaybes
@@ -203,9 +206,8 @@ loadTeamProfiles handle page filters = Async.unify do
         weekdayToPair = filters.weekdayTo <#> ("weekdayTo=" <> _)
         weekendFromPair = filters.weekendFrom <#> ("weekendFrom=" <> _)
         weekendToPair = filters.weekendTo <#> ("weekendTo=" <> _)
-        fieldPairs =
-            filters.fields
-            <#> (\{ fieldKey, optionKey } -> fieldKey <> "=" <> optionKey)
+        fieldPairs = filters.fieldValues # MultiMap.toUnfoldable_
+            <#> \(Tuple fieldKey optionKey) -> fieldKey <> "=" <> optionKey
         newOrReturningPair = if filters.newOrReturning then Just "newOrReturning=true" else Nothing
         allPairs = [pagePair, timezonePair]
             <> languagePairs <> locationPairs <> fieldPairs <> Array.catMaybes
@@ -299,7 +301,7 @@ readQueryParams
     :: forall fields
     .  Array { key :: String | fields }
     -> Effect { filters :: ProfileFilters.Filters, page :: Int }
-readQueryParams fields' = do
+readQueryParams fields = do
     searchParams <- Html.window >>= Window.location >>= Location.href
         >>= Url.url >>= Url.searchParams
     page <- Url.get "page" searchParams <#> maybe 1 (Int.fromString >>> maybe 1 identity)
@@ -312,12 +314,18 @@ readQueryParams fields' = do
     weekdayTo <- Url.get "weekday-to" searchParams
     weekendFrom <- Url.get "weekend-from" searchParams
     weekendTo <- Url.get "weekend-to" searchParams
-    (fields :: Array { fieldKey :: String, optionKey :: String }) <-
-        fields'
-        # traverse (\field ->
-            Url.getAll field.key searchParams
-            <#> \values -> values <#> { fieldKey: field.key, optionKey: _ })
-        <#> join
+    (fieldValues :: FieldValues) <- do
+        (fieldValues :: Array { fieldKey :: String, optionKeys :: Array String}) <-
+            fields # traverse \{ key } ->
+                Url.getAll key searchParams <#> { fieldKey: key, optionKeys: _ }
+        pure $ foldl
+            (\valuesSoFar { fieldKey, optionKeys } ->
+                case NonEmptyList.fromFoldable optionKeys of
+                Nothing -> valuesSoFar
+                Just optionKeys' -> MultiMap.insertOrReplace fieldKey optionKeys' valuesSoFar
+            )
+            (MultiMap.empty :: FieldValues)
+            fieldValues
     newOrReturning <- Url.get "new-or-returning" searchParams <#> isJust
     pure
         { page
@@ -331,7 +339,7 @@ readQueryParams fields' = do
             , weekdayTo
             , weekendFrom
             , weekendTo
-            , fields
+            , fieldValues
             , newOrReturning
             }
         }
@@ -413,7 +421,7 @@ handleAction (ApplyFilters filters) = do
         case filters.weekendTo of
             Nothing -> pure unit
             Just weekendTo -> Url.set "weekend-to" weekendTo searchParams
-        foreachE filters.fields \{fieldKey, optionKey } ->
+        foreachE (MultiMap.toUnfoldable_ filters.fieldValues) \(Tuple fieldKey optionKey) ->
             Url.append fieldKey optionKey searchParams
         if filters.newOrReturning
             then Url.set "new-or-returning" "true" searchParams
