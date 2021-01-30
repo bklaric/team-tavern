@@ -2,12 +2,19 @@ module TeamTavern.Routes.Shared.ExternalIdIlk where
 
 import Prelude
 
+import Data.Generic.Rep (class Generic)
+import Data.Generic.Rep.Show (genericShow)
 import Foreign (ForeignError(..), fail, readString, unsafeToForeign)
 import Simple.JSON (class ReadForeign, class WriteForeign)
 
 data ExternalIdIlk = Steam | Riot | Blizzard | PlayStation | XBox | Switch
 
 derive instance eqExternalIdIlk :: Eq ExternalIdIlk
+
+derive instance genericExternalIdIlk :: Generic ExternalIdIlk _
+
+instance showExternalIdIlk :: Show ExternalIdIlk where
+    show = genericShow
 
 instance readForeignExternalIdIlk :: ReadForeign ExternalIdIlk where
     readImpl ilk' =

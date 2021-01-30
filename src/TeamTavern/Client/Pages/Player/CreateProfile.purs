@@ -71,7 +71,8 @@ sendRequest
         ))
 sendRequest state @ { nickname, handle, profile } =
     postNoContent ("/api/players/" <> nickname <> "/profiles/" <> handle)
-    { externalId: profile.externalId
+    { externalIdIlk: profile.externalIdIlk
+    , externalId: profile.externalId
     , fieldValues: profile.fieldValues
     , newOrReturning: profile.newOrReturning
     , ambitions: profile.ambitions
@@ -84,6 +85,7 @@ handleAction (UpdateProfile profile) =
         { profile
             { externalIdIlk = profile.externalIdIlk
             , externalId = profile.externalId
+            , externalIdError = profile.externalIdError
             , fieldValues = profile.fieldValues
             , newOrReturning = profile.newOrReturning
             , ambitions = profile.ambitions

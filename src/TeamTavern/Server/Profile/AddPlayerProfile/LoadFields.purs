@@ -3,6 +3,7 @@ module TeamTavern.Server.Profile.AddPlayerProfile.LoadFields (Option, Field, Gam
 import Async (Async)
 import Data.Maybe (Maybe)
 import Postgres.Query (class Querier, Query(..), (:))
+import TeamTavern.Routes.Shared.ExternalIdIlk (ExternalIdIlks)
 import TeamTavern.Server.Infrastructure.Error (InternalError)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstInternal)
 
@@ -22,7 +23,7 @@ type Field =
     }
 
 type Game =
-    { externalIdIlk :: Int
+    { externalIdIlks :: ExternalIdIlks
     , fields :: Array Field
     }
 

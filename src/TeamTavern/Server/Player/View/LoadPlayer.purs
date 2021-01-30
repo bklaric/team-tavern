@@ -53,8 +53,12 @@ queryString timezone = Query $ """
                         json_build_object(
                             'handle', game.handle,
                             'title', game.title,
-                            'externalIdIlk', profile.external_id_ilk,
+                            'externalIdIlks', json_build_object(
+                                'head', game.external_id_ilks[1],
+                                'tail', game.external_id_ilks[2:]
+                            ),
                             'fields', coalesce(fields.fields, '[]'),
+                            'externalIdIlk', profile.external_id_ilk,
                             'externalId', profile.external_id,
                             'fieldValues', coalesce(field_values.field_values, '[]'),
                             'newOrReturning', profile.new_or_returning,

@@ -12,6 +12,7 @@ import Data.List.NonEmpty as NonEmptyList
 import Data.List.Types (NonEmptyList)
 import Data.Symbol (SProxy(..))
 import Data.Variant (Variant)
+import TeamTavern.Routes.Shared.ExternalIdIlk (ExternalIdIlk)
 import TeamTavern.Server.Domain.Text (Text)
 import TeamTavern.Server.Profile.AddPlayerProfile.LoadFields as LoadFields
 import TeamTavern.Server.Profile.AddPlayerProfile.ReadProfile as ReadProfile
@@ -21,7 +22,8 @@ import TeamTavern.Server.Profile.AddPlayerProfile.ValidateFieldValues as Validat
 import TeamTavern.Server.Profile.Infrastructure.ValidateAmbitions (validateAmbitions)
 
 type Profile =
-    { externalId :: ExternalId
+    { externalIdIlk :: ExternalIdIlk
+    , externalId :: ExternalId
     , fieldValues :: Array ValidateFieldValues.FieldValue
     , newOrReturning :: Boolean
     , ambitions :: Text
@@ -40,9 +42,11 @@ validateProfile
     .  LoadFields.Game
     -> ReadProfile.Profile
     -> Async (Variant (profile :: ProfileErrors | errors)) Profile
-validateProfile { externalIdIlk, fields } { externalId, fieldValues, newOrReturning, ambitions } =
-    { externalId: _, fieldValues: _, newOrReturning, ambitions: _ }
-    <$> validateExternalId externalIdIlk externalId
+validateProfile
+    { externalIdIlks, fields }
+    { externalIdIlk, externalId, fieldValues, newOrReturning, ambitions } =
+    { externalIdIlk, externalId: _, fieldValues: _, newOrReturning, ambitions: _ }
+    <$> validateExternalId externalIdIlks externalIdIlk externalId
     <*> validateFieldValues fields fieldValues
     <*> validateAmbitions ambitions
     # Async.fromValidated

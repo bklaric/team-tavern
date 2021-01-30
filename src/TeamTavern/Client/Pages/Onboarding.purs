@@ -310,7 +310,8 @@ sendRequest (state :: State) = Async.unify do
             , team: Nothing
             , gameHandle: game.handle
             , playerProfile: Just
-                { externalId: profile.externalId
+                { externalIdIlk: profile.externalIdIlk
+                , externalId: profile.externalId
                 , fieldValues: profile.fieldValues
                 , newOrReturning: profile.newOrReturning
                 , ambitions: profile.ambitions
@@ -478,6 +479,7 @@ handleAction (UpdatePlayerProfile details) = do
         { playerProfile
             { externalIdIlk = details.externalIdIlk
             , externalId = details.externalId
+            , externalIdError = details.externalIdError
             , fieldValues = details.fieldValues
             , newOrReturning = details.newOrReturning
             , ambitions = details.ambitions

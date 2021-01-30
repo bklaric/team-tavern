@@ -36,6 +36,7 @@ type Input =
 type Output =
     { externalIdIlk :: ExternalIdIlk
     , externalId :: String
+    , externalIdError :: Boolean
     , fieldValues :: FieldValues
     , ambitions :: String
     , newOrReturning :: Boolean
@@ -95,9 +96,9 @@ render
     ]
 
 raiseOutput :: forall left. State -> H.HalogenM State Action ChildSlots Output (Async left) Unit
-raiseOutput { externalIdIlk, externalId, fieldValues, newOrReturning, ambitions } =
+raiseOutput { externalIdIlk, externalId, externalIdError, fieldValues, newOrReturning, ambitions } =
     H.raise
-    { externalIdIlk, externalId
+    { externalIdIlk, externalId, externalIdError
     , fieldValues: fieldValuesToArray fieldValues, newOrReturning, ambitions
     }
 
@@ -105,7 +106,11 @@ handleAction :: forall left. Action -> H.HalogenM State Action ChildSlots Output
 handleAction (Receive input) =
     H.put (Record.modify (SProxy :: SProxy "fieldValues") fieldValuesToMap input)
 handleAction (UpdateExternalIdIlk externalIdIlk) = do
-    state <- H.modify _ { externalIdIlk = externalIdIlk, externalId = "" }
+    state <- H.modify _
+        { externalIdIlk = externalIdIlk
+        , externalId = ""
+        , externalIdError = false
+        }
     raiseOutput state
 handleAction (UpdateExternalId externalId) = do
     state <- H.modify _ { externalId = externalId }

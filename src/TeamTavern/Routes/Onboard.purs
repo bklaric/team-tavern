@@ -7,6 +7,7 @@ import Jarilo.Path (type (:>), End)
 import Jarilo.Query (NoQuery)
 import Jarilo.Route (Route)
 import Jarilo.Segment (Literal)
+import TeamTavern.Routes.Shared.ExternalIdIlk (ExternalIdIlk)
 import Type (type ($))
 
 type Onboard = Route
@@ -48,7 +49,8 @@ type TeamRequestContent =
     }
 
 type PlayerProfileRequestContent =
-    { externalId :: String
+    { externalIdIlk :: ExternalIdIlk
+    , externalId :: String
     , fieldValues :: Array
         { fieldKey :: String
         , url :: Maybe String
