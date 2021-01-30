@@ -9,6 +9,7 @@ import Jarilo.Path (type (:>), End)
 import Jarilo.Query (type (:?), Mandatory, Many, NoQuery, Optional, Rest)
 import Jarilo.Route (Route)
 import Jarilo.Segment (Capture, Literal)
+import TeamTavern.Routes.Shared.ExternalIdIlk (ExternalIdIlk)
 import URI.Extra.QueryPairs (Key, QueryPairs, Value)
 
 type ProfileIlk = Int
@@ -36,6 +37,7 @@ type Filters =
     , weekdayOnline :: { from :: Maybe Time, to :: Maybe Time }
     , weekendOnline :: { from :: Maybe Time, to :: Maybe Time }
     , microphone :: HasMicrophone
+    , platforms :: Array ExternalIdIlk
     , fields :: QueryPairs Key Value
     , newOrReturning :: NewOrReturning
     }
@@ -43,7 +45,6 @@ type Filters =
 bundleFilters :: forall other.
     { ageFrom :: Maybe Int
     , ageTo :: Maybe Int
-    , fields :: QueryPairs Key Value
     , languages :: Array String
     , locations :: Array String
     , weekdayFrom :: Maybe String
@@ -51,6 +52,8 @@ bundleFilters :: forall other.
     , weekendFrom :: Maybe String
     , weekendTo :: Maybe String
     , microphone :: Maybe Boolean
+    , platforms :: Array ExternalIdIlk
+    , fields :: QueryPairs Key Value
     , newOrReturning :: Maybe Boolean
     | other }
     -> Filters
@@ -61,6 +64,7 @@ bundleFilters filters =
     , weekdayOnline: { from: filters.weekdayFrom, to: filters.weekdayTo }
     , weekendOnline: { from: filters.weekendFrom, to: filters.weekendTo }
     , microphone: maybe false identity filters.microphone
+    , platforms: filters.platforms
     , fields: filters.fields
     , newOrReturning: maybe false identity filters.newOrReturning
     }
@@ -128,6 +132,7 @@ type ViewPlayerProfilesByGame = Route
     :? Optional "weekendFrom" Time
     :? Optional "weekendTo" Time
     :? Optional "microphone" HasMicrophone
+    :? Many "platforms" ExternalIdIlk
     :? Optional "newOrReturning" NewOrReturning
     :? Rest "fields")
 
@@ -149,6 +154,7 @@ type ViewTeamProfilesByGame = Route
     :? Optional "weekendFrom" Time
     :? Optional "weekendTo" Time
     :? Optional "microphone" HasMicrophone
+    :? Many "platforms" ExternalIdIlk
     :? Optional "newOrReturning" NewOrReturning
     :? Rest "fields")
 

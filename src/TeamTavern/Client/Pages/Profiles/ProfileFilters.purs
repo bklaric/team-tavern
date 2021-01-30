@@ -14,6 +14,7 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import TeamTavern.Client.Components.Card (cardHeading, cardSection, cardSectionHeading)
+import TeamTavern.Client.Components.Input (externalIdCheckboxes, inputGroup, inputLabel)
 import TeamTavern.Client.Components.InputGroup (timeRangeInputGroup)
 import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.Select.MultiTreeSelect as MultiTreeSelect
@@ -21,6 +22,7 @@ import TeamTavern.Client.Components.Team.ProfileInputGroup (FieldValues, fieldIn
 import TeamTavern.Client.Components.Team.TeamInputGroup (ageInputGroup, languagesInputGroup, locationInputGroup, microphoneInputGroup)
 import TeamTavern.Client.Pages.Profiles.GameHeader (Tab(..))
 import TeamTavern.Client.Snippets.Class as HS
+import TeamTavern.Routes.Shared.ExternalIdIlk (ExternalIdIlk, ExternalIdIlks)
 import Web.HTML as Html
 import Web.HTML.Window as Window
 
@@ -46,12 +48,14 @@ type Filters =
     , weekdayTo :: Maybe String
     , weekendFrom :: Maybe String
     , weekendTo :: Maybe String
+    , externalIdIlks :: Array ExternalIdIlk
     , fieldValues :: FieldValues
     , newOrReturning :: Boolean
     }
 
 type Input =
-    { fields :: Array Field
+    { externalIdIlks :: ExternalIdIlks
+    , fields :: Array Field
     , filters :: Filters
     , tab :: Tab
     }
@@ -66,6 +70,8 @@ type State =
     , weekdayTo :: Maybe String
     , weekendFrom :: Maybe String
     , weekendTo :: Maybe String
+    , allExternalIdIlks :: ExternalIdIlks
+    , selectedExternalIdIlks :: Array ExternalIdIlk
     , fields :: Array Field
     , fieldValues :: FieldValues
     , newOrReturning :: Boolean
@@ -89,6 +95,7 @@ data Action
     | UpdateWeekdayTo (Maybe String)
     | UpdateWeekendFrom (Maybe String)
     | UpdateWeekendTo (Maybe String)
+    | UpdateExternalIdIlk ExternalIdIlk
     | UpdateFieldValues String (MultiSelect.Output Option)
     | UpdateNewOrReturning Boolean
     | ToggleFiltersVisibility
@@ -164,9 +171,12 @@ render state =
         then Array.singleton $
             cardSection
             [ HH.div [ HS.class_ "filter-input-groups" ] $
-                ( state.fields <#> fieldInputGroup state.fieldValues UpdateFieldValues )
-                <>
-                [ newOrReturningInputGroup state.newOrReturning UpdateNewOrReturning ]
+                ( case externalIdCheckboxes state.allExternalIdIlks state.selectedExternalIdIlks UpdateExternalIdIlk of
+                    Nothing -> []
+                    Just checkboxes -> [ inputGroup [ inputLabel "fas fa-laptop" "Platform", checkboxes ] ]
+                )
+                <> ( state.fields <#> fieldInputGroup state.fieldValues UpdateFieldValues )
+                <> [ newOrReturningInputGroup state.newOrReturning UpdateNewOrReturning ]
             ]
         else [])
         <>
@@ -189,8 +199,7 @@ render state =
         ]
     else []
 
-handleAction :: forall left.
-    Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
+handleAction :: forall left. Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
 handleAction Initialize = do
     windowWidth <- Html.window >>= Window.innerWidth # H.liftEffect
     let showFilters = windowWidth >= 960
@@ -199,7 +208,7 @@ handleAction Initialize = do
         , playerFiltersVisible = showFilters
         , profileFiltersVisible = showFilters
         }
-handleAction (Receive { fields, filters, tab }) = do
+handleAction (Receive { externalIdIlks, fields, filters, tab }) = do
     H.modify_ _
         { ageFrom = filters.ageFrom
         , ageTo = filters.ageTo
@@ -210,6 +219,8 @@ handleAction (Receive { fields, filters, tab }) = do
         , weekdayTo = filters.weekdayTo
         , weekendFrom = filters.weekendFrom
         , weekendTo = filters.weekendTo
+        , allExternalIdIlks = externalIdIlks
+        , selectedExternalIdIlks = filters.externalIdIlks
         , fields = fields
         , fieldValues = filters.fieldValues
         , newOrReturning = filters.newOrReturning
@@ -217,21 +228,19 @@ handleAction (Receive { fields, filters, tab }) = do
         }
 handleAction ApplyFilters = do
     state <- H.get
-    let ageFrom = state.ageFrom
-        ageTo = state.ageTo
-        locations = state.locations
-        languages = state.languages
-        microphone = state.microphone
-        weekdayFrom = state.weekdayFrom
-        weekdayTo = state.weekdayTo
-        weekendFrom = state.weekendFrom
-        weekendTo = state.weekendTo
-        fieldValues = state.fieldValues
-        newOrReturning = state.newOrReturning
     H.raise $ Apply
-        { ageFrom, ageTo, languages, locations, microphone
-        , weekdayFrom, weekdayTo, weekendFrom, weekendTo
-        , fieldValues, newOrReturning
+        { ageFrom: state.ageFrom
+        , ageTo: state.ageTo
+        , languages: state.languages
+        , locations: state.locations
+        , microphone: state.microphone
+        , weekdayFrom: state.weekdayFrom
+        , weekdayTo: state.weekdayTo
+        , weekendFrom: state.weekendFrom
+        , weekendTo: state.weekendTo
+        , externalIdIlks: state.selectedExternalIdIlks
+        , fieldValues: state.fieldValues
+        , newOrReturning: state.newOrReturning
         }
 handleAction ClearFilters = do
     H.modify_ \state -> state
@@ -244,6 +253,7 @@ handleAction ClearFilters = do
         , weekdayTo = Nothing
         , weekendFrom = Nothing
         , weekendTo = Nothing
+        , selectedExternalIdIlks = []
         , fieldValues = (MultiMap.empty :: MultiMap String String)
         , newOrReturning = false
         }
@@ -265,6 +275,13 @@ handleAction (UpdateWeekendFrom time) =
     H.modify_ (_ { weekendFrom = time })
 handleAction (UpdateWeekendTo time) =
     H.modify_ (_ { weekendTo = time })
+handleAction (UpdateExternalIdIlk externalIdIlk) =
+    H.modify_ \state -> state
+        { selectedExternalIdIlks =
+            if Array.elem externalIdIlk state.selectedExternalIdIlks
+            then Array.delete externalIdIlk state.selectedExternalIdIlks
+            else Array.cons externalIdIlk state.selectedExternalIdIlks
+        }
 handleAction (UpdateFieldValues fieldKey options) = do
     H.modify_ \state -> state
         { fieldValues =
@@ -282,7 +299,7 @@ handleAction ToggleProfileFiltersVisibility =
     H.modify_ \state -> state { profileFiltersVisible = not state.profileFiltersVisible }
 
 initialState :: Input -> State
-initialState { fields, filters, tab } =
+initialState { externalIdIlks, fields, filters, tab } =
     { ageFrom: filters.ageFrom
     , ageTo: filters.ageTo
     , locations: filters.locations
@@ -292,6 +309,8 @@ initialState { fields, filters, tab } =
     , weekdayTo: filters.weekdayTo
     , weekendFrom: filters.weekendFrom
     , weekendTo: filters.weekendTo
+    , allExternalIdIlks: externalIdIlks
+    , selectedExternalIdIlks: []
     , fields
     , fieldValues: filters.fieldValues
     , newOrReturning: filters.newOrReturning
