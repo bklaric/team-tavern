@@ -25,6 +25,7 @@ import TeamTavern.Client.Script.Cookie (PlayerInfo)
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Client.Snippets.PreventMouseDefault (preventMouseDefault)
+import TeamTavern.Routes.Shared.Platform (Platform)
 import TeamTavern.Server.Profile.ViewTeamProfilesByGame.LoadProfiles (pageSize)
 import Web.UIEvent.MouseEvent (MouseEvent)
 
@@ -49,6 +50,7 @@ type TeamProfile =
         , to :: String
         }
     , about :: Array String
+    , platforms :: Array Platform
     , fieldValues :: Array
         { field ::
             { ilk :: Int

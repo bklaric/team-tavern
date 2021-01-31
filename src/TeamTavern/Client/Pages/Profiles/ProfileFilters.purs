@@ -318,7 +318,7 @@ initialState { platforms, fields, filters, tab } =
     , weekendFrom: filters.weekendFrom
     , weekendTo: filters.weekendTo
     , allPlatforms: platforms
-    , selectedPlatforms: []
+    , selectedPlatforms: filters.platforms
     , fields
     , fieldValues: filters.fieldValues
     , newOrReturning: filters.newOrReturning

@@ -178,7 +178,7 @@ loadPlayerProfiles handle page filters = Async.unify do
         weekdayToPair = filters.weekdayTo <#> ("weekdayTo=" <> _)
         weekendFromPair = filters.weekendFrom <#> ("weekendFrom=" <> _)
         weekendToPair = filters.weekendTo <#> ("weekendTo=" <> _)
-        platformPairs = filters.platforms <#> Platform.toString <#> ("platform=" <> _)
+        platformPairs = filters.platforms <#> Platform.toString <#> ("platforms=" <> _)
         fieldPairs = filters.fieldValues # MultiMap.toUnfoldable_
             <#> \(Tuple fieldKey optionKey) -> fieldKey <> "=" <> optionKey
         newOrReturningPair = if filters.newOrReturning then Just "newOrReturning=true" else Nothing
@@ -213,7 +213,7 @@ loadTeamProfiles handle page filters = Async.unify do
         weekdayToPair = filters.weekdayTo <#> ("weekdayTo=" <> _)
         weekendFromPair = filters.weekendFrom <#> ("weekendFrom=" <> _)
         weekendToPair = filters.weekendTo <#> ("weekendTo=" <> _)
-        platformPairs = filters.platforms <#> Platform.toString <#> ("platform=" <> _)
+        platformPairs = filters.platforms <#> Platform.toString <#> ("platforms=" <> _)
         fieldPairs = filters.fieldValues # MultiMap.toUnfoldable_
             <#> \(Tuple fieldKey optionKey) -> fieldKey <> "=" <> optionKey
         newOrReturningPair = if filters.newOrReturning then Just "newOrReturning=true" else Nothing
