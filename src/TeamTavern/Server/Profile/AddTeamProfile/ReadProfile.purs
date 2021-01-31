@@ -1,7 +1,6 @@
 module TeamTavern.Server.Profile.AddTeamProfile.ReadProfile where
 
 import Async (Async)
-import Data.Array.NonEmpty (NonEmptyArray)
 import Perun.Request.Body (Body)
 import TeamTavern.Routes.Shared.Platform (Platform)
 import TeamTavern.Server.Infrastructure.Error (ClientError)

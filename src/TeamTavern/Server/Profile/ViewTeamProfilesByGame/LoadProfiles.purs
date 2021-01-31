@@ -21,7 +21,7 @@ import Postgres.Error (Error)
 import Postgres.Query (Query(..))
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
-import TeamTavern.Routes.Shared.Platform (Platform)
+import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
 import TeamTavern.Routes.Shared.Platform as Platform
 import TeamTavern.Server.Infrastructure.Postgres (prepareJsonString, prepareString, teamAdjustedWeekdayFrom, teamAdjustedWeekdayTo, teamAdjustedWeekendFrom, teamAdjustedWeekendTo)
 import TeamTavern.Server.Profile.Routes (Age, Location, Filters, Handle, HasMicrophone, Language, ProfilePage, Time, Timezone, NewOrReturning)
@@ -53,7 +53,8 @@ type LoadProfilesResult =
         , to :: String
         }
     , about :: Array String
-    , platforms :: Array Platform
+    , allPlatforms :: Platforms
+    , selectedPlatforms :: Array Platform
     , fieldValues :: Array
         { field ::
             { ilk :: Int
@@ -277,7 +278,11 @@ queryStringWithoutPagination handle timezone filters = Query $ """
                     'to', to_char(""" <> teamAdjustedWeekendTo timezone <> """, 'HH24:MI')
                 )
             end as "weekendOnline",
-            profile.platforms,
+            json_build_object(
+                'head', game.platforms[1],
+                'tail', game.platforms[2:]
+            ) as "allPlatforms",
+            profile.platforms as "selectedPlatforms",
             coalesce(
                 jsonb_agg(
                     jsonb_build_object(
@@ -335,7 +340,7 @@ queryStringWithoutPagination handle timezone filters = Query $ """
         where
             game.handle = """ <> prepareString handle
             <> createTeamFilterString timezone filters <> """
-        group by player.id, team.id, profile.id
+        group by player.id, team.id, profile.id, game.id
         ) as profile
     """ <> createFieldsFilterString filters.fields <> """
     order by profile.updated desc"""

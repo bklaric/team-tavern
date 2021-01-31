@@ -10,7 +10,7 @@ import Foreign (ForeignError(..), fail, readString, unsafeToForeign)
 import Jarilo.FromComponent (class FromComponent)
 import Simple.JSON (class ReadForeign, class WriteForeign)
 
-data Platform = Steam | Riot | BattleNet | PlayStation | XBox | Switch
+data Platform = Steam | Riot | BattleNet | PlayStation | Xbox | Switch
 
 derive instance eqPlatform :: Eq Platform
 
@@ -20,23 +20,23 @@ instance showPlatform :: Show Platform where
     show = genericShow
 
 instance readForeignPlatform :: ReadForeign Platform where
-    readImpl ilk' =
-        readString ilk' >>=
+    readImpl platform' =
+        readString platform' >>=
         case _ of
         "steam" -> pure Steam
         "riot" -> pure Riot
         "battle.net" -> pure BattleNet
         "playstation" -> pure PlayStation
-        "xbox" -> pure XBox
+        "xbox" -> pure Xbox
         "switch" -> pure Switch
-        ilk -> fail $ ForeignError $ "Unknown platform: " <> ilk
+        platform -> fail $ ForeignError $ "Unknown platform: " <> platform
 
 instance writeForeignPlatform :: WriteForeign Platform where
     writeImpl Steam = unsafeToForeign "steam"
     writeImpl Riot = unsafeToForeign "riot"
     writeImpl BattleNet = unsafeToForeign "battle.net"
     writeImpl PlayStation = unsafeToForeign "playstation"
-    writeImpl XBox = unsafeToForeign "xbox"
+    writeImpl Xbox = unsafeToForeign "xbox"
     writeImpl Switch = unsafeToForeign "switch"
 
 instance fromComponentPlatform :: FromComponent Platform where
@@ -44,7 +44,7 @@ instance fromComponentPlatform :: FromComponent Platform where
     fromComponent "riot" = Right Riot
     fromComponent "battle.net" = Right BattleNet
     fromComponent "playstation" = Right PlayStation
-    fromComponent "xbox" = Right XBox
+    fromComponent "xbox" = Right Xbox
     fromComponent "switch" = Right Switch
     fromComponent platform = Left $ "Unknown platform: " <> platform
 
@@ -53,7 +53,7 @@ fromString "steam" = Just Steam
 fromString "riot" = Just Riot
 fromString "battle.net" = Just BattleNet
 fromString "playstation" = Just PlayStation
-fromString "xbox" = Just XBox
+fromString "xbox" = Just Xbox
 fromString "switch" = Just Switch
 fromString _ = Nothing
 
@@ -62,7 +62,7 @@ toString Steam = "steam"
 toString Riot = "riot"
 toString BattleNet = "battle.net"
 toString PlayStation = "playstation"
-toString XBox = "xbox"
+toString Xbox = "xbox"
 toString Switch = "switch"
 
 type Platforms = { head :: Platform, tail :: Array Platform }
