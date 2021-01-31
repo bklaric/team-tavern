@@ -3,13 +3,13 @@ module TeamTavern.Server.Profile.AddPlayerProfile.ValidatePlatformId (PlatformId
 import Prelude
 
 import Data.Array as Array
-import Data.List.NonEmpty (NonEmptyList, notElem)
+import Data.List.NonEmpty (notElem)
 import Data.List.NonEmpty as NEL
 import Data.Symbol (SProxy(..))
-import Data.Validated (Validated)
 import Data.Validated as Validated
+import Data.Validated.Label (VariantValidated)
 import Data.Validated.Label as ValidatedL
-import Data.Variant (Variant, inj)
+import Data.Variant (inj)
 import TeamTavern.Routes.Shared.Platform (Platform(..), Platforms)
 import TeamTavern.Server.Profile.Infrastructure.ValidateBattleTag (BattleTag, validateBattleTag)
 import TeamTavern.Server.Profile.Infrastructure.ValidateBattleTag as BattleTag
@@ -31,14 +31,14 @@ validatePlatformId
     .  Platforms
     -> Platform
     -> String
-    -> Validated (NonEmptyList (Variant (platformId :: Array String | errors))) PlatformId
+    -> VariantValidated (platformId :: Array String | errors) PlatformId
 validatePlatformId platforms platform platformId =
     case platform of
     _ | notElem platform $ Array.cons platforms.head platforms.tail ->
         Validated.invalid $ NEL.singleton $ inj (SProxy :: SProxy "platformId")
-        [ "Error validating platform id, profile ilk doesn't match any game ilks."
-        , "Profile ilk: " <> show platform
-        , "Game ilks: " <> show platforms
+        [ "Error validating platform id, profile platform doesn't match any game platforms."
+        , "Profile platform: " <> show platform
+        , "Game platforms: " <> show platforms
         ]
     Steam -> validateSteamUrl platformId
         <#> SteamUrl
@@ -53,4 +53,4 @@ validatePlatformId platforms platform platformId =
         # Validated.fromEither
         # ValidatedL.label (SProxy :: SProxy "platformId")
     ilk -> Validated.invalid $ NEL.singleton $ inj (SProxy :: SProxy "platformId")
-        [ "Error validating platform id, ilk is unknown: " <> show ilk ]
+        [ "Error validating platform id, platform is unknown: " <> show ilk ]

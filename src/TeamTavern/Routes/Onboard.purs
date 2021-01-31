@@ -62,7 +62,8 @@ type PlayerProfileRequestContent =
     }
 
 type TeamProfileRequestContent =
-    { fieldValues :: Array
+    { platforms :: Array Platform
+    , fieldValues :: Array
         { fieldKey :: String
         , optionKeys :: Array String
         }
@@ -100,5 +101,7 @@ type BadContent = Array $ Variant
         , ambitions :: Array String
         )
     , teamProfile :: Array $ Variant
-        ( ambitions :: Array String )
+        ( platforms :: Array String
+        , ambitions :: Array String
+        )
     )

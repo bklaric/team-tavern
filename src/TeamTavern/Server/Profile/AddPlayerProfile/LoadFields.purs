@@ -33,7 +33,7 @@ queryString = Query """
         json_build_object(
             'head', game.platforms[1],
             'tail', game.platforms[2:]
-        ) as "platforms",
+        ) as platforms,
         coalesce(
             json_agg(
                 json_build_object(

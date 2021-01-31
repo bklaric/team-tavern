@@ -153,13 +153,16 @@ emptyInput playerOrTeam game =
         Just game' -> Preselected game'
         Nothing -> Selected Nothing
     , playerProfile: PlayerProfileFormInput.emptyInput $
-        maybe { platforms: { head: Steam, tail: []}, fields: [] } pick game
-    , teamProfile: TeamProfileFormInput.emptyInput $ maybe [] (_.fields >>>
-        mapMaybe
-        case _ of
-        { ilk, key, label, icon, options: Just options } | ilk == 2 || ilk == 3 ->
-            Just { key, label, icon, options: options }
-        _ -> Nothing) game
+        maybe { platforms: { head: Steam, tail: [] }, fields: [] } pick game
+    , teamProfile: TeamProfileFormInput.emptyInput $
+        maybe { platforms: { head: Steam, tail: [] }, fields: [] } pick game
+        # \game' -> game'
+            { fields = game'.fields # mapMaybe
+                case _ of
+                { ilk, key, label, icon, options: Just options } | ilk == 2 || ilk == 3 ->
+                    Just { key, label, icon, options: options }
+                _ -> Nothing
+            }
     , registration: RegistrationInput.emptyInput
     , otherError: false
     }
@@ -436,7 +439,8 @@ sendRequest (state :: State) = Async.unify do
             , gameHandle: game.handle
             , playerProfile: Nothing
             , teamProfile: Just
-                { fieldValues: profile.fieldValues
+                { platforms: profile.selectedPlatforms
+                , fieldValues: profile.fieldValues
                 , newOrReturning: profile.newOrReturning
                 , ambitions: profile.ambitions
                 }
@@ -552,7 +556,9 @@ handleAction (UpdateGame game) = do
             , ambitions = ""
             }
         , teamProfile
-            { fields = game.fields # Array.mapMaybe
+            { allPlatforms = game.platforms
+            , selectedPlatforms = [ game.platforms.head ]
+            , fields = game.fields # Array.mapMaybe
                 case _ of
                 { ilk, key, label, icon, options: Just options } | ilk == 2 || ilk == 3 ->
                     Just { key, label, icon, options }
@@ -578,7 +584,8 @@ handleAction (UpdatePlayerProfile details) = do
 handleAction (UpdateTeamProfile details) = do
     state <- H.modify _
         { teamProfile
-            { fieldValues = details.fieldValues
+            { selectedPlatforms = details.platforms
+            , fieldValues = details.fieldValues
             , newOrReturning = details.newOrReturning
             , ambitions = details.ambitions
             }
@@ -611,6 +618,10 @@ handleAction SetUpAccount = do
             , playerProfile
                 { platformIdError = false
                 , urlErrors = []
+                , ambitionsError = false
+                }
+            , teamProfile
+                { platformsError = false
                 , ambitionsError = false
                 }
             , registration
@@ -687,9 +698,13 @@ handleAction SetUpAccount = do
                     foldl
                     (\state' error' ->
                         match
-                        { ambitions: const state'
+                        { platforms: const state'
                             { step = if state'.step > TeamProfile then TeamProfile else state'.step
-                            , playerProfile { ambitionsError = true }
+                            , teamProfile { platformsError = true }
+                            }
+                        , ambitions: const state'
+                            { step = if state'.step > TeamProfile then TeamProfile else state'.step
+                            , teamProfile { ambitionsError = true }
                             }
                         }
                         error'

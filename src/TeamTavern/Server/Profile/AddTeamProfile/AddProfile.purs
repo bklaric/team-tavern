@@ -5,6 +5,7 @@ import Prelude
 import Async (Async)
 import Postgres.Client (Client)
 import Postgres.Query (Query(..), QueryParameter, (:), (:|))
+import TeamTavern.Routes.Shared.Platform as Platform
 import TeamTavern.Server.Infrastructure.Error (ChangeSingleError)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstNotAuthorized)
 import TeamTavern.Server.Player.Domain.Id (Id)
@@ -17,10 +18,11 @@ queryString = Query """
     insert into team_profile
         ( team_id
         , game_id
+        , platforms
         , new_or_returning
         , ambitions
         )
-    select team.id, game.id, $4, $5
+    select team.id, game.id, $4, $5, $6
     from player, team, game
     where player.id = $1
         and team.handle = $2
@@ -34,6 +36,7 @@ queryParameters id teamHandle gameHandle profile =
     id
     : teamHandle
     : gameHandle
+    : (profile.platforms <#> Platform.toString)
     : profile.newOrReturning
     :| profile.ambitions
 

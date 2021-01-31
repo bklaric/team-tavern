@@ -25,13 +25,13 @@ updateTeamProfile pool cookies body { teamHandle, gameHandle } =
 
     pool # transaction \client -> do
         -- Load game fields from database.
-        fields <- loadFields client gameHandle
+        game <- loadFields client gameHandle
 
         -- Read profile from body.
         profile <- readProfile body
 
         -- Validate profile.
-        profile' <- validateProfile fields profile
+        profile' <- validateProfile game profile
 
         -- Add profile to database.
         updateProfile client cookieInfo teamHandle gameHandle profile'

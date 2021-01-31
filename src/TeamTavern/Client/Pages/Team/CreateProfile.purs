@@ -17,6 +17,7 @@ import TeamTavern.Client.Components.Team.ProfileFormInput as ProfileFormInput
 import TeamTavern.Client.Components.Team.ProfileInputGroup (Field)
 import TeamTavern.Client.Script.Navigate (hardNavigate)
 import TeamTavern.Client.Script.Request (postNoContent)
+import TeamTavern.Routes.Shared.Platform (Platforms)
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
@@ -24,6 +25,7 @@ type Input =
     { teamHandle :: String
     , gameHandle :: String
     , title :: String
+    , platforms :: Platforms
     , fields :: Array Field
     }
 
@@ -56,10 +58,11 @@ render { profile, submitting, otherError } =
 sendRequest
     :: forall left
     .  State
-    -> Async left (Maybe (Either (Array (Variant (ambitions :: Array String))) Unit))
+    -> Async left (Maybe (Either (Array (Variant (platforms :: Array String, ambitions :: Array String))) Unit))
 sendRequest state @ { teamHandle, gameHandle, profile } =
     postNoContent ("/api/teams/" <> teamHandle <> "/profiles/" <> gameHandle)
-    { fieldValues: profile.fieldValues
+    { platforms: profile.selectedPlatforms
+    , fieldValues: profile.fieldValues
     , newOrReturning: profile.newOrReturning
     , ambitions: profile.ambitions
     }
@@ -67,9 +70,10 @@ sendRequest state @ { teamHandle, gameHandle, profile } =
 handleAction :: forall output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
 handleAction (UpdateProfile profile) =
-    H.modify_ \state -> state
-        { profile = state.profile
-            { fieldValues = profile.fieldValues
+    H.modify_ _
+        { profile
+            { selectedPlatforms = profile.platforms
+            , fieldValues = profile.fieldValues
             , newOrReturning = profile.newOrReturning
             , ambitions = profile.ambitions
             }
@@ -84,7 +88,9 @@ handleAction (SendRequest event) = do
             foldl
             (\state error ->
                 match
-                { ambitions: const state { profile { ambitionsError = true } } }
+                { platforms: const state { profile = state.profile { platformsError = true } }
+                , ambitions: const state { profile = state.profile { ambitionsError = true } }
+                }
                 error
             )
             (currentState
@@ -102,11 +108,11 @@ handleAction (SendRequest event) = do
 
 component :: forall query output left. H.Component HH.HTML query Input output (Async left)
 component = H.mkComponent
-    { initialState: \{ teamHandle, gameHandle, title, fields } ->
+    { initialState: \{ platforms, teamHandle, gameHandle, title, fields } ->
         { teamHandle
         , gameHandle
         , title
-        , profile: ProfileFormInput.emptyInput fields
+        , profile: ProfileFormInput.emptyInput { platforms, fields }
         , otherError: false
         , submitting: false
         }

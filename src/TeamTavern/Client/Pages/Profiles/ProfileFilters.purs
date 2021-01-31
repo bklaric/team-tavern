@@ -3,6 +3,7 @@ module TeamTavern.Client.Pages.Profiles.ProfileFilters (Option, Field, Filters, 
 import Prelude
 
 import Async (Async)
+import CSS as Css
 import Data.Array as Array
 import Data.Const (Const)
 import Data.List.NonEmpty as NonEmptyList
@@ -12,9 +13,10 @@ import Data.MultiMap as MultiMap
 import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
+import Halogen.HTML.CSS as HC
 import Halogen.HTML.Events as HE
 import TeamTavern.Client.Components.Card (cardHeading, cardSection, cardSectionHeading)
-import TeamTavern.Client.Components.Input (platformIdCheckboxes, inputGroup, inputLabel)
+import TeamTavern.Client.Components.Input (platformCheckboxes, inputGroup, inputLabel)
 import TeamTavern.Client.Components.InputGroup (timeRangeInputGroup)
 import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.Select.MultiTreeSelect as MultiTreeSelect
@@ -171,9 +173,15 @@ render state =
         then Array.singleton $
             cardSection
             [ HH.div [ HS.class_ "filter-input-groups" ] $
-                ( case platformIdCheckboxes state.allPlatforms state.selectedPlatforms UpdatePlatform of
+                ( case platformCheckboxes state.allPlatforms state.selectedPlatforms UpdatePlatform of
                     Nothing -> []
-                    Just checkboxes -> [ inputGroup [ inputLabel "fas fa-laptop" "Platform", checkboxes ] ]
+                    Just checkboxes ->
+                        [ inputGroup
+                            [ inputLabel "fas fa-laptop" "Platform"
+                            , HH.div [ HC.style $ Css.height $ Css.px 7.0 ] [] -- filler
+                            , checkboxes
+                            ]
+                        ]
                 )
                 <> ( state.fields <#> fieldInputGroup state.fieldValues UpdateFieldValues )
                 <> [ newOrReturningInputGroup state.newOrReturning UpdateNewOrReturning ]

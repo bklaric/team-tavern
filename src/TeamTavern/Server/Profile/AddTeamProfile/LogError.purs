@@ -23,7 +23,7 @@ type AddProfileError = Variant
 profileHandler :: forall fields. Lacks "profile" fields =>
     Builder (Record fields) { profile :: ProfileErrors -> Effect Unit | fields }
 profileHandler = Builder.insert (SProxy :: SProxy "profile") \errors ->
-    foreachE (Array.fromFoldable errors) $ match { ambitions: logLines }
+    foreachE (Array.fromFoldable errors) $ match { platforms: logLines, ambitions: logLines }
 
 logError :: AddProfileError -> Effect Unit
 logError = Log.logError "Error creating team profile"

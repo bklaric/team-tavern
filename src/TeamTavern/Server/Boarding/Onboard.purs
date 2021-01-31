@@ -12,10 +12,10 @@ import Data.List.Types (NonEmptyList)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
 import Data.Symbol (SProxy(..))
-import Data.Variant (Variant, inj, match, onMatch)
+import Data.Variant (Variant, inj, match)
 import Effect (Effect, foreachE)
 import Perun.Request.Body (Body)
-import Perun.Response (Response, badRequest_, internalServerError__, ok_)
+import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, ok_, unauthorized__)
 import Postgres.Pool (Pool)
 import Prim.Row (class Lacks)
 import Record.Builder (Builder)
@@ -31,12 +31,12 @@ import TeamTavern.Server.Infrastructure.ReadJsonBody (readJsonBody)
 import TeamTavern.Server.Player.UpdatePlayer.UpdateDetails (updateDetails)
 import TeamTavern.Server.Player.UpdatePlayer.ValidatePlayer (PlayerErrors, validatePlayerV)
 import TeamTavern.Server.Profile.AddPlayerProfile.AddProfile (addProfile)
-import TeamTavern.Server.Profile.AddPlayerProfile.LoadFields (loadFields)
+import TeamTavern.Server.Profile.AddPlayerProfile.LoadFields as Player
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile (validateProfileV)
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile as PlayerProfile
 import TeamTavern.Server.Profile.AddTeamProfile.AddProfile as AddTeamProfile
+import TeamTavern.Server.Profile.AddTeamProfile.LoadFields as Team
 import TeamTavern.Server.Profile.AddTeamProfile.ValidateProfile as TeamProfile
-import TeamTavern.Server.Profile.Infrastructure.ConvertFields (convertFields)
 import TeamTavern.Server.Team.Create.AddTeam (addTeam)
 import TeamTavern.Server.Team.Infrastructure.GenerateHandle (generateHandle)
 import TeamTavern.Server.Team.Infrastructure.ValidateTeam (TeamErrors, validateTeamV)
@@ -84,7 +84,7 @@ logError = Log.logError "Error onboarding"
     )
 
 errorResponse :: OnboardError -> Response
-errorResponse = onMatch
+errorResponse = match
     { invalidBody: \errors ->
         errors
         # fromFoldable
@@ -96,8 +96,11 @@ errorResponse = onMatch
             }
         # (writeJSON :: BadContent -> String)
         # badRequest_
+    , client: const badRequest__
+    , internal: const internalServerError__
+    , notAuthenticated: const unauthorized__
+    , notAuthorized: const forbidden__
     }
-    (const internalServerError__)
 
 successResponse :: OkContent -> Response
 successResponse = ok_ <<< (writeJSON :: OkContent -> String)
@@ -116,35 +119,38 @@ onboard pool cookies body =
     (content :: RequestContent) <- readJsonBody body
 
     -- Start the transaction.
-    pool # transaction \client -> do
-        -- Read fields from database.
-        game <- loadFields client content.gameHandle
-
+    pool # transaction \client ->
         case content of
-            { ilk: 1, player: Just player, playerProfile: Just profile } -> do
-                { player', profile' } <-
-                    { player': _, profile': _ }
-                    <$> validatePlayerV player
-                    <*> validateProfileV game profile
-                    # AsyncV.toAsync
-                    # label (SProxy :: SProxy "invalidBody")
-                updateDetails client (unwrap cookieInfo.id) player'
-                addProfile client (unwrap cookieInfo.id)
-                    { handle: content.gameHandle
-                    , nickname: unwrap cookieInfo.nickname
-                    }
-                    profile'
-                pure { teamHandle: Nothing }
-            { ilk: 2, team: Just team, teamProfile: Just profile } -> do
-                { team', profile' } <-
-                    { team': _, profile': _ }
-                    <$> validateTeamV team
-                    <*> TeamProfile.validateProfileV (convertFields game.fields) profile
-                    # AsyncV.toAsync
-                    # label (SProxy :: SProxy "invalidBody")
-                let generatedHandle = generateHandle team'.name
-                { handle } <- addTeam client cookieInfo.id generatedHandle team'
-                AddTeamProfile.addProfile
-                    client cookieInfo.id handle content.gameHandle profile'
-                pure { teamHandle: Just handle }
-            _ -> Async.left $ inj (SProxy :: SProxy "client") []
+        { ilk: 1, player: Just player, playerProfile: Just profile } -> do
+            -- Read fields from database.
+            game <- Player.loadFields client content.gameHandle
+
+            { player', profile' } <-
+                { player': _, profile': _ }
+                <$> validatePlayerV player
+                <*> validateProfileV game profile
+                # AsyncV.toAsync
+                # label (SProxy :: SProxy "invalidBody")
+            updateDetails client (unwrap cookieInfo.id) player'
+            addProfile client (unwrap cookieInfo.id)
+                { handle: content.gameHandle
+                , nickname: unwrap cookieInfo.nickname
+                }
+                profile'
+            pure { teamHandle: Nothing }
+        { ilk: 2, team: Just team, teamProfile: Just profile } -> do
+            -- Read fields from database.
+            game <- Team.loadFields client content.gameHandle
+
+            { team', profile' } <-
+                { team': _, profile': _ }
+                <$> validateTeamV team
+                <*> TeamProfile.validateProfileV game profile
+                # AsyncV.toAsync
+                # label (SProxy :: SProxy "invalidBody")
+            let generatedHandle = generateHandle team'.name
+            { handle } <- addTeam client cookieInfo.id generatedHandle team'
+            AddTeamProfile.addProfile
+                client cookieInfo.id handle content.gameHandle profile'
+            pure { teamHandle: Just handle }
+        _ -> Async.left $ inj (SProxy :: SProxy "client") []

@@ -96,9 +96,9 @@ inputGroupsHeading' children = HH.h2 [ HS.class_ "input-groups-heading" ] childr
 inputGroupsHeading :: forall slots action. String -> HH.HTML slots action
 inputGroupsHeading text = inputGroupsHeading' [ HH.text text ]
 
-platformIdCheckboxes :: forall action slots.
+platformCheckboxes :: forall action slots.
     Platforms -> Array Platform -> (Platform -> action) -> Maybe (HH.HTML slots action)
-platformIdCheckboxes allPlatforms selectedPlatforms onValue =
+platformCheckboxes allPlatforms selectedPlatforms onValue =
     if Array.null allPlatforms.tail
     then Nothing
     else Just $
@@ -110,9 +110,9 @@ platformIdCheckboxes allPlatforms selectedPlatforms onValue =
         BattleNet -> checkbox radioBattleNetSvg  "BattleNet" (Array.elem BattleNet selectedPlatforms) (onValue BattleNet)
         _ -> HH.div_ []
 
-platformIdRadios :: forall action slots.
+platformRadios :: forall action slots.
     Platforms -> Platform -> (Platform -> action) -> Maybe (HH.HTML slots action)
-platformIdRadios platforms selectedIdIlk onInput =
+platformRadios platforms selectedIdIlk onInput =
     if Array.null platforms.tail
     then Nothing
     else Just $
@@ -129,7 +129,7 @@ platformIdHeading :: forall action slots.
 platformIdHeading platforms selectedIdIlk onInput =
     HH.h2 [ HS.class_ "platform-id-heading" ] $
     [ HH.text "Platform ID" ]
-    <> case platformIdRadios platforms selectedIdIlk onInput of
+    <> case platformRadios platforms selectedIdIlk onInput of
         Nothing -> []
         Just radios -> [ radios ]
 
