@@ -12,6 +12,7 @@ import Halogen as H
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Content (contentDescription, contentHeader, contentHeading)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
+import TeamTavern.Client.Components.Player.ProfileDetails (PlatformIdSlots)
 import TeamTavern.Client.Components.Popover (subscribeToWindowClick)
 import TeamTavern.Client.Pages.Player.CreateProfileButton as CreateProfileButton
 import TeamTavern.Client.Pages.Player.CreateTeam (createTeam)
@@ -64,10 +65,8 @@ data Action
 
 type Slot = H.Slot (Const Void) Void Unit
 
-type ChildSlots =
+type ChildSlots = PlatformIdSlots
     ( discordTag :: Copyable.Slot String
-    , riotId :: Copyable.Slot String
-    , battleTag :: Copyable.Slot String
     , team :: NavigationAnchor.Slot String
     , games :: NavigationAnchor.Slot String
     , editPlayer :: EditDetails.Slot

@@ -13,18 +13,33 @@ import Data.Variant (inj)
 import TeamTavern.Routes.Shared.Platform (Platform(..), Platforms)
 import TeamTavern.Server.Profile.Infrastructure.ValidateBattleTag (BattleTag, validateBattleTag)
 import TeamTavern.Server.Profile.Infrastructure.ValidateBattleTag as BattleTag
+import TeamTavern.Server.Profile.Infrastructure.ValidateFriendCode (FriendCode, validateFriendCode)
+import TeamTavern.Server.Profile.Infrastructure.ValidateFriendCode as FriendCode
+import TeamTavern.Server.Profile.Infrastructure.ValidateGamertag (Gamertag, validateGamertag)
+import TeamTavern.Server.Profile.Infrastructure.ValidateGamertag as Gamertag
+import TeamTavern.Server.Profile.Infrastructure.ValidatePsnId (PsnId, validatePsnId)
+import TeamTavern.Server.Profile.Infrastructure.ValidatePsnId as PsnId
 import TeamTavern.Server.Profile.Infrastructure.ValidateRiotId (RiotId, validateRiotId)
 import TeamTavern.Server.Profile.Infrastructure.ValidateRiotId as RiotId
 import TeamTavern.Server.Profile.Infrastructure.ValidateSteamUrl (validateSteamUrl)
 import TeamTavern.Server.Profile.Infrastructure.ValidateUrl (Url)
 import TeamTavern.Server.Profile.Infrastructure.ValidateUrl as Url
 
-data PlatformId = SteamUrl Url | RiotId RiotId | BattleTag BattleTag
+data PlatformId
+    = SteamUrl Url
+    | RiotId RiotId
+    | BattleTag BattleTag
+    | PsnId PsnId
+    | Gamertag Gamertag
+    | FriendCode FriendCode
 
 toString :: PlatformId -> String
 toString (SteamUrl url) = Url.toString url
 toString (RiotId riotId) = RiotId.toString riotId
 toString (BattleTag battleTag) = BattleTag.toString battleTag
+toString (PsnId psnId) = PsnId.toString psnId
+toString (Gamertag gamertag) = Gamertag.toString gamertag
+toString (FriendCode friendCode) = FriendCode.toString friendCode
 
 validatePlatformId
     :: forall errors
@@ -52,5 +67,15 @@ validatePlatformId platforms platform platformId =
         <#> BattleTag
         # Validated.fromEither
         # ValidatedL.label (SProxy :: SProxy "platformId")
-    ilk -> Validated.invalid $ NEL.singleton $ inj (SProxy :: SProxy "platformId")
-        [ "Error validating platform id, platform is unknown: " <> show ilk ]
+    PlayStation -> validatePsnId platformId
+        <#> PsnId
+        # Validated.fromEither
+        # ValidatedL.label (SProxy :: SProxy "platformId")
+    Xbox -> validateGamertag platformId
+        <#> Gamertag
+        # Validated.fromEither
+        # ValidatedL.label (SProxy :: SProxy "platformId")
+    Switch -> validateFriendCode platformId
+        <#> FriendCode
+        # Validated.fromEither
+        # ValidatedL.label (SProxy :: SProxy "platformId")

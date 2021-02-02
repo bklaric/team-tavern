@@ -18,7 +18,7 @@ import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
 import TeamTavern.Client.Components.Pagination (pagination)
 import TeamTavern.Client.Components.Player.PlayerDetails (playerDetails)
-import TeamTavern.Client.Components.Player.ProfileDetails (profileDetails')
+import TeamTavern.Client.Components.Player.ProfileDetails (PlatformIdSlots, profileDetails')
 import TeamTavern.Client.Components.Profile (profileHeader, profileHeaderItem, profileHeading, profileSubheading)
 import TeamTavern.Client.Script.Cookie (PlayerInfo)
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
@@ -93,12 +93,10 @@ data Output = PageChanged Int | PreboardingClicked
 
 type Slot = H.Slot (Const Void) Output Unit
 
-type ChildSlots =
+type ChildSlots = PlatformIdSlots
     ( players :: Anchor.Slot String
     , messagePlayer :: Anchor.Slot String
     , discordTag :: Copyable.Slot String
-    , riotId :: Copyable.Slot String
-    , battleTag :: Copyable.Slot String
     )
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)

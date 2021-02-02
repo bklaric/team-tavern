@@ -8,9 +8,17 @@ import Data.Array (intercalate)
 import Data.Array as Array
 import Data.Maybe (Maybe(..))
 import Halogen.HTML as HH
-import TeamTavern.Client.Components.Detail (battleTagDetail, detail, fieldDetail, riotIdDetail, steamUrlDetail, urlDetail)
+import TeamTavern.Client.Components.Detail (battleTagDetail, detail, fieldDetail, friendCodeDetail, gamertagDetail, psnIdDetail, riotIdDetail, steamUrlDetail, urlDetail)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Shared.Platform (Platform(..))
+
+type PlatformIdSlots slots =
+    ( riotId :: Copyable.Slot String
+    , battleTag :: Copyable.Slot String
+    , psnId :: Copyable.Slot String
+    , gamertag :: Copyable.Slot String
+    , friendCode :: Copyable.Slot String
+    | slots )
 
 profileDetails :: forall left slots action.
     Platform
@@ -33,7 +41,7 @@ profileDetails :: forall left slots action.
         , optionKeys :: Maybe (Array String)
         }
     -> Boolean
-    -> Array (HH.ComponentHTML action (riotId :: Copyable.Slot String, battleTag :: Copyable.Slot String | slots) (Async left))
+    -> Array (HH.ComponentHTML action (PlatformIdSlots slots) (Async left))
 profileDetails platform platformId fields fieldValues newOrReturning =
     profileDetails' platform platformId
     ( fields
@@ -85,13 +93,15 @@ profileDetails' :: forall left slots action.
             })
         }
     -> Boolean
-    -> Array (HH.ComponentHTML action (riotId :: Copyable.Slot String, battleTag :: Copyable.Slot String | slots) (Async left))
+    -> Array (HH.ComponentHTML action (PlatformIdSlots slots) (Async left))
 profileDetails' platform platformId fieldValues newOrReturning =
     case platform of
     Steam -> [ steamUrlDetail platformId ]
     Riot -> [ riotIdDetail platformId ]
     BattleNet -> [ battleTagDetail platformId ]
-    _ -> []
+    PlayStation -> [ psnIdDetail platformId ]
+    Xbox -> [ gamertagDetail platformId ]
+    Switch -> [ friendCodeDetail platformId ]
     <>
     ( fieldValues
     <#> ( \{ field, url, option, options } ->

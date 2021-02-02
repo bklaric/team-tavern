@@ -12,12 +12,12 @@ import Data.Variant (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
-import TeamTavern.Client.Components.Input (checkboxInput, domainInputLabel, platformIdLabel, inputError, inputGroup, inputLabel, inputUnderlabel, inputUnderlabel', requiredTextLineInput, textInput_, textLineInput)
+import TeamTavern.Client.Components.Input (checkboxInput, domainInputLabel, inputError, inputGroup, inputLabel, inputUnderlabel, inputUnderlabel', platformIdLabel, requiredTextLineInput, textInput_, textLineInput)
 import TeamTavern.Client.Components.Select.MultiSelect (multiSelectIndexed)
 import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.Select.SingleSelect (singleSelectIndexed)
 import TeamTavern.Client.Components.Select.SingleSelect as SingleSelect
-import TeamTavern.Client.Snippets.Brands (inputBattleNetSvg, inputRiotSvg, inputSteamSvg)
+import TeamTavern.Client.Snippets.Brands (inputBattleNetSvg, inputPlayStationSvg, inputRiotSvg, inputSteamSvg, inputSwitchSvg, inputXboxSvg)
 import TeamTavern.Routes.Shared.Platform (Platform(..))
 
 platformIdInputGroup :: forall slots action.
@@ -28,7 +28,9 @@ platformIdInputGroup platform platformId onValue error =
         Steam -> [ platformIdLabel inputSteamSvg "Steam profile" (Just "steamcommunity.com") ]
         Riot -> [ platformIdLabel inputRiotSvg "Riot ID" Nothing ]
         BattleNet -> [ platformIdLabel inputBattleNetSvg "BattleTag" Nothing ]
-        _ -> []
+        PlayStation -> [ platformIdLabel inputPlayStationSvg "PSN ID" Nothing ]
+        Xbox -> [ platformIdLabel inputXboxSvg "Gamertag" Nothing ]
+        Switch -> [ platformIdLabel inputSwitchSvg "Friend code" Nothing ]
     )
     <>
     [ requiredTextLineInput platformId onValue ]
@@ -52,7 +54,9 @@ platformIdInputGroup platform platformId onValue error =
                 , HH.a [ HP.href "https://account.blizzard.com/details", HP.target "_blank" ] [ HH.text "account.blizzard.com" ]
                 ]
             ]
-        _ -> []
+        PlayStation -> []
+        Xbox -> [ inputUnderlabel "Make sure to include your suffix (e.g. #123) if you have one."]
+        Switch -> [ inputUnderlabel "Example: SW-7417-3522-1808" ]
     )
     <>
     inputError error
@@ -60,7 +64,9 @@ platformIdInputGroup platform platformId onValue error =
         Steam -> "This doesn't look like a valid Steam profile URL."
         Riot -> "This doesn't look like a valid Riot ID."
         BattleNet -> "This doesn't look like a valid BattleTag."
-        _ -> "This doesn't look like a valid platform ID."
+        PlayStation -> "This doesn't look like a valid PSN ID."
+        Xbox -> "This doesn't look like a valid Gamertag."
+        Switch -> "This doesn't look like a valid friend code."
 
 type Option =
     { key :: String

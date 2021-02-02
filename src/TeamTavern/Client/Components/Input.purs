@@ -11,7 +11,7 @@ import TeamTavern.Client.Components.Checkbox (checkbox)
 import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.Radio (radio)
 import TeamTavern.Client.Script.Request (justIfInt, nothingIfEmpty)
-import TeamTavern.Client.Snippets.Brands (radioBattleNetSvg, radioRiotSvg, radioSteamSvg)
+import TeamTavern.Client.Snippets.Brands (radioBattleNetSvg, radioPlayStationSvg, radioRiotSvg, radioSteamSvg, radioSwitchSvg, radioXboxSvg)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Shared.Platform (Platform(..), Platforms)
 import Unsafe.Coerce (unsafeCoerce)
@@ -105,31 +105,35 @@ platformCheckboxes allPlatforms selectedPlatforms onValue =
         HH.div [ HS.class_ "platform-id-checkboxes" ] $
         Array.cons allPlatforms.head allPlatforms.tail <#>
         case _ of
-        Steam     -> checkbox radioSteamSvg      "Steam"     (Array.elem Steam     selectedPlatforms) (onValue Steam)
-        Riot      -> checkbox radioRiotSvg       "Riot"      (Array.elem Riot      selectedPlatforms) (onValue Riot)
-        BattleNet -> checkbox radioBattleNetSvg  "BattleNet" (Array.elem BattleNet selectedPlatforms) (onValue BattleNet)
-        _ -> HH.div_ []
+        Steam       -> checkbox radioSteamSvg       "Steam"       (Array.elem Steam       selectedPlatforms) (onValue Steam)
+        Riot        -> checkbox radioRiotSvg        "Riot"        (Array.elem Riot        selectedPlatforms) (onValue Riot)
+        BattleNet   -> checkbox radioBattleNetSvg   "BattleNet"   (Array.elem BattleNet   selectedPlatforms) (onValue BattleNet)
+        PlayStation -> checkbox radioPlayStationSvg "PlayStation" (Array.elem PlayStation selectedPlatforms) (onValue PlayStation)
+        Xbox        -> checkbox radioXboxSvg        "Xbox"        (Array.elem Xbox        selectedPlatforms) (onValue Xbox)
+        Switch      -> checkbox radioSwitchSvg      "Switch"      (Array.elem Switch      selectedPlatforms) (onValue Switch)
 
 platformRadios :: forall action slots.
     Platforms -> Platform -> (Platform -> action) -> Maybe (HH.HTML slots action)
-platformRadios platforms selectedIdIlk onInput =
+platformRadios platforms selectedPlatform onInput =
     if Array.null platforms.tail
     then Nothing
     else Just $
         HH.div [ HS.class_ "platform-id-radios" ] $
         Array.cons platforms.head platforms.tail <#>
         case _ of
-        Steam     | selected <- selectedIdIlk == Steam     -> radio radioSteamSvg     "Steam"      selected $ onInput Steam
-        Riot      | selected <- selectedIdIlk == Riot      -> radio radioRiotSvg      "Riot"       selected $ onInput Riot
-        BattleNet | selected <- selectedIdIlk == BattleNet -> radio radioBattleNetSvg "Battle.net" selected $ onInput BattleNet
-        _ -> HH.div_ []
+        Steam       | selected <- selectedPlatform == Steam       -> radio radioSteamSvg       "Steam"       selected $ onInput Steam
+        Riot        | selected <- selectedPlatform == Riot        -> radio radioRiotSvg        "Riot"        selected $ onInput Riot
+        BattleNet   | selected <- selectedPlatform == BattleNet   -> radio radioBattleNetSvg   "Battle.net"  selected $ onInput BattleNet
+        PlayStation | selected <- selectedPlatform == PlayStation -> radio radioPlayStationSvg "PlayStation" selected $ onInput PlayStation
+        Xbox        | selected <- selectedPlatform == Xbox        -> radio radioXboxSvg        "Xbox"        selected $ onInput Xbox
+        Switch      | selected <- selectedPlatform == Switch      -> radio radioSwitchSvg      "Switch"      selected $ onInput Switch
 
 platformIdHeading :: forall action slots.
     Platforms -> Platform -> (Platform -> action) -> HH.HTML slots action
-platformIdHeading platforms selectedIdIlk onInput =
+platformIdHeading platforms selectedPlatform onInput =
     HH.h2 [ HS.class_ "platform-id-heading" ] $
     [ HH.text "Platform ID" ]
-    <> case platformRadios platforms selectedIdIlk onInput of
+    <> case platformRadios platforms selectedPlatform onInput of
         Nothing -> []
         Just radios -> [ radios ]
 

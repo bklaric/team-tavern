@@ -3,7 +3,6 @@ module TeamTavern.Client.Pages.Player.Profiles (profiles) where
 import Prelude
 
 import Async (Async)
-import Client.Components.Copyable as Copyable
 import Data.Array as Array
 import Data.Symbol (SProxy(..))
 import Halogen.HTML as HH
@@ -13,7 +12,7 @@ import TeamTavern.Client.Components.Detail (detailColumn, detailColumnHeading4, 
 import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.Missing (missing)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
-import TeamTavern.Client.Components.Player.ProfileDetails (profileDetails)
+import TeamTavern.Client.Components.Player.ProfileDetails (PlatformIdSlots, profileDetails)
 import TeamTavern.Client.Components.Profile (profileHeader, profileHeaderItem, profileHeading, profileSubheading)
 import TeamTavern.Client.Pages.Player.CreateProfileButton (createProfileButton)
 import TeamTavern.Client.Pages.Player.CreateProfileButton as CreateProfileButton
@@ -21,11 +20,9 @@ import TeamTavern.Client.Pages.Player.Status (Status(..))
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
 import TeamTavern.Routes.ViewPlayer as ViewPlayer
 
-type ChildSlots children =
+type ChildSlots children = PlatformIdSlots
     ( games :: NavigationAnchor.Slot String
     , createProfile :: CreateProfileButton.Slot
-    , riotId :: Copyable.Slot String
-    , battleTag :: Copyable.Slot String
     | children)
 
 profiles
