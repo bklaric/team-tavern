@@ -12,45 +12,61 @@ import Data.Variant (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
-import TeamTavern.Client.Components.Input (checkboxInput, domainInputLabel, externalIdLabel, inputError, inputGroup, inputLabel, inputUnderlabel, inputUnderlabel', requiredTextLineInput, textInput_, textLineInput)
+import TeamTavern.Client.Components.Input (checkboxInput, domainInputLabel, inputError, inputGroup, inputLabel, inputUnderlabel, inputUnderlabel', platformIdLabel, requiredTextLineInput, textInput_, textLineInput)
 import TeamTavern.Client.Components.Select.MultiSelect (multiSelectIndexed)
 import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.Select.SingleSelect (singleSelectIndexed)
 import TeamTavern.Client.Components.Select.SingleSelect as SingleSelect
-import TeamTavern.Client.Snippets.Brands (inputRiotSvg, inputSteamSvg)
+import TeamTavern.Client.Snippets.Brands (inputBattleNetSvg, inputPlayStationSvg, inputRiotSvg, inputSteamSvg, inputSwitchSvg, inputXboxSvg)
+import TeamTavern.Routes.Shared.Platform (Platform(..))
 
-externalIdInputGroup :: forall slots action.
-    Int -> String -> (String -> action) -> Boolean -> HH.HTML slots action
-externalIdInputGroup externalIdIlk externalId onValue error =
+platformIdInputGroup :: forall slots action.
+    Platform -> String -> (String -> action) -> Boolean -> HH.HTML slots action
+platformIdInputGroup platform platformId onValue error =
     inputGroup $
-    ( case externalIdIlk of
-        1 -> [ externalIdLabel inputSteamSvg "Steam profile" (Just "steamcommunity.com") ]
-        2 -> [ externalIdLabel inputRiotSvg "Riot ID" Nothing ]
-        _ -> []
+    ( case platform of
+        Steam -> [ platformIdLabel inputSteamSvg "Steam profile" (Just "steamcommunity.com") ]
+        Riot -> [ platformIdLabel inputRiotSvg "Riot ID" Nothing ]
+        BattleNet -> [ platformIdLabel inputBattleNetSvg "BattleTag" Nothing ]
+        PlayStation -> [ platformIdLabel inputPlayStationSvg "PSN ID" Nothing ]
+        Xbox -> [ platformIdLabel inputXboxSvg "Gamertag" Nothing ]
+        Switch -> [ platformIdLabel inputSwitchSvg "Friend code" Nothing ]
     )
     <>
-    [ requiredTextLineInput externalId onValue ]
+    [ requiredTextLineInput platformId onValue ]
     <>
-    ( case externalIdIlk of
-        1 ->
+    ( case platform of
+        Steam ->
             [ inputUnderlabel "Example: steamcommunity.com/id/username"
             , inputUnderlabel "Example: steamcommunity.com/profile/76561198821728791"
             ]
-        2 ->
+        Riot ->
             [ inputUnderlabel "Example: username#12345"
             , inputUnderlabel'
                 [ HH.text "You can find out your Riot ID at "
                 , HH.a [ HP.href "https://account.riotgames.com/", HP.target "_blank" ] [ HH.text "account.riotgames.com" ]
                 ]
             ]
-        _ -> []
+        BattleNet ->
+            [ inputUnderlabel "Example: username#1234"
+            , inputUnderlabel'
+                [ HH.text "You can find out your BattleTag at "
+                , HH.a [ HP.href "https://account.blizzard.com/details", HP.target "_blank" ] [ HH.text "account.blizzard.com" ]
+                ]
+            ]
+        PlayStation -> []
+        Xbox -> [ inputUnderlabel "Make sure to include your suffix (e.g. #123) if you have one."]
+        Switch -> [ inputUnderlabel "Example: SW-7417-3522-1808" ]
     )
     <>
     inputError error
-        case externalIdIlk of
-        1 -> "This doesn't look like a valid Steam profile URL."
-        2 -> "This doesn't look like a valid Riot ID."
-        _ -> "This doesn't look like a valid external ID."
+        case platform of
+        Steam -> "This doesn't look like a valid Steam profile URL."
+        Riot -> "This doesn't look like a valid Riot ID."
+        BattleNet -> "This doesn't look like a valid BattleTag."
+        PlayStation -> "This doesn't look like a valid PSN ID."
+        Xbox -> "This doesn't look like a valid Gamertag."
+        Switch -> "This doesn't look like a valid friend code."
 
 type Option =
     { key :: String

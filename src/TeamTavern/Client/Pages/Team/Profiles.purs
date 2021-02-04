@@ -52,7 +52,7 @@ profiles teamHandle profiles' status editProfileModalShown =
         SignedInOwner -> "Your team hasn't created any profiles."
         _ -> "This team hasn't created any profiles." ] ]
     else profiles' <#> \profile -> let
-        profileDetails' = profileDetails profile.fields profile.fieldValues profile.newOrReturning
+        profileDetails' = profileDetails profile
         ambitions = textDetail profile.ambitions
         in
         cardSection $

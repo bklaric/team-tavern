@@ -6,6 +6,7 @@ import Jarilo.Path (type (:>), End)
 import Jarilo.Query (Mandatory)
 import Jarilo.Route (Route)
 import Jarilo.Segment (Capture, Literal)
+import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
 
 type RouteParams =
     { nickname :: String
@@ -15,7 +16,7 @@ type RouteParams =
 type OkContentProfile =
     { handle :: String
     , title :: String
-    , externalIdIlk :: Int
+    , platforms :: Platforms
     , fields :: Array
         { key :: String
         , ilk :: Int
@@ -27,7 +28,8 @@ type OkContentProfile =
             , label :: String
             })
         }
-    , externalId :: String
+    , platform :: Platform
+    , platformId :: String
     , fieldValues :: Array
         { fieldKey :: String
         , url :: Maybe String

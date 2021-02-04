@@ -3,6 +3,7 @@ module TeamTavern.Server.Profile.AddPlayerProfile.LoadFields (Option, Field, Gam
 import Async (Async)
 import Data.Maybe (Maybe)
 import Postgres.Query (class Querier, Query(..), (:))
+import TeamTavern.Routes.Shared.Platform (Platforms)
 import TeamTavern.Server.Infrastructure.Error (InternalError)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstInternal)
 
@@ -22,14 +23,17 @@ type Field =
     }
 
 type Game =
-    { externalIdIlk :: Int
+    { platforms :: Platforms
     , fields :: Array Field
     }
 
 queryString :: Query
 queryString = Query """
     select
-        game.external_id_ilk as "externalIdIlk",
+        json_build_object(
+            'head', game.platforms[1],
+            'tail', game.platforms[2:]
+        ) as platforms,
         coalesce(
             json_agg(
                 json_build_object(
@@ -43,7 +47,7 @@ queryString = Query """
             '[]'
         ) as fields
     from game
-        join (
+        left join (
             select
                 field.*,
                 json_agg(

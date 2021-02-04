@@ -73,7 +73,7 @@ languagesInputGroup
     -> ComponentHTML action (language :: MultiSelect.Slot String Unit | slots) (Async left)
 languagesInputGroup value onValue =
     inputGroup
-    [ inputLabel "fas fa-comments" "Languages"
+    [ inputLabel "fas fa-comments" "Language"
     , multiSelect (SProxy :: SProxy "language")
         { options: allLanguages
         , selected: value

@@ -10,6 +10,7 @@ import Perun.Response (Response, internalServerError__, notFound__, ok_)
 import Postgres.Pool (Pool)
 import Postgres.Query (Query(..), (:))
 import Simple.JSON (writeJSON)
+import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
 import TeamTavern.Server.Infrastructure.Error (LoadSingleError)
 import TeamTavern.Server.Infrastructure.Log (logLoadSingleError)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstNotFound, teamAdjustedWeekdayFrom, teamAdjustedWeekdayTo, teamAdjustedWeekendFrom, teamAdjustedWeekendTo)
@@ -19,6 +20,8 @@ type RouteParams = { handle :: String, timezone :: String }
 type Profile =
     { handle :: String
     , title :: String
+    , allPlatforms :: Platforms
+    , selectedPlatforms :: Array Platform
     , fields :: Array
         { key :: String
         , label :: String
@@ -106,6 +109,8 @@ queryString timezone = Query $ """
                 json_build_object(
                     'handle', profile.handle,
                     'title', profile.title,
+                    'allPlatforms', profile.all_platforms,
+                    'selectedPlatforms', profile.selected_platforms,
                     'fields', profile.fields,
                     'fieldValues', profile.field_values,
                     'newOrReturning', profile.new_or_returning,
@@ -125,6 +130,11 @@ queryString timezone = Query $ """
                 profile.team_id,
                 game.handle,
                 game.title,
+                json_build_object(
+                    'head', game.platforms[1],
+                    'tail', game.platforms[2:]
+                ) as all_platforms,
+                profile.platforms as selected_platforms,
                 coalesce(fields.fields, '[]') as fields,
                 coalesce(field_values.field_values, '[]') as field_values,
                 profile.new_or_returning,

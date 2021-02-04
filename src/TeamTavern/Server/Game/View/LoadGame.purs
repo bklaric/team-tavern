@@ -12,7 +12,10 @@ queryString = Query """
     select
         game.handle,
         game.title,
-        game.external_id_ilk as "externalIdIlk",
+        json_build_object(
+            'head', game.platforms[1],
+            'tail', game.platforms[2:]
+        ) as "platforms",
         coalesce(
             json_agg(
                 json_build_object(

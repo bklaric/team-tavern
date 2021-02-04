@@ -7,6 +7,7 @@ import Jarilo.Path (type (:>), End)
 import Jarilo.Query (NoQuery)
 import Jarilo.Route (Route)
 import Jarilo.Segment (Literal)
+import TeamTavern.Routes.Shared.Platform (Platform)
 import Type (type ($))
 
 type Onboard = Route
@@ -48,7 +49,8 @@ type TeamRequestContent =
     }
 
 type PlayerProfileRequestContent =
-    { externalId :: String
+    { platform :: Platform
+    , platformId :: String
     , fieldValues :: Array
         { fieldKey :: String
         , url :: Maybe String
@@ -60,7 +62,8 @@ type PlayerProfileRequestContent =
     }
 
 type TeamProfileRequestContent =
-    { fieldValues :: Array
+    { platforms :: Array Platform
+    , fieldValues :: Array
         { fieldKey :: String
         , optionKeys :: Array String
         }
@@ -93,10 +96,12 @@ type BadContent = Array $ Variant
         , about :: Array String
         )
     , playerProfile :: Array $ Variant
-        ( externalId :: Array String
+        ( platformId :: Array String
         , url :: { message :: Array String, key :: String }
         , ambitions :: Array String
         )
     , teamProfile :: Array $ Variant
-        ( ambitions :: Array String )
+        ( platforms :: Array String
+        , ambitions :: Array String
+        )
     )

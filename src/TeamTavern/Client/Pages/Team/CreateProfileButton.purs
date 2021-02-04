@@ -74,6 +74,7 @@ createProfileButton = Hooks.component $ \_ { teamHandle, profileGameHandles } ->
                         { teamHandle
                         , gameHandle: game''.handle
                         , title: game''.title
+                        , platforms: game''.platforms
                         , fields:
                             game''.fields
                             <#> (\{ key, label, icon, options } ->

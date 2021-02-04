@@ -98,24 +98,6 @@ render (Games games') = HH.div [ HP.class_ $ HH.ClassName "games" ] $
             []
         ]
     )
-    <>
-    [ HH.div
-        [ HP.class_ $ HH.ClassName "game-card" ]
-        [ HH.div
-            [ HP.class_ $ HH.ClassName "game-card-text"
-            , HP.style $ CSS.backgroundImage $ CSS.fromString
-                "linear-gradient(to right,hsla(20, 20%, 19%, 0.87),hsla(20, 20%, 19%, 0.87)), url(/images/soon-banner.png)"
-            ] $
-            [ HH.h2 [ HP.class_ $ HH.ClassName "game-card-coming-soon" ]
-                [ HH.text "More games coming soon!" ]
-            ]
-        , HH.div
-            [ HP.class_ $ HH.ClassName "game-card-image"
-            , HP.style $ CSS.backgroundImage $ CSS.url "/images/soon-banner.png"
-            ]
-            []
-        ]
-    ]
 
 loadGames :: forall left. Async left State
 loadGames = Async.unify do

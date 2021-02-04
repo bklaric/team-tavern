@@ -82,12 +82,12 @@ render (Loaded { team: team', status, showEditTeamModal, showEditProfileModal } 
         { teamHandle: team'.handle
         , gameHandle: profile.handle
         , title: profile.title
+        , allPlatforms: profile.allPlatforms
+        , selectedPlatforms: profile.selectedPlatforms
         , fields: profile.fields
-        , profile:
-            { fieldValues: profile.fieldValues
-            , newOrReturning: profile.newOrReturning
-            , ambitions: intercalate "\n\n" profile.ambitions
-            }
+        , fieldValues: profile.fieldValues
+        , newOrReturning: profile.newOrReturning
+        , ambitions: intercalate "\n\n" profile.ambitions
         }
         (const $ Just HideEditProfileModal)
 render NotFound = HH.p_ [ HH.text "Team could not be found." ]

@@ -18,12 +18,13 @@ import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
 import TeamTavern.Client.Components.Pagination (pagination)
 import TeamTavern.Client.Components.Player.PlayerDetails (playerDetails)
-import TeamTavern.Client.Components.Player.ProfileDetails (profileDetails')
+import TeamTavern.Client.Components.Player.ProfileDetails (PlatformIdSlots, profileDetails')
 import TeamTavern.Client.Components.Profile (profileHeader, profileHeaderItem, profileHeading, profileSubheading)
 import TeamTavern.Client.Script.Cookie (PlayerInfo)
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Client.Snippets.PreventMouseDefault (preventMouseDefault)
+import TeamTavern.Routes.Shared.Platform (Platform)
 import TeamTavern.Server.Profile.ViewPlayerProfilesByGame.LoadProfiles (pageSize)
 import Web.UIEvent.MouseEvent (MouseEvent)
 
@@ -49,8 +50,8 @@ type PlayerProfile =
     , weekdayOnline :: Maybe { from :: String, to :: String }
     , weekendOnline :: Maybe { from :: String, to :: String }
     , about :: Array String
-    , externalIdIlk :: Int
-    , externalId :: String
+    , platform :: Platform
+    , platformId :: String
     , fieldValues :: Array
         { field ::
             { ilk :: Int
@@ -92,11 +93,10 @@ data Output = PageChanged Int | PreboardingClicked
 
 type Slot = H.Slot (Const Void) Output Unit
 
-type ChildSlots =
+type ChildSlots = PlatformIdSlots
     ( players :: Anchor.Slot String
     , messagePlayer :: Anchor.Slot String
     , discordTag :: Copyable.Slot String
-    , riotId :: Copyable.Slot String
     )
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
@@ -131,7 +131,7 @@ render { profiles, profileCount, playerInfo, page } =
     ( profiles <#> \profile -> let
         playerDetails' = playerDetails profile
         profileDetails'' = profileDetails'
-            profile.externalIdIlk profile.externalId profile.fieldValues profile.newOrReturning
+            profile.platform profile.platformId profile.fieldValues profile.newOrReturning
         about = textDetail profile.about
         ambitions = textDetail profile.ambitions
         in

@@ -58,7 +58,7 @@ sendRequest
     -> Async left (Maybe
         ( Either
             ( Array (Variant
-                ( externalId :: Array String
+                ( platformId :: Array String
                 , ambitions :: Array String
                 , url :: { key :: String, message :: Array String }
                 ))
@@ -67,7 +67,8 @@ sendRequest
         ))
 sendRequest state @ { nickname, handle, profile } =
     putNoContent ("/api/players/" <> nickname <> "/profiles/" <> handle)
-    { externalId: profile.externalId
+    { platform: profile.platform
+    , platformId: profile.platformId
     , fieldValues: profile.fieldValues
     , newOrReturning: profile.newOrReturning
     , ambitions: profile.ambitions
@@ -78,7 +79,9 @@ handleAction :: forall output left.
 handleAction (UpdateProfile profile) =
     H.modify_ _
         { profile
-            { externalId = profile.externalId
+            { platform = profile.platform
+            , platformId = profile.platformId
+            , platformIdError = profile.platformIdError
             , fieldValues = profile.fieldValues
             , newOrReturning = profile.newOrReturning
             , ambitions = profile.ambitions
@@ -94,7 +97,7 @@ handleAction (SendRequest event) = do
             foldl
             (\state error ->
                 match
-                { externalId: const state { profile { externalIdError = true } }
+                { platformId: const state { profile { platformIdError = true } }
                 , ambitions: const state { profile { ambitionsError = true } }
                 , url: \{ key } -> state { profile
                     { urlErrors = Array.cons key state.profile.urlErrors } }
@@ -105,7 +108,7 @@ handleAction (SendRequest event) = do
                 { submitting = false
                 , otherError = false
                 , profile
-                    { externalIdError = false
+                    { platformIdError = false
                     , urlErrors = []
                     , ambitionsError = false
                     }
@@ -116,7 +119,7 @@ handleAction (SendRequest event) = do
             { submitting = false
             , otherError = true
             , profile
-                { externalIdError = false
+                { platformIdError = false
                 , urlErrors = []
                 , ambitionsError = false
                 }
@@ -126,13 +129,14 @@ component :: forall query output left. H.Component HH.HTML query Input output (A
 component = H.mkComponent
     { initialState: \
         { nickname
-        , profile: { handle, title, externalIdIlk, fields, externalId, fieldValues, newOrReturning, ambitions }
+        , profile: { handle, title, platforms, fields, platform, platformId, fieldValues, newOrReturning, ambitions }
         } ->
         { nickname
         , handle
         , title
-        , profile: (ProfileFormInput.emptyInput { externalIdIlk, fields })
-            { externalId = externalId
+        , profile: (ProfileFormInput.emptyInput { platforms, fields })
+            { platform = platform
+            , platformId = platformId
             , fieldValues = fieldValues
             , newOrReturning = newOrReturning
             , ambitions = intercalate "\n\n" ambitions

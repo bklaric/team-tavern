@@ -77,7 +77,7 @@ createProfileButton = Hooks.component $ \_ { nickname, profileGameHandles } -> H
                         { nickname
                         , handle: game''.handle
                         , title: game''.title
-                        , externalIdIlk: game''.externalIdIlk
+                        , platforms: game''.platforms
                         , fields: game''.fields
                         }
             )

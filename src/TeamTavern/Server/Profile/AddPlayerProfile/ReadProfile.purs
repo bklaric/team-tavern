@@ -3,6 +3,7 @@ module TeamTavern.Server.Profile.AddPlayerProfile.ReadProfile where
 import Async (Async)
 import Data.Maybe (Maybe)
 import Perun.Request.Body (Body)
+import TeamTavern.Routes.Shared.Platform (Platform)
 import TeamTavern.Server.Infrastructure.Error (ClientError)
 import TeamTavern.Server.Infrastructure.ReadJsonBody (readJsonBody)
 
@@ -14,7 +15,8 @@ type FieldValue =
     }
 
 type Profile =
-    { externalId :: String
+    { platform :: Platform
+    , platformId :: String
     , fieldValues :: Array FieldValue
     , newOrReturning :: Boolean
     , ambitions :: String

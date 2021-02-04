@@ -8,11 +8,20 @@ import Data.Array (intercalate)
 import Data.Array as Array
 import Data.Maybe (Maybe(..))
 import Halogen.HTML as HH
-import TeamTavern.Client.Components.Detail (detail, fieldDetail, riotIdDetail, steamUrlDetail, urlDetail)
+import TeamTavern.Client.Components.Detail (battleTagDetail, detail, fieldDetail, friendCodeDetail, gamertagDetail, psnIdDetail, riotIdDetail, steamUrlDetail, urlDetail)
 import TeamTavern.Client.Snippets.Class as HS
+import TeamTavern.Routes.Shared.Platform (Platform(..))
+
+type PlatformIdSlots slots =
+    ( riotId :: Copyable.Slot String
+    , battleTag :: Copyable.Slot String
+    , psnId :: Copyable.Slot String
+    , gamertag :: Copyable.Slot String
+    , friendCode :: Copyable.Slot String
+    | slots )
 
 profileDetails :: forall left slots action.
-    Int
+    Platform
     -> String
     -> Array
         { ilk :: Int
@@ -32,9 +41,9 @@ profileDetails :: forall left slots action.
         , optionKeys :: Maybe (Array String)
         }
     -> Boolean
-    -> Array (HH.ComponentHTML action (riotId :: Copyable.Slot String | slots) (Async left))
-profileDetails externalIdIlk externalId fields fieldValues newOrReturning =
-    profileDetails' externalIdIlk externalId
+    -> Array (HH.ComponentHTML action (PlatformIdSlots slots) (Async left))
+profileDetails platform platformId fields fieldValues newOrReturning =
+    profileDetails' platform platformId
     ( fields
     <#> ( \field ->
             case fieldValues # Array.find \{ fieldKey } -> fieldKey == field.key of
@@ -64,7 +73,7 @@ profileDetails externalIdIlk externalId fields fieldValues newOrReturning =
     newOrReturning
 
 profileDetails' :: forall left slots action.
-    Int
+    Platform
     -> String
     -> Array
         { field ::
@@ -84,12 +93,15 @@ profileDetails' :: forall left slots action.
             })
         }
     -> Boolean
-    -> Array (HH.ComponentHTML action (riotId :: Copyable.Slot String | slots) (Async left))
-profileDetails' externalIdIlk externalId fieldValues newOrReturning =
-    case externalIdIlk of
-    1 -> [ steamUrlDetail externalId ]
-    2 -> [ riotIdDetail externalId ]
-    _ -> []
+    -> Array (HH.ComponentHTML action (PlatformIdSlots slots) (Async left))
+profileDetails' platform platformId fieldValues newOrReturning =
+    case platform of
+    Steam -> [ steamUrlDetail platformId ]
+    Riot -> [ riotIdDetail platformId ]
+    BattleNet -> [ battleTagDetail platformId ]
+    PlayStation -> [ psnIdDetail platformId ]
+    Xbox -> [ gamertagDetail platformId ]
+    Switch -> [ friendCodeDetail platformId ]
     <>
     ( fieldValues
     <#> ( \{ field, url, option, options } ->

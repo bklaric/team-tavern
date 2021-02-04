@@ -14,12 +14,11 @@ import Postgres.Client (Client)
 import Postgres.Error (Error)
 import Postgres.Query (Query(..), QueryParameter, (:), (:|))
 import Postgres.Result (Result, rows)
+import Simple.JSON (writeImpl)
 import Simple.JSON.Async (read)
-import TeamTavern.Server.Domain.Text (Text)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Server.Profile.AddPlayerProfile.AddFieldValues (ProfileId, addFieldValues)
-import TeamTavern.Server.Profile.AddPlayerProfile.ValidateExternalId (ExternalId)
-import TeamTavern.Server.Profile.AddPlayerProfile.ValidateExternalId as ExternalId
+import TeamTavern.Server.Profile.AddPlayerProfile.ValidatePlatformId as PlatformId
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile (Profile)
 import TeamTavern.Server.Profile.Routes (Identifiers)
 
@@ -48,7 +47,11 @@ type UpdateProfileError errors = Variant
 updateProfileString :: Query
 updateProfileString = Query """
     update player_profile
-    set external_id = $5, ambitions = $6, new_or_returning = $7, updated = now()
+    set platform = $5,
+        platform_id = $6,
+        ambitions = $7,
+        new_or_returning = $8,
+        updated = now()
     from session, player, game
     where session.player_id = $1
     and session.token = $2
@@ -61,24 +64,18 @@ updateProfileString = Query """
     returning player_profile.id as "profileId";
     """
 
-updateProfileParameters ::
-    CookieInfo -> Identifiers -> ExternalId -> Text -> Boolean -> Array QueryParameter
-updateProfileParameters { id, token } { nickname, handle } externalId ambitions newOrReturning =
-    id : token : nickname : handle : ExternalId.toString externalId : ambitions :| newOrReturning
+updateProfileParameters :: CookieInfo -> Identifiers -> Profile -> Array QueryParameter
+updateProfileParameters { id, token } { nickname, handle }
+    { platform, platformId, ambitions, newOrReturning} =
+    id : token : nickname : handle : writeImpl platform : PlatformId.toString platformId
+    : ambitions :| newOrReturning
 
-updateProfile'
-    :: forall errors
-    .  Client
-    -> CookieInfo
-    -> Identifiers
-    -> ExternalId
-    -> Text
-    -> Boolean
-    -> Async (UpdateProfileError errors) ProfileId
-updateProfile' client cookieInfo identifiers externalId ambitions newOrReturning = do
+updateProfile' :: forall errors.
+    Client -> CookieInfo -> Identifiers -> Profile -> Async (UpdateProfileError errors) ProfileId
+updateProfile' client cookieInfo identifiers profile = do
     result <- client
         # query updateProfileString
-            (updateProfileParameters cookieInfo identifiers externalId ambitions newOrReturning)
+            (updateProfileParameters cookieInfo identifiers profile)
         # label (SProxy :: SProxy "databaseError")
     { profileId } :: { profileId :: Int } <- rows result
         # head
@@ -110,9 +107,9 @@ updateProfile
     -> Identifiers
     -> Profile
     -> Async (UpdateProfileError errors) Unit
-updateProfile client cookieInfo identifiers { externalId, fieldValues, newOrReturning, ambitions } = do
+updateProfile client cookieInfo identifiers profile @ { fieldValues } = do
     -- Update profile row.
-    profileId <- updateProfile' client cookieInfo identifiers externalId ambitions newOrReturning
+    profileId <- updateProfile' client cookieInfo identifiers profile
 
     -- Delete all existing field values.
     deleteFieldValues client profileId

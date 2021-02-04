@@ -6,6 +6,7 @@ import Jarilo.Path (type (:>), End)
 import Jarilo.Query (NoQuery)
 import Jarilo.Route (Route)
 import Jarilo.Segment (Capture, Literal)
+import TeamTavern.Routes.Shared.Platform (Platforms)
 
 type ViewGame = Route
     Get
@@ -32,6 +33,6 @@ type OkContentField =
 type OkContent =
     { title :: String
     , handle :: String
-    , externalIdIlk :: Int
+    , platforms :: Platforms
     , fields :: Array OkContentField
     }

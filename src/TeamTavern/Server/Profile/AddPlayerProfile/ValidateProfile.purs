@@ -12,23 +12,25 @@ import Data.List.NonEmpty as NonEmptyList
 import Data.List.Types (NonEmptyList)
 import Data.Symbol (SProxy(..))
 import Data.Variant (Variant)
+import TeamTavern.Routes.Shared.Platform (Platform)
 import TeamTavern.Server.Domain.Text (Text)
 import TeamTavern.Server.Profile.AddPlayerProfile.LoadFields as LoadFields
 import TeamTavern.Server.Profile.AddPlayerProfile.ReadProfile as ReadProfile
-import TeamTavern.Server.Profile.AddPlayerProfile.ValidateExternalId (ExternalId, validateExternalId)
+import TeamTavern.Server.Profile.AddPlayerProfile.ValidatePlatformId (PlatformId, validatePlatformId)
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateFieldValues (validateFieldValues)
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateFieldValues as ValidateFieldValues
 import TeamTavern.Server.Profile.Infrastructure.ValidateAmbitions (validateAmbitions)
 
 type Profile =
-    { externalId :: ExternalId
+    { platform :: Platform
+    , platformId :: PlatformId
     , fieldValues :: Array ValidateFieldValues.FieldValue
     , newOrReturning :: Boolean
     , ambitions :: Text
     }
 
 type ProfileError = Variant
-    ( externalId :: Array String
+    ( platformId :: Array String
     , url :: { message :: Array String, key :: String }
     , ambitions :: Array String
     )
@@ -40,9 +42,11 @@ validateProfile
     .  LoadFields.Game
     -> ReadProfile.Profile
     -> Async (Variant (profile :: ProfileErrors | errors)) Profile
-validateProfile { externalIdIlk, fields } { externalId, fieldValues, newOrReturning, ambitions } =
-    { externalId: _, fieldValues: _, newOrReturning, ambitions: _ }
-    <$> validateExternalId externalIdIlk externalId
+validateProfile
+    { platforms, fields }
+    { platform, platformId, fieldValues, newOrReturning, ambitions } =
+    { platform, platformId: _, fieldValues: _, newOrReturning, ambitions: _ }
+    <$> validatePlatformId platforms platform platformId
     <*> validateFieldValues fields fieldValues
     <*> validateAmbitions ambitions
     # Async.fromValidated

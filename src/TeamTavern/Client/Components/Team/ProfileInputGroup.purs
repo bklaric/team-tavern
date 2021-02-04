@@ -35,10 +35,9 @@ fieldInputGroup
     -> Field
     -> H.ComponentHTML
         action
-        ("multiSelectField" :: MultiSelect.Slot Option String | slots)
+        (multiSelectField :: MultiSelect.Slot Option String | slots)
         (Async left)
-fieldInputGroup fieldValues onValue field
-    =
+fieldInputGroup fieldValues onValue field =
     inputGroup
     [ inputLabel field.icon field.label
     , multiSelectIndexed (SProxy :: SProxy "multiSelectField") field.key
