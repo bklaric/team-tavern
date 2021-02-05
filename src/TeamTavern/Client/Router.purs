@@ -64,9 +64,9 @@ type ChildSlots = Footer.ChildSlots
     ( topBar :: TopBar.Slot Unit
     , home :: Home.Slot Unit
     , about :: About.Slot
-    , games :: Games.Slot Unit
+    , games :: Games.Slot
     , game :: Game.Slot
-    , profiles :: Profiles.Slot Unit
+    , profiles :: Profiles.Slot
     , player :: Player.Slot
     , team :: Team.Slot
     , onboarding :: Onboarding.Slot

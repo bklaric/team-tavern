@@ -86,7 +86,7 @@ data State
     | NotFound
     | Error
 
-type Slot = H.Slot (Const Void) Void
+type Slot = H.Slot (Const Void) Void Unit
 
 type ChildSlots =
     ( gameHeader :: H.Slot (Const Void) Void Unit
@@ -232,8 +232,8 @@ loadTeamProfiles handle page filters = Async.unify do
         _ -> Async.left Nothing
     pure content
 
-loadTab :: forall output left.
-    String -> GameHeader.Tab -> H.HalogenM State Action ChildSlots output (Async left) Unit
+loadTab :: forall action output left.
+    String -> GameHeader.Tab -> H.HalogenM State action ChildSlots output (Async left) Unit
 loadTab handle GameHeader.Players = do
     game <- H.lift $ loadGame handle
     case game of
@@ -354,8 +354,8 @@ readQueryParams fields = do
             }
         }
 
-handleAction :: forall output left.
-    Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
+handleAction :: forall action output left.
+    Action -> H.HalogenM State action ChildSlots output (Async left) Unit
 handleAction Init = do
     state <- H.get
     case state of
@@ -367,6 +367,7 @@ handleAction (Receive (Input handle tab)) = do
         Game game player _ _, GameHeader.Players | game.handle == handle -> do
             { page, filters } <- H.liftEffect $ readQueryParams game.fields
             playerProfiles <- H.lift $ loadPlayerProfiles handle page filters
+            scrollProfilesIntoView
             case playerProfiles of
                 Just playerProfiles' -> do
                     H.put $ Game game player filters $ Players
@@ -381,6 +382,7 @@ handleAction (Receive (Input handle tab)) = do
         Game game player _ _, GameHeader.Teams | game.handle == handle -> do
             { page, filters } <- H.liftEffect $ readQueryParams game.fields
             teamProfiles <- H.lift $ loadTeamProfiles handle page filters
+            scrollProfilesIntoView
             case teamProfiles of
                 Just teamProfiles' -> do
                     timezone <- getClientTimezone
@@ -441,7 +443,6 @@ handleAction (ApplyFilters filters) = do
 
         href <- Url.href url
         navigate_ href
-
 handleAction ShowCreateProfileModal =
     H.modify_
     case _ of
@@ -493,6 +494,6 @@ component = H.mkComponent
     }
 
 profiles :: forall query children left.
-    String -> GameHeader.Tab -> HH.ComponentHTML query (profiles :: Slot Unit | children) (Async left)
+    String -> GameHeader.Tab -> HH.ComponentHTML query (profiles :: Slot | children) (Async left)
 profiles handle tab =
     HH.slot (SProxy :: SProxy "profiles") unit component (Input handle tab) absurd

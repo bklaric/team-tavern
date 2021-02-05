@@ -31,7 +31,7 @@ data Action = Init | Navigate String Boolean MouseEvent
 
 data State = Empty | Games ViewAllGames.OkContent
 
-type Slot = H.Slot (Const Void) Void
+type Slot = H.Slot (Const Void) Void Unit
 
 render :: forall slots monad. MonadEffect monad =>
     State -> H.ComponentHTML Action slots monad
@@ -139,6 +139,6 @@ component =
 
 games
     :: forall query children left
-    .  HH.ComponentHTML query (games :: Slot Unit | children) (Async left)
+    .  HH.ComponentHTML query (games :: Slot | children) (Async left)
 games =
     HH.slot (SProxy :: SProxy "games") unit component Empty absurd
