@@ -19,6 +19,7 @@ callToAction handle title createAccount =
         [ HS.class_ "call-to-action-video"
         , HP.autoplay true
         , HP.loop true
+        , HP.muted true
         , HP.src $ "/images/" <> maybe "dota2" identity handle <> "/video.mp4"
         ]
         []
