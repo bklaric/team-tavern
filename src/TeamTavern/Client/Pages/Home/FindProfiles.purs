@@ -21,7 +21,7 @@ findProfiles' :: forall slots action.
     String -> String -> (MouseEvent -> action) -> (MouseEvent -> action) -> HH.HTML slots action
 findProfiles' handle title onPlayersClick onTeamsClick =
     landingSection
-    [ landingSectionImage "/images/search.png"
+    [ landingSectionImage $ "/images/" <> handle <> "/search.png"
     , landingSectionText
         [ landingSectionHeading "fas fa-search" "Find your new teammates now!"
         , landingSectionDescription $ "Search through players and teams who have already created their " <> title <> " profiles on TeamTavern."

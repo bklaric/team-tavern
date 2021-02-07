@@ -1,9 +1,33 @@
 .call-to-action {
+    position: relative;
     background-color: hsl(20, 20%, 19%);
     padding: 100px 21px;
+
+    @media screen and (min-width: 700px) {
+        padding: 200px 21px;
+    }
+}
+
+.call-to-action-overlay {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #3a2d27dd;
+}
+
+.call-to-action-video {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
 .call-to-action-content {
+    position: relative;
     display: flex;
     flex-direction: column;
     justify-content: space-between;

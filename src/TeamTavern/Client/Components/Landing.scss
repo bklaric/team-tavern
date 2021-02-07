@@ -19,11 +19,13 @@
 }
 
 .landing-section-content {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 21px;
     text-align: center;
     padding: 42px 21px;
 
     @media screen and (min-width: 700px) {
-        display: grid;
         grid-template-columns: 1fr 1fr;
         text-align: left;
         max-width: 1000px;
