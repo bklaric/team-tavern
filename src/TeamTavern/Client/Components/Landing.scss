@@ -1,4 +1,24 @@
 .landing-section {
+    &:nth-child(2n + 1) {
+        background-color: hsl(24deg 25% 93%);
+    }
+
+    @media screen and (min-width: 700px) {
+        &:nth-child(2n) {
+            .landing-section-content {
+                grid-template-areas: "text image";
+            }
+        }
+
+        &:nth-child(2n + 1) {
+            .landing-section-content {
+                grid-template-areas: "image text";
+            }
+        }
+    }
+}
+
+.landing-section-content {
     text-align: center;
     padding: 42px 21px;
 
@@ -8,14 +28,6 @@
         text-align: left;
         max-width: 1000px;
         margin: auto;
-
-        &:nth-child(2n) {
-            grid-template-areas: "text image";
-        }
-
-        &:nth-child(2n + 1) {
-            grid-template-areas: "image text";
-        }
     }
 }
 
