@@ -81,11 +81,12 @@
 
 .landing-section-image {
     width: 100%;
-    max-width: 400px;
+    max-height: 400px;
+    object-fit: contain;
     place-self: center;
 
     @media screen and (min-width: 700px) {
-        max-width: unset;
+        max-height: 700px;
         grid-area: image;
     }
 }
