@@ -20,7 +20,7 @@ callToAction handle title createAccount =
         , HP.autoplay true
         , HP.loop true
         , HP.muted true
-        , HP.src $ "/images/" <> maybe "dota2" identity handle <> "/video.mp4"
+        , HP.src $ maybe "/images/video.mp4" (\handle' -> "/images/" <> handle' <> "/video.mp4") handle
         ]
         []
     , HH.div [ HS.class_ "call-to-action-overlay" ] []
