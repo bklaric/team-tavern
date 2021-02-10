@@ -60,7 +60,7 @@ render (Loaded { game: game' @ { handle, title } }) =
     , forPlayers' handle title (OpenPlayerPreboarding game')
     , forTeams' handle title (OpenTeamPreboarding game')
     , findProfiles' handle title (OpenPlayerProfiles handle) (OpenTeamProfiles handle)
-    , features' title (OpenPreboarding game')
+    , features' handle title (OpenPreboarding game')
     ]
 
 loadGame :: forall left. String -> Async left (Maybe ViewGame.OkContent)

@@ -1,4 +1,8 @@
 .features {
+    color: #ffffffdd;
+    background-position-x: center;
+    background-size: cover;
+
     &:nth-child(2n + 1) {
         background-color: hsl(24deg 25% 93%);
     }

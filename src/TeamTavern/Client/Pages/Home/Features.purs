@@ -2,14 +2,20 @@ module TeamTavern.Client.Pages.Home.Features where
 
 import Prelude
 
+import CSS as CSS
 import Halogen.HTML as HH
+import Halogen.HTML.CSS as HC
 import TeamTavern.Client.Components.Landing (landingSectionButton)
 import TeamTavern.Client.Snippets.Class as HS
 import Web.UIEvent.MouseEvent (MouseEvent)
 
 features :: forall slots action. (MouseEvent -> action) -> HH.HTML slots action
 features createAccount =
-    HH.div [ HS.class_ "features" ]
+    HH.div
+    [ HS.class_ "features"
+    , HC.style $ CSS.backgroundImage $ CSS.fromString $
+        "linear-gradient(hsla(20, 20%, 19%, 0.8),hsla(20, 20%, 19%, 0.8)), url(/images/features.jpg)"
+    ]
     [ HH.div [ HS.class_ "features-content" ]
         [ HH.h2 [ HS.class_ "features-heading" ]
             [ HH.text "All you need to find great teammates" ]
@@ -62,9 +68,13 @@ features createAccount =
         ]
     ]
 
-features' :: forall slots action. String -> (MouseEvent -> action) -> HH.HTML slots action
-features' title createAccount =
-    HH.div [ HS.class_ "features" ]
+features' :: forall slots action. String -> String -> (MouseEvent -> action) -> HH.HTML slots action
+features' handle title createAccount =
+    HH.div
+    [ HS.class_ "features"
+    , HC.style $ CSS.backgroundImage $ CSS.fromString $
+        "linear-gradient(hsla(20, 20%, 19%, 0.8),hsla(20, 20%, 19%, 0.8)), url(/images/" <> handle <> "/features.jpg)"
+    ]
     [ HH.div [ HS.class_ "features-content" ]
         [ HH.h2 [ HS.class_ "features-heading" ]
             [ HH.text "All you need to find great teammates" ]
