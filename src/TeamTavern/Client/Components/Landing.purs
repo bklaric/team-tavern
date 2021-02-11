@@ -10,7 +10,9 @@ import TeamTavern.Client.Snippets.Class as HS
 import Web.UIEvent.MouseEvent (MouseEvent)
 
 landingSection :: forall slots action. Array (HH.HTML slots action) -> HH.HTML slots action
-landingSection = HH.div [ HS.class_ "landing-section" ]
+landingSection content =
+    HH.div [ HS.class_ "landing-section" ]
+    [ HH.div [ HS.class_ "landing-section-content" ] content ]
 
 landingSectionText :: forall slots action. Array (HH.HTML slots action) -> HH.HTML slots action
 landingSectionText = HH.div [ HS.class_ "landing-section-text" ]

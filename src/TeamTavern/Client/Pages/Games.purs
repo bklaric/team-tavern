@@ -53,7 +53,7 @@ render (Games games') = HH.div [ HP.class_ $ HH.ClassName "games" ] $
         [ HH.div
             [ HP.class_ $ HH.ClassName "game-card-text"
             , HP.style $ CSS.backgroundImage $ CSS.fromString $
-                "linear-gradient(to right,hsla(20, 20%, 19%, 0.87),hsla(20, 20%, 19%, 0.87)), url(/images/" <> handle <> "-banner.jpg)"
+                "linear-gradient(hsla(20, 20%, 19%, 0.8),hsla(20, 20%, 19%, 0.8)), url(/images/" <> handle <> "/banner.jpg)"
             ] $
             [ HH.h2 [ HP.class_ $ HH.ClassName "game-card-heading" ]
                 [ HH.a
@@ -63,7 +63,7 @@ render (Games games') = HH.div [ HP.class_ $ HH.ClassName "games" ] $
                     ]
                     [ HH.img
                         [ HP.class_ $ HH.ClassName "game-card-logo"
-                        , HP.src $ "/images/" <> handle <> "-icon.png"
+                        , HP.src $ "/images/" <> handle <> "/icon.png"
                         , HP.alt $ title <> " icon"
                         ]
                     , HH.text title
@@ -93,7 +93,7 @@ render (Games games') = HH.div [ HP.class_ $ HH.ClassName "games" ] $
             )
         , HH.div
             [ HP.class_ $ HH.ClassName "game-card-image"
-            , HP.style $ CSS.backgroundImage $ CSS.url $ "/images/" <> handle <> "-banner.jpg"
+            , HP.style $ CSS.backgroundImage $ CSS.url $ "/images/" <> handle <> "/banner.jpg"
             ]
             []
         ]

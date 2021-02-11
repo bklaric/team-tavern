@@ -56,11 +56,11 @@ render :: forall left.
 render (Empty _) = HH.div [ HP.class_ $ HH.ClassName "home" ] []
 render (Loaded { game: game' @ { handle, title } }) =
     HH.div [ HP.class_ $ HH.ClassName "home" ]
-    [ callToAction (Just title) (OpenPreboarding game')
-    , forPlayers' title (OpenPlayerPreboarding game')
-    , forTeams' title (OpenTeamPreboarding game')
+    [ callToAction (Just handle) (Just title) (OpenPreboarding game')
+    , forPlayers' handle title (OpenPlayerPreboarding game')
+    , forTeams' handle title (OpenTeamPreboarding game')
     , findProfiles' handle title (OpenPlayerProfiles handle) (OpenTeamProfiles handle)
-    , features' title (OpenPreboarding game')
+    , features' handle title (OpenPreboarding game')
     ]
 
 loadGame :: forall left. String -> Async left (Maybe ViewGame.OkContent)

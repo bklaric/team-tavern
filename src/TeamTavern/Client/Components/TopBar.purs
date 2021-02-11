@@ -15,8 +15,6 @@ import Data.Const (Const)
 import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..), maybe)
 import Data.Options ((:=))
-import Data.String (Pattern(..), Replacement(..))
-import Data.String as String
 import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
@@ -111,7 +109,7 @@ render state = HH.div_ $
                                 ]
                                 [ HH.img
                                     [ HP.class_ $ HH.ClassName "top-bar-game-icon"
-                                    , HP.src $ String.replace (Pattern "icon") (Replacement "icon-orange") ("/images/" <> game.handle <> "-icon.png")
+                                    , HP.src $ "/images/" <> game.handle <> "/icon-orange.png"
                                     ]
                                 , HH.span [ HP.class_ $ HH.ClassName "top-bar-game-title" ]
                                     [ HH.text game.title ]
