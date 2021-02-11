@@ -83,7 +83,7 @@ createProfileButton = Hooks.component $ \_ { nickname, profileGameHandles } -> H
             )
             [ HH.img
                 [ HS.class_ "game-card-logo"
-                , HP.src $ "/images/" <> game.handle <> "-icon-black.png"
+                , HP.src $ "/images/" <> game.handle <> "/icon-black.png"
                 ]
             , HH.text game.title
             ]
