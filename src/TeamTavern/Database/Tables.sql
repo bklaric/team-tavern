@@ -52,6 +52,7 @@ create table session
 create table game
     ( id serial not null primary key
     , title varchar(50) not null unique
+    , short_title varchar(50) not null unique
     , handle varchar(50) not null unique
     , description text[] not null
     , platforms text[] not null -- steam, riot, battle.net, playstation, xbox, switch

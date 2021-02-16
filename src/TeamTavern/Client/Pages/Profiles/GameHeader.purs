@@ -1,5 +1,5 @@
 module TeamTavern.Client.Pages.Profiles.GameHeader
-    (Handle, Title, Tab(..), Input(..), component) where
+    (Handle, Title, ShortTitle, Tab(..), Input(..), component) where
 
 import Prelude
 
@@ -19,11 +19,13 @@ type Handle = String
 
 type Title = String
 
+type ShortTitle = String
+
 data Tab = Players | Teams
 
 derive instance eqTab :: Eq Tab
 
-data Input = Input Handle Title Tab
+data Input = Input Handle Title ShortTitle Tab
 
 type State = Input
 
@@ -66,7 +68,7 @@ renderTabs handle Teams =
     ]
 
 render :: forall slots. Input -> HH.HTML slots Action
-render (Input handle title tab) = HH.div_
+render (Input handle title shortTitle tab) = HH.div_
     [ contentHeader
         [ HH.div_
             [ HH.a
@@ -82,8 +84,8 @@ render (Input handle title tab) = HH.div_
     , HH.p [ HP.class_ $ HH.ClassName "content-description" ]
         [ HH.text
             case tab of
-            Players -> "Search through " <> title <> " players looking for a team."
-            Teams -> "Search through " <> title <> " teams looking for players."
+            Players -> "Find " <> shortTitle <> " players looking for a team. Create your own player profile and let everyone know you're looking to team up."
+            Teams -> "Find  " <> shortTitle <> " teams looking for players. Create your own team profile and recruit new members for your team."
         ]
     ]
 handleAction :: forall monad.

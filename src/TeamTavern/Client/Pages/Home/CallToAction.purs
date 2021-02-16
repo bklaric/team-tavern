@@ -6,6 +6,7 @@ import Data.Maybe (Maybe, maybe)
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Components.Landing (landingSectionButton)
+import TeamTavern.Client.Snippets.ArticledNoun (indefiniteNoun)
 import TeamTavern.Client.Snippets.Class as HS
 import Web.UIEvent.MouseEvent (MouseEvent)
 
@@ -29,9 +30,10 @@ callToAction handle title createAccount =
             [ HH.h1 [ HS.class_ "call-to-action-heading" ]
                 [ HH.text $ "Find your " <> titleOrEsports title <> " teammates" ]
             , HH.p [ HS.class_ "call-to-action-paragraph" ]
-                [ HH.text $ """Search through player and team profiles to find your new """
-                    <> titleOrEsports title <> """ teammates. Create
-                    your own player or team profile and let them find you."""
+                [ HH.text $ "Find " <> titleOrEsports title
+                    <> " players and teams looking for teammates on TeamTavern, "
+                    <> indefiniteNoun (titleOrEsports title) <> " team finding platform. "
+                    <> "Create your own player or team profile and let them find you."
                 ]
             , landingSectionButton "Start finding teammates" "/preboarding/start" createAccount
             ]

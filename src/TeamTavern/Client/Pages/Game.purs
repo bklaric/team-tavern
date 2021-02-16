@@ -25,6 +25,7 @@ import TeamTavern.Client.Pages.Home.ForPlayers (forPlayers')
 import TeamTavern.Client.Pages.Preboarding as Preboarding
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigate, navigate_)
+import TeamTavern.Client.Snippets.ArticledNoun (indefiniteNoun)
 import TeamTavern.Client.Snippets.PreventMouseDefault (preventMouseDefault)
 import TeamTavern.Routes.ViewGame as ViewGame
 import Web.UIEvent.MouseEvent (MouseEvent)
@@ -54,13 +55,13 @@ type ChildSlots =
 render :: forall left.
     State -> H.ComponentHTML Action ChildSlots (Async left)
 render (Empty _) = HH.div [ HP.class_ $ HH.ClassName "home" ] []
-render (Loaded { game: game' @ { handle, title } }) =
+render (Loaded { game: game' @ { handle, shortTitle } }) =
     HH.div [ HP.class_ $ HH.ClassName "home" ]
-    [ callToAction (Just handle) (Just title) (OpenPreboarding game')
-    , forPlayers' handle title (OpenPlayerPreboarding game')
-    , forTeams' handle title (OpenTeamPreboarding game')
-    , findProfiles' handle title (OpenPlayerProfiles handle) (OpenTeamProfiles handle)
-    , features' handle title (OpenPreboarding game')
+    [ callToAction (Just handle) (Just shortTitle) (OpenPreboarding game')
+    , forPlayers' handle shortTitle (OpenPlayerPreboarding game')
+    , forTeams' handle shortTitle (OpenTeamPreboarding game')
+    , findProfiles' handle shortTitle (OpenPlayerProfiles handle) (OpenTeamProfiles handle)
+    , features' handle shortTitle (OpenPreboarding game')
     ]
 
 loadGame :: forall left. String -> Async left (Maybe ViewGame.OkContent)
@@ -75,8 +76,8 @@ loadGame handle = Async.unify do
     pure $ Just content
 
 setMeta' :: forall monad. MonadEffect monad => String -> monad Unit
-setMeta' title = setMeta ("Find your " <> title <> " teammates | TeamTavern")
-    ( "Search through player and team profiles to find your new " <> title <> " teammates. "
+setMeta' title = setMeta (title <> " Team Finder | TeamTavern")
+    ( "Find " <> title <> " players and teams looking for teammates on TeamTavern, " <> indefiniteNoun title <> " team finding platform. "
     <> "Create your own player or team profile and let them find you."
     )
 
@@ -90,7 +91,7 @@ handleAction Initialize = do
             case game' of
                 Just game'' -> do
                     H.put $ Loaded { game: game'' }
-                    setMeta' game''.title
+                    setMeta' game''.shortTitle
                 Nothing -> pure unit
         _ -> pure unit
 handleAction (Receive { handle }) = do
@@ -98,7 +99,7 @@ handleAction (Receive { handle }) = do
     case game' of
         Just game'' -> do
             H.put $ Loaded { game: game'' }
-            setMeta' game''.title
+            setMeta' game''.shortTitle
         _ -> pure unit
 handleAction (OpenPreboarding game' mouseEvent) = do
     preventMouseDefault mouseEvent

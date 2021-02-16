@@ -116,8 +116,10 @@ handleAction Init = do
     newState <- H.lift loadGames
     H.put newState
     case newState of
-        Games games' -> setMeta "View all featured games | TeamTavern"
-            "Choose one of the featured games and start finding your new teammates!"
+        Games games' -> setMeta "Games | TeamTavern"
+            (  "Find players and teams looking for teammates for featured games on TeamTavern, an esports team finding platform."
+            <> " Create your own player or team profile and let them find you."
+            )
         _ -> pure unit
 handleAction (Navigate url stopBubble event) = do
     H.liftEffect if stopBubble

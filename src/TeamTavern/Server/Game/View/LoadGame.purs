@@ -12,6 +12,7 @@ queryString = Query """
     select
         game.handle,
         game.title,
+        game.short_title as "shortTitle",
         json_build_object(
             'head', game.platforms[1],
             'tail', game.platforms[2:]

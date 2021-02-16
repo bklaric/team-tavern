@@ -32,6 +32,7 @@ type OkContentField =
 
 type OkContent =
     { title :: String
+    , shortTitle :: String
     , handle :: String
     , platforms :: Platforms
     , fields :: Array OkContentField

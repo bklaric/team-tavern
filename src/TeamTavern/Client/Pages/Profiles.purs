@@ -40,6 +40,7 @@ import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigate, navigate_)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Script.Url as Url
+import TeamTavern.Client.Snippets.ArticledNoun (indefiniteNoun)
 import TeamTavern.Routes.Shared.Platform as Platform
 import TeamTavern.Routes.ViewGame as ViewGame
 import TeamTavern.Server.Profile.ViewPlayerProfilesByGame.SendResponse as ViewGamePlayers
@@ -119,7 +120,7 @@ render (Empty _) = HH.div_ []
 render (Game game player filters tab) = let
     gameHeader =
         HH.slot (SProxy :: SProxy "gameHeader") unit GameHeader.component
-        (GameHeader.Input game.handle game.title $ toHeaderTab tab) absurd
+        (GameHeader.Input game.handle game.title game.shortTitle $ toHeaderTab tab) absurd
     in
     HH.div_ $
     [ gameHeader
@@ -250,7 +251,7 @@ loadTab handle GameHeader.Players = do
                         , playerInfo: player
                         }
                         false
-                    H.liftEffect $ setMetaTags game'.title GameHeader.Players
+                    H.liftEffect $ setMetaTags game'.shortTitle GameHeader.Players
                 Nothing -> do
                     H.put Error
                     H.liftEffect $ setMetaTags handle GameHeader.Players
@@ -275,23 +276,25 @@ loadTab handle GameHeader.Teams = do
                         }
                         false
                         timezone
-                    H.liftEffect $ setMetaTags game'.title GameHeader.Players
+                    H.liftEffect $ setMetaTags game'.shortTitle GameHeader.Teams
                 Nothing -> do
                     H.put Error
-                    H.liftEffect $ setMetaTags handle GameHeader.Players
+                    H.liftEffect $ setMetaTags handle GameHeader.Teams
         Nothing -> do
             H.put Error
-            H.liftEffect $ setMetaTags handle GameHeader.Players
+            H.liftEffect $ setMetaTags handle GameHeader.Teams
 
 setMetaTags :: String -> GameHeader.Tab -> Effect Unit
 setMetaTags handleOrTitle tab =
     case tab of
     GameHeader.Players ->
-        setMeta ("Find " <> handleOrTitle <> " players looking for a team | TeamTavern")
-        ("Search through " <> handleOrTitle <> " players looking for a team and find your new teammates.")
+        setMeta ("Players - " <> handleOrTitle <> " Team Finder | TeamTavern")
+        ("Find " <> handleOrTitle <> " players looking for a team on TeamTavern, " <> indefiniteNoun handleOrTitle <> " team finding platform."
+        <> " Create your own player profile and let everyone know you're looking to team up.")
     GameHeader.Teams ->
-        setMeta ("Find " <> handleOrTitle <> " teams looking for players | TeamTavern")
-        ("Search through " <> handleOrTitle <> " teams looking for players and find your new teammates.")
+        setMeta ("Teams - " <> handleOrTitle <> " Team Finder | TeamTavern")
+        ("Find " <> handleOrTitle <> " teams looking for players on TeamTavern, " <> indefiniteNoun handleOrTitle <> " team finding platform."
+        <> " Create your own team profile and recruit new members for your team.")
 
 scrollProfilesIntoView :: forall monad. Bind monad => MonadEffect monad => monad Unit
 scrollProfilesIntoView = do
@@ -376,7 +379,7 @@ handleAction (Receive (Input handle tab)) = do
                         , playerInfo: player
                         }
                         false
-                    H.liftEffect $ setMetaTags game.title tab
+                    H.liftEffect $ setMetaTags game.shortTitle tab
                 Nothing -> pure unit
         Game game player _ _, GameHeader.Teams | game.handle == handle -> do
             { page, filters } <- H.liftEffect $ readQueryParams game.fields
@@ -392,7 +395,7 @@ handleAction (Receive (Input handle tab)) = do
                         }
                         false
                         timezone
-                    H.liftEffect $ setMetaTags game.title tab
+                    H.liftEffect $ setMetaTags game.shortTitle tab
                 Nothing -> pure unit
         _, _ -> loadTab handle tab
 handleAction (ApplyFilters filters) = do

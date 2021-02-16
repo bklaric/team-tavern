@@ -50,8 +50,8 @@ render _ =
 handleAction :: forall action output slots left.
     Action -> H.HalogenM State action slots output (Async left) Unit
 handleAction Initialize = setMeta
-    "Find your esports teammates | TeamTavern"
-    ( "Search through player and team profiles to find your new esports teammates. "
+    "Esports Team Finder | TeamTavern"
+    ( "Find esports players and teams looking for teammates on TeamTavern, an esports team finding platform. "
     <> "Create your own player or team profile and let them find you."
     )
 handleAction (OpenPreboarding mouseEvent) = do
