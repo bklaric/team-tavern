@@ -12,7 +12,7 @@ import Data.Bifunctor (bimap, lmap)
 import Data.Const (Const)
 import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
-import Data.Maybe (Maybe(..), isNothing)
+import Data.Maybe (Maybe(..), isNothing, maybe)
 import Data.Options ((:=))
 import Data.Symbol (SProxy(..))
 import Data.Variant (match)
@@ -229,9 +229,9 @@ renderPage { step: Game, game, playerOrTeam } =
             [ HH.text "Next" ]
         ]
     ]
-renderPage { step: PlayerProfile, playerProfile, otherError, submitting } =
+renderPage { step: PlayerProfile, playerProfile, game, otherError, submitting } =
     [ boardingStep
-        [ boardingHeading "Player profile"
+        [ boardingHeading $ maybe "Player profile" (\{ title } -> title <> " player profile") game
         , boardingDescription  """Fill out your in-game stats, achievements and ambitions to find
             equally skilled teammates."""
         , PlayerProfileFormInput.profileFormInput playerProfile UpdatePlayerProfile
@@ -254,9 +254,9 @@ renderPage { step: PlayerProfile, playerProfile, otherError, submitting } =
             else []
         ]
     ]
-renderPage { step: TeamProfile, teamProfile, otherError, submitting } =
+renderPage { step: TeamProfile, teamProfile, game, otherError, submitting } =
     [ boardingStep
-        [ boardingHeading "Team profile"
+        [ boardingHeading $ maybe "Team profile" (\{ title } -> title <> " team profile") game
         , boardingDescription  """Tell us about your team's ambitions and what you're looking for
             skill-wise in new team members."""
         , TeamProfileFormInput.profileFormInput teamProfile UpdateTeamProfile

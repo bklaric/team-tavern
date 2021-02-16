@@ -310,7 +310,7 @@ renderPage { step: Game, game, playerOrTeam } =
     ]
 renderPage { step: PlayerProfile, playerProfile, otherError, submitting, game } =
     [ boardingStep
-        [ boardingHeading "Player profile"
+        [ boardingHeading $ maybe "Player profile" (\{ title } -> title <> " player profile") (getGame game)
         , boardingDescription  """Fill out your in-game stats, achievements and ambitions to find
             equally skilled teammates."""
         , PlayerProfileFormInput.profileFormInput playerProfile UpdatePlayerProfile
@@ -325,7 +325,7 @@ renderPage { step: PlayerProfile, playerProfile, otherError, submitting, game } 
     ]
 renderPage { step: TeamProfile, teamProfile, otherError, submitting, game } =
     [ boardingStep
-        [ boardingHeading "Team profile"
+        [ boardingHeading $ maybe "Team profile" (\{ title } -> title <> " team profile") (getGame game)
         , boardingDescription  """Tell us about your team's ambitions and what you're looking for
             skill-wise in new team members."""
         , TeamProfileFormInput.profileFormInput teamProfile UpdateTeamProfile
