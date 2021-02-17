@@ -7,7 +7,7 @@ import Data.Maybe (Maybe(..), isJust, isNothing, maybe)
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import TeamTavern.Client.Components.Checkbox (checkbox)
+import TeamTavern.Client.Components.Checkbox (checkboxIconInput)
 import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.Radio (radio)
 import TeamTavern.Client.Script.Request (justIfInt, nothingIfEmpty)
@@ -105,12 +105,12 @@ platformCheckboxes allPlatforms selectedPlatforms onValue =
         HH.div [ HS.class_ "platform-id-checkboxes" ] $
         Array.cons allPlatforms.head allPlatforms.tail <#>
         case _ of
-        Steam       -> checkbox radioSteamSvg       "Steam"       (Array.elem Steam       selectedPlatforms) (onValue Steam)
-        Riot        -> checkbox radioRiotSvg        "Riot"        (Array.elem Riot        selectedPlatforms) (onValue Riot)
-        BattleNet   -> checkbox radioBattleNetSvg   "BattleNet"   (Array.elem BattleNet   selectedPlatforms) (onValue BattleNet)
-        PlayStation -> checkbox radioPlayStationSvg "PlayStation" (Array.elem PlayStation selectedPlatforms) (onValue PlayStation)
-        Xbox        -> checkbox radioXboxSvg        "Xbox"        (Array.elem Xbox        selectedPlatforms) (onValue Xbox)
-        Switch      -> checkbox radioSwitchSvg      "Switch"      (Array.elem Switch      selectedPlatforms) (onValue Switch)
+        Steam       -> checkboxIconInput radioSteamSvg       "Steam"       (Array.elem Steam       selectedPlatforms) (onValue Steam)
+        Riot        -> checkboxIconInput radioRiotSvg        "Riot"        (Array.elem Riot        selectedPlatforms) (onValue Riot)
+        BattleNet   -> checkboxIconInput radioBattleNetSvg   "BattleNet"   (Array.elem BattleNet   selectedPlatforms) (onValue BattleNet)
+        PlayStation -> checkboxIconInput radioPlayStationSvg "PlayStation" (Array.elem PlayStation selectedPlatforms) (onValue PlayStation)
+        Xbox        -> checkboxIconInput radioXboxSvg        "Xbox"        (Array.elem Xbox        selectedPlatforms) (onValue Xbox)
+        Switch      -> checkboxIconInput radioSwitchSvg      "Switch"      (Array.elem Switch      selectedPlatforms) (onValue Switch)
 
 platformRadios :: forall action slots.
     Platforms -> Platform -> (Platform -> action) -> Maybe (HH.HTML slots action)
@@ -162,20 +162,6 @@ textInput placeholder input onInput =
 
 textInput_ :: forall slots action. String -> (String -> action) -> HH.HTML slots action
 textInput_ = textInput ""
-
-checkboxInput :: forall slots action.
-    Boolean -> (Boolean -> action) -> String -> HH.HTML slots action
-checkboxInput input onInput label =
-    HH.label
-    [ HS.class_ "checkbox-input-label" ]
-    [ HH.input
-        [ HS.class_ "checkbox-input"
-        , HP.type_ HP.InputCheckbox
-        , HP.checked input
-        , HE.onChecked $ Just <<< onInput
-        ]
-    , HH.text label
-    ]
 
 numberInput :: forall slots action. Maybe Int -> (Maybe Int -> action) -> HH.HTML slots action
 numberInput (input :: Maybe Int) onInput =

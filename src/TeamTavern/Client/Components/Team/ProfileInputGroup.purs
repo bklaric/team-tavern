@@ -10,7 +10,8 @@ import Data.MultiMap as MultiMap
 import Data.Variant (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
-import TeamTavern.Client.Components.Input (checkboxInput, inputError, inputGroup, inputLabel, inputUnderlabel, textInput_)
+import TeamTavern.Client.Components.Checkbox (checkboxInput)
+import TeamTavern.Client.Components.Input (inputError, inputGroup, inputLabel, inputUnderlabel, textInput_)
 import TeamTavern.Client.Components.Select.MultiSelect (multiSelectIndexed)
 import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
 

@@ -1,39 +1,47 @@
+%checkbox {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    flex: 0 0 20px;
+    font-size: 12px;
+    border: 1px solid #bbb;
+    border-radius: 3px;
+}
+
 .checkbox {
+    @extend %checkbox;
+    color: transparent;
+}
+
+.checked-checkbox {
+    @extend %checkbox;
+    color: $text-color;
+}
+
+.checkbox-input {
     display: flex;
     align-items: center;
     font-family: Roboto;
     font-size: 14px;
     font-weight: 400;
+    line-height: 1.5;
+    min-height: 40px;
     color: $text-color;
-    background-color: white;
-    border: unset;
     cursor: pointer;
 }
 
 .checkbox-icon {
-  height: 20px;
-  fill: currentColor;
-  margin-right: 7px;
-}
-
-%checkbox-check {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 20px;
     height: 20px;
-    font-size: 10px;
-    border: 1px solid #bbb;
-    border-radius: 3px;
+    fill: currentColor;
+    margin-right: 7px;
+}
+
+.checkbox-icon-label {
+    margin-right: 7px;
+}
+
+.checkbox-label {
     margin-left: 7px;
-}
-
-.checkbox-check {
-    @extend %checkbox-check;
-    color: white;
-}
-
-.selected-checkbox-check {
-    @extend %checkbox-check;
-    color: $text-color;
 }
