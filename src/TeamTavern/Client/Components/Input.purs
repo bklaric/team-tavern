@@ -107,7 +107,7 @@ platformCheckboxes allPlatforms selectedPlatforms onValue =
         case _ of
         Steam       -> checkboxIconInput radioSteamSvg       "Steam"       (Array.elem Steam       selectedPlatforms) (onValue Steam)
         Riot        -> checkboxIconInput radioRiotSvg        "Riot"        (Array.elem Riot        selectedPlatforms) (onValue Riot)
-        BattleNet   -> checkboxIconInput radioBattleNetSvg   "BattleNet"   (Array.elem BattleNet   selectedPlatforms) (onValue BattleNet)
+        BattleNet   -> checkboxIconInput radioBattleNetSvg   "Battle.net"  (Array.elem BattleNet   selectedPlatforms) (onValue BattleNet)
         PlayStation -> checkboxIconInput radioPlayStationSvg "PlayStation" (Array.elem PlayStation selectedPlatforms) (onValue PlayStation)
         Xbox        -> checkboxIconInput radioXboxSvg        "Xbox"        (Array.elem Xbox        selectedPlatforms) (onValue Xbox)
         Switch      -> checkboxIconInput radioSwitchSvg      "Switch"      (Array.elem Switch      selectedPlatforms) (onValue Switch)
