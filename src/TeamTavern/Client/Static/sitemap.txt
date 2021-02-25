@@ -2,7 +2,6 @@ https://www.teamtavern.net
 https://www.teamtavern.net/about
 https://www.teamtavern.net/register
 https://www.teamtavern.net/signin
-https://www.teamtavern.net/forgot-password
 https://www.teamtavern.net/games
 https://www.teamtavern.net/games/dota2
 https://www.teamtavern.net/games/dota2/players
