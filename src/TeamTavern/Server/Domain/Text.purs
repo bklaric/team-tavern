@@ -9,11 +9,11 @@ import Data.Validated (Validated, invalid, valid)
 import Data.Variant (SProxy(..), Variant, inj)
 import TeamTavern.Server.Domain.Paragraph (Paragraph)
 import TeamTavern.Server.Domain.Paragraph as Paragraph
-import Wrapped.String (NotPrintable, TooLong)
+import Wrapped.String (TooLong)
 
 newtype Text = Text (Array Paragraph)
 
-type TextErrorRow = (tooLong :: TooLong, notPrintable :: NotPrintable)
+type TextErrorRow = (tooLong :: TooLong)
 
 type TextError = Variant TextErrorRow
 

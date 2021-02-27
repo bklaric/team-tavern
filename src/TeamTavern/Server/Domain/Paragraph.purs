@@ -12,19 +12,14 @@ import Data.String.Regex (regex, replace)
 import Data.String.Regex.Flags (global)
 import Data.Traversable (sequence)
 import Data.Validated (Validated)
-import Data.Variant (Variant)
 import Partial.Unsafe (unsafePartial)
-import Wrapped.String (NotPrintable, notPrintable)
 import Wrapped.Validated as Wrapped
 
 newtype Paragraph = Paragraph String
 
 derive instance newtypeParagraph :: Newtype Paragraph _
 
-type ParagraphError errors = Variant (notPrintable :: NotPrintable | errors)
-
-create :: forall errors.
-    String -> Validated (NonEmptyList (ParagraphError errors)) (Array Paragraph)
+create :: forall errors. String -> Validated (NonEmptyList errors) (Array Paragraph)
 create text = let
     whitespaceRegex = regex """\s+""" global # unsafePartial fromRight
     paragraphs =
@@ -34,7 +29,7 @@ create text = let
         <#> replace whitespaceRegex " "
         # filter (not <<< null)
     in
-    paragraphs <#> Wrapped.create identity [notPrintable] Paragraph # sequence
+    paragraphs <#> Wrapped.create identity [] Paragraph # sequence
 
 length :: Paragraph -> Int
 length = unwrap >>> String.length

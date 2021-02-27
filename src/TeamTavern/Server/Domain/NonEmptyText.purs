@@ -9,12 +9,11 @@ import Data.Validated (Validated, invalid, valid)
 import Data.Variant (SProxy(..), Variant, inj)
 import TeamTavern.Server.Domain.Paragraph (Paragraph)
 import TeamTavern.Server.Domain.Paragraph as Paragraph
-import Wrapped.String (Empty, NotPrintable, TooLong)
+import Wrapped.String (Empty, TooLong)
 
 type NonEmptyTextError = Variant
     ( empty :: Empty
     , tooLong :: TooLong
-    , notPrintable :: NotPrintable
     )
 
 create'
