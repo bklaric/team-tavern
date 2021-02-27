@@ -21,6 +21,8 @@ import Postgres.Error (Error)
 import Postgres.Query (Query(..))
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
+import TeamTavern.Routes.Shared.Platform (Platform)
+import TeamTavern.Routes.Shared.Platform as Platform
 import TeamTavern.Server.Infrastructure.Postgres (playerAdjustedWeekdayFrom, playerAdjustedWeekdayTo, playerAdjustedWeekendFrom, playerAdjustedWeekendTo, prepareJsonString, prepareString)
 import TeamTavern.Server.Profile.Routes (Age, Location, Filters, Handle, HasMicrophone, Language, ProfilePage, Time, Timezone, NewOrReturning)
 import URI.Extra.QueryPairs (Key, QueryPairs(..), Value)
@@ -40,8 +42,8 @@ type LoadProfilesResult =
     , weekdayOnline :: Maybe { from :: String, to :: String }
     , weekendOnline :: Maybe { from :: String, to :: String }
     , about :: Array String
-    , externalIdIlk :: Int
-    , externalId :: String
+    , platform :: Platform
+    , platformId :: String
     , fieldValues :: Array
         { field ::
             { ilk :: Int
@@ -142,6 +144,10 @@ createMicrophoneFilter :: HasMicrophone -> String
 createMicrophoneFilter false = ""
 createMicrophoneFilter true = " and player.microphone"
 
+createPlatformsFilter :: Array Platform -> String
+createPlatformsFilter [] = ""
+createPlatformsFilter platforms = " and array[profile.platform] <@ (array[" <> (platforms <#> Platform.toString <#> prepareString # intercalate ", ") <> "])"
+
 createNewOrReturningFilter :: NewOrReturning -> String
 createNewOrReturningFilter false = ""
 createNewOrReturningFilter true = " and profile.new_or_returning"
@@ -156,6 +162,7 @@ createPlayerFilterString timezone filters =
     <> createWeekendOnlineFilter
         timezone filters.weekendOnline.from filters.weekendOnline.to
     <> createMicrophoneFilter filters.microphone
+    <> createPlatformsFilter filters.platforms
     <> createNewOrReturningFilter filters.newOrReturning
 
 prepareFields :: QueryPairs Key Value -> Array (Tuple String (Array String))
@@ -222,8 +229,8 @@ queryStringWithoutPagination handle timezone filters = Query $ """
                 )
             end as "weekendOnline",
             player.about,
-            game.external_id_ilk as "externalIdIlk",
-            profile.external_id as "externalId",
+            profile.platform as "platform",
+            profile.platform_id as "platformId",
             coalesce(
                 jsonb_agg(
                     jsonb_build_object(

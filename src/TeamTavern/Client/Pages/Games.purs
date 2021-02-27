@@ -53,7 +53,7 @@ render (Games games') = HH.div [ HP.class_ $ HH.ClassName "games" ] $
         [ HH.div
             [ HP.class_ $ HH.ClassName "game-card-text"
             , HP.style $ CSS.backgroundImage $ CSS.fromString $
-                "linear-gradient(to right,hsla(20, 20%, 19%, 0.87),hsla(20, 20%, 19%, 0.87)), url(/images/" <> handle <> "-banner.jpg)"
+                "linear-gradient(hsla(20, 20%, 19%, 0.8),hsla(20, 20%, 19%, 0.8)), url(/images/" <> handle <> "/banner.jpg)"
             ] $
             [ HH.h2 [ HP.class_ $ HH.ClassName "game-card-heading" ]
                 [ HH.a
@@ -63,7 +63,7 @@ render (Games games') = HH.div [ HP.class_ $ HH.ClassName "games" ] $
                     ]
                     [ HH.img
                         [ HP.class_ $ HH.ClassName "game-card-logo"
-                        , HP.src $ "/images/" <> handle <> "-icon.png"
+                        , HP.src $ "/images/" <> handle <> "/icon.png"
                         , HP.alt $ title <> " icon"
                         ]
                     , HH.text title
@@ -93,29 +93,11 @@ render (Games games') = HH.div [ HP.class_ $ HH.ClassName "games" ] $
             )
         , HH.div
             [ HP.class_ $ HH.ClassName "game-card-image"
-            , HP.style $ CSS.backgroundImage $ CSS.url $ "/images/" <> handle <> "-banner.jpg"
+            , HP.style $ CSS.backgroundImage $ CSS.url $ "/images/" <> handle <> "/banner.jpg"
             ]
             []
         ]
     )
-    <>
-    [ HH.div
-        [ HP.class_ $ HH.ClassName "game-card" ]
-        [ HH.div
-            [ HP.class_ $ HH.ClassName "game-card-text"
-            , HP.style $ CSS.backgroundImage $ CSS.fromString
-                "linear-gradient(to right,hsla(20, 20%, 19%, 0.87),hsla(20, 20%, 19%, 0.87)), url(/images/soon-banner.png)"
-            ] $
-            [ HH.h2 [ HP.class_ $ HH.ClassName "game-card-coming-soon" ]
-                [ HH.text "More games coming soon!" ]
-            ]
-        , HH.div
-            [ HP.class_ $ HH.ClassName "game-card-image"
-            , HP.style $ CSS.backgroundImage $ CSS.url "/images/soon-banner.png"
-            ]
-            []
-        ]
-    ]
 
 loadGames :: forall left. Async left State
 loadGames = Async.unify do
@@ -134,8 +116,10 @@ handleAction Init = do
     newState <- H.lift loadGames
     H.put newState
     case newState of
-        Games games' -> setMeta "View all featured games | TeamTavern"
-            "Choose one of the featured games and start finding your new teammates!"
+        Games games' -> setMeta "Games | TeamTavern"
+            (  "Find players and teams looking for teammates for featured games on TeamTavern, an esports team finding platform."
+            <> " Create your own player or team profile and let them find you."
+            )
         _ -> pure unit
 handleAction (Navigate url stopBubble event) = do
     H.liftEffect if stopBubble

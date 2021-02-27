@@ -41,14 +41,6 @@ create table team
     , updated timestamptz not null default current_timestamp
     );
 
-create table password_reset
-    ( id serial not null primary key
-    , player_id integer not null references player(id)
-    , nonce character(20) not null
-    , consumed boolean not null default false
-    , created timestamptz not null default current_timestamp
-    );
-
 create table session
     ( id serial not null primary key
     , player_id integer not null references player(id)
@@ -60,9 +52,10 @@ create table session
 create table game
     ( id serial not null primary key
     , title varchar(50) not null unique
+    , short_title varchar(50) not null unique
     , handle varchar(50) not null unique
     , description text[] not null
-    , external_id_ilk integer not null -- 1 (Steam profile URL), 2 (Riot ID)
+    , platforms text[] not null -- steam, riot, battle.net, playstation, xbox, switch
     , created timestamptz not null default current_timestamp
     );
 
@@ -89,7 +82,8 @@ create table player_profile
     ( id serial not null primary key
     , player_id integer not null references player(id)
     , game_id integer not null references game(id)
-    , external_id text not null
+    , platform text not null
+    , platform_id text not null
     , new_or_returning boolean not null
     , ambitions text[] not null
     , created timestamptz not null default current_timestamp
@@ -115,6 +109,7 @@ create table team_profile
     ( id serial not null primary key
     , team_id integer not null references team(id)
     , game_id integer not null references game(id)
+    , platforms text[] not null
     , new_or_returning boolean not null
     , ambitions text[] not null
     , created timestamptz not null default current_timestamp

@@ -40,7 +40,7 @@
     justify-content: center;
     width: 20px;
     height: 20px;
-    font-size: 10px;
+    font-size: 12px;
     border: 2px solid;
     border-radius: 50px;
     margin-left: 14px;
@@ -62,4 +62,5 @@
     text-align: center;
     color: #888;
     max-width: fit-content;
+    max-width: -moz-fit-content;
 }

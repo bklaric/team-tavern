@@ -6,7 +6,8 @@ import Async (Async)
 import Data.Maybe (Maybe(..))
 import Data.Variant (SProxy(..))
 import Halogen.HTML (HTML, ComponentHTML)
-import TeamTavern.Client.Components.Input (checkboxInput, inputError, inputGroup, inputLabel, inputUnderlabel, numberRangeInput, requiredInputLabel, requiredTextLineInput, textInput_, textLineInput)
+import TeamTavern.Client.Components.Checkbox (checkboxInput)
+import TeamTavern.Client.Components.Input (inputError, inputGroup, inputLabel, inputUnderlabel, numberRangeInput, requiredInputLabel, requiredTextLineInput, textInput_, textLineInput)
 import TeamTavern.Client.Components.Select.MultiSelect (multiSelect)
 import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.Select.MultiTreeSelect (multiTreeSelect)
@@ -73,7 +74,7 @@ languagesInputGroup
     -> ComponentHTML action (language :: MultiSelect.Slot String Unit | slots) (Async left)
 languagesInputGroup value onValue =
     inputGroup
-    [ inputLabel "fas fa-comments" "Languages"
+    [ inputLabel "fas fa-comments" "Language"
     , multiSelect (SProxy :: SProxy "language")
         { options: allLanguages
         , selected: value

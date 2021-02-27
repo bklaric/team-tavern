@@ -12,6 +12,7 @@
 }
 
 .input-label-text {
+    display: inline-block;
     margin-left: 28px;
 }
 
@@ -84,6 +85,7 @@
     font-size: 14px;
     line-height: 1.5;
     padding: 9px 12px;
+    color: rgba(0, 0, 0, 0.733);
 }
 
 .text-input {
@@ -92,23 +94,6 @@
     height: 160px;
     width: 100%;
     box-sizing: border-box;
-}
-
-.checkbox-input-label {
-    display: flex;
-    margin: 0;
-    line-height: 1.5;
-    align-items: center;
-    height: 40px;
-}
-
-.checkbox-input {
-    width: 20px;
-    height: 20px;
-    margin: 0 7px 0 0;
-    cursor: pointer;
-    vertical-align: middle;
-    flex-shrink: 0;
 }
 
 .range-input-part {
@@ -129,4 +114,23 @@
 .range-input {
     display: flex;
     align-items: center;
+}
+
+.platform-id-heading {
+    @extend .input-groups-heading;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px 28px;
+}
+
+.platform-id-checkboxes {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 14px 28px;
+}
+
+.platform-id-radios {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 14px 28px;
 }

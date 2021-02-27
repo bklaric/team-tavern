@@ -13,9 +13,7 @@ import Data.String (Pattern(..), contains, toLower, trim)
 import Data.String as String
 import Data.String.Utils (repeat)
 import Data.Symbol (class IsSymbol)
-import Data.Traversable (traverse)
 import Data.Variant (SProxy)
-import Effect.Class (class MonadEffect)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
@@ -23,12 +21,9 @@ import Halogen.HTML.Properties as HP
 import Halogen.Query.EventSource as ES
 import Halogen.Query.HalogenM (SubscriptionId)
 import Prim.Row (class Cons)
-import Web.DOM.NonElementParentNode (getElementById)
+import TeamTavern.Client.Components.Checkbox (CheckboxState(..), checkbox', checkboxLabel)
 import Web.Event.Event as E
 import Web.HTML (window)
-import Web.HTML.HTMLDocument (toNonElementParentNode)
-import Web.HTML.HTMLInputElement as HTMLInputElement
-import Web.HTML.Window (document)
 import Web.HTML.Window as Window
 
 newtype InputEntry option = InputEntry
@@ -36,11 +31,9 @@ newtype InputEntry option = InputEntry
     , subEntries :: Array (InputEntry option)
     }
 
-data EntryState = Checked | Unchecked | Indeterminate
-
 newtype Entry option = Entry
     { option :: option
-    , state :: EntryState
+    , state :: CheckboxState
     , shown :: Boolean
     , expanded :: Boolean
     , subEntries :: Array (Entry option)
@@ -104,7 +97,7 @@ renderEntry
     -> Entry option
     -> Maybe (Array (HH.HTML slots (Action option)))
 renderEntry _ _ (Entry { shown: false }) = Nothing
-renderEntry level labeler (Entry { option, expanded, subEntries }) = let
+renderEntry level labeler (Entry { option, state, expanded, subEntries }) = let
     hasSubEntries = not $ Array.null subEntries
     optionClass =
             (if hasSubEntries then "collapsible-" else "")
@@ -115,14 +108,8 @@ renderEntry level labeler (Entry { option, expanded, subEntries }) = let
         [ HP.class_ $ HH.ClassName optionClass
         , HE.onClick $ const $ Just $ ToggleEntryState option
         ]
-        [ HH.input
-            [ HP.type_ HP.InputCheckbox
-            , HP.tabIndex $ -1
-            , HP.class_ $ HH.ClassName "checkbox-input"
-            , HP.id_ $ "tree " <> labeler option
-            -- , HP.ref $ H.RefLabel $ labeler option
-            ]
-        , HH.text $ labeler option
+        [ checkbox' state
+        , checkboxLabel $ labeler option
         ]
     ]
     <>
@@ -261,36 +248,6 @@ toggleEntriesExpanded comparer option entries = entries <#> \(Entry entry) ->
     else Entry $ entry
         { subEntries = toggleEntriesExpanded comparer option entry.subEntries }
 
-updateCheckboxes
-    :: forall monad message slots action state option
-    .  MonadEffect monad
-    => Labeler option
-    -> Entries option
-    -> H.HalogenM state action slots message monad Unit
-updateCheckboxes labeler entries =
-    entries
-    # traverse (\(Entry entry) -> do
-        element <- window >>= document <#> toNonElementParentNode
-            >>= getElementById ("tree " <> labeler entry.option) # H.liftEffect
-        -- element <- H.getRef $ H.RefLabel $ labeler entry.option
-        case element >>= HTMLInputElement.fromElement of
-            Nothing -> pure unit
-            Just checkbox -> do
-                H.liftEffect
-                    case entry.state of
-                    Checked -> do
-                        HTMLInputElement.setChecked true checkbox
-                        HTMLInputElement.setIndeterminate false checkbox
-                    Unchecked -> do
-                        HTMLInputElement.setChecked false checkbox
-                        HTMLInputElement.setIndeterminate false checkbox
-                    Indeterminate -> do
-                        HTMLInputElement.setChecked false checkbox
-                        HTMLInputElement.setIndeterminate true checkbox
-                updateCheckboxes labeler entry.subEntries
-    )
-    # void
-
 getSelectedEntries :: forall option. Entries option -> Array option
 getSelectedEntries entries =
     entries
@@ -331,8 +288,8 @@ handleAction Initialize = do
             (E.EventType "mousedown") window \_ -> Just TryClose
     windowSubscription <- H.subscribe $ ES.hoist affToAsync windowEventSource
     H.modify_ (_ { windowSubscription = Just windowSubscription })
-handleAction (Receive input) = do
-    state <- H.modify \state -> state
+handleAction (Receive input) =
+    H.modify_ \state -> state
         { entries =
             let
             checkedEntries =
@@ -348,15 +305,13 @@ handleAction (Receive input) = do
         , comparer = input.comparer
         , filter = { placeHolder: input.filter, text: state.filter.text }
         }
-    updateCheckboxes state.labeler state.entries
 handleAction Finalize = do
     { windowSubscription } <- H.get
     case windowSubscription of
         Just windowSubscription' -> H.unsubscribe windowSubscription'
         Nothing -> pure unit
-handleAction Open = do
-    { labeler, entries } <- H.modify (_ { open = true, keepOpen = true })
-    updateCheckboxes labeler entries
+handleAction Open =
+    H.modify_ (_ { open = true, keepOpen = true })
 handleAction Close =
     H.modify_ (_ { open = false })
 handleAction KeepOpen =
@@ -366,22 +321,19 @@ handleAction TryClose =
         if state.keepOpen
         then state { keepOpen = false }
         else state { open = false }
-handleAction (Filter text) = do
-    state <- H.modify \state @ { entries, labeler, filter } ->
+handleAction (Filter text) =
+    H.modify_ \state @ { entries, labeler, filter } ->
         state
         { entries = filterEntries text labeler entries
         , filter = filter { text = text }
         }
-    updateCheckboxes state.labeler state.entries
 handleAction (ToggleEntryState option) = do
     state <- H.modify \state @ { entries, comparer } ->
         state { entries = toggleEntriesState comparer option entries }
-    updateCheckboxes state.labeler state.entries
     H.raise $ getSelectedEntries state.entries
-handleAction (ToggleEntryExpanded option) = do
-    state <- H.modify \state @ { entries, comparer } ->
+handleAction (ToggleEntryExpanded option) =
+    H.modify_ \state @ { entries, comparer } ->
         state { entries = toggleEntriesExpanded comparer option entries }
-    updateCheckboxes state.labeler state.entries
 
 clearEntries :: forall option. Entries option -> Entries option
 clearEntries entries = entries <#> \(Entry entry) ->

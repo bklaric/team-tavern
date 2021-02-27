@@ -12,12 +12,12 @@ import Data.List.Types (NonEmptyList)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
 import Data.Symbol (SProxy(..))
-import Data.Variant (Variant, inj, match, onMatch)
+import Data.Variant (Variant, inj, match)
 import Effect (Effect, foreachE)
 import Global.Unsafe (unsafeStringify)
 import Node.Errors (Error)
 import Perun.Request.Body (Body)
-import Perun.Response (Response, badRequest_, internalServerError__, ok)
+import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, ok, unauthorized__)
 import Postgres.Error as Postgres
 import Postgres.Pool (Pool)
 import Prim.Row (class Lacks)
@@ -40,12 +40,12 @@ import TeamTavern.Server.Player.Register.ValidateRegistration (RegistrationError
 import TeamTavern.Server.Player.UpdatePlayer.UpdateDetails (updateDetails)
 import TeamTavern.Server.Player.UpdatePlayer.ValidatePlayer (PlayerErrors, validatePlayerV)
 import TeamTavern.Server.Profile.AddPlayerProfile.AddProfile (addProfile)
-import TeamTavern.Server.Profile.AddPlayerProfile.LoadFields (loadFields)
+import TeamTavern.Server.Profile.AddPlayerProfile.LoadFields as Player
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile (validateProfileV)
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile as PlayerProfile
 import TeamTavern.Server.Profile.AddTeamProfile.AddProfile as AddTeamProfile
+import TeamTavern.Server.Profile.AddTeamProfile.LoadFields as Team
 import TeamTavern.Server.Profile.AddTeamProfile.ValidateProfile as TeamProfile
-import TeamTavern.Server.Profile.Infrastructure.ConvertFields (convertFields)
 import TeamTavern.Server.Session.Domain.Token as Token
 import TeamTavern.Server.Session.Start.CreateSession (createSession)
 import TeamTavern.Server.Team.Create.AddTeam (addTeam)
@@ -112,7 +112,7 @@ type PreboardResult =
     }
 
 errorResponse :: PreboardError -> Response
-errorResponse = onMatch
+errorResponse = match
     { invalidBody: \errors ->
         errors
         # fromFoldable
@@ -129,8 +129,13 @@ errorResponse = onMatch
         [ inj (SProxy :: SProxy "nicknameTaken") [ unsafeStringify error ] ]
         # (writeJSON :: BadContent -> String)
         # badRequest_
+    , client: const badRequest__
+    , internal: const internalServerError__
+    , notAuthenticated: const unauthorized__
+    , notAuthorized: const forbidden__
+    , signedIn: const forbidden__
+    , randomError: const internalServerError__
     }
-    (const internalServerError__)
 
 successResponse :: Deployment -> PreboardResult -> Response
 successResponse deployment { teamHandle, cookieInfo } =
@@ -152,79 +157,82 @@ preboard deployment pool cookies body =
     (content :: RequestContent) <- readJsonBody body
 
     -- Start the transaction.
-    pool # transaction \client -> do
-        -- Read fields from database.
-        game <- loadFields client content.gameHandle
-
+    pool # transaction \client ->
         case content of
-            { ilk: 1, player: Just player, playerProfile: Just profile, registration } -> do
-                -- Validate data from body.
-                { player', profile', registration' } <-
-                    { player': _, profile': _, registration': _ }
-                    <$> validatePlayerV player
-                    <*> validateProfileV game profile
-                    <*> validateRegistrationV registration
-                    # AsyncV.toAsync
-                    # label (SProxy :: SProxy "invalidBody")
+        { ilk: 1, player: Just player, playerProfile: Just profile, registration } -> do
+            -- Read fields from database.
+            game <- Player.loadFields client content.gameHandle
 
-                -- Generate password hash.
-                hash <- generateHash registration'.password
+            -- Validate data from body.
+            { player', profile', registration' } <-
+                { player': _, profile': _, registration': _ }
+                <$> validatePlayerV player
+                <*> validateProfileV game profile
+                <*> validateRegistrationV registration
+                # AsyncV.toAsync
+                # label (SProxy :: SProxy "invalidBody")
 
-                -- Generate session token.
-                token <- Token.generate
+            -- Generate password hash.
+            hash <- generateHash registration'.password
 
-                -- Add player.
-                id <- addPlayer client
-                    { nickname: registration'.nickname
-                    , hash
-                    }
+            -- Generate session token.
+            token <- Token.generate
 
-                -- Create a new session.
-                createSession { id: Id id, token } client
+            -- Add player.
+            id <- addPlayer client
+                { nickname: registration'.nickname
+                , hash
+                }
 
-                updateDetails client id player'
+            -- Create a new session.
+            createSession { id: Id id, token } client
 
-                addProfile client id
-                    { handle: content.gameHandle
-                    , nickname: unwrap registration'.nickname
-                    }
-                    profile'
+            updateDetails client id player'
 
-                pure
-                    { teamHandle: Nothing
-                    , cookieInfo: { id: Id id, nickname: registration'.nickname, token }
-                    }
-            { ilk: 2, team: Just team, teamProfile: Just profile, registration } -> do
-                -- Validate data from body.
-                { team', profile', registration' } <-
-                    { team': _, profile': _, registration': _ }
-                    <$> validateTeamV team
-                    <*> TeamProfile.validateProfileV (convertFields game.fields) profile
-                    <*> validateRegistrationV registration
-                    # AsyncV.toAsync
-                    # label (SProxy :: SProxy "invalidBody")
+            addProfile client id
+                { handle: content.gameHandle
+                , nickname: unwrap registration'.nickname
+                }
+                profile'
 
-                -- Generate password hash.
-                hash <- generateHash registration'.password
+            pure
+                { teamHandle: Nothing
+                , cookieInfo: { id: Id id, nickname: registration'.nickname, token }
+                }
+        { ilk: 2, team: Just team, teamProfile: Just profile, registration } -> do
+            -- Read fields from database.
+            game <- Team.loadFields client content.gameHandle
 
-                -- Generate session token.
-                token <- Token.generate
+            -- Validate data from body.
+            { team', profile', registration' } <-
+                { team': _, profile': _, registration': _ }
+                <$> validateTeamV team
+                <*> TeamProfile.validateProfileV game profile
+                <*> validateRegistrationV registration
+                # AsyncV.toAsync
+                # label (SProxy :: SProxy "invalidBody")
 
-                -- Add player.
-                id <- addPlayer client
-                    { nickname: registration'.nickname
-                    , hash
-                    }
+            -- Generate password hash.
+            hash <- generateHash registration'.password
 
-                -- Create a new session.
-                createSession { id: Id id, token } client
+            -- Generate session token.
+            token <- Token.generate
 
-                { handle } <- addTeam client (Id id) (generateHandle team'.name) team'
+            -- Add player.
+            id <- addPlayer client
+                { nickname: registration'.nickname
+                , hash
+                }
 
-                AddTeamProfile.addProfile client (Id id) handle content.gameHandle profile'
+            -- Create a new session.
+            createSession { id: Id id, token } client
 
-                pure
-                    { teamHandle: Just handle
-                    , cookieInfo: { id: Id id, nickname: registration'.nickname, token }
-                    }
-            _ -> Async.left $ inj (SProxy :: SProxy "client") []
+            { handle } <- addTeam client (Id id) (generateHandle team'.name) team'
+
+            AddTeamProfile.addProfile client (Id id) handle content.gameHandle profile'
+
+            pure
+                { teamHandle: Just handle
+                , cookieInfo: { id: Id id, nickname: registration'.nickname, token }
+                }
+        _ -> Async.left $ inj (SProxy :: SProxy "client") []

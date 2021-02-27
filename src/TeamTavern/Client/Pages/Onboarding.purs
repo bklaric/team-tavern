@@ -12,7 +12,7 @@ import Data.Bifunctor (bimap, lmap)
 import Data.Const (Const)
 import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
-import Data.Maybe (Maybe(..), isNothing)
+import Data.Maybe (Maybe(..), isNothing, maybe)
 import Data.Options ((:=))
 import Data.Symbol (SProxy(..))
 import Data.Variant (match)
@@ -27,6 +27,8 @@ import Simple.JSON (class ReadForeign, class WriteForeign)
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.Boarding.Boarding (boarding, boardingButtons, boardingDescription, boardingHeading, boardingStep)
+import TeamTavern.Client.Components.Boarding.GameInput (gameInput)
+import TeamTavern.Client.Components.Boarding.GameInput as GameInput
 import TeamTavern.Client.Components.Boarding.PlayerOrTeamInput (playerOrTeamInput)
 import TeamTavern.Client.Components.Boarding.PlayerOrTeamInput as PlayerOrTeamInput
 import TeamTavern.Client.Components.Button (primaryButton_, secondaryButton_)
@@ -34,13 +36,12 @@ import TeamTavern.Client.Components.Player.PlayerFormInput as PlayerFormInput
 import TeamTavern.Client.Components.Player.ProfileFormInput as PlayerProfileFormInput
 import TeamTavern.Client.Components.Team.ProfileFormInput as TeamProfileFormInput
 import TeamTavern.Client.Components.Team.TeamFormInput as TeamFormInput
-import TeamTavern.Client.Components.Boarding.GameInput (gameInput)
-import TeamTavern.Client.Components.Boarding.GameInput as GameInput
 import TeamTavern.Client.Script.Cookie (getPlayerNickname)
 import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
 import TeamTavern.Client.Script.Navigate (navigate, navigateReplace, navigate_)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Onboard as Onboard
+import TeamTavern.Routes.Shared.Platform (Platform(..))
 
 data Step
     = Greeting
@@ -91,8 +92,10 @@ emptyInput =
     , player: PlayerFormInput.emptyInput
     , team: TeamFormInput.emptyInput
     , game: Nothing
-    , playerProfile: PlayerProfileFormInput.emptyInput { externalIdIlk: 1, fields: [] }
-    , teamProfile: TeamProfileFormInput.emptyInput []
+    , playerProfile: PlayerProfileFormInput.emptyInput
+        { platforms: { head: Steam, tail: [] }, fields: [] }
+    , teamProfile: TeamProfileFormInput.emptyInput
+        { platforms: { head: Steam, tail: [] }, fields: [] }
     , otherError: false
     }
 
@@ -226,9 +229,9 @@ renderPage { step: Game, game, playerOrTeam } =
             [ HH.text "Next" ]
         ]
     ]
-renderPage { step: PlayerProfile, playerProfile, otherError, submitting } =
+renderPage { step: PlayerProfile, playerProfile, game, otherError, submitting } =
     [ boardingStep
-        [ boardingHeading "Player profile"
+        [ boardingHeading $ maybe "Player profile" (\{ title } -> title <> " player profile") game
         , boardingDescription  """Fill out your in-game stats, achievements and ambitions to find
             equally skilled teammates."""
         , PlayerProfileFormInput.profileFormInput playerProfile UpdatePlayerProfile
@@ -251,9 +254,9 @@ renderPage { step: PlayerProfile, playerProfile, otherError, submitting } =
             else []
         ]
     ]
-renderPage { step: TeamProfile, teamProfile, otherError, submitting } =
+renderPage { step: TeamProfile, teamProfile, game, otherError, submitting } =
     [ boardingStep
-        [ boardingHeading "Team profile"
+        [ boardingHeading $ maybe "Team profile" (\{ title } -> title <> " team profile") game
         , boardingDescription  """Tell us about your team's ambitions and what you're looking for
             skill-wise in new team members."""
         , TeamProfileFormInput.profileFormInput teamProfile UpdateTeamProfile
@@ -308,7 +311,8 @@ sendRequest (state :: State) = Async.unify do
             , team: Nothing
             , gameHandle: game.handle
             , playerProfile: Just
-                { externalId: profile.externalId
+                { platform: profile.platform
+                , platformId: profile.platformId
                 , fieldValues: profile.fieldValues
                 , newOrReturning: profile.newOrReturning
                 , ambitions: profile.ambitions
@@ -342,7 +346,8 @@ sendRequest (state :: State) = Async.unify do
             , gameHandle: game.handle
             , playerProfile: Nothing
             , teamProfile: Just
-                { fieldValues: profile.fieldValues
+                { platforms: profile.selectedPlatforms
+                , fieldValues: profile.fieldValues
                 , newOrReturning: profile.newOrReturning
                 , ambitions: profile.ambitions
                 }
@@ -451,15 +456,18 @@ handleAction (UpdateGame game) = do
     state <- H.modify _
         { game = Just game
         , playerProfile
-            { externalIdIlk = game.externalIdIlk
+            { platforms = game.platforms
             , fields = game.fields
-            , externalId = ""
+            , platform = game.platforms.head
+            , platformId = ""
             , fieldValues = []
             , newOrReturning = false
             , ambitions = ""
             }
         , teamProfile
-            { fields = game.fields # Array.mapMaybe
+            { allPlatforms = game.platforms
+            , selectedPlatforms = [ game.platforms.head ]
+            , fields = game.fields # Array.mapMaybe
                 case _ of
                 { ilk, key, label, icon, options: Just options } | ilk == 2 || ilk == 3 ->
                     Just { key, label, icon, options }
@@ -473,7 +481,9 @@ handleAction (UpdateGame game) = do
 handleAction (UpdatePlayerProfile details) = do
     state <- H.modify _
         { playerProfile
-            { externalId = details.externalId
+            { platform = details.platform
+            , platformId = details.platformId
+            , platformIdError = details.platformIdError
             , fieldValues = details.fieldValues
             , newOrReturning = details.newOrReturning
             , ambitions = details.ambitions
@@ -483,7 +493,8 @@ handleAction (UpdatePlayerProfile details) = do
 handleAction (UpdateTeamProfile details) = do
     state <- H.modify _
         { teamProfile
-            { fieldValues = details.fieldValues
+            { selectedPlatforms = details.platforms
+            , fieldValues = details.fieldValues
             , newOrReturning = details.newOrReturning
             , ambitions = details.ambitions
             }
@@ -506,8 +517,12 @@ handleAction SetUpAccount = do
                 , aboutError = false
                 }
             , playerProfile
-                { externalIdError = false
+                { platformIdError = false
                 , urlErrors = []
+                , ambitionsError = false
+                }
+            , teamProfile
+                { platformsError = false
                 , ambitionsError = false
                 }
             }
@@ -555,8 +570,8 @@ handleAction SetUpAccount = do
                     foldl
                     (\state' error' ->
                         match
-                        { externalId: const state'
-                            { playerProfile { externalIdError = true } }
+                        { platformId: const state'
+                            { playerProfile { platformIdError = true } }
                         , url: \{ key } -> state'
                             { playerProfile
                                 { urlErrors = Array.cons key state'.playerProfile.urlErrors }
@@ -571,8 +586,8 @@ handleAction SetUpAccount = do
                     foldl
                     (\state' error' ->
                         match
-                        { ambitions: const state'
-                            { playerProfile { ambitionsError = true } }
+                        { platforms: const state' { teamProfile { platformsError = true } }
+                        , ambitions: const state' { teamProfile { ambitionsError = true } }
                         }
                         error'
                     )

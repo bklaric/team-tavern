@@ -18,6 +18,7 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Halogen.Query.EventSource as ES
 import Prim.Row (class Cons)
+import TeamTavern.Client.Components.Checkbox (checkbox, checkboxLabel)
 import Web.Event.Event as E
 import Web.HTML (window)
 import Web.HTML.Window as Window
@@ -101,13 +102,8 @@ render { entries, labeler, comparer, filter, open } =
                 [ HP.class_ $ HH.ClassName "option"
                 , HE.onClick $ const $ Just $ ToggleOption option
                 ]
-                [ HH.input
-                    [ HP.type_ HP.InputCheckbox
-                    , HP.checked selected
-                    , HP.tabIndex $ -1
-                    , HP.class_ $ HH.ClassName "checkbox-input"
-                    ]
-                , HH.text $ labeler option
+                [ checkbox selected
+                , checkboxLabel $ labeler option
                 ])
         ]
     else []

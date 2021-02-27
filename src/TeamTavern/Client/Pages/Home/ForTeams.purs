@@ -9,7 +9,7 @@ import Web.UIEvent.MouseEvent (MouseEvent)
 forTeams :: forall slots action. (MouseEvent -> action) -> HH.HTML slots action
 forTeams onClick =
     landingSection
-    [ landingSectionImage "/images/player-2.png"
+    [ landingSectionImage "/images/for-teams.png"
     , landingSectionText $
         [ landingSectionHeading "fas fa-users" "Looking for players?"
         , landingSectionDescription "Recruit new members for your team and expand your online community in four easy steps:"
@@ -27,10 +27,10 @@ forTeams onClick =
         ]
     ]
 
-forTeams' :: forall slots action. String -> (MouseEvent -> action) -> HH.HTML slots action
-forTeams' title onClick =
+forTeams' :: forall slots action. String -> String -> (MouseEvent -> action) -> HH.HTML slots action
+forTeams' handle title onClick =
     landingSection
-    [ landingSectionImage "/images/player-2.png"
+    [ landingSectionImage $ "/images/" <> handle <> "/for-teams.png"
     , landingSectionText $
         [ landingSectionHeading "fas fa-users" "Looking for players?"
         , landingSectionDescription "Recruit new members for your team and expand your online community in three easy steps:"

@@ -21,6 +21,8 @@ import Postgres.Error (Error)
 import Postgres.Query (Query(..))
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
+import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
+import TeamTavern.Routes.Shared.Platform as Platform
 import TeamTavern.Server.Infrastructure.Postgres (prepareJsonString, prepareString, teamAdjustedWeekdayFrom, teamAdjustedWeekdayTo, teamAdjustedWeekendFrom, teamAdjustedWeekendTo)
 import TeamTavern.Server.Profile.Routes (Age, Location, Filters, Handle, HasMicrophone, Language, ProfilePage, Time, Timezone, NewOrReturning)
 import URI.Extra.QueryPairs (Key, QueryPairs(..), Value)
@@ -51,6 +53,8 @@ type LoadProfilesResult =
         , to :: String
         }
     , about :: Array String
+    , allPlatforms :: Platforms
+    , selectedPlatforms :: Array Platform
     , fieldValues :: Array
         { field ::
             { ilk :: Int
@@ -185,6 +189,10 @@ createMicrophoneFilter :: HasMicrophone -> String
 createMicrophoneFilter false = ""
 createMicrophoneFilter true = " and team.microphone"
 
+createPlatformsFilter :: Array Platform -> String
+createPlatformsFilter [] = ""
+createPlatformsFilter platforms = " and profile.platforms && (array[" <> (platforms <#> Platform.toString <#> prepareString # intercalate ", ") <> "])"
+
 createNewOrReturningFilter :: NewOrReturning -> String
 createNewOrReturningFilter false = ""
 createNewOrReturningFilter true = " and profile.new_or_returning"
@@ -199,6 +207,7 @@ createTeamFilterString timezone filters =
     <> createWeekendOnlineFilter
         timezone filters.weekendOnline.from filters.weekendOnline.to
     <> createMicrophoneFilter filters.microphone
+    <> createPlatformsFilter filters.platforms
     <> createNewOrReturningFilter filters.newOrReturning
 
 prepareFields :: QueryPairs Key Value -> Array (Tuple String (Array String))
@@ -269,6 +278,11 @@ queryStringWithoutPagination handle timezone filters = Query $ """
                     'to', to_char(""" <> teamAdjustedWeekendTo timezone <> """, 'HH24:MI')
                 )
             end as "weekendOnline",
+            json_build_object(
+                'head', game.platforms[1],
+                'tail', game.platforms[2:]
+            ) as "allPlatforms",
+            profile.platforms as "selectedPlatforms",
             coalesce(
                 jsonb_agg(
                     jsonb_build_object(
@@ -326,7 +340,7 @@ queryStringWithoutPagination handle timezone filters = Query $ """
         where
             game.handle = """ <> prepareString handle
             <> createTeamFilterString timezone filters <> """
-        group by player.id, team.id, profile.id
+        group by player.id, team.id, profile.id, game.id
         ) as profile
     """ <> createFieldsFilterString filters.fields <> """
     order by profile.updated desc"""

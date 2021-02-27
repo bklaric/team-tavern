@@ -10,7 +10,8 @@ import Data.MultiMap as MultiMap
 import Data.Variant (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
-import TeamTavern.Client.Components.Input (checkboxInput, inputError, inputGroup, inputLabel, inputUnderlabel, textInput_)
+import TeamTavern.Client.Components.Checkbox (checkboxInput)
+import TeamTavern.Client.Components.Input (inputError, inputGroup, inputLabel, inputUnderlabel, textInput_)
 import TeamTavern.Client.Components.Select.MultiSelect (multiSelectIndexed)
 import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
 
@@ -35,10 +36,9 @@ fieldInputGroup
     -> Field
     -> H.ComponentHTML
         action
-        ("multiSelectField" :: MultiSelect.Slot Option String | slots)
+        (multiSelectField :: MultiSelect.Slot Option String | slots)
         (Async left)
-fieldInputGroup fieldValues onValue field
-    =
+fieldInputGroup fieldValues onValue field =
     inputGroup
     [ inputLabel field.icon field.label
     , multiSelectIndexed (SProxy :: SProxy "multiSelectField") field.key

@@ -25,6 +25,7 @@ import TeamTavern.Client.Script.Cookie (PlayerInfo)
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Client.Snippets.PreventMouseDefault (preventMouseDefault)
+import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
 import TeamTavern.Server.Profile.ViewTeamProfilesByGame.LoadProfiles (pageSize)
 import Web.UIEvent.MouseEvent (MouseEvent)
 
@@ -49,6 +50,8 @@ type TeamProfile =
         , to :: String
         }
     , about :: Array String
+    , allPlatforms :: Platforms
+    , selectedPlatforms :: Array Platform
     , fieldValues :: Array
         { field ::
             { ilk :: Int
@@ -122,7 +125,7 @@ render { profiles, profileCount, playerInfo, page } =
     else
     ( profiles # mapWithIndex \index profile -> let
         teamDetails' = teamDetails profile
-        profileDetails'' = profileDetails' profile.fieldValues profile.newOrReturning
+        profileDetails'' = profileDetails' profile
         about = textDetail profile.about
         ambitions = textDetail profile.ambitions
         in
