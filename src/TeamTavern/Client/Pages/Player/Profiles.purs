@@ -13,7 +13,7 @@ import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.Missing (missing)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Components.Player.ProfileDetails (PlatformIdSlots, profileDetails)
-import TeamTavern.Client.Components.Profile (profileHeader, profileHeaderItem, profileHeading, profileSubheading)
+import TeamTavern.Client.Components.Profile (profileHeader, profileHeaderItem, profileHeading', profileSubheading)
 import TeamTavern.Client.Pages.Player.CreateProfileButton (createProfileButton)
 import TeamTavern.Client.Pages.Player.CreateProfileButton as CreateProfileButton
 import TeamTavern.Client.Pages.Player.Status (Status(..))
@@ -55,7 +55,7 @@ profiles { nickname, profiles: profiles' } status showEditProfileModal =
         cardSection $
         [ profileHeader $
             [ profileHeaderItem $
-                [ profileHeading (SProxy :: SProxy "games") profile.handle
+                [ profileHeading' (SProxy :: SProxy "games") profile.handle
                     ("/games/" <> profile.handle <> "/players") profile.title
                 ]
                 <>
