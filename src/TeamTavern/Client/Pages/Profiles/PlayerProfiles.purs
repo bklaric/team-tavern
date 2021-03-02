@@ -20,6 +20,7 @@ import TeamTavern.Client.Components.Pagination (pagination)
 import TeamTavern.Client.Components.Player.PlayerDetails (playerDetails)
 import TeamTavern.Client.Components.Player.ProfileDetails (PlatformIdSlots, profileDetails')
 import TeamTavern.Client.Components.Profile (profileHeader, profileHeaderItem, profileHeading, profileSubheading)
+import TeamTavern.Client.Pages.Profiles.Ads (profileSectionsWithAds)
 import TeamTavern.Client.Script.Cookie (PlayerInfo)
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
 import TeamTavern.Client.Snippets.Class as HS
@@ -95,9 +96,66 @@ type Slot = H.Slot (Const Void) Output Unit
 
 type ChildSlots = PlatformIdSlots
     ( players :: Anchor.Slot String
-    , messagePlayer :: Anchor.Slot String
     , discordTag :: Copyable.Slot String
     )
+
+profileSection :: forall action left.
+    PlayerProfile -> HH.ComponentHTML action ChildSlots (Async left)
+profileSection profile = let
+    playerDetails' = playerDetails profile
+    profileDetails'' = profileDetails'
+        profile.platform profile.platformId profile.fieldValues profile.newOrReturning
+    about = textDetail profile.about
+    ambitions = textDetail profile.ambitions
+    in
+    cardSection $
+    [ profileHeader
+        [ profileHeaderItem
+            [ profileHeading (SProxy :: SProxy "players") profile.nickname
+                ("/players/" <> profile.nickname) profile.nickname
+            , divider
+            , profileSubheading $ "Updated " <> lastUpdated profile.updatedSeconds
+            ]
+        ]
+    ]
+    <>
+    if (not $ Array.null playerDetails') || (not $ Array.null profileDetails'')
+        || (not $ Array.null about) || (not $ Array.null ambitions)
+    then
+        [ detailColumns $
+            ( if (not $ Array.null playerDetails') || (not $ Array.null profileDetails'')
+                then
+                    [ detailColumn $
+                        ( if not $ Array.null playerDetails'
+                            then [ detailColumnHeading4 "Player details" ] <> playerDetails'
+                            else []
+                        )
+                        <>
+                        ( if not $ Array.null profileDetails''
+                            then [ detailColumnHeading4 "Profile details" ] <> profileDetails''
+                            else []
+                        )
+                    ]
+                else []
+            )
+            <>
+            ( if (not $ Array.null about) || (not $ Array.null ambitions)
+                then
+                    [ detailColumn $
+                        ( if not $ Array.null about
+                            then [ detailColumnHeading4 "About" ] <> about
+                            else []
+                        )
+                        <>
+                        ( if not $ Array.null ambitions
+                            then [ detailColumnHeading4 "Ambitions" ] <> ambitions
+                            else []
+                        )
+                    ]
+                else []
+            )
+        ]
+    else []
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { profiles, profileCount, playerInfo, page } =
@@ -127,64 +185,8 @@ render { profiles, profileCount, playerInfo, page } =
     <>
     if Array.null profiles
     then [ cardSection [ HH.p_ [ HH.text "No profiles satisfy specified filters." ] ] ]
-    else
-    ( profiles <#> \profile -> let
-        playerDetails' = playerDetails profile
-        profileDetails'' = profileDetails'
-            profile.platform profile.platformId profile.fieldValues profile.newOrReturning
-        about = textDetail profile.about
-        ambitions = textDetail profile.ambitions
-        in
-        cardSection $
-        [ profileHeader
-            [ profileHeaderItem
-                [ profileHeading (SProxy :: SProxy "players") profile.nickname
-                    ("/players/" <> profile.nickname) profile.nickname
-                , divider
-                , profileSubheading $ "Updated " <> lastUpdated profile.updatedSeconds
-                ]
-            ]
-        ]
-        <>
-        if (not $ Array.null playerDetails') || (not $ Array.null profileDetails'')
-            || (not $ Array.null about) || (not $ Array.null ambitions)
-        then
-            [ detailColumns $
-                ( if (not $ Array.null playerDetails') || (not $ Array.null profileDetails'')
-                    then
-                        [ detailColumn $
-                            ( if not $ Array.null playerDetails'
-                                then [ detailColumnHeading4 "Player details" ] <> playerDetails'
-                                else []
-                            )
-                            <>
-                            ( if not $ Array.null profileDetails''
-                                then [ detailColumnHeading4 "Profile details" ] <> profileDetails''
-                                else []
-                            )
-                        ]
-                    else []
-                )
-                <>
-                ( if (not $ Array.null about) || (not $ Array.null ambitions)
-                    then
-                        [ detailColumn $
-                            ( if not $ Array.null about
-                                then [ detailColumnHeading4 "About" ] <> about
-                                else []
-                            )
-                            <>
-                            ( if not $ Array.null ambitions
-                                then [ detailColumnHeading4 "Ambitions" ] <> ambitions
-                                else []
-                            )
-                        ]
-                    else []
-                )
-            ]
-        else []
-    )
-    <> [ pagination page profileCount ChangePage ]
+    else ( profiles <#> profileSection # profileSectionsWithAds )
+        <> [ pagination page profileCount ChangePage ]
 
 handleAction :: forall left. Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
 handleAction (Receive input) = H.put input

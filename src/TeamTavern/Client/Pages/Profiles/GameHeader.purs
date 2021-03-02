@@ -10,10 +10,13 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import TeamTavern.Client.Components.Content (contentHeader)
+import TeamTavern.Client.Components.Content (contentDescription, contentHeader)
+import TeamTavern.Client.Pages.Profiles.Ads (descriptionAd)
 import TeamTavern.Client.Script.Navigate (navigate_)
 import TeamTavern.Client.Snippets.Class as HS
 import Web.Event.Event (preventDefault)
+import Web.HTML (window)
+import Web.HTML.Window (innerWidth)
 import Web.UIEvent.MouseEvent (MouseEvent, toEvent)
 
 type Handle = String
@@ -28,9 +31,9 @@ derive instance eqTab :: Eq Tab
 
 data Input = Input Handle Title ShortTitle Tab
 
-type State = Input
+type State = { input :: Input, adWidth :: Maybe Int }
 
-data Action = Navigate String MouseEvent | Receive Input
+data Action = Navigate String MouseEvent | Initialize | Receive Input
 
 playersPath :: String -> String
 playersPath handle = "/games/" <> handle <> "/players"
@@ -68,8 +71,9 @@ renderTabs handle Teams =
         ]
     ]
 
-render :: forall slots. Input -> HH.HTML slots Action
-render (Input handle title shortTitle tab) = HH.div_
+render :: forall slots. State -> HH.HTML slots Action
+render ({ input: Input handle title shortTitle tab, adWidth }) =
+    HH.div_ $
     [ contentHeader
         [ HH.div_
             [ HH.a
@@ -87,29 +91,35 @@ render (Input handle title shortTitle tab) = HH.div_
                 (renderTabs handle tab)
             ]
         ]
-    , HH.p [ HS.class_ "content-description" ]
-        [ HH.text
-            case tab of
-            Players -> "Find " <> shortTitle <> " players looking for a team. Create your own player profile and let everyone know you're looking to team up."
-            Teams -> "Find  " <> shortTitle <> " teams looking for players. Create your own team profile and recruit new members for your team."
-        ]
+    , contentDescription
+        case tab of
+        Players -> "Find " <> shortTitle <> " players looking for a team. Create your own player profile and let everyone know you're looking to team up."
+        Teams -> "Find " <> shortTitle <> " teams looking for players. Create your own team profile and recruit new members for your team."
     ]
+    <>
+    case adWidth of
+    Just width -> [ descriptionAd width ]
+    Nothing -> []
 handleAction :: forall monad.
-    Bind monad => MonadEffect monad => MonadState Input monad =>
+    Bind monad => MonadEffect monad => MonadState State monad =>
     Action -> monad Unit
 handleAction (Navigate path mouseEvent) = do
     liftEffect $ preventDefault $ toEvent mouseEvent
     liftEffect $ navigate_ path
+handleAction Initialize = do
+    width <- window >>= innerWidth # H.liftEffect
+    H.modify_ _ { adWidth = Just $ max 1200 (width - 42) }
 handleAction (Receive input) =
-    H.put input
+    H.modify_ _ { input = input }
 
 component :: forall query output monad. MonadEffect monad =>
     H.Component HH.HTML query Input output monad
 component = H.mkComponent
-    { initialState: identity
+    { initialState: { input: _, adWidth: Nothing }
     , render
     , eval: H.mkEval $ H.defaultEval
         { handleAction = handleAction
+        , initialize = Just Initialize
         , receive = Just <<< Receive
         }
     }

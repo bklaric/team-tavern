@@ -22,6 +22,7 @@ import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.Select.MultiTreeSelect as MultiTreeSelect
 import TeamTavern.Client.Components.Team.ProfileInputGroup (FieldValues, fieldInputGroup, newOrReturningInputGroup)
 import TeamTavern.Client.Components.Team.TeamInputGroup (ageInputGroup, languagesInputGroup, locationInputGroup, microphoneInputGroup)
+import TeamTavern.Client.Pages.Profiles.Ads (filtersAd)
 import TeamTavern.Client.Pages.Profiles.GameHeader (Tab(..))
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
@@ -80,6 +81,7 @@ type State =
     , filtersVisible :: Boolean
     , playerFiltersVisible :: Boolean
     , profileFiltersVisible :: Boolean
+    , adVisible :: Boolean
     , tab :: Tab
     }
 
@@ -120,6 +122,8 @@ headerCaret class_ visible =
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render state =
+    HH.div [ HS.class_ "filters-container" ] $
+    [
     HH.div [ HS.class_ "filters-card" ] $
     [ HH.div
         [ HS.class_ "card-header"
@@ -206,6 +210,9 @@ render state =
             ]
         ]
     else []
+    ]
+    <>
+    if state.adVisible then [ filtersAd ] else []
 
 handleAction :: forall left. Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
 handleAction Initialize = do
@@ -215,6 +222,7 @@ handleAction Initialize = do
         { filtersVisible = showFilters
         , playerFiltersVisible = showFilters
         , profileFiltersVisible = showFilters
+        , adVisible = showFilters
         }
 handleAction (Receive { platforms, fields, filters, tab }) = do
     H.modify_ _
@@ -325,6 +333,7 @@ initialState { platforms, fields, filters, tab } =
     , filtersVisible: false
     , playerFiltersVisible: false
     , profileFiltersVisible: false
+    , adVisible: false
     , tab
     }
 
