@@ -1,0 +1,1 @@
+0 0 * * * curl --output ~/team-tavern/dist-client/ads.txt https://os1.network-n.com/ads.txt
