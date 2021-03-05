@@ -30,6 +30,7 @@ import TeamTavern.Client.Pages.Player (player)
 import TeamTavern.Client.Pages.Player as Player
 import TeamTavern.Client.Pages.Preboarding (preboarding)
 import TeamTavern.Client.Pages.Preboarding as Preboarding
+import TeamTavern.Client.Pages.Privacy (privacyPolicy)
 import TeamTavern.Client.Pages.Profiles as Profiles
 import TeamTavern.Client.Pages.Profiles.GameHeader as GameHeader
 import TeamTavern.Client.Pages.Register (register)
@@ -50,6 +51,7 @@ data State
     | Home
     | Games
     | About
+    | Privacy
     | Game { handle :: String }
     | Profiles GameHeader.Handle GameHeader.Tab
     | Player { nickname :: String }
@@ -58,6 +60,7 @@ data State
     | SignIn
     | Onboarding Onboarding.Input
     | Preboarding Preboarding.Input
+    | NetworkN
     | NotFound
 
 type ChildSlots = Footer.ChildSlots
@@ -94,6 +97,7 @@ render Empty = HH.div_ []
 render Home = HH.div_ [ topBar, home, footer ]
 render Games = topBarWithContent [ games ]
 render About = topBarWithContent [ about ]
+render Privacy = topBarWithContent [ privacyPolicy ]
 render (Game input) = HH.div_ [ topBar, game input, footer ]
 render (Profiles handle tab) = wideTopBarWithContent [ Profiles.profiles handle tab ]
 render (Player input) = topBarWithContent [ player input ]
@@ -102,6 +106,18 @@ render Register = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form
 render SignIn = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ signIn ] ]
 render (Onboarding input) = onboarding input
 render (Preboarding input) = preboarding input
+render NetworkN = topBarWithContent
+    [ HH.h3_ [ HH.text "nn_lb1" ]
+    , HH.div [ HP.id_ "nn_lb1" ] []
+    , HH.h3_ [ HH.text "nn_lb2" ]
+    , HH.div [ HP.id_ "nn_lb2" ] []
+    , HH.h3_ [ HH.text "nn_mpu1" ]
+    , HH.div [ HP.id_ "nn_mpu1" ] []
+    , HH.h3_ [ HH.text "nn_mobile_lb1_sticky" ]
+    , HH.div [ HP.id_ "nn_mobile_lb1_sticky" ] []
+    , HH.h3_ [ HH.text "nn_mobile_lb2" ]
+    , HH.div [ HP.id_ "nn_mobile_lb2" ] []
+    ]
 render NotFound = HH.p_ [ HH.text "You're fucken lost, mate." ]
 
 just :: forall t5 t7. Applicative t5 => t7 -> t5 (Maybe t7)
@@ -121,6 +137,8 @@ handleAction (Init state route) = do
                 Nothing -> just Home
         ["", "about"] ->
             just About
+        ["", "privacy"] ->
+            just Privacy
         ["", "register"] ->
             just Register
         ["", "signin"] ->
@@ -171,6 +189,8 @@ handleAction (Init state route) = do
             just $ Profiles handle GameHeader.Teams
         ["", "players", nickname] ->
             just $ Player { nickname }
+        ["", "network-n-test"] ->
+            just $ NetworkN
         _ ->
             navigateReplace_ "/" *> nothing
     case newState of
