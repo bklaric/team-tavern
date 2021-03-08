@@ -10,6 +10,7 @@ import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
+import TeamTavern.Client.Components.Ads (descriptionLeaderboard, mobileDescriptionLeaderboard)
 import TeamTavern.Client.Components.Content (contentDescription, contentHeader, contentHeading)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Components.Player.ProfileDetails (PlatformIdSlots)
@@ -84,6 +85,8 @@ render (Loaded state @ { player: player', status, editPopoverShown }) =
         case status of
         SignedInSelf -> "View and edit all your details, profiles and teams."
         _ -> "View all player's details, profiles and teams."
+    , descriptionLeaderboard
+    , mobileDescriptionLeaderboard
     , details player' status ShowEditPlayerModal
     , profiles player' status ShowEditProfileModal
     , teams player' status ShowCreateTeamModal

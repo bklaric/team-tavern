@@ -12,6 +12,7 @@ import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
+import TeamTavern.Client.Components.Ads (descriptionLeaderboard, mobileDescriptionLeaderboard)
 import TeamTavern.Client.Components.Content (contentDescription, contentHeader, contentHeading)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
 import TeamTavern.Client.Pages.Team.Details (details)
@@ -67,6 +68,8 @@ render (Loaded { team: team', status, showEditTeamModal, showEditProfileModal } 
         case status of
         SignedInOwner -> "View and edit all your team's details and profiles."
         _ -> "View all team's details and profiles."
+    , descriptionLeaderboard
+    , mobileDescriptionLeaderboard
     , details team' status ShowEditTeamModal
     , profiles team'.handle team'.profiles status ShowEditProfileModal
     ]

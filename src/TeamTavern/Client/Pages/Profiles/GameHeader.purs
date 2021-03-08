@@ -10,7 +10,8 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import TeamTavern.Client.Components.Content (contentHeader)
+import TeamTavern.Client.Components.Ads (descriptionLeaderboard, mobileDescriptionLeaderboard)
+import TeamTavern.Client.Components.Content (contentDescription, contentHeader)
 import TeamTavern.Client.Script.Navigate (navigate_)
 import TeamTavern.Client.Snippets.Class as HS
 import Web.Event.Event (preventDefault)
@@ -68,7 +69,7 @@ renderTabs handle Teams =
         ]
     ]
 
-render :: forall slots. Input -> HH.HTML slots Action
+render :: forall slots. State -> HH.HTML slots Action
 render (Input handle title shortTitle tab) = HH.div_
     [ contentHeader
         [ HH.div_
@@ -87,15 +88,15 @@ render (Input handle title shortTitle tab) = HH.div_
                 (renderTabs handle tab)
             ]
         ]
-    , HH.p [ HS.class_ "content-description" ]
-        [ HH.text
-            case tab of
-            Players -> "Find " <> shortTitle <> " players looking for a team. Create your own player profile and let everyone know you're looking to team up."
-            Teams -> "Find  " <> shortTitle <> " teams looking for players. Create your own team profile and recruit new members for your team."
-        ]
+    , contentDescription
+        case tab of
+        Players -> "Find " <> shortTitle <> " players looking for a team. Create your own player profile and let everyone know you're looking to team up."
+        Teams -> "Find  " <> shortTitle <> " teams looking for players. Create your own team profile and recruit new members for your team."
+    , descriptionLeaderboard
+    , mobileDescriptionLeaderboard
     ]
 handleAction :: forall monad.
-    Bind monad => MonadEffect monad => MonadState Input monad =>
+    Bind monad => MonadEffect monad => MonadState State monad =>
     Action -> monad Unit
 handleAction (Navigate path mouseEvent) = do
     liftEffect $ preventDefault $ toEvent mouseEvent
