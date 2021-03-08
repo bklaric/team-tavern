@@ -27,6 +27,7 @@ import TeamTavern.Client.Pages.Player.Profiles (profiles)
 import TeamTavern.Client.Pages.Player.Status (Status(..), getStatus)
 import TeamTavern.Client.Pages.Player.Teams (teams)
 import TeamTavern.Client.Script.Meta (setMeta)
+import TeamTavern.Client.Script.ReloadAds (reloadAds)
 import TeamTavern.Client.Script.Request (get)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Routes.ViewPlayer as ViewPlayer

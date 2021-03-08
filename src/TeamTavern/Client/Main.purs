@@ -34,7 +34,7 @@ main = HA.runHalogenAff do
     path <- window >>= Window.location >>= Location.pathname # liftEffect
     { query } <- runUI (hoist (asyncToAff absurd) (router state path)) unit body
     listener <- liftEffect $ DOM.eventListener \event -> do
-        reloadAds
+        -- reloadAds
         let state' = PSE.fromEvent event # unsafePartial fromJust # PSE.state
         path' <- window >>= Window.location >>= Location.pathname
         query (ChangeRoute state' path' unit) # launchAff_

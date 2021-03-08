@@ -5,6 +5,7 @@ import Prelude
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import Effect.Class (class MonadEffect, liftEffect)
+import TeamTavern.Client.Script.ReloadAds (reloadAds)
 import Web.DOM.NonElementParentNode (getElementById)
 import Web.HTML (window)
 import Web.HTML.HTMLDocument (setTitle, toNonElementParentNode)
@@ -54,3 +55,4 @@ setMeta title description = liftEffect do
     setMetaTitle title
     setMetaDescription description
     setMetaUrl
+    reloadAds

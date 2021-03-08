@@ -43,6 +43,7 @@ import TeamTavern.Client.Pages.Team (team)
 import TeamTavern.Client.Pages.Team as Team
 import TeamTavern.Client.Script.Cookie (getPlayerNickname, hasPlayerIdCookie)
 import TeamTavern.Client.Script.Navigate (navigateReplace_)
+import TeamTavern.Client.Script.ReloadAds (reloadAds)
 
 data Query send = ChangeRoute Foreign String send
 
@@ -225,7 +226,12 @@ handleAction (Init state route) = do
         _ ->
             navigateReplace_ "/" *> nothing
     case newState of
-        Just newState' -> H.put newState'
+        Just newState' -> do
+            H.put newState'
+            case newState' of
+                NetworkN -> reloadAds
+                NetworkN2 -> reloadAds
+                _ -> pure unit
         Nothing -> pure unit
 
 handleQuery

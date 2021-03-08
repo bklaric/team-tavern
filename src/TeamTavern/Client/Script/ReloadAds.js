@@ -1,5 +1,5 @@
 "use strict";
 
-exports.reloadAds = function () {
+exports.reloadAdsImpl = function () {
   return window.reloadAdSlots();
 }
