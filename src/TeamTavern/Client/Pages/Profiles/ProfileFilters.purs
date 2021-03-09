@@ -15,7 +15,8 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.CSS as HC
 import Halogen.HTML.Events as HE
-import TeamTavern.Client.Components.Card (cardHeading, cardSection, cardSectionHeading)
+import TeamTavern.Client.Components.Ads (filtersMpu)
+import TeamTavern.Client.Components.Card (card, cardHeading, cardSection, cardSectionHeading)
 import TeamTavern.Client.Components.Input (platformCheckboxes, inputGroup, inputLabel)
 import TeamTavern.Client.Components.InputGroup (timeRangeInputGroup)
 import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
@@ -120,7 +121,8 @@ headerCaret class_ visible =
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render state =
-    HH.div [ HS.class_ "filters-card" ] $
+    HH.div [ HS.class_ "filters-container" ] $ [
+    card $
     [ HH.div
         [ HS.class_ "card-header"
         , HE.onClick $ const $ Just ToggleFiltersVisibility
@@ -206,6 +208,8 @@ render state =
             ]
         ]
     else []
+    ]
+    <> [ filtersMpu ]
 
 handleAction :: forall left. Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
 handleAction Initialize = do

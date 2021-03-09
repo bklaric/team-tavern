@@ -124,7 +124,7 @@ render (Game game player filters tab) = let
     in
     HH.div_ $
     [ gameHeader
-    , HH.div [ HP.class_ $ HH.ClassName "profiles-container" ]
+    , HH.div [ HP.class_ $ HH.ClassName "filters-and-profiles" ]
         [ profileFilters
             { platforms: game.platforms
             , fields: filterableFields game.fields

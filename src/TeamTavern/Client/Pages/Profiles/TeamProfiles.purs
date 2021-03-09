@@ -4,7 +4,6 @@ import Prelude
 
 import Async (Async)
 import Client.Components.Copyable as Copyable
-import Data.Array (mapWithIndex)
 import Data.Array as Array
 import Data.Const (Const)
 import Data.Maybe (Maybe(..), isNothing)
@@ -13,6 +12,7 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
+import TeamTavern.Client.Components.Ads (profileSectionsWithLeaderboard)
 import TeamTavern.Client.Components.Card (cardHeader, cardHeading, cardSection, cardSubheading)
 import TeamTavern.Client.Components.Detail (detailColumn, detailColumnHeading4, detailColumns, textDetail)
 import TeamTavern.Client.Components.Divider (divider)
@@ -90,13 +90,70 @@ type Slot = H.Slot (Const Void) Output Unit
 
 type ChildSlots =
     ( teams :: Anchor.Slot String
-    , messageOwner :: Anchor.Slot String
     , discordTag :: Copyable.Slot String
     )
 
+profileSection :: forall action left.
+    TeamProfile -> HH.ComponentHTML action ChildSlots (Async left)
+profileSection profile = let
+    teamDetails' = teamDetails profile
+    profileDetails'' = profileDetails' profile
+    about = textDetail profile.about
+    ambitions = textDetail profile.ambitions
+    in
+    cardSection $
+    [ profileHeader
+        [ profileHeaderItem
+            [ profileHeading (SProxy :: SProxy "teams") profile.handle
+                ("/teams/" <> profile.handle) profile.name
+            , divider
+            , profileSubheading $ "Updated " <> lastUpdated profile.updatedSeconds
+            ]
+        ]
+    ]
+    <>
+    if (not $ Array.null teamDetails') || (not $ Array.null profileDetails'')
+        || (not $ Array.null about) || (not $ Array.null ambitions)
+    then
+        [ detailColumns $
+            ( if (not $ Array.null teamDetails') || (not $ Array.null profileDetails'')
+                then
+                    [ detailColumn $
+                        ( if not $ Array.null teamDetails'
+                            then [ detailColumnHeading4 "Team details" ] <> teamDetails'
+                            else []
+                        )
+                        <>
+                        ( if not $ Array.null profileDetails''
+                            then [ detailColumnHeading4 "Profile details" ] <> profileDetails''
+                            else []
+                        )
+                    ]
+                else []
+            )
+            <>
+            ( if (not $ Array.null about) || (not $ Array.null ambitions)
+                then
+                    [ detailColumn $
+                        ( if not $ Array.null about
+                            then [ detailColumnHeading4 "About" ] <> about
+                            else []
+                        )
+                        <>
+                        ( if not $ Array.null ambitions
+                            then [ detailColumnHeading4 "Ambitions" ] <> ambitions
+                            else []
+                        )
+                    ]
+                else []
+            )
+        ]
+    else []
+
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { profiles, profileCount, playerInfo, page } =
-    HH.div [ HP.id_ "profiles-card", HP.class_ $ HH.ClassName "profiles-card" ] $
+    HH.div [ HS.class_ "profiles-container" ] $ [
+    HH.div [ HP.id_ "profiles-card", HS.class_ "card" ] $
     [ cardHeader $
         [ HH.div_ $
             [ cardHeading "Team profiles"
@@ -122,63 +179,9 @@ render { profiles, profileCount, playerInfo, page } =
     <>
     if Array.null profiles
     then [ cardSection [ HH.p_ [ HH.text "No profiles satisfy specified filters." ] ] ]
-    else
-    ( profiles # mapWithIndex \index profile -> let
-        teamDetails' = teamDetails profile
-        profileDetails'' = profileDetails' profile
-        about = textDetail profile.about
-        ambitions = textDetail profile.ambitions
-        in
-        cardSection $
-        [ profileHeader
-            [ profileHeaderItem
-                [ profileHeading (SProxy :: SProxy "teams") profile.handle
-                    ("/teams/" <> profile.handle) profile.name
-                , divider
-                , profileSubheading $ "Updated " <> lastUpdated profile.updatedSeconds
-                ]
-            ]
-        ]
-        <>
-        if (not $ Array.null teamDetails') || (not $ Array.null profileDetails'')
-            || (not $ Array.null about) || (not $ Array.null ambitions)
-        then
-            [ detailColumns $
-                ( if (not $ Array.null teamDetails') || (not $ Array.null profileDetails'')
-                    then
-                        [ detailColumn $
-                            ( if not $ Array.null teamDetails'
-                                then [ detailColumnHeading4 "Team details" ] <> teamDetails'
-                                else []
-                            )
-                            <>
-                            ( if not $ Array.null profileDetails''
-                                then [ detailColumnHeading4 "Profile details" ] <> profileDetails''
-                                else []
-                            )
-                        ]
-                    else []
-                )
-                <>
-                ( if (not $ Array.null about) || (not $ Array.null ambitions)
-                    then
-                        [ detailColumn $
-                            ( if not $ Array.null about
-                                then [ detailColumnHeading4 "About" ] <> about
-                                else []
-                            )
-                            <>
-                            ( if not $ Array.null ambitions
-                                then [ detailColumnHeading4 "Ambitions" ] <> ambitions
-                                else []
-                            )
-                        ]
-                    else []
-                )
-            ]
-        else []
-    )
-    <> [ pagination page profileCount ChangePage ]
+    else ( profiles <#> profileSection # profileSectionsWithLeaderboard )
+        <> [ pagination page profileCount ChangePage ]
+    ]
 
 handleAction :: forall left. Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
 handleAction (Receive input) = H.put input
