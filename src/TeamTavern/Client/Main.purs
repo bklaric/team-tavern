@@ -12,7 +12,6 @@ import Halogen.Aff as HA
 import Halogen.VDom.Driver (runUI)
 import Partial.Unsafe (unsafePartial)
 import TeamTavern.Client.Router (Query(..), router)
-import TeamTavern.Client.Script.ReloadAds (reloadAds)
 import Web.DOM.NonElementParentNode (getElementById)
 import Web.Event.EventTarget (addEventListener)
 import Web.Event.EventTarget as DOM
@@ -29,12 +28,11 @@ import Web.HTML.Window as Window
 main :: Effect Unit
 main = HA.runHalogenAff do
     body <- HA.awaitBody
-    -- (spa :: _) <- window >>= document <#> toNonElementParentNode >>= getElementById "spa-teamtavern" <#> bindFlipped fromElement <#> unsafePartial fromJust # liftEffect
+    (spa :: _) <- window >>= document <#> toNonElementParentNode >>= getElementById "spa-teamtavern" <#> bindFlipped fromElement <#> unsafePartial fromJust # liftEffect
     state <- window >>= Window.history >>= History.state # liftEffect
     path <- window >>= Window.location >>= Location.pathname # liftEffect
-    { query } <- runUI (hoist (asyncToAff absurd) (router state path)) unit body
+    { query } <- runUI (hoist (asyncToAff absurd) (router state path)) unit spa
     listener <- liftEffect $ DOM.eventListener \event -> do
-        -- reloadAds
         let state' = PSE.fromEvent event # unsafePartial fromJust # PSE.state
         path' <- window >>= Window.location >>= Location.pathname
         query (ChangeRoute state' path' unit) # launchAff_
