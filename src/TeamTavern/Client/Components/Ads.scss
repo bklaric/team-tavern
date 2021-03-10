@@ -1,17 +1,25 @@
-.description-leaderboard {
+%ad {
     text-align: center;
+
+    &:empty {
+        display: none;
+    }
+}
+
+.description-leaderboard {
+    @extend %ad;
     margin-bottom: 21px;
 }
 
 .section-leaderboard {
+    @extend %ad;
     @extend .card-section;
-    text-align: center;
     min-width: 100%;
     padding: 0;
 }
 
 .filters-mpu {
-    text-align: center;
+    @extend %ad;
     position: sticky;
     top: 64px;
 }
