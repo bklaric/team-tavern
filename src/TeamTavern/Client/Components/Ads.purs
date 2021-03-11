@@ -30,7 +30,7 @@ filtersMpu = HH.div [ HP.id_ "nn_mpu1", HS.class_ "filters-mpu" ] []
 -- Mobile
 
 mobileStickyLeaderboard :: forall slots action. HH.HTML slots action
-mobileStickyLeaderboard = HH.div [ HP.id_ "nn_mobile_lb1_sticky" ] []
+mobileStickyLeaderboard = HH.div [ HP.id_ "nn_mobile_lb1_sticky", HS.class_ "nn-sticky" ] []
 
 mobileDescriptionLeaderboard :: forall slots action. HH.HTML slots action
 mobileDescriptionLeaderboard = HH.div [ HP.id_ "nn_mobile_lb2", HS.class_ "description-leaderboard" ] []

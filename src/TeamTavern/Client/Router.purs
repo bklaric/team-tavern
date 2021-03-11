@@ -44,6 +44,7 @@ import TeamTavern.Client.Pages.Team as Team
 import TeamTavern.Client.Script.Cookie (getPlayerNickname, hasPlayerIdCookie)
 import TeamTavern.Client.Script.Navigate (navigateReplace_)
 import TeamTavern.Client.Script.ReloadAds (reloadAds)
+import TeamTavern.Client.Snippets.Class as HS
 
 data Query send = ChangeRoute Foreign String send
 
@@ -122,13 +123,13 @@ render NetworkN = HH.div_
         , HH.h3_ [ HH.text "nn_mpu1" ]
         , HH.div [ HP.id_ "nn_mpu1" ] []
         , HH.h3_ [ HH.text "nn_mobile_lb1_sticky" ]
-        , HH.div [ HP.id_ "nn_mobile_lb1_sticky" ] []
+        , HH.div [ HP.id_ "nn_mobile_lb1_sticky", HS.class_ "nn-sticky" ] []
         , HH.h3_ [ HH.text "nn_mobile_lb2" ]
         , HH.div [ HP.id_ "nn_mobile_lb2" ] []
         , navigationAnchor (SProxy :: SProxy "network-n-test2") { path: "/network-n-test2", content: HH.text "Go to test page 2" }
         ]
     , footer
-    , HH.div [ HP.id_ "nn_1by1" ] []
+    -- , HH.div [ HP.id_ "nn_1by1" ] []
     ]
 render NetworkN2 = HH.div_
     [ topBar
@@ -140,13 +141,13 @@ render NetworkN2 = HH.div_
         , HH.h3_ [ HH.text "nn_mpu1" ]
         , HH.div [ HP.id_ "nn_mpu1" ] []
         , HH.h3_ [ HH.text "nn_mobile_lb1_sticky" ]
-        , HH.div [ HP.id_ "nn_mobile_lb1_sticky" ] []
+        , HH.div [ HP.id_ "nn_mobile_lb1_sticky", HS.class_ "nn-sticky" ] []
         , HH.h3_ [ HH.text "nn_mobile_lb2" ]
         , HH.div [ HP.id_ "nn_mobile_lb2" ] []
         , navigationAnchor (SProxy :: SProxy "network-n-test") { path: "/network-n-test", content: HH.text "Go to test page 1" }
         ]
     , footer
-    , HH.div [ HP.id_ "nn_1by1" ] []
+    -- , HH.div [ HP.id_ "nn_1by1" ] []
     ]
 render NotFound = HH.p_ [ HH.text "You're fucken lost, mate." ]
 
