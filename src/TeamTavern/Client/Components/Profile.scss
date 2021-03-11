@@ -6,11 +6,19 @@
     gap: 14px;
 }
 
+.team-profile-heading-container {
+    display: flex;
+    align-items: baseline;
+    gap: 6px 12px;
+    flex-wrap: wrap;
+}
+
 .profile-heading {
     display: inline;
     font-size: 20px;
     line-height: 1.5;
     font-weight: 500;
+    margin: 0;
 }
 
 .profile-subheading {

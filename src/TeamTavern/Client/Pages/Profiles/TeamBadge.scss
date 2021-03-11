@@ -1,11 +1,12 @@
 %badge {
+    display: inline-flex;
+    gap: 0 6px;
+    align-items: center;
     font-size: 12px;
-    margin: 0 12px;
     color: #000000bb;
-    padding: 3px 6px;
+    padding: 4px 6px;
     border-radius: 4px;
     font-weight: 500;
-
 }
 
 .party-group-badge {

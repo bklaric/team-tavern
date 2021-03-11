@@ -24,8 +24,10 @@ import TeamTavern.Client.Components.Select.MultiTreeSelect as MultiTreeSelect
 import TeamTavern.Client.Components.Team.ProfileInputGroup (FieldValues, fieldInputGroup, newOrReturningInputGroup)
 import TeamTavern.Client.Components.Team.TeamInputGroup (ageInputGroup, languagesInputGroup, locationInputGroup, microphoneInputGroup)
 import TeamTavern.Client.Pages.Profiles.GameHeader (Tab(..))
+import TeamTavern.Client.Pages.Profiles.TeamBadge (teamBadgeCheckboxes)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
+import TeamTavern.Routes.Shared.TeamIlk (TeamIlk)
 import Web.HTML as Html
 import Web.HTML.Window as Window
 
@@ -64,7 +66,8 @@ type Input =
     }
 
 type State =
-    { ageFrom :: Maybe Int
+    { teamIlks :: Array TeamIlk
+    , ageFrom :: Maybe Int
     , ageTo :: Maybe Int
     , locations :: Array String
     , languages :: Array String
@@ -89,6 +92,7 @@ data Action
     | Receive Input
     | ApplyFilters
     | ClearFilters
+    | UpdateTeamIlk TeamIlk
     | UpdateAgeFrom (Maybe Int)
     | UpdateAgeTo (Maybe Int)
     | UpdateLanguages (MultiSelect.Output String)
@@ -150,6 +154,16 @@ render state =
         then Array.singleton $
             cardSection
             [ HH.div [ HS.class_ "filter-input-groups" ] $
+                ( case state.tab of
+                    Players -> []
+                    Teams -> Array.singleton $
+                        inputGroup
+                        [ inputLabel "fas fa-users" "Team"
+                        , HH.div [ HC.style $ Css.height $ Css.px 7.0 ] [] -- filler
+                        , teamBadgeCheckboxes state.teamIlks UpdateTeamIlk
+                        ]
+                )
+                <>
                 [ ageInputGroup state.ageFrom state.ageTo UpdateAgeFrom UpdateAgeTo
                 , locationInputGroup state.locations UpdateLocations
                 , languagesInputGroup state.languages UpdateLanguages
@@ -269,6 +283,13 @@ handleAction ClearFilters = do
         , fieldValues = (MultiMap.empty :: MultiMap String String)
         , newOrReturning = false
         }
+handleAction (UpdateTeamIlk teamIlk) =
+    H.modify_ \state -> state
+        { teamIlks =
+            if Array.elem teamIlk state.teamIlks
+            then Array.delete teamIlk state.teamIlks
+            else Array.cons teamIlk state.teamIlks
+        }
 handleAction (UpdateAgeFrom ageFrom) =
     H.modify_ (_ { ageFrom = ageFrom })
 handleAction (UpdateAgeTo ageTo) =
@@ -312,7 +333,8 @@ handleAction ToggleProfileFiltersVisibility =
 
 initialState :: Input -> State
 initialState { platforms, fields, filters, tab } =
-    { ageFrom: filters.ageFrom
+    { teamIlks: []
+    , ageFrom: filters.ageFrom
     , ageTo: filters.ageTo
     , locations: filters.locations
     , languages: filters.languages

@@ -8,6 +8,7 @@
     font-size: 12px;
     border: 1px solid #bbb;
     border-radius: 3px;
+    background-color: white;
 }
 
 .checkbox {
@@ -44,4 +45,8 @@
 
 .checkbox-label {
     margin-left: 7px;
+}
+
+.checkbox-container {
+    cursor: pointer;
 }

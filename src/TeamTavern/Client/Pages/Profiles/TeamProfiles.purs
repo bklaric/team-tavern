@@ -104,7 +104,7 @@ profileSection profile = let
     in
     cardSection $
     [ profileHeader
-        [ HH.div_
+        [ HH.div [ HS.class_ "team-profile-heading-container" ]
             [ profileHeading (SProxy :: SProxy "teams") profile.handle
                 ("/teams/" <> profile.handle) profile.name
             , partyGroupBadge
