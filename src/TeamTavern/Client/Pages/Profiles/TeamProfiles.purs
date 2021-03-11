@@ -18,7 +18,7 @@ import TeamTavern.Client.Components.Detail (detailColumn, detailColumnHeading4, 
 import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
 import TeamTavern.Client.Components.Pagination (pagination)
-import TeamTavern.Client.Components.Profile (profileHeader, profileHeaderItem, profileHeading, profileSubheading)
+import TeamTavern.Client.Components.Profile (profileHeader, profileHeading, profileSubheading)
 import TeamTavern.Client.Components.Team.ProfileDetails (profileDetails')
 import TeamTavern.Client.Components.Team.TeamDetails (teamDetails)
 import TeamTavern.Client.Pages.Profiles.TeamBadge (partyGroupBadge)
@@ -104,7 +104,7 @@ profileSection profile = let
     in
     cardSection $
     [ profileHeader
-        [ profileHeaderItem
+        [ HH.div_
             [ profileHeading (SProxy :: SProxy "teams") profile.handle
                 ("/teams/" <> profile.handle) profile.name
             , partyGroupBadge
