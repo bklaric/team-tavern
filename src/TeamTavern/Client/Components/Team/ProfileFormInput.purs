@@ -19,7 +19,10 @@ import TeamTavern.Client.Components.Input (inputErrorSublabel, inputGroup, input
 import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.Team.ProfileInputGroup (Field, Option, ambitionsInputGroup, fieldInputGroup, newOrReturningInputGroup)
 import TeamTavern.Client.Components.Team.ProfileInputGroup as Input
+import TeamTavern.Client.Pages.Profiles.TeamBadge (teamSizeRadios)
+import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
+import TeamTavern.Routes.Shared.TeamSize (TeamSize(..))
 
 type FieldValues = Array
     { fieldKey :: String
@@ -27,7 +30,8 @@ type FieldValues = Array
     }
 
 type Input =
-    { allPlatforms :: Platforms
+    { size :: TeamSize
+    , allPlatforms :: Platforms
     , selectedPlatforms :: Array Platform
     , platformsError :: Boolean
     , fields :: Array Field
@@ -45,7 +49,8 @@ type Output =
     }
 
 type State =
-    { allPlatforms :: Platforms
+    { size :: TeamSize
+    , allPlatforms :: Platforms
     , selectedPlatforms :: Array Platform
     , platformsError :: Boolean
     , fields :: Array Field
@@ -57,6 +62,7 @@ type State =
 
 data Action
     = Receive Input
+    | UpdateSize TeamSize
     | UpdatePlatform Platform
     | UpdateFieldValues String (MultiSelect.Output Option)
     | UpdateNewOrReturning Boolean
@@ -67,15 +73,22 @@ type Slot = H.Slot (Const Void) Output Unit
 type ChildSlots = ("multiSelectField" :: MultiSelect.Slot Option String)
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
-render { allPlatforms, selectedPlatforms, platformsError, fields, fieldValues, newOrReturning, ambitions, ambitionsError } =
+render state =
     HH.div_ $
-    ( case platformCheckboxes allPlatforms selectedPlatforms UpdatePlatform of
+    [ HH.h2 [ HS.class_ "platform-id-heading" ]
+        [ HH.text "Size"
+        , teamSizeRadios state.size UpdateSize
+        , inputSublabel "You want to recruit a smaller number of players to fill out a party, roster or group."
+        ]
+    ]
+    <>
+    ( case platformCheckboxes state.allPlatforms state.selectedPlatforms UpdatePlatform of
         Nothing -> []
         Just checkboxes ->
             [ inputGroupsHeading' $
                 [ HH.text "Platforms"
                 , divider, inputRequiredSublabel
-                , divider, (if platformsError then inputErrorSublabel else inputSublabel)
+                , divider, (if state.platformsError then inputErrorSublabel else inputSublabel)
                     "You must select at least one of the available platforms."
                 ]
             , inputGroup [ checkboxes ]
@@ -84,11 +97,11 @@ render { allPlatforms, selectedPlatforms, platformsError, fields, fieldValues, n
     <>
     [ inputGroupsHeading "Details"
     , responsiveInputGroups $
-        (fields <#> fieldInputGroup fieldValues UpdateFieldValues)
+        (state.fields <#> fieldInputGroup state.fieldValues UpdateFieldValues)
         <>
-        [ newOrReturningInputGroup newOrReturning UpdateNewOrReturning ]
+        [ newOrReturningInputGroup state.newOrReturning UpdateNewOrReturning ]
     , inputGroupsHeading "Ambitions"
-    , ambitionsInputGroup ambitions UpdateAmbitions ambitionsError
+    , ambitionsInputGroup state.ambitions UpdateAmbitions state.ambitionsError
     ]
 
 fieldValuesToArray :: Input.FieldValues -> FieldValues
@@ -117,6 +130,9 @@ raiseOutput { selectedPlatforms, fieldValues, newOrReturning, ambitions } =
 handleAction :: forall left. Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
 handleAction (Receive input) =
     H.put (Record.modify (SProxy :: SProxy "fieldValues") fieldValuesToMap input)
+handleAction (UpdateSize size) = do
+    state <- H.modify _ { size = size }
+    raiseOutput state
 handleAction (UpdatePlatform platform) = do
     state <- H.modify \state -> state
         { selectedPlatforms =
@@ -152,7 +168,8 @@ component = H.mkComponent
 
 emptyInput :: { platforms :: Platforms, fields :: Array Field } -> Input
 emptyInput { platforms, fields } =
-    { allPlatforms: platforms
+    { size: Party
+    , allPlatforms: platforms
     , selectedPlatforms: [ platforms.head ]
     , platformsError: false
     , fields

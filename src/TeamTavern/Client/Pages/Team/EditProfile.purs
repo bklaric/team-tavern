@@ -18,6 +18,7 @@ import TeamTavern.Client.Components.Team.ProfileInputGroup (Field)
 import TeamTavern.Client.Script.Navigate (hardNavigate)
 import TeamTavern.Client.Script.Request (putNoContent)
 import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
+import TeamTavern.Routes.Shared.TeamSize (TeamSize(..))
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
@@ -124,7 +125,8 @@ component = H.mkComponent
         , gameHandle
         , title
         , profile:
-            { allPlatforms: input.allPlatforms
+            { size: Party
+            , allPlatforms: input.allPlatforms
             , selectedPlatforms: input.selectedPlatforms
             , platformsError: false
             , fields: input.fields
