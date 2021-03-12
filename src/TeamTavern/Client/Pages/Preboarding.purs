@@ -266,7 +266,7 @@ renderPage { step: Team, team, playerOrTeam, game } =
     [ boardingStep
         [ boardingHeading "Team"
         , boardingDescription  """Tell us about your team. Fill out as much as you want to help us
-            find the right teammates for your team. All fields are optional."""
+            find the right teammates for your team."""
         , TeamFormInput.teamFormInput team (Just <<< UpdateTeam)
         ]
     , boardingButtons

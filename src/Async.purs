@@ -29,6 +29,14 @@ runSafeAsync :: forall right.
     (right -> Effect Unit) -> (forall left. Async left right) -> Effect Unit
 runSafeAsync callback = runAsync $ either absurd callback
 
+forkAsync :: forall right left.
+    (Either left right -> Effect Unit) -> Async left right -> (forall voidLeft. Async voidLeft Unit)
+forkAsync callback async = fromEffect $ runAsync callback async
+
+forkSafeAsync :: forall right.
+    (right -> Effect Unit) -> (forall voidLeft. Async voidLeft right) -> (forall voidLeft. Async voidLeft Unit)
+forkSafeAsync callback = forkAsync $ either absurd callback
+
 fromEither :: forall left right. Either left right -> Async left right
 fromEither = pure >>> ExceptT >>> Async
 
