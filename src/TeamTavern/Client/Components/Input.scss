@@ -121,16 +121,17 @@
     display: flex;
     flex-wrap: wrap;
     gap: 14px 28px;
+    align-items: baseline;
 }
 
 .platform-id-checkboxes {
     display: inline-flex;
     flex-wrap: wrap;
-    gap: 14px 28px;
+    gap: 22px 28px;
 }
 
 .platform-id-radios {
     display: inline-flex;
     flex-wrap: wrap;
-    gap: 14px 28px;
+    gap: 22px 28px;
 }

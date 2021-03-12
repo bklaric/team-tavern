@@ -23,12 +23,11 @@
 
 .checkbox-input {
     display: flex;
-    align-items: center;
+    align-items: baseline;
     font-family: Roboto;
     font-size: 14px;
     font-weight: 400;
     line-height: 1.5;
-    min-height: 40px;
     color: $text-color;
     cursor: pointer;
 }
@@ -37,6 +36,7 @@
     height: 20px;
     fill: currentColor;
     margin-right: 7px;
+    align-self: center;
 }
 
 .checkbox-icon-label {

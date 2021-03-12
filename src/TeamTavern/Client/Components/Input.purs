@@ -9,7 +9,7 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Components.Checkbox (checkboxIconInput)
 import TeamTavern.Client.Components.Divider (divider)
-import TeamTavern.Client.Components.Radio (radio)
+import TeamTavern.Client.Components.Radio (radioIconInput)
 import TeamTavern.Client.Script.Request (justIfInt, nothingIfEmpty)
 import TeamTavern.Client.Snippets.Brands (radioBattleNetSvg, radioPlayStationSvg, radioRiotSvg, radioSteamSvg, radioSwitchSvg, radioXboxSvg)
 import TeamTavern.Client.Snippets.Class as HS
@@ -121,12 +121,12 @@ platformRadios platforms selectedPlatform onInput =
         HH.div [ HS.class_ "platform-id-radios" ] $
         Array.cons platforms.head platforms.tail <#>
         case _ of
-        Steam       | selected <- selectedPlatform == Steam       -> radio radioSteamSvg       "Steam"       selected $ onInput Steam
-        Riot        | selected <- selectedPlatform == Riot        -> radio radioRiotSvg        "Riot"        selected $ onInput Riot
-        BattleNet   | selected <- selectedPlatform == BattleNet   -> radio radioBattleNetSvg   "Battle.net"  selected $ onInput BattleNet
-        PlayStation | selected <- selectedPlatform == PlayStation -> radio radioPlayStationSvg "PlayStation" selected $ onInput PlayStation
-        Xbox        | selected <- selectedPlatform == Xbox        -> radio radioXboxSvg        "Xbox"        selected $ onInput Xbox
-        Switch      | selected <- selectedPlatform == Switch      -> radio radioSwitchSvg      "Switch"      selected $ onInput Switch
+        Steam       | selected <- selectedPlatform == Steam       -> radioIconInput radioSteamSvg       "Steam"       selected $ onInput Steam
+        Riot        | selected <- selectedPlatform == Riot        -> radioIconInput radioRiotSvg        "Riot"        selected $ onInput Riot
+        BattleNet   | selected <- selectedPlatform == BattleNet   -> radioIconInput radioBattleNetSvg   "Battle.net"  selected $ onInput BattleNet
+        PlayStation | selected <- selectedPlatform == PlayStation -> radioIconInput radioPlayStationSvg "PlayStation" selected $ onInput PlayStation
+        Xbox        | selected <- selectedPlatform == Xbox        -> radioIconInput radioXboxSvg        "Xbox"        selected $ onInput Xbox
+        Switch      | selected <- selectedPlatform == Switch      -> radioIconInput radioSwitchSvg      "Switch"      selected $ onInput Switch
 
 platformIdHeading :: forall action slots.
     Platforms -> Platform -> (Platform -> action) -> HH.HTML slots action

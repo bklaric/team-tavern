@@ -17,11 +17,15 @@ import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.Select.MultiTreeSelect as MultiTreeSelect
 import TeamTavern.Client.Components.Select.SingleSelect as SingleSelect
 import TeamTavern.Client.Components.Team.TeamInputGroup (aboutInputGroup, ageInputGroup, discordServerInputGroup, languagesInputGroup, locationInputGroup, microphoneInputGroup, nameInputGroup, websiteInputGroup)
+import TeamTavern.Client.Pages.Profiles.TeamBadge (teamOrganizationRadios)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
+import TeamTavern.Client.Snippets.Class as HS
+import TeamTavern.Routes.Shared.TeamOrganization (TeamOrganization(..))
 import TeamTavern.Server.Infrastructure.Timezones (Timezone)
 
 type Input =
-    { name :: String
+    { organization :: TeamOrganization
+    , name :: String
     , website :: Maybe String
     , discordTag :: Maybe String
     , discordServer :: Maybe String
@@ -45,7 +49,8 @@ type Input =
     }
 
 type Output =
-    { name :: String
+    { organization :: TeamOrganization
+    , name :: String
     , website :: Maybe String
     , discordTag :: Maybe String
     , discordServer :: Maybe String
@@ -67,6 +72,7 @@ type State = Input
 data Action
     = Initialize
     | Receive Input
+    | UpdateOrganization TeamOrganization
     | UpdateName String
     | UpdateWebsite (Maybe String)
     | UpdateDiscordTag (Maybe String)
@@ -94,7 +100,11 @@ type Slot = H.Slot (Const Void) Output Unit
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render state =
     HH.div_
-    [ inputGroupsHeading "General"
+    [ HH.h2 [ HS.class_ "platform-id-heading" ]
+        [ HH.text "General"
+        , teamOrganizationRadios state.organization UpdateOrganization
+        , inputSublabel "Organized teams have a name, probably an official logo and chat server, maybe even a website."
+        ]
     , responsiveInputGroups
         [ nameInputGroup state.name UpdateName state.nameError
         , websiteInputGroup state.website UpdateWebsite state.websiteError
@@ -150,6 +160,9 @@ handleAction Initialize = do
     raiseOutput newState
 handleAction (Receive input) =
     H.put input
+handleAction (UpdateOrganization organization) = do
+    state <- H.modify _ { organization = organization }
+    raiseOutput state
 handleAction (UpdateName name) = do
     state <- H.modify _ { name = name }
     raiseOutput state
@@ -209,7 +222,8 @@ component = H.mkComponent
 
 emptyInput :: Input
 emptyInput =
-    { name: ""
+    { organization: Informal
+    , name: ""
     , website: Nothing
     , discordTag: Nothing
     , discordServer: Nothing
