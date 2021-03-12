@@ -24,10 +24,11 @@ import TeamTavern.Client.Components.Select.MultiTreeSelect as MultiTreeSelect
 import TeamTavern.Client.Components.Team.ProfileInputGroup (FieldValues, fieldInputGroup, newOrReturningInputGroup)
 import TeamTavern.Client.Components.Team.TeamInputGroup (ageInputGroup, languagesInputGroup, locationInputGroup, microphoneInputGroup)
 import TeamTavern.Client.Pages.Profiles.GameHeader (Tab(..))
-import TeamTavern.Client.Pages.Profiles.TeamBadge (teamBadgeCheckboxes)
+import TeamTavern.Client.Pages.Profiles.TeamBadge (teamOrganizationCheckboxes, teamSizeCheckboxes)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
-import TeamTavern.Routes.Shared.TeamIlk (TeamIlk)
+import TeamTavern.Routes.Shared.TeamOrganization (TeamOrganization)
+import TeamTavern.Routes.Shared.TeamSize (TeamSize)
 import Web.HTML as Html
 import Web.HTML.Window as Window
 
@@ -66,7 +67,8 @@ type Input =
     }
 
 type State =
-    { teamIlks :: Array TeamIlk
+    { teamOrganizations :: Array TeamOrganization
+    , teamSizes :: Array TeamSize
     , ageFrom :: Maybe Int
     , ageTo :: Maybe Int
     , locations :: Array String
@@ -92,7 +94,7 @@ data Action
     | Receive Input
     | ApplyFilters
     | ClearFilters
-    | UpdateTeamIlk TeamIlk
+    | UpdateTeamOrganization TeamOrganization
     | UpdateAgeFrom (Maybe Int)
     | UpdateAgeTo (Maybe Int)
     | UpdateLanguages (MultiSelect.Output String)
@@ -102,6 +104,7 @@ data Action
     | UpdateWeekdayTo (Maybe String)
     | UpdateWeekendFrom (Maybe String)
     | UpdateWeekendTo (Maybe String)
+    | UpdateTeamSize TeamSize
     | UpdatePlatform Platform
     | UpdateFieldValues String (MultiSelect.Output Option)
     | UpdateNewOrReturning Boolean
@@ -158,9 +161,9 @@ render state =
                     Players -> []
                     Teams -> Array.singleton $
                         inputGroup
-                        [ inputLabel "fas fa-users" "Team"
+                        [ inputLabel "fas fa-users" "Organization"
                         , HH.div [ HC.style $ Css.height $ Css.px 7.0 ] [] -- filler
-                        , teamBadgeCheckboxes state.teamIlks UpdateTeamIlk
+                        , teamOrganizationCheckboxes state.teamOrganizations UpdateTeamOrganization
                         ]
                 )
                 <>
@@ -189,6 +192,16 @@ render state =
         then Array.singleton $
             cardSection
             [ HH.div [ HS.class_ "filter-input-groups" ] $
+                ( case state.tab of
+                    Players -> []
+                    Teams -> Array.singleton $
+                        inputGroup
+                        [ inputLabel "fas fa-users" "Size"
+                        , HH.div [ HC.style $ Css.height $ Css.px 7.0 ] [] -- filler
+                        , teamSizeCheckboxes state.teamSizes UpdateTeamSize
+                        ]
+                )
+                <>
                 ( case platformCheckboxes state.allPlatforms state.selectedPlatforms UpdatePlatform of
                     Nothing -> []
                     Just checkboxes ->
@@ -283,12 +296,12 @@ handleAction ClearFilters = do
         , fieldValues = (MultiMap.empty :: MultiMap String String)
         , newOrReturning = false
         }
-handleAction (UpdateTeamIlk teamIlk) =
+handleAction (UpdateTeamOrganization teamOrganization) =
     H.modify_ \state -> state
-        { teamIlks =
-            if Array.elem teamIlk state.teamIlks
-            then Array.delete teamIlk state.teamIlks
-            else Array.cons teamIlk state.teamIlks
+        { teamOrganizations =
+            if Array.elem teamOrganization state.teamOrganizations
+            then Array.delete teamOrganization state.teamOrganizations
+            else Array.cons teamOrganization state.teamOrganizations
         }
 handleAction (UpdateAgeFrom ageFrom) =
     H.modify_ (_ { ageFrom = ageFrom })
@@ -308,6 +321,13 @@ handleAction (UpdateWeekendFrom time) =
     H.modify_ (_ { weekendFrom = time })
 handleAction (UpdateWeekendTo time) =
     H.modify_ (_ { weekendTo = time })
+handleAction (UpdateTeamSize teamSize) =
+    H.modify_ \state -> state
+        { teamSizes =
+            if Array.elem teamSize state.teamSizes
+            then Array.delete teamSize state.teamSizes
+            else Array.cons teamSize state.teamSizes
+        }
 handleAction (UpdatePlatform platform) =
     H.modify_ \state -> state
         { selectedPlatforms =
@@ -333,7 +353,8 @@ handleAction ToggleProfileFiltersVisibility =
 
 initialState :: Input -> State
 initialState { platforms, fields, filters, tab } =
-    { teamIlks: []
+    { teamOrganizations: []
+    , teamSizes: []
     , ageFrom: filters.ageFrom
     , ageTo: filters.ageTo
     , locations: filters.locations

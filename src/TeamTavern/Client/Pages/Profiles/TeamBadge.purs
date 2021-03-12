@@ -8,7 +8,20 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HP
 import TeamTavern.Client.Components.Checkbox (checkbox)
 import TeamTavern.Client.Snippets.Class as HS
-import TeamTavern.Routes.Shared.TeamIlk (TeamIlk(..))
+import TeamTavern.Routes.Shared.TeamOrganization (TeamOrganization(..))
+import TeamTavern.Routes.Shared.TeamSize (TeamSize(..))
+
+partyBadge :: forall slots action. HH.HTML slots action
+partyBadge = HH.span [ HS.class_ "party-badge" ] [ HH.text "Party" ]
+
+communityBadge :: forall slots action. HH.HTML slots action
+communityBadge = HH.span [ HS.class_ "community-badge" ] [ HH.text "Community" ]
+
+informalBadge :: forall slots action. HH.HTML slots action
+informalBadge = HH.span [ HS.class_ "informal-badge" ] [ HH.text "Informal" ]
+
+organizedBadge :: forall slots action. HH.HTML slots action
+organizedBadge = HH.span [ HS.class_ "organized-badge" ] [ HH.text "Organized" ]
 
 partyGroupBadge :: forall slots action. HH.HTML slots action
 partyGroupBadge = HH.span [ HS.class_ "party-group-badge" ] [ HH.text "Party/Group" ]
@@ -17,20 +30,38 @@ communityOrganizationBadge :: forall slots action. HH.HTML slots action
 communityOrganizationBadge =
     HH.span [ HS.class_ "community-organization-badge" ] [ HH.text "Community/Organization" ]
 
-teamBadgeCheckboxes :: forall slots action.
-    Array TeamIlk -> (TeamIlk -> action) -> HH.HTML slots action
-teamBadgeCheckboxes selectedBadges onValue =
+teamSizeCheckboxes :: forall slots action.
+    Array TeamSize -> (TeamSize -> action) -> HH.HTML slots action
+teamSizeCheckboxes selected onValue =
     HH.div [ HS.class_ "platform-id-checkboxes" ]
     [ HH.span
-        [ HS.class_ "party-group-badge checkbox-container"
-        , HP.onClick $ const $ Just $ onValue PartyGroup]
-        [ HH.text "Party/Group"
-        , checkbox $ elem PartyGroup selectedBadges
+        [ HS.class_ "party-badge checkbox-container"
+        , HP.onClick $ const $ Just $ onValue Party]
+        [ HH.text "Party"
+        , checkbox $ elem Party selected
         ]
     , HH.span
-        [ HS.class_ "community-organization-badge checkbox-container"
-        , HP.onClick $ const $ Just $ onValue CommunityOrganization]
-        [ HH.text "Community/Organization"
-        , checkbox $ elem CommunityOrganization selectedBadges
+        [ HS.class_ "community-badge checkbox-container"
+        , HP.onClick $ const $ Just $ onValue Community]
+        [ HH.text "Community"
+        , checkbox $ elem Community selected
+        ]
+    ]
+
+teamOrganizationCheckboxes :: forall slots action.
+    Array TeamOrganization -> (TeamOrganization -> action) -> HH.HTML slots action
+teamOrganizationCheckboxes selected onValue =
+    HH.div [ HS.class_ "platform-id-checkboxes" ]
+    [ HH.span
+        [ HS.class_ "informal-badge checkbox-container"
+        , HP.onClick $ const $ Just $ onValue Informal]
+        [ HH.text "Informal"
+        , checkbox $ elem Informal selected
+        ]
+    , HH.span
+        [ HS.class_ "organized-badge checkbox-container"
+        , HP.onClick $ const $ Just $ onValue Organized]
+        [ HH.text "Organized"
+        , checkbox $ elem Organized selected
         ]
     ]

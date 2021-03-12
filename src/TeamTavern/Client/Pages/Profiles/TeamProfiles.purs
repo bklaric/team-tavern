@@ -21,7 +21,7 @@ import TeamTavern.Client.Components.Pagination (pagination)
 import TeamTavern.Client.Components.Profile (profileHeader, profileHeading, profileSubheading)
 import TeamTavern.Client.Components.Team.ProfileDetails (profileDetails')
 import TeamTavern.Client.Components.Team.TeamDetails (teamDetails)
-import TeamTavern.Client.Pages.Profiles.TeamBadge (partyGroupBadge)
+import TeamTavern.Client.Pages.Profiles.TeamBadge (informalBadge, partyBadge)
 import TeamTavern.Client.Script.Cookie (PlayerInfo)
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
 import TeamTavern.Client.Snippets.Class as HS
@@ -107,7 +107,8 @@ profileSection profile = let
         [ HH.div [ HS.class_ "team-profile-heading-container" ]
             [ profileHeading (SProxy :: SProxy "teams") profile.handle
                 ("/teams/" <> profile.handle) profile.name
-            , partyGroupBadge
+            , informalBadge
+            , partyBadge
             , profileSubheading $ "Updated " <> lastUpdated profile.updatedSeconds
             ]
         ]

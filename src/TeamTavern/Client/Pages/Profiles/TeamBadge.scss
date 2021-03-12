@@ -9,12 +9,22 @@
     font-weight: 500;
 }
 
-.party-group-badge {
+.party-badge {
     @extend %badge;
     background: rgba(40, 167, 69, 29%);
 }
 
-.community-organization-badge {
+.community-badge {
     @extend %badge;
     background: rgba(96, 40, 167, 29%);
+}
+
+.informal-badge {
+    @extend %badge;
+    background: rgba(40, 91, 167, 0.29);
+}
+
+.organized-badge {
+    @extend %badge;
+    background: rgba(165, 167, 40, 0.29);
 }
