@@ -16,6 +16,8 @@ import TeamTavern.Client.Components.Player.PlayerInputGroup (discordTagInputGrou
 import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.Select.MultiTreeSelect as MultiTreeSelect
 import TeamTavern.Client.Components.Select.SingleSelect as SingleSelect
+import TeamTavern.Client.Components.Team.OrganizationInfo (organizationInfo)
+import TeamTavern.Client.Components.Team.OrganizationInfo as OrganizationInfo
 import TeamTavern.Client.Components.Team.TeamInputGroup (aboutInputGroup, ageInputGroup, discordServerInputGroup, languagesInputGroup, locationInputGroup, microphoneInputGroup, nameInputGroup, websiteInputGroup)
 import TeamTavern.Client.Pages.Profiles.TeamBadge (teamOrganizationRadios)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
@@ -93,6 +95,7 @@ type ChildSlots =
     ( location :: MultiTreeSelect.Slot String
     , language :: MultiSelect.Slot String Unit
     , timezone :: SingleSelect.Slot Timezone Unit
+    , organizationInfo :: OrganizationInfo.Slot
     )
 
 type Slot = H.Slot (Const Void) Output Unit
@@ -103,7 +106,7 @@ render state =
     [ HH.h2 [ HS.class_ "platform-id-heading" ]
         [ HH.text "General"
         , teamOrganizationRadios state.organization UpdateOrganization
-        , inputSublabel "Organized teams have a name, probably an official logo and chat server, maybe even a website."
+        , organizationInfo
         ]
     , responsiveInputGroups
         [ nameInputGroup state.name UpdateName state.nameError

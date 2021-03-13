@@ -5,10 +5,9 @@ import Prelude
 import Async (Async)
 import Async.Aff (affToAsync)
 import Data.Maybe (Maybe(..))
+import Data.Monoid (guard)
 import Data.Tuple (Tuple(..))
 import Effect.Class (class MonadEffect, liftEffect)
-import Halogen (SubscriptionId)
-import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.Hooks as Hooks
@@ -33,10 +32,7 @@ popoverButtonCaret popoverShown =
 
 popoverBody :: forall slots action.
     Boolean -> Array (HH.HTML slots action) -> Array (HH.HTML slots action)
-popoverBody popoverShown content =
-    if popoverShown
-    then [ HH.div [ HS.class_ "popover" ] content ]
-    else []
+popoverBody popoverShown content = guard popoverShown [ HH.div [ HS.class_ "popover popover-bottom-end" ] content ]
 
 popoverItem :: forall slots action.
     (MouseEvent -> action) -> Array (HH.HTML slots action) -> HH.HTML slots action
@@ -47,38 +43,6 @@ popover :: forall slots action.
     Boolean -> Array (HH.HTML slots action) -> Array (HH.HTML slots action) -> HH.HTML slots action
 popover popoverShown containerContent popoverContent =
     popoverContainer $ containerContent <> popoverBody popoverShown popoverContent
-
-primaryButtonPopover
-    :: forall slots action
-    .  Boolean
-    -> String
-    -> String
-    -> (MouseEvent -> action)
-    -> Array (HH.HTML slots action)
-    -> HH.HTML slots action
-primaryButtonPopover popoverShown icon text showPopover popoverContent =
-    popover
-    popoverShown
-    [ HH.button
-        [ HS.class_ "primary-button"
-        , HE.onClick $ Just <<< showPopover
-        ]
-        [ HH.i [ HS.class_ $ icon <> " button-icon" ] []
-        , HH.text text
-        , popoverButtonCaret popoverShown
-        ]
-    ]
-    popoverContent
-
--- Component
-
-subscribeToWindowClick :: forall output slots action state left.
-    action -> H.HalogenM state action slots output (Async left) SubscriptionId
-subscribeToWindowClick onClick = do
-    window <- liftEffect $ Window.toEventTarget <$> window
-    let windowEventSource = ES.eventListenerEventSource
-            (E.EventType "click") window \_ -> Just onClick
-    H.subscribe $ ES.hoist affToAsync windowEventSource
 
 -- Hook
 

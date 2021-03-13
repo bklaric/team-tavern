@@ -1,3 +1,8 @@
+$party-color:rgba(40, 167, 69, 29%);
+$community-color: rgba(96, 40, 167, 29%);
+$informal-color: rgba(40, 91, 167, 0.29);
+$organized-color: rgba(165, 167, 40, 0.29);
+
 %badge {
     display: inline-flex;
     gap: 0 6px;
@@ -11,20 +16,20 @@
 
 .party-badge {
     @extend %badge;
-    background: rgba(40, 167, 69, 29%);
+    background: $party-color;
 }
 
 .community-badge {
     @extend %badge;
-    background: rgba(96, 40, 167, 29%);
+    background: $community-color;
 }
 
 .informal-badge {
     @extend %badge;
-    background: rgba(40, 91, 167, 0.29);
+    background: $informal-color;
 }
 
 .organized-badge {
     @extend %badge;
-    background: rgba(165, 167, 40, 0.29);
+    background: $organized-color;
 }

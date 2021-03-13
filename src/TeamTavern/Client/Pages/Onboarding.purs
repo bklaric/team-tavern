@@ -434,7 +434,8 @@ handleAction (UpdatePlayer details) = do
 handleAction (UpdateTeam details) = do
     state <- H.modify _
         { team
-            { name = details.name
+            { organization = details.organization
+            , name = details.name
             , website = details.website
             , discordTag = details.discordTag
             , discordServer = details.discordServer
@@ -493,7 +494,8 @@ handleAction (UpdatePlayerProfile details) = do
 handleAction (UpdateTeamProfile details) = do
     state <- H.modify _
         { teamProfile
-            { selectedPlatforms = details.platforms
+            { size = details.size
+            , selectedPlatforms = details.platforms
             , fieldValues = details.fieldValues
             , newOrReturning = details.newOrReturning
             , ambitions = details.ambitions

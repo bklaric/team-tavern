@@ -27,10 +27,6 @@ organizedBadge = HH.span [ HS.class_ "organized-badge" ] [ HH.text "Organized" ]
 partyGroupBadge :: forall slots action. HH.HTML slots action
 partyGroupBadge = HH.span [ HS.class_ "party-group-badge" ] [ HH.text "Party/Group" ]
 
-communityOrganizationBadge :: forall slots action. HH.HTML slots action
-communityOrganizationBadge =
-    HH.span [ HS.class_ "community-organization-badge" ] [ HH.text "Community/Organization" ]
-
 teamOrganizationCheckboxes :: forall slots action.
     Array TeamOrganization -> (TeamOrganization -> action) -> HH.HTML slots action
 teamOrganizationCheckboxes selected onValue =

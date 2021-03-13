@@ -42,7 +42,8 @@ type Input =
     }
 
 type Output =
-    { platforms :: Array Platform
+    { size :: TeamSize
+    , platforms :: Array Platform
     , fieldValues :: FieldValues
     , newOrReturning :: Boolean
     , ambitions :: String
@@ -119,9 +120,10 @@ fieldValuesToMap =
     MultiMap.empty
 
 raiseOutput :: forall left. State -> H.HalogenM State Action ChildSlots Output (Async left) Unit
-raiseOutput { selectedPlatforms, fieldValues, newOrReturning, ambitions } =
+raiseOutput { size, selectedPlatforms, fieldValues, newOrReturning, ambitions } =
     H.raise
-    { platforms: selectedPlatforms
+    { size
+    , platforms: selectedPlatforms
     , fieldValues: fieldValuesToArray fieldValues
     , newOrReturning
     , ambitions
