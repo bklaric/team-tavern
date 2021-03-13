@@ -23,6 +23,7 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Record as Record
+import Record.Extra (pick)
 import Simple.JSON (class ReadForeign, class WriteForeign)
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
@@ -295,28 +296,10 @@ sendRequest (state :: State) = Async.unify do
         , playerProfile: profile
         } -> Async.right
             { ilk: 1
-            , player: Just
-                { birthday: player.birthday
-                , location: player.location
-                , languages: player.languages
-                , microphone: player.microphone
-                , discordTag: player.discordTag
-                , timezone: player.timezone
-                , weekdayFrom: player.weekdayFrom
-                , weekdayTo: player.weekdayTo
-                , weekendFrom: player.weekendFrom
-                , weekendTo: player.weekendTo
-                , about: player.about
-                }
+            , player: Just $ pick player
             , team: Nothing
             , gameHandle: game.handle
-            , playerProfile: Just
-                { platform: profile.platform
-                , platformId: profile.platformId
-                , fieldValues: profile.fieldValues
-                , newOrReturning: profile.newOrReturning
-                , ambitions: profile.ambitions
-                }
+            , playerProfile: Just $ pick profile
             , teamProfile: Nothing
             }
         { playerOrTeam: Just PlayerOrTeamInput.Team
@@ -326,23 +309,7 @@ sendRequest (state :: State) = Async.unify do
         } -> Async.right
             { ilk: 2
             , player: Nothing
-            , team: Just
-                { name: team.name
-                , website: team.website
-                , discordTag: team.discordTag
-                , discordServer: team.discordServer
-                , ageFrom: team.ageFrom
-                , ageTo: team.ageTo
-                , locations: team.locations
-                , languages: team.languages
-                , microphone: team.microphone
-                , timezone: team.timezone
-                , weekdayFrom: team.weekdayFrom
-                , weekdayTo: team.weekdayTo
-                , weekendFrom: team.weekendFrom
-                , weekendTo: team.weekendTo
-                , about: team.about
-                }
+            , team: Just $ pick team
             , gameHandle: game.handle
             , playerProfile: Nothing
             , teamProfile: Just

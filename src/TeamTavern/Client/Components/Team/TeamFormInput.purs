@@ -8,7 +8,7 @@ import Data.Maybe (Maybe(..), isNothing, maybe)
 import Data.Variant (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
-import Record as Record
+import Record.Extra (pick)
 import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.Input (inputErrorSublabel, inputGroupsHeading, inputGroupsHeading', inputRequiredSublabel, inputSublabel, responsiveInputGroups)
 import TeamTavern.Client.Components.InputGroup (timeRangeInputGroup, timezoneInputGroup)
@@ -145,15 +145,7 @@ render state =
     ]
 
 raiseOutput :: forall left. State -> H.HalogenM State Action ChildSlots Output (Async left) Unit
-raiseOutput state
-    = state
-    # Record.delete (SProxy :: SProxy "nameError")
-    # Record.delete (SProxy :: SProxy "websiteError")
-    # Record.delete (SProxy :: SProxy "discordTagError")
-    # Record.delete (SProxy :: SProxy "discordServerError")
-    # Record.delete (SProxy :: SProxy "contactError")
-    # Record.delete (SProxy :: SProxy "aboutError")
-    # H.raise
+raiseOutput = pick >>> H.raise
 
 handleAction :: forall left. Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
 handleAction Initialize = do

@@ -8,6 +8,7 @@ import Data.Array as Array
 import Data.Const (Const)
 import Data.List.NonEmpty as NonEmptyList
 import Data.Maybe (Maybe(..))
+import Data.Monoid (guard)
 import Data.MultiMap as MultiMap
 import Data.Tuple (Tuple(..))
 import Data.Variant (SProxy(..))
@@ -82,19 +83,15 @@ render state =
         , inputSublabel "You want to recruit a smaller number of players to fill out a party, roster or group."
         ]
     ]
-    <>
-    ( case platformCheckboxes state.allPlatforms state.selectedPlatforms UpdatePlatform of
-        Nothing -> []
-        Just checkboxes ->
-            [ inputGroupsHeading' $
-                [ HH.text "Platforms"
-                , divider, inputRequiredSublabel
-                , divider, (if state.platformsError then inputErrorSublabel else inputSublabel)
-                    "You must select at least one of the available platforms."
-                ]
-            , inputGroup [ checkboxes ]
-            ]
-    )
+    <> guard (Array.null state.allPlatforms.tail)
+    [ inputGroupsHeading' $
+        [ HH.text "Platforms"
+        , divider, inputRequiredSublabel
+        , divider, (if state.platformsError then inputErrorSublabel else inputSublabel)
+            "You must select at least one of the available platforms."
+        ]
+    , inputGroup [ platformCheckboxes state.allPlatforms state.selectedPlatforms UpdatePlatform ]
+    ]
     <>
     [ inputGroupsHeading "Details"
     , responsiveInputGroups $

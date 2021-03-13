@@ -8,6 +8,7 @@ import Data.Array as Array
 import Data.Const (Const)
 import Data.List.NonEmpty as NonEmptyList
 import Data.Maybe (Maybe(..))
+import Data.Monoid (guard)
 import Data.MultiMap (MultiMap)
 import Data.MultiMap as MultiMap
 import Data.Symbol (SProxy(..))
@@ -201,17 +202,13 @@ render state =
                         , teamSizeCheckboxes state.teamSizes UpdateTeamSize
                         ]
                 )
-                <>
-                ( case platformCheckboxes state.allPlatforms state.selectedPlatforms UpdatePlatform of
-                    Nothing -> []
-                    Just checkboxes ->
-                        [ inputGroup
-                            [ inputLabel "fas fa-laptop" "Platform"
-                            , HH.div [ HC.style $ Css.height $ Css.px 7.0 ] [] -- filler
-                            , checkboxes
-                            ]
-                        ]
-                )
+                <> guard (Array.null state.allPlatforms.tail)
+                [ inputGroup
+                    [ inputLabel "fas fa-laptop" "Platform"
+                    , HH.div [ HC.style $ Css.height $ Css.px 7.0 ] [] -- filler
+                    , platformCheckboxes state.allPlatforms state.selectedPlatforms UpdatePlatform
+                    ]
+                ]
                 <> ( state.fields <#> fieldInputGroup state.fieldValues UpdateFieldValues )
                 <> [ newOrReturningInputGroup state.newOrReturning UpdateNewOrReturning ]
             ]

@@ -4,6 +4,7 @@ import Prelude
 
 import Data.Array as Array
 import Data.Maybe (Maybe(..), isJust, isNothing, maybe)
+import Data.Monoid (guard)
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
@@ -81,8 +82,7 @@ inputUnderlabel :: forall slots action. String -> HH.HTML slots action
 inputUnderlabel text = inputUnderlabel' [ HH.text text ]
 
 inputError :: forall slots action. Boolean -> String -> Array (HH.HTML slots action)
-inputError true text = [ HH.p [ HS.class_ "input-error" ] [ HH.text text ] ]
-inputError false text = []
+inputError error text = guard error [ HH.p [ HS.class_ "input-error" ] [ HH.text text ] ]
 
 inputGroup :: forall slots action. Array (HH.HTML slots action) -> HH.HTML slots action
 inputGroup group = HH.div [ HS.class_ "input-group" ] group
@@ -97,45 +97,37 @@ inputGroupsHeading :: forall slots action. String -> HH.HTML slots action
 inputGroupsHeading text = inputGroupsHeading' [ HH.text text ]
 
 platformCheckboxes :: forall action slots.
-    Platforms -> Array Platform -> (Platform -> action) -> Maybe (HH.HTML slots action)
+    Platforms -> Array Platform -> (Platform -> action) -> HH.HTML slots action
 platformCheckboxes allPlatforms selectedPlatforms onValue =
-    if Array.null allPlatforms.tail
-    then Nothing
-    else Just $
-        HH.div [ HS.class_ "platform-id-checkboxes" ] $
-        Array.cons allPlatforms.head allPlatforms.tail <#>
-        case _ of
-        Steam       -> checkboxIconInput radioSteamSvg       "Steam"       (Array.elem Steam       selectedPlatforms) (onValue Steam)
-        Riot        -> checkboxIconInput radioRiotSvg        "Riot"        (Array.elem Riot        selectedPlatforms) (onValue Riot)
-        BattleNet   -> checkboxIconInput radioBattleNetSvg   "Battle.net"  (Array.elem BattleNet   selectedPlatforms) (onValue BattleNet)
-        PlayStation -> checkboxIconInput radioPlayStationSvg "PlayStation" (Array.elem PlayStation selectedPlatforms) (onValue PlayStation)
-        Xbox        -> checkboxIconInput radioXboxSvg        "Xbox"        (Array.elem Xbox        selectedPlatforms) (onValue Xbox)
-        Switch      -> checkboxIconInput radioSwitchSvg      "Switch"      (Array.elem Switch      selectedPlatforms) (onValue Switch)
+    HH.div [ HS.class_ "platform-id-checkboxes" ] $
+    Array.cons allPlatforms.head allPlatforms.tail <#>
+    case _ of
+    Steam       -> checkboxIconInput radioSteamSvg       "Steam"       (Array.elem Steam       selectedPlatforms) (onValue Steam)
+    Riot        -> checkboxIconInput radioRiotSvg        "Riot"        (Array.elem Riot        selectedPlatforms) (onValue Riot)
+    BattleNet   -> checkboxIconInput radioBattleNetSvg   "Battle.net"  (Array.elem BattleNet   selectedPlatforms) (onValue BattleNet)
+    PlayStation -> checkboxIconInput radioPlayStationSvg "PlayStation" (Array.elem PlayStation selectedPlatforms) (onValue PlayStation)
+    Xbox        -> checkboxIconInput radioXboxSvg        "Xbox"        (Array.elem Xbox        selectedPlatforms) (onValue Xbox)
+    Switch      -> checkboxIconInput radioSwitchSvg      "Switch"      (Array.elem Switch      selectedPlatforms) (onValue Switch)
 
 platformRadios :: forall action slots.
-    Platforms -> Platform -> (Platform -> action) -> Maybe (HH.HTML slots action)
+    Platforms -> Platform -> (Platform -> action) -> HH.HTML slots action
 platformRadios platforms selectedPlatform onInput =
-    if Array.null platforms.tail
-    then Nothing
-    else Just $
-        HH.div [ HS.class_ "platform-id-radios" ] $
-        Array.cons platforms.head platforms.tail <#>
-        case _ of
-        Steam       | selected <- selectedPlatform == Steam       -> radioIconInput radioSteamSvg       "Steam"       selected $ onInput Steam
-        Riot        | selected <- selectedPlatform == Riot        -> radioIconInput radioRiotSvg        "Riot"        selected $ onInput Riot
-        BattleNet   | selected <- selectedPlatform == BattleNet   -> radioIconInput radioBattleNetSvg   "Battle.net"  selected $ onInput BattleNet
-        PlayStation | selected <- selectedPlatform == PlayStation -> radioIconInput radioPlayStationSvg "PlayStation" selected $ onInput PlayStation
-        Xbox        | selected <- selectedPlatform == Xbox        -> radioIconInput radioXboxSvg        "Xbox"        selected $ onInput Xbox
-        Switch      | selected <- selectedPlatform == Switch      -> radioIconInput radioSwitchSvg      "Switch"      selected $ onInput Switch
+    HH.div [ HS.class_ "platform-id-radios" ] $
+    Array.cons platforms.head platforms.tail <#>
+    case _ of
+    Steam       | selected <- selectedPlatform == Steam       -> radioIconInput radioSteamSvg       "Steam"       selected $ onInput Steam
+    Riot        | selected <- selectedPlatform == Riot        -> radioIconInput radioRiotSvg        "Riot"        selected $ onInput Riot
+    BattleNet   | selected <- selectedPlatform == BattleNet   -> radioIconInput radioBattleNetSvg   "Battle.net"  selected $ onInput BattleNet
+    PlayStation | selected <- selectedPlatform == PlayStation -> radioIconInput radioPlayStationSvg "PlayStation" selected $ onInput PlayStation
+    Xbox        | selected <- selectedPlatform == Xbox        -> radioIconInput radioXboxSvg        "Xbox"        selected $ onInput Xbox
+    Switch      | selected <- selectedPlatform == Switch      -> radioIconInput radioSwitchSvg      "Switch"      selected $ onInput Switch
 
 platformIdHeading :: forall action slots.
     Platforms -> Platform -> (Platform -> action) -> HH.HTML slots action
 platformIdHeading platforms selectedPlatform onInput =
     HH.h2 [ HS.class_ "platform-id-heading" ] $
     [ HH.text "Platform ID" ]
-    <> case platformRadios platforms selectedPlatform onInput of
-        Nothing -> []
-        Just radios -> [ radios ]
+    <> guard (Array.null platforms.tail) [ platformRadios platforms selectedPlatform onInput ]
 
 requiredTextLineInput :: forall slots action. String -> (String -> action) -> HH.HTML slots action
 requiredTextLineInput input onInput =
