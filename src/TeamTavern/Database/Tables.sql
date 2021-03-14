@@ -21,8 +21,9 @@ create unique index player_lower_nickname_key on player (lower(nickname));
 create table team
     ( id serial not null primary key
     , owner_id int not null references player(id)
-    , handle text not null
-    , name text not null
+    , handle text not null unique
+    , organization text not null -- informal, organized
+    , name text
     , website text
     , discord_tag text
     , discord_server text
@@ -109,6 +110,7 @@ create table team_profile
     ( id serial not null primary key
     , team_id integer not null references team(id)
     , game_id integer not null references game(id)
+    , size text not null -- party, community
     , platforms text[] not null
     , new_or_returning boolean not null
     , ambitions text[] not null

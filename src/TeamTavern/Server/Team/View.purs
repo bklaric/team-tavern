@@ -10,7 +10,9 @@ import Perun.Response (Response, internalServerError__, notFound__, ok_)
 import Postgres.Pool (Pool)
 import Postgres.Query (Query(..), (:))
 import Simple.JSON (writeJSON)
+import TeamTavern.Routes.Shared.Organization (OrganizationNW)
 import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
+import TeamTavern.Routes.Shared.Size (Size)
 import TeamTavern.Server.Infrastructure.Error (LoadSingleError)
 import TeamTavern.Server.Infrastructure.Log (logLoadSingleError)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstNotFound, teamAdjustedWeekdayFrom, teamAdjustedWeekdayTo, teamAdjustedWeekendFrom, teamAdjustedWeekendTo)
@@ -21,6 +23,7 @@ type Profile =
     { handle :: String
     , title :: String
     , allPlatforms :: Platforms
+    , size :: Size
     , selectedPlatforms :: Array Platform
     , fields :: Array
         { key :: String
@@ -44,8 +47,7 @@ type Profile =
 type Team =
     { owner :: String
     , handle :: String
-    , name :: String
-    , website :: Maybe String
+    , organization :: OrganizationNW
     , discordTag :: Maybe String
     , discordServer :: Maybe String
     , ageFrom :: Maybe Int

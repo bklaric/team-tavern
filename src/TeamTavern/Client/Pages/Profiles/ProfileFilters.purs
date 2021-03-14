@@ -27,9 +27,9 @@ import TeamTavern.Client.Components.Team.TeamInputGroup (ageInputGroup, language
 import TeamTavern.Client.Pages.Profiles.GameHeader (Tab(..))
 import TeamTavern.Client.Pages.Profiles.TeamBadge (teamOrganizationCheckboxes, teamSizeCheckboxes)
 import TeamTavern.Client.Snippets.Class as HS
+import TeamTavern.Routes.Shared.Organization (Organization)
 import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
-import TeamTavern.Routes.Shared.TeamOrganization (TeamOrganization)
-import TeamTavern.Routes.Shared.TeamSize (TeamSize)
+import TeamTavern.Routes.Shared.Size (Size)
 import Web.HTML as Html
 import Web.HTML.Window as Window
 
@@ -68,8 +68,8 @@ type Input =
     }
 
 type State =
-    { teamOrganizations :: Array TeamOrganization
-    , teamSizes :: Array TeamSize
+    { teamOrganizations :: Array Organization
+    , teamSizes :: Array Size
     , ageFrom :: Maybe Int
     , ageTo :: Maybe Int
     , locations :: Array String
@@ -95,7 +95,7 @@ data Action
     | Receive Input
     | ApplyFilters
     | ClearFilters
-    | UpdateTeamOrganization TeamOrganization
+    | UpdateOrganization Organization
     | UpdateAgeFrom (Maybe Int)
     | UpdateAgeTo (Maybe Int)
     | UpdateLanguages (MultiSelect.Output String)
@@ -105,7 +105,7 @@ data Action
     | UpdateWeekdayTo (Maybe String)
     | UpdateWeekendFrom (Maybe String)
     | UpdateWeekendTo (Maybe String)
-    | UpdateTeamSize TeamSize
+    | UpdateSize Size
     | UpdatePlatform Platform
     | UpdateFieldValues String (MultiSelect.Output Option)
     | UpdateNewOrReturning Boolean
@@ -164,7 +164,7 @@ render state =
                         inputGroup
                         [ inputLabel "fas fa-users" "Organization"
                         , HH.div [ HC.style $ Css.height $ Css.px 7.0 ] [] -- filler
-                        , teamOrganizationCheckboxes state.teamOrganizations UpdateTeamOrganization
+                        , teamOrganizationCheckboxes state.teamOrganizations UpdateOrganization
                         ]
                 )
                 <>
@@ -199,10 +199,10 @@ render state =
                         inputGroup
                         [ inputLabel "fas fa-users" "Size"
                         , HH.div [ HC.style $ Css.height $ Css.px 7.0 ] [] -- filler
-                        , teamSizeCheckboxes state.teamSizes UpdateTeamSize
+                        , teamSizeCheckboxes state.teamSizes UpdateSize
                         ]
                 )
-                <> guard (Array.null state.allPlatforms.tail)
+                <> guard (not $ Array.null state.allPlatforms.tail)
                 [ inputGroup
                     [ inputLabel "fas fa-laptop" "Platform"
                     , HH.div [ HC.style $ Css.height $ Css.px 7.0 ] [] -- filler
@@ -293,7 +293,7 @@ handleAction ClearFilters = do
         , fieldValues = (MultiMap.empty :: MultiMap String String)
         , newOrReturning = false
         }
-handleAction (UpdateTeamOrganization teamOrganization) =
+handleAction (UpdateOrganization teamOrganization) =
     H.modify_ \state -> state
         { teamOrganizations =
             if Array.elem teamOrganization state.teamOrganizations
@@ -318,7 +318,7 @@ handleAction (UpdateWeekendFrom time) =
     H.modify_ (_ { weekendFrom = time })
 handleAction (UpdateWeekendTo time) =
     H.modify_ (_ { weekendTo = time })
-handleAction (UpdateTeamSize teamSize) =
+handleAction (UpdateSize teamSize) =
     H.modify_ \state -> state
         { teamSizes =
             if Array.elem teamSize state.teamSizes

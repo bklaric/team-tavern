@@ -10,6 +10,7 @@ import Data.Maybe (Maybe(..))
 import Data.Variant (SProxy(..), match)
 import Halogen as H
 import Halogen.HTML as HH
+import Record.Extra (pick)
 import TeamTavern.Client.Components.Form (form, otherFormError, submitButton)
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.Team.TeamFormInput (teamFormInput)
@@ -47,24 +48,7 @@ render { details, submitting, otherError } =
     otherFormError otherError
 
 sendRequest :: forall left. State -> Async left (Maybe (Either Create.BadContent Create.OkContent))
-sendRequest state @ { details } =
-    post "/api/teams"
-    ({ name: details.name
-    , website: details.website
-    , discordTag: details.discordTag
-    , discordServer: details.discordServer
-    , ageFrom: details.ageFrom
-    , ageTo: details.ageTo
-    , locations: details.locations
-    , languages: details.languages
-    , microphone: details.microphone
-    , timezone: details.timezone
-    , weekdayFrom: details.weekdayFrom
-    , weekdayTo: details.weekdayTo
-    , weekendFrom: details.weekendFrom
-    , weekendTo: details.weekendTo
-    , about: details.about
-    } :: TeamModel)
+sendRequest state @ { details } = post "/api/teams" (pick details :: TeamModel)
 
 handleAction :: forall output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
@@ -74,8 +58,7 @@ handleAction Initialize = do
 handleAction (UpdateDetails details) =
     H.modify_ \state -> state
         { details = state.details
-            { name = details.name
-            , website = details.website
+            { organization = details.organization
             , discordTag = details.discordTag
             , discordServer = details.discordServer
             , ageFrom = details.ageFrom

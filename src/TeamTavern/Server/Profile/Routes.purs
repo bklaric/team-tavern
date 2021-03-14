@@ -9,7 +9,9 @@ import Jarilo.Path (type (:>), End)
 import Jarilo.Query (type (:?), Mandatory, Many, NoQuery, Optional, Rest)
 import Jarilo.Route (Route)
 import Jarilo.Segment (Capture, Literal)
+import TeamTavern.Routes.Shared.Organization (Organization)
 import TeamTavern.Routes.Shared.Platform (Platform)
+import TeamTavern.Routes.Shared.Size (Size)
 import URI.Extra.QueryPairs (Key, QueryPairs, Value)
 
 type ProfileIlk = Int
@@ -116,8 +118,7 @@ type UpdateTeamProfile = Route
 
 type ViewPlayerProfilesByGame = Route
     Get
-    (  Literal "profiles"
-    :> Literal "by-handle"
+    (  Literal "games"
     :> Capture "handle" Handle
     :> Literal "players"
     :> End)
@@ -138,13 +139,13 @@ type ViewPlayerProfilesByGame = Route
 
 type ViewTeamProfilesByGame = Route
     Get
-    (  Literal "profiles"
-    :> Literal "by-handle"
+    (  Literal "games"
     :> Capture "handle" Handle
     :> Literal "teams"
     :> End)
     (  Mandatory "page" ProfilePage
     :? Mandatory "timezone" Timezone
+    :? Many "organizations" Organization
     :? Optional "ageFrom" Age
     :? Optional "ageTo" Age
     :? Many "languages" Language
@@ -154,6 +155,7 @@ type ViewTeamProfilesByGame = Route
     :? Optional "weekendFrom" Time
     :? Optional "weekendTo" Time
     :? Optional "microphone" HasMicrophone
+    :? Many "sizes" Size
     :? Many "platforms" Platform
     :? Optional "newOrReturning" NewOrReturning
     :? Rest "fields")

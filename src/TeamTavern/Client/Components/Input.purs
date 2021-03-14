@@ -127,7 +127,7 @@ platformIdHeading :: forall action slots.
 platformIdHeading platforms selectedPlatform onInput =
     HH.h2 [ HS.class_ "platform-id-heading" ] $
     [ HH.text "Platform ID" ]
-    <> guard (Array.null platforms.tail) [ platformRadios platforms selectedPlatform onInput ]
+    <> guard (not $ Array.null platforms.tail) [ platformRadios platforms selectedPlatform onInput ]
 
 requiredTextLineInput :: forall slots action. String -> (String -> action) -> HH.HTML slots action
 requiredTextLineInput input onInput =

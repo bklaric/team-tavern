@@ -148,7 +148,7 @@ onboard pool cookies body =
                 <*> TeamProfile.validateProfileV game profile
                 # AsyncV.toAsync
                 # label (SProxy :: SProxy "invalidBody")
-            let generatedHandle = generateHandle team'.name
+            let generatedHandle = generateHandle team'.organization cookieInfo.nickname
             { handle } <- addTeam client cookieInfo.id generatedHandle team'
             AddTeamProfile.addProfile
                 client cookieInfo.id handle content.gameHandle profile'

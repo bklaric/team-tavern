@@ -14,6 +14,7 @@ import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Components.Profile (profileHeading, profileSubheading)
 import TeamTavern.Client.Pages.Player.Status (Status(..))
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
+import TeamTavern.Routes.Shared.Organization (nameOrHandleN)
 import TeamTavern.Routes.ViewPlayer as ViewPlayer
 
 teams
@@ -46,7 +47,7 @@ teams player status showCreateTeamModal =
         player.teams <#> \team ->
             cardSection
             [ profileHeading (SProxy :: SProxy "team") team.handle
-                ("/teams/" <> team.handle) team.name
+                ("/teams/" <> team.handle) (nameOrHandleN team.handle team.organization)
             , divider
             , profileSubheading $ "Updated " <> lastUpdated team.updatedSeconds
             ]

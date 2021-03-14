@@ -18,7 +18,7 @@ import TeamTavern.Client.Components.Team.ProfileInputGroup (Field)
 import TeamTavern.Client.Script.Navigate (hardNavigate)
 import TeamTavern.Client.Script.Request (putNoContent)
 import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
-import TeamTavern.Routes.Shared.TeamSize (TeamSize(..))
+import TeamTavern.Routes.Shared.Size (Size(..))
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 

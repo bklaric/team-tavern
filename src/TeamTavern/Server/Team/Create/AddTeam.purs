@@ -1,5 +1,6 @@
 module TeamTavern.Server.Team.Create.AddTeam (addTeam) where
 
+import Prelude
 
 import Async (Async)
 import Data.Nullable (toNullable)
@@ -10,7 +11,7 @@ import TeamTavern.Server.Player.Domain.Id (Id)
 import TeamTavern.Server.Player.UpdatePlayer.ValidateTimespan (nullableTimeFrom, nullableTimeTo)
 import TeamTavern.Server.Profile.AddTeamProfile.ValidateAgeSpan (nullableAgeFrom, nullableAgeTo)
 import TeamTavern.Server.Team.Infrastructure.GenerateHandle (Handle)
-import TeamTavern.Server.Team.Infrastructure.ValidateTeam (Team)
+import TeamTavern.Server.Team.Infrastructure.ValidateTeam (Team, organizationName, organizationWebsite)
 
 queryString :: Query
 queryString = Query """
@@ -58,8 +59,8 @@ queryParameters :: Id -> Handle -> Team -> Array QueryParameter
 queryParameters ownerId handle team
     = ownerId
     : handle
-    : team.name
-    : toNullable team.website
+    : (toNullable $ organizationName team.organization)
+    : (toNullable $ organizationWebsite team.organization)
     : toNullable team.discordTag
     : toNullable team.discordServer
     : nullableAgeFrom team.ageSpan

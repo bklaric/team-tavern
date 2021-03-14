@@ -26,15 +26,16 @@ import TeamTavern.Client.Script.Cookie (PlayerInfo)
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Client.Snippets.PreventMouseDefault (preventMouseDefault)
+import TeamTavern.Routes.Shared.Organization (OrganizationNW, nameOrHandleNW)
 import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
+import TeamTavern.Routes.Shared.Size (Size)
 import TeamTavern.Server.Profile.ViewTeamProfilesByGame.LoadProfiles (pageSize)
 import Web.UIEvent.MouseEvent (MouseEvent)
 
 type TeamProfile =
     { owner :: String
     , handle :: String
-    , name :: String
-    , website :: Maybe String
+    , organization :: OrganizationNW
     , discordTag :: Maybe String
     , discordServer :: Maybe String
     , ageFrom :: Maybe Int
@@ -52,6 +53,7 @@ type TeamProfile =
         }
     , about :: Array String
     , allPlatforms :: Platforms
+    , size :: Size
     , selectedPlatforms :: Array Platform
     , fieldValues :: Array
         { field ::
@@ -106,7 +108,7 @@ profileSection profile = let
     [ profileHeader
         [ HH.div [ HS.class_ "team-profile-heading-container" ]
             [ profileHeading (SProxy :: SProxy "teams") profile.handle
-                ("/teams/" <> profile.handle) profile.name
+                ("/teams/" <> profile.handle) (nameOrHandleNW profile.handle profile.organization)
             , informalBadge
             , partyBadge
             , profileSubheading $ "Updated " <> lastUpdated profile.updatedSeconds

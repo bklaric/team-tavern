@@ -3,6 +3,7 @@ module TeamTavern.Client.Components.Team.TeamFormInput (Input, Output, Slot, emp
 import Prelude
 
 import Async (Async)
+import Data.Array as Array
 import Data.Const (Const)
 import Data.Maybe (Maybe(..), isNothing, maybe)
 import Data.Variant (SProxy(..))
@@ -22,13 +23,11 @@ import TeamTavern.Client.Components.Team.TeamInputGroup (aboutInputGroup, ageInp
 import TeamTavern.Client.Pages.Profiles.TeamBadge (teamOrganizationRadios)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Snippets.Class as HS
-import TeamTavern.Routes.Shared.TeamOrganization (TeamOrganization(..))
+import TeamTavern.Routes.Shared.Organization (Organization, OrganizationNW(..), fromOrganizationNW, toOrganizationNW)
 import TeamTavern.Server.Infrastructure.Timezones (Timezone)
 
 type Input =
-    { organization :: TeamOrganization
-    , name :: String
-    , website :: Maybe String
+    { organization :: OrganizationNW
     , discordTag :: Maybe String
     , discordServer :: Maybe String
     , ageFrom :: Maybe Int
@@ -51,9 +50,7 @@ type Input =
     }
 
 type Output =
-    { organization :: TeamOrganization
-    , name :: String
-    , website :: Maybe String
+    { organization :: OrganizationNW
     , discordTag :: Maybe String
     , discordServer :: Maybe String
     , ageFrom :: Maybe Int
@@ -74,7 +71,7 @@ type State = Input
 data Action
     = Initialize
     | Receive Input
-    | UpdateOrganization TeamOrganization
+    | UpdateOrganization Organization
     | UpdateName String
     | UpdateWebsite (Maybe String)
     | UpdateDiscordTag (Maybe String)
@@ -102,17 +99,24 @@ type Slot = H.Slot (Const Void) Output Unit
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render state =
-    HH.div_
+    HH.div_ $
     [ HH.h2 [ HS.class_ "platform-id-heading" ]
         [ HH.text "General"
-        , teamOrganizationRadios state.organization UpdateOrganization
+        , teamOrganizationRadios (fromOrganizationNW state.organization) UpdateOrganization
         , organizationInfo
         ]
-    , responsiveInputGroups
-        [ nameInputGroup state.name UpdateName state.nameError
-        , websiteInputGroup state.website UpdateWebsite state.websiteError
-        ]
-    , inputGroupsHeading' $
+    ]
+    <>
+    ( case state.organization of
+        Informal'' -> []
+        Organized'' { name, website } -> Array.singleton $
+            responsiveInputGroups
+            [ nameInputGroup name UpdateName state.nameError
+            , websiteInputGroup website UpdateWebsite state.websiteError
+            ]
+    )
+    <>
+    [ inputGroupsHeading' $
         [ HH.text "Contact"
         , divider, inputRequiredSublabel
         , divider, (if state.contactError then inputErrorSublabel else inputSublabel)
@@ -156,13 +160,21 @@ handleAction Initialize = do
 handleAction (Receive input) =
     H.put input
 handleAction (UpdateOrganization organization) = do
-    state <- H.modify _ { organization = organization }
+    state <- H.modify _ { organization = toOrganizationNW organization }
     raiseOutput state
 handleAction (UpdateName name) = do
-    state <- H.modify _ { name = name }
+    state <- H.modify
+        case _ of
+        state @ { organization: Informal'' } -> state
+        state @ { organization: Organized'' state' } ->
+            state { organization = Organized'' state' { name = name } }
     raiseOutput state
 handleAction (UpdateWebsite website) = do
-    state <- H.modify _ { website = website }
+    state <- H.modify
+        case _ of
+        state @ { organization: Informal'' } -> state
+        state @ { organization: Organized'' state' } ->
+            state { organization = Organized'' state' { website = website } }
     raiseOutput state
 handleAction (UpdateDiscordTag discordTag) = do
     state <- H.modify _ { discordTag = discordTag }
@@ -217,9 +229,7 @@ component = H.mkComponent
 
 emptyInput :: Input
 emptyInput =
-    { organization: Informal
-    , name: ""
-    , website: Nothing
+    { organization: Informal''
     , discordTag: Nothing
     , discordServer: Nothing
     , ageFrom: Nothing

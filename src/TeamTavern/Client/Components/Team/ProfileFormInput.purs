@@ -23,7 +23,7 @@ import TeamTavern.Client.Components.Team.ProfileInputGroup as Input
 import TeamTavern.Client.Pages.Profiles.TeamBadge (teamSizeRadios)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
-import TeamTavern.Routes.Shared.TeamSize (TeamSize(..))
+import TeamTavern.Routes.Shared.Size (Size(..))
 
 type FieldValues = Array
     { fieldKey :: String
@@ -31,7 +31,7 @@ type FieldValues = Array
     }
 
 type Input =
-    { size :: TeamSize
+    { size :: Size
     , allPlatforms :: Platforms
     , selectedPlatforms :: Array Platform
     , platformsError :: Boolean
@@ -43,7 +43,7 @@ type Input =
     }
 
 type Output =
-    { size :: TeamSize
+    { size :: Size
     , platforms :: Array Platform
     , fieldValues :: FieldValues
     , newOrReturning :: Boolean
@@ -51,7 +51,7 @@ type Output =
     }
 
 type State =
-    { size :: TeamSize
+    { size :: Size
     , allPlatforms :: Platforms
     , selectedPlatforms :: Array Platform
     , platformsError :: Boolean
@@ -64,7 +64,7 @@ type State =
 
 data Action
     = Receive Input
-    | UpdateSize TeamSize
+    | UpdateSize Size
     | UpdatePlatform Platform
     | UpdateFieldValues String (MultiSelect.Output Option)
     | UpdateNewOrReturning Boolean
@@ -83,7 +83,7 @@ render state =
         , inputSublabel "You want to recruit a smaller number of players to fill out a party, roster or group."
         ]
     ]
-    <> guard (Array.null state.allPlatforms.tail)
+    <> guard (not $ Array.null state.allPlatforms.tail)
     [ inputGroupsHeading' $
         [ HH.text "Platforms"
         , divider, inputRequiredSublabel

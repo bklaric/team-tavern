@@ -313,7 +313,8 @@ sendRequest (state :: State) = Async.unify do
             , gameHandle: game.handle
             , playerProfile: Nothing
             , teamProfile: Just
-                { platforms: profile.selectedPlatforms
+                { size: profile.size
+                , platforms: profile.selectedPlatforms
                 , fieldValues: profile.fieldValues
                 , newOrReturning: profile.newOrReturning
                 , ambitions: profile.ambitions
@@ -402,8 +403,6 @@ handleAction (UpdateTeam details) = do
     state <- H.modify _
         { team
             { organization = details.organization
-            , name = details.name
-            , website = details.website
             , discordTag = details.discordTag
             , discordServer = details.discordServer
             , ageFrom = details.ageFrom

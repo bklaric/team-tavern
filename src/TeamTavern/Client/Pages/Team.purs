@@ -25,6 +25,7 @@ import TeamTavern.Client.Pages.Team.Status (Status(..), getStatus)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Request (get)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
+import TeamTavern.Routes.Shared.Organization (nameOrHandleNW)
 import TeamTavern.Server.Team.View (Team, Profile)
 
 type Input = { handle :: String }
@@ -63,7 +64,7 @@ render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render (Empty _) = HH.div_ []
 render (Loaded { team: team', status, showEditTeamModal, showEditProfileModal } ) =
     HH.div_  $
-    [ contentHeader [ HH.div_ [ contentHeading team'.name ] ]
+    [ contentHeader [ HH.div_ [ contentHeading $ nameOrHandleNW team'.handle team'.organization ] ]
     , contentDescription
         case status of
         SignedInOwner -> "View and edit all your team's details and profiles."
@@ -124,8 +125,9 @@ handleAction Initialize = do
                         , showEditTeamModal: false
                         , showEditProfileModal: Nothing
                         }
-                    setMeta (team''.name <> " | TeamTavern")
-                        ("View all details and profiles of team " <> team''.name <> ".")
+                    let nameOrHandle = nameOrHandleNW team''.handle team''.organization
+                    setMeta (nameOrHandle <> " | TeamTavern")
+                        ("View all details and profiles of team " <> nameOrHandle <> ".")
                 _ -> pure unit
         _ -> pure unit
 handleAction ShowEditTeamModal = modifyLoaded _ { showEditTeamModal = true }

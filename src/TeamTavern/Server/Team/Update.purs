@@ -23,7 +23,7 @@ import TeamTavern.Server.Player.Domain.Id (Id)
 import TeamTavern.Server.Player.UpdatePlayer.ValidateTimespan (nullableTimeFrom, nullableTimeTo)
 import TeamTavern.Server.Profile.AddTeamProfile.ValidateAgeSpan (nullableAgeFrom, nullableAgeTo)
 import TeamTavern.Server.Team.Infrastructure.LogError (teamHandler)
-import TeamTavern.Server.Team.Infrastructure.ValidateTeam (Team, TeamError, TeamErrors, validateTeam)
+import TeamTavern.Server.Team.Infrastructure.ValidateTeam (Team, TeamError, TeamErrors, organizationName, organizationWebsite, validateTeam)
 
 queryString :: Query
 queryString = Query """
@@ -52,8 +52,8 @@ queryParameters :: Id -> String -> Team -> Array QueryParameter
 queryParameters ownerId handle team
     = ownerId
     : handle
-    : team.name
-    : toNullable team.website
+    : (toNullable $ organizationName team.organization)
+    : (toNullable $ organizationWebsite team.organization)
     : toNullable team.discordTag
     : toNullable team.discordServer
     : nullableAgeFrom team.ageSpan

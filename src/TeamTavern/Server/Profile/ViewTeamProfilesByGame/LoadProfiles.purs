@@ -21,8 +21,10 @@ import Postgres.Error (Error)
 import Postgres.Query (Query(..))
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
+import TeamTavern.Routes.Shared.Organization (OrganizationNW)
 import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
 import TeamTavern.Routes.Shared.Platform as Platform
+import TeamTavern.Routes.Shared.Size (Size)
 import TeamTavern.Server.Infrastructure.Postgres (prepareJsonString, prepareString, teamAdjustedWeekdayFrom, teamAdjustedWeekdayTo, teamAdjustedWeekendFrom, teamAdjustedWeekendTo)
 import TeamTavern.Server.Profile.Routes (Age, Location, Filters, Handle, HasMicrophone, Language, ProfilePage, Time, Timezone, NewOrReturning)
 import URI.Extra.QueryPairs (Key, QueryPairs(..), Value)
@@ -35,8 +37,7 @@ pageSize = 10
 type LoadProfilesResult =
     { owner :: String
     , handle :: String
-    , name :: String
-    , website :: Maybe String
+    , organization :: OrganizationNW
     , discordTag :: Maybe String
     , discordServer :: Maybe String
     , ageFrom :: Maybe Int
@@ -53,6 +54,7 @@ type LoadProfilesResult =
         , to :: String
         }
     , about :: Array String
+    , size :: Size
     , allPlatforms :: Platforms
     , selectedPlatforms :: Array Platform
     , fieldValues :: Array

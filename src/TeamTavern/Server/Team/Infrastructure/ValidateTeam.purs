@@ -11,10 +11,12 @@ import Data.Bifunctor.Label (label)
 import Data.List.NonEmpty as Nel
 import Data.List.NonEmpty as NonEmptyList
 import Data.List.Types (NonEmptyList)
-import Data.Maybe (Maybe, isJust)
+import Data.Maybe (Maybe(..), isJust)
 import Data.Symbol (SProxy(..))
 import Data.Validated (invalid, valid, validated)
+import Data.Validated.Label (VariantValidated)
 import Data.Variant (Variant, inj)
+import TeamTavern.Routes.Shared.Organization (OrganizationNW(..))
 import TeamTavern.Server.Domain.Text (Text)
 import TeamTavern.Server.Infrastructure.ValidateAbout (validateAbout)
 import TeamTavern.Server.Player.UpdatePlayer.ValidateDiscordTag (DiscordTag, validateDiscordTag)
@@ -29,8 +31,7 @@ import TeamTavern.Server.Team.Infrastructure.ValidateName (Name, validateName)
 import TeamTavern.Server.Team.Infrastructure.ValidateWebsite (validateWebsite)
 
 type TeamModel =
-    { name :: String
-    , website :: Maybe String
+    { organization :: OrganizationNW
     , discordTag :: Maybe String
     , discordServer :: Maybe String
     , ageFrom :: Maybe Int
@@ -46,9 +47,26 @@ type TeamModel =
     , about :: String
     }
 
+data Organization = Informal | Organized { name :: Name, website :: Maybe Url }
+
+organizationName :: Organization -> Maybe Name
+organizationName Informal = Nothing
+organizationName (Organized { name }) = Just name
+
+organizationWebsite :: Organization -> Maybe Url
+organizationWebsite Informal = Nothing
+organizationWebsite (Organized { website }) = website
+
+validateOrganization
+    :: forall errors
+    .  OrganizationNW
+    -> VariantValidated (name :: Array String, website :: Array String | errors) Organization
+validateOrganization Informal'' = pure Informal
+validateOrganization (Organized'' { name, website }) =
+    Organized <$> ({ name: _, website: _ } <$> validateName name <*> validateWebsite website)
+
 type Team =
-    { name :: Name
-    , website :: Maybe Url
+    { organization :: Organization
     , discordTag :: Maybe DiscordTag
     , discordServer :: Maybe Url
     , ageSpan :: AgeSpan
@@ -74,8 +92,7 @@ type TeamErrors = NonEmptyList TeamError
 
 validateTeam :: forall errors. TeamModel -> Async (Variant (team :: TeamErrors | errors)) Team
 validateTeam (team :: TeamModel) = let
-    name = validateName team.name
-    website = validateWebsite team.website
+    organization = validateOrganization team.organization
     discordTag = validateDiscordTag team.discordTag
     discordServer = validateDiscordServer team.discordServer
     contact =
@@ -96,14 +113,14 @@ validateTeam (team :: TeamModel) = let
     onlineWeekend = timezone >>= (const $ validateTimespan team.weekendFrom team.weekendTo)
     about = validateAbout team.about
     in
-    { name: _, website: _
+    { organization: _
     , discordTag: _, discordServer: _
     , ageSpan, locations
     , languages, microphone
     , timezone, onlineWeekday, onlineWeekend
     , about: _
     }
-    <$> name <*> website <*> discordTag <*> discordServer <*> about <* contact
+    <$> organization <*> discordTag <*> discordServer <*> about <* contact
     # Async.fromValidated # label (SProxy :: SProxy "team")
 
 validateTeamV :: forall errors.

@@ -9,8 +9,8 @@ import Halogen.HTML.Events as HP
 import TeamTavern.Client.Components.Checkbox (checkbox)
 import TeamTavern.Client.Components.Radio (radio)
 import TeamTavern.Client.Snippets.Class as HS
-import TeamTavern.Routes.Shared.TeamOrganization (TeamOrganization(..))
-import TeamTavern.Routes.Shared.TeamSize (TeamSize(..))
+import TeamTavern.Routes.Shared.Organization (Organization(..))
+import TeamTavern.Routes.Shared.Size (Size(..))
 
 partyBadge :: forall slots action. HH.HTML slots action
 partyBadge = HH.span [ HS.class_ "party-badge" ] [ HH.text "Party" ]
@@ -28,7 +28,7 @@ partyGroupBadge :: forall slots action. HH.HTML slots action
 partyGroupBadge = HH.span [ HS.class_ "party-group-badge" ] [ HH.text "Party/Group" ]
 
 teamOrganizationCheckboxes :: forall slots action.
-    Array TeamOrganization -> (TeamOrganization -> action) -> HH.HTML slots action
+    Array Organization -> (Organization -> action) -> HH.HTML slots action
 teamOrganizationCheckboxes selected onValue =
     HH.div [ HS.class_ "platform-id-checkboxes" ]
     [ HH.span
@@ -46,7 +46,7 @@ teamOrganizationCheckboxes selected onValue =
     ]
 
 teamSizeCheckboxes :: forall slots action.
-    Array TeamSize -> (TeamSize -> action) -> HH.HTML slots action
+    Array Size -> (Size -> action) -> HH.HTML slots action
 teamSizeCheckboxes selected onValue =
     HH.div [ HS.class_ "platform-id-checkboxes" ]
     [ HH.span
@@ -64,7 +64,7 @@ teamSizeCheckboxes selected onValue =
     ]
 
 teamOrganizationRadios :: forall slots action.
-    TeamOrganization -> (TeamOrganization -> action) -> HH.HTML slots action
+    Organization -> (Organization -> action) -> HH.HTML slots action
 teamOrganizationRadios selected onValue =
     HH.div [ HS.class_ "platform-id-checkboxes" ]
     [ HH.span
@@ -82,7 +82,7 @@ teamOrganizationRadios selected onValue =
     ]
 
 teamSizeRadios :: forall slots action.
-    TeamSize -> (TeamSize -> action) -> HH.HTML slots action
+    Size -> (Size -> action) -> HH.HTML slots action
 teamSizeRadios selected onValue =
     HH.div [ HS.class_ "platform-id-checkboxes" ]
     [ HH.span
