@@ -58,7 +58,7 @@ loadGames = Async.unify do
 
 loadGame :: forall left. String -> Async left (Maybe ViewGame.OkContent)
 loadGame handle = Async.unify do
-    response <- Fetch.fetch_ ("/api/games/by-handle/" <> handle) # lmap (const Nothing)
+    response <- Fetch.fetch_ ("/api/games/" <> handle) # lmap (const Nothing)
     case FetchRes.status response of
         200 -> FetchRes.text response >>= Json.readJSON # lmap (const Nothing)
         _ -> Async.left Nothing

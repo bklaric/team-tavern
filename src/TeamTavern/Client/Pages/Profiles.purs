@@ -154,7 +154,7 @@ render Error = HH.p_ [ HH.text
 loadGame :: forall left. String -> Async left (Maybe ViewGame.OkContent)
 loadGame handle = Async.unify do
     response <-
-        Fetch.fetch_ ("/api/games/by-handle/" <> handle)
+        Fetch.fetch_ ("/api/games/" <> handle)
         # lmap (const Nothing)
     content <-
         case FetchRes.status response of
@@ -190,7 +190,7 @@ loadPlayerProfiles handle page filters = Async.unify do
             ]
         filterQuery = "?" <> intercalate "&" allPairs
     response <-
-        Fetch.fetch_ ("/api/profiles/by-handle/" <> handle <> "/players" <> filterQuery)
+        Fetch.fetch_ ("/api/games/" <> handle <> "/players" <> filterQuery)
         # lmap (const Nothing)
     content <-
         case FetchRes.status response of
@@ -225,7 +225,7 @@ loadTeamProfiles handle page filters = Async.unify do
             ]
         filterQuery = "?" <> intercalate "&" allPairs
     response <-
-        Fetch.fetch_ ("/api/profiles/by-handle/" <> handle <> "/teams" <> filterQuery)
+        Fetch.fetch_ ("/api/games/" <> handle <> "/teams" <> filterQuery)
         # lmap (const Nothing)
     content <-
         case FetchRes.status response of

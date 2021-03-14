@@ -100,7 +100,7 @@ render Error = HH.p_ [ HH.text "There has been an error loading the team. Please
 loadTeam :: forall left. String -> Async left (Maybe Team)
 loadTeam handle = do
     timezone <- getClientTimezone
-    get $ "/api/teams/by-handle/" <> handle <> "?timezone=" <> timezone
+    get $ "/api/teams/" <> handle <> "?timezone=" <> timezone
 
 modifyLoaded :: forall monad. MonadState State monad => (Loaded -> Loaded) -> monad Unit
 modifyLoaded mod =
