@@ -257,8 +257,21 @@ queryStringWithoutPagination handle timezone filters = Query $ """
         (select
             player.nickname as owner,
             team.handle,
-            team.name,
-            team.website,
+            case
+                when team.organization = 'informal'
+                then json_build_object(
+                    'type', '"informal"'::jsonb,
+                    'value', '{}'::jsonb
+                )
+                when team.organization = 'organized'
+                then json_build_object(
+                    'type', '"organized"'::jsonb,
+                    'value', json_build_object(
+                        'name', team.name,
+                        'website', team.website
+                    )
+                )
+            end as organization,
             team.discord_tag as "discordTag",
             team.discord_server as "discordServer",
             team.age_from as "ageFrom",
@@ -280,6 +293,8 @@ queryStringWithoutPagination handle timezone filters = Query $ """
                     'to', to_char(""" <> teamAdjustedWeekendTo timezone <> """, 'HH24:MI')
                 )
             end as "weekendOnline",
+            team.about,
+            profile.size,
             json_build_object(
                 'head', game.platforms[1],
                 'tail', game.platforms[2:]
@@ -299,7 +314,6 @@ queryStringWithoutPagination handle timezone filters = Query $ """
                 ) filter (where field_values.team_profile_id is not null),
                 '[]'
             ) as "fieldValues",
-            team.about,
             profile.new_or_returning as "newOrReturning",
             profile.ambitions,
             profile.updated::text,

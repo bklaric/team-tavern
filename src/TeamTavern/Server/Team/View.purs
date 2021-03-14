@@ -77,8 +77,21 @@ queryString timezone = Query $ """
     select
         player.nickname as owner,
         team.handle,
-        team.name,
-        team.website,
+        case
+            when team.organization = 'informal'
+            then json_build_object(
+                'type', '"informal"'::jsonb,
+                'value', '{}'::jsonb
+            )
+            when team.organization = 'organized'
+            then json_build_object(
+                'type', '"organized"'::jsonb,
+                'value', json_build_object(
+                    'name', team.name,
+                    'website', team.website
+                )
+            )
+        end as organization,
         team.discord_tag as "discordTag",
         team.discord_server as "discordServer",
         team.age_from as "ageFrom",
@@ -112,6 +125,7 @@ queryString timezone = Query $ """
                     'handle', profile.handle,
                     'title', profile.title,
                     'allPlatforms', profile.all_platforms,
+                    'size', profile.size,
                     'selectedPlatforms', profile.selected_platforms,
                     'fields', profile.fields,
                     'fieldValues', profile.field_values,
@@ -136,6 +150,7 @@ queryString timezone = Query $ """
                     'head', game.platforms[1],
                     'tail', game.platforms[2:]
                 ) as all_platforms,
+                profile.size,
                 profile.platforms as selected_platforms,
                 coalesce(fields.fields, '[]') as fields,
                 coalesce(field_values.field_values, '[]') as field_values,
