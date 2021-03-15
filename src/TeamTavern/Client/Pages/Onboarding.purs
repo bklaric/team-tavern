@@ -37,7 +37,7 @@ import TeamTavern.Client.Components.Player.ProfileFormInput as PlayerProfileForm
 import TeamTavern.Client.Components.Team.ProfileFormInput as TeamProfileFormInput
 import TeamTavern.Client.Components.Team.TeamFormInput as TeamFormInput
 import TeamTavern.Client.Script.Cookie (getPlayerNickname)
-import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
+import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigate, navigateReplace, navigate_)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Onboard as Onboard
@@ -387,16 +387,14 @@ handleAction Initialize = do
     case nickname of
         Just nickname' -> H.modify_ _ { nickname = nickname' }
         Nothing -> navigate_ "/"
-    H.liftEffect do
-        setMetaTitle "Onboarding | TeamTavern"
-        setMetaDescription "TeamTavern onboarding."
-        setMetaUrl
-handleAction (Receive input) =
+    setMeta "Onboarding | TeamTavern" "TeamTavern onboarding."
+handleAction (Receive input) = do
     H.put
         ( input
         # Record.insert (SProxy :: SProxy "confirmSkip") false
         # Record.insert (SProxy :: SProxy "submitting") false
         )
+    setMeta "Onboarding | TeamTavern" "TeamTavern onboarding."
 handleAction Skip =
     H.modify_ _ { confirmSkip = true }
 handleAction ConfirmSkip =
