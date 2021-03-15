@@ -10,6 +10,7 @@ cp src/TeamTavern/Client/Static/sitemap.txt dist-client/sitemap.txt
 cp src/TeamTavern/Client/Static/ads.txt dist-client/ads.txt
 cp src/TeamTavern/Client/Static/teamtavern.min.js dist-client/teamtavern.min.js
 cp src/TeamTavern/Client/Static/index.html dist-client/index.html
+cp src/TeamTavern/Client/Static/index.prerender.html dist-client/index.prerender.html
 cp -r src/TeamTavern/Client/Static/Images/* dist-client/images/
 cp src/TeamTavern/Client/Static/Favicons/* dist-client/favicons/
 cp src/TeamTavern/Client/Static/Css/* dist-client/css/
@@ -22,3 +23,5 @@ uglifyjs dist-client/app.js --beautify beautify=false,ascii_only=true --mangle -
     --output "dist-client/app.min.${discriminator}.js"
 sed -i -e "s/app.min.js/app.min.$discriminator.js/g" dist-client/index.html
 sed -i -e "s/style.min.css/style.min.$discriminator.css/g" dist-client/index.html
+sed -i -e "s/app.min.js/app.min.$discriminator.js/g" dist-client/index.prerender.html
+sed -i -e "s/style.min.css/style.min.$discriminator.css/g" dist-client/index.prerender.html
