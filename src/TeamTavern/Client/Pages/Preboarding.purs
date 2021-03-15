@@ -40,7 +40,7 @@ import TeamTavern.Client.Components.RegistrationInput (registrationInput)
 import TeamTavern.Client.Components.RegistrationInput as RegistrationInput
 import TeamTavern.Client.Components.Team.ProfileFormInput as TeamProfileFormInput
 import TeamTavern.Client.Components.Team.TeamFormInput as TeamFormInput
-import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
+import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigate, navigateReplace, navigate_)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Preboard as Preboard
@@ -440,12 +440,10 @@ updateHistoryState (state :: State) = do
 handleAction :: forall action output slots left.
     Action -> H.HalogenM State action slots output (Async left) Unit
 handleAction Initialize =
-    H.liftEffect do
-        setMetaTitle "Preboarding | TeamTavern"
-        setMetaDescription "TeamTavern preboarding."
-        setMetaUrl
-handleAction (Receive input) =
+    setMeta "Preboarding | TeamTavern" "TeamTavern preboarding."
+handleAction (Receive input) = do
     H.put (input # Record.insert (SProxy :: SProxy "submitting") false)
+    setMeta "Preboarding | TeamTavern" "TeamTavern preboarding."
 handleAction Exit = do
     { game } <- H.get
     navigate_
