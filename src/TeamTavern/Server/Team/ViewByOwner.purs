@@ -11,6 +11,8 @@ import TeamTavern.Server.Infrastructure.Error (InternalError)
 import TeamTavern.Server.Infrastructure.Log (logInternalError)
 import TeamTavern.Server.Infrastructure.Postgres (queryMany)
 
+-- TODO: Obrisati sve vezano za ViewByOwner
+
 type Team =
     { name :: String
     , handle :: String

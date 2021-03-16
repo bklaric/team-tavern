@@ -80,7 +80,7 @@ render state =
     [ HH.h2 [ HS.class_ "platform-id-heading" ]
         [ HH.text "Size"
         , teamSizeRadios state.size UpdateSize
-        , inputSublabel "You want to recruit a smaller number of players to fill out a party, roster or group."
+        , inputSublabel "You want to recruit a smaller number of players to fill out a party, roster or group." -- TODO: Add explanation popup or something.
         ]
     ]
     <> guard (not $ Array.null state.allPlatforms.tail)

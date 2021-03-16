@@ -57,6 +57,10 @@ organizationWebsite :: Organization -> Maybe Url
 organizationWebsite Informal = Nothing
 organizationWebsite (Organized { website }) = website
 
+toString :: Organization -> String
+toString Informal = "informal"
+toString (Organized _) = "organized"
+
 validateOrganization
     :: forall errors
     .  OrganizationNW

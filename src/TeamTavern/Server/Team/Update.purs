@@ -23,27 +23,28 @@ import TeamTavern.Server.Player.Domain.Id (Id)
 import TeamTavern.Server.Player.UpdatePlayer.ValidateTimespan (nullableTimeFrom, nullableTimeTo)
 import TeamTavern.Server.Profile.AddTeamProfile.ValidateAgeSpan (nullableAgeFrom, nullableAgeTo)
 import TeamTavern.Server.Team.Infrastructure.LogError (teamHandler)
-import TeamTavern.Server.Team.Infrastructure.ValidateTeam (Team, TeamError, TeamErrors, organizationName, organizationWebsite, validateTeam)
+import TeamTavern.Server.Team.Infrastructure.ValidateTeam (Team, TeamError, TeamErrors, organizationName, organizationWebsite, toString, validateTeam)
 
 queryString :: Query
 queryString = Query """
     update team
     set
-        name = $3,
-        website = $4,
-        discord_tag = $5,
-        discord_server = $6,
-        age_from = $7,
-        age_to = $8,
-        locations = $9,
-        languages = $10,
-        microphone = $11,
-        timezone = $12,
-        weekday_from = $13,
-        weekday_to = $14,
-        weekend_from = $15,
-        weekend_to = $16,
-        about = $17,
+        organization = $3,
+        name = $4,
+        website = $5,
+        discord_tag = $6,
+        discord_server = $7,
+        age_from = $8,
+        age_to = $9,
+        locations = $10,
+        languages = $11,
+        microphone = $12,
+        timezone = $13,
+        weekday_from = $14,
+        weekday_to = $15,
+        weekend_from = $16,
+        weekend_to = $17,
+        about = $18,
         updated = now()
     where owner_id = $1 and handle = $2
     """
@@ -52,6 +53,7 @@ queryParameters :: Id -> String -> Team -> Array QueryParameter
 queryParameters ownerId handle team
     = ownerId
     : handle
+    : (toString team.organization)
     : (toNullable $ organizationName team.organization)
     : (toNullable $ organizationWebsite team.organization)
     : toNullable team.discordTag

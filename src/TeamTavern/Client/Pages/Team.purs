@@ -87,6 +87,7 @@ render (Loaded { team: team', status, showEditTeamModal, showEditProfileModal } 
         , gameHandle: profile.handle
         , title: profile.title
         , allPlatforms: profile.allPlatforms
+        , size: profile.size
         , selectedPlatforms: profile.selectedPlatforms
         , fields: profile.fields
         , fieldValues: profile.fieldValues
