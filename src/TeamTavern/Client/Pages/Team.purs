@@ -15,6 +15,7 @@ import Halogen.HTML as HH
 import TeamTavern.Client.Components.Ads (descriptionLeaderboard, mobileDescriptionLeaderboard)
 import TeamTavern.Client.Components.Content (contentDescription, contentHeader, contentHeading)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
+import TeamTavern.Client.Pages.Profiles.TeamBadge (informalBadge, organizedBadge)
 import TeamTavern.Client.Pages.Team.Details (details)
 import TeamTavern.Client.Pages.Team.EditProfile (editProfile)
 import TeamTavern.Client.Pages.Team.EditProfile as EditProfile
@@ -25,7 +26,7 @@ import TeamTavern.Client.Pages.Team.Status (Status(..), getStatus)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Request (get)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
-import TeamTavern.Routes.Shared.Organization (nameOrHandleNW)
+import TeamTavern.Routes.Shared.Organization (OrganizationNW(..), nameOrHandleNW)
 import TeamTavern.Server.Team.View (Team, Profile)
 
 type Input = { handle :: String }
@@ -64,7 +65,14 @@ render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render (Empty _) = HH.div_ []
 render (Loaded { team: team', status, showEditTeamModal, showEditProfileModal } ) =
     HH.div_  $
-    [ contentHeader [ HH.div_ [ contentHeading $ nameOrHandleNW team'.handle team'.organization ] ]
+    [ contentHeader
+        [ HH.div_
+            [ contentHeading $ nameOrHandleNW team'.handle team'.organization
+            , case team'.organization of
+                Informal'' -> informalBadge
+                Organized'' _ -> organizedBadge
+            ]
+        ]
     , contentDescription
         case status of
         SignedInOwner -> "View and edit all your team's details and profiles."

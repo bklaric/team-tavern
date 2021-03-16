@@ -42,6 +42,7 @@ websiteInputGroup value onValue error =
     inputError error ("Website must be valid and cannot be more than 200 characters long. "
         <> "Please check and try again.")
 
+-- TODO: Indicate that only one box can be filled.
 ageInputGroup :: forall slots action.
     Maybe Int -> Maybe Int -> (Maybe Int -> action) -> (Maybe Int -> action) -> HTML slots action
 ageInputGroup ageFrom ageTo onAgeFrom onAgeTo =

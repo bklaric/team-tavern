@@ -54,6 +54,8 @@ instance fromComponentOrganization :: FromComponent Organization where
 
 -- Organization with name.
 
+-- TODO: Rename Informal' to InformalN and Informal'' to InformalNW
+
 data OrganizationN = Informal' | Organized' { name :: String }
 
 fromOrganizationN :: OrganizationN -> Organization

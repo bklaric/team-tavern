@@ -21,14 +21,14 @@ import TeamTavern.Client.Components.Pagination (pagination)
 import TeamTavern.Client.Components.Profile (profileHeader, profileHeading, profileSubheading)
 import TeamTavern.Client.Components.Team.ProfileDetails (profileDetails')
 import TeamTavern.Client.Components.Team.TeamDetails (teamDetails)
-import TeamTavern.Client.Pages.Profiles.TeamBadge (informalBadge, partyBadge)
+import TeamTavern.Client.Pages.Profiles.TeamBadge (communityBadge, informalBadge, organizedBadge, partyBadge)
 import TeamTavern.Client.Script.Cookie (PlayerInfo)
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Client.Snippets.PreventMouseDefault (preventMouseDefault)
-import TeamTavern.Routes.Shared.Organization (OrganizationNW, nameOrHandleNW)
+import TeamTavern.Routes.Shared.Organization (OrganizationNW(..), nameOrHandleNW)
 import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
-import TeamTavern.Routes.Shared.Size (Size)
+import TeamTavern.Routes.Shared.Size (Size(..))
 import TeamTavern.Server.Profile.ViewTeamProfilesByGame.LoadProfiles (pageSize)
 import Web.UIEvent.MouseEvent (MouseEvent)
 
@@ -109,8 +109,12 @@ profileSection profile = let
         [ HH.div [ HS.class_ "team-profile-heading-container" ]
             [ profileHeading (SProxy :: SProxy "teams") profile.handle
                 ("/teams/" <> profile.handle) (nameOrHandleNW profile.handle profile.organization)
-            , informalBadge
-            , partyBadge
+            , case profile.organization of
+                Informal'' -> informalBadge
+                Organized'' _ -> organizedBadge
+            , case profile.size of
+                Party -> partyBadge
+                Community -> communityBadge
             , profileSubheading $ "Updated " <> lastUpdated profile.updatedSeconds
             ]
         ]

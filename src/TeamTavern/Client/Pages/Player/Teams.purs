@@ -8,13 +8,14 @@ import Effect.Class (class MonadEffect)
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Button (primaryButton)
 import TeamTavern.Client.Components.Card (card, cardHeader, cardHeading, cardSection)
-import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.Missing (missing)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Components.Profile (profileHeading, profileSubheading)
 import TeamTavern.Client.Pages.Player.Status (Status(..))
+import TeamTavern.Client.Pages.Profiles.TeamBadge (informalBadge, organizedBadge)
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
-import TeamTavern.Routes.Shared.Organization (nameOrHandleN)
+import TeamTavern.Client.Snippets.Class as HS
+import TeamTavern.Routes.Shared.Organization (OrganizationN(..), nameOrHandleN)
 import TeamTavern.Routes.ViewPlayer as ViewPlayer
 
 teams
@@ -46,8 +47,12 @@ teams player status showCreateTeamModal =
     else
         player.teams <#> \team ->
             cardSection
-            [ profileHeading (SProxy :: SProxy "team") team.handle
-                ("/teams/" <> team.handle) (nameOrHandleN team.handle team.organization)
-            , divider
-            , profileSubheading $ "Updated " <> lastUpdated team.updatedSeconds
+            [ HH.div [ HS.class_ "team-profile-heading-container" ]
+                [ profileHeading (SProxy :: SProxy "team") team.handle
+                    ("/teams/" <> team.handle) (nameOrHandleN team.handle team.organization)
+                , case team.organization of
+                    Informal' -> informalBadge
+                    Organized' _ -> organizedBadge
+                , profileSubheading $ "Updated " <> lastUpdated team.updatedSeconds
+                ]
             ]

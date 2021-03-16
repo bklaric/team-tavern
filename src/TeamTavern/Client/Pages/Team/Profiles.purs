@@ -11,14 +11,16 @@ import Halogen.HTML as HH
 import TeamTavern.Client.Components.Button (regularButton)
 import TeamTavern.Client.Components.Card (card, cardHeader, cardHeading, cardSection)
 import TeamTavern.Client.Components.Detail (detailColumn, detailColumnHeading4, detailColumns, textDetail)
-import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.Missing (missing)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
 import TeamTavern.Client.Components.Profile (profileHeader, profileHeading', profileSubheading)
 import TeamTavern.Client.Components.Team.ProfileDetails (profileDetails)
+import TeamTavern.Client.Pages.Profiles.TeamBadge (communityBadge, partyBadge)
 import TeamTavern.Client.Pages.Team.CreateProfileButton (createProfileButton)
 import TeamTavern.Client.Pages.Team.Status (Status(..))
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
+import TeamTavern.Client.Snippets.Class as HS
+import TeamTavern.Routes.Shared.Size (Size(..))
 import TeamTavern.Server.Team.View (Profile)
 
 type ChildSlots children =
@@ -57,12 +59,12 @@ profiles teamHandle profiles' status editProfileModalShown =
         in
         cardSection $
         [ profileHeader $
-            [ HH.div_ $
+            [ HH.div [ HS.class_ "team-profile-heading-container" ] $
                 [ profileHeading' (SProxy :: SProxy "games") profile.handle
                     ("/games/" <> profile.handle <> "/teams") profile.title
-                ]
-                <>
-                [ divider
+                , case profile.size of
+                    Party -> partyBadge
+                    Community -> communityBadge
                 , profileSubheading $ "Updated " <> lastUpdated profile.updatedSeconds
                 ]
             ]
