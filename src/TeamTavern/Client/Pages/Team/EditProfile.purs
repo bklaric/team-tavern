@@ -81,7 +81,7 @@ handleAction (UpdateProfile profile) =
     H.modify_ _
         { profile
             { size = profile.size
-            , selectedPlatforms = profile.platforms  -- TODO: Rename selectedPlatforms to just platforms
+            , selectedPlatforms = profile.platforms
             , fieldValues = profile.fieldValues
             , newOrReturning = profile.newOrReturning
             , ambitions = profile.ambitions

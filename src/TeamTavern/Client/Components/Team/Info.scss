@@ -1,14 +1,17 @@
-.organization-info-container {
+.info-container {
     align-self: center;
 
     @media screen and (min-width: 640px) {
         position: relative;
+        > .info {
+            max-width: 400px;
+        }
     }
 }
 
-.organization-info-icon {
+.info-icon {
     font-size: 20px;
-    color:#888;
+    color: #888;
     cursor: pointer;
 
     &:hover {
@@ -16,24 +19,24 @@
     }
 }
 
-.organization-info {
+.info {
     @extend .popover, .popover-centered;
     padding: 14px;
 
-    > .organization-info-list:not(:last-child) {
+    > .info-list:not(:last-child) {
         margin-bottom: 14px;
     }
 }
 
-.organization-info-intro {
+.info-text {
     color: #888;
     font-size: 12px;
     font-weight: 400;
     line-height: 1.5;
 }
 
-.organization-info-list {
-    @extend .organization-info-intro;
+.info-list {
+    @extend .info-text;
     list-style: disc;
     padding-left: 16px;
     > *:not(:last-child) {

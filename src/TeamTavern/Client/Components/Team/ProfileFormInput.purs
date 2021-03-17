@@ -20,6 +20,8 @@ import TeamTavern.Client.Components.Input (inputErrorSublabel, inputGroup, input
 import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.Team.ProfileInputGroup (Field, Option, ambitionsInputGroup, fieldInputGroup, newOrReturningInputGroup)
 import TeamTavern.Client.Components.Team.ProfileInputGroup as Input
+import TeamTavern.Client.Components.Team.SizeInfo (sizeInfo)
+import TeamTavern.Client.Components.Team.SizeInfo as SizeInfo
 import TeamTavern.Client.Pages.Profiles.TeamBadge (teamSizeRadios)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
@@ -72,7 +74,10 @@ data Action
 
 type Slot = H.Slot (Const Void) Output Unit
 
-type ChildSlots = ("multiSelectField" :: MultiSelect.Slot Option String)
+type ChildSlots =
+    ( "multiSelectField" :: MultiSelect.Slot Option String
+    , "sizeInfo" :: SizeInfo.Slot
+    )
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render state =
@@ -80,7 +85,7 @@ render state =
     [ HH.h2 [ HS.class_ "platform-id-heading" ]
         [ HH.text "Size"
         , teamSizeRadios state.size UpdateSize
-        , inputSublabel "You want to recruit a smaller number of players to fill out a party, roster or group." -- TODO: Add explanation popup or something.
+        , sizeInfo
         ]
     ]
     <> guard (not $ Array.null state.allPlatforms.tail)
