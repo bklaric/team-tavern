@@ -13,6 +13,7 @@ import Data.Const (Const)
 import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..), isNothing, maybe)
+import Data.Monoid (guard)
 import Data.Options ((:=))
 import Data.Symbol (SProxy(..))
 import Data.Variant (match)
@@ -51,6 +52,8 @@ data Step
     | Game
     | PlayerProfile
     | TeamProfile
+
+derive instance eqStep :: Eq Step
 
 instance writeForeginStep :: WriteForeign Step where
     writeImpl Greeting = unsafeToForeign "Greeting"
@@ -389,12 +392,13 @@ handleAction Initialize = do
         Nothing -> navigate_ "/"
     setMeta "Onboarding | TeamTavern" "TeamTavern onboarding."
 handleAction (Receive input) = do
+    state <- H.get
     H.put
         ( input
         # Record.insert (SProxy :: SProxy "confirmSkip") false
         # Record.insert (SProxy :: SProxy "submitting") false
         )
-    setMeta "Onboarding | TeamTavern" "TeamTavern onboarding."
+    guard (input.step /= state.step) $ setMeta "Onboarding | TeamTavern" "TeamTavern onboarding."
 handleAction Skip =
     H.modify_ _ { confirmSkip = true }
 handleAction ConfirmSkip =
