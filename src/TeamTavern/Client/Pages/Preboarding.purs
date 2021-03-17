@@ -14,6 +14,7 @@ import Data.Const (Const)
 import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..), isNothing, maybe)
+import Data.Monoid (guard)
 import Data.Options ((:=))
 import Data.Symbol (SProxy(..))
 import Data.Variant (match)
@@ -442,8 +443,9 @@ handleAction :: forall action output slots left.
 handleAction Initialize =
     setMeta "Preboarding | TeamTavern" "TeamTavern preboarding."
 handleAction (Receive input) = do
+    state <- H.get
     H.put (input # Record.insert (SProxy :: SProxy "submitting") false)
-    setMeta "Preboarding | TeamTavern" "TeamTavern preboarding."
+    guard (input.step /= state.step) $ setMeta "Preboarding | TeamTavern" "TeamTavern preboarding."
 handleAction Exit = do
     { game } <- H.get
     navigate_
