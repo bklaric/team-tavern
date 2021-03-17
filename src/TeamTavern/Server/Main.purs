@@ -52,7 +52,6 @@ import TeamTavern.Server.Session.Start (start) as Session
 import TeamTavern.Server.Team.Create (create) as Team
 import TeamTavern.Server.Team.Update (update) as Team
 import TeamTavern.Server.Team.View (view) as Team
-import TeamTavern.Server.Team.ViewByOwner (viewByOwner) as Team
 
 listenOptions :: ListenOptions
 listenOptions = TcpListenOptions
@@ -146,8 +145,6 @@ handleRequest deployment pool method url cookies body =
             Player.view pool cookies
         , updatePlayer: \{ nickname } ->
             Player.updatePlayer pool nickname cookies body
-        , viewTeamsByOwner:
-            Team.viewByOwner pool
         , viewTeam:
             Team.view pool
         , createTeam: const $
