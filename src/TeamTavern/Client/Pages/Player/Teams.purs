@@ -51,8 +51,8 @@ teams player status showCreateTeamModal =
                 [ profileHeading (SProxy :: SProxy "team") team.handle
                     ("/teams/" <> team.handle) (nameOrHandleN team.handle team.organization)
                 , case team.organization of
-                    Informal' -> informalBadge
-                    Organized' _ -> organizedBadge
+                    InformalN -> informalBadge
+                    OrganizedN _ -> organizedBadge
                 , profileSubheading $ "Updated " <> lastUpdated team.updatedSeconds
                 ]
             ]

@@ -108,8 +108,8 @@ render state =
     ]
     <>
     ( case state.organization of
-        Informal'' -> []
-        Organized'' { name, website } -> Array.singleton $
+        InformalNW -> []
+        OrganizedNW { name, website } -> Array.singleton $
             responsiveInputGroups
             [ nameInputGroup name UpdateName state.nameError
             , websiteInputGroup website UpdateWebsite state.websiteError
@@ -165,16 +165,16 @@ handleAction (UpdateOrganization organization) = do
 handleAction (UpdateName name) = do
     state <- H.modify
         case _ of
-        state @ { organization: Informal'' } -> state
-        state @ { organization: Organized'' state' } ->
-            state { organization = Organized'' state' { name = name } }
+        state @ { organization: InformalNW } -> state
+        state @ { organization: OrganizedNW state' } ->
+            state { organization = OrganizedNW state' { name = name } }
     raiseOutput state
 handleAction (UpdateWebsite website) = do
     state <- H.modify
         case _ of
-        state @ { organization: Informal'' } -> state
-        state @ { organization: Organized'' state' } ->
-            state { organization = Organized'' state' { website = website } }
+        state @ { organization: InformalNW } -> state
+        state @ { organization: OrganizedNW state' } ->
+            state { organization = OrganizedNW state' { website = website } }
     raiseOutput state
 handleAction (UpdateDiscordTag discordTag) = do
     state <- H.modify _ { discordTag = discordTag }
@@ -229,7 +229,7 @@ component = H.mkComponent
 
 emptyInput :: Input
 emptyInput =
-    { organization: Informal''
+    { organization: InformalNW
     , discordTag: Nothing
     , discordServer: Nothing
     , ageFrom: Nothing

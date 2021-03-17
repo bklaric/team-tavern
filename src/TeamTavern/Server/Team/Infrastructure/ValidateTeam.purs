@@ -65,8 +65,8 @@ validateOrganization
     :: forall errors
     .  OrganizationNW
     -> VariantValidated (name :: Array String, website :: Array String | errors) Organization
-validateOrganization Informal'' = pure Informal
-validateOrganization (Organized'' { name, website }) =
+validateOrganization InformalNW = pure Informal
+validateOrganization (OrganizedNW { name, website }) =
     Organized <$> ({ name: _, website: _ } <$> validateName name <*> validateWebsite website)
 
 type Team =

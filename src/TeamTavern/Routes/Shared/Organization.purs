@@ -20,12 +20,12 @@ import Type.Data.RowList (RLProxy(..))
 data Organization = Informal | Organized
 
 toOrganizationN :: Organization -> OrganizationN
-toOrganizationN Informal = Informal'
-toOrganizationN Organized = Organized' { name: "" }
+toOrganizationN Informal = InformalN
+toOrganizationN Organized = OrganizedN { name: "" }
 
 toOrganizationNW :: Organization -> OrganizationNW
-toOrganizationNW Informal = Informal''
-toOrganizationNW Organized = Organized'' { name: "", website: Nothing }
+toOrganizationNW Informal = InformalNW
+toOrganizationNW Organized = OrganizedNW { name: "", website: Nothing }
 
 derive instance eqOrganization :: Eq Organization
 
@@ -54,35 +54,33 @@ instance fromComponentOrganization :: FromComponent Organization where
 
 -- Organization with name.
 
--- TODO: Rename Informal' to InformalN and Informal'' to InformalNW
-
-data OrganizationN = Informal' | Organized' { name :: String }
+data OrganizationN = InformalN | OrganizedN { name :: String }
 
 fromOrganizationN :: OrganizationN -> Organization
-fromOrganizationN Informal' = Informal
-fromOrganizationN (Organized' _) = Organized
+fromOrganizationN InformalN = Informal
+fromOrganizationN (OrganizedN _) = Organized
 
 nameOrHandleN :: String -> OrganizationN -> String
-nameOrHandleN handle Informal' = handle
-nameOrHandleN _ (Organized' { name }) = name
+nameOrHandleN handle InformalN = handle
+nameOrHandleN _ (OrganizedN { name }) = name
 
-type OrganizationRow' = (informal :: {}, organized :: { name :: String })
+type OrganizationRowN = (informal :: {}, organized :: { name :: String })
 
-fromVariantN :: Variant OrganizationRow' -> Maybe OrganizationN
+fromVariantN :: Variant OrganizationRowN -> Maybe OrganizationN
 fromVariantN variant =
-    (Informal' <$ prj (SProxy :: _ "informal") variant)
-    <|> (Organized' <$> prj (SProxy :: _ "organized") variant)
+    (InformalN <$ prj (SProxy :: _ "informal") variant)
+    <|> (OrganizedN <$> prj (SProxy :: _ "organized") variant)
 
-fromVariantN' :: Variant OrganizationRow' -> Either String OrganizationN
+fromVariantN' :: Variant OrganizationRowN -> Either String OrganizationN
 fromVariantN' organization = fromVariantN organization # note ("Unknown organization: " <> show organization)
 
-toVariantN :: OrganizationN -> Variant OrganizationRow'
-toVariantN Informal' = inj (SProxy :: _ "informal") {}
-toVariantN (Organized' stuff) = inj (SProxy :: _ "organized") stuff
+toVariantN :: OrganizationN -> Variant OrganizationRowN
+toVariantN InformalN = inj (SProxy :: _ "informal") {}
+toVariantN (OrganizedN stuff) = inj (SProxy :: _ "organized") stuff
 
 instance readForeignOrganizationN ::
-    ( RowToList OrganizationRow' rowList
-    , ReadForeignVariant rowList OrganizationRow'
+    ( RowToList OrganizationRowN rowList
+    , ReadForeignVariant rowList OrganizationRowN
     ) => ReadForeign OrganizationN where
     readImpl organization' =
         readVariantImpl (RLProxy :: _ rowList) organization'
@@ -93,37 +91,37 @@ instance writeForeignOrganizationN :: WriteForeign OrganizationN where
 
 -- Organization with name and website.
 
-data OrganizationNW = Informal'' | Organized'' { name :: String, website :: Maybe String }
+data OrganizationNW = InformalNW | OrganizedNW { name :: String, website :: Maybe String }
 
 fromOrganizationNW :: OrganizationNW -> Organization
-fromOrganizationNW Informal'' = Informal
-fromOrganizationNW (Organized'' _) = Organized
+fromOrganizationNW InformalNW = Informal
+fromOrganizationNW (OrganizedNW _) = Organized
 
 nameOrHandleNW :: String -> OrganizationNW -> String
-nameOrHandleNW handle Informal'' = handle
-nameOrHandleNW _ (Organized'' { name }) = name
+nameOrHandleNW handle InformalNW = handle
+nameOrHandleNW _ (OrganizedNW { name }) = name
 
 websiteNW :: OrganizationNW -> Maybe String
-websiteNW Informal'' = Nothing
-websiteNW (Organized'' { website }) = website
+websiteNW InformalNW = Nothing
+websiteNW (OrganizedNW { website }) = website
 
-type OrganizationRow'' = (informal :: {}, organized :: { name :: String, website :: Maybe String })
+type OrganizationRowNW = (informal :: {}, organized :: { name :: String, website :: Maybe String })
 
-fromVariantNW :: Variant OrganizationRow'' -> Maybe OrganizationNW
+fromVariantNW :: Variant OrganizationRowNW -> Maybe OrganizationNW
 fromVariantNW variant =
-    (Informal'' <$ prj (SProxy :: _ "informal") variant)
-    <|> (Organized'' <$> prj (SProxy :: _ "organized") variant)
+    (InformalNW <$ prj (SProxy :: _ "informal") variant)
+    <|> (OrganizedNW <$> prj (SProxy :: _ "organized") variant)
 
-fromVariantNW' :: Variant OrganizationRow'' -> Either String OrganizationNW
+fromVariantNW' :: Variant OrganizationRowNW -> Either String OrganizationNW
 fromVariantNW' organization = fromVariantNW organization # note ("Unknown organization: " <> show organization)
 
-toVariantNW :: OrganizationNW -> Variant OrganizationRow''
-toVariantNW Informal'' = inj (SProxy :: _ "informal") {}
-toVariantNW (Organized'' stuff) = inj (SProxy :: _ "organized") stuff
+toVariantNW :: OrganizationNW -> Variant OrganizationRowNW
+toVariantNW InformalNW = inj (SProxy :: _ "informal") {}
+toVariantNW (OrganizedNW stuff) = inj (SProxy :: _ "organized") stuff
 
 instance readForeignOrganizationNW ::
-    ( RowToList OrganizationRow'' rowList
-    , ReadForeignVariant rowList OrganizationRow''
+    ( RowToList OrganizationRowNW rowList
+    , ReadForeignVariant rowList OrganizationRowNW
     ) => ReadForeign OrganizationNW where
     readImpl organization' =
         readVariantImpl (RLProxy :: _ rowList) organization'

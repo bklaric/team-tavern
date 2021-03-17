@@ -110,8 +110,8 @@ profileSection profile = let
             [ profileHeading (SProxy :: SProxy "teams") profile.handle
                 ("/teams/" <> profile.handle) (nameOrHandleNW profile.handle profile.organization)
             , case profile.organization of
-                Informal'' -> informalBadge
-                Organized'' _ -> organizedBadge
+                InformalNW -> informalBadge
+                OrganizedNW _ -> organizedBadge
             , case profile.size of
                 Party -> partyBadge
                 Community -> communityBadge

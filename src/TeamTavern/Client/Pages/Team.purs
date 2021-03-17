@@ -69,8 +69,8 @@ render (Loaded { team: team', status, showEditTeamModal, showEditProfileModal } 
         [ HH.div_
             [ contentHeading $ nameOrHandleNW team'.handle team'.organization
             , case team'.organization of
-                Informal'' -> informalBadge
-                Organized'' _ -> organizedBadge
+                InformalNW -> informalBadge
+                OrganizedNW _ -> organizedBadge
             ]
         ]
     , contentDescription
