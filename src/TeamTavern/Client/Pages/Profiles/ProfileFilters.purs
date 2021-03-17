@@ -46,7 +46,8 @@ type Field =
     }
 
 type Filters =
-    { ageFrom :: Maybe Int
+    { organizations :: Array Organization
+    , ageFrom :: Maybe Int
     , ageTo :: Maybe Int
     , locations :: Array String
     , languages :: Array String
@@ -55,6 +56,7 @@ type Filters =
     , weekdayTo :: Maybe String
     , weekendFrom :: Maybe String
     , weekendTo :: Maybe String
+    , sizes :: Array Size
     , platforms :: Array Platform
     , fieldValues :: FieldValues
     , newOrReturning :: Boolean
@@ -68,8 +70,7 @@ type Input =
     }
 
 type State =
-    { teamOrganizations :: Array Organization
-    , teamSizes :: Array Size
+    { organizations :: Array Organization
     , ageFrom :: Maybe Int
     , ageTo :: Maybe Int
     , locations :: Array String
@@ -79,6 +80,7 @@ type State =
     , weekdayTo :: Maybe String
     , weekendFrom :: Maybe String
     , weekendTo :: Maybe String
+    , sizes :: Array Size
     , allPlatforms :: Platforms
     , selectedPlatforms :: Array Platform
     , fields :: Array Field
@@ -164,7 +166,7 @@ render state =
                         inputGroup
                         [ inputLabel "fas fa-users" "Organization"
                         , HH.div [ HC.style $ Css.height $ Css.px 7.0 ] [] -- filler
-                        , teamOrganizationCheckboxes state.teamOrganizations UpdateOrganization
+                        , teamOrganizationCheckboxes state.organizations UpdateOrganization
                         ]
                 )
                 <>
@@ -199,7 +201,7 @@ render state =
                         inputGroup
                         [ inputLabel "fas fa-users" "Size"
                         , HH.div [ HC.style $ Css.height $ Css.px 7.0 ] [] -- filler
-                        , teamSizeCheckboxes state.teamSizes UpdateSize
+                        , teamSizeCheckboxes state.sizes UpdateSize
                         ]
                 )
                 <> guard (not $ Array.null state.allPlatforms.tail)
@@ -246,7 +248,8 @@ handleAction Initialize = do
         }
 handleAction (Receive { platforms, fields, filters, tab }) = do
     H.modify_ _
-        { ageFrom = filters.ageFrom
+        { organizations = filters.organizations
+        , ageFrom = filters.ageFrom
         , ageTo = filters.ageTo
         , locations = filters.locations
         , languages = filters.languages
@@ -255,6 +258,7 @@ handleAction (Receive { platforms, fields, filters, tab }) = do
         , weekdayTo = filters.weekdayTo
         , weekendFrom = filters.weekendFrom
         , weekendTo = filters.weekendTo
+        , sizes = filters.sizes
         , allPlatforms = platforms
         , selectedPlatforms = filters.platforms
         , fields = fields
@@ -265,7 +269,8 @@ handleAction (Receive { platforms, fields, filters, tab }) = do
 handleAction ApplyFilters = do
     state <- H.get
     H.raise $ Apply
-        { ageFrom: state.ageFrom
+        { organizations: state.organizations
+        , ageFrom: state.ageFrom
         , ageTo: state.ageTo
         , languages: state.languages
         , locations: state.locations
@@ -274,13 +279,15 @@ handleAction ApplyFilters = do
         , weekdayTo: state.weekdayTo
         , weekendFrom: state.weekendFrom
         , weekendTo: state.weekendTo
+        , sizes: state.sizes
         , platforms: state.selectedPlatforms
         , fieldValues: state.fieldValues
         , newOrReturning: state.newOrReturning
         }
 handleAction ClearFilters = do
     H.modify_ \state -> state
-        { ageFrom = Nothing
+        { organizations = []
+        , ageFrom = Nothing
         , ageTo = Nothing
         , locations = []
         , languages = []
@@ -289,16 +296,17 @@ handleAction ClearFilters = do
         , weekdayTo = Nothing
         , weekendFrom = Nothing
         , weekendTo = Nothing
+        , sizes = []
         , selectedPlatforms = []
         , fieldValues = (MultiMap.empty :: MultiMap String String)
         , newOrReturning = false
         }
 handleAction (UpdateOrganization teamOrganization) =
     H.modify_ \state -> state
-        { teamOrganizations =
-            if Array.elem teamOrganization state.teamOrganizations
-            then Array.delete teamOrganization state.teamOrganizations
-            else Array.cons teamOrganization state.teamOrganizations
+        { organizations =
+            if Array.elem teamOrganization state.organizations
+            then Array.delete teamOrganization state.organizations
+            else Array.cons teamOrganization state.organizations
         }
 handleAction (UpdateAgeFrom ageFrom) =
     H.modify_ (_ { ageFrom = ageFrom })
@@ -320,10 +328,10 @@ handleAction (UpdateWeekendTo time) =
     H.modify_ (_ { weekendTo = time })
 handleAction (UpdateSize teamSize) =
     H.modify_ \state -> state
-        { teamSizes =
-            if Array.elem teamSize state.teamSizes
-            then Array.delete teamSize state.teamSizes
-            else Array.cons teamSize state.teamSizes
+        { sizes =
+            if Array.elem teamSize state.sizes
+            then Array.delete teamSize state.sizes
+            else Array.cons teamSize state.sizes
         }
 handleAction (UpdatePlatform platform) =
     H.modify_ \state -> state
@@ -350,8 +358,7 @@ handleAction ToggleProfileFiltersVisibility =
 
 initialState :: Input -> State
 initialState { platforms, fields, filters, tab } =
-    { teamOrganizations: []
-    , teamSizes: []
+    { organizations: filters.organizations
     , ageFrom: filters.ageFrom
     , ageTo: filters.ageTo
     , locations: filters.locations
@@ -361,6 +368,7 @@ initialState { platforms, fields, filters, tab } =
     , weekdayTo: filters.weekdayTo
     , weekendFrom: filters.weekendFrom
     , weekendTo: filters.weekendTo
+    , sizes: filters.sizes
     , allPlatforms: platforms
     , selectedPlatforms: filters.platforms
     , fields

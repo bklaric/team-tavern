@@ -21,10 +21,12 @@ import Postgres.Error (Error)
 import Postgres.Query (Query(..))
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
-import TeamTavern.Routes.Shared.Organization (OrganizationNW)
+import TeamTavern.Routes.Shared.Organization (Organization, OrganizationNW)
+import TeamTavern.Routes.Shared.Organization as Organization
 import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
 import TeamTavern.Routes.Shared.Platform as Platform
 import TeamTavern.Routes.Shared.Size (Size)
+import TeamTavern.Routes.Shared.Size as Size
 import TeamTavern.Server.Infrastructure.Postgres (prepareJsonString, prepareString, teamAdjustedWeekdayFrom, teamAdjustedWeekdayTo, teamAdjustedWeekendFrom, teamAdjustedWeekendTo)
 import TeamTavern.Server.Profile.Routes (Age, Location, Filters, Handle, HasMicrophone, Language, ProfilePage, Time, Timezone, NewOrReturning)
 import URI.Extra.QueryPairs (Key, QueryPairs(..), Value)
@@ -82,6 +84,10 @@ type LoadProfilesError errors = Variant
         , errors :: MultipleErrors
         }
     | errors )
+
+createOrganizationsFilter :: Array Organization -> String
+createOrganizationsFilter [] = ""
+createOrganizationsFilter organizations = " and team.organization = any (array[" <> (organizations <#> Organization.toString <#> prepareString # intercalate ", ") <> "])"
 
 createAgeFilter :: Maybe Age -> Maybe Age -> String
 createAgeFilter Nothing Nothing = ""
@@ -191,6 +197,10 @@ createMicrophoneFilter :: HasMicrophone -> String
 createMicrophoneFilter false = ""
 createMicrophoneFilter true = " and team.microphone"
 
+createSizesFilter :: Array Size -> String
+createSizesFilter [] = ""
+createSizesFilter sizes = " and profile.size = any (array[" <> (sizes <#> Size.toString <#> prepareString # intercalate ", ") <> "])"
+
 createPlatformsFilter :: Array Platform -> String
 createPlatformsFilter [] = ""
 createPlatformsFilter platforms = " and profile.platforms && (array[" <> (platforms <#> Platform.toString <#> prepareString # intercalate ", ") <> "])"
@@ -201,7 +211,8 @@ createNewOrReturningFilter true = " and profile.new_or_returning"
 
 createTeamFilterString :: Timezone -> Filters -> String
 createTeamFilterString timezone filters =
-    createAgeFilter filters.age.from filters.age.to
+    createOrganizationsFilter filters.organizations
+    <> createAgeFilter filters.age.from filters.age.to
     <> createLanguagesFilter filters.languages
     <> createCountriesFilter filters.locations
     <> createWeekdayOnlineFilter
@@ -209,6 +220,7 @@ createTeamFilterString timezone filters =
     <> createWeekendOnlineFilter
         timezone filters.weekendOnline.from filters.weekendOnline.to
     <> createMicrophoneFilter filters.microphone
+    <> createSizesFilter filters.sizes
     <> createPlatformsFilter filters.platforms
     <> createNewOrReturningFilter filters.newOrReturning
 

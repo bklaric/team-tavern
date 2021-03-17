@@ -31,6 +31,8 @@ import Postgres.Pool (Pool)
 import Postgres.Pool as Pool
 import TeamTavern.Server.Architecture.Deployment (Deployment)
 import TeamTavern.Server.Architecture.Deployment as Deployment
+import TeamTavern.Server.Boarding.Onboard as Onboard
+import TeamTavern.Server.Boarding.Preboard as Preboard
 import TeamTavern.Server.Game.View (view) as Game
 import TeamTavern.Server.Game.ViewAll (viewAll) as Game
 import TeamTavern.Server.Infrastructure.Log (logStamped, logt)
@@ -39,7 +41,7 @@ import TeamTavern.Server.Player.UpdatePlayer (updatePlayer) as Player
 import TeamTavern.Server.Player.View (view) as Player
 import TeamTavern.Server.Profile.AddPlayerProfile (addPlayerProfile) as Profile
 import TeamTavern.Server.Profile.AddTeamProfile (addTeamProfile) as Profile
-import TeamTavern.Server.Profile.Routes (bundleFilters)
+import TeamTavern.Server.Profile.Routes (bundlePlayerFilters, bundleTeamFilters)
 import TeamTavern.Server.Profile.UpdatePlayerProfile (updatePlayerProfile) as Profile
 import TeamTavern.Server.Profile.UpdateTeamProfile (updateTeamProfile) as Profile
 import TeamTavern.Server.Profile.ViewPlayerProfilesByGame (viewPlayerProfilesByGame) as Profile
@@ -51,8 +53,6 @@ import TeamTavern.Server.Team.Create (create) as Team
 import TeamTavern.Server.Team.Update (update) as Team
 import TeamTavern.Server.Team.View (view) as Team
 import TeamTavern.Server.Team.ViewByOwner (viewByOwner) as Team
-import TeamTavern.Server.Boarding.Onboard as Onboard
-import TeamTavern.Server.Boarding.Preboard as Preboard
 
 listenOptions :: ListenOptions
 listenOptions = TcpListenOptions
@@ -171,9 +171,9 @@ handleRequest deployment pool method url cookies body =
         , updateTeamProfile:
             Profile.updateTeamProfile pool cookies body
         , viewPlayerProfilesByGame: \filters @ { handle, page, timezone } ->
-            Profile.viewPlayerProfilesByGame pool handle page timezone $ bundleFilters filters
+            Profile.viewPlayerProfilesByGame pool handle page timezone $ bundlePlayerFilters filters
         , viewTeamProfilesByGame: \filters @ { handle, page, timezone } ->
-            Profile.viewTeamProfilesByGame pool handle page timezone $ bundleFilters filters
+            Profile.viewTeamProfilesByGame pool handle page timezone $ bundleTeamFilters filters
         , onboard: const $
             Onboard.onboard pool cookies body
         , preboard: const $
