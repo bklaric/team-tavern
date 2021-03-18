@@ -31,7 +31,7 @@ component = Hooks.component $ \_ _ -> Hooks.do
                 , "Don't have strict membership rules that need to be followed."
                 , "Don't have a defined governance structure."
                 ]
-            , infoText "Informal team exaples:"
+            , infoText "Informal team examples:"
             , infoList
                 [ "Parties for climbing ranked ladders in games."
                 , "Unmoderated or lightly moderated game servers."
@@ -42,7 +42,7 @@ component = Hooks.component $ \_ _ -> Hooks.do
                 , "Have membership rules, such as minimum active in-game time, gaming nights, training schedule etc."
                 , "Have some form of governance structure, such as administrators, moderators, roles etc."
                 ]
-            , infoText "Organized team exaples:"
+            , infoText "Organized team examples:"
             , infoList
                 [ "Amateur or professional teams competing in leagues and tournaments."
                 , "Guilds, clans and other moderated gaming communities."
