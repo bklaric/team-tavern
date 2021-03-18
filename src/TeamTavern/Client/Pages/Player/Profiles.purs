@@ -4,6 +4,8 @@ import Prelude
 
 import Async (Async)
 import Data.Array as Array
+import Data.Array.Extra (full)
+import Data.Monoid (guard)
 import Data.Symbol (SProxy(..))
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Button (regularButton)
@@ -70,17 +72,11 @@ profiles { nickname, profiles: profiles' } status showEditProfileModal =
             _ -> []
         ]
         <>
-        if Array.null profileDetails' && Array.null ambitions
-        then []
-        else Array.singleton $ detailColumns $
-            ( if Array.null profileDetails'
-                then []
-                else Array.singleton $ detailColumn $
-                    [ detailColumnHeading4 "Details" ] <> profileDetails'
-            )
+        guard (full profileDetails' || full ambitions)
+        [ detailColumns $
+            guard (full profileDetails')
+            [ detailColumn $ [ detailColumnHeading4 "Details" ] <> profileDetails' ]
             <>
-            ( if Array.null ambitions
-                then []
-                else Array.singleton $ detailColumn $
-                    [ detailColumnHeading4 "Ambitions" ] <> ambitions
-            )
+            guard (full ambitions)
+            [ detailColumn $ [ detailColumnHeading4 "Ambitions" ] <> ambitions ]
+        ]

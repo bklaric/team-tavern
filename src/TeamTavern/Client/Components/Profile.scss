@@ -8,9 +8,13 @@
 
 .team-profile-heading-container {
     display: flex;
-    align-items: baseline;
+    align-items: stretch;
     gap: 6px 12px;
     flex-wrap: wrap;
+
+    > .profile-subheading {
+        align-self: center;
+    }
 }
 
 .profile-heading {

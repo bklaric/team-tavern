@@ -5,8 +5,10 @@ import Prelude
 import Async (Async)
 import Client.Components.Copyable as Copyable
 import Data.Array as Array
+import Data.Array.Extra (full)
 import Data.Const (Const)
 import Data.Maybe (Maybe(..), isNothing)
+import Data.Monoid (guard)
 import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
@@ -21,7 +23,7 @@ import TeamTavern.Client.Components.Pagination (pagination)
 import TeamTavern.Client.Components.Profile (profileHeader, profileHeading, profileSubheading)
 import TeamTavern.Client.Components.Team.ProfileDetails (profileDetails')
 import TeamTavern.Client.Components.Team.TeamDetails (teamDetails)
-import TeamTavern.Client.Pages.Profiles.TeamBadge (communityBadge, informalBadge, organizedBadge, partyBadge)
+import TeamTavern.Client.Pages.Profiles.TeamBadge (communityBadge, informalBadge, organizedBadge, partyBadge, platformBadge)
 import TeamTavern.Client.Script.Cookie (PlayerInfo)
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
 import TeamTavern.Client.Snippets.Class as HS
@@ -106,7 +108,7 @@ profileSection profile = let
     in
     cardSection $
     [ profileHeader
-        [ HH.div [ HS.class_ "team-profile-heading-container" ]
+        [ HH.div [ HS.class_ "team-profile-heading-container" ] $
             [ profileHeading (SProxy :: SProxy "teams") profile.handle
                 ("/teams/" <> profile.handle) (nameOrHandleNW profile.handle profile.organization)
             , case profile.organization of
@@ -115,48 +117,32 @@ profileSection profile = let
             , case profile.size of
                 Party -> partyBadge
                 Community -> communityBadge
-            , profileSubheading $ "Updated " <> lastUpdated profile.updatedSeconds
             ]
+            <> guard (full profile.allPlatforms.tail) (profile.selectedPlatforms <#> platformBadge)
+            <> [ profileSubheading $ "Updated " <> lastUpdated profile.updatedSeconds ]
         ]
     ]
     <>
-    if (not $ Array.null teamDetails') || (not $ Array.null profileDetails'')
-        || (not $ Array.null about) || (not $ Array.null ambitions)
-    then
-        [ detailColumns $
-            ( if (not $ Array.null teamDetails') || (not $ Array.null profileDetails'')
-                then
-                    [ detailColumn $
-                        ( if not $ Array.null teamDetails'
-                            then [ detailColumnHeading4 "Team details" ] <> teamDetails'
-                            else []
-                        )
-                        <>
-                        ( if not $ Array.null profileDetails''
-                            then [ detailColumnHeading4 "Profile details" ] <> profileDetails''
-                            else []
-                        )
-                    ]
-                else []
-            )
+    guard (full teamDetails' || full profileDetails'' || full about || full ambitions)
+    [ detailColumns $
+        guard (full teamDetails' || full profileDetails'')
+        [ detailColumn $
+            guard (full teamDetails')
+            [ detailColumnHeading4 "Team details" ] <> teamDetails'
             <>
-            ( if (not $ Array.null about) || (not $ Array.null ambitions)
-                then
-                    [ detailColumn $
-                        ( if not $ Array.null about
-                            then [ detailColumnHeading4 "About" ] <> about
-                            else []
-                        )
-                        <>
-                        ( if not $ Array.null ambitions
-                            then [ detailColumnHeading4 "Ambitions" ] <> ambitions
-                            else []
-                        )
-                    ]
-                else []
-            )
+            guard (full profileDetails'')
+            [ detailColumnHeading4 "Profile details" ] <> profileDetails''
         ]
-    else []
+        <>
+        guard (full about || full ambitions)
+        [ detailColumn $
+            guard (full about)
+            [ detailColumnHeading4 "About" ] <> about
+            <>
+            guard (full ambitions)
+            [ detailColumnHeading4 "Ambitions" ] <> ambitions
+        ]
+    ]
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { profiles, profileCount, playerInfo, page } =

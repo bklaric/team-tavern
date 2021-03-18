@@ -42,6 +42,14 @@ toString PlayStation = "playstation"
 toString Xbox = "xbox"
 toString Switch = "switch"
 
+toLabel :: Platform -> String
+toLabel Steam = "Steam"
+toLabel Riot = "Riot"
+toLabel BattleNet = "Battle.net"
+toLabel PlayStation = "PlayStation"
+toLabel Xbox = "Xbox"
+toLabel Switch = "Switch"
+
 instance readForeignPlatform :: ReadForeign Platform where
     readImpl platform' =
         readString platform'

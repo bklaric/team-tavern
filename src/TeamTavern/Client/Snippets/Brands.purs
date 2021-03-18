@@ -4,6 +4,15 @@ import Halogen (AttrName(..))
 import Halogen.HTML (HTML)
 import Halogen.Svg.Attributes (attr, class_, viewBox)
 import Halogen.Svg.Elements (path, svg)
+import TeamTavern.Routes.Shared.Platform (Platform(..))
+
+platformSvg :: forall slots action. String -> Platform -> HTML slots action
+platformSvg class' Steam = steamSvg class'
+platformSvg class' Riot = riotSvg class'
+platformSvg class' BattleNet = battleNetSvg class'
+platformSvg class' PlayStation = playStationSvg class'
+platformSvg class' Xbox = xboxSvg class'
+platformSvg class' Switch = switchSvg class'
 
 -- Steam
 
@@ -19,7 +28,6 @@ inputSteamSvg = steamSvg "input-label-icon"
 detailSteamSvg :: forall slots actions. HTML slots actions
 detailSteamSvg = steamSvg "detail-icon"
 
-
 -- Riot
 
 riotPath :: String
@@ -33,7 +41,6 @@ inputRiotSvg = riotSvg "input-label-icon"
 
 detailRiotSvg :: forall slots actions. HTML slots actions
 detailRiotSvg = riotSvg "detail-icon"
-
 
 -- Battle.net
 
@@ -49,7 +56,6 @@ inputBattleNetSvg = battleNetSvg "input-label-icon"
 detailBattleNetSvg :: forall slots actions. HTML slots actions
 detailBattleNetSvg = battleNetSvg "detail-icon"
 
-
 -- PlayStation
 
 playStationPath :: String
@@ -64,7 +70,6 @@ inputPlayStationSvg = playStationSvg "input-label-icon"
 detailPlayStationSvg :: forall slots actions. HTML slots actions
 detailPlayStationSvg = playStationSvg "detail-icon"
 
-
 -- Xbox
 
 xboxPath :: String
@@ -78,7 +83,6 @@ inputXboxSvg = xboxSvg "input-label-icon"
 
 detailXboxSvg :: forall slots actions. HTML slots actions
 detailXboxSvg = xboxSvg "detail-icon"
-
 
 -- Switch
 

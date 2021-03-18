@@ -4,7 +4,9 @@ import Prelude
 
 import Async (Async)
 import Data.Array as Array
+import Data.Array.Extra (full)
 import Data.Const (Const)
+import Data.Monoid (guard)
 import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
@@ -15,7 +17,7 @@ import TeamTavern.Client.Components.Missing (missing)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
 import TeamTavern.Client.Components.Profile (profileHeader, profileHeading', profileSubheading)
 import TeamTavern.Client.Components.Team.ProfileDetails (profileDetails)
-import TeamTavern.Client.Pages.Profiles.TeamBadge (communityBadge, partyBadge)
+import TeamTavern.Client.Pages.Profiles.TeamBadge (communityBadge, partyBadge, platformBadge)
 import TeamTavern.Client.Pages.Team.CreateProfileButton (createProfileButton)
 import TeamTavern.Client.Pages.Team.Status (Status(..))
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
@@ -65,8 +67,9 @@ profiles teamHandle profiles' status editProfileModalShown =
                 , case profile.size of
                     Party -> partyBadge
                     Community -> communityBadge
-                , profileSubheading $ "Updated " <> lastUpdated profile.updatedSeconds
                 ]
+                <> guard (full profile.allPlatforms.tail) (profile.selectedPlatforms <#> platformBadge)
+                <> [ profileSubheading $ "Updated " <> lastUpdated profile.updatedSeconds ]
             ]
             <>
             case status of
@@ -75,17 +78,11 @@ profiles teamHandle profiles' status editProfileModalShown =
             _ -> []
         ]
         <>
-        if Array.null profileDetails' && Array.null ambitions
-        then []
-        else Array.singleton $ detailColumns $
-            ( if Array.null profileDetails'
-                then []
-                else Array.singleton $ detailColumn $
-                    [ detailColumnHeading4 "Details" ] <> profileDetails'
-            )
+        guard (full profileDetails' || full ambitions)
+        [ detailColumns $
+            guard (full profileDetails')
+            [ detailColumn $ [ detailColumnHeading4 "Details" ] <> profileDetails' ]
             <>
-            ( if Array.null ambitions
-                then []
-                else Array.singleton $ detailColumn $
-                    [ detailColumnHeading4 "Ambitions" ] <> ambitions
-            )
+            guard (full ambitions)
+            [ detailColumn $ [ detailColumnHeading4 "Ambitions" ] <> ambitions ]
+        ]
