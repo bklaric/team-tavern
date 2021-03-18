@@ -18,14 +18,14 @@ import Halogen.HTML.CSS as HC
 import Halogen.HTML.Events as HE
 import TeamTavern.Client.Components.Ads (filtersMpu)
 import TeamTavern.Client.Components.Card (card, cardHeading, cardSection, cardSectionHeading)
-import TeamTavern.Client.Components.Input (platformCheckboxes, inputGroup, inputLabel)
+import TeamTavern.Client.Components.Input (inputGroup, inputLabel)
 import TeamTavern.Client.Components.InputGroup (timeRangeInputGroup)
 import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.Select.MultiTreeSelect as MultiTreeSelect
 import TeamTavern.Client.Components.Team.ProfileInputGroup (FieldValues, fieldInputGroup, newOrReturningInputGroup)
 import TeamTavern.Client.Components.Team.TeamInputGroup (ageInputGroup, languagesInputGroup, locationInputGroup, microphoneInputGroup)
 import TeamTavern.Client.Pages.Profiles.GameHeader (Tab(..))
-import TeamTavern.Client.Pages.Profiles.TeamBadge (teamOrganizationCheckboxes, teamSizeCheckboxes)
+import TeamTavern.Client.Pages.Profiles.TeamBadge (organizationCheckboxBadges, platformCheckboxBadges, sizeCheckboxBadges)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Shared.Organization (Organization)
 import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
@@ -166,7 +166,7 @@ render state =
                         inputGroup
                         [ inputLabel "fas fa-users" "Organization"
                         , HH.div [ HC.style $ Css.height $ Css.px 7.0 ] [] -- filler
-                        , teamOrganizationCheckboxes state.organizations UpdateOrganization
+                        , organizationCheckboxBadges state.organizations UpdateOrganization
                         ]
                 )
                 <>
@@ -201,14 +201,14 @@ render state =
                         inputGroup
                         [ inputLabel "fas fa-users" "Size"
                         , HH.div [ HC.style $ Css.height $ Css.px 7.0 ] [] -- filler
-                        , teamSizeCheckboxes state.sizes UpdateSize
+                        , sizeCheckboxBadges state.sizes UpdateSize
                         ]
                 )
                 <> guard (not $ Array.null state.allPlatforms.tail)
                 [ inputGroup
                     [ inputLabel "fas fa-laptop" "Platform"
                     , HH.div [ HC.style $ Css.height $ Css.px 7.0 ] [] -- filler
-                    , platformCheckboxes state.allPlatforms state.selectedPlatforms UpdatePlatform
+                    , platformCheckboxBadges state.allPlatforms state.selectedPlatforms UpdatePlatform
                     ]
                 ]
                 <> ( state.fields <#> fieldInputGroup state.fieldValues UpdateFieldValues )

@@ -5,8 +5,7 @@
 @import "Cmp";
 @import "../Pages/Player/Details";
 @import "../Components/Missing";
-@import "../Components/Checkbox";
-@import "../Components/Radio";
+@import "../Components/Checkable";
 @import "../Components/RadioButton";
 @import "../Components/RadioCard";
 @import "../Components/Pagination";
@@ -28,6 +27,7 @@
 @import "../Components/Landing";
 @import "../Components/Ads";
 @import "../Components/Team/Info";
+@import "../Components/Badge";
 @import "../Pages/Home/CallToAction";
 @import "../Pages/Home/Why";
 @import "../Pages/Home/Features";
@@ -35,7 +35,6 @@
 @import "../Pages/About";
 @import "../Pages/Privacy";
 @import "../Pages/Games";
-@import "../Pages/Profiles/TeamBadge";
 @import "../Pages/Profiles/ProfileFilters";
 @import "../Pages/Profiles";
 @import "../Pages/SignIn";

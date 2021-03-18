@@ -16,13 +16,13 @@ import Halogen as H
 import Halogen.HTML as HH
 import Record as Record
 import TeamTavern.Client.Components.Divider (divider)
-import TeamTavern.Client.Components.Input (inputErrorSublabel, inputGroup, inputGroupsHeading, inputGroupsHeading', inputRequiredSublabel, inputSublabel, platformCheckboxes, responsiveInputGroups)
+import TeamTavern.Client.Components.Input (inputErrorSublabel, inputGroup, inputGroupsHeading, inputGroupsHeading', inputRequiredSublabel, inputSublabel, responsiveInputGroups)
 import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.Team.ProfileInputGroup (Field, Option, ambitionsInputGroup, fieldInputGroup, newOrReturningInputGroup)
 import TeamTavern.Client.Components.Team.ProfileInputGroup as Input
 import TeamTavern.Client.Components.Team.SizeInfo (sizeInfo)
 import TeamTavern.Client.Components.Team.SizeInfo as SizeInfo
-import TeamTavern.Client.Pages.Profiles.TeamBadge (teamSizeRadios)
+import TeamTavern.Client.Pages.Profiles.TeamBadge (platformCheckboxBadges, sizeRadioBadges)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
 import TeamTavern.Routes.Shared.Size (Size(..))
@@ -84,7 +84,7 @@ render state =
     HH.div_ $
     [ HH.h2 [ HS.class_ "platform-id-heading" ]
         [ HH.text "Size"
-        , teamSizeRadios state.size UpdateSize
+        , sizeRadioBadges state.size UpdateSize
         , sizeInfo
         ]
     ]
@@ -95,7 +95,7 @@ render state =
         , divider, (if state.platformsError then inputErrorSublabel else inputSublabel)
             "You must select at least one of the available platforms."
         ]
-    , inputGroup [ platformCheckboxes state.allPlatforms state.selectedPlatforms UpdatePlatform ]
+    , inputGroup [ platformCheckboxBadges state.allPlatforms state.selectedPlatforms UpdatePlatform ]
     ]
     <>
     [ inputGroupsHeading "Details"

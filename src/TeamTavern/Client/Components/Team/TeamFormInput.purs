@@ -20,7 +20,7 @@ import TeamTavern.Client.Components.Select.SingleSelect as SingleSelect
 import TeamTavern.Client.Components.Team.OrganizationInfo (organizationInfo)
 import TeamTavern.Client.Components.Team.OrganizationInfo as OrganizationInfo
 import TeamTavern.Client.Components.Team.TeamInputGroup (aboutInputGroup, ageInputGroup, discordServerInputGroup, languagesInputGroup, locationInputGroup, microphoneInputGroup, nameInputGroup, websiteInputGroup)
-import TeamTavern.Client.Pages.Profiles.TeamBadge (teamOrganizationRadios)
+import TeamTavern.Client.Pages.Profiles.TeamBadge (organizationRadioBadges)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Shared.Organization (Organization, OrganizationNW(..), fromOrganizationNW, toOrganizationNW)
@@ -102,7 +102,7 @@ render state =
     HH.div_ $
     [ HH.h2 [ HS.class_ "platform-id-heading" ]
         [ HH.text "General"
-        , teamOrganizationRadios (fromOrganizationNW state.organization) UpdateOrganization
+        , organizationRadioBadges (fromOrganizationNW state.organization) UpdateOrganization
         , organizationInfo
         ]
     ]

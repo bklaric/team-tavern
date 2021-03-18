@@ -8,13 +8,12 @@ import Data.Monoid (guard)
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import TeamTavern.Client.Components.Checkbox (checkboxIconInput)
+import TeamTavern.Client.Components.Checkable (checkbox)
 import TeamTavern.Client.Components.Divider (divider)
-import TeamTavern.Client.Components.Radio (radioIconInput)
+import TeamTavern.Client.Pages.Profiles.TeamBadge (platformRadioBadges)
 import TeamTavern.Client.Script.Request (justIfInt, nothingIfEmpty)
-import TeamTavern.Client.Snippets.Brands (radioBattleNetSvg, radioPlayStationSvg, radioRiotSvg, radioSteamSvg, radioSwitchSvg, radioXboxSvg)
 import TeamTavern.Client.Snippets.Class as HS
-import TeamTavern.Routes.Shared.Platform (Platform(..), Platforms)
+import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
 import Unsafe.Coerce (unsafeCoerce)
 
 inputLabel' :: forall slots action.
@@ -96,38 +95,12 @@ inputGroupsHeading' children = HH.h2 [ HS.class_ "input-groups-heading" ] childr
 inputGroupsHeading :: forall slots action. String -> HH.HTML slots action
 inputGroupsHeading text = inputGroupsHeading' [ HH.text text ]
 
-platformCheckboxes :: forall action slots.
-    Platforms -> Array Platform -> (Platform -> action) -> HH.HTML slots action
-platformCheckboxes allPlatforms selectedPlatforms onValue =
-    HH.div [ HS.class_ "platform-id-checkboxes" ] $
-    Array.cons allPlatforms.head allPlatforms.tail <#>
-    case _ of
-    Steam       -> checkboxIconInput radioSteamSvg       "Steam"       (Array.elem Steam       selectedPlatforms) (onValue Steam)
-    Riot        -> checkboxIconInput radioRiotSvg        "Riot"        (Array.elem Riot        selectedPlatforms) (onValue Riot)
-    BattleNet   -> checkboxIconInput radioBattleNetSvg   "Battle.net"  (Array.elem BattleNet   selectedPlatforms) (onValue BattleNet)
-    PlayStation -> checkboxIconInput radioPlayStationSvg "PlayStation" (Array.elem PlayStation selectedPlatforms) (onValue PlayStation)
-    Xbox        -> checkboxIconInput radioXboxSvg        "Xbox"        (Array.elem Xbox        selectedPlatforms) (onValue Xbox)
-    Switch      -> checkboxIconInput radioSwitchSvg      "Switch"      (Array.elem Switch      selectedPlatforms) (onValue Switch)
-
-platformRadios :: forall action slots.
-    Platforms -> Platform -> (Platform -> action) -> HH.HTML slots action
-platformRadios platforms selectedPlatform onInput =
-    HH.div [ HS.class_ "platform-id-radios" ] $
-    Array.cons platforms.head platforms.tail <#>
-    case _ of
-    Steam       | selected <- selectedPlatform == Steam       -> radioIconInput radioSteamSvg       "Steam"       selected $ onInput Steam
-    Riot        | selected <- selectedPlatform == Riot        -> radioIconInput radioRiotSvg        "Riot"        selected $ onInput Riot
-    BattleNet   | selected <- selectedPlatform == BattleNet   -> radioIconInput radioBattleNetSvg   "Battle.net"  selected $ onInput BattleNet
-    PlayStation | selected <- selectedPlatform == PlayStation -> radioIconInput radioPlayStationSvg "PlayStation" selected $ onInput PlayStation
-    Xbox        | selected <- selectedPlatform == Xbox        -> radioIconInput radioXboxSvg        "Xbox"        selected $ onInput Xbox
-    Switch      | selected <- selectedPlatform == Switch      -> radioIconInput radioSwitchSvg      "Switch"      selected $ onInput Switch
-
 platformIdHeading :: forall action slots.
     Platforms -> Platform -> (Platform -> action) -> HH.HTML slots action
 platformIdHeading platforms selectedPlatform onInput =
     HH.h2 [ HS.class_ "platform-id-heading" ] $
     [ HH.text "Platform ID" ]
-    <> guard (not $ Array.null platforms.tail) [ platformRadios platforms selectedPlatform onInput ]
+    <> guard (not $ Array.null platforms.tail) [ platformRadioBadges platforms selectedPlatform onInput ]
 
 requiredTextLineInput :: forall slots action. String -> (String -> action) -> HH.HTML slots action
 requiredTextLineInput input onInput =
@@ -222,4 +195,18 @@ dateInput min max value onValue =
     , HP.max $ unsafeCoerce max
     , HP.value $ maybe "" identity value
     , HE.onValueInput $ Just <<< onValue <<< nothingIfEmpty
+    ]
+
+checkboxLabel :: forall slots action. String -> HH.HTML slots action
+checkboxLabel label = HH.span [ HS.class_ "checkbox-input-label" ] [ HH.text label ]
+
+checkboxInput :: forall slots action.
+    Boolean -> (Boolean -> action) -> String -> HH.HTML slots action
+checkboxInput checked onChecked label =
+    HH.div
+    [ HS.class_ "checkbox-input"
+    , HE.onClick $ const $ Just $ onChecked $ not checked
+    ]
+    [ checkbox checked
+    , checkboxLabel label
     ]

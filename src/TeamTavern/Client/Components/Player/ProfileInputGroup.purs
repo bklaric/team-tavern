@@ -12,8 +12,7 @@ import Data.Variant (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
-import TeamTavern.Client.Components.Checkbox (checkboxInput)
-import TeamTavern.Client.Components.Input (domainInputLabel, inputError, inputGroup, inputLabel, inputUnderlabel, inputUnderlabel', platformIdLabel, requiredTextLineInput, textInput_, textLineInput)
+import TeamTavern.Client.Components.Input (checkboxInput, domainInputLabel, inputError, inputGroup, inputLabel, inputUnderlabel, inputUnderlabel', platformIdLabel, requiredTextLineInput, textInput_, textLineInput)
 import TeamTavern.Client.Components.Select.MultiSelect (multiSelectIndexed)
 import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.Select.SingleSelect (singleSelectIndexed)

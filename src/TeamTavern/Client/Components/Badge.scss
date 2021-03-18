@@ -2,6 +2,7 @@ $party-color:rgba(40, 167, 69, 29%);
 $community-color: rgba(96, 40, 167, 29%);
 $informal-color: rgba(40, 91, 167, 0.29);
 $organized-color: rgba(165, 167, 40, 0.29);
+$platform-color: #ededed;
 
 %badge {
     display: inline-flex;
@@ -33,4 +34,14 @@ $organized-color: rgba(165, 167, 40, 0.29);
 .organized-badge {
     @extend %badge;
     background: $organized-color;
+}
+
+.platform-badge {
+    @extend %badge;
+    background: $platform-color;
+}
+
+.badge-icon {
+    height: 20px;
+    fill: currentColor;
 }
