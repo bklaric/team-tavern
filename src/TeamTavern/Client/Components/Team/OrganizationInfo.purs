@@ -27,7 +27,7 @@ component = Hooks.component $ \_ _ -> Hooks.do
             info
             [ infoText "You are an informal team if you:"
             , infoList
-                [ "Don't have a name, a logo or a chat server."
+                [ "Don't have a name or a logo."
                 , "Don't have strict membership rules that need to be followed."
                 , "Don't have a defined governance structure."
                 ]
@@ -38,7 +38,7 @@ component = Hooks.component $ \_ _ -> Hooks.do
                 ]
             , infoText "You are an organized team if you:"
             , infoList
-                [ "Have a name, a logo, a chat server, maybe even a website."
+                [ "Have a name, a logo and maybe even a website."
                 , "Have membership rules, such as minimum active in-game time, gaming nights, training schedule etc."
                 , "Have some form of governance structure, such as administrators, moderators, roles etc."
                 ]
