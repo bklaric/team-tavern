@@ -160,8 +160,12 @@ handleAction Initialize = do
 handleAction (Receive input) =
     H.put input
 handleAction (UpdateOrganization organization) = do
-    state <- H.modify _ { organization = toOrganizationNW organization }
-    raiseOutput state
+    state <- H.get
+    if fromOrganizationNW state.organization == organization
+    then pure unit
+    else do
+        state' <- H.modify _ { organization = toOrganizationNW organization }
+        raiseOutput state'
 handleAction (UpdateName name) = do
     state <- H.modify
         case _ of
