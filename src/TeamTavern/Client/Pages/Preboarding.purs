@@ -41,6 +41,7 @@ import TeamTavern.Client.Components.RegistrationInput (registrationInput)
 import TeamTavern.Client.Components.RegistrationInput as RegistrationInput
 import TeamTavern.Client.Components.Team.ProfileFormInput as TeamProfileFormInput
 import TeamTavern.Client.Components.Team.TeamFormInput as TeamFormInput
+import TeamTavern.Client.Script.Analytics (sendEvent)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigate, navigateReplace, navigate_)
 import TeamTavern.Client.Snippets.Class as HS
@@ -592,8 +593,12 @@ handleAction SetUpAccount = do
             }
     response <- H.lift $ sendRequest currentState
     case response of
-        Just (Right { teamHandle: Nothing }) -> navigate_ "/"
-        Just (Right { teamHandle: Just teamHandle }) -> navigate_ $ "/teams/" <> teamHandle
+        Just (Right { teamHandle: Nothing }) -> do
+            H.liftEffect $ maybe (pure unit) (sendEvent "preboard" "player") $ _.handle <$> getGame currentState.game
+            navigate_ "/"
+        Just (Right { teamHandle: Just teamHandle }) -> do
+            H.liftEffect $ maybe (pure unit) (sendEvent "preboard" "team") $ _.handle <$> getGame currentState.game
+            navigate_ $ "/teams/" <> teamHandle
         Just (Left errors) -> H.put $
             foldl
             (\state error ->
