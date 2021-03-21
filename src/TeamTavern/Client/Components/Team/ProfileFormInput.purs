@@ -8,6 +8,7 @@ import Data.Array as Array
 import Data.Const (Const)
 import Data.List.NonEmpty as NonEmptyList
 import Data.Maybe (Maybe(..))
+import Data.Monoid (guard)
 import Data.MultiMap as MultiMap
 import Data.Tuple (Tuple(..))
 import Data.Variant (SProxy(..))
@@ -15,11 +16,16 @@ import Halogen as H
 import Halogen.HTML as HH
 import Record as Record
 import TeamTavern.Client.Components.Divider (divider)
-import TeamTavern.Client.Components.Input (inputErrorSublabel, inputGroup, inputGroupsHeading, inputGroupsHeading', inputRequiredSublabel, inputSublabel, platformCheckboxes, responsiveInputGroups)
+import TeamTavern.Client.Components.Input (inputErrorSublabel, inputGroup, inputGroupsHeading, inputGroupsHeading', inputRequiredSublabel, inputSublabel, responsiveInputGroups)
 import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.Team.ProfileInputGroup (Field, Option, ambitionsInputGroup, fieldInputGroup, newOrReturningInputGroup)
 import TeamTavern.Client.Components.Team.ProfileInputGroup as Input
+import TeamTavern.Client.Components.Team.SizeInfo (sizeInfo)
+import TeamTavern.Client.Components.Team.SizeInfo as SizeInfo
+import TeamTavern.Client.Pages.Profiles.TeamBadge (platformCheckboxBadges, sizeRadioBadges)
+import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
+import TeamTavern.Routes.Shared.Size (Size(..))
 
 type FieldValues = Array
     { fieldKey :: String
@@ -27,7 +33,8 @@ type FieldValues = Array
     }
 
 type Input =
-    { allPlatforms :: Platforms
+    { size :: Size
+    , allPlatforms :: Platforms
     , selectedPlatforms :: Array Platform
     , platformsError :: Boolean
     , fields :: Array Field
@@ -38,14 +45,16 @@ type Input =
     }
 
 type Output =
-    { platforms :: Array Platform
+    { size :: Size
+    , platforms :: Array Platform
     , fieldValues :: FieldValues
     , newOrReturning :: Boolean
     , ambitions :: String
     }
 
 type State =
-    { allPlatforms :: Platforms
+    { size :: Size
+    , allPlatforms :: Platforms
     , selectedPlatforms :: Array Platform
     , platformsError :: Boolean
     , fields :: Array Field
@@ -57,6 +66,7 @@ type State =
 
 data Action
     = Receive Input
+    | UpdateSize Size
     | UpdatePlatform Platform
     | UpdateFieldValues String (MultiSelect.Output Option)
     | UpdateNewOrReturning Boolean
@@ -64,31 +74,37 @@ data Action
 
 type Slot = H.Slot (Const Void) Output Unit
 
-type ChildSlots = ("multiSelectField" :: MultiSelect.Slot Option String)
+type ChildSlots =
+    ( "multiSelectField" :: MultiSelect.Slot Option String
+    , "sizeInfo" :: SizeInfo.Slot
+    )
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
-render { allPlatforms, selectedPlatforms, platformsError, fields, fieldValues, newOrReturning, ambitions, ambitionsError } =
+render state =
     HH.div_ $
-    ( case platformCheckboxes allPlatforms selectedPlatforms UpdatePlatform of
-        Nothing -> []
-        Just checkboxes ->
-            [ inputGroupsHeading' $
-                [ HH.text "Platforms"
-                , divider, inputRequiredSublabel
-                , divider, (if platformsError then inputErrorSublabel else inputSublabel)
-                    "You must select at least one of the available platforms."
-                ]
-            , inputGroup [ checkboxes ]
-            ]
-    )
+    [ HH.h2 [ HS.class_ "platform-id-heading" ]
+        [ HH.text "Size"
+        , sizeRadioBadges state.size UpdateSize
+        , sizeInfo
+        ]
+    ]
+    <> guard (not $ Array.null state.allPlatforms.tail)
+    [ inputGroupsHeading' $
+        [ HH.text "Platforms"
+        , divider, inputRequiredSublabel
+        , divider, (if state.platformsError then inputErrorSublabel else inputSublabel)
+            "You must select at least one of the available platforms."
+        ]
+    , inputGroup [ platformCheckboxBadges state.allPlatforms state.selectedPlatforms UpdatePlatform ]
+    ]
     <>
     [ inputGroupsHeading "Details"
     , responsiveInputGroups $
-        (fields <#> fieldInputGroup fieldValues UpdateFieldValues)
+        (state.fields <#> fieldInputGroup state.fieldValues UpdateFieldValues)
         <>
-        [ newOrReturningInputGroup newOrReturning UpdateNewOrReturning ]
+        [ newOrReturningInputGroup state.newOrReturning UpdateNewOrReturning ]
     , inputGroupsHeading "Ambitions"
-    , ambitionsInputGroup ambitions UpdateAmbitions ambitionsError
+    , ambitionsInputGroup state.ambitions UpdateAmbitions state.ambitionsError
     ]
 
 fieldValuesToArray :: Input.FieldValues -> FieldValues
@@ -106,9 +122,10 @@ fieldValuesToMap =
     MultiMap.empty
 
 raiseOutput :: forall left. State -> H.HalogenM State Action ChildSlots Output (Async left) Unit
-raiseOutput { selectedPlatforms, fieldValues, newOrReturning, ambitions } =
+raiseOutput { size, selectedPlatforms, fieldValues, newOrReturning, ambitions } =
     H.raise
-    { platforms: selectedPlatforms
+    { size
+    , platforms: selectedPlatforms
     , fieldValues: fieldValuesToArray fieldValues
     , newOrReturning
     , ambitions
@@ -117,6 +134,9 @@ raiseOutput { selectedPlatforms, fieldValues, newOrReturning, ambitions } =
 handleAction :: forall left. Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
 handleAction (Receive input) =
     H.put (Record.modify (SProxy :: SProxy "fieldValues") fieldValuesToMap input)
+handleAction (UpdateSize size) = do
+    state <- H.modify _ { size = size }
+    raiseOutput state
 handleAction (UpdatePlatform platform) = do
     state <- H.modify \state -> state
         { selectedPlatforms =
@@ -152,7 +172,8 @@ component = H.mkComponent
 
 emptyInput :: { platforms :: Platforms, fields :: Array Field } -> Input
 emptyInput { platforms, fields } =
-    { allPlatforms: platforms
+    { size: Party
+    , allPlatforms: platforms
     , selectedPlatforms: [ platforms.head ]
     , platformsError: false
     , fields

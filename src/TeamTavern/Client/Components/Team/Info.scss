@@ -1,0 +1,45 @@
+.info-container {
+    align-self: center;
+
+    @media screen and (min-width: 640px) {
+        position: relative;
+        > .info {
+            max-width: 400px;
+        }
+    }
+}
+
+.info-icon {
+    font-size: 20px;
+    color: #888;
+    cursor: pointer;
+
+    &:hover {
+        color: $text-color;
+    }
+}
+
+.info {
+    @extend .popover, .popover-centered;
+    padding: 14px;
+
+    > .info-list:not(:last-child) {
+        margin-bottom: 14px;
+    }
+}
+
+.info-text {
+    color: #888;
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1.5;
+}
+
+.info-list {
+    @extend .info-text;
+    list-style: disc;
+    padding-left: 16px;
+    > *:not(:last-child) {
+        margin-bottom: 7px;
+    }
+}

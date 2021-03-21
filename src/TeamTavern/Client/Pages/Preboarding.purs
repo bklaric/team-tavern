@@ -370,8 +370,7 @@ renderPage { step: Register, registration, otherError, submitting, playerOrTeam 
         ]
     ]
 
-render :: forall slots left.
-    State -> HH.ComponentHTML Action (ChildSlots slots) (Async left)
+render :: forall slots left. State -> HH.ComponentHTML Action (ChildSlots slots) (Async left)
 render state = boarding $ renderPage state
 
 sendRequest :: forall left.
@@ -385,33 +384,12 @@ sendRequest (state :: State) = Async.unify do
         } | Just game <- getGame state.game
           , Just (PlayerOrTeamInput.Player) <- getPlayerOrTeam state.playerOrTeam -> Async.right
             { ilk: 1
-            , player: Just
-                { birthday: player.birthday
-                , location: player.location
-                , languages: player.languages
-                , microphone: player.microphone
-                , discordTag: player.discordTag
-                , timezone: player.timezone
-                , weekdayFrom: player.weekdayFrom
-                , weekdayTo: player.weekdayTo
-                , weekendFrom: player.weekendFrom
-                , weekendTo: player.weekendTo
-                , about: player.about
-                }
+            , player: Just $ pick player
             , team: Nothing
             , gameHandle: game.handle
-            , playerProfile: Just
-                { platform: profile.platform
-                , platformId: profile.platformId
-                , fieldValues: profile.fieldValues
-                , newOrReturning: profile.newOrReturning
-                , ambitions: profile.ambitions
-                }
+            , playerProfile: Just $ pick profile
             , teamProfile: Nothing
-            , registration:
-                { nickname: registration.nickname
-                , password: registration.password
-                }
+            , registration: pick registration
             }
         { team
         , teamProfile: profile
@@ -420,35 +398,17 @@ sendRequest (state :: State) = Async.unify do
           , Just (PlayerOrTeamInput.Team) <- getPlayerOrTeam state.playerOrTeam -> Async.right
             { ilk: 2
             , player: Nothing
-            , team: Just
-                { name: team.name
-                , website: team.website
-                , discordTag: team.discordTag
-                , discordServer: team.discordServer
-                , ageFrom: team.ageFrom
-                , ageTo: team.ageTo
-                , locations: team.locations
-                , languages: team.languages
-                , microphone: team.microphone
-                , timezone: team.timezone
-                , weekdayFrom: team.weekdayFrom
-                , weekdayTo: team.weekdayTo
-                , weekendFrom: team.weekendFrom
-                , weekendTo: team.weekendTo
-                , about: team.about
-                }
+            , team: Just $ pick team
             , gameHandle: game.handle
             , playerProfile: Nothing
             , teamProfile: Just
-                { platforms: profile.selectedPlatforms
+                { size: profile.size
+                , platforms: profile.selectedPlatforms
                 , fieldValues: profile.fieldValues
                 , newOrReturning: profile.newOrReturning
                 , ambitions: profile.ambitions
                 }
-            , registration:
-                { nickname: registration.nickname
-                , password: registration.password
-                }
+            , registration: pick registration
             }
         _ -> Async.left Nothing
     response <-
@@ -526,8 +486,7 @@ handleAction (UpdatePlayer details) = do
 handleAction (UpdateTeam details) = do
     state <- H.modify _
         { team
-            { name = details.name
-            , website = details.website
+            { organization = details.organization
             , discordTag = details.discordTag
             , discordServer = details.discordServer
             , ageFrom = details.ageFrom
@@ -584,7 +543,8 @@ handleAction (UpdatePlayerProfile details) = do
 handleAction (UpdateTeamProfile details) = do
     state <- H.modify _
         { teamProfile
-            { selectedPlatforms = details.platforms
+            { size = details.size
+            , selectedPlatforms = details.platforms
             , fieldValues = details.fieldValues
             , newOrReturning = details.newOrReturning
             , ambitions = details.ambitions

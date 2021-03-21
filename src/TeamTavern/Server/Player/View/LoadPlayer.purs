@@ -174,8 +174,22 @@ queryString timezone = Query $ """
                 coalesce(
                     json_agg(
                         json_build_object(
-                            'name', team.name,
                             'handle', team.handle,
+                            'organization',
+                                case
+                                    when team.organization = 'informal'
+                                    then json_build_object(
+                                        'type', '"informal"'::jsonb,
+                                        'value', '{}'::jsonb
+                                    )
+                                    when team.organization = 'organized'
+                                    then json_build_object(
+                                        'type', '"organized"'::jsonb,
+                                        'value', json_build_object(
+                                            'name', team.name
+                                        )
+                                    )
+                                end,
                             'updated', team.updated::text,
                             'updatedSeconds', extract(epoch from (now() - team.updated))
                         )

@@ -11,7 +11,6 @@ import TeamTavern.Routes.Shared.Platform (Platforms)
 type ViewGame = Route
     Get
     (  Literal "games"
-    :> Literal "by-handle"
     :> Capture "handle" String
     :> End)
     NoQuery

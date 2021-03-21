@@ -3,12 +3,13 @@ module TeamTavern.Client.Components.Team.TeamFormInput (Input, Output, Slot, emp
 import Prelude
 
 import Async (Async)
+import Data.Array as Array
 import Data.Const (Const)
 import Data.Maybe (Maybe(..), isNothing, maybe)
 import Data.Variant (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
-import Record as Record
+import Record.Extra (pick)
 import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.Input (inputErrorSublabel, inputGroupsHeading, inputGroupsHeading', inputRequiredSublabel, inputSublabel, responsiveInputGroups)
 import TeamTavern.Client.Components.InputGroup (timeRangeInputGroup, timezoneInputGroup)
@@ -16,13 +17,17 @@ import TeamTavern.Client.Components.Player.PlayerInputGroup (discordTagInputGrou
 import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.Select.MultiTreeSelect as MultiTreeSelect
 import TeamTavern.Client.Components.Select.SingleSelect as SingleSelect
+import TeamTavern.Client.Components.Team.OrganizationInfo (organizationInfo)
+import TeamTavern.Client.Components.Team.OrganizationInfo as OrganizationInfo
 import TeamTavern.Client.Components.Team.TeamInputGroup (aboutInputGroup, ageInputGroup, discordServerInputGroup, languagesInputGroup, locationInputGroup, microphoneInputGroup, nameInputGroup, websiteInputGroup)
+import TeamTavern.Client.Pages.Profiles.TeamBadge (organizationRadioBadges)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
+import TeamTavern.Client.Snippets.Class as HS
+import TeamTavern.Routes.Shared.Organization (Organization, OrganizationNW(..), fromOrganizationNW, toOrganizationNW)
 import TeamTavern.Server.Infrastructure.Timezones (Timezone)
 
 type Input =
-    { name :: String
-    , website :: Maybe String
+    { organization :: OrganizationNW
     , discordTag :: Maybe String
     , discordServer :: Maybe String
     , ageFrom :: Maybe Int
@@ -45,8 +50,7 @@ type Input =
     }
 
 type Output =
-    { name :: String
-    , website :: Maybe String
+    { organization :: OrganizationNW
     , discordTag :: Maybe String
     , discordServer :: Maybe String
     , ageFrom :: Maybe Int
@@ -67,6 +71,7 @@ type State = Input
 data Action
     = Initialize
     | Receive Input
+    | UpdateOrganization Organization
     | UpdateName String
     | UpdateWebsite (Maybe String)
     | UpdateDiscordTag (Maybe String)
@@ -87,19 +92,31 @@ type ChildSlots =
     ( location :: MultiTreeSelect.Slot String
     , language :: MultiSelect.Slot String Unit
     , timezone :: SingleSelect.Slot Timezone Unit
+    , organizationInfo :: OrganizationInfo.Slot
     )
 
 type Slot = H.Slot (Const Void) Output Unit
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render state =
-    HH.div_
-    [ inputGroupsHeading "General"
-    , responsiveInputGroups
-        [ nameInputGroup state.name UpdateName state.nameError
-        , websiteInputGroup state.website UpdateWebsite state.websiteError
+    HH.div_ $
+    [ HH.h2 [ HS.class_ "platform-id-heading" ]
+        [ HH.text "General"
+        , organizationRadioBadges (fromOrganizationNW state.organization) UpdateOrganization
+        , organizationInfo
         ]
-    , inputGroupsHeading' $
+    ]
+    <>
+    ( case state.organization of
+        InformalNW -> []
+        OrganizedNW { name, website } -> Array.singleton $
+            responsiveInputGroups
+            [ nameInputGroup name UpdateName state.nameError
+            , websiteInputGroup website UpdateWebsite state.websiteError
+            ]
+    )
+    <>
+    [ inputGroupsHeading' $
         [ HH.text "Contact"
         , divider, inputRequiredSublabel
         , divider, (if state.contactError then inputErrorSublabel else inputSublabel)
@@ -132,15 +149,7 @@ render state =
     ]
 
 raiseOutput :: forall left. State -> H.HalogenM State Action ChildSlots Output (Async left) Unit
-raiseOutput state
-    = state
-    # Record.delete (SProxy :: SProxy "nameError")
-    # Record.delete (SProxy :: SProxy "websiteError")
-    # Record.delete (SProxy :: SProxy "discordTagError")
-    # Record.delete (SProxy :: SProxy "discordServerError")
-    # Record.delete (SProxy :: SProxy "contactError")
-    # Record.delete (SProxy :: SProxy "aboutError")
-    # H.raise
+raiseOutput = pick >>> H.raise
 
 handleAction :: forall left. Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
 handleAction Initialize = do
@@ -150,11 +159,22 @@ handleAction Initialize = do
     raiseOutput newState
 handleAction (Receive input) =
     H.put input
+handleAction (UpdateOrganization organization) = do
+    state <- H.modify _ { organization = toOrganizationNW organization }
+    raiseOutput state
 handleAction (UpdateName name) = do
-    state <- H.modify _ { name = name }
+    state <- H.modify
+        case _ of
+        state @ { organization: InformalNW } -> state
+        state @ { organization: OrganizedNW state' } ->
+            state { organization = OrganizedNW state' { name = name } }
     raiseOutput state
 handleAction (UpdateWebsite website) = do
-    state <- H.modify _ { website = website }
+    state <- H.modify
+        case _ of
+        state @ { organization: InformalNW } -> state
+        state @ { organization: OrganizedNW state' } ->
+            state { organization = OrganizedNW state' { website = website } }
     raiseOutput state
 handleAction (UpdateDiscordTag discordTag) = do
     state <- H.modify _ { discordTag = discordTag }
@@ -209,8 +229,7 @@ component = H.mkComponent
 
 emptyInput :: Input
 emptyInput =
-    { name: ""
-    , website: Nothing
+    { organization: InformalNW
     , discordTag: Nothing
     , discordServer: Nothing
     , ageFrom: Nothing

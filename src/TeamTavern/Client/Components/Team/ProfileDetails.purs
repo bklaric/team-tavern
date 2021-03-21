@@ -7,7 +7,7 @@ import Data.Maybe (Maybe(..))
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Detail (detail, fieldDetail)
 import TeamTavern.Client.Snippets.Class as HS
-import TeamTavern.Routes.Shared.Platform (Platform(..), Platforms)
+import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
 
 profileDetails :: forall fieldOptionFields fieldValueFields fieldFields someMoreFields slots action.
     { allPlatforms :: Platforms
@@ -73,24 +73,6 @@ profileDetails' :: forall fieldOptionFields fieldFields someMoreFields slots act
     }
     -> Array (HH.HTML slots action)
 profileDetails' { allPlatforms, selectedPlatforms, fieldValues, newOrReturning } =
-    ( if Array.null allPlatforms.tail
-        then []
-        else
-            [ fieldDetail "fas fa-laptop" "Platform" $
-                selectedPlatforms
-                <#> ( case _ of
-                    Steam -> "Steam"
-                    Riot -> "Riot"
-                    BattleNet -> "Battle.net"
-                    PlayStation -> "PlayStation"
-                    Xbox -> "Xbox"
-                    Switch -> "Switch"
-                )
-                <#> (\platform -> [ HH.span [ HS.class_ "detail-emphasize" ] [ HH.text platform ] ])
-                # Array.intercalate [ HH.text ", " ]
-            ]
-    )
-    <>
     ( fieldValues
     <#> ( \fieldValue ->
             if not $ Array.null fieldValue.options

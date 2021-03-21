@@ -5,8 +5,10 @@ import Prelude
 import Async (Async)
 import Client.Components.Copyable as Copyable
 import Data.Array as Array
+import Data.Array.Extra (full)
 import Data.Const (Const)
 import Data.Maybe (Maybe(..), isNothing)
+import Data.Monoid (guard)
 import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
@@ -20,7 +22,7 @@ import TeamTavern.Client.Components.NavigationAnchor as Anchor
 import TeamTavern.Client.Components.Pagination (pagination)
 import TeamTavern.Client.Components.Player.PlayerDetails (playerDetails)
 import TeamTavern.Client.Components.Player.ProfileDetails (PlatformIdSlots, profileDetails')
-import TeamTavern.Client.Components.Profile (profileHeader, profileHeaderItem, profileHeading, profileSubheading)
+import TeamTavern.Client.Components.Profile (profileHeader, profileHeading, profileSubheading)
 import TeamTavern.Client.Script.Cookie (PlayerInfo)
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
 import TeamTavern.Client.Snippets.Class as HS
@@ -110,7 +112,7 @@ profileSection profile = let
     in
     cardSection $
     [ profileHeader
-        [ profileHeaderItem
+        [ HH.div_
             [ profileHeading (SProxy :: SProxy "players") profile.nickname
                 ("/players/" <> profile.nickname) profile.nickname
             , divider
@@ -119,43 +121,26 @@ profileSection profile = let
         ]
     ]
     <>
-    if (not $ Array.null playerDetails') || (not $ Array.null profileDetails'')
-        || (not $ Array.null about) || (not $ Array.null ambitions)
-    then
-        [ detailColumns $
-            ( if (not $ Array.null playerDetails') || (not $ Array.null profileDetails'')
-                then
-                    [ detailColumn $
-                        ( if not $ Array.null playerDetails'
-                            then [ detailColumnHeading4 "Player details" ] <> playerDetails'
-                            else []
-                        )
-                        <>
-                        ( if not $ Array.null profileDetails''
-                            then [ detailColumnHeading4 "Profile details" ] <> profileDetails''
-                            else []
-                        )
-                    ]
-                else []
-            )
+    guard (full playerDetails' || full profileDetails'' || full about || full ambitions)
+    [ detailColumns $
+        guard (full playerDetails' || full profileDetails'')
+        [ detailColumn $
+            guard (full playerDetails')
+            [ detailColumnHeading4 "Player details" ] <> playerDetails'
             <>
-            ( if (not $ Array.null about) || (not $ Array.null ambitions)
-                then
-                    [ detailColumn $
-                        ( if not $ Array.null about
-                            then [ detailColumnHeading4 "About" ] <> about
-                            else []
-                        )
-                        <>
-                        ( if not $ Array.null ambitions
-                            then [ detailColumnHeading4 "Ambitions" ] <> ambitions
-                            else []
-                        )
-                    ]
-                else []
-            )
+            guard (full profileDetails'')
+            [ detailColumnHeading4 "Profile details" ] <> profileDetails''
         ]
-    else []
+        <>
+        guard (full about || full ambitions)
+        [ detailColumn $
+            guard (full about)
+            [ detailColumnHeading4 "About" ] <> about
+            <>
+            guard (full ambitions)
+            [ detailColumnHeading4 "Ambitions" ] <> ambitions
+        ]
+    ]
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { profiles, profileCount, playerInfo, page } =

@@ -12,6 +12,7 @@ import Effect.Now (nowDate)
 import Halogen as H
 import Halogen.HTML as HH
 import Record as Record
+import Record.Extra (pick)
 import TeamTavern.Client.Components.Input (inputGroupsHeading, responsiveInputGroups)
 import TeamTavern.Client.Components.InputGroup (timeRangeInputGroup, timezoneInputGroup)
 import TeamTavern.Client.Components.Player.PlayerInputGroup (aboutInputGroup, birthdayInputGroup, discordTagInputGroup, languagesInputGroup, locationInputGroup, microphoneInputGroup)
@@ -120,12 +121,7 @@ render state =
     ]
 
 raiseOutput :: forall left. State -> H.HalogenM State Action ChildSlots Output (Async left) Unit
-raiseOutput state
-    = state
-    # Record.delete (SProxy :: SProxy "thirteenYearsAgo")
-    # Record.delete (SProxy :: SProxy "discordTagError")
-    # Record.delete (SProxy :: SProxy "aboutError")
-    # H.raise
+raiseOutput = pick >>> H.raise
 
 handleAction :: forall left. Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
 handleAction Initialize = do

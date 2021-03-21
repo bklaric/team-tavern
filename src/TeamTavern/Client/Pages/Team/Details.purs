@@ -5,7 +5,9 @@ import Prelude
 import Async (Async)
 import Client.Components.Copyable as Copyable
 import Data.Array as Array
+import Data.Array.Extra (full)
 import Data.Maybe (Maybe(..))
+import Data.Monoid (guard)
 import Data.Symbol (SProxy(..))
 import Halogen as H
 import Record as Record
@@ -51,15 +53,9 @@ details team status showEditTeamModal = let
             SignedInOwner -> "Apparently, your team prefers to keep an air of mystery about them."
             _ -> "Apparently, this team prefers to keep an air of mystery about them."
         else Array.singleton $ detailColumnsContainer $ Array.singleton $ detailColumns $
-            ( if Array.null teamDetails'
-                then []
-                else Array.singleton $ detailColumn $
-                    [ detailColumnHeading3 "Details" ] <> teamDetails'
-            )
+            guard (full teamDetails')
+            [ detailColumn $ [ detailColumnHeading3 "Details" ] <> teamDetails' ]
             <>
-            ( if Array.null about
-                then []
-                else Array.singleton $ detailColumn $
-                    [ detailColumnHeading3 "About" ] <> about
-            )
+            guard (full about)
+            [ detailColumn $ [ detailColumnHeading3 "About" ] <> about ]
     ]

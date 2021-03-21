@@ -66,7 +66,7 @@ createProfileButton = Hooks.component $ \_ { teamHandle, profileGameHandles } ->
         (games <#> \game ->
             popoverItem
             (const do
-                game' <- lift $ get $ "/api/games/by-handle/" <> game.handle
+                game' <- lift $ get $ "/api/games/" <> game.handle
                 case game' of
                     Nothing -> pure unit
                     Just (game'' :: View.OkContent) ->

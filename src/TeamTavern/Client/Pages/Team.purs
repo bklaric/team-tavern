@@ -15,6 +15,7 @@ import Halogen.HTML as HH
 import TeamTavern.Client.Components.Ads (descriptionLeaderboard, mobileDescriptionLeaderboard)
 import TeamTavern.Client.Components.Content (contentDescription, contentHeader, contentHeading)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
+import TeamTavern.Client.Pages.Profiles.TeamBadge (informalBadge, organizedBadge)
 import TeamTavern.Client.Pages.Team.Details (details)
 import TeamTavern.Client.Pages.Team.EditProfile (editProfile)
 import TeamTavern.Client.Pages.Team.EditProfile as EditProfile
@@ -25,6 +26,7 @@ import TeamTavern.Client.Pages.Team.Status (Status(..), getStatus)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Request (get)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
+import TeamTavern.Routes.Shared.Organization (OrganizationNW(..), nameOrHandleNW)
 import TeamTavern.Server.Team.View (Team, Profile)
 
 type Input = { handle :: String }
@@ -63,7 +65,14 @@ render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render (Empty _) = HH.div_ []
 render (Loaded { team: team', status, showEditTeamModal, showEditProfileModal } ) =
     HH.div_  $
-    [ contentHeader [ HH.div_ [ contentHeading team'.name ] ]
+    [ contentHeader
+        [ HH.div_
+            [ contentHeading $ nameOrHandleNW team'.handle team'.organization
+            , case team'.organization of
+                InformalNW -> informalBadge
+                OrganizedNW _ -> organizedBadge
+            ]
+        ]
     , contentDescription
         case status of
         SignedInOwner -> "View and edit all your team's details and profiles."
@@ -86,6 +95,7 @@ render (Loaded { team: team', status, showEditTeamModal, showEditProfileModal } 
         , gameHandle: profile.handle
         , title: profile.title
         , allPlatforms: profile.allPlatforms
+        , size: profile.size
         , selectedPlatforms: profile.selectedPlatforms
         , fields: profile.fields
         , fieldValues: profile.fieldValues
@@ -99,7 +109,7 @@ render Error = HH.p_ [ HH.text "There has been an error loading the team. Please
 loadTeam :: forall left. String -> Async left (Maybe Team)
 loadTeam handle = do
     timezone <- getClientTimezone
-    get $ "/api/teams/by-handle/" <> handle <> "?timezone=" <> timezone
+    get $ "/api/teams/" <> handle <> "?timezone=" <> timezone
 
 modifyLoaded :: forall monad. MonadState State monad => (Loaded -> Loaded) -> monad Unit
 modifyLoaded mod =
@@ -124,8 +134,9 @@ handleAction Initialize = do
                         , showEditTeamModal: false
                         , showEditProfileModal: Nothing
                         }
-                    setMeta (team''.name <> " | TeamTavern")
-                        ("View all details and profiles of team " <> team''.name <> ".")
+                    let nameOrHandle = nameOrHandleNW team''.handle team''.organization
+                    setMeta (nameOrHandle <> " | TeamTavern")
+                        ("View all details and profiles of team " <> nameOrHandle <> ".")
                 _ -> pure unit
         _ -> pure unit
 handleAction ShowEditTeamModal = modifyLoaded _ { showEditTeamModal = true }

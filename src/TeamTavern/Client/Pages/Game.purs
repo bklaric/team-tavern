@@ -67,7 +67,7 @@ render (Loaded { game: game' @ { handle, shortTitle } }) =
 loadGame :: forall left. String -> Async left (Maybe ViewGame.OkContent)
 loadGame handle = Async.unify do
     response <-
-        Fetch.fetch_ ("/api/games/by-handle/" <> handle)
+        Fetch.fetch_ ("/api/games/" <> handle)
         # lmap (const Nothing)
     content <-
         case FetchRes.status response of

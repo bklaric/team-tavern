@@ -10,7 +10,9 @@ import Perun.Response (Response, internalServerError__, notFound__, ok_)
 import Postgres.Pool (Pool)
 import Postgres.Query (Query(..), (:))
 import Simple.JSON (writeJSON)
+import TeamTavern.Routes.Shared.Organization (OrganizationNW)
 import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
+import TeamTavern.Routes.Shared.Size (Size)
 import TeamTavern.Server.Infrastructure.Error (LoadSingleError)
 import TeamTavern.Server.Infrastructure.Log (logLoadSingleError)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstNotFound, teamAdjustedWeekdayFrom, teamAdjustedWeekdayTo, teamAdjustedWeekendFrom, teamAdjustedWeekendTo)
@@ -21,6 +23,7 @@ type Profile =
     { handle :: String
     , title :: String
     , allPlatforms :: Platforms
+    , size :: Size
     , selectedPlatforms :: Array Platform
     , fields :: Array
         { key :: String
@@ -44,8 +47,7 @@ type Profile =
 type Team =
     { owner :: String
     , handle :: String
-    , name :: String
-    , website :: Maybe String
+    , organization :: OrganizationNW
     , discordTag :: Maybe String
     , discordServer :: Maybe String
     , ageFrom :: Maybe Int
@@ -75,8 +77,21 @@ queryString timezone = Query $ """
     select
         player.nickname as owner,
         team.handle,
-        team.name,
-        team.website,
+        case
+            when team.organization = 'informal'
+            then json_build_object(
+                'type', '"informal"'::jsonb,
+                'value', '{}'::jsonb
+            )
+            when team.organization = 'organized'
+            then json_build_object(
+                'type', '"organized"'::jsonb,
+                'value', json_build_object(
+                    'name', team.name,
+                    'website', team.website
+                )
+            )
+        end as organization,
         team.discord_tag as "discordTag",
         team.discord_server as "discordServer",
         team.age_from as "ageFrom",
@@ -110,6 +125,7 @@ queryString timezone = Query $ """
                     'handle', profile.handle,
                     'title', profile.title,
                     'allPlatforms', profile.all_platforms,
+                    'size', profile.size,
                     'selectedPlatforms', profile.selected_platforms,
                     'fields', profile.fields,
                     'fieldValues', profile.field_values,
@@ -134,6 +150,7 @@ queryString timezone = Query $ """
                     'head', game.platforms[1],
                     'tail', game.platforms[2:]
                 ) as all_platforms,
+                profile.size,
                 profile.platforms as selected_platforms,
                 coalesce(fields.fields, '[]') as fields,
                 coalesce(field_values.field_values, '[]') as field_values,

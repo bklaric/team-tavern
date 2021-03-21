@@ -18,6 +18,8 @@ import TeamTavern.Client.Components.Team.ProfileInputGroup (Field)
 import TeamTavern.Client.Script.Navigate (hardNavigate)
 import TeamTavern.Client.Script.Request (putNoContent)
 import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
+import TeamTavern.Routes.Shared.Size (Size)
+import TeamTavern.Server.Profile.AddTeamProfile.ReadProfile (Profile)
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
@@ -26,6 +28,7 @@ type Input =
     , gameHandle :: String
     , title :: String
     , allPlatforms :: Platforms
+    , size :: Size
     , selectedPlatforms :: Array Platform
     , fields :: Array Field
     , fieldValues :: FieldValues
@@ -65,18 +68,20 @@ sendRequest
     -> Async left (Maybe (Either (Array (Variant (platforms :: Array String, ambitions :: Array String))) Unit))
 sendRequest state @ { teamHandle, gameHandle, profile } =
     putNoContent ("/api/teams/" <> teamHandle <> "/profiles/" <> gameHandle)
-    { platforms: profile.selectedPlatforms
+    ({ size: profile.size
+    , platforms: profile.selectedPlatforms
     , fieldValues: profile.fieldValues
     , newOrReturning: profile.newOrReturning
     , ambitions: profile.ambitions
-    }
+    } :: Profile)
 
 handleAction :: forall output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
 handleAction (UpdateProfile profile) =
     H.modify_ _
         { profile
-            { selectedPlatforms = profile.platforms
+            { size = profile.size
+            , selectedPlatforms = profile.platforms
             , fieldValues = profile.fieldValues
             , newOrReturning = profile.newOrReturning
             , ambitions = profile.ambitions
@@ -124,7 +129,8 @@ component = H.mkComponent
         , gameHandle
         , title
         , profile:
-            { allPlatforms: input.allPlatforms
+            { size: input.size
+            , allPlatforms: input.allPlatforms
             , selectedPlatforms: input.selectedPlatforms
             , platformsError: false
             , fields: input.fields

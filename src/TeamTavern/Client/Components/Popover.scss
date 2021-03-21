@@ -2,15 +2,6 @@
     position: relative;
 }
 
-.popover-button {
-    @extend %button;
-    color: $text-color;
-    background-color: inherit;
-    border: 0;
-    padding: 9px 12px;
-    margin-left: -12px;
-}
-
 .popover-button-caret {
     font-size: 20px;
     margin-left: 6px;
@@ -24,8 +15,20 @@
     border: 1px solid #ccc;
     border-radius: 4px;
     width: max-content;
+    max-width: calc(100vw - 28px);
+    box-sizing: border-box;
     padding: 4px 0;
+    z-index: 1;
+}
+
+.popover-bottom-end {
+    top: 100%;
     right: 0;
+}
+
+.popover-centered {
+    left: 50%;
+    transform: translate(-50%, 0);
 }
 
 .popover-item {

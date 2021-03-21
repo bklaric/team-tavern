@@ -6,7 +6,15 @@ import Jarilo.Path (type (:>), End)
 import Jarilo.Query (Mandatory)
 import Jarilo.Route (Route)
 import Jarilo.Segment (Capture, Literal)
+import TeamTavern.Routes.Shared.Organization (OrganizationN)
 import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
+
+type ViewPlayer = Route
+    Get
+    (  Literal "players"
+    :> Capture "nickname" String
+    :> End)
+    (Mandatory "timezone" String)
 
 type RouteParams =
     { nickname :: String
@@ -43,8 +51,8 @@ type OkContentProfile =
     }
 
 type OkContentTeam =
-    { name :: String
-    , handle :: String
+    { handle :: String
+    , organization :: OrganizationN
     , updated :: String
     , updatedSeconds :: Number
     }
@@ -74,10 +82,3 @@ type OkContent =
     , profiles :: Array OkContentProfile
     , teams :: Array OkContentTeam
     }
-
-type ViewPlayer = Route
-    Get
-    (  Literal "players"
-    :> Capture "nickname" String
-    :> End)
-    (Mandatory "timezone" String)

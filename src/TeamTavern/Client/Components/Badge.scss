@@ -1,0 +1,47 @@
+$party-color:rgba(40, 167, 69, 29%);
+$community-color: rgba(96, 40, 167, 29%);
+$informal-color: rgba(40, 91, 167, 0.29);
+$organized-color: rgba(165, 167, 40, 0.29);
+$platform-color: #ededed;
+
+%badge {
+    display: inline-flex;
+    gap: 0 6px;
+    align-items: center;
+    font-size: 12px;
+    line-height: 1;
+    color: #000000bb;
+    padding: 4px 6px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.party-badge {
+    @extend %badge;
+    background: $party-color;
+}
+
+.community-badge {
+    @extend %badge;
+    background: $community-color;
+}
+
+.informal-badge {
+    @extend %badge;
+    background: $informal-color;
+}
+
+.organized-badge {
+    @extend %badge;
+    background: $organized-color;
+}
+
+.platform-badge {
+    @extend %badge;
+    background: $platform-color;
+}
+
+.badge-icon {
+    height: 20px;
+    fill: currentColor;
+}

@@ -41,7 +41,9 @@ import TeamTavern.Client.Script.Navigate (navigate, navigate_)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Script.Url as Url
 import TeamTavern.Client.Snippets.ArticledNoun (indefiniteNoun)
+import TeamTavern.Routes.Shared.Organization as Organization
 import TeamTavern.Routes.Shared.Platform as Platform
+import TeamTavern.Routes.Shared.Size as Size
 import TeamTavern.Routes.ViewGame as ViewGame
 import TeamTavern.Server.Profile.ViewPlayerProfilesByGame.SendResponse as ViewGamePlayers
 import TeamTavern.Server.Profile.ViewTeamProfilesByGame.SendResponse as ViewGameTeams
@@ -154,7 +156,7 @@ render Error = HH.p_ [ HH.text
 loadGame :: forall left. String -> Async left (Maybe ViewGame.OkContent)
 loadGame handle = Async.unify do
     response <-
-        Fetch.fetch_ ("/api/games/by-handle/" <> handle)
+        Fetch.fetch_ ("/api/games/" <> handle)
         # lmap (const Nothing)
     content <-
         case FetchRes.status response of
@@ -172,14 +174,14 @@ loadPlayerProfiles handle page filters = Async.unify do
         timezonePair = "timezone=" <> timezone
         ageFromPair = filters.ageFrom <#> show <#> ("ageFrom=" <> _)
         ageToPair = filters.ageTo <#> show <#> ("ageTo=" <> _)
-        languagePairs = filters.languages <#> ("languages=" <> _)
-        locationPairs = filters.locations <#> (\location -> "locations=" <> location)
+        languagePairs = filters.languages <#> ("language=" <> _)
+        locationPairs = filters.locations <#> (\location -> "location=" <> location)
         microphonePair = if filters.microphone then Just "microphone=true" else Nothing
         weekdayFromPair = filters.weekdayFrom <#> ("weekdayFrom=" <> _)
         weekdayToPair = filters.weekdayTo <#> ("weekdayTo=" <> _)
         weekendFromPair = filters.weekendFrom <#> ("weekendFrom=" <> _)
         weekendToPair = filters.weekendTo <#> ("weekendTo=" <> _)
-        platformPairs = filters.platforms <#> Platform.toString <#> ("platforms=" <> _)
+        platformPairs = filters.platforms <#> Platform.toString <#> ("platform=" <> _)
         fieldPairs = filters.fieldValues # MultiMap.toUnfoldable_
             <#> \(Tuple fieldKey optionKey) -> fieldKey <> "=" <> optionKey
         newOrReturningPair = if filters.newOrReturning then Just "newOrReturning=true" else Nothing
@@ -190,7 +192,7 @@ loadPlayerProfiles handle page filters = Async.unify do
             ]
         filterQuery = "?" <> intercalate "&" allPairs
     response <-
-        Fetch.fetch_ ("/api/profiles/by-handle/" <> handle <> "/players" <> filterQuery)
+        Fetch.fetch_ ("/api/games/" <> handle <> "/players" <> filterQuery)
         # lmap (const Nothing)
     content <-
         case FetchRes.status response of
@@ -205,27 +207,30 @@ loadTeamProfiles handle page filters = Async.unify do
     let nothingIfNull string = if String.null string then Nothing else Just string
     let pagePair = "page=" <> show page
         timezonePair = "timezone=" <> timezone
+        organizationPairs = filters.organizations <#> Organization.toString <#> ("organization=" <> _)
         ageFromPair = filters.ageFrom <#> show <#> ("ageFrom=" <> _)
         ageToPair = filters.ageTo <#> show <#> ("ageTo=" <> _)
-        languagePairs = filters.languages <#> ("languages=" <> _)
-        locationPairs = filters.locations <#> (\location -> "locations=" <> location)
+        languagePairs = filters.languages <#> ("language=" <> _)
+        locationPairs = filters.locations <#> (\location -> "location=" <> location)
         microphonePair = if filters.microphone then Just "microphone=true" else Nothing
         weekdayFromPair = filters.weekdayFrom <#> ("weekdayFrom=" <> _)
         weekdayToPair = filters.weekdayTo <#> ("weekdayTo=" <> _)
         weekendFromPair = filters.weekendFrom <#> ("weekendFrom=" <> _)
         weekendToPair = filters.weekendTo <#> ("weekendTo=" <> _)
-        platformPairs = filters.platforms <#> Platform.toString <#> ("platforms=" <> _)
+        sizePairs = filters.sizes <#> Size.toString <#> ("size=" <> _)
+        platformPairs = filters.platforms <#> Platform.toString <#> ("platform=" <> _)
         fieldPairs = filters.fieldValues # MultiMap.toUnfoldable_
             <#> \(Tuple fieldKey optionKey) -> fieldKey <> "=" <> optionKey
         newOrReturningPair = if filters.newOrReturning then Just "newOrReturning=true" else Nothing
         allPairs = [pagePair, timezonePair]
-            <> languagePairs <> locationPairs <> platformPairs <> fieldPairs <> Array.catMaybes
+            <> organizationPairs <> languagePairs <> locationPairs
+            <> sizePairs <> platformPairs <> fieldPairs <> Array.catMaybes
             [ ageFromPair, ageToPair, microphonePair, newOrReturningPair
             , weekdayFromPair, weekdayToPair, weekendFromPair, weekendToPair
             ]
         filterQuery = "?" <> intercalate "&" allPairs
     response <-
-        Fetch.fetch_ ("/api/profiles/by-handle/" <> handle <> "/teams" <> filterQuery)
+        Fetch.fetch_ ("/api/games/" <> handle <> "/teams" <> filterQuery)
         # lmap (const Nothing)
     content <-
         case FetchRes.status response of
@@ -316,6 +321,7 @@ readQueryParams fields = do
     searchParams <- Html.window >>= Window.location >>= Location.href
         >>= Url.url >>= Url.searchParams
     page <- Url.get "page" searchParams <#> maybe 1 (Int.fromString >>> maybe 1 identity)
+    organizations <- Url.getAll "organization" searchParams <#> Array.mapMaybe Organization.fromString
     ageFrom <- Url.get "age-from" searchParams <#> (\ageFrom -> ageFrom >>= Int.fromString)
     ageTo <- Url.get "age-to" searchParams <#> (\ageTo -> ageTo >>= Int.fromString)
     locations <- Url.getAll "location" searchParams
@@ -325,6 +331,7 @@ readQueryParams fields = do
     weekdayTo <- Url.get "weekday-to" searchParams
     weekendFrom <- Url.get "weekend-from" searchParams
     weekendTo <- Url.get "weekend-to" searchParams
+    sizes <- Url.getAll "size" searchParams <#> Array.mapMaybe Size.fromString
     platforms <- Url.getAll "platform" searchParams <#> Array.mapMaybe Platform.fromString
     (fieldValues :: FieldValues) <- do
         (fieldValues :: Array { fieldKey :: String, optionKeys :: Array String}) <-
@@ -342,7 +349,8 @@ readQueryParams fields = do
     pure
         { page
         , filters:
-            { ageFrom
+            { organizations
+            , ageFrom
             , ageTo
             , locations
             , languages
@@ -351,6 +359,7 @@ readQueryParams fields = do
             , weekdayTo
             , weekendFrom
             , weekendTo
+            , sizes
             , platforms
             , fieldValues
             , newOrReturning
@@ -409,6 +418,8 @@ handleAction (ApplyFilters filters) = do
         foreachE keys \key -> Url.delete key searchParams
 
         Url.set "page" "1" searchParams
+        foreachE filters.organizations \organization ->
+            Url.append "organization" (Organization.toString organization) searchParams
         case filters.ageFrom of
             Nothing -> pure unit
             Just ageFrom -> Url.set "age-from" (show ageFrom) searchParams
@@ -434,6 +445,8 @@ handleAction (ApplyFilters filters) = do
         case filters.weekendTo of
             Nothing -> pure unit
             Just weekendTo -> Url.set "weekend-to" weekendTo searchParams
+        foreachE filters.sizes \size ->
+            Url.append "size" (Size.toString size) searchParams
         foreachE filters.platforms \platform ->
             Url.append "platform" (Platform.toString platform) searchParams
         foreachE (MultiMap.toUnfoldable_ filters.fieldValues) \(Tuple fieldKey optionKey) ->

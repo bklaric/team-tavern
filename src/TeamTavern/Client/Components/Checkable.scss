@@ -1,0 +1,51 @@
+%checkable {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    flex: 0 0 20px;
+    font-size: 12px;
+    border: 1px solid #bbb;
+    background-color: white;
+}
+
+%checkbox {
+    @extend %checkable;
+    border-radius: 3px;
+}
+
+.checkbox {
+    @extend %checkbox;
+    color: transparent;
+}
+
+.checked-checkbox {
+    @extend %checkbox;
+    color: $text-color;
+}
+
+%radio {
+    @extend %checkable;
+    border-radius: 50%;
+}
+
+.radio {
+    @extend %radio;
+    color: transparent;
+}
+
+.checked-radio {
+    @extend %radio;
+    color: $text-color;
+}
+
+.checkables {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 22px 28px;
+}
+
+.checkable-container {
+    cursor: pointer;
+}

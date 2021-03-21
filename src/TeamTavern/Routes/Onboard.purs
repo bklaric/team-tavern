@@ -7,7 +7,9 @@ import Jarilo.Path (type (:>), End)
 import Jarilo.Query (NoQuery)
 import Jarilo.Route (Route)
 import Jarilo.Segment (Literal)
+import TeamTavern.Routes.Shared.Organization (OrganizationNW)
 import TeamTavern.Routes.Shared.Platform (Platform)
+import TeamTavern.Routes.Shared.Size (Size)
 import Type (type ($))
 
 type Onboard = Route
@@ -31,8 +33,7 @@ type PlayerRequestContent =
     }
 
 type TeamRequestContent =
-    { name :: String
-    , website :: Maybe String
+    { organization :: OrganizationNW
     , discordTag :: Maybe String
     , discordServer :: Maybe String
     , ageFrom :: Maybe Int
@@ -62,7 +63,8 @@ type PlayerProfileRequestContent =
     }
 
 type TeamProfileRequestContent =
-    { platforms :: Array Platform
+    { size :: Size
+    , platforms :: Array Platform
     , fieldValues :: Array
         { fieldKey :: String
         , optionKeys :: Array String

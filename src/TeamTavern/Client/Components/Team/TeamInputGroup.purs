@@ -6,8 +6,7 @@ import Async (Async)
 import Data.Maybe (Maybe(..))
 import Data.Variant (SProxy(..))
 import Halogen.HTML (HTML, ComponentHTML)
-import TeamTavern.Client.Components.Checkbox (checkboxInput)
-import TeamTavern.Client.Components.Input (inputError, inputGroup, inputLabel, inputUnderlabel, numberRangeInput, requiredInputLabel, requiredTextLineInput, textInput_, textLineInput)
+import TeamTavern.Client.Components.Input (checkboxInput, inputError, inputGroup, inputLabel, inputUnderlabel, numberRangeInput, requiredInputLabel, requiredTextLineInput, textInput_, textLineInput)
 import TeamTavern.Client.Components.Select.MultiSelect (multiSelect)
 import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.Select.MultiTreeSelect (multiTreeSelect)
@@ -48,6 +47,7 @@ ageInputGroup ageFrom ageTo onAgeFrom onAgeTo =
     inputGroup
     [ inputLabel "fas fa-calendar-alt" "Age"
     , numberRangeInput ageFrom ageTo onAgeFrom onAgeTo
+    , inputUnderlabel "You can enter either one or both of the age limits."
     ]
 
 locationInputGroup
