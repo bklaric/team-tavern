@@ -61,7 +61,8 @@ sendRequest
     -> Async left (Maybe (Either (Array (Variant (platforms :: Array String, ambitions :: Array String))) Unit))
 sendRequest state @ { teamHandle, gameHandle, profile } =
     postNoContent ("/api/teams/" <> teamHandle <> "/profiles/" <> gameHandle)
-    { platforms: profile.selectedPlatforms
+    { size: profile.size
+    , platforms: profile.selectedPlatforms
     , fieldValues: profile.fieldValues
     , newOrReturning: profile.newOrReturning
     , ambitions: profile.ambitions
@@ -72,7 +73,8 @@ handleAction :: forall output left.
 handleAction (UpdateProfile profile) =
     H.modify_ _
         { profile
-            { selectedPlatforms = profile.platforms
+            { size = profile.size
+            , selectedPlatforms = profile.platforms
             , fieldValues = profile.fieldValues
             , newOrReturning = profile.newOrReturning
             , ambitions = profile.ambitions
