@@ -44,7 +44,7 @@ create table team
 
 create table session
     ( id serial not null primary key
-    , player_id integer not null references player(id)
+    , player_id integer not null references player(id) on delete cascade
     , token character(40) not null
     , revoked boolean not null default false
     , generated timestamptz not null default current_timestamp
