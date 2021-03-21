@@ -42,7 +42,7 @@ render { games, selected } =
             (SelectGame game)
             [ HH.img
                 [ HP.class_ $ HH.ClassName "top-bar-game-icon"
-                , HP.src $ "/images/" <> game.handle <> "/icon.png"
+                , HP.src $ "/images/" <> game.handle <> "/icon-white.png"
                 ]
             , HH.text game.title
             ]

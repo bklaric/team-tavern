@@ -63,7 +63,7 @@ render (Games games') = HH.div [ HP.class_ $ HH.ClassName "games" ] $
                     ]
                     [ HH.img
                         [ HP.class_ $ HH.ClassName "game-card-logo"
-                        , HP.src $ "/images/" <> handle <> "/icon.png"
+                        , HP.src $ "/images/" <> handle <> "/icon-white.png"
                         , HP.alt $ title <> " icon"
                         ]
                     , HH.text title
