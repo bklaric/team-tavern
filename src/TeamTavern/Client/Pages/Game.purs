@@ -18,7 +18,7 @@ import Halogen.HTML.Properties as HP
 import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.Boarding.PlayerOrTeamInput as Boarding
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
-import TeamTavern.Client.Pages.Home.CallToAction (callToAction)
+import TeamTavern.Client.Pages.Home.CallToAction (callToAction')
 import TeamTavern.Client.Pages.Home.Features (features')
 import TeamTavern.Client.Pages.Home.FindProfiles (findProfiles')
 import TeamTavern.Client.Pages.Home.ForPlayers (forPlayers')
@@ -57,7 +57,7 @@ render :: forall left.
 render (Empty _) = HH.div [ HP.class_ $ HH.ClassName "home" ] []
 render (Loaded { game: game' @ { handle, shortTitle } }) =
     HH.div [ HP.class_ $ HH.ClassName "home" ]
-    [ callToAction (Just handle) (Just shortTitle) (OpenPreboarding game')
+    [ callToAction' handle shortTitle (OpenPlayerProfiles handle) (OpenTeamProfiles handle) (OpenPreboarding game')
     , forPlayers' handle shortTitle (OpenPlayerPreboarding game')
     , forTeams' handle shortTitle (OpenTeamPreboarding game')
     , findProfiles' handle shortTitle (OpenPlayerProfiles handle) (OpenTeamProfiles handle)

@@ -40,7 +40,7 @@ type ChildSlots =
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render _ =
     HH.div [ HP.class_ $ HH.ClassName "home" ]
-    [ callToAction Nothing Nothing OpenPreboarding
+    [ callToAction OpenGames OpenPreboarding
     , forPlayers OpenPlayerPreboarding
     , forTeams OpenTeamPreboarding
     , findProfiles OpenGames
