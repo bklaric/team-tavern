@@ -2,8 +2,11 @@ module TeamTavern.Server.Profile.Routes where
 
 import Prelude
 
+import Data.Array (foldl, mapMaybe)
 import Data.Maybe (Maybe, maybe)
+import Data.MultiMap as MultiMap
 import Data.Symbol (SProxy(..))
+import Data.Tuple (Tuple(..))
 import Jarilo.Junction (type (:<|>), type (:=))
 import Jarilo.Method (Get, Post, Put)
 import Jarilo.Path (type (:>), End)
@@ -12,42 +15,32 @@ import Jarilo.Route (Route)
 import Jarilo.Segment (Capture, Literal)
 import Prim.Row (class Lacks)
 import Record as Record
+import TeamTavern.Routes.Shared.Filters (Age, Filters, HasMicrophone, Language, Location, NewOrReturning, Time, Field)
 import TeamTavern.Routes.Shared.Organization (Organization)
 import TeamTavern.Routes.Shared.Platform (Platform)
 import TeamTavern.Routes.Shared.Size (Size)
-import URI.Extra.QueryPairs (Key, QueryPairs, Value)
-
-type ProfileIlk = Int
+import TeamTavern.Routes.Shared.Timezone (Timezone)
+import URI.Extra.QueryPairs (Key, QueryPairs(..), Value, keyToString, valueToString)
 
 type ProfilePage = Int
 
-type Timezone = String
-
-type Age = Int
-
-type Language = String
-
-type Location = String
-
-type Time = String
-
-type HasMicrophone = Boolean
-
-type NewOrReturning = Boolean
-
-type Filters =
-    { organizations :: Array Organization
-    , age :: { from :: Maybe Age, to :: Maybe Age }
-    , languages :: Array Language
-    , locations :: Array Location
-    , weekdayOnline :: { from :: Maybe Time, to :: Maybe Time }
-    , weekendOnline :: { from :: Maybe Time, to :: Maybe Time }
-    , microphone :: HasMicrophone
-    , sizes :: Array Size
-    , platforms :: Array Platform
-    , fields :: QueryPairs Key Value
-    , newOrReturning :: NewOrReturning
-    }
+bundleFields :: QueryPairs Key Value -> Array Field
+bundleFields (QueryPairs filters) = let
+    preparedField fieldKey optionKey = let
+        preparedFieldKey = keyToString fieldKey
+        preparedOptionKey = valueToString optionKey
+        in
+        Tuple preparedFieldKey preparedOptionKey
+    preparedFields =
+        filters # mapMaybe \(Tuple fieldKey optionKey') ->
+            optionKey' <#> \optionKey -> preparedField fieldKey optionKey
+    groupedFields = preparedFields
+        # foldl (\groupedFiltersSoFar (Tuple fieldKey optionKey) ->
+            MultiMap.insertOrAppend' fieldKey optionKey groupedFiltersSoFar)
+            MultiMap.empty
+    in
+    groupedFields # MultiMap.toUnfoldable' <#> \(Tuple fieldKey optionKeys) ->
+        { fieldKey, optionKeys }
 
 bundlePlayerFilters :: forall other. Lacks "organization" other => Lacks "size" other =>
     { ageFrom :: Maybe Int
@@ -89,15 +82,18 @@ bundleTeamFilters :: forall other.
     -> Filters
 bundleTeamFilters filters =
     { organizations: filters.organization
-    , age: { from: filters.ageFrom, to: filters.ageTo }
+    , ageFrom: filters.ageFrom
+    , ageTo: filters.ageTo
     , languages: filters.language
     , locations: filters.location
-    , weekdayOnline: { from: filters.weekdayFrom, to: filters.weekdayTo }
-    , weekendOnline: { from: filters.weekendFrom, to: filters.weekendTo }
+    , weekdayFrom: filters.weekdayFrom
+    , weekdayTo: filters.weekdayTo
+    , weekendFrom: filters.weekendFrom
+    , weekendTo: filters.weekendTo
     , microphone: maybe false identity filters.microphone
     , sizes: filters.size
     , platforms: filters.platform
-    , fields: filters.fields
+    , fields: bundleFields filters.fields
     , newOrReturning: maybe false identity filters.newOrReturning
     }
 
