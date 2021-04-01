@@ -57,6 +57,7 @@ type Input =
     , fields :: Array Field
     , filters :: Filters
     , tab :: Tab
+    , handle :: String
     }
 
 type State =
@@ -80,6 +81,7 @@ type State =
     , playerFiltersVisible :: Boolean
     , profileFiltersVisible :: Boolean
     , tab :: Tab
+    , handle :: String
     , createAlertModalShown :: Boolean
     }
 
@@ -213,7 +215,12 @@ render state =
         [ HH.div [ HS.class_ "filters-buttons" ]
             [ button "filters-clear-button" "fas fa-eraser" "Clear filters" ClearFilters
             , button "filters-apply-button" "fas fa-filter" "Apply filters" ApplyFilters
-            , button "filters-alert-button" "fas fa-bell" "Create a profile alert" ShowCreateAlertModal
+            , button "filters-alert-button" "fas fa-bell"
+                ( case state.tab of
+                    Players -> "Create player profile alert"
+                    Teams -> "Create team profile alert"
+                )
+                ShowCreateAlertModal
             ]
         ]
     else []
@@ -221,11 +228,14 @@ render state =
     <> [ filtersMpu ]
     <> guard state.createAlertModalShown
         [ createAlert
-            { handle: "dota2"
-            , playerOrTeam: CreateAlertRoute.Player
+            { handle: state.handle
+            , playerOrTeam:
+                case state.tab of
+                Players -> CreateAlertRoute.Player
+                Teams -> CreateAlertRoute.Team
             , filters: state # Record.insert (SProxy :: _ "platforms") state.selectedPlatforms # pick
             }
-            (const Nothing)
+            (const $ Just HideCreateAlertModal)
         ]
 
 handleAction :: forall left. Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
@@ -352,7 +362,7 @@ handleAction ToggleProfileFiltersVisibility =
     H.modify_ \state -> state { profileFiltersVisible = not state.profileFiltersVisible }
 
 initialState :: Input -> State
-initialState { platforms, fields, filters, tab } =
+initialState { platforms, fields, filters, tab, handle } =
     { organizations: filters.organizations
     , ageFrom: filters.ageFrom
     , ageTo: filters.ageTo
@@ -373,11 +383,11 @@ initialState { platforms, fields, filters, tab } =
     , playerFiltersVisible: false
     , profileFiltersVisible: false
     , tab
+    , handle
     , createAlertModalShown: false
     }
 
-component :: forall query left.
-    H.Component HH.HTML query Input Output (Async left)
+component :: forall query left. H.Component HH.HTML query Input Output (Async left)
 component = H.mkComponent
     { initialState
     , render

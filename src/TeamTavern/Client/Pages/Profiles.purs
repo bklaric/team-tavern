@@ -133,6 +133,7 @@ render (Game game player filters tab) = let
             , fields: filterableFields game.fields
             , filters
             , tab: toHeaderTab tab
+            , handle: game.handle
             }
             (\(ProfileFilters.Apply filters') -> Just $ ApplyFilters filters')
         , case tab of
