@@ -29,6 +29,7 @@ import Perun.Url (Url, pathSegments, queryPairs)
 import Postgres.Client.Config (ClientConfig, database, host, password, port, user)
 import Postgres.Pool (Pool)
 import Postgres.Pool as Pool
+import TeamTavern.Server.Alert.Create as Alert
 import TeamTavern.Server.Architecture.Deployment (Deployment)
 import TeamTavern.Server.Architecture.Deployment as Deployment
 import TeamTavern.Server.Boarding.Onboard as Onboard
@@ -175,6 +176,8 @@ handleRequest deployment pool method url cookies body =
             Onboard.onboard pool cookies body
         , preboard: const $
             Preboard.preboard deployment pool cookies body
+        , createAlert: const $
+            Alert.createAlert pool body
         }
         <#> (\response -> response { headers = response.headers <> MultiMap.fromFoldable
                 [ Tuple "Access-Control-Allow-Origin" $ NEL.singleton "http://localhost:1337"

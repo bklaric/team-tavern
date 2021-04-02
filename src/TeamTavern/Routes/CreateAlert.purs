@@ -13,7 +13,6 @@ import Jarilo.Segment (Literal)
 import Simple.JSON (class ReadForeign, class WriteForeign, readImpl, writeImpl)
 import TeamTavern.Routes.Shared.Filters (Filters)
 import TeamTavern.Routes.Shared.Timezone (Timezone)
-import Type (type ($))
 
 data PlayerOrTeam = Player | Team
 
@@ -36,7 +35,7 @@ instance readForeignPlayerOrTeam :: ReadForeign PlayerOrTeam where
         "team" -> pure Team
         string -> fail $ ForeignError $ "Invalid player or team " <> string
 
-type Onboard = Route
+type CreateAlert = Route
     Post
     (  Literal "alerts"
     :> End)
@@ -50,4 +49,4 @@ type RequestContent =
     , filters :: Filters
     }
 
-type BadContent = Array $ Variant (email :: Array String)
+type BadContent = Variant (email :: Array String)

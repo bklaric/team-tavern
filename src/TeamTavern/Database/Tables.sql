@@ -144,9 +144,11 @@ create table alert
     , locations text[]
     , weekday_from time
     , weekday_to time
+    , weekend_from time
+    , weekend_to time
     , microphone boolean
     , sizes text[]
     , platforms text[]
     , field jsonb
     , new_or_returning boolean
-    )
+    );
