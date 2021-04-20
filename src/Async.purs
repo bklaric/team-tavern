@@ -127,6 +127,10 @@ foreach :: forall left right traversable. Traversable traversable =>
     traversable right -> (right -> Async left Unit) -> Async left Unit
 foreach traversable function = void $ traverse function traversable
 
+safeForeach :: forall right traversable. Traversable traversable =>
+    traversable right -> (forall left. right -> Async left Unit) -> (forall left. Async left Unit)
+safeForeach traversable function = void $ traverse function traversable
+
 derive instance newtypeAsync :: Newtype (Async left right) _
 
 derive newtype instance functorAsync :: Functor (Async left)

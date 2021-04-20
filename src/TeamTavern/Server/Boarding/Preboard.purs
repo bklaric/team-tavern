@@ -189,7 +189,7 @@ preboard deployment pool cookies body =
 
             updateDetails client id player'
 
-            addProfile client id
+            _ <- addProfile client id
                 { handle: content.gameHandle
                 , nickname: unwrap registration'.nickname
                 }

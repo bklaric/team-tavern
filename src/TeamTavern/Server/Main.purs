@@ -29,6 +29,7 @@ import Perun.Url (Url, pathSegments, queryPairs)
 import Postgres.Client.Config (ClientConfig, database, host, password, port, user)
 import Postgres.Pool (Pool)
 import Postgres.Pool as Pool
+import Sendgrid (setApiKey)
 import TeamTavern.Server.Alert.Create as Alert
 import TeamTavern.Server.Architecture.Deployment (Deployment)
 import TeamTavern.Server.Architecture.Deployment as Deployment
@@ -61,6 +62,11 @@ listenOptions = TcpListenOptions
     , backlog: Nothing
     , exclusive: Nothing
     }
+
+setSendGridApiKey :: ExceptT String Effect Unit
+setSendGridApiKey = do
+    key <- lookupEnv "SENDGRID_API_KEY" <#> note "Couldn't read variable SENDGRID_API_KEY" # ExceptT
+    lift $ setApiKey key
 
 loadPostgresVariables :: ExceptT String Effect
     { user :: String
@@ -200,4 +206,5 @@ main :: Effect Unit
 main = either log pure =<< runExceptT do
     deployment <- loadDeployment
     pool <- createPostgresPool
+    setSendGridApiKey
     lift $ run_ listenOptions (handleInvalidUrl deployment pool)

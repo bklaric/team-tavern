@@ -45,7 +45,7 @@ queryString = Query """
         , microphone
         , sizes
         , platforms
-        , field
+        , fields
         , new_or_returning
         )
     values

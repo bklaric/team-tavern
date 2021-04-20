@@ -132,7 +132,7 @@ onboard pool cookies body =
                 # AsyncV.toAsync
                 # label (SProxy :: SProxy "invalidBody")
             updateDetails client (unwrap cookieInfo.id) player'
-            addProfile client (unwrap cookieInfo.id)
+            _ <- addProfile client (unwrap cookieInfo.id)
                 { handle: content.gameHandle
                 , nickname: unwrap cookieInfo.nickname
                 }

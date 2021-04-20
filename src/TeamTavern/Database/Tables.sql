@@ -136,19 +136,19 @@ create table alert
     , game_id integer not null references game(id)
     , player_or_team text not null
     , email text not null
-    , timezone text not null
     , organizations text[]
     , age_from integer
     , age_to integer
-    , languages text[]
     , locations text[]
+    , languages text[]
+    , microphone boolean not null
+    , timezone text not null
     , weekday_from time
     , weekday_to time
     , weekend_from time
     , weekend_to time
-    , microphone boolean
     , sizes text[]
     , platforms text[]
-    , field jsonb
-    , new_or_returning boolean
+    , fields jsonb[]
+    , new_or_returning boolean not null
     );
