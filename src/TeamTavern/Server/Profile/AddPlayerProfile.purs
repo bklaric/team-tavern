@@ -43,4 +43,4 @@ addPlayerProfile pool identifiers cookies body =
         pure profileId
 
     -- Check alerts and notify.
-    checkPlayerAlerts identifiers.handle profileId pool
+    checkPlayerAlerts profileId pool

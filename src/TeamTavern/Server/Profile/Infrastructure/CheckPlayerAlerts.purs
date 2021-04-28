@@ -13,7 +13,7 @@ import Sendgrid (sendAsync)
 import TeamTavern.Routes.Shared.Organization (Organization)
 import TeamTavern.Routes.Shared.Platform (Platform)
 import TeamTavern.Routes.Shared.Size (Size)
-import TeamTavern.Server.Infrastructure.Postgres (prepareString, queryFirstNotFound, queryMany)
+import TeamTavern.Server.Infrastructure.Postgres (queryFirstNotFound, queryMany)
 import TeamTavern.Server.Profile.ViewPlayerProfilesByGame.LoadProfiles (createFieldsFilterString, createPlayerFilterString)
 
 type Alert =
@@ -58,11 +58,12 @@ loadAlertsQueryString = Query """
         alert.new_or_returning as "newOrReturning"
     from alert
     join game on game.id = alert.game_id
-    where game.handle = $1 and player_or_team = 'player';
+    join player_profile on player_profile.game_id = game.id
+    where player_profile.id = $1 and alert.player_or_team = 'player';
     """
 
-queryStringWithoutPagination :: String -> Int -> Alert -> Query
-queryStringWithoutPagination handle profileId alert = Query $ """
+queryStringWithoutPagination :: Int -> Alert -> Query
+queryStringWithoutPagination profileId alert = Query $ """
     select profile.nickname
     from
         (select
@@ -125,25 +126,24 @@ queryStringWithoutPagination handle profileId alert = Query $ """
             ) as field_values
                 on field_values.player_profile_id = profile.id
         where
-            profile.id = """ <> show profileId <> """ and game.handle = """ <> prepareString handle
+            profile.id = """ <> show profileId
             <> createPlayerFilterString alert.timezone (pick alert) <> """
         group by player.id, game.id, profile.id
         ) as profile
     """ <> createFieldsFilterString alert.fields
 
-checkPlayerAlerts :: forall querier left. Querier querier =>
-    String -> Int -> querier -> Async left Unit
-checkPlayerAlerts handle profileId querier =
+checkPlayerAlerts :: forall querier left. Querier querier => Int -> querier -> Async left Unit
+checkPlayerAlerts profileId querier =
     fromEffect $ void $ setTimeout 0 $ runSafeAsync pure (
     alwaysRightWithEffect (log <<< unsafeStringify) pure do
 
     -- Load all player alerts for the game.
-    (alerts :: Array Alert) <- queryMany querier loadAlertsQueryString (handle : [])
+    (alerts :: Array Alert) <- queryMany querier loadAlertsQueryString (profileId : [])
 
     safeForeach alerts \alert -> alwaysRightWithEffect (log <<< unsafeStringify) pure do
         -- Check if alert matches the profile.
         { nickname } <- queryFirstNotFound querier
-            (queryStringWithoutPagination handle profileId alert) [] :: _ _ { nickname :: String }
+            (queryStringWithoutPagination profileId alert) [] :: _ _ { nickname :: String }
         -- Send the email.
         let playerUrl = "https://www.teamtavern.net/players/" <> nickname
         sendAsync
