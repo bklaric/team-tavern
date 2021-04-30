@@ -25,7 +25,7 @@ type ViewAllError = Variant
 
 logError :: ViewAllError -> Effect Unit
 logError viewError = do
-    logStamped "Error viewing profiles by game"
+    logStamped "Error viewing player profiles by game"
     viewError # match
         { databaseError: \error ->
             logt $ "Unknown database error ocurred: " <> print error
