@@ -4,6 +4,8 @@ import Prelude
 
 import Async (Async)
 import Data.Array as Array
+import Data.Array.Extra (full)
+import Data.Monoid (guard)
 import Data.Symbol (SProxy(..))
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Button (regularButton)
@@ -13,7 +15,7 @@ import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.Missing (missing)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Components.Player.ProfileDetails (PlatformIdSlots, profileDetails)
-import TeamTavern.Client.Components.Profile (profileHeader, profileHeaderItem, profileHeading', profileSubheading)
+import TeamTavern.Client.Components.Profile (profileHeader, profileHeading', profileSubheading)
 import TeamTavern.Client.Pages.Player.CreateProfileButton (createProfileButton)
 import TeamTavern.Client.Pages.Player.CreateProfileButton as CreateProfileButton
 import TeamTavern.Client.Pages.Player.Status (Status(..))
@@ -54,7 +56,7 @@ profiles { nickname, profiles: profiles' } status showEditProfileModal =
         in
         cardSection $
         [ profileHeader $
-            [ profileHeaderItem $
+            [ HH.div_ $
                 [ profileHeading' (SProxy :: SProxy "games") profile.handle
                     ("/games/" <> profile.handle <> "/players") profile.title
                 ]
@@ -66,24 +68,15 @@ profiles { nickname, profiles: profiles' } status showEditProfileModal =
             <>
             case status of
             SignedInSelf -> Array.singleton $
-                profileHeaderItem
-                [ regularButton "fas fa-user-edit" "Edit profile"
-                    $ showEditProfileModal profile
-                ]
+                regularButton "fas fa-user-edit" "Edit profile" $ showEditProfileModal profile
             _ -> []
         ]
         <>
-        if Array.null profileDetails' && Array.null ambitions
-        then []
-        else Array.singleton $ detailColumns $
-            ( if Array.null profileDetails'
-                then []
-                else Array.singleton $ detailColumn $
-                    [ detailColumnHeading4 "Details" ] <> profileDetails'
-            )
+        guard (full profileDetails' || full ambitions)
+        [ detailColumns $
+            guard (full profileDetails')
+            [ detailColumn $ [ detailColumnHeading4 "Details" ] <> profileDetails' ]
             <>
-            ( if Array.null ambitions
-                then []
-                else Array.singleton $ detailColumn $
-                    [ detailColumnHeading4 "Ambitions" ] <> ambitions
-            )
+            guard (full ambitions)
+            [ detailColumn $ [ detailColumnHeading4 "Ambitions" ] <> ambitions ]
+        ]

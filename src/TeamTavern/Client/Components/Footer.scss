@@ -1,6 +1,5 @@
 .footer {
     display: block;
-    height: 40px;
     background: white;
     border-top: 1px solid #ccc;
     width: 100%;
@@ -10,11 +9,29 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-direction: column;
     color: $primary-color;
     font-weight: 500;
-    height: 100%;
     padding: 0 21px;
     margin: auto;
+
+    > * {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        min-height: 40px;
+        text-align: center;
+    }
+
+    @media screen and (min-width: 550px) {
+        flex-direction: row;
+
+        > * {
+            width: unset;
+        }
+    }
+
 }
 
 .footer-icon {

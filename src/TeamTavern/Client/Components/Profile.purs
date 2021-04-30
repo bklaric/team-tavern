@@ -14,9 +14,6 @@ import TeamTavern.Client.Snippets.Class as HS
 profileHeader :: forall slots action. Array (HH.HTML slots action) -> HH.HTML slots action
 profileHeader = HH.div [ HS.class_ "profile-header" ]
 
-profileHeaderItem :: forall slots action. Array (HH.HTML slots action) -> HH.HTML slots action
-profileHeaderItem = HH.div [ HS.class_ "profile-header-item" ]
-
 profileHeading
     :: forall action index monad slots' slots label
     .  Cons label (NavigationAnchor.Slot index) slots' slots

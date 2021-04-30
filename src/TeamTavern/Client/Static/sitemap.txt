@@ -18,3 +18,6 @@ https://www.teamtavern.net/games/valorant/teams
 https://www.teamtavern.net/games/overwatch
 https://www.teamtavern.net/games/overwatch/players
 https://www.teamtavern.net/games/overwatch/teams
+https://www.teamtavern.net/games/valheim
+https://www.teamtavern.net/games/valheim/players
+https://www.teamtavern.net/games/valheim/teams

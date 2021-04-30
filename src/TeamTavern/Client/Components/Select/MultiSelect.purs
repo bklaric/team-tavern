@@ -18,7 +18,8 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Halogen.Query.EventSource as ES
 import Prim.Row (class Cons)
-import TeamTavern.Client.Components.Checkbox (checkbox, checkboxLabel)
+import TeamTavern.Client.Components.Checkable (checkbox)
+import TeamTavern.Client.Components.Input (checkboxLabel)
 import Web.Event.Event as E
 import Web.HTML (window)
 import Web.HTML.Window as Window

@@ -227,7 +227,9 @@ preboard deployment pool cookies body =
             -- Create a new session.
             createSession { id: Id id, token } client
 
-            { handle } <- addTeam client (Id id) (generateHandle team'.name) team'
+            let generatedHandle = generateHandle team'.organization registration'.nickname
+
+            { handle } <- addTeam client (Id id) generatedHandle team'
 
             AddTeamProfile.addProfile client (Id id) handle content.gameHandle profile'
 

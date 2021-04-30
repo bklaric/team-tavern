@@ -52,5 +52,5 @@ create pool body cookies =
     cookieInfo <- ensureSignedIn pool cookies
     content <- readJsonBody body
     team <- validateTeam content
-    let generatedHandle = generateHandle team.name
+    let generatedHandle = generateHandle team.organization cookieInfo.nickname
     addTeam pool cookieInfo.id generatedHandle team

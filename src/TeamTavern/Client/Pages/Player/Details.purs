@@ -5,7 +5,9 @@ import Prelude
 import Async (Async)
 import Client.Components.Copyable as Copyable
 import Data.Array as Array
+import Data.Array.Extra (full)
 import Data.Maybe (Maybe(..))
+import Data.Monoid (guard)
 import Data.Symbol (SProxy(..))
 import Halogen as H
 import Record as Record
@@ -51,15 +53,9 @@ details player status showEditPlayerModal = let
             SignedInSelf -> "Apparently, you prefer to keep an air of mystery about yourself."
             _ -> "Apparently, this player prefers to keep an air of mystery about them."
         else Array.singleton $ detailColumnsContainer $ Array.singleton $ detailColumns $
-            ( if Array.null playerDetails'
-                then []
-                else Array.singleton $ detailColumn $
-                    [ detailColumnHeading3 "Details" ] <> playerDetails'
-            )
+            guard (full playerDetails')
+            [ detailColumn $ [ detailColumnHeading3 "Details" ] <> playerDetails' ]
             <>
-            ( if Array.null about
-                then []
-                else Array.singleton $ detailColumn $
-                    [ detailColumnHeading3 "About" ] <> about
-            )
+            guard (full about)
+            [ detailColumn $ [ detailColumnHeading3 "About" ] <> about ]
     ]

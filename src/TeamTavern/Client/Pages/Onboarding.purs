@@ -13,6 +13,7 @@ import Data.Const (Const)
 import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..), isNothing, maybe)
+import Data.Monoid (guard)
 import Data.Options ((:=))
 import Data.Symbol (SProxy(..))
 import Data.Variant (match)
@@ -23,6 +24,7 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Record as Record
+import Record.Extra (pick)
 import Simple.JSON (class ReadForeign, class WriteForeign)
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
@@ -36,8 +38,9 @@ import TeamTavern.Client.Components.Player.PlayerFormInput as PlayerFormInput
 import TeamTavern.Client.Components.Player.ProfileFormInput as PlayerProfileFormInput
 import TeamTavern.Client.Components.Team.ProfileFormInput as TeamProfileFormInput
 import TeamTavern.Client.Components.Team.TeamFormInput as TeamFormInput
+import TeamTavern.Client.Script.Analytics (sendEvent)
 import TeamTavern.Client.Script.Cookie (getPlayerNickname)
-import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
+import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigate, navigateReplace, navigate_)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Onboard as Onboard
@@ -51,6 +54,8 @@ data Step
     | Game
     | PlayerProfile
     | TeamProfile
+
+derive instance eqStep :: Eq Step
 
 instance writeForeginStep :: WriteForeign Step where
     writeImpl Greeting = unsafeToForeign "Greeting"
@@ -295,28 +300,10 @@ sendRequest (state :: State) = Async.unify do
         , playerProfile: profile
         } -> Async.right
             { ilk: 1
-            , player: Just
-                { birthday: player.birthday
-                , location: player.location
-                , languages: player.languages
-                , microphone: player.microphone
-                , discordTag: player.discordTag
-                , timezone: player.timezone
-                , weekdayFrom: player.weekdayFrom
-                , weekdayTo: player.weekdayTo
-                , weekendFrom: player.weekendFrom
-                , weekendTo: player.weekendTo
-                , about: player.about
-                }
+            , player: Just $ pick player
             , team: Nothing
             , gameHandle: game.handle
-            , playerProfile: Just
-                { platform: profile.platform
-                , platformId: profile.platformId
-                , fieldValues: profile.fieldValues
-                , newOrReturning: profile.newOrReturning
-                , ambitions: profile.ambitions
-                }
+            , playerProfile: Just $ pick profile
             , teamProfile: Nothing
             }
         { playerOrTeam: Just PlayerOrTeamInput.Team
@@ -326,27 +313,12 @@ sendRequest (state :: State) = Async.unify do
         } -> Async.right
             { ilk: 2
             , player: Nothing
-            , team: Just
-                { name: team.name
-                , website: team.website
-                , discordTag: team.discordTag
-                , discordServer: team.discordServer
-                , ageFrom: team.ageFrom
-                , ageTo: team.ageTo
-                , locations: team.locations
-                , languages: team.languages
-                , microphone: team.microphone
-                , timezone: team.timezone
-                , weekdayFrom: team.weekdayFrom
-                , weekdayTo: team.weekdayTo
-                , weekendFrom: team.weekendFrom
-                , weekendTo: team.weekendTo
-                , about: team.about
-                }
+            , team: Just $ pick team
             , gameHandle: game.handle
             , playerProfile: Nothing
             , teamProfile: Just
-                { platforms: profile.selectedPlatforms
+                { size: profile.size
+                , platforms: profile.selectedPlatforms
                 , fieldValues: profile.fieldValues
                 , newOrReturning: profile.newOrReturning
                 , ambitions: profile.ambitions
@@ -387,16 +359,15 @@ handleAction Initialize = do
     case nickname of
         Just nickname' -> H.modify_ _ { nickname = nickname' }
         Nothing -> navigate_ "/"
-    H.liftEffect do
-        setMetaTitle "Onboarding | TeamTavern"
-        setMetaDescription "TeamTavern onboarding."
-        setMetaUrl
-handleAction (Receive input) =
+    setMeta "Onboarding | TeamTavern" "TeamTavern onboarding."
+handleAction (Receive input) = do
+    state <- H.get
     H.put
         ( input
         # Record.insert (SProxy :: SProxy "confirmSkip") false
         # Record.insert (SProxy :: SProxy "submitting") false
         )
+    guard (input.step /= state.step) $ setMeta "Onboarding | TeamTavern" "TeamTavern onboarding."
 handleAction Skip =
     H.modify_ _ { confirmSkip = true }
 handleAction ConfirmSkip =
@@ -434,8 +405,7 @@ handleAction (UpdatePlayer details) = do
 handleAction (UpdateTeam details) = do
     state <- H.modify _
         { team
-            { name = details.name
-            , website = details.website
+            { organization = details.organization
             , discordTag = details.discordTag
             , discordServer = details.discordServer
             , ageFrom = details.ageFrom
@@ -493,7 +463,8 @@ handleAction (UpdatePlayerProfile details) = do
 handleAction (UpdateTeamProfile details) = do
     state <- H.modify _
         { teamProfile
-            { selectedPlatforms = details.platforms
+            { size = details.size
+            , selectedPlatforms = details.platforms
             , fieldValues = details.fieldValues
             , newOrReturning = details.newOrReturning
             , ambitions = details.ambitions
@@ -528,8 +499,12 @@ handleAction SetUpAccount = do
             }
     response <- H.lift $ sendRequest currentState
     case response of
-        Just (Right { teamHandle: Nothing }) -> navigate_ "/"
-        Just (Right { teamHandle: Just teamHandle}) -> navigate_ $ "/teams/" <> teamHandle
+        Just (Right { teamHandle: Nothing }) -> do
+            H.liftEffect $ maybe (pure unit) (sendEvent "onboard" "player") $ _.handle <$> currentState.game
+            navigate_ "/"
+        Just (Right { teamHandle: Just teamHandle}) -> do
+            H.liftEffect $ maybe (pure unit) (sendEvent "onboard" "team") $ _.handle <$> currentState.game
+            navigate_ $ "/teams/" <> teamHandle
         Just (Left errors) -> H.put $
             foldl
             (\state error ->

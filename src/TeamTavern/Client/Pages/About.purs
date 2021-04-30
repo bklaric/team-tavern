@@ -53,6 +53,9 @@ render = HH.div [ HS.class_ "about" ]
         ]
     , HH.p [ HS.class_ "about-text" ]
         [ HH.text "Come find out about the latest updates, give feedback, ask questions, find teammates or just say hi!" ]
+    , HH.h2 [ HS.class_ "about-heading" ] [ HH.text "Advertising" ]
+    , HH.p [ HS.class_ "about-text" ]
+        [ HH.text $ "For all advertising inquiries please contact Andrew Church (andrew.church@network-n.com)." ]
     ]
 
 handleAction :: forall monad. MonadEffect monad => Action -> monad Unit

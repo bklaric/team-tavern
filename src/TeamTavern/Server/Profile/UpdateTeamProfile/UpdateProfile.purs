@@ -6,6 +6,7 @@ import Async (Async)
 import Postgres.Client (Client)
 import Postgres.Query (Query(..), QueryParameter, (:), (:|))
 import TeamTavern.Routes.Shared.Platform as Platform
+import TeamTavern.Routes.Shared.Size as Size
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Server.Infrastructure.Error (InternalError, ChangeSingleError)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstNotAuthorized, queryNone)
@@ -18,9 +19,10 @@ import TeamTavern.Server.Profile.Routes (Handle)
 updateProfileString :: Query
 updateProfileString = Query """
     update team_profile
-    set platforms = $4,
-        new_or_returning = $5,
-        ambitions = $6,
+    set size = $4,
+        platforms = $5,
+        new_or_returning = $6,
+        ambitions = $7,
         updated = now()
     from player, team, game
     where player.id = $1
@@ -37,6 +39,7 @@ updateProfileParameters { id } teamHandle gameHandle profile =
     id
     : teamHandle
     : gameHandle
+    : (Size.toString profile.size)
     : (profile.platforms <#> Platform.toString)
     : profile.newOrReturning
     :| profile.ambitions

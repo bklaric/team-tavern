@@ -14,6 +14,7 @@ import Data.List.Types (NonEmptyList)
 import Data.Symbol (SProxy(..))
 import Data.Variant (Variant)
 import TeamTavern.Routes.Shared.Platform (Platform)
+import TeamTavern.Routes.Shared.Size (Size)
 import TeamTavern.Server.Domain.Text (Text)
 import TeamTavern.Server.Profile.AddTeamProfile.LoadFields as LoadFields
 import TeamTavern.Server.Profile.AddTeamProfile.ReadProfile as ReadProfile
@@ -23,7 +24,8 @@ import TeamTavern.Server.Profile.AddTeamProfile.ValidatePlatforms (validatePlatf
 import TeamTavern.Server.Profile.Infrastructure.ValidateAmbitions (validateAmbitions)
 
 type Profile =
-    { platforms :: NonEmptyArray Platform
+    { size :: Size
+    , platforms :: NonEmptyArray Platform
     , fieldValues :: Array ValidateFieldValues.FieldValue
     , newOrReturning :: Boolean
     , ambitions :: Text
@@ -38,8 +40,8 @@ validateProfile
     .  LoadFields.Game
     -> ReadProfile.Profile
     -> Async (Variant (profile :: ProfileErrors | errors)) Profile
-validateProfile game profile @ { newOrReturning } =
-    { platforms: _, fieldValues: _, newOrReturning, ambitions: _ }
+validateProfile game profile @ { size, newOrReturning } =
+    { size, platforms: _, fieldValues: _, newOrReturning, ambitions: _ }
     <$> validatePlatforms game.platforms profile.platforms
     <*> (pure $ validateFieldValues game.fields profile.fieldValues)
     <*> validateAmbitions profile.ambitions

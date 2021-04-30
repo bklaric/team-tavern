@@ -4,21 +4,25 @@ import Prelude
 
 import Async (Async)
 import Data.Array as Array
+import Data.Array.Extra (full)
 import Data.Const (Const)
+import Data.Monoid (guard)
 import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Button (regularButton)
 import TeamTavern.Client.Components.Card (card, cardHeader, cardHeading, cardSection)
 import TeamTavern.Client.Components.Detail (detailColumn, detailColumnHeading4, detailColumns, textDetail)
-import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.Missing (missing)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
-import TeamTavern.Client.Components.Profile (profileHeader, profileHeaderItem, profileHeading', profileSubheading)
+import TeamTavern.Client.Components.Profile (profileHeader, profileHeading', profileSubheading)
 import TeamTavern.Client.Components.Team.ProfileDetails (profileDetails)
+import TeamTavern.Client.Pages.Profiles.TeamBadge (communityBadge, partyBadge, platformBadge)
 import TeamTavern.Client.Pages.Team.CreateProfileButton (createProfileButton)
 import TeamTavern.Client.Pages.Team.Status (Status(..))
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
+import TeamTavern.Client.Snippets.Class as HS
+import TeamTavern.Routes.Shared.Size (Size(..))
 import TeamTavern.Server.Team.View (Profile)
 
 type ChildSlots children =
@@ -57,36 +61,28 @@ profiles teamHandle profiles' status editProfileModalShown =
         in
         cardSection $
         [ profileHeader $
-            [ profileHeaderItem $
+            [ HH.div [ HS.class_ "team-profile-heading-container" ] $
                 [ profileHeading' (SProxy :: SProxy "games") profile.handle
                     ("/games/" <> profile.handle <> "/teams") profile.title
+                , case profile.size of
+                    Party -> partyBadge
+                    Community -> communityBadge
                 ]
-                <>
-                [ divider
-                , profileSubheading $ "Updated " <> lastUpdated profile.updatedSeconds
-                ]
+                <> guard (full profile.allPlatforms.tail) (profile.selectedPlatforms <#> platformBadge)
+                <> [ profileSubheading $ "Updated " <> lastUpdated profile.updatedSeconds ]
             ]
             <>
             case status of
             SignedInOwner -> Array.singleton $
-                profileHeaderItem
-                [ regularButton "fas fa-user-edit" "Edit profile"
-                    $ editProfileModalShown profile
-                ]
+                regularButton "fas fa-user-edit" "Edit profile" $ editProfileModalShown profile
             _ -> []
         ]
         <>
-        if Array.null profileDetails' && Array.null ambitions
-        then []
-        else Array.singleton $ detailColumns $
-            ( if Array.null profileDetails'
-                then []
-                else Array.singleton $ detailColumn $
-                    [ detailColumnHeading4 "Details" ] <> profileDetails'
-            )
+        guard (full profileDetails' || full ambitions)
+        [ detailColumns $
+            guard (full profileDetails')
+            [ detailColumn $ [ detailColumnHeading4 "Details" ] <> profileDetails' ]
             <>
-            ( if Array.null ambitions
-                then []
-                else Array.singleton $ detailColumn $
-                    [ detailColumnHeading4 "Ambitions" ] <> ambitions
-            )
+            guard (full ambitions)
+            [ detailColumn $ [ detailColumnHeading4 "Ambitions" ] <> ambitions ]
+        ]

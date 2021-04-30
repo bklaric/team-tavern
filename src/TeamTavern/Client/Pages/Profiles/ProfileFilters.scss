@@ -23,15 +23,6 @@
     line-height: 20px;
 }
 
-.filter-field-icon {
-    position: absolute;
-    font-size: 20px;
-}
-
-.filter-field-label {
-    margin-left: 28px;
-}
-
 .apply-filters {
     @extend .secondary-button;
 }
@@ -48,5 +39,9 @@
 
     @media screen and (min-width: 960px) {
         grid-template-columns: minmax(0, 1fr);
+    }
+
+    .fas.fa-laptop, .fas.fa-users {
+        font-size: 18px;
     }
 }

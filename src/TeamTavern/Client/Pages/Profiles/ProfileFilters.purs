@@ -8,6 +8,7 @@ import Data.Array as Array
 import Data.Const (Const)
 import Data.List.NonEmpty as NonEmptyList
 import Data.Maybe (Maybe(..))
+import Data.Monoid (guard)
 import Data.MultiMap (MultiMap)
 import Data.MultiMap as MultiMap
 import Data.Symbol (SProxy(..))
@@ -15,16 +16,20 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.CSS as HC
 import Halogen.HTML.Events as HE
-import TeamTavern.Client.Components.Card (cardHeading, cardSection, cardSectionHeading)
-import TeamTavern.Client.Components.Input (platformCheckboxes, inputGroup, inputLabel)
+import TeamTavern.Client.Components.Ads (filtersMpu)
+import TeamTavern.Client.Components.Card (card, cardHeading, cardSection, cardSectionHeading)
+import TeamTavern.Client.Components.Input (inputGroup, inputLabel)
 import TeamTavern.Client.Components.InputGroup (timeRangeInputGroup)
 import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.Select.MultiTreeSelect as MultiTreeSelect
 import TeamTavern.Client.Components.Team.ProfileInputGroup (FieldValues, fieldInputGroup, newOrReturningInputGroup)
 import TeamTavern.Client.Components.Team.TeamInputGroup (ageInputGroup, languagesInputGroup, locationInputGroup, microphoneInputGroup)
 import TeamTavern.Client.Pages.Profiles.GameHeader (Tab(..))
+import TeamTavern.Client.Pages.Profiles.TeamBadge (organizationCheckboxBadges, platformCheckboxBadges, sizeCheckboxBadges)
 import TeamTavern.Client.Snippets.Class as HS
+import TeamTavern.Routes.Shared.Organization (Organization)
 import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
+import TeamTavern.Routes.Shared.Size (Size)
 import Web.HTML as Html
 import Web.HTML.Window as Window
 
@@ -41,7 +46,8 @@ type Field =
     }
 
 type Filters =
-    { ageFrom :: Maybe Int
+    { organizations :: Array Organization
+    , ageFrom :: Maybe Int
     , ageTo :: Maybe Int
     , locations :: Array String
     , languages :: Array String
@@ -50,6 +56,7 @@ type Filters =
     , weekdayTo :: Maybe String
     , weekendFrom :: Maybe String
     , weekendTo :: Maybe String
+    , sizes :: Array Size
     , platforms :: Array Platform
     , fieldValues :: FieldValues
     , newOrReturning :: Boolean
@@ -63,7 +70,8 @@ type Input =
     }
 
 type State =
-    { ageFrom :: Maybe Int
+    { organizations :: Array Organization
+    , ageFrom :: Maybe Int
     , ageTo :: Maybe Int
     , locations :: Array String
     , languages :: Array String
@@ -72,6 +80,7 @@ type State =
     , weekdayTo :: Maybe String
     , weekendFrom :: Maybe String
     , weekendTo :: Maybe String
+    , sizes :: Array Size
     , allPlatforms :: Platforms
     , selectedPlatforms :: Array Platform
     , fields :: Array Field
@@ -88,6 +97,7 @@ data Action
     | Receive Input
     | ApplyFilters
     | ClearFilters
+    | UpdateOrganization Organization
     | UpdateAgeFrom (Maybe Int)
     | UpdateAgeTo (Maybe Int)
     | UpdateLanguages (MultiSelect.Output String)
@@ -97,6 +107,7 @@ data Action
     | UpdateWeekdayTo (Maybe String)
     | UpdateWeekendFrom (Maybe String)
     | UpdateWeekendTo (Maybe String)
+    | UpdateSize Size
     | UpdatePlatform Platform
     | UpdateFieldValues String (MultiSelect.Output Option)
     | UpdateNewOrReturning Boolean
@@ -120,7 +131,8 @@ headerCaret class_ visible =
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render state =
-    HH.div [ HS.class_ "filters-card" ] $
+    HH.div [ HS.class_ "filters-container" ] $ [
+    card $
     [ HH.div
         [ HS.class_ "card-header"
         , HE.onClick $ const $ Just ToggleFiltersVisibility
@@ -148,6 +160,16 @@ render state =
         then Array.singleton $
             cardSection
             [ HH.div [ HS.class_ "filter-input-groups" ] $
+                ( case state.tab of
+                    Players -> []
+                    Teams -> Array.singleton $
+                        inputGroup
+                        [ inputLabel "fas fa-users" "Organization"
+                        , HH.div [ HC.style $ Css.height $ Css.px 7.0 ] [] -- filler
+                        , organizationCheckboxBadges state.organizations UpdateOrganization
+                        ]
+                )
+                <>
                 [ ageInputGroup state.ageFrom state.ageTo UpdateAgeFrom UpdateAgeTo
                 , locationInputGroup state.locations UpdateLocations
                 , languagesInputGroup state.languages UpdateLanguages
@@ -173,16 +195,22 @@ render state =
         then Array.singleton $
             cardSection
             [ HH.div [ HS.class_ "filter-input-groups" ] $
-                ( case platformCheckboxes state.allPlatforms state.selectedPlatforms UpdatePlatform of
-                    Nothing -> []
-                    Just checkboxes ->
-                        [ inputGroup
-                            [ inputLabel "fas fa-laptop" "Platform"
-                            , HH.div [ HC.style $ Css.height $ Css.px 7.0 ] [] -- filler
-                            , checkboxes
-                            ]
+                ( case state.tab of
+                    Players -> []
+                    Teams -> Array.singleton $
+                        inputGroup
+                        [ inputLabel "fas fa-users" "Size"
+                        , HH.div [ HC.style $ Css.height $ Css.px 7.0 ] [] -- filler
+                        , sizeCheckboxBadges state.sizes UpdateSize
                         ]
                 )
+                <> guard (not $ Array.null state.allPlatforms.tail)
+                [ inputGroup
+                    [ inputLabel "fas fa-laptop" "Platform"
+                    , HH.div [ HC.style $ Css.height $ Css.px 7.0 ] [] -- filler
+                    , platformCheckboxBadges state.allPlatforms state.selectedPlatforms UpdatePlatform
+                    ]
+                ]
                 <> ( state.fields <#> fieldInputGroup state.fieldValues UpdateFieldValues )
                 <> [ newOrReturningInputGroup state.newOrReturning UpdateNewOrReturning ]
             ]
@@ -206,6 +234,8 @@ render state =
             ]
         ]
     else []
+    ]
+    <> [ filtersMpu ]
 
 handleAction :: forall left. Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
 handleAction Initialize = do
@@ -218,7 +248,8 @@ handleAction Initialize = do
         }
 handleAction (Receive { platforms, fields, filters, tab }) = do
     H.modify_ _
-        { ageFrom = filters.ageFrom
+        { organizations = filters.organizations
+        , ageFrom = filters.ageFrom
         , ageTo = filters.ageTo
         , locations = filters.locations
         , languages = filters.languages
@@ -227,6 +258,7 @@ handleAction (Receive { platforms, fields, filters, tab }) = do
         , weekdayTo = filters.weekdayTo
         , weekendFrom = filters.weekendFrom
         , weekendTo = filters.weekendTo
+        , sizes = filters.sizes
         , allPlatforms = platforms
         , selectedPlatforms = filters.platforms
         , fields = fields
@@ -237,7 +269,8 @@ handleAction (Receive { platforms, fields, filters, tab }) = do
 handleAction ApplyFilters = do
     state <- H.get
     H.raise $ Apply
-        { ageFrom: state.ageFrom
+        { organizations: state.organizations
+        , ageFrom: state.ageFrom
         , ageTo: state.ageTo
         , languages: state.languages
         , locations: state.locations
@@ -246,13 +279,15 @@ handleAction ApplyFilters = do
         , weekdayTo: state.weekdayTo
         , weekendFrom: state.weekendFrom
         , weekendTo: state.weekendTo
+        , sizes: state.sizes
         , platforms: state.selectedPlatforms
         , fieldValues: state.fieldValues
         , newOrReturning: state.newOrReturning
         }
 handleAction ClearFilters = do
     H.modify_ \state -> state
-        { ageFrom = Nothing
+        { organizations = []
+        , ageFrom = Nothing
         , ageTo = Nothing
         , locations = []
         , languages = []
@@ -261,9 +296,17 @@ handleAction ClearFilters = do
         , weekdayTo = Nothing
         , weekendFrom = Nothing
         , weekendTo = Nothing
+        , sizes = []
         , selectedPlatforms = []
         , fieldValues = (MultiMap.empty :: MultiMap String String)
         , newOrReturning = false
+        }
+handleAction (UpdateOrganization teamOrganization) =
+    H.modify_ \state -> state
+        { organizations =
+            if Array.elem teamOrganization state.organizations
+            then Array.delete teamOrganization state.organizations
+            else Array.cons teamOrganization state.organizations
         }
 handleAction (UpdateAgeFrom ageFrom) =
     H.modify_ (_ { ageFrom = ageFrom })
@@ -283,6 +326,13 @@ handleAction (UpdateWeekendFrom time) =
     H.modify_ (_ { weekendFrom = time })
 handleAction (UpdateWeekendTo time) =
     H.modify_ (_ { weekendTo = time })
+handleAction (UpdateSize teamSize) =
+    H.modify_ \state -> state
+        { sizes =
+            if Array.elem teamSize state.sizes
+            then Array.delete teamSize state.sizes
+            else Array.cons teamSize state.sizes
+        }
 handleAction (UpdatePlatform platform) =
     H.modify_ \state -> state
         { selectedPlatforms =
@@ -308,7 +358,8 @@ handleAction ToggleProfileFiltersVisibility =
 
 initialState :: Input -> State
 initialState { platforms, fields, filters, tab } =
-    { ageFrom: filters.ageFrom
+    { organizations: filters.organizations
+    , ageFrom: filters.ageFrom
     , ageTo: filters.ageTo
     , locations: filters.locations
     , languages: filters.languages
@@ -317,6 +368,7 @@ initialState { platforms, fields, filters, tab } =
     , weekdayTo: filters.weekdayTo
     , weekendFrom: filters.weekendFrom
     , weekendTo: filters.weekendTo
+    , sizes: filters.sizes
     , allPlatforms: platforms
     , selectedPlatforms: filters.platforms
     , fields

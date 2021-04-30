@@ -14,6 +14,7 @@ import Data.Const (Const)
 import Data.Either (Either(..))
 import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..), isNothing, maybe)
+import Data.Monoid (guard)
 import Data.Options ((:=))
 import Data.Symbol (SProxy(..))
 import Data.Variant (match)
@@ -40,7 +41,8 @@ import TeamTavern.Client.Components.RegistrationInput (registrationInput)
 import TeamTavern.Client.Components.RegistrationInput as RegistrationInput
 import TeamTavern.Client.Components.Team.ProfileFormInput as TeamProfileFormInput
 import TeamTavern.Client.Components.Team.TeamFormInput as TeamFormInput
-import TeamTavern.Client.Script.Meta (setMetaDescription, setMetaTitle, setMetaUrl)
+import TeamTavern.Client.Script.Analytics (sendEvent)
+import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigate, navigateReplace, navigate_)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Preboard as Preboard
@@ -266,7 +268,7 @@ renderPage { step: Team, team, playerOrTeam, game } =
     [ boardingStep
         [ boardingHeading "Team"
         , boardingDescription  """Tell us about your team. Fill out as much as you want to help us
-            find the right teammates for your team. All fields are optional."""
+            find the right teammates for your team."""
         , TeamFormInput.teamFormInput team (Just <<< UpdateTeam)
         ]
     , boardingButtons
@@ -369,8 +371,7 @@ renderPage { step: Register, registration, otherError, submitting, playerOrTeam 
         ]
     ]
 
-render :: forall slots left.
-    State -> HH.ComponentHTML Action (ChildSlots slots) (Async left)
+render :: forall slots left. State -> HH.ComponentHTML Action (ChildSlots slots) (Async left)
 render state = boarding $ renderPage state
 
 sendRequest :: forall left.
@@ -384,33 +385,12 @@ sendRequest (state :: State) = Async.unify do
         } | Just game <- getGame state.game
           , Just (PlayerOrTeamInput.Player) <- getPlayerOrTeam state.playerOrTeam -> Async.right
             { ilk: 1
-            , player: Just
-                { birthday: player.birthday
-                , location: player.location
-                , languages: player.languages
-                , microphone: player.microphone
-                , discordTag: player.discordTag
-                , timezone: player.timezone
-                , weekdayFrom: player.weekdayFrom
-                , weekdayTo: player.weekdayTo
-                , weekendFrom: player.weekendFrom
-                , weekendTo: player.weekendTo
-                , about: player.about
-                }
+            , player: Just $ pick player
             , team: Nothing
             , gameHandle: game.handle
-            , playerProfile: Just
-                { platform: profile.platform
-                , platformId: profile.platformId
-                , fieldValues: profile.fieldValues
-                , newOrReturning: profile.newOrReturning
-                , ambitions: profile.ambitions
-                }
+            , playerProfile: Just $ pick profile
             , teamProfile: Nothing
-            , registration:
-                { nickname: registration.nickname
-                , password: registration.password
-                }
+            , registration: pick registration
             }
         { team
         , teamProfile: profile
@@ -419,35 +399,17 @@ sendRequest (state :: State) = Async.unify do
           , Just (PlayerOrTeamInput.Team) <- getPlayerOrTeam state.playerOrTeam -> Async.right
             { ilk: 2
             , player: Nothing
-            , team: Just
-                { name: team.name
-                , website: team.website
-                , discordTag: team.discordTag
-                , discordServer: team.discordServer
-                , ageFrom: team.ageFrom
-                , ageTo: team.ageTo
-                , locations: team.locations
-                , languages: team.languages
-                , microphone: team.microphone
-                , timezone: team.timezone
-                , weekdayFrom: team.weekdayFrom
-                , weekdayTo: team.weekdayTo
-                , weekendFrom: team.weekendFrom
-                , weekendTo: team.weekendTo
-                , about: team.about
-                }
+            , team: Just $ pick team
             , gameHandle: game.handle
             , playerProfile: Nothing
             , teamProfile: Just
-                { platforms: profile.selectedPlatforms
+                { size: profile.size
+                , platforms: profile.selectedPlatforms
                 , fieldValues: profile.fieldValues
                 , newOrReturning: profile.newOrReturning
                 , ambitions: profile.ambitions
                 }
-            , registration:
-                { nickname: registration.nickname
-                , password: registration.password
-                }
+            , registration: pick registration
             }
         _ -> Async.left Nothing
     response <-
@@ -480,12 +442,11 @@ updateHistoryState (state :: State) = do
 handleAction :: forall action output slots left.
     Action -> H.HalogenM State action slots output (Async left) Unit
 handleAction Initialize =
-    H.liftEffect do
-        setMetaTitle "Preboarding | TeamTavern"
-        setMetaDescription "TeamTavern preboarding."
-        setMetaUrl
-handleAction (Receive input) =
+    setMeta "Preboarding | TeamTavern" "TeamTavern preboarding."
+handleAction (Receive input) = do
+    state <- H.get
     H.put (input # Record.insert (SProxy :: SProxy "submitting") false)
+    guard (input.step /= state.step) $ setMeta "Preboarding | TeamTavern" "TeamTavern preboarding."
 handleAction Exit = do
     { game } <- H.get
     navigate_
@@ -526,8 +487,7 @@ handleAction (UpdatePlayer details) = do
 handleAction (UpdateTeam details) = do
     state <- H.modify _
         { team
-            { name = details.name
-            , website = details.website
+            { organization = details.organization
             , discordTag = details.discordTag
             , discordServer = details.discordServer
             , ageFrom = details.ageFrom
@@ -584,7 +544,8 @@ handleAction (UpdatePlayerProfile details) = do
 handleAction (UpdateTeamProfile details) = do
     state <- H.modify _
         { teamProfile
-            { selectedPlatforms = details.platforms
+            { size = details.size
+            , selectedPlatforms = details.platforms
             , fieldValues = details.fieldValues
             , newOrReturning = details.newOrReturning
             , ambitions = details.ambitions
@@ -632,8 +593,12 @@ handleAction SetUpAccount = do
             }
     response <- H.lift $ sendRequest currentState
     case response of
-        Just (Right { teamHandle: Nothing }) -> navigate_ "/"
-        Just (Right { teamHandle: Just teamHandle }) -> navigate_ $ "/teams/" <> teamHandle
+        Just (Right { teamHandle: Nothing }) -> do
+            H.liftEffect $ maybe (pure unit) (sendEvent "preboard" "player") $ _.handle <$> getGame currentState.game
+            navigate_ "/"
+        Just (Right { teamHandle: Just teamHandle }) -> do
+            H.liftEffect $ maybe (pure unit) (sendEvent "preboard" "team") $ _.handle <$> getGame currentState.game
+            navigate_ $ "/teams/" <> teamHandle
         Just (Left errors) -> H.put $
             foldl
             (\state error ->

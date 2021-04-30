@@ -4,9 +4,11 @@ import Prelude
 
 import Data.Array as Array
 import Data.Maybe (Maybe(..))
+import Data.Newtype (unwrap)
 import Data.String (CodePoint, codePointFromChar, fromCodePointArray, toCodePointArray)
-import TeamTavern.Server.Team.Infrastructure.ValidateName (Name)
+import TeamTavern.Server.Player.Domain.Nickname (Nickname)
 import TeamTavern.Server.Team.Infrastructure.ValidateName as ValidateName
+import TeamTavern.Server.Team.Infrastructure.ValidateTeam (Organization(..))
 
 newtype Handle = Handle String
 
@@ -43,9 +45,12 @@ isLetter point = (aPoint <= point && point <= zPoint) || (aCapPoint <= point && 
 isNumber :: CodePoint -> Boolean
 isNumber point = onePoint <= point && point <= ninePoint
 
-generateHandle :: Name -> Handle
-generateHandle name =
-    ValidateName.toString name
+generateHandle :: Organization -> Nickname -> Handle
+generateHandle organization nickname =
+    ( case organization of
+        Informal -> unwrap nickname
+        Organized { name } -> ValidateName.toString name
+    )
     # toCodePointArray
     <#> (\point ->
         if isLetter point || isNumber point || point == dashPoint || point == underscorePoint

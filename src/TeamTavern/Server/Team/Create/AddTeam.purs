@@ -1,5 +1,6 @@
 module TeamTavern.Server.Team.Create.AddTeam (addTeam) where
 
+import Prelude
 
 import Async (Async)
 import Data.Nullable (toNullable)
@@ -10,7 +11,7 @@ import TeamTavern.Server.Player.Domain.Id (Id)
 import TeamTavern.Server.Player.UpdatePlayer.ValidateTimespan (nullableTimeFrom, nullableTimeTo)
 import TeamTavern.Server.Profile.AddTeamProfile.ValidateAgeSpan (nullableAgeFrom, nullableAgeTo)
 import TeamTavern.Server.Team.Infrastructure.GenerateHandle (Handle)
-import TeamTavern.Server.Team.Infrastructure.ValidateTeam (Team)
+import TeamTavern.Server.Team.Infrastructure.ValidateTeam (Team, organizationName, organizationWebsite, toString)
 
 queryString :: Query
 queryString = Query """
@@ -31,6 +32,7 @@ queryString = Query """
     insert into team
         ( owner_id
         , handle
+        , organization
         , name
         , website
         , discord_tag
@@ -49,7 +51,7 @@ queryString = Query """
         )
     values
         ( $1, (select handle from unique_handle)
-        , $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17
+        , $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18
         )
     returning team.handle;
     """
@@ -58,8 +60,9 @@ queryParameters :: Id -> Handle -> Team -> Array QueryParameter
 queryParameters ownerId handle team
     = ownerId
     : handle
-    : team.name
-    : toNullable team.website
+    : (toString team.organization)
+    : (toNullable $ organizationName team.organization)
+    : (toNullable $ organizationWebsite team.organization)
     : toNullable team.discordTag
     : toNullable team.discordServer
     : nullableAgeFrom team.ageSpan

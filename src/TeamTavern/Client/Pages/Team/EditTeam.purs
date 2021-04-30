@@ -10,6 +10,7 @@ import Data.Maybe (Maybe(..))
 import Data.Variant (SProxy(..), match)
 import Halogen as H
 import Halogen.HTML as HH
+import Record.Extra (pick)
 import TeamTavern.Client.Components.Form (form, otherFormError, submitButton)
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.Team.TeamFormInput (teamFormInput)
@@ -17,6 +18,7 @@ import TeamTavern.Client.Components.Team.TeamFormInput as EnterTeamDetails
 import TeamTavern.Client.Script.Navigate (hardNavigate)
 import TeamTavern.Client.Script.Request (putNoContent)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
+import TeamTavern.Routes.Shared.Organization (OrganizationNW)
 import TeamTavern.Server.Team.Create as Create
 import TeamTavern.Server.Team.Infrastructure.ValidateTeam (TeamModel)
 import Web.Event.Event (preventDefault)
@@ -24,8 +26,7 @@ import Web.Event.Internal.Types (Event)
 
 type Input fields =
     { handle :: String
-    , name :: String
-    , website :: Maybe String
+    , organization :: OrganizationNW
     , discordTag :: Maybe String
     , discordServer :: Maybe String
     , ageFrom :: Maybe Int
@@ -76,25 +77,8 @@ render { details, submitting, otherError } =
     otherFormError otherError
 
 sendRequest :: forall left. State -> Async left (Maybe (Either Create.BadContent Unit))
-sendRequest state @ { handle, details } = do
-    putNoContent
-        ("/api/teams/" <> handle)
-        ({ name: details.name
-        , website: details.website
-        , discordTag: details.discordTag
-        , discordServer: details.discordServer
-        , ageFrom: details.ageFrom
-        , ageTo: details.ageTo
-        , locations: details.locations
-        , languages: details.languages
-        , microphone: details.microphone
-        , timezone: details.timezone
-        , weekdayFrom: details.weekdayFrom
-        , weekdayTo: details.weekdayTo
-        , weekendFrom: details.weekendFrom
-        , weekendTo: details.weekendTo
-        , about: details.about
-        } :: TeamModel)
+sendRequest state @ { handle, details } =
+    putNoContent ("/api/teams/" <> handle) (pick details :: TeamModel)
 
 handleAction :: forall output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
@@ -108,8 +92,7 @@ handleAction Initialize = do
 handleAction (UpdateDetails details) =
     H.modify_ \state -> state
         { details = state.details
-            { name = details.name
-            , website = details.website
+            { organization = details.organization
             , discordTag = details.discordTag
             , discordServer = details.discordServer
             , ageFrom = details.ageFrom
@@ -177,8 +160,7 @@ component = H.mkComponent
     { initialState: \team ->
         { handle: team.handle
         , details: EnterTeamDetails.emptyInput
-            { name = team.name
-            , website = team.website
+            { organization = team.organization
             , discordTag = team.discordTag
             , discordServer = team.discordServer
             , ageFrom = team.ageFrom

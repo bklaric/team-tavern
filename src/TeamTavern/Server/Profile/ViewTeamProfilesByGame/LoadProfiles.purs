@@ -21,8 +21,12 @@ import Postgres.Error (Error)
 import Postgres.Query (Query(..))
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
+import TeamTavern.Routes.Shared.Organization (Organization, OrganizationNW)
+import TeamTavern.Routes.Shared.Organization as Organization
 import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
 import TeamTavern.Routes.Shared.Platform as Platform
+import TeamTavern.Routes.Shared.Size (Size)
+import TeamTavern.Routes.Shared.Size as Size
 import TeamTavern.Server.Infrastructure.Postgres (prepareJsonString, prepareString, teamAdjustedWeekdayFrom, teamAdjustedWeekdayTo, teamAdjustedWeekendFrom, teamAdjustedWeekendTo)
 import TeamTavern.Server.Profile.Routes (Age, Location, Filters, Handle, HasMicrophone, Language, ProfilePage, Time, Timezone, NewOrReturning)
 import URI.Extra.QueryPairs (Key, QueryPairs(..), Value)
@@ -35,8 +39,7 @@ pageSize = 10
 type LoadProfilesResult =
     { owner :: String
     , handle :: String
-    , name :: String
-    , website :: Maybe String
+    , organization :: OrganizationNW
     , discordTag :: Maybe String
     , discordServer :: Maybe String
     , ageFrom :: Maybe Int
@@ -53,6 +56,7 @@ type LoadProfilesResult =
         , to :: String
         }
     , about :: Array String
+    , size :: Size
     , allPlatforms :: Platforms
     , selectedPlatforms :: Array Platform
     , fieldValues :: Array
@@ -80,6 +84,10 @@ type LoadProfilesError errors = Variant
         , errors :: MultipleErrors
         }
     | errors )
+
+createOrganizationsFilter :: Array Organization -> String
+createOrganizationsFilter [] = ""
+createOrganizationsFilter organizations = " and team.organization = any (array[" <> (organizations <#> Organization.toString <#> prepareString # intercalate ", ") <> "])"
 
 createAgeFilter :: Maybe Age -> Maybe Age -> String
 createAgeFilter Nothing Nothing = ""
@@ -189,6 +197,10 @@ createMicrophoneFilter :: HasMicrophone -> String
 createMicrophoneFilter false = ""
 createMicrophoneFilter true = " and team.microphone"
 
+createSizesFilter :: Array Size -> String
+createSizesFilter [] = ""
+createSizesFilter sizes = " and profile.size = any (array[" <> (sizes <#> Size.toString <#> prepareString # intercalate ", ") <> "])"
+
 createPlatformsFilter :: Array Platform -> String
 createPlatformsFilter [] = ""
 createPlatformsFilter platforms = " and profile.platforms && (array[" <> (platforms <#> Platform.toString <#> prepareString # intercalate ", ") <> "])"
@@ -199,7 +211,8 @@ createNewOrReturningFilter true = " and profile.new_or_returning"
 
 createTeamFilterString :: Timezone -> Filters -> String
 createTeamFilterString timezone filters =
-    createAgeFilter filters.age.from filters.age.to
+    createOrganizationsFilter filters.organizations
+    <> createAgeFilter filters.age.from filters.age.to
     <> createLanguagesFilter filters.languages
     <> createCountriesFilter filters.locations
     <> createWeekdayOnlineFilter
@@ -207,6 +220,7 @@ createTeamFilterString timezone filters =
     <> createWeekendOnlineFilter
         timezone filters.weekendOnline.from filters.weekendOnline.to
     <> createMicrophoneFilter filters.microphone
+    <> createSizesFilter filters.sizes
     <> createPlatformsFilter filters.platforms
     <> createNewOrReturningFilter filters.newOrReturning
 
@@ -255,8 +269,21 @@ queryStringWithoutPagination handle timezone filters = Query $ """
         (select
             player.nickname as owner,
             team.handle,
-            team.name,
-            team.website,
+            case
+                when team.organization = 'informal'
+                then json_build_object(
+                    'type', '"informal"'::jsonb,
+                    'value', '{}'::jsonb
+                )
+                when team.organization = 'organized'
+                then json_build_object(
+                    'type', '"organized"'::jsonb,
+                    'value', json_build_object(
+                        'name', team.name,
+                        'website', team.website
+                    )
+                )
+            end as organization,
             team.discord_tag as "discordTag",
             team.discord_server as "discordServer",
             team.age_from as "ageFrom",
@@ -278,6 +305,8 @@ queryStringWithoutPagination handle timezone filters = Query $ """
                     'to', to_char(""" <> teamAdjustedWeekendTo timezone <> """, 'HH24:MI')
                 )
             end as "weekendOnline",
+            team.about,
+            profile.size,
             json_build_object(
                 'head', game.platforms[1],
                 'tail', game.platforms[2:]
@@ -297,7 +326,6 @@ queryStringWithoutPagination handle timezone filters = Query $ """
                 ) filter (where field_values.team_profile_id is not null),
                 '[]'
             ) as "fieldValues",
-            team.about,
             profile.new_or_returning as "newOrReturning",
             profile.ambitions,
             profile.updated::text,

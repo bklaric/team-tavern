@@ -5,6 +5,8 @@ import Prelude
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import Effect.Class (class MonadEffect, liftEffect)
+import TeamTavern.Client.Script.Analytics (registerPageView)
+import TeamTavern.Client.Script.ReloadAds (reloadAds)
 import Web.DOM.NonElementParentNode (getElementById)
 import Web.HTML (window)
 import Web.HTML.HTMLDocument (setTitle, toNonElementParentNode)
@@ -12,7 +14,7 @@ import Web.HTML.HTMLLinkElement (setHref)
 import Web.HTML.HTMLLinkElement as LinkElement
 import Web.HTML.HTMLMetaElement (setContent)
 import Web.HTML.HTMLMetaElement as MetaElement
-import Web.HTML.Location (href)
+import Web.HTML.Location (origin, pathname)
 import Web.HTML.Window (document, location)
 
 setMetaContent :: String -> String -> Effect Unit
@@ -43,7 +45,9 @@ setLink id url = do
 
 setMetaUrl :: Effect Unit
 setMetaUrl = do
-    url <- window >>= location >>= href
+    origin' <- window >>= location >>= origin
+    pathname' <- window >>= location >>= pathname
+    let url = origin' <> pathname'
     setMetaContent url "meta-og-url"
     setLink "canonical-url" url
     setLink "hreflang-en" url
@@ -54,3 +58,5 @@ setMeta title description = liftEffect do
     setMetaTitle title
     setMetaDescription description
     setMetaUrl
+    reloadAds
+    registerPageView

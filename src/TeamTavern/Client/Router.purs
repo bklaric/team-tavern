@@ -5,6 +5,7 @@ import Prelude
 import Async (Async)
 import Data.Maybe (Maybe(..))
 import Data.String (Pattern(..), split)
+import Data.Symbol (SProxy(..))
 import Foreign (Foreign)
 import Halogen as H
 import Halogen.HTML as HH
@@ -13,6 +14,7 @@ import Simple.JSON (read_)
 import TeamTavern.Client.Components.Content (content, singleContent, wideContent)
 import TeamTavern.Client.Components.Footer (footer)
 import TeamTavern.Client.Components.Footer as Footer
+import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Components.TopBar (topBar)
 import TeamTavern.Client.Components.TopBar as TopBar
@@ -30,6 +32,7 @@ import TeamTavern.Client.Pages.Player (player)
 import TeamTavern.Client.Pages.Player as Player
 import TeamTavern.Client.Pages.Preboarding (preboarding)
 import TeamTavern.Client.Pages.Preboarding as Preboarding
+import TeamTavern.Client.Pages.Privacy (privacyPolicy)
 import TeamTavern.Client.Pages.Profiles as Profiles
 import TeamTavern.Client.Pages.Profiles.GameHeader as GameHeader
 import TeamTavern.Client.Pages.Register (register)
@@ -40,6 +43,8 @@ import TeamTavern.Client.Pages.Team (team)
 import TeamTavern.Client.Pages.Team as Team
 import TeamTavern.Client.Script.Cookie (getPlayerNickname, hasPlayerIdCookie)
 import TeamTavern.Client.Script.Navigate (navigateReplace_)
+import TeamTavern.Client.Script.ReloadAds (reloadAds)
+import TeamTavern.Client.Snippets.Class as HS
 
 data Query send = ChangeRoute Foreign String send
 
@@ -50,6 +55,7 @@ data State
     | Home
     | Games
     | About
+    | Privacy
     | Game { handle :: String }
     | Profiles GameHeader.Handle GameHeader.Tab
     | Player { nickname :: String }
@@ -58,6 +64,8 @@ data State
     | SignIn
     | Onboarding Onboarding.Input
     | Preboarding Preboarding.Input
+    | NetworkN
+    | NetworkN2
     | NotFound
 
 type ChildSlots = Footer.ChildSlots
@@ -75,6 +83,8 @@ type ChildSlots = Footer.ChildSlots
     , homeAnchor :: NavigationAnchor.Slot Unit
     , signInAnchor :: NavigationAnchor.Slot Unit
     , register :: Register.Slot Unit
+    , "network-n-test" :: NavigationAnchor.Slot Unit
+    , "network-n-test2" :: NavigationAnchor.Slot Unit
     )
 
 topBarWithContent
@@ -94,6 +104,7 @@ render Empty = HH.div_ []
 render Home = HH.div_ [ topBar, home, footer ]
 render Games = topBarWithContent [ games ]
 render About = topBarWithContent [ about ]
+render Privacy = topBarWithContent [ privacyPolicy ]
 render (Game input) = HH.div_ [ topBar, game input, footer ]
 render (Profiles handle tab) = wideTopBarWithContent [ Profiles.profiles handle tab ]
 render (Player input) = topBarWithContent [ player input ]
@@ -102,6 +113,42 @@ render Register = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form
 render SignIn = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ signIn ] ]
 render (Onboarding input) = onboarding input
 render (Preboarding input) = preboarding input
+render NetworkN = HH.div_
+    [ topBar
+    , content
+        [ HH.h3_ [ HH.text "nn_lb1" ]
+        , HH.div [ HP.id_ "nn_lb1" ] []
+        , HH.h3_ [ HH.text "nn_lb2" ]
+        , HH.div [ HP.id_ "nn_lb2" ] []
+        , HH.h3_ [ HH.text "nn_mpu1" ]
+        , HH.div [ HP.id_ "nn_mpu1" ] []
+        , HH.h3_ [ HH.text "nn_mobile_lb1_sticky" ]
+        , HH.div [ HP.id_ "nn_mobile_lb1_sticky", HS.class_ "nn-sticky" ] []
+        , HH.h3_ [ HH.text "nn_mobile_lb2" ]
+        , HH.div [ HP.id_ "nn_mobile_lb2" ] []
+        , navigationAnchor (SProxy :: SProxy "network-n-test2") { path: "/network-n-test2", content: HH.text "Go to test page 2" }
+        ]
+    , footer
+    -- , HH.div [ HP.id_ "nn_1by1" ] []
+    ]
+render NetworkN2 = HH.div_
+    [ topBar
+    , content
+        [ HH.h3_ [ HH.text "nn_lb1" ]
+        , HH.div [ HP.id_ "nn_lb1" ] []
+        , HH.h3_ [ HH.text "nn_lb2" ]
+        , HH.div [ HP.id_ "nn_lb2" ] []
+        , HH.h3_ [ HH.text "nn_mpu1" ]
+        , HH.div [ HP.id_ "nn_mpu1" ] []
+        , HH.h3_ [ HH.text "nn_mobile_lb1_sticky" ]
+        , HH.div [ HP.id_ "nn_mobile_lb1_sticky", HS.class_ "nn-sticky" ] []
+        , HH.h3_ [ HH.text "nn_mobile_lb2" ]
+        , HH.div [ HP.id_ "nn_mobile_lb2" ] []
+        , navigationAnchor (SProxy :: SProxy "network-n-test") { path: "/network-n-test", content: HH.text "Go to test page 1" }
+        ]
+    , footer
+    -- , HH.div [ HP.id_ "nn_1by1" ] []
+    ]
 render NotFound = HH.p_ [ HH.text "You're fucken lost, mate." ]
 
 just :: forall t5 t7. Applicative t5 => t7 -> t5 (Maybe t7)
@@ -121,6 +168,8 @@ handleAction (Init state route) = do
                 Nothing -> just Home
         ["", "about"] ->
             just About
+        ["", "privacy"] ->
+            just Privacy
         ["", "register"] ->
             just Register
         ["", "signin"] ->
@@ -171,10 +220,19 @@ handleAction (Init state route) = do
             just $ Profiles handle GameHeader.Teams
         ["", "players", nickname] ->
             just $ Player { nickname }
+        ["", "network-n-test"] ->
+            just $ NetworkN
+        ["", "network-n-test2"] ->
+            just $ NetworkN2
         _ ->
             navigateReplace_ "/" *> nothing
     case newState of
-        Just newState' -> H.put newState'
+        Just newState' -> do
+            H.put newState'
+            case newState' of
+                NetworkN -> reloadAds
+                NetworkN2 -> reloadAds
+                _ -> pure unit
         Nothing -> pure unit
 
 handleQuery
