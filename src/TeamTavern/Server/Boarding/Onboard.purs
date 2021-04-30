@@ -39,6 +39,7 @@ import TeamTavern.Server.Profile.AddTeamProfile.AddProfile as AddTeamProfile
 import TeamTavern.Server.Profile.AddTeamProfile.LoadFields as Team
 import TeamTavern.Server.Profile.AddTeamProfile.ValidateProfile as TeamProfile
 import TeamTavern.Server.Profile.Infrastructure.CheckPlayerAlerts (checkPlayerAlerts)
+import TeamTavern.Server.Profile.Infrastructure.CheckTeamAlerts (checkTeamAlerts)
 import TeamTavern.Server.Team.Create.AddTeam (addTeam)
 import TeamTavern.Server.Team.Infrastructure.GenerateHandle (generateHandle)
 import TeamTavern.Server.Team.Infrastructure.ValidateTeam (TeamErrors, validateTeamV)
@@ -152,13 +153,13 @@ onboard pool cookies body =
                 # label (SProxy :: SProxy "invalidBody")
             let generatedHandle = generateHandle team'.organization cookieInfo.nickname
             { handle } <- addTeam client cookieInfo.id generatedHandle team'
-            AddTeamProfile.addProfile
+            profileId <- AddTeamProfile.addProfile
                 client cookieInfo.id handle content.gameHandle profile'
-            pure { teamHandle: Just handle, profileId: 0 }
+            pure { teamHandle: Just handle, profileId }
         _ -> Async.left $ inj (SProxy :: SProxy "client") []
 
     case result.teamHandle of
         Nothing -> checkPlayerAlerts result.profileId pool
-        Just _ -> pure unit
+        Just _ -> checkTeamAlerts result.profileId pool
 
     pure $ pick result

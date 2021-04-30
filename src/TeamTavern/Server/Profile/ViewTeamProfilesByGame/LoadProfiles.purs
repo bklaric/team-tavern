@@ -1,5 +1,5 @@
 module TeamTavern.Server.Profile.ViewTeamProfilesByGame.LoadProfiles
-    (pageSize, LoadProfilesResult, LoadProfilesError, queryStringWithoutPagination, loadProfiles) where
+    (pageSize, LoadProfilesResult, LoadProfilesError, createTeamFilterString, createFieldsFilterString, queryStringWithoutPagination, loadProfiles) where
 
 import Prelude
 

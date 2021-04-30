@@ -15,6 +15,7 @@ import TeamTavern.Server.Profile.AddTeamProfile.LogError (logError)
 import TeamTavern.Server.Profile.AddTeamProfile.ReadProfile (readProfile)
 import TeamTavern.Server.Profile.AddTeamProfile.SendResponse (sendResponse)
 import TeamTavern.Server.Profile.AddTeamProfile.ValidateProfile (validateProfile)
+import TeamTavern.Server.Profile.Infrastructure.CheckTeamAlerts (checkTeamAlerts)
 
 addTeamProfile :: forall left.
     Pool -> Map String String -> Body -> { teamHandle :: String, gameHandle :: String } -> Async left Response
@@ -23,7 +24,7 @@ addTeamProfile pool cookies body { teamHandle, gameHandle } =
     -- Read info from cookies.
     cookieInfo <- ensureSignedIn pool cookies
 
-    pool # transaction \client -> do
+    profileId <- pool # transaction \client -> do
         -- Load game fields from database.
         game <- loadFields client gameHandle
 
@@ -35,3 +36,6 @@ addTeamProfile pool cookies body { teamHandle, gameHandle } =
 
         -- Add profile to database.
         addProfile client cookieInfo.id teamHandle gameHandle profile'
+
+    -- Check alerts and notify.
+    checkTeamAlerts profileId pool
