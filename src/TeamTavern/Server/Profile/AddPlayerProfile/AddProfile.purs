@@ -37,7 +37,8 @@ addProfile' client playerId identifiers profile = do
     pure profileId
 
 addProfile :: forall errors.
-    Client -> Int -> Identifiers -> Profile -> Async (InternalError errors) Unit
+    Client -> Int -> Identifiers -> Profile -> Async (InternalError errors) Int
 addProfile client playerId identifiers profile @ { fieldValues } = do
     profileId <- addProfile' client playerId identifiers profile
     addFieldValues client profileId fieldValues
+    pure profileId

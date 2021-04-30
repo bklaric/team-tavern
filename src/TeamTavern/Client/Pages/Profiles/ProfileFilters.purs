@@ -1,4 +1,4 @@
-module TeamTavern.Client.Pages.Profiles.ProfileFilters (Option, Field, Filters, Input, Output(..), Slot, profileFilters) where
+module TeamTavern.Client.Pages.Profiles.ProfileFilters (Option, Field, Input, Output(..), Slot, profileFilters) where
 
 import Prelude
 
@@ -16,7 +16,10 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.CSS as HC
 import Halogen.HTML.Events as HE
+import Record as Record
+import Record.Extra (pick)
 import TeamTavern.Client.Components.Ads (filtersMpu)
+import TeamTavern.Client.Components.Button (button)
 import TeamTavern.Client.Components.Card (card, cardHeading, cardSection, cardSectionHeading)
 import TeamTavern.Client.Components.Input (inputGroup, inputLabel)
 import TeamTavern.Client.Components.InputGroup (timeRangeInputGroup)
@@ -24,9 +27,13 @@ import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.Select.MultiTreeSelect as MultiTreeSelect
 import TeamTavern.Client.Components.Team.ProfileInputGroup (FieldValues, fieldInputGroup, newOrReturningInputGroup)
 import TeamTavern.Client.Components.Team.TeamInputGroup (ageInputGroup, languagesInputGroup, locationInputGroup, microphoneInputGroup)
+import TeamTavern.Client.Pages.Profile.Filters (Filters)
+import TeamTavern.Client.Pages.Profiles.CreateAlert (createAlert)
+import TeamTavern.Client.Pages.Profiles.CreateAlert as CreateAlert
 import TeamTavern.Client.Pages.Profiles.GameHeader (Tab(..))
 import TeamTavern.Client.Pages.Profiles.TeamBadge (organizationCheckboxBadges, platformCheckboxBadges, sizeCheckboxBadges)
 import TeamTavern.Client.Snippets.Class as HS
+import TeamTavern.Routes.CreateAlert as CreateAlertRoute
 import TeamTavern.Routes.Shared.Organization (Organization)
 import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
 import TeamTavern.Routes.Shared.Size (Size)
@@ -45,28 +52,12 @@ type Field =
     , options :: Array Option
     }
 
-type Filters =
-    { organizations :: Array Organization
-    , ageFrom :: Maybe Int
-    , ageTo :: Maybe Int
-    , locations :: Array String
-    , languages :: Array String
-    , microphone :: Boolean
-    , weekdayFrom :: Maybe String
-    , weekdayTo :: Maybe String
-    , weekendFrom :: Maybe String
-    , weekendTo :: Maybe String
-    , sizes :: Array Size
-    , platforms :: Array Platform
-    , fieldValues :: FieldValues
-    , newOrReturning :: Boolean
-    }
-
 type Input =
     { platforms :: Platforms
     , fields :: Array Field
     , filters :: Filters
     , tab :: Tab
+    , handle :: String
     }
 
 type State =
@@ -90,6 +81,8 @@ type State =
     , playerFiltersVisible :: Boolean
     , profileFiltersVisible :: Boolean
     , tab :: Tab
+    , handle :: String
+    , createAlertModalShown :: Boolean
     }
 
 data Action
@@ -114,6 +107,8 @@ data Action
     | ToggleFiltersVisibility
     | TogglePlayerFiltersVisibility
     | ToggleProfileFiltersVisibility
+    | ShowCreateAlertModal
+    | HideCreateAlertModal
 
 data Output = Apply Filters
 
@@ -123,6 +118,7 @@ type ChildSlots =
     ( language :: MultiSelect.Slot String Unit
     , location :: MultiTreeSelect.Slot String
     , multiSelectField :: MultiSelect.Slot Option String
+    , createAlert :: CreateAlert.Slot
     )
 
 headerCaret :: forall action slots. String -> Boolean -> HH.HTML slots action
@@ -216,26 +212,31 @@ render state =
             ]
         else [])
         <>
-        [ cardSection
-            [ HH.button
-                [ HS.class_ "apply-filters"
-                , HE.onClick $ const $ Just $ ApplyFilters
-                ]
-                [ HH.i [ HS.class_ "fas fa-filter button-icon" ] []
-                , HH.text "Apply filters"
-                ]
-            , HH.button
-                [ HS.class_ "clear-filters"
-                , HE.onClick $ const $ Just $ ClearFilters
-                ]
-                [ HH.i [ HS.class_ "fas fa-eraser button-icon" ] []
-                , HH.text "Clear filters"
-                ]
+        [ HH.div [ HS.class_ "filters-buttons" ]
+            [ button "filters-clear-button" "fas fa-eraser" "Clear filters" ClearFilters
+            , button "filters-apply-button" "fas fa-filter" "Apply filters" ApplyFilters
+            , button "filters-alert-button" "fas fa-bell"
+                ( case state.tab of
+                    Players -> "Create player profile alert"
+                    Teams -> "Create team profile alert"
+                )
+                ShowCreateAlertModal
             ]
         ]
     else []
     ]
     <> [ filtersMpu ]
+    <> guard state.createAlertModalShown
+        [ createAlert
+            { handle: state.handle
+            , playerOrTeam:
+                case state.tab of
+                Players -> CreateAlertRoute.Player
+                Teams -> CreateAlertRoute.Team
+            , filters: state # Record.insert (SProxy :: _ "platforms") state.selectedPlatforms # pick
+            }
+            (const $ Just HideCreateAlertModal)
+        ]
 
 handleAction :: forall left. Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
 handleAction Initialize = do
@@ -301,6 +302,10 @@ handleAction ClearFilters = do
         , fieldValues = (MultiMap.empty :: MultiMap String String)
         , newOrReturning = false
         }
+handleAction ShowCreateAlertModal =
+    H.modify_ _ { createAlertModalShown = true }
+handleAction HideCreateAlertModal =
+    H.modify_ _ { createAlertModalShown = false }
 handleAction (UpdateOrganization teamOrganization) =
     H.modify_ \state -> state
         { organizations =
@@ -357,7 +362,7 @@ handleAction ToggleProfileFiltersVisibility =
     H.modify_ \state -> state { profileFiltersVisible = not state.profileFiltersVisible }
 
 initialState :: Input -> State
-initialState { platforms, fields, filters, tab } =
+initialState { platforms, fields, filters, tab, handle } =
     { organizations: filters.organizations
     , ageFrom: filters.ageFrom
     , ageTo: filters.ageTo
@@ -378,10 +383,11 @@ initialState { platforms, fields, filters, tab } =
     , playerFiltersVisible: false
     , profileFiltersVisible: false
     , tab
+    , handle
+    , createAlertModalShown: false
     }
 
-component :: forall query left.
-    H.Component HH.HTML query Input Output (Async left)
+component :: forall query left. H.Component HH.HTML query Input Output (Async left)
 component = H.mkComponent
     { initialState
     , render

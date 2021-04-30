@@ -1,18 +1,15 @@
 module TeamTavern.Server.Profile.ViewPlayerProfilesByGame.LoadProfiles
-    (pageSize, LoadProfilesResult, LoadProfilesError, queryStringWithoutPagination, loadProfiles) where
+    (pageSize, LoadProfilesResult, LoadProfilesError, createPlayerFilterString, createFieldsFilterString, queryStringWithoutPagination, loadProfiles) where
 
 import Prelude
 
 import Async (Async)
-import Data.Array (foldl, intercalate)
-import Data.Array as Array
+import Data.Array (intercalate)
 import Data.Bifunctor.Label (label, labelMap)
 import Data.Maybe (Maybe(..))
-import Data.MultiMap as MultiMap
 import Data.String as String
 import Data.Symbol (SProxy(..))
 import Data.Traversable (traverse)
-import Data.Tuple (Tuple(..))
 import Data.Variant (Variant)
 import Foreign (MultipleErrors)
 import Postgres.Async.Query (query_)
@@ -21,13 +18,12 @@ import Postgres.Error (Error)
 import Postgres.Query (Query(..))
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
+import TeamTavern.Routes.Shared.Filters (Age, Filters, HasMicrophone, Language, Location, NewOrReturning, Time, Field)
 import TeamTavern.Routes.Shared.Platform (Platform)
 import TeamTavern.Routes.Shared.Platform as Platform
+import TeamTavern.Routes.Shared.Timezone (Timezone)
 import TeamTavern.Server.Infrastructure.Postgres (playerAdjustedWeekdayFrom, playerAdjustedWeekdayTo, playerAdjustedWeekendFrom, playerAdjustedWeekendTo, prepareJsonString, prepareString)
-import TeamTavern.Server.Profile.Routes (Age, Location, Filters, Handle, HasMicrophone, Language, ProfilePage, Time, Timezone, NewOrReturning)
-import URI.Extra.QueryPairs (Key, QueryPairs(..), Value)
-import URI.Extra.QueryPairs as Key
-import URI.Extra.QueryPairs as Value
+import TeamTavern.Server.Profile.Routes (Handle, ProfilePage)
 
 pageSize :: Int
 pageSize = 10
@@ -154,47 +150,28 @@ createNewOrReturningFilter true = " and profile.new_or_returning"
 
 createPlayerFilterString :: Timezone -> Filters -> String
 createPlayerFilterString timezone filters =
-    createAgeFilter filters.age.from filters.age.to
+    createAgeFilter filters.ageFrom filters.ageTo
     <> createLanguagesFilter filters.languages
     <> createCountriesFilter filters.locations
-    <> createWeekdayOnlineFilter
-        timezone filters.weekdayOnline.from filters.weekdayOnline.to
-    <> createWeekendOnlineFilter
-        timezone filters.weekendOnline.from filters.weekendOnline.to
+    <> createWeekdayOnlineFilter timezone filters.weekdayFrom filters.weekdayTo
+    <> createWeekendOnlineFilter timezone filters.weekendFrom filters.weekendTo
     <> createMicrophoneFilter filters.microphone
     <> createPlatformsFilter filters.platforms
     <> createNewOrReturningFilter filters.newOrReturning
 
-prepareFields :: QueryPairs Key Value -> Array (Tuple String (Array String))
-prepareFields (QueryPairs filters) = let
-    preparedField fieldKey optionKey = let
-        preparedFieldKey = prepareJsonString $ Key.keyToString fieldKey
-        preparedOptionKey = prepareJsonString $ Value.valueToString optionKey
-        in
-        Tuple preparedFieldKey preparedOptionKey
-    preparedFields =
-        filters # Array.mapMaybe \(Tuple fieldKey optionKey') ->
-            optionKey' <#> \optionKey -> preparedField fieldKey optionKey
-    groupeFields = preparedFields
-        # foldl (\groupedFiltersSoFar (Tuple fieldKey optionKey) ->
-            MultiMap.insertOrAppend' fieldKey optionKey groupedFiltersSoFar)
-            MultiMap.empty
-    in
-    groupeFields # MultiMap.toUnfoldable'
-
 -- Example:
 -- jsonb_path_exists(player_profile."fieldValues", '$[*] ? (@.field.key == "rank") ? (@.option.key == "guardian" || @.option.key == "herald" || @.options[*].key == "guardian" || @.options[*].key == "herald")')
 -- and jsonb_path_exists(player_profile."fieldValues", '$[*] ? (@.field.label == "Region") ? (@.option.key == "eu-east" || @.options[*].key == "eu-east")')
-createFieldsFilterString :: QueryPairs Key Value -> String
+createFieldsFilterString :: Array Field -> String
 createFieldsFilterString fields = let
-    fieldFilterString (Tuple fieldKey optionKeys) =
+    fieldFilterString ({ fieldKey, optionKeys }) =
         optionKeys
+        <#> prepareJsonString
         <#> (\optionKey -> "@.option.key == " <> optionKey <> " || @.options[*].key == " <> optionKey)
         # intercalate " || "
-        # \filterString -> "jsonb_path_exists(profile.\"fieldValues\", '$[*] ? (@.field.key == " <> fieldKey <> ") ? (" <> filterString <> ")')"
+        # \filterString -> "jsonb_path_exists(profile.\"fieldValues\", '$[*] ? (@.field.key == " <> prepareJsonString fieldKey <> ") ? (" <> filterString <> ")')"
     in
     fields
-    # prepareFields
     <#> fieldFilterString
     # intercalate " and "
     # \filterString ->

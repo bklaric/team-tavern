@@ -16,6 +16,7 @@ import TeamTavern.Server.Profile.AddPlayerProfile.LogError (logError)
 import TeamTavern.Server.Profile.AddPlayerProfile.ReadProfile (readProfile)
 import TeamTavern.Server.Profile.AddPlayerProfile.SendResponse (sendResponse)
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile (validateProfile)
+import TeamTavern.Server.Profile.Infrastructure.CheckPlayerAlerts (checkPlayerAlerts)
 import TeamTavern.Server.Profile.Routes (Identifiers)
 
 addPlayerProfile :: forall left.
@@ -23,7 +24,7 @@ addPlayerProfile :: forall left.
 addPlayerProfile pool identifiers cookies body =
     sendResponse $ examineLeftWithEffect logError do
 
-    pool # transaction \client -> do
+    profileId <- pool # transaction \client -> do
         -- Read info info from cookies.
         cookieInfo <- ensureSignedInAs client cookies identifiers.nickname
 
@@ -37,4 +38,9 @@ addPlayerProfile pool identifiers cookies body =
         profile' <- validateProfile game profile
 
         -- Add profile to database.
-        addProfile client (unwrap cookieInfo.id) identifiers profile'
+        profileId <- addProfile client (unwrap cookieInfo.id) identifiers profile'
+
+        pure profileId
+
+    -- Check alerts and notify.
+    checkPlayerAlerts profileId pool

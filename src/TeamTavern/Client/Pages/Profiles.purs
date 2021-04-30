@@ -28,6 +28,7 @@ import Simple.JSON.Async as Json
 import TeamTavern.Client.Components.Boarding.PlayerOrTeamInput as Boarding
 import TeamTavern.Client.Components.Team.ProfileInputGroup (FieldValues)
 import TeamTavern.Client.Pages.Preboarding as Preboarding
+import TeamTavern.Client.Pages.Profile.Filters (Filters)
 import TeamTavern.Client.Pages.Profiles.GameHeader as GameHeader
 import TeamTavern.Client.Pages.Profiles.PlayerProfiles (playerProfiles)
 import TeamTavern.Client.Pages.Profiles.PlayerProfiles as PlayerProfiles
@@ -75,7 +76,7 @@ data Input = Input GameHeader.Handle GameHeader.Tab
 data Action
     = Init
     | Receive Input
-    | ApplyFilters ProfileFilters.Filters
+    | ApplyFilters Filters
     | ShowCreateProfileModal
     | HideCreateProfileModal
     | ReloadPage
@@ -85,7 +86,7 @@ data Action
 
 data State
     = Empty Input
-    | Game ViewGame.OkContent (Maybe PlayerInfo) ProfileFilters.Filters Tab
+    | Game ViewGame.OkContent (Maybe PlayerInfo) Filters Tab
     | NotFound
     | Error
 
@@ -132,6 +133,7 @@ render (Game game player filters tab) = let
             , fields: filterableFields game.fields
             , filters
             , tab: toHeaderTab tab
+            , handle: game.handle
             }
             (\(ProfileFilters.Apply filters') -> Just $ ApplyFilters filters')
         , case tab of
@@ -166,7 +168,7 @@ loadGame handle = Async.unify do
     pure $ Just content
 
 loadPlayerProfiles :: forall left.
-    String -> Int -> ProfileFilters.Filters -> Async left (Maybe ViewGamePlayers.OkContent)
+    String -> Int -> Filters -> Async left (Maybe ViewGamePlayers.OkContent)
 loadPlayerProfiles handle page filters = Async.unify do
     timezone <- getClientTimezone
     let nothingIfNull string = if String.null string then Nothing else Just string
@@ -201,7 +203,7 @@ loadPlayerProfiles handle page filters = Async.unify do
     pure content
 
 loadTeamProfiles :: forall left.
-    String -> Int -> ProfileFilters.Filters -> Async left (Maybe ViewGameTeams.OkContent)
+    String -> Int -> Filters -> Async left (Maybe ViewGameTeams.OkContent)
 loadTeamProfiles handle page filters = Async.unify do
     timezone <- getClientTimezone
     let nothingIfNull string = if String.null string then Nothing else Just string
@@ -316,7 +318,7 @@ scrollProfilesIntoView = do
 readQueryParams
     :: forall fields
     .  Array { key :: String | fields }
-    -> Effect { filters :: ProfileFilters.Filters, page :: Int }
+    -> Effect { filters :: Filters, page :: Int }
 readQueryParams fields = do
     searchParams <- Html.window >>= Window.location >>= Location.href
         >>= Url.url >>= Url.searchParams
