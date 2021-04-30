@@ -150,9 +150,9 @@ checkPlayerAlerts profileId querier =
             { from: "admin@teamtavern.net"
             , to: alert.email
             , subject: "A player created a matching " <> alert.title <> " profile on TeamTavern"
-            , text: "Hi, player " <> nickname <> " created their " <> alert.title <> " profile and it matches your alert.\n"
+            , text: "Player " <> nickname <> " created their " <> alert.title <> " profile and it matches your alert.\n"
                 <> "You can check out their profile at: " <> playerUrl
-            , html: "<p>Hi, player " <> nickname <> " created their " <> alert.title <> " profile and it matches your alert.</p>"
+            , html: "<p>Player " <> nickname <> " created their " <> alert.title <> " profile and it matches your alert.</p>"
                 <> "<p>You can check out their profile at: <a href=\"" <> playerUrl <> "\">" <> playerUrl <> "</a></p>"
             }
     )

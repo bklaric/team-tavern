@@ -136,9 +136,9 @@ checkTeamAlerts profileId querier =
             { from: "admin@teamtavern.net"
             , to: alert.email
             , subject: "A team created a matching " <> alert.title <> " profile on TeamTavern"
-            , text: "Hi, team " <> teamName <> " created their " <> alert.title <> " profile and it matches your alert.\n"
+            , text: "Team " <> teamName <> " created their " <> alert.title <> " profile and it matches your alert.\n"
                 <> "You can check out their profile at: " <> teamUrl
-            , html: "<p>Hi, team " <> teamName <> " created their " <> alert.title <> " profile and it matches your alert.</p>"
+            , html: "<p>Team " <> teamName <> " created their " <> alert.title <> " profile and it matches your alert.</p>"
                 <> "<p>You can check out their profile at: <a href=\"" <> teamUrl <> "\">" <> teamUrl <> "</a></p>"
             }
     )
