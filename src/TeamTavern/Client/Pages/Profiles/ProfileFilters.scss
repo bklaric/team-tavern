@@ -23,13 +23,30 @@
     line-height: 20px;
 }
 
-.apply-filters {
-    @extend .secondary-button;
+.filters-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+        "clear apply"
+        "alert alert";
+    gap: 7px;
+    padding: 7px;
+    border-top: $border;
 }
 
-.clear-filters {
+.filters-clear-button {
     @extend .regular-button;
-    margin-left: 14px;
+    grid-area: clear;
+}
+
+.filters-apply-button {
+    @extend .secondary-button;
+    grid-area: apply;
+}
+
+.filters-alert-button {
+    @extend .secondary-button;
+    grid-area: alert;
 }
 
 .filter-input-groups {

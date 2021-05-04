@@ -18,6 +18,7 @@ You can edit this file as you like.
   , "idiomatic-node-http"
   , "idiomatic-node-process"
   , "jarilo"
+  , "js-timers"
   , "pg"
   , "psci-support"
   , "record-extra"

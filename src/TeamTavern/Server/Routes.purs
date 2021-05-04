@@ -1,12 +1,13 @@
 module TeamTavern.Server.Routes where
 
-import Jarilo.Junction (type (:<|>))
+import Jarilo.Junction (type (:<|>), type (:=))
+import TeamTavern.Routes.CreateAlert (CreateAlert)
+import TeamTavern.Server.Boarding.Routes (BoardRoutes)
 import TeamTavern.Server.Game.Routes (GameRoutes)
 import TeamTavern.Server.Player.Routes (PlayerRoutes)
 import TeamTavern.Server.Profile.Routes (ProfileRoutes)
 import TeamTavern.Server.Session.Routes (SessionRoutes)
 import TeamTavern.Server.Team.Routes (TeamRoutes)
-import TeamTavern.Server.Boarding.Routes (WizardRoutes)
 
 type TeamTavernRoutes
     =    PlayerRoutes
@@ -14,4 +15,5 @@ type TeamTavernRoutes
     :<|> SessionRoutes
     :<|> GameRoutes
     :<|> ProfileRoutes
-    :<|> WizardRoutes
+    :<|> BoardRoutes
+    :<|> "createAlert" := CreateAlert

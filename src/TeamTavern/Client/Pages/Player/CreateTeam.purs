@@ -48,7 +48,7 @@ render { details, submitting, otherError } =
     otherFormError otherError
 
 sendRequest :: forall left. State -> Async left (Maybe (Either Create.BadContent Create.OkContent))
-sendRequest state @ { details } = post "/api/teams" (pick details :: TeamModel)
+sendRequest { details } = post "/api/teams" (pick details :: TeamModel)
 
 handleAction :: forall output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit

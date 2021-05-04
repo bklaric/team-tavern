@@ -23,6 +23,7 @@ import Postgres.Pool (Pool)
 import Prim.Row (class Lacks)
 import Record.Builder (Builder)
 import Record.Builder as Builder
+import Record.Extra (pick)
 import Simple.JSON (writeJSON)
 import TeamTavern.Routes.Preboard (BadContent, RequestContent, OkContent)
 import TeamTavern.Server.Architecture.Deployment (Deployment)
@@ -46,6 +47,8 @@ import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile as PlayerProfi
 import TeamTavern.Server.Profile.AddTeamProfile.AddProfile as AddTeamProfile
 import TeamTavern.Server.Profile.AddTeamProfile.LoadFields as Team
 import TeamTavern.Server.Profile.AddTeamProfile.ValidateProfile as TeamProfile
+import TeamTavern.Server.Profile.Infrastructure.CheckPlayerAlerts (checkPlayerAlerts)
+import TeamTavern.Server.Profile.Infrastructure.CheckTeamAlerts (checkTeamAlerts)
 import TeamTavern.Server.Session.Domain.Token as Token
 import TeamTavern.Server.Session.Start.CreateSession (createSession)
 import TeamTavern.Server.Team.Create.AddTeam (addTeam)
@@ -157,7 +160,7 @@ preboard deployment pool cookies body =
     (content :: RequestContent) <- readJsonBody body
 
     -- Start the transaction.
-    pool # transaction \client ->
+    result <- pool # transaction \client ->
         case content of
         { ilk: 1, player: Just player, playerProfile: Just profile, registration } -> do
             -- Read fields from database.
@@ -189,7 +192,7 @@ preboard deployment pool cookies body =
 
             updateDetails client id player'
 
-            addProfile client id
+            profileId <- addProfile client id
                 { handle: content.gameHandle
                 , nickname: unwrap registration'.nickname
                 }
@@ -198,6 +201,7 @@ preboard deployment pool cookies body =
             pure
                 { teamHandle: Nothing
                 , cookieInfo: { id: Id id, nickname: registration'.nickname, token }
+                , profileId
                 }
         { ilk: 2, team: Just team, teamProfile: Just profile, registration } -> do
             -- Read fields from database.
@@ -231,10 +235,17 @@ preboard deployment pool cookies body =
 
             { handle } <- addTeam client (Id id) generatedHandle team'
 
-            AddTeamProfile.addProfile client (Id id) handle content.gameHandle profile'
+            profileId <- AddTeamProfile.addProfile client (Id id) handle content.gameHandle profile'
 
             pure
                 { teamHandle: Just handle
                 , cookieInfo: { id: Id id, nickname: registration'.nickname, token }
+                , profileId
                 }
         _ -> Async.left $ inj (SProxy :: SProxy "client") []
+
+    case result.teamHandle of
+        Nothing -> checkPlayerAlerts result.profileId pool
+        Just _ -> checkTeamAlerts result.profileId pool
+
+    pure $ pick result

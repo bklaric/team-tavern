@@ -12,6 +12,10 @@ type VariantNel rows = NonEmptyList (Variant rows)
 
 type VariantValidated rows = Validated (NonEmptyList (Variant rows))
 
+type ValidatedNelVari rows = VariantValidated rows
+
+type ValidatedNel errors = Validated (NonEmptyList errors)
+
 label
     :: forall errors errors' left label right
     .  Cons label left errors' errors

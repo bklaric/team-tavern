@@ -15,7 +15,9 @@ import Postgres.Error (Error)
 import Postgres.Query (Query(..))
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
-import TeamTavern.Server.Profile.Routes (Filters, Handle, Timezone)
+import TeamTavern.Routes.Shared.Filters (Filters)
+import TeamTavern.Routes.Shared.Timezone (Timezone)
+import TeamTavern.Server.Profile.Routes (Handle)
 import TeamTavern.Server.Profile.ViewPlayerProfilesByGame.LoadProfiles (queryStringWithoutPagination)
 
 type LoadProfileCountResult = { count :: Int }

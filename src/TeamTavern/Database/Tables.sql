@@ -130,3 +130,25 @@ create table team_profile_field_value_option
     , team_profile_field_value_id integer not null references team_profile_field_value(id) on delete cascade
     , field_option_id integer not null references field_option(id)
     );
+
+create table alert
+    ( id serial not null primary key
+    , game_id integer not null references game(id)
+    , player_or_team text not null
+    , email text not null
+    , organizations text[]
+    , age_from integer
+    , age_to integer
+    , locations text[]
+    , languages text[]
+    , microphone boolean not null
+    , timezone text not null
+    , weekday_from time
+    , weekday_to time
+    , weekend_from time
+    , weekend_to time
+    , sizes text[]
+    , platforms text[]
+    , fields jsonb[]
+    , new_or_returning boolean not null
+    );

@@ -62,7 +62,8 @@ addProfile
     -> Handle
     -> Handle
     -> Profile
-    -> Async (ChangeSingleError errors) Unit
+    -> Async (ChangeSingleError errors) Int
 addProfile client id teamHandle gameHandle profile = do
     { profileId } <- addProfile' client id teamHandle gameHandle profile
     addFieldValues client profileId profile.fieldValues
+    pure profileId
