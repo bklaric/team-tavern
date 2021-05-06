@@ -7,7 +7,6 @@ mkdir dist-client/css
 mkdir dist-client/webfonts
 cp src/TeamTavern/Client/Static/robots.txt dist-client/robots.txt
 cp src/TeamTavern/Client/Static/sitemap.txt dist-client/sitemap.txt
-cp src/TeamTavern/Client/Static/ads.txt dist-client/ads.txt
 cp src/TeamTavern/Client/Static/teamtavern.min.js dist-client/teamtavern.min.js
 cp src/TeamTavern/Client/Static/index.html dist-client/index.html
 cp src/TeamTavern/Client/Static/index.prerender.html dist-client/index.prerender.html
