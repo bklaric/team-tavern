@@ -12,7 +12,7 @@ import Data.Monoid (guard)
 import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
-import TeamTavern.Client.Components.Ads (descriptionLeaderboard, mobileDescriptionLeaderboard)
+import TeamTavern.Client.Components.Ads (descriptionLeaderboard, stickyLeaderboards)
 import TeamTavern.Client.Components.Content (contentDescription, contentHeader, contentHeading)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Components.Player.ProfileDetails (PlatformIdSlots)
@@ -80,11 +80,11 @@ render (Loaded state @ { player: player', status }) =
         SignedInSelf -> "View and edit all your details, profiles and teams."
         _ -> "View all player's details, profiles and teams."
     , descriptionLeaderboard
-    , mobileDescriptionLeaderboard
     , details player' status ShowEditPlayerModal
     , profiles player' status ShowEditProfileModal
     , teams player' status ShowCreateTeamModal
     ]
+    <> stickyLeaderboards
     <> guard state.editPlayerModalShown [ editPlayer player' $ const $ Just HideEditPlayerModal ]
     <> guard state.createTeamModalShown [ createTeam $ const $ Just HideCreateTeamModal ]
     <> foldMap

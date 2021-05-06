@@ -9,6 +9,7 @@ import Effect.Class (class MonadEffect)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
+import TeamTavern.Client.Components.Ads (stickyLeaderboards)
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Script.Meta (setMeta)
@@ -22,7 +23,7 @@ type Slot = H.Slot (Const Void) Void Unit
 type ChildSlots = (emailAnchor :: NavigationAnchor.Slot Unit)
 
 render :: forall monad. MonadEffect monad => HH.ComponentHTML Action ChildSlots monad
-render = HH.div [ HS.class_ "about" ]
+render = HH.div [ HS.class_ "about" ] $
     [ HH.h1 [ HS.class_ "about-title" ] [ HH.text "About TeamTavern" ]
     , HH.h2 [ HS.class_ "about-heading" ] [ HH.text "What is TeamTavern?" ]
     , HH.p [ HS.class_ "about-text" ]
@@ -57,6 +58,7 @@ render = HH.div [ HS.class_ "about" ]
     , HH.p [ HS.class_ "about-text" ]
         [ HH.text $ "For all advertising inquiries please contact Andrew Church (andrew.church@network-n.com)." ]
     ]
+    <> stickyLeaderboards
 
 handleAction :: forall monad. MonadEffect monad => Action -> monad Unit
 handleAction Initialize =

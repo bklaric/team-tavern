@@ -19,6 +19,7 @@ import Halogen.HTML.CSS (style) as HP
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties (alt, class_, href, src) as HP
 import Simple.JSON.Async as JsonAsync
+import TeamTavern.Client.Components.Ads (descriptionLeaderboard, stickyLeaderboards)
 import TeamTavern.Client.Components.Divider (whiteDivider)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigateWithEvent_)
@@ -33,8 +34,7 @@ data State = Empty | Games ViewAllGames.OkContent
 
 type Slot = H.Slot (Const Void) Void
 
-render :: forall slots monad. MonadEffect monad =>
-    State -> H.ComponentHTML Action slots monad
+render :: forall slots monad. MonadEffect monad => State -> H.ComponentHTML Action slots monad
 render Empty = HH.div_ []
 render (Games games') = HH.div [ HP.class_ $ HH.ClassName "games" ] $
     [ HH.div [ HP.class_ $ HH.ClassName "games-header"]
@@ -42,6 +42,7 @@ render (Games games') = HH.div [ HP.class_ $ HH.ClassName "games" ] $
             [ HH.text "Games" ]
         , HH.p [ HP.class_ $ HH.ClassName "games-header-subtitle" ]
             [ HH.text "Choose one of the featured games and start finding your new teammates!" ]
+        , descriptionLeaderboard
         ]
     ]
     <>
@@ -98,6 +99,7 @@ render (Games games') = HH.div [ HP.class_ $ HH.ClassName "games" ] $
             []
         ]
     )
+    <> stickyLeaderboards
 
 loadGames :: forall left. Async left State
 loadGames = Async.unify do

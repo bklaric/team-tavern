@@ -23,3 +23,19 @@
     position: sticky;
     top: 64px;
 }
+
+.sticky-leaderboard {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 9999;
+    margin-top: 21px;
+
+    &:empty {
+        display: none;
+    }
+}

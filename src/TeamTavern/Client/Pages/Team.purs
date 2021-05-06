@@ -5,14 +5,14 @@ import Prelude
 import Async (Async)
 import Client.Components.Copyable as Copyable
 import Control.Monad.State (class MonadState)
-import Data.Array (intercalate)
-import Data.Array as Array
+import Data.Array (foldMap, intercalate)
 import Data.Const (Const)
 import Data.Maybe (Maybe(..))
+import Data.Monoid (guard)
 import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
-import TeamTavern.Client.Components.Ads (descriptionLeaderboard, mobileDescriptionLeaderboard)
+import TeamTavern.Client.Components.Ads (descriptionLeaderboard, stickyLeaderboards)
 import TeamTavern.Client.Components.Content (contentDescription, contentHeader, contentHeading)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
 import TeamTavern.Client.Pages.Profiles.TeamBadge (informalBadge, organizedBadge)
@@ -78,31 +78,27 @@ render (Loaded { team: team', status, showEditTeamModal, showEditProfileModal } 
         SignedInOwner -> "View and edit all your team's details and profiles."
         _ -> "View all team's details and profiles."
     , descriptionLeaderboard
-    , mobileDescriptionLeaderboard
     , details team' status ShowEditTeamModal
     , profiles team'.handle team'.profiles status ShowEditProfileModal
     ]
-    <>
-    (if showEditTeamModal
-    then [ editTeam team' (const $ Just HideEditTeamModal) ]
-    else [])
-    <>
-    case showEditProfileModal of
-    Nothing -> []
-    Just profile -> Array.singleton $
-        editProfile
-        { teamHandle: team'.handle
-        , gameHandle: profile.handle
-        , title: profile.title
-        , allPlatforms: profile.allPlatforms
-        , size: profile.size
-        , selectedPlatforms: profile.selectedPlatforms
-        , fields: profile.fields
-        , fieldValues: profile.fieldValues
-        , newOrReturning: profile.newOrReturning
-        , ambitions: intercalate "\n\n" profile.ambitions
-        }
-        (const $ Just HideEditProfileModal)
+    <> stickyLeaderboards
+    <> guard showEditTeamModal [ editTeam team' (const $ Just HideEditTeamModal) ]
+    <> foldMap (\profile ->
+        [ editProfile
+            { teamHandle: team'.handle
+            , gameHandle: profile.handle
+            , title: profile.title
+            , allPlatforms: profile.allPlatforms
+            , size: profile.size
+            , selectedPlatforms: profile.selectedPlatforms
+            , fields: profile.fields
+            , fieldValues: profile.fieldValues
+            , newOrReturning: profile.newOrReturning
+            , ambitions: intercalate "\n\n" profile.ambitions
+            }
+            (const $ Just HideEditProfileModal)
+        ])
+        showEditProfileModal
 render NotFound = HH.p_ [ HH.text "Team could not be found." ]
 render Error = HH.p_ [ HH.text "There has been an error loading the team. Please try again later." ]
 
