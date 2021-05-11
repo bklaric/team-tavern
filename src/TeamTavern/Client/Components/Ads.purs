@@ -25,5 +25,5 @@ mobileDescriptionLeaderboard = HH.div [ HP.id_ "nn_mobile_lb2", HS.class_ "descr
 
 -- Both
 
-stickyLeaderboards :: forall t16 t17. Array (HH.HTML t17 t16)
+stickyLeaderboards :: forall slots action. Array (HH.HTML slots action)
 stickyLeaderboards = [ stickyLeaderboard, mobileStickyLeaderboard ]

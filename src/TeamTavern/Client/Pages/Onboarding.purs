@@ -28,6 +28,7 @@ import Record.Extra (pick)
 import Simple.JSON (class ReadForeign, class WriteForeign)
 import Simple.JSON as Json
 import Simple.JSON.Async as JsonAsync
+import TeamTavern.Client.Components.Ads (stickyLeaderboards)
 import TeamTavern.Client.Components.Boarding.Boarding (boarding, boardingButtons, boardingDescription, boardingHeading, boardingStep)
 import TeamTavern.Client.Components.Boarding.GameInput (gameInput)
 import TeamTavern.Client.Components.Boarding.GameInput as GameInput
@@ -285,9 +286,8 @@ renderPage { step: TeamProfile, teamProfile, game, otherError, submitting } =
         ]
     ]
 
-render :: forall slots left.
-    State -> HH.ComponentHTML Action (ChildSlots slots) (Async left)
-render state = boarding $ renderPage state
+render :: forall slots left. State -> HH.ComponentHTML Action (ChildSlots slots) (Async left)
+render state = HH.div_ $ [ boarding $ renderPage state ] <> stickyLeaderboards
 
 sendRequest :: forall left.
     State -> Async left (Maybe (Either Onboard.BadContent Onboard.OkContent))
