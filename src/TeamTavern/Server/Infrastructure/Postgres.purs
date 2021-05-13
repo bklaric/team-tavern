@@ -18,7 +18,7 @@ import Postgres.Client (Client)
 import Postgres.Error (Error, constraint, detail, schema, severity, table)
 import Postgres.Pool (Pool)
 import Postgres.Query (class Querier, Query, QueryParameter)
-import Postgres.Result (rows)
+import Postgres.Result (Result, rows)
 import Prim.Row (class Cons)
 import Simple.JSON (class ReadForeign)
 import Simple.JSON.Async (read)
@@ -86,6 +86,11 @@ reportDatabaseError error =
 reportDatabaseError' :: forall right errors.
     Async Error right -> Async (InternalError errors) right
 reportDatabaseError' = labelMap (SProxy :: SProxy "internal") reportDatabaseError
+
+queryInternal :: forall querier errors. Querier querier =>
+    querier -> Query -> Array QueryParameter -> Async (InternalError errors) Result
+queryInternal querier queryString parameters =
+    query queryString parameters querier # reportDatabaseError'
 
 queryMany :: forall querier errors rows. Querier querier => ReadForeign rows =>
     querier -> Query -> Array QueryParameter -> Async (InternalError errors) (Array rows)
