@@ -30,6 +30,13 @@ get url = Async.unify do
         200 -> FetchRes.text response >>= JsonAsync.readJSON # lmap (const Nothing)
         _ -> Async.left Nothing
 
+deleteNoContent :: forall left. String -> Async left (Maybe Unit)
+deleteNoContent url = Async.unify do
+    response <- Fetch.fetch url (Fetch.method := DELETE) # lmap (const Nothing)
+    case FetchRes.status response of
+        204 -> pure $ Just unit
+        _ -> Async.left Nothing
+
 withBody :: forall body ok bad left. WriteForeign body => ReadForeign ok => ReadForeign bad =>
     Method -> String -> body -> Async left (Maybe (Either bad ok))
 withBody method url body = Async.unify do
