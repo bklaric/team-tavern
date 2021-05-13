@@ -18,7 +18,9 @@ import TeamTavern.Server.Profile.ViewPlayerProfilesByGame.LoadProfiles (createFi
 
 type Alert =
     { title :: String
+    , id :: Int
     , email :: String
+    , token :: String
     , organizations :: Array Organization
     , ageFrom :: Maybe Int
     , ageTo :: Maybe Int
@@ -40,7 +42,9 @@ loadAlertsQueryString :: Query
 loadAlertsQueryString = Query """
     select
         game.title,
+        alert.id,
         alert.email,
+        alert.token,
         alert.organizations,
         alert.age_from as "ageFrom",
         alert.age_to as "ageTo",
@@ -62,8 +66,8 @@ loadAlertsQueryString = Query """
     where player_profile.id = $1 and alert.player_or_team = 'player';
     """
 
-queryStringWithoutPagination :: Int -> Alert -> Query
-queryStringWithoutPagination profileId alert = Query $ """
+checkAlertQueryString :: Int -> Alert -> Query
+checkAlertQueryString profileId alert = Query $ """
     select profile.nickname
     from
         (select
@@ -143,16 +147,19 @@ checkPlayerAlerts profileId querier =
     safeForeach alerts \alert -> alwaysRightWithEffect (log <<< unsafeStringify) pure do
         -- Check if alert matches the profile.
         { nickname } <- queryFirstNotFound querier
-            (queryStringWithoutPagination profileId alert) [] :: _ _ { nickname :: String }
+            (checkAlertQueryString profileId alert) [] :: _ _ { nickname :: String }
         -- Send the email.
         let playerUrl = "https://www.teamtavern.net/players/" <> nickname
+        let deleteAlertUrl = "https://www.teamtavern.net/remove-alert?id=" <> show alert.id <> "&token=" <> alert.token
         sendAsync
             { from: "admin@teamtavern.net"
             , to: alert.email
             , subject: "A player created a matching " <> alert.title <> " profile on TeamTavern"
             , text: "Player " <> nickname <> " created their " <> alert.title <> " profile and it matches your alert.\n"
-                <> "You can check out their profile at: " <> playerUrl
+                <> "You can check out their profile at: " <> playerUrl <> "\n"
+                <> "If you no longer wish to receive further emails for this alert, you can unsubscribe at " <> deleteAlertUrl
             , html: "<p>Player " <> nickname <> " created their " <> alert.title <> " profile and it matches your alert.</p>"
                 <> "<p>You can check out their profile at: <a href=\"" <> playerUrl <> "\">" <> playerUrl <> "</a></p>"
+                <> "<p>If you no longer wish to receive further emails for this alert, you can <a href=\"" <> deleteAlertUrl <> "\">unsubscribe here</a>.</p>"
             }
     )
