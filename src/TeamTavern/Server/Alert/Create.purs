@@ -19,6 +19,7 @@ import TeamTavern.Routes.CreateAlert as CreateAlert
 import TeamTavern.Routes.Shared.Organization as Organization
 import TeamTavern.Routes.Shared.Platform as Platform
 import TeamTavern.Routes.Shared.Size as Size
+import TeamTavern.Server.Infrastructure.GenerateHexString (ByteCount(..), generateHexString')
 import TeamTavern.Server.Infrastructure.Log (clientHandler, internalHandler, logLines)
 import TeamTavern.Server.Infrastructure.Log as Log
 import TeamTavern.Server.Infrastructure.Postgres (queryNone)
@@ -30,6 +31,7 @@ queryString :: Query
 queryString = Query """
     insert into alert
         ( game_id
+        , token
         , player_or_team
         , email
         , timezone
@@ -67,12 +69,14 @@ queryString = Query """
         , $16
         , $17
         , $18
+        , $19
         )
     """
 
-queryParameters :: Email -> CreateAlert.RequestContent -> Array QueryParameter
-queryParameters email { handle, playerOrTeam, timezone, filters }
+queryParameters :: Email -> String -> CreateAlert.RequestContent -> Array QueryParameter
+queryParameters email token { handle, playerOrTeam, timezone, filters }
     = handle
+    : token
     : CreateAlert.toString playerOrTeam
     : Email.toString email
     : timezone
@@ -103,7 +107,7 @@ invalidEmailHandler = Builder.insert (SProxy :: SProxy "email") logLines
 
 logError :: CreateAlertError -> Effect Unit
 logError = Log.logError "Error creating alert"
-    ( internalHandler
+    (   internalHandler
     >>> clientHandler
     >>> invalidEmailHandler
     )
@@ -131,5 +135,8 @@ createAlert pool body =
     -- Validate alert.
     email <- validateEmail' content.email
 
+    -- Generate alert token.
+    token <- generateHexString' $ ByteCount 10
+
     -- Write alert into database.
-    queryNone pool queryString $ queryParameters email content
+    queryNone pool queryString $ queryParameters email token content

@@ -30,7 +30,8 @@ import Postgres.Client.Config (ClientConfig, database, host, password, port, use
 import Postgres.Pool (Pool)
 import Postgres.Pool as Pool
 import Sendgrid (setApiKey)
-import TeamTavern.Server.Alert.Create as Alert
+import TeamTavern.Server.Alert.Create (createAlert) as Alert
+import TeamTavern.Server.Alert.Delete (deleteAlert) as Alert
 import TeamTavern.Server.Architecture.Deployment (Deployment)
 import TeamTavern.Server.Architecture.Deployment as Deployment
 import TeamTavern.Server.Boarding.Onboard as Onboard
@@ -184,6 +185,8 @@ handleRequest deployment pool method url cookies body =
             Preboard.preboard deployment pool cookies body
         , createAlert: const $
             Alert.createAlert pool body
+        , deleteAlert:
+            Alert.deleteAlert pool
         }
         <#> (\response -> response { headers = response.headers <> MultiMap.fromFoldable
                 [ Tuple "Access-Control-Allow-Origin" $ NEL.singleton "http://localhost:1337"

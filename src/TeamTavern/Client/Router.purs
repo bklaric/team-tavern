@@ -20,6 +20,8 @@ import TeamTavern.Client.Components.TopBar (topBar)
 import TeamTavern.Client.Components.TopBar as TopBar
 import TeamTavern.Client.Pages.About (about)
 import TeamTavern.Client.Pages.About as About
+import TeamTavern.Client.Pages.DeleteAlert (deleteAlert)
+import TeamTavern.Client.Pages.DeleteAlert as DeleteAlert
 import TeamTavern.Client.Pages.Game (game)
 import TeamTavern.Client.Pages.Game as Game
 import TeamTavern.Client.Pages.Games (games)
@@ -66,6 +68,7 @@ data State
     | Preboarding Preboarding.Input
     | NetworkN
     | NetworkN2
+    | DeleteAlert
     | NotFound
 
 type ChildSlots = Footer.ChildSlots
@@ -85,6 +88,7 @@ type ChildSlots = Footer.ChildSlots
     , register :: Register.Slot Unit
     , "network-n-test" :: NavigationAnchor.Slot Unit
     , "network-n-test2" :: NavigationAnchor.Slot Unit
+    , deleteAlert :: DeleteAlert.Slot
     )
 
 topBarWithContent
@@ -149,6 +153,7 @@ render NetworkN2 = HH.div_
     , footer
     -- , HH.div [ HP.id_ "nn_1by1" ] []
     ]
+render DeleteAlert = singleContent [ deleteAlert ]
 render NotFound = HH.p_ [ HH.text "You're fucken lost, mate." ]
 
 just :: forall t5 t7. Applicative t5 => t7 -> t5 (Maybe t7)
@@ -224,6 +229,8 @@ handleAction (Init state route) = do
             just $ NetworkN
         ["", "network-n-test2"] ->
             just $ NetworkN2
+        ["", "remove-alert" ] ->
+            just $ DeleteAlert
         _ ->
             navigateReplace_ "/" *> nothing
     case newState of

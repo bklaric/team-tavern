@@ -21,4 +21,3 @@ sed -i -e "s/app.min.js/app.min.$discriminator.js/g" dist-client/index.html
 sed -i -e "s/style.min.css/style.min.$discriminator.css/g" dist-client/index.html
 sed -i -e "s/app.min.js/app.min.$discriminator.js/g" dist-client/index.prerender.html
 sed -i -e "s/style.min.css/style.min.$discriminator.css/g" dist-client/index.prerender.html
-rm dist-client/app.js

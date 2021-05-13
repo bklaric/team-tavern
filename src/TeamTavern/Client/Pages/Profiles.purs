@@ -499,7 +499,6 @@ handleAction OpenTeamPreboarding = do
         Game game _ _ _ -> navigate (Preboarding.emptyInput (Just Boarding.Team) (Just game)) "/preboarding/start"
         _ -> pure unit
 
-
 component :: forall query output left.
     H.Component HH.HTML query Input output (Async left)
 component = H.mkComponent

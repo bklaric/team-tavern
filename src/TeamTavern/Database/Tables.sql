@@ -20,7 +20,7 @@ create unique index player_lower_nickname_key on player (lower(nickname));
 
 create table team
     ( id serial not null primary key
-    , owner_id int not null references player(id)
+    , owner_id int not null references player(id) on delete cascade
     , handle text not null unique
     , organization text not null -- informal, organized
     , name text
@@ -81,7 +81,7 @@ create table field_option
 
 create table player_profile
     ( id serial not null primary key
-    , player_id integer not null references player(id)
+    , player_id integer not null references player(id) on delete cascade
     , game_id integer not null references game(id)
     , platform text not null
     , platform_id text not null
@@ -108,7 +108,7 @@ create table player_profile_field_value_option
 
 create table team_profile
     ( id serial not null primary key
-    , team_id integer not null references team(id)
+    , team_id integer not null references team(id) on delete cascade
     , game_id integer not null references game(id)
     , size text not null -- party, community
     , platforms text[] not null
@@ -134,6 +134,7 @@ create table team_profile_field_value_option
 create table alert
     ( id serial not null primary key
     , game_id integer not null references game(id)
+    , token character(20) not null
     , player_or_team text not null
     , email text not null
     , organizations text[]
