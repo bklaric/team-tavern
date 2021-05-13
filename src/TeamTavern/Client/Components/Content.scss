@@ -29,12 +29,19 @@
     padding: 0 21px;
 }
 
+.content-header-section {
+    display: flex;
+    gap: 21px;
+    flex-wrap: wrap;
+    align-items: baseline;
+}
+
 .content-heading {
     display: inline;
     font-size: 20px;
     font-weight: 500;
-    margin-right: 21px;
     overflow-wrap: break-word;
+    margin: 0;
 }
 
 .content-heading-icon {
@@ -42,6 +49,10 @@
     width: 20px;
     margin-right: 8px;
     vertical-align: -2px;
+}
+
+.content-heading-fa-icon {
+    margin-right: 8px;
 }
 
 .content-description {
@@ -53,17 +64,15 @@
 }
 
 .content-header-tabs {
-    display: inline-block;
-
-    .content-header-tab:last-child {
-        margin-right: 0;
-    }
+    display: inline-flex;
+    gap: 21px;
+    flex-wrap: wrap;
 }
 
 .content-header-tab {
     display: inline-block;
     font-size: 16px;
     font-weight: 500;
-    margin-right: 21px;
-    margin-bottom: 0;
+    margin: 0;
+    line-height: 1;
 }

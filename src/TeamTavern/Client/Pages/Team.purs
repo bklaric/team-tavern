@@ -13,7 +13,7 @@ import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Ads (descriptionLeaderboard, stickyLeaderboards)
-import TeamTavern.Client.Components.Content (contentDescription, contentHeader, contentHeading)
+import TeamTavern.Client.Components.Content (contentDescription, contentHeader, contentHeaderSection, contentHeading', contentHeadingFaIcon)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
 import TeamTavern.Client.Pages.Profiles.TeamBadge (informalBadge, organizedBadge)
 import TeamTavern.Client.Pages.Team.Details (details)
@@ -66,8 +66,11 @@ render (Empty _) = HH.div_ []
 render (Loaded { team: team', status, showEditTeamModal, showEditProfileModal } ) =
     HH.div_  $
     [ contentHeader
-        [ HH.div_
-            [ contentHeading $ nameOrHandleNW team'.handle team'.organization
+        [ contentHeaderSection
+            [ contentHeading'
+                [ contentHeadingFaIcon "fas fa-users"
+                , HH.text $ nameOrHandleNW team'.handle team'.organization
+            ]
             , case team'.organization of
                 InformalNW -> informalBadge
                 OrganizedNW _ -> organizedBadge

@@ -13,7 +13,7 @@ import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Ads (descriptionLeaderboard, stickyLeaderboards)
-import TeamTavern.Client.Components.Content (contentDescription, contentHeader, contentHeading)
+import TeamTavern.Client.Components.Content (contentDescription, contentHeader, contentHeaderSection, contentHeading', contentHeadingFaIcon)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Components.Player.ProfileDetails (PlatformIdSlots)
 import TeamTavern.Client.Pages.Player.CreateProfileButton as CreateProfileButton
@@ -74,7 +74,8 @@ render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render (Empty _) = HH.div_ []
 render (Loaded state @ { player: player', status }) =
     HH.div_ $
-    [ contentHeader [ HH.div_ [ contentHeading player'.nickname ] ]
+    [ contentHeader [ contentHeaderSection [ contentHeading'
+        [ contentHeadingFaIcon "fas fa-user", HH.text player'.nickname ] ] ]
     , contentDescription
         case status of
         SignedInSelf -> "View and edit all your details, profiles and teams."

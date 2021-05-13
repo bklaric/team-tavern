@@ -11,7 +11,7 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Components.Ads (descriptionLeaderboard)
-import TeamTavern.Client.Components.Content (contentDescription, contentHeader)
+import TeamTavern.Client.Components.Content (contentDescription, contentHeader, contentHeaderSection)
 import TeamTavern.Client.Script.Navigate (navigate_)
 import TeamTavern.Client.Snippets.Class as HS
 import Web.Event.Event (preventDefault)
@@ -72,7 +72,7 @@ renderTabs handle Teams =
 render :: forall slots. State -> HH.HTML slots Action
 render (Input handle title shortTitle tab) = HH.div_
     [ contentHeader
-        [ HH.div_
+        [ contentHeaderSection
             [ HH.a
                 [ HS.class_ "content-heading"
                 , HP.href $ "/games/" <> handle
