@@ -24,6 +24,8 @@ import TeamTavern.Client.Pages.Player.EditPlayer (editPlayer)
 import TeamTavern.Client.Pages.Player.EditPlayer as EditDetails
 import TeamTavern.Client.Pages.Player.EditProfile (editProfile)
 import TeamTavern.Client.Pages.Player.EditProfile as EditProfile
+import TeamTavern.Client.Pages.Player.PlayerOptions as PlayerOptions
+import TeamTavern.Client.Pages.Player.PlayerOptions (playerOptions)
 import TeamTavern.Client.Pages.Player.Profiles (profiles)
 import TeamTavern.Client.Pages.Player.Status (Status(..), getStatus)
 import TeamTavern.Client.Pages.Player.Teams (teams)
@@ -68,14 +70,20 @@ type ChildSlots = PlatformIdSlots
     , createProfile :: CreateProfileButton.Slot
     , editProfile :: EditProfile.Slot
     , createTeam :: CreateTeam.Slot
+    , playerOptions :: PlayerOptions.Slot
     )
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render (Empty _) = HH.div_ []
 render (Loaded state @ { player: player', status }) =
     HH.div_ $
-    [ contentHeader [ contentHeaderSection [ contentHeading'
-        [ contentHeadingFaIcon "fas fa-user", HH.text player'.nickname ] ] ]
+    [ contentHeader $
+        [ contentHeaderSection [ contentHeading'
+            [ contentHeadingFaIcon "fas fa-user", HH.text player'.nickname ] ]
+        ]
+        <> case status of
+            SignedInSelf -> [ playerOptions player'.nickname ]
+            _ -> []
     , contentDescription
         case status of
         SignedInSelf -> "View and edit all your details, profiles and teams."

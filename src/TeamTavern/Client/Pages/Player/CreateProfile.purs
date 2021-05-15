@@ -69,7 +69,7 @@ sendRequest
             )
             Unit
         ))
-sendRequest state @ { nickname, handle, profile } =
+sendRequest { nickname, handle, profile } =
     postNoContent ("/api/players/" <> nickname <> "/profiles/" <> handle)
     { platform: profile.platform
     , platformId: profile.platformId

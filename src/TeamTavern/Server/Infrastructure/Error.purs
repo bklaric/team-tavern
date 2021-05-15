@@ -6,6 +6,8 @@ type InternalRow errors = (internal :: Array String | errors)
 
 type NotFoundRow errors = (notFound :: Array String | errors)
 
+type NotAuthenticatedRow errors = (notAuthenticated :: Array String | errors)
+
 type NotAuthorizedRow errors = (notAuthorized :: Array String | errors)
 
 type ClientRow errors = (client :: Array String | errors)

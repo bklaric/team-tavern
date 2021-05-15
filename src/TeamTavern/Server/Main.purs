@@ -39,6 +39,7 @@ import TeamTavern.Server.Boarding.Preboard as Preboard
 import TeamTavern.Server.Game.View (view) as Game
 import TeamTavern.Server.Game.ViewAll (viewAll) as Game
 import TeamTavern.Server.Infrastructure.Log (logStamped, logt)
+import TeamTavern.Server.Player.Delete (delete) as Player
 import TeamTavern.Server.Player.Register (register) as Player
 import TeamTavern.Server.Player.UpdatePlayer (updatePlayer) as Player
 import TeamTavern.Server.Player.View (view) as Player
@@ -153,6 +154,8 @@ handleRequest deployment pool method url cookies body =
             Player.view pool cookies
         , updatePlayer: \{ nickname } ->
             Player.updatePlayer pool nickname cookies body
+        , deletePlayer: \{ nickname } ->
+            Player.delete pool nickname cookies
         , viewTeam:
             Team.view pool
         , createTeam: const $
