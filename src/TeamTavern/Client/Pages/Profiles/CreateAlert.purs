@@ -54,12 +54,12 @@ render { email, emailError, otherError, submitting } =
     form SendRequest $
     [ boardingDescription """Create a profile alert using the specified filters
         and we will send you an email when a matching profile has been created."""
-    , inputGroup
+    , inputGroup $
         [ inputLabel "fas fa-envelope" "Email address"
         , requiredTextLineInput email UpdateEmail
         ]
+        <> inputError emailError "This doesn't look like a valid email address."
     ]
-    <> inputError emailError "This doesn't look like a valid email address."
     <> [ submitButton "fas fa-bell" "Create alert" "Creating alert..." submitting ]
     <> otherFormError otherError
 
