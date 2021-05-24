@@ -135,6 +135,7 @@ render state = HH.div_ $
             , HH.div [ HP.class_ $ HH.ClassName "top-bar-menu" ]
                 [ HH.button
                     [ HP.class_ $ HH.ClassName "top-bar-menu-button"
+                    , HP.title "Menu"
                     , HE.onClick $ const $ Just ToggleMenu
                     ]
                     [ HH.i [ HP.class_ $ HH.ClassName if state.menuVisible then "fas fa-times top-bar-menu-button-icon" else "fas fa-bars top-bar-menu-button-icon" ] [] ]
