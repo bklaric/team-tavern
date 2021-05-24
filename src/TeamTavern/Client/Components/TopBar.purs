@@ -79,6 +79,7 @@ render state = HH.div_ $
                     [ HH.img
                         [ HP.class_ $ HH.ClassName "top-bar-logo"
                         , HP.src "/favicons/favicon-32x32.png"
+                        , HP.alt "TeamTavern logo"
                         ]
                     , HH.text "TeamTavern"
                     ]

@@ -64,7 +64,7 @@ features createAccount =
         ]
     , HH.element (HH.ElemName "picture") []
         [ HH.source [ HP.prop (HH.PropName "srcset") "/images/features.webp", HP.type_ $ MediaType "image/webp" ]
-        , HH.img [ HS.class_ "features-image", HP.src "/images/features.jpg" ]
+        , HH.img [ HS.class_ "features-image", HP.src "/images/features.jpg", HP.alt "Video game wallpaper" ]
         ]
     ]
 
@@ -123,6 +123,6 @@ features' handle title createAccount =
         ]
     , HH.element (HH.ElemName "picture") []
         [ HH.source [ HP.prop (HH.PropName "srcset") $ "/images/" <> handle <> "/features.webp", HP.type_ $ MediaType "image/webp" ]
-        , HH.img [ HS.class_ "features-image", HP.src $ "/images/" <> handle <> "/features.jpg" ]
+        , HH.img [ HS.class_ "features-image", HP.src $ "/images/" <> handle <> "/features.jpg", HP.alt $ title <> " wallpaper" ]
         ]
     ]

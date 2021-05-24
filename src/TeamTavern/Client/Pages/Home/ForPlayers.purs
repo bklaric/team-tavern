@@ -2,6 +2,7 @@ module TeamTavern.Client.Pages.Home.ForPlayers where
 
 import Prelude
 
+import Data.Maybe (Maybe(..))
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Landing (landingSection, landingSectionButton, landingSectionDescription, landingSectionHeading, landingSectionImage, landingSectionSubheading, landingSectionText)
 import Web.UIEvent.MouseEvent (MouseEvent)
@@ -9,7 +10,7 @@ import Web.UIEvent.MouseEvent (MouseEvent)
 forPlayers :: forall slots action. (MouseEvent -> action) -> HH.HTML slots action
 forPlayers onClick =
     landingSection
-    [ landingSectionImage "/images/for-players"
+    [ landingSectionImage Nothing "/images/for-players"
     , landingSectionText
         [ landingSectionHeading "fas fa-user" "Looking for a team?"
         , landingSectionDescription "Let everyone know you're looking to team up in four easy steps:"
@@ -30,7 +31,7 @@ forPlayers onClick =
 forPlayers' :: forall slots action. String -> String -> (MouseEvent -> action) -> HH.HTML slots action
 forPlayers' handle title onClick =
     landingSection
-    [ landingSectionImage $ "/images/" <> handle <> "/for-players"
+    [ landingSectionImage (Just title) $ "/images/" <> handle <> "/for-players"
     , landingSectionText $
         [ landingSectionHeading "fas fa-user" "Looking for a team?"
         , landingSectionDescription "Let everyone know you're looking to team up in three easy steps:"
