@@ -2,20 +2,16 @@ module TeamTavern.Client.Pages.Home.Features where
 
 import Prelude
 
-import CSS as CSS
+import Data.MediaType (MediaType(..))
 import Halogen.HTML as HH
-import Halogen.HTML.CSS as HC
+import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Components.Landing (landingSectionButton)
 import TeamTavern.Client.Snippets.Class as HS
 import Web.UIEvent.MouseEvent (MouseEvent)
 
 features :: forall slots action. (MouseEvent -> action) -> HH.HTML slots action
 features createAccount =
-    HH.div
-    [ HS.class_ "features"
-    , HC.style $ CSS.backgroundImage $ CSS.fromString $
-        "linear-gradient(hsla(20, 20%, 19%, 0.8),hsla(20, 20%, 19%, 0.8)), url(/images/features.jpg)"
-    ]
+    HH.div [ HS.class_ "features" ]
     [ HH.div [ HS.class_ "features-content" ]
         [ HH.h2 [ HS.class_ "features-heading" ]
             [ HH.text "All you need to find great teammates" ]
@@ -66,15 +62,15 @@ features createAccount =
             ]
         , landingSectionButton "Start finding teammates" "/preboarding/start" createAccount
         ]
+    , HH.element (HH.ElemName "picture") []
+        [ HH.source [ HP.prop (HH.PropName "srcset") "/images/features.webp", HP.type_ $ MediaType "image/webp" ]
+        , HH.img [ HS.class_ "features-image", HP.src "/images/features.jpg" ]
+        ]
     ]
 
 features' :: forall slots action. String -> String -> (MouseEvent -> action) -> HH.HTML slots action
 features' handle title createAccount =
-    HH.div
-    [ HS.class_ "features"
-    , HC.style $ CSS.backgroundImage $ CSS.fromString $
-        "linear-gradient(hsla(20, 20%, 19%, 0.8),hsla(20, 20%, 19%, 0.8)), url(/images/" <> handle <> "/features.jpg)"
-    ]
+    HH.div [ HS.class_ "features" ]
     [ HH.div [ HS.class_ "features-content" ]
         [ HH.h2 [ HS.class_ "features-heading" ]
             [ HH.text "All you need to find great teammates" ]
@@ -124,5 +120,9 @@ features' handle title createAccount =
                 ]
             ]
         , landingSectionButton "Start finding teammates" "/preboarding/start" createAccount
+        ]
+    , HH.element (HH.ElemName "picture") []
+        [ HH.source [ HP.prop (HH.PropName "srcset") $ "/images/" <> handle <> "/features.webp", HP.type_ $ MediaType "image/webp" ]
+        , HH.img [ HS.class_ "features-image", HP.src $ "/images/" <> handle <> "/features.jpg" ]
         ]
     ]

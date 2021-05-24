@@ -3,6 +3,7 @@ module TeamTavern.Client.Components.Landing where
 import Prelude
 
 import Data.Maybe (Maybe(..))
+import Data.MediaType (MediaType(..))
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
@@ -47,4 +48,8 @@ landingSectionButton text url onClick =
     [ HH.text text ]
 
 landingSectionImage :: forall slots action. String -> HH.HTML slots action
-landingSectionImage src = HH.img [ HS.class_ "landing-section-image", HP.src src ]
+landingSectionImage baseSrc =
+    HH.element (HH.ElemName "picture") []
+    [ HH.source [ HP.prop (HH.PropName "srcset") $ baseSrc <> ".webp", HP.type_ $ MediaType "image/webp" ]
+    , HH.img [ HS.class_ "landing-section-image", HP.src $ baseSrc <> ".png" ]
+    ]
