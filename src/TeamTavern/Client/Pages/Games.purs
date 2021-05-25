@@ -89,7 +89,7 @@ render (Games games') = HH.div [ HS.class_ "games" ] $
             )
         , HH.element (HH.ElemName "picture") []
             [ HH.source [ HP.prop (HH.PropName "srcset") $ "/images/" <> handle <> "/banner.webp", HP.type_ $ MediaType "image/webp" ]
-            , HH.img [ HS.class_ "game-card-image", HP.src $ "/images/" <> handle <> "/banner.jpg" ]
+            , HH.img [ HS.class_ "game-card-image", HP.src $ "/images/" <> handle <> "/banner.jpg", HP.alt $ title <> " banner" ]
             ]
         ]
     )
