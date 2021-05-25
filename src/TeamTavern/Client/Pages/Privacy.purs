@@ -5,7 +5,7 @@ import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Snippets.Class as HS
 
 link :: forall slots action. String -> HH.HTML slots action
-link text = HH.a [ HP.href text, HP.target "_blank" ] [ HH.text text ]
+link text = HH.a [ HP.href text, HP.target "_blank", HP.rel "noopener" ] [ HH.text text ]
 
 privacyPolicy :: forall slots action. HH.HTML slots action
 privacyPolicy =

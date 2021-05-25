@@ -56,7 +56,7 @@ steamUrlDetail :: forall slots action. String -> HH.HTML slots action
 steamUrlDetail steamUrl =
     detail' detailSteamSvg
     [ HH.a
-        [ HS.class_ "detail-url", HP.target "_blank", HP.href steamUrl ]
+        [ HS.class_ "detail-url", HP.target "_blank", HP.rel "noopener", HP.href steamUrl ]
         [ HH.text "Steam profile" ]
     ]
 
@@ -95,7 +95,7 @@ urlDetail _ _ Nothing = Nothing
 urlDetail icon text (Just href) = Just $
     detail icon
     [ HH.a
-        [ HS.class_ "detail-url", HP.target "_blank", HP.href href ]
+        [ HS.class_ "detail-url", HP.target "_blank", HP.rel "noopener", HP.href href ]
         [ HH.text text ]
     ]
 
