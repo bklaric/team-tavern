@@ -81,6 +81,7 @@ render (Input handle title shortTitle tab) = HH.div_
                 [ HH.img
                     [ HS.class_ "content-heading-icon"
                     , HP.src $ "/images/" <> handle <> "/icon-orange.png"
+                    , HP.alt $ title <> " logo"
                     ]
                 , HH.text title
                 ]
