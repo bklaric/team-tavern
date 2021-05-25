@@ -6,23 +6,23 @@ import Async (Async)
 import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
-import CSS as CSS
 import Data.Bifunctor (lmap)
 import Data.Const (Const)
 import Data.Maybe (Maybe(..))
+import Data.MediaType (MediaType(..))
 import Data.Symbol (SProxy(..))
 import Effect.Class (class MonadEffect)
 import Halogen (ClassName(..))
 import Halogen as H
 import Halogen.HTML as HH
-import Halogen.HTML.CSS (style) as HP
 import Halogen.HTML.Events as HE
-import Halogen.HTML.Properties (alt, class_, href, src) as HP
+import Halogen.HTML.Properties as HP
 import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.Ads (descriptionLeaderboard, stickyLeaderboards)
 import TeamTavern.Client.Components.Divider (whiteDivider)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigateWithEvent_)
+import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.ViewAllGames as ViewAllGames
 import Web.Event.Event (stopPropagation)
 import Web.UIEvent.MouseEvent (MouseEvent)
@@ -36,11 +36,11 @@ type Slot = H.Slot (Const Void) Void
 
 render :: forall slots monad. MonadEffect monad => State -> H.ComponentHTML Action slots monad
 render Empty = HH.div_ []
-render (Games games') = HH.div [ HP.class_ $ HH.ClassName "games" ] $
-    [ HH.div [ HP.class_ $ HH.ClassName "games-header"]
-        [ HH.h1 [ HP.class_ $ HH.ClassName "games-header-title" ]
+render (Games games') = HH.div [ HS.class_ "games" ] $
+    [ HH.div [ HS.class_ "games-header"]
+        [ HH.h1 [ HS.class_ "games-header-title" ]
             [ HH.text "Games" ]
-        , HH.p [ HP.class_ $ HH.ClassName "games-header-subtitle" ]
+        , HH.p [ HS.class_ "games-header-subtitle" ]
             [ HH.text "Choose one of the featured games and start finding your new teammates!" ]
         , descriptionLeaderboard
         ]
@@ -48,29 +48,25 @@ render (Games games') = HH.div [ HP.class_ $ HH.ClassName "games" ] $
     <>
     (games' <#> \{ title, handle, description } ->
         HH.div
-        [ HP.class_ $ HH.ClassName "game-card"
+        [ HS.class_ "game-card"
         , HE.onClick $ Just <<< Navigate ("/games/" <> handle) false
         ]
-        [ HH.div
-            [ HP.class_ $ HH.ClassName "game-card-text"
-            , HP.style $ CSS.backgroundImage $ CSS.fromString $
-                "linear-gradient(hsla(20, 20%, 19%, 0.8),hsla(20, 20%, 19%, 0.8)), url(/images/" <> handle <> "/banner.jpg)"
-            ] $
-            [ HH.h2 [ HP.class_ $ HH.ClassName "game-card-heading" ]
+        [ HH.div [ HS.class_ "game-card-text" ] $
+            [ HH.h2 [ HS.class_ "game-card-heading" ]
                 [ HH.a
                     [ HP.class_ $ ClassName "game-card-name"
                     , HP.href $ "/games/" <> handle <> "/players"
                     , HE.onClick $ Just <<< Navigate ("/games/" <> handle) true
                     ]
                     [ HH.img
-                        [ HP.class_ $ HH.ClassName "game-card-logo"
+                        [ HS.class_ "game-card-logo"
                         , HP.src $ "/images/" <> handle <> "/icon-white.png"
                         , HP.alt $ title <> " icon"
                         ]
                     , HH.text title
                     ]
                 ]
-            , HH.span [ HP.class_ $ HH.ClassName "game-card-profiles" ]
+            , HH.span [ HS.class_ "game-card-profiles" ]
                 [ HH.h3 [ HP.class_ $ ClassName "game-card-profile-count" ]
                     [ HH.a
                         [ HP.href $ "/games/" <> handle <> "/players"
@@ -89,14 +85,12 @@ render (Games games') = HH.div [ HP.class_ $ HH.ClassName "games" ] $
                 ]
             ]
             <> (description <#> \paragraph ->
-                HH.p [ HP.class_ $ HH.ClassName "game-card-description" ]
-                [ HH.text paragraph ]
+                HH.p [ HS.class_ "game-card-description" ] [ HH.text paragraph ]
             )
-        , HH.div
-            [ HP.class_ $ HH.ClassName "game-card-image"
-            , HP.style $ CSS.backgroundImage $ CSS.url $ "/images/" <> handle <> "/banner.jpg"
+        , HH.element (HH.ElemName "picture") []
+            [ HH.source [ HP.prop (HH.PropName "srcset") $ "/images/" <> handle <> "/banner.webp", HP.type_ $ MediaType "image/webp" ]
+            , HH.img [ HS.class_ "game-card-image", HP.src $ "/images/" <> handle <> "/banner.jpg", HP.alt $ title <> " banner" ]
             ]
-            []
         ]
     )
     <> stickyLeaderboards

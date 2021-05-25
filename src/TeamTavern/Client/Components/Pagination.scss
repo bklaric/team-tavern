@@ -17,7 +17,7 @@
 
 %pagination-button {
     background-color: white;
-    color: #888;
+    color: $light-text-color;
     flex: 1 1 80px;
     height: 100%;
     border: 0;
@@ -70,5 +70,5 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    color: #888;
+    color: $light-text-color;
 }

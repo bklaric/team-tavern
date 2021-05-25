@@ -2,6 +2,7 @@
 @font-face {
     font-family: 'Roboto';
     font-style: normal;
+    font-display: swap;
     font-weight: 400;
     src: local(''),
         /* Chrome 26+, Opera 23+, Firefox 39+ */
@@ -14,6 +15,7 @@
 @font-face {
     font-family: 'Roboto';
     font-style: normal;
+    font-display: swap;
     font-weight: 500;
     src: local(''),
         /* Chrome 26+, Opera 23+, Firefox 39+ */
@@ -26,6 +28,7 @@
 @font-face {
     font-family: 'Roboto';
     font-style: normal;
+    font-display: swap;
     font-weight: 700;
     src: local(''),
         /* Chrome 26+, Opera 23+, Firefox 39+ */

@@ -37,7 +37,7 @@ render { games, selected } =
     [ radioCards $
         ( games <#> \game ->
             radioCard
-            ("/images/" <> game.handle <> "/tile.jpg")
+            ("/images/" <> game.handle <> "/tile")
             (maybe false (_.handle >>> (_ == game.handle)) selected)
             (SelectGame game)
             [ HH.img

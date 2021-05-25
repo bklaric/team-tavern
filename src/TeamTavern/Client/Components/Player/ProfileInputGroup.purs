@@ -44,14 +44,14 @@ platformIdInputGroup platform platformId onValue error =
             [ inputUnderlabel "Example: username#12345"
             , inputUnderlabel'
                 [ HH.text "You can find out your Riot ID at "
-                , HH.a [ HP.href "https://account.riotgames.com/", HP.target "_blank" ] [ HH.text "account.riotgames.com" ]
+                , HH.a [ HP.href "https://account.riotgames.com/", HP.target "_blank", HP.rel "noopener" ] [ HH.text "account.riotgames.com" ]
                 ]
             ]
         BattleNet ->
             [ inputUnderlabel "Example: username#1234"
             , inputUnderlabel'
                 [ HH.text "You can find out your BattleTag at "
-                , HH.a [ HP.href "https://account.blizzard.com/details", HP.target "_blank" ] [ HH.text "account.blizzard.com" ]
+                , HH.a [ HP.href "https://account.blizzard.com/details", HP.target "_blank", HP.rel "noopener" ] [ HH.text "account.blizzard.com" ]
                 ]
             ]
         PlayStation -> []

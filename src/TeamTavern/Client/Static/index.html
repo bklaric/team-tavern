@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Esports Team Finder | TeamTavern</title>
 
@@ -30,6 +31,28 @@
   <link rel="apple-touch-icon" sizes="180x180" href="/favicons/apple-touch-icon.png">
   <link rel="manifest" href="/favicons/site.webmanifest">
 
+  <!-- Resources preload. -->
+  <link rel="preload" href="/app.min.js" as="script">
+  <link rel="preload" href="/style.min.css" as="style">
+  <link rel="preload" href="/css/roboto.css" as="style">
+  <link rel="preload" href="/css/font-awesome.min.css" as="style">
+  <link rel="preload" href="/webfonts/roboto-v20-latin-regular.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/webfonts/roboto-v20-latin-500.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/webfonts/roboto-v20-latin-700.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/webfonts/fa-brands-400.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/webfonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin>
+
+  <!-- Ads preload. -->
+  <link rel="preconnect" href="https://tags.bkrtx.com/">
+  <link rel="preconnect" href="https://securepubads.g.doubleclick.net/" crossorigin>
+  <link rel="preconnect" href="https://cdn.consentmanager.mgr.consensu.org/" crossorigin>
+  <link rel="preload" href="https://tags.bkrtx.com/js/bk-coretag.js" as="script">
+  <link rel="preload" href="https://securepubads.g.doubleclick.net/tag/js/gpt.js" as="script">
+  <link rel="preload" href="/teamtavern.min.js" as="script">
+
+  <!-- Analytics preload. -->
+  <link rel="preload" href="https://www.googletagmanager.com/gtag/js?id=UA-150934365-1" as="script">
+
   <!-- Styles. -->
   <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.9.0/css/all.min.css"> -->
   <!-- <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:400,500,700&display=swap"> -->
@@ -41,16 +64,13 @@
   <script async src="/app.min.js"></script>
 
   <!-- Ads. -->
-  <link rel="preconnect" href="https://tags.bkrtx.com/">
-  <link rel="preconnect" href="https://securepubads.g.doubleclick.net/" crossorigin>
-  <link rel="preconnect" href="https://cdn.consentmanager.mgr.consensu.org/" crossorigin>
   <script>window.AdSlots = window.AdSlots || { cmd: [], disableScripts: ['gpt', 'bk'] };</script>
   <script async src="https://tags.bkrtx.com/js/bk-coretag.js"></script>
   <script async src="https://securepubads.g.doubleclick.net/tag/js/gpt.js"></script>
-  <script async src="/teamtavern.min.js"></script>
+  <script defer src="/teamtavern.min.js"></script>
 
   <!-- Global site tag (gtag.js) - Google Analytics -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-150934365-1"></script>
+  <script defer src="https://www.googletagmanager.com/gtag/js?id=UA-150934365-1"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag() { dataLayer.push(arguments); }
@@ -60,7 +80,7 @@
   </script>
 
   <!-- Feedback widget. -->
-  <script async src="https://w.appzi.io/w.js?token=zY7Jk"></script>
+  <!-- <script async src="https://w.appzi.io/w.js?token=zY7Jk"></script> -->
 </head>
 
 <body>

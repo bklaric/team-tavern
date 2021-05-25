@@ -41,6 +41,7 @@ profileHeading' label handle path heading =
             [ HH.img
                 [ HS.class_ "content-heading-icon"
                 , HP.src $ "/images/" <> handle <> "/icon-orange.png"
+                , HP.alt $ heading <> " logo"
                 ]
             , HH.text heading
             ]

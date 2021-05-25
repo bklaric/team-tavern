@@ -37,7 +37,7 @@
     width: 20px;
     height: 20px;
     font-size: 12px;
-    border: 2px solid #b15e3677;
+    border: 2px solid #ab5b3477;
     border-radius: 50px;
     margin-left: 14px;
     color: white;
@@ -46,7 +46,7 @@
 
 .selected-radio-card-check {
     @extend .radio-card-check;
-    background: #b15e36;
+    background: #ab5b34;
 }
 
 .radio-card-ribbon {
@@ -55,7 +55,8 @@
     justify-content: center;
     height: 60px;
     padding: 0 7px;
-    background: #b15e3677;
+    background: #ab5b3477;
+    position: relative;
 }
 
 .radio-card-ribbon-text {
@@ -68,5 +69,10 @@
 
 .selected-radio-card-ribbon {
     @extend .radio-card-ribbon;
-    background: #b15e36dd;
+    background: #ab5b34dd;
+}
+
+.radio-card-image {
+    position: absolute;
+    top: 0;
 }
