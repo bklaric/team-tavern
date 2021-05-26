@@ -92,8 +92,13 @@
     line-height: 1;
 }
 
+.top-bar-menu {
+    margin-right: -11.25px;
+}
+
 .top-bar-menu-button {
     @extend .top-bar-button;
+    color: rgba(0,0,0,.733);
 
     @media screen and (max-width: 580px) {
         width: 40px;
