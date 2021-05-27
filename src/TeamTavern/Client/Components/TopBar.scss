@@ -19,36 +19,40 @@
 
 .top-bar-left {
     display: flex;
-}
-
-.top-bar-logo {
-    color: white;
-    background-color: $primary-color;
-    display: inline-flex;
-    justify-content: center;
-    width: 26px;
-    height: 26px;
-    border-radius: 4px;
-    margin-right: 6px;
+    gap: 32px;
 }
 
 .top-bar-title {
-    margin-bottom: 0;
+    display: flex;
+    align-items: center;
+}
+
+.top-bar-title-logo {
+    width: 26px;
+    height: 26px;
+    margin-right: 8px;
+}
+
+.top-bar-title-text {
+    line-height: 40px;
+    font-size: 20px;
     font-weight: 700;
 }
 
-.top-bar-title-link {
+.top-bar-game-selection {
     display: flex;
-    align-items: center;
-    font-size: 20px;
-    line-height: 40px;
+    gap: 6px;
 }
 
 .top-bar-games {
-    margin-left: 18px;
-    padding: 0 6px;
     font-weight: 500;
     line-height: 40px;
+}
+
+.top-bar-games-icon {
+    font-size: 22px;
+    margin-right: 8px;
+    vertical-align: -3px;
 }
 
 .top-bar-games-caret {
@@ -80,10 +84,10 @@
 }
 
 .top-bar-game-icon {
-    height: 18px;
-    width: 18px;
+    height: 22px;
+    width: 22px;
     margin-right: 8px;
-    vertical-align: -2px;
+    vertical-align: -6px;
 }
 
 .top-bar-game-title {
@@ -91,6 +95,24 @@
     font-weight: 500;
     line-height: 1;
 }
+
+.top-bar-navigation {
+    display: flex;
+    gap: 24px;
+
+    .top-bar-navigation-item {
+        font-size: 14px;
+        font-weight: 500;
+        line-height: 40px;
+
+        .top-bar-navigation-item-icon {
+            font-size: 20px;
+            margin-right: 10px;
+            vertical-align: -2px;
+        }
+    }
+}
+
 
 .top-bar-menu {
     margin-right: -11.25px;
