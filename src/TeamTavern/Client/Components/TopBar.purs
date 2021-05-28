@@ -147,6 +147,12 @@ render state = HH.div_ $
                                         , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/teams")
                                         ]
                                         [ HH.text "Teams" ]
+                                    , divider
+                                    , HH.a
+                                        [ HP.href $ "/games/" <> handle <> "/competitions"
+                                        , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/competitions")
+                                        ]
+                                        [ HH.text "Competitions" ]
                                     ]
                                 ])
                                 state.games
