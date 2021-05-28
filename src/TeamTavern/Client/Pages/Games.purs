@@ -82,6 +82,14 @@ render (Games games') = HH.div [ HS.class_ "games" ] $
                         ]
                         [ HH.text "Teams" ]
                     ]
+                , whiteDivider
+                , HH.h3 [ HP.class_ $ ClassName "game-card-profile-count" ]
+                    [ HH.a
+                        [ HP.href $ "/games/" <> handle <> "/competitions"
+                        , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/competitions") true
+                        ]
+                        [ HH.text "Competitions" ]
+                    ]
                 ]
             ]
             <> (description <#> \paragraph ->
