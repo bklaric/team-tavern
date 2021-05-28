@@ -19,7 +19,10 @@
 
 .top-bar-left {
     display: flex;
-    gap: 32px;
+
+    @media screen and (min-width: 461px) {
+        gap: 32px;
+    }
 }
 
 .top-bar-title {
@@ -34,14 +37,24 @@
 }
 
 .top-bar-title-text {
-    line-height: 40px;
-    font-size: 20px;
-    font-weight: 700;
+    @media screen and (min-width: 901px) {
+        display: inline;
+        line-height: 40px;
+        font-size: 20px;
+        font-weight: 700;
+    }
+
+    @media screen and (max-width: 900px) {
+        display: none
+    }
 }
 
 .top-bar-game-selection {
     display: flex;
-    gap: 6px;
+
+    @media screen and (min-width: 461px) {
+        gap: 6px;
+    }
 }
 
 .top-bar-games {
@@ -49,10 +62,42 @@
     line-height: 40px;
 }
 
-.top-bar-games-icon {
+.top-bar-games-title {
+    display: none;
+
+    @media screen and (min-width: 1041px) {
+        display: inline;
+    }
+}
+
+.top-bar-games-short-title {
+    display: none;
+
+    @media screen and (min-width: 461px) and (max-width: 1040px) {
+        display: inline;
+    }
+}
+
+i.top-bar-games-icon {
     font-size: 22px;
-    margin-right: 8px;
     vertical-align: -3px;
+}
+
+img.top-bar-games-icon {
+        height: 22px;
+        width: 22px;
+        vertical-align: -6px;
+}
+
+.top-bar-games-icon {
+    @media screen and (min-width: 461px) {
+        margin-right: 8px;
+    }
+
+    @media screen and (max-width: 460px) {
+        padding: 0 9px;
+        text-align: center;
+    }
 }
 
 .top-bar-games-caret {
@@ -63,14 +108,16 @@
     cursor: pointer;
 }
 
+.top-bar-games-popover-container {
+    @media screen and (min-width: 461px) {
+        position: relative;
+    }
+}
+
 .top-bar-games-popover {
     @extend .popover;
-    right: calc(-100vw + 265px);
-    max-width: 100vw;
-
-    @media screen and (min-width: 430px) {
-        left: -120px;
-    }
+    left: 50%;
+    transform: translate(-50%, 0);
 }
 
 .top-bar-game {
@@ -87,7 +134,7 @@
     height: 22px;
     width: 22px;
     margin-right: 8px;
-    vertical-align: -6px;
+    vertical-align: -3px;
 }
 
 .top-bar-game-title {
@@ -98,7 +145,15 @@
 
 .top-bar-navigation {
     display: flex;
-    gap: 24px;
+
+    @media screen and (min-width: 801px) {
+        gap: 24px;
+    }
+
+    @media screen and (min-width: 461px) and (max-width: 800px) {
+        gap: 14px;
+        margin-left: -14px;
+    }
 
     .top-bar-navigation-item {
         font-size: 14px;
@@ -107,8 +162,24 @@
 
         .top-bar-navigation-item-icon {
             font-size: 20px;
-            margin-right: 10px;
             vertical-align: -2px;
+
+            @media screen and (min-width: 801px) {
+                margin-right: 10px;
+            }
+
+            @media screen and (max-width: 800px) {
+                width: 40px;
+                text-align: center;
+            }
+        }
+
+        .top-bar-navigation-item-text {
+            display: none;
+
+            @media screen and (min-width: 801px) {
+                display: inline;
+            }
         }
     }
 }
@@ -122,13 +193,13 @@
     @extend .top-bar-button;
     color: rgba(0,0,0,.733);
 
-    @media screen and (max-width: 580px) {
+    @media screen and (max-width: 600px) {
         width: 40px;
         height: 40px;
         padding: 0;
     }
 
-    @media screen and (min-width: 581px) {
+    @media screen and (min-width: 601px) {
         display: none;
     }
 }
@@ -139,7 +210,7 @@
 }
 
 .top-bar-menu-items {
-    @media screen and (max-width: 580px) {
+    @media screen and (max-width: 600px) {
         position: fixed;
         top: 0;
         left: 0;
@@ -153,7 +224,7 @@
 .hidden-top-bar-menu-items {
     @extend .top-bar-menu-items;
 
-    @media screen and (max-width: 580px) {
+    @media screen and (max-width: 600px) {
         display: none;
     }
 }
@@ -164,7 +235,7 @@
     text-align: left;
     background-color: white;
 
-    @media screen and (max-width: 580px) {
+    @media screen and (max-width: 600px) {
         display: block;
         width: 100%;
         padding: 0 21px;

@@ -14,6 +14,7 @@ type ViewAllGames = Route
 
 type OkGameContent =
     { title :: String
+    , shortTitle :: String
     , handle :: String
     , description :: Array String
     }

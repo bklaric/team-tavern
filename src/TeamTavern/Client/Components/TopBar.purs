@@ -98,19 +98,20 @@ render state = HH.div_ $
                             [ HH.i [ HS.class_ "fas fa-gamepad top-bar-games-icon"] []
                             , HH.text "Games"
                             ]
-                        Just { handle, title } ->
+                        Just { handle, title, shortTitle } ->
                             HH.a
                             [ HS.class_ "top-bar-games"
                             , HP.href $ "/games/" <> handle
                             , HE.onClick $ Just <<< Navigate ("/games/" <> handle)
                             ]
                             [ HH.img
-                                [ HS.class_ "top-bar-game-icon"
+                                [ HS.class_ "top-bar-games-icon"
                                 , HP.src $ "/images/" <> handle <> "/icon-orange.png"
                                 ]
-                            , HH.text title
+                            , HH.span [ HS.class_ "top-bar-games-title" ] [ HH.text title ]
+                            , HH.span [ HS.class_ "top-bar-games-short-title" ] [ HH.text shortTitle ]
                             ]
-                    , HH.div [ HS.class_ "popover-container" ] $
+                    , HH.div [ HS.class_ "top-bar-games-popover-container" ] $
                         [ HH.i
                             [ HS.class_ "fas fa-caret-down top-bar-games-caret"
                             , HE.onClick $ Just <<< ToggleGamesPopunder
@@ -161,7 +162,7 @@ render state = HH.div_ $
                             , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/players")
                             ]
                             [ HH.i [ HS.class_ "fas fa-user top-bar-navigation-item-icon" ] []
-                            , HH.text "Players"
+                            , HH.span [ HS.class_ "top-bar-navigation-item-text" ] [ HH.text "Players" ]
                             ]
                         , HH.a
                             [ HS.class_ "top-bar-navigation-item"
@@ -169,7 +170,7 @@ render state = HH.div_ $
                             , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/teams")
                             ]
                             [ HH.i [ HS.class_ "fas fa-users top-bar-navigation-item-icon" ] []
-                            , HH.text "Teams"
+                            , HH.span [ HS.class_ "top-bar-navigation-item-text" ] [ HH.text "Teams" ]
                             ]
                         , HH.a
                             [ HS.class_ "top-bar-navigation-item"
@@ -177,7 +178,7 @@ render state = HH.div_ $
                             , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/competitions")
                             ]
                             [ HH.i [ HS.class_ "fas fa-trophy top-bar-navigation-item-icon" ] []
-                            , HH.text "Competitions"
+                            , HH.span [ HS.class_ "top-bar-navigation-item-text" ] [ HH.text "Competitions" ]
                             ]
                         ]
                     ])
