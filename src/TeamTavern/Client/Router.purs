@@ -59,7 +59,7 @@ data State
     | About
     | Privacy
     | Game { handle :: String }
-    | Profiles GameHeader.Handle GameHeader.Tab
+    | Profiles Profiles.Input
     | Player { nickname :: String }
     | Team { handle :: String }
     | Register
@@ -112,7 +112,7 @@ render Games = topBarWithContent Nothing [ games ]
 render About = topBarWithContent Nothing [ about ]
 render Privacy = topBarWithContent Nothing [ privacyPolicy ]
 render (Game input) = HH.div_ [ topBar $ Just input.handle, game input, footer ]
-render (Profiles handle tab) = wideTopBarWithContent (Just handle) [ Profiles.profiles handle tab ]
+render (Profiles input) = wideTopBarWithContent (Just input.handle) [ Profiles.profiles input ]
 render (Player input) = topBarWithContent Nothing [ player input ]
 render (Team input) = topBarWithContent Nothing [ team input ]
 render Register = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ register ] ]
@@ -222,9 +222,9 @@ handleAction (Init state route) = do
                 then (navigateReplace_ $ "/games/" <> handle <> "/players") *> nothing
                 else just $ Game { handle }
         ["", "games", handle, "players" ] ->
-            just $ Profiles handle GameHeader.Players
+            just $ Profiles { handle, tab: GameHeader.Players }
         ["", "games", handle, "teams" ] ->
-            just $ Profiles handle GameHeader.Teams
+            just $ Profiles { handle, tab: GameHeader.Teams }
         ["", "players", nickname] ->
             just $ Player { nickname }
         ["", "network-n-test"] ->

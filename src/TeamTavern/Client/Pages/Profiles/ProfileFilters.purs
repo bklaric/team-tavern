@@ -30,7 +30,7 @@ import TeamTavern.Client.Components.Team.TeamInputGroup (ageInputGroup, language
 import TeamTavern.Client.Pages.Profile.Filters (Filters)
 import TeamTavern.Client.Pages.Profiles.CreateAlert (createAlert)
 import TeamTavern.Client.Pages.Profiles.CreateAlert as CreateAlert
-import TeamTavern.Client.Pages.Profiles.GameHeader (Tab(..))
+import TeamTavern.Client.Pages.Profiles.GameHeader (ProfileTab(..))
 import TeamTavern.Client.Pages.Profiles.TeamBadge (organizationCheckboxBadges, platformCheckboxBadges, sizeCheckboxBadges)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.CreateAlert as CreateAlertRoute
@@ -56,7 +56,7 @@ type Input =
     { platforms :: Platforms
     , fields :: Array Field
     , filters :: Filters
-    , tab :: Tab
+    , tab :: ProfileTab
     , handle :: String
     }
 
@@ -80,7 +80,7 @@ type State =
     , filtersVisible :: Boolean
     , playerFiltersVisible :: Boolean
     , profileFiltersVisible :: Boolean
-    , tab :: Tab
+    , tab :: ProfileTab
     , handle :: String
     , createAlertModalShown :: Boolean
     }

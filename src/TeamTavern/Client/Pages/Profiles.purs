@@ -1,4 +1,4 @@
-module TeamTavern.Client.Pages.Profiles (Slot, profiles) where
+module TeamTavern.Client.Pages.Profiles (Input, Slot, profiles) where
 
 import Prelude
 
@@ -30,6 +30,7 @@ import TeamTavern.Client.Components.Boarding.PlayerOrTeamInput as Boarding
 import TeamTavern.Client.Components.Team.ProfileInputGroup (FieldValues)
 import TeamTavern.Client.Pages.Preboarding as Preboarding
 import TeamTavern.Client.Pages.Profile.Filters (Filters)
+import TeamTavern.Client.Pages.Profiles.GameHeader (gameHeader)
 import TeamTavern.Client.Pages.Profiles.GameHeader as GameHeader
 import TeamTavern.Client.Pages.Profiles.PlayerProfiles (playerProfiles)
 import TeamTavern.Client.Pages.Profiles.PlayerProfiles as PlayerProfiles
@@ -60,26 +61,24 @@ import Web.HTML.Location as Location
 import Web.HTML.Window (location)
 import Web.HTML.Window as Window
 
-type ShowCreateModal = Boolean
-
-type Timezone = String
-
 data Tab
-    = Players PlayerProfiles.Input ShowCreateModal
-    | Teams TeamProfiles.Input ShowCreateModal Timezone
+    = Players PlayerProfiles.Input
+    | Teams TeamProfiles.Input
 
 toHeaderTab :: Tab -> GameHeader.Tab
-toHeaderTab (Players _ _) = GameHeader.Players
-toHeaderTab (Teams _ _ _) = GameHeader.Teams
+toHeaderTab (Players _) = GameHeader.Profiles GameHeader.Players
+toHeaderTab (Teams _) = GameHeader.Profiles GameHeader.Teams
 
-data Input = Input GameHeader.Handle GameHeader.Tab
+toHeaderProfileTab :: Tab -> GameHeader.ProfileTab
+toHeaderProfileTab (Players _) = GameHeader.Players
+toHeaderProfileTab (Teams _) = GameHeader.Teams
+
+type Input = { handle :: String, tab :: GameHeader.ProfileTab }
 
 data Action
     = Init
     | Receive Input
     | ApplyFilters Filters
-    | ShowCreateProfileModal
-    | HideCreateProfileModal
     | ReloadPage
     | ChangePage Int
     | OpenPlayerPreboarding
@@ -121,30 +120,26 @@ filterableFields fields = fields # Array.mapMaybe
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render (Empty _) = HH.div_ []
-render (Game game player filters tab) = let
-    gameHeader =
-        HH.slot (SProxy :: SProxy "gameHeader") unit GameHeader.component
-        (GameHeader.Input game.handle game.title game.shortTitle $ toHeaderTab tab) absurd
-    in
+render (Game game player filters tab) =
     HH.div_ $
-    [ gameHeader
+    [ gameHeader { handle: game.handle, title: game.title, shortTitle: game.shortTitle, tab: toHeaderTab tab }
     , HH.div [ HP.class_ $ HH.ClassName "filters-and-profiles" ]
         [ profileFilters
             { platforms: game.platforms
             , fields: filterableFields game.fields
             , filters
-            , tab: toHeaderTab tab
+            , tab: toHeaderProfileTab tab
             , handle: game.handle
             }
             (\(ProfileFilters.Apply filters') -> Just $ ApplyFilters filters')
         , case tab of
-            Players input _ ->
+            Players input ->
                 playerProfiles
                 input
                 case _ of
                 PlayerProfiles.PageChanged page -> Just $ ChangePage page
                 PlayerProfiles.PreboardingClicked -> Just OpenPlayerPreboarding
-            Teams input _ _ ->
+            Teams input ->
                 teamProfiles
                 input
                 case _ of
@@ -243,7 +238,7 @@ loadTeamProfiles handle page filters = Async.unify do
     pure content
 
 loadTab :: forall output left.
-    String -> GameHeader.Tab -> H.HalogenM State Action ChildSlots output (Async left) Unit
+    String -> GameHeader.ProfileTab -> H.HalogenM State Action ChildSlots output (Async left) Unit
 loadTab handle GameHeader.Players = do
     game <- H.lift $ loadGame handle
     case game of
@@ -259,7 +254,6 @@ loadTab handle GameHeader.Players = do
                         , page
                         , playerInfo: player
                         }
-                        false
                     H.liftEffect $ setMetaTags game'.shortTitle GameHeader.Players
                 Nothing -> do
                     H.put Error
@@ -276,15 +270,12 @@ loadTab handle GameHeader.Teams = do
             case teamProfiles' of
                 Just teamProfiles'' -> do
                     player <- getPlayerInfo
-                    timezone <- getClientTimezone
                     H.put $ Game game' player filters $ Teams
                         { profiles: teamProfiles''.profiles
                         , profileCount: teamProfiles''.count
                         , page
                         , playerInfo: player
                         }
-                        false
-                        timezone
                     H.liftEffect $ setMetaTags game'.shortTitle GameHeader.Teams
                 Nothing -> do
                     H.put Error
@@ -293,7 +284,7 @@ loadTab handle GameHeader.Teams = do
             H.put Error
             H.liftEffect $ setMetaTags handle GameHeader.Teams
 
-setMetaTags :: String -> GameHeader.Tab -> Effect Unit
+setMetaTags :: String -> GameHeader.ProfileTab -> Effect Unit
 setMetaTags handleOrTitle tab =
     case tab of
     GameHeader.Players ->
@@ -375,9 +366,9 @@ handleAction :: forall output left.
 handleAction Init = do
     state <- H.get
     case state of
-        Empty (Input handle tab) -> handleAction $ Receive $ Input handle tab
+        Empty input -> handleAction $ Receive input
         _ -> pure unit
-handleAction (Receive (Input handle tab)) = do
+handleAction (Receive { handle, tab }) = do
     state <- H.get
     case state, tab of
         Game game player _ _, GameHeader.Players | game.handle == handle -> do
@@ -391,7 +382,6 @@ handleAction (Receive (Input handle tab)) = do
                         , page: page
                         , playerInfo: player
                         }
-                        false
                     H.liftEffect $ setMetaTags game.shortTitle tab
                 Nothing -> pure unit
         Game game player _ _, GameHeader.Teams | game.handle == handle -> do
@@ -399,15 +389,12 @@ handleAction (Receive (Input handle tab)) = do
             teamProfiles <- H.lift $ loadTeamProfiles handle page filters
             case teamProfiles of
                 Just teamProfiles' -> do
-                    timezone <- getClientTimezone
                     H.put $ Game game player filters $ Teams
                         { profiles: teamProfiles'.profiles
                         , profileCount: teamProfiles'.count
                         , page: page
                         , playerInfo: player
                         }
-                        false
-                        timezone
                     H.liftEffect $ setMetaTags game.shortTitle tab
                 Nothing -> pure unit
         _, _ -> loadTab handle tab
@@ -461,23 +448,6 @@ handleAction (ApplyFilters filters) = do
 
         href <- Url.href url
         navigate_ href
-
-handleAction ShowCreateProfileModal =
-    H.modify_
-    case _ of
-    Game game' player filters (Players input _) ->
-        Game game' player filters $ Players input true
-    Game game' player filters (Teams input _ timezone) ->
-        Game game' player filters $ Teams input true timezone
-    other -> other
-handleAction HideCreateProfileModal =
-    H.modify_
-    case _ of
-    Game game' player filters (Players input _) ->
-        Game game' player filters $ Players input false
-    Game game' player filters (Teams input _ timezone) ->
-        Game game' player filters $ Teams input false timezone
-    other -> other
 handleAction ReloadPage =
     window >>= location >>= reload # H.liftEffect
 handleAction (ChangePage page) = do
@@ -512,6 +482,5 @@ component = H.mkComponent
     }
 
 profiles :: forall query children left.
-    String -> GameHeader.Tab -> HH.ComponentHTML query (profiles :: Slot Unit | children) (Async left)
-profiles handle tab =
-    HH.slot (SProxy :: SProxy "profiles") unit component (Input handle tab) absurd
+    Input -> HH.ComponentHTML query (profiles :: Slot Unit | children) (Async left)
+profiles input = HH.slot (SProxy :: SProxy "profiles") unit component input absurd
