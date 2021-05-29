@@ -24,6 +24,7 @@ import TeamTavern.Client.Pages.DeleteAlert (deleteAlert)
 import TeamTavern.Client.Pages.DeleteAlert as DeleteAlert
 import TeamTavern.Client.Pages.Game (game)
 import TeamTavern.Client.Pages.Game as Game
+import TeamTavern.Client.Pages.GameTabs as GameTabs
 import TeamTavern.Client.Pages.Games (games)
 import TeamTavern.Client.Pages.Games as Games
 import TeamTavern.Client.Pages.Home (home)
@@ -35,7 +36,6 @@ import TeamTavern.Client.Pages.Player as Player
 import TeamTavern.Client.Pages.Preboarding (preboarding)
 import TeamTavern.Client.Pages.Preboarding as Preboarding
 import TeamTavern.Client.Pages.Privacy (privacyPolicy)
-import TeamTavern.Client.Pages.Profiles as Profiles
 import TeamTavern.Client.Pages.Profiles.GameHeader as GameHeader
 import TeamTavern.Client.Pages.Register (register)
 import TeamTavern.Client.Pages.Register as Register
@@ -59,7 +59,7 @@ data State
     | About
     | Privacy
     | Game { handle :: String }
-    | Profiles Profiles.Input
+    | GameTabs GameTabs.Input
     | Player { nickname :: String }
     | Team { handle :: String }
     | Register
@@ -77,7 +77,7 @@ type ChildSlots = Footer.ChildSlots
     , about :: About.Slot
     , games :: Games.Slot Unit
     , game :: Game.Slot
-    , profiles :: Profiles.Slot Unit
+    , gameTabs :: GameTabs.Slot
     , player :: Player.Slot
     , team :: Team.Slot
     , onboarding :: Onboarding.Slot
@@ -112,7 +112,7 @@ render Games = topBarWithContent Nothing [ games ]
 render About = topBarWithContent Nothing [ about ]
 render Privacy = topBarWithContent Nothing [ privacyPolicy ]
 render (Game input) = HH.div_ [ topBar $ Just input.handle, game input, footer ]
-render (Profiles input) = wideTopBarWithContent (Just input.handle) [ Profiles.profiles input ]
+render (GameTabs input) = wideTopBarWithContent (Just input.handle) [ GameTabs.gameTabs input ]
 render (Player input) = topBarWithContent Nothing [ player input ]
 render (Team input) = topBarWithContent Nothing [ team input ]
 render Register = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ register ] ]
@@ -222,9 +222,11 @@ handleAction (Init state route) = do
                 then (navigateReplace_ $ "/games/" <> handle <> "/players") *> nothing
                 else just $ Game { handle }
         ["", "games", handle, "players" ] ->
-            just $ Profiles { handle, tab: GameHeader.Players }
+            just $ GameTabs { handle, tab: GameHeader.Profiles GameHeader.Players }
         ["", "games", handle, "teams" ] ->
-            just $ Profiles { handle, tab: GameHeader.Teams }
+            just $ GameTabs { handle, tab: GameHeader.Profiles GameHeader.Teams }
+        ["", "games", handle, "competitions" ] ->
+            just $ GameTabs { handle, tab: GameHeader.Competitions }
         ["", "players", nickname] ->
             just $ Player { nickname }
         ["", "network-n-test"] ->
