@@ -1,12 +1,13 @@
 module TeamTavern.Routes.ViewCompetitions where
 
+import Data.Maybe (Maybe)
 import Jarilo.Method (Get)
 import Jarilo.Path (type (:>), End)
 import Jarilo.Query (NoQuery)
 import Jarilo.Route (Route)
 import Jarilo.Segment (Capture, Literal)
 
-type ViewAllGames = Route
+type ViewCompetitions = Route
     Get
     (  Literal "games"
     :> Capture "handle" String
@@ -16,8 +17,9 @@ type ViewAllGames = Route
 
 type OkCompetitionContent =
     { name :: String
-    , link :: String
     , description :: Array String
+    , website :: Maybe String
+    , discordServer :: Maybe String
     }
 
 type OkContent = Array OkCompetitionContent
