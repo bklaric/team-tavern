@@ -136,8 +136,10 @@ create table competition
     , game_id integer not null references game(id) on delete cascade
     , name text not null
     , description text[] not null
+    , banner text not null
     , website text
     , discord_server text
+    , region text not null
     );
 
 create table alert

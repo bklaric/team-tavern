@@ -15,11 +15,16 @@ type ViewCompetitions = Route
     :> End)
     NoQuery
 
-type OkCompetitionContent =
-    { name :: String
+type OkCompetitionRow fields =
+    ( name :: String
     , description :: Array String
+    , banner :: String
     , website :: Maybe String
     , discordServer :: Maybe String
-    }
+    , region :: String
+    | fields
+    )
+
+type OkCompetitionContent = Record (OkCompetitionRow ())
 
 type OkContent = Array OkCompetitionContent

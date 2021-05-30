@@ -1,0 +1,92 @@
+.competitions {
+    display: grid;
+    gap: 21px;
+    grid-template-columns: 1fr;
+
+    @media screen and (min-width: 700px) {
+        grid-template-columns: 1fr 1fr;
+        padding: 0 21px;
+    }
+
+    @media screen and (min-width: 1100px) {
+        grid-template-columns: 1fr 1fr 1fr;
+    }
+}
+
+.competition {
+    display: flex;
+    flex-flow: column;
+    overflow: auto;
+    border-top: $border;
+    border-bottom: $border;
+    background-color: white;
+    width: 100%;
+
+    @media screen and (min-width: 700px) {
+        border: $border;
+        border-radius: $border-radius;
+    }
+}
+
+.competition-banner {
+    object-fit: cover;
+}
+
+.competition-text {
+    @extend .card-section;
+}
+
+.competition-heading {
+    font-size: 20px;
+    line-height: 1.5;
+    margin-bottom: 20px;
+}
+
+.competition-details {
+    margin-bottom: 20px;
+}
+
+.competition-description {
+    position: relative;
+
+    &.expanded {
+        padding-bottom: 42px;
+    }
+
+    &.expanded .competition-description-text {
+        overflow: unset;
+        text-overflow: unset;
+        white-space: unset;
+        width: 100%;
+    }
+
+    &.expanded .competition-description-paragraph {
+        display: block;
+    }
+}
+
+.competition-description-expand {
+    position: absolute;
+    line-height: 1.5;
+    color: $primary-color;
+    cursor: pointer;
+    right: 0;
+    bottom: 0;
+
+    &:hover {
+        text-decoration: underline;
+    }
+}
+
+.competition-description-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: calc(100% - 50px);
+}
+
+.competition-description-paragraph {
+    display: contents;
+    line-height: 1.5;
+    margin-bottom: 1em;
+}

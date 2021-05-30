@@ -19,8 +19,10 @@ queryString = Query """
     select
         competition.name,
         competition.description,
+        competition.banner,
         competition.website,
-        competition.discord_server as "discordServer"
+        competition.discord_server as "discordServer",
+        competition.region
     from competition
         join game on game.id = competition.game_id
     where game.handle = $1;
