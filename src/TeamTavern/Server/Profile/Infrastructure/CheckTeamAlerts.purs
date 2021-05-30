@@ -18,7 +18,9 @@ import TeamTavern.Server.Profile.ViewTeamProfilesByGame.LoadProfiles (createFiel
 
 type Alert =
     { title :: String
+    , id :: Int
     , email :: String
+    , token :: String
     , organizations :: Array Organization
     , ageFrom :: Maybe Int
     , ageTo :: Maybe Int
@@ -40,7 +42,9 @@ loadAlertsQueryString :: Query
 loadAlertsQueryString = Query """
     select
         game.title,
+        alert.id,
         alert.email,
+        alert.token,
         alert.organizations,
         alert.age_from as "ageFrom",
         alert.age_to as "ageTo",
@@ -132,13 +136,16 @@ checkTeamAlerts profileId querier =
         -- Send the email.
         let teamUrl = "https://www.teamtavern.net/teams/" <> handle
         let teamName = maybe handle identity name
+        let deleteAlertUrl = "https://www.teamtavern.net/remove-alert?id=" <> show alert.id <> "&token=" <> alert.token
         sendAsync
             { from: "admin@teamtavern.net"
             , to: alert.email
             , subject: "A team created a matching " <> alert.title <> " profile on TeamTavern"
             , text: "Team " <> teamName <> " created their " <> alert.title <> " profile and it matches your alert.\n"
                 <> "You can check out their profile at: " <> teamUrl
+                <> "If you no longer wish to receive further emails for this alert, you can unsubscribe at " <> deleteAlertUrl
             , html: "<p>Team " <> teamName <> " created their " <> alert.title <> " profile and it matches your alert.</p>"
                 <> "<p>You can check out their profile at: <a href=\"" <> teamUrl <> "\">" <> teamUrl <> "</a></p>"
+                <> "<p>If you no longer wish to receive further emails for this alert, you can <a href=\"" <> deleteAlertUrl <> "\">unsubscribe here</a>.</p>"
             }
     )
