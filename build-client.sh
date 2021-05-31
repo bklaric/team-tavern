@@ -2,6 +2,7 @@
 rm -rf dist-client
 mkdir dist-client
 mkdir dist-client/images
+mkdir dist-client/images/competitions
 mkdir dist-client/favicons
 mkdir dist-client/css
 mkdir dist-client/webfonts
@@ -10,7 +11,8 @@ cp src/TeamTavern/Client/Static/sitemap.txt dist-client/sitemap.txt
 cp src/TeamTavern/Client/Static/teamtavern.min.js dist-client/teamtavern.min.js
 cp src/TeamTavern/Client/Static/index.html dist-client/index.html
 cp src/TeamTavern/Client/Static/index.prerender.html dist-client/index.prerender.html
-cp -r src/TeamTavern/Client/Static/Images/* dist-client/images/
+cp -r src/TeamTavern/Client/Static/Images/Landing/* dist-client/images/
+cp src/TeamTavern/Client/Static/Images/Competitions/* dist-client/images/competitions/
 cp src/TeamTavern/Client/Static/Favicons/* dist-client/favicons/
 cp src/TeamTavern/Client/Static/Css/* dist-client/css/
 cp src/TeamTavern/Client/Static/Fonts/* dist-client/webfonts/

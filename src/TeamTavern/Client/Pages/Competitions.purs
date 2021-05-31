@@ -13,9 +13,9 @@ import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
-import Halogen.HTML.Properties as HP
 import Record (insert)
 import TeamTavern.Client.Components.Detail (fieldDetail, urlDetail)
+import TeamTavern.Client.Components.Picture (picture)
 import TeamTavern.Client.Script.Request (get)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.ViewCompetitions as ViewCompetitions
@@ -40,7 +40,7 @@ render (Loaded { game, competitions: competitions' }) =
     HH.div [ HS.class_ "competitions" ] $
     mapFlipped competitions' \competition ->
         HH.div [ HS.class_ "competition" ]
-        [ HH.img [ HS.class_ "competition-banner", HP.src competition.banner ]
+        [ picture "competition-banner" (competition.name <> " banner") ("/images/competitions/" <> competition.banner)
         , HH.div [ HS.class_ "competition-text" ]
             [ HH.h2 [ HS.class_ "competition-heading" ] [ HH.text competition.name ]
             , HH.div [ HS.class_ "competition-details" ] $
