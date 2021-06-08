@@ -16,9 +16,9 @@ type ViewCompetitions = Route
     NoQuery
 
 type OkCompetitionRow fields =
-    ( name :: String
+    ( handle :: String
+    , name :: String
     , description :: Array String
-    , banner :: String
     , website :: Maybe String
     , discordServer :: Maybe String
     , region :: String

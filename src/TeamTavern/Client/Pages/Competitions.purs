@@ -40,7 +40,7 @@ render (Loaded { game, competitions: competitions' }) =
     HH.div [ HS.class_ "competitions" ] $
     mapFlipped competitions' \competition ->
         HH.div [ HS.class_ "competition" ]
-        [ picture "competition-banner" (competition.name <> " banner") ("/images/competitions/" <> competition.banner)
+        [ picture "competition-banner" (competition.name <> " banner") ("/images/competitions/" <> competition.handle)
         , HH.div [ HS.class_ "competition-text" ]
             [ HH.h2 [ HS.class_ "competition-heading" ] [ HH.text competition.name ]
             , HH.div [ HS.class_ "competition-details" ] $

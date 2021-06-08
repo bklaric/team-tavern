@@ -17,9 +17,9 @@ import TeamTavern.Server.Infrastructure.Postgres (queryMany)
 queryString :: Query
 queryString = Query """
     select
+        competition.handle,
         competition.name,
         competition.description,
-        competition.banner,
         competition.website,
         competition.discord_server as "discordServer",
         competition.region
