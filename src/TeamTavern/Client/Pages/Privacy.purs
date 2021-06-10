@@ -2,10 +2,8 @@ module TeamTavern.Client.Pages.Privacy (privacyPolicy) where
 
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
+import TeamTavern.Client.Components.Anchor (textAnchor_)
 import TeamTavern.Client.Snippets.Class as HS
-
-link :: forall slots action. String -> HH.HTML slots action
-link text = HH.a [ HP.href text, HP.target "_blank", HP.rel "noopener" ] [ HH.text text ]
 
 privacyPolicy :: forall slots action. HH.HTML slots action
 privacyPolicy =
@@ -18,7 +16,7 @@ privacyPolicy =
   , HH.p_ [ HH.text "1.4 This website is owned and operated by Branimir Klarić." ]
   , HH.p_ [ HH.text "1.5 You can contact us by email, using this email address admin@teamtavern.net" ]
   , HH.p_ [ HH.text "2. Credit" ]
-  , HH.p_ [ HH.text "2.1 This document was created using a template from Docular (", link "https://docular.net", HH.text ")." ]
+  , HH.p_ [ HH.text "2.1 This document was created using a template from Docular (", textAnchor_ "https://docular.net" ")." ]
   , HH.p_ [ HH.text "3. How we use your personal data" ]
   , HH.p_ [ HH.text "3.1 In this Section 3 we have set out:" ]
   , HH.p_ [ HH.text "(a) the general categories of personal data that we may process;" ]
@@ -89,15 +87,15 @@ privacyPolicy =
   , HH.p_ [ HH.text "(f) cookie consent - we use cookies to store your preferences in relation to the use of cookies more generally." ]
   , HH.p_ [ HH.text "11. Cookies used by our service providers" ]
   , HH.p_ [ HH.text "11.1 We use third party advertisements to support our site. Some of these advertisers may be served from our third party advertiser, you can view their privacy policy and cookie policy here." ]
-  , HH.p_ [ HH.text "11.2 We use Google Analytics and Comscore to analyse the use of our website. Google Analytics and Comscore gather information about website use by means of cookies. The information gathered relating to our website is used to create reports about the use of our website. Google's privacy policy is available at: ", link "https://www.google.com/policies/privacy/", HH.text". Comscore’s privacy policy is available at ", link "https://www.comscore.com/About-comScore/Privacy-Policy", HH.text"." ]
+  , HH.p_ [ HH.text "11.2 We use Google Analytics and Comscore to analyse the use of our website. Google Analytics and Comscore gather information about website use by means of cookies. The information gathered relating to our website is used to create reports about the use of our website. Google's privacy policy is available at: ", textAnchor_ "https://www.google.com/policies/privacy/" ". Comscore’s privacy policy is available at ", textAnchor_ "https://www.comscore.com/About-comScore/Privacy-Policy" "." ]
   , HH.p_ [ HH.text "12. Managing cookies" ]
   , HH.p_ [ HH.text "12.1 Most browsers allow you to refuse to accept cookies and to delete cookies. The methods for doing so vary from browser to browser, and from version to version. You can however obtain up-to-date information about blocking and deleting cookies via these links:" ]
-  , HH.p_ [ HH.text "(a) ", link "https://support.google.com/chrome/answer/95647?hl=en", HH.text " (Chrome);" ]
-  , HH.p_ [ HH.text "(b) ", link "https://support.mozilla.org/en-US/kb/enable-and-disable-cookies-website-preferences", HH.text " (Firefox);" ]
-  , HH.p_ [ HH.text "(c) ", link "https://help.opera.com/en/latest/security-and-privacy/", HH.text " (Opera);" ]
-  , HH.p_ [ HH.text "(d) ", link "https://support.microsoft.com/en-gb/help/17442/windows-internet-explorer-delete-manage-cookies", HH.text " (Internet Explorer);" ]
-  , HH.p_ [ HH.text "(e) ", link "https://support.apple.com/kb/PH21411", HH.text " (Safari); and" ]
-  , HH.p_ [ HH.text "(f) ", link "https://privacy.microsoft.com/en-us/windows-10-microsoft-edge-and-privacy", HH.text " (Edge)." ]
+  , HH.p_ [ HH.text "(a) ", textAnchor_ "https://support.google.com/chrome/answer/95647?hl=en" "(Chrome);" ]
+  , HH.p_ [ HH.text "(b) ", textAnchor_ "https://support.mozilla.org/en-US/kb/enable-and-disable-cookies-website-preferences" "(Firefox);" ]
+  , HH.p_ [ HH.text "(c) ", textAnchor_ "https://help.opera.com/en/latest/security-and-privacy/" "(Opera);" ]
+  , HH.p_ [ HH.text "(d) ", textAnchor_ "https://support.microsoft.com/en-gb/help/17442/windows-internet-explorer-delete-manage-cookies" "(Internet Explorer);" ]
+  , HH.p_ [ HH.text "(e) ", textAnchor_ "https://support.apple.com/kb/PH21411" "(Safari); and" ]
+  , HH.p_ [ HH.text "(f) ", textAnchor_ "https://privacy.microsoft.com/en-us/windows-10-microsoft-edge-and-privacy" "(Edge)." ]
   , HH.p_ [ HH.text "12.2 Blocking all cookies will have a negative impact upon the usability of many websites." ]
   , HH.p_ [ HH.text "12.3 If you block cookies, you will not be able to use all the features on our website." ]
   , HH.p_ [ HH.text "12.4 You can manage your cookies ", HH.a [ HS.class_ "nn-cmp-show", HP.href "#" ] [ HH.text "here" ], HH.text "." ]

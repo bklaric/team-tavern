@@ -7,4 +7,7 @@ insert into competition (game_id, handle, name, description, website, discord_se
     ((select id from game where handle = 'dota2'), 'pgc', 'PGC', array['Description.']::text[], '', '', 'Europe'),
     ((select id from game where handle = 'dota2'), 'rd2l-eu', 'Reddit Dota 2 League EU', array['Description.']::text[], '', '', 'Europe'),
     ((select id from game where handle = 'dota2'), 'rd2l-na', 'Reddit Dota 2 League NA', array['Description.']::text[], '', '', 'Europe'),
-    ((select id from game where handle = 'dota2'), 'wd2l', 'West Coast Dota 2 League', array['Description.']::text[], '', '', 'Europe');
+    ((select id from game where handle = 'dota2'), 'wd2l', 'West Coast Dota 2 League', array['Description.']::text[], '', '', 'Europe'),
+    ((select id from game where handle = 'csgo'), 'esea', 'ESEA Open League', array['Description.']::text[], '', '', 'Global'),
+    ((select id from game where handle = 'csgo'), '99damage', '99Damage League', array['Description.']::text[], '', '', 'Europe'),
+    ((select id from game where handle = 'csgo'), 'cc', 'Club Conflict', array['Description.']::text[], '', '', 'Europe');

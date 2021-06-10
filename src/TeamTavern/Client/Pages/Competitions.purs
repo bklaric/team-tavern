@@ -3,7 +3,7 @@ module TeamTavern.Client.Pages.Competitions where
 import Prelude
 
 import Async (Async)
-import Data.Array (singleton)
+import Data.Array (null, singleton)
 import Data.Const (Const)
 import Data.Foldable (foldMap)
 import Data.Functor (mapFlipped)
@@ -14,6 +14,7 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Record (insert)
+import TeamTavern.Client.Components.Anchor (mailtoAnchor)
 import TeamTavern.Client.Components.Detail (fieldDetail, urlDetail)
 import TeamTavern.Client.Components.Picture (picture)
 import TeamTavern.Client.Script.Request (get)
@@ -37,32 +38,42 @@ type Slot = H.Slot (Const Void) Void Unit
 render :: forall slots. State -> HH.HTML slots Action
 render (Empty _) = HH.div_ []
 render (Loaded { game, competitions: competitions' }) =
-    HH.div [ HS.class_ "competitions" ] $
-    mapFlipped competitions' \competition ->
-        HH.div [ HS.class_ "competition" ]
-        [ picture "competition-banner" (competition.name <> " banner") ("/images/competitions/" <> competition.handle)
-        , HH.div [ HS.class_ "competition-text" ]
-            [ HH.h2 [ HS.class_ "competition-heading" ] [ HH.text competition.name ]
-            , HH.div [ HS.class_ "competition-details" ] $
-                foldMap singleton (urlDetail "fas fa-globe" "Website" competition.website)
-                <>
-                foldMap singleton (urlDetail "fab fa-discord" "Discord server" competition.discordServer)
-                <>
-                [ fieldDetail "fas fa-globe-europe" "Region"
-                    [ HH.span [ HS.class_ "detail-emphasize" ] [ HH.text competition.region ] ]
-                ]
-            , HH.div [ HS.class_ $ "competition-description" <> guard competition.expanded " expanded" ]
-                [ HH.span
-                    [ HS.class_ "competition-description-expand"
-                    , HE.onClick $ const $ Just $ Expand competition.name
+    HH.div_ $
+    (if null competitions'
+    then [ HH.p [ HS.class_ "competitions-empty" ] [ HH.text $ "There are no active " <> game.shortTitle <> " competitions." ] ]
+    else [ HH.div [ HS.class_ "competitions" ] $
+        mapFlipped competitions' \competition ->
+            HH.div [ HS.class_ "competition" ]
+            [ picture "competition-banner" (competition.name <> " banner") ("/images/competitions/" <> competition.handle)
+            , HH.div [ HS.class_ "competition-text" ]
+                [ HH.h2 [ HS.class_ "competition-heading" ] [ HH.text competition.name ]
+                , HH.div [ HS.class_ "competition-details" ] $
+                    foldMap singleton (urlDetail "fas fa-globe" "Website" competition.website)
+                    <>
+                    foldMap singleton (urlDetail "fab fa-discord" "Discord server" competition.discordServer)
+                    <>
+                    [ fieldDetail "fas fa-globe-europe" "Region"
+                        [ HH.span [ HS.class_ "detail-emphasize" ] [ HH.text competition.region ] ]
                     ]
-                    [ HH.text $ if competition.expanded then "Less" else "More" ]
-                , HH.div [ HS.class_ "competition-description-text" ] $
-                    mapFlipped competition.description \paragraph ->
-                        HH.p [ HS.class_ "competition-description-paragraph" ] [ HH.text paragraph ]
+                , HH.div [ HS.class_ $ "competition-description" <> guard competition.expanded " expanded" ]
+                    [ HH.span
+                        [ HS.class_ "competition-description-expand"
+                        , HE.onClick $ const $ Just $ Expand competition.name
+                        ]
+                        [ HH.text $ if competition.expanded then "Less" else "More" ]
+                    , HH.div [ HS.class_ "competition-description-text" ] $
+                        mapFlipped competition.description \paragraph ->
+                            HH.p [ HS.class_ "competition-description-paragraph" ] [ HH.text paragraph ]
+                    ]
                 ]
             ]
+        ])
+    <>
+    [ HH.p [ HS.class_ "competitions-contact" ]
+        [ mailtoAnchor "admin@teamtavern.net" "Contact us"
+        , HH.text " to add your league or tournament or to update your existing competition listing."
         ]
+    ]
 render Error =
     HH.p_ [ HH.text "There has been an error loading competitions. Please try again later." ]
 
