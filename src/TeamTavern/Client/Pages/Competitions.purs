@@ -3,12 +3,13 @@ module TeamTavern.Client.Pages.Competitions where
 import Prelude
 
 import Async (Async)
-import Data.Array (null, singleton)
+import Data.Array (foldl, null, singleton, snoc)
 import Data.Const (Const)
 import Data.Foldable (foldMap)
 import Data.Functor (mapFlipped)
 import Data.Maybe (Maybe(..))
 import Data.Monoid (guard)
+import Data.String (Pattern(..), split)
 import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
@@ -35,6 +36,9 @@ data Action = Initialize | Receive Input | Expand String
 
 type Slot = H.Slot (Const Void) Void Unit
 
+intersperse :: forall a. a -> Array a -> Array a
+intersperse a arr = foldl (\{ first, new } elem -> if first then { first: false, new: new `snoc` elem} else { first, new: new `snoc` a `snoc` elem }) { first: true, new: [] } arr # _.new
+
 render :: forall slots. State -> HH.HTML slots Action
 render (Empty _) = HH.div_ []
 render (Loaded { game, competitions: competitions' }) =
@@ -44,7 +48,8 @@ render (Loaded { game, competitions: competitions' }) =
     else [ HH.div [ HS.class_ "competitions" ] $
         mapFlipped competitions' \competition ->
             HH.div [ HS.class_ "competition" ]
-            [ picture "competition-banner" (competition.name <> " banner") ("/images/competitions/" <> competition.handle)
+            [ HH.div [ HS.class_ "competition-signup" ] [ HH.text "8 days to sign up" ]
+            , picture "competition-banner" (competition.name <> " banner") ("/images/competitions/" <> competition.handle)
             , HH.div [ HS.class_ "competition-text" ]
                 [ HH.h2 [ HS.class_ "competition-heading" ] [ HH.text competition.name ]
                 , HH.div [ HS.class_ "competition-details" ] $
@@ -63,7 +68,8 @@ render (Loaded { game, competitions: competitions' }) =
                         [ HH.text $ if competition.expanded then "Less" else "More" ]
                     , HH.div [ HS.class_ "competition-description-text" ] $
                         mapFlipped competition.description \paragraph ->
-                            HH.p [ HS.class_ "competition-description-paragraph" ] [ HH.text paragraph ]
+                            HH.p [ HS.class_ "competition-description-paragraph" ]
+                            (paragraph # split (Pattern "\n") <#> HH.text # intersperse HH.br_)
                     ]
                 ]
             ]
