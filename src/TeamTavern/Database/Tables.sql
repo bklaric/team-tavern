@@ -140,6 +140,7 @@ create table competition
     , website text
     , discord_server text
     , region text not null
+    , signup_deadline date
     );
 
 create table alert

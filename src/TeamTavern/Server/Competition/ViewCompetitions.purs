@@ -22,7 +22,12 @@ queryString = Query """
         competition.description,
         competition.website,
         competition.discord_server as "discordServer",
-        competition.region
+        competition.region,
+        case
+            when extract(epoch from (signup_deadline + time '23:59' - now())) > 0
+            then extract(epoch from (signup_deadline + time '23:59' - now()))
+            else null
+        end as "signupDeadlineSeconds"
     from competition
         join game on game.id = competition.game_id
     where game.handle = $1;

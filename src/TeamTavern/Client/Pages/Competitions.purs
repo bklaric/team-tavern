@@ -18,6 +18,7 @@ import Record (insert)
 import TeamTavern.Client.Components.Anchor (mailtoAnchor)
 import TeamTavern.Client.Components.Detail (fieldDetail, urlDetail)
 import TeamTavern.Client.Components.Picture (picture)
+import TeamTavern.Client.Script.LastUpdated (daysToSignUp)
 import TeamTavern.Client.Script.Request (get)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.ViewCompetitions as ViewCompetitions
@@ -47,9 +48,12 @@ render (Loaded { game, competitions: competitions' }) =
     then [ HH.p [ HS.class_ "competitions-empty" ] [ HH.text $ "There are no active " <> game.shortTitle <> " competitions." ] ]
     else [ HH.div [ HS.class_ "competitions" ] $
         mapFlipped competitions' \competition ->
-            HH.div [ HS.class_ "competition" ]
-            [ HH.div [ HS.class_ "competition-signup" ] [ HH.text "8 days to sign up" ]
-            , picture "competition-banner" (competition.name <> " banner") ("/images/competitions/" <> competition.handle)
+            HH.div [ HS.class_ "competition" ] $
+            ( flip foldMap competition.signupDeadlineSeconds \deadline ->
+                [ HH.div [ HS.class_ "competition-signup" ] [ HH.text $ daysToSignUp deadline ] ]
+            )
+            <>
+            [ picture "competition-banner" (competition.name <> " banner") ("/images/competitions/" <> competition.handle)
             , HH.div [ HS.class_ "competition-text" ]
                 [ HH.h2 [ HS.class_ "competition-heading" ] [ HH.text competition.name ]
                 , HH.div [ HS.class_ "competition-details" ] $

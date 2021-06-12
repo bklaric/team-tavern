@@ -1,4 +1,4 @@
-module TeamTavern.Client.Script.LastUpdated (lastUpdated) where
+module TeamTavern.Client.Script.LastUpdated (lastUpdated, daysToSignUp) where
 
 import Prelude
 
@@ -38,3 +38,11 @@ lastUpdated updatedSeconds = let
     case interval of
     Just { unit, count } -> show count <> " " <> unit <> (if count == 1 then "" else "s") <> " ago"
     Nothing -> "less than a minute ago"
+
+daysToSignUp :: Number -> String
+daysToSignUp signupDeadlineSeconds = let
+    days = floor(signupDeadlineSeconds / daySeconds)
+    in
+    if days > 0
+    then show days <> " day" <> (if days == 1 then "" else "s") <> " to sign up"
+    else "Less than a day to sign up"

@@ -22,6 +22,7 @@ type OkCompetitionRow fields =
     , website :: Maybe String
     , discordServer :: Maybe String
     , region :: String
+    , signupDeadlineSeconds :: Maybe Number
     | fields
     )
 
