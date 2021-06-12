@@ -19,6 +19,7 @@ import TeamTavern.Client.Components.Anchor (mailtoAnchor)
 import TeamTavern.Client.Components.Detail (fieldDetail, urlDetail)
 import TeamTavern.Client.Components.Picture (picture)
 import TeamTavern.Client.Script.LastUpdated (daysToSignUp)
+import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Request (get)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.ViewCompetitions as ViewCompetitions
@@ -100,6 +101,8 @@ handleAction (Receive { game }) = do
         Nothing -> Error
         Just competitions'' -> Loaded
             { game, competitions: competitions'' <#> insert (SProxy :: SProxy "expanded") false }
+    setMeta ("Competitions - " <> game.shortTitle <> " Team Finder | TeamTavern")
+        ("Apply for open " <> game.shortTitle <> " leagues and tournaments and compete for prizes and boasting rights.")
 handleAction (Expand name) =
     H.modify_ case _ of
         Loaded { game, competitions: competitions' } -> Loaded
