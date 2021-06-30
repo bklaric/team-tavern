@@ -147,12 +147,12 @@ render state = HH.div_ $
                                         , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/teams")
                                         ]
                                         [ HH.text "Teams" ]
-                                    , divider
-                                    , HH.a
-                                        [ HP.href $ "/games/" <> handle <> "/competitions"
-                                        , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/competitions")
-                                        ]
-                                        [ HH.text "Competitions" ]
+                                    -- , divider
+                                    -- , HH.a
+                                    --     [ HP.href $ "/games/" <> handle <> "/competitions"
+                                    --     , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/competitions")
+                                    --     ]
+                                    --     [ HH.text "Competitions" ]
                                     ]
                                 ])
                                 state.games
@@ -178,14 +178,14 @@ render state = HH.div_ $
                             [ HH.i [ HS.class_ "fas fa-users top-bar-navigation-item-icon" ] []
                             , HH.span [ HS.class_ "top-bar-navigation-item-text" ] [ HH.text "Teams" ]
                             ]
-                        , HH.a
-                            [ HS.class_ "top-bar-navigation-item"
-                            , HP.href $ "/games/" <> handle <> "/competitions"
-                            , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/competitions")
-                            ]
-                            [ HH.i [ HS.class_ "fas fa-trophy top-bar-navigation-item-icon" ] []
-                            , HH.span [ HS.class_ "top-bar-navigation-item-text" ] [ HH.text "Competitions" ]
-                            ]
+                        -- , HH.a
+                        --     [ HS.class_ "top-bar-navigation-item"
+                        --     , HP.href $ "/games/" <> handle <> "/competitions"
+                        --     , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/competitions")
+                        --     ]
+                        --     [ HH.i [ HS.class_ "fas fa-trophy top-bar-navigation-item-icon" ] []
+                        --     , HH.span [ HS.class_ "top-bar-navigation-item-text" ] [ HH.text "Competitions" ]
+                        --     ]
                         ]
                     ])
                     state.selectedGame

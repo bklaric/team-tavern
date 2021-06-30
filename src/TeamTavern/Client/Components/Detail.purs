@@ -54,7 +54,7 @@ fieldDetail icon label children =
 
 steamUrlDetail :: forall slots action. String -> HH.HTML slots action
 steamUrlDetail steamUrl =
-    detail' detailSteamSvg [ textAnchor "detail_url" steamUrl "Steam profile" ]
+    detail' detailSteamSvg [ textAnchor "detail-url" steamUrl "Steam profile" ]
 
 riotIdDetail :: forall left slots action.
     String -> HH.ComponentHTML action (riotId :: Copyable.Slot String | slots) (Async left)
