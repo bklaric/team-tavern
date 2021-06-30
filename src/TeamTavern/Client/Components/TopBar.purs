@@ -2,18 +2,18 @@ module TeamTavern.Client.Components.TopBar (Slot, topBar) where
 
 import Prelude
 
-import Async (Async, unify)
+import Async (Async)
 import Async as Async
 import Async.Aff (affToAsync)
 import Browser.Async.Fetch (fetch, method)
-import Browser.Async.Fetch as Fetch
-import Browser.Async.Fetch.Response as FetchRes
 import Browser.Fetch.Response (status)
+import Data.Array (find, foldMap)
 import Data.Array as Array
 import Data.Bifunctor (lmap)
 import Data.Const (Const)
 import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..), maybe)
+import Data.Monoid (guard)
 import Data.Options ((:=))
 import Data.Symbol (SProxy(..))
 import Halogen as H
@@ -21,10 +21,11 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Halogen.Query.EventSource as ES
-import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Script.Cookie (getPlayerNickname)
 import TeamTavern.Client.Script.Navigate (navigateWithEvent_)
+import TeamTavern.Client.Script.Request (get)
+import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.ViewAllGames as ViewAllGames
 import Web.Event.Event (stopPropagation)
 import Web.Event.Event as E
@@ -35,26 +36,29 @@ import Web.HTML.Window as Window
 import Web.UIEvent.MouseEvent (MouseEvent)
 import Web.UIEvent.MouseEvent as MouseEvent
 
+type Game = ViewAllGames.OkGameContent
+
 type Games = ViewAllGames.OkContent
 
-type GamesVisible = Boolean
-
-type MenuVisible = Boolean
+type Input = Maybe String
 
 type Nickname = String
 
 data PlayerStatus = Unknown | SignedOut | SignedIn Nickname
 
 type State =
-    { windowSubscription :: Maybe H.SubscriptionId
+    { handle :: Maybe String
     , games :: Maybe Games
+    , selectedGame :: Maybe Game
     , gamesVisible :: Boolean
+    , windowSubscription :: Maybe H.SubscriptionId
     , menuVisible :: Boolean
     , playerStatus :: PlayerStatus
     }
 
 data Action
     = Initialize
+    | Receive Input
     | Finalize
     | SignOut
     | Navigate String MouseEvent
@@ -63,97 +67,150 @@ data Action
     | ToggleGamesPopunder MouseEvent
     | CloseGamesPopunder
 
-type Slot = H.Slot (Const Void) Void
+type Slot = H.Slot (Const Void) Void Unit
 
 render :: forall children left.
     State -> H.ComponentHTML Action children (Async left)
 render state = HH.div_ $
-    [ HH.div [ HP.class_ $ HH.ClassName "top-bar" ]
-        [ HH.div [ HP.class_ $ HH.ClassName "top-bar-content" ]
-            [ HH.div [ HP.class_ $ HH.ClassName "top-bar-left" ]
+    [ HH.div [ HS.class_ "top-bar" ]
+        [ HH.div [ HS.class_ "top-bar-content" ]
+            [ HH.div [ HS.class_ "top-bar-left" ] $
                 [ HH.a
-                    [ HP.class_ $ HH.ClassName "top-bar-title top-bar-title-link"
+                    [ HS.class_ "top-bar-title"
                     , HP.href "/"
                     , HE.onClick $ Just <<< Navigate "/"
                     ]
                     [ HH.img
-                        [ HP.class_ $ HH.ClassName "top-bar-logo"
+                        [ HS.class_ "top-bar-title-logo"
                         , HP.src "/favicons/apple-touch-icon.png"
                         , HP.alt "TeamTavern logo"
                         ]
-                    , HH.text "TeamTavern"
+                    , HH.span [ HS.class_ "top-bar-title-text" ] [ HH.text "TeamTavern" ]
                     ]
-                , HH.a
-                    [ HP.class_ $ HH.ClassName "top-bar-games"
-                    , HP.href "/games"
-                    , HE.onClick $ Just <<< Navigate "/games"
-                    ]
-                    [ HH.text "Games"]
-                , HH.div [ HP.class_ $ HH.ClassName "popover-container" ] $
-                    [ HH.i
-                        [ HP.class_ $ HH.ClassName "fas fa-caret-down top-bar-games-caret"
-                        , HE.onClick $ Just <<< ToggleGamesPopunder
-                        ]
-                        []
-                    ]
-                    <>
-                    if state.gamesVisible
-                    then Array.singleton $
-                        HH.div [ HP.class_ $ HH.ClassName "top-bar-games-popover" ]
-                        case state of
-                        { games: Just games } -> games <#> \game ->
-                            HH.div [ HP.class_ $ HH.ClassName "top-bar-game" ]
-                            [ HH.a
-                                [ HP.class_ $ HH.ClassName "top-bar-game-link"
-                                , HP.href $ "/games/" <> game.handle
-                                , HE.onClick $ Just <<< Navigate ("/games/" <> game.handle)
-                                ]
-                                [ HH.img
-                                    [ HP.class_ $ HH.ClassName "top-bar-game-icon"
-                                    , HP.src $ "/images/" <> game.handle <> "/icon-orange.png"
-                                    ]
-                                , HH.span [ HP.class_ $ HH.ClassName "top-bar-game-title" ]
-                                    [ HH.text game.title ]
-                                ]
-                            , HH.div_
-                                [ HH.a
-                                    [ HP.href $ "/games/" <> game.handle <> "/players"
-                                    , HE.onClick $ Just <<< Navigate ("/games/" <> game.handle <> "/players")
-                                    ]
-                                    [ HH.text "Players" ]
-                                , divider
-                                , HH.a
-                                    [ HP.href $ "/games/" <> game.handle <> "/teams"
-                                    , HE.onClick $ Just <<< Navigate ("/games/" <> game.handle <> "/teams")
-                                    ]
-                                    [ HH.text "Teams" ]
-                                ]
+                , HH.div [ HS.class_ "top-bar-game-selection" ]
+                    [ case state.selectedGame of
+                        Nothing ->
+                            HH.a
+                            [ HS.class_ "top-bar-games"
+                            , HP.href "/games"
+                            , HE.onClick $ Just <<< Navigate "/games"
                             ]
-                        _ -> []
-                    else []
+                            [ HH.i [ HS.class_ "fas fa-gamepad top-bar-games-icon"] []
+                            , HH.text "Games"
+                            ]
+                        Just { handle, title, shortTitle } ->
+                            HH.a
+                            [ HS.class_ "top-bar-games"
+                            , HP.href $ "/games/" <> handle
+                            , HE.onClick $ Just <<< Navigate ("/games/" <> handle)
+                            ]
+                            [ HH.img
+                                [ HS.class_ "top-bar-games-icon"
+                                , HP.src $ "/images/" <> handle <> "/icon-orange.png"
+                                ]
+                            , HH.span [ HS.class_ "top-bar-games-title" ] [ HH.text title ]
+                            , HH.span [ HS.class_ "top-bar-games-short-title" ] [ HH.text shortTitle ]
+                            ]
+                    , HH.div [ HS.class_ "top-bar-games-popover-container" ] $
+                        [ HH.i
+                            [ HS.class_ "fas fa-caret-down top-bar-games-caret"
+                            , HE.onClick $ Just <<< ToggleGamesPopunder
+                            ]
+                            []
+                        ]
+                        <>
+                        ( guard state.gamesVisible $ Array.singleton $
+                            HH.div [ HS.class_ "top-bar-games-popover" ] $
+                            foldMap (_ <#> \{ handle, title } ->
+                                HH.div [ HS.class_ "top-bar-game" ]
+                                [ HH.a
+                                    [ HS.class_ "top-bar-game-link"
+                                    , HP.href $ "/games/" <> handle
+                                    , HE.onClick $ Just <<< Navigate ("/games/" <> handle)
+                                    ]
+                                    [ HH.img
+                                        [ HS.class_ "top-bar-game-icon"
+                                        , HP.src $ "/images/" <> handle <> "/icon-orange.png"
+                                        ]
+                                    , HH.span [ HS.class_ "top-bar-game-title" ]
+                                        [ HH.text title ]
+                                    ]
+                                , HH.div_
+                                    [ HH.a
+                                        [ HP.href $ "/games/" <> handle <> "/players"
+                                        , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/players")
+                                        ]
+                                        [ HH.text "Players" ]
+                                    , divider
+                                    , HH.a
+                                        [ HP.href $ "/games/" <> handle <> "/teams"
+                                        , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/teams")
+                                        ]
+                                        [ HH.text "Teams" ]
+                                    -- , divider
+                                    -- , HH.a
+                                    --     [ HP.href $ "/games/" <> handle <> "/competitions"
+                                    --     , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/competitions")
+                                    --     ]
+                                    --     [ HH.text "Competitions" ]
+                                    ]
+                                ])
+                                state.games
+                        )
+                    ]
                 ]
-            , HH.div [ HP.class_ $ HH.ClassName "top-bar-menu" ]
+                <>
+                foldMap (\{ handle } ->
+                    [ HH.div [ HS.class_ "top-bar-navigation" ]
+                        [ HH.a
+                            [ HS.class_ "top-bar-navigation-item"
+                            , HP.href $ "/games/" <> handle <> "/players"
+                            , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/players")
+                            ]
+                            [ HH.i [ HS.class_ "fas fa-user top-bar-navigation-item-icon" ] []
+                            , HH.span [ HS.class_ "top-bar-navigation-item-text" ] [ HH.text "Players" ]
+                            ]
+                        , HH.a
+                            [ HS.class_ "top-bar-navigation-item"
+                            , HP.href $ "/games/" <> handle <> "/teams"
+                            , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/teams")
+                            ]
+                            [ HH.i [ HS.class_ "fas fa-users top-bar-navigation-item-icon" ] []
+                            , HH.span [ HS.class_ "top-bar-navigation-item-text" ] [ HH.text "Teams" ]
+                            ]
+                        -- , HH.a
+                        --     [ HS.class_ "top-bar-navigation-item"
+                        --     , HP.href $ "/games/" <> handle <> "/competitions"
+                        --     , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/competitions")
+                        --     ]
+                        --     [ HH.i [ HS.class_ "fas fa-trophy top-bar-navigation-item-icon" ] []
+                        --     , HH.span [ HS.class_ "top-bar-navigation-item-text" ] [ HH.text "Competitions" ]
+                        --     ]
+                        ]
+                    ])
+                    state.selectedGame
+            , HH.div [ HS.class_ "top-bar-menu" ]
                 [ HH.button
-                    [ HP.class_ $ HH.ClassName "top-bar-menu-button"
+                    [ HS.class_ "top-bar-menu-button"
                     , HP.title "Menu"
                     , HE.onClick $ const $ Just ToggleMenu
                     ]
-                    [ HH.i [ HP.class_ $ HH.ClassName if state.menuVisible then "fas fa-times top-bar-menu-button-icon" else "fas fa-bars top-bar-menu-button-icon" ] [] ]
+                    [ HH.i [ HS.class_ if state.menuVisible then "fas fa-times top-bar-menu-button-icon" else "fas fa-bars top-bar-menu-button-icon" ] [] ]
                 , HH.div
-                    [ HP.class_ $ HH.ClassName if state.menuVisible then "top-bar-menu-items" else "hidden-top-bar-menu-items"
+                    [ HS.class_ if state.menuVisible then "top-bar-menu-items" else "hidden-top-bar-menu-items"
                     , HE.onClick $ const $ Just CloseMenu
                     ]
                     case state.playerStatus of
                     Unknown -> []
                     SignedOut ->
                         [ HH.a
-                            [ HP.class_ $ HH.ClassName "top-bar-menu-item"
+                            [ HS.class_ "top-bar-menu-item"
                             , HP.href "/signin"
                             , HE.onClick $ Just <<< Navigate "/signin"
                             ]
                             [ HH.text "Sign in" ]
                         , HH.a
-                            [ HP.class_ $ HH.ClassName "top-bar-menu-item"
+                            [ HS.class_ "top-bar-menu-item"
                             , HP.href "/register"
                             , HE.onClick $ Just <<< Navigate "/register"
                             ]
@@ -161,41 +218,29 @@ render state = HH.div_ $
                         ]
                     SignedIn nickname ->
                         [ HH.a
-                            [ HP.class_ $ HH.ClassName "top-bar-menu-item"
+                            [ HS.class_ "top-bar-menu-item"
                             , HP.href $ "/players/" <> nickname
                             , HE.onClick $ Just <<< Navigate ("/players/" <> nickname)
                             ]
                             [ HH.text "Account" ]
                         , HH.button
-                            [ HP.class_ $ HH.ClassName "top-bar-menu-item top-bar-button"
+                            [ HS.class_ "top-bar-menu-item top-bar-button"
                             , HE.onClick $ const $ Just $ SignOut
                             ]
-                            [ HH.i [ HP.class_ $ HH.ClassName "fas fa-sign-out-alt button-icon" ] []
+                            [ HH.i [ HS.class_ "fas fa-sign-out-alt button-icon" ] []
                             , HH.text "Sign out"
                             ]
                         ]
                 ]
             ]
         ]
-    , HH.div [ HP.class_ $ HH.ClassName "top-bar-filler" ] []
+    , HH.div [ HS.class_ "top-bar-filler" ] []
     ]
 
 endSession :: forall left. Async left Boolean
-endSession = unify do
-    response <- fetch ("/api/sessions/current") (method := DELETE)
-        # lmap (const false)
+endSession = Async.unify do
+    response <- fetch ("/api/sessions/current") (method := DELETE) # lmap (const false)
     pure $ status response == 204
-
-loadGames :: forall left. Async left (Maybe Games)
-loadGames = Async.unify do
-    response <- Fetch.fetch_ "/api/games" # lmap (const Nothing)
-    games :: Games <-
-        case FetchRes.status response of
-        200 -> FetchRes.text response
-            >>= JsonAsync.readJSON
-            # lmap (const Nothing)
-        _ -> Async.left Nothing
-    pure $ Just games
 
 handleAction :: forall children left output.
     Action -> H.HalogenM State Action children output (Async left) Unit
@@ -207,24 +252,31 @@ handleAction Initialize = do
             (E.EventType "click") window \_ -> Just CloseGamesPopunder
     windowSubscription <- H.subscribe $ ES.hoist affToAsync windowEventSource
 
-    games <- H.lift loadGames
+    games' <- H.lift $ get "/api/games"
 
-    H.put
-        { windowSubscription: Just windowSubscription
-        , games
-        , gamesVisible: false
-        , menuVisible: false
-        , playerStatus: maybe SignedOut SignedIn nickname
+    H.modify_ \state -> state
+        { windowSubscription = Just windowSubscription
+        , games = games'
+        , selectedGame =
+            case state.handle, games' of
+            Just handle, Just games -> find (_.handle >>> eq handle) games
+            _, _ -> Nothing
+        , playerStatus = maybe SignedOut SignedIn nickname
+        }
+handleAction (Receive handle') =
+    H.modify_ \state -> state
+        { handle = handle'
+        , selectedGame =
+            case handle', state.games of
+            Just handle, Just games -> find (_.handle >>> eq handle) games
+            _, _ -> Nothing
         }
 handleAction Finalize = do
     { windowSubscription } <- H.get
-    case windowSubscription of
-        Just windowSubscription' -> H.unsubscribe windowSubscription'
-        Nothing -> pure unit
+    foldMap H.unsubscribe windowSubscription
 handleAction SignOut = do
     success <- H.lift endSession
-    when success do
-        window >>= location >>= setPathname "/" # H.liftEffect
+    when success do window >>= location >>= setPathname "/" # H.liftEffect
 handleAction (Navigate url event) = do
     navigateWithEvent_ url event
     H.modify_ (_ { gamesVisible = false, menuVisible = false })
@@ -238,24 +290,25 @@ handleAction (ToggleGamesPopunder mouseEvent) = do
 handleAction CloseGamesPopunder =
     H.modify_ (_ { gamesVisible = false })
 
-component :: forall query input output left.
-    H.Component HH.HTML query input output (Async left)
-component =
-    H.mkComponent
-        { initialState: const
-            { windowSubscription: Nothing
-            , games: Nothing
-            , gamesVisible: false
-            , menuVisible: false
-            , playerStatus: Unknown
-            }
-        , render
-        , eval: H.mkEval $ H.defaultEval
-            { handleAction = handleAction
-            , initialize = Just Initialize
-            }
+component :: forall query output left. H.Component HH.HTML query Input output (Async left)
+component = H.mkComponent
+    { initialState:
+        { handle: _
+        , games: Nothing
+        , selectedGame: Nothing
+        , gamesVisible: false
+        , windowSubscription: Nothing
+        , menuVisible: false
+        , playerStatus: Unknown
         }
+    , render
+    , eval: H.mkEval $ H.defaultEval
+        { handleAction = handleAction
+        , initialize = Just Initialize
+        , receive = Just <<< Receive
+        }
+    }
 
-topBar :: forall query void children.
-    HH.ComponentHTML query (topBar :: Slot Unit | children) (Async void)
-topBar = HH.slot (SProxy :: SProxy "topBar") unit component unit absurd
+topBar :: forall action left slots.
+    Input -> HH.ComponentHTML action (topBar :: Slot | slots) (Async left)
+topBar input = HH.slot (SProxy :: SProxy "topBar") unit component input absurd

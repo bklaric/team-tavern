@@ -10,7 +10,7 @@ import Data.Foldable (foldr)
 import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
 import Halogen.HTML as HH
-import Halogen.HTML.Properties as HP
+import TeamTavern.Client.Components.Anchor (textAnchor)
 import TeamTavern.Client.Snippets.Brands (detailBattleNetSvg, detailPlayStationSvg, detailRiotSvg, detailSteamSvg, detailSwitchSvg, detailXboxSvg)
 import TeamTavern.Client.Snippets.Class as HS
 
@@ -54,11 +54,7 @@ fieldDetail icon label children =
 
 steamUrlDetail :: forall slots action. String -> HH.HTML slots action
 steamUrlDetail steamUrl =
-    detail' detailSteamSvg
-    [ HH.a
-        [ HS.class_ "detail-url", HP.target "_blank", HP.rel "noopener", HP.href steamUrl ]
-        [ HH.text "Steam profile" ]
-    ]
+    detail' detailSteamSvg [ textAnchor "detail-url" steamUrl "Steam profile" ]
 
 riotIdDetail :: forall left slots action.
     String -> HH.ComponentHTML action (riotId :: Copyable.Slot String | slots) (Async left)
@@ -92,12 +88,7 @@ friendCodeDetail friendCode =
 
 urlDetail :: forall slots action. String -> String -> Maybe String -> Maybe (HH.HTML slots action)
 urlDetail _ _ Nothing = Nothing
-urlDetail icon text (Just href) = Just $
-    detail icon
-    [ HH.a
-        [ HS.class_ "detail-url", HP.target "_blank", HP.rel "noopener", HP.href href ]
-        [ HH.text text ]
-    ]
+urlDetail icon text (Just href) = Just $ detail icon [ textAnchor "detail-url" href text ]
 
 discordTagDetail
     :: forall action left slots

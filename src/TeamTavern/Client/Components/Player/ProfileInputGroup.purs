@@ -11,7 +11,7 @@ import Data.Maybe (Maybe(..), maybe)
 import Data.Variant (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
-import Halogen.HTML.Properties as HP
+import TeamTavern.Client.Components.Anchor (textAnchor_)
 import TeamTavern.Client.Components.Input (checkboxInput, domainInputLabel, inputError, inputGroup, inputLabel, inputUnderlabel, inputUnderlabel', platformIdLabel, requiredTextLineInput, textInput_, textLineInput)
 import TeamTavern.Client.Components.Select.MultiSelect (multiSelectIndexed)
 import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
@@ -44,14 +44,14 @@ platformIdInputGroup platform platformId onValue error =
             [ inputUnderlabel "Example: username#12345"
             , inputUnderlabel'
                 [ HH.text "You can find out your Riot ID at "
-                , HH.a [ HP.href "https://account.riotgames.com/", HP.target "_blank", HP.rel "noopener" ] [ HH.text "account.riotgames.com" ]
+                , textAnchor_ "https://account.riotgames.com/" "account.riotgames.com"
                 ]
             ]
         BattleNet ->
             [ inputUnderlabel "Example: username#1234"
             , inputUnderlabel'
                 [ HH.text "You can find out your BattleTag at "
-                , HH.a [ HP.href "https://account.blizzard.com/details", HP.target "_blank", HP.rel "noopener" ] [ HH.text "account.blizzard.com" ]
+                , textAnchor_ "https://account.blizzard.com/details" "account.blizzard.com"
                 ]
             ]
         PlayStation -> []

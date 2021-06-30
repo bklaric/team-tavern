@@ -39,7 +39,7 @@ profileHeading' label handle path heading =
         { path
         , content: HH.span_
             [ HH.img
-                [ HS.class_ "content-heading-icon"
+                [ HS.class_ "profile-heading-icon"
                 , HP.src $ "/images/" <> handle <> "/icon-orange.png"
                 , HP.alt $ heading <> " logo"
                 ]

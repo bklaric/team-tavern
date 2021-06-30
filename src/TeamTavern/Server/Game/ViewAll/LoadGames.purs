@@ -11,6 +11,7 @@ loadGamesQuery :: Query
 loadGamesQuery = Query """
     select
         game.title,
+        game.short_title as "shortTitle",
         game.handle,
         game.description
     from game

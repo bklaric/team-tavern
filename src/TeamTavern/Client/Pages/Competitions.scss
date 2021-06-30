@@ -1,0 +1,130 @@
+.competitions {
+    display: grid;
+    gap: 21px;
+    align-items: flex-start;
+    grid-template-columns: 1fr;
+
+    @media screen and (min-width: 700px) {
+        grid-template-columns: 1fr 1fr;
+        padding: 0 21px;
+    }
+
+    @media screen and (min-width: 1100px) {
+        grid-template-columns: 1fr 1fr 1fr;
+    }
+}
+
+.competition {
+    display: flex;
+    flex-flow: column;
+    overflow: auto;
+    border-top: $border;
+    border-bottom: $border;
+    background-color: white;
+    width: 100%;
+    position: relative;
+
+    @media screen and (min-width: 700px) {
+        border: $border;
+        border-radius: $border-radius;
+    }
+}
+
+.competition-signup {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 7px;
+    color: white;
+    background: #3aab34;
+    border-bottom-left-radius: 4px;
+    font-weight: 500;
+}
+
+.competition-banner {
+    display: block;
+    object-fit: cover;
+    width: 100%;
+    aspect-ratio: 2.15;
+}
+
+.competition-text {
+    @extend .card-section;
+}
+
+.competition-heading {
+    font-size: 20px;
+    line-height: 1.5;
+    margin-bottom: 20px;
+}
+
+.competition-details {
+    margin-bottom: 20px;
+}
+
+.competition-description {
+    position: relative;
+
+    br {
+        display: none;
+    }
+
+    &.expanded {
+        padding-bottom: 42px;
+    }
+
+    &.expanded .competition-description-text {
+        overflow: unset;
+        text-overflow: unset;
+        white-space: unset;
+        width: 100%;
+    }
+
+    &.expanded .competition-description-paragraph {
+        display: block;
+    }
+
+    &.expanded br {
+        display: initial;
+    }
+}
+
+.competition-description-expand {
+    position: absolute;
+    line-height: 1.5;
+    color: $primary-color;
+    cursor: pointer;
+    right: 0;
+    bottom: 0;
+
+    &:hover {
+        text-decoration: underline;
+    }
+}
+
+.competition-description-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: calc(100% - 50px);
+}
+
+.competition-description-paragraph {
+    display: contents;
+    line-height: 1.5;
+    margin-bottom: 1em;
+}
+
+.competitions-empty {
+    padding: 0 21px;
+    font-size: 16px;
+    text-align: center;
+    margin-top: 0;
+}
+
+.competitions-contact {
+    padding: 0 21px;
+    font-size: 16px;
+    text-align: center;
+    margin-top: 21px;
+}

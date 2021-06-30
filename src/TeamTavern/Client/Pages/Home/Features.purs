@@ -2,10 +2,9 @@ module TeamTavern.Client.Pages.Home.Features where
 
 import Prelude
 
-import Data.MediaType (MediaType(..))
 import Halogen.HTML as HH
-import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Components.Landing (landingSectionButton)
+import TeamTavern.Client.Components.Picture (picture)
 import TeamTavern.Client.Snippets.Class as HS
 import Web.UIEvent.MouseEvent (MouseEvent)
 
@@ -62,10 +61,7 @@ features createAccount =
             ]
         , landingSectionButton "Start finding teammates" "/preboarding/start" createAccount
         ]
-    , HH.element (HH.ElemName "picture") []
-        [ HH.source [ HP.prop (HH.PropName "srcset") "/images/features.webp", HP.type_ $ MediaType "image/webp" ]
-        , HH.img [ HS.class_ "features-image", HP.src "/images/features.jpg", HP.alt "Video game wallpaper" ]
-        ]
+    , picture "features-image" "Video game wallpaper" "/images/features"
     ]
 
 features' :: forall slots action. String -> String -> (MouseEvent -> action) -> HH.HTML slots action
@@ -121,8 +117,5 @@ features' handle title createAccount =
             ]
         , landingSectionButton "Start finding teammates" "/preboarding/start" createAccount
         ]
-    , HH.element (HH.ElemName "picture") []
-        [ HH.source [ HP.prop (HH.PropName "srcset") $ "/images/" <> handle <> "/features.webp", HP.type_ $ MediaType "image/webp" ]
-        , HH.img [ HS.class_ "features-image", HP.src $ "/images/" <> handle <> "/features.jpg", HP.alt $ title <> " wallpaper" ]
-        ]
+    , picture "features-image" (title <> " wallpaper") ("/images/" <> handle <> "/features")
     ]

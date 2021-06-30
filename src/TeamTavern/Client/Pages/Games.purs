@@ -9,7 +9,6 @@ import Browser.Async.Fetch.Response as FetchRes
 import Data.Bifunctor (lmap)
 import Data.Const (Const)
 import Data.Maybe (Maybe(..))
-import Data.MediaType (MediaType(..))
 import Data.Symbol (SProxy(..))
 import Effect.Class (class MonadEffect)
 import Halogen (ClassName(..))
@@ -20,6 +19,7 @@ import Halogen.HTML.Properties as HP
 import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.Ads (descriptionLeaderboard, stickyLeaderboards)
 import TeamTavern.Client.Components.Divider (whiteDivider)
+import TeamTavern.Client.Components.Picture (picture)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigateWithEvent_)
 import TeamTavern.Client.Snippets.Class as HS
@@ -82,15 +82,20 @@ render (Games games') = HH.div [ HS.class_ "games" ] $
                         ]
                         [ HH.text "Teams" ]
                     ]
+                -- , whiteDivider
+                -- , HH.h3 [ HP.class_ $ ClassName "game-card-profile-count" ]
+                --     [ HH.a
+                --         [ HP.href $ "/games/" <> handle <> "/competitions"
+                --         , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/competitions") true
+                --         ]
+                --         [ HH.text "Competitions" ]
+                --     ]
                 ]
             ]
             <> (description <#> \paragraph ->
                 HH.p [ HS.class_ "game-card-description" ] [ HH.text paragraph ]
             )
-        , HH.element (HH.ElemName "picture") []
-            [ HH.source [ HP.prop (HH.PropName "srcset") $ "/images/" <> handle <> "/banner.webp", HP.type_ $ MediaType "image/webp" ]
-            , HH.img [ HS.class_ "game-card-image", HP.src $ "/images/" <> handle <> "/banner.jpg", HP.alt $ title <> " banner" ]
-            ]
+        , picture "game-card-image" (title <> " banner") ("/images/" <> handle <> "/banner")
         ]
     )
     <> stickyLeaderboards

@@ -1,6 +1,5 @@
 module TeamTavern.Routes.DeleteAlert where
 
-import Data.Variant (Variant)
 import Jarilo.Method (Delete)
 import Jarilo.Path (type (:>), End)
 import Jarilo.Query (Mandatory)
