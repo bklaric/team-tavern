@@ -1,0 +1,15 @@
+.partner-banner {
+    width: 100%;
+    min-height: 200px;
+    object-fit: cover;
+    margin: auto;
+    display: block;
+    margin-bottom: 21px;
+    padding: 0;
+    box-sizing: border-box;
+
+
+    @media screen and (min-width: 960px) {
+        padding: 0 21px;
+    }
+}
