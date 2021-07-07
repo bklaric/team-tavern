@@ -13,8 +13,7 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Prim.Row (class Cons)
-import TeamTavern.Client.Script.Navigate (navigate_)
-import TeamTavern.Client.Snippets.PreventMouseDefault (preventMouseDefault)
+import TeamTavern.Client.Script.Navigate (navigateWithEvent_)
 import Web.UIEvent.MouseEvent (MouseEvent)
 
 type SimpleInput slots monad =
@@ -51,9 +50,8 @@ handleAction
     -> H.HalogenM (State slots monad) (Action slots monad)
         slots output monad Unit
 handleAction (Navigate event) = do
-    preventMouseDefault event
     { path } <- H.get
-    navigate_ path
+    navigateWithEvent_ path event
 handleAction (Receive state) = H.put state
 
 component :: forall query slots monad output. MonadEffect monad =>

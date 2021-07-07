@@ -21,6 +21,7 @@ import Data.Traversable (traverse)
 import Data.Tuple (Tuple(..))
 import Effect (Effect, foreachE)
 import Effect.Class (class MonadEffect)
+import Effect.Timer (setTimeout)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
@@ -271,9 +272,10 @@ scrollProfilesIntoView = do
         <#> (\element -> element >>= HtmlElement.fromElement)
         # H.liftEffect
     case profileCard of
-        Just element -> do
-            offsetTop <- H.liftEffect $ round <$> HtmlElement.offsetTop element
-            Html.window >>= Window.scroll 0 (offsetTop - 41 - 21) # H.liftEffect
+        Just element ->
+            void $ H.liftEffect $ setTimeout 0 do
+                offsetTop <- round <$> HtmlElement.offsetTop element
+                Html.window >>= Window.scroll 0 (offsetTop - 41 - 21)
         Nothing -> pure unit
 
 readQueryParams
@@ -388,18 +390,17 @@ handleAction Init = do
 handleAction (Receive input) =
     loadTab input
 handleAction (ApplyFilters filters) = do
-    scrollProfilesIntoView
     writeQueryParams filters
+    scrollProfilesIntoView
 handleAction ReloadPage =
     window >>= location >>= reload # H.liftEffect
-handleAction (ChangePage page) = do
+handleAction (ChangePage page) = H.liftEffect do
+    url <- Html.window >>= Window.location >>= Location.href >>= Url.url
+    searchParams <- Url.searchParams url
+    Url.set "page" (show page) searchParams
+    href <- Url.href url
+    navigate_ href
     scrollProfilesIntoView
-    H.liftEffect do
-        url <- Html.window >>= Window.location >>= Location.href >>= Url.url
-        searchParams <- Url.searchParams url
-        Url.set "page" (show page) searchParams
-        href <- Url.href url
-        navigate_ href
 handleAction OpenPlayerPreboarding = do
     state <- H.get
     case state of
