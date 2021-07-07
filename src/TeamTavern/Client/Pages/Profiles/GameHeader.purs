@@ -35,6 +35,8 @@ gameHeader { title, shortTitle, tab } = HH.div_ $
     <>
     if shortTitle == "Dota 2"
     then Array.singleton $
-        HH.a [ HP.href "https://discord.gg/d2zjFWxC8M", HP.target "_blank", HP.rel "noopener", HP.title "Dota 2 Dream League Community" ]
-        [ HH.img [ HS.class_ "partner-banner", HP.src $ "https://cdn.discordapp.com/attachments/861682299107278868/861682469459722280/dota2_logo_banner_2.png" ] ]
+        HH.a [ HS.class_ "partner-banner", HP.href "https://discord.gg/d2zjFWxC8M", HP.target "_blank", HP.rel "noopener", HP.title "Dota 2 Dream League Community" ]
+        [ HH.span [ HS.class_ "partner-banner-detail" ] [ HH.text "Open league • EU servers • Sign-ups end July 17th" ]
+        , HH.img [ HS.class_ "partner-banner-image", HP.src $ "https://cdn.discordapp.com/attachments/861682299107278868/862348698603225108/dota_banner_1.jpg" ]
+        ]
     else [ descriptionLeaderboard ]
