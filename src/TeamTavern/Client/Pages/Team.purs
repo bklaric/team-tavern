@@ -12,7 +12,7 @@ import Data.Monoid (guard)
 import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
-import TeamTavern.Client.Components.Ads (descriptionLeaderboard, stickyLeaderboards)
+import TeamTavern.Client.Components.Ads (descriptionLeaderboards, stickyLeaderboards)
 import TeamTavern.Client.Components.Content (contentDescription, contentHeader, contentHeaderSection, contentHeading', contentHeadingFaIcon)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
 import TeamTavern.Client.Pages.Profiles.TeamBadge (informalBadge, organizedBadge)
@@ -80,8 +80,10 @@ render (Loaded { team: team', status, showEditTeamModal, showEditProfileModal } 
         case status of
         SignedInOwner -> "View and edit all your team's details and profiles."
         _ -> "View all team's details and profiles."
-    , descriptionLeaderboard
-    , details team' status ShowEditTeamModal
+    ]
+    <> descriptionLeaderboards
+    <>
+    [ details team' status ShowEditTeamModal
     , profiles team'.handle team'.profiles status ShowEditProfileModal
     ]
     <> stickyLeaderboards

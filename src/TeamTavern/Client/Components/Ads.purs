@@ -17,13 +17,16 @@ filtersMpu = HH.div [ HP.id_ "nn_mpu1", HS.class_ "filters-mpu" ] []
 
 -- Mobile
 
+mobileDescriptionLeaderboard :: forall slots action. HH.HTML slots action
+mobileDescriptionLeaderboard = HH.div [ HP.id_ "nn_mobile_lb1_sticky", HS.class_ "description-leaderboard" ] []
+
 mobileStickyLeaderboard :: forall slots action. HH.HTML slots action
 mobileStickyLeaderboard = HH.div [ HP.id_ "nn_mobile_lb2", HS.class_ "sticky-leaderboard" ] []
 
-mobileDescriptionLeaderboard :: forall slots action. HH.HTML slots action
-mobileDescriptionLeaderboard = HH.div [ HP.id_ "nn_mobile_lb2", HS.class_ "description-leaderboard" ] []
-
 -- Both
+
+descriptionLeaderboards :: forall slots action. Array (HH.HTML slots action)
+descriptionLeaderboards = [ descriptionLeaderboard, mobileDescriptionLeaderboard ]
 
 stickyLeaderboards :: forall slots action. Array (HH.HTML slots action)
 stickyLeaderboards = [ stickyLeaderboard, mobileStickyLeaderboard ]

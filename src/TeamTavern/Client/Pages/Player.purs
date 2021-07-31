@@ -12,7 +12,7 @@ import Data.Monoid (guard)
 import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
-import TeamTavern.Client.Components.Ads (descriptionLeaderboard, stickyLeaderboards)
+import TeamTavern.Client.Components.Ads (descriptionLeaderboards, stickyLeaderboards)
 import TeamTavern.Client.Components.Content (contentDescription, contentHeader, contentHeaderSection, contentHeading', contentHeadingFaIcon)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Components.Player.ProfileDetails (PlatformIdSlots)
@@ -24,8 +24,8 @@ import TeamTavern.Client.Pages.Player.EditPlayer (editPlayer)
 import TeamTavern.Client.Pages.Player.EditPlayer as EditDetails
 import TeamTavern.Client.Pages.Player.EditProfile (editProfile)
 import TeamTavern.Client.Pages.Player.EditProfile as EditProfile
-import TeamTavern.Client.Pages.Player.PlayerOptions as PlayerOptions
 import TeamTavern.Client.Pages.Player.PlayerOptions (playerOptions)
+import TeamTavern.Client.Pages.Player.PlayerOptions as PlayerOptions
 import TeamTavern.Client.Pages.Player.Profiles (profiles)
 import TeamTavern.Client.Pages.Player.Status (Status(..), getStatus)
 import TeamTavern.Client.Pages.Player.Teams (teams)
@@ -88,8 +88,10 @@ render (Loaded state @ { player: player', status }) =
         case status of
         SignedInSelf -> "View and edit all your details, profiles and teams."
         _ -> "View all player's details, profiles and teams."
-    , descriptionLeaderboard
-    , details player' status ShowEditPlayerModal
+    ]
+    <> descriptionLeaderboards
+    <>
+    [ details player' status ShowEditPlayerModal
     , profiles player' status ShowEditProfileModal
     , teams player' status ShowCreateTeamModal
     ]
