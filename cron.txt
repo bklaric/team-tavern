@@ -1,1 +1,2 @@
 0 0 * * * curl --output ~/team-tavern/dist-client/ads.txt https://kumo.network-n.com/ads.txt
+0 0 * * * curl --output ~/team-tavern/dist-client/teamtavern.min.js https://os.network-n.com/dist/teamtavern.min.js
