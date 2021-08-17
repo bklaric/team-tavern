@@ -5,7 +5,7 @@ import Prelude
 import Async (Async, note)
 import Data.Array (head)
 import Data.Bifunctor.Label (labelMap)
-import Data.Maybe (maybe)
+import Data.Maybe (Maybe, maybe)
 import Data.String as String
 import Data.Symbol (class IsSymbol, SProxy(..))
 import Data.Traversable (traverse)
@@ -95,7 +95,7 @@ queryInternal querier queryString parameters =
 queryMany :: forall querier errors rows. Querier querier => ReadForeign rows =>
     querier -> Query -> Array QueryParameter -> Async (InternalError errors) (Array rows)
 queryMany pool queryString parameters = do
-    result <- pool # query queryString parameters # reportDatabaseError'
+    result <- queryInternal pool queryString parameters
     rows result # traverse read # labelMap (SProxy :: SProxy "internal") \errors ->
         [ "Error reading result from database: " <> show errors ]
 
@@ -125,6 +125,12 @@ queryFirstInternal = queryFirst (SProxy :: SProxy "internal")
 queryFirstNotFound :: forall row errors querier. Querier querier => ReadForeign row =>
     querier -> Query -> Array QueryParameter -> Async (LoadSingleError errors) row
 queryFirstNotFound = queryFirst (SProxy :: SProxy "notFound")
+
+queryFirstMaybe :: forall errors querier row. Querier querier => ReadForeign row =>
+    querier -> Query -> Array QueryParameter -> Async (InternalError errors) (Maybe row)
+queryFirstMaybe pool queryString parameters = do
+    rows <- queryMany pool queryString parameters
+    pure $ head rows
 
 queryFirstNotAuthorized :: forall row errors querier. Querier querier => ReadForeign row =>
     querier -> Query -> Array QueryParameter -> Async (ChangeSingleError errors) row
