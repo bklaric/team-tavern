@@ -62,7 +62,7 @@ create table game
 
 create table field
     ( id serial not null primary key
-    , game_id integer not null references game(id)
+    , game_id integer not null references game(id) on delete cascade
     , ilk integer not null -- 1 (url), 2 (single), 3 (multi)
     , key varchar(40) not null
     , label varchar(40) not null
@@ -73,7 +73,7 @@ create table field
 
 create table field_option
     ( id serial not null primary key
-    , field_id integer not null references field(id)
+    , field_id integer not null references field(id) on delete cascade
     , key varchar(40) not null
     , label varchar(40) not null
     , ordinal int not null
