@@ -1,0 +1,2 @@
+put -r dist-client/* team-tavern/dist-client
+bye

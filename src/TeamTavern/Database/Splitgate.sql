@@ -37,6 +37,7 @@ values
     ((select id from field where field.key = '2v2-rank' and field.game_id = ((select id from game where game.handle = 'splitgate'))), 'Diamond', 'diamond', 5),
     ((select id from field where field.key = '2v2-rank' and field.game_id = ((select id from game where game.handle = 'splitgate'))), 'Master', 'master', 6),
     ((select id from field where field.key = '2v2-rank' and field.game_id = ((select id from game where game.handle = 'splitgate'))), 'Champion', 'champion', 7),
-    ((select id from field where field.key = 'interest' and field.game_id = ((select id from game where game.handle = 'splitgate'))), 'Casual', 'bronze', 1),
-    ((select id from field where field.key = 'interest' and field.game_id = ((select id from game where game.handle = 'splitgate'))), 'Ranked takedown', 'ranked-takedown', 2),
-    ((select id from field where field.key = 'interest' and field.game_id = ((select id from game where game.handle = 'splitgate'))), 'Ranked 4v4', 'ranked-4v4', 3);
+    ((select id from field where field.key = 'interest' and field.game_id = ((select id from game where game.handle = 'splitgate'))), 'Casual', 'casual', 1),
+    ((select id from field where field.key = 'interest' and field.game_id = ((select id from game where game.handle = 'splitgate'))), 'Ranked 4v4', 'ranked-4v4', 2),
+    ((select id from field where field.key = 'interest' and field.game_id = ((select id from game where game.handle = 'splitgate'))), 'Ranked takedown', 'ranked-takedown', 3),
+    ((select id from field where field.key = 'interest' and field.game_id = ((select id from game where game.handle = 'splitgate'))), 'Ranked 2v2', 'ranked-2v2', 4);
