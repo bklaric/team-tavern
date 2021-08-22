@@ -1,4 +1,4 @@
-module TeamTavern.Server.Profile.Infrastructure.ValidateSteamId (SteamId, toString, validateSteamId) where
+module TeamTavern.Server.Profile.Infrastructure.ValidateSteamId (SteamId, toString, isSteamIdValid, validateSteamId) where
 
 import Prelude
 
@@ -16,8 +16,11 @@ toString (SteamId steamId) = steamId
 exactLength :: Int
 exactLength = 17
 
+isSteamIdValid :: String -> Boolean
+isSteamIdValid steamId = length steamId == exactLength && (toCharArray steamId # all isNumber)
+
 validateSteamId :: String -> Either (Array String) SteamId
 validateSteamId steamId' | steamId <- trim steamId' =
-    if length steamId == exactLength && (toCharArray steamId # all isNumber)
+    if isSteamIdValid steamId
     then Right $ SteamId steamId
     else Left [ "Invalid Steam ID: " <> steamId]
