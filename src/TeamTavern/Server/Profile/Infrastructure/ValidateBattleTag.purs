@@ -36,4 +36,4 @@ validateBattleTag :: String -> Either (Array String) BattleTag
 validateBattleTag battleTag | battleTag' <- trim battleTag =
     if isBattleTagValid battleTag'
     then Right $ BattleTag battleTag'
-    else Left [ "Invalid Riot ID: " <> battleTag' ]
+    else Left [ "Invalid BattleTag: " <> battleTag' ]

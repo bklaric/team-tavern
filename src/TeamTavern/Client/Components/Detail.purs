@@ -52,9 +52,15 @@ fieldDetail icon label children =
     <>
     children
 
+steamIdDetail :: forall left slots action.
+    String -> HH.ComponentHTML action (steamId :: Copyable.Slot String | slots) (Async left)
+steamIdDetail steamId =
+    fieldDetail' detailSteamSvg "Steam ID"
+    [ copyable (SProxy :: SProxy "steamId") steamId steamId ]
+
 steamUrlDetail :: forall slots action. String -> HH.HTML slots action
-steamUrlDetail steamUrl =
-    detail' detailSteamSvg [ textAnchor "detail-url" steamUrl "Steam profile" ]
+steamUrlDetail steamId =
+    detail' detailSteamSvg [ textAnchor "detail-url" ("https://steamcommunity.com/profiles/" <> steamId) "Steam profile" ]
 
 riotIdDetail :: forall left slots action.
     String -> HH.ComponentHTML action (riotId :: Copyable.Slot String | slots) (Async left)

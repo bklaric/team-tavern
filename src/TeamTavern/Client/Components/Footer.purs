@@ -11,7 +11,7 @@ import TeamTavern.Client.Components.Anchor (iconAnchor)
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Snippets.Class as HS
-import TeamTavern.Client.Snippets.SocialMediaUrls (discordUrl, redditUrl, steamUrl, twitterUrl)
+import TeamTavern.Client.Snippets.SocialMediaUrls (discordUrl, redditUrl, steamId, twitterUrl)
 
 type ChildSlots children =
     ( aboutAnchor :: NavigationAnchor.Slot Unit
@@ -41,7 +41,7 @@ footer = HH.div [ HP.class_ $ HH.ClassName "footer" ]
         , HH.div_
             [ iconAnchor discordUrl "TeamTavern Discord server" "fab fa-discord footer-icon"
             , iconAnchor redditUrl "TeamTavern subreddit" "fab fa-reddit footer-icon"
-            , iconAnchor steamUrl "TeamTavern Steam group" "fab fa-steam footer-icon"
+            , iconAnchor steamId "TeamTavern Steam group" "fab fa-steam footer-icon"
             , iconAnchor twitterUrl "TeamTavern Twitter account" "fab fa-twitter footer-icon"
             ]
         ]

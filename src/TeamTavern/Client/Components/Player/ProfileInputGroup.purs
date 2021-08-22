@@ -25,20 +25,23 @@ platformIdInputGroup :: forall slots action.
 platformIdInputGroup platform platformId onValue error =
     inputGroup $
     ( case platform of
-        Steam -> [ platformIdLabel inputSteamSvg "Steam profile" (Just "steamcommunity.com") ]
-        Riot -> [ platformIdLabel inputRiotSvg "Riot ID" Nothing ]
-        BattleNet -> [ platformIdLabel inputBattleNetSvg "BattleTag" Nothing ]
-        PlayStation -> [ platformIdLabel inputPlayStationSvg "PSN ID" Nothing ]
-        Xbox -> [ platformIdLabel inputXboxSvg "Gamertag" Nothing ]
-        Switch -> [ platformIdLabel inputSwitchSvg "Friend code" Nothing ]
+        Steam -> [ platformIdLabel inputSteamSvg "Steam ID" ]
+        Riot -> [ platformIdLabel inputRiotSvg "Riot ID" ]
+        BattleNet -> [ platformIdLabel inputBattleNetSvg "BattleTag" ]
+        PlayStation -> [ platformIdLabel inputPlayStationSvg "PSN ID" ]
+        Xbox -> [ platformIdLabel inputXboxSvg "Gamertag" ]
+        Switch -> [ platformIdLabel inputSwitchSvg "Friend code" ]
     )
     <>
     [ requiredTextLineInput platformId onValue ]
     <>
     ( case platform of
         Steam ->
-            [ inputUnderlabel "Example: steamcommunity.com/id/username"
-            , inputUnderlabel "Example: steamcommunity.com/profile/76561198821728791"
+            [ inputUnderlabel "Example: 76561198821728791"
+            , inputUnderlabel'
+                [ HH.text "You can find out your Steam ID at "
+                , textAnchor_ "https://store.steampowered.com/account/" "store.steampowered.com/account"
+                ]
             ]
         Riot ->
             [ inputUnderlabel "Example: username#12345"
@@ -61,7 +64,7 @@ platformIdInputGroup platform platformId onValue error =
     <>
     inputError error
         case platform of
-        Steam -> "This doesn't look like a valid Steam profile URL."
+        Steam -> "This doesn't look like a valid Steam ID."
         Riot -> "This doesn't look like a valid Riot ID."
         BattleNet -> "This doesn't look like a valid BattleTag."
         PlayStation -> "This doesn't look like a valid PSN ID."

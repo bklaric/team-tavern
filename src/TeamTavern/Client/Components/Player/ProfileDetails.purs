@@ -8,12 +8,13 @@ import Data.Array (intercalate)
 import Data.Array as Array
 import Data.Maybe (Maybe(..))
 import Halogen.HTML as HH
-import TeamTavern.Client.Components.Detail (battleTagDetail, detail, fieldDetail, friendCodeDetail, gamertagDetail, psnIdDetail, riotIdDetail, steamUrlDetail, urlDetail)
+import TeamTavern.Client.Components.Detail (battleTagDetail, detail, fieldDetail, friendCodeDetail, gamertagDetail, psnIdDetail, riotIdDetail, steamIdDetail, steamUrlDetail, urlDetail)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Shared.Platform (Platform(..))
 
 type PlatformIdSlots slots =
-    ( riotId :: Copyable.Slot String
+    ( steamId :: Copyable.Slot String
+    , riotId :: Copyable.Slot String
     , battleTag :: Copyable.Slot String
     , psnId :: Copyable.Slot String
     , gamertag :: Copyable.Slot String
@@ -96,7 +97,7 @@ profileDetails' :: forall left slots action.
     -> Array (HH.ComponentHTML action (PlatformIdSlots slots) (Async left))
 profileDetails' platform platformId fieldValues newOrReturning =
     case platform of
-    Steam -> [ steamUrlDetail platformId ]
+    Steam -> [ steamIdDetail platformId, steamUrlDetail platformId ]
     Riot -> [ riotIdDetail platformId ]
     BattleNet -> [ battleTagDetail platformId ]
     PlayStation -> [ psnIdDetail platformId ]

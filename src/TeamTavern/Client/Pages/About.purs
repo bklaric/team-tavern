@@ -14,7 +14,7 @@ import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Snippets.Class as HS
-import TeamTavern.Client.Snippets.SocialMediaUrls (discordUrl, redditUrl, steamUrl, twitterUrl)
+import TeamTavern.Client.Snippets.SocialMediaUrls (discordUrl, redditUrl, steamId, twitterUrl)
 
 data Action = Initialize
 
@@ -49,7 +49,7 @@ render = HH.div [ HS.class_ "about" ] $
     , HH.ul [ HS.class_ "about-list" ]
         [ HH.li_ [ HH.a [ HP.href discordUrl ] [ HH.text "Discord server" ] ]
         , HH.li_ [ HH.a [ HP.href redditUrl ] [ HH.text "Subreddit" ] ]
-        , HH.li_ [ HH.a [ HP.href steamUrl ] [ HH.text "Steam community group" ] ]
+        , HH.li_ [ HH.a [ HP.href steamId ] [ HH.text "Steam community group" ] ]
         , HH.li_ [ HH.a [ HP.href twitterUrl ] [ HH.text "Twitter account" ] ]
         ]
     , HH.p [ HS.class_ "about-text" ]

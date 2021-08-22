@@ -47,18 +47,13 @@ inputLabel :: forall slots action. String -> String -> HH.HTML slots action
 inputLabel icon label = inputLabel' icon label Nothing false
 
 platformIdLabel :: forall slots action.
-    HH.HTML slots action -> String -> Maybe String -> HH.HTML slots action
-platformIdLabel icon label domain =
+    HH.HTML slots action -> String -> HH.HTML slots action
+platformIdLabel icon label =
     HH.label
     [ HS.class_ "input-label"] $
     [ icon
     , HH.span [ HS.class_ "input-label-text" ] [ HH.text label ]
     ]
-    <>
-    (case domain of
-    Just domain' -> [ divider, inputSublabel domain' ]
-    Nothing -> []
-    )
     <>
     [ divider, inputRequiredSublabel ]
 

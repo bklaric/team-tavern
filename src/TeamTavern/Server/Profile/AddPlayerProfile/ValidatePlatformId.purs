@@ -21,12 +21,11 @@ import TeamTavern.Server.Profile.Infrastructure.ValidatePsnId (PsnId, validatePs
 import TeamTavern.Server.Profile.Infrastructure.ValidatePsnId as PsnId
 import TeamTavern.Server.Profile.Infrastructure.ValidateRiotId (RiotId, validateRiotId)
 import TeamTavern.Server.Profile.Infrastructure.ValidateRiotId as RiotId
-import TeamTavern.Server.Profile.Infrastructure.ValidateSteamUrl (validateSteamUrl)
-import TeamTavern.Server.Profile.Infrastructure.ValidateUrl (Url)
-import TeamTavern.Server.Profile.Infrastructure.ValidateUrl as Url
+import TeamTavern.Server.Profile.Infrastructure.ValidateSteamId (SteamId, validateSteamId)
+import TeamTavern.Server.Profile.Infrastructure.ValidateSteamId as SteamId
 
 data PlatformId
-    = SteamUrl Url
+    = SteamId SteamId
     | RiotId RiotId
     | BattleTag BattleTag
     | PsnId PsnId
@@ -34,7 +33,7 @@ data PlatformId
     | FriendCode FriendCode
 
 toString :: PlatformId -> String
-toString (SteamUrl url) = Url.toString url
+toString (SteamId steamId) = SteamId.toString steamId
 toString (RiotId riotId) = RiotId.toString riotId
 toString (BattleTag battleTag) = BattleTag.toString battleTag
 toString (PsnId psnId) = PsnId.toString psnId
@@ -55,8 +54,8 @@ validatePlatformId platforms platform platformId =
         , "Profile platform: " <> show platform
         , "Game platforms: " <> show platforms
         ]
-    Steam -> validateSteamUrl platformId
-        <#> SteamUrl
+    Steam -> validateSteamId platformId
+        <#> SteamId
         # Validated.fromEither
         # ValidatedL.label (SProxy :: SProxy "platformId")
     Riot -> validateRiotId platformId
