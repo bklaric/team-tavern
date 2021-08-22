@@ -39,7 +39,7 @@ import TeamTavern.Server.Player.Domain.Nickname (Nickname)
 import TeamTavern.Server.Player.Register.AddPlayer (addPlayer)
 import TeamTavern.Server.Player.Register.ValidateRegistration (RegistrationErrors, validateRegistrationV)
 import TeamTavern.Server.Player.UpdatePlayer.UpdateDetails (updateDetails)
-import TeamTavern.Server.Player.UpdatePlayer.ValidatePlayer (PlayerErrors, validatePlayerV)
+import TeamTavern.Server.Player.UpdatePlayer.ValidatePlayer (validatePlayerV)
 import TeamTavern.Server.Profile.AddPlayerProfile.AddProfile (addProfile)
 import TeamTavern.Server.Profile.AddPlayerProfile.LoadFields as Player
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile (validateProfileV)
@@ -63,8 +63,7 @@ type PreboardError = Variant
     , notAuthenticated :: Array String
     , notAuthorized :: Array String
     , invalidBody :: NonEmptyList $ Variant
-        ( player :: PlayerErrors
-        , team :: TeamErrors
+        ( team :: TeamErrors
         , playerProfile :: PlayerProfile.ProfileErrors
         , teamProfile :: TeamProfile.ProfileErrors
         , registration :: RegistrationErrors
@@ -80,8 +79,7 @@ invalidBodyHandler :: forall fields. Lacks "invalidBody" fields =>
     Builder (Record fields)
     { invalidBody ::
         NonEmptyList $ Variant
-        ( player :: PlayerErrors
-        , team :: TeamErrors
+        ( team :: TeamErrors
         , playerProfile :: PlayerProfile.ProfileErrors
         , teamProfile :: TeamProfile.ProfileErrors
         , registration :: RegistrationErrors
@@ -90,8 +88,7 @@ invalidBodyHandler :: forall fields. Lacks "invalidBody" fields =>
     | fields }
 invalidBodyHandler = Builder.insert (SProxy :: SProxy "invalidBody") \errors ->
     foreachE (Array.fromFoldable errors) $ match
-    { player: \errors' -> logt $ "Player errors: " <> show errors'
-    , team: \errors' -> logt $ "Team errors: " <> show errors'
+    { team: \errors' -> logt $ "Team errors: " <> show errors'
     , playerProfile: \errors' -> logt $ "Player profile errors: " <> show errors'
     , teamProfile: \errors' -> logt $ "Team profile errors: " <> show errors'
     , registration: \errors' -> logt $ "Registration errors: " <> show errors'
@@ -120,8 +117,7 @@ errorResponse = match
         errors
         # fromFoldable
         <#> match
-            { player: inj (SProxy :: SProxy "player") <<< Array.fromFoldable
-            , team: inj (SProxy :: SProxy "team") <<< Array.fromFoldable
+            { team: inj (SProxy :: SProxy "team") <<< Array.fromFoldable
             , playerProfile: inj (SProxy :: SProxy "playerProfile") <<< Array.fromFoldable
             , teamProfile: inj (SProxy :: SProxy "teamProfile") <<< Array.fromFoldable
             , registration: inj (SProxy :: SProxy "registration") <<< Array.fromFoldable

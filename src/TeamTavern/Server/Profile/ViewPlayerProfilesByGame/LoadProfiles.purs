@@ -38,7 +38,6 @@ type LoadProfilesResult =
     , weekdayOnline :: Maybe { from :: String, to :: String }
     , weekendOnline :: Maybe { from :: String, to :: String }
     , platform :: Platform
-    , platformId :: String
     , fieldValues :: Array
         { field ::
             { ilk :: Int
@@ -185,7 +184,6 @@ queryStringWithoutPagination handle timezone filters = Query $ """
     from
         (select
             player.nickname,
-            player.discord_tag as "discordTag",
             extract(year from age(player.birthday))::int as age,
             player.location,
             player.languages,
@@ -205,7 +203,6 @@ queryStringWithoutPagination handle timezone filters = Query $ """
                 )
             end as "weekendOnline",
             profile.platform as "platform",
-            profile.platform_id as "platformId",
             coalesce(
                 jsonb_agg(
                     jsonb_build_object(

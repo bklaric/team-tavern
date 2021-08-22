@@ -18,7 +18,6 @@ import Simple.JSON (writeImpl)
 import Simple.JSON.Async (read)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Server.Profile.AddPlayerProfile.AddFieldValues (ProfileId, addFieldValues)
-import TeamTavern.Server.Profile.AddPlayerProfile.ValidatePlatformId as PlatformId
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile (Profile)
 import TeamTavern.Server.Profile.Routes (Identifiers)
 
@@ -48,9 +47,8 @@ updateProfileString :: Query
 updateProfileString = Query """
     update player_profile
     set platform = $5,
-        platform_id = $6,
-        about = $7,
-        new_or_returning = $8,
+        about = $6,
+        new_or_returning = $7,
         updated = now()
     from session, player, game
     where session.player_id = $1
@@ -66,9 +64,8 @@ updateProfileString = Query """
 
 updateProfileParameters :: CookieInfo -> Identifiers -> Profile -> Array QueryParameter
 updateProfileParameters { id, token } { nickname, handle }
-    { platform, platformId, about, newOrReturning} =
-    id : token : nickname : handle : writeImpl platform : PlatformId.toString platformId
-    : about :| newOrReturning
+    { platform, about, newOrReturning} =
+    id : token : nickname : handle : writeImpl platform : about :| newOrReturning
 
 updateProfile' :: forall errors.
     Client -> CookieInfo -> Identifiers -> Profile -> Async (UpdateProfileError errors) ProfileId

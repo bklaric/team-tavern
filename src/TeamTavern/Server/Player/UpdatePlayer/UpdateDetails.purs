@@ -14,23 +14,21 @@ queryString :: Query
 queryString = Query """
     update player
     set
-        discord_tag = $2,
-        birthday = $3,
-        languages = $4,
-        location = $5,
-        timezone = $6,
-        weekday_from = $7::time,
-        weekday_to = $8::time,
-        weekend_from = $9::time,
-        weekend_to = $10::time,
-        microphone = $11
+        birthday = $2,
+        languages = $3,
+        location = $4,
+        timezone = $5,
+        weekday_from = $6::time,
+        weekday_to = $7::time,
+        weekend_from = $8::time,
+        weekend_to = $9::time,
+        microphone = $10
     where player.id = $1
     """
 
 queryParameters :: Int -> Player -> Array QueryParameter
 queryParameters playerId model =
     playerId
-    : toNullable model.discordTag
     : toNullable model.birthday
     : model.languages
     : toNullable model.location

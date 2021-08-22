@@ -7,7 +7,7 @@ import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
 import Control.Alt ((<|>))
-import Data.Array (foldl, mapMaybe)
+import Data.Array (foldMap, foldl, mapMaybe)
 import Data.Array as Array
 import Data.Bifunctor (bimap, lmap)
 import Data.Const (Const)
@@ -36,6 +36,7 @@ import TeamTavern.Client.Components.Boarding.GameInput as GameInput
 import TeamTavern.Client.Components.Boarding.PlayerOrTeamInput (playerOrTeamInput)
 import TeamTavern.Client.Components.Boarding.PlayerOrTeamInput as PlayerOrTeamInput
 import TeamTavern.Client.Components.Button (primaryButton_, secondaryButton_)
+import TeamTavern.Client.Components.Player.ContactFormInput as PlayerContactFormInput
 import TeamTavern.Client.Components.Player.PlayerFormInput as PlayerFormInput
 import TeamTavern.Client.Components.Player.ProfileFormInput as PlayerProfileFormInput
 import TeamTavern.Client.Components.RegistrationInput (registrationInput)
@@ -58,6 +59,8 @@ data Step
     | Game
     | PlayerProfile
     | TeamProfile
+    | PlayerContact
+    | TeamContact
     | Register
 
 derive instance eqStep :: Eq Step
@@ -72,6 +75,8 @@ instance writeForeginStep :: WriteForeign Step where
     writeImpl Game = unsafeToForeign "Game"
     writeImpl PlayerProfile = unsafeToForeign "PlayerProfile"
     writeImpl TeamProfile = unsafeToForeign "TeamProfile"
+    writeImpl PlayerContact = unsafeToForeign "PlayerContact"
+    writeImpl TeamContact = unsafeToForeign "TeamContact"
     writeImpl Register = unsafeToForeign "Register"
 
 instance readForeignStep :: ReadForeign Step where
@@ -83,6 +88,8 @@ instance readForeignStep :: ReadForeign Step where
         "Game" -> pure Game
         "PlayerProfile" -> pure PlayerProfile
         "TeamProfile" -> pure TeamProfile
+        "PlayerContact" -> pure PlayerContact
+        "TeamContact" -> pure TeamContact
         "Register" -> pure Register
         step -> fail $ ForeignError $ "Unknown step " <> step
 
@@ -138,6 +145,8 @@ type Input =
     , game :: Game
     , playerProfile :: PlayerProfileFormInput.Input
     , teamProfile :: TeamProfileFormInput.Input
+    , playerContact :: PlayerContactFormInput.Input
+    -- , teamContact :: TeamContactFormInput.Input
     , registration :: RegistrationInput.Input
     , otherError :: Boolean
     }
@@ -166,6 +175,8 @@ emptyInput playerOrTeam game =
                     Just { key, label, icon, options: options }
                 _ -> Nothing
             }
+    , playerContact: PlayerContactFormInput.emptyInput $ foldMap (\game' -> [ game'.platforms.head ]) game
+    -- , teamContact: TeamContactFormInput.emptyInput []
     , registration: RegistrationInput.emptyInput
     , otherError: false
     }
@@ -178,6 +189,8 @@ type State =
     , game :: Game
     , playerProfile :: PlayerProfileFormInput.Input
     , teamProfile :: TeamProfileFormInput.Input
+    , playerContact :: PlayerContactFormInput.Input
+    -- , teamContact :: TeamContactFormInput.Input
     , registration :: RegistrationInput.Input
     , otherError :: Boolean
     , submitting :: Boolean
@@ -194,6 +207,8 @@ data Action
     | UpdateGame GameInput.Output
     | UpdatePlayerProfile PlayerProfileFormInput.Output
     | UpdateTeamProfile TeamProfileFormInput.Output
+    | UpdatePlayerContact PlayerContactFormInput.Output
+    -- | UpdateTeamContact TeamContactFormInput.Output
     | UpdateRegistration RegistrationInput.Output
     | SetUpAccount
 
@@ -205,6 +220,8 @@ type ChildSlots slots =
     , gameInput :: GameInput.Slot
     , playerProfileFormInput :: PlayerProfileFormInput.Slot
     , teamProfileFormInput :: TeamProfileFormInput.Slot
+    , playerContactFormInput :: PlayerContactFormInput.Slot
+    -- , teamContactFormInput :: TeamContactFormInput.Slot
     , registrationInput :: RegistrationInput.Slot
     | slots )
 
@@ -323,7 +340,7 @@ renderPage { step: PlayerProfile, playerProfile, otherError, submitting, game } 
             case game of
             Preselected _ -> Player
             _ -> Game
-        , primaryButton_ "Next" $ SetStep Register
+        , primaryButton_ "Next" $ SetStep PlayerContact
         ]
     ]
 renderPage { step: TeamProfile, teamProfile, otherError, submitting, game } =
@@ -338,6 +355,28 @@ renderPage { step: TeamProfile, teamProfile, otherError, submitting, game } =
             case game of
             Preselected _ -> Team
             _ -> Game
+        , primaryButton_ "Next" $ SetStep TeamContact
+        ]
+    ]
+renderPage { step: PlayerContact, playerContact, otherError, submitting, game } =
+    [ boardingStep
+        [ boardingHeading "Player contact"
+        , boardingDescription  """Enter your contact details so players and teams can contact you."""
+        , PlayerContactFormInput.contactFormInput playerContact UpdatePlayerContact
+        ]
+    , boardingButtons
+        [ secondaryButton_ "Back" $ SetStep PlayerProfile
+        , primaryButton_ "Next" $ SetStep Register
+        ]
+    ]
+renderPage { step: TeamContact, teamProfile, otherError, submitting, game } =
+    [ boardingStep
+        [ boardingHeading "Team contact"
+        , boardingDescription  """Enter your team's contact details so players can contact you."""
+        , TeamProfileFormInput.profileFormInput teamProfile UpdateTeamProfile
+        ]
+    , boardingButtons
+        [ secondaryButton_ "Back" $ SetStep TeamProfile
         , primaryButton_ "Next" $ SetStep Register
         ]
     ]
@@ -350,10 +389,10 @@ renderPage { step: Register, registration, otherError, submitting, playerOrTeam 
     , boardingButtons
         [ secondaryButton_ "Back" $ SetStep
             case playerOrTeam of
-            Preselected' (PlayerOrTeamInput.Player) -> PlayerProfile
-            Preselected' (PlayerOrTeamInput.Team) -> TeamProfile
-            Selected' (Just PlayerOrTeamInput.Player) -> PlayerProfile
-            Selected' (Just PlayerOrTeamInput.Team) -> TeamProfile
+            Preselected' (PlayerOrTeamInput.Player) -> PlayerContact
+            Preselected' (PlayerOrTeamInput.Team) -> TeamContact
+            Selected' (Just PlayerOrTeamInput.Player) -> PlayerContact
+            Selected' (Just PlayerOrTeamInput.Team) -> TeamContact
             Selected' Nothing -> PlayerOrTeam
         , HH.div [ HS.class_ "boarding-submit-button-group" ] $
             [ HH.button
@@ -438,6 +477,8 @@ updateHistoryState (state :: State) = do
         Game -> navigateReplace state "/preboarding/game"
         PlayerProfile -> navigateReplace state "/preboarding/player-profile"
         TeamProfile -> navigateReplace state "/preboarding/team-profile"
+        PlayerContact -> navigateReplace state "/preboarding/player-contact"
+        TeamContact -> navigateReplace state "/preboarding/team-contact"
         Register -> navigateReplace state "/preboarding/register"
 
 handleAction :: forall action output slots left.
@@ -464,6 +505,8 @@ handleAction (SetStep step) = do
         Game -> navigate state "/preboarding/game"
         PlayerProfile -> navigate state "/preboarding/player-profile"
         TeamProfile -> navigate state "/preboarding/team-profile"
+        PlayerContact -> navigate state "/preboarding/player-contact"
+        TeamContact -> navigate state "/preboarding/team-contact"
         Register -> navigate state "/preboarding/register"
 handleAction (UpdatePlayerOrTeam playerOrTeam) = do
     state <- H.modify _ { playerOrTeam = Selected' $ Just playerOrTeam }
@@ -475,7 +518,6 @@ handleAction (UpdatePlayer details) = do
             , location = details.location
             , languages = details.languages
             , microphone = details.microphone
-            , discordTag = details.discordTag
             , timezone = details.timezone
             , weekdayFrom = details.weekdayFrom
             , weekdayTo = details.weekdayTo
@@ -532,12 +574,11 @@ handleAction (UpdatePlayerProfile details) = do
     state <- H.modify _
         { playerProfile
             { platform = details.platform
-            , platformId = details.platformId
-            , platformIdError = details.platformIdError
             , fieldValues = details.fieldValues
             , newOrReturning = details.newOrReturning
             , about = details.about
             }
+        , playerContact { requiredPlatforms = [ details.platform ] }
         }
     updateHistoryState state
 handleAction (UpdateTeamProfile details) = do
@@ -549,8 +590,33 @@ handleAction (UpdateTeamProfile details) = do
             , newOrReturning = details.newOrReturning
             , about = details.about
             }
+        -- , teamContact { requiredPlatforms = details.platforms }
         }
     updateHistoryState state
+handleAction (UpdatePlayerContact contact) = do
+    state <- H.modify _
+        { playerContact
+            { discordTag = contact.discordTag
+            , steamId = contact.steamId
+            , riotId = contact.riotId
+            , battleTag = contact.battleTag
+            , psnId = contact.psnId
+            , gamerTag = contact.gamerTag
+            , friendCode = contact.friendCode
+            }
+        }
+    updateHistoryState state
+-- handleAction (UpdateTeamContact details) = do
+--     state <- H.modify _
+--         { teamContact
+--             { size = details.size
+--             , selectedPlatforms = details.platforms
+--             , fieldValues = details.fieldValues
+--             , newOrReturning = details.newOrReturning
+--             , about = details.about
+--             }
+--         }
+--     updateHistoryState state
 handleAction (UpdateRegistration registration) = do
     state <- H.modify _
         { registration
@@ -563,9 +629,6 @@ handleAction SetUpAccount = do
     currentState <- H.modify _ { submitting = true }
     let nextState = currentState
             { submitting = false
-            , player
-                { discordTagError = false
-                }
             , team
                 { nameError = false
                 , websiteError = false
@@ -574,8 +637,7 @@ handleAction SetUpAccount = do
                 , contactError = false
                 }
             , playerProfile
-                { platformIdError = false
-                , urlErrors = []
+                { urlErrors = []
                 , aboutError = false
                 }
             , teamProfile
@@ -600,17 +662,7 @@ handleAction SetUpAccount = do
             foldl
             (\state error ->
                 match
-                { player:
-                    foldl
-                    (\state' error' ->
-                        match
-                        { discordTag: const state'
-                            { step = Player, player { discordTagError = true } }
-                        }
-                        error'
-                    )
-                    state
-                , team:
+                { team:
                     foldl
                     (\state' error' ->
                         match
@@ -632,12 +684,7 @@ handleAction SetUpAccount = do
                     foldl
                     (\state' error' ->
                         match
-                        { platformId: const state'
-                            { step =
-                                if state'.step > PlayerProfile then PlayerProfile else state'.step
-                            , playerProfile { platformIdError = true }
-                            }
-                        , url: \{ key } -> state'
+                        { url: \{ key } -> state'
                             { step =
                                 if state'.step > PlayerProfile then PlayerProfile else state'.step
                             , playerProfile

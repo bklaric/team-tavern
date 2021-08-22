@@ -89,7 +89,7 @@ render state =
         ]
     ]
     <> guard (not $ Array.null state.allPlatforms.tail)
-    [ inputGroupsHeading' $
+    [ inputGroupsHeading'
         [ HH.text "Platforms"
         , divider, inputRequiredSublabel
         , divider, (if state.platformsError then inputErrorSublabel else inputSublabel)

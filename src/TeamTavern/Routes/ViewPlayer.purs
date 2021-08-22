@@ -37,7 +37,6 @@ type OkContentProfile =
             })
         }
     , platform :: Platform
-    , platformId :: String
     , fieldValues :: Array
         { fieldKey :: String
         , url :: Maybe String
@@ -64,7 +63,6 @@ type OkContent =
     , location :: Maybe String
     , languages :: Array String
     , microphone :: Boolean
-    , discordTag :: Maybe String
     , timezone :: Maybe String
     , weekdayOnline :: Maybe
         { clientFrom :: String

@@ -15,7 +15,7 @@ import Record as Record
 import Record.Extra (pick)
 import TeamTavern.Client.Components.Input (inputGroupsHeading, responsiveInputGroups)
 import TeamTavern.Client.Components.InputGroup (timeRangeInputGroup, timezoneInputGroup)
-import TeamTavern.Client.Components.Player.PlayerInputGroup (birthdayInputGroup, discordTagInputGroup, languagesInputGroup, locationInputGroup, microphoneInputGroup)
+import TeamTavern.Client.Components.Player.PlayerInputGroup (birthdayInputGroup, languagesInputGroup, locationInputGroup, microphoneInputGroup)
 import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.Select.SingleSelect as SingleSelect
 import TeamTavern.Client.Components.Select.SingleTreeSelect as SingleTreeSelect
@@ -27,13 +27,11 @@ type Input =
     , location :: Maybe String
     , languages :: Array String
     , microphone :: Boolean
-    , discordTag :: Maybe String
     , timezone :: Maybe String
     , weekdayFrom :: Maybe String
     , weekdayTo :: Maybe String
     , weekendFrom :: Maybe String
     , weekendTo :: Maybe String
-    , discordTagError :: Boolean
     }
 
 type Output =
@@ -41,7 +39,6 @@ type Output =
     , location :: Maybe String
     , languages :: Array String
     , microphone :: Boolean
-    , discordTag :: Maybe String
     , timezone :: Maybe String
     , weekdayFrom :: Maybe String
     , weekdayTo :: Maybe String
@@ -54,14 +51,12 @@ type State =
     , location :: Maybe String
     , languages :: Array String
     , microphone :: Boolean
-    , discordTag :: Maybe String
     , timezone :: Maybe String
     , weekdayFrom :: Maybe String
     , weekdayTo :: Maybe String
     , weekendFrom :: Maybe String
     , weekendTo :: Maybe String
     , thirteenYearsAgo :: String
-    , discordTagError :: Boolean
     }
 
 data Action
@@ -71,7 +66,6 @@ data Action
     | UpdateLocation (Maybe String)
     | UpdateLanguages (Array String)
     | UpdateMicrophone Boolean
-    | UpdateDiscordTag (Maybe String)
     | UpdateTimezone (Maybe String)
     | UpdateWeekdayFrom (Maybe String)
     | UpdateWeekdayTo (Maybe String)
@@ -89,10 +83,7 @@ type Slot = H.Slot (Const Void) Output Unit
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render state =
     HH.div_
-    [ inputGroupsHeading "Contact"
-    , responsiveInputGroups
-        [ discordTagInputGroup state.discordTag UpdateDiscordTag state.discordTagError ]
-    , inputGroupsHeading "Personal"
+    [ inputGroupsHeading "Personal"
     , responsiveInputGroups
         [ birthdayInputGroup state.thirteenYearsAgo state.birthday UpdateBirthday
         , locationInputGroup state.location UpdateLocation
@@ -147,9 +138,6 @@ handleAction (UpdateLanguages languages) = do
 handleAction (UpdateMicrophone microphone) = do
     state <- H.modify _ { microphone = microphone }
     raiseOutput state
-handleAction (UpdateDiscordTag discordTag) = do
-    state <- H.modify _ { discordTag = discordTag }
-    raiseOutput state
 handleAction (UpdateTimezone timezone) = do
     state <- H.modify _ { timezone = timezone }
     raiseOutput state
@@ -184,13 +172,11 @@ emptyInput =
     , location: Nothing
     , languages: []
     , microphone: false
-    , discordTag: Nothing
     , timezone: Nothing
     , weekdayFrom: Nothing
     , weekdayTo: Nothing
     , weekendFrom: Nothing
     , weekendTo: Nothing
-    , discordTagError: false
     }
 
 playerFormInput

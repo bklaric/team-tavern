@@ -12,7 +12,7 @@ import Data.Variant (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Anchor (textAnchor_)
-import TeamTavern.Client.Components.Input (checkboxInput, domainInputLabel, inputError, inputGroup, inputLabel, inputUnderlabel, inputUnderlabel', platformIdLabel, requiredTextLineInput, textInput_, textLineInput)
+import TeamTavern.Client.Components.Input (checkboxInput, domainInputLabel, inputError, inputGroup, inputLabel, inputUnderlabel, inputUnderlabel', platformIdLabel, textInput_, textLineInput)
 import TeamTavern.Client.Components.Select.MultiSelect (multiSelectIndexed)
 import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.Select.SingleSelect (singleSelectIndexed)
@@ -21,26 +21,26 @@ import TeamTavern.Client.Snippets.Brands (inputBattleNetSvg, inputPlayStationSvg
 import TeamTavern.Routes.Shared.Platform (Platform(..))
 
 platformIdInputGroup :: forall slots action.
-    Platform -> String -> (String -> action) -> Boolean -> HH.HTML slots action
-platformIdInputGroup platform platformId onValue error =
+    Platform -> (Maybe String) -> ((Maybe String) -> action) -> Boolean -> Boolean -> HH.HTML slots action
+platformIdInputGroup platform platformId onValue error required =
     inputGroup $
     ( case platform of
-        Steam -> [ platformIdLabel inputSteamSvg "Steam ID" ]
-        Riot -> [ platformIdLabel inputRiotSvg "Riot ID" ]
-        BattleNet -> [ platformIdLabel inputBattleNetSvg "BattleTag" ]
-        PlayStation -> [ platformIdLabel inputPlayStationSvg "PSN ID" ]
-        Xbox -> [ platformIdLabel inputXboxSvg "Gamertag" ]
-        Switch -> [ platformIdLabel inputSwitchSvg "Friend code" ]
+        Steam -> [ platformIdLabel inputSteamSvg "Steam ID" required ]
+        Riot -> [ platformIdLabel inputRiotSvg "Riot ID" required ]
+        BattleNet -> [ platformIdLabel inputBattleNetSvg "BattleTag" required ]
+        PlayStation -> [ platformIdLabel inputPlayStationSvg "PSN ID" required ]
+        Xbox -> [ platformIdLabel inputXboxSvg "Gamertag" required ]
+        Switch -> [ platformIdLabel inputSwitchSvg "Friend code" required ]
     )
     <>
-    [ requiredTextLineInput platformId onValue ]
+    [ textLineInput platformId onValue ]
     <>
     ( case platform of
         Steam ->
             [ inputUnderlabel "Example: 76561198821728791"
             , inputUnderlabel'
                 [ HH.text "You can find out your Steam ID at "
-                , textAnchor_ "https://store.steampowered.com/account/" "store.steampowered.com/account"
+                , textAnchor_ "https://store.steampowered.com/account" "store.steampowered.com/account"
                 ]
             ]
         Riot ->

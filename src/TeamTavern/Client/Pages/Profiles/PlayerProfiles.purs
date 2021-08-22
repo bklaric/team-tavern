@@ -52,7 +52,6 @@ type PlayerProfile =
     , weekdayOnline :: Maybe { from :: String, to :: String }
     , weekendOnline :: Maybe { from :: String, to :: String }
     , platform :: Platform
-    , platformId :: String
     , fieldValues :: Array
         { field ::
             { ilk :: Int
@@ -103,8 +102,7 @@ profileSection :: forall action left.
     PlayerProfile -> HH.ComponentHTML action ChildSlots (Async left)
 profileSection profile = let
     playerDetails' = playerDetails profile
-    profileDetails'' = profileDetails'
-        profile.platform profile.platformId profile.fieldValues profile.newOrReturning
+    profileDetails'' = profileDetails' profile.platform profile.fieldValues profile.newOrReturning
     about = textDetail profile.about
     in
     cardSection $

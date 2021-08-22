@@ -21,7 +21,6 @@ queryString timezone = Query $ """
         player.location,
         player.languages,
         player.microphone,
-        player.discord_tag as "discordTag",
         player.timezone,
         case
             when player.weekday_from is not null and player.weekday_to is not null
@@ -58,7 +57,6 @@ queryString timezone = Query $ """
                             ),
                             'fields', coalesce(fields.fields, '[]'),
                             'platform', profile.platform,
-                            'platformId', profile.platform_id,
                             'fieldValues', coalesce(field_values.field_values, '[]'),
                             'newOrReturning', profile.new_or_returning,
                             'about', profile.about,

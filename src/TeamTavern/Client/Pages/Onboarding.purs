@@ -392,7 +392,6 @@ handleAction (UpdatePlayer details) = do
             , location = details.location
             , languages = details.languages
             , microphone = details.microphone
-            , discordTag = details.discordTag
             , timezone = details.timezone
             , weekdayFrom = details.weekdayFrom
             , weekdayTo = details.weekdayTo
@@ -427,7 +426,6 @@ handleAction (UpdateGame game) = do
             { platforms = game.platforms
             , fields = game.fields
             , platform = game.platforms.head
-            , platformId = ""
             , fieldValues = []
             , newOrReturning = false
             , about = ""
@@ -450,8 +448,6 @@ handleAction (UpdatePlayerProfile details) = do
     state <- H.modify _
         { playerProfile
             { platform = details.platform
-            , platformId = details.platformId
-            , platformIdError = details.platformIdError
             , fieldValues = details.fieldValues
             , newOrReturning = details.newOrReturning
             , about = details.about
@@ -473,9 +469,6 @@ handleAction SetUpAccount = do
     currentState <- H.modify _ { submitting = true }
     let nextState = currentState
             { submitting = false
-            , player
-                { discordTagError = false
-                }
             , team
                 { nameError = false
                 , websiteError = false
@@ -484,8 +477,7 @@ handleAction SetUpAccount = do
                 , contactError = false
                 }
             , playerProfile
-                { platformIdError = false
-                , urlErrors = []
+                { urlErrors = []
                 , aboutError = false
                 }
             , teamProfile
@@ -505,17 +497,7 @@ handleAction SetUpAccount = do
             foldl
             (\state error ->
                 match
-                { player:
-                    foldl
-                    (\state' error' ->
-                        match
-                        { discordTag: const state'
-                            { step = Player, player { discordTagError = true } }
-                        }
-                        error'
-                    )
-                    state
-                , team:
+                { team:
                     foldl
                     (\state' error' ->
                         match
@@ -537,9 +519,7 @@ handleAction SetUpAccount = do
                     foldl
                     (\state' error' ->
                         match
-                        { platformId: const state'
-                            { playerProfile { platformIdError = true } }
-                        , url: \{ key } -> state'
+                        { url: \{ key } -> state'
                             { playerProfile
                                 { urlErrors = Array.cons key state'.playerProfile.urlErrors }
                             }

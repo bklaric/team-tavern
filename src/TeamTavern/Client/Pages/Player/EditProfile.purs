@@ -58,8 +58,7 @@ sendRequest
     -> Async left (Maybe
         ( Either
             ( Array (Variant
-                ( platformId :: Array String
-                , about :: Array String
+                ( about :: Array String
                 , url :: { key :: String, message :: Array String }
                 ))
             )
@@ -68,7 +67,6 @@ sendRequest
 sendRequest state @ { nickname, handle, profile } =
     putNoContent ("/api/players/" <> nickname <> "/profiles/" <> handle)
     { platform: profile.platform
-    , platformId: profile.platformId
     , fieldValues: profile.fieldValues
     , newOrReturning: profile.newOrReturning
     , about: profile.about
@@ -80,8 +78,6 @@ handleAction (UpdateProfile profile) =
     H.modify_ _
         { profile
             { platform = profile.platform
-            , platformId = profile.platformId
-            , platformIdError = profile.platformIdError
             , fieldValues = profile.fieldValues
             , newOrReturning = profile.newOrReturning
             , about = profile.about
@@ -97,8 +93,7 @@ handleAction (SendRequest event) = do
             foldl
             (\state error ->
                 match
-                { platformId: const state { profile { platformIdError = true } }
-                , about: const state { profile { aboutError = true } }
+                { about: const state { profile { aboutError = true } }
                 , url: \{ key } -> state { profile
                     { urlErrors = Array.cons key state.profile.urlErrors } }
                 }
@@ -108,8 +103,7 @@ handleAction (SendRequest event) = do
                 { submitting = false
                 , otherError = false
                 , profile
-                    { platformIdError = false
-                    , urlErrors = []
+                    { urlErrors = []
                     , aboutError = false
                     }
                 }
@@ -119,8 +113,7 @@ handleAction (SendRequest event) = do
             { submitting = false
             , otherError = true
             , profile
-                { platformIdError = false
-                , urlErrors = []
+                { urlErrors = []
                 , aboutError = false
                 }
             }
@@ -129,14 +122,13 @@ component :: forall query output left. H.Component HH.HTML query Input output (A
 component = H.mkComponent
     { initialState: \
         { nickname
-        , profile: { handle, title, platforms, fields, platform, platformId, fieldValues, newOrReturning, about }
+        , profile: { handle, title, platforms, fields, platform, fieldValues, newOrReturning, about }
         } ->
         { nickname
         , handle
         , title
         , profile: (ProfileFormInput.emptyInput { platforms, fields })
             { platform = platform
-            , platformId = platformId
             , fieldValues = fieldValues
             , newOrReturning = newOrReturning
             , about = intercalate "\n\n" about

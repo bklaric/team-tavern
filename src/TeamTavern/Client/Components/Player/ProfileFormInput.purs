@@ -9,13 +9,15 @@ import Data.Const (Const)
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..))
+import Data.Monoid (guard)
 import Data.Variant (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Record as Record
-import TeamTavern.Client.Components.Input (platformIdHeading, inputGroupsHeading, responsiveInputGroups)
-import TeamTavern.Client.Components.Player.ProfileInputGroup (ChildSlots, Field, FieldValue, aboutInputGroup, platformIdInputGroup, fieldInputGroup, newOrReturningInputGroup)
+import TeamTavern.Client.Components.Input (inputGroup, inputGroupsHeading, responsiveInputGroups)
+import TeamTavern.Client.Components.Player.ProfileInputGroup (ChildSlots, Field, FieldValue, aboutInputGroup, fieldInputGroup, newOrReturningInputGroup)
 import TeamTavern.Client.Components.Player.ProfileInputGroup as Input
+import TeamTavern.Client.Pages.Profiles.TeamBadge (platformRadioBadges)
 import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
 
 type FieldValues = Array FieldValue
@@ -24,19 +26,15 @@ type Input =
     { platforms :: Platforms
     , fields :: Array Field
     , platform :: Platform
-    , platformId :: String
     , fieldValues :: FieldValues
     , newOrReturning :: Boolean
     , about :: String
-    , platformIdError :: Boolean
     , urlErrors :: Array String
     , aboutError :: Boolean
     }
 
 type Output =
     { platform :: Platform
-    , platformId :: String
-    , platformIdError :: Boolean
     , fieldValues :: FieldValues
     , about :: String
     , newOrReturning :: Boolean
@@ -46,11 +44,9 @@ type State =
     { platforms :: Platforms
     , fields :: Array Field
     , platform :: Platform
-    , platformId :: String
     , fieldValues :: Input.FieldValues
     , newOrReturning :: Boolean
     , about :: String
-    , platformIdError :: Boolean
     , urlErrors :: Array String
     , aboutError :: Boolean
     }
@@ -58,7 +54,6 @@ type State =
 data Action
     = Receive Input
     | UpdatePlatform Platform
-    | UpdatePlatformId String
     | UpdateUrl String (Maybe String)
     | UpdateSingleSelect String (Maybe String)
     | UpdateMultiSelect String (Array String)
@@ -77,14 +72,16 @@ fieldValuesToMap = foldl (\map value -> Map.insert value.fieldKey value map) Map
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render
     { platforms, fields
-    , platform, platformId, fieldValues, newOrReturning, about
-    , platformIdError, urlErrors, aboutError
+    , platform, fieldValues, newOrReturning, about
+    , urlErrors, aboutError
     }
     = HH.div_ $
-    [ platformIdHeading platforms platform UpdatePlatform
-    , responsiveInputGroups
-        [ platformIdInputGroup platform platformId UpdatePlatformId platformIdError ]
-    , inputGroupsHeading "Details"
+    guard (not $ Array.null platforms.tail)
+    [ inputGroupsHeading "Platform"
+    , inputGroup [ platformRadioBadges platforms platform UpdatePlatform ]
+    ]
+    <>
+    [ inputGroupsHeading "Details"
     , responsiveInputGroups $
         ( fields <#> fieldInputGroup fieldValues
             UpdateUrl UpdateSingleSelect UpdateMultiSelect urlErrors
@@ -96,11 +93,8 @@ render
     ]
 
 raiseOutput :: forall left. State -> H.HalogenM State Action ChildSlots Output (Async left) Unit
-raiseOutput { platform, platformId, platformIdError, fieldValues, newOrReturning, about } =
-    H.raise
-    { platform, platformId, platformIdError
-    , fieldValues: fieldValuesToArray fieldValues, newOrReturning, about
-    }
+raiseOutput { platform, fieldValues, newOrReturning, about } =
+    H.raise { platform, fieldValues: fieldValuesToArray fieldValues, newOrReturning, about }
 
 handleAction :: forall left. Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
 handleAction (Receive input) =
@@ -108,12 +102,7 @@ handleAction (Receive input) =
 handleAction (UpdatePlatform platform) = do
     state <- H.modify _
         { platform = platform
-        , platformId = ""
-        , platformIdError = false
         }
-    raiseOutput state
-handleAction (UpdatePlatformId platformId) = do
-    state <- H.modify _ { platformId = platformId }
     raiseOutput state
 handleAction (UpdateUrl fieldKey url) = do
     state <- H.modify \state -> state
@@ -178,11 +167,9 @@ emptyInput { platforms, fields } =
     { platforms
     , fields
     , platform: platforms.head
-    , platformId: ""
     , fieldValues: []
     , newOrReturning: false
     , about: ""
-    , platformIdError: false
     , urlErrors: []
     , aboutError: false
     }

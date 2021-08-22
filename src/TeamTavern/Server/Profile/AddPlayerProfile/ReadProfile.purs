@@ -16,7 +16,6 @@ type FieldValue =
 
 type Profile =
     { platform :: Platform
-    , platformId :: String
     , fieldValues :: Array FieldValue
     , newOrReturning :: Boolean
     , about :: String

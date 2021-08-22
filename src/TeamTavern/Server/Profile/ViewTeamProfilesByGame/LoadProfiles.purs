@@ -260,7 +260,6 @@ queryStringWithoutPagination handle timezone filters = Query $ """
                     )
                 )
             end as organization,
-            team.discord_tag as "discordTag",
             team.discord_server as "discordServer",
             team.age_from as "ageFrom",
             team.age_to as "ageTo",

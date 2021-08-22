@@ -1,7 +1,6 @@
 create table player
     ( id serial not null primary key
     , nickname varchar(40) not null unique
-    , discord_tag varchar(37)
     , birthday date
     , languages text[] not null default '{}'
     , location varchar(100)
@@ -82,7 +81,6 @@ create table player_profile
     , player_id integer not null references player(id) on delete cascade
     , game_id integer not null references game(id)
     , platform text not null
-    , platform_id text not null
     , new_or_returning boolean not null
     , about text[] not null
     , created timestamptz not null default current_timestamp

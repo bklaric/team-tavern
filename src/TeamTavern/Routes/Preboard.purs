@@ -34,10 +34,7 @@ type RequestContent =
 type OkContent = { teamHandle :: Maybe String }
 
 type BadContent = Array $ Variant
-    ( player :: Array $ Variant
-        ( discordTag :: Array String
-        )
-    , team :: Array $ Variant
+    ( team :: Array $ Variant
         ( name :: Array String
         , website :: Array String
         , discordTag :: Array String
@@ -45,8 +42,7 @@ type BadContent = Array $ Variant
         , contact :: Array String
         )
     , playerProfile :: Array $ Variant
-        ( platformId :: Array String
-        , url :: { message :: Array String, key :: String }
+        ( url :: { message :: Array String, key :: String }
         , about :: Array String
         )
     , teamProfile :: Array $ Variant

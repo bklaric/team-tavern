@@ -7,12 +7,10 @@ import Client.Components.Copyable as Copyable
 import Data.Array (intercalate)
 import Data.Array as Array
 import Data.Maybe (Maybe(..))
-import Data.Monoid (guard)
 import Halogen.HTML as HH
-import TeamTavern.Client.Components.Detail (battleTagDetail, detail, fieldDetail, friendCodeDetail, gamertagDetail, psnIdDetail, riotIdDetail, steamIdDetail, steamUrlDetail, urlDetail)
+import TeamTavern.Client.Components.Detail (detail, fieldDetail, urlDetail)
 import TeamTavern.Client.Snippets.Class as HS
-import TeamTavern.Routes.Shared.Platform (Platform(..))
-import TeamTavern.Server.Profile.Infrastructure.ValidateSteamId (isSteamIdValid)
+import TeamTavern.Routes.Shared.Platform (Platform)
 
 type PlatformIdSlots slots =
     ( steamId :: Copyable.Slot String
@@ -25,7 +23,6 @@ type PlatformIdSlots slots =
 
 profileDetails :: forall left slots action.
     Platform
-    -> String
     -> Array
         { ilk :: Int
         , key :: String
@@ -45,8 +42,8 @@ profileDetails :: forall left slots action.
         }
     -> Boolean
     -> Array (HH.ComponentHTML action (PlatformIdSlots slots) (Async left))
-profileDetails platform platformId fields fieldValues newOrReturning =
-    profileDetails' platform platformId
+profileDetails platform fields fieldValues newOrReturning =
+    profileDetails' platform
     ( fields
     <#> ( \field ->
             case fieldValues # Array.find \{ fieldKey } -> fieldKey == field.key of
@@ -77,7 +74,6 @@ profileDetails platform platformId fields fieldValues newOrReturning =
 
 profileDetails' :: forall left slots action.
     Platform
-    -> String
     -> Array
         { field ::
             { ilk :: Int
@@ -97,15 +93,15 @@ profileDetails' :: forall left slots action.
         }
     -> Boolean
     -> Array (HH.ComponentHTML action (PlatformIdSlots slots) (Async left))
-profileDetails' platform platformId fieldValues newOrReturning =
-    case platform of
-    Steam -> guard (isSteamIdValid platformId) [ steamIdDetail platformId, steamUrlDetail platformId ]
-    Riot -> [ riotIdDetail platformId ]
-    BattleNet -> [ battleTagDetail platformId ]
-    PlayStation -> [ psnIdDetail platformId ]
-    Xbox -> [ gamertagDetail platformId ]
-    Switch -> [ friendCodeDetail platformId ]
-    <>
+profileDetails' platform fieldValues newOrReturning =
+    -- case platform of
+    -- Steam -> guard (isSteamIdValid platformId) [ steamIdDetail platformId, steamUrlDetail platformId ]
+    -- Riot -> [ riotIdDetail platformId ]
+    -- BattleNet -> [ battleTagDetail platformId ]
+    -- PlayStation -> [ psnIdDetail platformId ]
+    -- Xbox -> [ gamertagDetail platformId ]
+    -- Switch -> [ friendCodeDetail platformId ]
+    -- <>
     ( fieldValues
     <#> ( \{ field, url, option, options } ->
             case field.ilk, url, option, options of
