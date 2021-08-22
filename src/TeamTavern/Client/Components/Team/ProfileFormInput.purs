@@ -18,7 +18,7 @@ import Record as Record
 import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.Input (inputErrorSublabel, inputGroup, inputGroupsHeading, inputGroupsHeading', inputRequiredSublabel, inputSublabel, responsiveInputGroups)
 import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
-import TeamTavern.Client.Components.Team.ProfileInputGroup (Field, Option, ambitionsInputGroup, fieldInputGroup, newOrReturningInputGroup)
+import TeamTavern.Client.Components.Team.ProfileInputGroup (Field, Option, aboutInputGroup, fieldInputGroup, newOrReturningInputGroup)
 import TeamTavern.Client.Components.Team.ProfileInputGroup as Input
 import TeamTavern.Client.Components.Team.SizeInfo (sizeInfo)
 import TeamTavern.Client.Components.Team.SizeInfo as SizeInfo
@@ -40,8 +40,8 @@ type Input =
     , fields :: Array Field
     , fieldValues :: FieldValues
     , newOrReturning :: Boolean
-    , ambitions :: String
-    , ambitionsError :: Boolean
+    , about :: String
+    , aboutError :: Boolean
     }
 
 type Output =
@@ -49,7 +49,7 @@ type Output =
     , platforms :: Array Platform
     , fieldValues :: FieldValues
     , newOrReturning :: Boolean
-    , ambitions :: String
+    , about :: String
     }
 
 type State =
@@ -60,8 +60,8 @@ type State =
     , fields :: Array Field
     , fieldValues :: Input.FieldValues
     , newOrReturning :: Boolean
-    , ambitions :: String
-    , ambitionsError :: Boolean
+    , about :: String
+    , aboutError :: Boolean
     }
 
 data Action
@@ -70,7 +70,7 @@ data Action
     | UpdatePlatform Platform
     | UpdateFieldValues String (MultiSelect.Output Option)
     | UpdateNewOrReturning Boolean
-    | UpdateAmbitions String
+    | UpdateAbout String
 
 type Slot = H.Slot (Const Void) Output Unit
 
@@ -103,8 +103,8 @@ render state =
         (state.fields <#> fieldInputGroup state.fieldValues UpdateFieldValues)
         <>
         [ newOrReturningInputGroup state.newOrReturning UpdateNewOrReturning ]
-    , inputGroupsHeading "Ambitions"
-    , ambitionsInputGroup state.ambitions UpdateAmbitions state.ambitionsError
+    , inputGroupsHeading "About"
+    , aboutInputGroup state.about UpdateAbout state.aboutError
     ]
 
 fieldValuesToArray :: Input.FieldValues -> FieldValues
@@ -122,13 +122,13 @@ fieldValuesToMap =
     MultiMap.empty
 
 raiseOutput :: forall left. State -> H.HalogenM State Action ChildSlots Output (Async left) Unit
-raiseOutput { size, selectedPlatforms, fieldValues, newOrReturning, ambitions } =
+raiseOutput { size, selectedPlatforms, fieldValues, newOrReturning, about } =
     H.raise
     { size
     , platforms: selectedPlatforms
     , fieldValues: fieldValuesToArray fieldValues
     , newOrReturning
-    , ambitions
+    , about
     }
 
 handleAction :: forall left. Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
@@ -156,8 +156,8 @@ handleAction (UpdateFieldValues fieldKey options) = do
 handleAction (UpdateNewOrReturning newOrReturning) = do
     state <- H.modify _ { newOrReturning = newOrReturning }
     raiseOutput state
-handleAction (UpdateAmbitions ambitions) = do
-    state <- H.modify _ { ambitions = ambitions }
+handleAction (UpdateAbout about) = do
+    state <- H.modify _ { about = about }
     raiseOutput state
 
 component :: forall query left. H.Component HH.HTML query Input Output (Async left)
@@ -179,8 +179,8 @@ emptyInput { platforms, fields } =
     , fields
     , fieldValues: []
     , newOrReturning: false
-    , ambitions: ""
-    , ambitionsError: false
+    , about: ""
+    , aboutError: false
     }
 
 profileFormInput

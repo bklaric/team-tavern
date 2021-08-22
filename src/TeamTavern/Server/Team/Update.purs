@@ -44,7 +44,6 @@ queryString = Query """
         weekday_to = $15,
         weekend_from = $16,
         weekend_to = $17,
-        about = $18,
         updated = now()
     where owner_id = $1 and handle = $2
     """
@@ -67,8 +66,7 @@ queryParameters ownerId handle team
     : nullableTimeFrom team.onlineWeekday
     : nullableTimeTo team.onlineWeekday
     : nullableTimeFrom team.onlineWeekend
-    : nullableTimeTo team.onlineWeekend
-    :| team.about
+    :| nullableTimeTo team.onlineWeekend
 
 updateTeam :: forall querier errors. Querier querier =>
     querier -> Id -> String -> Team -> Async (InternalError errors) Unit

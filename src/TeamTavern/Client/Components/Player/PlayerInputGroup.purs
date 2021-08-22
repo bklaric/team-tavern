@@ -8,7 +8,7 @@ import Data.Maybe (Maybe(..))
 import Data.Variant (SProxy(..))
 import Halogen (ComponentHTML, Slot)
 import Halogen.HTML (HTML)
-import TeamTavern.Client.Components.Input (checkboxInput, dateInput, inputError, inputGroup, inputLabel, inputUnderlabel, textInput_, textLineInput)
+import TeamTavern.Client.Components.Input (checkboxInput, dateInput, inputError, inputGroup, inputLabel, inputUnderlabel, textLineInput)
 import TeamTavern.Client.Components.Select.MultiSelect (multiSelect)
 import TeamTavern.Client.Components.Select.SingleTreeSelect (singleTreeSelect)
 import TeamTavern.Client.Components.Select.SingleTreeSelect as SingleTreeSelect
@@ -88,13 +88,3 @@ discordTagInputGroup value onValue error =
     , inputUnderlabel "Example: username#1234"
     ]
     <> inputError error "This does not look like a valid Discord tag."
-
-aboutInputGroup :: forall slots action. String -> (String -> action) -> Boolean -> HTML slots action
-aboutInputGroup value onValue error =
-    inputGroup $
-    [ textInput_ value onValue
-    , inputUnderlabel """Write a bit about yourself. What are you like?
-        What are you looking for in other players?"""
-    ]
-    <>
-    inputError error "About text cannot be more than 2000 characters long."

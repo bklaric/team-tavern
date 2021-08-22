@@ -21,17 +21,17 @@ import TeamTavern.Server.Profile.AddTeamProfile.ReadProfile as ReadProfile
 import TeamTavern.Server.Profile.AddTeamProfile.ValidateFieldValues (validateFieldValues)
 import TeamTavern.Server.Profile.AddTeamProfile.ValidateFieldValues as ValidateFieldValues
 import TeamTavern.Server.Profile.AddTeamProfile.ValidatePlatforms (validatePlatforms)
-import TeamTavern.Server.Profile.Infrastructure.ValidateAmbitions (validateAmbitions)
+import TeamTavern.Server.Profile.Infrastructure.ValidateAbout (validateAbout)
 
 type Profile =
     { size :: Size
     , platforms :: NonEmptyArray Platform
     , fieldValues :: Array ValidateFieldValues.FieldValue
     , newOrReturning :: Boolean
-    , ambitions :: Text
+    , about :: Text
     }
 
-type ProfileError = Variant (platforms :: Array String, ambitions :: Array String)
+type ProfileError = Variant (platforms :: Array String, about :: Array String)
 
 type ProfileErrors = NonEmptyList ProfileError
 
@@ -41,10 +41,10 @@ validateProfile
     -> ReadProfile.Profile
     -> Async (Variant (profile :: ProfileErrors | errors)) Profile
 validateProfile game profile @ { size, newOrReturning } =
-    { size, platforms: _, fieldValues: _, newOrReturning, ambitions: _ }
+    { size, platforms: _, fieldValues: _, newOrReturning, about: _ }
     <$> validatePlatforms game.platforms profile.platforms
     <*> (pure $ validateFieldValues game.fields profile.fieldValues)
-    <*> validateAmbitions profile.ambitions
+    <*> validateAbout profile.about
     # Async.fromValidated # label (SProxy :: SProxy "profile")
 
 validateProfileV

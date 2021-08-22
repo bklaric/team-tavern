@@ -45,7 +45,7 @@ type OkContentProfile =
         , optionKeys :: Maybe (Array String)
         }
     , newOrReturning :: Boolean
-    , ambitions :: Array String
+    , about :: Array String
     , updated :: String
     , updatedSeconds :: Number
     }
@@ -78,7 +78,6 @@ type OkContent =
         , sourceFrom :: String
         , sourceTo :: String
         }
-    , about :: Array String
     , profiles :: Array OkContentProfile
     , teams :: Array OkContentTeam
     }

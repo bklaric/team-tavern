@@ -52,7 +52,7 @@ profiles { nickname, profiles: profiles' } status showEditProfileModal =
         _ -> "This player hasn't created any profiles." ] ]
     else profiles' <#> \profile -> let
         profileDetails' = profileDetails profile.platform profile.platformId profile.fields profile.fieldValues profile.newOrReturning
-        ambitions = textDetail profile.ambitions
+        about = textDetail profile.about
         in
         cardSection $
         [ profileHeader $
@@ -72,11 +72,11 @@ profiles { nickname, profiles: profiles' } status showEditProfileModal =
             _ -> []
         ]
         <>
-        guard (full profileDetails' || full ambitions)
+        guard (full profileDetails' || full about)
         [ detailColumns $
             guard (full profileDetails')
             [ detailColumn $ [ detailColumnHeading4 "Details" ] <> profileDetails' ]
             <>
-            guard (full ambitions)
-            [ detailColumn $ [ detailColumnHeading4 "Ambitions" ] <> ambitions ]
+            guard (full about)
+            [ detailColumn $ [ detailColumnHeading4 "About" ] <> about ]
         ]

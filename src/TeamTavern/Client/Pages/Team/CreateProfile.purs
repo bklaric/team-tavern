@@ -58,14 +58,14 @@ render { profile, submitting, otherError } =
 sendRequest
     :: forall left
     .  State
-    -> Async left (Maybe (Either (Array (Variant (platforms :: Array String, ambitions :: Array String))) Unit))
+    -> Async left (Maybe (Either (Array (Variant (platforms :: Array String, about :: Array String))) Unit))
 sendRequest state @ { teamHandle, gameHandle, profile } =
     postNoContent ("/api/teams/" <> teamHandle <> "/profiles/" <> gameHandle)
     { size: profile.size
     , platforms: profile.selectedPlatforms
     , fieldValues: profile.fieldValues
     , newOrReturning: profile.newOrReturning
-    , ambitions: profile.ambitions
+    , about: profile.about
     }
 
 handleAction :: forall output left.
@@ -77,7 +77,7 @@ handleAction (UpdateProfile profile) =
             , selectedPlatforms = profile.platforms
             , fieldValues = profile.fieldValues
             , newOrReturning = profile.newOrReturning
-            , ambitions = profile.ambitions
+            , about = profile.about
             }
         }
 handleAction (SendRequest event) = do
@@ -91,21 +91,21 @@ handleAction (SendRequest event) = do
             (\state error ->
                 match
                 { platforms: const state { profile = state.profile { platformsError = true } }
-                , ambitions: const state { profile = state.profile { ambitionsError = true } }
+                , about: const state { profile = state.profile { aboutError = true } }
                 }
                 error
             )
             (currentState
                 { submitting = false
                 , otherError = false
-                , profile { ambitionsError = false }
+                , profile { aboutError = false }
                 }
             )
             badContent
         Nothing -> H.put currentState
             { submitting = false
             , otherError = true
-            , profile { ambitionsError = false }
+            , profile { aboutError = false }
             }
 
 component :: forall query output left. H.Component HH.HTML query Input output (Async left)

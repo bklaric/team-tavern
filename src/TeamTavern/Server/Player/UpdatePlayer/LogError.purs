@@ -24,7 +24,7 @@ playerHandler :: forall fields. Lacks "player" fields =>
     Builder (Record fields) { player :: PlayerErrors -> Effect Unit | fields }
 playerHandler = Builder.insert (SProxy :: SProxy "player") \errors ->
     foreachE (Array.fromFoldable errors) $ match
-    { discordTag: logLines, about: logLines }
+    { discordTag: logLines }
 
 logError :: UpdateDetailsError -> Effect Unit
 logError = Log.logError "Error updating player"

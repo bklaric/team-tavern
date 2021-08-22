@@ -36,7 +36,6 @@ type OkContent = { teamHandle :: Maybe String }
 type BadContent = Array $ Variant
     ( player :: Array $ Variant
         ( discordTag :: Array String
-        , about :: Array String
         )
     , team :: Array $ Variant
         ( name :: Array String
@@ -44,16 +43,15 @@ type BadContent = Array $ Variant
         , discordTag :: Array String
         , discordServer :: Array String
         , contact :: Array String
-        , about :: Array String
         )
     , playerProfile :: Array $ Variant
         ( platformId :: Array String
         , url :: { message :: Array String, key :: String }
-        , ambitions :: Array String
+        , about :: Array String
         )
     , teamProfile :: Array $ Variant
         ( platforms :: Array String
-        , ambitions :: Array String
+        , about :: Array String
         )
     , registration :: Array $ Variant
         ( nickname :: Array String

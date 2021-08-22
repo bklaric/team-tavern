@@ -41,7 +41,6 @@ queryString timezone = Query $ """
                 'sourceTo', to_char(player.weekend_to, 'HH24:MI')
             )
         end as "weekendOnline",
-        player.about,
         coalesce(player_profiles.profiles, '[]') as profiles,
         coalesce(player_teams.teams, '[]') as teams
     from player
@@ -62,7 +61,7 @@ queryString timezone = Query $ """
                             'platformId', profile.platform_id,
                             'fieldValues', coalesce(field_values.field_values, '[]'),
                             'newOrReturning', profile.new_or_returning,
-                            'ambitions', profile.ambitions,
+                            'about', profile.about,
                             'updated', profile.updated::text,
                             'updatedSeconds', extract(epoch from (now() - updated))
                         )

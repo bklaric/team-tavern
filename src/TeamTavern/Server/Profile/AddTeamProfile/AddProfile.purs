@@ -22,7 +22,7 @@ queryString = Query """
         , size
         , platforms
         , new_or_returning
-        , ambitions
+        , about
         )
     select team.id, game.id, $4, $5, $6, $7
     from player, team, game
@@ -41,7 +41,7 @@ queryParameters id teamHandle gameHandle profile =
     : (Size.toString profile.size)
     : (profile.platforms <#> Platform.toString)
     : profile.newOrReturning
-    :| profile.ambitions
+    :| profile.about
 
 addProfile'
     :: forall errors

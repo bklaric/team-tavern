@@ -57,7 +57,7 @@ profiles teamHandle profiles' status editProfileModalShown =
         _ -> "This team hasn't created any profiles." ] ]
     else profiles' <#> \profile -> let
         profileDetails' = profileDetails profile
-        ambitions = textDetail profile.ambitions
+        about = textDetail profile.about
         in
         cardSection $
         [ profileHeader $
@@ -78,11 +78,11 @@ profiles teamHandle profiles' status editProfileModalShown =
             _ -> []
         ]
         <>
-        guard (full profileDetails' || full ambitions)
+        guard (full profileDetails' || full about)
         [ detailColumns $
             guard (full profileDetails')
             [ detailColumn $ [ detailColumnHeading4 "Details" ] <> profileDetails' ]
             <>
-            guard (full ambitions)
-            [ detailColumn $ [ detailColumnHeading4 "Ambitions" ] <> ambitions ]
+            guard (full about)
+            [ detailColumn $ [ detailColumnHeading4 "About" ] <> about ]
         ]

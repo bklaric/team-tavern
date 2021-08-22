@@ -51,7 +51,6 @@ type PlayerProfile =
     , microphone :: Boolean
     , weekdayOnline :: Maybe { from :: String, to :: String }
     , weekendOnline :: Maybe { from :: String, to :: String }
-    , about :: Array String
     , platform :: Platform
     , platformId :: String
     , fieldValues :: Array
@@ -71,7 +70,7 @@ type PlayerProfile =
             , label :: String
             })
         }
-    , ambitions :: Array String
+    , about :: Array String
     , newOrReturning :: Boolean
     , updated :: String
     , updatedSeconds :: Number
@@ -107,7 +106,6 @@ profileSection profile = let
     profileDetails'' = profileDetails'
         profile.platform profile.platformId profile.fieldValues profile.newOrReturning
     about = textDetail profile.about
-    ambitions = textDetail profile.ambitions
     in
     cardSection $
     [ profileHeader
@@ -120,7 +118,7 @@ profileSection profile = let
         ]
     ]
     <>
-    guard (full playerDetails' || full profileDetails'' || full about || full ambitions)
+    guard (full playerDetails' || full profileDetails'' || full about)
     [ detailColumns $
         guard (full playerDetails' || full profileDetails'')
         [ detailColumn $
@@ -131,14 +129,8 @@ profileSection profile = let
             [ detailColumnHeading4 "Profile details" ] <> profileDetails''
         ]
         <>
-        guard (full about || full ambitions)
-        [ detailColumn $
-            guard (full about)
-            [ detailColumnHeading4 "About" ] <> about
-            <>
-            guard (full ambitions)
-            [ detailColumnHeading4 "Ambitions" ] <> ambitions
-        ]
+        guard (full about)
+        [ detailColumn $ [ detailColumnHeading4 "About" ] <> about ]
     ]
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)

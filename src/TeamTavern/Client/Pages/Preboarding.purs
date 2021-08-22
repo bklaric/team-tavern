@@ -314,7 +314,7 @@ renderPage { step: Game, game, playerOrTeam } =
 renderPage { step: PlayerProfile, playerProfile, otherError, submitting, game } =
     [ boardingStep
         [ boardingHeading $ maybe "Player profile" (\{ title } -> title <> " player profile") (getGame game)
-        , boardingDescription  """Fill out your in-game stats, achievements and ambitions to find
+        , boardingDescription  """Fill out your in-game stats, achievements and about to find
             equally skilled teammates."""
         , PlayerProfileFormInput.profileFormInput playerProfile UpdatePlayerProfile
         ]
@@ -329,7 +329,7 @@ renderPage { step: PlayerProfile, playerProfile, otherError, submitting, game } 
 renderPage { step: TeamProfile, teamProfile, otherError, submitting, game } =
     [ boardingStep
         [ boardingHeading $ maybe "Team profile" (\{ title } -> title <> " team profile") (getGame game)
-        , boardingDescription  """Tell us about your team's ambitions and what you're looking for
+        , boardingDescription  """Tell us about your team's about and what you're looking for
             skill-wise in new team members."""
         , TeamProfileFormInput.profileFormInput teamProfile UpdateTeamProfile
         ]
@@ -408,7 +408,7 @@ sendRequest (state :: State) = Async.unify do
                 , platforms: profile.selectedPlatforms
                 , fieldValues: profile.fieldValues
                 , newOrReturning: profile.newOrReturning
-                , ambitions: profile.ambitions
+                , about: profile.about
                 }
             , registration: pick registration
             }
@@ -481,7 +481,6 @@ handleAction (UpdatePlayer details) = do
             , weekdayTo = details.weekdayTo
             , weekendFrom = details.weekendFrom
             , weekendTo = details.weekendTo
-            , about = details.about
             }
         }
     updateHistoryState state
@@ -501,7 +500,6 @@ handleAction (UpdateTeam details) = do
             , weekdayTo = details.weekdayTo
             , weekendFrom = details.weekendFrom
             , weekendTo = details.weekendTo
-            , about = details.about
             }
         }
     updateHistoryState state
@@ -514,7 +512,7 @@ handleAction (UpdateGame game) = do
             , platform = game.platforms.head
             , fieldValues = []
             , newOrReturning = false
-            , ambitions = ""
+            , about = ""
             }
         , teamProfile
             { allPlatforms = game.platforms
@@ -526,7 +524,7 @@ handleAction (UpdateGame game) = do
                 _ -> Nothing
             , fieldValues = []
             , newOrReturning = false
-            , ambitions = ""
+            , about = ""
             }
         }
     updateHistoryState state
@@ -538,7 +536,7 @@ handleAction (UpdatePlayerProfile details) = do
             , platformIdError = details.platformIdError
             , fieldValues = details.fieldValues
             , newOrReturning = details.newOrReturning
-            , ambitions = details.ambitions
+            , about = details.about
             }
         }
     updateHistoryState state
@@ -549,7 +547,7 @@ handleAction (UpdateTeamProfile details) = do
             , selectedPlatforms = details.platforms
             , fieldValues = details.fieldValues
             , newOrReturning = details.newOrReturning
-            , ambitions = details.ambitions
+            , about = details.about
             }
         }
     updateHistoryState state
@@ -567,7 +565,6 @@ handleAction SetUpAccount = do
             { submitting = false
             , player
                 { discordTagError = false
-                , aboutError = false
                 }
             , team
                 { nameError = false
@@ -575,16 +572,15 @@ handleAction SetUpAccount = do
                 , discordTagError = false
                 , discordServerError = false
                 , contactError = false
-                , aboutError = false
                 }
             , playerProfile
                 { platformIdError = false
                 , urlErrors = []
-                , ambitionsError = false
+                , aboutError = false
                 }
             , teamProfile
                 { platformsError = false
-                , ambitionsError = false
+                , aboutError = false
                 }
             , registration
                 { nicknameError = false
@@ -610,8 +606,6 @@ handleAction SetUpAccount = do
                         match
                         { discordTag: const state'
                             { step = Player, player { discordTagError = true } }
-                        , about: const state'
-                            { step = Player, player { aboutError = true } }
                         }
                         error'
                     )
@@ -630,8 +624,6 @@ handleAction SetUpAccount = do
                             { step = Team, team { discordServerError = true } }
                         , contact: const state'
                             { step = Team, team { contactError = true } }
-                        , about: const state'
-                            { step = Team, team { aboutError = true } }
                         }
                         error'
                     )
@@ -651,10 +643,10 @@ handleAction SetUpAccount = do
                             , playerProfile
                                 { urlErrors = Array.cons key state'.playerProfile.urlErrors }
                             }
-                        , ambitions: const state'
+                        , about: const state'
                             { step =
                                 if state'.step > PlayerProfile then PlayerProfile else state'.step
-                            , playerProfile { ambitionsError = true }
+                            , playerProfile { aboutError = true }
                             }
                         }
                         error'
@@ -668,9 +660,9 @@ handleAction SetUpAccount = do
                             { step = if state'.step > TeamProfile then TeamProfile else state'.step
                             , teamProfile { platformsError = true }
                             }
-                        , ambitions: const state'
+                        , about: const state'
                             { step = if state'.step > TeamProfile then TeamProfile else state'.step
-                            , teamProfile { ambitionsError = true }
+                            , teamProfile { aboutError = true }
                             }
                         }
                         error'

@@ -35,7 +35,7 @@ features createAccount =
                     [ HH.text """Do you want to build a team or expand your existing
                     online community? Create your team profile and let prospecting players
                     know you're looking for new members. Find and invite like-minded players
-                    of matching skills and ambitions.""" ]
+                    of matching skills and about.""" ]
                 ]
             , HH.div_
                 [ HH.h3 [ HS.class_ "features-feature-heading" ]
@@ -91,7 +91,7 @@ features' handle title createAccount =
                     [ HH.text """Do you want to build a team or expand your existing
                     online community? Create your team profile and let prospecting players
                     know you're looking for new members. Find and invite like-minded players
-                    of matching skills and ambitions.""" ]
+                    of matching skills and about.""" ]
                 ]
             , HH.div_
                 [ HH.h3 [ HS.class_ "features-feature-heading" ]

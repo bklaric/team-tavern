@@ -19,7 +19,7 @@ import TeamTavern.Client.Components.Select.MultiTreeSelect as MultiTreeSelect
 import TeamTavern.Client.Components.Select.SingleSelect as SingleSelect
 import TeamTavern.Client.Components.Team.OrganizationInfo (organizationInfo)
 import TeamTavern.Client.Components.Team.OrganizationInfo as OrganizationInfo
-import TeamTavern.Client.Components.Team.TeamInputGroup (aboutInputGroup, ageInputGroup, discordServerInputGroup, languagesInputGroup, locationInputGroup, microphoneInputGroup, nameInputGroup, websiteInputGroup)
+import TeamTavern.Client.Components.Team.TeamInputGroup (ageInputGroup, discordServerInputGroup, languagesInputGroup, locationInputGroup, microphoneInputGroup, nameInputGroup, websiteInputGroup)
 import TeamTavern.Client.Pages.Profiles.TeamBadge (organizationRadioBadges)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Snippets.Class as HS
@@ -40,13 +40,11 @@ type Input =
     , weekdayTo :: Maybe String
     , weekendFrom :: Maybe String
     , weekendTo :: Maybe String
-    , about :: String
     , nameError :: Boolean
     , websiteError :: Boolean
     , discordTagError :: Boolean
     , discordServerError :: Boolean
     , contactError :: Boolean
-    , aboutError :: Boolean
     }
 
 type Output =
@@ -63,7 +61,6 @@ type Output =
     , weekdayTo :: Maybe String
     , weekendFrom :: Maybe String
     , weekendTo :: Maybe String
-    , about :: String
     }
 
 type State = Input
@@ -86,7 +83,6 @@ data Action
     | UpdateWeekdayTo (Maybe String)
     | UpdateWeekendFrom (Maybe String)
     | UpdateWeekendTo (Maybe String)
-    | UpdateAbout String
 
 type ChildSlots =
     ( location :: MultiTreeSelect.Slot String
@@ -144,8 +140,6 @@ render state =
         , timeRangeInputGroup "Online on weekends" (isNothing state.timezone)
             state.weekendFrom state.weekendTo UpdateWeekendFrom UpdateWeekendTo
         ]
-    , inputGroupsHeading "About"
-    , aboutInputGroup state.about UpdateAbout state.aboutError
     ]
 
 raiseOutput :: forall left. State -> H.HalogenM State Action ChildSlots Output (Async left) Unit
@@ -216,9 +210,6 @@ handleAction (UpdateWeekendFrom weekendFrom) = do
 handleAction (UpdateWeekendTo weekendTo) = do
     state <- H.modify _ { weekendTo = weekendTo }
     raiseOutput state
-handleAction (UpdateAbout about) = do
-    state <- H.modify _ { about = about }
-    raiseOutput state
 
 component :: forall query left. H.Component HH.HTML query Input Output (Async left)
 component = H.mkComponent
@@ -246,13 +237,11 @@ emptyInput =
     , weekdayTo: Nothing
     , weekendFrom: Nothing
     , weekendTo: Nothing
-    , about: ""
     , nameError: false
     , websiteError: false
     , discordTagError: false
     , discordServerError: false
     , contactError: false
-    , aboutError: false
     }
 
 teamFormInput

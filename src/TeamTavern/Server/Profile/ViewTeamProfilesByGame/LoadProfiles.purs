@@ -51,7 +51,6 @@ type LoadProfilesResult =
         { from :: String
         , to :: String
         }
-    , about :: Array String
     , size :: Size
     , allPlatforms :: Platforms
     , selectedPlatforms :: Array Platform
@@ -68,7 +67,7 @@ type LoadProfilesResult =
             }
         }
     , newOrReturning :: Boolean
-    , ambitions :: Array String
+    , about :: Array String
     , updated :: String
     , updatedSeconds :: Number
     }
@@ -282,7 +281,6 @@ queryStringWithoutPagination handle timezone filters = Query $ """
                     'to', to_char(""" <> teamAdjustedWeekendTo timezone <> """, 'HH24:MI')
                 )
             end as "weekendOnline",
-            team.about,
             profile.size,
             json_build_object(
                 'head', game.platforms[1],
@@ -304,7 +302,7 @@ queryStringWithoutPagination handle timezone filters = Query $ """
                 '[]'
             ) as "fieldValues",
             profile.new_or_returning as "newOrReturning",
-            profile.ambitions,
+            profile.about,
             profile.updated::text,
             extract(epoch from (now() - profile.updated)) as "updatedSeconds"
         from team_profile as profile

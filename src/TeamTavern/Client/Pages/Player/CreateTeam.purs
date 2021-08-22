@@ -71,7 +71,6 @@ handleAction (UpdateDetails details) =
             , weekdayTo = details.weekdayTo
             , weekendFrom = details.weekendFrom
             , weekendTo = details.weekendTo
-            , about = details.about
             }
         }
 handleAction (SendRequest event) = do
@@ -89,7 +88,6 @@ handleAction (SendRequest event) = do
                 , discordTag: const state { details = state.details { discordTagError = true } }
                 , discordServer: const state { details = state.details { discordServerError = true } }
                 , contact: const state { details = state.details { contactError = true } }
-                , about: const state { details = state.details { aboutError = true } }
                 }
                 error
             )
@@ -102,7 +100,6 @@ handleAction (SendRequest event) = do
                     , discordTagError = false
                     , discordServerError = false
                     , contactError = false
-                    , aboutError = false
                     }
                 }
             )
@@ -116,7 +113,6 @@ handleAction (SendRequest event) = do
                 , discordTagError = false
                 , discordServerError = false
                 , contactError = false
-                , aboutError = false
                 }
             }
 

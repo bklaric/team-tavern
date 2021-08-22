@@ -17,7 +17,6 @@ type PlayerModel =
     , weekdayTo :: Maybe String
     , weekendFrom :: Maybe String
     , weekendTo :: Maybe String
-    , about :: String
     }
 
 readPlayer :: forall errors. Body -> Async (ClientError errors) PlayerModel

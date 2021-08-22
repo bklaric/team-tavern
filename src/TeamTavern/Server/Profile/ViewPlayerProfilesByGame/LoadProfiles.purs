@@ -37,7 +37,6 @@ type LoadProfilesResult =
     , microphone :: Boolean
     , weekdayOnline :: Maybe { from :: String, to :: String }
     , weekendOnline :: Maybe { from :: String, to :: String }
-    , about :: Array String
     , platform :: Platform
     , platformId :: String
     , fieldValues :: Array
@@ -57,7 +56,7 @@ type LoadProfilesResult =
             , label :: String
             })
         }
-    , ambitions :: Array String
+    , about :: Array String
     , newOrReturning :: Boolean
     , updated :: String
     , updatedSeconds :: Number
@@ -205,7 +204,6 @@ queryStringWithoutPagination handle timezone filters = Query $ """
                     'to', to_char(""" <> playerAdjustedWeekendTo timezone <> """, 'HH24:MI')
                 )
             end as "weekendOnline",
-            player.about,
             profile.platform as "platform",
             profile.platform_id as "platformId",
             coalesce(
@@ -235,7 +233,7 @@ queryStringWithoutPagination handle timezone filters = Query $ """
                 ) filter (where field_values.player_profile_id is not null),
                 '[]'
             ) as "fieldValues",
-            profile.ambitions,
+            profile.about,
             profile.new_or_returning as "newOrReturning",
             profile.updated::text,
             extract(epoch from (now() - updated)) as "updatedSeconds"

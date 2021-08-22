@@ -22,7 +22,7 @@ updateProfileString = Query """
     set size = $4,
         platforms = $5,
         new_or_returning = $6,
-        ambitions = $7,
+        about = $7,
         updated = now()
     from player, team, game
     where player.id = $1
@@ -42,7 +42,7 @@ updateProfileParameters { id } teamHandle gameHandle profile =
     : (Size.toString profile.size)
     : (profile.platforms <#> Platform.toString)
     : profile.newOrReturning
-    :| profile.ambitions
+    :| profile.about
 
 updateProfile' :: forall errors.
     Client -> CookieInfo -> Handle -> Handle -> Profile -> Async (ChangeSingleError errors) { profileId :: Int }

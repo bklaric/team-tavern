@@ -13,7 +13,7 @@ import Halogen as H
 import Record as Record
 import TeamTavern.Client.Components.Button (regularButton)
 import TeamTavern.Client.Components.Card (card, cardHeader, cardHeading, cardSection)
-import TeamTavern.Client.Components.Detail (detailColumn, detailColumnHeading3, detailColumns, detailColumnsContainer, textDetail)
+import TeamTavern.Client.Components.Detail (detailColumn, detailColumnHeading3, detailColumns, detailColumnsContainer)
 import TeamTavern.Client.Components.Missing (missing)
 import TeamTavern.Client.Components.Player.PlayerDetails (playerDetails)
 import TeamTavern.Client.Pages.Player.Status (Status(..))
@@ -37,7 +37,6 @@ details player status showEditPlayerModal = let
             Just { clientFrom, clientTo } -> Just { from: clientFrom, to: clientTo }
             Nothing -> Nothing
         )
-    about = textDetail player.about
     in
     card
     [ cardHeader $
@@ -47,7 +46,7 @@ details player status showEditPlayerModal = let
         SignedInSelf -> [ regularButton "fas fa-user-edit" "Edit player" showEditPlayerModal ]
         _ -> []
     , cardSection
-        if Array.null playerDetails' && Array.null about
+        if Array.null playerDetails'
         then Array.singleton $ missing
             case status of
             SignedInSelf -> "Apparently, you prefer to keep an air of mystery about yourself."
@@ -55,7 +54,4 @@ details player status showEditPlayerModal = let
         else Array.singleton $ detailColumnsContainer $ Array.singleton $ detailColumns $
             guard (full playerDetails')
             [ detailColumn $ [ detailColumnHeading3 "Details" ] <> playerDetails' ]
-            <>
-            guard (full about)
-            [ detailColumn $ [ detailColumnHeading3 "About" ] <> about ]
     ]

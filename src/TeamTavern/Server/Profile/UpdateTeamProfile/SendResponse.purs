@@ -10,7 +10,7 @@ import Perun.Response (Response, badRequest_, badRequest__, forbidden__, interna
 import Simple.JSON (writeJSON)
 import TeamTavern.Server.Profile.UpdateTeamProfile.LogError (UpdateProfileError)
 
-type ProfileErrorContent = Variant (invalidAmbitions :: {})
+type ProfileErrorContent = Variant (invalidAbout :: {})
 
 type BadRequestContent = Variant (invalidProfile :: Array ProfileErrorContent)
 
