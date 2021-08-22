@@ -45,7 +45,7 @@ type OkContentProfile =
         , optionKeys :: Maybe (Array String)
         }
     , newOrReturning :: Boolean
-    , ambitions :: Array String
+    , about :: Array String
     , updated :: String
     , updatedSeconds :: Number
     }

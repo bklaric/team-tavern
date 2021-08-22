@@ -56,7 +56,7 @@ type PlayerProfileRequestContent =
         , optionKey :: Maybe String
         , optionKeys :: Maybe (Array String)
         }
-    , ambitions :: String
+    , about :: String
     , newOrReturning :: Boolean
     }
 
@@ -68,7 +68,7 @@ type TeamProfileRequestContent =
         , optionKeys :: Array String
         }
     , newOrReturning :: Boolean
-    , ambitions :: String
+    , about :: String
     }
 
 type RequestContent =
@@ -96,10 +96,10 @@ type BadContent = Array $ Variant
     , playerProfile :: Array $ Variant
         ( platformId :: Array String
         , url :: { message :: Array String, key :: String }
-        , ambitions :: Array String
+        , about :: Array String
         )
     , teamProfile :: Array $ Variant
         ( platforms :: Array String
-        , ambitions :: Array String
+        , about :: Array String
         )
     )

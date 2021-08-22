@@ -238,7 +238,7 @@ renderPage { step: Game, game, playerOrTeam } =
 renderPage { step: PlayerProfile, playerProfile, game, otherError, submitting } =
     [ boardingStep
         [ boardingHeading $ maybe "Player profile" (\{ title } -> title <> " player profile") game
-        , boardingDescription  """Fill out your in-game stats, achievements and ambitions to find
+        , boardingDescription  """Fill out your in-game stats, achievements and about to find
             equally skilled teammates."""
         , PlayerProfileFormInput.profileFormInput playerProfile UpdatePlayerProfile
         ]
@@ -263,7 +263,7 @@ renderPage { step: PlayerProfile, playerProfile, game, otherError, submitting } 
 renderPage { step: TeamProfile, teamProfile, game, otherError, submitting } =
     [ boardingStep
         [ boardingHeading $ maybe "Team profile" (\{ title } -> title <> " team profile") game
-        , boardingDescription  """Tell us about your team's ambitions and what you're looking for
+        , boardingDescription  """Tell us about your team's about and what you're looking for
             skill-wise in new team members."""
         , TeamProfileFormInput.profileFormInput teamProfile UpdateTeamProfile
         ]
@@ -321,7 +321,7 @@ sendRequest (state :: State) = Async.unify do
                 , platforms: profile.selectedPlatforms
                 , fieldValues: profile.fieldValues
                 , newOrReturning: profile.newOrReturning
-                , ambitions: profile.ambitions
+                , about: profile.about
                 }
             }
         _ -> Async.left Nothing
@@ -430,7 +430,7 @@ handleAction (UpdateGame game) = do
             , platformId = ""
             , fieldValues = []
             , newOrReturning = false
-            , ambitions = ""
+            , about = ""
             }
         , teamProfile
             { allPlatforms = game.platforms
@@ -442,7 +442,7 @@ handleAction (UpdateGame game) = do
                 _ -> Nothing
             , fieldValues = []
             , newOrReturning = false
-            , ambitions = ""
+            , about = ""
             }
         }
     updateHistoryState state
@@ -454,7 +454,7 @@ handleAction (UpdatePlayerProfile details) = do
             , platformIdError = details.platformIdError
             , fieldValues = details.fieldValues
             , newOrReturning = details.newOrReturning
-            , ambitions = details.ambitions
+            , about = details.about
             }
         }
     updateHistoryState state
@@ -465,7 +465,7 @@ handleAction (UpdateTeamProfile details) = do
             , selectedPlatforms = details.platforms
             , fieldValues = details.fieldValues
             , newOrReturning = details.newOrReturning
-            , ambitions = details.ambitions
+            , about = details.about
             }
         }
     updateHistoryState state
@@ -486,11 +486,11 @@ handleAction SetUpAccount = do
             , playerProfile
                 { platformIdError = false
                 , urlErrors = []
-                , ambitionsError = false
+                , aboutError = false
                 }
             , teamProfile
                 { platformsError = false
-                , ambitionsError = false
+                , aboutError = false
                 }
             }
     response <- H.lift $ sendRequest currentState
@@ -543,8 +543,8 @@ handleAction SetUpAccount = do
                             { playerProfile
                                 { urlErrors = Array.cons key state'.playerProfile.urlErrors }
                             }
-                        , ambitions: const state'
-                            { playerProfile { ambitionsError = true } }
+                        , about: const state'
+                            { playerProfile { aboutError = true } }
                         }
                         error'
                     )
@@ -554,7 +554,7 @@ handleAction SetUpAccount = do
                     (\state' error' ->
                         match
                         { platforms: const state' { teamProfile { platformsError = true } }
-                        , ambitions: const state' { teamProfile { ambitionsError = true } }
+                        , about: const state' { teamProfile { aboutError = true } }
                         }
                         error'
                     )

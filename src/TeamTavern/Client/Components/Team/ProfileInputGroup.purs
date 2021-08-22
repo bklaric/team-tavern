@@ -60,13 +60,13 @@ newOrReturningInputGroup value onValue =
     , checkboxInput value onValue "Must be new or returning players to the game."
     ]
 
-ambitionsInputGroup :: forall slots action.
+aboutInputGroup :: forall slots action.
     String -> (String -> action) -> Boolean -> HH.HTML slots action
-ambitionsInputGroup value onValue error =
+aboutInputGroup value onValue error =
     inputGroup $
     [ textInput_ value onValue
     , inputUnderlabel """What do you want to get out of playing as a team?
         Any specific goals you want to achieve?"""
     ]
     <>
-    inputError error "Ambitions text cannot be more than 2000 characters long."
+    inputError error "About text cannot be more than 2000 characters long."

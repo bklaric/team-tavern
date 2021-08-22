@@ -70,7 +70,7 @@ type PlayerProfile =
             , label :: String
             })
         }
-    , ambitions :: Array String
+    , about :: Array String
     , newOrReturning :: Boolean
     , updated :: String
     , updatedSeconds :: Number
@@ -105,7 +105,7 @@ profileSection profile = let
     playerDetails' = playerDetails profile
     profileDetails'' = profileDetails'
         profile.platform profile.platformId profile.fieldValues profile.newOrReturning
-    ambitions = textDetail profile.ambitions
+    about = textDetail profile.about
     in
     cardSection $
     [ profileHeader
@@ -118,7 +118,7 @@ profileSection profile = let
         ]
     ]
     <>
-    guard (full playerDetails' || full profileDetails'' || full ambitions)
+    guard (full playerDetails' || full profileDetails'' || full about)
     [ detailColumns $
         guard (full playerDetails' || full profileDetails'')
         [ detailColumn $
@@ -129,8 +129,8 @@ profileSection profile = let
             [ detailColumnHeading4 "Profile details" ] <> profileDetails''
         ]
         <>
-        guard (full ambitions)
-        [ detailColumn $ [ detailColumnHeading4 "Ambitions" ] <> ambitions ]
+        guard (full about)
+        [ detailColumn $ [ detailColumnHeading4 "About" ] <> about ]
     ]
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)

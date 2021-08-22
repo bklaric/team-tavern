@@ -17,7 +17,7 @@ type Profile =
     , platforms :: Array Platform
     , fieldValues :: Array FieldValue
     , newOrReturning :: Boolean
-    , ambitions :: String
+    , about :: String
     }
 
 readProfile :: forall errors. Body -> Async (ClientError errors) Profile

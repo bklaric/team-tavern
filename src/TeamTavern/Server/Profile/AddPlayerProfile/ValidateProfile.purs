@@ -19,20 +19,20 @@ import TeamTavern.Server.Profile.AddPlayerProfile.ReadProfile as ReadProfile
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidatePlatformId (PlatformId, validatePlatformId)
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateFieldValues (validateFieldValues)
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateFieldValues as ValidateFieldValues
-import TeamTavern.Server.Profile.Infrastructure.ValidateAmbitions (validateAmbitions)
+import TeamTavern.Server.Profile.Infrastructure.ValidateAbout (validateAbout)
 
 type Profile =
     { platform :: Platform
     , platformId :: PlatformId
     , fieldValues :: Array ValidateFieldValues.FieldValue
     , newOrReturning :: Boolean
-    , ambitions :: Text
+    , about :: Text
     }
 
 type ProfileError = Variant
     ( platformId :: Array String
     , url :: { message :: Array String, key :: String }
-    , ambitions :: Array String
+    , about :: Array String
     )
 
 type ProfileErrors = NonEmptyList ProfileError
@@ -44,11 +44,11 @@ validateProfile
     -> Async (Variant (profile :: ProfileErrors | errors)) Profile
 validateProfile
     { platforms, fields }
-    { platform, platformId, fieldValues, newOrReturning, ambitions } =
-    { platform, platformId: _, fieldValues: _, newOrReturning, ambitions: _ }
+    { platform, platformId, fieldValues, newOrReturning, about } =
+    { platform, platformId: _, fieldValues: _, newOrReturning, about: _ }
     <$> validatePlatformId platforms platform platformId
     <*> validateFieldValues fields fieldValues
-    <*> validateAmbitions ambitions
+    <*> validateAbout about
     # Async.fromValidated
     # label (SProxy :: SProxy "profile")
 

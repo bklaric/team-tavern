@@ -63,7 +63,7 @@ sendRequest
         ( Either
             ( Array (Variant
                 ( platformId :: Array String
-                , ambitions :: Array String
+                , about :: Array String
                 , url :: { key :: String, message :: Array String }
                 ))
             )
@@ -75,7 +75,7 @@ sendRequest { nickname, handle, profile } =
     , platformId: profile.platformId
     , fieldValues: profile.fieldValues
     , newOrReturning: profile.newOrReturning
-    , ambitions: profile.ambitions
+    , about: profile.about
     }
 
 handleAction :: forall output left.
@@ -88,7 +88,7 @@ handleAction (UpdateProfile profile) =
             , platformIdError = profile.platformIdError
             , fieldValues = profile.fieldValues
             , newOrReturning = profile.newOrReturning
-            , ambitions = profile.ambitions
+            , about = profile.about
             }
         }
 handleAction (SendRequest event) = do
@@ -102,7 +102,7 @@ handleAction (SendRequest event) = do
             (\state error ->
                 match
                 { platformId: const state { profile { platformIdError = true } }
-                , ambitions: const state { profile { ambitionsError = true } }
+                , about: const state { profile { aboutError = true } }
                 , url: \{ key } -> state { profile
                     { urlErrors = Array.cons key state.profile.urlErrors } }
                 }
@@ -114,7 +114,7 @@ handleAction (SendRequest event) = do
                 , profile
                     { platformIdError = false
                     , urlErrors = []
-                    , ambitionsError = false
+                    , aboutError = false
                     }
                 }
             )
@@ -125,7 +125,7 @@ handleAction (SendRequest event) = do
             , profile
                 { platformIdError = false
                 , urlErrors = []
-                , ambitionsError = false
+                , aboutError = false
                 }
             }
 

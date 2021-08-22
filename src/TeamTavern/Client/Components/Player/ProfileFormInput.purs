@@ -14,7 +14,7 @@ import Halogen as H
 import Halogen.HTML as HH
 import Record as Record
 import TeamTavern.Client.Components.Input (platformIdHeading, inputGroupsHeading, responsiveInputGroups)
-import TeamTavern.Client.Components.Player.ProfileInputGroup (ChildSlots, Field, FieldValue, ambitionsInputGroup, platformIdInputGroup, fieldInputGroup, newOrReturningInputGroup)
+import TeamTavern.Client.Components.Player.ProfileInputGroup (ChildSlots, Field, FieldValue, aboutInputGroup, platformIdInputGroup, fieldInputGroup, newOrReturningInputGroup)
 import TeamTavern.Client.Components.Player.ProfileInputGroup as Input
 import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
 
@@ -27,10 +27,10 @@ type Input =
     , platformId :: String
     , fieldValues :: FieldValues
     , newOrReturning :: Boolean
-    , ambitions :: String
+    , about :: String
     , platformIdError :: Boolean
     , urlErrors :: Array String
-    , ambitionsError :: Boolean
+    , aboutError :: Boolean
     }
 
 type Output =
@@ -38,7 +38,7 @@ type Output =
     , platformId :: String
     , platformIdError :: Boolean
     , fieldValues :: FieldValues
-    , ambitions :: String
+    , about :: String
     , newOrReturning :: Boolean
     }
 
@@ -49,10 +49,10 @@ type State =
     , platformId :: String
     , fieldValues :: Input.FieldValues
     , newOrReturning :: Boolean
-    , ambitions :: String
+    , about :: String
     , platformIdError :: Boolean
     , urlErrors :: Array String
-    , ambitionsError :: Boolean
+    , aboutError :: Boolean
     }
 
 data Action
@@ -63,7 +63,7 @@ data Action
     | UpdateSingleSelect String (Maybe String)
     | UpdateMultiSelect String (Array String)
     | UpdateNewOrReturning Boolean
-    | UpdateAmbitions String
+    | UpdateAbout String
 
 type Slot = H.Slot (Const Void) Output Unit
 
@@ -77,8 +77,8 @@ fieldValuesToMap = foldl (\map value -> Map.insert value.fieldKey value map) Map
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render
     { platforms, fields
-    , platform, platformId, fieldValues, newOrReturning, ambitions
-    , platformIdError, urlErrors, ambitionsError
+    , platform, platformId, fieldValues, newOrReturning, about
+    , platformIdError, urlErrors, aboutError
     }
     = HH.div_ $
     [ platformIdHeading platforms platform UpdatePlatform
@@ -91,15 +91,15 @@ render
         )
         <>
         [ newOrReturningInputGroup newOrReturning UpdateNewOrReturning ]
-    , inputGroupsHeading "Ambitions"
-    , ambitionsInputGroup ambitions UpdateAmbitions ambitionsError
+    , inputGroupsHeading "About"
+    , aboutInputGroup about UpdateAbout aboutError
     ]
 
 raiseOutput :: forall left. State -> H.HalogenM State Action ChildSlots Output (Async left) Unit
-raiseOutput { platform, platformId, platformIdError, fieldValues, newOrReturning, ambitions } =
+raiseOutput { platform, platformId, platformIdError, fieldValues, newOrReturning, about } =
     H.raise
     { platform, platformId, platformIdError
-    , fieldValues: fieldValuesToArray fieldValues, newOrReturning, ambitions
+    , fieldValues: fieldValuesToArray fieldValues, newOrReturning, about
     }
 
 handleAction :: forall left. Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
@@ -158,8 +158,8 @@ handleAction (UpdateMultiSelect fieldKey optionKeys) = do
 handleAction (UpdateNewOrReturning newOrReturning) = do
     state <- H.modify _ { newOrReturning = newOrReturning }
     raiseOutput state
-handleAction (UpdateAmbitions ambitions) = do
-    state <- H.modify _ { ambitions = ambitions }
+handleAction (UpdateAbout about) = do
+    state <- H.modify _ { about = about }
     raiseOutput state
 
 component :: forall query left. H.Component HH.HTML query Input Output (Async left)
@@ -181,10 +181,10 @@ emptyInput { platforms, fields } =
     , platformId: ""
     , fieldValues: []
     , newOrReturning: false
-    , ambitions: ""
+    , about: ""
     , platformIdError: false
     , urlErrors: []
-    , ambitionsError: false
+    , aboutError: false
     }
 
 profileFormInput

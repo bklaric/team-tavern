@@ -99,7 +99,7 @@ render (Loaded { team: team', status, showEditTeamModal, showEditProfileModal } 
             , fields: profile.fields
             , fieldValues: profile.fieldValues
             , newOrReturning: profile.newOrReturning
-            , ambitions: intercalate "\n\n" profile.ambitions
+            , about: intercalate "\n\n" profile.about
             }
             (const $ Just HideEditProfileModal)
         ])

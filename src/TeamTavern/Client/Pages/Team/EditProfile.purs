@@ -33,7 +33,7 @@ type Input =
     , fields :: Array Field
     , fieldValues :: FieldValues
     , newOrReturning :: Boolean
-    , ambitions :: String
+    , about :: String
     }
 
 type State =
@@ -65,14 +65,14 @@ render { profile, submitting, otherError } =
 sendRequest
     :: forall left
     .  State
-    -> Async left (Maybe (Either (Array (Variant (platforms :: Array String, ambitions :: Array String))) Unit))
+    -> Async left (Maybe (Either (Array (Variant (platforms :: Array String, about :: Array String))) Unit))
 sendRequest state @ { teamHandle, gameHandle, profile } =
     putNoContent ("/api/teams/" <> teamHandle <> "/profiles/" <> gameHandle)
     ({ size: profile.size
     , platforms: profile.selectedPlatforms
     , fieldValues: profile.fieldValues
     , newOrReturning: profile.newOrReturning
-    , ambitions: profile.ambitions
+    , about: profile.about
     } :: Profile)
 
 handleAction :: forall output left.
@@ -84,7 +84,7 @@ handleAction (UpdateProfile profile) =
             , selectedPlatforms = profile.platforms
             , fieldValues = profile.fieldValues
             , newOrReturning = profile.newOrReturning
-            , ambitions = profile.ambitions
+            , about = profile.about
             }
         }
 handleAction (SendRequest event) = do
@@ -98,7 +98,7 @@ handleAction (SendRequest event) = do
             (\state error ->
                 match
                 { platforms: const state { profile = state.profile { platformsError = true } }
-                , ambitions: const state { profile = state.profile { ambitionsError = true } }
+                , about: const state { profile = state.profile { aboutError = true } }
                 }
                 error
             )
@@ -107,7 +107,7 @@ handleAction (SendRequest event) = do
                 , otherError = false
                 , profile = currentState.profile
                     { platformsError = false
-                    , ambitionsError = false
+                    , aboutError = false
                     }
                 }
             )
@@ -117,7 +117,7 @@ handleAction (SendRequest event) = do
             , otherError = true
             , profile = currentState.profile
                 { platformsError = false
-                , ambitionsError = false
+                , aboutError = false
                 }
             }
 
@@ -136,8 +136,8 @@ component = H.mkComponent
             , fields: input.fields
             , fieldValues: input.fieldValues
             , newOrReturning: input.newOrReturning
-            , ambitions: input.ambitions
-            , ambitionsError: false
+            , about: input.about
+            , aboutError: false
             }
         , otherError: false
         , submitting: false
