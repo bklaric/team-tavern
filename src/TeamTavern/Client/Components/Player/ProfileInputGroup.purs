@@ -172,7 +172,10 @@ aboutInputGroup :: forall slots action.
 aboutInputGroup value onValue error =
     inputGroup $
     [ textInput_ value onValue
-    , inputUnderlabel """What do you want to get out of playing in a team?
+    , inputUnderlabel """Write a bit about yourself.
+        What are you like?
+        What are you looking for in other players?
+        What do you want to get out of playing in a team?
         Any specific goals you want to achieve?"""
     ]
     <>
