@@ -24,3 +24,6 @@ https://www.teamtavern.net/games/valheim/teams
 https://www.teamtavern.net/games/tf2
 https://www.teamtavern.net/games/tf2/players
 https://www.teamtavern.net/games/tf2/teams
+https://www.teamtavern.net/games/splitgate
+https://www.teamtavern.net/games/splitgate/players
+https://www.teamtavern.net/games/splitgate/teams
