@@ -17,8 +17,6 @@ import Data.Validated (invalid, valid, validated)
 import Data.Validated.Label (VariantValidated)
 import Data.Variant (Variant, inj)
 import TeamTavern.Routes.Shared.Organization (OrganizationNW(..))
-import TeamTavern.Server.Domain.Text (Text)
-import TeamTavern.Server.Infrastructure.ValidateAbout (validateAbout)
 import TeamTavern.Server.Player.UpdatePlayer.ValidateDiscordTag (DiscordTag, validateDiscordTag)
 import TeamTavern.Server.Player.UpdatePlayer.ValidateLangugase (Language, validateLanguages)
 import TeamTavern.Server.Player.UpdatePlayer.ValidateTimespan (Timespan, validateTimespan)
@@ -44,7 +42,6 @@ type TeamModel =
     , weekdayTo :: Maybe String
     , weekendFrom :: Maybe String
     , weekendTo :: Maybe String
-    , about :: String
     }
 
 data Organization = Informal | Organized { name :: Name, website :: Maybe Url }
@@ -80,7 +77,6 @@ type Team =
     , timezone :: Maybe Timezone
     , onlineWeekday :: Maybe Timespan
     , onlineWeekend :: Maybe Timespan
-    , about :: Text
     }
 
 type TeamError = Variant
@@ -89,7 +85,6 @@ type TeamError = Variant
     , discordTag :: Array String
     , discordServer :: Array String
     , contact :: Array String
-    , about :: Array String
     )
 
 type TeamErrors = NonEmptyList TeamError
@@ -115,16 +110,14 @@ validateTeam (team :: TeamModel) = let
     timezone = validateTimezone team.timezone
     onlineWeekday = timezone >>= (const $ validateTimespan team.weekdayFrom team.weekdayTo)
     onlineWeekend = timezone >>= (const $ validateTimespan team.weekendFrom team.weekendTo)
-    about = validateAbout team.about
     in
     { organization: _
     , discordTag: _, discordServer: _
     , ageSpan, locations
     , languages, microphone
     , timezone, onlineWeekday, onlineWeekend
-    , about: _
     }
-    <$> organization <*> discordTag <*> discordServer <*> about <* contact
+    <$> organization <*> discordTag <*> discordServer <* contact
     # Async.fromValidated # label (SProxy :: SProxy "team")
 
 validateTeamV :: forall errors.

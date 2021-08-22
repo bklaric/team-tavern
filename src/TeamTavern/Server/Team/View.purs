@@ -68,7 +68,6 @@ type Team =
         , sourceFrom :: String
         , sourceTo :: String
         }
-    , about :: Array String
     , profiles :: Array Profile
     }
 
@@ -118,7 +117,6 @@ queryString timezone = Query $ """
                 'sourceTo', to_char(team.weekend_to, 'HH24:MI')
             )
         end as "weekendOnline",
-        team.about,
         coalesce(
             json_agg(
                 json_build_object(

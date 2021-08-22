@@ -13,8 +13,6 @@ import Data.List.NonEmpty as NonEmptyList
 import Data.List.Types (NonEmptyList)
 import Data.Maybe (Maybe)
 import Data.Variant (SProxy(..), Variant)
-import TeamTavern.Server.Domain.Text (Text)
-import TeamTavern.Server.Infrastructure.ValidateAbout (validateAbout)
 import TeamTavern.Server.Player.UpdatePlayer.ReadPlayer (PlayerModel)
 import TeamTavern.Server.Player.UpdatePlayer.ValidateBirthday (validateOptionalBirthday)
 import TeamTavern.Server.Player.UpdatePlayer.ValidateDiscordTag (DiscordTag, validateDiscordTag)
@@ -32,12 +30,10 @@ type Player =
     , onlineWeekday :: Maybe Timespan
     , onlineWeekend :: Maybe Timespan
     , microphone :: Boolean
-    , about :: Text
     }
 
 type PlayerError = Variant
     ( discordTag :: Array String
-    , about :: Array String
     )
 
 type PlayerErrors = NonEmptyList PlayerError
@@ -55,10 +51,8 @@ validatePlayer dto = do
     , onlineWeekday: timezone' >>= (const $ validateTimespan dto.weekdayFrom dto.weekdayTo)
     , onlineWeekend: timezone' >>= (const $ validateTimespan dto.weekendFrom dto.weekendTo)
     , microphone: dto.microphone
-    , about: _
     }
         <$> validateDiscordTag dto.discordTag
-        <*> validateAbout dto.about
         # Async.fromValidated
         # label (SProxy :: SProxy "player")
 

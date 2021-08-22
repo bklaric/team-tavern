@@ -51,7 +51,6 @@ type LoadProfilesResult =
         { from :: String
         , to :: String
         }
-    , about :: Array String
     , size :: Size
     , allPlatforms :: Platforms
     , selectedPlatforms :: Array Platform
@@ -282,7 +281,6 @@ queryStringWithoutPagination handle timezone filters = Query $ """
                     'to', to_char(""" <> teamAdjustedWeekendTo timezone <> """, 'HH24:MI')
                 )
             end as "weekendOnline",
-            team.about,
             profile.size,
             json_build_object(
                 'head', game.platforms[1],

@@ -37,7 +37,6 @@ type LoadProfilesResult =
     , microphone :: Boolean
     , weekdayOnline :: Maybe { from :: String, to :: String }
     , weekendOnline :: Maybe { from :: String, to :: String }
-    , about :: Array String
     , platform :: Platform
     , platformId :: String
     , fieldValues :: Array
@@ -205,7 +204,6 @@ queryStringWithoutPagination handle timezone filters = Query $ """
                     'to', to_char(""" <> playerAdjustedWeekendTo timezone <> """, 'HH24:MI')
                 )
             end as "weekendOnline",
-            player.about,
             profile.platform as "platform",
             profile.platform_id as "platformId",
             coalesce(

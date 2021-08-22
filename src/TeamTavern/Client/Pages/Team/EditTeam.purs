@@ -5,7 +5,7 @@ import Prelude
 import Async (Async)
 import Data.Const (Const)
 import Data.Either (Either(..))
-import Data.Foldable (foldl, intercalate)
+import Data.Foldable (foldl)
 import Data.Maybe (Maybe(..))
 import Data.Variant (SProxy(..), match)
 import Halogen as H
@@ -47,7 +47,6 @@ type Input fields =
         , sourceFrom :: String
         , sourceTo :: String
         }
-    , about :: Array String
     | fields
     }
 
@@ -105,7 +104,6 @@ handleAction (UpdateDetails details) =
             , weekdayTo = details.weekdayTo
             , weekendFrom = details.weekendFrom
             , weekendTo = details.weekendTo
-            , about = details.about
             }
         }
 handleAction (SendRequest event) = do
@@ -123,7 +121,6 @@ handleAction (SendRequest event) = do
                 , discordTag: const state { details { discordTagError = true } }
                 , discordServer: const state { details { discordServerError = true } }
                 , contact: const state { details { contactError = true } }
-                , about: const state { details { aboutError = true } }
                 }
                 error
             )
@@ -136,7 +133,6 @@ handleAction (SendRequest event) = do
                     , discordTagError = false
                     , discordServerError = false
                     , contactError = false
-                    , aboutError = false
                     }
                 }
             )
@@ -150,7 +146,6 @@ handleAction (SendRequest event) = do
                 , discordTagError = false
                 , discordServerError = false
                 , contactError = false
-                , aboutError = false
                 }
             }
 
@@ -173,7 +168,6 @@ component = H.mkComponent
             , weekdayTo = team.weekdayOnline <#> _.sourceTo
             , weekendFrom = team.weekendOnline <#> _.sourceFrom
             , weekendTo = team.weekendOnline <#> _.sourceTo
-            , about = intercalate "\n\n" team.about
             }
         , otherError: false
         , submitting: false

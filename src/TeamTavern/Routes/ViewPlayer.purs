@@ -78,7 +78,6 @@ type OkContent =
         , sourceFrom :: String
         , sourceTo :: String
         }
-    , about :: Array String
     , profiles :: Array OkContentProfile
     , teams :: Array OkContentTeam
     }

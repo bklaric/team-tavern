@@ -52,7 +52,6 @@ type TeamProfile =
         { from :: String
         , to :: String
         }
-    , about :: Array String
     , allPlatforms :: Platforms
     , size :: Size
     , selectedPlatforms :: Array Platform
@@ -102,7 +101,6 @@ profileSection :: forall action left.
 profileSection profile = let
     teamDetails' = teamDetails profile
     profileDetails'' = profileDetails' profile
-    about = textDetail profile.about
     ambitions = textDetail profile.ambitions
     in
     cardSection $
@@ -122,7 +120,7 @@ profileSection profile = let
         ]
     ]
     <>
-    guard (full teamDetails' || full profileDetails'' || full about || full ambitions)
+    guard (full teamDetails' || full profileDetails'' || full ambitions)
     [ detailColumns $
         guard (full teamDetails' || full profileDetails'')
         [ detailColumn $
@@ -133,14 +131,8 @@ profileSection profile = let
             [ detailColumnHeading4 "Profile details" ] <> profileDetails''
         ]
         <>
-        guard (full about || full ambitions)
-        [ detailColumn $
-            guard (full about)
-            [ detailColumnHeading4 "About" ] <> about
-            <>
-            guard (full ambitions)
-            [ detailColumnHeading4 "Ambitions" ] <> ambitions
-        ]
+        guard (full ambitions)
+        [ detailColumn $ [ detailColumnHeading4 "Ambitions" ] <> ambitions ]
     ]
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)

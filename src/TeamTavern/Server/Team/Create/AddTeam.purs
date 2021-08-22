@@ -47,11 +47,10 @@ queryString = Query """
         , weekday_to
         , weekend_from
         , weekend_to
-        , about
         )
     values
         ( $1, (select handle from unique_handle)
-        , $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18
+        , $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17
         )
     returning team.handle;
     """
@@ -74,8 +73,7 @@ queryParameters ownerId handle team
     : nullableTimeFrom team.onlineWeekday
     : nullableTimeTo team.onlineWeekday
     : nullableTimeFrom team.onlineWeekend
-    : nullableTimeTo team.onlineWeekend
-    :| team.about
+    :| nullableTimeTo team.onlineWeekend
 
 addTeam :: forall querier errors. Querier querier =>
     querier -> Id -> Handle -> Team -> Async (InternalError errors) { handle :: String }

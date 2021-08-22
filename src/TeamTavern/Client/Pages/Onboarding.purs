@@ -398,7 +398,6 @@ handleAction (UpdatePlayer details) = do
             , weekdayTo = details.weekdayTo
             , weekendFrom = details.weekendFrom
             , weekendTo = details.weekendTo
-            , about = details.about
             }
         }
     updateHistoryState state
@@ -418,7 +417,6 @@ handleAction (UpdateTeam details) = do
             , weekdayTo = details.weekdayTo
             , weekendFrom = details.weekendFrom
             , weekendTo = details.weekendTo
-            , about = details.about
             }
         }
     updateHistoryState state
@@ -477,7 +475,6 @@ handleAction SetUpAccount = do
             { submitting = false
             , player
                 { discordTagError = false
-                , aboutError = false
                 }
             , team
                 { nameError = false
@@ -485,7 +482,6 @@ handleAction SetUpAccount = do
                 , discordTagError = false
                 , discordServerError = false
                 , contactError = false
-                , aboutError = false
                 }
             , playerProfile
                 { platformIdError = false
@@ -515,8 +511,6 @@ handleAction SetUpAccount = do
                         match
                         { discordTag: const state'
                             { step = Player, player { discordTagError = true } }
-                        , about: const $ state'
-                            { step = Player, player { aboutError = true } }
                         }
                         error'
                     )
@@ -535,8 +529,6 @@ handleAction SetUpAccount = do
                             { step = Team, team { discordServerError = true } }
                         , contact: const state'
                             { step = Team, team { contactError = true } }
-                        , about: const state'
-                            { step = Team, team { aboutError = true } }
                         }
                         error'
                     )

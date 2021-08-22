@@ -3,7 +3,6 @@ module TeamTavern.Client.Pages.Player.EditPlayer (Input, Slot, editPlayer) where
 import Prelude
 
 import Async (Async)
-import Data.Array (intercalate)
 import Data.Const (Const)
 import Data.Either (Either(..))
 import Data.Foldable (foldl)
@@ -61,7 +60,6 @@ sendRequest { nickname, details } =
     , weekdayTo: details.weekdayTo
     , weekendFrom: details.weekendFrom
     , weekendTo: details.weekendTo
-    , about: details.about
     }
 
 handleAction :: forall output left.
@@ -79,7 +77,6 @@ handleAction (UpdatePlayerDetails details) =
             , weekdayTo = details.weekdayTo
             , weekendFrom = details.weekendFrom
             , weekendTo = details.weekendTo
-            , about = details.about
             }
         }
 handleAction (Update event) = do
@@ -94,15 +91,13 @@ handleAction (Update event) = do
                 match
                 { discordTag: const $ state
                     { details = state.details { discordTagError = true } }
-                , about: const $ state
-                    { details = state.details { aboutError = true } }
                 }
                 error
             )
             (currentState
                 { submitting = false
                 , details = currentState.details
-                    { discordTagError = false, aboutError = false }
+                    { discordTagError = false }
                 , otherError = false
                 }
             )
@@ -110,7 +105,7 @@ handleAction (Update event) = do
         Nothing -> H.put currentState
             { submitting = false
             , details = currentState.details
-                { discordTagError = false, aboutError = false }
+                { discordTagError = false }
             , otherError = true
             }
 
@@ -129,9 +124,7 @@ component = H.mkComponent
             , weekdayTo: player.weekdayOnline <#> _.sourceTo
             , weekendFrom: player.weekendOnline <#> _.sourceFrom
             , weekendTo: player.weekendOnline <#> _.sourceTo
-            , about: intercalate "\n\n" player.about
             , discordTagError: false
-            , aboutError: false
             }
         , otherError: false
         , submitting: false

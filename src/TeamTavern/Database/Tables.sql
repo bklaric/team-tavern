@@ -11,7 +11,6 @@ create table player
     , weekend_from time
     , weekend_to time
     , microphone boolean not null default false
-    , about text[] not null default '{}'
     , password_hash character(60) not null
     , registered timestamptz not null default current_timestamp
     );
@@ -37,7 +36,6 @@ create table team
     , weekday_to time
     , weekend_from time
     , weekend_to time
-    , about text[] not null default '{}'
     , created timestamptz not null default current_timestamp
     , updated timestamptz not null default current_timestamp
     );
@@ -86,7 +84,7 @@ create table player_profile
     , platform text not null
     , platform_id text not null
     , new_or_returning boolean not null
-    , ambitions text[] not null
+    , about text[] not null
     , created timestamptz not null default current_timestamp
     , updated timestamptz not null default current_timestamp
     , unique (game_id, player_id)
@@ -113,7 +111,7 @@ create table team_profile
     , size text not null -- party, community
     , platforms text[] not null
     , new_or_returning boolean not null
-    , ambitions text[] not null
+    , about text[] not null
     , created timestamptz not null default current_timestamp
     , updated timestamptz not null default current_timestamp
     , unique (game_id, team_id)

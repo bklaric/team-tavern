@@ -18,5 +18,4 @@ teamHandler = Builder.insert (SProxy :: SProxy "team") \errors ->
     foreachE (Array.fromFoldable errors) $ match
     { name: logLines, website: logLines
     , discordTag: logLines, discordServer: logLines, contact: logLines
-    , about: logLines
     }

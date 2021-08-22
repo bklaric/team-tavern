@@ -29,7 +29,6 @@ type PlayerRequestContent =
     , weekdayTo :: Maybe String
     , weekendFrom :: Maybe String
     , weekendTo :: Maybe String
-    , about :: String
     }
 
 type TeamRequestContent =
@@ -46,7 +45,6 @@ type TeamRequestContent =
     , weekdayTo :: Maybe String
     , weekendFrom :: Maybe String
     , weekendTo :: Maybe String
-    , about :: String
     }
 
 type PlayerProfileRequestContent =
@@ -87,7 +85,6 @@ type OkContent = { teamHandle :: Maybe String }
 type BadContent = Array $ Variant
     ( player :: Array $ Variant
         ( discordTag :: Array String
-        , about :: Array String
         )
     , team :: Array $ Variant
         ( name :: Array String
@@ -95,7 +92,6 @@ type BadContent = Array $ Variant
         , discordTag :: Array String
         , discordServer :: Array String
         , contact :: Array String
-        , about :: Array String
         )
     , playerProfile :: Array $ Variant
         ( platformId :: Array String

@@ -41,7 +41,6 @@ queryString timezone = Query $ """
                 'sourceTo', to_char(player.weekend_to, 'HH24:MI')
             )
         end as "weekendOnline",
-        player.about,
         coalesce(player_profiles.profiles, '[]') as profiles,
         coalesce(player_teams.teams, '[]') as teams
     from player
