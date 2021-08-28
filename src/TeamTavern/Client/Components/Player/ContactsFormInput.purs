@@ -1,4 +1,4 @@
-module TeamTavern.Client.Components.Player.ContactFormInput (Input, Output, Slot, emptyInput, contactFormInput) where
+module TeamTavern.Client.Components.Player.ContactsFormInput (Input, Output, Slot, emptyInput, contactsFormInput) where
 
 import Prelude
 
@@ -122,10 +122,10 @@ emptyInput requiredPlatforms =
     , friendCodeError: false
     }
 
-contactFormInput
+contactsFormInput
     :: forall action children left
     .  Input
     -> (Output -> action)
-    -> HH.ComponentHTML action (playerContactFormInput :: Slot | children) (Async left)
-contactFormInput input handleOutput =
-    HH.slot (SProxy :: SProxy "playerContactFormInput") unit component input (Just <<< handleOutput)
+    -> HH.ComponentHTML action (playerContactsFormInput :: Slot | children) (Async left)
+contactsFormInput input handleOutput =
+    HH.slot (SProxy :: SProxy "playerContactsFormInput") unit component input (Just <<< handleOutput)

@@ -21,6 +21,8 @@ import TeamTavern.Client.Pages.Player.CreateProfileButton as CreateProfileButton
 import TeamTavern.Client.Pages.Player.CreateTeam (createTeam)
 import TeamTavern.Client.Pages.Player.CreateTeam as CreateTeam
 import TeamTavern.Client.Pages.Player.Details (details)
+import TeamTavern.Client.Pages.Player.EditContacts (editContacts)
+import TeamTavern.Client.Pages.Player.EditContacts as EditContacts
 import TeamTavern.Client.Pages.Player.EditPlayer (editPlayer)
 import TeamTavern.Client.Pages.Player.EditPlayer as EditDetails
 import TeamTavern.Client.Pages.Player.EditProfile (editProfile)
@@ -70,6 +72,7 @@ type ChildSlots = PlatformIdSlots
     ( discordTag :: Copyable.Slot String
     , team :: NavigationAnchor.Slot String
     , games :: NavigationAnchor.Slot String
+    , editContacts :: EditContacts.Slot
     , editPlayer :: EditDetails.Slot
     , createProfile :: CreateProfileButton.Slot
     , editProfile :: EditProfile.Slot
@@ -101,6 +104,7 @@ render (Loaded state @ { player: player', status }) =
     , teams player' status ShowCreateTeamModal
     ]
     <> stickyLeaderboards
+    <> guard state.editContactsModalShown [ editContacts player' $ const $ Just HideEditContactsModal ]
     <> guard state.editPlayerModalShown [ editPlayer player' $ const $ Just HideEditPlayerModal ]
     <> guard state.createTeamModalShown [ createTeam $ const $ Just HideCreateTeamModal ]
     <> foldMap

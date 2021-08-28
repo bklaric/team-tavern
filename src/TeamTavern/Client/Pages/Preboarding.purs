@@ -36,7 +36,7 @@ import TeamTavern.Client.Components.Boarding.GameInput as GameInput
 import TeamTavern.Client.Components.Boarding.PlayerOrTeamInput (playerOrTeamInput)
 import TeamTavern.Client.Components.Boarding.PlayerOrTeamInput as PlayerOrTeamInput
 import TeamTavern.Client.Components.Button (primaryButton_, secondaryButton_)
-import TeamTavern.Client.Components.Player.ContactFormInput as PlayerContactFormInput
+import TeamTavern.Client.Components.Player.ContactsFormInput as PlayerContactsFormInput
 import TeamTavern.Client.Components.Player.PlayerFormInput as PlayerFormInput
 import TeamTavern.Client.Components.Player.ProfileFormInput as PlayerProfileFormInput
 import TeamTavern.Client.Components.RegistrationInput (registrationInput)
@@ -145,8 +145,8 @@ type Input =
     , game :: Game
     , playerProfile :: PlayerProfileFormInput.Input
     , teamProfile :: TeamProfileFormInput.Input
-    , playerContacts :: PlayerContactFormInput.Input
-    -- , teamContact :: TeamContactFormInput.Input
+    , playerContacts :: PlayerContactsFormInput.Input
+    -- , teamContact :: TeamContactsFormInput.Input
     , registration :: RegistrationInput.Input
     , otherError :: Boolean
     }
@@ -175,8 +175,8 @@ emptyInput playerOrTeam game =
                     Just { key, label, icon, options: options }
                 _ -> Nothing
             }
-    , playerContacts: PlayerContactFormInput.emptyInput $ foldMap (\game' -> [ game'.platforms.head ]) game
-    -- , teamContact: TeamContactFormInput.emptyInput []
+    , playerContacts: PlayerContactsFormInput.emptyInput $ foldMap (\game' -> [ game'.platforms.head ]) game
+    -- , teamContact: TeamContactsFormInput.emptyInput []
     , registration: RegistrationInput.emptyInput
     , otherError: false
     }
@@ -189,8 +189,8 @@ type State =
     , game :: Game
     , playerProfile :: PlayerProfileFormInput.Input
     , teamProfile :: TeamProfileFormInput.Input
-    , playerContacts :: PlayerContactFormInput.Input
-    -- , teamContact :: TeamContactFormInput.Input
+    , playerContacts :: PlayerContactsFormInput.Input
+    -- , teamContact :: TeamContactsFormInput.Input
     , registration :: RegistrationInput.Input
     , otherError :: Boolean
     , submitting :: Boolean
@@ -207,8 +207,8 @@ data Action
     | UpdateGame GameInput.Output
     | UpdatePlayerProfile PlayerProfileFormInput.Output
     | UpdateTeamProfile TeamProfileFormInput.Output
-    | UpdatePlayerContact PlayerContactFormInput.Output
-    -- | UpdateTeamContact TeamContactFormInput.Output
+    | UpdatePlayerContact PlayerContactsFormInput.Output
+    -- | UpdateTeamContact TeamContactsFormInput.Output
     | UpdateRegistration RegistrationInput.Output
     | SetUpAccount
 
@@ -220,8 +220,8 @@ type ChildSlots slots =
     , gameInput :: GameInput.Slot
     , playerProfileFormInput :: PlayerProfileFormInput.Slot
     , teamProfileFormInput :: TeamProfileFormInput.Slot
-    , playerContactFormInput :: PlayerContactFormInput.Slot
-    -- , teamContactFormInput :: TeamContactFormInput.Slot
+    , playerContactsFormInput :: PlayerContactsFormInput.Slot
+    -- , teamContactsFormInput :: TeamContactsFormInput.Slot
     , registrationInput :: RegistrationInput.Slot
     | slots )
 
@@ -362,7 +362,7 @@ renderPage { step: PlayerContact, playerContacts, otherError, submitting, game }
     [ boardingStep
         [ boardingHeading "Player contact"
         , boardingDescription  """Enter your contact details so players and teams can contact you."""
-        , PlayerContactFormInput.contactFormInput playerContacts UpdatePlayerContact
+        , PlayerContactsFormInput.contactsFormInput playerContacts UpdatePlayerContact
         ]
     , boardingButtons
         [ secondaryButton_ "Back" $ SetStep PlayerProfile

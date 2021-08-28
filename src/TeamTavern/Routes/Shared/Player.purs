@@ -2,6 +2,7 @@ module TeamTavern.Routes.Shared.Player where
 
 import Data.Maybe (Maybe)
 import Data.Variant (Variant)
+import TeamTavern.Routes.Shared.Platform (Platform)
 
 type ContactsRow fields =
     ( discordTag :: Maybe String
@@ -17,6 +18,12 @@ type ContactsRow fields =
 type Contacts' fields = Record (ContactsRow fields)
 
 type Contacts = Contacts' ()
+
+type ContactsRequiredRow fields = ContactsRow (requiredPlatforms :: Array Platform | fields)
+
+type ContactsRequired' fields = Record (ContactsRequiredRow fields)
+
+type ContactsRequired = ContactsRequired' ()
 
 type ContactsError = Variant
     ( battleTag :: String
