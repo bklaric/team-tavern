@@ -108,7 +108,17 @@ handleAction (UpdateDetails details) =
         }
 handleAction (SendRequest event) = do
     H.liftEffect $ preventDefault event
-    currentState <- H.modify _ { submitting = true }
+    currentState <- H.modify _
+        { submitting = true
+        , otherError = false
+        , details
+            { nameError = false
+            , websiteError = false
+            , discordTagError = false
+            , discordServerError = false
+            , contactError = false
+            }
+        }
     response <- H.lift $ sendRequest currentState
     case response of
         Just (Right _) -> hardNavigate $ "/teams/" <> currentState.handle
@@ -124,30 +134,9 @@ handleAction (SendRequest event) = do
                 }
                 error
             )
-            (currentState
-                { submitting = false
-                , otherError = false
-                , details = currentState.details
-                    { nameError = false
-                    , websiteError = false
-                    , discordTagError = false
-                    , discordServerError = false
-                    , contactError = false
-                    }
-                }
-            )
+            (currentState { submitting = false })
             badContent
-        Nothing -> H.put currentState
-            { submitting = false
-            , otherError = true
-            , details = currentState.details
-                { nameError = false
-                , websiteError = false
-                , discordTagError = false
-                , discordServerError = false
-                , contactError = false
-                }
-            }
+        Nothing -> H.put currentState { submitting = false, otherError = true }
 
 component :: forall query output fields left.
     H.Component HH.HTML query (Input fields) output (Async left)

@@ -178,7 +178,7 @@ preboard deployment pool cookies body =
                 { player': _, profile': _, contacts': _, registration': _ }
                 <$> validatePlayerV player
                 <*> validateProfileV game profile
-                <*> validateContactsV contacts
+                <*> validateContactsV [ profile.platform ] contacts
                 <*> validateRegistrationV registration
                 # AsyncV.toAsync
                 # label (SProxy :: SProxy "invalidBody")

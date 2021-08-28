@@ -3,10 +3,11 @@ module TeamTavern.Client.Pages.Player.EditContacts (Input, Slot, editContacts) w
 import Prelude
 
 import Async (Async)
-import Data.Array (nubEq)
+import Data.Array (foldl, nubEq)
 import Data.Const (Const)
+import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
-import Data.Variant (SProxy(..))
+import Data.Variant (SProxy(..), match)
 import Halogen as H
 import Halogen.HTML as HH
 import Record.Extra (pick)
@@ -15,9 +16,11 @@ import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.Player.ContactsFormInput (contactsFormInput)
 import TeamTavern.Client.Components.Player.ContactsFormInput as ContactsFormInput
 import TeamTavern.Client.Script.Navigate (hardNavigate)
-import TeamTavern.Client.Script.Request (putNoContent')
+import TeamTavern.Client.Script.Request (putNoContent)
 import TeamTavern.Routes.Shared.Player as Routes
+import TeamTavern.Routes.UpdatePlayerContacts (RequestContent, BadContent)
 import TeamTavern.Routes.ViewPlayer (OkContentProfile)
+import Type (type ($))
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
@@ -47,9 +50,9 @@ render { contacts, submitting, otherError } =
     <>
     otherFormError otherError
 
-sendRequest :: forall left. State -> Async left (Maybe Unit)
+sendRequest :: forall left. State -> Async left $ Maybe $ Either BadContent Unit
 sendRequest { nickname, contacts } =
-    putNoContent' ("/api/players/" <> nickname <> "/contacts") $ (pick contacts :: Routes.Contacts)
+    putNoContent ("/api/players/" <> nickname <> "/contacts") $ (pick contacts :: RequestContent)
 
 handleAction :: forall output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
@@ -67,14 +70,39 @@ handleAction (UpdateContacts contacts) =
         }
 handleAction (Update event) = do
     H.liftEffect $ preventDefault event
-    currentState <- H.modify _ { submitting = true }
+    currentState <- H.modify _
+        { submitting = true
+        , otherError = false
+        , contacts
+            { discordTagError = false
+            , steamIdError = false
+            , riotIdError = false
+            , battleTagError = false
+            , psnIdError = false
+            , gamerTagError = false
+            , friendCodeError = false
+            }
+        }
     response <- H.lift $ sendRequest currentState
     case response of
-        Just _ -> hardNavigate $ "/players/" <> currentState.nickname
-        Nothing -> H.put currentState
-            { submitting = false
-            , otherError = true
-            }
+        Just (Right _) -> hardNavigate $ "/players/" <> currentState.nickname
+        Just (Left badContent) -> H.put $
+            foldl
+            (\state error ->
+                match
+                { discordTag: const state { contacts { discordTagError = true } }
+                , steamId: const state { contacts { steamIdError = true } }
+                , riotId: const state { contacts { riotIdError = true } }
+                , battleTag: const state { contacts { battleTagError = true } }
+                , psnId: const state { contacts { psnIdError = true } }
+                , gamerTag: const state { contacts { gamerTagError = true } }
+                , friendCode: const state { contacts { friendCodeError = true } }
+                }
+                error
+            )
+            (currentState { submitting = false })
+            badContent
+        Nothing -> H.put currentState { submitting = false, otherError = true }
 
 component :: forall query fields output left. H.Component HH.HTML query (Input fields) output (Async left)
 component = H.mkComponent

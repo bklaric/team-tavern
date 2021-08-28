@@ -9,7 +9,9 @@ import Perun.Response (Response)
 import Postgres.Pool (Pool)
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.EnsureSignedInAs (ensureSignedInAs)
+import TeamTavern.Server.Infrastructure.Postgres (transaction)
 import TeamTavern.Server.Infrastructure.ReadJsonBody (readJsonBody)
+import TeamTavern.Server.Player.UpdateContacts.LoadRequiredPlatforms (loadRequiredPlatforms)
 import TeamTavern.Server.Player.UpdateContacts.LogError (logError)
 import TeamTavern.Server.Player.UpdateContacts.SendResponse (sendResponse)
 import TeamTavern.Server.Player.UpdateContacts.ValidateContacts (validateContacts)
@@ -25,8 +27,12 @@ updateContacts pool nickname cookies body =
     -- Read contacts from body.
     contacts' <- readJsonBody body
 
-    -- Validate contacts.
-    contacts <- validateContacts contacts'
+    pool # transaction \client -> do
+        -- Read required platforms.
+        requiredPlatforms <- loadRequiredPlatforms client (unwrap cookieInfo.id)
 
-    -- Update contacts.
-    writeContacts pool (unwrap cookieInfo.id) contacts
+        -- Validate contacts.
+        contacts <- validateContacts requiredPlatforms contacts'
+
+        -- Update contacts.
+        writeContacts client (unwrap cookieInfo.id) contacts
