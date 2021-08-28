@@ -6,11 +6,12 @@ import Async (Async)
 import Data.Const (Const)
 import Data.Foldable (elem)
 import Data.Maybe (Maybe(..))
+import Data.Monoid (guard)
 import Data.Variant (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Record.Extra (pick)
-import TeamTavern.Client.Components.Input (responsiveInputGroups)
+import TeamTavern.Client.Components.Input (inputGroupsHeading, responsiveInputGroups)
 import TeamTavern.Client.Components.Player.PlayerInputGroup (discordTagInputGroup)
 import TeamTavern.Client.Components.Player.ProfileInputGroup (ChildSlots, platformIdInputGroup)
 import TeamTavern.Routes.Shared.Platform (Platform(..))
@@ -55,14 +56,26 @@ render
     , friendCode, friendCodeError
     }
     = HH.div_ $
-    [ responsiveInputGroups
-        [ discordTagInputGroup discordTag UpdateDiscordTag discordTagError
-        , platformIdInputGroup Steam       steamId    UpdateSteamId    steamIdError    (elem Steam       requiredPlatforms)
-        , platformIdInputGroup Riot        riotId     UpdateRiotId     riotIdError     (elem Riot        requiredPlatforms)
-        , platformIdInputGroup BattleNet   battleTag  UpdateBattleTag  battleTagError  (elem BattleNet   requiredPlatforms)
-        , platformIdInputGroup PlayStation psnId      UpdatePsnId      psnIdError      (elem PlayStation requiredPlatforms)
-        , platformIdInputGroup Xbox        gamerTag   UpdateGamerTag   gamerTagError   (elem Xbox        requiredPlatforms)
-        , platformIdInputGroup Switch      friendCode UpdateFriendCode friendCodeError (elem Switch      requiredPlatforms)
+    [ inputGroupsHeading "Required"
+    , responsiveInputGroups $ join
+        [ guard (Steam       `elem` requiredPlatforms) [ platformIdInputGroup Steam       steamId    UpdateSteamId    steamIdError    true ]
+        , guard (Riot        `elem` requiredPlatforms) [ platformIdInputGroup Riot        riotId     UpdateRiotId     riotIdError     true ]
+        , guard (BattleNet   `elem` requiredPlatforms) [ platformIdInputGroup BattleNet   battleTag  UpdateBattleTag  battleTagError  true ]
+        , guard (PlayStation `elem` requiredPlatforms) [ platformIdInputGroup PlayStation psnId      UpdatePsnId      psnIdError      true ]
+        , guard (Xbox        `elem` requiredPlatforms) [ platformIdInputGroup Xbox        gamerTag   UpdateGamerTag   gamerTagError   true ]
+        , guard (Switch      `elem` requiredPlatforms) [ platformIdInputGroup Switch      friendCode UpdateFriendCode friendCodeError true ]
+        ]
+    , inputGroupsHeading "Discord"
+    , responsiveInputGroups
+        [ discordTagInputGroup discordTag UpdateDiscordTag discordTagError ]
+    , inputGroupsHeading "Other"
+    , responsiveInputGroups $ join
+        [ guard (Steam       `not <<< elem` requiredPlatforms) [ platformIdInputGroup Steam       steamId    UpdateSteamId    steamIdError    false ]
+        , guard (Riot        `not <<< elem` requiredPlatforms) [ platformIdInputGroup Riot        riotId     UpdateRiotId     riotIdError     false ]
+        , guard (BattleNet   `not <<< elem` requiredPlatforms) [ platformIdInputGroup BattleNet   battleTag  UpdateBattleTag  battleTagError  false ]
+        , guard (PlayStation `not <<< elem` requiredPlatforms) [ platformIdInputGroup PlayStation psnId      UpdatePsnId      psnIdError      false ]
+        , guard (Xbox        `not <<< elem` requiredPlatforms) [ platformIdInputGroup Xbox        gamerTag   UpdateGamerTag   gamerTagError   false ]
+        , guard (Switch      `not <<< elem` requiredPlatforms) [ platformIdInputGroup Switch      friendCode UpdateFriendCode friendCodeError false ]
         ]
     ]
 
