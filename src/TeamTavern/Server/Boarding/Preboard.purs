@@ -38,9 +38,9 @@ import TeamTavern.Server.Player.Domain.Id (Id(..))
 import TeamTavern.Server.Player.Domain.Nickname (Nickname)
 import TeamTavern.Server.Player.Register.AddPlayer (addPlayer)
 import TeamTavern.Server.Player.Register.ValidateRegistration (RegistrationErrors, validateRegistrationV)
-import TeamTavern.Server.Player.UpdatePlayer.UpdateContact (updateContacts) as Player
+import TeamTavern.Server.Player.UpdateContacts.ValidateContacts (ContactsErrors, validateContactsV)
+import TeamTavern.Server.Player.UpdateContacts.WriteContacts (writeContacts)
 import TeamTavern.Server.Player.UpdatePlayer.UpdateDetails (updateDetails)
-import TeamTavern.Server.Player.UpdatePlayer.ValidateContacts (ContactsErrors, validateContactsV) as Player
 import TeamTavern.Server.Player.UpdatePlayer.ValidatePlayer (validatePlayerV)
 import TeamTavern.Server.Profile.AddPlayerProfile.AddProfile (addProfile)
 import TeamTavern.Server.Profile.AddPlayerProfile.LoadFields (loadFields) as Player
@@ -66,7 +66,7 @@ type PreboardError = Variant
     , notAuthorized :: Array String
     , invalidBody :: NonEmptyList $ Variant
         ( team :: TeamErrors
-        , playerContacts :: Player.ContactsErrors
+        , playerContacts :: ContactsErrors
         , playerProfile :: PlayerProfile.ProfileErrors
         , teamProfile :: TeamProfile.ProfileErrors
         , registration :: RegistrationErrors
@@ -83,7 +83,7 @@ invalidBodyHandler :: forall fields. Lacks "invalidBody" fields =>
     { invalidBody ::
         NonEmptyList $ Variant
         ( team :: TeamErrors
-        , playerContacts :: Player.ContactsErrors
+        , playerContacts :: ContactsErrors
         , playerProfile :: PlayerProfile.ProfileErrors
         , teamProfile :: TeamProfile.ProfileErrors
         , registration :: RegistrationErrors
@@ -178,7 +178,7 @@ preboard deployment pool cookies body =
                 { player': _, profile': _, contacts': _, registration': _ }
                 <$> validatePlayerV player
                 <*> validateProfileV game profile
-                <*> Player.validateContactsV contacts
+                <*> validateContactsV contacts
                 <*> validateRegistrationV registration
                 # AsyncV.toAsync
                 # label (SProxy :: SProxy "invalidBody")
@@ -206,7 +206,7 @@ preboard deployment pool cookies body =
                 }
                 profile'
 
-            Player.updateContacts client id contacts'
+            writeContacts client id contacts'
 
             pure
                 { teamHandle: Nothing

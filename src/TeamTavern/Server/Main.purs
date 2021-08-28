@@ -42,6 +42,7 @@ import TeamTavern.Server.Game.ViewAll (viewAll) as Game
 import TeamTavern.Server.Infrastructure.Log (logStamped, logt)
 import TeamTavern.Server.Player.Delete (delete) as Player
 import TeamTavern.Server.Player.Register (register) as Player
+import TeamTavern.Server.Player.UpdateContacts (updateContacts) as Player
 import TeamTavern.Server.Player.UpdatePlayer (updatePlayer) as Player
 import TeamTavern.Server.Player.View (view) as Player
 import TeamTavern.Server.Profile.AddPlayerProfile (addPlayerProfile) as Profile
@@ -153,6 +154,8 @@ handleRequest deployment pool method url cookies body =
             Player.register deployment pool cookies body
         , viewPlayer:
             Player.view pool cookies
+        , updatePlayerContacts: \{ nickname } ->
+            Player.updateContacts pool nickname cookies body
         , updatePlayer: \{ nickname } ->
             Player.updatePlayer pool nickname cookies body
         , deletePlayer: \{ nickname } ->

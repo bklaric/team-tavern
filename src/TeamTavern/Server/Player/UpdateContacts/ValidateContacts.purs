@@ -1,4 +1,4 @@
-module TeamTavern.Server.Player.UpdatePlayer.ValidateContacts where
+module TeamTavern.Server.Player.UpdateContacts.ValidateContacts where
 
 import Prelude
 

@@ -14,34 +14,20 @@ import TeamTavern.Client.Components.Input (responsiveInputGroups)
 import TeamTavern.Client.Components.Player.PlayerInputGroup (discordTagInputGroup)
 import TeamTavern.Client.Components.Player.ProfileInputGroup (ChildSlots, platformIdInputGroup)
 import TeamTavern.Routes.Shared.Platform (Platform(..))
+import TeamTavern.Routes.Shared.Player (Contacts, Contacts')
 
-type Input =
-    { requiredPlatforms :: Array Platform
-    , discordTag :: Maybe String
+type Input = Contacts'
+    ( requiredPlatforms :: Array Platform
     , discordTagError :: Boolean
-    , steamId :: Maybe String
     , steamIdError :: Boolean
-    , riotId :: Maybe String
     , riotIdError :: Boolean
-    , battleTag :: Maybe String
     , battleTagError :: Boolean
-    , psnId :: Maybe String
     , psnIdError :: Boolean
-    , gamerTag :: Maybe String
     , gamerTagError :: Boolean
-    , friendCode :: Maybe String
     , friendCodeError :: Boolean
-    }
+    )
 
-type Output =
-    { discordTag :: Maybe String
-    , steamId :: Maybe String
-    , riotId :: Maybe String
-    , battleTag :: Maybe String
-    , psnId :: Maybe String
-    , gamerTag :: Maybe String
-    , friendCode :: Maybe String
-    }
+type Output = Contacts
 
 type State = Input
 
