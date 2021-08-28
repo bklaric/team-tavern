@@ -37,7 +37,7 @@ module TeamTavern.Server.Profile.AddPlayerProfile.ValidatePlatformId where
 -- toString (RiotId riotId) = RiotId.toString riotId
 -- toString (BattleTag battleTag) = BattleTag.toString battleTag
 -- toString (PsnId psnId) = PsnId.toString psnId
--- toString (GamerTag gamertag) = GamerTag.toString gamertag
+-- toString (GamerTag gamerTag) = GamerTag.toString gamerTag
 -- toString (FriendCode friendCode) = FriendCode.toString friendCode
 
 -- validatePlatformId

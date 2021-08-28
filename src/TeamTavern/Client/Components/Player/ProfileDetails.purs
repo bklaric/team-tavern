@@ -17,7 +17,7 @@ type PlatformIdSlots slots =
     , riotId :: Copyable.Slot String
     , battleTag :: Copyable.Slot String
     , psnId :: Copyable.Slot String
-    , gamertag :: Copyable.Slot String
+    , gamerTag :: Copyable.Slot String
     , friendCode :: Copyable.Slot String
     | slots )
 
@@ -99,7 +99,7 @@ profileDetails' platform fieldValues newOrReturning =
     -- Riot -> [ riotIdDetail platformId ]
     -- BattleNet -> [ battleTagDetail platformId ]
     -- PlayStation -> [ psnIdDetail platformId ]
-    -- Xbox -> [ gamertagDetail platformId ]
+    -- Xbox -> [ gamerTagDetail platformId ]
     -- Switch -> [ friendCodeDetail platformId ]
     -- <>
     ( fieldValues

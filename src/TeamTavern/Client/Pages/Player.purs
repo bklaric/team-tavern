@@ -16,6 +16,7 @@ import TeamTavern.Client.Components.Ads (descriptionLeaderboards, stickyLeaderbo
 import TeamTavern.Client.Components.Content (contentDescription, contentHeader, contentHeaderSection, contentHeading', contentHeadingFaIcon)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Components.Player.ProfileDetails (PlatformIdSlots)
+import TeamTavern.Client.Pages.Player.Contacts (contacts)
 import TeamTavern.Client.Pages.Player.CreateProfileButton as CreateProfileButton
 import TeamTavern.Client.Pages.Player.CreateTeam (createTeam)
 import TeamTavern.Client.Pages.Player.CreateTeam as CreateTeam
@@ -39,6 +40,7 @@ type Input = { nickname :: String }
 type Loaded =
     { player :: ViewPlayer.OkContent
     , status :: Status
+    , editContactsModalShown :: Boolean
     , editPlayerModalShown :: Boolean
     , editProfileModalShown :: Maybe ViewPlayer.OkContentProfile
     , createTeamModalShown :: Boolean
@@ -53,6 +55,8 @@ data State
 data Action
     = Initialize
     | Receive Input
+    | ShowEditContactsModal
+    | HideEditContactsModal
     | ShowEditPlayerModal
     | HideEditPlayerModal
     | ShowEditProfileModal ViewPlayer.OkContentProfile
@@ -91,7 +95,8 @@ render (Loaded state @ { player: player', status }) =
     ]
     <> descriptionLeaderboards
     <>
-    [ details player' status ShowEditPlayerModal
+    [ contacts player' status ShowEditContactsModal
+    , details player' status ShowEditPlayerModal
     , profiles player' status ShowEditProfileModal
     , teams player' status ShowCreateTeamModal
     ]
@@ -132,6 +137,7 @@ handleAction (Receive { nickname }) = do
             H.put $ Loaded
                 { player: player''
                 , status
+                , editContactsModalShown: false
                 , editPlayerModalShown: false
                 , editProfileModalShown: Nothing
                 , createTeamModalShown: false
@@ -139,6 +145,8 @@ handleAction (Receive { nickname }) = do
             setMeta (player''.nickname <> " | TeamTavern")
                 ("View all details, profiles and teams of player " <> player''.nickname <> ".")
         _ -> pure unit
+handleAction ShowEditContactsModal = modifyLoaded _ { editContactsModalShown = true }
+handleAction HideEditContactsModal = modifyLoaded _ { editContactsModalShown = false }
 handleAction ShowEditPlayerModal = modifyLoaded _ { editPlayerModalShown = true }
 handleAction HideEditPlayerModal = modifyLoaded _ { editPlayerModalShown = false }
 handleAction (ShowEditProfileModal profile) = modifyLoaded _ { editProfileModalShown = Just profile }

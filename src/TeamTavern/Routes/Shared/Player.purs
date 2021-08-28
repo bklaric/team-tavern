@@ -3,15 +3,20 @@ module TeamTavern.Routes.Shared.Player where
 import Data.Maybe (Maybe)
 import Data.Variant (Variant)
 
-type Contacts =
-    { discordTag :: Maybe String
+type ContactsRow fields =
+    ( discordTag :: Maybe String
     , steamId :: Maybe String
     , riotId :: Maybe String
     , battleTag :: Maybe String
     , psnId :: Maybe String
     , gamerTag :: Maybe String
     , friendCode :: Maybe String
-    }
+    | fields
+    )
+
+type Contacts' fields = Record (ContactsRow fields)
+
+type Contacts = Contacts' ()
 
 type ContactsError = Variant
     ( battleTag :: String

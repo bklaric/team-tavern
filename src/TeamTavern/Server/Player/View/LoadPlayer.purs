@@ -16,6 +16,13 @@ queryString :: String -> Query
 queryString timezone = Query $ """
     select
         player.nickname,
+        player.discord_tag as "discordTag",
+        player.steam_id as "steamId",
+        player.riot_id as "riotId",
+        player.battle_tag as "battleTag",
+        player.psn_id as "psnId",
+        player.gamer_tag as "gamerTag",
+        player.friend_code as "friendCode",
         case when $2 then to_char(player.birthday, 'yyyy-mm-dd') end as birthday,
         extract(year from age(player.birthday))::int as age,
         player.location,

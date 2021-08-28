@@ -11,7 +11,7 @@ import TeamTavern.Server.Profile.Infrastructure.ValidateContact (validateContact
 newtype GamerTag = GamerTag String
 
 toString :: GamerTag -> String
-toString (GamerTag gamertag) = gamertag
+toString (GamerTag gamerTag) = gamerTag
 
 minNameLength :: Int
 minNameLength = 1
@@ -34,7 +34,7 @@ maxNameLength = 16
 -- 12 + 1 + 3 = 16
 -- https://support.xbox.com/en-US/help/account-profile/profile/gamertag-update-faq
 isGamerTagValid :: String -> Boolean
-isGamerTagValid gamertag = minNameLength <= length gamertag && length gamertag <= maxNameLength
+isGamerTagValid gamerTag = minNameLength <= length gamerTag && length gamerTag <= maxNameLength
 
 validateGamerTag :: forall errors. Maybe String -> ValidatedVariants (gamerTag :: String | errors) (Maybe GamerTag)
 validateGamerTag gamerTag =
