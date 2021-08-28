@@ -8,13 +8,9 @@ import Data.Validated (Validated, lmap)
 import Data.Variant (Variant, inj, on)
 import Prim.Row (class Cons)
 
-type VariantNel rows = NonEmptyList (Variant rows)
+type Variants rows = NonEmptyList (Variant rows)
 
-type VariantValidated rows = Validated (NonEmptyList (Variant rows))
-
-type ValidatedNelVari rows = VariantValidated rows
-
-type ValidatedNel errors = Validated (NonEmptyList errors)
+type ValidatedVariants rows = Validated (NonEmptyList (Variant rows))
 
 label
     :: forall errors errors' left label right
@@ -22,7 +18,7 @@ label
     => IsSymbol label
     => SProxy label
     -> Validated left right
-    -> VariantValidated errors right
+    -> ValidatedVariants errors right
 label label' = lmap (singleton <<< inj label')
 
 labelMap
@@ -32,7 +28,7 @@ labelMap
     => SProxy label
     -> (leftIn -> leftOut)
     -> Validated leftIn right
-    -> VariantValidated lefts right
+    -> ValidatedVariants lefts right
 labelMap label' mapper = lmap (singleton <<< inj label' <<< mapper)
 
 relabel

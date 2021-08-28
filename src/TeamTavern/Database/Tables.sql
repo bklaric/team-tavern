@@ -1,6 +1,17 @@
 create table player
     ( id serial not null primary key
     , nickname varchar(40) not null unique
+
+    -- Contact
+    , discord_tag text
+    , steam_id text
+    , riot_id text
+    , battle_tag text
+    , psn_id text
+    , gamer_tag text
+    , friend_code text
+
+    -- Details
     , birthday date
     , languages text[] not null default '{}'
     , location varchar(100)
@@ -10,6 +21,7 @@ create table player
     , weekend_from time
     , weekend_to time
     , microphone boolean not null default false
+
     , password_hash character(60) not null
     , registered timestamptz not null default current_timestamp
     );

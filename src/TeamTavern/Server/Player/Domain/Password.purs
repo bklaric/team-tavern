@@ -4,7 +4,7 @@ import Prelude
 
 import Data.List.Types (NonEmptyList)
 import Data.Newtype (class Newtype)
-import Data.Validated.Label (VariantValidated)
+import Data.Validated.Label (ValidatedVariants)
 import Data.Validated.Label as Validated
 import Data.Variant (SProxy(..), Variant)
 import Wrapped.String (TooShort, tooShort)
@@ -22,7 +22,7 @@ minPasswordLength :: Int
 minPasswordLength = 8
 
 validatePassword :: forall errors.
-    String -> VariantValidated (password :: Array String | errors) Password
+    String -> ValidatedVariants (password :: Array String | errors) Password
 validatePassword password =
     Wrapped.create identity [tooShort minPasswordLength] Password password
     # Validated.labelMap (SProxy :: SProxy "password") \(errors :: PasswordErrors) ->

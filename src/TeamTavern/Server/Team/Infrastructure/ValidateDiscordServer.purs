@@ -5,12 +5,12 @@ import Prelude
 import Data.Maybe (Maybe)
 import Data.Symbol (SProxy(..))
 import Data.Traversable (traverse)
-import Data.Validated.Label (VariantValidated)
+import Data.Validated.Label (ValidatedVariants)
 import Data.Validated.Label as Validated
 import TeamTavern.Server.Profile.Infrastructure.ValidateUrl (Url, UrlErrors, validateUrlV)
 
 validateDiscordServer :: forall errors.
-    Maybe String -> VariantValidated (discordServer :: Array String | errors) (Maybe Url)
+    Maybe String -> ValidatedVariants (discordServer :: Array String | errors) (Maybe Url)
 validateDiscordServer discordServer
     = discordServer
     # traverse (validateUrlV "discord.gg")

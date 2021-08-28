@@ -1,5 +1,5 @@
 module TeamTavern.Server.Player.UpdatePlayer.ValidateDiscordTag
-    (DiscordTag, DiscordTagError, validateDiscordTag) where
+    (DiscordTag, DiscordTagError, validateDiscordTag, validateDiscordTag') where
 
 import Prelude
 
@@ -7,9 +7,10 @@ import Data.List.Types (NonEmptyList)
 import Data.Maybe (Maybe(..))
 import Data.String (Pattern(..), length, split, trim)
 import Data.Validated as Validated
-import Data.Validated.Label (VariantValidated)
+import Data.Validated.Label (ValidatedVariants)
 import Data.Validated.Label as ValidatedLabel
 import Data.Variant (SProxy(..), Variant)
+import TeamTavern.Server.Profile.Infrastructure.ValidateContact (validateContact)
 import Wrapped.String (Invalid, invalid)
 import Wrapped.Validated as Wrapped
 
@@ -38,7 +39,7 @@ isDiscordTagValid discordTag =
     _ -> false
 
 validateDiscordTag :: forall errors.
-    Maybe String -> VariantValidated (discordTag :: Array String | errors) (Maybe DiscordTag)
+    Maybe String -> ValidatedVariants (discordTag :: Array String | errors) (Maybe DiscordTag)
 validateDiscordTag discordTag =
     case discordTag of
     Nothing -> Validated.valid Nothing
@@ -48,3 +49,8 @@ validateDiscordTag discordTag =
         # ValidatedLabel.labelMap (SProxy :: SProxy "discordTag")
             \(errors :: NonEmptyList DiscordTagError) ->
                 [ "Error validating Discord tag: " <> show errors ]
+
+validateDiscordTag' :: forall errors.
+    Maybe String -> ValidatedVariants (discordTag :: String | errors) (Maybe DiscordTag)
+validateDiscordTag' discordTag =
+    validateContact discordTag isDiscordTagValid DiscordTag (SProxy :: _ "discordTag") ("Invalid DiscordTag: " <> _)

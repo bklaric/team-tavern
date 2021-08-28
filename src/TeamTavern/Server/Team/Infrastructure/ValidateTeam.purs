@@ -14,7 +14,7 @@ import Data.List.Types (NonEmptyList)
 import Data.Maybe (Maybe(..), isJust)
 import Data.Symbol (SProxy(..))
 import Data.Validated (invalid, valid, validated)
-import Data.Validated.Label (VariantValidated)
+import Data.Validated.Label (ValidatedVariants)
 import Data.Variant (Variant, inj)
 import TeamTavern.Routes.Shared.Organization (OrganizationNW(..))
 import TeamTavern.Server.Player.UpdatePlayer.ValidateDiscordTag (DiscordTag, validateDiscordTag)
@@ -61,7 +61,7 @@ toString (Organized _) = "organized"
 validateOrganization
     :: forall errors
     .  OrganizationNW
-    -> VariantValidated (name :: Array String, website :: Array String | errors) Organization
+    -> ValidatedVariants (name :: Array String, website :: Array String | errors) Organization
 validateOrganization InformalNW = pure Informal
 validateOrganization (OrganizedNW { name, website }) =
     Organized <$> ({ name: _, website: _ } <$> validateName name <*> validateWebsite website)

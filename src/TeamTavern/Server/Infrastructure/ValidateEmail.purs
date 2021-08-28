@@ -11,7 +11,7 @@ import Data.Maybe (isJust)
 import Data.String (trim)
 import Data.String.Regex (Regex, match, regex)
 import Data.String.Regex.Flags (unicode)
-import Data.Validated.Label (ValidatedNelVari)
+import Data.Validated.Label (ValidatedVariants)
 import Data.Validated.Label as Validated
 import Data.Variant (SProxy(..), Variant)
 import Partial.Unsafe (unsafePartial)
@@ -25,7 +25,7 @@ emailRegex = regex """^[^\s@]+@[^\s@]+\.[^\s@]+$""" unicode # unsafePartial from
 
 type EmailError = Variant (invalid :: Invalid, tooLong :: TooLong )
 
-validateEmail :: forall errors. String -> ValidatedNelVari (email :: Array String | errors) Email
+validateEmail :: forall errors. String -> ValidatedVariants (email :: Array String | errors) Email
 validateEmail email =
     Wrapped.create trim [invalid (match emailRegex >>> isJust), tooLong 254] Email email
     # Validated.labelMap (SProxy :: _ "email") \errors ->

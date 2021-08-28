@@ -38,10 +38,12 @@ import TeamTavern.Server.Player.Domain.Id (Id(..))
 import TeamTavern.Server.Player.Domain.Nickname (Nickname)
 import TeamTavern.Server.Player.Register.AddPlayer (addPlayer)
 import TeamTavern.Server.Player.Register.ValidateRegistration (RegistrationErrors, validateRegistrationV)
+import TeamTavern.Server.Player.UpdatePlayer.UpdateContact (updateContacts) as Player
 import TeamTavern.Server.Player.UpdatePlayer.UpdateDetails (updateDetails)
+import TeamTavern.Server.Player.UpdatePlayer.ValidateContacts (ContactsErrors, validateContactsV) as Player
 import TeamTavern.Server.Player.UpdatePlayer.ValidatePlayer (validatePlayerV)
 import TeamTavern.Server.Profile.AddPlayerProfile.AddProfile (addProfile)
-import TeamTavern.Server.Profile.AddPlayerProfile.LoadFields as Player
+import TeamTavern.Server.Profile.AddPlayerProfile.LoadFields (loadFields) as Player
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile (validateProfileV)
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile as PlayerProfile
 import TeamTavern.Server.Profile.AddTeamProfile.AddProfile as AddTeamProfile
@@ -64,6 +66,7 @@ type PreboardError = Variant
     , notAuthorized :: Array String
     , invalidBody :: NonEmptyList $ Variant
         ( team :: TeamErrors
+        , playerContacts :: Player.ContactsErrors
         , playerProfile :: PlayerProfile.ProfileErrors
         , teamProfile :: TeamProfile.ProfileErrors
         , registration :: RegistrationErrors
@@ -80,6 +83,7 @@ invalidBodyHandler :: forall fields. Lacks "invalidBody" fields =>
     { invalidBody ::
         NonEmptyList $ Variant
         ( team :: TeamErrors
+        , playerContacts :: Player.ContactsErrors
         , playerProfile :: PlayerProfile.ProfileErrors
         , teamProfile :: TeamProfile.ProfileErrors
         , registration :: RegistrationErrors
@@ -89,6 +93,7 @@ invalidBodyHandler :: forall fields. Lacks "invalidBody" fields =>
 invalidBodyHandler = Builder.insert (SProxy :: SProxy "invalidBody") \errors ->
     foreachE (Array.fromFoldable errors) $ match
     { team: \errors' -> logt $ "Team errors: " <> show errors'
+    , playerContacts: \errors' -> logt $ "Player contacts errors: " <> show errors'
     , playerProfile: \errors' -> logt $ "Player profile errors: " <> show errors'
     , teamProfile: \errors' -> logt $ "Team profile errors: " <> show errors'
     , registration: \errors' -> logt $ "Registration errors: " <> show errors'
@@ -118,6 +123,7 @@ errorResponse = match
         # fromFoldable
         <#> match
             { team: inj (SProxy :: SProxy "team") <<< Array.fromFoldable
+            , playerContacts: inj (SProxy :: _ "playerContacts") <<< Array.fromFoldable
             , playerProfile: inj (SProxy :: SProxy "playerProfile") <<< Array.fromFoldable
             , teamProfile: inj (SProxy :: SProxy "teamProfile") <<< Array.fromFoldable
             , registration: inj (SProxy :: SProxy "registration") <<< Array.fromFoldable
@@ -158,15 +164,21 @@ preboard deployment pool cookies body =
     -- Start the transaction.
     result <- pool # transaction \client ->
         case content of
-        { ilk: 1, player: Just player, playerProfile: Just profile, registration } -> do
+        { ilk: 1
+        , player: Just player
+        , playerContacts: Just contacts
+        , playerProfile: Just profile
+        , registration
+        } -> do
             -- Read fields from database.
             game <- Player.loadFields client content.gameHandle
 
             -- Validate data from body.
-            { player', profile', registration' } <-
-                { player': _, profile': _, registration': _ }
+            { player', profile', contacts', registration' } <-
+                { player': _, profile': _, contacts': _, registration': _ }
                 <$> validatePlayerV player
                 <*> validateProfileV game profile
+                <*> Player.validateContactsV contacts
                 <*> validateRegistrationV registration
                 # AsyncV.toAsync
                 # label (SProxy :: SProxy "invalidBody")
@@ -193,6 +205,8 @@ preboard deployment pool cookies body =
                 , nickname: unwrap registration'.nickname
                 }
                 profile'
+
+            Player.updateContacts client id contacts'
 
             pure
                 { teamHandle: Nothing

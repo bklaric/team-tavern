@@ -2,8 +2,11 @@ module TeamTavern.Server.Profile.Infrastructure.ValidateRiotId (RiotId, toString
 
 import Prelude
 
-import Data.Either (Either(..))
-import Data.String (Pattern(..), length, split, trim)
+import Data.Maybe (Maybe)
+import Data.String (Pattern(..), length, split)
+import Data.Validated.Label (ValidatedVariants)
+import Data.Variant (SProxy(..))
+import TeamTavern.Server.Profile.Infrastructure.ValidateContact (validateContact)
 
 newtype RiotId = RiotId String
 
@@ -32,8 +35,6 @@ isRiotIdValid riotId =
         && length discriminator <= maxDiscriminatorLength
     _ -> false
 
-validateRiotId :: String -> Either (Array String) RiotId
-validateRiotId riotId | riotId' <- trim riotId =
-    if isRiotIdValid riotId'
-    then Right $ RiotId riotId'
-    else Left [ "Invalid Riot ID: " <> riotId' ]
+validateRiotId :: forall errors. Maybe String -> ValidatedVariants (riotId :: String | errors) (Maybe RiotId)
+validateRiotId riotId =
+    validateContact riotId isRiotIdValid RiotId (SProxy :: _ "riotId") ("Invalid RiotId: " <> _)
