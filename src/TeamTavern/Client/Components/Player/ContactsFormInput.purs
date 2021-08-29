@@ -85,11 +85,11 @@ raiseOutput state = H.raise $ pick state
 handleAction :: forall left. Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
 handleAction (Receive input) = H.put input
 handleAction (UpdateDiscordTag discordTag) = H.modify _ { discordTag = discordTag } >>= raiseOutput
-handleAction (UpdateSteamId steamId) = H.modify _ { steamId = steamId } >>= raiseOutput
-handleAction (UpdateRiotId riotId) = H.modify _ { riotId = riotId } >>= raiseOutput
-handleAction (UpdateBattleTag battleTag) = H.modify _ { battleTag = battleTag } >>= raiseOutput
-handleAction (UpdatePsnId psnId) = H.modify _ { psnId = psnId } >>= raiseOutput
-handleAction (UpdateGamerTag gamerTag) = H.modify _ { gamerTag = gamerTag } >>= raiseOutput
+handleAction (UpdateSteamId steamId)       = H.modify _ { steamId    = steamId }    >>= raiseOutput
+handleAction (UpdateRiotId riotId)         = H.modify _ { riotId     = riotId }     >>= raiseOutput
+handleAction (UpdateBattleTag battleTag)   = H.modify _ { battleTag  = battleTag }  >>= raiseOutput
+handleAction (UpdatePsnId psnId)           = H.modify _ { psnId      = psnId }      >>= raiseOutput
+handleAction (UpdateGamerTag gamerTag)     = H.modify _ { gamerTag   = gamerTag }   >>= raiseOutput
 handleAction (UpdateFriendCode friendCode) = H.modify _ { friendCode = friendCode } >>= raiseOutput
 
 component :: forall query left. H.Component HH.HTML query Input Output (Async left)

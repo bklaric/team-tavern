@@ -298,12 +298,13 @@ sendRequest (state :: State) = Async.unify do
         , player: player
         , game: Just game
         , playerProfile: profile
-        } -> Async.right
+        } -> let profile' = profile { contacts = pick profile.contacts }
+            in Async.right
             { ilk: 1
             , player: Just $ pick player
             , team: Nothing
             , gameHandle: game.handle
-            , playerProfile: Just $ pick profile
+            , playerProfile: Just $ pick profile'
             , teamProfile: Nothing
             }
         { playerOrTeam: Just PlayerOrTeamInput.Team
@@ -497,48 +498,30 @@ handleAction SetUpAccount = do
             foldl
             (\state error ->
                 match
-                { team:
-                    foldl
-                    (\state' error' ->
-                        match
-                        { name: const state'
-                            { step = Team, team { nameError = true } }
-                        , website: const state'
-                            { step = Team, team { websiteError = true } }
-                        , discordTag: const state'
-                            { step = Team, team { discordTagError = true } }
-                        , discordServer: const state'
-                            { step = Team, team { discordServerError = true } }
-                        , contact: const state'
-                            { step = Team, team { contactError = true } }
+                { team: state # foldl \state' error' -> error' # match
+                    { name: const state'
+                        { step = Team, team { nameError = true } }
+                    , website: const state'
+                        { step = Team, team { websiteError = true } }
+                    , discordTag: const state'
+                        { step = Team, team { discordTagError = true } }
+                    , discordServer: const state'
+                        { step = Team, team { discordServerError = true } }
+                    , contact: const state'
+                        { step = Team, team { contactError = true } }
+                    }
+                , playerProfile: state # foldl \state' error' -> error' # match
+                    { url: \{ key } -> state'
+                        { playerProfile
+                            { urlErrors = Array.cons key state'.playerProfile.urlErrors }
                         }
-                        error'
-                    )
-                    state
-                , playerProfile:
-                    foldl
-                    (\state' error' ->
-                        match
-                        { url: \{ key } -> state'
-                            { playerProfile
-                                { urlErrors = Array.cons key state'.playerProfile.urlErrors }
-                            }
-                        , about: const state'
-                            { playerProfile { aboutError = true } }
-                        }
-                        error'
-                    )
-                    state
-                , teamProfile:
-                    foldl
-                    (\state' error' ->
-                        match
-                        { platforms: const state' { teamProfile { platformsError = true } }
-                        , about: const state' { teamProfile { aboutError = true } }
-                        }
-                        error'
-                    )
-                    state
+                    , about: const state'
+                        { playerProfile { aboutError = true } }
+                    }
+                , teamProfile: state # foldl \state' error' -> error' # match
+                    { platforms: const state' { teamProfile { platformsError = true } }
+                    , about: const state' { teamProfile { aboutError = true } }
+                    }
                 }
                 error
             )

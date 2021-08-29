@@ -5,8 +5,7 @@ import Prelude
 import Async (Async)
 import Data.Maybe (Maybe, maybe)
 import Data.Newtype (unwrap)
-import Postgres.Pool (Pool)
-import Postgres.Query (Query(..), (:|))
+import Postgres.Query (class Querier, Query(..), (:|))
 import TeamTavern.Routes.ViewPlayer as ViewPlayer
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Server.Infrastructure.Error (LoadSingleError)
@@ -209,8 +208,9 @@ queryString timezone = Query $ """
     """
 
 loadPlayer
-    :: forall errors
-    .  Pool
+    :: forall errors querier
+    .  Querier querier
+    => querier
     -> Maybe CookieInfo
     -> ViewPlayer.RouteParams
     -> Async (LoadSingleError errors) ViewPlayer.OkContent

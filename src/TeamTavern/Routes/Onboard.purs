@@ -9,6 +9,7 @@ import Jarilo.Route (Route)
 import Jarilo.Segment (Literal)
 import TeamTavern.Routes.Shared.Organization (OrganizationNW)
 import TeamTavern.Routes.Shared.Platform (Platform)
+import TeamTavern.Routes.Shared.Player (Contacts)
 import TeamTavern.Routes.Shared.Size (Size)
 import Type (type ($))
 
@@ -48,6 +49,7 @@ type TeamRequestContent =
 
 type PlayerProfileRequestContent =
     { platform :: Platform
+    , contacts :: Contacts
     , fieldValues :: Array
         { fieldKey :: String
         , url :: Maybe String

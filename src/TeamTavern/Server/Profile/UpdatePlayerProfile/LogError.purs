@@ -2,20 +2,21 @@ module TeamTavern.Server.Profile.UpdatePlayerProfile.LogError where
 
 import Prelude
 
+import Data.Array as Array
 import Data.List.Types (NonEmptyList)
 import Data.Map (Map)
 import Data.Variant (Variant, match)
-import Effect (Effect)
+import Effect (Effect, foreachE)
 import Foreign (MultipleErrors)
 import Global.Unsafe (unsafeStringify)
 import Postgres.Error (Error)
 import Postgres.Result (Result, rows)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Server.Infrastructure.Log (logLines, logStamped, logt, print)
-import TeamTavern.Server.Profile.AddPlayerProfile.ReadProfile as ReadProfile
+import TeamTavern.Server.Player.UpdateContacts.ValidateContacts (ContactsErrors)
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile (ProfileErrors)
-import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile as ValidateProfile
 import TeamTavern.Server.Profile.Routes (Identifiers)
+import Type (type ($))
 
 type UpdateError = Variant
     -- Cookies.
@@ -31,11 +32,12 @@ type UpdateError = Variant
         { content :: String
         , errors :: MultipleErrors
         }
-    -- Validate profile.
-    , invalidProfile ::
-        { profile :: ReadProfile.Profile
-        , errors :: NonEmptyList ValidateProfile.ProfileError
-        }
+    , invalidBody :: NonEmptyList $ Variant
+        -- Validate profile.
+        ( playerProfile :: ProfileErrors
+        -- Validate contacts.
+        , playerContacts :: ContactsErrors
+        )
     -- Insert profile into database.
     , notAuthorized ::
         { cookieInfo :: CookieInfo
@@ -72,9 +74,19 @@ logError updateError = do
         , unreadableProfile: \{ content, errors } -> do
             logt $ "Couldn't read dto out of content: " <> show content
             logt $ "Reading resulted in these errors: " <> show errors
-        , invalidProfile: \{ profile, errors } -> do
-            logt $ "Couldn't validate profile: " <> show profile
-            logt $ "Validation resulted in these errors: " <> show errors
+        , invalidBody: \errors' -> foreachE (Array.fromFoldable errors') $ match
+            { playerProfile: \errors ->
+                logt $ "Validation resulted in these errors: " <> show errors
+            , playerContacts: \errors -> foreachE (Array.fromFoldable errors) $ match
+                { discordTag: logt
+                , steamId: logt
+                , riotId: logt
+                , battleTag: logt
+                , psnId: logt
+                , gamerTag: logt
+                , friendCode: logt
+                }
+            }
         , notAuthorized: \{ cookieInfo, identifiers } -> do
             logt $ "Player with cookie info: " <> show cookieInfo
             logt $ "Not authorized to create profile for identifiers: "

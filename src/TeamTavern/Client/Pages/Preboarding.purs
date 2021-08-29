@@ -424,12 +424,14 @@ sendRequest (state :: State) = Async.unify do
         , playerContacts: contact
         , registration
         } | Just game <- getGame state.game
-          , Just (PlayerOrTeamInput.Player) <- getPlayerOrTeam state.playerOrTeam -> Async.right
+          , Just (PlayerOrTeamInput.Player) <- getPlayerOrTeam state.playerOrTeam -> let
+            profile' = profile { contacts = pick profile.contacts }
+            in Async.right
             { ilk: 1
             , player: Just $ pick player
             , team: Nothing
             , gameHandle: game.handle
-            , playerProfile: Just $ pick profile
+            , playerProfile: Just $ pick profile'
             , playerContacts: Just $ pick contact
             , teamProfile: Nothing
             , registration: pick registration
@@ -672,41 +674,26 @@ handleAction SetUpAccount = do
                     , discordServer: const state' { step = Team, team { discordServerError = true } }
                     , contact: const state' { step = Team, team { contactError = true } }
                     }
-                , playerProfile:
-                    foldl
-                    (\state' error' ->
-                        match
-                        { url: \{ key } -> state'
-                            { step =
-                                if state'.step > PlayerProfile then PlayerProfile else state'.step
-                            , playerProfile
-                                { urlErrors = Array.cons key state'.playerProfile.urlErrors }
-                            }
-                        , about: const state'
-                            { step =
-                                if state'.step > PlayerProfile then PlayerProfile else state'.step
-                            , playerProfile { aboutError = true }
-                            }
+                , playerProfile: state # foldl \state' error' -> error' # match
+                    { url: \{ key } -> state'
+                        { step = if state'.step > PlayerProfile then PlayerProfile else state'.step
+                        , playerProfile { urlErrors = Array.cons key state'.playerProfile.urlErrors }
                         }
-                        error'
-                    )
-                    state
-                , teamProfile:
-                    foldl
-                    (\state' error' ->
-                        match
-                        { platforms: const state'
-                            { step = if state'.step > TeamProfile then TeamProfile else state'.step
-                            , teamProfile { platformsError = true }
-                            }
-                        , about: const state'
-                            { step = if state'.step > TeamProfile then TeamProfile else state'.step
-                            , teamProfile { aboutError = true }
-                            }
+                    , about: const state'
+                        { step = if state'.step > PlayerProfile then PlayerProfile else state'.step
+                        , playerProfile { aboutError = true }
                         }
-                        error'
-                    )
-                    state
+                    }
+                , teamProfile: state # foldl \state' error' -> error' # match
+                    { platforms: const state'
+                        { step = if state'.step > TeamProfile then TeamProfile else state'.step
+                        , teamProfile { platformsError = true }
+                        }
+                    , about: const state'
+                        { step = if state'.step > TeamProfile then TeamProfile else state'.step
+                        , teamProfile { aboutError = true }
+                        }
+                    }
                 , playerContacts: state # foldl \state' error' -> error' # match
                     { discordTag: const state' { step = PlayerContact, playerContacts { discordTagError = true } }
                     , steamId: const state' { step = PlayerContact, playerContacts { steamIdError = true } }
@@ -716,16 +703,10 @@ handleAction SetUpAccount = do
                     , gamerTag: const state' { step = PlayerContact, playerContacts { gamerTagError = true } }
                     , friendCode: const state' { step = PlayerContact, playerContacts { friendCodeError = true } }
                     }
-                , registration:
-                    foldl
-                    (\state' error' ->
-                        match
-                        { nickname: const state' { registration { nicknameError = true } }
-                        , password: const state' { registration { passwordError = true } }
-                        }
-                        error'
-                    )
-                    state
+                , registration: state # foldl \state' error' -> error' # match
+                    { nickname: const state' { registration { nicknameError = true } }
+                    , password: const state' { registration { passwordError = true } }
+                    }
                 , nicknameTaken: const state { registration { nicknameTaken = true } }
                 }
                 error

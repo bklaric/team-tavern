@@ -108,7 +108,7 @@ render (Loaded state @ { player: player', status }) =
     <> guard state.editPlayerModalShown [ editPlayer player' $ const $ Just HideEditPlayerModal ]
     <> guard state.createTeamModalShown [ createTeam $ const $ Just HideCreateTeamModal ]
     <> foldMap
-        (\profile -> [ editProfile { nickname: player'.nickname, profile } $ const $ Just HideEditProfileModal ])
+        (\profile -> [ editProfile { player: player', profile } $ const $ Just HideEditProfileModal ])
         state.editProfileModalShown
 render NotFound = HH.p_ [ HH.text "Player could not be found." ]
 render Error = HH.p_ [ HH.text
