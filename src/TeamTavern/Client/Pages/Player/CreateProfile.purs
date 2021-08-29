@@ -11,6 +11,7 @@ import Data.Maybe (Maybe(..))
 import Data.Variant (SProxy(..), match)
 import Halogen as H
 import Halogen.HTML as HH
+import Record.Extra (pick)
 import TeamTavern.Client.Components.Form (form, otherFormError, submitButton)
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.Player.ProfileFormInput (profileFormInput)
@@ -19,6 +20,7 @@ import TeamTavern.Client.Script.Navigate (hardNavigate)
 import TeamTavern.Client.Script.Request (postNoContent)
 import TeamTavern.Routes.ViewGame as ViewGame
 import TeamTavern.Routes.ViewPlayer as ViewPlayer
+import TeamTavern.Server.Profile.AddPlayerProfile.ReadProfile (RequestContent)
 import TeamTavern.Server.Profile.AddPlayerProfile.SendResponse (BadContent)
 import Type (type ($))
 import Web.Event.Event (preventDefault)
@@ -58,19 +60,21 @@ render { profile, otherError, submitting } =
 sendRequest :: forall left. State -> Async left $ Maybe $ Either BadContent Unit
 sendRequest { nickname, handle, profile } =
     postNoContent ("/api/players/" <> nickname <> "/profiles/" <> handle)
-    { platform: profile.platform
-    , contacts: profile.contacts
-    , fieldValues: profile.fieldValues
-    , newOrReturning: profile.newOrReturning
-    , about: profile.about
-    }
+    ({ details: pick profile.details
+    , contacts: pick profile.contacts
+    } :: RequestContent)
 
 handleAction :: forall output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
 handleAction (UpdateProfile profile) =
     H.modify_ _
         { profile
-            { platform = profile.platform
+            { details
+                { platform = profile.details.platform
+                , fieldValues = profile.details.fieldValues
+                , newOrReturning = profile.details.newOrReturning
+                , about = profile.details.about
+                }
             , contacts
                 { discordTag = profile.contacts.discordTag
                 , steamId = profile.contacts.steamId
@@ -80,9 +84,6 @@ handleAction (UpdateProfile profile) =
                 , gamerTag = profile.contacts.gamerTag
                 , friendCode = profile.contacts.friendCode
                 }
-            , fieldValues = profile.fieldValues
-            , newOrReturning = profile.newOrReturning
-            , about = profile.about
             }
         }
 handleAction (SendRequest event) = do
@@ -91,8 +92,10 @@ handleAction (SendRequest event) = do
         { submitting = true
         , otherError = false
         , profile
-            { urlErrors = []
-            , aboutError = false
+            { details
+                { urlErrors = []
+                , aboutError = false
+                }
             , contacts
                 { discordTagError = false
                 , steamIdError = false
@@ -112,9 +115,9 @@ handleAction (SendRequest event) = do
             (\state error ->
                 match
                 { profile: state # foldl \state' error' -> error' # match
-                    { about: const state { profile { aboutError = true } }
-                    , url: \{ key } -> state { profile
-                        { urlErrors = Array.cons key state.profile.urlErrors } }
+                    { about: const state { profile { details { aboutError = true } } }
+                    , url: \{ key } -> state { profile { details
+                        { urlErrors = Array.cons key state.profile.details.urlErrors } } }
                     }
                 , contacts: state # foldl \state' error' -> error' # match
                     { discordTag: const state' { profile { contacts { discordTagError = true } } }

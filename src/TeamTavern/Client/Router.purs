@@ -208,8 +208,6 @@ handleAction (Init state route) = do
                     "game" -> Just Preboarding.Game
                     "player-profile" -> Just Preboarding.PlayerProfile
                     "team-profile" -> Just Preboarding.TeamProfile
-                    "player-contact" -> Just Preboarding.PlayerContact
-                    "team-contact" -> Just Preboarding.TeamContact
                     "register" -> Just Preboarding.Register
                     _ -> Nothing
             in

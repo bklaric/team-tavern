@@ -26,6 +26,7 @@ import Record.Builder as Builder
 import Record.Extra (pick)
 import Simple.JSON (writeJSON)
 import TeamTavern.Routes.Preboard (BadContent, RequestContent, OkContent)
+import TeamTavern.Routes.Shared.Platform (Platform(..))
 import TeamTavern.Server.Architecture.Deployment (Deployment)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo, Cookies, setCookieHeaderFull)
 import TeamTavern.Server.Infrastructure.EnsureNotSignedIn (ensureNotSignedIn')
@@ -166,19 +167,29 @@ preboard deployment pool cookies body =
         case content of
         { ilk: 1
         , player: Just player
-        , playerContacts: Just contacts
         , playerProfile: Just profile
+        , playerContacts: Just contacts
         , registration
         } -> do
             -- Read fields from database.
             game <- Player.loadFields client content.gameHandle
+
+            -- We only want to patch the selected platform contact.
+            let contactsHue = contacts
+                    { steamId    = if profile.platform == Steam       then contacts.steamId    else Nothing
+                    , riotId     = if profile.platform == Riot        then contacts.riotId     else Nothing
+                    , battleTag  = if profile.platform == BattleNet   then contacts.battleTag  else Nothing
+                    , psnId      = if profile.platform == PlayStation then contacts.psnId      else Nothing
+                    , gamerTag   = if profile.platform == Xbox        then contacts.gamerTag   else Nothing
+                    , friendCode = if profile.platform == Switch      then contacts.friendCode else Nothing
+                    }
 
             -- Validate data from body.
             { player', profile', contacts', registration' } <-
                 { player': _, profile': _, contacts': _, registration': _ }
                 <$> validatePlayerV player
                 <*> validateProfileV game profile
-                <*> validateContactsV [ profile.platform ] contacts
+                <*> validateContactsV [ profile.platform ] contactsHue
                 <*> validateRegistrationV registration
                 # AsyncV.toAsync
                 # label (SProxy :: SProxy "invalidBody")

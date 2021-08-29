@@ -17,11 +17,15 @@ type FieldValue =
 
 type Profile =
     { platform :: Platform
-    , contacts :: Contacts
     , fieldValues :: Array FieldValue
     , newOrReturning :: Boolean
     , about :: String
     }
 
-readProfile :: forall errors. Body -> Async (ClientError errors) Profile
+type RequestContent =
+    { details :: Profile
+    , contacts :: Contacts
+    }
+
+readProfile :: forall errors. Body -> Async (ClientError errors) RequestContent
 readProfile = readJsonBody

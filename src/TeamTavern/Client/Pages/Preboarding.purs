@@ -7,7 +7,7 @@ import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
 import Control.Alt ((<|>))
-import Data.Array (foldMap, foldl, mapMaybe)
+import Data.Array (foldl, mapMaybe)
 import Data.Array as Array
 import Data.Bifunctor (bimap, lmap)
 import Data.Const (Const)
@@ -59,8 +59,6 @@ data Step
     | Game
     | PlayerProfile
     | TeamProfile
-    | PlayerContact
-    | TeamContact
     | Register
 
 derive instance eqStep :: Eq Step
@@ -75,8 +73,6 @@ instance writeForeginStep :: WriteForeign Step where
     writeImpl Game = unsafeToForeign "Game"
     writeImpl PlayerProfile = unsafeToForeign "PlayerProfile"
     writeImpl TeamProfile = unsafeToForeign "TeamProfile"
-    writeImpl PlayerContact = unsafeToForeign "PlayerContact"
-    writeImpl TeamContact = unsafeToForeign "TeamContact"
     writeImpl Register = unsafeToForeign "Register"
 
 instance readForeignStep :: ReadForeign Step where
@@ -88,8 +84,6 @@ instance readForeignStep :: ReadForeign Step where
         "Game" -> pure Game
         "PlayerProfile" -> pure PlayerProfile
         "TeamProfile" -> pure TeamProfile
-        "PlayerContact" -> pure PlayerContact
-        "TeamContact" -> pure TeamContact
         "Register" -> pure Register
         step -> fail $ ForeignError $ "Unknown step " <> step
 
@@ -145,8 +139,6 @@ type Input =
     , game :: Game
     , playerProfile :: PlayerProfileFormInput.Input
     , teamProfile :: TeamProfileFormInput.Input
-    , playerContacts :: PlayerContactsFormInput.Input
-    -- , teamContact :: TeamContactsFormInput.Input
     , registration :: RegistrationInput.Input
     , otherError :: Boolean
     }
@@ -175,8 +167,6 @@ emptyInput playerOrTeam game =
                     Just { key, label, icon, options: options }
                 _ -> Nothing
             }
-    , playerContacts: PlayerContactsFormInput.emptyInput $ foldMap (\game' -> [ game'.platforms.head ]) game
-    -- , teamContact: TeamContactsFormInput.emptyInput []
     , registration: RegistrationInput.emptyInput
     , otherError: false
     }
@@ -189,8 +179,6 @@ type State =
     , game :: Game
     , playerProfile :: PlayerProfileFormInput.Input
     , teamProfile :: TeamProfileFormInput.Input
-    , playerContacts :: PlayerContactsFormInput.Input
-    -- , teamContact :: TeamContactsFormInput.Input
     , registration :: RegistrationInput.Input
     , otherError :: Boolean
     , submitting :: Boolean
@@ -207,8 +195,6 @@ data Action
     | UpdateGame GameInput.Output
     | UpdatePlayerProfile PlayerProfileFormInput.Output
     | UpdateTeamProfile TeamProfileFormInput.Output
-    | UpdatePlayerContact PlayerContactsFormInput.Output
-    -- | UpdateTeamContact TeamContactsFormInput.Output
     | UpdateRegistration RegistrationInput.Output
     | SetUpAccount
 
@@ -340,7 +326,7 @@ renderPage { step: PlayerProfile, playerProfile, otherError, submitting, game } 
             case game of
             Preselected _ -> Player
             _ -> Game
-        , primaryButton_ "Next" $ SetStep PlayerContact
+        , primaryButton_ "Next" $ SetStep Register
         ]
     ]
 renderPage { step: TeamProfile, teamProfile, otherError, submitting, game } =
@@ -355,28 +341,6 @@ renderPage { step: TeamProfile, teamProfile, otherError, submitting, game } =
             case game of
             Preselected _ -> Team
             _ -> Game
-        , primaryButton_ "Next" $ SetStep TeamContact
-        ]
-    ]
-renderPage { step: PlayerContact, playerContacts, otherError, submitting, game } =
-    [ boardingStep
-        [ boardingHeading "Player contact"
-        , boardingDescription  """Enter your contact details so players and teams can contact you."""
-        , PlayerContactsFormInput.contactsFormInput playerContacts UpdatePlayerContact
-        ]
-    , boardingButtons
-        [ secondaryButton_ "Back" $ SetStep PlayerProfile
-        , primaryButton_ "Next" $ SetStep Register
-        ]
-    ]
-renderPage { step: TeamContact, teamProfile, otherError, submitting, game } =
-    [ boardingStep
-        [ boardingHeading "Team contact"
-        , boardingDescription  """Enter your team's contact details so players can contact you."""
-        , TeamProfileFormInput.profileFormInput teamProfile UpdateTeamProfile
-        ]
-    , boardingButtons
-        [ secondaryButton_ "Back" $ SetStep TeamProfile
         , primaryButton_ "Next" $ SetStep Register
         ]
     ]
@@ -389,10 +353,10 @@ renderPage { step: Register, registration, otherError, submitting, playerOrTeam 
     , boardingButtons
         [ secondaryButton_ "Back" $ SetStep
             case playerOrTeam of
-            Preselected' (PlayerOrTeamInput.Player) -> PlayerContact
-            Preselected' (PlayerOrTeamInput.Team) -> TeamContact
-            Selected' (Just PlayerOrTeamInput.Player) -> PlayerContact
-            Selected' (Just PlayerOrTeamInput.Team) -> TeamContact
+            Preselected' (PlayerOrTeamInput.Player) -> PlayerProfile
+            Preselected' (PlayerOrTeamInput.Team) -> TeamProfile
+            Selected' (Just PlayerOrTeamInput.Player) -> PlayerProfile
+            Selected' (Just PlayerOrTeamInput.Team) -> TeamProfile
             Selected' Nothing -> PlayerOrTeam
         , HH.div [ HS.class_ "boarding-submit-button-group" ] $
             [ HH.button
@@ -421,19 +385,16 @@ sendRequest (state :: State) = Async.unify do
         case state of
         { player
         , playerProfile: profile
-        , playerContacts: contact
         , registration
         } | Just game <- getGame state.game
-          , Just (PlayerOrTeamInput.Player) <- getPlayerOrTeam state.playerOrTeam -> let
-            profile' = profile { contacts = pick profile.contacts }
-            in Async.right
+          , Just (PlayerOrTeamInput.Player) <- getPlayerOrTeam state.playerOrTeam -> Async.right
             { ilk: 1
             , player: Just $ pick player
             , team: Nothing
             , gameHandle: game.handle
-            , playerProfile: Just $ pick profile'
-            , playerContacts: Just $ pick contact
+            , playerProfile: Just $ pick profile.details
             , teamProfile: Nothing
+            , playerContacts: Just $ pick profile.contacts
             , registration: pick registration
             }
         { team
@@ -482,8 +443,6 @@ updateHistoryState (state :: State) = do
         Game -> navigateReplace state "/preboarding/game"
         PlayerProfile -> navigateReplace state "/preboarding/player-profile"
         TeamProfile -> navigateReplace state "/preboarding/team-profile"
-        PlayerContact -> navigateReplace state "/preboarding/player-contact"
-        TeamContact -> navigateReplace state "/preboarding/team-contact"
         Register -> navigateReplace state "/preboarding/register"
 
 handleAction :: forall action output slots left.
@@ -510,8 +469,6 @@ handleAction (SetStep step) = do
         Game -> navigate state "/preboarding/game"
         PlayerProfile -> navigate state "/preboarding/player-profile"
         TeamProfile -> navigate state "/preboarding/team-profile"
-        PlayerContact -> navigate state "/preboarding/player-contact"
-        TeamContact -> navigate state "/preboarding/team-contact"
         Register -> navigate state "/preboarding/register"
 handleAction (UpdatePlayerOrTeam playerOrTeam) = do
     state <- H.modify _ { playerOrTeam = Selected' $ Just playerOrTeam }
@@ -554,12 +511,14 @@ handleAction (UpdateGame game) = do
     state <- H.modify _
         { game = Selected $ Just game
         , playerProfile
-            { platforms = game.platforms
-            , fields = game.fields
-            , platform = game.platforms.head
-            , fieldValues = []
-            , newOrReturning = false
-            , about = ""
+            { details
+                { platforms = game.platforms
+                , fields = game.fields
+                , platform = game.platforms.head
+                , fieldValues = []
+                , newOrReturning = false
+                , about = ""
+                }
             }
         , teamProfile
             { allPlatforms = game.platforms
@@ -575,15 +534,25 @@ handleAction (UpdateGame game) = do
             }
         }
     updateHistoryState state
-handleAction (UpdatePlayerProfile details) = do
+handleAction (UpdatePlayerProfile profile) = do
     state <- H.modify _
         { playerProfile
-            { platform = details.platform
-            , fieldValues = details.fieldValues
-            , newOrReturning = details.newOrReturning
-            , about = details.about
+            { details
+                { platform = profile.details.platform
+                , fieldValues = profile.details.fieldValues
+                , newOrReturning = profile.details.newOrReturning
+                , about = profile.details.about
+                }
+            , contacts
+                { discordTag = profile.contacts.discordTag
+                , steamId = profile.contacts.steamId
+                , riotId = profile.contacts.riotId
+                , battleTag = profile.contacts.battleTag
+                , psnId = profile.contacts.psnId
+                , gamerTag = profile.contacts.gamerTag
+                , friendCode = profile.contacts.friendCode
+                }
             }
-        , playerContacts { requiredPlatforms = [ details.platform ] }
         }
     updateHistoryState state
 handleAction (UpdateTeamProfile details) = do
@@ -595,33 +564,8 @@ handleAction (UpdateTeamProfile details) = do
             , newOrReturning = details.newOrReturning
             , about = details.about
             }
-        -- , teamContact { requiredPlatforms = details.platforms }
         }
     updateHistoryState state
-handleAction (UpdatePlayerContact contact) = do
-    state <- H.modify _
-        { playerContacts
-            { discordTag = contact.discordTag
-            , steamId = contact.steamId
-            , riotId = contact.riotId
-            , battleTag = contact.battleTag
-            , psnId = contact.psnId
-            , gamerTag = contact.gamerTag
-            , friendCode = contact.friendCode
-            }
-        }
-    updateHistoryState state
--- handleAction (UpdateTeamContact details) = do
---     state <- H.modify _
---         { teamContact
---             { size = details.size
---             , selectedPlatforms = details.platforms
---             , fieldValues = details.fieldValues
---             , newOrReturning = details.newOrReturning
---             , about = details.about
---             }
---         }
---     updateHistoryState state
 handleAction (UpdateRegistration registration) = do
     state <- H.modify _
         { registration
@@ -642,8 +586,19 @@ handleAction SetUpAccount = do
                 , contactError = false
                 }
             , playerProfile
-                { urlErrors = []
-                , aboutError = false
+                { details
+                    { urlErrors = []
+                    , aboutError = false
+                    }
+                , contacts
+                    { discordTagError = false
+                    , steamIdError = false
+                    , riotIdError = false
+                    , battleTagError = false
+                    , psnIdError = false
+                    , gamerTagError = false
+                    , friendCodeError = false
+                    }
                 }
             , teamProfile
                 { platformsError = false
@@ -677,11 +632,11 @@ handleAction SetUpAccount = do
                 , playerProfile: state # foldl \state' error' -> error' # match
                     { url: \{ key } -> state'
                         { step = if state'.step > PlayerProfile then PlayerProfile else state'.step
-                        , playerProfile { urlErrors = Array.cons key state'.playerProfile.urlErrors }
+                        , playerProfile { details { urlErrors = Array.cons key state'.playerProfile.details.urlErrors } }
                         }
                     , about: const state'
                         { step = if state'.step > PlayerProfile then PlayerProfile else state'.step
-                        , playerProfile { aboutError = true }
+                        , playerProfile { details { aboutError = true } }
                         }
                     }
                 , teamProfile: state # foldl \state' error' -> error' # match
@@ -695,13 +650,13 @@ handleAction SetUpAccount = do
                         }
                     }
                 , playerContacts: state # foldl \state' error' -> error' # match
-                    { discordTag: const state' { step = PlayerContact, playerContacts { discordTagError = true } }
-                    , steamId: const state' { step = PlayerContact, playerContacts { steamIdError = true } }
-                    , riotId: const state' { step = PlayerContact, playerContacts { riotIdError = true } }
-                    , battleTag: const state' { step = PlayerContact, playerContacts { battleTagError = true } }
-                    , psnId: const state' { step = PlayerContact, playerContacts { psnIdError = true } }
-                    , gamerTag: const state' { step = PlayerContact, playerContacts { gamerTagError = true } }
-                    , friendCode: const state' { step = PlayerContact, playerContacts { friendCodeError = true } }
+                    { discordTag: const state' { step = PlayerProfile, playerProfile { contacts { discordTagError = true } } }
+                    , steamId: const state' { step = PlayerProfile, playerProfile { contacts { steamIdError = true } } }
+                    , riotId: const state' { step = PlayerProfile, playerProfile { contacts { riotIdError = true } } }
+                    , battleTag: const state' { step = PlayerProfile, playerProfile { contacts { battleTagError = true } } }
+                    , psnId: const state' { step = PlayerProfile, playerProfile { contacts { psnIdError = true } } }
+                    , gamerTag: const state' { step = PlayerProfile, playerProfile { contacts { gamerTagError = true } } }
+                    , friendCode: const state' { step = PlayerProfile, playerProfile { contacts { friendCodeError = true } } }
                     }
                 , registration: state # foldl \state' error' -> error' # match
                     { nickname: const state' { registration { nicknameError = true } }

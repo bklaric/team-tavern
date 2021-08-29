@@ -41,19 +41,19 @@ updatePlayerProfile pool identifiers cookies body =
 
         -- We only want to patch the selected platform contact.
         let contacts' = profile'.contacts
-                { steamId    = if profile'.platform == Steam       then profile'.contacts.steamId    else Nothing
-                , riotId     = if profile'.platform == Riot        then profile'.contacts.riotId     else Nothing
-                , battleTag  = if profile'.platform == BattleNet   then profile'.contacts.battleTag  else Nothing
-                , psnId      = if profile'.platform == PlayStation then profile'.contacts.psnId      else Nothing
-                , gamerTag   = if profile'.platform == Xbox        then profile'.contacts.gamerTag   else Nothing
-                , friendCode = if profile'.platform == Switch      then profile'.contacts.friendCode else Nothing
+                { steamId    = if profile'.details.platform == Steam       then profile'.contacts.steamId    else Nothing
+                , riotId     = if profile'.details.platform == Riot        then profile'.contacts.riotId     else Nothing
+                , battleTag  = if profile'.details.platform == BattleNet   then profile'.contacts.battleTag  else Nothing
+                , psnId      = if profile'.details.platform == PlayStation then profile'.contacts.psnId      else Nothing
+                , gamerTag   = if profile'.details.platform == Xbox        then profile'.contacts.gamerTag   else Nothing
+                , friendCode = if profile'.details.platform == Switch      then profile'.contacts.friendCode else Nothing
                 }
 
         -- Validate profile and contacts.
         { profile, contacts } <-
             { profile: _, contacts: _ }
-            <$> validateProfileV game profile'
-            <*> validateContactsV [ profile'.platform ] contacts'
+            <$> validateProfileV game profile'.details
+            <*> validateContactsV [ profile'.details.platform ] contacts'
             # AsyncV.toAsync
             # label (SProxy :: _ "invalidBody")
 
