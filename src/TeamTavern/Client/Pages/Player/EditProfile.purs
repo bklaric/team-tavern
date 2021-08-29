@@ -86,7 +86,23 @@ handleAction (UpdateProfile profile) =
         }
 handleAction (SendRequest event) = do
     H.liftEffect $ preventDefault event
-    currentState <- H.modify _ { submitting = true }
+    currentState <- H.modify _
+        { submitting = true
+        , otherError = false
+        , profile
+            { urlErrors = []
+            , aboutError = false
+            , contacts
+                { discordTagError = false
+                , steamIdError = false
+                , riotIdError = false
+                , battleTagError = false
+                , psnIdError = false
+                , gamerTagError = false
+                , friendCodeError = false
+                }
+            }
+        }
     response <- H.lift $ sendRequest currentState
     case response of
         Just (Right _) -> hardNavigate $ "/players/" <> currentState.nickname
@@ -111,24 +127,9 @@ handleAction (SendRequest event) = do
                 }
                 error
             )
-            (currentState
-                { submitting = false
-                , otherError = false
-                , profile
-                    { urlErrors = []
-                    , aboutError = false
-                    }
-                }
-            )
+            (currentState { submitting = false })
             badContent
-        Nothing -> H.put currentState
-            { submitting = false
-            , otherError = true
-            , profile
-                { urlErrors = []
-                , aboutError = false
-                }
-            }
+        Nothing -> H.put currentState { submitting = false, otherError = true }
 
 component :: forall query output left. H.Component HH.HTML query Input output (Async left)
 component = H.mkComponent
@@ -142,7 +143,7 @@ component = H.mkComponent
         , profile:
             { platforms
             , fields
-            , platform: platforms.head
+            , platform
             , contacts:
                 { discordTag
                 , discordTagError: false

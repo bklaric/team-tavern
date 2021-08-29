@@ -88,9 +88,7 @@ render (Loaded state @ { player: player', status }) =
         [ contentHeaderSection [ contentHeading'
             [ contentHeadingFaIcon "fas fa-user", HH.text player'.nickname ] ]
         ]
-        <> case status of
-            SignedInSelf -> [ playerOptions player'.nickname ]
-            _ -> []
+        <> guard (status == SignedInSelf) [ playerOptions player'.nickname ]
     , contentDescription
         case status of
         SignedInSelf -> "View and edit all your details, profiles and teams."

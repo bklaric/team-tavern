@@ -33,16 +33,13 @@ profiles
     -> Status
     -> (ViewPlayer.OkContentProfile -> action)
     -> HH.ComponentHTML action (ChildSlots slots) (Async left)
-profiles { nickname, profiles: profiles' } status showEditProfileModal =
+profiles player @ { profiles: profiles' } status showEditProfileModal =
     card $
     [ cardHeader $
         [ cardHeading "Profiles" ]
         <>
-        case status of
-        SignedInSelf -> Array.singleton $
-            HH.slot (SProxy :: SProxy "createProfile") unit createProfileButton
-            { nickname, profileGameHandles: profiles' <#> _.handle } absurd
-        _ -> []
+        guard (status == SignedInSelf)
+        [ HH.slot (SProxy :: SProxy "createProfile") unit createProfileButton player absurd ]
     ]
     <>
     if Array.null profiles'
@@ -66,10 +63,8 @@ profiles { nickname, profiles: profiles' } status showEditProfileModal =
                 ]
             ]
             <>
-            case status of
-            SignedInSelf -> Array.singleton $
-                regularButton "fas fa-user-edit" "Edit profile" $ showEditProfileModal profile
-            _ -> []
+            guard (status == SignedInSelf)
+            [ regularButton "fas fa-user-edit" "Edit profile" $ showEditProfileModal profile ]
         ]
         <>
         guard (full profileDetails' || full about)

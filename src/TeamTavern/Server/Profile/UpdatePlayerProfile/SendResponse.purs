@@ -12,10 +12,10 @@ import TeamTavern.Server.Profile.UpdatePlayerProfile.LogError (UpdateError)
 import Type (type ($))
 
 type BadContent = Array $ Variant
-    ( profile :: Array (Variant
-                ( about :: Array String
-                , url :: { key :: String, message :: Array String }
-                ))
+    ( profile :: Array $ Variant
+        ( about :: Array String
+        , url :: { key :: String, message :: Array String }
+        )
     , contacts :: Array ContactsError
     )
 

@@ -29,9 +29,8 @@ contacts contacts' status showEditModal = let
     [ cardHeader $
         [ cardHeading "Contacts" ]
         <>
-        case status of
-        SignedInSelf -> [ regularButton "fas fa-user-edit" "Edit contacts" showEditModal ]
-        _ -> []
+        guard (status == SignedInSelf)
+        [ regularButton "fas fa-user-edit" "Edit contacts" showEditModal ]
     , cardSection
         if Array.null contacts''
         then Array.singleton $ missing

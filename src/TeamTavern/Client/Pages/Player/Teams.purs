@@ -3,6 +3,7 @@ module TeamTavern.Client.Pages.Player.Teams (teams) where
 import Prelude
 
 import Data.Array as Array
+import Data.Monoid (guard)
 import Data.Symbol (SProxy(..))
 import Effect.Class (class MonadEffect)
 import Halogen.HTML as HH
@@ -30,10 +31,8 @@ teams player status showCreateTeamModal =
     [ cardHeader $
         [ cardHeading "Teams" ]
         <>
-        case status of
-        SignedInSelf -> Array.singleton $
-            primaryButton "fas fa-user-plus" "Create team" showCreateTeamModal
-        _ -> []
+        guard (status == SignedInSelf)
+        [ primaryButton "fas fa-user-plus" "Create team" showCreateTeamModal ]
     ]
     <>
     if Array.null player.teams
