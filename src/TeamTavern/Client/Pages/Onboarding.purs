@@ -305,6 +305,7 @@ sendRequest (state :: State) = Async.unify do
             , gameHandle: game.handle
             , playerProfile: Just $ pick profile.details
             , teamProfile: Nothing
+            , playerContacts: Just $ pick profile.contacts
             }
         { playerOrTeam: Just PlayerOrTeamInput.Team
         , team: team
@@ -323,6 +324,7 @@ sendRequest (state :: State) = Async.unify do
                 , newOrReturning: profile.newOrReturning
                 , about: profile.about
                 }
+            , playerContacts: Nothing
             }
         _ -> Async.left Nothing
     response <-
@@ -537,6 +539,15 @@ handleAction SetUpAccount = do
                 , teamProfile: state # foldl \state' error' -> error' # match
                     { platforms: const state' { teamProfile { platformsError = true } }
                     , about: const state' { teamProfile { aboutError = true } }
+                    }
+                , playerContacts: state # foldl \state' error' -> error' # match
+                    { discordTag: const state' { playerProfile { contacts { discordTagError = true } } }
+                    , steamId: const state' { playerProfile { contacts { steamIdError = true } } }
+                    , riotId: const state' { playerProfile { contacts { riotIdError = true } } }
+                    , battleTag: const state' { playerProfile { contacts { battleTagError = true } } }
+                    , psnId: const state' { playerProfile { contacts { psnIdError = true } } }
+                    , gamerTag: const state' { playerProfile { contacts { gamerTagError = true } } }
+                    , friendCode: const state' { playerProfile { contacts { friendCodeError = true } } }
                     }
                 }
                 error

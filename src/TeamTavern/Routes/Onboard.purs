@@ -9,6 +9,7 @@ import Jarilo.Route (Route)
 import Jarilo.Segment (Literal)
 import TeamTavern.Routes.Shared.Organization (OrganizationNW)
 import TeamTavern.Routes.Shared.Platform (Platform)
+import TeamTavern.Routes.Shared.Player (Contacts, ContactsError)
 import TeamTavern.Routes.Shared.Size (Size)
 import Type (type ($))
 
@@ -76,6 +77,8 @@ type RequestContent =
     , gameHandle :: String
     , playerProfile :: Maybe PlayerProfileRequestContent
     , teamProfile :: Maybe TeamProfileRequestContent
+    , playerContacts :: Maybe Contacts
+    -- , teamContact :: Maybe TeamContactRequestContent
     }
 
 type OkContent = { teamHandle :: Maybe String }
@@ -96,4 +99,5 @@ type BadContent = Array $ Variant
         ( platforms :: Array String
         , about :: Array String
         )
+    , playerContacts :: Array ContactsError
     )

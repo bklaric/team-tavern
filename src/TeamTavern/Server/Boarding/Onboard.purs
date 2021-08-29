@@ -23,12 +23,15 @@ import Record.Builder as Builder
 import Record.Extra (pick)
 import Simple.JSON (writeJSON)
 import TeamTavern.Routes.Onboard (BadContent, RequestContent, OkContent)
+import TeamTavern.Routes.Shared.Platform (Platform(..))
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
 import TeamTavern.Server.Infrastructure.Log (clientHandler, internalHandler, logt, notAuthenticatedHandler, notAuthorizedHandler)
 import TeamTavern.Server.Infrastructure.Log as Log
 import TeamTavern.Server.Infrastructure.Postgres (transaction)
 import TeamTavern.Server.Infrastructure.ReadJsonBody (readJsonBody)
+import TeamTavern.Server.Player.UpdateContacts.ValidateContacts (ContactsErrors, validateContactsV)
+import TeamTavern.Server.Player.UpdateContacts.WriteContacts (writeContacts)
 import TeamTavern.Server.Player.UpdatePlayer.UpdateDetails (updateDetails)
 import TeamTavern.Server.Player.UpdatePlayer.ValidatePlayer (validatePlayerV)
 import TeamTavern.Server.Profile.AddPlayerProfile.AddProfile (addProfile)
@@ -54,6 +57,7 @@ type OnboardError = Variant
         ( team :: TeamErrors
         , playerProfile :: PlayerProfile.ProfileErrors
         , teamProfile :: TeamProfile.ProfileErrors
+        , playerContacts :: ContactsErrors
         )
     )
 
@@ -64,6 +68,7 @@ invalidBodyHandler :: forall fields. Lacks "invalidBody" fields =>
         ( team :: TeamErrors
         , playerProfile :: PlayerProfile.ProfileErrors
         , teamProfile :: TeamProfile.ProfileErrors
+        , playerContacts :: ContactsErrors
         )
         -> Effect Unit
     | fields }
@@ -72,6 +77,7 @@ invalidBodyHandler = Builder.insert (SProxy :: SProxy "invalidBody") \errors ->
     { team: \errors' -> logt $ "Team errors: " <> show errors'
     , playerProfile: \errors' -> logt $ "Player profile errors: " <> show errors'
     , teamProfile: \errors' -> logt $ "Team profile errors: " <> show errors'
+    , playerContacts: \errors' -> logt $ "Player contacts errors: " <> show errors'
     }
 
 logError :: OnboardError -> Effect Unit
@@ -92,6 +98,7 @@ errorResponse = match
             { team: inj (SProxy :: SProxy "team") <<< Array.fromFoldable
             , playerProfile: inj (SProxy :: SProxy "playerProfile") <<< Array.fromFoldable
             , teamProfile: inj (SProxy :: SProxy "teamProfile") <<< Array.fromFoldable
+            , playerContacts: inj (SProxy :: _ "playerContacts") <<< Array.fromFoldable
             }
         # (writeJSON :: BadContent -> String)
         # badRequest_
@@ -120,14 +127,25 @@ onboard pool cookies body =
     -- Start the transaction.
     result <- pool # transaction \client ->
         case content of
-        { ilk: 1, player: Just player, playerProfile: Just profile } -> do
+        { ilk: 1, player: Just player, playerProfile: Just profile, playerContacts: Just contacts } -> do
             -- Read fields from database.
             game <- Player.loadFields client content.gameHandle
 
-            { player', profile' } <-
-                { player': _, profile': _ }
+            -- We only want to patch the selected platform contact.
+            let contactsHue = contacts
+                    { steamId    = if profile.platform == Steam       then contacts.steamId    else Nothing
+                    , riotId     = if profile.platform == Riot        then contacts.riotId     else Nothing
+                    , battleTag  = if profile.platform == BattleNet   then contacts.battleTag  else Nothing
+                    , psnId      = if profile.platform == PlayStation then contacts.psnId      else Nothing
+                    , gamerTag   = if profile.platform == Xbox        then contacts.gamerTag   else Nothing
+                    , friendCode = if profile.platform == Switch      then contacts.friendCode else Nothing
+                    }
+
+            { player', profile', contacts' } <-
+                { player': _, profile': _, contacts': _ }
                 <$> validatePlayerV player
                 <*> validateProfileV game profile
+                <*> validateContactsV [ profile.platform ] contactsHue
                 # AsyncV.toAsync
                 # label (SProxy :: SProxy "invalidBody")
             updateDetails client (unwrap cookieInfo.id) player'
@@ -136,6 +154,7 @@ onboard pool cookies body =
                 , nickname: unwrap cookieInfo.nickname
                 }
                 profile'
+            writeContacts client (unwrap cookieInfo.id) contacts'
             pure { teamHandle: Nothing, profileId }
         { ilk: 2, team: Just team, teamProfile: Just profile } -> do
             -- Read fields from database.

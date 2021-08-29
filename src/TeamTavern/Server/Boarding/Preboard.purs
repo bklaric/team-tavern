@@ -67,9 +67,9 @@ type PreboardError = Variant
     , notAuthorized :: Array String
     , invalidBody :: NonEmptyList $ Variant
         ( team :: TeamErrors
-        , playerContacts :: ContactsErrors
         , playerProfile :: PlayerProfile.ProfileErrors
         , teamProfile :: TeamProfile.ProfileErrors
+        , playerContacts :: ContactsErrors
         , registration :: RegistrationErrors
         )
     , nicknameTaken ::
@@ -84,9 +84,9 @@ invalidBodyHandler :: forall fields. Lacks "invalidBody" fields =>
     { invalidBody ::
         NonEmptyList $ Variant
         ( team :: TeamErrors
-        , playerContacts :: ContactsErrors
         , playerProfile :: PlayerProfile.ProfileErrors
         , teamProfile :: TeamProfile.ProfileErrors
+        , playerContacts :: ContactsErrors
         , registration :: RegistrationErrors
         )
         -> Effect Unit
@@ -94,9 +94,9 @@ invalidBodyHandler :: forall fields. Lacks "invalidBody" fields =>
 invalidBodyHandler = Builder.insert (SProxy :: SProxy "invalidBody") \errors ->
     foreachE (Array.fromFoldable errors) $ match
     { team: \errors' -> logt $ "Team errors: " <> show errors'
-    , playerContacts: \errors' -> logt $ "Player contacts errors: " <> show errors'
     , playerProfile: \errors' -> logt $ "Player profile errors: " <> show errors'
     , teamProfile: \errors' -> logt $ "Team profile errors: " <> show errors'
+    , playerContacts: \errors' -> logt $ "Player contacts errors: " <> show errors'
     , registration: \errors' -> logt $ "Registration errors: " <> show errors'
     }
 
@@ -124,9 +124,9 @@ errorResponse = match
         # fromFoldable
         <#> match
             { team: inj (SProxy :: SProxy "team") <<< Array.fromFoldable
-            , playerContacts: inj (SProxy :: _ "playerContacts") <<< Array.fromFoldable
             , playerProfile: inj (SProxy :: SProxy "playerProfile") <<< Array.fromFoldable
             , teamProfile: inj (SProxy :: SProxy "teamProfile") <<< Array.fromFoldable
+            , playerContacts: inj (SProxy :: _ "playerContacts") <<< Array.fromFoldable
             , registration: inj (SProxy :: SProxy "registration") <<< Array.fromFoldable
             }
         # (writeJSON :: BadContent -> String)

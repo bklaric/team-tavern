@@ -8,7 +8,7 @@ import Jarilo.Query (NoQuery)
 import Jarilo.Route (Route)
 import Jarilo.Segment (Literal)
 import TeamTavern.Routes.Onboard (PlayerProfileRequestContent, PlayerRequestContent, TeamProfileRequestContent, TeamRequestContent)
-import TeamTavern.Routes.Shared.Player as Player
+import TeamTavern.Routes.Shared.Player (Contacts, ContactsError)
 import Type (type ($))
 
 type Preboard = Route
@@ -29,7 +29,7 @@ type RequestContent =
     , gameHandle :: String
     , playerProfile :: Maybe PlayerProfileRequestContent
     , teamProfile :: Maybe TeamProfileRequestContent
-    , playerContacts :: Maybe Player.Contacts
+    , playerContacts :: Maybe Contacts
     -- , teamContact :: Maybe TeamContactRequestContent
     , registration :: RegisterRequestContent
     }
@@ -52,7 +52,7 @@ type BadContent = Array $ Variant
         ( platforms :: Array String
         , about :: Array String
         )
-    , playerContacts :: Array Player.ContactsError
+    , playerContacts :: Array ContactsError
     , registration :: Array $ Variant
         ( nickname :: Array String
         , password :: Array String
