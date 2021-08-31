@@ -306,6 +306,7 @@ sendRequest (state :: State) = Async.unify do
             , playerProfile: Just $ pick profile.details
             , teamProfile: Nothing
             , playerContacts: Just $ pick profile.contacts
+            , teamContacts: Nothing
             }
         { playerOrTeam: Just PlayerOrTeamInput.Team
         , team: team
@@ -317,14 +318,10 @@ sendRequest (state :: State) = Async.unify do
             , team: Just $ pick team
             , gameHandle: game.handle
             , playerProfile: Nothing
-            , teamProfile: Just
-                { size: profile.size
-                , platforms: profile.selectedPlatforms
-                , fieldValues: profile.fieldValues
-                , newOrReturning: profile.newOrReturning
-                , about: profile.about
-                }
+            , teamProfile: Just $ pick $ Record.insert
+                (SProxy :: _ "platforms") profile.details.selectedPlatforms profile.details
             , playerContacts: Nothing
+            , teamContacts: Just $ pick profile.contacts
             }
         _ -> Async.left Nothing
     response <-
@@ -406,8 +403,6 @@ handleAction (UpdateTeam details) = do
     state <- H.modify _
         { team
             { organization = details.organization
-            , discordTag = details.discordTag
-            , discordServer = details.discordServer
             , ageFrom = details.ageFrom
             , ageTo = details.ageTo
             , locations = details.locations
@@ -435,16 +430,18 @@ handleAction (UpdateGame game) = do
                 }
             }
         , teamProfile
-            { allPlatforms = game.platforms
-            , selectedPlatforms = [ game.platforms.head ]
-            , fields = game.fields # Array.mapMaybe
-                case _ of
-                { ilk, key, label, icon, options: Just options } | ilk == 2 || ilk == 3 ->
-                    Just { key, label, icon, options }
-                _ -> Nothing
-            , fieldValues = []
-            , newOrReturning = false
-            , about = ""
+            { details
+                { allPlatforms = game.platforms
+                , selectedPlatforms = [ game.platforms.head ]
+                , fields = game.fields # Array.mapMaybe
+                    case _ of
+                    { ilk, key, label, icon, options: Just options } | ilk == 2 || ilk == 3 ->
+                        Just { key, label, icon, options }
+                    _ -> Nothing
+                , fieldValues = []
+                , newOrReturning = false
+                , about = ""
+                }
             }
         }
     updateHistoryState state
@@ -469,14 +466,26 @@ handleAction (UpdatePlayerProfile profile) = do
             }
         }
     updateHistoryState state
-handleAction (UpdateTeamProfile details) = do
+handleAction (UpdateTeamProfile profile) = do
     state <- H.modify _
         { teamProfile
-            { size = details.size
-            , selectedPlatforms = details.platforms
-            , fieldValues = details.fieldValues
-            , newOrReturning = details.newOrReturning
-            , about = details.about
+            { details
+                { size = profile.details.size
+                , selectedPlatforms = profile.details.platforms
+                , fieldValues = profile.details.fieldValues
+                , newOrReturning = profile.details.newOrReturning
+                , about = profile.details.about
+                }
+            , contacts
+                { discordTag = profile.contacts.discordTag
+                , discordServer = profile.contacts.discordServer
+                , steamId = profile.contacts.steamId
+                , riotId = profile.contacts.riotId
+                , battleTag = profile.contacts.battleTag
+                , psnId = profile.contacts.psnId
+                , gamerTag = profile.contacts.gamerTag
+                , friendCode = profile.contacts.friendCode
+                }
             }
         }
     updateHistoryState state
@@ -507,8 +516,19 @@ handleAction SetUpAccount = do
                     }
                 }
             , teamProfile
-                { platformsError = false
-                , aboutError = false
+                { details
+                    { platformsError = false
+                    , aboutError = false
+                    }
+                , contacts
+                    { discordTagError = false
+                    , steamIdError = false
+                    , riotIdError = false
+                    , battleTagError = false
+                    , psnIdError = false
+                    , gamerTagError = false
+                    , friendCodeError = false
+                    }
                 }
             }
     response <- H.lift $ sendRequest currentState
@@ -526,9 +546,6 @@ handleAction SetUpAccount = do
                 { team: state # foldl \state' error' -> error' # match
                     { name: const state' { step = Team, team { nameError = true } }
                     , website: const state' { step = Team, team { websiteError = true } }
-                    , discordTag: const state' { step = Team, team { discordTagError = true } }
-                    , discordServer: const state' { step = Team, team { discordServerError = true } }
-                    , contact: const state' { step = Team, team { contactError = true } }
                     }
                 , playerProfile: state # foldl \state' error' -> error' # match
                     { url: \{ key } -> state'
@@ -537,8 +554,8 @@ handleAction SetUpAccount = do
                         { playerProfile { details { aboutError = true } } }
                     }
                 , teamProfile: state # foldl \state' error' -> error' # match
-                    { platforms: const state' { teamProfile { platformsError = true } }
-                    , about: const state' { teamProfile { aboutError = true } }
+                    { platforms: const state' { teamProfile { details { platformsError = true } } }
+                    , about: const state' { teamProfile { details { aboutError = true } } }
                     }
                 , playerContacts: state # foldl \state' error' -> error' # match
                     { discordTag: const state' { playerProfile { contacts { discordTagError = true } } }
@@ -548,6 +565,16 @@ handleAction SetUpAccount = do
                     , psnId: const state' { playerProfile { contacts { psnIdError = true } } }
                     , gamerTag: const state' { playerProfile { contacts { gamerTagError = true } } }
                     , friendCode: const state' { playerProfile { contacts { friendCodeError = true } } }
+                    }
+                , teamContacts: state # foldl \state' error' -> error' # match
+                    { discordTag: const state' { teamProfile { contacts { discordTagError = true } } }
+                    , discordServer: const state' { teamProfile { contacts { discordServerError = true } } }
+                    , steamId: const state' { teamProfile { contacts { steamIdError = true } } }
+                    , riotId: const state' { teamProfile { contacts { riotIdError = true } } }
+                    , battleTag: const state' { teamProfile { contacts { battleTagError = true } } }
+                    , psnId: const state' { teamProfile { contacts { psnIdError = true } } }
+                    , gamerTag: const state' { teamProfile { contacts { gamerTagError = true } } }
+                    , friendCode: const state' { teamProfile { contacts { friendCodeError = true } } }
                     }
                 }
                 error

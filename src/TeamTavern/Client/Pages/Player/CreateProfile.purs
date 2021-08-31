@@ -112,8 +112,7 @@ handleAction (SendRequest event) = do
         Just (Right _) -> hardNavigate $ "/players/" <> currentState.nickname
         Just (Left badContent) -> H.put $
             foldl
-            (\state error ->
-                match
+            (\state error -> error # match
                 { profile: state # foldl \state' error' -> error' # match
                     { about: const state { profile { details { aboutError = true } } }
                     , url: \{ key } -> state { profile { details
@@ -129,7 +128,6 @@ handleAction (SendRequest event) = do
                     , friendCode: const state' { profile { contacts { friendCodeError = true } } }
                     }
                 }
-                error
             )
             (currentState { submitting = false })
             badContent

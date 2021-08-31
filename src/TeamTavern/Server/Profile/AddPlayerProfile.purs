@@ -23,7 +23,7 @@ import TeamTavern.Server.Profile.AddPlayerProfile.ReadProfile (readProfile)
 import TeamTavern.Server.Profile.AddPlayerProfile.SendResponse (sendResponse)
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile (validateProfileV)
 import TeamTavern.Server.Profile.Infrastructure.CheckPlayerAlerts (checkPlayerAlerts)
-import TeamTavern.Server.Profile.Infrastructure.PatchContacts (patchContacts)
+import TeamTavern.Server.Profile.Infrastructure.PatchPlayerContacts (patchPlayerContacts)
 import TeamTavern.Server.Profile.Routes (Identifiers)
 
 addPlayerProfile :: forall left.
@@ -63,7 +63,7 @@ addPlayerProfile pool identifiers cookies body =
         profileId <- addProfile client (unwrap cookieInfo.id) identifiers profile
 
         -- Update contacts.
-        patchContacts client (unwrap cookieInfo.id) contacts
+        patchPlayerContacts client (unwrap cookieInfo.id) contacts
 
         pure profileId
 

@@ -5,7 +5,7 @@ import Prelude
 import Async (Async, alwaysRight, examineLeftWithEffect)
 import Async as Async
 import AsyncV as AsyncV
-import Data.Array (fromFoldable)
+import Data.Array (elem, fromFoldable)
 import Data.Array as Array
 import Data.Bifunctor.Label (label)
 import Data.List.Types (NonEmptyList)
@@ -45,7 +45,10 @@ import TeamTavern.Server.Profile.Infrastructure.CheckPlayerAlerts (checkPlayerAl
 import TeamTavern.Server.Profile.Infrastructure.CheckTeamAlerts (checkTeamAlerts)
 import TeamTavern.Server.Team.Create.AddTeam (addTeam)
 import TeamTavern.Server.Team.Infrastructure.GenerateHandle (generateHandle)
+import TeamTavern.Server.Team.Infrastructure.ValidateContacts as TeamCont
+import TeamTavern.Server.Team.Infrastructure.ValidateContacts as TeamLel
 import TeamTavern.Server.Team.Infrastructure.ValidateTeam (TeamErrors, validateTeamV)
+import TeamTavern.Server.Team.Infrastructure.WriteContacts as TeamIdunno
 import Type (type ($))
 
 type OnboardError = Variant
@@ -58,6 +61,7 @@ type OnboardError = Variant
         , playerProfile :: PlayerProfile.ProfileErrors
         , teamProfile :: TeamProfile.ProfileErrors
         , playerContacts :: ContactsErrors
+        , teamContacts :: TeamLel.ContactsErrors
         )
     )
 
@@ -69,6 +73,7 @@ invalidBodyHandler :: forall fields. Lacks "invalidBody" fields =>
         , playerProfile :: PlayerProfile.ProfileErrors
         , teamProfile :: TeamProfile.ProfileErrors
         , playerContacts :: ContactsErrors
+        , teamContacts :: TeamLel.ContactsErrors
         )
         -> Effect Unit
     | fields }
@@ -78,6 +83,7 @@ invalidBodyHandler = Builder.insert (SProxy :: SProxy "invalidBody") \errors ->
     , playerProfile: \errors' -> logt $ "Player profile errors: " <> show errors'
     , teamProfile: \errors' -> logt $ "Team profile errors: " <> show errors'
     , playerContacts: \errors' -> logt $ "Player contacts errors: " <> show errors'
+    , teamContacts: \errors' -> logt $ "Team contacts errors: " <> show errors'
     }
 
 logError :: OnboardError -> Effect Unit
@@ -99,6 +105,7 @@ errorResponse = match
             , playerProfile: inj (SProxy :: SProxy "playerProfile") <<< Array.fromFoldable
             , teamProfile: inj (SProxy :: SProxy "teamProfile") <<< Array.fromFoldable
             , playerContacts: inj (SProxy :: _ "playerContacts") <<< Array.fromFoldable
+            , teamContacts: inj (SProxy :: _ "teamContacts") <<< Array.fromFoldable
             }
         # (writeJSON :: BadContent -> String)
         # badRequest_
@@ -132,7 +139,7 @@ onboard pool cookies body =
             game <- Player.loadFields client content.gameHandle
 
             -- We only want to patch the selected platform contact.
-            let contactsHue = contacts
+            let contactsCleaned = contacts
                     { steamId    = if profile.platform == Steam       then contacts.steamId    else Nothing
                     , riotId     = if profile.platform == Riot        then contacts.riotId     else Nothing
                     , battleTag  = if profile.platform == BattleNet   then contacts.battleTag  else Nothing
@@ -145,7 +152,7 @@ onboard pool cookies body =
                 { player': _, profile': _, contacts': _ }
                 <$> validatePlayerV player
                 <*> validateProfileV game profile
-                <*> validateContactsV [ profile.platform ] contactsHue
+                <*> validateContactsV [ profile.platform ] contactsCleaned
                 # AsyncV.toAsync
                 # label (SProxy :: SProxy "invalidBody")
             updateDetails client (unwrap cookieInfo.id) player'
@@ -156,20 +163,32 @@ onboard pool cookies body =
                 profile'
             writeContacts client (unwrap cookieInfo.id) contacts'
             pure { teamHandle: Nothing, profileId }
-        { ilk: 2, team: Just team, teamProfile: Just profile } -> do
+        { ilk: 2, team: Just team, teamProfile: Just profile, teamContacts: Just contacts } -> do
             -- Read fields from database.
             game <- Team.loadFields client content.gameHandle
 
-            { team', profile' } <-
-                { team': _, profile': _ }
+            -- We only want to patch the selected platforms contacts.
+            let contactsCleaned = contacts
+                    { steamId    = if Steam       `elem` profile.platforms then contacts.steamId    else Nothing
+                    , riotId     = if Riot        `elem` profile.platforms then contacts.riotId     else Nothing
+                    , battleTag  = if BattleNet   `elem` profile.platforms then contacts.battleTag  else Nothing
+                    , psnId      = if PlayStation `elem` profile.platforms then contacts.psnId      else Nothing
+                    , gamerTag   = if Xbox        `elem` profile.platforms then contacts.gamerTag   else Nothing
+                    , friendCode = if Switch      `elem` profile.platforms then contacts.friendCode else Nothing
+                    }
+
+            { team', profile', contacts' } <-
+                { team': _, profile': _, contacts': _ }
                 <$> validateTeamV team
                 <*> TeamProfile.validateProfileV game profile
+                <*> TeamCont.validateContactsV profile.platforms contactsCleaned
                 # AsyncV.toAsync
                 # label (SProxy :: SProxy "invalidBody")
             let generatedHandle = generateHandle team'.organization cookieInfo.nickname
             { handle } <- addTeam client cookieInfo.id generatedHandle team'
             profileId <- AddTeamProfile.addProfile
                 client cookieInfo.id handle content.gameHandle profile'
+            TeamIdunno.writeContacts client (unwrap cookieInfo.id) contacts'
             pure { teamHandle: Just handle, profileId }
         _ -> Async.left $ inj (SProxy :: SProxy "client") []
 

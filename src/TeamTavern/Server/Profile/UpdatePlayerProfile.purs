@@ -19,7 +19,7 @@ import TeamTavern.Server.Player.UpdateContacts.ValidateContacts (validateContact
 import TeamTavern.Server.Profile.AddPlayerProfile.LoadFields (loadFields)
 import TeamTavern.Server.Profile.AddPlayerProfile.ReadProfile (readProfile)
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile (validateProfileV)
-import TeamTavern.Server.Profile.Infrastructure.PatchContacts (patchContacts)
+import TeamTavern.Server.Profile.Infrastructure.PatchPlayerContacts (patchPlayerContacts)
 import TeamTavern.Server.Profile.Routes (Identifiers)
 import TeamTavern.Server.Profile.UpdatePlayerProfile.LogError (logError)
 import TeamTavern.Server.Profile.UpdatePlayerProfile.SendResponse (sendResponse)
@@ -61,4 +61,4 @@ updatePlayerProfile pool identifiers cookies body =
         updateProfile client cookieInfo identifiers profile
 
         -- Update contacts.
-        patchContacts client (unwrap cookieInfo.id) contacts
+        patchPlayerContacts client (unwrap cookieInfo.id) contacts

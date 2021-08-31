@@ -59,8 +59,6 @@ handleAction (UpdateDetails details) =
     H.modify_ \state -> state
         { details = state.details
             { organization = details.organization
-            , discordTag = details.discordTag
-            , discordServer = details.discordServer
             , ageFrom = details.ageFrom
             , ageTo = details.ageTo
             , locations = details.locations
@@ -85,9 +83,6 @@ handleAction (SendRequest event) = do
                 match
                 { name: const state { details = state.details { nameError = true } }
                 , website: const state { details = state.details { websiteError = true } }
-                , discordTag: const state { details = state.details { discordTagError = true } }
-                , discordServer: const state { details = state.details { discordServerError = true } }
-                , contact: const state { details = state.details { contactError = true } }
                 }
                 error
             )

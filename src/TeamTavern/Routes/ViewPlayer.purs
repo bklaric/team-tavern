@@ -8,7 +8,7 @@ import Jarilo.Route (Route)
 import Jarilo.Segment (Capture, Literal)
 import TeamTavern.Routes.Shared.Organization (OrganizationN)
 import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
-import TeamTavern.Routes.Shared.Player (ContactsRow)
+import TeamTavern.Routes.Shared.Player (Contacts')
 
 type ViewPlayer = Route
     Get
@@ -57,8 +57,7 @@ type OkContentTeam =
     , updatedSeconds :: Number
     }
 
-type OkContent = Record
-    (ContactsRow
+type OkContent = Contacts'
     ( nickname :: String
     , birthday :: Maybe String
     , age :: Maybe Int
@@ -80,4 +79,4 @@ type OkContent = Record
         }
     , profiles :: Array OkContentProfile
     , teams :: Array OkContentTeam
-    ))
+    )

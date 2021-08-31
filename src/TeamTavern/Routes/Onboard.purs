@@ -11,6 +11,7 @@ import TeamTavern.Routes.Shared.Organization (OrganizationNW)
 import TeamTavern.Routes.Shared.Platform (Platform)
 import TeamTavern.Routes.Shared.Player (Contacts, ContactsError)
 import TeamTavern.Routes.Shared.Size (Size)
+import TeamTavern.Routes.Shared.Team as TeamRoutes
 import Type (type ($))
 
 type Onboard = Route
@@ -33,8 +34,6 @@ type PlayerRequestContent =
 
 type TeamRequestContent =
     { organization :: OrganizationNW
-    , discordTag :: Maybe String
-    , discordServer :: Maybe String
     , ageFrom :: Maybe Int
     , ageTo :: Maybe Int
     , locations :: Array String
@@ -78,7 +77,7 @@ type RequestContent =
     , playerProfile :: Maybe PlayerProfileRequestContent
     , teamProfile :: Maybe TeamProfileRequestContent
     , playerContacts :: Maybe Contacts
-    -- , teamContact :: Maybe TeamContactRequestContent
+    , teamContacts :: Maybe TeamRoutes.Contacts
     }
 
 type OkContent = { teamHandle :: Maybe String }
@@ -87,9 +86,6 @@ type BadContent = Array $ Variant
     ( team :: Array $ Variant
         ( name :: Array String
         , website :: Array String
-        , discordTag :: Array String
-        , discordServer :: Array String
-        , contact :: Array String
         )
     , playerProfile :: Array $ Variant
         ( url :: { message :: Array String, key :: String }
@@ -100,4 +96,5 @@ type BadContent = Array $ Variant
         , about :: Array String
         )
     , playerContacts :: Array ContactsError
+    , teamContacts :: Array TeamRoutes.ContactsError
     )

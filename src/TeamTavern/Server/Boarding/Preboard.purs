@@ -5,7 +5,7 @@ import Prelude
 import Async (Async, alwaysRight, examineLeftWithEffect)
 import Async as Async
 import AsyncV as AsyncV
-import Data.Array (fromFoldable)
+import Data.Array (elem, fromFoldable)
 import Data.Array as Array
 import Data.Bifunctor.Label (label)
 import Data.List.Types (NonEmptyList)
@@ -56,7 +56,10 @@ import TeamTavern.Server.Session.Domain.Token as Token
 import TeamTavern.Server.Session.Start.CreateSession (createSession)
 import TeamTavern.Server.Team.Create.AddTeam (addTeam)
 import TeamTavern.Server.Team.Infrastructure.GenerateHandle (generateHandle)
+import TeamTavern.Server.Team.Infrastructure.ValidateContacts as TeamCont
+import TeamTavern.Server.Team.Infrastructure.ValidateContacts as TeamLel
 import TeamTavern.Server.Team.Infrastructure.ValidateTeam (TeamErrors, validateTeamV)
+import TeamTavern.Server.Team.Infrastructure.WriteContacts as TeamIdunno
 import Type (type ($))
 
 type PreboardError = Variant
@@ -70,6 +73,7 @@ type PreboardError = Variant
         , playerProfile :: PlayerProfile.ProfileErrors
         , teamProfile :: TeamProfile.ProfileErrors
         , playerContacts :: ContactsErrors
+        , teamContacts :: TeamLel.ContactsErrors
         , registration :: RegistrationErrors
         )
     , nicknameTaken ::
@@ -87,6 +91,7 @@ invalidBodyHandler :: forall fields. Lacks "invalidBody" fields =>
         , playerProfile :: PlayerProfile.ProfileErrors
         , teamProfile :: TeamProfile.ProfileErrors
         , playerContacts :: ContactsErrors
+        , teamContacts :: TeamLel.ContactsErrors
         , registration :: RegistrationErrors
         )
         -> Effect Unit
@@ -97,6 +102,7 @@ invalidBodyHandler = Builder.insert (SProxy :: SProxy "invalidBody") \errors ->
     , playerProfile: \errors' -> logt $ "Player profile errors: " <> show errors'
     , teamProfile: \errors' -> logt $ "Team profile errors: " <> show errors'
     , playerContacts: \errors' -> logt $ "Player contacts errors: " <> show errors'
+    , teamContacts: \errors' -> logt $ "Team contacts errors: " <> show errors'
     , registration: \errors' -> logt $ "Registration errors: " <> show errors'
     }
 
@@ -127,6 +133,7 @@ errorResponse = match
             , playerProfile: inj (SProxy :: SProxy "playerProfile") <<< Array.fromFoldable
             , teamProfile: inj (SProxy :: SProxy "teamProfile") <<< Array.fromFoldable
             , playerContacts: inj (SProxy :: _ "playerContacts") <<< Array.fromFoldable
+            , teamContacts: inj (SProxy :: _ "teamContacts") <<< Array.fromFoldable
             , registration: inj (SProxy :: SProxy "registration") <<< Array.fromFoldable
             }
         # (writeJSON :: BadContent -> String)
@@ -175,7 +182,7 @@ preboard deployment pool cookies body =
             game <- Player.loadFields client content.gameHandle
 
             -- We only want to patch the selected platform contact.
-            let contactsHue = contacts
+            let contactsCleaned = contacts
                     { steamId    = if profile.platform == Steam       then contacts.steamId    else Nothing
                     , riotId     = if profile.platform == Riot        then contacts.riotId     else Nothing
                     , battleTag  = if profile.platform == BattleNet   then contacts.battleTag  else Nothing
@@ -189,7 +196,7 @@ preboard deployment pool cookies body =
                 { player': _, profile': _, contacts': _, registration': _ }
                 <$> validatePlayerV player
                 <*> validateProfileV game profile
-                <*> validateContactsV [ profile.platform ] contactsHue
+                <*> validateContactsV [ profile.platform ] contactsCleaned
                 <*> validateRegistrationV registration
                 # AsyncV.toAsync
                 # label (SProxy :: SProxy "invalidBody")
@@ -224,15 +231,26 @@ preboard deployment pool cookies body =
                 , cookieInfo: { id: Id id, nickname: registration'.nickname, token }
                 , profileId
                 }
-        { ilk: 2, team: Just team, teamProfile: Just profile, registration } -> do
+        { ilk: 2, team: Just team, teamProfile: Just profile, teamContacts: Just contacts, registration } -> do
             -- Read fields from database.
             game <- Team.loadFields client content.gameHandle
 
+            -- We only want to patch the selected platforms contacts.
+            let contactsCleaned = contacts
+                    { steamId    = if Steam       `elem` profile.platforms then contacts.steamId    else Nothing
+                    , riotId     = if Riot        `elem` profile.platforms then contacts.riotId     else Nothing
+                    , battleTag  = if BattleNet   `elem` profile.platforms then contacts.battleTag  else Nothing
+                    , psnId      = if PlayStation `elem` profile.platforms then contacts.psnId      else Nothing
+                    , gamerTag   = if Xbox        `elem` profile.platforms then contacts.gamerTag   else Nothing
+                    , friendCode = if Switch      `elem` profile.platforms then contacts.friendCode else Nothing
+                    }
+
             -- Validate data from body.
-            { team', profile', registration' } <-
-                { team': _, profile': _, registration': _ }
+            { team', profile', contacts', registration' } <-
+                { team': _, profile': _, contacts': _, registration': _ }
                 <$> validateTeamV team
                 <*> TeamProfile.validateProfileV game profile
+                <*> TeamCont.validateContactsV profile.platforms contactsCleaned
                 <*> validateRegistrationV registration
                 # AsyncV.toAsync
                 # label (SProxy :: SProxy "invalidBody")
@@ -257,6 +275,8 @@ preboard deployment pool cookies body =
             { handle } <- addTeam client (Id id) generatedHandle team'
 
             profileId <- AddTeamProfile.addProfile client (Id id) handle content.gameHandle profile'
+
+            TeamIdunno.writeContacts client id contacts'
 
             pure
                 { teamHandle: Just handle

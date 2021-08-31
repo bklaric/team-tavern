@@ -42,9 +42,8 @@ details team status showEditTeamModal = let
     [ cardHeader $
         [ cardHeading "Team" ]
         <>
-        case status of
-        SignedInOwner -> [ regularButton "fas fa-edit" "Edit team" showEditTeamModal ]
-        _ -> []
+        guard (status == SignedInOwner)
+        [ regularButton "fas fa-edit" "Edit team" showEditTeamModal ]
     , cardSection
         if Array.null teamDetails'
         then Array.singleton $ missing

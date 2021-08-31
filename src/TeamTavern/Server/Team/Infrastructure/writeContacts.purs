@@ -1,4 +1,4 @@
-module TeamTavern.Server.Profile.Infrastructure.PatchContacts (patchContacts) where
+module TeamTavern.Server.Team.Infrastructure.WriteContacts (writeContacts) where
 
 import Prelude
 
@@ -7,20 +7,21 @@ import Data.Nullable (toNullable)
 import Postgres.Query (class Querier, Query(..), QueryParameter, (:), (:|))
 import TeamTavern.Server.Infrastructure.Error (InternalError)
 import TeamTavern.Server.Infrastructure.Postgres (queryNone)
-import TeamTavern.Server.Player.UpdateContacts.ValidateContacts (Contacts)
+import TeamTavern.Server.Team.Infrastructure.ValidateContacts (Contacts)
 
+-- Write contacts
 queryString :: Query
 queryString = Query """
     update player
     set
-        discord_tag = coalesce($2, discord_tag),
-        steam_id = coalesce($3, steam_id),
-        riot_id = coalesce($4, riot_id),
-        battle_tag = coalesce($5, battle_tag),
-        psn_id = coalesce($6, psn_id),
-        gamer_tag = coalesce($7, gamer_tag),
-        friend_code = coalesce($8, friend_code)
-        where player.id = $1
+        discord_tag = $2,
+        steam_id = $3,
+        riot_id = $4,
+        battle_tag = $5,
+        psn_id = $6,
+        gamer_tag = $7,
+        friend_code = $8
+    where player.id = $1
     """
 
 queryParameters :: Int -> Contacts -> Array QueryParameter
@@ -34,7 +35,7 @@ queryParameters playerId contacts =
     : toNullable contacts.gamerTag
     :| toNullable contacts.friendCode
 
-patchContacts :: forall querier errors. Querier querier =>
+writeContacts :: forall querier errors. Querier querier =>
     querier -> Int -> Contacts -> Async (InternalError errors) Unit
-patchContacts querier playerId contacts =
+writeContacts querier playerId contacts =
     queryNone querier queryString (queryParameters playerId contacts)

@@ -92,8 +92,6 @@ handleAction (UpdateDetails details) =
     H.modify_ \state -> state
         { details = state.details
             { organization = details.organization
-            , discordTag = details.discordTag
-            , discordServer = details.discordServer
             , ageFrom = details.ageFrom
             , ageTo = details.ageTo
             , locations = details.locations
@@ -128,9 +126,6 @@ handleAction (SendRequest event) = do
                 match
                 { name: const state { details { nameError = true } }
                 , website: const state { details { websiteError = true } }
-                , discordTag: const state { details { discordTagError = true } }
-                , discordServer: const state { details { discordServerError = true } }
-                , contact: const state { details { contactError = true } }
                 }
                 error
             )
@@ -145,8 +140,6 @@ component = H.mkComponent
         { handle: team.handle
         , details: EnterTeamDetails.emptyInput
             { organization = team.organization
-            , discordTag = team.discordTag
-            , discordServer = team.discordServer
             , ageFrom = team.ageFrom
             , ageTo = team.ageTo
             , locations = team.locations

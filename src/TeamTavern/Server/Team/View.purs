@@ -13,6 +13,7 @@ import Simple.JSON (writeJSON)
 import TeamTavern.Routes.Shared.Organization (OrganizationNW)
 import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
 import TeamTavern.Routes.Shared.Size (Size)
+import TeamTavern.Routes.Shared.Team (Contacts')
 import TeamTavern.Server.Infrastructure.Error (LoadSingleError)
 import TeamTavern.Server.Infrastructure.Log (logLoadSingleError)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstNotFound, teamAdjustedWeekdayFrom, teamAdjustedWeekdayTo, teamAdjustedWeekendFrom, teamAdjustedWeekendTo)
@@ -44,12 +45,10 @@ type Profile =
     , updatedSeconds :: Number
     }
 
-type Team =
-    { owner :: String
+type Team = Contacts'
+    ( owner :: String
     , handle :: String
     , organization :: OrganizationNW
-    , discordTag :: Maybe String
-    , discordServer :: Maybe String
     , ageFrom :: Maybe Int
     , ageTo :: Maybe Int
     , locations :: Array String
@@ -69,7 +68,7 @@ type Team =
         , sourceTo :: String
         }
     , profiles :: Array Profile
-    }
+    )
 
 queryString :: String -> Query
 queryString timezone = Query $ """
@@ -255,7 +254,7 @@ sendResponse = alwaysRight
         , notFound: const notFound__
         }
     )
-    (ok_ <<< writeJSON)
+    (ok_ <<< (writeJSON :: Team -> String))
 
 view :: forall left. Pool -> RouteParams -> Async left Response
 view pool routeParams =

@@ -5,7 +5,7 @@ import Prelude
 import Async (Async)
 import Client.Components.Copyable as Copyable
 import Control.Monad.State (class MonadState)
-import Data.Array (foldMap, intercalate)
+import Data.Array (foldMap)
 import Data.Const (Const)
 import Data.Maybe (Maybe(..))
 import Data.Monoid (guard)
@@ -84,24 +84,12 @@ render (Loaded { team: team', status, showEditTeamModal, showEditProfileModal } 
     <> descriptionLeaderboards
     <>
     [ details team' status ShowEditTeamModal
-    , profiles team'.handle team'.profiles status ShowEditProfileModal
+    , profiles team' status ShowEditProfileModal
     ]
     <> stickyLeaderboards
     <> guard showEditTeamModal [ editTeam team' (const $ Just HideEditTeamModal) ]
     <> foldMap (\profile ->
-        [ editProfile
-            { teamHandle: team'.handle
-            , gameHandle: profile.handle
-            , title: profile.title
-            , allPlatforms: profile.allPlatforms
-            , size: profile.size
-            , selectedPlatforms: profile.selectedPlatforms
-            , fields: profile.fields
-            , fieldValues: profile.fieldValues
-            , newOrReturning: profile.newOrReturning
-            , about: intercalate "\n\n" profile.about
-            }
-            (const $ Just HideEditProfileModal)
+        [ editProfile { team: team', profile } (const $ Just HideEditProfileModal)
         ])
         showEditProfileModal
 render NotFound = HH.p_ [ HH.text "Team could not be found." ]

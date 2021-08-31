@@ -10,9 +10,9 @@ import Data.Validated.Label as Validated
 import TeamTavern.Server.Profile.Infrastructure.ValidateUrl (Url, UrlErrors, validateUrlV)
 
 validateDiscordServer :: forall errors.
-    Maybe String -> ValidatedVariants (discordServer :: Array String | errors) (Maybe Url)
+    Maybe String -> ValidatedVariants (discordServer :: String | errors) (Maybe Url)
 validateDiscordServer discordServer
     = discordServer
     # traverse (validateUrlV "discord.gg")
     # Validated.labelMap (SProxy :: SProxy "discordServer") \(errors :: UrlErrors) ->
-        [ "Error validating Discord server: " <> show errors]
+        "Error validating Discord server: " <> show errors
