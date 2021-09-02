@@ -24,9 +24,9 @@ import Effect.Class (class MonadEffect)
 import Effect.Timer (setTimeout)
 import Halogen as H
 import Halogen.HTML as HH
-import Halogen.HTML.Properties as HP
 import Simple.JSON.Async as Json
 import TeamTavern.Client.Components.Boarding.PlayerOrTeamInput as Boarding
+import TeamTavern.Client.Components.Content (contentColumns)
 import TeamTavern.Client.Components.Team.ProfileInputGroup (FieldValues)
 import TeamTavern.Client.Pages.Preboarding as Preboarding
 import TeamTavern.Client.Pages.Profile.Filters (Filters)
@@ -120,7 +120,7 @@ render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render (Empty _) = HH.div_ []
 render (Game game player filters tab) =
     HH.div_ $
-    [ HH.div [ HP.class_ $ HH.ClassName "filters-and-profiles" ]
+    [ contentColumns
         [ profileFilters
             { platforms: game.platforms
             , fields: filterableFields game.fields

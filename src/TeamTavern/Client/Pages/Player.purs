@@ -13,7 +13,7 @@ import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Ads (descriptionLeaderboards, stickyLeaderboards)
-import TeamTavern.Client.Components.Content (contentDescription, contentHeader, contentHeaderSection, contentHeading', contentHeadingFaIcon)
+import TeamTavern.Client.Components.Content (contentColumns, contentDescription, contentHeader, contentHeaderSection, contentHeading', contentHeadingFaIcon)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Components.Player.ProfileDetails (PlatformIdSlots)
 import TeamTavern.Client.Pages.Player.Contacts (contacts)
@@ -96,10 +96,16 @@ render (Loaded state @ { player: player', status }) =
     ]
     <> descriptionLeaderboards
     <>
-    [ contacts player' status ShowEditContactsModal
-    , details player' status ShowEditPlayerModal
-    , profiles player' status ShowEditProfileModal
-    , teams player' status ShowCreateTeamModal
+    [ contentColumns
+        [ HH.div_
+            [ contacts player' status ShowEditContactsModal
+            , details player' status ShowEditPlayerModal
+            ]
+        , HH.div_
+            [ profiles player' status ShowEditProfileModal
+            , teams player' status ShowCreateTeamModal
+            ]
+        ]
     ]
     <> stickyLeaderboards
     <> guard state.editContactsModalShown [ editContacts player' $ const $ Just HideEditContactsModal ]

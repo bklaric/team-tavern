@@ -137,7 +137,7 @@ profileSection profile = let
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { profiles, profileCount, playerInfo, page } =
-    HH.div [ HS.class_ "profiles-container" ] $ [
+    HH.div_ $ [
     HH.div [ HP.id_ "profiles-card", HS.class_ "card" ] $
     [ cardHeader $
         [ HH.div_ $
