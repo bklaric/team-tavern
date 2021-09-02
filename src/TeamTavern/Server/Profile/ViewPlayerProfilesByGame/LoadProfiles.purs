@@ -21,6 +21,7 @@ import Simple.JSON.Async (read)
 import TeamTavern.Routes.Shared.Filters (Age, Filters, HasMicrophone, Language, Location, NewOrReturning, Time, Field)
 import TeamTavern.Routes.Shared.Platform (Platform)
 import TeamTavern.Routes.Shared.Platform as Platform
+import TeamTavern.Routes.Shared.Player (Contacts')
 import TeamTavern.Routes.Shared.Timezone (Timezone)
 import TeamTavern.Server.Infrastructure.Postgres (playerAdjustedWeekdayFrom, playerAdjustedWeekdayTo, playerAdjustedWeekendFrom, playerAdjustedWeekendTo, prepareJsonString, prepareString)
 import TeamTavern.Server.Profile.Routes (Handle, ProfilePage)
@@ -28,9 +29,8 @@ import TeamTavern.Server.Profile.Routes (Handle, ProfilePage)
 pageSize :: Int
 pageSize = 10
 
-type LoadProfilesResult =
-    { nickname :: String
-    , discordTag :: Maybe String
+type LoadProfilesResult = Contacts'
+    ( nickname :: String
     , age :: Maybe Int
     , location :: Maybe String
     , languages :: Array String
@@ -59,7 +59,7 @@ type LoadProfilesResult =
     , newOrReturning :: Boolean
     , updated :: String
     , updatedSeconds :: Number
-    }
+    )
 
 type LoadProfilesError errors = Variant
     ( databaseError :: Error
@@ -184,6 +184,13 @@ queryStringWithoutPagination handle timezone filters = Query $ """
     from
         (select
             player.nickname,
+            player.discord_tag as "discordTag",
+            player.steam_id as "steamId",
+            player.riot_id as "riotId",
+            player.battle_tag as "battleTag",
+            player.psn_id as "psnId",
+            player.gamer_tag as "gamerTag",
+            player.friend_code as "friendCode",
             extract(year from age(player.birthday))::int as age,
             player.location,
             player.languages,

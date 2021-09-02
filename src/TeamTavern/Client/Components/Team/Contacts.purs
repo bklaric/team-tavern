@@ -1,17 +1,19 @@
-module TeamTavern.Client.Components.Team.Contacts (ContactsSlots, contacts) where
+module TeamTavern.Client.Components.Team.Contacts (ContactsSlots, contacts, profileContacts) where
 
 import Prelude
 
 import Async (Async)
 import Client.Components.Copyable (copyable)
 import Client.Components.Copyable as Copyable
+import Data.Array (elem)
 import Data.Array as Array
-import Data.Maybe (Maybe)
+import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Anchor (textAnchor)
 import TeamTavern.Client.Components.Detail (detail', discordTagDetail, fieldDetail', urlDetail)
 import TeamTavern.Client.Snippets.Brands (detailBattleNetSvg, detailPlayStationSvg, detailRiotSvg, detailSteamSvg, detailSwitchSvg, detailXboxSvg)
+import TeamTavern.Routes.Shared.Platform (Platform(..))
 import TeamTavern.Routes.Shared.Team (Contacts')
 import Type (type ($))
 
@@ -25,6 +27,9 @@ type ContactsSlots slots =
     , steamId :: Copyable.Slot String
     | slots
     )
+
+teamDiscordServerDetail :: forall slots actions. Maybe String -> Maybe (HH.HTML slots actions)
+teamDiscordServerDetail discordServer = urlDetail "fab fa-discord" "Discord server" discordServer
 
 steamIdDetail :: forall left slots action.
     Maybe String -> Maybe $ HH.ComponentHTML action (steamId :: Copyable.Slot String | slots) (Async left)
@@ -71,7 +76,7 @@ contacts :: forall fields action slots left.
 contacts conts =
     Array.catMaybes
     [ discordTagDetail conts.handle conts.discordTag
-    , urlDetail "fab fa-discord" "Discord tag" conts.discordServer
+    , teamDiscordServerDetail conts.discordServer
     , steamIdDetail conts.steamId
     , steamUrlDetail conts.steamId
     , riotIdDetail conts.riotId
@@ -80,3 +85,15 @@ contacts conts =
     , gamerTagDetail conts.gamerTag
     , friendCodeDetail conts.friendCode
     ]
+
+profileContacts :: forall fields action slots left.
+    Contacts' (handle :: String, selectedPlatforms :: Array Platform | fields) -> Array (HH.ComponentHTML action (ContactsSlots slots) (Async left))
+profileContacts conts @ { selectedPlatforms } =
+    contacts conts
+    { steamId = if Steam `elem` selectedPlatforms then conts.steamId else Nothing
+    , riotId = if Riot `elem` selectedPlatforms then conts.riotId else Nothing
+    , battleTag = if BattleNet `elem` selectedPlatforms then conts.battleTag else Nothing
+    , psnId = if PlayStation `elem` selectedPlatforms then conts.psnId else Nothing
+    , gamerTag = if Xbox `elem` selectedPlatforms then conts.gamerTag else Nothing
+    , friendCode = if Switch `elem` selectedPlatforms then conts.friendCode else Nothing
+    }

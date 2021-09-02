@@ -1,4 +1,4 @@
-module TeamTavern.Client.Components.Player.Contacts (ContactsSlots, contacts) where
+module TeamTavern.Client.Components.Player.Contacts (ContactsSlots, contacts, profileContacts) where
 
 import Prelude
 
@@ -6,12 +6,13 @@ import Async (Async)
 import Client.Components.Copyable (copyable)
 import Client.Components.Copyable as Copyable
 import Data.Array as Array
-import Data.Maybe (Maybe)
+import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Anchor (textAnchor)
 import TeamTavern.Client.Components.Detail (detail', discordTagDetail, fieldDetail')
 import TeamTavern.Client.Snippets.Brands (detailBattleNetSvg, detailPlayStationSvg, detailRiotSvg, detailSteamSvg, detailSwitchSvg, detailXboxSvg)
+import TeamTavern.Routes.Shared.Platform (Platform(..))
 import TeamTavern.Routes.Shared.Player (Contacts')
 import Type (type ($))
 
@@ -79,3 +80,15 @@ contacts conts =
     , gamerTagDetail conts.gamerTag
     , friendCodeDetail conts.friendCode
     ]
+
+profileContacts :: forall fields action slots left.
+    Contacts' (nickname :: String, platform :: Platform | fields) -> Array (HH.ComponentHTML action (ContactsSlots slots) (Async left))
+profileContacts conts @ { platform } =
+    contacts conts
+    { steamId = if platform == Steam then conts.steamId else Nothing
+    , riotId = if platform == Riot then conts.riotId else Nothing
+    , battleTag = if platform == BattleNet then conts.battleTag else Nothing
+    , psnId = if platform == PlayStation then conts.psnId else Nothing
+    , gamerTag = if platform == Xbox then conts.gamerTag else Nothing
+    , friendCode = if platform == Switch then conts.friendCode else Nothing
+    }
