@@ -12,22 +12,24 @@ import TeamTavern.Server.Team.Infrastructure.ValidateContacts (Contacts)
 -- Write contacts
 queryString :: Query
 queryString = Query """
-    update player
+    update team
     set
         discord_tag = $2,
-        steam_id = $3,
-        riot_id = $4,
-        battle_tag = $5,
-        psn_id = $6,
-        gamer_tag = $7,
-        friend_code = $8
-    where player.id = $1
+        discord_server = $3,
+        steam_id = $4,
+        riot_id = $5,
+        battle_tag = $6,
+        psn_id = $7,
+        gamer_tag = $8,
+        friend_code = $9
+    where team.id = $1
     """
 
 queryParameters :: Int -> Contacts -> Array QueryParameter
-queryParameters playerId contacts =
-    playerId
+queryParameters teamId contacts =
+    teamId
     : toNullable contacts.discordTag
+    : toNullable contacts.discordServer
     : toNullable contacts.steamId
     : toNullable contacts.riotId
     : toNullable contacts.battleTag
@@ -37,5 +39,5 @@ queryParameters playerId contacts =
 
 writeContacts :: forall querier errors. Querier querier =>
     querier -> Int -> Contacts -> Async (InternalError errors) Unit
-writeContacts querier playerId contacts =
-    queryNone querier queryString (queryParameters playerId contacts)
+writeContacts querier teamId contacts =
+    queryNone querier queryString (queryParameters teamId contacts)

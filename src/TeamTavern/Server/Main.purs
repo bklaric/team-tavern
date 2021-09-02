@@ -57,6 +57,7 @@ import TeamTavern.Server.Session.End (end) as Session
 import TeamTavern.Server.Session.Start (start) as Session
 import TeamTavern.Server.Team.Create (create) as Team
 import TeamTavern.Server.Team.Update (update) as Team
+import TeamTavern.Server.Team.UpdateContacts (updateContacts) as Team
 import TeamTavern.Server.Team.View (view) as Team
 
 listenOptions :: ListenOptions
@@ -166,6 +167,8 @@ handleRequest deployment pool method url cookies body =
             Team.create pool body cookies
         , updateTeam:
             Team.update pool body cookies
+        , updateTeamContacts:
+            Team.updateContacts pool body cookies
         , startSession: const $
             Session.start deployment pool cookies body
         , endSession: const

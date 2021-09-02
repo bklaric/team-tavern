@@ -32,11 +32,21 @@ create table team
     ( id serial not null primary key
     , owner_id int not null references player(id) on delete cascade
     , handle text not null unique
-    , organization text not null -- informal, organized
     , name text
     , website text
+
+    -- Contact
     , discord_tag text
     , discord_server text
+    , steam_id text
+    , riot_id text
+    , battle_tag text
+    , psn_id text
+    , gamer_tag text
+    , friend_code text
+
+    -- Details
+    , organization text not null -- informal, organized
     , age_from integer
     , age_to integer
     , locations text[] not null default '{}'
@@ -47,6 +57,7 @@ create table team
     , weekday_to time
     , weekend_from time
     , weekend_to time
+
     , created timestamptz not null default current_timestamp
     , updated timestamptz not null default current_timestamp
     );

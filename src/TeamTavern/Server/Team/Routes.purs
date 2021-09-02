@@ -6,6 +6,7 @@ import Jarilo.Path (type (:>), End)
 import Jarilo.Query (Mandatory, NoQuery)
 import Jarilo.Route (Route)
 import Jarilo.Segment (Capture, Literal)
+import TeamTavern.Routes.UpdateTeamContacts (UpdateTeamContacts)
 
 type ViewTeam = Route
     Get
@@ -31,3 +32,4 @@ type TeamRoutes
     =    "viewTeam"   := ViewTeam
     :<|> "createTeam" := CreateTeam
     :<|> "updateTeam" := UpdateTeam
+    :<|> "updateTeamContacts" := UpdateTeamContacts

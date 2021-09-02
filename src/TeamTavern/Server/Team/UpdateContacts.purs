@@ -4,7 +4,6 @@ import Prelude
 
 import Async (Async, alwaysRight, examineLeftWithEffect)
 import Data.Array as Array
-import Data.Newtype (unwrap)
 import Data.Symbol (SProxy(..))
 import Data.Variant (Variant, match)
 import Effect (Effect, foreachE)
@@ -18,7 +17,7 @@ import Record.Builder as Builder
 import Simple.JSON (writeJSON)
 import TeamTavern.Routes.Shared.Platform (Platform)
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
-import TeamTavern.Server.Infrastructure.EnsureSignedInAs (ensureSignedInAs)
+import TeamTavern.Server.Infrastructure.EnsureSignedInOwner (ensureSignedInOwner)
 import TeamTavern.Server.Infrastructure.Error (InternalError)
 import TeamTavern.Server.Infrastructure.Log (clientHandler, internalHandler, logt, notAuthenticatedHandler, notAuthorizedHandler)
 import TeamTavern.Server.Infrastructure.Log as Log
@@ -31,9 +30,9 @@ import TeamTavern.Server.Team.Infrastructure.WriteContacts (writeContacts)
 
 queryString :: Query
 queryString = Query $ """
-    select distinct player_profile.platform
-    from player_profile
-    where player_profile.player_id = $1;
+    select distinct unnest(team_profile.platforms) as platform
+    from team_profile
+    where team_profile.team_id = $1;
     """
 
 loadRequiredPlatforms :: forall querier errors. Querier querier =>
@@ -66,7 +65,7 @@ contactsHandler = Builder.insert (SProxy :: SProxy "teamContacts") \errors ->
     }
 
 logError :: UpdateContactsError -> Effect Unit
-logError = Log.logError "Error updating player contacts"
+logError = Log.logError "Error updating team contacts"
     ( internalHandler
     >>> clientHandler
     >>> notAuthenticatedHandler
@@ -92,21 +91,22 @@ sendResponse = alwaysRight errorResponse successResponse
 
 -- Main
 updateContacts :: forall left.
-    Pool -> String -> Cookies -> Body -> Async left Response
-updateContacts pool nickname cookies body =
+    Pool -> Body -> Cookies -> { handle :: String } -> Async left Response
+updateContacts pool body cookies { handle } =
     sendResponse $ examineLeftWithEffect logError do
-    -- Read requestor info from cookies.
-    cookieInfo <- ensureSignedInAs pool cookies nickname
 
     -- Read contacts from body.
     contacts' <- readJsonBody body
 
     pool # transaction \client -> do
+        -- Read requestor info from cookies.
+        { cookieInfo, teamId } <- ensureSignedInOwner client cookies handle
+
         -- Read required platforms.
-        requiredPlatforms <- loadRequiredPlatforms client (unwrap cookieInfo.id)
+        requiredPlatforms <- loadRequiredPlatforms client teamId
 
         -- Validate contacts.
         contacts <- validateContacts requiredPlatforms contacts'
 
         -- Update contacts.
-        writeContacts client (unwrap cookieInfo.id) contacts
+        writeContacts client teamId contacts
