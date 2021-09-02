@@ -4,12 +4,10 @@ import Prelude
 
 import Async (Async)
 import Data.Array as Array
-import Data.Array.Extra (full)
 import Data.Monoid (guard)
 import Halogen as H
 import TeamTavern.Client.Components.Button (regularButton)
 import TeamTavern.Client.Components.Card (card, cardHeader, cardHeading, cardSection)
-import TeamTavern.Client.Components.Detail (detailColumn, detailColumns, detailColumnsContainer)
 import TeamTavern.Client.Components.Missing (missing)
 import TeamTavern.Client.Components.Team.Contacts (ContactsSlots)
 import TeamTavern.Client.Components.Team.Contacts as Components
@@ -37,6 +35,5 @@ contacts contacts' status showEditModal = let
             case status of
             SignedInOwner -> "Apparently, your team prefers to keep to itself."
             _ -> "Apparently, this team prefers to keep itself."
-        else Array.singleton $ detailColumnsContainer $ Array.singleton $ detailColumns $
-            guard (full contacts'') [ detailColumn contacts'' ]
+        else contacts''
     ]

@@ -5,7 +5,6 @@ import Prelude
 import Async (Async)
 import Client.Components.Copyable as Copyable
 import Data.Array as Array
-import Data.Array.Extra (full)
 import Data.Maybe (Maybe(..))
 import Data.Monoid (guard)
 import Data.Symbol (SProxy(..))
@@ -13,7 +12,6 @@ import Halogen as H
 import Record as Record
 import TeamTavern.Client.Components.Button (regularButton)
 import TeamTavern.Client.Components.Card (card, cardHeader, cardHeading, cardSection)
-import TeamTavern.Client.Components.Detail (detailColumn, detailColumns, detailColumnsContainer)
 import TeamTavern.Client.Components.Missing (missing)
 import TeamTavern.Client.Components.Player.PlayerDetails (playerDetails)
 import TeamTavern.Client.Pages.Player.Status (Status(..))
@@ -50,6 +48,5 @@ details player status showEditPlayerModal = let
             case status of
             SignedInSelf -> "Apparently, you prefer to keep an air of mystery about yourself."
             _ -> "Apparently, this player prefers to keep an air of mystery about them."
-        else Array.singleton $ detailColumnsContainer $ Array.singleton $ detailColumns $
-            guard (full playerDetails') [ detailColumn playerDetails' ]
+        else playerDetails'
     ]
