@@ -10,16 +10,14 @@ import Data.Variant (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Record.Extra (pick)
-import TeamTavern.Client.Components.Divider (divider)
-import TeamTavern.Client.Components.Input (inputErrorSublabel, inputGroupsHeading, inputGroupsHeading', inputRequiredSublabel, inputSublabel, responsiveInputGroups)
+import TeamTavern.Client.Components.Input (inputGroupsHeading, responsiveInputGroups)
 import TeamTavern.Client.Components.InputGroup (timeRangeInputGroup, timezoneInputGroup)
-import TeamTavern.Client.Components.Player.PlayerInputGroup (discordTagInputGroup)
 import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.Select.MultiTreeSelect as MultiTreeSelect
 import TeamTavern.Client.Components.Select.SingleSelect as SingleSelect
 import TeamTavern.Client.Components.Team.OrganizationInfo (organizationInfo)
 import TeamTavern.Client.Components.Team.OrganizationInfo as OrganizationInfo
-import TeamTavern.Client.Components.Team.TeamInputGroup (aboutInputGroup, ageInputGroup, discordServerInputGroup, languagesInputGroup, locationInputGroup, microphoneInputGroup, nameInputGroup, websiteInputGroup)
+import TeamTavern.Client.Components.Team.TeamInputGroup (ageInputGroup, languagesInputGroup, locationInputGroup, microphoneInputGroup, nameInputGroup, websiteInputGroup)
 import TeamTavern.Client.Pages.Profiles.TeamBadge (organizationRadioBadges)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Snippets.Class as HS
@@ -28,8 +26,6 @@ import TeamTavern.Server.Infrastructure.Timezones (Timezone)
 
 type Input =
     { organization :: OrganizationNW
-    , discordTag :: Maybe String
-    , discordServer :: Maybe String
     , ageFrom :: Maybe Int
     , ageTo :: Maybe Int
     , locations :: Array String
@@ -40,19 +36,15 @@ type Input =
     , weekdayTo :: Maybe String
     , weekendFrom :: Maybe String
     , weekendTo :: Maybe String
-    , about :: String
     , nameError :: Boolean
     , websiteError :: Boolean
     , discordTagError :: Boolean
     , discordServerError :: Boolean
     , contactError :: Boolean
-    , aboutError :: Boolean
     }
 
 type Output =
     { organization :: OrganizationNW
-    , discordTag :: Maybe String
-    , discordServer :: Maybe String
     , ageFrom :: Maybe Int
     , ageTo :: Maybe Int
     , locations :: Array String
@@ -63,7 +55,6 @@ type Output =
     , weekdayTo :: Maybe String
     , weekendFrom :: Maybe String
     , weekendTo :: Maybe String
-    , about :: String
     }
 
 type State = Input
@@ -74,8 +65,6 @@ data Action
     | UpdateOrganization Organization
     | UpdateName String
     | UpdateWebsite (Maybe String)
-    | UpdateDiscordTag (Maybe String)
-    | UpdateDiscordServer (Maybe String)
     | UpdateAgeFrom (Maybe Int)
     | UpdateAgeTo (Maybe Int)
     | UpdateLocations (Array String)
@@ -86,7 +75,6 @@ data Action
     | UpdateWeekdayTo (Maybe String)
     | UpdateWeekendFrom (Maybe String)
     | UpdateWeekendTo (Maybe String)
-    | UpdateAbout String
 
 type ChildSlots =
     ( location :: MultiTreeSelect.Slot String
@@ -116,17 +104,7 @@ render state =
             ]
     )
     <>
-    [ inputGroupsHeading' $
-        [ HH.text "Contact"
-        , divider, inputRequiredSublabel
-        , divider, (if state.contactError then inputErrorSublabel else inputSublabel)
-            "You must fill out at least one of the available contact fields."
-        ]
-    , responsiveInputGroups
-        [ discordTagInputGroup state.discordTag UpdateDiscordTag state.discordTagError
-        , discordServerInputGroup state.discordServer UpdateDiscordServer state.discordServerError
-        ]
-    , inputGroupsHeading "Personal"
+    [ inputGroupsHeading "Personal"
     , responsiveInputGroups
         [ ageInputGroup state.ageFrom state.ageTo UpdateAgeFrom UpdateAgeTo
         , locationInputGroup state.locations UpdateLocations
@@ -144,8 +122,6 @@ render state =
         , timeRangeInputGroup "Online on weekends" (isNothing state.timezone)
             state.weekendFrom state.weekendTo UpdateWeekendFrom UpdateWeekendTo
         ]
-    , inputGroupsHeading "About"
-    , aboutInputGroup state.about UpdateAbout state.aboutError
     ]
 
 raiseOutput :: forall left. State -> H.HalogenM State Action ChildSlots Output (Async left) Unit
@@ -180,12 +156,6 @@ handleAction (UpdateWebsite website) = do
         state @ { organization: OrganizedNW state' } ->
             state { organization = OrganizedNW state' { website = website } }
     raiseOutput state
-handleAction (UpdateDiscordTag discordTag) = do
-    state <- H.modify _ { discordTag = discordTag }
-    raiseOutput state
-handleAction (UpdateDiscordServer discordServer) = do
-    state <- H.modify _ { discordServer = discordServer }
-    raiseOutput state
 handleAction (UpdateAgeFrom ageFrom) = do
     state <- H.modify _ { ageFrom = ageFrom }
     raiseOutput state
@@ -216,9 +186,6 @@ handleAction (UpdateWeekendFrom weekendFrom) = do
 handleAction (UpdateWeekendTo weekendTo) = do
     state <- H.modify _ { weekendTo = weekendTo }
     raiseOutput state
-handleAction (UpdateAbout about) = do
-    state <- H.modify _ { about = about }
-    raiseOutput state
 
 component :: forall query left. H.Component HH.HTML query Input Output (Async left)
 component = H.mkComponent
@@ -234,8 +201,6 @@ component = H.mkComponent
 emptyInput :: Input
 emptyInput =
     { organization: InformalNW
-    , discordTag: Nothing
-    , discordServer: Nothing
     , ageFrom: Nothing
     , ageTo: Nothing
     , locations: []
@@ -246,13 +211,11 @@ emptyInput =
     , weekdayTo: Nothing
     , weekendFrom: Nothing
     , weekendTo: Nothing
-    , about: ""
     , nameError: false
     , websiteError: false
     , discordTagError: false
     , discordServerError: false
     , contactError: false
-    , aboutError: false
     }
 
 teamFormInput

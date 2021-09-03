@@ -2,8 +2,11 @@ module TeamTavern.Server.Profile.Infrastructure.ValidateBattleTag (BattleTag, to
 
 import Prelude
 
-import Data.Either (Either(..))
-import Data.String (Pattern(..), length, split, trim)
+import Data.Maybe (Maybe)
+import Data.String (Pattern(..), length, split)
+import Data.Validated.Label (ValidatedVariants)
+import Data.Variant (SProxy(..))
+import TeamTavern.Server.Profile.Infrastructure.ValidateContact (validateContact)
 
 newtype BattleTag = BattleTag String
 
@@ -32,8 +35,6 @@ isBattleTagValid battleTag =
         && length discriminator <= maxDiscriminatorLength
     _ -> false
 
-validateBattleTag :: String -> Either (Array String) BattleTag
-validateBattleTag battleTag | battleTag' <- trim battleTag =
-    if isBattleTagValid battleTag'
-    then Right $ BattleTag battleTag'
-    else Left [ "Invalid BattleTag: " <> battleTag' ]
+validateBattleTag :: forall errors. Maybe String -> ValidatedVariants (battleTag :: String | errors) (Maybe BattleTag)
+validateBattleTag battleTag =
+    validateContact battleTag isBattleTagValid BattleTag (SProxy :: _ "battleTag") ("Invalid BattleTag: " <> _)

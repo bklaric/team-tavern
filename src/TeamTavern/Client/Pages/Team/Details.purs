@@ -5,7 +5,6 @@ import Prelude
 import Async (Async)
 import Client.Components.Copyable as Copyable
 import Data.Array as Array
-import Data.Array.Extra (full)
 import Data.Maybe (Maybe(..))
 import Data.Monoid (guard)
 import Data.Symbol (SProxy(..))
@@ -13,7 +12,6 @@ import Halogen as H
 import Record as Record
 import TeamTavern.Client.Components.Button (regularButton)
 import TeamTavern.Client.Components.Card (card, cardHeader, cardHeading, cardSection)
-import TeamTavern.Client.Components.Detail (detailColumn, detailColumnHeading3, detailColumns, detailColumnsContainer, textDetail)
 import TeamTavern.Client.Components.Missing (missing)
 import TeamTavern.Client.Components.Team.TeamDetails (teamDetails)
 import TeamTavern.Client.Pages.Team.Status (Status(..))
@@ -37,25 +35,18 @@ details team status showEditTeamModal = let
             Just { clientFrom, clientTo } -> Just { from: clientFrom, to: clientTo }
             Nothing -> Nothing
         )
-    about = textDetail team.about
     in
     card
     [ cardHeader $
-        [ cardHeading "Team" ]
+        [ cardHeading "Details" ]
         <>
-        case status of
-        SignedInOwner -> [ regularButton "fas fa-edit" "Edit team" showEditTeamModal ]
-        _ -> []
+        guard (status == SignedInOwner)
+        [ regularButton "fas fa-edit" "Edit team" showEditTeamModal ]
     , cardSection
-        if Array.null teamDetails' && Array.null about
+        if Array.null teamDetails'
         then Array.singleton $ missing
             case status of
             SignedInOwner -> "Apparently, your team prefers to keep an air of mystery about them."
             _ -> "Apparently, this team prefers to keep an air of mystery about them."
-        else Array.singleton $ detailColumnsContainer $ Array.singleton $ detailColumns $
-            guard (full teamDetails')
-            [ detailColumn $ [ detailColumnHeading3 "Details" ] <> teamDetails' ]
-            <>
-            guard (full about)
-            [ detailColumn $ [ detailColumnHeading3 "About" ] <> about ]
+        else teamDetails'
     ]

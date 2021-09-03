@@ -19,6 +19,7 @@ import TeamTavern.Client.Components.Detail (detailColumn, detailColumnHeading4, 
 import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
 import TeamTavern.Client.Components.Pagination (pagination)
+import TeamTavern.Client.Components.Player.Contacts (profileContacts)
 import TeamTavern.Client.Components.Player.PlayerDetails (playerDetails)
 import TeamTavern.Client.Components.Player.ProfileDetails (PlatformIdSlots, profileDetails')
 import TeamTavern.Client.Components.Profile (profileHeader, profileHeading, profileSubheading)
@@ -27,6 +28,7 @@ import TeamTavern.Client.Script.LastUpdated (lastUpdated)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Client.Snippets.PreventMouseDefault (preventMouseDefault)
 import TeamTavern.Routes.Shared.Platform (Platform)
+import TeamTavern.Routes.Shared.Player (Contacts')
 import TeamTavern.Server.Profile.ViewPlayerProfilesByGame.LoadProfiles (pageSize)
 import Web.UIEvent.MouseEvent (MouseEvent)
 
@@ -42,18 +44,15 @@ type Fields = Array
         })
     }
 
-type PlayerProfile =
-    { nickname :: String
-    , discordTag :: Maybe String
+type PlayerProfile = Contacts'
+    ( nickname :: String
     , age :: Maybe Int
     , location :: Maybe String
     , languages :: Array String
     , microphone :: Boolean
     , weekdayOnline :: Maybe { from :: String, to :: String }
     , weekendOnline :: Maybe { from :: String, to :: String }
-    , about :: Array String
     , platform :: Platform
-    , platformId :: String
     , fieldValues :: Array
         { field ::
             { ilk :: Int
@@ -71,11 +70,12 @@ type PlayerProfile =
             , label :: String
             })
         }
+    , about :: Array String
     , ambitions :: Array String
     , newOrReturning :: Boolean
     , updated :: String
     , updatedSeconds :: Number
-    }
+    )
 
 type Input =
     { profiles :: Array PlayerProfile
@@ -104,8 +104,8 @@ profileSection :: forall action left.
     PlayerProfile -> HH.ComponentHTML action ChildSlots (Async left)
 profileSection profile = let
     playerDetails' = playerDetails profile
-    profileDetails'' = profileDetails'
-        profile.platform profile.platformId profile.fieldValues profile.newOrReturning
+    profileDetails'' = profileDetails' profile.platform profile.fieldValues profile.newOrReturning
+    contactsDetails' = profileContacts profile
     about = textDetail profile.about
     ambitions = textDetail profile.ambitions
     in
@@ -120,30 +120,26 @@ profileSection profile = let
         ]
     ]
     <>
-    guard (full playerDetails' || full profileDetails'' || full about || full ambitions)
     [ detailColumns $
-        guard (full playerDetails' || full profileDetails'')
         [ detailColumn $
-            guard (full playerDetails')
-            [ detailColumnHeading4 "Player details" ] <> playerDetails'
+            guard (full contactsDetails')
+            [ detailColumnHeading4 "Contacts" ] <> contactsDetails'
             <>
-            guard (full profileDetails'')
-            [ detailColumnHeading4 "Profile details" ] <> profileDetails''
+            guard (full playerDetails' || full profileDetails'')
+            [ detailColumnHeading4 "Details" ] <> playerDetails' <> profileDetails''
         ]
         <>
         guard (full about || full ambitions)
         [ detailColumn $
-            guard (full about)
-            [ detailColumnHeading4 "About" ] <> about
+            guard (full about) ([ detailColumnHeading4 "About" ] <> about)
             <>
-            guard (full ambitions)
-            [ detailColumnHeading4 "Ambitions" ] <> ambitions
+            guard (full ambitions) ([ detailColumnHeading4 "Ambitions" ] <> ambitions)
         ]
     ]
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { profiles, profileCount, playerInfo, page } =
-    HH.div [ HS.class_ "profiles-container" ] $ [
+    HH.div_ $ [
     HH.div [ HP.id_ "profiles-card", HS.class_ "card" ] $
     [ cardHeader $
         [ HH.div_

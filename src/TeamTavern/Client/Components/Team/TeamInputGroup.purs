@@ -6,7 +6,7 @@ import Async (Async)
 import Data.Maybe (Maybe(..))
 import Data.Variant (SProxy(..))
 import Halogen.HTML (HTML, ComponentHTML)
-import TeamTavern.Client.Components.Input (checkboxInput, inputError, inputGroup, inputLabel, inputUnderlabel, numberRangeInput, requiredInputLabel, requiredTextLineInput, textInput_, textLineInput)
+import TeamTavern.Client.Components.Input (checkboxInput, inputError, inputGroup, inputLabel, inputUnderlabel, numberRangeInput, requiredInputLabel, requiredTextLineInput, textLineInput)
 import TeamTavern.Client.Components.Select.MultiSelect (multiSelect)
 import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.Select.MultiTreeSelect (multiTreeSelect)
@@ -102,13 +102,3 @@ discordServerInputGroup value onValue error =
     ]
     <>
     inputError error "This does not look like a valid Discord tag."
-
-aboutInputGroup :: forall slots action. String -> (String -> action) -> Boolean -> HTML slots action
-aboutInputGroup value onValue error =
-    inputGroup $
-    [ textInput_ value onValue
-    , inputUnderlabel """Write a bit about your team. What are you like?
-        What are you looking for in other team members?"""
-    ]
-    <>
-    inputError error "About text cannot be more than 2000 characters long."

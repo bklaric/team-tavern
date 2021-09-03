@@ -2,8 +2,11 @@ module TeamTavern.Server.Profile.Infrastructure.ValidatePsnId (PsnId, toString, 
 
 import Prelude
 
-import Data.Either (Either(..))
-import Data.String (length, trim)
+import Data.Maybe (Maybe)
+import Data.String (length)
+import Data.Validated.Label (ValidatedVariants)
+import Data.Variant (SProxy(..))
+import TeamTavern.Server.Profile.Infrastructure.ValidateContact (validateContact)
 
 newtype PsnId = PsnId String
 
@@ -22,8 +25,6 @@ maxNameLength = 16
 isPsnIdValid :: String -> Boolean
 isPsnIdValid psnId = minNameLength <= length psnId && length psnId <= maxNameLength
 
-validatePsnId :: String -> Either (Array String) PsnId
-validatePsnId psnId | psnId' <- trim psnId =
-    if isPsnIdValid psnId'
-    then Right $ PsnId psnId'
-    else Left [ "Invalid PSN ID: " <> psnId' ]
+validatePsnId :: forall errors. Maybe String -> ValidatedVariants (psnId :: String | errors) (Maybe PsnId)
+validatePsnId psnId =
+    validateContact psnId isPsnIdValid PsnId (SProxy :: _ "psnId") ("Invalid PsnId: " <> _)

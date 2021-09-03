@@ -32,19 +32,16 @@ queryString = Query """
         organization = $3,
         name = $4,
         website = $5,
-        discord_tag = $6,
-        discord_server = $7,
-        age_from = $8,
-        age_to = $9,
-        locations = $10,
-        languages = $11,
-        microphone = $12,
-        timezone = $13,
-        weekday_from = $14,
-        weekday_to = $15,
-        weekend_from = $16,
-        weekend_to = $17,
-        about = $18,
+        age_from = $6,
+        age_to = $7,
+        locations = $8,
+        languages = $9,
+        microphone = $10,
+        timezone = $11,
+        weekday_from = $12,
+        weekday_to = $13,
+        weekend_from = $14,
+        weekend_to = $15,
         updated = now()
     where owner_id = $1 and handle = $2
     """
@@ -56,8 +53,6 @@ queryParameters ownerId handle team
     : (toString team.organization)
     : (toNullable $ organizationName team.organization)
     : (toNullable $ organizationWebsite team.organization)
-    : toNullable team.discordTag
-    : toNullable team.discordServer
     : nullableAgeFrom team.ageSpan
     : nullableAgeTo team.ageSpan
     : team.locations
@@ -67,8 +62,7 @@ queryParameters ownerId handle team
     : nullableTimeFrom team.onlineWeekday
     : nullableTimeTo team.onlineWeekday
     : nullableTimeFrom team.onlineWeekend
-    : nullableTimeTo team.onlineWeekend
-    :| team.about
+    :| nullableTimeTo team.onlineWeekend
 
 updateTeam :: forall querier errors. Querier querier =>
     querier -> Id -> String -> Team -> Async (InternalError errors) Unit

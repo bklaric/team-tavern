@@ -23,7 +23,7 @@ import TeamTavern.Client.Pages.Team.Status (Status(..))
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Shared.Size (Size(..))
-import TeamTavern.Server.Team.View (Profile)
+import TeamTavern.Server.Team.View (Profile, Team)
 
 type ChildSlots children =
     ( games :: Anchor.Slot String
@@ -33,21 +33,17 @@ type ChildSlots children =
 
 profiles
     :: forall action children left
-    .  String
-    -> Array Profile
+    .  Team
     -> Status
     -> (Profile -> action)
     -> H.ComponentHTML action (ChildSlots children) (Async left)
-profiles teamHandle profiles' status editProfileModalShown =
+profiles team @ { profiles: profiles' } status editProfileModalShown =
     card $
     [ cardHeader $
         [ cardHeading "Profiles" ]
         <>
-        case status of
-        SignedInOwner -> Array.singleton $
-            HH.slot (SProxy :: SProxy "createProfile") unit createProfileButton
-            { teamHandle, profileGameHandles: profiles' <#> _.handle } absurd
-        _ -> []
+        guard (status == SignedInOwner)
+        [ HH.slot (SProxy :: SProxy "createProfile") unit createProfileButton team absurd ]
     ]
     <>
     if Array.null profiles'
@@ -57,6 +53,7 @@ profiles teamHandle profiles' status editProfileModalShown =
         _ -> "This team hasn't created any profiles." ] ]
     else profiles' <#> \profile -> let
         profileDetails' = profileDetails profile
+        about = textDetail profile.about
         ambitions = textDetail profile.ambitions
         in
         cardSection $
@@ -72,17 +69,19 @@ profiles teamHandle profiles' status editProfileModalShown =
                 <> [ profileSubheading $ "Updated " <> lastUpdated profile.updatedSeconds ]
             ]
             <>
-            case status of
-            SignedInOwner -> Array.singleton $
-                regularButton "fas fa-user-edit" "Edit profile" $ editProfileModalShown profile
-            _ -> []
+            guard (status == SignedInOwner)
+            [ regularButton "fas fa-user-edit" "Edit profile" $ editProfileModalShown profile ]
         ]
         <>
-        guard (full profileDetails' || full ambitions)
+        guard (full profileDetails' || full about || full ambitions)
         [ detailColumns $
             guard (full profileDetails')
             [ detailColumn $ [ detailColumnHeading4 "Details" ] <> profileDetails' ]
             <>
-            guard (full ambitions)
-            [ detailColumn $ [ detailColumnHeading4 "Ambitions" ] <> ambitions ]
+            guard (full about || full ambitions)
+            [ detailColumn $
+                guard (full about) ([ detailColumnHeading4 "About" ] <> about)
+                <>
+                guard (full ambitions) ([ detailColumnHeading4 "Ambitions" ] <> ambitions)
+            ]
         ]

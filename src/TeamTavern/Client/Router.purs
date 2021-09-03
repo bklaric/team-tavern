@@ -6,11 +6,12 @@ import Async (Async)
 import Data.Maybe (Maybe(..))
 import Data.String (Pattern(..), split)
 import Data.Symbol (SProxy(..))
+import Effect.Class.Console (log)
 import Foreign (Foreign)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
-import Simple.JSON (read_)
+import Simple.JSON (E, read, read_)
 import TeamTavern.Client.Components.Content (content, singleContent, wideContent)
 import TeamTavern.Client.Components.Footer (footer)
 import TeamTavern.Client.Components.Footer as Footer
@@ -47,6 +48,7 @@ import TeamTavern.Client.Script.Cookie (getPlayerNickname, hasPlayerIdCookie)
 import TeamTavern.Client.Script.Navigate (navigateReplace_)
 import TeamTavern.Client.Script.ReloadAds (reloadAds)
 import TeamTavern.Client.Snippets.Class as HS
+import Unsafe.Coerce (unsafeCoerce)
 
 data Query send = ChangeRoute Foreign String send
 
@@ -113,8 +115,8 @@ render About = topBarWithContent Nothing [ about ]
 render Privacy = topBarWithContent Nothing [ privacyPolicy ]
 render (Game input) = HH.div_ [ topBar $ Just input.handle, game input, footer ]
 render (GameTabs input) = wideTopBarWithContent (Just input.handle) [ GameTabs.gameTabs input ]
-render (Player input) = topBarWithContent Nothing [ player input ]
-render (Team input) = topBarWithContent Nothing [ team input ]
+render (Player input) = wideTopBarWithContent Nothing [ player input ]
+render (Team input) = wideTopBarWithContent Nothing [ team input ]
 render Register = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ register ] ]
 render SignIn = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ signIn ] ]
 render (Onboarding input) = onboarding input
@@ -211,7 +213,7 @@ handleAction (Init state route) = do
             in
             case (read_ state :: Maybe Preboarding.Input), step' of
             Just input, Just step'' -> just $ Preboarding input { step = step'' }
-            _, _ -> navigateReplace_ "/" *> nothing
+            hmm, _ -> log (unsafeCoerce $ (read state :: E Preboarding.Input)) *> log (unsafeCoerce state) *> navigateReplace_ "/" *> nothing
         ["", "teams", handle] ->
             just $ Team { handle }
         ["", "games"] ->

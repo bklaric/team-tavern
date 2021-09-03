@@ -5,7 +5,6 @@ import Prelude
 import Async (Async)
 import Client.Components.Copyable as Copyable
 import Data.Array as Array
-import Data.Array.Extra (full)
 import Data.Maybe (Maybe(..))
 import Data.Monoid (guard)
 import Data.Symbol (SProxy(..))
@@ -13,7 +12,6 @@ import Halogen as H
 import Record as Record
 import TeamTavern.Client.Components.Button (regularButton)
 import TeamTavern.Client.Components.Card (card, cardHeader, cardHeading, cardSection)
-import TeamTavern.Client.Components.Detail (detailColumn, detailColumnHeading3, detailColumns, detailColumnsContainer, textDetail)
 import TeamTavern.Client.Components.Missing (missing)
 import TeamTavern.Client.Components.Player.PlayerDetails (playerDetails)
 import TeamTavern.Client.Pages.Player.Status (Status(..))
@@ -37,25 +35,18 @@ details player status showEditPlayerModal = let
             Just { clientFrom, clientTo } -> Just { from: clientFrom, to: clientTo }
             Nothing -> Nothing
         )
-    about = textDetail player.about
     in
     card
     [ cardHeader $
-        [ cardHeading "Player" ]
+        [ cardHeading "Details" ]
         <>
-        case status of
-        SignedInSelf -> [ regularButton "fas fa-user-edit" "Edit player" showEditPlayerModal ]
-        _ -> []
+        guard (status == SignedInSelf)
+        [ regularButton "fas fa-user-edit" "Edit details" showEditPlayerModal ]
     , cardSection
-        if Array.null playerDetails' && Array.null about
+        if Array.null playerDetails'
         then Array.singleton $ missing
             case status of
             SignedInSelf -> "Apparently, you prefer to keep an air of mystery about yourself."
             _ -> "Apparently, this player prefers to keep an air of mystery about them."
-        else Array.singleton $ detailColumnsContainer $ Array.singleton $ detailColumns $
-            guard (full playerDetails')
-            [ detailColumn $ [ detailColumnHeading3 "Details" ] <> playerDetails' ]
-            <>
-            guard (full about)
-            [ detailColumn $ [ detailColumnHeading3 "About" ] <> about ]
+        else playerDetails'
     ]

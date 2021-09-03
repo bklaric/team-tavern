@@ -11,7 +11,6 @@ import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Anchor (textAnchor)
-import TeamTavern.Client.Snippets.Brands (detailBattleNetSvg, detailPlayStationSvg, detailRiotSvg, detailSteamSvg, detailSwitchSvg, detailXboxSvg)
 import TeamTavern.Client.Snippets.Class as HS
 
 detailColumnsContainer :: forall slots action. Array (HH.HTML slots action) -> HH.HTML slots action
@@ -51,46 +50,6 @@ fieldDetail icon label children =
     [ HH.span [ HS.class_ "detail-label" ] [ HH.text $ label <> ": " ] ]
     <>
     children
-
-steamIdDetail :: forall left slots action.
-    String -> HH.ComponentHTML action (steamId :: Copyable.Slot String | slots) (Async left)
-steamIdDetail steamId =
-    fieldDetail' detailSteamSvg "Steam ID"
-    [ copyable (SProxy :: SProxy "steamId") steamId steamId ]
-
-steamUrlDetail :: forall slots action. String -> HH.HTML slots action
-steamUrlDetail steamId =
-    detail' detailSteamSvg [ textAnchor "detail-url" ("https://steamcommunity.com/profiles/" <> steamId) "Steam profile" ]
-
-riotIdDetail :: forall left slots action.
-    String -> HH.ComponentHTML action (riotId :: Copyable.Slot String | slots) (Async left)
-riotIdDetail riotId =
-    fieldDetail' detailRiotSvg "Riot ID"
-    [ copyable (SProxy :: SProxy "riotId") riotId riotId ]
-
-battleTagDetail :: forall left slots action.
-    String -> HH.ComponentHTML action (battleTag :: Copyable.Slot String | slots) (Async left)
-battleTagDetail battleTag =
-    fieldDetail' detailBattleNetSvg "BattleTag"
-    [ copyable (SProxy :: SProxy "battleTag") battleTag battleTag ]
-
-psnIdDetail :: forall left slots action.
-    String -> HH.ComponentHTML action (psnId :: Copyable.Slot String | slots) (Async left)
-psnIdDetail psnId =
-    fieldDetail' detailPlayStationSvg "PSN ID"
-    [ copyable (SProxy :: SProxy "psnId") psnId psnId ]
-
-gamertagDetail :: forall left slots action.
-    String -> HH.ComponentHTML action (gamertag :: Copyable.Slot String | slots) (Async left)
-gamertagDetail gamertag =
-    fieldDetail' detailXboxSvg "Gamertag"
-    [ copyable (SProxy :: SProxy "gamertag") gamertag gamertag ]
-
-friendCodeDetail :: forall left slots action.
-    String -> HH.ComponentHTML action (friendCode :: Copyable.Slot String | slots) (Async left)
-friendCodeDetail friendCode =
-    fieldDetail' detailSwitchSvg "Friend code"
-    [ copyable (SProxy :: SProxy "friendCode") friendCode friendCode ]
 
 urlDetail :: forall slots action. String -> String -> Maybe String -> Maybe (HH.HTML slots action)
 urlDetail _ _ Nothing = Nothing

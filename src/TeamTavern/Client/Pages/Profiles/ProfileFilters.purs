@@ -127,7 +127,7 @@ headerCaret class_ visible =
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render state =
-    HH.div [ HS.class_ "filters-container" ] $ [
+    HH.div_ $ [
     card $
     [ HH.div
         [ HS.class_ "card-header"

@@ -3,7 +3,7 @@ module TeamTavern.Server.Team.Infrastructure.ValidateName (Name, validateName, t
 import Prelude
 
 import Data.String (trim)
-import Data.Validated.Label (VariantNel, VariantValidated)
+import Data.Validated.Label (ValidatedVariants, Variants)
 import Data.Validated.Label as Validated
 import Data.Variant (SProxy(..))
 import Wrapped.String (Empty, NotPrintable, TooLong, empty, notPrintable, tooLong)
@@ -14,9 +14,9 @@ newtype Name = Name String
 maxLength :: Int
 maxLength = 40
 
-type NameErrors = VariantNel (empty :: Empty, notPrintable :: NotPrintable, tooLong :: TooLong)
+type NameErrors = Variants (empty :: Empty, notPrintable :: NotPrintable, tooLong :: TooLong)
 
-validateName :: forall errors. String -> VariantValidated (name :: Array String | errors) Name
+validateName :: forall errors. String -> ValidatedVariants (name :: Array String | errors) Name
 validateName name
     = Wrapped.create trim [empty, tooLong maxLength, notPrintable] Name name
     # Validated.labelMap (SProxy :: SProxy "name") \(errors :: NameErrors) ->

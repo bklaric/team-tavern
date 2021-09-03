@@ -13,13 +13,16 @@ import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Ads (descriptionLeaderboards, stickyLeaderboards)
-import TeamTavern.Client.Components.Content (contentDescription, contentHeader, contentHeaderSection, contentHeading', contentHeadingFaIcon)
+import TeamTavern.Client.Components.Content (contentColumns, contentDescription, contentHeader, contentHeaderSection, contentHeading', contentHeadingFaIcon)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Components.Player.ProfileDetails (PlatformIdSlots)
+import TeamTavern.Client.Pages.Player.Contacts (contacts)
 import TeamTavern.Client.Pages.Player.CreateProfileButton as CreateProfileButton
 import TeamTavern.Client.Pages.Player.CreateTeam (createTeam)
 import TeamTavern.Client.Pages.Player.CreateTeam as CreateTeam
 import TeamTavern.Client.Pages.Player.Details (details)
+import TeamTavern.Client.Pages.Player.EditContacts (editContacts)
+import TeamTavern.Client.Pages.Player.EditContacts as EditContacts
 import TeamTavern.Client.Pages.Player.EditPlayer (editPlayer)
 import TeamTavern.Client.Pages.Player.EditPlayer as EditDetails
 import TeamTavern.Client.Pages.Player.EditProfile (editProfile)
@@ -39,6 +42,7 @@ type Input = { nickname :: String }
 type Loaded =
     { player :: ViewPlayer.OkContent
     , status :: Status
+    , editContactsModalShown :: Boolean
     , editPlayerModalShown :: Boolean
     , editProfileModalShown :: Maybe ViewPlayer.OkContentProfile
     , createTeamModalShown :: Boolean
@@ -53,6 +57,8 @@ data State
 data Action
     = Initialize
     | Receive Input
+    | ShowEditContactsModal
+    | HideEditContactsModal
     | ShowEditPlayerModal
     | HideEditPlayerModal
     | ShowEditProfileModal ViewPlayer.OkContentProfile
@@ -66,6 +72,7 @@ type ChildSlots = PlatformIdSlots
     ( discordTag :: Copyable.Slot String
     , team :: NavigationAnchor.Slot String
     , games :: NavigationAnchor.Slot String
+    , editContacts :: EditContacts.Slot
     , editPlayer :: EditDetails.Slot
     , createProfile :: CreateProfileButton.Slot
     , editProfile :: EditProfile.Slot
@@ -81,9 +88,7 @@ render (Loaded state @ { player: player', status }) =
         [ contentHeaderSection [ contentHeading'
             [ contentHeadingFaIcon "fas fa-user", HH.text player'.nickname ] ]
         ]
-        <> case status of
-            SignedInSelf -> [ playerOptions player'.nickname ]
-            _ -> []
+        <> guard (status == SignedInSelf) [ playerOptions player'.nickname ]
     , contentDescription
         case status of
         SignedInSelf -> "View and edit all your details, profiles and teams."
@@ -91,15 +96,23 @@ render (Loaded state @ { player: player', status }) =
     ]
     <> descriptionLeaderboards
     <>
-    [ details player' status ShowEditPlayerModal
-    , profiles player' status ShowEditProfileModal
-    , teams player' status ShowCreateTeamModal
+    [ contentColumns
+        [ HH.div_
+            [ contacts player' status ShowEditContactsModal
+            , details player' status ShowEditPlayerModal
+            ]
+        , HH.div_
+            [ profiles player' status ShowEditProfileModal
+            , teams player' status ShowCreateTeamModal
+            ]
+        ]
     ]
     <> stickyLeaderboards
+    <> guard state.editContactsModalShown [ editContacts player' $ const $ Just HideEditContactsModal ]
     <> guard state.editPlayerModalShown [ editPlayer player' $ const $ Just HideEditPlayerModal ]
     <> guard state.createTeamModalShown [ createTeam $ const $ Just HideCreateTeamModal ]
     <> foldMap
-        (\profile -> [ editProfile { nickname: player'.nickname, profile } $ const $ Just HideEditProfileModal ])
+        (\profile -> [ editProfile { player: player', profile } $ const $ Just HideEditProfileModal ])
         state.editProfileModalShown
 render NotFound = HH.p_ [ HH.text "Player could not be found." ]
 render Error = HH.p_ [ HH.text
@@ -132,6 +145,7 @@ handleAction (Receive { nickname }) = do
             H.put $ Loaded
                 { player: player''
                 , status
+                , editContactsModalShown: false
                 , editPlayerModalShown: false
                 , editProfileModalShown: Nothing
                 , createTeamModalShown: false
@@ -139,6 +153,8 @@ handleAction (Receive { nickname }) = do
             setMeta (player''.nickname <> " | TeamTavern")
                 ("View all details, profiles and teams of player " <> player''.nickname <> ".")
         _ -> pure unit
+handleAction ShowEditContactsModal = modifyLoaded _ { editContactsModalShown = true }
+handleAction HideEditContactsModal = modifyLoaded _ { editContactsModalShown = false }
 handleAction ShowEditPlayerModal = modifyLoaded _ { editPlayerModalShown = true }
 handleAction HideEditPlayerModal = modifyLoaded _ { editPlayerModalShown = false }
 handleAction (ShowEditProfileModal profile) = modifyLoaded _ { editProfileModalShown = Just profile }

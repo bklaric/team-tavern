@@ -11,13 +11,11 @@ type PlayerModel =
     , location :: Maybe String
     , languages :: Array String
     , microphone :: Boolean
-    , discordTag :: Maybe String
     , timezone :: Maybe String
     , weekdayFrom :: Maybe String
     , weekdayTo :: Maybe String
     , weekendFrom :: Maybe String
     , weekendTo :: Maybe String
-    , about :: String
     }
 
 readPlayer :: forall errors. Body -> Async (ClientError errors) PlayerModel

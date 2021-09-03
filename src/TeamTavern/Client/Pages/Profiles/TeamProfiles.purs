@@ -19,7 +19,9 @@ import TeamTavern.Client.Components.Detail (detailColumn, detailColumnHeading4, 
 import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
 import TeamTavern.Client.Components.Pagination (pagination)
+import TeamTavern.Client.Components.Player.ProfileDetails (PlatformIdSlots)
 import TeamTavern.Client.Components.Profile (profileHeader, profileHeading, profileSubheading)
+import TeamTavern.Client.Components.Team.Contacts (profileContacts)
 import TeamTavern.Client.Components.Team.ProfileDetails (profileDetails')
 import TeamTavern.Client.Components.Team.TeamDetails (teamDetails)
 import TeamTavern.Client.Pages.Profiles.TeamBadge (communityBadge, informalBadge, organizedBadge, partyBadge, platformBadge)
@@ -30,15 +32,14 @@ import TeamTavern.Client.Snippets.PreventMouseDefault (preventMouseDefault)
 import TeamTavern.Routes.Shared.Organization (OrganizationNW(..), nameOrHandleNW)
 import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
 import TeamTavern.Routes.Shared.Size (Size(..))
+import TeamTavern.Routes.Shared.Team (Contacts')
 import TeamTavern.Server.Profile.ViewTeamProfilesByGame.LoadProfiles (pageSize)
 import Web.UIEvent.MouseEvent (MouseEvent)
 
-type TeamProfile =
-    { owner :: String
+type TeamProfile = Contacts'
+    ( owner :: String
     , handle :: String
     , organization :: OrganizationNW
-    , discordTag :: Maybe String
-    , discordServer :: Maybe String
     , ageFrom :: Maybe Int
     , ageTo :: Maybe Int
     , locations :: Array String
@@ -52,7 +53,6 @@ type TeamProfile =
         { from :: String
         , to :: String
         }
-    , about :: Array String
     , allPlatforms :: Platforms
     , size :: Size
     , selectedPlatforms :: Array Platform
@@ -69,10 +69,11 @@ type TeamProfile =
             }
         }
     , newOrReturning :: Boolean
+    , about :: Array String
     , ambitions :: Array String
     , updated :: String
     , updatedSeconds :: Number
-    }
+    )
 
 type Input =
     { profiles :: Array TeamProfile
@@ -92,7 +93,7 @@ data Output = PageChanged Int | PreboardingClicked
 
 type Slot = H.Slot (Const Void) Output Unit
 
-type ChildSlots =
+type ChildSlots = PlatformIdSlots
     ( teams :: Anchor.Slot String
     , discordTag :: Copyable.Slot String
     )
@@ -102,6 +103,7 @@ profileSection :: forall action left.
 profileSection profile = let
     teamDetails' = teamDetails profile
     profileDetails'' = profileDetails' profile
+    contactsDetails' = profileContacts profile
     about = textDetail profile.about
     ambitions = textDetail profile.ambitions
     in
@@ -122,30 +124,26 @@ profileSection profile = let
         ]
     ]
     <>
-    guard (full teamDetails' || full profileDetails'' || full about || full ambitions)
     [ detailColumns $
-        guard (full teamDetails' || full profileDetails'')
         [ detailColumn $
-            guard (full teamDetails')
-            [ detailColumnHeading4 "Team details" ] <> teamDetails'
+            guard (full contactsDetails')
+            [ detailColumnHeading4 "Contacts" ] <> contactsDetails'
             <>
-            guard (full profileDetails'')
-            [ detailColumnHeading4 "Profile details" ] <> profileDetails''
+            guard (full teamDetails' || full profileDetails'')
+            [ detailColumnHeading4 "Details" ] <> teamDetails' <> profileDetails''
         ]
         <>
         guard (full about || full ambitions)
         [ detailColumn $
-            guard (full about)
-            [ detailColumnHeading4 "About" ] <> about
+            guard (full about) ([ detailColumnHeading4 "About" ] <> about)
             <>
-            guard (full ambitions)
-            [ detailColumnHeading4 "Ambitions" ] <> ambitions
+            guard (full ambitions) ([ detailColumnHeading4 "Ambitions" ] <> ambitions)
         ]
     ]
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { profiles, profileCount, playerInfo, page } =
-    HH.div [ HS.class_ "profiles-container" ] $ [
+    HH.div_ $ [
     HH.div [ HP.id_ "profiles-card", HS.class_ "card" ] $
     [ cardHeader $
         [ HH.div_ $

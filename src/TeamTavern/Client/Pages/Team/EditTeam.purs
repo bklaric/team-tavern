@@ -5,7 +5,7 @@ import Prelude
 import Async (Async)
 import Data.Const (Const)
 import Data.Either (Either(..))
-import Data.Foldable (foldl, intercalate)
+import Data.Foldable (foldl)
 import Data.Maybe (Maybe(..))
 import Data.Variant (SProxy(..), match)
 import Halogen as H
@@ -47,7 +47,6 @@ type Input fields =
         , sourceFrom :: String
         , sourceTo :: String
         }
-    , about :: Array String
     | fields
     }
 
@@ -93,8 +92,6 @@ handleAction (UpdateDetails details) =
     H.modify_ \state -> state
         { details = state.details
             { organization = details.organization
-            , discordTag = details.discordTag
-            , discordServer = details.discordServer
             , ageFrom = details.ageFrom
             , ageTo = details.ageTo
             , locations = details.locations
@@ -105,12 +102,21 @@ handleAction (UpdateDetails details) =
             , weekdayTo = details.weekdayTo
             , weekendFrom = details.weekendFrom
             , weekendTo = details.weekendTo
-            , about = details.about
             }
         }
 handleAction (SendRequest event) = do
     H.liftEffect $ preventDefault event
-    currentState <- H.modify _ { submitting = true }
+    currentState <- H.modify _
+        { submitting = true
+        , otherError = false
+        , details
+            { nameError = false
+            , websiteError = false
+            , discordTagError = false
+            , discordServerError = false
+            , contactError = false
+            }
+        }
     response <- H.lift $ sendRequest currentState
     case response of
         Just (Right _) -> hardNavigate $ "/teams/" <> currentState.handle
@@ -120,39 +126,12 @@ handleAction (SendRequest event) = do
                 match
                 { name: const state { details { nameError = true } }
                 , website: const state { details { websiteError = true } }
-                , discordTag: const state { details { discordTagError = true } }
-                , discordServer: const state { details { discordServerError = true } }
-                , contact: const state { details { contactError = true } }
-                , about: const state { details { aboutError = true } }
                 }
                 error
             )
-            (currentState
-                { submitting = false
-                , otherError = false
-                , details = currentState.details
-                    { nameError = false
-                    , websiteError = false
-                    , discordTagError = false
-                    , discordServerError = false
-                    , contactError = false
-                    , aboutError = false
-                    }
-                }
-            )
+            (currentState { submitting = false })
             badContent
-        Nothing -> H.put currentState
-            { submitting = false
-            , otherError = true
-            , details = currentState.details
-                { nameError = false
-                , websiteError = false
-                , discordTagError = false
-                , discordServerError = false
-                , contactError = false
-                , aboutError = false
-                }
-            }
+        Nothing -> H.put currentState { submitting = false, otherError = true }
 
 component :: forall query output fields left.
     H.Component HH.HTML query (Input fields) output (Async left)
@@ -161,8 +140,6 @@ component = H.mkComponent
         { handle: team.handle
         , details: EnterTeamDetails.emptyInput
             { organization = team.organization
-            , discordTag = team.discordTag
-            , discordServer = team.discordServer
             , ageFrom = team.ageFrom
             , ageTo = team.ageTo
             , locations = team.locations
@@ -173,7 +150,6 @@ component = H.mkComponent
             , weekdayTo = team.weekdayOnline <#> _.sourceTo
             , weekendFrom = team.weekendOnline <#> _.sourceFrom
             , weekendTo = team.weekendOnline <#> _.sourceTo
-            , about = intercalate "\n\n" team.about
             }
         , otherError: false
         , submitting: false

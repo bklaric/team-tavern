@@ -7,7 +7,7 @@ import Client.Components.Copyable as Copyable
 import Data.Array as Array
 import Data.Maybe (Maybe(..))
 import Halogen.HTML as HH
-import TeamTavern.Client.Components.Detail (arrangedAndDetail, detail, discordTagDetail, weekdaysOnlineDetail, weekendsOnlineDetail)
+import TeamTavern.Client.Components.Detail (arrangedAndDetail, detail, weekdaysOnlineDetail, weekendsOnlineDetail)
 import TeamTavern.Client.Snippets.Class as HS
 
 playerAgeDetail :: forall slots action. Maybe Int -> Maybe (HH.HTML slots action)
@@ -42,7 +42,6 @@ playerMicrophoneDetail true = Just $
 playerDetails :: forall fields action slots left.
     { nickname :: String
     , age :: Maybe Int
-    , discordTag :: Maybe String
     , languages :: Array String
     , location :: Maybe String
     , microphone :: Boolean
@@ -59,8 +58,7 @@ playerDetails :: forall fields action slots left.
     -> Array (HH.ComponentHTML action (discordTag :: Copyable.Slot String | slots) (Async left))
 playerDetails details =
     Array.catMaybes
-    [ discordTagDetail details.nickname details.discordTag
-    , playerAgeDetail details.age
+    [ playerAgeDetail details.age
     , playerLocationDetail details.location
     , playerLanguagesDetail details.languages
     , playerMicrophoneDetail details.microphone

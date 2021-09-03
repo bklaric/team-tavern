@@ -31,3 +31,6 @@ contentHeadingFaIcon icon = HH.i [ HS.class_ $ icon <> " content-heading-fa-icon
 
 contentDescription :: forall slots action. String -> HH.HTML slots action
 contentDescription text = HH.p [ HS.class_ "content-description" ] [ HH.text text ]
+
+contentColumns :: forall slots action. Array (HH.HTML slots action) -> HH.HTML slots action
+contentColumns content' = HH.div [ HS.class_ "content-columns" ] content'

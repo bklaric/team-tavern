@@ -33,16 +33,13 @@ profiles
     -> Status
     -> (ViewPlayer.OkContentProfile -> action)
     -> HH.ComponentHTML action (ChildSlots slots) (Async left)
-profiles { nickname, profiles: profiles' } status showEditProfileModal =
+profiles player @ { profiles: profiles' } status showEditProfileModal =
     card $
     [ cardHeader $
         [ cardHeading "Profiles" ]
         <>
-        case status of
-        SignedInSelf -> Array.singleton $
-            HH.slot (SProxy :: SProxy "createProfile") unit createProfileButton
-            { nickname, profileGameHandles: profiles' <#> _.handle } absurd
-        _ -> []
+        guard (status == SignedInSelf)
+        [ HH.slot (SProxy :: SProxy "createProfile") unit createProfileButton player absurd ]
     ]
     <>
     if Array.null profiles'
@@ -51,7 +48,8 @@ profiles { nickname, profiles: profiles' } status showEditProfileModal =
         SignedInSelf -> "You haven't create any profiles."
         _ -> "This player hasn't created any profiles." ] ]
     else profiles' <#> \profile -> let
-        profileDetails' = profileDetails profile.platform profile.platformId profile.fields profile.fieldValues profile.newOrReturning
+        profileDetails' = profileDetails profile.platform profile.fields profile.fieldValues profile.newOrReturning
+        about = textDetail profile.about
         ambitions = textDetail profile.ambitions
         in
         cardSection $
@@ -66,17 +64,19 @@ profiles { nickname, profiles: profiles' } status showEditProfileModal =
                 ]
             ]
             <>
-            case status of
-            SignedInSelf -> Array.singleton $
-                regularButton "fas fa-user-edit" "Edit profile" $ showEditProfileModal profile
-            _ -> []
+            guard (status == SignedInSelf)
+            [ regularButton "fas fa-user-edit" "Edit profile" $ showEditProfileModal profile ]
         ]
         <>
-        guard (full profileDetails' || full ambitions)
+        guard (full profileDetails' || full about || full ambitions)
         [ detailColumns $
             guard (full profileDetails')
             [ detailColumn $ [ detailColumnHeading4 "Details" ] <> profileDetails' ]
             <>
-            guard (full ambitions)
-            [ detailColumn $ [ detailColumnHeading4 "Ambitions" ] <> ambitions ]
+            guard (full about || full ambitions)
+            [ detailColumn $
+                guard (full about) ([ detailColumnHeading4 "About" ] <> about)
+                <>
+                guard (full ambitions) ([ detailColumnHeading4 "Ambitions" ] <> ambitions)
+            ]
         ]

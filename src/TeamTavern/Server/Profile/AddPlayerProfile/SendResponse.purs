@@ -1,13 +1,24 @@
-module TeamTavern.Server.Profile.AddPlayerProfile.SendResponse (sendResponse) where
+module TeamTavern.Server.Profile.AddPlayerProfile.SendResponse (BadContent, sendResponse) where
 
 import Prelude
 
 import Async (Async, alwaysRight)
 import Data.Array as Array
-import Data.Variant (match)
+import Data.Variant (SProxy(..), Variant, inj, match)
 import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, noContent_, unauthorized__)
 import Simple.JSON (writeJSON)
+import TeamTavern.Routes.Shared.Player (ContactsError)
 import TeamTavern.Server.Profile.AddPlayerProfile.LogError (CreateError)
+import Type (type ($))
+
+type BadContent = Array $ Variant
+    ( profile :: Array $ Variant
+        ( about :: Array String
+        , ambitions :: Array String
+        , url :: { key :: String, message :: Array String }
+        )
+    , contacts :: Array ContactsError
+    )
 
 errorResponse :: CreateError -> Response
 errorResponse = match
@@ -15,7 +26,15 @@ errorResponse = match
     , client: const badRequest__
     , notAuthenticated: const unauthorized__
     , notAuthorized: const forbidden__
-    , profile: badRequest_ <<< writeJSON <<< Array.fromFoldable
+    , invalidBody: \errors ->
+        errors
+        # Array.fromFoldable
+        <#> (match
+            { playerProfile: Array.fromFoldable >>> inj (SProxy :: _ "profile")
+            , playerContacts: Array.fromFoldable >>> inj (SProxy :: _ "contacts")
+            })
+        # (writeJSON :: BadContent -> String)
+        # badRequest_
     }
 
 successResponse :: Unit -> Response

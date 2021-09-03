@@ -36,6 +36,7 @@ import TeamTavern.Client.Components.Boarding.GameInput as GameInput
 import TeamTavern.Client.Components.Boarding.PlayerOrTeamInput (playerOrTeamInput)
 import TeamTavern.Client.Components.Boarding.PlayerOrTeamInput as PlayerOrTeamInput
 import TeamTavern.Client.Components.Button (primaryButton_, secondaryButton_)
+import TeamTavern.Client.Components.Player.ContactsFormInput as PlayerContactsFormInput
 import TeamTavern.Client.Components.Player.PlayerFormInput as PlayerFormInput
 import TeamTavern.Client.Components.Player.ProfileFormInput as PlayerProfileFormInput
 import TeamTavern.Client.Components.RegistrationInput (registrationInput)
@@ -205,6 +206,8 @@ type ChildSlots slots =
     , gameInput :: GameInput.Slot
     , playerProfileFormInput :: PlayerProfileFormInput.Slot
     , teamProfileFormInput :: TeamProfileFormInput.Slot
+    , playerContactsFormInput :: PlayerContactsFormInput.Slot
+    -- , teamContactsFormInput :: TeamContactsFormInput.Slot
     , registrationInput :: RegistrationInput.Slot
     | slots )
 
@@ -314,7 +317,7 @@ renderPage { step: Game, game, playerOrTeam } =
 renderPage { step: PlayerProfile, playerProfile, otherError, submitting, game } =
     [ boardingStep
         [ boardingHeading $ maybe "Player profile" (\{ title } -> title <> " player profile") (getGame game)
-        , boardingDescription  """Fill out your in-game stats, achievements and ambitions to find
+        , boardingDescription  """Fill out your in-game stats, achievements and about to find
             equally skilled teammates."""
         , PlayerProfileFormInput.profileFormInput playerProfile UpdatePlayerProfile
         ]
@@ -329,7 +332,7 @@ renderPage { step: PlayerProfile, playerProfile, otherError, submitting, game } 
 renderPage { step: TeamProfile, teamProfile, otherError, submitting, game } =
     [ boardingStep
         [ boardingHeading $ maybe "Team profile" (\{ title } -> title <> " team profile") (getGame game)
-        , boardingDescription  """Tell us about your team's ambitions and what you're looking for
+        , boardingDescription  """Tell us about your team's about and what you're looking for
             skill-wise in new team members."""
         , TeamProfileFormInput.profileFormInput teamProfile UpdateTeamProfile
         ]
@@ -389,8 +392,10 @@ sendRequest (state :: State) = Async.unify do
             , player: Just $ pick player
             , team: Nothing
             , gameHandle: game.handle
-            , playerProfile: Just $ pick profile
+            , playerProfile: Just $ pick profile.details
             , teamProfile: Nothing
+            , playerContacts: Just $ pick profile.contacts
+            , teamContacts: Nothing
             , registration: pick registration
             }
         { team
@@ -403,13 +408,10 @@ sendRequest (state :: State) = Async.unify do
             , team: Just $ pick team
             , gameHandle: game.handle
             , playerProfile: Nothing
-            , teamProfile: Just
-                { size: profile.size
-                , platforms: profile.selectedPlatforms
-                , fieldValues: profile.fieldValues
-                , newOrReturning: profile.newOrReturning
-                , ambitions: profile.ambitions
-                }
+            , teamProfile: Just $ pick $ Record.insert
+                (SProxy :: _ "platforms") profile.details.selectedPlatforms profile.details
+            , playerContacts: Nothing
+            , teamContacts: Just $ pick profile.contacts
             , registration: pick registration
             }
         _ -> Async.left Nothing
@@ -475,13 +477,11 @@ handleAction (UpdatePlayer details) = do
             , location = details.location
             , languages = details.languages
             , microphone = details.microphone
-            , discordTag = details.discordTag
             , timezone = details.timezone
             , weekdayFrom = details.weekdayFrom
             , weekdayTo = details.weekdayTo
             , weekendFrom = details.weekendFrom
             , weekendTo = details.weekendTo
-            , about = details.about
             }
         }
     updateHistoryState state
@@ -489,8 +489,6 @@ handleAction (UpdateTeam details) = do
     state <- H.modify _
         { team
             { organization = details.organization
-            , discordTag = details.discordTag
-            , discordServer = details.discordServer
             , ageFrom = details.ageFrom
             , ageTo = details.ageTo
             , locations = details.locations
@@ -501,7 +499,6 @@ handleAction (UpdateTeam details) = do
             , weekdayTo = details.weekdayTo
             , weekendFrom = details.weekendFrom
             , weekendTo = details.weekendTo
-            , about = details.about
             }
         }
     updateHistoryState state
@@ -509,47 +506,74 @@ handleAction (UpdateGame game) = do
     state <- H.modify _
         { game = Selected $ Just game
         , playerProfile
-            { platforms = game.platforms
-            , fields = game.fields
-            , platform = game.platforms.head
-            , fieldValues = []
-            , newOrReturning = false
-            , ambitions = ""
+            { details
+                { platforms = game.platforms
+                , fields = game.fields
+                , platform = game.platforms.head
+                , fieldValues = []
+                , newOrReturning = false
+                , about = ""
+                }
             }
         , teamProfile
-            { allPlatforms = game.platforms
-            , selectedPlatforms = [ game.platforms.head ]
-            , fields = game.fields # Array.mapMaybe
-                case _ of
-                { ilk, key, label, icon, options: Just options } | ilk == 2 || ilk == 3 ->
-                    Just { key, label, icon, options }
-                _ -> Nothing
-            , fieldValues = []
-            , newOrReturning = false
-            , ambitions = ""
+            { details
+                { allPlatforms = game.platforms
+                , selectedPlatforms = [ game.platforms.head ]
+                , fields = game.fields # Array.mapMaybe
+                    case _ of
+                    { ilk, key, label, icon, options: Just options } | ilk == 2 || ilk == 3 ->
+                        Just { key, label, icon, options }
+                    _ -> Nothing
+                , fieldValues = []
+                , newOrReturning = false
+                , about = ""
+                }
             }
         }
     updateHistoryState state
-handleAction (UpdatePlayerProfile details) = do
+handleAction (UpdatePlayerProfile profile) = do
     state <- H.modify _
         { playerProfile
-            { platform = details.platform
-            , platformId = details.platformId
-            , platformIdError = details.platformIdError
-            , fieldValues = details.fieldValues
-            , newOrReturning = details.newOrReturning
-            , ambitions = details.ambitions
+            { details
+                { platform = profile.details.platform
+                , fieldValues = profile.details.fieldValues
+                , newOrReturning = profile.details.newOrReturning
+                , about = profile.details.about
+                , ambitions = profile.details.ambitions
+                }
+            , contacts
+                { discordTag = profile.contacts.discordTag
+                , steamId = profile.contacts.steamId
+                , riotId = profile.contacts.riotId
+                , battleTag = profile.contacts.battleTag
+                , psnId = profile.contacts.psnId
+                , gamerTag = profile.contacts.gamerTag
+                , friendCode = profile.contacts.friendCode
+                }
             }
         }
     updateHistoryState state
-handleAction (UpdateTeamProfile details) = do
+handleAction (UpdateTeamProfile profile) = do
     state <- H.modify _
         { teamProfile
-            { size = details.size
-            , selectedPlatforms = details.platforms
-            , fieldValues = details.fieldValues
-            , newOrReturning = details.newOrReturning
-            , ambitions = details.ambitions
+            { details
+                { size = profile.details.size
+                , selectedPlatforms = profile.details.platforms
+                , fieldValues = profile.details.fieldValues
+                , newOrReturning = profile.details.newOrReturning
+                , about = profile.details.about
+                , ambitions = profile.details.ambitions
+                }
+            , contacts
+                { discordTag = profile.contacts.discordTag
+                , discordServer = profile.contacts.discordServer
+                , steamId = profile.contacts.steamId
+                , riotId = profile.contacts.riotId
+                , battleTag = profile.contacts.battleTag
+                , psnId = profile.contacts.psnId
+                , gamerTag = profile.contacts.gamerTag
+                , friendCode = profile.contacts.friendCode
+                }
             }
         }
     updateHistoryState state
@@ -565,26 +589,42 @@ handleAction SetUpAccount = do
     currentState <- H.modify _ { submitting = true }
     let nextState = currentState
             { submitting = false
-            , player
-                { discordTagError = false
-                , aboutError = false
-                }
             , team
                 { nameError = false
                 , websiteError = false
                 , discordTagError = false
                 , discordServerError = false
                 , contactError = false
-                , aboutError = false
                 }
             , playerProfile
-                { platformIdError = false
-                , urlErrors = []
-                , ambitionsError = false
+                { details
+                    { urlErrors = []
+                    , aboutError = false
+                    }
+                , contacts
+                    { discordTagError = false
+                    , steamIdError = false
+                    , riotIdError = false
+                    , battleTagError = false
+                    , psnIdError = false
+                    , gamerTagError = false
+                    , friendCodeError = false
+                    }
                 }
             , teamProfile
-                { platformsError = false
-                , ambitionsError = false
+                { details
+                    { platformsError = false
+                    , aboutError = false
+                    }
+                , contacts
+                    { discordTagError = false
+                    , steamIdError = false
+                    , riotIdError = false
+                    , battleTagError = false
+                    , psnIdError = false
+                    , gamerTagError = false
+                    , friendCodeError = false
+                    }
                 }
             , registration
                 { nicknameError = false
@@ -604,88 +644,61 @@ handleAction SetUpAccount = do
             foldl
             (\state error ->
                 match
-                { player:
-                    foldl
-                    (\state' error' ->
-                        match
-                        { discordTag: const state'
-                            { step = Player, player { discordTagError = true } }
-                        , about: const state'
-                            { step = Player, player { aboutError = true } }
+                { team: state # foldl \state' error' -> error' # match
+                    { name: const state' { step = Team, team { nameError = true } }
+                    , website: const state' { step = Team, team { websiteError = true } }
+                    }
+                , playerProfile: state # foldl \state' error' -> error' # match
+                    { url: \{ key } -> state'
+                        { step = if state'.step > PlayerProfile then PlayerProfile else state'.step
+                        , playerProfile { details { urlErrors = Array.cons key state'.playerProfile.details.urlErrors } }
                         }
-                        error'
-                    )
-                    state
-                , team:
-                    foldl
-                    (\state' error' ->
-                        match
-                        { name: const state'
-                            { step = Team, team { nameError = true } }
-                        , website: const state'
-                            { step = Team, team { websiteError = true } }
-                        , discordTag: const state'
-                            { step = Team, team { discordTagError = true } }
-                        , discordServer: const state'
-                            { step = Team, team { discordServerError = true } }
-                        , contact: const state'
-                            { step = Team, team { contactError = true } }
-                        , about: const state'
-                            { step = Team, team { aboutError = true } }
+                    , about: const state'
+                        { step = if state'.step > PlayerProfile then PlayerProfile else state'.step
+                        , playerProfile { details { aboutError = true } }
                         }
-                        error'
-                    )
-                    state
-                , playerProfile:
-                    foldl
-                    (\state' error' ->
-                        match
-                        { platformId: const state'
-                            { step =
-                                if state'.step > PlayerProfile then PlayerProfile else state'.step
-                            , playerProfile { platformIdError = true }
-                            }
-                        , url: \{ key } -> state'
-                            { step =
-                                if state'.step > PlayerProfile then PlayerProfile else state'.step
-                            , playerProfile
-                                { urlErrors = Array.cons key state'.playerProfile.urlErrors }
-                            }
-                        , ambitions: const state'
-                            { step =
-                                if state'.step > PlayerProfile then PlayerProfile else state'.step
-                            , playerProfile { ambitionsError = true }
-                            }
+                    , ambitions: const state'
+                        { step = if state'.step > PlayerProfile then PlayerProfile else state'.step
+                        , playerProfile { details { ambitionsError = true } }
                         }
-                        error'
-                    )
-                    state
-                , teamProfile:
-                    foldl
-                    (\state' error' ->
-                        match
-                        { platforms: const state'
-                            { step = if state'.step > TeamProfile then TeamProfile else state'.step
-                            , teamProfile { platformsError = true }
-                            }
-                        , ambitions: const state'
-                            { step = if state'.step > TeamProfile then TeamProfile else state'.step
-                            , teamProfile { ambitionsError = true }
-                            }
+                    }
+                , teamProfile: state # foldl \state' error' -> error' # match
+                    { platforms: const state'
+                        { step = if state'.step > TeamProfile then TeamProfile else state'.step
+                        , teamProfile { details { platformsError = true } }
                         }
-                        error'
-                    )
-                    state
-                , registration:
-                    foldl
-                    (\state' error' ->
-                        match
-                        { nickname: const state' { registration { nicknameError = true } }
-                        , password: const state' { registration { passwordError = true } }
+                    , about: const state'
+                        { step = if state'.step > TeamProfile then TeamProfile else state'.step
+                        , teamProfile { details { aboutError = true } }
                         }
-                        error'
-                    )
-                    state
+                    , ambitions: const state'
+                        { step = if state'.step > TeamProfile then TeamProfile else state'.step
+                        , teamProfile { details { ambitionsError = true } }
+                        }
+                    }
+                , playerContacts: state # foldl \state' error' -> error' # match
+                    { discordTag: const state' { step = PlayerProfile, playerProfile { contacts { discordTagError = true } } }
+                    , steamId: const state' { step = PlayerProfile, playerProfile { contacts { steamIdError = true } } }
+                    , riotId: const state' { step = PlayerProfile, playerProfile { contacts { riotIdError = true } } }
+                    , battleTag: const state' { step = PlayerProfile, playerProfile { contacts { battleTagError = true } } }
+                    , psnId: const state' { step = PlayerProfile, playerProfile { contacts { psnIdError = true } } }
+                    , gamerTag: const state' { step = PlayerProfile, playerProfile { contacts { gamerTagError = true } } }
+                    , friendCode: const state' { step = PlayerProfile, playerProfile { contacts { friendCodeError = true } } }
+                    }
+                , teamContacts: state # foldl \state' error' -> error' # match
+                    { discordTag: const state' { teamProfile { contacts { discordTagError = true } } }
+                    , discordServer: const state' { teamProfile { contacts { discordServerError = true } } }
+                    , steamId: const state' { teamProfile { contacts { steamIdError = true } } }
+                    , riotId: const state' { teamProfile { contacts { riotIdError = true } } }
+                    , battleTag: const state' { teamProfile { contacts { battleTagError = true } } }
+                    , psnId: const state' { teamProfile { contacts { psnIdError = true } } }
+                    , gamerTag: const state' { teamProfile { contacts { gamerTagError = true } } }
+                    , friendCode: const state' { teamProfile { contacts { friendCodeError = true } } }
+                    }
+                , registration: state # foldl \state' error' -> error' # match
+                    { nickname: const state' { registration { nicknameError = true } }
+                    , password: const state' { registration { passwordError = true } }
+                    }
                 , nicknameTaken: const state { registration { nicknameTaken = true } }
                 }
                 error

@@ -59,8 +59,6 @@ handleAction (UpdateDetails details) =
     H.modify_ \state -> state
         { details = state.details
             { organization = details.organization
-            , discordTag = details.discordTag
-            , discordServer = details.discordServer
             , ageFrom = details.ageFrom
             , ageTo = details.ageTo
             , locations = details.locations
@@ -71,7 +69,6 @@ handleAction (UpdateDetails details) =
             , weekdayTo = details.weekdayTo
             , weekendFrom = details.weekendFrom
             , weekendTo = details.weekendTo
-            , about = details.about
             }
         }
 handleAction (SendRequest event) = do
@@ -86,10 +83,6 @@ handleAction (SendRequest event) = do
                 match
                 { name: const state { details = state.details { nameError = true } }
                 , website: const state { details = state.details { websiteError = true } }
-                , discordTag: const state { details = state.details { discordTagError = true } }
-                , discordServer: const state { details = state.details { discordServerError = true } }
-                , contact: const state { details = state.details { contactError = true } }
-                , about: const state { details = state.details { aboutError = true } }
                 }
                 error
             )
@@ -102,7 +95,6 @@ handleAction (SendRequest event) = do
                     , discordTagError = false
                     , discordServerError = false
                     , contactError = false
-                    , aboutError = false
                     }
                 }
             )
@@ -116,7 +108,6 @@ handleAction (SendRequest event) = do
                 , discordTagError = false
                 , discordServerError = false
                 , contactError = false
-                , aboutError = false
                 }
             }
 

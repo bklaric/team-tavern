@@ -13,6 +13,7 @@ import Simple.JSON (writeJSON)
 import TeamTavern.Routes.Shared.Organization (OrganizationNW)
 import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
 import TeamTavern.Routes.Shared.Size (Size)
+import TeamTavern.Routes.Shared.Team (Contacts')
 import TeamTavern.Server.Infrastructure.Error (LoadSingleError)
 import TeamTavern.Server.Infrastructure.Log (logLoadSingleError)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstNotFound, teamAdjustedWeekdayFrom, teamAdjustedWeekdayTo, teamAdjustedWeekendFrom, teamAdjustedWeekendTo)
@@ -39,17 +40,16 @@ type Profile =
         , optionKeys :: Array String
         }
     , newOrReturning :: Boolean
+    , about :: Array String
     , ambitions :: Array String
     , updated :: String
     , updatedSeconds :: Number
     }
 
-type Team =
-    { owner :: String
+type Team = Contacts'
+    ( owner :: String
     , handle :: String
     , organization :: OrganizationNW
-    , discordTag :: Maybe String
-    , discordServer :: Maybe String
     , ageFrom :: Maybe Int
     , ageTo :: Maybe Int
     , locations :: Array String
@@ -68,9 +68,8 @@ type Team =
         , sourceFrom :: String
         , sourceTo :: String
         }
-    , about :: Array String
     , profiles :: Array Profile
-    }
+    )
 
 queryString :: String -> Query
 queryString timezone = Query $ """
@@ -94,6 +93,12 @@ queryString timezone = Query $ """
         end as organization,
         team.discord_tag as "discordTag",
         team.discord_server as "discordServer",
+        team.steam_id as "steamId",
+        team.riot_id as "riotId",
+        team.battle_tag as "battleTag",
+        team.psn_id as "psnId",
+        team.gamer_tag as "gamerTag",
+        team.friend_code as "friendCode",
         team.age_from as "ageFrom",
         team.age_to as "ageTo",
         team.locations,
@@ -118,7 +123,6 @@ queryString timezone = Query $ """
                 'sourceTo', to_char(team.weekend_to, 'HH24:MI')
             )
         end as "weekendOnline",
-        team.about,
         coalesce(
             json_agg(
                 json_build_object(
@@ -130,6 +134,7 @@ queryString timezone = Query $ """
                     'fields', profile.fields,
                     'fieldValues', profile.field_values,
                     'newOrReturning', profile.new_or_returning,
+                    'about', profile.about,
                     'ambitions', profile.ambitions,
                     'updated', profile.updated,
                     'updatedSeconds', profile.updated_seconds
@@ -155,6 +160,7 @@ queryString timezone = Query $ """
                 coalesce(fields.fields, '[]') as fields,
                 coalesce(field_values.field_values, '[]') as field_values,
                 profile.new_or_returning,
+                profile.about,
                 profile.ambitions,
                 profile.updated::text,
                 extract(epoch from (now() - updated)) as updated_seconds
@@ -257,7 +263,7 @@ sendResponse = alwaysRight
         , notFound: const notFound__
         }
     )
-    (ok_ <<< writeJSON)
+    (ok_ <<< (writeJSON :: Team -> String))
 
 view :: forall left. Pool -> RouteParams -> Async left Response
 view pool routeParams =

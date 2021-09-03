@@ -4,6 +4,7 @@ import Async (Async)
 import Data.Maybe (Maybe)
 import Perun.Request.Body (Body)
 import TeamTavern.Routes.Shared.Platform (Platform)
+import TeamTavern.Routes.Shared.Player (Contacts)
 import TeamTavern.Server.Infrastructure.Error (ClientError)
 import TeamTavern.Server.Infrastructure.ReadJsonBody (readJsonBody)
 
@@ -16,11 +17,16 @@ type FieldValue =
 
 type Profile =
     { platform :: Platform
-    , platformId :: String
     , fieldValues :: Array FieldValue
     , newOrReturning :: Boolean
+    , about :: String
     , ambitions :: String
     }
 
-readProfile :: forall errors. Body -> Async (ClientError errors) Profile
+type RequestContent =
+    { details :: Profile
+    , contacts :: Contacts
+    }
+
+readProfile :: forall errors. Body -> Async (ClientError errors) RequestContent
 readProfile = readJsonBody

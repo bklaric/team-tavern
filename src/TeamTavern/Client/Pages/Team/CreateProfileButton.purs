@@ -3,6 +3,7 @@ module TeamTavern.Client.Pages.Team.CreateProfileButton where
 import Prelude
 
 import Async (Async)
+import Data.Array (foldMap)
 import Data.Array as Array
 import Data.Maybe (Maybe(..), maybe)
 import Data.Tuple (Tuple(..))
@@ -18,17 +19,17 @@ import TeamTavern.Client.Script.Request (get)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.ViewAllGames as ViewAllGames
 import TeamTavern.Routes.ViewGame as View
+import TeamTavern.Server.Team.View (Team)
 
-type Input =
-    { teamHandle :: String
-    , profileGameHandles :: Array String
-    }
+type Input = Team
 
 createProfileButton :: forall left output query. H.Component HH.HTML query Input output (Async left)
-createProfileButton = Hooks.component $ \_ { teamHandle, profileGameHandles } -> Hooks.do
+createProfileButton = Hooks.component $ \_ team -> Hooks.do
     (Tuple shown shownId) <- usePopover
 
     (Tuple (games :: ViewAllGames.OkContent) gamesId) <- Hooks.useState []
+
+    let profileGameHandles = team.profiles <#> _.handle
 
     Hooks.useLifecycleEffect do
         games' <- lift $ get "/api/games"
@@ -55,13 +56,9 @@ createProfileButton = Hooks.component $ \_ { teamHandle, profileGameHandles } ->
             ]
         ]
         <>
-        case modalShown of
-        Nothing -> []
-        Just modalInput ->
-            [ createProfile
-                modalInput
-                (const $ Just $ Hooks.put modalShownId Nothing)
-            ]
+        foldMap (\modalInput ->
+            [ createProfile modalInput (const $ Just $ Hooks.put modalShownId Nothing) ])
+            modalShown
         )
         (games <#> \game ->
             popoverItem
@@ -70,17 +67,7 @@ createProfileButton = Hooks.component $ \_ { teamHandle, profileGameHandles } ->
                 case game' of
                     Nothing -> pure unit
                     Just (game'' :: View.OkContent) ->
-                        Hooks.put modalShownId $ Just
-                        { teamHandle
-                        , gameHandle: game''.handle
-                        , title: game''.title
-                        , platforms: game''.platforms
-                        , fields:
-                            game''.fields
-                            <#> (\{ key, label, icon, options } ->
-                                options <#> { key, label, icon, options: _ })
-                            # Array.catMaybes
-                        }
+                        Hooks.put modalShownId $ Just { team, game: game'' }
             )
             [ HH.img
                 [ HS.class_ "game-card-logo"

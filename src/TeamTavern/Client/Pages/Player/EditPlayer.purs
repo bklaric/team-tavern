@@ -3,12 +3,9 @@ module TeamTavern.Client.Pages.Player.EditPlayer (Input, Slot, editPlayer) where
 import Prelude
 
 import Async (Async)
-import Data.Array (intercalate)
 import Data.Const (Const)
-import Data.Either (Either(..))
-import Data.Foldable (foldl)
 import Data.Maybe (Maybe(..))
-import Data.Variant (SProxy(..), match)
+import Data.Variant (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Form (form, otherFormError, submitButton)
@@ -16,9 +13,8 @@ import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.Player.PlayerFormInput (playerFormInput)
 import TeamTavern.Client.Components.Player.PlayerFormInput as EnterPlayerDetails
 import TeamTavern.Client.Script.Navigate (hardNavigate)
-import TeamTavern.Client.Script.Request (putNoContent)
+import TeamTavern.Client.Script.Request (putNoContent')
 import TeamTavern.Routes.ViewPlayer as ViewPlayer
-import TeamTavern.Server.Player.UpdatePlayer.SendResponse as Update
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
@@ -48,20 +44,18 @@ render { details, submitting, otherError } =
     <>
     otherFormError otherError
 
-sendRequest :: forall left. State -> Async left (Maybe (Either Update.BadRequestContent Unit))
+sendRequest :: forall left. State -> Async left (Maybe Unit)
 sendRequest { nickname, details } =
-    putNoContent ("/api/players/" <> nickname)
+    putNoContent' ("/api/players/" <> nickname)
     { birthday: details.birthday
     , location: details.location
     , languages: details.languages
     , microphone: details.microphone
-    , discordTag: details.discordTag
     , timezone: details.timezone
     , weekdayFrom: details.weekdayFrom
     , weekdayTo: details.weekdayTo
     , weekendFrom: details.weekendFrom
     , weekendTo: details.weekendTo
-    , about: details.about
     }
 
 handleAction :: forall output left.
@@ -73,13 +67,11 @@ handleAction (UpdatePlayerDetails details) =
             , location = details.location
             , languages = details.languages
             , microphone = details.microphone
-            , discordTag = details.discordTag
             , timezone = details.timezone
             , weekdayFrom = details.weekdayFrom
             , weekdayTo = details.weekdayTo
             , weekendFrom = details.weekendFrom
             , weekendTo = details.weekendTo
-            , about = details.about
             }
         }
 handleAction (Update event) = do
@@ -87,30 +79,9 @@ handleAction (Update event) = do
     currentState <- H.modify _ { submitting = true }
     response <- H.lift $ sendRequest currentState
     case response of
-        Just (Right _) -> hardNavigate $ "/players/" <> currentState.nickname
-        Just (Left errors) -> H.put $
-            foldl
-            (\state error ->
-                match
-                { discordTag: const $ state
-                    { details = state.details { discordTagError = true } }
-                , about: const $ state
-                    { details = state.details { aboutError = true } }
-                }
-                error
-            )
-            (currentState
-                { submitting = false
-                , details = currentState.details
-                    { discordTagError = false, aboutError = false }
-                , otherError = false
-                }
-            )
-            errors
+        Just _ -> hardNavigate $ "/players/" <> currentState.nickname
         Nothing -> H.put currentState
             { submitting = false
-            , details = currentState.details
-                { discordTagError = false, aboutError = false }
             , otherError = true
             }
 
@@ -123,15 +94,11 @@ component = H.mkComponent
             , location: player.location
             , languages: player.languages
             , microphone: player.microphone
-            , discordTag: player.discordTag
             , timezone: player.timezone
             , weekdayFrom: player.weekdayOnline <#> _.sourceFrom
             , weekdayTo: player.weekdayOnline <#> _.sourceTo
             , weekendFrom: player.weekendOnline <#> _.sourceFrom
             , weekendTo: player.weekendOnline <#> _.sourceTo
-            , about: intercalate "\n\n" player.about
-            , discordTagError: false
-            , aboutError: false
             }
         , otherError: false
         , submitting: false
