@@ -118,6 +118,8 @@ img.top-bar-games-icon {
     @extend .popover;
     left: 50%;
     transform: translate(-50%, 0);
+    max-height: calc(100vh - 41px - 80px);
+    overflow: auto;
 }
 
 .top-bar-game {
