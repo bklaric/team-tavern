@@ -3,6 +3,7 @@ module TeamTavern.Client.Pages.Team (Input, Slot, team) where
 import Prelude
 
 import Async (Async)
+import CSS as Css
 import Client.Components.Copyable as Copyable
 import Control.Monad.State (class MonadState)
 import Data.Array (foldMap)
@@ -12,8 +13,10 @@ import Data.Monoid (guard)
 import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
+import Halogen.HTML.CSS as HC
 import TeamTavern.Client.Components.Ads (descriptionLeaderboards, stickyLeaderboards)
 import TeamTavern.Client.Components.Content (contentColumns, contentDescription, contentHeader, contentHeaderSection, contentHeading', contentHeadingFaIcon)
+import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
 import TeamTavern.Client.Components.Player.ProfileDetails (PlatformIdSlots)
 import TeamTavern.Client.Pages.Profiles.TeamBadge (informalBadge, organizedBadge)
@@ -67,6 +70,7 @@ type ChildSlots = PlatformIdSlots
     , editContacts :: EditContacts.Slot
     , editTeam :: EditTeam.Slot
     , editProfile :: EditProfile.Slot
+    , viewTeamOwner :: Anchor.Slot Unit
     )
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
@@ -83,6 +87,10 @@ render (Loaded state @ { team: team', status } ) =
                 InformalNW -> informalBadge
                 OrganizedNW _ -> organizedBadge
             ]
+        , navigationAnchor (SProxy :: _ "viewTeamOwner")
+            { path: "/players/" <> team'.owner
+            , content: HH.span [ HC.style $ Css.fontWeight $ Css.weight 500.0 ] [ HH.text "View team owner" ]
+            }
         ]
     , contentDescription
         case status of
