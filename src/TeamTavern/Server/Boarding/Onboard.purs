@@ -185,10 +185,10 @@ onboard pool cookies body =
                 # AsyncV.toAsync
                 # label (SProxy :: SProxy "invalidBody")
             let generatedHandle = generateHandle team'.organization cookieInfo.nickname
-            { handle } <- addTeam client cookieInfo.id generatedHandle team'
+            { id, handle } <- addTeam client cookieInfo.id generatedHandle team'
             profileId <- AddTeamProfile.addProfile
                 client cookieInfo.id handle content.gameHandle profile'
-            TeamIdunno.writeContacts client (unwrap cookieInfo.id) contacts'
+            TeamIdunno.writeContacts client id contacts'
             pure { teamHandle: Just handle, profileId }
         _ -> Async.left $ inj (SProxy :: SProxy "client") []
 

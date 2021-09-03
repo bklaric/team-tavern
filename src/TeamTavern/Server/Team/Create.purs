@@ -31,11 +31,11 @@ logError :: CreateError -> Effect Unit
 logError = Log.logError "Error creating team"
     (internalHandler >>> notAuthenticatedHandler >>> clientHandler >>> teamHandler)
 
-type OkContent = { handle :: String }
+type OkContent = { id :: Int, handle :: String }
 
 type BadContent = Array TeamError
 
-sendResponse :: Async CreateError { handle :: String } -> (forall voidLeft. Async voidLeft Response)
+sendResponse :: Async CreateError OkContent -> (forall voidLeft. Async voidLeft Response)
 sendResponse = alwaysRight
     (match
         { internal: const internalServerError__

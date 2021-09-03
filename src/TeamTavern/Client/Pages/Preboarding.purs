@@ -686,14 +686,14 @@ handleAction SetUpAccount = do
                     , friendCode: const state' { step = PlayerProfile, playerProfile { contacts { friendCodeError = true } } }
                     }
                 , teamContacts: state # foldl \state' error' -> error' # match
-                    { discordTag: const state' { teamProfile { contacts { discordTagError = true } } }
-                    , discordServer: const state' { teamProfile { contacts { discordServerError = true } } }
-                    , steamId: const state' { teamProfile { contacts { steamIdError = true } } }
-                    , riotId: const state' { teamProfile { contacts { riotIdError = true } } }
-                    , battleTag: const state' { teamProfile { contacts { battleTagError = true } } }
-                    , psnId: const state' { teamProfile { contacts { psnIdError = true } } }
-                    , gamerTag: const state' { teamProfile { contacts { gamerTagError = true } } }
-                    , friendCode: const state' { teamProfile { contacts { friendCodeError = true } } }
+                    { discordTag: const state' { step = TeamProfile, teamProfile { contacts { discordTagError = true } } }
+                    , discordServer: const state' { step = TeamProfile, teamProfile { contacts { discordServerError = true } } }
+                    , steamId: const state' { step = TeamProfile, teamProfile { contacts { steamIdError = true } } }
+                    , riotId: const state' { step = TeamProfile, teamProfile { contacts { riotIdError = true } } }
+                    , battleTag: const state' { step = TeamProfile, teamProfile { contacts { battleTagError = true } } }
+                    , psnId: const state' { step = TeamProfile, teamProfile { contacts { psnIdError = true } } }
+                    , gamerTag: const state' { step = TeamProfile, teamProfile { contacts { gamerTagError = true } } }
+                    , friendCode: const state' { step = TeamProfile, teamProfile { contacts { friendCodeError = true } } }
                     }
                 , registration: state # foldl \state' error' -> error' # match
                     { nickname: const state' { registration { nicknameError = true } }

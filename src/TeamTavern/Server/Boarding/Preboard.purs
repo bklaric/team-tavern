@@ -272,11 +272,11 @@ preboard deployment pool cookies body =
 
             let generatedHandle = generateHandle team'.organization registration'.nickname
 
-            { handle } <- addTeam client (Id id) generatedHandle team'
+            { id: teamId, handle } <- addTeam client (Id id) generatedHandle team'
 
             profileId <- AddTeamProfile.addProfile client (Id id) handle content.gameHandle profile'
 
-            TeamIdunno.writeContacts client id contacts'
+            TeamIdunno.writeContacts client teamId contacts'
 
             pure
                 { teamHandle: Just handle

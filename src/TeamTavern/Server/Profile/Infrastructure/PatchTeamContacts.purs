@@ -21,12 +21,12 @@ queryString = Query """
         psn_id = coalesce($7, psn_id),
         gamer_tag = coalesce($8, gamer_tag),
         friend_code = coalesce($9, friend_code)
-        where team.id = $1
+        where team.handle = $1
     """
 
-queryParameters :: Int -> Contacts -> Array QueryParameter
-queryParameters teamId contacts =
-    teamId
+queryParameters :: String -> Contacts -> Array QueryParameter
+queryParameters teamHandle contacts =
+    teamHandle
     : toNullable contacts.discordTag
     : toNullable contacts.discordServer
     : toNullable contacts.steamId
@@ -37,6 +37,6 @@ queryParameters teamId contacts =
     :| toNullable contacts.friendCode
 
 patchTeamContacts :: forall querier errors. Querier querier =>
-    querier -> Int -> Contacts -> Async (InternalError errors) Unit
-patchTeamContacts querier teamId contacts =
-    queryNone querier queryString (queryParameters teamId contacts)
+    querier -> String -> Contacts -> Async (InternalError errors) Unit
+patchTeamContacts querier teamHandle contacts =
+    queryNone querier queryString (queryParameters teamHandle contacts)

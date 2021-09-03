@@ -8,7 +8,6 @@ import Data.Bifunctor.Label (label)
 import Data.Foldable (elem)
 import Data.Map (Map)
 import Data.Maybe (Maybe(..))
-import Data.Newtype (unwrap)
 import Data.Symbol (SProxy(..))
 import Perun.Request.Body (Body)
 import Perun.Response (Response)
@@ -62,7 +61,7 @@ addTeamProfile pool cookies body { teamHandle, gameHandle } =
         profileId <- addProfile client cookieInfo.id teamHandle gameHandle profile
 
         -- Update contacts.
-        patchTeamContacts client (unwrap cookieInfo.id) contacts
+        patchTeamContacts client teamHandle contacts
 
         pure profileId
 

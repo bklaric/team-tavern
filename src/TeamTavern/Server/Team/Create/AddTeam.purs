@@ -50,7 +50,7 @@ queryString = Query """
         ( $1, (select handle from unique_handle)
         , $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15
         )
-    returning team.handle;
+    returning team.id, team.handle;
     """
 
 queryParameters :: Id -> Handle -> Team -> Array QueryParameter
@@ -72,6 +72,6 @@ queryParameters ownerId handle team
     :| nullableTimeTo team.onlineWeekend
 
 addTeam :: forall querier errors. Querier querier =>
-    querier -> Id -> Handle -> Team -> Async (InternalError errors) { handle :: String }
+    querier -> Id -> Handle -> Team -> Async (InternalError errors) { id :: Int, handle :: String }
 addTeam pool ownerId handle team =
     queryFirstInternal pool queryString (queryParameters ownerId handle team)
