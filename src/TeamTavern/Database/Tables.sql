@@ -105,7 +105,8 @@ create table player_profile
     , game_id integer not null references game(id)
     , platform text not null
     , new_or_returning boolean not null
-    , about text[] not null
+    , about text[] not null default array[]::text[]
+    , ambitions text[] not null default array[]::text[]
     , created timestamptz not null default current_timestamp
     , updated timestamptz not null default current_timestamp
     , unique (game_id, player_id)
@@ -133,6 +134,7 @@ create table team_profile
     , platforms text[] not null
     , new_or_returning boolean not null
     , about text[] not null
+    , ambitions text[] not null
     , created timestamptz not null default current_timestamp
     , updated timestamptz not null default current_timestamp
     , unique (game_id, team_id)

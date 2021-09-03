@@ -19,6 +19,7 @@ type Profile =
     , fieldValues :: Array FieldValue
     , newOrReturning :: Boolean
     , about :: String
+    , ambitions :: String
     }
 
 type RequestContent =

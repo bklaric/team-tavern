@@ -46,6 +46,7 @@ type OkContentProfile =
         }
     , newOrReturning :: Boolean
     , about :: Array String
+    , ambitions :: Array String
     , updated :: String
     , updatedSeconds :: Number
     }

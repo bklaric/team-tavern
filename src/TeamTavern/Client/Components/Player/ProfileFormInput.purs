@@ -17,7 +17,7 @@ import Record.Extra (pick)
 import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.Input (inputGroup, inputGroupsHeading, inputGroupsHeading', inputSublabel, responsiveInputGroups)
 import TeamTavern.Client.Components.Player.PlayerInputGroup (discordTagInputGroup)
-import TeamTavern.Client.Components.Player.ProfileInputGroup (ChildSlots, Field, FieldValue, aboutInputGroup, fieldInputGroup, newOrReturningInputGroup, platformIdInputGroup)
+import TeamTavern.Client.Components.Player.ProfileInputGroup (ChildSlots, Field, FieldValue, aboutInputGroup, ambitionsInputGroup, fieldInputGroup, newOrReturningInputGroup, platformIdInputGroup)
 import TeamTavern.Client.Components.Player.ProfileInputGroup as Input
 import TeamTavern.Client.Pages.Profiles.TeamBadge (platformRadioBadges)
 import TeamTavern.Routes.Shared.Platform (Platform(..), Platforms)
@@ -33,8 +33,10 @@ type Input =
         , fieldValues :: FieldValues
         , newOrReturning :: Boolean
         , about :: String
+        , ambitions :: String
         , urlErrors :: Array String
         , aboutError :: Boolean
+        , ambitionsError :: Boolean
         }
     , contacts :: Routes.Contacts'
         ( discordTagError :: Boolean
@@ -52,6 +54,7 @@ type Output =
         { platform :: Platform
         , fieldValues :: FieldValues
         , about :: String
+        , ambitions :: String
         , newOrReturning :: Boolean
         }
     , contacts :: Routes.Contacts
@@ -65,8 +68,10 @@ type State =
         , fieldValues :: Input.FieldValues
         , newOrReturning :: Boolean
         , about :: String
+        , ambitions :: String
         , urlErrors :: Array String
         , aboutError :: Boolean
+        , ambitionsError :: Boolean
         }
     , contacts :: Routes.Contacts'
         ( discordTagError :: Boolean
@@ -87,6 +92,7 @@ data Action
     | UpdateMultiSelect String (Array String)
     | UpdateNewOrReturning Boolean
     | UpdateAbout String
+    | UpdateAmbitions String
     | UpdateDiscordTag (Maybe String)
     | UpdateSteamId (Maybe String)
     | UpdateRiotId (Maybe String)
@@ -106,7 +112,7 @@ fieldValuesToMap = foldl (\map value -> Map.insert value.fieldKey value map) Map
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render
-    { details: { platforms, fields, platform, fieldValues, newOrReturning, about, urlErrors, aboutError }
+    { details: { platforms, fields, platform, fieldValues, newOrReturning, about, ambitions, urlErrors, aboutError, ambitionsError }
     , contacts
     }
     = HH.div_ $
@@ -135,8 +141,10 @@ render
         )
         <>
         [ newOrReturningInputGroup newOrReturning UpdateNewOrReturning ]
-    , inputGroupsHeading "About"
+    , inputGroupsHeading' [ HH.text "About", divider, inputSublabel "Write a bit about yourself. What are you like? What are you looking for in other players?" ]
     , aboutInputGroup about UpdateAbout aboutError
+    , inputGroupsHeading' [ HH.text "Ambitions", divider, inputSublabel "What do you want to get out of playing in a team? Any specific goals you want to achieve?" ]
+    , ambitionsInputGroup ambitions UpdateAmbitions ambitionsError
     ]
 
 raiseOutput :: forall left. State -> H.HalogenM State Action ChildSlots Output (Async left) Unit
@@ -198,6 +206,7 @@ handleAction (UpdateMultiSelect fieldKey optionKeys) = do
     raiseOutput state
 handleAction (UpdateNewOrReturning newOrReturning) = H.modify _ { details { newOrReturning = newOrReturning } } >>= raiseOutput
 handleAction (UpdateAbout about)                   = H.modify _ { details { about          = about          } } >>= raiseOutput
+handleAction (UpdateAmbitions ambitions)           = H.modify _ { details { ambitions      = ambitions      } } >>= raiseOutput
 handleAction (UpdateDiscordTag discordTag) = H.modify _ { contacts { discordTag = discordTag } } >>= raiseOutput
 handleAction (UpdateSteamId steamId)       = H.modify _ { contacts { steamId    = steamId    } } >>= raiseOutput
 handleAction (UpdateRiotId riotId)         = H.modify _ { contacts { riotId     = riotId     } } >>= raiseOutput
@@ -228,6 +237,8 @@ emptyInput { platforms, fields } =
         , about: ""
         , urlErrors: []
         , aboutError: false
+        , ambitions: ""
+        , ambitionsError: false
         }
     , contacts:
         { discordTag: Nothing

@@ -453,6 +453,7 @@ handleAction (UpdatePlayerProfile profile) = do
                 , fieldValues = profile.details.fieldValues
                 , newOrReturning = profile.details.newOrReturning
                 , about = profile.details.about
+                , ambitions = profile.details.ambitions
                 }
             , contacts
                 { discordTag = profile.contacts.discordTag
@@ -475,6 +476,7 @@ handleAction (UpdateTeamProfile profile) = do
                 , fieldValues = profile.details.fieldValues
                 , newOrReturning = profile.details.newOrReturning
                 , about = profile.details.about
+                , ambitions = profile.details.ambitions
                 }
             , contacts
                 { discordTag = profile.contacts.discordTag
@@ -552,10 +554,13 @@ handleAction SetUpAccount = do
                         { playerProfile { details { urlErrors = Array.cons key state'.playerProfile.details.urlErrors } } }
                     , about: const state'
                         { playerProfile { details { aboutError = true } } }
+                    , ambitions: const state'
+                        { playerProfile { details { ambitionsError = true } } }
                     }
                 , teamProfile: state # foldl \state' error' -> error' # match
                     { platforms: const state' { teamProfile { details { platformsError = true } } }
                     , about: const state' { teamProfile { details { aboutError = true } } }
+                    , ambitions: const state' { teamProfile { details { ambitionsError = true } } }
                     }
                 , playerContacts: state # foldl \state' error' -> error' # match
                     { discordTag: const state' { playerProfile { contacts { discordTagError = true } } }

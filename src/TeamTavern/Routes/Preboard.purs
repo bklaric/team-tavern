@@ -45,10 +45,12 @@ type BadContent = Array $ Variant
     , playerProfile :: Array $ Variant
         ( url :: { message :: Array String, key :: String }
         , about :: Array String
+        , ambitions :: Array String
         )
     , teamProfile :: Array $ Variant
         ( platforms :: Array String
         , about :: Array String
+        , ambitions :: Array String
         )
     , playerContacts :: Array ContactsError
     , teamContacts :: Array TeamRoutes.ContactsError

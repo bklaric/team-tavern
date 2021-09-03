@@ -67,6 +67,7 @@ type LoadProfilesResult = Contacts'
         }
     , newOrReturning :: Boolean
     , about :: Array String
+    , ambitions :: Array String
     , updated :: String
     , updatedSeconds :: Number
     )
@@ -308,6 +309,7 @@ queryStringWithoutPagination handle timezone filters = Query $ """
             ) as "fieldValues",
             profile.new_or_returning as "newOrReturning",
             profile.about,
+            profile.ambitions,
             profile.updated::text,
             extract(epoch from (now() - profile.updated)) as "updatedSeconds"
         from team_profile as profile

@@ -171,12 +171,14 @@ aboutInputGroup :: forall slots action.
     String -> (String -> action) -> Boolean -> HH.HTML slots action
 aboutInputGroup value onValue error =
     inputGroup $
-    [ textInput_ value onValue
-    , inputUnderlabel """Write a bit about yourself.
-        What are you like?
-        What are you looking for in other players?
-        What do you want to get out of playing in a team?
-        Any specific goals you want to achieve?"""
-    ]
+    [ textInput_ value onValue ]
     <>
     inputError error "About text cannot be more than 2000 characters long."
+
+ambitionsInputGroup :: forall slots action.
+    String -> (String -> action) -> Boolean -> HH.HTML slots action
+ambitionsInputGroup value onValue error =
+    inputGroup $
+    [ textInput_ value onValue ]
+    <>
+    inputError error "Ambitions text cannot be more than 2000 characters long."

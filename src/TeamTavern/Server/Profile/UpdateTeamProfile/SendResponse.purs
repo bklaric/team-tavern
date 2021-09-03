@@ -15,6 +15,7 @@ type BadContent = Array $ Variant
     ( profile :: Array $ Variant
         ( platforms :: Array String
         , about :: Array String
+        , ambitions :: Array String
         )
     , contacts :: Array ContactsError
     )

@@ -73,6 +73,7 @@ handleAction (UpdateProfile profile) =
                 , fieldValues = profile.details.fieldValues
                 , newOrReturning = profile.details.newOrReturning
                 , about = profile.details.about
+                , ambitions = profile.details.ambitions
                 }
             , contacts
                 { discordTag = profile.contacts.discordTag
@@ -115,6 +116,7 @@ handleAction (SendRequest event) = do
                 match
                 { profile: state # foldl \state' error' -> error' # match
                     { about: const state { profile { details { aboutError = true } } }
+                    , ambitions: const state { profile { details { ambitionsError = true } } }
                     , url: \{ key } -> state { profile { details
                         { urlErrors = Array.cons key state.profile.details.urlErrors } } }
                     }
@@ -138,7 +140,7 @@ component :: forall query output left. H.Component HH.HTML query Input output (A
 component = H.mkComponent
     { initialState: \
         { player: { nickname, discordTag, steamId, riotId, battleTag, psnId, gamerTag, friendCode }
-        , profile: { handle, title, platforms, fields, platform, fieldValues, newOrReturning, about }
+        , profile: { handle, title, platforms, fields, platform, fieldValues, newOrReturning, about, ambitions }
         } ->
         { nickname
         , handle
@@ -151,8 +153,10 @@ component = H.mkComponent
                 , fieldValues
                 , newOrReturning
                 , about: intercalate "\n\n" about
-                , urlErrors: []
                 , aboutError: false
+                , ambitions: intercalate "\n\n" ambitions
+                , ambitionsError: false
+                , urlErrors: []
                 }
             , contacts:
                 { discordTag

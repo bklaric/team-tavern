@@ -47,8 +47,9 @@ updateProfileString :: Query
 updateProfileString = Query """
     update player_profile
     set platform = $5,
-        about = $6,
-        new_or_returning = $7,
+        new_or_returning = $6,
+        about = $7,
+        ambitions = $8,
         updated = now()
     from session, player, game
     where session.player_id = $1
@@ -64,8 +65,8 @@ updateProfileString = Query """
 
 updateProfileParameters :: CookieInfo -> Identifiers -> Profile -> Array QueryParameter
 updateProfileParameters { id, token } { nickname, handle }
-    { platform, about, newOrReturning} =
-    id : token : nickname : handle : writeImpl platform : about :| newOrReturning
+    { platform, newOrReturning, about, ambitions } =
+    id : token : nickname : handle : writeImpl platform : newOrReturning : about :| ambitions
 
 updateProfile' :: forall errors.
     Client -> CookieInfo -> Identifiers -> Profile -> Async (UpdateProfileError errors) ProfileId

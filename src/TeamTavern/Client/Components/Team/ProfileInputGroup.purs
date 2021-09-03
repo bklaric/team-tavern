@@ -10,7 +10,7 @@ import Data.MultiMap as MultiMap
 import Data.Variant (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
-import TeamTavern.Client.Components.Input (checkboxInput, inputError, inputGroup, inputLabel, inputUnderlabel, textInput_)
+import TeamTavern.Client.Components.Input (checkboxInput, inputError, inputGroup, inputLabel, textInput_)
 import TeamTavern.Client.Components.Select.MultiSelect (multiSelectIndexed)
 import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
 
@@ -64,12 +64,14 @@ aboutInputGroup :: forall slots action.
     String -> (String -> action) -> Boolean -> HH.HTML slots action
 aboutInputGroup value onValue error =
     inputGroup $
-    [ textInput_ value onValue
-    , inputUnderlabel """Write a bit about your team.
-        What are you like?
-        What are you looking for in other team members?
-        What do you want to get out of playing as a team?
-        Any specific goals you want to achieve?"""
-    ]
+    [ textInput_ value onValue ]
     <>
     inputError error "About text cannot be more than 2000 characters long."
+
+ambitionsInputGroup :: forall slots action.
+    String -> (String -> action) -> Boolean -> HH.HTML slots action
+ambitionsInputGroup value onValue error =
+    inputGroup $
+    [ textInput_ value onValue ]
+    <>
+    inputError error "Ambitions text cannot be more than 2000 characters long."

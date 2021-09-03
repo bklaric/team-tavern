@@ -66,6 +66,7 @@ queryString timezone = Query $ """
                             'fieldValues', coalesce(field_values.field_values, '[]'),
                             'newOrReturning', profile.new_or_returning,
                             'about', profile.about,
+                            'ambitions', profile.ambitions,
                             'updated', profile.updated::text,
                             'updatedSeconds', extract(epoch from (now() - updated))
                         )

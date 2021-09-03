@@ -21,7 +21,7 @@ import TeamTavern.Client.Components.Input (inputErrorSublabel, inputGroup, input
 import TeamTavern.Client.Components.Player.PlayerInputGroup (discordTagInputGroup)
 import TeamTavern.Client.Components.Player.ProfileInputGroup (platformIdInputGroup)
 import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
-import TeamTavern.Client.Components.Team.ProfileInputGroup (Field, Option, aboutInputGroup, fieldInputGroup, newOrReturningInputGroup)
+import TeamTavern.Client.Components.Team.ProfileInputGroup (Field, Option, aboutInputGroup, ambitionsInputGroup, fieldInputGroup, newOrReturningInputGroup)
 import TeamTavern.Client.Components.Team.ProfileInputGroup as Input
 import TeamTavern.Client.Components.Team.SizeInfo (sizeInfo)
 import TeamTavern.Client.Components.Team.SizeInfo as SizeInfo
@@ -47,7 +47,9 @@ type Input =
         , fieldValues :: FieldValues
         , newOrReturning :: Boolean
         , about :: String
+        , ambitions :: String
         , aboutError :: Boolean
+        , ambitionsError :: Boolean
         }
     , contacts :: Contacts'
         ( discordTagError :: Boolean
@@ -68,6 +70,7 @@ type Output =
         , fieldValues :: FieldValues
         , newOrReturning :: Boolean
         , about :: String
+        , ambitions :: String
         }
     , contacts :: Contacts
     }
@@ -82,7 +85,9 @@ type State =
         , fieldValues :: Input.FieldValues
         , newOrReturning :: Boolean
         , about :: String
+        , ambitions :: String
         , aboutError :: Boolean
+        , ambitionsError :: Boolean
         }
     , contacts :: Contacts'
         ( discordTagError :: Boolean
@@ -103,6 +108,7 @@ data Action
     | UpdateFieldValues String (MultiSelect.Output Option)
     | UpdateNewOrReturning Boolean
     | UpdateAbout String
+    | UpdateAmbitions String
     | UpdateDiscordTag (Maybe String)
     | UpdateDiscordServer (Maybe String)
     | UpdateSteamId (Maybe String)
@@ -159,8 +165,10 @@ render { details, contacts }
         (details.fields <#> fieldInputGroup details.fieldValues UpdateFieldValues)
         <>
         [ newOrReturningInputGroup details.newOrReturning UpdateNewOrReturning ]
-    , inputGroupsHeading "About"
+    , inputGroupsHeading' [ HH.text "About", divider, inputSublabel "Write a bit about your team. What are you like? What are you looking for in other team members?" ]
     , aboutInputGroup details.about UpdateAbout details.aboutError
+    , inputGroupsHeading' [ HH.text "Ambitions", divider, inputSublabel "What do you want to get out of playing as a team? Any specific goals you want to achieve?" ]
+    , ambitionsInputGroup details.ambitions UpdateAmbitions details.ambitionsError
     ]
 
 fieldValuesToArray :: Input.FieldValues -> FieldValues
@@ -212,6 +220,7 @@ handleAction (UpdateFieldValues fieldKey options) = do
     raiseOutput state
 handleAction (UpdateNewOrReturning newOrReturning) = H.modify _ { details { newOrReturning = newOrReturning } } >>= raiseOutput
 handleAction (UpdateAbout about) = H.modify _ { details { about = about } } >>= raiseOutput
+handleAction (UpdateAmbitions ambitions) = H.modify _ { details { ambitions = ambitions } } >>= raiseOutput
 handleAction (UpdateDiscordTag discordTag) = H.modify _ { contacts { discordTag = discordTag } } >>= raiseOutput
 handleAction (UpdateDiscordServer discordServer) = H.modify _ { contacts { discordServer = discordServer } } >>= raiseOutput
 handleAction (UpdateSteamId steamId)       = H.modify _ { contacts { steamId    = steamId    } } >>= raiseOutput
@@ -243,6 +252,8 @@ emptyInput { platforms, fields } =
         , newOrReturning: false
         , about: ""
         , aboutError: false
+        , ambitions: ""
+        , ambitionsError: false
         }
     , contacts:
         { discordTag: Nothing

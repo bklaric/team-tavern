@@ -80,6 +80,7 @@ handleAction (UpdateProfile profile) =
                 , fieldValues = profile.details.fieldValues
                 , newOrReturning = profile.details.newOrReturning
                 , about = profile.details.about
+                , ambitions = profile.details.ambitions
                 }
             , contacts
                 { discordTag = profile.contacts.discordTag
@@ -125,6 +126,7 @@ handleAction (SendRequest event) = do
                 { profile: state # foldl \state' error' -> error' # match
                     { platforms: const state { profile { details { platformsError = true } } }
                     , about: const state { profile { details { aboutError = true } } }
+                    , ambitions: const state { profile { details { ambitionsError = true } } }
                     }
                 , contacts: state # foldl \state' error' -> error' # match
                     { discordTag: const state' { profile { contacts { discordTagError = true } } }

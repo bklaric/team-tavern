@@ -14,6 +14,7 @@ import Type (type ($))
 type BadContent = Array $ Variant
     ( profile :: Array $ Variant
         ( about :: Array String
+        , ambitions :: Array String
         , url :: { key :: String, message :: Array String }
         )
     , contacts :: Array ContactsError

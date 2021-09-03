@@ -539,6 +539,7 @@ handleAction (UpdatePlayerProfile profile) = do
                 , fieldValues = profile.details.fieldValues
                 , newOrReturning = profile.details.newOrReturning
                 , about = profile.details.about
+                , ambitions = profile.details.ambitions
                 }
             , contacts
                 { discordTag = profile.contacts.discordTag
@@ -561,6 +562,7 @@ handleAction (UpdateTeamProfile profile) = do
                 , fieldValues = profile.details.fieldValues
                 , newOrReturning = profile.details.newOrReturning
                 , about = profile.details.about
+                , ambitions = profile.details.ambitions
                 }
             , contacts
                 { discordTag = profile.contacts.discordTag
@@ -655,6 +657,10 @@ handleAction SetUpAccount = do
                         { step = if state'.step > PlayerProfile then PlayerProfile else state'.step
                         , playerProfile { details { aboutError = true } }
                         }
+                    , ambitions: const state'
+                        { step = if state'.step > PlayerProfile then PlayerProfile else state'.step
+                        , playerProfile { details { ambitionsError = true } }
+                        }
                     }
                 , teamProfile: state # foldl \state' error' -> error' # match
                     { platforms: const state'
@@ -664,6 +670,10 @@ handleAction SetUpAccount = do
                     , about: const state'
                         { step = if state'.step > TeamProfile then TeamProfile else state'.step
                         , teamProfile { details { aboutError = true } }
+                        }
+                    , ambitions: const state'
+                        { step = if state'.step > TeamProfile then TeamProfile else state'.step
+                        , teamProfile { details { ambitionsError = true } }
                         }
                     }
                 , playerContacts: state # foldl \state' error' -> error' # match

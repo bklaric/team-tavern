@@ -50,6 +50,7 @@ profiles player @ { profiles: profiles' } status showEditProfileModal =
     else profiles' <#> \profile -> let
         profileDetails' = profileDetails profile.platform profile.fields profile.fieldValues profile.newOrReturning
         about = textDetail profile.about
+        ambitions = textDetail profile.ambitions
         in
         cardSection $
         [ profileHeader $
@@ -67,11 +68,15 @@ profiles player @ { profiles: profiles' } status showEditProfileModal =
             [ regularButton "fas fa-user-edit" "Edit profile" $ showEditProfileModal profile ]
         ]
         <>
-        guard (full profileDetails' || full about)
+        guard (full profileDetails' || full about || full ambitions)
         [ detailColumns $
             guard (full profileDetails')
             [ detailColumn $ [ detailColumnHeading4 "Details" ] <> profileDetails' ]
             <>
-            guard (full about)
-            [ detailColumn $ [ detailColumnHeading4 "About" ] <> about ]
+            guard (full about || full ambitions)
+            [ detailColumn $
+                guard (full about) ([ detailColumnHeading4 "About" ] <> about)
+                <>
+                guard (full ambitions) ([ detailColumnHeading4 "Ambitions" ] <> ambitions)
+            ]
         ]
