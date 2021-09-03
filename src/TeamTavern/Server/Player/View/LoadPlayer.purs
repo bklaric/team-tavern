@@ -5,8 +5,7 @@ import Prelude
 import Async (Async)
 import Data.Maybe (Maybe, maybe)
 import Data.Newtype (unwrap)
-import Postgres.Pool (Pool)
-import Postgres.Query (Query(..), (:|))
+import Postgres.Query (class Querier, Query(..), (:|))
 import TeamTavern.Routes.ViewPlayer as ViewPlayer
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Server.Infrastructure.Error (LoadSingleError)
@@ -16,12 +15,18 @@ queryString :: String -> Query
 queryString timezone = Query $ """
     select
         player.nickname,
+        player.discord_tag as "discordTag",
+        player.steam_id as "steamId",
+        player.riot_id as "riotId",
+        player.battle_tag as "battleTag",
+        player.psn_id as "psnId",
+        player.gamer_tag as "gamerTag",
+        player.friend_code as "friendCode",
         case when $2 then to_char(player.birthday, 'yyyy-mm-dd') end as birthday,
         extract(year from age(player.birthday))::int as age,
         player.location,
         player.languages,
         player.microphone,
-        player.discord_tag as "discordTag",
         player.timezone,
         case
             when player.weekday_from is not null and player.weekday_to is not null
@@ -58,7 +63,6 @@ queryString timezone = Query $ """
                             ),
                             'fields', coalesce(fields.fields, '[]'),
                             'platform', profile.platform,
-                            'platformId', profile.platform_id,
                             'fieldValues', coalesce(field_values.field_values, '[]'),
                             'newOrReturning', profile.new_or_returning,
                             'about', profile.about,
@@ -204,8 +208,9 @@ queryString timezone = Query $ """
     """
 
 loadPlayer
-    :: forall errors
-    .  Pool
+    :: forall errors querier
+    .  Querier querier
+    => querier
     -> Maybe CookieInfo
     -> ViewPlayer.RouteParams
     -> Async (LoadSingleError errors) ViewPlayer.OkContent

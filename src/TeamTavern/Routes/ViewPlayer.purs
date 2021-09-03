@@ -8,6 +8,7 @@ import Jarilo.Route (Route)
 import Jarilo.Segment (Capture, Literal)
 import TeamTavern.Routes.Shared.Organization (OrganizationN)
 import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
+import TeamTavern.Routes.Shared.Player (Contacts')
 
 type ViewPlayer = Route
     Get
@@ -37,7 +38,6 @@ type OkContentProfile =
             })
         }
     , platform :: Platform
-    , platformId :: String
     , fieldValues :: Array
         { fieldKey :: String
         , url :: Maybe String
@@ -57,14 +57,13 @@ type OkContentTeam =
     , updatedSeconds :: Number
     }
 
-type OkContent =
-    { nickname :: String
+type OkContent = Contacts'
+    ( nickname :: String
     , birthday :: Maybe String
     , age :: Maybe Int
     , location :: Maybe String
     , languages :: Array String
     , microphone :: Boolean
-    , discordTag :: Maybe String
     , timezone :: Maybe String
     , weekdayOnline :: Maybe
         { clientFrom :: String
@@ -80,4 +79,4 @@ type OkContent =
         }
     , profiles :: Array OkContentProfile
     , teams :: Array OkContentTeam
-    }
+    )

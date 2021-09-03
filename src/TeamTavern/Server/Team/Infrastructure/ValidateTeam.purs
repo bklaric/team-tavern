@@ -8,30 +8,24 @@ import AsyncV (AsyncV)
 import AsyncV as AsyncV
 import Data.Bifunctor (lmap)
 import Data.Bifunctor.Label (label)
-import Data.List.NonEmpty as Nel
 import Data.List.NonEmpty as NonEmptyList
 import Data.List.Types (NonEmptyList)
-import Data.Maybe (Maybe(..), isJust)
+import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
-import Data.Validated (invalid, valid, validated)
-import Data.Validated.Label (VariantValidated)
-import Data.Variant (Variant, inj)
+import Data.Validated.Label (ValidatedVariants)
+import Data.Variant (Variant)
 import TeamTavern.Routes.Shared.Organization (OrganizationNW(..))
-import TeamTavern.Server.Player.UpdatePlayer.ValidateDiscordTag (DiscordTag, validateDiscordTag)
 import TeamTavern.Server.Player.UpdatePlayer.ValidateLangugase (Language, validateLanguages)
 import TeamTavern.Server.Player.UpdatePlayer.ValidateTimespan (Timespan, validateTimespan)
 import TeamTavern.Server.Player.UpdatePlayer.ValidateTimezone (Timezone, validateTimezone)
 import TeamTavern.Server.Profile.AddTeamProfile.ValidateAgeSpan (AgeSpan, validateAgeSpan)
 import TeamTavern.Server.Profile.AddTeamProfile.ValidateRegions (Region, validateRegions)
 import TeamTavern.Server.Profile.Infrastructure.ValidateUrl (Url)
-import TeamTavern.Server.Team.Infrastructure.ValidateDiscordServer (validateDiscordServer)
 import TeamTavern.Server.Team.Infrastructure.ValidateName (Name, validateName)
 import TeamTavern.Server.Team.Infrastructure.ValidateWebsite (validateWebsite)
 
 type TeamModel =
     { organization :: OrganizationNW
-    , discordTag :: Maybe String
-    , discordServer :: Maybe String
     , ageFrom :: Maybe Int
     , ageTo :: Maybe Int
     , locations :: Array String
@@ -61,15 +55,13 @@ toString (Organized _) = "organized"
 validateOrganization
     :: forall errors
     .  OrganizationNW
-    -> VariantValidated (name :: Array String, website :: Array String | errors) Organization
+    -> ValidatedVariants (name :: Array String, website :: Array String | errors) Organization
 validateOrganization InformalNW = pure Informal
 validateOrganization (OrganizedNW { name, website }) =
     Organized <$> ({ name: _, website: _ } <$> validateName name <*> validateWebsite website)
 
 type Team =
     { organization :: Organization
-    , discordTag :: Maybe DiscordTag
-    , discordServer :: Maybe Url
     , ageSpan :: AgeSpan
     , locations :: Array Region
     , languages :: Array Language
@@ -82,9 +74,6 @@ type Team =
 type TeamError = Variant
     ( name :: Array String
     , website :: Array String
-    , discordTag :: Array String
-    , discordServer :: Array String
-    , contact :: Array String
     )
 
 type TeamErrors = NonEmptyList TeamError
@@ -92,17 +81,6 @@ type TeamErrors = NonEmptyList TeamError
 validateTeam :: forall errors. TeamModel -> Async (Variant (team :: TeamErrors | errors)) Team
 validateTeam (team :: TeamModel) = let
     organization = validateOrganization team.organization
-    discordTag = validateDiscordTag team.discordTag
-    discordServer = validateDiscordServer team.discordServer
-    contact =
-        if  (validated (const true) isJust discordTag)
-            || (validated (const true) isJust discordServer)
-        then valid unit
-        else invalid $ Nel.singleton $ inj (SProxy :: SProxy "contact")
-            [ "Neither Discord tag nor Discord server have been provided."
-            , "Discord tag: " <> show discordTag
-            , "Discord server: " <> show discordServer
-            ]
     ageSpan = validateAgeSpan team.ageFrom team.ageTo
     locations = validateRegions team.locations
     languages = validateLanguages team.languages
@@ -112,12 +90,11 @@ validateTeam (team :: TeamModel) = let
     onlineWeekend = timezone >>= (const $ validateTimespan team.weekendFrom team.weekendTo)
     in
     { organization: _
-    , discordTag: _, discordServer: _
     , ageSpan, locations
     , languages, microphone
     , timezone, onlineWeekday, onlineWeekend
     }
-    <$> organization <*> discordTag <*> discordServer <* contact
+    <$> organization
     # Async.fromValidated # label (SProxy :: SProxy "team")
 
 validateTeamV :: forall errors.

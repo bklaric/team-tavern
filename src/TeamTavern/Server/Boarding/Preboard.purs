@@ -5,7 +5,7 @@ import Prelude
 import Async (Async, alwaysRight, examineLeftWithEffect)
 import Async as Async
 import AsyncV as AsyncV
-import Data.Array (fromFoldable)
+import Data.Array (elem, fromFoldable)
 import Data.Array as Array
 import Data.Bifunctor.Label (label)
 import Data.List.Types (NonEmptyList)
@@ -26,6 +26,7 @@ import Record.Builder as Builder
 import Record.Extra (pick)
 import Simple.JSON (writeJSON)
 import TeamTavern.Routes.Preboard (BadContent, RequestContent, OkContent)
+import TeamTavern.Routes.Shared.Platform (Platform(..))
 import TeamTavern.Server.Architecture.Deployment (Deployment)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo, Cookies, setCookieHeaderFull)
 import TeamTavern.Server.Infrastructure.EnsureNotSignedIn (ensureNotSignedIn')
@@ -38,10 +39,12 @@ import TeamTavern.Server.Player.Domain.Id (Id(..))
 import TeamTavern.Server.Player.Domain.Nickname (Nickname)
 import TeamTavern.Server.Player.Register.AddPlayer (addPlayer)
 import TeamTavern.Server.Player.Register.ValidateRegistration (RegistrationErrors, validateRegistrationV)
+import TeamTavern.Server.Player.UpdateContacts.ValidateContacts (ContactsErrors, validateContactsV)
+import TeamTavern.Server.Player.UpdateContacts.WriteContacts (writeContacts)
 import TeamTavern.Server.Player.UpdatePlayer.UpdateDetails (updateDetails)
-import TeamTavern.Server.Player.UpdatePlayer.ValidatePlayer (PlayerErrors, validatePlayerV)
+import TeamTavern.Server.Player.UpdatePlayer.ValidatePlayer (validatePlayerV)
 import TeamTavern.Server.Profile.AddPlayerProfile.AddProfile (addProfile)
-import TeamTavern.Server.Profile.AddPlayerProfile.LoadFields as Player
+import TeamTavern.Server.Profile.AddPlayerProfile.LoadFields (loadFields) as Player
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile (validateProfileV)
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile as PlayerProfile
 import TeamTavern.Server.Profile.AddTeamProfile.AddProfile as AddTeamProfile
@@ -53,7 +56,10 @@ import TeamTavern.Server.Session.Domain.Token as Token
 import TeamTavern.Server.Session.Start.CreateSession (createSession)
 import TeamTavern.Server.Team.Create.AddTeam (addTeam)
 import TeamTavern.Server.Team.Infrastructure.GenerateHandle (generateHandle)
+import TeamTavern.Server.Team.Infrastructure.ValidateContacts as TeamCont
+import TeamTavern.Server.Team.Infrastructure.ValidateContacts as TeamLel
 import TeamTavern.Server.Team.Infrastructure.ValidateTeam (TeamErrors, validateTeamV)
+import TeamTavern.Server.Team.Infrastructure.WriteContacts as TeamIdunno
 import Type (type ($))
 
 type PreboardError = Variant
@@ -63,10 +69,11 @@ type PreboardError = Variant
     , notAuthenticated :: Array String
     , notAuthorized :: Array String
     , invalidBody :: NonEmptyList $ Variant
-        ( player :: PlayerErrors
-        , team :: TeamErrors
+        ( team :: TeamErrors
         , playerProfile :: PlayerProfile.ProfileErrors
         , teamProfile :: TeamProfile.ProfileErrors
+        , playerContacts :: ContactsErrors
+        , teamContacts :: TeamLel.ContactsErrors
         , registration :: RegistrationErrors
         )
     , nicknameTaken ::
@@ -80,20 +87,22 @@ invalidBodyHandler :: forall fields. Lacks "invalidBody" fields =>
     Builder (Record fields)
     { invalidBody ::
         NonEmptyList $ Variant
-        ( player :: PlayerErrors
-        , team :: TeamErrors
+        ( team :: TeamErrors
         , playerProfile :: PlayerProfile.ProfileErrors
         , teamProfile :: TeamProfile.ProfileErrors
+        , playerContacts :: ContactsErrors
+        , teamContacts :: TeamLel.ContactsErrors
         , registration :: RegistrationErrors
         )
         -> Effect Unit
     | fields }
 invalidBodyHandler = Builder.insert (SProxy :: SProxy "invalidBody") \errors ->
     foreachE (Array.fromFoldable errors) $ match
-    { player: \errors' -> logt $ "Player errors: " <> show errors'
-    , team: \errors' -> logt $ "Team errors: " <> show errors'
+    { team: \errors' -> logt $ "Team errors: " <> show errors'
     , playerProfile: \errors' -> logt $ "Player profile errors: " <> show errors'
     , teamProfile: \errors' -> logt $ "Team profile errors: " <> show errors'
+    , playerContacts: \errors' -> logt $ "Player contacts errors: " <> show errors'
+    , teamContacts: \errors' -> logt $ "Team contacts errors: " <> show errors'
     , registration: \errors' -> logt $ "Registration errors: " <> show errors'
     }
 
@@ -120,10 +129,11 @@ errorResponse = match
         errors
         # fromFoldable
         <#> match
-            { player: inj (SProxy :: SProxy "player") <<< Array.fromFoldable
-            , team: inj (SProxy :: SProxy "team") <<< Array.fromFoldable
+            { team: inj (SProxy :: SProxy "team") <<< Array.fromFoldable
             , playerProfile: inj (SProxy :: SProxy "playerProfile") <<< Array.fromFoldable
             , teamProfile: inj (SProxy :: SProxy "teamProfile") <<< Array.fromFoldable
+            , playerContacts: inj (SProxy :: _ "playerContacts") <<< Array.fromFoldable
+            , teamContacts: inj (SProxy :: _ "teamContacts") <<< Array.fromFoldable
             , registration: inj (SProxy :: SProxy "registration") <<< Array.fromFoldable
             }
         # (writeJSON :: BadContent -> String)
@@ -162,15 +172,31 @@ preboard deployment pool cookies body =
     -- Start the transaction.
     result <- pool # transaction \client ->
         case content of
-        { ilk: 1, player: Just player, playerProfile: Just profile, registration } -> do
+        { ilk: 1
+        , player: Just player
+        , playerProfile: Just profile
+        , playerContacts: Just contacts
+        , registration
+        } -> do
             -- Read fields from database.
             game <- Player.loadFields client content.gameHandle
 
+            -- We only want to patch the selected platform contact.
+            let contactsCleaned = contacts
+                    { steamId    = if profile.platform == Steam       then contacts.steamId    else Nothing
+                    , riotId     = if profile.platform == Riot        then contacts.riotId     else Nothing
+                    , battleTag  = if profile.platform == BattleNet   then contacts.battleTag  else Nothing
+                    , psnId      = if profile.platform == PlayStation then contacts.psnId      else Nothing
+                    , gamerTag   = if profile.platform == Xbox        then contacts.gamerTag   else Nothing
+                    , friendCode = if profile.platform == Switch      then contacts.friendCode else Nothing
+                    }
+
             -- Validate data from body.
-            { player', profile', registration' } <-
-                { player': _, profile': _, registration': _ }
+            { player', profile', contacts', registration' } <-
+                { player': _, profile': _, contacts': _, registration': _ }
                 <$> validatePlayerV player
                 <*> validateProfileV game profile
+                <*> validateContactsV [ profile.platform ] contactsCleaned
                 <*> validateRegistrationV registration
                 # AsyncV.toAsync
                 # label (SProxy :: SProxy "invalidBody")
@@ -198,20 +224,33 @@ preboard deployment pool cookies body =
                 }
                 profile'
 
+            writeContacts client id contacts'
+
             pure
                 { teamHandle: Nothing
                 , cookieInfo: { id: Id id, nickname: registration'.nickname, token }
                 , profileId
                 }
-        { ilk: 2, team: Just team, teamProfile: Just profile, registration } -> do
+        { ilk: 2, team: Just team, teamProfile: Just profile, teamContacts: Just contacts, registration } -> do
             -- Read fields from database.
             game <- Team.loadFields client content.gameHandle
 
+            -- We only want to patch the selected platforms contacts.
+            let contactsCleaned = contacts
+                    { steamId    = if Steam       `elem` profile.platforms then contacts.steamId    else Nothing
+                    , riotId     = if Riot        `elem` profile.platforms then contacts.riotId     else Nothing
+                    , battleTag  = if BattleNet   `elem` profile.platforms then contacts.battleTag  else Nothing
+                    , psnId      = if PlayStation `elem` profile.platforms then contacts.psnId      else Nothing
+                    , gamerTag   = if Xbox        `elem` profile.platforms then contacts.gamerTag   else Nothing
+                    , friendCode = if Switch      `elem` profile.platforms then contacts.friendCode else Nothing
+                    }
+
             -- Validate data from body.
-            { team', profile', registration' } <-
-                { team': _, profile': _, registration': _ }
+            { team', profile', contacts', registration' } <-
+                { team': _, profile': _, contacts': _, registration': _ }
                 <$> validateTeamV team
                 <*> TeamProfile.validateProfileV game profile
+                <*> TeamCont.validateContactsV profile.platforms contactsCleaned
                 <*> validateRegistrationV registration
                 # AsyncV.toAsync
                 # label (SProxy :: SProxy "invalidBody")
@@ -236,6 +275,8 @@ preboard deployment pool cookies body =
             { handle } <- addTeam client (Id id) generatedHandle team'
 
             profileId <- AddTeamProfile.addProfile client (Id id) handle content.gameHandle profile'
+
+            TeamIdunno.writeContacts client id contacts'
 
             pure
                 { teamHandle: Just handle

@@ -5,7 +5,7 @@ import Prelude
 import Async (Async)
 import Client.Components.Copyable as Copyable
 import Control.Monad.State (class MonadState)
-import Data.Array (foldMap, intercalate)
+import Data.Array (foldMap)
 import Data.Const (Const)
 import Data.Maybe (Maybe(..))
 import Data.Monoid (guard)
@@ -13,10 +13,14 @@ import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Ads (descriptionLeaderboards, stickyLeaderboards)
-import TeamTavern.Client.Components.Content (contentDescription, contentHeader, contentHeaderSection, contentHeading', contentHeadingFaIcon)
+import TeamTavern.Client.Components.Content (contentColumns, contentDescription, contentHeader, contentHeaderSection, contentHeading', contentHeadingFaIcon)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
+import TeamTavern.Client.Components.Player.ProfileDetails (PlatformIdSlots)
 import TeamTavern.Client.Pages.Profiles.TeamBadge (informalBadge, organizedBadge)
+import TeamTavern.Client.Pages.Team.Contacts (contacts)
 import TeamTavern.Client.Pages.Team.Details (details)
+import TeamTavern.Client.Pages.Team.EditContacts (editContacts)
+import TeamTavern.Client.Pages.Team.EditContacts as EditContacts
 import TeamTavern.Client.Pages.Team.EditProfile (editProfile)
 import TeamTavern.Client.Pages.Team.EditProfile as EditProfile
 import TeamTavern.Client.Pages.Team.EditTeam (editTeam)
@@ -34,8 +38,9 @@ type Input = { handle :: String }
 type Loaded =
     { team :: Team
     , status :: Status
-    , showEditTeamModal :: Boolean
-    , showEditProfileModal :: Maybe Profile
+    , editContactsModalShown :: Boolean
+    , editTeamModalShown :: Boolean
+    , editProfileModalShown :: Maybe Profile
     }
 
 data State
@@ -46,6 +51,8 @@ data State
 
 data Action
     = Initialize
+    | ShowEditContactsModal
+    | HideEditContactsModal
     | ShowEditTeamModal
     | HideEditTeamModal
     | ShowEditProfileModal Profile
@@ -53,17 +60,18 @@ data Action
 
 type Slot = H.Slot (Const Void) Void Unit
 
-type ChildSlots =
+type ChildSlots = PlatformIdSlots
     ( discordTag :: Copyable.Slot String
     , games :: Anchor.Slot String
     , createProfile :: H.Slot (Const Void) Void Unit
+    , editContacts :: EditContacts.Slot
     , editTeam :: EditTeam.Slot
     , editProfile :: EditProfile.Slot
     )
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render (Empty _) = HH.div_ []
-render (Loaded { team: team', status, showEditTeamModal, showEditProfileModal } ) =
+render (Loaded state @ { team: team', status } ) =
     HH.div_  $
     [ contentHeader
         [ contentHeaderSection
@@ -83,27 +91,22 @@ render (Loaded { team: team', status, showEditTeamModal, showEditProfileModal } 
     ]
     <> descriptionLeaderboards
     <>
-    [ details team' status ShowEditTeamModal
-    , profiles team'.handle team'.profiles status ShowEditProfileModal
+    [ contentColumns
+        [ HH.div_
+            [ contacts team' status ShowEditContactsModal
+            , details team' status ShowEditTeamModal
+            ]
+        , HH.div_
+            [ profiles team' status ShowEditProfileModal ]
+        ]
     ]
     <> stickyLeaderboards
-    <> guard showEditTeamModal [ editTeam team' (const $ Just HideEditTeamModal) ]
+    <> guard state.editContactsModalShown [ editContacts team' $ const $ Just HideEditContactsModal ]
+    <> guard state.editTeamModalShown [ editTeam team' (const $ Just HideEditTeamModal) ]
     <> foldMap (\profile ->
-        [ editProfile
-            { teamHandle: team'.handle
-            , gameHandle: profile.handle
-            , title: profile.title
-            , allPlatforms: profile.allPlatforms
-            , size: profile.size
-            , selectedPlatforms: profile.selectedPlatforms
-            , fields: profile.fields
-            , fieldValues: profile.fieldValues
-            , newOrReturning: profile.newOrReturning
-            , about: intercalate "\n\n" profile.about
-            }
-            (const $ Just HideEditProfileModal)
+        [ editProfile { team: team', profile } (const $ Just HideEditProfileModal)
         ])
-        showEditProfileModal
+        state.editProfileModalShown
 render NotFound = HH.p_ [ HH.text "Team could not be found." ]
 render Error = HH.p_ [ HH.text "There has been an error loading the team. Please try again later." ]
 
@@ -132,18 +135,21 @@ handleAction Initialize = do
                     H.put $ Loaded
                         { team: team''
                         , status
-                        , showEditTeamModal: false
-                        , showEditProfileModal: Nothing
+                        , editContactsModalShown: false
+                        , editTeamModalShown: false
+                        , editProfileModalShown: Nothing
                         }
                     let nameOrHandle = nameOrHandleNW team''.handle team''.organization
                     setMeta (nameOrHandle <> " | TeamTavern")
                         ("View all details and profiles of team " <> nameOrHandle <> ".")
                 _ -> pure unit
         _ -> pure unit
-handleAction ShowEditTeamModal = modifyLoaded _ { showEditTeamModal = true }
-handleAction HideEditTeamModal = modifyLoaded _ { showEditTeamModal = false }
-handleAction (ShowEditProfileModal profile) = modifyLoaded _ { showEditProfileModal = Just profile }
-handleAction HideEditProfileModal = modifyLoaded _ { showEditProfileModal = Nothing }
+handleAction ShowEditContactsModal = modifyLoaded _ { editContactsModalShown = true }
+handleAction HideEditContactsModal = modifyLoaded _ { editContactsModalShown = false }
+handleAction ShowEditTeamModal = modifyLoaded _ { editTeamModalShown = true }
+handleAction HideEditTeamModal = modifyLoaded _ { editTeamModalShown = false }
+handleAction (ShowEditProfileModal profile) = modifyLoaded _ { editProfileModalShown = Just profile }
+handleAction HideEditProfileModal = modifyLoaded _ { editProfileModalShown = Nothing }
 
 component :: forall query output left.
     H.Component HH.HTML query Input output (Async left)

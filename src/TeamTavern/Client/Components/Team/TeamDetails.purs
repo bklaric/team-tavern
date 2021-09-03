@@ -7,15 +7,12 @@ import Client.Components.Copyable as Copyable
 import Data.Array as Array
 import Data.Maybe (Maybe(..))
 import Halogen.HTML as HH
-import TeamTavern.Client.Components.Detail (arrangedOrDetail, detail, discordTagDetail, urlDetail, weekdaysOnlineDetail, weekendsOnlineDetail)
+import TeamTavern.Client.Components.Detail (arrangedOrDetail, detail, urlDetail, weekdaysOnlineDetail, weekendsOnlineDetail)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Shared.Organization (OrganizationNW, websiteNW)
 
 teamWebsiteDetail :: forall slots action. Maybe String -> Maybe (HH.HTML slots action)
 teamWebsiteDetail website = urlDetail "fas fa-globe" "Website" website
-
-teamDiscordServerDetail :: forall slots actions. Maybe String -> Maybe (HH.HTML slots actions)
-teamDiscordServerDetail discordServer = urlDetail "fab fa-discord" "Discord server" discordServer
 
 teamAgeDetail :: forall slots action. Maybe Int -> Maybe Int -> Maybe (HH.HTML slots action)
 teamAgeDetail Nothing Nothing = Nothing
@@ -77,8 +74,6 @@ teamDetails :: forall fields slots action left.
 teamDetails details =
     Array.catMaybes
     [ teamWebsiteDetail $ websiteNW details.organization
-    , discordTagDetail details.handle details.discordTag
-    , teamDiscordServerDetail details.discordServer
     , teamAgeDetail details.ageFrom details.ageTo
     , teamLocationsDetail details.locations
     , teamLanguagesDetail details.languages

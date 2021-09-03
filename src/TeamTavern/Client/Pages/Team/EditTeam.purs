@@ -92,8 +92,6 @@ handleAction (UpdateDetails details) =
     H.modify_ \state -> state
         { details = state.details
             { organization = details.organization
-            , discordTag = details.discordTag
-            , discordServer = details.discordServer
             , ageFrom = details.ageFrom
             , ageTo = details.ageTo
             , locations = details.locations
@@ -108,7 +106,17 @@ handleAction (UpdateDetails details) =
         }
 handleAction (SendRequest event) = do
     H.liftEffect $ preventDefault event
-    currentState <- H.modify _ { submitting = true }
+    currentState <- H.modify _
+        { submitting = true
+        , otherError = false
+        , details
+            { nameError = false
+            , websiteError = false
+            , discordTagError = false
+            , discordServerError = false
+            , contactError = false
+            }
+        }
     response <- H.lift $ sendRequest currentState
     case response of
         Just (Right _) -> hardNavigate $ "/teams/" <> currentState.handle
@@ -118,36 +126,12 @@ handleAction (SendRequest event) = do
                 match
                 { name: const state { details { nameError = true } }
                 , website: const state { details { websiteError = true } }
-                , discordTag: const state { details { discordTagError = true } }
-                , discordServer: const state { details { discordServerError = true } }
-                , contact: const state { details { contactError = true } }
                 }
                 error
             )
-            (currentState
-                { submitting = false
-                , otherError = false
-                , details = currentState.details
-                    { nameError = false
-                    , websiteError = false
-                    , discordTagError = false
-                    , discordServerError = false
-                    , contactError = false
-                    }
-                }
-            )
+            (currentState { submitting = false })
             badContent
-        Nothing -> H.put currentState
-            { submitting = false
-            , otherError = true
-            , details = currentState.details
-                { nameError = false
-                , websiteError = false
-                , discordTagError = false
-                , discordServerError = false
-                , contactError = false
-                }
-            }
+        Nothing -> H.put currentState { submitting = false, otherError = true }
 
 component :: forall query output fields left.
     H.Component HH.HTML query (Input fields) output (Async left)
@@ -156,8 +140,6 @@ component = H.mkComponent
         { handle: team.handle
         , details: EnterTeamDetails.emptyInput
             { organization = team.organization
-            , discordTag = team.discordTag
-            , discordServer = team.discordServer
             , ageFrom = team.ageFrom
             , ageTo = team.ageTo
             , locations = team.locations

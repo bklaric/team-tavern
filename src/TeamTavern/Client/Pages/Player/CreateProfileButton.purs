@@ -3,6 +3,7 @@ module TeamTavern.Client.Pages.Player.CreateProfileButton where
 import Prelude
 
 import Async (Async)
+import Data.Array (foldMap)
 import Data.Array as Array
 import Data.Const (Const)
 import Data.Maybe (Maybe(..), maybe)
@@ -18,20 +19,19 @@ import TeamTavern.Client.Pages.Player.CreateProfile (createProfile)
 import TeamTavern.Client.Script.Request (get)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.ViewAllGames as ViewAllGames
-import TeamTavern.Routes.ViewGame as View
+import TeamTavern.Routes.ViewPlayer as ViewPlayer
 
-type Input =
-    { nickname :: String
-    , profileGameHandles :: Array String
-    }
+type Input = ViewPlayer.OkContent
 
 type Slot = H.Slot (Const Void) Void Unit
 
 createProfileButton :: forall left output query. H.Component HH.HTML query Input output (Async left)
-createProfileButton = Hooks.component $ \_ { nickname, profileGameHandles } -> Hooks.do
+createProfileButton = Hooks.component $ \_ player -> Hooks.do
     (Tuple shown shownId) <- usePopover
 
     (Tuple (games :: ViewAllGames.OkContent) gamesId) <- Hooks.useState []
+
+    let profileGameHandles = player.profiles <#> _.handle
 
     Hooks.useLifecycleEffect do
         games' <- lift $ get "/api/games"
@@ -58,13 +58,9 @@ createProfileButton = Hooks.component $ \_ { nickname, profileGameHandles } -> H
             ]
         ]
         <>
-        case modalShown of
-        Nothing -> []
-        Just modalInput ->
-            [ createProfile
-                modalInput
-                (const $ Just $ Hooks.put modalShownId Nothing)
-            ]
+        foldMap (\modalInput ->
+            [ createProfile modalInput (const $ Just $ Hooks.put modalShownId Nothing) ])
+            modalShown
         )
         (games <#> \game ->
             popoverItem
@@ -72,14 +68,7 @@ createProfileButton = Hooks.component $ \_ { nickname, profileGameHandles } -> H
                 game' <- lift $ get $ "/api/games/" <> game.handle
                 case game' of
                     Nothing -> pure unit
-                    Just (game'' :: View.OkContent) ->
-                        Hooks.put modalShownId $ Just
-                        { nickname
-                        , handle: game''.handle
-                        , title: game''.title
-                        , platforms: game''.platforms
-                        , fields: game''.fields
-                        }
+                    Just game'' -> Hooks.put modalShownId $ Just { player, game: game'' }
             )
             [ HH.img
                 [ HS.class_ "game-card-logo"

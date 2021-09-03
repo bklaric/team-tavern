@@ -1,14 +1,17 @@
-module TeamTavern.Server.Profile.Infrastructure.ValidateGamertag (Gamertag, toString, validateGamertag) where
+module TeamTavern.Server.Profile.Infrastructure.ValidateGamerTag (GamerTag, toString, validateGamerTag) where
 
 import Prelude
 
-import Data.Either (Either(..))
-import Data.String (length, trim)
+import Data.Maybe (Maybe)
+import Data.String (length)
+import Data.Validated.Label (ValidatedVariants)
+import Data.Variant (SProxy(..))
+import TeamTavern.Server.Profile.Infrastructure.ValidateContact (validateContact)
 
-newtype Gamertag = Gamertag String
+newtype GamerTag = GamerTag String
 
-toString :: Gamertag -> String
-toString (Gamertag gamertag) = gamertag
+toString :: GamerTag -> String
+toString (GamerTag gamerTag) = gamerTag
 
 minNameLength :: Int
 minNameLength = 1
@@ -30,11 +33,9 @@ maxNameLength = 16
 -- For a 12-character gamertag, we’re limited to a 3-digit suffix.
 -- 12 + 1 + 3 = 16
 -- https://support.xbox.com/en-US/help/account-profile/profile/gamertag-update-faq
-isGamertagValid :: String -> Boolean
-isGamertagValid gamertag = minNameLength <= length gamertag && length gamertag <= maxNameLength
+isGamerTagValid :: String -> Boolean
+isGamerTagValid gamerTag = minNameLength <= length gamerTag && length gamerTag <= maxNameLength
 
-validateGamertag :: String -> Either (Array String) Gamertag
-validateGamertag gamertag | gamertag' <- trim gamertag =
-    if isGamertagValid gamertag'
-    then Right $ Gamertag gamertag'
-    else Left [ "Invalid Gamertag: " <> gamertag' ]
+validateGamerTag :: forall errors. Maybe String -> ValidatedVariants (gamerTag :: String | errors) (Maybe GamerTag)
+validateGamerTag gamerTag =
+    validateContact gamerTag isGamerTagValid GamerTag (SProxy :: _ "gamerTag") ("Invalid GamerTag: " <> _)

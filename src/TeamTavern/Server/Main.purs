@@ -42,6 +42,7 @@ import TeamTavern.Server.Game.ViewAll (viewAll) as Game
 import TeamTavern.Server.Infrastructure.Log (logStamped, logt)
 import TeamTavern.Server.Player.Delete (delete) as Player
 import TeamTavern.Server.Player.Register (register) as Player
+import TeamTavern.Server.Player.UpdateContacts (updateContacts) as Player
 import TeamTavern.Server.Player.UpdatePlayer (updatePlayer) as Player
 import TeamTavern.Server.Player.View (view) as Player
 import TeamTavern.Server.Profile.AddPlayerProfile (addPlayerProfile) as Profile
@@ -56,6 +57,7 @@ import TeamTavern.Server.Session.End (end) as Session
 import TeamTavern.Server.Session.Start (start) as Session
 import TeamTavern.Server.Team.Create (create) as Team
 import TeamTavern.Server.Team.Update (update) as Team
+import TeamTavern.Server.Team.UpdateContacts (updateContacts) as Team
 import TeamTavern.Server.Team.View (view) as Team
 
 listenOptions :: ListenOptions
@@ -153,6 +155,8 @@ handleRequest deployment pool method url cookies body =
             Player.register deployment pool cookies body
         , viewPlayer:
             Player.view pool cookies
+        , updatePlayerContacts: \{ nickname } ->
+            Player.updateContacts pool nickname cookies body
         , updatePlayer: \{ nickname } ->
             Player.updatePlayer pool nickname cookies body
         , deletePlayer: \{ nickname } ->
@@ -163,6 +167,8 @@ handleRequest deployment pool method url cookies body =
             Team.create pool body cookies
         , updateTeam:
             Team.update pool body cookies
+        , updateTeamContacts:
+            Team.updateContacts pool body cookies
         , startSession: const $
             Session.start deployment pool cookies body
         , endSession: const

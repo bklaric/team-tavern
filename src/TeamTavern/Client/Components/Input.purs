@@ -2,7 +2,6 @@ module TeamTavern.Client.Components.Input where
 
 import Prelude
 
-import Data.Array as Array
 import Data.Maybe (Maybe(..), isJust, isNothing, maybe)
 import Data.Monoid (guard)
 import Halogen.HTML as HH
@@ -10,10 +9,8 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Components.Checkable (checkbox)
 import TeamTavern.Client.Components.Divider (divider)
-import TeamTavern.Client.Pages.Profiles.TeamBadge (platformRadioBadges)
 import TeamTavern.Client.Script.Request (justIfInt, nothingIfEmpty)
 import TeamTavern.Client.Snippets.Class as HS
-import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
 import Unsafe.Coerce (unsafeCoerce)
 
 inputLabel' :: forall slots action.
@@ -47,15 +44,15 @@ inputLabel :: forall slots action. String -> String -> HH.HTML slots action
 inputLabel icon label = inputLabel' icon label Nothing false
 
 platformIdLabel :: forall slots action.
-    HH.HTML slots action -> String -> HH.HTML slots action
-platformIdLabel icon label =
+    HH.HTML slots action -> String -> Boolean -> HH.HTML slots action
+platformIdLabel icon label required =
     HH.label
     [ HS.class_ "input-label"] $
     [ icon
     , HH.span [ HS.class_ "input-label-text" ] [ HH.text label ]
     ]
     <>
-    [ divider, inputRequiredSublabel ]
+    guard required [ divider, inputRequiredSublabel ]
 
 inputSublabel :: forall slots action. String -> HH.HTML slots action
 inputSublabel text = HH.span [ HS.class_ "input-sublabel" ] [ HH.text text ]
@@ -89,13 +86,6 @@ inputGroupsHeading' children = HH.h2 [ HS.class_ "input-groups-heading" ] childr
 
 inputGroupsHeading :: forall slots action. String -> HH.HTML slots action
 inputGroupsHeading text = inputGroupsHeading' [ HH.text text ]
-
-platformIdHeading :: forall action slots.
-    Platforms -> Platform -> (Platform -> action) -> HH.HTML slots action
-platformIdHeading platforms selectedPlatform onInput =
-    HH.h2 [ HS.class_ "platform-id-heading" ] $
-    [ HH.text "Platform ID" ]
-    <> guard (not $ Array.null platforms.tail) [ platformRadioBadges platforms selectedPlatform onInput ]
 
 requiredTextLineInput :: forall slots action. String -> (String -> action) -> HH.HTML slots action
 requiredTextLineInput input onInput =

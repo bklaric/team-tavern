@@ -2,10 +2,12 @@ module TeamTavern.Server.Profile.Infrastructure.ValidateFriendCode (FriendCode, 
 
 import Prelude
 
-import Data.Either (Either(..))
 import Data.Int (fromString)
-import Data.Maybe (isJust)
-import Data.String (Pattern(..), length, split, trim)
+import Data.Maybe (Maybe, isJust)
+import Data.String (Pattern(..), length, split)
+import Data.Validated.Label (ValidatedVariants)
+import Data.Variant (SProxy(..))
+import TeamTavern.Server.Profile.Infrastructure.ValidateContact (validateContact)
 
 newtype FriendCode = FriendCode String
 
@@ -28,8 +30,6 @@ isFriendCodeValid friendCode =
         && (isJust $ fromString left) && (isJust $ fromString mid) && (isJust $ fromString right)
     _ -> false
 
-validateFriendCode :: String -> Either (Array String) FriendCode
-validateFriendCode friendCode | friendCode' <- trim friendCode =
-    if isFriendCodeValid friendCode'
-    then Right $ FriendCode friendCode'
-    else Left [ "Invalid friend code: " <> friendCode' ]
+validateFriendCode :: forall errors. Maybe String -> ValidatedVariants (friendCode :: String | errors) (Maybe FriendCode)
+validateFriendCode friendCode =
+    validateContact friendCode isFriendCodeValid FriendCode (SProxy :: _ "friendCode") ("Invalid FriendCode: " <> _)

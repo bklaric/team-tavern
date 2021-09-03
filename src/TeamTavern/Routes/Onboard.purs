@@ -9,7 +9,9 @@ import Jarilo.Route (Route)
 import Jarilo.Segment (Literal)
 import TeamTavern.Routes.Shared.Organization (OrganizationNW)
 import TeamTavern.Routes.Shared.Platform (Platform)
+import TeamTavern.Routes.Shared.Player (Contacts, ContactsError)
 import TeamTavern.Routes.Shared.Size (Size)
+import TeamTavern.Routes.Shared.Team as TeamRoutes
 import Type (type ($))
 
 type Onboard = Route
@@ -23,7 +25,6 @@ type PlayerRequestContent =
     , location :: Maybe String
     , languages :: Array String
     , microphone :: Boolean
-    , discordTag :: Maybe String
     , timezone :: Maybe String
     , weekdayFrom :: Maybe String
     , weekdayTo :: Maybe String
@@ -33,8 +34,6 @@ type PlayerRequestContent =
 
 type TeamRequestContent =
     { organization :: OrganizationNW
-    , discordTag :: Maybe String
-    , discordServer :: Maybe String
     , ageFrom :: Maybe Int
     , ageTo :: Maybe Int
     , locations :: Array String
@@ -49,7 +48,6 @@ type TeamRequestContent =
 
 type PlayerProfileRequestContent =
     { platform :: Platform
-    , platformId :: String
     , fieldValues :: Array
         { fieldKey :: String
         , url :: Maybe String
@@ -78,28 +76,25 @@ type RequestContent =
     , gameHandle :: String
     , playerProfile :: Maybe PlayerProfileRequestContent
     , teamProfile :: Maybe TeamProfileRequestContent
+    , playerContacts :: Maybe Contacts
+    , teamContacts :: Maybe TeamRoutes.Contacts
     }
 
 type OkContent = { teamHandle :: Maybe String }
 
 type BadContent = Array $ Variant
-    ( player :: Array $ Variant
-        ( discordTag :: Array String
-        )
-    , team :: Array $ Variant
+    ( team :: Array $ Variant
         ( name :: Array String
         , website :: Array String
-        , discordTag :: Array String
-        , discordServer :: Array String
-        , contact :: Array String
         )
     , playerProfile :: Array $ Variant
-        ( platformId :: Array String
-        , url :: { message :: Array String, key :: String }
+        ( url :: { message :: Array String, key :: String }
         , about :: Array String
         )
     , teamProfile :: Array $ Variant
         ( platforms :: Array String
         , about :: Array String
         )
+    , playerContacts :: Array ContactsError
+    , teamContacts :: Array TeamRoutes.ContactsError
     )

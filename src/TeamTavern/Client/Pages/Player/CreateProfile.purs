@@ -8,26 +8,27 @@ import Data.Array as Array
 import Data.Const (Const)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
-import Data.Variant (SProxy(..), Variant, match)
+import Data.Variant (SProxy(..), match)
 import Halogen as H
 import Halogen.HTML as HH
+import Record.Extra (pick)
 import TeamTavern.Client.Components.Form (form, otherFormError, submitButton)
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.Player.ProfileFormInput (profileFormInput)
 import TeamTavern.Client.Components.Player.ProfileFormInput as ProfileFormInput
-import TeamTavern.Client.Components.Player.ProfileInputGroup (Field)
 import TeamTavern.Client.Script.Navigate (hardNavigate)
 import TeamTavern.Client.Script.Request (postNoContent)
-import TeamTavern.Routes.Shared.Platform (Platforms)
+import TeamTavern.Routes.ViewGame as ViewGame
+import TeamTavern.Routes.ViewPlayer as ViewPlayer
+import TeamTavern.Server.Profile.AddPlayerProfile.ReadProfile (RequestContent)
+import TeamTavern.Server.Profile.AddPlayerProfile.SendResponse (BadContent)
+import Type (type ($))
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
 type Input =
-    { nickname :: String
-    , handle :: String
-    , title :: String
-    , platforms :: Platforms
-    , fields :: Array Field
+    { player :: ViewPlayer.OkContent
+    , game :: ViewGame.OkContent
     }
 
 type State =
@@ -56,86 +57,109 @@ render { profile, otherError, submitting } =
     ]
     <> otherFormError otherError
 
-sendRequest
-    :: forall left
-    .  State
-    -> Async left (Maybe
-        ( Either
-            ( Array (Variant
-                ( platformId :: Array String
-                , about :: Array String
-                , url :: { key :: String, message :: Array String }
-                ))
-            )
-            Unit
-        ))
+sendRequest :: forall left. State -> Async left $ Maybe $ Either BadContent Unit
 sendRequest { nickname, handle, profile } =
     postNoContent ("/api/players/" <> nickname <> "/profiles/" <> handle)
-    { platform: profile.platform
-    , platformId: profile.platformId
-    , fieldValues: profile.fieldValues
-    , newOrReturning: profile.newOrReturning
-    , about: profile.about
-    }
+    ({ details: pick profile.details
+    , contacts: pick profile.contacts
+    } :: RequestContent)
 
 handleAction :: forall output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
 handleAction (UpdateProfile profile) =
     H.modify_ _
         { profile
-            { platform = profile.platform
-            , platformId = profile.platformId
-            , platformIdError = profile.platformIdError
-            , fieldValues = profile.fieldValues
-            , newOrReturning = profile.newOrReturning
-            , about = profile.about
+            { details
+                { platform = profile.details.platform
+                , fieldValues = profile.details.fieldValues
+                , newOrReturning = profile.details.newOrReturning
+                , about = profile.details.about
+                }
+            , contacts
+                { discordTag = profile.contacts.discordTag
+                , steamId = profile.contacts.steamId
+                , riotId = profile.contacts.riotId
+                , battleTag = profile.contacts.battleTag
+                , psnId = profile.contacts.psnId
+                , gamerTag = profile.contacts.gamerTag
+                , friendCode = profile.contacts.friendCode
+                }
             }
         }
 handleAction (SendRequest event) = do
     H.liftEffect $ preventDefault event
-    currentState <- H.modify _ { submitting = true }
+    currentState <- H.modify _
+        { submitting = true
+        , otherError = false
+        , profile
+            { details
+                { urlErrors = []
+                , aboutError = false
+                }
+            , contacts
+                { discordTagError = false
+                , steamIdError = false
+                , riotIdError = false
+                , battleTagError = false
+                , psnIdError = false
+                , gamerTagError = false
+                , friendCodeError = false
+                }
+            }
+        }
     response <- H.lift $ sendRequest currentState
     case response of
         Just (Right _) -> hardNavigate $ "/players/" <> currentState.nickname
         Just (Left badContent) -> H.put $
             foldl
-            (\state error ->
-                match
-                { platformId: const state { profile { platformIdError = true } }
-                , about: const state { profile { aboutError = true } }
-                , url: \{ key } -> state { profile
-                    { urlErrors = Array.cons key state.profile.urlErrors } }
-                }
-                error
-            )
-            (currentState
-                { submitting = false
-                , otherError = false
-                , profile
-                    { platformIdError = false
-                    , urlErrors = []
-                    , aboutError = false
+            (\state error -> error # match
+                { profile: state # foldl \state' error' -> error' # match
+                    { about: const state { profile { details { aboutError = true } } }
+                    , url: \{ key } -> state { profile { details
+                        { urlErrors = Array.cons key state.profile.details.urlErrors } } }
+                    }
+                , contacts: state # foldl \state' error' -> error' # match
+                    { discordTag: const state' { profile { contacts { discordTagError = true } } }
+                    , steamId: const state' { profile { contacts { steamIdError = true } } }
+                    , riotId: const state' { profile { contacts { riotIdError = true } } }
+                    , battleTag: const state' { profile { contacts { battleTagError = true } } }
+                    , psnId: const state' { profile { contacts { psnIdError = true } } }
+                    , gamerTag: const state' { profile { contacts { gamerTagError = true } } }
+                    , friendCode: const state' { profile { contacts { friendCodeError = true } } }
                     }
                 }
             )
+            (currentState { submitting = false })
             badContent
-        Nothing -> H.put currentState
-            { submitting = false
-            , otherError = true
-            , profile
-                { platformIdError = false
-                , urlErrors = []
-                , aboutError = false
-                }
-            }
+        Nothing -> H.put currentState { submitting = false, otherError = true }
 
 component :: forall query output left. H.Component HH.HTML query Input output (Async left)
 component = H.mkComponent
-    { initialState: \{ nickname, handle, title, platforms, fields } ->
+    { initialState: \
+        { player: { nickname, discordTag, steamId, riotId, battleTag, psnId, gamerTag, friendCode }
+        , game: { handle, title, platforms, fields }
+        } ->
         { nickname
         , handle
         , title
-        , profile: ProfileFormInput.emptyInput { platforms, fields }
+        , profile: (ProfileFormInput.emptyInput { platforms, fields })
+            { contacts =
+                { discordTag
+                , discordTagError: false
+                , steamId
+                , steamIdError: false
+                , riotId
+                , riotIdError: false
+                , battleTag
+                , battleTagError: false
+                , psnId
+                , psnIdError: false
+                , gamerTag
+                , gamerTagError: false
+                , friendCode
+                , friendCodeError: false
+                }
+            }
         , otherError: false
         , submitting: false
         }
@@ -150,4 +174,4 @@ createProfile
     -> HH.ComponentHTML action (createProfile :: Slot | children) (Async left)
 createProfile input handleMessage = HH.slot
     (SProxy :: SProxy "createProfile") unit
-    (Modal.component ("Create your " <> input.title <> " profile") component) input handleMessage
+    (Modal.component ("Create your " <> input.game.title <> " profile") component) input handleMessage

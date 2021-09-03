@@ -1,7 +1,17 @@
 create table player
     ( id serial not null primary key
     , nickname varchar(40) not null unique
-    , discord_tag varchar(37)
+
+    -- Contact
+    , discord_tag text
+    , steam_id text
+    , riot_id text
+    , battle_tag text
+    , psn_id text
+    , gamer_tag text
+    , friend_code text
+
+    -- Details
     , birthday date
     , languages text[] not null default '{}'
     , location varchar(100)
@@ -11,6 +21,7 @@ create table player
     , weekend_from time
     , weekend_to time
     , microphone boolean not null default false
+
     , password_hash character(60) not null
     , registered timestamptz not null default current_timestamp
     );
@@ -21,11 +32,21 @@ create table team
     ( id serial not null primary key
     , owner_id int not null references player(id) on delete cascade
     , handle text not null unique
-    , organization text not null -- informal, organized
     , name text
     , website text
+
+    -- Contact
     , discord_tag text
     , discord_server text
+    , steam_id text
+    , riot_id text
+    , battle_tag text
+    , psn_id text
+    , gamer_tag text
+    , friend_code text
+
+    -- Details
+    , organization text not null -- informal, organized
     , age_from integer
     , age_to integer
     , locations text[] not null default '{}'
@@ -36,6 +57,7 @@ create table team
     , weekday_to time
     , weekend_from time
     , weekend_to time
+
     , created timestamptz not null default current_timestamp
     , updated timestamptz not null default current_timestamp
     );
@@ -82,7 +104,6 @@ create table player_profile
     , player_id integer not null references player(id) on delete cascade
     , game_id integer not null references game(id)
     , platform text not null
-    , platform_id text not null
     , new_or_returning boolean not null
     , about text[] not null
     , created timestamptz not null default current_timestamp

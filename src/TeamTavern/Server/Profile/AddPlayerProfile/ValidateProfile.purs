@@ -16,22 +16,19 @@ import TeamTavern.Routes.Shared.Platform (Platform)
 import TeamTavern.Server.Domain.Text (Text)
 import TeamTavern.Server.Profile.AddPlayerProfile.LoadFields as LoadFields
 import TeamTavern.Server.Profile.AddPlayerProfile.ReadProfile as ReadProfile
-import TeamTavern.Server.Profile.AddPlayerProfile.ValidatePlatformId (PlatformId, validatePlatformId)
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateFieldValues (validateFieldValues)
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateFieldValues as ValidateFieldValues
 import TeamTavern.Server.Profile.Infrastructure.ValidateAbout (validateAbout)
 
 type Profile =
     { platform :: Platform
-    , platformId :: PlatformId
     , fieldValues :: Array ValidateFieldValues.FieldValue
     , newOrReturning :: Boolean
     , about :: Text
     }
 
 type ProfileError = Variant
-    ( platformId :: Array String
-    , url :: { message :: Array String, key :: String }
+    ( url :: { message :: Array String, key :: String }
     , about :: Array String
     )
 
@@ -44,10 +41,9 @@ validateProfile
     -> Async (Variant (profile :: ProfileErrors | errors)) Profile
 validateProfile
     { platforms, fields }
-    { platform, platformId, fieldValues, newOrReturning, about } =
-    { platform, platformId: _, fieldValues: _, newOrReturning, about: _ }
-    <$> validatePlatformId platforms platform platformId
-    <*> validateFieldValues fields fieldValues
+    { platform, fieldValues, newOrReturning, about } =
+    { platform, fieldValues: _, newOrReturning, about: _ }
+    <$> validateFieldValues fields fieldValues
     <*> validateAbout about
     # Async.fromValidated
     # label (SProxy :: SProxy "profile")

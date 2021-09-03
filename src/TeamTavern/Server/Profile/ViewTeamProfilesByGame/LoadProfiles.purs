@@ -25,6 +25,7 @@ import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
 import TeamTavern.Routes.Shared.Platform as Platform
 import TeamTavern.Routes.Shared.Size (Size)
 import TeamTavern.Routes.Shared.Size as Size
+import TeamTavern.Routes.Shared.Team (Contacts')
 import TeamTavern.Routes.Shared.Timezone (Timezone)
 import TeamTavern.Server.Infrastructure.Postgres (prepareJsonString, prepareString, teamAdjustedWeekdayFrom, teamAdjustedWeekdayTo, teamAdjustedWeekendFrom, teamAdjustedWeekendTo)
 import TeamTavern.Server.Profile.Routes (Handle, ProfilePage)
@@ -32,12 +33,10 @@ import TeamTavern.Server.Profile.Routes (Handle, ProfilePage)
 pageSize :: Int
 pageSize = 10
 
-type LoadProfilesResult =
-    { owner :: String
+type LoadProfilesResult = Contacts'
+    ( owner :: String
     , handle :: String
     , organization :: OrganizationNW
-    , discordTag :: Maybe String
-    , discordServer :: Maybe String
     , ageFrom :: Maybe Int
     , ageTo :: Maybe Int
     , locations :: Array String
@@ -70,7 +69,7 @@ type LoadProfilesResult =
     , about :: Array String
     , updated :: String
     , updatedSeconds :: Number
-    }
+    )
 
 type LoadProfilesError errors = Variant
     ( databaseError :: Error
@@ -262,6 +261,12 @@ queryStringWithoutPagination handle timezone filters = Query $ """
             end as organization,
             team.discord_tag as "discordTag",
             team.discord_server as "discordServer",
+            team.steam_id as "steamId",
+            team.riot_id as "riotId",
+            team.battle_tag as "battleTag",
+            team.psn_id as "psnId",
+            team.gamer_tag as "gamerTag",
+            team.friend_code as "friendCode",
             team.age_from as "ageFrom",
             team.age_to as "ageTo",
             team.locations,

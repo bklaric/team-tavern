@@ -9,61 +9,91 @@ import Data.Const (Const)
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..))
-import Data.Variant (SProxy(..))
+import Data.Monoid (guard)
+import Data.Symbol (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
-import Record as Record
-import TeamTavern.Client.Components.Input (platformIdHeading, inputGroupsHeading, responsiveInputGroups)
-import TeamTavern.Client.Components.Player.ProfileInputGroup (ChildSlots, Field, FieldValue, aboutInputGroup, platformIdInputGroup, fieldInputGroup, newOrReturningInputGroup)
+import Record.Extra (pick)
+import TeamTavern.Client.Components.Divider (divider)
+import TeamTavern.Client.Components.Input (inputGroup, inputGroupsHeading, inputGroupsHeading', inputSublabel, responsiveInputGroups)
+import TeamTavern.Client.Components.Player.PlayerInputGroup (discordTagInputGroup)
+import TeamTavern.Client.Components.Player.ProfileInputGroup (ChildSlots, Field, FieldValue, aboutInputGroup, fieldInputGroup, newOrReturningInputGroup, platformIdInputGroup)
 import TeamTavern.Client.Components.Player.ProfileInputGroup as Input
-import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
+import TeamTavern.Client.Pages.Profiles.TeamBadge (platformRadioBadges)
+import TeamTavern.Routes.Shared.Platform (Platform(..), Platforms)
+import TeamTavern.Routes.Shared.Player as Routes
 
 type FieldValues = Array FieldValue
 
 type Input =
-    { platforms :: Platforms
-    , fields :: Array Field
-    , platform :: Platform
-    , platformId :: String
-    , fieldValues :: FieldValues
-    , newOrReturning :: Boolean
-    , about :: String
-    , platformIdError :: Boolean
-    , urlErrors :: Array String
-    , aboutError :: Boolean
+    { details ::
+        { platforms :: Platforms
+        , fields :: Array Field
+        , platform :: Platform
+        , fieldValues :: FieldValues
+        , newOrReturning :: Boolean
+        , about :: String
+        , urlErrors :: Array String
+        , aboutError :: Boolean
+        }
+    , contacts :: Routes.Contacts'
+        ( discordTagError :: Boolean
+        , steamIdError :: Boolean
+        , riotIdError :: Boolean
+        , battleTagError :: Boolean
+        , psnIdError :: Boolean
+        , gamerTagError :: Boolean
+        , friendCodeError :: Boolean
+        )
     }
 
 type Output =
-    { platform :: Platform
-    , platformId :: String
-    , platformIdError :: Boolean
-    , fieldValues :: FieldValues
-    , about :: String
-    , newOrReturning :: Boolean
+    { details ::
+        { platform :: Platform
+        , fieldValues :: FieldValues
+        , about :: String
+        , newOrReturning :: Boolean
+        }
+    , contacts :: Routes.Contacts
     }
 
 type State =
-    { platforms :: Platforms
-    , fields :: Array Field
-    , platform :: Platform
-    , platformId :: String
-    , fieldValues :: Input.FieldValues
-    , newOrReturning :: Boolean
-    , about :: String
-    , platformIdError :: Boolean
-    , urlErrors :: Array String
-    , aboutError :: Boolean
+    { details ::
+        { platforms :: Platforms
+        , fields :: Array Field
+        , platform :: Platform
+        , fieldValues :: Input.FieldValues
+        , newOrReturning :: Boolean
+        , about :: String
+        , urlErrors :: Array String
+        , aboutError :: Boolean
+        }
+    , contacts :: Routes.Contacts'
+        ( discordTagError :: Boolean
+        , steamIdError :: Boolean
+        , riotIdError :: Boolean
+        , battleTagError :: Boolean
+        , psnIdError :: Boolean
+        , gamerTagError :: Boolean
+        , friendCodeError :: Boolean
+        )
     }
 
 data Action
     = Receive Input
     | UpdatePlatform Platform
-    | UpdatePlatformId String
     | UpdateUrl String (Maybe String)
     | UpdateSingleSelect String (Maybe String)
     | UpdateMultiSelect String (Array String)
     | UpdateNewOrReturning Boolean
     | UpdateAbout String
+    | UpdateDiscordTag (Maybe String)
+    | UpdateSteamId (Maybe String)
+    | UpdateRiotId (Maybe String)
+    | UpdateBattleTag (Maybe String)
+    | UpdatePsnId (Maybe String)
+    | UpdateGamerTag (Maybe String)
+    | UpdateFriendCode (Maybe String)
 
 type Slot = H.Slot (Const Void) Output Unit
 
@@ -76,15 +106,29 @@ fieldValuesToMap = foldl (\map value -> Map.insert value.fieldKey value map) Map
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render
-    { platforms, fields
-    , platform, platformId, fieldValues, newOrReturning, about
-    , platformIdError, urlErrors, aboutError
+    { details: { platforms, fields, platform, fieldValues, newOrReturning, about, urlErrors, aboutError }
+    , contacts
     }
     = HH.div_ $
-    [ platformIdHeading platforms platform UpdatePlatform
+    guard (not $ Array.null platforms.tail)
+    [ inputGroupsHeading "Platform"
+    , inputGroup [ platformRadioBadges platforms platform UpdatePlatform ]
+    ]
+    <>
+    [ inputGroupsHeading' [ HH.text "Contacts", divider, inputSublabel "Contacts are shared between all your profiles." ]
     , responsiveInputGroups
-        [ platformIdInputGroup platform platformId UpdatePlatformId platformIdError ]
-    , inputGroupsHeading "Details"
+        [ case platform of
+            Steam       -> platformIdInputGroup Steam       contacts.steamId    UpdateSteamId    contacts.steamIdError    true
+            Riot        -> platformIdInputGroup Riot        contacts.riotId     UpdateRiotId     contacts.riotIdError     true
+            BattleNet   -> platformIdInputGroup BattleNet   contacts.battleTag  UpdateBattleTag  contacts.battleTagError  true
+            PlayStation -> platformIdInputGroup PlayStation contacts.psnId      UpdatePsnId      contacts.psnIdError      true
+            Xbox        -> platformIdInputGroup Xbox        contacts.gamerTag   UpdateGamerTag   contacts.gamerTagError   true
+            Switch      -> platformIdInputGroup Switch      contacts.friendCode UpdateFriendCode contacts.friendCodeError true
+        , discordTagInputGroup contacts.discordTag UpdateDiscordTag contacts.discordTagError
+        ]
+    ]
+    <>
+    [ inputGroupsHeading "Details"
     , responsiveInputGroups $
         ( fields <#> fieldInputGroup fieldValues
             UpdateUrl UpdateSingleSelect UpdateMultiSelect urlErrors
@@ -96,75 +140,75 @@ render
     ]
 
 raiseOutput :: forall left. State -> H.HalogenM State Action ChildSlots Output (Async left) Unit
-raiseOutput { platform, platformId, platformIdError, fieldValues, newOrReturning, about } =
-    H.raise
-    { platform, platformId, platformIdError
-    , fieldValues: fieldValuesToArray fieldValues, newOrReturning, about
-    }
+raiseOutput state = let
+    details = state.details { fieldValues = fieldValuesToArray state.details.fieldValues } # pick
+    contacts = pick state.contacts
+    in
+    H.raise { details, contacts }
 
 handleAction :: forall left. Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
 handleAction (Receive input) =
-    H.put (Record.modify (SProxy :: SProxy "fieldValues") fieldValuesToMap input)
-handleAction (UpdatePlatform platform) = do
-    state <- H.modify _
-        { platform = platform
-        , platformId = ""
-        , platformIdError = false
-        }
-    raiseOutput state
-handleAction (UpdatePlatformId platformId) = do
-    state <- H.modify _ { platformId = platformId }
-    raiseOutput state
+    H.put $ input { details { fieldValues = fieldValuesToMap input.details.fieldValues } }
+handleAction (UpdatePlatform platform) = H.modify _ { details { platform = platform } } >>= raiseOutput
 handleAction (UpdateUrl fieldKey url) = do
     state <- H.modify \state -> state
-        { fieldValues =
-            case url of
-            Nothing -> Map.delete fieldKey state.fieldValues
-            Just url' ->
-                Map.insert
-                fieldKey
-                { fieldKey, url: Just url', optionKey: Nothing, optionKeys: Nothing }
-                state.fieldValues
+        { details
+            { fieldValues =
+                case url of
+                Nothing -> Map.delete fieldKey state.details.fieldValues
+                Just url' ->
+                    Map.insert
+                    fieldKey
+                    { fieldKey, url: Just url', optionKey: Nothing, optionKeys: Nothing }
+                    state.details.fieldValues
+            }
         }
     raiseOutput state
 handleAction (UpdateSingleSelect fieldKey optionKey) = do
     state <- H.modify \state -> state
-        { fieldValues =
-            case optionKey of
-            Nothing -> Map.delete fieldKey state.fieldValues
-            Just optionKey' ->
-                Map.insert
-                fieldKey
-                { fieldKey, url: Nothing, optionKey: Just optionKey', optionKeys: Nothing }
-                state.fieldValues
+        { details
+            { fieldValues =
+                case optionKey of
+                Nothing -> Map.delete fieldKey state.details.fieldValues
+                Just optionKey' ->
+                    Map.insert
+                    fieldKey
+                    { fieldKey, url: Nothing, optionKey: Just optionKey', optionKeys: Nothing }
+                    state.details.fieldValues
+            }
         }
     raiseOutput state
 handleAction (UpdateMultiSelect fieldKey optionKeys) = do
     state <- H.modify \state -> state
-        { fieldValues =
-            case Array.uncons optionKeys of
-            Nothing -> Map.delete fieldKey state.fieldValues
-            Just { head, tail } ->
-                Map.insert
-                fieldKey
-                { fieldKey
-                , url: Nothing
-                , optionKey: Nothing
-                , optionKeys: Just $ Array.cons head tail
-                }
-                state.fieldValues
+        { details
+            { fieldValues =
+                case Array.uncons optionKeys of
+                Nothing -> Map.delete fieldKey state.details.fieldValues
+                Just { head, tail } ->
+                    Map.insert
+                    fieldKey
+                    { fieldKey
+                    , url: Nothing
+                    , optionKey: Nothing
+                    , optionKeys: Just $ Array.cons head tail
+                    }
+                    state.details.fieldValues
+            }
         }
     raiseOutput state
-handleAction (UpdateNewOrReturning newOrReturning) = do
-    state <- H.modify _ { newOrReturning = newOrReturning }
-    raiseOutput state
-handleAction (UpdateAbout about) = do
-    state <- H.modify _ { about = about }
-    raiseOutput state
+handleAction (UpdateNewOrReturning newOrReturning) = H.modify _ { details { newOrReturning = newOrReturning } } >>= raiseOutput
+handleAction (UpdateAbout about)                   = H.modify _ { details { about          = about          } } >>= raiseOutput
+handleAction (UpdateDiscordTag discordTag) = H.modify _ { contacts { discordTag = discordTag } } >>= raiseOutput
+handleAction (UpdateSteamId steamId)       = H.modify _ { contacts { steamId    = steamId    } } >>= raiseOutput
+handleAction (UpdateRiotId riotId)         = H.modify _ { contacts { riotId     = riotId     } } >>= raiseOutput
+handleAction (UpdateBattleTag battleTag)   = H.modify _ { contacts { battleTag  = battleTag  } } >>= raiseOutput
+handleAction (UpdatePsnId psnId)           = H.modify _ { contacts { psnId      = psnId      } } >>= raiseOutput
+handleAction (UpdateGamerTag gamerTag)     = H.modify _ { contacts { gamerTag   = gamerTag   } } >>= raiseOutput
+handleAction (UpdateFriendCode friendCode) = H.modify _ { contacts { friendCode = friendCode } } >>= raiseOutput
 
 component :: forall query left. H.Component HH.HTML query Input Output (Async left)
 component = H.mkComponent
-    { initialState: Record.modify (SProxy :: SProxy "fieldValues") fieldValuesToMap
+    { initialState: \input -> input { details { fieldValues = fieldValuesToMap input.details.fieldValues } }
     , render
     , eval: H.mkEval $ H.defaultEval
         { handleAction = handleAction
@@ -175,22 +219,38 @@ component = H.mkComponent
 emptyInput :: forall props.
     { platforms :: Platforms, fields :: Array Field | props } -> Input
 emptyInput { platforms, fields } =
-    { platforms
-    , fields
-    , platform: platforms.head
-    , platformId: ""
-    , fieldValues: []
-    , newOrReturning: false
-    , about: ""
-    , platformIdError: false
-    , urlErrors: []
-    , aboutError: false
+    { details:
+        { platforms
+        , fields
+        , platform: platforms.head
+        , fieldValues: []
+        , newOrReturning: false
+        , about: ""
+        , urlErrors: []
+        , aboutError: false
+        }
+    , contacts:
+        { discordTag: Nothing
+        , discordTagError: false
+        , steamId: Nothing
+        , steamIdError: false
+        , riotId: Nothing
+        , riotIdError: false
+        , battleTag: Nothing
+        , battleTagError: false
+        , psnId: Nothing
+        , psnIdError: false
+        , gamerTag: Nothing
+        , gamerTagError: false
+        , friendCode: Nothing
+        , friendCodeError: false
+        }
     }
 
 profileFormInput
-    :: forall action children left
+    :: forall action slots left
     .  Input
     -> (Output -> action)
-    -> HH.ComponentHTML action (playerProfileFormInput :: Slot | children) (Async left)
+    -> HH.ComponentHTML action (playerProfileFormInput :: Slot | slots) (Async left)
 profileFormInput input handleMessage =
-    HH.slot (SProxy :: SProxy "playerProfileFormInput") unit component input (Just <<< handleMessage)
+    HH.slot (SProxy :: _ "playerProfileFormInput") unit component input (Just <<< handleMessage)
