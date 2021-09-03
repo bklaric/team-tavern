@@ -23,11 +23,12 @@ import TeamTavern.Client.Components.Player.Contacts (profileContacts)
 import TeamTavern.Client.Components.Player.PlayerDetails (playerDetails)
 import TeamTavern.Client.Components.Player.ProfileDetails (PlatformIdSlots, profileDetails')
 import TeamTavern.Client.Components.Profile (profileHeader, profileHeading, profileSubheading)
+import TeamTavern.Client.Pages.Profiles.TeamBadge (platformBadge)
 import TeamTavern.Client.Script.Cookie (PlayerInfo)
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Client.Snippets.PreventMouseDefault (preventMouseDefault)
-import TeamTavern.Routes.Shared.Platform (Platform)
+import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
 import TeamTavern.Routes.Shared.Player (Contacts')
 import TeamTavern.Server.Profile.ViewPlayerProfilesByGame.LoadProfiles (pageSize)
 import Web.UIEvent.MouseEvent (MouseEvent)
@@ -52,6 +53,7 @@ type PlayerProfile = Contacts'
     , microphone :: Boolean
     , weekdayOnline :: Maybe { from :: String, to :: String }
     , weekendOnline :: Maybe { from :: String, to :: String }
+    , platforms :: Platforms
     , platform :: Platform
     , fieldValues :: Array
         { field ::
@@ -111,12 +113,19 @@ profileSection profile = let
     in
     cardSection $
     [ profileHeader
-        [ HH.div_
+        [ if full profile.platforms.tail
+        then
+        HH.div [ HS.class_ "team-profile-heading-container" ] $
             [ profileHeading (SProxy :: SProxy "players") profile.nickname
                 ("/players/" <> profile.nickname) profile.nickname
-            , divider
-            , profileSubheading $ "Updated " <> lastUpdated profile.updatedSeconds
             ]
+            <> [ platformBadge profile.platform, profileSubheading $ "Updated " <> lastUpdated profile.updatedSeconds ]
+        else
+        HH.div_ $
+            [ profileHeading (SProxy :: SProxy "players") profile.nickname
+                ("/players/" <> profile.nickname) profile.nickname
+            ]
+            <> [ divider, profileSubheading $ "Updated " <> lastUpdated profile.updatedSeconds ]
         ]
     ]
     <>

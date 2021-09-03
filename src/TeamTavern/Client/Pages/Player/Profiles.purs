@@ -19,7 +19,9 @@ import TeamTavern.Client.Components.Profile (profileHeader, profileHeading', pro
 import TeamTavern.Client.Pages.Player.CreateProfileButton (createProfileButton)
 import TeamTavern.Client.Pages.Player.CreateProfileButton as CreateProfileButton
 import TeamTavern.Client.Pages.Player.Status (Status(..))
+import TeamTavern.Client.Pages.Profiles.TeamBadge (platformBadge)
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
+import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.ViewPlayer as ViewPlayer
 
 type ChildSlots children = PlatformIdSlots
@@ -54,15 +56,21 @@ profiles player @ { profiles: profiles' } status showEditProfileModal =
         in
         cardSection $
         [ profileHeader $
+            (if full profile.platforms.tail
+            then
+            [ HH.div [ HS.class_ "team-profile-heading-container" ] $
+                [ profileHeading' (SProxy :: SProxy "games") profile.handle
+                    ("/games/" <> profile.handle <> "/players") profile.title
+                ]
+                <> [ platformBadge profile.platform, profileSubheading $ "Updated " <> lastUpdated profile.updatedSeconds ]
+            ]
+            else
             [ HH.div_ $
                 [ profileHeading' (SProxy :: SProxy "games") profile.handle
                     ("/games/" <> profile.handle <> "/players") profile.title
                 ]
-                <>
-                [ divider
-                , profileSubheading $ "Updated " <> lastUpdated profile.updatedSeconds
-                ]
-            ]
+                <> [ divider, profileSubheading $ "Updated " <> lastUpdated profile.updatedSeconds ]
+            ])
             <>
             guard (status == SignedInSelf)
             [ regularButton "fas fa-user-edit" "Edit profile" $ showEditProfileModal profile ]

@@ -19,7 +19,7 @@ import Postgres.Query (Query(..))
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
 import TeamTavern.Routes.Shared.Filters (Age, Filters, HasMicrophone, Language, Location, NewOrReturning, Time, Field)
-import TeamTavern.Routes.Shared.Platform (Platform)
+import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
 import TeamTavern.Routes.Shared.Platform as Platform
 import TeamTavern.Routes.Shared.Player (Contacts')
 import TeamTavern.Routes.Shared.Timezone (Timezone)
@@ -37,6 +37,7 @@ type LoadProfilesResult = Contacts'
     , microphone :: Boolean
     , weekdayOnline :: Maybe { from :: String, to :: String }
     , weekendOnline :: Maybe { from :: String, to :: String }
+    , platforms :: Platforms
     , platform :: Platform
     , fieldValues :: Array
         { field ::
@@ -210,6 +211,10 @@ queryStringWithoutPagination handle timezone filters = Query $ """
                     'to', to_char(""" <> playerAdjustedWeekendTo timezone <> """, 'HH24:MI')
                 )
             end as "weekendOnline",
+            json_build_object(
+                'head', game.platforms[1],
+                'tail', game.platforms[2:]
+            ) as platforms,
             profile.platform as "platform",
             coalesce(
                 jsonb_agg(
