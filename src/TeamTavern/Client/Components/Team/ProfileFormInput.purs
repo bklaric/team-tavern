@@ -3,7 +3,7 @@ module TeamTavern.Client.Components.Team.ProfileFormInput (FieldValues, Input, O
 import Prelude
 
 import Async (Async)
-import Data.Array (foldl)
+import Data.Array (foldl, sort)
 import Data.Array as Array
 import Data.Const (Const)
 import Data.List.NonEmpty as NonEmptyList
@@ -146,7 +146,7 @@ render { details, contacts }
     <>
     [ inputGroupsHeading' [ HH.text "Contacts", divider, inputSublabel "Contacts are shared between all your profiles." ]
     , responsiveInputGroups $
-        (details.selectedPlatforms <#>
+        (details.selectedPlatforms # sort <#>
             case _ of
             Steam       -> platformIdInputGroup Steam       contacts.steamId    UpdateSteamId    contacts.steamIdError    true
             Riot        -> platformIdInputGroup Riot        contacts.riotId     UpdateRiotId     contacts.riotIdError     true

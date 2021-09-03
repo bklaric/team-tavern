@@ -4,6 +4,7 @@ import Prelude
 
 import Async (Async)
 import Client.Components.Copyable as Copyable
+import Data.Array (sort)
 import Data.Array as Array
 import Data.Array.Extra (full)
 import Data.Const (Const)
@@ -119,7 +120,7 @@ profileSection profile = let
                 Party -> partyBadge
                 Community -> communityBadge
             ]
-            <> guard (full profile.allPlatforms.tail) (profile.selectedPlatforms <#> platformBadge)
+            <> guard (full profile.allPlatforms.tail) (profile.selectedPlatforms # sort <#> platformBadge)
             <> [ profileSubheading $ "Updated " <> lastUpdated profile.updatedSeconds ]
         ]
     ]

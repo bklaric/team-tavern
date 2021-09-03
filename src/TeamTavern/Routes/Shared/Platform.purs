@@ -17,6 +17,8 @@ data Platform = Steam | Riot | BattleNet | PlayStation | Xbox | Switch
 
 derive instance eqPlatform :: Eq Platform
 
+derive instance ordPlatform :: Ord Platform
+
 derive instance genericPlatform :: Generic Platform _
 
 instance showPlatform :: Show Platform where

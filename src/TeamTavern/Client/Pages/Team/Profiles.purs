@@ -3,6 +3,7 @@ module TeamTavern.Client.Pages.Team.Profiles (profiles) where
 import Prelude
 
 import Async (Async)
+import Data.Array (sort)
 import Data.Array as Array
 import Data.Array.Extra (full)
 import Data.Const (Const)
@@ -65,7 +66,7 @@ profiles team @ { profiles: profiles' } status editProfileModalShown =
                     Party -> partyBadge
                     Community -> communityBadge
                 ]
-                <> guard (full profile.allPlatforms.tail) (profile.selectedPlatforms <#> platformBadge)
+                <> guard (full profile.allPlatforms.tail) (profile.selectedPlatforms # sort <#> platformBadge)
                 <> [ profileSubheading $ "Updated " <> lastUpdated profile.updatedSeconds ]
             ]
             <>
