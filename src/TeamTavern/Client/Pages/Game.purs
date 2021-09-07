@@ -19,6 +19,7 @@ import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.Boarding.PlayerOrTeamInput as Boarding
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Pages.Home.CallToAction (callToAction')
+import TeamTavern.Client.Pages.Home.Connect (connect')
 import TeamTavern.Client.Pages.Home.Features (features')
 import TeamTavern.Client.Pages.Home.FindProfiles (findProfiles')
 import TeamTavern.Client.Pages.Home.ForPlayers (forPlayers')
@@ -61,6 +62,7 @@ render (Loaded { game: game' @ { handle, shortTitle } }) =
     , forPlayers' handle shortTitle (OpenPlayerPreboarding game')
     , forTeams' handle shortTitle (OpenTeamPreboarding game')
     , findProfiles' handle shortTitle (OpenPlayerProfiles handle) (OpenTeamProfiles handle)
+    , connect' handle shortTitle
     , features' handle shortTitle (OpenPreboarding game')
     ]
 

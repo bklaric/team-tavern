@@ -6,8 +6,10 @@ import Data.Maybe (Maybe(..), maybe)
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
+import TeamTavern.Client.Components.Anchor (iconAnchor)
 import TeamTavern.Client.Components.Picture (picture)
 import TeamTavern.Client.Snippets.Class as HS
+import TeamTavern.Client.Snippets.SocialMediaUrls (discordUrl, redditUrl, steamId, twitterUrl)
 import Web.UIEvent.MouseEvent (MouseEvent)
 
 landingSection :: forall slots action. Array (HH.HTML slots action) -> HH.HTML slots action
@@ -50,3 +52,12 @@ landingSectionButton text url onClick =
 landingSectionImage :: forall slots action. Maybe String -> String -> HH.HTML slots action
 landingSectionImage title baseSrc =
     picture "landing-section-image" (maybe "Video game characters" (_ <> " character") title) baseSrc
+
+landingSectionConnect :: forall slots action. HH.HTML slots action
+landingSectionConnect =
+    HH.div [ HS.class_ "landing-section-connect" ]
+    [ iconAnchor discordUrl "TeamTavern Discord server" "fab fa-discord"
+    , iconAnchor redditUrl "TeamTavern subreddit" "fab fa-reddit"
+    , iconAnchor steamId "TeamTavern Steam group" "fab fa-steam"
+    , iconAnchor twitterUrl "TeamTavern Twitter account" "fab fa-twitter"
+    ]
