@@ -11,7 +11,7 @@ cp src/TeamTavern/Client/Static/sitemap.txt dist-client/sitemap.txt
 cp src/TeamTavern/Client/Static/index.html dist-client/index.html
 cp src/TeamTavern/Client/Static/index.prerender.html dist-client/index.prerender.html
 cp -r src/TeamTavern/Client/Static/Images/Landing/* dist-client/images/
-cp src/TeamTavern/Client/Static/Images/Competitions/* dist-client/images/competitions/
+cp -r src/TeamTavern/Client/Static/Images/Competitions/* dist-client/images/competitions/
 cp src/TeamTavern/Client/Static/Favicons/* dist-client/favicons/
 cp src/TeamTavern/Client/Static/Css/* dist-client/css/
 cp src/TeamTavern/Client/Static/Fonts/* dist-client/webfonts/
