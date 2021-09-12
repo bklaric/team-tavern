@@ -29,7 +29,7 @@ import TeamTavern.Client.Script.LastUpdated (lastUpdated)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Client.Snippets.PreventMouseDefault (preventMouseDefault)
 import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
-import TeamTavern.Routes.Shared.Player (Contacts')
+import TeamTavern.Routes.Shared.PlayerContacts (PlayerContactsOpen)
 import TeamTavern.Server.Profile.ViewPlayerProfilesByGame.LoadProfiles (pageSize)
 import Web.UIEvent.MouseEvent (MouseEvent)
 
@@ -45,7 +45,7 @@ type Fields = Array
         })
     }
 
-type PlayerProfile = Contacts'
+type PlayerProfile = PlayerContactsOpen
     ( nickname :: String
     , age :: Maybe Int
     , location :: Maybe String

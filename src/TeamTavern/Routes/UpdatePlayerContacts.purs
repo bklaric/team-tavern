@@ -5,7 +5,7 @@ import Jarilo.Path (type (:>), End)
 import Jarilo.Query (NoQuery)
 import Jarilo.Route (Route)
 import Jarilo.Segment (Capture, Literal)
-import TeamTavern.Routes.Shared.Player (Contacts, ContactsError)
+import TeamTavern.Routes.Shared.PlayerContacts (PlayerContacts, PlayerContactsError)
 
 type UpdatePlayerContacts = Route
     Put
@@ -15,6 +15,6 @@ type UpdatePlayerContacts = Route
     :> End)
     NoQuery
 
-type RequestContent = Contacts
+type RequestContent = PlayerContacts
 
-type BadContent = Array ContactsError
+type BadContent = Array PlayerContactsError

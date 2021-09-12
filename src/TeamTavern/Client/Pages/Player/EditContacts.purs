@@ -17,14 +17,14 @@ import TeamTavern.Client.Components.Player.ContactsFormInput (contactsFormInput)
 import TeamTavern.Client.Components.Player.ContactsFormInput as ContactsFormInput
 import TeamTavern.Client.Script.Navigate (hardNavigate)
 import TeamTavern.Client.Script.Request (putNoContent)
-import TeamTavern.Routes.Shared.Player as Routes
+import TeamTavern.Routes.Shared.PlayerContacts as Routes
 import TeamTavern.Routes.UpdatePlayerContacts (RequestContent, BadContent)
 import TeamTavern.Routes.ViewPlayer (OkContentProfile)
 import Type (type ($))
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
-type Input fields = Routes.Contacts' (nickname :: String, profiles :: Array OkContentProfile | fields)
+type Input fields = Routes.PlayerContactsOpen (nickname :: String, profiles :: Array OkContentProfile | fields)
 
 data Action
     = UpdateContacts ContactsFormInput.Output

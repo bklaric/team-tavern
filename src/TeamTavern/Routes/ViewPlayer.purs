@@ -8,7 +8,7 @@ import Jarilo.Route (Route)
 import Jarilo.Segment (Capture, Literal)
 import TeamTavern.Routes.Shared.Organization (OrganizationN)
 import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
-import TeamTavern.Routes.Shared.Player (Contacts')
+import TeamTavern.Routes.Shared.PlayerContacts (PlayerContactsOpen)
 
 type ViewPlayer = Route
     Get
@@ -58,7 +58,7 @@ type OkContentTeam =
     , updatedSeconds :: Number
     }
 
-type OkContent = Contacts'
+type OkContent = PlayerContactsOpen
     ( nickname :: String
     , birthday :: Maybe String
     , age :: Maybe Int

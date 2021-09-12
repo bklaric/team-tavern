@@ -19,58 +19,25 @@ import Postgres.Query (Query(..))
 import Postgres.Result (Result, rows)
 import Simple.JSON.Async (read)
 import TeamTavern.Routes.Shared.Filters (Age, Filters, HasMicrophone, Language, Location, NewOrReturning, Time, Field)
-import TeamTavern.Routes.Shared.Organization (Organization, OrganizationNW)
+import TeamTavern.Routes.Shared.Organization (Organization)
 import TeamTavern.Routes.Shared.Organization as Organization
-import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
+import TeamTavern.Routes.Shared.Platform (Platform)
 import TeamTavern.Routes.Shared.Platform as Platform
 import TeamTavern.Routes.Shared.Size (Size)
 import TeamTavern.Routes.Shared.Size as Size
-import TeamTavern.Routes.Shared.Team (Contacts')
+import TeamTavern.Routes.Shared.TeamBase (TeamBaseRow)
+import TeamTavern.Routes.Shared.TeamContacts (TeamContactsRow)
+import TeamTavern.Routes.Shared.TeamDetails (TeamDetailsRow)
+import TeamTavern.Routes.Shared.TeamProfile (TeamProfileRow)
 import TeamTavern.Routes.Shared.Timezone (Timezone)
 import TeamTavern.Server.Infrastructure.Postgres (prepareJsonString, prepareString, teamAdjustedWeekdayFrom, teamAdjustedWeekdayTo, teamAdjustedWeekendFrom, teamAdjustedWeekendTo)
 import TeamTavern.Server.Profile.Routes (Handle, ProfilePage)
+import Type.Row (type (+))
 
 pageSize :: Int
 pageSize = 10
 
-type LoadProfilesResult = Contacts'
-    ( owner :: String
-    , handle :: String
-    , organization :: OrganizationNW
-    , ageFrom :: Maybe Int
-    , ageTo :: Maybe Int
-    , locations :: Array String
-    , languages :: Array String
-    , microphone :: Boolean
-    , weekdayOnline :: Maybe
-        { from :: String
-        , to :: String
-        }
-    , weekendOnline :: Maybe
-        { from :: String
-        , to :: String
-        }
-    , size :: Size
-    , allPlatforms :: Platforms
-    , selectedPlatforms :: Array Platform
-    , fieldValues :: Array
-        { field ::
-            { ilk :: Int
-            , key :: String
-            , label :: String
-            , icon :: String
-            }
-        , options :: Array
-            { key :: String
-            , label :: String
-            }
-        }
-    , newOrReturning :: Boolean
-    , about :: Array String
-    , ambitions :: Array String
-    , updated :: String
-    , updatedSeconds :: Number
-    )
+type LoadProfilesResult = Record (TeamBaseRow + TeamContactsRow + TeamDetailsRow + TeamProfileRow + ())
 
 type LoadProfilesError errors = Variant
     ( databaseError :: Error

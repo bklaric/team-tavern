@@ -20,7 +20,7 @@ import Data.Validated as Validated
 import Data.Validated.Label (Variants)
 import Data.Variant (Variant, inj)
 import TeamTavern.Routes.Shared.Platform (Platform(..))
-import TeamTavern.Routes.Shared.Team as Routes
+import TeamTavern.Routes.Shared.TeamContacts (TeamContactsError, TeamContacts)
 import TeamTavern.Server.Player.UpdatePlayer.ValidateDiscordTag (DiscordTag, validateDiscordTag')
 import TeamTavern.Server.Profile.Infrastructure.ValidateBattleTag (BattleTag, validateBattleTag)
 import TeamTavern.Server.Profile.Infrastructure.ValidateFriendCode (FriendCode, validateFriendCode)
@@ -42,9 +42,9 @@ type Contacts =
     , friendCode :: Maybe FriendCode
     }
 
-type ContactsErrors = NonEmptyList Routes.ContactsError
+type ContactsErrors = NonEmptyList TeamContactsError
 
-checkRequiredPlatforms :: Array Platform -> Routes.Contacts -> Validated ContactsErrors Unit
+checkRequiredPlatforms :: Array Platform -> TeamContacts -> Validated ContactsErrors Unit
 checkRequiredPlatforms requiredPlatforms contacts = let
     checkPlatform errors platform =
             case platform, contacts of
@@ -61,7 +61,7 @@ checkRequiredPlatforms requiredPlatforms contacts = let
     Cons head tail -> Validated.invalid $ NonEmptyList $ head :| tail
 
 validateContacts :: forall errors.
-    Array Platform -> Routes.Contacts -> Async (Variant (teamContacts :: ContactsErrors | errors)) Contacts
+    Array Platform -> TeamContacts -> Async (Variant (teamContacts :: ContactsErrors | errors)) Contacts
 validateContacts requiredPlatforms contacts @ { discordTag, discordServer, steamId, riotId, battleTag, psnId, gamerTag, friendCode } =
     { discordTag: _, discordServer: _, steamId: _, riotId: _, battleTag: _, psnId: _, gamerTag: _, friendCode: _ }
     <$ checkRequiredPlatforms requiredPlatforms contacts
@@ -77,5 +77,5 @@ validateContacts requiredPlatforms contacts @ { discordTag, discordServer, steam
     # label (SProxy :: _ "teamContacts")
 
 validateContactsV :: forall errors.
-    Array Platform -> Routes.Contacts -> AsyncV (Variants (teamContacts :: ContactsErrors | errors)) Contacts
+    Array Platform -> TeamContacts -> AsyncV (Variants (teamContacts :: ContactsErrors | errors)) Contacts
 validateContactsV requiredPlatforms = validateContacts requiredPlatforms >>> lmap Nel.singleton >>> AsyncV.fromAsync

@@ -498,9 +498,6 @@ handleAction SetUpAccount = do
             , team
                 { nameError = false
                 , websiteError = false
-                , discordTagError = false
-                , discordServerError = false
-                , contactError = false
                 }
             , playerProfile
                 { details

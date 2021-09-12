@@ -1,10 +1,11 @@
-module TeamTavern.Routes.Shared.Player where
+module TeamTavern.Routes.Shared.TeamContacts where
 
 import Data.Maybe (Maybe)
 import Data.Variant (Variant)
 
-type ContactsRow fields =
+type TeamContactsRow fields =
     ( discordTag :: Maybe String
+    , discordServer :: Maybe String
     , steamId :: Maybe String
     , riotId :: Maybe String
     , battleTag :: Maybe String
@@ -14,13 +15,14 @@ type ContactsRow fields =
     | fields
     )
 
-type Contacts' fields = Record (ContactsRow fields)
+type TeamContactsOpen fields = Record (TeamContactsRow fields)
 
-type Contacts = Contacts' ()
+type TeamContacts = TeamContactsOpen ()
 
-type ContactsError = Variant
+type TeamContactsError = Variant
     ( battleTag :: String
     , discordTag :: String
+    , discordServer :: String
     , friendCode :: String
     , gamerTag :: String
     , psnId :: String

@@ -9,9 +9,9 @@ import Jarilo.Route (Route)
 import Jarilo.Segment (Literal)
 import TeamTavern.Routes.Shared.Organization (OrganizationNW)
 import TeamTavern.Routes.Shared.Platform (Platform)
-import TeamTavern.Routes.Shared.Player (Contacts, ContactsError)
+import TeamTavern.Routes.Shared.PlayerContacts (PlayerContacts, PlayerContactsError)
 import TeamTavern.Routes.Shared.Size (Size)
-import TeamTavern.Routes.Shared.Team as TeamRoutes
+import TeamTavern.Routes.Shared.TeamContacts
 import Type (type ($))
 
 type Onboard = Route
@@ -78,8 +78,8 @@ type RequestContent =
     , gameHandle :: String
     , playerProfile :: Maybe PlayerProfileRequestContent
     , teamProfile :: Maybe TeamProfileRequestContent
-    , playerContacts :: Maybe Contacts
-    , teamContacts :: Maybe TeamRoutes.Contacts
+    , playerContacts :: Maybe PlayerContacts
+    , teamContacts :: Maybe TeamContacts
     }
 
 type OkContent = { teamHandle :: Maybe String }
@@ -99,6 +99,6 @@ type BadContent = Array $ Variant
         , about :: Array String
         , ambitions :: Array String
         )
-    , playerContacts :: Array ContactsError
-    , teamContacts :: Array TeamRoutes.ContactsError
+    , playerContacts :: Array PlayerContactsError
+    , teamContacts :: Array TeamContactsError
     )

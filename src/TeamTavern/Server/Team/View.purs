@@ -13,7 +13,7 @@ import Simple.JSON (writeJSON)
 import TeamTavern.Routes.Shared.Organization (OrganizationNW)
 import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
 import TeamTavern.Routes.Shared.Size (Size)
-import TeamTavern.Routes.Shared.Team (Contacts')
+import TeamTavern.Routes.Shared.TeamContacts (TeamContactsOpen)
 import TeamTavern.Server.Infrastructure.Error (LoadSingleError)
 import TeamTavern.Server.Infrastructure.Log (logLoadSingleError)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstNotFound, teamAdjustedWeekdayFrom, teamAdjustedWeekdayTo, teamAdjustedWeekendFrom, teamAdjustedWeekendTo)
@@ -46,7 +46,7 @@ type Profile =
     , updatedSeconds :: Number
     }
 
-type Team = Contacts'
+type Team = TeamContactsOpen
     ( owner :: String
     , handle :: String
     , organization :: OrganizationNW

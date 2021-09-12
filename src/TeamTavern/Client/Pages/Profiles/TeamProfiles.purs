@@ -33,11 +33,11 @@ import TeamTavern.Client.Snippets.PreventMouseDefault (preventMouseDefault)
 import TeamTavern.Routes.Shared.Organization (OrganizationNW(..), nameOrHandleNW)
 import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
 import TeamTavern.Routes.Shared.Size (Size(..))
-import TeamTavern.Routes.Shared.Team (Contacts')
+import TeamTavern.Routes.Shared.TeamContacts (TeamContactsOpen)
 import TeamTavern.Server.Profile.ViewTeamProfilesByGame.LoadProfiles (pageSize)
 import Web.UIEvent.MouseEvent (MouseEvent)
 
-type TeamProfile = Contacts'
+type TeamProfile = TeamContactsOpen
     ( owner :: String
     , handle :: String
     , organization :: OrganizationNW

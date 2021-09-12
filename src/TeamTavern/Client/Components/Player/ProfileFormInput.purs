@@ -21,7 +21,7 @@ import TeamTavern.Client.Components.Player.ProfileInputGroup (ChildSlots, Field,
 import TeamTavern.Client.Components.Player.ProfileInputGroup as Input
 import TeamTavern.Client.Pages.Profiles.TeamBadge (platformRadioBadges)
 import TeamTavern.Routes.Shared.Platform (Platform(..), Platforms)
-import TeamTavern.Routes.Shared.Player as Routes
+import TeamTavern.Routes.Shared.PlayerContacts (PlayerContacts, PlayerContactsOpen)
 
 type FieldValues = Array FieldValue
 
@@ -38,7 +38,7 @@ type Input =
         , aboutError :: Boolean
         , ambitionsError :: Boolean
         }
-    , contacts :: Routes.Contacts'
+    , contacts :: PlayerContactsOpen
         ( discordTagError :: Boolean
         , steamIdError :: Boolean
         , riotIdError :: Boolean
@@ -57,7 +57,7 @@ type Output =
         , ambitions :: String
         , newOrReturning :: Boolean
         }
-    , contacts :: Routes.Contacts
+    , contacts :: PlayerContacts
     }
 
 type State =
@@ -73,7 +73,7 @@ type State =
         , aboutError :: Boolean
         , ambitionsError :: Boolean
         }
-    , contacts :: Routes.Contacts'
+    , contacts :: PlayerContactsOpen
         ( discordTagError :: Boolean
         , steamIdError :: Boolean
         , riotIdError :: Boolean
