@@ -1,7 +1,7 @@
 module TeamTavern.Client.Snippets.SocialMediaUrls where
 
 discordUrl :: String
-discordUrl = "https://discord.gg/3z3697S"
+discordUrl = "https://discord.gg/XrkPGG87Zd"
 
 redditUrl :: String
 redditUrl = "https://www.reddit.com/r/teamtavern"
