@@ -20,6 +20,7 @@ import TeamTavern.Routes.Shared.Organization (Organization)
 import TeamTavern.Routes.Shared.Platform (Platform)
 import TeamTavern.Routes.Shared.Size (Size)
 import TeamTavern.Routes.Shared.Timezone (Timezone)
+import TeamTavern.Routes.Shared.ViewPlayerProfile (ViewPlayerProfile)
 import URI.Extra.QueryPairs (Key, QueryPairs(..), Value, keyToString, valueToString)
 
 type ProfilePage = Int
@@ -187,9 +188,10 @@ type ViewTeamProfilesByGame = Route
     :? Rest "fields")
 
 type ProfileRoutes
-    =    "addPlayerProfile"           := AddPlayerProfile
-    :<|> "addTeamProfile"             := AddTeamProfile
-    :<|> "updatePlayerProfile"        := UpdatePlayerProfile
-    :<|> "updateTeamProfile"          := UpdateTeamProfile
-    :<|> "viewPlayerProfilesByGame"   := ViewPlayerProfilesByGame
-    :<|> "viewTeamProfilesByGame"     := ViewTeamProfilesByGame
+    =    "addPlayerProfile"         := AddPlayerProfile
+    :<|> "addTeamProfile"           := AddTeamProfile
+    :<|> "updatePlayerProfile"      := UpdatePlayerProfile
+    :<|> "updateTeamProfile"        := UpdateTeamProfile
+    :<|> "viewPlayerProfilesByGame" := ViewPlayerProfilesByGame
+    :<|> "viewTeamProfilesByGame"   := ViewTeamProfilesByGame
+    :<|> "viewPlayerProfile"        := ViewPlayerProfile

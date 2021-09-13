@@ -50,6 +50,7 @@ import TeamTavern.Server.Profile.AddTeamProfile (addTeamProfile) as Profile
 import TeamTavern.Server.Profile.Routes (bundlePlayerFilters, bundleTeamFilters)
 import TeamTavern.Server.Profile.UpdatePlayerProfile (updatePlayerProfile) as Profile
 import TeamTavern.Server.Profile.UpdateTeamProfile (updateTeamProfile) as Profile
+import TeamTavern.Server.Profile.ViewPlayerProfile (viewPlayerProfile)
 import TeamTavern.Server.Profile.ViewPlayerProfilesByGame (viewPlayerProfilesByGame) as Profile
 import TeamTavern.Server.Profile.ViewTeamProfilesByGame (viewTeamProfilesByGame) as Profile
 import TeamTavern.Server.Routes (TeamTavernRoutes)
@@ -189,6 +190,8 @@ handleRequest deployment pool method url cookies body =
             Profile.viewPlayerProfilesByGame pool handle page timezone $ bundlePlayerFilters filters
         , viewTeamProfilesByGame: \filters @ { handle, page, timezone } ->
             Profile.viewTeamProfilesByGame pool handle page timezone $ bundleTeamFilters filters
+        , viewPlayerProfile:
+            viewPlayerProfile pool
         , onboard: const $
             Onboard.onboard pool cookies body
         , preboard: const $

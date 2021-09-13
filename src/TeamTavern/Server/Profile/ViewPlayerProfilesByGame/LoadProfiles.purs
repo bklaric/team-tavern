@@ -200,15 +200,11 @@ queryStringWithoutPagination handle timezone filters = Query $ """
                         case
                             when field_values.ilk = 1 then 'url'
                             when field_values.ilk = 2 then 'option'
-                            when field_values.ilk = 2 then 'options'
-                            when field_values.ilk = 3 then 'options'
                             when field_values.ilk = 3 then 'options'
                         end,
                         case
                             when field_values.ilk = 1 then field_values.url
                             when field_values.ilk = 2 then field_values.single
-                            when field_values.ilk = 2 then field_values.multi
-                            when field_values.ilk = 3 then field_values.multi
                             when field_values.ilk = 3 then field_values.multi
                         end
                     ) order by field_values.ordinal
