@@ -10,6 +10,10 @@
         margin-bottom: 0;
     }
 
+    > :not(:first-child) {
+        border-top: $border;
+    }
+
     @media screen and (min-width: 960px) {
         border: $border;
         border-radius: 4px;
@@ -47,12 +51,10 @@
 
 .card-section {
     padding: 21px;
-    border-top: $border;
 }
 
 .card-section-header {
     padding: 7px 21px;
-    border-top: 1px solid #ccc;
     display: flex;
     justify-content: space-between;
     align-items: center;
