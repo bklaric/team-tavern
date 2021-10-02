@@ -130,8 +130,11 @@ profileSection profile = let
             guard (full contactsDetails')
             [ detailColumnHeading4 "Contacts" ] <> contactsDetails'
             <>
-            guard (full teamDetails' || full profileDetails'')
-            [ detailColumnHeading4 "Details" ] <> teamDetails' <> profileDetails''
+            guard (full teamDetails')
+            [ detailColumnHeading4 "Team details" ] <> teamDetails'
+            <>
+            guard (full profileDetails'')
+            [ detailColumnHeading4 "Game details" ] <> profileDetails''
         ]
         <>
         guard (full about || full ambitions)

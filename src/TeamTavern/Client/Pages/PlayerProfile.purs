@@ -99,8 +99,11 @@ render (Loaded { profile, status }) = let
                     guard (full contactsDetails)
                     [ detailColumnHeading4 "Contacts" ] <> contactsDetails
                     <>
-                    guard (full playerDetails' || full profileDetails)
-                    [ detailColumnHeading4 "Details" ] <> playerDetails' <> profileDetails
+                    guard (full playerDetails')
+                    [ detailColumnHeading4 "Player details" ] <> playerDetails'
+                    <>
+                    guard (full profileDetails)
+                    [ detailColumnHeading4 "Game details"] <> profileDetails
                 ]
                 <>
                 guard (full about || full ambitions)
