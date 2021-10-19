@@ -1,4 +1,4 @@
-module TeamTavern.Client.Pages.PlayerProfile (Input, playerProfile) where
+module TeamTavern.Client.Pages.TeamProfile (Input, teamProfile) where
 
 import Prelude
 
@@ -16,29 +16,31 @@ import TeamTavern.Client.Components.Content (contentDescription, contentHeader, 
 import TeamTavern.Client.Components.Detail (detailColumn, detailColumnHeading4, detailColumns, textDetail)
 import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
-import TeamTavern.Client.Components.Player.Contacts (profileContacts)
-import TeamTavern.Client.Components.Player.PlayerDetails (playerDetails)
-import TeamTavern.Client.Components.Player.ProfileDetails (PlatformIdSlots, profileDetails')
+import TeamTavern.Client.Components.Player.ProfileDetails (PlatformIdSlots)
 import TeamTavern.Client.Components.Profile (profileHeader, profileHeading', profileSubheading)
-import TeamTavern.Client.Pages.Player.Status (Status(..), getStatus)
+import TeamTavern.Client.Components.Team.Contacts (profileContacts)
+import TeamTavern.Client.Components.Team.ProfileDetails (profileDetails')
+import TeamTavern.Client.Components.Team.TeamDetails (teamDetails)
 import TeamTavern.Client.Pages.Profiles.TeamBadge (platformBadge)
+import TeamTavern.Client.Pages.Team.Status (Status(..), getStatus)
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Request (get)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Shared.Slot (SimpleSlot)
 import TeamTavern.Client.Snippets.Class as HS
-import TeamTavern.Routes.ViewPlayerProfile as ViewPlayerProfile
+import TeamTavern.Routes.Shared.Organization (OrganizationNW(..))
+import TeamTavern.Routes.ViewTeamProfile as ViewTeamProfile
 
 type Input =
-    { nickname :: String
-    , handle :: String
+    { teamHandle :: String
+    , gameHandle :: String
     }
 
 data State
     = Empty Input
     | Loaded
-        { profile :: ViewPlayerProfile.OkContent
+        { profile :: ViewTeamProfile.OkContent
         , status :: Status
         }
     | NotFound
@@ -53,42 +55,47 @@ type Slots = PlatformIdSlots
     , games :: NavigationAnchor.Slot String
     )
 
+nameOrHandle :: forall fields. { handle :: String, organization :: OrganizationNW | fields } -> String
+nameOrHandle { organization: OrganizedNW { name } } = name
+nameOrHandle { handle } = handle
+
 render :: forall left. State -> H.ComponentHTML Action Slots (Async left)
 render (Empty _) = HH.div_ []
 render (Loaded { profile, status }) = let
     contactsDetails = profileContacts profile
-    playerDetails' = playerDetails profile
-    profileDetails = profileDetails' profile.platform profile.fieldValues profile.newOrReturning
+    teamDetails' = teamDetails profile
+    profileDetails = profileDetails' profile
     about = textDetail profile.about
     ambitions = textDetail profile.ambitions
     in
     HH.div_ $
     [ contentHeader $
         [ contentHeaderSection [ contentHeading'
-            [ contentHeadingFaIcon "fas fa-user", HH.text profile.nickname ] ]
+            [ contentHeadingFaIcon "fas fa-users", HH.text profile.handle ] ]
         ]
     , contentDescription
         case status of
-        SignedInSelf -> "View your " <> profile.title <> " profile."
-        _ -> "View " <> profile.title <> " profile of player " <> profile.nickname <> "."
+        SignedInOwner -> "View your teams " <> profile.title <> " profile."
+        _ -> "View " <> profile.title <> " profile of team " <> nameOrHandle profile <> "."
     ]
     <> descriptionLeaderboards
     <>
     [ card
         [ cardSection $
             [ profileHeader $
-                if full profile.platforms.tail
+                if full profile.allPlatforms.tail
                 then
                 [ HH.div [ HS.class_ "team-profile-heading-container" ] $
-                    [ profileHeading' (SProxy :: SProxy "games") profile.handle
-                        ("/games/" <> profile.handle <> "/players") profile.title
+                    [ profileHeading' (SProxy :: SProxy "games") profile.gameHandle
+                        ("/games/" <> profile.handle <> "/teams") profile.title
                     ]
-                    <> [ platformBadge profile.platform, profileSubheading $ "Updated " <> lastUpdated profile.updatedSeconds ]
+                    <> (platformBadge <$> profile.selectedPlatforms)
+                    <> [ profileSubheading $ "Updated " <> lastUpdated profile.updatedSeconds ]
                 ]
                 else
                 [ HH.div_ $
-                    [ profileHeading' (SProxy :: SProxy "games") profile.handle
-                        ("/games/" <> profile.handle <> "/players") profile.title
+                    [ profileHeading' (SProxy :: SProxy "games") profile.gameHandle
+                        ("/games/" <> profile.handle <> "/teams") profile.title
                     ]
                     <> [ divider, profileSubheading $ "Updated " <> lastUpdated profile.updatedSeconds ]
                 ]
@@ -99,8 +106,8 @@ render (Loaded { profile, status }) = let
                     guard (full contactsDetails)
                     [ detailColumnHeading4 "Contacts" ] <> contactsDetails
                     <>
-                    guard (full playerDetails')
-                    [ detailColumnHeading4 "Player details" ] <> playerDetails'
+                    guard (full teamDetails')
+                    [ detailColumnHeading4 "Team details" ] <> teamDetails'
                     <>
                     guard (full profileDetails)
                     [ detailColumnHeading4 "Game details"] <> profileDetails
@@ -116,14 +123,14 @@ render (Loaded { profile, status }) = let
         ]
     ]
     <> stickyLeaderboards
-render NotFound = HH.p_ [ HH.text "Player could not be found." ]
+render NotFound = HH.p_ [ HH.text "Team could not be found." ]
 render Error = HH.p_ [ HH.text
-    "There has been an error loading the player. Please try again later." ]
+    "There has been an error loading the team. Please try again later." ]
 
-loadPlayerProfile :: forall left. Input -> Async left (Maybe ViewPlayerProfile.OkContent)
-loadPlayerProfile { nickname, handle } = do
+loadTeamProfile :: forall left. Input -> Async left (Maybe ViewTeamProfile.OkContent)
+loadTeamProfile { teamHandle, gameHandle } = do
     timezone <- getClientTimezone
-    get ("/api/players/" <> nickname <> "/profiles/" <> handle <> "?timezone=" <> timezone)
+    get ("/api/teams/" <> teamHandle <> "/profiles/" <> gameHandle <> "?timezone=" <> timezone)
 
 handleAction :: forall slots output left.
     Action -> H.HalogenM State Action slots output (Async left) Unit
@@ -133,14 +140,14 @@ handleAction Initialize = do
         Empty input -> handleAction $ Receive input
         _ -> pure unit
 handleAction (Receive input) = do
-    playerProfileMaybe <- H.lift $ loadPlayerProfile input
-    case playerProfileMaybe of
-        Just playerProfile' @ { nickname, title } -> do
-            status <- getStatus nickname
-            H.put $ Loaded { profile: playerProfile', status }
-            setMeta (nickname <> " - " <> title <> " | TeamTavern")
-                ( "View " <> title <> " profile of player "
-                <> nickname <> " on TeamTavern."
+    teamProfileMaybe <- H.lift $ loadTeamProfile input
+    case teamProfileMaybe of
+        Just teamProfile' @ { handle, owner, title } -> do
+            status <- getStatus owner
+            H.put $ Loaded { profile: teamProfile', status }
+            setMeta (nameOrHandle teamProfile' <> " - " <> title <> " | TeamTavern")
+                ( "View " <> title <> " profile of team "
+                <> nameOrHandle teamProfile' <> " on TeamTavern."
                 )
         _ -> pure unit
 
@@ -155,6 +162,6 @@ component = H.mkComponent
         }
     }
 
-playerProfile :: forall query children left.
-    Input -> HH.ComponentHTML query (playerProfile :: SimpleSlot | children) (Async left)
-playerProfile input = HH.slot (SProxy :: SProxy "playerProfile") unit component input absurd
+teamProfile :: forall query children left.
+    Input -> HH.ComponentHTML query (teamProfile :: SimpleSlot | children) (Async left)
+teamProfile input = HH.slot (SProxy :: SProxy "teamProfile") unit component input absurd

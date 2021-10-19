@@ -46,6 +46,8 @@ import TeamTavern.Client.Pages.SignIn (signIn)
 import TeamTavern.Client.Pages.SignIn as SignIn
 import TeamTavern.Client.Pages.Team (team)
 import TeamTavern.Client.Pages.Team as Team
+import TeamTavern.Client.Pages.TeamProfile (teamProfile)
+import TeamTavern.Client.Pages.TeamProfile as TeamProfile
 import TeamTavern.Client.Script.Cookie (getPlayerNickname, hasPlayerIdCookie)
 import TeamTavern.Client.Script.Navigate (navigateReplace_)
 import TeamTavern.Client.Script.ReloadAds (reloadAds)
@@ -67,6 +69,7 @@ data State
     | GameTabs GameTabs.Input
     | Player { nickname :: String }
     | PlayerProfile PlayerProfile.Input
+    | TeamProfile TeamProfile.Input
     | Team { handle :: String }
     | Register
     | SignIn
@@ -87,6 +90,7 @@ type ChildSlots = Footer.ChildSlots
     , player :: Player.Slot
     , playerProfile :: SimpleSlot
     , team :: Team.Slot
+    , teamProfile :: SimpleSlot
     , onboarding :: Onboarding.Slot
     , preboarding :: Preboarding.Slot
     , signIn :: SignIn.Slot Unit
@@ -122,6 +126,7 @@ render (Game input) = HH.div_ [ topBar $ Just input.handle, game input, footer ]
 render (GameTabs input) = wideTopBarWithContent (Just input.handle) [ GameTabs.gameTabs input ]
 render (Player input) = wideTopBarWithContent Nothing [ player input ]
 render (PlayerProfile input) = topBarWithContent Nothing [ playerProfile input ]
+render (TeamProfile input) = topBarWithContent Nothing [ teamProfile input ]
 render (Team input) = wideTopBarWithContent Nothing [ team input ]
 render Register = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ register ] ]
 render SignIn = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ signIn ] ]
@@ -239,6 +244,8 @@ handleAction (Init state route) = do
             just $ Player { nickname }
         ["", "players", nickname, "profiles", handle] ->
             just $ PlayerProfile { nickname, handle }
+        ["", "teams", teamHandle, "profiles", gameHandle] ->
+            just $ TeamProfile { teamHandle, gameHandle }
         ["", "network-n-test"] ->
             just $ NetworkN
         ["", "network-n-test2"] ->
