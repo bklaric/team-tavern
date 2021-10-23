@@ -1,9 +1,10 @@
-module TeamTavern.Client.Pages.Player.PlayerProfileOptions where
+module TeamTavern.Client.Pages.Player.PlayerProfileOptions (playerProfileOptions) where
 
 import Prelude
 
 import Async (Async, attempt, fromEffect)
 import Data.Maybe (Maybe(..))
+import Data.Monoid (guard)
 import Data.Symbol (SProxy(..))
 import Data.Tuple (Tuple(..))
 import Effect (Effect)
@@ -13,6 +14,7 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.Hooks as Hooks
 import TeamTavern.Client.Components.Popover (popover, popoverItem, togglePopover, usePopover)
+import TeamTavern.Client.Pages.Player.Status (Status(..))
 import TeamTavern.Client.Script.Clipboard (writeTextAsync)
 import TeamTavern.Client.Shared.Slot (QuerylessSlot)
 import TeamTavern.Client.Snippets.Class as HS
@@ -20,7 +22,7 @@ import Web.HTML (window)
 import Web.HTML.Location (origin)
 import Web.HTML.Window (location, open)
 
-type Input = { nickname :: String, handle :: String }
+type Input = { status :: Status, nickname :: String, handle :: String }
 
 profileUrl :: Input -> Effect String
 profileUrl { nickname, handle } = do
@@ -28,7 +30,7 @@ profileUrl { nickname, handle } = do
     pure $ origin' <> "/players/" <> nickname <> "/profiles/" <> handle
 
 component :: forall query left. H.Component HH.HTML query Input Unit (Async left)
-component = Hooks.component $ \{ outputToken } input @ { nickname, handle } -> Hooks.do
+component = Hooks.component $ \{ outputToken } input -> Hooks.do
     (Tuple shown shownId) <- usePopover
     let openProfileInNewTab = void $ fromEffect do
             profileUrl' <- profileUrl input
@@ -39,22 +41,25 @@ component = Hooks.component $ \{ outputToken } input @ { nickname, handle } -> H
     Hooks.pure $
         popover
         shown
-        ([ HH.i
+        [ HH.i
             [ HS.class_ "fas fa-ellipsis-h options-button-icon"
             , HE.onClick (Just <<< togglePopover shownId)
             ]
             []
-        ])
+        ]
+        (guard (input.status == SignedInSelf)
         [ popoverItem
             (const $ Hooks.raise outputToken unit)
             [ HH.text "Edit profile" ]
-        , popoverItem
+        ]
+        <>
+        [ popoverItem
             (const $ lift openProfileInNewTab)
             [ HH.text "Open profile in new tab" ]
         , popoverItem
             (const $ lift copyProfileAddress)
             [ HH.text "Copy profile address" ]
-        ]
+        ])
 
 playerProfileOptions :: forall action slots left.
     Input -> action -> HH.ComponentHTML action (playerProfileOptions :: QuerylessSlot Unit String | slots) (Async left)

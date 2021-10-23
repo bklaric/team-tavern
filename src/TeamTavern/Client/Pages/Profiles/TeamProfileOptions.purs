@@ -1,4 +1,4 @@
-module TeamTavern.Client.Pages.Profiles.PlayerProfileOptions (playerProfileOptions) where
+module TeamTavern.Client.Pages.Profiles.TeamProfileOptions (teamProfileOptions) where
 
 import Prelude
 
@@ -20,12 +20,12 @@ import Web.HTML (window)
 import Web.HTML.Location (origin)
 import Web.HTML.Window (location, open)
 
-type Input = { nickname :: String, handle :: String }
+type Input = { teamHandle :: String, gameHandle :: String }
 
 profileUrl :: Input -> Effect String
-profileUrl { nickname, handle } = do
+profileUrl { teamHandle, gameHandle } = do
     origin' <- window >>= location >>= origin
-    pure $ origin' <> "/players/" <> nickname <> "/profiles/" <> handle
+    pure $ origin' <> "/teams/" <> teamHandle <> "/profiles/" <> gameHandle
 
 component :: forall query output left. H.Component HH.HTML query Input output (Async left)
 component = Hooks.component $ \_ input -> Hooks.do
@@ -53,7 +53,7 @@ component = Hooks.component $ \_ input -> Hooks.do
             [ HH.text "Copy profile address" ]
         ]
 
-playerProfileOptions :: forall action slots left.
-    Input -> HH.ComponentHTML action (playerProfileOptions :: StringSlot | slots) (Async left)
-playerProfileOptions input =
-    HH.slot (SProxy :: _ "playerProfileOptions") input.nickname component input absurd
+teamProfileOptions :: forall action slots left.
+    Input -> HH.ComponentHTML action (teamProfileOptions :: StringSlot | slots) (Async left)
+teamProfileOptions input =
+    HH.slot (SProxy :: _ "teamProfileOptions") input.teamHandle component input absurd

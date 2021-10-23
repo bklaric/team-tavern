@@ -244,7 +244,8 @@ loadTab { game: game @ { handle, shortTitle, fields }, tab: GameHeader.Teams } =
         Just teamProfiles -> do
             playerInfo <- getPlayerInfo
             H.put $ Game game playerInfo filters $ Teams
-                { profiles: teamProfiles.profiles
+                { handle: game.handle
+                , profiles: teamProfiles.profiles
                 , profileCount: teamProfiles.count
                 , page
                 , playerInfo

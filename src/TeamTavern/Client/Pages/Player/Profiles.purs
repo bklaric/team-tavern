@@ -74,11 +74,7 @@ profiles player @ { profiles: profiles' } status showEditProfileModal =
                 <> [ divider, profileSubheading $ "Updated " <> lastUpdated profile.updatedSeconds ]
             ])
             <>
-            guard (status == SignedInSelf)
-            [
-                playerProfileOptions { nickname: player.nickname, handle: profile.handle } $ showEditProfileModal profile
-                -- regularButton "fas fa-user-edit" "Edit profile" $ showEditProfileModal profile
-            ]
+            [ playerProfileOptions { status, nickname: player.nickname, handle: profile.handle } $ showEditProfileModal profile ]
         ]
         <>
         guard (full profileDetails' || full about || full ambitions)

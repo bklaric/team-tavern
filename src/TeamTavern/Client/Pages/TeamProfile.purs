@@ -15,6 +15,7 @@ import TeamTavern.Client.Components.Card (card, cardSection)
 import TeamTavern.Client.Components.Content (contentDescription, contentHeader, contentHeaderSection, contentHeading', contentHeadingFaIcon)
 import TeamTavern.Client.Components.Detail (detailColumn, detailColumnHeading4, detailColumns, textDetail)
 import TeamTavern.Client.Components.Divider (divider)
+import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Components.Player.ProfileDetails (PlatformIdSlots)
 import TeamTavern.Client.Components.Profile (profileHeader, profileHeading', profileSubheading)
@@ -53,6 +54,7 @@ data Action
 type Slots = PlatformIdSlots
     ( discordTag :: Copyable.Slot String
     , games :: NavigationAnchor.Slot String
+    , team :: SimpleSlot
     )
 
 nameOrHandle :: forall fields. { handle :: String, organization :: OrganizationNW | fields } -> String
@@ -70,8 +72,17 @@ render (Loaded { profile, status }) = let
     in
     HH.div_ $
     [ contentHeader $
-        [ contentHeaderSection [ contentHeading'
-            [ contentHeadingFaIcon "fas fa-users", HH.text profile.handle ] ]
+        [ contentHeaderSection
+            [ contentHeading'
+                [ navigationAnchor (SProxy :: _ "team")
+                    { path: "/teams/" <> profile.handle
+                    , content: HH.span_
+                        [ contentHeadingFaIcon "fas fa-users"
+                        , HH.text profile.handle
+                        ]
+                    }
+                ]
+            ]
         ]
     , contentDescription
         case status of
@@ -87,7 +98,7 @@ render (Loaded { profile, status }) = let
                 then
                 [ HH.div [ HS.class_ "team-profile-heading-container" ] $
                     [ profileHeading' (SProxy :: SProxy "games") profile.gameHandle
-                        ("/games/" <> profile.handle <> "/teams") profile.title
+                        ("/games/" <> profile.gameHandle <> "/teams") profile.title
                     ]
                     <> (platformBadge <$> profile.selectedPlatforms)
                     <> [ profileSubheading $ "Updated " <> lastUpdated profile.updatedSeconds ]
@@ -95,7 +106,7 @@ render (Loaded { profile, status }) = let
                 else
                 [ HH.div_ $
                     [ profileHeading' (SProxy :: SProxy "games") profile.gameHandle
-                        ("/games/" <> profile.handle <> "/teams") profile.title
+                        ("/games/" <> profile.gameHandle <> "/teams") profile.title
                     ]
                     <> [ divider, profileSubheading $ "Updated " <> lastUpdated profile.updatedSeconds ]
                 ]

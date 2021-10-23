@@ -25,9 +25,11 @@ import TeamTavern.Client.Components.Profile (profileHeader, profileHeading, prof
 import TeamTavern.Client.Components.Team.Contacts (profileContacts)
 import TeamTavern.Client.Components.Team.ProfileDetails (profileDetails')
 import TeamTavern.Client.Components.Team.TeamDetails (teamDetails)
+import TeamTavern.Client.Pages.Profiles.TeamProfileOptions (teamProfileOptions)
 import TeamTavern.Client.Pages.Profiles.TeamBadge (communityBadge, informalBadge, organizedBadge, partyBadge, platformBadge)
 import TeamTavern.Client.Script.Cookie (PlayerInfo)
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
+import TeamTavern.Client.Shared.Slot (StringSlot)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Client.Snippets.PreventMouseDefault (preventMouseDefault)
 import TeamTavern.Routes.Shared.Organization (OrganizationNW(..), nameOrHandleNW)
@@ -77,7 +79,8 @@ type TeamProfile = TeamContactsOpen
     )
 
 type Input =
-    { profiles :: Array TeamProfile
+    { handle :: String
+    , profiles :: Array TeamProfile
     , profileCount :: Int
     , playerInfo :: Maybe PlayerInfo
     , page :: Int
@@ -97,11 +100,12 @@ type Slot = H.Slot (Const Void) Output Unit
 type ChildSlots = PlatformIdSlots
     ( teams :: Anchor.Slot String
     , discordTag :: Copyable.Slot String
+    , teamProfileOptions :: StringSlot
     )
 
 profileSection :: forall action left.
-    TeamProfile -> HH.ComponentHTML action ChildSlots (Async left)
-profileSection profile = let
+    String -> TeamProfile -> HH.ComponentHTML action ChildSlots (Async left)
+profileSection handle profile = let
     teamDetails' = teamDetails profile
     profileDetails'' = profileDetails' profile
     contactsDetails' = profileContacts profile
@@ -109,7 +113,7 @@ profileSection profile = let
     ambitions = textDetail profile.ambitions
     in
     cardSection $
-    [ profileHeader
+    [ profileHeader $
         [ HH.div [ HS.class_ "team-profile-heading-container" ] $
             [ profileHeading (SProxy :: SProxy "teams") profile.handle
                 ("/teams/" <> profile.handle) (nameOrHandleNW profile.handle profile.organization)
@@ -123,6 +127,8 @@ profileSection profile = let
             <> guard (full profile.allPlatforms.tail) (profile.selectedPlatforms # sort <#> platformBadge)
             <> [ profileSubheading $ "Updated " <> lastUpdated profile.updatedSeconds ]
         ]
+        <>
+        [ teamProfileOptions { teamHandle: profile.handle, gameHandle: handle } ]
     ]
     <>
     [ detailColumns $
@@ -146,7 +152,7 @@ profileSection profile = let
     ]
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
-render { profiles, profileCount, playerInfo, page } =
+render { handle, profiles, profileCount, playerInfo, page } =
     HH.div_ $ [
     HH.div [ HP.id_ "profiles-card", HS.class_ "card" ] $
     [ cardHeader $
@@ -174,7 +180,7 @@ render { profiles, profileCount, playerInfo, page } =
     <>
     if Array.null profiles
     then [ cardSection [ HH.p_ [ HH.text "No profiles satisfy specified filters." ] ] ]
-    else ( profiles <#> profileSection ) <> [ pagination page profileCount ChangePage ]
+    else ( profiles <#> profileSection handle ) <> [ pagination page profileCount ChangePage ]
     ]
 
 handleAction :: forall left. Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
