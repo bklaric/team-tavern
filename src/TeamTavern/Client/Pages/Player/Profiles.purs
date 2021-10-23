@@ -8,7 +8,6 @@ import Data.Array.Extra (full)
 import Data.Monoid (guard)
 import Data.Symbol (SProxy(..))
 import Halogen.HTML as HH
-import TeamTavern.Client.Components.Button (regularButton)
 import TeamTavern.Client.Components.Card (card, cardHeader, cardHeading, cardSection)
 import TeamTavern.Client.Components.Detail (detailColumn, detailColumnHeading4, detailColumns, textDetail)
 import TeamTavern.Client.Components.Divider (divider)
@@ -18,15 +17,18 @@ import TeamTavern.Client.Components.Player.ProfileDetails (PlatformIdSlots, prof
 import TeamTavern.Client.Components.Profile (profileHeader, profileHeading', profileSubheading)
 import TeamTavern.Client.Pages.Player.CreateProfileButton (createProfileButton)
 import TeamTavern.Client.Pages.Player.CreateProfileButton as CreateProfileButton
+import TeamTavern.Client.Pages.Player.PlayerProfileOptions (playerProfileOptions)
 import TeamTavern.Client.Pages.Player.Status (Status(..))
 import TeamTavern.Client.Pages.Profiles.TeamBadge (platformBadge)
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
+import TeamTavern.Client.Shared.Slot (QuerylessSlot)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.ViewPlayer as ViewPlayer
 
 type ChildSlots children = PlatformIdSlots
     ( games :: NavigationAnchor.Slot String
     , createProfile :: CreateProfileButton.Slot
+    , playerProfileOptions :: QuerylessSlot Unit String
     | children)
 
 profiles
@@ -73,7 +75,10 @@ profiles player @ { profiles: profiles' } status showEditProfileModal =
             ])
             <>
             guard (status == SignedInSelf)
-            [ regularButton "fas fa-user-edit" "Edit profile" $ showEditProfileModal profile ]
+            [
+                playerProfileOptions { nickname: player.nickname, handle: profile.handle } $ showEditProfileModal profile
+                -- regularButton "fas fa-user-edit" "Edit profile" $ showEditProfileModal profile
+            ]
         ]
         <>
         guard (full profileDetails' || full about || full ambitions)

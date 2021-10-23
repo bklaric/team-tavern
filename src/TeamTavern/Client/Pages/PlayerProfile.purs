@@ -15,6 +15,7 @@ import TeamTavern.Client.Components.Card (card, cardSection)
 import TeamTavern.Client.Components.Content (contentDescription, contentHeader, contentHeaderSection, contentHeading', contentHeadingFaIcon)
 import TeamTavern.Client.Components.Detail (detailColumn, detailColumnHeading4, detailColumns, textDetail)
 import TeamTavern.Client.Components.Divider (divider)
+import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Components.Player.Contacts (profileContacts)
 import TeamTavern.Client.Components.Player.PlayerDetails (playerDetails)
@@ -51,6 +52,7 @@ data Action
 type Slots = PlatformIdSlots
     ( discordTag :: Copyable.Slot String
     , games :: NavigationAnchor.Slot String
+    , player :: SimpleSlot
     )
 
 render :: forall left. State -> H.ComponentHTML Action Slots (Async left)
@@ -64,8 +66,17 @@ render (Loaded { profile, status }) = let
     in
     HH.div_ $
     [ contentHeader $
-        [ contentHeaderSection [ contentHeading'
-            [ contentHeadingFaIcon "fas fa-user", HH.text profile.nickname ] ]
+        [ contentHeaderSection
+            [ contentHeading'
+                [ navigationAnchor (SProxy :: _ "player")
+                    { path: "/players/" <> profile.nickname
+                    , content: HH.span_
+                        [ contentHeadingFaIcon "fas fa-user"
+                        , HH.text profile.nickname
+                        ]
+                    }
+                ]
+            ]
         ]
     , contentDescription
         case status of

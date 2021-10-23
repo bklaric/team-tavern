@@ -48,5 +48,5 @@ component = Hooks.component $ \_ nickname -> Hooks.do
         ]
 
 playerOptions :: forall action slots left.
-    Input -> HH.ComponentHTML action (playerOptions :: Slot | slots)(Async left)
+    Input -> HH.ComponentHTML action (playerOptions :: Slot | slots) (Async left)
 playerOptions nickname = HH.slot (SProxy :: _ "playerOptions") unit component nickname absurd
