@@ -27,3 +27,11 @@ type ChangeSingleError errors = Variant
     )
 
 type ClientError errors = Variant (client :: Array String | errors)
+
+type CommonError = Variant
+    ( client :: Array String
+    , internal :: Array String
+    , notAuthenticated :: Array String
+    , notAuthorized :: Array String
+    , notFound :: Array String
+    )

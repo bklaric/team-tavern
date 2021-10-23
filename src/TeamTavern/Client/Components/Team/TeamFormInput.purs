@@ -38,9 +38,6 @@ type Input =
     , weekendTo :: Maybe String
     , nameError :: Boolean
     , websiteError :: Boolean
-    , discordTagError :: Boolean
-    , discordServerError :: Boolean
-    , contactError :: Boolean
     }
 
 type Output =
@@ -213,9 +210,6 @@ emptyInput =
     , weekendTo: Nothing
     , nameError: false
     , websiteError: false
-    , discordTagError: false
-    , discordServerError: false
-    , contactError: false
     }
 
 teamFormInput

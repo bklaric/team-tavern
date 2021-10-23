@@ -7,7 +7,7 @@ import Data.Array as Array
 import Data.Variant (SProxy(..), Variant, inj, match)
 import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, noContent_, unauthorized__)
 import Simple.JSON (writeJSON)
-import TeamTavern.Routes.Shared.Team (ContactsError)
+import TeamTavern.Routes.Shared.TeamContacts (TeamContactsError)
 import TeamTavern.Server.Profile.AddTeamProfile.LogError (AddProfileError)
 import Type (type ($))
 
@@ -17,7 +17,7 @@ type BadContent = Array $ Variant
         , about :: Array String
         , ambitions :: Array String
         )
-    , contacts :: Array ContactsError
+    , contacts :: Array TeamContactsError
     )
 
 errorResponse :: AddProfileError -> Response

@@ -35,6 +35,7 @@ import TeamTavern.Client.Pages.Player.Teams (teams)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Request (get)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
+import TeamTavern.Client.Shared.Slot (QuerylessSlot)
 import TeamTavern.Routes.ViewPlayer as ViewPlayer
 
 type Input = { nickname :: String }
@@ -78,6 +79,7 @@ type ChildSlots = PlatformIdSlots
     , editProfile :: EditProfile.Slot
     , createTeam :: CreateTeam.Slot
     , playerOptions :: PlayerOptions.Slot
+    , playerProfileOptions :: QuerylessSlot Unit String
     )
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)

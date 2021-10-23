@@ -27,8 +27,6 @@ import Web.Event.Internal.Types (Event)
 type Input fields =
     { handle :: String
     , organization :: OrganizationNW
-    , discordTag :: Maybe String
-    , discordServer :: Maybe String
     , ageFrom :: Maybe Int
     , ageTo :: Maybe Int
     , locations :: Array String
@@ -112,9 +110,6 @@ handleAction (SendRequest event) = do
         , details
             { nameError = false
             , websiteError = false
-            , discordTagError = false
-            , discordServerError = false
-            , contactError = false
             }
         }
     response <- H.lift $ sendRequest currentState

@@ -182,7 +182,7 @@ render state =
             [ HS.class_ "card-section-header"
             , HE.onClick $ const $ Just ToggleProfileFiltersVisibility
             ]
-            [ cardSectionHeading "Profile details"
+            [ cardSectionHeading "Game details"
             , headerCaret "filters-section-title-caret" state.profileFiltersVisible
             ]
         ]

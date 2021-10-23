@@ -227,7 +227,8 @@ loadTab { game: game @ { handle, shortTitle, fields }, tab: GameHeader.Players }
         Just playerProfiles -> do
             playerInfo <- getPlayerInfo
             H.put $ Game game playerInfo filters $ Players
-                { profiles: playerProfiles.profiles
+                { handle: game.handle
+                , profiles: playerProfiles.profiles
                 , profileCount: playerProfiles.count
                 , page
                 , playerInfo
@@ -243,7 +244,8 @@ loadTab { game: game @ { handle, shortTitle, fields }, tab: GameHeader.Teams } =
         Just teamProfiles -> do
             playerInfo <- getPlayerInfo
             H.put $ Game game playerInfo filters $ Teams
-                { profiles: teamProfiles.profiles
+                { handle: game.handle
+                , profiles: teamProfiles.profiles
                 , profileCount: teamProfiles.count
                 , page
                 , playerInfo

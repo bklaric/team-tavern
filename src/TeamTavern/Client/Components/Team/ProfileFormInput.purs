@@ -30,7 +30,7 @@ import TeamTavern.Client.Pages.Profiles.TeamBadge (platformCheckboxBadges, sizeR
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Shared.Platform (Platform(..), Platforms)
 import TeamTavern.Routes.Shared.Size (Size(..))
-import TeamTavern.Routes.Shared.Team (Contacts', Contacts)
+import TeamTavern.Routes.Shared.TeamContacts (TeamContactsOpen, TeamContacts)
 
 type FieldValues = Array
     { fieldKey :: String
@@ -51,7 +51,7 @@ type Input =
         , aboutError :: Boolean
         , ambitionsError :: Boolean
         }
-    , contacts :: Contacts'
+    , contacts :: TeamContactsOpen
         ( discordTagError :: Boolean
         , discordServerError :: Boolean
         , steamIdError :: Boolean
@@ -72,7 +72,7 @@ type Output =
         , about :: String
         , ambitions :: String
         }
-    , contacts :: Contacts
+    , contacts :: TeamContacts
     }
 
 type State =
@@ -89,7 +89,7 @@ type State =
         , aboutError :: Boolean
         , ambitionsError :: Boolean
         }
-    , contacts :: Contacts'
+    , contacts :: TeamContactsOpen
         ( discordTagError :: Boolean
         , discordServerError :: Boolean
         , steamIdError :: Boolean

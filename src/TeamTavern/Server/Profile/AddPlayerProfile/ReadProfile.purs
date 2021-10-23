@@ -4,7 +4,7 @@ import Async (Async)
 import Data.Maybe (Maybe)
 import Perun.Request.Body (Body)
 import TeamTavern.Routes.Shared.Platform (Platform)
-import TeamTavern.Routes.Shared.Player (Contacts)
+import TeamTavern.Routes.Shared.PlayerContacts (PlayerContacts)
 import TeamTavern.Server.Infrastructure.Error (ClientError)
 import TeamTavern.Server.Infrastructure.ReadJsonBody (readJsonBody)
 
@@ -25,7 +25,7 @@ type Profile =
 
 type RequestContent =
     { details :: Profile
-    , contacts :: Contacts
+    , contacts :: PlayerContacts
     }
 
 readProfile :: forall errors. Body -> Async (ClientError errors) RequestContent

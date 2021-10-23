@@ -92,9 +92,6 @@ handleAction (SendRequest event) = do
                 , details = currentState.details
                     { nameError = false
                     , websiteError = false
-                    , discordTagError = false
-                    , discordServerError = false
-                    , contactError = false
                     }
                 }
             )
@@ -105,9 +102,6 @@ handleAction (SendRequest event) = do
             , details = currentState.details
                 { nameError = false
                 , websiteError = false
-                , discordTagError = false
-                , discordServerError = false
-                , contactError = false
                 }
             }
 

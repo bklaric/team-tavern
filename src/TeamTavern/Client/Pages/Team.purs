@@ -33,6 +33,7 @@ import TeamTavern.Client.Pages.Team.Status (Status(..), getStatus)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Request (get)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
+import TeamTavern.Client.Shared.Slot (QuerylessSlot)
 import TeamTavern.Routes.Shared.Organization (OrganizationNW(..), nameOrHandleNW)
 import TeamTavern.Server.Team.View (Team, Profile)
 
@@ -71,6 +72,7 @@ type ChildSlots = PlatformIdSlots
     , editTeam :: EditTeam.Slot
     , editProfile :: EditProfile.Slot
     , viewTeamOwner :: Anchor.Slot Unit
+    , teamProfileOptions :: QuerylessSlot Unit String
     )
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)

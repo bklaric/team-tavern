@@ -13,7 +13,7 @@ import TeamTavern.Client.Components.Anchor (textAnchor)
 import TeamTavern.Client.Components.Detail (detail', discordTagDetail, fieldDetail')
 import TeamTavern.Client.Snippets.Brands (detailBattleNetSvg, detailPlayStationSvg, detailRiotSvg, detailSteamSvg, detailSwitchSvg, detailXboxSvg)
 import TeamTavern.Routes.Shared.Platform (Platform(..))
-import TeamTavern.Routes.Shared.Player (Contacts')
+import TeamTavern.Routes.Shared.PlayerContacts (PlayerContactsOpen)
 import Type (type ($))
 
 type ContactsSlots slots =
@@ -68,7 +68,7 @@ friendCodeDetail friendCode' = friendCode' <#> \friendCode ->
     [ copyable (SProxy :: _ "friendCode") friendCode friendCode ]
 
 contacts :: forall fields action slots left.
-    Contacts' (nickname :: String | fields) -> Array (HH.ComponentHTML action (ContactsSlots slots) (Async left))
+    PlayerContactsOpen (nickname :: String | fields) -> Array (HH.ComponentHTML action (ContactsSlots slots) (Async left))
 contacts conts =
     Array.catMaybes
     [ discordTagDetail conts.nickname conts.discordTag
@@ -82,7 +82,7 @@ contacts conts =
     ]
 
 profileContacts :: forall fields action slots left.
-    Contacts' (nickname :: String, platform :: Platform | fields) -> Array (HH.ComponentHTML action (ContactsSlots slots) (Async left))
+    PlayerContactsOpen (nickname :: String, platform :: Platform | fields) -> Array (HH.ComponentHTML action (ContactsSlots slots) (Async left))
 profileContacts conts @ { platform } =
     contacts conts
     { steamId = if platform == Steam then conts.steamId else Nothing

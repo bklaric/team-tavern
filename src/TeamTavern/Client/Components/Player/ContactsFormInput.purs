@@ -15,9 +15,9 @@ import TeamTavern.Client.Components.Input (inputGroupsHeading, responsiveInputGr
 import TeamTavern.Client.Components.Player.PlayerInputGroup (discordTagInputGroup)
 import TeamTavern.Client.Components.Player.ProfileInputGroup (ChildSlots, platformIdInputGroup)
 import TeamTavern.Routes.Shared.Platform (Platform(..))
-import TeamTavern.Routes.Shared.Player (Contacts, Contacts')
+import TeamTavern.Routes.Shared.PlayerContacts (PlayerContacts, PlayerContactsOpen)
 
-type Input = Contacts'
+type Input = PlayerContactsOpen
     ( requiredPlatforms :: Array Platform
     , discordTagError :: Boolean
     , steamIdError :: Boolean
@@ -28,7 +28,7 @@ type Input = Contacts'
     , friendCodeError :: Boolean
     )
 
-type Output = Contacts
+type Output = PlayerContacts
 
 type State = Input
 

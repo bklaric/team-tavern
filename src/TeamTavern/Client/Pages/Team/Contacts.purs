@@ -12,11 +12,11 @@ import TeamTavern.Client.Components.Missing (missing)
 import TeamTavern.Client.Components.Team.Contacts (ContactsSlots)
 import TeamTavern.Client.Components.Team.Contacts as Components
 import TeamTavern.Client.Pages.Team.Status (Status(..))
-import TeamTavern.Routes.Shared.Team (Contacts')
+import TeamTavern.Routes.Shared.TeamContacts (TeamContactsOpen)
 
 contacts
     :: forall fields action slots left
-    .  Contacts' (handle :: String | fields)
+    .  TeamContactsOpen (handle :: String | fields)
     -> Status
     -> action
     -> H.ComponentHTML action (ContactsSlots slots) (Async left)

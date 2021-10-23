@@ -14,6 +14,7 @@ You can edit this file as you like.
   , "halogen-css"
   , "halogen-hooks"
   , "halogen-svg-elems"
+  , "heterogeneous"
   , "idiomatic-node-crypto"
   , "idiomatic-node-http"
   , "idiomatic-node-process"
