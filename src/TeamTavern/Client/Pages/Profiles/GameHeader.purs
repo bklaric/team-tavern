@@ -34,13 +34,14 @@ gameHeader { title, shortTitle, tab } = HH.div_ $
         Competitions -> "Apply for open " <> shortTitle <> " leagues and tournaments and compete for prizes and boasting rights."
     ]
     <>
-    if shortTitle == "Dota 2"
-    then Array.singleton $
-        HH.a [ HS.class_ "partner-banner", HP.href "https://discord.gg/d2zjFWxC8M", HP.target "_blank", HP.rel "noopener", HP.title "Dota 2 Dream Community League" ]
-        [ HH.span [ HS.class_ "partner-banner-detail" ] [ HH.text "Open league • €1000 prize pool • EU servers • Sign-ups end October 1st" ]
-        , HH.img [ HS.class_ "partner-banner-image", HP.src $ "https://cdn.discordapp.com/attachments/861682299107278868/862348698603225108/dota_banner_1.jpg" ]
-        ]
-    else if shortTitle == "CS:GO"
+    -- if shortTitle == "Dota 2"
+    -- then Array.singleton $
+    --     HH.a [ HS.class_ "partner-banner", HP.href "https://discord.gg/d2zjFWxC8M", HP.target "_blank", HP.rel "noopener", HP.title "Dota 2 Dream Community League" ]
+    --     [ HH.span [ HS.class_ "partner-banner-detail" ] [ HH.text "Open league • €1000 prize pool • EU servers • Sign-ups end October 1st" ]
+    --     , HH.img [ HS.class_ "partner-banner-image", HP.src $ "https://cdn.discordapp.com/attachments/861682299107278868/862348698603225108/dota_banner_1.jpg" ]
+    --     ]
+    -- else
+    if shortTitle == "CS:GO"
     then Array.singleton $
         HH.a [ HS.class_ "partner-banner", HP.href "https://discord.gg/M5jm2585WV", HP.target "_blank", HP.rel "noopener", HP.title "205 CS:GO Community" ]
         [ HH.span [ HS.class_ "partner-banner-detail" ] [ HH.text "Monthly, free, european, amateur tournaments • All skillgroups are welcome!" ]
