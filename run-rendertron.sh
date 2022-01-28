@@ -1,3 +1,4 @@
 #!/bin/bash
-fuser -k 3000/tcp
+pkill rendetron
+pkill chrome
 rendertron &>> rendertron.txt &
