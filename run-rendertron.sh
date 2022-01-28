@@ -1,4 +1,4 @@
 #!/bin/bash
 pkill rendetron
 pkill chrome
-rendertron &>> rendertron.txt &
+rendertron &>> dist-server/rendertron.txt &
