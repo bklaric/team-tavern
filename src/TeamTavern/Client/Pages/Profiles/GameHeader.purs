@@ -2,10 +2,7 @@ module TeamTavern.Client.Pages.Profiles.GameHeader (ProfileTab(..), Tab(..), Inp
 
 import Prelude
 
-import Data.Array as Array
-import Data.MediaType (MediaType(..))
 import Halogen.HTML as HH
-import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Components.Ads (descriptionLeaderboards)
 import TeamTavern.Client.Components.Content (contentDescription, contentHeader, contentHeaderSection, contentHeading')
 import TeamTavern.Client.Snippets.Class as HS
@@ -41,31 +38,32 @@ gameHeader { title, shortTitle, tab } = HH.div_ $
     --     , HH.img [ HS.class_ "partner-banner-image", HP.src $ "https://cdn.discordapp.com/attachments/861682299107278868/862348698603225108/dota_banner_1.jpg" ]
     --     ]
     -- else
-    if shortTitle == "CS:GO"
-    then Array.singleton $
-        HH.a [ HS.class_ "partner-banner", HP.href "https://discord.gg/M5jm2585WV", HP.target "_blank", HP.rel "noopener", HP.title "205 CS:GO Community" ]
-        [ HH.span [ HS.class_ "partner-banner-detail" ] [ HH.text "Monthly, free, european, amateur tournaments • All skillgroups are welcome!" ]
-        , HH.element (HH.ElemName "picture") []
-            [ HH.source
-                [ HP.prop (HH.PropName "srcset") "/images/competitions/205/default.png"
-                , HP.prop (HH.PropName "media") "(max-width: 500px)"
-                , HP.type_ $ MediaType "image/png"
-                ]
-            , HH.source
-                [ HP.prop (HH.PropName "srcset") "/images/competitions/205/min-500.png"
-                , HP.prop (HH.PropName "media") "(min-width: 500px) and (max-width: 900px)"
-                , HP.type_ $ MediaType "image/png"
-                ]
-            , HH.source
-                [ HP.prop (HH.PropName "srcset") "/images/competitions/205/min-900.png"
-                , HP.prop (HH.PropName "media") "(min-width: 900px)"
-                , HP.type_ $ MediaType "image/png"
-                ]
-            , HH.img
-                [ HS.class_ "partner-banner-image"
-                , HP.alt "205 CS:GO Community"
-                , HP.src "/images/competitions/205/min-900.png"
-                ]
-            ]
-        ]
-    else descriptionLeaderboards
+    -- if shortTitle == "CS:GO"
+    -- then Array.singleton $
+    --     HH.a [ HS.class_ "partner-banner", HP.href "https://discord.gg/M5jm2585WV", HP.target "_blank", HP.rel "noopener", HP.title "205 CS:GO Community" ]
+    --     [ HH.span [ HS.class_ "partner-banner-detail" ] [ HH.text "Monthly, free, european, amateur tournaments • All skillgroups are welcome!" ]
+    --     , HH.element (HH.ElemName "picture") []
+    --         [ HH.source
+    --             [ HP.prop (HH.PropName "srcset") "/images/competitions/205/default.png"
+    --             , HP.prop (HH.PropName "media") "(max-width: 500px)"
+    --             , HP.type_ $ MediaType "image/png"
+    --             ]
+    --         , HH.source
+    --             [ HP.prop (HH.PropName "srcset") "/images/competitions/205/min-500.png"
+    --             , HP.prop (HH.PropName "media") "(min-width: 500px) and (max-width: 900px)"
+    --             , HP.type_ $ MediaType "image/png"
+    --             ]
+    --         , HH.source
+    --             [ HP.prop (HH.PropName "srcset") "/images/competitions/205/min-900.png"
+    --             , HP.prop (HH.PropName "media") "(min-width: 900px)"
+    --             , HP.type_ $ MediaType "image/png"
+    --             ]
+    --         , HH.img
+    --             [ HS.class_ "partner-banner-image"
+    --             , HP.alt "205 CS:GO Community"
+    --             , HP.src "/images/competitions/205/min-900.png"
+    --             ]
+    --         ]
+    --     ]
+    -- else
+    descriptionLeaderboards
