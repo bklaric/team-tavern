@@ -1,4 +1,11 @@
 #!/bin/bash
-npm install -g sass
-npm install -g clean-css-cli@4.3.0
-npm install -g uglify-js
+npm install -g purescript spago sass clean-css-cli uglify-js
+
+# /home/bklaric/.nvm/versions/node/v18.3.0/lib
+# ├── clean-css-cli@5.6.0
+# ├── corepack@0.10.0
+# ├── npm@8.12.1
+# ├── purescript@0.15.2
+# ├── sass@1.52.3
+# ├── spago@0.20.9
+# └── uglify-js@3.16.0
