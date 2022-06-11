@@ -1,25 +1,7 @@
 {
-  "name": "purescript-team-tavern-server",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "directories": {
-    "test": "test"
-  },
   "dependencies": {
     "@sendgrid/mail": "^7.4.2",
     "bcrypt": "^3.0.8",
-    "pg": "^7.18.2",
-    "postmark": "^2.5.4"
-  },
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://branimirklaric@bitbucket.org/team-tavern/purescript-team-tavern-server.git"
-  },
-  "author": "",
-  "license": "AGPL-3.0",
-  "homepage": "https://bitbucket.org/team-tavern/purescript-team-tavern-server#readme"
+    "pg": "^7.18.2"
+  }
 }
