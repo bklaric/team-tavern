@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "@sendgrid/mail": "^7.4.2",
-    "bcrypt": "^3.0.8",
+    "bcrypt": "^5.0.0",
     "pg": "^7.18.2"
   }
 }
