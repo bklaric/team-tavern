@@ -6,7 +6,7 @@ import Async (Async, alwaysRightWithEffect, fromEffect, runSafeAsync, safeForeac
 import Data.Maybe (Maybe, maybe)
 import Effect.Class.Console (log)
 import Effect.Timer (setTimeout)
-import Global.Unsafe (unsafeStringify)
+import Yoga.JSON (unsafeStringify)
 import Postgres.Query (class Querier, Query(..), (:))
 import Record.Extra (pick)
 import Sendgrid (sendAsync)

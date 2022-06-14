@@ -11,13 +11,11 @@ import Data.Const (Const)
 import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..))
 import Data.Options ((:=))
-import Data.Variant (SProxy(..), match)
+import Data.Variant (match)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import Simple.JSON as Json
-import Simple.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Script.Cookie (hasPlayerIdCookie)
@@ -26,8 +24,11 @@ import TeamTavern.Client.Script.Navigate (navigateReplace_, navigate_)
 import TeamTavern.Client.Snippets.ErrorClasses (otherErrorClass)
 import TeamTavern.Server.Session.Start.ReadModel (StartDto)
 import TeamTavern.Server.Session.Start.SendResponse as Start
+import Type.Proxy (Proxy(..))
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
+import Yoga.JSON as Json
+import Yoga.JSON.Async as JsonAsync
 
 data Action
     = Init
@@ -62,10 +63,10 @@ render
     , otherError
     , submitting
     } = HH.form
-    [ HP.class_ $ HH.ClassName "form", HE.onSubmit $ Just <<< SignIn ]
+    [ HP.class_ $ HH.ClassName "form", HE.onSubmit SignIn ]
     [ HH.h1 [ HP.class_ $ HH.ClassName "form-heading" ]
         [ HH.text "Sign in to "
-        , navigationAnchor (SProxy :: SProxy "home")
+        , navigationAnchor (Proxy :: _ "home")
             { path: "/", content: HH.text "TeamTavern" }
         ]
     , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
@@ -73,9 +74,9 @@ render
             [ HP.class_ $ HH.ClassName "input-label", HP.for "nickname" ]
             [ HH.text "Nickname" ]
         , HH.input
-            [ HP.id_ "nickname"
+            [ HP.id "nickname"
             , HP.class_ $ HH.ClassName "text-line-input"
-            , HE.onValueInput $ Just <<< UpdateNickname
+            , HE.onValueInput UpdateNickname
             ]
         ]
     , HH.div [ HP.class_ $ HH.ClassName "input-group" ]
@@ -84,13 +85,13 @@ render
             [ HH.text "Password" ]
         , HH.div [ HP.class_ $ HH.ClassName "password-input-container" ]
             [ HH.input
-                [ HP.id_ "password"
+                [ HP.id "password"
                 , HP.class_ $ HH.ClassName "password-input"
                 , HP.type_
                     if passwordShown
                     then HP.InputText
                     else HP.InputPassword
-                , HE.onValueInput $ Just <<< UpdatePassword
+                , HE.onValueInput UpdatePassword
                 ]
             , HH.button
                 [ HP.class_ $ HH.ClassName "password-input-button"
@@ -99,7 +100,7 @@ render
                     if passwordShown
                     then "Hide password"
                     else "Show password"
-                , HE.onClick $ Just <<< const TogglePasswordVisibility
+                , HE.onClick $ const TogglePasswordVisibility
                 ]
                 [ HH.i
                     [ HP.class_ $ HH.ClassName
@@ -131,7 +132,7 @@ render
     , HH.p
         [ HP.class_ $ HH.ClassName "form-bottom-text"]
         [ HH.text "New to TeamTavern? "
-        , navigationAnchor (SProxy :: SProxy "registerAnchor")
+        , navigationAnchor (Proxy :: _ "registerAnchor")
             { path: "/register", content: HH.text "Create an account." }
         ]
     ]
@@ -182,7 +183,7 @@ handleAction (SignIn event) = do
         Just newState' -> H.put newState' { submitting = false }
 
 component :: forall query input output left.
-    H.Component HH.HTML query input output (Async left)
+    H.Component query input output (Async left)
 component = H.mkComponent
     { initialState: const
         { nickname: ""
@@ -201,4 +202,4 @@ component = H.mkComponent
 
 signIn :: forall query children left.
     HH.ComponentHTML query (signIn :: Slot Unit | children) (Async left)
-signIn = HH.slot (SProxy :: SProxy "signIn") unit component unit absurd
+signIn = HH.slot (Proxy :: _ "signIn") unit component unit absurd

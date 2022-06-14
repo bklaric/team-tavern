@@ -6,7 +6,7 @@ import Prelude
 
 import Data.Const (Const)
 import Data.Maybe (Maybe(..))
-import Data.Symbol (class IsSymbol, SProxy)
+import Data.Symbol (class IsSymbol)
 import Effect.Class (class MonadEffect)
 import Halogen as H
 import Halogen.HTML as HH
@@ -14,6 +14,7 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Prim.Row (class Cons)
 import TeamTavern.Client.Script.Navigate (navigateWithEvent_)
+import Type.Proxy (Proxy)
 import Web.UIEvent.MouseEvent (MouseEvent)
 
 type SimpleInput slots monad =
@@ -39,7 +40,7 @@ render { class_, path, content } =
     HH.a
     [ HP.class_ $ HH.ClassName class_
     , HP.href path
-    , HE.onClick $ Navigate >>> Just
+    , HE.onClick Navigate
     ]
     [ content ]
 
@@ -55,7 +56,7 @@ handleAction (Navigate event) = do
 handleAction (Receive state) = H.put state
 
 component :: forall query slots monad output. MonadEffect monad =>
-    H.Component HH.HTML query (State slots monad) output monad
+    H.Component query (State slots monad) output monad
 component = H.mkComponent
     { initialState: identity
     , render
@@ -70,7 +71,7 @@ navigationAnchor
     .  Cons label (Slot Unit) children' children
     => IsSymbol label
     => MonadEffect monad
-    => SProxy label
+    => Proxy label
     -> SimpleInput children monad
     -> HH.ComponentHTML action children monad
 navigationAnchor label { path, content } =
@@ -81,7 +82,7 @@ navigationAnchorClassed
     .  Cons label (Slot Unit) children' children
     => IsSymbol label
     => MonadEffect monad
-    => SProxy label
+    => Proxy label
     -> ClassInput children monad
     -> HH.ComponentHTML action children monad
 navigationAnchorClassed label state =
@@ -93,7 +94,7 @@ navigationAnchorIndexed
     => IsSymbol label
     => Ord index
     => MonadEffect monad
-    => SProxy label
+    => Proxy label
     -> index
     -> SimpleInput children monad
     -> HH.ComponentHTML action children monad

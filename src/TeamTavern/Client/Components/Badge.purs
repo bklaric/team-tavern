@@ -4,7 +4,6 @@ import Prelude
 
 import Data.Array as Array
 import Data.Foldable (elem)
-import Data.Maybe (Maybe(..))
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HP
 import TeamTavern.Client.Components.Checkable (checkables, checkbox, radio)
@@ -45,13 +44,13 @@ organizationCheckableBadges informalCheckable organizedCheckable onValue =
     checkables
     [ HH.span
         [ HS.class_ "informal-badge checkable-container"
-        , HP.onClick $ const $ Just $ onValue Informal]
+        , HP.onClick $ const $ onValue Informal]
         [ HH.text "Informal"
         , informalCheckable
         ]
     , HH.span
         [ HS.class_ "organized-badge checkable-container"
-        , HP.onClick $ const $ Just $ onValue Organized]
+        , HP.onClick $ const $ onValue Organized]
         [ HH.text "Organized"
         , organizedCheckable
         ]
@@ -75,13 +74,13 @@ sizeCheckableBadges partyCheckable communityCheckable onValue =
     checkables
     [ HH.span
         [ HS.class_ "party-badge checkable-container"
-        , HP.onClick $ const $ Just $ onValue Party]
+        , HP.onClick $ const $ onValue Party]
         [ HH.text "Party"
         , partyCheckable
         ]
     , HH.span
         [ HS.class_ "community-badge checkable-container"
-        , HP.onClick $ const $ Just $ onValue Community]
+        , HP.onClick $ const $ onValue Community]
         [ HH.text "Community"
         , communityCheckable
         ]
@@ -104,7 +103,7 @@ platformCheckableBadge :: forall slots action.
 platformCheckableBadge checkable icon label onValue =
     HH.span
     [ HS.class_ "platform-badge checkable-container"
-    , HP.onClick $ const $ Just onValue]
+    , HP.onClick $ const onValue]
     [ icon
     , HH.text label
     , checkable

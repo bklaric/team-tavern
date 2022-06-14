@@ -11,14 +11,14 @@ import Data.String.Regex (regex, replace)
 import Data.String.Regex.Flags (global)
 import Data.Traversable (sequence)
 import Data.Validated (Validated)
-import Partial.Unsafe (unsafePartial)
+import Undefined (undefined)
 import Wrapped.Validated as Wrapped
 
 newtype Paragraph = Paragraph String
 
 create :: forall errors. String -> Validated (NonEmptyList errors) (Array Paragraph)
 create text = let
-    whitespaceRegex = regex """\s+""" global # unsafePartial fromRight
+    whitespaceRegex = regex """\s+""" global # fromRight undefined
     paragraphs =
         text
         # split (Pattern "\n\n")

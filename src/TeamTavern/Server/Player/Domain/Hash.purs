@@ -6,12 +6,13 @@ import Async (Async)
 import Bcrypt.Async (hash_)
 import Data.Bifunctor (bimap)
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Show (genericShow)
 import Data.Newtype (class Newtype)
-import Data.Variant (SProxy(..), inj)
+import Data.Show.Generic (genericShow)
+import Data.Variant (inj)
 import TeamTavern.Server.Infrastructure.Error (InternalError)
 import TeamTavern.Server.Infrastructure.Log (print)
 import TeamTavern.Server.Player.Domain.Password (Password(..))
+import Type.Proxy (Proxy(..))
 
 newtype Hash = Hash String
 
@@ -24,7 +25,7 @@ instance showHash :: Show Hash where show = genericShow
 generateHash :: forall errors. Password -> Async (InternalError errors) Hash
 generateHash (Password password) =
     password # hash_ # bimap
-        ( \error -> inj (SProxy :: SProxy "internal")
+        ( \error -> inj (Proxy :: _ "internal")
             [ "Error generating password hash: " <> print error ]
         )
         Hash

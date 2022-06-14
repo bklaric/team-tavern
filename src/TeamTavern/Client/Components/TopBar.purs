@@ -15,12 +15,12 @@ import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..), maybe)
 import Data.Monoid (guard)
 import Data.Options ((:=))
-import Data.Symbol (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import Halogen.Query.EventSource as ES
+import Halogen.Query.Event as ES
 import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Script.Cookie (getPlayerNickname)
 import TeamTavern.Client.Script.Navigate (navigateWithEvent_)
@@ -248,7 +248,7 @@ handleAction Initialize = do
     nickname <- getPlayerNickname
 
     window <- H.liftEffect $ Window.toEventTarget <$> window
-    let windowEventSource = ES.eventListenerEventSource
+    let windowEventSource = ES.eventListener
             (E.EventType "click") window \_ -> Just CloseGamesPopunder
     windowSubscription <- H.subscribe $ ES.hoist affToAsync windowEventSource
 
@@ -290,7 +290,7 @@ handleAction (ToggleGamesPopunder mouseEvent) = do
 handleAction CloseGamesPopunder =
     H.modify_ (_ { gamesVisible = false })
 
-component :: forall query output left. H.Component HH.HTML query Input output (Async left)
+component :: forall query output left. H.Component query Input output (Async left)
 component = H.mkComponent
     { initialState:
         { handle: _
@@ -311,4 +311,4 @@ component = H.mkComponent
 
 topBar :: forall action left slots.
     Input -> HH.ComponentHTML action (topBar :: Slot | slots) (Async left)
-topBar input = HH.slot (SProxy :: SProxy "topBar") unit component input absurd
+topBar input = HH.slot (Proxy :: _ "topBar") unit component input absurd

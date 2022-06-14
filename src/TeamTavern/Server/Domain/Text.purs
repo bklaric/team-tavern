@@ -6,9 +6,10 @@ import Data.List.NonEmpty (singleton)
 import Data.List.Types (NonEmptyList)
 import Data.Traversable (sum)
 import Data.Validated (Validated, invalid, valid)
-import Data.Variant (SProxy(..), Variant, inj)
+import Data.Variant (Variant, inj)
 import TeamTavern.Server.Domain.Paragraph (Paragraph)
 import TeamTavern.Server.Domain.Paragraph as Paragraph
+import Type.Proxy (Proxy(..))
 import Wrapped.String (TooLong)
 
 newtype Text = Text (Array Paragraph)
@@ -29,7 +30,7 @@ create' maxLength constructor paragraphs = let
     actualLength = paragraphs <#> Paragraph.length # sum
     in
     if actualLength > maxLength
-    then invalid $ singleton $ inj (SProxy :: SProxy "tooLong")
+    then invalid $ singleton $ inj (Proxy :: _ "tooLong")
         { maxLength, actualLength }
     else valid $ constructor paragraphs
 

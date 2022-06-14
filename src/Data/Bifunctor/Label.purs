@@ -3,16 +3,17 @@ module Data.Bifunctor.Label where
 import Prelude
 
 import Data.Bifunctor (class Bifunctor, lmap)
-import Data.Symbol (class IsSymbol, SProxy)
+import Data.Symbol (class IsSymbol)
 import Data.Variant (Variant, inj, on)
 import Prim.Row (class Cons)
+import Type.Proxy (Proxy)
 
 label
     :: forall bifunctor label left lefts' lefts right
     .  Bifunctor bifunctor
     => Cons label left lefts' lefts
     => IsSymbol label
-    => SProxy label
+    => Proxy label
     -> bifunctor left right
     -> bifunctor (Variant lefts) right
 label label' = lmap (inj label')
@@ -22,7 +23,7 @@ labelMap
     .  Bifunctor bifunctor
     => Cons label leftOut lefts' lefts
     => IsSymbol label
-    => SProxy label
+    => Proxy label
     -> (leftIn -> leftOut)
     -> bifunctor leftIn right
     -> bifunctor (Variant lefts) right
@@ -35,8 +36,8 @@ relabel
     => Cons toLabel value lefts leftsOut
     => IsSymbol fromLabel
     => IsSymbol toLabel
-    => SProxy fromLabel
-    -> SProxy toLabel
+    => Proxy fromLabel
+    -> Proxy toLabel
     -> bifunctor (Variant leftsIn) right
     -> bifunctor (Variant leftsOut) right
 relabel fromLabel toLabel = lmap (on fromLabel (inj toLabel) identity)
@@ -49,8 +50,8 @@ relabelMap
     => Cons toLabel leftOut lefts leftsOut
     => IsSymbol fromLabel
     => IsSymbol toLabel
-    => SProxy fromLabel
-    -> SProxy toLabel
+    => Proxy fromLabel
+    -> Proxy toLabel
     -> (leftIn -> leftOut)
     -> bifunctor (Variant leftsIn) right
     -> bifunctor (Variant leftsOut) right

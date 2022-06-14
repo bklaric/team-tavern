@@ -4,7 +4,7 @@ import Prelude
 
 import Async (Async, alwaysRight, examineLeftWithEffect)
 import Data.Array as Array
-import Data.Symbol (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Data.Variant (Variant, match)
 import Effect (Effect, foreachE)
 import Perun.Request.Body (Body)
@@ -14,7 +14,7 @@ import Postgres.Query (class Querier, Query(..), (:))
 import Prim.Row (class Lacks)
 import Record.Builder (Builder)
 import Record.Builder as Builder
-import Simple.JSON (writeJSON)
+import Yoga.JSON (writeJSON)
 import TeamTavern.Routes.Shared.Platform (Platform)
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.EnsureSignedInOwner (ensureSignedInOwner)
@@ -52,7 +52,7 @@ type UpdateContactsError = Variant
 
 contactsHandler :: forall fields. Lacks "teamContacts" fields =>
     Builder (Record fields) { teamContacts :: ContactsErrors -> Effect Unit | fields }
-contactsHandler = Builder.insert (SProxy :: SProxy "teamContacts") \errors ->
+contactsHandler = Builder.insert (Proxy :: _ "teamContacts") \errors ->
     foreachE (Array.fromFoldable errors) $ match
     { discordTag: logt
     , discordServer: logt
@@ -100,7 +100,7 @@ updateContacts pool body cookies { handle } =
 
     pool # transaction \client -> do
         -- Read requestor info from cookies.
-        { cookieInfo, teamId } <- ensureSignedInOwner client cookies handle
+        { teamId } <- ensureSignedInOwner client cookies handle
 
         -- Read required platforms.
         requiredPlatforms <- loadRequiredPlatforms client teamId

@@ -5,7 +5,7 @@ module TeamTavern.Server.Profile.AddPlayerProfile.ValidatePlatformId where
 -- import Data.Array as Array
 -- import Data.List.NonEmpty (notElem)
 -- import Data.List.NonEmpty as NEL
--- import Data.Symbol (SProxy(..))
+-- import Type.Proxy (Proxy(..))
 -- import Data.Validated as Validated
 -- import Data.Validated.Label (ValidatedVariants)
 -- import Data.Validated.Label as ValidatedL
@@ -49,7 +49,7 @@ module TeamTavern.Server.Profile.AddPlayerProfile.ValidatePlatformId where
 -- validatePlatformId platforms platform platformId =
 --     case platform of
 --     _ | notElem platform $ Array.cons platforms.head platforms.tail ->
---         Validated.invalid $ NEL.singleton $ inj (SProxy :: SProxy "platformId")
+--         Validated.invalid $ NEL.singleton $ inj (Proxy :: _ "platformId")
 --         [ "Error validating platform id, profile platform doesn't match any game platforms."
 --         , "Profile platform: " <> show platform
 --         , "Game platforms: " <> show platforms
@@ -57,24 +57,24 @@ module TeamTavern.Server.Profile.AddPlayerProfile.ValidatePlatformId where
 --     Steam -> validateSteamId platformId
 --         <#> SteamId
 --         # Validated.fromEither
---         # ValidatedL.label (SProxy :: SProxy "platformId")
+--         # ValidatedL.label (Proxy :: _ "platformId")
 --     Riot -> validateRiotId platformId
 --         <#> RiotId
 --         # Validated.fromEither
---         # ValidatedL.label (SProxy :: SProxy "platformId")
+--         # ValidatedL.label (Proxy :: _ "platformId")
 --     BattleNet -> validateBattleTag platformId
 --         <#> BattleTag
 --         # Validated.fromEither
---         # ValidatedL.label (SProxy :: SProxy "platformId")
+--         # ValidatedL.label (Proxy :: _ "platformId")
 --     PlayStation -> validatePsnId platformId
 --         <#> PsnId
 --         # Validated.fromEither
---         # ValidatedL.label (SProxy :: SProxy "platformId")
+--         # ValidatedL.label (Proxy :: _ "platformId")
 --     Xbox -> validateGamerTag platformId
 --         <#> GamerTag
 --         # Validated.fromEither
---         # ValidatedL.label (SProxy :: SProxy "platformId")
+--         # ValidatedL.label (Proxy :: _ "platformId")
 --     Switch -> validateFriendCode platformId
 --         <#> FriendCode
 --         # Validated.fromEither
---         # ValidatedL.label (SProxy :: SProxy "platformId")
+--         # ValidatedL.label (Proxy :: _ "platformId")

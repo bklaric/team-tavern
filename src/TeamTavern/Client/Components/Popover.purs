@@ -3,7 +3,6 @@ module TeamTavern.Client.Components.Popover where
 import Prelude
 
 import Async (Async)
-import Async.Aff (affToAsync)
 import Data.Maybe (Maybe(..))
 import Data.Monoid (guard)
 import Data.Tuple (Tuple(..))
@@ -11,7 +10,8 @@ import Effect.Class (class MonadEffect, liftEffect)
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.Hooks as Hooks
-import Halogen.Query.EventSource as ES
+import Halogen.Hooks.Hook (type (<>))
+import Halogen.Query.Event as ES
 import TeamTavern.Client.Snippets.Class as HS
 import Web.Event.Event as E
 import Web.HTML (window)
@@ -37,7 +37,7 @@ popoverBody popoverShown content = guard popoverShown [ HH.div [ HS.class_ "popo
 popoverItem :: forall slots action.
     (MouseEvent -> action) -> Array (HH.HTML slots action) -> HH.HTML slots action
 popoverItem onClick content =
-    HH.div [ HS.class_ "popover-item", HE.onClick $ Just <<< onClick ] content
+    HH.div [ HS.class_ "popover-item", HE.onClick onClick ] content
 
 popover :: forall slots action.
     Boolean -> Array (HH.HTML slots action) -> Array (HH.HTML slots action) -> HH.HTML slots action
@@ -46,18 +46,17 @@ popover popoverShown containerContent popoverContent =
 
 -- Hook
 
-type UsePopover state = Hooks.UseEffect (Hooks.UseState Boolean state)
+type UsePopover = Hooks.UseState Boolean <> Hooks.UseEffect <> Hooks.Pure
 
-usePopover :: forall left.
-    Hooks.Hook (Async left) UsePopover (Tuple Boolean (Hooks.StateId Boolean))
+usePopover :: forall left. Hooks.Hook (Async left) UsePopover (Tuple Boolean (Hooks.StateId Boolean))
 usePopover = Hooks.do
-    state @ (Tuple shown shownId) <- Hooks.useState false
+    state @ (Tuple _ shownId) <- Hooks.useState false
 
     Hooks.useLifecycleEffect do
         window <- window <#> Window.toEventTarget # liftEffect
-        let windowEventSource = ES.eventListenerEventSource
+        let windowEventSource = ES.eventListener
                 (E.EventType "click") window (const $ Just $ Hooks.put shownId false)
-        subscriptionId <- Hooks.subscribe $ ES.hoist affToAsync windowEventSource
+        subscriptionId <- Hooks.subscribe windowEventSource
         pure $ Just $ Hooks.unsubscribe subscriptionId
 
     Hooks.pure state

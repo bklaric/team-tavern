@@ -9,7 +9,7 @@ import Data.List.NonEmpty as NonEmptyList
 import Data.Maybe (Maybe(..))
 import Foreign (ForeignError(..), readString)
 import Jarilo.FromComponent (class FromComponent)
-import Simple.JSON (class ReadForeign, class WriteForeign, writeImpl)
+import Yoga.JSON (class ReadForeign, class WriteForeign, writeImpl)
 
 data Size = Party | Community
 

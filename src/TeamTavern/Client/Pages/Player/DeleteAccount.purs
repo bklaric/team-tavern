@@ -5,7 +5,7 @@ import Prelude
 import Async (Async)
 import Data.Const (Const)
 import Data.Maybe (Maybe(..))
-import Data.Variant (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Form (form, otherFormError, submitButton)
@@ -50,7 +50,7 @@ handleAction (SendRequest event) = do
             , otherError = true
             }
 
-component :: forall query output left. H.Component HH.HTML query Input output (Async left)
+component :: forall query output left. H.Component query Input output (Async left)
 component = H.mkComponent
     { initialState: \nickname ->
         { nickname
@@ -64,8 +64,8 @@ component = H.mkComponent
 deleteAccount
     :: forall children action left
     .  Input
-    -> (Modal.Output Void -> Maybe action)
+    -> (Modal.Output Void -> action)
     -> HH.ComponentHTML action (deleteAccount :: Slot | children) (Async left)
 deleteAccount input handleMessage = HH.slot
-    (SProxy :: SProxy "deleteAccount") unit
+    (Proxy :: _ "deleteAccount") unit
     (Modal.component ("Delete your TeamTavern account") component) input handleMessage

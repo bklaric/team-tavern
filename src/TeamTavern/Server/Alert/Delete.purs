@@ -3,7 +3,7 @@ module TeamTavern.Server.Alert.Delete where
 import Prelude
 
 import Async (Async, alwaysRight, examineLeftWithEffect, left)
-import Data.Symbol (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Data.Variant (inj, match)
 import Effect (Effect)
 import Perun.Response (Response, internalServerError__, noContent_, notFound__)
@@ -42,5 +42,5 @@ deleteAlert pool { id, token } =
     result <- queryInternal pool queryString (id :| token)
     if rowCount result > 0
         then pure unit
-        else left $ inj (SProxy :: _ "notFound")
+        else left $ inj (Proxy :: _ "notFound")
             [ "No alert deleted for id=(" <> show id <> ") token=(" <> token <> ")." ]

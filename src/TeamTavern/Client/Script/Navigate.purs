@@ -12,7 +12,7 @@ import Prelude
 
 import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Timer (setTimeout)
-import Simple.JSON (class WriteForeign, write)
+import Yoga.JSON (class WriteForeign, write)
 import TeamTavern.Client.Script.PopStateEvent as PopStateEvent
 import TeamTavern.Client.Snippets.PreventMouseDefault (preventMouseDefault)
 import Web.Event.EventTarget (dispatchEvent)

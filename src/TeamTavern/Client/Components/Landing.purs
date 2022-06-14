@@ -2,7 +2,7 @@ module TeamTavern.Client.Components.Landing where
 
 import Prelude
 
-import Data.Maybe (Maybe(..), maybe)
+import Data.Maybe (Maybe, maybe)
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
@@ -45,7 +45,7 @@ landingSectionButton text url onClick =
     HH.a
     [ HS.class_ "landing-section-button"
     , HP.href url
-    , HE.onClick $ Just <<< onClick
+    , HE.onClick onClick
     ]
     [ HH.text text ]
 

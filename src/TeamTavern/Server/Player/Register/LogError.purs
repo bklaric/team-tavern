@@ -5,10 +5,9 @@ import Prelude
 import Data.Array as Array
 import Data.Map (Map)
 import Data.Newtype (unwrap)
-import Data.Variant (SProxy(..), Variant, match)
+import Data.Variant (Variant, match)
 import Effect (Effect, foreachE)
 import Foreign (MultipleErrors)
-import Global.Unsafe (unsafeStringify)
 import Node.Errors as Node
 import Postgres.Error as Postgres
 import Postgres.Result (Result, rows)
@@ -21,6 +20,8 @@ import TeamTavern.Server.Player.Domain.Id (Id)
 import TeamTavern.Server.Player.Domain.Nickname (Nickname)
 import TeamTavern.Server.Player.Register.ValidateRegistration (RegistrationErrors)
 import TeamTavern.Server.Session.Domain.Token (Token)
+import Type.Proxy (Proxy(..))
+import Yoga.JSON (unsafeStringify)
 
 type RegisterError = Variant
     ( internal :: Array String
@@ -48,7 +49,7 @@ type RegisterError = Variant
 
 registrationHandler :: forall fields. Lacks "registration" fields =>
     Builder (Record fields) { registration :: RegistrationErrors -> Effect Unit | fields }
-registrationHandler = Builder.insert (SProxy :: SProxy "registration") \errors ->
+registrationHandler = Builder.insert (Proxy :: _ "registration") \errors ->
     foreachE (Array.fromFoldable errors) $ match
         { nickname: logLines
         , password: logLines

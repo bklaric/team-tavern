@@ -11,10 +11,10 @@ import Data.Bifunctor.Label (label)
 import Data.List.Types (NonEmptyList)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
-import Data.Symbol (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Data.Variant (Variant, inj, match)
 import Effect (Effect, foreachE)
-import Global.Unsafe (unsafeStringify)
+import Yoga.JSON (unsafeStringify)
 import Node.Errors (Error)
 import Perun.Request.Body (Body)
 import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, ok, unauthorized__)
@@ -24,7 +24,7 @@ import Prim.Row (class Lacks)
 import Record.Builder (Builder)
 import Record.Builder as Builder
 import Record.Extra (pick)
-import Simple.JSON (writeJSON)
+import Yoga.JSON (writeJSON)
 import TeamTavern.Routes.Preboard (BadContent, RequestContent, OkContent)
 import TeamTavern.Routes.Shared.Platform (Platform(..))
 import TeamTavern.Server.Architecture.Deployment (Deployment)
@@ -96,7 +96,7 @@ invalidBodyHandler :: forall fields. Lacks "invalidBody" fields =>
         )
         -> Effect Unit
     | fields }
-invalidBodyHandler = Builder.insert (SProxy :: SProxy "invalidBody") \errors ->
+invalidBodyHandler = Builder.insert (Proxy :: _ "invalidBody") \errors ->
     foreachE (Array.fromFoldable errors) $ match
     { team: \errors' -> logt $ "Team errors: " <> show errors'
     , playerProfile: \errors' -> logt $ "Player profile errors: " <> show errors'
@@ -113,9 +113,9 @@ logError = Log.logError "Error preboarding"
     >>> notAuthenticatedHandler
     >>> notAuthorizedHandler
     >>> invalidBodyHandler
-    >>> (Builder.insert (SProxy :: SProxy "nicknameTaken") (unsafeStringify >>> logt))
-    >>> (Builder.insert (SProxy :: SProxy "signedIn") (unsafeStringify >>> logt))
-    >>> (Builder.insert (SProxy :: SProxy "randomError") (unsafeStringify >>> logt))
+    >>> (Builder.insert (Proxy :: _ "nicknameTaken") (unsafeStringify >>> logt))
+    >>> (Builder.insert (Proxy :: _ "signedIn") (unsafeStringify >>> logt))
+    >>> (Builder.insert (Proxy :: _ "randomError") (unsafeStringify >>> logt))
     )
 
 type PreboardResult =
@@ -129,17 +129,17 @@ errorResponse = match
         errors
         # fromFoldable
         <#> match
-            { team: inj (SProxy :: SProxy "team") <<< Array.fromFoldable
-            , playerProfile: inj (SProxy :: SProxy "playerProfile") <<< Array.fromFoldable
-            , teamProfile: inj (SProxy :: SProxy "teamProfile") <<< Array.fromFoldable
-            , playerContacts: inj (SProxy :: _ "playerContacts") <<< Array.fromFoldable
-            , teamContacts: inj (SProxy :: _ "teamContacts") <<< Array.fromFoldable
-            , registration: inj (SProxy :: SProxy "registration") <<< Array.fromFoldable
+            { team: inj (Proxy :: _ "team") <<< Array.fromFoldable
+            , playerProfile: inj (Proxy :: _ "playerProfile") <<< Array.fromFoldable
+            , teamProfile: inj (Proxy :: _ "teamProfile") <<< Array.fromFoldable
+            , playerContacts: inj (Proxy :: _ "playerContacts") <<< Array.fromFoldable
+            , teamContacts: inj (Proxy :: _ "teamContacts") <<< Array.fromFoldable
+            , registration: inj (Proxy :: _ "registration") <<< Array.fromFoldable
             }
         # (writeJSON :: BadContent -> String)
         # badRequest_
     , nicknameTaken: \error ->
-        [ inj (SProxy :: SProxy "nicknameTaken") [ unsafeStringify error ] ]
+        [ inj (Proxy :: _ "nicknameTaken") [ unsafeStringify error ] ]
         # (writeJSON :: BadContent -> String)
         # badRequest_
     , client: const badRequest__
@@ -199,7 +199,7 @@ preboard deployment pool cookies body =
                 <*> validateContactsV [ profile.platform ] contactsCleaned
                 <*> validateRegistrationV registration
                 # AsyncV.toAsync
-                # label (SProxy :: SProxy "invalidBody")
+                # label (Proxy :: _ "invalidBody")
 
             -- Generate password hash.
             hash <- generateHash registration'.password
@@ -253,7 +253,7 @@ preboard deployment pool cookies body =
                 <*> TeamCont.validateContactsV profile.platforms contactsCleaned
                 <*> validateRegistrationV registration
                 # AsyncV.toAsync
-                # label (SProxy :: SProxy "invalidBody")
+                # label (Proxy :: _ "invalidBody")
 
             -- Generate password hash.
             hash <- generateHash registration'.password
@@ -283,7 +283,7 @@ preboard deployment pool cookies body =
                 , cookieInfo: { id: Id id, nickname: registration'.nickname, token }
                 , profileId
                 }
-        _ -> Async.left $ inj (SProxy :: SProxy "client") []
+        _ -> Async.left $ inj (Proxy :: _ "client") []
 
     case result.teamHandle of
         Nothing -> checkPlayerAlerts result.profileId pool

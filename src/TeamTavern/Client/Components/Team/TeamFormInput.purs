@@ -6,7 +6,7 @@ import Async (Async)
 import Data.Array as Array
 import Data.Const (Const)
 import Data.Maybe (Maybe(..), isNothing, maybe)
-import Data.Variant (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Record.Extra (pick)
@@ -184,7 +184,7 @@ handleAction (UpdateWeekendTo weekendTo) = do
     state <- H.modify _ { weekendTo = weekendTo }
     raiseOutput state
 
-component :: forall query left. H.Component HH.HTML query Input Output (Async left)
+component :: forall query left. H.Component query Input Output (Async left)
 component = H.mkComponent
     { initialState: identity
     , render
@@ -215,7 +215,7 @@ emptyInput =
 teamFormInput
     :: forall action children left
     .  Input
-    -> (Output -> Maybe action)
+    -> (Output -> action)
     -> HH.ComponentHTML action (teamFormInput :: Slot | children) (Async left)
 teamFormInput input handleMessage =
-    HH.slot (SProxy :: SProxy "teamFormInput") unit component input handleMessage
+    HH.slot (Proxy :: _ "teamFormInput") unit component input handleMessage

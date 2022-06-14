@@ -4,7 +4,6 @@ module TeamTavern.Client.Components.Select.SingleTreeSelect
 import Prelude
 
 import Async (Async)
-import Async.Aff (affToAsync)
 import Data.Array as Array
 import Data.Const (Const)
 import Data.Foldable (any)
@@ -13,14 +12,14 @@ import Data.String (Pattern(..), contains, toLower, trim)
 import Data.String as String
 import Data.String.Utils (repeat)
 import Data.Symbol (class IsSymbol)
-import Data.Variant (SProxy)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import Halogen.Query.EventSource as ES
+import Halogen.Query.Event as ES
 import Halogen.Query.HalogenM (SubscriptionId)
 import Prim.Row (class Cons)
+import Type.Proxy (Proxy)
 import Web.Event.Event as E
 import Web.HTML (window)
 import Web.HTML.Window as Window
@@ -83,7 +82,7 @@ renderEntry
     -> Labeler option
     -> Entry option
     -> Maybe (Array (HH.HTML slots (Action option)))
-renderEntry level labeler (Entry { shown: false }) = Nothing
+renderEntry _ _ (Entry { shown: false }) = Nothing
 renderEntry level labeler (Entry { option, expanded, subEntries }) = let
     hasSubEntries = not $ Array.null subEntries
     optionClass =
@@ -93,7 +92,7 @@ renderEntry level labeler (Entry { option, expanded, subEntries }) = let
     Just $
     [ HH.div
         [ HP.class_ $ HH.ClassName optionClass
-        , HE.onClick $ const $ Just $ SelectEntry $ Just option
+        , HE.onClick $ const $ SelectEntry $ Just option
         ]
         [ HH.text $ labeler option ]
     ]
@@ -104,7 +103,7 @@ renderEntry level labeler (Entry { option, expanded, subEntries }) = let
             [ HP.class_ $ HH.ClassName $ "fas "
                 <> (if expanded then "fa-caret-up" else "fa-caret-down")
                 <> " collapsible-option-caret"
-            , HE.onMouseDown $ const $ Just $ ToggleEntryExpanded option
+            , HE.onMouseDown $ const $ ToggleEntryExpanded option
             ]
             []
         else Nothing
@@ -124,14 +123,14 @@ renderEntries level labeler entries =
     entries <#> renderEntry level labeler # Array.catMaybes # join
 
 render :: forall option slots. State option -> HH.HTML slots (Action option)
-render { entries, selected, labeler, comparer, filter, open } = let
+render { entries, selected, labeler, filter, open } = let
     selectedClass = if open then "selected-open" else "selected-closed"
     openOrClose = if open then Close else Open
     in
     HH.div [ HP.class_ $ HH.ClassName "select" ] $
     [ HH.div
         [ HP.class_ $ HH.ClassName selectedClass
-        , HE.onMouseDown $ const $ Just openOrClose
+        , HE.onMouseDown $ const openOrClose
         ]
         [ HH.text $ maybe "" labeler selected ]
     ]
@@ -143,16 +142,16 @@ render { entries, selected, labeler, comparer, filter, open } = let
             [ HP.class_ $ HH.ClassName "select-filter-input"
             , HP.placeholder filter.placeHolder
             , HP.value filter.text
-            , HE.onMouseDown $ const $ Just $ KeepOpen
-            , HE.onValueInput $ Just <<< Filter
+            , HE.onMouseDown $ const KeepOpen
+            , HE.onValueInput Filter
             ]
         , HH.div
             [ HP.class_ $ HH.ClassName "filterable-options"
-            , HE.onMouseDown $ const $ Just KeepOpen
+            , HE.onMouseDown $ const KeepOpen
             ] $
             [ HH.div
                 [ HP.class_ $ HH.ClassName "option"
-                , HE.onClick $ const $ Just $ SelectEntry Nothing
+                , HE.onClick $ const $ SelectEntry Nothing
                 ]
                 [ HH.text "" ]
             ]
@@ -193,9 +192,9 @@ handleAction
         (Output option) (Async left) Unit
 handleAction Initialize = do
     window <- H.liftEffect $ Window.toEventTarget <$> window
-    let windowEventSource = ES.eventListenerEventSource
+    let windowEventSource = ES.eventListener
             (E.EventType "mousedown") window \_ -> Just TryClose
-    windowSubscription <- H.subscribe $ ES.hoist affToAsync windowEventSource
+    windowSubscription <- H.subscribe windowEventSource
     H.modify_ (_ { windowSubscription = Just windowSubscription })
 handleAction Finalize = do
     { windowSubscription } <- H.get
@@ -235,7 +234,7 @@ createEntry (InputEntry { option, subEntries }) = Entry
     }
 
 component :: forall query option left.
-    H.Component HH.HTML query (Input option) (Output option) (Async left)
+    H.Component query (Input option) (Output option) (Async left)
 component = H.mkComponent
     { initialState: \{ entries, selected, labeler, comparer, filter } ->
         { entries: entries <#> createEntry
@@ -259,9 +258,9 @@ singleTreeSelect
     :: forall children' slot children action left option
     .  Cons slot (Slot option) children' children
     => IsSymbol slot
-    => SProxy slot
+    => Proxy slot
     -> Input option
-    -> (Output option -> Maybe action)
+    -> (Output option -> action)
     -> HH.ComponentHTML action children (Async left)
 singleTreeSelect label input handleOutput =
     HH.slot label unit component input handleOutput

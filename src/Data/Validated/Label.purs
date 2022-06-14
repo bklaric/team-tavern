@@ -3,10 +3,11 @@ module Data.Validated.Label where
 import Prelude
 
 import Data.List.NonEmpty (NonEmptyList, singleton)
-import Data.Symbol (class IsSymbol, SProxy)
+import Data.Symbol (class IsSymbol)
 import Data.Validated (Validated, lmap)
 import Data.Variant (Variant, inj, on)
 import Prim.Row (class Cons)
+import Type.Proxy (Proxy)
 
 type Variants rows = NonEmptyList (Variant rows)
 
@@ -16,7 +17,7 @@ label
     :: forall errors errors' left label right
     .  Cons label left errors' errors
     => IsSymbol label
-    => SProxy label
+    => Proxy label
     -> Validated left right
     -> ValidatedVariants errors right
 label label' = lmap (singleton <<< inj label')
@@ -25,7 +26,7 @@ labelMap
     :: forall label leftIn leftOut lefts' lefts right
     .  Cons label leftOut lefts' lefts
     => IsSymbol label
-    => SProxy label
+    => Proxy label
     -> (leftIn -> leftOut)
     -> Validated leftIn right
     -> ValidatedVariants lefts right
@@ -40,8 +41,8 @@ relabel
     => Cons toLabel value lefts leftsOut
     => IsSymbol fromLabel
     => IsSymbol toLabel
-    => SProxy fromLabel
-    -> SProxy toLabel
+    => Proxy fromLabel
+    -> Proxy toLabel
     -> Validated (container (Variant leftsIn)) right
     -> Validated (container (Variant leftsOut)) right
 relabel fromLabel toLabel = lmap (map (on fromLabel (inj toLabel) identity))
@@ -56,8 +57,8 @@ relabelMap
     => Cons toLabel leftOut lefts leftsOut
     => IsSymbol fromLabel
     => IsSymbol toLabel
-    => SProxy fromLabel
-    -> SProxy toLabel
+    => Proxy fromLabel
+    -> Proxy toLabel
     -> (leftIn -> leftOut)
     -> Validated (container (Variant leftsIn)) right
     -> Validated (container (Variant leftsOut)) right

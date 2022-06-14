@@ -4,12 +4,13 @@ import Prelude
 
 import Async (Async, alwaysRight)
 import Data.Array (fromFoldable)
-import Data.Variant (SProxy(..), Variant, inj, match)
+import Data.Variant (Variant, inj, match)
 import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, noContent)
-import Simple.JSON (writeJSON)
 import TeamTavern.Server.Architecture.Deployment (Deployment)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo, setCookieHeaderFull)
 import TeamTavern.Server.Player.Register.LogError (RegisterError)
+import Type.Proxy (Proxy(..))
+import Yoga.JSON (writeJSON)
 
 type OkContent = { nickname :: String }
 
@@ -31,16 +32,16 @@ errorResponse = match
     , registration: \errors ->
         errors
         <#> (match
-            { nickname: const $ inj (SProxy :: SProxy "invalidNickname") {}
-            , password: const $ inj (SProxy :: SProxy "invalidPassword") {}
+            { nickname: const $ inj (Proxy :: _ "invalidNickname") {}
+            , password: const $ inj (Proxy :: _ "invalidPassword") {}
             })
         # fromFoldable
-        # inj (SProxy :: SProxy "registration")
+        # inj (Proxy :: _ "registration")
         # (writeJSON :: BadRequestContent -> String)
         # badRequest_
     , randomError: const internalServerError__
     , nicknameTaken: const $ badRequest_ $ writeJSON $
-        (inj (SProxy :: SProxy "nicknameTaken") {} :: BadRequestContent)
+        (inj (Proxy :: _ "nicknameTaken") {} :: BadRequestContent)
     , databaseError: const internalServerError__
     , cantReadId: const internalServerError__
     , noSessionStarted: const internalServerError__

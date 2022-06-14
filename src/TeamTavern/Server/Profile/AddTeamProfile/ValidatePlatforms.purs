@@ -2,16 +2,16 @@ module TeamTavern.Server.Profile.AddTeamProfile.ValidatePlatforms where
 
 import Prelude
 
-import Data.Array (elem)
 import Data.Array as Array
-import Data.Array.NonEmpty (NonEmptyArray)
+import Data.Array.NonEmpty (NonEmptyArray, elem)
 import Data.Array.NonEmpty as NonEmptyArray
 import Data.List.NonEmpty as NonEmptyList
 import Data.Maybe (Maybe(..))
 import Data.Validated as Validated
 import Data.Validated.Label (ValidatedVariants)
-import Data.Variant (SProxy(..), inj)
+import Data.Variant (inj)
 import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
+import Type.Proxy (Proxy(..))
 
 validatePlatforms
     :: forall errors
@@ -23,7 +23,7 @@ validatePlatforms allPlatforms selectedPlatforms = let
     filteredSelectedPlatforms = selectedPlatforms # Array.filter (flip elem nonEmptyAllPlatforms)
     in
     case NonEmptyArray.fromArray filteredSelectedPlatforms of
-    Nothing ->  Validated.invalid $ NonEmptyList.singleton $ inj (SProxy :: SProxy "platforms")
+    Nothing ->  Validated.invalid $ NonEmptyList.singleton $ inj (Proxy :: _ "platforms")
         [ "Error validating platforms, team profile provided no valid platforms."
         , "Game platforms: " <> show allPlatforms
         , "Profile platforms: " <> show selectedPlatforms

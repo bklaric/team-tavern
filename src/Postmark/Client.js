@@ -1,14 +1,12 @@
-"use strict";
+import * as postmark from "postmark"
 
-var postmark = require("postmark")
-
-exports.create = function (serverKey) {
+export const create = function (serverKey) {
     return function () {
         return new postmark.ServerClient(serverKey)
     }
 }
 
-exports.sendEmailImpl = function (message) {
+export const sendEmailImpl = function (message) {
     return function (errorCallback) {
         return function (successCallback) {
             return function (client) {

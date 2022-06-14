@@ -5,7 +5,7 @@ import Prelude
 import Data.Maybe (Maybe)
 import Data.String (length)
 import Data.Validated.Label (ValidatedVariants)
-import Data.Variant (SProxy(..))
+import Type.Proxy (Proxy(..))
 import TeamTavern.Server.Profile.Infrastructure.ValidateContact (validateContact)
 
 newtype GamerTag = GamerTag String
@@ -38,4 +38,4 @@ isGamerTagValid gamerTag = minNameLength <= length gamerTag && length gamerTag <
 
 validateGamerTag :: forall errors. Maybe String -> ValidatedVariants (gamerTag :: String | errors) (Maybe GamerTag)
 validateGamerTag gamerTag =
-    validateContact gamerTag isGamerTagValid GamerTag (SProxy :: _ "gamerTag") ("Invalid GamerTag: " <> _)
+    validateContact gamerTag isGamerTagValid GamerTag (Proxy :: _ "gamerTag") ("Invalid GamerTag: " <> _)

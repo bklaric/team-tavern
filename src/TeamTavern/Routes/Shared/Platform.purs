@@ -6,12 +6,12 @@ import Control.Monad.Except (except)
 import Data.Bifunctor (lmap)
 import Data.Either (Either, note)
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Show (genericShow)
+import Data.Show.Generic (genericShow)
 import Data.List.NonEmpty as NonEmptyList
 import Data.Maybe (Maybe(..))
 import Foreign (ForeignError(..), readString)
 import Jarilo.FromComponent (class FromComponent)
-import Simple.JSON (class ReadForeign, class WriteForeign, writeImpl)
+import Yoga.JSON (class ReadForeign, class WriteForeign, writeImpl)
 
 data Platform = Steam | Riot | BattleNet | PlayStation | Xbox | Switch
 

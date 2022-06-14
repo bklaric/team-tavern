@@ -10,7 +10,7 @@ import Data.Bifunctor (lmap)
 import Data.Bifunctor.Label (label, relabel)
 import Data.List.NonEmpty as NonEmptyList
 import Data.List.Types (NonEmptyList)
-import Data.Symbol (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Data.Variant (Variant)
 import TeamTavern.Routes.Shared.Platform (Platform)
 import TeamTavern.Server.Domain.Text (Text)
@@ -43,14 +43,14 @@ validateProfile
     -> ReadProfile.Profile
     -> Async (Variant (profile :: ProfileErrors | errors)) Profile
 validateProfile
-    { platforms, fields }
+    { fields }
     { platform, fieldValues, newOrReturning, about, ambitions } =
     { platform, fieldValues: _, newOrReturning, about: _, ambitions: _ }
     <$> validateFieldValues fields fieldValues
     <*> validateAbout about
     <*> validateAmbitions ambitions
     # Async.fromValidated
-    # label (SProxy :: SProxy "profile")
+    # label (Proxy :: _ "profile")
 
 validateProfileV
     :: forall errors
@@ -59,6 +59,6 @@ validateProfileV
     -> AsyncV (NonEmptyList (Variant (playerProfile :: ProfileErrors | errors))) Profile
 validateProfileV game =
     validateProfile game
-    >>> relabel (SProxy :: SProxy "profile") (SProxy :: SProxy "playerProfile")
+    >>> relabel (Proxy :: _ "profile") (Proxy :: _ "playerProfile")
     >>> lmap NonEmptyList.singleton
     >>> AsyncV.fromAsync

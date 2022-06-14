@@ -5,7 +5,7 @@ import Prelude
 import Async (Async)
 import Data.Const (Const)
 import Data.Maybe (Maybe(..))
-import Data.Variant (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Halogen (ComponentHTML, Slot)
 import Halogen.HTML (HTML)
 import TeamTavern.Client.Components.Input (checkboxInput, dateInput, inputError, inputGroup, inputLabel, inputUnderlabel, textLineInput)
@@ -41,14 +41,14 @@ locationInputGroup
 locationInputGroup value onValue =
     inputGroup
     [ inputLabel "fas fa-globe-europe" "Location"
-    , singleTreeSelect (SProxy :: SProxy "location")
+    , singleTreeSelect (Proxy :: _ "location")
         { entries: allRegions <#> locationToEntry
         , selected: value
         , labeler: identity
         , comparer: (==)
         , filter: "Search locations"
         }
-        \location -> Just $ onValue location
+        onValue
     , inputUnderlabel
         $  "You can select either a specific country or "
         <> "one of the containing regions."
@@ -62,14 +62,14 @@ languagesInputGroup
 languagesInputGroup value onValue =
     inputGroup
     [ inputLabel "fas fa-comments" "Language"
-    , multiSelect (SProxy :: SProxy "language")
+    , multiSelect (Proxy :: _ "language")
         { options: allLanguages
         , selected: value
         , labeler: identity
         , comparer: (==)
         , filter: Just "Search languages"
         }
-        \languages -> Just $ onValue languages
+        onValue
     ]
 
 microphoneInputGroup :: forall slots action. Boolean -> (Boolean -> action) -> HTML slots action

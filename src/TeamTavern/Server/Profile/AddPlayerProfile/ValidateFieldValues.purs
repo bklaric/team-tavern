@@ -6,20 +6,21 @@ import Data.Array (foldl)
 import Data.Array as Array
 import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
-import Data.Generic.Rep.Show (genericShow)
 import Data.List.NonEmpty as NonEmptyList
 import Data.List.Types (NonEmptyList)
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..))
+import Data.Show.Generic (genericShow)
 import Data.Tuple (Tuple(..))
 import Data.Validated (Validated)
 import Data.Validated as Validated
-import Data.Variant (SProxy(..), Variant, inj)
+import Data.Variant (Variant, inj)
 import TeamTavern.Server.Profile.AddPlayerProfile.LoadFields as LoadFields
 import TeamTavern.Server.Profile.AddPlayerProfile.ReadProfile as ReadProfile
 import TeamTavern.Server.Profile.Infrastructure.ValidateUrl (validateUrl)
 import TeamTavern.Server.Profile.Infrastructure.ValidateUrl as ValidateUrl
+import Type.Proxy (Proxy(..))
 
 -- Profile types.
 
@@ -111,7 +112,7 @@ validateField fieldValues (Field id key (UrlField domain)) =
     Just fieldValue | Just url <- fieldValue.url ->
         case validateUrl domain url of
         Right url' -> Just $ Right $ FieldValue id $ Url url'
-        Left errors -> Just $ Left $ inj (SProxy :: SProxy "url")
+        Left errors -> Just $ Left $ inj (Proxy :: _ "url")
             { message: [ "Field value for field " <> key <> " is invalid: " <> show errors ], key }
     _ -> Nothing
 validateField fieldValues (Field id key (SingleField options)) =

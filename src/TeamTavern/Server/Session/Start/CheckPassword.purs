@@ -9,16 +9,17 @@ import Data.Array (head)
 import Data.Bifunctor.Label (label, labelMap)
 import Data.Newtype (wrap)
 import Data.Traversable (traverse)
-import Data.Variant (SProxy(..), Variant, inj)
+import Data.Variant (Variant, inj)
 import Foreign (MultipleErrors)
 import Node.Errors as Node
 import Postgres.Async.Query (query)
 import Postgres.Error as Postgres
 import Postgres.Query (class Querier, Query(..), (:))
 import Postgres.Result (Result, rows)
-import Simple.JSON.Async (read)
 import TeamTavern.Server.Player.Domain.Id (Id)
 import TeamTavern.Server.Player.Domain.Nickname (Nickname)
+import Type.Proxy (Proxy(..))
+import Yoga.JSON.Async (read)
 
 type CheckPasswordModel =
     { nickname :: String
@@ -67,16 +68,16 @@ checkPassword model querier = do
     -- Load player hash.
     result <- querier
         # query queryString (model.nickname : [])
-        # label (SProxy :: SProxy "databaseError")
+        # label (Proxy :: _ "databaseError")
     dtos <- rows result
         # traverse read
-        # labelMap (SProxy :: SProxy "unreadableHash")
+        # labelMap (Proxy :: _ "unreadableHash")
             { result, errors: _ }
     { id, nickname, hash } :: CheckPasswordDto <- head dtos
-        # note (inj (SProxy :: SProxy "noMatchingPlayer") model.nickname)
+        # note (inj (Proxy :: _ "noMatchingPlayer") model.nickname)
 
     -- Compare hash with password.
-    matches <- Bcrypt.compare model.password hash # label (SProxy :: SProxy "bcrypt")
-    when (not matches) $ left $ inj (SProxy :: SProxy "passwordDoesntMatch") nickname
+    matches <- Bcrypt.compare model.password hash # label (Proxy :: _ "bcrypt")
+    when (not matches) $ left $ inj (Proxy :: _ "passwordDoesntMatch") nickname
 
     pure $ { id: wrap id, nickname: wrap nickname }

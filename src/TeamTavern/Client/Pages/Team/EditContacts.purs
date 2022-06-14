@@ -7,7 +7,7 @@ import Data.Array (foldl, nubEq)
 import Data.Const (Const)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
-import Data.Variant (SProxy(..), match)
+import Data.Variant (match)
 import Halogen as H
 import Halogen.HTML as HH
 import Record.Extra (pick)
@@ -107,7 +107,7 @@ handleAction (Update event) = do
             badContent
         Nothing -> H.put currentState { submitting = false, otherError = true }
 
-component :: forall query fields output left. H.Component HH.HTML query (Input fields) output (Async left)
+component :: forall query fields output left. H.Component query (Input fields) output (Async left)
 component = H.mkComponent
     { initialState: \player ->
         { handle: player.handle
@@ -140,8 +140,8 @@ component = H.mkComponent
 editContacts
     :: forall fields action slots left
     .  Input fields
-    -> (Modal.Output Void -> Maybe action)
+    -> (Modal.Output Void -> action)
     -> HH.ComponentHTML action (editContacts :: Slot | slots) (Async left)
 editContacts input handleMessage = HH.slot
-    (SProxy :: SProxy "editContacts") unit
+    (Proxy :: _ "editContacts") unit
     (Modal.component "Edit contacts" component) input handleMessage

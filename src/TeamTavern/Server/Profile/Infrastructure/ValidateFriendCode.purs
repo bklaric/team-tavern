@@ -6,7 +6,7 @@ import Data.Int (fromString)
 import Data.Maybe (Maybe, isJust)
 import Data.String (Pattern(..), length, split)
 import Data.Validated.Label (ValidatedVariants)
-import Data.Variant (SProxy(..))
+import Type.Proxy (Proxy(..))
 import TeamTavern.Server.Profile.Infrastructure.ValidateContact (validateContact)
 
 newtype FriendCode = FriendCode String
@@ -32,4 +32,4 @@ isFriendCodeValid friendCode =
 
 validateFriendCode :: forall errors. Maybe String -> ValidatedVariants (friendCode :: String | errors) (Maybe FriendCode)
 validateFriendCode friendCode =
-    validateContact friendCode isFriendCodeValid FriendCode (SProxy :: _ "friendCode") ("Invalid FriendCode: " <> _)
+    validateContact friendCode isFriendCodeValid FriendCode (Proxy :: _ "friendCode") ("Invalid FriendCode: " <> _)

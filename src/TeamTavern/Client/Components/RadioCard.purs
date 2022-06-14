@@ -2,7 +2,6 @@ module TeamTavern.Client.Components.RadioCard where
 
 import Prelude
 
-import Data.Maybe (Maybe(..))
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import TeamTavern.Client.Components.Picture (picture)
@@ -16,7 +15,7 @@ radioCard :: forall slots action.
 radioCard backgroundUrl selected onSelect children =
     HH.div
     [ HS.class_ if selected then "selected-radio-card" else "radio-card"
-    , HE.onClick $ const $ Just onSelect
+    , HE.onClick $ const onSelect
     ]
     [ picture "radio-card-image" "Game banner" backgroundUrl
     , HH.div

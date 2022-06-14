@@ -6,7 +6,7 @@ import Async (Async)
 import Client.Pages.Home.ForTeams (forTeams)
 import Data.Const (Const)
 import Data.Maybe (Maybe(..))
-import Data.Symbol (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
@@ -69,7 +69,7 @@ handleAction (OpenGames mouseEvent) = do
     preventMouseDefault mouseEvent
     navigate_ "/games"
 
-component :: forall query input output left. H.Component HH.HTML query input output (Async left)
+component :: forall query input output left. H.Component query input output (Async left)
 component = H.mkComponent
     { initialState: const unit
     , render
@@ -81,4 +81,4 @@ component = H.mkComponent
 
 home :: forall query children left.
     HH.ComponentHTML query (home :: Slot Unit | children) (Async left)
-home = HH.slot (SProxy :: SProxy "home") unit component unit absurd
+home = HH.slot (Proxy :: _ "home") unit component unit absurd

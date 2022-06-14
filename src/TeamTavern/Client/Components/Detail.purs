@@ -8,7 +8,7 @@ import Client.Components.Copyable as Copyable
 import Data.Array as Array
 import Data.Foldable (foldr)
 import Data.Maybe (Maybe(..))
-import Data.Symbol (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Anchor (textAnchor)
 import TeamTavern.Client.Snippets.Class as HS
@@ -63,7 +63,7 @@ discordTagDetail
 discordTagDetail _ Nothing = Nothing
 discordTagDetail nickname (Just discordTag) = Just $
     fieldDetail "fab fa-discord" "Discord tag"
-    [ copyable (SProxy :: SProxy "discordTag") ("discordTag-" <> nickname) discordTag ]
+    [ copyable (Proxy :: _ "discordTag") ("discordTag-" <> nickname) discordTag ]
 
 arrangeItems :: forall slots action. String -> Array String -> Array (HH.HTML slots action)
 arrangeItems binder items =

@@ -1,34 +1,32 @@
-"use strict";
-
-exports.url = function (url) {
-    return function() {
+export const url = function (url) {
+    return function () {
         return new URL(url);
     }
 }
 
-exports.href = function (url) {
+export const href = function (url) {
     return function () {
         return url.href;
     }
 }
 
-exports.searchParams = function (url) {
-    return function() {
+export const searchParams = function (url) {
+    return function () {
         return url.searchParams;
     }
 }
 
-exports.append = function (key) {
+export const append = function (key) {
     return function (value) {
         return function (params) {
-            return function() {
+            return function () {
                 params.append(key, value);
             }
         }
     }
 }
 
-exports.set = function (key) {
+export const set = function (key) {
     return function (value) {
         return function (params) {
             return function () {
@@ -38,32 +36,32 @@ exports.set = function (key) {
     }
 }
 
-exports.getImpl = function (key) {
+export const getImpl = function (key) {
     return function (params) {
-        return function() {
+        return function () {
             return params.get(key);
         }
     }
 }
 
-exports.getAll = function (key) {
+export const getAll = function (key) {
     return function (params) {
-        return function() {
+        return function () {
             return params.getAll(key);
         }
     }
 }
 
-exports.delete = function (key) {
+export const delete = function (key) {
     return function (params) {
-        return function() {
+        return function () {
             params.delete(key);
         }
     }
 }
 
-exports.keys = function (params) {
-    return function() {
+export const keys = function (params) {
+    return function () {
         return Array.from(params.keys());
     }
 }

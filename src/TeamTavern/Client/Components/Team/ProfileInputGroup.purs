@@ -4,15 +4,16 @@ import Prelude
 
 import Async (Async)
 import Data.Array as Array
+import Data.Foldable (any)
 import Data.Maybe (Maybe(..), maybe)
 import Data.MultiMap (MultiMap)
 import Data.MultiMap as MultiMap
-import Data.Variant (SProxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Input (checkboxInput, inputError, inputGroup, inputLabel, textInput_)
 import TeamTavern.Client.Components.Select.MultiSelect (multiSelectIndexed)
 import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
+import Type.Proxy (Proxy(..))
 
 type Option =
     { key :: String
@@ -40,16 +41,16 @@ fieldInputGroup
 fieldInputGroup fieldValues onValue field =
     inputGroup
     [ inputLabel field.icon field.label
-    , multiSelectIndexed (SProxy :: SProxy "multiSelectField") field.key
+    , multiSelectIndexed (Proxy :: _ "multiSelectField") field.key
         { options: field.options
         , selected: MultiMap.lookup field.key fieldValues # maybe [] \optionKeys ->
             field.options # Array.filter \option ->
-                optionKeys # Array.any (_ == option.key)
+                optionKeys # any (_ == option.key)
         , labeler: _.label
         , comparer: \optionLeft optionRight -> optionLeft.key == optionRight.key
         , filter: Nothing
         }
-        (Just <<< onValue field.key)
+        (onValue field.key)
     ]
 
 newOrReturningInputGroup :: forall slots action.

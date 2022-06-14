@@ -3,7 +3,7 @@ module TeamTavern.Server.Team.Infrastructure.LogError where
 import Prelude
 
 import Data.Array as Array
-import Data.Symbol (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Data.Variant (match)
 import Effect (Effect, foreachE)
 import Prim.Row (class Lacks)
@@ -14,6 +14,6 @@ import TeamTavern.Server.Team.Infrastructure.ValidateTeam (TeamErrors)
 
 teamHandler :: forall fields. Lacks "team" fields =>
     Builder (Record fields) { team :: TeamErrors -> Effect Unit | fields }
-teamHandler = Builder.insert (SProxy :: SProxy "team") \errors ->
+teamHandler = Builder.insert (Proxy :: _ "team") \errors ->
     foreachE (Array.fromFoldable errors) $ match
     { name: logLines, website: logLines }

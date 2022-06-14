@@ -4,7 +4,7 @@ import Prelude
 
 import Data.Array as Array
 import Data.List.Types (NonEmptyList)
-import Data.Variant (SProxy(..), Variant, match)
+import Data.Variant (Variant, match)
 import Effect (Effect, foreachE)
 import Prim.Row (class Lacks)
 import Record.Builder (Builder)
@@ -14,6 +14,7 @@ import TeamTavern.Server.Infrastructure.Log as Log
 import TeamTavern.Server.Profile.AddTeamProfile.ValidateProfile (ProfileErrors)
 import TeamTavern.Server.Team.Infrastructure.ValidateContacts (ContactsErrors)
 import Type (type ($))
+import Type.Proxy (Proxy(..))
 
 type AddProfileError = Variant
     ( internal :: Array String
@@ -35,7 +36,7 @@ invalidBodyHandler :: forall fields. Lacks "invalidBody" fields =>
         )
         -> Effect Unit
     | fields }
-invalidBodyHandler = Builder.insert (SProxy :: SProxy "invalidBody") \errors ->
+invalidBodyHandler = Builder.insert (Proxy :: _ "invalidBody") \errors ->
     foreachE (Array.fromFoldable errors) $ match
     { teamProfile: \errors' -> logt $ "Team profile errors: " <> show errors'
     , teamContacts: \errors' -> logt $ "Team contacts errors: " <> show errors'

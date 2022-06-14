@@ -10,12 +10,12 @@ import Client.Pages.Home.ForTeams (forTeams')
 import Data.Bifunctor (lmap)
 import Data.Const (Const)
 import Data.Maybe (Maybe(..))
-import Data.Symbol (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Effect.Class (class MonadEffect)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
-import Simple.JSON.Async as JsonAsync
+import Yoga.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.Boarding.PlayerOrTeamInput as Boarding
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Pages.Home.CallToAction (callToAction')
@@ -120,7 +120,7 @@ handleAction (OpenTeamProfiles handle mouseEvent) = do
     navigate_ $ "/games/" <> handle <> "/teams"
 
 component :: forall query output left.
-    H.Component HH.HTML query Input output (Async left)
+    H.Component query Input output (Async left)
 component = H.mkComponent
     { initialState: Empty
     , render
@@ -133,4 +133,4 @@ component = H.mkComponent
 
 game :: forall query children left.
     Input -> HH.ComponentHTML query (game :: Slot | children) (Async left)
-game input = HH.slot (SProxy :: SProxy "game") unit component input absurd
+game input = HH.slot (Proxy :: _ "game") unit component input absurd

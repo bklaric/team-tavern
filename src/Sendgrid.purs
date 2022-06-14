@@ -6,7 +6,7 @@ import Async (Async, fromEitherCont)
 import Data.Array (singleton)
 import Data.Bifunctor.Label (labelMap)
 import Data.Either (Either(..))
-import Data.Symbol (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Effect (Effect)
 import Node.Errors (Error)
 import TeamTavern.Server.Infrastructure.Error (InternalError)
@@ -29,4 +29,4 @@ send callback message = sendImpl (callback <<< Left) (callback $ Right unit) mes
 
 sendAsync :: forall errors. Message -> Async (InternalError errors) Unit
 sendAsync message =
-    labelMap (SProxy :: _ "internal") (singleton <<< print) $ fromEitherCont $ flip send message
+    labelMap (Proxy :: _ "internal") (singleton <<< print) $ fromEitherCont $ flip send message

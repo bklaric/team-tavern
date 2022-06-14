@@ -8,7 +8,7 @@ import Data.Bifunctor.Label (label)
 import Data.Map (Map)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
-import Data.Symbol (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Perun.Request.Body (Body)
 import Perun.Response (Response)
 import Postgres.Pool (Pool)
@@ -57,7 +57,7 @@ addPlayerProfile pool identifiers cookies body =
             <$> validateProfileV game profile'.details
             <*> validateContactsV [ profile'.details.platform ] profile'.contacts
             # AsyncV.toAsync
-            # label (SProxy :: _ "invalidBody")
+            # label (Proxy :: _ "invalidBody")
 
         -- Add profile to database.
         profileId <- addProfile client (unwrap cookieInfo.id) identifiers profile

@@ -8,7 +8,7 @@ import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.MultiMap (toUnfoldable')
 import Data.Tuple (Tuple(..))
-import Data.Variant (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Record as Record
@@ -73,7 +73,7 @@ sendRequest { handle, playerOrTeam, email, filters } = do
             , timezone
             , filters:
                 filters
-                # Record.insert (SProxy :: _ "fields")
+                # Record.insert (Proxy :: _ "fields")
                     (filters.fieldValues # toUnfoldable' <#> \(Tuple fieldKey optionKeys) ->
                         { fieldKey, optionKeys })
                 # pick
@@ -91,7 +91,7 @@ handleAction (SendRequest event) = do
         Just (Left _) -> H.modify_ _ { emailError = true, submitting = false }
         Nothing -> H.modify_ _ { otherError = true, submitting = false }
 
-component :: forall query left. H.Component HH.HTML query Input Output (Async left)
+component :: forall query left. H.Component query Input Output (Async left)
 component = H.mkComponent
     { initialState: \{ handle, playerOrTeam, filters } ->
         { handle
@@ -113,8 +113,8 @@ title Team = "Create team profile alert"
 createAlert
     :: forall slots action left
     .  Input
-    -> (Modal.Output Output -> Maybe action)
+    -> (Modal.Output Output -> action)
     -> HH.ComponentHTML action (createAlert :: Slot | slots) (Async left)
 createAlert input handleMessage = HH.slot
-    (SProxy :: _ "createAlert") unit
+    (Proxy :: _ "createAlert") unit
     (Modal.component (title input.playerOrTeam) component) input handleMessage

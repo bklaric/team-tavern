@@ -10,7 +10,7 @@ import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..))
 import Data.Monoid (guard)
-import Data.Symbol (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Record.Extra (pick)
@@ -215,7 +215,7 @@ handleAction (UpdatePsnId psnId)           = H.modify _ { contacts { psnId      
 handleAction (UpdateGamerTag gamerTag)     = H.modify _ { contacts { gamerTag   = gamerTag   } } >>= raiseOutput
 handleAction (UpdateFriendCode friendCode) = H.modify _ { contacts { friendCode = friendCode } } >>= raiseOutput
 
-component :: forall query left. H.Component HH.HTML query Input Output (Async left)
+component :: forall query left. H.Component query Input Output (Async left)
 component = H.mkComponent
     { initialState: \input -> input { details { fieldValues = fieldValuesToMap input.details.fieldValues } }
     , render
@@ -264,4 +264,4 @@ profileFormInput
     -> (Output -> action)
     -> HH.ComponentHTML action (playerProfileFormInput :: Slot | slots) (Async left)
 profileFormInput input handleMessage =
-    HH.slot (SProxy :: _ "playerProfileFormInput") unit component input (Just <<< handleMessage)
+    HH.slot (Proxy :: _ "playerProfileFormInput") unit component input handleMessage

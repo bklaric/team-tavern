@@ -9,14 +9,14 @@ import Browser.Async.Fetch.Response as FetchRes
 import Data.Bifunctor (lmap)
 import Data.Const (Const)
 import Data.Maybe (Maybe(..))
-import Data.Symbol (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Effect.Class (class MonadEffect)
 import Halogen (ClassName(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import Simple.JSON.Async as JsonAsync
+import Yoga.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.Ads (descriptionLeaderboards, stickyLeaderboards)
 import TeamTavern.Client.Components.Divider (whiteDivider)
 import TeamTavern.Client.Components.Picture (picture)
@@ -129,7 +129,7 @@ handleAction (Navigate url stopBubble event) = do
     navigateWithEvent_ url event
 
 component :: forall query output left.
-    H.Component HH.HTML query State output (Async left)
+    H.Component query State output (Async left)
 component =
     H.mkComponent
         { initialState: identity
@@ -144,4 +144,4 @@ games
     :: forall query children left
     .  HH.ComponentHTML query (games :: Slot Unit | children) (Async left)
 games =
-    HH.slot (SProxy :: SProxy "games") unit component Empty absurd
+    HH.slot (Proxy :: _ "games") unit component Empty absurd

@@ -16,7 +16,7 @@ import Data.List.NonEmpty as NonEmptyList
 import Data.Maybe (Maybe(..), isJust, maybe)
 import Data.MultiMap as MultiMap
 import Data.String as String
-import Data.Symbol (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Data.Traversable (traverse)
 import Data.Tuple (Tuple(..))
 import Effect (Effect, foreachE)
@@ -24,7 +24,7 @@ import Effect.Class (class MonadEffect)
 import Effect.Timer (setTimeout)
 import Halogen as H
 import Halogen.HTML as HH
-import Simple.JSON.Async as Json
+import Yoga.JSON.Async as Json
 import TeamTavern.Client.Components.Boarding.PlayerOrTeamInput as Boarding
 import TeamTavern.Client.Components.Content (contentColumns)
 import TeamTavern.Client.Components.Team.ProfileInputGroup (FieldValues)
@@ -415,7 +415,7 @@ handleAction OpenTeamPreboarding = do
         _ -> pure unit
 
 component :: forall query output left.
-    H.Component HH.HTML query Input output (Async left)
+    H.Component query Input output (Async left)
 component = H.mkComponent
     { initialState: Empty
     , render
@@ -428,4 +428,4 @@ component = H.mkComponent
 
 profiles :: forall query children left.
     Input -> HH.ComponentHTML query (profiles :: Slot | children) (Async left)
-profiles input = HH.slot (SProxy :: SProxy "profiles") unit component input absurd
+profiles input = HH.slot (Proxy :: _ "profiles") unit component input absurd

@@ -9,7 +9,7 @@ import Data.Array.Extra (full)
 import Data.Const (Const)
 import Data.Maybe (Maybe(..), isNothing)
 import Data.Monoid (guard)
-import Data.Symbol (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
@@ -120,13 +120,13 @@ profileSection handle profile = let
         [ if full profile.platforms.tail
         then
         HH.div [ HS.class_ "team-profile-heading-container" ] $
-            [ profileHeading (SProxy :: SProxy "players") profile.nickname
+            [ profileHeading (Proxy :: _ "players") profile.nickname
                 ("/players/" <> profile.nickname) profile.nickname
             ]
             <> [ platformBadge profile.platform, profileSubheading $ "Updated " <> lastUpdated profile.updatedSeconds ]
         else
         HH.div_ $
-            [ profileHeading (SProxy :: SProxy "players") profile.nickname
+            [ profileHeading (Proxy :: _ "players") profile.nickname
                 ("/players/" <> profile.nickname) profile.nickname
             ]
             <> [ divider, profileSubheading $ "Updated " <> lastUpdated profile.updatedSeconds ]
@@ -158,7 +158,7 @@ profileSection handle profile = let
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { handle, profiles, profileCount, playerInfo, page } =
     HH.div_ $ [
-    HH.div [ HP.id_ "profiles-card", HS.class_ "card" ] $
+    HH.div [ HP.id "profiles-card", HS.class_ "card" ] $
     [ cardHeader $
         [ HH.div_
             [ cardHeading "Player profiles"
@@ -194,7 +194,7 @@ handleAction (OpenPreboarding mouseEvent) = do
     preventMouseDefault mouseEvent
     H.raise PreboardingClicked
 
-component :: forall query left. H.Component HH.HTML query Input Output (Async left)
+component :: forall query left. H.Component query Input Output (Async left)
 component = H.mkComponent
     { initialState: identity
     , render
@@ -207,7 +207,7 @@ component = H.mkComponent
 playerProfiles
     :: forall children action left
     .  Input
-    -> (Output -> Maybe action)
+    -> (Output -> action)
     -> HH.ComponentHTML action (playerProfiles :: Slot | children) (Async left)
 playerProfiles input handleOutput =
-    HH.slot (SProxy :: SProxy "playerProfiles") unit component input handleOutput
+    HH.slot (Proxy :: _ "playerProfiles") unit component input handleOutput

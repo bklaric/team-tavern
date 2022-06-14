@@ -2,7 +2,6 @@ module TeamTavern.Client.Components.PasswordInput where
 
 import Prelude
 
-import Data.Maybe (Maybe(..))
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties (ButtonType(..), InputType(..))
@@ -14,14 +13,14 @@ passwordInput :: forall slots action.
 passwordInput password passwordShown onPassword togglePasswordVisibility =
     HH.div [ HS.class_ "password-input-container" ]
     [ HH.input
-        [ HP.id_ "password"
+        [ HP.id "password"
         , HS.class_ "password-input"
         , HP.type_
             if passwordShown
             then InputText
             else InputPassword
         , HP.value password
-        , HE.onValueInput $ Just <<< onPassword
+        , HE.onValueInput onPassword
         ]
     , HH.button
         [ HS.class_ "password-input-button"
@@ -30,7 +29,7 @@ passwordInput password passwordShown onPassword togglePasswordVisibility =
             if passwordShown
             then "Hide password"
             else "Show password"
-        , HE.onClick $ const $ Just togglePasswordVisibility
+        , HE.onClick $ const togglePasswordVisibility
         ]
         [ HH.i
             [ HS.class_

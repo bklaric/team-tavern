@@ -3,7 +3,7 @@ module TeamTavern.Server.Session.Start where
 import Prelude
 
 import Async (Async, examineLeftWithEffect)
-import Data.Symbol (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Data.Variant (inj)
 import Perun.Request.Body (Body)
 import Perun.Response (Response)
@@ -28,7 +28,7 @@ start deployment pool cookies body =
     -- Read start model.
     model <- readModel body
 
-    pool # withTransaction (inj (SProxy :: SProxy "databaseError")) \client -> do
+    pool # withTransaction (inj (Proxy :: _ "databaseError")) \client -> do
         -- Check if password hash matches.
         { id, nickname } <- checkPassword model client
 

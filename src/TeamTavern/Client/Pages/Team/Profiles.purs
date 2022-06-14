@@ -8,7 +8,7 @@ import Data.Array as Array
 import Data.Array.Extra (full)
 import Data.Const (Const)
 import Data.Monoid (guard)
-import Data.Symbol (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Card (card, cardHeader, cardHeading, cardSection)
@@ -46,7 +46,7 @@ profiles team @ { profiles: profiles' } status showEditProfileModal =
         [ cardHeading "Profiles" ]
         <>
         guard (status == SignedInOwner)
-        [ HH.slot (SProxy :: SProxy "createProfile") unit createProfileButton team absurd ]
+        [ HH.slot (Proxy :: _ "createProfile") unit createProfileButton team absurd ]
     ]
     <>
     if Array.null profiles'
@@ -62,7 +62,7 @@ profiles team @ { profiles: profiles' } status showEditProfileModal =
         cardSection $
         [ profileHeader $
             [ HH.div [ HS.class_ "team-profile-heading-container" ] $
-                [ profileHeading' (SProxy :: SProxy "games") profile.handle
+                [ profileHeading' (Proxy :: _ "games") profile.handle
                     ("/games/" <> profile.handle <> "/teams") profile.title
                 , case profile.size of
                     Party -> partyBadge

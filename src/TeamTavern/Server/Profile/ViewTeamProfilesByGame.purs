@@ -3,7 +3,7 @@ module TeamTavern.Server.Profile.ViewTeamProfilesByGame where
 import Prelude
 
 import Async (Async, examineLeftWithEffect)
-import Data.Variant (SProxy(..), inj)
+import Data.Variant (inj)
 import Perun.Response (Response)
 import Postgres.Async.Pool (withTransaction)
 import Postgres.Pool (Pool)
@@ -25,7 +25,7 @@ viewTeamProfilesByGame
     -> Async left Response
 viewTeamProfilesByGame pool handle page timezone filters =
     sendResponse $ examineLeftWithEffect logError do
-    pool # withTransaction (inj (SProxy :: SProxy "databaseError"))
+    pool # withTransaction (inj (Proxy :: _ "databaseError"))
         \client -> do
             -- Load profiles.
             profiles <- loadProfiles client handle page timezone filters

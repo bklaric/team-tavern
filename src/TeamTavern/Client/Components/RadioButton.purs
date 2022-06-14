@@ -2,7 +2,6 @@ module TeamTavern.Client.Components.RadioButton where
 
 import Prelude
 
-import Data.Maybe (Maybe(..))
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import TeamTavern.Client.Snippets.Class as HS
@@ -15,7 +14,7 @@ radioButton :: forall slots action.
 radioButton selected onSelect children =
     HH.button
     [ HS.class_ if selected then "selected-radio-button" else "radio-button"
-    , HE.onClick $ const $ Just onSelect
+    , HE.onClick $ const onSelect
     ] $
     children
     <>

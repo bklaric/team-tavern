@@ -30,7 +30,7 @@ register deployment pool cookies body =
     dto <- readDto body
 
     -- Validate register model.
-    model @ { nickname, password } <- validateRegistration dto
+    { nickname, password } <- validateRegistration dto
 
     -- Generate password hash.
     hash <- generateHash password

@@ -2,14 +2,13 @@ module TeamTavern.Server.Profile.Infrastructure.ValidateSteamId (SteamId, toStri
 
 import Prelude
 
-import Data.Char.Unicode (isNumber)
+import Data.CodePoint.Unicode (isNumber)
 import Data.Foldable (all)
 import Data.Maybe (Maybe)
-import Data.String (length)
-import Data.String.CodeUnits (toCharArray)
+import Data.String (length, toCodePointArray)
 import Data.Validated.Label (ValidatedVariants)
-import Data.Variant (SProxy(..))
 import TeamTavern.Server.Profile.Infrastructure.ValidateContact (validateContact)
+import Type.Proxy (Proxy(..))
 
 newtype SteamId = SteamId String
 
@@ -20,8 +19,8 @@ exactLength :: Int
 exactLength = 17
 
 isSteamIdValid :: String -> Boolean
-isSteamIdValid steamId = length steamId == exactLength && (toCharArray steamId # all isNumber)
+isSteamIdValid steamId = length steamId == exactLength && (toCodePointArray steamId # all isNumber)
 
 validateSteamId :: forall errors. Maybe String -> ValidatedVariants (steamId :: String | errors) (Maybe SteamId)
 validateSteamId steamId =
-    validateContact steamId isSteamIdValid SteamId (SProxy :: _ "steamId") ("Invalid SteamId: " <> _)
+    validateContact steamId isSteamIdValid SteamId (Proxy :: _ "steamId") ("Invalid SteamId: " <> _)

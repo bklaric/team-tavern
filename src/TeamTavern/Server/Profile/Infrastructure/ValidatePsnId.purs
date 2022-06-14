@@ -5,7 +5,7 @@ import Prelude
 import Data.Maybe (Maybe)
 import Data.String (length)
 import Data.Validated.Label (ValidatedVariants)
-import Data.Variant (SProxy(..))
+import Type.Proxy (Proxy(..))
 import TeamTavern.Server.Profile.Infrastructure.ValidateContact (validateContact)
 
 newtype PsnId = PsnId String
@@ -27,4 +27,4 @@ isPsnIdValid psnId = minNameLength <= length psnId && length psnId <= maxNameLen
 
 validatePsnId :: forall errors. Maybe String -> ValidatedVariants (psnId :: String | errors) (Maybe PsnId)
 validatePsnId psnId =
-    validateContact psnId isPsnIdValid PsnId (SProxy :: _ "psnId") ("Invalid PsnId: " <> _)
+    validateContact psnId isPsnIdValid PsnId (Proxy :: _ "psnId") ("Invalid PsnId: " <> _)

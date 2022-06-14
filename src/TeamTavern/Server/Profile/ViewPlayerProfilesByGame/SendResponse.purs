@@ -5,7 +5,7 @@ import Prelude
 import Async (Async, alwaysRight)
 import Data.Variant (match)
 import Perun.Response (Response, internalServerError__, ok_)
-import Simple.JSON (writeJSON)
+import Yoga.JSON (writeJSON)
 import TeamTavern.Server.Profile.ViewPlayerProfilesByGame.LoadProfiles (LoadProfilesResult)
 import TeamTavern.Server.Profile.ViewPlayerProfilesByGame.LogError (ViewAllError)
 

@@ -15,7 +15,7 @@ import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..), isNothing, maybe)
 import Data.Monoid (guard)
 import Data.Options ((:=))
-import Data.Symbol (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Data.Variant (match)
 import Effect.Class (class MonadEffect)
 import Foreign (ForeignError(..), fail, readString, unsafeToForeign)
@@ -25,9 +25,9 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Record as Record
 import Record.Extra (pick)
-import Simple.JSON (class ReadForeign, class WriteForeign)
-import Simple.JSON as Json
-import Simple.JSON.Async as JsonAsync
+import Yoga.JSON (class ReadForeign, class WriteForeign)
+import Yoga.JSON as Json
+import Yoga.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.Ads (stickyLeaderboards)
 import TeamTavern.Client.Components.Boarding.Boarding (boarding, boardingButtons, boardingDescription, boardingHeading, boardingStep)
 import TeamTavern.Client.Components.Boarding.GameInput (gameInput)
@@ -319,7 +319,7 @@ sendRequest (state :: State) = Async.unify do
             , gameHandle: game.handle
             , playerProfile: Nothing
             , teamProfile: Just $ pick $ Record.insert
-                (SProxy :: _ "platforms") profile.details.selectedPlatforms profile.details
+                (Proxy :: _ "platforms") profile.details.selectedPlatforms profile.details
             , playerContacts: Nothing
             , teamContacts: Just $ pick profile.contacts
             }
@@ -363,8 +363,8 @@ handleAction (Receive input) = do
     state <- H.get
     H.put
         ( input
-        # Record.insert (SProxy :: SProxy "confirmSkip") false
-        # Record.insert (SProxy :: SProxy "submitting") false
+        # Record.insert (Proxy :: _ "confirmSkip") false
+        # Record.insert (Proxy :: _ "submitting") false
         )
     guard (input.step /= state.step) $ setMeta "Onboarding | TeamTavern" "TeamTavern onboarding."
 handleAction Skip =
@@ -586,11 +586,11 @@ handleAction SetUpAccount = do
         Nothing -> H.put nextState { otherError = true }
 
 component :: forall query output left.
-    H.Component HH.HTML query Input output (Async left)
+    H.Component query Input output (Async left)
 component = H.mkComponent
     { initialState:
-        Record.insert (SProxy :: SProxy "confirmSkip") false
-        >>> Record.insert (SProxy :: SProxy "submitting") false
+        Record.insert (Proxy :: _ "confirmSkip") false
+        >>> Record.insert (Proxy :: _ "submitting") false
     , render
     , eval: H.mkEval H.defaultEval
         { handleAction = handleAction
@@ -601,4 +601,4 @@ component = H.mkComponent
 
 onboarding :: forall action slots left.
     Input -> HH.ComponentHTML action (onboarding :: Slot | slots) (Async left)
-onboarding input = HH.slot (SProxy :: SProxy "onboarding") unit component input absurd
+onboarding input = HH.slot (Proxy :: _ "onboarding") unit component input absurd

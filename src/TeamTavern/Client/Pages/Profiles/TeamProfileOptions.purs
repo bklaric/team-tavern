@@ -3,8 +3,7 @@ module TeamTavern.Client.Pages.Profiles.TeamProfileOptions (teamProfileOptions) 
 import Prelude
 
 import Async (Async, attempt, fromEffect)
-import Data.Maybe (Maybe(..))
-import Data.Symbol (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Data.Tuple (Tuple(..))
 import Effect (Effect)
 import Halogen (lift)
@@ -27,7 +26,7 @@ profileUrl { teamHandle, gameHandle } = do
     origin' <- window >>= location >>= origin
     pure $ origin' <> "/teams/" <> teamHandle <> "/profiles/" <> gameHandle
 
-component :: forall query output left. H.Component HH.HTML query Input output (Async left)
+component :: forall query output left. H.Component query Input output (Async left)
 component = Hooks.component $ \_ input -> Hooks.do
     (Tuple shown shownId) <- usePopover
     let openProfileInNewTab = void $ fromEffect do
@@ -41,7 +40,7 @@ component = Hooks.component $ \_ input -> Hooks.do
         shown
         ([ HH.i
             [ HS.class_ "fas fa-ellipsis-h options-button-icon"
-            , HE.onClick (Just <<< togglePopover shownId)
+            , HE.onClick $ togglePopover shownId
             ]
             []
         ])
@@ -56,4 +55,4 @@ component = Hooks.component $ \_ input -> Hooks.do
 teamProfileOptions :: forall action slots left.
     Input -> HH.ComponentHTML action (teamProfileOptions :: StringSlot | slots) (Async left)
 teamProfileOptions input =
-    HH.slot (SProxy :: _ "teamProfileOptions") input.teamHandle component input absurd
+    HH.slot (Proxy :: _ "teamProfileOptions") input.teamHandle component input absurd

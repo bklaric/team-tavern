@@ -7,7 +7,7 @@ import Data.Array (head)
 import Data.Bifunctor.Label (labelMap)
 import Data.Maybe (Maybe, maybe)
 import Data.String as String
-import Data.Symbol (class IsSymbol, SProxy(..))
+import Data.Symbol (class IsSymbol)
 import Data.Traversable (traverse)
 import Data.Variant (inj)
 import Error.Class (message, name)
@@ -20,9 +20,10 @@ import Postgres.Pool (Pool)
 import Postgres.Query (class Querier, Query, QueryParameter)
 import Postgres.Result (Result, rows)
 import Prim.Row (class Cons)
-import Simple.JSON (class ReadForeign)
-import Simple.JSON.Async (read)
 import TeamTavern.Server.Infrastructure.Error (InternalError, InternalRow, LoadSingleError, ChangeSingleError)
+import Type.Proxy (Proxy(..))
+import Yoga.JSON (class ReadForeign)
+import Yoga.JSON.Async (read)
 
 prepareString :: String -> String
 prepareString string
@@ -85,7 +86,7 @@ reportDatabaseError error =
 
 reportDatabaseError' :: forall right errors.
     Async Error right -> Async (InternalError errors) right
-reportDatabaseError' = labelMap (SProxy :: SProxy "internal") reportDatabaseError
+reportDatabaseError' = labelMap (Proxy :: _ "internal") reportDatabaseError
 
 queryInternal :: forall querier errors. Querier querier =>
     querier -> Query -> Array QueryParameter -> Async (InternalError errors) Result
@@ -96,7 +97,7 @@ queryMany :: forall querier errors rows. Querier querier => ReadForeign rows =>
     querier -> Query -> Array QueryParameter -> Async (InternalError errors) (Array rows)
 queryMany pool queryString parameters = do
     result <- queryInternal pool queryString parameters
-    rows result # traverse read # labelMap (SProxy :: SProxy "internal") \errors ->
+    rows result # traverse read # labelMap (Proxy :: _ "internal") \errors ->
         [ "Error reading result from database: " <> show errors ]
 
 queryMany_ :: forall querier errors rows. Querier querier => ReadForeign rows =>
@@ -109,7 +110,7 @@ queryFirst
     => ReadForeign row
     => Cons label (Array String) errors' (InternalRow errors)
     => IsSymbol label
-    => SProxy label
+    => Proxy label
     -> querier
     -> Query
     -> Array QueryParameter
@@ -120,11 +121,11 @@ queryFirst label pool queryString parameters = do
 
 queryFirstInternal :: forall row errors querier. Querier querier => ReadForeign row =>
     querier -> Query -> Array QueryParameter -> Async (InternalError errors) row
-queryFirstInternal = queryFirst (SProxy :: SProxy "internal")
+queryFirstInternal = queryFirst (Proxy :: _ "internal")
 
 queryFirstNotFound :: forall row errors querier. Querier querier => ReadForeign row =>
     querier -> Query -> Array QueryParameter -> Async (LoadSingleError errors) row
-queryFirstNotFound = queryFirst (SProxy :: SProxy "notFound")
+queryFirstNotFound = queryFirst (Proxy :: _ "notFound")
 
 queryFirstMaybe :: forall errors querier row. Querier querier => ReadForeign row =>
     querier -> Query -> Array QueryParameter -> Async (InternalError errors) (Maybe row)
@@ -134,7 +135,7 @@ queryFirstMaybe pool queryString parameters = do
 
 queryFirstNotAuthorized :: forall row errors querier. Querier querier => ReadForeign row =>
     querier -> Query -> Array QueryParameter -> Async (ChangeSingleError errors) row
-queryFirstNotAuthorized = queryFirst (SProxy :: SProxy "notAuthorized")
+queryFirstNotAuthorized = queryFirst (Proxy :: _ "notAuthorized")
 
 queryNone :: forall querier errors. Querier querier =>
     querier -> Query -> Array QueryParameter -> Async (InternalError errors) Unit
@@ -143,4 +144,4 @@ queryNone querier queryString parameters =
 
 transaction :: forall result errors.
     (Client -> Async (InternalError errors) result) -> Pool -> Async (InternalError errors) result
-transaction = withTransaction (inj (SProxy :: SProxy "internal") <<< reportDatabaseError)
+transaction = withTransaction (inj (Proxy :: _ "internal") <<< reportDatabaseError)

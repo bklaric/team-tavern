@@ -3,7 +3,7 @@ module TeamTavern.Server.Team.Infrastructure.ValidateDiscordServer where
 import Prelude
 
 import Data.Maybe (Maybe)
-import Data.Symbol (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Data.Traversable (traverse)
 import Data.Validated.Label (ValidatedVariants)
 import Data.Validated.Label as Validated
@@ -14,5 +14,5 @@ validateDiscordServer :: forall errors.
 validateDiscordServer discordServer
     = discordServer
     # traverse (validateUrlV "discord.gg")
-    # Validated.labelMap (SProxy :: SProxy "discordServer") \(errors :: UrlErrors) ->
+    # Validated.labelMap (Proxy :: _ "discordServer") \(errors :: UrlErrors) ->
         "Error validating Discord server: " <> show errors

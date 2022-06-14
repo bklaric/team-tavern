@@ -9,11 +9,11 @@ import Browser.Async.Fetch.Response as FetchRes
 import Data.Bifunctor (lmap)
 import Data.Const (Const)
 import Data.Maybe (Maybe(..), maybe)
-import Data.Symbol (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
-import Simple.JSON.Async as Json
+import Yoga.JSON.Async as Json
 import TeamTavern.Client.Components.RadioCard (radioCard, radioCards)
 import TeamTavern.Routes.ViewAllGames as ViewAllGames
 import TeamTavern.Routes.ViewGame as ViewGame
@@ -81,7 +81,7 @@ handleAction (SelectGame game) = do
                 Nothing -> pure unit
 
 component :: forall query left.
-    H.Component HH.HTML query Input Output (Async left)
+    H.Component query Input Output (Async left)
 component = H.mkComponent
     { initialState: { selected: _, games: [] }
     , render
@@ -94,7 +94,7 @@ component = H.mkComponent
 gameInput
     :: forall action slots left
     .  Input
-    -> (Output -> Maybe action)
+    -> (Output -> action)
     -> HH.ComponentHTML action (gameInput :: Slot | slots) (Async left)
 gameInput input handleOutput =
-    HH.slot (SProxy :: SProxy "gameInput") unit component input handleOutput
+    HH.slot (Proxy :: _ "gameInput") unit component input handleOutput

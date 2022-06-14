@@ -11,9 +11,10 @@ import Data.Newtype (class Newtype, unwrap)
 import Data.Symbol (class IsSymbol)
 import Data.Validated (Validated, validated)
 import Data.Validated as Validated
-import Data.Variant (SProxy, Variant, inj)
+import Data.Variant (Variant, inj)
 import Effect (Effect)
 import Prim.Row (class Cons)
+import Type.Proxy (Proxy)
 
 newtype ValidatedT invalid monad valid = ValidatedT (monad (Validated invalid valid))
 
@@ -98,7 +99,7 @@ label
     :: forall errors errors' left label right
     .  Cons label left errors' errors
     => IsSymbol label
-    => SProxy label
+    => Proxy label
     -> AsyncV left right
     -> AsyncV (NonEmptyList (Variant errors)) right
 label label' = lmap (singleton <<< inj label')
@@ -107,7 +108,7 @@ labelMap
     :: forall label leftIn leftOut lefts' lefts right
     .  Cons label leftOut lefts' lefts
     => IsSymbol label
-    => SProxy label
+    => Proxy label
     -> (leftIn -> leftOut)
     -> AsyncV leftIn right
     -> AsyncV (NonEmptyList (Variant lefts)) right

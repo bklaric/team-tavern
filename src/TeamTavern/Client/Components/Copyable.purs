@@ -8,13 +8,14 @@ import Data.Array as Array
 import Data.Const (Const)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
-import Data.Symbol (class IsSymbol, SProxy)
+import Data.Symbol (class IsSymbol)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Prim.Row (class Cons)
 import TeamTavern.Client.Script.Clipboard as Clipboard
 import TeamTavern.Client.Snippets.Class as HS
+import Type.Proxy (Proxy)
 
 type Input = String
 
@@ -29,7 +30,7 @@ render { text, copied } =
     HH.span_ $
     [ HH.span
         [ HS.class_ "copyable"
-        , HE.onClick $ const $ Just CopyText
+        , HE.onClick $ const CopyText
         ] $
         [ HH.text text ]
     ]
@@ -51,7 +52,7 @@ handleAction (Receive text) =
     H.put { text, copied: false }
 
 component :: forall output left query.
-    H.Component HH.HTML query Input output (Async left)
+    H.Component query Input output (Async left)
 component = H.mkComponent
     { initialState: { text: _, copied: false }
     , render
@@ -66,7 +67,7 @@ copyable
     .  Cons name (Slot index) children' children
     => IsSymbol name
     => Ord index
-    => SProxy name
+    => Proxy name
     -> index
     -> Input
     -> HH.ComponentHTML action children (Async left)

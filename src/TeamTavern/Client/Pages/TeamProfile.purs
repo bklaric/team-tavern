@@ -7,7 +7,7 @@ import Client.Components.Copyable as Copyable
 import Data.Array.Extra (full)
 import Data.Maybe (Maybe(..))
 import Data.Monoid (guard)
-import Data.Symbol (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Ads (descriptionLeaderboards, stickyLeaderboards)
@@ -74,7 +74,7 @@ render (Loaded { profile, status }) = let
     [ contentHeader $
         [ contentHeaderSection
             [ contentHeading'
-                [ navigationAnchor (SProxy :: _ "team")
+                [ navigationAnchor (Proxy :: _ "team")
                     { path: "/teams/" <> profile.handle
                     , content: HH.span_
                         [ contentHeadingFaIcon "fas fa-users"
@@ -97,7 +97,7 @@ render (Loaded { profile, status }) = let
                 if full profile.allPlatforms.tail
                 then
                 [ HH.div [ HS.class_ "team-profile-heading-container" ] $
-                    [ profileHeading' (SProxy :: SProxy "games") profile.gameHandle
+                    [ profileHeading' (Proxy :: _ "games") profile.gameHandle
                         ("/games/" <> profile.gameHandle <> "/teams") profile.title
                     ]
                     <> (platformBadge <$> profile.selectedPlatforms)
@@ -105,7 +105,7 @@ render (Loaded { profile, status }) = let
                 ]
                 else
                 [ HH.div_ $
-                    [ profileHeading' (SProxy :: SProxy "games") profile.gameHandle
+                    [ profileHeading' (Proxy :: _ "games") profile.gameHandle
                         ("/games/" <> profile.gameHandle <> "/teams") profile.title
                     ]
                     <> [ divider, profileSubheading $ "Updated " <> lastUpdated profile.updatedSeconds ]
@@ -162,7 +162,7 @@ handleAction (Receive input) = do
                 )
         _ -> pure unit
 
-component :: forall query output left. H.Component HH.HTML query Input output (Async left)
+component :: forall query output left. H.Component query Input output (Async left)
 component = H.mkComponent
     { initialState: Empty
     , render
@@ -175,4 +175,4 @@ component = H.mkComponent
 
 teamProfile :: forall query children left.
     Input -> HH.ComponentHTML query (teamProfile :: SimpleSlot | children) (Async left)
-teamProfile input = HH.slot (SProxy :: SProxy "teamProfile") unit component input absurd
+teamProfile input = HH.slot (Proxy :: _ "teamProfile") unit component input absurd

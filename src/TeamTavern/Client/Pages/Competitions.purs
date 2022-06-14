@@ -10,7 +10,7 @@ import Data.Functor (mapFlipped)
 import Data.Maybe (Maybe(..))
 import Data.Monoid (guard)
 import Data.String (Pattern(..), split)
-import Data.Symbol (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
@@ -100,7 +100,7 @@ handleAction (Receive { game }) = do
     H.put case competitions' of
         Nothing -> Error
         Just competitions'' -> Loaded
-            { game, competitions: competitions'' <#> insert (SProxy :: SProxy "expanded") false }
+            { game, competitions: competitions'' <#> insert (Proxy :: _ "expanded") false }
     setMeta ("Competitions - " <> game.shortTitle <> " Team Finder | TeamTavern")
         ("Apply for open " <> game.shortTitle <> " leagues and tournaments and compete for prizes and boasting rights.")
 handleAction (Expand name) =
@@ -114,7 +114,7 @@ handleAction (Expand name) =
             }
         state -> state
 
-component :: forall query output left. H.Component HH.HTML query Input output (Async left)
+component :: forall query output left. H.Component query Input output (Async left)
 component = H.mkComponent
     { initialState: Empty
     , render
@@ -127,4 +127,4 @@ component = H.mkComponent
 
 competitions :: forall query children left.
     Input -> HH.ComponentHTML query (competitions :: Slot | children) (Async left)
-competitions input = HH.slot (SProxy :: SProxy "competitions") unit component input absurd
+competitions input = HH.slot (Proxy :: _ "competitions") unit component input absurd

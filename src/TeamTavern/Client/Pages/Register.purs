@@ -12,14 +12,14 @@ import Data.Foldable (foldl)
 import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..))
 import Data.Options ((:=))
-import Data.Symbol (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Data.Variant (match)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import Simple.JSON as Json
-import Simple.JSON.Async as JsonAsync
+import Yoga.JSON as Json
+import Yoga.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.RegistrationInput (registrationInput)
 import TeamTavern.Client.Components.RegistrationInput as RegistrationInput
 import TeamTavern.Client.Pages.Onboarding as Onboarding
@@ -147,7 +147,7 @@ handleAction (Register event) = do
 handleAction (Navigate url event) =
     navigateWithEvent_ url event
 
-component :: forall query input output left. H.Component HH.HTML query input output (Async left)
+component :: forall query input output left. H.Component query input output (Async left)
 component = H.mkComponent
     { initialState: const
         { registration: RegistrationInput.emptyInput
@@ -163,4 +163,4 @@ component = H.mkComponent
 
 register :: forall query children left.
     HH.ComponentHTML query (register :: Slot Unit | children) (Async left)
-register = HH.slot (SProxy :: SProxy "register") unit component unit absurd
+register = HH.slot (Proxy :: _ "register") unit component unit absurd

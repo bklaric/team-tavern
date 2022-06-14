@@ -25,7 +25,7 @@ type Input = ViewPlayer.OkContent
 
 type Slot = H.Slot (Const Void) Void Unit
 
-createProfileButton :: forall left output query. H.Component HH.HTML query Input output (Async left)
+createProfileButton :: forall left output query. H.Component query Input output (Async left)
 createProfileButton = Hooks.component $ \_ player -> Hooks.do
     (Tuple shown shownId) <- usePopover
 

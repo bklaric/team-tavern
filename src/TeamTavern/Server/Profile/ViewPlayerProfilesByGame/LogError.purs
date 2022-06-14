@@ -5,7 +5,7 @@ import Prelude
 import Data.Variant (Variant, match)
 import Effect (Effect)
 import Foreign (Foreign, MultipleErrors)
-import Global.Unsafe (unsafeStringify)
+import Yoga.JSON (unsafeStringify)
 import Postgres.Error (Error)
 import Postgres.Result (Result, rows)
 import TeamTavern.Server.Infrastructure.Log (logStamped, logt, print)

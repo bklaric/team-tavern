@@ -5,7 +5,7 @@ import Prelude
 import Data.Bifunctor (class Bifunctor, lmap)
 import Data.Formatter.DateTime (FormatterCommand(..), format)
 import Data.List (List(..), (:))
-import Data.Variant (class VariantMatchCases, SProxy(..), Variant, match)
+import Data.Variant (class VariantMatchCases, Variant, match)
 import Effect (Effect, foreachE)
 import Effect.Console (log)
 import Effect.Now (nowDateTime)
@@ -17,6 +17,7 @@ import Prim.RowList (class RowToList)
 import Record.Builder (Builder)
 import Record.Builder as Builder
 import TeamTavern.Server.Infrastructure.Error (InternalError, LoadSingleError, CommonError)
+import Type.Proxy (Proxy(..))
 
 datetimeFormat :: List FormatterCommand
 datetimeFormat =
@@ -54,23 +55,23 @@ logError heading handler error = do
 
 internalHandler :: forall fields. Lacks "internal" fields =>
     Builder (Record fields) { internal :: Array String -> Effect Unit | fields }
-internalHandler = Builder.insert (SProxy :: SProxy "internal") logLines
+internalHandler = Builder.insert (Proxy :: _ "internal") logLines
 
 notFoundHandler :: forall fields. Lacks "notFound" fields =>
     Builder (Record fields) { notFound :: Array String -> Effect Unit | fields }
-notFoundHandler = Builder.insert (SProxy :: SProxy "notFound") logLines
+notFoundHandler = Builder.insert (Proxy :: _ "notFound") logLines
 
 notAuthenticatedHandler :: forall fields. Lacks "notAuthenticated" fields =>
     Builder (Record fields) { notAuthenticated :: Array String -> Effect Unit | fields }
-notAuthenticatedHandler = Builder.insert (SProxy :: SProxy "notAuthenticated") logLines
+notAuthenticatedHandler = Builder.insert (Proxy :: _ "notAuthenticated") logLines
 
 notAuthorizedHandler :: forall fields. Lacks "notAuthorized" fields =>
     Builder (Record fields) { notAuthorized :: Array String -> Effect Unit | fields }
-notAuthorizedHandler = Builder.insert (SProxy :: SProxy "notAuthorized") logLines
+notAuthorizedHandler = Builder.insert (Proxy :: _ "notAuthorized") logLines
 
 clientHandler :: forall handlers. Lacks "client" handlers =>
     Builder (Record handlers) { client :: Array String -> Effect Unit | handlers }
-clientHandler = Builder.insert (SProxy :: SProxy "client") logLines
+clientHandler = Builder.insert (Proxy :: _ "client") logLines
 
 commonHandler
     :: forall handlers

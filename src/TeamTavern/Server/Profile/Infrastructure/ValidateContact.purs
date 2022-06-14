@@ -5,11 +5,12 @@ import Prelude
 import Data.List.NonEmpty (singleton)
 import Data.Maybe (Maybe(..))
 import Data.String (trim)
-import Data.Symbol (class IsSymbol, SProxy)
+import Data.Symbol (class IsSymbol)
 import Data.Validated as Validated
 import Data.Validated.Label (ValidatedVariants)
 import Data.Variant (inj)
 import Prim.Row (class Cons)
+import Type.Proxy (Proxy)
 
 validateContact
     :: forall wrapper errors errors' error label
@@ -18,7 +19,7 @@ validateContact
     => Maybe String
     -> (String -> Boolean)
     -> (String -> wrapper)
-    -> SProxy label
+    -> Proxy label
     -> (String -> error)
     -> ValidatedVariants errors (Maybe wrapper)
 validateContact Nothing _ _ _ _ =

@@ -8,7 +8,7 @@ import Data.Array as Array
 import Data.Const (Const)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
-import Data.Variant (SProxy(..), match)
+import Data.Variant (match)
 import Halogen as H
 import Halogen.HTML as HH
 import Record.Extra (pick)
@@ -135,7 +135,7 @@ handleAction (SendRequest event) = do
             badContent
         Nothing -> H.put currentState { submitting = false, otherError = true }
 
-component :: forall query output left. H.Component HH.HTML query Input output (Async left)
+component :: forall query output left. H.Component query Input output (Async left)
 component = H.mkComponent
     { initialState: \
         { player: { nickname, discordTag, steamId, riotId, battleTag, psnId, gamerTag, friendCode }
@@ -172,8 +172,8 @@ component = H.mkComponent
 createProfile
     :: forall children action left
     .  Input
-    -> (Modal.Output Void -> Maybe action)
+    -> (Modal.Output Void -> action)
     -> HH.ComponentHTML action (createProfile :: Slot | children) (Async left)
 createProfile input handleMessage = HH.slot
-    (SProxy :: SProxy "createProfile") unit
+    (Proxy :: _ "createProfile") unit
     (Modal.component ("Create your " <> input.game.title <> " profile") component) input handleMessage

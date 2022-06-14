@@ -11,7 +11,7 @@ import Data.Maybe (Maybe(..))
 import Data.Monoid (guard)
 import Data.MultiMap (MultiMap)
 import Data.MultiMap as MultiMap
-import Data.Symbol (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.CSS as HC
@@ -233,7 +233,7 @@ render state =
                 case state.tab of
                 Players -> CreateAlertRoute.Player
                 Teams -> CreateAlertRoute.Team
-            , filters: state # Record.insert (SProxy :: _ "platforms") state.selectedPlatforms # pick
+            , filters: state # Record.insert (Proxy :: _ "platforms") state.selectedPlatforms # pick
             }
             (const $ Just HideCreateAlertModal)
         ]
@@ -387,7 +387,7 @@ initialState { platforms, fields, filters, tab, handle } =
     , createAlertModalShown: false
     }
 
-component :: forall query left. H.Component HH.HTML query Input Output (Async left)
+component :: forall query left. H.Component query Input Output (Async left)
 component = H.mkComponent
     { initialState
     , render
@@ -401,7 +401,7 @@ component = H.mkComponent
 profileFilters
     :: forall action children left
     .  Input
-    -> (Output -> Maybe action)
+    -> (Output -> action)
     -> HH.ComponentHTML action (profileFilters :: Slot | children) (Async left)
 profileFilters input handleOutput =
-    HH.slot (SProxy :: SProxy "profileFilters") unit component input handleOutput
+    HH.slot (Proxy :: _ "profileFilters") unit component input handleOutput

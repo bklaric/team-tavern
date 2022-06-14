@@ -9,8 +9,9 @@ import Data.String (Pattern(..), length, split, trim)
 import Data.Validated as Validated
 import Data.Validated.Label (ValidatedVariants)
 import Data.Validated.Label as ValidatedLabel
-import Data.Variant (SProxy(..), Variant)
+import Data.Variant (Variant)
 import TeamTavern.Server.Profile.Infrastructure.ValidateContact (validateContact)
+import Type.Proxy (Proxy(..))
 import Wrapped.String (Invalid, invalid)
 import Wrapped.Validated as Wrapped
 
@@ -46,11 +47,11 @@ validateDiscordTag discordTag =
     Just discordTag' ->
         Wrapped.create trim [invalid isDiscordTagValid] DiscordTag discordTag'
         <#> Just
-        # ValidatedLabel.labelMap (SProxy :: SProxy "discordTag")
+        # ValidatedLabel.labelMap (Proxy :: _ "discordTag")
             \(errors :: NonEmptyList DiscordTagError) ->
                 [ "Error validating Discord tag: " <> show errors ]
 
 validateDiscordTag' :: forall errors.
     Maybe String -> ValidatedVariants (discordTag :: String | errors) (Maybe DiscordTag)
 validateDiscordTag' discordTag =
-    validateContact discordTag isDiscordTagValid DiscordTag (SProxy :: _ "discordTag") ("Invalid DiscordTag: " <> _)
+    validateContact discordTag isDiscordTagValid DiscordTag (Proxy :: _ "discordTag") ("Invalid DiscordTag: " <> _)

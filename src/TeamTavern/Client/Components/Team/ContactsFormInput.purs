@@ -7,7 +7,7 @@ import Data.Const (Const)
 import Data.Foldable (elem)
 import Data.Maybe (Maybe(..))
 import Data.Monoid (guard)
-import Data.Variant (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Record.Extra (pick)
@@ -99,7 +99,7 @@ handleAction (UpdatePsnId psnId)                 = H.modify _ { psnId         = 
 handleAction (UpdateGamerTag gamerTag)           = H.modify _ { gamerTag      = gamerTag }      >>= raiseOutput
 handleAction (UpdateFriendCode friendCode)       = H.modify _ { friendCode    = friendCode }    >>= raiseOutput
 
-component :: forall query left. H.Component HH.HTML query Input Output (Async left)
+component :: forall query left. H.Component query Input Output (Async left)
 component = H.mkComponent
     { initialState: identity
     , render
@@ -136,4 +136,4 @@ contactsFormInput
     -> (Output -> action)
     -> HH.ComponentHTML action (playerContactsFormInput :: Slot | children) (Async left)
 contactsFormInput input handleOutput =
-    HH.slot (SProxy :: SProxy "playerContactsFormInput") unit component input (Just <<< handleOutput)
+    HH.slot (Proxy :: _ "playerContactsFormInput") unit component input handleOutput

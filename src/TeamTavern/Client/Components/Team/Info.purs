@@ -2,7 +2,6 @@ module TeamTavern.Client.Components.Team.Info where
 
 import Prelude
 
-import Data.Maybe (Maybe(..))
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HP
 import TeamTavern.Client.Snippets.Class as HS
@@ -15,7 +14,7 @@ infoIcon :: forall slots action. (MouseEvent -> action) -> HH.HTML slots action
 infoIcon onClick =
     HH.i
     [ HS.class_ "fas fa-question-circle info-icon"
-    , HP.onClick $ Just <<< onClick
+    , HP.onClick onClick
     ]
     []
 

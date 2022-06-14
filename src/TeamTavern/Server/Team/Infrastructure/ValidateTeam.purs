@@ -11,7 +11,7 @@ import Data.Bifunctor.Label (label)
 import Data.List.NonEmpty as NonEmptyList
 import Data.List.Types (NonEmptyList)
 import Data.Maybe (Maybe(..))
-import Data.Symbol (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Data.Validated.Label (ValidatedVariants)
 import Data.Variant (Variant)
 import TeamTavern.Routes.Shared.Organization (OrganizationNW(..))
@@ -95,7 +95,7 @@ validateTeam (team :: TeamModel) = let
     , timezone, onlineWeekday, onlineWeekend
     }
     <$> organization
-    # Async.fromValidated # label (SProxy :: SProxy "team")
+    # Async.fromValidated # label (Proxy :: _ "team")
 
 validateTeamV :: forall errors.
     TeamModel -> AsyncV (NonEmptyList (Variant (team :: TeamErrors | errors))) Team

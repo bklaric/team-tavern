@@ -3,7 +3,7 @@ module TeamTavern.Server.Player.Delete where
 import Prelude
 
 import Async (Async, alwaysRight, examineLeftWithEffect, left)
-import Data.Symbol (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Data.Variant (inj, match)
 import Effect (Effect)
 import Perun.Response (Response, forbidden__, internalServerError__, noContent, notFound__, unauthorized__)
@@ -49,5 +49,5 @@ delete pool nickname cookies =
     result <- queryInternal pool queryString (cookieInfo.id : [])
     if rowCount result > 0
         then pure unit
-        else left $ inj (SProxy :: _ "notFound")
+        else left $ inj (Proxy :: _ "notFound")
             [ "No player deleted for id=(" <> show cookieInfo.id <> ")." ]

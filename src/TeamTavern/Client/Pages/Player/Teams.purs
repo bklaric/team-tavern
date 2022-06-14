@@ -4,7 +4,7 @@ import Prelude
 
 import Data.Array as Array
 import Data.Monoid (guard)
-import Data.Symbol (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Effect.Class (class MonadEffect)
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Button (primaryButton)
@@ -47,7 +47,7 @@ teams player status showCreateTeamModal =
         player.teams <#> \team ->
             cardSection
             [ HH.div [ HS.class_ "team-profile-heading-container" ]
-                [ profileHeading (SProxy :: SProxy "team") team.handle
+                [ profileHeading (Proxy :: _ "team") team.handle
                     ("/teams/" <> team.handle) (nameOrHandleN team.handle team.organization)
                 , case team.organization of
                     InformalN -> informalBadge

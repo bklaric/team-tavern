@@ -13,9 +13,9 @@ import Data.Int as Int
 import Data.Maybe (Maybe(..))
 import Data.Options ((:=))
 import Data.String as String
-import Simple.JSON (class ReadForeign, class WriteForeign)
-import Simple.JSON as Json
-import Simple.JSON.Async as JsonAsync
+import Yoga.JSON (class ReadForeign, class WriteForeign)
+import Yoga.JSON as Json
+import Yoga.JSON.Async as JsonAsync
 
 nothingIfEmpty :: String -> Maybe String
 nothingIfEmpty string = if String.null string then Nothing else Just string

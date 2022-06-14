@@ -5,12 +5,13 @@ import Prelude
 import Async (Async)
 import Async as Async
 import Data.Maybe (Maybe(..))
-import Data.Variant (SProxy(..), Variant, inj)
+import Data.Variant (Variant, inj)
 import Postgres.Async.Query (query)
 import Postgres.Query (class Querier, Query(..), (:), (:|))
 import Postgres.Result (rowCount)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo, Cookies, lookupCookieInfo)
 import TeamTavern.Server.Infrastructure.Postgres (reportDatabaseError')
+import Type.Proxy (Proxy(..))
 
 type EnsureSignedInError errors = Variant
     ( internal :: Array String
@@ -33,11 +34,11 @@ ensureSignedIn :: forall querier errors. Querier querier =>
     querier -> Cookies -> Async (EnsureSignedInError errors) CookieInfo
 ensureSignedIn querier cookies =
     case lookupCookieInfo cookies of
-    Nothing -> Async.left $ inj (SProxy :: SProxy "notAuthenticated")
+    Nothing -> Async.left $ inj (Proxy :: _ "notAuthenticated")
         [ "No cookie info has been found in cookies: " <> show cookies]
     Just cookieInfo @ { id, nickname, token } -> do
         result <- querier # query queryString (id : nickname :| token) # reportDatabaseError'
         if rowCount result == 0
-        then Async.left $ inj (SProxy :: SProxy "notAuthenticated")
+        then Async.left $ inj (Proxy :: _ "notAuthenticated")
             [ "Client session in cookies is invalid: " <> show cookies ]
         else Async.right cookieInfo

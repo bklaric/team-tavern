@@ -1,5 +1,3 @@
-"use strict";
-
-exports.cookies = function () {
+export const cookies = function () {
     return document.cookie;
 }

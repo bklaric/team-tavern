@@ -6,7 +6,7 @@ import Async (Async)
 import Data.Const (Const)
 import Data.Foldable (foldMap)
 import Data.Maybe (Maybe(..))
-import Data.Symbol (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Data.Tuple (Tuple(..))
 import Halogen as H
 import Halogen.HTML as HH
@@ -20,7 +20,7 @@ type Input = String
 
 type Slot = H.Slot (Const Void) Void Unit
 
-component :: forall query output left. H.Component HH.HTML query Input output (Async left)
+component :: forall query output left. H.Component query Input output (Async left)
 component = Hooks.component $ \_ nickname -> Hooks.do
     (Tuple shown shownId) <- usePopover
     (Tuple deleteModalShown deleteModalShownId) <- Hooks.useState Nothing
@@ -29,14 +29,14 @@ component = Hooks.component $ \_ nickname -> Hooks.do
         shown
         ([ HH.i
             [ HS.class_ "fas fa-ellipsis-h options-button-icon"
-            , HE.onClick (Just <<< togglePopover shownId)
+            , HE.onClick $ togglePopover shownId
             ]
             []
         ]
         <> foldMap (\deleteModalInput ->
             [ deleteAccount
                 deleteModalInput
-                (const $ Just $ Hooks.put deleteModalShownId Nothing)
+                (const $ Hooks.put deleteModalShownId Nothing)
             ])
             deleteModalShown
         )
@@ -49,4 +49,4 @@ component = Hooks.component $ \_ nickname -> Hooks.do
 
 playerOptions :: forall action slots left.
     Input -> HH.ComponentHTML action (playerOptions :: Slot | slots) (Async left)
-playerOptions nickname = HH.slot (SProxy :: _ "playerOptions") unit component nickname absurd
+playerOptions nickname = HH.slot (Proxy :: _ "playerOptions") unit component nickname absurd

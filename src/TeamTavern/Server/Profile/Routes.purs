@@ -5,7 +5,7 @@ import Prelude
 import Data.Array (foldl, mapMaybe)
 import Data.Maybe (Maybe, maybe)
 import Data.MultiMap as MultiMap
-import Data.Symbol (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Data.Tuple (Tuple(..))
 import Jarilo.Junction (type (:<|>), type (:=))
 import Jarilo.Method (Get, Post, Put)
@@ -61,8 +61,8 @@ bundlePlayerFilters :: forall other. Lacks "organization" other => Lacks "size" 
     -> Filters
 bundlePlayerFilters filters =
     bundleTeamFilters
-    $ Record.insert (SProxy :: _ "organization") []
-    $ Record.insert (SProxy :: _ "size") []
+    $ Record.insert (Proxy :: _ "organization") []
+    $ Record.insert (Proxy :: _ "size") []
     $ filters
 
 bundleTeamFilters :: forall other.

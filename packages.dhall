@@ -117,87 +117,67 @@ let additions =
 -------------------------------
 -}
 
-
 let upstream =
-    https://github.com/purescript/package-sets/releases/download/psc-0.15.2-20220610/packages.dhall sha256:348212b7c79da7d343bed71b48ed164d426f1977f92196babac49bd560b32e75
-
-let overrides =
-    { stringutils =
-        { dependencies =
-            [ "arrays"
-            , "either"
-            , "integers"
-            , "maybe"
-            , "partial"
-            , "prelude"
-            , "strings"
-            ]
-        , repo = "https://github.com/menelaos/purescript-stringutils.git"
-        , version = "v0.0.10"
-        }
-    }
+    https://github.com/purescript/package-sets/releases/download/psc-0.15.2-20220610/packages.dhall
+    sha256:348212b7c79da7d343bed71b48ed164d426f1977f92196babac49bd560b32e75
 
 let additions =
     { jarilo =
         { dependencies = [ "http-methods", "uri", "variant", "record" ]
-        , repo = "https://github.com/bklaric/purescript-jarilo.git"
-        , version = "v0.5.3"
+        , repo = "ssh://git@github.com/bklaric/purescript-jarilo.git"
+        , version = "v1.0.0"
         }
     , undefined =
         { dependencies = [] : List Text
-        , repo = "https://github.com/bklaric/purescript-undefined.git"
-        , version = "v1.0.2"
+        , repo = "ssh://git@github.com/bklaric/purescript-undefined.git"
+        , version = "v2.0.0"
         }
     , error =
         { dependencies = [] : List Text
-        , repo = "https://github.com/bklaric/purescript-error.git"
+        , repo = "ssh://git@github.com/bklaric/purescript-error.git"
+        , version = "v2.0.0"
+        }
+    , nodey =
+        { dependencies =
+            [ "arrays"
+            , "console"
+            , "effect"
+            , "either"
+            , "error"
+            , "foreign"
+            , "foreign-object"
+            , "lists"
+            , "maybe"
+            , "nullable"
+            , "prelude"
+            , "refs"
+            , "transformers"
+            , "undefined"
+            , "unsafe-coerce"
+            ]
+        , repo = "ssh://git@github.com/bklaric/purescript-nodey.git"
         , version = "v1.0.2"
         }
-    , idiomatic-node-errors =
-        { dependencies = [ "effect", "error" ]
-        , repo = "https://github.com/bklaric/purescript-idiomatic-node-errors.git"
-        , version = "v0.3.1"
-        }
-    , idiomatic-node-buffer =
-        { dependencies = [ "foreign", "undefined" ]
-        , repo = "https://github.com/bklaric/purescript-idiomatic-node-buffer.git"
-        , version = "v0.4.1"
-        }
-    , idiomatic-node-events =
-        { dependencies = [ "foreign", "undefined", "effect" ]
-        , repo = "https://github.com/bklaric/purescript-idiomatic-node-events.git"
-        , version = "v0.4.1"
-        }
-    , idiomatic-node-stream =
-        { dependencies = [ "idiomatic-node-events", "idiomatic-node-buffer", "idiomatic-node-errors", "nullable", "refs" ]
-        , repo = "https://github.com/bklaric/purescript-idiomatic-node-stream.git"
-        , version = "v0.6.1"
-        }
-    , idiomatic-node-server =
-        { dependencies = [ "idiomatic-node-events", "nullable" ]
-        , repo = "https://github.com/bklaric/purescript-idiomatic-node-server.git"
-        , version = "v0.5.1"
-        }
-    , idiomatic-node-http =
-        { dependencies = [ "idiomatic-node-server", "idiomatic-node-stream", "foreign-object" ]
-        , repo = "https://github.com/bklaric/purescript-idiomatic-node-http.git"
-        , version = "v0.4.1"
-        }
-    , idiomatic-node-crypto =
-        { dependencies = [ "idiomatic-node-buffer", "idiomatic-node-errors" ]
-        , repo = "https://github.com/bklaric/purescript-idiomatic-node-crypto.git"
-        , version = "v0.2.1"
-        }
-    , idiomatic-node-process =
-        { dependencies = [ "effect", "maybe", "nullable" ]
-        , repo = "https://github.com/bklaric/purescript-idiomatic-node-process.git"
-        , version = "v0.3.1"
-        }
     , pg =
-        { dependencies = [ "idiomatic-node-events", "idiomatic-node-errors", "options", "nullable", "foreign-generic" ]
-        , repo = "https://github.com/bklaric/purescript-pg.git"
-        , version = "v0.5.0"
+        { dependencies =
+            [ "arrays"
+            , "control"
+            , "effect"
+            , "either"
+            , "error"
+            , "foreign"
+            , "maybe"
+            , "nodey"
+            , "nullable"
+            , "options"
+            , "prelude"
+            , "transformers"
+            , "unsafe-coerce"
+            , "yoga-json"
+            ]
+        , repo = "ssh://git@github.com/bklaric/purescript-pg.git"
+        , version = "v1.0.1"
         }
     }
 
-in  upstream // overrides // additions
+in upstream // additions

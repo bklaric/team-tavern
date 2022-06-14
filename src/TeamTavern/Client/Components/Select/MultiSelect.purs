@@ -4,22 +4,21 @@ module TeamTavern.Client.Components.Select.MultiSelect
 import Prelude
 
 import Async (Async)
-import Async.Aff (affToAsync)
 import Data.Array as Array
 import Data.Const (Const)
 import Data.Foldable (intercalate)
 import Data.Maybe (Maybe(..), isJust, maybe)
 import Data.String (Pattern(..), contains, toLower, trim)
 import Data.Symbol (class IsSymbol)
-import Data.Variant (SProxy)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import Halogen.Query.EventSource as ES
+import Halogen.Query.Event as ES
 import Prim.Row (class Cons)
 import TeamTavern.Client.Components.Checkable (checkbox)
 import TeamTavern.Client.Components.Input (checkboxLabel)
+import Type.Proxy (Proxy)
 import Web.Event.Event as E
 import Web.HTML (window)
 import Web.HTML.Window as Window
@@ -64,12 +63,12 @@ type Output option = Array option
 type Slot option = H.Slot (Const Void) (Output option)
 
 render :: forall slots option. State option -> HH.HTML slots (Action option)
-render { entries, labeler, comparer, filter, open } =
+render { entries, labeler, filter, open } =
     HH.div [ HP.class_ $ HH.ClassName "select" ] $
     [ HH.div
         [ HP.class_ $ HH.ClassName
             if open then "selected-open" else "selected-closed"
-        , HE.onMouseDown $ const $ Just if open then Close else Open
+        , HE.onMouseDown $ const if open then Close else Open
         ]
         [ HH.text $ intercalate ", "
             (entries # Array.filter (_.selected) <#> (_.option >>> labeler))
@@ -87,8 +86,8 @@ render { entries, labeler, comparer, filter, open } =
                 [ HP.class_ $ HH.ClassName "select-filter-input"
                 , HP.placeholder placeHolder
                 , HP.value text
-                , HE.onMouseDown $ const $ Just $ KeepOpen
-                , HE.onValueInput $ Just <<< FilterInput
+                , HE.onMouseDown $ const KeepOpen
+                , HE.onValueInput FilterInput
                 ])
         <>
         [ HH.div
@@ -96,12 +95,12 @@ render { entries, labeler, comparer, filter, open } =
                 if isJust filter
                 then "filterable-options"
                 else "options"
-            , HE.onMouseDown $ const $ Just $ KeepOpen
+            , HE.onMouseDown $ const $ KeepOpen
             ]
             (entries # Array.filter _.shown <#> \{ option, selected } ->
                 HH.div
                 [ HP.class_ $ HH.ClassName "option"
-                , HE.onClick $ const $ Just $ ToggleOption option
+                , HE.onClick $ const $ ToggleOption option
                 ]
                 [ checkbox selected
                 , checkboxLabel $ labeler option
@@ -116,9 +115,9 @@ handleAction
         (Output option) (Async left) Unit
 handleAction Initialize = do
     window <- H.liftEffect $ Window.toEventTarget <$> window
-    let windowEventSource = ES.eventListenerEventSource
+    let windowEventSource = ES.eventListener
             (E.EventType "mousedown") window \_ -> Just TryClose
-    windowSubscription <- H.subscribe $ ES.hoist affToAsync windowEventSource
+    windowSubscription <- H.subscribe windowEventSource
     H.modify_ (_ { windowSubscription = Just windowSubscription })
 handleAction (Receive input) =
     H.modify_ \state -> state
@@ -175,7 +174,7 @@ handleAction (FilterInput text) =
         }
 
 component :: forall query option left.
-    H.Component HH.HTML query (Input option) (Output option) (Async left)
+    H.Component query (Input option) (Output option) (Async left)
 component = H.mkComponent
     { initialState: \{ options, selected, labeler, comparer, filter } ->
         { entries: options <#> \option ->
@@ -203,10 +202,10 @@ multiSelect
     :: forall children' slot children action left option
     .  Cons slot (Slot option Unit) children' children
     => IsSymbol slot
-    => SProxy slot
+    => Proxy slot
     -> Input option
-    -> (Output option -> Maybe action)
-    -> HH.HTML (H.ComponentSlot HH.HTML children (Async left) action) action
+    -> (Output option -> action)
+    -> HH.HTML (H.ComponentSlot children (Async left) action) action
 multiSelect label input handleOutput =
     HH.slot label unit component input handleOutput
 
@@ -215,10 +214,10 @@ multiSelectIndexed
     .  Cons slot (Slot option index) children' children
     => IsSymbol slot
     => Ord index
-    => SProxy slot
+    => Proxy slot
     -> index
     -> Input option
-    -> (Output option -> Maybe action)
-    -> HH.HTML (H.ComponentSlot HH.HTML children (Async left) action) action
+    -> (Output option -> action)
+    -> HH.HTML (H.ComponentSlot children (Async left) action) action
 multiSelectIndexed label index input handleOutput =
     HH.slot label index component input handleOutput

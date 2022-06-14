@@ -7,7 +7,7 @@ import Client.Components.Copyable as Copyable
 import Data.Array as Array
 import Data.Maybe (Maybe(..))
 import Data.Monoid (guard)
-import Data.Symbol (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Halogen as H
 import Record as Record
 import TeamTavern.Client.Components.Button (regularButton)
@@ -26,11 +26,11 @@ details
 details player status showEditPlayerModal = let
     playerDetails' = playerDetails
         ( player
-        # Record.modify (SProxy :: SProxy "weekdayOnline")
+        # Record.modify (Proxy :: _ "weekdayOnline")
             case _ of
             Just { clientFrom, clientTo } -> Just { from: clientFrom, to: clientTo }
             Nothing -> Nothing
-        # Record.modify (SProxy :: SProxy "weekendOnline")
+        # Record.modify (Proxy :: _ "weekendOnline")
             case _ of
             Just { clientFrom, clientTo } -> Just { from: clientFrom, to: clientTo }
             Nothing -> Nothing

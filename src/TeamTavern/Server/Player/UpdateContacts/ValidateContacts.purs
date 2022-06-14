@@ -14,7 +14,7 @@ import Data.List.NonEmpty as Nel
 import Data.List.Types (List(..), NonEmptyList)
 import Data.Maybe (Maybe(..))
 import Data.NonEmpty ((:|))
-import Data.Symbol (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Data.Validated (Validated)
 import Data.Validated as Validated
 import Data.Validated.Label (Variants)
@@ -45,12 +45,12 @@ checkRequiredPlatforms :: Array Platform -> PlayerContacts -> Validated Contacts
 checkRequiredPlatforms requiredPlatforms contacts = let
     checkPlatform errors platform =
             case platform, contacts of
-            Steam, { steamId: Nothing } -> inj (SProxy :: _ "steamId") "SteamId is required" : errors
-            Riot, { riotId: Nothing } -> inj (SProxy :: _ "riotId") "RiotId is required" : errors
-            BattleNet, { battleTag: Nothing } -> inj (SProxy :: _ "battleTag") "BattleTag is required" : errors
-            PlayStation, { psnId: Nothing } -> inj (SProxy :: _ "psnId") "PsnId is required" : errors
-            Xbox, { gamerTag: Nothing } -> inj (SProxy :: _ "gamerTag") "GamerTag is required" : errors
-            Switch, { friendCode: Nothing } -> inj (SProxy :: _ "friendCode") "FriendCode is required" : errors
+            Steam, { steamId: Nothing } -> inj (Proxy :: _ "steamId") "SteamId is required" : errors
+            Riot, { riotId: Nothing } -> inj (Proxy :: _ "riotId") "RiotId is required" : errors
+            BattleNet, { battleTag: Nothing } -> inj (Proxy :: _ "battleTag") "BattleTag is required" : errors
+            PlayStation, { psnId: Nothing } -> inj (Proxy :: _ "psnId") "PsnId is required" : errors
+            Xbox, { gamerTag: Nothing } -> inj (Proxy :: _ "gamerTag") "GamerTag is required" : errors
+            Switch, { friendCode: Nothing } -> inj (Proxy :: _ "friendCode") "FriendCode is required" : errors
             _, _ -> errors
     in
     case requiredPlatforms # foldl checkPlatform Nil of
@@ -70,7 +70,7 @@ validateContacts requiredPlatforms contacts @ { discordTag, steamId, riotId, bat
     <*> validateGamerTag gamerTag
     <*> validateFriendCode friendCode
     # AsyncVal.fromValidated
-    # label (SProxy :: _ "playerContacts")
+    # label (Proxy :: _ "playerContacts")
 
 validateContactsV :: forall errors.
     Array Platform -> PlayerContacts -> AsyncV (Variants (playerContacts :: ContactsErrors | errors)) Contacts

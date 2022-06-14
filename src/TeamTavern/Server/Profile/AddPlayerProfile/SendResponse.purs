@@ -4,12 +4,13 @@ import Prelude
 
 import Async (Async, alwaysRight)
 import Data.Array as Array
-import Data.Variant (SProxy(..), Variant, inj, match)
+import Data.Variant (Variant, inj, match)
 import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, noContent_, unauthorized__)
-import Simple.JSON (writeJSON)
 import TeamTavern.Routes.Shared.PlayerContacts (PlayerContactsError)
 import TeamTavern.Server.Profile.AddPlayerProfile.LogError (CreateError)
 import Type (type ($))
+import Type.Proxy (Proxy(..))
+import Yoga.JSON (writeJSON)
 
 type BadContent = Array $ Variant
     ( profile :: Array $ Variant
@@ -30,8 +31,8 @@ errorResponse = match
         errors
         # Array.fromFoldable
         <#> (match
-            { playerProfile: Array.fromFoldable >>> inj (SProxy :: _ "profile")
-            , playerContacts: Array.fromFoldable >>> inj (SProxy :: _ "contacts")
+            { playerProfile: Array.fromFoldable >>> inj (Proxy :: _ "profile")
+            , playerContacts: Array.fromFoldable >>> inj (Proxy :: _ "contacts")
             })
         # (writeJSON :: BadContent -> String)
         # badRequest_

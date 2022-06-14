@@ -5,7 +5,7 @@ import Prelude
 import Async (Async)
 import Data.Const (Const)
 import Data.Maybe (Maybe(..))
-import Data.Symbol (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Ads (stickyLeaderboards)
@@ -63,7 +63,7 @@ handleAction (Receive input) = do
                 Nothing -> Error
                 Just game -> Loaded { game, tab: input.tab }
 
-component :: forall query output left. H.Component HH.HTML query Input output (Async left)
+component :: forall query output left. H.Component query Input output (Async left)
 component = H.mkComponent
     { initialState: Empty
     , render
@@ -76,4 +76,4 @@ component = H.mkComponent
 
 gameTabs :: forall query children left.
     Input -> HH.ComponentHTML query (gameTabs :: Slot | children) (Async left)
-gameTabs input = HH.slot (SProxy :: SProxy "gameTabs") unit component input absurd
+gameTabs input = HH.slot (Proxy :: _ "gameTabs") unit component input absurd

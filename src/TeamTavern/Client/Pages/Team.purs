@@ -10,7 +10,7 @@ import Data.Array (foldMap)
 import Data.Const (Const)
 import Data.Maybe (Maybe(..))
 import Data.Monoid (guard)
-import Data.Symbol (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.CSS as HC
@@ -89,7 +89,7 @@ render (Loaded state @ { team: team', status } ) =
                 InformalNW -> informalBadge
                 OrganizedNW _ -> organizedBadge
             ]
-        , navigationAnchor (SProxy :: _ "viewTeamOwner")
+        , navigationAnchor (Proxy :: _ "viewTeamOwner")
             { path: "/players/" <> team'.owner
             , content: HH.span [ HC.style $ Css.fontWeight $ Css.weight 500.0 ] [ HH.text "View team owner" ]
             }
@@ -162,7 +162,7 @@ handleAction (ShowEditProfileModal profile) = modifyLoaded _ { editProfileModalS
 handleAction HideEditProfileModal = modifyLoaded _ { editProfileModalShown = Nothing }
 
 component :: forall query output left.
-    H.Component HH.HTML query Input output (Async left)
+    H.Component query Input output (Async left)
 component = H.mkComponent
     { initialState: Empty
     , render
@@ -174,4 +174,4 @@ component = H.mkComponent
 
 team :: forall query children left.
     Input -> HH.ComponentHTML query (team :: Slot | children) (Async left)
-team handle = HH.slot (SProxy :: SProxy "team") unit component handle absurd
+team handle = HH.slot (Proxy :: _ "team") unit component handle absurd

@@ -3,7 +3,7 @@ module TeamTavern.Server.Team.Infrastructure.ValidateWebsite where
 import Prelude
 
 import Data.Maybe (Maybe)
-import Data.Symbol (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Data.Traversable (traverse)
 import Data.Validated.Label (ValidatedVariants)
 import Data.Validated.Label as Validated
@@ -14,5 +14,5 @@ validateWebsite :: forall errors.
 validateWebsite website
     = website
     # traverse validateUrlV_
-    # Validated.labelMap (SProxy :: SProxy "website") \(errors :: UrlErrors) ->
+    # Validated.labelMap (Proxy :: _ "website") \(errors :: UrlErrors) ->
         [ "Error validating website: " <> show errors]

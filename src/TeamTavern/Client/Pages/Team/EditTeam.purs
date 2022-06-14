@@ -7,7 +7,7 @@ import Data.Const (Const)
 import Data.Either (Either(..))
 import Data.Foldable (foldl)
 import Data.Maybe (Maybe(..))
-import Data.Variant (SProxy(..), match)
+import Data.Variant (match)
 import Halogen as H
 import Halogen.HTML as HH
 import Record.Extra (pick)
@@ -21,6 +21,7 @@ import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Routes.Shared.Organization (OrganizationNW)
 import TeamTavern.Server.Team.Create as Create
 import TeamTavern.Server.Team.Infrastructure.ValidateTeam (TeamModel)
+import Type.Proxy (Proxy(..))
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
@@ -67,7 +68,7 @@ type Slot = H.Slot (Const Void) (Modal.Output Void) Unit
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { details, submitting, otherError } =
     form SendRequest $
-    [ teamFormInput details (Just <<< UpdateDetails)
+    [ teamFormInput details UpdateDetails
     , submitButton "fas fa-edit" "Edit team" "Editting team..." submitting
     ]
     <>
@@ -129,7 +130,7 @@ handleAction (SendRequest event) = do
         Nothing -> H.put currentState { submitting = false, otherError = true }
 
 component :: forall query output fields left.
-    H.Component HH.HTML query (Input fields) output (Async left)
+    H.Component query (Input fields) output (Async left)
 component = H.mkComponent
     { initialState: \team ->
         { handle: team.handle
@@ -159,8 +160,8 @@ component = H.mkComponent
 editTeam
     :: forall fields action children left
     .  (Input fields)
-    -> (Modal.Output Void -> Maybe action)
+    -> (Modal.Output Void -> action)
     -> HH.ComponentHTML action (editTeam :: Slot | children) (Async left)
 editTeam input handleMessage = HH.slot
-    (SProxy :: SProxy "editTeam") unit
+    (Proxy :: _ "editTeam") unit
     (Modal.component "Edit team" component) input handleMessage

@@ -7,8 +7,9 @@ import Data.Newtype (class Newtype)
 import Data.String (trim)
 import Data.Validated (Validated)
 import Data.Validated.Label as Validated
-import Data.Variant (SProxy(..), Variant)
+import Data.Variant (Variant)
 import Jarilo.FromComponent (class FromComponent)
+import Type.Proxy (Proxy(..))
 import Wrapped.String (Empty, NotAsciiAlphaNumSpecial, TooLong, empty, notAsciiAlphaNumSpecial, tooLong)
 import Wrapped.Validated as Wrapped
 
@@ -35,7 +36,7 @@ validateNickname :: forall errors.
     String -> Validated (NonEmptyList (Variant (nickname :: Array String | errors))) Nickname
 validateNickname nickname =
     Wrapped.create trim [empty, tooLong maxLength, notAsciiAlphaNumSpecial] Nickname nickname
-    # Validated.labelMap (SProxy :: SProxy "nickname") \(errors :: NicknameErrors) ->
+    # Validated.labelMap (Proxy :: _ "nickname") \(errors :: NicknameErrors) ->
         [ "Registration nickname is invalid: " <> nickname
         , "Failed with following errors: " <> show errors
         ]

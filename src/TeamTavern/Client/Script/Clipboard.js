@@ -1,6 +1,4 @@
-"use strict";
-
-exports.writeTextImpl = function (errorCallback) {
+export const writeTextImpl = function (errorCallback) {
     return function (successCallback) {
         return function (text) {
             return function () {

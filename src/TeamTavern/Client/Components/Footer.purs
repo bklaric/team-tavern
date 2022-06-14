@@ -2,7 +2,7 @@ module TeamTavern.Client.Components.Footer where
 
 import Prelude
 
-import Data.Symbol (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Effect.Class (class MonadEffect)
 import Halogen as H
 import Halogen.HTML as HH
@@ -27,7 +27,7 @@ footer :: forall monad action children. MonadEffect monad =>
 footer = HH.div [ HP.class_ $ HH.ClassName "footer" ]
     [ HH.div [ HP.class_ $ HH.ClassName "footer-content" ]
         [ HH.div_
-            [ navigationAnchor (SProxy :: SProxy "aboutAnchor")
+            [ navigationAnchor (Proxy :: _ "aboutAnchor")
                 { path: "/about", content: HH.text "About" }
             , HH.a
                 [ HS.class_ "nn-cmp-show"
@@ -35,7 +35,7 @@ footer = HH.div [ HP.class_ $ HH.ClassName "footer" ]
                 , HP.href "#"
                 ]
                 [ HH.text "Manage Cookie Settings" ]
-            , navigationAnchor (SProxy :: SProxy "privacyAnchor")
+            , navigationAnchor (Proxy :: _ "privacyAnchor")
                 { path: "/privacy", content: HH.text "Privacy Policy" }
             ]
         , HH.div_

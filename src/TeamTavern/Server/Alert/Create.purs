@@ -4,7 +4,7 @@ import Prelude
 
 import Async (Async, alwaysRight, examineLeftWithEffect)
 import Data.Nullable (toNullable)
-import Data.Symbol (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Data.Variant (Variant, inj, match)
 import Effect (Effect)
 import Perun.Request.Body (Body)
@@ -14,7 +14,7 @@ import Postgres.Query (Query(..), QueryParameter, (:), (:|))
 import Prim.Row (class Lacks)
 import Record.Builder (Builder)
 import Record.Builder as Builder
-import Simple.JSON (writeJSON)
+import Yoga.JSON (writeJSON)
 import TeamTavern.Routes.CreateAlert as CreateAlert
 import TeamTavern.Routes.Shared.Organization as Organization
 import TeamTavern.Routes.Shared.Platform as Platform
@@ -103,7 +103,7 @@ type CreateAlertError = Variant
 
 invalidEmailHandler :: forall fields. Lacks "email" fields =>
     Builder (Record fields) { email :: Array String -> Effect Unit | fields }
-invalidEmailHandler = Builder.insert (SProxy :: SProxy "email") logLines
+invalidEmailHandler = Builder.insert (Proxy :: _ "email") logLines
 
 logError :: CreateAlertError -> Effect Unit
 logError = Log.logError "Error creating alert"
@@ -115,7 +115,7 @@ logError = Log.logError "Error creating alert"
 errorResponse :: CreateAlertError -> Response
 errorResponse = match
     { email:
-        inj (SProxy :: _ "email")
+        inj (Proxy :: _ "email")
         >>> (writeJSON :: CreateAlert.BadContent -> String)
         >>> badRequest_
     , client: const badRequest__

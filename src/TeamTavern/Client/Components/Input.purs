@@ -93,7 +93,7 @@ requiredTextLineInput input onInput =
     [ HS.class_ "text-line-input"
     , HP.type_ HP.InputText
     , HP.value input
-    , HE.onValueInput $ Just <<< onInput
+    , HE.onValueInput onInput
     ]
 
 textLineInput :: forall slots action.
@@ -107,7 +107,7 @@ textInput placeholder input onInput =
     [ HS.class_ "text-input"
     , HP.placeholder placeholder
     , HP.value input
-    , HE.onValueInput $ Just <<< onInput
+    , HE.onValueInput onInput
     ]
 
 textInput_ :: forall slots action. String -> (String -> action) -> HH.HTML slots action
@@ -119,7 +119,7 @@ numberInput (input :: Maybe Int) onInput =
     [ HS.class_ $ "range-input-part"
     , HP.type_ HP.InputNumber
     , HP.value $ maybe "" show input
-    , HE.onValueChange $ Just <<< onInput <<< justIfInt
+    , HE.onValueChange $ onInput <<< justIfInt
     ]
 
 numberRangeInput :: forall slots action.
@@ -141,7 +141,7 @@ timeInput disabled input onInput =
     , HP.type_ HP.InputTime
     , HP.disabled disabled
     , HP.value $ maybe "" identity input
-    , HE.onValueChange $ Just <<< onInput <<< nothingIfEmpty
+    , HE.onValueChange $ onInput <<< nothingIfEmpty
     ]
 
 timeRangeInput
@@ -179,7 +179,7 @@ dateInput min max value onValue =
     , HP.min $ unsafeCoerce min
     , HP.max $ unsafeCoerce max
     , HP.value $ maybe "" identity value
-    , HE.onValueInput $ Just <<< onValue <<< nothingIfEmpty
+    , HE.onValueInput $ onValue <<< nothingIfEmpty
     ]
 
 checkboxLabel :: forall slots action. String -> HH.HTML slots action
@@ -190,7 +190,7 @@ checkboxInput :: forall slots action.
 checkboxInput checked onChecked label =
     HH.div
     [ HS.class_ "checkbox-input"
-    , HE.onClick $ const $ Just $ onChecked $ not checked
+    , HE.onClick $ const $ onChecked $ not checked
     ]
     [ checkbox checked
     , checkboxLabel label

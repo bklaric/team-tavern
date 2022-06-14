@@ -4,7 +4,7 @@ import Prelude
 
 import Data.Const (Const)
 import Data.Maybe (Maybe(..))
-import Data.Symbol (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Effect.Class (class MonadEffect)
 import Halogen as H
 import Halogen.HTML as HH
@@ -40,7 +40,7 @@ render = HH.div [ HS.class_ "about" ] $
     , HH.h2 [ HS.class_ "about-heading" ] [ HH.text "How to contact TeamTavern?" ]
     , HH.p [ HS.class_ "about-text" ]
         [ HH.text "You can contact "
-        , navigationAnchor (SProxy :: SProxy "emailAnchor")
+        , navigationAnchor (Proxy :: _ "emailAnchor")
             { path: "mailto:admin@teamtavern.net", content: HH.text "admin@teamtavern.net" }
         , HH.text " for all inquiries regarding TeamTavern."
         ]
@@ -65,7 +65,7 @@ handleAction Initialize =
     setMeta "About | TeamTavern" "TeamTavern is an online platform for finding esports teammates."
 
 component :: forall monad output input query. MonadEffect monad =>
-    H.Component HH.HTML query input output monad
+    H.Component query input output monad
 component = H.mkComponent
     { initialState: const unit
     , render: const render
@@ -77,4 +77,4 @@ component = H.mkComponent
 
 about :: forall action monad children. MonadEffect monad =>
     HH.ComponentHTML action (about :: Slot | children) monad
-about = HH.slot (SProxy :: SProxy "about") unit component unit absurd
+about = HH.slot (Proxy :: _ "about") unit component unit absurd

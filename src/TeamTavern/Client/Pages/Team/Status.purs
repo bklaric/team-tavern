@@ -15,5 +15,5 @@ getStatus owner = do
     nickname <- getPlayerNickname
     pure $ case nickname of
         Just nickname' | nickname' == owner -> SignedInOwner
-        Just nickname' -> SignedInOther
+        Just _ -> SignedInOther
         Nothing -> SignedOut

@@ -5,7 +5,7 @@ import Prelude
 import Async (Async, alwaysRight)
 import Data.Variant (match)
 import Perun.Response (Response, internalServerError__, notFound__, ok_)
-import Simple.JSON (writeJSON)
+import Yoga.JSON (writeJSON)
 import TeamTavern.Routes.ViewPlayer as ViewPlayer
 import TeamTavern.Server.Infrastructure.Error (LoadSingleError)
 

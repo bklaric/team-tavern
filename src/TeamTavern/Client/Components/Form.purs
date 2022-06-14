@@ -2,7 +2,6 @@ module TeamTavern.Client.Components.Form where
 
 import Prelude
 
-import Data.Maybe (Maybe(..))
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
@@ -11,7 +10,7 @@ import Web.Event.Internal.Types (Event)
 
 form :: forall slots action.
     (Event -> action) -> Array (HH.HTML slots action) -> HH.HTML slots action
-form onSubmit content = HH.form [ HS.class_ "form", HE.onSubmit (Just <<< onSubmit) ] content
+form onSubmit content = HH.form [ HS.class_ "form", HE.onSubmit onSubmit ] content
 
 submitButton :: forall slots action. String -> String -> String -> Boolean -> HH.HTML slots action
 submitButton icon text submittingText submitting =
@@ -22,7 +21,7 @@ submitButton icon text submittingText submitting =
 
 formError :: forall slots action. String -> Boolean -> Array (HH.HTML slots action)
 formError text true = [ HH.p [ HS.class_ "form-error" ] [ HH.text text ] ]
-formError text false = []
+formError _ false = []
 
 otherFormError :: forall slots action. Boolean -> Array (HH.HTML slots action)
 otherFormError = formError "Something unexpected went wrong! Please try again later."

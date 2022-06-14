@@ -6,7 +6,7 @@ import Async (Async, alwaysRight)
 import Data.Array as Array
 import Data.Variant (match)
 import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, noContent_, unauthorized__)
-import Simple.JSON (writeJSON)
+import Yoga.JSON (writeJSON)
 import TeamTavern.Server.Player.UpdateContacts.LogError (UpdateContactsError)
 
 errorResponse :: UpdateContactsError -> Response

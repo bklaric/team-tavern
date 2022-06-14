@@ -11,7 +11,7 @@ import Data.Maybe (Maybe(..))
 import Data.Monoid (guard)
 import Data.MultiMap as MultiMap
 import Data.Tuple (Tuple(..))
-import Data.Variant (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Record as Record
@@ -188,7 +188,7 @@ fieldValuesToMap =
 raiseOutput :: forall left. State -> H.HalogenM State Action ChildSlots Output (Async left) Unit
 raiseOutput state = let
     details = state.details { fieldValues = fieldValuesToArray state.details.fieldValues }
-        # Record.insert (SProxy :: _ "platforms") state.details.selectedPlatforms
+        # Record.insert (Proxy :: _ "platforms") state.details.selectedPlatforms
         # pick
     contacts = pick state.contacts
     in
@@ -230,7 +230,7 @@ handleAction (UpdatePsnId psnId)           = H.modify _ { contacts { psnId      
 handleAction (UpdateGamerTag gamerTag)     = H.modify _ { contacts { gamerTag   = gamerTag   } } >>= raiseOutput
 handleAction (UpdateFriendCode friendCode) = H.modify _ { contacts { friendCode = friendCode } } >>= raiseOutput
 
-component :: forall query left. H.Component HH.HTML query Input Output (Async left)
+component :: forall query left. H.Component query Input Output (Async left)
 component = H.mkComponent
     { initialState: \input -> input { details { fieldValues = fieldValuesToMap input.details.fieldValues } }
     , render
@@ -281,4 +281,4 @@ profileFormInput
     -> (Output -> action)
     -> HH.ComponentHTML action (teamProfileFormInput :: Slot | children) (Async left)
 profileFormInput input handleMessage =
-    HH.slot (SProxy :: SProxy "teamProfileFormInput") unit component input (Just <<< handleMessage)
+    HH.slot (Proxy :: _ "teamProfileFormInput") unit component input handleMessage

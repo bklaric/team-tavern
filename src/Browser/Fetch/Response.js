@@ -1,10 +1,8 @@
-"use strict";
-
-exports.status = function (response) {
+export const status = function (response) {
     return response.status
 }
 
-exports.textImpl = function (successCallback) {
+export const textImpl = function (successCallback) {
     return function (response) {
         return function () {
             response.text().then(
@@ -14,7 +12,7 @@ exports.textImpl = function (successCallback) {
     }
 }
 
-exports.jsonImpl = function (successCallback) {
+export const jsonImpl = function (successCallback) {
     return function (errorCallback){
         return function (response) {
             return function () {

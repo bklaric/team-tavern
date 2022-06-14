@@ -5,13 +5,13 @@ import Prelude
 import Async (Async)
 import Data.Maybe (Maybe(..))
 import Data.String (Pattern(..), split)
-import Data.Symbol (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Effect.Class.Console (log)
 import Foreign (Foreign)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
-import Simple.JSON (E, read, read_)
+import Yoga.JSON (E, read, read_)
 import TeamTavern.Client.Components.Content (content, singleContent, wideContent)
 import TeamTavern.Client.Components.Footer (footer)
 import TeamTavern.Client.Components.Footer as Footer
@@ -136,37 +136,37 @@ render NetworkN = HH.div_
     [ topBar Nothing
     , content
         [ HH.h3_ [ HH.text "nn_lb1" ]
-        , HH.div [ HP.id_ "nn_lb1" ] []
+        , HH.div [ HP.id "nn_lb1" ] []
         , HH.h3_ [ HH.text "nn_lb2" ]
-        , HH.div [ HP.id_ "nn_lb2" ] []
+        , HH.div [ HP.id "nn_lb2" ] []
         , HH.h3_ [ HH.text "nn_mpu1" ]
-        , HH.div [ HP.id_ "nn_mpu1" ] []
+        , HH.div [ HP.id "nn_mpu1" ] []
         , HH.h3_ [ HH.text "nn_mobile_lb1_sticky" ]
-        , HH.div [ HP.id_ "nn_mobile_lb1_sticky", HS.class_ "nn-sticky" ] []
+        , HH.div [ HP.id "nn_mobile_lb1_sticky", HS.class_ "nn-sticky" ] []
         , HH.h3_ [ HH.text "nn_mobile_lb2" ]
-        , HH.div [ HP.id_ "nn_mobile_lb2" ] []
-        , navigationAnchor (SProxy :: SProxy "network-n-test2") { path: "/network-n-test2", content: HH.text "Go to test page 2" }
+        , HH.div [ HP.id "nn_mobile_lb2" ] []
+        , navigationAnchor (Proxy :: _ "network-n-test2") { path: "/network-n-test2", content: HH.text "Go to test page 2" }
         ]
     , footer
-    -- , HH.div [ HP.id_ "nn_1by1" ] []
+    -- , HH.div [ HP.id "nn_1by1" ] []
     ]
 render NetworkN2 = HH.div_
     [ topBar Nothing
     , content
         [ HH.h3_ [ HH.text "nn_lb1" ]
-        , HH.div [ HP.id_ "nn_lb1" ] []
+        , HH.div [ HP.id "nn_lb1" ] []
         , HH.h3_ [ HH.text "nn_lb2" ]
-        , HH.div [ HP.id_ "nn_lb2" ] []
+        , HH.div [ HP.id "nn_lb2" ] []
         , HH.h3_ [ HH.text "nn_mpu1" ]
-        , HH.div [ HP.id_ "nn_mpu1" ] []
+        , HH.div [ HP.id "nn_mpu1" ] []
         , HH.h3_ [ HH.text "nn_mobile_lb1_sticky" ]
-        , HH.div [ HP.id_ "nn_mobile_lb1_sticky", HS.class_ "nn-sticky" ] []
+        , HH.div [ HP.id "nn_mobile_lb1_sticky", HS.class_ "nn-sticky" ] []
         , HH.h3_ [ HH.text "nn_mobile_lb2" ]
-        , HH.div [ HP.id_ "nn_mobile_lb2" ] []
-        , navigationAnchor (SProxy :: SProxy "network-n-test") { path: "/network-n-test", content: HH.text "Go to test page 1" }
+        , HH.div [ HP.id "nn_mobile_lb2" ] []
+        , navigationAnchor (Proxy :: _ "network-n-test") { path: "/network-n-test", content: HH.text "Go to test page 1" }
         ]
     , footer
-    -- , HH.div [ HP.id_ "nn_1by1" ] []
+    -- , HH.div [ HP.id "nn_1by1" ] []
     ]
 render DeleteAlert = singleContent [ deleteAlert ]
 render NotFound = HH.p_ [ HH.text "You're fucken lost, mate." ]
@@ -272,7 +272,7 @@ handleQuery (ChangeRoute state route send) = do
     pure $ Just send
 
 router :: forall input output left.
-    Foreign -> String -> H.Component HH.HTML Query input output (Async left)
+    Foreign -> String -> H.Component Query input output (Async left)
 router state route = H.mkComponent
     { initialState: const Empty
     , render

@@ -8,7 +8,7 @@ import Data.Bifunctor.Label (label)
 import Data.Map (Map)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
-import Data.Variant (SProxy(..), inj)
+import Data.Variant (inj)
 import Perun.Request.Body (Body)
 import Perun.Response (Response)
 import Postgres.Async.Pool (withTransaction)
@@ -32,7 +32,7 @@ updatePlayerProfile pool identifiers cookies body =
     -- Read cookie info from cookies.
     cookieInfo <- readCookieInfo cookies
 
-    pool # withTransaction (inj (SProxy :: SProxy "databaseError")) \client -> do
+    pool # withTransaction (inj (Proxy :: _ "databaseError")) \client -> do
         -- Load game fields from database.
         game <- loadFields client identifiers.handle
 
@@ -55,7 +55,7 @@ updatePlayerProfile pool identifiers cookies body =
             <$> validateProfileV game profile'.details
             <*> validateContactsV [ profile'.details.platform ] contacts'
             # AsyncV.toAsync
-            # label (SProxy :: _ "invalidBody")
+            # label (Proxy :: _ "invalidBody")
 
         -- Update profile.
         updateProfile client cookieInfo identifiers profile

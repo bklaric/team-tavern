@@ -10,7 +10,7 @@ import Jarilo.Path (type (:>), End)
 import Jarilo.Query (NoQuery)
 import Jarilo.Route (Route)
 import Jarilo.Segment (Literal)
-import Simple.JSON (class ReadForeign, class WriteForeign, readImpl, writeImpl)
+import Yoga.JSON (class ReadForeign, class WriteForeign, readImpl, writeImpl)
 import TeamTavern.Routes.Shared.Filters (Filters)
 import TeamTavern.Routes.Shared.Timezone (Timezone)
 

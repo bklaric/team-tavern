@@ -4,7 +4,7 @@ import Prelude
 
 import Data.Const (Const)
 import Data.Maybe (Maybe(..))
-import Data.Variant (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Effect.Class (class MonadEffect)
 import Halogen as H
 import Halogen.HTML as HH
@@ -17,9 +17,9 @@ import Web.Event.Event (target)
 import Web.HTML.HTMLElement (fromEventTarget)
 import Web.UIEvent.MouseEvent (MouseEvent, toEvent)
 
-type Input input = input
+type Input (input :: Type) = input
 
-type State input = Input input
+type State (input :: Type) = Input input
 
 data Action output
     = Init
@@ -37,25 +37,25 @@ type Slot output = H.Slot (Const Void) output Unit
 render
     :: forall query input output monad
     .  String
-    -> H.Component HH.HTML query input output monad
+    -> H.Component query input output monad
     -> State input
     -> HH.ComponentHTML (Action output) (ChildSlots query output) monad
 render title content input =
     HH.div
     [ HP.class_ $ H.ClassName "modal-background"
     , HP.ref $ H.RefLabel "modal-background"
-    , HE.onClick $ Just <<< BackgroundClose
+    , HE.onClick BackgroundClose
     ]
     [ HH.div [ HS.class_ "modal-content" ]
         [ HH.h1 [ HS.class_ "modal-title" ]
             [ HH.text title
             , HH.button
                 [ HS.class_ "modal-close-button"
-                , HE.onClick $ const $ Just ButtonClose
+                , HE.onClick $ const ButtonClose
                 ]
                 [ HH.i [ HS.class_ "fas fa-times modal-close-button-icon" ] [] ]
             ]
-        , HH.slot (SProxy :: SProxy "content") unit content input (Just <<< OutputRaise)
+        , HH.slot (Proxy :: _ "content") unit content input OutputRaise
         ]
     ]
 
@@ -79,8 +79,8 @@ component
     :: forall query input output monad
     .  MonadEffect monad
     => String
-    -> H.Component HH.HTML query input output monad
-    -> H.Component HH.HTML query input (Output output) monad
+    -> H.Component query input output monad
+    -> H.Component query input (Output output) monad
 component title content = H.mkComponent
     { initialState: identity
     , render: render title content

@@ -8,7 +8,7 @@ import Data.Bifunctor.Label (label)
 import Data.Foldable (elem)
 import Data.Map (Map)
 import Data.Maybe (Maybe(..))
-import Data.Symbol (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Perun.Request.Body (Body)
 import Perun.Response (Response)
 import Postgres.Pool (Pool)
@@ -54,7 +54,7 @@ updateTeamProfile pool cookies body { teamHandle, gameHandle } =
             <$> validateProfileV game profile'.details
             <*> validateContactsV profile'.details.platforms contacts'
             # AsyncV.toAsync
-            # label (SProxy :: _ "invalidBody")
+            # label (Proxy :: _ "invalidBody")
 
         -- Add profile to database.
         updateProfile client cookieInfo teamHandle gameHandle profile

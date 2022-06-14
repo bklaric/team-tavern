@@ -9,7 +9,7 @@ import Data.Const (Const)
 import Data.Foldable (foldMap)
 import Data.Maybe (Maybe(..))
 import Data.Monoid (guard)
-import Data.Symbol (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Ads (descriptionLeaderboards, stickyLeaderboards)
@@ -164,7 +164,7 @@ handleAction HideEditProfileModal = modifyLoaded _ { editProfileModalShown = Not
 handleAction ShowCreateTeamModal = modifyLoaded _ { createTeamModalShown = true }
 handleAction HideCreateTeamModal = modifyLoaded _ { createTeamModalShown = false }
 
-component :: forall query output left. H.Component HH.HTML query Input output (Async left)
+component :: forall query output left. H.Component query Input output (Async left)
 component = H.mkComponent
     { initialState: Empty
     , render
@@ -177,4 +177,4 @@ component = H.mkComponent
 
 player :: forall query children left.
     Input -> HH.ComponentHTML query (player :: Slot | children) (Async left)
-player input = HH.slot (SProxy :: SProxy "player") unit component input absurd
+player input = HH.slot (Proxy :: _ "player") unit component input absurd

@@ -6,7 +6,7 @@ import Async (Async)
 import Data.Array as Array
 import Data.Const (Const)
 import Data.Monoid (guard)
-import Data.Symbol (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Data.Tuple (Tuple(..))
 import Halogen as H
 import Halogen.HTML as HH
@@ -16,7 +16,7 @@ import TeamTavern.Client.Components.Team.Info (info, infoContainer, infoIcon, in
 
 type Slot = H.Slot (Const Void) Void Unit
 
-component :: forall left output input query. H.Component HH.HTML query input output (Async left)
+component :: forall left output input query. H.Component query input output (Async left)
 component = Hooks.component $ \_ _ -> Hooks.do
     (Tuple shown shownId) <- usePopover
 
@@ -51,4 +51,4 @@ component = Hooks.component $ \_ _ -> Hooks.do
         )
 
 organizationInfo :: forall action slots left. H.ComponentHTML action (organizationInfo :: Slot | slots) (Async left)
-organizationInfo = HH.slot (SProxy :: _ "organizationInfo") unit component unit absurd
+organizationInfo = HH.slot (Proxy :: _ "organizationInfo") unit component unit absurd

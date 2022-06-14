@@ -5,7 +5,7 @@ import Prelude
 import Async (Async)
 import Data.Const (Const)
 import Data.Maybe (Maybe(..))
-import Data.Symbol (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Record as Record
@@ -97,9 +97,9 @@ emptyInput =
     }
 
 component :: forall query left.
-    H.Component HH.HTML query Input Output (Async left)
+    H.Component query Input Output (Async left)
 component = H.mkComponent
-    { initialState: Record.insert (SProxy :: SProxy "passwordShown") false
+    { initialState: Record.insert (Proxy :: _ "passwordShown") false
     , render
     , eval: H.mkEval $ H.defaultEval
         { receive = Just <<< Receive
@@ -113,4 +113,4 @@ registrationInput
     -> (Output -> action)
     -> HH.ComponentHTML action (registrationInput :: Slot | children) (Async left)
 registrationInput input handleOutput =
-    HH.slot (SProxy :: SProxy "registrationInput") unit component input (Just <<< handleOutput)
+    HH.slot (Proxy :: _ "registrationInput") unit component input handleOutput

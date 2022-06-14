@@ -11,7 +11,7 @@ import Data.Const (Const)
 import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..))
 import Data.Options ((:=))
-import Data.Symbol (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Halogen (liftEffect)
 import Halogen as H
 import Halogen.HTML as HH
@@ -71,7 +71,7 @@ handleAction Initialize = do
             H.put nextState
         _, _ -> H.put Error
 
-component :: forall query input output left. H.Component HH.HTML query input output (Async left)
+component :: forall query input output left. H.Component query input output (Async left)
 component = H.mkComponent
     { initialState: const Empty
     , render
@@ -80,4 +80,4 @@ component = H.mkComponent
 
 deleteAlert :: forall query children left.
     HH.ComponentHTML query (deleteAlert :: Slot | children) (Async left)
-deleteAlert = HH.slot (SProxy :: _ "deleteAlert") unit component unit absurd
+deleteAlert = HH.slot (Proxy :: _ "deleteAlert") unit component unit absurd

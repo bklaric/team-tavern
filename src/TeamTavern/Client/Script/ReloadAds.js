@@ -1,6 +1,4 @@
-"use strict";
-
-exports.reloadAdsImpl = function () {
+export const reloadAdsImpl = function () {
   try {
     window.reloadAdSlots();
   }

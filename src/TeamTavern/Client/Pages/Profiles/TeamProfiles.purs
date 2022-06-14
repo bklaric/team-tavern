@@ -10,7 +10,7 @@ import Data.Array.Extra (full)
 import Data.Const (Const)
 import Data.Maybe (Maybe(..), isNothing)
 import Data.Monoid (guard)
-import Data.Symbol (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
@@ -115,7 +115,7 @@ profileSection handle profile = let
     cardSection $
     [ profileHeader $
         [ HH.div [ HS.class_ "team-profile-heading-container" ] $
-            [ profileHeading (SProxy :: SProxy "teams") profile.handle
+            [ profileHeading (Proxy :: _ "teams") profile.handle
                 ("/teams/" <> profile.handle) (nameOrHandleNW profile.handle profile.organization)
             , case profile.organization of
                 InformalNW -> informalBadge
@@ -154,7 +154,7 @@ profileSection handle profile = let
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { handle, profiles, profileCount, playerInfo, page } =
     HH.div_ $ [
-    HH.div [ HP.id_ "profiles-card", HS.class_ "card" ] $
+    HH.div [ HP.id "profiles-card", HS.class_ "card" ] $
     [ cardHeader $
         [ HH.div_ $
             [ cardHeading "Team profiles"
@@ -190,7 +190,7 @@ handleAction (OpenPreboarding mouseEvent) = do
     preventMouseDefault mouseEvent
     H.raise PreboardingClicked
 
-component :: forall query left. H.Component HH.HTML query Input Output (Async left)
+component :: forall query left. H.Component query Input Output (Async left)
 component = H.mkComponent
     { initialState: identity
     , render
@@ -203,7 +203,7 @@ component = H.mkComponent
 teamProfiles
     :: forall children action left
     .  Input
-    -> (Output -> Maybe action)
+    -> (Output -> action)
     -> HH.ComponentHTML action (teamProfiles :: Slot | children) (Async left)
 teamProfiles input handleOutput =
-    HH.slot (SProxy :: SProxy "teamProfiles") unit component input handleOutput
+    HH.slot (Proxy :: _ "teamProfiles") unit component input handleOutput

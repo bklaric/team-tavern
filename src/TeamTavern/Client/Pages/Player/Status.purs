@@ -15,5 +15,5 @@ getStatus nickname = do
     nickname' <- getPlayerNickname
     pure $ case nickname' of
         Just nickname'' | nickname'' == nickname -> SignedInSelf
-        Just nickname'' -> SignedInOther
+        Just _ -> SignedInOther
         Nothing -> SignedOut

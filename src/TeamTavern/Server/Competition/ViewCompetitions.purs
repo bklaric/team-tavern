@@ -8,7 +8,7 @@ import Effect (Effect)
 import Perun.Response (Response, internalServerError__, ok_)
 import Postgres.Pool (Pool)
 import Postgres.Query (Query(..), (:))
-import Simple.JSON (writeJSON)
+import Yoga.JSON (writeJSON)
 import TeamTavern.Routes.ViewCompetitions as ViewCompetitions
 import TeamTavern.Server.Infrastructure.Error (InternalError)
 import TeamTavern.Server.Infrastructure.Log (logInternalError)

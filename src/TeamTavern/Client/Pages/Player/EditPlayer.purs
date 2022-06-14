@@ -5,7 +5,7 @@ import Prelude
 import Async (Async)
 import Data.Const (Const)
 import Data.Maybe (Maybe(..))
-import Data.Variant (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Form (form, otherFormError, submitButton)
@@ -85,7 +85,7 @@ handleAction (Update event) = do
             , otherError = true
             }
 
-component :: forall query output left. H.Component HH.HTML query Input output (Async left)
+component :: forall query output left. H.Component query Input output (Async left)
 component = H.mkComponent
     { initialState: \player ->
         { nickname: player.nickname
@@ -110,8 +110,8 @@ component = H.mkComponent
 editPlayer
     :: forall action children left
     .  Input
-    -> (Modal.Output Void -> Maybe action)
+    -> (Modal.Output Void -> action)
     -> HH.ComponentHTML action (editPlayer :: Slot | children) (Async left)
 editPlayer input handleMessage = HH.slot
-    (SProxy :: SProxy "editPlayer") unit
+    (Proxy :: _ "editPlayer") unit
     (Modal.component "Edit player" component) input handleMessage

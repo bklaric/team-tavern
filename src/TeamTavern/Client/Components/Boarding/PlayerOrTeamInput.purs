@@ -6,7 +6,7 @@ import Data.Maybe (Maybe, maybe)
 import Foreign (ForeignError(..), fail, readString, unsafeToForeign)
 import Halogen.HTML (HTML)
 import Halogen.HTML as HH
-import Simple.JSON (class ReadForeign, class WriteForeign)
+import Yoga.JSON (class ReadForeign, class WriteForeign)
 import TeamTavern.Client.Components.RadioButton (radioButton, radioButtonDescription, radioButtons)
 import TeamTavern.Client.Snippets.Class as HS
 

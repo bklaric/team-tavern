@@ -11,7 +11,7 @@ import Data.Bifunctor.Label (label)
 import Data.List.Types (NonEmptyList)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
-import Data.Symbol (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Data.Variant (Variant, inj, match)
 import Effect (Effect, foreachE)
 import Perun.Request.Body (Body)
@@ -21,7 +21,7 @@ import Prim.Row (class Lacks)
 import Record.Builder (Builder)
 import Record.Builder as Builder
 import Record.Extra (pick)
-import Simple.JSON (writeJSON)
+import Yoga.JSON (writeJSON)
 import TeamTavern.Routes.Onboard (BadContent, RequestContent, OkContent)
 import TeamTavern.Routes.Shared.Platform (Platform(..))
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
@@ -77,7 +77,7 @@ invalidBodyHandler :: forall fields. Lacks "invalidBody" fields =>
         )
         -> Effect Unit
     | fields }
-invalidBodyHandler = Builder.insert (SProxy :: SProxy "invalidBody") \errors ->
+invalidBodyHandler = Builder.insert (Proxy :: _ "invalidBody") \errors ->
     foreachE (Array.fromFoldable errors) $ match
     { team: \errors' -> logt $ "Team errors: " <> show errors'
     , playerProfile: \errors' -> logt $ "Player profile errors: " <> show errors'
@@ -101,11 +101,11 @@ errorResponse = match
         errors
         # fromFoldable
         <#> match
-            { team: inj (SProxy :: SProxy "team") <<< Array.fromFoldable
-            , playerProfile: inj (SProxy :: SProxy "playerProfile") <<< Array.fromFoldable
-            , teamProfile: inj (SProxy :: SProxy "teamProfile") <<< Array.fromFoldable
-            , playerContacts: inj (SProxy :: _ "playerContacts") <<< Array.fromFoldable
-            , teamContacts: inj (SProxy :: _ "teamContacts") <<< Array.fromFoldable
+            { team: inj (Proxy :: _ "team") <<< Array.fromFoldable
+            , playerProfile: inj (Proxy :: _ "playerProfile") <<< Array.fromFoldable
+            , teamProfile: inj (Proxy :: _ "teamProfile") <<< Array.fromFoldable
+            , playerContacts: inj (Proxy :: _ "playerContacts") <<< Array.fromFoldable
+            , teamContacts: inj (Proxy :: _ "teamContacts") <<< Array.fromFoldable
             }
         # (writeJSON :: BadContent -> String)
         # badRequest_
@@ -154,7 +154,7 @@ onboard pool cookies body =
                 <*> validateProfileV game profile
                 <*> validateContactsV [ profile.platform ] contactsCleaned
                 # AsyncV.toAsync
-                # label (SProxy :: SProxy "invalidBody")
+                # label (Proxy :: _ "invalidBody")
             updateDetails client (unwrap cookieInfo.id) player'
             profileId <- addProfile client (unwrap cookieInfo.id)
                 { handle: content.gameHandle
@@ -183,14 +183,14 @@ onboard pool cookies body =
                 <*> TeamProfile.validateProfileV game profile
                 <*> TeamCont.validateContactsV profile.platforms contactsCleaned
                 # AsyncV.toAsync
-                # label (SProxy :: SProxy "invalidBody")
+                # label (Proxy :: _ "invalidBody")
             let generatedHandle = generateHandle team'.organization cookieInfo.nickname
             { id, handle } <- addTeam client cookieInfo.id generatedHandle team'
             profileId <- AddTeamProfile.addProfile
                 client cookieInfo.id handle content.gameHandle profile'
             TeamIdunno.writeContacts client id contacts'
             pure { teamHandle: Just handle, profileId }
-        _ -> Async.left $ inj (SProxy :: SProxy "client") []
+        _ -> Async.left $ inj (Proxy :: _ "client") []
 
     case result.teamHandle of
         Nothing -> checkPlayerAlerts result.profileId pool

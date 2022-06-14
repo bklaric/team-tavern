@@ -7,15 +7,15 @@ import Async (Async)
 import Async as Async
 import Data.Array (head)
 import Data.Bifunctor.Label (label, labelMap)
-import Data.Variant (SProxy(..), Variant, inj)
+import Data.Variant (Variant, inj)
 import Foreign (MultipleErrors)
 import Postgres.Async.Query (execute, query)
 import Postgres.Client (Client)
 import Postgres.Error (Error)
 import Postgres.Query (Query(..), QueryParameter, (:), (:|))
 import Postgres.Result (Result, rows)
-import Simple.JSON (writeImpl)
-import Simple.JSON.Async (read)
+import Yoga.JSON (writeImpl)
+import Yoga.JSON.Async (read)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Server.Profile.AddPlayerProfile.AddFieldValues (ProfileId, addFieldValues)
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile (Profile)
@@ -74,13 +74,13 @@ updateProfile' client cookieInfo identifiers profile = do
     result <- client
         # query updateProfileString
             (updateProfileParameters cookieInfo identifiers profile)
-        # label (SProxy :: SProxy "databaseError")
+        # label (Proxy :: _ "databaseError")
     { profileId } :: { profileId :: Int } <- rows result
         # head
         # Async.note (inj
-            (SProxy :: SProxy "notAuthorized") { cookieInfo, identifiers })
+            (Proxy :: _ "notAuthorized") { cookieInfo, identifiers })
         >>= (read >>> labelMap
-            (SProxy :: SProxy "unreadableProfileId") { result, errors: _ })
+            (Proxy :: _ "unreadableProfileId") { result, errors: _ })
     pure profileId
 
 -- Delete field value rows.
@@ -96,7 +96,7 @@ deleteFieldValues :: forall errors.
 deleteFieldValues client profileId =
     client
     # execute deleteFieldValuesString (profileId : [])
-    # label (SProxy :: SProxy "databaseError")
+    # label (Proxy :: _ "databaseError")
 
 updateProfile
     :: forall errors

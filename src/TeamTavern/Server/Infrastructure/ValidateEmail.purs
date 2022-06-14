@@ -13,22 +13,23 @@ import Data.String.Regex (Regex, match, regex)
 import Data.String.Regex.Flags (unicode)
 import Data.Validated.Label (ValidatedVariants)
 import Data.Validated.Label as Validated
-import Data.Variant (SProxy(..), Variant)
-import Partial.Unsafe (unsafePartial)
+import Data.Variant (Variant)
+import Type.Proxy (Proxy(..))
+import Undefined (undefined)
 import Wrapped.String (TooLong, Invalid, invalid, tooLong)
 import Wrapped.Validated as Wrapped
 
 newtype Email = Email String
 
 emailRegex :: Regex
-emailRegex = regex """^[^\s@]+@[^\s@]+\.[^\s@]+$""" unicode # unsafePartial fromRight
+emailRegex = regex """^[^\s@]+@[^\s@]+\.[^\s@]+$""" unicode # fromRight undefined
 
 type EmailError = Variant (invalid :: Invalid, tooLong :: TooLong )
 
 validateEmail :: forall errors. String -> ValidatedVariants (email :: Array String | errors) Email
 validateEmail email =
     Wrapped.create trim [invalid (match emailRegex >>> isJust), tooLong 254] Email email
-    # Validated.labelMap (SProxy :: _ "email") \errors ->
+    # Validated.labelMap (Proxy :: _ "email") \errors ->
         [ "Error validating email: " <> email
         , "Failed with following errors: " <> show (errors :: NonEmptyList EmailError)
         ]
@@ -37,7 +38,7 @@ validateEmail' :: forall errors. String -> Async (Variant (email :: Array String
 validateEmail' email =
     Wrapped.create trim [invalid (match emailRegex >>> isJust), tooLong 254] Email email
     # fromValidated
-    # labelMap (SProxy :: _ "email") \errors ->
+    # labelMap (Proxy :: _ "email") \errors ->
         [ "Error validating email: " <> email
         , "Failed with following errors: " <> show (errors :: NonEmptyList EmailError)
         ]

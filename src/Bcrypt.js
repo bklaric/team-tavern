@@ -1,8 +1,6 @@
-"use strict";
+import * as bcrypt from "bcrypt"
 
-var bcrypt = require('bcrypt');
-
-exports.genSaltImpl = function (rounds) {
+export const genSaltImpl = function (rounds) {
     return function (minor) {
         return function (errorCallback) {
             return function (successCallback) {
@@ -21,7 +19,7 @@ exports.genSaltImpl = function (rounds) {
     }
 }
 
-exports.hashImpl = function (data) {
+export const hashImpl = function (data) {
     return function (saltOrRounds) {
         return function (errorCallback) {
             return function (successCallback) {
@@ -40,7 +38,7 @@ exports.hashImpl = function (data) {
     }
 }
 
-exports.compareImpl = function (data) {
+export const compareImpl = function (data) {
     return function (encrypted) {
         return function (errorCallback) {
             return function (successCallback) {
@@ -59,6 +57,6 @@ exports.compareImpl = function (data) {
     }
 }
 
-exports.getRounds = function (encrypted) {
+export const getRounds = function (encrypted) {
     return bcrypt.getRounds(encrypted)
 }

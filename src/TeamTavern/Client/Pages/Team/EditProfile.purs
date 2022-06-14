@@ -7,7 +7,7 @@ import Data.Const (Const)
 import Data.Either (Either(..))
 import Data.Foldable (foldl, intercalate)
 import Data.Maybe (Maybe(..))
-import Data.Variant (SProxy(..), match)
+import Data.Variant (match)
 import Halogen as H
 import Halogen.HTML as HH
 import Record as Record
@@ -22,6 +22,7 @@ import TeamTavern.Server.Profile.AddTeamProfile.ReadProfile (RequestContent)
 import TeamTavern.Server.Profile.UpdateTeamProfile.SendResponse (BadContent)
 import TeamTavern.Server.Team.View (Team, Profile)
 import Type (type ($))
+import Type.Proxy (Proxy(..))
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
@@ -59,7 +60,7 @@ render { profile, submitting, otherError } =
 sendRequest :: forall left. State -> Async left $ Maybe $ Either BadContent Unit
 sendRequest state @ { teamHandle, gameHandle, profile } = let
     details = profile.details
-        # Record.insert (SProxy :: _ "platforms") profile.details.selectedPlatforms
+        # Record.insert (Proxy :: _ "platforms") profile.details.selectedPlatforms
         # pick
     in
     putNoContent ("/api/teams/" <> teamHandle <> "/profiles/" <> gameHandle)
@@ -144,7 +145,7 @@ handleAction (SendRequest event) = do
         Nothing -> H.put currentState { submitting = false, otherError = true }
 
 component :: forall query output left.
-    H.Component HH.HTML query Input output (Async left)
+    H.Component query Input output (Async left)
 component = H.mkComponent
     { initialState: \state @
         { team:
@@ -201,8 +202,8 @@ component = H.mkComponent
 editProfile
     :: forall action children left
     .  Input
-    -> (Modal.Output Void -> Maybe action)
+    -> (Modal.Output Void -> action)
     -> HH.ComponentHTML action (editProfile :: Slot | children) (Async left)
 editProfile input handleMessage = HH.slot
-    (SProxy :: SProxy "editProfile") unit
+    (Proxy :: _ "editProfile") unit
     (Modal.component ("Edit " <> input.profile.title <> " team profile") component) input handleMessage

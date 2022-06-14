@@ -1,14 +1,12 @@
-"use strict";
+import * as sgMail from "@sendgrid/mail"
 
-const sgMail = require('@sendgrid/mail');
-
-exports.setApiKey = function (key) {
+export const setApiKey = function (key) {
     return function () {
         sgMail.setApiKey(key)
     }
 }
 
-exports.sendImpl = function (onError) {
+export const sendImpl = function (onError) {
     return function (onSuccess) {
         return function (email) {
             return function () {

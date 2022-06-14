@@ -23,7 +23,7 @@ import TeamTavern.Server.Team.View (Team)
 
 type Input = Team
 
-createProfileButton :: forall left output query. H.Component HH.HTML query Input output (Async left)
+createProfileButton :: forall left output query. H.Component query Input output (Async left)
 createProfileButton = Hooks.component $ \_ team -> Hooks.do
     (Tuple shown shownId) <- usePopover
 

@@ -2,7 +2,7 @@ module TeamTavern.Client.Components.Profile where
 
 import Prelude
 
-import Data.Symbol (class IsSymbol, SProxy)
+import Data.Symbol (class IsSymbol)
 import Effect.Class (class MonadEffect)
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
@@ -10,6 +10,7 @@ import Prim.Row (class Cons)
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchorIndexed)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Snippets.Class as HS
+import Type.Proxy (Proxy)
 
 profileHeader :: forall slots action. Array (HH.HTML slots action) -> HH.HTML slots action
 profileHeader = HH.div [ HS.class_ "profile-header" ]
@@ -20,7 +21,7 @@ profileHeading
     => IsSymbol label
     => Ord index
     => MonadEffect monad
-    => SProxy label -> index -> String -> String -> HH.ComponentHTML action slots monad
+    => Proxy label -> index -> String -> String -> HH.ComponentHTML action slots monad
 profileHeading label index path heading =
     HH.h3
     [ HS.class_ "profile-heading" ]
@@ -31,7 +32,7 @@ profileHeading'
     .  Cons label (NavigationAnchor.Slot String) slots' slots
     => IsSymbol label
     => MonadEffect monad
-    => SProxy label -> String -> String -> String -> HH.ComponentHTML action slots monad
+    => Proxy label -> String -> String -> String -> HH.ComponentHTML action slots monad
 profileHeading' label handle path heading =
     HH.h3
     [ HS.class_ "profile-heading" ]

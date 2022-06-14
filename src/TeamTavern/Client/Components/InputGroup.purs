@@ -5,7 +5,7 @@ import Prelude
 import Async (Async)
 import Data.Array as Array
 import Data.Maybe (Maybe(..))
-import Data.Variant (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Halogen.HTML (HTML, ComponentHTML)
 import TeamTavern.Client.Components.Input (inputGroup, inputLabel, timeRangeInput, timeRangeInputUnderlabel)
 import TeamTavern.Client.Components.Select.SingleSelect (singleSelect)
@@ -20,7 +20,7 @@ timezoneInputGroup
 timezoneInputGroup value onValue =
     inputGroup
     [ inputLabel "fas fa-user-clock" "Timezone"
-    , singleSelect (SProxy :: SProxy "timezone")
+    , singleSelect (Proxy :: _ "timezone")
         { options: allTimezones # Array.sortBy \leftTimezone rightTimezone -> let
             countryComparison =
                 leftTimezone.country `compare` rightTimezone.country
@@ -36,7 +36,7 @@ timezoneInputGroup value onValue =
             leftTimezone.name == rightTimezone.name
         , filter: Just "Search timezones"
         }
-        \timezone -> Just $ onValue (timezone <#> _.name)
+        \timezone -> onValue (timezone <#> _.name)
     ]
 
 timeRangeInputGroup

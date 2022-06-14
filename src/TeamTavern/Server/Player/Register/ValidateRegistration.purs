@@ -10,10 +10,11 @@ import Data.Bifunctor (lmap)
 import Data.Bifunctor.Label (label)
 import Data.List.NonEmpty as NonEmptyList
 import Data.List.Types (NonEmptyList)
-import Data.Variant (SProxy(..), Variant)
+import Data.Variant (Variant)
 import TeamTavern.Server.Player.Domain.Nickname (Nickname, validateNickname)
 import TeamTavern.Server.Player.Domain.Password (Password, validatePassword)
 import TeamTavern.Server.Player.Register.ReadDto (RegisterDto)
+import Type.Proxy (Proxy(..))
 
 type Registration =
     { nickname :: Nickname
@@ -29,12 +30,12 @@ type RegistrationErrors = NonEmptyList RegistrationError
 
 validateRegistration :: forall errors.
     RegisterDto -> Async (Variant (registration :: RegistrationErrors | errors)) Registration
-validateRegistration dto @ { nickname, password } =
+validateRegistration { nickname, password } =
     { nickname: _, password: _ }
     <$> validateNickname nickname
     <*> validatePassword password
     # Async.fromValidated
-    # label (SProxy :: SProxy "registration")
+    # label (Proxy :: _ "registration")
 
 validateRegistrationV
     :: forall errors

@@ -8,7 +8,7 @@ import Data.Array as Array
 import Data.Const (Const)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
-import Data.Variant (SProxy(..), match)
+import Data.Variant (match)
 import Halogen as H
 import Halogen.HTML as HH
 import Record.Extra (pick)
@@ -136,7 +136,7 @@ handleAction (SendRequest event) = do
             badContent
         Nothing -> H.put currentState { submitting = false, otherError = true }
 
-component :: forall query output left. H.Component HH.HTML query Input output (Async left)
+component :: forall query output left. H.Component query Input output (Async left)
 component = H.mkComponent
     { initialState: \
         { player: { nickname, discordTag, steamId, riotId, battleTag, psnId, gamerTag, friendCode }
@@ -189,6 +189,6 @@ editProfile
     -> HH.ComponentHTML query (editProfile :: Slot | children) (Async left)
 editProfile input handleMessage =
     HH.slot
-    (SProxy :: SProxy "editProfile") unit
+    (Proxy :: _ "editProfile") unit
     (Modal.component ("Edit your " <> input.profile.title <> " profile") component)
     input handleMessage

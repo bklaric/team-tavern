@@ -6,7 +6,7 @@ import Async (Async)
 import Async as Async
 import Data.Array as Array
 import Data.Bifunctor.Label (label, labelMap)
-import Data.Symbol (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Data.Variant (Variant, inj)
 import Foreign (Foreign, MultipleErrors)
 import Postgres.Async.Query (query)
@@ -14,7 +14,7 @@ import Postgres.Client (Client)
 import Postgres.Error (Error)
 import Postgres.Query (Query(..))
 import Postgres.Result (Result, rows)
-import Simple.JSON.Async (read)
+import Yoga.JSON.Async (read)
 import TeamTavern.Routes.Shared.Filters (Filters)
 import TeamTavern.Routes.Shared.Timezone (Timezone)
 import TeamTavern.Server.Profile.Routes (Handle)
@@ -52,10 +52,10 @@ loadProfileCount
 loadProfileCount client handle timezone filters = do
     result <- client
         # query (queryString handle timezone filters) []
-        # label (SProxy :: SProxy "databaseError")
+        # label (Proxy :: _ "databaseError")
     count <- rows result
         # Array.head
-        # Async.note (inj (SProxy :: SProxy "noRowsSomehow") result)
+        # Async.note (inj (Proxy :: _ "noRowsSomehow") result)
     count' :: LoadProfileCountResult <- read count
-        # labelMap (SProxy :: SProxy "unreadableCount") { count, errors: _ }
+        # labelMap (Proxy :: _ "unreadableCount") { count, errors: _ }
     pure count'.count

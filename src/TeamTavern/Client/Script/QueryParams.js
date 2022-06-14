@@ -1,6 +1,4 @@
-"use strict";
-
-exports.getQueryParamImpl = function (param) {
+export const getQueryParamImpl = function (param) {
     return function () {
         var query = window.location.search.substring(1);
         var vars = query.split("&");

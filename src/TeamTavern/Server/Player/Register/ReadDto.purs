@@ -4,11 +4,12 @@ import Prelude
 
 import Async (Async)
 import Data.Bifunctor.Label (labelMap)
-import Data.Variant (SProxy(..), Variant)
+import Data.Variant (Variant)
 import Foreign (MultipleErrors)
 import Perun.Request.Body (Body)
-import Simple.JSON.Async (readJSON)
 import TeamTavern.Server.Architecture.Perun.Request.Body (readBody)
+import Type.Proxy (Proxy(..))
+import Yoga.JSON.Async (readJSON)
 
 type RegisterDto =
     { nickname :: String
@@ -27,4 +28,4 @@ readDto :: forall errors.
 readDto body = do
     content <- readBody body
     readJSON content
-        # labelMap (SProxy :: SProxy "unreadableDto") { content, errors: _ }
+        # labelMap (Proxy :: _ "unreadableDto") { content, errors: _ }

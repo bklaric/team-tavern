@@ -14,11 +14,12 @@ import Data.String.NonEmpty as NES
 import Data.String.Utils (endsWith, startsWith)
 import Data.Validated (Validated)
 import Data.Validated as Validated
-import Data.Variant (SProxy(..), Variant, inj)
-import Text.Parsing.Parser (Parser)
-import Text.Parsing.Parser (runParser) as Parser
-import Text.Parsing.Parser.Combinators (notFollowedBy, optionMaybe)
-import Text.Parsing.Parser.String (anyChar, string)
+import Data.Variant (Variant, inj)
+import Parsing (Parser)
+import Parsing (runParser) as Parser
+import Parsing.Combinators (notFollowedBy, optionMaybe)
+import Parsing.String (anyChar, string)
+import Type.Proxy (Proxy(..))
 import URI (Path(..), RegName, Scheme)
 import URI.Common (URIPartParseError(..), wrapParser)
 import URI.Host.RegName as Host
@@ -106,12 +107,12 @@ validateUrl :: Domain -> String -> Either (NonEmptyList UrlError) Url
 validateUrl domain url =
     case Parser.runParser (url # trim # prependScheme) (parser domain)
         <#> (\{ scheme, host, path } -> (NES.toString $ Scheme.toString scheme) <> "://" <> (NES.toString $ Host.toString host) <> (maybe "" (\(Path segments) -> "/" <> intercalate "/" (segments <#> segmentToString) ) path))
-        # lmap (const $ NonEmptyList.singleton $ inj (SProxy :: SProxy "invalid") { original: url }) of
+        # lmap (const $ NonEmptyList.singleton $ inj (Proxy :: _ "invalid") { original: url }) of
     Left errors -> Left errors
     Right url' ->
         if String.length url' <= 200
         then Right $ Url url'
-        else Left $ NonEmptyList.singleton $ inj (SProxy :: SProxy "tooLong") { actualLength: String.length url, maxLength: 200 }
+        else Left $ NonEmptyList.singleton $ inj (Proxy :: _ "tooLong") { actualLength: String.length url, maxLength: 200 }
 
 validateUrlV :: String -> String -> Validated (NonEmptyList UrlError) Url
 validateUrlV domain url = validateUrl domain url # Validated.fromEither
@@ -120,12 +121,12 @@ validateUrl_ :: String -> Either (NonEmptyList UrlError) Url
 validateUrl_ url =
     case Parser.runParser (url # trim # prependScheme) (parser_)
         <#> (\{ scheme, host, path } -> (NES.toString $ Scheme.toString scheme) <> "://" <> (NES.toString $ Host.toString host) <> (maybe "" (\(Path segments) -> "/" <> intercalate "/" (segments <#> segmentToString) ) path))
-        # lmap (const $ NonEmptyList.singleton $ inj (SProxy :: SProxy "invalid") { original: url }) of
+        # lmap (const $ NonEmptyList.singleton $ inj (Proxy :: _ "invalid") { original: url }) of
     Left errors -> Left errors
     Right url' ->
         if String.length url' <= 200
         then Right $ Url url'
-        else Left $ NonEmptyList.singleton $ inj (SProxy :: SProxy "tooLong") { actualLength: String.length url, maxLength: 200 }
+        else Left $ NonEmptyList.singleton $ inj (Proxy :: _ "tooLong") { actualLength: String.length url, maxLength: 200 }
 
 validateUrlV_ :: String -> Validated (NonEmptyList UrlError) Url
 validateUrlV_ url = validateUrl_ url # Validated.fromEither

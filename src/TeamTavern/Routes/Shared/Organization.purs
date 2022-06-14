@@ -8,12 +8,12 @@ import Data.Bifunctor (lmap)
 import Data.Either (Either, note)
 import Data.List.NonEmpty as NonEmptyList
 import Data.Maybe (Maybe(..))
-import Data.Variant (SProxy(..), Variant, inj, prj)
+import Data.Variant (Variant, inj, prj)
 import Foreign (ForeignError(..), readString, unsafeToForeign)
 import Jarilo.FromComponent (class FromComponent)
 import Prim.RowList (class RowToList)
-import Simple.JSON (class ReadForeign, class ReadForeignVariant, class WriteForeign, readVariantImpl, writeImpl)
-import Type.Data.RowList (RLProxy(..))
+import Type.Proxy (Proxy(..))
+import Yoga.JSON (class ReadForeign, class ReadForeignVariant, class WriteForeign, readVariantImpl, writeImpl)
 
 -- Organization enum.
 
@@ -68,22 +68,22 @@ type OrganizationRowN = (informal :: {}, organized :: { name :: String })
 
 fromVariantN :: Variant OrganizationRowN -> Maybe OrganizationN
 fromVariantN variant =
-    (InformalN <$ prj (SProxy :: _ "informal") variant)
-    <|> (OrganizedN <$> prj (SProxy :: _ "organized") variant)
+    (InformalN <$ prj (Proxy :: _ "informal") variant)
+    <|> (OrganizedN <$> prj (Proxy :: _ "organized") variant)
 
 fromVariantN' :: Variant OrganizationRowN -> Either String OrganizationN
 fromVariantN' organization = fromVariantN organization # note ("Unknown organization: " <> show organization)
 
 toVariantN :: OrganizationN -> Variant OrganizationRowN
-toVariantN InformalN = inj (SProxy :: _ "informal") {}
-toVariantN (OrganizedN stuff) = inj (SProxy :: _ "organized") stuff
+toVariantN InformalN = inj (Proxy :: _ "informal") {}
+toVariantN (OrganizedN stuff) = inj (Proxy :: _ "organized") stuff
 
 instance readForeignOrganizationN ::
     ( RowToList OrganizationRowN rowList
     , ReadForeignVariant rowList OrganizationRowN
     ) => ReadForeign OrganizationN where
     readImpl organization' =
-        readVariantImpl (RLProxy :: _ rowList) organization'
+        readVariantImpl (Proxy :: _ rowList) organization'
         >>= (fromVariantN' >>> lmap (ForeignError >>> NonEmptyList.singleton) >>> except)
 
 instance writeForeignOrganizationN :: WriteForeign OrganizationN where
@@ -109,22 +109,22 @@ type OrganizationRowNW = (informal :: {}, organized :: { name :: String, website
 
 fromVariantNW :: Variant OrganizationRowNW -> Maybe OrganizationNW
 fromVariantNW variant =
-    (InformalNW <$ prj (SProxy :: _ "informal") variant)
-    <|> (OrganizedNW <$> prj (SProxy :: _ "organized") variant)
+    (InformalNW <$ prj (Proxy :: _ "informal") variant)
+    <|> (OrganizedNW <$> prj (Proxy :: _ "organized") variant)
 
 fromVariantNW' :: Variant OrganizationRowNW -> Either String OrganizationNW
 fromVariantNW' organization = fromVariantNW organization # note ("Unknown organization: " <> show organization)
 
 toVariantNW :: OrganizationNW -> Variant OrganizationRowNW
-toVariantNW InformalNW = inj (SProxy :: _ "informal") {}
-toVariantNW (OrganizedNW stuff) = inj (SProxy :: _ "organized") stuff
+toVariantNW InformalNW = inj (Proxy :: _ "informal") {}
+toVariantNW (OrganizedNW stuff) = inj (Proxy :: _ "organized") stuff
 
 instance readForeignOrganizationNW ::
     ( RowToList OrganizationRowNW rowList
     , ReadForeignVariant rowList OrganizationRowNW
     ) => ReadForeign OrganizationNW where
     readImpl organization' =
-        readVariantImpl (RLProxy :: _ rowList) organization'
+        readVariantImpl (Proxy :: _ rowList) organization'
         >>= (fromVariantNW' >>> lmap (ForeignError >>> NonEmptyList.singleton) >>> except)
 
 instance writeForeignOrganizationNW :: WriteForeign OrganizationNW where

@@ -5,11 +5,11 @@ import Prelude
 import Async (Async)
 import Data.Bifunctor.Label (labelMap)
 import Data.String (trim)
-import Data.Symbol (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Data.Variant (Variant)
 import Foreign (MultipleErrors)
 import Perun.Request.Body (Body)
-import Simple.JSON.Async (readJSON)
+import Yoga.JSON.Async (readJSON)
 import TeamTavern.Server.Architecture.Perun.Request.Body (readBody)
 
 type StartDto =
@@ -30,5 +30,5 @@ readModel :: forall errors. Body -> Async (ReadNonceError errors) StartModel
 readModel body = do
     content <- readBody body
     { nickname, password } :: StartDto <- readJSON content
-        # labelMap (SProxy :: SProxy "unreadableDto") { content, errors: _ }
+        # labelMap (Proxy :: _ "unreadableDto") { content, errors: _ }
     pure { nickname: trim nickname, password }

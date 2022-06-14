@@ -1,6 +1,4 @@
-"use strict";
-
-exports.fetchImpl = function (url) {
+export const fetchImpl = function (url) {
     return function (options) {
         return function (successCallback) {
             return function (errorCallback) {

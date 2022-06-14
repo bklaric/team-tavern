@@ -7,7 +7,7 @@ import Data.Const (Const)
 import Data.Date as Date
 import Data.Enum (fromEnum)
 import Data.Maybe (Maybe(..), isNothing, maybe)
-import Data.Variant (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Effect.Now (nowDate)
 import Halogen as H
 import Halogen.HTML as HH
@@ -125,7 +125,7 @@ handleAction Initialize = do
     raiseOutput newState
 handleAction (Receive input) =
     H.modify_ \state ->
-        input # Record.insert (SProxy :: SProxy "thirteenYearsAgo") state.thirteenYearsAgo
+        input # Record.insert (Proxy :: _ "thirteenYearsAgo") state.thirteenYearsAgo
 handleAction (UpdateBirthday birthday) = do
     state <- H.modify _ { birthday = birthday }
     raiseOutput state
@@ -155,9 +155,9 @@ handleAction (UpdateWeekendTo weekendTo) = do
     raiseOutput state
 
 component :: forall query left.
-    H.Component HH.HTML query Input Output (Async left)
+    H.Component query Input Output (Async left)
 component = H.mkComponent
-    { initialState: Record.insert (SProxy :: SProxy "thirteenYearsAgo") ""
+    { initialState: Record.insert (Proxy :: _ "thirteenYearsAgo") ""
     , render
     , eval: H.mkEval $ H.defaultEval
         { handleAction = handleAction
@@ -182,7 +182,7 @@ emptyInput =
 playerFormInput
     :: forall action children left
     .  Input
-    -> (Output -> Maybe action)
+    -> (Output -> action)
     -> HH.ComponentHTML action (playerFormInput :: Slot | children) (Async left)
 playerFormInput input handleMessage =
-    HH.slot (SProxy :: SProxy "playerFormInput") unit component input handleMessage
+    HH.slot (Proxy :: _ "playerFormInput") unit component input handleMessage

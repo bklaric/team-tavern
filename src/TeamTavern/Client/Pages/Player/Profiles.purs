@@ -6,7 +6,7 @@ import Async (Async)
 import Data.Array as Array
 import Data.Array.Extra (full)
 import Data.Monoid (guard)
-import Data.Symbol (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Card (card, cardHeader, cardHeading, cardSection)
 import TeamTavern.Client.Components.Detail (detailColumn, detailColumnHeading4, detailColumns, textDetail)
@@ -43,7 +43,7 @@ profiles player @ { profiles: profiles' } status showEditProfileModal =
         [ cardHeading "Profiles" ]
         <>
         guard (status == SignedInSelf)
-        [ HH.slot (SProxy :: SProxy "createProfile") unit createProfileButton player absurd ]
+        [ HH.slot (Proxy :: _ "createProfile") unit createProfileButton player absurd ]
     ]
     <>
     if Array.null profiles'
@@ -61,14 +61,14 @@ profiles player @ { profiles: profiles' } status showEditProfileModal =
             (if full profile.platforms.tail
             then
             [ HH.div [ HS.class_ "team-profile-heading-container" ] $
-                [ profileHeading' (SProxy :: SProxy "games") profile.handle
+                [ profileHeading' (Proxy :: _ "games") profile.handle
                     ("/games/" <> profile.handle <> "/players") profile.title
                 ]
                 <> [ platformBadge profile.platform, profileSubheading $ "Updated " <> lastUpdated profile.updatedSeconds ]
             ]
             else
             [ HH.div_ $
-                [ profileHeading' (SProxy :: SProxy "games") profile.handle
+                [ profileHeading' (Proxy :: _ "games") profile.handle
                     ("/games/" <> profile.handle <> "/players") profile.title
                 ]
                 <> [ divider, profileSubheading $ "Updated " <> lastUpdated profile.updatedSeconds ]

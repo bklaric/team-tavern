@@ -3,7 +3,7 @@ module TeamTavern.Server.Player.UpdateContacts.LogError where
 import Prelude
 
 import Data.Array as Array
-import Data.Symbol (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Data.Variant (Variant, match)
 import Effect (Effect, foreachE)
 import Prim.Row (class Lacks)
@@ -23,7 +23,7 @@ type UpdateContactsError = Variant
 
 contactsHandler :: forall fields. Lacks "playerContacts" fields =>
     Builder (Record fields) { playerContacts :: ContactsErrors -> Effect Unit | fields }
-contactsHandler = Builder.insert (SProxy :: SProxy "playerContacts") \errors ->
+contactsHandler = Builder.insert (Proxy :: _ "playerContacts") \errors ->
     foreachE (Array.fromFoldable errors) $ match
     { discordTag: logt
     , steamId: logt

@@ -8,7 +8,7 @@ import Data.Foldable (find)
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), maybe)
-import Data.Variant (SProxy(..))
+import Type.Proxy (Proxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Anchor (textAnchor_)
@@ -130,14 +130,14 @@ fieldInputGroup fieldValues _ onValue _ _
     in
     inputGroup
     [ inputLabel icon label
-    , singleSelectIndexed (SProxy :: SProxy "singleSelectField") key
+    , singleSelectIndexed (Proxy :: _ "singleSelectField") key
         { options
         , selected
         , labeler: _.label
         , comparer: \leftOption rightOption -> leftOption.key == rightOption.key
         , filter: Nothing
         }
-        \option -> Just $ onValue key (option <#> _.key)
+        \option -> onValue key (option <#> _.key)
     ]
 fieldInputGroup fieldValues _ _ onValue _
     { ilk: 3, key, label, icon, options: Just options } =
@@ -148,14 +148,14 @@ fieldInputGroup fieldValues _ _ onValue _
     in
     inputGroup
     [ inputLabel icon label
-    , multiSelectIndexed (SProxy :: SProxy "multiSelectField") key
+    , multiSelectIndexed (Proxy :: _ "multiSelectField") key
         { options
         , selected
         , labeler: _.label
         , comparer: \leftOption rightOption -> leftOption.key == rightOption.key
         , filter: Nothing
         }
-        \options' -> Just $ onValue key (options' <#> _.key)
+        \options' -> onValue key (options' <#> _.key)
     ]
 fieldInputGroup _ _ _ _ _ _ = HH.div_ []
 

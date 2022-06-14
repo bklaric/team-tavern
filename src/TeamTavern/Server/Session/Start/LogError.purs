@@ -6,7 +6,7 @@ import Data.Map (Map)
 import Data.Variant (Variant, match)
 import Effect (Effect)
 import Foreign (MultipleErrors)
-import Global.Unsafe (unsafeStringify)
+import Yoga.JSON (unsafeStringify)
 import Node.Errors as Node
 import Postgres.Error as Postgres
 import Postgres.Result (Result, rows)
