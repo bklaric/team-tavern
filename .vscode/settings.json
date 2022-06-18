@@ -1,0 +1,23 @@
+{
+    "files.exclude": {
+        "**/.git": true,
+        "**/.svn": true,
+        "**/.hg": true,
+        "**/CVS": true,
+        "**/.DS_Store": true,
+        "**/Thumbs.db": true,
+        "[!s]*/**": true,
+        "s[!r]*/**": true,
+        "sr[!c]*/**": true,
+        "src/[!T]*/**": true,
+        "src/T[!e]*/**": true,
+        "src/Te[!a]*/**": true,
+        "src/Tea[!m]*/**": true,
+        "src/Team[!T]*/**": true,
+        "src/TeamT[!a]*/**": true,
+        "src/TeamTa[!v]*/**": true,
+        "src/TeamTav[!e]*/**": true,
+        "src/TeamTave[!r]*/**": true,
+        "src/TeamTaver[!n]*/**": true
+    }
+}

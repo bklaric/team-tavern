@@ -20,15 +20,15 @@ import TeamTavern.Client.Script.Navigate (hardNavigate)
 import TeamTavern.Client.Script.Request (putNoContent)
 import TeamTavern.Server.Profile.AddTeamProfile.ReadProfile (RequestContent)
 import TeamTavern.Server.Profile.UpdateTeamProfile.SendResponse (BadContent)
-import TeamTavern.Server.Team.View (Team, Profile)
+import TeamTavern.Routes.Team.ViewTeam as ViewTeam
 import Type (type ($))
 import Type.Proxy (Proxy(..))
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
 type Input =
-    { team :: Team
-    , profile :: Profile
+    { team :: ViewTeam.OkContent
+    , profile :: ViewTeam.OkContentProfile
     }
 
 type State =

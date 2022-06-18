@@ -19,17 +19,17 @@ import TeamTavern.Client.Components.Team.ProfileFormInput (profileFormInput)
 import TeamTavern.Client.Components.Team.ProfileFormInput as ProfileFormInput
 import TeamTavern.Client.Script.Navigate (hardNavigate)
 import TeamTavern.Client.Script.Request (postNoContent)
+import TeamTavern.Routes.Team.ViewTeam as ViewTeam
 import TeamTavern.Routes.ViewGame as ViewGame
 import TeamTavern.Server.Profile.AddTeamProfile.ReadProfile (RequestContent)
 import TeamTavern.Server.Profile.AddTeamProfile.SendResponse (BadContent)
-import TeamTavern.Server.Team.View (Team)
 import Type (type ($))
 import Type.Proxy (Proxy(..))
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
 type Input =
-    { team :: Team
+    { team :: ViewTeam.OkContent
     , game :: ViewGame.OkContent
     }
 

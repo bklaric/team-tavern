@@ -7,7 +7,6 @@ import Client.Components.Copyable as Copyable
 import Data.Array as Array
 import Data.Maybe (Maybe(..))
 import Data.Monoid (guard)
-import Type.Proxy (Proxy(..))
 import Halogen as H
 import Record as Record
 import TeamTavern.Client.Components.Button (regularButton)
@@ -15,11 +14,12 @@ import TeamTavern.Client.Components.Card (card, cardHeader, cardHeading, cardSec
 import TeamTavern.Client.Components.Missing (missing)
 import TeamTavern.Client.Components.Team.TeamDetails (teamDetails)
 import TeamTavern.Client.Pages.Team.Status (Status(..))
-import TeamTavern.Server.Team.View (Team)
+import TeamTavern.Routes.Team.ViewTeam as ViewTeam
+import Type.Proxy (Proxy(..))
 
 details
     :: forall action slots left
-    .  Team
+    .  ViewTeam.OkContent
     -> Status
     -> action
     -> H.ComponentHTML action (discordTag :: Copyable.Slot String | slots) (Async left)

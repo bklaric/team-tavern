@@ -19,13 +19,13 @@ import TeamTavern.Client.Script.Navigate (hardNavigate)
 import TeamTavern.Client.Script.Request (putNoContent)
 import TeamTavern.Routes.Shared.TeamContacts as Routes
 import TeamTavern.Routes.UpdateTeamContacts (RequestContent, BadContent)
-import TeamTavern.Server.Team.View (Profile)
+import TeamTavern.Routes.Team.ViewTeam as ViewTeam
 import Type (type ($))
 import Type.Proxy (Proxy(..))
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
-type Input fields = Routes.TeamContactsOpen (handle :: String, profiles :: Array Profile | fields)
+type Input fields = Routes.TeamContactsOpen (handle :: String, profiles :: Array ViewTeam.OkContentProfile | fields)
 
 data Action
     = UpdateContacts ContactsFormInput.Output

@@ -8,7 +8,6 @@ import Data.Array as Array
 import Data.Array.Extra (full)
 import Data.Const (Const)
 import Data.Monoid (guard)
-import Type.Proxy (Proxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Card (card, cardHeader, cardHeading, cardSection)
@@ -25,7 +24,8 @@ import TeamTavern.Client.Script.LastUpdated (lastUpdated)
 import TeamTavern.Client.Shared.Slot (QuerylessSlot)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Shared.Size (Size(..))
-import TeamTavern.Server.Team.View (Profile, Team)
+import TeamTavern.Routes.Team.ViewTeam as ViewTeam
+import Type.Proxy (Proxy(..))
 
 type ChildSlots children =
     ( games :: Anchor.Slot String
@@ -36,9 +36,9 @@ type ChildSlots children =
 
 profiles
     :: forall action children left
-    .  Team
+    .  ViewTeam.OkContent
     -> Status
-    -> (Profile -> action)
+    -> (ViewTeam.OkContentProfile -> action)
     -> H.ComponentHTML action (ChildSlots children) (Async left)
 profiles team @ { profiles: profiles' } status showEditProfileModal =
     card $

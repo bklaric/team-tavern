@@ -34,17 +34,17 @@ import TeamTavern.Client.Script.Request (get)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Shared.Slot (QuerylessSlot)
 import TeamTavern.Routes.Shared.Organization (OrganizationNW(..), nameOrHandleNW)
-import TeamTavern.Server.Team.View (Team, Profile)
+import TeamTavern.Routes.Team.ViewTeam as ViewTeam
 import Type.Proxy (Proxy(..))
 
 type Input = { handle :: String }
 
 type Loaded =
-    { team :: Team
+    { team :: ViewTeam.OkContent
     , status :: Status
     , editContactsModalShown :: Boolean
     , editTeamModalShown :: Boolean
-    , editProfileModalShown :: Maybe Profile
+    , editProfileModalShown :: Maybe ViewTeam.OkContentProfile
     }
 
 data State
@@ -59,7 +59,7 @@ data Action
     | HideEditContactsModal
     | ShowEditTeamModal
     | HideEditTeamModal
-    | ShowEditProfileModal Profile
+    | ShowEditProfileModal ViewTeam.OkContentProfile
     | HideEditProfileModal
 
 type Slot = H.Slot (Const Void) Void Unit
@@ -120,7 +120,7 @@ render (Loaded state @ { team: team', status } ) =
 render NotFound = HH.p_ [ HH.text "Team could not be found." ]
 render Error = HH.p_ [ HH.text "There has been an error loading the team. Please try again later." ]
 
-loadTeam :: forall left. String -> Async left (Maybe Team)
+loadTeam :: forall left. String -> Async left (Maybe ViewTeam.OkContent)
 loadTeam handle = do
     timezone <- getClientTimezone
     get $ "/api/teams/" <> handle <> "?timezone=" <> timezone

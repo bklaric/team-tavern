@@ -1,75 +1,18 @@
-module TeamTavern.Server.Team.View (Profile, Team, view) where
+module TeamTavern.Server.Team.View (view) where
 
 import Prelude
 
 import Async (Async, alwaysRight, examineLeftWithEffect)
-import Data.Maybe (Maybe)
 import Data.Variant (match)
 import Effect (Effect)
 import Perun.Response (Response, internalServerError__, notFound__, ok_)
 import Postgres.Pool (Pool)
 import Postgres.Query (Query(..), (:))
-import Yoga.JSON (writeJSON)
-import TeamTavern.Routes.Shared.Organization (OrganizationNW)
-import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
-import TeamTavern.Routes.Shared.Size (Size)
-import TeamTavern.Routes.Shared.TeamContacts (TeamContactsOpen)
+import TeamTavern.Routes.Team.ViewTeam as ViewTeam
 import TeamTavern.Server.Infrastructure.Error (LoadSingleError)
 import TeamTavern.Server.Infrastructure.Log (logLoadSingleError)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstNotFound, teamAdjustedWeekdayFrom, teamAdjustedWeekdayTo, teamAdjustedWeekendFrom, teamAdjustedWeekendTo)
-
-type RouteParams = { handle :: String, timezone :: String }
-
-type Profile =
-    { handle :: String
-    , title :: String
-    , allPlatforms :: Platforms
-    , size :: Size
-    , selectedPlatforms :: Array Platform
-    , fields :: Array
-        { key :: String
-        , label :: String
-        , icon :: String
-        , options :: Array
-            { key :: String
-            , label :: String
-            }
-        }
-    , fieldValues :: Array
-        { fieldKey :: String
-        , optionKeys :: Array String
-        }
-    , newOrReturning :: Boolean
-    , about :: Array String
-    , ambitions :: Array String
-    , updated :: String
-    , updatedSeconds :: Number
-    }
-
-type Team = TeamContactsOpen
-    ( owner :: String
-    , handle :: String
-    , organization :: OrganizationNW
-    , ageFrom :: Maybe Int
-    , ageTo :: Maybe Int
-    , locations :: Array String
-    , languages :: Array String
-    , microphone :: Boolean
-    , timezone :: Maybe String
-    , weekdayOnline :: Maybe
-        { clientFrom :: String
-        , clientTo :: String
-        , sourceFrom :: String
-        , sourceTo :: String
-        }
-    , weekendOnline :: Maybe
-        { clientFrom :: String
-        , clientTo :: String
-        , sourceFrom :: String
-        , sourceTo :: String
-        }
-    , profiles :: Array Profile
-    )
+import Yoga.JSON (writeJSON)
 
 queryString :: String -> Query
 queryString timezone = Query $ """
@@ -250,22 +193,22 @@ queryString timezone = Query $ """
     group by team.id, player.nickname;
     """
 
-loadTeam :: forall errors. Pool -> RouteParams -> Async (LoadSingleError errors) Team
+loadTeam :: forall errors. Pool -> ViewTeam.RouteParams -> Async (LoadSingleError errors) ViewTeam.OkContent
 loadTeam pool { handle, timezone } = queryFirstNotFound pool (queryString timezone) (handle : [])
 
 logError :: LoadSingleError () -> Effect Unit
 logError = logLoadSingleError "Error viewing team"
 
-sendResponse :: Async (LoadSingleError ()) Team -> (forall left. Async left Response)
+sendResponse :: Async (LoadSingleError ()) ViewTeam.OkContent -> (forall left. Async left Response)
 sendResponse = alwaysRight
     (match
         { internal: const internalServerError__
         , notFound: const notFound__
         }
     )
-    (ok_ <<< (writeJSON :: Team -> String))
+    (ok_ <<< (writeJSON :: ViewTeam.OkContent -> String))
 
-view :: forall left. Pool -> RouteParams -> Async left Response
+view :: forall left. Pool -> ViewTeam.RouteParams -> Async left Response
 view pool routeParams =
     sendResponse $ examineLeftWithEffect logError do
     loadTeam pool routeParams

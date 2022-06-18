@@ -8,4 +8,4 @@ for (const module in graph) {
     }
 }
 
-console.log(offendingModules)
+console.log(offendingModules.sort())
