@@ -11,7 +11,7 @@ import Jarilo.Junction (type (:<|>), type (:=))
 import Jarilo.Method (Get, Post, Put)
 import Jarilo.Path (type (:>), End)
 import Jarilo.Query (type (:?), Mandatory, Many, NoQuery, Optional, Rest)
-import Jarilo.Route (Route)
+import Jarilo.Route (FullRoute)
 import Jarilo.Segment (Capture, Literal)
 import Prim.Row (class Lacks)
 import Record as Record
@@ -108,7 +108,7 @@ type Identifiers =
     , nickname :: Nickname
     }
 
-type AddPlayerProfile = Route
+type AddPlayerProfile = FullRoute
     Post
     (  Literal "players"
     :> Capture "nickname" Nickname
@@ -117,7 +117,7 @@ type AddPlayerProfile = Route
     :> End)
     NoQuery
 
-type AddTeamProfile = Route
+type AddTeamProfile = FullRoute
     Post
     (  Literal "teams"
     :> Capture "teamHandle" Handle
@@ -126,7 +126,7 @@ type AddTeamProfile = Route
     :> End)
     NoQuery
 
-type UpdatePlayerProfile = Route
+type UpdatePlayerProfile = FullRoute
     Put
     (  Literal "players"
     :> Capture "nickname" Nickname
@@ -135,7 +135,7 @@ type UpdatePlayerProfile = Route
     :> End)
     NoQuery
 
-type UpdateTeamProfile = Route
+type UpdateTeamProfile = FullRoute
     Put
     (  Literal "teams"
     :> Capture "teamHandle" Handle
@@ -144,7 +144,7 @@ type UpdateTeamProfile = Route
     :> End)
     NoQuery
 
-type ViewPlayerProfilesByGame = Route
+type ViewPlayerProfilesByGame = FullRoute
     Get
     (  Literal "games"
     :> Capture "handle" Handle
@@ -165,7 +165,7 @@ type ViewPlayerProfilesByGame = Route
     :? Optional "newOrReturning" NewOrReturning
     :? Rest "fields")
 
-type ViewTeamProfilesByGame = Route
+type ViewTeamProfilesByGame = FullRoute
     Get
     (  Literal "games"
     :> Capture "handle" Handle

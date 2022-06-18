@@ -17,7 +17,7 @@ isValidRegion regions region =
 validateRegion :: String -> Maybe Region
 validateRegion region | isValidRegion Regions.allRegions region =
     Just $ Region region
-validateRegion region = Nothing
+validateRegion _ = Nothing
 
 validateRegions :: Array String -> Array Region
 validateRegions regions = regions # Array.mapMaybe validateRegion

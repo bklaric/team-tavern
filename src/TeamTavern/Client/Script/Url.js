@@ -52,7 +52,7 @@ export const getAll = function (key) {
     }
 }
 
-export const delete = function (key) {
+export const deleteImpl = function (key) {
     return function (params) {
         return function () {
             params.delete(key);

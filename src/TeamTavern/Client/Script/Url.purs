@@ -27,6 +27,9 @@ get key params = getImpl key params <#> toMaybe
 
 foreign import getAll :: String -> SearchParams -> Effect (Array String)
 
-foreign import delete :: String -> SearchParams -> Effect Unit
+foreign import deleteImpl :: String -> SearchParams -> Effect Unit
+
+delete :: String -> SearchParams -> Effect Unit
+delete = deleteImpl
 
 foreign import keys :: SearchParams -> Effect (Array String)

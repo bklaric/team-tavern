@@ -3,7 +3,6 @@ module TeamTavern.Client.Components.Pagination (pagination) where
 import Prelude
 
 import Data.Int (ceil, toNumber)
-import Data.Maybe (Maybe(..))
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
@@ -20,13 +19,13 @@ pagination page profileCount changePage =
         [ HH.button
             [ HS.class_ "pagination-first-button"
             , HP.disabled $ page == 1
-            , HE.onClick $ const $ Just $ changePage 1
+            , HE.onClick $ const $ changePage 1
             ]
             [ HH.text "First" ]
         , HH.button
             [ HS.class_ "pagination-previous-button"
             , HP.disabled $ page == 1
-            , HE.onClick $ const $ Just $ changePage $ page - 1
+            , HE.onClick $ const $ changePage $ page - 1
             ]
             [ HH.text "Previous" ]
         ]
@@ -36,13 +35,13 @@ pagination page profileCount changePage =
         [ HH.button
             [ HS.class_ "pagination-next-button"
             , HP.disabled $ page == (totalPages profileCount)
-            , HE.onClick $ const $ Just $ changePage $ page + 1
+            , HE.onClick $ const $ changePage $ page + 1
             ]
             [ HH.text "Next" ]
         , HH.button
             [ HS.class_ "pagination-last-button"
             , HP.disabled $ page == (totalPages profileCount)
-            , HE.onClick $ const $ Just $ changePage $ totalPages profileCount
+            , HE.onClick $ const $ changePage $ totalPages profileCount
             ]
             [ HH.text "Last" ]
         ]

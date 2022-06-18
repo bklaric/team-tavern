@@ -4,20 +4,20 @@ import Jarilo.Junction (type (:<|>), type (:=))
 import Jarilo.Method (Post, Put)
 import Jarilo.Path (type (:>), End)
 import Jarilo.Query (NoQuery)
-import Jarilo.Route (Route)
+import Jarilo.Route (FullRoute)
 import Jarilo.Segment (Capture, Literal)
 import TeamTavern.Routes.DeletePlayer (DeletePlayer)
 import TeamTavern.Routes.UpdatePlayerContacts (UpdatePlayerContacts)
 import TeamTavern.Routes.ViewPlayer (ViewPlayer)
 import TeamTavern.Server.Player.Domain.Nickname (Nickname)
 
-type RegisterPlayer = Route
+type RegisterPlayer = FullRoute
     Post
     (  Literal "players"
     :> End)
     NoQuery
 
-type UpdatePlayer = Route
+type UpdatePlayer = FullRoute
     Put
     (  Literal "players"
     :> Capture "nickname" Nickname

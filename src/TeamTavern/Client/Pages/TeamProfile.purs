@@ -153,7 +153,7 @@ handleAction Initialize = do
 handleAction (Receive input) = do
     teamProfileMaybe <- H.lift $ loadTeamProfile input
     case teamProfileMaybe of
-        Just teamProfile' @ { handle, owner, title } -> do
+        Just teamProfile' @ { owner, title } -> do
             status <- getStatus owner
             H.put $ Loaded { profile: teamProfile', status }
             setMeta (nameOrHandle teamProfile' <> " - " <> title <> " | TeamTavern")

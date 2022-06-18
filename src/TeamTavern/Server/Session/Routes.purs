@@ -4,16 +4,16 @@ import Jarilo.Junction (type (:<|>), type (:=))
 import Jarilo.Method (Delete, Post)
 import Jarilo.Path (type (:>), End)
 import Jarilo.Query (NoQuery)
-import Jarilo.Route (Route)
+import Jarilo.Route (FullRoute)
 import Jarilo.Segment (Literal)
 
-type StartSession = Route
+type StartSession = FullRoute
     Post
     (  Literal "sessions"
     :> End)
     NoQuery
 
-type EndSession = Route
+type EndSession = FullRoute
     Delete
     (  Literal "sessions"
     :> Literal "current"

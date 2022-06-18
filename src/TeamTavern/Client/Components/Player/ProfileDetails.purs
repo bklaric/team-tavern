@@ -10,7 +10,6 @@ import Data.Maybe (Maybe(..))
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Detail (detail, fieldDetail, urlDetail)
 import TeamTavern.Client.Snippets.Class as HS
-import TeamTavern.Routes.Shared.Platform (Platform)
 
 type PlatformIdSlots slots =
     ( steamId :: Copyable.Slot String
@@ -22,8 +21,7 @@ type PlatformIdSlots slots =
     | slots )
 
 profileDetails :: forall left slots action.
-    Platform
-    -> Array
+    Array
         { ilk :: Int
         , key :: String
         , label :: String
@@ -42,8 +40,8 @@ profileDetails :: forall left slots action.
         }
     -> Boolean
     -> Array (HH.ComponentHTML action (PlatformIdSlots slots) (Async left))
-profileDetails platform fields fieldValues newOrReturning =
-    profileDetails' platform
+profileDetails fields fieldValues newOrReturning =
+    profileDetails'
     ( fields
     <#> ( \field ->
             case fieldValues # Array.find \{ fieldKey } -> fieldKey == field.key of
@@ -73,8 +71,7 @@ profileDetails platform fields fieldValues newOrReturning =
     newOrReturning
 
 profileDetails' :: forall left slots action.
-    Platform
-    -> Array
+    Array
         { field ::
             { ilk :: Int
             , key :: String
@@ -93,15 +90,7 @@ profileDetails' :: forall left slots action.
         }
     -> Boolean
     -> Array (HH.ComponentHTML action (PlatformIdSlots slots) (Async left))
-profileDetails' platform fieldValues newOrReturning =
-    -- case platform of
-    -- Steam -> guard (isSteamIdValid platformId) [ steamIdDetail platformId, steamUrlDetail platformId ]
-    -- Riot -> [ riotIdDetail platformId ]
-    -- BattleNet -> [ battleTagDetail platformId ]
-    -- PlayStation -> [ psnIdDetail platformId ]
-    -- Xbox -> [ gamerTagDetail platformId ]
-    -- Switch -> [ friendCodeDetail platformId ]
-    -- <>
+profileDetails' fieldValues newOrReturning =
     ( fieldValues
     <#> ( \{ field, url, option, options } ->
             case field.ilk, url, option, options of

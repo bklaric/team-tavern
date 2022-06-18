@@ -52,13 +52,13 @@ render :: forall left.
 render { registration, otherError, submitting } =
     HH.form
     [ HP.class_ $ HH.ClassName "form"
-    , HE.onSubmit $ Just <<< Register
+    , HE.onSubmit  Register
     ]
     [ HH.h1 [ HP.class_ $ HH.ClassName "form-heading" ]
         [ HH.text "Create your "
         , HH.a
             [ HP.href "/"
-            , HE.onClick $ Just <<< Navigate "/"
+            , HE.onClick $ Navigate "/"
             ]
             [ HH.text "TeamTavern" ]
         , HH.text " account"
@@ -82,7 +82,7 @@ render { registration, otherError, submitting } =
         [ HH.text "Already have an account? "
         , HH.a
             [ HP.href "/signin"
-            , HE.onClick $ Just <<< Navigate "/signin"
+            , HE.onClick $ Navigate "/signin"
             ]
             [ HH.text "Sign in." ]
         ]

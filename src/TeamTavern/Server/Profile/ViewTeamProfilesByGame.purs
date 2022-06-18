@@ -14,6 +14,7 @@ import TeamTavern.Server.Profile.ViewTeamProfilesByGame.LoadProfileCount (loadPr
 import TeamTavern.Server.Profile.ViewTeamProfilesByGame.LoadProfiles (loadProfiles)
 import TeamTavern.Server.Profile.ViewTeamProfilesByGame.LogError (logError)
 import TeamTavern.Server.Profile.ViewTeamProfilesByGame.SendResponse (sendResponse)
+import Type.Proxy (Proxy(..))
 
 viewTeamProfilesByGame
     :: forall left

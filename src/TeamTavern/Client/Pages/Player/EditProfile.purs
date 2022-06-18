@@ -22,6 +22,7 @@ import TeamTavern.Routes.ViewPlayer as ViewPlayer
 import TeamTavern.Server.Profile.AddPlayerProfile.ReadProfile (RequestContent)
 import TeamTavern.Server.Profile.UpdatePlayerProfile.SendResponse (BadContent)
 import Type (type ($))
+import Type.Proxy (Proxy(..))
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
@@ -57,7 +58,7 @@ render { profile, otherError, submitting } =
     <> otherFormError otherError
 
 sendRequest :: forall left. State -> Async left $ Maybe $ Either BadContent Unit
-sendRequest state @ { nickname, handle, profile } =
+sendRequest { nickname, handle, profile } =
     putNoContent ("/api/players/" <> nickname <> "/profiles/" <> handle)
     ({ details: pick profile.details
     , contacts: pick profile.contacts
@@ -114,7 +115,7 @@ handleAction (SendRequest event) = do
             foldl
             (\state error ->
                 match
-                { profile: state # foldl \state' error' -> error' # match
+                { profile: state # foldl \_ error' -> error' # match
                     { about: const state { profile { details { aboutError = true } } }
                     , ambitions: const state { profile { details { ambitionsError = true } } }
                     , url: \{ key } -> state { profile { details
@@ -185,7 +186,7 @@ component = H.mkComponent
 editProfile
     :: forall query children left
     .  Input
-    -> (Modal.Output Void -> Maybe query)
+    -> (Modal.Output Void -> query)
     -> HH.ComponentHTML query (editProfile :: Slot | children) (Async left)
 editProfile input handleMessage =
     HH.slot

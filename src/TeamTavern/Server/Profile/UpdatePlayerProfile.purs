@@ -24,6 +24,7 @@ import TeamTavern.Server.Profile.Routes (Identifiers)
 import TeamTavern.Server.Profile.UpdatePlayerProfile.LogError (logError)
 import TeamTavern.Server.Profile.UpdatePlayerProfile.SendResponse (sendResponse)
 import TeamTavern.Server.Profile.UpdatePlayerProfile.UpdateProfile (updateProfile)
+import Type.Proxy (Proxy(..))
 
 updatePlayerProfile :: forall left.
     Pool -> Identifiers -> Map String String -> Body -> Async left Response

@@ -6,10 +6,11 @@ import Async (Async, alwaysRight)
 import Data.Array as Array
 import Data.Variant (Variant, inj, match)
 import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, noContent_, unauthorized__)
-import Yoga.JSON (writeJSON)
 import TeamTavern.Routes.Shared.PlayerContacts (PlayerContactsError)
 import TeamTavern.Server.Profile.UpdatePlayerProfile.LogError (UpdateError)
 import Type (type ($))
+import Type.Proxy (Proxy(..))
+import Yoga.JSON (writeJSON)
 
 type BadContent = Array $ Variant
     ( profile :: Array $ Variant

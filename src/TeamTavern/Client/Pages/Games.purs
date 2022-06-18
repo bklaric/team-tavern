@@ -49,14 +49,14 @@ render (Games games') = HH.div [ HS.class_ "games" ] $
     (games' <#> \{ title, handle, description } ->
         HH.div
         [ HS.class_ "game-card"
-        , HE.onClick $ Just <<< Navigate ("/games/" <> handle) false
+        , HE.onClick $ Navigate ("/games/" <> handle) false
         ]
         [ HH.div [ HS.class_ "game-card-text" ] $
             [ HH.h2 [ HS.class_ "game-card-heading" ]
                 [ HH.a
                     [ HP.class_ $ ClassName "game-card-name"
                     , HP.href $ "/games/" <> handle <> "/players"
-                    , HE.onClick $ Just <<< Navigate ("/games/" <> handle) true
+                    , HE.onClick $ Navigate ("/games/" <> handle) true
                     ]
                     [ HH.img
                         [ HS.class_ "game-card-logo"
@@ -70,7 +70,7 @@ render (Games games') = HH.div [ HS.class_ "games" ] $
                 [ HH.h3 [ HP.class_ $ ClassName "game-card-profile-count" ]
                     [ HH.a
                         [ HP.href $ "/games/" <> handle <> "/players"
-                        , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/players") true
+                        , HE.onClick $ Navigate ("/games/" <> handle <> "/players") true
                         ]
                         [ HH.text "Players" ]
                     ]
@@ -78,7 +78,7 @@ render (Games games') = HH.div [ HS.class_ "games" ] $
                 , HH.h3 [ HP.class_ $ ClassName "game-card-profile-count" ]
                     [ HH.a
                         [ HP.href $ "/games/" <> handle <> "/teams"
-                        , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/teams") true
+                        , HE.onClick $ Navigate ("/games/" <> handle <> "/teams") true
                         ]
                         [ HH.text "Teams" ]
                     ]
@@ -86,7 +86,7 @@ render (Games games') = HH.div [ HS.class_ "games" ] $
                 -- , HH.h3 [ HP.class_ $ ClassName "game-card-profile-count" ]
                 --     [ HH.a
                 --         [ HP.href $ "/games/" <> handle <> "/competitions"
-                --         , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/competitions") true
+                --         , HE.onClick $ Navigate ("/games/" <> handle <> "/competitions") true
                 --         ]
                 --         [ HH.text "Competitions" ]
                 --     ]
@@ -117,7 +117,7 @@ handleAction Init = do
     newState <- H.lift loadGames
     H.put newState
     case newState of
-        Games games' -> setMeta "Games | TeamTavern"
+        Games _ -> setMeta "Games | TeamTavern"
             (  "Find players and teams looking for teammates for featured games on TeamTavern, an esports team finding platform."
             <> " Create your own player or team profile and let them find you."
             )

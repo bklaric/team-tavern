@@ -15,7 +15,6 @@ import Data.Int as Int
 import Data.List.NonEmpty as NonEmptyList
 import Data.Maybe (Maybe(..), isJust, maybe)
 import Data.MultiMap as MultiMap
-import Data.String as String
 import Type.Proxy (Proxy(..))
 import Data.Traversable (traverse)
 import Data.Tuple (Tuple(..))
@@ -63,10 +62,6 @@ import Web.HTML.Window as Window
 data Tab
     = Players PlayerProfiles.Input
     | Teams TeamProfiles.Input
-
-toHeaderTab :: Tab -> GameHeader.Tab
-toHeaderTab (Players _) = GameHeader.Profiles GameHeader.Players
-toHeaderTab (Teams _) = GameHeader.Profiles GameHeader.Teams
 
 toHeaderProfileTab :: Tab -> GameHeader.ProfileTab
 toHeaderProfileTab (Players _) = GameHeader.Players
@@ -118,7 +113,7 @@ filterableFields fields = fields # Array.mapMaybe
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render (Empty _) = HH.div_ []
-render (Game game player filters tab) =
+render (Game game _ filters tab) =
     HH.div_ $
     [ contentColumns
         [ profileFilters
@@ -128,20 +123,20 @@ render (Game game player filters tab) =
             , tab: toHeaderProfileTab tab
             , handle: game.handle
             }
-            (\(ProfileFilters.Apply filters') -> Just $ ApplyFilters filters')
+            (\(ProfileFilters.Apply filters') -> ApplyFilters filters')
         , case tab of
             Players input ->
                 playerProfiles
                 input
                 case _ of
-                PlayerProfiles.PageChanged page -> Just $ ChangePage page
-                PlayerProfiles.PreboardingClicked -> Just OpenPlayerPreboarding
+                PlayerProfiles.PageChanged page -> ChangePage page
+                PlayerProfiles.PreboardingClicked -> OpenPlayerPreboarding
             Teams input ->
                 teamProfiles
                 input
                 case _ of
-                TeamProfiles.PageChanged page -> Just $ ChangePage page
-                TeamProfiles.PreboardingClicked -> Just OpenTeamPreboarding
+                TeamProfiles.PageChanged page -> ChangePage page
+                TeamProfiles.PreboardingClicked -> OpenTeamPreboarding
         ]
     ]
 render Error = HH.p_ [ HH.text "There has been an error loading profiles. Please try again later." ]
@@ -150,7 +145,6 @@ loadPlayerProfiles :: forall left.
     String -> Int -> Filters -> Async left (Maybe ViewGamePlayers.OkContent)
 loadPlayerProfiles handle page filters = Async.unify do
     timezone <- getClientTimezone
-    let nothingIfNull string = if String.null string then Nothing else Just string
     let pagePair = "page=" <> show page
         timezonePair = "timezone=" <> timezone
         ageFromPair = filters.ageFrom <#> show <#> ("ageFrom=" <> _)
@@ -185,7 +179,6 @@ loadTeamProfiles :: forall left.
     String -> Int -> Filters -> Async left (Maybe ViewGameTeams.OkContent)
 loadTeamProfiles handle page filters = Async.unify do
     timezone <- getClientTimezone
-    let nothingIfNull string = if String.null string then Nothing else Just string
     let pagePair = "page=" <> show page
         timezonePair = "timezone=" <> timezone
         organizationPairs = filters.organizations <#> Organization.toString <#> ("organization=" <> _)
@@ -233,7 +226,7 @@ loadTab { game: game @ { handle, shortTitle, fields }, tab: GameHeader.Players }
                 , page
                 , playerInfo
                 }
-            H.liftEffect $ setMetaTags game.shortTitle GameHeader.Players
+            H.liftEffect $ setMetaTags shortTitle GameHeader.Players
         Nothing -> do
             H.put Error
             H.liftEffect $ setMetaTags handle GameHeader.Players
@@ -250,7 +243,7 @@ loadTab { game: game @ { handle, shortTitle, fields }, tab: GameHeader.Teams } =
                 , page
                 , playerInfo
                 }
-            H.liftEffect $ setMetaTags game.shortTitle GameHeader.Teams
+            H.liftEffect $ setMetaTags shortTitle GameHeader.Teams
         Nothing -> do
             H.put Error
             H.liftEffect $ setMetaTags handle GameHeader.Teams

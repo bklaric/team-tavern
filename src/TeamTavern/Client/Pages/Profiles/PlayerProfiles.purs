@@ -110,7 +110,7 @@ profileSection :: forall action left.
     String -> PlayerProfile -> HH.ComponentHTML action ChildSlots (Async left)
 profileSection handle profile = let
     playerDetails' = playerDetails profile
-    profileDetails'' = profileDetails' profile.platform profile.fieldValues profile.newOrReturning
+    profileDetails'' = profileDetails' profile.fieldValues profile.newOrReturning
     contactsDetails' = profileContacts profile
     about = textDetail profile.about
     ambitions = textDetail profile.ambitions
@@ -177,7 +177,7 @@ render { handle, profiles, profileCount, playerInfo, page } =
         <>
         if isNothing playerInfo
         then Array.singleton $
-            HH.a [ HS.class_ "primary-button", HE.onClick $ Just <<< OpenPreboarding ]
+            HH.a [ HS.class_ "primary-button", HE.onClick OpenPreboarding ]
             [ HH.i [ HS.class_ "fas fa-user-plus button-icon"] [], HH.text "Create player profile" ]
         else []
     ]

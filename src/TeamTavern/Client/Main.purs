@@ -37,7 +37,7 @@ addWindowListener event listener =
 
 main :: Effect Unit
 main = HA.runHalogenAff do
-    body <- HA.awaitBody
+    _ <- HA.awaitBody
     (spa :: _) <- window >>= document <#> toNonElementParentNode >>= getElementById "spa-teamtavern" <#> bindFlipped fromElement <#> unsafePartial fromJust # liftEffect
     state <- window >>= Window.history >>= History.state # liftEffect
     path <- window >>= Window.location >>= Location.pathname # liftEffect
@@ -45,7 +45,7 @@ main = HA.runHalogenAff do
     navigationListener <- createListener \event -> do
         let state' = PSE.fromEvent event # unsafePartial fromJust # PSE.state
         path' <- window >>= Window.location >>= Location.pathname
-        query (ChangeRoute state' path' unit) # launchAff_
+        query (ChangeRoute state' path' unit) # void # launchAff_
     addWindowListener PSET.popstate navigationListener
     orientationListener <- createListener $ const reloadAds
     addWindowListener (EventType "orientationchange") orientationListener

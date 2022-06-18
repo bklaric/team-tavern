@@ -75,7 +75,7 @@ render { details, submitting, otherError } =
     otherFormError otherError
 
 sendRequest :: forall left. State -> Async left (Maybe (Either Create.BadContent Unit))
-sendRequest state @ { handle, details } =
+sendRequest { handle, details } =
     putNoContent ("/api/teams/" <> handle) (pick details :: TeamModel)
 
 handleAction :: forall output left.
@@ -83,7 +83,7 @@ handleAction :: forall output left.
 handleAction Initialize = do
     state <- H.get
     case state.details.timezone of
-        Just timezone -> pure unit
+        Just _ -> pure unit
         Nothing -> do
             timezone <- getClientTimezone
             H.put state { details = state.details { timezone = Just timezone } }

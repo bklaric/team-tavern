@@ -6,11 +6,10 @@ import Async (Async)
 import CSS as Css
 import Client.Components.Copyable as Copyable
 import Control.Monad.State (class MonadState)
-import Data.Array (foldMap)
 import Data.Const (Const)
+import Data.Foldable (foldMap)
 import Data.Maybe (Maybe(..))
 import Data.Monoid (guard)
-import Type.Proxy (Proxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.CSS as HC
@@ -36,6 +35,7 @@ import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Shared.Slot (QuerylessSlot)
 import TeamTavern.Routes.Shared.Organization (OrganizationNW(..), nameOrHandleNW)
 import TeamTavern.Server.Team.View (Team, Profile)
+import Type.Proxy (Proxy(..))
 
 type Input = { handle :: String }
 
@@ -111,10 +111,10 @@ render (Loaded state @ { team: team', status } ) =
         ]
     ]
     <> stickyLeaderboards
-    <> guard state.editContactsModalShown [ editContacts team' $ const $ Just HideEditContactsModal ]
-    <> guard state.editTeamModalShown [ editTeam team' (const $ Just HideEditTeamModal) ]
+    <> guard state.editContactsModalShown [ editContacts team' $ const HideEditContactsModal ]
+    <> guard state.editTeamModalShown [ editTeam team' (const HideEditTeamModal) ]
     <> foldMap (\profile ->
-        [ editProfile { team: team', profile } (const $ Just HideEditProfileModal)
+        [ editProfile { team: team', profile } (const HideEditProfileModal)
         ])
         state.editProfileModalShown
 render NotFound = HH.p_ [ HH.text "Team could not be found." ]

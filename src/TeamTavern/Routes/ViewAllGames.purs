@@ -3,10 +3,10 @@ module TeamTavern.Routes.ViewAllGames where
 import Jarilo.Method (Get)
 import Jarilo.Path (type (:>), End)
 import Jarilo.Query (NoQuery)
-import Jarilo.Route (Route)
+import Jarilo.Route (FullRoute)
 import Jarilo.Segment (Literal)
 
-type ViewAllGames = Route
+type ViewAllGames = FullRoute
     Get
     (  Literal "games"
     :> End)

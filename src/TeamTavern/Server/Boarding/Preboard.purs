@@ -11,10 +11,8 @@ import Data.Bifunctor.Label (label)
 import Data.List.Types (NonEmptyList)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
-import Type.Proxy (Proxy(..))
 import Data.Variant (Variant, inj, match)
 import Effect (Effect, foreachE)
-import Yoga.JSON (unsafeStringify)
 import Node.Errors (Error)
 import Perun.Request.Body (Body)
 import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, ok, unauthorized__)
@@ -24,7 +22,6 @@ import Prim.Row (class Lacks)
 import Record.Builder (Builder)
 import Record.Builder as Builder
 import Record.Extra (pick)
-import Yoga.JSON (writeJSON)
 import TeamTavern.Routes.Preboard (BadContent, RequestContent, OkContent)
 import TeamTavern.Routes.Shared.Platform (Platform(..))
 import TeamTavern.Server.Architecture.Deployment (Deployment)
@@ -61,6 +58,8 @@ import TeamTavern.Server.Team.Infrastructure.ValidateContacts as TeamLel
 import TeamTavern.Server.Team.Infrastructure.ValidateTeam (TeamErrors, validateTeamV)
 import TeamTavern.Server.Team.Infrastructure.WriteContacts as TeamIdunno
 import Type (type ($))
+import Type.Proxy (Proxy(..))
+import Yoga.JSON (unsafeStringify, writeJSON)
 
 type PreboardError = Variant
     ( client :: Array String

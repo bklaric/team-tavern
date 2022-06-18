@@ -4,13 +4,13 @@ import Data.Maybe (Maybe)
 import Jarilo.Method (Get)
 import Jarilo.Path (type (:>), End)
 import Jarilo.Query (Mandatory)
-import Jarilo.Route (Route)
+import Jarilo.Route (FullRoute)
 import Jarilo.Segment (Capture, Literal)
 import TeamTavern.Routes.Shared.Organization (OrganizationN)
 import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
 import TeamTavern.Routes.Shared.PlayerContacts (PlayerContactsOpen)
 
-type ViewPlayer = Route
+type ViewPlayer = FullRoute
     Get
     (  Literal "players"
     :> Capture "nickname" String

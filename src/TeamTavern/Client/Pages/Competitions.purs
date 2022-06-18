@@ -68,7 +68,7 @@ render (Loaded { game, competitions: competitions' }) =
                 , HH.div [ HS.class_ $ "competition-description" <> guard competition.expanded " expanded" ]
                     [ HH.span
                         [ HS.class_ "competition-description-expand"
-                        , HE.onClick $ const $ Just $ Expand competition.name
+                        , HE.onClick $ const $ Expand competition.name
                         ]
                         [ HH.text $ if competition.expanded then "Less" else "More" ]
                     , HH.div [ HS.class_ "competition-description-text" ] $

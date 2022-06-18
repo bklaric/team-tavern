@@ -23,7 +23,7 @@ queryString = Query """
     """
 
 queryParameters :: Int -> Identifiers -> Profile -> Array QueryParameter
-queryParameters playerId { handle, nickname }
+queryParameters playerId { handle }
     { platform, newOrReturning, about, ambitions } =
     playerId : handle : writeImpl platform : newOrReturning : about :| ambitions
 

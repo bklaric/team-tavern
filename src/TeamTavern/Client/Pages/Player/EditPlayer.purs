@@ -38,7 +38,7 @@ type Slot = H.Slot (Const Void) (Modal.Output Void) Unit
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { details, submitting, otherError } =
     form Update $
-    [ playerFormInput details (Just <<< UpdatePlayerDetails)
+    [ playerFormInput details UpdatePlayerDetails
     , submitButton "fas fa-edit" "Edit player" "Editing player..." submitting
     ]
     <>

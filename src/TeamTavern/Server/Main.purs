@@ -18,7 +18,7 @@ import Data.Tuple (Tuple(..))
 import Data.Variant (match)
 import Effect (Effect)
 import Effect.Console (log)
-import Jarilo.Junction (JunctionProxy(..), router)
+import Jarilo.Junction (router)
 import Node.Process (lookupEnv)
 import Node.Server (ListenOptions(..))
 import Perun.Async.Server (run_)
@@ -61,6 +61,7 @@ import TeamTavern.Server.Team.Create (create) as Team
 import TeamTavern.Server.Team.Update (update) as Team
 import TeamTavern.Server.Team.UpdateContacts (updateContacts) as Team
 import TeamTavern.Server.Team.View (view) as Team
+import Type.Proxy (Proxy(..))
 
 listenOptions :: ListenOptions
 listenOptions = TcpListenOptions
@@ -122,7 +123,7 @@ loadDeployment =
     <#> note "Couldn't read variable DEPLOYMENT."
     # ExceptT
 
-teamTavernRoutes = JunctionProxy :: JunctionProxy TeamTavernRoutes
+teamTavernRoutes = Proxy :: Proxy TeamTavernRoutes
 
 handleRequest
     :: Deployment
@@ -178,7 +179,7 @@ handleRequest deployment pool method url cookies body =
         , viewAllGames: const $
             Game.viewAll pool
         , viewGame: \{ handle } ->
-            Game.view pool handle cookies
+            Game.view pool handle
         , addPlayerProfile: \identifiers ->
             Profile.addPlayerProfile pool identifiers cookies body
         , addTeamProfile:

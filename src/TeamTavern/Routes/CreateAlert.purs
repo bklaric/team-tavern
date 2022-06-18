@@ -8,7 +8,7 @@ import Foreign (ForeignError(..), fail)
 import Jarilo.Method (Post)
 import Jarilo.Path (type (:>), End)
 import Jarilo.Query (NoQuery)
-import Jarilo.Route (Route)
+import Jarilo.Route (FullRoute)
 import Jarilo.Segment (Literal)
 import Yoga.JSON (class ReadForeign, class WriteForeign, readImpl, writeImpl)
 import TeamTavern.Routes.Shared.Filters (Filters)
@@ -35,7 +35,7 @@ instance readForeignPlayerOrTeam :: ReadForeign PlayerOrTeam where
         "team" -> pure Team
         string -> fail $ ForeignError $ "Invalid player or team " <> string
 
-type CreateAlert = Route
+type CreateAlert = FullRoute
     Post
     (  Literal "alerts"
     :> End)

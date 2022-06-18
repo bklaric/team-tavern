@@ -23,6 +23,7 @@ import TeamTavern.Routes.ViewPlayer as ViewPlayer
 import TeamTavern.Server.Profile.AddPlayerProfile.ReadProfile (RequestContent)
 import TeamTavern.Server.Profile.AddPlayerProfile.SendResponse (BadContent)
 import Type (type ($))
+import Type.Proxy (Proxy(..))
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
@@ -114,7 +115,7 @@ handleAction (SendRequest event) = do
         Just (Left badContent) -> H.put $
             foldl
             (\state error -> error # match
-                { profile: state # foldl \state' error' -> error' # match
+                { profile: state # foldl \_ error' -> error' # match
                     { about: const state { profile { details { aboutError = true } } }
                     , ambitions: const state { profile { details { ambitionsError = true } } }
                     , url: \{ key } -> state { profile { details

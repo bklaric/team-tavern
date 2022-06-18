@@ -14,12 +14,13 @@ import Postgres.Client (Client)
 import Postgres.Error (Error)
 import Postgres.Query (Query(..), QueryParameter, (:), (:|))
 import Postgres.Result (Result, rows)
-import Yoga.JSON (writeImpl)
-import Yoga.JSON.Async (read)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Server.Profile.AddPlayerProfile.AddFieldValues (ProfileId, addFieldValues)
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile (Profile)
 import TeamTavern.Server.Profile.Routes (Identifiers)
+import Type.Proxy (Proxy(..))
+import Yoga.JSON (writeImpl)
+import Yoga.JSON.Async (read)
 
 type UpdateProfileError errors = Variant
     ( databaseError :: Error

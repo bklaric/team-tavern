@@ -14,12 +14,6 @@ newtype FriendCode = FriendCode String
 toString :: FriendCode -> String
 toString (FriendCode friendCode) = friendCode
 
-minNameLength :: Int
-minNameLength = 3
-
-maxNameLength :: Int
-maxNameLength = 16
-
 -- Fixed format, e.g.: SW-7417-3522-1808
 -- https://en-americas-support.nintendo.com/app/answers/detail/a_id/22438/kw/friend%20code/p/989
 isFriendCodeValid :: String -> Boolean

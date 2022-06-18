@@ -62,7 +62,7 @@ render (Loaded { game: game' @ { handle, shortTitle } }) =
     , forPlayers' handle shortTitle (OpenPlayerPreboarding game')
     , forTeams' handle shortTitle (OpenTeamPreboarding game')
     , findProfiles' handle shortTitle (OpenPlayerProfiles handle) (OpenTeamProfiles handle)
-    , connect' handle shortTitle
+    , connect' shortTitle
     , features' handle shortTitle (OpenPreboarding game')
     ]
 

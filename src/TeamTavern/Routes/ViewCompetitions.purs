@@ -4,10 +4,10 @@ import Data.Maybe (Maybe)
 import Jarilo.Method (Get)
 import Jarilo.Path (type (:>), End)
 import Jarilo.Query (NoQuery)
-import Jarilo.Route (Route)
+import Jarilo.Route (FullRoute)
 import Jarilo.Segment (Capture, Literal)
 
-type ViewCompetitions = Route
+type ViewCompetitions = FullRoute
     Get
     (  Literal "games"
     :> Capture "handle" String

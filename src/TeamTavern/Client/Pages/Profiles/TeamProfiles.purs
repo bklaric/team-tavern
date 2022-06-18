@@ -173,7 +173,7 @@ render { handle, profiles, profileCount, playerInfo, page } =
         <>
         if isNothing playerInfo
         then Array.singleton $
-            HH.a [ HS.class_ "primary-button", HE.onClick $ Just <<< OpenPreboarding ]
+            HH.a [ HS.class_ "primary-button", HE.onClick OpenPreboarding ]
             [ HH.i [ HS.class_ "fas fa-user-plus button-icon"] [], HH.text "Create team profile" ]
         else []
     ]

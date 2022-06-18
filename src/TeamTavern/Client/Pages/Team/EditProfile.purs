@@ -58,7 +58,7 @@ render { profile, submitting, otherError } =
     otherFormError otherError
 
 sendRequest :: forall left. State -> Async left $ Maybe $ Either BadContent Unit
-sendRequest state @ { teamHandle, gameHandle, profile } = let
+sendRequest { teamHandle, gameHandle, profile } = let
     details = profile.details
         # Record.insert (Proxy :: _ "platforms") profile.details.selectedPlatforms
         # pick
@@ -122,7 +122,7 @@ handleAction (SendRequest event) = do
             foldl
             (\state error ->
                 match
-                { profile: state # foldl \state' error' -> error' # match
+                { profile: state # foldl \_ error' -> error' # match
                     { platforms: const state { profile { details { platformsError = true } } }
                     , about: const state { profile { details { aboutError = true } } }
                     , ambitions: const state { profile { details { ambitionsError = true } } }

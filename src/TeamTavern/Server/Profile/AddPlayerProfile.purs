@@ -55,7 +55,7 @@ addPlayerProfile pool identifiers cookies body =
         { profile, contacts } <-
             { profile: _, contacts: _ }
             <$> validateProfileV game profile'.details
-            <*> validateContactsV [ profile'.details.platform ] profile'.contacts
+            <*> validateContactsV [ profile'.details.platform ] contacts'
             # AsyncV.toAsync
             # label (Proxy :: _ "invalidBody")
 

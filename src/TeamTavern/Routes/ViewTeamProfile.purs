@@ -3,7 +3,7 @@ module TeamTavern.Routes.ViewTeamProfile where
 import Jarilo.Method (Get)
 import Jarilo.Path (type (:>), End)
 import Jarilo.Query (Mandatory)
-import Jarilo.Route (Route)
+import Jarilo.Route (FullRoute)
 import Jarilo.Segment (Capture, Literal)
 import TeamTavern.Routes.Shared.GameBase (GameBaseRow')
 import TeamTavern.Routes.Shared.TeamBase (TeamBaseRow)
@@ -12,7 +12,7 @@ import TeamTavern.Routes.Shared.TeamDetails (TeamDetailsRow)
 import TeamTavern.Routes.Shared.TeamProfile (TeamProfileRow)
 import Type.Row (type (+))
 
-type ViewTeamProfile = Route
+type ViewTeamProfile = FullRoute
     Get
     (  Literal "teams"
     :> Capture "teamHandle" String

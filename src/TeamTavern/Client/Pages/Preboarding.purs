@@ -239,7 +239,7 @@ renderPage { step: PlayerOrTeam, playerOrTeam } =
         , HH.button
             [ HP.class_ $ HH.ClassName "primary-button"
             , HP.disabled $ isNothing (getPlayerOrTeam playerOrTeam)
-            , HE.onClick $ const $ Just $ SetStep
+            , HE.onClick $ const $ SetStep
                 case playerOrTeam of
                 Preselected' (PlayerOrTeamInput.Player) -> Player
                 Preselected' (PlayerOrTeamInput.Team) -> Team
@@ -255,7 +255,7 @@ renderPage { step: Player, player, playerOrTeam, game } =
         [ boardingHeading "Player"
         , boardingDescription  """Tell us about yourself. Fill out as much as you want to help us
             find you the right teammates. All fields are optional."""
-        , PlayerFormInput.playerFormInput player (Just <<< UpdatePlayer)
+        , PlayerFormInput.playerFormInput player UpdatePlayer
         ]
     , boardingButtons
         [ secondaryButton_ "Back" $ SetStep
@@ -273,7 +273,7 @@ renderPage { step: Team, team, playerOrTeam, game } =
         [ boardingHeading "Team"
         , boardingDescription  """Tell us about your team. Fill out as much as you want to help us
             find the right teammates for your team."""
-        , TeamFormInput.teamFormInput team (Just <<< UpdateTeam)
+        , TeamFormInput.teamFormInput team UpdateTeam
         ]
     , boardingButtons
         [ secondaryButton_ "Back" $ SetStep
@@ -290,7 +290,7 @@ renderPage { step: Game, game, playerOrTeam } =
     [ boardingStep
         [ boardingHeading "Game"
         , boardingDescription  """Select a game to create your first profile."""
-        , gameInput (getGame game) (Just <<< UpdateGame)
+        , gameInput (getGame game) UpdateGame
         ]
     , boardingButtons
         [ secondaryButton_ "Back" $ SetStep
@@ -303,7 +303,7 @@ renderPage { step: Game, game, playerOrTeam } =
         , HH.button
             [ HP.class_ $ HH.ClassName "primary-button"
             , HP.disabled $ isNothing (getGame game)
-            , HE.onClick $ const $ Just $ SetStep
+            , HE.onClick $ const $ SetStep
                 case playerOrTeam of
                 Preselected' (PlayerOrTeamInput.Player) -> PlayerProfile
                 Preselected' (PlayerOrTeamInput.Team) -> TeamProfile
@@ -314,7 +314,7 @@ renderPage { step: Game, game, playerOrTeam } =
             [ HH.text "Next" ]
         ]
     ]
-renderPage { step: PlayerProfile, playerProfile, otherError, submitting, game } =
+renderPage { step: PlayerProfile, playerProfile, game } =
     [ boardingStep
         [ boardingHeading $ maybe "Player profile" (\{ title } -> title <> " player profile") (getGame game)
         , boardingDescription  """Fill out your in-game stats, achievements and about to find
@@ -329,7 +329,7 @@ renderPage { step: PlayerProfile, playerProfile, otherError, submitting, game } 
         , primaryButton_ "Next" $ SetStep Register
         ]
     ]
-renderPage { step: TeamProfile, teamProfile, otherError, submitting, game } =
+renderPage { step: TeamProfile, teamProfile, game } =
     [ boardingStep
         [ boardingHeading $ maybe "Team profile" (\{ title } -> title <> " team profile") (getGame game)
         , boardingDescription  """Tell us about your team's about and what you're looking for
@@ -362,7 +362,7 @@ renderPage { step: Register, registration, otherError, submitting, playerOrTeam 
             [ HH.button
                 [ HS.class_ "primary-button"
                 , HP.disabled submitting
-                , HE.onClick $ const $ Just SetUpAccount
+                , HE.onClick $ const SetUpAccount
                 ]
                 [ HH.text if submitting then "Submitting..." else "Submit" ]
             ]

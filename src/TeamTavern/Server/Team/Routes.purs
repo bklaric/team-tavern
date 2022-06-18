@@ -4,24 +4,24 @@ import Jarilo.Junction (type (:<|>), type (:=))
 import Jarilo.Method (Get, Post, Put)
 import Jarilo.Path (type (:>), End)
 import Jarilo.Query (Mandatory, NoQuery)
-import Jarilo.Route (Route)
+import Jarilo.Route (FullRoute)
 import Jarilo.Segment (Capture, Literal)
 import TeamTavern.Routes.UpdateTeamContacts (UpdateTeamContacts)
 
-type ViewTeam = Route
+type ViewTeam = FullRoute
     Get
     (  Literal "teams"
     :> Capture "handle" String
     :> End)
     (Mandatory "timezone" String)
 
-type CreateTeam = Route
+type CreateTeam = FullRoute
     Post
     (  Literal "teams"
     :> End)
     NoQuery
 
-type UpdateTeam = Route
+type UpdateTeam = FullRoute
     Put
     (  Literal "teams"
     :> Capture "handle" String

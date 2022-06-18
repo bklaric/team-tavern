@@ -5,7 +5,7 @@ import Data.Variant (Variant)
 import Jarilo.Method (Post)
 import Jarilo.Path (type (:>), End)
 import Jarilo.Query (NoQuery)
-import Jarilo.Route (Route)
+import Jarilo.Route (FullRoute)
 import Jarilo.Segment (Literal)
 import TeamTavern.Routes.Shared.Organization (OrganizationNW)
 import TeamTavern.Routes.Shared.Platform (Platform)
@@ -14,7 +14,7 @@ import TeamTavern.Routes.Shared.Size (Size)
 import TeamTavern.Routes.Shared.TeamContacts
 import Type (type ($))
 
-type Onboard = Route
+type Onboard = FullRoute
     Post
     (  Literal "onboarding"
     :> End)

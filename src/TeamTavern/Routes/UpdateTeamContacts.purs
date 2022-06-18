@@ -3,11 +3,11 @@ module TeamTavern.Routes.UpdateTeamContacts where
 import Jarilo.Method (Put)
 import Jarilo.Path (type (:>), End)
 import Jarilo.Query (NoQuery)
-import Jarilo.Route (Route)
+import Jarilo.Route (FullRoute)
 import Jarilo.Segment (Capture, Literal)
 import TeamTavern.Routes.Shared.TeamContacts (TeamContacts, TeamContactsError)
 
-type UpdateTeamContacts = Route
+type UpdateTeamContacts = FullRoute
     Put
     (  Literal "teams"
     :> Capture "handle" String

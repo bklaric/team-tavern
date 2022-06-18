@@ -21,6 +21,7 @@ import TeamTavern.Routes.Shared.PlayerContacts as Routes
 import TeamTavern.Routes.UpdatePlayerContacts (RequestContent, BadContent)
 import TeamTavern.Routes.ViewPlayer (OkContentProfile)
 import Type (type ($))
+import Type.Proxy (Proxy(..))
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 

@@ -4,18 +4,17 @@ import Prelude
 
 import Async (Async)
 import Async as Async
-import Async.Aff (affToAsync)
 import Browser.Async.Fetch (fetch, method)
 import Browser.Fetch.Response (status)
-import Data.Array (find, foldMap)
+import Data.Array (find)
 import Data.Array as Array
 import Data.Bifunctor (lmap)
 import Data.Const (Const)
+import Data.Foldable (foldMap)
 import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..), maybe)
 import Data.Monoid (guard)
 import Data.Options ((:=))
-import Type.Proxy (Proxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
@@ -27,6 +26,7 @@ import TeamTavern.Client.Script.Navigate (navigateWithEvent_)
 import TeamTavern.Client.Script.Request (get)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.ViewAllGames as ViewAllGames
+import Type.Proxy (Proxy(..))
 import Web.Event.Event (stopPropagation)
 import Web.Event.Event as E
 import Web.HTML (window)
@@ -78,7 +78,7 @@ render state = HH.div_ $
                 [ HH.a
                     [ HS.class_ "top-bar-title"
                     , HP.href "/"
-                    , HE.onClick $ Just <<< Navigate "/"
+                    , HE.onClick $ Navigate "/"
                     ]
                     [ HH.img
                         [ HS.class_ "top-bar-title-logo"
@@ -93,7 +93,7 @@ render state = HH.div_ $
                             HH.a
                             [ HS.class_ "top-bar-games"
                             , HP.href "/games"
-                            , HE.onClick $ Just <<< Navigate "/games"
+                            , HE.onClick $ Navigate "/games"
                             ]
                             [ HH.i [ HS.class_ "fas fa-gamepad top-bar-games-icon"] []
                             , HH.text "Games"
@@ -102,7 +102,7 @@ render state = HH.div_ $
                             HH.a
                             [ HS.class_ "top-bar-games"
                             , HP.href $ "/games/" <> handle
-                            , HE.onClick $ Just <<< Navigate ("/games/" <> handle)
+                            , HE.onClick $ Navigate ("/games/" <> handle)
                             ]
                             [ HH.img
                                 [ HS.class_ "top-bar-games-icon"
@@ -114,7 +114,7 @@ render state = HH.div_ $
                     , HH.div [ HS.class_ "top-bar-games-popover-container" ] $
                         [ HH.i
                             [ HS.class_ "fas fa-caret-down top-bar-games-caret"
-                            , HE.onClick $ Just <<< ToggleGamesPopunder
+                            , HE.onClick $ ToggleGamesPopunder
                             ]
                             []
                         ]
@@ -126,7 +126,7 @@ render state = HH.div_ $
                                 [ HH.a
                                     [ HS.class_ "top-bar-game-link"
                                     , HP.href $ "/games/" <> handle
-                                    , HE.onClick $ Just <<< Navigate ("/games/" <> handle)
+                                    , HE.onClick $ Navigate ("/games/" <> handle)
                                     ]
                                     [ HH.img
                                         [ HS.class_ "top-bar-game-icon"
@@ -138,19 +138,19 @@ render state = HH.div_ $
                                 , HH.div_
                                     [ HH.a
                                         [ HP.href $ "/games/" <> handle <> "/players"
-                                        , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/players")
+                                        , HE.onClick $ Navigate ("/games/" <> handle <> "/players")
                                         ]
                                         [ HH.text "Players" ]
                                     , divider
                                     , HH.a
                                         [ HP.href $ "/games/" <> handle <> "/teams"
-                                        , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/teams")
+                                        , HE.onClick $ Navigate ("/games/" <> handle <> "/teams")
                                         ]
                                         [ HH.text "Teams" ]
                                     -- , divider
                                     -- , HH.a
                                     --     [ HP.href $ "/games/" <> handle <> "/competitions"
-                                    --     , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/competitions")
+                                    --     , HE.onClick $ Navigate ("/games/" <> handle <> "/competitions")
                                     --     ]
                                     --     [ HH.text "Competitions" ]
                                     ]
@@ -165,7 +165,7 @@ render state = HH.div_ $
                         [ HH.a
                             [ HS.class_ "top-bar-navigation-item"
                             , HP.href $ "/games/" <> handle <> "/players"
-                            , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/players")
+                            , HE.onClick $ Navigate ("/games/" <> handle <> "/players")
                             ]
                             [ HH.i [ HS.class_ "fas fa-user top-bar-navigation-item-icon" ] []
                             , HH.span [ HS.class_ "top-bar-navigation-item-text" ] [ HH.text "Players" ]
@@ -173,7 +173,7 @@ render state = HH.div_ $
                         , HH.a
                             [ HS.class_ "top-bar-navigation-item"
                             , HP.href $ "/games/" <> handle <> "/teams"
-                            , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/teams")
+                            , HE.onClick $ Navigate ("/games/" <> handle <> "/teams")
                             ]
                             [ HH.i [ HS.class_ "fas fa-users top-bar-navigation-item-icon" ] []
                             , HH.span [ HS.class_ "top-bar-navigation-item-text" ] [ HH.text "Teams" ]
@@ -181,7 +181,7 @@ render state = HH.div_ $
                         -- , HH.a
                         --     [ HS.class_ "top-bar-navigation-item"
                         --     , HP.href $ "/games/" <> handle <> "/competitions"
-                        --     , HE.onClick $ Just <<< Navigate ("/games/" <> handle <> "/competitions")
+                        --     , HE.onClick $ Navigate ("/games/" <> handle <> "/competitions")
                         --     ]
                         --     [ HH.i [ HS.class_ "fas fa-trophy top-bar-navigation-item-icon" ] []
                         --     , HH.span [ HS.class_ "top-bar-navigation-item-text" ] [ HH.text "Competitions" ]
@@ -193,12 +193,12 @@ render state = HH.div_ $
                 [ HH.button
                     [ HS.class_ "top-bar-menu-button"
                     , HP.title "Menu"
-                    , HE.onClick $ const $ Just ToggleMenu
+                    , HE.onClick $ const ToggleMenu
                     ]
                     [ HH.i [ HS.class_ if state.menuVisible then "fas fa-times top-bar-menu-button-icon" else "fas fa-bars top-bar-menu-button-icon" ] [] ]
                 , HH.div
                     [ HS.class_ if state.menuVisible then "top-bar-menu-items" else "hidden-top-bar-menu-items"
-                    , HE.onClick $ const $ Just CloseMenu
+                    , HE.onClick $ const CloseMenu
                     ]
                     case state.playerStatus of
                     Unknown -> []
@@ -206,13 +206,13 @@ render state = HH.div_ $
                         [ HH.a
                             [ HS.class_ "top-bar-menu-item"
                             , HP.href "/signin"
-                            , HE.onClick $ Just <<< Navigate "/signin"
+                            , HE.onClick $ Navigate "/signin"
                             ]
                             [ HH.text "Sign in" ]
                         , HH.a
                             [ HS.class_ "top-bar-menu-item"
                             , HP.href "/register"
-                            , HE.onClick $ Just <<< Navigate "/register"
+                            , HE.onClick $ Navigate "/register"
                             ]
                             [ HH.text "Create account" ]
                         ]
@@ -220,12 +220,12 @@ render state = HH.div_ $
                         [ HH.a
                             [ HS.class_ "top-bar-menu-item"
                             , HP.href $ "/players/" <> nickname
-                            , HE.onClick $ Just <<< Navigate ("/players/" <> nickname)
+                            , HE.onClick $ Navigate ("/players/" <> nickname)
                             ]
                             [ HH.text "Account" ]
                         , HH.button
                             [ HS.class_ "top-bar-menu-item top-bar-button"
-                            , HE.onClick $ const $ Just $ SignOut
+                            , HE.onClick $ const SignOut
                             ]
                             [ HH.i [ HS.class_ "fas fa-sign-out-alt button-icon" ] []
                             , HH.text "Sign out"
@@ -250,7 +250,7 @@ handleAction Initialize = do
     window <- H.liftEffect $ Window.toEventTarget <$> window
     let windowEventSource = ES.eventListener
             (E.EventType "click") window \_ -> Just CloseGamesPopunder
-    windowSubscription <- H.subscribe $ ES.hoist affToAsync windowEventSource
+    windowSubscription <- H.subscribe windowEventSource
 
     games' <- H.lift $ get "/api/games"
 

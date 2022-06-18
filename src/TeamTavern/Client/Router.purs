@@ -224,7 +224,7 @@ handleAction (Init state route) = do
             in
             case (read_ state :: Maybe Preboarding.Input), step' of
             Just input, Just step'' -> just $ Preboarding input { step = step'' }
-            hmm, _ -> log (unsafeCoerce $ (read state :: E Preboarding.Input)) *> log (unsafeCoerce state) *> navigateReplace_ "/" *> nothing
+            _, _ -> log (unsafeCoerce $ (read state :: E Preboarding.Input)) *> log (unsafeCoerce state) *> navigateReplace_ "/" *> nothing
         ["", "teams", handle] ->
             just $ Team { handle }
         ["", "games"] ->

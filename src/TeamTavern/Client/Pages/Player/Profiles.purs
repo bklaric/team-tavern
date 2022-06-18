@@ -52,7 +52,7 @@ profiles player @ { profiles: profiles' } status showEditProfileModal =
         SignedInSelf -> "You haven't create any profiles."
         _ -> "This player hasn't created any profiles." ] ]
     else profiles' <#> \profile -> let
-        profileDetails' = profileDetails profile.platform profile.fields profile.fieldValues profile.newOrReturning
+        profileDetails' = profileDetails profile.fields profile.fieldValues profile.newOrReturning
         about = textDetail profile.about
         ambitions = textDetail profile.ambitions
         in

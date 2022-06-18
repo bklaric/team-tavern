@@ -131,7 +131,7 @@ render state =
     card $
     [ HH.div
         [ HS.class_ "card-header"
-        , HE.onClick $ const $ Just ToggleFiltersVisibility
+        , HE.onClick $ const ToggleFiltersVisibility
         ]
         [ cardHeading "Filters"
         , headerCaret "filters-title-caret" state.filtersVisible
@@ -142,7 +142,7 @@ render state =
     then
         [ HH.div
             [ HS.class_ "card-section-header"
-            , HE.onClick $ const $ Just TogglePlayerFiltersVisibility
+            , HE.onClick $ const TogglePlayerFiltersVisibility
             ]
             [ cardSectionHeading
                 case state.tab of
@@ -180,7 +180,7 @@ render state =
         <>
         [ HH.div
             [ HS.class_ "card-section-header"
-            , HE.onClick $ const $ Just ToggleProfileFiltersVisibility
+            , HE.onClick $ const ToggleProfileFiltersVisibility
             ]
             [ cardSectionHeading "Game details"
             , headerCaret "filters-section-title-caret" state.profileFiltersVisible
@@ -235,7 +235,7 @@ render state =
                 Teams -> CreateAlertRoute.Team
             , filters: state # Record.insert (Proxy :: _ "platforms") state.selectedPlatforms # pick
             }
-            (const $ Just HideCreateAlertModal)
+            (const HideCreateAlertModal)
         ]
 
 handleAction :: forall left. Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit

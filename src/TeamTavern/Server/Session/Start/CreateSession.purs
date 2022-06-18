@@ -22,4 +22,4 @@ queryString = Query """
 
 createSession :: forall querier errors. Querier querier =>
     CreateSessionModel -> querier -> Async (InternalError errors) Unit
-createSession model @ { id, token } querier = queryNone querier queryString (id :| token)
+createSession { id, token } querier = queryNone querier queryString (id :| token)

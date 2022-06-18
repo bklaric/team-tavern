@@ -53,9 +53,7 @@ profileDetails { allPlatforms, selectedPlatforms, fields, fieldValues, newOrRetu
     }
 
 profileDetails' :: forall fieldOptionFields fieldFields someMoreFields slots action.
-    { allPlatforms :: Platforms
-    , selectedPlatforms :: Array Platform
-    , fieldValues :: Array
+    { fieldValues :: Array
         { field ::
             { key :: String
             , label :: String
@@ -72,7 +70,7 @@ profileDetails' :: forall fieldOptionFields fieldFields someMoreFields slots act
     | someMoreFields
     }
     -> Array (HH.HTML slots action)
-profileDetails' { allPlatforms, selectedPlatforms, fieldValues, newOrReturning } =
+profileDetails' { fieldValues, newOrReturning } =
     ( fieldValues
     <#> ( \fieldValue ->
             if not $ Array.null fieldValue.options

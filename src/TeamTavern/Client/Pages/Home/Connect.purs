@@ -15,8 +15,8 @@ connect =
         ]
     ]
 
-connect' :: forall slots action. String -> String -> HH.HTML slots action
-connect' handle title =
+connect' :: forall slots action. String -> HH.HTML slots action
+connect' title =
     landingSection
     [ landingSectionConnect
     , landingSectionText

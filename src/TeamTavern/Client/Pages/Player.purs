@@ -110,11 +110,11 @@ render (Loaded state @ { player: player', status }) =
         ]
     ]
     <> stickyLeaderboards
-    <> guard state.editContactsModalShown [ editContacts player' $ const $ Just HideEditContactsModal ]
-    <> guard state.editPlayerModalShown [ editPlayer player' $ const $ Just HideEditPlayerModal ]
-    <> guard state.createTeamModalShown [ createTeam $ const $ Just HideCreateTeamModal ]
+    <> guard state.editContactsModalShown [ editContacts player' $ const HideEditContactsModal ]
+    <> guard state.editPlayerModalShown [ editPlayer player' $ const HideEditPlayerModal ]
+    <> guard state.createTeamModalShown [ createTeam $ const HideCreateTeamModal ]
     <> foldMap
-        (\profile -> [ editProfile { player: player', profile } $ const $ Just HideEditProfileModal ])
+        (\profile -> [ editProfile { player: player', profile } $ const HideEditProfileModal ])
         state.editProfileModalShown
 render NotFound = HH.p_ [ HH.text "Player could not be found." ]
 render Error = HH.p_ [ HH.text

@@ -3,9 +3,9 @@ module TeamTavern.Client.Pages.Player.CreateProfileButton where
 import Prelude
 
 import Async (Async)
-import Data.Array (foldMap)
 import Data.Array as Array
 import Data.Const (Const)
+import Data.Foldable (foldMap)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Tuple (Tuple(..))
 import Halogen (lift)
@@ -50,7 +50,7 @@ createProfileButton = Hooks.component $ \_ player -> Hooks.do
         shown
         ([ HH.button
             [ HS.class_ "primary-button"
-            , HE.onClick (Just <<< togglePopover shownId)
+            , HE.onClick $ togglePopover shownId
             ]
             [ HH.i [ HS.class_ "fas fa-user-plus button-icon" ] []
             , HH.text "Create player profile"
@@ -59,7 +59,7 @@ createProfileButton = Hooks.component $ \_ player -> Hooks.do
         ]
         <>
         foldMap (\modalInput ->
-            [ createProfile modalInput (const $ Just $ Hooks.put modalShownId Nothing) ])
+            [ createProfile modalInput (const $ Hooks.put modalShownId Nothing) ])
             modalShown
         )
         (games <#> \game ->
