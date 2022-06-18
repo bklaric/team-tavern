@@ -18,7 +18,7 @@ import TeamTavern.Client.Components.Team.ContactsFormInput as ContactsFormInput
 import TeamTavern.Client.Script.Navigate (hardNavigate)
 import TeamTavern.Client.Script.Request (putNoContent)
 import TeamTavern.Routes.Shared.TeamContacts as Routes
-import TeamTavern.Routes.UpdateTeamContacts (RequestContent, BadContent)
+import TeamTavern.Routes.Team.UpdateTeamContacts (RequestContent, BadContent)
 import TeamTavern.Routes.Team.ViewTeam as ViewTeam
 import Type (type ($))
 import Type.Proxy (Proxy(..))

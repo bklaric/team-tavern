@@ -19,8 +19,7 @@ import TeamTavern.Client.Script.Navigate (hardNavigate)
 import TeamTavern.Client.Script.Request (putNoContent)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Routes.Shared.Organization (OrganizationNW)
-import TeamTavern.Server.Team.Create as Create
-import TeamTavern.Server.Team.Infrastructure.ValidateTeam (TeamModel)
+import TeamTavern.Routes.Team.CreateTeam as CreateTeam
 import Type.Proxy (Proxy(..))
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
@@ -74,9 +73,9 @@ render { details, submitting, otherError } =
     <>
     otherFormError otherError
 
-sendRequest :: forall left. State -> Async left (Maybe (Either Create.BadContent Unit))
+sendRequest :: forall left. State -> Async left (Maybe (Either CreateTeam.BadContent Unit))
 sendRequest { handle, details } =
-    putNoContent ("/api/teams/" <> handle) (pick details :: TeamModel)
+    putNoContent ("/api/teams/" <> handle) (pick details :: CreateTeam.RequestContent)
 
 handleAction :: forall output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit

@@ -1,4 +1,4 @@
-module TeamTavern.Server.Team.Update (OkContent, BadContent, update) where
+module TeamTavern.Server.Team.Update (update) where
 
 import Prelude
 
@@ -23,7 +23,7 @@ import TeamTavern.Server.Player.Domain.Id (Id)
 import TeamTavern.Server.Player.UpdatePlayer.ValidateTimespan (nullableTimeFrom, nullableTimeTo)
 import TeamTavern.Server.Profile.AddTeamProfile.ValidateAgeSpan (nullableAgeFrom, nullableAgeTo)
 import TeamTavern.Server.Team.Infrastructure.LogError (teamHandler)
-import TeamTavern.Server.Team.Infrastructure.ValidateTeam (Team, TeamError, TeamErrors, organizationName, organizationWebsite, toString, validateTeam)
+import TeamTavern.Server.Team.Infrastructure.ValidateTeam (Team, TeamErrors, organizationName, organizationWebsite, toString, validateTeam)
 
 queryString :: Query
 queryString = Query """
@@ -79,10 +79,6 @@ type CreateError = Variant
 logError :: CreateError -> Effect Unit
 logError = Log.logError "Error updating team"
     (internalHandler >>> notAuthenticatedHandler >>> clientHandler >>> teamHandler)
-
-type OkContent = { handle :: String }
-
-type BadContent = Array TeamError
 
 sendResponse :: Async CreateError Unit -> (forall voidLeft. Async voidLeft Response)
 sendResponse = alwaysRight

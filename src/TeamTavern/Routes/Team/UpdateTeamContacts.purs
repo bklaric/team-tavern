@@ -1,4 +1,4 @@
-module TeamTavern.Routes.UpdateTeamContacts where
+module TeamTavern.Routes.Team.UpdateTeamContacts where
 
 import Jarilo.Method (Put)
 import Jarilo.Path (type (:>), End)

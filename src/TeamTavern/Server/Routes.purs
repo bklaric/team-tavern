@@ -9,11 +9,9 @@ import TeamTavern.Server.Boarding.Routes (BoardRoutes)
 import TeamTavern.Server.Game.Routes (GameRoutes)
 import TeamTavern.Server.Player.Routes (PlayerRoutes)
 import TeamTavern.Server.Profile.Routes (ProfileRoutes)
-import TeamTavern.Server.Team.Routes (TeamRoutes)
 
 type TeamTavernRoutes
     =    PlayerRoutes
-    :<|> TeamRoutes
     :<|> AllRoutes
     :<|> GameRoutes
     :<|> ProfileRoutes

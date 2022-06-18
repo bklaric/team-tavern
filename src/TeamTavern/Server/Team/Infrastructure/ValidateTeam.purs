@@ -11,10 +11,10 @@ import Data.Bifunctor.Label (label)
 import Data.List.NonEmpty as NonEmptyList
 import Data.List.Types (NonEmptyList)
 import Data.Maybe (Maybe(..))
-import Type.Proxy (Proxy(..))
 import Data.Validated.Label (ValidatedVariants)
 import Data.Variant (Variant)
 import TeamTavern.Routes.Shared.Organization (OrganizationNW(..))
+import TeamTavern.Routes.Team.CreateTeam as CreateTeam
 import TeamTavern.Server.Player.UpdatePlayer.ValidateLangugase (Language, validateLanguages)
 import TeamTavern.Server.Player.UpdatePlayer.ValidateTimespan (Timespan, validateTimespan)
 import TeamTavern.Server.Player.UpdatePlayer.ValidateTimezone (Timezone, validateTimezone)
@@ -23,20 +23,7 @@ import TeamTavern.Server.Profile.AddTeamProfile.ValidateRegions (Region, validat
 import TeamTavern.Server.Profile.Infrastructure.ValidateUrl (Url)
 import TeamTavern.Server.Team.Infrastructure.ValidateName (Name, validateName)
 import TeamTavern.Server.Team.Infrastructure.ValidateWebsite (validateWebsite)
-
-type TeamModel =
-    { organization :: OrganizationNW
-    , ageFrom :: Maybe Int
-    , ageTo :: Maybe Int
-    , locations :: Array String
-    , languages :: Array String
-    , microphone :: Boolean
-    , timezone :: Maybe String
-    , weekdayFrom :: Maybe String
-    , weekdayTo :: Maybe String
-    , weekendFrom :: Maybe String
-    , weekendTo :: Maybe String
-    }
+import Type.Proxy (Proxy(..))
 
 data Organization = Informal | Organized { name :: Name, website :: Maybe Url }
 
@@ -71,15 +58,10 @@ type Team =
     , onlineWeekend :: Maybe Timespan
     }
 
-type TeamError = Variant
-    ( name :: Array String
-    , website :: Array String
-    )
+type TeamErrors = NonEmptyList CreateTeam.BadContentError
 
-type TeamErrors = NonEmptyList TeamError
-
-validateTeam :: forall errors. TeamModel -> Async (Variant (team :: TeamErrors | errors)) Team
-validateTeam (team :: TeamModel) = let
+validateTeam :: forall errors. CreateTeam.RequestContent -> Async (Variant (team :: TeamErrors | errors)) Team
+validateTeam (team :: CreateTeam.RequestContent) = let
     organization = validateOrganization team.organization
     ageSpan = validateAgeSpan team.ageFrom team.ageTo
     locations = validateRegions team.locations
@@ -98,5 +80,5 @@ validateTeam (team :: TeamModel) = let
     # Async.fromValidated # label (Proxy :: _ "team")
 
 validateTeamV :: forall errors.
-    TeamModel -> AsyncV (NonEmptyList (Variant (team :: TeamErrors | errors))) Team
+    CreateTeam.RequestContent -> AsyncV (NonEmptyList (Variant (team :: TeamErrors | errors))) Team
 validateTeamV = validateTeam >>> lmap NonEmptyList.singleton >>> AsyncV.fromAsync

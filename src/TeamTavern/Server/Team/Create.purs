@@ -1,4 +1,4 @@
-module TeamTavern.Server.Team.Create (OkContent, BadContent, create) where
+module TeamTavern.Server.Team.Create (create) where
 
 import Prelude
 
@@ -9,7 +9,7 @@ import Effect (Effect)
 import Perun.Request.Body (Body)
 import Perun.Response (Response, badRequest_, badRequest__, internalServerError__, ok_, unauthorized__)
 import Postgres.Pool (Pool)
-import Yoga.JSON (writeJSON)
+import TeamTavern.Routes.Team.CreateTeam as CreateTeam
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
 import TeamTavern.Server.Infrastructure.Log (clientHandler, internalHandler, notAuthenticatedHandler)
@@ -18,7 +18,8 @@ import TeamTavern.Server.Infrastructure.ReadJsonBody (readJsonBody)
 import TeamTavern.Server.Team.Create.AddTeam (addTeam)
 import TeamTavern.Server.Team.Infrastructure.GenerateHandle (generateHandle)
 import TeamTavern.Server.Team.Infrastructure.LogError (teamHandler)
-import TeamTavern.Server.Team.Infrastructure.ValidateTeam (TeamError, TeamErrors, validateTeam)
+import TeamTavern.Server.Team.Infrastructure.ValidateTeam (TeamErrors, validateTeam)
+import Yoga.JSON (writeJSON)
 
 type CreateError = Variant
     ( internal :: Array String
@@ -31,11 +32,7 @@ logError :: CreateError -> Effect Unit
 logError = Log.logError "Error creating team"
     (internalHandler >>> notAuthenticatedHandler >>> clientHandler >>> teamHandler)
 
-type OkContent = { id :: Int, handle :: String }
-
-type BadContent = Array TeamError
-
-sendResponse :: Async CreateError OkContent -> (forall voidLeft. Async voidLeft Response)
+sendResponse :: Async CreateError CreateTeam.OkContent -> (forall voidLeft. Async voidLeft Response)
 sendResponse = alwaysRight
     (match
         { internal: const internalServerError__
