@@ -4,7 +4,7 @@ import Prelude
 
 import Data.Array as Array
 import Data.Maybe (Maybe(..))
-import TeamTavern.Server.Infrastructure.Regions (Region(..), allRegions)
+import TeamTavern.Shared.Regions (Region(..), allRegions)
 
 newtype Location = Location String
 

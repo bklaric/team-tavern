@@ -1,4 +1,4 @@
-module TeamTavern.Server.Infrastructure.Languages where
+module TeamTavern.Shared.Languages where
 
 allLanguages :: Array String
 allLanguages =

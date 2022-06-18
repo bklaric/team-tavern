@@ -5,7 +5,7 @@ import Prelude
 
 import Data.Array as Array
 import Data.Maybe (Maybe(..))
-import TeamTavern.Server.Infrastructure.Regions as Regions
+import TeamTavern.Shared.Regions as Regions
 
 newtype Region = Region String
 

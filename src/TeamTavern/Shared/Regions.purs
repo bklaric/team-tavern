@@ -1,4 +1,4 @@
-module TeamTavern.Server.Infrastructure.Regions where
+module TeamTavern.Shared.Regions where
 
 data Region = Region String (Array Region)
 

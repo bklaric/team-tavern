@@ -20,7 +20,7 @@ import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.Select.SingleSelect as SingleSelect
 import TeamTavern.Client.Components.Select.SingleTreeSelect as SingleTreeSelect
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
-import TeamTavern.Server.Infrastructure.Timezones (Timezone)
+import TeamTavern.Shared.Timezones (Timezone)
 
 type Input =
     { birthday :: Maybe String

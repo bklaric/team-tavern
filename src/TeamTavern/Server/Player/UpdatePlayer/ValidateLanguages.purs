@@ -4,7 +4,7 @@ module TeamTavern.Server.Player.UpdatePlayer.ValidateLangugase
 import Prelude
 
 import Data.Array as Array
-import TeamTavern.Server.Infrastructure.Languages (allLanguages)
+import TeamTavern.Shared.Languages (allLanguages)
 
 newtype Language = Language String
 

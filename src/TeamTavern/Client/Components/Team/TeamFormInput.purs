@@ -22,7 +22,7 @@ import TeamTavern.Client.Pages.Profiles.TeamBadge (organizationRadioBadges)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Shared.Organization (Organization, OrganizationNW(..), fromOrganizationNW, toOrganizationNW)
-import TeamTavern.Server.Infrastructure.Timezones (Timezone)
+import TeamTavern.Shared.Timezones (Timezone)
 
 type Input =
     { organization :: OrganizationNW

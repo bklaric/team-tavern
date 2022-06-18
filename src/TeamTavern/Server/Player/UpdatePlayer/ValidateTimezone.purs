@@ -5,7 +5,7 @@ import Prelude
 
 import Data.Array as Array
 import Data.Maybe (Maybe(..))
-import TeamTavern.Server.Infrastructure.Timezones (allTimezones)
+import TeamTavern.Shared.Timezones (allTimezones)
 
 newtype Timezone = Timezone String
 

@@ -12,8 +12,8 @@ import TeamTavern.Client.Components.Input (checkboxInput, dateInput, inputError,
 import TeamTavern.Client.Components.Select.MultiSelect (multiSelect)
 import TeamTavern.Client.Components.Select.SingleTreeSelect (singleTreeSelect)
 import TeamTavern.Client.Components.Select.SingleTreeSelect as SingleTreeSelect
-import TeamTavern.Server.Infrastructure.Languages (allLanguages)
-import TeamTavern.Server.Infrastructure.Regions (Region(..), allRegions)
+import TeamTavern.Shared.Languages (allLanguages)
+import TeamTavern.Shared.Regions (Region(..), allRegions)
 
 locationToEntry :: Region -> SingleTreeSelect.InputEntry String
 locationToEntry (Region region subRegions) =

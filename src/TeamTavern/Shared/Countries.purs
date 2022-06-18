@@ -1,4 +1,4 @@
-module TeamTavern.Server.Infrastructure.Countries where
+module TeamTavern.Shared.Countries where
 
 allCountries :: Array String
 allCountries =

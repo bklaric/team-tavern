@@ -1,4 +1,4 @@
-module TeamTavern.Server.Infrastructure.Timezones where
+module TeamTavern.Shared.Timezones where
 
 type Timezone =
     { city :: String

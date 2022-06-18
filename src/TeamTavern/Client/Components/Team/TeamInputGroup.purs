@@ -11,8 +11,8 @@ import TeamTavern.Client.Components.Select.MultiSelect (multiSelect)
 import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.Select.MultiTreeSelect (multiTreeSelect)
 import TeamTavern.Client.Components.Select.MultiTreeSelect as MultiTreeSelect
-import TeamTavern.Server.Infrastructure.Languages (allLanguages)
-import TeamTavern.Server.Infrastructure.Regions (Region(..), allRegions)
+import TeamTavern.Shared.Languages (allLanguages)
+import TeamTavern.Shared.Regions (Region(..), allRegions)
 
 locationToEntry :: Region -> MultiTreeSelect.InputEntry String
 locationToEntry (Region region subRegions) =
