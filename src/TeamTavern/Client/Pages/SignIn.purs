@@ -22,8 +22,7 @@ import TeamTavern.Client.Script.Cookie (hasPlayerIdCookie)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigateReplace_, navigate_)
 import TeamTavern.Client.Snippets.ErrorClasses (otherErrorClass)
-import TeamTavern.Server.Session.Start.ReadModel (StartDto)
-import TeamTavern.Server.Session.Start.SendResponse as Start
+import TeamTavern.Routes.Session.StartSession as StartSession
 import Type.Proxy (Proxy(..))
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
@@ -141,7 +140,7 @@ sendSignInRequest :: forall left. State -> Async left (Maybe State)
 sendSignInRequest state @ { nickname, password } = Async.unify do
     response <- Fetch.fetch "/api/sessions"
         (  Fetch.method := POST
-        <> Fetch.body := Json.writeJSON ({ nickname, password } :: StartDto)
+        <> Fetch.body := Json.writeJSON ({ nickname, password } :: StartSession.RequestContent)
         <> Fetch.credentials := Fetch.Include
         )
         # lmap (const $ Just $ state { otherError = true })
@@ -150,7 +149,7 @@ sendSignInRequest state @ { nickname, password } = Async.unify do
         400 -> FetchRes.text response >>= JsonAsync.readJSON
             # bimap
                 (const $ Just $ state { otherError = true })
-                (\(error :: Start.BadRequestContent) -> Just $ match
+                (\(error :: StartSession.BadContent) -> Just $ match
                     { noSessionStarted:
                         const $ state { noSessionStarted = true }
                     }

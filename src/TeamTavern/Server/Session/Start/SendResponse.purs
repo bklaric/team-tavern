@@ -1,19 +1,17 @@
-module TeamTavern.Server.Session.Start.SendResponse
-    (BadRequestContent, sendResponse) where
+module TeamTavern.Server.Session.Start.SendResponse (sendResponse) where
 
 import Prelude
 
 import Async (Async, alwaysRight)
 import Data.MultiMap (singleton')
-import Data.Variant (Variant, inj, match)
+import Data.Variant (inj, match)
 import Perun.Response (Response, badRequest, badRequest__, forbidden__, internalServerError__, noContent)
+import TeamTavern.Routes.Session.StartSession as StartSession
 import TeamTavern.Server.Architecture.Deployment (Deployment)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo, setCookieHeaderFull)
 import TeamTavern.Server.Session.Start.LogError (StartError)
 import Type.Proxy (Proxy(..))
 import Yoga.JSON (writeJSON)
-
-type BadRequestContent = Variant ( noSessionStarted :: {} )
 
 errorResponse :: StartError -> Response
 errorResponse = match
@@ -26,13 +24,13 @@ errorResponse = match
     , unreadableHash: const internalServerError__
     , noMatchingPlayer: const $ badRequest
         (singleton' "Content-Type" "application/json") $ writeJSON
-        (inj (Proxy :: _ "noSessionStarted") {} :: BadRequestContent)
+        (inj (Proxy :: _ "noSessionStarted") {} :: StartSession.BadContent)
     , passwordDoesntMatch: const $ badRequest
         (singleton' "Content-Type" "application/json") $ writeJSON
-        (inj (Proxy :: _ "noSessionStarted") {} :: BadRequestContent)
+        (inj (Proxy :: _ "noSessionStarted") {} :: StartSession.BadContent)
     , noSessionStarted: const $ badRequest
         (singleton' "Content-Type" "application/json") $ writeJSON
-        (inj (Proxy :: _ "noSessionStarted") {} :: BadRequestContent)
+        (inj (Proxy :: _ "noSessionStarted") {} :: StartSession.BadContent)
     }
 
 successResponse :: Deployment -> CookieInfo -> Response
