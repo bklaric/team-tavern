@@ -12,14 +12,11 @@ import Data.Foldable (foldl)
 import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..))
 import Data.Options ((:=))
-import Type.Proxy (Proxy(..))
 import Data.Variant (match)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import Yoga.JSON as Json
-import Yoga.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.RegistrationInput (registrationInput)
 import TeamTavern.Client.Components.RegistrationInput as RegistrationInput
 import TeamTavern.Client.Pages.Onboarding as Onboarding
@@ -27,11 +24,13 @@ import TeamTavern.Client.Script.Cookie (hasPlayerIdCookie)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigate, navigateReplace_, navigateWithEvent_)
 import TeamTavern.Client.Snippets.ErrorClasses (otherErrorClass)
-import TeamTavern.Server.Player.Register.ReadDto (RegisterDto)
-import TeamTavern.Server.Player.Register.SendResponse as Register
+import TeamTavern.Routes.Player.RegisterPlayer as RegisterPlayer
+import Type.Proxy (Proxy(..))
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 import Web.UIEvent.MouseEvent (MouseEvent)
+import Yoga.JSON as Json
+import Yoga.JSON.Async as JsonAsync
 
 data Action
     = Initialize
@@ -92,7 +91,7 @@ sendRegisterRequest :: forall left. State -> Async left (Maybe State)
 sendRegisterRequest state @ { registration: { nickname, password } } = Async.unify do
     response <- Fetch.fetch "/api/players"
         (  Fetch.method := POST
-        <> Fetch.body := Json.writeJSON ({ nickname, password } :: RegisterDto)
+        <> Fetch.body := Json.writeJSON ({ nickname, password } :: RegisterPlayer.RequestContent)
         <> Fetch.credentials := Fetch.Include
         )
         # lmap (const $ Just $ state { otherError = true })
@@ -101,7 +100,7 @@ sendRegisterRequest state @ { registration: { nickname, password } } = Async.uni
         400 -> FetchRes.text response >>= JsonAsync.readJSON
             # bimap
                 (const $ Just $ state { otherError = true })
-                (\(error :: Register.BadRequestContent) -> Just $ match
+                (\(error :: RegisterPlayer.BadContent) -> Just $ match
                     { registration: foldl (\state' -> match
                         { invalidNickname:
                             const $ state' { registration { nicknameError = true } }

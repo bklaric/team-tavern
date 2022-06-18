@@ -7,14 +7,10 @@ import Data.Bifunctor.Label (labelMap)
 import Data.Variant (Variant)
 import Foreign (MultipleErrors)
 import Perun.Request.Body (Body)
+import TeamTavern.Routes.Player.RegisterPlayer as RegisterPlayer
 import TeamTavern.Server.Architecture.Perun.Request.Body (readBody)
 import Type.Proxy (Proxy(..))
 import Yoga.JSON.Async (readJSON)
-
-type RegisterDto =
-    { nickname :: String
-    , password :: String
-    }
 
 type ReadRegisterDtoError errors = Variant
     ( unreadableDto ::
@@ -24,7 +20,7 @@ type ReadRegisterDtoError errors = Variant
     | errors )
 
 readDto :: forall errors.
-    Body -> Async (ReadRegisterDtoError errors) RegisterDto
+    Body -> Async (ReadRegisterDtoError errors) RegisterPlayer.RequestContent
 readDto body = do
     content <- readBody body
     readJSON content

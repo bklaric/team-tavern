@@ -1,7 +1,7 @@
 module TeamTavern.Server.Player.Routes where
 
 import Jarilo.Junction (type (:<|>), type (:=))
-import Jarilo.Method (Post, Put)
+import Jarilo.Method (Put)
 import Jarilo.Path (type (:>), End)
 import Jarilo.Query (NoQuery)
 import Jarilo.Route (FullRoute)
@@ -10,12 +10,7 @@ import TeamTavern.Routes.DeletePlayer (DeletePlayer)
 import TeamTavern.Routes.UpdatePlayerContacts (UpdatePlayerContacts)
 import TeamTavern.Routes.ViewPlayer (ViewPlayer)
 import TeamTavern.Server.Player.Domain.Nickname (Nickname)
-
-type RegisterPlayer = FullRoute
-    Post
-    (  Literal "players"
-    :> End)
-    NoQuery
+import TeamTavern.Routes.Player.RegisterPlayer (RegisterPlayer)
 
 type UpdatePlayer = FullRoute
     Put

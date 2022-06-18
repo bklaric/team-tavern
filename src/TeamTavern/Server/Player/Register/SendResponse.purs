@@ -1,28 +1,17 @@
-module TeamTavern.Server.Player.Register.SendResponse (OkContent, BadRequestContent, IdentifiersErrorContent, sendResponse) where
+module TeamTavern.Server.Player.Register.SendResponse (sendResponse) where
 
 import Prelude
 
 import Async (Async, alwaysRight)
 import Data.Array (fromFoldable)
-import Data.Variant (Variant, inj, match)
+import Data.Variant (inj, match)
 import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, noContent)
+import TeamTavern.Routes.Player.RegisterPlayer as RegisterPlayer
 import TeamTavern.Server.Architecture.Deployment (Deployment)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo, setCookieHeaderFull)
 import TeamTavern.Server.Player.Register.LogError (RegisterError)
 import Type.Proxy (Proxy(..))
 import Yoga.JSON (writeJSON)
-
-type OkContent = { nickname :: String }
-
-type IdentifiersErrorContent = Variant
-    ( invalidNickname :: {}
-    , invalidPassword :: {}
-    )
-
-type BadRequestContent = Variant
-    ( registration :: Array IdentifiersErrorContent
-    , nicknameTaken :: {}
-    )
 
 errorResponse :: RegisterError -> Response
 errorResponse = match
@@ -37,11 +26,11 @@ errorResponse = match
             })
         # fromFoldable
         # inj (Proxy :: _ "registration")
-        # (writeJSON :: BadRequestContent -> String)
+        # (writeJSON :: RegisterPlayer.BadContent -> String)
         # badRequest_
     , randomError: const internalServerError__
     , nicknameTaken: const $ badRequest_ $ writeJSON $
-        (inj (Proxy :: _ "nicknameTaken") {} :: BadRequestContent)
+        (inj (Proxy :: _ "nicknameTaken") {} :: RegisterPlayer.BadContent)
     , databaseError: const internalServerError__
     , cantReadId: const internalServerError__
     , noSessionStarted: const internalServerError__
