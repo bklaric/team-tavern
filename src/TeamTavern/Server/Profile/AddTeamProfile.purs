@@ -8,10 +8,10 @@ import Data.Bifunctor.Label (label)
 import Data.Foldable (elem)
 import Data.Map (Map)
 import Data.Maybe (Maybe(..))
-import Type.Proxy (Proxy(..))
 import Perun.Request.Body (Body)
 import Perun.Response (Response)
 import Postgres.Pool (Pool)
+import TeamTavern.Routes.Profile.AddTeamProfile as AddTeamProfile
 import TeamTavern.Routes.Shared.Platform (Platform(..))
 import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
 import TeamTavern.Server.Infrastructure.Postgres (transaction)
@@ -24,9 +24,10 @@ import TeamTavern.Server.Profile.AddTeamProfile.ValidateProfile (validateProfile
 import TeamTavern.Server.Profile.Infrastructure.CheckTeamAlerts (checkTeamAlerts)
 import TeamTavern.Server.Profile.Infrastructure.PatchTeamContacts (patchTeamContacts)
 import TeamTavern.Server.Team.Infrastructure.ValidateContacts (validateContactsV)
+import Type.Proxy (Proxy(..))
 
 addTeamProfile :: forall left.
-    Pool -> Map String String -> Body -> { teamHandle :: String, gameHandle :: String } -> Async left Response
+    Pool -> Map String String -> Body -> AddTeamProfile.RouteParams -> Async left Response
 addTeamProfile pool cookies body { teamHandle, gameHandle } =
     sendResponse $ examineLeftWithEffect logError do
     -- Read info from cookies.

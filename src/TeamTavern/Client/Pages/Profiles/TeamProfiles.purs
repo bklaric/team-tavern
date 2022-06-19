@@ -10,7 +10,6 @@ import Data.Array.Extra (full)
 import Data.Const (Const)
 import Data.Maybe (Maybe(..), isNothing)
 import Data.Monoid (guard)
-import Type.Proxy (Proxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
@@ -25,18 +24,19 @@ import TeamTavern.Client.Components.Profile (profileHeader, profileHeading, prof
 import TeamTavern.Client.Components.Team.Contacts (profileContacts)
 import TeamTavern.Client.Components.Team.ProfileDetails (profileDetails')
 import TeamTavern.Client.Components.Team.TeamDetails (teamDetails)
-import TeamTavern.Client.Pages.Profiles.TeamProfileOptions (teamProfileOptions)
 import TeamTavern.Client.Pages.Profiles.TeamBadge (communityBadge, informalBadge, organizedBadge, partyBadge, platformBadge)
+import TeamTavern.Client.Pages.Profiles.TeamProfileOptions (teamProfileOptions)
 import TeamTavern.Client.Script.Cookie (PlayerInfo)
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
 import TeamTavern.Client.Shared.Slot (StringSlot)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Client.Snippets.PreventMouseDefault (preventMouseDefault)
+import TeamTavern.Routes.Profile.Shared (pageSize)
 import TeamTavern.Routes.Shared.Organization (OrganizationNW(..), nameOrHandleNW)
 import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
 import TeamTavern.Routes.Shared.Size (Size(..))
 import TeamTavern.Routes.Shared.TeamContacts (TeamContactsOpen)
-import TeamTavern.Server.Profile.ViewTeamProfilesByGame.LoadProfiles (pageSize)
+import Type.Proxy (Proxy(..))
 import Web.UIEvent.MouseEvent (MouseEvent)
 
 type TeamProfile = TeamContactsOpen

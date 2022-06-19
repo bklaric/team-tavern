@@ -11,18 +11,18 @@ import Data.Bifunctor (lmap)
 import Data.Bifunctor.Label (label, relabel)
 import Data.List.NonEmpty as NonEmptyList
 import Data.List.Types (NonEmptyList)
-import Type.Proxy (Proxy(..))
 import Data.Variant (Variant)
+import TeamTavern.Routes.Profile.AddTeamProfile as AddTeamProfile
 import TeamTavern.Routes.Shared.Platform (Platform)
 import TeamTavern.Routes.Shared.Size (Size)
 import TeamTavern.Server.Domain.Text (Text)
 import TeamTavern.Server.Profile.AddTeamProfile.LoadFields as LoadFields
-import TeamTavern.Server.Profile.AddTeamProfile.ReadProfile as ReadProfile
 import TeamTavern.Server.Profile.AddTeamProfile.ValidateFieldValues (validateFieldValues)
 import TeamTavern.Server.Profile.AddTeamProfile.ValidateFieldValues as ValidateFieldValues
 import TeamTavern.Server.Profile.AddTeamProfile.ValidatePlatforms (validatePlatforms)
 import TeamTavern.Server.Profile.Infrastructure.ValidateAbout (validateAbout)
 import TeamTavern.Server.Profile.Infrastructure.ValidateAmbitions (validateAmbitions)
+import Type.Proxy (Proxy(..))
 
 type Profile =
     { size :: Size
@@ -44,7 +44,7 @@ type ProfileErrors = NonEmptyList ProfileError
 validateProfile
     :: forall errors
     .  LoadFields.Game
-    -> ReadProfile.Profile
+    -> AddTeamProfile.RequestContentProfile
     -> Async (Variant (profile :: ProfileErrors | errors)) Profile
 validateProfile game profile @ { size, newOrReturning } =
     { size, platforms: _, fieldValues: _, newOrReturning, about: _, ambitions: _ }
@@ -57,7 +57,7 @@ validateProfile game profile @ { size, newOrReturning } =
 validateProfileV
     :: forall errors
     .  LoadFields.Game
-    -> ReadProfile.Profile
+    -> AddTeamProfile.RequestContentProfile
     -> AsyncV (NonEmptyList (Variant (teamProfile :: ProfileErrors | errors))) Profile
 validateProfileV game =
     validateProfile game

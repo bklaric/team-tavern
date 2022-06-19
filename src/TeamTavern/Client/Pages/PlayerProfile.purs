@@ -29,7 +29,7 @@ import TeamTavern.Client.Script.Request (get)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Shared.Slot (SimpleSlot)
 import TeamTavern.Client.Snippets.Class as HS
-import TeamTavern.Routes.ViewPlayerProfile as ViewPlayerProfile
+import TeamTavern.Routes.Profile.ViewPlayerProfile as ViewPlayerProfile
 
 type Input =
     { nickname :: String

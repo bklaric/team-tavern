@@ -156,7 +156,7 @@ let additions =
             , "unsafe-coerce"
             ]
         , repo = "ssh://git@github.com/bklaric/purescript-nodey.git"
-        , version = "v1.0.2"
+        , version = "v1.0.3"
         }
     , pg =
         { dependencies =

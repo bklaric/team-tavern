@@ -10,16 +10,16 @@ import Data.Bifunctor (lmap)
 import Data.Bifunctor.Label (label, relabel)
 import Data.List.NonEmpty as NonEmptyList
 import Data.List.Types (NonEmptyList)
-import Type.Proxy (Proxy(..))
 import Data.Variant (Variant)
+import TeamTavern.Routes.Profile.AddPlayerProfile as AddPlayerProfile
 import TeamTavern.Routes.Shared.Platform (Platform)
 import TeamTavern.Server.Domain.Text (Text)
 import TeamTavern.Server.Profile.AddPlayerProfile.LoadFields as LoadFields
-import TeamTavern.Server.Profile.AddPlayerProfile.ReadProfile as ReadProfile
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateFieldValues (validateFieldValues)
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateFieldValues as ValidateFieldValues
 import TeamTavern.Server.Profile.Infrastructure.ValidateAbout (validateAbout)
 import TeamTavern.Server.Profile.Infrastructure.ValidateAmbitions (validateAmbitions)
+import Type.Proxy (Proxy(..))
 
 type Profile =
     { platform :: Platform
@@ -40,7 +40,7 @@ type ProfileErrors = NonEmptyList ProfileError
 validateProfile
     :: forall errors
     .  LoadFields.Game
-    -> ReadProfile.Profile
+    -> AddPlayerProfile.RequestContentProfile
     -> Async (Variant (profile :: ProfileErrors | errors)) Profile
 validateProfile
     { fields }
@@ -55,7 +55,7 @@ validateProfile
 validateProfileV
     :: forall errors
     .  LoadFields.Game
-    -> ReadProfile.Profile
+    -> AddPlayerProfile.RequestContentProfile
     -> AsyncV (NonEmptyList (Variant (playerProfile :: ProfileErrors | errors))) Profile
 validateProfileV game =
     validateProfile game

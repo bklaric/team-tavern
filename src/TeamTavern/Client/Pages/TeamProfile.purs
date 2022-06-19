@@ -31,7 +31,7 @@ import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Shared.Slot (SimpleSlot)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Shared.Organization (OrganizationNW(..))
-import TeamTavern.Routes.ViewTeamProfile as ViewTeamProfile
+import TeamTavern.Routes.Profile.ViewTeamProfile as ViewTeamProfile
 
 type Input =
     { teamHandle :: String

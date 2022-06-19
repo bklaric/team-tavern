@@ -1,5 +1,5 @@
 module TeamTavern.Server.Profile.ViewPlayerProfilesByGame.LoadProfiles
-    (pageSize, LoadProfilesResult, LoadProfilesError, createPlayerFilterString, createFieldsFilterString, queryStringWithoutPagination, loadProfiles) where
+    (LoadProfilesError, createPlayerFilterString, createFieldsFilterString, queryStringWithoutPagination, loadProfiles) where
 
 import Prelude
 
@@ -8,7 +8,6 @@ import Data.Array (intercalate)
 import Data.Bifunctor.Label (label, labelMap)
 import Data.Maybe (Maybe(..))
 import Data.String as String
-import Type.Proxy (Proxy(..))
 import Data.Traversable (traverse)
 import Data.Variant (Variant)
 import Foreign (MultipleErrors)
@@ -17,23 +16,15 @@ import Postgres.Client (Client)
 import Postgres.Error (Error)
 import Postgres.Query (Query(..))
 import Postgres.Result (Result, rows)
-import Yoga.JSON.Async (read)
+import TeamTavern.Routes.Profile.Shared (ProfilePage, pageSize)
+import TeamTavern.Routes.Profile.ViewPlayerProfilesByGame as ViewPlayerProfilesByGame
 import TeamTavern.Routes.Shared.Filters (Age, Filters, HasMicrophone, Language, Location, NewOrReturning, Time, Field)
 import TeamTavern.Routes.Shared.Platform (Platform)
 import TeamTavern.Routes.Shared.Platform as Platform
-import TeamTavern.Routes.Shared.PlayerBase (PlayerBaseRow)
-import TeamTavern.Routes.Shared.PlayerContacts (PlayerContactsRow)
-import TeamTavern.Routes.Shared.PlayerDetails (PlayerDetailsRow)
-import TeamTavern.Routes.Shared.PlayerProfile (PlayerProfileRow)
-import TeamTavern.Routes.Shared.Timezone (Timezone)
+import TeamTavern.Routes.Shared.Types (Timezone, Handle)
 import TeamTavern.Server.Infrastructure.Postgres (playerAdjustedWeekdayFrom, playerAdjustedWeekdayTo, playerAdjustedWeekendFrom, playerAdjustedWeekendTo, prepareJsonString, prepareString)
-import TeamTavern.Server.Profile.Routes (Handle, ProfilePage)
-import Type.Row (type (+))
-
-pageSize :: Int
-pageSize = 10
-
-type LoadProfilesResult = Record (PlayerBaseRow + PlayerContactsRow + PlayerDetailsRow + PlayerProfileRow + ())
+import Type.Proxy (Proxy(..))
+import Yoga.JSON.Async (read)
 
 type LoadProfilesError errors = Variant
     ( databaseError :: Error
@@ -274,7 +265,7 @@ loadProfiles
     -> ProfilePage
     -> Timezone
     -> Filters
-    -> Async (LoadProfilesError errors) (Array LoadProfilesResult)
+    -> Async (LoadProfilesError errors) (Array ViewPlayerProfilesByGame.OkContentProfiles)
 loadProfiles client handle page timezone filters = do
     result <- client
         # query_ (queryString handle page timezone filters)

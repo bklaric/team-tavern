@@ -7,12 +7,12 @@ import Postgres.Client (Client)
 import Postgres.Query (Query(..), QueryParameter, (:), (:|))
 import TeamTavern.Routes.Shared.Platform as Platform
 import TeamTavern.Routes.Shared.Size as Size
+import TeamTavern.Routes.Shared.Types (Handle)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Server.Infrastructure.Error (InternalError, ChangeSingleError)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstNotAuthorized, queryNone)
 import TeamTavern.Server.Profile.AddTeamProfile.AddFieldValues (ProfileId, addFieldValues)
 import TeamTavern.Server.Profile.AddTeamProfile.ValidateProfile (Profile)
-import TeamTavern.Server.Profile.Routes (Handle)
 
 -- Update profile row.
 

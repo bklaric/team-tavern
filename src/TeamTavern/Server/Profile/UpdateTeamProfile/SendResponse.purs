@@ -1,25 +1,15 @@
-module TeamTavern.Server.Profile.UpdateTeamProfile.SendResponse (BadContent, sendResponse) where
+module TeamTavern.Server.Profile.UpdateTeamProfile.SendResponse (sendResponse) where
 
 import Prelude
 
 import Async (Async, alwaysRight)
 import Data.Array as Array
-import Data.Variant (Variant, inj, match)
+import Data.Variant (inj, match)
 import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, noContent_, unauthorized__)
-import TeamTavern.Routes.Shared.TeamContacts (TeamContactsError)
+import TeamTavern.Routes.Profile.AddTeamProfile as AddTeamProfile
 import TeamTavern.Server.Profile.UpdateTeamProfile.LogError (UpdateProfileError)
-import Type (type ($))
 import Type.Proxy (Proxy(..))
 import Yoga.JSON (writeJSON)
-
-type BadContent = Array $ Variant
-    ( profile :: Array $ Variant
-        ( platforms :: Array String
-        , about :: Array String
-        , ambitions :: Array String
-        )
-    , contacts :: Array TeamContactsError
-    )
 
 errorResponse :: UpdateProfileError -> Response
 errorResponse = match
@@ -34,7 +24,7 @@ errorResponse = match
             { teamProfile: Array.fromFoldable >>> inj (Proxy :: _ "profile")
             , teamContacts: Array.fromFoldable >>> inj (Proxy :: _ "contacts")
             })
-        # (writeJSON :: BadContent -> String)
+        # (writeJSON :: AddTeamProfile.BadContent -> String)
         # badRequest_
     }
 

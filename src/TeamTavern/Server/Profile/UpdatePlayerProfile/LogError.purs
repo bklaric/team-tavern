@@ -8,15 +8,15 @@ import Data.Map (Map)
 import Data.Variant (Variant, match)
 import Effect (Effect, foreachE)
 import Foreign (MultipleErrors)
-import Yoga.JSON (unsafeStringify)
 import Postgres.Error (Error)
 import Postgres.Result (Result, rows)
+import TeamTavern.Routes.Profile.AddPlayerProfile as AddPlayerProfile
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Server.Infrastructure.Log (logLines, logStamped, logt, print)
 import TeamTavern.Server.Player.UpdateContacts.ValidateContacts (ContactsErrors)
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile (ProfileErrors)
-import TeamTavern.Server.Profile.Routes (Identifiers)
 import Type (type ($))
+import Yoga.JSON (unsafeStringify)
 
 type UpdateError = Variant
     -- Cookies.
@@ -41,7 +41,7 @@ type UpdateError = Variant
     -- Insert profile into database.
     , notAuthorized ::
         { cookieInfo :: CookieInfo
-        , identifiers :: Identifiers
+        , identifiers :: AddPlayerProfile.RouteParams
         }
     , unreadableProfileId ::
         { result :: Result

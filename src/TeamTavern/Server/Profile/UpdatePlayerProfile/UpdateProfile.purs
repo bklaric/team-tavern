@@ -14,10 +14,10 @@ import Postgres.Client (Client)
 import Postgres.Error (Error)
 import Postgres.Query (Query(..), QueryParameter, (:), (:|))
 import Postgres.Result (Result, rows)
+import TeamTavern.Routes.Profile.AddPlayerProfile as AddPlayerProfile
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Server.Profile.AddPlayerProfile.AddFieldValues (ProfileId, addFieldValues)
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile (Profile)
-import TeamTavern.Server.Profile.Routes (Identifiers)
 import Type.Proxy (Proxy(..))
 import Yoga.JSON (writeImpl)
 import Yoga.JSON.Async (read)
@@ -26,7 +26,7 @@ type UpdateProfileError errors = Variant
     ( databaseError :: Error
     , notAuthorized ::
         { cookieInfo :: CookieInfo
-        , identifiers :: Identifiers
+        , identifiers :: AddPlayerProfile.RouteParams
         }
     , unreadableProfileId ::
         { result :: Result
@@ -64,13 +64,13 @@ updateProfileString = Query """
     returning player_profile.id as "profileId";
     """
 
-updateProfileParameters :: CookieInfo -> Identifiers -> Profile -> Array QueryParameter
+updateProfileParameters :: CookieInfo -> AddPlayerProfile.RouteParams -> Profile -> Array QueryParameter
 updateProfileParameters { id, token } { nickname, handle }
     { platform, newOrReturning, about, ambitions } =
     id : token : nickname : handle : writeImpl platform : newOrReturning : about :| ambitions
 
 updateProfile' :: forall errors.
-    Client -> CookieInfo -> Identifiers -> Profile -> Async (UpdateProfileError errors) ProfileId
+    Client -> CookieInfo -> AddPlayerProfile.RouteParams -> Profile -> Async (UpdateProfileError errors) ProfileId
 updateProfile' client cookieInfo identifiers profile = do
     result <- client
         # query updateProfileString
@@ -103,7 +103,7 @@ updateProfile
     :: forall errors
     .  Client
     -> CookieInfo
-    -> Identifiers
+    -> AddPlayerProfile.RouteParams
     -> Profile
     -> Async (UpdateProfileError errors) Unit
 updateProfile client cookieInfo identifiers profile @ { fieldValues } = do

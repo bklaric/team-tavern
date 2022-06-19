@@ -16,8 +16,8 @@ import Data.Tuple (Tuple(..))
 import Data.Validated (Validated)
 import Data.Validated as Validated
 import Data.Variant (Variant, inj)
+import TeamTavern.Routes.Profile.AddPlayerProfile as AddPlayerProfile
 import TeamTavern.Server.Profile.AddPlayerProfile.LoadFields as LoadFields
-import TeamTavern.Server.Profile.AddPlayerProfile.ReadProfile as ReadProfile
 import TeamTavern.Server.Profile.Infrastructure.ValidateUrl (validateUrl)
 import TeamTavern.Server.Profile.Infrastructure.ValidateUrl as ValidateUrl
 import Type.Proxy (Proxy(..))
@@ -106,7 +106,7 @@ prepareFields fields =
 -- Validate field values.
 
 validateField :: forall errors.
-    Array ReadProfile.FieldValue -> Field -> Maybe (Either (ValidateFieldValuesError errors) FieldValue)
+    Array AddPlayerProfile.RequestContentFieldValue -> Field -> Maybe (Either (ValidateFieldValuesError errors) FieldValue)
 validateField fieldValues (Field id key (UrlField domain)) =
     case fieldValues # Array.find \{ fieldKey } -> fieldKey == key of
     Just fieldValue | Just url <- fieldValue.url ->
@@ -137,7 +137,7 @@ validateField fieldValues (Field id key (MultiField options)) =
 
 validateFieldValues :: forall errors
     .  Array LoadFields.Field
-    -> Array ReadProfile.FieldValue
+    -> Array AddPlayerProfile.RequestContentFieldValue
     -> Validated (NonEmptyList (ValidateFieldValuesError errors)) (Array FieldValue)
 validateFieldValues fields fieldValues
     = prepareFields fields

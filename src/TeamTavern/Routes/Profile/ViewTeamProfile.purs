@@ -1,4 +1,4 @@
-module TeamTavern.Routes.ViewTeamProfile where
+module TeamTavern.Routes.Profile.ViewTeamProfile where
 
 import Jarilo.Method (Get)
 import Jarilo.Path (type (:>), End)

@@ -18,10 +18,9 @@ import TeamTavern.Client.Components.Player.ProfileFormInput (profileFormInput)
 import TeamTavern.Client.Components.Player.ProfileFormInput as ProfileFormInput
 import TeamTavern.Client.Script.Navigate (hardNavigate)
 import TeamTavern.Client.Script.Request (postNoContent)
+import TeamTavern.Routes.Profile.AddPlayerProfile as AddPlayerProfile
 import TeamTavern.Routes.ViewGame as ViewGame
 import TeamTavern.Routes.ViewPlayer as ViewPlayer
-import TeamTavern.Server.Profile.AddPlayerProfile.ReadProfile (RequestContent)
-import TeamTavern.Server.Profile.AddPlayerProfile.SendResponse (BadContent)
 import Type (type ($))
 import Type.Proxy (Proxy(..))
 import Web.Event.Event (preventDefault)
@@ -58,12 +57,12 @@ render { profile, otherError, submitting } =
     ]
     <> otherFormError otherError
 
-sendRequest :: forall left. State -> Async left $ Maybe $ Either BadContent Unit
+sendRequest :: forall left. State -> Async left $ Maybe $ Either AddPlayerProfile.BadContent Unit
 sendRequest { nickname, handle, profile } =
     postNoContent ("/api/players/" <> nickname <> "/profiles/" <> handle)
     ({ details: pick profile.details
     , contacts: pick profile.contacts
-    } :: RequestContent)
+    } :: AddPlayerProfile.RequestContent)
 
 handleAction :: forall output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit

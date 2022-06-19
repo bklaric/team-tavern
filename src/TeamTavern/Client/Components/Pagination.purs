@@ -7,7 +7,7 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Snippets.Class as HS
-import TeamTavern.Server.Profile.ViewPlayerProfilesByGame.LoadProfiles (pageSize)
+import TeamTavern.Routes.Profile.Shared (pageSize)
 
 totalPages :: Int -> Int
 totalPages count = ceil (toNumber count / toNumber pageSize)

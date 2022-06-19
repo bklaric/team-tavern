@@ -15,7 +15,6 @@ import Data.Int as Int
 import Data.List.NonEmpty as NonEmptyList
 import Data.Maybe (Maybe(..), isJust, maybe)
 import Data.MultiMap as MultiMap
-import Type.Proxy (Proxy(..))
 import Data.Traversable (traverse)
 import Data.Tuple (Tuple(..))
 import Effect (Effect, foreachE)
@@ -23,7 +22,6 @@ import Effect.Class (class MonadEffect)
 import Effect.Timer (setTimeout)
 import Halogen as H
 import Halogen.HTML as HH
-import Yoga.JSON.Async as Json
 import TeamTavern.Client.Components.Boarding.PlayerOrTeamInput as Boarding
 import TeamTavern.Client.Components.Content (contentColumns)
 import TeamTavern.Client.Components.Team.ProfileInputGroup (FieldValues)
@@ -42,12 +40,13 @@ import TeamTavern.Client.Script.Navigate (navigate, navigate_)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Script.Url as Url
 import TeamTavern.Client.Snippets.ArticledNoun (indefiniteNoun)
+import TeamTavern.Routes.Profile.ViewPlayerProfilesByGame as ViewPlayerProfilesByGame
+import TeamTavern.Routes.Profile.ViewTeamProfilesByGame as ViewTeamProfilesByGame
 import TeamTavern.Routes.Shared.Organization as Organization
 import TeamTavern.Routes.Shared.Platform as Platform
 import TeamTavern.Routes.Shared.Size as Size
 import TeamTavern.Routes.ViewGame as ViewGame
-import TeamTavern.Server.Profile.ViewPlayerProfilesByGame.SendResponse as ViewGamePlayers
-import TeamTavern.Server.Profile.ViewTeamProfilesByGame.SendResponse as ViewGameTeams
+import Type.Proxy (Proxy(..))
 import Web.DOM.ParentNode (QuerySelector(..))
 import Web.DOM.ParentNode as ParentNode
 import Web.HTML (window)
@@ -58,6 +57,7 @@ import Web.HTML.Location (reload)
 import Web.HTML.Location as Location
 import Web.HTML.Window (location)
 import Web.HTML.Window as Window
+import Yoga.JSON.Async as Json
 
 data Tab
     = Players PlayerProfiles.Input
@@ -142,7 +142,7 @@ render (Game game _ filters tab) =
 render Error = HH.p_ [ HH.text "There has been an error loading profiles. Please try again later." ]
 
 loadPlayerProfiles :: forall left.
-    String -> Int -> Filters -> Async left (Maybe ViewGamePlayers.OkContent)
+    String -> Int -> Filters -> Async left (Maybe ViewPlayerProfilesByGame.OkContent)
 loadPlayerProfiles handle page filters = Async.unify do
     timezone <- getClientTimezone
     let pagePair = "page=" <> show page
@@ -176,7 +176,7 @@ loadPlayerProfiles handle page filters = Async.unify do
     pure content
 
 loadTeamProfiles :: forall left.
-    String -> Int -> Filters -> Async left (Maybe ViewGameTeams.OkContent)
+    String -> Int -> Filters -> Async left (Maybe ViewTeamProfilesByGame.OkContent)
 loadTeamProfiles handle page filters = Async.unify do
     timezone <- getClientTimezone
     let pagePair = "page=" <> show page

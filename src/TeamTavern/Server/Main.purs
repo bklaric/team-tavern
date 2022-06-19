@@ -30,6 +30,8 @@ import Postgres.Client.Config (ClientConfig, database, host, password, port, use
 import Postgres.Pool (Pool)
 import Postgres.Pool as Pool
 import Sendgrid (setApiKey)
+import TeamTavern.Routes.Profile.ViewPlayerProfilesByGame (bundlePlayerFilters)
+import TeamTavern.Routes.Profile.ViewTeamProfilesByGame (bundleTeamFilters)
 import TeamTavern.Server.Alert.Create (createAlert) as Alert
 import TeamTavern.Server.Alert.Delete (deleteAlert) as Alert
 import TeamTavern.Server.Architecture.Deployment (Deployment)
@@ -47,7 +49,6 @@ import TeamTavern.Server.Player.UpdatePlayer (updatePlayer) as Player
 import TeamTavern.Server.Player.View (view) as Player
 import TeamTavern.Server.Profile.AddPlayerProfile (addPlayerProfile) as Profile
 import TeamTavern.Server.Profile.AddTeamProfile (addTeamProfile) as Profile
-import TeamTavern.Server.Profile.Routes (bundlePlayerFilters, bundleTeamFilters)
 import TeamTavern.Server.Profile.UpdatePlayerProfile (updatePlayerProfile) as Profile
 import TeamTavern.Server.Profile.UpdateTeamProfile (updateTeamProfile) as Profile
 import TeamTavern.Server.Profile.ViewPlayerProfile (viewPlayerProfile)

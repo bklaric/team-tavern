@@ -1,18 +1,13 @@
-module TeamTavern.Server.Profile.ViewTeamProfilesByGame.SendResponse (OkContent, sendResponse) where
+module TeamTavern.Server.Profile.ViewTeamProfilesByGame.SendResponse (sendResponse) where
 
 import Prelude
 
 import Async (Async, alwaysRight)
 import Data.Variant (match)
 import Perun.Response (Response, internalServerError__, ok_)
-import Yoga.JSON (writeJSON)
-import TeamTavern.Server.Profile.ViewTeamProfilesByGame.LoadProfiles (LoadProfilesResult)
+import TeamTavern.Routes.Profile.ViewTeamProfilesByGame as ViewTeamProfilesByGame
 import TeamTavern.Server.Profile.ViewTeamProfilesByGame.LogError (ViewAllError)
-
-type OkContent =
-    { profiles :: Array LoadProfilesResult
-    , count :: Int
-    }
+import Yoga.JSON (writeJSON)
 
 errorResponse :: ViewAllError -> Response
 errorResponse = match
@@ -22,9 +17,9 @@ errorResponse = match
     , noRowsSomehow: const internalServerError__
     }
 
-successResponse :: OkContent -> Response
-successResponse result = ok_ $ (writeJSON :: OkContent -> String) result
+successResponse :: ViewTeamProfilesByGame.OkContent -> Response
+successResponse result = ok_ $ writeJSON result
 
 sendResponse ::
-    Async ViewAllError OkContent -> (forall left. Async left Response)
+    Async ViewAllError ViewTeamProfilesByGame.OkContent -> (forall left. Async left Response)
 sendResponse = alwaysRight errorResponse successResponse

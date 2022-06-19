@@ -12,7 +12,7 @@ import Jarilo.Route (FullRoute)
 import Jarilo.Segment (Literal)
 import Yoga.JSON (class ReadForeign, class WriteForeign, readImpl, writeImpl)
 import TeamTavern.Routes.Shared.Filters (Filters)
-import TeamTavern.Routes.Shared.Timezone (Timezone)
+import TeamTavern.Routes.Shared.Types (Timezone)
 
 data PlayerOrTeam = Player | Team
 

@@ -1,5 +1,5 @@
 module TeamTavern.Server.Profile.ViewTeamProfilesByGame.LoadProfiles
-    (pageSize, LoadProfilesResult, LoadProfilesError, createTeamFilterString, createFieldsFilterString, queryStringWithoutPagination, loadProfiles) where
+    (LoadProfilesError, createTeamFilterString, createFieldsFilterString, queryStringWithoutPagination, loadProfiles) where
 
 import Prelude
 
@@ -8,7 +8,6 @@ import Data.Array (intercalate)
 import Data.Bifunctor.Label (label, labelMap)
 import Data.Maybe (Maybe(..))
 import Data.String as String
-import Type.Proxy (Proxy(..))
 import Data.Traversable (traverse)
 import Data.Variant (Variant)
 import Foreign (MultipleErrors)
@@ -17,7 +16,8 @@ import Postgres.Client (Client)
 import Postgres.Error (Error)
 import Postgres.Query (Query(..))
 import Postgres.Result (Result, rows)
-import Yoga.JSON.Async (read)
+import TeamTavern.Routes.Profile.Shared (ProfilePage, pageSize)
+import TeamTavern.Routes.Profile.ViewTeamProfilesByGame as ViewTeamProfilesByGame
 import TeamTavern.Routes.Shared.Filters (Age, Filters, HasMicrophone, Language, Location, NewOrReturning, Time, Field)
 import TeamTavern.Routes.Shared.Organization (Organization)
 import TeamTavern.Routes.Shared.Organization as Organization
@@ -25,19 +25,10 @@ import TeamTavern.Routes.Shared.Platform (Platform)
 import TeamTavern.Routes.Shared.Platform as Platform
 import TeamTavern.Routes.Shared.Size (Size)
 import TeamTavern.Routes.Shared.Size as Size
-import TeamTavern.Routes.Shared.TeamBase (TeamBaseRow)
-import TeamTavern.Routes.Shared.TeamContacts (TeamContactsRow)
-import TeamTavern.Routes.Shared.TeamDetails (TeamDetailsRow)
-import TeamTavern.Routes.Shared.TeamProfile (TeamProfileRow)
-import TeamTavern.Routes.Shared.Timezone (Timezone)
+import TeamTavern.Routes.Shared.Types (Timezone, Handle)
 import TeamTavern.Server.Infrastructure.Postgres (prepareJsonString, prepareString, teamAdjustedWeekdayFrom, teamAdjustedWeekdayTo, teamAdjustedWeekendFrom, teamAdjustedWeekendTo)
-import TeamTavern.Server.Profile.Routes (Handle, ProfilePage)
-import Type.Row (type (+))
-
-pageSize :: Int
-pageSize = 10
-
-type LoadProfilesResult = Record (TeamBaseRow + TeamContactsRow + TeamDetailsRow + TeamProfileRow + ())
+import Type.Proxy (Proxy(..))
+import Yoga.JSON.Async (read)
 
 type LoadProfilesError errors = Variant
     ( databaseError :: Error
@@ -334,7 +325,7 @@ loadProfiles
     -> ProfilePage
     -> Timezone
     -> Filters
-    -> Async (LoadProfilesError errors) (Array LoadProfilesResult)
+    -> Async (LoadProfilesError errors) (Array ViewTeamProfilesByGame.OkContentProfiles)
 loadProfiles client handle page timezone filters = do
     result <- client
         # query_ (queryString handle page timezone filters)

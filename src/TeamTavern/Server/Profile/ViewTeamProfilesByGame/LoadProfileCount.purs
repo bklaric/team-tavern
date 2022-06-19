@@ -6,7 +6,6 @@ import Async (Async)
 import Async as Async
 import Data.Array as Array
 import Data.Bifunctor.Label (label, labelMap)
-import Type.Proxy (Proxy(..))
 import Data.Variant (Variant, inj)
 import Foreign (Foreign, MultipleErrors)
 import Postgres.Async.Query (query)
@@ -14,11 +13,11 @@ import Postgres.Client (Client)
 import Postgres.Error (Error)
 import Postgres.Query (Query(..))
 import Postgres.Result (Result, rows)
-import Yoga.JSON.Async (read)
 import TeamTavern.Routes.Shared.Filters (Filters)
-import TeamTavern.Routes.Shared.Timezone (Timezone)
-import TeamTavern.Server.Profile.Routes (Handle)
+import TeamTavern.Routes.Shared.Types (Timezone, Handle)
 import TeamTavern.Server.Profile.ViewTeamProfilesByGame.LoadProfiles (queryStringWithoutPagination)
+import Type.Proxy (Proxy(..))
+import Yoga.JSON.Async (read)
 
 type LoadProfileCountResult = { count :: Int }
 

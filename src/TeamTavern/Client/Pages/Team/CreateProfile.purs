@@ -19,10 +19,9 @@ import TeamTavern.Client.Components.Team.ProfileFormInput (profileFormInput)
 import TeamTavern.Client.Components.Team.ProfileFormInput as ProfileFormInput
 import TeamTavern.Client.Script.Navigate (hardNavigate)
 import TeamTavern.Client.Script.Request (postNoContent)
+import TeamTavern.Routes.Profile.AddTeamProfile as AddTeamProfile
 import TeamTavern.Routes.Team.ViewTeam as ViewTeam
 import TeamTavern.Routes.ViewGame as ViewGame
-import TeamTavern.Server.Profile.AddTeamProfile.ReadProfile (RequestContent)
-import TeamTavern.Server.Profile.AddTeamProfile.SendResponse (BadContent)
 import Type (type ($))
 import Type.Proxy (Proxy(..))
 import Web.Event.Event (preventDefault)
@@ -59,7 +58,7 @@ render { profile, submitting, otherError } =
     <>
     otherFormError otherError
 
-sendRequest :: forall left. State -> Async left $ Maybe $ Either BadContent Unit
+sendRequest :: forall left. State -> Async left $ Maybe $ Either AddTeamProfile.BadContent Unit
 sendRequest { teamHandle, gameHandle, profile } = let
     details = profile.details
         # Record.insert (Proxy :: _ "platforms") profile.details.selectedPlatforms
@@ -68,7 +67,7 @@ sendRequest { teamHandle, gameHandle, profile } = let
     postNoContent ("/api/teams/" <> teamHandle <> "/profiles/" <> gameHandle)
     ({ details
     , contacts: pick profile.contacts
-    } :: RequestContent)
+    } :: AddTeamProfile.RequestContent)
 
 handleAction :: forall output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
