@@ -1,0 +1,16 @@
+version: "3.7"
+
+services:
+  caddy:
+    image: caddy:2.5.1
+    container_name: caddy
+    restart: unless-stopped
+    network_mode: "host"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /home/bklaric/team-tavern/Caddyfile:/etc/caddy/Caddyfile
+      - /home/bklaric/team-tavern/dist-client:/srv
+      - /home/bklaric/caddy-docker/data:/data
+      - /home/bklaric/caddy-docker/config:/config
