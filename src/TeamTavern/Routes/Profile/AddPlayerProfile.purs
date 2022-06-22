@@ -10,7 +10,7 @@ import Jarilo.Segment (Capture, Literal)
 import TeamTavern.Routes.Shared.Platform (Platform)
 import TeamTavern.Routes.Shared.PlayerContacts (PlayerContacts, PlayerContactsError)
 import TeamTavern.Routes.Shared.Types (Handle, Nickname)
-import Type (type ($))
+import Type.Function (type ($))
 
 type AddPlayerProfile = FullRoute
     Post

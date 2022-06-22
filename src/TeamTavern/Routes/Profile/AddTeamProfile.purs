@@ -10,7 +10,7 @@ import TeamTavern.Routes.Shared.Platform (Platform)
 import TeamTavern.Routes.Shared.Size (Size)
 import TeamTavern.Routes.Shared.TeamContacts (TeamContacts, TeamContactsError)
 import TeamTavern.Routes.Shared.Types (Handle)
-import Type (type ($))
+import Type.Function (type ($))
 
 type AddTeamProfile = FullRoute
     Post

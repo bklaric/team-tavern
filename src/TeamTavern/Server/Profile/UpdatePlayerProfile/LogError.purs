@@ -15,7 +15,7 @@ import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Server.Infrastructure.Log (logLines, logStamped, logt, print)
 import TeamTavern.Server.Player.UpdateContacts.ValidateContacts (ContactsErrors)
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile (ProfileErrors)
-import Type (type ($))
+import Type.Function (type ($))
 import Yoga.JSON (unsafeStringify)
 
 type UpdateError = Variant

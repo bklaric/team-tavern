@@ -10,7 +10,7 @@ import TeamTavern.Server.Infrastructure.Log as Log
 import TeamTavern.Server.Profile.AddTeamProfile.LogError (invalidBodyHandler)
 import TeamTavern.Server.Profile.AddTeamProfile.ValidateProfile (ProfileErrors)
 import TeamTavern.Server.Team.Infrastructure.ValidateContacts (ContactsErrors)
-import Type (type ($))
+import Type.Function (type ($))
 
 type UpdateProfileError = Variant
     ( internal :: Array String

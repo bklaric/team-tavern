@@ -49,7 +49,7 @@ import TeamTavern.Server.Team.Infrastructure.ValidateContacts as TeamCont
 import TeamTavern.Server.Team.Infrastructure.ValidateContacts as TeamLel
 import TeamTavern.Server.Team.Infrastructure.ValidateTeam (TeamErrors, validateTeamV)
 import TeamTavern.Server.Team.Infrastructure.WriteContacts as TeamIdunno
-import Type (type ($))
+import Type.Function (type ($))
 
 type OnboardError = Variant
     ( client :: Array String

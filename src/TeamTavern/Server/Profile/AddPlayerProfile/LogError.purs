@@ -13,7 +13,7 @@ import TeamTavern.Server.Infrastructure.Log (clientHandler, internalHandler, log
 import TeamTavern.Server.Infrastructure.Log as Log
 import TeamTavern.Server.Player.UpdateContacts.ValidateContacts (ContactsErrors)
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile (ProfileErrors)
-import Type (type ($))
+import Type.Function (type ($))
 import Type.Proxy (Proxy(..))
 
 type CreateError = Variant

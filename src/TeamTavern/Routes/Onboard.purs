@@ -12,7 +12,7 @@ import TeamTavern.Routes.Shared.Platform (Platform)
 import TeamTavern.Routes.Shared.PlayerContacts (PlayerContacts, PlayerContactsError)
 import TeamTavern.Routes.Shared.Size (Size)
 import TeamTavern.Routes.Shared.TeamContacts
-import Type (type ($))
+import Type.Function (type ($))
 
 type Onboard = FullRoute
     Post

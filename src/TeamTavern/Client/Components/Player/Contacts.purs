@@ -14,7 +14,7 @@ import TeamTavern.Client.Components.Detail (detail', discordTagDetail, fieldDeta
 import TeamTavern.Client.Snippets.Brands (detailBattleNetSvg, detailPlayStationSvg, detailRiotSvg, detailSteamSvg, detailSwitchSvg, detailXboxSvg)
 import TeamTavern.Routes.Shared.Platform (Platform(..))
 import TeamTavern.Routes.Shared.PlayerContacts (PlayerContactsOpen)
-import Type (type ($))
+import Type.Function (type ($))
 
 type ContactsSlots slots =
     ( battleTag :: Copyable.Slot String

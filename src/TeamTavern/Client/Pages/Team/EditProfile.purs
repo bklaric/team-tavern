@@ -20,7 +20,7 @@ import TeamTavern.Client.Script.Navigate (hardNavigate)
 import TeamTavern.Client.Script.Request (putNoContent)
 import TeamTavern.Routes.Profile.AddTeamProfile as AddTeamProfile
 import TeamTavern.Routes.Team.ViewTeam as ViewTeam
-import Type (type ($))
+import Type.Function (type ($))
 import Type.Proxy (Proxy(..))
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)

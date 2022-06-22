@@ -10,7 +10,7 @@ import Jarilo.Segment (Literal)
 import TeamTavern.Routes.Onboard (PlayerProfileRequestContent, PlayerRequestContent, TeamProfileRequestContent, TeamRequestContent)
 import TeamTavern.Routes.Shared.PlayerContacts (PlayerContactsError, PlayerContacts)
 import TeamTavern.Routes.Shared.TeamContacts (TeamContactsError, TeamContacts)
-import Type (type ($))
+import Type.Function (type ($))
 
 type Preboard = FullRoute
     Post
