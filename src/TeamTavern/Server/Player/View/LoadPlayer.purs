@@ -68,7 +68,7 @@ queryString timezone = Query $ """
                             'about', profile.about,
                             'ambitions', profile.ambitions,
                             'updated', profile.updated::text,
-                            'updatedSeconds', extract(epoch from (now() - updated))
+                            'updatedSeconds', extract(epoch from (now() - updated))::int
                         )
                         order by profile.updated desc
                     )
@@ -195,7 +195,7 @@ queryString timezone = Query $ """
                                     )
                                 end,
                             'updated', team.updated::text,
-                            'updatedSeconds', extract(epoch from (now() - team.updated))
+                            'updatedSeconds', extract(epoch from (now() - team.updated))::int
                         )
                         order by team.updated desc
                     )

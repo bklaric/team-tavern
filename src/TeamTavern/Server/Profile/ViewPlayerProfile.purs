@@ -84,7 +84,7 @@ queryString timezone = Query $ """
             profile.ambitions,
             profile.new_or_returning as "newOrReturning",
             profile.updated::text,
-            extract(epoch from (now() - updated)) as "updatedSeconds"
+            extract(epoch from (now() - updated))::int as "updatedSeconds"
         from player_profile as profile
             join game on game.id = profile.game_id
             join player on player.id = profile.player_id

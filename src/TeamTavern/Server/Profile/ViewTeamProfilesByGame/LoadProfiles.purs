@@ -269,7 +269,7 @@ queryStringWithoutPagination handle timezone filters = Query $ """
             profile.about,
             profile.ambitions,
             profile.updated::text,
-            extract(epoch from (now() - profile.updated)) as "updatedSeconds"
+            extract(epoch from (now() - profile.updated))::int as "updatedSeconds"
         from team_profile as profile
             join game on game.id = profile.game_id
             join team on team.id = profile.team_id
