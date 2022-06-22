@@ -5,7 +5,9 @@ services:
     image: caddy:2.5.1
     container_name: caddy
     restart: unless-stopped
-    network_mode: "host"
+    ports:
+      - "80:80"
+      - "443:443"
     volumes:
       - /home/bklaric/team-tavern/Caddyfile:/etc/caddy/Caddyfile
       - /home/bklaric/team-tavern/dist-client:/srv
@@ -16,11 +18,17 @@ services:
     image: postgres:14.4
     container_name: postgres
     restart: unless-stopped
-    ports:
-      - "5432:5432"
     environment:
       - POSTGRES_USER=bklaric
       - POSTGRES_PASSWORD=bklaric
       - POSTGRES_DB=team_tavern
     volumes:
       - /home/bklaric/postgres-docker:/var/lib/postgresql/data
+
+  node:
+    image: node:18.4
+    container_name: node
+    restart: unless-stopped
+    command: /root/team-tavern/run-server.sh
+    volumes:
+      - /home/bklaric/team-tavern:/root/team-tavern

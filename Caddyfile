@@ -3,11 +3,10 @@ staging.teamtavern.net
 encode gzip zstd
 
 handle_path /api/* {
-    reverse_proxy localhost:8080
+    reverse_proxy node:8080
 }
 
 handle {
     try_files {path} /index.html
     file_server
 }
-
