@@ -10,7 +10,7 @@ newtype Age = Age Int
 
 validateAge :: Int -> Maybe Age
 validateAge age | age >= 13 = Just $ Age age
-validateAge age = Nothing
+validateAge _ = Nothing
 
 data AgeSpan = AgeSpan (Maybe Age) (Maybe Age)
 
