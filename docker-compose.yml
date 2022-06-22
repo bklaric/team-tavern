@@ -1,6 +1,25 @@
 version: "3.7"
 
 services:
+  postgres:
+    image: postgres:14.4
+    container_name: postgres
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - /home/bklaric/postgres-docker:/var/lib/postgresql/data
+
+  node:
+    image: node:18.4
+    container_name: node
+    restart: unless-stopped
+    command: node /root/team-tavern/dist-server/server.js
+    env_file: .env
+    volumes:
+      - /home/bklaric/team-tavern:/root/team-tavern
+    depends_on:
+      - postgres
+
   caddy:
     image: caddy:2.5.1
     container_name: caddy
@@ -13,22 +32,5 @@ services:
       - /home/bklaric/team-tavern/dist-client:/srv
       - /home/bklaric/caddy-docker/data:/data
       - /home/bklaric/caddy-docker/config:/config
-
-  postgres:
-    image: postgres:14.4
-    container_name: postgres
-    restart: unless-stopped
-    environment:
-      - POSTGRES_USER=bklaric
-      - POSTGRES_PASSWORD=bklaric
-      - POSTGRES_DB=team_tavern
-    volumes:
-      - /home/bklaric/postgres-docker:/var/lib/postgresql/data
-
-  node:
-    image: node:18.4
-    container_name: node
-    restart: unless-stopped
-    command: /root/team-tavern/run-server.sh
-    volumes:
-      - /home/bklaric/team-tavern:/root/team-tavern
+    depends_on:
+      - node

@@ -67,7 +67,7 @@ import Type.Proxy (Proxy(..))
 listenOptions :: ListenOptions
 listenOptions = TcpListenOptions
     { port: Just 8080
-    , host: Just "localhost"
+    , host: Just "0.0.0.0"
     , backlog: Nothing
     , exclusive: Nothing
     }
