@@ -10,3 +10,4 @@
 /.sass-cache
 /dist*
 /.spago
+/.env
