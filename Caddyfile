@@ -1,7 +1,3 @@
-{ 
-    debug 
-}
-
 staging.teamtavern.net
 
 encode gzip zstd
