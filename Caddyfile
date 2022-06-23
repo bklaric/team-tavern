@@ -2,9 +2,39 @@ staging.teamtavern.net
 
 encode gzip zstd
 
+# Serve index.prerender.html to the prerenderer.
+
+@prerender_header header_regexp User-Agent (?i)(prerender)
+
+handle @prerender_header {
+    try_files {path} /index.prerender.html
+    file_server
+}
+
+# Proxy bot requests to the prerenderer.
+
+@bot_header header_regexp User-Agent (?i)(baiduspider|bingbot|discordbot|embedly|facebot|facebookexternalhit|googlebot|linkedinbot|outbrain|pinterest|pinterestbot|quora link preview|rogerbot|showyoubot|slackbot|telegrambot|twitterbot|vkshare|W3C_Validator|whatsapp|yandex)
+
+@static_file path_regexp (?i)(css|eot|html|ico|jpg|js|mp4|png|svg|ttf|txt|webmanifest|webp|woff|woff2)
+
+@bot_header_and_not_static_file {
+    @bot_header
+    not @static_file
+}
+
+handle @bot_header_and_not_static_file {
+    reverse_proxy rendertron:3000 {
+        rewrite /render/{uri}
+    }
+}
+
+# Proxy api requests to the api.
+
 handle_path /api/* {
     reverse_proxy node:8080
 }
+
+# Serve all other static files.
 
 handle {
     try_files {path} /index.html

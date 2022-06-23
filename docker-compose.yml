@@ -20,6 +20,13 @@ services:
     depends_on:
       - postgres
 
+  rendertron:
+    image: dockette/rendertron
+    container_name: rendertron
+    restart: unless-stopped
+    depends_on:
+      - node
+
   caddy:
     image: caddy:2.5.1
     container_name: caddy
@@ -34,3 +41,4 @@ services:
       - /home/bklaric/caddy-docker/config:/config
     depends_on:
       - node
+      - rendertron
