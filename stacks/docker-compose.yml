@@ -7,7 +7,7 @@ services:
     restart: unless-stopped
     env_file: .env
     volumes:
-      - /home/bklaric/postgres-docker:/var/lib/postgresql/data
+      - ${POSTGRES_DOCKER_PATH}:/var/lib/postgresql/data
 
   node:
     image: node:18.4
@@ -16,7 +16,7 @@ services:
     command: node /root/team-tavern/dist-server/server.js
     env_file: .env
     volumes:
-      - /home/bklaric/team-tavern:/root/team-tavern
+      - ${TEAMTAVERN_PATH}:/root/team-tavern
     depends_on:
       - postgres
 
@@ -35,10 +35,11 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - /home/bklaric/team-tavern/Caddyfile:/etc/caddy/Caddyfile
-      - /home/bklaric/team-tavern/dist-client:/srv
-      - /home/bklaric/caddy-docker/data:/data
-      - /home/bklaric/caddy-docker/config:/config
+      - ${TEAMTAVERN_PATH}/stacks/base.Caddyfile:/etc/caddy/base.Caddyfile
+      - ${TEAMTAVERN_PATH}/stacks/${ENVIRONMENT}.Caddyfile:/etc/caddy/Caddyfile
+      - ${TEAMTAVERN_PATH}/dist-client:/srv
+      - ${CADDY_DOCKER_PATH}/data:/data
+      - ${CADDY_DOCKER_PATH}/config:/config
     depends_on:
       - node
       - rendertron

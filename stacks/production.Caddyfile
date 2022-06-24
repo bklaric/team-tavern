@@ -1,0 +1,7 @@
+www.teamtavern.net {
+    import base.Caddyfile
+}
+
+teamtavern.net {
+    redir https://www.{host}{uri} 308
+}
