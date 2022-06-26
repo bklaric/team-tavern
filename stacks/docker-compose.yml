@@ -1,0 +1,45 @@
+version: "3.7"
+
+services:
+  postgres:
+    image: postgres:14.4
+    container_name: postgres
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ${POSTGRES_DOCKER_PATH}:/var/lib/postgresql/data
+
+  node:
+    image: node:18.4
+    container_name: node
+    restart: unless-stopped
+    command: node /root/team-tavern/dist-server/server.js
+    env_file: .env
+    volumes:
+      - ${TEAMTAVERN_PATH}:/root/team-tavern
+    depends_on:
+      - postgres
+
+  rendertron:
+    image: dockette/rendertron
+    container_name: rendertron
+    restart: unless-stopped
+    depends_on:
+      - node
+
+  caddy:
+    image: caddy:2.5.1
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ${TEAMTAVERN_PATH}/stacks/base.Caddyfile:/etc/caddy/base.Caddyfile
+      - ${TEAMTAVERN_PATH}/stacks/${ENVIRONMENT}.Caddyfile:/etc/caddy/Caddyfile
+      - ${TEAMTAVERN_PATH}/dist-client:/srv
+      - ${CADDY_DOCKER_PATH}/data:/data
+      - ${CADDY_DOCKER_PATH}/config:/config
+    depends_on:
+      - node
+      - rendertron
