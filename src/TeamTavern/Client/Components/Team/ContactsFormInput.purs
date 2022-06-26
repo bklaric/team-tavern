@@ -25,6 +25,7 @@ type Input = TeamContactsOpen
     , steamIdError :: Boolean
     , riotIdError :: Boolean
     , battleTagError :: Boolean
+    , eaIdError :: Boolean
     , psnIdError :: Boolean
     , gamerTagError :: Boolean
     , friendCodeError :: Boolean
@@ -41,6 +42,7 @@ data Action
     | UpdateSteamId (Maybe String)
     | UpdateRiotId (Maybe String)
     | UpdateBattleTag (Maybe String)
+    | UpdateEaId (Maybe String)
     | UpdatePsnId (Maybe String)
     | UpdateGamerTag (Maybe String)
     | UpdateFriendCode (Maybe String)
@@ -55,6 +57,7 @@ render
     , steamId, steamIdError
     , riotId, riotIdError
     , battleTag, battleTagError
+    , eaId, eaIdError
     , psnId, psnIdError
     , gamerTag, gamerTagError
     , friendCode, friendCodeError
@@ -65,6 +68,7 @@ render
         [ guard (Steam       `elem` requiredPlatforms) [ platformIdInputGroup Steam       steamId    UpdateSteamId    steamIdError    true ]
         , guard (Riot        `elem` requiredPlatforms) [ platformIdInputGroup Riot        riotId     UpdateRiotId     riotIdError     true ]
         , guard (BattleNet   `elem` requiredPlatforms) [ platformIdInputGroup BattleNet   battleTag  UpdateBattleTag  battleTagError  true ]
+        , guard (Origin      `elem` requiredPlatforms) [ platformIdInputGroup Origin      eaId       UpdateEaId       eaIdError       true ]
         , guard (PlayStation `elem` requiredPlatforms) [ platformIdInputGroup PlayStation psnId      UpdatePsnId      psnIdError      true ]
         , guard (Xbox        `elem` requiredPlatforms) [ platformIdInputGroup Xbox        gamerTag   UpdateGamerTag   gamerTagError   true ]
         , guard (Switch      `elem` requiredPlatforms) [ platformIdInputGroup Switch      friendCode UpdateFriendCode friendCodeError true ]
@@ -79,6 +83,7 @@ render
         [ guard (Steam       `not <<< elem` requiredPlatforms) [ platformIdInputGroup Steam       steamId    UpdateSteamId    steamIdError    false ]
         , guard (Riot        `not <<< elem` requiredPlatforms) [ platformIdInputGroup Riot        riotId     UpdateRiotId     riotIdError     false ]
         , guard (BattleNet   `not <<< elem` requiredPlatforms) [ platformIdInputGroup BattleNet   battleTag  UpdateBattleTag  battleTagError  false ]
+        , guard (Origin      `not <<< elem` requiredPlatforms) [ platformIdInputGroup Origin      eaId       UpdateEaId       eaIdError       false ]
         , guard (PlayStation `not <<< elem` requiredPlatforms) [ platformIdInputGroup PlayStation psnId      UpdatePsnId      psnIdError      false ]
         , guard (Xbox        `not <<< elem` requiredPlatforms) [ platformIdInputGroup Xbox        gamerTag   UpdateGamerTag   gamerTagError   false ]
         , guard (Switch      `not <<< elem` requiredPlatforms) [ platformIdInputGroup Switch      friendCode UpdateFriendCode friendCodeError false ]
@@ -95,6 +100,7 @@ handleAction (UpdateDiscordServer discordServer) = H.modify _ { discordServer = 
 handleAction (UpdateSteamId steamId)             = H.modify _ { steamId       = steamId }       >>= raiseOutput
 handleAction (UpdateRiotId riotId)               = H.modify _ { riotId        = riotId }        >>= raiseOutput
 handleAction (UpdateBattleTag battleTag)         = H.modify _ { battleTag     = battleTag }     >>= raiseOutput
+handleAction (UpdateEaId eaId)                   = H.modify _ { eaId          = eaId }          >>= raiseOutput
 handleAction (UpdatePsnId psnId)                 = H.modify _ { psnId         = psnId }         >>= raiseOutput
 handleAction (UpdateGamerTag gamerTag)           = H.modify _ { gamerTag      = gamerTag }      >>= raiseOutput
 handleAction (UpdateFriendCode friendCode)       = H.modify _ { friendCode    = friendCode }    >>= raiseOutput
@@ -122,6 +128,8 @@ emptyInput requiredPlatforms =
     , riotIdError: false
     , battleTag: Nothing
     , battleTagError: false
+    , eaId: Nothing
+    , eaIdError: false
     , psnId: Nothing
     , psnIdError: false
     , gamerTag: Nothing

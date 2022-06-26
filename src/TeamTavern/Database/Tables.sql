@@ -7,6 +7,7 @@ create table player
     , steam_id text
     , riot_id text
     , battle_tag text
+    , ea_id text
     , psn_id text
     , gamer_tag text
     , friend_code text
@@ -41,6 +42,7 @@ create table team
     , steam_id text
     , riot_id text
     , battle_tag text
+    , ea_id text
     , psn_id text
     , gamer_tag text
     , friend_code text
@@ -76,7 +78,7 @@ create table game
     , short_title varchar(50) not null unique
     , handle varchar(50) not null unique
     , description text[] not null
-    , platforms text[] not null -- steam, riot, battle.net, playstation, xbox, switch
+    , platforms text[] not null -- steam, riot, battle.net, origin, playstation, xbox, switch
     , created timestamptz not null default current_timestamp
     );
 

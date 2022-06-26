@@ -8,7 +8,6 @@ import Data.Foldable (find)
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), maybe)
-import Type.Proxy (Proxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Anchor (textAnchor_)
@@ -17,8 +16,9 @@ import TeamTavern.Client.Components.Select.MultiSelect (multiSelectIndexed)
 import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.Select.SingleSelect (singleSelectIndexed)
 import TeamTavern.Client.Components.Select.SingleSelect as SingleSelect
-import TeamTavern.Client.Snippets.Brands (inputBattleNetSvg, inputPlayStationSvg, inputRiotSvg, inputSteamSvg, inputSwitchSvg, inputXboxSvg)
+import TeamTavern.Client.Snippets.Brands (inputBattleNetSvg, inputOriginSvg, inputPlayStationSvg, inputRiotSvg, inputSteamSvg, inputSwitchSvg, inputXboxSvg)
 import TeamTavern.Routes.Shared.Platform (Platform(..))
+import Type.Proxy (Proxy(..))
 
 platformIdInputGroup :: forall slots action.
     Platform -> (Maybe String) -> ((Maybe String) -> action) -> Boolean -> Boolean -> HH.HTML slots action
@@ -28,6 +28,7 @@ platformIdInputGroup platform platformId onValue error required =
         Steam -> [ platformIdLabel inputSteamSvg "Steam ID" required ]
         Riot -> [ platformIdLabel inputRiotSvg "Riot ID" required ]
         BattleNet -> [ platformIdLabel inputBattleNetSvg "BattleTag" required ]
+        Origin -> [ platformIdLabel inputOriginSvg "EA ID" required ]
         PlayStation -> [ platformIdLabel inputPlayStationSvg "PSN ID" required ]
         Xbox -> [ platformIdLabel inputXboxSvg "Gamertag" required ]
         Switch -> [ platformIdLabel inputSwitchSvg "Friend code" required ]
@@ -57,6 +58,7 @@ platformIdInputGroup platform platformId onValue error required =
                 , textAnchor_ "https://account.blizzard.com/details" "account.blizzard.com"
                 ]
             ]
+        Origin -> []
         PlayStation -> []
         Xbox -> [ inputUnderlabel "Make sure to include your suffix (e.g. #123) if you have one."]
         Switch -> [ inputUnderlabel "Example: SW-7417-3522-1808" ]
@@ -67,6 +69,7 @@ platformIdInputGroup platform platformId onValue error required =
         Steam -> "This doesn't look like a valid Steam ID."
         Riot -> "This doesn't look like a valid Riot ID."
         BattleNet -> "This doesn't look like a valid BattleTag."
+        Origin -> "This doesn't look like a valid EA ID."
         PlayStation -> "This doesn't look like a valid PSN ID."
         Xbox -> "This doesn't look like a valid Gamertag."
         Switch -> "This doesn't look like a valid friend code."

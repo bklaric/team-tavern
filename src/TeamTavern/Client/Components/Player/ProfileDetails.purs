@@ -15,6 +15,7 @@ type PlatformIdSlots slots =
     ( steamId :: Copyable.Slot String
     , riotId :: Copyable.Slot String
     , battleTag :: Copyable.Slot String
+    , eaId :: Copyable.Slot String
     , psnId :: Copyable.Slot String
     , gamerTag :: Copyable.Slot String
     , friendCode :: Copyable.Slot String

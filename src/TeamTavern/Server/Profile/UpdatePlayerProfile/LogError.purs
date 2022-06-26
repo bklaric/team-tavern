@@ -82,6 +82,7 @@ logError updateError = do
                 , steamId: logt
                 , riotId: logt
                 , battleTag: logt
+                , eaId: logt
                 , psnId: logt
                 , gamerTag: logt
                 , friendCode: logt

@@ -7,20 +7,21 @@ import Client.Components.Copyable (copyable)
 import Client.Components.Copyable as Copyable
 import Data.Array as Array
 import Data.Maybe (Maybe(..))
-import Type.Proxy (Proxy(..))
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Anchor (textAnchor)
 import TeamTavern.Client.Components.Detail (detail', discordTagDetail, fieldDetail')
-import TeamTavern.Client.Snippets.Brands (detailBattleNetSvg, detailPlayStationSvg, detailRiotSvg, detailSteamSvg, detailSwitchSvg, detailXboxSvg)
+import TeamTavern.Client.Snippets.Brands (detailBattleNetSvg, detailOriginSvg, detailPlayStationSvg, detailRiotSvg, detailSteamSvg, detailSwitchSvg, detailXboxSvg)
 import TeamTavern.Routes.Shared.Platform (Platform(..))
 import TeamTavern.Routes.Shared.PlayerContacts (PlayerContactsOpen)
 import Type.Function (type ($))
+import Type.Proxy (Proxy(..))
 
 type ContactsSlots slots =
     ( battleTag :: Copyable.Slot String
     , discordTag :: Copyable.Slot String
     , friendCode :: Copyable.Slot String
     , gamerTag :: Copyable.Slot String
+    , eaId :: Copyable.Slot String
     , psnId :: Copyable.Slot String
     , riotId :: Copyable.Slot String
     , steamId :: Copyable.Slot String
@@ -49,6 +50,12 @@ battleTagDetail battleTag' = battleTag' <#> \battleTag ->
     fieldDetail' detailBattleNetSvg "BattleTag"
     [ copyable (Proxy :: _ "battleTag") battleTag battleTag ]
 
+eaIdDetail :: forall left slots action.
+    Maybe String -> Maybe $ HH.ComponentHTML action (eaId :: Copyable.Slot String | slots) (Async left)
+eaIdDetail eaId' = eaId' <#> \eaId ->
+    fieldDetail' detailOriginSvg "EA ID"
+    [ copyable (Proxy :: _ "eaId") eaId eaId ]
+
 psnIdDetail :: forall left slots action.
     Maybe String -> Maybe $ HH.ComponentHTML action (psnId :: Copyable.Slot String | slots) (Async left)
 psnIdDetail psnId' = psnId' <#> \psnId ->
@@ -76,6 +83,7 @@ contacts conts =
     , steamUrlDetail conts.steamId
     , riotIdDetail conts.riotId
     , battleTagDetail conts.battleTag
+    , eaIdDetail conts.eaId
     , psnIdDetail conts.psnId
     , gamerTagDetail conts.gamerTag
     , friendCodeDetail conts.friendCode
@@ -88,6 +96,7 @@ profileContacts conts @ { platform } =
     { steamId = if platform == Steam then conts.steamId else Nothing
     , riotId = if platform == Riot then conts.riotId else Nothing
     , battleTag = if platform == BattleNet then conts.battleTag else Nothing
+    , eaId = if platform == Origin then conts.eaId else Nothing
     , psnId = if platform == PlayStation then conts.psnId else Nothing
     , gamerTag = if platform == Xbox then conts.gamerTag else Nothing
     , friendCode = if platform == Switch then conts.friendCode else Nothing

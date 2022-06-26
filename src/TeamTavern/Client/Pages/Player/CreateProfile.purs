@@ -81,6 +81,7 @@ handleAction (UpdateProfile profile) =
                 , steamId = profile.contacts.steamId
                 , riotId = profile.contacts.riotId
                 , battleTag = profile.contacts.battleTag
+                , eaId = profile.contacts.eaId
                 , psnId = profile.contacts.psnId
                 , gamerTag = profile.contacts.gamerTag
                 , friendCode = profile.contacts.friendCode
@@ -102,6 +103,7 @@ handleAction (SendRequest event) = do
                 , steamIdError = false
                 , riotIdError = false
                 , battleTagError = false
+                , eaIdError = false
                 , psnIdError = false
                 , gamerTagError = false
                 , friendCodeError = false
@@ -125,6 +127,7 @@ handleAction (SendRequest event) = do
                     , steamId: const state' { profile { contacts { steamIdError = true } } }
                     , riotId: const state' { profile { contacts { riotIdError = true } } }
                     , battleTag: const state' { profile { contacts { battleTagError = true } } }
+                    , eaId: const state' { profile { contacts { eaIdError = true } } }
                     , psnId: const state' { profile { contacts { psnIdError = true } } }
                     , gamerTag: const state' { profile { contacts { gamerTagError = true } } }
                     , friendCode: const state' { profile { contacts { friendCodeError = true } } }
@@ -138,7 +141,7 @@ handleAction (SendRequest event) = do
 component :: forall query output left. H.Component query Input output (Async left)
 component = H.mkComponent
     { initialState: \
-        { player: { nickname, discordTag, steamId, riotId, battleTag, psnId, gamerTag, friendCode }
+        { player: { nickname, discordTag, steamId, riotId, battleTag, eaId, psnId, gamerTag, friendCode }
         , game: { handle, title, platforms, fields }
         } ->
         { nickname
@@ -154,6 +157,8 @@ component = H.mkComponent
                 , riotIdError: false
                 , battleTag
                 , battleTagError: false
+                , eaId
+                , eaIdError: false
                 , psnId
                 , psnIdError: false
                 , gamerTag

@@ -546,6 +546,7 @@ handleAction (UpdatePlayerProfile profile) = do
                 , steamId = profile.contacts.steamId
                 , riotId = profile.contacts.riotId
                 , battleTag = profile.contacts.battleTag
+                , eaId = profile.contacts.eaId
                 , psnId = profile.contacts.psnId
                 , gamerTag = profile.contacts.gamerTag
                 , friendCode = profile.contacts.friendCode
@@ -570,6 +571,7 @@ handleAction (UpdateTeamProfile profile) = do
                 , steamId = profile.contacts.steamId
                 , riotId = profile.contacts.riotId
                 , battleTag = profile.contacts.battleTag
+                , eaId = profile.contacts.eaId
                 , psnId = profile.contacts.psnId
                 , gamerTag = profile.contacts.gamerTag
                 , friendCode = profile.contacts.friendCode
@@ -603,6 +605,7 @@ handleAction SetUpAccount = do
                     , steamIdError = false
                     , riotIdError = false
                     , battleTagError = false
+                    , eaIdError = false
                     , psnIdError = false
                     , gamerTagError = false
                     , friendCodeError = false
@@ -618,6 +621,7 @@ handleAction SetUpAccount = do
                     , steamIdError = false
                     , riotIdError = false
                     , battleTagError = false
+                    , eaIdError = false
                     , psnIdError = false
                     , gamerTagError = false
                     , friendCodeError = false
@@ -678,6 +682,7 @@ handleAction SetUpAccount = do
                     , steamId: const state' { step = PlayerProfile, playerProfile { contacts { steamIdError = true } } }
                     , riotId: const state' { step = PlayerProfile, playerProfile { contacts { riotIdError = true } } }
                     , battleTag: const state' { step = PlayerProfile, playerProfile { contacts { battleTagError = true } } }
+                    , eaId: const state' { step = PlayerProfile, playerProfile { contacts { eaIdError = true } } }
                     , psnId: const state' { step = PlayerProfile, playerProfile { contacts { psnIdError = true } } }
                     , gamerTag: const state' { step = PlayerProfile, playerProfile { contacts { gamerTagError = true } } }
                     , friendCode: const state' { step = PlayerProfile, playerProfile { contacts { friendCodeError = true } } }
@@ -688,6 +693,7 @@ handleAction SetUpAccount = do
                     , steamId: const state' { step = TeamProfile, teamProfile { contacts { steamIdError = true } } }
                     , riotId: const state' { step = TeamProfile, teamProfile { contacts { riotIdError = true } } }
                     , battleTag: const state' { step = TeamProfile, teamProfile { contacts { battleTagError = true } } }
+                    , eaId: const state' { step = TeamProfile, teamProfile { contacts { eaIdError = true } } }
                     , psnId: const state' { step = TeamProfile, teamProfile { contacts { psnIdError = true } } }
                     , gamerTag: const state' { step = TeamProfile, teamProfile { contacts { gamerTagError = true } } }
                     , friendCode: const state' { step = TeamProfile, teamProfile { contacts { friendCodeError = true } } }

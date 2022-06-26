@@ -45,6 +45,7 @@ addTeamProfile pool cookies body { teamHandle, gameHandle } =
                 { steamId    = if Steam       `elem` profile'.details.platforms then profile'.contacts.steamId    else Nothing
                 , riotId     = if Riot        `elem` profile'.details.platforms then profile'.contacts.riotId     else Nothing
                 , battleTag  = if BattleNet   `elem` profile'.details.platforms then profile'.contacts.battleTag  else Nothing
+                , eaId       = if Origin      `elem` profile'.details.platforms then profile'.contacts.eaId       else Nothing
                 , psnId      = if PlayStation `elem` profile'.details.platforms then profile'.contacts.psnId      else Nothing
                 , gamerTag   = if Xbox        `elem` profile'.details.platforms then profile'.contacts.gamerTag   else Nothing
                 , friendCode = if Switch      `elem` profile'.details.platforms then profile'.contacts.friendCode else Nothing
