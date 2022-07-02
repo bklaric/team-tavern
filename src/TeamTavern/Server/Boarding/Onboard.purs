@@ -143,6 +143,7 @@ onboard pool cookies body =
                     { steamId    = if profile.platform == Steam       then contacts.steamId    else Nothing
                     , riotId     = if profile.platform == Riot        then contacts.riotId     else Nothing
                     , battleTag  = if profile.platform == BattleNet   then contacts.battleTag  else Nothing
+                    , eaId       = if profile.platform == Origin      then contacts.eaId       else Nothing
                     , psnId      = if profile.platform == PlayStation then contacts.psnId      else Nothing
                     , gamerTag   = if profile.platform == Xbox        then contacts.gamerTag   else Nothing
                     , friendCode = if profile.platform == Switch      then contacts.friendCode else Nothing
@@ -172,6 +173,7 @@ onboard pool cookies body =
                     { steamId    = if Steam       `elem` profile.platforms then contacts.steamId    else Nothing
                     , riotId     = if Riot        `elem` profile.platforms then contacts.riotId     else Nothing
                     , battleTag  = if BattleNet   `elem` profile.platforms then contacts.battleTag  else Nothing
+                    , eaId       = if Origin      `elem` profile.platforms then contacts.eaId       else Nothing
                     , psnId      = if PlayStation `elem` profile.platforms then contacts.psnId      else Nothing
                     , gamerTag   = if Xbox        `elem` profile.platforms then contacts.gamerTag   else Nothing
                     , friendCode = if Switch      `elem` profile.platforms then contacts.friendCode else Nothing

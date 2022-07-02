@@ -64,6 +64,7 @@ handleAction (UpdateContacts contacts) =
             , steamId = contacts.steamId
             , riotId = contacts.riotId
             , battleTag = contacts.battleTag
+            , eaId = contacts.eaId
             , psnId = contacts.psnId
             , gamerTag = contacts.gamerTag
             , friendCode = contacts.friendCode
@@ -79,6 +80,7 @@ handleAction (Update event) = do
             , steamIdError = false
             , riotIdError = false
             , battleTagError = false
+            , eaIdError = false
             , psnIdError = false
             , gamerTagError = false
             , friendCodeError = false
@@ -95,6 +97,7 @@ handleAction (Update event) = do
                 , steamId: const state { contacts { steamIdError = true } }
                 , riotId: const state { contacts { riotIdError = true } }
                 , battleTag: const state { contacts { battleTagError = true } }
+                , eaId: const state { contacts { eaIdError = true } }
                 , psnId: const state { contacts { psnIdError = true } }
                 , gamerTag: const state { contacts { gamerTagError = true } }
                 , friendCode: const state { contacts { friendCodeError = true } }
@@ -119,6 +122,8 @@ component = H.mkComponent
             , riotIdError: false
             , battleTag: player.battleTag
             , battleTagError: false
+            , eaId: player.eaId
+            , eaIdError: false
             , psnId: player.psnId
             , psnIdError: false
             , gamerTag: player.gamerTag

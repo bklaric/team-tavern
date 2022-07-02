@@ -45,6 +45,7 @@ updatePlayerProfile pool identifiers cookies body =
                 { steamId    = if profile'.details.platform == Steam       then profile'.contacts.steamId    else Nothing
                 , riotId     = if profile'.details.platform == Riot        then profile'.contacts.riotId     else Nothing
                 , battleTag  = if profile'.details.platform == BattleNet   then profile'.contacts.battleTag  else Nothing
+                , eaId       = if profile'.details.platform == Origin      then profile'.contacts.eaId       else Nothing
                 , psnId      = if profile'.details.platform == PlayStation then profile'.contacts.psnId      else Nothing
                 , gamerTag   = if profile'.details.platform == Xbox        then profile'.contacts.gamerTag   else Nothing
                 , friendCode = if profile'.details.platform == Switch      then profile'.contacts.friendCode else Nothing

@@ -8,6 +8,7 @@ type PlayerContactsRow fields =
     , steamId :: Maybe String
     , riotId :: Maybe String
     , battleTag :: Maybe String
+    , eaId :: Maybe String
     , psnId :: Maybe String
     , gamerTag :: Maybe String
     , friendCode :: Maybe String
@@ -23,6 +24,7 @@ type PlayerContactsError = Variant
     , discordTag :: String
     , friendCode :: String
     , gamerTag :: String
+    , eaId :: String
     , psnId :: String
     , riotId :: String
     , steamId :: String

@@ -59,6 +59,7 @@ contactsHandler = Builder.insert (Proxy :: _ "teamContacts") \errors ->
     , steamId: logt
     , riotId: logt
     , battleTag: logt
+    , eaId: logt
     , psnId: logt
     , gamerTag: logt
     , friendCode: logt

@@ -10,7 +10,6 @@ import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..))
 import Data.Monoid (guard)
-import Type.Proxy (Proxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Record.Extra (pick)
@@ -22,6 +21,7 @@ import TeamTavern.Client.Components.Player.ProfileInputGroup as Input
 import TeamTavern.Client.Pages.Profiles.TeamBadge (platformRadioBadges)
 import TeamTavern.Routes.Shared.Platform (Platform(..), Platforms)
 import TeamTavern.Routes.Shared.PlayerContacts (PlayerContacts, PlayerContactsOpen)
+import Type.Proxy (Proxy(..))
 
 type FieldValues = Array FieldValue
 
@@ -43,6 +43,7 @@ type Input =
         , steamIdError :: Boolean
         , riotIdError :: Boolean
         , battleTagError :: Boolean
+        , eaIdError :: Boolean
         , psnIdError :: Boolean
         , gamerTagError :: Boolean
         , friendCodeError :: Boolean
@@ -78,6 +79,7 @@ type State =
         , steamIdError :: Boolean
         , riotIdError :: Boolean
         , battleTagError :: Boolean
+        , eaIdError :: Boolean
         , psnIdError :: Boolean
         , gamerTagError :: Boolean
         , friendCodeError :: Boolean
@@ -97,6 +99,7 @@ data Action
     | UpdateSteamId (Maybe String)
     | UpdateRiotId (Maybe String)
     | UpdateBattleTag (Maybe String)
+    | UpdateEaId (Maybe String)
     | UpdatePsnId (Maybe String)
     | UpdateGamerTag (Maybe String)
     | UpdateFriendCode (Maybe String)
@@ -127,6 +130,7 @@ render
             Steam       -> platformIdInputGroup Steam       contacts.steamId    UpdateSteamId    contacts.steamIdError    true
             Riot        -> platformIdInputGroup Riot        contacts.riotId     UpdateRiotId     contacts.riotIdError     true
             BattleNet   -> platformIdInputGroup BattleNet   contacts.battleTag  UpdateBattleTag  contacts.battleTagError  true
+            Origin      -> platformIdInputGroup Origin      contacts.eaId       UpdateEaId       contacts.eaIdError       true
             PlayStation -> platformIdInputGroup PlayStation contacts.psnId      UpdatePsnId      contacts.psnIdError      true
             Xbox        -> platformIdInputGroup Xbox        contacts.gamerTag   UpdateGamerTag   contacts.gamerTagError   true
             Switch      -> platformIdInputGroup Switch      contacts.friendCode UpdateFriendCode contacts.friendCodeError true
@@ -211,6 +215,7 @@ handleAction (UpdateDiscordTag discordTag) = H.modify _ { contacts { discordTag 
 handleAction (UpdateSteamId steamId)       = H.modify _ { contacts { steamId    = steamId    } } >>= raiseOutput
 handleAction (UpdateRiotId riotId)         = H.modify _ { contacts { riotId     = riotId     } } >>= raiseOutput
 handleAction (UpdateBattleTag battleTag)   = H.modify _ { contacts { battleTag  = battleTag  } } >>= raiseOutput
+handleAction (UpdateEaId eaId)             = H.modify _ { contacts { eaId       = eaId       } } >>= raiseOutput
 handleAction (UpdatePsnId psnId)           = H.modify _ { contacts { psnId      = psnId      } } >>= raiseOutput
 handleAction (UpdateGamerTag gamerTag)     = H.modify _ { contacts { gamerTag   = gamerTag   } } >>= raiseOutput
 handleAction (UpdateFriendCode friendCode) = H.modify _ { contacts { friendCode = friendCode } } >>= raiseOutput
@@ -249,6 +254,8 @@ emptyInput { platforms, fields } =
         , riotIdError: false
         , battleTag: Nothing
         , battleTagError: false
+        , eaId: Nothing
+        , eaIdError: false
         , psnId: Nothing
         , psnIdError: false
         , gamerTag: Nothing
