@@ -1,10 +1,10 @@
 #!/bin/bash
-npm install -g purescript spago sass clean-css-cli
+npm install -g purescript spago sass esbuild
 
-# /home/bklaric/.nvm/versions/node/v18.3.0/lib
-# ├── clean-css-cli@5.6.0
-# ├── corepack@0.10.0
-# ├── npm@8.12.1
-# ├── purescript@0.15.2
-# ├── sass@1.52.3
-# └── spago@0.20.9
+/home/bklaric/.nvm/versions/node/v18.4.0/lib
+├── corepack@0.11.2
+├── esbuild@0.14.48
+├── npm@8.13.2
+├── purescript@0.15.4
+├── sass@1.53.0
+└── spago@0.20.9
