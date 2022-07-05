@@ -6,7 +6,7 @@ values (
     'Apex Legends',
     'Apex Legends',
     'apex',
-    array['Find Apex Legends teammates for casual, ranked 4v4, ranked takedown, ranked 2v2 and more.']::varchar[],
+    array['Find Apex Legends teammates for battle royale, arenas and more.']::varchar[],
     array['steam', 'origin', 'playstation', 'xbox', 'switch']::varchar[]
 );
 
