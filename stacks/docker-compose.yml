@@ -8,6 +8,7 @@ services:
     env_file: .env
     volumes:
       - ${POSTGRES_DOCKER_PATH}:/var/lib/postgresql/data
+      - ${POSTGRES_BACKUP_PATH}:/backups
 
   node:
     image: node:18.4
