@@ -137,6 +137,7 @@ handleAction (SendRequest event) = do
                     , riotId: const state' { profile { contacts { riotIdError = true } } }
                     , battleTag: const state' { profile { contacts { battleTagError = true } } }
                     , eaId: const state' { profile { contacts { eaIdError = true } } }
+                    , ubisoftUsername: const state' { profile { contacts { ubisoftUsernameError = true } } }
                     , psnId: const state' { profile { contacts { psnIdError = true } } }
                     , gamerTag: const state' { profile { contacts { gamerTagError = true } } }
                     , friendCode: const state' { profile { contacts { friendCodeError = true } } }
@@ -153,7 +154,7 @@ component = H.mkComponent
     { initialState: \state @
         { team:
             { discordTag, discordServer
-            , steamId, riotId, battleTag, eaId, psnId, gamerTag, friendCode
+            , steamId, riotId, battleTag, eaId, ubisoftUsername, psnId, gamerTag, friendCode
             }
         , game: { title, platforms, fields }
         } ->
@@ -180,6 +181,8 @@ component = H.mkComponent
                 , battleTagError: false
                 , eaId
                 , eaIdError: false
+                , ubisoftUsername
+                , ubisoftUsernameError: false
                 , psnId
                 , psnIdError: false
                 , gamerTag

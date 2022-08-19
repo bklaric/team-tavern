@@ -24,6 +24,7 @@ type Input = PlayerContactsOpen
     , riotIdError :: Boolean
     , battleTagError :: Boolean
     , eaIdError :: Boolean
+    , ubisoftUsernameError :: Boolean
     , psnIdError :: Boolean
     , gamerTagError :: Boolean
     , friendCodeError :: Boolean
@@ -121,6 +122,8 @@ emptyInput requiredPlatforms =
     , battleTagError: false
     , eaId: Nothing
     , eaIdError: false
+    , ubisoftUsername: Nothing
+    , ubisoftUsernameError: false
     , psnId: Nothing
     , psnIdError: false
     , gamerTag: Nothing

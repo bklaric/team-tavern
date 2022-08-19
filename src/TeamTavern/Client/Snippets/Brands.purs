@@ -14,6 +14,7 @@ platformSvg class' Steam = steamSvg class'
 platformSvg class' Riot = riotSvg class'
 platformSvg class' BattleNet = battleNetSvg class'
 platformSvg class' Origin = originSvg class'
+platformSvg class' Ubisoft = ubisoftSvg class'
 platformSvg class' PlayStation = playStationSvg class'
 platformSvg class' Xbox = xboxSvg class'
 platformSvg class' Switch = switchSvg class'
@@ -73,6 +74,20 @@ inputOriginSvg = originSvg "input-label-icon"
 
 detailOriginSvg :: forall slots actions. HTML slots actions
 detailOriginSvg = originSvg "detail-icon"
+
+-- Ubisoft
+
+ubisoftPath :: String
+ubisoftPath = "m10.879 0c-7.4506 0-10.667 6.6318-10.667 6.6318l0.94664 0.67769s-1.1913 2.2654-1.1583 5.1711c0 5.9317 4.7218 11.519 11.673 11.519 6.3146 0 11.531-5.1397 11.531-11.505 0-8.3016-6.4376-12.495-12.325-12.495zm0.0646 2.0236c5.8211 0 10.338 4.6909 10.338 10.144 0 5.7809-4.3479 9.8012-9.4144 9.8012-3.7288 0-7.0926-2.8396-7.0926-6.7329 0-2.2487 1.1952-3.8164 2.5345-4.6519l0.19599 0.21267c-0.36651 0.28679-1.4116 1.9656-1.4116 3.6156 0 3.0632 2.4022 5.1847 5.4287 5.1847 3.8552 0 6.4264-3.2882 6.4264-7.1061 0-4.4421-3.9211-8.2134-8.6398-8.2134-2.61 0-4.8251 1.1224-6.098 2.1133l-0.19808-0.17931c1.6653-2.5676 4.5491-4.188 7.9308-4.188zm-1.7369 4.2495c3.0112 0 5.9512 1.9921 6.685 4.8198l-0.2669 0.10113c-1.3176-1.7399-3.4766-3.1819-6.0261-3.1819-4.6913 0-7.1551 4.263-6.7934 7.8234l-0.27626 0.10117s-0.51816-1.1433-0.51816-2.4991c0-3.926 3.2241-7.1646 7.1958-7.1646zm1.9903 4.9272c1.4256 0 2.5658 1.1555 2.5658 2.5272 0 1.1351-0.72878 1.8078-0.72878 1.8078l0.86324 0.60362s-0.856 1.3439-2.6033 1.3439c-1.6714 0-3.1496-1.349-3.1496-3.1632 0-1.8693 1.6079-3.1194 3.0527-3.1194z"
+
+ubisoftSvg :: forall slots actions. String -> HTML slots actions
+ubisoftSvg class' = svg [ HSA.class_ $ ClassName class', viewBox 0.0 0.0 24.0 24.0 ] [ path [ attr (AttrName "d") ubisoftPath ] ]
+
+inputUbisoftSvg :: forall slots actions. HTML slots actions
+inputUbisoftSvg = ubisoftSvg "input-label-icon"
+
+detailUbisoftSvg :: forall slots actions. HTML slots actions
+detailUbisoftSvg = ubisoftSvg "detail-icon"
 
 -- PlayStation
 

@@ -13,7 +13,7 @@ import Foreign (ForeignError(..), readString)
 import Jarilo.FromComponent (class FromComponent)
 import Yoga.JSON (class ReadForeign, class WriteForeign, writeImpl)
 
-data Platform = Steam | Riot | BattleNet | Origin | PlayStation | Xbox | Switch
+data Platform = Steam | Riot | BattleNet | Origin | Ubisoft | PlayStation | Xbox | Switch
 
 derive instance eqPlatform :: Eq Platform
 
@@ -29,6 +29,7 @@ fromString "steam" = Just Steam
 fromString "riot" = Just Riot
 fromString "battle.net" = Just BattleNet
 fromString "origin" = Just Origin
+fromString "ubisoft-connect" = Just Ubisoft
 fromString "playstation" = Just PlayStation
 fromString "xbox" = Just Xbox
 fromString "switch" = Just Switch
@@ -42,6 +43,7 @@ toString Steam = "steam"
 toString Riot = "riot"
 toString BattleNet = "battle.net"
 toString Origin = "origin"
+toString Ubisoft = "ubisoft-connect"
 toString PlayStation = "playstation"
 toString Xbox = "xbox"
 toString Switch = "switch"
@@ -51,6 +53,7 @@ toLabel Steam = "Steam"
 toLabel Riot = "Riot"
 toLabel BattleNet = "Battle.net"
 toLabel Origin = "Origin"
+toLabel Ubisoft = "Ubisoft Connect"
 toLabel PlayStation = "PlayStation"
 toLabel Xbox = "Xbox"
 toLabel Switch = "Switch"

@@ -101,6 +101,7 @@ handleAction (Update event) = do
                 , riotId: const state { contacts { riotIdError = true } }
                 , battleTag: const state { contacts { battleTagError = true } }
                 , eaId: const state { contacts { eaIdError = true } }
+                , ubisoftUsername: const state { contacts { ubisoftUsernameError = true } }
                 , psnId: const state { contacts { psnIdError = true } }
                 , gamerTag: const state { contacts { gamerTagError = true } }
                 , friendCode: const state { contacts { friendCodeError = true } }
@@ -129,6 +130,8 @@ component = H.mkComponent
             , battleTagError: false
             , eaId: player.eaId
             , eaIdError: false
+            , ubisoftUsername: player.ubisoftUsername
+            , ubisoftUsernameError: false
             , psnId: player.psnId
             , psnIdError: false
             , gamerTag: player.gamerTag

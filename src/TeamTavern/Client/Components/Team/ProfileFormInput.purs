@@ -58,6 +58,7 @@ type Input =
         , riotIdError :: Boolean
         , battleTagError :: Boolean
         , eaIdError :: Boolean
+        , ubisoftUsernameError :: Boolean
         , psnIdError :: Boolean
         , gamerTagError :: Boolean
         , friendCodeError :: Boolean
@@ -97,6 +98,7 @@ type State =
         , riotIdError :: Boolean
         , battleTagError :: Boolean
         , eaIdError :: Boolean
+        , ubisoftUsernameError :: Boolean
         , psnIdError :: Boolean
         , gamerTagError :: Boolean
         , friendCodeError :: Boolean
@@ -117,6 +119,7 @@ data Action
     | UpdateRiotId (Maybe String)
     | UpdateBattleTag (Maybe String)
     | UpdateEaId (Maybe String)
+    | UpdateUbisoftUsername (Maybe String)
     | UpdatePsnId (Maybe String)
     | UpdateGamerTag (Maybe String)
     | UpdateFriendCode (Maybe String)
@@ -151,13 +154,14 @@ render { details, contacts }
     , responsiveInputGroups $
         (details.selectedPlatforms # sort <#>
             case _ of
-            Steam       -> platformIdInputGroup Steam       contacts.steamId    UpdateSteamId    contacts.steamIdError    true
-            Riot        -> platformIdInputGroup Riot        contacts.riotId     UpdateRiotId     contacts.riotIdError     true
-            BattleNet   -> platformIdInputGroup BattleNet   contacts.battleTag  UpdateBattleTag  contacts.battleTagError  true
-            Origin      -> platformIdInputGroup Origin      contacts.eaId       UpdateEaId       contacts.eaIdError       true
-            PlayStation -> platformIdInputGroup PlayStation contacts.psnId      UpdatePsnId      contacts.psnIdError      true
-            Xbox        -> platformIdInputGroup Xbox        contacts.gamerTag   UpdateGamerTag   contacts.gamerTagError   true
-            Switch      -> platformIdInputGroup Switch      contacts.friendCode UpdateFriendCode contacts.friendCodeError true)
+            Steam       -> platformIdInputGroup Steam       contacts.steamId         UpdateSteamId         contacts.steamIdError         true
+            Riot        -> platformIdInputGroup Riot        contacts.riotId          UpdateRiotId          contacts.riotIdError          true
+            BattleNet   -> platformIdInputGroup BattleNet   contacts.battleTag       UpdateBattleTag       contacts.battleTagError       true
+            Origin      -> platformIdInputGroup Origin      contacts.eaId            UpdateEaId            contacts.eaIdError            true
+            Ubisoft     -> platformIdInputGroup Ubisoft     contacts.ubisoftUsername UpdateUbisoftUsername contacts.ubisoftUsernameError true
+            PlayStation -> platformIdInputGroup PlayStation contacts.psnId           UpdatePsnId           contacts.psnIdError           true
+            Xbox        -> platformIdInputGroup Xbox        contacts.gamerTag        UpdateGamerTag        contacts.gamerTagError        true
+            Switch      -> platformIdInputGroup Switch      contacts.friendCode      UpdateFriendCode      contacts.friendCodeError      true)
         <>
         [ discordTagInputGroup contacts.discordTag UpdateDiscordTag contacts.discordTagError
         , discordServerInputGroup contacts.discordServer UpdateDiscordServer contacts.discordServerError
@@ -227,13 +231,14 @@ handleAction (UpdateAbout about) = H.modify _ { details { about = about } } >>= 
 handleAction (UpdateAmbitions ambitions) = H.modify _ { details { ambitions = ambitions } } >>= raiseOutput
 handleAction (UpdateDiscordTag discordTag) = H.modify _ { contacts { discordTag = discordTag } } >>= raiseOutput
 handleAction (UpdateDiscordServer discordServer) = H.modify _ { contacts { discordServer = discordServer } } >>= raiseOutput
-handleAction (UpdateSteamId steamId)       = H.modify _ { contacts { steamId    = steamId    } } >>= raiseOutput
-handleAction (UpdateRiotId riotId)         = H.modify _ { contacts { riotId     = riotId     } } >>= raiseOutput
-handleAction (UpdateBattleTag battleTag)   = H.modify _ { contacts { battleTag  = battleTag  } } >>= raiseOutput
-handleAction (UpdateEaId eaId)             = H.modify _ { contacts { eaId       = eaId       } } >>= raiseOutput
-handleAction (UpdatePsnId psnId)           = H.modify _ { contacts { psnId      = psnId      } } >>= raiseOutput
-handleAction (UpdateGamerTag gamerTag)     = H.modify _ { contacts { gamerTag   = gamerTag   } } >>= raiseOutput
-handleAction (UpdateFriendCode friendCode) = H.modify _ { contacts { friendCode = friendCode } } >>= raiseOutput
+handleAction (UpdateSteamId steamId)          = H.modify _ { contacts { steamId         = steamId    } } >>= raiseOutput
+handleAction (UpdateRiotId riotId)            = H.modify _ { contacts { riotId          = riotId     } } >>= raiseOutput
+handleAction (UpdateBattleTag battleTag)      = H.modify _ { contacts { battleTag       = battleTag  } } >>= raiseOutput
+handleAction (UpdateEaId eaId)                = H.modify _ { contacts { eaId            = eaId       } } >>= raiseOutput
+handleAction (UpdateUbisoftUsername username) = H.modify _ { contacts { ubisoftUsername = username   } } >>= raiseOutput
+handleAction (UpdatePsnId psnId)              = H.modify _ { contacts { psnId           = psnId      } } >>= raiseOutput
+handleAction (UpdateGamerTag gamerTag)        = H.modify _ { contacts { gamerTag        = gamerTag   } } >>= raiseOutput
+handleAction (UpdateFriendCode friendCode)    = H.modify _ { contacts { friendCode      = friendCode } } >>= raiseOutput
 
 component :: forall query left. H.Component query Input Output (Async left)
 component = H.mkComponent
@@ -273,6 +278,8 @@ emptyInput { platforms, fields } =
         , battleTagError: false
         , eaId: Nothing
         , eaIdError: false
+        , ubisoftUsername: Nothing
+        , ubisoftUsernameError: false
         , psnId: Nothing
         , psnIdError: false
         , gamerTag: Nothing
