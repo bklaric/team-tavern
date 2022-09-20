@@ -30,6 +30,7 @@ queryString timezone = Query $ """
             player.riot_id as "riotId",
             player.battle_tag as "battleTag",
             player.ea_id as "eaId",
+            player.ubisoft_username as "ubisoftUsername",
             player.psn_id as "psnId",
             player.gamer_tag as "gamerTag",
             player.friend_code as "friendCode",

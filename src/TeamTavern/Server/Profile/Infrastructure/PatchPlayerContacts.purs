@@ -18,9 +18,10 @@ queryString = Query """
         riot_id = coalesce($4, riot_id),
         battle_tag = coalesce($5, battle_tag),
         ea_id = coalesce($6, ea_id),
-        psn_id = coalesce($7, psn_id),
-        gamer_tag = coalesce($8, gamer_tag),
-        friend_code = coalesce($9, friend_code)
+        ubisoft_username = coalesce($7, ubisoft_username),
+        psn_id = coalesce($8, psn_id),
+        gamer_tag = coalesce($9, gamer_tag),
+        friend_code = coalesce($10, friend_code)
         where player.id = $1
     """
 
@@ -32,6 +33,7 @@ queryParameters playerId contacts =
     : toNullable contacts.riotId
     : toNullable contacts.battleTag
     : toNullable contacts.eaId
+    : toNullable contacts.ubisoftUsername
     : toNullable contacts.psnId
     : toNullable contacts.gamerTag
     :| toNullable contacts.friendCode

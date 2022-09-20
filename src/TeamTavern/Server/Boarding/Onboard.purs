@@ -140,13 +140,14 @@ onboard pool cookies body =
 
             -- We only want to patch the selected platform contact.
             let contactsCleaned = contacts
-                    { steamId    = if profile.platform == Steam       then contacts.steamId    else Nothing
-                    , riotId     = if profile.platform == Riot        then contacts.riotId     else Nothing
-                    , battleTag  = if profile.platform == BattleNet   then contacts.battleTag  else Nothing
-                    , eaId       = if profile.platform == Origin      then contacts.eaId       else Nothing
-                    , psnId      = if profile.platform == PlayStation then contacts.psnId      else Nothing
-                    , gamerTag   = if profile.platform == Xbox        then contacts.gamerTag   else Nothing
-                    , friendCode = if profile.platform == Switch      then contacts.friendCode else Nothing
+                    { steamId         = if profile.platform == Steam       then contacts.steamId         else Nothing
+                    , riotId          = if profile.platform == Riot        then contacts.riotId          else Nothing
+                    , battleTag       = if profile.platform == BattleNet   then contacts.battleTag       else Nothing
+                    , eaId            = if profile.platform == Origin      then contacts.eaId            else Nothing
+                    , ubisoftUsername = if profile.platform == Ubisoft     then contacts.ubisoftUsername else Nothing
+                    , psnId           = if profile.platform == PlayStation then contacts.psnId           else Nothing
+                    , gamerTag        = if profile.platform == Xbox        then contacts.gamerTag        else Nothing
+                    , friendCode      = if profile.platform == Switch      then contacts.friendCode      else Nothing
                     }
 
             { player', profile', contacts' } <-
@@ -170,13 +171,14 @@ onboard pool cookies body =
 
             -- We only want to patch the selected platforms contacts.
             let contactsCleaned = contacts
-                    { steamId    = if Steam       `elem` profile.platforms then contacts.steamId    else Nothing
-                    , riotId     = if Riot        `elem` profile.platforms then contacts.riotId     else Nothing
-                    , battleTag  = if BattleNet   `elem` profile.platforms then contacts.battleTag  else Nothing
-                    , eaId       = if Origin      `elem` profile.platforms then contacts.eaId       else Nothing
-                    , psnId      = if PlayStation `elem` profile.platforms then contacts.psnId      else Nothing
-                    , gamerTag   = if Xbox        `elem` profile.platforms then contacts.gamerTag   else Nothing
-                    , friendCode = if Switch      `elem` profile.platforms then contacts.friendCode else Nothing
+                    { steamId         = if Steam       `elem` profile.platforms then contacts.steamId         else Nothing
+                    , riotId          = if Riot        `elem` profile.platforms then contacts.riotId          else Nothing
+                    , battleTag       = if BattleNet   `elem` profile.platforms then contacts.battleTag       else Nothing
+                    , eaId            = if Origin      `elem` profile.platforms then contacts.eaId            else Nothing
+                    , ubisoftUsername = if Ubisoft     `elem` profile.platforms then contacts.ubisoftUsername else Nothing
+                    , psnId           = if PlayStation `elem` profile.platforms then contacts.psnId           else Nothing
+                    , gamerTag        = if Xbox        `elem` profile.platforms then contacts.gamerTag        else Nothing
+                    , friendCode      = if Switch      `elem` profile.platforms then contacts.friendCode      else Nothing
                     }
 
             { team', profile', contacts' } <-
