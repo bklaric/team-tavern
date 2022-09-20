@@ -89,6 +89,7 @@ handleAction (UpdateProfile profile) =
                 , riotId = profile.contacts.riotId
                 , battleTag = profile.contacts.battleTag
                 , eaId = profile.contacts.eaId
+                , ubisoftUsername = profile.contacts.ubisoftUsername
                 , psnId = profile.contacts.psnId
                 , gamerTag = profile.contacts.gamerTag
                 , friendCode = profile.contacts.friendCode
@@ -112,6 +113,7 @@ handleAction (SendRequest event) = do
                 , riotIdError = false
                 , battleTagError = false
                 , eaIdError = false
+                , ubisoftUsernameError = false
                 , psnIdError = false
                 , gamerTagError = false
                 , friendCodeError = false
@@ -137,6 +139,7 @@ handleAction (SendRequest event) = do
                     , riotId: const state' { profile { contacts { riotIdError = true } } }
                     , battleTag: const state' { profile { contacts { battleTagError = true } } }
                     , eaId: const state' { profile { contacts { eaIdError = true } } }
+                    , ubisoftUsername: const state' { profile { contacts { ubisoftUsernameError = true } } }
                     , psnId: const state' { profile { contacts { psnIdError = true } } }
                     , gamerTag: const state' { profile { contacts { gamerTagError = true } } }
                     , friendCode: const state' { profile { contacts { friendCodeError = true } } }
@@ -153,7 +156,7 @@ component = H.mkComponent
     { initialState: \state @
         { team:
             { discordTag, discordServer
-            , steamId, riotId, battleTag, eaId, psnId, gamerTag, friendCode
+            , steamId, riotId, battleTag, eaId, ubisoftUsername, psnId, gamerTag, friendCode
             }
         , game: { title, platforms, fields }
         } ->
@@ -180,6 +183,8 @@ component = H.mkComponent
                 , battleTagError: false
                 , eaId
                 , eaIdError: false
+                , ubisoftUsername
+                , ubisoftUsernameError: false
                 , psnId
                 , psnIdError: false
                 , gamerTag

@@ -83,6 +83,7 @@ logError updateError = do
                 , riotId: logt
                 , battleTag: logt
                 , eaId: logt
+                , ubisoftUsername: logt
                 , psnId: logt
                 , gamerTag: logt
                 , friendCode: logt

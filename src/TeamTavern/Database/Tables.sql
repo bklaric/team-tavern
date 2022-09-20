@@ -8,6 +8,7 @@ create table player
     , riot_id text
     , battle_tag text
     , ea_id text
+    , ubisoft_username text
     , psn_id text
     , gamer_tag text
     , friend_code text
@@ -43,6 +44,7 @@ create table team
     , riot_id text
     , battle_tag text
     , ea_id text
+    , ubisoft_username text
     , psn_id text
     , gamer_tag text
     , friend_code text

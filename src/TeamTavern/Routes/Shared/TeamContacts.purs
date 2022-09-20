@@ -10,6 +10,7 @@ type TeamContactsRow fields =
     , riotId :: Maybe String
     , battleTag :: Maybe String
     , eaId :: Maybe String
+    , ubisoftUsername :: Maybe String
     , psnId :: Maybe String
     , gamerTag :: Maybe String
     , friendCode :: Maybe String
@@ -27,6 +28,7 @@ type TeamContactsError = Variant
     , friendCode :: String
     , gamerTag :: String
     , eaId :: String
+    , ubisoftUsername :: String
     , psnId :: String
     , riotId :: String
     , steamId :: String

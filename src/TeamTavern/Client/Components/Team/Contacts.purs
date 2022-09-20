@@ -11,7 +11,7 @@ import Data.Maybe (Maybe(..))
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Anchor (textAnchor)
 import TeamTavern.Client.Components.Detail (detail', discordTagDetail, fieldDetail', urlDetail)
-import TeamTavern.Client.Snippets.Brands (detailBattleNetSvg, detailOriginSvg, detailPlayStationSvg, detailRiotSvg, detailSteamSvg, detailSwitchSvg, detailXboxSvg)
+import TeamTavern.Client.Snippets.Brands (detailBattleNetSvg, detailOriginSvg, detailPlayStationSvg, detailRiotSvg, detailSteamSvg, detailSwitchSvg, detailUbisoftSvg, detailXboxSvg)
 import TeamTavern.Routes.Shared.Platform (Platform(..))
 import TeamTavern.Routes.Shared.TeamContacts (TeamContactsOpen)
 import Type.Function (type ($))
@@ -23,6 +23,7 @@ type ContactsSlots slots =
     , friendCode :: Copyable.Slot String
     , gamerTag :: Copyable.Slot String
     , eaId :: Copyable.Slot String
+    , ubisoftUsername :: Copyable.Slot String
     , psnId :: Copyable.Slot String
     , riotId :: Copyable.Slot String
     , steamId :: Copyable.Slot String
@@ -60,6 +61,12 @@ eaIdDetail eaId' = eaId' <#> \eaId ->
     fieldDetail' detailOriginSvg "EA ID"
     [ copyable (Proxy :: _ "eaId") eaId eaId ]
 
+ubisoftUsernameDetail :: forall left slots action.
+    Maybe String -> Maybe $ HH.ComponentHTML action (ubisoftUsername :: Copyable.Slot String | slots) (Async left)
+ubisoftUsernameDetail ubisoftUsername' = ubisoftUsername' <#> \ubisoftUsername ->
+    fieldDetail' detailUbisoftSvg "Ubisoft Connect username"
+    [ copyable (Proxy :: _ "ubisoftUsername") ubisoftUsername ubisoftUsername ]
+
 psnIdDetail :: forall left slots action.
     Maybe String -> Maybe $ HH.ComponentHTML action (psnId :: Copyable.Slot String | slots) (Async left)
 psnIdDetail psnId' = psnId' <#> \psnId ->
@@ -89,6 +96,7 @@ contacts conts =
     , riotIdDetail conts.riotId
     , battleTagDetail conts.battleTag
     , eaIdDetail conts.eaId
+    , ubisoftUsernameDetail conts.ubisoftUsername
     , psnIdDetail conts.psnId
     , gamerTagDetail conts.gamerTag
     , friendCodeDetail conts.friendCode
@@ -102,6 +110,7 @@ profileContacts conts @ { selectedPlatforms } =
     , riotId = if Riot `elem` selectedPlatforms then conts.riotId else Nothing
     , battleTag = if BattleNet `elem` selectedPlatforms then conts.battleTag else Nothing
     , eaId = if Origin `elem` selectedPlatforms then conts.eaId else Nothing
+    , ubisoftUsername = if Ubisoft `elem` selectedPlatforms then conts.ubisoftUsername else Nothing
     , psnId = if PlayStation `elem` selectedPlatforms then conts.psnId else Nothing
     , gamerTag = if Xbox `elem` selectedPlatforms then conts.gamerTag else Nothing
     , friendCode = if Switch `elem` selectedPlatforms then conts.friendCode else Nothing

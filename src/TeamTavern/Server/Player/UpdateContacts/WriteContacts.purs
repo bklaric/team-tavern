@@ -18,9 +18,10 @@ queryString = Query """
         riot_id = $4,
         battle_tag = $5,
         ea_id = $6,
-        psn_id = $7,
-        gamer_tag = $8,
-        friend_code = $9
+        ubisoft_username = $7,
+        psn_id = $8,
+        gamer_tag = $9,
+        friend_code = $10
     where player.id = $1
     """
 
@@ -32,6 +33,7 @@ queryParameters playerId contacts =
     : toNullable contacts.riotId
     : toNullable contacts.battleTag
     : toNullable contacts.eaId
+    : toNullable contacts.ubisoftUsername
     : toNullable contacts.psnId
     : toNullable contacts.gamerTag
     :| toNullable contacts.friendCode

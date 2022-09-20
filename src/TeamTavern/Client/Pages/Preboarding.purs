@@ -547,6 +547,7 @@ handleAction (UpdatePlayerProfile profile) = do
                 , riotId = profile.contacts.riotId
                 , battleTag = profile.contacts.battleTag
                 , eaId = profile.contacts.eaId
+                , ubisoftUsername = profile.contacts.ubisoftUsername
                 , psnId = profile.contacts.psnId
                 , gamerTag = profile.contacts.gamerTag
                 , friendCode = profile.contacts.friendCode
@@ -572,6 +573,7 @@ handleAction (UpdateTeamProfile profile) = do
                 , riotId = profile.contacts.riotId
                 , battleTag = profile.contacts.battleTag
                 , eaId = profile.contacts.eaId
+                , ubisoftUsername = profile.contacts.ubisoftUsername
                 , psnId = profile.contacts.psnId
                 , gamerTag = profile.contacts.gamerTag
                 , friendCode = profile.contacts.friendCode
@@ -606,6 +608,7 @@ handleAction SetUpAccount = do
                     , riotIdError = false
                     , battleTagError = false
                     , eaIdError = false
+                    , ubisoftUsernameError = false
                     , psnIdError = false
                     , gamerTagError = false
                     , friendCodeError = false
@@ -622,6 +625,7 @@ handleAction SetUpAccount = do
                     , riotIdError = false
                     , battleTagError = false
                     , eaIdError = false
+                    , ubisoftUsernameError = false
                     , psnIdError = false
                     , gamerTagError = false
                     , friendCodeError = false
@@ -683,6 +687,7 @@ handleAction SetUpAccount = do
                     , riotId: const state' { step = PlayerProfile, playerProfile { contacts { riotIdError = true } } }
                     , battleTag: const state' { step = PlayerProfile, playerProfile { contacts { battleTagError = true } } }
                     , eaId: const state' { step = PlayerProfile, playerProfile { contacts { eaIdError = true } } }
+                    , ubisoftUsername: const state' { step = PlayerProfile, playerProfile { contacts { ubisoftUsernameError = true } } }
                     , psnId: const state' { step = PlayerProfile, playerProfile { contacts { psnIdError = true } } }
                     , gamerTag: const state' { step = PlayerProfile, playerProfile { contacts { gamerTagError = true } } }
                     , friendCode: const state' { step = PlayerProfile, playerProfile { contacts { friendCodeError = true } } }
@@ -694,6 +699,7 @@ handleAction SetUpAccount = do
                     , riotId: const state' { step = TeamProfile, teamProfile { contacts { riotIdError = true } } }
                     , battleTag: const state' { step = TeamProfile, teamProfile { contacts { battleTagError = true } } }
                     , eaId: const state' { step = TeamProfile, teamProfile { contacts { eaIdError = true } } }
+                    , ubisoftUsername: const state' { step = TeamProfile, teamProfile { contacts { ubisoftUsernameError = true } } }
                     , psnId: const state' { step = TeamProfile, teamProfile { contacts { psnIdError = true } } }
                     , gamerTag: const state' { step = TeamProfile, teamProfile { contacts { gamerTagError = true } } }
                     , friendCode: const state' { step = TeamProfile, teamProfile { contacts { friendCodeError = true } } }
