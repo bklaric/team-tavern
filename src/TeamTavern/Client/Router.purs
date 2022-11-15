@@ -238,8 +238,6 @@ handleAction (Init state route) = do
             just $ GameTabs { handle, tab: GameHeader.Profiles GameHeader.Players }
         ["", "games", handle, "teams" ] ->
             just $ GameTabs { handle, tab: GameHeader.Profiles GameHeader.Teams }
-        ["", "games", handle, "competitions" ] ->
-            just $ GameTabs { handle, tab: GameHeader.Competitions }
         ["", "players", nickname] ->
             just $ Player { nickname }
         ["", "players", nickname, "profiles", handle] ->
