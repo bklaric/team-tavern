@@ -47,9 +47,9 @@ import TeamTavern.Client.Script.Analytics (sendEvent)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigate, navigateReplace, navigate_)
 import TeamTavern.Client.Snippets.Class as HS
-import TeamTavern.Routes.Preboard as Preboard
+import TeamTavern.Routes.Boarding.Preboard as Preboard
 import TeamTavern.Routes.Shared.Platform (Platform(..))
-import TeamTavern.Routes.ViewGame as ViewGame
+import TeamTavern.Routes.Game.ViewGame as ViewGame
 
 data Step
     = Greeting

@@ -18,8 +18,8 @@ import TeamTavern.Client.Components.Player.ContactsFormInput as ContactsFormInpu
 import TeamTavern.Client.Script.Navigate (hardNavigate)
 import TeamTavern.Client.Script.Request (putNoContent)
 import TeamTavern.Routes.Shared.PlayerContacts as Routes
-import TeamTavern.Routes.UpdatePlayerContacts (RequestContent, BadContent)
-import TeamTavern.Routes.ViewPlayer (OkContentProfile)
+import TeamTavern.Routes.Player.UpdatePlayerContacts (RequestContent, BadContent)
+import TeamTavern.Routes.Player.ViewPlayer (OkContentProfile)
 import Type.Function (type ($))
 import Type.Proxy (Proxy(..))
 import Web.Event.Event (preventDefault)

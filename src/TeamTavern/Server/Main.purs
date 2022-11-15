@@ -30,6 +30,7 @@ import Postgres.Client.Config (ClientConfig, database, host, password, port, use
 import Postgres.Pool (Pool)
 import Postgres.Pool as Pool
 import Sendgrid (setApiKey)
+import TeamTavern.Routes.All (AllRoutes)
 import TeamTavern.Routes.Profile.ViewPlayerProfilesByGame (bundlePlayerFilters)
 import TeamTavern.Routes.Profile.ViewTeamProfilesByGame (bundleTeamFilters)
 import TeamTavern.Server.Alert.Create (createAlert) as Alert
@@ -54,7 +55,6 @@ import TeamTavern.Server.Profile.ViewPlayerProfile (viewPlayerProfile)
 import TeamTavern.Server.Profile.ViewPlayerProfilesByGame (viewPlayerProfilesByGame) as Profile
 import TeamTavern.Server.Profile.ViewTeamProfile (viewTeamProfile)
 import TeamTavern.Server.Profile.ViewTeamProfilesByGame (viewTeamProfilesByGame) as Profile
-import TeamTavern.Server.Routes (TeamTavernRoutes)
 import TeamTavern.Server.Session.End (end) as Session
 import TeamTavern.Server.Session.Start (start) as Session
 import TeamTavern.Server.Team.Create (create) as Team
@@ -123,7 +123,7 @@ loadDeployment =
     <#> note "Couldn't read variable DEPLOYMENT."
     # ExceptT
 
-teamTavernRoutes = Proxy :: Proxy TeamTavernRoutes
+teamTavernRoutes = Proxy :: Proxy AllRoutes
 
 handleRequest
     :: Deployment

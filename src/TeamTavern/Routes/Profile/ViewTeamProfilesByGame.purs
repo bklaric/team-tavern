@@ -4,10 +4,10 @@ import Prelude
 
 import Data.Maybe (Maybe, maybe)
 import Jarilo.Method (Get)
-import Jarilo.Path (type (:>), End)
+import Jarilo.Path (type (:>), Capture, Literal)
 import Jarilo.Query (type (:?), Mandatory, Many, Optional, Rest)
+import Jarilo.Response (Ok)
 import Jarilo.Route (FullRoute)
-import Jarilo.Segment (Capture, Literal)
 import TeamTavern.Routes.Profile.Shared (ProfilePage, bundleFields)
 import TeamTavern.Routes.Shared.Filters (Age, Filters, HasMicrophone, Language, Location, NewOrReturning, Time)
 import TeamTavern.Routes.Shared.Organization (Organization)
@@ -25,8 +25,7 @@ type ViewTeamProfilesByGame = FullRoute
     Get
     (  Literal "games"
     :> Capture "handle" Handle
-    :> Literal "teams"
-    :> End)
+    :> Literal "teams")
     (  Mandatory "page" ProfilePage
     :? Mandatory "timezone" Timezone
     :? Many "organization" Organization
@@ -43,6 +42,7 @@ type ViewTeamProfilesByGame = FullRoute
     :? Many "platform" Platform
     :? Optional "newOrReturning" NewOrReturning
     :? Rest "fields")
+    (Ok OkContent)
 
 bundleTeamFilters :: forall other.
     { organization :: Array Organization

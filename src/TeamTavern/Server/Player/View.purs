@@ -5,7 +5,7 @@ import Prelude
 import Async (Async, examineLeftWithEffect)
 import Perun.Response (Response)
 import Postgres.Pool (Pool)
-import TeamTavern.Routes.ViewPlayer as ViewPlayer
+import TeamTavern.Routes.Player.ViewPlayer as ViewPlayer
 import TeamTavern.Server.Infrastructure.CheckSignedIn (checkSignedIn)
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Player.View.LoadPlayer (loadPlayer)

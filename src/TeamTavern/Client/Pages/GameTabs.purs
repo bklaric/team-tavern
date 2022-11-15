@@ -13,7 +13,7 @@ import TeamTavern.Client.Pages.Profiles (profiles)
 import TeamTavern.Client.Pages.Profiles as Profiles
 import TeamTavern.Client.Pages.Profiles.GameHeader (ProfileTab(..), Tab(..), gameHeader)
 import TeamTavern.Client.Script.Request (get)
-import TeamTavern.Routes.ViewGame as ViewGame
+import TeamTavern.Routes.Game.ViewGame as ViewGame
 
 type Input = { handle :: String, tab :: Tab }
 

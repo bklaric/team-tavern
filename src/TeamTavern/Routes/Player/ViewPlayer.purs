@@ -1,11 +1,11 @@
-module TeamTavern.Routes.ViewPlayer where
+module TeamTavern.Routes.Player.ViewPlayer where
 
 import Data.Maybe (Maybe)
 import Jarilo.Method (Get)
-import Jarilo.Path (type (:>), End)
+import Jarilo.Path (type (:>), Capture, Literal)
 import Jarilo.Query (Mandatory)
+import Jarilo.Response (Ok)
 import Jarilo.Route (FullRoute)
-import Jarilo.Segment (Capture, Literal)
 import TeamTavern.Routes.Shared.Organization (OrganizationN)
 import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
 import TeamTavern.Routes.Shared.PlayerContacts (PlayerContactsOpen)
@@ -13,9 +13,9 @@ import TeamTavern.Routes.Shared.PlayerContacts (PlayerContactsOpen)
 type ViewPlayer = FullRoute
     Get
     (  Literal "players"
-    :> Capture "nickname" String
-    :> End)
+    :> Capture "nickname" String)
     (Mandatory "timezone" String)
+    (Ok OkContent)
 
 type RouteParams =
     { nickname :: String

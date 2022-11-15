@@ -44,7 +44,7 @@ import TeamTavern.Client.Script.Cookie (getPlayerNickname)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigate, navigateReplace, navigate_)
 import TeamTavern.Client.Snippets.Class as HS
-import TeamTavern.Routes.Onboard as Onboard
+import TeamTavern.Routes.Boarding.Onboard as Onboard
 import TeamTavern.Routes.Shared.Platform (Platform(..))
 
 data Step

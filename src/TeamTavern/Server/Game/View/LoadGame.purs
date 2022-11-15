@@ -3,7 +3,7 @@ module TeamTavern.Server.Game.View.LoadGame (loadGame) where
 import Async (Async)
 import Postgres.Pool (Pool)
 import Postgres.Query (Query(..), (:))
-import TeamTavern.Routes.ViewGame as ViewGame
+import TeamTavern.Routes.Game.ViewGame as ViewGame
 import TeamTavern.Server.Infrastructure.Error (LoadSingleError)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstNotFound)
 

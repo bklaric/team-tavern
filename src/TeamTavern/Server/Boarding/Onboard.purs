@@ -22,7 +22,7 @@ import Record.Builder (Builder)
 import Record.Builder as Builder
 import Record.Extra (pick)
 import Yoga.JSON (writeJSON)
-import TeamTavern.Routes.Onboard (BadContent, RequestContent, OkContent)
+import TeamTavern.Routes.Boarding.Onboard (BadContent, RequestContent, OkContent)
 import TeamTavern.Routes.Shared.Platform (Platform(..))
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)

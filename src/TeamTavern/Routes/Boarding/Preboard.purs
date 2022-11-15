@@ -1,22 +1,22 @@
-module TeamTavern.Routes.Preboard where
+module TeamTavern.Routes.Boarding.Preboard where
 
 import Data.Maybe (Maybe)
 import Data.Variant (Variant)
 import Jarilo.Method (Post)
-import Jarilo.Path (type (:>), End)
+import Jarilo.Path (Literal)
 import Jarilo.Query (NoQuery)
+import Jarilo.Response (type (:!), BadRequest, Ok)
 import Jarilo.Route (FullRoute)
-import Jarilo.Segment (Literal)
-import TeamTavern.Routes.Onboard (PlayerProfileRequestContent, PlayerRequestContent, TeamProfileRequestContent, TeamRequestContent)
+import TeamTavern.Routes.Boarding.Onboard (PlayerProfileRequestContent, PlayerRequestContent, TeamProfileRequestContent, TeamRequestContent)
 import TeamTavern.Routes.Shared.PlayerContacts (PlayerContactsError, PlayerContacts)
 import TeamTavern.Routes.Shared.TeamContacts (TeamContactsError, TeamContacts)
 import Type.Function (type ($))
 
 type Preboard = FullRoute
-    Post
-    (  Literal "preboarding"
-    :> End)
+    (Post RequestContent)
+    (  Literal "preboarding")
     NoQuery
+    (Ok OkContent :! BadRequest BadContent)
 
 type RegisterRequestContent =
     { nickname :: String

@@ -1,4 +1,4 @@
-module TeamTavern.Routes.CreateAlert where
+module TeamTavern.Routes.Alert.CreateAlert where
 
 import Prelude
 
@@ -6,13 +6,13 @@ import Data.Maybe (Maybe(..))
 import Data.Variant (Variant)
 import Foreign (ForeignError(..), fail)
 import Jarilo.Method (Post)
-import Jarilo.Path (type (:>), End)
+import Jarilo.Path (Literal)
 import Jarilo.Query (NoQuery)
+import Jarilo.Response (type (:!), BadRequest, NoContent)
 import Jarilo.Route (FullRoute)
-import Jarilo.Segment (Literal)
-import Yoga.JSON (class ReadForeign, class WriteForeign, readImpl, writeImpl)
 import TeamTavern.Routes.Shared.Filters (Filters)
 import TeamTavern.Routes.Shared.Types (Timezone)
+import Yoga.JSON (class ReadForeign, class WriteForeign, readImpl, writeImpl)
 
 data PlayerOrTeam = Player | Team
 
@@ -36,10 +36,10 @@ instance readForeignPlayerOrTeam :: ReadForeign PlayerOrTeam where
         string -> fail $ ForeignError $ "Invalid player or team " <> string
 
 type CreateAlert = FullRoute
-    Post
-    (  Literal "alerts"
-    :> End)
+    (Post RequestContent)
+    (  Literal "alerts")
     NoQuery
+    (NoContent :! BadRequest BadContent)
 
 type RequestContent =
     { handle :: String

@@ -10,7 +10,7 @@ import Perun.Response (Response, internalServerError__, noContent_, notFound__)
 import Postgres.Pool (Pool)
 import Postgres.Query (Query(..), (:|))
 import Postgres.Result (rowCount)
-import TeamTavern.Routes.DeleteAlert (RouteContent)
+import TeamTavern.Routes.Alert.DeleteAlert (RouteContent)
 import TeamTavern.Server.Infrastructure.Error (InternalError, NotFoundRow)
 import TeamTavern.Server.Infrastructure.Log (internalHandler, notFoundHandler)
 import TeamTavern.Server.Infrastructure.Log as Log

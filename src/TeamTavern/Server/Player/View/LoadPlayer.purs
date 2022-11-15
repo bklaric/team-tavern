@@ -6,7 +6,7 @@ import Async (Async)
 import Data.Maybe (Maybe, maybe)
 import Data.Newtype (unwrap)
 import Postgres.Query (class Querier, Query(..), (:|))
-import TeamTavern.Routes.ViewPlayer as ViewPlayer
+import TeamTavern.Routes.Player.ViewPlayer as ViewPlayer
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Server.Infrastructure.Error (LoadSingleError)
 import TeamTavern.Server.Infrastructure.Postgres (playerAdjustedWeekdayFrom, playerAdjustedWeekdayTo, playerAdjustedWeekendFrom, playerAdjustedWeekendTo, queryFirstNotFound)

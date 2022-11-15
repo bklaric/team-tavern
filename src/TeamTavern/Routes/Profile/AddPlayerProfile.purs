@@ -3,23 +3,23 @@ module TeamTavern.Routes.Profile.AddPlayerProfile where
 import Data.Maybe (Maybe)
 import Data.Variant (Variant)
 import Jarilo.Method (Post)
-import Jarilo.Path (type (:>), End)
+import Jarilo.Path (type (:>), Capture, Literal)
 import Jarilo.Query (NoQuery)
+import Jarilo.Response (type (:!), BadRequest, NoContent)
 import Jarilo.Route (FullRoute)
-import Jarilo.Segment (Capture, Literal)
 import TeamTavern.Routes.Shared.Platform (Platform)
 import TeamTavern.Routes.Shared.PlayerContacts (PlayerContacts, PlayerContactsError)
 import TeamTavern.Routes.Shared.Types (Handle, Nickname)
 import Type.Function (type ($))
 
 type AddPlayerProfile = FullRoute
-    Post
+    (Post RequestContent)
     (  Literal "players"
     :> Capture "nickname" Nickname
     :> Literal "profiles"
-    :> Capture "handle" Handle
-    :> End)
+    :> Capture "handle" Handle)
     NoQuery
+    (NoContent :! BadRequest BadContent)
 
 type RouteParams = { nickname :: Nickname, handle :: Handle }
 

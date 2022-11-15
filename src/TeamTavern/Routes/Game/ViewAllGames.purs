@@ -1,16 +1,16 @@
-module TeamTavern.Routes.ViewAllGames where
+module TeamTavern.Routes.Game.ViewAllGames where
 
 import Jarilo.Method (Get)
-import Jarilo.Path (type (:>), End)
+import Jarilo.Path (Literal)
 import Jarilo.Query (NoQuery)
+import Jarilo.Response (Ok)
 import Jarilo.Route (FullRoute)
-import Jarilo.Segment (Literal)
 
 type ViewAllGames = FullRoute
     Get
-    (  Literal "games"
-    :> End)
+    (  Literal "games")
     NoQuery
+    (Ok OkContent)
 
 type OkGameContent =
     { title :: String

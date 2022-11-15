@@ -28,7 +28,7 @@ import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigate, navigate_)
 import TeamTavern.Client.Snippets.ArticledNoun (indefiniteNoun)
 import TeamTavern.Client.Snippets.PreventMouseDefault (preventMouseDefault)
-import TeamTavern.Routes.ViewGame as ViewGame
+import TeamTavern.Routes.Game.ViewGame as ViewGame
 import Web.UIEvent.MouseEvent (MouseEvent)
 
 type Input = { handle :: String }

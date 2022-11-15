@@ -15,7 +15,7 @@ import Prim.Row (class Lacks)
 import Record.Builder (Builder)
 import Record.Builder as Builder
 import Yoga.JSON (writeJSON)
-import TeamTavern.Routes.CreateAlert as CreateAlert
+import TeamTavern.Routes.Alert.CreateAlert as CreateAlert
 import TeamTavern.Routes.Shared.Organization as Organization
 import TeamTavern.Routes.Shared.Platform as Platform
 import TeamTavern.Routes.Shared.Size as Size

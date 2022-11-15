@@ -1,6 +1,17 @@
 module TeamTavern.Routes.All where
 
 import Jarilo.Junction (type (:<|>), type (:=))
+import TeamTavern.Routes.Boarding.Onboard (Onboard)
+import TeamTavern.Routes.Boarding.Preboard (Preboard)
+import TeamTavern.Routes.Alert.CreateAlert (CreateAlert)
+import TeamTavern.Routes.Alert.DeleteAlert (DeleteAlert)
+import TeamTavern.Routes.Game.ViewAllGames (ViewAllGames)
+import TeamTavern.Routes.Game.ViewGame (ViewGame)
+import TeamTavern.Routes.Player.DeletePlayer (DeletePlayer)
+import TeamTavern.Routes.Player.RegisterPlayer (RegisterPlayer)
+import TeamTavern.Routes.Player.UpdatePlayer (UpdatePlayer)
+import TeamTavern.Routes.Player.UpdatePlayerContacts (UpdatePlayerContacts)
+import TeamTavern.Routes.Player.ViewPlayer (ViewPlayer)
 import TeamTavern.Routes.Profile.AddPlayerProfile (AddPlayerProfile)
 import TeamTavern.Routes.Profile.AddTeamProfile (AddTeamProfile)
 import TeamTavern.Routes.Profile.UpdatePlayerProfile (UpdatePlayerProfile)
@@ -20,6 +31,17 @@ type SessionRoutes
     =    "startSession" := StartSession
     :<|> "endSession"   := EndSession
 
+type GameRoutes
+    =    "viewAllGames" := ViewAllGames
+    :<|> "viewGame"     := ViewGame
+
+type PlayerRoutes
+    =    "viewPlayer"     := ViewPlayer
+    :<|> "registerPlayer" := RegisterPlayer
+    :<|> "updatePlayer"   := UpdatePlayer
+    :<|> "deletePlayer"   := DeletePlayer
+    :<|> "updatePlayerContacts" := UpdatePlayerContacts
+
 type TeamRoutes
     =    "viewTeam"   := ViewTeam
     :<|> "createTeam" := CreateTeam
@@ -36,4 +58,12 @@ type ProfileRoutes
     :<|> "viewPlayerProfile"        := ViewPlayerProfile
     :<|> "viewTeamProfile"          := ViewTeamProfile
 
-type AllRoutes = SessionRoutes :<|> TeamRoutes :<|> ProfileRoutes
+type BoardRoutes
+    =    "onboard"  := Onboard
+    :<|> "preboard" := Preboard
+
+type AlertRoutes
+    =    "createAlert" := CreateAlert
+    :<|> "deleteAlert" := DeleteAlert
+
+type AllRoutes = SessionRoutes :<|> GameRoutes :<|> PlayerRoutes :<|> TeamRoutes :<|> ProfileRoutes :<|> BoardRoutes :<|> AlertRoutes

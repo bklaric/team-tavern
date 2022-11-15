@@ -22,7 +22,7 @@ import Prim.Row (class Lacks)
 import Record.Builder (Builder)
 import Record.Builder as Builder
 import Record.Extra (pick)
-import TeamTavern.Routes.Preboard (BadContent, RequestContent, OkContent)
+import TeamTavern.Routes.Boarding.Preboard (BadContent, RequestContent, OkContent)
 import TeamTavern.Routes.Shared.Platform (Platform(..))
 import TeamTavern.Server.Architecture.Deployment (Deployment)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo, Cookies, setCookieHeaderFull)

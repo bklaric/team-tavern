@@ -1,18 +1,18 @@
 module TeamTavern.Routes.Team.UpdateTeam where
 
 import Jarilo.Method (Put)
-import Jarilo.Path (type (:>), End)
+import Jarilo.Path (type (:>), Capture, Literal)
 import Jarilo.Query (NoQuery)
+import Jarilo.Response (type (:!), BadRequest, Ok)
 import Jarilo.Route (FullRoute)
-import Jarilo.Segment (Capture, Literal)
 import TeamTavern.Routes.Team.CreateTeam as CreateTeam
 
 type UpdateTeam = FullRoute
-    Put
+    (Put RequestContent)
     (  Literal "teams"
-    :> Capture "handle" String
-    :> End)
+    :> Capture "handle" String)
     NoQuery
+    (Ok OkContent :! BadRequest BadContent)
 
 type RequestContent = CreateTeam.RequestContent
 

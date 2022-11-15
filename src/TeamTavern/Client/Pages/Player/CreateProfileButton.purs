@@ -18,8 +18,8 @@ import TeamTavern.Client.Components.Popover (popover, popoverButtonCaret, popove
 import TeamTavern.Client.Pages.Player.CreateProfile (createProfile)
 import TeamTavern.Client.Script.Request (get)
 import TeamTavern.Client.Snippets.Class as HS
-import TeamTavern.Routes.ViewAllGames as ViewAllGames
-import TeamTavern.Routes.ViewPlayer as ViewPlayer
+import TeamTavern.Routes.Game.ViewAllGames as ViewAllGames
+import TeamTavern.Routes.Player.ViewPlayer as ViewPlayer
 
 type Input = ViewPlayer.OkContent
 

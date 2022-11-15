@@ -6,7 +6,7 @@ import Async (Async, alwaysRight)
 import Data.Variant (match)
 import Perun.Response (Response, internalServerError__, ok_)
 import Yoga.JSON (writeJSON)
-import TeamTavern.Routes.ViewAllGames as ViewAllGame
+import TeamTavern.Routes.Game.ViewAllGames as ViewAllGame
 import TeamTavern.Server.Game.ViewAll.LogError (ViewAllError)
 
 errorResponse :: ViewAllError -> Response

@@ -2,16 +2,16 @@ module TeamTavern.Routes.Player.RegisterPlayer where
 
 import Data.Variant (Variant)
 import Jarilo.Method (Post)
-import Jarilo.Path (type (:>), End)
+import Jarilo.Path (Literal)
 import Jarilo.Query (NoQuery)
+import Jarilo.Response (type (:!), BadRequest, Ok)
 import Jarilo.Route (FullRoute)
-import Jarilo.Segment (Literal)
 
 type RegisterPlayer = FullRoute
-    Post
-    (  Literal "players"
-    :> End)
+    (Post RequestContent)
+    (Literal "players")
     NoQuery
+    (Ok OkContent :! BadRequest BadContent)
 
 type RequestContent =
     { nickname :: String

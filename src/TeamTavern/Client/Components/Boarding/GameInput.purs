@@ -15,8 +15,8 @@ import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import Yoga.JSON.Async as Json
 import TeamTavern.Client.Components.RadioCard (radioCard, radioCards)
-import TeamTavern.Routes.ViewAllGames as ViewAllGames
-import TeamTavern.Routes.ViewGame as ViewGame
+import TeamTavern.Routes.Game.ViewAllGames as ViewAllGames
+import TeamTavern.Routes.Game.ViewGame as ViewGame
 
 type Input = Maybe ViewGame.OkContent
 

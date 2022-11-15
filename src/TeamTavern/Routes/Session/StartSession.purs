@@ -2,16 +2,16 @@ module TeamTavern.Routes.Session.StartSession where
 
 import Data.Variant (Variant)
 import Jarilo.Method (Post)
-import Jarilo.Path (type (:>), End)
+import Jarilo.Path (Literal)
 import Jarilo.Query (NoQuery)
+import Jarilo.Response (type (:!), BadRequest, NoContent)
 import Jarilo.Route (FullRoute)
-import Jarilo.Segment (Literal)
 
 type StartSession = FullRoute
-    Post
-    (  Literal "sessions"
-    :> End)
+    (Post RequestContent)
+    (Literal "sessions")
     NoQuery
+    (NoContent :! BadRequest BadContent)
 
 type RequestContent =
     { nickname :: String

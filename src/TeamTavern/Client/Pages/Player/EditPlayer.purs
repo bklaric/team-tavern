@@ -14,7 +14,7 @@ import TeamTavern.Client.Components.Player.PlayerFormInput (playerFormInput)
 import TeamTavern.Client.Components.Player.PlayerFormInput as EnterPlayerDetails
 import TeamTavern.Client.Script.Navigate (hardNavigate)
 import TeamTavern.Client.Script.Request (putNoContent')
-import TeamTavern.Routes.ViewPlayer as ViewPlayer
+import TeamTavern.Routes.Player.ViewPlayer as ViewPlayer
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 

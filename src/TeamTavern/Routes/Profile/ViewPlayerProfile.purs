@@ -1,10 +1,10 @@
 module TeamTavern.Routes.Profile.ViewPlayerProfile where
 
 import Jarilo.Method (Get)
-import Jarilo.Path (type (:>), End)
+import Jarilo.Path (type (:>), Capture, Literal)
 import Jarilo.Query (Mandatory)
+import Jarilo.Response (Ok)
 import Jarilo.Route (FullRoute)
-import Jarilo.Segment (Capture, Literal)
 import TeamTavern.Routes.Shared.GameBase (GameBaseRow)
 import TeamTavern.Routes.Shared.PlayerBase (PlayerBaseRow)
 import TeamTavern.Routes.Shared.PlayerContacts (PlayerContactsRow)
@@ -17,9 +17,9 @@ type ViewPlayerProfile = FullRoute
     (  Literal "players"
     :> Capture "nickname" String
     :> Literal "profiles"
-    :> Capture "handle" String
-    :> End)
+    :> Capture "handle" String)
     (Mandatory "timezone" String)
+    (Ok OkContent)
 
 type RouteParams =
     { nickname :: String

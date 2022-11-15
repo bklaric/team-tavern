@@ -1,17 +1,22 @@
 module TeamTavern.Routes.Profile.UpdatePlayerProfile where
 
 import Jarilo.Method (Put)
-import Jarilo.Path (type (:>), End)
+import Jarilo.Path (type (:>), Capture, Literal)
 import Jarilo.Query (NoQuery)
+import Jarilo.Response (type (:!), BadRequest, NoContent)
 import Jarilo.Route (FullRoute)
-import Jarilo.Segment (Capture, Literal)
+import TeamTavern.Routes.Profile.AddPlayerProfile as AddPlayerProfile
 import TeamTavern.Routes.Shared.Types (Handle, Nickname)
 
 type UpdatePlayerProfile = FullRoute
-    Put
+    (Put RequestContent)
     (  Literal "players"
     :> Capture "nickname" Nickname
     :> Literal "profiles"
-    :> Capture "handle" Handle
-    :> End)
+    :> Capture "handle" Handle)
     NoQuery
+    (NoContent :! BadRequest BadContent)
+
+type RequestContent = AddPlayerProfile.RequestContent
+
+type BadContent = AddPlayerProfile.BadContent

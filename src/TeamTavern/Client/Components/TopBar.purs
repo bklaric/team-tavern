@@ -25,7 +25,7 @@ import TeamTavern.Client.Script.Cookie (getPlayerNickname)
 import TeamTavern.Client.Script.Navigate (navigateWithEvent_)
 import TeamTavern.Client.Script.Request (get)
 import TeamTavern.Client.Snippets.Class as HS
-import TeamTavern.Routes.ViewAllGames as ViewAllGames
+import TeamTavern.Routes.Game.ViewAllGames as ViewAllGames
 import Type.Proxy (Proxy(..))
 import Web.Event.Event (stopPropagation)
 import Web.Event.Event as E

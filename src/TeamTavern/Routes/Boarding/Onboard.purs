@@ -1,24 +1,25 @@
-module TeamTavern.Routes.Onboard where
+module TeamTavern.Routes.Boarding.Onboard where
+
+import TeamTavern.Routes.Shared.TeamContacts
 
 import Data.Maybe (Maybe)
 import Data.Variant (Variant)
 import Jarilo.Method (Post)
-import Jarilo.Path (type (:>), End)
+import Jarilo.Path (Literal)
 import Jarilo.Query (NoQuery)
+import Jarilo.Response (type (:!), BadRequest, Ok)
 import Jarilo.Route (FullRoute)
-import Jarilo.Segment (Literal)
 import TeamTavern.Routes.Shared.Organization (OrganizationNW)
 import TeamTavern.Routes.Shared.Platform (Platform)
 import TeamTavern.Routes.Shared.PlayerContacts (PlayerContacts, PlayerContactsError)
 import TeamTavern.Routes.Shared.Size (Size)
-import TeamTavern.Routes.Shared.TeamContacts
 import Type.Function (type ($))
 
 type Onboard = FullRoute
-    Post
-    (  Literal "onboarding"
-    :> End)
+    (Post RequestContent)
+    (  Literal "onboarding")
     NoQuery
+    (Ok OkContent :! BadRequest BadContent)
 
 type PlayerRequestContent =
     { birthday :: Maybe String
