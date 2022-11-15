@@ -9,8 +9,6 @@ import Type.Proxy (Proxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Ads (stickyLeaderboards)
-import TeamTavern.Client.Pages.Competitions (competitions)
-import TeamTavern.Client.Pages.Competitions as Competitions
 import TeamTavern.Client.Pages.Profiles (profiles)
 import TeamTavern.Client.Pages.Profiles as Profiles
 import TeamTavern.Client.Pages.Profiles.GameHeader (ProfileTab(..), Tab(..), gameHeader)
@@ -30,7 +28,6 @@ type Slot = H.Slot (Const Void) Void Unit
 
 type ChildSlots =
     ( profiles :: Profiles.Slot
-    , competitions :: Competitions.Slot
     )
 
 render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
@@ -40,7 +37,6 @@ render (Loaded { game, tab }) = HH.div_ $
     , case tab of
         Profiles Players -> profiles { game, tab: Players }
         Profiles Teams -> profiles { game, tab: Teams }
-        Competitions -> competitions { game }
     ]
     <> stickyLeaderboards
 render Error = HH.p_ [ HH.text "There has been an error loading the game. Please try again later." ]

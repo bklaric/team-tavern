@@ -38,7 +38,6 @@ import TeamTavern.Server.Architecture.Deployment (Deployment)
 import TeamTavern.Server.Architecture.Deployment as Deployment
 import TeamTavern.Server.Boarding.Onboard as Onboard
 import TeamTavern.Server.Boarding.Preboard as Preboard
-import TeamTavern.Server.Competition.ViewCompetitions (viewCompetitions)
 import TeamTavern.Server.Game.View (view) as Game
 import TeamTavern.Server.Game.ViewAll (viewAll) as Game
 import TeamTavern.Server.Infrastructure.Log (logStamped, logt)
@@ -205,8 +204,6 @@ handleRequest deployment pool method url cookies body =
             Alert.createAlert pool body
         , deleteAlert:
             Alert.deleteAlert pool
-        , viewCompetitions: \{ handle } ->
-            viewCompetitions pool handle
         }
         <#> (\response -> response { headers = response.headers <> MultiMap.fromFoldable
                 [ Tuple "Access-Control-Allow-Origin" $ NEL.singleton "http://localhost:1337"

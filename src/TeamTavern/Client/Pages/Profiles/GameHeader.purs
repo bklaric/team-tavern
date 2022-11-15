@@ -9,7 +9,7 @@ import TeamTavern.Client.Snippets.Class as HS
 
 data ProfileTab = Players | Teams
 
-data Tab = Profiles ProfileTab | Competitions
+data Tab = Profiles ProfileTab
 
 type Input = { title :: String, shortTitle :: String, tab :: Tab }
 
@@ -21,14 +21,12 @@ gameHeader { title, shortTitle, tab } = HH.div_ $
                 case tab of
                 Profiles Players -> [ HH.i [ HS.class_ "fas fa-user content-heading-icon" ] [], HH.text $ title <> " players" ]
                 Profiles Teams -> [ HH.i [ HS.class_ "fas fa-users content-heading-icon" ] [], HH.text $ title <> " teams" ]
-                Competitions -> [ HH.i [ HS.class_ "fas fa-trophy content-heading-icon" ] [], HH.text $ title <> " competitions" ]
             ]
         ]
     , contentDescription
         case tab of
         Profiles Players -> "Find " <> shortTitle <> " players looking for a team. Create your own player profile and let everyone know you're looking to team up."
         Profiles Teams -> "Find  " <> shortTitle <> " teams looking for players. Create your own team profile and recruit new members for your team."
-        Competitions -> "Apply for open " <> shortTitle <> " leagues and tournaments and compete for prizes and boasting rights."
     ]
     <>
     -- if shortTitle == "Dota 2"
