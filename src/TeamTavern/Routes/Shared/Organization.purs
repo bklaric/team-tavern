@@ -10,7 +10,7 @@ import Data.List.NonEmpty as NonEmptyList
 import Data.Maybe (Maybe(..))
 import Data.Variant (Variant, inj, prj)
 import Foreign (ForeignError(..), readString, unsafeToForeign)
-import Jarilo.FromComponent (class FromComponent)
+import Jarilo.Shared.Component (class Component)
 import Prim.RowList (class RowToList)
 import Type.Proxy (Proxy(..))
 import Yoga.JSON (class ReadForeign, class ReadForeignVariant, class WriteForeign, readVariantImpl, writeImpl)
@@ -49,8 +49,9 @@ instance readForeignOrganization :: ReadForeign Organization where
 instance writeForeignOrganization :: WriteForeign Organization where
     writeImpl organization = unsafeToForeign $ toString organization
 
-instance fromComponentOrganization :: FromComponent Organization where
-    fromComponent organization = fromString' organization
+instance fromComponentOrganization :: Component Organization where
+    fromComponent = fromString'
+    toComponent = toString
 
 -- Organization with name.
 

@@ -8,7 +8,7 @@ import Data.Either (Either, note)
 import Data.List.NonEmpty as NonEmptyList
 import Data.Maybe (Maybe(..))
 import Foreign (ForeignError(..), readString)
-import Jarilo.FromComponent (class FromComponent)
+import Jarilo.Shared.Component (class Component)
 import Yoga.JSON (class ReadForeign, class WriteForeign, writeImpl)
 
 data Size = Party | Community
@@ -35,5 +35,6 @@ instance readForeignSize :: ReadForeign Size where
 instance writeForeignSize :: WriteForeign Size where
     writeImpl size = writeImpl $ toString size
 
-instance fromComponentSize :: FromComponent Size where
-    fromComponent size = fromString' size
+instance fromComponentSize :: Component Size where
+    fromComponent = fromString'
+    toComponent = toString

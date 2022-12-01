@@ -7,7 +7,7 @@ import Data.Show.Generic (genericShow)
 import Data.Int as Int
 import Data.Maybe (Maybe)
 import Data.Newtype (class Newtype, unwrap)
-import Jarilo.FromComponent (class FromComponent)
+import Jarilo.Shared.Component (class Component)
 
 newtype Id = Id Int
 
@@ -21,7 +21,7 @@ derive newtype instance eqId :: Eq Id
 
 derive newtype instance ordId :: Ord Id
 
-derive newtype instance fromComponentId :: FromComponent Id
+derive newtype instance fromComponentId :: Component Id
 
 fromString :: String -> Maybe Id
 fromString id = Int.fromString id <#> Id

@@ -102,6 +102,11 @@ attempt
     -> (forall voidLeft. Async voidLeft (Either left right))
 attempt = alwaysRight Left Right
 
+giveUp :: forall left right. Async left (Either left right) -> Async left right
+giveUp async = async >>= case _ of
+    Left left' -> left left'
+    Right right' -> pure right'
+
 note :: forall right left. left -> Maybe right -> Async left right
 note left' maybe = maybe # Either.note left' # fromEither
 

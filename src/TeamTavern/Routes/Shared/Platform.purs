@@ -10,7 +10,7 @@ import Data.Show.Generic (genericShow)
 import Data.List.NonEmpty as NonEmptyList
 import Data.Maybe (Maybe(..))
 import Foreign (ForeignError(..), readString)
-import Jarilo.FromComponent (class FromComponent)
+import Jarilo.Shared.Component (class Component)
 import Yoga.JSON (class ReadForeign, class WriteForeign, writeImpl)
 
 data Platform = Steam | Riot | BattleNet | Origin | Ubisoft | PlayStation | Xbox | Switch
@@ -66,7 +66,8 @@ instance readForeignPlatform :: ReadForeign Platform where
 instance writeForeignPlatform :: WriteForeign Platform where
     writeImpl platform = writeImpl $ toString platform
 
-instance fromComponentPlatform :: FromComponent Platform where
-    fromComponent platform = fromString' platform
+instance fromComponentPlatform :: Component Platform where
+    fromComponent = fromString'
+    toComponent = toString
 
 type Platforms = { head :: Platform, tail :: Array Platform }

@@ -8,7 +8,7 @@ import Data.String (trim)
 import Data.Validated (Validated)
 import Data.Validated.Label as Validated
 import Data.Variant (Variant)
-import Jarilo.FromComponent (class FromComponent)
+import Jarilo.Shared.Component (class Component)
 import Type.Proxy (Proxy(..))
 import Wrapped.String (Empty, NotAsciiAlphaNumSpecial, TooLong, empty, notAsciiAlphaNumSpecial, tooLong)
 import Wrapped.Validated as Wrapped
@@ -19,7 +19,7 @@ derive instance newtypeNickname :: Newtype Nickname _
 
 derive newtype instance showNickname :: Show Nickname
 
-derive newtype instance fromComponentNickname :: FromComponent Nickname
+derive newtype instance fromComponentNickname :: Component Nickname
 
 type NicknameError = Variant
     ( empty :: Empty

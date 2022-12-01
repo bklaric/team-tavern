@@ -19,7 +19,7 @@ create
     -> Effect HttpServer
 create requestErrorHandler responseErrorHandler handler =
     Node.create requestErrorHandler responseErrorHandler \request response ->
-        handler (readRequest request) (respond response)
+        readRequest request \request' -> handler request' (respond response)
 
 create_ :: RequestHandler -> Effect HttpServer
 create_ handler = create (const mempty) (const mempty) handler

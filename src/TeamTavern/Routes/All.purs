@@ -66,4 +66,11 @@ type AlertRoutes
     =    "createAlert" := CreateAlert
     :<|> "deleteAlert" := DeleteAlert
 
-type AllRoutes = SessionRoutes :<|> GameRoutes :<|> PlayerRoutes :<|> TeamRoutes :<|> ProfileRoutes :<|> BoardRoutes :<|> AlertRoutes
+type AllRoutes
+    =    SessionRoutes
+    -- :<|> GameRoutes
+    -- :<|> PlayerRoutes
+    -- :<|> TeamRoutes
+    -- :<|> ProfileRoutes
+    -- :<|> BoardRoutes
+    -- :<|> AlertRoutes
