@@ -3,10 +3,8 @@ module Jarilo.Fetch where
 import Prelude
 
 import Async (Async, attempt, giveUp, left)
-import Async as Async
-import Browser.Async.Fetch (body, credentials, method)
 import Browser.Async.Fetch as Fetch
-import Browser.Async.Fetch.Response (status, text)
+import Browser.Async.Fetch.Response (text)
 import Browser.Fetch (Credentials)
 import Browser.Fetch.Response (status)
 import Browser.Fetch.Response as FetchRes
@@ -21,189 +19,270 @@ import Data.String (joinWith)
 import Data.Symbol (class IsSymbol, reflectSymbol)
 import Data.Tuple (Tuple(..))
 import Data.Variant (Variant, inj)
-import Effect (Effect)
-import Effect.Class.Console (log)
-import Error (Error)
 import Error.Class (message)
-import Jarilo.Method (Delete, Get, Head, Method, Options, Patch, Post, Put)
-import Jarilo.Path (type (:>), Capture, Literal, Path)
-import Jarilo.Query (type (:?), Mandatory, Many, NoQuery, Optional, Query, QueryChain, Rest)
-import Jarilo.Response (type (:!), BadRequest, BadRequest_, Internal, Internal_, NoContent, Ok, Ok_, Response)
-import Jarilo.Route (FullRoute, Route)
 import Jarilo.Shared.Component (class Component, toComponent)
-import Prim.Row (class Cons, class Lacks, class Nub, class Union)
+import Jarilo.Types (BadRequest, Body, Capture, Delete, Forbidden, FullRequest, FullResponse, FullRoute, Get, Head, Internal, JsonBody, Literal, Mandatory, Many, Method, NoBody, NoContent, NoQuery, NotAuthorized, Ok, Optional, Options, Patch, Path, PathChain, Post, Put, Query, QueryChain, Response, ResponseChain, Rest, Route, Status)
+import Prim.Row (class Cons, class Lacks, class Nub)
 import Prim.RowList (class RowToList)
-import Record (get, insert, merge)
-import Record.Builder (Builder, build)
+import Record (get)
+import Record.Builder (Builder, buildFromScratch)
 import Record.Builder as Builder
-import Test.QuickCheck (assertEquals)
 import Type.Proxy (Proxy(..))
-import Undefined (undefined)
 import Yoga.JSON (class ReadForeign, class WriteForeign, writeJSON)
 import Yoga.JSON.Async as JsonAsync
 
--- fetch proxy
--- Option.Record
--- ( pathParameters :: { pathParams } -- from proxy
--- , queryParameters :: { queryParams } -- from proxy
--- , body :: { body } -- from proxy
--- )
--- ( host :: String -- e.g. https://www.teamtavern.net
--- , pathPrefix :: Proxy pathPrefix
--- , credentials :: Credentials
--- )
+class FetchMethod (method :: Method) where
+    fetchMethod :: Proxy method -> Options.Options Fetch.FetchOptions
 
-class RequestUrlPath (path :: Path) parameters | path -> parameters where
-    requestUrlPath :: Proxy path -> Record parameters -> String
+instance FetchMethod Options where
+    fetchMethod _ = Fetch.method := Http.OPTIONS
 
-instance IsSymbol name => RequestUrlPath (Literal name) parameters where
-    requestUrlPath _ _ = "/" <> reflectSymbol (Proxy :: _ name)
+instance FetchMethod Head where
+    fetchMethod _ = Fetch.method := Http.HEAD
 
-instance (IsSymbol name, Component value, Cons name value parameters' parameters) => RequestUrlPath (Capture name value) parameters where
-    requestUrlPath _ parameters = "/" <> ((toComponent :: value -> String) $ get (Proxy :: _ name) parameters)
+instance FetchMethod Get where
+    fetchMethod _ = Fetch.method := Http.GET
 
-instance (RequestUrlPath leftPath parameters, RequestUrlPath rightPath parameters) => RequestUrlPath (leftPath :> rightPath) parameters where
-    requestUrlPath _ parameters = requestUrlPath (Proxy :: _ leftPath) parameters <> requestUrlPath (Proxy :: _ rightPath) parameters
+instance FetchMethod Post where
+    fetchMethod _ = Fetch.method := Http.POST
+
+instance FetchMethod Put where
+    fetchMethod _ = Fetch.method := Http.PUT
+
+instance FetchMethod Patch where
+    fetchMethod _ = Fetch.method := Http.PATCH
+
+instance FetchMethod Delete where
+    fetchMethod _ = Fetch.method := Http.DELETE
 
 
 
-class RequestUrlQuery (query :: Query) parameters | query -> parameters where
-    requestUrlQuery :: Proxy query -> Record parameters -> Maybe String
+class FetchPath (path :: Path) parameters | path -> parameters where
+    fetchPath :: Proxy path -> Record parameters -> String
 
-instance RequestUrlQuery NoQuery parameters where
-    requestUrlQuery _ _ = Nothing
+instance (IsSymbol name) =>
+    FetchPath (Literal name) parameters where
+    fetchPath _ _ = "/" <> reflectSymbol (Proxy :: _ name)
 
-instance (IsSymbol name, Component value, Cons name (Maybe value) parameters' parameters) => RequestUrlQuery (Optional name value) parameters where
-    requestUrlQuery _ parameters = get (Proxy :: _ name) parameters <#> toComponent <#> \value -> reflectSymbol (Proxy :: _ name) <> "=" <> value
+instance (IsSymbol name, Component value, Cons name value parameters' parameters) =>
+    FetchPath (Capture name value) parameters where
+    fetchPath _ parameters = "/" <> ((toComponent :: value -> String) $ get (Proxy :: _ name) parameters)
 
-instance (IsSymbol name, Component value, Cons name value parameters' parameters) => RequestUrlQuery (Mandatory name value) parameters where
-    requestUrlQuery _ parameters = get (Proxy :: _ name) parameters # toComponent # \value -> Just $ reflectSymbol (Proxy :: _ name) <> "=" <> value
+instance (FetchPath leftPath parameters, FetchPath rightPath parameters) =>
+    FetchPath (PathChain leftPath rightPath) parameters where
+    fetchPath _ parameters = fetchPath (Proxy :: _ leftPath) parameters <> fetchPath (Proxy :: _ rightPath) parameters
 
-instance (IsSymbol name, Component value, Cons name (Array value) parameters' parameters) => RequestUrlQuery (Many name value) parameters where
-    requestUrlQuery _ parameters = get (Proxy :: _ name) parameters <#> toComponent <#> (\value -> reflectSymbol (Proxy :: _ name) <> "=" <> value) # joinWith "&" # Just
 
-instance (IsSymbol name,  Component name', Component value, Cons name (Array (Tuple name' value)) parameters' parameters) => RequestUrlQuery (Rest name) parameters where
-    requestUrlQuery _ parameters = get (Proxy :: _ name) parameters <#> (\(Tuple name value) -> toComponent name <> "=" <> toComponent value) # joinWith "&" # Just
 
-instance (RequestUrlQuery leftQuery parameters, RequestUrlQuery rightQuery parameters) => RequestUrlQuery (leftQuery :? rightQuery) parameters where
-    requestUrlQuery _ parameters =
-        case requestUrlQuery (Proxy :: _ leftQuery) parameters, requestUrlQuery (Proxy :: _ rightQuery) parameters of
+class FetchQuery (query :: Query) parameters | query -> parameters where
+    fetchQuery' :: Proxy query -> Record parameters -> Maybe String
+
+instance FetchQuery NoQuery parameters where
+    fetchQuery' _ _ = Nothing
+
+instance (IsSymbol name, Component value, Cons name (Maybe value) parameters' parameters) =>
+    FetchQuery (Optional name value) parameters where
+    fetchQuery' _ parameters = get (Proxy :: _ name) parameters <#> toComponent <#> \value -> reflectSymbol (Proxy :: _ name) <> "=" <> value
+
+instance (IsSymbol name, Component value, Cons name value parameters' parameters) =>
+    FetchQuery (Mandatory name value) parameters where
+    fetchQuery' _ parameters = get (Proxy :: _ name) parameters # toComponent # \value -> Just $ reflectSymbol (Proxy :: _ name) <> "=" <> value
+
+instance (IsSymbol name, Component value, Cons name (Array value) parameters' parameters) =>
+    FetchQuery (Many name value) parameters where
+    fetchQuery' _ parameters = get (Proxy :: _ name) parameters <#> toComponent <#> (\value -> reflectSymbol (Proxy :: _ name) <> "=" <> value) # joinWith "&" # Just
+
+instance (IsSymbol name,  Component name', Component value, Cons name (Array (Tuple name' value)) parameters' parameters) =>
+    FetchQuery (Rest name) parameters where
+    fetchQuery' _ parameters = get (Proxy :: _ name) parameters <#> (\(Tuple name value) -> toComponent name <> "=" <> toComponent value) # joinWith "&" # Just
+
+instance (FetchQuery leftQuery parameters, FetchQuery rightQuery parameters) =>
+    FetchQuery (QueryChain leftQuery rightQuery) parameters where
+    fetchQuery' _ parameters =
+        case fetchQuery' (Proxy :: _ leftQuery) parameters, fetchQuery' (Proxy :: _ rightQuery) parameters of
         Nothing, Nothing -> Nothing
         Just left, Nothing -> Just left
         Nothing, Just right -> Just right
         Just left, Just right -> Just $ left <> "&" <> right
 
-requestUrlQuery' :: forall parameters query. RequestUrlQuery query parameters => Proxy query -> Record parameters -> String
-requestUrlQuery' proxy parameters = maybe "" ("?" <> _) (requestUrlQuery proxy parameters)
+fetchQuery :: forall parameters query. FetchQuery query parameters => Proxy query -> Record parameters -> String
+fetchQuery proxy parameters = maybe "" ("?" <> _) (fetchQuery' proxy parameters)
 
 
 
-requestUrl :: forall pathParameters queryParameters path query.
-    RequestUrlPath path pathParameters => RequestUrlQuery query queryParameters =>
-    Proxy path -> Proxy query -> Record pathParameters -> Record queryParameters -> String
-requestUrl pathProxy queryProxy pathParameters queryParameters = requestUrlPath pathProxy pathParameters <> requestUrlQuery' queryProxy queryParameters
+fetchUrl :: forall pathParameters queryParameters path query.
+    FetchPath path pathParameters => FetchQuery query queryParameters =>
+    Maybe String -> Maybe String -> Proxy path -> Proxy query -> Record pathParameters -> Record queryParameters -> String
+fetchUrl origin' pathPrefix' pathProxy queryProxy pathParameters queryParameters = let
+        origin = maybe "" identity origin'
+        pathPrefix = maybe "" identity pathPrefix'
+        path = fetchPath pathProxy pathParameters
+        query = fetchQuery queryProxy queryParameters
+        in
+        origin <> pathPrefix <> path <> query
 
 
 
-class RequestMethod (method :: Method) body | method -> body where
-    requestMethod :: Proxy method -> body -> Options.Options Fetch.FetchOptions
+class FetchRequestBody (body :: Body) realBody | body -> realBody where
+    fetchRequestBody :: Proxy body -> realBody -> Options.Options Fetch.FetchOptions
 
-instance RequestMethod Get body where
-    requestMethod _ _ = method := Http.GET
+instance FetchRequestBody NoBody realBody where
+    fetchRequestBody _ _ = mempty
 
-instance RequestMethod Head body where
-    requestMethod _ _ = method := Http.HEAD
-
-instance RequestMethod Options body where
-    requestMethod _ _ = method := Http.OPTIONS
-
-instance RequestMethod Delete body where
-    requestMethod _ _ = method := Http.DELETE
-
-instance WriteForeign body => RequestMethod (Post body) body where
-    requestMethod _ body' = method := Http.POST <> body := writeJSON body'
-
-instance WriteForeign body => RequestMethod (Put body) body where
-    requestMethod _ body' = method := Http.PUT <> body := writeJSON body'
-
-instance WriteForeign body => RequestMethod (Patch body) body where
-    requestMethod _ body' = method := Http.PATCH <> body := writeJSON body'
+instance (WriteForeign realBody) => FetchRequestBody (JsonBody realBody) realBody where
+    fetchRequestBody _ realBody = Fetch.body := writeJSON realBody
 
 
 
-class ReadResponse (response :: Response) start end result | response -> start end result where
-    readResponse
+class FetchStatusResult (status :: Status) realBody results | status -> realBody results where
+    createResult :: Proxy status -> (realBody -> Variant results)
+
+instance FetchStatusResult Ok realBody (ok :: realBody | results) where
+    createResult _ = inj (Proxy :: _ "ok")
+
+instance FetchStatusResult NoContent realBody (noContent :: realBody | results) where
+    createResult _ = inj (Proxy :: _ "noContent")
+
+instance FetchStatusResult BadRequest realBody (badRequest :: realBody | results) where
+    createResult _ = inj (Proxy :: _ "badRequest")
+
+instance FetchStatusResult NotAuthorized realBody (notAuthorized :: realBody | results) where
+    createResult _ = inj (Proxy :: _ "notAuthorized")
+
+instance FetchStatusResult Forbidden realBody (forbidden :: realBody | results) where
+    createResult _ = inj (Proxy :: _ "forbidden")
+
+instance FetchStatusResult Internal realBody (internal :: realBody | results) where
+    createResult _ = inj (Proxy :: _ "internal")
+
+
+
+class FetchStatusError (status :: Status) startErrors endErrors | status -> startErrors endErrors where
+    createError :: Proxy status -> (String -> Builder (Record startErrors) (Record endErrors))
+
+instance (Lacks "ok" startErrors) =>
+    FetchStatusError Ok startErrors (ok :: String | startErrors) where
+    createError _ = Builder.insert (Proxy :: _ "ok")
+
+instance (Lacks "noContent" startErrors) =>
+    FetchStatusError NoContent startErrors (noContent :: String | startErrors) where
+    createError _ = Builder.insert (Proxy :: _ "noContent")
+
+instance (Lacks "badRequest" startErrors) =>
+    FetchStatusError BadRequest startErrors (badRequest :: String | startErrors) where
+    createError _ = Builder.insert (Proxy :: _ "badRequest")
+
+instance (Lacks "notAuthorized" startErrors) =>
+    FetchStatusError NotAuthorized startErrors (notAuthorized :: String | startErrors) where
+    createError _ = Builder.insert (Proxy :: _ "notAuthorized")
+
+instance (Lacks "forbidden" startErrors) =>
+    FetchStatusError Forbidden startErrors (forbidden :: String | startErrors) where
+    createError _ = Builder.insert (Proxy :: _ "forbidden")
+
+instance (Lacks "internal" startErrors) =>
+    FetchStatusError Internal startErrors (internal :: String | startErrors) where
+    createError _ = Builder.insert (Proxy :: _ "internal")
+
+
+
+fetchStatus'
+    :: forall status startErrors endErrors
+    .  FetchStatusError status startErrors endErrors
+    => Proxy status
+    -> Int
+    -> FetchRes.Response
+    -> Async (Builder (Record startErrors) (Record endErrors)) Unit
+fetchStatus' proxy expected response =
+    if status response == expected
+    then pure unit
+    else left $ createError proxy $ "Wrong status. Expected " <> show expected <> ", got " <> (show $ status response)
+
+class FetchStatus (status :: Status) startErrors endErrors | status -> startErrors endErrors where
+    fetchStatus
+        :: Proxy status
+        -> FetchRes.Response
+        -> Async
+            (Builder (Record startErrors) (Record endErrors))
+            Unit
+
+instance (Lacks "ok" startErrors) =>
+    FetchStatus Ok startErrors (ok :: String | startErrors) where
+    fetchStatus proxy response = fetchStatus' proxy 200 response
+
+instance (Lacks "noContent" startErrors) =>
+    FetchStatus NoContent startErrors (noContent :: String | startErrors) where
+    fetchStatus proxy response = fetchStatus' proxy 204 response
+
+instance (Lacks "badRequest" startErrors) =>
+    FetchStatus BadRequest startErrors (badRequest :: String | startErrors) where
+    fetchStatus proxy response = fetchStatus' proxy 400 response
+
+instance (Lacks "internal" startErrors) =>
+    FetchStatus Internal startErrors (internal :: String | startErrors) where
+    fetchStatus proxy response = fetchStatus' proxy 500 response
+
+
+
+class FetchResponseBody (body :: Body) realBody | body -> realBody where
+    fetchResponseBody :: Proxy body -> FetchRes.Response -> Async String realBody
+
+instance FetchResponseBody NoBody Unit where
+    fetchResponseBody _ _ = pure unit
+
+instance (ReadForeign realBody) => FetchResponseBody (JsonBody realBody) realBody where
+    fetchResponseBody _ response = response # text >>= JsonAsync.readJSON # lmap show
+
+
+
+class FetchResponse (response :: Response) startErrors endErrors (realBody :: Type) results | response -> startErrors endErrors realBody results where
+    fetchResponse'
         :: Proxy response
         -> FetchRes.Response
-        -> Async (Builder (Record start) (Record end)) (Variant result)
+        -> Async
+            (Builder (Record startErrors) (Record endErrors))
+            (Variant results)
 
-instance (ReadForeign body, Lacks "ok" start) => ReadResponse (Ok body) start (ok :: String | start) (ok :: body | result) where
-    readResponse _ response =
-        case status response of
-        200 -> do
-            jsonBody <- response # text >>= JsonAsync.readJSON # lmap (\error -> Builder.insert (Proxy :: _ "ok") (show error))
-            pure $ inj (Proxy :: Proxy "ok") jsonBody
-        status' -> Async.left $ Builder.insert (Proxy :: _ "ok") $ "Wrong status " <> show status'
+instance
+    ( FetchStatusError status startErrors endErrors
+    , FetchStatusResult status realBody results
+    , FetchStatus status startErrors endErrors
+    , FetchResponseBody body realBody
+    ) =>
+    FetchResponse (FullResponse status body) startErrors endErrors realBody results where
+    fetchResponse' _ response = do
+        let statusProxy = (Proxy :: _ status)
+        fetchStatus statusProxy response
+        body <- fetchResponseBody (Proxy :: _ body) response # lmap (createError statusProxy)
+        pure $ createResult statusProxy body
 
-instance (ReadForeign body, Lacks "badRequest" start) => ReadResponse (BadRequest body) start (badRequest :: String | start) (badRequest :: body | result) where
-    readResponse _ response =
-        case status response of
-        400 -> do
-            jsonBody <- response # text >>= JsonAsync.readJSON # lmap (\error -> Builder.insert (Proxy :: _ "badRequest") (show error))
-            pure $ inj (Proxy :: Proxy "badRequest") jsonBody
-        status' -> Async.left $ Builder.insert (Proxy :: _ "badRequest") $ "Wrong status " <> show status'
-
-instance (ReadForeign body, Lacks "internal" start) => ReadResponse (Internal body) start (internal :: String | start) (internal :: body | result) where
-    readResponse _ response =
-        case status response of
-        500 -> do
-            jsonBody <- response # text >>= JsonAsync.readJSON # lmap (\error -> Builder.insert (Proxy :: _ "internal") (show error))
-            pure $ inj (Proxy :: Proxy "internal") jsonBody
-        status' -> Async.left $ Builder.insert (Proxy :: _ "internal") $ "Wrong status " <> show status'
-
-instance (Lacks "ok" start) => ReadResponse Ok_ start (ok :: String | start) (ok :: Unit | result) where
-    readResponse _ response =
-        case status response of
-        200 -> pure $ inj (Proxy :: Proxy "ok") unit
-        status' -> Async.left $ Builder.insert (Proxy :: _ "ok") $ "Wrong status " <> show status'
-
-instance (Lacks "noContent" start) => ReadResponse NoContent start (noContent :: String | start) (noContent :: Unit | result) where
-    readResponse _ response =
-        case status response of
-        204 -> pure $ inj (Proxy :: Proxy "noContent") unit
-        status' -> Async.left $ Builder.insert (Proxy :: _ "noContent") $ "Wrong status " <> show status'
-
-instance (Lacks "badRequest" start) => ReadResponse BadRequest_ start (badRequest :: String | start) (badRequest :: Unit | result) where
-    readResponse _ response =
-        case status response of
-        400 -> pure $ inj (Proxy :: Proxy "badRequest") unit
-        status' -> Async.left $ Builder.insert (Proxy :: _ "badRequest") $ "Wrong status " <> show status'
-
-instance (Lacks "internal" start) => ReadResponse Internal_ start (internal :: String | start) (internal :: Unit | result) where
-    readResponse _ response =
-        case status response of
-        500 -> pure $ inj (Proxy :: Proxy "internal") unit
-        status' -> Async.left $ Builder.insert (Proxy :: _ "internal") $ "Wrong status " <> show status'
-
-instance (ReadResponse leftResponse start mid result, ReadResponse rightResponse mid end result) => ReadResponse (leftResponse :! rightResponse) start end result where
-    readResponse _ response = let
+instance
+    ( FetchResponse leftResponse startErrors mid realBody results
+    , FetchResponse rightResponse mid endErrors realBody results
+    ) =>
+    FetchResponse (ResponseChain leftResponse rightResponse) startErrors endErrors realBody results where
+    fetchResponse' _ response = let
         leftProxy = (Proxy :: _ leftResponse)
         rightProxy = (Proxy :: _ rightResponse)
         in
-        readResponse leftProxy response # attempt >>= (case _ of
-            Left leftError -> readResponse rightProxy response # attempt <#> case _ of
+        fetchResponse' leftProxy response # attempt >>= (case _ of
+            Left leftError -> fetchResponse' rightProxy response # attempt <#> case _ of
                 Left rightError -> Left $ leftError >>> rightError
                 Right rightResult -> Right rightResult
             Right leftResult -> pure $ Right leftResult)
         # giveUp
 
-readResponse' :: forall response result errors errorsList.
-    ReadResponse response () errors result => Nub errors errors => RowToList errors errorsList => ShowRecordFields errorsList errors =>
-    Proxy response -> FetchRes.Response -> Async String (Variant result)
-readResponse' proxy response = readResponse proxy response # lmap (flip build {} >>> show)
+fetchResponse
+    :: forall realBody response results errors errorsList
+    .  FetchResponse response () errors realBody results
+    => Nub errors errors
+    => RowToList errors errorsList
+    => ShowRecordFields errorsList errors
+    => Proxy response
+    -> FetchRes.Response
+    -> Async String (Variant results)
+fetchResponse proxy response = fetchResponse' proxy response # lmap (buildFromScratch >>> show)
 
-a ∷ ∀ (r11077 ∷ Row Type). Variant ( internal ∷ Unit | r11077 )
-a = inj (Proxy :: Proxy "internal") unit
 
 
 type FetchOptions = { origin :: Maybe String, pathPrefix :: Maybe String, credentials :: Maybe Credentials }
@@ -213,14 +292,29 @@ defaultOptions = { origin: Nothing, pathPrefix: Nothing, credentials: Nothing }
 
 
 
-class Fetch (route :: Route) pathParameters queryParameters body responses | route -> pathParameters queryParameters body responses where
-    fetch :: Proxy route -> { pathParameters :: Record pathParameters, queryParameters :: Record queryParameters, body :: body } -> FetchOptions -> Async String (Variant responses)
+class Fetch (route :: Route) pathParams queryParams body responses | route -> pathParams queryParams body responses where
+    fetch
+        :: Proxy route
+        -> Record pathParams
+        -> Record queryParams
+        -> body
+        -> FetchOptions
+        -> Async String (Variant responses)
 
-instance (RequestMethod method body, RequestUrlPath path pathParameters, RequestUrlQuery query queryParameters, ReadResponse response () errors responses, Nub errors errors, RowToList errors errorsList, ShowRecordFields errorsList errors) => Fetch (FullRoute method path query response) pathParameters queryParameters body responses where
-    fetch _ { pathParameters, queryParameters, body } options = let
-        origin = maybe "" identity options.origin
-        pathPrefix = maybe "" identity options.pathPrefix
-        url = origin <> pathPrefix <> requestUrl (Proxy :: _ path) (Proxy :: _ query) pathParameters queryParameters
-        fetchOptions = requestMethod (Proxy :: _ method) body <> maybe mempty (credentials := _) options.credentials
+instance
+    ( FetchMethod method
+    , FetchPath path pathParams
+    , FetchQuery query queryParams
+    , FetchRequestBody requestBody realBody
+    , FetchResponse response () errors realBody responses
+    , Nub errors errors
+    , RowToList errors errorsList
+    , ShowRecordFields errorsList errors
+    ) => Fetch (FullRoute (FullRequest method path query requestBody) response) pathParams queryParams realBody responses where
+    fetch _ pathParams queryParams realBody { origin, pathPrefix, credentials } = let
+        method = fetchMethod (Proxy :: _ method)
+        url = fetchUrl origin pathPrefix (Proxy :: _ path) (Proxy :: _ query) pathParams queryParams
+        body = fetchRequestBody (Proxy :: _ requestBody) realBody
+        options = method <> body <> maybe mempty (Fetch.credentials := _) credentials
         in
-        Fetch.fetch url fetchOptions # lmap message >>= readResponse' (Proxy :: _ response)
+        Fetch.fetch url options # lmap message >>= fetchResponse (Proxy :: _ response)
