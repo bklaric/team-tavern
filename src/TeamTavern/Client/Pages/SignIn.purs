@@ -4,7 +4,6 @@ import Prelude
 
 import Async (Async)
 import Async as Async
-import Browser.Async.Fetch as Fetch
 import Data.Bifunctor (lmap)
 import Data.Const (Const)
 import Data.Maybe (Maybe(..))
@@ -13,12 +12,12 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import Jarilo.Fetch as JariloFetch
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Script.Cookie (hasPlayerIdCookie)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigateReplace_, navigate_)
+import TeamTavern.Client.Shared.Fetch (fetchBody)
 import TeamTavern.Client.Snippets.ErrorClasses (otherErrorClass)
 import TeamTavern.Routes.Session.StartSession (StartSession)
 import Type.Proxy (Proxy(..))
@@ -134,8 +133,7 @@ render
 
 sendSignInRequest :: forall left. State -> Async left (Maybe State)
 sendSignInRequest state @ { nickname, password } = Async.unify do
-    response <- JariloFetch.fetch (Proxy :: _ StartSession) {} {} { nickname, password }
-        JariloFetch.defaultOptions { pathPrefix = Just "/api", credentials = Just Fetch.Include }
+    response <- fetchBody (Proxy :: _ StartSession) { nickname, password }
         # lmap (const $ Just $ state { otherError = true })
     pure $ onMatch
         { noContent: const Nothing

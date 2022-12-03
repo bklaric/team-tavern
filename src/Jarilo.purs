@@ -1,7 +1,9 @@
-module Jarilo (module Jarilo, module TypesExport) where
+module Jarilo (module Jarilo, module TypesExport, module Jarilo.Fetch, module Jarilo.Serve) where
 
 import Jarilo.Types as Types
 import Jarilo.Types hiding (Method, Options, Head, Get, Post, Put, Patch, Delete, Ok, NoContent, BadRequest, NotAuthorized, Forbidden, Internal) as TypesExport
+import Jarilo.Fetch
+import Jarilo.Serve
 
 -- General request shortcuts
 

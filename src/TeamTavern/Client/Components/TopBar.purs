@@ -16,11 +16,11 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Halogen.Query.Event as ES
-import Jarilo.Fetch as JariloFetch
 import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Script.Cookie (getPlayerNickname)
 import TeamTavern.Client.Script.Navigate (navigateWithEvent_)
 import TeamTavern.Client.Script.Request (get)
+import TeamTavern.Client.Shared.Fetch (fetchSimple)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Game.ViewAllGames as ViewAllGames
 import TeamTavern.Routes.Session.EndSession (EndSession)
@@ -223,9 +223,7 @@ render state = HH.div_ $
 
 endSession :: forall left. Async left Boolean
 endSession = Async.unify do
-    JariloFetch.fetch (Proxy :: _ EndSession) {} {} unit
-        JariloFetch.defaultOptions { pathPrefix = Just "/api" }
-        # bimap (const false) (const true)
+    fetchSimple (Proxy :: _ EndSession) # bimap (const false) (const true)
 
 handleAction :: forall children left output.
     Action -> H.HalogenM State Action children output (Async left) Unit
