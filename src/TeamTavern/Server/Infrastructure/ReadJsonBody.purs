@@ -9,7 +9,7 @@ import Data.Variant (Variant)
 import Perun.Request.Body (Body)
 import Yoga.JSON (class ReadForeign)
 import Yoga.JSON.Async (readJSON)
-import TeamTavern.Server.Architecture.Perun.Request.Body (readBody)
+import Perun.Async.Request.Body (readBody)
 
 readJsonBody :: forall errors result. ReadForeign result =>
     Body -> Async (Variant (client :: Array String | errors)) result

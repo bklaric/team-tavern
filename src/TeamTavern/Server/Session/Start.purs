@@ -14,8 +14,8 @@ import Postgres.Async.Pool (withTransaction)
 import Postgres.Pool (Pool)
 import TeamTavern.Routes.Session.StartSession as SessionStart
 import TeamTavern.Routes.Session.StartSession as StartSession
-import TeamTavern.Server.Architecture.Deployment (Deployment)
-import TeamTavern.Server.Architecture.Deployment (Deployment)
+import TeamTavern.Server.Infrastructure.Deployment (Deployment)
+import TeamTavern.Server.Infrastructure.Deployment (Deployment)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo, setCookieHeaderFull)
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.EnsureNotSignedIn (ensureNotSignedIn)

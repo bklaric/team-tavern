@@ -24,7 +24,7 @@ import Record.Builder as Builder
 import Record.Extra (pick)
 import TeamTavern.Routes.Boarding.Preboard (BadContent, RequestContent, OkContent)
 import TeamTavern.Routes.Shared.Platform (Platform(..))
-import TeamTavern.Server.Architecture.Deployment (Deployment)
+import TeamTavern.Server.Infrastructure.Deployment (Deployment)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo, Cookies, setCookieHeaderFull)
 import TeamTavern.Server.Infrastructure.EnsureNotSignedIn (ensureNotSignedIn')
 import TeamTavern.Server.Infrastructure.Log (clientHandler, internalHandler, logt, notAuthenticatedHandler, notAuthorizedHandler)

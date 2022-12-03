@@ -1,4 +1,4 @@
-module TeamTavern.Server.Architecture.Deployment where
+module TeamTavern.Server.Infrastructure.Deployment where
 
 import Data.Maybe (Maybe(..))
 import Data.String (toLower)

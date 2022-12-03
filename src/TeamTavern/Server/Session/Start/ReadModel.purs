@@ -9,7 +9,7 @@ import Data.Variant (Variant)
 import Foreign (MultipleErrors)
 import Perun.Request.Body (Body)
 import TeamTavern.Routes.Session.StartSession as StartSession
-import TeamTavern.Server.Architecture.Perun.Request.Body (readBody)
+import Perun.Async.Request.Body (readBody)
 import Type.Proxy (Proxy(..))
 import Yoga.JSON.Async (readJSON)
 

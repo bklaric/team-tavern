@@ -7,7 +7,7 @@ import Data.Array (fromFoldable)
 import Data.Variant (inj, match)
 import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, noContent)
 import TeamTavern.Routes.Player.RegisterPlayer as RegisterPlayer
-import TeamTavern.Server.Architecture.Deployment (Deployment)
+import TeamTavern.Server.Infrastructure.Deployment (Deployment)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo, setCookieHeaderFull)
 import TeamTavern.Server.Player.Register.LogError (RegisterError)
 import Type.Proxy (Proxy(..))
