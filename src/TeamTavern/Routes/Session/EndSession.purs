@@ -1,14 +1,7 @@
 module TeamTavern.Routes.Session.EndSession where
 
-import Jarilo.Types (Delete)
-import Jarilo.Types (type (:>), Literal)
-import Jarilo.Types (NoQuery)
-import Jarilo.Types (NoContent)
-import Jarilo.Types (FullRoute)
+import Jarilo (type (/), type (==>), Delete_, Literal, NoContent)
 
-type EndSession = FullRoute
-    Delete
-    (  Literal "sessions"
-    :> Literal "current")
-    NoQuery
-    NoContent
+type EndSession =
+    Delete_ (Literal "sessions" / Literal "current")
+    ==> NoContent

@@ -3,7 +3,7 @@ module Jarilo.Router.Junction where
 import Prelude
 
 import Async (Async, attempt, right)
-import Data.Bifunctor (bimap, lmap)
+import Data.Bifunctor (lmap)
 import Data.Either (Either(..))
 import Data.Symbol (class IsSymbol)
 import Data.Variant (Variant)
@@ -12,7 +12,7 @@ import Jarilo.Router.Route (class RouteRouter, RouteResult(..), routeRouter)
 import Jarilo.Types (Junction, JunctionChain, NamedRoute)
 import Perun.Request as PerunReq
 import Perun.Response as PerunRes
-import Prim.Row (class Cons, class Lacks, class Union)
+import Prim.Row (class Cons, class Union)
 import Record (get, insert, union)
 import Type.Proxy (Proxy(..))
 
@@ -27,17 +27,14 @@ class JunctionRouter (junction :: Junction) errors handlers
 instance
     ( RouteRouter route pathParams queryParams realBody responses
     , Cons name RequestError () errors
-    , Lacks name startErrors
+    , Cons name (RequestResult pathParams queryParams realBody -> Async (Record errors) (Variant responses)) handlers' handlers
     , IsSymbol name
-    , Cons name (RequestResult pathParams queryParams realBody -> Variant responses) handlers' handlers
     ) =>
     JunctionRouter (NamedRoute name route) errors handlers where
-    junctionRouter _ handlers request =
-        routeRouter (Proxy :: _ route) request
-        # bimap
-            (\error -> insert (Proxy :: _ name) error {})
-            \(RouteResult requestResult respond) ->
-                get (Proxy :: _ name) handlers requestResult # respond
+    junctionRouter _ handlers request = do
+        RouteResult requestResult respond <- routeRouter (Proxy :: _ route) request
+            # lmap (\error -> insert (Proxy :: _ name) error {})
+        get (Proxy :: _ name) handlers requestResult <#> respond
 
 instance
     ( JunctionRouter leftJunction leftErrors results

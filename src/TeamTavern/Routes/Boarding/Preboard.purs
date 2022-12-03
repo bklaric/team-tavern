@@ -2,21 +2,15 @@ module TeamTavern.Routes.Boarding.Preboard where
 
 import Data.Maybe (Maybe)
 import Data.Variant (Variant)
-import Jarilo.Types (Post)
-import Jarilo.Types (Literal)
-import Jarilo.Types (NoQuery)
-import Jarilo.Types (type (:!), BadRequest, Ok)
-import Jarilo.Types (FullRoute)
+import Jarilo (type (!), type (==>), Literal, OkJson, PostJson_, BadRequestJson)
 import TeamTavern.Routes.Boarding.Onboard (PlayerProfileRequestContent, PlayerRequestContent, TeamProfileRequestContent, TeamRequestContent)
 import TeamTavern.Routes.Shared.PlayerContacts (PlayerContactsError, PlayerContacts)
 import TeamTavern.Routes.Shared.TeamContacts (TeamContactsError, TeamContacts)
 import Type.Function (type ($))
 
-type Preboard = FullRoute
-    (Post RequestContent)
-    (  Literal "preboarding")
-    NoQuery
-    (Ok OkContent :! BadRequest BadContent)
+type Preboard =
+    PostJson_ (Literal "preboarding") RequestContent
+    ==> OkJson OkContent ! BadRequestJson BadContent
 
 type RegisterRequestContent =
     { nickname :: String

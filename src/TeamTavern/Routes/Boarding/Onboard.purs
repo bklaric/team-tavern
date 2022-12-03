@@ -4,22 +4,16 @@ import TeamTavern.Routes.Shared.TeamContacts
 
 import Data.Maybe (Maybe)
 import Data.Variant (Variant)
-import Jarilo.Types (Post)
-import Jarilo.Types (Literal)
-import Jarilo.Types (NoQuery)
-import Jarilo.Types (type (:!), BadRequest, Ok)
-import Jarilo.Types (FullRoute)
+import Jarilo (type (!), type (==>), Literal, OkJson, PostJson_, BadRequestJson)
 import TeamTavern.Routes.Shared.Organization (OrganizationNW)
 import TeamTavern.Routes.Shared.Platform (Platform)
 import TeamTavern.Routes.Shared.PlayerContacts (PlayerContacts, PlayerContactsError)
 import TeamTavern.Routes.Shared.Size (Size)
 import Type.Function (type ($))
 
-type Onboard = FullRoute
-    (Post RequestContent)
-    (  Literal "onboarding")
-    NoQuery
-    (Ok OkContent :! BadRequest BadContent)
+type Onboard =
+    PostJson_ (Literal "onboarding") RequestContent
+    ==> OkJson OkContent ! BadRequestJson BadContent
 
 type PlayerRequestContent =
     { birthday :: Maybe String

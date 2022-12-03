@@ -51,13 +51,13 @@ import Yoga.JSON (writeJSON)
 
 -- errorResponse :: StartError -> Response
 errorResponse = match
-    { internal: const $ inj (Proxy :: _ "internal") { headers: (mempty :: MultiMap String String) }
-    , signedIn: const $ inj (Proxy :: _ "notAuthenticated") { headers: (mempty :: MultiMap String String) }
-    , unreadableDto: const $ inj (Proxy :: _ "internal") { headers: (mempty :: MultiMap String String) }
-    , bcrypt: const $ inj (Proxy :: _ "internal") { headers: (mempty :: MultiMap String String) }
-    , randomError: const $ inj (Proxy :: _ "internal") { headers: (mempty :: MultiMap String String) }
-    , databaseError: const $ inj (Proxy :: _ "internal") { headers: (mempty :: MultiMap String String) }
-    , unreadableHash: const $ inj (Proxy :: _ "internal") { headers: (mempty :: MultiMap String String) }
+    { internal: const $ inj (Proxy :: _ "internal") { headers: (mempty :: MultiMap String String), body: unit }
+    , signedIn: const $ inj (Proxy :: _ "forbidden") { headers: (mempty :: MultiMap String String), body: unit }
+    , unreadableDto: const $ inj (Proxy :: _ "internal") { headers: (mempty :: MultiMap String String), body: unit }
+    , bcrypt: const $ inj (Proxy :: _ "internal") { headers: (mempty :: MultiMap String String), body: unit }
+    , randomError: const $ inj (Proxy :: _ "internal") { headers: (mempty :: MultiMap String String), body: unit }
+    , databaseError: const $ inj (Proxy :: _ "internal") { headers: (mempty :: MultiMap String String), body: unit }
+    , unreadableHash: const $ inj (Proxy :: _ "internal") { headers: (mempty :: MultiMap String String), body: unit }
     , noMatchingPlayer: const $ inj (Proxy :: _ "badRequest") { headers: (mempty :: MultiMap String String),
         body: (inj (Proxy :: _ "noSessionStarted") {} :: StartSession.BadContent)}
 
@@ -73,7 +73,7 @@ errorResponse = match
 
 -- successResponse :: Deployment -> CookieInfo -> Response
 successResponse deployment cookieInfo = inj (Proxy :: _ "noContent")
-    { headers: setCookieHeaderFull deployment cookieInfo }
+    { headers: setCookieHeaderFull deployment cookieInfo, body: unit }
 
 -- sendResponse :: Deployment -> Async StartError CookieInfo -> (forall left. Async left Response)
 sendResponse deployment = alwaysRight errorResponse $ successResponse deployment

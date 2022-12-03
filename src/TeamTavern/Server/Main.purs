@@ -19,6 +19,7 @@ import Data.Variant (match)
 import Effect (Effect)
 import Effect.Class.Console (logShow)
 import Effect.Console (log)
+import Jarilo.Router.Request (RequestResult(..))
 import Jarilo.Serve (serve)
 import Node.Process (lookupEnv)
 import Node.Server (ListenOptions(..))
@@ -223,12 +224,14 @@ teamTavernRoutes = Proxy :: Proxy AllRoutes
 --         , content: "Couldn't parse url '" <> url' <> "'."
 --         }
 
-handleRequest :: Deployment -> Pool -> Request -> _ -> (forall left. Async left Response)
-handleRequest deployment pool { cookies } = match
-    { startSession: \{respond, body} ->
-        Session.start deployment pool cookies body <#> respond
-    , endSession: \{ respond } ->
-        Session.end <#> respond
+-- runServerIGuess :: Deployment -> Pool -> Request -> _ -> (forall left. Async left Response)
+runServerIGuess deployment pool = serve (Proxy :: _ AllRoutes) listenOptions
+    {
+        startSession: \(RequestResult { cookies, body }) ->
+        Session.start deployment pool cookies body
+    ,
+    endSession: const
+        Session.end
     -- , registerPlayer: \{respond,  body } ->
     --     Player.register deployment pool cookies body <#> respond
     -- , viewPlayer: \{respond,  path } ->
@@ -290,4 +293,4 @@ main = either log pure =<< runExceptT do
     pool <- createPostgresPool
     setSendGridApiKey
     -- lift $ run_ listenOptions (handleInvalidUrl deployment pool)
-    lift $ serve (Proxy :: _ AllRoutes) listenOptions handleNotFound (handleRequest deployment pool)
+    lift $ runServerIGuess deployment pool

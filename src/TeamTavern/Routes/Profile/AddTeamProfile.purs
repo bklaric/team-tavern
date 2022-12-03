@@ -1,25 +1,21 @@
 module TeamTavern.Routes.Profile.AddTeamProfile where
 
 import Data.Variant (Variant)
-import Jarilo.Types (Post)
-import Jarilo.Types (type (:>), Capture, Literal)
-import Jarilo.Types (NoQuery)
-import Jarilo.Types (type (:!), BadRequest, NoContent)
-import Jarilo.Types (FullRoute)
+import Jarilo (type (!), type (/), type (==>), BadRequestJson, Capture, Literal, NoContent, PostJson_)
 import TeamTavern.Routes.Shared.Platform (Platform)
 import TeamTavern.Routes.Shared.Size (Size)
 import TeamTavern.Routes.Shared.TeamContacts (TeamContacts, TeamContactsError)
 import TeamTavern.Routes.Shared.Types (Handle)
 import Type.Function (type ($))
 
-type AddTeamProfile = FullRoute
-    (Post RequestContent)
-    (  Literal "teams"
-    :> Capture "teamHandle" Handle
-    :> Literal "profiles"
-    :> Capture "gameHandle" Handle)
-    NoQuery
-    (NoContent :! BadRequest BadContent)
+type AddTeamProfile =
+    PostJson_
+    ( Literal "teams"
+    / Capture "teamHandle" Handle
+    / Literal "profiles"
+    / Capture "gameHandle" Handle)
+    RequestContent
+    ==> NoContent ! BadRequestJson BadContent
 
 type RouteParams = { teamHandle :: Handle, gameHandle :: Handle }
 

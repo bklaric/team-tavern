@@ -24,11 +24,11 @@ module Veles where
 -- import Effect.Console (log, logShow)
 -- import Error (Error)
 -- import Error.Class (message)
--- import Jarilo.Junction (type (:<|>), type (:=))
+-- import Jarilo.Junction (type (<|>), type (:=))
 -- import Jarilo.Types (Get, Post)
--- import Jarilo.Types (type (:>), Capture, Literal, Path)
--- import Jarilo.Types (type (:?), Mandatory, NoQuery, Optional)
--- import Jarilo.Types (type (:!), BadRequest, Internal_, Ok, Response)
+-- import Jarilo.Types (type (/), Capture, Literal, Path)
+-- import Jarilo.Types (type (&), Mandatory, NoQuery, Optional)
+-- import Jarilo.Types (type (!), BadRequest, Internal_, Ok, Response)
 -- import Jarilo.Types (FullRoute, Route, RouteErrors)
 -- import Prim.Row (class Lacks, class Nub, class Union)
 -- import Prim.RowList (class RowToList)
@@ -41,22 +41,22 @@ module Veles where
 -- import Yoga.JSON (class ReadForeign, class ReadForeignVariant, class WriteForeign, readJSON, readJSON_, unsafeStringify, writeJSON)
 -- import Yoga.JSON.Async as JsonAsync
 
--- type RegisterPlayer = FullRoute
+-- type RegisterPlayer =
 --     (Post { content :: String })
 --     (Literal "players")
 --     NoQuery
 --     (  Ok { response :: Int }
---     :! BadRequest { error :: String }
---     :! Internal_)
+--     ! BadRequestJson { error :: String }
+--     ! Internal_)
 
--- type ViewPlayer = FullRoute Get (Literal "players" :> Capture "nickname" NonEmptyString) NoQuery (Ok { huehue :: Int } :! BadRequest String)
+-- type ViewPlayer = Get (Literal "players" / Capture "nickname" NonEmptyString) NoQuery (Ok { huehue :: Int } ! BadRequestJson String)
 
--- type ViewPlayers = FullRoute Get (Literal "players") (Optional "game" NonEmptyString :? Mandatory "teamId" Int) (Internal_)
+-- type ViewPlayers = Get (Literal "players") (Optional "game" NonEmptyString & Mandatory "teamId" Int) (Internal_)
 
 -- type PlayerRoutes
 --     =    "registerPlayer" := RegisterPlayer
---     :<|> "viewPlayer"     := ViewPlayer
---     :<|> "viewPlayers"    := ViewPlayers
+--     <|> "viewPlayer"     := ViewPlayer
+--     <|> "viewPlayers"    := ViewPlayers
 
 -- junction :: forall t166.
 --     Either
@@ -116,7 +116,7 @@ module Veles where
 --     ( PrepareWriteResponse (FullRoute method path query leftResponse) input midput
 --     , PrepareWriteResponse (FullRoute method path query rightResponse) midput output
 --     ) =>
---     PrepareWriteResponse (FullRoute method path query (leftResponse :! rightResponse)) input output where
+--     PrepareWriteResponse (FullRoute method path query (leftResponse ! rightResponse)) input output where
 --     prepareWriteResponse _ = let
 --         leftBuilder = prepareWriteResponse (Proxy :: _ (FullRoute method path query leftResponse))
 --         rightBuilder = prepareWriteResponse (Proxy :: _ (FullRoute method path query rightResponse))
@@ -151,7 +151,7 @@ module Veles where
 -- --     ( PrepareReadResponse (FullRoute method path query leftResponse) input midput
 -- --     , PrepareReadResponse (FullRoute method path query rightResponse) midput output
 -- --     ) =>
--- --     PrepareReadResponse (FullRoute method path query (leftResponse :! rightResponse)) input output where
+-- --     PrepareReadResponse (FullRoute method path query (leftResponse ! rightResponse)) input output where
 -- --     prepareReadResponse _ = let
 -- --         leftBuilder = prepareReadResponse (Proxy :: _ (FullRoute method path query leftResponse))
 -- --         rightBuilder = prepareReadResponse (Proxy :: _ (FullRoute method path query rightResponse))
@@ -189,7 +189,7 @@ module Veles where
 -- --     ( ReadResponse leftResponse input midput
 -- --     , ReadResponse rightResponse midput output
 -- --     ) =>
--- --     ReadResponse (leftResponse :! rightResponse) input output where
+-- --     ReadResponse (leftResponse ! rightResponse) input output where
 -- --     readResponse _ = let
 -- --         leftBuilder = readResponse (Proxy :: _ leftResponse)
 -- --         rightBuilder = readResponse (Proxy :: _ rightResponse)
@@ -226,7 +226,7 @@ module Veles where
 -- instance ToComponent value => Url (Capture name value) { name :: value | parameters } where
 --     url _ parameters = "/" <> (toComponent $ parameters.name)
 
--- instance (Url leftPath parameters, Url rightPath parameters) => Url (leftPath :> rightPath) parameters where
+-- instance (Url leftPath parameters, Url rightPath parameters) => Url (leftPath / rightPath) parameters where
 --     url _ parameters = url (Proxy :: _ leftPath) parameters <> url (Proxy :: _ rightPath) parameters
 
 -- url' :: forall path424. Url path424 (Record ()) => Proxy path424 -> String
@@ -238,7 +238,7 @@ module Veles where
 -- -- instance IsSymbol name => Url_ (Literal name) where
 -- --     url_ _ = "/" <> reflectSymbol (Proxy :: _ name)
 
--- -- instance (Url_ leftPath, Url_ rightPath) => Url_ (leftPath :> rightPath) where
+-- -- instance (Url_ leftPath, Url_ rightPath) => Url_ (leftPath / rightPath) where
 -- --     url_ _ = url_ (Proxy :: _ leftPath) <> url_ (Proxy :: _ rightPath)
 
 
@@ -281,7 +281,7 @@ module Veles where
 
 
 
--- type FetchTest = FullRoute Get (Literal "api" :> Literal "games") NoQuery (Ok ViewAllGames.OkContent)
+-- type FetchTest = Get (Literal "api" / Literal "games") NoQuery (Ok ViewAllGames.OkContent)
 
 -- -- fetchTest :: Async String Unit
 -- fetchTest :: Effect Unit

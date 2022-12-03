@@ -28,7 +28,7 @@ foreign import data Capture :: Symbol -> Type -> Path
 
 foreign import data PathChain :: Path -> Path -> Path
 
-infixr 9 type PathChain as :>
+infixr 9 type PathChain as /
 
 -- Query
 
@@ -46,7 +46,7 @@ foreign import data Rest :: Symbol -> Query
 
 foreign import data QueryChain :: Query -> Query -> Query
 
-infixr 9 type QueryChain as :?
+infixr 9 type QueryChain as &
 
 -- Body
 
@@ -88,7 +88,7 @@ foreign import data FullResponse :: Status -> Body -> Response
 
 foreign import data ResponseChain :: Response -> Response -> Response
 
-infixr 9 type ResponseChain as :!
+infixr 9 type ResponseChain as !
 
 -- Route
 
@@ -96,14 +96,16 @@ foreign import data Route :: Type
 
 foreign import data FullRoute :: Request -> Response -> Route
 
+infixr 9 type FullRoute as ==>
+
 -- Junction
 
 foreign import data Junction :: Type
 
 foreign import data NamedRoute :: Symbol -> Route -> Junction
 
-infixr 9 type NamedRoute as :=
+infixr 9 type NamedRoute as :
 
 foreign import data JunctionChain :: Junction -> Junction -> Junction
 
-infixr 8 type JunctionChain as :<|>
+infixr 8 type JunctionChain as <|>

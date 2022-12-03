@@ -3,11 +3,7 @@ module TeamTavern.Routes.Profile.ViewPlayerProfilesByGame where
 import Prelude
 
 import Data.Maybe (Maybe)
-import Jarilo.Types (Get)
-import Jarilo.Types (type (:>), Capture, Literal)
-import Jarilo.Types (type (:?), Mandatory, Many, Optional, Rest)
-import Jarilo.Types (Ok)
-import Jarilo.Types (FullRoute)
+import Jarilo (type (&), type (/), type (==>), Capture, Get, Literal, Mandatory, Many, OkJson, Optional, Rest)
 import Prim.Row (class Lacks)
 import Record as Record
 import TeamTavern.Routes.Profile.Shared (ProfilePage)
@@ -23,26 +19,26 @@ import Type.Proxy (Proxy(..))
 import Type.Row (type (+))
 import URI.Extra.QueryPairs (Key, QueryPairs, Value)
 
-type ViewPlayerProfilesByGame = FullRoute
+type ViewPlayerProfilesByGame =
     Get
-    (  Literal "games"
-    :> Capture "handle" Handle
-    :> Literal "players")
-    (  Mandatory "page" ProfilePage
-    :? Mandatory "timezone" Timezone
-    :? Optional "ageFrom" Age
-    :? Optional "ageTo" Age
-    :? Many "language" Language
-    :? Many "location" Location
-    :? Optional "weekdayFrom" Time
-    :? Optional "weekdayTo" Time
-    :? Optional "weekendFrom" Time
-    :? Optional "weekendTo" Time
-    :? Optional "microphone" HasMicrophone
-    :? Many "platform" Platform
-    :? Optional "newOrReturning" NewOrReturning
-    :? Rest "fields")
-    (Ok OkContent)
+    ( Literal "games"
+    / Capture "handle" Handle
+    / Literal "players")
+    ( Mandatory "page" ProfilePage
+    & Mandatory "timezone" Timezone
+    & Optional "ageFrom" Age
+    & Optional "ageTo" Age
+    & Many "language" Language
+    & Many "location" Location
+    & Optional "weekdayFrom" Time
+    & Optional "weekdayTo" Time
+    & Optional "weekendFrom" Time
+    & Optional "weekendTo" Time
+    & Optional "microphone" HasMicrophone
+    & Many "platform" Platform
+    & Optional "newOrReturning" NewOrReturning
+    & Rest "fields")
+    ==> OkJson OkContent
 
 bundlePlayerFilters :: forall other. Lacks "organization" other => Lacks "size" other =>
     { ageFrom :: Maybe Int

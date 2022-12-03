@@ -1,10 +1,6 @@
 module TeamTavern.Routes.Profile.ViewTeamProfile where
 
-import Jarilo.Types (Get)
-import Jarilo.Types (type (:>), Capture, Literal)
-import Jarilo.Types (Mandatory)
-import Jarilo.Types (Ok)
-import Jarilo.Types (FullRoute)
+import Jarilo (type (/), type (==>), Capture, Get, Literal, Mandatory, OkJson)
 import TeamTavern.Routes.Shared.GameBase (GameBaseRow')
 import TeamTavern.Routes.Shared.TeamBase (TeamBaseRow)
 import TeamTavern.Routes.Shared.TeamContacts (TeamContactsRow)
@@ -12,14 +8,14 @@ import TeamTavern.Routes.Shared.TeamDetails (TeamDetailsRow)
 import TeamTavern.Routes.Shared.TeamProfile (TeamProfileRow)
 import Type.Row (type (+))
 
-type ViewTeamProfile = FullRoute
+type ViewTeamProfile =
     Get
-    (  Literal "teams"
-    :> Capture "teamHandle" String
-    :> Literal "profiles"
-    :> Capture "gameHandle" String)
+    ( Literal "teams"
+    / Capture "teamHandle" String
+    / Literal "profiles"
+    / Capture "gameHandle" String)
     (Mandatory "timezone" String)
-    (Ok OkContent)
+    ==> OkJson OkContent
 
 type RouteParams =
     { teamHandle :: String

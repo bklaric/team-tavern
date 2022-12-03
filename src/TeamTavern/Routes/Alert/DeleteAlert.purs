@@ -1,16 +1,11 @@
 module TeamTavern.Routes.Alert.DeleteAlert where
 
-import Jarilo.Types (Delete)
-import Jarilo.Types (type (:>), Capture, Literal)
-import Jarilo.Types (Mandatory)
-import Jarilo.Types (NoContent)
-import Jarilo.Types (FullRoute)
+import Jarilo (type (/), type (==>), Capture, Delete, Literal, Mandatory, NoContent)
 
-type DeleteAlert = FullRoute
+type DeleteAlert =
     Delete
-    (  Literal "alerts"
-    :> Capture "id" Int)
+    (Literal "alerts" / Capture "id" Int)
     (Mandatory "token" String)
-    NoContent
+    ==> NoContent
 
 type RouteContent = { id :: Int, token :: String }

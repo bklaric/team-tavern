@@ -1,16 +1,10 @@
 module TeamTavern.Routes.Game.ViewAllGames where
 
-import Jarilo.Types (Get)
-import Jarilo.Types (Literal)
-import Jarilo.Types (NoQuery)
-import Jarilo.Types (Ok)
-import Jarilo.Types (FullRoute)
+import Jarilo (type (==>), Get_, Literal, OkJson)
 
-type ViewAllGames = FullRoute
-    Get
-    (  Literal "games")
-    NoQuery
-    (Ok OkContent)
+type ViewAllGames =
+    Get_ (Literal "games")
+    ==> OkJson OkContent
 
 type OkGameContent =
     { title :: String

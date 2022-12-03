@@ -2,18 +2,14 @@ module TeamTavern.Routes.Team.CreateTeam where
 
 import Data.Maybe (Maybe)
 import Data.Variant (Variant)
-import Jarilo.Types (Post)
-import Jarilo.Types (Literal)
-import Jarilo.Types (NoQuery)
-import Jarilo.Types (type (:!), BadRequest, Ok)
-import Jarilo.Types (FullRoute)
+import Jarilo (type (!), type (==>), BadRequestJson, Literal, OkJson, PostJson_)
 import TeamTavern.Routes.Shared.Organization (OrganizationNW)
 
-type CreateTeam = FullRoute
-    (Post RequestContent)
+type CreateTeam =
+    PostJson_
     (Literal "teams")
-    NoQuery
-    (Ok OkContent :! BadRequest BadContent)
+    RequestContent
+    ==> OkJson OkContent ! BadRequestJson BadContent
 
 type RequestContent =
     { organization :: OrganizationNW

@@ -1,19 +1,12 @@
 module TeamTavern.Routes.Game.ViewGame where
 
 import Data.Maybe (Maybe)
-import Jarilo.Types (Get)
-import Jarilo.Types (type (:>), Capture, Literal)
-import Jarilo.Types (NoQuery)
-import Jarilo.Types (Ok)
-import Jarilo.Types (FullRoute)
+import Jarilo (type (/), type (==>), Capture, Get_, Literal, OkJson)
 import TeamTavern.Routes.Shared.Platform (Platforms)
 
-type ViewGame = FullRoute
-    Get
-    (  Literal "games"
-    :> Capture "handle" String)
-    NoQuery
-    (Ok OkContent)
+type ViewGame =
+    Get_ (Literal "games" / Capture "handle" String)
+    ==> OkJson OkContent
 
 type OkContentOption =
     { key :: String

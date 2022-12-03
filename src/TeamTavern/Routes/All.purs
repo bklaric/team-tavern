@@ -1,6 +1,6 @@
 module TeamTavern.Routes.All where
 
-import Jarilo.Types (type (:<|>), type (:=))
+import Jarilo (type (<|>), type (:))
 import TeamTavern.Routes.Boarding.Onboard (Onboard)
 import TeamTavern.Routes.Boarding.Preboard (Preboard)
 import TeamTavern.Routes.Alert.CreateAlert (CreateAlert)
@@ -28,49 +28,49 @@ import TeamTavern.Routes.Team.UpdateTeamContacts (UpdateTeamContacts)
 import TeamTavern.Routes.Team.ViewTeam (ViewTeam)
 
 type SessionRoutes
-    =    "startSession" := StartSession
-    :<|> "endSession"   := EndSession
+    =   "startSession" : StartSession
+    <|> "endSession"   : EndSession
 
 type GameRoutes
-    =    "viewAllGames" := ViewAllGames
-    :<|> "viewGame"     := ViewGame
+    =   "viewAllGames" : ViewAllGames
+    <|> "viewGame"     : ViewGame
 
 type PlayerRoutes
-    =    "viewPlayer"     := ViewPlayer
-    :<|> "registerPlayer" := RegisterPlayer
-    :<|> "updatePlayer"   := UpdatePlayer
-    :<|> "deletePlayer"   := DeletePlayer
-    :<|> "updatePlayerContacts" := UpdatePlayerContacts
+    =   "viewPlayer"     : ViewPlayer
+    <|> "registerPlayer" : RegisterPlayer
+    <|> "updatePlayer"   : UpdatePlayer
+    <|> "deletePlayer"   : DeletePlayer
+    <|> "updatePlayerContacts" : UpdatePlayerContacts
 
 type TeamRoutes
-    =    "viewTeam"   := ViewTeam
-    :<|> "createTeam" := CreateTeam
-    :<|> "updateTeam" := UpdateTeam
-    :<|> "updateTeamContacts" := UpdateTeamContacts
+    =   "viewTeam"   : ViewTeam
+    <|> "createTeam" : CreateTeam
+    <|> "updateTeam" : UpdateTeam
+    <|> "updateTeamContacts" : UpdateTeamContacts
 
 type ProfileRoutes
-    =    "addPlayerProfile"         := AddPlayerProfile
-    :<|> "addTeamProfile"           := AddTeamProfile
-    :<|> "updatePlayerProfile"      := UpdatePlayerProfile
-    :<|> "updateTeamProfile"        := UpdateTeamProfile
-    :<|> "viewPlayerProfilesByGame" := ViewPlayerProfilesByGame
-    :<|> "viewTeamProfilesByGame"   := ViewTeamProfilesByGame
-    :<|> "viewPlayerProfile"        := ViewPlayerProfile
-    :<|> "viewTeamProfile"          := ViewTeamProfile
+    =   "addPlayerProfile"         : AddPlayerProfile
+    <|> "addTeamProfile"           : AddTeamProfile
+    <|> "updatePlayerProfile"      : UpdatePlayerProfile
+    <|> "updateTeamProfile"        : UpdateTeamProfile
+    <|> "viewPlayerProfilesByGame" : ViewPlayerProfilesByGame
+    <|> "viewTeamProfilesByGame"   : ViewTeamProfilesByGame
+    <|> "viewPlayerProfile"        : ViewPlayerProfile
+    <|> "viewTeamProfile"          : ViewTeamProfile
 
 type BoardRoutes
-    =    "onboard"  := Onboard
-    :<|> "preboard" := Preboard
+    =   "onboard"  : Onboard
+    <|> "preboard" : Preboard
 
 type AlertRoutes
-    =    "createAlert" := CreateAlert
-    :<|> "deleteAlert" := DeleteAlert
+    =   "createAlert" : CreateAlert
+    <|> "deleteAlert" : DeleteAlert
 
 type AllRoutes
     =    SessionRoutes
-    -- :<|> GameRoutes
-    -- :<|> PlayerRoutes
-    -- :<|> TeamRoutes
-    -- :<|> ProfileRoutes
-    -- :<|> BoardRoutes
-    -- :<|> AlertRoutes
+    -- <|> GameRoutes
+    -- <|> PlayerRoutes
+    -- <|> TeamRoutes
+    -- <|> ProfileRoutes
+    -- <|> BoardRoutes
+    -- <|> AlertRoutes

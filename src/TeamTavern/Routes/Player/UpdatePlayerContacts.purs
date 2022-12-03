@@ -1,19 +1,15 @@
 module TeamTavern.Routes.Player.UpdatePlayerContacts where
 
-import Jarilo.Types (Put)
-import Jarilo.Types (type (:>), Capture, Literal)
-import Jarilo.Types (NoQuery)
-import Jarilo.Types (type (:!), BadRequest, NoContent)
-import Jarilo.Types (FullRoute)
+import Jarilo (type (!), type (/), type (==>), BadRequestJson, Capture, Literal, NoContent, PutJson_)
 import TeamTavern.Routes.Shared.PlayerContacts (PlayerContacts, PlayerContactsError)
 
-type UpdatePlayerContacts = FullRoute
-    (Put RequestContent)
-    (  Literal "players"
-    :> Capture "nickname" String
-    :> Literal "contacts")
-    NoQuery
-    (NoContent :! BadRequest BadContent)
+type UpdatePlayerContacts =
+    PutJson_
+    ( Literal "players"
+    / Capture "nickname" String
+    / Literal "contacts")
+    RequestContent
+    ==> NoContent ! BadRequestJson BadContent
 
 type RequestContent = PlayerContacts
 

@@ -1,21 +1,17 @@
 module TeamTavern.Routes.Player.ViewPlayer where
 
 import Data.Maybe (Maybe)
-import Jarilo.Types (Get)
-import Jarilo.Types (type (:>), Capture, Literal)
-import Jarilo.Types (Mandatory)
-import Jarilo.Types (Ok)
-import Jarilo.Types (FullRoute)
+import Jarilo (type (/), type (==>), Capture, Get, Literal, Mandatory, OkJson)
 import TeamTavern.Routes.Shared.Organization (OrganizationN)
 import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
 import TeamTavern.Routes.Shared.PlayerContacts (PlayerContactsOpen)
 
-type ViewPlayer = FullRoute
+type ViewPlayer =
     Get
-    (  Literal "players"
-    :> Capture "nickname" String)
+    ( Literal "players"
+    / Capture "nickname" String)
     (Mandatory "timezone" String)
-    (Ok OkContent)
+    ==> OkJson OkContent
 
 type RouteParams =
     { nickname :: String

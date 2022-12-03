@@ -4,6 +4,7 @@ import Prelude
 
 import Async (Async, fromEither)
 import Data.Bifunctor (lmap)
+import Data.Map (Map)
 import Jarilo.Router.Body (class BodyRouter, BodyError, bodyRouter)
 import Jarilo.Router.Method (class MethodRouter, MethodError, methodRouter)
 import Jarilo.Router.Path (class PathRouter, PathError, pathRouter)
@@ -21,6 +22,8 @@ data RequestError
 data RequestResult pathParams queryParams realBody = RequestResult
     { path :: Record pathParams
     , query :: Record queryParams
+    , headers :: Map String String
+    , cookies :: Map String String
     , body :: realBody
     }
 
@@ -37,7 +40,7 @@ instance
     , BodyRouter body realBody
     ) =>
     RequestRouter (FullRequest method path query body) pathParams queryParams realBody where
-    requestRouter _ { method, path, query, body } = let
+    requestRouter _ { method, path, query, headers, cookies, body } = let
         methodProxy = (Proxy :: _ method)
         pathProxy = (Proxy :: _ path)
         queryProxy = (Proxy :: _ query)
@@ -50,5 +53,7 @@ instance
         pure $ RequestResult
             { path: pathParams
             , query: queryParams
+            , headers
+            , cookies
             , body: realBody
             }

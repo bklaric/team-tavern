@@ -1,17 +1,11 @@
 module TeamTavern.Routes.Session.StartSession where
 
 import Data.Variant (Variant)
-import Jarilo.Types (Post)
-import Jarilo.Types (Literal)
-import Jarilo.Types (NoQuery)
-import Jarilo.Types (type (:!), BadRequest, Forbidden_, Internal_, NoContent)
-import Jarilo.Types (FullRoute)
+import Jarilo (type (!), type (==>), BadRequestJson, Forbidden_, Internal_, Literal, NoContent, PostJson_)
 
-type StartSession = FullRoute
-    (Post RequestContent)
-    (Literal "sessions")
-    NoQuery
-    (NoContent :! BadRequest BadContent :! Forbidden_ :! Internal_)
+type StartSession =
+    PostJson_ (Literal "sessions") RequestContent
+    ==> (NoContent ! BadRequestJson BadContent ! Forbidden_ ! Internal_)
 
 type RequestContent =
     { nickname :: String
