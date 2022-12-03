@@ -1,4 +1,4 @@
-module Jarilo.Fetch (FetchOptions, defaultOptions, class Fetch, fetch) where
+module Jarilo.Fetch where
 
 import Prelude
 
@@ -223,6 +223,10 @@ instance (Lacks "badRequest" startErrors) =>
     FetchStatus BadRequest startErrors (badRequest :: String | startErrors) where
     fetchStatus proxy response = fetchStatus' proxy 400 response
 
+instance (Lacks "forbidden" startErrors) =>
+    FetchStatus Forbidden startErrors (forbidden :: String | startErrors) where
+    fetchStatus proxy response = fetchStatus' proxy 400 response
+
 instance (Lacks "internal" startErrors) =>
     FetchStatus Internal startErrors (internal :: String | startErrors) where
     fetchStatus proxy response = fetchStatus' proxy 500 response
@@ -251,8 +255,8 @@ instance
         pure $ createResult statusProxy body
 
 instance
-    ( FetchResponse leftResponse startErrors mid realBody results
-    , FetchResponse rightResponse mid endErrors realBody results
+    ( FetchResponse leftResponse startErrors mid leftRealBody results
+    , FetchResponse rightResponse mid endErrors rightRealBody results
     ) =>
     FetchResponse (ResponseChain leftResponse rightResponse) startErrors endErrors realBody results where
     fetchResponse' _ response = let
@@ -275,23 +279,30 @@ fetchResponse
     => Proxy response
     -> FetchRes.Response
     -> Async String (Variant results)
-fetchResponse proxy response = fetchResponse' proxy response # lmap (buildFromScratch >>> show)
+fetchResponse proxy response =
+    fetchResponse' proxy response
+    # lmap (buildFromScratch >>> show)
 
 
 
-type FetchOptions = { origin :: Maybe String, pathPrefix :: Maybe String, credentials :: Maybe Credentials }
+type FetchOptions =
+    { origin :: Maybe String
+    , pathPrefix :: Maybe String
+    , credentials :: Maybe Credentials
+    }
 
 defaultOptions :: FetchOptions
 defaultOptions = { origin: Nothing, pathPrefix: Nothing, credentials: Nothing }
 
 
 
-class Fetch (route :: Route) pathParams queryParams body responses | route -> pathParams queryParams body responses where
+class Fetch (route :: Route) pathParams queryParams realBody responses
+    | route -> pathParams queryParams realBody responses where
     fetch
         :: Proxy route
         -> Record pathParams
         -> Record queryParams
-        -> body
+        -> realBody
         -> FetchOptions
         -> Async String (Variant responses)
 
