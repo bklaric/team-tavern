@@ -1,4 +1,4 @@
-module Jarilo.Fetch where
+module Jarilo.Fetch (FetchOptions, defaultOptions, class Fetch, fetch) where
 
 import Prelude
 
@@ -30,6 +30,8 @@ import Record.Builder as Builder
 import Type.Proxy (Proxy(..))
 import Yoga.JSON (class ReadForeign, class WriteForeign, writeJSON)
 import Yoga.JSON.Async as JsonAsync
+
+
 
 class FetchMethod (method :: Method) where
     fetchMethod :: Proxy method -> Options.Options Fetch.FetchOptions
@@ -123,14 +125,17 @@ fetchUrl origin' pathPrefix' pathProxy queryProxy pathParameters queryParameters
 
 
 
-class FetchRequestBody (body :: Body) realBody | body -> realBody where
+class FetchBody (body :: Body) realBody | body -> realBody where
     fetchRequestBody :: Proxy body -> realBody -> Options.Options Fetch.FetchOptions
+    fetchResponseBody :: Proxy body -> FetchRes.Response -> Async String realBody
 
-instance FetchRequestBody NoBody realBody where
+instance FetchBody NoBody Unit where
     fetchRequestBody _ _ = mempty
+    fetchResponseBody _ _ = pure unit
 
-instance (WriteForeign realBody) => FetchRequestBody (JsonBody realBody) realBody where
+instance (WriteForeign realBody, ReadForeign realBody) => FetchBody (JsonBody realBody) realBody where
     fetchRequestBody _ realBody = Fetch.body := writeJSON realBody
+    fetchResponseBody _ response = response # text >>= JsonAsync.readJSON # lmap show
 
 
 
@@ -224,17 +229,6 @@ instance (Lacks "internal" startErrors) =>
 
 
 
-class FetchResponseBody (body :: Body) realBody | body -> realBody where
-    fetchResponseBody :: Proxy body -> FetchRes.Response -> Async String realBody
-
-instance FetchResponseBody NoBody Unit where
-    fetchResponseBody _ _ = pure unit
-
-instance (ReadForeign realBody) => FetchResponseBody (JsonBody realBody) realBody where
-    fetchResponseBody _ response = response # text >>= JsonAsync.readJSON # lmap show
-
-
-
 class FetchResponse (response :: Response) startErrors endErrors (realBody :: Type) results | response -> startErrors endErrors realBody results where
     fetchResponse'
         :: Proxy response
@@ -247,7 +241,7 @@ instance
     ( FetchStatusError status startErrors endErrors
     , FetchStatusResult status realBody results
     , FetchStatus status startErrors endErrors
-    , FetchResponseBody body realBody
+    , FetchBody body realBody
     ) =>
     FetchResponse (FullResponse status body) startErrors endErrors realBody results where
     fetchResponse' _ response = do
@@ -305,12 +299,13 @@ instance
     ( FetchMethod method
     , FetchPath path pathParams
     , FetchQuery query queryParams
-    , FetchRequestBody requestBody realBody
+    , FetchBody requestBody realBody
     , FetchResponse response () errors realBody responses
     , Nub errors errors
     , RowToList errors errorsList
     , ShowRecordFields errorsList errors
-    ) => Fetch (FullRoute (FullRequest method path query requestBody) response) pathParams queryParams realBody responses where
+    ) =>
+    Fetch (FullRoute (FullRequest method path query requestBody) response) pathParams queryParams realBody responses where
     fetch _ pathParams queryParams realBody { origin, pathPrefix, credentials } = let
         method = fetchMethod (Proxy :: _ method)
         url = fetchUrl origin pathPrefix (Proxy :: _ path) (Proxy :: _ query) pathParams queryParams

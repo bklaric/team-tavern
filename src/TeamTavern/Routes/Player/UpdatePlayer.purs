@@ -2,11 +2,11 @@ module TeamTavern.Routes.Player.UpdatePlayer where
 
 
 import Data.Maybe (Maybe)
-import Jarilo.Method (Put)
-import Jarilo.Path (type (:>), Capture, Literal)
-import Jarilo.Query (NoQuery)
-import Jarilo.Response (NoContent)
-import Jarilo.Route (FullRoute)
+import Jarilo.Types (Put)
+import Jarilo.Types (type (:>), Capture, Literal)
+import Jarilo.Types (NoQuery)
+import Jarilo.Types (NoContent)
+import Jarilo.Types (FullRoute)
 import TeamTavern.Server.Player.Domain.Nickname (Nickname)
 
 type UpdatePlayer = FullRoute

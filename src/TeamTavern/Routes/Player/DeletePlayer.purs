@@ -1,10 +1,10 @@
 module TeamTavern.Routes.Player.DeletePlayer where
 
-import Jarilo.Method (Delete)
-import Jarilo.Path (type (:>), Capture, Literal)
-import Jarilo.Query (NoQuery)
-import Jarilo.Response (NoContent)
-import Jarilo.Route (FullRoute)
+import Jarilo.Types (Delete)
+import Jarilo.Types (type (:>), Capture, Literal)
+import Jarilo.Types (NoQuery)
+import Jarilo.Types (NoContent)
+import Jarilo.Types (FullRoute)
 
 type DeletePlayer = FullRoute
     Delete

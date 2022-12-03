@@ -1,10 +1,10 @@
 module TeamTavern.Routes.Game.ViewAllGames where
 
-import Jarilo.Method (Get)
-import Jarilo.Path (Literal)
-import Jarilo.Query (NoQuery)
-import Jarilo.Response (Ok)
-import Jarilo.Route (FullRoute)
+import Jarilo.Types (Get)
+import Jarilo.Types (Literal)
+import Jarilo.Types (NoQuery)
+import Jarilo.Types (Ok)
+import Jarilo.Types (FullRoute)
 
 type ViewAllGames = FullRoute
     Get

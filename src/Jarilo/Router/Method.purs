@@ -2,73 +2,48 @@ module Jarilo.Router.Method where
 
 import Prelude
 
-import Data.Bifunctor (lmap)
 import Data.Either (Either(..))
 import Data.HTTP.Method (CustomMethod, Method(..)) as HM
-import Data.Maybe (Maybe(..), maybe)
-import Data.Variant (Variant, inj)
-import Foreign (MultipleErrors)
-import Jarilo.Method (Delete, Get, Head, Method, Options, Patch, Post, Put)
-import Type.Proxy (Proxy(..))
-import Yoga.JSON (class ReadForeign, readJSON)
+import Jarilo.Types (Delete, Get, Head, Method, Options, Patch, Post, Put)
+import Type.Proxy (Proxy)
 
-type MethodError = Variant
-    ( wrongMethod ::
-        { expectedMethod :: Either HM.CustomMethod HM.Method
-        , actualMethod :: Either HM.CustomMethod HM.Method
-        }
-    , bodyParse :: MultipleErrors
-    )
+data MethodError = WrongMethod
+    { expectedMethod :: Either HM.CustomMethod HM.Method
+    , actualMethod :: Either HM.CustomMethod HM.Method
+    }
 
-checkMethod
-    :: Either HM.CustomMethod HM.Method
-    -> Either HM.CustomMethod HM.Method
-    -> Maybe MethodError
-checkMethod expectedMethod actualMethod =
-    if expectedMethod == actualMethod
-    then Nothing
-    else Just $ inj (Proxy :: _ "wrongMethod") { expectedMethod, actualMethod }
-
-checkMethod'
+methodRouter'
     :: Either HM.CustomMethod HM.Method
     -> Either HM.CustomMethod HM.Method
     -> Either MethodError Unit
-checkMethod' expectedMethod actualMethod =
-    checkMethod expectedMethod actualMethod # maybe (Right unit) Left
+methodRouter' expectedMethod actualMethod =
+    if expectedMethod == actualMethod
+    then Right unit
+    else Left $ WrongMethod { expectedMethod, actualMethod }
 
-class MethodRouter (method :: Method) (body :: Type) | method -> body where
+class MethodRouter (method :: Method) where
     methodRouter
         :: Proxy method
         -> Either HM.CustomMethod HM.Method
-        -> String
-        -> Either MethodError body
+        -> Either MethodError Unit
 
-instance MethodRouter Options Unit where
-    methodRouter _ actual _ = checkMethod' (Right HM.OPTIONS) actual
+instance MethodRouter Options where
+    methodRouter _ actual  = methodRouter' (Right HM.OPTIONS) actual
 
-instance MethodRouter Head Unit where
-    methodRouter _ actual _ = checkMethod' (Right HM.HEAD) actual
+instance MethodRouter Head where
+    methodRouter _ actual  = methodRouter' (Right HM.HEAD) actual
 
-instance MethodRouter Get Unit where
-    methodRouter _ actual _ = checkMethod' (Right HM.GET) actual
+instance MethodRouter Get where
+    methodRouter _ actual  = methodRouter' (Right HM.GET) actual
 
-instance ReadForeign body => MethodRouter (Post body) body where
-    methodRouter _ actual body =
-        case checkMethod (Right HM.POST) actual of
-        Just error -> Left error
-        Nothing -> readJSON body # lmap (inj (Proxy :: _ "bodyParse"))
+instance MethodRouter Post where
+    methodRouter _ actual  = methodRouter' (Right HM.POST) actual
 
-instance ReadForeign body => MethodRouter (Put body) body where
-    methodRouter _ actual body =
-        case checkMethod (Right HM.PUT) actual of
-        Just error -> Left error
-        Nothing -> readJSON body # lmap (inj (Proxy :: _ "bodyParse"))
+instance MethodRouter Put where
+    methodRouter _ actual  = methodRouter' (Right HM.PUT) actual
 
-instance ReadForeign body => MethodRouter (Patch body) body where
-    methodRouter _ actual body =
-        case checkMethod (Right HM.PATCH) actual of
-        Just error -> Left error
-        Nothing -> readJSON body # lmap (inj (Proxy :: _ "bodyParse"))
+instance MethodRouter Patch where
+    methodRouter _ actual  = methodRouter' (Right HM.PATCH) actual
 
-instance MethodRouter Delete Unit where
-    methodRouter _ actual _ = checkMethod' (Right HM.DELETE) actual
+instance MethodRouter Delete where
+    methodRouter _ actual  = methodRouter' (Right HM.DELETE) actual

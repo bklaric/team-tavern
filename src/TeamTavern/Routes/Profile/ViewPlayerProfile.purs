@@ -1,10 +1,10 @@
 module TeamTavern.Routes.Profile.ViewPlayerProfile where
 
-import Jarilo.Method (Get)
-import Jarilo.Path (type (:>), Capture, Literal)
-import Jarilo.Query (Mandatory)
-import Jarilo.Response (Ok)
-import Jarilo.Route (FullRoute)
+import Jarilo.Types (Get)
+import Jarilo.Types (type (:>), Capture, Literal)
+import Jarilo.Types (Mandatory)
+import Jarilo.Types (Ok)
+import Jarilo.Types (FullRoute)
 import TeamTavern.Routes.Shared.GameBase (GameBaseRow)
 import TeamTavern.Routes.Shared.PlayerBase (PlayerBaseRow)
 import TeamTavern.Routes.Shared.PlayerContacts (PlayerContactsRow)

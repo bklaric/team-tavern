@@ -3,11 +3,11 @@ module TeamTavern.Routes.Profile.ViewTeamProfilesByGame where
 import Prelude
 
 import Data.Maybe (Maybe, maybe)
-import Jarilo.Method (Get)
-import Jarilo.Path (type (:>), Capture, Literal)
-import Jarilo.Query (type (:?), Mandatory, Many, Optional, Rest)
-import Jarilo.Response (Ok)
-import Jarilo.Route (FullRoute)
+import Jarilo.Types (Get)
+import Jarilo.Types (type (:>), Capture, Literal)
+import Jarilo.Types (type (:?), Mandatory, Many, Optional, Rest)
+import Jarilo.Types (Ok)
+import Jarilo.Types (FullRoute)
 import TeamTavern.Routes.Profile.Shared (ProfilePage, bundleFields)
 import TeamTavern.Routes.Shared.Filters (Age, Filters, HasMicrophone, Language, Location, NewOrReturning, Time)
 import TeamTavern.Routes.Shared.Organization (Organization)

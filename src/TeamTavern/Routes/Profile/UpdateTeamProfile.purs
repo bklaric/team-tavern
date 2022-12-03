@@ -1,10 +1,10 @@
 module TeamTavern.Routes.Profile.UpdateTeamProfile where
 
-import Jarilo.Method (Put)
-import Jarilo.Path (type (:>), Capture, Literal)
-import Jarilo.Query (NoQuery)
-import Jarilo.Response (type (:!), BadRequest, NoContent)
-import Jarilo.Route (FullRoute)
+import Jarilo.Types (Put)
+import Jarilo.Types (type (:>), Capture, Literal)
+import Jarilo.Types (NoQuery)
+import Jarilo.Types (type (:!), BadRequest, NoContent)
+import Jarilo.Types (FullRoute)
 import TeamTavern.Routes.Profile.AddTeamProfile as AddTeamProfile
 import TeamTavern.Routes.Shared.Types (Handle, Nickname)
 

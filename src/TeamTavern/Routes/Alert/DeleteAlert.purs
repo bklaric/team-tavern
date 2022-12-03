@@ -1,10 +1,10 @@
 module TeamTavern.Routes.Alert.DeleteAlert where
 
-import Jarilo.Method (Delete)
-import Jarilo.Path (type (:>), Capture, Literal)
-import Jarilo.Query (Mandatory)
-import Jarilo.Response (NoContent)
-import Jarilo.Route (FullRoute)
+import Jarilo.Types (Delete)
+import Jarilo.Types (type (:>), Capture, Literal)
+import Jarilo.Types (Mandatory)
+import Jarilo.Types (NoContent)
+import Jarilo.Types (FullRoute)
 
 type DeleteAlert = FullRoute
     Delete

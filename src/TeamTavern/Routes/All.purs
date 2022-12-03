@@ -1,6 +1,6 @@
 module TeamTavern.Routes.All where
 
-import Jarilo.Junction (type (:<|>), type (:=))
+import Jarilo.Types (type (:<|>), type (:=))
 import TeamTavern.Routes.Boarding.Onboard (Onboard)
 import TeamTavern.Routes.Boarding.Preboard (Preboard)
 import TeamTavern.Routes.Alert.CreateAlert (CreateAlert)

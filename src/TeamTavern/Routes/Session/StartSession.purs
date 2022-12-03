@@ -1,11 +1,11 @@
 module TeamTavern.Routes.Session.StartSession where
 
 import Data.Variant (Variant)
-import Jarilo.Method (Post)
-import Jarilo.Path (Literal)
-import Jarilo.Query (NoQuery)
-import Jarilo.Response (type (:!), BadRequest, Forbidden_, Internal_, NoContent)
-import Jarilo.Route (FullRoute)
+import Jarilo.Types (Post)
+import Jarilo.Types (Literal)
+import Jarilo.Types (NoQuery)
+import Jarilo.Types (type (:!), BadRequest, Forbidden_, Internal_, NoContent)
+import Jarilo.Types (FullRoute)
 
 type StartSession = FullRoute
     (Post RequestContent)

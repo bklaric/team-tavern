@@ -1,11 +1,11 @@
 module TeamTavern.Routes.Player.ViewPlayer where
 
 import Data.Maybe (Maybe)
-import Jarilo.Method (Get)
-import Jarilo.Path (type (:>), Capture, Literal)
-import Jarilo.Query (Mandatory)
-import Jarilo.Response (Ok)
-import Jarilo.Route (FullRoute)
+import Jarilo.Types (Get)
+import Jarilo.Types (type (:>), Capture, Literal)
+import Jarilo.Types (Mandatory)
+import Jarilo.Types (Ok)
+import Jarilo.Types (FullRoute)
 import TeamTavern.Routes.Shared.Organization (OrganizationN)
 import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
 import TeamTavern.Routes.Shared.PlayerContacts (PlayerContactsOpen)

@@ -1,11 +1,11 @@
 module TeamTavern.Routes.Profile.AddTeamProfile where
 
 import Data.Variant (Variant)
-import Jarilo.Method (Post)
-import Jarilo.Path (type (:>), Capture, Literal)
-import Jarilo.Query (NoQuery)
-import Jarilo.Response (type (:!), BadRequest, NoContent)
-import Jarilo.Route (FullRoute)
+import Jarilo.Types (Post)
+import Jarilo.Types (type (:>), Capture, Literal)
+import Jarilo.Types (NoQuery)
+import Jarilo.Types (type (:!), BadRequest, NoContent)
+import Jarilo.Types (FullRoute)
 import TeamTavern.Routes.Shared.Platform (Platform)
 import TeamTavern.Routes.Shared.Size (Size)
 import TeamTavern.Routes.Shared.TeamContacts (TeamContacts, TeamContactsError)

@@ -1,11 +1,11 @@
 module TeamTavern.Routes.Game.ViewGame where
 
 import Data.Maybe (Maybe)
-import Jarilo.Method (Get)
-import Jarilo.Path (type (:>), Capture, Literal)
-import Jarilo.Query (NoQuery)
-import Jarilo.Response (Ok)
-import Jarilo.Route (FullRoute)
+import Jarilo.Types (Get)
+import Jarilo.Types (type (:>), Capture, Literal)
+import Jarilo.Types (NoQuery)
+import Jarilo.Types (Ok)
+import Jarilo.Types (FullRoute)
 import TeamTavern.Routes.Shared.Platform (Platforms)
 
 type ViewGame = FullRoute
