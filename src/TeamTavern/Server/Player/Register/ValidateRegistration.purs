@@ -7,11 +7,12 @@ import Async.Validated (fromValidated) as Async
 import AsyncV (AsyncV)
 import AsyncV as AsyncV
 import Data.Bifunctor (lmap)
-import Data.Bifunctor.Label (label)
 import Data.List.NonEmpty as NonEmptyList
 import Data.List.Types (NonEmptyList)
 import Data.Variant (Variant)
+import Jarilo (badRequest_)
 import TeamTavern.Routes.Player.RegisterPlayer as RegisterPlayer
+import TeamTavern.Server.Infrastructure.Error (TavernError, BadRequestError, mapError, mergeAll)
 import TeamTavern.Server.Player.Domain.Nickname (Nickname, validateNickname)
 import TeamTavern.Server.Player.Domain.Password (Password, validatePassword)
 import Type.Proxy (Proxy(..))
@@ -22,23 +23,33 @@ type Registration =
     }
 
 type RegistrationError = Variant
-    ( nickname :: Array String
-    , password :: Array String
+    ( nickname :: {}
+    , password :: {}
     )
 
-type RegistrationErrors = NonEmptyList RegistrationError
+type RegistrationErrors = Array RegistrationError
 
-validateRegistration :: forall errors.
-    RegisterPlayer.RequestContent -> Async (Variant (registration :: RegistrationErrors | errors)) Registration
-validateRegistration { nickname, password } =
+validateRegistration'
+    :: forall errors
+    .  RegisterPlayer.RequestContent
+    -> Async (TavernError (registration :: Array RegistrationError | errors)) Registration
+validateRegistration' { nickname, password } =
     { nickname: _, password: _ }
     <$> validateNickname nickname
     <*> validatePassword password
     # Async.fromValidated
-    # label (Proxy :: _ "registration")
+    # lmap (mergeAll (Proxy :: _ "registration"))
+
+validateRegistration
+    :: forall errors
+    .  RegisterPlayer.RequestContent
+    -> Async (BadRequestError RegisterPlayer.BadContent errors) Registration
+validateRegistration identifiers =
+    validateRegistration' identifiers
+    # lmap (mapError badRequest_)
 
 validateRegistrationV
     :: forall errors
     .  RegisterPlayer.RequestContent
-    -> AsyncV (NonEmptyList (Variant (registration :: RegistrationErrors | errors))) Registration
-validateRegistrationV = validateRegistration >>> lmap NonEmptyList.singleton >>> AsyncV.fromAsync
+    -> AsyncV (NonEmptyList (TavernError (registration :: RegistrationErrors | errors))) Registration
+validateRegistrationV = validateRegistration' >>> lmap NonEmptyList.singleton >>> AsyncV.fromAsync

@@ -15,8 +15,8 @@ type RequestContent =
 type OkContent = { nickname :: String }
 
 type BadContentIdentifiers = Variant
-    ( invalidNickname :: {}
-    , invalidPassword :: {}
+    ( nickname :: {}
+    , password :: {}
     )
 
 type BadContent = Variant

@@ -13,8 +13,9 @@ import Prim.RowList (class RowToList)
 import Record.Builder (Builder, buildFromScratch, insert)
 import Type.Proxy (Proxy(..))
 
-type ResponseConverter realBody =
-    { headers :: MultiMap String String, body :: realBody } -> PerunRes.Response
+data AppResponse realBody = AppResponse (MultiMap String String) realBody
+
+type ResponseConverter realBody = AppResponse realBody -> PerunRes.Response
 
 responseRouter''
     :: forall label responsesStart responsesEnd body realBody
@@ -27,7 +28,7 @@ responseRouter''
     -> Int
     -> Builder (Record responsesStart) (Record responsesEnd)
 responseRouter'' labelProxy bodyProxy statusCode = insert labelProxy
-    \({headers, body}) -> { statusCode, headers, body: responseBodyRouter bodyProxy body }
+    \(AppResponse headers body) -> { statusCode, headers, body: responseBodyRouter bodyProxy body }
 
 class ResponseRouter (response :: Response) responsesStart responsesEnd | response -> responsesStart responsesEnd where
     responseRouter'

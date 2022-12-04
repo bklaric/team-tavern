@@ -5,7 +5,7 @@ import Prelude
 import Data.CodePoint.Unicode (isAlpha)
 import Data.Maybe (Maybe, maybe)
 import Data.String (codePointAt, length)
-import Data.Validated.Label (ValidatedVariants)
+import TeamTavern.Server.Infrastructure.Error (ValidatedTavern)
 import TeamTavern.Server.Profile.Infrastructure.ValidateContact (validateContact)
 import Type.Proxy (Proxy(..))
 
@@ -26,6 +26,7 @@ isUbisoftUsernameValid ubisoftUsername =
     && length ubisoftUsername <= maxUsernameLength
     && (codePointAt 0 ubisoftUsername <#> isAlpha # maybe false identity)
 
-validateUbisoftUsername :: forall errors. Maybe String -> ValidatedVariants (ubisoftUsername :: String | errors) (Maybe UbisoftUsername)
+validateUbisoftUsername :: forall errors.
+    Maybe String -> ValidatedTavern (ubisoftUsername :: {} | errors) (Maybe UbisoftUsername)
 validateUbisoftUsername ubisoftUsername =
     validateContact ubisoftUsername isUbisoftUsernameValid UbisoftUsername (Proxy :: _ "ubisoftUsername") ("Invalid Ubisoft Connect username: " <> _)

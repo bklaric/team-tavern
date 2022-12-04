@@ -4,13 +4,14 @@ import Prelude
 
 import Async (Async, note)
 import Data.Array (head)
-import Data.Bifunctor.Label (labelMap)
+import Data.Bifunctor (lmap)
 import Data.Maybe (Maybe, maybe)
 import Data.String as String
-import Data.Symbol (class IsSymbol)
 import Data.Traversable (traverse)
-import Data.Variant (inj)
+import Data.Variant (Variant)
 import Error.Class (message, name)
+import Jarilo (badRequest__, internal__, notAuthorized__, notFound__)
+import Jarilo.Router.Response (AppResponse)
 import Node.Errors.Class (code)
 import Postgres.Async.Pool (withTransaction)
 import Postgres.Async.Query (execute, query)
@@ -19,9 +20,8 @@ import Postgres.Error (Error, constraint, detail, schema, severity, table)
 import Postgres.Pool (Pool)
 import Postgres.Query (class Querier, Query, QueryParameter)
 import Postgres.Result (Result, rows)
-import Prim.Row (class Cons)
-import TeamTavern.Server.Infrastructure.Error (InternalError, InternalRow, LoadSingleError, ChangeSingleError)
-import Type.Proxy (Proxy(..))
+import TeamTavern.Server.Infrastructure.Error (InternalError_, InternalRow_, NotAuthorizedRow_, NotFoundRow_, TavernError(..), BadRequestRow_)
+import Type.Row (type (+))
 import Yoga.JSON (class ReadForeign)
 import Yoga.JSON.Async (read)
 
@@ -72,8 +72,12 @@ teamAdjustedWeekendFrom = teamAdjustedTime "team.weekend_from"
 teamAdjustedWeekendTo :: String -> String
 teamAdjustedWeekendTo = teamAdjustedTime "team.weekend_to"
 
-reportDatabaseError :: Error -> Array String
-reportDatabaseError error =
+type LoadSingleError errors = TavernError (InternalRow_ + NotFoundRow_ + errors)
+
+type ChangeSingleError errors = TavernError (InternalRow_ + NotAuthorizedRow_ + errors)
+
+databaseErrorLines :: Error -> Array String
+databaseErrorLines error =
     [ "Name: " <> name error
     , "Message: " <> message error
     , "Code: " <> code error
@@ -84,64 +88,66 @@ reportDatabaseError error =
     , "Constraint: " <> maybe "-" identity (constraint error)
     ]
 
-reportDatabaseError' :: forall right errors.
-    Async Error right -> Async (InternalError errors) right
-reportDatabaseError' = labelMap (Proxy :: _ "internal") reportDatabaseError
+reportDatabaseError :: forall right errors.
+    Async Error right -> Async (InternalError_ errors) right
+reportDatabaseError = lmap (databaseErrorLines >>> TavernError internal__)
 
 queryInternal :: forall querier errors. Querier querier =>
-    querier -> Query -> Array QueryParameter -> Async (InternalError errors) Result
+    querier -> Query -> Array QueryParameter -> Async (InternalError_ errors) Result
 queryInternal querier queryString parameters =
-    query queryString parameters querier # reportDatabaseError'
+    query queryString parameters querier # reportDatabaseError
 
 queryMany :: forall querier errors rows. Querier querier => ReadForeign rows =>
-    querier -> Query -> Array QueryParameter -> Async (InternalError errors) (Array rows)
+    querier -> Query -> Array QueryParameter -> Async (InternalError_ errors) (Array rows)
 queryMany pool queryString parameters = do
     result <- queryInternal pool queryString parameters
-    rows result # traverse read # labelMap (Proxy :: _ "internal") \errors ->
+    rows result # traverse read # lmap \errors -> TavernError internal__
         [ "Error reading result from database: " <> show errors ]
 
 queryMany_ :: forall querier errors rows. Querier querier => ReadForeign rows =>
-    querier -> Query -> Async (InternalError errors) (Array rows)
+    querier -> Query -> Async (InternalError_ errors) (Array rows)
 queryMany_ pool queryString = queryMany pool queryString []
 
 queryFirst
-    :: forall row errors querier errors' label
+    :: forall row querier errors
     .  Querier querier
     => ReadForeign row
-    => Cons label (Array String) errors' (InternalRow errors)
-    => IsSymbol label
-    => Proxy label
+    => Variant (internal :: AppResponse Unit | errors)
     -> querier
     -> Query
     -> Array QueryParameter
-    -> Async (InternalError errors) row
-queryFirst label pool queryString parameters = do
+    -> Async (InternalError_ errors) row
+queryFirst response pool queryString parameters = do
     rows <- queryMany pool queryString parameters
-    rows # head # note (inj label [ "Expected at least one row from database, got none." ])
+    rows # head # note (TavernError response [ "Expected at least one row from database, got none." ])
 
 queryFirstInternal :: forall row errors querier. Querier querier => ReadForeign row =>
-    querier -> Query -> Array QueryParameter -> Async (InternalError errors) row
-queryFirstInternal = queryFirst (Proxy :: _ "internal")
+    querier -> Query -> Array QueryParameter -> Async (InternalError_ errors) row
+queryFirstInternal = queryFirst internal__
+
+queryFirstBadRequest :: forall row errors querier. Querier querier => ReadForeign row =>
+    querier -> Query -> Array QueryParameter -> Async (TavernError (InternalRow_ + BadRequestRow_ + errors)) row
+queryFirstBadRequest = queryFirst badRequest__
 
 queryFirstNotFound :: forall row errors querier. Querier querier => ReadForeign row =>
     querier -> Query -> Array QueryParameter -> Async (LoadSingleError errors) row
-queryFirstNotFound = queryFirst (Proxy :: _ "notFound")
+queryFirstNotFound = queryFirst notFound__
 
 queryFirstMaybe :: forall errors querier row. Querier querier => ReadForeign row =>
-    querier -> Query -> Array QueryParameter -> Async (InternalError errors) (Maybe row)
+    querier -> Query -> Array QueryParameter -> Async (InternalError_ errors) (Maybe row)
 queryFirstMaybe pool queryString parameters = do
     rows <- queryMany pool queryString parameters
     pure $ head rows
 
 queryFirstNotAuthorized :: forall row errors querier. Querier querier => ReadForeign row =>
     querier -> Query -> Array QueryParameter -> Async (ChangeSingleError errors) row
-queryFirstNotAuthorized = queryFirst (Proxy :: _ "notAuthorized")
+queryFirstNotAuthorized = queryFirst notAuthorized__
 
 queryNone :: forall querier errors. Querier querier =>
-    querier -> Query -> Array QueryParameter -> Async (InternalError errors) Unit
+    querier -> Query -> Array QueryParameter -> Async (InternalError_ errors) Unit
 queryNone querier queryString parameters =
-    querier # execute queryString parameters # reportDatabaseError'
+    querier # execute queryString parameters # reportDatabaseError
 
 transaction :: forall result errors.
-    (Client -> Async (InternalError errors) result) -> Pool -> Async (InternalError errors) result
-transaction = withTransaction (inj (Proxy :: _ "internal") <<< reportDatabaseError)
+    (Client -> Async (InternalError_ errors) result) -> Pool -> Async (InternalError_ errors) result
+transaction = withTransaction (databaseErrorLines >>> TavernError internal__)

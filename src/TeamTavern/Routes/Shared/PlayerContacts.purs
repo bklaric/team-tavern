@@ -20,14 +20,16 @@ type PlayerContactsOpen fields = Record (PlayerContactsRow fields)
 
 type PlayerContacts = PlayerContactsOpen ()
 
-type PlayerContactsError = Variant
-    ( battleTag :: String
-    , discordTag :: String
-    , friendCode :: String
-    , gamerTag :: String
-    , eaId :: String
-    , ubisoftUsername :: String
-    , psnId :: String
-    , riotId :: String
-    , steamId :: String
+type PlayerContactsErrorRow =
+    ( battleTag :: {}
+    , discordTag :: {}
+    , friendCode :: {}
+    , gamerTag :: {}
+    , eaId :: {}
+    , ubisoftUsername :: {}
+    , psnId :: {}
+    , riotId :: {}
+    , steamId :: {}
     )
+
+type PlayerContactsError = Variant PlayerContactsErrorRow

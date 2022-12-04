@@ -4,7 +4,7 @@ import Prelude
 
 import Async (Async)
 import Async.Validated (fromValidated)
-import Data.Bifunctor.Label (labelMap)
+import Data.Bifunctor (lmap)
 import Data.Either (fromRight)
 import Data.List.Types (NonEmptyList)
 import Data.Maybe (isJust)
@@ -14,6 +14,8 @@ import Data.String.Regex.Flags (unicode)
 import Data.Validated.Label (ValidatedVariants)
 import Data.Validated.Label as Validated
 import Data.Variant (Variant)
+import Jarilo (internal__)
+import TeamTavern.Server.Infrastructure.Error (TavernError(..), InternalError_)
 import Type.Proxy (Proxy(..))
 import Undefined (undefined)
 import Wrapped.String (TooLong, Invalid, invalid, tooLong)
@@ -34,11 +36,11 @@ validateEmail email =
         , "Failed with following errors: " <> show (errors :: NonEmptyList EmailError)
         ]
 
-validateEmail' :: forall errors. String -> Async (Variant (email :: Array String | errors)) Email
+validateEmail' :: forall errors. String -> Async (InternalError_ errors) Email
 validateEmail' email =
     Wrapped.create trim [invalid (match emailRegex >>> isJust), tooLong 254] Email email
     # fromValidated
-    # labelMap (Proxy :: _ "email") \errors ->
+    # lmap \errors -> TavernError internal__
         [ "Error validating email: " <> email
         , "Failed with following errors: " <> show (errors :: NonEmptyList EmailError)
         ]

@@ -60,7 +60,7 @@ deleteFieldValuesString = Query """
     where team_profile_id = $1;
     """
 
-deleteFieldValues :: forall errors. Client -> ProfileId -> Async (InternalError errors) Unit
+deleteFieldValues :: forall errors. Client -> ProfileId -> Async (InternalError_ errors) Unit
 deleteFieldValues client profileId = queryNone client deleteFieldValuesString (profileId : [])
 
 updateProfile :: forall errors.

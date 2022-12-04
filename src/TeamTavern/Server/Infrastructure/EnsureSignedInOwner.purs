@@ -6,12 +6,11 @@ import Async (Async)
 import Postgres.Query (class Querier, Query(..), (:|))
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo, Cookies)
 import TeamTavern.Server.Infrastructure.EnsureSignedIn (EnsureSignedInError, ensureSignedIn)
+import TeamTavern.Server.Infrastructure.Error (ForbiddenRow_)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstNotAuthorized)
+import Type.Row (type (+))
 
-type EnsureSignedInOwnerError errors = EnsureSignedInError
-    ( notAuthorized :: Array String
-    | errors
-    )
+type EnsureSignedInOwnerError errors = EnsureSignedInError (ForbiddenRow_ + errors)
 
 queryString :: Query
 queryString = Query """

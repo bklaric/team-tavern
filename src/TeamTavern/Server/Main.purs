@@ -33,36 +33,36 @@ import Postgres.Pool (Pool)
 import Postgres.Pool as Pool
 import Sendgrid (setApiKey)
 import TeamTavern.Routes.All (AllRoutes)
-import TeamTavern.Routes.Profile.ViewPlayerProfilesByGame (bundlePlayerFilters)
-import TeamTavern.Routes.Profile.ViewTeamProfilesByGame (bundleTeamFilters)
+-- import TeamTavern.Routes.Profile.ViewPlayerProfilesByGame (bundlePlayerFilters)
+-- import TeamTavern.Routes.Profile.ViewTeamProfilesByGame (bundleTeamFilters)
 import TeamTavern.Server.Alert.Create (createAlert) as Alert
 import TeamTavern.Server.Alert.Delete (deleteAlert) as Alert
 import TeamTavern.Server.Infrastructure.Deployment (Deployment)
 import TeamTavern.Server.Infrastructure.Deployment as Deployment
-import TeamTavern.Server.Boarding.Onboard as Onboard
-import TeamTavern.Server.Boarding.Preboard as Preboard
+-- import TeamTavern.Server.Boarding.Onboard as Onboard
+-- import TeamTavern.Server.Boarding.Preboard as Preboard
 import TeamTavern.Server.Game.View (view) as Game
 import TeamTavern.Server.Game.ViewAll (viewAll) as Game
 import TeamTavern.Server.Infrastructure.Log (logStamped, logt)
-import TeamTavern.Server.Player.Delete (delete) as Player
-import TeamTavern.Server.Player.Register (register) as Player
-import TeamTavern.Server.Player.UpdateContacts (updateContacts) as Player
-import TeamTavern.Server.Player.UpdatePlayer (updatePlayer) as Player
-import TeamTavern.Server.Player.View (view) as Player
-import TeamTavern.Server.Profile.AddPlayerProfile (addPlayerProfile) as Profile
-import TeamTavern.Server.Profile.AddTeamProfile (addTeamProfile) as Profile
-import TeamTavern.Server.Profile.UpdatePlayerProfile (updatePlayerProfile) as Profile
-import TeamTavern.Server.Profile.UpdateTeamProfile (updateTeamProfile) as Profile
-import TeamTavern.Server.Profile.ViewPlayerProfile (viewPlayerProfile)
-import TeamTavern.Server.Profile.ViewPlayerProfilesByGame (viewPlayerProfilesByGame) as Profile
-import TeamTavern.Server.Profile.ViewTeamProfile (viewTeamProfile)
-import TeamTavern.Server.Profile.ViewTeamProfilesByGame (viewTeamProfilesByGame) as Profile
+-- import TeamTavern.Server.Player.Delete (delete) as Player
+-- import TeamTavern.Server.Player.Register (register) as Player
+-- import TeamTavern.Server.Player.UpdateContacts (updateContacts) as Player
+-- import TeamTavern.Server.Player.UpdatePlayer (updatePlayer) as Player
+-- import TeamTavern.Server.Player.View (view) as Player
+-- import TeamTavern.Server.Profile.AddPlayerProfile (addPlayerProfile) as Profile
+-- import TeamTavern.Server.Profile.AddTeamProfile (addTeamProfile) as Profile
+-- import TeamTavern.Server.Profile.UpdatePlayerProfile (updatePlayerProfile) as Profile
+-- import TeamTavern.Server.Profile.UpdateTeamProfile (updateTeamProfile) as Profile
+-- import TeamTavern.Server.Profile.ViewPlayerProfile (viewPlayerProfile)
+-- import TeamTavern.Server.Profile.ViewPlayerProfilesByGame (viewPlayerProfilesByGame) as Profile
+-- import TeamTavern.Server.Profile.ViewTeamProfile (viewTeamProfile)
+-- import TeamTavern.Server.Profile.ViewTeamProfilesByGame (viewTeamProfilesByGame) as Profile
 import TeamTavern.Server.Session.End (end) as Session
 import TeamTavern.Server.Session.Start (start) as Session
-import TeamTavern.Server.Team.Create (create) as Team
-import TeamTavern.Server.Team.Update (update) as Team
-import TeamTavern.Server.Team.UpdateContacts (updateContacts) as Team
-import TeamTavern.Server.Team.View (view) as Team
+-- import TeamTavern.Server.Team.Create (create) as Team
+-- import TeamTavern.Server.Team.Update (update) as Team
+-- import TeamTavern.Server.Team.UpdateContacts (updateContacts) as Team
+-- import TeamTavern.Server.Team.View (view) as Team
 import Type.Proxy (Proxy(..))
 
 listenOptions :: ListenOptions
@@ -226,11 +226,9 @@ teamTavernRoutes = Proxy :: Proxy AllRoutes
 
 -- runServerIGuess :: Deployment -> Pool -> Request -> _ -> (forall left. Async left Response)
 runServerIGuess deployment pool = serve (Proxy :: _ AllRoutes) listenOptions
-    {
-        startSession: \(RequestResult { cookies, body }) ->
+    { startSession: \(RequestResult { cookies, body }) ->
         Session.start deployment pool cookies body
-    ,
-    endSession: const
+    , endSession: const
         Session.end
     -- , registerPlayer: \{respond,  body } ->
     --     Player.register deployment pool cookies body <#> respond
@@ -250,10 +248,10 @@ runServerIGuess deployment pool = serve (Proxy :: _ AllRoutes) listenOptions
     --     Team.update pool body cookies <#> respond
     -- , updateTeamContacts: \{respond, body} ->
     --     Team.updateContacts pool body cookies <#> respond
-    -- , viewAllGames: const $
-    --     Game.viewAll pool
-    -- , viewGame: \{respond,  handle } ->
-    --     Game.view pool handle <#> respond
+    , viewAllGames: const $
+        Game.viewAll pool
+    , viewGame: \(RequestResult { path: { handle } }) ->
+        Game.view pool handle
     -- , addPlayerProfile: \{respond, path, body} ->
     --     Profile.addPlayerProfile pool path cookies body <#> respond
     -- , addTeamProfile: \{respond, body} ->
@@ -274,10 +272,10 @@ runServerIGuess deployment pool = serve (Proxy :: _ AllRoutes) listenOptions
     --     Onboard.onboard pool cookies body <#> respond
     -- , preboard: \{respond, body} ->
     --     Preboard.preboard deployment pool cookies body <#> respond
-    -- , createAlert: \{respond, body} ->
-    --     Alert.createAlert pool body <#> respond
-    -- , deleteAlert: \{respond, path} ->
-    --     Alert.deleteAlert pool path <#> respond
+    , createAlert: \(RequestResult { body }) ->
+        Alert.createAlert pool body
+    , deleteAlert: \(RequestResult { path }) ->
+        Alert.deleteAlert pool path
     }
 
 handleNotFound { method, path } errors = do

@@ -4,7 +4,7 @@ import Async (Async)
 import Data.Maybe (Maybe)
 import Postgres.Query (class Querier, Query(..), (:))
 import TeamTavern.Routes.Shared.Platform (Platforms)
-import TeamTavern.Server.Infrastructure.Error (InternalError)
+import TeamTavern.Server.Infrastructure.Error (InternalError_)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstInternal)
 
 type Handle = String

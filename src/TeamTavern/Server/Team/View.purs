@@ -10,7 +10,7 @@ import Postgres.Pool (Pool)
 import Postgres.Query (Query(..), (:))
 import TeamTavern.Routes.Team.ViewTeam as ViewTeam
 import TeamTavern.Server.Infrastructure.Error (LoadSingleError)
-import TeamTavern.Server.Infrastructure.Log (logLoadSingleError)
+import TeamTavern.Server.Infrastructure.Log (logError)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstNotFound, teamAdjustedWeekdayFrom, teamAdjustedWeekdayTo, teamAdjustedWeekendFrom, teamAdjustedWeekendTo)
 import Yoga.JSON (writeJSON)
 
@@ -199,7 +199,7 @@ loadTeam :: forall errors. Pool -> ViewTeam.RouteParams -> Async (LoadSingleErro
 loadTeam pool { handle, timezone } = queryFirstNotFound pool (queryString timezone) (handle : [])
 
 logError :: LoadSingleError () -> Effect Unit
-logError = logLoadSingleError "Error viewing team"
+logError = logError "Error viewing team"
 
 sendResponse :: Async (LoadSingleError ()) ViewTeam.OkContent -> (forall left. Async left Response)
 sendResponse = alwaysRight

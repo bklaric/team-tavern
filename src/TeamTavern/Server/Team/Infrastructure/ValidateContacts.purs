@@ -20,7 +20,7 @@ import Data.Validated.Label (Variants)
 import Data.Variant (Variant, inj)
 import TeamTavern.Routes.Shared.Platform (Platform(..))
 import TeamTavern.Routes.Shared.TeamContacts (TeamContactsError, TeamContacts)
-import TeamTavern.Server.Player.UpdatePlayer.ValidateDiscordTag (DiscordTag, validateDiscordTag')
+import TeamTavern.Server.Profile.Infrastructure.ValidateDiscordTag (DiscordTag, validateDiscordTag)
 import TeamTavern.Server.Profile.Infrastructure.ValidateBattleTag (BattleTag, validateBattleTag)
 import TeamTavern.Server.Profile.Infrastructure.ValidateEaId (EaId, validateEaId)
 import TeamTavern.Server.Profile.Infrastructure.ValidateFriendCode (FriendCode, validateFriendCode)
@@ -71,7 +71,7 @@ validateContacts :: forall errors.
 validateContacts requiredPlatforms contacts @ { discordTag, discordServer, steamId, riotId, battleTag, eaId, ubisoftUsername, psnId, gamerTag, friendCode } =
     { discordTag: _, discordServer: _, steamId: _, riotId: _, battleTag: _, eaId: _, ubisoftUsername: _, psnId: _, gamerTag: _, friendCode: _ }
     <$ checkRequiredPlatforms requiredPlatforms contacts
-    <*> validateDiscordTag' discordTag
+    <*> validateDiscordTag discordTag
     <*> validateDiscordServer discordServer
     <*> validateSteamId steamId
     <*> validateRiotId riotId

@@ -1,9 +1,14 @@
 module Jarilo (module Jarilo, module TypesExport, module Jarilo.Fetch, module Jarilo.Serve) where
 
-import Jarilo.Types as Types
-import Jarilo.Types hiding (Method, Options, Head, Get, Post, Put, Patch, Delete, Ok, NoContent, BadRequest, NotAuthorized, Forbidden, Internal) as TypesExport
 import Jarilo.Fetch
 import Jarilo.Serve
+import Prelude
+
+import Data.Variant (Variant, inj)
+import Jarilo.Router.Response (AppResponse(..))
+import Jarilo.Types as Types
+import Jarilo.Types hiding (Method, Options, Head, Get, Post, Put, Patch, Delete, Ok, NoContent, BadRequest, NotAuthorized, Forbidden, Internal) as TypesExport
+import Type.Proxy (Proxy(..))
 
 -- General request shortcuts
 
@@ -86,3 +91,45 @@ type NotAuthorizedJson body = Types.FullResponse Types.NotAuthorized (Types.Json
 type ForbiddenJson body = Types.FullResponse Types.Forbidden (Types.JsonBody body)
 
 type InternalJson body = Types.FullResponse Types.Internal (Types.JsonBody body)
+
+-- Concrete response shortcuts
+
+ok headers body = inj (Proxy :: _ "ok") $ AppResponse headers body
+
+ok_ body = ok mempty body
+
+ok__ = ok_ unit
+
+noContent headers = inj (Proxy :: _ "noContent") $ AppResponse headers unit
+
+noContent_ = noContent mempty
+
+badRequest headers body = inj (Proxy :: _ "badRequest") $ AppResponse headers body
+
+badRequest_ body = badRequest mempty body
+
+badRequest__ = badRequest_ unit
+
+notAuthorized headers body = inj (Proxy :: _ "notAuthorized") $ AppResponse headers body
+
+notAuthorized_ body = notAuthorized mempty body
+
+notAuthorized__ = notAuthorized_ unit
+
+forbidden headers body = inj (Proxy :: _ "forbidden") $ AppResponse headers body
+
+forbidden_ body = forbidden mempty body
+
+forbidden__ = forbidden_ unit
+
+notFound headers body = inj (Proxy :: _ "notFound") $ AppResponse headers body
+
+notFound_ body = notFound mempty body
+
+notFound__ = notFound_ unit
+
+internal headers body = inj (Proxy :: _ "internal") $ AppResponse headers body
+
+internal_ body = internal mempty body
+
+internal__ = internal_ unit

@@ -4,12 +4,12 @@ import Prelude
 
 import Async (Async, fromEitherCont)
 import Data.Array (singleton)
-import Data.Bifunctor.Label (labelMap)
+import Data.Bifunctor (lmap)
 import Data.Either (Either(..))
-import Type.Proxy (Proxy(..))
 import Effect (Effect)
+import Jarilo (internal__)
 import Node.Errors (Error)
-import TeamTavern.Server.Infrastructure.Error (InternalError)
+import TeamTavern.Server.Infrastructure.Error (InternalError_, TavernError(..))
 import TeamTavern.Server.Infrastructure.Log (print)
 
 type Message =
@@ -27,6 +27,8 @@ foreign import sendImpl :: (Error -> Effect Unit) -> Effect Unit -> Message -> E
 send :: (Either Error Unit -> Effect Unit) -> Message -> Effect Unit
 send callback message = sendImpl (callback <<< Left) (callback $ Right unit) message
 
-sendAsync :: forall errors. Message -> Async (InternalError errors) Unit
+sendAsync :: forall errors. Message -> Async (InternalError_ errors) Unit
 sendAsync message =
-    labelMap (Proxy :: _ "internal") (singleton <<< print) $ fromEitherCont $ flip send message
+    lmap (print >>> ("Error sending email: " <> _) >>> singleton >>> TavernError internal__)
+    $ fromEitherCont
+    $ flip send message

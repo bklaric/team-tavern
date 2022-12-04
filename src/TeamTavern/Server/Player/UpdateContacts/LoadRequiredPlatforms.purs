@@ -5,7 +5,7 @@ import Prelude
 import Async (Async)
 import Postgres.Query (class Querier, Query(..), (:))
 import TeamTavern.Routes.Shared.Platform (Platform)
-import TeamTavern.Server.Infrastructure.Error (InternalError)
+import TeamTavern.Server.Infrastructure.Error (InternalError_)
 import TeamTavern.Server.Infrastructure.Postgres (queryMany)
 
 queryString :: Query
@@ -16,7 +16,7 @@ queryString = Query $ """
     """
 
 loadRequiredPlatforms :: forall querier errors. Querier querier =>
-    querier -> Int -> Async (InternalError errors) (Array Platform)
+    querier -> Int -> Async (InternalError_ errors) (Array Platform)
 loadRequiredPlatforms querier id =
     (queryMany querier queryString (id : []) :: Async _ (Array { platform :: Platform }))
     <#> map _.platform

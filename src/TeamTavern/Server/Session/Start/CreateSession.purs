@@ -4,15 +4,9 @@ import Prelude
 
 import Async (Async)
 import Postgres.Query (class Querier, Query(..), (:|))
-import TeamTavern.Server.Infrastructure.Error (InternalError)
+import TeamTavern.Server.Infrastructure.Error (InternalError_)
 import TeamTavern.Server.Infrastructure.Postgres (queryNone)
-import TeamTavern.Server.Player.Domain.Id (Id)
 import TeamTavern.Server.Session.Domain.Token (Token)
-
-type CreateSessionModel =
-    { id :: Id
-    , token :: Token
-    }
 
 queryString :: Query
 queryString = Query """
@@ -21,5 +15,5 @@ queryString = Query """
     """
 
 createSession :: forall querier errors. Querier querier =>
-    CreateSessionModel -> querier -> Async (InternalError errors) Unit
-createSession { id, token } querier = queryNone querier queryString (id :| token)
+    Int -> Token -> querier -> Async (InternalError_ errors) Unit
+createSession id token querier = queryNone querier queryString (id :| token)
