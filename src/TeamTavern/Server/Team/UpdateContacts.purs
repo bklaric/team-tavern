@@ -33,8 +33,8 @@ loadRequiredPlatforms querier id =
 
 -- Main
 updateContacts :: forall left.
-    Pool -> UpdateTeamContacts.RequestContent -> Cookies -> { handle :: String } -> Async left _
-updateContacts pool contacts' cookies { handle } =
+    Pool -> Cookies -> { handle :: String } -> UpdateTeamContacts.RequestContent -> Async left _
+updateContacts pool cookies { handle } contacts' =
     sendResponse "Error updating team contacts" do
     pool # transaction \client -> do
         -- Read requestor info from cookies.

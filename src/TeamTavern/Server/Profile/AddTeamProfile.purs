@@ -12,7 +12,7 @@ import Jarilo (badRequest_, noContent_)
 import Postgres.Pool (Pool)
 import TeamTavern.Routes.Profile.AddTeamProfile as AddTeamProfile
 import TeamTavern.Routes.Shared.Platform (Platform(..))
-import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
+import TeamTavern.Server.Infrastructure.EnsureSignedInOwner (ensureSignedInOwner)
 import TeamTavern.Server.Infrastructure.Postgres (transaction)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Profile.AddTeamProfile.AddProfile (addProfile)
@@ -28,7 +28,7 @@ addTeamProfile :: forall left.
 addTeamProfile pool cookies { teamHandle, gameHandle } profile' =
     sendResponse "Error creating player profile" do
     -- Read info from cookies.
-    cookieInfo <- ensureSignedIn pool cookies
+    { cookieInfo } <- ensureSignedInOwner pool cookies teamHandle
 
     profileId <- pool # transaction \client -> do
         -- Load game fields from database.

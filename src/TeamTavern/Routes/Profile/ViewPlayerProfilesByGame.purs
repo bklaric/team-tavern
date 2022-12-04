@@ -3,7 +3,7 @@ module TeamTavern.Routes.Profile.ViewPlayerProfilesByGame where
 import Prelude
 
 import Data.Maybe (Maybe)
-import Jarilo (type (&), type (/), type (==>), Capture, Get, Literal, Mandatory, Many, OkJson, Optional, Rest)
+import Jarilo (type (!), type (&), type (/), type (==>), Capture, Get, Internal_, Literal, Mandatory, Many, OkJson, Optional, Rest)
 import Prim.Row (class Lacks)
 import Record as Record
 import TeamTavern.Routes.Profile.Shared (ProfilePage)
@@ -38,7 +38,7 @@ type ViewPlayerProfilesByGame =
     & Many "platform" Platform
     & Optional "newOrReturning" NewOrReturning
     & Rest "fields")
-    ==> OkJson OkContent
+    ==> OkJson OkContent ! Internal_
 
 bundlePlayerFilters :: forall other. Lacks "organization" other => Lacks "size" other =>
     { ageFrom :: Maybe Int

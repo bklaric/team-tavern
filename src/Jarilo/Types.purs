@@ -76,6 +76,8 @@ foreign import data BadRequest :: Status
 
 foreign import data NotAuthorized :: Status
 
+foreign import data NotFound :: Status
+
 foreign import data Forbidden :: Status
 
 foreign import data Internal :: Status

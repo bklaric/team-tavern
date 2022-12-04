@@ -9,7 +9,7 @@ import Postgres.Pool (Pool)
 import Postgres.Query (class Querier, Query(..), QueryParameter, (:), (:|))
 import TeamTavern.Routes.Team.UpdateTeam as UpdateTeam
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
-import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
+import TeamTavern.Server.Infrastructure.EnsureSignedInOwner (ensureSignedInOwner)
 import TeamTavern.Server.Infrastructure.Postgres (queryNone)
 import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
@@ -62,10 +62,10 @@ updateTeam :: forall querier errors. Querier querier =>
 updateTeam pool ownerId handle team =
     queryNone pool queryString (queryParameters ownerId handle team)
 
-update :: forall left. Pool -> UpdateTeam.RequestContent -> Cookies -> { handle :: String } -> Async left _
-update pool content cookies { handle } =
+update :: forall left. Pool -> Cookies -> { handle :: String } -> UpdateTeam.RequestContent -> Async left _
+update pool cookies { handle } content =
     sendResponse "Error updating team" do
-    cookieInfo <- ensureSignedIn pool cookies
+    { cookieInfo } <- ensureSignedInOwner pool cookies handle
     team <- validateTeam content
     updateTeam pool cookieInfo.id handle team
     pure noContent_

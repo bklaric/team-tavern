@@ -22,11 +22,11 @@ type Registration =
     , password :: Password
     }
 
-type RegistrationErrors = NonEmptyArray RegisterPlayer.BadContentIdentifiers
+type RegistrationErrors = NonEmptyArray RegisterPlayer.RegistrationError
 
 validateRegistration'
     :: RegisterPlayer.RequestContent
-    -> ValidatedTerrorNea RegisterPlayer.BadContentIdentifiers Registration
+    -> ValidatedTerrorNea RegisterPlayer.RegistrationError Registration
 validateRegistration' { nickname, password } =
     { nickname: _, password: _ }
     <$> validateNickname nickname

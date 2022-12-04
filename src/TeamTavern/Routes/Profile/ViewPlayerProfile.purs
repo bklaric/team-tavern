@@ -1,6 +1,6 @@
 module TeamTavern.Routes.Profile.ViewPlayerProfile where
 
-import Jarilo (type (/), type (==>), Capture, Get, Literal, Mandatory, OkJson)
+import Jarilo (type (!), type (/), type (==>), Capture, Get, Internal_, Literal, Mandatory, OkJson, NotFound_)
 import TeamTavern.Routes.Shared.GameBase (GameBaseRow)
 import TeamTavern.Routes.Shared.PlayerBase (PlayerBaseRow)
 import TeamTavern.Routes.Shared.PlayerContacts (PlayerContactsRow)
@@ -15,7 +15,7 @@ type ViewPlayerProfile =
     / Literal "profiles"
     / Capture "handle" String)
     (Mandatory "timezone" String)
-    ==> OkJson OkContent
+    ==> OkJson OkContent ! NotFound_ ! Internal_
 
 type RouteParams =
     { nickname :: String

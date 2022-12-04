@@ -68,9 +68,9 @@ type AlertRoutes
 
 type AllRoutes
     =    SessionRoutes
-    -- <|> GameRoutes
-    -- <|> PlayerRoutes
-    -- <|> TeamRoutes
-    -- <|> ProfileRoutes
-    -- <|> BoardRoutes
-    -- <|> AlertRoutes
+    <|> GameRoutes
+    <|> PlayerRoutes
+    <|> TeamRoutes
+    <|> ProfileRoutes
+    <|> BoardRoutes
+    <|> AlertRoutes

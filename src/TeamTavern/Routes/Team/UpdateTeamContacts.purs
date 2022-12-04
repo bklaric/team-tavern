@@ -1,7 +1,7 @@
 module TeamTavern.Routes.Team.UpdateTeamContacts where
 
 import Data.Array.NonEmpty (NonEmptyArray)
-import Jarilo (type (!), type (/), type (==>), BadRequestJson, Capture, Literal, NoContent, PutJson_)
+import Jarilo (type (!), type (/), type (==>), BadRequestJson, Capture, Forbidden_, Literal, NoContent, NotAuthorized_, PutJson_, Internal_)
 import TeamTavern.Routes.Shared.TeamContacts (TeamContacts, TeamContactsError)
 
 type UpdateTeamContacts =
@@ -10,7 +10,7 @@ type UpdateTeamContacts =
     / Capture "handle" String
     / Literal "contacts")
     RequestContent
-    ==> NoContent ! BadRequestJson BadContent
+    ==> NoContent ! BadRequestJson BadContent ! NotAuthorized_ ! Forbidden_ ! Internal_
 
 type RequestContent = TeamContacts
 

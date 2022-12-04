@@ -8,7 +8,7 @@ import Data.MultiMap (MultiMap)
 import Data.Variant (Variant, inj)
 import Jarilo.Router.Response (AppResponse(..))
 import Jarilo.Types as Types
-import Jarilo.Types hiding (Method, Options, Head, Get, Post, Put, Patch, Delete, Ok, NoContent, BadRequest, NotAuthorized, Forbidden, Internal) as TypesExport
+import Jarilo.Types hiding (Method, Options, Head, Get, Post, Put, Patch, Delete, Ok, NoContent, BadRequest, NotAuthorized, Forbidden, NotFound, Internal) as TypesExport
 import Type.Proxy (Proxy(..))
 
 -------------------------------------------------
@@ -71,6 +71,8 @@ type NotAuthorized body = Types.FullResponse Types.NotAuthorized body
 
 type Forbidden body = Types.FullResponse Types.Forbidden body
 
+type NotFound body = Types.FullResponse Types.NotFound body
+
 type Internal body = Types.FullResponse Types.Internal body
 
 -- No body response shortcuts
@@ -82,6 +84,8 @@ type BadRequest_ = Types.FullResponse Types.BadRequest Types.NoBody
 type NotAuthorized_ = Types.FullResponse Types.NotAuthorized Types.NoBody
 
 type Forbidden_ = Types.FullResponse Types.Forbidden Types.NoBody
+
+type NotFound_ = Types.FullResponse Types.NotFound Types.NoBody
 
 type Internal_ = Types.FullResponse Types.Internal Types.NoBody
 

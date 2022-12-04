@@ -19,7 +19,7 @@ data RequestError
     | QueryError QueryError
     | BodyError BodyError
 
-data RequestResult pathParams queryParams realBody = RequestResult
+type RequestResult pathParams queryParams realBody =
     { path :: Record pathParams
     , query :: Record queryParams
     , headers :: Map String String
@@ -50,7 +50,7 @@ instance
         pathParams <- pathRouter pathProxy path # lmap PathError # fromEither
         queryParams <- queryRouter queryProxy query # lmap QueryError # fromEither
         realBody <- bodyRouter bodyProxy body # lmap BodyError
-        pure $ RequestResult
+        pure
             { path: pathParams
             , query: queryParams
             , headers

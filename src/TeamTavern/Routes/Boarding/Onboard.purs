@@ -5,16 +5,19 @@ import TeamTavern.Routes.Shared.TeamContacts
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Maybe (Maybe)
 import Data.Variant (Variant)
-import Jarilo (type (!), type (==>), Literal, OkJson, PostJson_, BadRequestJson)
+import Jarilo (type (!), type (==>), BadRequestJson, Literal, NotAuthorized_, OkJson, PostJson_, Internal_)
 import TeamTavern.Routes.Shared.Organization (OrganizationNW)
 import TeamTavern.Routes.Shared.Platform (Platform)
 import TeamTavern.Routes.Shared.PlayerContacts (PlayerContacts, PlayerContactsError)
+import TeamTavern.Routes.Shared.PlayerProfile (PlayerProfileError)
 import TeamTavern.Routes.Shared.Size (Size)
+import TeamTavern.Routes.Shared.TeamBase (TeamError)
+import TeamTavern.Routes.Shared.TeamProfile (TeamProfileError)
 import Type.Function (type ($))
 
 type Onboard =
     PostJson_ (Literal "onboarding") RequestContent
-    ==> OkJson OkContent ! BadRequestJson BadContent
+    ==> OkJson OkContent ! BadRequestJson BadContent ! NotAuthorized_ ! Internal_
 
 type PlayerRequestContent =
     { birthday :: Maybe String
@@ -81,20 +84,10 @@ type RequestContent =
 type OkContent = { teamHandle :: Maybe String }
 
 type BadContent = NonEmptyArray $ Variant
-    ( team :: NonEmptyArray $ Variant
-        ( name :: {}
-        , website :: {}
-        )
-    , playerProfile :: NonEmptyArray $ Variant
-        ( url :: { key :: String }
-        , about :: {}
-        , ambitions :: {}
-        )
-    , teamProfile :: NonEmptyArray $ Variant
-        ( platforms :: {}
-        , about :: {}
-        , ambitions :: {}
-        )
+    ( team :: NonEmptyArray TeamError
+    , playerProfile :: NonEmptyArray PlayerProfileError
+    , teamProfile :: NonEmptyArray TeamProfileError
     , playerContacts :: NonEmptyArray PlayerContactsError
     , teamContacts :: NonEmptyArray TeamContactsError
+    , other :: {}
     )

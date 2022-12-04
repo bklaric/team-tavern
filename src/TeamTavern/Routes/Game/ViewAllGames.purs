@@ -1,10 +1,10 @@
 module TeamTavern.Routes.Game.ViewAllGames where
 
-import Jarilo (type (==>), Get_, Literal, OkJson)
+import Jarilo (type (!), type (==>), Get_, Literal, OkJson, Internal_)
 
 type ViewAllGames =
     Get_ (Literal "games")
-    ==> OkJson OkContent
+    ==> OkJson OkContent ! Internal_
 
 type OkGameContent =
     { title :: String

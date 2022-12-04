@@ -1,7 +1,7 @@
 module TeamTavern.Routes.Team.ViewTeam where
 
 import Data.Maybe (Maybe)
-import Jarilo (type (/), type (==>), Capture, Get, Literal, Mandatory, OkJson)
+import Jarilo (type (!), type (/), type (==>), Capture, Get, Literal, Mandatory, NotFound_, OkJson, Internal_)
 import TeamTavern.Routes.Shared.Organization (OrganizationNW)
 import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
 import TeamTavern.Routes.Shared.Size (Size)
@@ -12,7 +12,7 @@ type ViewTeam =
     ( Literal "teams"
     / Capture "handle" String)
     (Mandatory "timezone" String)
-    ==> OkJson OkContent
+    ==> OkJson OkContent ! NotFound_ ! Internal_
 
 type RouteParams = { handle :: String, timezone :: String }
 

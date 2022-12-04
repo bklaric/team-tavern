@@ -1,6 +1,6 @@
 module TeamTavern.Routes.Profile.UpdatePlayerProfile where
 
-import Jarilo (type (!), type (/), type (==>), BadRequestJson, Capture, Literal, NoContent, PutJson_)
+import Jarilo (type (!), type (/), type (==>), BadRequestJson, Capture, Internal_, Literal, NoContent, NotAuthorized_, PutJson_, Forbidden_)
 import TeamTavern.Routes.Profile.AddPlayerProfile as AddPlayerProfile
 import TeamTavern.Routes.Shared.Types (Handle, Nickname)
 
@@ -11,7 +11,7 @@ type UpdatePlayerProfile =
     / Literal "profiles"
     / Capture "handle" Handle)
     RequestContent
-    ==> NoContent ! BadRequestJson BadContent
+    ==> NoContent ! BadRequestJson BadContent ! NotAuthorized_ ! Forbidden_ ! Internal_
 
 type RequestContent = AddPlayerProfile.RequestContent
 

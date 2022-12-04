@@ -6,7 +6,7 @@ import Data.MultiMap (MultiMap)
 import Data.Symbol (class IsSymbol)
 import Data.Variant (class VariantMatchCases, Variant, match)
 import Jarilo.Router.Body (class BodyRouter, responseBodyRouter)
-import Jarilo.Types (BadRequest, Forbidden, FullResponse, Internal, NoContent, NotAuthorized, Ok, Response, ResponseChain)
+import Jarilo.Types (BadRequest, Forbidden, FullResponse, Internal, NoContent, NotAuthorized, NotFound, Ok, Response, ResponseChain)
 import Perun.Response as PerunRes
 import Prim.Row (class Cons, class Lacks, class Union)
 import Prim.RowList (class RowToList)
@@ -54,6 +54,10 @@ instance (Lacks "notAuthorized" responsesStart, BodyRouter body realBody) =>
 instance (Lacks "forbidden" responsesStart, BodyRouter body realBody) =>
     ResponseRouter (FullResponse Forbidden body) responsesStart (forbidden :: ResponseConverter realBody | responsesStart) where
     responseRouter' _ = responseRouter'' (Proxy :: _ "forbidden") (Proxy :: _ body) 403
+
+instance (Lacks "notFound" responsesStart, BodyRouter body realBody) =>
+    ResponseRouter (FullResponse NotFound body) responsesStart (notFound :: ResponseConverter realBody | responsesStart) where
+    responseRouter' _ = responseRouter'' (Proxy :: _ "notFound") (Proxy :: _ body) 403
 
 instance (Lacks "internal" responsesStart, BodyRouter body realBody) =>
     ResponseRouter (FullResponse Internal body) responsesStart (internal :: ResponseConverter realBody | responsesStart) where

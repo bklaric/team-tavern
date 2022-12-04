@@ -5,7 +5,7 @@ import Prelude
 import Data.Maybe (Maybe(..))
 import Data.Variant (Variant)
 import Foreign (ForeignError(..), fail)
-import Jarilo (type (!), type (==>), BadRequestJson, Literal, NoContent, PostJson_)
+import Jarilo (type (!), type (==>), BadRequestJson, Literal, NoContent, PostJson_, Internal_)
 import TeamTavern.Routes.Shared.Filters (Filters)
 import TeamTavern.Routes.Shared.Types (Timezone)
 import Yoga.JSON (class ReadForeign, class WriteForeign, readImpl, writeImpl)
@@ -33,7 +33,7 @@ instance readForeignPlayerOrTeam :: ReadForeign PlayerOrTeam where
 
 type CreateAlert =
     PostJson_ (Literal "alerts") RequestContent
-    ==> NoContent ! BadRequestJson BadContent
+    ==> NoContent ! BadRequestJson BadContent ! Internal_
 
 type RequestContent =
     { handle :: String
