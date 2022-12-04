@@ -9,8 +9,8 @@ import TeamTavern.Routes.Shared.Platform as Platform
 import TeamTavern.Routes.Shared.Size as Size
 import TeamTavern.Routes.Shared.Types (Handle)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
-import TeamTavern.Server.Infrastructure.Error (InternalTerror, ChangeSingleError)
-import TeamTavern.Server.Infrastructure.Postgres (queryFirstNotAuthorized, queryNone)
+import TeamTavern.Server.Infrastructure.Postgres (ChangeSingleError, queryFirstNotAuthorized, queryNone)
+import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
 import TeamTavern.Server.Profile.AddTeamProfile.AddFieldValues (ProfileId, addFieldValues)
 import TeamTavern.Server.Profile.AddTeamProfile.ValidateProfile (Profile)
 

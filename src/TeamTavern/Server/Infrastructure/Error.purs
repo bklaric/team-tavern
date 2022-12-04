@@ -3,6 +3,7 @@ module TeamTavern.Server.Infrastructure.Error where
 import Prelude
 
 import Async (Async)
+import Data.Array as Array
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Array.NonEmpty as Nea
 import Data.Semigroup.Foldable (fold1)
@@ -20,9 +21,13 @@ type TerrorNea error = Terror (NonEmptyArray error)
 
 type TerrorNeaVar errors = Terror (NonEmptyArray (Variant errors))
 
+type ValidatedTerror errors = Validated (Terror errors)
+
 type ValidatedTerrorNea errors = Validated (TerrorNea errors)
 
 type ValidatedTerrorNeaVar errors = Validated (TerrorNeaVar errors)
+
+type NeaVar errors = NonEmptyArray (Variant errors)
 
 type AsyncTerrorNeaVar errors = Async (TerrorNeaVar errors)
 
@@ -55,3 +60,6 @@ labelNea label' terror = map (inj label' >>> Nea.singleton) terror
 collect :: forall error.
     NonEmptyArray (Terror error) -> Terror (NonEmptyArray error)
 collect = map toNea >>> fold1
+
+elaborate :: forall error. String -> Terror error -> Terror error
+elaborate line (Terror error lines) = Terror error (Array.cons line lines)

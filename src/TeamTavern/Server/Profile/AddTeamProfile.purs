@@ -15,11 +15,9 @@ import TeamTavern.Routes.Profile.AddTeamProfile as AddTeamProfile
 import TeamTavern.Routes.Shared.Platform (Platform(..))
 import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
 import TeamTavern.Server.Infrastructure.Postgres (transaction)
+import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Profile.AddTeamProfile.AddProfile (addProfile)
 import TeamTavern.Server.Profile.AddTeamProfile.LoadFields (loadFields)
-import TeamTavern.Server.Profile.AddTeamProfile.LogError (logError)
-import TeamTavern.Server.Profile.AddTeamProfile.ReadProfile (readProfile)
-import TeamTavern.Server.Profile.AddTeamProfile.SendResponse (sendResponse)
 import TeamTavern.Server.Profile.AddTeamProfile.ValidateProfile (validateProfileV)
 import TeamTavern.Server.Profile.Infrastructure.CheckTeamAlerts (checkTeamAlerts)
 import TeamTavern.Server.Profile.Infrastructure.PatchTeamContacts (patchTeamContacts)
@@ -29,7 +27,7 @@ import Type.Proxy (Proxy(..))
 addTeamProfile :: forall left.
     Pool -> Map String String -> Body -> AddTeamProfile.RouteParams -> Async left Response
 addTeamProfile pool cookies body { teamHandle, gameHandle } =
-    sendResponse $ examineLeftWithEffect logError do
+    sendResponse "Error creating player profile" do
     -- Read info from cookies.
     cookieInfo <- ensureSignedIn pool cookies
 

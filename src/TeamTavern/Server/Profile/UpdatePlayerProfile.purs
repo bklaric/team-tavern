@@ -18,16 +18,13 @@ import TeamTavern.Routes.Shared.Platform (Platform(..))
 import TeamTavern.Server.Infrastructure.ReadCookieInfo (readCookieInfo)
 import TeamTavern.Server.Player.UpdateContacts.ValidateContacts (validateContactsV)
 import TeamTavern.Server.Profile.AddPlayerProfile.LoadFields (loadFields)
-import TeamTavern.Server.Profile.AddPlayerProfile.ReadProfile (readProfile)
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile (validateProfileV)
 import TeamTavern.Server.Profile.Infrastructure.PatchPlayerContacts (patchPlayerContacts)
-import TeamTavern.Server.Profile.UpdatePlayerProfile.LogError (logError)
-import TeamTavern.Server.Profile.UpdatePlayerProfile.SendResponse (sendResponse)
 import TeamTavern.Server.Profile.UpdatePlayerProfile.UpdateProfile (updateProfile)
 import Type.Proxy (Proxy(..))
 
 updatePlayerProfile :: forall left.
-    Pool -> AddPlayerProfile.RouteParams -> Map String String -> Body -> Async left Response
+    Pool -> AddPlayerProfile.RouteParams -> Map String String -> Body -> Async left _
 updatePlayerProfile pool identifiers cookies body =
     sendResponse $ examineLeftWithEffect logError do
     -- Read cookie info from cookies.

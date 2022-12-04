@@ -4,12 +4,12 @@ import Prelude
 
 import Async (Async, left, right)
 import Data.Maybe (Maybe(..))
-import Jarilo (notAuthorized__)
+import Jarilo (InternalRow_, NotAuthorizedRow_, notAuthorized__)
 import Postgres.Async.Query (query)
 import Postgres.Query (class Querier, Query(..), (:), (:|))
 import Postgres.Result (rowCount)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo, Cookies, lookupCookieInfo)
-import TeamTavern.Server.Infrastructure.Error (InternalRow_, NotAuthorizedRow_, Terror(..), TerrorVar)
+import TeamTavern.Server.Infrastructure.Error (Terror(..), TerrorVar)
 import TeamTavern.Server.Infrastructure.Postgres (reportDatabaseError)
 import Type.Row (type (+))
 

@@ -127,6 +127,10 @@ queryFirstInternal :: forall row errors querier. Querier querier => ReadForeign 
     querier -> Query -> Array QueryParameter -> Async (InternalTerror_ errors) row
 queryFirstInternal = queryFirst internal__
 
+queryFirstInternal_ :: forall row errors querier. Querier querier => ReadForeign row =>
+    querier -> Query -> Async (InternalTerror_ errors) row
+queryFirstInternal_ pool queryString = queryFirst internal__ pool queryString []
+
 queryFirstBadRequest :: forall row errors querier. Querier querier => ReadForeign row =>
     querier -> Query -> Array QueryParameter -> Async (TerrorVar (InternalRow_ + BadRequestRow_ + errors)) row
 queryFirstBadRequest = queryFirst badRequest__

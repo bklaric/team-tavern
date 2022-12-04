@@ -1,5 +1,6 @@
 module TeamTavern.Routes.Team.UpdateTeamContacts where
 
+import Data.Array.NonEmpty (NonEmptyArray)
 import Jarilo (type (!), type (/), type (==>), BadRequestJson, Capture, Literal, NoContent, PutJson_)
 import TeamTavern.Routes.Shared.TeamContacts (TeamContacts, TeamContactsError)
 
@@ -13,4 +14,4 @@ type UpdateTeamContacts =
 
 type RequestContent = TeamContacts
 
-type BadContent = Array TeamContactsError
+type BadContent = NonEmptyArray TeamContactsError

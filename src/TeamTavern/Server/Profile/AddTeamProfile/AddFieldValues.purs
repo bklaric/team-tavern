@@ -6,7 +6,7 @@ import Async (Async)
 import Async as Async
 import Postgres.Client (Client)
 import Postgres.Query (Query(..), (:|))
-import TeamTavern.Server.Infrastructure.Error (InternalTerror_)
+import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstInternal, queryNone)
 import TeamTavern.Server.Profile.AddTeamProfile.ValidateFieldValues (FieldValue(..), OptionId)
 

@@ -43,4 +43,4 @@ type RequestContent =
     , filters :: Filters
     }
 
-type BadContent = Variant (email :: Array String)
+type BadContent = Variant (email :: {})

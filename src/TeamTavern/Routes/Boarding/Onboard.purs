@@ -2,6 +2,7 @@ module TeamTavern.Routes.Boarding.Onboard where
 
 import TeamTavern.Routes.Shared.TeamContacts
 
+import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Maybe (Maybe)
 import Data.Variant (Variant)
 import Jarilo (type (!), type (==>), Literal, OkJson, PostJson_, BadRequestJson)
@@ -79,21 +80,21 @@ type RequestContent =
 
 type OkContent = { teamHandle :: Maybe String }
 
-type BadContent = Array $ Variant
-    ( team :: Array $ Variant
-        ( name :: Array String
-        , website :: Array String
+type BadContent = NonEmptyArray $ Variant
+    ( team :: NonEmptyArray $ Variant
+        ( name :: {}
+        , website :: {}
         )
-    , playerProfile :: Array $ Variant
-        ( url :: { message :: Array String, key :: String }
-        , about :: Array String
-        , ambitions :: Array String
+    , playerProfile :: NonEmptyArray $ Variant
+        ( url :: { key :: String }
+        , about :: {}
+        , ambitions :: {}
         )
-    , teamProfile :: Array $ Variant
-        ( platforms :: Array String
-        , about :: Array String
-        , ambitions :: Array String
+    , teamProfile :: NonEmptyArray $ Variant
+        ( platforms :: {}
+        , about :: {}
+        , ambitions :: {}
         )
-    , playerContacts :: Array PlayerContactsError
-    , teamContacts :: Array TeamContactsError
+    , playerContacts :: NonEmptyArray PlayerContactsError
+    , teamContacts :: NonEmptyArray TeamContactsError
     )

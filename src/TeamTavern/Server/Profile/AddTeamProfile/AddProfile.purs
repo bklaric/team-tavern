@@ -8,8 +8,7 @@ import Postgres.Query (Query(..), QueryParameter, (:), (:|))
 import TeamTavern.Routes.Shared.Platform as Platform
 import TeamTavern.Routes.Shared.Size as Size
 import TeamTavern.Routes.Shared.Types (Handle)
-import TeamTavern.Server.Infrastructure.Error (ChangeSingleError)
-import TeamTavern.Server.Infrastructure.Postgres (queryFirstNotAuthorized)
+import TeamTavern.Server.Infrastructure.Postgres (ChangeSingleError, queryFirstNotAuthorized)
 import TeamTavern.Server.Player.Domain.Id (Id)
 import TeamTavern.Server.Profile.AddTeamProfile.AddFieldValues (addFieldValues)
 import TeamTavern.Server.Profile.AddTeamProfile.ValidateProfile (Profile)

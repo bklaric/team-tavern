@@ -18,9 +18,6 @@ import TeamTavern.Server.Infrastructure.Postgres (transaction)
 import TeamTavern.Server.Player.UpdateContacts.ValidateContacts (validateContactsV)
 import TeamTavern.Server.Profile.AddPlayerProfile.AddProfile (addProfile)
 import TeamTavern.Server.Profile.AddPlayerProfile.LoadFields (loadFields)
-import TeamTavern.Server.Profile.AddPlayerProfile.LogError (logError)
-import TeamTavern.Server.Profile.AddPlayerProfile.ReadProfile (readProfile)
-import TeamTavern.Server.Profile.AddPlayerProfile.SendResponse (sendResponse)
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile (validateProfileV)
 import TeamTavern.Server.Profile.Infrastructure.CheckPlayerAlerts (checkPlayerAlerts)
 import TeamTavern.Server.Profile.Infrastructure.PatchPlayerContacts (patchPlayerContacts)
@@ -29,7 +26,7 @@ import Type.Proxy (Proxy(..))
 addPlayerProfile :: forall left.
     Pool -> AddPlayerProfile.RouteParams -> Map String String -> Body -> Async left Response
 addPlayerProfile pool identifiers cookies body =
-    sendResponse $ examineLeftWithEffect logError do
+    sendResponse "Error creating player profile" do
 
     profileId <- pool # transaction \client -> do
         -- Read info info from cookies.

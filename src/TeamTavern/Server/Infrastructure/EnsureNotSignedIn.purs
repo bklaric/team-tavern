@@ -6,7 +6,8 @@ import Async (Async, left, right)
 import Data.Maybe (Maybe(..))
 import Jarilo (forbidden__)
 import TeamTavern.Server.Infrastructure.Cookie (Cookies, lookupCookieInfo)
-import TeamTavern.Server.Infrastructure.Error (ForbiddenTerror_, Terror(..))
+import TeamTavern.Server.Infrastructure.Error (Terror(..))
+import TeamTavern.Server.Infrastructure.Response (ForbiddenTerror_)
 
 ensureNotSignedIn :: forall errors. Cookies -> Async (ForbiddenTerror_ errors) Unit
 ensureNotSignedIn cookies =

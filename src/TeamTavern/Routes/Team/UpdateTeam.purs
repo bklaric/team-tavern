@@ -14,6 +14,4 @@ type RequestContent = CreateTeam.RequestContent
 
 type OkContent = { handle :: String }
 
-type BadContentError = CreateTeam.BadContentError
-
 type BadContent = CreateTeam.BadContent

@@ -40,6 +40,6 @@ validateNickname nickname =
     in Wrapped.create trim validators Nickname nickname
     # Validated.lmap \(errors :: NicknameErrors) -> Terror
         (Nea.singleton $ inj (Proxy :: _ "nickname") {})
-        [ "Registration nickname is invalid: " <> nickname
+        [ "Nickname is invalid: " <> nickname
         , "Failed with following errors: " <> show errors
         ]

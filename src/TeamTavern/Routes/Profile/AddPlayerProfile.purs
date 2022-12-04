@@ -1,5 +1,6 @@
 module TeamTavern.Routes.Profile.AddPlayerProfile where
 
+import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Maybe (Maybe)
 import Data.Variant (Variant)
 import Jarilo (type (!), type (/), type (==>), BadRequestJson, Capture, Literal, NoContent, PostJson_)
@@ -39,11 +40,11 @@ type RequestContent =
     , contacts :: PlayerContacts
     }
 
-type BadContent = Array $ Variant
-    ( profile :: Array $ Variant
-        ( about :: Array String
-        , ambitions :: Array String
-        , url :: { key :: String, message :: Array String }
+type BadContent = NonEmptyArray $ Variant
+    ( profile :: NonEmptyArray $ Variant
+        ( about :: {}
+        , ambitions :: {}
+        , url :: { key :: String }
         )
-    , contacts :: Array PlayerContactsError
+    , contacts :: NonEmptyArray PlayerContactsError
     )

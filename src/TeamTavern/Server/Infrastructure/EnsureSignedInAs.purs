@@ -6,11 +6,11 @@ import Async (Async)
 import Async as Async
 import Data.Newtype (unwrap)
 import Data.String (toLower)
-import Jarilo (forbidden__)
+import Jarilo (ForbiddenRow_, forbidden__)
 import Postgres.Query (class Querier)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo, Cookies)
 import TeamTavern.Server.Infrastructure.EnsureSignedIn (EnsureSignedInError, ensureSignedIn)
-import TeamTavern.Server.Infrastructure.Error (ForbiddenRow_, Terror(..))
+import TeamTavern.Server.Infrastructure.Error (Terror(..))
 import Type.Row (type (+))
 
 type EnsureSignedInAsError errors = EnsureSignedInError (ForbiddenRow_ + errors)

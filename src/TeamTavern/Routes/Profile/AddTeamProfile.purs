@@ -1,5 +1,6 @@
 module TeamTavern.Routes.Profile.AddTeamProfile where
 
+import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Variant (Variant)
 import Jarilo (type (!), type (/), type (==>), BadRequestJson, Capture, Literal, NoContent, PostJson_)
 import TeamTavern.Routes.Shared.Platform (Platform)
@@ -38,11 +39,11 @@ type RequestContent =
     , contacts :: TeamContacts
     }
 
-type BadContent = Array $ Variant
-    ( profile :: Array $ Variant
-        ( platforms :: Array String
-        , about :: Array String
-        , ambitions :: Array String
+type BadContent = NonEmptyArray $ Variant
+    ( profile :: NonEmptyArray $ Variant
+        ( platforms :: {}
+        , about :: {}
+        , ambitions :: {}
         )
-    , contacts :: Array TeamContactsError
+    , contacts :: NonEmptyArray TeamContactsError
     )

@@ -1,53 +1,91 @@
-module TeamTavern.Server.Team.Create (create) where
+module TeamTavern.Server.Team.Create (create, addTeam) where
 
 import Prelude
 
-import Async (Async, alwaysRight, examineLeftWithEffect)
-import Data.Array as Array
-import Data.Variant (Variant, match)
-import Effect (Effect)
-import Perun.Request.Body (Body)
-import Perun.Response (Response, badRequest_, badRequest__, internalServerError__, ok_, unauthorized__)
+import Async (Async)
+import Data.Nullable (toNullable)
+import Jarilo (ok_)
 import Postgres.Pool (Pool)
+import Postgres.Query (class Querier, Query(..), QueryParameter, (:), (:|))
 import TeamTavern.Routes.Team.CreateTeam as CreateTeam
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
-import TeamTavern.Server.Infrastructure.Log (clientHandler, internalHandler, notAuthenticatedHandler)
-import TeamTavern.Server.Infrastructure.Log as Log
-import TeamTavern.Server.Infrastructure.ReadJsonBody (readJsonBody)
-import TeamTavern.Server.Team.Create.AddTeam (addTeam)
-import TeamTavern.Server.Team.Infrastructure.GenerateHandle (generateHandle)
-import TeamTavern.Server.Team.Infrastructure.LogError (teamHandler)
-import TeamTavern.Server.Team.Infrastructure.ValidateTeam (TeamErrors, validateTeam)
-import Yoga.JSON (writeJSON)
+import TeamTavern.Server.Infrastructure.Postgres (queryFirstInternal)
+import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
+import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
+import TeamTavern.Server.Player.Domain.Id (Id)
+import TeamTavern.Server.Player.UpdatePlayer.ValidateTimespan (nullableTimeFrom, nullableTimeTo)
+import TeamTavern.Server.Profile.AddTeamProfile.ValidateAgeSpan (nullableAgeFrom, nullableAgeTo)
+import TeamTavern.Server.Team.Infrastructure.GenerateHandle (Handle, generateHandle)
+import TeamTavern.Server.Team.Infrastructure.ValidateTeam (Team, organizationName, organizationWebsite, toString, validateTeam)
 
-type CreateError = Variant
-    ( internal :: Array String
-    , notAuthenticated :: Array String
-    , client :: Array String
-    , team :: TeamErrors
+queryString :: Query
+queryString = Query """
+    with similar_handle_count as (
+        select count(*)
+        from team
+        where team.handle ilike ($2 || '%')
+    ),
+    unique_handle as (
+        select $2 || (
+            case
+                when (select count from similar_handle_count) = 0
+                then ''
+                else '' || ((select count from similar_handle_count) + 1)
+            end
+        ) as handle
     )
+    insert into team
+        ( owner_id
+        , handle
+        , organization
+        , name
+        , website
+        , age_from
+        , age_to
+        , locations
+        , languages
+        , microphone
+        , timezone
+        , weekday_from
+        , weekday_to
+        , weekend_from
+        , weekend_to
+        )
+    values
+        ( $1, (select handle from unique_handle)
+        , $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15
+        )
+    returning team.id, team.handle;
+    """
 
-logError :: CreateError -> Effect Unit
-logError = Log.logError "Error creating team"
-    (internalHandler >>> notAuthenticatedHandler >>> clientHandler >>> teamHandler)
+queryParameters :: Id -> Handle -> Team -> Array QueryParameter
+queryParameters ownerId handle team
+    = ownerId
+    : handle
+    : (toString team.organization)
+    : (toNullable $ organizationName team.organization)
+    : (toNullable $ organizationWebsite team.organization)
+    : nullableAgeFrom team.ageSpan
+    : nullableAgeTo team.ageSpan
+    : team.locations
+    : team.languages
+    : team.microphone
+    : toNullable team.timezone
+    : nullableTimeFrom team.onlineWeekday
+    : nullableTimeTo team.onlineWeekday
+    : nullableTimeFrom team.onlineWeekend
+    :| nullableTimeTo team.onlineWeekend
 
-sendResponse :: Async CreateError CreateTeam.OkContent -> (forall voidLeft. Async voidLeft Response)
-sendResponse = alwaysRight
-    (match
-        { internal: const internalServerError__
-        , notAuthenticated: const unauthorized__
-        , client: const badRequest__
-        , team: badRequest_ <<< writeJSON <<< Array.fromFoldable
-        }
-    )
-    (ok_ <<< writeJSON)
+addTeam :: forall querier errors. Querier querier =>
+    querier -> Id -> Handle -> Team -> Async (InternalTerror_ errors) { id :: Int, handle :: String }
+addTeam pool ownerId handle team =
+    queryFirstInternal pool queryString (queryParameters ownerId handle team)
 
-create :: forall left. Pool -> Body -> Cookies -> Async left Response
-create pool body cookies =
-    sendResponse $ examineLeftWithEffect logError do
+create :: forall left. Pool -> Cookies -> CreateTeam.RequestContent -> Async left _
+create pool cookies content =
+    sendResponse "Error creating team" do
     cookieInfo <- ensureSignedIn pool cookies
-    content <- readJsonBody body
     team <- validateTeam content
     let generatedHandle = generateHandle team.organization cookieInfo.nickname
-    addTeam pool cookieInfo.id generatedHandle team
+    ok_ <$> addTeam pool cookieInfo.id generatedHandle team

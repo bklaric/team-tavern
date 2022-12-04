@@ -1,9 +1,11 @@
 module TeamTavern.Routes.Team.CreateTeam where
 
+import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Maybe (Maybe)
 import Data.Variant (Variant)
 import Jarilo (type (!), type (==>), BadRequestJson, Literal, OkJson, PostJson_)
 import TeamTavern.Routes.Shared.Organization (OrganizationNW)
+import Type.Function (type ($))
 
 type CreateTeam =
     PostJson_
@@ -30,9 +32,7 @@ type OkContent =
     , handle :: String
     }
 
-type BadContentError = Variant
-    ( name :: Array String
-    , website :: Array String
+type BadContent = NonEmptyArray $ Variant
+    ( name :: {}
+    , website :: {}
     )
-
-type BadContent = Array BadContentError

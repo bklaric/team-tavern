@@ -2,28 +2,18 @@ module TeamTavern.Server.Team.UpdateContacts (updateContacts) where
 
 import Prelude
 
-import Async (Async, alwaysRight, examineLeftWithEffect)
-import Data.Array as Array
-import Type.Proxy (Proxy(..))
-import Data.Variant (Variant, match)
-import Effect (Effect, foreachE)
-import Perun.Request.Body (Body)
-import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, noContent_, unauthorized__)
+import Async (Async)
+import Jarilo (noContent_)
 import Postgres.Pool (Pool)
 import Postgres.Query (class Querier, Query(..), (:))
-import Prim.Row (class Lacks)
-import Record.Builder (Builder)
-import Record.Builder as Builder
-import Yoga.JSON (writeJSON)
 import TeamTavern.Routes.Shared.Platform (Platform)
+import TeamTavern.Routes.Team.UpdateTeamContacts as UpdateTeamContacts
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.EnsureSignedInOwner (ensureSignedInOwner)
-import TeamTavern.Server.Infrastructure.Error (InternalTerror_)
-import TeamTavern.Server.Infrastructure.Log (clientHandler, internalHandler, logt, notAuthenticatedHandler, notAuthorizedHandler)
-import TeamTavern.Server.Infrastructure.Log as Log
 import TeamTavern.Server.Infrastructure.Postgres (queryMany, transaction)
-import TeamTavern.Server.Infrastructure.ReadJsonBody (readJsonBody)
-import TeamTavern.Server.Team.Infrastructure.ValidateContacts (ContactsErrors, validateContacts)
+import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
+import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
+import TeamTavern.Server.Team.Infrastructure.ValidateContacts (validateContacts)
 import TeamTavern.Server.Team.Infrastructure.WriteContacts (writeContacts)
 
 -- Load plaftorms
@@ -36,70 +26,16 @@ queryString = Query $ """
     """
 
 loadRequiredPlatforms :: forall querier errors. Querier querier =>
-    querier -> Int -> Async (InternalTerror errors) (Array Platform)
+    querier -> Int -> Async (InternalTerror_ errors) (Array Platform)
 loadRequiredPlatforms querier id =
     (queryMany querier queryString (id : []) :: Async _ (Array { platform :: Platform }))
     <#> map _.platform
 
--- Log
-type UpdateContactsError = Variant
-    ( internal :: Array String
-    , client :: Array String
-    , notAuthenticated :: Array String
-    , notAuthorized :: Array String
-    , teamContacts :: ContactsErrors
-    )
-
-contactsHandler :: forall fields. Lacks "teamContacts" fields =>
-    Builder (Record fields) { teamContacts :: ContactsErrors -> Effect Unit | fields }
-contactsHandler = Builder.insert (Proxy :: _ "teamContacts") \errors ->
-    foreachE (Array.fromFoldable errors) $ match
-    { discordTag: logt
-    , discordServer: logt
-    , steamId: logt
-    , riotId: logt
-    , battleTag: logt
-    , eaId: logt
-    , ubisoftUsername: logt
-    , psnId: logt
-    , gamerTag: logt
-    , friendCode: logt
-    }
-
-logError :: UpdateContactsError -> Effect Unit
-logError = Log.logError "Error updating team contacts"
-    ( internalHandler
-    >>> clientHandler
-    >>> notAuthenticatedHandler
-    >>> notAuthorizedHandler
-    >>> contactsHandler
-    )
-
--- Response
-errorResponse :: UpdateContactsError -> Response
-errorResponse = match
-    { internal: const internalServerError__
-    , client: const badRequest__
-    , notAuthenticated: const unauthorized__
-    , notAuthorized: const forbidden__
-    , teamContacts: Array.fromFoldable >>> writeJSON >>> badRequest_
-    }
-
-successResponse :: Unit -> Response
-successResponse _ = noContent_
-
-sendResponse :: Async UpdateContactsError Unit -> (forall left. Async left Response)
-sendResponse = alwaysRight errorResponse successResponse
-
 -- Main
 updateContacts :: forall left.
-    Pool -> Body -> Cookies -> { handle :: String } -> Async left Response
-updateContacts pool body cookies { handle } =
-    sendResponse $ examineLeftWithEffect logError do
-
-    -- Read contacts from body.
-    contacts' <- readJsonBody body
-
+    Pool -> UpdateTeamContacts.RequestContent -> Cookies -> { handle :: String } -> Async left _
+updateContacts pool contacts' cookies { handle } =
+    sendResponse "Error updating team contacts" do
     pool # transaction \client -> do
         -- Read requestor info from cookies.
         { teamId } <- ensureSignedInOwner client cookies handle
@@ -112,3 +48,4 @@ updateContacts pool body cookies { handle } =
 
         -- Update contacts.
         writeContacts client teamId contacts
+    pure noContent_

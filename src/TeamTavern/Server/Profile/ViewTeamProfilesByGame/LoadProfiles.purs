@@ -1,21 +1,14 @@
 module TeamTavern.Server.Profile.ViewTeamProfilesByGame.LoadProfiles
-    (LoadProfilesError, createTeamFilterString, createFieldsFilterString, queryStringWithoutPagination, loadProfiles) where
+    (createTeamFilterString, createFieldsFilterString, queryStringWithoutPagination, loadProfiles) where
 
 import Prelude
 
 import Async (Async)
 import Data.Array (intercalate)
-import Data.Bifunctor.Label (label, labelMap)
 import Data.Maybe (Maybe(..))
 import Data.String as String
-import Data.Traversable (traverse)
-import Data.Variant (Variant)
-import Foreign (MultipleErrors)
-import Postgres.Async.Query (query_)
 import Postgres.Client (Client)
-import Postgres.Error (Error)
 import Postgres.Query (Query(..))
-import Postgres.Result (Result, rows)
 import TeamTavern.Routes.Profile.Shared (ProfilePage, pageSize)
 import TeamTavern.Routes.Profile.ViewTeamProfilesByGame as ViewTeamProfilesByGame
 import TeamTavern.Routes.Shared.Filters (Age, Filters, HasMicrophone, Language, Location, NewOrReturning, Time, Field)
@@ -26,17 +19,8 @@ import TeamTavern.Routes.Shared.Platform as Platform
 import TeamTavern.Routes.Shared.Size (Size)
 import TeamTavern.Routes.Shared.Size as Size
 import TeamTavern.Routes.Shared.Types (Timezone, Handle)
-import TeamTavern.Server.Infrastructure.Postgres (prepareJsonString, prepareString, teamAdjustedWeekdayFrom, teamAdjustedWeekdayTo, teamAdjustedWeekendFrom, teamAdjustedWeekendTo)
-import Type.Proxy (Proxy(..))
-import Yoga.JSON.Async (read)
-
-type LoadProfilesError errors = Variant
-    ( databaseError :: Error
-    , unreadableDtos ::
-        { result :: Result
-        , errors :: MultipleErrors
-        }
-    | errors )
+import TeamTavern.Server.Infrastructure.Postgres (prepareJsonString, prepareString, queryMany_, teamAdjustedWeekdayFrom, teamAdjustedWeekdayTo, teamAdjustedWeekendFrom, teamAdjustedWeekendTo)
+import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
 
 createOrganizationsFilter :: Array Organization -> String
 createOrganizationsFilter [] = ""
@@ -327,12 +311,6 @@ loadProfiles
     -> ProfilePage
     -> Timezone
     -> Filters
-    -> Async (LoadProfilesError errors) (Array ViewTeamProfilesByGame.OkContentProfiles)
-loadProfiles client handle page timezone filters = do
-    result <- client
-        # query_ (queryString handle page timezone filters)
-        # label (Proxy :: _ "databaseError")
-    profiles <- rows result
-        # traverse read
-        # labelMap (Proxy :: _ "unreadableDtos") { result, errors: _ }
-    pure profiles
+    -> Async (InternalTerror_ errors) (Array ViewTeamProfilesByGame.OkContentProfiles)
+loadProfiles client handle page timezone filters =
+    queryMany_ client (queryString handle page timezone filters)

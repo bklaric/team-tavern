@@ -2,14 +2,12 @@ module TeamTavern.Server.Infrastructure.Log where
 
 import Prelude
 
-import Data.Bifunctor (class Bifunctor, lmap)
 import Data.Formatter.DateTime (FormatterCommand(..), format)
 import Data.List (List(..), (:))
 import Effect (Effect, foreachE)
 import Effect.Console (log)
 import Effect.Now (nowDateTime)
 import Error.Class (message, name)
-import Heterogeneous.Mapping (class HMap, hmap)
 import Node.Errors.Class (class NodeError, code)
 import TeamTavern.Server.Infrastructure.Error (Terror(..))
 
@@ -44,9 +42,3 @@ print error =
     "Code: " <> code error
     <> "; Name: " <> name error
     <> "; Message: " <> message error
-
-elaborate
-    :: forall line right left bifunctor
-    .  Bifunctor bifunctor => HMap (Array line -> Array line) left left
-    => line -> bifunctor left right -> bifunctor left right
-elaborate line = lmap (hmap (_ <> [ line ]))
