@@ -7,8 +7,8 @@ import Jarilo (ok_)
 import Postgres.Pool (Pool)
 import Postgres.Query (Query(..))
 import TeamTavern.Routes.Game.ViewAllGames as ViewAllGames
-import TeamTavern.Server.Infrastructure.Error (InternalError_)
 import TeamTavern.Server.Infrastructure.Postgres (queryMany_)
+import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 
 loadGamesQuery :: Query
@@ -22,7 +22,7 @@ loadGamesQuery = Query """
     order by game.created
     """
 
-loadGames :: forall errors. Pool -> Async (InternalError_ errors) ViewAllGames.OkContent
+loadGames :: forall errors. Pool -> Async (InternalTerror_ errors) ViewAllGames.OkContent
 loadGames pool = queryMany_ pool loadGamesQuery
 
 viewAll :: forall left. Pool -> Async left _

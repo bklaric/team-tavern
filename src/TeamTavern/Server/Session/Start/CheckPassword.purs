@@ -7,16 +7,16 @@ import Bcrypt.Async as Bcrypt
 import Data.Array (singleton)
 import Data.Bifunctor (lmap)
 import Data.Variant (inj)
-import Jarilo (badRequest_, internal__)
+import Jarilo (InternalRow_, BadRequestRow, badRequest_, internal__)
 import Postgres.Query (class Querier, Query(..), (:))
 import TeamTavern.Routes.Session.StartSession as StartSession
-import TeamTavern.Server.Infrastructure.Error (InternalRow_, TavernError(..), BadRequestRow)
+import TeamTavern.Server.Infrastructure.Error (Terror(..), TerrorVar)
 import TeamTavern.Server.Infrastructure.Log (print)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirst)
 import Type.Proxy (Proxy(..))
 import Type.Row (type (+))
 
-type CheckPasswordError errors = TavernError
+type CheckPasswordError errors = TerrorVar
     ( InternalRow_
     + BadRequestRow StartSession.BadContent
     + errors
@@ -46,7 +46,7 @@ checkPassword model querier = do
 
     -- Compare hash with password.
     matches <- Bcrypt.compare model.password hash # lmap
-        (print >>> ("Bcrypt error while checking hash: " <> _) >>> singleton >>> TavernError internal__)
-    when (not matches) $ left $ TavernError noSessionStartedResponse [ "Wrong password entered for user: " <> nickname ]
+        (print >>> ("Bcrypt error while checking hash: " <> _) >>> singleton >>> Terror internal__)
+    when (not matches) $ left $ Terror noSessionStartedResponse [ "Wrong password entered for user: " <> nickname ]
 
     pure $ { id, nickname }

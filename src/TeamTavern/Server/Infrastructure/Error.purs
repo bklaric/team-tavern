@@ -2,148 +2,56 @@ module TeamTavern.Server.Infrastructure.Error where
 
 import Prelude
 
-import Data.Array ((:))
-import Data.Array as Array
-import Data.Foldable (foldl, foldr)
-import Data.List.NonEmpty as Nel
-import Data.List.Types (NonEmptyList(..))
-import Data.NonEmpty ((:|))
-import Data.Tuple (Tuple(..))
+import Async (Async)
+import Data.Array.NonEmpty (NonEmptyArray)
+import Data.Array.NonEmpty as Nea
+import Data.Semigroup.Foldable (fold1)
+import Data.Symbol (class IsSymbol)
 import Data.Validated (Validated)
 import Data.Variant (Variant, inj)
-import Jarilo.Router.Response (AppResponse)
-import Type.Proxy (Proxy(..))
-import Type.Row (type (+))
+import Prim.Row (class Cons)
+import Type.Proxy (Proxy)
 
-data Error errors = Error errors (Array String)
+data Terror error = Terror error (Array String)
 
-type ErrorVar errors = Error (Variant errors)
+type TerrorVar error = Terror (Variant error)
 
-type ErrorVarNel errors = Error (NonEmptyList (Variant errors))
+type TerrorNea error = Terror (NonEmptyArray error)
 
-type ValidatedErrorVarNel errors = Validated (ErrorVarNel errors)
+type TerrorNeaVar errors = Terror (NonEmptyArray (Variant errors))
 
-instance (Semigroup errors) => Semigroup (Error errors) where
-    append (Error errors lines) (Error errors' lines') =
-        Error (errors <> errors') (lines <> lines')
+type ValidatedTerrorNea errors = Validated (TerrorNea errors)
 
+type ValidatedTerrorNeaVar errors = Validated (TerrorNeaVar errors)
 
+type AsyncTerrorNeaVar errors = Async (TerrorNeaVar errors)
 
+instance (Semigroup error) => Semigroup (Terror error) where
+    append (Terror error lines) (Terror error' lines') =
+        Terror (error <> error') (lines <> lines')
 
+instance Functor Terror where
+    map mapper (Terror error lines) = Terror (mapper error) lines
 
+singleton :: forall error. error -> String -> Terror error
+singleton error line = Terror error [line]
 
+singletonNea :: forall error. error -> String -> Terror (NonEmptyArray error)
+singletonNea error line = Terror (Nea.singleton error) [line]
 
+toNea :: forall error. Terror error -> Terror (NonEmptyArray error)
+toNea (Terror error lines) = Terror (Nea.singleton error) lines
 
+label :: forall label error errors' errors.
+    Cons label error errors' errors => IsSymbol label =>
+    Proxy label -> Terror error -> TerrorVar errors
+label label' terror = map (inj label') terror
 
+labelNea :: forall error label errors' errors.
+    Cons label error errors' errors => IsSymbol label =>
+    Proxy label -> Terror error -> TerrorNeaVar errors
+labelNea label' terror = map (inj label' >>> Nea.singleton) terror
 
-
-
-
-data TavernError errors = TavernError (Variant errors) (Array String)
-
-data TavernErrorMany errors = TavernErrorMany (NonEmptyList (Variant errors)) (Array String)
-
-instance Semigroup (TavernErrorMany errors) where
-    append (TavernErrorMany errors lines) (TavernErrorMany errors' lines') =
-        TavernErrorMany (errors <> errors') (lines <> lines')
-
-toMany (TavernError error lines) = TavernErrorMany (Nel.singleton error) lines
-
-singleton :: forall errors. Variant errors -> String -> TavernErrorMany errors
-singleton error line = TavernErrorMany (Nel.singleton error) [line]
-
-concat :: forall errors. NonEmptyList (TavernErrorMany errors) -> TavernErrorMany errors
-concat (NonEmptyList (error :| errors)) = foldl (<>) error errors
-
-collect :: forall errors. NonEmptyList (TavernError errors) -> TavernErrorMany errors
-collect = map toMany >>> concat
-
-mapErrorMany mapper (TavernErrorMany errors lines) = TavernErrorMany (mapper errors) lines
-
-mapErrorMany' mapper (TavernErrorMany errors lines) = TavernError (mapper errors) lines
-
-type ValidatedNel left right = Validated (NonEmptyList left) right
-
-type ValidatedNelTavern errors right = ValidatedNel (TavernError errors) right
-
-type ValidatedTavern errors right = Validated (TavernErrorMany errors) right
-
-errorResponse :: forall errors. TavernError errors -> Variant errors
-errorResponse (TavernError response _) = response
-
-mergeAll label' (NonEmptyList ((TavernError firstError firstLines) :| errors)) =
-    errors
-    # foldr
-        (\(TavernError nextError nextLines) (Tuple errorsSoFar linesSoFar) ->
-            Tuple (nextError : errorsSoFar) (nextLines <> linesSoFar)
-        )
-        (Tuple [firstError] firstLines)
-    # \(Tuple errors lines) -> TavernError (inj label' errors) lines
-
-mapError mapper (TavernError response lines) = TavernError (mapper response) lines
-
-type BadRequestError body errors = TavernError (badRequest :: AppResponse body | errors)
-
-type BadRequestError_ errors = TavernError (badRequest :: AppResponse Unit | errors)
-
-type ForbiddenError body errors = TavernError (forbidden :: AppResponse body | errors)
-
-type ForbiddenError_ errors = TavernError (forbidden :: AppResponse Unit | errors)
-
-type InternalError body errors = TavernError (internal :: AppResponse body | errors)
-
-type InternalError_ errors = TavernError (internal :: AppResponse Unit | errors)
-
-
-type InternalBadRequestError errors = TavernError (InternalRow_ + BadRequestRow_ + errors)
-
-type InternalNotAuthorizedError errors = TavernError (InternalRow_ + NotAuthorizedRow_ + errors)
-
-type InternalNotAuthorizedForbiddenError errors = TavernError (InternalRow_ + NotAuthorizedRow_ + ForbiddenRow_ + errors)
-
-
-
-type BadRequestRow body errors = (badRequest :: AppResponse body | errors)
-
-type NotFoundRow body errors = (notFound :: AppResponse body | errors)
-
-type NotAuthorizedRow body errors = (notAuthorized :: AppResponse body | errors)
-
-type ForbiddenRow body errors = (forbidden :: AppResponse body | errors)
-
-type InternalRow body errors = (internal :: AppResponse body | errors)
-
-
-
-type BadRequestRow_ errors = (badRequest :: AppResponse Unit | errors)
-
-type NotFoundRow_ errors = (notFound :: AppResponse Unit | errors)
-
-type NotAuthorizedRow_ errors = (notAuthorized :: AppResponse Unit | errors)
-
-type ForbiddenRow_ errors = (forbidden :: AppResponse Unit | errors)
-
-type InternalRow_ errors = (internal :: AppResponse Unit | errors)
-
-
-
-
-
-
-
-
-
-
-
-
-type ClientRow errors = (client :: AppResponse Unit | errors)
-
-type ClientError errors = Variant (client :: Array String | errors)
-
-type CommonError = Variant
-    ( client :: Array String
-    , internal :: Array String
-    , notAuthenticated :: Array String
-    , notAuthorized :: Array String
-    , notFound :: Array String
-    )
+collect :: forall error.
+    NonEmptyArray (Terror error) -> Terror (NonEmptyArray error)
+collect = map toNea >>> fold1

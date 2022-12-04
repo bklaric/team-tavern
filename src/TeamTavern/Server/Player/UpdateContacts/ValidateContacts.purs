@@ -7,25 +7,21 @@ import Async.Validated as AsyncVal
 import AsyncV (AsyncV)
 import AsyncV as AsyncV
 import Data.Array as Array
+import Data.Array.NonEmpty (NonEmptyArray)
+import Data.Array.NonEmpty as Nea
 import Data.Bifunctor (lmap)
-import Data.Bifunctor.Label (label)
 import Data.List ((:))
-import Data.List.NonEmpty (NonEmptyList(..), foldl)
-import Data.List.NonEmpty as Nel
-import Data.List.Types (List(..), NonEmptyList)
+import Data.List.NonEmpty (foldl)
+import Data.List.Types (List(..))
 import Data.Maybe (Maybe(..))
-import Data.NonEmpty ((:|))
-import Data.Validated (Validated)
 import Data.Validated as Validated
-import Data.Validated.Label (Variants)
-import Data.Variant (Variant, inj)
+import Data.Variant (inj)
 import Jarilo (badRequest_)
-import TeamTavern.Routes.Player.UpdatePlayerContacts (UpdatePlayerContacts)
-import TeamTavern.Routes.Player.UpdatePlayerContacts as UpdatePlayerContacts
 import TeamTavern.Routes.Shared.Platform (Platform(..))
-import TeamTavern.Routes.Shared.PlayerContacts (PlayerContacts, PlayerContactsError, PlayerContactsErrorRow)
-import TeamTavern.Server.Infrastructure.Error (TavernError(..), TavernErrorMany(..), ValidatedNelTavern, ValidatedTavern, BadRequestError, mapError, mapErrorMany', mergeAll)
-import TeamTavern.Server.Infrastructure.Error as TavernError
+import TeamTavern.Routes.Shared.PlayerContacts (PlayerContacts, PlayerContactsError)
+import TeamTavern.Server.Infrastructure.Error (Terror(..), TerrorNeaVar, ValidatedTerrorNea)
+import TeamTavern.Server.Infrastructure.Error as Terror
+import TeamTavern.Server.Infrastructure.Response (BadRequestTerror)
 import TeamTavern.Server.Profile.Infrastructure.ValidateBattleTag (BattleTag, validateBattleTag)
 import TeamTavern.Server.Profile.Infrastructure.ValidateDiscordTag (DiscordTag, validateDiscordTag)
 import TeamTavern.Server.Profile.Infrastructure.ValidateEaId (EaId, validateEaId)
@@ -49,31 +45,31 @@ type Contacts =
     , friendCode :: Maybe FriendCode
     }
 
-type ContactsErrors = Array PlayerContactsError
+type ContactsErrors = NonEmptyArray PlayerContactsError
 
 checkRequiredPlatforms ::
-    Array Platform -> PlayerContacts -> ValidatedTavern _ Unit
+    Array Platform -> PlayerContacts -> ValidatedTerrorNea PlayerContactsError Unit
 checkRequiredPlatforms requiredPlatforms contacts = let
     checkPlatform errors platform =
         case platform, contacts of
-        Steam,       { steamId:         Nothing } -> TavernError (inj (Proxy :: _ "steamId")         {}) ["SteamId is required"]                  : errors
-        Riot,        { riotId:          Nothing } -> TavernError (inj (Proxy :: _ "riotId")          {}) ["RiotId is required"]                   : errors
-        BattleNet,   { battleTag:       Nothing } -> TavernError (inj (Proxy :: _ "battleTag")       {}) ["BattleTag is required"]                : errors
-        Origin,      { eaId:            Nothing } -> TavernError (inj (Proxy :: _ "eaId")            {}) ["EA ID is required"]                    : errors
-        Ubisoft,     { ubisoftUsername: Nothing } -> TavernError (inj (Proxy :: _ "ubisoftUsername") {}) ["Ubisoft Connect username is required"] : errors
-        PlayStation, { psnId:           Nothing } -> TavernError (inj (Proxy :: _ "psnId")           {}) ["PsnId is required"]                    : errors
-        Xbox,        { gamerTag:        Nothing } -> TavernError (inj (Proxy :: _ "gamerTag")        {}) ["GamerTag is required"]                 : errors
-        Switch,      { friendCode:      Nothing } -> TavernError (inj (Proxy :: _ "friendCode")      {}) ["FriendCode is required"]               : errors
+        Steam,       { steamId:         Nothing } -> Terror (inj (Proxy :: _ "steamId")         {}) ["SteamId is required"]                  : errors
+        Riot,        { riotId:          Nothing } -> Terror (inj (Proxy :: _ "riotId")          {}) ["RiotId is required"]                   : errors
+        BattleNet,   { battleTag:       Nothing } -> Terror (inj (Proxy :: _ "battleTag")       {}) ["BattleTag is required"]                : errors
+        Origin,      { eaId:            Nothing } -> Terror (inj (Proxy :: _ "eaId")            {}) ["EA ID is required"]                    : errors
+        Ubisoft,     { ubisoftUsername: Nothing } -> Terror (inj (Proxy :: _ "ubisoftUsername") {}) ["Ubisoft Connect username is required"] : errors
+        PlayStation, { psnId:           Nothing } -> Terror (inj (Proxy :: _ "psnId")           {}) ["PsnId is required"]                    : errors
+        Xbox,        { gamerTag:        Nothing } -> Terror (inj (Proxy :: _ "gamerTag")        {}) ["GamerTag is required"]                 : errors
+        Switch,      { friendCode:      Nothing } -> Terror (inj (Proxy :: _ "friendCode")      {}) ["FriendCode is required"]               : errors
         _, _ -> errors
     in
     case requiredPlatforms # foldl checkPlatform Nil of
     Nil -> Validated.valid unit
-    Cons head tail -> Validated.invalid $ TavernError.collect $ NonEmptyList $ head :| tail
+    Cons head tail -> Validated.invalid $ Terror.collect $ Nea.cons' head (Array.fromFoldable tail)
 
 validateContacts'
     :: Array Platform
     -> PlayerContacts
-    -> Validated (TavernErrorMany PlayerContactsErrorRow) Contacts
+    -> ValidatedTerrorNea PlayerContactsError Contacts
 validateContacts' requiredPlatforms contacts @ { discordTag, steamId, riotId, battleTag, eaId, ubisoftUsername, psnId, gamerTag, friendCode } =
     { discordTag: _, steamId: _, riotId: _, battleTag: _, eaId: _, ubisoftUsername: _, psnId: _, gamerTag: _, friendCode: _ }
     <$ checkRequiredPlatforms requiredPlatforms contacts
@@ -88,14 +84,15 @@ validateContacts' requiredPlatforms contacts @ { discordTag, steamId, riotId, ba
     <*> validateFriendCode friendCode
 
 validateContacts :: forall errors.
-    Array Platform -> PlayerContacts -> Async (BadRequestError ContactsErrors errors) Contacts
+    Array Platform -> PlayerContacts -> Async (BadRequestTerror ContactsErrors errors) Contacts
 validateContacts requiredPlatforms contacts =
     validateContacts' requiredPlatforms contacts
     # AsyncVal.fromValidated
-    # lmap (mapErrorMany' (Array.fromFoldable >>> badRequest_))
+    # lmap (map badRequest_)
 
--- validateContactsV :: forall errors.
---     Array Platform -> PlayerContacts -> AsyncV (Variants (playerContacts :: ContactsErrors | errors)) Contacts
 validateContactsV :: forall errors.
-    Array Platform -> PlayerContacts-> AsyncV _ Contacts
-validateContactsV requiredPlatforms = validateContacts' requiredPlatforms >>> AsyncV.fromValidated
+    Array Platform -> PlayerContacts-> AsyncV (TerrorNeaVar (playerContacts :: ContactsErrors | errors)) Contacts
+validateContactsV requiredPlatforms contacts =
+    validateContacts' requiredPlatforms contacts
+    # AsyncV.fromValidated
+    # AsyncV.lmap (Terror.labelNea (Proxy :: _ "playerContacts"))

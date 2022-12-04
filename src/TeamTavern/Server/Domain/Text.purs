@@ -2,8 +2,8 @@ module TeamTavern.Server.Domain.Text (Text, TextErrorRow, TextError, TextErrors,
 
 import Prelude
 
-import Data.List.NonEmpty (singleton)
-import Data.List.Types (NonEmptyList)
+import Data.Array.NonEmpty (NonEmptyArray)
+import Data.Array.NonEmpty as Nea
 import Data.Traversable (sum)
 import Data.Validated (Validated, invalid, valid)
 import Data.Variant (Variant, inj)
@@ -18,19 +18,19 @@ type TextErrorRow = (tooLong :: TooLong)
 
 type TextError = Variant TextErrorRow
 
-type TextErrors = NonEmptyList TextError
+type TextErrors = NonEmptyArray TextError
 
 create'
     :: forall text
     .  Int
     -> (Array Paragraph -> text)
     -> Array Paragraph
-    -> Validated (NonEmptyList TextError) text
+    -> Validated TextErrors text
 create' maxLength constructor paragraphs = let
     actualLength = paragraphs <#> Paragraph.length # sum
     in
     if actualLength > maxLength
-    then invalid $ singleton $ inj (Proxy :: _ "tooLong")
+    then invalid $ Nea.singleton $ inj (Proxy :: _ "tooLong")
         { maxLength, actualLength }
     else valid $ constructor paragraphs
 

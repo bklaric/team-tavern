@@ -6,8 +6,8 @@ import Async (Async)
 import Data.Generic.Rep (class Generic)
 import Data.Newtype (class Newtype)
 import Data.Show.Generic (genericShow)
-import TeamTavern.Server.Infrastructure.Error (InternalError_)
 import TeamTavern.Server.Infrastructure.GenerateHexString (ByteCount(..), generateHexString)
+import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
 
 newtype Token = Token String
 
@@ -20,5 +20,5 @@ instance showToken :: Show Token where show = genericShow
 tokenByteCount :: ByteCount
 tokenByteCount = ByteCount 20
 
-generate :: forall errors. Async (InternalError_ errors) Token
+generate :: forall errors. Async (InternalTerror_ errors) Token
 generate = generateHexString tokenByteCount <#> Token

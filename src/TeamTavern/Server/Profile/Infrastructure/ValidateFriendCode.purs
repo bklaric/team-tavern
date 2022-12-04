@@ -5,7 +5,7 @@ import Prelude
 import Data.Int (fromString)
 import Data.Maybe (Maybe, isJust)
 import Data.String (Pattern(..), length, split)
-import TeamTavern.Server.Infrastructure.Error (ValidatedTavern)
+import TeamTavern.Server.Infrastructure.Error (ValidatedTerrorNeaVar)
 import TeamTavern.Server.Profile.Infrastructure.ValidateContact (validateContact)
 import Type.Proxy (Proxy(..))
 
@@ -25,6 +25,6 @@ isFriendCodeValid friendCode =
     _ -> false
 
 validateFriendCode :: forall errors.
-    Maybe String -> ValidatedTavern (friendCode :: {} | errors) (Maybe FriendCode)
+    Maybe String -> ValidatedTerrorNeaVar (friendCode :: {} | errors) (Maybe FriendCode)
 validateFriendCode friendCode =
     validateContact friendCode isFriendCodeValid FriendCode (Proxy :: _ "friendCode") ("Invalid FriendCode: " <> _)

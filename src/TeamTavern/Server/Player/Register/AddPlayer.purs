@@ -4,10 +4,10 @@ import Prelude
 
 import Async (Async)
 import Data.Variant (inj)
-import Jarilo (badRequest_)
+import Jarilo (InternalRow_, BadRequestRow, badRequest_)
 import Postgres.Query (class Querier, Query(..), (:|))
 import TeamTavern.Routes.Player.RegisterPlayer as RegisterPlayer
-import TeamTavern.Server.Infrastructure.Error (BadRequestRow, InternalRow_, TavernError)
+import TeamTavern.Server.Infrastructure.Error (TerrorVar)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirst)
 import TeamTavern.Server.Player.Domain.Hash (Hash)
 import TeamTavern.Server.Player.Domain.Nickname (Nickname)
@@ -19,7 +19,7 @@ type AddPlayerModel =
     , hash :: Hash
     }
 
-type AddPlayerError errors = TavernError
+type AddPlayerError errors = TerrorVar
     ( InternalRow_
     + BadRequestRow RegisterPlayer.BadContent
     + errors )

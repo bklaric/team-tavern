@@ -2,11 +2,10 @@ module Wrapped where
 
 import Prelude
 
+import Data.Array as Array
+import Data.Array.NonEmpty (NonEmptyArray, cons')
 import Data.Either (Either(..))
-import Data.List (List(..), (:))
-import Data.List.Types (NonEmptyList(..))
-import Data.Maybe (Maybe, maybe)
-import Data.NonEmpty ((:|))
+import Data.Maybe (Maybe(..), maybe)
 import Data.Traversable (class Foldable, foldl)
 
 create
@@ -16,15 +15,16 @@ create
     -> container (canonicalized -> Maybe error)
     -> (canonicalized -> result)
     -> input
-    -> Either (NonEmptyList error) result
+    -> Either (NonEmptyArray error) result
 create canonicalize validate construct input = let
     canonicalized = canonicalize input
     in
     validate
     # foldl
         (\errors validate' ->
-            maybe errors (flip Cons errors) (validate' canonicalized))
-        Nil
+            maybe errors (Array.snoc errors) (validate' canonicalized))
+        []
+    # Array.uncons
     # case _ of
-    Nil -> Right $ construct canonicalized
-    error : errors -> Left $ NonEmptyList $ error :| errors
+    Nothing -> Right $ construct canonicalized
+    Just { head, tail } -> Left $ head `cons'` tail

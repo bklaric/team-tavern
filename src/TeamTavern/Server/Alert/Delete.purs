@@ -8,7 +8,7 @@ import Postgres.Pool (Pool)
 import Postgres.Query (Query(..), (:|))
 import Postgres.Result (rowCount)
 import TeamTavern.Routes.Alert.DeleteAlert (RouteContent)
-import TeamTavern.Server.Infrastructure.Error (TavernError(..))
+import TeamTavern.Server.Infrastructure.Error (Terror(..))
 import TeamTavern.Server.Infrastructure.Postgres (queryInternal)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 
@@ -21,5 +21,5 @@ deleteAlert pool { id, token } =
     result <- queryInternal pool queryString (id :| token)
     if rowCount result > 0
         then pure noContent_
-        else left $ TavernError notFound__
+        else left $ Terror notFound__
             [ "No alert deleted for id=(" <> show id <> ") token=(" <> token <> ")." ]

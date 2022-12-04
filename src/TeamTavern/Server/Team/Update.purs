@@ -14,7 +14,7 @@ import Postgres.Query (class Querier, Query(..), QueryParameter, (:), (:|))
 import Yoga.JSON (writeJSON)
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
-import TeamTavern.Server.Infrastructure.Error (InternalError_)
+import TeamTavern.Server.Infrastructure.Error (InternalTerror_)
 import TeamTavern.Server.Infrastructure.Log (clientHandler, internalHandler, notAuthenticatedHandler)
 import TeamTavern.Server.Infrastructure.Log as Log
 import TeamTavern.Server.Infrastructure.Postgres (queryNone)
@@ -65,7 +65,7 @@ queryParameters ownerId handle team
     :| nullableTimeTo team.onlineWeekend
 
 updateTeam :: forall querier errors. Querier querier =>
-    querier -> Id -> String -> Team -> Async (InternalError_ errors) Unit
+    querier -> Id -> String -> Team -> Async (InternalTerror_ errors) Unit
 updateTeam pool ownerId handle team =
     queryNone pool queryString (queryParameters ownerId handle team)
 

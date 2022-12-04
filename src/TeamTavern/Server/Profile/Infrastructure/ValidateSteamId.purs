@@ -6,7 +6,7 @@ import Data.CodePoint.Unicode (isNumber)
 import Data.Foldable (all)
 import Data.Maybe (Maybe)
 import Data.String (length, toCodePointArray)
-import TeamTavern.Server.Infrastructure.Error (ValidatedTavern)
+import TeamTavern.Server.Infrastructure.Error (ValidatedTerrorNeaVar)
 import TeamTavern.Server.Profile.Infrastructure.ValidateContact (validateContact)
 import Type.Proxy (Proxy(..))
 
@@ -22,6 +22,6 @@ isSteamIdValid :: String -> Boolean
 isSteamIdValid steamId = length steamId == exactLength && (toCodePointArray steamId # all isNumber)
 
 validateSteamId :: forall errors.
-    Maybe String -> ValidatedTavern (steamId :: {} | errors) (Maybe SteamId)
+    Maybe String -> ValidatedTerrorNeaVar (steamId :: {} | errors) (Maybe SteamId)
 validateSteamId steamId =
     validateContact steamId isSteamIdValid SteamId (Proxy :: _ "steamId") ("Invalid SteamId: " <> _)

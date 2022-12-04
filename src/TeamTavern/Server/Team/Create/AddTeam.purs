@@ -5,7 +5,7 @@ import Prelude
 import Async (Async)
 import Data.Nullable (toNullable)
 import Postgres.Query (class Querier, Query(..), QueryParameter, (:), (:|))
-import TeamTavern.Server.Infrastructure.Error (InternalError_)
+import TeamTavern.Server.Infrastructure.Error (InternalTerror_)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstInternal)
 import TeamTavern.Server.Player.Domain.Id (Id)
 import TeamTavern.Server.Player.UpdatePlayer.ValidateTimespan (nullableTimeFrom, nullableTimeTo)
@@ -72,6 +72,6 @@ queryParameters ownerId handle team
     :| nullableTimeTo team.onlineWeekend
 
 addTeam :: forall querier errors. Querier querier =>
-    querier -> Id -> Handle -> Team -> Async (InternalError errors) { id :: Int, handle :: String }
+    querier -> Id -> Handle -> Team -> Async (InternalTerror errors) { id :: Int, handle :: String }
 addTeam pool ownerId handle team =
     queryFirstInternal pool queryString (queryParameters ownerId handle team)

@@ -3,16 +3,16 @@ module TeamTavern.Server.Player.Register.ValidateRegistration where
 import Prelude
 
 import Async (Async)
-import Async.Validated (fromValidated) as Async
+import Async.Validated (fromValidated) as AsyncVal
 import AsyncV (AsyncV)
 import AsyncV as AsyncV
+import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Bifunctor (lmap)
-import Data.List.NonEmpty as NonEmptyList
-import Data.List.Types (NonEmptyList)
-import Data.Variant (Variant)
 import Jarilo (badRequest_)
 import TeamTavern.Routes.Player.RegisterPlayer as RegisterPlayer
-import TeamTavern.Server.Infrastructure.Error (TavernError, BadRequestError, mapError, mergeAll)
+import TeamTavern.Server.Infrastructure.Error (TerrorNeaVar, ValidatedTerrorNea)
+import TeamTavern.Server.Infrastructure.Error as Terror
+import TeamTavern.Server.Infrastructure.Response (BadRequestTerror)
 import TeamTavern.Server.Player.Domain.Nickname (Nickname, validateNickname)
 import TeamTavern.Server.Player.Domain.Password (Password, validatePassword)
 import Type.Proxy (Proxy(..))
@@ -22,34 +22,33 @@ type Registration =
     , password :: Password
     }
 
-type RegistrationError = Variant
-    ( nickname :: {}
-    , password :: {}
-    )
-
-type RegistrationErrors = Array RegistrationError
+type RegistrationErrors = NonEmptyArray RegisterPlayer.BadContentIdentifiers
 
 validateRegistration'
-    :: forall errors
-    .  RegisterPlayer.RequestContent
-    -> Async (TavernError (registration :: Array RegistrationError | errors)) Registration
+    :: RegisterPlayer.RequestContent
+    -> ValidatedTerrorNea RegisterPlayer.BadContentIdentifiers Registration
 validateRegistration' { nickname, password } =
     { nickname: _, password: _ }
     <$> validateNickname nickname
     <*> validatePassword password
-    # Async.fromValidated
-    # lmap (mergeAll (Proxy :: _ "registration"))
 
 validateRegistration
     :: forall errors
     .  RegisterPlayer.RequestContent
-    -> Async (BadRequestError RegisterPlayer.BadContent errors) Registration
+    -> Async (BadRequestTerror RegisterPlayer.BadContent errors) Registration
 validateRegistration identifiers =
     validateRegistration' identifiers
-    # lmap (mapError badRequest_)
+    # AsyncVal.fromValidated
+    # lmap
+        (Terror.label ((Proxy :: _ "registration"))
+        >>> map badRequest_)
 
 validateRegistrationV
     :: forall errors
     .  RegisterPlayer.RequestContent
-    -> AsyncV (NonEmptyList (TavernError (registration :: RegistrationErrors | errors))) Registration
-validateRegistrationV = validateRegistration' >>> lmap NonEmptyList.singleton >>> AsyncV.fromAsync
+    -> AsyncV (TerrorNeaVar (registration :: RegistrationErrors | errors)) Registration
+validateRegistrationV =
+    validateRegistration'
+    >>> AsyncV.fromValidated
+    >>> AsyncV.lmap
+        (Terror.labelNea ((Proxy :: _ "registration")))

@@ -2,16 +2,14 @@ module TeamTavern.Server.Player.UpdateContacts (updateContacts) where
 
 import Prelude
 
-import Async (Async, examineLeftWithEffect)
+import Async (Async)
 import Data.Newtype (unwrap)
-import Perun.Request.Body (Body)
-import Perun.Response (Response)
+import Jarilo (noContent_)
 import Postgres.Pool (Pool)
 import TeamTavern.Routes.Player.UpdatePlayerContacts as UpdatePlayerContacts
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.EnsureSignedInAs (ensureSignedInAs)
 import TeamTavern.Server.Infrastructure.Postgres (transaction)
-import TeamTavern.Server.Infrastructure.ReadJsonBody (readJsonBody)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Player.UpdateContacts.LoadRequiredPlatforms (loadRequiredPlatforms)
 import TeamTavern.Server.Player.UpdateContacts.ValidateContacts (validateContacts)
@@ -33,3 +31,5 @@ updateContacts pool nickname cookies contacts' =
 
         -- Update contacts.
         writeContacts client (unwrap cookieInfo.id) contacts
+
+    pure $ noContent_

@@ -14,7 +14,7 @@ import TeamTavern.Routes.Shared.Size as Size
 import TeamTavern.Server.Infrastructure.GenerateHexString (ByteCount(..), generateHexString)
 import TeamTavern.Server.Infrastructure.Postgres (queryNone)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
-import TeamTavern.Server.Infrastructure.ValidateEmail (Email, validateEmail')
+import TeamTavern.Server.Infrastructure.ValidateEmail (Email, validateEmail)
 import TeamTavern.Server.Infrastructure.ValidateEmail as Email
 
 queryString :: Query
@@ -90,7 +90,7 @@ createAlert pool content =
     sendResponse "Error creating alert" do
 
     -- Validate alert.
-    email <- validateEmail' content.email
+    email <- validateEmail content.email
 
     -- Generate alert token.
     token <- generateHexString $ ByteCount 10

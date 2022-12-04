@@ -4,8 +4,8 @@ import Prelude
 
 import Async (Async)
 import Postgres.Query (class Querier, Query(..), (:|))
-import TeamTavern.Server.Infrastructure.Error (InternalError_)
 import TeamTavern.Server.Infrastructure.Postgres (queryNone)
+import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
 import TeamTavern.Server.Session.Domain.Token (Token)
 
 queryString :: Query
@@ -15,5 +15,5 @@ queryString = Query """
     """
 
 createSession :: forall querier errors. Querier querier =>
-    Int -> Token -> querier -> Async (InternalError_ errors) Unit
+    Int -> Token -> querier -> Async (InternalTerror_ errors) Unit
 createSession id token querier = queryNone querier queryString (id :| token)

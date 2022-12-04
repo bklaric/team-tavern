@@ -6,7 +6,7 @@ import Prelude
 import Data.Maybe (Maybe)
 import Data.String (Pattern(..), length, split)
 import Data.Variant (Variant)
-import TeamTavern.Server.Infrastructure.Error (ValidatedTavern)
+import TeamTavern.Server.Infrastructure.Error (ValidatedTerrorNeaVar)
 import TeamTavern.Server.Profile.Infrastructure.ValidateContact (validateContact)
 import Type.Proxy (Proxy(..))
 import Wrapped.String (Invalid)
@@ -36,6 +36,6 @@ isDiscordTagValid discordTag =
     _ -> false
 
 validateDiscordTag :: forall errors.
-    Maybe String -> ValidatedTavern (discordTag :: {} | errors) (Maybe DiscordTag)
+    Maybe String -> ValidatedTerrorNeaVar (discordTag :: {} | errors) (Maybe DiscordTag)
 validateDiscordTag discordTag =
     validateContact discordTag isDiscordTagValid DiscordTag (Proxy :: _ "discordTag") ("Invalid DiscordTag: " <> _)

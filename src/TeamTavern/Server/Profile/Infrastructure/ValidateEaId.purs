@@ -4,7 +4,7 @@ import Prelude
 
 import Data.Maybe (Maybe)
 import Data.String (length)
-import TeamTavern.Server.Infrastructure.Error (ValidatedTavern)
+import TeamTavern.Server.Infrastructure.Error (ValidatedTerrorNeaVar)
 import TeamTavern.Server.Profile.Infrastructure.ValidateContact (validateContact)
 import Type.Proxy (Proxy(..))
 
@@ -19,6 +19,6 @@ minIdLength = 4
 isEaIdValid :: String -> Boolean
 isEaIdValid eaId = minIdLength <= length eaId
 
-validateEaId :: forall errors. Maybe String -> ValidatedTavern (eaId :: {} | errors) (Maybe EaId)
+validateEaId :: forall errors. Maybe String -> ValidatedTerrorNeaVar (eaId :: {} | errors) (Maybe EaId)
 validateEaId eaId =
     validateContact eaId isEaIdValid EaId (Proxy :: _ "eaId") ("Invalid EA ID: " <> _)

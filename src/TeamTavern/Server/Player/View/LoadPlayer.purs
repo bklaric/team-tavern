@@ -8,8 +8,7 @@ import Data.Newtype (unwrap)
 import Postgres.Query (class Querier, Query(..), (:|))
 import TeamTavern.Routes.Player.ViewPlayer as ViewPlayer
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
-import TeamTavern.Server.Infrastructure.Error (LoadSingleError)
-import TeamTavern.Server.Infrastructure.Postgres (playerAdjustedWeekdayFrom, playerAdjustedWeekdayTo, playerAdjustedWeekendFrom, playerAdjustedWeekendTo, queryFirstNotFound)
+import TeamTavern.Server.Infrastructure.Postgres (LoadSingleError, playerAdjustedWeekdayFrom, playerAdjustedWeekdayTo, playerAdjustedWeekendFrom, playerAdjustedWeekendTo, queryFirstNotFound)
 
 queryString :: String -> Query
 queryString timezone = Query $ """

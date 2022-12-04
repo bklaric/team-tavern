@@ -9,7 +9,7 @@ import Postgres.Query (Query(..), (:))
 import Postgres.Result (rowCount)
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.EnsureSignedInAs (ensureSignedInAs)
-import TeamTavern.Server.Infrastructure.Error (TavernError(..))
+import TeamTavern.Server.Infrastructure.Error (Terror(..))
 import TeamTavern.Server.Infrastructure.Postgres (queryInternal)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 
@@ -23,5 +23,5 @@ delete pool nickname cookies =
     result <- queryInternal pool queryString (cookieInfo.id : [])
     if rowCount result > 0
         then pure noContent_
-        else left $ TavernError notFound__
+        else left $ Terror notFound__
             [ "No player deleted for id=(" <> show cookieInfo.id <> ")." ]

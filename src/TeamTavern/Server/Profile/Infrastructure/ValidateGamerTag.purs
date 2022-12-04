@@ -4,7 +4,7 @@ import Prelude
 
 import Data.Maybe (Maybe)
 import Data.String (length)
-import TeamTavern.Server.Infrastructure.Error (ValidatedTavern)
+import TeamTavern.Server.Infrastructure.Error (ValidatedTerrorNeaVar)
 import TeamTavern.Server.Profile.Infrastructure.ValidateContact (validateContact)
 import Type.Proxy (Proxy(..))
 
@@ -37,6 +37,6 @@ isGamerTagValid :: String -> Boolean
 isGamerTagValid gamerTag = minNameLength <= length gamerTag && length gamerTag <= maxNameLength
 
 validateGamerTag :: forall errors.
-    Maybe String -> ValidatedTavern (gamerTag :: {} | errors) (Maybe GamerTag)
+    Maybe String -> ValidatedTerrorNeaVar (gamerTag :: {} | errors) (Maybe GamerTag)
 validateGamerTag gamerTag =
     validateContact gamerTag isGamerTagValid GamerTag (Proxy :: _ "gamerTag") ("Invalid GamerTag: " <> _)
