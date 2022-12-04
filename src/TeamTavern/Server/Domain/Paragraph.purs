@@ -1,4 +1,4 @@
-module TeamTavern.Server.Domain.Paragraph where
+module TeamTavern.Server.Domain.Paragraph (Paragraph, create, length, toString) where
 
 import Prelude
 

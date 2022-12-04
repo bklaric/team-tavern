@@ -15,7 +15,7 @@ import Data.Variant (Variant, inj, match)
 import Effect (Effect, foreachE)
 import Node.Errors (Error)
 import Perun.Request.Body (Body)
-import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, ok, unauthorized__)
+import Perun.Response (Response)
 import Postgres.Error as Postgres
 import Postgres.Pool (Pool)
 import Prim.Row (class Lacks)
@@ -26,11 +26,10 @@ import TeamTavern.Routes.Boarding.Preboard (BadContent, RequestContent, OkConten
 import TeamTavern.Routes.Shared.Platform (Platform(..))
 import TeamTavern.Server.Infrastructure.Deployment (Deployment)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo, Cookies, setCookieHeaderFull)
-import TeamTavern.Server.Infrastructure.EnsureNotSignedIn (ensureNotSignedIn')
-import TeamTavern.Server.Infrastructure.Log (clientHandler, internalHandler, logt, notAuthenticatedHandler, notAuthorizedHandler)
+import TeamTavern.Server.Infrastructure.EnsureNotSignedIn (ensureNotSignedIn)
+import TeamTavern.Server.Infrastructure.Log (logt)
 import TeamTavern.Server.Infrastructure.Log as Log
 import TeamTavern.Server.Infrastructure.Postgres (transaction)
-import TeamTavern.Server.Infrastructure.ReadJsonBody (readJsonBody)
 import TeamTavern.Server.Player.Domain.Hash (generateHash)
 import TeamTavern.Server.Player.Domain.Id (Id(..))
 import TeamTavern.Server.Player.Domain.Nickname (Nickname)
@@ -51,11 +50,11 @@ import TeamTavern.Server.Profile.Infrastructure.CheckPlayerAlerts (checkPlayerAl
 import TeamTavern.Server.Profile.Infrastructure.CheckTeamAlerts (checkTeamAlerts)
 import TeamTavern.Server.Session.Domain.Token as Token
 import TeamTavern.Server.Session.Start.CreateSession (createSession)
-import TeamTavern.Server.Team.Create.AddTeam (addTeam)
+import TeamTavern.Server.Team.Create (addTeam)
 import TeamTavern.Server.Team.Infrastructure.GenerateHandle (generateHandle)
 import TeamTavern.Server.Team.Infrastructure.ValidateContacts as TeamCont
 import TeamTavern.Server.Team.Infrastructure.ValidateContacts as TeamLel
-import TeamTavern.Server.Team.Infrastructure.ValidateTeam (TeamErrors, validateTeamV)
+import TeamTavern.Server.Team.Infrastructure.ValidateTeam (validateTeamV)
 import TeamTavern.Server.Team.Infrastructure.WriteContacts as TeamIdunno
 import Type.Function (type ($))
 import Type.Proxy (Proxy(..))
@@ -163,7 +162,7 @@ preboard deployment pool cookies body =
     sendResponse deployment $ examineLeftWithEffect logError do
 
     -- Ensure the player is not signed in.
-    ensureNotSignedIn' cookies
+    ensureNotSignedIn cookies
 
     -- Read data from body.
     (content :: RequestContent) <- readJsonBody body

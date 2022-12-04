@@ -6,6 +6,7 @@ import Data.Variant (Variant)
 import Jarilo (type (!), type (/), type (==>), BadRequestJson, Capture, Literal, NoContent, PostJson_)
 import TeamTavern.Routes.Shared.Platform (Platform)
 import TeamTavern.Routes.Shared.PlayerContacts (PlayerContacts, PlayerContactsError)
+import TeamTavern.Routes.Shared.PlayerProfile (PlayerProfileError)
 import TeamTavern.Routes.Shared.Types (Handle, Nickname)
 import Type.Function (type ($))
 
@@ -41,10 +42,6 @@ type RequestContent =
     }
 
 type BadContent = NonEmptyArray $ Variant
-    ( profile :: NonEmptyArray $ Variant
-        ( about :: {}
-        , ambitions :: {}
-        , url :: { key :: String }
-        )
+    ( profile :: NonEmptyArray PlayerProfileError
     , contacts :: NonEmptyArray PlayerContactsError
     )

@@ -1,6 +1,7 @@
 module TeamTavern.Routes.Shared.PlayerProfile where
 
 import Data.Maybe (Maybe)
+import Data.Variant (Variant)
 import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
 
 type PlayerProfileRow fields =
@@ -34,3 +35,9 @@ type PlayerProfileRow fields =
 type PlayerProfileOpen fields = Record (PlayerProfileRow fields)
 
 type PlayerProfile = PlayerProfileOpen ()
+
+type PlayerProfileError = Variant
+    ( about :: {}
+    , ambitions :: {}
+    , url :: { key :: String }
+    )

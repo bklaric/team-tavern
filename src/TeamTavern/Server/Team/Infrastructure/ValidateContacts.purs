@@ -14,9 +14,11 @@ import Data.List ((:))
 import Data.List.NonEmpty (foldl)
 import Data.List.Types (List(..))
 import Data.Maybe (Maybe(..))
+import Data.Symbol (class IsSymbol)
 import Data.Validated as Validated
 import Data.Variant (inj)
 import Jarilo (badRequest_)
+import Prim.Row (class Cons)
 import TeamTavern.Routes.Shared.Platform (Platform(..))
 import TeamTavern.Routes.Shared.TeamContacts (TeamContacts, TeamContactsError)
 import TeamTavern.Server.Infrastructure.Error (Terror(..), ValidatedTerrorNea, TerrorNeaVar)
@@ -94,9 +96,10 @@ validateContacts requiredPlatforms contacts =
     # AsyncVal.fromValidated
     # lmap (map badRequest_)
 
-validateContactsV :: forall errors.
-    Array Platform -> TeamContacts-> AsyncV (TerrorNeaVar (teamContacts :: ContactsErrors | errors)) Contacts
-validateContactsV requiredPlatforms contacts =
+validateContactsV :: forall errors' errors label.
+    Cons label ContactsErrors errors' errors => IsSymbol label =>
+    Array Platform -> TeamContacts -> Proxy label -> AsyncV (TerrorNeaVar errors) Contacts
+validateContactsV requiredPlatforms contacts label =
     validateContacts' requiredPlatforms contacts
     # AsyncV.fromValidated
-    # AsyncV.lmap (Terror.labelNea (Proxy :: _ "teamContacts"))
+    # AsyncV.lmap (Terror.labelNea label)

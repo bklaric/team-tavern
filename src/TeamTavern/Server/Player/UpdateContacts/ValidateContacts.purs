@@ -14,9 +14,11 @@ import Data.List ((:))
 import Data.List.NonEmpty (foldl)
 import Data.List.Types (List(..))
 import Data.Maybe (Maybe(..))
+import Data.Symbol (class IsSymbol)
 import Data.Validated as Validated
 import Data.Variant (inj)
 import Jarilo (badRequest_)
+import Prim.Row (class Cons)
 import TeamTavern.Routes.Shared.Platform (Platform(..))
 import TeamTavern.Routes.Shared.PlayerContacts (PlayerContacts, PlayerContactsError)
 import TeamTavern.Server.Infrastructure.Error (Terror(..), TerrorNeaVar, ValidatedTerrorNea)
@@ -47,8 +49,10 @@ type Contacts =
 
 type ContactsErrors = NonEmptyArray PlayerContactsError
 
-checkRequiredPlatforms ::
-    Array Platform -> PlayerContacts -> ValidatedTerrorNea PlayerContactsError Unit
+checkRequiredPlatforms
+    :: Array Platform
+    -> PlayerContacts
+    -> ValidatedTerrorNea PlayerContactsError Unit
 checkRequiredPlatforms requiredPlatforms contacts = let
     checkPlatform errors platform =
         case platform, contacts of
@@ -83,16 +87,20 @@ validateContacts' requiredPlatforms contacts @ { discordTag, steamId, riotId, ba
     <*> validateGamerTag gamerTag
     <*> validateFriendCode friendCode
 
-validateContacts :: forall errors.
-    Array Platform -> PlayerContacts -> Async (BadRequestTerror ContactsErrors errors) Contacts
+validateContacts
+    :: forall errors
+    .  Array Platform
+    -> PlayerContacts
+    -> Async (BadRequestTerror ContactsErrors errors) Contacts
 validateContacts requiredPlatforms contacts =
     validateContacts' requiredPlatforms contacts
     # AsyncVal.fromValidated
     # lmap (map badRequest_)
 
-validateContactsV :: forall errors.
-    Array Platform -> PlayerContacts-> AsyncV (TerrorNeaVar (playerContacts :: ContactsErrors | errors)) Contacts
-validateContactsV requiredPlatforms contacts =
+validateContactsV :: forall errors' errors label.
+    Cons label ContactsErrors errors' errors => IsSymbol label =>
+    Array Platform -> PlayerContacts -> Proxy label -> AsyncV (TerrorNeaVar errors) Contacts
+validateContactsV requiredPlatforms contacts label =
     validateContacts' requiredPlatforms contacts
     # AsyncV.fromValidated
-    # AsyncV.lmap (Terror.labelNea (Proxy :: _ "playerContacts"))
+    # AsyncV.lmap (Terror.labelNea label)

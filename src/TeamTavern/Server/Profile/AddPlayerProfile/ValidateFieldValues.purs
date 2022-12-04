@@ -4,19 +4,19 @@ import Prelude
 
 import Data.Array (foldl)
 import Data.Array as Array
+import Data.Array.NonEmpty as Nea
 import Data.Either (Either(..))
 import Data.Generic.Rep (class Generic)
-import Data.List.NonEmpty as NonEmptyList
-import Data.List.Types (NonEmptyList)
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..))
 import Data.Show.Generic (genericShow)
 import Data.Tuple (Tuple(..))
-import Data.Validated (Validated)
 import Data.Validated as Validated
 import Data.Variant (Variant, inj)
 import TeamTavern.Routes.Profile.AddPlayerProfile as AddPlayerProfile
+import TeamTavern.Server.Infrastructure.Error (Terror(..), ValidatedTerrorNea)
+import TeamTavern.Server.Infrastructure.Error as Terror
 import TeamTavern.Server.Profile.AddPlayerProfile.LoadFields as LoadFields
 import TeamTavern.Server.Profile.Infrastructure.ValidateUrl (validateUrl)
 import TeamTavern.Server.Profile.Infrastructure.ValidateUrl as ValidateUrl
@@ -77,10 +77,7 @@ data FieldValue = FieldValue FieldId FieldValueType
 -- Error type.
 
 type ValidateFieldValuesError errors = Variant
-    ( url ::
-        { message :: Array String
-        , key :: String
-        }
+    ( url :: { key :: String }
     | errors
     )
 
@@ -105,15 +102,18 @@ prepareFields fields =
 
 -- Validate field values.
 
-validateField :: forall errors.
-    Array AddPlayerProfile.RequestContentFieldValue -> Field -> Maybe (Either (ValidateFieldValuesError errors) FieldValue)
+validateField
+    :: forall errors
+    .  Array AddPlayerProfile.RequestContentFieldValue
+    -> Field
+    -> Maybe (Either (Terror (ValidateFieldValuesError errors)) FieldValue)
 validateField fieldValues (Field id key (UrlField domain)) =
     case fieldValues # Array.find \{ fieldKey } -> fieldKey == key of
     Just fieldValue | Just url <- fieldValue.url ->
         case validateUrl domain url of
         Right url' -> Just $ Right $ FieldValue id $ Url url'
-        Left errors -> Just $ Left $ inj (Proxy :: _ "url")
-            { message: [ "Field value for field " <> key <> " is invalid: " <> show errors ], key }
+        Left errors -> Just $ Left $ Terror (inj (Proxy :: _ "url") { key })
+            [ "Field value for field " <> key <> " is invalid: " <> show errors ]
     _ -> Nothing
 validateField fieldValues (Field id key (SingleField options)) =
     case fieldValues # Array.find \{ fieldKey } -> fieldKey == key of
@@ -138,16 +138,17 @@ validateField fieldValues (Field id key (MultiField options)) =
 validateFieldValues :: forall errors
     .  Array LoadFields.Field
     -> Array AddPlayerProfile.RequestContentFieldValue
-    -> Validated (NonEmptyList (ValidateFieldValuesError errors)) (Array FieldValue)
+    -> ValidatedTerrorNea (ValidateFieldValuesError errors) (Array FieldValue)
 validateFieldValues fields fieldValues
     = prepareFields fields
     # Array.mapMaybe (validateField fieldValues)
     # foldl
         ( case _, _ of
             Right values, Right value -> Right $ Array.snoc values value
-            Right _, Left error -> Left $ NonEmptyList.singleton error
+            Right _, Left error -> Left $ Nea.singleton error
             Left errors, Right _ -> Left errors
-            Left errors, Left error -> Left $ NonEmptyList.snoc errors error
+            Left errors, Left error -> Left $ Nea.snoc errors error
         )
         (Right [])
     # Validated.fromEither
+    # Validated.lmap Terror.collect

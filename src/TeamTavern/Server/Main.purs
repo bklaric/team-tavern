@@ -26,7 +26,7 @@ import Node.Server (ListenOptions(..))
 import Perun.Async.Server (run_)
 import Perun.Request (Request)
 import Perun.Request.Body (Body)
-import Perun.Response (Response, notFound_)
+import Perun.Response (Response)
 import Perun.Url (Url, pathSegments, queryPairs)
 import Postgres.Client.Config (ClientConfig, database, host, password, port, user)
 import Postgres.Pool (Pool)
@@ -278,12 +278,12 @@ runServerIGuess deployment pool = serve (Proxy :: _ AllRoutes) listenOptions
         Alert.deleteAlert pool path
     }
 
-handleNotFound { method, path } errors = do
-    fromEffect $ logStamped $ "Endpoint 404 Not Found"
-    fromEffect $ logt $
-        "Not found for method " <> show method <> " and path " <> show path
-    fromEffect $ logt $ "Routing resulted in these errors: " <> show errors
-    pure $ notFound_ $ show errors
+-- handleNotFound { method, path } errors = do
+--     fromEffect $ logStamped $ "Endpoint 404 Not Found"
+--     fromEffect $ logt $
+--         "Not found for method " <> show method <> " and path " <> show path
+--     fromEffect $ logt $ "Routing resulted in these errors: " <> show errors
+--     pure $ notFound_ $ show errors
 
 main :: Effect Unit
 main = either log pure =<< runExceptT do
