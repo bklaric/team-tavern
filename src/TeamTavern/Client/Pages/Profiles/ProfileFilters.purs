@@ -215,12 +215,12 @@ render state =
         [ HH.div [ HS.class_ "filters-buttons" ]
             [ button "filters-clear-button" "fas fa-eraser" "Clear filters" ClearFilters
             , button "filters-apply-button" "fas fa-filter" "Apply filters" ApplyFilters
-            , button "filters-alert-button" "fas fa-bell"
-                ( case state.tab of
-                    Players -> "Create player profile alert"
-                    Teams -> "Create team profile alert"
-                )
-                ShowCreateAlertModal
+            -- , button "filters-alert-button" "fas fa-bell"
+            --     ( case state.tab of
+            --         Players -> "Create player profile alert"
+            --         Teams -> "Create team profile alert"
+            --     )
+            --     ShowCreateAlertModal
             ]
         ]
     else []
