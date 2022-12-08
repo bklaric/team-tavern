@@ -3,7 +3,8 @@ module TeamTavern.Client.Pages.Player.EditContacts (Input, Slot, editContacts) w
 import Prelude
 
 import Async (Async)
-import Data.Array (foldl, nubEq)
+import Data.Array (nubEq)
+import Data.Foldable (foldl)
 import Data.Const (Const)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))

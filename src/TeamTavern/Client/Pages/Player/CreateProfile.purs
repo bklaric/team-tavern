@@ -3,10 +3,10 @@ module TeamTavern.Client.Pages.Player.CreateProfile (Input, Slot, createProfile)
 import Prelude
 
 import Async (Async)
-import Data.Array (foldl)
 import Data.Array as Array
 import Data.Const (Const)
 import Data.Either (Either(..))
+import Data.Foldable (foldl)
 import Data.Maybe (Maybe(..))
 import Data.Variant (match)
 import Halogen as H
@@ -18,9 +18,9 @@ import TeamTavern.Client.Components.Player.ProfileFormInput (profileFormInput)
 import TeamTavern.Client.Components.Player.ProfileFormInput as ProfileFormInput
 import TeamTavern.Client.Script.Navigate (hardNavigate)
 import TeamTavern.Client.Script.Request (postNoContent)
-import TeamTavern.Routes.Profile.AddPlayerProfile as AddPlayerProfile
 import TeamTavern.Routes.Game.ViewGame as ViewGame
 import TeamTavern.Routes.Player.ViewPlayer as ViewPlayer
+import TeamTavern.Routes.Profile.AddPlayerProfile as AddPlayerProfile
 import Type.Function (type ($))
 import Type.Proxy (Proxy(..))
 import Web.Event.Event (preventDefault)

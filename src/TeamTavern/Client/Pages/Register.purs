@@ -102,9 +102,9 @@ sendRegisterRequest state @ { registration: { nickname, password } } = Async.uni
                 (const $ Just $ state { otherError = true })
                 (\(error :: RegisterPlayer.BadContent) -> Just $ match
                     { registration: foldl (\state' -> match
-                        { invalidNickname:
+                        { nickname:
                             const $ state' { registration { nicknameError = true } }
-                        , invalidPassword:
+                        , password:
                             const $ state' { registration { passwordError = true } }
                         })
                         state

@@ -223,9 +223,13 @@ instance (Lacks "badRequest" startErrors) =>
     FetchStatus BadRequest startErrors (badRequest :: String | startErrors) where
     fetchStatus proxy response = fetchStatus' proxy 400 response
 
+instance (Lacks "notAuthorized" startErrors) =>
+    FetchStatus NotAuthorized startErrors (notAuthorized :: String | startErrors) where
+    fetchStatus proxy response = fetchStatus' proxy 401 response
+
 instance (Lacks "forbidden" startErrors) =>
     FetchStatus Forbidden startErrors (forbidden :: String | startErrors) where
-    fetchStatus proxy response = fetchStatus' proxy 400 response
+    fetchStatus proxy response = fetchStatus' proxy 403 response
 
 instance (Lacks "internal" startErrors) =>
     FetchStatus Internal startErrors (internal :: String | startErrors) where

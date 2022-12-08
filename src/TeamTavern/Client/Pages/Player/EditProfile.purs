@@ -3,7 +3,8 @@ module TeamTavern.Client.Pages.Player.EditProfile where
 import Prelude
 
 import Async (Async)
-import Data.Array (foldl, intercalate)
+import Data.Array (intercalate)
+import Data.Foldable (foldl)
 import Data.Array as Array
 import Data.Const (Const)
 import Data.Either (Either(..))
