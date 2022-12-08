@@ -17,7 +17,7 @@ import TeamTavern.Client.Pages.Profiles.TeamBadge (informalBadge, organizedBadge
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Shared.Organization (OrganizationN(..), nameOrHandleN)
-import TeamTavern.Routes.ViewPlayer as ViewPlayer
+import TeamTavern.Routes.Player.ViewPlayer as ViewPlayer
 
 teams
     :: forall action monad slots

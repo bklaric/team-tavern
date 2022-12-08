@@ -3,11 +3,7 @@ module TeamTavern.Routes.Profile.ViewTeamProfilesByGame where
 import Prelude
 
 import Data.Maybe (Maybe, maybe)
-import Jarilo.Method (Get)
-import Jarilo.Path (type (:>), End)
-import Jarilo.Query (type (:?), Mandatory, Many, Optional, Rest)
-import Jarilo.Route (FullRoute)
-import Jarilo.Segment (Capture, Literal)
+import Jarilo (type (!), type (&), type (/), type (==>), Capture, Get, Internal_, Literal, Mandatory, Many, OkJson, Optional, Rest)
 import TeamTavern.Routes.Profile.Shared (ProfilePage, bundleFields)
 import TeamTavern.Routes.Shared.Filters (Age, Filters, HasMicrophone, Language, Location, NewOrReturning, Time)
 import TeamTavern.Routes.Shared.Organization (Organization)
@@ -21,28 +17,28 @@ import TeamTavern.Routes.Shared.Types (Handle, Timezone)
 import Type.Row (type (+))
 import URI.Extra.QueryPairs (Key, QueryPairs, Value)
 
-type ViewTeamProfilesByGame = FullRoute
+type ViewTeamProfilesByGame =
     Get
-    (  Literal "games"
-    :> Capture "handle" Handle
-    :> Literal "teams"
-    :> End)
+    ( Literal "games"
+    / Capture "handle" Handle
+    / Literal "teams")
     (  Mandatory "page" ProfilePage
-    :? Mandatory "timezone" Timezone
-    :? Many "organization" Organization
-    :? Optional "ageFrom" Age
-    :? Optional "ageTo" Age
-    :? Many "language" Language
-    :? Many "location" Location
-    :? Optional "weekdayFrom" Time
-    :? Optional "weekdayTo" Time
-    :? Optional "weekendFrom" Time
-    :? Optional "weekendTo" Time
-    :? Optional "microphone" HasMicrophone
-    :? Many "size" Size
-    :? Many "platform" Platform
-    :? Optional "newOrReturning" NewOrReturning
-    :? Rest "fields")
+    & Mandatory "timezone" Timezone
+    & Many "organization" Organization
+    & Optional "ageFrom" Age
+    & Optional "ageTo" Age
+    & Many "language" Language
+    & Many "location" Location
+    & Optional "weekdayFrom" Time
+    & Optional "weekdayTo" Time
+    & Optional "weekendFrom" Time
+    & Optional "weekendTo" Time
+    & Optional "microphone" HasMicrophone
+    & Many "size" Size
+    & Many "platform" Platform
+    & Optional "newOrReturning" NewOrReturning
+    & Rest "fields")
+    ==> OkJson OkContent ! Internal_
 
 bundleTeamFilters :: forall other.
     { organization :: Array Organization

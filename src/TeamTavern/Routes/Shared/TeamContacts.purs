@@ -22,14 +22,14 @@ type TeamContactsOpen fields = Record (TeamContactsRow fields)
 type TeamContacts = TeamContactsOpen ()
 
 type TeamContactsError = Variant
-    ( battleTag :: String
-    , discordTag :: String
-    , discordServer :: String
-    , friendCode :: String
-    , gamerTag :: String
-    , eaId :: String
-    , ubisoftUsername :: String
-    , psnId :: String
-    , riotId :: String
-    , steamId :: String
+    ( battleTag :: {}
+    , discordTag :: {}
+    , discordServer :: {}
+    , friendCode :: {}
+    , gamerTag :: {}
+    , eaId :: {}
+    , ubisoftUsername :: {}
+    , psnId :: {}
+    , riotId :: {}
+    , steamId :: {}
     )

@@ -1,22 +1,18 @@
 module TeamTavern.Routes.Team.ViewTeam where
 
-import Jarilo.Method (Get)
-import Jarilo.Path (type (:>), End)
-import Jarilo.Query (Mandatory)
-import Jarilo.Route (FullRoute)
-import Jarilo.Segment (Capture, Literal)
-import TeamTavern.Routes.Shared.TeamContacts (TeamContactsOpen)
 import Data.Maybe (Maybe)
+import Jarilo (type (!), type (/), type (==>), Capture, Get, Literal, Mandatory, NotFound_, OkJson, Internal_)
 import TeamTavern.Routes.Shared.Organization (OrganizationNW)
 import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
 import TeamTavern.Routes.Shared.Size (Size)
+import TeamTavern.Routes.Shared.TeamContacts (TeamContactsOpen)
 
-type ViewTeam = FullRoute
+type ViewTeam =
     Get
-    (  Literal "teams"
-    :> Capture "handle" String
-    :> End)
+    ( Literal "teams"
+    / Capture "handle" String)
     (Mandatory "timezone" String)
+    ==> OkJson OkContent ! NotFound_ ! Internal_
 
 type RouteParams = { handle :: String, timezone :: String }
 

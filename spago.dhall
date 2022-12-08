@@ -29,7 +29,6 @@ You can edit this file as you like.
   , "heterogeneous"
   , "http-methods"
   , "integers"
-  , "jarilo"
   , "js-timers"
   , "lists"
   , "maybe"

@@ -1,9 +1,9 @@
-module TeamTavern.Server.Domain.Text (Text, TextErrorRow, TextError, TextErrors, create, validateText) where
+module TeamTavern.Server.Domain.Text (Text, TextErrorRow, TextError, TextErrors, validateText) where
 
 import Prelude
 
-import Data.List.NonEmpty (singleton)
-import Data.List.Types (NonEmptyList)
+import Data.Array.NonEmpty (NonEmptyArray)
+import Data.Array.NonEmpty as Nea
 import Data.Traversable (sum)
 import Data.Validated (Validated, invalid, valid)
 import Data.Variant (Variant, inj)
@@ -18,26 +18,17 @@ type TextErrorRow = (tooLong :: TooLong)
 
 type TextError = Variant TextErrorRow
 
-type TextErrors = NonEmptyList TextError
+type TextErrors = NonEmptyArray TextError
 
-create'
-    :: forall text
-    .  Int
-    -> (Array Paragraph -> text)
-    -> Array Paragraph
-    -> Validated (NonEmptyList TextError) text
-create' maxLength constructor paragraphs = let
+create' :: Array Paragraph -> Validated TextErrors Text
+create' paragraphs = let
+    maxLength = 2000
     actualLength = paragraphs <#> Paragraph.length # sum
     in
     if actualLength > maxLength
-    then invalid $ singleton $ inj (Proxy :: _ "tooLong")
+    then invalid $ Nea.singleton $ inj (Proxy :: _ "tooLong")
         { maxLength, actualLength }
-    else valid $ constructor paragraphs
-
-create :: forall text.
-    Int -> (Array Paragraph -> text) -> String -> Validated TextErrors text
-create maxLength constructor text =
-    text # Paragraph.create >>= create' maxLength constructor
+    else valid $ Text paragraphs
 
 validateText :: String -> Validated TextErrors Text
-validateText = create 2000 Text
+validateText text = text # Paragraph.create >>= create'

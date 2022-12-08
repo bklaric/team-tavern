@@ -2,17 +2,16 @@ module TeamTavern.Server.Profile.ViewPlayerProfile (viewPlayerProfile) where
 
 import Prelude
 
-import Async (Async, alwaysRight, examineLeftWithEffect)
-import Effect (Effect)
-import Perun.Response (Response)
+import Async (Async)
+import Data.Bifunctor (lmap)
+import Jarilo (ok_)
 import Postgres.Pool (Pool)
 import Postgres.Query (class Querier, Query(..), (:|))
-import TeamTavern.Routes.Shared.Types (Timezone)
 import TeamTavern.Routes.Profile.ViewPlayerProfile (RouteParams, OkContent)
-import TeamTavern.Server.Infrastructure.Error (CommonError)
-import TeamTavern.Server.Infrastructure.Log (elaborate, logCommonError)
-import TeamTavern.Server.Infrastructure.Postgres (playerAdjustedWeekdayFrom, playerAdjustedWeekdayTo, playerAdjustedWeekendFrom, playerAdjustedWeekendTo, queryFirstNotFound)
-import TeamTavern.Server.Infrastructure.Response (commonErrorResponse, okJson_)
+import TeamTavern.Routes.Shared.Types (Timezone)
+import TeamTavern.Server.Infrastructure.Error (elaborate)
+import TeamTavern.Server.Infrastructure.Postgres (LoadSingleError, playerAdjustedWeekdayFrom, playerAdjustedWeekdayTo, playerAdjustedWeekendFrom, playerAdjustedWeekendTo, queryFirstNotFound)
+import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 
 queryString :: Timezone -> Query
 queryString timezone = Query $ """
@@ -131,19 +130,13 @@ queryString timezone = Query $ """
         ) as profile
     order by profile.updated desc"""
 
-selectPlayerProfile :: forall querier. Querier querier =>
-    querier -> RouteParams -> Async CommonError OkContent
+selectPlayerProfile :: forall querier errors. Querier querier =>
+    querier -> RouteParams -> Async (LoadSingleError errors) OkContent
 selectPlayerProfile pool routeParams @ { nickname, handle, timezone } =
     queryFirstNotFound pool (queryString timezone) (nickname :| handle)
-    # elaborate ("Error selecting player profile with route params: " <> show routeParams)
+    # lmap (elaborate ("Error selecting player profile with route params: " <> show routeParams))
 
-logError :: CommonError -> Effect Unit
-logError = logCommonError "Error viewing player profile"
-
-sendResponse :: Async CommonError OkContent -> (forall voidLeft. Async voidLeft Response)
-sendResponse = alwaysRight commonErrorResponse (okJson_ :: OkContent -> _)
-
-viewPlayerProfile :: forall left. Pool -> RouteParams -> Async left Response
+viewPlayerProfile :: forall left. Pool -> RouteParams -> Async left _
 viewPlayerProfile pool routeParams =
-    sendResponse $ examineLeftWithEffect logError do
-    selectPlayerProfile pool routeParams
+    sendResponse  "Error viewing player profile" do
+    ok_ <$> selectPlayerProfile pool routeParams

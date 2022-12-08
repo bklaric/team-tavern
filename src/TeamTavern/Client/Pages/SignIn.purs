@@ -4,14 +4,10 @@ import Prelude
 
 import Async (Async)
 import Async as Async
-import Browser.Async.Fetch as Fetch
-import Browser.Async.Fetch.Response as FetchRes
-import Data.Bifunctor (bimap, lmap)
+import Data.Bifunctor (lmap)
 import Data.Const (Const)
-import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..))
-import Data.Options ((:=))
-import Data.Variant (match)
+import Data.Variant (match, onMatch)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
@@ -21,13 +17,12 @@ import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Script.Cookie (hasPlayerIdCookie)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigateReplace_, navigate_)
+import TeamTavern.Client.Shared.Fetch (fetchBody)
 import TeamTavern.Client.Snippets.ErrorClasses (otherErrorClass)
-import TeamTavern.Routes.Session.StartSession as StartSession
+import TeamTavern.Routes.Session.StartSession (StartSession)
 import Type.Proxy (Proxy(..))
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
-import Yoga.JSON as Json
-import Yoga.JSON.Async as JsonAsync
 
 data Action
     = Init
@@ -138,24 +133,18 @@ render
 
 sendSignInRequest :: forall left. State -> Async left (Maybe State)
 sendSignInRequest state @ { nickname, password } = Async.unify do
-    response <- Fetch.fetch "/api/sessions"
-        (  Fetch.method := POST
-        <> Fetch.body := Json.writeJSON ({ nickname, password } :: StartSession.RequestContent)
-        <> Fetch.credentials := Fetch.Include
-        )
+    response <- fetchBody (Proxy :: _ StartSession) { nickname, password }
         # lmap (const $ Just $ state { otherError = true })
-    newState <- case FetchRes.status response of
-        204 -> pure Nothing
-        400 -> FetchRes.text response >>= JsonAsync.readJSON
-            # bimap
-                (const $ Just $ state { otherError = true })
-                (\(error :: StartSession.BadContent) -> Just $ match
-                    { noSessionStarted:
-                        const $ state { noSessionStarted = true }
-                    }
-                    error)
-        _ -> pure $ Just $ state { otherError = true }
-    pure newState
+    pure $ onMatch
+        { noContent: const Nothing
+        , badRequest: \error -> Just $ match
+            { noSessionStarted:
+                const $ state { noSessionStarted = true }
+            }
+            error
+        }
+        (const $ Just state { noSessionStarted = true })
+        response
 
 handleAction :: forall output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit

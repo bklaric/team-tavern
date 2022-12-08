@@ -36,7 +36,7 @@ import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Request (get)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Shared.Slot (QuerylessSlot)
-import TeamTavern.Routes.ViewPlayer as ViewPlayer
+import TeamTavern.Routes.Player.ViewPlayer as ViewPlayer
 
 type Input = { nickname :: String }
 

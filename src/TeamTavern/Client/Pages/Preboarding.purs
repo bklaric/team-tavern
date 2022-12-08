@@ -4,20 +4,16 @@ import Prelude
 
 import Async (Async)
 import Async as Async
-import Browser.Async.Fetch as Fetch
-import Browser.Async.Fetch.Response as FetchRes
 import Control.Alt ((<|>))
-import Data.Array (foldl, mapMaybe)
+import Data.Array (mapMaybe)
 import Data.Array as Array
-import Data.Bifunctor (bimap, lmap)
+import Data.Bifunctor (lmap)
 import Data.Const (Const)
 import Data.Either (Either(..))
-import Data.HTTP.Method (Method(..))
+import Data.Foldable (foldl)
 import Data.Maybe (Maybe(..), isNothing, maybe)
 import Data.Monoid (guard)
-import Data.Options ((:=))
-import Type.Proxy (Proxy(..))
-import Data.Variant (match)
+import Data.Variant (match, onMatch)
 import Effect.Class (class MonadEffect)
 import Foreign (ForeignError(..), fail, readString, unsafeToForeign)
 import Halogen as H
@@ -26,9 +22,6 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Record as Record
 import Record.Extra (pick)
-import Yoga.JSON (class ReadForeign, class WriteForeign, readImpl, writeImpl)
-import Yoga.JSON as Json
-import Yoga.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.Ads (stickyLeaderboards)
 import TeamTavern.Client.Components.Boarding.Boarding (boarding, boardingButtons, boardingDescription, boardingHeading, boardingStep)
 import TeamTavern.Client.Components.Boarding.GameInput (gameInput)
@@ -46,10 +39,14 @@ import TeamTavern.Client.Components.Team.TeamFormInput as TeamFormInput
 import TeamTavern.Client.Script.Analytics (sendEvent)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigate, navigateReplace, navigate_)
+import TeamTavern.Client.Shared.Fetch (fetchBody)
 import TeamTavern.Client.Snippets.Class as HS
-import TeamTavern.Routes.Preboard as Preboard
+import TeamTavern.Routes.Boarding.Preboard (Preboard)
+import TeamTavern.Routes.Boarding.Preboard as Preboard
+import TeamTavern.Routes.Game.ViewGame as ViewGame
 import TeamTavern.Routes.Shared.Platform (Platform(..))
-import TeamTavern.Routes.ViewGame as ViewGame
+import Type.Proxy (Proxy(..))
+import Yoga.JSON (class ReadForeign, class WriteForeign, readImpl, writeImpl)
 
 data Step
     = Greeting
@@ -415,19 +412,13 @@ sendRequest (state :: State) = Async.unify do
             , registration: pick registration
             }
         _ -> Async.left Nothing
-    response <-
-        Fetch.fetch "/api/preboarding"
-        ( Fetch.method := POST
-        <> Fetch.body := Json.writeJSON body
-        <> Fetch.credentials := Fetch.Include
-        )
-        # lmap (const Nothing)
-    content :: Either Preboard.BadContent Preboard.OkContent <-
-        case FetchRes.status response of
-        200 -> FetchRes.text response >>= JsonAsync.readJSON # bimap (const Nothing) Right
-        400 -> FetchRes.text response >>= JsonAsync.readJSON # bimap (const Nothing) Left
-        _ -> Async.left Nothing
-    pure $ Just content
+    response <- fetchBody (Proxy :: _ Preboard) body # lmap (const Nothing)
+    pure $ onMatch
+        { ok: Just <<< Right
+        , badRequest: Just <<< Left
+        }
+        (const Nothing)
+        response
 
 -- Update state for current history entry so back button doesn't lose previous state.
 updateHistoryState :: forall monad. MonadEffect monad => State -> monad Unit
@@ -709,6 +700,7 @@ handleAction SetUpAccount = do
                     , password: const state' { registration { passwordError = true } }
                     }
                 , nicknameTaken: const state { registration { nicknameTaken = true } }
+                , other: const state { otherError = true }
                 }
                 error
             )

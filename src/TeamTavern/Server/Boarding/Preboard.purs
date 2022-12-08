@@ -2,48 +2,38 @@ module TeamTavern.Server.Boarding.Preboard (preboard) where
 
 import Prelude
 
-import Async (Async, alwaysRight, examineLeftWithEffect)
+import Async (Async)
 import Async as Async
 import AsyncV as AsyncV
-import Data.Array (elem, fromFoldable)
-import Data.Array as Array
-import Data.Bifunctor.Label (label)
-import Data.List.Types (NonEmptyList)
+import Data.Array (elem)
+import Data.Array.NonEmpty as Nea
+import Data.Bifunctor (lmap)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
-import Data.Variant (Variant, inj, match)
-import Effect (Effect, foreachE)
-import Node.Errors (Error)
-import Perun.Request.Body (Body)
-import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, ok, unauthorized__)
-import Postgres.Error as Postgres
+import Data.Variant (inj, over)
+import Jarilo (badRequest_, ok)
+import Jarilo.Router.Response (AppResponse(..))
 import Postgres.Pool (Pool)
-import Prim.Row (class Lacks)
-import Record.Builder (Builder)
-import Record.Builder as Builder
 import Record.Extra (pick)
-import TeamTavern.Routes.Preboard (BadContent, RequestContent, OkContent)
+import TeamTavern.Routes.Boarding.Preboard as Preboard
 import TeamTavern.Routes.Shared.Platform (Platform(..))
-import TeamTavern.Server.Architecture.Deployment (Deployment)
-import TeamTavern.Server.Infrastructure.Cookie (CookieInfo, Cookies, setCookieHeaderFull)
-import TeamTavern.Server.Infrastructure.EnsureNotSignedIn (ensureNotSignedIn')
-import TeamTavern.Server.Infrastructure.Log (clientHandler, internalHandler, logt, notAuthenticatedHandler, notAuthorizedHandler)
-import TeamTavern.Server.Infrastructure.Log as Log
+import TeamTavern.Server.Infrastructure.Cookie (Cookies, setCookieHeaderFull)
+import TeamTavern.Server.Infrastructure.Deployment (Deployment)
+import TeamTavern.Server.Infrastructure.EnsureNotSignedIn (ensureNotSignedIn)
+import TeamTavern.Server.Infrastructure.Error (Terror(..))
 import TeamTavern.Server.Infrastructure.Postgres (transaction)
-import TeamTavern.Server.Infrastructure.ReadJsonBody (readJsonBody)
+import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Player.Domain.Hash (generateHash)
 import TeamTavern.Server.Player.Domain.Id (Id(..))
-import TeamTavern.Server.Player.Domain.Nickname (Nickname)
 import TeamTavern.Server.Player.Register.AddPlayer (addPlayer)
-import TeamTavern.Server.Player.Register.ValidateRegistration (RegistrationErrors, validateRegistrationV)
-import TeamTavern.Server.Player.UpdateContacts.ValidateContacts (ContactsErrors, validateContactsV)
+import TeamTavern.Server.Player.Register.ValidateRegistration (validateRegistrationV)
+import TeamTavern.Server.Player.UpdateContacts.ValidateContacts (validateContactsV)
 import TeamTavern.Server.Player.UpdateContacts.WriteContacts (writeContacts)
 import TeamTavern.Server.Player.UpdatePlayer.UpdateDetails (updateDetails)
 import TeamTavern.Server.Player.UpdatePlayer.ValidatePlayer (validatePlayerV)
 import TeamTavern.Server.Profile.AddPlayerProfile.AddProfile (addProfile)
 import TeamTavern.Server.Profile.AddPlayerProfile.LoadFields (loadFields) as Player
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile (validateProfileV)
-import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile as PlayerProfile
 import TeamTavern.Server.Profile.AddTeamProfile.AddProfile as AddTeamProfile
 import TeamTavern.Server.Profile.AddTeamProfile.LoadFields as Team
 import TeamTavern.Server.Profile.AddTeamProfile.ValidateProfile as TeamProfile
@@ -51,122 +41,19 @@ import TeamTavern.Server.Profile.Infrastructure.CheckPlayerAlerts (checkPlayerAl
 import TeamTavern.Server.Profile.Infrastructure.CheckTeamAlerts (checkTeamAlerts)
 import TeamTavern.Server.Session.Domain.Token as Token
 import TeamTavern.Server.Session.Start.CreateSession (createSession)
-import TeamTavern.Server.Team.Create.AddTeam (addTeam)
+import TeamTavern.Server.Team.Create (addTeam)
 import TeamTavern.Server.Team.Infrastructure.GenerateHandle (generateHandle)
 import TeamTavern.Server.Team.Infrastructure.ValidateContacts as TeamCont
-import TeamTavern.Server.Team.Infrastructure.ValidateContacts as TeamLel
-import TeamTavern.Server.Team.Infrastructure.ValidateTeam (TeamErrors, validateTeamV)
+import TeamTavern.Server.Team.Infrastructure.ValidateTeam (validateTeamV)
 import TeamTavern.Server.Team.Infrastructure.WriteContacts as TeamIdunno
-import Type.Function (type ($))
 import Type.Proxy (Proxy(..))
-import Yoga.JSON (unsafeStringify, writeJSON)
 
-type PreboardError = Variant
-    ( client :: Array String
-    , internal :: Array String
-    , signedIn :: Array String
-    , notAuthenticated :: Array String
-    , notAuthorized :: Array String
-    , invalidBody :: NonEmptyList $ Variant
-        ( team :: TeamErrors
-        , playerProfile :: PlayerProfile.ProfileErrors
-        , teamProfile :: TeamProfile.ProfileErrors
-        , playerContacts :: ContactsErrors
-        , teamContacts :: TeamLel.ContactsErrors
-        , registration :: RegistrationErrors
-        )
-    , nicknameTaken ::
-        { nickname :: Nickname
-        , error :: Postgres.Error
-        }
-    , randomError :: Error
-    )
-
-invalidBodyHandler :: forall fields. Lacks "invalidBody" fields =>
-    Builder (Record fields)
-    { invalidBody ::
-        NonEmptyList $ Variant
-        ( team :: TeamErrors
-        , playerProfile :: PlayerProfile.ProfileErrors
-        , teamProfile :: TeamProfile.ProfileErrors
-        , playerContacts :: ContactsErrors
-        , teamContacts :: TeamLel.ContactsErrors
-        , registration :: RegistrationErrors
-        )
-        -> Effect Unit
-    | fields }
-invalidBodyHandler = Builder.insert (Proxy :: _ "invalidBody") \errors ->
-    foreachE (Array.fromFoldable errors) $ match
-    { team: \errors' -> logt $ "Team errors: " <> show errors'
-    , playerProfile: \errors' -> logt $ "Player profile errors: " <> show errors'
-    , teamProfile: \errors' -> logt $ "Team profile errors: " <> show errors'
-    , playerContacts: \errors' -> logt $ "Player contacts errors: " <> show errors'
-    , teamContacts: \errors' -> logt $ "Team contacts errors: " <> show errors'
-    , registration: \errors' -> logt $ "Registration errors: " <> show errors'
-    }
-
-logError :: PreboardError -> Effect Unit
-logError = Log.logError "Error preboarding"
-    ( internalHandler
-    >>> clientHandler
-    >>> notAuthenticatedHandler
-    >>> notAuthorizedHandler
-    >>> invalidBodyHandler
-    >>> (Builder.insert (Proxy :: _ "nicknameTaken") (unsafeStringify >>> logt))
-    >>> (Builder.insert (Proxy :: _ "signedIn") (unsafeStringify >>> logt))
-    >>> (Builder.insert (Proxy :: _ "randomError") (unsafeStringify >>> logt))
-    )
-
-type PreboardResult =
-    { teamHandle :: Maybe String
-    , cookieInfo :: CookieInfo
-    }
-
-errorResponse :: PreboardError -> Response
-errorResponse = match
-    { invalidBody: \errors ->
-        errors
-        # fromFoldable
-        <#> match
-            { team: inj (Proxy :: _ "team") <<< Array.fromFoldable
-            , playerProfile: inj (Proxy :: _ "playerProfile") <<< Array.fromFoldable
-            , teamProfile: inj (Proxy :: _ "teamProfile") <<< Array.fromFoldable
-            , playerContacts: inj (Proxy :: _ "playerContacts") <<< Array.fromFoldable
-            , teamContacts: inj (Proxy :: _ "teamContacts") <<< Array.fromFoldable
-            , registration: inj (Proxy :: _ "registration") <<< Array.fromFoldable
-            }
-        # (writeJSON :: BadContent -> String)
-        # badRequest_
-    , nicknameTaken: \error ->
-        [ inj (Proxy :: _ "nicknameTaken") [ unsafeStringify error ] ]
-        # (writeJSON :: BadContent -> String)
-        # badRequest_
-    , client: const badRequest__
-    , internal: const internalServerError__
-    , notAuthenticated: const unauthorized__
-    , notAuthorized: const forbidden__
-    , signedIn: const forbidden__
-    , randomError: const internalServerError__
-    }
-
-successResponse :: Deployment -> PreboardResult -> Response
-successResponse deployment { teamHandle, cookieInfo } =
-    ok (setCookieHeaderFull deployment cookieInfo)
-    ((writeJSON :: OkContent -> String) { teamHandle })
-
-sendResponse ::
-    Deployment -> Async PreboardError PreboardResult -> (forall left. Async left Response)
-sendResponse deployment = alwaysRight errorResponse $ successResponse deployment
-
-preboard :: forall left. Deployment -> Pool -> Cookies -> Body -> Async left Response
-preboard deployment pool cookies body =
-    sendResponse deployment $ examineLeftWithEffect logError do
+preboard :: forall left. Deployment -> Pool -> Cookies -> Preboard.RequestContent -> Async left _
+preboard deployment pool cookies content =
+    sendResponse "Error preboarding" do
 
     -- Ensure the player is not signed in.
-    ensureNotSignedIn' cookies
-
-    -- Read data from body.
-    (content :: RequestContent) <- readJsonBody body
+    ensureNotSignedIn cookies
 
     -- Start the transaction.
     result <- pool # transaction \client ->
@@ -196,11 +83,11 @@ preboard deployment pool cookies body =
             { player', profile', contacts', registration' } <-
                 { player': _, profile': _, contacts': _, registration': _ }
                 <$> validatePlayerV player
-                <*> validateProfileV game profile
-                <*> validateContactsV [ profile.platform ] contactsCleaned
+                <*> validateProfileV game profile (Proxy :: _ "playerProfile")
+                <*> validateContactsV [ profile.platform ] contactsCleaned (Proxy :: _ "playerContacts")
                 <*> validateRegistrationV registration
                 # AsyncV.toAsync
-                # label (Proxy :: _ "invalidBody")
+                # lmap (map badRequest_)
 
             -- Generate password hash.
             hash <- generateHash registration'.password
@@ -213,9 +100,10 @@ preboard deployment pool cookies body =
                 { nickname: registration'.nickname
                 , hash
                 }
+                # lmap (map (over { badRequest: \(AppResponse headers body) -> AppResponse headers (Nea.singleton body) }))
 
             -- Create a new session.
-            createSession { id: Id id, token } client
+            createSession id token client
 
             updateDetails client id player'
 
@@ -232,7 +120,12 @@ preboard deployment pool cookies body =
                 , cookieInfo: { id: Id id, nickname: registration'.nickname, token }
                 , profileId
                 }
-        { ilk: 2, team: Just team, teamProfile: Just profile, teamContacts: Just contacts, registration } -> do
+        { ilk: 2
+        , team: Just team
+        , teamProfile: Just profile
+        , teamContacts: Just contacts
+        , registration
+        } -> do
             -- Read fields from database.
             game <- Team.loadFields client content.gameHandle
 
@@ -252,11 +145,11 @@ preboard deployment pool cookies body =
             { team', profile', contacts', registration' } <-
                 { team': _, profile': _, contacts': _, registration': _ }
                 <$> validateTeamV team
-                <*> TeamProfile.validateProfileV game profile
-                <*> TeamCont.validateContactsV profile.platforms contactsCleaned
+                <*> TeamProfile.validateProfileV game profile (Proxy :: _ "teamProfile")
+                <*> TeamCont.validateContactsV profile.platforms contactsCleaned (Proxy :: _ "teamContacts")
                 <*> validateRegistrationV registration
                 # AsyncV.toAsync
-                # label (Proxy :: _ "invalidBody")
+                # lmap (map badRequest_)
 
             -- Generate password hash.
             hash <- generateHash registration'.password
@@ -269,9 +162,10 @@ preboard deployment pool cookies body =
                 { nickname: registration'.nickname
                 , hash
                 }
+                # lmap (map (over { badRequest: \(AppResponse headers body) -> AppResponse headers (Nea.singleton body) }))
 
             -- Create a new session.
-            createSession { id: Id id, token } client
+            createSession id token client
 
             let generatedHandle = generateHandle team'.organization registration'.nickname
 
@@ -286,10 +180,10 @@ preboard deployment pool cookies body =
                 , cookieInfo: { id: Id id, nickname: registration'.nickname, token }
                 , profileId
                 }
-        _ -> Async.left $ inj (Proxy :: _ "client") []
+        _ -> Async.left $ Terror (badRequest_ $ Nea.singleton $ inj (Proxy :: _ "other") {}) []
 
     case result.teamHandle of
         Nothing -> checkPlayerAlerts result.profileId pool
         Just _ -> checkTeamAlerts result.profileId pool
 
-    pure $ pick result
+    pure $ ok (setCookieHeaderFull deployment result.cookieInfo) (pick result :: Preboard.OkContent)

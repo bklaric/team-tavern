@@ -1,20 +1,17 @@
 module TeamTavern.Routes.Team.UpdateTeamContacts where
 
-import Jarilo.Method (Put)
-import Jarilo.Path (type (:>), End)
-import Jarilo.Query (NoQuery)
-import Jarilo.Route (FullRoute)
-import Jarilo.Segment (Capture, Literal)
+import Data.Array.NonEmpty (NonEmptyArray)
+import Jarilo (type (!), type (/), type (==>), BadRequestJson, Capture, Forbidden_, Literal, NoContent, NotAuthorized_, PutJson_, Internal_)
 import TeamTavern.Routes.Shared.TeamContacts (TeamContacts, TeamContactsError)
 
-type UpdateTeamContacts = FullRoute
-    Put
-    (  Literal "teams"
-    :> Capture "handle" String
-    :> Literal "contacts"
-    :> End)
-    NoQuery
+type UpdateTeamContacts =
+    PutJson_
+    ( Literal "teams"
+    / Capture "handle" String
+    / Literal "contacts")
+    RequestContent
+    ==> NoContent ! BadRequestJson BadContent ! NotAuthorized_ ! Forbidden_ ! Internal_
 
 type RequestContent = TeamContacts
 
-type BadContent = Array TeamContactsError
+type BadContent = NonEmptyArray TeamContactsError

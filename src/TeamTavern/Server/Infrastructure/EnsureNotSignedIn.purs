@@ -2,33 +2,18 @@ module TeamTavern.Server.Infrastructure.EnsureNotSignedIn where
 
 import Prelude
 
-import Async (Async)
-import Async as Async
-import Data.Map (Map)
+import Async (Async, left, right)
 import Data.Maybe (Maybe(..))
-import Data.Variant (Variant, inj)
-import TeamTavern.Server.Infrastructure.Cookie (CookieInfo, Cookies, lookupCookieInfo)
-import Type.Proxy (Proxy(..))
+import Jarilo (forbidden__)
+import TeamTavern.Server.Infrastructure.Cookie (Cookies, lookupCookieInfo)
+import TeamTavern.Server.Infrastructure.Error (Terror(..))
+import TeamTavern.Server.Infrastructure.Response (ForbiddenTerror_)
 
-type EnsureNotSignedInError errors = Variant
-    ( signedIn ::
-        { cookieInfo :: CookieInfo
-        , cookies :: Map String String
-        }
-    | errors )
-
-ensureNotSignedIn :: forall errors. Cookies -> Async (EnsureNotSignedInError errors) Unit
+ensureNotSignedIn :: forall errors. Cookies -> Async (ForbiddenTerror_ errors) Unit
 ensureNotSignedIn cookies =
     case lookupCookieInfo cookies of
-    Nothing -> Async.right unit
-    Just cookieInfo -> Async.left $ inj (Proxy :: _ "signedIn") { cookieInfo, cookies }
-
-ensureNotSignedIn' :: forall errors.
-    Cookies -> Async (Variant (signedIn :: Array String | errors)) Unit
-ensureNotSignedIn' cookies =
-    case lookupCookieInfo cookies of
-    Nothing -> Async.right unit
-    Just cookieInfo -> Async.left $ inj (Proxy :: _ "signedIn")
-        [ "Expected user to be signed out, but he's signed in with credentials: "
-        <> show cookieInfo
+    Nothing -> right unit
+    Just cookieInfo -> left $ Terror forbidden__
+        [ "Expected user to be signed out, but he's signed in with credentials: " <> show cookieInfo
+        , "Got these credentials from cookies: " <> show cookies
         ]

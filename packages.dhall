@@ -125,7 +125,7 @@ let additions =
     { jarilo =
         { dependencies = [ "http-methods", "uri", "variant", "record" ]
         , repo = "ssh://git@github.com/bklaric/purescript-jarilo.git"
-        , version = "v1.0.1"
+        , version = "v2.0.0-rc2"
         }
     , undefined =
         { dependencies = [] : List Text

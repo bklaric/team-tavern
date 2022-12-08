@@ -6,7 +6,7 @@ import Async (Async)
 import Async as Async
 import Postgres.Client (Client)
 import Postgres.Query (Query(..), (:), (:|))
-import TeamTavern.Server.Infrastructure.Error (InternalError)
+import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstInternal, queryNone)
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateFieldValues (FieldId, FieldValue(..), FieldValueId, FieldValueType(..), OptionId)
 import TeamTavern.Server.Profile.Infrastructure.ValidateUrl (Url)
@@ -22,7 +22,7 @@ insertUrlValueString = Query """
     """
 
 insertUrlValue :: forall errors.
-    Client -> ProfileId -> FieldId -> Url -> Async (InternalError errors) Unit
+    Client -> ProfileId -> FieldId -> Url -> Async (InternalTerror_ errors) Unit
 insertUrlValue client profileId fieldId url =
     queryNone client insertUrlValueString (profileId : fieldId :| url)
 
@@ -35,7 +35,7 @@ insertSingleValueString = Query """
     """
 
 insertSingleValue :: forall errors.
-    Client -> ProfileId -> FieldId -> OptionId -> Async (InternalError errors) Unit
+    Client -> ProfileId -> FieldId -> OptionId -> Async (InternalTerror_ errors) Unit
 insertSingleValue client profileId fieldId optionId =
     queryNone client insertSingleValueString (profileId : fieldId :| optionId)
 
@@ -48,7 +48,7 @@ insertMultiValueOptionString = Query """
     """
 
 insertMultiValueOption :: forall errors.
-    Client -> FieldValueId -> OptionId -> Async (InternalError errors) Unit
+    Client -> FieldValueId -> OptionId -> Async (InternalTerror_ errors) Unit
 insertMultiValueOption client fieldValueId optionId =
     queryNone client insertMultiValueOptionString (fieldValueId :| optionId)
 
@@ -60,7 +60,7 @@ insertMultiValueString = Query """
     """
 
 insertMultiValue :: forall errors.
-    Client -> ProfileId -> FieldId -> Array OptionId -> Async (InternalError errors) Unit
+    Client -> ProfileId -> FieldId -> Array OptionId -> Async (InternalTerror_ errors) Unit
 insertMultiValue client profileId fieldId optionIds = do
     -- Insert field value row.
     { fieldValueId } :: { fieldValueId :: FieldValueId } <-
@@ -72,7 +72,7 @@ insertMultiValue client profileId fieldId optionIds = do
 -- Insert field value rows.
 
 addFieldValues :: forall errors.
-    Client -> ProfileId -> Array FieldValue -> Async (InternalError errors) Unit
+    Client -> ProfileId -> Array FieldValue -> Async (InternalTerror_ errors) Unit
 addFieldValues client profileId fieldValues =
     Async.foreach fieldValues \(FieldValue fieldId fieldValueType) ->
         case fieldValueType of

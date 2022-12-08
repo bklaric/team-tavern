@@ -3,7 +3,8 @@ module TeamTavern.Client.Pages.Player.EditProfile where
 import Prelude
 
 import Async (Async)
-import Data.Array (foldl, intercalate)
+import Data.Array (intercalate)
+import Data.Foldable (foldl)
 import Data.Array as Array
 import Data.Const (Const)
 import Data.Either (Either(..))
@@ -19,7 +20,7 @@ import TeamTavern.Client.Components.Player.ProfileFormInput as ProfileFormInput
 import TeamTavern.Client.Script.Navigate (hardNavigate)
 import TeamTavern.Client.Script.Request (putNoContent)
 import TeamTavern.Routes.Profile.AddPlayerProfile as AddPlayerProfile
-import TeamTavern.Routes.ViewPlayer as ViewPlayer
+import TeamTavern.Routes.Player.ViewPlayer as ViewPlayer
 import Type.Function (type ($))
 import Type.Proxy (Proxy(..))
 import Web.Event.Event (preventDefault)

@@ -5,8 +5,8 @@ import Prelude
 import Async (Async)
 import Data.Nullable (toNullable)
 import Postgres.Query (class Querier, Query(..), QueryParameter, (:), (:|))
-import TeamTavern.Server.Infrastructure.Error (InternalError)
 import TeamTavern.Server.Infrastructure.Postgres (queryNone)
+import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
 import TeamTavern.Server.Player.UpdateContacts.ValidateContacts (Contacts)
 
 queryString :: Query
@@ -39,6 +39,6 @@ queryParameters playerId contacts =
     :| toNullable contacts.friendCode
 
 writeContacts :: forall querier errors. Querier querier =>
-    querier -> Int -> Contacts -> Async (InternalError errors) Unit
+    querier -> Int -> Contacts -> Async (InternalTerror_ errors) Unit
 writeContacts querier playerId contacts =
     queryNone querier queryString (queryParameters playerId contacts)

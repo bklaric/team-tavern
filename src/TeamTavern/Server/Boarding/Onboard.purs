@@ -2,134 +2,50 @@ module TeamTavern.Server.Boarding.Onboard (onboard) where
 
 import Prelude
 
-import Async (Async, alwaysRight, examineLeftWithEffect)
+import Async (Async)
 import Async as Async
 import AsyncV as AsyncV
-import Data.Array (elem, fromFoldable)
-import Data.Array as Array
-import Data.Bifunctor.Label (label)
-import Data.List.Types (NonEmptyList)
+import Data.Array (elem)
+import Data.Array.NonEmpty as Nea
+import Data.Bifunctor (lmap)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
-import Type.Proxy (Proxy(..))
-import Data.Variant (Variant, inj, match)
-import Effect (Effect, foreachE)
-import Perun.Request.Body (Body)
-import Perun.Response (Response, badRequest_, badRequest__, forbidden__, internalServerError__, ok_, unauthorized__)
+import Data.Variant (inj)
+import Jarilo (badRequest_, ok_)
 import Postgres.Pool (Pool)
-import Prim.Row (class Lacks)
-import Record.Builder (Builder)
-import Record.Builder as Builder
 import Record.Extra (pick)
-import Yoga.JSON (writeJSON)
-import TeamTavern.Routes.Onboard (BadContent, RequestContent, OkContent)
+import TeamTavern.Routes.Boarding.Onboard as Onboard
 import TeamTavern.Routes.Shared.Platform (Platform(..))
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
-import TeamTavern.Server.Infrastructure.Log (clientHandler, internalHandler, logt, notAuthenticatedHandler, notAuthorizedHandler)
-import TeamTavern.Server.Infrastructure.Log as Log
+import TeamTavern.Server.Infrastructure.Error (Terror(..))
 import TeamTavern.Server.Infrastructure.Postgres (transaction)
-import TeamTavern.Server.Infrastructure.ReadJsonBody (readJsonBody)
-import TeamTavern.Server.Player.UpdateContacts.ValidateContacts (ContactsErrors, validateContactsV)
+import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
+import TeamTavern.Server.Player.UpdateContacts.ValidateContacts (validateContactsV)
 import TeamTavern.Server.Player.UpdateContacts.WriteContacts (writeContacts)
 import TeamTavern.Server.Player.UpdatePlayer.UpdateDetails (updateDetails)
 import TeamTavern.Server.Player.UpdatePlayer.ValidatePlayer (validatePlayerV)
 import TeamTavern.Server.Profile.AddPlayerProfile.AddProfile (addProfile)
 import TeamTavern.Server.Profile.AddPlayerProfile.LoadFields as Player
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile (validateProfileV)
-import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile as PlayerProfile
 import TeamTavern.Server.Profile.AddTeamProfile.AddProfile as AddTeamProfile
 import TeamTavern.Server.Profile.AddTeamProfile.LoadFields as Team
 import TeamTavern.Server.Profile.AddTeamProfile.ValidateProfile as TeamProfile
 import TeamTavern.Server.Profile.Infrastructure.CheckPlayerAlerts (checkPlayerAlerts)
 import TeamTavern.Server.Profile.Infrastructure.CheckTeamAlerts (checkTeamAlerts)
-import TeamTavern.Server.Team.Create.AddTeam (addTeam)
+import TeamTavern.Server.Team.Create (addTeam)
 import TeamTavern.Server.Team.Infrastructure.GenerateHandle (generateHandle)
 import TeamTavern.Server.Team.Infrastructure.ValidateContacts as TeamCont
-import TeamTavern.Server.Team.Infrastructure.ValidateContacts as TeamLel
-import TeamTavern.Server.Team.Infrastructure.ValidateTeam (TeamErrors, validateTeamV)
+import TeamTavern.Server.Team.Infrastructure.ValidateTeam (validateTeamV)
 import TeamTavern.Server.Team.Infrastructure.WriteContacts as TeamIdunno
-import Type.Function (type ($))
+import Type.Proxy (Proxy(..))
 
-type OnboardError = Variant
-    ( client :: Array String
-    , internal :: Array String
-    , notAuthenticated :: Array String
-    , notAuthorized :: Array String
-    , invalidBody :: NonEmptyList $ Variant
-        ( team :: TeamErrors
-        , playerProfile :: PlayerProfile.ProfileErrors
-        , teamProfile :: TeamProfile.ProfileErrors
-        , playerContacts :: ContactsErrors
-        , teamContacts :: TeamLel.ContactsErrors
-        )
-    )
-
-invalidBodyHandler :: forall fields. Lacks "invalidBody" fields =>
-    Builder (Record fields)
-    { invalidBody ::
-        NonEmptyList $ Variant
-        ( team :: TeamErrors
-        , playerProfile :: PlayerProfile.ProfileErrors
-        , teamProfile :: TeamProfile.ProfileErrors
-        , playerContacts :: ContactsErrors
-        , teamContacts :: TeamLel.ContactsErrors
-        )
-        -> Effect Unit
-    | fields }
-invalidBodyHandler = Builder.insert (Proxy :: _ "invalidBody") \errors ->
-    foreachE (Array.fromFoldable errors) $ match
-    { team: \errors' -> logt $ "Team errors: " <> show errors'
-    , playerProfile: \errors' -> logt $ "Player profile errors: " <> show errors'
-    , teamProfile: \errors' -> logt $ "Team profile errors: " <> show errors'
-    , playerContacts: \errors' -> logt $ "Player contacts errors: " <> show errors'
-    , teamContacts: \errors' -> logt $ "Team contacts errors: " <> show errors'
-    }
-
-logError :: OnboardError -> Effect Unit
-logError = Log.logError "Error onboarding"
-    ( internalHandler
-    >>> clientHandler
-    >>> notAuthenticatedHandler
-    >>> notAuthorizedHandler
-    >>> invalidBodyHandler
-    )
-
-errorResponse :: OnboardError -> Response
-errorResponse = match
-    { invalidBody: \errors ->
-        errors
-        # fromFoldable
-        <#> match
-            { team: inj (Proxy :: _ "team") <<< Array.fromFoldable
-            , playerProfile: inj (Proxy :: _ "playerProfile") <<< Array.fromFoldable
-            , teamProfile: inj (Proxy :: _ "teamProfile") <<< Array.fromFoldable
-            , playerContacts: inj (Proxy :: _ "playerContacts") <<< Array.fromFoldable
-            , teamContacts: inj (Proxy :: _ "teamContacts") <<< Array.fromFoldable
-            }
-        # (writeJSON :: BadContent -> String)
-        # badRequest_
-    , client: const badRequest__
-    , internal: const internalServerError__
-    , notAuthenticated: const unauthorized__
-    , notAuthorized: const forbidden__
-    }
-
-successResponse :: OkContent -> Response
-successResponse = ok_ <<< (writeJSON :: OkContent -> String)
-
-sendResponse :: Async OnboardError OkContent -> (forall left. Async left Response)
-sendResponse = alwaysRight errorResponse successResponse
-
-onboard :: forall left. Pool -> Cookies -> Body -> Async left Response
-onboard pool cookies body =
-    sendResponse $ examineLeftWithEffect logError do
+onboard :: forall left. Pool -> Cookies -> Onboard.RequestContent -> Async left _
+onboard pool cookies content =
+    sendResponse "Error onboarding" do
 
     -- Ensure the player is signed in.
     cookieInfo <- ensureSignedIn pool cookies
-
-    -- Read data from body.
-    (content :: RequestContent) <- readJsonBody body
 
     -- Start the transaction.
     result <- pool # transaction \client ->
@@ -153,10 +69,10 @@ onboard pool cookies body =
             { player', profile', contacts' } <-
                 { player': _, profile': _, contacts': _ }
                 <$> validatePlayerV player
-                <*> validateProfileV game profile
-                <*> validateContactsV [ profile.platform ] contactsCleaned
+                <*> validateProfileV game profile (Proxy :: _ "playerProfile")
+                <*> validateContactsV [ profile.platform ] contactsCleaned (Proxy :: _ "playerContacts")
                 # AsyncV.toAsync
-                # label (Proxy :: _ "invalidBody")
+                # lmap (map badRequest_)
             updateDetails client (unwrap cookieInfo.id) player'
             profileId <- addProfile client (unwrap cookieInfo.id)
                 { handle: content.gameHandle
@@ -184,20 +100,20 @@ onboard pool cookies body =
             { team', profile', contacts' } <-
                 { team': _, profile': _, contacts': _ }
                 <$> validateTeamV team
-                <*> TeamProfile.validateProfileV game profile
-                <*> TeamCont.validateContactsV profile.platforms contactsCleaned
+                <*> TeamProfile.validateProfileV game profile (Proxy :: _ "teamProfile")
+                <*> TeamCont.validateContactsV profile.platforms contactsCleaned (Proxy :: _ "teamContacts")
                 # AsyncV.toAsync
-                # label (Proxy :: _ "invalidBody")
+                # lmap (map badRequest_)
             let generatedHandle = generateHandle team'.organization cookieInfo.nickname
             { id, handle } <- addTeam client cookieInfo.id generatedHandle team'
             profileId <- AddTeamProfile.addProfile
                 client cookieInfo.id handle content.gameHandle profile'
             TeamIdunno.writeContacts client id contacts'
             pure { teamHandle: Just handle, profileId }
-        _ -> Async.left $ inj (Proxy :: _ "client") []
+        _ -> Async.left $ Terror (badRequest_ $ Nea.singleton $ inj (Proxy :: _ "other") {}) []
 
     case result.teamHandle of
         Nothing -> checkPlayerAlerts result.profileId pool
         Just _ -> checkTeamAlerts result.profileId pool
 
-    pure $ pick result
+    pure $ ok_ (pick result :: Onboard.OkContent)

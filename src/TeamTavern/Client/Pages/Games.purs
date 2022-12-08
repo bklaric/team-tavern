@@ -23,7 +23,7 @@ import TeamTavern.Client.Components.Picture (picture)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigateWithEvent_)
 import TeamTavern.Client.Snippets.Class as HS
-import TeamTavern.Routes.ViewAllGames as ViewAllGames
+import TeamTavern.Routes.Game.ViewAllGames as ViewAllGames
 import Web.Event.Event (stopPropagation)
 import Web.UIEvent.MouseEvent (MouseEvent)
 import Web.UIEvent.MouseEvent as MouseEvent

@@ -1,52 +1,26 @@
-module TeamTavern.Server.Session.Start.CheckPassword
-    (CheckPasswordError, CheckPasswordResult, checkPassword) where
+module TeamTavern.Server.Session.Start.CheckPassword (CheckPasswordError, checkPassword) where
 
 import Prelude
 
-import Async (Async, left, note)
+import Async (Async, left)
 import Bcrypt.Async as Bcrypt
-import Data.Array (head)
-import Data.Bifunctor.Label (label, labelMap)
-import Data.Newtype (wrap)
-import Data.Traversable (traverse)
-import Data.Variant (Variant, inj)
-import Foreign (MultipleErrors)
-import Node.Errors as Node
-import Postgres.Async.Query (query)
-import Postgres.Error as Postgres
+import Data.Array (singleton)
+import Data.Bifunctor (lmap)
+import Data.Variant (inj)
+import Jarilo (InternalRow_, BadRequestRow, badRequest_, internal__)
 import Postgres.Query (class Querier, Query(..), (:))
-import Postgres.Result (Result, rows)
-import TeamTavern.Server.Player.Domain.Id (Id)
-import TeamTavern.Server.Player.Domain.Nickname (Nickname)
+import TeamTavern.Routes.Session.StartSession as StartSession
+import TeamTavern.Server.Infrastructure.Error (Terror(..), TerrorVar)
+import TeamTavern.Server.Infrastructure.Log (print)
+import TeamTavern.Server.Infrastructure.Postgres (queryFirst)
 import Type.Proxy (Proxy(..))
-import Yoga.JSON.Async (read)
+import Type.Row (type (+))
 
-type CheckPasswordModel =
-    { nickname :: String
-    , password :: String
-    }
-
-type CheckPasswordDto =
-    { id :: Int
-    , nickname :: String
-    , hash :: String
-    }
-
-type CheckPasswordResult =
-    { id :: Id
-    , nickname :: Nickname
-    }
-
-type CheckPasswordError errors = Variant
-    ( databaseError :: Postgres.Error
-    , unreadableHash ::
-        { result :: Result
-        , errors :: MultipleErrors
-        }
-    , noMatchingPlayer :: String
-    , bcrypt :: Node.Error
-    , passwordDoesntMatch :: String
-    | errors )
+type CheckPasswordError errors = TerrorVar
+    ( InternalRow_
+    + BadRequestRow StartSession.BadContent
+    + errors
+    )
 
 queryString :: Query
 queryString = Query """
@@ -61,23 +35,18 @@ queryString = Query """
 checkPassword
     :: forall querier errors
     .  Querier querier
-    => CheckPasswordModel
+    => StartSession.RequestContent
     -> querier
-    -> Async (CheckPasswordError errors) CheckPasswordResult
+    -> Async (CheckPasswordError errors) { id :: Int, nickname :: String }
 checkPassword model querier = do
+    let noSessionStartedResponse = badRequest_ $ inj (Proxy :: _ "noSessionStarted") {}
     -- Load player hash.
-    result <- querier
-        # query queryString (model.nickname : [])
-        # label (Proxy :: _ "databaseError")
-    dtos <- rows result
-        # traverse read
-        # labelMap (Proxy :: _ "unreadableHash")
-            { result, errors: _ }
-    { id, nickname, hash } :: CheckPasswordDto <- head dtos
-        # note (inj (Proxy :: _ "noMatchingPlayer") model.nickname)
+    { id, nickname, hash } :: { id :: Int, nickname :: String, hash :: String } <-
+        queryFirst noSessionStartedResponse querier queryString (model.nickname : [])
 
     -- Compare hash with password.
-    matches <- Bcrypt.compare model.password hash # label (Proxy :: _ "bcrypt")
-    when (not matches) $ left $ inj (Proxy :: _ "passwordDoesntMatch") nickname
+    matches <- Bcrypt.compare model.password hash # lmap
+        (print >>> ("Bcrypt error while checking hash: " <> _) >>> singleton >>> Terror internal__)
+    when (not matches) $ left $ Terror noSessionStartedResponse [ "Wrong password entered for user: " <> nickname ]
 
-    pure $ { id: wrap id, nickname: wrap nickname }
+    pure $ { id, nickname }

@@ -4,7 +4,7 @@ import Async (Async)
 import Postgres.Client (Client)
 import Postgres.Query (Query(..), (:))
 import TeamTavern.Routes.Shared.Platform (Platforms)
-import TeamTavern.Server.Infrastructure.Error (InternalError)
+import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstInternal)
 
 type Option =
@@ -61,5 +61,5 @@ queryString = Query """
     group by game.id;
     """
 
-loadFields :: forall errors. Client -> String -> Async (InternalError errors) Game
+loadFields :: forall errors. Client -> String -> Async (InternalTerror_ errors) Game
 loadFields client handle = queryFirstInternal client queryString (handle : [])

@@ -2,45 +2,33 @@ module TeamTavern.Server.Main where
 
 import Prelude
 
-import Async (Async, fromEffect)
 import Control.Bind (bindFlipped)
 import Control.Monad.Except (ExceptT(..), runExceptT)
 import Control.Monad.Maybe.Trans (lift)
-import Data.Either (Either(..), either, note)
-import Data.HTTP.Method (CustomMethod, Method(..))
+import Data.Either (either, note)
 import Data.Int (fromString)
-import Data.List.NonEmpty as NEL
-import Data.Map (Map)
 import Data.Maybe (Maybe(..))
-import Data.MultiMap as MultiMap
 import Data.Options (Options, (:=))
-import Data.Tuple (Tuple(..))
-import Data.Variant (match)
 import Effect (Effect)
 import Effect.Console (log)
-import Jarilo.Junction (router)
+import Jarilo.Serve (serve)
 import Node.Process (lookupEnv)
 import Node.Server (ListenOptions(..))
-import Perun.Async.Server (run_)
-import Perun.Request (Request)
-import Perun.Request.Body (Body)
-import Perun.Response (Response)
-import Perun.Url (Url, pathSegments, queryPairs)
 import Postgres.Client.Config (ClientConfig, database, host, password, port, user)
 import Postgres.Pool (Pool)
 import Postgres.Pool as Pool
 import Sendgrid (setApiKey)
+import TeamTavern.Routes.All (AllRoutes)
 import TeamTavern.Routes.Profile.ViewPlayerProfilesByGame (bundlePlayerFilters)
 import TeamTavern.Routes.Profile.ViewTeamProfilesByGame (bundleTeamFilters)
 import TeamTavern.Server.Alert.Create (createAlert) as Alert
 import TeamTavern.Server.Alert.Delete (deleteAlert) as Alert
-import TeamTavern.Server.Architecture.Deployment (Deployment)
-import TeamTavern.Server.Architecture.Deployment as Deployment
+import TeamTavern.Server.Infrastructure.Deployment (Deployment)
+import TeamTavern.Server.Infrastructure.Deployment as Deployment
 import TeamTavern.Server.Boarding.Onboard as Onboard
 import TeamTavern.Server.Boarding.Preboard as Preboard
 import TeamTavern.Server.Game.View (view) as Game
 import TeamTavern.Server.Game.ViewAll (viewAll) as Game
-import TeamTavern.Server.Infrastructure.Log (logStamped, logt)
 import TeamTavern.Server.Player.Delete (delete) as Player
 import TeamTavern.Server.Player.Register (register) as Player
 import TeamTavern.Server.Player.UpdateContacts (updateContacts) as Player
@@ -50,11 +38,10 @@ import TeamTavern.Server.Profile.AddPlayerProfile (addPlayerProfile) as Profile
 import TeamTavern.Server.Profile.AddTeamProfile (addTeamProfile) as Profile
 import TeamTavern.Server.Profile.UpdatePlayerProfile (updatePlayerProfile) as Profile
 import TeamTavern.Server.Profile.UpdateTeamProfile (updateTeamProfile) as Profile
-import TeamTavern.Server.Profile.ViewPlayerProfile (viewPlayerProfile)
+import TeamTavern.Server.Profile.ViewPlayerProfile (viewPlayerProfile) as Profile
 import TeamTavern.Server.Profile.ViewPlayerProfilesByGame (viewPlayerProfilesByGame) as Profile
-import TeamTavern.Server.Profile.ViewTeamProfile (viewTeamProfile)
+import TeamTavern.Server.Profile.ViewTeamProfile (viewTeamProfile) as Profile
 import TeamTavern.Server.Profile.ViewTeamProfilesByGame (viewTeamProfilesByGame) as Profile
-import TeamTavern.Server.Routes (TeamTavernRoutes)
 import TeamTavern.Server.Session.End (end) as Session
 import TeamTavern.Server.Session.Start (start) as Session
 import TeamTavern.Server.Team.Create (create) as Team
@@ -123,108 +110,65 @@ loadDeployment =
     <#> note "Couldn't read variable DEPLOYMENT."
     # ExceptT
 
-teamTavernRoutes = Proxy :: Proxy TeamTavernRoutes
+teamTavernRoutes = Proxy :: Proxy AllRoutes
 
-handleRequest
-    :: Deployment
-    -> Pool
-    -> Either CustomMethod Method
-    -> Url
-    -> Map String String
-    -> Body
-    -> (forall left. Async left Response)
-handleRequest deployment pool method url cookies body =
-    case router teamTavernRoutes method (pathSegments url) (queryPairs url) of
-    Left errors ->
-        if method == Right OPTIONS
-        then pure
-            { statusCode: 200
-            , headers: MultiMap.fromFoldable
-                [ Tuple "Access-Control-Allow-Origin" $ NEL.singleton "http://localhost:1337"
-                , Tuple "Access-Control-Allow-Methods" $ NEL.singleton "GET, POST, DELETE, PUT, PATCH, HEAD, OPTIONS"
-                , Tuple "Access-Control-Max-Age" $ NEL.singleton $ show $ (top :: Int)
-                , Tuple "Access-Control-Allow-Credentials" $ NEL.singleton "true"
-                ]
-            , content: mempty
-            }
-        else do
-            fromEffect $ logStamped $ "Endpoint 404 Not Found"
-            fromEffect $ logt $
-                "Not found for method " <> show method <> " and url " <> show url
-            fromEffect $ logt $ "Routing resulted in these errors: " <> show errors
-            pure { statusCode: 404, headers: MultiMap.empty, content: show errors }
-    Right routeValues -> routeValues # match
-        { registerPlayer: const $
-            Player.register deployment pool cookies body
-        , viewPlayer:
-            Player.view pool cookies
-        , updatePlayerContacts: \{ nickname } ->
-            Player.updateContacts pool nickname cookies body
-        , updatePlayer: \{ nickname } ->
-            Player.updatePlayer pool nickname cookies body
-        , deletePlayer: \{ nickname } ->
-            Player.delete pool nickname cookies
-        , viewTeam:
-            Team.view pool
-        , createTeam: const $
-            Team.create pool body cookies
-        , updateTeam:
-            Team.update pool body cookies
-        , updateTeamContacts:
-            Team.updateContacts pool body cookies
-        , startSession: const $
-            Session.start deployment pool cookies body
-        , endSession: const
-            Session.end
-        , viewAllGames: const $
-            Game.viewAll pool
-        , viewGame: \{ handle } ->
-            Game.view pool handle
-        , addPlayerProfile: \identifiers ->
-            Profile.addPlayerProfile pool identifiers cookies body
-        , addTeamProfile:
-            Profile.addTeamProfile pool cookies body
-        , updatePlayerProfile: \identifiers ->
-            Profile.updatePlayerProfile pool identifiers cookies body
-        , updateTeamProfile:
-            Profile.updateTeamProfile pool cookies body
-        , viewPlayerProfilesByGame: \filters @ { handle, page, timezone } ->
-            Profile.viewPlayerProfilesByGame pool handle page timezone $ bundlePlayerFilters filters
-        , viewTeamProfilesByGame: \filters @ { handle, page, timezone } ->
-            Profile.viewTeamProfilesByGame pool handle page timezone $ bundleTeamFilters filters
-        , viewPlayerProfile:
-            viewPlayerProfile pool
-        , viewTeamProfile:
-            viewTeamProfile pool
-        , onboard: const $
-            Onboard.onboard pool cookies body
-        , preboard: const $
-            Preboard.preboard deployment pool cookies body
-        , createAlert: const $
-            Alert.createAlert pool body
-        , deleteAlert:
-            Alert.deleteAlert pool
-        }
-        <#> (\response -> response { headers = response.headers <> MultiMap.fromFoldable
-                [ Tuple "Access-Control-Allow-Origin" $ NEL.singleton "http://localhost:1337"
-                , Tuple "Access-Control-Allow-Methods" $ NEL.singleton "GET, POST, DELETE, PUT, PATCH, HEAD, OPTIONS"
-                , Tuple "Access-Control-Max-Age" $ NEL.singleton $ show $ (top :: Int)
-                , Tuple "Access-Control-Allow-Credentials" $ NEL.singleton "true"
-                ]})
-
-handleInvalidUrl :: Deployment -> Pool -> Request -> (forall left. Async left Response)
-handleInvalidUrl deployment pool { method, url, cookies, body } =
-    case url of
-    Right url' -> handleRequest deployment pool method url' cookies body
-    Left url' -> pure
-        { statusCode: 400
-        , headers: MultiMap.empty
-        , content: "Couldn't parse url '" <> url' <> "'."
-        }
+runServer :: Deployment -> Pool -> Effect Unit
+runServer deployment pool = serve (Proxy :: _ AllRoutes) listenOptions
+    { startSession: \{ cookies, body } ->
+        Session.start deployment pool cookies body
+    , endSession: const
+        Session.end
+    , viewAllGames: const $
+        Game.viewAll pool
+    , viewGame: \{ path: { handle } } ->
+        Game.view pool handle
+    , viewPlayer: \{ path: { nickname } , query: { timezone }, cookies } ->
+        Player.view pool cookies { nickname, timezone }
+    , registerPlayer: \{ cookies, body } ->
+        Player.register deployment pool cookies body
+    , updatePlayer: \{ path, cookies, body } ->
+        Player.updatePlayer pool path.nickname cookies body
+    , deletePlayer: \{ path, cookies } ->
+        Player.delete pool path.nickname cookies
+    , updatePlayerContacts: \{ path, cookies, body } ->
+        Player.updateContacts pool path.nickname cookies body
+    , viewTeam: \{ path: { handle }, query: { timezone } } ->
+        Team.view pool { handle, timezone }
+    , createTeam: \{ cookies, body } ->
+        Team.create pool cookies body
+    , updateTeam: \{ path, cookies, body } ->
+        Team.update pool cookies path body
+    , updateTeamContacts: \{ path, cookies, body } ->
+        Team.updateContacts pool cookies path body
+    , addPlayerProfile: \{ path, cookies, body } ->
+        Profile.addPlayerProfile pool cookies path body
+    , addTeamProfile: \{ path, cookies, body } ->
+        Profile.addTeamProfile pool cookies path body
+    , updatePlayerProfile: \{ path, cookies, body } ->
+        Profile.updatePlayerProfile pool cookies path body
+    , updateTeamProfile: \{ path, cookies, body } ->
+        Profile.updateTeamProfile pool cookies path body
+    , viewPlayerProfilesByGame: \{ path: { handle }, query } ->
+        Profile.viewPlayerProfilesByGame pool handle query.page query.timezone $ bundlePlayerFilters query
+    , viewTeamProfilesByGame: \{ path: { handle }, query } ->
+        Profile.viewTeamProfilesByGame pool handle query.page query.timezone $ bundleTeamFilters query
+    , viewPlayerProfile: \{ path: { nickname, handle }, query: { timezone } } ->
+        Profile.viewPlayerProfile pool { nickname, handle, timezone }
+    , viewTeamProfile: \{ path: { teamHandle, gameHandle }, query: { timezone } } ->
+        Profile.viewTeamProfile pool { teamHandle, gameHandle, timezone }
+    , onboard: \{ cookies, body } ->
+        Onboard.onboard pool cookies body
+    , preboard: \{ cookies, body } ->
+        Preboard.preboard deployment pool cookies body
+    , createAlert: \{ body } ->
+        Alert.createAlert pool body
+    , deleteAlert: \{ path: { id }, query: { token } } ->
+        Alert.deleteAlert pool { id, token }
+    }
 
 main :: Effect Unit
 main = either log pure =<< runExceptT do
     deployment <- loadDeployment
     pool <- createPostgresPool
     setSendGridApiKey
-    lift $ run_ listenOptions (handleInvalidUrl deployment pool)
+    lift $ runServer deployment pool

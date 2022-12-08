@@ -3,15 +3,14 @@ module TeamTavern.Server.Infrastructure.EnsureSignedInOwner where
 import Prelude
 
 import Async (Async)
+import Jarilo (ForbiddenRow_)
 import Postgres.Query (class Querier, Query(..), (:|))
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo, Cookies)
 import TeamTavern.Server.Infrastructure.EnsureSignedIn (EnsureSignedInError, ensureSignedIn)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstNotAuthorized)
+import Type.Row (type (+))
 
-type EnsureSignedInOwnerError errors = EnsureSignedInError
-    ( notAuthorized :: Array String
-    | errors
-    )
+type EnsureSignedInOwnerError errors = EnsureSignedInError (ForbiddenRow_ + errors)
 
 queryString :: Query
 queryString = Query """

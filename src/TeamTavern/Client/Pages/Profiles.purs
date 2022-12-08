@@ -45,7 +45,7 @@ import TeamTavern.Routes.Profile.ViewTeamProfilesByGame as ViewTeamProfilesByGam
 import TeamTavern.Routes.Shared.Organization as Organization
 import TeamTavern.Routes.Shared.Platform as Platform
 import TeamTavern.Routes.Shared.Size as Size
-import TeamTavern.Routes.ViewGame as ViewGame
+import TeamTavern.Routes.Game.ViewGame as ViewGame
 import Type.Proxy (Proxy(..))
 import Web.DOM.ParentNode (QuerySelector(..))
 import Web.DOM.ParentNode as ParentNode

@@ -27,6 +27,7 @@ import Web.HTML.History as History
 import Web.HTML.Location as Location
 import Web.HTML.Window (document)
 import Web.HTML.Window as Window
+-- import Veles (fetchTest)
 
 createListener :: forall monad. MonadEffect monad => (Event -> Effect Unit) -> monad EventListener
 createListener = liftEffect <<< DOM.eventListener
@@ -49,3 +50,4 @@ main = HA.runHalogenAff do
     addWindowListener PSET.popstate navigationListener
     orientationListener <- createListener $ const reloadAds
     addWindowListener (EventType "orientationchange") orientationListener
+    -- liftEffect fetchTest

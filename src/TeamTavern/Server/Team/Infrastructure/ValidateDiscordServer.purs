@@ -3,16 +3,18 @@ module TeamTavern.Server.Team.Infrastructure.ValidateDiscordServer where
 import Prelude
 
 import Data.Maybe (Maybe)
-import Type.Proxy (Proxy(..))
 import Data.Traversable (traverse)
-import Data.Validated.Label (ValidatedVariants)
-import Data.Validated.Label as Validated
-import TeamTavern.Server.Profile.Infrastructure.ValidateUrl (Url, UrlErrors, validateUrlV)
+import Data.Validated as Validated
+import TeamTavern.Server.Infrastructure.Error (ValidatedTerrorNeaVar)
+import TeamTavern.Server.Infrastructure.Error as Terror
+import TeamTavern.Server.Profile.Infrastructure.ValidateUrl (Url, validateUrlV)
+import Type.Proxy (Proxy(..))
 
 validateDiscordServer :: forall errors.
-    Maybe String -> ValidatedVariants (discordServer :: String | errors) (Maybe Url)
+    Maybe String -> ValidatedTerrorNeaVar (discordServer :: {} | errors) (Maybe Url)
 validateDiscordServer discordServer
     = discordServer
     # traverse (validateUrlV "discord.gg")
-    # Validated.labelMap (Proxy :: _ "discordServer") \(errors :: UrlErrors) ->
-        "Error validating Discord server: " <> show errors
+    # Validated.lmap
+        ((\errors -> Terror.singleton {} ("Error validating Discord server: " <> show errors))
+        >>> Terror.labelNea (Proxy :: _ "discordServer"))

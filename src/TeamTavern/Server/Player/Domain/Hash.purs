@@ -8,11 +8,11 @@ import Data.Bifunctor (bimap)
 import Data.Generic.Rep (class Generic)
 import Data.Newtype (class Newtype)
 import Data.Show.Generic (genericShow)
-import Data.Variant (inj)
-import TeamTavern.Server.Infrastructure.Error (InternalError)
+import Jarilo (internal__)
+import TeamTavern.Server.Infrastructure.Error (Terror(..))
 import TeamTavern.Server.Infrastructure.Log (print)
+import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
 import TeamTavern.Server.Player.Domain.Password (Password(..))
-import Type.Proxy (Proxy(..))
 
 newtype Hash = Hash String
 
@@ -22,10 +22,8 @@ derive instance genericHash :: Generic Hash _
 
 instance showHash :: Show Hash where show = genericShow
 
-generateHash :: forall errors. Password -> Async (InternalError errors) Hash
+generateHash :: forall errors. Password -> Async (InternalTerror_ errors) Hash
 generateHash (Password password) =
     password # hash_ # bimap
-        ( \error -> inj (Proxy :: _ "internal")
-            [ "Error generating password hash: " <> print error ]
-        )
+        (\error -> Terror internal__ [ "Error generating password hash: " <> print error ])
         Hash

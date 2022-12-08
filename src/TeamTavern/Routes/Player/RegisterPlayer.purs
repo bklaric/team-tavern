@@ -1,17 +1,12 @@
 module TeamTavern.Routes.Player.RegisterPlayer where
 
+import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Variant (Variant)
-import Jarilo.Method (Post)
-import Jarilo.Path (type (:>), End)
-import Jarilo.Query (NoQuery)
-import Jarilo.Route (FullRoute)
-import Jarilo.Segment (Literal)
+import Jarilo (type (!), type (==>), BadRequestJson, Forbidden_, Internal_, Literal, NoContent, PostJson_)
 
-type RegisterPlayer = FullRoute
-    Post
-    (  Literal "players"
-    :> End)
-    NoQuery
+type RegisterPlayer =
+    PostJson_ (Literal "players") RequestContent
+    ==> (NoContent ! BadRequestJson BadContent ! Forbidden_ ! Internal_)
 
 type RequestContent =
     { nickname :: String
@@ -20,12 +15,12 @@ type RequestContent =
 
 type OkContent = { nickname :: String }
 
-type BadContentIdentifiers = Variant
-    ( invalidNickname :: {}
-    , invalidPassword :: {}
+type RegistrationError = Variant
+    ( nickname :: {}
+    , password :: {}
     )
 
 type BadContent = Variant
-    ( registration :: Array BadContentIdentifiers
+    ( registration :: NonEmptyArray RegistrationError
     , nicknameTaken :: {}
     )

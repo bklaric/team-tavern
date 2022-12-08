@@ -4,17 +4,13 @@ import Prelude
 
 import Async (Async)
 import Async as Async
-import Browser.Async.Fetch (fetch, method)
-import Browser.Fetch.Response (status)
 import Data.Array (find)
 import Data.Array as Array
-import Data.Bifunctor (lmap)
+import Data.Bifunctor (bimap)
 import Data.Const (Const)
 import Data.Foldable (foldMap)
-import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..), maybe)
 import Data.Monoid (guard)
-import Data.Options ((:=))
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
@@ -24,8 +20,10 @@ import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Script.Cookie (getPlayerNickname)
 import TeamTavern.Client.Script.Navigate (navigateWithEvent_)
 import TeamTavern.Client.Script.Request (get)
+import TeamTavern.Client.Shared.Fetch (fetchSimple)
 import TeamTavern.Client.Snippets.Class as HS
-import TeamTavern.Routes.ViewAllGames as ViewAllGames
+import TeamTavern.Routes.Game.ViewAllGames as ViewAllGames
+import TeamTavern.Routes.Session.EndSession (EndSession)
 import Type.Proxy (Proxy(..))
 import Web.Event.Event (stopPropagation)
 import Web.Event.Event as E
@@ -225,8 +223,7 @@ render state = HH.div_ $
 
 endSession :: forall left. Async left Boolean
 endSession = Async.unify do
-    response <- fetch ("/api/sessions/current") (method := DELETE) # lmap (const false)
-    pure $ status response == 204
+    fetchSimple (Proxy :: _ EndSession) # bimap (const false) (const true)
 
 handleAction :: forall children left output.
     Action -> H.HalogenM State Action children output (Async left) Unit

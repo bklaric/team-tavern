@@ -20,8 +20,8 @@ import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Pages.Profile.Filters (Filters)
 import TeamTavern.Client.Script.Request (postNoContent)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
-import TeamTavern.Routes.CreateAlert (PlayerOrTeam(..))
-import TeamTavern.Routes.CreateAlert as CreateAlert
+import TeamTavern.Routes.Alert.CreateAlert (PlayerOrTeam(..))
+import TeamTavern.Routes.Alert.CreateAlert as CreateAlert
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
