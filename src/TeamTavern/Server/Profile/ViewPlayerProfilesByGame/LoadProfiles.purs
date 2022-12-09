@@ -18,13 +18,24 @@ import TeamTavern.Routes.Shared.Types (Timezone, Handle)
 import TeamTavern.Server.Infrastructure.Postgres (playerAdjustedWeekdayFrom, playerAdjustedWeekdayTo, playerAdjustedWeekendFrom, playerAdjustedWeekendTo, prepareJsonString, prepareString, queryMany_)
 import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
 
+upperAgeLimit :: Int
+upperAgeLimit = 200
+
 createAgeFilter :: Maybe Age -> Maybe Age -> String
 createAgeFilter Nothing Nothing = ""
-createAgeFilter (Just ageFrom) Nothing = " and player.birthday < (current_timestamp - interval '" <> show ageFrom <> " years')"
-createAgeFilter Nothing (Just ageTo) = " and player.birthday > (current_timestamp - interval '" <> show (ageTo + 1) <> " years')"
+createAgeFilter (Just ageFrom) Nothing =
+    if ageFrom < upperAgeLimit
+    then " and player.birthday < (current_timestamp - interval '" <> show ageFrom <> " years')"
+    else " and false"
+createAgeFilter Nothing (Just ageTo) =
+    if ageTo < upperAgeLimit
+    then " and player.birthday > (current_timestamp - interval '" <> show (ageTo + 1) <> " years')"
+    else " and true"
 createAgeFilter (Just ageFrom) (Just ageTo) =
-    " and player.birthday < (current_timestamp - interval '" <> show ageFrom <> " years') "
-    <> "and player.birthday > (current_timestamp - interval '" <> show (ageTo + 1) <> " years')"
+    if ageFrom < upperAgeLimit && ageTo < upperAgeLimit && ageFrom <= ageTo
+    then " and player.birthday < (current_timestamp - interval '" <> show ageFrom <> " years') "
+        <> "and player.birthday > (current_timestamp - interval '" <> show (ageTo + 1) <> " years')"
+    else " and false"
 
 createLanguagesFilter :: Array Language -> String
 createLanguagesFilter [] = ""
