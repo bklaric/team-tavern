@@ -26,7 +26,6 @@ You can edit this file as you like.
   , "halogen-css"
   , "halogen-hooks"
   , "halogen-svg-elems"
-  , "heterogeneous"
   , "http-methods"
   , "integers"
   , "js-timers"
