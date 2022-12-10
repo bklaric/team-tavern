@@ -23,7 +23,7 @@ data Url = Url PathAbsolute (Maybe (QueryPairs Key Value))
 
 derive instance genericQueryPairs ∷ Generic Url _
 
-instance name :: Show Url where show = genericShow
+instance Show Url where show = genericShow
 
 parseQueryString :: Parser String (Maybe (QueryPairs Key Value))
 parseQueryString =

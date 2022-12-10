@@ -11,11 +11,11 @@ import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
 
 newtype Token = Token String
 
-derive instance newtypeToken :: Newtype Token _
+derive instance Newtype Token _
 
-derive instance genericToken :: Generic Token _
+derive instance Generic Token _
 
-instance showToken :: Show Token where show = genericShow
+instance Show Token where show = genericShow
 
 tokenByteCount :: ByteCount
 tokenByteCount = ByteCount 20

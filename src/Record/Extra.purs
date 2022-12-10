@@ -13,10 +13,10 @@ import Type.Proxy (Proxy(..))
 class Keys (xs :: RL.RowList Type) where
   keysImpl :: Proxy xs -> List String
 
-instance nilKeys :: Keys RL.Nil where
+instance Keys RL.Nil where
   keysImpl _ = mempty
 
-instance consKeys ::
+instance
   ( IsSymbol name
   , Keys tail
   ) => Keys (RL.Cons name ty tail) where

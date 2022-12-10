@@ -16,11 +16,11 @@ import TeamTavern.Server.Player.Domain.Password (Password(..))
 
 newtype Hash = Hash String
 
-derive instance newtypeHash :: Newtype Hash _
+derive instance Newtype Hash _
 
-derive instance genericHash :: Generic Hash _
+derive instance Generic Hash _
 
-instance showHash :: Show Hash where show = genericShow
+instance Show Hash where show = genericShow
 
 generateHash :: forall errors. Password -> Async (InternalTerror_ errors) Hash
 generateHash (Password password) =

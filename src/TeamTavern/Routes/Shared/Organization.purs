@@ -27,7 +27,7 @@ toOrganizationNW :: Organization -> OrganizationNW
 toOrganizationNW Informal = InformalNW
 toOrganizationNW Organized = OrganizedNW { name: "", website: Nothing }
 
-derive instance eqOrganization :: Eq Organization
+derive instance Eq Organization
 
 fromString :: String -> Maybe Organization
 fromString "informal" = Just Informal
@@ -41,15 +41,15 @@ toString :: Organization -> String
 toString Informal = "informal"
 toString Organized = "organized"
 
-instance readForeignOrganization :: ReadForeign Organization where
+instance ReadForeign Organization where
     readImpl organization' =
         readString organization'
         >>= (fromString' >>> lmap (ForeignError >>> NonEmptyList.singleton) >>> except)
 
-instance writeForeignOrganization :: WriteForeign Organization where
+instance WriteForeign Organization where
     writeImpl organization = unsafeToForeign $ toString organization
 
-instance fromComponentOrganization :: Component Organization where
+instance Component Organization where
     fromComponent = fromString'
     toComponent = toString
 
@@ -79,7 +79,7 @@ toVariantN :: OrganizationN -> Variant OrganizationRowN
 toVariantN InformalN = inj (Proxy :: _ "informal") {}
 toVariantN (OrganizedN stuff) = inj (Proxy :: _ "organized") stuff
 
-instance readForeignOrganizationN ::
+instance
     ( RowToList OrganizationRowN rowList
     , ReadForeignVariant rowList OrganizationRowN
     ) => ReadForeign OrganizationN where
@@ -87,7 +87,7 @@ instance readForeignOrganizationN ::
         readVariantImpl (Proxy :: _ rowList) organization'
         >>= (fromVariantN' >>> lmap (ForeignError >>> NonEmptyList.singleton) >>> except)
 
-instance writeForeignOrganizationN :: WriteForeign OrganizationN where
+instance WriteForeign OrganizationN where
     writeImpl organization = writeImpl $ toVariantN organization
 
 -- Organization with name and website.
@@ -120,7 +120,7 @@ toVariantNW :: OrganizationNW -> Variant OrganizationRowNW
 toVariantNW InformalNW = inj (Proxy :: _ "informal") {}
 toVariantNW (OrganizedNW stuff) = inj (Proxy :: _ "organized") stuff
 
-instance readForeignOrganizationNW ::
+instance
     ( RowToList OrganizationRowNW rowList
     , ReadForeignVariant rowList OrganizationRowNW
     ) => ReadForeign OrganizationNW where
@@ -128,5 +128,5 @@ instance readForeignOrganizationNW ::
         readVariantImpl (Proxy :: _ rowList) organization'
         >>= (fromVariantNW' >>> lmap (ForeignError >>> NonEmptyList.singleton) >>> except)
 
-instance writeForeignOrganizationNW :: WriteForeign OrganizationNW where
+instance WriteForeign OrganizationNW where
     writeImpl organization = writeImpl $ toVariantNW organization

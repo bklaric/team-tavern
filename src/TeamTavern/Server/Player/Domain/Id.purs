@@ -11,17 +11,17 @@ import Jarilo.Shared.Component (class Component)
 
 newtype Id = Id Int
 
-derive instance newtypeId :: Newtype Id _
+derive instance Newtype Id _
 
-derive instance genericId :: Generic Id _
+derive instance Generic Id _
 
-instance showId :: Show Id where show = genericShow
+instance Show Id where show = genericShow
 
-derive newtype instance eqId :: Eq Id
+derive newtype instance Eq Id
 
-derive newtype instance ordId :: Ord Id
+derive newtype instance Ord Id
 
-derive newtype instance fromComponentId :: Component Id
+derive newtype instance Component Id
 
 fromString :: String -> Maybe Id
 fromString id = Int.fromString id <#> Id

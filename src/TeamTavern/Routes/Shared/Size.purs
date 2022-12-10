@@ -13,7 +13,7 @@ import Yoga.JSON (class ReadForeign, class WriteForeign, writeImpl)
 
 data Size = Party | Community
 
-derive instance eqSize :: Eq Size
+derive instance Eq Size
 
 fromString :: String -> Maybe Size
 fromString "party" = Just Party
@@ -27,14 +27,14 @@ toString :: Size -> String
 toString Party = "party"
 toString Community = "community"
 
-instance readForeignSize :: ReadForeign Size where
+instance ReadForeign Size where
     readImpl size' =
         readString size'
         >>= (fromString' >>> lmap (ForeignError >>> NonEmptyList.singleton) >>> except)
 
-instance writeForeignSize :: WriteForeign Size where
+instance WriteForeign Size where
     writeImpl size = writeImpl $ toString size
 
-instance fromComponentSize :: Component Size where
+instance Component Size where
     fromComponent = fromString'
     toComponent = toString

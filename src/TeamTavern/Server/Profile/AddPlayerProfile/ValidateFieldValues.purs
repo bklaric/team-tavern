@@ -34,13 +34,13 @@ type OptionKey = String
 
 data Option = Option OptionId OptionKey
 
-derive instance eqOption :: Eq Option
+derive instance Eq Option
 
-derive instance ordOption :: Ord Option
+derive instance Ord Option
 
-derive instance genericOption :: Generic Option _
+derive instance Generic Option _
 
-instance showOption :: Show Option where show = genericShow
+instance Show Option where show = genericShow
 
 type FieldId = Int
 
@@ -53,15 +53,15 @@ data FieldType
     | SingleField (Map OptionKey Option)
     | MultiField (Map OptionKey Option)
 
-derive instance genericFieldType :: Generic FieldType _
+derive instance Generic FieldType _
 
-instance showFieldType :: Show FieldType where show = genericShow
+instance Show FieldType where show = genericShow
 
 data Field = Field FieldId FieldKey FieldType
 
-derive instance genericField :: Generic Field _
+derive instance Generic Field _
 
-instance showField :: Show Field where show = genericShow
+instance Show Field where show = genericShow
 
 -- Field value types.
 

@@ -52,9 +52,9 @@ data Step
     | PlayerProfile
     | TeamProfile
 
-derive instance eqStep :: Eq Step
+derive instance Eq Step
 
-instance writeForeginStep :: WriteForeign Step where
+instance WriteForeign Step where
     writeImpl Greeting = unsafeToForeign "Greeting"
     writeImpl PlayerOrTeam = unsafeToForeign "PlayerOrTeam"
     writeImpl Player = unsafeToForeign "Player"
@@ -63,7 +63,7 @@ instance writeForeginStep :: WriteForeign Step where
     writeImpl PlayerProfile = unsafeToForeign "PlayerProfile"
     writeImpl TeamProfile = unsafeToForeign "TeamProfile"
 
-instance readForeignStep :: ReadForeign Step where
+instance ReadForeign Step where
     readImpl = readString >=> case _ of
         "Greeting" -> pure Greeting
         "PlayerOrTeam" -> pure PlayerOrTeam

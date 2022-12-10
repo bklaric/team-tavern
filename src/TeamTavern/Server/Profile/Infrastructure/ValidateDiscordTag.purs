@@ -13,7 +13,7 @@ import Wrapped.String (Invalid)
 
 newtype DiscordTag = DiscordTag String
 
-derive newtype instance showDiscordTag :: Show DiscordTag
+derive newtype instance Show DiscordTag
 
 type DiscordTagError = Variant (invalid :: Invalid)
 

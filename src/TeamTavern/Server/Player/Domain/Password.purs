@@ -14,7 +14,7 @@ import Wrapped.Validated as Wrapped
 
 newtype Password = Password String
 
-derive instance newtypePassword :: Newtype Password _
+derive instance Newtype Password _
 
 type PasswordError = Variant (tooShort :: TooShort)
 

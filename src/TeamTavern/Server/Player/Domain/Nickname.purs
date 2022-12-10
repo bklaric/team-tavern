@@ -16,11 +16,11 @@ import Wrapped.Validated as Wrapped
 
 newtype Nickname = Nickname String
 
-derive instance newtypeNickname :: Newtype Nickname _
+derive instance Newtype Nickname _
 
-derive newtype instance showNickname :: Show Nickname
+derive newtype instance Show Nickname
 
-derive newtype instance fromComponentNickname :: Component Nickname
+derive newtype instance Component Nickname
 
 type NicknameError = Variant
     ( empty :: Empty

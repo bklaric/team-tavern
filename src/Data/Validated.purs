@@ -103,53 +103,53 @@ rmap
     -> Validated invalid newValid
 rmap validFunction validated' = bimap identity validFunction validated'
 
-derive instance eqValidated :: (Eq invalid, Eq valid) =>
+derive instance (Eq invalid, Eq valid) =>
     Eq (Validated invalid valid)
 
-derive instance ordValidated :: (Ord invalid, Ord valid) =>
+derive instance (Ord invalid, Ord valid) =>
     Ord (Validated invalid valid)
 
-instance showValidated :: (Show invalid, Show valid) =>
+instance (Show invalid, Show valid) =>
     Show (Validated invalid valid) where
     show (Valid valid') = "(valid " <> show valid' <> ")"
     show (Invalid invalid') = "(invalid " <> show invalid' <> ")"
 
-instance functorValidated :: Semigroup invalid =>
+instance Semigroup invalid =>
     Functor (Validated invalid) where
     map = rmap
 
-instance applyValidated :: Semigroup invalid => Apply (Validated invalid) where
+instance Semigroup invalid => Apply (Validated invalid) where
     apply (Invalid leftInvalid) (Invalid rightInvalid ) =
         Invalid $ leftInvalid <> rightInvalid
     apply (Invalid invalid') _ = Invalid invalid'
     apply _ (Invalid invalid') = Invalid invalid'
     apply (Valid validFunction) (Valid valid') = Valid $ validFunction valid'
 
-instance applicativeValidated :: Semigroup invalid =>
+instance Semigroup invalid =>
     Applicative (Validated invalid) where
     pure = Valid
 
-instance bindValidated :: Semigroup invalid => Bind (Validated invalid) where
+instance Semigroup invalid => Bind (Validated invalid) where
     bind validated' functionValidated =
         case validated' of
         Valid valid' -> functionValidated valid'
         Invalid invalid' -> Invalid invalid'
 
-instance monadValidated :: Semigroup invalid => Monad (Validated invalid)
+instance Semigroup invalid => Monad (Validated invalid)
 
-instance semigroupValidated :: (Semigroup invalid, Semigroup valid) =>
+instance (Semigroup invalid, Semigroup valid) =>
     Semigroup (Validated invalid valid) where
     append = lift2 append
 
-instance monoidValidated :: (Semigroup invalid, Monoid valid) =>
+instance (Semigroup invalid, Monoid valid) =>
     Monoid (Validated invalid valid) where
     mempty = pure mempty
 
-instance foldableValidated :: Semigroup invalid => Foldable (Validated invalid) where
+instance Semigroup invalid => Foldable (Validated invalid) where
     foldMap = validated (const mempty)
     foldr folder default = validated (const default) (flip folder default)
     foldl folder default = validated (const default) (folder default)
 
-instance traversableValidated :: Semigroup invalid => Traversable (Validated invalid) where
+instance Semigroup invalid => Traversable (Validated invalid) where
     sequence = validated (pure <<< Invalid) (map Valid)
     traverse function = validated (pure <<< Invalid) (map Valid <<< function)

@@ -136,38 +136,38 @@ safeForeach :: forall right traversable. Traversable traversable =>
     traversable right -> (forall left. right -> Async left Unit) -> (forall left. Async left Unit)
 safeForeach traversable function = void $ traverse function traversable
 
-derive instance newtypeAsync :: Newtype (Async left right) _
+derive instance Newtype (Async left right) _
 
-derive newtype instance functorAsync :: Functor (Async left)
+derive newtype instance Functor (Async left)
 
-instance bifunctorAsync :: Bifunctor Async where
+instance Bifunctor Async where
     bimap leftFunction rightFunction (Async exceptT) =
         exceptT # withExceptT leftFunction # map rightFunction # Async
 
-instance applyAsync :: Apply (Async left) where
+instance Apply (Async left) where
     apply = ap
 
-instance applicativeAsync :: Applicative (Async left) where
+instance Applicative (Async left) where
     pure = right
 
-instance bindAsync :: Bind (Async left) where
+instance Bind (Async left) where
     bind (Async exceptT) functionA = Async do
         right' <- exceptT
         functionA right' # unwrap
 
-instance monadAsync :: Monad (Async left)
+instance Monad (Async left)
 
-instance monadEffectAsync :: MonadEffect (Async left) where
+instance MonadEffect (Async left) where
     liftEffect = fromEffect
 
 newtype ParAsync left right = ParAsync (Async left right)
 
-derive instance newtypeParAsync :: Newtype (ParAsync left right) _
+derive instance Newtype (ParAsync left right) _
 
-instance functorParAsync :: Functor (ParAsync left) where
+instance Functor (ParAsync left) where
     map f = parallel <<< map f <<< sequential
 
-instance applyParAsync :: Apply (ParAsync left) where
+instance Apply (ParAsync left) where
     apply (ParAsync leftAsync) (ParAsync rightAsync) =
         ParAsync $ Async $ ExceptT $ ContT \callback -> do
             leftResultRef <- new Nothing
@@ -185,10 +185,10 @@ instance applyParAsync :: Apply (ParAsync left) where
                     Nothing -> (write (Just rightResult) rightResultRef)
                     Just leftResult -> callback $ leftResult <*> rightResult
 
-instance applicativeParAsync :: Applicative (ParAsync left) where
+instance Applicative (ParAsync left) where
     pure = parallel <<< pure
 
-instance altParAsync :: Alt (ParAsync left) where
+instance Alt (ParAsync left) where
     alt (ParAsync leftAsync) (ParAsync rightAsync) =
         ParAsync $ Async $ ExceptT $ ContT \callback -> do
             doneRef <- new false
@@ -209,11 +209,11 @@ instance altParAsync :: Alt (ParAsync left) where
                         write true doneRef
                         callback rightResult
 
-instance plusParAsync :: Plus (ParAsync left) where
+instance Plus (ParAsync left) where
     empty = ParAsync $ Async $ ExceptT $ ContT \_ -> pure unit
 
-instance alternativeParAsync :: Alternative (ParAsync left)
+instance Alternative (ParAsync left)
 
-instance monadParParAsync :: Parallel (ParAsync left) (Async left) where
+instance Parallel (ParAsync left) (Async left) where
     parallel = ParAsync
     sequential (ParAsync async) = async

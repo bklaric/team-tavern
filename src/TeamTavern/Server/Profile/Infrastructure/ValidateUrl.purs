@@ -35,7 +35,7 @@ type Domain = String
 
 newtype Url = Url String
 
-derive newtype instance showUrl :: Show Url
+derive newtype instance Show Url
 
 toString :: Url -> String
 toString (Url url) = url

@@ -18,24 +18,24 @@ import Type.Proxy (Proxy)
 
 newtype ValidatedT invalid monad valid = ValidatedT (monad (Validated invalid valid))
 
-derive instance newtypeValidatedT :: Newtype (ValidatedT left monad right) _
+derive instance Newtype (ValidatedT left monad right) _
 
-derive instance functorValidatedT :: (Functor monad, Semigroup invalid) => Functor (ValidatedT invalid monad)
+derive instance (Functor monad, Semigroup invalid) => Functor (ValidatedT invalid monad)
 
-instance applyValidatedT :: (Semigroup invalid, Monad monad) => Apply (ValidatedT invalid monad) where
+instance (Semigroup invalid, Monad monad) => Apply (ValidatedT invalid monad) where
     apply (ValidatedT funMonad) (ValidatedT valueMonad) = ValidatedT do
         fun <- funMonad
         value <- valueMonad
         pure $ fun <*> value
 
-instance applicativeValidatedT :: (Semigroup invalid, Monad monad) => Applicative (ValidatedT invalid monad) where
+instance (Semigroup invalid, Monad monad) => Applicative (ValidatedT invalid monad) where
     pure = ValidatedT <<< pure <<< Validated.valid
 
-instance bindValidatedT :: (Semigroup invalid, Monad monad) => Bind (ValidatedT invalid monad) where
+instance (Semigroup invalid, Monad monad) => Bind (ValidatedT invalid monad) where
     bind (ValidatedT valueMonad) funV =
         ValidatedT (valueMonad >>= Validated.validated (pure <<< Validated.invalid) (\value -> funV value # unwrap))
 
-instance monadTransValidatedT :: Semigroup invalid => MonadTrans (ValidatedT invalid) where
+instance Semigroup invalid => MonadTrans (ValidatedT invalid) where
     lift value = ValidatedT $ Validated.valid <$> value
 
 newtype AsyncV invalid valid = AsyncV (ValidatedT invalid (ContT Unit Effect) valid)
@@ -114,25 +114,25 @@ labelMap
     -> AsyncV (NonEmptyList (Variant lefts)) right
 labelMap label' mapper = lmap (singleton <<< inj label' <<< mapper)
 
-derive instance newtypeAsyncV :: Newtype (AsyncV left right) _
+derive instance Newtype (AsyncV left right) _
 
-derive newtype instance functorAsyncV :: Semigroup left => Functor (AsyncV left)
+derive newtype instance Semigroup left => Functor (AsyncV left)
 
 -- Check out Apply instance for ContT to understand how this works, because I
 -- sure as hell can't explain it.
-instance applyAsyncV :: Semigroup invalid => Apply (AsyncV invalid) where
+instance Semigroup invalid => Apply (AsyncV invalid) where
     apply (AsyncV (ValidatedT (ContT funCont))) (AsyncV (ValidatedT (ContT valueCont))) =
         AsyncV $ ValidatedT $ ContT \callback ->
             funCont \funCallback ->
                 valueCont \valueCallback ->
                     callback (funCallback <*> valueCallback)
 
-instance applicativeAsyncV :: Semigroup invalid => Applicative (AsyncV invalid) where
+instance Semigroup invalid => Applicative (AsyncV invalid) where
     pure = valid
 
-instance bindAsyncV :: Semigroup invalid => Bind (AsyncV invalid) where
+instance Semigroup invalid => Bind (AsyncV invalid) where
     bind (AsyncV valueTrans) funTrans = AsyncV do
         value <- valueTrans
         funTrans value # unwrap
 
-instance monadAsyncV :: Semigroup invalid => Monad (AsyncV invalid)
+instance Semigroup invalid => Monad (AsyncV invalid)

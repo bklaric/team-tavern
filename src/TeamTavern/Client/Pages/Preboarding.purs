@@ -58,11 +58,11 @@ data Step
     | TeamProfile
     | Register
 
-derive instance eqStep :: Eq Step
+derive instance Eq Step
 
-derive instance ordStep :: Ord Step
+derive instance Ord Step
 
-instance writeForeginStep :: WriteForeign Step where
+instance WriteForeign Step where
     writeImpl Greeting = unsafeToForeign "Greeting"
     writeImpl PlayerOrTeam = unsafeToForeign "PlayerOrTeam"
     writeImpl Player = unsafeToForeign "Player"
@@ -72,7 +72,7 @@ instance writeForeginStep :: WriteForeign Step where
     writeImpl TeamProfile = unsafeToForeign "TeamProfile"
     writeImpl Register = unsafeToForeign "Register"
 
-instance readForeignStep :: ReadForeign Step where
+instance ReadForeign Step where
     readImpl = readString >=> case _ of
         "Greeting" -> pure Greeting
         "PlayerOrTeam" -> pure PlayerOrTeam
@@ -93,11 +93,11 @@ getPlayerOrTeam (Preselected' playerOrTeam) = Just playerOrTeam
 getPlayerOrTeam (Selected' (Just playerOrTeam)) = Just playerOrTeam
 getPlayerOrTeam _ = Nothing
 
-instance writeForeginPlayerOrTeam :: WriteForeign PlayerOrTeam where
+instance WriteForeign PlayerOrTeam where
     writeImpl (Preselected' playerOrTeam) = writeImpl { preselected: playerOrTeam }
     writeImpl (Selected' input) = writeImpl { selected: input }
 
-instance readForeignPlayerOrTeam :: ReadForeign PlayerOrTeam where
+instance ReadForeign PlayerOrTeam where
     readImpl foreign' =
         ( (readImpl foreign' :: _ { preselected :: PlayerOrTeamInput.PlayerOrTeam })
             <#> _.preselected <#> Preselected'
@@ -114,11 +114,11 @@ getGame (Preselected game) = Just game
 getGame (Selected (Just game)) = Just game
 getGame _ = Nothing
 
-instance writeForeginGame :: WriteForeign Game where
+instance WriteForeign Game where
     writeImpl (Preselected game) = writeImpl { preselected: game }
     writeImpl (Selected input) = writeImpl { selected: input }
 
-instance readForeignGame :: ReadForeign Game where
+instance ReadForeign Game where
     readImpl foreign' =
         ( (readImpl foreign' :: _ { preselected :: ViewGame.OkContent })
             <#> _.preselected <#> Preselected

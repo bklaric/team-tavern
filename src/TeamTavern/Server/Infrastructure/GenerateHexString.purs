@@ -15,7 +15,7 @@ import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
 
 newtype ByteCount = ByteCount Int
 
-derive instance newtypeByteCount :: Newtype ByteCount _
+derive instance Newtype ByteCount _
 
 generateHexString :: forall errors. ByteCount -> Async (InternalTerror_ errors) String
 generateHexString (ByteCount byteCount) = do

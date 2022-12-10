@@ -32,30 +32,25 @@ import Data.Unfoldable (class Unfoldable)
 
 newtype MultiMap key value = MultiMap (Map key (NonEmptyList value))
 
-derive newtype instance eqMultiMap
-    :: (Eq key, Eq value) => Eq (MultiMap key value)
+derive newtype instance (Eq key, Eq value) => Eq (MultiMap key value)
 
 instance eq1MultiMap :: (Eq key) => Eq1 (MultiMap key) where
     eq1 = eq
 
-derive newtype instance ordMultiMap
-    :: (Ord key, Ord value) => Ord (MultiMap key value)
+derive newtype instance (Ord key, Ord value) => Ord (MultiMap key value)
 
 instance ord1MultiMap :: (Ord key) => Ord1 (MultiMap key) where
     compare1 = compare
 
-derive newtype instance semigroupMultiMap
-    :: (Ord key) => Semigroup (MultiMap key value)
+derive newtype instance (Ord key) => Semigroup (MultiMap key value)
 
-derive newtype instance monoidMultiMap
-    :: (Ord key) => Monoid (MultiMap key value)
+derive newtype instance (Ord key) => Monoid (MultiMap key value)
 
-derive instance functorMultiMap :: Functor (MultiMap key)
+derive instance Functor (MultiMap key)
 
-derive newtype instance showMultiMap
-    :: (Show key, Show value) => Show (MultiMap key value)
+derive newtype instance (Show key, Show value) => Show (MultiMap key value)
 
-instance foldableMultiMap :: Foldable (MultiMap key) where
+instance Foldable (MultiMap key) where
     foldl   function state map = foldl   function state $ values' map
     foldr   function state map = foldr   function state $ values' map
     foldMap function       map = foldMap function       $ values' map

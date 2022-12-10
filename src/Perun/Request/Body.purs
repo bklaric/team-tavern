@@ -18,9 +18,9 @@ import Unsafe.Coerce (unsafeCoerce)
 
 newtype Body = Body Request
 
-derive newtype instance eventEmitterBody :: EventEmitter Body
+derive newtype instance EventEmitter Body
 
-derive newtype instance readableBody :: Readable Body
+derive newtype instance Readable Body
 
 fromRequest :: Request -> Body
 fromRequest = Body

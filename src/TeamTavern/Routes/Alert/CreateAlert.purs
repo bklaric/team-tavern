@@ -21,11 +21,11 @@ toString :: PlayerOrTeam -> String
 toString Player = "player"
 toString Team = "team"
 
-instance writeForeignPlayerOrTeam :: WriteForeign PlayerOrTeam where
+instance WriteForeign PlayerOrTeam where
     writeImpl Player = writeImpl "player"
     writeImpl Team = writeImpl "team"
 
-instance readForeignPlayerOrTeam :: ReadForeign PlayerOrTeam where
+instance ReadForeign PlayerOrTeam where
     readImpl = readImpl >=> case _ of
         "player" -> pure Player
         "team" -> pure Team
