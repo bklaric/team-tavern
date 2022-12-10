@@ -44,23 +44,23 @@ parseCookies unparsedCookies =
     <#> (trim >>> toTuple)
     # fromFoldable
 
-getCookies :: forall effect. MonadEffect effect => effect (Object String)
+getCookies :: ∀ effect. MonadEffect effect => effect (Object String)
 getCookies = cookies <#> parseCookies # liftEffect
 
-getCookie :: forall effect. MonadEffect effect => String -> effect (Maybe String)
+getCookie :: ∀ effect. MonadEffect effect => String -> effect (Maybe String)
 getCookie key = getCookies <#> lookup key
 
-getPlayerId :: forall effect. MonadEffect effect => effect (Maybe Int)
+getPlayerId :: ∀ effect. MonadEffect effect => effect (Maybe Int)
 getPlayerId = getCookie idCookieName <#> bindFlipped fromString
 
-getPlayerNickname :: forall effect. MonadEffect effect => effect (Maybe String)
+getPlayerNickname :: ∀ effect. MonadEffect effect => effect (Maybe String)
 getPlayerNickname = getCookie nicknameCookieName
 
-getPlayerInfo :: forall effect. MonadEffect effect => effect (Maybe PlayerInfo)
+getPlayerInfo :: ∀ effect. MonadEffect effect => effect (Maybe PlayerInfo)
 getPlayerInfo = do
     id <- getPlayerId
     nickname <- getPlayerNickname
     pure $ { id: _, nickname: _ } <$> id <*> nickname
 
-hasPlayerIdCookie :: forall effect. MonadEffect effect => effect Boolean
+hasPlayerIdCookie :: ∀ effect. MonadEffect effect => effect Boolean
 hasPlayerIdCookie = getPlayerId <#> isJust

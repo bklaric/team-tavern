@@ -103,7 +103,7 @@ type ChildSlots = PlatformIdSlots
     , teamProfileOptions :: StringSlot
     )
 
-profileSection :: forall action left.
+profileSection :: ∀ action left.
     String -> TeamProfile -> HH.ComponentHTML action ChildSlots (Async left)
 profileSection handle profile = let
     teamDetails' = teamDetails profile
@@ -151,7 +151,7 @@ profileSection handle profile = let
         ]
     ]
 
-render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
+render :: ∀ left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { handle, profiles, profileCount, playerInfo, page } =
     HH.div_ $ [
     HH.div [ HP.id "profiles-card", HS.class_ "card" ] $
@@ -183,14 +183,14 @@ render { handle, profiles, profileCount, playerInfo, page } =
     else ( profiles <#> profileSection handle ) <> [ pagination page profileCount ChangePage ]
     ]
 
-handleAction :: forall left. Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
+handleAction :: ∀ left. Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
 handleAction (Receive input) = H.put input
 handleAction (ChangePage page) = H.raise $ PageChanged page
 handleAction (OpenPreboarding mouseEvent) = do
     preventMouseDefault mouseEvent
     H.raise PreboardingClicked
 
-component :: forall query left. H.Component query Input Output (Async left)
+component :: ∀ query left. H.Component query Input Output (Async left)
 component = H.mkComponent
     { initialState: identity
     , render
@@ -201,7 +201,7 @@ component = H.mkComponent
     }
 
 teamProfiles
-    :: forall children action left
+    :: ∀ children action left
     .  Input
     -> (Output -> action)
     -> HH.ComponentHTML action (teamProfiles :: Slot | children) (Async left)

@@ -22,7 +22,7 @@ type ChildSlots children =
     , twitterAnchor :: NavigationAnchor.Slot Unit
     | children )
 
-footer :: forall monad action children. MonadEffect monad =>
+footer :: ∀ monad action children. MonadEffect monad =>
     H.ComponentHTML action (ChildSlots children) monad
 footer = HH.div [ HP.class_ $ HH.ClassName "footer" ]
     [ HH.div [ HP.class_ $ HH.ClassName "footer-content" ]

@@ -5,7 +5,7 @@ import Prelude
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Landing (landingSection, landingSectionConnect, landingSectionDescription, landingSectionHeading, landingSectionText)
 
-connect :: forall slots action. HH.HTML slots action
+connect :: ∀ slots action. HH.HTML slots action
 connect =
     landingSection
     [ landingSectionConnect
@@ -15,7 +15,7 @@ connect =
         ]
     ]
 
-connect' :: forall slots action. String -> HH.HTML slots action
+connect' :: ∀ slots action. String -> HH.HTML slots action
 connect' title =
     landingSection
     [ landingSectionConnect

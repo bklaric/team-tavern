@@ -25,16 +25,16 @@ import Data.Traversable (class Traversable)
 
 data Validated invalid valid = Invalid invalid | Valid valid
 
-valid :: forall invalid valid. Semigroup invalid =>
+valid :: ∀ invalid valid. Semigroup invalid =>
     valid -> Validated invalid valid
 valid valid' = Valid valid'
 
-invalid :: forall invalid valid. Semigroup invalid =>
+invalid :: ∀ invalid valid. Semigroup invalid =>
     invalid -> Validated invalid valid
 invalid invalid' = Invalid invalid'
 
 validated
-    :: forall invalid valid result
+    :: ∀ invalid valid result
     .  (invalid -> result)
     -> (valid -> result)
     -> Validated invalid valid
@@ -42,32 +42,32 @@ validated
 validated invalidFunction _ (Invalid invalid') = invalidFunction invalid'
 validated _ validFunction (Valid valid') = validFunction valid'
 
-isValid :: forall invalid valid. Validated invalid valid -> Boolean
+isValid :: ∀ invalid valid. Validated invalid valid -> Boolean
 isValid (Valid _) = true
 isValid _ = false
 
-isInvalid :: forall invalid valid. Validated invalid valid -> Boolean
+isInvalid :: ∀ invalid valid. Validated invalid valid -> Boolean
 isInvalid = not <<< isValid
 
-toEither :: forall invalid valid.
+toEither :: ∀ invalid valid.
     Validated invalid valid -> Either invalid valid
 toEither (Valid valid') = Right valid'
 toEither (Invalid invalid') = Left invalid'
 
-fromEither :: forall invalid valid. Semigroup invalid =>
+fromEither :: ∀ invalid valid. Semigroup invalid =>
     Either invalid valid -> Validated invalid valid
 fromEither (Right valid') = Valid valid'
 fromEither (Left invalid') = Invalid invalid'
 
-hush :: forall left right. Validated left right -> Maybe right
+hush :: ∀ left right. Validated left right -> Maybe right
 hush = validated (const Nothing) Just
 
-note :: forall invalid valid. Semigroup invalid =>
+note :: ∀ invalid valid. Semigroup invalid =>
     invalid -> Maybe valid -> Validated invalid valid
 note invalid' = maybe (invalid invalid') valid
 
 note'
-    :: forall container invalid valid
+    :: ∀ container invalid valid
     .  Semigroup (container invalid)
     => Applicative container
     => invalid
@@ -76,7 +76,7 @@ note'
 note' invalid' = maybe (invalid $ pure invalid') valid
 
 bimap
-    :: forall oldValid oldInvalid newValid newInvalid
+    :: ∀ oldValid oldInvalid newValid newInvalid
     .  Semigroup newInvalid
     => (oldInvalid -> newInvalid)
     -> (oldValid -> newValid)
@@ -88,7 +88,7 @@ bimap invalidFunction validFunction validated' =
     Valid valid' -> Valid $ validFunction valid'
 
 lmap
-    :: forall newInvalid valid oldInvalid
+    :: ∀ newInvalid valid oldInvalid
     .  Semigroup newInvalid
     => (oldInvalid -> newInvalid)
     -> Validated oldInvalid valid
@@ -96,60 +96,60 @@ lmap
 lmap invalidFunction validated' = bimap invalidFunction identity validated'
 
 rmap
-    :: forall invalid newValid oldValid
+    :: ∀ invalid newValid oldValid
     .  Semigroup invalid
     => (oldValid -> newValid)
     -> Validated invalid oldValid
     -> Validated invalid newValid
 rmap validFunction validated' = bimap identity validFunction validated'
 
-derive instance eqValidated :: (Eq invalid, Eq valid) =>
+derive instance (Eq invalid, Eq valid) =>
     Eq (Validated invalid valid)
 
-derive instance ordValidated :: (Ord invalid, Ord valid) =>
+derive instance (Ord invalid, Ord valid) =>
     Ord (Validated invalid valid)
 
-instance showValidated :: (Show invalid, Show valid) =>
+instance (Show invalid, Show valid) =>
     Show (Validated invalid valid) where
     show (Valid valid') = "(valid " <> show valid' <> ")"
     show (Invalid invalid') = "(invalid " <> show invalid' <> ")"
 
-instance functorValidated :: Semigroup invalid =>
+instance Semigroup invalid =>
     Functor (Validated invalid) where
     map = rmap
 
-instance applyValidated :: Semigroup invalid => Apply (Validated invalid) where
+instance Semigroup invalid => Apply (Validated invalid) where
     apply (Invalid leftInvalid) (Invalid rightInvalid ) =
         Invalid $ leftInvalid <> rightInvalid
     apply (Invalid invalid') _ = Invalid invalid'
     apply _ (Invalid invalid') = Invalid invalid'
     apply (Valid validFunction) (Valid valid') = Valid $ validFunction valid'
 
-instance applicativeValidated :: Semigroup invalid =>
+instance Semigroup invalid =>
     Applicative (Validated invalid) where
     pure = Valid
 
-instance bindValidated :: Semigroup invalid => Bind (Validated invalid) where
+instance Semigroup invalid => Bind (Validated invalid) where
     bind validated' functionValidated =
         case validated' of
         Valid valid' -> functionValidated valid'
         Invalid invalid' -> Invalid invalid'
 
-instance monadValidated :: Semigroup invalid => Monad (Validated invalid)
+instance Semigroup invalid => Monad (Validated invalid)
 
-instance semigroupValidated :: (Semigroup invalid, Semigroup valid) =>
+instance (Semigroup invalid, Semigroup valid) =>
     Semigroup (Validated invalid valid) where
     append = lift2 append
 
-instance monoidValidated :: (Semigroup invalid, Monoid valid) =>
+instance (Semigroup invalid, Monoid valid) =>
     Monoid (Validated invalid valid) where
     mempty = pure mempty
 
-instance foldableValidated :: Semigroup invalid => Foldable (Validated invalid) where
+instance Semigroup invalid => Foldable (Validated invalid) where
     foldMap = validated (const mempty)
     foldr folder default = validated (const default) (flip folder default)
     foldl folder default = validated (const default) (folder default)
 
-instance traversableValidated :: Semigroup invalid => Traversable (Validated invalid) where
+instance Semigroup invalid => Traversable (Validated invalid) where
     sequence = validated (pure <<< Invalid) (map Valid)
     traverse function = validated (pure <<< Invalid) (map Valid <<< function)

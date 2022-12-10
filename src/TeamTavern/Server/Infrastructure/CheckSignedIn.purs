@@ -17,12 +17,12 @@ queryString = Query """
     from session
     join player on player.id = session.player_id
     where player.id = $1
-        and player.nickname = $2
+        and lower(player.nickname) = lower($2)
         and session.token = $3
         and revoked = false
     """
 
-checkSignedIn :: forall querier errors. Querier querier =>
+checkSignedIn :: ∀ querier errors. Querier querier =>
     querier -> Cookies -> Async errors (Maybe CookieInfo)
 checkSignedIn querier cookies =
     case lookupCookieInfo cookies of

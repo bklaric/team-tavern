@@ -15,7 +15,7 @@ import TeamTavern.Client.Pages.Team.Status (Status(..))
 import TeamTavern.Routes.Shared.TeamContacts (TeamContactsOpen)
 
 contacts
-    :: forall fields action slots left
+    :: ∀ fields action slots left
     .  TeamContactsOpen (handle :: String | fields)
     -> Status
     -> action

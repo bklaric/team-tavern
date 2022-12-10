@@ -11,7 +11,7 @@ import Sendgrid (sendAsync)
 import TeamTavern.Routes.Shared.Organization (Organization)
 import TeamTavern.Routes.Shared.Platform (Platform)
 import TeamTavern.Routes.Shared.Size (Size)
-import TeamTavern.Server.Infrastructure.Log (logInternalError)
+import TeamTavern.Server.Infrastructure.Log (logError)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstMaybe, queryMany)
 import TeamTavern.Server.Profile.ViewPlayerProfilesByGame.LoadProfiles (createFieldsFilterString, createPlayerFilterString)
 
@@ -135,15 +135,15 @@ checkAlertQueryString profileId alert = Query $ """
         ) as profile
     """ <> createFieldsFilterString alert.fields
 
-checkPlayerAlerts :: forall querier left. Querier querier => Int -> querier -> Async left Unit
+checkPlayerAlerts :: ∀ querier left. Querier querier => Int -> querier -> Async left Unit
 checkPlayerAlerts profileId querier =
     fromEffect $ void $ setTimeout 0 $ runSafeAsync pure (
-    alwaysRightWithEffect (logInternalError "Error checking player alerts") pure do
+    alwaysRightWithEffect (logError "Error checking player alerts") pure do
 
     -- Load all player alerts for the game.
     (alerts :: Array Alert) <- queryMany querier loadAlertsQueryString (profileId : [])
 
-    safeForeach alerts \alert -> alwaysRightWithEffect (logInternalError "Error sending player alerts") pure do
+    safeForeach alerts \alert -> alwaysRightWithEffect (logError "Error sending player alerts") pure do
         -- Check if alert matches the profile.
         player <- queryFirstMaybe querier
             (checkAlertQueryString profileId alert) [] :: _ _ (Maybe { nickname :: String })

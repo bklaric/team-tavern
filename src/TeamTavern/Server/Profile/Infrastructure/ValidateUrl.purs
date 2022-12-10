@@ -3,19 +3,20 @@ module TeamTavern.Server.Profile.Infrastructure.ValidateUrl (Url, toString, UrlE
 import Prelude
 
 import Data.Array (intercalate, (!!))
+import Data.Array.NonEmpty (NonEmptyArray)
+import Data.Array.NonEmpty as Nea
 import Data.Bifunctor (lmap)
 import Data.Either (Either(..))
-import Data.List.NonEmpty as NonEmptyList
 import Data.List.Types (NonEmptyList)
 import Data.Maybe (Maybe(..), maybe)
 import Data.String (toLower, trim)
 import Data.String as String
-import Data.String.NonEmpty as NES
+import Data.String.NonEmpty as Nes
 import Data.String.Utils (endsWith, startsWith)
 import Data.Validated (Validated)
 import Data.Validated as Validated
 import Data.Variant (Variant, inj)
-import Parsing (Parser)
+import Parsing (ParseError, Parser)
 import Parsing (runParser) as Parser
 import Parsing.Combinators (notFollowedBy, optionMaybe)
 import Parsing.String (anyChar, string)
@@ -28,18 +29,18 @@ import URI.Path as Path
 import URI.Path.Segment (segmentToString)
 import URI.Path.Segment as Segment
 import URI.Scheme as Scheme
-import Wrapped.String (Invalid, TooLong)
+import Wrapped.String (TooLong)
 
 type Domain = String
 
 newtype Url = Url String
 
-derive newtype instance showUrl :: Show Url
+derive newtype instance Show Url
 
 toString :: Url -> String
 toString (Url url) = url
 
-type UrlError = Variant (invalid :: Invalid, tooLong :: TooLong)
+type UrlError = Variant (invalid :: { original :: String, error :: ParseError }, tooLong :: TooLong)
 
 type UrlErrors = NonEmptyList UrlError
 
@@ -83,7 +84,7 @@ parsePath = flip wrapParser Path.parser
         _ -> Left $ URIPartParseError $ "Invalid path: " <> Path.print path
 
 parsePath_ :: Parser String (Maybe Path)
-parsePath_ = optionMaybe parsePath
+parsePath_ = optionMaybe Path.parser
 
 parser :: Domain -> Parser String ParsedUrl
 parser domain = do
@@ -91,7 +92,6 @@ parser domain = do
   _ <- string "//"
   host <- parseHost domain
   path <- parsePath
-  notFollowedBy anyChar
   pure { scheme, host, path: Just path }
 
 parser_ :: Parser String ParsedUrl
@@ -100,33 +100,32 @@ parser_ = do
     _ <- string "//"
     host <- parseHost_
     path <- parsePath_
-    notFollowedBy anyChar
     pure { scheme, host, path }
 
-validateUrl :: Domain -> String -> Either (NonEmptyList UrlError) Url
+validateUrl :: Domain -> String -> Either (NonEmptyArray UrlError) Url
 validateUrl domain url =
     case Parser.runParser (url # trim # prependScheme) (parser domain)
-        <#> (\{ scheme, host, path } -> (NES.toString $ Scheme.toString scheme) <> "://" <> (NES.toString $ Host.toString host) <> (maybe "" (\(Path segments) -> "/" <> intercalate "/" (segments <#> segmentToString) ) path))
-        # lmap (const $ NonEmptyList.singleton $ inj (Proxy :: _ "invalid") { original: url }) of
+        <#> (\{ scheme, host, path } -> (Nes.toString $ Scheme.toString scheme) <> "://" <> (Nes.toString $ Host.toString host) <> (maybe "" (\(Path segments) -> "/" <> intercalate "/" (segments <#> segmentToString) ) path))
+        # lmap (\error -> Nea.singleton $ inj (Proxy :: _ "invalid") { original: url, error }) of
     Left errors -> Left errors
     Right url' ->
         if String.length url' <= 200
         then Right $ Url url'
-        else Left $ NonEmptyList.singleton $ inj (Proxy :: _ "tooLong") { actualLength: String.length url, maxLength: 200 }
+        else Left $ Nea.singleton $ inj (Proxy :: _ "tooLong") { actualLength: String.length url, maxLength: 200 }
 
-validateUrlV :: String -> String -> Validated (NonEmptyList UrlError) Url
+validateUrlV :: String -> String -> Validated (NonEmptyArray UrlError) Url
 validateUrlV domain url = validateUrl domain url # Validated.fromEither
 
-validateUrl_ :: String -> Either (NonEmptyList UrlError) Url
+validateUrl_ :: String -> Either (NonEmptyArray UrlError) Url
 validateUrl_ url =
     case Parser.runParser (url # trim # prependScheme) (parser_)
-        <#> (\{ scheme, host, path } -> (NES.toString $ Scheme.toString scheme) <> "://" <> (NES.toString $ Host.toString host) <> (maybe "" (\(Path segments) -> "/" <> intercalate "/" (segments <#> segmentToString) ) path))
-        # lmap (const $ NonEmptyList.singleton $ inj (Proxy :: _ "invalid") { original: url }) of
+        <#> (\{ scheme, host, path } -> (Nes.toString $ Scheme.toString scheme) <> "://" <> (Nes.toString $ Host.toString host) <> (maybe "" (\(Path segments) -> "/" <> intercalate "/" (segments <#> segmentToString) ) path))
+        # lmap (\error -> Nea.singleton $ inj (Proxy :: _ "invalid") { original: url, error }) of
     Left errors -> Left errors
     Right url' ->
         if String.length url' <= 200
         then Right $ Url url'
-        else Left $ NonEmptyList.singleton $ inj (Proxy :: _ "tooLong") { actualLength: String.length url, maxLength: 200 }
+        else Left $ Nea.singleton $ inj (Proxy :: _ "tooLong") { actualLength: String.length url, maxLength: 200 }
 
-validateUrlV_ :: String -> Validated (NonEmptyList UrlError) Url
+validateUrlV_ :: String -> Validated (NonEmptyArray UrlError) Url
 validateUrlV_ url = validateUrl_ url # Validated.fromEither

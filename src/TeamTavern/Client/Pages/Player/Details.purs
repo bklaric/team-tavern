@@ -15,10 +15,10 @@ import TeamTavern.Client.Components.Card (card, cardHeader, cardHeading, cardSec
 import TeamTavern.Client.Components.Missing (missing)
 import TeamTavern.Client.Components.Player.PlayerDetails (playerDetails)
 import TeamTavern.Client.Pages.Player.Status (Status(..))
-import TeamTavern.Routes.ViewPlayer as ViewPlayer
+import TeamTavern.Routes.Player.ViewPlayer as ViewPlayer
 
 details
-    :: forall action children left
+    :: ∀ action children left
     .  ViewPlayer.OkContent
     -> Status
     -> action

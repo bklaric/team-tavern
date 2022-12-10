@@ -6,7 +6,7 @@ import Async (Async)
 import Async as Async
 import Postgres.Client (Client)
 import Postgres.Query (Query(..), (:|))
-import TeamTavern.Server.Infrastructure.Error (InternalError)
+import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstInternal, queryNone)
 import TeamTavern.Server.Profile.AddTeamProfile.ValidateFieldValues (FieldValue(..), OptionId)
 
@@ -23,8 +23,8 @@ insertFieldValueOptionString = Query """
     values ($1, $2);
     """
 
-insertFieldValueOption :: forall errors.
-    Client -> FieldValueId -> OptionId -> Async (InternalError errors) Unit
+insertFieldValueOption :: ∀ errors.
+    Client -> FieldValueId -> OptionId -> Async (InternalTerror_ errors) Unit
 insertFieldValueOption client fieldValueId optionId =
     queryNone client insertFieldValueOptionString (fieldValueId :| optionId)
 
@@ -35,8 +35,8 @@ insertFieldValueString = Query """
     returning team_profile_field_value.id as "fieldValueId";
     """
 
-insertFieldValue :: forall errors.
-    Client -> ProfileId -> FieldValue -> Async (InternalError errors) Unit
+insertFieldValue :: ∀ errors.
+    Client -> ProfileId -> FieldValue -> Async (InternalTerror_ errors) Unit
 insertFieldValue client profileId (FieldValue fieldId optionIds) = do
     -- Insert field value row.
     ({ fieldValueId } :: { fieldValueId :: Int }) <-
@@ -46,10 +46,10 @@ insertFieldValue client profileId (FieldValue fieldId optionIds) = do
     Async.foreach optionIds $ insertFieldValueOption client fieldValueId
 
 addFieldValues
-    :: forall errors
+    :: ∀ errors
     .  Client
     -> ProfileId
     -> Array FieldValue
-    -> Async (InternalError errors) Unit
+    -> Async (InternalTerror_ errors) Unit
 addFieldValues client profileId fieldValues =
     Async.foreach fieldValues $ insertFieldValue client profileId

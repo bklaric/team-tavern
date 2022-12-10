@@ -10,18 +10,18 @@ import Data.Show.Generic (genericShow)
 import Data.List.NonEmpty as NonEmptyList
 import Data.Maybe (Maybe(..))
 import Foreign (ForeignError(..), readString)
-import Jarilo.FromComponent (class FromComponent)
+import Jarilo.Shared.Component (class Component)
 import Yoga.JSON (class ReadForeign, class WriteForeign, writeImpl)
 
 data Platform = Steam | Riot | BattleNet | Origin | Ubisoft | PlayStation | Xbox | Switch
 
-derive instance eqPlatform :: Eq Platform
+derive instance Eq Platform
 
-derive instance ordPlatform :: Ord Platform
+derive instance Ord Platform
 
-derive instance genericPlatform :: Generic Platform _
+derive instance Generic Platform _
 
-instance showPlatform :: Show Platform where
+instance Show Platform where
     show = genericShow
 
 fromString :: String -> Maybe Platform
@@ -58,15 +58,16 @@ toLabel PlayStation = "PlayStation"
 toLabel Xbox = "Xbox"
 toLabel Switch = "Switch"
 
-instance readForeignPlatform :: ReadForeign Platform where
+instance ReadForeign Platform where
     readImpl platform' =
         readString platform'
         >>= (fromString' >>> lmap (ForeignError >>> NonEmptyList.singleton) >>> except)
 
-instance writeForeignPlatform :: WriteForeign Platform where
+instance WriteForeign Platform where
     writeImpl platform = writeImpl $ toString platform
 
-instance fromComponentPlatform :: FromComponent Platform where
-    fromComponent platform = fromString' platform
+instance Component Platform where
+    fromComponent = fromString'
+    toComponent = toString
 
 type Platforms = { head :: Platform, tail :: Array Platform }

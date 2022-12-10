@@ -20,8 +20,8 @@ import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Pages.Profile.Filters (Filters)
 import TeamTavern.Client.Script.Request (postNoContent)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
-import TeamTavern.Routes.CreateAlert (PlayerOrTeam(..))
-import TeamTavern.Routes.CreateAlert as CreateAlert
+import TeamTavern.Routes.Alert.CreateAlert (PlayerOrTeam(..))
+import TeamTavern.Routes.Alert.CreateAlert as CreateAlert
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
@@ -49,7 +49,7 @@ data Output = AlertCreated
 
 type Slot = H.Slot (Const Void) (Modal.Output Output) Unit
 
-render :: forall slots left. State -> H.ComponentHTML Action slots (Async left)
+render :: ∀ slots left. State -> H.ComponentHTML Action slots (Async left)
 render { email, emailError, otherError, submitting } =
     form SendRequest $
     [ boardingDescription """Create a profile alert using the specified filters
@@ -63,7 +63,7 @@ render { email, emailError, otherError, submitting } =
     <> [ submitButton "fas fa-bell" "Create alert" "Creating alert..." submitting ]
     <> otherFormError otherError
 
-sendRequest :: forall left. State -> Async left (Maybe (Either CreateAlert.BadContent Unit))
+sendRequest :: ∀ left. State -> Async left (Maybe (Either CreateAlert.BadContent Unit))
 sendRequest { handle, playerOrTeam, email, filters } = do
     timezone <- getClientTimezone
     let (body :: CreateAlert.RequestContent) =
@@ -80,7 +80,7 @@ sendRequest { handle, playerOrTeam, email, filters } = do
             }
     postNoContent "/api/alerts" body
 
-handleAction :: forall slots left. Action -> H.HalogenM State Action slots Output (Async left) Unit
+handleAction :: ∀ slots left. Action -> H.HalogenM State Action slots Output (Async left) Unit
 handleAction (UpdateEmail email) = H.modify_ _ { email = email }
 handleAction (SendRequest event) = do
     H.liftEffect $ preventDefault event
@@ -91,7 +91,7 @@ handleAction (SendRequest event) = do
         Just (Left _) -> H.modify_ _ { emailError = true, submitting = false }
         Nothing -> H.modify_ _ { otherError = true, submitting = false }
 
-component :: forall query left. H.Component query Input Output (Async left)
+component :: ∀ query left. H.Component query Input Output (Async left)
 component = H.mkComponent
     { initialState: \{ handle, playerOrTeam, filters } ->
         { handle
@@ -111,7 +111,7 @@ title Player = "Create player profile alert"
 title Team = "Create team profile alert"
 
 createAlert
-    :: forall slots action left
+    :: ∀ slots action left
     .  Input
     -> (Modal.Output Output -> action)
     -> HH.ComponentHTML action (createAlert :: Slot | slots) (Async left)

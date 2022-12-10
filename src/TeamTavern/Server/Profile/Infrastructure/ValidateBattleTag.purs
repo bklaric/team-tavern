@@ -4,9 +4,9 @@ import Prelude
 
 import Data.Maybe (Maybe)
 import Data.String (Pattern(..), length, split)
-import Data.Validated.Label (ValidatedVariants)
-import Type.Proxy (Proxy(..))
+import TeamTavern.Server.Infrastructure.Error (ValidatedTerrorNeaVar)
 import TeamTavern.Server.Profile.Infrastructure.ValidateContact (validateContact)
+import Type.Proxy (Proxy(..))
 
 newtype BattleTag = BattleTag String
 
@@ -35,6 +35,7 @@ isBattleTagValid battleTag =
         && length discriminator <= maxDiscriminatorLength
     _ -> false
 
-validateBattleTag :: forall errors. Maybe String -> ValidatedVariants (battleTag :: String | errors) (Maybe BattleTag)
+validateBattleTag :: ∀ errors.
+    Maybe String -> ValidatedTerrorNeaVar (battleTag :: {} | errors) (Maybe BattleTag)
 validateBattleTag battleTag =
     validateContact battleTag isBattleTagValid BattleTag (Proxy :: _ "battleTag") ("Invalid BattleTag: " <> _)

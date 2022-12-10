@@ -3,8 +3,8 @@ module TeamTavern.Server.Session.End where
 import Prelude
 
 import Async (Async, right)
-import Perun.Response (Response, noContent)
+import Jarilo (noContent)
 import TeamTavern.Server.Infrastructure.Cookie (removeCookieHeader)
 
-end :: forall void. Async void Response
+end :: ∀ left. Async left _
 end = right $ noContent removeCookieHeader

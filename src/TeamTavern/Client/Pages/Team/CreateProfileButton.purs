@@ -18,12 +18,12 @@ import TeamTavern.Client.Pages.Team.CreateProfile (createProfile)
 import TeamTavern.Client.Script.Request (get)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Team.ViewTeam as ViewTeam
-import TeamTavern.Routes.ViewAllGames as ViewAllGames
-import TeamTavern.Routes.ViewGame as View
+import TeamTavern.Routes.Game.ViewAllGames as ViewAllGames
+import TeamTavern.Routes.Game.ViewGame as View
 
 type Input = ViewTeam.OkContent
 
-createProfileButton :: forall left output query. H.Component query Input output (Async left)
+createProfileButton :: ∀ left output query. H.Component query Input output (Async left)
 createProfileButton = Hooks.component $ \_ team -> Hooks.do
     (Tuple shown shownId) <- usePopover
 

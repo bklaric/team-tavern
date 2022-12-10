@@ -12,11 +12,11 @@ import TeamTavern.Client.Snippets.Class as HS
 
 data PlayerOrTeam = Player | Team
 
-instance writeForeignPlayerOrTeam :: WriteForeign PlayerOrTeam where
+instance WriteForeign PlayerOrTeam where
     writeImpl Player = unsafeToForeign "Player"
     writeImpl Team = unsafeToForeign "Team"
 
-instance readForeignPlayerOrTeam :: ReadForeign PlayerOrTeam where
+instance ReadForeign PlayerOrTeam where
     readImpl = readString >=> case _ of
         "Player" -> pure Player
         "Team" -> pure Team
@@ -30,7 +30,7 @@ isTeam :: PlayerOrTeam -> Boolean
 isTeam Player = false
 isTeam Team = true
 
-playerOrTeamInput :: forall slots action.
+playerOrTeamInput :: ∀ slots action.
     Maybe PlayerOrTeam -> (PlayerOrTeam -> action) -> HTML slots action
 playerOrTeamInput selected onSelect =
     radioButtons

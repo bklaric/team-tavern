@@ -5,5 +5,5 @@ import Effect.Class (class MonadEffect, liftEffect)
 
 foreign import getClientTimezoneImpl :: Effect String
 
-getClientTimezone :: forall effect. MonadEffect effect => effect String
+getClientTimezone :: ∀ effect. MonadEffect effect => effect String
 getClientTimezone = liftEffect getClientTimezoneImpl

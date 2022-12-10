@@ -2,22 +2,18 @@ module TeamTavern.Server.Infrastructure.EnsureSignedIn (EnsureSignedInError, ens
 
 import Prelude
 
-import Async (Async)
-import Async as Async
+import Async (Async, left, right)
 import Data.Maybe (Maybe(..))
-import Data.Variant (Variant, inj)
+import Jarilo (InternalRow_, NotAuthorizedRow_, notAuthorized__)
 import Postgres.Async.Query (query)
 import Postgres.Query (class Querier, Query(..), (:), (:|))
 import Postgres.Result (rowCount)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo, Cookies, lookupCookieInfo)
-import TeamTavern.Server.Infrastructure.Postgres (reportDatabaseError')
-import Type.Proxy (Proxy(..))
+import TeamTavern.Server.Infrastructure.Error (Terror(..), TerrorVar)
+import TeamTavern.Server.Infrastructure.Postgres (reportDatabaseError)
+import Type.Row (type (+))
 
-type EnsureSignedInError errors = Variant
-    ( internal :: Array String
-    , notAuthenticated :: Array String
-    | errors
-    )
+type EnsureSignedInError errors = TerrorVar (InternalRow_ + NotAuthorizedRow_ + errors)
 
 queryString :: Query
 queryString = Query """
@@ -25,20 +21,20 @@ queryString = Query """
     from session
     join player on player.id = session.player_id
     where player.id = $1
-        and player.nickname = $2
+        and lower(player.nickname) = lower($2)
         and session.token = $3
         and revoked = false
     """
 
-ensureSignedIn :: forall querier errors. Querier querier =>
+ensureSignedIn :: ∀ querier errors. Querier querier =>
     querier -> Cookies -> Async (EnsureSignedInError errors) CookieInfo
 ensureSignedIn querier cookies =
     case lookupCookieInfo cookies of
-    Nothing -> Async.left $ inj (Proxy :: _ "notAuthenticated")
+    Nothing -> left $ Terror notAuthorized__
         [ "No cookie info has been found in cookies: " <> show cookies]
     Just cookieInfo @ { id, nickname, token } -> do
-        result <- querier # query queryString (id : nickname :| token) # reportDatabaseError'
+        result <- querier # query queryString (id : nickname :| token) # reportDatabaseError
         if rowCount result == 0
-        then Async.left $ inj (Proxy :: _ "notAuthenticated")
-            [ "Client session in cookies is invalid: " <> show cookies ]
-        else Async.right cookieInfo
+        then left $ Terror notAuthorized__
+            [ "Client session in cookies is invalid: " <> show cookieInfo ]
+        else right cookieInfo

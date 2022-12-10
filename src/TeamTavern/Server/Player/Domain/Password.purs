@@ -2,29 +2,31 @@ module TeamTavern.Server.Player.Domain.Password where
 
 import Prelude
 
-import Data.List.Types (NonEmptyList)
+import Data.Array.NonEmpty (NonEmptyArray)
+import Data.Array.NonEmpty as Nea
 import Data.Newtype (class Newtype)
-import Data.Validated.Label (ValidatedVariants)
-import Data.Validated.Label as Validated
-import Data.Variant (Variant)
+import Data.Validated as Validated
+import Data.Variant (Variant, inj)
+import TeamTavern.Server.Infrastructure.Error (Terror(..), ValidatedTerrorNeaVar)
 import Type.Proxy (Proxy(..))
 import Wrapped.String (TooShort, tooShort)
 import Wrapped.Validated as Wrapped
 
 newtype Password = Password String
 
-derive instance newtypePassword :: Newtype Password _
+derive instance Newtype Password _
 
 type PasswordError = Variant (tooShort :: TooShort)
 
-type PasswordErrors = NonEmptyList PasswordError
+type PasswordErrors = NonEmptyArray PasswordError
 
 minPasswordLength :: Int
 minPasswordLength = 8
 
-validatePassword :: forall errors.
-    String -> ValidatedVariants (password :: Array String | errors) Password
+validatePassword :: ∀ errors.
+    String -> ValidatedTerrorNeaVar (password :: {} | errors) Password
 validatePassword password =
     Wrapped.create identity [tooShort minPasswordLength] Password password
-    # Validated.labelMap (Proxy :: _ "password") \(errors :: PasswordErrors) ->
+    # Validated.lmap \(errors :: PasswordErrors) -> Terror
+        (Nea.singleton $ inj (Proxy :: _ "password") {})
         [ "Registration password is invalid: " <> show errors ]

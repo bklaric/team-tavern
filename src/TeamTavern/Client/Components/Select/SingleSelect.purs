@@ -60,7 +60,7 @@ type Output option = Maybe option
 
 type Slot option = H.Slot (Const Void) (Output option)
 
-render :: forall slots option. State option -> HH.HTML slots (Action option)
+render :: ∀ slots option. State option -> HH.HTML slots (Action option)
 render { entries, selected, labeler, filter, open } =
     HH.div [ HP.class_ $ HH.ClassName "select" ]
     $ [ HH.div
@@ -114,7 +114,7 @@ render { entries, selected, labeler, filter, open } =
         else []
 
 handleAction
-    :: forall option slots left
+    :: ∀ option slots left
     .  (Action option)
     -> H.HalogenM (State option) (Action option) slots
         (Output option) (Async left) Unit
@@ -160,7 +160,7 @@ handleAction (FilterInput text) =
         , filter = state.filter <#> (_ { text = text })
         }
 
-component :: forall option query left.
+component :: ∀ option query left.
     H.Component query (Input option) (Output option) (Async left)
 component = H.mkComponent
     { initialState: \{ options, selected, labeler, comparer, filter } ->
@@ -184,7 +184,7 @@ component = H.mkComponent
     }
 
 singleSelect
-    :: forall children' slot children action left option
+    :: ∀ children' slot children action left option
     .  Cons slot (Slot option Unit) children' children
     => IsSymbol slot
     => Proxy slot
@@ -195,7 +195,7 @@ singleSelect label input handleOutput =
     HH.slot label unit component input handleOutput
 
 singleSelectIndexed
-    :: forall children' slot children action left option index
+    :: ∀ children' slot children action left option index
     .  Cons slot (Slot option index) children' children
     => IsSymbol slot
     => Ord index

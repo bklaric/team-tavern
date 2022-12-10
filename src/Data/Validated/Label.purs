@@ -14,7 +14,7 @@ type Variants rows = NonEmptyList (Variant rows)
 type ValidatedVariants rows = Validated (NonEmptyList (Variant rows))
 
 label
-    :: forall errors errors' left label right
+    :: ∀ errors errors' left label right
     .  Cons label left errors' errors
     => IsSymbol label
     => Proxy label
@@ -23,7 +23,7 @@ label
 label label' = lmap (singleton <<< inj label')
 
 labelMap
-    :: forall label leftIn leftOut lefts' lefts right
+    :: ∀ label leftIn leftOut lefts' lefts right
     .  Cons label leftOut lefts' lefts
     => IsSymbol label
     => Proxy label
@@ -33,7 +33,7 @@ labelMap
 labelMap label' mapper = lmap (singleton <<< inj label' <<< mapper)
 
 relabel
-    :: forall container fromLabel toLabel value leftsIn lefts leftsOut right
+    :: ∀ container fromLabel toLabel value leftsIn lefts leftsOut right
     .  Semigroup (container (Variant leftsIn))
     => Semigroup (container (Variant leftsOut))
     => Functor container
@@ -48,7 +48,7 @@ relabel
 relabel fromLabel toLabel = lmap (map (on fromLabel (inj toLabel) identity))
 
 relabelMap
-    :: forall container fromLabel toLabel leftIn leftOut
+    :: ∀ container fromLabel toLabel leftIn leftOut
        leftsIn lefts leftsOut right
     .  Semigroup (container (Variant leftsIn))
     => Semigroup (container (Variant leftsOut))

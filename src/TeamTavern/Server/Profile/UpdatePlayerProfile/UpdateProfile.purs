@@ -4,23 +4,19 @@ module TeamTavern.Server.Profile.UpdatePlayerProfile.UpdateProfile
 import Prelude
 
 import Async (Async)
-import Async as Async
-import Data.Array (head)
-import Data.Bifunctor.Label (label, labelMap)
-import Data.Variant (Variant, inj)
+import Data.Variant (Variant)
 import Foreign (MultipleErrors)
-import Postgres.Async.Query (execute, query)
 import Postgres.Client (Client)
 import Postgres.Error (Error)
 import Postgres.Query (Query(..), QueryParameter, (:), (:|))
-import Postgres.Result (Result, rows)
+import Postgres.Result (Result)
 import TeamTavern.Routes.Profile.AddPlayerProfile as AddPlayerProfile
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
+import TeamTavern.Server.Infrastructure.Postgres (queryFirstInternal, queryNone)
+import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
 import TeamTavern.Server.Profile.AddPlayerProfile.AddFieldValues (ProfileId, addFieldValues)
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile (Profile)
-import Type.Proxy (Proxy(..))
 import Yoga.JSON (writeImpl)
-import Yoga.JSON.Async (read)
 
 type UpdateProfileError errors = Variant
     ( databaseError :: Error
@@ -47,41 +43,32 @@ type UpdateProfileError errors = Variant
 updateProfileString :: Query
 updateProfileString = Query """
     update player_profile
-    set platform = $5,
-        new_or_returning = $6,
-        about = $7,
-        ambitions = $8,
+    set platform = $3,
+        new_or_returning = $4,
+        about = $5,
+        ambitions = $6,
         updated = now()
-    from session, player, game
-    where session.player_id = $1
-    and session.token = $2
-    and session.revoked = false
-    and session.player_id = player.id
+    from player, game
+    where lower(player.nickname) = lower($1)
     and player.id = player_profile.player_id
     and game.id = player_profile.game_id
-    and lower(player.nickname) = lower($3)
-    and game.handle = $4
+    and game.handle = $2
     returning player_profile.id as "profileId";
     """
 
-updateProfileParameters :: CookieInfo -> AddPlayerProfile.RouteParams -> Profile -> Array QueryParameter
-updateProfileParameters { id, token } { nickname, handle }
+updateProfileParameters ::
+    AddPlayerProfile.RouteParams -> Profile -> Array QueryParameter
+updateProfileParameters
+    { nickname, handle }
     { platform, newOrReturning, about, ambitions } =
-    id : token : nickname : handle : writeImpl platform : newOrReturning : about :| ambitions
+    nickname : handle : writeImpl platform : newOrReturning : about :| ambitions
 
-updateProfile' :: forall errors.
-    Client -> CookieInfo -> AddPlayerProfile.RouteParams -> Profile -> Async (UpdateProfileError errors) ProfileId
-updateProfile' client cookieInfo identifiers profile = do
-    result <- client
-        # query updateProfileString
-            (updateProfileParameters cookieInfo identifiers profile)
-        # label (Proxy :: _ "databaseError")
-    { profileId } :: { profileId :: Int } <- rows result
-        # head
-        # Async.note (inj
-            (Proxy :: _ "notAuthorized") { cookieInfo, identifiers })
-        >>= (read >>> labelMap
-            (Proxy :: _ "unreadableProfileId") { result, errors: _ })
+updateProfile' :: ∀ errors.
+    Client -> AddPlayerProfile.RouteParams -> Profile -> Async (InternalTerror_ errors) ProfileId
+updateProfile' client identifiers profile = do
+    { profileId } :: { profileId :: Int } <-
+        queryFirstInternal client updateProfileString
+        (updateProfileParameters identifiers profile)
     pure profileId
 
 -- Delete field value rows.
@@ -92,23 +79,20 @@ deleteFieldValuesString = Query """
     where player_profile_id = $1;
     """
 
-deleteFieldValues :: forall errors.
-    Client -> ProfileId -> Async (UpdateProfileError errors) Unit
+deleteFieldValues :: ∀ errors.
+    Client -> ProfileId -> Async (InternalTerror_ errors) Unit
 deleteFieldValues client profileId =
-    client
-    # execute deleteFieldValuesString (profileId : [])
-    # label (Proxy :: _ "databaseError")
+    queryNone client deleteFieldValuesString (profileId : [])
 
 updateProfile
-    :: forall errors
+    :: ∀ errors
     .  Client
-    -> CookieInfo
     -> AddPlayerProfile.RouteParams
     -> Profile
-    -> Async (UpdateProfileError errors) Unit
-updateProfile client cookieInfo identifiers profile @ { fieldValues } = do
+    -> Async (InternalTerror_ errors) Unit
+updateProfile client identifiers profile @ { fieldValues } = do
     -- Update profile row.
-    profileId <- updateProfile' client cookieInfo identifiers profile
+    profileId <- updateProfile' client identifiers profile
 
     -- Delete all existing field values.
     deleteFieldValues client profileId

@@ -2,32 +2,29 @@ module TeamTavern.Server.Player.UpdatePlayer where
 
 import Prelude
 
-import Async (Async, examineLeftWithEffect)
+import Async (Async)
 import Data.Map (Map)
 import Data.Newtype (unwrap)
-import Perun.Request.Body (Body)
-import Perun.Response (Response)
+import Jarilo (noContent_)
 import Postgres.Pool (Pool)
+import TeamTavern.Routes.Player.UpdatePlayer as UpdatePlayer
 import TeamTavern.Server.Infrastructure.EnsureSignedInAs (ensureSignedInAs)
+import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Player.Domain.Nickname (Nickname)
-import TeamTavern.Server.Player.UpdatePlayer.LogError (logError)
-import TeamTavern.Server.Player.UpdatePlayer.ReadPlayer (readPlayer)
-import TeamTavern.Server.Player.UpdatePlayer.SendResponse (sendResponse)
 import TeamTavern.Server.Player.UpdatePlayer.UpdateDetails (updateDetails) as UpdateDetails
 import TeamTavern.Server.Player.UpdatePlayer.ValidatePlayer (validatePlayer)
 
-updatePlayer :: forall left.
-    Pool -> Nickname -> Map String String -> Body -> Async left Response
-updatePlayer pool nickname cookies body =
-    sendResponse $ examineLeftWithEffect logError do
+updatePlayer :: ∀ left.
+    Pool -> Nickname -> Map String String -> UpdatePlayer.RequestContent -> Async left _
+updatePlayer pool nickname cookies player' =
+    sendResponse "Error updating player" do
     -- Read requestor info from cookies.
     cookieInfo <- ensureSignedInAs pool cookies (unwrap nickname)
 
-    -- Read player from body.
-    playerModel <- readPlayer body
-
     -- Validate player.
-    player <- validatePlayer playerModel
+    player <- validatePlayer player'
 
     -- Update player.
     UpdateDetails.updateDetails pool (unwrap cookieInfo.id) player
+
+    pure noContent_

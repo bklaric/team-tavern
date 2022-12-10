@@ -1,46 +1,41 @@
 module TeamTavern.Server.Profile.ViewPlayerProfilesByGame.LoadProfiles
-    (LoadProfilesError, createPlayerFilterString, createFieldsFilterString, queryStringWithoutPagination, loadProfiles) where
+    (createPlayerFilterString, createFieldsFilterString, queryStringWithoutPagination, loadProfiles) where
 
 import Prelude
 
 import Async (Async)
 import Data.Array (intercalate)
-import Data.Bifunctor.Label (label, labelMap)
 import Data.Maybe (Maybe(..))
 import Data.String as String
-import Data.Traversable (traverse)
-import Data.Variant (Variant)
-import Foreign (MultipleErrors)
-import Postgres.Async.Query (query_)
 import Postgres.Client (Client)
-import Postgres.Error (Error)
 import Postgres.Query (Query(..))
-import Postgres.Result (Result, rows)
 import TeamTavern.Routes.Profile.Shared (ProfilePage, pageSize)
 import TeamTavern.Routes.Profile.ViewPlayerProfilesByGame as ViewPlayerProfilesByGame
 import TeamTavern.Routes.Shared.Filters (Age, Filters, HasMicrophone, Language, Location, NewOrReturning, Time, Field)
 import TeamTavern.Routes.Shared.Platform (Platform)
 import TeamTavern.Routes.Shared.Platform as Platform
 import TeamTavern.Routes.Shared.Types (Timezone, Handle)
-import TeamTavern.Server.Infrastructure.Postgres (playerAdjustedWeekdayFrom, playerAdjustedWeekdayTo, playerAdjustedWeekendFrom, playerAdjustedWeekendTo, prepareJsonString, prepareString)
-import Type.Proxy (Proxy(..))
-import Yoga.JSON.Async (read)
+import TeamTavern.Server.Infrastructure.Postgres (playerAdjustedWeekdayFrom, playerAdjustedWeekdayTo, playerAdjustedWeekendFrom, playerAdjustedWeekendTo, prepareJsonString, prepareString, queryMany_)
+import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
 
-type LoadProfilesError errors = Variant
-    ( databaseError :: Error
-    , unreadableDtos ::
-        { result :: Result
-        , errors :: MultipleErrors
-        }
-    | errors )
+upperAgeLimit :: Int
+upperAgeLimit = 200
 
 createAgeFilter :: Maybe Age -> Maybe Age -> String
 createAgeFilter Nothing Nothing = ""
-createAgeFilter (Just ageFrom) Nothing = " and player.birthday < (current_timestamp - interval '" <> show ageFrom <> " years')"
-createAgeFilter Nothing (Just ageTo) = " and player.birthday > (current_timestamp - interval '" <> show (ageTo + 1) <> " years')"
+createAgeFilter (Just ageFrom) Nothing =
+    if ageFrom < upperAgeLimit
+    then " and player.birthday < (current_timestamp - interval '" <> show ageFrom <> " years')"
+    else " and false"
+createAgeFilter Nothing (Just ageTo) =
+    if ageTo < upperAgeLimit
+    then " and player.birthday > (current_timestamp - interval '" <> show (ageTo + 1) <> " years')"
+    else " and true"
 createAgeFilter (Just ageFrom) (Just ageTo) =
-    " and player.birthday < (current_timestamp - interval '" <> show ageFrom <> " years') "
-    <> "and player.birthday > (current_timestamp - interval '" <> show (ageTo + 1) <> " years')"
+    if ageFrom < upperAgeLimit && ageTo < upperAgeLimit && ageFrom <= ageTo
+    then " and player.birthday < (current_timestamp - interval '" <> show ageFrom <> " years') "
+        <> "and player.birthday > (current_timestamp - interval '" <> show (ageTo + 1) <> " years')"
+    else " and false"
 
 createLanguagesFilter :: Array Language -> String
 createLanguagesFilter [] = ""
@@ -258,21 +253,15 @@ queryStringWithoutPagination handle timezone filters = Query $ """
 queryString :: Handle -> ProfilePage -> Timezone -> Filters -> Query
 queryString handle page timezone filters =
     queryStringWithoutPagination handle timezone filters
-    <> (Query $ """ limit """ <> show pageSize <> """ offset """ <> show ((page - 1) * pageSize))
+    <> (Query $ """ limit """ <> show pageSize <> """ offset """ <> show ((max 0 (page - 1)) * pageSize))
 
 loadProfiles
-    :: forall errors
+    :: ∀ errors
     .  Client
     -> Handle
     -> ProfilePage
     -> Timezone
     -> Filters
-    -> Async (LoadProfilesError errors) (Array ViewPlayerProfilesByGame.OkContentProfiles)
-loadProfiles client handle page timezone filters = do
-    result <- client
-        # query_ (queryString handle page timezone filters)
-        # label (Proxy :: _ "databaseError")
-    profiles <- rows result
-        # traverse read
-        # labelMap (Proxy :: _ "unreadableDtos") { result, errors: _ }
-    pure profiles
+    -> Async (InternalTerror_ errors) (Array ViewPlayerProfilesByGame.OkContentProfiles)
+loadProfiles client handle page timezone filters =
+    queryMany_ client (queryString handle page timezone filters)

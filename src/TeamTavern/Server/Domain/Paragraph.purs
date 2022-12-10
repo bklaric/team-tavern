@@ -1,10 +1,10 @@
-module TeamTavern.Server.Domain.Paragraph where
+module TeamTavern.Server.Domain.Paragraph (Paragraph, create, length, toString) where
 
 import Prelude
 
 import Data.Array (filter)
+import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Either (fromRight)
-import Data.List.Types (NonEmptyList)
 import Data.String (Pattern(..), null, split, trim)
 import Data.String as String
 import Data.String.Regex (regex, replace)
@@ -16,7 +16,8 @@ import Wrapped.Validated as Wrapped
 
 newtype Paragraph = Paragraph String
 
-create :: forall errors. String -> Validated (NonEmptyList errors) (Array Paragraph)
+create :: ∀ errors.
+    String -> Validated (NonEmptyArray errors) (Array Paragraph)
 create text = let
     whitespaceRegex = regex """\s+""" global # fromRight undefined
     paragraphs =

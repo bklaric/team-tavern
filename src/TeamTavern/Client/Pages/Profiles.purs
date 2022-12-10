@@ -6,6 +6,7 @@ import Async (Async)
 import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
+import Control.Bind (bindFlipped)
 import Data.Array (foldl, intercalate)
 import Data.Array as Array
 import Data.Bifunctor (lmap)
@@ -40,12 +41,12 @@ import TeamTavern.Client.Script.Navigate (navigate, navigate_)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Script.Url as Url
 import TeamTavern.Client.Snippets.ArticledNoun (indefiniteNoun)
+import TeamTavern.Routes.Game.ViewGame as ViewGame
 import TeamTavern.Routes.Profile.ViewPlayerProfilesByGame as ViewPlayerProfilesByGame
 import TeamTavern.Routes.Profile.ViewTeamProfilesByGame as ViewTeamProfilesByGame
 import TeamTavern.Routes.Shared.Organization as Organization
 import TeamTavern.Routes.Shared.Platform as Platform
 import TeamTavern.Routes.Shared.Size as Size
-import TeamTavern.Routes.ViewGame as ViewGame
 import Type.Proxy (Proxy(..))
 import Web.DOM.ParentNode (QuerySelector(..))
 import Web.DOM.ParentNode as ParentNode
@@ -111,7 +112,7 @@ filterableFields fields = fields # Array.mapMaybe
         | ilk == 2 || ilk == 3 -> Just { key, label, icon, options }
     _ -> Nothing
 
-render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
+render :: ∀ left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render (Empty _) = HH.div_ []
 render (Game game _ filters tab) =
     HH.div_ $
@@ -141,7 +142,7 @@ render (Game game _ filters tab) =
     ]
 render Error = HH.p_ [ HH.text "There has been an error loading profiles. Please try again later." ]
 
-loadPlayerProfiles :: forall left.
+loadPlayerProfiles :: ∀ left.
     String -> Int -> Filters -> Async left (Maybe ViewPlayerProfilesByGame.OkContent)
 loadPlayerProfiles handle page filters = Async.unify do
     timezone <- getClientTimezone
@@ -175,7 +176,7 @@ loadPlayerProfiles handle page filters = Async.unify do
         _ -> Async.left Nothing
     pure content
 
-loadTeamProfiles :: forall left.
+loadTeamProfiles :: ∀ left.
     String -> Int -> Filters -> Async left (Maybe ViewTeamProfilesByGame.OkContent)
 loadTeamProfiles handle page filters = Async.unify do
     timezone <- getClientTimezone
@@ -212,7 +213,7 @@ loadTeamProfiles handle page filters = Async.unify do
         _ -> Async.left Nothing
     pure content
 
-loadTab :: forall output left. Input -> H.HalogenM State Action ChildSlots output (Async left) Unit
+loadTab :: ∀ output left. Input -> H.HalogenM State Action ChildSlots output (Async left) Unit
 loadTab { game: game @ { handle, shortTitle, fields }, tab: GameHeader.Players } = do
     { page, filters } <- H.liftEffect $ readQueryParams fields
     playerProfiles' <- H.lift $ loadPlayerProfiles handle page filters
@@ -260,7 +261,7 @@ setMetaTags handleOrTitle tab =
         ("Find " <> handleOrTitle <> " teams looking for players on TeamTavern, " <> indefiniteNoun handleOrTitle <> " team finding platform."
         <> " Create your own team profile and recruit new members for your team.")
 
-scrollProfilesIntoView :: forall monad. Bind monad => MonadEffect monad => monad Unit
+scrollProfilesIntoView :: ∀ monad. Bind monad => MonadEffect monad => monad Unit
 scrollProfilesIntoView = do
     profileCard <- Html.window >>= Window.document <#> HtmlDocument.toParentNode
         >>= ParentNode.querySelector (QuerySelector "#profiles-card")
@@ -274,13 +275,13 @@ scrollProfilesIntoView = do
         Nothing -> pure unit
 
 readQueryParams
-    :: forall fields
+    :: ∀ fields
     .  Array { key :: String | fields }
     -> Effect { filters :: Filters, page :: Int }
 readQueryParams fields = do
     searchParams <- Html.window >>= Window.location >>= Location.href
         >>= Url.url >>= Url.searchParams
-    page <- Url.get "page" searchParams <#> maybe 1 (Int.fromString >>> maybe 1 identity)
+    page <- Url.get "page" searchParams <#> bindFlipped Int.fromString <#> maybe 1 (max 1)
     organizations <- Url.getAll "organization" searchParams <#> Array.mapMaybe Organization.fromString
     ageFrom <- Url.get "age-from" searchParams <#> (\ageFrom -> ageFrom >>= Int.fromString)
     ageTo <- Url.get "age-to" searchParams <#> (\ageTo -> ageTo >>= Int.fromString)
@@ -326,7 +327,7 @@ readQueryParams fields = do
             }
         }
 
-writeQueryParams :: forall t2. MonadEffect t2 => Filters -> t2 Unit
+writeQueryParams :: ∀ t2. MonadEffect t2 => Filters -> t2 Unit
 writeQueryParams filters = H.liftEffect do
     url <- Html.window >>= Window.location >>= Location.href >>= Url.url
     searchParams <- Url.searchParams url
@@ -375,7 +376,7 @@ writeQueryParams filters = H.liftEffect do
     href <- Url.href url
     navigate_ href
 
-handleAction :: forall output left.
+handleAction :: ∀ output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
 handleAction Init = do
     state <- H.get
@@ -407,7 +408,7 @@ handleAction OpenTeamPreboarding = do
         Game game _ _ _ -> navigate (Preboarding.emptyInput (Just Boarding.Team) (Just game)) "/preboarding/start"
         _ -> pure unit
 
-component :: forall query output left.
+component :: ∀ query output left.
     H.Component query Input output (Async left)
 component = H.mkComponent
     { initialState: Empty
@@ -419,6 +420,6 @@ component = H.mkComponent
         }
     }
 
-profiles :: forall query children left.
+profiles :: ∀ query children left.
     Input -> HH.ComponentHTML query (profiles :: Slot | children) (Async left)
 profiles input = HH.slot (Proxy :: _ "profiles") unit component input absurd

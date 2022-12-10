@@ -3,13 +3,14 @@ module TeamTavern.Server.Player.View.LoadPlayer (loadPlayer) where
 import Prelude
 
 import Async (Async)
+import Data.Bifunctor (lmap)
 import Data.Maybe (Maybe, maybe)
 import Data.Newtype (unwrap)
 import Postgres.Query (class Querier, Query(..), (:|))
-import TeamTavern.Routes.ViewPlayer as ViewPlayer
+import TeamTavern.Routes.Player.ViewPlayer as ViewPlayer
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
-import TeamTavern.Server.Infrastructure.Error (LoadSingleError)
-import TeamTavern.Server.Infrastructure.Postgres (playerAdjustedWeekdayFrom, playerAdjustedWeekdayTo, playerAdjustedWeekendFrom, playerAdjustedWeekendTo, queryFirstNotFound)
+import TeamTavern.Server.Infrastructure.Error (elaborate)
+import TeamTavern.Server.Infrastructure.Postgres (LoadSingleError, playerAdjustedWeekdayFrom, playerAdjustedWeekdayTo, playerAdjustedWeekendFrom, playerAdjustedWeekendTo, queryFirstNotFound)
 
 queryString :: String -> Query
 queryString timezone = Query $ """
@@ -211,7 +212,7 @@ queryString timezone = Query $ """
     """
 
 loadPlayer
-    :: forall errors querier
+    :: ∀ errors querier
     .  Querier querier
     => querier
     -> Maybe CookieInfo
@@ -220,3 +221,4 @@ loadPlayer
 loadPlayer pool cookieInfo { nickname, timezone } = do
     let samePlayer = maybe false ((_.nickname) >>> unwrap >>> (_ == nickname)) cookieInfo
     queryFirstNotFound pool (queryString timezone) (nickname :| samePlayer)
+        # lmap (elaborate ("Can't find player: " <> nickname))

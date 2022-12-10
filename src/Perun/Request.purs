@@ -8,8 +8,9 @@ import Data.Bifunctor (lmap)
 import Data.Either (Either, hush)
 import Data.Either.Swap (swap)
 import Data.HTTP.Method (CustomMethod, Method, fromString)
+import Data.List (List)
 import Data.Map (Map, empty, fromFoldable)
-import Data.Maybe (Maybe(..), maybe)
+import Data.Maybe (Maybe(..), fromJust, maybe)
 import Data.String (Pattern(..), split)
 import Data.Traversable (traverse)
 import Data.Tuple (Tuple(..))
@@ -18,12 +19,16 @@ import Foreign.Object (lookup, toUnfoldable)
 import Node.Http.IncomingMessage (headers)
 import Node.Http.Server.Request (method, url)
 import Node.Http.Server.Request as Node
+import Partial.Unsafe (unsafePartial)
 import Perun.Request.Body (Body, fromRequest)
-import Perun.Url (Url, parseUrl)
+import Perun.Url (Url, parseUrl, pathSegments, queryPairs)
+import URI.Extra.QueryPairs (Key, QueryPairs, Value)
+import URI.Path.Segment (PathSegment)
 
 type Request =
     { method :: Either CustomMethod Method
-    , url :: Either String Url
+    , path :: List PathSegment
+    , query :: QueryPairs Key Value
     , headers :: Map String String
     , cookies :: Map String String
     , body :: Body
@@ -61,9 +66,12 @@ readCookies request =
     # maybe empty (parseCookies >>> fromFoldable)
 
 readRequest :: Node.Request -> Request
-readRequest request =
+readRequest request = let
+    url' = unsafePartial (readUrl request # hush # fromJust)
+    in
     { method: readMethod request
-    , url: readUrl request
+    , path: pathSegments url'
+    , query: queryPairs url'
     , headers: readHeaders request
     , cookies: readCookies request
     , body: fromRequest request

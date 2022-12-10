@@ -8,7 +8,7 @@ import TeamTavern.Client.Components.Picture (picture)
 import TeamTavern.Client.Snippets.Class as HS
 import Web.UIEvent.MouseEvent (MouseEvent)
 
-features :: forall slots action. (MouseEvent -> action) -> HH.HTML slots action
+features :: ∀ slots action. (MouseEvent -> action) -> HH.HTML slots action
 features createAccount =
     HH.div [ HS.class_ "features" ]
     [ HH.div [ HS.class_ "features-content" ]
@@ -64,7 +64,7 @@ features createAccount =
     , picture "features-image" "Video game wallpaper" "/images/features"
     ]
 
-features' :: forall slots action. String -> String -> (MouseEvent -> action) -> HH.HTML slots action
+features' :: ∀ slots action. String -> String -> (MouseEvent -> action) -> HH.HTML slots action
 features' handle title createAccount =
     HH.div [ HS.class_ "features" ]
     [ HH.div [ HS.class_ "features-content" ]

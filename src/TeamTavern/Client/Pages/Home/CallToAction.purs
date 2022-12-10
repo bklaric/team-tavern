@@ -9,7 +9,7 @@ import TeamTavern.Client.Snippets.ArticledNoun (indefiniteNoun)
 import TeamTavern.Client.Snippets.Class as HS
 import Web.UIEvent.MouseEvent (MouseEvent)
 
-callToActionButton :: forall slots action.
+callToActionButton :: ∀ slots action.
     String -> String -> String -> (MouseEvent -> action) -> HH.HTML slots action
 callToActionButton icon text url onClick =
     HH.a
@@ -19,7 +19,7 @@ callToActionButton icon text url onClick =
     ]
     [ HH.i [ HS.class_ $ icon <> " button-icon" ] [], HH.text text ]
 
-callToAction :: forall action slots.
+callToAction :: ∀ action slots.
     (MouseEvent -> action) -> (MouseEvent -> action) -> HH.HTML slots action
 callToAction viewGames createAccount =
     HH.div [ HS.class_ "call-to-action" ]
@@ -50,7 +50,7 @@ callToAction viewGames createAccount =
     ]
 
 callToAction'
-    :: forall action slots
+    :: ∀ action slots
     .  String -> String
     -> (MouseEvent -> action) -> (MouseEvent -> action) -> (MouseEvent -> action)
     -> HH.HTML slots action

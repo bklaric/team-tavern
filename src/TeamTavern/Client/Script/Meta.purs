@@ -53,7 +53,7 @@ setMetaUrl = do
     setLink "hreflang-en" url
     setLink "hreflang-default" url
 
-setMeta :: forall monad. MonadEffect monad => String -> String -> monad Unit
+setMeta :: ∀ monad. MonadEffect monad => String -> String -> monad Unit
 setMeta title description = liftEffect do
     setMetaTitle title
     setMetaDescription description

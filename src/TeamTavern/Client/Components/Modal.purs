@@ -35,7 +35,7 @@ type ChildSlots query output = (content :: H.Slot query output Unit)
 type Slot output = H.Slot (Const Void) output Unit
 
 render
-    :: forall query input output monad
+    :: ∀ query input output monad
     .  String
     -> H.Component query input output monad
     -> State input
@@ -59,7 +59,7 @@ render title content input =
         ]
     ]
 
-handleAction :: forall state action slots output monad. MonadEffect monad =>
+handleAction :: ∀ state action slots output monad. MonadEffect monad =>
     Action output -> H.HalogenM state action slots (Output output) monad Unit
 handleAction Init =
     makeWindowUnscrollable
@@ -76,7 +76,7 @@ handleAction ButtonClose = H.raise CloseClicked
 handleAction (OutputRaise message) = H.raise $ OutputRaised message
 
 component
-    :: forall query input output monad
+    :: ∀ query input output monad
     .  MonadEffect monad
     => String
     -> H.Component query input output monad

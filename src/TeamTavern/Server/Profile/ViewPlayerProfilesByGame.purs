@@ -2,31 +2,28 @@ module TeamTavern.Server.Profile.ViewPlayerProfilesByGame where
 
 import Prelude
 
-import Async (Async, examineLeftWithEffect)
-import Data.Variant (inj)
-import Perun.Response (Response)
-import Postgres.Async.Pool (withTransaction)
+import Async (Async)
+import Jarilo (ok_)
 import Postgres.Pool (Pool)
 import TeamTavern.Routes.Profile.Shared (ProfilePage)
 import TeamTavern.Routes.Shared.Filters (Filters)
 import TeamTavern.Routes.Shared.Types (Timezone, Handle)
+import TeamTavern.Server.Infrastructure.Postgres (transaction)
+import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Profile.ViewPlayerProfilesByGame.LoadProfileCount (loadProfileCount)
 import TeamTavern.Server.Profile.ViewPlayerProfilesByGame.LoadProfiles (loadProfiles)
-import TeamTavern.Server.Profile.ViewPlayerProfilesByGame.LogError (logError)
-import TeamTavern.Server.Profile.ViewPlayerProfilesByGame.SendResponse (sendResponse)
-import Type.Proxy (Proxy(..))
 
 viewPlayerProfilesByGame
-    :: forall left
+    :: ∀ left
     .  Pool
     -> Handle
     -> ProfilePage
     -> Timezone
     -> Filters
-    -> Async left Response
+    -> Async left _
 viewPlayerProfilesByGame pool handle page timezone filters =
-    sendResponse $ examineLeftWithEffect logError do
-    pool # withTransaction (inj (Proxy :: _ "databaseError"))
+    sendResponse "Error viewing player profiles by game" do
+    profiles <- pool # transaction
         \client -> do
             -- Load profiles.
             profiles <- loadProfiles client handle page timezone filters
@@ -35,3 +32,4 @@ viewPlayerProfilesByGame pool handle page timezone filters =
             count <- loadProfileCount client handle timezone filters
 
             pure { profiles, count }
+    pure $ ok_ profiles

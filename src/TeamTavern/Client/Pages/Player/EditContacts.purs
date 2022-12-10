@@ -3,7 +3,8 @@ module TeamTavern.Client.Pages.Player.EditContacts (Input, Slot, editContacts) w
 import Prelude
 
 import Async (Async)
-import Data.Array (foldl, nubEq)
+import Data.Array (nubEq)
+import Data.Foldable (foldl)
 import Data.Const (Const)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
@@ -18,8 +19,8 @@ import TeamTavern.Client.Components.Player.ContactsFormInput as ContactsFormInpu
 import TeamTavern.Client.Script.Navigate (hardNavigate)
 import TeamTavern.Client.Script.Request (putNoContent)
 import TeamTavern.Routes.Shared.PlayerContacts as Routes
-import TeamTavern.Routes.UpdatePlayerContacts (RequestContent, BadContent)
-import TeamTavern.Routes.ViewPlayer (OkContentProfile)
+import TeamTavern.Routes.Player.UpdatePlayerContacts (RequestContent, BadContent)
+import TeamTavern.Routes.Player.ViewPlayer (OkContentProfile)
 import Type.Function (type ($))
 import Type.Proxy (Proxy(..))
 import Web.Event.Event (preventDefault)
@@ -42,7 +43,7 @@ type ChildSlots = (playerContactsFormInput :: ContactsFormInput.Slot)
 
 type Slot = H.Slot (Const Void) (Modal.Output Void) Unit
 
-render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
+render :: ∀ left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { contacts, submitting, otherError } =
     form Update $
     [ contactsFormInput contacts UpdateContacts
@@ -51,11 +52,11 @@ render { contacts, submitting, otherError } =
     <>
     otherFormError otherError
 
-sendRequest :: forall left. State -> Async left $ Maybe $ Either BadContent Unit
+sendRequest :: ∀ left. State -> Async left $ Maybe $ Either BadContent Unit
 sendRequest { nickname, contacts } =
     putNoContent ("/api/players/" <> nickname <> "/contacts") $ (pick contacts :: RequestContent)
 
-handleAction :: forall output left.
+handleAction :: ∀ output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
 handleAction (UpdateContacts contacts) =
     H.modify_ _
@@ -111,7 +112,7 @@ handleAction (Update event) = do
             badContent
         Nothing -> H.put currentState { submitting = false, otherError = true }
 
-component :: forall query fields output left. H.Component query (Input fields) output (Async left)
+component :: ∀ query fields output left. H.Component query (Input fields) output (Async left)
 component = H.mkComponent
     { initialState: \player ->
         { nickname: player.nickname
@@ -144,7 +145,7 @@ component = H.mkComponent
     }
 
 editContacts
-    :: forall fields action slots left
+    :: ∀ fields action slots left
     .  Input fields
     -> (Modal.Output Void -> action)
     -> HH.ComponentHTML action (editContacts :: Slot | slots) (Async left)

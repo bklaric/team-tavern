@@ -12,7 +12,7 @@ import Browser.Fetch.Response as FRes
 import Error (Error)
 import Foreign (Foreign)
 
-text :: forall left. Response -> Async left String
+text :: ∀ left. Response -> Async left String
 text = flip FRes.text >>> fromEitherCont
 
 json :: Response -> Async Error Foreign

@@ -12,11 +12,11 @@ import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Snippets.Class as HS
 import Type.Proxy (Proxy)
 
-profileHeader :: forall slots action. Array (HH.HTML slots action) -> HH.HTML slots action
+profileHeader :: ∀ slots action. Array (HH.HTML slots action) -> HH.HTML slots action
 profileHeader = HH.div [ HS.class_ "profile-header" ]
 
 profileHeading
-    :: forall action index monad slots' slots label
+    :: ∀ action index monad slots' slots label
     .  Cons label (NavigationAnchor.Slot index) slots' slots
     => IsSymbol label
     => Ord index
@@ -28,7 +28,7 @@ profileHeading label index path heading =
     [ navigationAnchorIndexed label index { path, content: HH.text heading } ]
 
 profileHeading'
-    :: forall action monad slots' slots label
+    :: ∀ action monad slots' slots label
     .  Cons label (NavigationAnchor.Slot String) slots' slots
     => IsSymbol label
     => MonadEffect monad
@@ -49,5 +49,5 @@ profileHeading' label handle path heading =
         }
     ]
 
-profileSubheading :: forall slots action. String -> HH.HTML slots action
+profileSubheading :: ∀ slots action. String -> HH.HTML slots action
 profileSubheading subheading = HH.span [ HS.class_ "profile-subheading" ] [ HH.text subheading ]

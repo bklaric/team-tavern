@@ -29,11 +29,11 @@ toString Omit = "omit"
 toString SameOrigin = "same-origin"
 toString Include = "include"
 
-optCredentials :: forall options. String -> Op (Options options) Credentials
+optCredentials :: ∀ options. String -> Op (Options options) Credentials
 optCredentials key = Op \value ->
     Options [Tuple key (unsafeToForeign $ toString value)]
 
-optShow :: forall value key. Show value => String -> Option key value
+optShow :: ∀ value key. Show value => String -> Option key value
 optShow key = Op \value -> Options [Tuple key (unsafeToForeign $ show value)]
 
 method :: Option FetchOptions Method

@@ -2,35 +2,30 @@ module TeamTavern.Server.Player.Register where
 
 import Prelude
 
-import Async (Async, examineLeftWithEffect)
-import Perun.Request.Body (Body)
-import Perun.Response (Response)
+import Async (Async)
+import Jarilo (noContent)
 import Postgres.Pool (Pool)
-import TeamTavern.Server.Architecture.Deployment (Deployment)
-import TeamTavern.Server.Infrastructure.Cookie (Cookies)
+import TeamTavern.Routes.Player.RegisterPlayer as RegisterPlayer
+import TeamTavern.Server.Infrastructure.Cookie (Cookies, setCookieHeaderFull)
+import TeamTavern.Server.Infrastructure.Deployment (Deployment)
 import TeamTavern.Server.Infrastructure.EnsureNotSignedIn (ensureNotSignedIn)
 import TeamTavern.Server.Infrastructure.Postgres (transaction)
+import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Player.Domain.Hash (generateHash)
 import TeamTavern.Server.Player.Domain.Id (Id(..))
 import TeamTavern.Server.Player.Register.AddPlayer (addPlayer)
-import TeamTavern.Server.Player.Register.LogError (logError)
-import TeamTavern.Server.Player.Register.ReadDto (readDto)
-import TeamTavern.Server.Player.Register.SendResponse (sendResponse)
 import TeamTavern.Server.Player.Register.ValidateRegistration (validateRegistration)
 import TeamTavern.Server.Session.Domain.Token as Token
 import TeamTavern.Server.Session.Start.CreateSession (createSession)
 
-register :: forall left. Deployment -> Pool -> Cookies -> Body -> Async left Response
-register deployment pool cookies body =
-    sendResponse deployment $ examineLeftWithEffect logError do
+register :: ∀ left. Deployment -> Pool -> Cookies -> RegisterPlayer.RequestContent -> Async left _
+register deployment pool cookies content =
+    sendResponse "Error registering player" do
     -- Ensure not signed in.
     ensureNotSignedIn cookies
 
-    -- Read register dto.
-    dto <- readDto body
-
     -- Validate register model.
-    { nickname, password } <- validateRegistration dto
+    { nickname, password } <- validateRegistration content
 
     -- Generate password hash.
     hash <- generateHash password
@@ -43,8 +38,8 @@ register deployment pool cookies body =
         id <- addPlayer client { nickname, hash }
 
         -- Add session to database.
-        createSession { id: Id id, token } client
+        createSession id token client
 
         pure id
 
-    pure { id: Id id, nickname, token }
+    pure $ noContent $ setCookieHeaderFull deployment { id: Id id, nickname, token }

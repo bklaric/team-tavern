@@ -3,15 +3,16 @@ module TeamTavern.Server.Player.Register.ValidateRegistration where
 import Prelude
 
 import Async (Async)
-import Async.Validated (fromValidated) as Async
+import Async.Validated (fromValidated) as AsyncVal
 import AsyncV (AsyncV)
 import AsyncV as AsyncV
+import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Bifunctor (lmap)
-import Data.Bifunctor.Label (label)
-import Data.List.NonEmpty as NonEmptyList
-import Data.List.Types (NonEmptyList)
-import Data.Variant (Variant)
+import Jarilo (badRequest_)
 import TeamTavern.Routes.Player.RegisterPlayer as RegisterPlayer
+import TeamTavern.Server.Infrastructure.Error (TerrorNeaVar, ValidatedTerrorNea)
+import TeamTavern.Server.Infrastructure.Error as Terror
+import TeamTavern.Server.Infrastructure.Response (BadRequestTerror)
 import TeamTavern.Server.Player.Domain.Nickname (Nickname, validateNickname)
 import TeamTavern.Server.Player.Domain.Password (Password, validatePassword)
 import Type.Proxy (Proxy(..))
@@ -21,24 +22,33 @@ type Registration =
     , password :: Password
     }
 
-type RegistrationError = Variant
-    ( nickname :: Array String
-    , password :: Array String
-    )
+type RegistrationErrors = NonEmptyArray RegisterPlayer.RegistrationError
 
-type RegistrationErrors = NonEmptyList RegistrationError
-
-validateRegistration :: forall errors.
-    RegisterPlayer.RequestContent -> Async (Variant (registration :: RegistrationErrors | errors)) Registration
-validateRegistration { nickname, password } =
+validateRegistration'
+    :: RegisterPlayer.RequestContent
+    -> ValidatedTerrorNea RegisterPlayer.RegistrationError Registration
+validateRegistration' { nickname, password } =
     { nickname: _, password: _ }
     <$> validateNickname nickname
     <*> validatePassword password
-    # Async.fromValidated
-    # label (Proxy :: _ "registration")
+
+validateRegistration
+    :: ∀ errors
+    .  RegisterPlayer.RequestContent
+    -> Async (BadRequestTerror RegisterPlayer.BadContent errors) Registration
+validateRegistration identifiers =
+    validateRegistration' identifiers
+    # AsyncVal.fromValidated
+    # lmap
+        (Terror.label ((Proxy :: _ "registration"))
+        >>> map badRequest_)
 
 validateRegistrationV
-    :: forall errors
+    :: ∀ errors
     .  RegisterPlayer.RequestContent
-    -> AsyncV (NonEmptyList (Variant (registration :: RegistrationErrors | errors))) Registration
-validateRegistrationV = validateRegistration >>> lmap NonEmptyList.singleton >>> AsyncV.fromAsync
+    -> AsyncV (TerrorNeaVar (registration :: RegistrationErrors | errors)) Registration
+validateRegistrationV =
+    validateRegistration'
+    >>> AsyncV.fromValidated
+    >>> AsyncV.lmap
+        (Terror.labelNea ((Proxy :: _ "registration")))

@@ -51,7 +51,7 @@ data Action
 
 type Slot = H.Slot (Const Void) Output Unit
 
-render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
+render :: ∀ left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render
     { requiredPlatforms
     , discordTag, discordTagError
@@ -95,10 +95,10 @@ render
         ]
     ]
 
-raiseOutput :: forall left. State -> H.HalogenM State Action ChildSlots Output (Async left) Unit
+raiseOutput :: ∀ left. State -> H.HalogenM State Action ChildSlots Output (Async left) Unit
 raiseOutput state = H.raise $ pick state
 
-handleAction :: forall left. Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
+handleAction :: ∀ left. Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
 handleAction (Receive input) = H.put input
 handleAction (UpdateDiscordTag discordTag)       = H.modify _ { discordTag      = discordTag    } >>= raiseOutput
 handleAction (UpdateDiscordServer discordServer) = H.modify _ { discordServer   = discordServer } >>= raiseOutput
@@ -111,7 +111,7 @@ handleAction (UpdatePsnId psnId)                 = H.modify _ { psnId           
 handleAction (UpdateGamerTag gamerTag)           = H.modify _ { gamerTag        = gamerTag      } >>= raiseOutput
 handleAction (UpdateFriendCode friendCode)       = H.modify _ { friendCode      = friendCode    } >>= raiseOutput
 
-component :: forall query left. H.Component query Input Output (Async left)
+component :: ∀ query left. H.Component query Input Output (Async left)
 component = H.mkComponent
     { initialState: identity
     , render
@@ -147,7 +147,7 @@ emptyInput requiredPlatforms =
     }
 
 contactsFormInput
-    :: forall action children left
+    :: ∀ action children left
     .  Input
     -> (Output -> action)
     -> HH.ComponentHTML action (playerContactsFormInput :: Slot | children) (Async left)

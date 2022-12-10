@@ -3,10 +3,10 @@ module TeamTavern.Client.Components.Checkable where
 import Halogen.HTML as HH
 import TeamTavern.Client.Snippets.Class as HS
 
-checkables :: forall slots action. Array (HH.HTML slots action) -> HH.HTML slots action
+checkables :: ∀ slots action. Array (HH.HTML slots action) -> HH.HTML slots action
 checkables = HH.div [ HS.class_ "checkables" ]
 
-checkbox :: forall slots action. Boolean -> HH.HTML slots action
+checkbox :: ∀ slots action. Boolean -> HH.HTML slots action
 checkbox checked =
     HH.div
     [ HS.class_ if checked then "checked-checkbox" else "checkbox" ]
@@ -14,7 +14,7 @@ checkbox checked =
 
 data CheckboxState = Checked | Unchecked | Indeterminate
 
-checkbox' :: forall slots action. CheckboxState -> HH.HTML slots action
+checkbox' :: ∀ slots action. CheckboxState -> HH.HTML slots action
 checkbox' state =
     HH.div
     [ HS.class_
@@ -33,7 +33,7 @@ checkbox' state =
         []
     ]
 
-radio :: forall slots action. Boolean -> HH.HTML slots action
+radio :: ∀ slots action. Boolean -> HH.HTML slots action
 radio checked =
     HH.div
     [ HS.class_ if checked then "checked-radio" else "radio" ]

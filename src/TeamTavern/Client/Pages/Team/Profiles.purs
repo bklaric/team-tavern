@@ -35,7 +35,7 @@ type ChildSlots children =
     )
 
 profiles
-    :: forall action children left
+    :: ∀ action children left
     .  ViewTeam.OkContent
     -> Status
     -> (ViewTeam.OkContentProfile -> action)

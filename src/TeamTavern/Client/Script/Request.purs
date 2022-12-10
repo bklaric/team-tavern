@@ -23,21 +23,21 @@ nothingIfEmpty string = if String.null string then Nothing else Just string
 justIfInt :: String -> Maybe Int
 justIfInt = Int.fromString
 
-get :: forall left ok. ReadForeign ok => String -> Async left (Maybe ok)
+get :: ∀ left ok. ReadForeign ok => String -> Async left (Maybe ok)
 get url = Async.unify do
     response <- Fetch.fetch_ url # lmap (const Nothing)
     case FetchRes.status response of
         200 -> FetchRes.text response >>= JsonAsync.readJSON # lmap (const Nothing)
         _ -> Async.left Nothing
 
-deleteNoContent :: forall bad. String -> Async bad (Maybe Unit)
+deleteNoContent :: ∀ bad. String -> Async bad (Maybe Unit)
 deleteNoContent url = Async.unify do
     response <- Fetch.fetch url (Fetch.method := DELETE) # lmap (const Nothing)
     case FetchRes.status response of
         204 -> pure $ Just unit
         _ -> Async.left Nothing
 
-withBody :: forall body ok bad left. WriteForeign body => ReadForeign ok => ReadForeign bad =>
+withBody :: ∀ body ok bad left. WriteForeign body => ReadForeign ok => ReadForeign bad =>
     Method -> String -> body -> Async left (Maybe (Either bad ok))
 withBody method url body = Async.unify do
     response
@@ -54,15 +54,15 @@ withBody method url body = Async.unify do
         _ -> Async.left Nothing
     pure $ Just result
 
-post :: forall body ok bad left. WriteForeign body => ReadForeign ok => ReadForeign bad =>
+post :: ∀ body ok bad left. WriteForeign body => ReadForeign ok => ReadForeign bad =>
     String -> body -> Async left (Maybe (Either bad ok))
 post = withBody POST
 
-put :: forall body ok bad left. WriteForeign body => ReadForeign ok => ReadForeign bad =>
+put :: ∀ body ok bad left. WriteForeign body => ReadForeign ok => ReadForeign bad =>
     String -> body -> Async left (Maybe (Either bad ok))
 put = withBody PUT
 
-withBodyNoContent :: forall body bad left. WriteForeign body => ReadForeign bad =>
+withBodyNoContent :: ∀ body bad left. WriteForeign body => ReadForeign bad =>
     Method -> String -> body -> Async left (Maybe (Either bad Unit))
 withBodyNoContent method url body = Async.unify do
     response
@@ -79,7 +79,7 @@ withBodyNoContent method url body = Async.unify do
         _ -> Async.left Nothing
     pure $ Just result
 
-withBodyNoContent' :: forall body left. WriteForeign body =>
+withBodyNoContent' :: ∀ body left. WriteForeign body =>
     Method -> String -> body -> Async left (Maybe Unit)
 withBodyNoContent' method url body = Async.unify do
     response
@@ -95,18 +95,18 @@ withBodyNoContent' method url body = Async.unify do
         _ -> Async.left Nothing
     pure $ Just result
 
-postNoContent :: forall body bad left. WriteForeign body => ReadForeign bad =>
+postNoContent :: ∀ body bad left. WriteForeign body => ReadForeign bad =>
     String -> body -> Async left (Maybe (Either bad Unit))
 postNoContent = withBodyNoContent POST
 
-postNoContent' :: forall body left. WriteForeign body =>
+postNoContent' :: ∀ body left. WriteForeign body =>
     String -> body -> Async left (Maybe Unit)
 postNoContent' = withBodyNoContent' POST
 
-putNoContent :: forall body bad left. WriteForeign body => ReadForeign bad =>
+putNoContent :: ∀ body bad left. WriteForeign body => ReadForeign bad =>
     String -> body -> Async left (Maybe (Either bad Unit))
 putNoContent = withBodyNoContent PUT
 
-putNoContent' :: forall body left. WriteForeign body =>
+putNoContent' :: ∀ body left. WriteForeign body =>
     String -> body -> Async left (Maybe Unit)
 putNoContent' = withBodyNoContent' PUT

@@ -18,7 +18,7 @@ import TeamTavern.Routes.Team.ViewTeam as ViewTeam
 import Type.Proxy (Proxy(..))
 
 details
-    :: forall action slots left
+    :: ∀ action slots left
     .  ViewTeam.OkContent
     -> Status
     -> action

@@ -21,7 +21,7 @@ locationToEntry (Region region subRegions) =
     , subEntries: subRegions <#> locationToEntry
     }
 
-nameInputGroup :: forall slots action. String -> (String -> action) -> Boolean -> HTML slots action
+nameInputGroup :: ∀ slots action. String -> (String -> action) -> Boolean -> HTML slots action
 nameInputGroup value onValue error =
     inputGroup $
     [ requiredInputLabel "fas fa-signature" "Name"
@@ -30,7 +30,7 @@ nameInputGroup value onValue error =
     <>
     inputError error "Name is required and cannot be more than 40 characters long."
 
-websiteInputGroup :: forall slots action.
+websiteInputGroup :: ∀ slots action.
     Maybe String -> (Maybe String -> action) -> Boolean -> HTML slots action
 websiteInputGroup value onValue error =
     inputGroup $
@@ -41,7 +41,7 @@ websiteInputGroup value onValue error =
     inputError error ("Website must be valid and cannot be more than 200 characters long. "
         <> "Please check and try again.")
 
-ageInputGroup :: forall slots action.
+ageInputGroup :: ∀ slots action.
     Maybe Int -> Maybe Int -> (Maybe Int -> action) -> (Maybe Int -> action) -> HTML slots action
 ageInputGroup ageFrom ageTo onAgeFrom onAgeTo =
     inputGroup
@@ -51,7 +51,7 @@ ageInputGroup ageFrom ageTo onAgeFrom onAgeTo =
     ]
 
 locationInputGroup
-    :: forall slots action left. Array String
+    :: ∀ slots action left. Array String
     -> (Array String -> action)
     -> ComponentHTML action (location :: MultiTreeSelect.Slot String | slots) (Async left)
 locationInputGroup value onValue =
@@ -68,7 +68,7 @@ locationInputGroup value onValue =
     ]
 
 languagesInputGroup
-    :: forall slots action left
+    :: ∀ slots action left
     .  Array String
     -> (Array String -> action)
     -> ComponentHTML action (language :: MultiSelect.Slot String Unit | slots) (Async left)
@@ -85,14 +85,14 @@ languagesInputGroup value onValue =
         onValue
     ]
 
-microphoneInputGroup :: forall slots action. Boolean -> (Boolean -> action) -> HTML slots action
+microphoneInputGroup :: ∀ slots action. Boolean -> (Boolean -> action) -> HTML slots action
 microphoneInputGroup value onValue =
     inputGroup
     [ inputLabel "fas fa-microphone" "Microphone"
     , checkboxInput value onValue "Must have a microphone and be willing to communicate."
     ]
 
-discordServerInputGroup :: forall slots action.
+discordServerInputGroup :: ∀ slots action.
     Maybe String -> (Maybe String -> action) -> Boolean -> HTML slots action
 discordServerInputGroup value onValue error =
     inputGroup $

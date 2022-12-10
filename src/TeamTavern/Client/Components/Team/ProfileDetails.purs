@@ -9,7 +9,7 @@ import TeamTavern.Client.Components.Detail (detail, fieldDetail)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
 
-profileDetails :: forall fieldOptionFields fieldValueFields fieldFields someMoreFields slots action.
+profileDetails :: ∀ fieldOptionFields fieldValueFields fieldFields someMoreFields slots action.
     { allPlatforms :: Platforms
     , selectedPlatforms :: Array Platform
     , fields :: Array
@@ -52,7 +52,7 @@ profileDetails { allPlatforms, selectedPlatforms, fields, fieldValues, newOrRetu
     , newOrReturning
     }
 
-profileDetails' :: forall fieldOptionFields fieldFields someMoreFields slots action.
+profileDetails' :: ∀ fieldOptionFields fieldFields someMoreFields slots action.
     { fieldValues :: Array
         { field ::
             { key :: String

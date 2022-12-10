@@ -4,9 +4,9 @@ import Prelude
 
 import Data.Maybe (Maybe)
 import Data.String (Pattern(..), length, split)
-import Data.Validated.Label (ValidatedVariants)
-import Type.Proxy (Proxy(..))
+import TeamTavern.Server.Infrastructure.Error (ValidatedTerrorNeaVar)
 import TeamTavern.Server.Profile.Infrastructure.ValidateContact (validateContact)
+import Type.Proxy (Proxy(..))
 
 newtype RiotId = RiotId String
 
@@ -35,6 +35,7 @@ isRiotIdValid riotId =
         && length discriminator <= maxDiscriminatorLength
     _ -> false
 
-validateRiotId :: forall errors. Maybe String -> ValidatedVariants (riotId :: String | errors) (Maybe RiotId)
+validateRiotId :: ∀ errors.
+    Maybe String -> ValidatedTerrorNeaVar (riotId :: {} | errors) (Maybe RiotId)
 validateRiotId riotId =
     validateContact riotId isRiotIdValid RiotId (Proxy :: _ "riotId") ("Invalid RiotId: " <> _)

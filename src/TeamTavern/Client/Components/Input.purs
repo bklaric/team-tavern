@@ -13,7 +13,7 @@ import TeamTavern.Client.Script.Request (justIfInt, nothingIfEmpty)
 import TeamTavern.Client.Snippets.Class as HS
 import Unsafe.Coerce (unsafeCoerce)
 
-inputLabel' :: forall slots action.
+inputLabel' :: ∀ slots action.
     String -> String -> Maybe String -> Boolean -> HH.HTML slots action
 inputLabel' icon label domain required =
     HH.label
@@ -31,19 +31,19 @@ inputLabel' icon label domain required =
     then [ divider, inputRequiredSublabel ]
     else []
 
-requiredDomainInputLabel :: forall slots action. String -> String -> String -> HH.HTML slots action
+requiredDomainInputLabel :: ∀ slots action. String -> String -> String -> HH.HTML slots action
 requiredDomainInputLabel icon label domain = inputLabel' icon label (Just domain) true
 
-domainInputLabel :: forall slots action. String -> String -> String -> HH.HTML slots action
+domainInputLabel :: ∀ slots action. String -> String -> String -> HH.HTML slots action
 domainInputLabel icon label domain = inputLabel' icon label (Just domain) false
 
-requiredInputLabel :: forall slots action. String -> String -> HH.HTML slots action
+requiredInputLabel :: ∀ slots action. String -> String -> HH.HTML slots action
 requiredInputLabel icon label = inputLabel' icon label Nothing true
 
-inputLabel :: forall slots action. String -> String -> HH.HTML slots action
+inputLabel :: ∀ slots action. String -> String -> HH.HTML slots action
 inputLabel icon label = inputLabel' icon label Nothing false
 
-platformIdLabel :: forall slots action.
+platformIdLabel :: ∀ slots action.
     HH.HTML slots action -> String -> Boolean -> HH.HTML slots action
 platformIdLabel icon label required =
     HH.label
@@ -54,40 +54,40 @@ platformIdLabel icon label required =
     <>
     guard required [ divider, inputRequiredSublabel ]
 
-inputSublabel :: forall slots action. String -> HH.HTML slots action
+inputSublabel :: ∀ slots action. String -> HH.HTML slots action
 inputSublabel text = HH.span [ HS.class_ "input-sublabel" ] [ HH.text text ]
 
-inputPrimarySublabel :: forall slots action. String -> HH.HTML slots action
+inputPrimarySublabel :: ∀ slots action. String -> HH.HTML slots action
 inputPrimarySublabel text = HH.span [ HS.class_ "input-primary-sublabel" ] [ HH.text text ]
 
-inputRequiredSublabel :: forall slots action. HH.HTML slots action
+inputRequiredSublabel :: ∀ slots action. HH.HTML slots action
 inputRequiredSublabel = inputPrimarySublabel "Required"
 
-inputErrorSublabel :: forall slots action. String -> HH.HTML slots action
+inputErrorSublabel :: ∀ slots action. String -> HH.HTML slots action
 inputErrorSublabel text = HH.span [ HS.class_ "input-error-sublabel" ] [ HH.text text ]
 
-inputUnderlabel' :: forall slots action. Array (HH.HTML slots action) -> HH.HTML slots action
+inputUnderlabel' :: ∀ slots action. Array (HH.HTML slots action) -> HH.HTML slots action
 inputUnderlabel' children = HH.label [ HS.class_ "input-underlabel" ] children
 
-inputUnderlabel :: forall slots action. String -> HH.HTML slots action
+inputUnderlabel :: ∀ slots action. String -> HH.HTML slots action
 inputUnderlabel text = inputUnderlabel' [ HH.text text ]
 
-inputError :: forall slots action. Boolean -> String -> Array (HH.HTML slots action)
+inputError :: ∀ slots action. Boolean -> String -> Array (HH.HTML slots action)
 inputError error text = guard error [ HH.p [ HS.class_ "input-error" ] [ HH.text text ] ]
 
-inputGroup :: forall slots action. Array (HH.HTML slots action) -> HH.HTML slots action
+inputGroup :: ∀ slots action. Array (HH.HTML slots action) -> HH.HTML slots action
 inputGroup group = HH.div [ HS.class_ "input-group" ] group
 
-responsiveInputGroups :: forall slots action. Array (HH.HTML slots action) -> HH.HTML slots action
+responsiveInputGroups :: ∀ slots action. Array (HH.HTML slots action) -> HH.HTML slots action
 responsiveInputGroups groups = HH.div [ HS.class_ "responsive-input-groups" ] groups
 
-inputGroupsHeading' :: forall slots action. Array (HH.HTML slots action) -> HH.HTML slots action
+inputGroupsHeading' :: ∀ slots action. Array (HH.HTML slots action) -> HH.HTML slots action
 inputGroupsHeading' children = HH.h2 [ HS.class_ "input-groups-heading" ] children
 
-inputGroupsHeading :: forall slots action. String -> HH.HTML slots action
+inputGroupsHeading :: ∀ slots action. String -> HH.HTML slots action
 inputGroupsHeading text = inputGroupsHeading' [ HH.text text ]
 
-requiredTextLineInput :: forall slots action. String -> (String -> action) -> HH.HTML slots action
+requiredTextLineInput :: ∀ slots action. String -> (String -> action) -> HH.HTML slots action
 requiredTextLineInput input onInput =
     HH.input
     [ HS.class_ "text-line-input"
@@ -96,12 +96,12 @@ requiredTextLineInput input onInput =
     , HE.onValueInput onInput
     ]
 
-textLineInput :: forall slots action.
+textLineInput :: ∀ slots action.
     Maybe String -> (Maybe String -> action) -> HH.HTML slots action
 textLineInput input onInput =
     requiredTextLineInput (maybe "" identity input) (onInput <<< nothingIfEmpty)
 
-textInput :: forall slots action. String -> String -> (String -> action) -> HH.HTML slots action
+textInput :: ∀ slots action. String -> String -> (String -> action) -> HH.HTML slots action
 textInput placeholder input onInput =
     HH.textarea
     [ HS.class_ "text-input"
@@ -110,10 +110,10 @@ textInput placeholder input onInput =
     , HE.onValueInput onInput
     ]
 
-textInput_ :: forall slots action. String -> (String -> action) -> HH.HTML slots action
+textInput_ :: ∀ slots action. String -> (String -> action) -> HH.HTML slots action
 textInput_ = textInput ""
 
-numberInput :: forall slots action. Maybe Int -> (Maybe Int -> action) -> HH.HTML slots action
+numberInput :: ∀ slots action. Maybe Int -> (Maybe Int -> action) -> HH.HTML slots action
 numberInput (input :: Maybe Int) onInput =
     HH.input
     [ HS.class_ $ "range-input-part"
@@ -122,7 +122,7 @@ numberInput (input :: Maybe Int) onInput =
     , HE.onValueChange $ onInput <<< justIfInt
     ]
 
-numberRangeInput :: forall slots action.
+numberRangeInput :: ∀ slots action.
     Maybe Int -> Maybe Int -> (Maybe Int -> action) -> (Maybe Int -> action) -> HH.HTML slots action
 numberRangeInput fromInput toInput onFromInput onToInput =
     HH.div
@@ -133,7 +133,7 @@ numberRangeInput fromInput toInput onFromInput onToInput =
     , numberInput toInput onToInput
     ]
 
-timeInput :: forall slots action.
+timeInput :: ∀ slots action.
     Boolean -> Maybe String -> (Maybe String -> action) -> HH.HTML slots action
 timeInput disabled input onInput =
     HH.input
@@ -145,7 +145,7 @@ timeInput disabled input onInput =
     ]
 
 timeRangeInput
-    :: forall slots action
+    :: ∀ slots action
     .  Boolean
     -> Maybe String
     -> Maybe String
@@ -161,7 +161,7 @@ timeRangeInput disabled fromInput toInput onFromInput onToInput =
     , timeInput disabled toInput onToInput
     ]
 
-timeRangeInputUnderlabel :: forall slots action.
+timeRangeInputUnderlabel :: ∀ slots action.
     Boolean -> Maybe String -> Maybe String -> Array (HH.HTML slots action)
 timeRangeInputUnderlabel disabled fromInput toInput =
     if disabled
@@ -170,7 +170,7 @@ timeRangeInputUnderlabel disabled fromInput toInput =
     then [ inputUnderlabel "Enter both times for the field to have effect." ]
     else []
 
-dateInput :: forall slots action.
+dateInput :: ∀ slots action.
     String -> String -> (Maybe String) -> (Maybe String -> action) -> HH.HTML slots action
 dateInput min max value onValue =
     HH.input
@@ -182,10 +182,10 @@ dateInput min max value onValue =
     , HE.onValueInput $ onValue <<< nothingIfEmpty
     ]
 
-checkboxLabel :: forall slots action. String -> HH.HTML slots action
+checkboxLabel :: ∀ slots action. String -> HH.HTML slots action
 checkboxLabel label = HH.span [ HS.class_ "checkbox-input-label" ] [ HH.text label ]
 
-checkboxInput :: forall slots action.
+checkboxInput :: ∀ slots action.
     Boolean -> (Boolean -> action) -> String -> HH.HTML slots action
 checkboxInput checked onChecked label =
     HH.div

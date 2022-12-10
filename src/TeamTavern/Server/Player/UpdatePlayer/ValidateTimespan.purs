@@ -15,9 +15,9 @@ type Minutes = Int
 
 data Time = Time Hours Minutes
 
-derive instance eqTime :: Eq Time
+derive instance Eq Time
 
-instance ordTime :: Ord Time where
+instance Ord Time where
     compare (Time hoursLeft minutesLeft) (Time hoursRight minutesRight) =
         case compare hoursLeft hoursRight of
         GT -> GT

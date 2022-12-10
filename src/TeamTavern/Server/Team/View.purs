@@ -2,17 +2,15 @@ module TeamTavern.Server.Team.View (view) where
 
 import Prelude
 
-import Async (Async, alwaysRight, examineLeftWithEffect)
-import Data.Variant (match)
-import Effect (Effect)
-import Perun.Response (Response, internalServerError__, notFound__, ok_)
+import Async (Async)
+import Data.Bifunctor (lmap)
+import Jarilo (ok_)
 import Postgres.Pool (Pool)
 import Postgres.Query (Query(..), (:))
 import TeamTavern.Routes.Team.ViewTeam as ViewTeam
-import TeamTavern.Server.Infrastructure.Error (LoadSingleError)
-import TeamTavern.Server.Infrastructure.Log (logLoadSingleError)
-import TeamTavern.Server.Infrastructure.Postgres (queryFirstNotFound, teamAdjustedWeekdayFrom, teamAdjustedWeekdayTo, teamAdjustedWeekendFrom, teamAdjustedWeekendTo)
-import Yoga.JSON (writeJSON)
+import TeamTavern.Server.Infrastructure.Error (elaborate)
+import TeamTavern.Server.Infrastructure.Postgres (LoadSingleError, queryFirstNotFound, teamAdjustedWeekdayFrom, teamAdjustedWeekdayTo, teamAdjustedWeekendFrom, teamAdjustedWeekendTo)
+import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 
 queryString :: String -> Query
 queryString timezone = Query $ """
@@ -195,22 +193,13 @@ queryString timezone = Query $ """
     group by team.id, player.nickname;
     """
 
-loadTeam :: forall errors. Pool -> ViewTeam.RouteParams -> Async (LoadSingleError errors) ViewTeam.OkContent
-loadTeam pool { handle, timezone } = queryFirstNotFound pool (queryString timezone) (handle : [])
+loadTeam :: ∀ errors.
+    Pool -> ViewTeam.RouteParams -> Async (LoadSingleError errors) ViewTeam.OkContent
+loadTeam pool { handle, timezone } =
+    queryFirstNotFound pool (queryString timezone) (handle : [])
+    # lmap (elaborate ("Can't find team: " <> handle))
 
-logError :: LoadSingleError () -> Effect Unit
-logError = logLoadSingleError "Error viewing team"
-
-sendResponse :: Async (LoadSingleError ()) ViewTeam.OkContent -> (forall left. Async left Response)
-sendResponse = alwaysRight
-    (match
-        { internal: const internalServerError__
-        , notFound: const notFound__
-        }
-    )
-    (ok_ <<< (writeJSON :: ViewTeam.OkContent -> String))
-
-view :: forall left. Pool -> ViewTeam.RouteParams -> Async left Response
+view :: ∀ left. Pool -> ViewTeam.RouteParams -> Async left _
 view pool routeParams =
-    sendResponse $ examineLeftWithEffect logError do
-    loadTeam pool routeParams
+    sendResponse "Error viewing team" do
+    ok_ <$> loadTeam pool routeParams

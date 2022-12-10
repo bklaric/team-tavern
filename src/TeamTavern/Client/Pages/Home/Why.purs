@@ -5,7 +5,7 @@ import Prelude
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 
-why :: forall slots action. HH.HTML slots action
+why :: ∀ slots action. HH.HTML slots action
 why =
     HH.div [ HP.class_ $ HH.ClassName "why" ]
     [ HH.h2 [ HP.class_ $ HH.ClassName "why-heading" ]

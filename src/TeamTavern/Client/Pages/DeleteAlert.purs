@@ -28,7 +28,7 @@ data State = Empty | Deleted | NotFound | Error
 
 type Slot = H.Slot (Const Void) Void Unit
 
-render :: forall slots action. State -> HH.HTML slots action
+render :: ∀ slots action. State -> HH.HTML slots action
 render Empty = HH.div_ []
 render Deleted =
     HH.div [ HS.class_ "single-message" ]
@@ -52,7 +52,7 @@ render Error =
         ]
     ]
 
-handleAction :: forall slots output left.
+handleAction :: ∀ slots output left.
     Action -> H.HalogenM State Action slots output (Async left) Unit
 handleAction Initialize = do
     searchParams <- Html.window >>= Window.location >>= Location.href
@@ -71,13 +71,13 @@ handleAction Initialize = do
             H.put nextState
         _, _ -> H.put Error
 
-component :: forall query input output left. H.Component query input output (Async left)
+component :: ∀ query input output left. H.Component query input output (Async left)
 component = H.mkComponent
     { initialState: const Empty
     , render
     , eval: H.mkEval $ H.defaultEval { handleAction = handleAction, initialize = Just Initialize }
     }
 
-deleteAlert :: forall query children left.
+deleteAlert :: ∀ query children left.
     HH.ComponentHTML query (deleteAlert :: Slot | children) (Async left)
 deleteAlert = HH.slot (Proxy :: _ "deleteAlert") unit component unit absurd

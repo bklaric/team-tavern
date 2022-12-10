@@ -156,18 +156,6 @@ create table team_profile_field_value_option
     , field_option_id integer not null references field_option(id)
     );
 
-create table competition
-    ( id serial not null primary key
-    , game_id integer not null references game(id) on delete cascade
-    , handle text not null
-    , name text not null
-    , description text[] not null
-    , website text
-    , discord_server text
-    , region text not null
-    , signup_deadline date
-    );
-
 create table alert
     ( id serial not null primary key
     , game_id integer not null references game(id)

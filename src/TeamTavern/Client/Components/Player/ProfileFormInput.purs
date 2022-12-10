@@ -109,14 +109,14 @@ data Action
 
 type Slot = H.Slot (Const Void) Output Unit
 
-fieldValuesToArray :: forall key value. Map key value -> Array value
+fieldValuesToArray :: ∀ key value. Map key value -> Array value
 fieldValuesToArray = Array.fromFoldable <<< Map.values
 
-fieldValuesToMap :: forall fields.
+fieldValuesToMap :: ∀ fields.
     Array { fieldKey :: String | fields } -> Map String { fieldKey :: String | fields }
 fieldValuesToMap = foldl (\map value -> Map.insert value.fieldKey value map) Map.empty
 
-render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
+render :: ∀ left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render
     { details: { platforms, fields, platform, fieldValues, newOrReturning, about, ambitions, urlErrors, aboutError, ambitionsError }
     , contacts
@@ -155,14 +155,14 @@ render
     , ambitionsInputGroup ambitions UpdateAmbitions ambitionsError
     ]
 
-raiseOutput :: forall left. State -> H.HalogenM State Action ChildSlots Output (Async left) Unit
+raiseOutput :: ∀ left. State -> H.HalogenM State Action ChildSlots Output (Async left) Unit
 raiseOutput state = let
     details = state.details { fieldValues = fieldValuesToArray state.details.fieldValues } # pick
     contacts = pick state.contacts
     in
     H.raise { details, contacts }
 
-handleAction :: forall left. Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
+handleAction :: ∀ left. Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
 handleAction (Receive input) =
     H.put $ input { details { fieldValues = fieldValuesToMap input.details.fieldValues } }
 handleAction (UpdatePlatform platform) = H.modify _ { details { platform = platform } } >>= raiseOutput
@@ -225,7 +225,7 @@ handleAction (UpdatePsnId psnId)              = H.modify _ { contacts { psnId   
 handleAction (UpdateGamerTag gamerTag)        = H.modify _ { contacts { gamerTag        = gamerTag   } } >>= raiseOutput
 handleAction (UpdateFriendCode friendCode)    = H.modify _ { contacts { friendCode      = friendCode } } >>= raiseOutput
 
-component :: forall query left. H.Component query Input Output (Async left)
+component :: ∀ query left. H.Component query Input Output (Async left)
 component = H.mkComponent
     { initialState: \input -> input { details { fieldValues = fieldValuesToMap input.details.fieldValues } }
     , render
@@ -235,7 +235,7 @@ component = H.mkComponent
         }
     }
 
-emptyInput :: forall props.
+emptyInput :: ∀ props.
     { platforms :: Platforms, fields :: Array Field | props } -> Input
 emptyInput { platforms, fields } =
     { details:
@@ -273,7 +273,7 @@ emptyInput { platforms, fields } =
     }
 
 profileFormInput
-    :: forall action slots left
+    :: ∀ action slots left
     .  Input
     -> (Output -> action)
     -> HH.ComponentHTML action (playerProfileFormInput :: Slot | slots) (Async left)

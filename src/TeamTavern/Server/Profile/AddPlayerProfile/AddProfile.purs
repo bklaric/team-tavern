@@ -6,7 +6,7 @@ import Async (Async)
 import Postgres.Client (Client)
 import Postgres.Query (Query(..), QueryParameter, (:), (:|))
 import TeamTavern.Routes.Profile.AddPlayerProfile as AddPlayerProfile
-import TeamTavern.Server.Infrastructure.Error (InternalError)
+import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstInternal)
 import TeamTavern.Server.Profile.AddPlayerProfile.AddFieldValues (ProfileId, addFieldValues)
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile (Profile)
@@ -27,15 +27,15 @@ queryParameters playerId { handle }
     { platform, newOrReturning, about, ambitions } =
     playerId : handle : writeImpl platform : newOrReturning : about :| ambitions
 
-addProfile' :: forall errors.
-    Client -> Int -> AddPlayerProfile.RouteParams -> Profile -> Async (InternalError errors) ProfileId
+addProfile' :: ∀ errors.
+    Client -> Int -> AddPlayerProfile.RouteParams -> Profile -> Async (InternalTerror_ errors) ProfileId
 addProfile' client playerId identifiers profile = do
     { profileId } :: { profileId :: Int } <- queryFirstInternal client queryString
         (queryParameters playerId identifiers profile)
     pure profileId
 
-addProfile :: forall errors.
-    Client -> Int -> AddPlayerProfile.RouteParams -> Profile -> Async (InternalError errors) Int
+addProfile :: ∀ errors.
+    Client -> Int -> AddPlayerProfile.RouteParams -> Profile -> Async (InternalTerror_ errors) Int
 addProfile client playerId identifiers profile @ { fieldValues } = do
     profileId <- addProfile' client playerId identifiers profile
     addFieldValues client profileId fieldValues

@@ -80,7 +80,7 @@ type ChildSlots =
 
 type Slot = H.Slot (Const Void) Output Unit
 
-render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
+render :: ∀ left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render state =
     HH.div_
     [ inputGroupsHeading "Personal"
@@ -103,10 +103,10 @@ render state =
         ]
     ]
 
-raiseOutput :: forall left. State -> H.HalogenM State Action ChildSlots Output (Async left) Unit
+raiseOutput :: ∀ left. State -> H.HalogenM State Action ChildSlots Output (Async left) Unit
 raiseOutput = pick >>> H.raise
 
-handleAction :: forall left. Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
+handleAction :: ∀ left. Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
 handleAction Initialize = do
     state <- H.get
     timezone <- maybe getClientTimezone pure state.timezone
@@ -154,7 +154,7 @@ handleAction (UpdateWeekendTo weekendTo) = do
     state <- H.modify _ { weekendTo = weekendTo }
     raiseOutput state
 
-component :: forall query left.
+component :: ∀ query left.
     H.Component query Input Output (Async left)
 component = H.mkComponent
     { initialState: Record.insert (Proxy :: _ "thirteenYearsAgo") ""
@@ -180,7 +180,7 @@ emptyInput =
     }
 
 playerFormInput
-    :: forall action children left
+    :: ∀ action children left
     .  Input
     -> (Output -> action)
     -> HH.ComponentHTML action (playerFormInput :: Slot | children) (Async left)

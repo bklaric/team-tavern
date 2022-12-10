@@ -2,34 +2,30 @@ module TeamTavern.Server.Profile.AddPlayerProfile where
 
 import Prelude
 
-import Async (Async, examineLeftWithEffect)
+import Async (Async)
 import AsyncV as AsyncV
-import Data.Bifunctor.Label (label)
+import Data.Bifunctor (lmap)
 import Data.Map (Map)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
-import Perun.Request.Body (Body)
-import Perun.Response (Response)
+import Jarilo (badRequest_, noContent_)
 import Postgres.Pool (Pool)
 import TeamTavern.Routes.Profile.AddPlayerProfile as AddPlayerProfile
 import TeamTavern.Routes.Shared.Platform (Platform(..))
 import TeamTavern.Server.Infrastructure.EnsureSignedInAs (ensureSignedInAs)
 import TeamTavern.Server.Infrastructure.Postgres (transaction)
+import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Player.UpdateContacts.ValidateContacts (validateContactsV)
 import TeamTavern.Server.Profile.AddPlayerProfile.AddProfile (addProfile)
 import TeamTavern.Server.Profile.AddPlayerProfile.LoadFields (loadFields)
-import TeamTavern.Server.Profile.AddPlayerProfile.LogError (logError)
-import TeamTavern.Server.Profile.AddPlayerProfile.ReadProfile (readProfile)
-import TeamTavern.Server.Profile.AddPlayerProfile.SendResponse (sendResponse)
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile (validateProfileV)
-import TeamTavern.Server.Profile.Infrastructure.CheckPlayerAlerts (checkPlayerAlerts)
 import TeamTavern.Server.Profile.Infrastructure.PatchPlayerContacts (patchPlayerContacts)
 import Type.Proxy (Proxy(..))
 
-addPlayerProfile :: forall left.
-    Pool -> AddPlayerProfile.RouteParams -> Map String String -> Body -> Async left Response
-addPlayerProfile pool identifiers cookies body =
-    sendResponse $ examineLeftWithEffect logError do
+addPlayerProfile :: ∀ left.
+    Pool -> Map String String -> AddPlayerProfile.RouteParams -> _ -> Async left _
+addPlayerProfile pool cookies identifiers profile' =
+    sendResponse "Error creating player profile" do
 
     profileId <- pool # transaction \client -> do
         -- Read info info from cookies.
@@ -37,9 +33,6 @@ addPlayerProfile pool identifiers cookies body =
 
         -- Load game fields from database.
         game <- loadFields client identifiers.handle
-
-        -- Read profile from body.
-        profile' <- readProfile body
 
         -- We only want to patch the selected platform contact.
         let contacts' = profile'.contacts
@@ -56,10 +49,10 @@ addPlayerProfile pool identifiers cookies body =
         -- Validate profile and contacts.
         { profile, contacts } <-
             { profile: _, contacts: _ }
-            <$> validateProfileV game profile'.details
-            <*> validateContactsV [ profile'.details.platform ] contacts'
+            <$> validateProfileV game profile'.details (Proxy :: _ "profile")
+            <*> validateContactsV [ profile'.details.platform ] contacts' (Proxy :: _ "contacts")
             # AsyncV.toAsync
-            # label (Proxy :: _ "invalidBody")
+            # lmap (map badRequest_)
 
         -- Add profile to database.
         profileId <- addProfile client (unwrap cookieInfo.id) identifiers profile
@@ -70,4 +63,6 @@ addPlayerProfile pool identifiers cookies body =
         pure profileId
 
     -- Check alerts and notify.
-    checkPlayerAlerts profileId pool
+    -- checkPlayerAlerts profileId pool
+
+    pure noContent_

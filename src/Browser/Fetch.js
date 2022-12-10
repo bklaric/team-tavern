@@ -1,3 +1,4 @@
+import fetch from 'node-fetch';
 export const fetchImpl = function (url) {
     return function (options) {
         return function (successCallback) {

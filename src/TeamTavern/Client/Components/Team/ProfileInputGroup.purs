@@ -30,7 +30,7 @@ type Field =
 type FieldValues = MultiMap String String
 
 fieldInputGroup
-    :: forall action slots left
+    :: ∀ action slots left
     .  FieldValues
     -> (String -> (MultiSelect.Output Option) -> action)
     -> Field
@@ -53,7 +53,7 @@ fieldInputGroup fieldValues onValue field =
         (onValue field.key)
     ]
 
-newOrReturningInputGroup :: forall slots action.
+newOrReturningInputGroup :: ∀ slots action.
     Boolean -> (Boolean -> action) -> HH.HTML slots action
 newOrReturningInputGroup value onValue =
     inputGroup
@@ -61,7 +61,7 @@ newOrReturningInputGroup value onValue =
     , checkboxInput value onValue "Must be new or returning players to the game."
     ]
 
-aboutInputGroup :: forall slots action.
+aboutInputGroup :: ∀ slots action.
     String -> (String -> action) -> Boolean -> HH.HTML slots action
 aboutInputGroup value onValue error =
     inputGroup $
@@ -69,7 +69,7 @@ aboutInputGroup value onValue error =
     <>
     inputError error "About text cannot be more than 2000 characters long."
 
-ambitionsInputGroup :: forall slots action.
+ambitionsInputGroup :: ∀ slots action.
     String -> (String -> action) -> Boolean -> HH.HTML slots action
 ambitionsInputGroup value onValue error =
     inputGroup $

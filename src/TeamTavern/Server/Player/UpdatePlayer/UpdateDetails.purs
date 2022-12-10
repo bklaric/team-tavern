@@ -5,8 +5,8 @@ import Prelude
 import Async (Async)
 import Data.Nullable (toNullable)
 import Postgres.Query (class Querier, Query(..), QueryParameter, (:), (:|))
-import TeamTavern.Server.Infrastructure.Error (InternalError)
 import TeamTavern.Server.Infrastructure.Postgres (queryNone)
+import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
 import TeamTavern.Server.Player.UpdatePlayer.ValidatePlayer (Player)
 import TeamTavern.Server.Player.UpdatePlayer.ValidateTimespan (nullableTimeFrom, nullableTimeTo)
 
@@ -39,7 +39,7 @@ queryParameters playerId model =
     : nullableTimeTo model.onlineWeekend
     :| model.microphone
 
-updateDetails :: forall querier errors. Querier querier =>
-    querier -> Int -> Player -> Async (InternalError errors) Unit
+updateDetails :: ∀ querier errors. Querier querier =>
+    querier -> Int -> Player -> Async (InternalTerror_ errors) Unit
 updateDetails querier playerId updateModel =
     queryNone querier queryString (queryParameters playerId updateModel)

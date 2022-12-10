@@ -1,19 +1,16 @@
 module TeamTavern.Routes.Team.CreateTeam where
 
+import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Maybe (Maybe)
-import Data.Variant (Variant)
-import Jarilo.Method (Post)
-import Jarilo.Path (type (:>), End)
-import Jarilo.Query (NoQuery)
-import Jarilo.Route (FullRoute)
-import Jarilo.Segment (Literal)
+import Jarilo (type (!), type (==>), BadRequestJson, Internal_, Literal, OkJson, PostJson_, NotAuthorized_)
 import TeamTavern.Routes.Shared.Organization (OrganizationNW)
+import TeamTavern.Routes.Shared.TeamBase (TeamError)
 
-type CreateTeam = FullRoute
-    Post
-    (  Literal "teams"
-    :> End)
-    NoQuery
+type CreateTeam =
+    PostJson_
+    (Literal "teams")
+    RequestContent
+    ==> OkJson OkContent ! BadRequestJson BadContent ! NotAuthorized_ ! Internal_
 
 type RequestContent =
     { organization :: OrganizationNW
@@ -34,9 +31,4 @@ type OkContent =
     , handle :: String
     }
 
-type BadContentError = Variant
-    ( name :: Array String
-    , website :: Array String
-    )
-
-type BadContent = Array BadContentError
+type BadContent = NonEmptyArray TeamError

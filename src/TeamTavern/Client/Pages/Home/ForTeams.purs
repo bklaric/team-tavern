@@ -7,7 +7,7 @@ import Halogen.HTML as HH
 import TeamTavern.Client.Components.Landing (landingSection, landingSectionButton, landingSectionDescription, landingSectionHeading, landingSectionImage, landingSectionSubheading, landingSectionText)
 import Web.UIEvent.MouseEvent (MouseEvent)
 
-forTeams :: forall slots action. (MouseEvent -> action) -> HH.HTML slots action
+forTeams :: ∀ slots action. (MouseEvent -> action) -> HH.HTML slots action
 forTeams onClick =
     landingSection
     [ landingSectionImage Nothing "/images/for-teams"
@@ -28,7 +28,7 @@ forTeams onClick =
         ]
     ]
 
-forTeams' :: forall slots action. String -> String -> (MouseEvent -> action) -> HH.HTML slots action
+forTeams' :: ∀ slots action. String -> String -> (MouseEvent -> action) -> HH.HTML slots action
 forTeams' handle title onClick =
     landingSection
     [ landingSectionImage (Just title) $ "/images/" <> handle <> "/for-teams"

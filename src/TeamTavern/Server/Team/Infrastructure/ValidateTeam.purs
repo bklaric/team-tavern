@@ -3,18 +3,17 @@ module TeamTavern.Server.Team.Infrastructure.ValidateTeam where
 import Prelude
 
 import Async (Async)
-import Async.Validated as Async
+import Async.Validated as AsyncVal
 import AsyncV (AsyncV)
 import AsyncV as AsyncV
 import Data.Bifunctor (lmap)
-import Data.Bifunctor.Label (label)
-import Data.List.NonEmpty as NonEmptyList
-import Data.List.Types (NonEmptyList)
 import Data.Maybe (Maybe(..))
-import Data.Validated.Label (ValidatedVariants)
-import Data.Variant (Variant)
+import Jarilo (badRequest_)
 import TeamTavern.Routes.Shared.Organization (OrganizationNW(..))
 import TeamTavern.Routes.Team.CreateTeam as CreateTeam
+import TeamTavern.Server.Infrastructure.Error (TerrorNeaVar, ValidatedTerror)
+import TeamTavern.Server.Infrastructure.Error as Terror
+import TeamTavern.Server.Infrastructure.Response (BadRequestTerror)
 import TeamTavern.Server.Player.UpdatePlayer.ValidateLangugase (Language, validateLanguages)
 import TeamTavern.Server.Player.UpdatePlayer.ValidateTimespan (Timespan, validateTimespan)
 import TeamTavern.Server.Player.UpdatePlayer.ValidateTimezone (Timezone, validateTimezone)
@@ -39,13 +38,14 @@ toString :: Organization -> String
 toString Informal = "informal"
 toString (Organized _) = "organized"
 
-validateOrganization
-    :: forall errors
-    .  OrganizationNW
-    -> ValidatedVariants (name :: Array String, website :: Array String | errors) Organization
+validateOrganization ::
+    OrganizationNW -> ValidatedTerror CreateTeam.BadContent Organization
 validateOrganization InformalNW = pure Informal
 validateOrganization (OrganizedNW { name, website }) =
-    Organized <$> ({ name: _, website: _ } <$> validateName name <*> validateWebsite website)
+    Organized
+    <$> ({ name: _, website: _ }
+    <$> validateName name
+    <*> validateWebsite website)
 
 type Team =
     { organization :: Organization
@@ -58,18 +58,19 @@ type Team =
     , onlineWeekend :: Maybe Timespan
     }
 
-type TeamErrors = NonEmptyList CreateTeam.BadContentError
-
-validateTeam :: forall errors. CreateTeam.RequestContent -> Async (Variant (team :: TeamErrors | errors)) Team
-validateTeam (team :: CreateTeam.RequestContent) = let
+validateTeam' ::
+    CreateTeam.RequestContent -> ValidatedTerror CreateTeam.BadContent Team
+validateTeam' team = let
     organization = validateOrganization team.organization
     ageSpan = validateAgeSpan team.ageFrom team.ageTo
     locations = validateRegions team.locations
     languages = validateLanguages team.languages
     microphone = team.microphone
     timezone = validateTimezone team.timezone
-    onlineWeekday = timezone >>= (const $ validateTimespan team.weekdayFrom team.weekdayTo)
-    onlineWeekend = timezone >>= (const $ validateTimespan team.weekendFrom team.weekendTo)
+    onlineWeekday =
+        timezone >>= (const $ validateTimespan team.weekdayFrom team.weekdayTo)
+    onlineWeekend =
+        timezone >>= (const $ validateTimespan team.weekendFrom team.weekendTo)
     in
     { organization: _
     , ageSpan, locations
@@ -77,8 +78,21 @@ validateTeam (team :: CreateTeam.RequestContent) = let
     , timezone, onlineWeekday, onlineWeekend
     }
     <$> organization
-    # Async.fromValidated # label (Proxy :: _ "team")
 
-validateTeamV :: forall errors.
-    CreateTeam.RequestContent -> AsyncV (NonEmptyList (Variant (team :: TeamErrors | errors))) Team
-validateTeamV = validateTeam >>> lmap NonEmptyList.singleton >>> AsyncV.fromAsync
+validateTeam
+    :: ∀ errors
+    .  CreateTeam.RequestContent
+    -> Async (BadRequestTerror CreateTeam.BadContent errors) Team
+validateTeam team =
+    validateTeam' team
+    # AsyncVal.fromValidated
+    # lmap (map badRequest_)
+
+validateTeamV
+    :: ∀ errors
+    .  CreateTeam.RequestContent
+    -> AsyncV (TerrorNeaVar (team :: CreateTeam.BadContent | errors)) Team
+validateTeamV team = validateTeam'
+    team
+    # AsyncV.fromValidated
+    # AsyncV.lmap (Terror.labelNea (Proxy :: _ "team"))

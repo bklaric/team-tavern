@@ -13,29 +13,29 @@ import Halogen.HTML as HH
 import TeamTavern.Client.Components.Anchor (textAnchor)
 import TeamTavern.Client.Snippets.Class as HS
 
-detailColumnsContainer :: forall slots action. Array (HH.HTML slots action) -> HH.HTML slots action
+detailColumnsContainer :: ∀ slots action. Array (HH.HTML slots action) -> HH.HTML slots action
 detailColumnsContainer = HH.div [ HS.class_ "detail-columns-container" ]
 
-detailColumns :: forall slots action. Array (HH.HTML slots action) -> HH.HTML slots action
+detailColumns :: ∀ slots action. Array (HH.HTML slots action) -> HH.HTML slots action
 detailColumns = HH.div [ HS.class_ "detail-columns" ]
 
-detailColumn :: forall slots action. Array (HH.HTML slots action) -> HH.HTML slots action
+detailColumn :: ∀ slots action. Array (HH.HTML slots action) -> HH.HTML slots action
 detailColumn = HH.div [ HS.class_ "detail-column" ]
 
-detailColumnHeading3 :: forall slots action. String -> HH.HTML slots action
+detailColumnHeading3 :: ∀ slots action. String -> HH.HTML slots action
 detailColumnHeading3 heading = HH.h3 [ HS.class_ "detail-column-heading" ] [ HH.text heading ]
 
-detailColumnHeading4 :: forall slots action. String -> HH.HTML slots action
+detailColumnHeading4 :: ∀ slots action. String -> HH.HTML slots action
 detailColumnHeading4 heading = HH.h4 [ HS.class_ "detail-column-heading" ] [ HH.text heading ]
 
-detail' :: forall slots action.
+detail' :: ∀ slots action.
     HH.HTML slots action -> Array (HH.HTML slots action) -> HH.HTML slots action
 detail' icon children = HH.p [ HS.class_ "detail" ] $ [ icon ] <> children
 
-detail :: forall slots action. String -> Array (HH.HTML slots action) -> HH.HTML slots action
+detail :: ∀ slots action. String -> Array (HH.HTML slots action) -> HH.HTML slots action
 detail icon children = detail' (HH.i [ HS.class_ $ icon <> " detail-icon" ] []) children
 
-fieldDetail' :: forall slots action.
+fieldDetail' :: ∀ slots action.
     HH.HTML slots action -> String -> Array (HH.HTML slots action) -> HH.HTML slots action
 fieldDetail' icon label children =
     detail' icon $
@@ -43,7 +43,7 @@ fieldDetail' icon label children =
     <>
     children
 
-fieldDetail :: forall slots action.
+fieldDetail :: ∀ slots action.
     String -> String -> Array (HH.HTML slots action) -> HH.HTML slots action
 fieldDetail icon label children =
     detail icon $
@@ -51,12 +51,12 @@ fieldDetail icon label children =
     <>
     children
 
-urlDetail :: forall slots action. String -> String -> Maybe String -> Maybe (HH.HTML slots action)
+urlDetail :: ∀ slots action. String -> String -> Maybe String -> Maybe (HH.HTML slots action)
 urlDetail _ _ Nothing = Nothing
 urlDetail icon text (Just href) = Just $ detail icon [ textAnchor "detail-url" href text ]
 
 discordTagDetail
-    :: forall action left slots
+    :: ∀ action left slots
     .  String
     -> Maybe String
     -> Maybe (HH.ComponentHTML action ( discordTag :: Copyable.Slot String | slots) (Async left))
@@ -65,7 +65,7 @@ discordTagDetail nickname (Just discordTag) = Just $
     fieldDetail "fab fa-discord" "Discord tag"
     [ copyable (Proxy :: _ "discordTag") ("discordTag-" <> nickname) discordTag ]
 
-arrangeItems :: forall slots action. String -> Array String -> Array (HH.HTML slots action)
+arrangeItems :: ∀ slots action. String -> Array String -> Array (HH.HTML slots action)
 arrangeItems binder items =
     foldr
     (\item state ->
@@ -95,7 +95,7 @@ arrangeItems binder items =
     items
     # _.itemsSoFar
 
-arrangedDetail :: forall slots action.
+arrangedDetail :: ∀ slots action.
     String -> String -> String -> Array String -> Maybe (HH.HTML slots action)
 arrangedDetail _ _ _ items | Array.null items = Nothing
 arrangedDetail binder icon prefix items = Just $
@@ -106,15 +106,15 @@ arrangedDetail binder icon prefix items = Just $
     ]
     <> arrangeItems binder items
 
-arrangedOrDetail :: forall slots action.
+arrangedOrDetail :: ∀ slots action.
     String -> String -> Array String -> Maybe (HH.HTML slots action)
 arrangedOrDetail = arrangedDetail "or"
 
-arrangedAndDetail :: forall slots action.
+arrangedAndDetail :: ∀ slots action.
     String -> String -> Array String -> Maybe (HH.HTML slots action)
 arrangedAndDetail = arrangedDetail "and"
 
-onlineDetail :: forall slots actions.
+onlineDetail :: ∀ slots actions.
     String -> Maybe { from :: String, to :: String } -> Maybe (HH.HTML slots actions)
 onlineDetail _ Nothing = Nothing
 onlineDetail frame (Just { from, to }) = Just $
@@ -127,14 +127,14 @@ onlineDetail frame (Just { from, to }) = Just $
     , HH.span [ HS.class_ "detail-emphasize" ] [ HH.text to ]
     ]
 
-weekdaysOnlineDetail :: forall slots actions.
+weekdaysOnlineDetail :: ∀ slots actions.
     Maybe { from :: String, to :: String } -> Maybe (HH.HTML slots actions)
 weekdaysOnlineDetail fromTo = onlineDetail "weekdays" fromTo
 
-weekendsOnlineDetail :: forall slots actions.
+weekendsOnlineDetail :: ∀ slots actions.
     Maybe { from :: String, to :: String } -> Maybe (HH.HTML slots actions)
 weekendsOnlineDetail fromTo = onlineDetail "weekends" fromTo
 
-textDetail :: forall slots action. Array String -> Array (HH.HTML slots action)
+textDetail :: ∀ slots action. Array String -> Array (HH.HTML slots action)
 textDetail paragraphs =
     paragraphs <#> \paragraph -> HH.p [ HS.class_ "detail-paragraph" ] [ HH.text paragraph ]

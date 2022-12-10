@@ -4,17 +4,13 @@ import Prelude
 
 import Async (Async)
 import Async as Async
-import Browser.Async.Fetch (fetch, method)
-import Browser.Fetch.Response (status)
 import Data.Array (find)
 import Data.Array as Array
-import Data.Bifunctor (lmap)
+import Data.Bifunctor (bimap)
 import Data.Const (Const)
 import Data.Foldable (foldMap)
-import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..), maybe)
 import Data.Monoid (guard)
-import Data.Options ((:=))
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
@@ -24,8 +20,10 @@ import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Script.Cookie (getPlayerNickname)
 import TeamTavern.Client.Script.Navigate (navigateWithEvent_)
 import TeamTavern.Client.Script.Request (get)
+import TeamTavern.Client.Shared.Fetch (fetchSimple)
 import TeamTavern.Client.Snippets.Class as HS
-import TeamTavern.Routes.ViewAllGames as ViewAllGames
+import TeamTavern.Routes.Game.ViewAllGames as ViewAllGames
+import TeamTavern.Routes.Session.EndSession (EndSession)
 import Type.Proxy (Proxy(..))
 import Web.Event.Event (stopPropagation)
 import Web.Event.Event as E
@@ -69,7 +67,7 @@ data Action
 
 type Slot = H.Slot (Const Void) Void Unit
 
-render :: forall children left.
+render :: ∀ children left.
     State -> H.ComponentHTML Action children (Async left)
 render state = HH.div_ $
     [ HH.div [ HS.class_ "top-bar" ]
@@ -147,12 +145,6 @@ render state = HH.div_ $
                                         , HE.onClick $ Navigate ("/games/" <> handle <> "/teams")
                                         ]
                                         [ HH.text "Teams" ]
-                                    -- , divider
-                                    -- , HH.a
-                                    --     [ HP.href $ "/games/" <> handle <> "/competitions"
-                                    --     , HE.onClick $ Navigate ("/games/" <> handle <> "/competitions")
-                                    --     ]
-                                    --     [ HH.text "Competitions" ]
                                     ]
                                 ])
                                 state.games
@@ -178,14 +170,6 @@ render state = HH.div_ $
                             [ HH.i [ HS.class_ "fas fa-users top-bar-navigation-item-icon" ] []
                             , HH.span [ HS.class_ "top-bar-navigation-item-text" ] [ HH.text "Teams" ]
                             ]
-                        -- , HH.a
-                        --     [ HS.class_ "top-bar-navigation-item"
-                        --     , HP.href $ "/games/" <> handle <> "/competitions"
-                        --     , HE.onClick $ Navigate ("/games/" <> handle <> "/competitions")
-                        --     ]
-                        --     [ HH.i [ HS.class_ "fas fa-trophy top-bar-navigation-item-icon" ] []
-                        --     , HH.span [ HS.class_ "top-bar-navigation-item-text" ] [ HH.text "Competitions" ]
-                        --     ]
                         ]
                     ])
                     state.selectedGame
@@ -237,12 +221,11 @@ render state = HH.div_ $
     , HH.div [ HS.class_ "top-bar-filler" ] []
     ]
 
-endSession :: forall left. Async left Boolean
+endSession :: ∀ left. Async left Boolean
 endSession = Async.unify do
-    response <- fetch ("/api/sessions/current") (method := DELETE) # lmap (const false)
-    pure $ status response == 204
+    fetchSimple (Proxy :: _ EndSession) # bimap (const false) (const true)
 
-handleAction :: forall children left output.
+handleAction :: ∀ children left output.
     Action -> H.HalogenM State Action children output (Async left) Unit
 handleAction Initialize = do
     nickname <- getPlayerNickname
@@ -290,7 +273,7 @@ handleAction (ToggleGamesPopunder mouseEvent) = do
 handleAction CloseGamesPopunder =
     H.modify_ (_ { gamesVisible = false })
 
-component :: forall query output left. H.Component query Input output (Async left)
+component :: ∀ query output left. H.Component query Input output (Async left)
 component = H.mkComponent
     { initialState:
         { handle: _
@@ -309,6 +292,6 @@ component = H.mkComponent
         }
     }
 
-topBar :: forall action left slots.
+topBar :: ∀ action left slots.
     Input -> HH.ComponentHTML action (topBar :: Slot | slots) (Async left)
 topBar input = HH.slot (Proxy :: _ "topBar") unit component input absurd

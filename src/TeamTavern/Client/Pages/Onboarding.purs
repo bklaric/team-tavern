@@ -4,19 +4,14 @@ import Prelude
 
 import Async (Async)
 import Async as Async
-import Browser.Async.Fetch as Fetch
-import Browser.Async.Fetch.Response as FetchRes
-import Data.Array (foldl)
 import Data.Array as Array
-import Data.Bifunctor (bimap, lmap)
+import Data.Bifunctor (lmap)
 import Data.Const (Const)
 import Data.Either (Either(..))
-import Data.HTTP.Method (Method(..))
+import Data.Foldable (foldl)
 import Data.Maybe (Maybe(..), isNothing, maybe)
 import Data.Monoid (guard)
-import Data.Options ((:=))
-import Type.Proxy (Proxy(..))
-import Data.Variant (match)
+import Data.Variant (match, onMatch)
 import Effect.Class (class MonadEffect)
 import Foreign (ForeignError(..), fail, readString, unsafeToForeign)
 import Halogen as H
@@ -25,9 +20,6 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Record as Record
 import Record.Extra (pick)
-import Yoga.JSON (class ReadForeign, class WriteForeign)
-import Yoga.JSON as Json
-import Yoga.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.Ads (stickyLeaderboards)
 import TeamTavern.Client.Components.Boarding.Boarding (boarding, boardingButtons, boardingDescription, boardingHeading, boardingStep)
 import TeamTavern.Client.Components.Boarding.GameInput (gameInput)
@@ -43,9 +35,13 @@ import TeamTavern.Client.Script.Analytics (sendEvent)
 import TeamTavern.Client.Script.Cookie (getPlayerNickname)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigate, navigateReplace, navigate_)
+import TeamTavern.Client.Shared.Fetch (fetchBody)
 import TeamTavern.Client.Snippets.Class as HS
-import TeamTavern.Routes.Onboard as Onboard
+import TeamTavern.Routes.Boarding.Onboard (Onboard)
+import TeamTavern.Routes.Boarding.Onboard as Onboard
 import TeamTavern.Routes.Shared.Platform (Platform(..))
+import Type.Proxy (Proxy(..))
+import Yoga.JSON (class ReadForeign, class WriteForeign)
 
 data Step
     = Greeting
@@ -56,9 +52,9 @@ data Step
     | PlayerProfile
     | TeamProfile
 
-derive instance eqStep :: Eq Step
+derive instance Eq Step
 
-instance writeForeginStep :: WriteForeign Step where
+instance WriteForeign Step where
     writeImpl Greeting = unsafeToForeign "Greeting"
     writeImpl PlayerOrTeam = unsafeToForeign "PlayerOrTeam"
     writeImpl Player = unsafeToForeign "Player"
@@ -67,7 +63,7 @@ instance writeForeginStep :: WriteForeign Step where
     writeImpl PlayerProfile = unsafeToForeign "PlayerProfile"
     writeImpl TeamProfile = unsafeToForeign "TeamProfile"
 
-instance readForeignStep :: ReadForeign Step where
+instance ReadForeign Step where
     readImpl = readString >=> case _ of
         "Greeting" -> pure Greeting
         "PlayerOrTeam" -> pure PlayerOrTeam
@@ -143,7 +139,7 @@ type ChildSlots slots =
     , teamProfileFormInput :: TeamProfileFormInput.Slot
     | slots )
 
-renderPage :: forall slots left.
+renderPage :: ∀ slots left.
     State -> Array (HH.ComponentHTML Action (ChildSlots slots) (Async left))
 renderPage { step: Greeting, nickname, confirmSkip } =
     [ boardingStep
@@ -286,10 +282,10 @@ renderPage { step: TeamProfile, teamProfile, game, otherError, submitting } =
         ]
     ]
 
-render :: forall slots left. State -> HH.ComponentHTML Action (ChildSlots slots) (Async left)
+render :: ∀ slots left. State -> HH.ComponentHTML Action (ChildSlots slots) (Async left)
 render state = HH.div_ $ [ boarding $ renderPage state ] <> stickyLeaderboards
 
-sendRequest :: forall left.
+sendRequest :: ∀ left.
     State -> Async left (Maybe (Either Onboard.BadContent Onboard.OkContent))
 sendRequest (state :: State) = Async.unify do
     (body :: Onboard.RequestContent) <-
@@ -324,22 +320,16 @@ sendRequest (state :: State) = Async.unify do
             , teamContacts: Just $ pick profile.contacts
             }
         _ -> Async.left Nothing
-    response <-
-        Fetch.fetch "/api/onboarding"
-        ( Fetch.method := POST
-        <> Fetch.body := Json.writeJSON body
-        <> Fetch.credentials := Fetch.Include
-        )
-        # lmap (const Nothing)
-    content :: Either Onboard.BadContent Onboard.OkContent <-
-        case FetchRes.status response of
-        200 -> FetchRes.text response >>= JsonAsync.readJSON # bimap (const Nothing) Right
-        400 -> FetchRes.text response >>= JsonAsync.readJSON # bimap (const Nothing) Left
-        _ -> Async.left Nothing
-    pure $ Just content
+    response <- fetchBody (Proxy :: _ Onboard) body # lmap (const Nothing)
+    pure $ onMatch
+        { ok: Just <<< Right
+        , badRequest: Just <<< Left
+        }
+        (const Nothing)
+        response
 
 -- Update state for current history entry so back button doesn't lose previous state.
-updateHistoryState :: forall monad. MonadEffect monad => State -> monad Unit
+updateHistoryState :: ∀ monad. MonadEffect monad => State -> monad Unit
 updateHistoryState (state :: State) = do
     case state.step of
         Greeting -> navigateReplace state "/onboarding/start"
@@ -350,7 +340,7 @@ updateHistoryState (state :: State) = do
         PlayerProfile -> navigateReplace state "/onboarding/player-profile"
         TeamProfile -> navigateReplace state "/onboarding/team-profile"
 
-handleAction :: forall action output slots left.
+handleAction :: ∀ action output slots left.
     Action -> H.HalogenM State action slots output (Async left) Unit
 handleAction Initialize = do
     nickname <- getPlayerNickname
@@ -589,6 +579,7 @@ handleAction SetUpAccount = do
                     , gamerTag: const state' { teamProfile { contacts { gamerTagError = true } } }
                     , friendCode: const state' { teamProfile { contacts { friendCodeError = true } } }
                     }
+                , other: const state { otherError = true }
                 }
                 error
             )
@@ -596,7 +587,7 @@ handleAction SetUpAccount = do
             errors
         Nothing -> H.put nextState { otherError = true }
 
-component :: forall query output left.
+component :: ∀ query output left.
     H.Component query Input output (Async left)
 component = H.mkComponent
     { initialState:
@@ -610,6 +601,6 @@ component = H.mkComponent
         }
     }
 
-onboarding :: forall action slots left.
+onboarding :: ∀ action slots left.
     Input -> HH.ComponentHTML action (onboarding :: Slot | slots) (Async left)
 onboarding input = HH.slot (Proxy :: _ "onboarding") unit component input absurd

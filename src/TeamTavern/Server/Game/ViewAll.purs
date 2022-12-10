@@ -2,15 +2,31 @@ module TeamTavern.Server.Game.ViewAll where
 
 import Prelude
 
-import Async (Async, examineLeftWithEffect)
-import Perun.Response (Response)
+import Async (Async)
+import Jarilo (ok_)
 import Postgres.Pool (Pool)
-import TeamTavern.Server.Game.ViewAll.LoadGames (loadGames)
-import TeamTavern.Server.Game.ViewAll.LogError (logError)
-import TeamTavern.Server.Game.ViewAll.SendResponse (sendResponse)
+import Postgres.Query (Query(..))
+import TeamTavern.Routes.Game.ViewAllGames as ViewAllGames
+import TeamTavern.Server.Infrastructure.Postgres (queryMany_)
+import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
+import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 
-viewAll :: forall left. Pool -> Async left Response
+loadGamesQuery :: Query
+loadGamesQuery = Query """
+    select
+        game.title,
+        game.short_title as "shortTitle",
+        game.handle,
+        game.description
+    from game
+    order by game.created
+    """
+
+loadGames :: ∀ errors. Pool -> Async (InternalTerror_ errors) ViewAllGames.OkContent
+loadGames pool = queryMany_ pool loadGamesQuery
+
+viewAll :: ∀ left. Pool -> Async left _
 viewAll pool =
-    sendResponse $ examineLeftWithEffect logError do
+    sendResponse "Error viewing all games" do
     -- Load games from database
-    loadGames pool
+    ok_ <$> loadGames pool

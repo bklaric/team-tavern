@@ -1,25 +1,23 @@
 module TeamTavern.Routes.Profile.AddTeamProfile where
 
+import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Variant (Variant)
-import Jarilo.Method (Post)
-import Jarilo.Path (type (:>), End)
-import Jarilo.Query (NoQuery)
-import Jarilo.Route (FullRoute)
-import Jarilo.Segment (Capture, Literal)
+import Jarilo (type (!), type (/), type (==>), BadRequestJson, Capture, Forbidden_, Literal, NoContent, NotAuthorized_, PostJson_, Internal_)
 import TeamTavern.Routes.Shared.Platform (Platform)
 import TeamTavern.Routes.Shared.Size (Size)
 import TeamTavern.Routes.Shared.TeamContacts (TeamContacts, TeamContactsError)
+import TeamTavern.Routes.Shared.TeamProfile (TeamProfileError)
 import TeamTavern.Routes.Shared.Types (Handle)
 import Type.Function (type ($))
 
-type AddTeamProfile = FullRoute
-    Post
-    (  Literal "teams"
-    :> Capture "teamHandle" Handle
-    :> Literal "profiles"
-    :> Capture "gameHandle" Handle
-    :> End)
-    NoQuery
+type AddTeamProfile =
+    PostJson_
+    ( Literal "teams"
+    / Capture "teamHandle" Handle
+    / Literal "profiles"
+    / Capture "gameHandle" Handle)
+    RequestContent
+    ==> NoContent ! BadRequestJson BadContent ! NotAuthorized_ ! Forbidden_ ! Internal_
 
 type RouteParams = { teamHandle :: Handle, gameHandle :: Handle }
 
@@ -42,11 +40,7 @@ type RequestContent =
     , contacts :: TeamContacts
     }
 
-type BadContent = Array $ Variant
-    ( profile :: Array $ Variant
-        ( platforms :: Array String
-        , about :: Array String
-        , ambitions :: Array String
-        )
-    , contacts :: Array TeamContactsError
+type BadContent = NonEmptyArray $ Variant
+    ( profile :: NonEmptyArray TeamProfileError
+    , contacts :: NonEmptyArray TeamContactsError
     )

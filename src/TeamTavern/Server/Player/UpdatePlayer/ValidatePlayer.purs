@@ -7,7 +7,7 @@ import Async (fromEffect) as Async
 import AsyncV (AsyncV)
 import AsyncV as AsyncV
 import Data.Maybe (Maybe)
-import TeamTavern.Server.Player.UpdatePlayer.ReadPlayer (PlayerModel)
+import TeamTavern.Routes.Player.UpdatePlayer as UpdatePlayer
 import TeamTavern.Server.Player.UpdatePlayer.ValidateBirthday (validateOptionalBirthday)
 import TeamTavern.Server.Player.UpdatePlayer.ValidateLangugase (Language, validateLanguages)
 import TeamTavern.Server.Player.UpdatePlayer.ValidateLocation (Location, validateLocation)
@@ -24,7 +24,7 @@ type Player =
     , microphone :: Boolean
     }
 
-validatePlayer :: forall left. PlayerModel -> Async left Player
+validatePlayer :: ∀ left. UpdatePlayer.RequestContent -> Async left Player
 validatePlayer dto = do
     birthday <- Async.fromEffect $ validateOptionalBirthday dto.birthday
     let timezone = validateTimezone dto.timezone
@@ -38,5 +38,5 @@ validatePlayer dto = do
     }
         # pure
 
-validatePlayerV :: forall left. Semigroup left => PlayerModel -> AsyncV left Player
+validatePlayerV :: ∀ left. Semigroup left => UpdatePlayer.RequestContent -> AsyncV left Player
 validatePlayerV = validatePlayer >>> AsyncV.fromAsync

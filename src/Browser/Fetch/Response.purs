@@ -21,7 +21,7 @@ foreign import textImpl
     -> Response
     -> Effect Unit
 
-text :: forall left.
+text :: ∀ left.
     (Either left String -> Effect Unit) -> Response -> Effect Unit
 text callback = textImpl (Right >>> callback)
 

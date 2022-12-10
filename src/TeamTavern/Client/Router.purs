@@ -6,12 +6,11 @@ import Async (Async)
 import Data.Maybe (Maybe(..))
 import Data.String (Pattern(..), split)
 import Type.Proxy (Proxy(..))
-import Effect.Class.Console (log)
 import Foreign (Foreign)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
-import Yoga.JSON (E, read, read_)
+import Yoga.JSON (read_)
 import TeamTavern.Client.Components.Content (content, singleContent, wideContent)
 import TeamTavern.Client.Components.Footer (footer)
 import TeamTavern.Client.Components.Footer as Footer
@@ -53,7 +52,6 @@ import TeamTavern.Client.Script.Navigate (navigateReplace_)
 import TeamTavern.Client.Script.ReloadAds (reloadAds)
 import TeamTavern.Client.Shared.Slot (SimpleSlot)
 import TeamTavern.Client.Snippets.Class as HS
-import Unsafe.Coerce (unsafeCoerce)
 
 data Query send = ChangeRoute Foreign String send
 
@@ -103,20 +101,20 @@ type ChildSlots = Footer.ChildSlots
     )
 
 topBarWithContent
-    :: forall query children left
+    :: ∀ query children left
     .  Maybe String
     -> Array (H.ComponentHTML query (Footer.ChildSlots (topBar :: TopBar.Slot | children)) (Async left))
     -> H.ComponentHTML query (Footer.ChildSlots (topBar :: TopBar.Slot | children)) (Async left)
 topBarWithContent handle content' = HH.div_ [ topBar handle, content content', footer ]
 
 wideTopBarWithContent
-    :: forall query children left
+    :: ∀ query children left
     .  Maybe String
     -> Array (H.ComponentHTML query (Footer.ChildSlots (topBar :: TopBar.Slot | children)) (Async left))
     -> H.ComponentHTML query (Footer.ChildSlots (topBar :: TopBar.Slot | children)) (Async left)
 wideTopBarWithContent handle content' = HH.div_ [ topBar handle, wideContent content', footer ]
 
-render :: forall action left. State -> H.ComponentHTML action ChildSlots (Async left)
+render :: ∀ action left. State -> H.ComponentHTML action ChildSlots (Async left)
 render Empty = HH.div_ []
 render Home = HH.div_ [ topBar Nothing, home, footer ]
 render Games = topBarWithContent Nothing [ games ]
@@ -171,13 +169,13 @@ render NetworkN2 = HH.div_
 render DeleteAlert = singleContent [ deleteAlert ]
 render NotFound = HH.p_ [ HH.text "You're fucken lost, mate." ]
 
-just :: forall t5 t7. Applicative t5 => t7 -> t5 (Maybe t7)
+just :: ∀ t5 t7. Applicative t5 => t7 -> t5 (Maybe t7)
 just = pure <<< Just
 
-nothing :: forall t1 t3. Applicative t1 => t1 (Maybe t3)
+nothing :: ∀ t1 t3. Applicative t1 => t1 (Maybe t3)
 nothing = pure Nothing
 
-handleAction :: forall action output slots left.
+handleAction :: ∀ action output slots left.
     Action -> H.HalogenM State action slots output (Async left) Unit
 handleAction (Init state route) = do
     newState <- case split (Pattern "/") route of
@@ -194,9 +192,9 @@ handleAction (Init state route) = do
             just Register
         ["", "signin"] ->
             just SignIn
-        ["", "onboarding", step] ->
-            let step' =
-                    case step of
+        ["", "onboarding", stepPath] ->
+            let stepMaybe =
+                    case stepPath of
                     "start" -> Just Onboarding.Greeting
                     "player-or-team" -> Just Onboarding.PlayerOrTeam
                     "player" -> Just Onboarding.Player
@@ -205,13 +203,14 @@ handleAction (Init state route) = do
                     "player-profile" -> Just Onboarding.PlayerProfile
                     "team-profile" -> Just Onboarding.TeamProfile
                     _ -> Nothing
+                (stateMaybe :: Maybe Onboarding.Input) = read_ state
             in
-            case (read_ state :: Maybe Onboarding.Input), step' of
-            Just input, Just step'' -> just $ Onboarding input { step = step'' }
-            _, _ -> navigateReplace_ "/" *> nothing
-        ["", "preboarding", step] ->
-            let step' =
-                    case step of
+            case stateMaybe, stepMaybe of
+                Just input, Just step -> just $ Onboarding input { step = step }
+                _, _ -> navigateReplace_ "/" *> nothing
+        ["", "preboarding", stepPath] ->
+            let stepMaybe =
+                    case stepPath of
                     "start" -> Just Preboarding.Greeting
                     "player-or-team" -> Just Preboarding.PlayerOrTeam
                     "player" -> Just Preboarding.Player
@@ -221,10 +220,12 @@ handleAction (Init state route) = do
                     "team-profile" -> Just Preboarding.TeamProfile
                     "register" -> Just Preboarding.Register
                     _ -> Nothing
-            in
-            case (read_ state :: Maybe Preboarding.Input), step' of
-            Just input, Just step'' -> just $ Preboarding input { step = step'' }
-            _, _ -> log (unsafeCoerce $ (read state :: E Preboarding.Input)) *> log (unsafeCoerce state) *> navigateReplace_ "/" *> nothing
+                (stateMaybe :: Maybe Preboarding.Input) = read_ state
+            in do
+            signedIn <- hasPlayerIdCookie
+            case stateMaybe, stepMaybe of
+                Just input, Just step | not signedIn -> just $ Preboarding input { step = step }
+                _, _ -> navigateReplace_ "/" *> nothing
         ["", "teams", handle] ->
             just $ Team { handle }
         ["", "games"] ->
@@ -238,8 +239,6 @@ handleAction (Init state route) = do
             just $ GameTabs { handle, tab: GameHeader.Profiles GameHeader.Players }
         ["", "games", handle, "teams" ] ->
             just $ GameTabs { handle, tab: GameHeader.Profiles GameHeader.Teams }
-        ["", "games", handle, "competitions" ] ->
-            just $ GameTabs { handle, tab: GameHeader.Competitions }
         ["", "players", nickname] ->
             just $ Player { nickname }
         ["", "players", nickname, "profiles", handle] ->
@@ -264,14 +263,14 @@ handleAction (Init state route) = do
         Nothing -> pure unit
 
 handleQuery
-    :: forall send action output wut left
+    :: ∀ send action output wut left
     .  Query send
     -> H.HalogenM State action wut output (Async left) (Maybe send)
 handleQuery (ChangeRoute state route send) = do
     handleAction (Init state route)
     pure $ Just send
 
-router :: forall input output left.
+router :: ∀ input output left.
     Foreign -> String -> H.Component Query input output (Async left)
 router state route = H.mkComponent
     { initialState: const Empty

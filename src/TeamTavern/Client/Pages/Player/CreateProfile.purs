@@ -3,10 +3,10 @@ module TeamTavern.Client.Pages.Player.CreateProfile (Input, Slot, createProfile)
 import Prelude
 
 import Async (Async)
-import Data.Array (foldl)
 import Data.Array as Array
 import Data.Const (Const)
 import Data.Either (Either(..))
+import Data.Foldable (foldl)
 import Data.Maybe (Maybe(..))
 import Data.Variant (match)
 import Halogen as H
@@ -18,9 +18,9 @@ import TeamTavern.Client.Components.Player.ProfileFormInput (profileFormInput)
 import TeamTavern.Client.Components.Player.ProfileFormInput as ProfileFormInput
 import TeamTavern.Client.Script.Navigate (hardNavigate)
 import TeamTavern.Client.Script.Request (postNoContent)
+import TeamTavern.Routes.Game.ViewGame as ViewGame
+import TeamTavern.Routes.Player.ViewPlayer as ViewPlayer
 import TeamTavern.Routes.Profile.AddPlayerProfile as AddPlayerProfile
-import TeamTavern.Routes.ViewGame as ViewGame
-import TeamTavern.Routes.ViewPlayer as ViewPlayer
 import Type.Function (type ($))
 import Type.Proxy (Proxy(..))
 import Web.Event.Event (preventDefault)
@@ -48,7 +48,7 @@ type Slot = H.Slot (Const Void) (Modal.Output Void) Unit
 
 type ChildSlots = ("playerProfileFormInput" :: ProfileFormInput.Slot)
 
-render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
+render :: ∀ left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { profile, otherError, submitting } =
     form SendRequest $
     [ profileFormInput profile UpdateProfile
@@ -57,14 +57,14 @@ render { profile, otherError, submitting } =
     ]
     <> otherFormError otherError
 
-sendRequest :: forall left. State -> Async left $ Maybe $ Either AddPlayerProfile.BadContent Unit
+sendRequest :: ∀ left. State -> Async left $ Maybe $ Either AddPlayerProfile.BadContent Unit
 sendRequest { nickname, handle, profile } =
     postNoContent ("/api/players/" <> nickname <> "/profiles/" <> handle)
     ({ details: pick profile.details
     , contacts: pick profile.contacts
     } :: AddPlayerProfile.RequestContent)
 
-handleAction :: forall output left.
+handleAction :: ∀ output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
 handleAction (UpdateProfile profile) =
     H.modify_ _
@@ -118,11 +118,11 @@ handleAction (SendRequest event) = do
         Just (Left badContent) -> H.put $
             foldl
             (\state error -> error # match
-                { profile: state # foldl \_ error' -> error' # match
-                    { about: const state { profile { details { aboutError = true } } }
-                    , ambitions: const state { profile { details { ambitionsError = true } } }
-                    , url: \{ key } -> state { profile { details
-                        { urlErrors = Array.cons key state.profile.details.urlErrors } } }
+                { profile: state # foldl \state' error' -> error' # match
+                    { about: const state' { profile { details { aboutError = true } } }
+                    , ambitions: const state' { profile { details { ambitionsError = true } } }
+                    , url: \{ key } -> state' { profile { details
+                        { urlErrors = Array.cons key state'.profile.details.urlErrors } } }
                     }
                 , contacts: state # foldl \state' error' -> error' # match
                     { discordTag: const state' { profile { contacts { discordTagError = true } } }
@@ -141,7 +141,7 @@ handleAction (SendRequest event) = do
             badContent
         Nothing -> H.put currentState { submitting = false, otherError = true }
 
-component :: forall query output left. H.Component query Input output (Async left)
+component :: ∀ query output left. H.Component query Input output (Async left)
 component = H.mkComponent
     { initialState: \
         { player: { nickname, discordTag, steamId, riotId, battleTag, eaId, ubisoftUsername, psnId, gamerTag, friendCode }
@@ -180,7 +180,7 @@ component = H.mkComponent
     }
 
 createProfile
-    :: forall children action left
+    :: ∀ children action left
     .  Input
     -> (Modal.Output Void -> action)
     -> HH.ComponentHTML action (createProfile :: Slot | children) (Async left)

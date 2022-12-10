@@ -23,7 +23,7 @@ import TeamTavern.Client.Pages.Profiles.TeamBadge (platformBadge)
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
 import TeamTavern.Client.Shared.Slot (QuerylessSlot)
 import TeamTavern.Client.Snippets.Class as HS
-import TeamTavern.Routes.ViewPlayer as ViewPlayer
+import TeamTavern.Routes.Player.ViewPlayer as ViewPlayer
 
 type ChildSlots children = PlatformIdSlots
     ( games :: NavigationAnchor.Slot String
@@ -32,7 +32,7 @@ type ChildSlots children = PlatformIdSlots
     | children)
 
 profiles
-    :: forall action slots left
+    :: ∀ action slots left
     .  ViewPlayer.OkContent
     -> Status
     -> (ViewPlayer.OkContentProfile -> action)

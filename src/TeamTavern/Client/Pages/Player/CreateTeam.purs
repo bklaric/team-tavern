@@ -38,7 +38,7 @@ type ChildSlots = (teamFormInput :: EnterTeamDetails.Slot)
 
 type Slot = H.Slot (Const Void) (Modal.Output Void) Unit
 
-render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
+render :: ∀ left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { details, submitting, otherError } =
     form SendRequest $
     [ teamFormInput details UpdateDetails
@@ -47,10 +47,10 @@ render { details, submitting, otherError } =
     <>
     otherFormError otherError
 
-sendRequest :: forall left. State -> Async left (Maybe (Either CreateTeam.BadContent CreateTeam.OkContent))
+sendRequest :: ∀ left. State -> Async left (Maybe (Either CreateTeam.BadContent CreateTeam.OkContent))
 sendRequest { details } = post "/api/teams" (pick details :: CreateTeam.RequestContent)
 
-handleAction :: forall output left.
+handleAction :: ∀ output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
 handleAction Initialize = do
     timezone <- getClientTimezone
@@ -105,7 +105,7 @@ handleAction (SendRequest event) = do
                 }
             }
 
-component :: forall query input output left.
+component :: ∀ query input output left.
     H.Component query input output (Async left)
 component = H.mkComponent
     { initialState: const
@@ -121,7 +121,7 @@ component = H.mkComponent
     }
 
 createTeam
-    :: forall action children left
+    :: ∀ action children left
     .  (Modal.Output Void -> action)
     -> HH.ComponentHTML action (createTeam :: Slot | children) (Async left)
 createTeam handleMessage = HH.slot

@@ -2,40 +2,37 @@ module TeamTavern.Server.Session.Start where
 
 import Prelude
 
-import Async (Async, examineLeftWithEffect)
-import Type.Proxy (Proxy(..))
-import Data.Variant (inj)
-import Perun.Request.Body (Body)
-import Perun.Response (Response)
-import Postgres.Async.Pool (withTransaction)
+import Async (Async)
+import Data.Map (Map)
+import Data.Newtype (wrap)
+import Jarilo (noContent)
 import Postgres.Pool (Pool)
-import TeamTavern.Server.Architecture.Deployment (Deployment)
-import TeamTavern.Server.Infrastructure.Cookie (Cookies)
+import TeamTavern.Routes.Session.StartSession as StartSession
+import TeamTavern.Server.Infrastructure.Cookie (setCookieHeaderFull)
+import TeamTavern.Server.Infrastructure.Deployment (Deployment)
 import TeamTavern.Server.Infrastructure.EnsureNotSignedIn (ensureNotSignedIn)
+import TeamTavern.Server.Infrastructure.Postgres (transaction)
+import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Session.Domain.Token as Token
 import TeamTavern.Server.Session.Start.CheckPassword (checkPassword)
 import TeamTavern.Server.Session.Start.CreateSession (createSession)
-import TeamTavern.Server.Session.Start.LogError (logError)
-import TeamTavern.Server.Session.Start.ReadModel (readModel)
-import TeamTavern.Server.Session.Start.SendResponse (sendResponse)
 
-start :: forall left. Deployment -> Pool -> Cookies -> Body -> Async left Response
+start :: ∀ left.
+    Deployment -> Pool -> Map String String -> StartSession.RequestContent -> Async left _
 start deployment pool cookies body =
-    sendResponse deployment $ examineLeftWithEffect logError do
+    sendResponse "Error starting session" do
     -- Ensure player isn't signed in.
     ensureNotSignedIn cookies
 
-    -- Read start model.
-    model <- readModel body
-
-    pool # withTransaction (inj (Proxy :: _ "databaseError")) \client -> do
+    pool # transaction \client -> do
         -- Check if password hash matches.
-        { id, nickname } <- checkPassword model client
+        { id, nickname } <- checkPassword body client
 
         -- Generate session token.
         token <- Token.generate
 
         -- Create a new session.
-        createSession { id, token } client
+        createSession id token client
 
-        pure { id, nickname, token }
+        pure $ noContent $ setCookieHeaderFull deployment
+            { id: wrap id, nickname: wrap nickname, token }

@@ -4,14 +4,10 @@ import Prelude
 
 import Async (Async)
 import Async as Async
-import Browser.Async.Fetch as Fetch
-import Browser.Async.Fetch.Response as FetchRes
-import Data.Bifunctor (bimap, lmap)
+import Data.Bifunctor (lmap)
 import Data.Const (Const)
-import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..))
-import Data.Options ((:=))
-import Data.Variant (match)
+import Data.Variant (match, onMatch)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
@@ -21,13 +17,12 @@ import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Script.Cookie (hasPlayerIdCookie)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigateReplace_, navigate_)
+import TeamTavern.Client.Shared.Fetch (fetchBody)
 import TeamTavern.Client.Snippets.ErrorClasses (otherErrorClass)
-import TeamTavern.Routes.Session.StartSession as StartSession
+import TeamTavern.Routes.Session.StartSession (StartSession)
 import Type.Proxy (Proxy(..))
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
-import Yoga.JSON as Json
-import Yoga.JSON.Async as JsonAsync
 
 data Action
     = Init
@@ -53,7 +48,7 @@ type ChildSlots =
     , registerAnchor :: NavigationAnchor.Slot Unit
     )
 
-render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
+render :: ∀ left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render
     { nickname
     , password
@@ -136,28 +131,22 @@ render
         ]
     ]
 
-sendSignInRequest :: forall left. State -> Async left (Maybe State)
+sendSignInRequest :: ∀ left. State -> Async left (Maybe State)
 sendSignInRequest state @ { nickname, password } = Async.unify do
-    response <- Fetch.fetch "/api/sessions"
-        (  Fetch.method := POST
-        <> Fetch.body := Json.writeJSON ({ nickname, password } :: StartSession.RequestContent)
-        <> Fetch.credentials := Fetch.Include
-        )
+    response <- fetchBody (Proxy :: _ StartSession) { nickname, password }
         # lmap (const $ Just $ state { otherError = true })
-    newState <- case FetchRes.status response of
-        204 -> pure Nothing
-        400 -> FetchRes.text response >>= JsonAsync.readJSON
-            # bimap
-                (const $ Just $ state { otherError = true })
-                (\(error :: StartSession.BadContent) -> Just $ match
-                    { noSessionStarted:
-                        const $ state { noSessionStarted = true }
-                    }
-                    error)
-        _ -> pure $ Just $ state { otherError = true }
-    pure newState
+    pure $ onMatch
+        { noContent: const Nothing
+        , badRequest: \error -> Just $ match
+            { noSessionStarted:
+                const $ state { noSessionStarted = true }
+            }
+            error
+        }
+        (const $ Just state { noSessionStarted = true })
+        response
 
-handleAction :: forall output left.
+handleAction :: ∀ output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
 handleAction Init = do
     H.liftEffect $ whenM hasPlayerIdCookie $ navigateReplace_ "/"
@@ -181,7 +170,7 @@ handleAction (SignIn event) = do
         Nothing -> navigate_ "/"
         Just newState' -> H.put newState' { submitting = false }
 
-component :: forall query input output left.
+component :: ∀ query input output left.
     H.Component query input output (Async left)
 component = H.mkComponent
     { initialState: const
@@ -199,6 +188,6 @@ component = H.mkComponent
         }
     }
 
-signIn :: forall query children left.
+signIn :: ∀ query children left.
     HH.ComponentHTML query (signIn :: Slot Unit | children) (Async left)
 signIn = HH.slot (Proxy :: _ "signIn") unit component unit absurd

@@ -121,7 +121,7 @@ queryStringWithoutPagination profileId alert = Query $ """
         ) as profile
     """ <> createFieldsFilterString alert.fields
 
-checkTeamAlerts :: forall querier left. Querier querier => Int -> querier -> Async left Unit
+checkTeamAlerts :: ∀ querier left. Querier querier => Int -> querier -> Async left Unit
 checkTeamAlerts profileId querier =
     fromEffect $ void $ setTimeout 0 $ runSafeAsync pure (
     alwaysRightWithEffect (log <<< unsafeStringify) pure do

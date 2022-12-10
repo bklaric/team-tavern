@@ -10,13 +10,13 @@ import Effect.Aff (Aff, Error, makeAff, runAff_)
 import Unsafe.Coerce (unsafeCoerce)
 
 asyncToAff
-    :: forall left right
+    :: ∀ left right
     .  (left -> Error)
     -> Async left right
     -> Aff right
 asyncToAff toError async = async # lmap toError # flip runAsync # (\cont ->
     \callback -> cont callback <#> mempty) # makeAff
 
-affToAsync :: forall left right. Aff right -> Async left right
+affToAsync :: ∀ left right. Aff right -> Async left right
 affToAsync aff = unsafeCoerce $ Async $ ExceptT $ ContT
     \cont -> runAff_ cont aff

@@ -12,7 +12,7 @@ import TeamTavern.Routes.Profile.Shared (pageSize)
 totalPages :: Int -> Int
 totalPages count = ceil (toNumber count / toNumber pageSize)
 
-pagination :: forall slots action. Int -> Int -> (Int -> action) -> HH.HTML slots action
+pagination :: ∀ slots action. Int -> Int -> (Int -> action) -> HH.HTML slots action
 pagination page profileCount changePage =
     HH.div [ HS.class_ "pagination" ]
     [ HH.div [ HP.class_$ HH.ClassName "pagination-left-buttons" ]

@@ -9,8 +9,8 @@ import TeamTavern.Routes.Shared.Platform as Platform
 import TeamTavern.Routes.Shared.Size as Size
 import TeamTavern.Routes.Shared.Types (Handle)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
-import TeamTavern.Server.Infrastructure.Error (InternalError, ChangeSingleError)
-import TeamTavern.Server.Infrastructure.Postgres (queryFirstNotAuthorized, queryNone)
+import TeamTavern.Server.Infrastructure.Postgres (ChangeSingleError, queryFirstNotAuthorized, queryNone)
+import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
 import TeamTavern.Server.Profile.AddTeamProfile.AddFieldValues (ProfileId, addFieldValues)
 import TeamTavern.Server.Profile.AddTeamProfile.ValidateProfile (Profile)
 
@@ -27,7 +27,7 @@ updateProfileString = Query """
         updated = now()
     from player, team, game
     where player.id = $1
-        and team.handle = $2
+        and lower(team.handle) = lower($2)
         and game.handle = $3
         and team_profile.team_id = team.id
         and team_profile.game_id = game.id
@@ -46,7 +46,7 @@ updateProfileParameters { id } teamHandle gameHandle profile =
     : profile.about
     :| profile.ambitions
 
-updateProfile' :: forall errors.
+updateProfile' :: ∀ errors.
     Client -> CookieInfo -> Handle -> Handle -> Profile -> Async (ChangeSingleError errors) { profileId :: Int }
 updateProfile' client cookieInfo teamHandle gameHandle profile =
     queryFirstNotAuthorized client updateProfileString
@@ -60,10 +60,10 @@ deleteFieldValuesString = Query """
     where team_profile_id = $1;
     """
 
-deleteFieldValues :: forall errors. Client -> ProfileId -> Async (InternalError errors) Unit
+deleteFieldValues :: ∀ errors. Client -> ProfileId -> Async (InternalTerror_ errors) Unit
 deleteFieldValues client profileId = queryNone client deleteFieldValuesString (profileId : [])
 
-updateProfile :: forall errors.
+updateProfile :: ∀ errors.
     Client -> CookieInfo -> Handle -> Handle -> Profile -> Async (ChangeSingleError errors) Unit
 updateProfile client cookieInfo teamHandle gameHandle profile = do
     -- Update profile row.

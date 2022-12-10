@@ -10,7 +10,7 @@ import Web.HTML.HTMLDocument (body)
 import Web.HTML.HTMLElement (toElement)
 import Web.HTML.Window (document)
 
-makeWindowUnscrollable :: forall monad. MonadEffect monad => monad Unit
+makeWindowUnscrollable :: ∀ monad. MonadEffect monad => monad Unit
 makeWindowUnscrollable =
     window
     >>= document
@@ -18,7 +18,7 @@ makeWindowUnscrollable =
     >>= (maybe (pure unit) (toElement >>> setClassName "unscrollable"))
     # liftEffect
 
-makeWindowScrollable :: forall monad. MonadEffect monad => monad Unit
+makeWindowScrollable :: ∀ monad. MonadEffect monad => monad Unit
 makeWindowScrollable =
     window
     >>= document
