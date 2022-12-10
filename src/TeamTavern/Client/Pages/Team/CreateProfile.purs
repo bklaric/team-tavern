@@ -127,10 +127,10 @@ handleAction (SendRequest event) = do
             foldl
             (\state error ->
                 match
-                { profile: state # foldl \_ error' -> error' # match
-                    { platforms: const state { profile { details { platformsError = true } } }
-                    , about: const state { profile { details { aboutError = true } } }
-                    , ambitions: const state { profile { details { ambitionsError = true } } }
+                { profile: state # foldl \state' error' -> error' # match
+                    { platforms: const state' { profile { details { platformsError = true } } }
+                    , about: const state' { profile { details { aboutError = true } } }
+                    , ambitions: const state' { profile { details { ambitionsError = true } } }
                     }
                 , contacts: state # foldl \state' error' -> error' # match
                     { discordTag: const state' { profile { contacts { discordTagError = true } } }

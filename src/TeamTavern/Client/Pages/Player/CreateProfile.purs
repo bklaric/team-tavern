@@ -118,11 +118,11 @@ handleAction (SendRequest event) = do
         Just (Left badContent) -> H.put $
             foldl
             (\state error -> error # match
-                { profile: state # foldl \_ error' -> error' # match
-                    { about: const state { profile { details { aboutError = true } } }
-                    , ambitions: const state { profile { details { ambitionsError = true } } }
-                    , url: \{ key } -> state { profile { details
-                        { urlErrors = Array.cons key state.profile.details.urlErrors } } }
+                { profile: state # foldl \state' error' -> error' # match
+                    { about: const state' { profile { details { aboutError = true } } }
+                    , ambitions: const state' { profile { details { ambitionsError = true } } }
+                    , url: \{ key } -> state' { profile { details
+                        { urlErrors = Array.cons key state'.profile.details.urlErrors } } }
                     }
                 , contacts: state # foldl \state' error' -> error' # match
                     { discordTag: const state' { profile { contacts { discordTagError = true } } }

@@ -4,10 +4,10 @@ import Prelude
 
 import Async (Async)
 import Data.Array (intercalate)
-import Data.Foldable (foldl)
 import Data.Array as Array
 import Data.Const (Const)
 import Data.Either (Either(..))
+import Data.Foldable (foldl)
 import Data.Maybe (Maybe(..))
 import Data.Variant (match)
 import Halogen as H
@@ -19,8 +19,8 @@ import TeamTavern.Client.Components.Player.ProfileFormInput (profileFormInput)
 import TeamTavern.Client.Components.Player.ProfileFormInput as ProfileFormInput
 import TeamTavern.Client.Script.Navigate (hardNavigate)
 import TeamTavern.Client.Script.Request (putNoContent)
-import TeamTavern.Routes.Profile.AddPlayerProfile as AddPlayerProfile
 import TeamTavern.Routes.Player.ViewPlayer as ViewPlayer
+import TeamTavern.Routes.Profile.AddPlayerProfile as AddPlayerProfile
 import Type.Function (type ($))
 import Type.Proxy (Proxy(..))
 import Web.Event.Event (preventDefault)
@@ -119,11 +119,11 @@ handleAction (SendRequest event) = do
             foldl
             (\state error ->
                 match
-                { profile: state # foldl \_ error' -> error' # match
-                    { about: const state { profile { details { aboutError = true } } }
-                    , ambitions: const state { profile { details { ambitionsError = true } } }
-                    , url: \{ key } -> state { profile { details
-                        { urlErrors = Array.cons key state.profile.details.urlErrors } } }
+                { profile: state # foldl \state' error' -> error' # match
+                    { about: const state' { profile { details { aboutError = true } } }
+                    , ambitions: const state' { profile { details { ambitionsError = true } } }
+                    , url: \{ key } -> state' { profile { details
+                        { urlErrors = Array.cons key state'.profile.details.urlErrors } } }
                     }
                 , contacts: state # foldl \state' error' -> error' # match
                     { discordTag: const state' { profile { contacts { discordTagError = true } } }
