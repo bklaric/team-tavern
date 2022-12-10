@@ -2,9 +2,11 @@ module TeamTavern.Server.Infrastructure.Log where
 
 import Prelude
 
+import Data.Array as Array
 import Data.Formatter.DateTime (FormatterCommand(..), format)
 import Data.List (List(..), (:))
-import Effect (Effect, foreachE)
+import Data.String as String
+import Effect (Effect)
 import Effect.Console (log)
 import Effect.Now (nowDateTime)
 import Error.Class (message, name)
@@ -29,13 +31,9 @@ logStamped string =
 logt :: String -> Effect Unit
 logt string = log $ "    " <> string
 
-logLines :: Array String -> Effect Unit
-logLines lines = foreachE lines logt
-
 logError :: ∀ errors. String -> Terror errors -> Effect Unit
-logError heading (Terror _ lines) = do
-    logStamped heading
-    logLines lines
+logError heading (Terror _ lines) =
+    logStamped $ String.joinWith " | " $ Array.cons heading lines
 
 print :: ∀ error. NodeError error => error -> String
 print error =
