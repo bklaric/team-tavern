@@ -36,5 +36,5 @@ ensureSignedIn querier cookies =
         result <- querier # query queryString (id : nickname :| token) # reportDatabaseError
         if rowCount result == 0
         then left $ Terror notAuthorized__
-            [ "Client session in cookies is invalid: " <> show cookies ]
+            [ "Client session in cookies is invalid: " <> show cookieInfo ]
         else right cookieInfo
