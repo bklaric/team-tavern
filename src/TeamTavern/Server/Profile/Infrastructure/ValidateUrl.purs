@@ -92,7 +92,6 @@ parser domain = do
   _ <- string "//"
   host <- parseHost domain
   path <- parsePath
-  notFollowedBy anyChar
   pure { scheme, host, path: Just path }
 
 parser_ :: Parser String ParsedUrl
@@ -101,7 +100,6 @@ parser_ = do
     _ <- string "//"
     host <- parseHost_
     path <- parsePath_
-    notFollowedBy anyChar
     pure { scheme, host, path }
 
 validateUrl :: Domain -> String -> Either (NonEmptyArray UrlError) Url
