@@ -18,7 +18,7 @@ import TeamTavern.Server.Player.Register.ValidateRegistration (validateRegistrat
 import TeamTavern.Server.Session.Domain.Token as Token
 import TeamTavern.Server.Session.Start.CreateSession (createSession)
 
-register :: forall left. Deployment -> Pool -> Cookies -> RegisterPlayer.RequestContent -> Async left _
+register :: ∀ left. Deployment -> Pool -> Cookies -> RegisterPlayer.RequestContent -> Async left _
 register deployment pool cookies content =
     sendResponse "Error registering player" do
     -- Ensure not signed in.

@@ -15,7 +15,7 @@ queryString = Query $ """
     where player_profile.player_id = $1;
     """
 
-loadRequiredPlatforms :: forall querier errors. Querier querier =>
+loadRequiredPlatforms :: ∀ querier errors. Querier querier =>
     querier -> Int -> Async (InternalTerror_ errors) (Array Platform)
 loadRequiredPlatforms querier id =
     (queryMany querier queryString (id : []) :: Async _ (Array { platform :: Platform }))

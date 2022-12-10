@@ -22,7 +22,7 @@ import TeamTavern.Server.Profile.Infrastructure.PatchTeamContacts (patchTeamCont
 import TeamTavern.Server.Team.Infrastructure.ValidateContacts (validateContactsV)
 import Type.Proxy (Proxy(..))
 
-addTeamProfile :: forall left.
+addTeamProfile :: ∀ left.
     Pool -> Map String String -> AddTeamProfile.RouteParams -> _ -> Async left _
 addTeamProfile pool cookies { teamHandle, gameHandle } profile' =
     sendResponse "Error creating player profile" do

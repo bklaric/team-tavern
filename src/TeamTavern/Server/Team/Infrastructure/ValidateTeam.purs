@@ -80,7 +80,7 @@ validateTeam' team = let
     <$> organization
 
 validateTeam
-    :: forall errors
+    :: ∀ errors
     .  CreateTeam.RequestContent
     -> Async (BadRequestTerror CreateTeam.BadContent errors) Team
 validateTeam team =
@@ -89,7 +89,7 @@ validateTeam team =
     # lmap (map badRequest_)
 
 validateTeamV
-    :: forall errors
+    :: ∀ errors
     .  CreateTeam.RequestContent
     -> AsyncV (TerrorNeaVar (team :: CreateTeam.BadContent | errors)) Team
 validateTeamV team = validateTeam'

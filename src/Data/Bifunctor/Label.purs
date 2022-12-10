@@ -9,7 +9,7 @@ import Prim.Row (class Cons)
 import Type.Proxy (Proxy)
 
 label
-    :: forall bifunctor label left lefts' lefts right
+    :: ∀ bifunctor label left lefts' lefts right
     .  Bifunctor bifunctor
     => Cons label left lefts' lefts
     => IsSymbol label
@@ -19,7 +19,7 @@ label
 label label' = lmap (inj label')
 
 labelMap
-    :: forall bifunctor label leftIn leftOut lefts' lefts right
+    :: ∀ bifunctor label leftIn leftOut lefts' lefts right
     .  Bifunctor bifunctor
     => Cons label leftOut lefts' lefts
     => IsSymbol label
@@ -30,7 +30,7 @@ labelMap
 labelMap label' mapper = lmap (mapper >>> inj label')
 
 relabel
-    :: forall bifunctor fromLabel toLabel value leftsIn lefts leftsOut right
+    :: ∀ bifunctor fromLabel toLabel value leftsIn lefts leftsOut right
     .  Bifunctor bifunctor
     => Cons fromLabel value leftsOut leftsIn
     => Cons toLabel value lefts leftsOut
@@ -43,7 +43,7 @@ relabel
 relabel fromLabel toLabel = lmap (on fromLabel (inj toLabel) identity)
 
 relabelMap
-    :: forall bifunctor fromLabel toLabel leftIn leftOut
+    :: ∀ bifunctor fromLabel toLabel leftIn leftOut
        leftsIn lefts leftsOut right
     .  Bifunctor bifunctor
     => Cons fromLabel leftIn leftsOut leftsIn

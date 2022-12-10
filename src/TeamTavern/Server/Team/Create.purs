@@ -77,12 +77,12 @@ queryParameters ownerId handle team
     : nullableTimeFrom team.onlineWeekend
     :| nullableTimeTo team.onlineWeekend
 
-addTeam :: forall querier errors. Querier querier =>
+addTeam :: ∀ querier errors. Querier querier =>
     querier -> Id -> Handle -> Team -> Async (InternalTerror_ errors) { id :: Int, handle :: String }
 addTeam pool ownerId handle team =
     queryFirstInternal pool queryString (queryParameters ownerId handle team)
 
-create :: forall left. Pool -> Cookies -> CreateTeam.RequestContent -> Async left _
+create :: ∀ left. Pool -> Cookies -> CreateTeam.RequestContent -> Async left _
 create pool cookies content =
     sendResponse "Error creating team" do
     cookieInfo <- ensureSignedIn pool cookies

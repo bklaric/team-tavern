@@ -16,29 +16,29 @@ import TeamTavern.Routes.Shared.Size (Size(..))
 
 -- Badges.
 
-partyBadge :: forall slots action. HH.HTML slots action
+partyBadge :: ∀ slots action. HH.HTML slots action
 partyBadge = HH.span [ HS.class_ "party-badge" ] [ HH.text "Party" ]
 
-communityBadge :: forall slots action. HH.HTML slots action
+communityBadge :: ∀ slots action. HH.HTML slots action
 communityBadge = HH.span [ HS.class_ "community-badge" ] [ HH.text "Community" ]
 
-informalBadge :: forall slots action. HH.HTML slots action
+informalBadge :: ∀ slots action. HH.HTML slots action
 informalBadge = HH.span [ HS.class_ "informal-badge" ] [ HH.text "Informal" ]
 
-organizedBadge :: forall slots action. HH.HTML slots action
+organizedBadge :: ∀ slots action. HH.HTML slots action
 organizedBadge = HH.span [ HS.class_ "organized-badge" ] [ HH.text "Organized" ]
 
-platformBadgeSvg :: forall slots actions. Platform -> HH.HTML slots actions
+platformBadgeSvg :: ∀ slots actions. Platform -> HH.HTML slots actions
 platformBadgeSvg = platformSvg "badge-icon"
 
-platformBadge :: forall slots action. Platform -> HH.HTML slots action
+platformBadge :: ∀ slots action. Platform -> HH.HTML slots action
 platformBadge platform =
     HH.span [ HS.class_ "platform-badge" ]
     [ platformBadgeSvg platform, HH.text $ Platform.toLabel platform ]
 
 -- Organization checkable badges.
 
-organizationCheckableBadges :: forall slots action.
+organizationCheckableBadges :: ∀ slots action.
     HH.HTML slots action -> HH.HTML slots action -> (Organization -> action) -> HH.HTML slots action
 organizationCheckableBadges informalCheckable organizedCheckable onValue =
     checkables
@@ -56,19 +56,19 @@ organizationCheckableBadges informalCheckable organizedCheckable onValue =
         ]
     ]
 
-organizationCheckboxBadges :: forall slots action.
+organizationCheckboxBadges :: ∀ slots action.
     Array Organization -> (Organization -> action) -> HH.HTML slots action
 organizationCheckboxBadges selected onValue =
     organizationCheckableBadges (checkbox $ elem Informal selected) (checkbox $ elem Organized selected) onValue
 
-organizationRadioBadges :: forall slots action.
+organizationRadioBadges :: ∀ slots action.
     Organization -> (Organization -> action) -> HH.HTML slots action
 organizationRadioBadges selected onValue =
     organizationCheckableBadges (radio $ Informal == selected) (radio $ Organized == selected) onValue
 
 -- Size checkable badges.
 
-sizeCheckableBadges :: forall slots action.
+sizeCheckableBadges :: ∀ slots action.
     HH.HTML slots action -> HH.HTML slots action -> (Size -> action) -> HH.HTML slots action
 sizeCheckableBadges partyCheckable communityCheckable onValue =
     checkables
@@ -86,19 +86,19 @@ sizeCheckableBadges partyCheckable communityCheckable onValue =
         ]
     ]
 
-sizeCheckboxBadges :: forall slots action.
+sizeCheckboxBadges :: ∀ slots action.
     Array Size -> (Size -> action) -> HH.HTML slots action
 sizeCheckboxBadges selected onValue =
     sizeCheckableBadges (checkbox $ elem Party selected) (checkbox $ elem Community selected) onValue
 
-sizeRadioBadges :: forall slots action.
+sizeRadioBadges :: ∀ slots action.
     Size -> (Size -> action) -> HH.HTML slots action
 sizeRadioBadges selected onValue =
     sizeCheckableBadges (radio $ Party == selected) (radio $ Community == selected) onValue
 
 -- Platform checkable badges.
 
-platformCheckableBadge :: forall slots action.
+platformCheckableBadge :: ∀ slots action.
     HH.HTML slots action -> HH.HTML slots action -> String -> action -> HH.HTML slots action
 platformCheckableBadge checkable icon label onValue =
     HH.span
@@ -109,15 +109,15 @@ platformCheckableBadge checkable icon label onValue =
     , checkable
     ]
 
-platformCheckboxBadge :: forall slots action.
+platformCheckboxBadge :: ∀ slots action.
     Boolean -> HH.HTML slots action -> String -> action -> HH.HTML slots action
 platformCheckboxBadge checked = platformCheckableBadge (checkbox checked)
 
-platformRadioBadge :: forall slots action.
+platformRadioBadge :: ∀ slots action.
     Boolean -> HH.HTML slots action -> String -> action -> HH.HTML slots action
 platformRadioBadge checked = platformCheckableBadge (radio checked)
 
-platformCheckboxBadges :: forall action slots.
+platformCheckboxBadges :: ∀ action slots.
     Platforms -> Array Platform -> (Platform -> action) -> HH.HTML slots action
 platformCheckboxBadges allPlatforms selectedPlatforms onValue =
     checkables $
@@ -126,7 +126,7 @@ platformCheckboxBadges allPlatforms selectedPlatforms onValue =
         (Array.elem platform selectedPlatforms) (platformBadgeSvg platform)
         (Platform.toLabel platform) (onValue platform)
 
-platformRadioBadges :: forall action slots.
+platformRadioBadges :: ∀ action slots.
     Platforms -> Platform -> (Platform -> action) -> HH.HTML slots action
 platformRadioBadges allPlatforms selectedPlatform onValue =
     checkables $

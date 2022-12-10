@@ -20,7 +20,7 @@ queryString = Query """
     where player.id = $1 and team.handle = $2
     """
 
-ensureSignedInOwner :: forall errors querier. Querier querier =>
+ensureSignedInOwner :: ∀ errors querier. Querier querier =>
     querier -> Cookies -> String -> Async (EnsureSignedInOwnerError errors) { cookieInfo :: CookieInfo, teamId :: Int }
 ensureSignedInOwner querier cookies handle = do
     cookieInfo <- ensureSignedIn querier cookies

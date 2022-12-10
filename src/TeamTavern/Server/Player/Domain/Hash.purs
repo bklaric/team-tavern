@@ -22,7 +22,7 @@ derive instance Generic Hash _
 
 instance Show Hash where show = genericShow
 
-generateHash :: forall errors. Password -> Async (InternalTerror_ errors) Hash
+generateHash :: ∀ errors. Password -> Async (InternalTerror_ errors) Hash
 generateHash (Password password) =
     password # hash_ # bimap
         (\error -> Terror internal__ [ "Error generating password hash: " <> print error ])

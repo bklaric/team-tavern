@@ -26,7 +26,7 @@ isUbisoftUsernameValid ubisoftUsername =
     && length ubisoftUsername <= maxUsernameLength
     && (codePointAt 0 ubisoftUsername <#> isAlpha # maybe false identity)
 
-validateUbisoftUsername :: forall errors.
+validateUbisoftUsername :: ∀ errors.
     Maybe String -> ValidatedTerrorNeaVar (ubisoftUsername :: {} | errors) (Maybe UbisoftUsername)
 validateUbisoftUsername ubisoftUsername =
     validateContact ubisoftUsername isUbisoftUsernameValid UbisoftUsername (Proxy :: _ "ubisoftUsername") ("Invalid Ubisoft Connect username: " <> _)

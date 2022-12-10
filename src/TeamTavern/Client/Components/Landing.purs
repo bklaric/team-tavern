@@ -12,15 +12,15 @@ import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Client.Snippets.SocialMediaUrls (discordUrl, redditUrl, steamId, twitterUrl)
 import Web.UIEvent.MouseEvent (MouseEvent)
 
-landingSection :: forall slots action. Array (HH.HTML slots action) -> HH.HTML slots action
+landingSection :: ∀ slots action. Array (HH.HTML slots action) -> HH.HTML slots action
 landingSection content =
     HH.div [ HS.class_ "landing-section" ]
     [ HH.div [ HS.class_ "landing-section-content" ] content ]
 
-landingSectionText :: forall slots action. Array (HH.HTML slots action) -> HH.HTML slots action
+landingSectionText :: ∀ slots action. Array (HH.HTML slots action) -> HH.HTML slots action
 landingSectionText = HH.div [ HS.class_ "landing-section-text" ]
 
-landingSectionHeading :: forall slots action. String -> String -> HH.HTML slots action
+landingSectionHeading :: ∀ slots action. String -> String -> HH.HTML slots action
 landingSectionHeading icon heading =
     HH.h2
     [ HS.class_ "landing-section-heading" ]
@@ -28,18 +28,18 @@ landingSectionHeading icon heading =
     , HH.text heading
     ]
 
-landingSectionSubheading :: forall slots action. String -> HH.HTML slots action
+landingSectionSubheading :: ∀ slots action. String -> HH.HTML slots action
 landingSectionSubheading subheading =
     HH.h3 [ HS.class_ "landing-section-subheading" ] [ HH.text subheading ]
 
-landingSectionDescription :: forall slots action. String -> HH.HTML slots action
+landingSectionDescription :: ∀ slots action. String -> HH.HTML slots action
 landingSectionDescription description =
     HH.p [ HS.class_ "landing-section-description" ] [ HH.text description ]
 
-landingSectionButtons :: forall slots action. Array (HH.HTML slots action) -> HH.HTML slots action
+landingSectionButtons :: ∀ slots action. Array (HH.HTML slots action) -> HH.HTML slots action
 landingSectionButtons = HH.div [ HS.class_ "landing-section-buttons" ]
 
-landingSectionButton :: forall slots action.
+landingSectionButton :: ∀ slots action.
     String -> String -> (MouseEvent -> action) -> HH.HTML slots action
 landingSectionButton text url onClick =
     HH.a
@@ -49,11 +49,11 @@ landingSectionButton text url onClick =
     ]
     [ HH.text text ]
 
-landingSectionImage :: forall slots action. Maybe String -> String -> HH.HTML slots action
+landingSectionImage :: ∀ slots action. Maybe String -> String -> HH.HTML slots action
 landingSectionImage title baseSrc =
     picture "landing-section-image" (maybe "Video game characters" (_ <> " character") title) baseSrc
 
-landingSectionConnect :: forall slots action. HH.HTML slots action
+landingSectionConnect :: ∀ slots action. HH.HTML slots action
 landingSectionConnect =
     HH.div [ HS.class_ "landing-section-connect" ]
     [ iconAnchor discordUrl "TeamTavern Discord server" "fab fa-discord"

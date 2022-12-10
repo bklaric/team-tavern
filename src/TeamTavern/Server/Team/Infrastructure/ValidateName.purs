@@ -22,7 +22,7 @@ type NameErrors = NeaVar
     , tooLong :: TooLong
     )
 
-validateName :: forall errors.
+validateName :: ∀ errors.
     String -> ValidatedTerrorNeaVar (name :: {} | errors) Name
 validateName name
     = Wrapped.create trim [empty, tooLong maxLength, notPrintable] Name name

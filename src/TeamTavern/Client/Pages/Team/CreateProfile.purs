@@ -49,7 +49,7 @@ type Slot = H.Slot (Const Void) (Modal.Output Void) Unit
 
 type ChildSlots = (teamProfileFormInput :: ProfileFormInput.Slot)
 
-render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
+render :: ∀ left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { profile, submitting, otherError } =
     form SendRequest $
     [ profileFormInput profile UpdateProfile
@@ -58,7 +58,7 @@ render { profile, submitting, otherError } =
     <>
     otherFormError otherError
 
-sendRequest :: forall left. State -> Async left $ Maybe $ Either AddTeamProfile.BadContent Unit
+sendRequest :: ∀ left. State -> Async left $ Maybe $ Either AddTeamProfile.BadContent Unit
 sendRequest { teamHandle, gameHandle, profile } = let
     details = profile.details
         # Record.insert (Proxy :: _ "platforms") profile.details.selectedPlatforms
@@ -69,7 +69,7 @@ sendRequest { teamHandle, gameHandle, profile } = let
     , contacts: pick profile.contacts
     } :: AddTeamProfile.RequestContent)
 
-handleAction :: forall output left.
+handleAction :: ∀ output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
 handleAction (UpdateProfile profile) =
     H.modify_ _
@@ -151,7 +151,7 @@ handleAction (SendRequest event) = do
             badContent
         Nothing -> H.put currentState { submitting = false, otherError = true }
 
-component :: forall query output left. H.Component query Input output (Async left)
+component :: ∀ query output left. H.Component query Input output (Async left)
 component = H.mkComponent
     { initialState: \state @
         { team:
@@ -203,7 +203,7 @@ component = H.mkComponent
     }
 
 createProfile
-    :: forall action children left
+    :: ∀ action children left
     .  Input
     -> (Modal.Output Void -> action)
     -> HH.ComponentHTML action (createProfile :: Slot | children) (Async left)

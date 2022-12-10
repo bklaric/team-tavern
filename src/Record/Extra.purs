@@ -25,16 +25,16 @@ instance
       first = reflectSymbol (Proxy :: _ name)
       rest = keysImpl (Proxy :: _ tail)
 
-keys :: forall g row rl
+keys :: ∀ g row rl
    . RL.RowToList row rl
   => Keys rl
   => g row -- this will work for any type with the row as a param!
   -> List String
 keys _ = keysImpl (Proxy :: _ rl)
 
-foreign import pickFn :: forall r1 r2. Fn2 (Array String) (Record r1) (Record r2)
+foreign import pickFn :: ∀ r1 r2. Fn2 (Array String) (Record r1) (Record r2)
 
-pick :: forall a r b l.
+pick :: ∀ a r b l.
      Row.Union b r a
   => RL.RowToList b l
   => Keys l

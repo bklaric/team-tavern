@@ -90,28 +90,28 @@ databaseErrorLines error =
     , "Constraint: " <> maybe "-" identity (constraint error)
     ]
 
-reportDatabaseError :: forall right errors.
+reportDatabaseError :: ∀ right errors.
     Async Postgres.Error right -> Async (InternalTerror_ errors) right
 reportDatabaseError = lmap (databaseErrorLines >>> Terror internal__)
 
-queryInternal :: forall querier errors. Querier querier =>
+queryInternal :: ∀ querier errors. Querier querier =>
     querier -> Query -> Array QueryParameter -> Async (InternalTerror_ errors) Result
 queryInternal querier queryString parameters =
     query queryString parameters querier # reportDatabaseError
 
-queryMany :: forall querier errors rows. Querier querier => ReadForeign rows =>
+queryMany :: ∀ querier errors rows. Querier querier => ReadForeign rows =>
     querier -> Query -> Array QueryParameter -> Async (InternalTerror_ errors) (Array rows)
 queryMany pool queryString parameters = do
     result <- queryInternal pool queryString parameters
     rows result # traverse read # lmap \errors -> Terror internal__
         [ "Error reading result from database: " <> show errors ]
 
-queryMany_ :: forall querier errors rows. Querier querier => ReadForeign rows =>
+queryMany_ :: ∀ querier errors rows. Querier querier => ReadForeign rows =>
     querier -> Query -> Async (InternalTerror_ errors) (Array rows)
 queryMany_ pool queryString = queryMany pool queryString []
 
 queryFirst
-    :: forall row querier errors
+    :: ∀ row querier errors
     .  Querier querier
     => ReadForeign row
     => Variant (internal :: AppResponse Unit | errors)
@@ -123,37 +123,37 @@ queryFirst response pool queryString parameters = do
     rows <- queryMany pool queryString parameters
     rows # head # note (Terror response [ "Expected at least one row from database, got none." ])
 
-queryFirstInternal :: forall row errors querier. Querier querier => ReadForeign row =>
+queryFirstInternal :: ∀ row errors querier. Querier querier => ReadForeign row =>
     querier -> Query -> Array QueryParameter -> Async (InternalTerror_ errors) row
 queryFirstInternal = queryFirst internal__
 
-queryFirstInternal_ :: forall row errors querier. Querier querier => ReadForeign row =>
+queryFirstInternal_ :: ∀ row errors querier. Querier querier => ReadForeign row =>
     querier -> Query -> Async (InternalTerror_ errors) row
 queryFirstInternal_ pool queryString = queryFirst internal__ pool queryString []
 
-queryFirstBadRequest :: forall row errors querier. Querier querier => ReadForeign row =>
+queryFirstBadRequest :: ∀ row errors querier. Querier querier => ReadForeign row =>
     querier -> Query -> Array QueryParameter -> Async (TerrorVar (InternalRow_ + BadRequestRow_ + errors)) row
 queryFirstBadRequest = queryFirst badRequest__
 
-queryFirstNotFound :: forall row errors querier. Querier querier => ReadForeign row =>
+queryFirstNotFound :: ∀ row errors querier. Querier querier => ReadForeign row =>
     querier -> Query -> Array QueryParameter -> Async (LoadSingleError errors) row
 queryFirstNotFound = queryFirst notFound__
 
-queryFirstMaybe :: forall errors querier row. Querier querier => ReadForeign row =>
+queryFirstMaybe :: ∀ errors querier row. Querier querier => ReadForeign row =>
     querier -> Query -> Array QueryParameter -> Async (InternalTerror_ errors) (Maybe row)
 queryFirstMaybe pool queryString parameters = do
     rows <- queryMany pool queryString parameters
     pure $ head rows
 
-queryFirstNotAuthorized :: forall row errors querier. Querier querier => ReadForeign row =>
+queryFirstNotAuthorized :: ∀ row errors querier. Querier querier => ReadForeign row =>
     querier -> Query -> Array QueryParameter -> Async (ChangeSingleError errors) row
 queryFirstNotAuthorized = queryFirst notAuthorized__
 
-queryNone :: forall querier errors. Querier querier =>
+queryNone :: ∀ querier errors. Querier querier =>
     querier -> Query -> Array QueryParameter -> Async (InternalTerror_ errors) Unit
 queryNone querier queryString parameters =
     querier # execute queryString parameters # reportDatabaseError
 
-transaction :: forall result errors.
+transaction :: ∀ result errors.
     (Client -> Async (InternalTerror_ errors) result) -> Pool -> Async (InternalTerror_ errors) result
 transaction = withTransaction (databaseErrorLines >>> Terror internal__)

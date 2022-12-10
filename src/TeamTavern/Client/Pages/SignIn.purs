@@ -48,7 +48,7 @@ type ChildSlots =
     , registerAnchor :: NavigationAnchor.Slot Unit
     )
 
-render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
+render :: ∀ left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render
     { nickname
     , password
@@ -131,7 +131,7 @@ render
         ]
     ]
 
-sendSignInRequest :: forall left. State -> Async left (Maybe State)
+sendSignInRequest :: ∀ left. State -> Async left (Maybe State)
 sendSignInRequest state @ { nickname, password } = Async.unify do
     response <- fetchBody (Proxy :: _ StartSession) { nickname, password }
         # lmap (const $ Just $ state { otherError = true })
@@ -146,7 +146,7 @@ sendSignInRequest state @ { nickname, password } = Async.unify do
         (const $ Just state { noSessionStarted = true })
         response
 
-handleAction :: forall output left.
+handleAction :: ∀ output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
 handleAction Init = do
     H.liftEffect $ whenM hasPlayerIdCookie $ navigateReplace_ "/"
@@ -170,7 +170,7 @@ handleAction (SignIn event) = do
         Nothing -> navigate_ "/"
         Just newState' -> H.put newState' { submitting = false }
 
-component :: forall query input output left.
+component :: ∀ query input output left.
     H.Component query input output (Async left)
 component = H.mkComponent
     { initialState: const
@@ -188,6 +188,6 @@ component = H.mkComponent
         }
     }
 
-signIn :: forall query children left.
+signIn :: ∀ query children left.
     HH.ComponentHTML query (signIn :: Slot Unit | children) (Async left)
 signIn = HH.slot (Proxy :: _ "signIn") unit component unit absurd

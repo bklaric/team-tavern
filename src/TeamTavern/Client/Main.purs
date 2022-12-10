@@ -29,10 +29,10 @@ import Web.HTML.Window (document)
 import Web.HTML.Window as Window
 -- import Veles (fetchTest)
 
-createListener :: forall monad. MonadEffect monad => (Event -> Effect Unit) -> monad EventListener
+createListener :: ∀ monad. MonadEffect monad => (Event -> Effect Unit) -> monad EventListener
 createListener = liftEffect <<< DOM.eventListener
 
-addWindowListener :: forall monad. MonadEffect monad => EventType -> EventListener -> monad Unit
+addWindowListener :: ∀ monad. MonadEffect monad => EventType -> EventListener -> monad Unit
 addWindowListener event listener =
     window <#> Window.toEventTarget >>= addEventListener event listener false # liftEffect
 

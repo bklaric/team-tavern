@@ -34,7 +34,7 @@ data Action slots monad = Navigate MouseEvent | Receive (State slots monad)
 
 type Slot = H.Slot (Const Void) Void
 
-render :: forall slots monad.
+render :: ∀ slots monad.
   State slots monad -> HH.ComponentHTML (Action slots monad) slots monad
 render { class_, path, content } =
     HH.a
@@ -45,7 +45,7 @@ render { class_, path, content } =
     [ content ]
 
 handleAction
-    :: forall slots monad output
+    :: ∀ slots monad output
     .  MonadEffect monad
     => Action slots monad
     -> H.HalogenM (State slots monad) (Action slots monad)
@@ -55,7 +55,7 @@ handleAction (Navigate event) = do
     navigateWithEvent_ path event
 handleAction (Receive state) = H.put state
 
-component :: forall query slots monad output. MonadEffect monad =>
+component :: ∀ query slots monad output. MonadEffect monad =>
     H.Component query (State slots monad) output monad
 component = H.mkComponent
     { initialState: identity
@@ -67,7 +67,7 @@ component = H.mkComponent
     }
 
 navigationAnchor
-    :: forall label children children' action monad
+    :: ∀ label children children' action monad
     .  Cons label (Slot Unit) children' children
     => IsSymbol label
     => MonadEffect monad
@@ -78,7 +78,7 @@ navigationAnchor label { path, content } =
     HH.slot label unit component { class_: "", path, content } absurd
 
 navigationAnchorClassed
-    :: forall label children children' action monad
+    :: ∀ label children children' action monad
     .  Cons label (Slot Unit) children' children
     => IsSymbol label
     => MonadEffect monad
@@ -89,7 +89,7 @@ navigationAnchorClassed label state =
     HH.slot label unit component state absurd
 
 navigationAnchorIndexed
-    :: forall label children children' action monad index
+    :: ∀ label children children' action monad index
     .  Cons label (Slot index) children' children
     => IsSymbol label
     => Ord index

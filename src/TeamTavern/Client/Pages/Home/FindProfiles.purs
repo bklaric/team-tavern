@@ -7,7 +7,7 @@ import Halogen.HTML as HH
 import TeamTavern.Client.Components.Landing (landingSection, landingSectionButton, landingSectionButtons, landingSectionDescription, landingSectionHeading, landingSectionImage, landingSectionText)
 import Web.UIEvent.MouseEvent (MouseEvent)
 
-findProfiles :: forall slots action. (MouseEvent -> action) -> HH.HTML slots action
+findProfiles :: ∀ slots action. (MouseEvent -> action) -> HH.HTML slots action
 findProfiles onClick =
     landingSection
     [ landingSectionImage Nothing "/images/search"
@@ -18,7 +18,7 @@ findProfiles onClick =
         ]
     ]
 
-findProfiles' :: forall slots action.
+findProfiles' :: ∀ slots action.
     String -> String -> (MouseEvent -> action) -> (MouseEvent -> action) -> HH.HTML slots action
 findProfiles' handle title onPlayersClick onTeamsClick =
     landingSection

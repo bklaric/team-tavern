@@ -11,10 +11,10 @@ import TeamTavern.Client.Components.Detail (arrangedOrDetail, detail, urlDetail,
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Shared.Organization (OrganizationNW, websiteNW)
 
-teamWebsiteDetail :: forall slots action. Maybe String -> Maybe (HH.HTML slots action)
+teamWebsiteDetail :: ∀ slots action. Maybe String -> Maybe (HH.HTML slots action)
 teamWebsiteDetail website = urlDetail "fas fa-globe" "Website" website
 
-teamAgeDetail :: forall slots action. Maybe Int -> Maybe Int -> Maybe (HH.HTML slots action)
+teamAgeDetail :: ∀ slots action. Maybe Int -> Maybe Int -> Maybe (HH.HTML slots action)
 teamAgeDetail Nothing Nothing = Nothing
 teamAgeDetail (Just from) Nothing = Just $
     detail "fas fa-calendar-alt"
@@ -35,13 +35,13 @@ teamAgeDetail (Just from) (Just to) = Just $
     , HH.text " years old"
     ]
 
-teamLocationsDetail :: forall slots actions. Array String -> Maybe (HH.HTML slots actions)
+teamLocationsDetail :: ∀ slots actions. Array String -> Maybe (HH.HTML slots actions)
 teamLocationsDetail locations = arrangedOrDetail "fas fa-globe-europe" "Live in" locations
 
-teamLanguagesDetail :: forall slots actions. Array String -> Maybe (HH.HTML slots actions)
+teamLanguagesDetail :: ∀ slots actions. Array String -> Maybe (HH.HTML slots actions)
 teamLanguagesDetail languages = arrangedOrDetail "fas fa-comments" "Speak" languages
 
-teamMicrophoneDetail :: forall slots actions. Boolean -> Maybe (HH.HTML slots actions)
+teamMicrophoneDetail :: ∀ slots actions. Boolean -> Maybe (HH.HTML slots actions)
 teamMicrophoneDetail false = Nothing
 teamMicrophoneDetail true = Just $
     detail "fas fa-microphone"
@@ -50,7 +50,7 @@ teamMicrophoneDetail true = Just $
     , HH.text $ " and are willing to communicate"
     ]
 
-teamDetails :: forall fields slots action left.
+teamDetails :: ∀ fields slots action left.
     { handle :: String
     , organization :: OrganizationNW
     , discordTag :: Maybe String

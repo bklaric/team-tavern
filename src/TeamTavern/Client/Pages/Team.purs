@@ -75,7 +75,7 @@ type ChildSlots = PlatformIdSlots
     , teamProfileOptions :: QuerylessSlot Unit String
     )
 
-render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
+render :: ∀ left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render (Empty _) = HH.div_ []
 render (Loaded state @ { team: team', status } ) =
     HH.div_  $
@@ -120,19 +120,19 @@ render (Loaded state @ { team: team', status } ) =
 render NotFound = HH.p_ [ HH.text "Team could not be found." ]
 render Error = HH.p_ [ HH.text "There has been an error loading the team. Please try again later." ]
 
-loadTeam :: forall left. String -> Async left (Maybe ViewTeam.OkContent)
+loadTeam :: ∀ left. String -> Async left (Maybe ViewTeam.OkContent)
 loadTeam handle = do
     timezone <- getClientTimezone
     get $ "/api/teams/" <> handle <> "?timezone=" <> timezone
 
-modifyLoaded :: forall monad. MonadState State monad => (Loaded -> Loaded) -> monad Unit
+modifyLoaded :: ∀ monad. MonadState State monad => (Loaded -> Loaded) -> monad Unit
 modifyLoaded mod =
     H.modify_
     case _ of
     Loaded state -> Loaded $ mod state
     state -> state
 
-handleAction :: forall output left.
+handleAction :: ∀ output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
 handleAction Initialize = do
     state <- H.get
@@ -161,7 +161,7 @@ handleAction HideEditTeamModal = modifyLoaded _ { editTeamModalShown = false }
 handleAction (ShowEditProfileModal profile) = modifyLoaded _ { editProfileModalShown = Just profile }
 handleAction HideEditProfileModal = modifyLoaded _ { editProfileModalShown = Nothing }
 
-component :: forall query output left.
+component :: ∀ query output left.
     H.Component query Input output (Async left)
 component = H.mkComponent
     { initialState: Empty
@@ -172,6 +172,6 @@ component = H.mkComponent
         }
     }
 
-team :: forall query children left.
+team :: ∀ query children left.
     Input -> HH.ComponentHTML query (team :: Slot | children) (Async left)
 team handle = HH.slot (Proxy :: _ "team") unit component handle absurd

@@ -83,7 +83,7 @@ instance
         Tuple rightPath rightBuilder <- pathRouter' rightProxy leftPath
         pure $ Tuple rightPath $ leftBuilder >>> rightBuilder
 
-pathRouter :: forall path output. PathRouter path () output =>
+pathRouter :: ∀ path output. PathRouter path () output =>
     Proxy path -> List PathSegment -> Either PathError (Record output)
 pathRouter proxy path = do
     Tuple restOfPath pathBuilder <- pathRouter' proxy path

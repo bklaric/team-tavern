@@ -6,5 +6,5 @@ import Async (Async, right)
 import Jarilo (noContent)
 import TeamTavern.Server.Infrastructure.Cookie (removeCookieHeader)
 
-end :: forall left. Async left _
+end :: ∀ left. Async left _
 end = right $ noContent removeCookieHeader

@@ -20,7 +20,7 @@ type Input = String
 
 type Slot = H.Slot (Const Void) Void Unit
 
-component :: forall query output left. H.Component query Input output (Async left)
+component :: ∀ query output left. H.Component query Input output (Async left)
 component = Hooks.component $ \_ nickname -> Hooks.do
     (Tuple shown shownId) <- usePopover
     (Tuple deleteModalShown deleteModalShownId) <- Hooks.useState Nothing
@@ -47,6 +47,6 @@ component = Hooks.component $ \_ nickname -> Hooks.do
             ]
         ]
 
-playerOptions :: forall action slots left.
+playerOptions :: ∀ action slots left.
     Input -> HH.ComponentHTML action (playerOptions :: Slot | slots) (Async left)
 playerOptions nickname = HH.slot (Proxy :: _ "playerOptions") unit component nickname absurd

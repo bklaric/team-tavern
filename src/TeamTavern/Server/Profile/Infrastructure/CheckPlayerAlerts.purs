@@ -135,7 +135,7 @@ checkAlertQueryString profileId alert = Query $ """
         ) as profile
     """ <> createFieldsFilterString alert.fields
 
-checkPlayerAlerts :: forall querier left. Querier querier => Int -> querier -> Async left Unit
+checkPlayerAlerts :: ∀ querier left. Querier querier => Int -> querier -> Async left Unit
 checkPlayerAlerts profileId querier =
     fromEffect $ void $ setTimeout 0 $ runSafeAsync pure (
     alwaysRightWithEffect (logError "Error checking player alerts") pure do

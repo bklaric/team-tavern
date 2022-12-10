@@ -26,7 +26,7 @@ profileUrl { teamHandle, gameHandle } = do
     origin' <- window >>= location >>= origin
     pure $ origin' <> "/teams/" <> teamHandle <> "/profiles/" <> gameHandle
 
-component :: forall query output left. H.Component query Input output (Async left)
+component :: ∀ query output left. H.Component query Input output (Async left)
 component = Hooks.component $ \_ input -> Hooks.do
     (Tuple shown shownId) <- usePopover
     let openProfileInNewTab = void $ fromEffect do
@@ -52,7 +52,7 @@ component = Hooks.component $ \_ input -> Hooks.do
             [ HH.text "Copy profile address" ]
         ]
 
-teamProfileOptions :: forall action slots left.
+teamProfileOptions :: ∀ action slots left.
     Input -> HH.ComponentHTML action (teamProfileOptions :: StringSlot | slots) (Async left)
 teamProfileOptions input =
     HH.slot (Proxy :: _ "teamProfileOptions") input.teamHandle component input absurd

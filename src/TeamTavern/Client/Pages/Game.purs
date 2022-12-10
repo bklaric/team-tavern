@@ -53,7 +53,7 @@ type ChildSlots =
     , viewAllTeams :: NavigationAnchor.Slot Unit
     )
 
-render :: forall left.
+render :: ∀ left.
     State -> H.ComponentHTML Action ChildSlots (Async left)
 render (Empty _) = HH.div [ HP.class_ $ HH.ClassName "home" ] []
 render (Loaded { game: game' @ { handle, shortTitle } }) =
@@ -66,7 +66,7 @@ render (Loaded { game: game' @ { handle, shortTitle } }) =
     , features' handle shortTitle (OpenPreboarding game')
     ]
 
-loadGame :: forall left. String -> Async left (Maybe ViewGame.OkContent)
+loadGame :: ∀ left. String -> Async left (Maybe ViewGame.OkContent)
 loadGame handle = Async.unify do
     response <-
         Fetch.fetch_ ("/api/games/" <> handle)
@@ -77,13 +77,13 @@ loadGame handle = Async.unify do
         _ -> Async.left Nothing
     pure $ Just content
 
-setMeta' :: forall monad. MonadEffect monad => String -> monad Unit
+setMeta' :: ∀ monad. MonadEffect monad => String -> monad Unit
 setMeta' title = setMeta (title <> " Team Finder | TeamTavern")
     ( "Find " <> title <> " players and teams looking for teammates on TeamTavern, " <> indefiniteNoun title <> " team finding platform. "
     <> "Create your own player or team profile and let them find you."
     )
 
-handleAction :: forall action output slots left.
+handleAction :: ∀ action output slots left.
     Action -> H.HalogenM State action slots output (Async left) Unit
 handleAction Initialize = do
     state <- H.get
@@ -119,7 +119,7 @@ handleAction (OpenTeamProfiles handle mouseEvent) = do
     preventMouseDefault mouseEvent
     navigate_ $ "/games/" <> handle <> "/teams"
 
-component :: forall query output left.
+component :: ∀ query output left.
     H.Component query Input output (Async left)
 component = H.mkComponent
     { initialState: Empty
@@ -131,6 +131,6 @@ component = H.mkComponent
         }
     }
 
-game :: forall query children left.
+game :: ∀ query children left.
     Input -> HH.ComponentHTML query (game :: Slot | children) (Async left)
 game input = HH.slot (Proxy :: _ "game") unit component input absurd

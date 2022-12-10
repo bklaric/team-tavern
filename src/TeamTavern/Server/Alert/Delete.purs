@@ -15,7 +15,7 @@ import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 queryString :: Query
 queryString = Query "delete from alert where id = $1 and token = $2;"
 
-deleteAlert :: forall left. Pool -> RouteContent -> Async left _
+deleteAlert :: ∀ left. Pool -> RouteContent -> Async left _
 deleteAlert pool { id, token } =
     sendResponse "Error deleting alert" do
     result <- queryInternal pool queryString (id :| token)

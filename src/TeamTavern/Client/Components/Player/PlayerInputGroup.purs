@@ -22,7 +22,7 @@ locationToEntry (Region region subRegions) =
     , subEntries: subRegions <#> locationToEntry
     }
 
-birthdayInputGroup :: forall slots action.
+birthdayInputGroup :: ∀ slots action.
     String -> Maybe String -> (Maybe String -> action) -> HTML slots action
 birthdayInputGroup max value onValue =
     inputGroup
@@ -34,7 +34,7 @@ birthdayInputGroup max value onValue =
     ]
 
 locationInputGroup
-    :: forall slots action left
+    :: ∀ slots action left
     .  Maybe String
     -> (Maybe String -> action)
     -> ComponentHTML action (location :: Slot (Const Void) (Maybe String) Unit | slots) (Async left)
@@ -55,7 +55,7 @@ locationInputGroup value onValue =
     ]
 
 languagesInputGroup
-    :: forall slots action left
+    :: ∀ slots action left
     .  Array String
     -> (Array String -> action)
     -> ComponentHTML action (language :: Slot (Const Void) (Array String) Unit | slots) (Async left)
@@ -72,14 +72,14 @@ languagesInputGroup value onValue =
         onValue
     ]
 
-microphoneInputGroup :: forall slots action. Boolean -> (Boolean -> action) -> HTML slots action
+microphoneInputGroup :: ∀ slots action. Boolean -> (Boolean -> action) -> HTML slots action
 microphoneInputGroup value onValue =
     inputGroup
     [ inputLabel "fas fa-microphone" "Microphone"
     , checkboxInput value onValue "I have a microphone and I'm willing to communicate."
     ]
 
-discordTagInputGroup :: forall slots action.
+discordTagInputGroup :: ∀ slots action.
     Maybe String -> (Maybe String -> action) -> Boolean -> HTML slots action
 discordTagInputGroup value onValue error =
     inputGroup $

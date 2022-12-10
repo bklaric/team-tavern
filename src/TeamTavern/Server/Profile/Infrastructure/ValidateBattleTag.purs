@@ -35,7 +35,7 @@ isBattleTagValid battleTag =
         && length discriminator <= maxDiscriminatorLength
     _ -> false
 
-validateBattleTag :: forall errors.
+validateBattleTag :: ∀ errors.
     Maybe String -> ValidatedTerrorNeaVar (battleTag :: {} | errors) (Maybe BattleTag)
 validateBattleTag battleTag =
     validateContact battleTag isBattleTagValid BattleTag (Proxy :: _ "battleTag") ("Invalid BattleTag: " <> _)

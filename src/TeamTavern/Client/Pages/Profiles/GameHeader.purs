@@ -13,7 +13,7 @@ data Tab = Profiles ProfileTab
 
 type Input = { title :: String, shortTitle :: String, tab :: Tab }
 
-gameHeader :: forall slots action. Input -> HH.HTML slots action
+gameHeader :: ∀ slots action. Input -> HH.HTML slots action
 gameHeader { title, shortTitle, tab } = HH.div_ $
     [ contentHeader
         [ contentHeaderSection

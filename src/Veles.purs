@@ -58,7 +58,7 @@ module Veles where
 --     <|> "viewPlayer"     := ViewPlayer
 --     <|> "viewPlayers"    := ViewPlayers
 
--- junction :: forall t166.
+-- junction :: ∀ t166.
 --     Either
 --         { viewPlayers :: Variant RouteErrors
 --         , viewPlayer :: Variant RouteErrors
@@ -123,7 +123,7 @@ module Veles where
 --         in
 --         leftBuilder >>> rightBuilder
 
--- writeResponse :: forall route result outputList output wtf response.
+-- writeResponse :: ∀ route result outputList output wtf response.
 --     PrepareWriteResponse route () output => RowToList output outputList => VariantMatchCases outputList wtf result => Union wtf () response =>
 --     Proxy route -> Variant response -> result
 -- writeResponse proxy response = let
@@ -229,7 +229,7 @@ module Veles where
 -- instance (Url leftPath parameters, Url rightPath parameters) => Url (leftPath / rightPath) parameters where
 --     url _ parameters = url (Proxy :: _ leftPath) parameters <> url (Proxy :: _ rightPath) parameters
 
--- url' :: forall path424. Url path424 (Record ()) => Proxy path424 -> String
+-- url' :: ∀ path424. Url path424 (Record ()) => Proxy path424 -> String
 -- url' proxy = url proxy {}
 
 -- -- class Url_ (path :: Path) where
@@ -308,7 +308,7 @@ module Veles where
 
 -- type Bruh other = ( a :: String, b :: Int | other)
 
--- funny :: forall before after other bruhLike. Union bruhLike after (Bruh after) => Record (a :: String | after) -> Effect Unit
+-- funny :: ∀ before after other bruhLike. Union bruhLike after (Bruh after) => Record (a :: String | after) -> Effect Unit
 -- funny bruhLike = do
 --     log $ unsafeCoerce bruhLike.a
 

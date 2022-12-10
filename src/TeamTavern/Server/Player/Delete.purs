@@ -16,7 +16,7 @@ import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 queryString :: Query
 queryString = Query "delete from player where id = $1"
 
-delete :: forall left. Pool -> String -> Cookies -> Async left _
+delete :: ∀ left. Pool -> String -> Cookies -> Async left _
 delete pool nickname cookies =
     sendResponse "Error deleting player" do
     cookieInfo <- ensureSignedInAs pool cookies nickname

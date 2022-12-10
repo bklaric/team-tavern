@@ -35,7 +35,7 @@ isDiscordTagValid discordTag =
         && length discriminator == discriminatorLength
     _ -> false
 
-validateDiscordTag :: forall errors.
+validateDiscordTag :: ∀ errors.
     Maybe String -> ValidatedTerrorNeaVar (discordTag :: {} | errors) (Maybe DiscordTag)
 validateDiscordTag discordTag =
     validateContact discordTag isDiscordTagValid DiscordTag (Proxy :: _ "discordTag") ("Invalid DiscordTag: " <> _)

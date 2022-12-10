@@ -26,7 +26,7 @@ queryString = Query """
         and revoked = false
     """
 
-ensureSignedIn :: forall querier errors. Querier querier =>
+ensureSignedIn :: ∀ querier errors. Querier querier =>
     querier -> Cookies -> Async (EnsureSignedInError errors) CookieInfo
 ensureSignedIn querier cookies =
     case lookupCookieInfo cookies of

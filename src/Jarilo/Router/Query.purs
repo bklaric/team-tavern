@@ -28,7 +28,7 @@ data QueryError
         , actualValue :: Value
         }
 
-parameterParseError :: forall parameterName. IsSymbol parameterName =>
+parameterParseError :: ∀ parameterName. IsSymbol parameterName =>
     Proxy parameterName -> Value -> String -> QueryError
 parameterParseError nameProxy actualValue errorMessage =
     CantParseParameter
@@ -37,10 +37,10 @@ parameterParseError nameProxy actualValue errorMessage =
     , actualValue: actualValue
     }
 
-fromValue :: forall value. Component value => Value -> Either String value
+fromValue :: ∀ value. Component value => Value -> Either String value
 fromValue = valueToString >>> fromComponent
 
-fromValue' :: forall value. Component value =>
+fromValue' :: ∀ value. Component value =>
     Value -> Either { error :: String, value :: Value } value
 fromValue' value = valueToString value # fromComponent # lmap { error: _, value }
 
@@ -138,7 +138,7 @@ instance
     queryRouter' _ query =
         pure $ Tuple (QueryPairs []) (insert (Proxy :: _ name) query)
 
-queryRouter :: forall query output. QueryRouter query () output =>
+queryRouter :: ∀ query output. QueryRouter query () output =>
     Proxy query -> QueryPairs Key Value -> Either QueryError (Record output)
 queryRouter proxy query = do
     Tuple _ builder <- queryRouter' proxy query

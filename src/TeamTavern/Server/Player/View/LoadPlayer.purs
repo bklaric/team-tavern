@@ -210,7 +210,7 @@ queryString timezone = Query $ """
     """
 
 loadPlayer
-    :: forall errors querier
+    :: ∀ errors querier
     .  Querier querier
     => querier
     -> Maybe CookieInfo

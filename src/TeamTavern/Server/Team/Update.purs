@@ -57,12 +57,12 @@ queryParameters ownerId handle team
     : nullableTimeFrom team.onlineWeekend
     :| nullableTimeTo team.onlineWeekend
 
-updateTeam :: forall querier errors. Querier querier =>
+updateTeam :: ∀ querier errors. Querier querier =>
     querier -> Id -> String -> Team -> Async (InternalTerror_ errors) Unit
 updateTeam pool ownerId handle team =
     queryNone pool queryString (queryParameters ownerId handle team)
 
-update :: forall left. Pool -> Cookies -> { handle :: String } -> UpdateTeam.RequestContent -> Async left _
+update :: ∀ left. Pool -> Cookies -> { handle :: String } -> UpdateTeam.RequestContent -> Async left _
 update pool cookies { handle } content =
     sendResponse "Error updating team" do
     { cookieInfo } <- ensureSignedInOwner pool cookies handle

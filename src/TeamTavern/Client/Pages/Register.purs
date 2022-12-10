@@ -46,7 +46,7 @@ type State =
 
 type Slot = H.Slot (Const Void) Void
 
-render :: forall left.
+render :: ∀ left.
     State -> H.ComponentHTML Action (registrationInput :: RegistrationInput.Slot) (Async left)
 render { registration, otherError, submitting } =
     HH.form
@@ -87,7 +87,7 @@ render { registration, otherError, submitting } =
         ]
     ]
 
-sendRegisterRequest :: forall left. State -> Async left (Maybe State)
+sendRegisterRequest :: ∀ left. State -> Async left (Maybe State)
 sendRegisterRequest state @ { registration: { nickname, password } } = Async.unify do
     response <- Fetch.fetch "/api/players"
         (  Fetch.method := POST
@@ -115,7 +115,7 @@ sendRegisterRequest state @ { registration: { nickname, password } } = Async.uni
         _ -> pure $ Just $ state { otherError = true }
     pure newState
 
-handleAction :: forall slots output left.
+handleAction :: ∀ slots output left.
     Action -> H.HalogenM State Action slots output (Async left) Unit
 handleAction Initialize = do
     H.liftEffect $ whenM hasPlayerIdCookie $ navigateReplace_ "/"
@@ -146,7 +146,7 @@ handleAction (Register event) = do
 handleAction (Navigate url event) =
     navigateWithEvent_ url event
 
-component :: forall query input output left. H.Component query input output (Async left)
+component :: ∀ query input output left. H.Component query input output (Async left)
 component = H.mkComponent
     { initialState: const
         { registration: RegistrationInput.emptyInput
@@ -160,6 +160,6 @@ component = H.mkComponent
         }
     }
 
-register :: forall query children left.
+register :: ∀ query children left.
     HH.ComponentHTML query (register :: Slot Unit | children) (Async left)
 register = HH.slot (Proxy :: _ "register") unit component unit absurd

@@ -77,7 +77,7 @@ type Output option = Maybe option
 type Slot option = H.Slot (Const Void) (Output option) Unit
 
 renderEntry
-    :: forall option slots
+    :: ∀ option slots
     .  Int
     -> Labeler option
     -> Entry option
@@ -114,7 +114,7 @@ renderEntry level labeler (Entry { option, expanded, subEntries }) = let
     else []
 
 renderEntries
-    :: forall option slots
+    :: ∀ option slots
     .  Int
     -> Labeler option
     -> Entries option
@@ -122,7 +122,7 @@ renderEntries
 renderEntries level labeler entries =
     entries <#> renderEntry level labeler # Array.catMaybes # join
 
-render :: forall option slots. State option -> HH.HTML slots (Action option)
+render :: ∀ option slots. State option -> HH.HTML slots (Action option)
 render { entries, selected, labeler, filter, open } = let
     selectedClass = if open then "selected-open" else "selected-closed"
     openOrClose = if open then Close else Open
@@ -160,7 +160,7 @@ render { entries, selected, labeler, filter, open } = let
         ]
     else []
 
-filterEntries :: forall option.
+filterEntries :: ∀ option.
     String -> Labeler option -> Entries option -> Entries option
 filterEntries filter _ entries | String.null $ trim filter =
     entries <#> \(Entry entry) -> Entry entry { shown = true, expanded = false }
@@ -177,7 +177,7 @@ filterEntries filter labeler entries = entries <#> \(Entry entry) -> let
         , subEntries = subEntries
         }
 
-toggleEntriesExpanded :: forall option.
+toggleEntriesExpanded :: ∀ option.
     Comparer option -> option -> Entries option -> Entries option
 toggleEntriesExpanded comparer option entries = entries <#> \(Entry entry) ->
     if comparer option entry.option
@@ -186,7 +186,7 @@ toggleEntriesExpanded comparer option entries = entries <#> \(Entry entry) ->
         { subEntries = toggleEntriesExpanded comparer option entry.subEntries }
 
 handleAction
-    :: forall option slots left
+    :: ∀ option slots left
     .  (Action option)
     -> H.HalogenM (State option) (Action option) slots
         (Output option) (Async left) Unit
@@ -225,7 +225,7 @@ handleAction (ToggleEntryExpanded option) =
     H.modify_ \state @ { entries, comparer } ->
         state { entries = toggleEntriesExpanded comparer option entries }
 
-createEntry :: forall option. InputEntry option -> Entry option
+createEntry :: ∀ option. InputEntry option -> Entry option
 createEntry (InputEntry { option, subEntries }) = Entry
     { option: option
     , shown: true
@@ -233,7 +233,7 @@ createEntry (InputEntry { option, subEntries }) = Entry
     , subEntries: subEntries <#> createEntry
     }
 
-component :: forall query option left.
+component :: ∀ query option left.
     H.Component query (Input option) (Output option) (Async left)
 component = H.mkComponent
     { initialState: \{ entries, selected, labeler, comparer, filter } ->
@@ -255,7 +255,7 @@ component = H.mkComponent
     }
 
 singleTreeSelect
-    :: forall children' slot children action left option
+    :: ∀ children' slot children action left option
     .  Cons slot (Slot option) children' children
     => IsSymbol slot
     => Proxy slot

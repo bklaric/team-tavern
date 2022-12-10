@@ -139,7 +139,7 @@ type ChildSlots slots =
     , teamProfileFormInput :: TeamProfileFormInput.Slot
     | slots )
 
-renderPage :: forall slots left.
+renderPage :: ∀ slots left.
     State -> Array (HH.ComponentHTML Action (ChildSlots slots) (Async left))
 renderPage { step: Greeting, nickname, confirmSkip } =
     [ boardingStep
@@ -282,10 +282,10 @@ renderPage { step: TeamProfile, teamProfile, game, otherError, submitting } =
         ]
     ]
 
-render :: forall slots left. State -> HH.ComponentHTML Action (ChildSlots slots) (Async left)
+render :: ∀ slots left. State -> HH.ComponentHTML Action (ChildSlots slots) (Async left)
 render state = HH.div_ $ [ boarding $ renderPage state ] <> stickyLeaderboards
 
-sendRequest :: forall left.
+sendRequest :: ∀ left.
     State -> Async left (Maybe (Either Onboard.BadContent Onboard.OkContent))
 sendRequest (state :: State) = Async.unify do
     (body :: Onboard.RequestContent) <-
@@ -329,7 +329,7 @@ sendRequest (state :: State) = Async.unify do
         response
 
 -- Update state for current history entry so back button doesn't lose previous state.
-updateHistoryState :: forall monad. MonadEffect monad => State -> monad Unit
+updateHistoryState :: ∀ monad. MonadEffect monad => State -> monad Unit
 updateHistoryState (state :: State) = do
     case state.step of
         Greeting -> navigateReplace state "/onboarding/start"
@@ -340,7 +340,7 @@ updateHistoryState (state :: State) = do
         PlayerProfile -> navigateReplace state "/onboarding/player-profile"
         TeamProfile -> navigateReplace state "/onboarding/team-profile"
 
-handleAction :: forall action output slots left.
+handleAction :: ∀ action output slots left.
     Action -> H.HalogenM State action slots output (Async left) Unit
 handleAction Initialize = do
     nickname <- getPlayerNickname
@@ -587,7 +587,7 @@ handleAction SetUpAccount = do
             errors
         Nothing -> H.put nextState { otherError = true }
 
-component :: forall query output left.
+component :: ∀ query output left.
     H.Component query Input output (Async left)
 component = H.mkComponent
     { initialState:
@@ -601,6 +601,6 @@ component = H.mkComponent
         }
     }
 
-onboarding :: forall action slots left.
+onboarding :: ∀ action slots left.
     Input -> HH.ComponentHTML action (onboarding :: Slot | slots) (Async left)
 onboarding input = HH.slot (Proxy :: _ "onboarding") unit component input absurd

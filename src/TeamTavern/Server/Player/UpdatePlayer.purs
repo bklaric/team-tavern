@@ -14,7 +14,7 @@ import TeamTavern.Server.Player.Domain.Nickname (Nickname)
 import TeamTavern.Server.Player.UpdatePlayer.UpdateDetails (updateDetails) as UpdateDetails
 import TeamTavern.Server.Player.UpdatePlayer.ValidatePlayer (validatePlayer)
 
-updatePlayer :: forall left.
+updatePlayer :: ∀ left.
     Pool -> Nickname -> Map String String -> UpdatePlayer.RequestContent -> Async left _
 updatePlayer pool nickname cookies player' =
     sendResponse "Error updating player" do

@@ -13,7 +13,7 @@ import TeamTavern.Client.Components.Select.SingleSelect as SingleSelect
 import TeamTavern.Shared.Timezones (Timezone, allTimezones)
 
 timezoneInputGroup
-    :: forall slots action left
+    :: ∀ slots action left
     .  Maybe String
     -> (Maybe String -> action)
     -> ComponentHTML action (timezone :: SingleSelect.Slot Timezone Unit | slots) (Async left)
@@ -40,7 +40,7 @@ timezoneInputGroup value onValue =
     ]
 
 timeRangeInputGroup
-    :: forall slots action
+    :: ∀ slots action
     .  String
     -> Boolean
     -> Maybe String

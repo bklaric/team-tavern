@@ -9,7 +9,7 @@ import TeamTavern.Server.Infrastructure.Cookie (Cookies, lookupCookieInfo)
 import TeamTavern.Server.Infrastructure.Error (Terror(..))
 import TeamTavern.Server.Infrastructure.Response (ForbiddenTerror_)
 
-ensureNotSignedIn :: forall errors. Cookies -> Async (ForbiddenTerror_ errors) Unit
+ensureNotSignedIn :: ∀ errors. Cookies -> Async (ForbiddenTerror_ errors) Unit
 ensureNotSignedIn cookies =
     case lookupCookieInfo cookies of
     Nothing -> right unit

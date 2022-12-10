@@ -88,7 +88,7 @@ validateContacts' requiredPlatforms contacts @ { discordTag, steamId, riotId, ba
     <*> validateFriendCode friendCode
 
 validateContacts
-    :: forall errors
+    :: ∀ errors
     .  Array Platform
     -> PlayerContacts
     -> Async (BadRequestTerror ContactsErrors errors) Contacts
@@ -97,7 +97,7 @@ validateContacts requiredPlatforms contacts =
     # AsyncVal.fromValidated
     # lmap (map badRequest_)
 
-validateContactsV :: forall errors' errors label.
+validateContactsV :: ∀ errors' errors label.
     Cons label ContactsErrors errors' errors => IsSymbol label =>
     Array Platform -> PlayerContacts -> Proxy label -> AsyncV (TerrorNeaVar errors) Contacts
 validateContactsV requiredPlatforms contacts label =

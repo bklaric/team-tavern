@@ -10,7 +10,7 @@ data Status = SignedInSelf | SignedInOther | SignedOut
 
 derive instance Eq Status
 
-getStatus :: forall effect. MonadEffect effect => String -> effect Status
+getStatus :: ∀ effect. MonadEffect effect => String -> effect Status
 getStatus nickname = do
     nickname' <- getPlayerNickname
     pure $ case nickname' of

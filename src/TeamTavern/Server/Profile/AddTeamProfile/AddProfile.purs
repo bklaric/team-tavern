@@ -45,7 +45,7 @@ queryParameters id teamHandle gameHandle profile =
     :| profile.ambitions
 
 addProfile'
-    :: forall errors
+    :: ∀ errors
     .  Client
     -> Id
     -> Handle
@@ -57,7 +57,7 @@ addProfile' client id teamHandle gameHandle profile = do
         (queryParameters id teamHandle gameHandle profile)
 
 addProfile
-    :: forall errors
+    :: ∀ errors
     .  Client
     -> Id
     -> Handle

@@ -11,7 +11,7 @@ import Type.Proxy (Proxy(..))
 
 type Empty = {}
 
-empty :: forall errors. String -> Maybe (Variant (empty :: Empty | errors))
+empty :: ∀ errors. String -> Maybe (Variant (empty :: Empty | errors))
 empty string =
     if null string
     then Just $ inj (Proxy :: _ "empty") {}
@@ -19,7 +19,7 @@ empty string =
 
 type TooShort = { minLength :: Int, actualLength :: Int }
 
-tooShort :: forall errors.
+tooShort :: ∀ errors.
     Int -> String -> Maybe (Variant (tooShort :: TooShort | errors))
 tooShort minLength string = let
     actualLength = length string
@@ -30,7 +30,7 @@ tooShort minLength string = let
 
 type TooLong = { maxLength :: Int, actualLength :: Int }
 
-tooLong :: forall errors.
+tooLong :: ∀ errors.
     Int -> String -> Maybe (Variant (tooLong :: TooLong | errors))
 tooLong maxLength string = let
     actualLength = length string
@@ -42,7 +42,7 @@ tooLong maxLength string = let
 type NotExactlyLong =
     { exactLength :: Int, actualLength :: Int }
 
-notExactlyLong :: forall errors.
+notExactlyLong :: ∀ errors.
     Int -> String -> Maybe (Variant (notExactlyLong :: NotExactlyLong | errors))
 notExactlyLong exactLength string = let
     actualLength = length string
@@ -53,7 +53,7 @@ notExactlyLong exactLength string = let
 
 type NotPrintable = {}
 
-notPrintable :: forall errors.
+notPrintable :: ∀ errors.
     String -> Maybe (Variant (notPrintable :: NotPrintable | errors))
 notPrintable string =
     if string # toCodePointArray # all isPrint
@@ -65,7 +65,7 @@ type NotAsciiAlphaNum = {}
 isAsciiAlpha :: CodePoint -> Boolean
 isAsciiAlpha ch = between (codePointFromChar 'a') (codePointFromChar 'z') (toLowerSimple ch)
 
-notAsciiAlphaNum :: forall errors.
+notAsciiAlphaNum :: ∀ errors.
     String -> Maybe (Variant (notAsciiAlphaNum :: NotAsciiAlphaNum | errors))
 notAsciiAlphaNum string =
     if string # toCodePointArray # all (\char -> isAsciiAlpha char || isDecDigit char)
@@ -74,7 +74,7 @@ notAsciiAlphaNum string =
 
 type NotAsciiAlphaNumHyphen = {}
 
-notAsciiAlphaNumHyphen :: forall errors.
+notAsciiAlphaNumHyphen :: ∀ errors.
     String -> Maybe (Variant (notAsciiAlphaNumHyphen :: NotAsciiAlphaNumHyphen | errors))
 notAsciiAlphaNumHyphen string =
     if string # toCodePointArray # all
@@ -84,7 +84,7 @@ notAsciiAlphaNumHyphen string =
 
 type NotAsciiAlphaNumSpecial = {}
 
-notAsciiAlphaNumSpecial :: forall errors.
+notAsciiAlphaNumSpecial :: ∀ errors.
     String -> Maybe (Variant (notAsciiAlphaNumSpecial :: NotAsciiAlphaNumSpecial | errors))
 notAsciiAlphaNumSpecial string =
     if string # toCodePointArray # all
@@ -97,7 +97,7 @@ type ContainsWhitespace = {}
 isSpace :: String -> Boolean
 isSpace char = any (char == _)  ["\t", "\n", "\r", "\x0c", "\x0b", " "]
 
-containsWhitespace :: forall errors.
+containsWhitespace :: ∀ errors.
     String -> Maybe (Variant (containsWhitespace :: ContainsWhitespace | errors))
 containsWhitespace string =
     if string # split (Pattern "") # all (not <<< isSpace)
@@ -106,7 +106,7 @@ containsWhitespace string =
 
 type NotHex = {}
 
-notHex :: forall errors. String -> Maybe (Variant (notHex :: NotHex | errors))
+notHex :: ∀ errors. String -> Maybe (Variant (notHex :: NotHex | errors))
 notHex string =
     if string # toCodePointArray # all isHexDigit
     then Nothing
@@ -114,7 +114,7 @@ notHex string =
 
 type Invalid = { original :: String }
 
-invalid :: forall errors.
+invalid :: ∀ errors.
     (String -> Boolean) -> String -> Maybe (Variant (invalid :: Invalid | errors))
 invalid check string =
     if check string

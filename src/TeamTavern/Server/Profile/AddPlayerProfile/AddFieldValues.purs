@@ -21,7 +21,7 @@ insertUrlValueString = Query """
     values ($1, $2, $3, null);
     """
 
-insertUrlValue :: forall errors.
+insertUrlValue :: ∀ errors.
     Client -> ProfileId -> FieldId -> Url -> Async (InternalTerror_ errors) Unit
 insertUrlValue client profileId fieldId url =
     queryNone client insertUrlValueString (profileId : fieldId :| url)
@@ -34,7 +34,7 @@ insertSingleValueString = Query """
     values ($1, $2, null, $3);
     """
 
-insertSingleValue :: forall errors.
+insertSingleValue :: ∀ errors.
     Client -> ProfileId -> FieldId -> OptionId -> Async (InternalTerror_ errors) Unit
 insertSingleValue client profileId fieldId optionId =
     queryNone client insertSingleValueString (profileId : fieldId :| optionId)
@@ -47,7 +47,7 @@ insertMultiValueOptionString = Query """
     values ($1, $2);
     """
 
-insertMultiValueOption :: forall errors.
+insertMultiValueOption :: ∀ errors.
     Client -> FieldValueId -> OptionId -> Async (InternalTerror_ errors) Unit
 insertMultiValueOption client fieldValueId optionId =
     queryNone client insertMultiValueOptionString (fieldValueId :| optionId)
@@ -59,7 +59,7 @@ insertMultiValueString = Query """
     returning player_profile_field_value.id as "fieldValueId";
     """
 
-insertMultiValue :: forall errors.
+insertMultiValue :: ∀ errors.
     Client -> ProfileId -> FieldId -> Array OptionId -> Async (InternalTerror_ errors) Unit
 insertMultiValue client profileId fieldId optionIds = do
     -- Insert field value row.
@@ -71,7 +71,7 @@ insertMultiValue client profileId fieldId optionIds = do
 
 -- Insert field value rows.
 
-addFieldValues :: forall errors.
+addFieldValues :: ∀ errors.
     Client -> ProfileId -> Array FieldValue -> Async (InternalTerror_ errors) Unit
 addFieldValues client profileId fieldValues =
     Async.foreach fieldValues \(FieldValue fieldId fieldValueType) ->

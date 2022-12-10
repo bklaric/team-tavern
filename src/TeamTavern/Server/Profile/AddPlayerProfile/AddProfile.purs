@@ -27,14 +27,14 @@ queryParameters playerId { handle }
     { platform, newOrReturning, about, ambitions } =
     playerId : handle : writeImpl platform : newOrReturning : about :| ambitions
 
-addProfile' :: forall errors.
+addProfile' :: ∀ errors.
     Client -> Int -> AddPlayerProfile.RouteParams -> Profile -> Async (InternalTerror_ errors) ProfileId
 addProfile' client playerId identifiers profile = do
     { profileId } :: { profileId :: Int } <- queryFirstInternal client queryString
         (queryParameters playerId identifiers profile)
     pure profileId
 
-addProfile :: forall errors.
+addProfile :: ∀ errors.
     Client -> Int -> AddPlayerProfile.RouteParams -> Profile -> Async (InternalTerror_ errors) Int
 addProfile client playerId identifiers profile @ { fieldValues } = do
     profileId <- addProfile' client playerId identifiers profile

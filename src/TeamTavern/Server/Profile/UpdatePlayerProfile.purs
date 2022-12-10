@@ -22,7 +22,7 @@ import TeamTavern.Server.Profile.Infrastructure.PatchPlayerContacts (patchPlayer
 import TeamTavern.Server.Profile.UpdatePlayerProfile.UpdateProfile (updateProfile)
 import Type.Proxy (Proxy(..))
 
-updatePlayerProfile :: forall left.
+updatePlayerProfile :: ∀ left.
     Pool -> Map String String -> AddPlayerProfile.RouteParams -> _ -> Async left _
 updatePlayerProfile pool cookies identifiers profile' =
     sendResponse "Error updating player profile" do

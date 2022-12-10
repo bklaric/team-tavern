@@ -30,7 +30,7 @@ isTeam :: PlayerOrTeam -> Boolean
 isTeam Player = false
 isTeam Team = true
 
-playerOrTeamInput :: forall slots action.
+playerOrTeamInput :: ∀ slots action.
     Maybe PlayerOrTeam -> (PlayerOrTeam -> action) -> HTML slots action
 playerOrTeamInput selected onSelect =
     radioButtons

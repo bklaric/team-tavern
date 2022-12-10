@@ -9,7 +9,7 @@ import Data.Maybe (Maybe(..), maybe)
 import Data.Traversable (class Foldable, foldl)
 
 create
-    :: forall result input container error canonicalized
+    :: ∀ result input container error canonicalized
     .  Foldable container
     => (input -> canonicalized)
     -> container (canonicalized -> Maybe error)

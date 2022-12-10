@@ -82,7 +82,7 @@ type ChildSlots = PlatformIdSlots
     , playerProfileOptions :: QuerylessSlot Unit String
     )
 
-render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
+render :: ∀ left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render (Empty _) = HH.div_ []
 render (Loaded state @ { player: player', status }) =
     HH.div_ $
@@ -120,19 +120,19 @@ render NotFound = HH.p_ [ HH.text "Player could not be found." ]
 render Error = HH.p_ [ HH.text
     "There has been an error loading the player. Please try again later." ]
 
-loadPlayer :: forall left. String -> Async left (Maybe ViewPlayer.OkContent)
+loadPlayer :: ∀ left. String -> Async left (Maybe ViewPlayer.OkContent)
 loadPlayer nickname = do
     timezone <- getClientTimezone
     get ("/api/players/" <> nickname <> "?timezone=" <> timezone)
 
-modifyLoaded :: forall monad. MonadState State monad => (Loaded -> Loaded) -> monad Unit
+modifyLoaded :: ∀ monad. MonadState State monad => (Loaded -> Loaded) -> monad Unit
 modifyLoaded mod =
     H.modify_
     case _ of
     Loaded state -> Loaded $ mod state
     state -> state
 
-handleAction :: forall output left.
+handleAction :: ∀ output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
 handleAction Initialize = do
     state <- H.get
@@ -164,7 +164,7 @@ handleAction HideEditProfileModal = modifyLoaded _ { editProfileModalShown = Not
 handleAction ShowCreateTeamModal = modifyLoaded _ { createTeamModalShown = true }
 handleAction HideCreateTeamModal = modifyLoaded _ { createTeamModalShown = false }
 
-component :: forall query output left. H.Component query Input output (Async left)
+component :: ∀ query output left. H.Component query Input output (Async left)
 component = H.mkComponent
     { initialState: Empty
     , render
@@ -175,6 +175,6 @@ component = H.mkComponent
         }
     }
 
-player :: forall query children left.
+player :: ∀ query children left.
     Input -> HH.ComponentHTML query (player :: Slot | children) (Async left)
 player input = HH.slot (Proxy :: _ "player") unit component input absurd

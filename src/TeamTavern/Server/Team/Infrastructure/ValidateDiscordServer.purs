@@ -10,7 +10,7 @@ import TeamTavern.Server.Infrastructure.Error as Terror
 import TeamTavern.Server.Profile.Infrastructure.ValidateUrl (Url, validateUrlV)
 import Type.Proxy (Proxy(..))
 
-validateDiscordServer :: forall errors.
+validateDiscordServer :: ∀ errors.
     Maybe String -> ValidatedTerrorNeaVar (discordServer :: {} | errors) (Maybe Url)
 validateDiscordServer discordServer
     = discordServer

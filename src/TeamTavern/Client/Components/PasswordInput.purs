@@ -8,7 +8,7 @@ import Halogen.HTML.Properties (ButtonType(..), InputType(..))
 import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Snippets.Class as HS
 
-passwordInput :: forall slots action.
+passwordInput :: ∀ slots action.
     String -> Boolean -> (String -> action) -> action -> HH.HTML slots action
 passwordInput password passwordShown onPassword togglePasswordVisibility =
     HH.div [ HS.class_ "password-input-container" ]

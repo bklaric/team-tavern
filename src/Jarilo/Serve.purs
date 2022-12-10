@@ -13,7 +13,7 @@ import Perun.Async.Server (run_)
 import Type.Proxy (Proxy)
 import Unsafe.Coerce (unsafeCoerce)
 
-serve :: forall errors handlers junction. JunctionRouter junction errors handlers =>
+serve :: ∀ errors handlers junction. JunctionRouter junction errors handlers =>
     Proxy junction -> ListenOptions -> Record handlers -> Effect Unit
 serve proxy options handlers =
     run_ options \request ->

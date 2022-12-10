@@ -16,7 +16,7 @@ import Wrapped.Validated as Wrapped
 
 newtype Paragraph = Paragraph String
 
-create :: forall errors.
+create :: ∀ errors.
     String -> Validated (NonEmptyArray errors) (Array Paragraph)
 create text = let
     whitespaceRegex = regex """\s+""" global # fromRight undefined

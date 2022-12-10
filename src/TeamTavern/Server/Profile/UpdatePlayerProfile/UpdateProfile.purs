@@ -63,7 +63,7 @@ updateProfileParameters
     { platform, newOrReturning, about, ambitions } =
     nickname : handle : writeImpl platform : newOrReturning : about :| ambitions
 
-updateProfile' :: forall errors.
+updateProfile' :: ∀ errors.
     Client -> AddPlayerProfile.RouteParams -> Profile -> Async (InternalTerror_ errors) ProfileId
 updateProfile' client identifiers profile = do
     { profileId } :: { profileId :: Int } <-
@@ -79,13 +79,13 @@ deleteFieldValuesString = Query """
     where player_profile_id = $1;
     """
 
-deleteFieldValues :: forall errors.
+deleteFieldValues :: ∀ errors.
     Client -> ProfileId -> Async (InternalTerror_ errors) Unit
 deleteFieldValues client profileId =
     queryNone client deleteFieldValuesString (profileId : [])
 
 updateProfile
-    :: forall errors
+    :: ∀ errors
     .  Client
     -> AddPlayerProfile.RouteParams
     -> Profile

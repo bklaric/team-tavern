@@ -38,7 +38,7 @@ queryParameters playerId contacts =
     : toNullable contacts.gamerTag
     :| toNullable contacts.friendCode
 
-writeContacts :: forall querier errors. Querier querier =>
+writeContacts :: ∀ querier errors. Querier querier =>
     querier -> Int -> Contacts -> Async (InternalTerror_ errors) Unit
 writeContacts querier playerId contacts =
     queryNone querier queryString (queryParameters playerId contacts)

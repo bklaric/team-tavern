@@ -48,7 +48,7 @@ type Slot = H.Slot (Const Void) (Modal.Output Void) Unit
 
 type ChildSlots = ("playerProfileFormInput" :: ProfileFormInput.Slot)
 
-render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
+render :: ∀ left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { profile, otherError, submitting } =
     form SendRequest $
     [ profileFormInput profile UpdateProfile
@@ -57,14 +57,14 @@ render { profile, otherError, submitting } =
     ]
     <> otherFormError otherError
 
-sendRequest :: forall left. State -> Async left $ Maybe $ Either AddPlayerProfile.BadContent Unit
+sendRequest :: ∀ left. State -> Async left $ Maybe $ Either AddPlayerProfile.BadContent Unit
 sendRequest { nickname, handle, profile } =
     postNoContent ("/api/players/" <> nickname <> "/profiles/" <> handle)
     ({ details: pick profile.details
     , contacts: pick profile.contacts
     } :: AddPlayerProfile.RequestContent)
 
-handleAction :: forall output left.
+handleAction :: ∀ output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
 handleAction (UpdateProfile profile) =
     H.modify_ _
@@ -141,7 +141,7 @@ handleAction (SendRequest event) = do
             badContent
         Nothing -> H.put currentState { submitting = false, otherError = true }
 
-component :: forall query output left. H.Component query Input output (Async left)
+component :: ∀ query output left. H.Component query Input output (Async left)
 component = H.mkComponent
     { initialState: \
         { player: { nickname, discordTag, steamId, riotId, battleTag, eaId, ubisoftUsername, psnId, gamerTag, friendCode }
@@ -180,7 +180,7 @@ component = H.mkComponent
     }
 
 createProfile
-    :: forall children action left
+    :: ∀ children action left
     .  Input
     -> (Modal.Output Void -> action)
     -> HH.ComponentHTML action (createProfile :: Slot | children) (Async left)

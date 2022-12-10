@@ -18,7 +18,7 @@ import TeamTavern.Client.Pages.Player.Status (Status(..))
 import TeamTavern.Routes.Player.ViewPlayer as ViewPlayer
 
 details
-    :: forall action children left
+    :: ∀ action children left
     .  ViewPlayer.OkContent
     -> Status
     -> action

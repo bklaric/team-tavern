@@ -130,13 +130,13 @@ queryString timezone = Query $ """
         ) as profile
     order by profile.updated desc"""
 
-selectPlayerProfile :: forall querier errors. Querier querier =>
+selectPlayerProfile :: ∀ querier errors. Querier querier =>
     querier -> RouteParams -> Async (LoadSingleError errors) OkContent
 selectPlayerProfile pool routeParams @ { nickname, handle, timezone } =
     queryFirstNotFound pool (queryString timezone) (nickname :| handle)
     # lmap (elaborate ("Error selecting player profile with route params: " <> show routeParams))
 
-viewPlayerProfile :: forall left. Pool -> RouteParams -> Async left _
+viewPlayerProfile :: ∀ left. Pool -> RouteParams -> Async left _
 viewPlayerProfile pool routeParams =
     sendResponse  "Error viewing player profile" do
     ok_ <$> selectPlayerProfile pool routeParams

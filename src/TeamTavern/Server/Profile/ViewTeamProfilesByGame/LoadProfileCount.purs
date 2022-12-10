@@ -23,7 +23,7 @@ queryString handle timezone filters = let
     ) as profiles"""
 
 loadProfileCount
-    :: forall errors
+    :: ∀ errors
     .  Client
     -> Handle
     -> Timezone

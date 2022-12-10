@@ -40,7 +40,7 @@ type ViewTeamProfilesByGame =
     & Rest "fields")
     ==> OkJson OkContent ! Internal_
 
-bundleTeamFilters :: forall other.
+bundleTeamFilters :: ∀ other.
     { organization :: Array Organization
     , ageFrom :: Maybe Int
     , ageTo :: Maybe Int

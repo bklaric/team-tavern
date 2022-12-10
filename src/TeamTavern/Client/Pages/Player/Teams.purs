@@ -20,7 +20,7 @@ import TeamTavern.Routes.Shared.Organization (OrganizationN(..), nameOrHandleN)
 import TeamTavern.Routes.Player.ViewPlayer as ViewPlayer
 
 teams
-    :: forall action monad slots
+    :: ∀ action monad slots
     .  MonadEffect monad
     => ViewPlayer.OkContent
     -> Status

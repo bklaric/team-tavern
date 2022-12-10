@@ -17,7 +17,7 @@ import TeamTavern.Server.Session.Domain.Token as Token
 import TeamTavern.Server.Session.Start.CheckPassword (checkPassword)
 import TeamTavern.Server.Session.Start.CreateSession (createSession)
 
-start :: forall left.
+start :: ∀ left.
     Deployment -> Pool -> Map String String -> StartSession.RequestContent -> Async left _
 start deployment pool cookies body =
     sendResponse "Error starting session" do

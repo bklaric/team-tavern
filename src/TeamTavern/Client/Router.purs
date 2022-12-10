@@ -103,20 +103,20 @@ type ChildSlots = Footer.ChildSlots
     )
 
 topBarWithContent
-    :: forall query children left
+    :: ∀ query children left
     .  Maybe String
     -> Array (H.ComponentHTML query (Footer.ChildSlots (topBar :: TopBar.Slot | children)) (Async left))
     -> H.ComponentHTML query (Footer.ChildSlots (topBar :: TopBar.Slot | children)) (Async left)
 topBarWithContent handle content' = HH.div_ [ topBar handle, content content', footer ]
 
 wideTopBarWithContent
-    :: forall query children left
+    :: ∀ query children left
     .  Maybe String
     -> Array (H.ComponentHTML query (Footer.ChildSlots (topBar :: TopBar.Slot | children)) (Async left))
     -> H.ComponentHTML query (Footer.ChildSlots (topBar :: TopBar.Slot | children)) (Async left)
 wideTopBarWithContent handle content' = HH.div_ [ topBar handle, wideContent content', footer ]
 
-render :: forall action left. State -> H.ComponentHTML action ChildSlots (Async left)
+render :: ∀ action left. State -> H.ComponentHTML action ChildSlots (Async left)
 render Empty = HH.div_ []
 render Home = HH.div_ [ topBar Nothing, home, footer ]
 render Games = topBarWithContent Nothing [ games ]
@@ -171,13 +171,13 @@ render NetworkN2 = HH.div_
 render DeleteAlert = singleContent [ deleteAlert ]
 render NotFound = HH.p_ [ HH.text "You're fucken lost, mate." ]
 
-just :: forall t5 t7. Applicative t5 => t7 -> t5 (Maybe t7)
+just :: ∀ t5 t7. Applicative t5 => t7 -> t5 (Maybe t7)
 just = pure <<< Just
 
-nothing :: forall t1 t3. Applicative t1 => t1 (Maybe t3)
+nothing :: ∀ t1 t3. Applicative t1 => t1 (Maybe t3)
 nothing = pure Nothing
 
-handleAction :: forall action output slots left.
+handleAction :: ∀ action output slots left.
     Action -> H.HalogenM State action slots output (Async left) Unit
 handleAction (Init state route) = do
     newState <- case split (Pattern "/") route of
@@ -262,14 +262,14 @@ handleAction (Init state route) = do
         Nothing -> pure unit
 
 handleQuery
-    :: forall send action output wut left
+    :: ∀ send action output wut left
     .  Query send
     -> H.HalogenM State action wut output (Async left) (Maybe send)
 handleQuery (ChangeRoute state route send) = do
     handleAction (Init state route)
     pure $ Just send
 
-router :: forall input output left.
+router :: ∀ input output left.
     Foreign -> String -> H.Component Query input output (Async left)
 router state route = H.mkComponent
     { initialState: const Empty

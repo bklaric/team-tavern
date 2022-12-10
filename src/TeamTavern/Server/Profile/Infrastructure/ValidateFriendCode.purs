@@ -24,7 +24,7 @@ isFriendCodeValid friendCode =
         && (isJust $ fromString left) && (isJust $ fromString mid) && (isJust $ fromString right)
     _ -> false
 
-validateFriendCode :: forall errors.
+validateFriendCode :: ∀ errors.
     Maybe String -> ValidatedTerrorNeaVar (friendCode :: {} | errors) (Maybe FriendCode)
 validateFriendCode friendCode =
     validateContact friendCode isFriendCodeValid FriendCode (Proxy :: _ "friendCode") ("Invalid FriendCode: " <> _)

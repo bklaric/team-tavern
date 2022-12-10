@@ -32,12 +32,12 @@ logt string = log $ "    " <> string
 logLines :: Array String -> Effect Unit
 logLines lines = foreachE lines logt
 
-logError :: forall errors. String -> Terror errors -> Effect Unit
+logError :: ∀ errors. String -> Terror errors -> Effect Unit
 logError heading (Terror _ lines) = do
     logStamped heading
     logLines lines
 
-print :: forall error. NodeError error => error -> String
+print :: ∀ error. NodeError error => error -> String
 print error =
     "Code: " <> code error
     <> "; Name: " <> name error

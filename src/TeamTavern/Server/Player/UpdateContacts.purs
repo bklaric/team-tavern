@@ -15,7 +15,7 @@ import TeamTavern.Server.Player.UpdateContacts.LoadRequiredPlatforms (loadRequir
 import TeamTavern.Server.Player.UpdateContacts.ValidateContacts (validateContacts)
 import TeamTavern.Server.Player.UpdateContacts.WriteContacts (writeContacts)
 
-updateContacts :: forall left.
+updateContacts :: ∀ left.
     Pool -> String -> Cookies -> UpdatePlayerContacts.RequestContent -> Async left _
 updateContacts pool nickname cookies contacts' =
     sendResponse "Error updating player contacts" do

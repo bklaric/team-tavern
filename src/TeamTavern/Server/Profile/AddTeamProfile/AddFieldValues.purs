@@ -23,7 +23,7 @@ insertFieldValueOptionString = Query """
     values ($1, $2);
     """
 
-insertFieldValueOption :: forall errors.
+insertFieldValueOption :: ∀ errors.
     Client -> FieldValueId -> OptionId -> Async (InternalTerror_ errors) Unit
 insertFieldValueOption client fieldValueId optionId =
     queryNone client insertFieldValueOptionString (fieldValueId :| optionId)
@@ -35,7 +35,7 @@ insertFieldValueString = Query """
     returning team_profile_field_value.id as "fieldValueId";
     """
 
-insertFieldValue :: forall errors.
+insertFieldValue :: ∀ errors.
     Client -> ProfileId -> FieldValue -> Async (InternalTerror_ errors) Unit
 insertFieldValue client profileId (FieldValue fieldId optionIds) = do
     -- Insert field value row.
@@ -46,7 +46,7 @@ insertFieldValue client profileId (FieldValue fieldId optionIds) = do
     Async.foreach optionIds $ insertFieldValueOption client fieldValueId
 
 addFieldValues
-    :: forall errors
+    :: ∀ errors
     .  Client
     -> ProfileId
     -> Array FieldValue

@@ -38,7 +38,7 @@ import TeamTavern.Server.Team.Infrastructure.ValidateTeam (validateTeamV)
 import TeamTavern.Server.Team.Infrastructure.WriteContacts as TeamIdunno
 import Type.Proxy (Proxy(..))
 
-onboard :: forall left. Pool -> Cookies -> Onboard.RequestContent -> Async left _
+onboard :: ∀ left. Pool -> Cookies -> Onboard.RequestContent -> Async left _
 onboard pool cookies content =
     sendResponse "Error onboarding" do
 

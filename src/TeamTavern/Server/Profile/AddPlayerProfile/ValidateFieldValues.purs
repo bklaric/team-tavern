@@ -103,7 +103,7 @@ prepareFields fields =
 -- Validate field values.
 
 validateField
-    :: forall errors
+    :: ∀ errors
     .  Array AddPlayerProfile.RequestContentFieldValue
     -> Field
     -> Maybe (Either (Terror (ValidateFieldValuesError errors)) FieldValue)
@@ -135,7 +135,7 @@ validateField fieldValues (Field id key (MultiField options)) =
         else Nothing
     _ -> Nothing
 
-validateFieldValues :: forall errors
+validateFieldValues :: ∀ errors
     .  Array LoadFields.Field
     -> Array AddPlayerProfile.RequestContentFieldValue
     -> ValidatedTerrorNea (ValidateFieldValuesError errors) (Array FieldValue)

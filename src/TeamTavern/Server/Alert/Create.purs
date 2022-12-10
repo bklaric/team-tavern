@@ -85,7 +85,7 @@ queryParameters email token { handle, playerOrTeam, timezone, filters }
     : filters.fields
     :| filters.newOrReturning
 
-createAlert :: forall left. Pool -> CreateAlert.RequestContent -> Async left _
+createAlert :: ∀ left. Pool -> CreateAlert.RequestContent -> Async left _
 createAlert pool content =
     sendResponse "Error creating alert" do
 

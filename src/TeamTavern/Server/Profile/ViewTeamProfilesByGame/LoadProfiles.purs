@@ -305,7 +305,7 @@ queryString handle page timezone filters =
     <> (Query $ """ limit """ <> show pageSize <> """ offset """ <> show ((page - 1) * pageSize))
 
 loadProfiles
-    :: forall errors
+    :: ∀ errors
     .  Client
     -> Handle
     -> ProfilePage

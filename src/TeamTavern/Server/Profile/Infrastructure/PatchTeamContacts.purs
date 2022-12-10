@@ -40,7 +40,7 @@ queryParameters teamHandle contacts =
     : toNullable contacts.gamerTag
     :| toNullable contacts.friendCode
 
-patchTeamContacts :: forall querier errors. Querier querier =>
+patchTeamContacts :: ∀ querier errors. Querier querier =>
     querier -> String -> Contacts -> Async (InternalTerror_ errors) Unit
 patchTeamContacts querier teamHandle contacts =
     queryNone querier queryString (queryParameters teamHandle contacts)

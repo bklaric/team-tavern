@@ -23,7 +23,7 @@ type PasswordErrors = NonEmptyArray PasswordError
 minPasswordLength :: Int
 minPasswordLength = 8
 
-validatePassword :: forall errors.
+validatePassword :: ∀ errors.
     String -> ValidatedTerrorNeaVar (password :: {} | errors) Password
 validatePassword password =
     Wrapped.create identity [tooShort minPasswordLength] Password password

@@ -15,7 +15,7 @@ import Type.Row (type (+))
 
 type EnsureSignedInAsError errors = EnsureSignedInError (ForbiddenRow_ + errors)
 
-ensureSignedInAs :: forall errors querier. Querier querier =>
+ensureSignedInAs :: ∀ errors querier. Querier querier =>
     querier -> Cookies -> String -> Async (EnsureSignedInAsError errors) CookieInfo
 ensureSignedInAs querier cookies nickname = do
     cookieInfo <- ensureSignedIn querier cookies

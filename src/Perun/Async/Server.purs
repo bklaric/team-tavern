@@ -11,7 +11,7 @@ import Perun.Response (Response)
 import Perun.Server (RequestHandler)
 import Perun.Server as Perun
 
-fromAsync :: (Request -> (forall left. Async left Response)) -> RequestHandler
+fromAsync :: (Request -> (∀ left. Async left Response)) -> RequestHandler
 fromAsync handler = \request respond ->
     runSafeAsync respond (handler request)
 
@@ -20,7 +20,7 @@ run
     -> Effect Unit
     -> (Error -> Effect Unit)
     -> (Error -> Effect Unit)
-    -> (Request -> (forall left. Async left Response))
+    -> (Request -> (∀ left. Async left Response))
     -> Effect Unit
 run listenOptions onListening onRequestError onResponseError handler =
     Perun.run
@@ -32,6 +32,6 @@ run listenOptions onListening onRequestError onResponseError handler =
 
 run_
     :: ListenOptions
-    -> (Request -> (forall left. Async left Response))
+    -> (Request -> (∀ left. Async left Response))
     -> Effect Unit
 run_ listenOptions handler = Perun.run_ listenOptions (fromAsync handler)

@@ -48,7 +48,7 @@ validateProfile'
     <*> validateAmbitions ambitions
 
 validateProfile
-    :: forall errors
+    :: ∀ errors
     .  LoadFields.Game
     -> AddPlayerProfile.RequestContentProfile
     -> Async (BadRequestTerror ProfileErrors errors) Profile
@@ -58,7 +58,7 @@ validateProfile game profile =
     # lmap (map badRequest_)
 
 validateProfileV
-    :: forall errors' errors label
+    :: ∀ errors' errors label
     .  Cons label ProfileErrors errors' errors
     => IsSymbol label
     => LoadFields.Game

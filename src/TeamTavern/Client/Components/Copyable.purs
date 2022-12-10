@@ -25,7 +25,7 @@ data Action = CopyText | Receive Input
 
 type Slot index = H.Slot (Const Void) Void index
 
-render :: forall children. State -> HH.HTML children Action
+render :: ∀ children. State -> HH.HTML children Action
 render { text, copied } =
     HH.span_ $
     [ HH.span
@@ -40,7 +40,7 @@ render { text, copied } =
         HH.span [ HS.class_ "copyable-copied" ] [ HH.text "Copied!" ]
     else []
 
-handleAction :: forall children output left.
+handleAction :: ∀ children output left.
     Action -> H.HalogenM State Action children output (Async left) Unit
 handleAction CopyText = do
     { text } <- H.get
@@ -51,7 +51,7 @@ handleAction CopyText = do
 handleAction (Receive text) =
     H.put { text, copied: false }
 
-component :: forall output left query.
+component :: ∀ output left query.
     H.Component query Input output (Async left)
 component = H.mkComponent
     { initialState: { text: _, copied: false }
@@ -63,7 +63,7 @@ component = H.mkComponent
     }
 
 copyable
-    :: forall index children' name children action left
+    :: ∀ index children' name children action left
     .  Cons name (Slot index) children' children
     => IsSymbol name
     => Ord index

@@ -19,6 +19,6 @@ minIdLength = 4
 isEaIdValid :: String -> Boolean
 isEaIdValid eaId = minIdLength <= length eaId
 
-validateEaId :: forall errors. Maybe String -> ValidatedTerrorNeaVar (eaId :: {} | errors) (Maybe EaId)
+validateEaId :: ∀ errors. Maybe String -> ValidatedTerrorNeaVar (eaId :: {} | errors) (Maybe EaId)
 validateEaId eaId =
     validateContact eaId isEaIdValid EaId (Proxy :: _ "eaId") ("Invalid EA ID: " <> _)

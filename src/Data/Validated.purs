@@ -25,16 +25,16 @@ import Data.Traversable (class Traversable)
 
 data Validated invalid valid = Invalid invalid | Valid valid
 
-valid :: forall invalid valid. Semigroup invalid =>
+valid :: ∀ invalid valid. Semigroup invalid =>
     valid -> Validated invalid valid
 valid valid' = Valid valid'
 
-invalid :: forall invalid valid. Semigroup invalid =>
+invalid :: ∀ invalid valid. Semigroup invalid =>
     invalid -> Validated invalid valid
 invalid invalid' = Invalid invalid'
 
 validated
-    :: forall invalid valid result
+    :: ∀ invalid valid result
     .  (invalid -> result)
     -> (valid -> result)
     -> Validated invalid valid
@@ -42,32 +42,32 @@ validated
 validated invalidFunction _ (Invalid invalid') = invalidFunction invalid'
 validated _ validFunction (Valid valid') = validFunction valid'
 
-isValid :: forall invalid valid. Validated invalid valid -> Boolean
+isValid :: ∀ invalid valid. Validated invalid valid -> Boolean
 isValid (Valid _) = true
 isValid _ = false
 
-isInvalid :: forall invalid valid. Validated invalid valid -> Boolean
+isInvalid :: ∀ invalid valid. Validated invalid valid -> Boolean
 isInvalid = not <<< isValid
 
-toEither :: forall invalid valid.
+toEither :: ∀ invalid valid.
     Validated invalid valid -> Either invalid valid
 toEither (Valid valid') = Right valid'
 toEither (Invalid invalid') = Left invalid'
 
-fromEither :: forall invalid valid. Semigroup invalid =>
+fromEither :: ∀ invalid valid. Semigroup invalid =>
     Either invalid valid -> Validated invalid valid
 fromEither (Right valid') = Valid valid'
 fromEither (Left invalid') = Invalid invalid'
 
-hush :: forall left right. Validated left right -> Maybe right
+hush :: ∀ left right. Validated left right -> Maybe right
 hush = validated (const Nothing) Just
 
-note :: forall invalid valid. Semigroup invalid =>
+note :: ∀ invalid valid. Semigroup invalid =>
     invalid -> Maybe valid -> Validated invalid valid
 note invalid' = maybe (invalid invalid') valid
 
 note'
-    :: forall container invalid valid
+    :: ∀ container invalid valid
     .  Semigroup (container invalid)
     => Applicative container
     => invalid
@@ -76,7 +76,7 @@ note'
 note' invalid' = maybe (invalid $ pure invalid') valid
 
 bimap
-    :: forall oldValid oldInvalid newValid newInvalid
+    :: ∀ oldValid oldInvalid newValid newInvalid
     .  Semigroup newInvalid
     => (oldInvalid -> newInvalid)
     -> (oldValid -> newValid)
@@ -88,7 +88,7 @@ bimap invalidFunction validFunction validated' =
     Valid valid' -> Valid $ validFunction valid'
 
 lmap
-    :: forall newInvalid valid oldInvalid
+    :: ∀ newInvalid valid oldInvalid
     .  Semigroup newInvalid
     => (oldInvalid -> newInvalid)
     -> Validated oldInvalid valid
@@ -96,7 +96,7 @@ lmap
 lmap invalidFunction validated' = bimap invalidFunction identity validated'
 
 rmap
-    :: forall invalid newValid oldValid
+    :: ∀ invalid newValid oldValid
     .  Semigroup invalid
     => (oldValid -> newValid)
     -> Validated invalid oldValid

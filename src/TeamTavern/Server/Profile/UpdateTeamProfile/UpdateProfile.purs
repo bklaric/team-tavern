@@ -46,7 +46,7 @@ updateProfileParameters { id } teamHandle gameHandle profile =
     : profile.about
     :| profile.ambitions
 
-updateProfile' :: forall errors.
+updateProfile' :: ∀ errors.
     Client -> CookieInfo -> Handle -> Handle -> Profile -> Async (ChangeSingleError errors) { profileId :: Int }
 updateProfile' client cookieInfo teamHandle gameHandle profile =
     queryFirstNotAuthorized client updateProfileString
@@ -60,10 +60,10 @@ deleteFieldValuesString = Query """
     where team_profile_id = $1;
     """
 
-deleteFieldValues :: forall errors. Client -> ProfileId -> Async (InternalTerror_ errors) Unit
+deleteFieldValues :: ∀ errors. Client -> ProfileId -> Async (InternalTerror_ errors) Unit
 deleteFieldValues client profileId = queryNone client deleteFieldValuesString (profileId : [])
 
-updateProfile :: forall errors.
+updateProfile :: ∀ errors.
     Client -> CookieInfo -> Handle -> Handle -> Profile -> Async (ChangeSingleError errors) Unit
 updateProfile client cookieInfo teamHandle gameHandle profile = do
     -- Update profile row.

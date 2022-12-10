@@ -5,7 +5,7 @@ import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Components.Anchor (textAnchor_)
 import TeamTavern.Client.Snippets.Class as HS
 
-privacyPolicy :: forall slots action. HH.HTML slots action
+privacyPolicy :: ∀ slots action. HH.HTML slots action
 privacyPolicy =
   HH.div [ HS.class_ "privacy-policy" ]
   [ HH.p_ [ HH.text "Privacy Policy" ]

@@ -33,7 +33,7 @@ type NicknameErrors = NonEmptyArray NicknameError
 maxLength :: Int
 maxLength = 40
 
-validateNickname :: forall errors.
+validateNickname :: ∀ errors.
     String -> ValidatedTerrorNeaVar (nickname :: {} | errors) Nickname
 validateNickname nickname =
     let validators = [empty, tooLong maxLength, notAsciiAlphaNumSpecial]

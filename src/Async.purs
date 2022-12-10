@@ -21,98 +21,98 @@ import Effect.Ref (new, read, write)
 
 newtype Async left right = Async (ExceptT left (ContT Unit Effect) right)
 
-runAsync :: forall left right.
+runAsync :: ∀ left right.
     (Either left right -> Effect Unit) -> Async left right -> Effect Unit
 runAsync callback = \(Async (ExceptT (ContT cont))) -> cont callback
 
-runSafeAsync :: forall right.
-    (right -> Effect Unit) -> (forall left. Async left right) -> Effect Unit
+runSafeAsync :: ∀ right.
+    (right -> Effect Unit) -> (∀ left. Async left right) -> Effect Unit
 runSafeAsync callback = runAsync $ either absurd callback
 
-forkAsync :: forall right left.
-    (Either left right -> Effect Unit) -> Async left right -> (forall voidLeft. Async voidLeft Unit)
+forkAsync :: ∀ right left.
+    (Either left right -> Effect Unit) -> Async left right -> (∀ voidLeft. Async voidLeft Unit)
 forkAsync callback async = fromEffect $ runAsync callback async
 
-forkSafeAsync :: forall right.
-    (right -> Effect Unit) -> (forall voidLeft. Async voidLeft right) -> (forall voidLeft. Async voidLeft Unit)
+forkSafeAsync :: ∀ right.
+    (right -> Effect Unit) -> (∀ voidLeft. Async voidLeft right) -> (∀ voidLeft. Async voidLeft Unit)
 forkSafeAsync callback = forkAsync $ either absurd callback
 
-fromEither :: forall left right. Either left right -> Async left right
+fromEither :: ∀ left right. Either left right -> Async left right
 fromEither = pure >>> ExceptT >>> Async
 
-fromEitherCont :: forall left right.
+fromEitherCont :: ∀ left right.
     ((Either left right -> Effect Unit) -> Effect Unit) -> Async left right
 fromEitherCont = ContT >>> ExceptT >>> Async
 
-fromEitherEffect :: forall left right.
+fromEitherEffect :: ∀ left right.
     Effect (Either left right) -> Async left right
 fromEitherEffect eitherEffect = Async $ ExceptT $ ContT \callback ->
     eitherEffect >>= callback
 
-fromEffect :: forall left right. Effect right -> Async left right
+fromEffect :: ∀ left right. Effect right -> Async left right
 fromEffect = lift >>> map Right >>> ExceptT >>> Async
 
-fromEffectCont :: forall left right.
+fromEffectCont :: ∀ left right.
     ((right -> Effect Unit) -> Effect Unit) -> Async left right
 fromEffectCont = ContT >>> map Right >>> ExceptT >>> Async
 
-right :: forall left right. right -> Async left right
+right :: ∀ left right. right -> Async left right
 right = fromEither <<< Right
 
-left :: forall left right. left -> Async left right
+left :: ∀ left right. left -> Async left right
 left = fromEither <<< Left
 
 alwaysRight
-    :: forall inLeft inRight outRight
+    :: ∀ inLeft inRight outRight
     .  (inLeft -> outRight)
     -> (inRight -> outRight)
     -> Async inLeft inRight
-    -> (forall voidLeft. Async voidLeft outRight)
+    -> (∀ voidLeft. Async voidLeft outRight)
 alwaysRight leftFunction rightFunction (Async (ExceptT eitherCont)) =
     eitherCont <#> Either.alwaysRight leftFunction rightFunction
     # ExceptT # Async
 
 alwaysRightWithAsync
-    :: forall inLeft inRight outRight
-    .  (inLeft -> forall voidLeft. (Async voidLeft outRight))
-    -> (inRight -> forall voidLeft. (Async voidLeft outRight))
+    :: ∀ inLeft inRight outRight
+    .  (inLeft -> ∀ voidLeft. (Async voidLeft outRight))
+    -> (inRight -> ∀ voidLeft. (Async voidLeft outRight))
     -> Async inLeft inRight
-    -> (forall voidLeft. Async voidLeft outRight)
+    -> (∀ voidLeft. Async voidLeft outRight)
 alwaysRightWithAsync leftFunction rightFunction async =
     alwaysRight leftFunction rightFunction async # join
 
 alwaysRightWithEffect
-    :: forall inLeft inRight outRight
+    :: ∀ inLeft inRight outRight
     .  (inLeft -> Effect outRight)
     -> (inRight -> Effect outRight)
     -> Async inLeft inRight
-    -> (forall voidLeft. Async voidLeft outRight)
+    -> (∀ voidLeft. Async voidLeft outRight)
 alwaysRightWithEffect leftFunction rightFunction async =
     alwaysRightWithAsync
         (\inLeft -> fromEffect $ leftFunction inLeft)
         (\inRight -> fromEffect $ rightFunction inRight)
         async
 
-unify :: forall right. Async right right -> (forall left. Async left right)
+unify :: ∀ right. Async right right -> (∀ left. Async left right)
 unify = alwaysRight identity identity
 
 attempt
-    :: forall left right
+    :: ∀ left right
     .  Async left right
-    -> (forall voidLeft. Async voidLeft (Either left right))
+    -> (∀ voidLeft. Async voidLeft (Either left right))
 attempt = alwaysRight Left Right
 
-giveUp :: forall left right. Async left (Either left right) -> Async left right
+giveUp :: ∀ left right. Async left (Either left right) -> Async left right
 giveUp async = async >>= case _ of
     Left left' -> left left'
     Right right' -> pure right'
 
-note :: forall right left. left -> Maybe right -> Async left right
+note :: ∀ right left. left -> Maybe right -> Async left right
 note left' maybe = maybe # Either.note left' # fromEither
 
 examineLeftWithAsync
-    :: forall left right
-    .  (left -> (forall voidLeft. Async voidLeft Unit))
+    :: ∀ left right
+    .  (left -> (∀ voidLeft. Async voidLeft Unit))
     -> Async left right
     -> Async left right
 examineLeftWithAsync examiner async = Async $ ExceptT $ ContT $ \callback ->
@@ -123,17 +123,17 @@ examineLeftWithAsync examiner async = Async $ ExceptT $ ContT $ \callback ->
             callback $ Left error
         Right result -> callback $ Right result
 
-examineLeftWithEffect :: forall left right.
+examineLeftWithEffect :: ∀ left right.
     (left -> Effect Unit) -> Async left right -> Async left right
 examineLeftWithEffect examiner async =
     examineLeftWithAsync (\left' -> fromEffect $ examiner left') async
 
-foreach :: forall left right traversable. Traversable traversable =>
+foreach :: ∀ left right traversable. Traversable traversable =>
     traversable right -> (right -> Async left Unit) -> Async left Unit
 foreach traversable function = void $ traverse function traversable
 
-safeForeach :: forall right traversable. Traversable traversable =>
-    traversable right -> (forall left. right -> Async left Unit) -> (forall left. Async left Unit)
+safeForeach :: ∀ right traversable. Traversable traversable =>
+    traversable right -> (∀ left. right -> Async left Unit) -> (∀ left. Async left Unit)
 safeForeach traversable function = void $ traverse function traversable
 
 derive instance Newtype (Async left right) _

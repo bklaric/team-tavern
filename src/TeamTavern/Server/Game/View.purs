@@ -52,10 +52,10 @@ queryString = Query """
     group by game.id;
     """
 
-loadGame :: forall errors. Pool -> String -> Async (LoadSingleError errors) ViewGame.OkContent
+loadGame :: ∀ errors. Pool -> String -> Async (LoadSingleError errors) ViewGame.OkContent
 loadGame pool handle = queryFirstNotFound pool queryString (handle : [])
 
-view :: forall left. Pool -> String -> Async left _
+view :: ∀ left. Pool -> String -> Async left _
 view pool handle =
     sendResponse "Error viewing game" do
     -- Load game from database.

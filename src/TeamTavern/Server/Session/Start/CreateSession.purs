@@ -14,6 +14,6 @@ queryString = Query """
     values ($1, $2)
     """
 
-createSession :: forall querier errors. Querier querier =>
+createSession :: ∀ querier errors. Querier querier =>
     Int -> Token -> querier -> Async (InternalTerror_ errors) Unit
 createSession id token querier = queryNone querier queryString (id :| token)

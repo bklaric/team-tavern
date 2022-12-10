@@ -26,7 +26,7 @@ emailRegex = regex """^[^\s@]+@[^\s@]+\.[^\s@]+$""" unicode # fromRight undefine
 
 type EmailError = Variant (invalid :: Invalid, tooLong :: TooLong )
 
-validateEmail :: forall errors. String -> Async (InternalTerror_ errors) Email
+validateEmail :: ∀ errors. String -> Async (InternalTerror_ errors) Email
 validateEmail email =
     Wrapped.create trim [invalid (match emailRegex >>> isJust), tooLong 254] Email email
     # AsyncVal.fromValidated

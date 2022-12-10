@@ -50,7 +50,7 @@ validateProfile' game profile @ { size, newOrReturning } =
     <*> validateAmbitions profile.ambitions
 
 validateProfile
-    :: forall errors
+    :: ∀ errors
     .  LoadFields.Game
     -> AddTeamProfile.RequestContentProfile
     -> Async (BadRequestTerror ProfileErrors errors) Profile
@@ -60,7 +60,7 @@ validateProfile game profile =
     # lmap (map badRequest_)
 
 validateProfileV
-    :: forall errors' errors label
+    :: ∀ errors' errors label
     .  Cons label ProfileErrors errors' errors
     => IsSymbol label
     => LoadFields.Game

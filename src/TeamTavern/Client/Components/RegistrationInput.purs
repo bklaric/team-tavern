@@ -42,7 +42,7 @@ data Action
 
 type Slot = H.Slot (Const Void) Output Unit
 
-render :: forall left slots. State -> H.ComponentHTML Action slots (Async left)
+render :: ∀ left slots. State -> H.ComponentHTML Action slots (Async left)
 render
     { nickname
     , password
@@ -69,7 +69,7 @@ render
 stateToOutput :: State -> Output
 stateToOutput { nickname, password } = { nickname, password }
 
-handleAction :: forall slots left. Action -> H.HalogenM State Action slots Output (Async left) Unit
+handleAction :: ∀ slots left. Action -> H.HalogenM State Action slots Output (Async left) Unit
 handleAction (Receive input) =
     H.modify_ _
         { nickname = input.nickname
@@ -96,7 +96,7 @@ emptyInput =
     , nicknameTaken: false
     }
 
-component :: forall query left.
+component :: ∀ query left.
     H.Component query Input Output (Async left)
 component = H.mkComponent
     { initialState: Record.insert (Proxy :: _ "passwordShown") false
@@ -108,7 +108,7 @@ component = H.mkComponent
     }
 
 registrationInput
-    :: forall action children left
+    :: ∀ action children left
     .  Input
     -> (Output -> action)
     -> HH.ComponentHTML action (registrationInput :: Slot | children) (Async left)

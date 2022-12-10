@@ -31,7 +31,7 @@ data Action = Initialize | SelectGame ViewAllGames.OkGameContent
 
 type Slot = H.Slot (Const Void) Output Unit
 
-render :: forall slots. State -> HH.HTML slots Action
+render :: ∀ slots. State -> HH.HTML slots Action
 render { games, selected } =
     HH.div_
     [ radioCards $
@@ -49,21 +49,21 @@ render { games, selected } =
         )
     ]
 
-loadGames :: forall left. Async left (Maybe ViewAllGames.OkContent)
+loadGames :: ∀ left. Async left (Maybe ViewAllGames.OkContent)
 loadGames = Async.unify do
     response <- Fetch.fetch_ "/api/games" # lmap (const Nothing)
     case FetchRes.status response of
         200 -> FetchRes.text response >>= Json.readJSON # lmap (const Nothing)
         _ -> Async.left Nothing
 
-loadGame :: forall left. String -> Async left (Maybe ViewGame.OkContent)
+loadGame :: ∀ left. String -> Async left (Maybe ViewGame.OkContent)
 loadGame handle = Async.unify do
     response <- Fetch.fetch_ ("/api/games/" <> handle) # lmap (const Nothing)
     case FetchRes.status response of
         200 -> FetchRes.text response >>= Json.readJSON # lmap (const Nothing)
         _ -> Async.left Nothing
 
-handleAction :: forall action slots left.
+handleAction :: ∀ action slots left.
     Action -> H.HalogenM State action slots Output (Async left) Unit
 handleAction Initialize = do
     games <- H.lift $ maybe [] identity <$> loadGames
@@ -80,7 +80,7 @@ handleAction (SelectGame game) = do
                     H.raise game''
                 Nothing -> pure unit
 
-component :: forall query left.
+component :: ∀ query left.
     H.Component query Input Output (Async left)
 component = H.mkComponent
     { initialState: { selected: _, games: [] }
@@ -92,7 +92,7 @@ component = H.mkComponent
     }
 
 gameInput
-    :: forall action slots left
+    :: ∀ action slots left
     .  Input
     -> (Output -> action)
     -> HH.ComponentHTML action (gameInput :: Slot | slots) (Async left)

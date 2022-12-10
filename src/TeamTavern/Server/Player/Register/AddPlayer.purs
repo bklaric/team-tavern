@@ -41,7 +41,7 @@ queryString = Query """
     returning id
     """
 
-addPlayer :: forall querier errors errors'. Querier querier =>
+addPlayer :: ∀ querier errors errors'. Querier querier =>
     querier -> AddPlayerModel -> Async (AddPlayerError errors errors') Int
 addPlayer pool { nickname, hash } = do
     result <- pool # query queryString (nickname :| hash) # lmap \error ->

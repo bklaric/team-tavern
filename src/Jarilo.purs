@@ -139,62 +139,62 @@ type InternalRow_ responses = InternalRow Unit responses
 
 -- Concrete response shortcuts
 
-ok :: forall responses body. MultiMap String String -> body -> Variant (OkRow body responses)
+ok :: ∀ responses body. MultiMap String String -> body -> Variant (OkRow body responses)
 ok headers body = inj (Proxy :: _ "ok") $ AppResponse headers body
 
-ok_ :: forall responses body. body -> Variant (OkRow body responses)
+ok_ :: ∀ responses body. body -> Variant (OkRow body responses)
 ok_ body = ok mempty body
 
-ok__ :: forall responses. Variant (OkRow_ responses)
+ok__ :: ∀ responses. Variant (OkRow_ responses)
 ok__ = ok_ unit
 
-noContent :: forall responses. MultiMap String String -> Variant (NoContentRow_ responses)
+noContent :: ∀ responses. MultiMap String String -> Variant (NoContentRow_ responses)
 noContent headers = inj (Proxy :: _ "noContent") $ AppResponse headers unit
 
-noContent_ :: forall responses. Variant (NoContentRow_ responses)
+noContent_ :: ∀ responses. Variant (NoContentRow_ responses)
 noContent_ = noContent mempty
 
-badRequest :: forall responses body. MultiMap String String -> body -> Variant (BadRequestRow body responses)
+badRequest :: ∀ responses body. MultiMap String String -> body -> Variant (BadRequestRow body responses)
 badRequest headers body = inj (Proxy :: _ "badRequest") $ AppResponse headers body
 
-badRequest_ :: forall responses body. body -> Variant (BadRequestRow body responses)
+badRequest_ :: ∀ responses body. body -> Variant (BadRequestRow body responses)
 badRequest_ body = badRequest mempty body
 
-badRequest__ :: forall responses. Variant (BadRequestRow_ responses)
+badRequest__ :: ∀ responses. Variant (BadRequestRow_ responses)
 badRequest__ = badRequest_ unit
 
-notAuthorized :: forall responses body. MultiMap String String -> body -> Variant (NotAuthorizedRow body responses)
+notAuthorized :: ∀ responses body. MultiMap String String -> body -> Variant (NotAuthorizedRow body responses)
 notAuthorized headers body = inj (Proxy :: _ "notAuthorized") $ AppResponse headers body
 
-notAuthorized_ :: forall responses body. body -> Variant (NotAuthorizedRow body responses)
+notAuthorized_ :: ∀ responses body. body -> Variant (NotAuthorizedRow body responses)
 notAuthorized_ body = notAuthorized mempty body
 
-notAuthorized__ :: forall responses. Variant (NotAuthorizedRow_ responses)
+notAuthorized__ :: ∀ responses. Variant (NotAuthorizedRow_ responses)
 notAuthorized__ = notAuthorized_ unit
 
-forbidden :: forall responses body. MultiMap String String -> body -> Variant (ForbiddenRow body responses)
+forbidden :: ∀ responses body. MultiMap String String -> body -> Variant (ForbiddenRow body responses)
 forbidden headers body = inj (Proxy :: _ "forbidden") $ AppResponse headers body
 
-forbidden_ :: forall responses body. body -> Variant (ForbiddenRow body responses)
+forbidden_ :: ∀ responses body. body -> Variant (ForbiddenRow body responses)
 forbidden_ body = forbidden mempty body
 
-forbidden__ :: forall responses. Variant (ForbiddenRow_ responses)
+forbidden__ :: ∀ responses. Variant (ForbiddenRow_ responses)
 forbidden__ = forbidden_ unit
 
-notFound :: forall responses body. MultiMap String String -> body -> Variant (NotFoundRow body responses)
+notFound :: ∀ responses body. MultiMap String String -> body -> Variant (NotFoundRow body responses)
 notFound headers body = inj (Proxy :: _ "notFound") $ AppResponse headers body
 
-notFound_ :: forall responses body. body -> Variant (NotFoundRow body responses)
+notFound_ :: ∀ responses body. body -> Variant (NotFoundRow body responses)
 notFound_ body = notFound mempty body
 
-notFound__ :: forall responses. Variant (NotFoundRow_ responses)
+notFound__ :: ∀ responses. Variant (NotFoundRow_ responses)
 notFound__ = notFound_ unit
 
-internal :: forall responses body. MultiMap String String -> body -> Variant (InternalRow body responses)
+internal :: ∀ responses body. MultiMap String String -> body -> Variant (InternalRow body responses)
 internal headers body = inj (Proxy :: _ "internal") $ AppResponse headers body
 
-internal_ :: forall responses body. body -> Variant (InternalRow body responses)
+internal_ :: ∀ responses body. body -> Variant (InternalRow body responses)
 internal_ body = internal mempty body
 
-internal__ :: forall responses. Variant (InternalRow_ responses)
+internal__ :: ∀ responses. Variant (InternalRow_ responses)
 internal__ = internal_ unit

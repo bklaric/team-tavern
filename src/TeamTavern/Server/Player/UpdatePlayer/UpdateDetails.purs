@@ -39,7 +39,7 @@ queryParameters playerId model =
     : nullableTimeTo model.onlineWeekend
     :| model.microphone
 
-updateDetails :: forall querier errors. Querier querier =>
+updateDetails :: ∀ querier errors. Querier querier =>
     querier -> Int -> Player -> Async (InternalTerror_ errors) Unit
 updateDetails querier playerId updateModel =
     queryNone querier queryString (queryParameters playerId updateModel)

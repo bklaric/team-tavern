@@ -121,11 +121,11 @@ type ChildSlots =
     , createAlert :: CreateAlert.Slot
     )
 
-headerCaret :: forall action slots. String -> Boolean -> HH.HTML slots action
+headerCaret :: ∀ action slots. String -> Boolean -> HH.HTML slots action
 headerCaret class_ visible =
     HH.i [ HS.class_ $ "fas " <> class_ <> if visible then " fa-caret-up" else " fa-caret-down" ] []
 
-render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
+render :: ∀ left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render state =
     HH.div_ $ [
     card $
@@ -238,7 +238,7 @@ render state =
             (const HideCreateAlertModal)
         ]
 
-handleAction :: forall left. Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
+handleAction :: ∀ left. Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
 handleAction Initialize = do
     windowWidth <- Html.window >>= Window.innerWidth # H.liftEffect
     let showFilters = windowWidth >= 960
@@ -387,7 +387,7 @@ initialState { platforms, fields, filters, tab, handle } =
     , createAlertModalShown: false
     }
 
-component :: forall query left. H.Component query Input Output (Async left)
+component :: ∀ query left. H.Component query Input Output (Async left)
 component = H.mkComponent
     { initialState
     , render
@@ -399,7 +399,7 @@ component = H.mkComponent
     }
 
 profileFilters
-    :: forall action children left
+    :: ∀ action children left
     .  Input
     -> (Output -> action)
     -> HH.ComponentHTML action (profileFilters :: Slot | children) (Async left)

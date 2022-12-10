@@ -7,7 +7,7 @@ import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Snippets.Class as HS
 
-picture :: forall slots action. String -> String -> String -> HH.HTML slots action
+picture :: ∀ slots action. String -> String -> String -> HH.HTML slots action
 picture class_ alt baseSrc =
     HH.element (HH.ElemName "picture") []
     [ HH.source

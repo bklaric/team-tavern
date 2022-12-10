@@ -131,7 +131,7 @@ type ChildSlots =
     , "sizeInfo" :: SizeInfo.Slot
     )
 
-render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
+render :: ∀ left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { details, contacts }
     = HH.div_ $
     [ HH.h2 [ HS.class_ "platform-id-heading" ]
@@ -193,7 +193,7 @@ fieldValuesToMap =
     )
     MultiMap.empty
 
-raiseOutput :: forall left. State -> H.HalogenM State Action ChildSlots Output (Async left) Unit
+raiseOutput :: ∀ left. State -> H.HalogenM State Action ChildSlots Output (Async left) Unit
 raiseOutput state = let
     details = state.details { fieldValues = fieldValuesToArray state.details.fieldValues }
         # Record.insert (Proxy :: _ "platforms") state.details.selectedPlatforms
@@ -202,7 +202,7 @@ raiseOutput state = let
     in
     H.raise { details, contacts }
 
-handleAction :: forall left. Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
+handleAction :: ∀ left. Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
 handleAction (Receive input) =
     H.put $ input { details { fieldValues = fieldValuesToMap input.details.fieldValues } }
 handleAction (UpdateSize size) = H.modify _ { details { size = size } } >>= raiseOutput
@@ -240,7 +240,7 @@ handleAction (UpdatePsnId psnId)              = H.modify _ { contacts { psnId   
 handleAction (UpdateGamerTag gamerTag)        = H.modify _ { contacts { gamerTag        = gamerTag   } } >>= raiseOutput
 handleAction (UpdateFriendCode friendCode)    = H.modify _ { contacts { friendCode      = friendCode } } >>= raiseOutput
 
-component :: forall query left. H.Component query Input Output (Async left)
+component :: ∀ query left. H.Component query Input Output (Async left)
 component = H.mkComponent
     { initialState: \input -> input { details { fieldValues = fieldValuesToMap input.details.fieldValues } }
     , render
@@ -290,7 +290,7 @@ emptyInput { platforms, fields } =
     }
 
 profileFormInput
-    :: forall children action left
+    :: ∀ children action left
     .  Input
     -> (Output -> action)
     -> HH.ComponentHTML action (teamProfileFormInput :: Slot | children) (Async left)

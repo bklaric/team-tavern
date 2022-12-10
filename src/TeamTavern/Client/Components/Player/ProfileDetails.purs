@@ -22,7 +22,7 @@ type PlatformIdSlots slots =
     , friendCode :: Copyable.Slot String
     | slots )
 
-profileDetails :: forall left slots action.
+profileDetails :: ∀ left slots action.
     Array
         { ilk :: Int
         , key :: String
@@ -72,7 +72,7 @@ profileDetails fields fieldValues newOrReturning =
     )
     newOrReturning
 
-profileDetails' :: forall left slots action.
+profileDetails' :: ∀ left slots action.
     Array
         { field ::
             { ilk :: Int

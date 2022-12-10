@@ -22,7 +22,7 @@ import TeamTavern.Server.Profile.UpdateTeamProfile.UpdateProfile (updateProfile)
 import TeamTavern.Server.Team.Infrastructure.ValidateContacts (validateContactsV)
 import Type.Proxy (Proxy(..))
 
-updateTeamProfile :: forall left.
+updateTeamProfile :: ∀ left.
     Pool -> Map String String -> AddTeamProfile.RouteParams -> _ -> Async left _
 updateTeamProfile pool cookies { teamHandle, gameHandle } profile' =
     sendResponse "Error updating team profile" do

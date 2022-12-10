@@ -11,7 +11,7 @@ import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Player.View.LoadPlayer (loadPlayer)
 
-view :: forall left.
+view :: ∀ left.
     Pool -> Cookies -> ViewPlayer.RouteParams -> Async left _
 view pool cookies routeParams =
     sendResponse "Error viewing player" do

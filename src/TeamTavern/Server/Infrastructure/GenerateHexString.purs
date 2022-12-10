@@ -17,7 +17,7 @@ newtype ByteCount = ByteCount Int
 
 derive instance Newtype ByteCount _
 
-generateHexString :: forall errors. ByteCount -> Async (InternalTerror_ errors) String
+generateHexString :: ∀ errors. ByteCount -> Async (InternalTerror_ errors) String
 generateHexString (ByteCount byteCount) = do
     bytes <- randomBytes byteCount
         # fromEitherCont

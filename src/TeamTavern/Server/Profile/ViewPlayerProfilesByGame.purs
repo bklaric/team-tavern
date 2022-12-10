@@ -14,7 +14,7 @@ import TeamTavern.Server.Profile.ViewPlayerProfilesByGame.LoadProfileCount (load
 import TeamTavern.Server.Profile.ViewPlayerProfilesByGame.LoadProfiles (loadProfiles)
 
 viewPlayerProfilesByGame
-    :: forall left
+    :: ∀ left
     .  Pool
     -> Handle
     -> ProfilePage

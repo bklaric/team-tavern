@@ -10,7 +10,7 @@ import TeamTavern.Server.Infrastructure.Error as Terror
 import TeamTavern.Server.Profile.Infrastructure.ValidateUrl (Url, validateUrlV_)
 import Type.Proxy (Proxy(..))
 
-validateWebsite :: forall errors.
+validateWebsite :: ∀ errors.
     Maybe String -> ValidatedTerrorNeaVar (website :: {} | errors) (Maybe Url)
 validateWebsite website
     = website

@@ -35,7 +35,7 @@ isRiotIdValid riotId =
         && length discriminator <= maxDiscriminatorLength
     _ -> false
 
-validateRiotId :: forall errors.
+validateRiotId :: ∀ errors.
     Maybe String -> ValidatedTerrorNeaVar (riotId :: {} | errors) (Maybe RiotId)
 validateRiotId riotId =
     validateContact riotId isRiotIdValid RiotId (Proxy :: _ "riotId") ("Invalid RiotId: " <> _)

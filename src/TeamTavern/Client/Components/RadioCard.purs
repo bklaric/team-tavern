@@ -7,10 +7,10 @@ import Halogen.HTML.Events as HE
 import TeamTavern.Client.Components.Picture (picture)
 import TeamTavern.Client.Snippets.Class as HS
 
-radioCards :: forall slots action. Array (HH.HTML slots action) -> HH.HTML slots action
+radioCards :: ∀ slots action. Array (HH.HTML slots action) -> HH.HTML slots action
 radioCards = HH.div [ HS.class_ "radio-cards" ]
 
-radioCard :: forall slots action.
+radioCard :: ∀ slots action.
     String -> Boolean -> action -> Array (HH.HTML slots action) -> HH.HTML slots action
 radioCard backgroundUrl selected onSelect children =
     HH.div

@@ -20,7 +20,7 @@ import TeamTavern.Client.Snippets.Brands (inputBattleNetSvg, inputOriginSvg, inp
 import TeamTavern.Routes.Shared.Platform (Platform(..))
 import Type.Proxy (Proxy(..))
 
-platformIdInputGroup :: forall slots action.
+platformIdInputGroup :: ∀ slots action.
     Platform -> (Maybe String) -> ((Maybe String) -> action) -> Boolean -> Boolean -> HH.HTML slots action
 platformIdInputGroup platform platformId onValue error required =
     inputGroup $
@@ -106,7 +106,7 @@ type ChildSlots =
     )
 
 fieldInputGroup
-    :: forall action left
+    :: ∀ action left
     .  FieldValues
     -> (String -> Maybe String -> action)
     -> (String -> Maybe String -> action)
@@ -165,7 +165,7 @@ fieldInputGroup fieldValues _ _ onValue _
     ]
 fieldInputGroup _ _ _ _ _ _ = HH.div_ []
 
-newOrReturningInputGroup :: forall slots action.
+newOrReturningInputGroup :: ∀ slots action.
     Boolean -> (Boolean -> action) -> HH.HTML slots action
 newOrReturningInputGroup value onValue =
     inputGroup
@@ -173,7 +173,7 @@ newOrReturningInputGroup value onValue =
     , checkboxInput value onValue "Is a new or returning player to the game."
     ]
 
-aboutInputGroup :: forall slots action.
+aboutInputGroup :: ∀ slots action.
     String -> (String -> action) -> Boolean -> HH.HTML slots action
 aboutInputGroup value onValue error =
     inputGroup $
@@ -181,7 +181,7 @@ aboutInputGroup value onValue error =
     <>
     inputError error "About text cannot be more than 2000 characters long."
 
-ambitionsInputGroup :: forall slots action.
+ambitionsInputGroup :: ∀ slots action.
     String -> (String -> action) -> Boolean -> HH.HTML slots action
 ambitionsInputGroup value onValue error =
     inputGroup $

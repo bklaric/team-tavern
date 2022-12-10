@@ -28,7 +28,7 @@ foreign import sendImpl :: (Error -> Effect Unit) -> Effect Unit -> Message -> E
 send :: (Either Error Unit -> Effect Unit) -> Message -> Effect Unit
 send callback message = sendImpl (callback <<< Left) (callback $ Right unit) message
 
-sendAsync :: forall errors. Message -> Async (InternalTerror_ errors) Unit
+sendAsync :: ∀ errors. Message -> Async (InternalTerror_ errors) Unit
 sendAsync message =
     lmap (print >>> ("Error sending email: " <> _) >>> singleton >>> Terror internal__)
     $ fromEitherCont

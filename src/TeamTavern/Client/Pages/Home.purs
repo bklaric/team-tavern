@@ -38,7 +38,7 @@ type ChildSlots =
     ( viewAllGames :: NavigationAnchor.Slot Unit
     )
 
-render :: forall left. State -> H.ComponentHTML Action ChildSlots (Async left)
+render :: ∀ left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render _ =
     HH.div [ HP.class_ $ HH.ClassName "home" ]
     [ callToAction OpenGames OpenPreboarding
@@ -49,7 +49,7 @@ render _ =
     , features OpenPreboarding
     ]
 
-handleAction :: forall action output slots left.
+handleAction :: ∀ action output slots left.
     Action -> H.HalogenM State action slots output (Async left) Unit
 handleAction Initialize = setMeta
     "Esports Team Finder | TeamTavern"
@@ -69,7 +69,7 @@ handleAction (OpenGames mouseEvent) = do
     preventMouseDefault mouseEvent
     navigate_ "/games"
 
-component :: forall query input output left. H.Component query input output (Async left)
+component :: ∀ query input output left. H.Component query input output (Async left)
 component = H.mkComponent
     { initialState: const unit
     , render
@@ -79,6 +79,6 @@ component = H.mkComponent
         }
     }
 
-home :: forall query children left.
+home :: ∀ query children left.
     HH.ComponentHTML query (home :: Slot Unit | children) (Async left)
 home = HH.slot (Proxy :: _ "home") unit component unit absurd

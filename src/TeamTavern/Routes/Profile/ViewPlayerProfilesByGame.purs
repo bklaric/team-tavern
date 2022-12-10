@@ -40,7 +40,7 @@ type ViewPlayerProfilesByGame =
     & Rest "fields")
     ==> OkJson OkContent ! Internal_
 
-bundlePlayerFilters :: forall other. Lacks "organization" other => Lacks "size" other =>
+bundlePlayerFilters :: ∀ other. Lacks "organization" other => Lacks "size" other =>
     { ageFrom :: Maybe Int
     , ageTo :: Maybe Int
     , language :: Array String

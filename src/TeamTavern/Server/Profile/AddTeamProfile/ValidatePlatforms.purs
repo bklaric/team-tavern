@@ -13,7 +13,7 @@ import TeamTavern.Server.Infrastructure.Error (Terror(..), ValidatedTerrorNeaVar
 import Type.Proxy (Proxy(..))
 
 validatePlatforms
-    :: forall errors
+    :: ∀ errors
     .  Platforms
     -> Array Platform
     -> ValidatedTerrorNeaVar (platforms :: {} | errors) (NonEmptyArray Platform)

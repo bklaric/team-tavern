@@ -21,25 +21,25 @@ import Web.UIEvent.MouseEvent as ME
 
 -- HTML
 
-popoverContainer :: forall slots action. Array (HH.HTML slots action) -> HH.HTML slots action
+popoverContainer :: ∀ slots action. Array (HH.HTML slots action) -> HH.HTML slots action
 popoverContainer content = HH.div [ HS.class_ "popover-container" ] content
 
-popoverButtonCaret :: forall slots action. Boolean -> HH.HTML slots action
+popoverButtonCaret :: ∀ slots action. Boolean -> HH.HTML slots action
 popoverButtonCaret popoverShown =
     HH.i
     [ HS.class_ $ "popover-button-caret fas fa-caret-" <> if popoverShown then "up" else "down" ]
     []
 
-popoverBody :: forall slots action.
+popoverBody :: ∀ slots action.
     Boolean -> Array (HH.HTML slots action) -> Array (HH.HTML slots action)
 popoverBody popoverShown content = guard popoverShown [ HH.div [ HS.class_ "popover popover-bottom-end" ] content ]
 
-popoverItem :: forall slots action.
+popoverItem :: ∀ slots action.
     (MouseEvent -> action) -> Array (HH.HTML slots action) -> HH.HTML slots action
 popoverItem onClick content =
     HH.div [ HS.class_ "popover-item", HE.onClick onClick ] content
 
-popover :: forall slots action.
+popover :: ∀ slots action.
     Boolean -> Array (HH.HTML slots action) -> Array (HH.HTML slots action) -> HH.HTML slots action
 popover popoverShown containerContent popoverContent =
     popoverContainer $ containerContent <> popoverBody popoverShown popoverContent
@@ -48,7 +48,7 @@ popover popoverShown containerContent popoverContent =
 
 type UsePopover = Hooks.UseState Boolean <> Hooks.UseEffect <> Hooks.Pure
 
-usePopover :: forall left. Hooks.Hook (Async left) UsePopover (Tuple Boolean (Hooks.StateId Boolean))
+usePopover :: ∀ left. Hooks.Hook (Async left) UsePopover (Tuple Boolean (Hooks.StateId Boolean))
 usePopover = Hooks.do
     state @ (Tuple _ shownId) <- Hooks.useState false
 
@@ -61,7 +61,7 @@ usePopover = Hooks.do
 
     Hooks.pure state
 
-togglePopover :: forall monad. MonadEffect monad =>
+togglePopover :: ∀ monad. MonadEffect monad =>
     Hooks.StateId Boolean -> MouseEvent -> Hooks.HookM monad Unit
 togglePopover shownId mouseEvent = do
     mouseEvent # ME.toEvent # E.stopPropagation # liftEffect

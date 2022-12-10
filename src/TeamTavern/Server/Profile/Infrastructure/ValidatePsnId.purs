@@ -25,7 +25,7 @@ maxNameLength = 16
 isPsnIdValid :: String -> Boolean
 isPsnIdValid psnId = minNameLength <= length psnId && length psnId <= maxNameLength
 
-validatePsnId :: forall errors.
+validatePsnId :: ∀ errors.
     Maybe String -> ValidatedTerrorNeaVar (psnId :: {} | errors) (Maybe PsnId)
 validatePsnId psnId =
     validateContact psnId isPsnIdValid PsnId (Proxy :: _ "psnId") ("Invalid PsnId: " <> _)

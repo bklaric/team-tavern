@@ -25,14 +25,14 @@ queryString = Query $ """
     where team_profile.team_id = $1;
     """
 
-loadRequiredPlatforms :: forall querier errors. Querier querier =>
+loadRequiredPlatforms :: ∀ querier errors. Querier querier =>
     querier -> Int -> Async (InternalTerror_ errors) (Array Platform)
 loadRequiredPlatforms querier id =
     (queryMany querier queryString (id : []) :: Async _ (Array { platform :: Platform }))
     <#> map _.platform
 
 -- Main
-updateContacts :: forall left.
+updateContacts :: ∀ left.
     Pool -> Cookies -> { handle :: String } -> UpdateTeamContacts.RequestContent -> Async left _
 updateContacts pool cookies { handle } contacts' =
     sendResponse "Error updating team contacts" do

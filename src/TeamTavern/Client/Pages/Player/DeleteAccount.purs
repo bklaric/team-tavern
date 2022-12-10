@@ -24,7 +24,7 @@ data Action = SendRequest Event
 
 type Slot = H.Slot (Const Void) (Modal.Output Void) Unit
 
-render :: forall slots. State -> HH.HTML slots Action
+render :: ∀ slots. State -> HH.HTML slots Action
 render { submitting, otherError } =
     form SendRequest $
     [ HH.p [ HS.class_ "boarding-description" ]
@@ -34,10 +34,10 @@ render { submitting, otherError } =
     ]
     <> otherFormError otherError
 
-sendRequest :: forall bad. State -> Async bad (Maybe Unit)
+sendRequest :: ∀ bad. State -> Async bad (Maybe Unit)
 sendRequest { nickname } = deleteNoContent $ "/api/players/" <> nickname
 
-handleAction :: forall slots output left.
+handleAction :: ∀ slots output left.
     Action -> H.HalogenM State Action slots output (Async left) Unit
 handleAction (SendRequest event) = do
     H.liftEffect $ preventDefault event
@@ -50,7 +50,7 @@ handleAction (SendRequest event) = do
             , otherError = true
             }
 
-component :: forall query output left. H.Component query Input output (Async left)
+component :: ∀ query output left. H.Component query Input output (Async left)
 component = H.mkComponent
     { initialState: \nickname ->
         { nickname
@@ -62,7 +62,7 @@ component = H.mkComponent
     }
 
 deleteAccount
-    :: forall children action left
+    :: ∀ children action left
     .  Input
     -> (Modal.Output Void -> action)
     -> HH.ComponentHTML action (deleteAccount :: Slot | children) (Async left)

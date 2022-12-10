@@ -36,7 +36,7 @@ maxNameLength = 16
 isGamerTagValid :: String -> Boolean
 isGamerTagValid gamerTag = minNameLength <= length gamerTag && length gamerTag <= maxNameLength
 
-validateGamerTag :: forall errors.
+validateGamerTag :: ∀ errors.
     Maybe String -> ValidatedTerrorNeaVar (gamerTag :: {} | errors) (Maybe GamerTag)
 validateGamerTag gamerTag =
     validateContact gamerTag isGamerTagValid GamerTag (Proxy :: _ "gamerTag") ("Invalid GamerTag: " <> _)

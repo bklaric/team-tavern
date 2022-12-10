@@ -46,7 +46,7 @@ import TeamTavern.Server.Team.Infrastructure.ValidateTeam (validateTeamV)
 import TeamTavern.Server.Team.Infrastructure.WriteContacts as TeamIdunno
 import Type.Proxy (Proxy(..))
 
-preboard :: forall left. Deployment -> Pool -> Cookies -> Preboard.RequestContent -> Async left _
+preboard :: ∀ left. Deployment -> Pool -> Cookies -> Preboard.RequestContent -> Async left _
 preboard deployment pool cookies content =
     sendResponse "Error preboarding" do
 

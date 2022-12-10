@@ -18,7 +18,7 @@ data AppResponse realBody = AppResponse (MultiMap String String) realBody
 type ResponseConverter realBody = AppResponse realBody -> PerunRes.Response
 
 responseRouter''
-    :: forall label responsesStart responsesEnd body realBody
+    :: ∀ label responsesStart responsesEnd body realBody
     .  Cons label (ResponseConverter realBody) responsesStart responsesEnd
     => Lacks label responsesStart
     => IsSymbol label
@@ -68,7 +68,7 @@ instance (ResponseRouter leftResponse responsesStart responsesMid, ResponseRoute
     responseRouter' _ = responseRouter' (Proxy :: _ leftResponse) >>> responseRouter' (Proxy :: _ rightResponse)
 
 responseRouter
-    :: forall responseHandlerRowList wtf responseRow response responseHandlerRow
+    :: ∀ responseHandlerRowList wtf responseRow response responseHandlerRow
     .  RowToList responseHandlerRow responseHandlerRowList
     => VariantMatchCases responseHandlerRowList wtf PerunRes.Response
     => Union wtf () responseRow

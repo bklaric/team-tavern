@@ -191,10 +191,10 @@ queryString timezone = Query $ """
     group by team.id, player.nickname;
     """
 
-loadTeam :: forall errors. Pool -> ViewTeam.RouteParams -> Async (LoadSingleError errors) ViewTeam.OkContent
+loadTeam :: ∀ errors. Pool -> ViewTeam.RouteParams -> Async (LoadSingleError errors) ViewTeam.OkContent
 loadTeam pool { handle, timezone } = queryFirstNotFound pool (queryString timezone) (handle : [])
 
-view :: forall left. Pool -> ViewTeam.RouteParams -> Async left _
+view :: ∀ left. Pool -> ViewTeam.RouteParams -> Async left _
 view pool routeParams =
     sendResponse "Error viewing team" do
     ok_ <$> loadTeam pool routeParams

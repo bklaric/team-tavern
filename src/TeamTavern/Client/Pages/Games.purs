@@ -34,7 +34,7 @@ data State = Empty | Games ViewAllGames.OkContent
 
 type Slot = H.Slot (Const Void) Void
 
-render :: forall slots monad. MonadEffect monad => State -> H.ComponentHTML Action slots monad
+render :: ∀ slots monad. MonadEffect monad => State -> H.ComponentHTML Action slots monad
 render Empty = HH.div_ []
 render (Games games') = HH.div [ HS.class_ "games" ] $
     [ HH.div [ HS.class_ "games-header"] $
@@ -92,7 +92,7 @@ render (Games games') = HH.div [ HS.class_ "games" ] $
     )
     <> stickyLeaderboards
 
-loadGames :: forall left. Async left State
+loadGames :: ∀ left. Async left State
 loadGames = Async.unify do
     response' <- Fetch.fetch_ "/api/games" # lmap (const Empty)
     games' :: ViewAllGames.OkContent <-
@@ -103,7 +103,7 @@ loadGames = Async.unify do
         _ -> Async.left Empty
     pure $ Games games'
 
-handleAction :: forall slots output left.
+handleAction :: ∀ slots output left.
     Action -> H.HalogenM State Action slots output (Async left) Unit
 handleAction Init = do
     newState <- H.lift loadGames
@@ -120,7 +120,7 @@ handleAction (Navigate url stopBubble event) = do
         else pure unit
     navigateWithEvent_ url event
 
-component :: forall query output left.
+component :: ∀ query output left.
     H.Component query State output (Async left)
 component =
     H.mkComponent
@@ -133,7 +133,7 @@ component =
         }
 
 games
-    :: forall query children left
+    :: ∀ query children left
     .  HH.ComponentHTML query (games :: Slot Unit | children) (Async left)
 games =
     HH.slot (Proxy :: _ "games") unit component Empty absurd

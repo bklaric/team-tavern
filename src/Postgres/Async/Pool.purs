@@ -12,13 +12,13 @@ import Postgres.Pool (create) as Pool
 import Postgres.Pool.Config (PoolConfig)
 import Postgres.Pool.Transaction (withTransaction) as Pool
 
-create :: forall left.
+create :: ∀ left.
     Options PoolConfig -> Options ClientConfig -> Async left Pool
 create poolConfig clientConfig =
     Pool.create poolConfig clientConfig # fromEffect
 
 withTransaction
-    :: forall error result
+    :: ∀ error result
     .  (Error -> error)
     -> (Client -> Async error result)
     -> Pool

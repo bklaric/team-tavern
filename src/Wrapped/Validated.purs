@@ -9,7 +9,7 @@ import Data.Validated (Validated, fromEither)
 import Wrapped as Wrapped
 
 create
-    :: forall result input container error canonicalized
+    :: ∀ result input container error canonicalized
     .  Foldable container
     => (input -> canonicalized)
     -> container (canonicalized -> Maybe error)

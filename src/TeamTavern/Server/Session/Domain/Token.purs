@@ -20,5 +20,5 @@ instance Show Token where show = genericShow
 tokenByteCount :: ByteCount
 tokenByteCount = ByteCount 20
 
-generate :: forall errors. Async (InternalTerror_ errors) Token
+generate :: ∀ errors. Async (InternalTerror_ errors) Token
 generate = generateHexString tokenByteCount <#> Token

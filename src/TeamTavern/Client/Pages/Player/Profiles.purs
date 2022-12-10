@@ -32,7 +32,7 @@ type ChildSlots children = PlatformIdSlots
     | children)
 
 profiles
-    :: forall action slots left
+    :: ∀ action slots left
     .  ViewPlayer.OkContent
     -> Status
     -> (ViewPlayer.OkContentProfile -> action)

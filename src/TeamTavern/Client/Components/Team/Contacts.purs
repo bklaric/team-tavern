@@ -30,62 +30,62 @@ type ContactsSlots slots =
     | slots
     )
 
-teamDiscordServerDetail :: forall slots actions. Maybe String -> Maybe (HH.HTML slots actions)
+teamDiscordServerDetail :: ∀ slots actions. Maybe String -> Maybe (HH.HTML slots actions)
 teamDiscordServerDetail discordServer = urlDetail "fab fa-discord" "Discord server" discordServer
 
-steamIdDetail :: forall left slots action.
+steamIdDetail :: ∀ left slots action.
     Maybe String -> Maybe $ HH.ComponentHTML action (steamId :: Copyable.Slot String | slots) (Async left)
 steamIdDetail steamId' = steamId' <#> \steamId ->
     fieldDetail' detailSteamSvg "Steam ID"
     [ copyable (Proxy :: _ "steamId") steamId steamId ]
 
-steamUrlDetail :: forall slots action. Maybe String -> Maybe $ HH.HTML slots action
+steamUrlDetail :: ∀ slots action. Maybe String -> Maybe $ HH.HTML slots action
 steamUrlDetail steamId' = steamId' <#> \steamId ->
     detail' detailSteamSvg [ textAnchor "detail-url" ("https://steamcommunity.com/profiles/" <> steamId) "Steam profile" ]
 
-riotIdDetail :: forall left slots action.
+riotIdDetail :: ∀ left slots action.
     Maybe String -> Maybe $ HH.ComponentHTML action (riotId :: Copyable.Slot String | slots) (Async left)
 riotIdDetail riotId' = riotId' <#> \riotId ->
     fieldDetail' detailRiotSvg "Riot ID"
     [ copyable (Proxy :: _ "riotId") riotId riotId ]
 
-battleTagDetail :: forall left slots action.
+battleTagDetail :: ∀ left slots action.
     Maybe String -> Maybe $ HH.ComponentHTML action (battleTag :: Copyable.Slot String | slots) (Async left)
 battleTagDetail battleTag' = battleTag' <#> \battleTag ->
     fieldDetail' detailBattleNetSvg "BattleTag"
     [ copyable (Proxy :: _ "battleTag") battleTag battleTag ]
 
-eaIdDetail :: forall left slots action.
+eaIdDetail :: ∀ left slots action.
     Maybe String -> Maybe $ HH.ComponentHTML action (eaId :: Copyable.Slot String | slots) (Async left)
 eaIdDetail eaId' = eaId' <#> \eaId ->
     fieldDetail' detailOriginSvg "EA ID"
     [ copyable (Proxy :: _ "eaId") eaId eaId ]
 
-ubisoftUsernameDetail :: forall left slots action.
+ubisoftUsernameDetail :: ∀ left slots action.
     Maybe String -> Maybe $ HH.ComponentHTML action (ubisoftUsername :: Copyable.Slot String | slots) (Async left)
 ubisoftUsernameDetail ubisoftUsername' = ubisoftUsername' <#> \ubisoftUsername ->
     fieldDetail' detailUbisoftSvg "Ubisoft Connect username"
     [ copyable (Proxy :: _ "ubisoftUsername") ubisoftUsername ubisoftUsername ]
 
-psnIdDetail :: forall left slots action.
+psnIdDetail :: ∀ left slots action.
     Maybe String -> Maybe $ HH.ComponentHTML action (psnId :: Copyable.Slot String | slots) (Async left)
 psnIdDetail psnId' = psnId' <#> \psnId ->
     fieldDetail' detailPlayStationSvg "PSN ID"
     [ copyable (Proxy :: _ "psnId") psnId psnId ]
 
-gamerTagDetail :: forall left slots action.
+gamerTagDetail :: ∀ left slots action.
     Maybe String -> Maybe $ HH.ComponentHTML action (gamerTag :: Copyable.Slot String | slots) (Async left)
 gamerTagDetail gamerTag' = gamerTag' <#> \gamerTag ->
     fieldDetail' detailXboxSvg "Gamertag"
     [ copyable (Proxy :: _ "gamerTag") gamerTag gamerTag ]
 
-friendCodeDetail :: forall left slots action.
+friendCodeDetail :: ∀ left slots action.
     Maybe String -> Maybe $ HH.ComponentHTML action (friendCode :: Copyable.Slot String | slots) (Async left)
 friendCodeDetail friendCode' = friendCode' <#> \friendCode ->
     fieldDetail' detailSwitchSvg "Friend code"
     [ copyable (Proxy :: _ "friendCode") friendCode friendCode ]
 
-contacts :: forall fields action slots left.
+contacts :: ∀ fields action slots left.
     TeamContactsOpen (handle :: String | fields) -> Array (HH.ComponentHTML action (ContactsSlots slots) (Async left))
 contacts conts =
     Array.catMaybes
@@ -102,7 +102,7 @@ contacts conts =
     , friendCodeDetail conts.friendCode
     ]
 
-profileContacts :: forall fields action slots left.
+profileContacts :: ∀ fields action slots left.
     TeamContactsOpen (handle :: String, selectedPlatforms :: Array Platform | fields) -> Array (HH.ComponentHTML action (ContactsSlots slots) (Async left))
 profileContacts conts @ { selectedPlatforms } =
     contacts conts

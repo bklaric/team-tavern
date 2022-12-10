@@ -23,7 +23,7 @@ import TeamTavern.Routes.Game.ViewGame as View
 
 type Input = ViewTeam.OkContent
 
-createProfileButton :: forall left output query. H.Component query Input output (Async left)
+createProfileButton :: ∀ left output query. H.Component query Input output (Async left)
 createProfileButton = Hooks.component $ \_ team -> Hooks.do
     (Tuple shown shownId) <- usePopover
 

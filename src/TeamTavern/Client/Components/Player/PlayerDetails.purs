@@ -10,7 +10,7 @@ import Halogen.HTML as HH
 import TeamTavern.Client.Components.Detail (arrangedAndDetail, detail, weekdaysOnlineDetail, weekendsOnlineDetail)
 import TeamTavern.Client.Snippets.Class as HS
 
-playerAgeDetail :: forall slots action. Maybe Int -> Maybe (HH.HTML slots action)
+playerAgeDetail :: ∀ slots action. Maybe Int -> Maybe (HH.HTML slots action)
 playerAgeDetail Nothing = Nothing
 playerAgeDetail (Just age) = Just $
     detail "fas fa-calendar-alt"
@@ -19,7 +19,7 @@ playerAgeDetail (Just age) = Just $
     , HH.text " years old"
     ]
 
-playerLocationDetail :: forall slots action. Maybe String -> Maybe (HH.HTML slots action)
+playerLocationDetail :: ∀ slots action. Maybe String -> Maybe (HH.HTML slots action)
 playerLocationDetail Nothing = Nothing
 playerLocationDetail (Just location) = Just $
     detail "fas fa-globe-europe"
@@ -27,10 +27,10 @@ playerLocationDetail (Just location) = Just $
     , HH.span [ HS.class_ "detail-emphasize" ] [ HH.text location ]
     ]
 
-playerLanguagesDetail :: forall slots action. Array String -> Maybe (HH.HTML slots action)
+playerLanguagesDetail :: ∀ slots action. Array String -> Maybe (HH.HTML slots action)
 playerLanguagesDetail languages = arrangedAndDetail "fas fa-comments" "Speaks" languages
 
-playerMicrophoneDetail :: forall slots action. Boolean -> Maybe (HH.HTML slots action)
+playerMicrophoneDetail :: ∀ slots action. Boolean -> Maybe (HH.HTML slots action)
 playerMicrophoneDetail false = Nothing
 playerMicrophoneDetail true = Just $
     detail "fas fa-microphone"
@@ -39,7 +39,7 @@ playerMicrophoneDetail true = Just $
     , HH.text $ " and is willing to communicate"
     ]
 
-playerDetails :: forall fields action slots left.
+playerDetails :: ∀ fields action slots left.
     { nickname :: String
     , age :: Maybe Int
     , languages :: Array String

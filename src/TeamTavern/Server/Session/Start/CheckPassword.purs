@@ -33,7 +33,7 @@ queryString = Query """
     """
 
 checkPassword
-    :: forall querier errors
+    :: ∀ querier errors
     .  Querier querier
     => StartSession.RequestContent
     -> querier

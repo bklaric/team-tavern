@@ -61,5 +61,5 @@ queryString = Query """
     group by game.id;
     """
 
-loadFields :: forall errors. Client -> String -> Async (InternalTerror_ errors) Game
+loadFields :: ∀ errors. Client -> String -> Async (InternalTerror_ errors) Game
 loadFields client handle = queryFirstInternal client queryString (handle : [])

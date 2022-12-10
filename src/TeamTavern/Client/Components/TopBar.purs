@@ -67,7 +67,7 @@ data Action
 
 type Slot = H.Slot (Const Void) Void Unit
 
-render :: forall children left.
+render :: ∀ children left.
     State -> H.ComponentHTML Action children (Async left)
 render state = HH.div_ $
     [ HH.div [ HS.class_ "top-bar" ]
@@ -221,11 +221,11 @@ render state = HH.div_ $
     , HH.div [ HS.class_ "top-bar-filler" ] []
     ]
 
-endSession :: forall left. Async left Boolean
+endSession :: ∀ left. Async left Boolean
 endSession = Async.unify do
     fetchSimple (Proxy :: _ EndSession) # bimap (const false) (const true)
 
-handleAction :: forall children left output.
+handleAction :: ∀ children left output.
     Action -> H.HalogenM State Action children output (Async left) Unit
 handleAction Initialize = do
     nickname <- getPlayerNickname
@@ -273,7 +273,7 @@ handleAction (ToggleGamesPopunder mouseEvent) = do
 handleAction CloseGamesPopunder =
     H.modify_ (_ { gamesVisible = false })
 
-component :: forall query output left. H.Component query Input output (Async left)
+component :: ∀ query output left. H.Component query Input output (Async left)
 component = H.mkComponent
     { initialState:
         { handle: _
@@ -292,6 +292,6 @@ component = H.mkComponent
         }
     }
 
-topBar :: forall action left slots.
+topBar :: ∀ action left slots.
     Input -> HH.ComponentHTML action (topBar :: Slot | slots) (Async left)
 topBar input = HH.slot (Proxy :: _ "topBar") unit component input absurd

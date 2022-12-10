@@ -21,7 +21,7 @@ exactLength = 17
 isSteamIdValid :: String -> Boolean
 isSteamIdValid steamId = length steamId == exactLength && (toCodePointArray steamId # all isNumber)
 
-validateSteamId :: forall errors.
+validateSteamId :: ∀ errors.
     Maybe String -> ValidatedTerrorNeaVar (steamId :: {} | errors) (Maybe SteamId)
 validateSteamId steamId =
     validateContact steamId isSteamIdValid SteamId (Proxy :: _ "steamId") ("Invalid SteamId: " <> _)

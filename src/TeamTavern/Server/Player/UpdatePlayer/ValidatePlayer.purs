@@ -24,7 +24,7 @@ type Player =
     , microphone :: Boolean
     }
 
-validatePlayer :: forall left. UpdatePlayer.RequestContent -> Async left Player
+validatePlayer :: ∀ left. UpdatePlayer.RequestContent -> Async left Player
 validatePlayer dto = do
     birthday <- Async.fromEffect $ validateOptionalBirthday dto.birthday
     let timezone = validateTimezone dto.timezone
@@ -38,5 +38,5 @@ validatePlayer dto = do
     }
         # pure
 
-validatePlayerV :: forall left. Semigroup left => UpdatePlayer.RequestContent -> AsyncV left Player
+validatePlayerV :: ∀ left. Semigroup left => UpdatePlayer.RequestContent -> AsyncV left Player
 validatePlayerV = validatePlayer >>> AsyncV.fromAsync

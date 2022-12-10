@@ -79,7 +79,7 @@ type Output option = Array option
 
 type Slot option = H.Slot (Const Void) (Output option) Unit
 
-selectedEntriesText :: forall option. Labeler option -> Entries option -> String
+selectedEntriesText :: ∀ option. Labeler option -> Entries option -> String
 selectedEntriesText labeler entries =
     entries
     <#> (\(Entry entry) ->
@@ -91,7 +91,7 @@ selectedEntriesText labeler entries =
     # intercalate ", "
 
 renderEntry
-    :: forall option slots
+    :: ∀ option slots
     .  Int
     -> Labeler option
     -> Entry option
@@ -129,7 +129,7 @@ renderEntry level labeler (Entry { option, state, expanded, subEntries }) = let
     else []
 
 renderEntries
-    :: forall option slots
+    :: ∀ option slots
     .  Int
     -> Labeler option
     -> Entries option
@@ -137,7 +137,7 @@ renderEntries
 renderEntries level labeler entries =
     entries <#> renderEntry level labeler # Array.catMaybes # join
 
-render :: forall option slots. State option -> HH.HTML slots (Action option)
+render :: ∀ option slots. State option -> HH.HTML slots (Action option)
 render { entries, labeler, filter, open } = let
     selectedClass = if open then "selected-open" else "selected-closed"
     openOrClose = if open then Close else Open
@@ -168,7 +168,7 @@ render { entries, labeler, filter, open } = let
         ]
     else []
 
-filterEntries :: forall option.
+filterEntries :: ∀ option.
     String -> Labeler option -> Entries option -> Entries option
 filterEntries filter labeler entries | String.null $ trim filter =
     entries <#> \(Entry entry) -> Entry entry
@@ -189,21 +189,21 @@ filterEntries filter labeler entries = entries <#> \(Entry entry) -> let
         , subEntries = subEntries
         }
 
-uncheckSubEntries :: forall option. Entries option -> Entries option
+uncheckSubEntries :: ∀ option. Entries option -> Entries option
 uncheckSubEntries subEntries =
     subEntries <#> \(Entry entry) -> Entry entry
         { state = Unchecked
         , subEntries = uncheckSubEntries entry.subEntries
         }
 
-checkSubEntries :: forall option. Entries option -> Entries option
+checkSubEntries :: ∀ option. Entries option -> Entries option
 checkSubEntries subEntries =
     subEntries <#> \(Entry entry) -> Entry entry
         { state = Checked
         , subEntries = checkSubEntries entry.subEntries
         }
 
-toggleEntriesState :: forall option.
+toggleEntriesState :: ∀ option.
     Comparer option -> option -> Entries option -> Entries option
 toggleEntriesState comparer option entries = entries <#> \(Entry entry) ->
     if comparer option entry.option
@@ -240,7 +240,7 @@ toggleEntriesState comparer option entries = entries <#> \(Entry entry) ->
             , subEntries = subEntries
             }
 
-toggleEntriesExpanded :: forall option.
+toggleEntriesExpanded :: ∀ option.
     Comparer option -> option -> Entries option -> Entries option
 toggleEntriesExpanded comparer option entries = entries <#> \(Entry entry) ->
     if comparer option entry.option
@@ -248,7 +248,7 @@ toggleEntriesExpanded comparer option entries = entries <#> \(Entry entry) ->
     else Entry $ entry
         { subEntries = toggleEntriesExpanded comparer option entry.subEntries }
 
-getSelectedEntries :: forall option. Entries option -> Array option
+getSelectedEntries :: ∀ option. Entries option -> Array option
 getSelectedEntries entries =
     entries
     <#> (\(Entry entry) ->
@@ -258,14 +258,14 @@ getSelectedEntries entries =
         Unchecked -> [])
     # join
 
-findMatchingEntry :: forall option. Comparer option -> Entry option -> Entries option -> Maybe (Entry option)
+findMatchingEntry :: ∀ option. Comparer option -> Entry option -> Entries option -> Maybe (Entry option)
 findMatchingEntry comparer (Entry newEntry) existingEntries =
     existingEntries # Array.findMap \(Entry existingEntry) ->
         if comparer newEntry.option existingEntry.option
         then Just $ Entry existingEntry
         else findMatchingEntry comparer (Entry newEntry) existingEntry.subEntries
 
-setExistingExpanded :: forall option. Comparer option -> Entries option -> Entries option -> Entries option
+setExistingExpanded :: ∀ option. Comparer option -> Entries option -> Entries option -> Entries option
 setExistingExpanded comparer newEntries existingEntries = newEntries <#> \(Entry newEntry) ->
     let matchingEntry = findMatchingEntry comparer (Entry newEntry) existingEntries
     in
@@ -278,7 +278,7 @@ setExistingExpanded comparer newEntries existingEntries = newEntries <#> \(Entry
             }
 
 handleAction
-    :: forall option slots left
+    :: ∀ option slots left
     .  (Action option)
     -> H.HalogenM (State option) (Action option) slots
         (Output option) (Async left) Unit
@@ -335,14 +335,14 @@ handleAction (ToggleEntryExpanded option) =
     H.modify_ \state @ { entries, comparer } ->
         state { entries = toggleEntriesExpanded comparer option entries }
 
-clearEntries :: forall option. Entries option -> Entries option
+clearEntries :: ∀ option. Entries option -> Entries option
 clearEntries entries = entries <#> \(Entry entry) ->
     Entry entry
         { state = Unchecked
         , subEntries = clearEntries entry.subEntries
         }
 
-createEntry :: forall option. InputEntry option -> Entry option
+createEntry :: ∀ option. InputEntry option -> Entry option
 createEntry (InputEntry { option, subEntries }) = Entry
     { option: option
     , state: Unchecked
@@ -351,7 +351,7 @@ createEntry (InputEntry { option, subEntries }) = Entry
     , subEntries: subEntries <#> createEntry
     }
 
-component :: forall query option left.
+component :: ∀ query option left.
     H.Component query (Input option) (Output option) (Async left)
 component = H.mkComponent
     { initialState: \{ entries, selected, labeler, comparer, filter } ->
@@ -377,7 +377,7 @@ component = H.mkComponent
     }
 
 multiTreeSelect
-    :: forall children' slot children action left option
+    :: ∀ children' slot children action left option
     .  Cons slot (Slot option) children' children
     => IsSymbol slot
     => Proxy slot

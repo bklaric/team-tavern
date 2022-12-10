@@ -55,7 +55,7 @@ type Slots = PlatformIdSlots
     , player :: SimpleSlot
     )
 
-render :: forall left. State -> H.ComponentHTML Action Slots (Async left)
+render :: ∀ left. State -> H.ComponentHTML Action Slots (Async left)
 render (Empty _) = HH.div_ []
 render (Loaded { profile, status }) = let
     contactsDetails = profileContacts profile
@@ -131,12 +131,12 @@ render NotFound = HH.p_ [ HH.text "Player could not be found." ]
 render Error = HH.p_ [ HH.text
     "There has been an error loading the player. Please try again later." ]
 
-loadPlayerProfile :: forall left. Input -> Async left (Maybe ViewPlayerProfile.OkContent)
+loadPlayerProfile :: ∀ left. Input -> Async left (Maybe ViewPlayerProfile.OkContent)
 loadPlayerProfile { nickname, handle } = do
     timezone <- getClientTimezone
     get ("/api/players/" <> nickname <> "/profiles/" <> handle <> "?timezone=" <> timezone)
 
-handleAction :: forall slots output left.
+handleAction :: ∀ slots output left.
     Action -> H.HalogenM State Action slots output (Async left) Unit
 handleAction Initialize = do
     state <- H.get
@@ -155,7 +155,7 @@ handleAction (Receive input) = do
                 )
         _ -> pure unit
 
-component :: forall query output left. H.Component query Input output (Async left)
+component :: ∀ query output left. H.Component query Input output (Async left)
 component = H.mkComponent
     { initialState: Empty
     , render
@@ -166,6 +166,6 @@ component = H.mkComponent
         }
     }
 
-playerProfile :: forall query children left.
+playerProfile :: ∀ query children left.
     Input -> HH.ComponentHTML query (playerProfile :: SimpleSlot | children) (Async left)
 playerProfile input = HH.slot (Proxy :: _ "playerProfile") unit component input absurd

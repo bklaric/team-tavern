@@ -22,10 +22,10 @@ loadGamesQuery = Query """
     order by game.created
     """
 
-loadGames :: forall errors. Pool -> Async (InternalTerror_ errors) ViewAllGames.OkContent
+loadGames :: ∀ errors. Pool -> Async (InternalTerror_ errors) ViewAllGames.OkContent
 loadGames pool = queryMany_ pool loadGamesQuery
 
-viewAll :: forall left. Pool -> Async left _
+viewAll :: ∀ left. Pool -> Async left _
 viewAll pool =
     sendResponse "Error viewing all games" do
     -- Load games from database

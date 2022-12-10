@@ -13,7 +13,7 @@ import TeamTavern.Server.Infrastructure.Error as Terror
 import Type.Proxy (Proxy)
 
 validateContact
-    :: forall wrapper errors errors' label
+    :: ∀ wrapper errors errors' label
     .  Cons label {} errors' errors
     => IsSymbol label
     => Maybe String

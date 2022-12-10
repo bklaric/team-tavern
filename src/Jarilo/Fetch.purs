@@ -107,12 +107,12 @@ instance (FetchQuery leftQuery parameters, FetchQuery rightQuery parameters) =>
         Nothing, Just right -> Just right
         Just left, Just right -> Just $ left <> "&" <> right
 
-fetchQuery :: forall parameters query. FetchQuery query parameters => Proxy query -> Record parameters -> String
+fetchQuery :: ∀ parameters query. FetchQuery query parameters => Proxy query -> Record parameters -> String
 fetchQuery proxy parameters = maybe "" ("?" <> _) (fetchQuery' proxy parameters)
 
 
 
-fetchUrl :: forall pathParameters queryParameters path query.
+fetchUrl :: ∀ pathParameters queryParameters path query.
     FetchPath path pathParameters => FetchQuery query queryParameters =>
     Maybe String -> Maybe String -> Proxy path -> Proxy query -> Record pathParameters -> Record queryParameters -> String
 fetchUrl origin' pathPrefix' pathProxy queryProxy pathParameters queryParameters = let
@@ -192,7 +192,7 @@ instance (Lacks "internal" startErrors) =>
 
 
 fetchStatus'
-    :: forall status startErrors endErrors
+    :: ∀ status startErrors endErrors
     .  FetchStatusError status startErrors endErrors
     => Proxy status
     -> Int
@@ -275,7 +275,7 @@ instance
         # giveUp
 
 fetchResponse
-    :: forall realBody response results errors errorsList
+    :: ∀ realBody response results errors errorsList
     .  FetchResponse response () errors realBody results
     => Nub errors errors
     => RowToList errors errorsList

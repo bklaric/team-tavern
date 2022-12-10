@@ -33,7 +33,7 @@ validateRegistration' { nickname, password } =
     <*> validatePassword password
 
 validateRegistration
-    :: forall errors
+    :: ∀ errors
     .  RegisterPlayer.RequestContent
     -> Async (BadRequestTerror RegisterPlayer.BadContent errors) Registration
 validateRegistration identifiers =
@@ -44,7 +44,7 @@ validateRegistration identifiers =
         >>> map badRequest_)
 
 validateRegistrationV
-    :: forall errors
+    :: ∀ errors
     .  RegisterPlayer.RequestContent
     -> AsyncV (TerrorNeaVar (registration :: RegistrationErrors | errors)) Registration
 validateRegistrationV =

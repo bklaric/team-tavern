@@ -55,19 +55,19 @@ instance Foldable (MultiMap key) where
     foldr   function state map = foldr   function state $ values' map
     foldMap function       map = foldMap function       $ values' map
 
-empty :: forall key value. MultiMap key value
+empty :: ∀ key value. MultiMap key value
 empty = MultiMap Map.empty
 
-singleton :: forall key value. key -> NonEmptyList value -> MultiMap key value
+singleton :: ∀ key value. key -> NonEmptyList value -> MultiMap key value
 singleton key values'' = MultiMap $ Map.singleton key values''
 
-singleton' :: forall key value. key -> value -> MultiMap key value
+singleton' :: ∀ key value. key -> value -> MultiMap key value
 singleton' key value = singleton key $ NonEmptyList.singleton value
 
-lookup :: forall key value. Ord key => key -> MultiMap key value -> Maybe (NonEmptyList value)
+lookup :: ∀ key value. Ord key => key -> MultiMap key value -> Maybe (NonEmptyList value)
 lookup key (MultiMap map) = Map.lookup key map
 
-insertOrAppend :: forall key value. Ord key =>
+insertOrAppend :: ∀ key value. Ord key =>
     key -> NonEmptyList value -> MultiMap key value -> MultiMap key value
 insertOrAppend key values'' (MultiMap map) =
     MultiMap $ Map.alter
@@ -77,43 +77,43 @@ insertOrAppend key values'' (MultiMap map) =
         key
         map
 
-insertOrAppend' :: forall key value. Ord key =>
+insertOrAppend' :: ∀ key value. Ord key =>
     key -> value -> MultiMap key value -> MultiMap key value
 insertOrAppend' key value multiMap = insertOrAppend key (NonEmptyList.singleton value) multiMap
 
-insertOrReplace :: forall key value. Ord key =>
+insertOrReplace :: ∀ key value. Ord key =>
     key -> NonEmptyList value -> MultiMap key value -> MultiMap key value
 insertOrReplace key values'' (MultiMap map) = MultiMap $ Map.insert key values'' map
 
-insertOrReplace' :: forall key value. Ord key =>
+insertOrReplace' :: ∀ key value. Ord key =>
     key -> value -> MultiMap key value -> MultiMap key value
 insertOrReplace' key value multiMap = insertOrReplace key (NonEmptyList.singleton value) multiMap
 
-delete :: forall key value. Ord key => key -> MultiMap key value -> MultiMap key value
+delete :: ∀ key value. Ord key => key -> MultiMap key value -> MultiMap key value
 delete key (MultiMap map) = MultiMap $ Map.delete key map
 
-values :: forall key value. MultiMap key value -> List (NonEmptyList value)
+values :: ∀ key value. MultiMap key value -> List (NonEmptyList value)
 values (MultiMap map) = Map.values map
 
-values' :: forall key value. MultiMap key value -> List value
+values' :: ∀ key value. MultiMap key value -> List value
 values' = values >=> NonEmptyList.toList
 
-fromFoldable :: forall key value container. Ord key => Foldable container =>
+fromFoldable :: ∀ key value container. Ord key => Foldable container =>
     container (Tuple key (NonEmptyList value)) -> MultiMap key value
 fromFoldable = Map.fromFoldable >>> MultiMap
 
-toUnfoldable :: forall key value tuples. Functor tuples => Unfoldable tuples =>
+toUnfoldable :: ∀ key value tuples. Functor tuples => Unfoldable tuples =>
     MultiMap key value -> tuples (Tuple key (NonEmptyList value))
 toUnfoldable (MultiMap map) = Map.toUnfoldable map
 
-toUnfoldable' :: forall key value tuples values
+toUnfoldable' :: ∀ key value tuples values
     .  Functor tuples => Unfoldable tuples => Unfoldable values
     => MultiMap key value -> tuples (Tuple key (values value))
 toUnfoldable' (MultiMap map) =
     Map.toUnfoldable map
     <#> \(Tuple key values'') -> Tuple key (NonEmptyList.toUnfoldable values'')
 
-toUnfoldable_ :: forall value key tuples. Functor tuples => Unfoldable tuples => Bind tuples =>
+toUnfoldable_ :: ∀ value key tuples. Functor tuples => Unfoldable tuples => Bind tuples =>
     MultiMap key value -> tuples (Tuple key value)
 toUnfoldable_ (MultiMap map) =
     Map.toUnfoldable map

@@ -9,7 +9,7 @@ import TeamTavern.Server.Domain.Text (Text, validateText)
 import TeamTavern.Server.Infrastructure.Error (Terror(..), ValidatedTerrorNeaVar)
 import Type.Proxy (Proxy(..))
 
-validateAmbitions :: forall errors.
+validateAmbitions :: ∀ errors.
     String -> ValidatedTerrorNeaVar (ambitions :: {} | errors) Text
 validateAmbitions ambitions
     = validateText ambitions
