@@ -3,10 +3,12 @@ module TeamTavern.Server.Game.View where
 import Prelude
 
 import Async (Async)
+import Data.Bifunctor (lmap)
 import Jarilo (ok_)
 import Postgres.Pool (Pool)
 import Postgres.Query (Query(..), (:))
 import TeamTavern.Routes.Game.ViewGame as ViewGame
+import TeamTavern.Server.Infrastructure.Error (elaborate)
 import TeamTavern.Server.Infrastructure.Postgres (LoadSingleError, queryFirstNotFound)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 
@@ -54,6 +56,7 @@ queryString = Query """
 
 loadGame :: ∀ errors. Pool -> String -> Async (LoadSingleError errors) ViewGame.OkContent
 loadGame pool handle = queryFirstNotFound pool queryString (handle : [])
+    # lmap (elaborate ("Can't find game: " <> handle))
 
 view :: ∀ left. Pool -> String -> Async left _
 view pool handle =
