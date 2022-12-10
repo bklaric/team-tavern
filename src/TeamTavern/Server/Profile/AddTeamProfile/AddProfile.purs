@@ -27,7 +27,7 @@ queryString = Query """
     select team.id, game.id, $4, $5, $6, $7, $8
     from player, team, game
     where player.id = $1
-        and team.handle = $2
+        and lower(team.handle) = lower($2)
         and game.handle = $3
         and team.owner_id = player.id
     returning team_profile.id as "profileId"

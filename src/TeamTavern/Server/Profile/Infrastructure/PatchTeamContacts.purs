@@ -23,7 +23,7 @@ queryString = Query """
         psn_id = coalesce($9, psn_id),
         gamer_tag = coalesce($10, gamer_tag),
         friend_code = coalesce($11, friend_code)
-        where team.handle = $1
+        where lower(team.handle) = lower($1)
     """
 
 queryParameters :: String -> Contacts -> Array QueryParameter

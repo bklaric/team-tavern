@@ -17,7 +17,7 @@ queryString = Query """
     select team.id
     from team
     join player on player.id = team.owner_id
-    where player.id = $1 and team.handle = $2
+    where player.id = $1 and lower(team.handle) = lower($2)
     """
 
 ensureSignedInOwner :: ∀ errors querier. Querier querier =>
