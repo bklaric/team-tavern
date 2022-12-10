@@ -3,10 +3,12 @@ module TeamTavern.Server.Team.View (view) where
 import Prelude
 
 import Async (Async)
+import Data.Bifunctor (lmap)
 import Jarilo (ok_)
 import Postgres.Pool (Pool)
 import Postgres.Query (Query(..), (:))
 import TeamTavern.Routes.Team.ViewTeam as ViewTeam
+import TeamTavern.Server.Infrastructure.Error (elaborate)
 import TeamTavern.Server.Infrastructure.Postgres (LoadSingleError, queryFirstNotFound, teamAdjustedWeekdayFrom, teamAdjustedWeekdayTo, teamAdjustedWeekendFrom, teamAdjustedWeekendTo)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 
@@ -191,8 +193,11 @@ queryString timezone = Query $ """
     group by team.id, player.nickname;
     """
 
-loadTeam :: ∀ errors. Pool -> ViewTeam.RouteParams -> Async (LoadSingleError errors) ViewTeam.OkContent
-loadTeam pool { handle, timezone } = queryFirstNotFound pool (queryString timezone) (handle : [])
+loadTeam :: ∀ errors.
+    Pool -> ViewTeam.RouteParams -> Async (LoadSingleError errors) ViewTeam.OkContent
+loadTeam pool { handle, timezone } =
+    queryFirstNotFound pool (queryString timezone) (handle : [])
+    # lmap (elaborate ("Can't find team: " <> handle))
 
 view :: ∀ left. Pool -> ViewTeam.RouteParams -> Async left _
 view pool routeParams =
