@@ -6,6 +6,7 @@ import Async (Async)
 import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
+import Control.Bind (bindFlipped)
 import Data.Array (foldl, intercalate)
 import Data.Array as Array
 import Data.Bifunctor (lmap)
@@ -40,12 +41,12 @@ import TeamTavern.Client.Script.Navigate (navigate, navigate_)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Script.Url as Url
 import TeamTavern.Client.Snippets.ArticledNoun (indefiniteNoun)
+import TeamTavern.Routes.Game.ViewGame as ViewGame
 import TeamTavern.Routes.Profile.ViewPlayerProfilesByGame as ViewPlayerProfilesByGame
 import TeamTavern.Routes.Profile.ViewTeamProfilesByGame as ViewTeamProfilesByGame
 import TeamTavern.Routes.Shared.Organization as Organization
 import TeamTavern.Routes.Shared.Platform as Platform
 import TeamTavern.Routes.Shared.Size as Size
-import TeamTavern.Routes.Game.ViewGame as ViewGame
 import Type.Proxy (Proxy(..))
 import Web.DOM.ParentNode (QuerySelector(..))
 import Web.DOM.ParentNode as ParentNode
@@ -280,7 +281,7 @@ readQueryParams
 readQueryParams fields = do
     searchParams <- Html.window >>= Window.location >>= Location.href
         >>= Url.url >>= Url.searchParams
-    page <- Url.get "page" searchParams <#> maybe 1 (Int.fromString >>> maybe 1 identity)
+    page <- Url.get "page" searchParams <#> bindFlipped Int.fromString <#> maybe 1 (max 1)
     organizations <- Url.getAll "organization" searchParams <#> Array.mapMaybe Organization.fromString
     ageFrom <- Url.get "age-from" searchParams <#> (\ageFrom -> ageFrom >>= Int.fromString)
     ageTo <- Url.get "age-to" searchParams <#> (\ageTo -> ageTo >>= Int.fromString)
