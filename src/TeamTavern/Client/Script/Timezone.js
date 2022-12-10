@@ -1,3 +1,9 @@
 export const getClientTimezoneImpl = function () {
-    return Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    if (timeZone == "Europe/Kyiv") {
+        return "Europe/Kiev"
+    }
+    else {
+        return timeZone
+    }
 }
