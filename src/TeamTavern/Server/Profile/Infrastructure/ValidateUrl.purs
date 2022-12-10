@@ -16,7 +16,7 @@ import Data.String.Utils (endsWith, startsWith)
 import Data.Validated (Validated)
 import Data.Validated as Validated
 import Data.Variant (Variant, inj)
-import Parsing (Parser)
+import Parsing (ParseError, Parser)
 import Parsing (runParser) as Parser
 import Parsing.Combinators (notFollowedBy, optionMaybe)
 import Parsing.String (anyChar, string)
@@ -29,7 +29,7 @@ import URI.Path as Path
 import URI.Path.Segment (segmentToString)
 import URI.Path.Segment as Segment
 import URI.Scheme as Scheme
-import Wrapped.String (Invalid, TooLong)
+import Wrapped.String (TooLong)
 
 type Domain = String
 
@@ -40,7 +40,7 @@ derive newtype instance Show Url
 toString :: Url -> String
 toString (Url url) = url
 
-type UrlError = Variant (invalid :: Invalid, tooLong :: TooLong)
+type UrlError = Variant (invalid :: { original :: String, error :: ParseError }, tooLong :: TooLong)
 
 type UrlErrors = NonEmptyList UrlError
 
@@ -84,7 +84,7 @@ parsePath = flip wrapParser Path.parser
         _ -> Left $ URIPartParseError $ "Invalid path: " <> Path.print path
 
 parsePath_ :: Parser String (Maybe Path)
-parsePath_ = optionMaybe parsePath
+parsePath_ = optionMaybe Path.parser
 
 parser :: Domain -> Parser String ParsedUrl
 parser domain = do
@@ -108,7 +108,7 @@ validateUrl :: Domain -> String -> Either (NonEmptyArray UrlError) Url
 validateUrl domain url =
     case Parser.runParser (url # trim # prependScheme) (parser domain)
         <#> (\{ scheme, host, path } -> (Nes.toString $ Scheme.toString scheme) <> "://" <> (Nes.toString $ Host.toString host) <> (maybe "" (\(Path segments) -> "/" <> intercalate "/" (segments <#> segmentToString) ) path))
-        # lmap (const $ Nea.singleton $ inj (Proxy :: _ "invalid") { original: url }) of
+        # lmap (\error -> Nea.singleton $ inj (Proxy :: _ "invalid") { original: url, error }) of
     Left errors -> Left errors
     Right url' ->
         if String.length url' <= 200
@@ -122,7 +122,7 @@ validateUrl_ :: String -> Either (NonEmptyArray UrlError) Url
 validateUrl_ url =
     case Parser.runParser (url # trim # prependScheme) (parser_)
         <#> (\{ scheme, host, path } -> (Nes.toString $ Scheme.toString scheme) <> "://" <> (Nes.toString $ Host.toString host) <> (maybe "" (\(Path segments) -> "/" <> intercalate "/" (segments <#> segmentToString) ) path))
-        # lmap (const $ Nea.singleton $ inj (Proxy :: _ "invalid") { original: url }) of
+        # lmap (\error -> Nea.singleton $ inj (Proxy :: _ "invalid") { original: url, error }) of
     Left errors -> Left errors
     Right url' ->
         if String.length url' <= 200
