@@ -6,11 +6,14 @@ import Async (Async)
 import Data.Maybe (Maybe, maybe)
 import Data.Newtype (unwrap)
 import Postgres.Query (class Querier, Query(..), (:|))
+import Tasync (Tasync, getRequest)
+import Tasync as Tasync
 import TeamTavern.Routes.Player.ViewPlayer as ViewPlayer
+import TeamTavern.Server.Infrastructure.CheckSignedIn (checkSignedIn')
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Server.Infrastructure.Postgres (LoadSingleError, playerAdjustedWeekdayFrom, playerAdjustedWeekdayTo, playerAdjustedWeekendFrom, playerAdjustedWeekendTo, queryFirstNotFound)
 
-queryString :: String -> Query
+queryString ∷ String -> Query
 queryString timezone = Query $ """
     select
         player.nickname,
@@ -209,13 +212,9 @@ queryString timezone = Query $ """
     where lower(player.nickname) = lower($1)
     """
 
-loadPlayer
-    :: forall errors querier
-    .  Querier querier
-    => querier
-    -> Maybe CookieInfo
-    -> ViewPlayer.RouteParams
-    -> Async (LoadSingleError errors) ViewPlayer.OkContent
-loadPlayer pool cookieInfo { nickname, timezone } = do
+loadPlayer ∷  ∀ l b.
+    Maybe CookieInfo -> Tasync (nickname∷_) (timezone∷_) b (LoadSingleError l) ViewPlayer.OkContent
+loadPlayer cookieInfo = do
+    { path: { nickname }, query: { timezone } } <- getRequest
     let samePlayer = maybe false ((_.nickname) >>> unwrap >>> (_ == nickname)) cookieInfo
-    queryFirstNotFound pool (queryString timezone) (nickname :| samePlayer)
+    Tasync.queryFirstNotFound (queryString timezone) (nickname :| samePlayer)

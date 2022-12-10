@@ -16,28 +16,28 @@ import TeamTavern.Server.Infrastructure.Postgres (queryFirstMaybe, queryMany)
 import TeamTavern.Server.Profile.ViewPlayerProfilesByGame.LoadProfiles (createFieldsFilterString, createPlayerFilterString)
 
 type Alert =
-    { title :: String
-    , id :: Int
-    , email :: String
-    , token :: String
-    , organizations :: Array Organization
-    , ageFrom :: Maybe Int
-    , ageTo :: Maybe Int
-    , locations :: Array String
-    , languages :: Array String
-    , microphone :: Boolean
-    , timezone :: String
-    , weekdayFrom :: Maybe String
-    , weekdayTo :: Maybe String
-    , weekendFrom :: Maybe String
-    , weekendTo :: Maybe String
-    , sizes :: Array Size
-    , platforms :: Array Platform
-    , fields :: Array { fieldKey :: String, optionKeys :: Array String }
-    , newOrReturning :: Boolean
+    { title ∷ String
+    , id ∷ Int
+    , email ∷ String
+    , token ∷ String
+    , organizations ∷ Array Organization
+    , ageFrom ∷ Maybe Int
+    , ageTo ∷ Maybe Int
+    , locations ∷ Array String
+    , languages ∷ Array String
+    , microphone ∷ Boolean
+    , timezone ∷ String
+    , weekdayFrom ∷ Maybe String
+    , weekdayTo ∷ Maybe String
+    , weekendFrom ∷ Maybe String
+    , weekendTo ∷ Maybe String
+    , sizes ∷ Array Size
+    , platforms ∷ Array Platform
+    , fields ∷ Array { fieldKey ∷ String, optionKeys ∷ Array String }
+    , newOrReturning ∷ Boolean
     }
 
-loadAlertsQueryString :: Query
+loadAlertsQueryString ∷ Query
 loadAlertsQueryString = Query """
     select
         game.title,
@@ -65,7 +65,7 @@ loadAlertsQueryString = Query """
     where player_profile.id = $1 and alert.player_or_team = 'player';
     """
 
-checkAlertQueryString :: Int -> Alert -> Query
+checkAlertQueryString ∷ Int -> Alert -> Query
 checkAlertQueryString profileId alert = Query $ """
     select profile.nickname
     from
@@ -135,18 +135,18 @@ checkAlertQueryString profileId alert = Query $ """
         ) as profile
     """ <> createFieldsFilterString alert.fields
 
-checkPlayerAlerts :: forall querier left. Querier querier => Int -> querier -> Async left Unit
+checkPlayerAlerts ∷ ∀ querier left. Querier querier => Int -> querier -> Async left Unit
 checkPlayerAlerts profileId querier =
     fromEffect $ void $ setTimeout 0 $ runSafeAsync pure (
     alwaysRightWithEffect (logError "Error checking player alerts") pure do
 
     -- Load all player alerts for the game.
-    (alerts :: Array Alert) <- queryMany querier loadAlertsQueryString (profileId : [])
+    (alerts ∷ Array Alert) <- queryMany querier loadAlertsQueryString (profileId : [])
 
     safeForeach alerts \alert -> alwaysRightWithEffect (logError "Error sending player alerts") pure do
         -- Check if alert matches the profile.
         player <- queryFirstMaybe querier
-            (checkAlertQueryString profileId alert) [] :: _ _ (Maybe { nickname :: String })
+            (checkAlertQueryString profileId alert) [] ∷ _ _ (Maybe { nickname ∷ String })
         case player of
             Nothing -> pure unit
             Just { nickname } -> do

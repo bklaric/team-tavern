@@ -18,17 +18,18 @@ import Postgres.Client.Config (ClientConfig, database, host, password, port, use
 import Postgres.Pool (Pool)
 import Postgres.Pool as Pool
 import Sendgrid (setApiKey)
+import Tasync (Tstate(..), runTasync)
 import TeamTavern.Routes.All (AllRoutes)
 import TeamTavern.Routes.Profile.ViewPlayerProfilesByGame (bundlePlayerFilters)
 import TeamTavern.Routes.Profile.ViewTeamProfilesByGame (bundleTeamFilters)
 import TeamTavern.Server.Alert.Create (createAlert) as Alert
 import TeamTavern.Server.Alert.Delete (deleteAlert) as Alert
-import TeamTavern.Server.Infrastructure.Deployment (Deployment)
-import TeamTavern.Server.Infrastructure.Deployment as Deployment
 import TeamTavern.Server.Boarding.Onboard as Onboard
 import TeamTavern.Server.Boarding.Preboard as Preboard
 import TeamTavern.Server.Game.View (view) as Game
 import TeamTavern.Server.Game.ViewAll (viewAll) as Game
+import TeamTavern.Server.Infrastructure.Deployment (Deployment)
+import TeamTavern.Server.Infrastructure.Deployment as Deployment
 import TeamTavern.Server.Player.Delete (delete) as Player
 import TeamTavern.Server.Player.Register (register) as Player
 import TeamTavern.Server.Player.UpdateContacts (updateContacts) as Player
@@ -50,7 +51,7 @@ import TeamTavern.Server.Team.UpdateContacts (updateContacts) as Team
 import TeamTavern.Server.Team.View (view) as Team
 import Type.Proxy (Proxy(..))
 
-listenOptions :: ListenOptions
+listenOptions ∷ ListenOptions
 listenOptions = TcpListenOptions
     { port: Just 8080
     , host: Just "0.0.0.0"
@@ -58,17 +59,17 @@ listenOptions = TcpListenOptions
     , exclusive: Nothing
     }
 
-setSendGridApiKey :: ExceptT String Effect Unit
+setSendGridApiKey ∷ ExceptT String Effect Unit
 setSendGridApiKey = do
     key <- lookupEnv "SENDGRID_API_KEY" <#> note "Couldn't read variable SENDGRID_API_KEY" # ExceptT
     lift $ setApiKey key
 
-loadPostgresVariables :: ExceptT String Effect
-    { user :: String
-    , password :: String
-    , host :: String
-    , port :: Int
-    , database :: String
+loadPostgresVariables ∷ ExceptT String Effect
+    { user ∷ String
+    , password ∷ String
+    , host ∷ String
+    , port ∷ Int
+    , database ∷ String
     }
 loadPostgresVariables = do
     user <- lookupEnv "PGUSER"
@@ -83,12 +84,12 @@ loadPostgresVariables = do
         <#> note ("Couldn't read variable PGDATABASE.") # ExceptT
     pure { user, password, host, port, database }
 
-createPostgresConfig ::
-    { user :: String
-    , password :: String
-    , host :: String
-    , port :: Int
-    , database :: String
+createPostgresConfig ∷
+    { user ∷ String
+    , password ∷ String
+    , host ∷ String
+    , port ∷ Int
+    , database ∷ String
     }
     -> Options ClientConfig
 createPostgresConfig variables =
@@ -98,22 +99,22 @@ createPostgresConfig variables =
     <> port := variables.port
     <> database := variables.database
 
-createPostgresPool :: ExceptT String Effect Pool
+createPostgresPool ∷ ExceptT String Effect Pool
 createPostgresPool = do
     postgresConfig <- loadPostgresVariables <#> createPostgresConfig
     lift $ Pool.create mempty postgresConfig
 
-loadDeployment :: ExceptT String Effect Deployment
+loadDeployment ∷ ExceptT String Effect Deployment
 loadDeployment =
     lookupEnv "DEPLOYMENT"
     <#> bindFlipped Deployment.fromString
     <#> note "Couldn't read variable DEPLOYMENT."
     # ExceptT
 
-teamTavernRoutes = Proxy :: Proxy AllRoutes
+teamTavernRoutes = Proxy ∷ Proxy AllRoutes
 
-runServer :: Deployment -> Pool -> Effect Unit
-runServer deployment pool = serve (Proxy :: _ AllRoutes) listenOptions
+runServer ∷ Deployment -> Pool -> Effect Unit
+runServer deployment pool = serve (Proxy ∷ _ AllRoutes) listenOptions
     { startSession: \{ cookies, body } ->
         Session.start deployment pool cookies body
     , endSession: const
@@ -122,8 +123,8 @@ runServer deployment pool = serve (Proxy :: _ AllRoutes) listenOptions
         Game.viewAll pool
     , viewGame: \{ path: { handle } } ->
         Game.view pool handle
-    , viewPlayer: \{ path: { nickname } , query: { timezone }, cookies } ->
-        Player.view pool cookies { nickname, timezone }
+    , viewPlayer: \request ->
+        runTasync Player.view (Tstate deployment pool Nothing request)
     , registerPlayer: \{ cookies, body } ->
         Player.register deployment pool cookies body
     , updatePlayer: \{ path, cookies, body } ->
@@ -166,7 +167,7 @@ runServer deployment pool = serve (Proxy :: _ AllRoutes) listenOptions
         Alert.deleteAlert pool { id, token }
     }
 
-main :: Effect Unit
+main ∷ Effect Unit
 main = either log pure =<< runExceptT do
     deployment <- loadDeployment
     pool <- createPostgresPool

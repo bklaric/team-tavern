@@ -2,7 +2,9 @@ module Jarilo.Router.Response where
 
 import Prelude
 
+import Data.Generic.Rep (class Generic)
 import Data.MultiMap (MultiMap)
+import Data.Show.Generic (genericShow)
 import Data.Symbol (class IsSymbol)
 import Data.Variant (class VariantMatchCases, Variant, match)
 import Jarilo.Router.Body (class BodyRouter, responseBodyRouter)
@@ -15,10 +17,15 @@ import Type.Proxy (Proxy(..))
 
 data AppResponse realBody = AppResponse (MultiMap String String) realBody
 
+derive instance Generic (AppResponse b) _
+
+instance Show b => Show (AppResponse b) where
+    show = genericShow
+
 type ResponseConverter realBody = AppResponse realBody -> PerunRes.Response
 
 responseRouter''
-    :: forall label responsesStart responsesEnd body realBody
+    ∷  ∀ label responsesStart responsesEnd body realBody
     .  Cons label (ResponseConverter realBody) responsesStart responsesEnd
     => Lacks label responsesStart
     => IsSymbol label
@@ -30,45 +37,45 @@ responseRouter''
 responseRouter'' labelProxy bodyProxy statusCode = insert labelProxy
     \(AppResponse headers body) -> { statusCode, headers, body: responseBodyRouter bodyProxy body }
 
-class ResponseRouter (response :: Response) responsesStart responsesEnd | response -> responsesStart responsesEnd where
+class ResponseRouter (response ∷ Response) responsesStart responsesEnd | response -> responsesStart responsesEnd where
     responseRouter'
-        :: Proxy response
+        ∷ Proxy response
         -> Builder (Record responsesStart) (Record responsesEnd)
 
 instance (Lacks "ok" responsesStart, BodyRouter body realBody) =>
-    ResponseRouter (FullResponse Ok body) responsesStart (ok :: ResponseConverter realBody | responsesStart) where
-    responseRouter' _ = responseRouter'' (Proxy :: _ "ok") (Proxy :: _ body) 200
+    ResponseRouter (FullResponse Ok body) responsesStart (ok ∷ ResponseConverter realBody | responsesStart) where
+    responseRouter' _ = responseRouter'' (Proxy ∷ _ "ok") (Proxy ∷ _ body) 200
 
 instance (Lacks "noContent" responsesStart, BodyRouter body realBody) =>
-    ResponseRouter (FullResponse NoContent body) responsesStart (noContent :: ResponseConverter realBody | responsesStart) where
-    responseRouter' _ = responseRouter'' (Proxy :: _ "noContent") (Proxy :: _ body) 204
+    ResponseRouter (FullResponse NoContent body) responsesStart (noContent ∷ ResponseConverter realBody | responsesStart) where
+    responseRouter' _ = responseRouter'' (Proxy ∷ _ "noContent") (Proxy ∷ _ body) 204
 
 instance (Lacks "badRequest" responsesStart, BodyRouter body realBody) =>
-    ResponseRouter (FullResponse BadRequest body) responsesStart (badRequest :: ResponseConverter realBody | responsesStart) where
-    responseRouter' _ = responseRouter'' (Proxy :: _ "badRequest") (Proxy :: _ body) 400
+    ResponseRouter (FullResponse BadRequest body) responsesStart (badRequest ∷ ResponseConverter realBody | responsesStart) where
+    responseRouter' _ = responseRouter'' (Proxy ∷ _ "badRequest") (Proxy ∷ _ body) 400
 
 instance (Lacks "notAuthorized" responsesStart, BodyRouter body realBody) =>
-    ResponseRouter (FullResponse NotAuthorized body) responsesStart (notAuthorized :: ResponseConverter realBody | responsesStart) where
-    responseRouter' _ = responseRouter'' (Proxy :: _ "notAuthorized") (Proxy :: _ body) 401
+    ResponseRouter (FullResponse NotAuthorized body) responsesStart (notAuthorized ∷ ResponseConverter realBody | responsesStart) where
+    responseRouter' _ = responseRouter'' (Proxy ∷ _ "notAuthorized") (Proxy ∷ _ body) 401
 
 instance (Lacks "forbidden" responsesStart, BodyRouter body realBody) =>
-    ResponseRouter (FullResponse Forbidden body) responsesStart (forbidden :: ResponseConverter realBody | responsesStart) where
-    responseRouter' _ = responseRouter'' (Proxy :: _ "forbidden") (Proxy :: _ body) 403
+    ResponseRouter (FullResponse Forbidden body) responsesStart (forbidden ∷ ResponseConverter realBody | responsesStart) where
+    responseRouter' _ = responseRouter'' (Proxy ∷ _ "forbidden") (Proxy ∷ _ body) 403
 
 instance (Lacks "notFound" responsesStart, BodyRouter body realBody) =>
-    ResponseRouter (FullResponse NotFound body) responsesStart (notFound :: ResponseConverter realBody | responsesStart) where
-    responseRouter' _ = responseRouter'' (Proxy :: _ "notFound") (Proxy :: _ body) 403
+    ResponseRouter (FullResponse NotFound body) responsesStart (notFound ∷ ResponseConverter realBody | responsesStart) where
+    responseRouter' _ = responseRouter'' (Proxy ∷ _ "notFound") (Proxy ∷ _ body) 403
 
 instance (Lacks "internal" responsesStart, BodyRouter body realBody) =>
-    ResponseRouter (FullResponse Internal body) responsesStart (internal :: ResponseConverter realBody | responsesStart) where
-    responseRouter' _ = responseRouter'' (Proxy :: _ "internal") (Proxy :: _ body) 500
+    ResponseRouter (FullResponse Internal body) responsesStart (internal ∷ ResponseConverter realBody | responsesStart) where
+    responseRouter' _ = responseRouter'' (Proxy ∷ _ "internal") (Proxy ∷ _ body) 500
 
 instance (ResponseRouter leftResponse responsesStart responsesMid, ResponseRouter rightResponse responsesMid responsesEnd) =>
     ResponseRouter (ResponseChain leftResponse rightResponse) responsesStart responsesEnd where
-    responseRouter' _ = responseRouter' (Proxy :: _ leftResponse) >>> responseRouter' (Proxy :: _ rightResponse)
+    responseRouter' _ = responseRouter' (Proxy ∷ _ leftResponse) >>> responseRouter' (Proxy ∷ _ rightResponse)
 
 responseRouter
-    :: forall responseHandlerRowList wtf responseRow response responseHandlerRow
+    ∷  ∀ responseHandlerRowList wtf responseRow response responseHandlerRow
     .  RowToList responseHandlerRow responseHandlerRowList
     => VariantMatchCases responseHandlerRowList wtf PerunRes.Response
     => Union wtf () responseRow

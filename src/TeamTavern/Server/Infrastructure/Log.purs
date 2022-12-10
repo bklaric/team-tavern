@@ -4,6 +4,7 @@ import Prelude
 
 import Data.Formatter.DateTime (FormatterCommand(..), format)
 import Data.List (List(..), (:))
+import Data.String (joinWith)
 import Effect (Effect, foreachE)
 import Effect.Console (log)
 import Effect.Now (nowDateTime)
@@ -11,7 +12,7 @@ import Error.Class (message, name)
 import Node.Errors.Class (class NodeError, code)
 import TeamTavern.Server.Infrastructure.Error (Terror(..))
 
-datetimeFormat :: List FormatterCommand
+datetimeFormat ∷ List FormatterCommand
 datetimeFormat =
     YearFull : Placeholder "-" :
     MonthTwoDigits : Placeholder "-" :
@@ -20,24 +21,28 @@ datetimeFormat =
     MinutesTwoDigits : Placeholder ":" :
     SecondsTwoDigits : Nil
 
-logStamped :: String -> Effect Unit
+logStamped ∷ String -> Effect Unit
 logStamped string =
     nowDateTime
     <#> format datetimeFormat
     >>= \dateTime -> log $ dateTime <> " - " <> string
 
-logt :: String -> Effect Unit
+logt ∷ String -> Effect Unit
 logt string = log $ "    " <> string
 
-logLines :: Array String -> Effect Unit
+logLines ∷ Array String -> Effect Unit
 logLines lines = foreachE lines logt
 
-logError :: forall errors. String -> Terror errors -> Effect Unit
+logError ∷ ∀ error. String -> Terror error -> Effect Unit
 logError heading (Terror _ lines) = do
     logStamped heading
     logLines lines
 
-print :: forall error. NodeError error => error -> String
+-- logError request (Terror response lines) = do
+--     logStamped $ joinWith " " [request.endpoint, show request.path, show request.query, show request.body, show response]
+--     logLines lines
+
+print ∷ ∀ error. NodeError error => error -> String
 print error =
     "Code: " <> code error
     <> "; Name: " <> name error

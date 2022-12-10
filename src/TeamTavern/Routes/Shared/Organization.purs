@@ -19,114 +19,122 @@ import Yoga.JSON (class ReadForeign, class ReadForeignVariant, class WriteForeig
 
 data Organization = Informal | Organized
 
-toOrganizationN :: Organization -> OrganizationN
+toOrganizationN ∷ Organization -> OrganizationN
 toOrganizationN Informal = InformalN
 toOrganizationN Organized = OrganizedN { name: "" }
 
-toOrganizationNW :: Organization -> OrganizationNW
+toOrganizationNW ∷ Organization -> OrganizationNW
 toOrganizationNW Informal = InformalNW
 toOrganizationNW Organized = OrganizedNW { name: "", website: Nothing }
 
-derive instance eqOrganization :: Eq Organization
+derive instance eqOrganization ∷ Eq Organization
 
-fromString :: String -> Maybe Organization
+fromString ∷ String -> Maybe Organization
 fromString "informal" = Just Informal
 fromString "organized" = Just Organized
 fromString _ = Nothing
 
-fromString' :: String -> Either String Organization
+fromString' ∷ String -> Either String Organization
 fromString' organization = fromString organization # note ("Unknown organization: " <> organization)
 
-toString :: Organization -> String
+toString ∷ Organization -> String
 toString Informal = "informal"
 toString Organized = "organized"
 
-instance readForeignOrganization :: ReadForeign Organization where
+instance readForeignOrganization ∷ ReadForeign Organization where
     readImpl organization' =
         readString organization'
         >>= (fromString' >>> lmap (ForeignError >>> NonEmptyList.singleton) >>> except)
 
-instance writeForeignOrganization :: WriteForeign Organization where
+instance writeForeignOrganization ∷ WriteForeign Organization where
     writeImpl organization = unsafeToForeign $ toString organization
 
-instance fromComponentOrganization :: Component Organization where
+instance fromComponentOrganization ∷ Component Organization where
     fromComponent = fromString'
     toComponent = toString
 
 -- Organization with name.
 
-data OrganizationN = InformalN | OrganizedN { name :: String }
+data OrganizationN = InformalN | OrganizedN { name ∷ String }
 
-fromOrganizationN :: OrganizationN -> Organization
+instance Show OrganizationN where
+    show InformalN = "InformalNW"
+    show (OrganizedN info) = "OrganizedN " <> show info
+
+fromOrganizationN ∷ OrganizationN -> Organization
 fromOrganizationN InformalN = Informal
 fromOrganizationN (OrganizedN _) = Organized
 
-nameOrHandleN :: String -> OrganizationN -> String
+nameOrHandleN ∷ String -> OrganizationN -> String
 nameOrHandleN handle InformalN = handle
 nameOrHandleN _ (OrganizedN { name }) = name
 
-type OrganizationRowN = (informal :: {}, organized :: { name :: String })
+type OrganizationRowN = (informal ∷ {}, organized ∷ { name ∷ String })
 
-fromVariantN :: Variant OrganizationRowN -> Maybe OrganizationN
+fromVariantN ∷ Variant OrganizationRowN -> Maybe OrganizationN
 fromVariantN variant =
-    (InformalN <$ prj (Proxy :: _ "informal") variant)
-    <|> (OrganizedN <$> prj (Proxy :: _ "organized") variant)
+    (InformalN <$ prj (Proxy ∷ _ "informal") variant)
+    <|> (OrganizedN <$> prj (Proxy ∷ _ "organized") variant)
 
-fromVariantN' :: Variant OrganizationRowN -> Either String OrganizationN
+fromVariantN' ∷ Variant OrganizationRowN -> Either String OrganizationN
 fromVariantN' organization = fromVariantN organization # note ("Unknown organization: " <> show organization)
 
-toVariantN :: OrganizationN -> Variant OrganizationRowN
-toVariantN InformalN = inj (Proxy :: _ "informal") {}
-toVariantN (OrganizedN stuff) = inj (Proxy :: _ "organized") stuff
+toVariantN ∷ OrganizationN -> Variant OrganizationRowN
+toVariantN InformalN = inj (Proxy ∷ _ "informal") {}
+toVariantN (OrganizedN stuff) = inj (Proxy ∷ _ "organized") stuff
 
 instance readForeignOrganizationN ::
     ( RowToList OrganizationRowN rowList
     , ReadForeignVariant rowList OrganizationRowN
     ) => ReadForeign OrganizationN where
     readImpl organization' =
-        readVariantImpl (Proxy :: _ rowList) organization'
+        readVariantImpl (Proxy ∷ _ rowList) organization'
         >>= (fromVariantN' >>> lmap (ForeignError >>> NonEmptyList.singleton) >>> except)
 
-instance writeForeignOrganizationN :: WriteForeign OrganizationN where
+instance writeForeignOrganizationN ∷ WriteForeign OrganizationN where
     writeImpl organization = writeImpl $ toVariantN organization
 
 -- Organization with name and website.
 
-data OrganizationNW = InformalNW | OrganizedNW { name :: String, website :: Maybe String }
+data OrganizationNW = InformalNW | OrganizedNW { name ∷ String, website ∷ Maybe String }
 
-fromOrganizationNW :: OrganizationNW -> Organization
+instance Show OrganizationNW where
+    show InformalNW = "InformalNW"
+    show (OrganizedNW info) = "OrganizedNW " <> show info
+
+fromOrganizationNW ∷ OrganizationNW -> Organization
 fromOrganizationNW InformalNW = Informal
 fromOrganizationNW (OrganizedNW _) = Organized
 
-nameOrHandleNW :: String -> OrganizationNW -> String
+nameOrHandleNW ∷ String -> OrganizationNW -> String
 nameOrHandleNW handle InformalNW = handle
 nameOrHandleNW _ (OrganizedNW { name }) = name
 
-websiteNW :: OrganizationNW -> Maybe String
+websiteNW ∷ OrganizationNW -> Maybe String
 websiteNW InformalNW = Nothing
 websiteNW (OrganizedNW { website }) = website
 
-type OrganizationRowNW = (informal :: {}, organized :: { name :: String, website :: Maybe String })
+type OrganizationRowNW = (informal ∷ {}, organized ∷ { name ∷ String, website ∷ Maybe String })
 
-fromVariantNW :: Variant OrganizationRowNW -> Maybe OrganizationNW
+fromVariantNW ∷ Variant OrganizationRowNW -> Maybe OrganizationNW
 fromVariantNW variant =
-    (InformalNW <$ prj (Proxy :: _ "informal") variant)
-    <|> (OrganizedNW <$> prj (Proxy :: _ "organized") variant)
+    (InformalNW <$ prj (Proxy ∷ _ "informal") variant)
+    <|> (OrganizedNW <$> prj (Proxy ∷ _ "organized") variant)
 
-fromVariantNW' :: Variant OrganizationRowNW -> Either String OrganizationNW
+fromVariantNW' ∷ Variant OrganizationRowNW -> Either String OrganizationNW
 fromVariantNW' organization = fromVariantNW organization # note ("Unknown organization: " <> show organization)
 
-toVariantNW :: OrganizationNW -> Variant OrganizationRowNW
-toVariantNW InformalNW = inj (Proxy :: _ "informal") {}
-toVariantNW (OrganizedNW stuff) = inj (Proxy :: _ "organized") stuff
+toVariantNW ∷ OrganizationNW -> Variant OrganizationRowNW
+toVariantNW InformalNW = inj (Proxy ∷ _ "informal") {}
+toVariantNW (OrganizedNW stuff) = inj (Proxy ∷ _ "organized") stuff
 
 instance readForeignOrganizationNW ::
     ( RowToList OrganizationRowNW rowList
     , ReadForeignVariant rowList OrganizationRowNW
     ) => ReadForeign OrganizationNW where
     readImpl organization' =
-        readVariantImpl (Proxy :: _ rowList) organization'
+        readVariantImpl (Proxy ∷ _ rowList) organization'
         >>= (fromVariantNW' >>> lmap (ForeignError >>> NonEmptyList.singleton) >>> except)
 
-instance writeForeignOrganizationNW :: WriteForeign OrganizationNW where
+instance writeForeignOrganizationNW ∷ WriteForeign OrganizationNW where
     writeImpl organization = writeImpl $ toVariantNW organization
