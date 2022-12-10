@@ -29,7 +29,6 @@ import TeamTavern.Client.Components.Boarding.GameInput as GameInput
 import TeamTavern.Client.Components.Boarding.PlayerOrTeamInput (playerOrTeamInput)
 import TeamTavern.Client.Components.Boarding.PlayerOrTeamInput as PlayerOrTeamInput
 import TeamTavern.Client.Components.Button (primaryButton_, secondaryButton_)
-import TeamTavern.Client.Components.Player.ContactsFormInput as PlayerContactsFormInput
 import TeamTavern.Client.Components.Player.PlayerFormInput as PlayerFormInput
 import TeamTavern.Client.Components.Player.ProfileFormInput as PlayerProfileFormInput
 import TeamTavern.Client.Components.RegistrationInput (registrationInput)
@@ -203,8 +202,6 @@ type ChildSlots slots =
     , gameInput :: GameInput.Slot
     , playerProfileFormInput :: PlayerProfileFormInput.Slot
     , teamProfileFormInput :: TeamProfileFormInput.Slot
-    , playerContactsFormInput :: PlayerContactsFormInput.Slot
-    -- , teamContactsFormInput :: TeamContactsFormInput.Slot
     , registrationInput :: RegistrationInput.Slot
     | slots )
 

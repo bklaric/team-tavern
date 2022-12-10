@@ -6,12 +6,11 @@ import Async (Async)
 import Data.Maybe (Maybe(..))
 import Data.String (Pattern(..), split)
 import Type.Proxy (Proxy(..))
-import Effect.Class.Console (log)
 import Foreign (Foreign)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
-import Yoga.JSON (E, read, read_)
+import Yoga.JSON (read_)
 import TeamTavern.Client.Components.Content (content, singleContent, wideContent)
 import TeamTavern.Client.Components.Footer (footer)
 import TeamTavern.Client.Components.Footer as Footer
@@ -53,7 +52,6 @@ import TeamTavern.Client.Script.Navigate (navigateReplace_)
 import TeamTavern.Client.Script.ReloadAds (reloadAds)
 import TeamTavern.Client.Shared.Slot (SimpleSlot)
 import TeamTavern.Client.Snippets.Class as HS
-import Unsafe.Coerce (unsafeCoerce)
 
 data Query send = ChangeRoute Foreign String send
 
@@ -194,9 +192,9 @@ handleAction (Init state route) = do
             just Register
         ["", "signin"] ->
             just SignIn
-        ["", "onboarding", step] ->
-            let step' =
-                    case step of
+        ["", "onboarding", stepPath] ->
+            let stepMaybe =
+                    case stepPath of
                     "start" -> Just Onboarding.Greeting
                     "player-or-team" -> Just Onboarding.PlayerOrTeam
                     "player" -> Just Onboarding.Player
@@ -205,13 +203,14 @@ handleAction (Init state route) = do
                     "player-profile" -> Just Onboarding.PlayerProfile
                     "team-profile" -> Just Onboarding.TeamProfile
                     _ -> Nothing
+                (stateMaybe :: Maybe Onboarding.Input) = read_ state
             in
-            case (read_ state :: Maybe Onboarding.Input), step' of
-            Just input, Just step'' -> just $ Onboarding input { step = step'' }
-            _, _ -> navigateReplace_ "/" *> nothing
-        ["", "preboarding", step] ->
-            let step' =
-                    case step of
+            case stateMaybe, stepMaybe of
+                Just input, Just step -> just $ Onboarding input { step = step }
+                _, _ -> navigateReplace_ "/" *> nothing
+        ["", "preboarding", stepPath] ->
+            let stepMaybe =
+                    case stepPath of
                     "start" -> Just Preboarding.Greeting
                     "player-or-team" -> Just Preboarding.PlayerOrTeam
                     "player" -> Just Preboarding.Player
@@ -221,10 +220,12 @@ handleAction (Init state route) = do
                     "team-profile" -> Just Preboarding.TeamProfile
                     "register" -> Just Preboarding.Register
                     _ -> Nothing
-            in
-            case (read_ state :: Maybe Preboarding.Input), step' of
-            Just input, Just step'' -> just $ Preboarding input { step = step'' }
-            _, _ -> log (unsafeCoerce $ (read state :: E Preboarding.Input)) *> log (unsafeCoerce state) *> navigateReplace_ "/" *> nothing
+                (stateMaybe :: Maybe Preboarding.Input) = read_ state
+            in do
+            signedIn <- hasPlayerIdCookie
+            case stateMaybe, stepMaybe of
+                Just input, Just step | not signedIn -> just $ Preboarding input { step = step }
+                _, _ -> navigateReplace_ "/" *> nothing
         ["", "teams", handle] ->
             just $ Team { handle }
         ["", "games"] ->
