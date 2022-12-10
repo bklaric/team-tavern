@@ -21,7 +21,7 @@ queryString = Query """
     from session
     join player on player.id = session.player_id
     where player.id = $1
-        and player.nickname = $2
+        and lower(player.nickname) = lower($2)
         and session.token = $3
         and revoked = false
     """

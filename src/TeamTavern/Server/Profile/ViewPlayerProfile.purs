@@ -125,7 +125,7 @@ queryString timezone = Query $ """
                     single.id
             ) as field_values
                 on field_values.player_profile_id = profile.id
-        where player.nickname = $1 and game.handle = $2
+        where lower(player.nickname) = lower($1) and game.handle = $2
         group by player.id, game.id, profile.id
         ) as profile
     order by profile.updated desc"""
