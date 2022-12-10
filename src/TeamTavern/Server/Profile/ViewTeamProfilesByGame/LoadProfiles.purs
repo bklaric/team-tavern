@@ -302,7 +302,7 @@ queryStringWithoutPagination handle timezone filters = Query $ """
 queryString :: Handle -> ProfilePage -> Timezone -> Filters -> Query
 queryString handle page timezone filters =
     queryStringWithoutPagination handle timezone filters
-    <> (Query $ """ limit """ <> show pageSize <> """ offset """ <> show ((max 1 (page - 1)) * pageSize))
+    <> (Query $ """ limit """ <> show pageSize <> """ offset """ <> show ((max 0 (page - 1)) * pageSize))
 
 loadProfiles
     :: ∀ errors
