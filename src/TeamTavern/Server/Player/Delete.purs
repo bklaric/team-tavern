@@ -1,4 +1,4 @@
-module TeamTavern.Server.Player.Delete where
+module TeamTavern.Server.Player.Delete (delete) where
 
 import Prelude
 
@@ -24,4 +24,7 @@ delete pool nickname cookies =
     if rowCount result > 0
         then pure noContent_
         else left $ Terror notFound__
-            [ "No player deleted for id=(" <> show cookieInfo.id <> ")." ]
+            [ "No player deleted."
+            , "Cookie info: " <> show cookieInfo
+            , "Path params: " <> show { nickname }
+            ]

@@ -9,7 +9,6 @@ import Data.Const (Const)
 import Data.Foldable (foldMap)
 import Data.Maybe (Maybe(..))
 import Data.Monoid (guard)
-import Type.Proxy (Proxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Ads (descriptionLeaderboards, stickyLeaderboards)
@@ -20,6 +19,8 @@ import TeamTavern.Client.Pages.Player.Contacts (contacts)
 import TeamTavern.Client.Pages.Player.CreateProfileButton as CreateProfileButton
 import TeamTavern.Client.Pages.Player.CreateTeam (createTeam)
 import TeamTavern.Client.Pages.Player.CreateTeam as CreateTeam
+import TeamTavern.Client.Pages.Player.DeletePlayerProfile (deletePlayerProfile)
+import TeamTavern.Client.Pages.Player.DeletePlayerProfile as DeletePlayerProfile
 import TeamTavern.Client.Pages.Player.Details (details)
 import TeamTavern.Client.Pages.Player.EditContacts (editContacts)
 import TeamTavern.Client.Pages.Player.EditContacts as EditContacts
@@ -29,14 +30,15 @@ import TeamTavern.Client.Pages.Player.EditProfile (editProfile)
 import TeamTavern.Client.Pages.Player.EditProfile as EditProfile
 import TeamTavern.Client.Pages.Player.PlayerOptions (playerOptions)
 import TeamTavern.Client.Pages.Player.PlayerOptions as PlayerOptions
+import TeamTavern.Client.Pages.Player.PlayerProfileOptions as PlayerProfileOptions
 import TeamTavern.Client.Pages.Player.Profiles (profiles)
 import TeamTavern.Client.Pages.Player.Status (Status(..), getStatus)
 import TeamTavern.Client.Pages.Player.Teams (teams)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Request (get)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
-import TeamTavern.Client.Shared.Slot (QuerylessSlot)
 import TeamTavern.Routes.Player.ViewPlayer as ViewPlayer
+import Type.Proxy (Proxy(..))
 
 type Input = { nickname :: String }
 
@@ -46,6 +48,7 @@ type Loaded =
     , editContactsModalShown :: Boolean
     , editPlayerModalShown :: Boolean
     , editProfileModalShown :: Maybe ViewPlayer.OkContentProfile
+    , deleteProfileModalShown :: Maybe ViewPlayer.OkContentProfile
     , createTeamModalShown :: Boolean
     }
 
@@ -64,6 +67,8 @@ data Action
     | HideEditPlayerModal
     | ShowEditProfileModal ViewPlayer.OkContentProfile
     | HideEditProfileModal
+    | ShowDeleteProfileModal ViewPlayer.OkContentProfile
+    | HideDeleteProfileModal
     | ShowCreateTeamModal
     | HideCreateTeamModal
 
@@ -77,9 +82,10 @@ type ChildSlots = PlatformIdSlots
     , editPlayer :: EditDetails.Slot
     , createProfile :: CreateProfileButton.Slot
     , editProfile :: EditProfile.Slot
+    , deletePlayerProfile :: DeletePlayerProfile.Slot
     , createTeam :: CreateTeam.Slot
     , playerOptions :: PlayerOptions.Slot
-    , playerProfileOptions :: QuerylessSlot Unit String
+    , playerProfileOptions :: PlayerProfileOptions.Slot
     )
 
 render :: ∀ left. State -> H.ComponentHTML Action ChildSlots (Async left)
@@ -104,7 +110,7 @@ render (Loaded state @ { player: player', status }) =
             , details player' status ShowEditPlayerModal
             ]
         , HH.div_
-            [ profiles player' status ShowEditProfileModal
+            [ profiles player' status ShowEditProfileModal ShowDeleteProfileModal
             , teams player' status ShowCreateTeamModal
             ]
         ]
@@ -116,6 +122,9 @@ render (Loaded state @ { player: player', status }) =
     <> foldMap
         (\profile -> [ editProfile { player: player', profile } $ const HideEditProfileModal ])
         state.editProfileModalShown
+    <> foldMap
+        (\profile -> [ deletePlayerProfile { player: player', profile } $ const HideDeleteProfileModal ])
+        state.deleteProfileModalShown
 render NotFound = HH.p_ [ HH.text "Player could not be found." ]
 render Error = HH.p_ [ HH.text
     "There has been an error loading the player. Please try again later." ]
@@ -150,6 +159,7 @@ handleAction (Receive { nickname }) = do
                 , editContactsModalShown: false
                 , editPlayerModalShown: false
                 , editProfileModalShown: Nothing
+                , deleteProfileModalShown: Nothing
                 , createTeamModalShown: false
                 }
             setMeta (player''.nickname <> " | TeamTavern")
@@ -161,6 +171,8 @@ handleAction ShowEditPlayerModal = modifyLoaded _ { editPlayerModalShown = true 
 handleAction HideEditPlayerModal = modifyLoaded _ { editPlayerModalShown = false }
 handleAction (ShowEditProfileModal profile) = modifyLoaded _ { editProfileModalShown = Just profile }
 handleAction HideEditProfileModal = modifyLoaded _ { editProfileModalShown = Nothing }
+handleAction (ShowDeleteProfileModal profile) = modifyLoaded _ { deleteProfileModalShown = Just profile}
+handleAction HideDeleteProfileModal = modifyLoaded _ { deleteProfileModalShown = Nothing }
 handleAction ShowCreateTeamModal = modifyLoaded _ { createTeamModalShown = true }
 handleAction HideCreateTeamModal = modifyLoaded _ { createTeamModalShown = false }
 

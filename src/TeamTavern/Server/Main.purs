@@ -23,25 +23,26 @@ import TeamTavern.Routes.Profile.ViewPlayerProfilesByGame (bundlePlayerFilters)
 import TeamTavern.Routes.Profile.ViewTeamProfilesByGame (bundleTeamFilters)
 import TeamTavern.Server.Alert.Create (createAlert) as Alert
 import TeamTavern.Server.Alert.Delete (deleteAlert) as Alert
-import TeamTavern.Server.Infrastructure.Deployment (Deployment)
-import TeamTavern.Server.Infrastructure.Deployment as Deployment
 import TeamTavern.Server.Boarding.Onboard as Onboard
 import TeamTavern.Server.Boarding.Preboard as Preboard
 import TeamTavern.Server.Game.View (view) as Game
 import TeamTavern.Server.Game.ViewAll (viewAll) as Game
+import TeamTavern.Server.Infrastructure.Deployment (Deployment)
+import TeamTavern.Server.Infrastructure.Deployment as Deployment
 import TeamTavern.Server.Player.Delete (delete) as Player
 import TeamTavern.Server.Player.Register (register) as Player
 import TeamTavern.Server.Player.UpdateContacts (updateContacts) as Player
 import TeamTavern.Server.Player.UpdatePlayer (updatePlayer) as Player
 import TeamTavern.Server.Player.View (view) as Player
-import TeamTavern.Server.Profile.AddPlayerProfile (addPlayerProfile) as Profile
-import TeamTavern.Server.Profile.AddTeamProfile (addTeamProfile) as Profile
-import TeamTavern.Server.Profile.UpdatePlayerProfile (updatePlayerProfile) as Profile
-import TeamTavern.Server.Profile.UpdateTeamProfile (updateTeamProfile) as Profile
-import TeamTavern.Server.Profile.ViewPlayerProfile (viewPlayerProfile) as Profile
-import TeamTavern.Server.Profile.ViewPlayerProfilesByGame (viewPlayerProfilesByGame) as Profile
-import TeamTavern.Server.Profile.ViewTeamProfile (viewTeamProfile) as Profile
-import TeamTavern.Server.Profile.ViewTeamProfilesByGame (viewTeamProfilesByGame) as Profile
+import TeamTavern.Server.Profile.AddPlayerProfile (addPlayerProfile)
+import TeamTavern.Server.Profile.AddTeamProfile (addTeamProfile)
+import TeamTavern.Server.Profile.DeletePlayerProfile (deletePlayerProfile)
+import TeamTavern.Server.Profile.UpdatePlayerProfile (updatePlayerProfile)
+import TeamTavern.Server.Profile.UpdateTeamProfile (updateTeamProfile)
+import TeamTavern.Server.Profile.ViewPlayerProfile (viewPlayerProfile)
+import TeamTavern.Server.Profile.ViewPlayerProfilesByGame (viewPlayerProfilesByGame)
+import TeamTavern.Server.Profile.ViewTeamProfile (viewTeamProfile)
+import TeamTavern.Server.Profile.ViewTeamProfilesByGame (viewTeamProfilesByGame)
 import TeamTavern.Server.Session.End (end) as Session
 import TeamTavern.Server.Session.Start (start) as Session
 import TeamTavern.Server.Team.Create (create) as Team
@@ -141,21 +142,23 @@ runServer deployment pool = serve (Proxy :: _ AllRoutes) listenOptions
     , updateTeamContacts: \{ path, cookies, body } ->
         Team.updateContacts pool cookies path body
     , addPlayerProfile: \{ path, cookies, body } ->
-        Profile.addPlayerProfile pool cookies path body
+        addPlayerProfile pool cookies path body
     , addTeamProfile: \{ path, cookies, body } ->
-        Profile.addTeamProfile pool cookies path body
+        addTeamProfile pool cookies path body
     , updatePlayerProfile: \{ path, cookies, body } ->
-        Profile.updatePlayerProfile pool cookies path body
+        updatePlayerProfile pool cookies path body
     , updateTeamProfile: \{ path, cookies, body } ->
-        Profile.updateTeamProfile pool cookies path body
+        updateTeamProfile pool cookies path body
+    , deletePlayerProfile: \{ path, cookies } ->
+        deletePlayerProfile pool cookies path
     , viewPlayerProfilesByGame: \{ path: { handle }, query } ->
-        Profile.viewPlayerProfilesByGame pool handle query.page query.timezone $ bundlePlayerFilters query
+        viewPlayerProfilesByGame pool handle query.page query.timezone $ bundlePlayerFilters query
     , viewTeamProfilesByGame: \{ path: { handle }, query } ->
-        Profile.viewTeamProfilesByGame pool handle query.page query.timezone $ bundleTeamFilters query
+        viewTeamProfilesByGame pool handle query.page query.timezone $ bundleTeamFilters query
     , viewPlayerProfile: \{ path: { nickname, handle }, query: { timezone } } ->
-        Profile.viewPlayerProfile pool { nickname, handle, timezone }
+        viewPlayerProfile pool { nickname, handle, timezone }
     , viewTeamProfile: \{ path: { teamHandle, gameHandle }, query: { timezone } } ->
-        Profile.viewTeamProfile pool { teamHandle, gameHandle, timezone }
+        viewTeamProfile pool { teamHandle, gameHandle, timezone }
     , onboard: \{ cookies, body } ->
         Onboard.onboard pool cookies body
     , preboard: \{ cookies, body } ->

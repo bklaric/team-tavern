@@ -1,13 +1,14 @@
 module TeamTavern.Routes.All where
 
 import Jarilo (type (<|>), type (:))
-import TeamTavern.Routes.Boarding.Onboard (Onboard)
-import TeamTavern.Routes.Boarding.Preboard (Preboard)
 import TeamTavern.Routes.Alert.CreateAlert (CreateAlert)
 import TeamTavern.Routes.Alert.DeleteAlert (DeleteAlert)
+import TeamTavern.Routes.Boarding.Onboard (Onboard)
+import TeamTavern.Routes.Boarding.Preboard (Preboard)
 import TeamTavern.Routes.Game.ViewAllGames (ViewAllGames)
 import TeamTavern.Routes.Game.ViewGame (ViewGame)
 import TeamTavern.Routes.Player.DeletePlayer (DeletePlayer)
+import TeamTavern.Routes.Player.DeletePlayerProfile (DeletePlayerProfile)
 import TeamTavern.Routes.Player.RegisterPlayer (RegisterPlayer)
 import TeamTavern.Routes.Player.UpdatePlayer (UpdatePlayer)
 import TeamTavern.Routes.Player.UpdatePlayerContacts (UpdatePlayerContacts)
@@ -53,6 +54,7 @@ type ProfileRoutes
     <|> "addTeamProfile"           : AddTeamProfile
     <|> "updatePlayerProfile"      : UpdatePlayerProfile
     <|> "updateTeamProfile"        : UpdateTeamProfile
+    <|> "deletePlayerProfile"      : DeletePlayerProfile
     <|> "viewPlayerProfilesByGame" : ViewPlayerProfilesByGame
     <|> "viewTeamProfilesByGame"   : ViewTeamProfilesByGame
     <|> "viewPlayerProfile"        : ViewPlayerProfile
