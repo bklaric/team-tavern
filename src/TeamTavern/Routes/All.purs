@@ -8,13 +8,13 @@ import TeamTavern.Routes.Boarding.Preboard (Preboard)
 import TeamTavern.Routes.Game.ViewAllGames (ViewAllGames)
 import TeamTavern.Routes.Game.ViewGame (ViewGame)
 import TeamTavern.Routes.Player.DeletePlayer (DeletePlayer)
-import TeamTavern.Routes.Profile.DeletePlayerProfile (DeletePlayerProfile)
 import TeamTavern.Routes.Player.RegisterPlayer (RegisterPlayer)
 import TeamTavern.Routes.Player.UpdatePlayer (UpdatePlayer)
 import TeamTavern.Routes.Player.UpdatePlayerContacts (UpdatePlayerContacts)
 import TeamTavern.Routes.Player.ViewPlayer (ViewPlayer)
 import TeamTavern.Routes.Profile.AddPlayerProfile (AddPlayerProfile)
 import TeamTavern.Routes.Profile.AddTeamProfile (AddTeamProfile)
+import TeamTavern.Routes.Profile.DeletePlayerProfile (DeletePlayerProfile)
 import TeamTavern.Routes.Profile.DeleteTeamProfile (DeleteTeamProfile)
 import TeamTavern.Routes.Profile.UpdatePlayerProfile (UpdatePlayerProfile)
 import TeamTavern.Routes.Profile.UpdateTeamProfile (UpdateTeamProfile)
@@ -25,6 +25,7 @@ import TeamTavern.Routes.Profile.ViewTeamProfilesByGame (ViewTeamProfilesByGame)
 import TeamTavern.Routes.Session.EndSession (EndSession)
 import TeamTavern.Routes.Session.StartSession (StartSession)
 import TeamTavern.Routes.Team.CreateTeam (CreateTeam)
+import TeamTavern.Routes.Team.DeleteTeam (DeleteTeam)
 import TeamTavern.Routes.Team.UpdateTeam (UpdateTeam)
 import TeamTavern.Routes.Team.UpdateTeamContacts (UpdateTeamContacts)
 import TeamTavern.Routes.Team.ViewTeam (ViewTeam)
@@ -48,6 +49,7 @@ type TeamRoutes
     =   "viewTeam"   : ViewTeam
     <|> "createTeam" : CreateTeam
     <|> "updateTeam" : UpdateTeam
+    <|> "deleteTeam" : DeleteTeam
     <|> "updateTeamContacts" : UpdateTeamContacts
 
 type ProfileRoutes

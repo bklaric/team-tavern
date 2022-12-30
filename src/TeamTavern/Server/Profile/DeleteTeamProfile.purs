@@ -25,13 +25,13 @@ queryString = Query """
 
 deleteTeamProfile :: ∀ left. Pool -> Cookies -> DTP.PathParams -> Async left _
 deleteTeamProfile pool cookies { teamHandle, gameHandle } =
-    sendResponse "Error deleting player profile" do
+    sendResponse "Error deleting team profile" do
     cookieInfo <- ensureSignedInOwner pool cookies teamHandle
     result <- queryInternal pool queryString (cookieInfo.teamId :| gameHandle)
     if rowCount result > 0
         then pure noContent_
         else left $ Terror notFound__
-            [ "No player profile deleted."
+            [ "No team profile deleted."
             , "Cookie info: " <> show cookieInfo
             , "Path params: " <> show { teamHandle, gameHandle }
             ]

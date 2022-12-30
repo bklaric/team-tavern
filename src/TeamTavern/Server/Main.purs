@@ -47,6 +47,7 @@ import TeamTavern.Server.Profile.ViewTeamProfilesByGame (viewTeamProfilesByGame)
 import TeamTavern.Server.Session.End (end) as Session
 import TeamTavern.Server.Session.Start (start) as Session
 import TeamTavern.Server.Team.Create (create) as Team
+import TeamTavern.Server.Team.DeleteTeam (deleteTeam)
 import TeamTavern.Server.Team.Update (update) as Team
 import TeamTavern.Server.Team.UpdateContacts (updateContacts) as Team
 import TeamTavern.Server.Team.View (view) as Team
@@ -140,6 +141,8 @@ runServer deployment pool = serve (Proxy :: _ AllRoutes) listenOptions
         Team.create pool cookies body
     , updateTeam: \{ path, cookies, body } ->
         Team.update pool cookies path body
+    , deleteTeam: \{ path, cookies } ->
+        deleteTeam pool cookies path
     , updateTeamContacts: \{ path, cookies, body } ->
         Team.updateContacts pool cookies path body
     , addPlayerProfile: \{ path, cookies, body } ->

@@ -3,7 +3,6 @@ module TeamTavern.Client.Pages.Team (Input, Slot, team) where
 import Prelude
 
 import Async (Async)
-import CSS as Css
 import Client.Components.Copyable as Copyable
 import Control.Monad.State (class MonadState)
 import Data.Const (Const)
@@ -12,7 +11,7 @@ import Data.Maybe (Maybe(..))
 import Data.Monoid (guard)
 import Halogen as H
 import Halogen.HTML as HH
-import Halogen.HTML.CSS as HC
+import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Components.Ads (descriptionLeaderboards, stickyLeaderboards)
 import TeamTavern.Client.Components.Content (contentColumns, contentDescription, contentHeader, contentHeaderSection, contentHeading', contentHeadingFaIcon)
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
@@ -31,10 +30,12 @@ import TeamTavern.Client.Pages.Team.EditTeam (editTeam)
 import TeamTavern.Client.Pages.Team.EditTeam as EditTeam
 import TeamTavern.Client.Pages.Team.Profiles (profiles)
 import TeamTavern.Client.Pages.Team.Status (Status(..), getStatus)
+import TeamTavern.Client.Pages.Team.TeamOptions (teamOptions)
 import TeamTavern.Client.Pages.Team.TeamProfileOptions as TeamProfileOptions
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Request (get)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
+import TeamTavern.Client.Shared.Slot (SimpleSlot)
 import TeamTavern.Routes.Shared.Organization (OrganizationNW(..), nameOrHandleNW)
 import TeamTavern.Routes.Team.ViewTeam as ViewTeam
 import Type.Proxy (Proxy(..))
@@ -79,13 +80,14 @@ type ChildSlots = PlatformIdSlots
     , deleteTeamProfile :: DeleteTeamProfile.Slot
     , viewTeamOwner :: Anchor.Slot Unit
     , teamProfileOptions :: TeamProfileOptions.Slot
+    , teamOptions :: SimpleSlot
     )
 
 render :: ∀ left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render (Empty _) = HH.div_ []
 render (Loaded state @ { team: team', status } ) =
     HH.div_  $
-    [ contentHeader
+    [ contentHeader $
         [ contentHeaderSection
             [ contentHeading'
                 [ contentHeadingFaIcon "fas fa-users"
@@ -95,10 +97,12 @@ render (Loaded state @ { team: team', status } ) =
                 InformalNW -> informalBadge
                 OrganizedNW _ -> organizedBadge
             ]
-        , navigationAnchor (Proxy :: _ "viewTeamOwner")
-            { path: "/players/" <> team'.owner
-            , content: HH.span [ HC.style $ Css.fontWeight $ Css.weight 500.0 ] [ HH.text "View team owner" ]
-            }
+        , case status of
+            SignedInOwner -> teamOptions team'
+            _ -> navigationAnchor (Proxy :: _ "viewTeamOwner")
+                { path: "/players/" <> team'.owner
+                , content: HH.span [ HP.style "font-weight: 500" ] [ HH.text "View team owner" ]
+                }
         ]
     , contentDescription
         case status of

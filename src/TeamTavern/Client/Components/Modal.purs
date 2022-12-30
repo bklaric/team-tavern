@@ -48,7 +48,7 @@ component title content = Hooks.component \{ outputToken } input -> Hooks.do
         , HP.ref $ H.RefLabel "modal-background"
         , HE.onClick onBackgroundClick
         ]
-        [ HH.div [ HS.class_ "modal-content" ]
+        [ HH.div [ HS.class_ "modal-body" ]
             [ HH.h1 [ HS.class_ "modal-title" ]
                 [ HH.text title
                 , HH.button
