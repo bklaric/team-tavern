@@ -57,7 +57,7 @@ instance (Lacks "forbidden" responsesStart, BodyRouter body realBody) =>
 
 instance (Lacks "notFound" responsesStart, BodyRouter body realBody) =>
     ResponseRouter (FullResponse NotFound body) responsesStart (notFound :: ResponseConverter realBody | responsesStart) where
-    responseRouter' _ = responseRouter'' (Proxy :: _ "notFound") (Proxy :: _ body) 403
+    responseRouter' _ = responseRouter'' (Proxy :: _ "notFound") (Proxy :: _ body) 404
 
 instance (Lacks "internal" responsesStart, BodyRouter body realBody) =>
     ResponseRouter (FullResponse Internal body) responsesStart (internal :: ResponseConverter realBody | responsesStart) where
