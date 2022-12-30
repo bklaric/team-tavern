@@ -113,8 +113,6 @@ loadDeployment =
     <#> note "Couldn't read variable DEPLOYMENT."
     # ExceptT
 
-teamTavernRoutes = Proxy :: Proxy AllRoutes
-
 runServer :: Deployment -> Pool -> Effect Unit
 runServer deployment pool = serve (Proxy :: _ AllRoutes) listenOptions
     { startSession: \{ cookies, body } ->
@@ -125,8 +123,8 @@ runServer deployment pool = serve (Proxy :: _ AllRoutes) listenOptions
         Game.viewAll pool
     , viewGame: \{ path: { handle } } ->
         Game.view pool handle
-    , viewPlayer: \{ path: { nickname } , query: { timezone }, cookies } ->
-        Player.view pool cookies { nickname, timezone }
+    , viewPlayer: \{ path: { nickname } , query: { timezone }, cookies, headers } ->
+        Player.view pool cookies { nickname, timezone } headers
     , registerPlayer: \{ cookies, body } ->
         Player.register deployment pool cookies body
     , updatePlayer: \{ path, cookies, body } ->
@@ -135,8 +133,8 @@ runServer deployment pool = serve (Proxy :: _ AllRoutes) listenOptions
         Player.delete pool path.nickname cookies
     , updatePlayerContacts: \{ path, cookies, body } ->
         Player.updateContacts pool path.nickname cookies body
-    , viewTeam: \{ path: { handle }, query: { timezone } } ->
-        Team.view pool { handle, timezone }
+    , viewTeam: \{ path: { handle }, query: { timezone }, headers } ->
+        Team.view pool { handle, timezone } headers
     , createTeam: \{ cookies, body } ->
         Team.create pool cookies body
     , updateTeam: \{ path, cookies, body } ->

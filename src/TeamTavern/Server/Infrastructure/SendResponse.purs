@@ -3,8 +3,10 @@ module TeamTavern.Server.Infrastructure.SendResponse where
 import Prelude
 
 import Async (Async, alwaysRight, examineLeftWithEffect)
+import Data.Map (Map)
+import Data.Map as Map
 import Data.Variant (Variant)
-import TeamTavern.Server.Infrastructure.Error (Terror(..), TerrorVar)
+import TeamTavern.Server.Infrastructure.Error (Terror(..), TerrorVar, lmapElaborate)
 import TeamTavern.Server.Infrastructure.Log (logError)
 
 sendResponse
@@ -15,3 +17,8 @@ sendResponse
 sendResponse heading =
     alwaysRight (\(Terror error _) -> error) identity
     <<< examineLeftWithEffect (logError heading)
+
+lmapElaborateReferrer :: forall right error.
+    Map String String -> Async (Terror error) right -> Async (Terror error) right
+lmapElaborateReferrer headers =
+    lmapElaborate ("Referrer: " <> (show $ Map.lookup "referer" headers))

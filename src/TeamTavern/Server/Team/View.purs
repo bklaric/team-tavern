@@ -4,13 +4,14 @@ import Prelude
 
 import Async (Async)
 import Data.Bifunctor (lmap)
+import Data.Map (Map)
 import Jarilo (ok_)
 import Postgres.Pool (Pool)
 import Postgres.Query (Query(..), (:))
 import TeamTavern.Routes.Team.ViewTeam as ViewTeam
 import TeamTavern.Server.Infrastructure.Error (elaborate)
 import TeamTavern.Server.Infrastructure.Postgres (LoadSingleError, queryFirstNotFound, teamAdjustedWeekdayFrom, teamAdjustedWeekdayTo, teamAdjustedWeekendFrom, teamAdjustedWeekendTo)
-import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
+import TeamTavern.Server.Infrastructure.SendResponse (lmapElaborateReferrer, sendResponse)
 
 queryString :: String -> Query
 queryString timezone = Query $ """
@@ -199,7 +200,7 @@ loadTeam pool { handle, timezone } =
     queryFirstNotFound pool (queryString timezone) (handle : [])
     # lmap (elaborate ("Can't find team: " <> handle))
 
-view :: ∀ left. Pool -> ViewTeam.RouteParams -> Async left _
-view pool routeParams =
-    sendResponse "Error viewing team" do
+view :: ∀ left. Pool -> ViewTeam.RouteParams -> Map String String -> Async left _
+view pool routeParams headers =
+    sendResponse "Error viewing team" $ lmapElaborateReferrer headers do
     ok_ <$> loadTeam pool routeParams

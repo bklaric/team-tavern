@@ -6,6 +6,7 @@ import Async (Async)
 import Data.Array as Array
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Array.NonEmpty as Nea
+import Data.Bifunctor (class Bifunctor, lmap)
 import Data.Semigroup.Foldable (fold1)
 import Data.Symbol (class IsSymbol)
 import Data.Validated (Validated)
@@ -63,3 +64,7 @@ collect = map toNea >>> fold1
 
 elaborate :: ∀ error. String -> Terror error -> Terror error
 elaborate line (Terror error lines) = Terror error (Array.cons line lines)
+
+lmapElaborate :: forall bf right error. Bifunctor bf =>
+    String -> bf (Terror error) right -> bf (Terror error) right
+lmapElaborate line asyncTerror = asyncTerror # lmap (elaborate line)
