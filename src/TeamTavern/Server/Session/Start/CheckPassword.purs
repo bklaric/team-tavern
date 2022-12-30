@@ -10,7 +10,7 @@ import Data.Variant (inj)
 import Jarilo (InternalRow_, BadRequestRow, badRequest_, internal__)
 import Postgres.Query (class Querier, Query(..), (:))
 import TeamTavern.Routes.Session.StartSession as StartSession
-import TeamTavern.Server.Infrastructure.Error (Terror(..), TerrorVar)
+import TeamTavern.Server.Infrastructure.Error (Terror(..), TerrorVar, lmapElaborate)
 import TeamTavern.Server.Infrastructure.Log (print)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirst)
 import Type.Proxy (Proxy(..))
@@ -43,6 +43,7 @@ checkPassword model querier = do
     -- Load player hash.
     { id, nickname, hash } :: { id :: Int, nickname :: String, hash :: String } <-
         queryFirst noSessionStartedResponse querier queryString (model.nickname : [])
+        # lmapElaborate ("Can't find player: " <> model.nickname)
 
     -- Compare hash with password.
     matches <- Bcrypt.compare model.password hash # lmap
