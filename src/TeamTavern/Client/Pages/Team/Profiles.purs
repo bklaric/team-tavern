@@ -19,9 +19,9 @@ import TeamTavern.Client.Components.Team.ProfileDetails (profileDetails)
 import TeamTavern.Client.Pages.Profiles.TeamBadge (communityBadge, partyBadge, platformBadge)
 import TeamTavern.Client.Pages.Team.CreateProfileButton (createProfileButton)
 import TeamTavern.Client.Pages.Team.Status (Status(..))
-import TeamTavern.Client.Pages.Team.TeamProfileOptions (teamProfileOptions)
+import TeamTavern.Client.Pages.Team.TeamProfileOptions (Output(..), teamProfileOptions)
+import TeamTavern.Client.Pages.Team.TeamProfileOptions as TeamProfileOptions
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
-import TeamTavern.Client.Shared.Slot (QuerylessSlot)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Shared.Size (Size(..))
 import TeamTavern.Routes.Team.ViewTeam as ViewTeam
@@ -30,7 +30,7 @@ import Type.Proxy (Proxy(..))
 type ChildSlots children =
     ( games :: Anchor.Slot String
     , createProfile :: H.Slot (Const Void) Void Unit
-    , teamProfileOptions :: QuerylessSlot Unit String
+    , teamProfileOptions :: TeamProfileOptions.Slot
     | children
     )
 
@@ -39,8 +39,9 @@ profiles
     .  ViewTeam.OkContent
     -> Status
     -> (ViewTeam.OkContentProfile -> action)
+    -> (ViewTeam.OkContentProfile -> action)
     -> H.ComponentHTML action (ChildSlots children) (Async left)
-profiles team @ { profiles: profiles' } status showEditProfileModal =
+profiles team @ { profiles: profiles' } status showEditProfileModal showDeleteProfileModal =
     card $
     [ cardHeader $
         [ cardHeading "Profiles" ]
@@ -72,7 +73,10 @@ profiles team @ { profiles: profiles' } status showEditProfileModal =
                 <> [ profileSubheading $ "Updated " <> lastUpdated profile.updatedSeconds ]
             ]
             <>
-            [ teamProfileOptions { status, teamHandle: team.handle, gameHandle: profile.handle } $ showEditProfileModal profile ]
+            [ teamProfileOptions { status, teamHandle: team.handle, gameHandle: profile.handle }
+                case _ of
+                Edit -> showEditProfileModal profile
+                Delete -> showDeleteProfileModal profile]
         ]
         <>
         guard (full profileDetails' || full about || full ambitions)

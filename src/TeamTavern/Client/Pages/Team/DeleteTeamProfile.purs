@@ -1,4 +1,4 @@
-module TeamTavern.Client.Pages.Player.DeletePlayerProfile (Slot, deletePlayerProfile) where
+module TeamTavern.Client.Pages.Team.DeleteTeamProfile where
 
 import Prelude
 
@@ -16,45 +16,46 @@ import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Script.Navigate (hardNavigate)
 import TeamTavern.Client.Shared.Fetch (fetchPathNoContent)
 import TeamTavern.Client.Snippets.Class as HS
-import TeamTavern.Routes.Profile.DeletePlayerProfile (DeletePlayerProfile)
-import TeamTavern.Routes.Player.ViewPlayer as ViewPlayer
+import TeamTavern.Routes.Profile.DeleteTeamProfile (DeleteTeamProfile)
+import TeamTavern.Routes.Team.ViewTeam as ViewTeam
 import Type.Proxy (Proxy(..))
 import Web.Event.Event (preventDefault)
 
 type Input =
-    { player :: ViewPlayer.OkContent
-    , profile :: ViewPlayer.OkContentProfile
+    { team :: ViewTeam.OkContent
+    , profile :: ViewTeam.OkContentProfile
     }
 
 type Slot = H.Slot (Const Void) (Modal.Output Void) Unit
 
 component :: ∀ query output left. H.Component query Input output (Async left)
-component = Hooks.component \_ { player: { nickname }, profile: { handle, title } } -> Hooks.do
+component = Hooks.component \_ { team, profile } -> Hooks.do
     { otherError, submitting } /\ stateId <-
         Hooks.useState { otherError: false, submitting: false }
     let onSubmit event = do
             liftEffect $ preventDefault event
             currentState <- Hooks.modify stateId _ { submitting = true }
             response <- lift $ fetchPathNoContent
-                (Proxy :: _ DeletePlayerProfile) { nickname, handle }
+                (Proxy :: _ DeleteTeamProfile)
+                { teamHandle: team.handle, gameHandle: profile.handle }
             case response of
-                Just _ -> hardNavigate $ "/players/" <> nickname
+                Just _ -> hardNavigate $ "/teams/" <> team.handle
                 Nothing -> Hooks.put stateId currentState
                     { submitting = false, otherError = true }
     Hooks.pure $
         form onSubmit $
         [ HH.p [ HS.class_ "boarding-description" ]
-            [ HH.text $ "Are you sure you want to delete your " <> title <> " profile?" ]
+            [ HH.text $ "Are you sure you want to delete your team's " <> profile.title <> " profile?" ]
         , submitButton "fas fa-trash" "Delete profile" "Deleting profile..." submitting
         ]
         <> otherFormError otherError
 
-deletePlayerProfile
+deleteTeamProfile
     :: ∀ action children left
     .  Input
     -> (Modal.Output Void -> action)
-    -> HH.ComponentHTML action (deletePlayerProfile :: Slot | children) (Async left)
-deletePlayerProfile input handleMessage = HH.slot
-    (Proxy :: _ "deletePlayerProfile") unit
+    -> HH.ComponentHTML action (deleteTeamProfile :: Slot | children) (Async left)
+deleteTeamProfile input handleMessage = HH.slot
+    (Proxy :: _ "deleteTeamProfile") unit
     (Modal.component ("Delete " <> input.profile.title <> " profile") component)
     input handleMessage

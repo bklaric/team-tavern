@@ -8,13 +8,14 @@ import TeamTavern.Routes.Boarding.Preboard (Preboard)
 import TeamTavern.Routes.Game.ViewAllGames (ViewAllGames)
 import TeamTavern.Routes.Game.ViewGame (ViewGame)
 import TeamTavern.Routes.Player.DeletePlayer (DeletePlayer)
-import TeamTavern.Routes.Player.DeletePlayerProfile (DeletePlayerProfile)
+import TeamTavern.Routes.Profile.DeletePlayerProfile (DeletePlayerProfile)
 import TeamTavern.Routes.Player.RegisterPlayer (RegisterPlayer)
 import TeamTavern.Routes.Player.UpdatePlayer (UpdatePlayer)
 import TeamTavern.Routes.Player.UpdatePlayerContacts (UpdatePlayerContacts)
 import TeamTavern.Routes.Player.ViewPlayer (ViewPlayer)
 import TeamTavern.Routes.Profile.AddPlayerProfile (AddPlayerProfile)
 import TeamTavern.Routes.Profile.AddTeamProfile (AddTeamProfile)
+import TeamTavern.Routes.Profile.DeleteTeamProfile (DeleteTeamProfile)
 import TeamTavern.Routes.Profile.UpdatePlayerProfile (UpdatePlayerProfile)
 import TeamTavern.Routes.Profile.UpdateTeamProfile (UpdateTeamProfile)
 import TeamTavern.Routes.Profile.ViewPlayerProfile (ViewPlayerProfile)
@@ -55,6 +56,7 @@ type ProfileRoutes
     <|> "updatePlayerProfile"      : UpdatePlayerProfile
     <|> "updateTeamProfile"        : UpdateTeamProfile
     <|> "deletePlayerProfile"      : DeletePlayerProfile
+    <|> "deleteTeamProfile"        : DeleteTeamProfile
     <|> "viewPlayerProfilesByGame" : ViewPlayerProfilesByGame
     <|> "viewTeamProfilesByGame"   : ViewTeamProfilesByGame
     <|> "viewPlayerProfile"        : ViewPlayerProfile

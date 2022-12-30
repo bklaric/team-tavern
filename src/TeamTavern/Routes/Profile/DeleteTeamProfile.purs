@@ -1,13 +1,13 @@
-module TeamTavern.Routes.Profile.DeletePlayerProfile where
+module TeamTavern.Routes.Profile.DeleteTeamProfile where
 
 import Jarilo (type (!), type (/), type (==>), Capture, Delete_, Forbidden_, Internal_, Literal, NoContent, NotAuthorized_, NotFound_)
 
-type DeletePlayerProfile =
+type DeleteTeamProfile =
     Delete_
-    ( Literal "players"
-    / Capture "nickname" String
+    ( Literal "teams"
+    / Capture "teamHandle" String
     / Literal "profiles"
-    / Capture "handle" String)
+    / Capture "gameHandle" String)
     ==> NoContent ! NotAuthorized_ ! Forbidden_ ! NotFound_ ! Internal_
 
-type PathParams = { nickname :: String, handle :: String }
+type PathParams = { teamHandle :: String, gameHandle :: String }

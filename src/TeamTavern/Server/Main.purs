@@ -37,6 +37,7 @@ import TeamTavern.Server.Player.View (view) as Player
 import TeamTavern.Server.Profile.AddPlayerProfile (addPlayerProfile)
 import TeamTavern.Server.Profile.AddTeamProfile (addTeamProfile)
 import TeamTavern.Server.Profile.DeletePlayerProfile (deletePlayerProfile)
+import TeamTavern.Server.Profile.DeleteTeamProfile (deleteTeamProfile)
 import TeamTavern.Server.Profile.UpdatePlayerProfile (updatePlayerProfile)
 import TeamTavern.Server.Profile.UpdateTeamProfile (updateTeamProfile)
 import TeamTavern.Server.Profile.ViewPlayerProfile (viewPlayerProfile)
@@ -151,6 +152,8 @@ runServer deployment pool = serve (Proxy :: _ AllRoutes) listenOptions
         updateTeamProfile pool cookies path body
     , deletePlayerProfile: \{ path, cookies } ->
         deletePlayerProfile pool cookies path
+    , deleteTeamProfile: \{ path, cookies } ->
+        deleteTeamProfile pool cookies path
     , viewPlayerProfilesByGame: \{ path: { handle }, query } ->
         viewPlayerProfilesByGame pool handle query.page query.timezone $ bundlePlayerFilters query
     , viewTeamProfilesByGame: \{ path: { handle }, query } ->

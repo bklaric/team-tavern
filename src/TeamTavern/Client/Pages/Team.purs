@@ -20,6 +20,8 @@ import TeamTavern.Client.Components.NavigationAnchor as Anchor
 import TeamTavern.Client.Components.Player.ProfileDetails (PlatformIdSlots)
 import TeamTavern.Client.Pages.Profiles.TeamBadge (informalBadge, organizedBadge)
 import TeamTavern.Client.Pages.Team.Contacts (contacts)
+import TeamTavern.Client.Pages.Team.DeleteTeamProfile (deleteTeamProfile)
+import TeamTavern.Client.Pages.Team.DeleteTeamProfile as DeleteTeamProfile
 import TeamTavern.Client.Pages.Team.Details (details)
 import TeamTavern.Client.Pages.Team.EditContacts (editContacts)
 import TeamTavern.Client.Pages.Team.EditContacts as EditContacts
@@ -29,10 +31,10 @@ import TeamTavern.Client.Pages.Team.EditTeam (editTeam)
 import TeamTavern.Client.Pages.Team.EditTeam as EditTeam
 import TeamTavern.Client.Pages.Team.Profiles (profiles)
 import TeamTavern.Client.Pages.Team.Status (Status(..), getStatus)
+import TeamTavern.Client.Pages.Team.TeamProfileOptions as TeamProfileOptions
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Request (get)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
-import TeamTavern.Client.Shared.Slot (QuerylessSlot)
 import TeamTavern.Routes.Shared.Organization (OrganizationNW(..), nameOrHandleNW)
 import TeamTavern.Routes.Team.ViewTeam as ViewTeam
 import Type.Proxy (Proxy(..))
@@ -45,6 +47,7 @@ type Loaded =
     , editContactsModalShown :: Boolean
     , editTeamModalShown :: Boolean
     , editProfileModalShown :: Maybe ViewTeam.OkContentProfile
+    , deleteProfileModalShown :: Maybe ViewTeam.OkContentProfile
     }
 
 data State
@@ -61,6 +64,8 @@ data Action
     | HideEditTeamModal
     | ShowEditProfileModal ViewTeam.OkContentProfile
     | HideEditProfileModal
+    | ShowDeleteProfileModal ViewTeam.OkContentProfile
+    | HideDeleteProfileModal
 
 type Slot = H.Slot (Const Void) Void Unit
 
@@ -71,8 +76,9 @@ type ChildSlots = PlatformIdSlots
     , editContacts :: EditContacts.Slot
     , editTeam :: EditTeam.Slot
     , editProfile :: EditProfile.Slot
+    , deleteTeamProfile :: DeleteTeamProfile.Slot
     , viewTeamOwner :: Anchor.Slot Unit
-    , teamProfileOptions :: QuerylessSlot Unit String
+    , teamProfileOptions :: TeamProfileOptions.Slot
     )
 
 render :: ∀ left. State -> H.ComponentHTML Action ChildSlots (Async left)
@@ -107,7 +113,7 @@ render (Loaded state @ { team: team', status } ) =
             , details team' status ShowEditTeamModal
             ]
         , HH.div_
-            [ profiles team' status ShowEditProfileModal ]
+            [ profiles team' status ShowEditProfileModal ShowDeleteProfileModal ]
         ]
     ]
     <> stickyLeaderboards
@@ -117,6 +123,9 @@ render (Loaded state @ { team: team', status } ) =
         [ editProfile { team: team', profile } (const HideEditProfileModal)
         ])
         state.editProfileModalShown
+    <> foldMap
+        (\profile -> [ deleteTeamProfile { team: team', profile } $ const HideDeleteProfileModal ])
+        state.deleteProfileModalShown
 render NotFound = HH.p_ [ HH.text "Team could not be found." ]
 render Error = HH.p_ [ HH.text "There has been an error loading the team. Please try again later." ]
 
@@ -148,6 +157,7 @@ handleAction Initialize = do
                         , editContactsModalShown: false
                         , editTeamModalShown: false
                         , editProfileModalShown: Nothing
+                        , deleteProfileModalShown: Nothing
                         }
                     let nameOrHandle = nameOrHandleNW team''.handle team''.organization
                     setMeta (nameOrHandle <> " | TeamTavern")
@@ -160,6 +170,8 @@ handleAction ShowEditTeamModal = modifyLoaded _ { editTeamModalShown = true }
 handleAction HideEditTeamModal = modifyLoaded _ { editTeamModalShown = false }
 handleAction (ShowEditProfileModal profile) = modifyLoaded _ { editProfileModalShown = Just profile }
 handleAction HideEditProfileModal = modifyLoaded _ { editProfileModalShown = Nothing }
+handleAction (ShowDeleteProfileModal profile) = modifyLoaded _ { deleteProfileModalShown = Just profile }
+handleAction HideDeleteProfileModal = modifyLoaded _ { deleteProfileModalShown = Nothing }
 
 component :: ∀ query output left.
     H.Component query Input output (Async left)
