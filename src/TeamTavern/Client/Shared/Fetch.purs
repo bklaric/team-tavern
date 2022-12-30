@@ -2,14 +2,26 @@ module TeamTavern.Client.Shared.Fetch where
 
 import Prelude
 
+import Async (attempt)
 import Browser.Fetch (Credentials(..))
+import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
+import Data.Variant (match, onMatch)
 import Jarilo as Jarilo
 
 fetch proxy path query body = let
-    options = Jarilo.defaultOptions { pathPrefix = Just "/api", credentials = Just Include }
+    options = Jarilo.defaultOptions
+        { pathPrefix = Just "/api", credentials = Just Include }
     in
     Jarilo.fetch proxy path query body options
+
+fetchPath proxy path = fetch proxy path {} unit
+
+fetchPathNoContent proxy path = fetchPath proxy path # attempt <#>
+    case _ of
+    Left _ -> Nothing
+    Right response ->
+        onMatch { noContent: const $ Just unit } (const Nothing) response
 
 fetchBody proxy body = fetch proxy {} {} body
 

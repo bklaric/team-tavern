@@ -38,12 +38,12 @@ component = Hooks.component $ \_ input -> Hooks.do
     Hooks.pure $
         popover
         shown
-        ([ HH.i
+        [ HH.i
             [ HS.class_ "fas fa-ellipsis-h options-button-icon"
             , HE.onClick $ togglePopover shownId
             ]
             []
-        ])
+        ]
         [ popoverItem
             (const $ lift openProfileInNewTab)
             [ HH.text "Open profile in new tab" ]

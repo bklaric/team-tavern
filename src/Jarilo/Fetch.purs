@@ -21,7 +21,7 @@ import Data.Tuple (Tuple(..))
 import Data.Variant (Variant, inj)
 import Error.Class (message)
 import Jarilo.Shared.Component (class Component, toComponent)
-import Jarilo.Types (BadRequest, Body, Capture, Delete, Forbidden, FullRequest, FullResponse, FullRoute, Get, Head, Internal, JsonBody, Literal, Mandatory, Many, Method, NoBody, NoContent, NoQuery, NotAuthorized, Ok, Optional, Options, Patch, Path, PathChain, Post, Put, Query, QueryChain, Response, ResponseChain, Rest, Route, Status)
+import Jarilo.Types (BadRequest, Body, Capture, Delete, Forbidden, FullRequest, FullResponse, FullRoute, Get, Head, Internal, JsonBody, Literal, Mandatory, Many, Method, NoBody, NoContent, NoQuery, NotAuthorized, NotFound, Ok, Optional, Options, Patch, Path, PathChain, Post, Put, Query, QueryChain, Response, ResponseChain, Rest, Route, Status)
 import Prim.Row (class Cons, class Lacks, class Nub)
 import Prim.RowList (class RowToList)
 import Record (get)
@@ -157,6 +157,9 @@ instance FetchStatusResult NotAuthorized realBody (notAuthorized :: realBody | r
 instance FetchStatusResult Forbidden realBody (forbidden :: realBody | results) where
     createResult _ = inj (Proxy :: _ "forbidden")
 
+instance FetchStatusResult NotFound realBody (notFound :: realBody | results) where
+    createResult _ = inj (Proxy :: _ "notFound")
+
 instance FetchStatusResult Internal realBody (internal :: realBody | results) where
     createResult _ = inj (Proxy :: _ "internal")
 
@@ -184,6 +187,10 @@ instance (Lacks "notAuthorized" startErrors) =>
 instance (Lacks "forbidden" startErrors) =>
     FetchStatusError Forbidden startErrors (forbidden :: String | startErrors) where
     createError _ = Builder.insert (Proxy :: _ "forbidden")
+
+instance (Lacks "notFound" startErrors) =>
+    FetchStatusError NotFound startErrors (notFound :: String | startErrors) where
+    createError _ = Builder.insert (Proxy :: _ "notFound")
 
 instance (Lacks "internal" startErrors) =>
     FetchStatusError Internal startErrors (internal :: String | startErrors) where
@@ -229,6 +236,10 @@ instance (Lacks "notAuthorized" startErrors) =>
 
 instance (Lacks "forbidden" startErrors) =>
     FetchStatus Forbidden startErrors (forbidden :: String | startErrors) where
+    fetchStatus proxy response = fetchStatus' proxy 403 response
+
+instance (Lacks "notFound" startErrors) =>
+    FetchStatus NotFound startErrors (notFound :: String | startErrors) where
     fetchStatus proxy response = fetchStatus' proxy 403 response
 
 instance (Lacks "internal" startErrors) =>

@@ -6,7 +6,6 @@ import Async (Async)
 import Data.Array as Array
 import Data.Array.Extra (full)
 import Data.Monoid (guard)
-import Type.Proxy (Proxy(..))
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Card (card, cardHeader, cardHeading, cardSection)
 import TeamTavern.Client.Components.Detail (detailColumn, detailColumnHeading4, detailColumns, textDetail)
@@ -17,18 +16,19 @@ import TeamTavern.Client.Components.Player.ProfileDetails (PlatformIdSlots, prof
 import TeamTavern.Client.Components.Profile (profileHeader, profileHeading', profileSubheading)
 import TeamTavern.Client.Pages.Player.CreateProfileButton (createProfileButton)
 import TeamTavern.Client.Pages.Player.CreateProfileButton as CreateProfileButton
-import TeamTavern.Client.Pages.Player.PlayerProfileOptions (playerProfileOptions)
+import TeamTavern.Client.Pages.Player.PlayerProfileOptions (Output(..), playerProfileOptions)
+import TeamTavern.Client.Pages.Player.PlayerProfileOptions as PlayerProfileOptions
 import TeamTavern.Client.Pages.Player.Status (Status(..))
 import TeamTavern.Client.Pages.Profiles.TeamBadge (platformBadge)
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
-import TeamTavern.Client.Shared.Slot (QuerylessSlot)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Player.ViewPlayer as ViewPlayer
+import Type.Proxy (Proxy(..))
 
 type ChildSlots children = PlatformIdSlots
     ( games :: NavigationAnchor.Slot String
     , createProfile :: CreateProfileButton.Slot
-    , playerProfileOptions :: QuerylessSlot Unit String
+    , playerProfileOptions :: PlayerProfileOptions.Slot
     | children)
 
 profiles
@@ -36,8 +36,9 @@ profiles
     .  ViewPlayer.OkContent
     -> Status
     -> (ViewPlayer.OkContentProfile -> action)
+    -> (ViewPlayer.OkContentProfile -> action)
     -> HH.ComponentHTML action (ChildSlots slots) (Async left)
-profiles player @ { profiles: profiles' } status showEditProfileModal =
+profiles player @ { profiles: profiles' } status showEditProfileModal showDeleteProfileModal =
     card $
     [ cardHeader $
         [ cardHeading "Profiles" ]
@@ -74,7 +75,11 @@ profiles player @ { profiles: profiles' } status showEditProfileModal =
                 <> [ divider, profileSubheading $ "Updated " <> lastUpdated profile.updatedSeconds ]
             ])
             <>
-            [ playerProfileOptions { status, nickname: player.nickname, handle: profile.handle } $ showEditProfileModal profile ]
+            [ playerProfileOptions { status, nickname: player.nickname, handle: profile.handle }
+                case _ of
+                Edit -> showEditProfileModal profile
+                Delete -> showDeleteProfileModal profile
+            ]
         ]
         <>
         guard (full profileDetails' || full about || full ambitions)

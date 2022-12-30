@@ -1,10 +1,9 @@
-module TeamTavern.Client.Pages.Player.PlayerProfileOptions (playerProfileOptions) where
+module TeamTavern.Client.Pages.Player.PlayerProfileOptions (Output(..), Slot, playerProfileOptions) where
 
 import Prelude
 
 import Async (Async, attempt, fromEffect)
 import Data.Monoid (guard)
-import Type.Proxy (Proxy(..))
 import Data.Tuple (Tuple(..))
 import Effect (Effect)
 import Halogen (lift)
@@ -17,18 +16,23 @@ import TeamTavern.Client.Pages.Player.Status (Status(..))
 import TeamTavern.Client.Script.Clipboard (writeTextAsync)
 import TeamTavern.Client.Shared.Slot (QuerylessSlot)
 import TeamTavern.Client.Snippets.Class as HS
+import Type.Proxy (Proxy(..))
 import Web.HTML (window)
 import Web.HTML.Location (origin)
 import Web.HTML.Window (location, open)
 
 type Input = { status :: Status, nickname :: String, handle :: String }
 
+data Output = Edit | Delete
+
+type Slot = QuerylessSlot Output String
+
 profileUrl :: Input -> Effect String
 profileUrl { nickname, handle } = do
     origin' <- window >>= location >>= origin
     pure $ origin' <> "/players/" <> nickname <> "/profiles/" <> handle
 
-component :: ∀ query left. H.Component query Input Unit (Async left)
+component :: ∀ query left. H.Component query Input Output (Async left)
 component = Hooks.component $ \{ outputToken } input -> Hooks.do
     (Tuple shown shownId) <- usePopover
     let openProfileInNewTab = void $ fromEffect do
@@ -48,7 +52,7 @@ component = Hooks.component $ \{ outputToken } input -> Hooks.do
         ]
         (guard (input.status == SignedInSelf)
         [ popoverItem
-            (const $ Hooks.raise outputToken unit)
+            (const $ Hooks.raise outputToken Edit)
             [ HH.text "Edit profile" ]
         ]
         <>
@@ -58,9 +62,17 @@ component = Hooks.component $ \{ outputToken } input -> Hooks.do
         , popoverItem
             (const $ lift copyProfileAddress)
             [ HH.text "Copy profile address" ]
+        ]
+        <>
+        guard (input.status == SignedInSelf)
+        [ HH.div
+            [ HS.class_ "popover-item"
+            , HE.onClick $ const $ Hooks.raise outputToken Delete
+            ]
+            [ HH.span [ HS.class_ "delete-account-option" ] [ HH.text $ "Delete profile" ] ]
         ])
 
 playerProfileOptions :: ∀ action slots left.
-    Input -> action -> HH.ComponentHTML action (playerProfileOptions :: QuerylessSlot Unit String | slots) (Async left)
+    Input -> (Output -> action) -> HH.ComponentHTML action (playerProfileOptions :: QuerylessSlot Output String | slots) (Async left)
 playerProfileOptions input handleOutput =
-    HH.slot (Proxy :: _ "playerProfileOptions") input.handle component input (const handleOutput)
+    HH.slot (Proxy :: _ "playerProfileOptions") input.handle component input handleOutput

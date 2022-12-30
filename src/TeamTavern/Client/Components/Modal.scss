@@ -9,7 +9,7 @@
     z-index: 3;
 }
 
-.modal-content {
+.modal-body {
     border-top: $border;
     border-bottom: $border;
     background-color: white;
@@ -28,7 +28,7 @@
     font-size: 20px;
     line-height: 1.5;
     margin: 0;
-    padding: 14px 21px;
+    padding: 14px 72px;
     position: relative;
     text-align: center;
     border-bottom: $border;
