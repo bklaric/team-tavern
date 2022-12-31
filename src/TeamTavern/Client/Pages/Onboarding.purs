@@ -1,4 +1,4 @@
-module TeamTavern.Client.Pages.Onboarding (Step(..), Input, Slot, emptyInput, onboarding) where
+module TeamTavern.Client.Pages.Onboarding (Step(..), Input, emptyInput, onboarding) where
 
 import Prelude
 
@@ -6,7 +6,6 @@ import Async (Async)
 import Async as Async
 import Data.Array as Array
 import Data.Bifunctor (lmap)
-import Data.Const (Const)
 import Data.Either (Either(..))
 import Data.Foldable (foldl)
 import Data.Maybe (Maybe(..), isNothing, maybe)
@@ -36,6 +35,7 @@ import TeamTavern.Client.Script.Cookie (getPlayerNickname)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigate, navigateReplace, navigate_)
 import TeamTavern.Client.Shared.Fetch (fetchBody)
+import TeamTavern.Client.Shared.Slot (SimpleSlot)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Boarding.Onboard (Onboard)
 import TeamTavern.Routes.Boarding.Onboard as Onboard
@@ -128,8 +128,6 @@ data Action
     | UpdatePlayerProfile PlayerProfileFormInput.Output
     | UpdateTeamProfile TeamProfileFormInput.Output
     | SetUpAccount
-
-type Slot = H.Slot (Const Void) Void Unit
 
 type ChildSlots slots =
     ( playerFormInput :: PlayerFormInput.Slot
@@ -602,5 +600,5 @@ component = H.mkComponent
     }
 
 onboarding :: ∀ action slots left.
-    Input -> HH.ComponentHTML action (onboarding :: Slot | slots) (Async left)
+    Input -> HH.ComponentHTML action (onboarding :: SimpleSlot | slots) (Async left)
 onboarding input = HH.slot (Proxy :: _ "onboarding") unit component input absurd

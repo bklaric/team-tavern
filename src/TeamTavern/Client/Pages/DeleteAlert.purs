@@ -7,17 +7,17 @@ import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Fetch.Response as FetchRes
 import Data.Bifunctor (lmap)
-import Data.Const (Const)
 import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..))
 import Data.Options ((:=))
-import Type.Proxy (Proxy(..))
 import Halogen (liftEffect)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Script.Url as Url
+import TeamTavern.Client.Shared.Slot (SimpleSlot)
 import TeamTavern.Client.Snippets.Class as HS
+import Type.Proxy (Proxy(..))
 import Web.HTML as Html
 import Web.HTML.Location as Location
 import Web.HTML.Window as Window
@@ -25,8 +25,6 @@ import Web.HTML.Window as Window
 data Action = Initialize
 
 data State = Empty | Deleted | NotFound | Error
-
-type Slot = H.Slot (Const Void) Void Unit
 
 render :: ∀ slots action. State -> HH.HTML slots action
 render Empty = HH.div_ []
@@ -79,5 +77,5 @@ component = H.mkComponent
     }
 
 deleteAlert :: ∀ query children left.
-    HH.ComponentHTML query (deleteAlert :: Slot | children) (Async left)
+    HH.ComponentHTML query (deleteAlert :: SimpleSlot | children) (Async left)
 deleteAlert = HH.slot (Proxy :: _ "deleteAlert") unit component unit absurd

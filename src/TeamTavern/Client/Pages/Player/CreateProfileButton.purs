@@ -4,7 +4,6 @@ import Prelude
 
 import Async (Async)
 import Data.Array as Array
-import Data.Const (Const)
 import Data.Foldable (foldMap)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Tuple (Tuple(..))
@@ -22,8 +21,6 @@ import TeamTavern.Routes.Game.ViewAllGames as ViewAllGames
 import TeamTavern.Routes.Player.ViewPlayer as ViewPlayer
 
 type Input = ViewPlayer.OkContent
-
-type Slot = H.Slot (Const Void) Void Unit
 
 createProfileButton :: ∀ left output query. H.Component query Input output (Async left)
 createProfileButton = Hooks.component $ \_ player -> Hooks.do

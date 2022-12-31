@@ -1,4 +1,4 @@
-module TeamTavern.Client.Pages.Profiles (Input, Slot, profiles) where
+module TeamTavern.Client.Pages.Profiles (Input, profiles) where
 
 import Prelude
 
@@ -40,6 +40,7 @@ import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigate, navigate_)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Script.Url as Url
+import TeamTavern.Client.Shared.Slot (SimpleSlot)
 import TeamTavern.Client.Snippets.ArticledNoun (indefiniteNoun)
 import TeamTavern.Routes.Game.ViewGame as ViewGame
 import TeamTavern.Routes.Profile.ViewPlayerProfilesByGame as ViewPlayerProfilesByGame
@@ -83,8 +84,6 @@ data State
     = Empty Input
     | Game ViewGame.OkContent (Maybe PlayerInfo) Filters Tab
     | Error
-
-type Slot = H.Slot (Const Void) Void Unit
 
 type ChildSlots =
     ( gameHeader :: H.Slot (Const Void) Void Unit
@@ -421,5 +420,5 @@ component = H.mkComponent
     }
 
 profiles :: ∀ query children left.
-    Input -> HH.ComponentHTML query (profiles :: Slot | children) (Async left)
+    Input -> HH.ComponentHTML query (profiles :: SimpleSlot | children) (Async left)
 profiles input = HH.slot (Proxy :: _ "profiles") unit component input absurd

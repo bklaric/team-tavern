@@ -15,19 +15,19 @@ import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Components.Player.ProfileDetails (PlatformIdSlots, profileDetails)
 import TeamTavern.Client.Components.Profile (profileHeader, profileHeading', profileSubheading)
 import TeamTavern.Client.Pages.Player.CreateProfileButton (createProfileButton)
-import TeamTavern.Client.Pages.Player.CreateProfileButton as CreateProfileButton
 import TeamTavern.Client.Pages.Player.PlayerProfileOptions (Output(..), playerProfileOptions)
 import TeamTavern.Client.Pages.Player.PlayerProfileOptions as PlayerProfileOptions
 import TeamTavern.Client.Pages.Player.Status (Status(..))
 import TeamTavern.Client.Pages.Profiles.TeamBadge (platformBadge)
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
+import TeamTavern.Client.Shared.Slot (SimpleSlot)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Player.ViewPlayer as ViewPlayer
 import Type.Proxy (Proxy(..))
 
 type ChildSlots children = PlatformIdSlots
     ( games :: NavigationAnchor.Slot String
-    , createProfile :: CreateProfileButton.Slot
+    , createProfile :: SimpleSlot
     , playerProfileOptions :: PlayerProfileOptions.Slot
     | children)
 

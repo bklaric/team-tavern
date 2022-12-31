@@ -1,11 +1,10 @@
-module TeamTavern.Client.Pages.SignIn (Slot, signIn) where
+module TeamTavern.Client.Pages.SignIn (signIn) where
 
 import Prelude
 
 import Async (Async)
 import Async as Async
 import Data.Bifunctor (lmap)
-import Data.Const (Const)
 import Data.Maybe (Maybe(..))
 import Data.Variant (match, onMatch)
 import Halogen as H
@@ -18,6 +17,7 @@ import TeamTavern.Client.Script.Cookie (hasPlayerIdCookie)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigateReplace_, navigate_)
 import TeamTavern.Client.Shared.Fetch (fetchBody)
+import TeamTavern.Client.Shared.Slot (SimpleSlot)
 import TeamTavern.Client.Snippets.ErrorClasses (otherErrorClass)
 import TeamTavern.Routes.Session.StartSession (StartSession)
 import Type.Proxy (Proxy(..))
@@ -39,8 +39,6 @@ type State =
     , otherError :: Boolean
     , submitting :: Boolean
     }
-
-type Slot = H.Slot (Const Void) Void
 
 type ChildSlots =
     ( home :: NavigationAnchor.Slot Unit
@@ -189,5 +187,5 @@ component = H.mkComponent
     }
 
 signIn :: ∀ query children left.
-    HH.ComponentHTML query (signIn :: Slot Unit | children) (Async left)
+    HH.ComponentHTML query (signIn :: SimpleSlot | children) (Async left)
 signIn = HH.slot (Proxy :: _ "signIn") unit component unit absurd

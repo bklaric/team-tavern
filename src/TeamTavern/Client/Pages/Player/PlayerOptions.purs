@@ -1,12 +1,10 @@
-module TeamTavern.Client.Pages.Player.PlayerOptions (Slot, playerOptions) where
+module TeamTavern.Client.Pages.Player.PlayerOptions (playerOptions) where
 
 import Prelude
 
 import Async (Async)
-import Data.Const (Const)
 import Data.Foldable (foldMap)
 import Data.Maybe (Maybe(..))
-import Type.Proxy (Proxy(..))
 import Data.Tuple (Tuple(..))
 import Halogen as H
 import Halogen.HTML as HH
@@ -14,11 +12,11 @@ import Halogen.HTML.Events as HE
 import Halogen.Hooks as Hooks
 import TeamTavern.Client.Components.Popover (popover, popoverItem, togglePopover, usePopover)
 import TeamTavern.Client.Pages.Player.DeleteAccount (deleteAccount)
+import TeamTavern.Client.Shared.Slot (SimpleSlot)
 import TeamTavern.Client.Snippets.Class as HS
+import Type.Proxy (Proxy(..))
 
 type Input = String
-
-type Slot = H.Slot (Const Void) Void Unit
 
 component :: ∀ query output left. H.Component query Input output (Async left)
 component = Hooks.component $ \_ nickname -> Hooks.do
@@ -48,5 +46,5 @@ component = Hooks.component $ \_ nickname -> Hooks.do
         ]
 
 playerOptions :: ∀ action slots left.
-    Input -> HH.ComponentHTML action (playerOptions :: Slot | slots) (Async left)
+    Input -> HH.ComponentHTML action (playerOptions :: SimpleSlot | slots) (Async left)
 playerOptions nickname = HH.slot (Proxy :: _ "playerOptions") unit component nickname absurd

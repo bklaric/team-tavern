@@ -4,9 +4,7 @@ import Prelude
 
 import Async (Async)
 import Client.Pages.Home.ForTeams (forTeams)
-import Data.Const (Const)
 import Data.Maybe (Maybe(..))
-import Type.Proxy (Proxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
@@ -20,7 +18,9 @@ import TeamTavern.Client.Pages.Home.ForPlayers (forPlayers)
 import TeamTavern.Client.Pages.Preboarding as Preboarding
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigate, navigate_)
+import TeamTavern.Client.Shared.Slot (SimpleSlot)
 import TeamTavern.Client.Snippets.PreventMouseDefault (preventMouseDefault)
+import Type.Proxy (Proxy(..))
 import Web.UIEvent.MouseEvent (MouseEvent)
 
 data Action
@@ -31,8 +31,6 @@ data Action
     | OpenGames MouseEvent
 
 type State = Unit
-
-type Slot = H.Slot (Const Void) Void
 
 type ChildSlots =
     ( viewAllGames :: NavigationAnchor.Slot Unit
@@ -80,5 +78,5 @@ component = H.mkComponent
     }
 
 home :: ∀ query children left.
-    HH.ComponentHTML query (home :: Slot Unit | children) (Async left)
+    HH.ComponentHTML query (home :: SimpleSlot | children) (Async left)
 home = HH.slot (Proxy :: _ "home") unit component unit absurd

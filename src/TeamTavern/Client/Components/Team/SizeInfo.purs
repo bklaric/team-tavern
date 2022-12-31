@@ -1,20 +1,18 @@
-module TeamTavern.Client.Components.Team.SizeInfo (Slot, sizeInfo) where
+module TeamTavern.Client.Components.Team.SizeInfo (sizeInfo) where
 
 import Prelude
 
 import Async (Async)
 import Data.Array as Array
-import Data.Const (Const)
 import Data.Monoid (guard)
-import Type.Proxy (Proxy(..))
 import Data.Tuple (Tuple(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.Hooks as Hooks
 import TeamTavern.Client.Components.Popover (togglePopover, usePopover)
 import TeamTavern.Client.Components.Team.Info (info, infoContainer, infoIcon, infoText)
-
-type Slot = H.Slot (Const Void) Void Unit
+import TeamTavern.Client.Shared.Slot (SimpleSlot)
+import Type.Proxy (Proxy(..))
 
 component :: ∀ left output input query. H.Component query input output (Async left)
 component = Hooks.component $ \_ _ -> Hooks.do
@@ -30,5 +28,5 @@ component = Hooks.component $ \_ _ -> Hooks.do
             ]
         )
 
-sizeInfo :: ∀ action slots left. H.ComponentHTML action (sizeInfo :: Slot | slots) (Async left)
+sizeInfo :: ∀ action slots left. H.ComponentHTML action (sizeInfo :: SimpleSlot | slots) (Async left)
 sizeInfo = HH.slot (Proxy :: _ "sizeInfo") unit component unit absurd

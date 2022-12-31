@@ -1,4 +1,4 @@
-module TeamTavern.Client.Pages.Register (Slot, register) where
+module TeamTavern.Client.Pages.Register (register) where
 
 import Prelude
 
@@ -7,7 +7,6 @@ import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
 import Data.Bifunctor (bimap, lmap)
-import Data.Const (Const)
 import Data.Foldable (foldl)
 import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..))
@@ -23,6 +22,7 @@ import TeamTavern.Client.Pages.Onboarding as Onboarding
 import TeamTavern.Client.Script.Cookie (hasPlayerIdCookie)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigate, navigateReplace_, navigateWithEvent_)
+import TeamTavern.Client.Shared.Slot (SimpleSlot)
 import TeamTavern.Client.Snippets.ErrorClasses (otherErrorClass)
 import TeamTavern.Routes.Player.RegisterPlayer as RegisterPlayer
 import Type.Proxy (Proxy(..))
@@ -43,8 +43,6 @@ type State =
     , otherError :: Boolean
     , submitting :: Boolean
     }
-
-type Slot = H.Slot (Const Void) Void
 
 render :: ∀ left.
     State -> H.ComponentHTML Action (registrationInput :: RegistrationInput.Slot) (Async left)
@@ -161,5 +159,5 @@ component = H.mkComponent
     }
 
 register :: ∀ query children left.
-    HH.ComponentHTML query (register :: Slot Unit | children) (Async left)
+    HH.ComponentHTML query (register :: SimpleSlot | children) (Async left)
 register = HH.slot (Proxy :: _ "register") unit component unit absurd

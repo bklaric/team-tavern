@@ -1,4 +1,4 @@
-module TeamTavern.Client.Pages.Team (Input, Slot, team) where
+module TeamTavern.Client.Pages.Team (Input, team) where
 
 import Prelude
 
@@ -71,8 +71,6 @@ data Action
     | HideEditProfileModal
     | ShowDeleteProfileModal ViewTeam.OkContentProfile
     | HideDeleteProfileModal
-
-type Slot = H.Slot (Const Void) Void Unit
 
 type ChildSlots = PlatformIdSlots
     ( discordTag :: Copyable.Slot String
@@ -195,5 +193,5 @@ component = H.mkComponent
     }
 
 team :: ∀ query children left.
-    Input -> HH.ComponentHTML query (team :: Slot | children) (Async left)
+    Input -> HH.ComponentHTML query (team :: SimpleSlot | children) (Async left)
 team handle = HH.slot (Proxy :: _ "team") unit component handle absurd

@@ -7,32 +7,30 @@ import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
 import Data.Bifunctor (lmap)
-import Data.Const (Const)
 import Data.Maybe (Maybe(..))
-import Type.Proxy (Proxy(..))
 import Effect.Class (class MonadEffect)
 import Halogen (ClassName(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import Yoga.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.Ads (descriptionLeaderboards, stickyLeaderboards)
 import TeamTavern.Client.Components.Divider (whiteDivider)
 import TeamTavern.Client.Components.Picture (picture)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigateWithEvent_)
+import TeamTavern.Client.Shared.Slot (SimpleSlot)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Game.ViewAllGames as ViewAllGames
+import Type.Proxy (Proxy(..))
 import Web.Event.Event (stopPropagation)
 import Web.UIEvent.MouseEvent (MouseEvent)
 import Web.UIEvent.MouseEvent as MouseEvent
+import Yoga.JSON.Async as JsonAsync
 
 data Action = Init | Navigate String Boolean MouseEvent
 
 data State = Empty | Games ViewAllGames.OkContent
-
-type Slot = H.Slot (Const Void) Void
 
 render :: ∀ slots monad. MonadEffect monad => State -> H.ComponentHTML Action slots monad
 render Empty = HH.div_ []
@@ -134,6 +132,6 @@ component =
 
 games
     :: ∀ query children left
-    .  HH.ComponentHTML query (games :: Slot Unit | children) (Async left)
+    .  HH.ComponentHTML query (games :: SimpleSlot | children) (Async left)
 games =
     HH.slot (Proxy :: _ "games") unit component Empty absurd

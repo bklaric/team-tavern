@@ -1,4 +1,4 @@
-module TeamTavern.Client.Pages.Game (Input, Slot, game) where
+module TeamTavern.Client.Pages.Game (Input, game) where
 
 import Prelude
 
@@ -8,14 +8,11 @@ import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
 import Client.Pages.Home.ForTeams (forTeams')
 import Data.Bifunctor (lmap)
-import Data.Const (Const)
 import Data.Maybe (Maybe(..))
-import Type.Proxy (Proxy(..))
 import Effect.Class (class MonadEffect)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
-import Yoga.JSON.Async as JsonAsync
 import TeamTavern.Client.Components.Boarding.PlayerOrTeamInput as Boarding
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Pages.Home.CallToAction (callToAction')
@@ -26,10 +23,13 @@ import TeamTavern.Client.Pages.Home.ForPlayers (forPlayers')
 import TeamTavern.Client.Pages.Preboarding as Preboarding
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigate, navigate_)
+import TeamTavern.Client.Shared.Slot (SimpleSlot)
 import TeamTavern.Client.Snippets.ArticledNoun (indefiniteNoun)
 import TeamTavern.Client.Snippets.PreventMouseDefault (preventMouseDefault)
 import TeamTavern.Routes.Game.ViewGame as ViewGame
+import Type.Proxy (Proxy(..))
 import Web.UIEvent.MouseEvent (MouseEvent)
+import Yoga.JSON.Async as JsonAsync
 
 type Input = { handle :: String }
 
@@ -45,8 +45,6 @@ data Action
 data State
     = Empty { handle :: String }
     | Loaded { game :: ViewGame.OkContent }
-
-type Slot = H.Slot (Const Void) Void Unit
 
 type ChildSlots =
     ( viewAllPlayers :: NavigationAnchor.Slot Unit
@@ -132,5 +130,5 @@ component = H.mkComponent
     }
 
 game :: ∀ query children left.
-    Input -> HH.ComponentHTML query (game :: Slot | children) (Async left)
+    Input -> HH.ComponentHTML query (game :: SimpleSlot | children) (Async left)
 game input = HH.slot (Proxy :: _ "game") unit component input absurd

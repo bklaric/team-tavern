@@ -1,4 +1,4 @@
-module TeamTavern.Client.Components.TopBar (Slot, topBar) where
+module TeamTavern.Client.Components.TopBar (topBar) where
 
 import Prelude
 
@@ -7,7 +7,6 @@ import Async as Async
 import Data.Array (find)
 import Data.Array as Array
 import Data.Bifunctor (bimap)
-import Data.Const (Const)
 import Data.Foldable (foldMap)
 import Data.Maybe (Maybe(..), maybe)
 import Data.Monoid (guard)
@@ -21,6 +20,7 @@ import TeamTavern.Client.Script.Cookie (getPlayerNickname)
 import TeamTavern.Client.Script.Navigate (navigateWithEvent_)
 import TeamTavern.Client.Script.Request (get)
 import TeamTavern.Client.Shared.Fetch (fetchSimple)
+import TeamTavern.Client.Shared.Slot (SimpleSlot)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Game.ViewAllGames as ViewAllGames
 import TeamTavern.Routes.Session.EndSession (EndSession)
@@ -65,10 +65,7 @@ data Action
     | ToggleGamesPopunder MouseEvent
     | CloseGamesPopunder
 
-type Slot = H.Slot (Const Void) Void Unit
-
-render :: ∀ children left.
-    State -> H.ComponentHTML Action children (Async left)
+render :: ∀ left. State -> H.ComponentHTML Action _ (Async left)
 render state = HH.div_ $
     [ HH.div [ HS.class_ "top-bar" ]
         [ HH.div [ HS.class_ "top-bar-content" ]
@@ -293,5 +290,5 @@ component = H.mkComponent
     }
 
 topBar :: ∀ action left slots.
-    Input -> HH.ComponentHTML action (topBar :: Slot | slots) (Async left)
+    Input -> HH.ComponentHTML action (topBar :: SimpleSlot | slots) (Async left)
 topBar input = HH.slot (Proxy :: _ "topBar") unit component input absurd

@@ -3,17 +3,16 @@ module TeamTavern.Client.Pages.GameTabs where
 import Prelude
 
 import Async (Async)
-import Data.Const (Const)
 import Data.Maybe (Maybe(..))
-import Type.Proxy (Proxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Ads (stickyLeaderboards)
 import TeamTavern.Client.Pages.Profiles (profiles)
-import TeamTavern.Client.Pages.Profiles as Profiles
 import TeamTavern.Client.Pages.Profiles.GameHeader (ProfileTab(..), Tab(..), gameHeader)
 import TeamTavern.Client.Script.Request (get)
+import TeamTavern.Client.Shared.Slot (SimpleSlot)
 import TeamTavern.Routes.Game.ViewGame as ViewGame
+import Type.Proxy (Proxy(..))
 
 type Input = { handle :: String, tab :: Tab }
 
@@ -24,10 +23,8 @@ data State
 
 data Action = Initialize | Receive Input
 
-type Slot = H.Slot (Const Void) Void Unit
-
 type ChildSlots =
-    ( profiles :: Profiles.Slot
+    ( profiles :: SimpleSlot
     )
 
 render :: ∀ left. State -> H.ComponentHTML Action ChildSlots (Async left)
@@ -71,5 +68,5 @@ component = H.mkComponent
     }
 
 gameTabs :: ∀ query children left.
-    Input -> HH.ComponentHTML query (gameTabs :: Slot | children) (Async left)
+    Input -> HH.ComponentHTML query (gameTabs :: SimpleSlot | children) (Async left)
 gameTabs input = HH.slot (Proxy :: _ "gameTabs") unit component input absurd

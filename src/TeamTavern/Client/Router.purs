@@ -5,34 +5,25 @@ import Prelude
 import Async (Async)
 import Data.Maybe (Maybe(..))
 import Data.String (Pattern(..), split)
-import Type.Proxy (Proxy(..))
 import Foreign (Foreign)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
-import Yoga.JSON (read_)
 import TeamTavern.Client.Components.Content (content, singleContent, wideContent)
 import TeamTavern.Client.Components.Footer (footer)
 import TeamTavern.Client.Components.Footer as Footer
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Components.TopBar (topBar)
-import TeamTavern.Client.Components.TopBar as TopBar
 import TeamTavern.Client.Pages.About (about)
-import TeamTavern.Client.Pages.About as About
 import TeamTavern.Client.Pages.DeleteAlert (deleteAlert)
-import TeamTavern.Client.Pages.DeleteAlert as DeleteAlert
 import TeamTavern.Client.Pages.Game (game)
-import TeamTavern.Client.Pages.Game as Game
 import TeamTavern.Client.Pages.GameTabs as GameTabs
 import TeamTavern.Client.Pages.Games (games)
-import TeamTavern.Client.Pages.Games as Games
 import TeamTavern.Client.Pages.Home (home)
-import TeamTavern.Client.Pages.Home as Home
 import TeamTavern.Client.Pages.Onboarding (onboarding)
 import TeamTavern.Client.Pages.Onboarding as Onboarding
 import TeamTavern.Client.Pages.Player (player)
-import TeamTavern.Client.Pages.Player as Player
 import TeamTavern.Client.Pages.PlayerProfile (playerProfile)
 import TeamTavern.Client.Pages.PlayerProfile as PlayerProfile
 import TeamTavern.Client.Pages.Preboarding (preboarding)
@@ -40,11 +31,8 @@ import TeamTavern.Client.Pages.Preboarding as Preboarding
 import TeamTavern.Client.Pages.Privacy (privacyPolicy)
 import TeamTavern.Client.Pages.Profiles.GameHeader as GameHeader
 import TeamTavern.Client.Pages.Register (register)
-import TeamTavern.Client.Pages.Register as Register
 import TeamTavern.Client.Pages.SignIn (signIn)
-import TeamTavern.Client.Pages.SignIn as SignIn
 import TeamTavern.Client.Pages.Team (team)
-import TeamTavern.Client.Pages.Team as Team
 import TeamTavern.Client.Pages.TeamProfile (teamProfile)
 import TeamTavern.Client.Pages.TeamProfile as TeamProfile
 import TeamTavern.Client.Script.Cookie (getPlayerNickname, hasPlayerIdCookie)
@@ -52,6 +40,8 @@ import TeamTavern.Client.Script.Navigate (navigateReplace_)
 import TeamTavern.Client.Script.ReloadAds (reloadAds)
 import TeamTavern.Client.Shared.Slot (SimpleSlot)
 import TeamTavern.Client.Snippets.Class as HS
+import Type.Proxy (Proxy(..))
+import Yoga.JSON (read_)
 
 data Query send = ChangeRoute Foreign String send
 
@@ -79,39 +69,39 @@ data State
     | NotFound
 
 type ChildSlots = Footer.ChildSlots
-    ( topBar :: TopBar.Slot
-    , home :: Home.Slot Unit
-    , about :: About.Slot
-    , games :: Games.Slot Unit
-    , game :: Game.Slot
-    , gameTabs :: GameTabs.Slot
-    , player :: Player.Slot
+    ( topBar :: SimpleSlot
+    , home :: SimpleSlot
+    , about :: SimpleSlot
+    , games :: SimpleSlot
+    , game :: SimpleSlot
+    , gameTabs :: SimpleSlot
+    , player :: SimpleSlot
     , playerProfile :: SimpleSlot
-    , team :: Team.Slot
+    , team :: SimpleSlot
     , teamProfile :: SimpleSlot
-    , onboarding :: Onboarding.Slot
-    , preboarding :: Preboarding.Slot
-    , signIn :: SignIn.Slot Unit
+    , onboarding :: SimpleSlot
+    , preboarding :: SimpleSlot
+    , signIn :: SimpleSlot
     , homeAnchor :: NavigationAnchor.Slot Unit
     , signInAnchor :: NavigationAnchor.Slot Unit
-    , register :: Register.Slot Unit
+    , register :: SimpleSlot
     , "network-n-test" :: NavigationAnchor.Slot Unit
     , "network-n-test2" :: NavigationAnchor.Slot Unit
-    , deleteAlert :: DeleteAlert.Slot
+    , deleteAlert :: SimpleSlot
     )
 
 topBarWithContent
     :: ∀ query children left
     .  Maybe String
-    -> Array (H.ComponentHTML query (Footer.ChildSlots (topBar :: TopBar.Slot | children)) (Async left))
-    -> H.ComponentHTML query (Footer.ChildSlots (topBar :: TopBar.Slot | children)) (Async left)
+    -> Array (H.ComponentHTML query (Footer.ChildSlots (topBar :: SimpleSlot | children)) (Async left))
+    -> H.ComponentHTML query (Footer.ChildSlots (topBar :: SimpleSlot | children)) (Async left)
 topBarWithContent handle content' = HH.div_ [ topBar handle, content content', footer ]
 
 wideTopBarWithContent
     :: ∀ query children left
     .  Maybe String
-    -> Array (H.ComponentHTML query (Footer.ChildSlots (topBar :: TopBar.Slot | children)) (Async left))
-    -> H.ComponentHTML query (Footer.ChildSlots (topBar :: TopBar.Slot | children)) (Async left)
+    -> Array (H.ComponentHTML query (Footer.ChildSlots (topBar :: SimpleSlot | children)) (Async left))
+    -> H.ComponentHTML query (Footer.ChildSlots (topBar :: SimpleSlot | children)) (Async left)
 wideTopBarWithContent handle content' = HH.div_ [ topBar handle, wideContent content', footer ]
 
 render :: ∀ action left. State -> H.ComponentHTML action ChildSlots (Async left)

@@ -1,10 +1,8 @@
-module TeamTavern.Client.Pages.About (Slot, about) where
+module TeamTavern.Client.Pages.About (about) where
 
 import Prelude
 
-import Data.Const (Const)
 import Data.Maybe (Maybe(..))
-import Type.Proxy (Proxy(..))
 import Effect.Class (class MonadEffect)
 import Halogen as H
 import Halogen.HTML as HH
@@ -13,12 +11,12 @@ import TeamTavern.Client.Components.Ads (stickyLeaderboards)
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Script.Meta (setMeta)
+import TeamTavern.Client.Shared.Slot (SimpleSlot)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Client.Snippets.SocialMediaUrls (discordUrl, redditUrl, steamId, twitterUrl)
+import Type.Proxy (Proxy(..))
 
 data Action = Initialize
-
-type Slot = H.Slot (Const Void) Void Unit
 
 type ChildSlots = (emailAnchor :: NavigationAnchor.Slot Unit)
 
@@ -76,5 +74,5 @@ component = H.mkComponent
     }
 
 about :: ∀ action monad children. MonadEffect monad =>
-    HH.ComponentHTML action (about :: Slot | children) monad
+    HH.ComponentHTML action (about :: SimpleSlot | children) monad
 about = HH.slot (Proxy :: _ "about") unit component unit absurd

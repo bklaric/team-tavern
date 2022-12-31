@@ -6,7 +6,6 @@ import Async (Async)
 import Data.Array as Array
 import Data.Const (Const)
 import Data.Maybe (Maybe(..), isNothing, maybe)
-import Type.Proxy (Proxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Record.Extra (pick)
@@ -16,13 +15,14 @@ import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.Select.MultiTreeSelect as MultiTreeSelect
 import TeamTavern.Client.Components.Select.SingleSelect as SingleSelect
 import TeamTavern.Client.Components.Team.OrganizationInfo (organizationInfo)
-import TeamTavern.Client.Components.Team.OrganizationInfo as OrganizationInfo
 import TeamTavern.Client.Components.Team.TeamInputGroup (ageInputGroup, languagesInputGroup, locationInputGroup, microphoneInputGroup, nameInputGroup, websiteInputGroup)
 import TeamTavern.Client.Pages.Profiles.TeamBadge (organizationRadioBadges)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
+import TeamTavern.Client.Shared.Slot (SimpleSlot)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Shared.Organization (Organization, OrganizationNW(..), fromOrganizationNW, toOrganizationNW)
 import TeamTavern.Shared.Timezones (Timezone)
+import Type.Proxy (Proxy(..))
 
 type Input =
     { organization :: OrganizationNW
@@ -77,7 +77,7 @@ type ChildSlots =
     ( location :: MultiTreeSelect.Slot String
     , language :: MultiSelect.Slot String Unit
     , timezone :: SingleSelect.Slot Timezone Unit
-    , organizationInfo :: OrganizationInfo.Slot
+    , organizationInfo :: SimpleSlot
     )
 
 type Slot = H.Slot (Const Void) Output Unit

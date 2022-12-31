@@ -1,4 +1,4 @@
-module TeamTavern.Client.Pages.Player (Input, Slot, player) where
+module TeamTavern.Client.Pages.Player (Input, player) where
 
 import Prelude
 
@@ -6,7 +6,6 @@ import Async (Async)
 import Async as Async
 import Client.Components.Copyable as Copyable
 import Control.Monad.State (class MonadState)
-import Data.Const (Const)
 import Data.Either (Either(..))
 import Data.Foldable (foldMap)
 import Data.Maybe (Maybe(..))
@@ -19,7 +18,6 @@ import TeamTavern.Client.Components.Content (contentColumns, contentDescription,
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Components.Player.ProfileDetails (PlatformIdSlots)
 import TeamTavern.Client.Pages.Player.Contacts (contacts)
-import TeamTavern.Client.Pages.Player.CreateProfileButton as CreateProfileButton
 import TeamTavern.Client.Pages.Player.CreateTeam (createTeam)
 import TeamTavern.Client.Pages.Player.CreateTeam as CreateTeam
 import TeamTavern.Client.Pages.Player.DeletePlayerProfile (deletePlayerProfile)
@@ -32,7 +30,6 @@ import TeamTavern.Client.Pages.Player.EditPlayer as EditDetails
 import TeamTavern.Client.Pages.Player.EditProfile (editProfile)
 import TeamTavern.Client.Pages.Player.EditProfile as EditProfile
 import TeamTavern.Client.Pages.Player.PlayerOptions (playerOptions)
-import TeamTavern.Client.Pages.Player.PlayerOptions as PlayerOptions
 import TeamTavern.Client.Pages.Player.PlayerProfileOptions as PlayerProfileOptions
 import TeamTavern.Client.Pages.Player.Profiles (profiles)
 import TeamTavern.Client.Pages.Player.Status (Status(..), getStatus)
@@ -40,6 +37,7 @@ import TeamTavern.Client.Pages.Player.Teams (teams)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Shared.Fetch (fetchPathQuery)
+import TeamTavern.Client.Shared.Slot (SimpleSlot)
 import TeamTavern.Routes.Player.ViewPlayer (ViewPlayer)
 import TeamTavern.Routes.Player.ViewPlayer as ViewPlayer
 import Type.Proxy (Proxy(..))
@@ -76,19 +74,17 @@ data Action
     | ShowCreateTeamModal
     | HideCreateTeamModal
 
-type Slot = H.Slot (Const Void) Void Unit
-
 type ChildSlots = PlatformIdSlots
     ( discordTag :: Copyable.Slot String
     , team :: NavigationAnchor.Slot String
     , games :: NavigationAnchor.Slot String
     , editContacts :: EditContacts.Slot
     , editPlayer :: EditDetails.Slot
-    , createProfile :: CreateProfileButton.Slot
+    , createProfile :: SimpleSlot
     , editProfile :: EditProfile.Slot
     , deletePlayerProfile :: DeletePlayerProfile.Slot
     , createTeam :: CreateTeam.Slot
-    , playerOptions :: PlayerOptions.Slot
+    , playerOptions :: SimpleSlot
     , playerProfileOptions :: PlayerProfileOptions.Slot
     )
 
@@ -193,5 +189,5 @@ component = H.mkComponent
     }
 
 player :: ∀ query children left.
-    Input -> HH.ComponentHTML query (player :: Slot | children) (Async left)
+    Input -> HH.ComponentHTML query (player :: SimpleSlot | children) (Async left)
 player input = HH.slot (Proxy :: _ "player") unit component input absurd

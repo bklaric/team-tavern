@@ -11,7 +11,6 @@ import Data.Maybe (Maybe(..))
 import Data.Monoid (guard)
 import Data.MultiMap as MultiMap
 import Data.Tuple (Tuple(..))
-import Type.Proxy (Proxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Record as Record
@@ -24,13 +23,14 @@ import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.Team.ProfileInputGroup (Field, Option, aboutInputGroup, ambitionsInputGroup, fieldInputGroup, newOrReturningInputGroup)
 import TeamTavern.Client.Components.Team.ProfileInputGroup as Input
 import TeamTavern.Client.Components.Team.SizeInfo (sizeInfo)
-import TeamTavern.Client.Components.Team.SizeInfo as SizeInfo
 import TeamTavern.Client.Components.Team.TeamInputGroup (discordServerInputGroup)
 import TeamTavern.Client.Pages.Profiles.TeamBadge (platformCheckboxBadges, sizeRadioBadges)
+import TeamTavern.Client.Shared.Slot (SimpleSlot)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Shared.Platform (Platform(..), Platforms)
 import TeamTavern.Routes.Shared.Size (Size(..))
 import TeamTavern.Routes.Shared.TeamContacts (TeamContactsOpen, TeamContacts)
+import Type.Proxy (Proxy(..))
 
 type FieldValues = Array
     { fieldKey :: String
@@ -128,7 +128,7 @@ type Slot = H.Slot (Const Void) Output Unit
 
 type ChildSlots =
     ( "multiSelectField" :: MultiSelect.Slot Option String
-    , "sizeInfo" :: SizeInfo.Slot
+    , "sizeInfo" :: SimpleSlot
     )
 
 render :: ∀ left. State -> H.ComponentHTML Action ChildSlots (Async left)
