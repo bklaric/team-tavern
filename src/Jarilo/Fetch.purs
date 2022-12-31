@@ -240,7 +240,7 @@ instance (Lacks "forbidden" startErrors) =>
 
 instance (Lacks "notFound" startErrors) =>
     FetchStatus NotFound startErrors (notFound :: String | startErrors) where
-    fetchStatus proxy response = fetchStatus' proxy 403 response
+    fetchStatus proxy response = fetchStatus' proxy 404 response
 
 instance (Lacks "internal" startErrors) =>
     FetchStatus Internal startErrors (internal :: String | startErrors) where
