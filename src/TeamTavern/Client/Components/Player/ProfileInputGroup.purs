@@ -51,6 +51,7 @@ platformIdInputGroup platform platformId onValue error required =
                 [ HH.text "You can find out your Riot ID at "
                 , textAnchor_ "https://account.riotgames.com/" "account.riotgames.com"
                 ]
+            , inputUnderlabel "Make sure to include the tagline as well."
             ]
         BattleNet ->
             [ inputUnderlabel "Example: username#1234"
