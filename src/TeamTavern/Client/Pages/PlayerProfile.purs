@@ -3,16 +3,18 @@ module TeamTavern.Client.Pages.PlayerProfile (Input, playerProfile) where
 import Prelude
 
 import Async (Async)
+import Async as Async
 import Client.Components.Copyable as Copyable
 import Data.Array.Extra (full)
+import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.Monoid (guard)
-import Type.Proxy (Proxy(..))
+import Data.Variant (onMatch)
 import Halogen as H
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Ads (descriptionLeaderboards, stickyLeaderboards)
 import TeamTavern.Client.Components.Card (card, cardSection)
-import TeamTavern.Client.Components.Content (contentDescription, contentHeader, contentHeaderSection, contentHeading', contentHeadingFaIcon)
+import TeamTavern.Client.Components.Content (contentColumns, contentDescription, contentHeader, contentHeaderSection, contentHeading', contentHeadingFaIcon)
 import TeamTavern.Client.Components.Detail (detailColumn, detailColumnHeading4, detailColumns, textDetail)
 import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
@@ -25,11 +27,13 @@ import TeamTavern.Client.Pages.Player.Status (Status(..), getStatus)
 import TeamTavern.Client.Pages.Profiles.TeamBadge (platformBadge)
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
 import TeamTavern.Client.Script.Meta (setMeta)
-import TeamTavern.Client.Script.Request (get)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
+import TeamTavern.Client.Shared.Fetch (fetchPathQuery)
 import TeamTavern.Client.Shared.Slot (SimpleSlot)
 import TeamTavern.Client.Snippets.Class as HS
+import TeamTavern.Routes.Profile.ViewPlayerProfile (ViewPlayerProfile)
 import TeamTavern.Routes.Profile.ViewPlayerProfile as ViewPlayerProfile
+import Type.Proxy (Proxy(..))
 
 type Input =
     { nickname :: String
@@ -127,14 +131,9 @@ render (Loaded { profile, status }) = let
         ]
     ]
     <> stickyLeaderboards
-render NotFound = HH.p_ [ HH.text "Player could not be found." ]
-render Error = HH.p_ [ HH.text
-    "There has been an error loading the player. Please try again later." ]
-
-loadPlayerProfile :: ∀ left. Input -> Async left (Maybe ViewPlayerProfile.OkContent)
-loadPlayerProfile { nickname, handle } = do
-    timezone <- getClientTimezone
-    get ("/api/players/" <> nickname <> "/profiles/" <> handle <> "?timezone=" <> timezone)
+render NotFound = contentColumns [ HH.p_ [ HH.text "Player profile could not be found." ] ]
+render Error = contentColumns [ HH.p_ [ HH.text
+    "There has been an error loading the player profile. Please try again later." ] ]
 
 handleAction :: ∀ slots output left.
     Action -> H.HalogenM State Action slots output (Async left) Unit
@@ -144,16 +143,22 @@ handleAction Initialize = do
         Empty input -> handleAction $ Receive input
         _ -> pure unit
 handleAction (Receive input) = do
-    playerProfileMaybe <- H.lift $ loadPlayerProfile input
-    case playerProfileMaybe of
-        Just playerProfile' @ { nickname, title } -> do
-            status <- getStatus nickname
-            H.put $ Loaded { profile: playerProfile', status }
-            setMeta (nickname <> " - " <> title <> " | TeamTavern")
-                ( "View " <> title <> " profile of player "
-                <> nickname <> " on TeamTavern."
-                )
-        _ -> pure unit
+    timezone <- getClientTimezone
+    result <- H.lift $ Async.attempt $
+        fetchPathQuery (Proxy :: _ ViewPlayerProfile) input { timezone }
+    case result of
+        Left _ -> H.put Error
+        Right response -> response # onMatch
+            { ok: \playerProfile' @ { nickname, title } -> do
+                status <- getStatus nickname
+                H.put $ Loaded { profile: playerProfile', status }
+                setMeta (nickname <> " - " <> title <> " | TeamTavern")
+                    ( "View " <> title <> " profile of player "
+                    <> nickname <> " on TeamTavern."
+                    )
+            , notFound: const $ H.put NotFound
+            }
+            (const $ H.put Error)
 
 component :: ∀ query output left. H.Component query Input output (Async left)
 component = H.mkComponent

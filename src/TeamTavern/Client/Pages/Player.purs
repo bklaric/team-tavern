@@ -3,12 +3,15 @@ module TeamTavern.Client.Pages.Player (Input, Slot, player) where
 import Prelude
 
 import Async (Async)
+import Async as Async
 import Client.Components.Copyable as Copyable
 import Control.Monad.State (class MonadState)
 import Data.Const (Const)
+import Data.Either (Either(..))
 import Data.Foldable (foldMap)
 import Data.Maybe (Maybe(..))
 import Data.Monoid (guard)
+import Data.Variant (onMatch)
 import Halogen as H
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Ads (descriptionLeaderboards, stickyLeaderboards)
@@ -35,8 +38,9 @@ import TeamTavern.Client.Pages.Player.Profiles (profiles)
 import TeamTavern.Client.Pages.Player.Status (Status(..), getStatus)
 import TeamTavern.Client.Pages.Player.Teams (teams)
 import TeamTavern.Client.Script.Meta (setMeta)
-import TeamTavern.Client.Script.Request (get)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
+import TeamTavern.Client.Shared.Fetch (fetchPathQuery)
+import TeamTavern.Routes.Player.ViewPlayer (ViewPlayer)
 import TeamTavern.Routes.Player.ViewPlayer as ViewPlayer
 import Type.Proxy (Proxy(..))
 
@@ -125,14 +129,9 @@ render (Loaded state @ { player: player', status }) =
     <> foldMap
         (\profile -> [ deletePlayerProfile { player: player', profile } $ const HideDeleteProfileModal ])
         state.deleteProfileModalShown
-render NotFound = HH.p_ [ HH.text "Player could not be found." ]
-render Error = HH.p_ [ HH.text
-    "There has been an error loading the player. Please try again later." ]
-
-loadPlayer :: ∀ left. String -> Async left (Maybe ViewPlayer.OkContent)
-loadPlayer nickname = do
-    timezone <- getClientTimezone
-    get ("/api/players/" <> nickname <> "?timezone=" <> timezone)
+render NotFound = contentColumns [ HH.p_ [ HH.text "Player could not be found." ] ]
+render Error = contentColumns [ HH.p_ [ HH.text
+    "There has been an error loading the player. Please try again later." ] ]
 
 modifyLoaded :: ∀ monad. MonadState State monad => (Loaded -> Loaded) -> monad Unit
 modifyLoaded mod =
@@ -148,23 +147,29 @@ handleAction Initialize = do
     case state of
         Empty input -> handleAction $ Receive input
         _ -> pure unit
-handleAction (Receive { nickname }) = do
-    player' <- H.lift $ loadPlayer nickname
-    case player' of
-        Just player'' -> do
-            status <- getStatus player''.nickname
-            H.put $ Loaded
-                { player: player''
-                , status
-                , editContactsModalShown: false
-                , editPlayerModalShown: false
-                , editProfileModalShown: Nothing
-                , deleteProfileModalShown: Nothing
-                , createTeamModalShown: false
-                }
-            setMeta (player''.nickname <> " | TeamTavern")
-                ("View all details, profiles and teams of player " <> player''.nickname <> ".")
-        _ -> pure unit
+handleAction (Receive input) = do
+    timezone <- getClientTimezone
+    result <- H.lift $ Async.attempt $
+        fetchPathQuery (Proxy :: _ ViewPlayer) input { timezone }
+    case result of
+        Left _ -> H.put Error
+        Right response -> response # onMatch
+            { ok: \player' -> do
+                status <- getStatus player'.nickname
+                H.put $ Loaded
+                    { player: player'
+                    , status
+                    , editContactsModalShown: false
+                    , editPlayerModalShown: false
+                    , editProfileModalShown: Nothing
+                    , deleteProfileModalShown: Nothing
+                    , createTeamModalShown: false
+                    }
+                setMeta (player'.nickname <> " | TeamTavern")
+                    ("View all details, profiles and teams of player " <> player'.nickname <> ".")
+            , notFound: const $ H.put NotFound
+            }
+            (const $ H.put Error)
 handleAction ShowEditContactsModal = modifyLoaded _ { editContactsModalShown = true }
 handleAction HideEditContactsModal = modifyLoaded _ { editContactsModalShown = false }
 handleAction ShowEditPlayerModal = modifyLoaded _ { editPlayerModalShown = true }

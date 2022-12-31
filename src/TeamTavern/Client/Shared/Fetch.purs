@@ -17,6 +17,8 @@ fetch proxy path query body = let
 
 fetchPath proxy path = fetch proxy path {} unit
 
+fetchPathQuery proxy path query = fetch proxy path query unit
+
 fetchPathNoContent proxy path = fetchPath proxy path # attempt <#>
     case _ of
     Left _ -> Nothing

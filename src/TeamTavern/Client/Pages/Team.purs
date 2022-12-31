@@ -3,12 +3,15 @@ module TeamTavern.Client.Pages.Team (Input, Slot, team) where
 import Prelude
 
 import Async (Async)
+import Async as Async
 import Client.Components.Copyable as Copyable
 import Control.Monad.State (class MonadState)
 import Data.Const (Const)
+import Data.Either (Either(..))
 import Data.Foldable (foldMap)
 import Data.Maybe (Maybe(..))
 import Data.Monoid (guard)
+import Data.Variant (onMatch)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
@@ -33,10 +36,11 @@ import TeamTavern.Client.Pages.Team.Status (Status(..), getStatus)
 import TeamTavern.Client.Pages.Team.TeamOptions (teamOptions)
 import TeamTavern.Client.Pages.Team.TeamProfileOptions as TeamProfileOptions
 import TeamTavern.Client.Script.Meta (setMeta)
-import TeamTavern.Client.Script.Request (get)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
+import TeamTavern.Client.Shared.Fetch (fetchPathQuery)
 import TeamTavern.Client.Shared.Slot (SimpleSlot)
 import TeamTavern.Routes.Shared.Organization (OrganizationNW(..), nameOrHandleNW)
+import TeamTavern.Routes.Team.ViewTeam (ViewTeam)
 import TeamTavern.Routes.Team.ViewTeam as ViewTeam
 import Type.Proxy (Proxy(..))
 
@@ -130,13 +134,9 @@ render (Loaded state @ { team: team', status } ) =
     <> foldMap
         (\profile -> [ deleteTeamProfile { team: team', profile } $ const HideDeleteProfileModal ])
         state.deleteProfileModalShown
-render NotFound = HH.p_ [ HH.text "Team could not be found." ]
-render Error = HH.p_ [ HH.text "There has been an error loading the team. Please try again later." ]
-
-loadTeam :: ∀ left. String -> Async left (Maybe ViewTeam.OkContent)
-loadTeam handle = do
-    timezone <- getClientTimezone
-    get $ "/api/teams/" <> handle <> "?timezone=" <> timezone
+render NotFound = contentColumns [ HH.p_ [ HH.text "Team could not be found." ] ]
+render Error = contentColumns [ HH.p_ [ HH.text
+    "There has been an error loading the team. Please try again later." ] ]
 
 modifyLoaded :: ∀ monad. MonadState State monad => (Loaded -> Loaded) -> monad Unit
 modifyLoaded mod =
@@ -150,23 +150,29 @@ handleAction :: ∀ output left.
 handleAction Initialize = do
     state <- H.get
     case state of
-        Empty { handle } -> do
-            team' <- H.lift $ loadTeam handle
-            case team' of
-                Just team'' -> do
-                    status <- getStatus team''.owner
-                    H.put $ Loaded
-                        { team: team''
-                        , status
-                        , editContactsModalShown: false
-                        , editTeamModalShown: false
-                        , editProfileModalShown: Nothing
-                        , deleteProfileModalShown: Nothing
-                        }
-                    let nameOrHandle = nameOrHandleNW team''.handle team''.organization
-                    setMeta (nameOrHandle <> " | TeamTavern")
-                        ("View all details and profiles of team " <> nameOrHandle <> ".")
-                _ -> pure unit
+        Empty input -> do
+            timezone <- getClientTimezone
+            result <- H.lift $ Async.attempt $
+                fetchPathQuery (Proxy :: _ ViewTeam) input { timezone }
+            case result of
+                Left _ -> H.put Error
+                Right response -> response # onMatch
+                    { ok: \team' -> do
+                        status <- getStatus team'.owner
+                        H.put $ Loaded
+                            { team: team'
+                            , status
+                            , editContactsModalShown: false
+                            , editTeamModalShown: false
+                            , editProfileModalShown: Nothing
+                            , deleteProfileModalShown: Nothing
+                            }
+                        let nameOrHandle = nameOrHandleNW team'.handle team'.organization
+                        setMeta (nameOrHandle <> " | TeamTavern")
+                            ("View all details and profiles of team " <> nameOrHandle <> ".")
+                    , notFound: const $ H.put NotFound
+                    }
+                    (const $ H.put Error)
         _ -> pure unit
 handleAction ShowEditContactsModal = modifyLoaded _ { editContactsModalShown = true }
 handleAction HideEditContactsModal = modifyLoaded _ { editContactsModalShown = false }
