@@ -1,3 +1,5 @@
+CREATE EXTENSION pg_trgm;
+
 create table player
     ( id serial not null primary key
     , nickname varchar(40) not null unique
@@ -29,6 +31,23 @@ create table player
     );
 
 create unique index player_lower_nickname_key on player (lower(nickname));
+
+alter table player
+add column search text
+generated always as (
+    nickname || ' '
+    || coalesce(discord_tag, '') || ' '
+    || coalesce(steam_id, '') || ' '
+    || coalesce(riot_id, '') || ' '
+    || coalesce(battle_tag, '') || ' '
+    || coalesce(ea_id, '') || ' '
+    || coalesce(ubisoft_username, '') || ' '
+    || coalesce(psn_id, '') || ' '
+    || coalesce(gamer_tag, '') || ' '
+    || coalesce(friend_code, '')
+) stored;
+
+create index player_search_idx on player using gin (search gin_trgm_ops);
 
 create table team
     ( id serial not null primary key
@@ -65,6 +84,26 @@ create table team
     , created timestamptz not null default current_timestamp
     , updated timestamptz not null default current_timestamp
     );
+
+alter table team
+add column search text
+generated always as (
+    handle || ' '
+    || coalesce(name, '') || ' '
+    || coalesce(website, '') || ' '
+    || coalesce(discord_tag, '') || ' '
+    || coalesce(discord_server, '') || ' '
+    || coalesce(steam_id, '') || ' '
+    || coalesce(riot_id, '') || ' '
+    || coalesce(battle_tag, '') || ' '
+    || coalesce(ea_id, '') || ' '
+    || coalesce(ubisoft_username, '') || ' '
+    || coalesce(psn_id, '') || ' '
+    || coalesce(gamer_tag, '') || ' '
+    || coalesce(friend_code, '')
+) stored;
+
+create index team_search_idx on team using gin (search gin_trgm_ops);
 
 create table session
     ( id serial not null primary key

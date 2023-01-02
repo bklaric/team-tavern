@@ -16,6 +16,7 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Halogen.Query.Event as ES
 import TeamTavern.Client.Components.Divider (divider)
+import TeamTavern.Client.Components.Search (search)
 import TeamTavern.Client.Script.Cookie (getPlayerNickname)
 import TeamTavern.Client.Script.Navigate (navigateWithEvent_)
 import TeamTavern.Client.Script.Request (get)
@@ -170,6 +171,7 @@ render state = HH.div_ $
                         ]
                     ])
                     state.selectedGame
+            , search
             , HH.div [ HS.class_ "top-bar-menu" ]
                 [ HH.button
                     [ HS.class_ "top-bar-menu-button"
