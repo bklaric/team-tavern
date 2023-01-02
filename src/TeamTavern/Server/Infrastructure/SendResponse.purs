@@ -18,7 +18,12 @@ sendResponse heading =
     alwaysRight (\(Terror error _) -> error) identity
     <<< examineLeftWithEffect (logError heading)
 
-lmapElaborateReferrer :: forall right error.
+lmapElaborateReferrer :: ∀ right error.
     Map String String -> Async (Terror error) right -> Async (Terror error) right
 lmapElaborateReferrer headers =
     lmapElaborate ("Referrer: " <> (show $ Map.lookup "referer" headers))
+
+lmapElaborateUserAgent :: ∀ right error.
+    Map String String -> Async (Terror error) right -> Async (Terror error) right
+lmapElaborateUserAgent headers =
+    lmapElaborate ("User agent: " <> (show $ Map.lookup "user-agent" headers))

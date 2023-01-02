@@ -65,6 +65,6 @@ collect = map toNea >>> fold1
 elaborate :: ∀ error. String -> Terror error -> Terror error
 elaborate line (Terror error lines) = Terror error (Array.cons line lines)
 
-lmapElaborate :: forall bf right error. Bifunctor bf =>
+lmapElaborate :: ∀ bf right error. Bifunctor bf =>
     String -> bf (Terror error) right -> bf (Terror error) right
 lmapElaborate line asyncTerror = asyncTerror # lmap (elaborate line)

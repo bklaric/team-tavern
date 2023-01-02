@@ -11,7 +11,7 @@ import Postgres.Query (Query(..), (:))
 import TeamTavern.Routes.Team.ViewTeam as ViewTeam
 import TeamTavern.Server.Infrastructure.Error (elaborate)
 import TeamTavern.Server.Infrastructure.Postgres (LoadSingleError, queryFirstNotFound, teamAdjustedWeekdayFrom, teamAdjustedWeekdayTo, teamAdjustedWeekendFrom, teamAdjustedWeekendTo)
-import TeamTavern.Server.Infrastructure.SendResponse (lmapElaborateReferrer, sendResponse)
+import TeamTavern.Server.Infrastructure.SendResponse (lmapElaborateReferrer, lmapElaborateUserAgent, sendResponse)
 
 queryString :: String -> Query
 queryString timezone = Query $ """
@@ -202,5 +202,5 @@ loadTeam pool { handle, timezone } =
 
 view :: ∀ left. Pool -> ViewTeam.RouteParams -> Map String String -> Async left _
 view pool routeParams headers =
-    sendResponse "Error viewing team" $ lmapElaborateReferrer headers do
+    sendResponse "Error viewing team" $ lmapElaborateReferrer headers $ lmapElaborateUserAgent headers do
     ok_ <$> loadTeam pool routeParams

@@ -17,6 +17,10 @@ fetch proxy path query body = let
 
 fetchPath proxy path = fetch proxy path {} unit
 
+fetchQuery proxy query = fetch proxy {} query unit
+
+fetchBody proxy body = fetch proxy {} {} body
+
 fetchPathQuery proxy path query = fetch proxy path query unit
 
 fetchPathNoContent proxy path = fetchPath proxy path # attempt <#>
@@ -24,8 +28,6 @@ fetchPathNoContent proxy path = fetchPath proxy path # attempt <#>
     Left _ -> Nothing
     Right response ->
         onMatch { noContent: const $ Just unit } (const Nothing) response
-
-fetchBody proxy body = fetch proxy {} {} body
 
 fetchPathBody proxy path body = fetch proxy path {} body
 

@@ -61,8 +61,11 @@ usePopover = Hooks.do
 
     Hooks.pure state
 
+stopMouseEventPropagation :: ∀ monad. MonadEffect monad => MouseEvent -> monad Unit
+stopMouseEventPropagation = ME.toEvent >>> E.stopPropagation >>> liftEffect
+
 togglePopover :: ∀ monad. MonadEffect monad =>
     Hooks.StateId Boolean -> MouseEvent -> Hooks.HookM monad Unit
 togglePopover shownId mouseEvent = do
-    mouseEvent # ME.toEvent # E.stopPropagation # liftEffect
+    stopMouseEventPropagation mouseEvent
     Hooks.modify_ shownId not
