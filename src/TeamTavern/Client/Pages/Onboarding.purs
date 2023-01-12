@@ -30,10 +30,10 @@ import TeamTavern.Client.Components.Player.PlayerFormInput as PlayerFormInput
 import TeamTavern.Client.Components.Player.ProfileFormInput as PlayerProfileFormInput
 import TeamTavern.Client.Components.Team.ProfileFormInput as TeamProfileFormInput
 import TeamTavern.Client.Components.Team.TeamFormInput as TeamFormInput
-import TeamTavern.Client.Script.Analytics (sendEvent)
+import TeamTavern.Client.Script.Analytics (track)
 import TeamTavern.Client.Script.Cookie (getPlayerNickname)
 import TeamTavern.Client.Script.Meta (setMeta)
-import TeamTavern.Client.Script.Navigate (navigate, navigateReplace, navigate_)
+import TeamTavern.Client.Script.Navigate (navigate, navigate_, replaceState)
 import TeamTavern.Client.Shared.Fetch (fetchBody)
 import TeamTavern.Client.Shared.Slot (SimpleSlot)
 import TeamTavern.Client.Snippets.Class as HS
@@ -330,13 +330,13 @@ sendRequest (state :: State) = Async.unify do
 updateHistoryState :: ∀ monad. MonadEffect monad => State -> monad Unit
 updateHistoryState (state :: State) = do
     case state.step of
-        Greeting -> navigateReplace state "/onboarding/start"
-        PlayerOrTeam -> navigateReplace state "/onboarding/player-or-team"
-        Player -> navigateReplace state "/onboarding/player"
-        Team -> navigateReplace state "/onboarding/team"
-        Game -> navigateReplace state "/onboarding/game"
-        PlayerProfile -> navigateReplace state "/onboarding/player-profile"
-        TeamProfile -> navigateReplace state "/onboarding/team-profile"
+        Greeting -> replaceState state "/onboarding/start"
+        PlayerOrTeam -> replaceState state "/onboarding/player-or-team"
+        Player -> replaceState state "/onboarding/player"
+        Team -> replaceState state "/onboarding/team"
+        Game -> replaceState state "/onboarding/game"
+        PlayerProfile -> replaceState state "/onboarding/player-profile"
+        TeamProfile -> replaceState state "/onboarding/team-profile"
 
 handleAction :: ∀ action output slots left.
     Action -> H.HalogenM State action slots output (Async left) Unit
@@ -528,10 +528,10 @@ handleAction SetUpAccount = do
     response <- H.lift $ sendRequest currentState
     case response of
         Just (Right { teamHandle: Nothing }) -> do
-            H.liftEffect $ maybe (pure unit) (sendEvent "onboard" "player") $ _.handle <$> currentState.game
+            currentState.game # maybe (pure unit) (\{handle} -> track "Onboard" {ilk: "player", game: handle})
             navigate_ "/"
         Just (Right { teamHandle: Just teamHandle}) -> do
-            H.liftEffect $ maybe (pure unit) (sendEvent "onboard" "team") $ _.handle <$> currentState.game
+            currentState.game # maybe (pure unit) (\{handle} -> track "Onboard" {ilk: "team", game: handle})
             navigate_ $ "/teams/" <> teamHandle
         Just (Left errors) -> H.put $
             foldl

@@ -3,6 +3,7 @@ module TeamTavern.Client.Script.Navigate
     , navigate_
     , navigateWithEvent
     , navigateWithEvent_
+    , replaceState
     , navigateReplace
     , navigateReplace_
     , hardNavigate
@@ -12,17 +13,18 @@ import Prelude
 
 import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Timer (setTimeout)
-import Yoga.JSON (class WriteForeign, write)
 import TeamTavern.Client.Script.PopStateEvent as PopStateEvent
 import TeamTavern.Client.Snippets.PreventMouseDefault (preventMouseDefault)
 import Web.Event.EventTarget (dispatchEvent)
 import Web.HTML (window)
 import Web.HTML as Html
-import Web.HTML.History (DocumentTitle(..), URL(..), pushState, replaceState)
+import Web.HTML.History (DocumentTitle(..), URL(..), pushState)
+import Web.HTML.History as History
 import Web.HTML.Location (setHref)
 import Web.HTML.Window (history, location)
 import Web.HTML.Window as Window
 import Web.UIEvent.MouseEvent (MouseEvent)
+import Yoga.JSON (class WriteForeign, write)
 
 navigate :: ∀ effect state. MonadEffect effect =>
     WriteForeign state => state -> String -> effect Unit
@@ -48,12 +50,18 @@ navigateWithEvent state path event = do
 navigateWithEvent_ :: ∀ effect. MonadEffect effect => String -> MouseEvent -> effect Unit
 navigateWithEvent_ path event = navigateWithEvent {} path event
 
+replaceState :: forall state effect. WriteForeign state => MonadEffect effect =>
+    state -> String -> effect Unit
+replaceState state path  =
+    window
+    >>= history
+    >>= History.replaceState (write state) (DocumentTitle path) (URL path)
+    # liftEffect
+
 navigateReplace :: ∀ state effect. MonadEffect effect => WriteForeign state =>
     state -> String -> effect Unit
 navigateReplace state path = liftEffect do
-    window
-        >>= history
-        >>= replaceState (write state) (DocumentTitle path) (URL path)
+    replaceState state path
     popStateEvent <-
         PopStateEvent.create (write state) <#> PopStateEvent.toEvent
     void $ setTimeout 0

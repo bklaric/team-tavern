@@ -13,6 +13,7 @@ import Halogen.Aff as HA
 import Halogen.VDom.Driver (runUI)
 import Partial.Unsafe (unsafePartial)
 import TeamTavern.Client.Router (Query(..), router)
+import TeamTavern.Client.Script.Analytics (identifyNickname, registerSignedIn)
 import TeamTavern.Client.Script.ReloadAds (reloadAds)
 import Web.DOM.NonElementParentNode (getElementById)
 import Web.Event.Event (Event, EventType(..))
@@ -39,6 +40,8 @@ addWindowListener event listener =
 main :: Effect Unit
 main = HA.runHalogenAff do
     _ <- HA.awaitBody
+    identifyNickname
+    registerSignedIn
     (spa :: _) <- window >>= document <#> toNonElementParentNode >>= getElementById "spa-teamtavern" <#> bindFlipped fromElement <#> unsafePartial fromJust # liftEffect
     state <- window >>= Window.history >>= History.state # liftEffect
     path <- window >>= Window.location >>= Location.pathname # liftEffect

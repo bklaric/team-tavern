@@ -13,6 +13,7 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
+import TeamTavern.Client.Script.Analytics (registerSignedIn)
 import TeamTavern.Client.Script.Cookie (hasPlayerIdCookie)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigateReplace_, navigate_)
@@ -165,7 +166,9 @@ handleAction (SignIn event) = do
     H.put state
     newState <- H.lift $ sendSignInRequest state
     case newState of
-        Nothing -> navigate_ "/"
+        Nothing -> do
+            registerSignedIn
+            navigate_ "/"
         Just newState' -> H.put newState' { submitting = false }
 
 component :: ∀ query input output left.

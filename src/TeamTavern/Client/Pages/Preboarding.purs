@@ -34,9 +34,9 @@ import TeamTavern.Client.Components.RegistrationInput (registrationInput)
 import TeamTavern.Client.Components.RegistrationInput as RegistrationInput
 import TeamTavern.Client.Components.Team.ProfileFormInput as TeamProfileFormInput
 import TeamTavern.Client.Components.Team.TeamFormInput as TeamFormInput
-import TeamTavern.Client.Script.Analytics (sendEvent)
+import TeamTavern.Client.Script.Analytics (aliasNickname, identifyNickname, track)
 import TeamTavern.Client.Script.Meta (setMeta)
-import TeamTavern.Client.Script.Navigate (navigate, navigateReplace, navigate_)
+import TeamTavern.Client.Script.Navigate (navigate, navigate_, replaceState)
 import TeamTavern.Client.Shared.Fetch (fetchBody)
 import TeamTavern.Client.Shared.Slot (SimpleSlot)
 import TeamTavern.Client.Snippets.Class as HS
@@ -419,14 +419,14 @@ sendRequest (state :: State) = Async.unify do
 updateHistoryState :: ∀ monad. MonadEffect monad => State -> monad Unit
 updateHistoryState (state :: State) = do
     case state.step of
-        Greeting -> navigateReplace state "/preboarding/start"
-        PlayerOrTeam -> navigateReplace state "/preboarding/player-or-team"
-        Player -> navigateReplace state "/preboarding/player"
-        Team -> navigateReplace state "/preboarding/team"
-        Game -> navigateReplace state "/preboarding/game"
-        PlayerProfile -> navigateReplace state "/preboarding/player-profile"
-        TeamProfile -> navigateReplace state "/preboarding/team-profile"
-        Register -> navigateReplace state "/preboarding/register"
+        Greeting -> replaceState state "/preboarding/start"
+        PlayerOrTeam -> replaceState state "/preboarding/player-or-team"
+        Player -> replaceState state "/preboarding/player"
+        Team -> replaceState state "/preboarding/team"
+        Game -> replaceState state "/preboarding/game"
+        PlayerProfile -> replaceState state "/preboarding/player-profile"
+        TeamProfile -> replaceState state "/preboarding/team-profile"
+        Register -> replaceState state "/preboarding/register"
 
 handleAction :: ∀ action output slots left.
     Action -> H.HalogenM State action slots output (Async left) Unit
@@ -626,10 +626,14 @@ handleAction SetUpAccount = do
     response <- H.lift $ sendRequest currentState
     case response of
         Just (Right { teamHandle: Nothing }) -> do
-            H.liftEffect $ maybe (pure unit) (sendEvent "preboard" "player") $ _.handle <$> getGame currentState.game
+            aliasNickname
+            identifyNickname
+            getGame currentState.game # maybe (pure unit) (\{handle} -> track "Preboard" {ilk: "player", game: handle})
             navigate_ "/"
         Just (Right { teamHandle: Just teamHandle }) -> do
-            H.liftEffect $ maybe (pure unit) (sendEvent "preboard" "team") $ _.handle <$> getGame currentState.game
+            aliasNickname
+            identifyNickname
+            getGame currentState.game # maybe (pure unit) (\{handle} -> track "Preboard" {ilk: "team", game: handle})
             navigate_ $ "/teams/" <> teamHandle
         Just (Left errors) -> H.put $
             foldl
