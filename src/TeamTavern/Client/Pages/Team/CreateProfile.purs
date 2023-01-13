@@ -124,7 +124,7 @@ handleAction (SendRequest event) = do
     response <- H.lift $ sendRequest currentState
     case response of
         Just (Right _) -> do
-            track "Create profile" {ilk: "team", game: currentState.gameHandle}
+            track "Profile create" {ilk: "team", game: currentState.gameHandle}
             hardNavigate $ "/teams/" <> currentState.teamHandle
         Just (Left badContent) -> H.put $
             foldl
