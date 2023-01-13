@@ -5,7 +5,6 @@ import Prelude
 import Async (Async)
 import Data.Maybe (Maybe(..))
 import Data.String (Pattern(..), split)
-import Effect.Class.Console (log)
 import Foreign (Foreign)
 import Halogen (liftEffect)
 import Halogen as H
@@ -171,7 +170,6 @@ nothing = pure Nothing
 handleAction :: ∀ action output slots left.
     Action -> H.HalogenM State action slots output (Async left) Unit
 handleAction (Init state route) = do
-    log "really?"
     liftEffect $ track "Page view" { path: route }
     newState <- case split (Pattern "/") route of
         ["", ""] -> do
