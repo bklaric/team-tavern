@@ -37,8 +37,9 @@ render { text, copied } =
     <>
     if copied
     then Array.singleton $
-        HH.span [ HS.class_ "copyable-copied" ] [ HH.text "Copied!" ]
-    else []
+        HH.span [HS.class_ "copyable-copied"] [HH.text "Copied!"]
+    else Array.singleton $
+        HH.span [HS.class_ "copyable-copy"] [HH.text "Copy"]
 
 handleAction :: ∀ children output left.
     Action -> H.HalogenM State Action children output (Async left) Unit
