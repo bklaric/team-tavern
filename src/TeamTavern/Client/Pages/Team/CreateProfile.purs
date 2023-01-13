@@ -17,11 +17,12 @@ import TeamTavern.Client.Components.Form (form, otherFormError, submitButton)
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.Team.ProfileFormInput (profileFormInput)
 import TeamTavern.Client.Components.Team.ProfileFormInput as ProfileFormInput
+import TeamTavern.Client.Script.Analytics (track)
 import TeamTavern.Client.Script.Navigate (hardNavigate)
 import TeamTavern.Client.Script.Request (postNoContent)
+import TeamTavern.Routes.Game.ViewGame as ViewGame
 import TeamTavern.Routes.Profile.AddTeamProfile as AddTeamProfile
 import TeamTavern.Routes.Team.ViewTeam as ViewTeam
-import TeamTavern.Routes.Game.ViewGame as ViewGame
 import Type.Function (type ($))
 import Type.Proxy (Proxy(..))
 import Web.Event.Event (preventDefault)
@@ -122,7 +123,9 @@ handleAction (SendRequest event) = do
         }
     response <- H.lift $ sendRequest currentState
     case response of
-        Just (Right _) -> hardNavigate $ "/teams/" <> currentState.teamHandle
+        Just (Right _) -> do
+            track "Create profile" {ilk: "team", game: currentState.gameHandle}
+            hardNavigate $ "/teams/" <> currentState.teamHandle
         Just (Left badContent) -> H.put $
             foldl
             (\state error ->
