@@ -408,12 +408,24 @@ sendRequest (state :: State) = Async.unify do
             }
         _ -> Async.left Nothing
     response <- fetchBody (Proxy :: _ Preboard) body # lmap (const Nothing)
-    pure $ onMatch
-        { ok: Just <<< Right
-        , badRequest: Just <<< Left
-        }
-        (const Nothing)
-        response
+    let result = onMatch
+            { ok: Just <<< Right
+            , badRequest: Just <<< Left
+            }
+            (const Nothing)
+            response
+    let trackParams =
+            { ilk: if body.ilk == 1 then "player" else "team"
+            , game: body.gameHandle
+            , result: show result
+            }
+    case result of
+        Just (Right _) -> do
+            aliasNickname
+            identifyNickname
+            track "Preboard" trackParams
+        _ -> track "Preboard error" trackParams
+    pure result
 
 -- Update state for current history entry so back button doesn't lose previous state.
 updateHistoryState :: ∀ monad. MonadEffect monad => State -> monad Unit
@@ -625,16 +637,8 @@ handleAction SetUpAccount = do
             }
     response <- H.lift $ sendRequest currentState
     case response of
-        Just (Right { teamHandle: Nothing }) -> do
-            aliasNickname
-            identifyNickname
-            getGame currentState.game # maybe (pure unit) (\{handle} -> track "Preboard" {ilk: "player", game: handle})
-            navigate_ "/"
-        Just (Right { teamHandle: Just teamHandle }) -> do
-            aliasNickname
-            identifyNickname
-            getGame currentState.game # maybe (pure unit) (\{handle} -> track "Preboard" {ilk: "team", game: handle})
-            navigate_ $ "/teams/" <> teamHandle
+        Just (Right {teamHandle: Nothing}) -> navigate_ "/"
+        Just (Right {teamHandle: Just teamHandle}) -> navigate_ $ "/teams/" <> teamHandle
         Just (Left errors) -> H.put $
             foldl
             (\state error ->
