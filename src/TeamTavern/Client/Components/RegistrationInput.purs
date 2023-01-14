@@ -5,12 +5,13 @@ import Prelude
 import Async (Async)
 import Data.Const (Const)
 import Data.Maybe (Maybe(..))
-import Type.Proxy (Proxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Record as Record
-import TeamTavern.Client.Components.Input (inputError, inputGroup, inputLabel, requiredTextLineInput)
+import TeamTavern.Client.Components.Input (inputError, inputGroup, requiredTextLineInput)
 import TeamTavern.Client.Components.PasswordInput (passwordInput)
+import TeamTavern.Client.Snippets.Class as HS
+import Type.Proxy (Proxy(..))
 
 type Input =
     { nickname :: String
@@ -53,14 +54,14 @@ render
     } =
     HH.div_
     [ inputGroup $
-        [ inputLabel "fas fa-signature" "Nickname"
+        [ HH.label [ HS.class_ "input-label" ] [ HH.text "Nickname" ]
         , requiredTextLineInput nickname UpdateNickname
         ]
         <> inputError nicknameError """Nickname cannot be more than 40 characters long
             and can only contain alphanumeric characters, dashes, underscores and dots."""
         <> inputError nicknameTaken "This nickname is already taken, please pick another one."
     , inputGroup $
-        [ inputLabel "fas fa-key" "Password"
+        [ HH.label [ HS.class_ "input-label" ] [ HH.text "Password" ]
         , passwordInput password passwordShown UpdatePassword TogglePasswordVisibility
         ]
         <> inputError passwordError "Password must have at least 8 characters."
