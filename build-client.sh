@@ -1,6 +1,6 @@
 #!/bin/bash
+mkdir -p dist-client
 rm -rf dist-client/*
-mkdir dist-client
 mkdir dist-client/images
 mkdir dist-client/images/competitions
 mkdir dist-client/favicons
