@@ -8,6 +8,7 @@ import Data.Maybe (Maybe(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
+import TeamTavern.Client.Components.Ads (stickyLeaderboards)
 import TeamTavern.Client.Components.Boarding.PlayerOrTeamInput as Boarding
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Pages.Home.CallToAction (callToAction)
@@ -38,7 +39,7 @@ type ChildSlots =
 
 render :: ∀ left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render _ =
-    HH.div [ HP.class_ $ HH.ClassName "home" ]
+    HH.div [ HP.class_ $ HH.ClassName "home" ] $
     [ callToAction OpenGames OpenPreboarding
     , forPlayers OpenPlayerPreboarding
     , forTeams OpenTeamPreboarding
@@ -46,6 +47,7 @@ render _ =
     , connect
     , features OpenPreboarding
     ]
+    <> stickyLeaderboards
 
 handleAction :: ∀ action output slots left.
     Action -> H.HalogenM State action slots output (Async left) Unit
