@@ -4,9 +4,9 @@ import Prelude
 
 import Async (Async)
 import Data.Array (nubEq)
-import Data.Foldable (foldl)
 import Data.Const (Const)
 import Data.Either (Either(..))
+import Data.Foldable (foldl)
 import Data.Maybe (Maybe(..))
 import Data.Variant (match)
 import Halogen as H
@@ -16,6 +16,7 @@ import TeamTavern.Client.Components.Form (form, otherFormError, submitButton)
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.Team.ContactsFormInput (contactsFormInput)
 import TeamTavern.Client.Components.Team.ContactsFormInput as ContactsFormInput
+import TeamTavern.Client.Script.Analytics (track_)
 import TeamTavern.Client.Script.Navigate (hardNavigate)
 import TeamTavern.Client.Script.Request (putNoContent)
 import TeamTavern.Routes.Shared.TeamContacts as Routes
@@ -93,7 +94,9 @@ handleAction (Update event) = do
         }
     response <- H.lift $ sendRequest currentState
     case response of
-        Just (Right _) -> hardNavigate $ "/teams/" <> currentState.handle
+        Just (Right _) -> do
+            track_ "Team contacts edit"
+            hardNavigate $ "/teams/" <> currentState.handle
         Just (Left badContent) -> H.put $
             foldl
             (\state error ->

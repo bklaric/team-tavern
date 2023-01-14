@@ -4,9 +4,9 @@ import Prelude
 
 import Async (Async)
 import Data.Array (nubEq)
-import Data.Foldable (foldl)
 import Data.Const (Const)
 import Data.Either (Either(..))
+import Data.Foldable (foldl)
 import Data.Maybe (Maybe(..))
 import Data.Variant (match)
 import Halogen as H
@@ -16,11 +16,12 @@ import TeamTavern.Client.Components.Form (form, otherFormError, submitButton)
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.Player.ContactsFormInput (contactsFormInput)
 import TeamTavern.Client.Components.Player.ContactsFormInput as ContactsFormInput
+import TeamTavern.Client.Script.Analytics (track_)
 import TeamTavern.Client.Script.Navigate (hardNavigate)
 import TeamTavern.Client.Script.Request (putNoContent)
-import TeamTavern.Routes.Shared.PlayerContacts as Routes
 import TeamTavern.Routes.Player.UpdatePlayerContacts (RequestContent, BadContent)
 import TeamTavern.Routes.Player.ViewPlayer (OkContentProfile)
+import TeamTavern.Routes.Shared.PlayerContacts as Routes
 import Type.Function (type ($))
 import Type.Proxy (Proxy(..))
 import Web.Event.Event (preventDefault)
@@ -91,7 +92,9 @@ handleAction (Update event) = do
         }
     response <- H.lift $ sendRequest currentState
     case response of
-        Just (Right _) -> hardNavigate $ "/players/" <> currentState.nickname
+        Just (Right _) -> do
+            track_ "Player contacts edit"
+            hardNavigate $ "/players/" <> currentState.nickname
         Just (Left badContent) -> H.put $
             foldl
             (\state error ->

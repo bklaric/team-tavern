@@ -398,7 +398,7 @@ handleAction (ChangePage page) = H.liftEffect do
     href <- Url.href url
     navigate_ href
     scrollProfilesIntoView
-    track "Page change" {page}
+    track "Profile page change" {page}
 handleAction OpenPlayerPreboarding = do
     state <- H.get
     case state of

@@ -17,6 +17,7 @@ import TeamTavern.Client.Components.Form (form, otherFormError, submitButton)
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.Player.ProfileFormInput (profileFormInput)
 import TeamTavern.Client.Components.Player.ProfileFormInput as ProfileFormInput
+import TeamTavern.Client.Script.Analytics (track)
 import TeamTavern.Client.Script.Navigate (hardNavigate)
 import TeamTavern.Client.Script.Request (putNoContent)
 import TeamTavern.Routes.Player.ViewPlayer as ViewPlayer
@@ -114,7 +115,9 @@ handleAction (SendRequest event) = do
         }
     response <- H.lift $ sendRequest currentState
     case response of
-        Just (Right _) -> hardNavigate $ "/players/" <> currentState.nickname
+        Just (Right _) -> do
+            track "Profile edit" {ilk: "player", game: currentState.handle}
+            hardNavigate $ "/players/" <> currentState.nickname
         Just (Left badContent) -> H.put $
             foldl
             (\state error ->
