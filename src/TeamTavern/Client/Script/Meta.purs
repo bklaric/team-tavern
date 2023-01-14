@@ -5,7 +5,6 @@ import Prelude
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import Effect.Class (class MonadEffect, liftEffect)
-import TeamTavern.Client.Script.Analytics (registerPageView)
 import TeamTavern.Client.Script.ReloadAds (reloadAds)
 import Web.DOM.NonElementParentNode (getElementById)
 import Web.HTML (window)
@@ -59,4 +58,3 @@ setMeta title description = liftEffect do
     setMetaDescription description
     setMetaUrl
     reloadAds
-    registerPageView

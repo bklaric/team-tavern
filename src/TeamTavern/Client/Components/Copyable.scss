@@ -2,6 +2,11 @@
     @extend a;
     cursor: pointer;
     font-weight: 500;
+    &:hover{
+        +.copyable-copy {
+            display: initial;
+        }
+    }
 }
 
 .copyable-copied {
@@ -10,4 +15,9 @@
     color: $light-text-color;
     font-weight: 400;
     margin-left: 6px;
+}
+
+.copyable-copy {
+    @extend .copyable-copied;
+    display: none;
 }

@@ -1,19 +1,42 @@
-export const registerPageView = function () {
-  if (window.gtag) {
-    gtag('config', 'UA-150934365-1', { 'page_path': location.pathname });
+export const trackImpl = function (event) {
+  return function (properties) {
+    return function () {
+      if (window.mixpanel) {
+        mixpanel.track(event, properties)
+      }
+    }
   }
 }
 
-export const sendEvent = function (action) {
-  return function (category) {
-    return function (label) {
-      return function () {
-        if (window.gtag) {
-          gtag('event', action, {
-            event_category: category,
-            event_label: label
-          })
-        }
+export const trackImpl_ = function (event) {
+  return function () {
+    if (window.mixpanel) {
+      mixpanel.track(event)
+    }
+  }
+}
+
+export const aliasImpl = function (id) {
+  return function () {
+    if (window.mixpanel) {
+      mixpanel.alias(id)
+    }
+  }
+}
+
+export const identifyImpl = function (id) {
+  return function () {
+    if (window.mixpanel) {
+      mixpanel.identify(id)
+    }
+  }
+}
+
+export const registerImpl = function (properties) {
+  return function (persistent) {
+    return function () {
+      if (window.mixpanel) {
+        mixpanel.register(properties, { persistent })
       }
     }
   }

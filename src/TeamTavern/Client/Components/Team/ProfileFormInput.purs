@@ -129,6 +129,9 @@ type Slot = H.Slot (Const Void) Output Unit
 type ChildSlots =
     ( "multiSelectField" :: MultiSelect.Slot Option String
     , "sizeInfo" :: SimpleSlot
+    , steamAccountLink :: SimpleSlot
+    , riotAccountLink :: SimpleSlot
+    , blizzardAccountLink :: SimpleSlot
     )
 
 render :: ∀ left. State -> H.ComponentHTML Action ChildSlots (Async left)

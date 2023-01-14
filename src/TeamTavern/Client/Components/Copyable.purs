@@ -13,6 +13,7 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Prim.Row (class Cons)
+import TeamTavern.Client.Script.Analytics (track)
 import TeamTavern.Client.Script.Clipboard as Clipboard
 import TeamTavern.Client.Snippets.Class as HS
 import Type.Proxy (Proxy)
@@ -37,8 +38,9 @@ render { text, copied } =
     <>
     if copied
     then Array.singleton $
-        HH.span [ HS.class_ "copyable-copied" ] [ HH.text "Copied!" ]
-    else []
+        HH.span [HS.class_ "copyable-copied"] [HH.text "Copied!"]
+    else Array.singleton $
+        HH.span [HS.class_ "copyable-copy"] [HH.text "Copy"]
 
 handleAction :: ∀ children output left.
     Action -> H.HalogenM State Action children output (Async left) Unit
@@ -46,7 +48,9 @@ handleAction CopyText = do
     { text } <- H.get
     result <- H.lift $ Async.attempt $ Clipboard.writeTextAsync text
     case result of
-        Right _ -> H.modify_ _ { copied = true }
+        Right _ -> do
+            H.modify_ _ { copied = true }
+            track "Copyable click" {text}
         _ -> pure unit
 handleAction (Receive text) =
     H.put { text, copied: false }

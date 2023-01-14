@@ -10,18 +10,26 @@ import Data.Map as Map
 import Data.Maybe (Maybe(..), maybe)
 import Halogen as H
 import Halogen.HTML as HH
-import TeamTavern.Client.Components.Anchor (textAnchor_)
+import TeamTavern.Client.Components.Anchor (trackedTextAnchor)
 import TeamTavern.Client.Components.Input (checkboxInput, domainInputLabel, inputError, inputGroup, inputLabel, inputUnderlabel, inputUnderlabel', platformIdLabel, textInput_, textLineInput)
 import TeamTavern.Client.Components.Select.MultiSelect (multiSelectIndexed)
 import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.Select.SingleSelect (singleSelectIndexed)
 import TeamTavern.Client.Components.Select.SingleSelect as SingleSelect
+import TeamTavern.Client.Shared.Slot (SimpleSlot)
 import TeamTavern.Client.Snippets.Brands (inputBattleNetSvg, inputOriginSvg, inputPlayStationSvg, inputRiotSvg, inputSteamSvg, inputSwitchSvg, inputUbisoftSvg, inputXboxSvg)
 import TeamTavern.Routes.Shared.Platform (Platform(..))
 import Type.Proxy (Proxy(..))
 
-platformIdInputGroup :: ∀ slots action.
-    Platform -> (Maybe String) -> ((Maybe String) -> action) -> Boolean -> Boolean -> HH.HTML slots action
+platformIdInputGroup :: forall action other left.
+    Platform -> Maybe String -> (Maybe String -> action) -> Boolean -> Boolean ->
+    H.ComponentHTML action
+        ( blizzardAccountLink :: SimpleSlot
+        , riotAccountLink :: SimpleSlot
+        , steamAccountLink :: SimpleSlot
+        | other
+        )
+        (Async left)
 platformIdInputGroup platform platformId onValue error required =
     inputGroup $
     ( case platform of
@@ -42,14 +50,14 @@ platformIdInputGroup platform platformId onValue error required =
             [ inputUnderlabel "Example: 76561198821728791"
             , inputUnderlabel'
                 [ HH.text "You can find out your Steam ID at "
-                , textAnchor_ "https://store.steampowered.com/account" "store.steampowered.com/account"
+                , HH.slot_ (Proxy :: _ "steamAccountLink") unit trackedTextAnchor {url: "https://store.steampowered.com/account", text: "store.steampowered.com/account"}
                 ]
             ]
         Riot ->
             [ inputUnderlabel "Example: username#12345"
             , inputUnderlabel'
                 [ HH.text "You can find out your Riot ID at "
-                , textAnchor_ "https://account.riotgames.com/" "account.riotgames.com"
+                , HH.slot_ (Proxy :: _ "riotAccountLink") unit trackedTextAnchor {url: "https://account.riotgames.com/", text: "account.riotgames.com"}
                 ]
             , inputUnderlabel "Make sure to include the tagline as well."
             ]
@@ -57,7 +65,7 @@ platformIdInputGroup platform platformId onValue error required =
             [ inputUnderlabel "Example: username#1234"
             , inputUnderlabel'
                 [ HH.text "You can find out your BattleTag at "
-                , textAnchor_ "https://account.blizzard.com/details" "account.blizzard.com"
+                , HH.slot_ (Proxy :: _ "blizzardAccountLink") unit trackedTextAnchor {url: "https://account.blizzard.com/details", text: "account.blizzard.com"}
                 ]
             ]
         Origin -> []
@@ -104,6 +112,9 @@ type FieldValues = Map String FieldValue
 type ChildSlots =
     ( "singleSelectField" :: SingleSelect.Slot Option String
     , "multiSelectField" :: MultiSelect.Slot Option String
+    , steamAccountLink :: SimpleSlot
+    , riotAccountLink :: SimpleSlot
+    , blizzardAccountLink :: SimpleSlot
     )
 
 fieldInputGroup

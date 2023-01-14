@@ -6,6 +6,7 @@ import Async (Async)
 import Data.Maybe (Maybe(..))
 import Data.String (Pattern(..), split)
 import Foreign (Foreign)
+import Halogen (liftEffect)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
@@ -35,6 +36,7 @@ import TeamTavern.Client.Pages.SignIn (signIn)
 import TeamTavern.Client.Pages.Team (team)
 import TeamTavern.Client.Pages.TeamProfile (teamProfile)
 import TeamTavern.Client.Pages.TeamProfile as TeamProfile
+import TeamTavern.Client.Script.Analytics (track)
 import TeamTavern.Client.Script.Cookie (getPlayerNickname, hasPlayerIdCookie)
 import TeamTavern.Client.Script.Navigate (navigateReplace_)
 import TeamTavern.Client.Script.ReloadAds (reloadAds)
@@ -168,6 +170,7 @@ nothing = pure Nothing
 handleAction :: ∀ action output slots left.
     Action -> H.HalogenM State action slots output (Async left) Unit
 handleAction (Init state route) = do
+    liftEffect $ track "Page view" { path: route }
     newState <- case split (Pattern "/") route of
         ["", ""] -> do
             nickname <- getPlayerNickname

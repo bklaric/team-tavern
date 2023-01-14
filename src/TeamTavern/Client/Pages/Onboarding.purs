@@ -30,10 +30,10 @@ import TeamTavern.Client.Components.Player.PlayerFormInput as PlayerFormInput
 import TeamTavern.Client.Components.Player.ProfileFormInput as PlayerProfileFormInput
 import TeamTavern.Client.Components.Team.ProfileFormInput as TeamProfileFormInput
 import TeamTavern.Client.Components.Team.TeamFormInput as TeamFormInput
-import TeamTavern.Client.Script.Analytics (sendEvent)
+import TeamTavern.Client.Script.Analytics (track)
 import TeamTavern.Client.Script.Cookie (getPlayerNickname)
 import TeamTavern.Client.Script.Meta (setMeta)
-import TeamTavern.Client.Script.Navigate (navigate, navigateReplace, navigate_)
+import TeamTavern.Client.Script.Navigate (navigate, navigate_, replaceState)
 import TeamTavern.Client.Shared.Fetch (fetchBody)
 import TeamTavern.Client.Shared.Slot (SimpleSlot)
 import TeamTavern.Client.Snippets.Class as HS
@@ -319,24 +319,33 @@ sendRequest (state :: State) = Async.unify do
             }
         _ -> Async.left Nothing
     response <- fetchBody (Proxy :: _ Onboard) body # lmap (const Nothing)
-    pure $ onMatch
-        { ok: Just <<< Right
-        , badRequest: Just <<< Left
-        }
-        (const Nothing)
-        response
+    let result = onMatch
+            { ok: Just <<< Right
+            , badRequest: Just <<< Left
+            }
+            (const Nothing)
+            response
+    let trackParams =
+            { ilk: if body.ilk == 1 then "player" else "team"
+            , game: body.gameHandle
+            , result: show result
+            }
+    case result of
+        Just (Right _) -> track "Onboard" trackParams
+        _ -> track "Onboard error" trackParams
+    pure result
 
 -- Update state for current history entry so back button doesn't lose previous state.
 updateHistoryState :: ∀ monad. MonadEffect monad => State -> monad Unit
 updateHistoryState (state :: State) = do
     case state.step of
-        Greeting -> navigateReplace state "/onboarding/start"
-        PlayerOrTeam -> navigateReplace state "/onboarding/player-or-team"
-        Player -> navigateReplace state "/onboarding/player"
-        Team -> navigateReplace state "/onboarding/team"
-        Game -> navigateReplace state "/onboarding/game"
-        PlayerProfile -> navigateReplace state "/onboarding/player-profile"
-        TeamProfile -> navigateReplace state "/onboarding/team-profile"
+        Greeting -> replaceState state "/onboarding/start"
+        PlayerOrTeam -> replaceState state "/onboarding/player-or-team"
+        Player -> replaceState state "/onboarding/player"
+        Team -> replaceState state "/onboarding/team"
+        Game -> replaceState state "/onboarding/game"
+        PlayerProfile -> replaceState state "/onboarding/player-profile"
+        TeamProfile -> replaceState state "/onboarding/team-profile"
 
 handleAction :: ∀ action output slots left.
     Action -> H.HalogenM State action slots output (Async left) Unit
@@ -527,12 +536,8 @@ handleAction SetUpAccount = do
             }
     response <- H.lift $ sendRequest currentState
     case response of
-        Just (Right { teamHandle: Nothing }) -> do
-            H.liftEffect $ maybe (pure unit) (sendEvent "onboard" "player") $ _.handle <$> currentState.game
-            navigate_ "/"
-        Just (Right { teamHandle: Just teamHandle}) -> do
-            H.liftEffect $ maybe (pure unit) (sendEvent "onboard" "team") $ _.handle <$> currentState.game
-            navigate_ $ "/teams/" <> teamHandle
+        Just (Right {teamHandle: Nothing}) -> navigate_ "/"
+        Just (Right {teamHandle: Just teamHandle}) -> navigate_ $ "/teams/" <> teamHandle
         Just (Left errors) -> H.put $
             foldl
             (\state error ->

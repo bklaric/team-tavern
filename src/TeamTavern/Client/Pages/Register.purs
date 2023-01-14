@@ -19,6 +19,7 @@ import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Components.RegistrationInput (registrationInput)
 import TeamTavern.Client.Components.RegistrationInput as RegistrationInput
 import TeamTavern.Client.Pages.Onboarding as Onboarding
+import TeamTavern.Client.Script.Analytics (aliasNickname, identifyNickname, track_)
 import TeamTavern.Client.Script.Cookie (hasPlayerIdCookie)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigate, navigateReplace_, navigateWithEvent_)
@@ -139,7 +140,11 @@ handleAction (Register event) = do
     H.put state
     newState <- H.lift $ sendRegisterRequest state
     case newState of
-        Nothing -> navigate Onboarding.emptyInput "/onboarding/start"
+        Nothing -> do
+            aliasNickname
+            identifyNickname
+            track_ "Register"
+            navigate Onboarding.emptyInput "/onboarding/start"
         Just newState' -> H.put newState' { submitting = false }
 handleAction (Navigate url event) =
     navigateWithEvent_ url event

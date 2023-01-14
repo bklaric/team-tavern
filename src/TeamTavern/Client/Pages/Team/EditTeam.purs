@@ -15,6 +15,7 @@ import TeamTavern.Client.Components.Form (form, otherFormError, submitButton)
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.Team.TeamFormInput (teamFormInput)
 import TeamTavern.Client.Components.Team.TeamFormInput as EnterTeamDetails
+import TeamTavern.Client.Script.Analytics (track_)
 import TeamTavern.Client.Script.Navigate (hardNavigate)
 import TeamTavern.Client.Script.Request (putNoContent)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
@@ -114,7 +115,9 @@ handleAction (SendRequest event) = do
         }
     response <- H.lift $ sendRequest currentState
     case response of
-        Just (Right _) -> hardNavigate $ "/teams/" <> currentState.handle
+        Just (Right _) -> do
+            track_ "Team edit"
+            hardNavigate $ "/teams/" <> currentState.handle
         Just (Left badContent) -> H.put $
             foldl
             (\state error ->

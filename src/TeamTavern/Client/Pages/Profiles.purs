@@ -35,6 +35,7 @@ import TeamTavern.Client.Pages.Profiles.ProfileFilters (profileFilters)
 import TeamTavern.Client.Pages.Profiles.ProfileFilters as ProfileFilters
 import TeamTavern.Client.Pages.Profiles.TeamProfiles (teamProfiles)
 import TeamTavern.Client.Pages.Profiles.TeamProfiles as TeamProfiles
+import TeamTavern.Client.Script.Analytics (track, track_)
 import TeamTavern.Client.Script.Cookie (PlayerInfo, getPlayerInfo)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigate, navigate_)
@@ -387,6 +388,7 @@ handleAction (Receive input) =
 handleAction (ApplyFilters filters) = do
     writeQueryParams filters
     scrollProfilesIntoView
+    track_ "Filters apply"
 handleAction ReloadPage =
     window >>= location >>= reload # H.liftEffect
 handleAction (ChangePage page) = H.liftEffect do
@@ -396,6 +398,7 @@ handleAction (ChangePage page) = H.liftEffect do
     href <- Url.href url
     navigate_ href
     scrollProfilesIntoView
+    track "Profile page change" {page}
 handleAction OpenPlayerPreboarding = do
     state <- H.get
     case state of

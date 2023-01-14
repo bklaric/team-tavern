@@ -13,6 +13,7 @@ import Halogen.Aff as HA
 import Halogen.VDom.Driver (runUI)
 import Partial.Unsafe (unsafePartial)
 import TeamTavern.Client.Router (Query(..), router)
+import TeamTavern.Client.Script.Analytics (identifyNickname, registerSignedIn)
 import TeamTavern.Client.Script.ReloadAds (reloadAds)
 import Web.DOM.NonElementParentNode (getElementById)
 import Web.Event.Event (Event, EventType(..))
@@ -27,7 +28,6 @@ import Web.HTML.History as History
 import Web.HTML.Location as Location
 import Web.HTML.Window (document)
 import Web.HTML.Window as Window
--- import Veles (fetchTest)
 
 createListener :: ∀ monad. MonadEffect monad => (Event -> Effect Unit) -> monad EventListener
 createListener = liftEffect <<< DOM.eventListener
@@ -39,6 +39,8 @@ addWindowListener event listener =
 main :: Effect Unit
 main = HA.runHalogenAff do
     _ <- HA.awaitBody
+    identifyNickname
+    registerSignedIn
     (spa :: _) <- window >>= document <#> toNonElementParentNode >>= getElementById "spa-teamtavern" <#> bindFlipped fromElement <#> unsafePartial fromJust # liftEffect
     state <- window >>= Window.history >>= History.state # liftEffect
     path <- window >>= Window.location >>= Location.pathname # liftEffect
@@ -50,4 +52,3 @@ main = HA.runHalogenAff do
     addWindowListener PSET.popstate navigationListener
     orientationListener <- createListener $ const reloadAds
     addWindowListener (EventType "orientationchange") orientationListener
-    -- liftEffect fetchTest

@@ -5,16 +5,17 @@ import Prelude
 import Async (Async)
 import Data.Const (Const)
 import Data.Maybe (Maybe(..))
-import Type.Proxy (Proxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Form (form, otherFormError, submitButton)
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.Player.PlayerFormInput (playerFormInput)
 import TeamTavern.Client.Components.Player.PlayerFormInput as EnterPlayerDetails
+import TeamTavern.Client.Script.Analytics (track_)
 import TeamTavern.Client.Script.Navigate (hardNavigate)
 import TeamTavern.Client.Script.Request (putNoContent')
 import TeamTavern.Routes.Player.ViewPlayer as ViewPlayer
+import Type.Proxy (Proxy(..))
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
@@ -79,7 +80,9 @@ handleAction (Update event) = do
     currentState <- H.modify _ { submitting = true }
     response <- H.lift $ sendRequest currentState
     case response of
-        Just _ -> hardNavigate $ "/players/" <> currentState.nickname
+        Just _ -> do
+            track_ "Player edit"
+            hardNavigate $ "/players/" <> currentState.nickname
         Nothing -> H.put currentState
             { submitting = false
             , otherError = true

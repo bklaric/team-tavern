@@ -16,6 +16,7 @@ import TeamTavern.Client.Components.Form (form, otherFormError, submitButton)
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.Team.ProfileFormInput (profileFormInput)
 import TeamTavern.Client.Components.Team.ProfileFormInput as EnterProfile
+import TeamTavern.Client.Script.Analytics (track)
 import TeamTavern.Client.Script.Navigate (hardNavigate)
 import TeamTavern.Client.Script.Request (putNoContent)
 import TeamTavern.Routes.Profile.AddTeamProfile as AddTeamProfile
@@ -120,7 +121,9 @@ handleAction (SendRequest event) = do
         }
     response <- H.lift $ sendRequest currentState
     case response of
-        Just (Right _) -> hardNavigate $ "/teams/" <> currentState.teamHandle
+        Just (Right _) -> do
+            track "Profile edit" {ilk: "team", game: currentState.gameHandle}
+            hardNavigate $ "/teams/" <> currentState.teamHandle
         Just (Left badContent) -> H.put $
             foldl
             (\state error ->
