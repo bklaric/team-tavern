@@ -13,12 +13,14 @@ import TeamTavern.Routes.Player.RegisterPlayer as RegisterPlayer
 import TeamTavern.Server.Infrastructure.Error (TerrorNeaVar, ValidatedTerrorNea)
 import TeamTavern.Server.Infrastructure.Error as Terror
 import TeamTavern.Server.Infrastructure.Response (BadRequestTerror)
+import TeamTavern.Server.Infrastructure.ValidateEmail (Email, validateEmail)
 import TeamTavern.Server.Player.Domain.Nickname (Nickname, validateNickname)
 import TeamTavern.Server.Player.Domain.Password (Password, validatePassword)
 import Type.Proxy (Proxy(..))
 
 type Registration =
-    { nickname :: Nickname
+    { email :: Email
+    , nickname :: Nickname
     , password :: Password
     }
 
@@ -27,9 +29,10 @@ type RegistrationErrors = NonEmptyArray RegisterPlayer.RegistrationError
 validateRegistration'
     :: RegisterPlayer.RequestContent
     -> ValidatedTerrorNea RegisterPlayer.RegistrationError Registration
-validateRegistration' { nickname, password } =
-    { nickname: _, password: _ }
-    <$> validateNickname nickname
+validateRegistration' { email, nickname, password } =
+    { email: _, nickname: _, password: _ }
+    <$> validateEmail email
+    <*> validateNickname nickname
     <*> validatePassword password
 
 validateRegistration

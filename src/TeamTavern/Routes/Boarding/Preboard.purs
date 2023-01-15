@@ -6,6 +6,7 @@ import Data.Variant (Variant)
 import Jarilo (type (!), type (==>), BadRequestJson, Internal_, Literal, NotAuthorized_, OkJson, PostJson_, Forbidden_)
 import TeamTavern.Routes.Boarding.Onboard (PlayerProfileRequestContent, PlayerRequestContent, TeamProfileRequestContent, TeamRequestContent)
 import TeamTavern.Routes.Player.RegisterPlayer (RegistrationError)
+import TeamTavern.Routes.Player.RegisterPlayer as RegisterPlayer
 import TeamTavern.Routes.Shared.PlayerContacts (PlayerContactsError, PlayerContacts)
 import TeamTavern.Routes.Shared.PlayerProfile (PlayerProfileError)
 import TeamTavern.Routes.Shared.TeamBase (TeamError)
@@ -17,11 +18,6 @@ type Preboard =
     PostJson_ (Literal "preboarding") RequestContent
     ==> OkJson OkContent ! BadRequestJson BadContent ! NotAuthorized_ ! Forbidden_ ! Internal_
 
-type RegisterRequestContent =
-    { nickname :: String
-    , password :: String
-    }
-
 type RequestContent =
     { ilk :: Int
     , player :: Maybe PlayerRequestContent
@@ -31,7 +27,7 @@ type RequestContent =
     , teamProfile :: Maybe TeamProfileRequestContent
     , playerContacts :: Maybe PlayerContacts
     , teamContacts :: Maybe TeamContacts
-    , registration :: RegisterRequestContent
+    , registration :: RegisterPlayer.RequestContent
     }
 
 type OkContent = { teamHandle :: Maybe String }
@@ -43,6 +39,7 @@ type BadContent = NonEmptyArray $ Variant
     , playerContacts :: NonEmptyArray PlayerContactsError
     , teamContacts :: NonEmptyArray TeamContactsError
     , registration :: NonEmptyArray RegistrationError
+    , emailTaken :: {}
     , nicknameTaken :: {}
     , other :: {}
     )

@@ -630,8 +630,10 @@ handleAction SetUpAccount = do
                     }
                 }
             , registration
-                { nicknameError = false
+                { emailError = false
+                , nicknameError = false
                 , passwordError = false
+                , emailTaken = false
                 , nicknameTaken = false
                 }
             }
@@ -699,9 +701,11 @@ handleAction SetUpAccount = do
                     , friendCode: const state' { step = TeamProfile, teamProfile { contacts { friendCodeError = true } } }
                     }
                 , registration: state # foldl \state' error' -> error' # match
-                    { nickname: const state' { registration { nicknameError = true } }
+                    { email: const state' { registration { emailError = true } }
+                    , nickname: const state' { registration { nicknameError = true } }
                     , password: const state' { registration { passwordError = true } }
                     }
+                , emailTaken: const state { registration { emailTaken = true } }
                 , nicknameTaken: const state { registration { nicknameTaken = true } }
                 , other: const state { otherError = true }
                 }

@@ -1,5 +1,6 @@
 create table player
     ( id serial not null primary key
+    , email varchar(254) unique
     , nickname varchar(40) not null unique
 
     -- Contact
@@ -28,6 +29,7 @@ create table player
     , registered timestamptz not null default current_timestamp
     );
 
+create unique index player_lower_email_key on player (lower(email));
 create unique index player_lower_nickname_key on player (lower(nickname));
 
 create table team

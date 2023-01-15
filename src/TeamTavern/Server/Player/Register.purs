@@ -25,7 +25,7 @@ register deployment pool cookies content =
     ensureNotSignedIn cookies
 
     -- Validate register model.
-    { nickname, password } <- validateRegistration content
+    { email, nickname, password } <- validateRegistration content
 
     -- Generate password hash.
     hash <- generateHash password
@@ -35,7 +35,7 @@ register deployment pool cookies content =
 
     id <- pool # transaction \client -> do
         -- Add player to database.
-        id <- addPlayer client { nickname, hash }
+        id <- addPlayer client { email, nickname, hash }
 
         -- Add session to database.
         createSession id token client

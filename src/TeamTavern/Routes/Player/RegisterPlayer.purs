@@ -9,18 +9,21 @@ type RegisterPlayer =
     ==> (NoContent ! BadRequestJson BadContent ! Forbidden_ ! Internal_)
 
 type RequestContent =
-    { nickname :: String
+    { email :: String
+    , nickname :: String
     , password :: String
     }
 
 type OkContent = { nickname :: String }
 
 type RegistrationError = Variant
-    ( nickname :: {}
+    ( email :: {}
+    , nickname :: {}
     , password :: {}
     )
 
 type BadContent = Variant
     ( registration :: NonEmptyArray RegistrationError
+    , emailTaken :: {}
     , nicknameTaken :: {}
     )
