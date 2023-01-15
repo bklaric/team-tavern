@@ -3,12 +3,11 @@ module TeamTavern.Server.Session.Start where
 import Prelude
 
 import Async (Async)
-import Data.Map (Map)
 import Data.Newtype (wrap)
 import Jarilo (noContent)
 import Postgres.Pool (Pool)
 import TeamTavern.Routes.Session.StartSession as StartSession
-import TeamTavern.Server.Infrastructure.Cookie (setCookieHeaderFull)
+import TeamTavern.Server.Infrastructure.Cookie (Cookies, setCookieHeaderFull)
 import TeamTavern.Server.Infrastructure.Deployment (Deployment)
 import TeamTavern.Server.Infrastructure.EnsureNotSignedIn (ensureNotSignedIn)
 import TeamTavern.Server.Infrastructure.Postgres (transaction)
@@ -18,7 +17,7 @@ import TeamTavern.Server.Session.Start.CheckPassword (checkPassword)
 import TeamTavern.Server.Session.Start.CreateSession (createSession)
 
 start :: ∀ left.
-    Deployment -> Pool -> Map String String -> StartSession.RequestContent -> Async left _
+    Deployment -> Pool -> Cookies -> StartSession.RequestContent -> Async left _
 start deployment pool cookies body =
     sendResponse "Error starting session" do
     -- Ensure player isn't signed in.

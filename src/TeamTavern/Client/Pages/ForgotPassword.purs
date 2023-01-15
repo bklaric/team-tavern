@@ -48,7 +48,7 @@ render { email, unknownEmail, otherError, submitting } =
             <> "and you will receive a link to reset your password."
         ]
     , inputGroup
-        [ inputLabel_ "Email address"
+        [ inputLabel_ "Email"
         , requiredTextLineInput email UpdateEmail
         ]
     , HH.button
@@ -79,8 +79,7 @@ sendPasswordResetRequest state @ {email} = Async.unify do
         # lmap (const $ Just $ state {otherError = true})
     pure $ onMatch
         { noContent: const Nothing
-        , badRequest: match
-            {unknownEmail: const $ Just $ state {unknownEmail = true}}
+        , notFound: const $ Just $ state {unknownEmail = true}
         }
         (const $ Just $ state {otherError = true})
         response
