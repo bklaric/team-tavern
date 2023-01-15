@@ -11,20 +11,15 @@
     margin-bottom: 21px;
 }
 
-.section-leaderboard {
-    @extend %ad;
-    @extend .card-section;
-    min-width: 100%;
-    padding: 0;
-}
-
 .filters-mpu {
     @extend %ad;
     position: sticky;
     top: 64px;
 }
 
-#celtra-reveal-wrapper { // .sticky-leaderboard
+#celtra-reveal-wrapper {
+    // .sticky-leaderboard
+    @extend %ad;
     width: 100%;
     display: flex;
     justify-content: center;
@@ -36,11 +31,7 @@
     margin-top: 21px;
     pointer-events: none;
 
-    &:empty {
-        display: none;
-    }
-
-    & > * {
+    &>* {
         pointer-events: initial;
     }
 }
