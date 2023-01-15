@@ -9,7 +9,6 @@ import Data.Maybe (Maybe(..))
 import Data.Variant (match, onMatch)
 import Halogen as H
 import Halogen.HTML as HH
-import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Components.Form (form, otherFormError)
 import TeamTavern.Client.Components.Input (inputError, inputGroup, inputLabel_, requiredTextLineInput)
@@ -71,6 +70,7 @@ render
                 { class_: "forgot-password"
                 , path: "/forgot-password"
                 , content: HH.text "Forgot password?"
+                , disableTabIndex: true
                 }
             ]
         , passwordInput password passwordShown UpdatePassword TogglePasswordVisibility
