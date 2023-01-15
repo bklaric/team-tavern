@@ -11,7 +11,6 @@ import Data.Maybe (Maybe(..))
 import Data.Options (Options, (:=))
 import Effect (Effect)
 import Effect.Console (log)
-import Jarilo (noContent_)
 import Jarilo.Serve (serve)
 import Node.Process (lookupEnv)
 import Node.Server (ListenOptions(..))
@@ -31,6 +30,7 @@ import TeamTavern.Server.Game.ViewAll (viewAll) as Game
 import TeamTavern.Server.Infrastructure.Deployment (Deployment)
 import TeamTavern.Server.Infrastructure.Deployment as Deployment
 import TeamTavern.Server.Password.ForgotPassword (forgotPassword)
+import TeamTavern.Server.Password.ResetPassword (resetPassword)
 import TeamTavern.Server.Player.Delete (delete) as Player
 import TeamTavern.Server.Player.Register (register) as Player
 import TeamTavern.Server.Player.UpdateContacts (updateContacts) as Player
@@ -124,7 +124,7 @@ runServer deployment pool = serve (Proxy :: _ AllRoutes) listenOptions
     , forgotPassword: \{ cookies, body } ->
         forgotPassword deployment pool cookies body
     , resetPassword: \{ cookies, body } ->
-        pure noContent_ -- ?aoeu
+        resetPassword pool cookies body
     , viewAllGames: const $
         Game.viewAll pool
     , viewGame: \{ path: { handle } } ->

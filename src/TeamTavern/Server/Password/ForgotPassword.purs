@@ -42,9 +42,11 @@ addPasswordReset
 addPasswordReset pool email nonce = do
     queryFirstNotFound pool queryString (email :| nonce)
 
-message :: Player -> Nonce -> Message
-message { email, nickname } nonce = let
-    link = "https://www.teamtavern.net/reset-password?nonce=" <> toString nonce
+message :: Deployment -> Player -> Nonce -> Message
+message deployment { email, nickname } nonce = let
+    link = case deployment of
+        Local -> "https://localhost/reset-password?nonce=" <> toString nonce
+        Cloud -> "https://www.teamtavern.net/reset-password?nonce=" <> toString nonce
     in
     { to: email
     , from: "TeamTavern admin@teamtavern.net"
@@ -63,8 +65,8 @@ sendPasswordResetEmail :: forall errors.
     Deployment -> Player -> Nonce -> Async (InternalTerror_ errors) Unit
 sendPasswordResetEmail deployment player nonce =
     case deployment of
-    Local -> logShow $ message player nonce
-    Cloud -> sendAsync $ message player nonce
+    Local -> logShow $ message deployment player nonce
+    Cloud -> sendAsync $ message deployment player nonce
 
 forgotPassword
     :: forall left

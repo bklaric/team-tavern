@@ -90,9 +90,8 @@ sendPasswordResetRequest state @ {password, nonce} = Async.unify do
     pure $ onMatch
         { noContent: const Nothing
         , badRequest: match
-            { password: const $ Just $ state {passwordError = true}
-            , nonce: const $ Just $ state {nonceError = true}
-            }
+            {password: const $ Just $ state {passwordError = true}}
+        , notFound: const $ Just $ state {nonceError = true}
         }
         (const $ Just $ state {otherError = true})
         response
