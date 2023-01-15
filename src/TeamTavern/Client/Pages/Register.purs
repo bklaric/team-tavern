@@ -18,9 +18,8 @@ import TeamTavern.Client.Components.RegistrationInput (registrationInput)
 import TeamTavern.Client.Components.RegistrationInput as RegistrationInput
 import TeamTavern.Client.Pages.Onboarding as Onboarding
 import TeamTavern.Client.Script.Analytics (aliasNickname, identifyNickname, track_)
-import TeamTavern.Client.Script.Cookie (hasPlayerIdCookie)
 import TeamTavern.Client.Script.Meta (setMeta)
-import TeamTavern.Client.Script.Navigate (navigate, navigateReplace_, navigateWithEvent_)
+import TeamTavern.Client.Script.Navigate (navigate, navigateWithEvent_)
 import TeamTavern.Client.Shared.Fetch (fetchBody)
 import TeamTavern.Client.Shared.Slot (SimpleSlot)
 import TeamTavern.Client.Snippets.Class as HS
@@ -42,8 +41,7 @@ type State =
     , submitting :: Boolean
     }
 
-render :: ∀ left.
-    State -> H.ComponentHTML Action (registrationInput :: RegistrationInput.Slot) (Async left)
+render :: ∀ left. State -> H.ComponentHTML Action _ (Async left)
 render { registration, otherError, submitting } =
     form Register $
     [ HH.h1 [ HS.class_ "form-heading" ]
@@ -106,8 +104,7 @@ sendRegisterRequest state @ { registration: { email, nickname, password } } = As
 
 handleAction :: ∀ slots output left.
     Action -> H.HalogenM State Action slots output (Async left) Unit
-handleAction Initialize = do
-    H.liftEffect $ whenM hasPlayerIdCookie $ navigateReplace_ "/"
+handleAction Initialize =
     setMeta "Create account | TeamTavern" "Create your TeamTavern account."
 handleAction (UpdateRegistration registration) =
     H.modify_ \state -> state { registration = Record.merge registration state.registration }

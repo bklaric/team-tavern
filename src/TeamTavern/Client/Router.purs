@@ -14,10 +14,10 @@ import TeamTavern.Client.Components.Content (content, singleContent, wideContent
 import TeamTavern.Client.Components.Footer (footer)
 import TeamTavern.Client.Components.Footer as Footer
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
-import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Components.TopBar (topBar)
 import TeamTavern.Client.Pages.About (about)
 import TeamTavern.Client.Pages.DeleteAlert (deleteAlert)
+import TeamTavern.Client.Pages.ForgotPassword (forgotPassword)
 import TeamTavern.Client.Pages.Game (game)
 import TeamTavern.Client.Pages.GameTabs as GameTabs
 import TeamTavern.Client.Pages.Games (games)
@@ -32,6 +32,9 @@ import TeamTavern.Client.Pages.Preboarding as Preboarding
 import TeamTavern.Client.Pages.Privacy (privacyPolicy)
 import TeamTavern.Client.Pages.Profiles.GameHeader as GameHeader
 import TeamTavern.Client.Pages.Register (register)
+import TeamTavern.Client.Pages.ResetPassword (resetPassword)
+import TeamTavern.Client.Pages.ResetPasswordSent (resetPasswordSent)
+import TeamTavern.Client.Pages.ResetPasswordSuccess (resetPasswordSuccess)
 import TeamTavern.Client.Pages.SignIn (signIn)
 import TeamTavern.Client.Pages.Team (team)
 import TeamTavern.Client.Pages.TeamProfile (teamProfile)
@@ -63,34 +66,16 @@ data State
     | Team { handle :: String }
     | Register
     | SignIn
+    | ForgotPassword
+    | ResetPasswordSent { email :: String }
+    | ResetPassword
+    | ResetPasswordSuccess
     | Onboarding Onboarding.Input
     | Preboarding Preboarding.Input
     | NetworkN
     | NetworkN2
     | DeleteAlert
     | NotFound
-
-type ChildSlots = Footer.ChildSlots
-    ( topBar :: SimpleSlot
-    , home :: SimpleSlot
-    , about :: SimpleSlot
-    , games :: SimpleSlot
-    , game :: SimpleSlot
-    , gameTabs :: SimpleSlot
-    , player :: SimpleSlot
-    , playerProfile :: SimpleSlot
-    , team :: SimpleSlot
-    , teamProfile :: SimpleSlot
-    , onboarding :: SimpleSlot
-    , preboarding :: SimpleSlot
-    , signIn :: SimpleSlot
-    , homeAnchor :: NavigationAnchor.Slot Unit
-    , signInAnchor :: NavigationAnchor.Slot Unit
-    , register :: SimpleSlot
-    , "network-n-test" :: NavigationAnchor.Slot Unit
-    , "network-n-test2" :: NavigationAnchor.Slot Unit
-    , deleteAlert :: SimpleSlot
-    )
 
 topBarWithContent
     :: ∀ query children left
@@ -106,7 +91,7 @@ wideTopBarWithContent
     -> H.ComponentHTML query (Footer.ChildSlots (topBar :: SimpleSlot | children)) (Async left)
 wideTopBarWithContent handle content' = HH.div_ [ topBar handle, wideContent content', footer ]
 
-render :: ∀ action left. State -> H.ComponentHTML action ChildSlots (Async left)
+render :: ∀ action left. State -> H.ComponentHTML action _ (Async left)
 render Empty = HH.div_ []
 render Home = HH.div_ [ topBar Nothing, home, footer ]
 render Games = topBarWithContent Nothing [ games ]
@@ -120,6 +105,10 @@ render (TeamProfile input) = topBarWithContent Nothing [ teamProfile input ]
 render (Team input) = wideTopBarWithContent Nothing [ team input ]
 render Register = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ register ] ]
 render SignIn = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ signIn ] ]
+render ForgotPassword = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ forgotPassword ] ]
+render (ResetPasswordSent resetPasswordData) = singleContent [ resetPasswordSent resetPasswordData ]
+render ResetPassword = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ resetPassword ] ]
+render ResetPasswordSuccess = singleContent [ resetPasswordSuccess ]
 render (Onboarding input) = onboarding input
 render (Preboarding input) = preboarding input
 render NetworkN = HH.div_
@@ -182,9 +171,29 @@ handleAction (Init state route) = do
         ["", "privacy"] ->
             just Privacy
         ["", "register"] ->
-            just Register
+            ifM hasPlayerIdCookie
+            (navigateReplace_ "/" *> nothing)
+            (just Register)
         ["", "signin"] ->
-            just SignIn
+            ifM hasPlayerIdCookie
+            (navigateReplace_ "/" *> nothing)
+            (just SignIn)
+        ["", "forgot-password"] ->
+            ifM hasPlayerIdCookie
+            (navigateReplace_ "/" *> nothing)
+            (just ForgotPassword)
+        ["", "reset-password-sent"] ->
+            case read_ state of
+            Just email -> just $ ResetPasswordSent email
+            Nothing -> navigateReplace_ "/" *> nothing
+        ["", "reset-password"] ->
+            ifM hasPlayerIdCookie
+            (navigateReplace_ "/" *> nothing)
+            (just ResetPassword)
+        ["", "reset-password-success"] ->
+            ifM hasPlayerIdCookie
+            (navigateReplace_ "/" *> nothing)
+            (just ResetPasswordSuccess)
         ["", "onboarding", stepPath] ->
             let stepMaybe =
                     case stepPath of
