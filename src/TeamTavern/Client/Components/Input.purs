@@ -43,6 +43,9 @@ requiredInputLabel icon label = inputLabel' icon label Nothing true
 inputLabel :: ∀ slots action. String -> String -> HH.HTML slots action
 inputLabel icon label = inputLabel' icon label Nothing false
 
+inputLabel_ :: ∀ slots action. String -> HH.HTML slots action
+inputLabel_ label = HH.label [ HS.class_ "input-label" ] [ HH.text label ]
+
 platformIdLabel :: ∀ slots action.
     HH.HTML slots action -> String -> Boolean -> HH.HTML slots action
 platformIdLabel icon label required =

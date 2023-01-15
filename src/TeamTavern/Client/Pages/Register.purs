@@ -13,6 +13,7 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Record as Record
+import TeamTavern.Client.Components.Form (form, otherFormError)
 import TeamTavern.Client.Components.RegistrationInput (registrationInput)
 import TeamTavern.Client.Components.RegistrationInput as RegistrationInput
 import TeamTavern.Client.Pages.Onboarding as Onboarding
@@ -22,7 +23,7 @@ import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigate, navigateReplace_, navigateWithEvent_)
 import TeamTavern.Client.Shared.Fetch (fetchBody)
 import TeamTavern.Client.Shared.Slot (SimpleSlot)
-import TeamTavern.Client.Snippets.ErrorClasses (otherErrorClass)
+import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Player.RegisterPlayer (RegisterPlayer)
 import Type.Proxy (Proxy(..))
 import Web.Event.Event (preventDefault)
@@ -44,11 +45,8 @@ type State =
 render :: ∀ left.
     State -> H.ComponentHTML Action (registrationInput :: RegistrationInput.Slot) (Async left)
 render { registration, otherError, submitting } =
-    HH.form
-    [ HP.class_ $ HH.ClassName "form"
-    , HE.onSubmit  Register
-    ]
-    [ HH.h1 [ HP.class_ $ HH.ClassName "form-heading" ]
+    form Register $
+    [ HH.h1 [ HS.class_ "form-heading" ]
         [ HH.text "Create your "
         , HH.a
             [ HP.href "/"
@@ -59,20 +57,24 @@ render { registration, otherError, submitting } =
         ]
     , registrationInput registration UpdateRegistration
     , HH.button
-        [ HP.class_ $ HH.ClassName "form-submit-button"
-        , HP.disabled $ registration.nickname == "" || registration.password == "" || submitting
+        [ HS.class_ "form-submit-button"
+        , HP.disabled
+            $ registration.email == ""
+            || registration.nickname == ""
+            || registration.password == ""
+            || submitting
         ]
-        [ HH.i [ HP.class_ $ HH.ClassName "fas fa-user-check button-icon" ] []
+        [ HH.i [ HS.class_ "fas fa-user-check button-icon" ] []
         , HH.text $
             if submitting
             then "Creating account..."
             else "Create account"
         ]
-    , HH.p
-        [ HP.class_ $ otherErrorClass otherError ]
-        [ HH.text "Something unexpected went wrong! Please try again later." ]
-    , HH.p
-        [ HP.class_ $ HH.ClassName "form-bottom-text" ]
+    ]
+    <> otherFormError otherError
+    <>
+    [ HH.p
+        [ HS.class_ "form-bottom-text" ]
         [ HH.text "Already have an account? "
         , HH.a
             [ HP.href "/signin"

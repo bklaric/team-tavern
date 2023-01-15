@@ -9,9 +9,8 @@ import Halogen as H
 import Halogen.HTML as HH
 import Record as Record
 import Record.Extra (pick)
-import TeamTavern.Client.Components.Input (inputError, inputGroup, requiredTextLineInput)
+import TeamTavern.Client.Components.Input (inputError, inputGroup, inputLabel_, requiredTextLineInput)
 import TeamTavern.Client.Components.PasswordInput (passwordInput)
-import TeamTavern.Client.Snippets.Class as HS
 import Type.Proxy (Proxy(..))
 
 type Input =
@@ -66,20 +65,20 @@ render
     } =
     HH.div_
     [ inputGroup $
-        [ HH.label [ HS.class_ "input-label" ] [ HH.text "Email" ]
+        [ inputLabel_ "Email"
         , requiredTextLineInput email UpdateEmail
         ]
         <> inputError emailError "This doesn't look like a valid email address."
         <> inputError emailTaken "This email is already taken, please pick another one."
     , inputGroup $
-        [ HH.label [ HS.class_ "input-label" ] [ HH.text "Nickname" ]
+        [ inputLabel_ "Nickname"
         , requiredTextLineInput nickname UpdateNickname
         ]
         <> inputError nicknameError """Nickname cannot be more than 40 characters long
             and can only contain alphanumeric characters, dashes, underscores and dots."""
         <> inputError nicknameTaken "This nickname is already taken, please pick another one."
     , inputGroup $
-        [ HH.label [ HS.class_ "input-label" ] [ HH.text "Password" ]
+        [ inputLabel_ "Password"
         , passwordInput password passwordShown UpdatePassword TogglePasswordVisibility
         ]
         <> inputError passwordError "Password must have at least 8 characters."

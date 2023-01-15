@@ -29,7 +29,8 @@ queryString = Query """
         player.nickname,
         player.password_hash as hash
     from player
-    where lower(player.nickname) = lower($1)
+    where lower(player.email) = lower($1)
+        or lower(player.nickname) = lower($1)
     """
 
 checkPassword
@@ -39,15 +40,16 @@ checkPassword
     -> querier
     -> Async (CheckPasswordError errors) { id :: Int, nickname :: String }
 checkPassword model querier = do
-    let noSessionStartedResponse = badRequest_ $ inj (Proxy :: _ "noSessionStarted") {}
+    let unknownPlayer = badRequest_ $ inj (Proxy :: _ "unknownPlayer") {}
+    let wrongPassword = badRequest_ $ inj (Proxy :: _ "wrongPassword") {}
     -- Load player hash.
     { id, nickname, hash } :: { id :: Int, nickname :: String, hash :: String } <-
-        queryFirst noSessionStartedResponse querier queryString (model.nickname : [])
-        # lmapElaborate ("Can't find player: " <> model.nickname)
+        queryFirst unknownPlayer querier queryString (model.emailOrNickname : [])
+        # lmapElaborate ("Can't find player: " <> model.emailOrNickname)
 
     -- Compare hash with password.
     matches <- Bcrypt.compare model.password hash # lmap
         (print >>> ("Bcrypt error while checking hash: " <> _) >>> singleton >>> Terror internal__)
-    when (not matches) $ left $ Terror noSessionStartedResponse [ "Wrong password entered for user: " <> nickname ]
+    when (not matches) $ left $ Terror wrongPassword [ "Wrong password entered for user: " <> nickname ]
 
     pure $ { id, nickname }

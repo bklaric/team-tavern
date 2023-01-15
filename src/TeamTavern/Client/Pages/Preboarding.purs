@@ -469,36 +469,10 @@ handleAction (UpdatePlayerOrTeam playerOrTeam) = do
     state <- H.modify _ { playerOrTeam = Selected' $ Just playerOrTeam }
     updateHistoryState state
 handleAction (UpdatePlayer details) = do
-    state <- H.modify _
-        { player
-            { birthday = details.birthday
-            , location = details.location
-            , languages = details.languages
-            , microphone = details.microphone
-            , timezone = details.timezone
-            , weekdayFrom = details.weekdayFrom
-            , weekdayTo = details.weekdayTo
-            , weekendFrom = details.weekendFrom
-            , weekendTo = details.weekendTo
-            }
-        }
+    state <- H.modify \state -> state { player = Record.merge details state.player }
     updateHistoryState state
 handleAction (UpdateTeam details) = do
-    state <- H.modify _
-        { team
-            { organization = details.organization
-            , ageFrom = details.ageFrom
-            , ageTo = details.ageTo
-            , locations = details.locations
-            , languages = details.languages
-            , microphone = details.microphone
-            , timezone = details.timezone
-            , weekdayFrom = details.weekdayFrom
-            , weekdayTo = details.weekdayTo
-            , weekendFrom = details.weekendFrom
-            , weekendTo = details.weekendTo
-            }
-        }
+    state <- H.modify \state -> state { team = Record.merge details state.team }
     updateHistoryState state
 handleAction (UpdateGame game) = do
     state <- H.modify _
@@ -530,62 +504,24 @@ handleAction (UpdateGame game) = do
         }
     updateHistoryState state
 handleAction (UpdatePlayerProfile profile) = do
-    state <- H.modify _
+    state <- H.modify \state -> state
         { playerProfile
-            { details
-                { platform = profile.details.platform
-                , fieldValues = profile.details.fieldValues
-                , newOrReturning = profile.details.newOrReturning
-                , about = profile.details.about
-                , ambitions = profile.details.ambitions
-                }
-            , contacts
-                { discordTag = profile.contacts.discordTag
-                , steamId = profile.contacts.steamId
-                , riotId = profile.contacts.riotId
-                , battleTag = profile.contacts.battleTag
-                , eaId = profile.contacts.eaId
-                , ubisoftUsername = profile.contacts.ubisoftUsername
-                , psnId = profile.contacts.psnId
-                , gamerTag = profile.contacts.gamerTag
-                , friendCode = profile.contacts.friendCode
-                }
+            { details = Record.merge profile.details state.playerProfile.details
+            , contacts = Record.merge profile.contacts state.playerProfile.contacts
             }
         }
     updateHistoryState state
 handleAction (UpdateTeamProfile profile) = do
-    state <- H.modify _
+    state <- H.modify \state -> state
         { teamProfile
-            { details
-                { size = profile.details.size
-                , selectedPlatforms = profile.details.platforms
-                , fieldValues = profile.details.fieldValues
-                , newOrReturning = profile.details.newOrReturning
-                , about = profile.details.about
-                , ambitions = profile.details.ambitions
-                }
-            , contacts
-                { discordTag = profile.contacts.discordTag
-                , discordServer = profile.contacts.discordServer
-                , steamId = profile.contacts.steamId
-                , riotId = profile.contacts.riotId
-                , battleTag = profile.contacts.battleTag
-                , eaId = profile.contacts.eaId
-                , ubisoftUsername = profile.contacts.ubisoftUsername
-                , psnId = profile.contacts.psnId
-                , gamerTag = profile.contacts.gamerTag
-                , friendCode = profile.contacts.friendCode
-                }
+            { details = Record.merge profile.details state.teamProfile.details
+            , contacts = Record.merge profile.contacts state.teamProfile.contacts
             }
         }
     updateHistoryState state
 handleAction (UpdateRegistration registration) = do
-    state <- H.modify _
-        { registration
-            { nickname = registration.nickname
-            , password = registration.password
-            }
-        }
+    state <- H.modify \state -> state
+        { registration = Record.merge registration state.registration }
     updateHistoryState state
 handleAction SetUpAccount = do
     currentState <- H.modify _ { submitting = true }
