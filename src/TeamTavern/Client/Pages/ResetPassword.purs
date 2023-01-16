@@ -6,7 +6,7 @@ import Async (Async)
 import Async as Async
 import Data.Bifunctor (lmap)
 import Data.Const (Const)
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), isNothing)
 import Data.Variant (match, onMatch)
 import Halogen as H
 import Halogen.HTML as HH
@@ -15,6 +15,7 @@ import TeamTavern.Client.Components.Form (form, formError, otherFormError)
 import TeamTavern.Client.Components.Input (inputError, inputGroup, inputLabel_)
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.PasswordInput (passwordInput)
+import TeamTavern.Client.Script.Analytics (track_)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigateReplace_, navigate_)
 import TeamTavern.Client.Script.QueryParams (getQueryParam)
@@ -87,7 +88,7 @@ sendPasswordResetRequest ::
 sendPasswordResetRequest state @ {password, nonce} = Async.unify do
     response <- fetchBody (Proxy :: _ ResetPassword) {password, nonce}
         # lmap (const $ Just $ state { otherError = true })
-    pure $ onMatch
+    nextState <- pure $ onMatch
         { noContent: const Nothing
         , badRequest: match
             {password: const $ Just $ state {passwordError = true}}
@@ -95,6 +96,8 @@ sendPasswordResetRequest state @ {password, nonce} = Async.unify do
         }
         (const $ Just $ state {otherError = true})
         response
+    when (isNothing nextState) $ track_ "Password reset"
+    pure nextState
 
 handleAction :: forall slots output left.
     Action -> H.HalogenM State Action slots output (Async left) Unit

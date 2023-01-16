@@ -16,6 +16,7 @@ import TeamTavern.Client.Components.Form (form, otherFormError, submitButton)
 import TeamTavern.Client.Components.Input (inputError, inputGroup, inputLabel_)
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.PasswordInput (passwordInput)
+import TeamTavern.Client.Script.Analytics (track_)
 import TeamTavern.Client.Script.Navigate (hardNavigate)
 import TeamTavern.Client.Shared.Fetch (fetchPathBody)
 import TeamTavern.Routes.Player.UpdatePlayerPassword (UpdatePlayerPassword)
@@ -49,7 +50,9 @@ component = Hooks.component \_ {nickname} -> Hooks.do
             case response of
                 Left _ -> Hooks.put otherErrorId true
                 Right response' -> response' # onMatch
-                    { noContent: const $ hardNavigate $ "/players/" <> nickname
+                    { noContent: const do
+                        track_ "Password change"
+                        hardNavigate $ "/players/" <> nickname
                     , badRequest: match
                         { password: const $ Hooks.put passwordNewErrorId true
                         , wrongPassword: const $ Hooks.put passwordOldWrongId true

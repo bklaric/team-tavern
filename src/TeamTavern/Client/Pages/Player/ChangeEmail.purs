@@ -17,6 +17,7 @@ import TeamTavern.Client.Components.Form (form, otherFormError, submitButton)
 import TeamTavern.Client.Components.Input (inputError, inputGroup, inputLabel_, requiredTextLineInput)
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.PasswordInput (passwordInput)
+import TeamTavern.Client.Script.Analytics (track_)
 import TeamTavern.Client.Script.Navigate (hardNavigate)
 import TeamTavern.Client.Shared.Fetch (fetchPathBody)
 import TeamTavern.Client.Snippets.Class as HS
@@ -52,7 +53,9 @@ component = Hooks.component \_ input @ {nickname} -> Hooks.do
             case response of
                 Left _ -> Hooks.put otherErrorId true
                 Right response' -> response' # onMatch
-                    { noContent: const $ hardNavigate $ "/players/" <> nickname
+                    { noContent: const do
+                        track_ "Email change"
+                        hardNavigate $ "/players/" <> nickname
                     , badRequest: match
                         { email: const $ Hooks.put emailErrorId true
                         , emailTaken: const $ Hooks.put emailTakenId true

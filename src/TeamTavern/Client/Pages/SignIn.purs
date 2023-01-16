@@ -5,7 +5,7 @@ import Prelude
 import Async (Async)
 import Async as Async
 import Data.Bifunctor (lmap)
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), isNothing)
 import Data.Variant (match, onMatch)
 import Halogen as H
 import Halogen.HTML as HH
@@ -14,7 +14,7 @@ import TeamTavern.Client.Components.Form (form, otherFormError)
 import TeamTavern.Client.Components.Input (inputError, inputGroup, inputLabel_, requiredTextLineInput)
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor, navigationAnchorClassed)
 import TeamTavern.Client.Components.PasswordInput (passwordInput)
-import TeamTavern.Client.Script.Analytics (registerSignedIn)
+import TeamTavern.Client.Script.Analytics (registerSignedIn, track_)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigate_)
 import TeamTavern.Client.Shared.Fetch (fetchBody)
@@ -101,7 +101,7 @@ sendSignInRequest :: ∀ left. State -> Async left (Maybe State)
 sendSignInRequest state @ { emailOrNickname, password } = Async.unify do
     response <- fetchBody (Proxy :: _ StartSession) { emailOrNickname, password }
         # lmap (const $ Just $ state { otherError = true })
-    pure $ onMatch
+    nextState <- pure $ onMatch
         { noContent: const Nothing
         , badRequest: \error -> Just $ match
             { unknownPlayer: const $ state { unknownPlayer = true }
@@ -111,6 +111,8 @@ sendSignInRequest state @ { emailOrNickname, password } = Async.unify do
         }
         (const $ Just state { otherError = true })
         response
+    when (isNothing nextState) $ track_ "Sign in"
+    pure nextState
 
 handleAction :: ∀ slots output left.
     Action -> H.HalogenM State Action slots output (Async left) Unit

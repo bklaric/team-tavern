@@ -5,7 +5,7 @@ import Prelude
 import Async (Async)
 import Async as Async
 import Data.Bifunctor (lmap)
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), isNothing)
 import Data.Variant (match, onMatch)
 import Halogen as H
 import Halogen.HTML as HH
@@ -13,6 +13,7 @@ import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Components.Form (form, formError, otherFormError)
 import TeamTavern.Client.Components.Input (inputGroup, inputLabel_, requiredTextLineInput)
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
+import TeamTavern.Client.Script.Analytics (track_)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigate)
 import TeamTavern.Client.Shared.Fetch (fetchBody)
@@ -77,12 +78,14 @@ sendPasswordResetRequest :: forall left. State -> Async left (Maybe State)
 sendPasswordResetRequest state @ {email} = Async.unify do
     response <- fetchBody (Proxy :: _ ForgotPassword) {email}
         # lmap (const $ Just $ state {otherError = true})
-    pure $ onMatch
+    nextState <- pure $ onMatch
         { noContent: const Nothing
         , notFound: const $ Just $ state {unknownEmail = true}
         }
         (const $ Just $ state {otherError = true})
         response
+    when (isNothing nextState) $ track_ "Password forgot"
+    pure nextState
 
 handleAction :: forall slots output left.
     Action -> H.HalogenM State Action slots output (Async left) Unit
