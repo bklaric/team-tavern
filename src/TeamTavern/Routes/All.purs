@@ -14,6 +14,7 @@ import TeamTavern.Routes.Player.RegisterPlayer (RegisterPlayer)
 import TeamTavern.Routes.Player.UpdatePlayer (UpdatePlayer)
 import TeamTavern.Routes.Player.UpdatePlayerContacts (UpdatePlayerContacts)
 import TeamTavern.Routes.Player.UpdatePlayerEmail (UpdatePlayerEmail)
+import TeamTavern.Routes.Player.UpdatePlayerPassword (UpdatePlayerPassword)
 import TeamTavern.Routes.Player.ViewPlayer (ViewPlayer)
 import TeamTavern.Routes.Profile.AddPlayerProfile (AddPlayerProfile)
 import TeamTavern.Routes.Profile.AddTeamProfile (AddTeamProfile)
@@ -52,6 +53,7 @@ type PlayerRoutes
     <|> "deletePlayer"   : DeletePlayer
     <|> "updatePlayerContacts" : UpdatePlayerContacts
     <|> "updatePlayerEmail"    : UpdatePlayerEmail
+    <|> "updatePlayerPassword" : UpdatePlayerPassword
 
 type TeamRoutes
     =   "viewTeam"   : ViewTeam

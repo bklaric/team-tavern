@@ -1,4 +1,4 @@
-module TeamTavern.Server.Player.UpdatePlayerEmail (updatePlayerEmail) where
+module TeamTavern.Server.Player.UpdatePlayerEmail (checkPassword, updatePlayerEmail) where
 
 import Prelude
 
@@ -15,6 +15,7 @@ import TeamTavern.Server.Infrastructure.EnsureSignedInAs (ensureSignedInAs)
 import TeamTavern.Server.Infrastructure.Error (Terror(..), lmapElaborate)
 import TeamTavern.Server.Infrastructure.Log (print)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirst, queryNone, transaction)
+import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Infrastructure.ValidateEmail (Email, validateEmail')
 import TeamTavern.Server.Player.Domain.Id (Id)
@@ -50,8 +51,8 @@ emailQueryString = Query """
     where id = $1
     """
 
-updateEmail :: forall querier. Querier querier =>
-    Id -> Email -> querier -> Async _ Unit
+updateEmail :: forall errors querier. Querier querier =>
+    Id -> Email -> querier -> Async (InternalTerror_ errors) Unit
 updateEmail id email client =
     queryNone client emailQueryString (id :| email)
 

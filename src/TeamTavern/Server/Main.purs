@@ -36,6 +36,7 @@ import TeamTavern.Server.Player.Register (register) as Player
 import TeamTavern.Server.Player.UpdateContacts (updateContacts) as Player
 import TeamTavern.Server.Player.UpdatePlayer (updatePlayer) as Player
 import TeamTavern.Server.Player.UpdatePlayerEmail (updatePlayerEmail)
+import TeamTavern.Server.Player.UpdatePlayerPassword (updatePlayerPassword)
 import TeamTavern.Server.Player.View (view) as Player
 import TeamTavern.Server.Profile.AddPlayerProfile (addPlayerProfile)
 import TeamTavern.Server.Profile.AddTeamProfile (addTeamProfile)
@@ -142,6 +143,8 @@ runServer deployment pool = serve (Proxy :: _ AllRoutes) listenOptions
         Player.updateContacts pool path.nickname cookies body
     , updatePlayerEmail: \{ path, cookies, body } ->
         updatePlayerEmail pool path.nickname cookies body
+    , updatePlayerPassword: \{ path, cookies, body } ->
+        updatePlayerPassword pool path.nickname cookies body
     , viewTeam: \{ path: { handle }, query: { timezone }, headers } ->
         Team.view pool { handle, timezone } headers
     , createTeam: \{ cookies, body } ->

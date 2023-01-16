@@ -1,4 +1,4 @@
-module TeamTavern.Client.Pages.Player.ChangeEmail where
+module TeamTavern.Client.Pages.Player.ChangeEmail (changeEmail) where
 
 import Prelude
 
@@ -60,7 +60,6 @@ component = Hooks.component \_ input @ {nickname} -> Hooks.do
                         }
                     }
                     (const $ Hooks.put otherErrorId true)
-            pure unit
     Hooks.pure $
         form onSubmit $
         [ inputGroup $
