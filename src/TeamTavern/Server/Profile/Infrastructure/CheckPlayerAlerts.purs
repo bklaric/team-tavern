@@ -151,17 +151,18 @@ checkPlayerAlerts profileId querier =
             Nothing -> pure unit
             Just { nickname } -> do
                 -- Send the email.
-                let playerUrl = "https://www.teamtavern.net/players/" <> nickname
+                let playerUrlShort = "https://www.teamtavern.net/players/" <> nickname
+                let playerUrlLong = "https://www.teamtavern.net/players/" <> nickname <> "?id=" <> show alert.id <> "&token=" <> alert.token
                 let deleteAlertUrl = "https://www.teamtavern.net/remove-alert?id=" <> show alert.id <> "&token=" <> alert.token
                 sendAsync
                     { from: "admin@teamtavern.net"
                     , to: alert.email
                     , subject: "A player created a matching " <> alert.title <> " profile on TeamTavern"
                     , text: "Player " <> nickname <> " created their " <> alert.title <> " profile and it matches your alert.\n"
-                        <> "You can check out their profile at: " <> playerUrl <> "\n"
+                        <> "You can check out their profile at: " <> playerUrlLong <> "\n"
                         <> "If you no longer wish to receive further emails for this alert, you can unsubscribe at " <> deleteAlertUrl
                     , html: "<p>Player " <> nickname <> " created their " <> alert.title <> " profile and it matches your alert.</p>"
-                        <> "<p>You can check out their profile at: <a href=\"" <> playerUrl <> "\">" <> playerUrl <> "</a></p>"
+                        <> "<p>You can check out their profile at: <a href=\"" <> playerUrlLong <> "\">" <> playerUrlShort <> "</a></p>"
                         <> "<p>If you no longer wish to receive further emails for this alert, you can <a href=\"" <> deleteAlertUrl <> "\">unsubscribe here</a>.</p>"
                     }
     )
