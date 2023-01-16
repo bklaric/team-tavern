@@ -13,6 +13,7 @@ import Data.Monoid (guard)
 import Data.Variant (onMatch)
 import Halogen as H
 import Halogen.HTML as HH
+import Record.Extra (pick)
 import TeamTavern.Client.Components.Ads (descriptionLeaderboards, stickyLeaderboards)
 import TeamTavern.Client.Components.Content (contentColumns, contentDescription, contentHeader, contentHeaderSection, contentHeading', contentHeadingFaIcon)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
@@ -96,7 +97,7 @@ render (Loaded state @ { player: player', status }) =
         [ contentHeaderSection [ contentHeading'
             [ contentHeadingFaIcon "fas fa-user", HH.text player'.nickname ] ]
         ]
-        <> guard (status == SignedInSelf) [ playerOptions player'.nickname ]
+        <> guard (status == SignedInSelf) [ playerOptions $ pick player' ]
     , contentDescription
         case status of
         SignedInSelf -> "View and edit all your details, profiles and teams."

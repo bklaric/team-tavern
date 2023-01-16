@@ -5,23 +5,26 @@ import Prelude
 import Async (Async)
 import Data.Foldable (foldMap)
 import Data.Maybe (Maybe(..))
-import Data.Tuple (Tuple(..))
+import Data.Monoid (guard)
+import Data.Tuple.Nested ((/\))
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.Hooks as Hooks
 import TeamTavern.Client.Components.Popover (popover, popoverItem, togglePopover, usePopover)
+import TeamTavern.Client.Pages.Player.ChangeEmail (changeEmail)
 import TeamTavern.Client.Pages.Player.DeleteAccount (deleteAccount)
 import TeamTavern.Client.Shared.Slot (SimpleSlot)
 import TeamTavern.Client.Snippets.Class as HS
 import Type.Proxy (Proxy(..))
 
-type Input = String
+type Input = {email :: Maybe String, nickname :: String}
 
 component :: ∀ query output left. H.Component query Input output (Async left)
-component = Hooks.component $ \_ nickname -> Hooks.do
-    (Tuple shown shownId) <- usePopover
-    (Tuple deleteModalShown deleteModalShownId) <- Hooks.useState Nothing
+component = Hooks.component $ \_ {email, nickname} -> Hooks.do
+    shown /\ shownId <- usePopover
+    changeEmailModalShown /\ changeEmailModalShownId <- Hooks.useState false
+    deleteModalShown /\ deleteModalShownId <- Hooks.useState Nothing
     Hooks.pure $
         popover
         shown
@@ -31,6 +34,10 @@ component = Hooks.component $ \_ nickname -> Hooks.do
             ]
             []
         ]
+        <> guard changeEmailModalShown
+            [ changeEmail {email, nickname}
+                (const $ Hooks.put changeEmailModalShownId false)
+            ]
         <> foldMap (\deleteModalInput ->
             [ deleteAccount
                 deleteModalInput
@@ -39,9 +46,12 @@ component = Hooks.component $ \_ nickname -> Hooks.do
             deleteModalShown
         )
         [ popoverItem
+            (const $ Hooks.put changeEmailModalShownId true)
+            [ HH.text "Change email" ]
+        , popoverItem
             (const $ Hooks.put deleteModalShownId $ Just nickname)
             [ HH.span [ HS.class_ "delete-account-option" ]
-                [ HH.i [ HS.class_ "fas fa-trash button-icon" ] [], HH.text "Delete account" ]
+                [ HH.text "Delete account" ]
             ]
         ]
 
