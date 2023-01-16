@@ -4,7 +4,6 @@ import Prelude
 
 import Async (Async)
 import Data.Array as Array
-import Data.Const (Const)
 import Data.Either (Either(..))
 import Data.Foldable (foldl)
 import Data.Maybe (Maybe(..))
@@ -45,8 +44,6 @@ type State =
 data Action
     = UpdateProfile ProfileFormInput.Output
     | SendRequest Event
-
-type Slot = H.Slot (Const Void) (Modal.Output Void) Unit
 
 type ChildSlots = (teamProfileFormInput :: ProfileFormInput.Slot)
 
@@ -191,7 +188,7 @@ createProfile
     :: ∀ action children left
     .  Input
     -> (Modal.Output Void -> action)
-    -> HH.ComponentHTML action (createProfile :: Slot | children) (Async left)
+    -> HH.ComponentHTML action (createProfile :: Modal.Slot_ | children) (Async left)
 createProfile input handleMessage = HH.slot
     (Proxy :: _ "createProfile") unit
     (Modal.component ("Create " <> input.game.title <> " team profile") component) input handleMessage

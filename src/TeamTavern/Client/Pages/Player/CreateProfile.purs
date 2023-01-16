@@ -1,4 +1,4 @@
-module TeamTavern.Client.Pages.Player.CreateProfile (Input, Slot, createProfile) where
+module TeamTavern.Client.Pages.Player.CreateProfile (Input, createProfile) where
 
 import Prelude
 
@@ -44,8 +44,6 @@ type State =
 data Action
     = UpdateProfile ProfileFormInput.Output
     | SendRequest Event
-
-type Slot = H.Slot (Const Void) (Modal.Output Void) Unit
 
 type ChildSlots = ("playerProfileFormInput" :: ProfileFormInput.Slot)
 
@@ -186,7 +184,7 @@ createProfile
     :: ∀ children action left
     .  Input
     -> (Modal.Output Void -> action)
-    -> HH.ComponentHTML action (createProfile :: Slot | children) (Async left)
+    -> HH.ComponentHTML action (createProfile :: Modal.Slot_ | children) (Async left)
 createProfile input handleMessage = HH.slot
     (Proxy :: _ "createProfile") unit
     (Modal.component ("Create your " <> input.game.title <> " profile") component) input handleMessage

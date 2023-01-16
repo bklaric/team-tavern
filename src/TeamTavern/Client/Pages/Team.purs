@@ -17,20 +17,17 @@ import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Components.Ads (descriptionLeaderboards, stickyLeaderboards)
 import TeamTavern.Client.Components.Content (contentColumns, contentDescription, contentHeader, contentHeaderSection, contentHeading', contentHeadingFaIcon)
+import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as Anchor
 import TeamTavern.Client.Components.Player.ProfileDetails (PlatformIdSlots)
 import TeamTavern.Client.Pages.Profiles.TeamBadge (informalBadge, organizedBadge)
 import TeamTavern.Client.Pages.Team.Contacts (contacts)
 import TeamTavern.Client.Pages.Team.DeleteTeamProfile (deleteTeamProfile)
-import TeamTavern.Client.Pages.Team.DeleteTeamProfile as DeleteTeamProfile
 import TeamTavern.Client.Pages.Team.Details (details)
 import TeamTavern.Client.Pages.Team.EditContacts (editContacts)
-import TeamTavern.Client.Pages.Team.EditContacts as EditContacts
 import TeamTavern.Client.Pages.Team.EditProfile (editProfile)
-import TeamTavern.Client.Pages.Team.EditProfile as EditProfile
 import TeamTavern.Client.Pages.Team.EditTeam (editTeam)
-import TeamTavern.Client.Pages.Team.EditTeam as EditTeam
 import TeamTavern.Client.Pages.Team.Profiles (profiles)
 import TeamTavern.Client.Pages.Team.Status (Status(..), getStatus)
 import TeamTavern.Client.Pages.Team.TeamOptions (teamOptions)
@@ -76,10 +73,10 @@ type ChildSlots = PlatformIdSlots
     ( discordTag :: Copyable.Slot String
     , games :: Anchor.Slot String
     , createProfile :: H.Slot (Const Void) Void Unit
-    , editContacts :: EditContacts.Slot
-    , editTeam :: EditTeam.Slot
-    , editProfile :: EditProfile.Slot
-    , deleteTeamProfile :: DeleteTeamProfile.Slot
+    , editContacts :: Modal.Slot_
+    , editTeam :: Modal.Slot_
+    , editProfile :: Modal.Slot_
+    , deleteTeamProfile :: Modal.Slot_
     , viewTeamOwner :: Anchor.Slot Unit
     , teamProfileOptions :: TeamProfileOptions.Slot
     , teamOptions :: SimpleSlot

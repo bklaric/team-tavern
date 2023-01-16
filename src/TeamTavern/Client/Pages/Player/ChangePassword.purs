@@ -4,7 +4,6 @@ import Prelude
 
 import Async (Async, attempt)
 import Control.Monad.Trans.Class (lift)
-import Data.Const (Const)
 import Data.Either (Either(..))
 import Data.Tuple.Nested ((/\))
 import Data.Variant (match, onMatch)
@@ -24,8 +23,6 @@ import Type.Proxy (Proxy(..))
 import Web.Event.Event (preventDefault)
 
 type Input = {nickname :: String}
-
-type Slot = H.Slot (Const Void) (Modal.Output Void) Unit
 
 component :: ∀ query output left. H.Component query Input output (Async left)
 component = Hooks.component \_ {nickname} -> Hooks.do
@@ -79,7 +76,7 @@ changePassword
     :: ∀ action children left
     .  Input
     -> (Modal.Output Void -> action)
-    -> HH.ComponentHTML action (changePassword :: Slot | children) (Async left)
+    -> HH.ComponentHTML action (changePassword :: Modal.Slot_ | children) (Async left)
 changePassword input handleMessage = HH.slot
     (Proxy :: _ "changePassword") unit
     (Modal.component ("Change password") component)

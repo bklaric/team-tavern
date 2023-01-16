@@ -16,20 +16,16 @@ import Halogen.HTML as HH
 import Record.Extra (pick)
 import TeamTavern.Client.Components.Ads (descriptionLeaderboards, stickyLeaderboards)
 import TeamTavern.Client.Components.Content (contentColumns, contentDescription, contentHeader, contentHeaderSection, contentHeading', contentHeadingFaIcon)
+import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Components.Player.ProfileDetails (PlatformIdSlots)
 import TeamTavern.Client.Pages.Player.Contacts (contacts)
 import TeamTavern.Client.Pages.Player.CreateTeam (createTeam)
-import TeamTavern.Client.Pages.Player.CreateTeam as CreateTeam
 import TeamTavern.Client.Pages.Player.DeletePlayerProfile (deletePlayerProfile)
-import TeamTavern.Client.Pages.Player.DeletePlayerProfile as DeletePlayerProfile
 import TeamTavern.Client.Pages.Player.Details (details)
 import TeamTavern.Client.Pages.Player.EditContacts (editContacts)
-import TeamTavern.Client.Pages.Player.EditContacts as EditContacts
 import TeamTavern.Client.Pages.Player.EditPlayer (editPlayer)
-import TeamTavern.Client.Pages.Player.EditPlayer as EditDetails
 import TeamTavern.Client.Pages.Player.EditProfile (editProfile)
-import TeamTavern.Client.Pages.Player.EditProfile as EditProfile
 import TeamTavern.Client.Pages.Player.PlayerOptions (playerOptions)
 import TeamTavern.Client.Pages.Player.PlayerProfileOptions as PlayerProfileOptions
 import TeamTavern.Client.Pages.Player.Profiles (profiles)
@@ -79,12 +75,12 @@ type ChildSlots = PlatformIdSlots
     ( discordTag :: Copyable.Slot String
     , team :: NavigationAnchor.Slot String
     , games :: NavigationAnchor.Slot String
-    , editContacts :: EditContacts.Slot
-    , editPlayer :: EditDetails.Slot
+    , editContacts :: Modal.Slot_
+    , editPlayer :: Modal.Slot_
     , createProfile :: SimpleSlot
-    , editProfile :: EditProfile.Slot
-    , deletePlayerProfile :: DeletePlayerProfile.Slot
-    , createTeam :: CreateTeam.Slot
+    , editProfile :: Modal.Slot_
+    , deletePlayerProfile :: Modal.Slot_
+    , createTeam :: Modal.Slot_
     , playerOptions :: SimpleSlot
     , playerProfileOptions :: PlayerProfileOptions.Slot
     )

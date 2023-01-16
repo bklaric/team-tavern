@@ -1,9 +1,8 @@
-module TeamTavern.Client.Pages.Player.CreateTeam (Slot, createTeam) where
+module TeamTavern.Client.Pages.Player.CreateTeam (createTeam) where
 
 import Prelude
 
 import Async (Async)
-import Data.Const (Const)
 import Data.Either (Either(..))
 import Data.Foldable (foldl)
 import Data.Maybe (Maybe(..))
@@ -36,8 +35,6 @@ data Action
     | SendRequest Event
 
 type ChildSlots = (teamFormInput :: EnterTeamDetails.Slot)
-
-type Slot = H.Slot (Const Void) (Modal.Output Void) Unit
 
 render :: ∀ left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { details, submitting, otherError } =
@@ -126,7 +123,7 @@ component = H.mkComponent
 createTeam
     :: ∀ action children left
     .  (Modal.Output Void -> action)
-    -> HH.ComponentHTML action (createTeam :: Slot | children) (Async left)
+    -> HH.ComponentHTML action (createTeam :: Modal.Slot_ | children) (Async left)
 createTeam handleMessage = HH.slot
     (Proxy :: _ "createTeam") unit
     (Modal.component "Create team" component) unit handleMessage

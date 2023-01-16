@@ -5,7 +5,6 @@ import Prelude
 import Async (Async)
 import Data.Array (intercalate)
 import Data.Array as Array
-import Data.Const (Const)
 import Data.Either (Either(..))
 import Data.Foldable (foldl)
 import Data.Maybe (Maybe(..))
@@ -44,8 +43,6 @@ type State =
 data Action
     = UpdateProfile ProfileFormInput.Output
     | SendRequest Event
-
-type Slot = H.Slot (Const Void) (Modal.Output Void) Unit
 
 type ChildSlots = ("playerProfileFormInput" :: ProfileFormInput.Slot)
 
@@ -200,7 +197,7 @@ editProfile
     :: ∀ query children left
     .  Input
     -> (Modal.Output Void -> query)
-    -> HH.ComponentHTML query (editProfile :: Slot | children) (Async left)
+    -> HH.ComponentHTML query (editProfile :: Modal.Slot_ | children) (Async left)
 editProfile input handleMessage =
     HH.slot
     (Proxy :: _ "editProfile") unit

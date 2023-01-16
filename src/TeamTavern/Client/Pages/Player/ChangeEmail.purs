@@ -4,7 +4,6 @@ import Prelude
 
 import Async (Async, attempt)
 import Control.Monad.Trans.Class (lift)
-import Data.Const (Const)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe, maybe)
 import Data.Tuple.Nested ((/\))
@@ -26,8 +25,6 @@ import Type.Proxy (Proxy(..))
 import Web.Event.Event (preventDefault)
 
 type Input = {email :: Maybe String, nickname :: String}
-
-type Slot = H.Slot (Const Void) (Modal.Output Void) Unit
 
 component :: ∀ query output left. H.Component query Input output (Async left)
 component = Hooks.component \_ input @ {nickname} -> Hooks.do
@@ -86,7 +83,7 @@ changeEmail
     :: ∀ action children left
     .  Input
     -> (Modal.Output Void -> action)
-    -> HH.ComponentHTML action (changeEmail :: Slot | children) (Async left)
+    -> HH.ComponentHTML action (changeEmail :: Modal.Slot_ | children) (Async left)
 changeEmail input handleMessage = HH.slot
     (Proxy :: _ "changeEmail") unit
     (Modal.component ("Change email") component)

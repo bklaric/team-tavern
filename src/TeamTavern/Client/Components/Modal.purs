@@ -1,4 +1,4 @@
-module TeamTavern.Client.Components.Modal (Output(..), component) where
+module TeamTavern.Client.Components.Modal (Output(..), Slot, Slot_, component) where
 
 import Prelude
 
@@ -22,7 +22,9 @@ data Output output = CloseClicked | OutputRaised output
 
 type ChildSlots query output = (content :: H.Slot query output Unit)
 
-type Slot output = H.Slot (Const Void) output Unit
+type Slot output = H.Slot (Const Void) (Output output) Unit
+
+type Slot_ = Slot Void
 
 component
     :: ∀ query' monad output query input

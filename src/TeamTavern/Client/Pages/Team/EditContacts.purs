@@ -1,10 +1,9 @@
-module TeamTavern.Client.Pages.Team.EditContacts (Input, Slot, editContacts) where
+module TeamTavern.Client.Pages.Team.EditContacts (Input, editContacts) where
 
 import Prelude
 
 import Async (Async)
 import Data.Array (nubEq)
-import Data.Const (Const)
 import Data.Either (Either(..))
 import Data.Foldable (foldl)
 import Data.Maybe (Maybe(..))
@@ -41,8 +40,6 @@ type State =
     }
 
 type ChildSlots = (playerContactsFormInput :: ContactsFormInput.Slot)
-
-type Slot = H.Slot (Const Void) (Modal.Output Void) Unit
 
 render :: ∀ left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { contacts, submitting, otherError } =
@@ -156,7 +153,7 @@ editContacts
     :: ∀ fields action slots left
     .  Input fields
     -> (Modal.Output Void -> action)
-    -> HH.ComponentHTML action (editContacts :: Slot | slots) (Async left)
+    -> HH.ComponentHTML action (editContacts :: Modal.Slot_ | slots) (Async left)
 editContacts input handleMessage = HH.slot
     (Proxy :: _ "editContacts") unit
     (Modal.component "Edit contacts" component) input handleMessage

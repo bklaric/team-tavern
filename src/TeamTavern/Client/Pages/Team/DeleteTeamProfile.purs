@@ -4,7 +4,6 @@ import Prelude
 
 import Async (Async)
 import Control.Monad.Trans.Class (lift)
-import Data.Const (Const)
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
 import Effect.Class (liftEffect)
@@ -25,8 +24,6 @@ type Input =
     { team :: ViewTeam.OkContent
     , profile :: ViewTeam.OkContentProfile
     }
-
-type Slot = H.Slot (Const Void) (Modal.Output Void) Unit
 
 component :: ∀ query output left. H.Component query Input output (Async left)
 component = Hooks.component \_ { team, profile } -> Hooks.do
@@ -54,7 +51,7 @@ deleteTeamProfile
     :: ∀ action children left
     .  Input
     -> (Modal.Output Void -> action)
-    -> HH.ComponentHTML action (deleteTeamProfile :: Slot | children) (Async left)
+    -> HH.ComponentHTML action (deleteTeamProfile :: Modal.Slot_ | children) (Async left)
 deleteTeamProfile input handleMessage = HH.slot
     (Proxy :: _ "deleteTeamProfile") unit
     (Modal.component ("Delete " <> input.profile.title <> " profile") component)

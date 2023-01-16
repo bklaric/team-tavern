@@ -3,7 +3,6 @@ module TeamTavern.Client.Pages.Team.EditTeam where
 import Prelude
 
 import Async (Async)
-import Data.Const (Const)
 import Data.Either (Either(..))
 import Data.Foldable (foldl)
 import Data.Maybe (Maybe(..))
@@ -62,8 +61,6 @@ data Action
     | SendRequest Event
 
 type ChildSlots = (teamFormInput :: EnterTeamDetails.Slot)
-
-type Slot = H.Slot (Const Void) (Modal.Output Void) Unit
 
 render :: ∀ left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { details, submitting, otherError } =
@@ -163,7 +160,7 @@ editTeam
     :: ∀ fields action children left
     .  (Input fields)
     -> (Modal.Output Void -> action)
-    -> HH.ComponentHTML action (editTeam :: Slot | children) (Async left)
+    -> HH.ComponentHTML action (editTeam :: Modal.Slot_ | children) (Async left)
 editTeam input handleMessage = HH.slot
     (Proxy :: _ "editTeam") unit
     (Modal.component "Edit team" component) input handleMessage

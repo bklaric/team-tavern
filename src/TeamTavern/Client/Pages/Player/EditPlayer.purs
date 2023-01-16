@@ -1,9 +1,8 @@
-module TeamTavern.Client.Pages.Player.EditPlayer (Input, Slot, editPlayer) where
+module TeamTavern.Client.Pages.Player.EditPlayer (Input, editPlayer) where
 
 import Prelude
 
 import Async (Async)
-import Data.Const (Const)
 import Data.Maybe (Maybe(..))
 import Halogen as H
 import Halogen.HTML as HH
@@ -33,8 +32,6 @@ type State =
     }
 
 type ChildSlots = (playerFormInput :: EnterPlayerDetails.Slot)
-
-type Slot = H.Slot (Const Void) (Modal.Output Void) Unit
 
 render :: ∀ left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { details, submitting, otherError } =
@@ -114,7 +111,7 @@ editPlayer
     :: ∀ action children left
     .  Input
     -> (Modal.Output Void -> action)
-    -> HH.ComponentHTML action (editPlayer :: Slot | children) (Async left)
+    -> HH.ComponentHTML action (editPlayer :: Modal.Slot_ | children) (Async left)
 editPlayer input handleMessage = HH.slot
     (Proxy :: _ "editPlayer") unit
     (Modal.component "Edit player" component) input handleMessage

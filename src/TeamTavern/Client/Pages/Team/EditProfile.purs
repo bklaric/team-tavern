@@ -3,7 +3,6 @@ module TeamTavern.Client.Pages.Team.EditProfile where
 import Prelude
 
 import Async (Async)
-import Data.Const (Const)
 import Data.Either (Either(..))
 import Data.Foldable (foldl, intercalate)
 import Data.Maybe (Maybe(..))
@@ -45,8 +44,6 @@ data Action
     | SendRequest Event
 
 type ChildSlots = (teamProfileFormInput :: EnterProfile.Slot)
-
-type Slot = H.Slot (Const Void) (Modal.Output Void) Unit
 
 render :: ∀ left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render { profile, submitting, otherError } =
@@ -197,7 +194,7 @@ editProfile
     :: ∀ action children left
     .  Input
     -> (Modal.Output Void -> action)
-    -> HH.ComponentHTML action (editProfile :: Slot | children) (Async left)
+    -> HH.ComponentHTML action (editProfile :: Modal.Slot_ | children) (Async left)
 editProfile input handleMessage = HH.slot
     (Proxy :: _ "editProfile") unit
     (Modal.component ("Edit " <> input.profile.title <> " team profile") component) input handleMessage

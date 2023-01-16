@@ -3,7 +3,6 @@ module TeamTavern.Client.Pages.Player.DeleteAccount where
 import Prelude
 
 import Async (Async)
-import Data.Const (Const)
 import Data.Maybe (Maybe(..))
 import Type.Proxy (Proxy(..))
 import Halogen as H
@@ -21,8 +20,6 @@ type Input = String
 type State = { nickname :: String, submitting :: Boolean, otherError :: Boolean }
 
 data Action = SendRequest Event
-
-type Slot = H.Slot (Const Void) (Modal.Output Void) Unit
 
 render :: ∀ slots. State -> HH.HTML slots Action
 render { submitting, otherError } =
@@ -65,7 +62,7 @@ deleteAccount
     :: ∀ children action left
     .  Input
     -> (Modal.Output Void -> action)
-    -> HH.ComponentHTML action (deleteAccount :: Slot | children) (Async left)
+    -> HH.ComponentHTML action (deleteAccount :: Modal.Slot_ | children) (Async left)
 deleteAccount input handleMessage = HH.slot
     (Proxy :: _ "deleteAccount") unit
     (Modal.component ("Delete your TeamTavern account") component) input handleMessage

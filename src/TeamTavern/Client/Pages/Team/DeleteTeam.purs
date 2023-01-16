@@ -1,10 +1,9 @@
-module TeamTavern.Client.Pages.Team.DeleteTeam (Slot, deleteTeam) where
+module TeamTavern.Client.Pages.Team.DeleteTeam (deleteTeam) where
 
 import Prelude
 
 import Async (Async)
 import Control.Monad.Trans.Class (lift)
-import Data.Const (Const)
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
 import Effect.Class (liftEffect)
@@ -21,8 +20,6 @@ import TeamTavern.Routes.Team.DeleteTeam (DeleteTeam)
 import TeamTavern.Routes.Team.ViewTeam as ViewTeam
 import Type.Proxy (Proxy(..))
 import Web.Event.Event (preventDefault)
-
-type Slot = H.Slot (Const Void) (Modal.Output Void) Unit
 
 component :: ∀ query output left.
     H.Component query ViewTeam.OkContent output (Async left)
@@ -50,7 +47,7 @@ deleteTeam
     :: ∀ action children left
     .  ViewTeam.OkContent
     -> (Modal.Output Void -> action)
-    -> HH.ComponentHTML action (deleteTeam :: Slot | children) (Async left)
+    -> HH.ComponentHTML action (deleteTeam :: Modal.Slot_ | children) (Async left)
 deleteTeam team handleMessage = HH.slot
     (Proxy :: _ "deleteTeam") unit
     (Modal.component ("Delete " <> nameOrHandleNW team.handle team.organization <> " team") component)
