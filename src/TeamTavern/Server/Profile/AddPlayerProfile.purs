@@ -19,6 +19,7 @@ import TeamTavern.Server.Player.UpdateContacts.ValidateContacts (validateContact
 import TeamTavern.Server.Profile.AddPlayerProfile.AddProfile (addProfile)
 import TeamTavern.Server.Profile.AddPlayerProfile.LoadFields (loadFields)
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile (validateProfileV)
+import TeamTavern.Server.Profile.Infrastructure.CheckPlayerAlerts (checkPlayerAlerts)
 import TeamTavern.Server.Profile.Infrastructure.PatchPlayerContacts (patchPlayerContacts)
 import Type.Proxy (Proxy(..))
 
@@ -63,6 +64,6 @@ addPlayerProfile pool cookies identifiers profile' =
         pure profileId
 
     -- Check alerts and notify.
-    -- checkPlayerAlerts profileId pool
+    checkPlayerAlerts profileId pool
 
     pure noContent_

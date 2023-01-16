@@ -31,6 +31,8 @@ import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile (validateProfi
 import TeamTavern.Server.Profile.AddTeamProfile.AddProfile as AddTeamProfile
 import TeamTavern.Server.Profile.AddTeamProfile.LoadFields as Team
 import TeamTavern.Server.Profile.AddTeamProfile.ValidateProfile as TeamProfile
+import TeamTavern.Server.Profile.Infrastructure.CheckPlayerAlerts (checkPlayerAlerts)
+import TeamTavern.Server.Profile.Infrastructure.CheckTeamAlerts (checkTeamAlerts)
 import TeamTavern.Server.Team.Create (addTeam)
 import TeamTavern.Server.Team.Infrastructure.GenerateHandle (generateHandle)
 import TeamTavern.Server.Team.Infrastructure.ValidateContacts as TeamCont
@@ -110,8 +112,8 @@ onboard pool cookies content =
             pure { teamHandle: Just handle, profileId }
         _ -> Async.left $ Terror (badRequest_ $ Nea.singleton $ inj (Proxy :: _ "other") {}) []
 
-    -- case result.teamHandle of
-    --     Nothing -> checkPlayerAlerts result.profileId pool
-    --     Just _ -> checkTeamAlerts result.profileId pool
+    case result.teamHandle of
+        Nothing -> checkPlayerAlerts result.profileId pool
+        Just _ -> checkTeamAlerts result.profileId pool
 
     pure $ ok_ (pick result :: Onboard.OkContent)
