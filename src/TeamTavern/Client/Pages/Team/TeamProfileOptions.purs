@@ -13,6 +13,7 @@ import Halogen.HTML.Events as HE
 import Halogen.Hooks as Hooks
 import TeamTavern.Client.Components.Popover (popover, popoverItem, togglePopover, usePopover)
 import TeamTavern.Client.Pages.Team.Status (Status(..))
+import TeamTavern.Client.Script.Analytics (track)
 import TeamTavern.Client.Script.Clipboard (writeTextAsync)
 import TeamTavern.Client.Shared.Slot (QuerylessSlot)
 import TeamTavern.Client.Snippets.Class as HS
@@ -35,12 +36,14 @@ profileUrl { teamHandle, gameHandle } = do
 component :: ∀ query left. H.Component query Input Output (Async left)
 component = Hooks.component $ \{ outputToken } input -> Hooks.do
     (Tuple shown shownId) <- usePopover
-    let openProfileInNewTab = void $ fromEffect do
+    let openProfileInNewTab = fromEffect do
             profileUrl' <- profileUrl input
-            window >>= open profileUrl' "" ""
+            window >>= open profileUrl' "" "" # void
+            track "Profile new tab open" {ilk: "team"}
     let copyProfileAddress = do
             profileUrl' <- profileUrl input # fromEffect
             writeTextAsync profileUrl' # attempt # void
+            track "Profile address copy" {ilk: "team"}
     Hooks.pure $
         popover
         shown
