@@ -1,5 +1,6 @@
 create table player
     ( id serial not null primary key
+    , email varchar(254) unique
     , nickname varchar(40) not null unique
 
     -- Contact
@@ -28,6 +29,7 @@ create table player
     , registered timestamptz not null default current_timestamp
     );
 
+create unique index player_lower_email_key on player (lower(email));
 create unique index player_lower_nickname_key on player (lower(nickname));
 
 create table team
@@ -72,6 +74,14 @@ create table session
     , token character(40) not null
     , revoked boolean not null default false
     , generated timestamptz not null default current_timestamp
+    );
+
+create table password_reset
+    ( id serial not null primary key
+    , player_id integer not null references player(id)
+    , nonce character(20) not null
+    , consumed boolean not null default false
+    , created timestamptz not null default current_timestamp
     );
 
 create table game

@@ -29,6 +29,7 @@ passwordInput password passwordShown onPassword togglePasswordVisibility =
             if passwordShown
             then "Hide password"
             else "Show password"
+        , HP.tabIndex (-1)
         , HE.onClick $ const togglePasswordVisibility
         ]
         [ HH.i

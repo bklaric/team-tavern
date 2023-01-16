@@ -95,7 +95,8 @@ preboard deployment pool cookies content =
 
             -- Add player.
             id <- addPlayer client
-                { nickname: registration'.nickname
+                { email: registration'.email
+                , nickname: registration'.nickname
                 , hash
                 }
                 # lmap (map (over { badRequest: \(AppResponse headers body) -> AppResponse headers (Nea.singleton body) }))
@@ -157,7 +158,8 @@ preboard deployment pool cookies content =
 
             -- Add player.
             id <- addPlayer client
-                { nickname: registration'.nickname
+                { email: registration'.email
+                , nickname: registration'.nickname
                 , hash
                 }
                 # lmap (map (over { badRequest: \(AppResponse headers body) -> AppResponse headers (Nea.singleton body) }))

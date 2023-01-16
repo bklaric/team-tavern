@@ -8,35 +8,43 @@ import Data.Maybe (Maybe(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Record as Record
-import TeamTavern.Client.Components.Input (inputError, inputGroup, requiredTextLineInput)
+import Record.Extra (pick)
+import TeamTavern.Client.Components.Input (inputError, inputGroup, inputLabel_, requiredTextLineInput)
 import TeamTavern.Client.Components.PasswordInput (passwordInput)
-import TeamTavern.Client.Snippets.Class as HS
 import Type.Proxy (Proxy(..))
 
 type Input =
-    { nickname :: String
+    { email :: String
+    , nickname :: String
     , password :: String
+    , emailError :: Boolean
     , nicknameError :: Boolean
     , passwordError :: Boolean
+    , emailTaken :: Boolean
     , nicknameTaken :: Boolean
     }
 
 type Output =
-    { nickname :: String
+    { email :: String
+    , nickname :: String
     , password :: String
     }
 
 type State =
-    { nickname :: String
+    { email :: String
+    , nickname :: String
     , password :: String
     , passwordShown :: Boolean
+    , emailError :: Boolean
     , nicknameError :: Boolean
     , passwordError :: Boolean
+    , emailTaken :: Boolean
     , nicknameTaken :: Boolean
     }
 
 data Action
     = Receive Input
+    | UpdateEmail String
     | UpdateNickname String
     | UpdatePassword String
     | TogglePasswordVisibility
@@ -45,55 +53,61 @@ type Slot = H.Slot (Const Void) Output Unit
 
 render :: ∀ left slots. State -> H.ComponentHTML Action slots (Async left)
 render
-    { nickname
+    { email
+    , nickname
     , password
     , passwordShown
+    , emailError
     , nicknameError
     , passwordError
+    , emailTaken
     , nicknameTaken
     } =
     HH.div_
     [ inputGroup $
-        [ HH.label [ HS.class_ "input-label" ] [ HH.text "Nickname" ]
+        [ inputLabel_ "Email"
+        , requiredTextLineInput email UpdateEmail
+        ]
+        <> inputError emailError "This doesn't look like a valid email address."
+        <> inputError emailTaken "This email is already taken, please pick another one."
+    , inputGroup $
+        [ inputLabel_ "Nickname"
         , requiredTextLineInput nickname UpdateNickname
         ]
         <> inputError nicknameError """Nickname cannot be more than 40 characters long
             and can only contain alphanumeric characters, dashes, underscores and dots."""
         <> inputError nicknameTaken "This nickname is already taken, please pick another one."
     , inputGroup $
-        [ HH.label [ HS.class_ "input-label" ] [ HH.text "Password" ]
+        [ inputLabel_ "Password"
         , passwordInput password passwordShown UpdatePassword TogglePasswordVisibility
         ]
         <> inputError passwordError "Password must have at least 8 characters."
     ]
 
-stateToOutput :: State -> Output
-stateToOutput { nickname, password } = { nickname, password }
-
 handleAction :: ∀ slots left. Action -> H.HalogenM State Action slots Output (Async left) Unit
 handleAction (Receive input) =
-    H.modify_ _
-        { nickname = input.nickname
-        , password = input.password
-        , nicknameError = input.nicknameError
-        , passwordError = input.passwordError
-        , nicknameTaken = input.nicknameTaken
-        }
+    H.modify_ $ Record.merge input
+handleAction (UpdateEmail email) = do
+    state <- H.modify _ { email = email }
+    H.raise $ pick state
 handleAction (UpdateNickname nickname) = do
     state <- H.modify _ { nickname = nickname }
-    H.raise $ stateToOutput state
+    H.raise $ pick state
 handleAction (UpdatePassword password) = do
     state <- H.modify _ { password = password }
-    H.raise $ stateToOutput state
+    H.raise $ pick state
 handleAction TogglePasswordVisibility =
     H.modify_ \state -> state { passwordShown = not state.passwordShown }
 
 emptyInput :: Input
 emptyInput =
-    { nickname: ""
+    { email: ""
+    , nickname: ""
     , password: ""
+    , emailError: false
     , nicknameError: false
     , passwordError: false
+    , emailTaken: false
     , nicknameTaken: false
     }
 

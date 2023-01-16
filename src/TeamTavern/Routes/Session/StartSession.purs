@@ -8,8 +8,8 @@ type StartSession =
     ==> (NoContent ! BadRequestJson BadContent ! Forbidden_ ! Internal_)
 
 type RequestContent =
-    { nickname :: String
+    { emailOrNickname :: String
     , password :: String
     }
 
-type BadContent = Variant (noSessionStarted :: {})
+type BadContent = Variant (unknownPlayer :: {}, wrongPassword :: {})

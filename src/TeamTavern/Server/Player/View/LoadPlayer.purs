@@ -15,6 +15,7 @@ import TeamTavern.Server.Infrastructure.Postgres (LoadSingleError, playerAdjuste
 queryString :: String -> Query
 queryString timezone = Query $ """
     select
+        case when $2 then player.email end as email,
         player.nickname,
         player.discord_tag as "discordTag",
         player.steam_id as "steamId",

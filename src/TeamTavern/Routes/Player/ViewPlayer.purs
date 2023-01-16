@@ -55,7 +55,8 @@ type OkContentTeam =
     }
 
 type OkContent = PlayerContactsOpen
-    ( nickname :: String
+    ( email :: Maybe String
+    , nickname :: String
     , birthday :: Maybe String
     , age :: Maybe Int
     , location :: Maybe String

@@ -1,3 +1,3 @@
 #!/bin/bash
 ./build-server.sh
-./run-server.sh
+./restart-server.sh

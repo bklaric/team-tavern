@@ -7,10 +7,14 @@ import TeamTavern.Routes.Boarding.Onboard (Onboard)
 import TeamTavern.Routes.Boarding.Preboard (Preboard)
 import TeamTavern.Routes.Game.ViewAllGames (ViewAllGames)
 import TeamTavern.Routes.Game.ViewGame (ViewGame)
+import TeamTavern.Routes.Password.ForgotPassword (ForgotPassword)
+import TeamTavern.Routes.Password.ResetPassword (ResetPassword)
 import TeamTavern.Routes.Player.DeletePlayer (DeletePlayer)
 import TeamTavern.Routes.Player.RegisterPlayer (RegisterPlayer)
 import TeamTavern.Routes.Player.UpdatePlayer (UpdatePlayer)
 import TeamTavern.Routes.Player.UpdatePlayerContacts (UpdatePlayerContacts)
+import TeamTavern.Routes.Player.UpdatePlayerEmail (UpdatePlayerEmail)
+import TeamTavern.Routes.Player.UpdatePlayerPassword (UpdatePlayerPassword)
 import TeamTavern.Routes.Player.ViewPlayer (ViewPlayer)
 import TeamTavern.Routes.Profile.AddPlayerProfile (AddPlayerProfile)
 import TeamTavern.Routes.Profile.AddTeamProfile (AddTeamProfile)
@@ -34,6 +38,10 @@ type SessionRoutes
     =   "startSession" : StartSession
     <|> "endSession"   : EndSession
 
+type PasswordRoutes
+    =   "forgotPassword" : ForgotPassword
+    <|> "resetPassword"  : ResetPassword
+
 type GameRoutes
     =   "viewAllGames" : ViewAllGames
     <|> "viewGame"     : ViewGame
@@ -44,6 +52,8 @@ type PlayerRoutes
     <|> "updatePlayer"   : UpdatePlayer
     <|> "deletePlayer"   : DeletePlayer
     <|> "updatePlayerContacts" : UpdatePlayerContacts
+    <|> "updatePlayerEmail"    : UpdatePlayerEmail
+    <|> "updatePlayerPassword" : UpdatePlayerPassword
 
 type TeamRoutes
     =   "viewTeam"   : ViewTeam
@@ -74,6 +84,7 @@ type AlertRoutes
 
 type AllRoutes
     =    SessionRoutes
+    <|> PasswordRoutes
     <|> GameRoutes
     <|> PlayerRoutes
     <|> TeamRoutes

@@ -68,7 +68,7 @@ type Input =
 type Output =
     { details ::
         { size :: Size
-        , platforms :: Array Platform
+        , selectedPlatforms :: Array Platform
         , fieldValues :: FieldValues
         , newOrReturning :: Boolean
         , about :: String

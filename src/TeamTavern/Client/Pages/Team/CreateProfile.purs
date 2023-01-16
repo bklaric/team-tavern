@@ -73,28 +73,10 @@ sendRequest { teamHandle, gameHandle, profile } = let
 handleAction :: ∀ output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
 handleAction (UpdateProfile profile) =
-    H.modify_ _
+    H.modify_ \state -> state
         { profile
-            { details
-                { size = profile.details.size
-                , selectedPlatforms = profile.details.platforms
-                , fieldValues = profile.details.fieldValues
-                , newOrReturning = profile.details.newOrReturning
-                , about = profile.details.about
-                , ambitions = profile.details.ambitions
-                }
-            , contacts
-                { discordTag = profile.contacts.discordTag
-                , discordServer = profile.contacts.discordServer
-                , steamId = profile.contacts.steamId
-                , riotId = profile.contacts.riotId
-                , battleTag = profile.contacts.battleTag
-                , eaId = profile.contacts.eaId
-                , ubisoftUsername = profile.contacts.ubisoftUsername
-                , psnId = profile.contacts.psnId
-                , gamerTag = profile.contacts.gamerTag
-                , friendCode = profile.contacts.friendCode
-                }
+            { details = Record.merge profile.details state.profile.details
+            , contacts = Record.merge profile.contacts state.profile.contacts
             }
         }
 handleAction (SendRequest event) = do

@@ -26,6 +26,7 @@ type ClassInput slots monad =
     { class_ :: String
     , path :: String
     , content :: HH.ComponentHTML (Action slots monad) slots monad
+    , disableTabIndex :: Boolean
     }
 
 type State slots monad = ClassInput slots monad
@@ -36,10 +37,11 @@ type Slot = H.Slot (Const Void) Void
 
 render :: ∀ slots monad.
   State slots monad -> HH.ComponentHTML (Action slots monad) slots monad
-render { class_, path, content } =
+render { class_, path, content, disableTabIndex } =
     HH.a
     [ HP.class_ $ HH.ClassName class_
     , HP.href path
+    , HP.tabIndex if disableTabIndex then -1 else 0
     , HE.onClick Navigate
     ]
     [ content ]
@@ -75,7 +77,8 @@ navigationAnchor
     -> SimpleInput children monad
     -> HH.ComponentHTML action children monad
 navigationAnchor label { path, content } =
-    HH.slot label unit component { class_: "", path, content } absurd
+    HH.slot label unit component
+    { class_: "", path, content, disableTabIndex: false } absurd
 
 navigationAnchorClassed
     :: ∀ label children children' action monad
@@ -99,4 +102,5 @@ navigationAnchorIndexed
     -> SimpleInput children monad
     -> HH.ComponentHTML action children monad
 navigationAnchorIndexed label index { path, content } =
-    HH.slot label index component { class_: "", path, content } absurd
+    HH.slot label index component
+    { class_: "", path, content, disableTabIndex: false } absurd
