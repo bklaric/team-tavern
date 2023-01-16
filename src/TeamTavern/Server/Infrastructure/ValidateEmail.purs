@@ -14,9 +14,9 @@ import Data.String.Regex (Regex, match, regex)
 import Data.String.Regex.Flags (unicode)
 import Data.Validated as Validated
 import Data.Variant (Variant, inj)
-import Jarilo (internal__)
+import Jarilo (badRequest_)
 import TeamTavern.Server.Infrastructure.Error (Terror(..), ValidatedTerrorNeaVar)
-import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
+import TeamTavern.Server.Infrastructure.Response (BadRequestTerror)
 import Type.Proxy (Proxy(..))
 import Undefined (undefined)
 import Wrapped.String (TooLong, Invalid, invalid, tooLong)
@@ -40,11 +40,12 @@ validateEmail email =
         , "Failed with following errors: " <> show errors
         ]
 
-validateEmail' :: ∀ errors. String -> Async (InternalTerror_ errors) Email
+validateEmail' :: ∀ other errors. String -> Async (BadRequestTerror (Variant (email :: {} | other)) errors) Email
 validateEmail' email =
     Wrapped.create trim [invalid (match emailRegex >>> isJust), tooLong 254] Email email
     # AsyncVal.fromValidated
-    # lmap \errors -> Terror internal__
+    # lmap \errors -> Terror
+        (badRequest_ $ inj (Proxy :: _ "email") {})
         [ "Error validating email: " <> email
         , "Failed with following errors: " <> show (errors :: NonEmptyArray EmailError)
         ]
