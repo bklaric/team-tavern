@@ -27,3 +27,9 @@ https://www.teamtavern.net/games/tf2/teams
 https://www.teamtavern.net/games/splitgate
 https://www.teamtavern.net/games/splitgate/players
 https://www.teamtavern.net/games/splitgate/teams
+https://www.teamtavern.net/games/apex
+https://www.teamtavern.net/games/apex/players
+https://www.teamtavern.net/games/apex/teams
+https://www.teamtavern.net/games/r6s
+https://www.teamtavern.net/games/r6s/players
+https://www.teamtavern.net/games/r6s/teams
