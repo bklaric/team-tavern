@@ -149,8 +149,8 @@ checkPlayerAlerts profileId querier =
             Nothing -> pure unit
             Just { nickname } -> do
                 -- Send the email.
-                let playerUrlShort = "https://www.teamtavern.net/players/" <> nickname <> "/" <> alert.handle
-                let playerUrlLong = "https://www.teamtavern.net/players/" <> nickname <> "/" <> alert.handle <> "?id=" <> show alert.id <> "&token=" <> alert.token
+                let playerUrlShort = "https://www.teamtavern.net/players/" <> nickname <> "/profiles/" <> alert.handle
+                let playerUrlLong = "https://www.teamtavern.net/players/" <> nickname <> "/profiles/" <> alert.handle <> "?id=" <> show alert.id <> "&token=" <> alert.token
                 let deleteAlertUrl = "https://www.teamtavern.net/remove-alert?id=" <> show alert.id <> "&token=" <> alert.token
                 sendAsync
                     { from: "admin@teamtavern.net"

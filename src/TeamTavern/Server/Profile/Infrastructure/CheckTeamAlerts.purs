@@ -139,8 +139,8 @@ checkTeamAlerts profileId querier =
             Nothing -> pure unit
             Just {handle, name} -> do
                 -- Send the email.
-                let teamUrlShort = "https://www.teamtavern.net/teams/" <> handle <> "/" <> alert.handle
-                let teamUrlLong = "https://www.teamtavern.net/teams/" <> handle <> "/" <> alert.handle <> "?id=" <> show alert.id <> "&token=" <> alert.token
+                let teamUrlShort = "https://www.teamtavern.net/teams/" <> handle <> "/profiles/" <> alert.handle
+                let teamUrlLong = "https://www.teamtavern.net/teams/" <> handle <> "/profiles/" <> alert.handle <> "?id=" <> show alert.id <> "&token=" <> alert.token
                 let teamName = maybe handle identity name
                 let deleteAlertUrl = "https://www.teamtavern.net/remove-alert?id=" <> show alert.id <> "&token=" <> alert.token
                 sendAsync
