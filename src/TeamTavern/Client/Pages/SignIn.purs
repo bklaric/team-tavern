@@ -11,7 +11,7 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Components.Form (form, otherFormError)
-import TeamTavern.Client.Components.Input (inputError, inputGroup, inputLabel_, requiredTextLineInput)
+import TeamTavern.Client.Components.Input (inputError, inputGroup, inputLabel_, requiredTextLineInputNamed)
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor, navigationAnchorClassed)
 import TeamTavern.Client.Components.PasswordInput (passwordInput)
 import TeamTavern.Client.Script.Analytics (registerSignedIn, track_)
@@ -59,7 +59,7 @@ render
         ]
     , inputGroup $
         [ inputLabel_ "Email or nickname"
-        , requiredTextLineInput emailOrNickname UpdateEmailOrNickname
+        , requiredTextLineInputNamed "emailOrNickname" emailOrNickname UpdateEmailOrNickname
         ]
         <> inputError unknownPlayer "No account exists with this email or nickname."
     , inputGroup $

@@ -99,6 +99,16 @@ requiredTextLineInput input onInput =
     , HE.onValueInput onInput
     ]
 
+requiredTextLineInputNamed :: ∀ slots action. String -> String -> (String -> action) -> HH.HTML slots action
+requiredTextLineInputNamed name input onInput =
+    HH.input
+    [ HS.class_ "text-line-input"
+    , HP.type_ HP.InputText
+    , HP.name name
+    , HP.value input
+    , HE.onValueInput onInput
+    ]
+
 textLineInput :: ∀ slots action.
     Maybe String -> (Maybe String -> action) -> HH.HTML slots action
 textLineInput input onInput =

@@ -19,6 +19,7 @@ passwordInput password passwordShown onPassword togglePasswordVisibility =
             if passwordShown
             then InputText
             else InputPassword
+        , HP.name "password"
         , HP.value password
         , HE.onValueInput onPassword
         ]

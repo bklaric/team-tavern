@@ -13,7 +13,7 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.Hooks as Hooks
 import TeamTavern.Client.Components.Form (form, otherFormError, submitButton)
-import TeamTavern.Client.Components.Input (inputError, inputGroup, inputLabel_, requiredTextLineInput)
+import TeamTavern.Client.Components.Input (inputError, inputGroup, inputLabel_, requiredTextLineInputNamed)
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.PasswordInput (passwordInput)
 import TeamTavern.Client.Script.Analytics (track_)
@@ -64,7 +64,7 @@ component = Hooks.component \_ input @ {nickname} -> Hooks.do
         form onSubmit $
         [ inputGroup $
             [ inputLabel_ "Email"
-            , requiredTextLineInput email $ Hooks.put emailId
+            , requiredTextLineInputNamed "email" email $ Hooks.put emailId
             ]
             <> inputError emailError "This doesn't look like a valid email address."
             <> inputError emailTaken "This email is already taken, please pick another one."
