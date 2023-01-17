@@ -49,7 +49,7 @@ message deployment { email, nickname } nonce = let
         Cloud -> "https://www.teamtavern.net/reset-password?nonce=" <> toString nonce
     in
     { to: email
-    , from: "TeamTavern admin@teamtavern.net"
+    , from: "admin@teamtavern.net"
     , subject: "Password reset"
     , html: "Hi " <> nickname <> ",<br /><br />"
         <> "Open the link below to reset your TeamTavern account password:<br /><br />"
