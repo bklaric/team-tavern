@@ -27,8 +27,8 @@
     display: grid;
     grid-template-columns: 1fr 1fr;
     grid-template-areas:
-        "clear apply";
-        // "alert alert";
+        "clear apply"
+        "alert alert";
     gap: 7px;
     padding: 7px;
     border-top: $border;
