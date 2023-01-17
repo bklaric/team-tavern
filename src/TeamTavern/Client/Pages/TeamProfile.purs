@@ -10,6 +10,7 @@ import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.Monoid (guard)
 import Data.Variant (onMatch)
+import Effect.Class (class MonadEffect)
 import Halogen as H
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Ads (descriptionLeaderboards, stickyLeaderboards)
@@ -26,8 +27,10 @@ import TeamTavern.Client.Components.Team.ProfileDetails (profileDetails')
 import TeamTavern.Client.Components.Team.TeamDetails (teamDetails)
 import TeamTavern.Client.Pages.Profiles.TeamBadge (platformBadge)
 import TeamTavern.Client.Pages.Team.Status (Status(..), getStatus)
+import TeamTavern.Client.Script.Analytics (track)
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
 import TeamTavern.Client.Script.Meta (setMeta)
+import TeamTavern.Client.Script.QueryParams (getQueryParam)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Shared.Fetch (fetchPathQuery)
 import TeamTavern.Client.Shared.Slot (SimpleSlot)
@@ -142,12 +145,24 @@ render NotFound = contentColumns [ HH.p_ [ HH.text "Team profile could not be fo
 render Error = contentColumns [ HH.p_ [ HH.text
     "There has been an error loading the team profile. Please try again later." ] ]
 
+trackAlertOpen :: forall m. Bind m => MonadEffect m => String -> m Unit
+trackAlertOpen handle = do
+    idMaybe <- getQueryParam "id"
+    tokenMaybe <- getQueryParam "token"
+    case idMaybe, tokenMaybe of
+        -- Can't name the property token because it's reserved by Mixpanel.
+        Just id, Just token -> track "Alert open"
+            {ilk: "team", id, tokenA: token, game: handle}
+        _, _ -> pure unit
+
 handleAction :: ∀ slots output left.
     Action -> H.HalogenM State Action slots output (Async left) Unit
 handleAction Initialize = do
     state <- H.get
     case state of
-        Empty input -> handleAction $ Receive input
+        Empty input -> do
+            trackAlertOpen input.gameHandle
+            handleAction $ Receive input
         _ -> pure unit
 handleAction (Receive input) = do
     timezone <- getClientTimezone

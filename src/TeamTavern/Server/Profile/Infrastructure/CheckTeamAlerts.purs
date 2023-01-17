@@ -3,21 +3,22 @@ module TeamTavern.Server.Profile.Infrastructure.CheckTeamAlerts where
 import Prelude
 
 import Async (Async, alwaysRightWithEffect, fromEffect, runSafeAsync, safeForeach)
-import Data.Maybe (Maybe, maybe)
+import Data.Maybe (Maybe(..), maybe)
 import Effect.Class.Console (log)
 import Effect.Timer (setTimeout)
-import Yoga.JSON (unsafeStringify)
 import Postgres.Query (class Querier, Query(..), (:))
 import Record.Extra (pick)
 import Sendgrid (sendAsync)
 import TeamTavern.Routes.Shared.Organization (Organization)
 import TeamTavern.Routes.Shared.Platform (Platform)
 import TeamTavern.Routes.Shared.Size (Size)
-import TeamTavern.Server.Infrastructure.Postgres (queryFirstNotFound, queryMany)
+import TeamTavern.Server.Infrastructure.Postgres (queryFirstMaybe, queryMany)
 import TeamTavern.Server.Profile.ViewTeamProfilesByGame.LoadProfiles (createFieldsFilterString, createTeamFilterString)
+import Yoga.JSON (unsafeStringify)
 
 type Alert =
     { title :: String
+    , handle :: String
     , id :: Int
     , email :: String
     , token :: String
@@ -42,6 +43,7 @@ loadAlertsQueryString :: Query
 loadAlertsQueryString = Query """
     select
         game.title,
+        game.handle,
         alert.id,
         alert.email,
         alert.token,
@@ -131,21 +133,25 @@ checkTeamAlerts profileId querier =
 
     safeForeach alerts \alert -> alwaysRightWithEffect (log <<< unsafeStringify) pure do
         -- Check if alert matches the profile.
-        { handle, name } :: { handle :: String, name :: Maybe String } <-
-            queryFirstNotFound querier (queryStringWithoutPagination profileId alert) []
-        -- Send the email.
-        let teamUrl = "https://www.teamtavern.net/teams/" <> handle
-        let teamName = maybe handle identity name
-        let deleteAlertUrl = "https://www.teamtavern.net/remove-alert?id=" <> show alert.id <> "&token=" <> alert.token
-        sendAsync
-            { from: "admin@teamtavern.net"
-            , to: alert.email
-            , subject: "A team created a matching " <> alert.title <> " profile on TeamTavern"
-            , text: "Team " <> teamName <> " created their " <> alert.title <> " profile and it matches your alert.\n"
-                <> "You can check out their profile at: " <> teamUrl
-                <> "If you no longer wish to receive further emails for this alert, you can unsubscribe at " <> deleteAlertUrl
-            , html: "<p>Team " <> teamName <> " created their " <> alert.title <> " profile and it matches your alert.</p>"
-                <> "<p>You can check out their profile at: <a href=\"" <> teamUrl <> "\">" <> teamUrl <> "</a></p>"
-                <> "<p>If you no longer wish to receive further emails for this alert, you can <a href=\"" <> deleteAlertUrl <> "\">unsubscribe here</a>.</p>"
-            }
+        teamMaybe :: Maybe { handle :: String, name :: Maybe String } <-
+            queryFirstMaybe querier (queryStringWithoutPagination profileId alert) []
+        case teamMaybe of
+            Nothing -> pure unit
+            Just {handle, name} -> do
+                -- Send the email.
+                let teamUrlShort = "https://www.teamtavern.net/teams/" <> handle <> "/profiles/" <> alert.handle
+                let teamUrlLong = "https://www.teamtavern.net/teams/" <> handle <> "/profiles/" <> alert.handle <> "?id=" <> show alert.id <> "&token=" <> alert.token
+                let teamName = maybe handle identity name
+                let deleteAlertUrl = "https://www.teamtavern.net/remove-alert?id=" <> show alert.id <> "&token=" <> alert.token
+                sendAsync
+                    { from: "admin@teamtavern.net"
+                    , to: alert.email
+                    , subject: "A team created a matching " <> alert.title <> " profile on TeamTavern"
+                    , text: "Team " <> teamName <> " created their " <> alert.title <> " profile and it matches your alert.\n"
+                        <> "You can check out their profile at: " <> teamUrlLong <> "\n"
+                        <> "If you no longer wish to receive further emails for this alert, you can unsubscribe at " <> deleteAlertUrl
+                    , html: "<p>Team " <> teamName <> " created their " <> alert.title <> " profile and it matches your alert.</p>"
+                        <> "<p>You can check out their profile at: <a href=\"" <> teamUrlLong <> "\">" <> teamUrlShort <> "</a></p>"
+                        <> "<p>If you no longer wish to receive further emails for this alert, you can <a href=\"" <> deleteAlertUrl <> "\">unsubscribe here</a>.</p>"
+                    }
     )

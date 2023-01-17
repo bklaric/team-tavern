@@ -37,6 +37,8 @@ import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile (validateProfi
 import TeamTavern.Server.Profile.AddTeamProfile.AddProfile as AddTeamProfile
 import TeamTavern.Server.Profile.AddTeamProfile.LoadFields as Team
 import TeamTavern.Server.Profile.AddTeamProfile.ValidateProfile as TeamProfile
+import TeamTavern.Server.Profile.Infrastructure.CheckPlayerAlerts (checkPlayerAlerts)
+import TeamTavern.Server.Profile.Infrastructure.CheckTeamAlerts (checkTeamAlerts)
 import TeamTavern.Server.Session.Domain.Token as Token
 import TeamTavern.Server.Session.Start.CreateSession (createSession)
 import TeamTavern.Server.Team.Create (addTeam)
@@ -182,8 +184,8 @@ preboard deployment pool cookies content =
                 }
         _ -> Async.left $ Terror (badRequest_ $ Nea.singleton $ inj (Proxy :: _ "other") {}) []
 
-    -- case result.teamHandle of
-    --     Nothing -> checkPlayerAlerts result.profileId pool
-    --     Just _ -> checkTeamAlerts result.profileId pool
+    case result.teamHandle of
+        Nothing -> checkPlayerAlerts result.profileId pool
+        Just _ -> checkTeamAlerts result.profileId pool
 
     pure $ ok (setCookieHeaderFull deployment result.cookieInfo) (pick result :: Preboard.OkContent)
