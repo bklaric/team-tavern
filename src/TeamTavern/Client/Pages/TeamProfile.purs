@@ -26,8 +26,10 @@ import TeamTavern.Client.Components.Team.ProfileDetails (profileDetails')
 import TeamTavern.Client.Components.Team.TeamDetails (teamDetails)
 import TeamTavern.Client.Pages.Profiles.TeamBadge (platformBadge)
 import TeamTavern.Client.Pages.Team.Status (Status(..), getStatus)
+import TeamTavern.Client.Script.Analytics (track)
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
 import TeamTavern.Client.Script.Meta (setMeta)
+import TeamTavern.Client.Script.QueryParams (getQueryParam)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Shared.Fetch (fetchPathQuery)
 import TeamTavern.Client.Shared.Slot (SimpleSlot)
@@ -145,6 +147,13 @@ render Error = contentColumns [ HH.p_ [ HH.text
 handleAction :: ∀ slots output left.
     Action -> H.HalogenM State Action slots output (Async left) Unit
 handleAction Initialize = do
+    idMaybe <- getQueryParam "id"
+    tokenMaybe <- getQueryParam "token"
+    case idMaybe, tokenMaybe of
+        -- Can't name the property token because it's reserved by Mixpanel.
+        Just id, Just token -> track "Alert open" {ilk: "team", id, tokenA: token}
+        _, _ -> pure unit
+
     state <- H.get
     case state of
         Empty input -> handleAction $ Receive input

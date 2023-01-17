@@ -144,7 +144,7 @@ handleAction Initialize = do
     tokenMaybe <- getQueryParam "token"
     case idMaybe, tokenMaybe of
         -- Can't name the property token because it's reserved by Mixpanel.
-        Just id, Just token -> track "Alert open" {id, tokenA: token}
+        Just id, Just token -> track "Alert open" {ilk: "player", id, tokenA: token}
         _, _ -> pure unit
 
     state <- H.get
