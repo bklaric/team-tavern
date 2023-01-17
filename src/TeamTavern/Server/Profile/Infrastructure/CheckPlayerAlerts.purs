@@ -17,6 +17,7 @@ import TeamTavern.Server.Profile.ViewPlayerProfilesByGame.LoadProfiles (createFi
 
 type Alert =
     { title :: String
+    , handle :: String
     , id :: Int
     , email :: String
     , token :: String
@@ -41,6 +42,7 @@ loadAlertsQueryString :: Query
 loadAlertsQueryString = Query """
     select
         game.title,
+        game.handle,
         alert.id,
         alert.email,
         alert.token,
@@ -80,15 +82,11 @@ checkAlertQueryString profileId alert = Query $ """
                         case
                             when field_values.ilk = 1 then 'url'
                             when field_values.ilk = 2 then 'option'
-                            when field_values.ilk = 2 then 'options'
-                            when field_values.ilk = 3 then 'options'
                             when field_values.ilk = 3 then 'options'
                         end,
                         case
                             when field_values.ilk = 1 then field_values.url
                             when field_values.ilk = 2 then field_values.single
-                            when field_values.ilk = 2 then field_values.multi
-                            when field_values.ilk = 3 then field_values.multi
                             when field_values.ilk = 3 then field_values.multi
                         end
                     )
@@ -145,14 +143,14 @@ checkPlayerAlerts profileId querier =
 
     safeForeach alerts \alert -> alwaysRightWithEffect (logError "Error sending player alerts") pure do
         -- Check if alert matches the profile.
-        player <- queryFirstMaybe querier
-            (checkAlertQueryString profileId alert) [] :: _ _ (Maybe { nickname :: String })
+        player :: Maybe { nickname :: String } <- queryFirstMaybe querier
+            (checkAlertQueryString profileId alert) []
         case player of
             Nothing -> pure unit
             Just { nickname } -> do
                 -- Send the email.
-                let playerUrlShort = "https://www.teamtavern.net/players/" <> nickname
-                let playerUrlLong = "https://www.teamtavern.net/players/" <> nickname <> "?id=" <> show alert.id <> "&token=" <> alert.token
+                let playerUrlShort = "https://www.teamtavern.net/players/" <> nickname <> "/" <> alert.handle
+                let playerUrlLong = "https://www.teamtavern.net/players/" <> nickname <> "/" <> alert.handle <> "?id=" <> show alert.id <> "&token=" <> alert.token
                 let deleteAlertUrl = "https://www.teamtavern.net/remove-alert?id=" <> show alert.id <> "&token=" <> alert.token
                 sendAsync
                     { from: "admin@teamtavern.net"
