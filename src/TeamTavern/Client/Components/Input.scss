@@ -49,6 +49,21 @@
     margin: 5px 0 0 0;
 }
 
+.text-input-subcontent {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas: "error length";
+
+    >.input-error {
+        grid-area: error;
+    }
+
+    >.input-sublabel {
+        grid-area: length;
+        justify-self: end;
+    }
+}
+
 .input-group {
     display: flex;
     flex-direction: column;

@@ -4,6 +4,7 @@ import Prelude
 
 import Data.Maybe (Maybe(..), isJust, isNothing, maybe)
 import Data.Monoid (guard)
+import Data.String (length)
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
@@ -77,6 +78,23 @@ inputUnderlabel text = inputUnderlabel' [ HH.text text ]
 
 inputError :: ∀ slots action. Boolean -> String -> Array (HH.HTML slots action)
 inputError error text = guard error [ HH.p [ HS.class_ "input-error" ] [ HH.text text ] ]
+
+textInputSubcontent :: forall slots action. String -> Boolean -> String -> Array (HH.HTML slots action)
+textInputSubcontent textName error text =
+    let textLength = length text
+    in
+    guard (error || (textLength > 1500))
+    [ HH.div
+        [HS.class_ "text-input-subcontent"]
+        (inputError error (textName <> " text cannot be more than 2000 characters long.")
+        <> guard (textLength > 1500) [inputUnderlabel (show textLength <> "/2000")])
+    ]
+
+aboutInputSubcontent :: forall slots action. Boolean -> String -> Array (HH.HTML slots action)
+aboutInputSubcontent = textInputSubcontent "About"
+
+ambitionsInputSubcontent :: forall slots action. Boolean -> String -> Array (HH.HTML slots action)
+ambitionsInputSubcontent = textInputSubcontent "Ambitions"
 
 inputGroup :: ∀ slots action. Array (HH.HTML slots action) -> HH.HTML slots action
 inputGroup group = HH.div [ HS.class_ "input-group" ] group

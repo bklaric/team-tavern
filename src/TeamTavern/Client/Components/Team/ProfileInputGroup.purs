@@ -10,7 +10,7 @@ import Data.MultiMap (MultiMap)
 import Data.MultiMap as MultiMap
 import Halogen as H
 import Halogen.HTML as HH
-import TeamTavern.Client.Components.Input (checkboxInput, inputError, inputGroup, inputLabel, textInput_)
+import TeamTavern.Client.Components.Input (aboutInputSubcontent, ambitionsInputSubcontent, checkboxInput, inputGroup, inputLabel, textInput_)
 import TeamTavern.Client.Components.Select.MultiSelect (multiSelectIndexed)
 import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
 import Type.Proxy (Proxy(..))
@@ -67,7 +67,7 @@ aboutInputGroup value onValue error =
     inputGroup $
     [ textInput_ value onValue ]
     <>
-    inputError error "About text cannot be more than 2000 characters long."
+    aboutInputSubcontent error value
 
 ambitionsInputGroup :: ∀ slots action.
     String -> (String -> action) -> Boolean -> HH.HTML slots action
@@ -75,4 +75,4 @@ ambitionsInputGroup value onValue error =
     inputGroup $
     [ textInput_ value onValue ]
     <>
-    inputError error "Ambitions text cannot be more than 2000 characters long."
+    ambitionsInputSubcontent error value

@@ -11,7 +11,7 @@ import Data.Maybe (Maybe(..), maybe)
 import Halogen as H
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Anchor (trackedTextAnchor)
-import TeamTavern.Client.Components.Input (checkboxInput, domainInputLabel, inputError, inputGroup, inputLabel, inputUnderlabel, inputUnderlabel', platformIdLabel, textInput_, textLineInput)
+import TeamTavern.Client.Components.Input (aboutInputSubcontent, ambitionsInputSubcontent, checkboxInput, domainInputLabel, inputError, inputGroup, inputLabel, inputUnderlabel, inputUnderlabel', platformIdLabel, textInput_, textLineInput)
 import TeamTavern.Client.Components.Select.MultiSelect (multiSelectIndexed)
 import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.Select.SingleSelect (singleSelectIndexed)
@@ -191,7 +191,7 @@ aboutInputGroup value onValue error =
     inputGroup $
     [ textInput_ value onValue ]
     <>
-    inputError error "About text cannot be more than 2000 characters long."
+    aboutInputSubcontent error value
 
 ambitionsInputGroup :: ∀ slots action.
     String -> (String -> action) -> Boolean -> HH.HTML slots action
@@ -199,4 +199,4 @@ ambitionsInputGroup value onValue error =
     inputGroup $
     [ textInput_ value onValue ]
     <>
-    inputError error "Ambitions text cannot be more than 2000 characters long."
+    ambitionsInputSubcontent error value
