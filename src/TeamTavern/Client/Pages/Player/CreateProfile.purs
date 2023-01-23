@@ -4,7 +4,6 @@ import Prelude
 
 import Async (Async)
 import Data.Array as Array
-import Data.Const (Const)
 import Data.Either (Either(..))
 import Data.Foldable (foldl)
 import Data.Maybe (Maybe(..))
@@ -97,6 +96,7 @@ handleAction (SendRequest event) = do
             { details
                 { urlErrors = []
                 , aboutError = false
+                , ambitionsError = false
                 }
             , contacts
                 { discordTagError = false

@@ -96,6 +96,7 @@ handleAction (SendRequest event) = do
             { details
                 { urlErrors = []
                 , aboutError = false
+                , ambitionsError = false
                 }
             , contacts
                 { discordTagError = false

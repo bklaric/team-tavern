@@ -83,6 +83,7 @@ handleAction (SendRequest event) = do
             { details
                 { platformsError = false
                 , aboutError = false
+                , ambitionsError = false
                 }
             , contacts
                 { discordTagError = false

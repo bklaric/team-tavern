@@ -535,6 +535,7 @@ handleAction SetUpAccount = do
                 { details
                     { urlErrors = []
                     , aboutError = false
+                    , ambitionsError = false
                     }
                 , contacts
                     { discordTagError = false
@@ -552,6 +553,7 @@ handleAction SetUpAccount = do
                 { details
                     { platformsError = false
                     , aboutError = false
+                    , ambitionsError = false
                     }
                 , contacts
                     { discordTagError = false
