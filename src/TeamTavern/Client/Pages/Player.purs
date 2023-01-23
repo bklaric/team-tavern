@@ -32,6 +32,7 @@ import TeamTavern.Client.Pages.Player.Profiles (profiles)
 import TeamTavern.Client.Pages.Player.Status (Status(..), getStatus)
 import TeamTavern.Client.Pages.Player.Teams (teams)
 import TeamTavern.Client.Script.Meta (setMeta)
+import TeamTavern.Client.Script.Rendertron (appendRendetronNotFound)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Shared.Fetch (fetchPathQuery)
 import TeamTavern.Client.Shared.Slot (SimpleSlot)
@@ -160,7 +161,9 @@ handleAction (Receive input) = do
                     }
                 setMeta (player'.nickname <> " | TeamTavern")
                     ("View all details, profiles and teams of player " <> player'.nickname <> ".")
-            , notFound: const $ H.put NotFound
+            , notFound: const do
+                appendRendetronNotFound
+                H.put NotFound
             }
             (const $ H.put Error)
 handleAction ShowEditContactsModal = modifyLoaded _ { editContactsModalShown = true }

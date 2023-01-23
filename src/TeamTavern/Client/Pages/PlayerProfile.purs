@@ -30,6 +30,7 @@ import TeamTavern.Client.Script.Analytics (track)
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.QueryParams (getQueryParam)
+import TeamTavern.Client.Script.Rendertron (appendRendetronNotFound)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Shared.Fetch (fetchPathQuery)
 import TeamTavern.Client.Shared.Slot (SimpleSlot)
@@ -171,7 +172,9 @@ handleAction (Receive input) = do
                     ( "View " <> title <> " profile of player "
                     <> nickname <> " on TeamTavern."
                     )
-            , notFound: const $ H.put NotFound
+            , notFound: const $ do
+                appendRendetronNotFound
+                H.put NotFound
             }
             (const $ H.put Error)
 
