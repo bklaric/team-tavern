@@ -29,6 +29,7 @@ import TeamTavern.Server.Game.View (view) as Game
 import TeamTavern.Server.Game.ViewAll (viewAll) as Game
 import TeamTavern.Server.Infrastructure.Deployment (Deployment)
 import TeamTavern.Server.Infrastructure.Deployment as Deployment
+import TeamTavern.Server.Oauth.DiscordOauth (discordOauth)
 import TeamTavern.Server.Password.ForgotPassword (forgotPassword)
 import TeamTavern.Server.Password.ResetPassword (resetPassword)
 import TeamTavern.Server.Player.Delete (delete) as Player
@@ -183,6 +184,8 @@ runServer deployment pool = serve (Proxy :: _ AllRoutes) listenOptions
         Alert.createAlert pool body
     , deleteAlert: \{ path: { id }, query: { token } } ->
         Alert.deleteAlert pool { id, token }
+    , discordOauth: \{ body } ->
+        discordOauth deployment pool body
     }
 
 main :: Effect Unit

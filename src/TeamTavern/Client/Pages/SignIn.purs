@@ -77,7 +77,7 @@ render
         ]
         <> inputError wrongPassword "Entered password is incorrect."
     , HH.button
-        [ HS.class_ "form-submit-button"
+        [ HS.class_ "primary-button"
         , HP.disabled $ emailOrNickname == "" || password == "" || submitting
         ]
         [ HH.i [ HS.class_ "fas fa-sign-in-alt button-icon" ] []

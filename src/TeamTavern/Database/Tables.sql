@@ -3,6 +3,9 @@ create table player
     , email varchar(254) unique
     , nickname varchar(40) not null unique
 
+    -- Oauth
+    , discord_id text unique
+
     -- Contact
     , discord_tag text
     , steam_id text

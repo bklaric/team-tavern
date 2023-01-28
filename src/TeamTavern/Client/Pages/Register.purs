@@ -19,7 +19,7 @@ import TeamTavern.Client.Components.RegistrationInput as RegistrationInput
 import TeamTavern.Client.Pages.Onboarding as Onboarding
 import TeamTavern.Client.Script.Analytics (aliasNickname, identifyNickname, track_)
 import TeamTavern.Client.Script.Meta (setMeta)
-import TeamTavern.Client.Script.Navigate (navigate, navigateWithEvent_)
+import TeamTavern.Client.Script.Navigate (hardNavigate, navigate, navigateWithEvent_)
 import TeamTavern.Client.Shared.Fetch (fetchBody)
 import TeamTavern.Client.Shared.Slot (SimpleSlot)
 import TeamTavern.Client.Snippets.Class as HS
@@ -33,6 +33,7 @@ data Action
     = Initialize
     | UpdateRegistration RegistrationInput.Output
     | Register Event
+    | RegisterWithDiscord
     | Navigate String MouseEvent
 
 type State =
@@ -55,7 +56,7 @@ render { registration, otherError, submitting } =
         ]
     , registrationInput registration UpdateRegistration
     , HH.button
-        [ HS.class_ "form-submit-button"
+        [ HS.class_ "primary-button"
         , HP.disabled
             $ registration.email == ""
             || registration.nickname == ""
@@ -71,7 +72,24 @@ render { registration, otherError, submitting } =
     ]
     <> otherFormError otherError
     <>
-    [ HH.p
+    [ HH.div [HP.style "display: flex; margin: 28px 0;"]
+        [ HH.hr [HP.style "flex: 1 1 auto;"]
+        , HH.span [HP.style "padding: 0 10px"] [HH.text "Or"]
+        , HH.hr [HP.style "flex: 1 1 auto;"]
+        ]
+    , HH.button
+        [ HS.class_ "regular-button"
+        , HP.type_ HP.ButtonButton
+        , HE.onClick $ const RegisterWithDiscord
+        ]
+        [ HH.img
+            [ HS.class_ "button-icon"
+            , HP.style "height: 20px; vertical-align: top;"
+            , HP.src "https://coaching.healthygamer.gg/discord-logo-color.svg"
+            ]
+        , HH.text "Create account with Discord"
+        ]
+    , HH.p
         [ HS.class_ "form-bottom-text" ]
         [ HH.text "Already have an account? "
         , HH.a
@@ -130,6 +148,13 @@ handleAction (Register event) = do
             track_ "Register"
             navigate Onboarding.emptyInput "/onboarding/start"
         Just newState' -> H.put newState' { submitting = false }
+handleAction RegisterWithDiscord =
+    hardNavigate $ "https://discord.com/api/oauth2/authorize"
+        <> "?client_id=1068667687661740052"
+        <> "&redirect_uri=https%3A%2F%2Flocalhost%2Foauth%2Fdiscord"
+        <> "&response_type=token"
+        <> "&scope=identify"
+        <> "&prompt=none"
 handleAction (Navigate url event) =
     navigateWithEvent_ url event
 

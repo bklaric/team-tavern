@@ -53,7 +53,7 @@ render { email, unknownEmail, otherError, submitting } =
         , requiredTextLineInput email UpdateEmail
         ]
     , HH.button
-        [ HS.class_ "form-submit-button"
+        [ HS.class_ "primary-button"
         , HP.disabled $ email == "" || submitting
         ]
         [ HH.i [ HS.class_ "fas fa-key button-icon" ] []

@@ -4,6 +4,7 @@ module Browser.Fetch
     , method
     , body
     , credentials
+    , headers
     , fetch
     , fetch_
     ) where
@@ -44,6 +45,9 @@ body = opt "body"
 
 credentials :: Option FetchOptions Credentials
 credentials = optCredentials "credentials"
+
+headers :: forall headers. Option FetchOptions (Record headers)
+headers = opt "headers"
 
 foreign import fetchImpl
     :: String

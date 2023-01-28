@@ -69,7 +69,7 @@ render (Loaded state @
         ]
         <> inputError passwordError "The password must have at least 8 characters."
     , HH.button
-        [ HS.class_ "form-submit-button"
+        [ HS.class_ "primary-button"
         , HP.disabled $ password == "" || submitting
         ]
         [ HH.i [ HS.class_ "fas fa-key button-icon" ] []
