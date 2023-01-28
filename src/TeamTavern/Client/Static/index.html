@@ -42,7 +42,7 @@
   <link rel="preload" href="/webfonts/fa-brands-400.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="/webfonts/fa-solid-900.woff2" as="font" type="font/woff2" crossorigin>
 
-  <!-- Ads preload. -->
+  <!-- Publisher Collective ads preload. -->
   <link rel="preconnect" href="https://tags.bkrtx.com/">
   <link rel="preconnect" href="https://securepubads.g.doubleclick.net/" crossorigin>
   <link rel="preconnect" href="https://cdn.consentmanager.mgr.consensu.org/" crossorigin>
@@ -50,14 +50,17 @@
   <link rel="preload" href="https://securepubads.g.doubleclick.net/tag/js/gpt.js" as="script">
   <link rel="preload" href="https://kumo.network-n.com/dist/app.js" as="script">
 
+  <!-- Ezoic ads preload. -->
+  <!-- <link rel="preload" href="//go.ezoic.net/ezoic/ezoic.js" as="script"> -->
+
   <!-- Analytics preload. -->
   <link rel="preload" href="https://www.googletagmanager.com/gtag/js?id=UA-150934365-1" as="script">
 
   <!-- Heap analytics. -->
-  <script type="text/javascript">
+  <!-- <script type="text/javascript">
     window.heap = window.heap || [], heap.load = function (e, t) { window.heap.appid = e, window.heap.config = t = t || {}; var r = document.createElement("script"); r.type = "text/javascript", r.async = !0, r.src = "https://cdn.heapanalytics.com/js/heap-" + e + ".js"; var a = document.getElementsByTagName("script")[0]; a.parentNode.insertBefore(r, a); for (var n = function (e) { return function () { heap.push([e].concat(Array.prototype.slice.call(arguments, 0))) } }, p = ["addEventProperties", "addUserProperties", "clearEventProperties", "identify", "resetIdentity", "removeEventProperty", "setEventProperties", "track", "unsetEventProperty"], o = 0; o < p.length; o++)heap[p[o]] = n(p[o]) };
     heap.load("2897788566");
-  </script>
+  </script> -->
 
   <!-- Mixpanel. -->
   <script type="text/javascript">
@@ -86,11 +89,15 @@
   <!-- The app. -->
   <script async src="/app.min.js"></script>
 
-  <!-- Ads. -->
+  <!-- Publisher Collective ads. -->
   <script>window.AdSlots = window.AdSlots || { cmd: [], disableScripts: ['gpt', 'bk'] };</script>
   <script async src="https://tags.bkrtx.com/js/bk-coretag.js"></script>
   <script async src="https://securepubads.g.doubleclick.net/tag/js/gpt.js"></script>
   <script async src="https://kumo.network-n.com/dist/app.js" site="team-tavern"></script>
+
+  <!-- Ezoic ads. -->
+  <!-- <script>var ezoicId = 429268; </script>
+  <script type="text/javascript" src="//go.ezoic.net/ezoic/ezoic.js"></script> -->
 
   <!-- Global site tag (gtag.js) - Google Analytics -->
   <script defer src="https://www.googletagmanager.com/gtag/js?id=UA-150934365-1"></script>
