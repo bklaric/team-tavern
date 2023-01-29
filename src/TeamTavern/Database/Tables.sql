@@ -28,7 +28,7 @@ create table player
     , weekend_to time
     , microphone boolean not null default false
 
-    , password_hash character(60) not null
+    , password_hash character(60)
     , registered timestamptz not null default current_timestamp
     );
 

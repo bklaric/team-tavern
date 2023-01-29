@@ -113,7 +113,7 @@ render ResetPassword = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single
 render ResetPasswordSuccess = singleContent [ resetPasswordSuccess ]
 render (Onboarding input) = onboarding input
 render (Preboarding input) = preboarding input
-render Oauth = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ oauth ] ]
+render Oauth = singleContent [ oauth ]
 render NetworkN = HH.div_
     [ topBar Nothing
     , content

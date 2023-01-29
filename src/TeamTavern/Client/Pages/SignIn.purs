@@ -9,6 +9,7 @@ import Data.Maybe (Maybe(..), isNothing)
 import Data.Variant (match, onMatch)
 import Halogen as H
 import Halogen.HTML as HH
+import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Components.Form (form, otherFormError)
 import TeamTavern.Client.Components.Input (inputError, inputGroup, inputLabel_, requiredTextLineInputNamed)
@@ -16,7 +17,7 @@ import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor, navigati
 import TeamTavern.Client.Components.PasswordInput (passwordInput)
 import TeamTavern.Client.Script.Analytics (registerSignedIn, track_)
 import TeamTavern.Client.Script.Meta (setMeta)
-import TeamTavern.Client.Script.Navigate (navigate_)
+import TeamTavern.Client.Script.Navigate (hardNavigate, navigate_)
 import TeamTavern.Client.Shared.Fetch (fetchBody)
 import TeamTavern.Client.Shared.Slot (SimpleSlot)
 import TeamTavern.Client.Snippets.Class as HS
@@ -31,6 +32,7 @@ data Action
     | UpdatePassword String
     | TogglePasswordVisibility
     | SignIn Event
+    | ContinueWithDiscord
 
 type State =
     { emailOrNickname :: String
@@ -89,7 +91,24 @@ render
     ]
     <> otherFormError otherError
     <>
-    [ HH.p
+    [ HH.div [HP.style "display: flex; align-items: center; margin: 28px 0;"]
+        [ HH.hr [HP.style "flex: 1 1 auto;"]
+        , HH.span [HP.style "padding: 0 10px"] [HH.text "Or"]
+        , HH.hr [HP.style "flex: 1 1 auto;"]
+        ]
+    , HH.button
+        [ HS.class_ "regular-button"
+        , HP.type_ HP.ButtonButton
+        , HE.onClick $ const ContinueWithDiscord
+        ]
+        [ HH.img
+            [ HS.class_ "button-icon"
+            , HP.style "height: 20px; vertical-align: top;"
+            , HP.src "https://coaching.healthygamer.gg/discord-logo-color.svg"
+            ]
+        , HH.text "Continue with Discord"
+        ]
+    , HH.p
         [ HS.class_ "form-bottom-text"]
         [ HH.text "New to TeamTavern? "
         , navigationAnchor (Proxy :: _ "registerAnchor")
@@ -139,6 +158,13 @@ handleAction (SignIn event) = do
             registerSignedIn
             navigate_ "/"
         Just newState' -> H.put newState' { submitting = false }
+handleAction ContinueWithDiscord =
+    hardNavigate $ "https://discord.com/api/oauth2/authorize"
+        <> "?client_id=1068667687661740052"
+        <> "&redirect_uri=https%3A%2F%2Flocalhost%2Foauth%2Fdiscord"
+        <> "&response_type=token"
+        <> "&scope=identify"
+        <> "&prompt=none"
 
 component :: ∀ query input output left.
     H.Component query input output (Async left)

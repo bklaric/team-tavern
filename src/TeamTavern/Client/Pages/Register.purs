@@ -72,7 +72,7 @@ render { registration, otherError, submitting } =
     ]
     <> otherFormError otherError
     <>
-    [ HH.div [HP.style "display: flex; margin: 28px 0;"]
+    [ HH.div [HP.style "display: flex; align-items: center; margin: 28px 0;"]
         [ HH.hr [HP.style "flex: 1 1 auto;"]
         , HH.span [HP.style "padding: 0 10px"] [HH.text "Or"]
         , HH.hr [HP.style "flex: 1 1 auto;"]
@@ -87,7 +87,7 @@ render { registration, otherError, submitting } =
             , HP.style "height: 20px; vertical-align: top;"
             , HP.src "https://coaching.healthygamer.gg/discord-logo-color.svg"
             ]
-        , HH.text "Create account with Discord"
+        , HH.text "Continue with Discord"
         ]
     , HH.p
         [ HS.class_ "form-bottom-text" ]
