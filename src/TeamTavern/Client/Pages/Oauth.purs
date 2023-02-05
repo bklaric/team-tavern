@@ -17,7 +17,8 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Halogen.Hooks as Hooks
 import TeamTavern.Client.Components.Form (form, otherFormError)
-import TeamTavern.Client.Components.Input (inputError, inputGroup, inputLabel_, requiredTextLineInputNamed)
+import TeamTavern.Client.Components.Input (inputGroup, inputLabel_, requiredTextLineInputNamed)
+import TeamTavern.Client.Components.InputError as InputError
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Pages.Onboarding as Onboarding
 import TeamTavern.Client.Script.Analytics (aliasNickname, identifyNickname, track_)
@@ -63,9 +64,8 @@ render {nickname, nicknameError, nicknameTaken, otherError, submitting} updateNi
         [ inputLabel_ "Nickname"
         , requiredTextLineInputNamed "nickname" nickname updateNickname
         ]
-        <> inputError nicknameError """Nickname cannot be more than 40 characters long
-            and can only contain alphanumeric characters, dashes, underscores and dots."""
-        <> inputError nicknameTaken "This nickname is already taken, please pick another one."
+        <> InputError.nicknameError nicknameError
+        <> InputError.nicknameTaken nicknameTaken
     , HH.button
         [ HS.class_ "primary-button"
         , HP.disabled $ nickname == "" || submitting

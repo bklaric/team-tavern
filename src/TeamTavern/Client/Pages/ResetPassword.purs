@@ -11,7 +11,8 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Components.Form (form, formError, otherFormError)
-import TeamTavern.Client.Components.Input (inputError, inputGroup, inputLabel_)
+import TeamTavern.Client.Components.Input (inputGroup, inputLabel_)
+import TeamTavern.Client.Components.InputError as InputError
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.PasswordInput (passwordInput_)
 import TeamTavern.Client.Script.Analytics (track_)
@@ -61,7 +62,7 @@ render (Loaded state @
         [ inputLabel_ "New password"
         , passwordInput_ password (UpdatePassword state)
         ]
-        <> inputError passwordError "The password must have at least 8 characters."
+        <> InputError.passwordError passwordError
     , HH.button
         [ HS.class_ "primary-button"
         , HP.disabled $ password == "" || submitting

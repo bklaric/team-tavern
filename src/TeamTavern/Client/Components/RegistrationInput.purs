@@ -7,6 +7,7 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.Hooks as Hooks
 import TeamTavern.Client.Components.Input (inputError, inputGroup, inputLabel_, requiredTextLineInputNamed)
+import TeamTavern.Client.Components.InputError as InputError
 import TeamTavern.Client.Components.PasswordInput (passwordInput_)
 import TeamTavern.Client.Shared.Slot (Slot_O_)
 import Type.Proxy (Proxy(..))
@@ -39,20 +40,19 @@ component = Hooks.component \{outputToken} input -> Hooks.do
             [ inputLabel_ "Email"
             , requiredTextLineInputNamed "email" email (\value -> raise _ {email = value})
             ]
-            <> inputError emailError "This doesn't look like a valid email address."
-            <> inputError emailTaken "This email is already taken, please pick another one."
+            <> InputError.emailError emailError
+            <> InputError.emailTaken emailTaken
         , inputGroup $
             [ inputLabel_ "Nickname"
             , requiredTextLineInputNamed "nickname" nickname (\value -> raise _ {nickname = value})
             ]
-            <> inputError nicknameError """Nickname cannot be more than 40 characters long
-                and can only contain alphanumeric characters, dashes, underscores and dots."""
-            <> inputError nicknameTaken "This nickname is already taken, please pick another one."
+            <> InputError.nicknameError nicknameError
+            <> InputError.nicknameTaken nicknameTaken
         , inputGroup $
             [ inputLabel_ "Password"
             , passwordInput_ password (\value -> raise _ {password = value})
             ]
-            <> inputError passwordError "Password must have at least 8 characters."
+            <> InputError.passwordError passwordError
         ]
 
 emptyInput :: Input

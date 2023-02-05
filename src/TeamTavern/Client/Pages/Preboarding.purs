@@ -28,6 +28,8 @@ import TeamTavern.Client.Components.Boarding.GameInput as GameInput
 import TeamTavern.Client.Components.Boarding.PlayerOrTeamInput (playerOrTeamInput)
 import TeamTavern.Client.Components.Boarding.PlayerOrTeamInput as PlayerOrTeamInput
 import TeamTavern.Client.Components.Button (primaryButton_, secondaryButton_)
+import TeamTavern.Client.Components.Form (otherFormError)
+import TeamTavern.Client.Components.InputError as InputError
 import TeamTavern.Client.Components.Player.PlayerFormInput as PlayerFormInput
 import TeamTavern.Client.Components.Player.ProfileFormInput as PlayerProfileFormInput
 import TeamTavern.Client.Components.RegistrationInput (registrationInput)
@@ -377,8 +379,10 @@ renderPage { step: Register, registrationMode, registrationEmail, registrationDi
         ]
         <> case registrationMode of
             Email ->
-                [ registrationInput registrationEmail UpdateRegistrationEmail
-                , HH.div [HP.style "display: flex; align-items: center; margin: 28px 0;"]
+                [ registrationInput registrationEmail UpdateRegistrationEmail ]
+                <> otherFormError otherError
+                <>
+                [ HH.div [HP.style "display: flex; align-items: center; margin: 28px 0;"]
                     [ HH.hr [HP.style "flex: 1 1 auto;"]
                     , HH.span [HP.style "padding: 0 10px"] [HH.text "Or"]
                     , HH.hr [HP.style "flex: 1 1 auto;"]
@@ -398,8 +402,11 @@ renderPage { step: Register, registrationMode, registrationEmail, registrationDi
                     ]
                 ]
             Discord ->
-                [ registrationInputDiscord registrationDiscord UpdateRegistrationDiscord
-                , HH.div [HP.style "display: flex; align-items: center; margin: 28px 0;"]
+                [ registrationInputDiscord registrationDiscord UpdateRegistrationDiscord ]
+                <> otherFormError otherError
+                <> InputError.discordTaken discordTaken
+                <>
+                [ HH.div [HP.style "display: flex; align-items: center; margin: 28px 0;"]
                     [ HH.hr [HP.style "flex: 1 1 auto;"]
                     , HH.span [HP.style "padding: 0 10px"] [HH.text "Or"]
                     , HH.hr [HP.style "flex: 1 1 auto;"]
@@ -422,7 +429,7 @@ renderPage { step: Register, registrationMode, registrationEmail, registrationDi
             Selected' (Just PlayerOrTeamInput.Player) -> PlayerProfile
             Selected' (Just PlayerOrTeamInput.Team) -> TeamProfile
             Selected' Nothing -> PlayerOrTeam
-        , HH.div [ HS.class_ "boarding-submit-button-group" ] $
+        , HH.div [ HS.class_ "boarding-submit-button-group" ]
             [ HH.button
                 [ HS.class_ "primary-button"
                 , HP.disabled submitting
@@ -430,16 +437,6 @@ renderPage { step: Register, registrationMode, registrationEmail, registrationDi
                 ]
                 [ HH.text if submitting then "Submitting..." else "Submit" ]
             ]
-            <>
-            if otherError
-            then Array.singleton $
-                HH.p [ HS.class_ "boarding-submit-button-underlabel" ]
-                [ HH.text "There has been an unexpected error setting up your account. Please try again later." ]
-            else if discordTaken
-            then Array.singleton $
-                HH.p [ HS.class_ "boarding-submit-button-underlabel" ]
-                [ HH.text "An account already exists for to this Discord account. Please try signin in." ]
-            else []
         ]
     ]
 

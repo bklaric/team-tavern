@@ -3,7 +3,8 @@ module TeamTavern.Client.Components.RegistrationInputDiscord where
 import Prelude
 
 import Halogen.HTML as HH
-import TeamTavern.Client.Components.Input (inputError, inputGroup, inputLabel_, requiredTextLineInputNamed)
+import TeamTavern.Client.Components.Input (inputGroup, inputLabel_, requiredTextLineInputNamed)
+import TeamTavern.Client.Components.InputError as InputError
 
 type Input =
     { nickname :: String
@@ -26,6 +27,5 @@ registrationInputDiscord {nickname, nicknameError, nicknameTaken} updateNickname
     [ inputLabel_ "Nickname"
     , requiredTextLineInputNamed "nickname" nickname ({nickname: _} >>> updateNickname)
     ]
-    <> inputError nicknameError """Nickname cannot be more than 40 characters long
-        and can only contain alphanumeric characters, dashes, underscores and dots."""
-    <> inputError nicknameTaken "This nickname is already taken, please pick another one."
+    <> InputError.nicknameError nicknameError
+    <> InputError.nicknameTaken nicknameTaken

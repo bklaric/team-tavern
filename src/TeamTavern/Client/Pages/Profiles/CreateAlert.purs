@@ -13,7 +13,8 @@ import Record as Record
 import Record.Extra (pick)
 import TeamTavern.Client.Components.Boarding.Boarding (boardingDescription)
 import TeamTavern.Client.Components.Form (form, otherFormError, submitButton)
-import TeamTavern.Client.Components.Input (inputError, inputGroup, inputLabel, requiredTextLineInput)
+import TeamTavern.Client.Components.Input (inputGroup, inputLabel, requiredTextLineInput)
+import TeamTavern.Client.Components.InputError as InputError
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Pages.Profile.Filters (Filters)
 import TeamTavern.Client.Script.Request (postNoContent)
@@ -58,7 +59,7 @@ render { email, emailError, otherError, submitting } =
         [ inputLabel "fas fa-envelope" "Email address"
         , requiredTextLineInput email UpdateEmail
         ]
-        <> inputError emailError "This doesn't look like a valid email address."
+        <> InputError.emailError emailError
     ]
     <> [ submitButton "fas fa-bell" "Create alert" "Creating alert..." submitting ]
     <> otherFormError otherError

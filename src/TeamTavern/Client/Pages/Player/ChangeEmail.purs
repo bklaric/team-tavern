@@ -13,7 +13,8 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.Hooks as Hooks
 import TeamTavern.Client.Components.Form (form, otherFormError, submitButton)
-import TeamTavern.Client.Components.Input (inputError, inputGroup, inputLabel_, requiredTextLineInputNamed)
+import TeamTavern.Client.Components.Input (inputGroup, inputLabel_, requiredTextLineInputNamed)
+import TeamTavern.Client.Components.InputError as InputError
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.PasswordInput (passwordInput_)
 import TeamTavern.Client.Script.Analytics (track_)
@@ -65,13 +66,13 @@ component = Hooks.component \_ input @ {nickname} -> Hooks.do
             [ inputLabel_ "Email"
             , requiredTextLineInputNamed "email" email $ Hooks.put emailId
             ]
-            <> inputError emailError "This doesn't look like a valid email address."
-            <> inputError emailTaken "This email is already taken, please pick another one."
+            <> InputError.emailError emailError
+            <> InputError.emailTaken emailTaken
         , inputGroup $
             [ inputLabel_ "Password"
             , passwordInput_ password (Hooks.put passwordId)
             ]
-            <> inputError wrongPassword "Entered password is incorrect."
+            <> InputError.passwordWrong wrongPassword
         , HH.p [ HS.class_ "boarding-description" ]
             [ HH.text $ "Enter your password to confirm changing your email." ]
         , submitButton "fas fa-edit" "Change email" "Changing email..." submitting

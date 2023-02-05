@@ -13,6 +13,7 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Components.Form (form, otherFormError)
 import TeamTavern.Client.Components.Input (inputError, inputGroup, inputLabel_, requiredTextLineInputNamed)
+import TeamTavern.Client.Components.InputError as InputError
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor, navigationAnchorClassed)
 import TeamTavern.Client.Components.PasswordInput (passwordInput_)
 import TeamTavern.Client.Script.Analytics (registerSignedIn, track_)
@@ -74,7 +75,7 @@ render
             ]
         , passwordInput_ password UpdatePassword
         ]
-        <> inputError wrongPassword "Entered password is incorrect."
+        <> InputError.passwordWrong wrongPassword
     , HH.button
         [ HS.class_ "primary-button"
         , HP.disabled $ emailOrNickname == "" || password == "" || submitting

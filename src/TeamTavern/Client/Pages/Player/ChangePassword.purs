@@ -12,7 +12,8 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.Hooks as Hooks
 import TeamTavern.Client.Components.Form (form, otherFormError, submitButton)
-import TeamTavern.Client.Components.Input (inputError, inputGroup, inputLabel_)
+import TeamTavern.Client.Components.Input (inputGroup, inputLabel_)
+import TeamTavern.Client.Components.InputError as InputError
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.PasswordInput (passwordInput)
 import TeamTavern.Client.Script.Analytics (track_)
@@ -60,12 +61,12 @@ component = Hooks.component \_ {nickname} -> Hooks.do
             [ inputLabel_ "Current password"
             , passwordInput (Proxy :: _ "passwordInputOld") passwordOld (Hooks.put passwordOldId)
             ]
-            <> inputError passwordOldWrong "Entered password is incorrect."
+            <> InputError.passwordWrong passwordOldWrong
         , inputGroup $
             [ inputLabel_ "New password"
             , passwordInput (Proxy :: _ "passwordInputNew") passwordNew (Hooks.put passwordNewId)
             ]
-            <> inputError passwordNewError "Password must have at least 8 characters."
+            <> InputError.passwordError passwordNewError
         , submitButton "fas fa-edit" "Change password" "Changing password..." submitting
         ]
         <> otherFormError otherError

@@ -17,7 +17,8 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Record as Record
 import Record.Extra (pick)
-import TeamTavern.Client.Components.Form (form, formError, otherFormError)
+import TeamTavern.Client.Components.Form (form, otherFormError)
+import TeamTavern.Client.Components.InputError as InputError
 import TeamTavern.Client.Components.RegistrationInput (registrationInput)
 import TeamTavern.Client.Components.RegistrationInput as RegistrationInput
 import TeamTavern.Client.Components.RegistrationInputDiscord (registrationInputDiscord)
@@ -104,8 +105,7 @@ render { registrationMode, registrationEmail, registrationDiscord, discordTaken,
                 , HH.text "Create account with Discord"
                 ]
             ]
-    <> formError discordTaken
-        "An account already exists for to this Discord account. Please try signin in."
+    <> InputError.discordTaken discordTaken
     <> otherFormError otherError
     <>
     [ HH.div [HP.style "display: flex; align-items: center; margin: 28px 0;"]
