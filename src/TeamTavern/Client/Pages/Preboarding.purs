@@ -1,4 +1,4 @@
-module TeamTavern.Client.Pages.Preboarding (PlayerOrTeam(..), Game(..), Step(..), Input, emptyInput, preboarding) where
+module TeamTavern.Client.Pages.Preboarding (PlayerOrTeam(..), Game(..), Step(..), RegistrationMode(..), Input, emptyInput, preboarding) where
 
 import Prelude
 
@@ -12,8 +12,8 @@ import Data.Either (Either(..))
 import Data.Foldable (foldl)
 import Data.Maybe (Maybe(..), isNothing, maybe)
 import Data.Monoid (guard)
-import Data.Variant (match, onMatch)
-import Effect.Class (class MonadEffect)
+import Data.Variant (inj, match, onMatch)
+import Effect.Class (class MonadEffect, liftEffect)
 import Foreign (ForeignError(..), fail, readString, unsafeToForeign)
 import Halogen as H
 import Halogen.HTML as HH
@@ -32,11 +32,13 @@ import TeamTavern.Client.Components.Player.PlayerFormInput as PlayerFormInput
 import TeamTavern.Client.Components.Player.ProfileFormInput as PlayerProfileFormInput
 import TeamTavern.Client.Components.RegistrationInput (registrationInput)
 import TeamTavern.Client.Components.RegistrationInput as RegistrationInput
+import TeamTavern.Client.Components.RegistrationInputDiscord (registrationInputDiscord)
+import TeamTavern.Client.Components.RegistrationInputDiscord as RegistrationInputDiscord
 import TeamTavern.Client.Components.Team.ProfileFormInput as TeamProfileFormInput
 import TeamTavern.Client.Components.Team.TeamFormInput as TeamFormInput
 import TeamTavern.Client.Script.Analytics (aliasNickname, identifyNickname, track)
 import TeamTavern.Client.Script.Meta (setMeta)
-import TeamTavern.Client.Script.Navigate (navigate, navigate_, replaceState)
+import TeamTavern.Client.Script.Navigate (hardNavigate, navigate, navigate_, replaceState)
 import TeamTavern.Client.Shared.Fetch (fetchBody)
 import TeamTavern.Client.Shared.Slot (SimpleSlot)
 import TeamTavern.Client.Snippets.Class as HS
@@ -45,7 +47,10 @@ import TeamTavern.Routes.Boarding.Preboard as Preboard
 import TeamTavern.Routes.Game.ViewGame as ViewGame
 import TeamTavern.Routes.Shared.Platform (Platform(..))
 import Type.Proxy (Proxy(..))
-import Yoga.JSON (class ReadForeign, class WriteForeign, readImpl, writeImpl)
+import Web.HTML (window)
+import Web.HTML.Window (localStorage)
+import Web.Storage.Storage (setItem)
+import Yoga.JSON (class ReadForeign, class WriteForeign, readImpl, writeImpl, writeJSON)
 
 data Step
     = Greeting
@@ -82,6 +87,20 @@ instance ReadForeign Step where
         "TeamProfile" -> pure TeamProfile
         "Register" -> pure Register
         step -> fail $ ForeignError $ "Unknown step " <> step
+
+data RegistrationMode = Email | Discord
+
+derive instance Eq RegistrationMode
+
+instance WriteForeign RegistrationMode where
+    writeImpl Email = unsafeToForeign "Email"
+    writeImpl Discord = unsafeToForeign "Discord"
+
+instance ReadForeign RegistrationMode where
+    readImpl = readString >=> case _ of
+        "Email" -> pure Email
+        "Discord" -> pure Discord
+        mode -> fail $ ForeignError $ "Unknown register mode " <> mode
 
 data PlayerOrTeam
     = Preselected' PlayerOrTeamInput.PlayerOrTeam
@@ -135,7 +154,11 @@ type Input =
     , game :: Game
     , playerProfile :: PlayerProfileFormInput.Input
     , teamProfile :: TeamProfileFormInput.Input
-    , registration :: RegistrationInput.Input
+    , registrationMode :: RegistrationMode
+    , registrationEmail :: RegistrationInput.Input
+    , registrationDiscord :: RegistrationInputDiscord.Input
+    , accessToken :: Maybe String
+    , discordError :: Boolean
     , otherError :: Boolean
     }
 
@@ -163,7 +186,11 @@ emptyInput playerOrTeam game =
                     Just { key, label, icon, options: options }
                 _ -> Nothing
             }
-    , registration: RegistrationInput.emptyInput
+    , registrationMode: Email
+    , registrationEmail: RegistrationInput.emptyInput
+    , registrationDiscord: RegistrationInputDiscord.emptyInput
+    , accessToken: Nothing
+    , discordError: false
     , otherError: false
     }
 
@@ -175,7 +202,11 @@ type State =
     , game :: Game
     , playerProfile :: PlayerProfileFormInput.Input
     , teamProfile :: TeamProfileFormInput.Input
-    , registration :: RegistrationInput.Input
+    , registrationMode :: RegistrationMode
+    , registrationEmail :: RegistrationInput.Input
+    , registrationDiscord :: RegistrationInputDiscord.Input
+    , accessToken :: Maybe String
+    , discordError :: Boolean
     , otherError :: Boolean
     , submitting :: Boolean
     }
@@ -191,8 +222,11 @@ data Action
     | UpdateGame GameInput.Output
     | UpdatePlayerProfile PlayerProfileFormInput.Output
     | UpdateTeamProfile TeamProfileFormInput.Output
-    | UpdateRegistration RegistrationInput.Output
+    | UpdateRegistrationEmail RegistrationInput.Output
+    | UpdateRegistrationDiscord RegistrationInputDiscord.Output
     | SetUpAccount
+    | CreateWithEmail
+    | CreateWithDiscord
 
 type ChildSlots slots =
     ( playerFormInput :: PlayerFormInput.Slot
@@ -336,12 +370,50 @@ renderPage { step: TeamProfile, teamProfile, game } =
         , primaryButton_ "Next" $ SetStep Register
         ]
     ]
-renderPage { step: Register, registration, otherError, submitting, playerOrTeam } =
-    [ boardingStep
+renderPage { step: Register, registrationMode, registrationEmail, registrationDiscord, otherError, submitting, playerOrTeam } =
+    [ boardingStep $
         [ boardingHeading "Registration"
         , boardingDescription  """Enter your nickname and password to complete the registration process."""
-        , registrationInput registration UpdateRegistration
         ]
+        <> case registrationMode of
+            Email ->
+                [ registrationInput registrationEmail UpdateRegistrationEmail
+                , HH.div [HP.style "display: flex; align-items: center; margin: 28px 0;"]
+                    [ HH.hr [HP.style "flex: 1 1 auto;"]
+                    , HH.span [HP.style "padding: 0 10px"] [HH.text "Or"]
+                    , HH.hr [HP.style "flex: 1 1 auto;"]
+                    ]
+                , HH.button
+                    [ HS.class_ "regular-button"
+                    , HP.style "width: 100%;"
+                    , HP.type_ HP.ButtonButton
+                    , HE.onClick $ const CreateWithDiscord
+                    ]
+                    [ HH.img
+                        [ HS.class_ "button-icon"
+                        , HP.style "height: 20px; vertical-align: top;"
+                        , HP.src "https://coaching.healthygamer.gg/discord-logo-color.svg"
+                        ]
+                    , HH.text "Create account with Discord"
+                    ]
+                ]
+            Discord ->
+                [ registrationInputDiscord registrationDiscord UpdateRegistrationDiscord
+                , HH.div [HP.style "display: flex; align-items: center; margin: 28px 0;"]
+                    [ HH.hr [HP.style "flex: 1 1 auto;"]
+                    , HH.span [HP.style "padding: 0 10px"] [HH.text "Or"]
+                    , HH.hr [HP.style "flex: 1 1 auto;"]
+                    ]
+                , HH.button
+                    [ HS.class_ "regular-button"
+                    , HP.style "width: 100%;"
+                    , HP.type_ HP.ButtonButton
+                    , HE.onClick $ const CreateWithEmail
+                    ]
+                    [ HH.i [ HS.class_ "fas fa-envelope button-icon", HP.style "font-size: 20px;" ] []
+                    , HH.text "Create account with Email"
+                    ]
+                ]
     , boardingButtons
         [ secondaryButton_ "Back" $ SetStep
             case playerOrTeam of
@@ -370,14 +442,26 @@ renderPage { step: Register, registration, otherError, submitting, playerOrTeam 
 render :: ∀ slots left. State -> HH.ComponentHTML Action (ChildSlots slots) (Async left)
 render state = HH.div_ $ [ boarding $ renderPage state ] <> stickyLeaderboards
 
-sendRequest :: ∀ left.
-    State -> Async left (Maybe (Either Preboard.BadContent Preboard.OkContent))
-sendRequest (state :: State) = Async.unify do
+sendRequest :: ∀ left. State -> Async left (Either State Preboard.OkContent)
+sendRequest state = Async.attempt do
+    registration <-
+        case state.registrationMode, state.accessToken of
+        Email, _ -> Async.right $ inj (Proxy :: _ "email") $ pick state.registrationEmail
+        Discord, Just accessToken -> Async.right $ inj (Proxy :: _ "discord")
+            {nickname: state.registrationDiscord.nickname, accessToken}
+        Discord, Nothing -> do
+            window >>= localStorage >>= setItem "preboard" (writeJSON state) # liftEffect
+            hardNavigate $ "https://discord.com/api/oauth2/authorize"
+                <> "?client_id=1068667687661740052"
+                <> "&redirect_uri=https%3A%2F%2Flocalhost%2Fpreboarding%2Fregister"
+                <> "&response_type=token"
+                <> "&scope=identify"
+                <> "&prompt=none"
+            Async.left state
     (body :: Preboard.RequestContent) <-
         case state of
         { player
         , playerProfile: profile
-        , registration
         } | Just game <- getGame state.game
           , Just (PlayerOrTeamInput.Player) <- getPlayerOrTeam state.playerOrTeam -> Async.right
             { ilk: 1
@@ -388,11 +472,10 @@ sendRequest (state :: State) = Async.unify do
             , teamProfile: Nothing
             , playerContacts: Just $ pick profile.contacts
             , teamContacts: Nothing
-            , registration: pick registration
+            , registration
             }
         { team
         , teamProfile: profile
-        , registration
         } | Just game <- getGame state.game
           , Just (PlayerOrTeamInput.Team) <- getPlayerOrTeam state.playerOrTeam -> Async.right
             { ilk: 2
@@ -404,28 +487,126 @@ sendRequest (state :: State) = Async.unify do
                 (Proxy :: _ "platforms") profile.details.selectedPlatforms profile.details
             , playerContacts: Nothing
             , teamContacts: Just $ pick profile.contacts
-            , registration: pick registration
+            , registration
             }
-        _ -> Async.left Nothing
-    response <- fetchBody (Proxy :: _ Preboard) body # lmap (const Nothing)
-    let result = onMatch
-            { ok: Just <<< Right
-            , badRequest: Just <<< Left
-            }
-            (const Nothing)
-            response
+        _ -> Async.left state {otherError = true}
+    response <- fetchBody (Proxy :: _ Preboard) body # lmap (const $ state {otherError = true})
+    onMatch
+        { ok: \content -> Async.right content
+        , badRequest: \(errors :: Preboard.BadContent) -> Async.left $
+            foldl
+            (\state error ->
+                match
+                { team: state # foldl \state' error' -> error' # match
+                    { name: const state' { step = Team, team { nameError = true } }
+                    , website: const state' { step = Team, team { websiteError = true } }
+                    }
+                , playerProfile: state # foldl \state' error' -> error' # match
+                    { url: \{ key } -> state'
+                        { step = if state'.step > PlayerProfile then PlayerProfile else state'.step
+                        , playerProfile { details { urlErrors = Array.cons key state'.playerProfile.details.urlErrors } }
+                        }
+                    , about: const state'
+                        { step = if state'.step > PlayerProfile then PlayerProfile else state'.step
+                        , playerProfile { details { aboutError = true } }
+                        }
+                    , ambitions: const state'
+                        { step = if state'.step > PlayerProfile then PlayerProfile else state'.step
+                        , playerProfile { details { ambitionsError = true } }
+                        }
+                    }
+                , teamProfile: state # foldl \state' error' -> error' # match
+                    { platforms: const state'
+                        { step = if state'.step > TeamProfile then TeamProfile else state'.step
+                        , teamProfile { details { platformsError = true } }
+                        }
+                    , about: const state'
+                        { step = if state'.step > TeamProfile then TeamProfile else state'.step
+                        , teamProfile { details { aboutError = true } }
+                        }
+                    , ambitions: const state'
+                        { step = if state'.step > TeamProfile then TeamProfile else state'.step
+                        , teamProfile { details { ambitionsError = true } }
+                        }
+                    }
+                , playerContacts: state # foldl \state' error' -> error' # match
+                    { discordTag: const state' { step = PlayerProfile, playerProfile { contacts { discordTagError = true } } }
+                    , steamId: const state' { step = PlayerProfile, playerProfile { contacts { steamIdError = true } } }
+                    , riotId: const state' { step = PlayerProfile, playerProfile { contacts { riotIdError = true } } }
+                    , battleTag: const state' { step = PlayerProfile, playerProfile { contacts { battleTagError = true } } }
+                    , eaId: const state' { step = PlayerProfile, playerProfile { contacts { eaIdError = true } } }
+                    , ubisoftUsername: const state' { step = PlayerProfile, playerProfile { contacts { ubisoftUsernameError = true } } }
+                    , psnId: const state' { step = PlayerProfile, playerProfile { contacts { psnIdError = true } } }
+                    , gamerTag: const state' { step = PlayerProfile, playerProfile { contacts { gamerTagError = true } } }
+                    , friendCode: const state' { step = PlayerProfile, playerProfile { contacts { friendCodeError = true } } }
+                    }
+                , teamContacts: state # foldl \state' error' -> error' # match
+                    { discordTag: const state' { step = TeamProfile, teamProfile { contacts { discordTagError = true } } }
+                    , discordServer: const state' { step = TeamProfile, teamProfile { contacts { discordServerError = true } } }
+                    , steamId: const state' { step = TeamProfile, teamProfile { contacts { steamIdError = true } } }
+                    , riotId: const state' { step = TeamProfile, teamProfile { contacts { riotIdError = true } } }
+                    , battleTag: const state' { step = TeamProfile, teamProfile { contacts { battleTagError = true } } }
+                    , eaId: const state' { step = TeamProfile, teamProfile { contacts { eaIdError = true } } }
+                    , ubisoftUsername: const state' { step = TeamProfile, teamProfile { contacts { ubisoftUsernameError = true } } }
+                    , psnId: const state' { step = TeamProfile, teamProfile { contacts { psnIdError = true } } }
+                    , gamerTag: const state' { step = TeamProfile, teamProfile { contacts { gamerTagError = true } } }
+                    , friendCode: const state' { step = TeamProfile, teamProfile { contacts { friendCodeError = true } } }
+                    }
+                , registration: state # foldl \state' error' -> error' # match
+                    { email: const state' { registrationEmail { emailError = true } }
+                    , nickname: const
+                        case state.registrationMode of
+                        Email -> state' { registrationEmail { nicknameError = true } }
+                        Discord -> state' { registrationDiscord { nicknameError = true } }
+                    , password: const state' { registrationEmail { passwordError = true } }
+                    }
+                , emailTaken: const state { registrationEmail { emailTaken = true } }
+                , nicknameTaken: const
+                    case state.registrationMode of
+                    Email -> state { registrationEmail { nicknameTaken = true } }
+                    Discord -> state { registrationDiscord { nicknameTaken = true } }
+                , other: const state { otherError = true }
+                }
+                error
+            )
+            state
+            errors
+        }
+        (const $ Async.left state {otherError = true})
+        response
+
+tryToRegister :: forall action slots output left.
+    State -> H.HalogenM State action slots output (Async left) Unit
+tryToRegister state = do
+    H.put state
+    eitherStateContent <- H.lift $ sendRequest state
     let trackParams =
-            { ilk: if body.ilk == 1 then "player" else "team"
-            , game: body.gameHandle
-            , result: show result
+            { ilk:
+                case getPlayerOrTeam state.playerOrTeam of
+                Just PlayerOrTeamInput.Player -> "player"
+                Just PlayerOrTeamInput.Team -> "team"
+                Nothing -> "unknown"
+            , game:
+                case getGame state.game of
+                Just game -> game.handle
+                Nothing -> "unknown"
             }
-    case result of
-        Just (Right _) -> do
-            aliasNickname
-            identifyNickname
-            track "Preboard" trackParams
-        _ -> track "Preboard error" trackParams
-    pure result
+    let trackSuccess = do
+                aliasNickname
+                identifyNickname
+                track "Preboard" trackParams
+    let trackError = track "Preboard error" trackParams
+
+    case eitherStateContent of
+        Left nextState -> do
+            trackError
+            H.put nextState {submitting = false}
+        Right {teamHandle: Nothing} -> do
+            trackSuccess
+            navigate_ "/"
+        Right {teamHandle: Just teamHandle} -> do
+            trackSuccess
+            navigate_ $ "/teams/" <> teamHandle
 
 -- Update state for current history entry so back button doesn't lose previous state.
 updateHistoryState :: ∀ monad. MonadEffect monad => State -> monad Unit
@@ -442,8 +623,13 @@ updateHistoryState (state :: State) = do
 
 handleAction :: ∀ action output slots left.
     Action -> H.HalogenM State action slots output (Async left) Unit
-handleAction Initialize =
+handleAction Initialize = do
     setMeta "Preboarding | TeamTavern" "TeamTavern preboarding."
+    -- Check if we came back from Discord sign in page.
+    state <- H.get
+    case state.accessToken of
+        Nothing -> pure unit
+        Just _ -> tryToRegister state
 handleAction (Receive input) = do
     state <- H.get
     H.put (input # Record.insert (Proxy :: _ "submitting") false)
@@ -519,139 +705,76 @@ handleAction (UpdateTeamProfile profile) = do
             }
         }
     updateHistoryState state
-handleAction (UpdateRegistration registration) = do
+handleAction (UpdateRegistrationEmail registration) = do
     state <- H.modify \state -> state
-        { registration = Record.merge registration state.registration }
+        { registrationEmail = Record.merge registration state.registrationEmail }
+    updateHistoryState state
+handleAction (UpdateRegistrationDiscord registration) = do
+    state <- H.modify \state -> state
+        { registrationDiscord = Record.merge registration state.registrationDiscord }
     updateHistoryState state
 handleAction SetUpAccount = do
-    currentState <- H.modify _ { submitting = true }
-    let nextState = currentState
-            { submitting = false
-            , team
-                { nameError = false
-                , websiteError = false
+    state <- H.gets (_
+        { submitting = true
+        , otherError = false
+        , team
+            { nameError = false
+            , websiteError = false
+            }
+        , playerProfile
+            { details
+                { urlErrors = []
+                , aboutError = false
+                , ambitionsError = false
                 }
-            , playerProfile
-                { details
-                    { urlErrors = []
-                    , aboutError = false
-                    , ambitionsError = false
-                    }
-                , contacts
-                    { discordTagError = false
-                    , steamIdError = false
-                    , riotIdError = false
-                    , battleTagError = false
-                    , eaIdError = false
-                    , ubisoftUsernameError = false
-                    , psnIdError = false
-                    , gamerTagError = false
-                    , friendCodeError = false
-                    }
-                }
-            , teamProfile
-                { details
-                    { platformsError = false
-                    , aboutError = false
-                    , ambitionsError = false
-                    }
-                , contacts
-                    { discordTagError = false
-                    , steamIdError = false
-                    , riotIdError = false
-                    , battleTagError = false
-                    , eaIdError = false
-                    , ubisoftUsernameError = false
-                    , psnIdError = false
-                    , gamerTagError = false
-                    , friendCodeError = false
-                    }
-                }
-            , registration
-                { emailError = false
-                , nicknameError = false
-                , passwordError = false
-                , emailTaken = false
-                , nicknameTaken = false
+            , contacts
+                { discordTagError = false
+                , steamIdError = false
+                , riotIdError = false
+                , battleTagError = false
+                , eaIdError = false
+                , ubisoftUsernameError = false
+                , psnIdError = false
+                , gamerTagError = false
+                , friendCodeError = false
                 }
             }
-    response <- H.lift $ sendRequest currentState
-    case response of
-        Just (Right {teamHandle: Nothing}) -> navigate_ "/"
-        Just (Right {teamHandle: Just teamHandle}) -> navigate_ $ "/teams/" <> teamHandle
-        Just (Left errors) -> H.put $
-            foldl
-            (\state error ->
-                match
-                { team: state # foldl \state' error' -> error' # match
-                    { name: const state' { step = Team, team { nameError = true } }
-                    , website: const state' { step = Team, team { websiteError = true } }
-                    }
-                , playerProfile: state # foldl \state' error' -> error' # match
-                    { url: \{ key } -> state'
-                        { step = if state'.step > PlayerProfile then PlayerProfile else state'.step
-                        , playerProfile { details { urlErrors = Array.cons key state'.playerProfile.details.urlErrors } }
-                        }
-                    , about: const state'
-                        { step = if state'.step > PlayerProfile then PlayerProfile else state'.step
-                        , playerProfile { details { aboutError = true } }
-                        }
-                    , ambitions: const state'
-                        { step = if state'.step > PlayerProfile then PlayerProfile else state'.step
-                        , playerProfile { details { ambitionsError = true } }
-                        }
-                    }
-                , teamProfile: state # foldl \state' error' -> error' # match
-                    { platforms: const state'
-                        { step = if state'.step > TeamProfile then TeamProfile else state'.step
-                        , teamProfile { details { platformsError = true } }
-                        }
-                    , about: const state'
-                        { step = if state'.step > TeamProfile then TeamProfile else state'.step
-                        , teamProfile { details { aboutError = true } }
-                        }
-                    , ambitions: const state'
-                        { step = if state'.step > TeamProfile then TeamProfile else state'.step
-                        , teamProfile { details { ambitionsError = true } }
-                        }
-                    }
-                , playerContacts: state # foldl \state' error' -> error' # match
-                    { discordTag: const state' { step = PlayerProfile, playerProfile { contacts { discordTagError = true } } }
-                    , steamId: const state' { step = PlayerProfile, playerProfile { contacts { steamIdError = true } } }
-                    , riotId: const state' { step = PlayerProfile, playerProfile { contacts { riotIdError = true } } }
-                    , battleTag: const state' { step = PlayerProfile, playerProfile { contacts { battleTagError = true } } }
-                    , eaId: const state' { step = PlayerProfile, playerProfile { contacts { eaIdError = true } } }
-                    , ubisoftUsername: const state' { step = PlayerProfile, playerProfile { contacts { ubisoftUsernameError = true } } }
-                    , psnId: const state' { step = PlayerProfile, playerProfile { contacts { psnIdError = true } } }
-                    , gamerTag: const state' { step = PlayerProfile, playerProfile { contacts { gamerTagError = true } } }
-                    , friendCode: const state' { step = PlayerProfile, playerProfile { contacts { friendCodeError = true } } }
-                    }
-                , teamContacts: state # foldl \state' error' -> error' # match
-                    { discordTag: const state' { step = TeamProfile, teamProfile { contacts { discordTagError = true } } }
-                    , discordServer: const state' { step = TeamProfile, teamProfile { contacts { discordServerError = true } } }
-                    , steamId: const state' { step = TeamProfile, teamProfile { contacts { steamIdError = true } } }
-                    , riotId: const state' { step = TeamProfile, teamProfile { contacts { riotIdError = true } } }
-                    , battleTag: const state' { step = TeamProfile, teamProfile { contacts { battleTagError = true } } }
-                    , eaId: const state' { step = TeamProfile, teamProfile { contacts { eaIdError = true } } }
-                    , ubisoftUsername: const state' { step = TeamProfile, teamProfile { contacts { ubisoftUsernameError = true } } }
-                    , psnId: const state' { step = TeamProfile, teamProfile { contacts { psnIdError = true } } }
-                    , gamerTag: const state' { step = TeamProfile, teamProfile { contacts { gamerTagError = true } } }
-                    , friendCode: const state' { step = TeamProfile, teamProfile { contacts { friendCodeError = true } } }
-                    }
-                , registration: state # foldl \state' error' -> error' # match
-                    { email: const state' { registration { emailError = true } }
-                    , nickname: const state' { registration { nicknameError = true } }
-                    , password: const state' { registration { passwordError = true } }
-                    }
-                , emailTaken: const state { registration { emailTaken = true } }
-                , nicknameTaken: const state { registration { nicknameTaken = true } }
-                , other: const state { otherError = true }
+        , teamProfile
+            { details
+                { platformsError = false
+                , aboutError = false
+                , ambitionsError = false
                 }
-                error
-            )
-            (nextState { otherError = false })
-            errors
-        Nothing -> H.put nextState { otherError = true }
+            , contacts
+                { discordTagError = false
+                , steamIdError = false
+                , riotIdError = false
+                , battleTagError = false
+                , eaIdError = false
+                , ubisoftUsernameError = false
+                , psnIdError = false
+                , gamerTagError = false
+                , friendCodeError = false
+                }
+            }
+        , registrationEmail
+            { emailError = false
+            , nicknameError = false
+            , passwordError = false
+            , emailTaken = false
+            , nicknameTaken = false
+            }
+        , registrationDiscord
+            { nicknameError = false
+            , nicknameTaken = false
+            }
+        }
+    )
+    tryToRegister state
+handleAction CreateWithEmail =
+    H.modify_ _ {registrationMode = Email}
+handleAction CreateWithDiscord =
+    H.modify_ _ {registrationMode = Discord}
 
 component :: ∀ query output left.
     H.Component query Input output (Async left)

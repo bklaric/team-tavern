@@ -8,6 +8,7 @@ import AsyncV (AsyncV)
 import AsyncV as AsyncV
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Bifunctor (lmap)
+import Data.Variant (Variant, inj, match)
 import Jarilo (badRequest_)
 import TeamTavern.Routes.Player.RegisterPlayer as RegisterPlayer
 import TeamTavern.Server.Infrastructure.Error (TerrorNeaVar, ValidatedTerrorNea)
@@ -18,22 +19,35 @@ import TeamTavern.Server.Player.Domain.Nickname (Nickname, validateNickname)
 import TeamTavern.Server.Player.Domain.Password (Password, validatePassword)
 import Type.Proxy (Proxy(..))
 
-type Registration =
-    { email :: Email
-    , nickname :: Nickname
-    , password :: Password
-    }
+type Registration = Variant
+    ( email ::
+        { email :: Email
+        , nickname :: Nickname
+        , password :: Password
+        }
+    , discord ::
+        { nickname :: Nickname
+        , accessToken :: String
+        }
+    )
 
 type RegistrationErrors = NonEmptyArray RegisterPlayer.RegistrationError
 
 validateRegistration'
     :: RegisterPlayer.RequestContent
     -> ValidatedTerrorNea RegisterPlayer.RegistrationError Registration
-validateRegistration' { email, nickname, password } =
-    { email: _, nickname: _, password: _ }
-    <$> validateEmail email
-    <*> validateNickname nickname
-    <*> validatePassword password
+validateRegistration' = match
+    { email: \{email, nickname, password} ->
+        { email: _, nickname: _, password: _ }
+        <$> validateEmail email
+        <*> validateNickname nickname
+        <*> validatePassword password
+        <#> inj (Proxy :: _ "email")
+    , discord: \{nickname, accessToken} ->
+        {nickname: _, accessToken}
+        <$> validateNickname nickname
+        <#> inj (Proxy :: _ "discord")
+    }
 
 validateRegistration
     :: ∀ errors

@@ -8,11 +8,17 @@ type RegisterPlayer =
     PostJson_ (Literal "players") RequestContent
     ==> (NoContent ! BadRequestJson BadContent ! Forbidden_ ! Internal_)
 
-type RequestContent =
-    { email :: String
-    , nickname :: String
-    , password :: String
-    }
+type RequestContent = Variant
+    ( email ::
+        { email :: String
+        , nickname :: String
+        , password :: String
+        }
+    , discord ::
+        { nickname :: String
+        , accessToken :: String
+        }
+    )
 
 type OkContent = { nickname :: String }
 

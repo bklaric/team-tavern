@@ -10,7 +10,7 @@ import Data.Array.NonEmpty as Nea
 import Data.Bifunctor (lmap)
 import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
-import Data.Variant (inj, over)
+import Data.Variant (inj, match, over)
 import Jarilo (badRequest_, ok)
 import Jarilo.Router.Response (AppResponse(..))
 import Postgres.Pool (Pool)
@@ -23,9 +23,11 @@ import TeamTavern.Server.Infrastructure.EnsureNotSignedIn (ensureNotSignedIn)
 import TeamTavern.Server.Infrastructure.Error (Terror(..))
 import TeamTavern.Server.Infrastructure.Postgres (transaction)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
+import TeamTavern.Server.Oauth.Shared.FetchDiscordUser (fetchDiscordUser)
 import TeamTavern.Server.Player.Domain.Hash (generateHash)
 import TeamTavern.Server.Player.Domain.Id (Id(..))
 import TeamTavern.Server.Player.Register.AddPlayer (addPlayer)
+import TeamTavern.Server.Player.Register.AddPlayerDiscord (addPlayerDiscord)
 import TeamTavern.Server.Player.Register.ValidateRegistration (validateRegistrationV)
 import TeamTavern.Server.Player.UpdateContacts.ValidateContacts (validateContactsV)
 import TeamTavern.Server.Player.UpdateContacts.WriteContacts (writeContacts)
@@ -89,19 +91,26 @@ preboard deployment pool cookies content =
                 # AsyncV.toAsync
                 # lmap (map badRequest_)
 
-            -- Generate password hash.
-            hash <- generateHash registration'.password
+            {id, nickname} <- registration' # match
+                { email: \{email, nickname, password} -> do
+                    -- Generate password hash.
+                    hash <- generateHash password
+
+                    -- -- Add player.
+                    id <- addPlayer client { email, nickname, hash}
+                        # lmap (map (over { badRequest: \(AppResponse headers body) -> AppResponse headers (Nea.singleton body) }))
+                    -- id <- pure 10
+
+                    pure {id, nickname}
+                , discord: \{nickname, accessToken} -> do
+                    discordUser <- fetchDiscordUser accessToken
+                    id <- addPlayerDiscord client nickname discordUser
+                        # lmap (map (over { badRequest: \(AppResponse headers body) -> AppResponse headers (Nea.singleton body) }))
+                    pure {id, nickname}
+                }
 
             -- Generate session token.
             token <- Token.generate
-
-            -- Add player.
-            id <- addPlayer client
-                { email: registration'.email
-                , nickname: registration'.nickname
-                , hash
-                }
-                # lmap (map (over { badRequest: \(AppResponse headers body) -> AppResponse headers (Nea.singleton body) }))
 
             -- Create a new session.
             createSession id token client
@@ -110,7 +119,7 @@ preboard deployment pool cookies content =
 
             profileId <- addProfile client id
                 { handle: content.gameHandle
-                , nickname: unwrap registration'.nickname
+                , nickname: unwrap nickname
                 }
                 profile'
 
@@ -118,7 +127,7 @@ preboard deployment pool cookies content =
 
             pure
                 { teamHandle: Nothing
-                , cookieInfo: { id: Id id, nickname: registration'.nickname, token }
+                , cookieInfo: { id: Id id, nickname, token }
                 , profileId
                 }
         { ilk: 2
@@ -152,24 +161,30 @@ preboard deployment pool cookies content =
                 # AsyncV.toAsync
                 # lmap (map badRequest_)
 
-            -- Generate password hash.
-            hash <- generateHash registration'.password
+            {id, nickname} <- registration' # match
+                { email: \{email, nickname, password} -> do
+                    -- Generate password hash.
+                    hash <- generateHash password
+
+                    -- Add player.
+                    id <- addPlayer client { email, nickname, hash}
+                        # lmap (map (over { badRequest: \(AppResponse headers body) -> AppResponse headers (Nea.singleton body) }))
+
+                    pure {id, nickname}
+                , discord: \{nickname, accessToken} -> do
+                    discordUser <- fetchDiscordUser accessToken
+                    id <- addPlayerDiscord client nickname discordUser
+                        # lmap (map (over { badRequest: \(AppResponse headers body) -> AppResponse headers (Nea.singleton body) }))
+                    pure {id, nickname}
+                }
 
             -- Generate session token.
             token <- Token.generate
 
-            -- Add player.
-            id <- addPlayer client
-                { email: registration'.email
-                , nickname: registration'.nickname
-                , hash
-                }
-                # lmap (map (over { badRequest: \(AppResponse headers body) -> AppResponse headers (Nea.singleton body) }))
-
             -- Create a new session.
             createSession id token client
 
-            let generatedHandle = generateHandle team'.organization registration'.nickname
+            let generatedHandle = generateHandle team'.organization nickname
 
             { id: teamId, handle } <- addTeam client (Id id) generatedHandle team'
 
@@ -179,7 +194,7 @@ preboard deployment pool cookies content =
 
             pure
                 { teamHandle: Just handle
-                , cookieInfo: { id: Id id, nickname: registration'.nickname, token }
+                , cookieInfo: { id: Id id, nickname, token }
                 , profileId
                 }
         _ -> Async.left $ Terror (badRequest_ $ Nea.singleton $ inj (Proxy :: _ "other") {}) []
