@@ -706,8 +706,7 @@ handleAction (UpdateTeamProfile profile) = do
         }
     updateHistoryState state
 handleAction (UpdateRegistrationEmail registration) = do
-    state <- H.modify \state -> state
-        { registrationEmail = Record.merge registration state.registrationEmail }
+    state <- H.modify _ {registrationEmail = registration}
     updateHistoryState state
 handleAction (UpdateRegistrationDiscord registration) = do
     state <- H.modify \state -> state

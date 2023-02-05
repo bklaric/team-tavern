@@ -213,7 +213,7 @@ handleAction Initialize = do
         pure state {accessToken = Just accessToken}
     stateMaybe # maybe (pure unit) tryToRegister
 handleAction (UpdateRegistrationEmail registration) =
-    H.modify_ \state -> state { registrationEmail = Record.merge registration state.registrationEmail }
+    H.modify_ _ {registrationEmail = registration}
 handleAction (UpdateRegistrationDiscord registration) =
     H.modify_ \state -> state { registrationDiscord = Record.merge registration state.registrationDiscord }
 handleAction (Register event) = do
