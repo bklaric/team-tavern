@@ -2,7 +2,6 @@ module TeamTavern.Client.Components.Modal (Output(..), Slot, Slot_, component) w
 
 import Prelude
 
-import Data.Const (Const)
 import Data.Maybe (Maybe(..))
 import Effect.Class (class MonadEffect)
 import Halogen as H
@@ -11,6 +10,7 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Halogen.Hooks as Hooks
 import TeamTavern.Client.Script.Unscrollable (makeWindowScrollable, makeWindowUnscrollable)
+import TeamTavern.Client.Shared.Slot (Slot_O_)
 import TeamTavern.Client.Snippets.Class as HS
 import Type.Proxy (Proxy(..))
 import Unsafe.Reference (unsafeRefEq)
@@ -22,7 +22,7 @@ data Output output = CloseClicked | OutputRaised output
 
 type ChildSlots query output = (content :: H.Slot query output Unit)
 
-type Slot output = H.Slot (Const Void) (Output output) Unit
+type Slot output = Slot_O_ (Output output)
 
 type Slot_ = Slot Void
 

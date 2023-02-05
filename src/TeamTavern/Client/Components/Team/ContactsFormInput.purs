@@ -3,11 +3,9 @@ module TeamTavern.Client.Components.Team.ContactsFormInput (Input, Output, Slot,
 import Prelude
 
 import Async (Async)
-import Data.Const (Const)
 import Data.Foldable (elem)
 import Data.Maybe (Maybe(..))
 import Data.Monoid (guard)
-import Type.Proxy (Proxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Record.Extra (pick)
@@ -15,8 +13,10 @@ import TeamTavern.Client.Components.Input (inputGroupsHeading, responsiveInputGr
 import TeamTavern.Client.Components.Player.PlayerInputGroup (discordTagInputGroup)
 import TeamTavern.Client.Components.Player.ProfileInputGroup (ChildSlots, platformIdInputGroup)
 import TeamTavern.Client.Components.Team.TeamInputGroup (discordServerInputGroup)
+import TeamTavern.Client.Shared.Slot (Slot_O_)
 import TeamTavern.Routes.Shared.Platform (Platform(..))
 import TeamTavern.Routes.Shared.TeamContacts (TeamContacts, TeamContactsOpen)
+import Type.Proxy (Proxy(..))
 
 type Input = TeamContactsOpen
     ( requiredPlatforms :: Array Platform
@@ -49,7 +49,7 @@ data Action
     | UpdateGamerTag (Maybe String)
     | UpdateFriendCode (Maybe String)
 
-type Slot = H.Slot (Const Void) Output Unit
+type Slot = Slot_O_ Output
 
 render :: ∀ left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render

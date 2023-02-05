@@ -19,7 +19,7 @@ import TeamTavern.Client.Script.Analytics (registerSignedIn, track_)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (hardNavigate, navigate_)
 import TeamTavern.Client.Shared.Fetch (fetchBody)
-import TeamTavern.Client.Shared.Slot (SimpleSlot)
+import TeamTavern.Client.Shared.Slot (Slot___)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Session.StartSession (StartSession)
 import Type.Proxy (Proxy(..))
@@ -186,5 +186,5 @@ component = H.mkComponent
     }
 
 signIn :: ∀ query children left.
-    HH.ComponentHTML query (signIn :: SimpleSlot | children) (Async left)
+    HH.ComponentHTML query (signIn :: Slot___ | children) (Async left)
 signIn = HH.slot (Proxy :: _ "signIn") unit component unit absurd

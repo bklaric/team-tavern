@@ -3,7 +3,6 @@ module TeamTavern.Client.Components.RegistrationInput (Input, Output, Slot, empt
 import Prelude
 
 import Async (Async)
-import Data.Const (Const)
 import Data.Maybe (Maybe(..))
 import Halogen as H
 import Halogen.HTML as HH
@@ -11,6 +10,7 @@ import Record as Record
 import Record.Extra (pick)
 import TeamTavern.Client.Components.Input (inputError, inputGroup, inputLabel_, requiredTextLineInputNamed)
 import TeamTavern.Client.Components.PasswordInput (passwordInput)
+import TeamTavern.Client.Shared.Slot (Slot_O_)
 import Type.Proxy (Proxy(..))
 
 type Input =
@@ -49,7 +49,7 @@ data Action
     | UpdatePassword String
     | TogglePasswordVisibility
 
-type Slot = H.Slot (Const Void) Output Unit
+type Slot = Slot_O_ Output
 
 render :: ∀ left slots. State -> H.ComponentHTML Action slots (Async left)
 render

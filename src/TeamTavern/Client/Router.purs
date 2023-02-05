@@ -46,7 +46,7 @@ import TeamTavern.Client.Script.Cookie (getPlayerNickname, hasPlayerIdCookie)
 import TeamTavern.Client.Script.Navigate (navigateReplace_)
 import TeamTavern.Client.Script.QueryParams (getFragmentParam)
 import TeamTavern.Client.Script.ReloadAds (reloadAds)
-import TeamTavern.Client.Shared.Slot (SimpleSlot)
+import TeamTavern.Client.Shared.Slot (Slot___)
 import TeamTavern.Client.Snippets.Class as HS
 import Type.Proxy (Proxy(..))
 import Web.HTML (window)
@@ -87,15 +87,15 @@ data State
 topBarWithContent
     :: ∀ query children left
     .  Maybe String
-    -> Array (H.ComponentHTML query (Footer.ChildSlots (topBar :: SimpleSlot | children)) (Async left))
-    -> H.ComponentHTML query (Footer.ChildSlots (topBar :: SimpleSlot | children)) (Async left)
+    -> Array (H.ComponentHTML query (Footer.ChildSlots (topBar :: Slot___ | children)) (Async left))
+    -> H.ComponentHTML query (Footer.ChildSlots (topBar :: Slot___ | children)) (Async left)
 topBarWithContent handle content' = HH.div_ [ topBar handle, content content', footer ]
 
 wideTopBarWithContent
     :: ∀ query children left
     .  Maybe String
-    -> Array (H.ComponentHTML query (Footer.ChildSlots (topBar :: SimpleSlot | children)) (Async left))
-    -> H.ComponentHTML query (Footer.ChildSlots (topBar :: SimpleSlot | children)) (Async left)
+    -> Array (H.ComponentHTML query (Footer.ChildSlots (topBar :: Slot___ | children)) (Async left))
+    -> H.ComponentHTML query (Footer.ChildSlots (topBar :: Slot___ | children)) (Async left)
 wideTopBarWithContent handle content' = HH.div_ [ topBar handle, wideContent content', footer ]
 
 render :: ∀ action left. State -> H.ComponentHTML action _ (Async left)

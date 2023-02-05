@@ -4,14 +4,14 @@ import Prelude
 
 import Async (Async)
 import Client.Components.Copyable (copyable)
-import Client.Components.Copyable as Copyable
 import Data.Array as Array
 import Data.Foldable (foldr)
 import Data.Maybe (Maybe(..))
-import Type.Proxy (Proxy(..))
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Anchor (textAnchor)
+import TeamTavern.Client.Shared.Slot (Slot__String)
 import TeamTavern.Client.Snippets.Class as HS
+import Type.Proxy (Proxy(..))
 
 detailColumnsContainer :: ∀ slots action. Array (HH.HTML slots action) -> HH.HTML slots action
 detailColumnsContainer = HH.div [ HS.class_ "detail-columns-container" ]
@@ -59,7 +59,7 @@ discordTagDetail
     :: ∀ action left slots
     .  String
     -> Maybe String
-    -> Maybe (HH.ComponentHTML action ( discordTag :: Copyable.Slot String | slots) (Async left))
+    -> Maybe (HH.ComponentHTML action ( discordTag :: Slot__String | slots) (Async left))
 discordTagDetail _ Nothing = Nothing
 discordTagDetail nickname (Just discordTag) = Just $
     fieldDetail "fab fa-discord" "Discord tag"

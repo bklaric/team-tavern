@@ -4,7 +4,6 @@ import Prelude
 
 import Async (Async)
 import Async as Async
-import Client.Components.Copyable as Copyable
 import Data.Array.Extra (full)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
@@ -19,7 +18,6 @@ import TeamTavern.Client.Components.Content (contentColumns, contentDescription,
 import TeamTavern.Client.Components.Detail (detailColumn, detailColumnHeading4, detailColumns, textDetail)
 import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
-import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Components.Player.ProfileDetails (PlatformIdSlots)
 import TeamTavern.Client.Components.Profile (profileHeader, profileHeading', profileSubheading)
 import TeamTavern.Client.Components.Team.Contacts (profileContacts)
@@ -34,7 +32,7 @@ import TeamTavern.Client.Script.QueryParams (getQueryParam)
 import TeamTavern.Client.Script.Rendertron (appendRendetronNotFound)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Shared.Fetch (fetchPathQuery)
-import TeamTavern.Client.Shared.Slot (SimpleSlot)
+import TeamTavern.Client.Shared.Slot (Slot___, Slot__String)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Profile.ViewTeamProfile (ViewTeamProfile)
 import TeamTavern.Routes.Profile.ViewTeamProfile as ViewTeamProfile
@@ -60,9 +58,9 @@ data Action
     | Receive Input
 
 type Slots = PlatformIdSlots
-    ( discordTag :: Copyable.Slot String
-    , games :: NavigationAnchor.Slot String
-    , team :: SimpleSlot
+    ( discordTag :: Slot__String
+    , games :: Slot__String
+    , team :: Slot___
     )
 
 nameOrHandle :: ∀ fields. { handle :: String, organization :: OrganizationNW | fields } -> String
@@ -197,5 +195,5 @@ component = H.mkComponent
     }
 
 teamProfile :: ∀ query children left.
-    Input -> HH.ComponentHTML query (teamProfile :: SimpleSlot | children) (Async left)
+    Input -> HH.ComponentHTML query (teamProfile :: Slot___ | children) (Async left)
 teamProfile input = HH.slot (Proxy :: _ "teamProfile") unit component input absurd

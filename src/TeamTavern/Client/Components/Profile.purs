@@ -8,7 +8,7 @@ import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import Prim.Row (class Cons)
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchorIndexed)
-import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
+import TeamTavern.Client.Shared.Slot (Slot__I, Slot__String)
 import TeamTavern.Client.Snippets.Class as HS
 import Type.Proxy (Proxy)
 
@@ -17,7 +17,7 @@ profileHeader = HH.div [ HS.class_ "profile-header" ]
 
 profileHeading
     :: ∀ action index monad slots' slots label
-    .  Cons label (NavigationAnchor.Slot index) slots' slots
+    .  Cons label (Slot__I index) slots' slots
     => IsSymbol label
     => Ord index
     => MonadEffect monad
@@ -29,7 +29,7 @@ profileHeading label index path heading =
 
 profileHeading'
     :: ∀ action monad slots' slots label
-    .  Cons label (NavigationAnchor.Slot String) slots' slots
+    .  Cons label (Slot__String) slots' slots
     => IsSymbol label
     => MonadEffect monad
     => Proxy label -> String -> String -> String -> HH.ComponentHTML action slots monad

@@ -10,7 +10,6 @@ import Control.Bind (bindFlipped)
 import Data.Array (foldl, intercalate)
 import Data.Array as Array
 import Data.Bifunctor (lmap)
-import Data.Const (Const)
 import Data.Int (round)
 import Data.Int as Int
 import Data.List.NonEmpty as NonEmptyList
@@ -41,7 +40,7 @@ import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigate, navigate_)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Script.Url as Url
-import TeamTavern.Client.Shared.Slot (SimpleSlot)
+import TeamTavern.Client.Shared.Slot (Slot___)
 import TeamTavern.Client.Snippets.ArticledNoun (indefiniteNoun)
 import TeamTavern.Routes.Game.ViewGame as ViewGame
 import TeamTavern.Routes.Profile.ViewPlayerProfilesByGame as ViewPlayerProfilesByGame
@@ -87,7 +86,7 @@ data State
     | Error
 
 type ChildSlots =
-    ( gameHeader :: H.Slot (Const Void) Void Unit
+    ( gameHeader :: Slot___
     , playerProfiles :: PlayerProfiles.Slot
     , teamProfiles :: TeamProfiles.Slot
     , profileFilters :: ProfileFilters.Slot
@@ -423,5 +422,5 @@ component = H.mkComponent
     }
 
 profiles :: ∀ query children left.
-    Input -> HH.ComponentHTML query (profiles :: SimpleSlot | children) (Async left)
+    Input -> HH.ComponentHTML query (profiles :: Slot___ | children) (Async left)
 profiles input = HH.slot (Proxy :: _ "profiles") unit component input absurd

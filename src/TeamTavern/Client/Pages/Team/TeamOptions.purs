@@ -12,7 +12,7 @@ import Halogen.HTML.Events as HE
 import Halogen.Hooks as Hooks
 import TeamTavern.Client.Components.Popover (popover, popoverItem, togglePopover, usePopover)
 import TeamTavern.Client.Pages.Team.DeleteTeam (deleteTeam)
-import TeamTavern.Client.Shared.Slot (SimpleSlot)
+import TeamTavern.Client.Shared.Slot (Slot___)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Team.ViewTeam as ViewTeam
 import Type.Proxy (Proxy(..))
@@ -50,6 +50,6 @@ component = Hooks.component $ \_ team -> Hooks.do
 teamOptions
     :: ∀ action slots left
     .  ViewTeam.OkContent
-    -> HH.ComponentHTML action (teamOptions :: SimpleSlot | slots) (Async left)
+    -> HH.ComponentHTML action (teamOptions :: Slot___ | slots) (Async left)
 teamOptions handle = HH.slot (Proxy :: _ "teamOptions") unit
     component handle absurd

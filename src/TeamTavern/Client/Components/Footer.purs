@@ -2,24 +2,24 @@ module TeamTavern.Client.Components.Footer where
 
 import Prelude
 
-import Type.Proxy (Proxy(..))
 import Effect.Class (class MonadEffect)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Components.Anchor (iconAnchor)
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
-import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
+import TeamTavern.Client.Shared.Slot (Slot___)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Client.Snippets.SocialMediaUrls (discordUrl, redditUrl, steamId, twitterUrl)
+import Type.Proxy (Proxy(..))
 
 type ChildSlots children =
-    ( aboutAnchor :: NavigationAnchor.Slot Unit
-    , privacyAnchor :: NavigationAnchor.Slot Unit
-    , discordAnchor :: NavigationAnchor.Slot Unit
-    , redditAnchor :: NavigationAnchor.Slot Unit
-    , steamAnchor :: NavigationAnchor.Slot Unit
-    , twitterAnchor :: NavigationAnchor.Slot Unit
+    ( aboutAnchor :: Slot___
+    , privacyAnchor :: Slot___
+    , discordAnchor :: Slot___
+    , redditAnchor :: Slot___
+    , steamAnchor :: Slot___
+    , twitterAnchor :: Slot___
     | children )
 
 footer :: ∀ monad action children. MonadEffect monad =>

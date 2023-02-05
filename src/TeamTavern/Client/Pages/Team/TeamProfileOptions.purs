@@ -15,7 +15,7 @@ import TeamTavern.Client.Components.Popover (popover, popoverItem, togglePopover
 import TeamTavern.Client.Pages.Team.Status (Status(..))
 import TeamTavern.Client.Script.Analytics (track)
 import TeamTavern.Client.Script.Clipboard (writeTextAsync)
-import TeamTavern.Client.Shared.Slot (QuerylessSlot)
+import TeamTavern.Client.Shared.Slot (Slot_OI)
 import TeamTavern.Client.Snippets.Class as HS
 import Type.Proxy (Proxy(..))
 import Web.HTML (window)
@@ -26,7 +26,7 @@ type Input = { status :: Status, teamHandle :: String, gameHandle :: String }
 
 data Output = Edit | Delete
 
-type Slot = QuerylessSlot Output String
+type Slot = Slot_OI Output String
 
 profileUrl :: Input -> Effect String
 profileUrl { teamHandle, gameHandle } = do

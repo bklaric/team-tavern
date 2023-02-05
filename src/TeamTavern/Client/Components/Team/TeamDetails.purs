@@ -3,11 +3,11 @@ module TeamTavern.Client.Components.Team.TeamDetails (teamDetails) where
 import Prelude
 
 import Async (Async)
-import Client.Components.Copyable as Copyable
 import Data.Array as Array
 import Data.Maybe (Maybe(..))
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Detail (arrangedOrDetail, detail, urlDetail, weekdaysOnlineDetail, weekendsOnlineDetail)
+import TeamTavern.Client.Shared.Slot (Slot__String)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Shared.Organization (OrganizationNW, websiteNW)
 
@@ -70,7 +70,7 @@ teamDetails :: ∀ fields slots action left.
                         }
     | fields
     }
-    -> Array (HH.ComponentHTML action ( discordTag :: Copyable.Slot String | slots) (Async left))
+    -> Array (HH.ComponentHTML action ( discordTag :: Slot__String | slots) (Async left))
 teamDetails details =
     Array.catMaybes
     [ teamWebsiteDetail $ websiteNW details.organization

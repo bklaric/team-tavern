@@ -24,7 +24,7 @@ import TeamTavern.Client.Pages.Home.ForPlayers (forPlayers')
 import TeamTavern.Client.Pages.Preboarding as Preboarding
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigate, navigate_)
-import TeamTavern.Client.Shared.Slot (SimpleSlot)
+import TeamTavern.Client.Shared.Slot (Slot___)
 import TeamTavern.Client.Snippets.ArticledNoun (indefiniteNoun)
 import TeamTavern.Client.Snippets.PreventMouseDefault (preventMouseDefault)
 import TeamTavern.Routes.Game.ViewGame as ViewGame
@@ -48,8 +48,8 @@ data State
     | Loaded { game :: ViewGame.OkContent }
 
 type ChildSlots =
-    ( viewAllPlayers :: NavigationAnchor.Slot Unit
-    , viewAllTeams :: NavigationAnchor.Slot Unit
+    ( viewAllPlayers :: Slot___
+    , viewAllTeams :: Slot___
     )
 
 render :: ∀ left.
@@ -132,5 +132,5 @@ component = H.mkComponent
     }
 
 game :: ∀ query children left.
-    Input -> HH.ComponentHTML query (game :: SimpleSlot | children) (Async left)
+    Input -> HH.ComponentHTML query (game :: Slot___ | children) (Async left)
 game input = HH.slot (Proxy :: _ "game") unit component input absurd

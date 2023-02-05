@@ -15,7 +15,7 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Script.Url as Url
-import TeamTavern.Client.Shared.Slot (SimpleSlot)
+import TeamTavern.Client.Shared.Slot (Slot___)
 import TeamTavern.Client.Snippets.Class as HS
 import Type.Proxy (Proxy(..))
 import Web.HTML as Html
@@ -77,5 +77,5 @@ component = H.mkComponent
     }
 
 deleteAlert :: ∀ query children left.
-    HH.ComponentHTML query (deleteAlert :: SimpleSlot | children) (Async left)
+    HH.ComponentHTML query (deleteAlert :: Slot___ | children) (Async left)
 deleteAlert = HH.slot (Proxy :: _ "deleteAlert") unit component unit absurd

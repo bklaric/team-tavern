@@ -11,7 +11,6 @@ import TeamTavern.Client.Components.Card (card, cardHeader, cardHeading, cardSec
 import TeamTavern.Client.Components.Detail (detailColumn, detailColumnHeading4, detailColumns, textDetail)
 import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.Missing (missing)
-import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Components.Player.ProfileDetails (PlatformIdSlots, profileDetails)
 import TeamTavern.Client.Components.Profile (profileHeader, profileHeading', profileSubheading)
 import TeamTavern.Client.Pages.Player.CreateProfileButton (createProfileButton)
@@ -20,14 +19,14 @@ import TeamTavern.Client.Pages.Player.PlayerProfileOptions as PlayerProfileOptio
 import TeamTavern.Client.Pages.Player.Status (Status(..))
 import TeamTavern.Client.Pages.Profiles.TeamBadge (platformBadge)
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
-import TeamTavern.Client.Shared.Slot (SimpleSlot)
+import TeamTavern.Client.Shared.Slot (Slot___, Slot__String)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Player.ViewPlayer as ViewPlayer
 import Type.Proxy (Proxy(..))
 
 type ChildSlots children = PlatformIdSlots
-    ( games :: NavigationAnchor.Slot String
-    , createProfile :: SimpleSlot
+    ( games :: Slot__String
+    , createProfile :: Slot___
     , playerProfileOptions :: PlayerProfileOptions.Slot
     | children)
 

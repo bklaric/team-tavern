@@ -4,13 +4,13 @@ import Prelude
 
 import Async (Async)
 import Client.Components.Copyable (copyable)
-import Client.Components.Copyable as Copyable
 import Data.Array (elem)
 import Data.Array as Array
 import Data.Maybe (Maybe(..))
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Anchor (textAnchor)
 import TeamTavern.Client.Components.Detail (detail', discordTagDetail, fieldDetail', urlDetail)
+import TeamTavern.Client.Shared.Slot (Slot__String)
 import TeamTavern.Client.Snippets.Brands (detailBattleNetSvg, detailOriginSvg, detailPlayStationSvg, detailRiotSvg, detailSteamSvg, detailSwitchSvg, detailUbisoftSvg, detailXboxSvg)
 import TeamTavern.Routes.Shared.Platform (Platform(..))
 import TeamTavern.Routes.Shared.TeamContacts (TeamContactsOpen)
@@ -18,15 +18,15 @@ import Type.Function (type ($))
 import Type.Proxy (Proxy(..))
 
 type ContactsSlots slots =
-    ( battleTag :: Copyable.Slot String
-    , discordTag :: Copyable.Slot String
-    , friendCode :: Copyable.Slot String
-    , gamerTag :: Copyable.Slot String
-    , eaId :: Copyable.Slot String
-    , ubisoftUsername :: Copyable.Slot String
-    , psnId :: Copyable.Slot String
-    , riotId :: Copyable.Slot String
-    , steamId :: Copyable.Slot String
+    ( battleTag :: Slot__String
+    , discordTag :: Slot__String
+    , friendCode :: Slot__String
+    , gamerTag :: Slot__String
+    , eaId :: Slot__String
+    , ubisoftUsername :: Slot__String
+    , psnId :: Slot__String
+    , riotId :: Slot__String
+    , steamId :: Slot__String
     | slots
     )
 
@@ -34,7 +34,7 @@ teamDiscordServerDetail :: ∀ slots actions. Maybe String -> Maybe (HH.HTML slo
 teamDiscordServerDetail discordServer = urlDetail "fab fa-discord" "Discord server" discordServer
 
 steamIdDetail :: ∀ left slots action.
-    Maybe String -> Maybe $ HH.ComponentHTML action (steamId :: Copyable.Slot String | slots) (Async left)
+    Maybe String -> Maybe $ HH.ComponentHTML action (steamId :: Slot__String | slots) (Async left)
 steamIdDetail steamId' = steamId' <#> \steamId ->
     fieldDetail' detailSteamSvg "Steam ID"
     [ copyable (Proxy :: _ "steamId") steamId steamId ]
@@ -44,43 +44,43 @@ steamUrlDetail steamId' = steamId' <#> \steamId ->
     detail' detailSteamSvg [ textAnchor "detail-url" ("https://steamcommunity.com/profiles/" <> steamId) "Steam profile" ]
 
 riotIdDetail :: ∀ left slots action.
-    Maybe String -> Maybe $ HH.ComponentHTML action (riotId :: Copyable.Slot String | slots) (Async left)
+    Maybe String -> Maybe $ HH.ComponentHTML action (riotId :: Slot__String | slots) (Async left)
 riotIdDetail riotId' = riotId' <#> \riotId ->
     fieldDetail' detailRiotSvg "Riot ID"
     [ copyable (Proxy :: _ "riotId") riotId riotId ]
 
 battleTagDetail :: ∀ left slots action.
-    Maybe String -> Maybe $ HH.ComponentHTML action (battleTag :: Copyable.Slot String | slots) (Async left)
+    Maybe String -> Maybe $ HH.ComponentHTML action (battleTag :: Slot__String | slots) (Async left)
 battleTagDetail battleTag' = battleTag' <#> \battleTag ->
     fieldDetail' detailBattleNetSvg "BattleTag"
     [ copyable (Proxy :: _ "battleTag") battleTag battleTag ]
 
 eaIdDetail :: ∀ left slots action.
-    Maybe String -> Maybe $ HH.ComponentHTML action (eaId :: Copyable.Slot String | slots) (Async left)
+    Maybe String -> Maybe $ HH.ComponentHTML action (eaId :: Slot__String | slots) (Async left)
 eaIdDetail eaId' = eaId' <#> \eaId ->
     fieldDetail' detailOriginSvg "EA ID"
     [ copyable (Proxy :: _ "eaId") eaId eaId ]
 
 ubisoftUsernameDetail :: ∀ left slots action.
-    Maybe String -> Maybe $ HH.ComponentHTML action (ubisoftUsername :: Copyable.Slot String | slots) (Async left)
+    Maybe String -> Maybe $ HH.ComponentHTML action (ubisoftUsername :: Slot__String | slots) (Async left)
 ubisoftUsernameDetail ubisoftUsername' = ubisoftUsername' <#> \ubisoftUsername ->
     fieldDetail' detailUbisoftSvg "Ubisoft Connect username"
     [ copyable (Proxy :: _ "ubisoftUsername") ubisoftUsername ubisoftUsername ]
 
 psnIdDetail :: ∀ left slots action.
-    Maybe String -> Maybe $ HH.ComponentHTML action (psnId :: Copyable.Slot String | slots) (Async left)
+    Maybe String -> Maybe $ HH.ComponentHTML action (psnId :: Slot__String | slots) (Async left)
 psnIdDetail psnId' = psnId' <#> \psnId ->
     fieldDetail' detailPlayStationSvg "PSN ID"
     [ copyable (Proxy :: _ "psnId") psnId psnId ]
 
 gamerTagDetail :: ∀ left slots action.
-    Maybe String -> Maybe $ HH.ComponentHTML action (gamerTag :: Copyable.Slot String | slots) (Async left)
+    Maybe String -> Maybe $ HH.ComponentHTML action (gamerTag :: Slot__String | slots) (Async left)
 gamerTagDetail gamerTag' = gamerTag' <#> \gamerTag ->
     fieldDetail' detailXboxSvg "Gamertag"
     [ copyable (Proxy :: _ "gamerTag") gamerTag gamerTag ]
 
 friendCodeDetail :: ∀ left slots action.
-    Maybe String -> Maybe $ HH.ComponentHTML action (friendCode :: Copyable.Slot String | slots) (Async left)
+    Maybe String -> Maybe $ HH.ComponentHTML action (friendCode :: Slot__String | slots) (Async left)
 friendCodeDetail friendCode' = friendCode' <#> \friendCode ->
     fieldDetail' detailSwitchSvg "Friend code"
     [ copyable (Proxy :: _ "friendCode") friendCode friendCode ]

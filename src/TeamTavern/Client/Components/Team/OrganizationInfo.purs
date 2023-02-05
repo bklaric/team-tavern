@@ -11,7 +11,7 @@ import Halogen.HTML as HH
 import Halogen.Hooks as Hooks
 import TeamTavern.Client.Components.Popover (togglePopover, usePopover)
 import TeamTavern.Client.Components.Team.Info (info, infoContainer, infoIcon, infoList, infoText)
-import TeamTavern.Client.Shared.Slot (SimpleSlot)
+import TeamTavern.Client.Shared.Slot (Slot___)
 import Type.Proxy (Proxy(..))
 
 component :: ∀ left output input query. H.Component query input output (Async left)
@@ -48,5 +48,5 @@ component = Hooks.component $ \_ _ -> Hooks.do
             ]
         )
 
-organizationInfo :: ∀ action slots left. H.ComponentHTML action (organizationInfo :: SimpleSlot | slots) (Async left)
+organizationInfo :: ∀ action slots left. H.ComponentHTML action (organizationInfo :: Slot___ | slots) (Async left)
 organizationInfo = HH.slot (Proxy :: _ "organizationInfo") unit component unit absurd

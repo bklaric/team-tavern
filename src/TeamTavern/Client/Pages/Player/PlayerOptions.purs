@@ -15,7 +15,7 @@ import TeamTavern.Client.Components.Popover (popover, popoverItem, togglePopover
 import TeamTavern.Client.Pages.Player.ChangeEmail (changeEmail)
 import TeamTavern.Client.Pages.Player.ChangePassword (changePassword)
 import TeamTavern.Client.Pages.Player.DeleteAccount (deleteAccount)
-import TeamTavern.Client.Shared.Slot (SimpleSlot)
+import TeamTavern.Client.Shared.Slot (Slot___)
 import TeamTavern.Client.Snippets.Class as HS
 import Type.Proxy (Proxy(..))
 
@@ -65,5 +65,5 @@ component = Hooks.component $ \_ {email, nickname} -> Hooks.do
         ]
 
 playerOptions :: ∀ action slots left.
-    Input -> HH.ComponentHTML action (playerOptions :: SimpleSlot | slots) (Async left)
+    Input -> HH.ComponentHTML action (playerOptions :: Slot___ | slots) (Async left)
 playerOptions nickname = HH.slot (Proxy :: _ "playerOptions") unit component nickname absurd

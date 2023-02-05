@@ -10,7 +10,7 @@ import TeamTavern.Client.Components.Ads (stickyLeaderboards)
 import TeamTavern.Client.Pages.Profiles (profiles)
 import TeamTavern.Client.Pages.Profiles.GameHeader (ProfileTab(..), Tab(..), gameHeader)
 import TeamTavern.Client.Script.Request (get)
-import TeamTavern.Client.Shared.Slot (SimpleSlot)
+import TeamTavern.Client.Shared.Slot (Slot___)
 import TeamTavern.Routes.Game.ViewGame as ViewGame
 import Type.Proxy (Proxy(..))
 
@@ -24,7 +24,7 @@ data State
 data Action = Initialize | Receive Input
 
 type ChildSlots =
-    ( profiles :: SimpleSlot
+    ( profiles :: Slot___
     )
 
 render :: ∀ left. State -> H.ComponentHTML Action ChildSlots (Async left)
@@ -68,5 +68,5 @@ component = H.mkComponent
     }
 
 gameTabs :: ∀ query children left.
-    Input -> HH.ComponentHTML query (gameTabs :: SimpleSlot | children) (Async left)
+    Input -> HH.ComponentHTML query (gameTabs :: Slot___ | children) (Async left)
 gameTabs input = HH.slot (Proxy :: _ "gameTabs") unit component input absurd

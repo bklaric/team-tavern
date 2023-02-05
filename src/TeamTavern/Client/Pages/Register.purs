@@ -29,7 +29,7 @@ import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (hardNavigate, navigate, navigateWithEvent_)
 import TeamTavern.Client.Script.QueryParams (getFragmentParam)
 import TeamTavern.Client.Shared.Fetch (fetchBody)
-import TeamTavern.Client.Shared.Slot (SimpleSlot)
+import TeamTavern.Client.Shared.Slot (Slot___)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Player.RegisterPlayer (RegisterPlayer)
 import Type.Proxy (Proxy(..))
@@ -260,5 +260,5 @@ component = H.mkComponent
     }
 
 register :: ∀ query children left.
-    HH.ComponentHTML query (register :: SimpleSlot | children) (Async left)
+    HH.ComponentHTML query (register :: Slot___ | children) (Async left)
 register = HH.slot (Proxy :: _ "register") unit component unit absurd

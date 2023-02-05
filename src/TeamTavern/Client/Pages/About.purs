@@ -11,14 +11,14 @@ import TeamTavern.Client.Components.Ads (stickyLeaderboards)
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Script.Meta (setMeta)
-import TeamTavern.Client.Shared.Slot (SimpleSlot)
+import TeamTavern.Client.Shared.Slot (Slot___)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Client.Snippets.SocialMediaUrls (discordUrl, redditUrl, steamId, twitterUrl)
 import Type.Proxy (Proxy(..))
 
 data Action = Initialize
 
-type ChildSlots = (emailAnchor :: NavigationAnchor.Slot Unit)
+type ChildSlots = (emailAnchor :: Slot___)
 
 render :: ∀ monad. MonadEffect monad => HH.ComponentHTML Action ChildSlots monad
 render = HH.div [ HS.class_ "about" ] $
@@ -74,5 +74,5 @@ component = H.mkComponent
     }
 
 about :: ∀ action monad children. MonadEffect monad =>
-    HH.ComponentHTML action (about :: SimpleSlot | children) monad
+    HH.ComponentHTML action (about :: Slot___ | children) monad
 about = HH.slot (Proxy :: _ "about") unit component unit absurd

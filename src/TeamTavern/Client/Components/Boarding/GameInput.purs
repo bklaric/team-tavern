@@ -7,16 +7,16 @@ import Async as Async
 import Browser.Async.Fetch as Fetch
 import Browser.Async.Fetch.Response as FetchRes
 import Data.Bifunctor (lmap)
-import Data.Const (Const)
 import Data.Maybe (Maybe(..), maybe)
-import Type.Proxy (Proxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
-import Yoga.JSON.Async as Json
 import TeamTavern.Client.Components.RadioCard (radioCard, radioCards)
+import TeamTavern.Client.Shared.Slot (Slot_O_)
 import TeamTavern.Routes.Game.ViewAllGames as ViewAllGames
 import TeamTavern.Routes.Game.ViewGame as ViewGame
+import Type.Proxy (Proxy(..))
+import Yoga.JSON.Async as Json
 
 type Input = Maybe ViewGame.OkContent
 
@@ -29,7 +29,7 @@ type State =
 
 data Action = Initialize | SelectGame ViewAllGames.OkGameContent
 
-type Slot = H.Slot (Const Void) Output Unit
+type Slot = Slot_O_ Output
 
 render :: ∀ slots. State -> HH.HTML slots Action
 render { games, selected } =

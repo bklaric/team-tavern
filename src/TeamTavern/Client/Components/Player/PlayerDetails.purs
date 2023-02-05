@@ -3,11 +3,11 @@ module TeamTavern.Client.Components.Player.PlayerDetails (playerDetails) where
 import Prelude
 
 import Async (Async)
-import Client.Components.Copyable as Copyable
 import Data.Array as Array
 import Data.Maybe (Maybe(..))
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Detail (arrangedAndDetail, detail, weekdaysOnlineDetail, weekendsOnlineDetail)
+import TeamTavern.Client.Shared.Slot (Slot__String)
 import TeamTavern.Client.Snippets.Class as HS
 
 playerAgeDetail :: ∀ slots action. Maybe Int -> Maybe (HH.HTML slots action)
@@ -55,7 +55,7 @@ playerDetails :: ∀ fields action slots left.
                         }
     | fields
     }
-    -> Array (HH.ComponentHTML action (discordTag :: Copyable.Slot String | slots) (Async left))
+    -> Array (HH.ComponentHTML action (discordTag :: Slot__String | slots) (Async left))
 playerDetails details =
     Array.catMaybes
     [ playerAgeDetail details.age

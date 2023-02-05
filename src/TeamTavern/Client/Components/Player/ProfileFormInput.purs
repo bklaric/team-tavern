@@ -5,7 +5,6 @@ import Prelude
 import Async (Async)
 import Data.Array (foldl)
 import Data.Array as Array
-import Data.Const (Const)
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..))
@@ -19,6 +18,7 @@ import TeamTavern.Client.Components.Player.PlayerInputGroup (discordTagInputGrou
 import TeamTavern.Client.Components.Player.ProfileInputGroup (ChildSlots, Field, FieldValue, aboutInputGroup, ambitionsInputGroup, fieldInputGroup, newOrReturningInputGroup, platformIdInputGroup)
 import TeamTavern.Client.Components.Player.ProfileInputGroup as Input
 import TeamTavern.Client.Pages.Profiles.TeamBadge (platformRadioBadges)
+import TeamTavern.Client.Shared.Slot (Slot_O_)
 import TeamTavern.Routes.Shared.Platform (Platform(..), Platforms)
 import TeamTavern.Routes.Shared.PlayerContacts (PlayerContacts, PlayerContactsOpen)
 import Type.Proxy (Proxy(..))
@@ -107,7 +107,7 @@ data Action
     | UpdateGamerTag (Maybe String)
     | UpdateFriendCode (Maybe String)
 
-type Slot = H.Slot (Const Void) Output Unit
+type Slot = Slot_O_ Output
 
 fieldValuesToArray :: ∀ key value. Map key value -> Array value
 fieldValuesToArray = Array.fromFoldable <<< Map.values

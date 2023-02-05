@@ -13,7 +13,7 @@ import Halogen.Hooks as Hooks
 import TeamTavern.Client.Components.Popover (popover, popoverItem, togglePopover, usePopover)
 import TeamTavern.Client.Script.Analytics (track)
 import TeamTavern.Client.Script.Clipboard (writeTextAsync)
-import TeamTavern.Client.Shared.Slot (StringSlot)
+import TeamTavern.Client.Shared.Slot (Slot__String)
 import TeamTavern.Client.Snippets.Class as HS
 import Type.Proxy (Proxy(..))
 import Web.HTML (window)
@@ -56,6 +56,6 @@ component = Hooks.component $ \_ input -> Hooks.do
         ]
 
 teamProfileOptions :: ∀ action slots left.
-    Input -> HH.ComponentHTML action (teamProfileOptions :: StringSlot | slots) (Async left)
+    Input -> HH.ComponentHTML action (teamProfileOptions :: Slot__String | slots) (Async left)
 teamProfileOptions input =
     HH.slot (Proxy :: _ "teamProfileOptions") input.teamHandle component input absurd

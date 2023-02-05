@@ -3,11 +3,9 @@ module TeamTavern.Client.Pages.Profiles.TeamProfiles (TeamProfile, Input, Output
 import Prelude
 
 import Async (Async)
-import Client.Components.Copyable as Copyable
 import Data.Array (sort)
 import Data.Array as Array
 import Data.Array.Extra (full)
-import Data.Const (Const)
 import Data.Maybe (Maybe(..), isNothing)
 import Data.Monoid (guard)
 import Halogen as H
@@ -17,7 +15,6 @@ import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Components.Card (cardHeader, cardHeading, cardSection, cardSubheading)
 import TeamTavern.Client.Components.Detail (detailColumn, detailColumnHeading4, detailColumns, textDetail)
 import TeamTavern.Client.Components.Divider (divider)
-import TeamTavern.Client.Components.NavigationAnchor as Anchor
 import TeamTavern.Client.Components.Pagination (pagination)
 import TeamTavern.Client.Components.Player.ProfileDetails (PlatformIdSlots)
 import TeamTavern.Client.Components.Profile (profileHeader, profileHeading, profileSubheading)
@@ -28,7 +25,7 @@ import TeamTavern.Client.Pages.Profiles.TeamBadge (communityBadge, informalBadge
 import TeamTavern.Client.Pages.Profiles.TeamProfileOptions (teamProfileOptions)
 import TeamTavern.Client.Script.Cookie (PlayerInfo)
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
-import TeamTavern.Client.Shared.Slot (StringSlot)
+import TeamTavern.Client.Shared.Slot (Slot__String, Slot_O_)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Client.Snippets.PreventMouseDefault (preventMouseDefault)
 import TeamTavern.Routes.Profile.Shared (pageSize)
@@ -95,12 +92,12 @@ data Action
 
 data Output = PageChanged Int | PreboardingClicked
 
-type Slot = H.Slot (Const Void) Output Unit
+type Slot = Slot_O_ Output
 
 type ChildSlots = PlatformIdSlots
-    ( teams :: Anchor.Slot String
-    , discordTag :: Copyable.Slot String
-    , teamProfileOptions :: StringSlot
+    ( teams :: Slot__String
+    , discordTag :: Slot__String
+    , teamProfileOptions :: Slot__String
     )
 
 profileSection :: ∀ action left.

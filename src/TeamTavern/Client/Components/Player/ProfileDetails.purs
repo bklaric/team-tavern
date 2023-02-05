@@ -3,23 +3,23 @@ module TeamTavern.Client.Components.Player.ProfileDetails where
 import Prelude
 
 import Async (Async)
-import Client.Components.Copyable as Copyable
 import Data.Array (intercalate)
 import Data.Array as Array
 import Data.Maybe (Maybe(..))
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Detail (detail, fieldDetail, urlDetail)
+import TeamTavern.Client.Shared.Slot (Slot__String)
 import TeamTavern.Client.Snippets.Class as HS
 
 type PlatformIdSlots slots =
-    ( steamId :: Copyable.Slot String
-    , riotId :: Copyable.Slot String
-    , battleTag :: Copyable.Slot String
-    , eaId :: Copyable.Slot String
-    , ubisoftUsername :: Copyable.Slot String
-    , psnId :: Copyable.Slot String
-    , gamerTag :: Copyable.Slot String
-    , friendCode :: Copyable.Slot String
+    ( steamId :: Slot__String
+    , riotId :: Slot__String
+    , battleTag :: Slot__String
+    , eaId :: Slot__String
+    , ubisoftUsername :: Slot__String
+    , psnId :: Slot__String
+    , gamerTag :: Slot__String
+    , friendCode :: Slot__String
     | slots )
 
 profileDetails :: ∀ left slots action.

@@ -5,7 +5,6 @@ import Prelude
 import Async (Async)
 import Async as Async
 import Data.Bifunctor (lmap)
-import Data.Const (Const)
 import Data.Maybe (Maybe(..), isNothing)
 import Data.Variant (match, onMatch)
 import Halogen as H
@@ -43,8 +42,6 @@ type LoadedState =
     }
 
 data State = Empty | Loaded LoadedState
-
-type Slot = H.Slot (Const Void) Void Unit
 
 render :: forall left. State -> H.ComponentHTML Action _ (Async left)
 render Empty = HH.div_ []

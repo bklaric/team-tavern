@@ -6,14 +6,12 @@ import Async (Async)
 import Data.Array (sort)
 import Data.Array as Array
 import Data.Array.Extra (full)
-import Data.Const (Const)
 import Data.Monoid (guard)
 import Halogen as H
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Card (card, cardHeader, cardHeading, cardSection)
 import TeamTavern.Client.Components.Detail (detailColumn, detailColumnHeading4, detailColumns, textDetail)
 import TeamTavern.Client.Components.Missing (missing)
-import TeamTavern.Client.Components.NavigationAnchor as Anchor
 import TeamTavern.Client.Components.Profile (profileHeader, profileHeading', profileSubheading)
 import TeamTavern.Client.Components.Team.ProfileDetails (profileDetails)
 import TeamTavern.Client.Pages.Profiles.TeamBadge (communityBadge, partyBadge, platformBadge)
@@ -22,14 +20,15 @@ import TeamTavern.Client.Pages.Team.Status (Status(..))
 import TeamTavern.Client.Pages.Team.TeamProfileOptions (Output(..), teamProfileOptions)
 import TeamTavern.Client.Pages.Team.TeamProfileOptions as TeamProfileOptions
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
+import TeamTavern.Client.Shared.Slot (Slot___, Slot__String)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Shared.Size (Size(..))
 import TeamTavern.Routes.Team.ViewTeam as ViewTeam
 import Type.Proxy (Proxy(..))
 
 type ChildSlots children =
-    ( games :: Anchor.Slot String
-    , createProfile :: H.Slot (Const Void) Void Unit
+    ( games :: Slot__String
+    , createProfile :: Slot___
     , teamProfileOptions :: TeamProfileOptions.Slot
     | children
     )

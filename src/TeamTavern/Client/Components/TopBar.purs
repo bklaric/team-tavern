@@ -20,7 +20,7 @@ import TeamTavern.Client.Script.Cookie (getPlayerNickname)
 import TeamTavern.Client.Script.Navigate (navigateWithEvent_)
 import TeamTavern.Client.Script.Request (get)
 import TeamTavern.Client.Shared.Fetch (fetchSimple)
-import TeamTavern.Client.Shared.Slot (SimpleSlot)
+import TeamTavern.Client.Shared.Slot (Slot___)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Game.ViewAllGames as ViewAllGames
 import TeamTavern.Routes.Session.EndSession (EndSession)
@@ -290,5 +290,5 @@ component = H.mkComponent
     }
 
 topBar :: ∀ action left slots.
-    Input -> HH.ComponentHTML action (topBar :: SimpleSlot | slots) (Async left)
+    Input -> HH.ComponentHTML action (topBar :: Slot___ | slots) (Async left)
 topBar input = HH.slot (Proxy :: _ "topBar") unit component input absurd

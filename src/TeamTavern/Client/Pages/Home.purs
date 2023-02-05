@@ -19,7 +19,7 @@ import TeamTavern.Client.Pages.Home.ForPlayers (forPlayers)
 import TeamTavern.Client.Pages.Preboarding as Preboarding
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigate, navigate_)
-import TeamTavern.Client.Shared.Slot (SimpleSlot)
+import TeamTavern.Client.Shared.Slot (Slot___)
 import TeamTavern.Client.Snippets.PreventMouseDefault (preventMouseDefault)
 import Type.Proxy (Proxy(..))
 import Web.UIEvent.MouseEvent (MouseEvent)
@@ -34,7 +34,7 @@ data Action
 type State = Unit
 
 type ChildSlots =
-    ( viewAllGames :: NavigationAnchor.Slot Unit
+    ( viewAllGames :: Slot___
     )
 
 render :: ∀ left. State -> H.ComponentHTML Action ChildSlots (Async left)
@@ -80,5 +80,5 @@ component = H.mkComponent
     }
 
 home :: ∀ query children left.
-    HH.ComponentHTML query (home :: SimpleSlot | children) (Async left)
+    HH.ComponentHTML query (home :: Slot___ | children) (Async left)
 home = HH.slot (Proxy :: _ "home") unit component unit absurd

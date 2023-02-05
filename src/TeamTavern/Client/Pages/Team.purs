@@ -4,9 +4,7 @@ import Prelude
 
 import Async (Async)
 import Async as Async
-import Client.Components.Copyable as Copyable
 import Control.Monad.State (class MonadState)
-import Data.Const (Const)
 import Data.Either (Either(..))
 import Data.Foldable (foldMap)
 import Data.Maybe (Maybe(..))
@@ -19,7 +17,6 @@ import TeamTavern.Client.Components.Ads (descriptionLeaderboards, stickyLeaderbo
 import TeamTavern.Client.Components.Content (contentColumns, contentDescription, contentHeader, contentHeaderSection, contentHeading', contentHeadingFaIcon)
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
-import TeamTavern.Client.Components.NavigationAnchor as Anchor
 import TeamTavern.Client.Components.Player.ProfileDetails (PlatformIdSlots)
 import TeamTavern.Client.Pages.Profiles.TeamBadge (informalBadge, organizedBadge)
 import TeamTavern.Client.Pages.Team.Contacts (contacts)
@@ -36,7 +33,7 @@ import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Rendertron (appendRendetronNotFound)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Shared.Fetch (fetchPathQuery)
-import TeamTavern.Client.Shared.Slot (SimpleSlot)
+import TeamTavern.Client.Shared.Slot (Slot___, Slot__String)
 import TeamTavern.Routes.Shared.Organization (OrganizationNW(..), nameOrHandleNW)
 import TeamTavern.Routes.Team.ViewTeam (ViewTeam)
 import TeamTavern.Routes.Team.ViewTeam as ViewTeam
@@ -71,16 +68,16 @@ data Action
     | HideDeleteProfileModal
 
 type ChildSlots = PlatformIdSlots
-    ( discordTag :: Copyable.Slot String
-    , games :: Anchor.Slot String
-    , createProfile :: H.Slot (Const Void) Void Unit
+    ( discordTag :: Slot__String
+    , games :: Slot__String
+    , createProfile :: Slot___
     , editContacts :: Modal.Slot_
     , editTeam :: Modal.Slot_
     , editProfile :: Modal.Slot_
     , deleteTeamProfile :: Modal.Slot_
-    , viewTeamOwner :: Anchor.Slot Unit
+    , viewTeamOwner :: Slot___
     , teamProfileOptions :: TeamProfileOptions.Slot
-    , teamOptions :: SimpleSlot
+    , teamOptions :: Slot___
     )
 
 render :: ∀ left. State -> H.ComponentHTML Action ChildSlots (Async left)
@@ -193,5 +190,5 @@ component = H.mkComponent
     }
 
 team :: ∀ query children left.
-    Input -> HH.ComponentHTML query (team :: SimpleSlot | children) (Async left)
+    Input -> HH.ComponentHTML query (team :: Slot___ | children) (Async left)
 team handle = HH.slot (Proxy :: _ "team") unit component handle absurd
