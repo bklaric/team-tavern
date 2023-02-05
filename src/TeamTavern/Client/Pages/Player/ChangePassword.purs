@@ -27,10 +27,8 @@ type Input = {nickname :: String}
 component :: ∀ query output left. H.Component query Input output (Async left)
 component = Hooks.component \_ {nickname} -> Hooks.do
     passwordOld /\ passwordOldId <- Hooks.useState ""
-    passwordOldShown /\ passwordOldShownId <- Hooks.useState false
     passwordOldWrong /\ passwordOldWrongId <- Hooks.useState false
     passwordNew /\ passwordNewId <- Hooks.useState ""
-    passwordNewShown /\ passwordNewShownId <- Hooks.useState false
     passwordNewError /\ passwordNewErrorId <- Hooks.useState false
     otherError /\ otherErrorId <- Hooks.useState false
     submitting /\ submittingId <- Hooks.useState false
@@ -60,12 +58,12 @@ component = Hooks.component \_ {nickname} -> Hooks.do
         form onSubmit $
         [ inputGroup $
             [ inputLabel_ "Current password"
-            , passwordInput passwordOld passwordOldShown (Hooks.put passwordOldId) (Hooks.modify_ passwordOldShownId not)
+            , passwordInput (Proxy :: _ "passwordInputOld") passwordOld (Hooks.put passwordOldId)
             ]
             <> inputError passwordOldWrong "Entered password is incorrect."
         , inputGroup $
             [ inputLabel_ "New password"
-            , passwordInput passwordNew passwordNewShown (Hooks.put passwordNewId) (Hooks.modify_ passwordNewShownId not)
+            , passwordInput (Proxy :: _ "passwordInputNew") passwordNew (Hooks.put passwordNewId)
             ]
             <> inputError passwordNewError "Password must have at least 8 characters."
         , submitButton "fas fa-edit" "Change password" "Changing password..." submitting

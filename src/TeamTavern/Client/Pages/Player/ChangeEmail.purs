@@ -15,7 +15,7 @@ import Halogen.Hooks as Hooks
 import TeamTavern.Client.Components.Form (form, otherFormError, submitButton)
 import TeamTavern.Client.Components.Input (inputError, inputGroup, inputLabel_, requiredTextLineInputNamed)
 import TeamTavern.Client.Components.Modal as Modal
-import TeamTavern.Client.Components.PasswordInput (passwordInput)
+import TeamTavern.Client.Components.PasswordInput (passwordInput_)
 import TeamTavern.Client.Script.Analytics (track_)
 import TeamTavern.Client.Script.Navigate (hardNavigate)
 import TeamTavern.Client.Shared.Fetch (fetchPathBody)
@@ -32,7 +32,6 @@ component = Hooks.component \_ input @ {nickname} -> Hooks.do
     emailError /\ emailErrorId <- Hooks.useState false
     emailTaken /\ emailTakenId <- Hooks.useState false
     password /\ passwordId <- Hooks.useState ""
-    passwordShown /\ passwordShownId <- Hooks.useState false
     wrongPassword /\ wrongPasswordId <- Hooks.useState false
     otherError /\ otherErrorId <- Hooks.useState false
     submitting /\ submittingId <- Hooks.useState false
@@ -70,7 +69,7 @@ component = Hooks.component \_ input @ {nickname} -> Hooks.do
             <> inputError emailTaken "This email is already taken, please pick another one."
         , inputGroup $
             [ inputLabel_ "Password"
-            , passwordInput password passwordShown (Hooks.put passwordId) (Hooks.modify_ passwordShownId not)
+            , passwordInput_ password (Hooks.put passwordId)
             ]
             <> inputError wrongPassword "Entered password is incorrect."
         , HH.p [ HS.class_ "boarding-description" ]

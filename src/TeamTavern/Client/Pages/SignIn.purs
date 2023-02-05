@@ -14,7 +14,7 @@ import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Components.Form (form, otherFormError)
 import TeamTavern.Client.Components.Input (inputError, inputGroup, inputLabel_, requiredTextLineInputNamed)
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor, navigationAnchorClassed)
-import TeamTavern.Client.Components.PasswordInput (passwordInput)
+import TeamTavern.Client.Components.PasswordInput (passwordInput_)
 import TeamTavern.Client.Script.Analytics (registerSignedIn, track_)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (hardNavigate, navigate_)
@@ -30,14 +30,12 @@ data Action
     = Init
     | UpdateEmailOrNickname String
     | UpdatePassword String
-    | TogglePasswordVisibility
     | SignIn Event
     | ContinueWithDiscord
 
 type State =
     { emailOrNickname :: String
     , password :: String
-    , passwordShown :: Boolean
     , unknownPlayer :: Boolean
     , wrongPassword :: Boolean
     , otherError :: Boolean
@@ -48,7 +46,6 @@ render :: ∀ left. State -> H.ComponentHTML Action _ (Async left)
 render
     { emailOrNickname
     , password
-    , passwordShown
     , unknownPlayer
     , wrongPassword
     , otherError
@@ -75,7 +72,7 @@ render
                 , disableTabIndex: true
                 }
             ]
-        , passwordInput password passwordShown UpdatePassword TogglePasswordVisibility
+        , passwordInput_ password UpdatePassword
         ]
         <> inputError wrongPassword "Entered password is incorrect."
     , HH.button
@@ -141,8 +138,6 @@ handleAction (UpdateEmailOrNickname emailOrNickname) =
     H.modify_ (_ { emailOrNickname = emailOrNickname })
 handleAction (UpdatePassword password) =
     H.modify_ (_ { password = password })
-handleAction TogglePasswordVisibility =
-    H.modify_ (\state -> state { passwordShown = not state.passwordShown })
 handleAction (SignIn event) = do
     H.liftEffect $ preventDefault event
     state <- H.gets (_
@@ -172,7 +167,6 @@ component = H.mkComponent
     { initialState: const
         { emailOrNickname: ""
         , password: ""
-        , passwordShown: false
         , unknownPlayer: false
         , wrongPassword: false
         , otherError: false

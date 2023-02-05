@@ -9,7 +9,7 @@ import Halogen.HTML as HH
 import Record as Record
 import Record.Extra (pick)
 import TeamTavern.Client.Components.Input (inputError, inputGroup, inputLabel_, requiredTextLineInputNamed)
-import TeamTavern.Client.Components.PasswordInput (passwordInput)
+import TeamTavern.Client.Components.PasswordInput (passwordInput_)
 import TeamTavern.Client.Shared.Slot (Slot_O_)
 import Type.Proxy (Proxy(..))
 
@@ -34,7 +34,6 @@ type State =
     { email :: String
     , nickname :: String
     , password :: String
-    , passwordShown :: Boolean
     , emailError :: Boolean
     , nicknameError :: Boolean
     , passwordError :: Boolean
@@ -47,16 +46,14 @@ data Action
     | UpdateEmail String
     | UpdateNickname String
     | UpdatePassword String
-    | TogglePasswordVisibility
 
 type Slot = Slot_O_ Output
 
-render :: ∀ left slots. State -> H.ComponentHTML Action slots (Async left)
+render :: ∀ left. State -> H.ComponentHTML Action _ (Async left)
 render
     { email
     , nickname
     , password
-    , passwordShown
     , emailError
     , nicknameError
     , passwordError
@@ -79,7 +76,7 @@ render
         <> inputError nicknameTaken "This nickname is already taken, please pick another one."
     , inputGroup $
         [ inputLabel_ "Password"
-        , passwordInput password passwordShown UpdatePassword TogglePasswordVisibility
+        , passwordInput_ password UpdatePassword
         ]
         <> inputError passwordError "Password must have at least 8 characters."
     ]
@@ -96,8 +93,6 @@ handleAction (UpdateNickname nickname) = do
 handleAction (UpdatePassword password) = do
     state <- H.modify _ { password = password }
     H.raise $ pick state
-handleAction TogglePasswordVisibility =
-    H.modify_ \state -> state { passwordShown = not state.passwordShown }
 
 emptyInput :: Input
 emptyInput =
@@ -114,7 +109,7 @@ emptyInput =
 component :: ∀ query left.
     H.Component query Input Output (Async left)
 component = H.mkComponent
-    { initialState: Record.insert (Proxy :: _ "passwordShown") false
+    { initialState: identity
     , render
     , eval: H.mkEval $ H.defaultEval
         { receive = Just <<< Receive
