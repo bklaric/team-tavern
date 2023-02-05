@@ -32,4 +32,5 @@ type BadContent = Variant
     ( registration :: NonEmptyArray RegistrationError
     , emailTaken :: {}
     , nicknameTaken :: {}
+    , discordTaken :: {}
     )

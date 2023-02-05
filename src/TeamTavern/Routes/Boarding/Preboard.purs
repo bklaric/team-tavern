@@ -41,5 +41,6 @@ type BadContent = NonEmptyArray $ Variant
     , registration :: NonEmptyArray RegistrationError
     , emailTaken :: {}
     , nicknameTaken :: {}
+    , discordTaken :: {}
     , other :: {}
     )

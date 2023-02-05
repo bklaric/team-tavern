@@ -55,13 +55,13 @@ type State =
     , registrationEmail :: RegistrationInput.Input
     , registrationDiscord :: RegistrationInputDiscord.Input
     , accessToken :: Maybe String
-    , discordError :: Boolean
+    , discordTaken :: Boolean
     , otherError :: Boolean
     , submitting :: Boolean
     }
 
 render :: ∀ left. State -> H.ComponentHTML Action _ (Async left)
-render { registrationMode, registrationEmail, registrationDiscord, discordError, otherError, submitting } =
+render { registrationMode, registrationEmail, registrationDiscord, discordTaken, otherError, submitting } =
     form Register $
     [ HH.h1 [ HS.class_ "form-heading" ]
         [ HH.text "Create your "
@@ -104,7 +104,8 @@ render { registrationMode, registrationEmail, registrationDiscord, discordError,
                 , HH.text "Create account with Discord"
                 ]
             ]
-    <> formError discordError "Yo, Discord is acting up."
+    <> formError discordTaken
+        "An account already exists for to this Discord account. Please try signin in."
     <> otherFormError otherError
     <>
     [ HH.div [HP.style "display: flex; align-items: center; margin: 28px 0;"]
@@ -183,6 +184,7 @@ sendRegisterRequest state = Async.unify do
                 case state.registrationMode of
                 Email -> state { registrationEmail { nicknameTaken = true } }
                 Discord -> state { registrationDiscord { nicknameTaken = true } }
+            , discordTaken: const state { discordTaken = true }
             }
         }
         (const $ Just $ state { otherError = true })
@@ -248,7 +250,7 @@ component = H.mkComponent
         , registrationEmail: RegistrationInput.emptyInput
         , registrationDiscord: RegistrationInputDiscord.emptyInput
         , accessToken: Nothing
-        , discordError: false
+        , discordTaken: false
         , otherError: false
         , submitting: false
         }

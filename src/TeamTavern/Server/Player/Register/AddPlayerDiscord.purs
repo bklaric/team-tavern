@@ -46,6 +46,10 @@ addPlayerDiscord querier nickname {id, username, discriminator} = do
                 -> Terror
                     (badRequest_ $ inj (Proxy :: _ "nicknameTaken") {})
                     ["Player nickname is taken: " <> show nickname, print error]
+            true | constraint error == Just "player_discord_id_key"
+                -> Terror
+                    (badRequest_ $ inj (Proxy :: _ "discordTaken") {})
+                    ["Discord account is already associated to an account"]
             _ -> Terror internal__ $ databaseErrorLines error
     row <- result # rows # head # note (Terror internal__
         ["Expected player id in query result, got no rows."])

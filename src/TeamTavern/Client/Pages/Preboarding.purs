@@ -158,7 +158,7 @@ type Input =
     , registrationEmail :: RegistrationInput.Input
     , registrationDiscord :: RegistrationInputDiscord.Input
     , accessToken :: Maybe String
-    , discordError :: Boolean
+    , discordTaken :: Boolean
     , otherError :: Boolean
     }
 
@@ -190,7 +190,7 @@ emptyInput playerOrTeam game =
     , registrationEmail: RegistrationInput.emptyInput
     , registrationDiscord: RegistrationInputDiscord.emptyInput
     , accessToken: Nothing
-    , discordError: false
+    , discordTaken: false
     , otherError: false
     }
 
@@ -206,7 +206,7 @@ type State =
     , registrationEmail :: RegistrationInput.Input
     , registrationDiscord :: RegistrationInputDiscord.Input
     , accessToken :: Maybe String
-    , discordError :: Boolean
+    , discordTaken :: Boolean
     , otherError :: Boolean
     , submitting :: Boolean
     }
@@ -370,7 +370,7 @@ renderPage { step: TeamProfile, teamProfile, game } =
         , primaryButton_ "Next" $ SetStep Register
         ]
     ]
-renderPage { step: Register, registrationMode, registrationEmail, registrationDiscord, otherError, submitting, playerOrTeam } =
+renderPage { step: Register, registrationMode, registrationEmail, registrationDiscord, discordTaken, otherError, submitting, playerOrTeam } =
     [ boardingStep $
         [ boardingHeading "Registration"
         , boardingDescription  """Enter your nickname and password to complete the registration process."""
@@ -435,6 +435,10 @@ renderPage { step: Register, registrationMode, registrationEmail, registrationDi
             then Array.singleton $
                 HH.p [ HS.class_ "boarding-submit-button-underlabel" ]
                 [ HH.text "There has been an unexpected error setting up your account. Please try again later." ]
+            else if discordTaken
+            then Array.singleton $
+                HH.p [ HS.class_ "boarding-submit-button-underlabel" ]
+                [ HH.text "An account already exists for to this Discord account. Please try signin in." ]
             else []
         ]
     ]
@@ -565,6 +569,7 @@ sendRequest state = Async.attempt do
                     case state.registrationMode of
                     Email -> state { registrationEmail { nicknameTaken = true } }
                     Discord -> state { registrationDiscord { nicknameTaken = true } }
+                , discordTaken: const state { discordTaken = true }
                 , other: const state { otherError = true }
                 }
                 error
