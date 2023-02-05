@@ -1,42 +1,16 @@
-module TeamTavern.Server.Profile.UpdatePlayerProfile.UpdateProfile
-    (UpdateProfileError, updateProfile) where
+module TeamTavern.Server.Profile.UpdatePlayerProfile.UpdateProfile (updateProfile) where
 
 import Prelude
 
 import Async (Async)
-import Data.Variant (Variant)
-import Foreign (MultipleErrors)
 import Postgres.Client (Client)
-import Postgres.Error (Error)
 import Postgres.Query (Query(..), QueryParameter, (:), (:|))
-import Postgres.Result (Result)
 import TeamTavern.Routes.Profile.AddPlayerProfile as AddPlayerProfile
-import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstInternal, queryNone)
 import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
 import TeamTavern.Server.Profile.AddPlayerProfile.AddFieldValues (ProfileId, addFieldValues)
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateProfile (Profile)
 import Yoga.JSON (writeImpl)
-
-type UpdateProfileError errors = Variant
-    ( databaseError :: Error
-    , notAuthorized ::
-        { cookieInfo :: CookieInfo
-        , identifiers :: AddPlayerProfile.RouteParams
-        }
-    , unreadableProfileId ::
-        { result :: Result
-        , errors :: MultipleErrors
-        }
-    , emptyResult ::
-        { result :: Result
-        }
-    , unreadableFieldValueId ::
-        { result :: Result
-        , errors :: MultipleErrors
-        }
-    , internal :: Array String
-    | errors )
 
 -- Update profile row.
 
