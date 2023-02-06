@@ -23,7 +23,6 @@ import TeamTavern.Client.Pages.Game (game)
 import TeamTavern.Client.Pages.GameTabs as GameTabs
 import TeamTavern.Client.Pages.Games (games)
 import TeamTavern.Client.Pages.Home (home)
-import TeamTavern.Client.Pages.Oauth (oauth)
 import TeamTavern.Client.Pages.Onboarding (onboarding)
 import TeamTavern.Client.Pages.Onboarding as Onboarding
 import TeamTavern.Client.Pages.Player (player)
@@ -78,7 +77,6 @@ data State
     | ResetPasswordSuccess
     | Onboarding Onboarding.Input
     | Preboarding Preboarding.Input
-    | Oauth
     | NetworkN
     | NetworkN2
     | DeleteAlert
@@ -118,7 +116,6 @@ render ResetPassword = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single
 render ResetPasswordSuccess = singleContent [ resetPasswordSuccess ]
 render (Onboarding input) = onboarding input
 render (Preboarding input) = preboarding input
-render Oauth = singleContent [ oauth ]
 render NetworkN = HH.div_
     [ topBar Nothing
     , content
@@ -261,8 +258,6 @@ handleAction (Init state route) = do
             just $ PlayerProfile { nickname, handle }
         ["", "teams", teamHandle, "profiles", gameHandle] ->
             just $ TeamProfile { teamHandle, gameHandle }
-        ["", "oauth", provider] ->
-            just $ Oauth
         ["", "network-n-test"] ->
             just $ NetworkN
         ["", "network-n-test2"] ->

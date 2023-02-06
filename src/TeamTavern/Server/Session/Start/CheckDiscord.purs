@@ -7,7 +7,7 @@ import Data.Variant (inj)
 import Jarilo (badRequest_)
 import Postgres.Query (class Querier, Query(..), (:))
 import TeamTavern.Server.Infrastructure.Postgres (queryFirst)
-import TeamTavern.Server.Oauth.Shared.FetchDiscordUser (DiscordUserContent)
+import TeamTavern.Server.Infrastructure.FetchDiscordUser (DiscordUserContent)
 import Type.Proxy (Proxy(..))
 
 queryString :: Query

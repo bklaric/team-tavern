@@ -7,8 +7,6 @@ import TeamTavern.Routes.Boarding.Onboard (Onboard)
 import TeamTavern.Routes.Boarding.Preboard (Preboard)
 import TeamTavern.Routes.Game.ViewAllGames (ViewAllGames)
 import TeamTavern.Routes.Game.ViewGame (ViewGame)
-import TeamTavern.Routes.Oauth.DiscordOauth (DiscordOauth)
-import TeamTavern.Routes.Oauth.DiscordOauthExists (DiscordOauthExists)
 import TeamTavern.Routes.Password.ForgotPassword (ForgotPassword)
 import TeamTavern.Routes.Password.ResetPassword (ResetPassword)
 import TeamTavern.Routes.Player.DeletePlayer (DeletePlayer)
@@ -84,10 +82,6 @@ type AlertRoutes
     =   "createAlert" : CreateAlert
     <|> "deleteAlert" : DeleteAlert
 
-type OauthRoutes
-    = "discordOauth"         : DiscordOauth
-    <|> "discordOauthExists" : DiscordOauthExists
-
 type AllRoutes
     =    SessionRoutes
     <|> PasswordRoutes
@@ -97,4 +91,3 @@ type AllRoutes
     <|> ProfileRoutes
     <|> BoardRoutes
     <|> AlertRoutes
-    <|> OauthRoutes

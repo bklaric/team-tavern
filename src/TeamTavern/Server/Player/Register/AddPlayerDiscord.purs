@@ -15,17 +15,12 @@ import Postgres.Error.Codes (unique_violation)
 import Postgres.Query (class Querier, Query(..), (:), (:|))
 import Postgres.Result (rows)
 import TeamTavern.Server.Infrastructure.Error (Terror(..))
+import TeamTavern.Server.Infrastructure.FetchDiscordUser (DiscordUserContent)
 import TeamTavern.Server.Infrastructure.Log (print)
 import TeamTavern.Server.Infrastructure.Postgres (databaseErrorLines)
 import TeamTavern.Server.Player.Domain.Nickname (Nickname)
 import Type.Proxy (Proxy(..))
 import Yoga.JSON.Async (read)
-
-type DiscordUserContent =
-    { id :: String
-    , username :: String
-    , discriminator :: String
-    }
 
 queryString :: Query
 queryString = Query """

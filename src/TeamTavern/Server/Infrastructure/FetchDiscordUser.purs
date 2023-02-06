@@ -1,4 +1,4 @@
-module TeamTavern.Server.Oauth.Shared.FetchDiscordUser where
+module TeamTavern.Server.Infrastructure.FetchDiscordUser where
 
 import Prelude
 

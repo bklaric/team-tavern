@@ -11,9 +11,9 @@ import TeamTavern.Routes.Session.StartSession as StartSession
 import TeamTavern.Server.Infrastructure.Cookie (Cookies, setCookieHeaderFull)
 import TeamTavern.Server.Infrastructure.Deployment (Deployment)
 import TeamTavern.Server.Infrastructure.EnsureNotSignedIn (ensureNotSignedIn)
+import TeamTavern.Server.Infrastructure.FetchDiscordUser (fetchDiscordUser)
 import TeamTavern.Server.Infrastructure.Postgres (transaction)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
-import TeamTavern.Server.Oauth.Shared.FetchDiscordUser (fetchDiscordUser)
 import TeamTavern.Server.Session.Domain.Token as Token
 import TeamTavern.Server.Session.Start.CheckDiscord (checkDiscord)
 import TeamTavern.Server.Session.Start.CheckPassword (checkPassword)
