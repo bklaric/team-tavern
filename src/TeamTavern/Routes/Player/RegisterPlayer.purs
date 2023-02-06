@@ -9,7 +9,7 @@ type RegisterPlayer =
     ==> (NoContent ! BadRequestJson BadContent ! Forbidden_ ! Internal_)
 
 type RequestContent = Variant
-    ( email ::
+    ( password ::
         { email :: String
         , nickname :: String
         , password :: String

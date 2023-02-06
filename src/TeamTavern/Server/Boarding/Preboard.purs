@@ -92,7 +92,7 @@ preboard deployment pool cookies content =
                 # lmap (map badRequest_)
 
             {id, nickname} <- registration' # match
-                { email: \{email, nickname, password} -> do
+                { password: \{email, nickname, password} -> do
                     -- Generate password hash.
                     hash <- generateHash password
 
@@ -162,7 +162,7 @@ preboard deployment pool cookies content =
                 # lmap (map badRequest_)
 
             {id, nickname} <- registration' # match
-                { email: \{email, nickname, password} -> do
+                { password: \{email, nickname, password} -> do
                     -- Generate password hash.
                     hash <- generateHash password
 

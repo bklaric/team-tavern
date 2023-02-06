@@ -15,7 +15,7 @@ type RequestContentEmail =
 type RequestContentDiscord = {accessToken :: String}
 
 type RequestContent = Variant
-    ( email :: RequestContentEmail
+    ( password :: RequestContentEmail
     , discord :: RequestContentDiscord
     )
 

@@ -123,7 +123,7 @@ sendSignInRequest :: ∀ left. State -> Maybe String -> Async left (Maybe State)
 sendSignInRequest state @ {emailOrNickname, password} accessTokenMaybe = Async.unify do
     let body =
             case accessTokenMaybe of
-            Nothing -> inj (Proxy :: _ "email") {emailOrNickname, password}
+            Nothing -> inj (Proxy :: _ "password") {emailOrNickname, password}
             Just accessToken -> inj (Proxy :: _ "discord") {accessToken}
     response <- fetchBody (Proxy :: _ StartSession) body
         # lmap (const $ Just $ state {otherError = true})

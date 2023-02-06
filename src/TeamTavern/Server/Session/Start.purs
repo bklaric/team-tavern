@@ -31,7 +31,7 @@ start deployment pool cookies body =
 
     pool # transaction \client -> do
         {id, nickname} <- body # match
-            { email: \bodyEmail -> do
+            { password: \bodyEmail -> do
                 -- Check if password hash matches.
                 checkPassword bodyEmail client
             , discord: \{accessToken} -> do

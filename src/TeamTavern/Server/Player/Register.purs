@@ -34,7 +34,7 @@ register deployment pool cookies content =
     token <- Token.generate
 
     {id, nickname} <- registration # match
-        { email: \{email, nickname, password} -> do
+        { password: \{email, nickname, password} -> do
             -- Generate password hash.
             hash <- generateHash password
 

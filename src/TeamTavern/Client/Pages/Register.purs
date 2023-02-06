@@ -73,12 +73,12 @@ render { registrationMode, registrationEmail, registrationDiscord, discordTaken,
             [ HH.text "TeamTavern" ]
         , HH.text " account"
         , HH.text case registrationMode of
-            Email -> ""
+            Password -> ""
             Discord -> " with Discord"
         ]
     ]
     <> case registrationMode of
-        Email ->
+        Password ->
             [ registrationInput registrationEmail UpdateRegistrationEmail
             , HH.button
                 [ HS.class_ "primary-button"
@@ -114,7 +114,7 @@ render { registrationMode, registrationEmail, registrationDiscord, discordTaken,
         , HH.hr [HP.style "flex: 1 1 auto;"]
         ]
     ]
-    <> guard (registrationMode /= Email)
+    <> guard (registrationMode /= Password)
         [ HH.button
             [ HS.class_ "regular-button"
             , HP.type_ HP.ButtonButton
@@ -154,7 +154,7 @@ sendRegisterRequest :: ∀ left. State -> Async left (Maybe State)
 sendRegisterRequest state = Async.unify do
     body <-
         case state.registrationMode, state.accessToken of
-        Email, _ -> Async.right $ inj (Proxy :: _ "email") $ pick state.registrationEmail
+        Password, _ -> Async.right $ inj (Proxy :: _ "password") $ pick state.registrationEmail
         Discord, Just accessToken -> Async.right $ inj (Proxy :: _ "discord")
             {nickname: state.registrationDiscord.nickname, accessToken}
         Discord, Nothing -> do
@@ -175,14 +175,14 @@ sendRegisterRequest state = Async.unify do
                 { email: const state' { registrationEmail { emailError = true } }
                 , nickname: const
                     case state.registrationMode of
-                    Email -> state' { registrationEmail { nicknameError = true } }
+                    Password -> state' { registrationEmail { nicknameError = true } }
                     Discord -> state' { registrationDiscord { nicknameError = true } }
                 , password: const state' { registrationEmail { passwordError = true } }
                 }
             , emailTaken: const $ state { registrationEmail { emailTaken = true } }
             , nicknameTaken: const
                 case state.registrationMode of
-                Email -> state { registrationEmail { nicknameTaken = true } }
+                Password -> state { registrationEmail { nicknameTaken = true } }
                 Discord -> state { registrationDiscord { nicknameTaken = true } }
             , discordTaken: const state { discordTaken = true }
             }
@@ -239,14 +239,14 @@ handleAction (Register event) = do
 handleAction (Navigate url event) =
     navigateWithEvent_ url event
 handleAction CreateWithEmail =
-    H.modify_ _ {registrationMode = Email}
+    H.modify_ _ {registrationMode = Password}
 handleAction CreateWithDiscord =
     H.modify_ _ {registrationMode = Discord}
 
 component :: ∀ query input output left. H.Component query input output (Async left)
 component = H.mkComponent
     { initialState: const
-        { registrationMode: Email
+        { registrationMode: Password
         , registrationEmail: RegistrationInput.emptyInput
         , registrationDiscord: RegistrationInputDiscord.emptyInput
         , accessToken: Nothing

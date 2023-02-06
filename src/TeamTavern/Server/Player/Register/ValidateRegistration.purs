@@ -20,7 +20,7 @@ import TeamTavern.Server.Player.Domain.Password (Password, validatePassword)
 import Type.Proxy (Proxy(..))
 
 type Registration = Variant
-    ( email ::
+    ( password ::
         { email :: Email
         , nickname :: Nickname
         , password :: Password
@@ -37,12 +37,12 @@ validateRegistration'
     :: RegisterPlayer.RequestContent
     -> ValidatedTerrorNea RegisterPlayer.RegistrationError Registration
 validateRegistration' = match
-    { email: \{email, nickname, password} ->
+    { password: \{email, nickname, password} ->
         { email: _, nickname: _, password: _ }
         <$> validateEmail email
         <*> validateNickname nickname
         <*> validatePassword password
-        <#> inj (Proxy :: _ "email")
+        <#> inj (Proxy :: _ "password")
     , discord: \{nickname, accessToken} ->
         {nickname: _, accessToken}
         <$> validateNickname nickname

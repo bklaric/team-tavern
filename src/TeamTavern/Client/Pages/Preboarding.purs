@@ -90,17 +90,17 @@ instance ReadForeign Step where
         "Register" -> pure Register
         step -> fail $ ForeignError $ "Unknown step " <> step
 
-data RegistrationMode = Email | Discord
+data RegistrationMode = Password | Discord
 
 derive instance Eq RegistrationMode
 
 instance WriteForeign RegistrationMode where
-    writeImpl Email = unsafeToForeign "Email"
+    writeImpl Password = unsafeToForeign "Password"
     writeImpl Discord = unsafeToForeign "Discord"
 
 instance ReadForeign RegistrationMode where
     readImpl = readString >=> case _ of
-        "Email" -> pure Email
+        "Password" -> pure Password
         "Discord" -> pure Discord
         mode -> fail $ ForeignError $ "Unknown register mode " <> mode
 
@@ -188,7 +188,7 @@ emptyInput playerOrTeam game =
                     Just { key, label, icon, options: options }
                 _ -> Nothing
             }
-    , registrationMode: Email
+    , registrationMode: Password
     , registrationEmail: RegistrationInput.emptyInput
     , registrationDiscord: RegistrationInputDiscord.emptyInput
     , accessToken: Nothing
@@ -378,7 +378,7 @@ renderPage { step: Register, registrationMode, registrationEmail, registrationDi
         , boardingDescription  """Enter your nickname and password to complete the registration process."""
         ]
         <> case registrationMode of
-            Email ->
+            Password ->
                 [ registrationInput registrationEmail UpdateRegistrationEmail ]
                 <> otherFormError otherError
                 <>
@@ -447,7 +447,7 @@ sendRequest :: ∀ left. State -> Async left (Either State Preboard.OkContent)
 sendRequest state = Async.attempt do
     registration <-
         case state.registrationMode, state.accessToken of
-        Email, _ -> Async.right $ inj (Proxy :: _ "email") $ pick state.registrationEmail
+        Password, _ -> Async.right $ inj (Proxy :: _ "password") $ pick state.registrationEmail
         Discord, Just accessToken -> Async.right $ inj (Proxy :: _ "discord")
             {nickname: state.registrationDiscord.nickname, accessToken}
         Discord, Nothing -> do
@@ -557,14 +557,14 @@ sendRequest state = Async.attempt do
                     { email: const state' { registrationEmail { emailError = true } }
                     , nickname: const
                         case state.registrationMode of
-                        Email -> state' { registrationEmail { nicknameError = true } }
+                        Password -> state' { registrationEmail { nicknameError = true } }
                         Discord -> state' { registrationDiscord { nicknameError = true } }
                     , password: const state' { registrationEmail { passwordError = true } }
                     }
                 , emailTaken: const state { registrationEmail { emailTaken = true } }
                 , nicknameTaken: const
                     case state.registrationMode of
-                    Email -> state { registrationEmail { nicknameTaken = true } }
+                    Password -> state { registrationEmail { nicknameTaken = true } }
                     Discord -> state { registrationDiscord { nicknameTaken = true } }
                 , discordTaken: const state { discordTaken = true }
                 , other: const state { otherError = true }
@@ -773,7 +773,7 @@ handleAction SetUpAccount = do
     )
     tryToRegister state
 handleAction CreateWithEmail =
-    H.modify_ _ {registrationMode = Email}
+    H.modify_ _ {registrationMode = Password}
 handleAction CreateWithDiscord =
     H.modify_ _ {registrationMode = Discord}
 
