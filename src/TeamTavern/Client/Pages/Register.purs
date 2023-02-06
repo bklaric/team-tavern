@@ -94,14 +94,10 @@ render { registrationMode, registrationEmail, registrationDiscord, discordTaken,
         Discord ->
             [ registrationInputDiscord registrationDiscord UpdateRegistrationDiscord
             , HH.button
-                [ HS.class_ "regular-button"
+                [ HS.class_ "primary-button"
                 , HP.disabled submitting
                 ]
-                [ HH.img
-                    [ HS.class_ "button-icon"
-                    , HP.style "height: 20px; vertical-align: top;"
-                    , HP.src "https://coaching.healthygamer.gg/discord-logo-color.svg"
-                    ]
+                [ HH.i [ HS.class_ "fab fa-discord button-icon", HP.style "font-size: 20px;" ] []
                 , HH.text "Create account with Discord"
                 ]
             ]
@@ -130,11 +126,7 @@ render { registrationMode, registrationEmail, registrationDiscord, discordTaken,
             , HP.type_ HP.ButtonButton
             , HE.onClick $ const CreateWithDiscord
             ]
-            [ HH.img
-                [ HS.class_ "button-icon"
-                , HP.style "height: 20px; vertical-align: top;"
-                , HP.src "https://coaching.healthygamer.gg/discord-logo-color.svg"
-                ]
+            [ HH.i [ HS.class_ "fab fa-discord button-icon", HP.style "font-size: 20px;" ] []
             , HH.text "Create account with Discord"
             ]
         ]

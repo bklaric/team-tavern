@@ -104,11 +104,7 @@ render
         , HP.type_ HP.ButtonButton
         , HE.onClick $ const SignInWithDiscord
         ]
-        [ HH.img
-            [ HS.class_ "button-icon"
-            , HP.style "height: 20px; vertical-align: top;"
-            , HP.src "https://coaching.healthygamer.gg/discord-logo-color.svg"
-            ]
+        [ HH.i [ HS.class_ "fab fa-discord button-icon", HP.style "font-size: 20px;" ] []
         , HH.text "Sign in with Discord"
         ]
     , HH.p

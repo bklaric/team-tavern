@@ -375,7 +375,10 @@ renderPage { step: TeamProfile, teamProfile, game } =
 renderPage { step: Register, registrationMode, registrationEmail, registrationDiscord, discordTaken, otherError, submitting, playerOrTeam } =
     [ boardingStep $
         [ boardingHeading "Registration"
-        , boardingDescription  """Enter your nickname and password to complete the registration process."""
+        , boardingDescription
+            case registrationMode of
+            Password -> "Enter your email, nickname and password to complete the registration process."
+            Discord -> "Enter your nickname to complete the registration process."
         ]
         <> case registrationMode of
             Password ->
@@ -393,11 +396,7 @@ renderPage { step: Register, registrationMode, registrationEmail, registrationDi
                     , HP.type_ HP.ButtonButton
                     , HE.onClick $ const CreateWithDiscord
                     ]
-                    [ HH.img
-                        [ HS.class_ "button-icon"
-                        , HP.style "height: 20px; vertical-align: top;"
-                        , HP.src "https://coaching.healthygamer.gg/discord-logo-color.svg"
-                        ]
+                    [ HH.i [ HS.class_ "fab fa-discord button-icon", HP.style "font-size: 20px;" ] []
                     , HH.text "Create account with Discord"
                     ]
                 ]
@@ -429,14 +428,23 @@ renderPage { step: Register, registrationMode, registrationEmail, registrationDi
             Selected' (Just PlayerOrTeamInput.Player) -> PlayerProfile
             Selected' (Just PlayerOrTeamInput.Team) -> TeamProfile
             Selected' Nothing -> PlayerOrTeam
-        , HH.div [ HS.class_ "boarding-submit-button-group" ]
-            [ HH.button
-                [ HS.class_ "primary-button"
-                , HP.disabled submitting
-                , HE.onClick $ const SetUpAccount
-                ]
-                [ HH.text if submitting then "Submitting..." else "Submit" ]
+        , HH.button
+            [ HS.class_ "primary-button"
+            , HP.style "width: unset;"
+            , HP.disabled submitting
+            , HE.onClick $ const SetUpAccount
             ]
+            case registrationMode, submitting of
+            Password, false -> [HH.text "Create account"]
+            Password, true -> [HH.text "Creating account..."]
+            Discord, false ->
+                [ HH.i [ HS.class_ "fab fa-discord button-icon", HP.style "font-size: 20px;" ] []
+                , HH.text "Create account with Discord"
+                ]
+            Discord, true ->
+                [ HH.i [ HS.class_ "fab fa-discord button-icon", HP.style "font-size: 20px;" ] []
+                , HH.text "Creating account with Discord..."
+                ]
         ]
     ]
 
