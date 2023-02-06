@@ -1,7 +1,6 @@
 module TeamTavern.Routes.Player.ViewPlayer where
 
 import Data.Maybe (Maybe)
-import Data.Variant (Variant)
 import Jarilo (type (!), type (/), type (==>), Capture, Get, Literal, Mandatory, NotFound_, OkJson, Internal_)
 import TeamTavern.Routes.Shared.Organization (OrganizationN)
 import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
