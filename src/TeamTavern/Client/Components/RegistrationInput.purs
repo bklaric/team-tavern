@@ -6,7 +6,7 @@ import Async (Async)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.Hooks as Hooks
-import TeamTavern.Client.Components.Input (inputError, inputGroup, inputLabel_, requiredTextLineInputNamed)
+import TeamTavern.Client.Components.Input (inputGroup, inputLabel_, requiredTextLineInputNamed)
 import TeamTavern.Client.Components.InputError as InputError
 import TeamTavern.Client.Components.PasswordInput (passwordInput_)
 import TeamTavern.Client.Shared.Slot (Slot_O_)
@@ -25,7 +25,7 @@ type Input =
 
 type Output = Input
 
-type Slot = Slot_O_ Input
+type Slot = Slot_O_ Output
 
 component :: forall q m. H.Component q Input Output m
 component = Hooks.component \{outputToken} input -> Hooks.do

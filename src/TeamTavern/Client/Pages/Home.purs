@@ -10,7 +10,6 @@ import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Components.Ads (stickyLeaderboards)
 import TeamTavern.Client.Components.Boarding.PlayerOrTeamInput as Boarding
-import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Pages.Home.CallToAction (callToAction)
 import TeamTavern.Client.Pages.Home.Connect (connect)
 import TeamTavern.Client.Pages.Home.Features (features)

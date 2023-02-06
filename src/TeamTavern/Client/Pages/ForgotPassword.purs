@@ -6,7 +6,7 @@ import Async (Async)
 import Async as Async
 import Data.Bifunctor (lmap)
 import Data.Maybe (Maybe(..), isNothing)
-import Data.Variant (match, onMatch)
+import Data.Variant (onMatch)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
