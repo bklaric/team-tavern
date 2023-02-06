@@ -30,5 +30,5 @@ emailTaken shown = inputError shown
 
 discordTaken :: forall slots action. Boolean -> Array (HH.HTML slots action)
 discordTaken shown = inputError shown
-    """An account already exists for to this Discord account.
-    Please try signin in."""
+    """An account already exists for this Discord user.
+    Try signin in instead."""
