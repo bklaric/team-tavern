@@ -11,7 +11,7 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import TeamTavern.Client.Components.Form (form, otherFormError)
+import TeamTavern.Client.Components.Form (form, formError, otherFormError)
 import TeamTavern.Client.Components.Input (inputError, inputGroup, inputLabel_, requiredTextLineInputNamed)
 import TeamTavern.Client.Components.InputError as InputError
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor, navigationAnchorClassed)
@@ -51,6 +51,7 @@ render
     , password
     , unknownPlayer
     , wrongPassword
+    , unknownDiscord
     , otherError
     , submitting
     } = form SignIn $
@@ -89,6 +90,8 @@ render
             else "Sign in"
         ]
     ]
+    <> formError unknownDiscord
+        "No account exists for this Discord user. Try creating an account instead."
     <> otherFormError otherError
     <>
     [ HH.div [HP.style "display: flex; align-items: center; margin: 28px 0;"]
