@@ -36,7 +36,7 @@ queryString = Query """
 checkPassword
     :: ∀ querier errors
     .  Querier querier
-    => StartSession.RequestContent
+    => StartSession.RequestContentEmail
     -> querier
     -> Async (CheckPasswordError errors) { id :: Int, nickname :: String }
 checkPassword model querier = do

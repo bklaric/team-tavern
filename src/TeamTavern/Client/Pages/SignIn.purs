@@ -6,7 +6,7 @@ import Async (Async)
 import Async as Async
 import Data.Bifunctor (lmap)
 import Data.Maybe (Maybe(..), isNothing)
-import Data.Variant (match, onMatch)
+import Data.Variant (inj, match, onMatch)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
@@ -19,6 +19,7 @@ import TeamTavern.Client.Components.PasswordInput (passwordInput_)
 import TeamTavern.Client.Script.Analytics (registerSignedIn, track_)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (hardNavigate, navigate_)
+import TeamTavern.Client.Script.QueryParams (getFragmentParam)
 import TeamTavern.Client.Shared.Fetch (fetchBody)
 import TeamTavern.Client.Shared.Slot (Slot___)
 import TeamTavern.Client.Snippets.Class as HS
@@ -32,13 +33,14 @@ data Action
     | UpdateEmailOrNickname String
     | UpdatePassword String
     | SignIn Event
-    | ContinueWithDiscord
+    | SignInWithDiscord
 
 type State =
     { emailOrNickname :: String
     , password :: String
     , unknownPlayer :: Boolean
     , wrongPassword :: Boolean
+    , unknownDiscord :: Boolean
     , otherError :: Boolean
     , submitting :: Boolean
     }
@@ -97,14 +99,14 @@ render
     , HH.button
         [ HS.class_ "regular-button"
         , HP.type_ HP.ButtonButton
-        , HE.onClick $ const ContinueWithDiscord
+        , HE.onClick $ const SignInWithDiscord
         ]
         [ HH.img
             [ HS.class_ "button-icon"
             , HP.style "height: 20px; vertical-align: top;"
             , HP.src "https://coaching.healthygamer.gg/discord-logo-color.svg"
             ]
-        , HH.text "Continue with Discord"
+        , HH.text "Sign in with Discord"
         ]
     , HH.p
         [ HS.class_ "form-bottom-text"]
@@ -114,27 +116,43 @@ render
         ]
     ]
 
-sendSignInRequest :: ∀ left. State -> Async left (Maybe State)
-sendSignInRequest state @ { emailOrNickname, password } = Async.unify do
-    response <- fetchBody (Proxy :: _ StartSession) { emailOrNickname, password }
-        # lmap (const $ Just $ state { otherError = true })
+sendSignInRequest :: ∀ left. State -> Maybe String -> Async left (Maybe State)
+sendSignInRequest state @ {emailOrNickname, password} accessTokenMaybe = Async.unify do
+    let body =
+            case accessTokenMaybe of
+            Nothing -> inj (Proxy :: _ "email") {emailOrNickname, password}
+            Just accessToken -> inj (Proxy :: _ "discord") {accessToken}
+    response <- fetchBody (Proxy :: _ StartSession) body
+        # lmap (const $ Just $ state {otherError = true})
     nextState <- pure $ onMatch
         { noContent: const Nothing
         , badRequest: \error -> Just $ match
-            { unknownPlayer: const $ state { unknownPlayer = true }
-            , wrongPassword: const $ state { wrongPassword = true }
+            { unknownPlayer: const $ state {unknownPlayer = true}
+            , wrongPassword: const $ state {wrongPassword = true}
+            , unknownDiscord: const $ state {unknownDiscord = true}
             }
             error
         }
-        (const $ Just state { otherError = true })
+        (const $ Just state {otherError = true})
         response
     when (isNothing nextState) $ track_ "Sign in"
     pure nextState
 
 handleAction :: ∀ slots output left.
     Action -> H.HalogenM State Action slots output (Async left) Unit
-handleAction Init =
+handleAction Init = do
     setMeta "Sign in | TeamTavern" "Sign in to TeamTavern."
+    accessTokenMaybe <- getFragmentParam "access_token"
+    case accessTokenMaybe of
+        Nothing -> pure unit
+        Just accessToken -> do
+            state <- H.get
+            newState <- H.lift $ sendSignInRequest state (Just accessToken)
+            case newState of
+                Nothing -> do
+                    registerSignedIn
+                    navigate_ "/"
+                Just newState' -> H.put newState' { submitting = false }
 handleAction (UpdateEmailOrNickname emailOrNickname) =
     H.modify_ (_ { emailOrNickname = emailOrNickname })
 handleAction (UpdatePassword password) =
@@ -148,16 +166,16 @@ handleAction (SignIn event) = do
         , submitting    = true
         })
     H.put state
-    newState <- H.lift $ sendSignInRequest state
+    newState <- H.lift $ sendSignInRequest state Nothing
     case newState of
         Nothing -> do
             registerSignedIn
             navigate_ "/"
         Just newState' -> H.put newState' { submitting = false }
-handleAction ContinueWithDiscord =
+handleAction SignInWithDiscord =
     hardNavigate $ "https://discord.com/api/oauth2/authorize"
         <> "?client_id=1068667687661740052"
-        <> "&redirect_uri=https%3A%2F%2Flocalhost%2Foauth%2Fdiscord"
+        <> "&redirect_uri=https%3A%2F%2Flocalhost%2Fsignin"
         <> "&response_type=token"
         <> "&scope=identify"
         <> "&prompt=none"
@@ -170,6 +188,7 @@ component = H.mkComponent
         , password: ""
         , unknownPlayer: false
         , wrongPassword: false
+        , unknownDiscord: false
         , otherError: false
         , submitting: false
         }
