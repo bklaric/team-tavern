@@ -19,10 +19,14 @@ import TeamTavern.Client.Shared.Slot (Slot___)
 import TeamTavern.Client.Snippets.Class as HS
 import Type.Proxy (Proxy(..))
 
-type Input = {email :: Maybe String, nickname :: String}
+type Input =
+    { email :: Maybe String
+    , hasPassword :: Maybe Boolean
+    , nickname :: String
+    }
 
 component :: ∀ query output left. H.Component query Input output (Async left)
-component = Hooks.component $ \_ {email, nickname} -> Hooks.do
+component = Hooks.component $ \_ {email, hasPassword, nickname} -> Hooks.do
     shown /\ shownId <- usePopover
     changeEmailModalShown /\ changeEmailModalShownId <- Hooks.useState false
     changePasswordModalShown /\ changePasswordModalShownId <- Hooks.useState false
@@ -51,18 +55,24 @@ component = Hooks.component $ \_ {email, nickname} -> Hooks.do
             ])
             deleteModalShown
         )
+        (case hasPassword of
+            Just true ->
+                [ popoverItem
+                    (const $ Hooks.put changeEmailModalShownId true)
+                    [ HH.text "Change email" ]
+                , popoverItem
+                    (const $ Hooks.put changePasswordModalShownId true)
+                    [ HH.text "Change password" ]
+                ]
+            _ -> []
+        <>
         [ popoverItem
-            (const $ Hooks.put changeEmailModalShownId true)
-            [ HH.text "Change email" ]
-        , popoverItem
-            (const $ Hooks.put changePasswordModalShownId true)
-            [ HH.text "Change password" ]
-        , popoverItem
             (const $ Hooks.put deleteModalShownId $ Just nickname)
             [ HH.span [ HS.class_ "delete-account-option" ]
                 [ HH.text "Delete account" ]
             ]
-        ]
+        ])
+
 
 playerOptions :: ∀ action slots left.
     Input -> HH.ComponentHTML action (playerOptions :: Slot___ | slots) (Async left)
