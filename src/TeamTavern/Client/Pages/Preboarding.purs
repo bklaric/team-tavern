@@ -50,7 +50,8 @@ import TeamTavern.Routes.Game.ViewGame as ViewGame
 import TeamTavern.Routes.Shared.Platform (Platform(..))
 import Type.Proxy (Proxy(..))
 import Web.HTML (window)
-import Web.HTML.Window (localStorage)
+import Web.HTML.Location (host)
+import Web.HTML.Window (localStorage, location)
 import Web.Storage.Storage (setItem)
 import Yoga.JSON (class ReadForeign, class WriteForeign, readImpl, writeImpl, writeJSON)
 
@@ -460,9 +461,10 @@ sendRequest state = Async.attempt do
             {nickname: state.registrationDiscord.nickname, accessToken}
         Discord, Nothing -> do
             window >>= localStorage >>= setItem "preboard" (writeJSON state) # liftEffect
+            host' <- window >>= location >>= host # liftEffect
             hardNavigate $ "https://discord.com/api/oauth2/authorize"
                 <> "?client_id=1068667687661740052"
-                <> "&redirect_uri=https%3A%2F%2Flocalhost%2Fpreboarding%2Fregister"
+                <> "&redirect_uri=https%3A%2F%2F" <> host' <> "%2Fpreboarding%2Fregister"
                 <> "&response_type=token"
                 <> "&scope=identify"
                 <> "&prompt=none"

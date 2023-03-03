@@ -27,6 +27,9 @@ import TeamTavern.Routes.Session.StartSession (StartSession)
 import Type.Proxy (Proxy(..))
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
+import Web.HTML (window)
+import Web.HTML.Location (host)
+import Web.HTML.Window (location)
 
 data Action
     = Init
@@ -171,10 +174,11 @@ handleAction (SignIn event) = do
             registerSignedIn
             navigate_ "/"
         Just newState' -> H.put newState' { submitting = false }
-handleAction SignInWithDiscord =
+handleAction SignInWithDiscord = do
+    host' <- window >>= location >>= host # H.liftEffect
     hardNavigate $ "https://discord.com/api/oauth2/authorize"
         <> "?client_id=1068667687661740052"
-        <> "&redirect_uri=https%3A%2F%2Flocalhost%2Fsignin"
+        <> "&redirect_uri=https%3A%2F%2F" <> host' <> "%2Fsignin"
         <> "&response_type=token"
         <> "&scope=identify"
         <> "&prompt=none"
