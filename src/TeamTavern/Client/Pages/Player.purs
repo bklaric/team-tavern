@@ -4,7 +4,6 @@ import Prelude
 
 import Async (Async)
 import Async as Async
-import Client.Components.Copyable as Copyable
 import Control.Monad.State (class MonadState)
 import Data.Either (Either(..))
 import Data.Foldable (foldMap)
@@ -17,7 +16,6 @@ import Record.Extra (pick)
 import TeamTavern.Client.Components.Ads (descriptionLeaderboards, stickyLeaderboards)
 import TeamTavern.Client.Components.Content (contentColumns, contentDescription, contentHeader, contentHeaderSection, contentHeading', contentHeadingFaIcon)
 import TeamTavern.Client.Components.Modal as Modal
-import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Components.Player.ProfileDetails (PlatformIdSlots)
 import TeamTavern.Client.Pages.Player.Contacts (contacts)
 import TeamTavern.Client.Pages.Player.CreateTeam (createTeam)
@@ -35,7 +33,7 @@ import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Rendertron (appendRendetronNotFound)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Shared.Fetch (fetchPathQuery)
-import TeamTavern.Client.Shared.Slot (SimpleSlot)
+import TeamTavern.Client.Shared.Slot (Slot___, Slot__String)
 import TeamTavern.Routes.Player.ViewPlayer (ViewPlayer)
 import TeamTavern.Routes.Player.ViewPlayer as ViewPlayer
 import Type.Proxy (Proxy(..))
@@ -73,16 +71,16 @@ data Action
     | HideCreateTeamModal
 
 type ChildSlots = PlatformIdSlots
-    ( discordTag :: Copyable.Slot String
-    , team :: NavigationAnchor.Slot String
-    , games :: NavigationAnchor.Slot String
+    ( discordTag :: Slot__String
+    , team :: Slot__String
+    , games :: Slot__String
     , editContacts :: Modal.Slot_
     , editPlayer :: Modal.Slot_
-    , createProfile :: SimpleSlot
+    , createProfile :: Slot___
     , editProfile :: Modal.Slot_
     , deletePlayerProfile :: Modal.Slot_
     , createTeam :: Modal.Slot_
-    , playerOptions :: SimpleSlot
+    , playerOptions :: Slot___
     , playerProfileOptions :: PlayerProfileOptions.Slot
     )
 
@@ -189,5 +187,5 @@ component = H.mkComponent
     }
 
 player :: ∀ query children left.
-    Input -> HH.ComponentHTML query (player :: SimpleSlot | children) (Async left)
+    Input -> HH.ComponentHTML query (player :: Slot___ | children) (Async left)
 player input = HH.slot (Proxy :: _ "player") unit component input absurd

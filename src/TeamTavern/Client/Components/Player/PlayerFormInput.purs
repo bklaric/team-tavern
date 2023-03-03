@@ -3,11 +3,9 @@ module TeamTavern.Client.Components.Player.PlayerFormInput (Input, Output, Slot,
 import Prelude
 
 import Async (Async)
-import Data.Const (Const)
 import Data.Date as Date
 import Data.Enum (fromEnum)
 import Data.Maybe (Maybe(..), isNothing, maybe)
-import Type.Proxy (Proxy(..))
 import Effect.Now (nowDate)
 import Halogen as H
 import Halogen.HTML as HH
@@ -20,7 +18,9 @@ import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.Select.SingleSelect as SingleSelect
 import TeamTavern.Client.Components.Select.SingleTreeSelect as SingleTreeSelect
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
+import TeamTavern.Client.Shared.Slot (Slot_O_)
 import TeamTavern.Shared.Timezones (Timezone)
+import Type.Proxy (Proxy(..))
 
 type Input =
     { birthday :: Maybe String
@@ -78,7 +78,7 @@ type ChildSlots =
     , timezone :: SingleSelect.Slot Timezone Unit
     )
 
-type Slot = H.Slot (Const Void) Output Unit
+type Slot = Slot_O_ Output
 
 render :: ∀ left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render state =

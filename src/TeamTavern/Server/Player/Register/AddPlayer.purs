@@ -3,7 +3,6 @@ module TeamTavern.Server.Player.Register.AddPlayer (AddPlayerError, addPlayer) w
 import Prelude
 
 import Async (Async, note)
-import Async as Async
 import Data.Array (head)
 import Data.Bifunctor (lmap)
 import Data.Maybe (Maybe(..))
@@ -23,7 +22,7 @@ import TeamTavern.Server.Player.Domain.Hash (Hash)
 import TeamTavern.Server.Player.Domain.Nickname (Nickname)
 import Type.Proxy (Proxy(..))
 import Type.Row (type (+))
-import Yoga.JSON (read)
+import Yoga.JSON.Async (read)
 
 type AddPlayerModel =
     { email :: Email
@@ -65,4 +64,3 @@ addPlayer pool { email, nickname, hash } = do
         <#> _.id
         # lmap (\error -> Terror internal__
             ["Error reading player id: " <> show error])
-        # Async.fromEither

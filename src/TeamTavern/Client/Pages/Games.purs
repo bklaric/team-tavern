@@ -19,7 +19,7 @@ import TeamTavern.Client.Components.Divider (whiteDivider)
 import TeamTavern.Client.Components.Picture (picture)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigateWithEvent_)
-import TeamTavern.Client.Shared.Slot (SimpleSlot)
+import TeamTavern.Client.Shared.Slot (Slot___)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Game.ViewAllGames as ViewAllGames
 import Type.Proxy (Proxy(..))
@@ -132,6 +132,6 @@ component =
 
 games
     :: ∀ query children left
-    .  HH.ComponentHTML query (games :: SimpleSlot | children) (Async left)
+    .  HH.ComponentHTML query (games :: Slot___ | children) (Async left)
 games =
     HH.slot (Proxy :: _ "games") unit component Empty absurd

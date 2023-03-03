@@ -5,16 +5,16 @@ import Prelude
 import Async (Async)
 import Async as Async
 import Data.Bifunctor (lmap)
-import Data.Const (Const)
 import Data.Maybe (Maybe(..), isNothing)
 import Data.Variant (match, onMatch)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Components.Form (form, formError, otherFormError)
-import TeamTavern.Client.Components.Input (inputError, inputGroup, inputLabel_)
+import TeamTavern.Client.Components.Input (inputGroup, inputLabel_)
+import TeamTavern.Client.Components.InputError as InputError
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
-import TeamTavern.Client.Components.PasswordInput (passwordInput)
+import TeamTavern.Client.Components.PasswordInput (passwordInput_)
 import TeamTavern.Client.Script.Analytics (track_)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigateReplace_, navigate_)
@@ -29,12 +29,10 @@ import Web.Event.Internal.Types (Event)
 data Action
     = Initialize
     | UpdatePassword LoadedState String
-    | TogglePasswordVisibility LoadedState
     | ResetPassword LoadedState Event
 
 type LoadedState =
     { password :: String
-    , passwordShown :: Boolean
     , passwordError :: Boolean
     , nonce :: String
     , nonceError :: Boolean
@@ -44,13 +42,10 @@ type LoadedState =
 
 data State = Empty | Loaded LoadedState
 
-type Slot = H.Slot (Const Void) Void Unit
-
 render :: forall left. State -> H.ComponentHTML Action _ (Async left)
 render Empty = HH.div_ []
 render (Loaded state @
     { password
-    , passwordShown
     , passwordError
     , nonceError
     , otherError
@@ -65,11 +60,11 @@ render (Loaded state @
         ]
     , inputGroup $
         [ inputLabel_ "New password"
-        , passwordInput password passwordShown (UpdatePassword state) (TogglePasswordVisibility state)
+        , passwordInput_ password (UpdatePassword state)
         ]
-        <> inputError passwordError "The password must have at least 8 characters."
+        <> InputError.passwordError passwordError
     , HH.button
-        [ HS.class_ "form-submit-button"
+        [ HS.class_ "primary-button"
         , HP.disabled $ password == "" || submitting
         ]
         [ HH.i [ HS.class_ "fas fa-key button-icon" ] []
@@ -107,7 +102,6 @@ handleAction Initialize = do
         Nothing -> navigateReplace_ "/"
         Just nonce' -> H.put $ Loaded
             { password: ""
-            , passwordShown: false
             , passwordError: false
             , nonce: nonce'
             , nonceError: false
@@ -117,8 +111,6 @@ handleAction Initialize = do
     setMeta  "Reset your password | TeamTavern" "Reset your TeamTavern password."
 handleAction (UpdatePassword state password) =
     H.put $ Loaded $ state { password = password }
-handleAction (TogglePasswordVisibility state) =
-    H.put $ Loaded $ state { passwordShown = not state.passwordShown }
 handleAction (ResetPassword state event) = do
     H.liftEffect $ Event.preventDefault event
     let state' = state

@@ -3,6 +3,7 @@ module TeamTavern.Server.Player.Register where
 import Prelude
 
 import Async (Async)
+import Data.Variant (match)
 import Jarilo (noContent)
 import Postgres.Pool (Pool)
 import TeamTavern.Routes.Player.RegisterPlayer as RegisterPlayer
@@ -11,9 +12,11 @@ import TeamTavern.Server.Infrastructure.Deployment (Deployment)
 import TeamTavern.Server.Infrastructure.EnsureNotSignedIn (ensureNotSignedIn)
 import TeamTavern.Server.Infrastructure.Postgres (transaction)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
+import TeamTavern.Server.Infrastructure.FetchDiscordUser (fetchDiscordUser)
 import TeamTavern.Server.Player.Domain.Hash (generateHash)
 import TeamTavern.Server.Player.Domain.Id (Id(..))
 import TeamTavern.Server.Player.Register.AddPlayer (addPlayer)
+import TeamTavern.Server.Player.Register.AddPlayerDiscord (addPlayerDiscord)
 import TeamTavern.Server.Player.Register.ValidateRegistration (validateRegistration)
 import TeamTavern.Server.Session.Domain.Token as Token
 import TeamTavern.Server.Session.Start.CreateSession (createSession)
@@ -25,21 +28,32 @@ register deployment pool cookies content =
     ensureNotSignedIn cookies
 
     -- Validate register model.
-    { email, nickname, password } <- validateRegistration content
-
-    -- Generate password hash.
-    hash <- generateHash password
+    registration <- validateRegistration content
 
     -- Generate session token.
     token <- Token.generate
 
-    id <- pool # transaction \client -> do
-        -- Add player to database.
-        id <- addPlayer client { email, nickname, hash }
+    {id, nickname} <- registration # match
+        { password: \{email, nickname, password} -> do
+            -- Generate password hash.
+            hash <- generateHash password
 
-        -- Add session to database.
-        createSession id token client
+            pool # transaction \client -> do
+                -- Add player to database.
+                id <- addPlayer client { email, nickname, hash }
 
-        pure id
+                -- Add session to database.
+                createSession id token client
 
-    pure $ noContent $ setCookieHeaderFull deployment { id: Id id, nickname, token }
+                pure {id, nickname}
+
+        , discord: \{nickname, accessToken} -> do
+            discordUser <- fetchDiscordUser accessToken
+            pool # transaction \client -> do
+                id <- addPlayerDiscord client nickname discordUser
+                createSession id token client
+                pure {id, nickname}
+        }
+
+    pure $ noContent $ setCookieHeaderFull deployment
+        {id: Id id, nickname, token}

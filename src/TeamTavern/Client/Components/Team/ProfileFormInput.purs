@@ -5,7 +5,6 @@ import Prelude
 import Async (Async)
 import Data.Array (foldl, sort)
 import Data.Array as Array
-import Data.Const (Const)
 import Data.List.NonEmpty as NonEmptyList
 import Data.Maybe (Maybe(..))
 import Data.Monoid (guard)
@@ -25,7 +24,7 @@ import TeamTavern.Client.Components.Team.ProfileInputGroup as Input
 import TeamTavern.Client.Components.Team.SizeInfo (sizeInfo)
 import TeamTavern.Client.Components.Team.TeamInputGroup (discordServerInputGroup)
 import TeamTavern.Client.Pages.Profiles.TeamBadge (platformCheckboxBadges, sizeRadioBadges)
-import TeamTavern.Client.Shared.Slot (SimpleSlot)
+import TeamTavern.Client.Shared.Slot (Slot___, Slot_O_)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Shared.Platform (Platform(..), Platforms)
 import TeamTavern.Routes.Shared.Size (Size(..))
@@ -124,14 +123,14 @@ data Action
     | UpdateGamerTag (Maybe String)
     | UpdateFriendCode (Maybe String)
 
-type Slot = H.Slot (Const Void) Output Unit
+type Slot = Slot_O_ Output
 
 type ChildSlots =
     ( "multiSelectField" :: MultiSelect.Slot Option String
-    , "sizeInfo" :: SimpleSlot
-    , steamAccountLink :: SimpleSlot
-    , riotAccountLink :: SimpleSlot
-    , blizzardAccountLink :: SimpleSlot
+    , "sizeInfo" :: Slot___
+    , steamAccountLink :: Slot___
+    , riotAccountLink :: Slot___
+    , blizzardAccountLink :: Slot___
     )
 
 render :: ∀ left. State -> H.ComponentHTML Action ChildSlots (Async left)

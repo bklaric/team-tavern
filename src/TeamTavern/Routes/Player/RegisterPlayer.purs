@@ -8,11 +8,17 @@ type RegisterPlayer =
     PostJson_ (Literal "players") RequestContent
     ==> (NoContent ! BadRequestJson BadContent ! Forbidden_ ! Internal_)
 
-type RequestContent =
-    { email :: String
-    , nickname :: String
-    , password :: String
-    }
+type RequestContent = Variant
+    ( password ::
+        { email :: String
+        , nickname :: String
+        , password :: String
+        }
+    , discord ::
+        { nickname :: String
+        , accessToken :: String
+        }
+    )
 
 type OkContent = { nickname :: String }
 
@@ -26,4 +32,5 @@ type BadContent = Variant
     ( registration :: NonEmptyArray RegistrationError
     , emailTaken :: {}
     , nicknameTaken :: {}
+    , discordTaken :: {}
     )

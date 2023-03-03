@@ -3,25 +3,26 @@ module TeamTavern.Client.Pages.Profiles.CreateAlert where
 import Prelude
 
 import Async (Async)
-import Data.Const (Const)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.MultiMap (toUnfoldable')
 import Data.Tuple (Tuple(..))
-import Type.Proxy (Proxy(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Record as Record
 import Record.Extra (pick)
 import TeamTavern.Client.Components.Boarding.Boarding (boardingDescription)
 import TeamTavern.Client.Components.Form (form, otherFormError, submitButton)
-import TeamTavern.Client.Components.Input (inputError, inputGroup, inputLabel, requiredTextLineInput)
+import TeamTavern.Client.Components.Input (inputGroup, inputLabel, requiredTextLineInput)
+import TeamTavern.Client.Components.InputError as InputError
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Pages.Profile.Filters (Filters)
 import TeamTavern.Client.Script.Request (postNoContent)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
+import TeamTavern.Client.Shared.Slot (Slot_O_)
 import TeamTavern.Routes.Alert.CreateAlert (PlayerOrTeam(..))
 import TeamTavern.Routes.Alert.CreateAlert as CreateAlert
+import Type.Proxy (Proxy(..))
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 
@@ -47,7 +48,7 @@ data Action
 
 data Output = AlertCreated
 
-type Slot = H.Slot (Const Void) (Modal.Output Output) Unit
+type Slot = Slot_O_ (Modal.Output Output)
 
 render :: ∀ slots left. State -> H.ComponentHTML Action slots (Async left)
 render { email, emailError, otherError, submitting } =
@@ -58,7 +59,7 @@ render { email, emailError, otherError, submitting } =
         [ inputLabel "fas fa-envelope" "Email address"
         , requiredTextLineInput email UpdateEmail
         ]
-        <> inputError emailError "This doesn't look like a valid email address."
+        <> InputError.emailError emailError
     ]
     <> [ submitButton "fas fa-bell" "Create alert" "Creating alert..." submitting ]
     <> otherFormError otherError

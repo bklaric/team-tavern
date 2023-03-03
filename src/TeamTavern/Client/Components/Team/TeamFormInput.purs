@@ -4,7 +4,6 @@ import Prelude
 
 import Async (Async)
 import Data.Array as Array
-import Data.Const (Const)
 import Data.Maybe (Maybe(..), isNothing, maybe)
 import Halogen as H
 import Halogen.HTML as HH
@@ -18,7 +17,7 @@ import TeamTavern.Client.Components.Team.OrganizationInfo (organizationInfo)
 import TeamTavern.Client.Components.Team.TeamInputGroup (ageInputGroup, languagesInputGroup, locationInputGroup, microphoneInputGroup, nameInputGroup, websiteInputGroup)
 import TeamTavern.Client.Pages.Profiles.TeamBadge (organizationRadioBadges)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
-import TeamTavern.Client.Shared.Slot (SimpleSlot)
+import TeamTavern.Client.Shared.Slot (Slot___, Slot_O_)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Shared.Organization (Organization, OrganizationNW(..), fromOrganizationNW, toOrganizationNW)
 import TeamTavern.Shared.Timezones (Timezone)
@@ -77,10 +76,10 @@ type ChildSlots =
     ( location :: MultiTreeSelect.Slot String
     , language :: MultiSelect.Slot String Unit
     , timezone :: SingleSelect.Slot Timezone Unit
-    , organizationInfo :: SimpleSlot
+    , organizationInfo :: Slot___
     )
 
-type Slot = H.Slot (Const Void) Output Unit
+type Slot = Slot_O_ Output
 
 render :: ∀ left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render state =

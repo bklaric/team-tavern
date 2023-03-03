@@ -1,11 +1,10 @@
-module Client.Components.Copyable (Input, Slot, copyable) where
+module Client.Components.Copyable (Input, copyable) where
 
 import Prelude
 
 import Async (Async)
 import Async as Async
 import Data.Array as Array
-import Data.Const (Const)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.Symbol (class IsSymbol)
@@ -15,6 +14,7 @@ import Halogen.HTML.Events as HE
 import Prim.Row (class Cons)
 import TeamTavern.Client.Script.Analytics (track)
 import TeamTavern.Client.Script.Clipboard as Clipboard
+import TeamTavern.Client.Shared.Slot (Slot__I)
 import TeamTavern.Client.Snippets.Class as HS
 import Type.Proxy (Proxy)
 
@@ -23,8 +23,6 @@ type Input = String
 type State = { text :: String, copied :: Boolean }
 
 data Action = CopyText | Receive Input
-
-type Slot index = H.Slot (Const Void) Void index
 
 render :: ∀ children. State -> HH.HTML children Action
 render { text, copied } =
@@ -68,7 +66,7 @@ component = H.mkComponent
 
 copyable
     :: ∀ index children' name children action left
-    .  Cons name (Slot index) children' children
+    .  Cons name (Slot__I index) children' children
     => IsSymbol name
     => Ord index
     => Proxy name

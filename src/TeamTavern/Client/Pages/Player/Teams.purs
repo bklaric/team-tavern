@@ -4,20 +4,20 @@ import Prelude
 
 import Data.Array as Array
 import Data.Monoid (guard)
-import Type.Proxy (Proxy(..))
 import Effect.Class (class MonadEffect)
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Button (primaryButton)
 import TeamTavern.Client.Components.Card (card, cardHeader, cardHeading, cardSection)
 import TeamTavern.Client.Components.Missing (missing)
-import TeamTavern.Client.Components.NavigationAnchor as NavigationAnchor
 import TeamTavern.Client.Components.Profile (profileHeading, profileSubheading)
 import TeamTavern.Client.Pages.Player.Status (Status(..))
 import TeamTavern.Client.Pages.Profiles.TeamBadge (informalBadge, organizedBadge)
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
+import TeamTavern.Client.Shared.Slot (Slot__String)
 import TeamTavern.Client.Snippets.Class as HS
-import TeamTavern.Routes.Shared.Organization (OrganizationN(..), nameOrHandleN)
 import TeamTavern.Routes.Player.ViewPlayer as ViewPlayer
+import TeamTavern.Routes.Shared.Organization (OrganizationN(..), nameOrHandleN)
+import Type.Proxy (Proxy(..))
 
 teams
     :: ∀ action monad slots
@@ -25,7 +25,7 @@ teams
     => ViewPlayer.OkContent
     -> Status
     -> action
-    -> HH.ComponentHTML action (team :: NavigationAnchor.Slot String | slots) monad
+    -> HH.ComponentHTML action (team :: Slot__String | slots) monad
 teams player status showCreateTeamModal =
     card $
     [ cardHeader $

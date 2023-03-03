@@ -16,6 +16,7 @@ queryString :: String -> Query
 queryString timezone = Query $ """
     select
         case when $2 then player.email end as email,
+        case when $2 then player.password_hash is not null end as "hasPassword",
         player.nickname,
         player.discord_tag as "discordTag",
         player.steam_id as "steamId",

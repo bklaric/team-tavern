@@ -5,7 +5,6 @@ import Prelude
 
 import Async (Async)
 import Data.Array as Array
-import Data.Const (Const)
 import Data.Foldable (any)
 import Data.Maybe (Maybe(..), maybe)
 import Data.String (Pattern(..), contains, toLower, trim)
@@ -19,6 +18,7 @@ import Halogen.HTML.Properties as HP
 import Halogen.Query.Event as ES
 import Halogen.Query.HalogenM (SubscriptionId)
 import Prim.Row (class Cons)
+import TeamTavern.Client.Shared.Slot (Slot_O_)
 import Type.Proxy (Proxy)
 import Web.Event.Event as E
 import Web.HTML (window)
@@ -74,7 +74,7 @@ data Action option
 
 type Output option = Maybe option
 
-type Slot option = H.Slot (Const Void) (Output option) Unit
+type Slot option = Slot_O_ (Output option)
 
 renderEntry
     :: ∀ option slots

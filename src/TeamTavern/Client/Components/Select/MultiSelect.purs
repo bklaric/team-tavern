@@ -5,7 +5,6 @@ import Prelude
 
 import Async (Async)
 import Data.Array as Array
-import Data.Const (Const)
 import Data.Foldable (intercalate)
 import Data.Maybe (Maybe(..), isJust, maybe)
 import Data.String (Pattern(..), contains, toLower, trim)
@@ -18,6 +17,7 @@ import Halogen.Query.Event as ES
 import Prim.Row (class Cons)
 import TeamTavern.Client.Components.Checkable (checkbox)
 import TeamTavern.Client.Components.Input (checkboxLabel)
+import TeamTavern.Client.Shared.Slot (Slot_OI)
 import Type.Proxy (Proxy)
 import Web.Event.Event as E
 import Web.HTML (window)
@@ -60,7 +60,7 @@ data Action option
 
 type Output option = Array option
 
-type Slot option = H.Slot (Const Void) (Output option)
+type Slot option index = Slot_OI (Output option) index
 
 render :: ∀ slots option. State option -> HH.HTML slots (Action option)
 render { entries, labeler, filter, open } =

@@ -3,11 +3,9 @@ module TeamTavern.Client.Pages.Player.Details (details) where
 import Prelude
 
 import Async (Async)
-import Client.Components.Copyable as Copyable
 import Data.Array as Array
 import Data.Maybe (Maybe(..))
 import Data.Monoid (guard)
-import Type.Proxy (Proxy(..))
 import Halogen as H
 import Record as Record
 import TeamTavern.Client.Components.Button (regularButton)
@@ -15,14 +13,16 @@ import TeamTavern.Client.Components.Card (card, cardHeader, cardHeading, cardSec
 import TeamTavern.Client.Components.Missing (missing)
 import TeamTavern.Client.Components.Player.PlayerDetails (playerDetails)
 import TeamTavern.Client.Pages.Player.Status (Status(..))
+import TeamTavern.Client.Shared.Slot (Slot__String)
 import TeamTavern.Routes.Player.ViewPlayer as ViewPlayer
+import Type.Proxy (Proxy(..))
 
 details
     :: ∀ action children left
     .  ViewPlayer.OkContent
     -> Status
     -> action
-    -> H.ComponentHTML action (discordTag :: Copyable.Slot String | children) (Async left)
+    -> H.ComponentHTML action (discordTag :: Slot__String | children) (Async left)
 details player status showEditPlayerModal = let
     playerDetails' = playerDetails
         ( player

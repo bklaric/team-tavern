@@ -18,6 +18,7 @@ import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Profile.AddTeamProfile.AddProfile (addProfile)
 import TeamTavern.Server.Profile.AddTeamProfile.LoadFields (loadFields)
 import TeamTavern.Server.Profile.AddTeamProfile.ValidateProfile (validateProfileV)
+import TeamTavern.Server.Profile.Infrastructure.CheckTeamAlerts (checkTeamAlerts)
 import TeamTavern.Server.Profile.Infrastructure.PatchTeamContacts (patchTeamContacts)
 import TeamTavern.Server.Team.Infrastructure.ValidateContacts (validateContactsV)
 import Type.Proxy (Proxy(..))
@@ -62,6 +63,6 @@ addTeamProfile pool cookies { teamHandle, gameHandle } profile' =
         pure profileId
 
     -- Check alerts and notify.
-    -- checkTeamAlerts profileId pool
+    checkTeamAlerts profileId pool
 
     pure noContent_

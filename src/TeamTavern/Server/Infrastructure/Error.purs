@@ -7,6 +7,7 @@ import Data.Array as Array
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Array.NonEmpty as Nea
 import Data.Bifunctor (class Bifunctor, lmap)
+import Data.Either (Either)
 import Data.Semigroup.Foldable (fold1)
 import Data.Symbol (class IsSymbol)
 import Data.Validated (Validated)
@@ -31,6 +32,8 @@ type ValidatedTerrorNeaVar errors = Validated (TerrorNeaVar errors)
 type NeaVar errors = NonEmptyArray (Variant errors)
 
 type AsyncTerrorNeaVar errors = Async (TerrorNeaVar errors)
+
+type EitherTerror errors = Either (Terror errors)
 
 instance (Semigroup error) => Semigroup (Terror error) where
     append (Terror error lines) (Terror error' lines') =

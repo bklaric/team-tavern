@@ -16,7 +16,7 @@ import TeamTavern.Client.Components.Select.MultiSelect (multiSelectIndexed)
 import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.Select.SingleSelect (singleSelectIndexed)
 import TeamTavern.Client.Components.Select.SingleSelect as SingleSelect
-import TeamTavern.Client.Shared.Slot (SimpleSlot)
+import TeamTavern.Client.Shared.Slot (Slot___)
 import TeamTavern.Client.Snippets.Brands (inputBattleNetSvg, inputOriginSvg, inputPlayStationSvg, inputRiotSvg, inputSteamSvg, inputSwitchSvg, inputUbisoftSvg, inputXboxSvg)
 import TeamTavern.Routes.Shared.Platform (Platform(..))
 import Type.Proxy (Proxy(..))
@@ -24,9 +24,9 @@ import Type.Proxy (Proxy(..))
 platformIdInputGroup :: forall action other left.
     Platform -> Maybe String -> (Maybe String -> action) -> Boolean -> Boolean ->
     H.ComponentHTML action
-        ( blizzardAccountLink :: SimpleSlot
-        , riotAccountLink :: SimpleSlot
-        , steamAccountLink :: SimpleSlot
+        ( blizzardAccountLink :: Slot___
+        , riotAccountLink :: Slot___
+        , steamAccountLink :: Slot___
         | other
         )
         (Async left)
@@ -112,9 +112,9 @@ type FieldValues = Map String FieldValue
 type ChildSlots =
     ( "singleSelectField" :: SingleSelect.Slot Option String
     , "multiSelectField" :: MultiSelect.Slot Option String
-    , steamAccountLink :: SimpleSlot
-    , riotAccountLink :: SimpleSlot
-    , blizzardAccountLink :: SimpleSlot
+    , steamAccountLink :: Slot___
+    , riotAccountLink :: Slot___
+    , blizzardAccountLink :: Slot___
     )
 
 fieldInputGroup

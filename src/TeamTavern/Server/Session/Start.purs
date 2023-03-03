@@ -4,15 +4,18 @@ import Prelude
 
 import Async (Async)
 import Data.Newtype (wrap)
+import Data.Variant (match)
 import Jarilo (noContent)
 import Postgres.Pool (Pool)
 import TeamTavern.Routes.Session.StartSession as StartSession
 import TeamTavern.Server.Infrastructure.Cookie (Cookies, setCookieHeaderFull)
 import TeamTavern.Server.Infrastructure.Deployment (Deployment)
 import TeamTavern.Server.Infrastructure.EnsureNotSignedIn (ensureNotSignedIn)
+import TeamTavern.Server.Infrastructure.FetchDiscordUser (fetchDiscordUser)
 import TeamTavern.Server.Infrastructure.Postgres (transaction)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Session.Domain.Token as Token
+import TeamTavern.Server.Session.Start.CheckDiscord (checkDiscord)
 import TeamTavern.Server.Session.Start.CheckPassword (checkPassword)
 import TeamTavern.Server.Session.Start.CreateSession (createSession)
 
@@ -23,15 +26,23 @@ start deployment pool cookies body =
     -- Ensure player isn't signed in.
     ensureNotSignedIn cookies
 
-    pool # transaction \client -> do
-        -- Check if password hash matches.
-        { id, nickname } <- checkPassword body client
+    -- Generate session token.
+    token <- Token.generate
 
-        -- Generate session token.
-        token <- Token.generate
+    pool # transaction \client -> do
+        {id, nickname} <- body # match
+            { password: \bodyEmail -> do
+                -- Check if password hash matches.
+                checkPassword bodyEmail client
+            , discord: \{accessToken} -> do
+                -- Fetch user from Discord API.
+                discordUser <- fetchDiscordUser accessToken
+                -- Check if he already has an account.
+                checkDiscord client discordUser
+            }
 
         -- Create a new session.
         createSession id token client
 
         pure $ noContent $ setCookieHeaderFull deployment
-            { id: wrap id, nickname: wrap nickname, token }
+            {id: wrap id, nickname: wrap nickname, token}

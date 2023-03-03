@@ -4,45 +4,66 @@ import Prelude
 
 import Async (Async)
 import Async as Async
+import Control.Monad.Maybe.Trans (MaybeT(..), runMaybeT)
 import Data.Bifunctor (lmap)
 import Data.Foldable (foldl)
-import Data.Maybe (Maybe(..))
-import Data.Variant (match, onMatch)
+import Data.Maybe (Maybe(..), maybe)
+import Data.Monoid (guard)
+import Data.Variant (inj, match, onMatch)
+import Halogen (liftEffect)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Record as Record
+import Record.Extra (pick)
 import TeamTavern.Client.Components.Form (form, otherFormError)
+import TeamTavern.Client.Components.InputError as InputError
 import TeamTavern.Client.Components.RegistrationInput (registrationInput)
 import TeamTavern.Client.Components.RegistrationInput as RegistrationInput
+import TeamTavern.Client.Components.RegistrationInputDiscord (registrationInputDiscord)
+import TeamTavern.Client.Components.RegistrationInputDiscord as RegistrationInputDiscord
 import TeamTavern.Client.Pages.Onboarding as Onboarding
+import TeamTavern.Client.Pages.Preboarding (RegistrationMode(..))
 import TeamTavern.Client.Script.Analytics (aliasNickname, identifyNickname, track_)
 import TeamTavern.Client.Script.Meta (setMeta)
-import TeamTavern.Client.Script.Navigate (navigate, navigateWithEvent_)
+import TeamTavern.Client.Script.Navigate (hardNavigate, navigate, navigateWithEvent_)
+import TeamTavern.Client.Script.QueryParams (getFragmentParam)
 import TeamTavern.Client.Shared.Fetch (fetchBody)
-import TeamTavern.Client.Shared.Slot (SimpleSlot)
+import TeamTavern.Client.Shared.Slot (Slot___)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Player.RegisterPlayer (RegisterPlayer)
 import Type.Proxy (Proxy(..))
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
+import Web.HTML (window)
+import Web.HTML.Location (host)
+import Web.HTML.Window (localStorage, location)
+import Web.Storage.Storage (getItem, setItem)
 import Web.UIEvent.MouseEvent (MouseEvent)
+import Yoga.JSON (readJSON_, writeJSON)
 
 data Action
     = Initialize
-    | UpdateRegistration RegistrationInput.Output
+    | UpdateRegistrationEmail RegistrationInput.Output
+    | UpdateRegistrationDiscord RegistrationInputDiscord.Output
     | Register Event
+    | CreateWithEmail
+    | CreateWithDiscord
     | Navigate String MouseEvent
 
 type State =
-    { registration :: RegistrationInput.Input
+    { registrationMode :: RegistrationMode
+    , registrationEmail :: RegistrationInput.Input
+    , registrationDiscord :: RegistrationInputDiscord.Input
+    , accessToken :: Maybe String
+    , discordTaken :: Boolean
     , otherError :: Boolean
     , submitting :: Boolean
     }
 
 render :: ∀ left. State -> H.ComponentHTML Action _ (Async left)
-render { registration, otherError, submitting } =
+render { registrationMode, registrationEmail, registrationDiscord, discordTaken, otherError, submitting } =
     form Register $
     [ HH.h1 [ HS.class_ "form-heading" ]
         [ HH.text "Create your "
@@ -52,24 +73,64 @@ render { registration, otherError, submitting } =
             ]
             [ HH.text "TeamTavern" ]
         , HH.text " account"
-        ]
-    , registrationInput registration UpdateRegistration
-    , HH.button
-        [ HS.class_ "form-submit-button"
-        , HP.disabled
-            $ registration.email == ""
-            || registration.nickname == ""
-            || registration.password == ""
-            || submitting
-        ]
-        [ HH.i [ HS.class_ "fas fa-user-check button-icon" ] []
-        , HH.text $
-            if submitting
-            then "Creating account..."
-            else "Create account"
+        , HH.text case registrationMode of
+            Password -> ""
+            Discord -> " with Discord"
         ]
     ]
+    <> case registrationMode of
+        Password ->
+            [ registrationInput registrationEmail UpdateRegistrationEmail
+            , HH.button
+                [ HS.class_ "primary-button"
+                , HP.disabled submitting
+                ]
+                [ HH.i [ HS.class_ "fas fa-user-check button-icon" ] []
+                , HH.text $
+                    if submitting
+                    then "Creating account..."
+                    else "Create account"
+                ]
+            ]
+        Discord ->
+            [ registrationInputDiscord registrationDiscord UpdateRegistrationDiscord
+            , HH.button
+                [ HS.class_ "primary-button"
+                , HP.disabled submitting
+                ]
+                [ HH.i [ HS.class_ "fab fa-discord button-icon", HP.style "font-size: 20px;" ] []
+                , HH.text "Create account with Discord"
+                ]
+            ]
+    <> InputError.discordTaken discordTaken
     <> otherFormError otherError
+    <>
+    [ HH.div [HP.style "display: flex; align-items: center; margin: 28px 0;"]
+        [ HH.hr [HP.style "flex: 1 1 auto;"]
+        , HH.span [HP.style "padding: 0 10px"] [HH.text "Or"]
+        , HH.hr [HP.style "flex: 1 1 auto;"]
+        ]
+    ]
+    <> guard (registrationMode /= Password)
+        [ HH.button
+            [ HS.class_ "regular-button"
+            , HP.type_ HP.ButtonButton
+            , HE.onClick $ const CreateWithEmail
+            ]
+            [ HH.i [ HS.class_ "fas fa-envelope button-icon", HP.style "font-size: 20px;" ] []
+            , HH.text "Create account with email"
+            ]
+        ]
+    <> guard (registrationMode /= Discord)
+        [ HH.button
+            [ HS.class_ "regular-button"
+            , HP.type_ HP.ButtonButton
+            , HE.onClick $ const CreateWithDiscord
+            ]
+            [ HH.i [ HS.class_ "fab fa-discord button-icon", HP.style "font-size: 20px;" ] []
+            , HH.text "Create account with Discord"
+            ]
+        ]
     <>
     [ HH.p
         [ HS.class_ "form-bottom-text" ]
@@ -83,60 +144,107 @@ render { registration, otherError, submitting } =
     ]
 
 sendRegisterRequest :: ∀ left. State -> Async left (Maybe State)
-sendRegisterRequest state @ { registration: { email, nickname, password } } = Async.unify do
-    response' <- fetchBody (Proxy :: _ RegisterPlayer) { email, nickname, password }
+sendRegisterRequest state = Async.unify do
+    body <-
+        case state.registrationMode, state.accessToken of
+        Password, _ -> Async.right $ inj (Proxy :: _ "password") $ pick state.registrationEmail
+        Discord, Just accessToken -> Async.right $ inj (Proxy :: _ "discord")
+            {nickname: state.registrationDiscord.nickname, accessToken}
+        Discord, Nothing -> do
+            window >>= localStorage >>= setItem "register" (writeJSON state) # liftEffect
+            host' <- window >>= location >>= host # liftEffect
+            hardNavigate $ "https://discord.com/api/oauth2/authorize"
+                <> "?client_id=1068667687661740052"
+                <> "&redirect_uri=https%3A%2F%2F" <> host' <> "%2Fregister"
+                <> "&response_type=token"
+                <> "&scope=identify"
+                <> "&prompt=none"
+            Async.left $ Just state
+    response' <- fetchBody (Proxy :: _ RegisterPlayer) body
         # lmap (const $ Just $ state { otherError = true })
     pure $ onMatch
         { noContent: const Nothing
         , badRequest: Just <<< match
-            { registration: foldl (\state' -> match
-                { email: const $ state' { registration { emailError = true } }
-                , nickname: const $ state' { registration { nicknameError = true } }
-                , password: const $ state' { registration { passwordError = true } }
-                })
-                state
-            , emailTaken: const $ state { registration { emailTaken = true } }
-            , nicknameTaken: const $ state { registration { nicknameTaken = true } }
+            { registration: state # foldl \state' error' -> error' # match
+                { email: const state' { registrationEmail { emailError = true } }
+                , nickname: const
+                    case state.registrationMode of
+                    Password -> state' { registrationEmail { nicknameError = true } }
+                    Discord -> state' { registrationDiscord { nicknameError = true } }
+                , password: const state' { registrationEmail { passwordError = true } }
+                }
+            , emailTaken: const $ state { registrationEmail { emailTaken = true } }
+            , nicknameTaken: const
+                case state.registrationMode of
+                Password -> state { registrationEmail { nicknameTaken = true } }
+                Discord -> state { registrationDiscord { nicknameTaken = true } }
+            , discordTaken: const state { discordTaken = true }
             }
         }
         (const $ Just $ state { otherError = true })
         response'
 
+tryToRegister :: forall slots output left.
+    State -> H.HalogenM State Action slots output (Async left) Unit
+tryToRegister state = do
+    H.put state
+    newStateMaybe <- H.lift $ sendRegisterRequest state
+    case newStateMaybe of
+        Nothing -> do
+            aliasNickname
+            identifyNickname
+            track_ "Register"
+            navigate Onboarding.emptyInput "/onboarding/start"
+        Just newState -> H.put newState {submitting = false}
+
 handleAction :: ∀ slots output left.
     Action -> H.HalogenM State Action slots output (Async left) Unit
-handleAction Initialize =
+handleAction Initialize = do
     setMeta "Create account | TeamTavern" "Create your TeamTavern account."
-handleAction (UpdateRegistration registration) =
-    H.modify_ \state -> state { registration = Record.merge registration state.registration }
+    -- Check if we came back from Discord sign in page.
+    stateMaybe <- runMaybeT do
+        accessToken <- MaybeT $ getFragmentParam "access_token"
+        stateJson <- window >>= localStorage >>= getItem "register" # liftEffect # MaybeT
+        state <- (readJSON_ :: _ -> _ State) stateJson # pure # MaybeT
+        pure state {accessToken = Just accessToken}
+    stateMaybe # maybe (pure unit) tryToRegister
+handleAction (UpdateRegistrationEmail registration) =
+    H.modify_ _ {registrationEmail = registration}
+handleAction (UpdateRegistrationDiscord registration) =
+    H.modify_ \state -> state { registrationDiscord = Record.merge registration state.registrationDiscord }
 handleAction (Register event) = do
     H.liftEffect $ preventDefault event
     state <- H.gets (_
-        { registration
+        { registrationEmail
             { emailError = false
             , nicknameError  = false
             , passwordError  = false
             , emailTaken = false
             , nicknameTaken  = false
             }
+        , registrationDiscord
+            { nicknameError = false
+            , nicknameTaken = false
+            }
         , otherError = false
         , submitting = true
         })
-    H.put state
-    newState <- H.lift $ sendRegisterRequest state
-    case newState of
-        Nothing -> do
-            aliasNickname
-            identifyNickname
-            track_ "Register"
-            navigate Onboarding.emptyInput "/onboarding/start"
-        Just newState' -> H.put newState' { submitting = false }
+    tryToRegister state
 handleAction (Navigate url event) =
     navigateWithEvent_ url event
+handleAction CreateWithEmail =
+    H.modify_ _ {registrationMode = Password}
+handleAction CreateWithDiscord =
+    H.modify_ _ {registrationMode = Discord}
 
 component :: ∀ query input output left. H.Component query input output (Async left)
 component = H.mkComponent
     { initialState: const
-        { registration: RegistrationInput.emptyInput
+        { registrationMode: Password
+        , registrationEmail: RegistrationInput.emptyInput
+        , registrationDiscord: RegistrationInputDiscord.emptyInput
+        , accessToken: Nothing
+        , discordTaken: false
         , otherError: false
         , submitting: false
         }
@@ -148,5 +256,5 @@ component = H.mkComponent
     }
 
 register :: ∀ query children left.
-    HH.ComponentHTML query (register :: SimpleSlot | children) (Async left)
+    HH.ComponentHTML query (register :: Slot___ | children) (Async left)
 register = HH.slot (Proxy :: _ "register") unit component unit absurd

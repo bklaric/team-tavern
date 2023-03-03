@@ -5,8 +5,13 @@ import Prelude
 import Async (Async, left)
 import Bcrypt.Async as Bcrypt
 import Data.Bifunctor (lmap)
+import Data.Maybe (Maybe(..))
 import Data.Variant (inj)
 import Jarilo (badRequest_, internal__, noContent_)
+import Node.Errors.Class (code)
+import Postgres.Async.Query (execute)
+import Postgres.Error (constraint)
+import Postgres.Error.Codes (unique_violation)
 import Postgres.Pool (Pool)
 import Postgres.Query (class Querier, Query(..), (:), (:|))
 import TeamTavern.Routes.Player.UpdatePlayerEmail as UpdatePlayerEmail
@@ -14,8 +19,7 @@ import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.EnsureSignedInAs (ensureSignedInAs)
 import TeamTavern.Server.Infrastructure.Error (Terror(..), lmapElaborate)
 import TeamTavern.Server.Infrastructure.Log (print)
-import TeamTavern.Server.Infrastructure.Postgres (queryFirst, queryNone, transaction)
-import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
+import TeamTavern.Server.Infrastructure.Postgres (databaseErrorLines, queryFirst, transaction)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Infrastructure.ValidateEmail (Email, validateEmail')
 import TeamTavern.Server.Player.Domain.Id (Id)
@@ -51,10 +55,17 @@ emailQueryString = Query """
     where id = $1
     """
 
-updateEmail :: forall errors querier. Querier querier =>
-    Id -> Email -> querier -> Async (InternalTerror_ errors) Unit
-updateEmail id email client =
-    queryNone client emailQueryString (id :| email)
+updateEmail :: forall querier. Querier querier =>
+    Id -> Email -> querier -> Async _ Unit
+updateEmail id email querier = do
+    querier # execute emailQueryString (id :| email) # lmap \error ->
+        case code error == unique_violation of
+        true | constraint error == Just "player_email_key"
+            || constraint error == Just "player_lower_email_key"
+            -> Terror
+                (badRequest_ $ inj (Proxy :: _ "emailTaken") {})
+                ["Player email is taken: " <> show email, print error]
+        _ -> Terror internal__ $ databaseErrorLines error
 
 updatePlayerEmail :: ∀ left.
     Pool -> String -> Cookies -> UpdatePlayerEmail.RequestContent -> Async left _

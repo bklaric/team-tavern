@@ -7,9 +7,20 @@ type StartSession =
     PostJson_ (Literal "sessions") RequestContent
     ==> (NoContent ! BadRequestJson BadContent ! Forbidden_ ! Internal_)
 
-type RequestContent =
+type RequestContentEmail =
     { emailOrNickname :: String
     , password :: String
     }
 
-type BadContent = Variant (unknownPlayer :: {}, wrongPassword :: {})
+type RequestContentDiscord = {accessToken :: String}
+
+type RequestContent = Variant
+    ( password :: RequestContentEmail
+    , discord :: RequestContentDiscord
+    )
+
+type BadContent = Variant
+    ( unknownPlayer :: {}
+    , wrongPassword :: {}
+    , unknownDiscord :: {}
+    )

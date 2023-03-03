@@ -1,10 +1,9 @@
 module TeamTavern.Client.Components.NavigationAnchor
-    ( Action, SimpleInput, ClassInput, Slot
+    ( Action, SimpleInput, ClassInput
     , navigationAnchor, navigationAnchorClassed, navigationAnchorIndexed) where
 
 import Prelude
 
-import Data.Const (Const)
 import Data.Maybe (Maybe(..))
 import Data.Symbol (class IsSymbol)
 import Effect.Class (class MonadEffect)
@@ -14,6 +13,7 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Prim.Row (class Cons)
 import TeamTavern.Client.Script.Navigate (navigateWithEvent_)
+import TeamTavern.Client.Shared.Slot (Slot__I)
 import Type.Proxy (Proxy)
 import Web.UIEvent.MouseEvent (MouseEvent)
 
@@ -32,8 +32,6 @@ type ClassInput slots monad =
 type State slots monad = ClassInput slots monad
 
 data Action slots monad = Navigate MouseEvent | Receive (State slots monad)
-
-type Slot = H.Slot (Const Void) Void
 
 render :: ∀ slots monad.
   State slots monad -> HH.ComponentHTML (Action slots monad) slots monad
@@ -70,7 +68,7 @@ component = H.mkComponent
 
 navigationAnchor
     :: ∀ label children children' action monad
-    .  Cons label (Slot Unit) children' children
+    .  Cons label (Slot__I Unit) children' children
     => IsSymbol label
     => MonadEffect monad
     => Proxy label
@@ -82,7 +80,7 @@ navigationAnchor label { path, content } =
 
 navigationAnchorClassed
     :: ∀ label children children' action monad
-    .  Cons label (Slot Unit) children' children
+    .  Cons label (Slot__I Unit) children' children
     => IsSymbol label
     => MonadEffect monad
     => Proxy label
@@ -93,7 +91,7 @@ navigationAnchorClassed label state =
 
 navigationAnchorIndexed
     :: ∀ label children children' action monad index
-    .  Cons label (Slot index) children' children
+    .  Cons label (Slot__I index) children' children
     => IsSymbol label
     => Ord index
     => MonadEffect monad

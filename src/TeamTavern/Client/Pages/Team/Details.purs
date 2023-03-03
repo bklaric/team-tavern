@@ -3,7 +3,6 @@ module TeamTavern.Client.Pages.Team.Details (details) where
 import Prelude
 
 import Async (Async)
-import Client.Components.Copyable as Copyable
 import Data.Array as Array
 import Data.Maybe (Maybe(..))
 import Data.Monoid (guard)
@@ -14,6 +13,7 @@ import TeamTavern.Client.Components.Card (card, cardHeader, cardHeading, cardSec
 import TeamTavern.Client.Components.Missing (missing)
 import TeamTavern.Client.Components.Team.TeamDetails (teamDetails)
 import TeamTavern.Client.Pages.Team.Status (Status(..))
+import TeamTavern.Client.Shared.Slot (Slot__String)
 import TeamTavern.Routes.Team.ViewTeam as ViewTeam
 import Type.Proxy (Proxy(..))
 
@@ -22,7 +22,7 @@ details
     .  ViewTeam.OkContent
     -> Status
     -> action
-    -> H.ComponentHTML action (discordTag :: Copyable.Slot String | slots) (Async left)
+    -> H.ComponentHTML action (discordTag :: Slot__String | slots) (Async left)
 details team status showEditTeamModal = let
     teamDetails' = teamDetails
         ( team

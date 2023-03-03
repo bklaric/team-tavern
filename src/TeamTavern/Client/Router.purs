@@ -3,6 +3,7 @@ module TeamTavern.Client.Router (Query(..), router) where
 import Prelude
 
 import Async (Async)
+import Control.Monad.Maybe.Trans (MaybeT(..), runMaybeT)
 import Data.Maybe (Maybe(..))
 import Data.String (Pattern(..), split)
 import Foreign (Foreign)
@@ -42,11 +43,15 @@ import TeamTavern.Client.Pages.TeamProfile as TeamProfile
 import TeamTavern.Client.Script.Analytics (track)
 import TeamTavern.Client.Script.Cookie (getPlayerNickname, hasPlayerIdCookie)
 import TeamTavern.Client.Script.Navigate (navigateReplace_)
+import TeamTavern.Client.Script.QueryParams (getFragmentParam)
 import TeamTavern.Client.Script.ReloadAds (reloadAds)
-import TeamTavern.Client.Shared.Slot (SimpleSlot)
+import TeamTavern.Client.Shared.Slot (Slot___)
 import TeamTavern.Client.Snippets.Class as HS
 import Type.Proxy (Proxy(..))
-import Yoga.JSON (read_)
+import Web.HTML (window)
+import Web.HTML.Window (localStorage)
+import Web.Storage.Storage (getItem)
+import Yoga.JSON (readJSON_, read_)
 
 data Query send = ChangeRoute Foreign String send
 
@@ -80,15 +85,15 @@ data State
 topBarWithContent
     :: ∀ query children left
     .  Maybe String
-    -> Array (H.ComponentHTML query (Footer.ChildSlots (topBar :: SimpleSlot | children)) (Async left))
-    -> H.ComponentHTML query (Footer.ChildSlots (topBar :: SimpleSlot | children)) (Async left)
+    -> Array (H.ComponentHTML query (Footer.ChildSlots (topBar :: Slot___ | children)) (Async left))
+    -> H.ComponentHTML query (Footer.ChildSlots (topBar :: Slot___ | children)) (Async left)
 topBarWithContent handle content' = HH.div_ [ topBar handle, content content', footer ]
 
 wideTopBarWithContent
     :: ∀ query children left
     .  Maybe String
-    -> Array (H.ComponentHTML query (Footer.ChildSlots (topBar :: SimpleSlot | children)) (Async left))
-    -> H.ComponentHTML query (Footer.ChildSlots (topBar :: SimpleSlot | children)) (Async left)
+    -> Array (H.ComponentHTML query (Footer.ChildSlots (topBar :: Slot___ | children)) (Async left))
+    -> H.ComponentHTML query (Footer.ChildSlots (topBar :: Slot___ | children)) (Async left)
 wideTopBarWithContent handle content' = HH.div_ [ topBar handle, wideContent content', footer ]
 
 render :: ∀ action left. State -> H.ComponentHTML action _ (Async left)
@@ -224,10 +229,16 @@ handleAction (Init state route) = do
                     _ -> Nothing
                 (stateMaybe :: Maybe Preboarding.Input) = read_ state
             in do
+            stateMaybeStorage <- runMaybeT do
+                accessToken <- MaybeT $ getFragmentParam "access_token"
+                stateJson <- window >>= localStorage >>= getItem "preboard" # liftEffect # MaybeT
+                state' <- (readJSON_ :: _ -> _ Preboarding.Input) stateJson # pure # MaybeT
+                pure (state' {accessToken = Just accessToken})
             signedIn <- hasPlayerIdCookie
-            case stateMaybe, stepMaybe of
-                Just input, Just step | not signedIn -> just $ Preboarding input { step = step }
-                _, _ -> navigateReplace_ "/" *> nothing
+            case stateMaybe, stateMaybeStorage, stepMaybe of
+                _, Just input, Just step | not signedIn -> just $ Preboarding input { step = step }
+                Just input, _, Just step | not signedIn -> just $ Preboarding input { step = step }
+                _, _, _ -> navigateReplace_ "/" *> nothing
         ["", "teams", handle] ->
             just $ Team { handle }
         ["", "games"] ->

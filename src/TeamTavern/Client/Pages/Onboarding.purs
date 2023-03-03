@@ -35,7 +35,7 @@ import TeamTavern.Client.Script.Cookie (getPlayerNickname)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigate, navigate_, replaceState)
 import TeamTavern.Client.Shared.Fetch (fetchBody)
-import TeamTavern.Client.Shared.Slot (SimpleSlot)
+import TeamTavern.Client.Shared.Slot (Slot___)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Boarding.Onboard (Onboard)
 import TeamTavern.Routes.Boarding.Onboard as Onboard
@@ -547,5 +547,5 @@ component = H.mkComponent
     }
 
 onboarding :: ∀ action slots left.
-    Input -> HH.ComponentHTML action (onboarding :: SimpleSlot | slots) (Async left)
+    Input -> HH.ComponentHTML action (onboarding :: Slot___ | slots) (Async left)
 onboarding input = HH.slot (Proxy :: _ "onboarding") unit component input absurd
