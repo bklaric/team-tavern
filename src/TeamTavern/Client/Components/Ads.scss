@@ -17,8 +17,7 @@
     top: 64px;
 }
 
-#celtra-reveal-wrapper {
-    // .sticky-leaderboard
+#celtra-reveal-wrapper, .sticky-leaderboard {
     @extend %ad;
     width: 100%;
     display: flex;
