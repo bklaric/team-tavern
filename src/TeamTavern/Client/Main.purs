@@ -51,8 +51,8 @@ main = HA.runHalogenAff do
         path' <- window >>= Window.location >>= Location.pathname
         hostname <- window >>= Window.location >>= Location.hostname
         search' <- window >>= Window.location >>= Location.search
-        -- Append ?nntestads=staging in staging so we see test ads there.
-        if hostname == "staging.teamtavern.net" && search' == ""
+        -- Append ?nntestads=staging in staging and locally so we see test ads there.
+        if (hostname == "staging.teamtavern.net" || hostname == "localhost") && search' == ""
             then navigateReplace_ $ path' <> "?nntestads=staging"
             else query (ChangeRoute state' path' unit) # void # launchAff_
     addWindowListener PSET.popstate navigationListener
