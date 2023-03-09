@@ -8,7 +8,6 @@ import Data.Maybe (Maybe(..))
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
-import TeamTavern.Client.Components.Ads (stickyLeaderboards)
 import TeamTavern.Client.Components.Boarding.PlayerOrTeamInput as Boarding
 import TeamTavern.Client.Pages.Home.CallToAction (callToAction)
 import TeamTavern.Client.Pages.Home.Connect (connect)
@@ -46,7 +45,6 @@ render _ =
     , connect
     , features OpenPreboarding
     ]
-    <> stickyLeaderboards
 
 handleAction :: ∀ action output slots left.
     Action -> H.HalogenM State action slots output (Async left) Unit

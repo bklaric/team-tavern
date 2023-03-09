@@ -13,7 +13,6 @@ import Data.Variant (onMatch)
 import Halogen as H
 import Halogen.HTML as HH
 import Record.Extra (pick)
-import TeamTavern.Client.Components.Ads (descriptionLeaderboards, stickyLeaderboards)
 import TeamTavern.Client.Components.Content (contentColumns, contentDescription, contentHeader, contentHeaderSection, contentHeading', contentHeadingFaIcon)
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.Player.ProfileDetails (PlatformIdSlots)
@@ -98,7 +97,6 @@ render (Loaded state @ { player: player', status }) =
         SignedInSelf -> "View and edit all your details, profiles and teams."
         _ -> "View all player's details, profiles and teams."
     ]
-    <> descriptionLeaderboards
     <>
     [ contentColumns
         [ HH.div_
@@ -111,7 +109,6 @@ render (Loaded state @ { player: player', status }) =
             ]
         ]
     ]
-    <> stickyLeaderboards
     <> guard state.editContactsModalShown [ editContacts player' $ const HideEditContactsModal ]
     <> guard state.editPlayerModalShown [ editPlayer player' $ const HideEditPlayerModal ]
     <> guard state.createTeamModalShown [ createTeam $ const HideCreateTeamModal ]

@@ -15,6 +15,12 @@ stickyLeaderboard = HH.div [ HP.id "nn_lb1", HS.class_ "sticky-leaderboard" ] []
 filtersMpu :: ∀ slots action. HH.HTML slots action
 filtersMpu = HH.div [ HP.id "nn_mpu1", HS.class_ "filters-mpu" ] []
 
+skinLeft :: ∀ slots action. HH.HTML slots action
+skinLeft = HH.div [ HP.id "nn_skinl", HS.class_ "" ] []
+
+skinRight :: ∀ slots action. HH.HTML slots action
+skinRight = HH.div [ HP.id "nn_skinr", HS.class_ "" ] []
+
 -- Mobile
 
 mobileDescriptionLeaderboard :: ∀ slots action. HH.HTML slots action

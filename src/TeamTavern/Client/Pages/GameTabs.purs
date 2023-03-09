@@ -6,7 +6,6 @@ import Async (Async)
 import Data.Maybe (Maybe(..))
 import Halogen as H
 import Halogen.HTML as HH
-import TeamTavern.Client.Components.Ads (stickyLeaderboards)
 import TeamTavern.Client.Pages.Profiles (profiles)
 import TeamTavern.Client.Pages.Profiles.GameHeader (ProfileTab(..), Tab(..), gameHeader)
 import TeamTavern.Client.Script.Request (get)
@@ -35,7 +34,6 @@ render (Loaded { game, tab }) = HH.div_ $
         Profiles Players -> profiles { game, tab: Players }
         Profiles Teams -> profiles { game, tab: Teams }
     ]
-    <> stickyLeaderboards
 render Error = HH.p_ [ HH.text "There has been an error loading the game. Please try again later." ]
 
 handleAction :: ∀ output left.

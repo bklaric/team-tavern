@@ -13,7 +13,6 @@ import Data.Variant (onMatch)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
-import TeamTavern.Client.Components.Ads (descriptionLeaderboards, stickyLeaderboards)
 import TeamTavern.Client.Components.Content (contentColumns, contentDescription, contentHeader, contentHeaderSection, contentHeading', contentHeadingFaIcon)
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
@@ -106,7 +105,6 @@ render (Loaded state @ { team: team', status } ) =
         SignedInOwner -> "View and edit all your team's details and profiles."
         _ -> "View all team's details and profiles."
     ]
-    <> descriptionLeaderboards
     <>
     [ contentColumns
         [ HH.div_
@@ -117,7 +115,6 @@ render (Loaded state @ { team: team', status } ) =
             [ profiles team' status ShowEditProfileModal ShowDeleteProfileModal ]
         ]
     ]
-    <> stickyLeaderboards
     <> guard state.editContactsModalShown [ editContacts team' $ const HideEditContactsModal ]
     <> guard state.editTeamModalShown [ editTeam team' (const HideEditTeamModal) ]
     <> foldMap (\profile ->

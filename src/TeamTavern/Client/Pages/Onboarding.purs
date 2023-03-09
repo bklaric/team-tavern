@@ -19,7 +19,6 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Record as Record
 import Record.Extra (pick)
-import TeamTavern.Client.Components.Ads (stickyLeaderboards)
 import TeamTavern.Client.Components.Boarding.Boarding (boarding, boardingButtons, boardingDescription, boardingHeading, boardingStep)
 import TeamTavern.Client.Components.Boarding.GameInput (gameInput)
 import TeamTavern.Client.Components.Boarding.GameInput as GameInput
@@ -281,7 +280,7 @@ renderPage { step: TeamProfile, teamProfile, game, otherError, submitting } =
     ]
 
 render :: ∀ slots left. State -> HH.ComponentHTML Action (ChildSlots slots) (Async left)
-render state = HH.div_ $ [ boarding $ renderPage state ] <> stickyLeaderboards
+render state = HH.div_ [boarding $ renderPage state]
 
 sendRequest :: ∀ left.
     State -> Async left (Maybe (Either Onboard.BadContent Onboard.OkContent))

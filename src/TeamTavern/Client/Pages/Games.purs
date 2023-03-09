@@ -14,7 +14,6 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import TeamTavern.Client.Components.Ads (descriptionLeaderboards, stickyLeaderboards)
 import TeamTavern.Client.Components.Divider (whiteDivider)
 import TeamTavern.Client.Components.Picture (picture)
 import TeamTavern.Client.Script.Meta (setMeta)
@@ -41,7 +40,6 @@ render (Games games') = HH.div [ HS.class_ "games" ] $
         , HH.p [ HS.class_ "games-header-subtitle" ]
             [ HH.text "Choose one of the featured games and start finding your new teammates!" ]
         ]
-        <> descriptionLeaderboards
     ]
     <>
     (games' <#> \{ title, handle, description } ->
@@ -88,7 +86,6 @@ render (Games games') = HH.div [ HS.class_ "games" ] $
         , picture "game-card-image" (title <> " banner") ("/images/" <> handle <> "/banner")
         ]
     )
-    <> stickyLeaderboards
 
 loadGames :: ∀ left. Async left State
 loadGames = Async.unify do
