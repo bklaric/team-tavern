@@ -14,6 +14,7 @@ import Halogen.VDom.Driver (runUI)
 import Partial.Unsafe (unsafePartial)
 import TeamTavern.Client.Router (Query(..), router)
 import TeamTavern.Client.Script.Analytics (identifyNickname, registerSignedIn)
+import TeamTavern.Client.Script.Navigate (navigateReplace_)
 import TeamTavern.Client.Script.ReloadAds (reloadAds)
 import Web.DOM.NonElementParentNode (getElementById)
 import Web.Event.Event (Event, EventType(..))
@@ -48,7 +49,12 @@ main = HA.runHalogenAff do
     navigationListener <- createListener \event -> do
         let state' = PSE.fromEvent event # unsafePartial fromJust # PSE.state
         path' <- window >>= Window.location >>= Location.pathname
-        query (ChangeRoute state' path' unit) # void # launchAff_
+        hostname <- window >>= Window.location >>= Location.hostname
+        search' <- window >>= Window.location >>= Location.search
+        -- Append ?nntestads=staging in staging so we see test ads there.
+        if hostname == "staging.teamtavern.net" && search' == ""
+            then navigateReplace_ $ path' <> "?nntestads=staging"
+            else query (ChangeRoute state' path' unit) # void # launchAff_
     addWindowListener PSET.popstate navigationListener
     orientationListener <- createListener $ const reloadAds
     addWindowListener (EventType "orientationchange") orientationListener
