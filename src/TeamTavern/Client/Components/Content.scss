@@ -1,16 +1,19 @@
 .content {
-    max-width: 1002px;
-    // calc(100vh - topBar - footer - padding);
-    min-height: calc(100vh - 41px - 41px - 42px);
-    padding: 21px 0;
-    margin: auto;
+    display: grid;
+    grid-template-columns: 1fr 1002px 1fr;
+    // max-width: 1002px;
+    // calc(100vh - topBar - footer);
+    min-height: calc(100vh - 41px - 41px);
+    // padding: 21px 0;
+    // margin: auto;
 }
 
 .wide-content {
     @extend .content;
     // 422 + 962 + 21 + 21 + 21
     // profiles + filters + padding + padding + margin
-    max-width: 1447px;
+    grid-template-columns: 1fr 1300px 1fr;
+    // max-width: 1447px;
 }
 
 .single-content {
