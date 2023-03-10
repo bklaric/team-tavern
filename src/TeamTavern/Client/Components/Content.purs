@@ -11,6 +11,9 @@ content = HH.div [ HS.class_ "content" ]
 wideContent :: ∀ slots action. Array (HH.HTML slots action) -> HH.HTML slots action
 wideContent = HH.div [ HS.class_ "wide-content" ]
 
+actualContent :: ∀ slots action. Array (HH.HTML slots action) -> HH.HTML slots action
+actualContent = HH.div [HS.class_ "actual-content"]
+
 singleContent :: ∀ slots action. Array (HH.HTML slots action) -> HH.HTML slots action
 singleContent = HH.div [ HS.class_ "single-content" ]
 

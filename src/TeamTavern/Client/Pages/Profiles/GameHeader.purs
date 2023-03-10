@@ -12,8 +12,8 @@ data Tab = Profiles ProfileTab
 
 type Input = { title :: String, shortTitle :: String, tab :: Tab }
 
-gameHeader :: ∀ slots action. Input -> HH.HTML slots action
-gameHeader { title, shortTitle, tab } = HH.div_ $
+gameHeader :: ∀ slots action. Input -> Array (HH.HTML slots action)
+gameHeader { title, shortTitle, tab } =
     [ contentHeader
         [ contentHeaderSection
             [ contentHeading'

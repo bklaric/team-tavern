@@ -16,7 +16,7 @@ import Halogen.HTML.CSS as HC
 import Halogen.HTML.Events as HE
 import Record as Record
 import Record.Extra (pick)
-import TeamTavern.Client.Components.Ads (filtersMpu)
+import TeamTavern.Client.Components.Ads (mpu)
 import TeamTavern.Client.Components.Button (button)
 import TeamTavern.Client.Components.Card (card, cardHeading, cardSection, cardSectionHeading)
 import TeamTavern.Client.Components.Input (inputGroup, inputLabel)
@@ -225,7 +225,7 @@ render state =
         ]
     else []
     ]
-    <> [ filtersMpu ]
+    <> [ mpu ]
     <> guard state.createAlertModalShown
         [ createAlert
             { handle: state.handle
