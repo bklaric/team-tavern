@@ -14,16 +14,19 @@ descriptionLeaderboard :: ∀ slots action. HH.HTML slots action
 descriptionLeaderboard = HH.div [HP.id "nn_lb2", HS.class_ "ad"] []
 
 stickyLeaderboard :: ∀ slots action. HH.HTML slots action
-stickyLeaderboard = HH.div [HP.id "nn_lb1", HS.class_ "ad"] []
+stickyLeaderboard = HH.div [HP.id "nn_lb1", HS.class_ "sticky-leaderboard"] []
 
 mpu :: ∀ slots action. HH.HTML slots action
-mpu = HH.div [HP.id "nn_mpu1", HS.class_ "filters-mpu"] []
+mpu = HH.div [HP.id "nn_mpu1", HS.class_ "ad"] []
+
+filtersMpu :: ∀ slots action. HH.HTML slots action
+filtersMpu = HH.div [HP.id "nn_mpu1", HS.class_ "filters-mpu"] []
 
 skinLeft :: ∀ slots action. HH.HTML slots action
-skinLeft = HH.div [HP.id "nn_skinl", HS.class_ "ad"] []
+skinLeft = HH.div [HP.id "nn_skinl", HS.class_ ""] []
 
 skinRight :: ∀ slots action. HH.HTML slots action
-skinRight = HH.div [HP.id "nn_skinr", HS.class_ "ad"] []
+skinRight = HH.div [HP.id "nn_skinr", HS.class_ ""] []
 
 -- Mobile
 
@@ -31,7 +34,7 @@ mobileDescriptionLeaderboard :: ∀ slots action. HH.HTML slots action
 mobileDescriptionLeaderboard = HH.div [HP.id "nn_mobile_lb2", HS.class_ "ad"] []
 
 mobileStickyLeaderboard :: ∀ slots action. HH.HTML slots action
-mobileStickyLeaderboard = HH.div [HP.id "nn_mobile_lb1_sticky", HS.class_ "ad"] []
+mobileStickyLeaderboard = HH.div [HP.id "nn_mobile_lb1_sticky", HS.class_ "sticky-leaderboard"] []
 
 mobileMpu :: ∀ slots action. HH.HTML slots action
 mobileMpu = HH.div [HP.id "nn_mobile_mpu1", HS.class_ "ad"] []
@@ -46,6 +49,9 @@ stickyLeaderboards = [stickyLeaderboard, mobileStickyLeaderboard]
 
 mpus :: ∀ slots action. Array (HH.HTML slots action)
 mpus = [mpu, mobileMpu]
+
+player :: ∀ slots action. HH.HTML slots action
+player = HH.div [HP.id "nn_player"] []
 
 -- Utils
 

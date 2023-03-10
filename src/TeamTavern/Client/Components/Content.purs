@@ -8,9 +8,6 @@ import TeamTavern.Client.Snippets.Class as HS
 content :: ∀ slots action. Array (HH.HTML slots action) -> HH.HTML slots action
 content = HH.div [ HS.class_ "content" ]
 
-wideContent :: ∀ slots action. Array (HH.HTML slots action) -> HH.HTML slots action
-wideContent = HH.div [ HS.class_ "wide-content" ]
-
 actualContent :: ∀ slots action. Array (HH.HTML slots action) -> HH.HTML slots action
 actualContent = HH.div [HS.class_ "actual-content"]
 

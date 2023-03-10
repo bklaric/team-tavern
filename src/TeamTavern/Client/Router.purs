@@ -12,7 +12,8 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Components.Ads (descriptionLeaderboards, skinLeft, skinRight, stickyLeaderboards)
-import TeamTavern.Client.Components.Content (content, singleContent, wideContent)
+import TeamTavern.Client.Components.Ads as Ads
+import TeamTavern.Client.Components.Content (content, singleContent)
 import TeamTavern.Client.Components.Footer (footer)
 import TeamTavern.Client.Components.Footer as Footer
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
@@ -92,22 +93,7 @@ topBarWithContent handle content' = HH.div_
     [ topBar handle
     , content
         [ skinLeft
-        , HH.div_ $ descriptionLeaderboards <> [content'] <> stickyLeaderboards
-        , skinRight
-        ]
-    , footer
-    ]
-
-wideTopBarWithContent
-    :: ∀ query children left
-    .  Maybe String
-    -> (H.ComponentHTML query (Footer.ChildSlots (topBar :: Slot___ | children)) (Async left))
-    -> H.ComponentHTML query (Footer.ChildSlots (topBar :: Slot___ | children)) (Async left)
-wideTopBarWithContent handle content' = HH.div_
-    [ topBar handle
-    , wideContent
-        [ skinLeft
-        , HH.div_ $ descriptionLeaderboards <> [content'] <> stickyLeaderboards
+        , HH.div_ $ descriptionLeaderboards <> [content', Ads.player] <> stickyLeaderboards
         , skinRight
         ]
     , footer
@@ -120,11 +106,11 @@ render Games = topBarWithContent Nothing $ games
 render About = topBarWithContent Nothing $ about
 render Privacy = topBarWithContent Nothing $ privacyPolicy
 render (Game input) = HH.div_ [ topBar $ Just input.handle, game input, footer ]
-render (GameTabs input) = wideTopBarWithContent (Just input.handle) $ GameTabs.gameTabs input
-render (Player input) = wideTopBarWithContent Nothing $ player input
+render (GameTabs input) = topBarWithContent (Just input.handle) $ GameTabs.gameTabs input
+render (Player input) = topBarWithContent Nothing $ player input
 render (PlayerProfile input) = topBarWithContent Nothing $ playerProfile input
 render (TeamProfile input) = topBarWithContent Nothing $ teamProfile input
-render (Team input) = wideTopBarWithContent Nothing $ team input
+render (Team input) = topBarWithContent Nothing $ team input
 render Register = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ register ] ]
 render SignIn = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ signIn ] ]
 render ForgotPassword = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ forgotPassword ] ]

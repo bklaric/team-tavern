@@ -9,7 +9,7 @@
 .filters-mpu {
     @extend .ad;
     position: sticky;
-    top: 64px;
+    top: 41px;
 }
 
 #celtra-reveal-wrapper, .sticky-leaderboard {
@@ -31,8 +31,14 @@
 
 #nn_skinl {
     justify-self: flex-start;
+    align-self: flex-start;
+    position: sticky;
+    top: 41px;
 }
 
 #nn_skinr {
     justify-self: flex-end;
+    align-self: flex-start;
+    position: sticky;
+    top: 41px;
 }
