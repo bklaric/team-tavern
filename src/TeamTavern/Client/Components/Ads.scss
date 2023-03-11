@@ -30,15 +30,20 @@
 }
 
 #nn_skinl {
-    justify-self: flex-start;
+    justify-self: flex-end;
     align-self: flex-start;
     position: sticky;
     top: 41px;
 }
 
 #nn_skinr {
-    justify-self: flex-end;
+    justify-self: flex-start;
     align-self: flex-start;
     position: sticky;
     top: 41px;
+}
+
+#nn_player {
+    max-width: 800px;
+    margin: auto;
 }
