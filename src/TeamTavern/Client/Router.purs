@@ -16,7 +16,6 @@ import TeamTavern.Client.Components.Ads as Ads
 import TeamTavern.Client.Components.Content (content, singleContent)
 import TeamTavern.Client.Components.Footer (footer)
 import TeamTavern.Client.Components.Footer as Footer
-import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.TopBar (topBar)
 import TeamTavern.Client.Pages.About (about)
 import TeamTavern.Client.Pages.DeleteAlert (deleteAlert)
@@ -46,10 +45,7 @@ import TeamTavern.Client.Script.Analytics (track)
 import TeamTavern.Client.Script.Cookie (getPlayerNickname, hasPlayerIdCookie)
 import TeamTavern.Client.Script.Navigate (navigateReplace_)
 import TeamTavern.Client.Script.QueryParams (getFragmentParam)
-import TeamTavern.Client.Script.ReloadAds (reloadAds)
 import TeamTavern.Client.Shared.Slot (Slot___)
-import TeamTavern.Client.Snippets.Class as HS
-import Type.Proxy (Proxy(..))
 import Web.HTML (window)
 import Web.HTML.Window (localStorage)
 import Web.Storage.Storage (getItem)
@@ -79,8 +75,6 @@ data State
     | ResetPasswordSuccess
     | Onboarding Onboarding.Input
     | Preboarding Preboarding.Input
-    | NetworkN
-    | NetworkN2
     | DeleteAlert
     | NotFound
 
@@ -119,42 +113,6 @@ render ResetPassword = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single
 render ResetPasswordSuccess = singleContent [ resetPasswordSuccess ]
 render (Onboarding input) = onboarding input
 render (Preboarding input) = preboarding input
-render NetworkN = HH.div_
-    [ topBar Nothing
-    , content
-        [ HH.h3_ [ HH.text "nn_lb1" ]
-        , HH.div [ HP.id "nn_lb1" ] []
-        , HH.h3_ [ HH.text "nn_lb2" ]
-        , HH.div [ HP.id "nn_lb2" ] []
-        , HH.h3_ [ HH.text "nn_mpu1" ]
-        , HH.div [ HP.id "nn_mpu1" ] []
-        , HH.h3_ [ HH.text "nn_mobile_lb1_sticky" ]
-        , HH.div [ HP.id "nn_mobile_lb1_sticky", HS.class_ "nn-sticky" ] []
-        , HH.h3_ [ HH.text "nn_mobile_lb2" ]
-        , HH.div [ HP.id "nn_mobile_lb2" ] []
-        , navigationAnchor (Proxy :: _ "network-n-test2") { path: "/network-n-test2", content: HH.text "Go to test page 2" }
-        ]
-    , footer
-    -- , HH.div [ HP.id "nn_1by1" ] []
-    ]
-render NetworkN2 = HH.div_
-    [ topBar Nothing
-    , content
-        [ HH.h3_ [ HH.text "nn_lb1" ]
-        , HH.div [ HP.id "nn_lb1" ] []
-        , HH.h3_ [ HH.text "nn_lb2" ]
-        , HH.div [ HP.id "nn_lb2" ] []
-        , HH.h3_ [ HH.text "nn_mpu1" ]
-        , HH.div [ HP.id "nn_mpu1" ] []
-        , HH.h3_ [ HH.text "nn_mobile_lb1_sticky" ]
-        , HH.div [ HP.id "nn_mobile_lb1_sticky", HS.class_ "nn-sticky" ] []
-        , HH.h3_ [ HH.text "nn_mobile_lb2" ]
-        , HH.div [ HP.id "nn_mobile_lb2" ] []
-        , navigationAnchor (Proxy :: _ "network-n-test") { path: "/network-n-test", content: HH.text "Go to test page 1" }
-        ]
-    , footer
-    -- , HH.div [ HP.id "nn_1by1" ] []
-    ]
 render DeleteAlert = singleContent [ deleteAlert ]
 render NotFound = HH.p_ [ HH.text "You're fucken lost, mate." ]
 
@@ -261,21 +219,12 @@ handleAction (Init state route) = do
             just $ PlayerProfile { nickname, handle }
         ["", "teams", teamHandle, "profiles", gameHandle] ->
             just $ TeamProfile { teamHandle, gameHandle }
-        ["", "network-n-test"] ->
-            just $ NetworkN
-        ["", "network-n-test2"] ->
-            just $ NetworkN2
         ["", "remove-alert" ] ->
             just $ DeleteAlert
         _ ->
             navigateReplace_ "/" *> nothing
     case newState of
-        Just newState' -> do
-            H.put newState'
-            case newState' of
-                NetworkN -> reloadAds
-                NetworkN2 -> reloadAds
-                _ -> pure unit
+        Just newState' -> H.put newState'
         Nothing -> pure unit
 
 handleQuery
