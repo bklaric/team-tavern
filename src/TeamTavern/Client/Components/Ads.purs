@@ -62,3 +62,11 @@ insertMpusInMiddleOrAtEnd array =
     case Array.insertAt 3 mpu array >>= Array.insertAt 4 mobileMpu of
     Nothing -> Array.snoc (Array.snoc array mpu) mobileMpu
     Just arrayWithAds -> arrayWithAds
+
+insertMobileMpuInMiddleOrAtEnd :: ∀ slots action.
+    Array (HH.HTML slots action) -> Array (HH.HTML slots action)
+insertMobileMpuInMiddleOrAtEnd array =
+    -- Try to insert after the third element.
+    case Array.insertAt 3 mobileMpu array of
+    Nothing -> Array.snoc array mobileMpu
+    Just arrayWithAds -> arrayWithAds
