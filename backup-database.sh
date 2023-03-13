@@ -2,7 +2,7 @@
 # UTC ISO timestamp for file name.
 DATETIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 # Dump database, encode it in base64 and store it in variable.
-BACKUP_BASE64=$(docker exec postgres pg_dump | base64)
+BACKUP_BASE64=$(docker exec postgres pg_dump | base64 -w 0)
 # Prepare JSON body for Sendgrid API.
 DATA='{"personalizations": [{"to": [{"email": "branimir.klaric.bk@gmail.com"}]}],"from": {"email": "backup@teamtavern.net"},"subject":"Database backup '$DATETIME'","content": [{"type": "text/plain","value": "Database backup."}], "attachments": [{"content": "'$BACKUP_BASE64'", "type": "application/sql", "filename": "'$DATETIME'-database-backup.sql"}]}'
 # Write JSON body into a file.
