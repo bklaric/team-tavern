@@ -12,7 +12,7 @@ forTeams onClick =
     landingSection
     [ landingSectionImage Nothing "/images/for-teams"
     , landingSectionText $
-        [ landingSectionHeading "fas fa-users" "Looking for players?"
+        [ landingSectionHeading "fas fa-users" "LFM / LFP / Looking for players?"
         , landingSectionDescription "Recruit new members for your team and expand your online community in four easy steps:"
         , landingSectionSubheading "1. Tell us about your team"
         , landingSectionDescription "Describe your team to find players that fit best into your team."
@@ -33,7 +33,7 @@ forTeams' handle title onClick =
     landingSection
     [ landingSectionImage (Just title) $ "/images/" <> handle <> "/for-teams"
     , landingSectionText $
-        [ landingSectionHeading "fas fa-users" "Looking for players?"
+        [ landingSectionHeading "fas fa-users" "LFM / LFP / Looking for players?"
         , landingSectionDescription "Recruit new members for your team and expand your online community in three easy steps:"
         , landingSectionSubheading "1. Tell us about your team"
         , landingSectionDescription "Describe your team to find players that fit best into your team."

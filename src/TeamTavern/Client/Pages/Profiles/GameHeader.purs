@@ -19,8 +19,8 @@ gameHeader { title, shortTitle, tab } = HH.div_ $
         [ contentHeaderSection
             [ contentHeading'
                 case tab of
-                Profiles Players -> [ HH.i [ HS.class_ "fas fa-user content-heading-icon" ] [], HH.text $ title <> " players" ]
-                Profiles Teams -> [ HH.i [ HS.class_ "fas fa-users content-heading-icon" ] [], HH.text $ title <> " teams" ]
+                Profiles Players -> [ HH.i [ HS.class_ "fas fa-user content-heading-icon" ] [], HH.text $ title <> " players / LFG / LFT" ]
+                Profiles Teams -> [ HH.i [ HS.class_ "fas fa-users content-heading-icon" ] [], HH.text $ title <> " teams / LFM / LFP" ]
             ]
         ]
     , contentDescription

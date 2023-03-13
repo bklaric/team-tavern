@@ -51,7 +51,7 @@ render _ =
 handleAction :: ∀ action output slots left.
     Action -> H.HalogenM State action slots output (Async left) Unit
 handleAction Initialize = setMeta
-    "Esports Team Finder | TeamTavern"
+    "Esports Team Finder / LFG / LFT / LFM / LFP | TeamTavern"
     ( "Find esports players and teams looking for teammates on TeamTavern, an esports team finding platform. "
     <> "Create your own player or team profile and let them find you."
     )

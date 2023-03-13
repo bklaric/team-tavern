@@ -18,7 +18,7 @@ features createAccount =
             [ HH.div_
                 [ HH.h3 [ HS.class_ "features-feature-heading" ]
                     [ HH.i [ HS.class_ "fas fa-user feature-icon" ] []
-                    , HH.text "For players"
+                    , HH.text "For players / LFG / LFT"
                     ]
                 , HH.p  [ HS.class_ "features-feature-description" ]
                     [ HH.text """Are you a single player looking for a team?
@@ -29,7 +29,7 @@ features createAccount =
             , HH.div_
                 [ HH.h3 [ HS.class_ "features-feature-heading" ]
                     [ HH.i [ HS.class_ "fas fa-users feature-icon" ] []
-                    , HH.text "For teams"
+                    , HH.text "For teams / LFM / LFP"
                     ]
                 , HH.p  [ HS.class_ "features-feature-description" ]
                     [ HH.text """Do you want to build a team or expand your existing
@@ -74,7 +74,7 @@ features' handle title createAccount =
             [ HH.div_
                 [ HH.h3 [ HS.class_ "features-feature-heading" ]
                     [ HH.i [ HS.class_ "fas fa-user feature-icon" ] []
-                    , HH.text "For players"
+                    , HH.text "For players / LFG / LFT"
                     ]
                 , HH.p  [ HS.class_ "features-feature-description" ]
                     [ HH.text """Are you a single player looking for a team?
@@ -85,7 +85,7 @@ features' handle title createAccount =
             , HH.div_
                 [ HH.h3 [ HS.class_ "features-feature-heading" ]
                     [ HH.i [ HS.class_ "fas fa-users feature-icon" ] []
-                    , HH.text "For teams"
+                    , HH.text "For teams / LFM / LFP"
                     ]
                 , HH.p  [ HS.class_ "features-feature-description" ]
                     [ HH.text """Do you want to build a team or expand your existing

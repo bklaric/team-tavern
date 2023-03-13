@@ -252,11 +252,11 @@ setMetaTags :: String -> GameHeader.ProfileTab -> Effect Unit
 setMetaTags handleOrTitle tab =
     case tab of
     GameHeader.Players ->
-        setMeta ("Players - " <> handleOrTitle <> " Team Finder | TeamTavern")
+        setMeta ("Players / LFG / LFT - " <> handleOrTitle <> " Team Finder | TeamTavern")
         ("Find " <> handleOrTitle <> " players looking for a team on TeamTavern, " <> indefiniteNoun handleOrTitle <> " team finding platform."
         <> " Create your own player profile and let everyone know you're looking to team up.")
     GameHeader.Teams ->
-        setMeta ("Teams - " <> handleOrTitle <> " Team Finder | TeamTavern")
+        setMeta ("Teams / LFM / LFP - " <> handleOrTitle <> " Team Finder | TeamTavern")
         ("Find " <> handleOrTitle <> " teams looking for players on TeamTavern, " <> indefiniteNoun handleOrTitle <> " team finding platform."
         <> " Create your own team profile and recruit new members for your team.")
 

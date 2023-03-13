@@ -77,7 +77,7 @@ loadGame handle = Async.unify do
     pure $ Just content
 
 setMeta' :: ∀ monad. MonadEffect monad => String -> monad Unit
-setMeta' title = setMeta (title <> " Team Finder | TeamTavern")
+setMeta' title = setMeta (title <> " Team Finder / LFG / LFT / LFM / LFP | TeamTavern")
     ( "Find " <> title <> " players and teams looking for teammates on TeamTavern, " <> indefiniteNoun title <> " team finding platform. "
     <> "Create your own player or team profile and let them find you."
     )
