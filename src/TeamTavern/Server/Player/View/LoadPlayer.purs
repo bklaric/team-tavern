@@ -135,12 +135,10 @@ queryString timezone = Query $ """
                             json_agg(json_build_object(
                                 'fieldKey', profile_value.key,
                                 case
-                                    when profile_value.ilk = 1 then 'url'
                                     when profile_value.ilk = 2 then 'optionKey'
                                     when profile_value.ilk = 3 then 'optionKeys'
                                 end,
                                 case
-                                    when profile_value.ilk = 1 then url
                                     when profile_value.ilk = 2 then single
                                     when profile_value.ilk = 3 then multi
                                 end
@@ -153,7 +151,6 @@ queryString timezone = Query $ """
                             field.key,
                             field.ilk,
                             field_value.id as field_value_id,
-                            to_json(field_value.url) as url,
                             to_json(single.key) as single,
                             json_agg(multi.key) as multi
                         from
@@ -163,9 +160,11 @@ queryString timezone = Query $ """
                         left join player_profile_field_value_option as field_value_option
                             on field_value_option.player_profile_field_value_id = field_value.id
                         left join field_option as single
-                            on single.id = field_value.field_option_id
+                            on single.id = field_value_option.field_option_id
+                            and field.ilk = 2
                         left join field_option as multi
                             on multi.id = field_value_option.field_option_id
+                            and field.ilk = 3
                         group by
                             field.id,
                             field_value.id,

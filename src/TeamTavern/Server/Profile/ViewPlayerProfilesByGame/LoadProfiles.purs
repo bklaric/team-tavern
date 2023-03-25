@@ -186,12 +186,10 @@ queryStringWithoutPagination handle timezone filters = Query $ """
                             'icon', field_values.icon
                         ),
                         case
-                            when field_values.ilk = 1 then 'url'
                             when field_values.ilk = 2 then 'option'
                             when field_values.ilk = 3 then 'options'
                         end,
                         case
-                            when field_values.ilk = 1 then field_values.url
                             when field_values.ilk = 2 then field_values.single
                             when field_values.ilk = 3 then field_values.multi
                         end
@@ -214,7 +212,6 @@ queryStringWithoutPagination handle timezone filters = Query $ """
                     field.key,
                     field.icon,
                     field.ordinal,
-                    to_jsonb(field_value.url) as url,
                     jsonb_build_object(
                         'key', single.key,
                         'label', single.label
@@ -233,9 +230,11 @@ queryStringWithoutPagination handle timezone filters = Query $ """
                     left join player_profile_field_value_option as field_value_option
                         on field_value_option.player_profile_field_value_id = field_value.id
                     left join field_option as single
-                        on single.id = field_value.field_option_id
+                        on single.id = field_value_option.field_option_id
+                        and field.ilk = 2
                     left join field_option as multi
                         on multi.id = field_value_option.field_option_id
+                        and field.ilk = 3
                 group by
                     field.id,
                     field_value.id,

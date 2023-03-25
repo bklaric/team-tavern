@@ -17,8 +17,8 @@ type ProfileId = Int
 
 insertUrlValueString :: Query
 insertUrlValueString = Query """
-    insert into player_profile_field_value (player_profile_id, field_id, url, field_option_id)
-    values ($1, $2, $3, null);
+    insert into player_profile_field_value (player_profile_id, field_id, url)
+    values ($1, $2, $3);
     """
 
 insertUrlValue :: ∀ errors.
@@ -28,16 +28,16 @@ insertUrlValue client profileId fieldId url =
 
 -- Insert single select value row.
 
-insertSingleValueString :: Query
-insertSingleValueString = Query """
-    insert into player_profile_field_value (player_profile_id, field_id, url, field_option_id)
-    values ($1, $2, null, $3);
-    """
+-- insertSingleValueString :: Query
+-- insertSingleValueString = Query """
+--     insert into player_profile_field_value (player_profile_id, field_id, url, field_option_id)
+--     values ($1, $2, null, $3);
+--     """
 
-insertSingleValue :: ∀ errors.
-    Client -> ProfileId -> FieldId -> OptionId -> Async (InternalTerror_ errors) Unit
-insertSingleValue client profileId fieldId optionId =
-    queryNone client insertSingleValueString (profileId : fieldId :| optionId)
+-- insertSingleValue :: ∀ errors.
+--     Client -> ProfileId -> FieldId -> OptionId -> Async (InternalTerror_ errors) Unit
+-- insertSingleValue client profileId fieldId optionId =
+--     queryNone client insertSingleValueString (profileId : fieldId :| optionId)
 
 -- Insert multiselect value row and related field value option rows.
 
@@ -54,8 +54,8 @@ insertMultiValueOption client fieldValueId optionId =
 
 insertMultiValueString :: Query
 insertMultiValueString = Query """
-    insert into player_profile_field_value (player_profile_id, field_id, url, field_option_id)
-    values ($1, $2, null, null)
+    insert into player_profile_field_value (player_profile_id, field_id, url)
+    values ($1, $2, null)
     returning player_profile_field_value.id as "fieldValueId";
     """
 
@@ -77,5 +77,5 @@ addFieldValues client profileId fieldValues =
     Async.foreach fieldValues \(FieldValue fieldId fieldValueType) ->
         case fieldValueType of
         Url url -> insertUrlValue client profileId fieldId url
-        Single optionId -> insertSingleValue client profileId fieldId optionId
+        Single optionId -> insertMultiValue client profileId fieldId [optionId]
         Multi optionIds -> insertMultiValue client profileId fieldId optionIds
