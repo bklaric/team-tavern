@@ -29,6 +29,13 @@
     }
 }
 
+#nn_lb2 {
+    @media screen and (min-width: 1000px) {
+        display: block;
+        min-height: 250px;
+    }
+}
+
 #nn_skinl {
     justify-self: flex-end;
     align-self: flex-start;
