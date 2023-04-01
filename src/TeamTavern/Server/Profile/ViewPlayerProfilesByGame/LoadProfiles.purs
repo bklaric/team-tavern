@@ -233,12 +233,12 @@ from (
                         'icon', field_icon
                     ),
                     case
-                        when field_ilk = 2 then 'option'
-                        when field_ilk = 3 then 'options'
+                        when field_ilk = 'single' then 'option'
+                        when field_ilk = 'multi' then 'options'
                     end,
                     case
-                        when field_ilk = 2 then field_options->0
-                        when field_ilk = 3 then field_options
+                        when field_ilk = 'single' then field_options->0
+                        when field_ilk = 'multi' then field_options
                     end
                 ) order by field_ordinal
             ) filter (where field_key is not null),

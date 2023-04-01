@@ -71,9 +71,9 @@ prepareFields :: Array LoadFields.Field -> Array Field
 prepareFields fields =
     fields # Array.mapMaybe \field ->
         case field.ilk, field.options of
-        2, options -> Just $
+        "single", options -> Just $
             Field field.id field.key $ SingleField (prepareOptions options)
-        3, options -> Just $
+        "multi", options -> Just $
             Field field.id field.key $ MultiField (prepareOptions options)
         _, _ -> Nothing
 

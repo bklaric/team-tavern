@@ -100,7 +100,7 @@ create table game
 create table field
     ( id serial not null primary key
     , game_id integer not null references game(id) on delete cascade
-    , ilk integer not null -- 1 (url), 2 (single), 3 (multi)
+    , ilk integer not null -- 'single', 'multi'
     , key varchar(40) not null
     , label varchar(40) not null
     , icon varchar(40) not null

@@ -68,12 +68,12 @@ queryString timezone = Query $ """
                             'icon', field_values.icon
                         ),
                         case
-                            when field_values.ilk = 2 then 'option'
-                            when field_values.ilk = 3 then 'options'
+                            when field_values.ilk = 'single' then 'option'
+                            when field_values.ilk = 'multi' then 'options'
                         end,
                         case
-                            when field_values.ilk = 2 then field_values.single
-                            when field_values.ilk = 3 then field_values.multi
+                            when field_values.ilk = 'single' then field_values.single
+                            when field_values.ilk = 'multi' then field_values.multi
                         end
                     ) order by field_values.ordinal
                 ) filter (where field_values.player_profile_id is not null),
@@ -114,10 +114,10 @@ queryString timezone = Query $ """
                         on field_value_option.player_profile_field_value_id = field_value.id
                     left join field_option as single
                         on single.id = field_value_option.field_option_id
-                        and field.ilk = 2
+                        and field.ilk = 'single'
                     left join field_option as multi
                         on multi.id = field_value_option.field_option_id
-                        and field.ilk = 3
+                        and field.ilk = 'multi'
                 group by
                     field.id,
                     field_value.id,

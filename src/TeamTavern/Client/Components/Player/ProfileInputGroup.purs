@@ -105,7 +105,7 @@ fieldInputGroup
     -> Field
     -> H.ComponentHTML action ChildSlots (Async left)
 fieldInputGroup fieldValues onValue _
-    { ilk: 2, key, label, icon, options } =
+    { ilk: "single", key, label, icon, options } =
     let
     fieldValue' = Map.lookup key fieldValues
     selected = fieldValue' >>= _.optionKey >>= \optionKey ->
@@ -123,7 +123,7 @@ fieldInputGroup fieldValues onValue _
         \option -> onValue key (option <#> _.key)
     ]
 fieldInputGroup fieldValues _ onValue
-    { ilk: 3, key, label, icon, options } =
+    { ilk: "multi", key, label, icon, options } =
     let
     fieldValue' = fieldValues # find \{ fieldKey } -> fieldKey == key
     selected = fieldValue' >>= _.optionKeys # maybe [] \selectedOptionKeys ->

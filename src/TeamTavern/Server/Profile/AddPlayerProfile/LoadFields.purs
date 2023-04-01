@@ -15,7 +15,7 @@ type Option =
 
 type Field =
     { id :: Int
-    , ilk :: Int
+    , ilk :: String
     , key :: String
     , options :: Array Option
     }

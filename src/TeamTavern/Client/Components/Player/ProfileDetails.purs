@@ -48,10 +48,10 @@ profileDetails' fieldValues newOrReturning =
     ( fieldValues
     <#> ( \{ field, option, options } ->
             case field.ilk, option, options of
-            2, Just option', _ -> Just $
+            "single", Just option', _ -> Just $
                 fieldDetail field.icon field.label
                 [ HH.span [ HS.class_ "detail-emphasize" ] [ HH.text option'.label ] ]
-            3, _, Just options' | not $ Array.null options' -> Just $
+            "multi", _, Just options' | not $ Array.null options' -> Just $
                 fieldDetail field.icon field.label
                 ( intercalate [ HH.text ", " ] $ map
                     ( \{ label } ->

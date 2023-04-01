@@ -148,8 +148,6 @@ queryString timezone = Query $ """
                             as options
                         from field
                             left join field_option on field_option.field_id = field.id
-                        where
-                            field.ilk = 2 or field.ilk = 3
                         group by
                             field.id
                         ) as field

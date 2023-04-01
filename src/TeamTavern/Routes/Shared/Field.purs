@@ -10,7 +10,7 @@ type Option =
 type Options = Array Option
 
 type Field =
-    { ilk :: Int
+    { ilk :: String
     , key :: String
     , label :: String
     , icon :: String
@@ -21,7 +21,7 @@ type Fields = Array Field
 
 type Value =
     { field ::
-        { ilk :: Int
+        { ilk :: String
         , key :: String
         , label :: String
         , icon :: String
@@ -34,7 +34,7 @@ type Values = Array Value
 
 type ValueMulti =
     { field ::
-        { ilk :: Int
+        { ilk :: String
         , key :: String
         , label :: String
         , icon :: String
