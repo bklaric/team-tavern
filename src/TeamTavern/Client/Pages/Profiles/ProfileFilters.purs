@@ -1,4 +1,4 @@
-module TeamTavern.Client.Pages.Profiles.ProfileFilters (Option, Field, Input, Output(..), Slot, profileFilters) where
+module TeamTavern.Client.Pages.Profiles.ProfileFilters (Input, Output(..), Slot, profileFilters) where
 
 import Prelude
 
@@ -33,24 +33,13 @@ import TeamTavern.Client.Pages.Profiles.TeamBadge (organizationCheckboxBadges, p
 import TeamTavern.Client.Shared.Slot (Slot_O_)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Alert.CreateAlert as CreateAlertRoute
+import TeamTavern.Routes.Shared.Field (Field, Option)
 import TeamTavern.Routes.Shared.Organization (Organization)
 import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
 import TeamTavern.Routes.Shared.Size (Size)
 import Type.Proxy (Proxy(..))
 import Web.HTML as Html
 import Web.HTML.Window as Window
-
-type Option =
-    { key :: String
-    , label :: String
-    }
-
-type Field =
-    { key :: String
-    , label :: String
-    , icon :: String
-    , options :: Array Option
-    }
 
 type Input =
     { platforms :: Platforms

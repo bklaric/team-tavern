@@ -11,13 +11,14 @@ import Data.Maybe (Maybe(..), maybe)
 import Halogen as H
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Anchor (trackedTextAnchor)
-import TeamTavern.Client.Components.Input (aboutInputSubcontent, ambitionsInputSubcontent, checkboxInput, domainInputLabel, inputError, inputGroup, inputLabel, inputUnderlabel, inputUnderlabel', platformIdLabel, textInput_, textLineInput)
+import TeamTavern.Client.Components.Input (aboutInputSubcontent, ambitionsInputSubcontent, checkboxInput, inputError, inputGroup, inputLabel, inputUnderlabel, inputUnderlabel', platformIdLabel, textInput_, textLineInput)
 import TeamTavern.Client.Components.Select.MultiSelect (multiSelectIndexed)
 import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
 import TeamTavern.Client.Components.Select.SingleSelect (singleSelectIndexed)
 import TeamTavern.Client.Components.Select.SingleSelect as SingleSelect
 import TeamTavern.Client.Shared.Slot (Slot___)
 import TeamTavern.Client.Snippets.Brands (inputBattleNetSvg, inputOriginSvg, inputPlayStationSvg, inputRiotSvg, inputSteamSvg, inputSwitchSvg, inputUbisoftSvg, inputXboxSvg)
+import TeamTavern.Routes.Shared.Field (Field, Option, ValueSimple)
 import TeamTavern.Routes.Shared.Platform (Platform(..))
 import Type.Proxy (Proxy(..))
 
@@ -86,28 +87,7 @@ platformIdInputGroup platform platformId onValue error required =
         Xbox -> "This doesn't look like a valid Gamertag."
         Switch -> "This doesn't look like a valid friend code."
 
-type Option =
-    { key :: String
-    , label :: String
-    }
-
-type Field =
-    { key :: String
-    , ilk :: Int
-    , label :: String
-    , icon :: String
-    , domain :: Maybe String
-    , options :: Maybe (Array Option)
-    }
-
-type FieldValue =
-    { fieldKey :: String
-    , url :: Maybe String
-    , optionKey :: Maybe String
-    , optionKeys :: Maybe (Array String)
-    }
-
-type FieldValues = Map String FieldValue
+type FieldValues = Map String ValueSimple
 
 type ChildSlots =
     ( "singleSelectField" :: SingleSelect.Slot Option String
@@ -121,26 +101,11 @@ fieldInputGroup
     :: ∀ action left
     .  FieldValues
     -> (String -> Maybe String -> action)
-    -> (String -> Maybe String -> action)
     -> (String -> Array String -> action)
-    -> Array String
     -> Field
     -> H.ComponentHTML action ChildSlots (Async left)
-fieldInputGroup fieldValues onValue _ _ urlValueErrors
-    { ilk: 1, key, label, icon, domain: Just domain } =
-    let
-    fieldValue' = Map.lookup key fieldValues
-    url = fieldValue' >>= _.url
-    urlError = urlValueErrors # Array.any (_ == key)
-    in
-    inputGroup $
-    [ domainInputLabel icon label domain
-    , textLineInput url (onValue key)
-    ]
-    <> inputError urlError
-        ("This doesn't look like a valid " <> label <> " (" <> domain <> ") address.")
-fieldInputGroup fieldValues _ onValue _ _
-    { ilk: 2, key, label, icon, options: Just options } =
+fieldInputGroup fieldValues onValue _
+    { ilk: "single", key, label, icon, options } =
     let
     fieldValue' = Map.lookup key fieldValues
     selected = fieldValue' >>= _.optionKey >>= \optionKey ->
@@ -157,8 +122,8 @@ fieldInputGroup fieldValues _ onValue _ _
         }
         \option -> onValue key (option <#> _.key)
     ]
-fieldInputGroup fieldValues _ _ onValue _
-    { ilk: 3, key, label, icon, options: Just options } =
+fieldInputGroup fieldValues _ onValue
+    { ilk: "multi", key, label, icon, options } =
     let
     fieldValue' = fieldValues # find \{ fieldKey } -> fieldKey == key
     selected = fieldValue' >>= _.optionKeys # maybe [] \selectedOptionKeys ->
@@ -175,7 +140,7 @@ fieldInputGroup fieldValues _ _ onValue _
         }
         \options' -> onValue key (options' <#> _.key)
     ]
-fieldInputGroup _ _ _ _ _ _ = HH.div_ []
+fieldInputGroup _ _ _ _ = HH.div_ []
 
 newOrReturningInputGroup :: ∀ slots action.
     Boolean -> (Boolean -> action) -> HH.HTML slots action

@@ -10,7 +10,7 @@ import Postgres.Query (class Querier, Query(..), (:|))
 import TeamTavern.Routes.Profile.ViewPlayerProfile (RouteParams, OkContent)
 import TeamTavern.Routes.Shared.Types (Timezone)
 import TeamTavern.Server.Infrastructure.Error (elaborate)
-import TeamTavern.Server.Infrastructure.Postgres (LoadSingleError, playerAdjustedWeekdayFrom, playerAdjustedWeekdayTo, playerAdjustedWeekendFrom, playerAdjustedWeekendTo, queryFirstNotFound)
+import TeamTavern.Server.Infrastructure.Postgres (LoadSingleError, adjustedWeekdayFrom, adjustedWeekdayTo, adjustedWeekendFrom, adjustedWeekendTo, queryFirstNotFound)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 
 queryString :: Timezone -> Query
@@ -41,15 +41,15 @@ queryString timezone = Query $ """
             case
                 when player.weekday_from is not null and player.weekday_to is not null
                 then json_build_object(
-                    'from', to_char(""" <> playerAdjustedWeekdayFrom timezone <> """, 'HH24:MI'),
-                    'to', to_char(""" <> playerAdjustedWeekdayTo timezone <> """, 'HH24:MI')
+                    'from', to_char(""" <> adjustedWeekdayFrom timezone <> """, 'HH24:MI'),
+                    'to', to_char(""" <> adjustedWeekdayTo timezone <> """, 'HH24:MI')
                 )
             end as "weekdayOnline",
             case
                 when player.weekend_from is not null and player.weekend_to is not null
                 then json_build_object(
-                    'from', to_char(""" <> playerAdjustedWeekendFrom timezone <> """, 'HH24:MI'),
-                    'to', to_char(""" <> playerAdjustedWeekendTo timezone <> """, 'HH24:MI')
+                    'from', to_char(""" <> adjustedWeekendFrom timezone <> """, 'HH24:MI'),
+                    'to', to_char(""" <> adjustedWeekendTo timezone <> """, 'HH24:MI')
                 )
             end as "weekendOnline",
             -- Profile
@@ -68,14 +68,12 @@ queryString timezone = Query $ """
                             'icon', field_values.icon
                         ),
                         case
-                            when field_values.ilk = 1 then 'url'
-                            when field_values.ilk = 2 then 'option'
-                            when field_values.ilk = 3 then 'options'
+                            when field_values.ilk = 'single' then 'option'
+                            when field_values.ilk = 'multi' then 'options'
                         end,
                         case
-                            when field_values.ilk = 1 then field_values.url
-                            when field_values.ilk = 2 then field_values.single
-                            when field_values.ilk = 3 then field_values.multi
+                            when field_values.ilk = 'single' then field_values.single
+                            when field_values.ilk = 'multi' then field_values.multi
                         end
                     ) order by field_values.ordinal
                 ) filter (where field_values.player_profile_id is not null),
@@ -97,7 +95,6 @@ queryString timezone = Query $ """
                     field.key,
                     field.icon,
                     field.ordinal,
-                    to_jsonb(field_value.url) as url,
                     jsonb_build_object(
                         'key', single.key,
                         'label', single.label
@@ -116,9 +113,11 @@ queryString timezone = Query $ """
                     left join player_profile_field_value_option as field_value_option
                         on field_value_option.player_profile_field_value_id = field_value.id
                     left join field_option as single
-                        on single.id = field_value.field_option_id
+                        on single.id = field_value_option.field_option_id
+                        and field.ilk = 'single'
                     left join field_option as multi
                         on multi.id = field_value_option.field_option_id
+                        and field.ilk = 'multi'
                 group by
                     field.id,
                     field_value.id,

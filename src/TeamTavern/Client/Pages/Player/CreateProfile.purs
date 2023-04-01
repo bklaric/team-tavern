@@ -3,7 +3,6 @@ module TeamTavern.Client.Pages.Player.CreateProfile (Input, createProfile) where
 import Prelude
 
 import Async (Async)
-import Data.Array as Array
 import Data.Either (Either(..))
 import Data.Foldable (foldl)
 import Data.Maybe (Maybe(..))
@@ -94,8 +93,7 @@ handleAction (SendRequest event) = do
         , otherError = false
         , profile
             { details
-                { urlErrors = []
-                , aboutError = false
+                { aboutError = false
                 , ambitionsError = false
                 }
             , contacts
@@ -122,8 +120,6 @@ handleAction (SendRequest event) = do
                 { profile: state # foldl \state' error' -> error' # match
                     { about: const state' { profile { details { aboutError = true } } }
                     , ambitions: const state' { profile { details { ambitionsError = true } } }
-                    , url: \{ key } -> state' { profile { details
-                        { urlErrors = Array.cons key state'.profile.details.urlErrors } } }
                     }
                 , contacts: state # foldl \state' error' -> error' # match
                     { discordTag: const state' { profile { contacts { discordTagError = true } } }

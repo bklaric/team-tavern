@@ -8,7 +8,7 @@ import Data.Map as Map
 import Data.Maybe (Maybe(..))
 import Data.Traversable (find)
 import Data.Tuple (Tuple(..))
-import TeamTavern.Routes.Profile.AddTeamProfile as AddTeamProfile
+import TeamTavern.Routes.Shared.Field (ValuesSimpleMulti, ValueSimpleMulti)
 import TeamTavern.Server.Profile.AddTeamProfile.LoadFields as LoadFields
 
 -- Field types.
@@ -49,7 +49,7 @@ prepareFields fields =
 
 validateFieldValue
     :: Array Field
-    -> AddTeamProfile.RequestContentFieldValue
+    -> ValueSimpleMulti
     -> Maybe FieldValue
 validateFieldValue fields { fieldKey, optionKeys } =
     fields
@@ -66,7 +66,7 @@ validateFieldValue fields { fieldKey, optionKeys } =
 
 validateFieldValues
     :: Array LoadFields.Field
-    -> Array AddTeamProfile.RequestContentFieldValue
+    -> ValuesSimpleMulti
     -> Array FieldValue
 validateFieldValues fields fieldValues =
     fieldValues # Array.mapMaybe (validateFieldValue $ prepareFields fields)

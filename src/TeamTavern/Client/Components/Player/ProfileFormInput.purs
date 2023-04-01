@@ -1,4 +1,4 @@
-module TeamTavern.Client.Components.Player.ProfileFormInput (FieldValues, Input, Output, Slot, emptyInput, profileFormInput) where
+module TeamTavern.Client.Components.Player.ProfileFormInput (Input, Output, Slot, emptyInput, profileFormInput) where
 
 import Prelude
 
@@ -15,26 +15,24 @@ import Record.Extra (pick)
 import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.Input (inputGroup, inputGroupsHeading, inputGroupsHeading', inputSublabel, responsiveInputGroups)
 import TeamTavern.Client.Components.Player.PlayerInputGroup (discordTagInputGroup)
-import TeamTavern.Client.Components.Player.ProfileInputGroup (ChildSlots, Field, FieldValue, aboutInputGroup, ambitionsInputGroup, fieldInputGroup, newOrReturningInputGroup, platformIdInputGroup)
+import TeamTavern.Client.Components.Player.ProfileInputGroup (ChildSlots, aboutInputGroup, ambitionsInputGroup, fieldInputGroup, newOrReturningInputGroup, platformIdInputGroup)
 import TeamTavern.Client.Components.Player.ProfileInputGroup as Input
 import TeamTavern.Client.Pages.Profiles.TeamBadge (platformRadioBadges)
 import TeamTavern.Client.Shared.Slot (Slot_O_)
+import TeamTavern.Routes.Shared.Field (Fields, ValuesSimple, ValueSimple)
 import TeamTavern.Routes.Shared.Platform (Platform(..), Platforms)
 import TeamTavern.Routes.Shared.PlayerContacts (PlayerContacts, PlayerContactsOpen)
 import Type.Proxy (Proxy(..))
 
-type FieldValues = Array FieldValue
-
 type Input =
     { details ::
         { platforms :: Platforms
-        , fields :: Array Field
+        , fields :: Fields
         , platform :: Platform
-        , fieldValues :: FieldValues
+        , fieldValues :: ValuesSimple
         , newOrReturning :: Boolean
         , about :: String
         , ambitions :: String
-        , urlErrors :: Array String
         , aboutError :: Boolean
         , ambitionsError :: Boolean
         }
@@ -54,7 +52,7 @@ type Input =
 type Output =
     { details ::
         { platform :: Platform
-        , fieldValues :: FieldValues
+        , fieldValues :: ValuesSimple
         , about :: String
         , ambitions :: String
         , newOrReturning :: Boolean
@@ -65,13 +63,12 @@ type Output =
 type State =
     { details ::
         { platforms :: Platforms
-        , fields :: Array Field
+        , fields :: Fields
         , platform :: Platform
         , fieldValues :: Input.FieldValues
         , newOrReturning :: Boolean
         , about :: String
         , ambitions :: String
-        , urlErrors :: Array String
         , aboutError :: Boolean
         , ambitionsError :: Boolean
         }
@@ -91,7 +88,6 @@ type State =
 data Action
     = Receive Input
     | UpdatePlatform Platform
-    | UpdateUrl String (Maybe String)
     | UpdateSingleSelect String (Maybe String)
     | UpdateMultiSelect String (Array String)
     | UpdateNewOrReturning Boolean
@@ -112,13 +108,12 @@ type Slot = Slot_O_ Output
 fieldValuesToArray :: ∀ key value. Map key value -> Array value
 fieldValuesToArray = Array.fromFoldable <<< Map.values
 
-fieldValuesToMap :: ∀ fields.
-    Array { fieldKey :: String | fields } -> Map String { fieldKey :: String | fields }
+fieldValuesToMap :: ValuesSimple -> Map String ValueSimple
 fieldValuesToMap = foldl (\map value -> Map.insert value.fieldKey value map) Map.empty
 
 render :: ∀ left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render
-    { details: { platforms, fields, platform, fieldValues, newOrReturning, about, ambitions, urlErrors, aboutError, ambitionsError }
+    { details: { platforms, fields, platform, fieldValues, newOrReturning, about, ambitions, aboutError, ambitionsError }
     , contacts
     }
     = HH.div_ $
@@ -144,9 +139,7 @@ render
     <>
     [ inputGroupsHeading "Details"
     , responsiveInputGroups $
-        ( fields <#> fieldInputGroup fieldValues
-            UpdateUrl UpdateSingleSelect UpdateMultiSelect urlErrors
-        )
+        (fields <#> fieldInputGroup fieldValues UpdateSingleSelect UpdateMultiSelect)
         <>
         [ newOrReturningInputGroup newOrReturning UpdateNewOrReturning ]
     , inputGroupsHeading' [ HH.text "About", divider, inputSublabel "Write a bit about yourself. What are you like? What are you looking for in other players?" ]
@@ -166,20 +159,6 @@ handleAction :: ∀ left. Action -> H.HalogenM State Action ChildSlots Output (A
 handleAction (Receive input) =
     H.put $ input { details { fieldValues = fieldValuesToMap input.details.fieldValues } }
 handleAction (UpdatePlatform platform) = H.modify _ { details { platform = platform } } >>= raiseOutput
-handleAction (UpdateUrl fieldKey url) = do
-    state <- H.modify \state -> state
-        { details
-            { fieldValues =
-                case url of
-                Nothing -> Map.delete fieldKey state.details.fieldValues
-                Just url' ->
-                    Map.insert
-                    fieldKey
-                    { fieldKey, url: Just url', optionKey: Nothing, optionKeys: Nothing }
-                    state.details.fieldValues
-            }
-        }
-    raiseOutput state
 handleAction (UpdateSingleSelect fieldKey optionKey) = do
     state <- H.modify \state -> state
         { details
@@ -189,7 +168,7 @@ handleAction (UpdateSingleSelect fieldKey optionKey) = do
                 Just optionKey' ->
                     Map.insert
                     fieldKey
-                    { fieldKey, url: Nothing, optionKey: Just optionKey', optionKeys: Nothing }
+                    { fieldKey, optionKey: Just optionKey', optionKeys: Nothing }
                     state.details.fieldValues
             }
         }
@@ -204,7 +183,6 @@ handleAction (UpdateMultiSelect fieldKey optionKeys) = do
                     Map.insert
                     fieldKey
                     { fieldKey
-                    , url: Nothing
                     , optionKey: Nothing
                     , optionKeys: Just $ Array.cons head tail
                     }
@@ -236,7 +214,7 @@ component = H.mkComponent
     }
 
 emptyInput :: ∀ props.
-    { platforms :: Platforms, fields :: Array Field | props } -> Input
+    { platforms :: Platforms, fields :: Fields | props } -> Input
 emptyInput { platforms, fields } =
     { details:
         { platforms
@@ -245,7 +223,6 @@ emptyInput { platforms, fields } =
         , fieldValues: []
         , newOrReturning: false
         , about: ""
-        , urlErrors: []
         , aboutError: false
         , ambitions: ""
         , ambitionsError: false

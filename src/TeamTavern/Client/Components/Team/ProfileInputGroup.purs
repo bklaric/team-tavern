@@ -13,19 +13,8 @@ import Halogen.HTML as HH
 import TeamTavern.Client.Components.Input (aboutInputSubcontent, ambitionsInputSubcontent, checkboxInput, inputGroup, inputLabel, textInput_)
 import TeamTavern.Client.Components.Select.MultiSelect (multiSelectIndexed)
 import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
+import TeamTavern.Routes.Shared.Field (Field, Option)
 import Type.Proxy (Proxy(..))
-
-type Option =
-    { key :: String
-    , label :: String
-    }
-
-type Field =
-    { key :: String
-    , label :: String
-    , icon :: String
-    , options :: Array Option
-    }
 
 type FieldValues = MultiMap String String
 

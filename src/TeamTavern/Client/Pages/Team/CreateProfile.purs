@@ -3,7 +3,6 @@ module TeamTavern.Client.Pages.Team.CreateProfile (Input, createProfile) where
 import Prelude
 
 import Async (Async)
-import Data.Array as Array
 import Data.Either (Either(..))
 import Data.Foldable (foldl)
 import Data.Maybe (Maybe(..))
@@ -148,10 +147,7 @@ component = H.mkComponent
         , title
         , profile: (ProfileFormInput.emptyInput
             { platforms
-            , fields: fields
-                <#> (\{ key, label, icon, options } ->
-                    options <#> { key, label, icon, options: _ })
-                # Array.catMaybes
+            , fields
             })
             { contacts =
                 { discordTag

@@ -55,7 +55,7 @@ profiles team @ { profiles: profiles' } status showEditProfileModal showDeletePr
         SignedInOwner -> "Your team hasn't created any profiles."
         _ -> "This team hasn't created any profiles." ] ]
     else profiles' <#> \profile -> let
-        profileDetails' = profileDetails profile
+        profileDetails' = profileDetails profile.fields profile.fieldValues profile.newOrReturning
         about = textDetail profile.about
         ambitions = textDetail profile.ambitions
         in

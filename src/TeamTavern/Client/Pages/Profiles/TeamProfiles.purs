@@ -30,6 +30,7 @@ import TeamTavern.Client.Shared.Slot (Slot__String, Slot_O_)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Client.Snippets.PreventMouseDefault (preventMouseDefault)
 import TeamTavern.Routes.Profile.Shared (pageSize)
+import TeamTavern.Routes.Shared.Field (ValuesMulti)
 import TeamTavern.Routes.Shared.Organization (OrganizationNW(..), nameOrHandleNW)
 import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
 import TeamTavern.Routes.Shared.Size (Size(..))
@@ -57,18 +58,7 @@ type TeamProfile = TeamContactsOpen
     , allPlatforms :: Platforms
     , size :: Size
     , selectedPlatforms :: Array Platform
-    , fieldValues :: Array
-        { field ::
-            { ilk :: Int
-            , key :: String
-            , label :: String
-            , icon :: String
-            }
-        , options :: Array
-            { key :: String
-            , label :: String
-            }
-        }
+    , fieldValues :: ValuesMulti
     , newOrReturning :: Boolean
     , about :: Array String
     , ambitions :: Array String
@@ -105,7 +95,7 @@ profileSection :: ∀ action left.
     String -> TeamProfile -> HH.ComponentHTML action ChildSlots (Async left)
 profileSection handle profile = let
     teamDetails' = teamDetails profile
-    profileDetails'' = profileDetails' profile
+    profileDetails'' = profileDetails' profile.fieldValues profile.newOrReturning
     contactsDetails' = profileContacts profile
     about = textDetail profile.about
     ambitions = textDetail profile.ambitions

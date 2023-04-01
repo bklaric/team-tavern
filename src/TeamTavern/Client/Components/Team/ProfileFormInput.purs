@@ -1,4 +1,4 @@
-module TeamTavern.Client.Components.Team.ProfileFormInput (FieldValues, Input, Output, Slot, emptyInput, profileFormInput) where
+module TeamTavern.Client.Components.Team.ProfileFormInput (Input, Output, Slot, emptyInput, profileFormInput) where
 
 import Prelude
 
@@ -19,22 +19,18 @@ import TeamTavern.Client.Components.Input (inputErrorSublabel, inputGroup, input
 import TeamTavern.Client.Components.Player.PlayerInputGroup (discordTagInputGroup)
 import TeamTavern.Client.Components.Player.ProfileInputGroup (platformIdInputGroup)
 import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
-import TeamTavern.Client.Components.Team.ProfileInputGroup (Field, Option, aboutInputGroup, ambitionsInputGroup, fieldInputGroup, newOrReturningInputGroup)
+import TeamTavern.Client.Components.Team.ProfileInputGroup (aboutInputGroup, ambitionsInputGroup, fieldInputGroup, newOrReturningInputGroup)
 import TeamTavern.Client.Components.Team.ProfileInputGroup as Input
 import TeamTavern.Client.Components.Team.SizeInfo (sizeInfo)
 import TeamTavern.Client.Components.Team.TeamInputGroup (discordServerInputGroup)
 import TeamTavern.Client.Pages.Profiles.TeamBadge (platformCheckboxBadges, sizeRadioBadges)
 import TeamTavern.Client.Shared.Slot (Slot___, Slot_O_)
 import TeamTavern.Client.Snippets.Class as HS
+import TeamTavern.Routes.Shared.Field (Field, Option, ValuesSimpleMulti)
 import TeamTavern.Routes.Shared.Platform (Platform(..), Platforms)
 import TeamTavern.Routes.Shared.Size (Size(..))
 import TeamTavern.Routes.Shared.TeamContacts (TeamContactsOpen, TeamContacts)
 import Type.Proxy (Proxy(..))
-
-type FieldValues = Array
-    { fieldKey :: String
-    , optionKeys :: Array String
-    }
 
 type Input =
     { details ::
@@ -43,7 +39,7 @@ type Input =
         , selectedPlatforms :: Array Platform
         , platformsError :: Boolean
         , fields :: Array Field
-        , fieldValues :: FieldValues
+        , fieldValues :: ValuesSimpleMulti
         , newOrReturning :: Boolean
         , about :: String
         , ambitions :: String
@@ -68,7 +64,7 @@ type Output =
     { details ::
         { size :: Size
         , selectedPlatforms :: Array Platform
-        , fieldValues :: FieldValues
+        , fieldValues :: ValuesSimpleMulti
         , newOrReturning :: Boolean
         , about :: String
         , ambitions :: String
@@ -181,11 +177,11 @@ render { details, contacts }
     , ambitionsInputGroup details.ambitions UpdateAmbitions details.ambitionsError
     ]
 
-fieldValuesToArray :: Input.FieldValues -> FieldValues
+fieldValuesToArray :: Input.FieldValues -> ValuesSimpleMulti
 fieldValuesToArray = (MultiMap.toUnfoldable' :: _ -> Array (Tuple _ (Array _))) >>>
     map \(Tuple fieldKey optionKeys) -> { fieldKey, optionKeys }
 
-fieldValuesToMap :: FieldValues -> Input.FieldValues
+fieldValuesToMap :: ValuesSimpleMulti -> Input.FieldValues
 fieldValuesToMap =
     foldl
     (\fieldValues { fieldKey, optionKeys } ->

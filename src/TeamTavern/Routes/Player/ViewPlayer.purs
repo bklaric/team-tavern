@@ -2,6 +2,7 @@ module TeamTavern.Routes.Player.ViewPlayer where
 
 import Data.Maybe (Maybe)
 import Jarilo (type (!), type (/), type (==>), Capture, Get, Literal, Mandatory, NotFound_, OkJson, Internal_)
+import TeamTavern.Routes.Shared.Field (Fields, ValuesSimple)
 import TeamTavern.Routes.Shared.Organization (OrganizationN)
 import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
 import TeamTavern.Routes.Shared.PlayerContacts (PlayerContactsOpen)
@@ -22,24 +23,9 @@ type OkContentProfile =
     { handle :: String
     , title :: String
     , platforms :: Platforms
-    , fields :: Array
-        { key :: String
-        , ilk :: Int
-        , label :: String
-        , icon :: String
-        , domain :: Maybe String
-        , options :: Maybe (Array
-            { key :: String
-            , label :: String
-            })
-        }
+    , fields :: Fields
     , platform :: Platform
-    , fieldValues :: Array
-        { fieldKey :: String
-        , url :: Maybe String
-        , optionKey :: Maybe String
-        , optionKeys :: Maybe (Array String)
-        }
+    , fieldValues :: ValuesSimple
     , newOrReturning :: Boolean
     , about :: Array String
     , ambitions :: Array String

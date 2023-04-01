@@ -43,8 +43,8 @@ validateProfile'
     { fields }
     { platform, fieldValues, newOrReturning, about, ambitions } =
     { platform, fieldValues: _, newOrReturning, about: _, ambitions: _ }
-    <$> validateFieldValues fields fieldValues
-    <*> validateAbout about
+    (validateFieldValues fields fieldValues)
+    <$> validateAbout about
     <*> validateAmbitions ambitions
 
 validateProfile

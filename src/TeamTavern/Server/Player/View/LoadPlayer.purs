@@ -10,7 +10,7 @@ import Postgres.Query (class Querier, Query(..), (:|))
 import TeamTavern.Routes.Player.ViewPlayer as ViewPlayer
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Server.Infrastructure.Error (elaborate)
-import TeamTavern.Server.Infrastructure.Postgres (LoadSingleError, playerAdjustedWeekdayFrom, playerAdjustedWeekdayTo, playerAdjustedWeekendFrom, playerAdjustedWeekendTo, queryFirstNotFound)
+import TeamTavern.Server.Infrastructure.Postgres (LoadSingleError, adjustedWeekdayFrom, adjustedWeekdayTo, adjustedWeekendFrom, adjustedWeekendTo, queryFirstNotFound)
 
 queryString :: String -> Query
 queryString timezone = Query $ """
@@ -36,8 +36,8 @@ queryString timezone = Query $ """
         case
             when player.weekday_from is not null and player.weekday_to is not null
             then json_build_object(
-                'clientFrom', to_char(""" <> playerAdjustedWeekdayFrom timezone <> """, 'HH24:MI'),
-                'clientTo', to_char(""" <> playerAdjustedWeekdayTo timezone <> """, 'HH24:MI'),
+                'clientFrom', to_char(""" <> adjustedWeekdayFrom timezone <> """, 'HH24:MI'),
+                'clientTo', to_char(""" <> adjustedWeekdayTo timezone <> """, 'HH24:MI'),
                 'sourceFrom', to_char(player.weekday_from, 'HH24:MI'),
                 'sourceTo', to_char(player.weekday_to, 'HH24:MI')
             )
@@ -45,8 +45,8 @@ queryString timezone = Query $ """
         case
             when player.weekend_from is not null and player.weekend_to is not null
             then json_build_object(
-                'clientFrom', to_char(""" <> playerAdjustedWeekendFrom timezone <> """, 'HH24:MI'),
-                'clientTo', to_char(""" <> playerAdjustedWeekendTo timezone <> """, 'HH24:MI'),
+                'clientFrom', to_char(""" <> adjustedWeekendFrom timezone <> """, 'HH24:MI'),
+                'clientTo', to_char(""" <> adjustedWeekendTo timezone <> """, 'HH24:MI'),
                 'sourceFrom', to_char(player.weekend_from, 'HH24:MI'),
                 'sourceTo', to_char(player.weekend_to, 'HH24:MI')
             )
@@ -93,7 +93,6 @@ queryString timezone = Query $ """
                                     'label', label,
                                     'key', key,
                                     'icon', icon,
-                                    'domain', domain,
                                     'options', options
                                 )
                                 order by ordinal
@@ -111,7 +110,6 @@ queryString timezone = Query $ """
                             field.key,
                             field.icon,
                             field.ordinal,
-                            field.domain,
                             json_agg(
                                 json_build_object(
                                     'key', field_option.key,
@@ -135,14 +133,12 @@ queryString timezone = Query $ """
                             json_agg(json_build_object(
                                 'fieldKey', profile_value.key,
                                 case
-                                    when profile_value.ilk = 1 then 'url'
-                                    when profile_value.ilk = 2 then 'optionKey'
-                                    when profile_value.ilk = 3 then 'optionKeys'
+                                    when profile_value.ilk = 'single' then 'optionKey'
+                                    when profile_value.ilk = 'multi' then 'optionKeys'
                                 end,
                                 case
-                                    when profile_value.ilk = 1 then url
-                                    when profile_value.ilk = 2 then single
-                                    when profile_value.ilk = 3 then multi
+                                    when profile_value.ilk = 'single' then single
+                                    when profile_value.ilk = 'multi' then multi
                                 end
                             )) filter (where profile_value.field_value_id is not null),
                             '[]'
@@ -153,7 +149,6 @@ queryString timezone = Query $ """
                             field.key,
                             field.ilk,
                             field_value.id as field_value_id,
-                            to_json(field_value.url) as url,
                             to_json(single.key) as single,
                             json_agg(multi.key) as multi
                         from
@@ -163,9 +158,11 @@ queryString timezone = Query $ """
                         left join player_profile_field_value_option as field_value_option
                             on field_value_option.player_profile_field_value_id = field_value.id
                         left join field_option as single
-                            on single.id = field_value.field_option_id
+                            on single.id = field_value_option.field_option_id
+                            and field.ilk = 'single'
                         left join field_option as multi
                             on multi.id = field_value_option.field_option_id
+                            and field.ilk = 'multi'
                         group by
                             field.id,
                             field_value.id,
