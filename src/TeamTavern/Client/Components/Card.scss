@@ -2,9 +2,7 @@
     border-top: $border;
     border-bottom: $border;
     background-color: white;
-    margin: 0 auto 21px;
     width: 100%;
-    max-width: 960px;
 
     &:last-child {
         margin-bottom: 0;
@@ -14,7 +12,7 @@
         border-top: $border;
     }
 
-    @media screen and (min-width: 960px) {
+    @media screen and (min-width: 1000px) {
         border: $border;
         border-radius: 4px;
     }
@@ -34,6 +32,7 @@
     font-size: 14px;
     line-height: 1.5;
     margin: 0;
+    flex-shrink: 0;
 }
 
 .card-subheading {
@@ -42,7 +41,7 @@
     color: $light-text-color;
 }
 
-.card-header > * {
+.card-header>* {
     min-height: 40px;
     box-sizing: border-box;
     display: flex;

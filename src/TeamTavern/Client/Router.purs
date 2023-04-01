@@ -11,10 +11,11 @@ import Halogen (liftEffect)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
-import TeamTavern.Client.Components.Content (content, singleContent, wideContent)
+import TeamTavern.Client.Components.Ads (descriptionLeaderboards, skinLeft, skinRight, stickyLeaderboards)
+import TeamTavern.Client.Components.Ads as Ads
+import TeamTavern.Client.Components.Content (content, singleContent)
 import TeamTavern.Client.Components.Footer (footer)
 import TeamTavern.Client.Components.Footer as Footer
-import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.TopBar (topBar)
 import TeamTavern.Client.Pages.About (about)
 import TeamTavern.Client.Pages.DeleteAlert (deleteAlert)
@@ -44,10 +45,7 @@ import TeamTavern.Client.Script.Analytics (track)
 import TeamTavern.Client.Script.Cookie (getPlayerNickname, hasPlayerIdCookie)
 import TeamTavern.Client.Script.Navigate (navigateReplace_)
 import TeamTavern.Client.Script.QueryParams (getFragmentParam)
-import TeamTavern.Client.Script.ReloadAds (reloadAds)
 import TeamTavern.Client.Shared.Slot (Slot___)
-import TeamTavern.Client.Snippets.Class as HS
-import Type.Proxy (Proxy(..))
 import Web.HTML (window)
 import Web.HTML.Window (localStorage)
 import Web.Storage.Storage (getItem)
@@ -77,37 +75,36 @@ data State
     | ResetPasswordSuccess
     | Onboarding Onboarding.Input
     | Preboarding Preboarding.Input
-    | NetworkN
-    | NetworkN2
     | DeleteAlert
     | NotFound
 
 topBarWithContent
     :: ∀ query children left
     .  Maybe String
-    -> Array (H.ComponentHTML query (Footer.ChildSlots (topBar :: Slot___ | children)) (Async left))
+    -> (H.ComponentHTML query (Footer.ChildSlots (topBar :: Slot___ | children)) (Async left))
     -> H.ComponentHTML query (Footer.ChildSlots (topBar :: Slot___ | children)) (Async left)
-topBarWithContent handle content' = HH.div_ [ topBar handle, content content', footer ]
-
-wideTopBarWithContent
-    :: ∀ query children left
-    .  Maybe String
-    -> Array (H.ComponentHTML query (Footer.ChildSlots (topBar :: Slot___ | children)) (Async left))
-    -> H.ComponentHTML query (Footer.ChildSlots (topBar :: Slot___ | children)) (Async left)
-wideTopBarWithContent handle content' = HH.div_ [ topBar handle, wideContent content', footer ]
+topBarWithContent handle content' = HH.div_
+    [ topBar handle
+    , content
+        [ skinLeft
+        , HH.div_ $ descriptionLeaderboards <> [content', Ads.player] <> stickyLeaderboards
+        , skinRight
+        ]
+    , footer
+    ]
 
 render :: ∀ action left. State -> H.ComponentHTML action _ (Async left)
 render Empty = HH.div_ []
 render Home = HH.div_ [ topBar Nothing, home, footer ]
-render Games = topBarWithContent Nothing [ games ]
-render About = topBarWithContent Nothing [ about ]
-render Privacy = topBarWithContent Nothing [ privacyPolicy ]
+render Games = topBarWithContent Nothing $ games
+render About = topBarWithContent Nothing $ about
+render Privacy = topBarWithContent Nothing $ privacyPolicy
 render (Game input) = HH.div_ [ topBar $ Just input.handle, game input, footer ]
-render (GameTabs input) = wideTopBarWithContent (Just input.handle) [ GameTabs.gameTabs input ]
-render (Player input) = wideTopBarWithContent Nothing [ player input ]
-render (PlayerProfile input) = topBarWithContent Nothing [ playerProfile input ]
-render (TeamProfile input) = topBarWithContent Nothing [ teamProfile input ]
-render (Team input) = wideTopBarWithContent Nothing [ team input ]
+render (GameTabs input) = topBarWithContent (Just input.handle) $ GameTabs.gameTabs input
+render (Player input) = topBarWithContent Nothing $ player input
+render (PlayerProfile input) = topBarWithContent Nothing $ playerProfile input
+render (TeamProfile input) = topBarWithContent Nothing $ teamProfile input
+render (Team input) = topBarWithContent Nothing $ team input
 render Register = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ register ] ]
 render SignIn = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ signIn ] ]
 render ForgotPassword = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ forgotPassword ] ]
@@ -116,42 +113,6 @@ render ResetPassword = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single
 render ResetPasswordSuccess = singleContent [ resetPasswordSuccess ]
 render (Onboarding input) = onboarding input
 render (Preboarding input) = preboarding input
-render NetworkN = HH.div_
-    [ topBar Nothing
-    , content
-        [ HH.h3_ [ HH.text "nn_lb1" ]
-        , HH.div [ HP.id "nn_lb1" ] []
-        , HH.h3_ [ HH.text "nn_lb2" ]
-        , HH.div [ HP.id "nn_lb2" ] []
-        , HH.h3_ [ HH.text "nn_mpu1" ]
-        , HH.div [ HP.id "nn_mpu1" ] []
-        , HH.h3_ [ HH.text "nn_mobile_lb1_sticky" ]
-        , HH.div [ HP.id "nn_mobile_lb1_sticky", HS.class_ "nn-sticky" ] []
-        , HH.h3_ [ HH.text "nn_mobile_lb2" ]
-        , HH.div [ HP.id "nn_mobile_lb2" ] []
-        , navigationAnchor (Proxy :: _ "network-n-test2") { path: "/network-n-test2", content: HH.text "Go to test page 2" }
-        ]
-    , footer
-    -- , HH.div [ HP.id "nn_1by1" ] []
-    ]
-render NetworkN2 = HH.div_
-    [ topBar Nothing
-    , content
-        [ HH.h3_ [ HH.text "nn_lb1" ]
-        , HH.div [ HP.id "nn_lb1" ] []
-        , HH.h3_ [ HH.text "nn_lb2" ]
-        , HH.div [ HP.id "nn_lb2" ] []
-        , HH.h3_ [ HH.text "nn_mpu1" ]
-        , HH.div [ HP.id "nn_mpu1" ] []
-        , HH.h3_ [ HH.text "nn_mobile_lb1_sticky" ]
-        , HH.div [ HP.id "nn_mobile_lb1_sticky", HS.class_ "nn-sticky" ] []
-        , HH.h3_ [ HH.text "nn_mobile_lb2" ]
-        , HH.div [ HP.id "nn_mobile_lb2" ] []
-        , navigationAnchor (Proxy :: _ "network-n-test") { path: "/network-n-test", content: HH.text "Go to test page 1" }
-        ]
-    , footer
-    -- , HH.div [ HP.id "nn_1by1" ] []
-    ]
 render DeleteAlert = singleContent [ deleteAlert ]
 render NotFound = HH.p_ [ HH.text "You're fucken lost, mate." ]
 
@@ -258,21 +219,12 @@ handleAction (Init state route) = do
             just $ PlayerProfile { nickname, handle }
         ["", "teams", teamHandle, "profiles", gameHandle] ->
             just $ TeamProfile { teamHandle, gameHandle }
-        ["", "network-n-test"] ->
-            just $ NetworkN
-        ["", "network-n-test2"] ->
-            just $ NetworkN2
         ["", "remove-alert" ] ->
             just $ DeleteAlert
         _ ->
             navigateReplace_ "/" *> nothing
     case newState of
-        Just newState' -> do
-            H.put newState'
-            case newState' of
-                NetworkN -> reloadAds
-                NetworkN2 -> reloadAds
-                _ -> pure unit
+        Just newState' -> H.put newState'
         Nothing -> pure unit
 
 handleQuery

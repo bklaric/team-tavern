@@ -1,34 +1,26 @@
-.games {
-    .game-card:not(:last-child) {
-        margin-bottom: 21px;
-    }
-}
-
-.games-header {
-    padding: 0 21px;
-    margin-bottom: 28px;
-}
-
 .games-header-title {
     font-size: 20px;
     text-align: center;
+    padding: 0 21px;
+    margin: 0;
 }
 
 .games-header-subtitle {
     font-size: 16px;
     text-align: center;
+    padding: 0 21px;
 }
 
 .game-card {
     height: 200px;
     border-top: 1px solid #ccc;
     border-bottom: 1px solid #ccc;
-    max-width: 960px;
-    margin: auto;
+    max-width: 1000px;
     cursor: pointer;
     position: relative;
+    justify-self: center;
 
-    @media screen and (min-width: 960px) {
+    @media screen and (min-width: 1000px) {
         border: 1px solid #ccc;
         border-radius: 4px;
     }
@@ -41,7 +33,7 @@
     height: calc(100% - 56px);
     padding: 28px;
     vertical-align: top;
-    background-image: linear-gradient(hsla(20, 20%, 19%, 0.8),hsla(20, 20%, 19%, 0.8));
+    background-image: linear-gradient(hsla(20, 20%, 19%, 0.8), hsla(20, 20%, 19%, 0.8));
 
     @media screen and (min-width: 600px) {
         display: inline-flex;
@@ -49,7 +41,7 @@
         background: hsl(20, 20%, 19%) !important;
     }
 
-    @media screen and (min-width: 960px) {
+    @media screen and (min-width: 1000px) {
         border-radius: 4px 0 0 4px;
     }
 }
@@ -121,9 +113,10 @@
     @media screen and (min-width: 600px) {
         display: inline-block;
         width: calc(100% - 376px);
+        position: initial;
     }
 
-    @media screen and (min-width: 960px) {
+    @media screen and (min-width: 1000px) {
         border-radius: 0 4px 4px 0;
     }
 }

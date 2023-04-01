@@ -23,7 +23,6 @@ import Effect.Timer (setTimeout)
 import Halogen as H
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Boarding.PlayerOrTeamInput as Boarding
-import TeamTavern.Client.Components.Content (contentColumns)
 import TeamTavern.Client.Components.Team.ProfileInputGroup (FieldValues)
 import TeamTavern.Client.Pages.Preboarding as Preboarding
 import TeamTavern.Client.Pages.Profile.Filters (Filters)
@@ -42,6 +41,7 @@ import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Script.Url as Url
 import TeamTavern.Client.Shared.Slot (Slot___)
 import TeamTavern.Client.Snippets.ArticledNoun (indefiniteNoun)
+import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Game.ViewGame as ViewGame
 import TeamTavern.Routes.Profile.ViewPlayerProfilesByGame as ViewPlayerProfilesByGame
 import TeamTavern.Routes.Profile.ViewTeamProfilesByGame as ViewTeamProfilesByGame
@@ -115,7 +115,7 @@ render :: ∀ left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render (Empty _) = HH.div_ []
 render (Game game _ filters tab) =
     HH.div_ $
-    [ contentColumns
+    [ HH.div [HS.class_ "content-columns-profiles"]
         [ profileFilters
             { platforms: game.platforms
             , fields: filterableFields game.fields

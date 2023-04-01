@@ -241,7 +241,7 @@ render state =
 handleAction :: ∀ left. Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
 handleAction Initialize = do
     windowWidth <- Html.window >>= Window.innerWidth # H.liftEffect
-    let showFilters = windowWidth >= 960
+    let showFilters = windowWidth >= 1000
     H.modify_ _
         { filtersVisible = showFilters
         , playerFiltersVisible = showFilters

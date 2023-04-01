@@ -14,7 +14,8 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import TeamTavern.Client.Components.Ads (descriptionLeaderboards, stickyLeaderboards)
+import TeamTavern.Client.Components.Ads (insertMpusInMiddleOrAtEnd)
+import TeamTavern.Client.Components.Content (actualContent)
 import TeamTavern.Client.Components.Divider (whiteDivider)
 import TeamTavern.Client.Components.Picture (picture)
 import TeamTavern.Client.Script.Meta (setMeta)
@@ -34,16 +35,13 @@ data State = Empty | Games ViewAllGames.OkContent
 
 render :: ∀ slots monad. MonadEffect monad => State -> H.ComponentHTML Action slots monad
 render Empty = HH.div_ []
-render (Games games') = HH.div [ HS.class_ "games" ] $
-    [ HH.div [ HS.class_ "games-header"] $
-        [ HH.h1 [ HS.class_ "games-header-title" ]
-            [ HH.text "Games" ]
-        , HH.p [ HS.class_ "games-header-subtitle" ]
-            [ HH.text "Choose one of the featured games and start finding your new teammates!" ]
-        ]
-        <> descriptionLeaderboards
+render (Games games') = actualContent $
+    [ HH.h1 [ HS.class_ "games-header-title" ]
+        [ HH.text "Games" ]
+    , HH.p [ HS.class_ "games-header-subtitle" ]
+        [ HH.text "Choose one of the featured games and start finding your new teammates!" ]
     ]
-    <>
+    <> insertMpusInMiddleOrAtEnd
     (games' <#> \{ title, handle, description } ->
         HH.div
         [ HS.class_ "game-card"
@@ -88,7 +86,6 @@ render (Games games') = HH.div [ HS.class_ "games" ] $
         , picture "game-card-image" (title <> " banner") ("/images/" <> handle <> "/banner")
         ]
     )
-    <> stickyLeaderboards
 
 loadGames :: ∀ left. Async left State
 loadGames = Async.unify do

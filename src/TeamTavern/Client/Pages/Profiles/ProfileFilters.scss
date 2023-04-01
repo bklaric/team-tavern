@@ -54,11 +54,12 @@
 
     margin-bottom: 0;
 
-    @media screen and (min-width: 960px) {
+    @media screen and (min-width: 1000px) {
         grid-template-columns: minmax(0, 1fr);
     }
 
-    .fas.fa-laptop, .fas.fa-users {
+    .fas.fa-laptop,
+    .fas.fa-users {
         font-size: 18px;
     }
 }

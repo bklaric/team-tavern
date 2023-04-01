@@ -6,7 +6,7 @@ import Async (Async)
 import Data.Maybe (Maybe(..))
 import Halogen as H
 import Halogen.HTML as HH
-import TeamTavern.Client.Components.Ads (stickyLeaderboards)
+import TeamTavern.Client.Components.Content (actualContent)
 import TeamTavern.Client.Pages.Profiles (profiles)
 import TeamTavern.Client.Pages.Profiles.GameHeader (ProfileTab(..), Tab(..), gameHeader)
 import TeamTavern.Client.Script.Request (get)
@@ -29,13 +29,13 @@ type ChildSlots =
 
 render :: ∀ left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render (Empty _) = HH.div_ []
-render (Loaded { game, tab }) = HH.div_ $
-    [ gameHeader { title: game.title, shortTitle: game.shortTitle, tab }
-    , case tab of
+render (Loaded { game, tab }) = actualContent $
+    gameHeader { title: game.title, shortTitle: game.shortTitle, tab }
+    <>
+    [ case tab of
         Profiles Players -> profiles { game, tab: Players }
         Profiles Teams -> profiles { game, tab: Teams }
     ]
-    <> stickyLeaderboards
 render Error = HH.p_ [ HH.text "There has been an error loading the game. Please try again later." ]
 
 handleAction :: ∀ output left.

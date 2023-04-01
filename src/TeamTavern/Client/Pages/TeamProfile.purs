@@ -12,9 +12,8 @@ import Data.Variant (onMatch)
 import Effect.Class (class MonadEffect)
 import Halogen as H
 import Halogen.HTML as HH
-import TeamTavern.Client.Components.Ads (descriptionLeaderboards, stickyLeaderboards)
 import TeamTavern.Client.Components.Card (card, cardSection)
-import TeamTavern.Client.Components.Content (contentColumns, contentDescription, contentHeader, contentHeaderSection, contentHeading', contentHeadingFaIcon)
+import TeamTavern.Client.Components.Content (actualContent, contentDescription, contentHeader, contentHeaderSection, contentHeading', contentHeadingFaIcon)
 import TeamTavern.Client.Components.Detail (detailColumn, detailColumnHeading4, detailColumns, textDetail)
 import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
@@ -76,7 +75,7 @@ render (Loaded { profile, status }) = let
     about = textDetail profile.about
     ambitions = textDetail profile.ambitions
     in
-    HH.div_ $
+    actualContent $
     [ contentHeader $
         [ contentHeaderSection
             [ contentHeading'
@@ -95,7 +94,6 @@ render (Loaded { profile, status }) = let
         SignedInOwner -> "View your teams " <> profile.title <> " profile."
         _ -> "View " <> profile.title <> " profile of team " <> nameOrHandle profile <> "."
     ]
-    <> descriptionLeaderboards
     <>
     [ card
         [ cardSection $
@@ -139,10 +137,9 @@ render (Loaded { profile, status }) = let
             ]
         ]
     ]
-    <> stickyLeaderboards
-render NotFound = contentColumns [ HH.p_ [ HH.text "Team profile could not be found." ] ]
-render Error = contentColumns [ HH.p_ [ HH.text
-    "There has been an error loading the team profile. Please try again later." ] ]
+render NotFound = HH.p_ [ HH.text "Team profile could not be found." ]
+render Error = HH.p_ [ HH.text
+    "There has been an error loading the team profile. Please try again later." ]
 
 trackAlertOpen :: forall m. Bind m => MonadEffect m => String -> m Unit
 trackAlertOpen handle = do

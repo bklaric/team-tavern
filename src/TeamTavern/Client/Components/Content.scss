@@ -1,16 +1,23 @@
 .content {
-    max-width: 1002px;
-    // calc(100vh - topBar - footer - padding);
-    min-height: calc(100vh - 41px - 41px - 42px);
-    padding: 21px 0;
-    margin: auto;
-}
+    display: grid;
+    // grid-template-columns: 1fr 1002px 1fr;
+    // max-width: 1002px;
+    // calc(100vh - topBar - footer);
+    min-height: calc(100vh - 41px - 41px);
 
-.wide-content {
-    @extend .content;
-    // 422 + 962 + 21 + 21 + 21
-    // profiles + filters + padding + padding + margin
-    max-width: 1447px;
+    // padding: 21px 0;
+    // margin: auto;
+    @media screen and (min-width: 1000px) {
+        grid-template-columns: minmax(auto, 300px) 1000px minmax(auto, 300px);
+    }
+
+    @media screen and (min-width: 1600px) {
+        grid-template-columns: 300px minmax(auto, 1500px) 300px;
+    }
+
+    @media screen and (min-width: 2100px) {
+        grid-template-columns: auto 1500px auto;
+    }
 }
 
 .single-content {
@@ -19,12 +26,17 @@
     overflow: hidden auto;
 }
 
+.actual-content {
+    display: grid;
+    gap: 21px;
+    padding: 21px 0;
+}
+
 .content-header {
     display: flex;
     justify-content: space-between;
     align-items: baseline;
     flex-wrap: wrap;
-    margin-bottom: 21px;
     line-height: 30px;
     padding: 0 21px;
 }
@@ -55,8 +67,6 @@
 .content-description {
     display: block;
     padding: 0 21px;
-    margin-top: -7px;
-    margin-bottom: 21px !important;
     font-size: 14px;
 }
 
@@ -65,13 +75,22 @@
     gap: 21px;
     grid-template-columns: 1fr;
 
-    @media screen and (min-width: 960px) {
-        grid-template-columns: 0.5fr 1fr;
-        padding: 0 21px;
+    >* {
+        display: flex;
+        flex-direction: column;
+        gap: 21px;
     }
 
-    @media screen and (min-width: 1340px) {
-        grid-template-columns: 420px 1fr;
+    @media screen and (min-width: 1000px) {
+        grid-template-columns: 340px 1fr;
+        padding: 0 21px;
+    }
+}
+
+.content-columns-profiles {
+    @extend .content-columns;
+    @media screen and (min-width: 1000px) {
+        grid-template-columns: 320px 1fr;
         padding: 0 21px;
     }
 }

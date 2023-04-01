@@ -13,8 +13,8 @@ import Data.Variant (onMatch)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
-import TeamTavern.Client.Components.Ads (descriptionLeaderboards, stickyLeaderboards)
-import TeamTavern.Client.Components.Content (contentColumns, contentDescription, contentHeader, contentHeaderSection, contentHeading', contentHeadingFaIcon)
+import TeamTavern.Client.Components.Ads (mobileMpu)
+import TeamTavern.Client.Components.Content (actualContent, contentColumns, contentDescription, contentHeader, contentHeaderSection, contentHeading', contentHeadingFaIcon)
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Components.Player.ProfileDetails (PlatformIdSlots)
@@ -83,7 +83,7 @@ type ChildSlots = PlatformIdSlots
 render :: ∀ left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render (Empty _) = HH.div_ []
 render (Loaded state @ { team: team', status } ) =
-    HH.div_  $
+    actualContent  $
     [ contentHeader $
         [ contentHeaderSection
             [ contentHeading'
@@ -106,18 +106,17 @@ render (Loaded state @ { team: team', status } ) =
         SignedInOwner -> "View and edit all your team's details and profiles."
         _ -> "View all team's details and profiles."
     ]
-    <> descriptionLeaderboards
     <>
     [ contentColumns
         [ HH.div_
             [ contacts team' status ShowEditContactsModal
             , details team' status ShowEditTeamModal
             ]
+        , mobileMpu
         , HH.div_
             [ profiles team' status ShowEditProfileModal ShowDeleteProfileModal ]
         ]
     ]
-    <> stickyLeaderboards
     <> guard state.editContactsModalShown [ editContacts team' $ const HideEditContactsModal ]
     <> guard state.editTeamModalShown [ editTeam team' (const HideEditTeamModal) ]
     <> foldMap (\profile ->
@@ -127,9 +126,9 @@ render (Loaded state @ { team: team', status } ) =
     <> foldMap
         (\profile -> [ deleteTeamProfile { team: team', profile } $ const HideDeleteProfileModal ])
         state.deleteProfileModalShown
-render NotFound = contentColumns [ HH.p_ [ HH.text "Team could not be found." ] ]
-render Error = contentColumns [ HH.p_ [ HH.text
-    "There has been an error loading the team. Please try again later." ] ]
+render NotFound = HH.p_ [ HH.text "Team could not be found." ]
+render Error = HH.p_ [ HH.text
+    "There has been an error loading the team. Please try again later." ]
 
 modifyLoaded :: ∀ monad. MonadState State monad => (Loaded -> Loaded) -> monad Unit
 modifyLoaded mod =
