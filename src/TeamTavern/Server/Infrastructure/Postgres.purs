@@ -39,28 +39,27 @@ prepareJsonString stringValue =
     <> (String.replace (String.Pattern "\"") (String.Replacement "") stringValue)
     <> "\""
 
-adjustedTime :: String -> String -> String -> String
-adjustedTime timezoneColumn timeColumn timezone = """
-    ((current_date || ' ' || """ <> timeColumn <> """ || ' ' || """ <> timezoneColumn <> """)
+adjustedTime :: String -> String -> String
+adjustedTime timeColumn timezone = """
+    ((current_date || ' ' || """ <> timeColumn <> """ || ' ' || timezone)
     ::timestamptz at time zone """ <> prepareString timezone <> """)::time"""
 
-playerAdjustedTime :: String -> String -> String
-playerAdjustedTime = adjustedTime "player.timezone"
+adjustedWeekdayFrom :: String -> String
+adjustedWeekdayFrom = adjustedTime "weekday_from"
 
-playerAdjustedWeekdayFrom :: String -> String
-playerAdjustedWeekdayFrom = playerAdjustedTime "player.weekday_from"
+adjustedWeekdayTo :: String -> String
+adjustedWeekdayTo = adjustedTime "weekday_to"
 
-playerAdjustedWeekdayTo :: String -> String
-playerAdjustedWeekdayTo = playerAdjustedTime "player.weekday_to"
+adjustedWeekendFrom :: String -> String
+adjustedWeekendFrom = adjustedTime "weekend_from"
 
-playerAdjustedWeekendFrom :: String -> String
-playerAdjustedWeekendFrom = playerAdjustedTime "player.weekend_from"
-
-playerAdjustedWeekendTo :: String -> String
-playerAdjustedWeekendTo = playerAdjustedTime "player.weekend_to"
+adjustedWeekendTo :: String -> String
+adjustedWeekendTo = adjustedTime "weekend_to"
 
 teamAdjustedTime :: String -> String -> String
-teamAdjustedTime = adjustedTime "team.timezone"
+teamAdjustedTime timeColumn timezone = """
+    ((current_date || ' ' || """ <> timeColumn <> """ || ' ' || team.timezone)
+    ::timestamptz at time zone """ <> prepareString timezone <> """)::time"""
 
 teamAdjustedWeekdayFrom :: String -> String
 teamAdjustedWeekdayFrom = teamAdjustedTime "team.weekday_from"

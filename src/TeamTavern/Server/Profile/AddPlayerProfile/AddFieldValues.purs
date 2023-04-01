@@ -54,8 +54,8 @@ insertMultiValueOption client fieldValueId optionId =
 
 insertMultiValueString :: Query
 insertMultiValueString = Query """
-    insert into player_profile_field_value (player_profile_id, field_id, url)
-    values ($1, $2, null)
+    insert into player_profile_field_value (player_profile_id, field_id)
+    values ($1, $2)
     returning player_profile_field_value.id as "fieldValueId";
     """
 

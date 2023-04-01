@@ -10,7 +10,7 @@ import Postgres.Query (class Querier, Query(..), (:|))
 import TeamTavern.Routes.Player.ViewPlayer as ViewPlayer
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Server.Infrastructure.Error (elaborate)
-import TeamTavern.Server.Infrastructure.Postgres (LoadSingleError, playerAdjustedWeekdayFrom, playerAdjustedWeekdayTo, playerAdjustedWeekendFrom, playerAdjustedWeekendTo, queryFirstNotFound)
+import TeamTavern.Server.Infrastructure.Postgres (LoadSingleError, adjustedWeekdayFrom, adjustedWeekdayTo, adjustedWeekendFrom, adjustedWeekendTo, queryFirstNotFound)
 
 queryString :: String -> Query
 queryString timezone = Query $ """
@@ -36,8 +36,8 @@ queryString timezone = Query $ """
         case
             when player.weekday_from is not null and player.weekday_to is not null
             then json_build_object(
-                'clientFrom', to_char(""" <> playerAdjustedWeekdayFrom timezone <> """, 'HH24:MI'),
-                'clientTo', to_char(""" <> playerAdjustedWeekdayTo timezone <> """, 'HH24:MI'),
+                'clientFrom', to_char(""" <> adjustedWeekdayFrom timezone <> """, 'HH24:MI'),
+                'clientTo', to_char(""" <> adjustedWeekdayTo timezone <> """, 'HH24:MI'),
                 'sourceFrom', to_char(player.weekday_from, 'HH24:MI'),
                 'sourceTo', to_char(player.weekday_to, 'HH24:MI')
             )
@@ -45,8 +45,8 @@ queryString timezone = Query $ """
         case
             when player.weekend_from is not null and player.weekend_to is not null
             then json_build_object(
-                'clientFrom', to_char(""" <> playerAdjustedWeekendFrom timezone <> """, 'HH24:MI'),
-                'clientTo', to_char(""" <> playerAdjustedWeekendTo timezone <> """, 'HH24:MI'),
+                'clientFrom', to_char(""" <> adjustedWeekendFrom timezone <> """, 'HH24:MI'),
+                'clientTo', to_char(""" <> adjustedWeekendTo timezone <> """, 'HH24:MI'),
                 'sourceFrom', to_char(player.weekend_from, 'HH24:MI'),
                 'sourceTo', to_char(player.weekend_to, 'HH24:MI')
             )

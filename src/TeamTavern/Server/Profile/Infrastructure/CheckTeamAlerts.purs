@@ -4,7 +4,6 @@ import Prelude
 
 import Async (Async, alwaysRightWithEffect, fromEffect, runSafeAsync, safeForeach)
 import Data.Maybe (Maybe(..), maybe)
-import Effect.Class.Console (log)
 import Effect.Timer (setTimeout)
 import Postgres.Query (class Querier, Query(..), (:))
 import Record.Extra (pick)
@@ -12,9 +11,10 @@ import Sendgrid (sendAsync)
 import TeamTavern.Routes.Shared.Organization (Organization)
 import TeamTavern.Routes.Shared.Platform (Platform)
 import TeamTavern.Routes.Shared.Size (Size)
+import TeamTavern.Server.Infrastructure.Log (logError)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstMaybe, queryMany)
-import TeamTavern.Server.Profile.ViewTeamProfilesByGame.LoadProfiles (createFieldsFilterString, createTeamFilterString)
-import Yoga.JSON (unsafeStringify)
+import TeamTavern.Server.Profile.Infrastructure.LoadFieldAndOptionIds (FieldAndOptionIds, loadFieldAndOptionIds)
+import TeamTavern.Server.Profile.ViewTeamProfilesByGame.LoadProfiles (createFieldsFilterString, createFieldsJoinString, createTeamFilterString)
 
 type Alert =
     { title :: String
@@ -68,73 +68,33 @@ loadAlertsQueryString = Query """
     where team_profile.id = $1 and alert.player_or_team = 'team';
     """
 
-queryStringWithoutPagination :: Int -> Alert -> Query
-queryStringWithoutPagination profileId alert = Query $ """
-    select profile.handle, profile.name
-    from
-        (select
-            team.handle,
-            team.name,
-            coalesce(
-                jsonb_agg(
-                    jsonb_build_object(
-                        'field', jsonb_build_object(
-                            'key', field_values.key
-                        ),
-                        'options', field_values.multi
-                    )
-                ) filter (where field_values.team_profile_id is not null),
-                '[]'
-            ) as "fieldValues"
-        from team_profile as profile
-            join game on game.id = profile.game_id
-            join team on team.id = profile.team_id
-            left join (
-                select field_value.team_profile_id,
-                    field.ilk,
-                    field.key,
-                    coalesce(
-                        jsonb_agg(
-                            jsonb_build_object(
-                                'key', multi.key
-                            ) order by multi.ordinal
-                        ) filter (where multi.label is not null),
-                        '[]'
-                    ) as multi
-                from
-                    field
-                    join team_profile_field_value as field_value
-                        on field_value.field_id = field.id
-                    left join team_profile_field_value_option as field_value_option
-                        on field_value_option.team_profile_field_value_id = field_value.id
-                    left join field_option as multi
-                        on multi.id = field_value_option.field_option_id
-                where
-                    field.ilk = 2 or field.ilk = 3
-                group by
-                    field.id,
-                    field_value.id
-            ) as field_values
-                on field_values.team_profile_id = profile.id
-        where
-            profile.id = """ <> show profileId
-            <> createTeamFilterString alert.timezone (pick alert) <> """
-        group by team.id, game.id, profile.id
-        ) as profile
-    """ <> createFieldsFilterString alert.fields
+checkAlertQueryString :: Int -> Alert -> Array FieldAndOptionIds -> Query
+checkAlertQueryString profileId alert fieldAndOptionIds = Query $ """
+    select team.handle, team.name
+    from team_profile profile
+    join team on team.id = profile.team_id """
+    <> createFieldsJoinString fieldAndOptionIds
+    <> " where profile.id = " <> show profileId
+    <> createTeamFilterString alert.timezone (pick alert)
+    <> createFieldsFilterString fieldAndOptionIds
+    <> " group by team.handle, team.name"
 
 checkTeamAlerts :: ∀ querier left. Querier querier => Int -> querier -> Async left Unit
 checkTeamAlerts profileId querier =
     fromEffect $ void $ setTimeout 0 $ runSafeAsync pure (
-    alwaysRightWithEffect (log <<< unsafeStringify) pure do
+    alwaysRightWithEffect (logError "Error checking team alerts") pure do
 
     -- Load all player alerts for the game.
     (alerts :: Array Alert) <- queryMany querier loadAlertsQueryString (profileId : [])
 
-    safeForeach alerts \alert -> alwaysRightWithEffect (log <<< unsafeStringify) pure do
+    safeForeach alerts \alert -> alwaysRightWithEffect (logError "Error sending team alerts") pure do
+        -- Load field and option ids.
+        fieldAndOptionIds <- loadFieldAndOptionIds querier alert.handle alert.fields
+
         -- Check if alert matches the profile.
         teamMaybe :: Maybe { handle :: String, name :: Maybe String } <-
-            queryFirstMaybe querier (queryStringWithoutPagination profileId alert) []
+            queryFirstMaybe querier (checkAlertQueryString profileId alert fieldAndOptionIds) []
+
         case teamMaybe of
             Nothing -> pure unit
             Just {handle, name} -> do
