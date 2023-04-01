@@ -10,7 +10,7 @@ import Postgres.Query (class Querier, Query(..), (:|))
 import TeamTavern.Routes.Profile.ViewTeamProfile (RouteParams, OkContent)
 import TeamTavern.Routes.Shared.Types (Timezone)
 import TeamTavern.Server.Infrastructure.Error (elaborate)
-import TeamTavern.Server.Infrastructure.Postgres (LoadSingleError, queryFirstNotFound, adjustedWeekdayFrom, adjustedWeekdayTo, adjustedWeekendFrom, adjustedWeekendTo)
+import TeamTavern.Server.Infrastructure.Postgres (LoadSingleError, queryFirstNotFound, teamAdjustedWeekdayFrom, teamAdjustedWeekdayTo, teamAdjustedWeekendFrom, teamAdjustedWeekendTo)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 
 queryString :: Timezone -> Query
@@ -59,15 +59,15 @@ queryString timezone = Query $ """
             case
                 when team.weekday_from is not null and team.weekday_to is not null
                 then json_build_object(
-                    'from', to_char(""" <> adjustedWeekdayFrom timezone <> """, 'HH24:MI'),
-                    'to', to_char(""" <> adjustedWeekdayTo timezone <> """, 'HH24:MI')
+                    'from', to_char(""" <> teamAdjustedWeekdayFrom timezone <> """, 'HH24:MI'),
+                    'to', to_char(""" <> teamAdjustedWeekdayTo timezone <> """, 'HH24:MI')
                 )
             end as "weekdayOnline",
             case
                 when team.weekend_from is not null and team.weekend_to is not null
                 then json_build_object(
-                    'from', to_char(""" <> adjustedWeekendFrom timezone <> """, 'HH24:MI'),
-                    'to', to_char(""" <> adjustedWeekendTo timezone <> """, 'HH24:MI')
+                    'from', to_char(""" <> teamAdjustedWeekendFrom timezone <> """, 'HH24:MI'),
+                    'to', to_char(""" <> teamAdjustedWeekendTo timezone <> """, 'HH24:MI')
                 )
             end as "weekendOnline",
             -- Profile

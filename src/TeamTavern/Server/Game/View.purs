@@ -29,7 +29,6 @@ queryString = Query """
                     'label', field.label,
                     'key', field.key,
                     'icon', field.icon,
-                    'domain', field.domain,
                     'options', field.options
                 ) order by field.ordinal
             ) filter (where field.id is not null),

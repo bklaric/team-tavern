@@ -1,4 +1,4 @@
-module TeamTavern.Client.Pages.Profiles.PlayerProfiles (Fields, PlayerProfile, Input, Output(..), Slot, playerProfiles) where
+module TeamTavern.Client.Pages.Profiles.PlayerProfiles (PlayerProfile, Input, Output(..), Slot, playerProfiles) where
 
 import Prelude
 
@@ -28,22 +28,11 @@ import TeamTavern.Client.Shared.Slot (Slot_O_, Slot__String)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Client.Snippets.PreventMouseDefault (preventMouseDefault)
 import TeamTavern.Routes.Profile.Shared (pageSize)
+import TeamTavern.Routes.Shared.Field (Values)
 import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
 import TeamTavern.Routes.Shared.PlayerContacts (PlayerContactsOpen)
 import Type.Proxy (Proxy(..))
 import Web.UIEvent.MouseEvent (MouseEvent)
-
-type Fields = Array
-    { ilk :: Int
-    , label :: String
-    , key :: String
-    , icon :: String
-    , domain :: Maybe String
-    , options :: Maybe (Array
-        { key :: String
-        , label :: String
-        })
-    }
 
 type PlayerProfile = PlayerContactsOpen
     ( nickname :: String
@@ -55,23 +44,7 @@ type PlayerProfile = PlayerContactsOpen
     , weekendOnline :: Maybe { from :: String, to :: String }
     , platforms :: Platforms
     , platform :: Platform
-    , fieldValues :: Array
-        { field ::
-            { ilk :: Int
-            , key :: String
-            , label :: String
-            , icon :: String
-            }
-        , url :: Maybe String
-        , option :: Maybe
-            { key :: String
-            , label :: String
-            }
-        , options :: Maybe (Array
-            { key :: String
-            , label :: String
-            })
-        }
+    , fieldValues :: Values
     , about :: Array String
     , ambitions :: Array String
     , newOrReturning :: Boolean

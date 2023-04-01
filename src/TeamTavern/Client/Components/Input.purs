@@ -2,7 +2,7 @@ module TeamTavern.Client.Components.Input where
 
 import Prelude
 
-import Data.Maybe (Maybe(..), isJust, isNothing, maybe)
+import Data.Maybe (Maybe, isJust, isNothing, maybe)
 import Data.Monoid (guard)
 import Data.String (length)
 import Halogen.HTML as HH
@@ -15,34 +15,23 @@ import TeamTavern.Client.Snippets.Class as HS
 import Unsafe.Coerce (unsafeCoerce)
 
 inputLabel' :: ∀ slots action.
-    String -> String -> Maybe String -> Boolean -> HH.HTML slots action
-inputLabel' icon label domain required =
+    String -> String -> Boolean -> HH.HTML slots action
+inputLabel' icon label required =
     HH.label
     [ HS.class_ "input-label"] $
     [ HH.i [ HS.class_ $ icon <> " input-label-icon" ] []
     , HH.span [ HS.class_ "input-label-text" ] [ HH.text label ]
     ]
     <>
-    (case domain of
-    Just domain' -> [ divider, inputSublabel domain' ]
-    Nothing -> []
-    )
-    <>
     if required
     then [ divider, inputRequiredSublabel ]
     else []
 
-requiredDomainInputLabel :: ∀ slots action. String -> String -> String -> HH.HTML slots action
-requiredDomainInputLabel icon label domain = inputLabel' icon label (Just domain) true
-
-domainInputLabel :: ∀ slots action. String -> String -> String -> HH.HTML slots action
-domainInputLabel icon label domain = inputLabel' icon label (Just domain) false
-
 requiredInputLabel :: ∀ slots action. String -> String -> HH.HTML slots action
-requiredInputLabel icon label = inputLabel' icon label Nothing true
+requiredInputLabel icon label = inputLabel' icon label true
 
 inputLabel :: ∀ slots action. String -> String -> HH.HTML slots action
-inputLabel icon label = inputLabel' icon label Nothing false
+inputLabel icon label = inputLabel' icon label false
 
 inputLabel_ :: ∀ slots action. String -> HH.HTML slots action
 inputLabel_ label = HH.label [ HS.class_ "input-label" ] [ HH.text label ]

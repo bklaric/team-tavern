@@ -2,14 +2,15 @@ module TeamTavern.Client.Components.Player.ProfileDetails where
 
 import Prelude
 
-import Async (Async)
 import Data.Array (intercalate)
 import Data.Array as Array
 import Data.Maybe (Maybe(..))
 import Halogen.HTML as HH
-import TeamTavern.Client.Components.Detail (detail, fieldDetail, urlDetail)
+import Record.Extra (pick)
+import TeamTavern.Client.Components.Detail (detail, fieldDetail)
 import TeamTavern.Client.Shared.Slot (Slot__String)
 import TeamTavern.Client.Snippets.Class as HS
+import TeamTavern.Routes.Shared.Field (Fields, Values, ValuesSimple)
 
 type PlatformIdSlots slots =
     ( steamId :: Slot__String
@@ -22,85 +23,35 @@ type PlatformIdSlots slots =
     , friendCode :: Slot__String
     | slots )
 
-profileDetails :: ∀ left slots action.
-    Array
-        { ilk :: Int
-        , key :: String
-        , label :: String
-        , icon :: String
-        , domain :: Maybe String
-        , options :: Maybe (Array
-            { key :: String
-            , label :: String
-            })
-        }
-    -> Array
-        { fieldKey :: String
-        , url :: Maybe String
-        , optionKey :: Maybe String
-        , optionKeys :: Maybe (Array String)
-        }
-    -> Boolean
-    -> Array (HH.ComponentHTML action (PlatformIdSlots slots) (Async left))
+profileDetails :: ∀ slots action.
+    Fields -> ValuesSimple -> Boolean -> Array (HH.HTML slots action)
 profileDetails fields fieldValues newOrReturning =
     profileDetails'
-    ( fields
-    <#> ( \field ->
-            case fieldValues # Array.find \{ fieldKey } -> fieldKey == field.key of
-            Just fieldValue -> Just
-                { field:
-                    { ilk: field.ilk
-                    , icon: field.icon
-                    , key: field.key
-                    , label: field.label
-                    }
-                , url: fieldValue.url
-                , option:
-                    case field.options, fieldValue.optionKey of
-                    Just options, Just optionKey ->
-                        options # Array.find \option -> option.key == optionKey
-                    _, _ -> Nothing
-                , options:
-                    case field.options, fieldValue.optionKeys of
-                    Just options, Just optionKeys ->
-                        options # Array.filter (\option -> Array.elem option.key optionKeys) # Just
-                    _, _ -> Nothing
-                }
-            Nothing -> Nothing
+    (fields <#> (\field ->
+        case fieldValues # Array.find \{ fieldKey } -> fieldKey == field.key of
+        Just fieldValue -> Just
+            { field: pick field
+            , option: fieldValue.optionKey >>= \optionKey ->
+                field.options # Array.find \option -> option.key == optionKey
+            , options: fieldValue.optionKeys <#> \optionKeys ->
+                field.options # Array.filter (\option -> Array.elem option.key optionKeys)
+            }
+        Nothing -> Nothing
         )
-    # Array.catMaybes
+        # Array.catMaybes
     )
     newOrReturning
 
-profileDetails' :: ∀ left slots action.
-    Array
-        { field ::
-            { ilk :: Int
-            , key :: String
-            , label :: String
-            , icon :: String
-            }
-        , url :: Maybe String
-        , option :: Maybe
-            { key :: String
-            , label :: String
-            }
-        , options :: Maybe (Array
-            { key :: String
-            , label :: String
-            })
-        }
-    -> Boolean
-    -> Array (HH.ComponentHTML action (PlatformIdSlots slots) (Async left))
+profileDetails' :: ∀ slots action.
+    Values -> Boolean -> Array (HH.HTML slots action)
 profileDetails' fieldValues newOrReturning =
     ( fieldValues
-    <#> ( \{ field, url, option, options } ->
-            case field.ilk, url, option, options of
-            1, Just url', _, _ -> urlDetail field.icon field.label (Just url')
-            2, _, Just option', _ -> Just $
+    <#> ( \{ field, option, options } ->
+            case field.ilk, option, options of
+            2, Just option', _ -> Just $
                 fieldDetail field.icon field.label
                 [ HH.span [ HS.class_ "detail-emphasize" ] [ HH.text option'.label ] ]
-            3, _, _, Just options' | not $ Array.null options' -> Just $
+            3, _, Just options' | not $ Array.null options' -> Just $
                 fieldDetail field.icon field.label
                 ( intercalate [ HH.text ", " ] $ map
                     ( \{ label } ->
@@ -108,7 +59,7 @@ profileDetails' fieldValues newOrReturning =
                     )
                     options'
                 )
-            _, _, _, _ ->  Nothing
+            _, _, _ ->  Nothing
         )
     # Array.catMaybes
     )

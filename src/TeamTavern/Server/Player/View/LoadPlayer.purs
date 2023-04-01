@@ -93,7 +93,6 @@ queryString timezone = Query $ """
                                     'label', label,
                                     'key', key,
                                     'icon', icon,
-                                    'domain', domain,
                                     'options', options
                                 )
                                 order by ordinal
@@ -111,7 +110,6 @@ queryString timezone = Query $ """
                             field.key,
                             field.icon,
                             field.ordinal,
-                            field.domain,
                             json_agg(
                                 json_build_object(
                                     'key', field_option.key,

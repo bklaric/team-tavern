@@ -8,6 +8,7 @@ import Effect.Timer (setTimeout)
 import Postgres.Query (class Querier, Query(..), (:))
 import Record.Extra (pick)
 import Sendgrid (sendAsync)
+import TeamTavern.Routes.Shared.Filters (Field)
 import TeamTavern.Routes.Shared.Organization (Organization)
 import TeamTavern.Routes.Shared.Platform (Platform)
 import TeamTavern.Routes.Shared.Size (Size)
@@ -35,7 +36,7 @@ type Alert =
     , weekendTo :: Maybe String
     , sizes :: Array Size
     , platforms :: Array Platform
-    , fields :: Array { fieldKey :: String, optionKeys :: Array String }
+    , fields :: Array Field
     , newOrReturning :: Boolean
     }
 

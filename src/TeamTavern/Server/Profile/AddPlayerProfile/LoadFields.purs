@@ -1,7 +1,6 @@
 module TeamTavern.Server.Profile.AddPlayerProfile.LoadFields (Option, Field, Game, loadFields) where
 
 import Async (Async)
-import Data.Maybe (Maybe)
 import Postgres.Query (class Querier, Query(..), (:))
 import TeamTavern.Routes.Shared.Platform (Platforms)
 import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
@@ -18,8 +17,7 @@ type Field =
     { id :: Int
     , ilk :: Int
     , key :: String
-    , domain :: Maybe String
-    , options :: Maybe (Array Option)
+    , options :: Array Option
     }
 
 type Game =
@@ -40,7 +38,6 @@ queryString = Query """
                     'id', field.id,
                     'ilk', field.ilk,
                     'key', field.key,
-                    'domain', field.domain,
                     'options', field.options
                 ) order by field.ordinal
             ) filter (where field.id is not null),

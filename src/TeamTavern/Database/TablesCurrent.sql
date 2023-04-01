@@ -105,7 +105,6 @@ create table field
     , label varchar(40) not null
     , icon varchar(40) not null
     , ordinal int not null
-    , domain varchar(40)
     );
 
 create table field_option

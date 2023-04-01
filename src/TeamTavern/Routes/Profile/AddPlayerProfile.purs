@@ -1,9 +1,9 @@
 module TeamTavern.Routes.Profile.AddPlayerProfile where
 
 import Data.Array.NonEmpty (NonEmptyArray)
-import Data.Maybe (Maybe)
 import Data.Variant (Variant)
 import Jarilo (type (!), type (/), type (==>), BadRequestJson, Capture, Internal_, Literal, NoContent, NotAuthorized_, PostJson_, Forbidden_)
+import TeamTavern.Routes.Shared.Field (ValuesSimple)
 import TeamTavern.Routes.Shared.Platform (Platform)
 import TeamTavern.Routes.Shared.PlayerContacts (PlayerContacts, PlayerContactsError)
 import TeamTavern.Routes.Shared.PlayerProfile (PlayerProfileError)
@@ -22,16 +22,9 @@ type AddPlayerProfile =
 
 type RouteParams = { nickname :: Nickname, handle :: Handle }
 
-type RequestContentFieldValue =
-    { fieldKey :: String
-    , url :: Maybe String
-    , optionKey :: Maybe String
-    , optionKeys :: Maybe (Array String)
-    }
-
 type RequestContentProfile =
     { platform :: Platform
-    , fieldValues :: Array RequestContentFieldValue
+    , fieldValues :: ValuesSimple
     , newOrReturning :: Boolean
     , about :: String
     , ambitions :: String

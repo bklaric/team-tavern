@@ -2,6 +2,7 @@ module TeamTavern.Routes.Team.ViewTeam where
 
 import Data.Maybe (Maybe)
 import Jarilo (type (!), type (/), type (==>), Capture, Get, Literal, Mandatory, NotFound_, OkJson, Internal_)
+import TeamTavern.Routes.Shared.Field (Fields, ValuesSimpleMulti)
 import TeamTavern.Routes.Shared.Organization (OrganizationNW)
 import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
 import TeamTavern.Routes.Shared.Size (Size)
@@ -22,19 +23,8 @@ type OkContentProfile =
     , allPlatforms :: Platforms
     , size :: Size
     , selectedPlatforms :: Array Platform
-    , fields :: Array
-        { key :: String
-        , label :: String
-        , icon :: String
-        , options :: Array
-            { key :: String
-            , label :: String
-            }
-        }
-    , fieldValues :: Array
-        { fieldKey :: String
-        , optionKeys :: Array String
-        }
+    , fields :: Fields
+    , fieldValues :: ValuesSimpleMulti
     , newOrReturning :: Boolean
     , about :: Array String
     , ambitions :: Array String

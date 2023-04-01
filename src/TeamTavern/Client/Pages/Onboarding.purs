@@ -402,11 +402,7 @@ handleAction (UpdateGame game) = do
             { details
                 { allPlatforms = game.platforms
                 , selectedPlatforms = [ game.platforms.head ]
-                , fields = game.fields # Array.mapMaybe
-                    case _ of
-                    { ilk, key, label, icon, options: Just options } | ilk == 2 || ilk == 3 ->
-                        Just { key, label, icon, options }
-                    _ -> Nothing
+                , fields = game.fields
                 , fieldValues = []
                 , newOrReturning = false
                 , about = ""
@@ -440,8 +436,7 @@ handleAction SetUpAccount = do
                 }
             , playerProfile
                 { details
-                    { urlErrors = []
-                    , aboutError = false
+                    { aboutError = false
                     , ambitionsError = false
                     }
                 , contacts
@@ -488,9 +483,7 @@ handleAction SetUpAccount = do
                     , website: const state' { step = Team, team { websiteError = true } }
                     }
                 , playerProfile: state # foldl \state' error' -> error' # match
-                    { url: \{ key } -> state'
-                        { playerProfile { details { urlErrors = Array.cons key state'.playerProfile.details.urlErrors } } }
-                    , about: const state'
+                    { about: const state'
                         { playerProfile { details { aboutError = true } } }
                     , ambitions: const state'
                         { playerProfile { details { ambitionsError = true } } }
