@@ -5,7 +5,7 @@ import Prelude
 
 import Async (Async)
 import Data.Array (fold, intercalate, mapWithIndex)
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), maybe)
 import Data.String (joinWith)
 import Postgres.Client (Client)
 import Postgres.Query (Query(..))
@@ -15,7 +15,7 @@ import TeamTavern.Routes.Shared.Filters (Age, Filters, HasMicrophone, Language, 
 import TeamTavern.Routes.Shared.Platform (Platform)
 import TeamTavern.Routes.Shared.Platform as Platform
 import TeamTavern.Routes.Shared.Types (Timezone, Handle)
-import TeamTavern.Server.Infrastructure.Postgres (adjustedWeekdayFrom, adjustedWeekdayTo, adjustedWeekendFrom, adjustedWeekendTo, prepareString, queryFirstInternal_)
+import TeamTavern.Server.Infrastructure.Postgres (adjustedWeekdayFrom, adjustedWeekdayTo, adjustedWeekendFrom, adjustedWeekendTo, prepareString, queryFirstInternal_, queryFirstMaybe, queryFirstMaybe_)
 import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
 import TeamTavern.Server.Profile.Infrastructure.LoadFieldAndOptionIds (FieldAndOptionIds)
 
@@ -411,4 +411,5 @@ loadProfiles
     -> Array FieldAndOptionIds
     -> Async (InternalTerror_ errors) (ViewPlayerProfilesByGame.OkContent)
 loadProfiles client handle page timezone filters fieldAndOptionIds =
-    queryFirstInternal_ client (queryString handle page timezone filters fieldAndOptionIds)
+    queryFirstMaybe_ client (queryString handle page timezone filters fieldAndOptionIds)
+    <#> maybe {count: 0, profiles: []} identity
