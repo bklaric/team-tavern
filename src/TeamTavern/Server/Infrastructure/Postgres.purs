@@ -144,6 +144,10 @@ queryFirstMaybe pool queryString parameters = do
     rows <- queryMany pool queryString parameters
     pure $ head rows
 
+queryFirstMaybe_ :: ∀ errors querier row. Querier querier => ReadForeign row =>
+    querier -> Query -> Async (InternalTerror_ errors) (Maybe row)
+queryFirstMaybe_ pool queryString = queryFirstMaybe pool queryString []
+
 queryFirstNotAuthorized :: ∀ row errors querier. Querier querier => ReadForeign row =>
     querier -> Query -> Array QueryParameter -> Async (ChangeSingleError errors) row
 queryFirstNotAuthorized = queryFirst notAuthorized__

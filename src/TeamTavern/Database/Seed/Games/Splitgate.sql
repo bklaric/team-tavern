@@ -9,10 +9,10 @@ values (
 
 insert into field (game_id, ilk, label, key, icon, ordinal)
 values
-    ((select id from game where game.handle = 'splitgate'), 2, '4v4 rank', '4v4-rank', 'fas fa-medal', 1),
-    ((select id from game where game.handle = 'splitgate'), 2, 'Takedown rank', 'takedown-rank', 'fas fa-medal', 2),
-    ((select id from game where game.handle = 'splitgate'), 2, '2v2 rank', '2v2-rank', 'fas fa-medal', 3),
-    ((select id from game where game.handle = 'splitgate'), 3, 'Interest', 'interest', 'fas fa-crosshairs', 4);
+    ((select id from game where game.handle = 'splitgate'), 'single', '4v4 rank', '4v4-rank', 'fas fa-medal', 1),
+    ((select id from game where game.handle = 'splitgate'), 'single', 'Takedown rank', 'takedown-rank', 'fas fa-medal', 2),
+    ((select id from game where game.handle = 'splitgate'), 'single', '2v2 rank', '2v2-rank', 'fas fa-medal', 3),
+    ((select id from game where game.handle = 'splitgate'), 'multi', 'Interest', 'interest', 'fas fa-crosshairs', 4);
 
 insert into field_option (field_id, label, key, ordinal)
 values
