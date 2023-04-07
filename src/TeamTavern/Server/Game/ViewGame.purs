@@ -1,4 +1,4 @@
-module TeamTavern.Server.Game.View where
+module TeamTavern.Server.Game.ViewGame (viewGame) where
 
 import Prelude
 
@@ -57,8 +57,8 @@ loadGame :: ∀ errors. Pool -> String -> Async (LoadSingleError errors) ViewGam
 loadGame pool handle = queryFirstNotFound pool queryString (handle : [])
     # lmap (elaborate ("Can't find game: " <> handle))
 
-view :: ∀ left. Pool -> String -> Async left _
-view pool handle =
+viewGame :: ∀ left. Pool -> String -> Async left _
+viewGame pool handle =
     sendResponse "Error viewing game" do
     -- Load game from database.
     ok_ <$> loadGame pool handle

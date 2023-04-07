@@ -25,8 +25,8 @@ import TeamTavern.Server.Alert.Create (createAlert) as Alert
 import TeamTavern.Server.Alert.Delete (deleteAlert) as Alert
 import TeamTavern.Server.Boarding.Onboard as Onboard
 import TeamTavern.Server.Boarding.Preboard as Preboard
-import TeamTavern.Server.Game.View (view) as Game
-import TeamTavern.Server.Game.ViewAll (viewAll) as Game
+import TeamTavern.Server.Game.ViewAllGames (viewAllGames)
+import TeamTavern.Server.Game.ViewGame (viewGame)
 import TeamTavern.Server.Infrastructure.Deployment (Deployment)
 import TeamTavern.Server.Infrastructure.Deployment as Deployment
 import TeamTavern.Server.Password.ForgotPassword (forgotPassword)
@@ -128,9 +128,9 @@ runServer deployment pool = serve (Proxy :: _ AllRoutes) listenOptions
     , resetPassword: \{ cookies, body } ->
         resetPassword pool cookies body
     , viewAllGames: const $
-        Game.viewAll pool
+        viewAllGames pool
     , viewGame: \{ path: { handle } } ->
-        Game.view pool handle
+        viewGame pool handle
     , viewPlayer: \{ path: { nickname } , query: { timezone }, cookies, headers } ->
         Player.view pool cookies { nickname, timezone } headers
     , registerPlayer: \{ cookies, body } ->
