@@ -28,6 +28,12 @@ handle_path /api/* {
     reverse_proxy node:8080
 }
 
+# Redirect ads.txt for Ezoic.
+
+handle_path /ads.txt {
+    redir https://srv.adstxtmanager.com/19390/teamtavern.net 301
+}
+
 # Serve all other static files.
 
 handle {

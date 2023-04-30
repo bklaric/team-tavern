@@ -11,33 +11,33 @@ import TeamTavern.Client.Snippets.Class as HS
 -- Desktop
 
 descriptionLeaderboard :: ∀ slots action. HH.HTML slots action
-descriptionLeaderboard = HH.div [HP.id "nn_lb2", HS.class_ "ad"] []
+descriptionLeaderboard = HH.div [HP.id "ezoic-pub-ad-placeholder-102", HS.class_ "ad"] []
 
 stickyLeaderboard :: ∀ slots action. HH.HTML slots action
-stickyLeaderboard = HH.div [HP.id "nn_lb1", HS.class_ "sticky-leaderboard"] []
+stickyLeaderboard = HH.div [HP.id "ezoic-pub-ad-placeholder-105", HS.class_ "sticky-leaderboard"] []
 
 mpu :: ∀ slots action. HH.HTML slots action
-mpu = HH.div [HP.id "nn_mpu1", HS.class_ "ad"] []
+mpu = HH.div [HP.id "ezoic-pub-ad-placeholder-106", HS.class_ "ad"] []
 
 filtersMpu :: ∀ slots action. HH.HTML slots action
-filtersMpu = HH.div [HP.id "nn_mpu1", HS.class_ "filters-mpu"] []
+filtersMpu = HH.div [HP.id "ezoic-pub-ad-placeholder-106", HS.class_ "filters-mpu"] []
 
 skinLeft :: ∀ slots action. HH.HTML slots action
-skinLeft = HH.div [HP.id "nn_skinl", HS.class_ ""] []
+skinLeft = HH.div [HP.id "ezoic-pub-ad-placeholder-103", HS.class_ ""] []
 
 skinRight :: ∀ slots action. HH.HTML slots action
-skinRight = HH.div [HP.id "nn_skinr", HS.class_ ""] []
+skinRight = HH.div [HP.id "ezoic-pub-ad-placeholder-104", HS.class_ ""] []
 
 -- Mobile
 
 mobileDescriptionLeaderboard :: ∀ slots action. HH.HTML slots action
-mobileDescriptionLeaderboard = HH.div [HP.id "nn_mobile_lb2", HS.class_ "ad"] []
+mobileDescriptionLeaderboard = HH.div [HP.id "ezoic-pub-ad-placeholder-102", HS.class_ "ad"] []
 
 mobileStickyLeaderboard :: ∀ slots action. HH.HTML slots action
-mobileStickyLeaderboard = HH.div [HP.id "nn_mobile_lb1_sticky", HS.class_ "sticky-leaderboard"] []
+mobileStickyLeaderboard = HH.div [HP.id "ezoic-pub-ad-placeholder-105", HS.class_ "sticky-leaderboard"] []
 
 mobileMpu :: ∀ slots action. HH.HTML slots action
-mobileMpu = HH.div [HP.id "nn_mobile_mpu1", HS.class_ "ad"] []
+mobileMpu = HH.div [HP.id "ezoic-pub-ad-placeholder-106", HS.class_ "ad"] []
 
 -- Both
 
