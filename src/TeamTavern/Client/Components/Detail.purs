@@ -51,9 +51,12 @@ fieldDetail icon label children =
     <>
     children
 
-urlDetail :: ∀ slots action. String -> String -> Maybe String -> Maybe (HH.HTML slots action)
-urlDetail _ _ Nothing = Nothing
-urlDetail icon text (Just href) = Just $ detail icon [ textAnchor "detail-url" href text ]
+urlDetail :: ∀ slots action. String -> String -> String -> HH.HTML slots action
+urlDetail icon text href = detail icon [ textAnchor "detail-url" href text ]
+
+urlDetailMaybe :: ∀ slots action. String -> String -> Maybe String -> Maybe (HH.HTML slots action)
+urlDetailMaybe _ _ Nothing = Nothing
+urlDetailMaybe icon text (Just href) = Just $ urlDetail icon text href
 
 discordTagDetail
     :: ∀ action left slots

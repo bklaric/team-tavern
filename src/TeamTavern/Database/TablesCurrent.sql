@@ -188,3 +188,11 @@ create table alert
     , fields jsonb[]
     , new_or_returning boolean not null
     );
+
+create table tracker (
+    id serial not null primary key,
+    game_id int not null references game(id),
+    platform text not null,
+    title text not null,
+    template text not null
+);

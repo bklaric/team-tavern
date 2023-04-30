@@ -203,6 +203,7 @@ loadTab { game: game @ { handle, shortTitle, fields }, tab: GameHeader.Players }
             playerInfo <- getPlayerInfo
             H.put $ Game game playerInfo filters $ Players
                 { handle: game.handle
+                , trackers: game.trackers
                 , profiles: playerProfiles.profiles
                 , profileCount: playerProfiles.count
                 , page

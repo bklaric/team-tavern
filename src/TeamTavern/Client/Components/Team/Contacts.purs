@@ -9,7 +9,7 @@ import Data.Array as Array
 import Data.Maybe (Maybe(..))
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Anchor (textAnchor)
-import TeamTavern.Client.Components.Detail (detail', discordTagDetail, fieldDetail', urlDetail)
+import TeamTavern.Client.Components.Detail (detail', discordTagDetail, fieldDetail', urlDetailMaybe)
 import TeamTavern.Client.Shared.Slot (Slot__String)
 import TeamTavern.Client.Snippets.Brands (detailBattleNetSvg, detailOriginSvg, detailPlayStationSvg, detailRiotSvg, detailSteamSvg, detailSwitchSvg, detailUbisoftSvg, detailXboxSvg)
 import TeamTavern.Routes.Shared.Platform (Platform(..))
@@ -31,7 +31,7 @@ type ContactsSlots slots =
     )
 
 teamDiscordServerDetail :: ∀ slots actions. Maybe String -> Maybe (HH.HTML slots actions)
-teamDiscordServerDetail discordServer = urlDetail "fab fa-discord" "Discord server" discordServer
+teamDiscordServerDetail discordServer = urlDetailMaybe "fab fa-discord" "Discord server" discordServer
 
 steamIdDetail :: ∀ left slots action.
     Maybe String -> Maybe $ HH.ComponentHTML action (steamId :: Slot__String | slots) (Async left)

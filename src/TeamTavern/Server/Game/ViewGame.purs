@@ -22,6 +22,19 @@ queryString = Query """
             'head', game.platforms[1],
             'tail', game.platforms[2:]
         ) as "platforms",
+        (   select coalesce(
+                json_agg(
+                    json_build_object(
+                        'platform', tracker.platform,
+                        'title', tracker.title,
+                        'template', tracker.template
+                    )
+                ) filter (where tracker.id is not null),
+                '[]'
+            )
+            from tracker
+            where tracker.game_id = game.id
+        ) as trackers,
         coalesce(
             json_agg(
                 json_build_object(
