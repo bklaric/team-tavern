@@ -1,4 +1,4 @@
-module TeamTavern.Server.Game.View where
+module TeamTavern.Server.Game.ViewGame (viewGame) where
 
 import Prelude
 
@@ -22,6 +22,19 @@ queryString = Query """
             'head', game.platforms[1],
             'tail', game.platforms[2:]
         ) as "platforms",
+        (   select coalesce(
+                json_agg(
+                    json_build_object(
+                        'platform', tracker.platform,
+                        'title', tracker.title,
+                        'template', tracker.template
+                    )
+                ) filter (where tracker.id is not null),
+                '[]'
+            )
+            from tracker
+            where tracker.game_id = game.id
+        ) as trackers,
         coalesce(
             json_agg(
                 json_build_object(
@@ -29,7 +42,6 @@ queryString = Query """
                     'label', field.label,
                     'key', field.key,
                     'icon', field.icon,
-                    'domain', field.domain,
                     'options', field.options
                 ) order by field.ordinal
             ) filter (where field.id is not null),
@@ -58,8 +70,8 @@ loadGame :: ∀ errors. Pool -> String -> Async (LoadSingleError errors) ViewGam
 loadGame pool handle = queryFirstNotFound pool queryString (handle : [])
     # lmap (elaborate ("Can't find game: " <> handle))
 
-view :: ∀ left. Pool -> String -> Async left _
-view pool handle =
+viewGame :: ∀ left. Pool -> String -> Async left _
+viewGame pool handle =
     sendResponse "Error viewing game" do
     -- Load game from database.
     ok_ <$> loadGame pool handle

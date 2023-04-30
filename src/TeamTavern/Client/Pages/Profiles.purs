@@ -45,6 +45,7 @@ import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Game.ViewGame as ViewGame
 import TeamTavern.Routes.Profile.ViewPlayerProfilesByGame as ViewPlayerProfilesByGame
 import TeamTavern.Routes.Profile.ViewTeamProfilesByGame as ViewTeamProfilesByGame
+import TeamTavern.Routes.Shared.Filters (Field)
 import TeamTavern.Routes.Shared.Organization as Organization
 import TeamTavern.Routes.Shared.Platform as Platform
 import TeamTavern.Routes.Shared.Size as Size
@@ -92,25 +93,6 @@ type ChildSlots =
     , profileFilters :: ProfileFilters.Slot
     )
 
-filterableFields
-    :: Array
-        { ilk :: Int
-        , key :: String
-        , label :: String
-        , icon :: String
-        , domain :: Maybe String
-        , options :: Maybe (Array
-            { key :: String
-            , label :: String
-            })
-        }
-    -> Array ProfileFilters.Field
-filterableFields fields = fields # Array.mapMaybe
-    case _ of
-    { key, label, icon, ilk, options: Just options }
-        | ilk == 2 || ilk == 3 -> Just { key, label, icon, options }
-    _ -> Nothing
-
 render :: ∀ left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render (Empty _) = HH.div_ []
 render (Game game _ filters tab) =
@@ -118,7 +100,7 @@ render (Game game _ filters tab) =
     [ HH.div [HS.class_ "content-columns-profiles"]
         [ profileFilters
             { platforms: game.platforms
-            , fields: filterableFields game.fields
+            , fields: game.fields
             , filters
             , tab: toHeaderProfileTab tab
             , handle: game.handle
@@ -221,6 +203,7 @@ loadTab { game: game @ { handle, shortTitle, fields }, tab: GameHeader.Players }
             playerInfo <- getPlayerInfo
             H.put $ Game game playerInfo filters $ Players
                 { handle: game.handle
+                , trackers: game.trackers
                 , profiles: playerProfiles.profiles
                 , profileCount: playerProfiles.count
                 , page
@@ -294,7 +277,7 @@ readQueryParams fields = do
     sizes <- Url.getAll "size" searchParams <#> Array.mapMaybe Size.fromString
     platforms <- Url.getAll "platform" searchParams <#> Array.mapMaybe Platform.fromString
     (fieldValues :: FieldValues) <- do
-        (fieldValues :: Array { fieldKey :: String, optionKeys :: Array String}) <-
+        (fieldValues :: Array Field) <-
             fields # traverse \{ key } ->
                 Url.getAll key searchParams <#> { fieldKey: key, optionKeys: _ }
         pure $ foldl

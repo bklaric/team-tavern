@@ -123,8 +123,6 @@ queryString timezone = Query $ """
                         on field_value_option.team_profile_field_value_id = field_value.id
                     left join field_option as multi
                         on multi.id = field_value_option.field_option_id
-                where
-                    field.ilk = 2 or field.ilk = 3
                 group by
                     field.id,
                     field_value.id

@@ -6,13 +6,13 @@ import Async (Async)
 import Data.Array as Array
 import Data.Maybe (Maybe(..))
 import Halogen.HTML as HH
-import TeamTavern.Client.Components.Detail (arrangedOrDetail, detail, urlDetail, weekdaysOnlineDetail, weekendsOnlineDetail)
+import TeamTavern.Client.Components.Detail (arrangedOrDetail, detail, urlDetailMaybe, weekdaysOnlineDetail, weekendsOnlineDetail)
 import TeamTavern.Client.Shared.Slot (Slot__String)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Shared.Organization (OrganizationNW, websiteNW)
 
 teamWebsiteDetail :: ∀ slots action. Maybe String -> Maybe (HH.HTML slots action)
-teamWebsiteDetail website = urlDetail "fas fa-globe" "Website" website
+teamWebsiteDetail website = urlDetailMaybe "fas fa-globe" "Website" website
 
 teamAgeDetail :: ∀ slots action. Maybe Int -> Maybe Int -> Maybe (HH.HTML slots action)
 teamAgeDetail Nothing Nothing = Nothing

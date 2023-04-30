@@ -1,6 +1,3 @@
-alter table player add ea_id text;
-alter table team add ea_id text;
-
 insert into game (title, short_title, handle, description, platforms)
 values (
     'Apex Legends',
@@ -12,9 +9,9 @@ values (
 
 insert into field (game_id, ilk, label, key, icon, ordinal)
 values
-    ((select id from game where game.handle = 'apex'), 2, 'Battle royale rank', 'battle-royale-rank', 'fas fa-medal', 1),
-    ((select id from game where game.handle = 'apex'), 2, 'Arenas rank', 'arenas-rank', 'fas fa-medal', 2),
-    ((select id from game where game.handle = 'apex'), 3, 'Interest', 'interest', 'fas fa-crosshairs', 3);
+    ((select id from game where game.handle = 'apex'), 'single', 'Battle royale rank', 'battle-royale-rank', 'fas fa-medal', 1),
+    ((select id from game where game.handle = 'apex'), 'single', 'Arenas rank', 'arenas-rank', 'fas fa-medal', 2),
+    ((select id from game where game.handle = 'apex'), 'multi', 'Interest', 'interest', 'fas fa-crosshairs', 3);
 
 insert into field_option (field_id, label, key, ordinal)
 values

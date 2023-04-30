@@ -6,6 +6,7 @@ import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Maybe (Maybe)
 import Data.Variant (Variant)
 import Jarilo (type (!), type (==>), BadRequestJson, Literal, NotAuthorized_, OkJson, PostJson_, Internal_)
+import TeamTavern.Routes.Shared.Field (ValuesSimple, ValuesSimpleMulti)
 import TeamTavern.Routes.Shared.Organization (OrganizationNW)
 import TeamTavern.Routes.Shared.Platform (Platform)
 import TeamTavern.Routes.Shared.PlayerContacts (PlayerContacts, PlayerContactsError)
@@ -47,12 +48,7 @@ type TeamRequestContent =
 
 type PlayerProfileRequestContent =
     { platform :: Platform
-    , fieldValues :: Array
-        { fieldKey :: String
-        , url :: Maybe String
-        , optionKey :: Maybe String
-        , optionKeys :: Maybe (Array String)
-        }
+    , fieldValues :: ValuesSimple
     , about :: String
     , ambitions :: String
     , newOrReturning :: Boolean
@@ -61,10 +57,7 @@ type PlayerProfileRequestContent =
 type TeamProfileRequestContent =
     { size :: Size
     , platforms :: Array Platform
-    , fieldValues :: Array
-        { fieldKey :: String
-        , optionKeys :: Array String
-        }
+    , fieldValues :: ValuesSimpleMulti
     , newOrReturning :: Boolean
     , about :: String
     , ambitions :: String

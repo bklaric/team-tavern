@@ -9,9 +9,9 @@ values (
 
 insert into field (game_id, ilk, label, key, icon, ordinal)
 values
-    ((select id from game where game.handle = 'r6s'), 2, 'Rank', 'rank', 'fas fa-medal', 1),
-    ((select id from game where game.handle = 'r6s'), 3, 'Role', 'role', 'fas fa-bullseye', 2),
-    ((select id from game where game.handle = 'r6s'), 3, 'Interest', 'interest', 'fas fa-crosshairs', 3);
+    ((select id from game where game.handle = 'r6s'), 'single', 'Rank', 'rank', 'fas fa-medal', 1),
+    ((select id from game where game.handle = 'r6s'), 'multi', 'Role', 'role', 'fas fa-bullseye', 2),
+    ((select id from game where game.handle = 'r6s'), 'multi', 'Interest', 'interest', 'fas fa-crosshairs', 3);
 
 insert into field_option (field_id, label, key, ordinal)
 values

@@ -3,6 +3,7 @@ module TeamTavern.Routes.Profile.AddTeamProfile where
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Variant (Variant)
 import Jarilo (type (!), type (/), type (==>), BadRequestJson, Capture, Forbidden_, Literal, NoContent, NotAuthorized_, PostJson_, Internal_)
+import TeamTavern.Routes.Shared.Field (ValuesSimpleMulti)
 import TeamTavern.Routes.Shared.Platform (Platform)
 import TeamTavern.Routes.Shared.Size (Size)
 import TeamTavern.Routes.Shared.TeamContacts (TeamContacts, TeamContactsError)
@@ -21,15 +22,10 @@ type AddTeamProfile =
 
 type RouteParams = { teamHandle :: Handle, gameHandle :: Handle }
 
-type RequestContentFieldValue =
-    { fieldKey :: String
-    , optionKeys :: Array String
-    }
-
 type RequestContentProfile =
     { size :: Size
     , platforms :: Array Platform
-    , fieldValues :: Array RequestContentFieldValue
+    , fieldValues :: ValuesSimpleMulti
     , newOrReturning :: Boolean
     , about :: String
     , ambitions :: String

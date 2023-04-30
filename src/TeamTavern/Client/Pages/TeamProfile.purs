@@ -71,7 +71,7 @@ render (Empty _) = HH.div_ []
 render (Loaded { profile, status }) = let
     contactsDetails = profileContacts profile
     teamDetails' = teamDetails profile
-    profileDetails = profileDetails' profile
+    profileDetails = profileDetails' profile.fieldValues profile.newOrReturning
     about = textDetail profile.about
     ambitions = textDetail profile.ambitions
     in

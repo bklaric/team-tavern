@@ -5,8 +5,6 @@ import Prelude
 import Async (Async)
 import Async as Async
 import Control.Alt ((<|>))
-import Data.Array (mapMaybe)
-import Data.Array as Array
 import Data.Bifunctor (lmap)
 import Data.Either (Either(..))
 import Data.Foldable (foldl)
@@ -181,13 +179,6 @@ emptyInput playerOrTeam game =
         maybe { platforms: { head: Steam, tail: [] }, fields: [] } pick game
     , teamProfile: TeamProfileFormInput.emptyInput $
         maybe { platforms: { head: Steam, tail: [] }, fields: [] } pick game
-        # \game' -> game'
-            { fields = game'.fields # mapMaybe
-                case _ of
-                { ilk, key, label, icon, options: Just options } | ilk == 2 || ilk == 3 ->
-                    Just { key, label, icon, options: options }
-                _ -> Nothing
-            }
     , registrationMode: Password
     , registrationEmail: RegistrationInput.emptyInput
     , registrationDiscord: RegistrationInputDiscord.emptyInput
@@ -512,11 +503,7 @@ sendRequest state = Async.attempt do
                     , website: const state' { step = Team, team { websiteError = true } }
                     }
                 , playerProfile: state # foldl \state' error' -> error' # match
-                    { url: \{ key } -> state'
-                        { step = if state'.step > PlayerProfile then PlayerProfile else state'.step
-                        , playerProfile { details { urlErrors = Array.cons key state'.playerProfile.details.urlErrors } }
-                        }
-                    , about: const state'
+                    { about: const state'
                         { step = if state'.step > PlayerProfile then PlayerProfile else state'.step
                         , playerProfile { details { aboutError = true } }
                         }
@@ -688,11 +675,7 @@ handleAction (UpdateGame game) = do
             { details
                 { allPlatforms = game.platforms
                 , selectedPlatforms = [ game.platforms.head ]
-                , fields = game.fields # Array.mapMaybe
-                    case _ of
-                    { ilk, key, label, icon, options: Just options } | ilk == 2 || ilk == 3 ->
-                        Just { key, label, icon, options }
-                    _ -> Nothing
+                , fields = game.fields
                 , fieldValues = []
                 , newOrReturning = false
                 , about = ""
@@ -733,8 +716,7 @@ handleAction SetUpAccount = do
             }
         , playerProfile
             { details
-                { urlErrors = []
-                , aboutError = false
+                { aboutError = false
                 , ambitionsError = false
                 }
             , contacts

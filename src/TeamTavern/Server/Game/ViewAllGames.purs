@@ -1,4 +1,4 @@
-module TeamTavern.Server.Game.ViewAll where
+module TeamTavern.Server.Game.ViewAllGames (viewAllGames) where
 
 import Prelude
 
@@ -25,8 +25,8 @@ loadGamesQuery = Query """
 loadGames :: ∀ errors. Pool -> Async (InternalTerror_ errors) ViewAllGames.OkContent
 loadGames pool = queryMany_ pool loadGamesQuery
 
-viewAll :: ∀ left. Pool -> Async left _
-viewAll pool =
+viewAllGames :: ∀ left. Pool -> Async left _
+viewAllGames pool =
     sendResponse "Error viewing all games" do
     -- Load games from database
     ok_ <$> loadGames pool

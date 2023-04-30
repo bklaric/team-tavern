@@ -5,72 +5,31 @@ import Prelude
 import Data.Array as Array
 import Data.Maybe (Maybe(..))
 import Halogen.HTML as HH
+import Record.Extra (pick)
 import TeamTavern.Client.Components.Detail (detail, fieldDetail)
 import TeamTavern.Client.Snippets.Class as HS
-import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
+import TeamTavern.Routes.Shared.Field (Fields, ValuesMulti, ValuesSimpleMulti)
 
-profileDetails :: ∀ fieldOptionFields fieldValueFields fieldFields someMoreFields slots action.
-    { allPlatforms :: Platforms
-    , selectedPlatforms :: Array Platform
-    , fields :: Array
-        { icon :: String
-        , key :: String
-        , label :: String
-        , options :: Array
-            { key :: String
-            , label :: String
-            | fieldOptionFields
-            }
-        | fieldFields
-        }
-    , fieldValues ::  Array
-        { fieldKey :: String
-        , optionKeys :: Array String
-        | fieldValueFields
-        }
-    , newOrReturning :: Boolean
-    | someMoreFields
-    }
-    -> Array (HH.HTML slots action)
-profileDetails { allPlatforms, selectedPlatforms, fields, fieldValues, newOrReturning } =
+profileDetails :: ∀ slots action.
+    Fields -> ValuesSimpleMulti -> Boolean -> Array (HH.HTML slots action)
+profileDetails fields fieldValues newOrReturning =
     profileDetails'
-    { allPlatforms
-    , selectedPlatforms
-    , fieldValues: fieldValues <#> (\fieldValue ->
+    (fieldValues <#> (\fieldValue ->
         case fields # Array.find \{ key } -> key == fieldValue.fieldKey of
         Just field -> Just
-            { field:
-                { icon: field.icon
-                , key: field.key
-                , label: field.label
-                }
+            { field: pick field
             , options: field.options # Array.filter \{ key } -> Array.elem key fieldValue.optionKeys
             }
         Nothing -> Nothing
         )
         # Array.catMaybes
-    , newOrReturning
-    }
+    )
+    newOrReturning
 
-profileDetails' :: ∀ fieldOptionFields fieldFields someMoreFields slots action.
-    { fieldValues :: Array
-        { field ::
-            { key :: String
-            , label :: String
-            , icon :: String
-            | fieldFields
-            }
-        , options :: Array
-            { key :: String
-            , label :: String
-            | fieldOptionFields
-            }
-        }
-    , newOrReturning :: Boolean
-    | someMoreFields
-    }
-    -> Array (HH.HTML slots action)
-profileDetails' { fieldValues, newOrReturning } =
+
+profileDetails' :: ∀ slots action.
+    ValuesMulti -> Boolean -> Array (HH.HTML slots action)
+profileDetails' fieldValues newOrReturning =
     ( fieldValues
     <#> ( \fieldValue ->
             if not $ Array.null fieldValue.options

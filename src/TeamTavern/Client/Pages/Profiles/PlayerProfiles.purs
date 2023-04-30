@@ -1,4 +1,4 @@
-module TeamTavern.Client.Pages.Profiles.PlayerProfiles (Fields, PlayerProfile, Input, Output(..), Slot, playerProfiles) where
+module TeamTavern.Client.Pages.Profiles.PlayerProfiles (PlayerProfile, Input, Output(..), Slot, playerProfiles) where
 
 import Prelude
 
@@ -19,6 +19,7 @@ import TeamTavern.Client.Components.Pagination (pagination)
 import TeamTavern.Client.Components.Player.Contacts (profileContacts)
 import TeamTavern.Client.Components.Player.PlayerDetails (playerDetails)
 import TeamTavern.Client.Components.Player.ProfileDetails (PlatformIdSlots, profileDetails')
+import TeamTavern.Client.Components.Player.TrackerDetails (trackerDetails)
 import TeamTavern.Client.Components.Profile (profileHeader, profileHeading, profileSubheading)
 import TeamTavern.Client.Pages.Profiles.PlayerProfileOptions (playerProfileOptions)
 import TeamTavern.Client.Pages.Profiles.TeamBadge (platformBadge)
@@ -28,22 +29,12 @@ import TeamTavern.Client.Shared.Slot (Slot_O_, Slot__String)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Client.Snippets.PreventMouseDefault (preventMouseDefault)
 import TeamTavern.Routes.Profile.Shared (pageSize)
+import TeamTavern.Routes.Shared.Field (Values)
 import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
 import TeamTavern.Routes.Shared.PlayerContacts (PlayerContactsOpen)
+import TeamTavern.Routes.Shared.Tracker (Trackers)
 import Type.Proxy (Proxy(..))
 import Web.UIEvent.MouseEvent (MouseEvent)
-
-type Fields = Array
-    { ilk :: Int
-    , label :: String
-    , key :: String
-    , icon :: String
-    , domain :: Maybe String
-    , options :: Maybe (Array
-        { key :: String
-        , label :: String
-        })
-    }
 
 type PlayerProfile = PlayerContactsOpen
     ( nickname :: String
@@ -55,23 +46,7 @@ type PlayerProfile = PlayerContactsOpen
     , weekendOnline :: Maybe { from :: String, to :: String }
     , platforms :: Platforms
     , platform :: Platform
-    , fieldValues :: Array
-        { field ::
-            { ilk :: Int
-            , key :: String
-            , label :: String
-            , icon :: String
-            }
-        , url :: Maybe String
-        , option :: Maybe
-            { key :: String
-            , label :: String
-            }
-        , options :: Maybe (Array
-            { key :: String
-            , label :: String
-            })
-        }
+    , fieldValues :: Values
     , about :: Array String
     , ambitions :: Array String
     , newOrReturning :: Boolean
@@ -81,6 +56,7 @@ type PlayerProfile = PlayerContactsOpen
 
 type Input =
     { handle :: String
+    , trackers :: Trackers
     , profiles :: Array PlayerProfile
     , profileCount :: Int
     , playerInfo :: Maybe PlayerInfo
@@ -105,11 +81,12 @@ type ChildSlots = PlatformIdSlots
     )
 
 profileSection :: ∀ action left.
-    String -> PlayerProfile -> HH.ComponentHTML action ChildSlots (Async left)
-profileSection handle profile = let
+    String -> Trackers -> PlayerProfile -> HH.ComponentHTML action ChildSlots (Async left)
+profileSection handle trackers profile = let
     playerDetails' = playerDetails profile
     profileDetails'' = profileDetails' profile.fieldValues profile.newOrReturning
     contactsDetails' = profileContacts profile
+    trackerDetails' = trackerDetails profile trackers
     about = textDetail profile.about
     ambitions = textDetail profile.ambitions
     in
@@ -138,6 +115,9 @@ profileSection handle profile = let
             guard (full contactsDetails')
             [ detailColumnHeading4 "Contacts" ] <> contactsDetails'
             <>
+            guard (full trackerDetails')
+            [ detailColumnHeading4 "Trackers" ] <> trackerDetails'
+            <>
             guard (full playerDetails')
             [ detailColumnHeading4 "Player details" ] <> playerDetails'
             <>
@@ -154,7 +134,7 @@ profileSection handle profile = let
     ]
 
 render :: ∀ left. State -> H.ComponentHTML Action ChildSlots (Async left)
-render { handle, profiles, profileCount, playerInfo, page } =
+render { handle, trackers, profiles, profileCount, playerInfo, page } =
     HH.div_ $ [
     HH.div [ HP.id "profiles-card", HS.class_ "card" ] $
     [ cardHeader $
@@ -182,7 +162,7 @@ render { handle, profiles, profileCount, playerInfo, page } =
     <>
     if Array.null profiles
     then [ cardSection [ HH.p_ [ HH.text "No profiles satisfy specified filters." ] ] ]
-    else ( profiles <#> profileSection handle # insertMobileMpuInMiddleOrAtEnd ) <> [ pagination page profileCount ChangePage ]
+    else ( profiles <#> profileSection handle trackers # insertMobileMpuInMiddleOrAtEnd ) <> [ pagination page profileCount ChangePage ]
     ]
 
 handleAction :: ∀ left. Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit

@@ -10,7 +10,7 @@ import TeamTavern.Routes.Shared.Filters (Filters)
 import TeamTavern.Routes.Shared.Types (Timezone, Handle)
 import TeamTavern.Server.Infrastructure.Postgres (transaction)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
-import TeamTavern.Server.Profile.ViewTeamProfilesByGame.LoadProfileCount (loadProfileCount)
+import TeamTavern.Server.Profile.Infrastructure.LoadFieldAndOptionIds (loadFieldAndOptionIds)
 import TeamTavern.Server.Profile.ViewTeamProfilesByGame.LoadProfiles (loadProfiles)
 
 viewTeamProfilesByGame
@@ -25,11 +25,10 @@ viewTeamProfilesByGame pool handle page timezone filters =
     sendResponse "Error viewing team profiles by game" do
     profiles <- pool # transaction
         \client -> do
-            -- Load profiles.
-            profiles <- loadProfiles client handle page timezone filters
+            -- Load field and option ids.
+            fieldAndOptionIds <- loadFieldAndOptionIds client handle filters.fields
 
-            -- Load profile count.
-            count <- loadProfileCount client handle timezone filters
+            -- Load profiles and count.
+            loadProfiles client handle page timezone filters fieldAndOptionIds
 
-            pure { profiles, count }
     pure $ ok_ profiles

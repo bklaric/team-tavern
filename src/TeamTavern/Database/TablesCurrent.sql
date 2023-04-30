@@ -100,12 +100,11 @@ create table game
 create table field
     ( id serial not null primary key
     , game_id integer not null references game(id) on delete cascade
-    , ilk integer not null -- 1 (url), 2 (single), 3 (multi)
+    , ilk integer not null -- 'single', 'multi'
     , key varchar(40) not null
     , label varchar(40) not null
     , icon varchar(40) not null
     , ordinal int not null
-    , domain varchar(40)
     );
 
 create table field_option
@@ -133,8 +132,6 @@ create table player_profile_field_value
     ( id serial not null primary key
     , player_profile_id integer not null references player_profile(id) on delete cascade
     , field_id integer not null references field(id)
-    , url varchar(200) -- When field is url.
-    , field_option_id integer references field_option(id) -- When field is single select.
     );
 
 create table player_profile_field_value_option
@@ -191,3 +188,11 @@ create table alert
     , fields jsonb[]
     , new_or_returning boolean not null
     );
+
+create table tracker (
+    id serial not null primary key,
+    game_id int not null references game(id),
+    platform text not null,
+    title text not null,
+    template text not null
+);
