@@ -29,6 +29,7 @@ You can edit this file as you like.
   , "http-methods"
   , "integers"
   , "js-timers"
+  , "js-uri"
   , "lists"
   , "maybe"
   , "media-types"
@@ -61,6 +62,7 @@ You can edit this file as you like.
   , "web-dom"
   , "web-events"
   , "web-html"
+  , "web-storage"
   , "web-uievents"
   , "yoga-json"
   ]
