@@ -83,8 +83,8 @@ discordTagInputGroup :: ∀ slots action.
     Maybe String -> (Maybe String -> action) -> Boolean -> HTML slots action
 discordTagInputGroup value onValue error =
     inputGroup $
-    [ inputLabel "fab fa-discord" "Discord tag"
+    [ inputLabel "fab fa-discord" "Discord username or tag"
     , textLineInput value onValue
-    , inputUnderlabel "Example: username#1234"
+    , inputUnderlabel "Example: username or username#1234"
     ]
     <> inputError error "This does not look like a valid Discord tag."

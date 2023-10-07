@@ -65,7 +65,7 @@ discordTagDetail
     -> Maybe (HH.ComponentHTML action ( discordTag :: Slot__String | slots) (Async left))
 discordTagDetail _ Nothing = Nothing
 discordTagDetail nickname (Just discordTag) = Just $
-    fieldDetail "fab fa-discord" "Discord tag"
+    fieldDetail "fab fa-discord" "Discord"
     [ copyable (Proxy :: _ "discordTag") ("discordTag-" <> nickname) discordTag ]
 
 arrangeItems :: ∀ slots action. String -> Array String -> Array (HH.HTML slots action)

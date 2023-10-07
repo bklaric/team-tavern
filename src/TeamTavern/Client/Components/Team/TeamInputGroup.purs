@@ -101,4 +101,4 @@ discordServerInputGroup value onValue error =
     , inputUnderlabel "Example: discord.gg/AbCdEfG"
     ]
     <>
-    inputError error "This does not look like a valid Discord tag."
+    inputError error "This does not look like a valid Discord server."
