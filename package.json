@@ -3,5 +3,15 @@
     "@sendgrid/mail": "^7.7.0",
     "bcrypt": "^5.0.1",
     "pg": "^8.7.3"
+  },
+  "volta": {
+    "node": "20.9.0",
+    "npm": "10.2.4"
+  },
+  "devDependencies": {
+    "esbuild": "^0.19.5",
+    "purescript": "^0.15.12",
+    "sass": "^1.69.5",
+    "spago": "^0.21.0"
   }
 }
