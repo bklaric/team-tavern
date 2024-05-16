@@ -57,4 +57,4 @@ setMeta title description = liftEffect do
     setMetaTitle title
     setMetaDescription description
     setMetaUrl
-    -- reloadAds
+    reloadAds
