@@ -10,7 +10,7 @@
   },
   "devDependencies": {
     "esbuild": "^0.19.5",
-    "purescript": "^0.15.12",
+    "purescript": "^0.15.15",
     "sass": "^1.69.5",
     "spago": "^0.21.0"
   }
