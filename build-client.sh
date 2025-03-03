@@ -10,6 +10,7 @@ cp src/TeamTavern/Client/Static/robots.txt dist-client/robots.txt
 cp src/TeamTavern/Client/Static/sitemap.txt dist-client/sitemap.txt
 cp src/TeamTavern/Client/Static/index.html dist-client/index.html
 cp src/TeamTavern/Client/Static/index.prerender.html dist-client/index.prerender.html
+cp src/TeamTavern/Client/Static/ads.txt dist-client/ads.txt
 cp -r src/TeamTavern/Client/Static/Images/Landing/* dist-client/images/
 cp -r src/TeamTavern/Client/Static/Images/Competitions/* dist-client/images/competitions/
 cp src/TeamTavern/Client/Static/Favicons/* dist-client/favicons/
