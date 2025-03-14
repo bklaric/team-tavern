@@ -1,1 +1,1 @@
-0 0 * * * curl --output ~/team-tavern/dist-client/ads.txt https://kumo.network-n.com/ads.txt
+0 0 * * * export $(cat ~/team-tavern/stacks/.env | xargs) && ~/team-tavern/backup-database.sh
