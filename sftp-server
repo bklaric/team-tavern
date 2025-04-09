@@ -1,2 +1,4 @@
 put dist-server/server.js team-tavern/dist-server/server.js
+put dist-server/package.json team-tavern/dist-server/package.json
+put dist-server/package-lock.json team-tavern/dist-server/package-lock.json
 bye
