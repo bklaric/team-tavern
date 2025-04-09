@@ -14,7 +14,11 @@ services:
     image: node:18.4
     container_name: node
     restart: unless-stopped
-    command: node /root/team-tavern/dist-server/server.js
+    # Bash -c is necessary because of cd and &&, which are shell builtin commands.
+    command: >
+      bash -c "cd /root/team-tavern &&
+              npm ci &&
+              node /root/team-tavern/dist-server/server.js"
     env_file: .env
     volumes:
       - ${TEAMTAVERN_PATH}:/root/team-tavern
