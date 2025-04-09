@@ -22,6 +22,7 @@ services:
     env_file: .env
     volumes:
       - ${TEAMTAVERN_PATH}/dist-server:/root/team-tavern/dist-server
+      - node_modules:/root/team-tavern/dist-server/node_modules
     depends_on:
       - postgres
 
@@ -48,3 +49,7 @@ services:
     depends_on:
       - node
       - rendertron
+
+# Named volume for API's node_modules directory.
+volumes:
+  node_modules:
