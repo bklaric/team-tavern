@@ -16,12 +16,12 @@ services:
     restart: unless-stopped
     # Bash -c is necessary because of cd and &&, which are shell builtin commands.
     command: >
-      bash -c "cd /root/team-tavern &&
+      bash -c "cd /root/team-tavern/dist-server &&
               npm ci &&
-              node /root/team-tavern/dist-server/server.js"
+              node server.js"
     env_file: .env
     volumes:
-      - ${TEAMTAVERN_PATH}:/root/team-tavern
+      - ${TEAMTAVERN_PATH}/dist-server:/root/team-tavern/dist-server
     depends_on:
       - postgres
 
