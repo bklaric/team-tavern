@@ -26,7 +26,7 @@ skinLeft :: ∀ slots action. HH.HTML slots action
 skinLeft = HH.div [HP.id "slot-7", HS.class_ ""] []
 
 skinRight :: ∀ slots action. HH.HTML slots action
-skinRight = HH.div [HP.id "nn_skinr", HS.class_ ""] []
+skinRight = HH.div [HP.id "slot-8", HS.class_ ""] []
 
 -- Mobile
 
