@@ -4,7 +4,7 @@ DATETIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 # Dump database, gzip it, encode it in base64 and store it in variable.
 BACKUP_BASE64=$(docker exec postgres pg_dump | gzip -c | base64 -w 0)
 # Prepare JSON body for Sendgrid API.
-DATA='{"personalizations": [{"to": [{"email": "branimir.klaric.bk@gmail.com"}]}],"from": {"email": "backup@teamtavern.net"},"subject":"Database backup '$DATETIME'","content": [{"type": "text/plain","value": "Database backup."}], "attachments": [{"content": "'$BACKUP_BASE64'", "type": "application/sql", "filename": "'$DATETIME'-database-backup.sql"}]}'
+DATA='{"personalizations": [{"to": [{"email": "branimir.klaric.bk@gmail.com"}]}],"from": {"email": "backup@teamtavern.net"},"subject":"Database backup '$DATETIME'","content": [{"type": "text/plain","value": "Database backup."}], "attachments": [{"content": "'$BACKUP_BASE64'", "type": "application/gzip", "filename": "'$DATETIME'-database-backup.sql.gz"}]}'
 # Write JSON body into a file.
 # We're doing this because curl complains if we pass it a large --data argument.
 # However, it can read --data from files just fine.
