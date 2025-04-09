@@ -68,6 +68,26 @@
     mixpanel.init('553718f6cdc8747b43ba382ad1003b87');
   </script> -->
 
+  <!-- Venatus -->
+  <script src="https://hb.vntsm.com/v4/live/vms/sites/teamtavern.net/index.js" async></script>
+  <script>
+    self.__VM = self.__VM || [];
+    self.__VM.push(function (admanager, scope) {
+      scope.Config.get('billboard').display('slot-1');
+      scope.Config.get('double_mpu').display('slot-2');
+      scope.Config.get('leaderboard').display('slot-3');
+      scope.Config.get('mobile_banner').display('slot-4');
+      scope.Config.get('mobile_mpu').display('slot-5');
+      scope.Config.get('mpu').display('slot-6');
+      scope.Config.get('skyscraper').display('slot-7');
+      scope.Config.get('desktop_takeover').display('slot-8');
+      scope.Config.get('mobile_takeover').display('slot-9');
+      scope.Config.get('video').display('slot-10');
+      // Based on your layout, here are the responsive tags. The placement will change based on screen width.
+      // With the mobile breakpoint set by default at max-width:1024px
+    });
+  </script>
+
   <!-- PostHog. -->
   <script>
     !function (t, e) { var o, n, p, r; e.__SV || (window.posthog = e, e._i = [], e.init = function (i, s, a) { function g(t, e) { var o = e.split("."); 2 == o.length && (t = t[o[0]], e = o[1]), t[e] = function () { t.push([e].concat(Array.prototype.slice.call(arguments, 0))) } } (p = t.createElement("script")).type = "text/javascript", p.async = !0, p.src = s.api_host + "/static/array.js", (r = t.getElementsByTagName("script")[0]).parentNode.insertBefore(p, r); var u = e; for (void 0 !== a ? u = e[a] = [] : a = "posthog", u.people = u.people || [], u.toString = function (t) { var e = "posthog"; return "posthog" !== a && (e += "." + a), t || (e += " (stub)"), e }, u.people.toString = function () { return u.toString(1) + ".people (stub)" }, o = "capture identify alias people.set people.set_once set_config register register_once unregister opt_out_capturing has_opted_out_capturing opt_in_capturing reset isFeatureEnabled onFeatureFlags getFeatureFlag getFeatureFlagPayload reloadFeatureFlags group updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures getActiveMatchingSurveys getSurveys onSessionId".split(" "), n = 0; n < o.length; n++)g(u, o[n]); e._i.push([i, s, a]) }, e.__SV = 1) }(document, window.posthog || []);

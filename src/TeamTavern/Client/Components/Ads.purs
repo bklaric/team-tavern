@@ -11,19 +11,19 @@ import TeamTavern.Client.Snippets.Class as HS
 -- Desktop
 
 descriptionLeaderboard :: ∀ slots action. HH.HTML slots action
-descriptionLeaderboard = HH.div [HP.id "nn_lb2", HS.class_ "ad"] []
+descriptionLeaderboard = HH.div [HP.id "slot-1", HS.class_ "ad"] []
 
 stickyLeaderboard :: ∀ slots action. HH.HTML slots action
-stickyLeaderboard = HH.div [HP.id "nn_lb1", HS.class_ "sticky-leaderboard"] []
+stickyLeaderboard = HH.div [HP.id "slot-3", HS.class_ "sticky-leaderboard"] []
 
 mpu :: ∀ slots action. HH.HTML slots action
-mpu = HH.div [HP.id "nn_mpu1", HS.class_ "ad"] []
+mpu = HH.div [HP.id "slot-6", HS.class_ "ad"] []
 
 filtersMpu :: ∀ slots action. HH.HTML slots action
-filtersMpu = HH.div [HP.id "nn_mpu1", HS.class_ "filters-mpu"] []
+filtersMpu = HH.div [HP.id "slot-2", HS.class_ "filters-mpu"] []
 
 skinLeft :: ∀ slots action. HH.HTML slots action
-skinLeft = HH.div [HP.id "nn_skinl", HS.class_ ""] []
+skinLeft = HH.div [HP.id "slot-7", HS.class_ ""] []
 
 skinRight :: ∀ slots action. HH.HTML slots action
 skinRight = HH.div [HP.id "nn_skinr", HS.class_ ""] []
@@ -31,13 +31,13 @@ skinRight = HH.div [HP.id "nn_skinr", HS.class_ ""] []
 -- Mobile
 
 mobileDescriptionLeaderboard :: ∀ slots action. HH.HTML slots action
-mobileDescriptionLeaderboard = HH.div [HP.id "nn_mobile_lb2", HS.class_ "ad"] []
+mobileDescriptionLeaderboard = HH.div [HP.id "slot-4", HS.class_ "ad"] []
 
 mobileStickyLeaderboard :: ∀ slots action. HH.HTML slots action
 mobileStickyLeaderboard = HH.div [HP.id "nn_mobile_lb1_sticky", HS.class_ "sticky-leaderboard"] []
 
 mobileMpu :: ∀ slots action. HH.HTML slots action
-mobileMpu = HH.div [HP.id "nn_mobile_mpu1", HS.class_ "ad"] []
+mobileMpu = HH.div [HP.id "slot-5", HS.class_ "ad"] []
 
 -- Both
 
@@ -51,7 +51,7 @@ mpus :: ∀ slots action. Array (HH.HTML slots action)
 mpus = [mpu, mobileMpu]
 
 player :: ∀ slots action. HH.HTML slots action
-player = HH.div [HP.id "nn_player"] []
+player = HH.div [HP.id "slot-10"] []
 
 -- Utils
 
