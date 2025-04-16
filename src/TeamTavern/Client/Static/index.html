@@ -83,6 +83,9 @@
       scope.Config.get('desktop_takeover').display('slot-8');
       scope.Config.get('mobile_takeover').display('slot-9');
       scope.Config.get('video').display('slot-10');
+      scope.Instances.pageManager.on('navigated', () => {
+        scope.Instances.pageManager.newPageSession(false);
+      }, false);
       // Based on your layout, here are the responsive tags. The placement will change based on screen width.
       // With the mobile breakpoint set by default at max-width:1024px
     });
