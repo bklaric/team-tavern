@@ -11,7 +11,7 @@ services:
       - ${POSTGRES_BACKUP_PATH}:/backups
 
   node:
-    image: node:18.4
+    image: node:22.15.0
     container_name: node
     restart: unless-stopped
     # Bash -c is necessary because of cd and &&, which are shell builtin commands.
@@ -34,7 +34,7 @@ services:
       - node
 
   caddy:
-    image: caddy:2.5.1
+    image: caddy:2.10.0
     container_name: caddy
     restart: unless-stopped
     ports:
