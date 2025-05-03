@@ -1,7 +1,6 @@
 module TeamTavern.Client.Pages.Privacy (privacyPolicy) where
 
 import Halogen.HTML as HH
-import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Components.Anchor (textAnchor_)
 import TeamTavern.Client.Snippets.Class as HS
 
