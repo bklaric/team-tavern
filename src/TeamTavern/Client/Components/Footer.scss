@@ -31,7 +31,11 @@
             width: unset;
         }
     }
+}
 
+.footer-content-links {
+    display: flex;
+    gap: 21px;
 }
 
 .footer-icon {

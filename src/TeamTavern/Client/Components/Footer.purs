@@ -9,6 +9,7 @@ import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Components.Anchor (iconAnchor)
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Shared.Slot (Slot___)
+import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Client.Snippets.SocialMediaUrls (discordUrl, redditUrl, steamId, twitterUrl)
 import Type.Proxy (Proxy(..))
 
@@ -25,7 +26,7 @@ footer :: ∀ monad action children. MonadEffect monad =>
     H.ComponentHTML action (ChildSlots children) monad
 footer = HH.div [ HP.class_ $ HH.ClassName "footer" ]
     [ HH.div [ HP.class_ $ HH.ClassName "footer-content" ]
-        [ HH.div_
+        [ HH.div [HS.class_ "footer-content-links"]
             [ navigationAnchor (Proxy :: _ "aboutAnchor")
                 { path: "/about", content: HH.text "About" }
             , navigationAnchor (Proxy :: _ "privacyAnchor")
