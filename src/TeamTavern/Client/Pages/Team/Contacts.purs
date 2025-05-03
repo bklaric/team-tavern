@@ -34,6 +34,6 @@ contacts contacts' status showEditModal = let
         then Array.singleton $ missing
             case status of
             SignedInOwner -> "Apparently, your team prefers to keep to itself."
-            _ -> "Apparently, this team prefers to keep itself."
+            _ -> "Apparently, this team prefers to keep to itself."
         else contacts''
     ]
