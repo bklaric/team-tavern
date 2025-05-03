@@ -9,7 +9,6 @@ import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Components.Anchor (iconAnchor)
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
 import TeamTavern.Client.Shared.Slot (Slot___)
-import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Client.Snippets.SocialMediaUrls (discordUrl, redditUrl, steamId, twitterUrl)
 import Type.Proxy (Proxy(..))
 
@@ -29,12 +28,6 @@ footer = HH.div [ HP.class_ $ HH.ClassName "footer" ]
         [ HH.div_
             [ navigationAnchor (Proxy :: _ "aboutAnchor")
                 { path: "/about", content: HH.text "About" }
-            , HH.a
-                [ HS.class_ "nn-cmp-show"
-                , HP.prop (H.PropName "style") "margin-left: 21px; margin-right: 21px;"
-                , HP.href "#"
-                ]
-                [ HH.text "Manage Cookie Settings" ]
             , navigationAnchor (Proxy :: _ "privacyAnchor")
                 { path: "/privacy", content: HH.text "Privacy Policy" }
             ]
