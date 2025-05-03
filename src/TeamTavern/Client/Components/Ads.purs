@@ -4,69 +4,54 @@ import Prelude
 
 import Data.Array as Array
 import Data.Maybe (Maybe(..))
+import Data.Monoid (guard)
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Snippets.Class as HS
 
--- Desktop
+billboard :: ∀ slots action. HH.HTML slots action
+billboard = HH.div [HP.id "slot-1", HS.class_ "ad"] []
 
-descriptionLeaderboard :: ∀ slots action. HH.HTML slots action
-descriptionLeaderboard = HH.div [HP.id "slot-1", HS.class_ "ad"] []
+doubleMpu :: ∀ slots action. HH.HTML slots action
+doubleMpu = HH.div [HP.id "slot-2", HS.class_ "ad"] []
 
-stickyLeaderboard :: ∀ slots action. HH.HTML slots action
-stickyLeaderboard = HH.div [HP.id "slot-3", HS.class_ "sticky-leaderboard"] []
+leaderboard :: ∀ slots action. HH.HTML slots action
+leaderboard = HH.div [HP.id "slot-3", HS.class_ "ad"] []
 
-mpu :: ∀ slots action. HH.HTML slots action
-mpu = HH.div [HP.id "slot-6", HS.class_ "ad"] []
-
-filtersMpu :: ∀ slots action. HH.HTML slots action
-filtersMpu = HH.div [HP.id "slot-2", HS.class_ "filters-mpu"] []
-
-skinLeft :: ∀ slots action. HH.HTML slots action
-skinLeft = HH.div [HP.id "slot-7", HS.class_ ""] []
-
-skinRight :: ∀ slots action. HH.HTML slots action
-skinRight = HH.div [HP.id "slot-8", HS.class_ ""] []
-
--- Mobile
-
-mobileDescriptionLeaderboard :: ∀ slots action. HH.HTML slots action
-mobileDescriptionLeaderboard = HH.div [HP.id "slot-4", HS.class_ "ad"] []
-
-mobileStickyLeaderboard :: ∀ slots action. HH.HTML slots action
-mobileStickyLeaderboard = HH.div [HP.id "nn_mobile_lb1_sticky", HS.class_ "sticky-leaderboard"] []
+mobileBanner :: ∀ slots action. HH.HTML slots action
+mobileBanner = HH.div [HP.id "slot-4", HS.class_ "ad"] []
 
 mobileMpu :: ∀ slots action. HH.HTML slots action
 mobileMpu = HH.div [HP.id "slot-5", HS.class_ "ad"] []
 
--- Both
+mpu :: ∀ slots action. HH.HTML slots action
+mpu = HH.div [HP.id "slot-6", HS.class_ "ad"] []
 
-descriptionLeaderboards :: ∀ slots action. Array (HH.HTML slots action)
-descriptionLeaderboards = [descriptionLeaderboard, mobileDescriptionLeaderboard]
+skyscrapper :: ∀ slots action. HH.HTML slots action
+skyscrapper = HH.div [HP.id "slot-7", HS.class_ "ad"] []
 
-stickyLeaderboards :: ∀ slots action. Array (HH.HTML slots action)
-stickyLeaderboards = [stickyLeaderboard, mobileStickyLeaderboard]
+desktopTakeover :: ∀ slots action. HH.HTML slots action
+desktopTakeover = HH.div [HP.id "slot-8", HS.class_ "ad"] []
 
-mpus :: ∀ slots action. Array (HH.HTML slots action)
-mpus = [mpu, mobileMpu]
+mobileTakeover :: ∀ slots action. HH.HTML slots action
+mobileTakeover = HH.div [HP.id "slot-9", HS.class_ "ad"] []
 
-player :: ∀ slots action. HH.HTML slots action
-player = HH.div [HP.id "slot-10"] []
+video :: ∀ slots action. HH.HTML slots action
+video = HH.div [HP.id "slot-10", HS.class_ "ad"] []
 
 -- Utils
 
-insertMpusInMiddleOrAtEnd :: ∀ slots action.
+insertAdsInMiddle :: ∀ slots action.
     Array (HH.HTML slots action) -> Array (HH.HTML slots action)
-insertMpusInMiddleOrAtEnd array =
+insertAdsInMiddle array =
     -- Try to insert after the third element.
-    case Array.insertAt 3 mpu array >>= Array.insertAt 4 mobileMpu of
-    Nothing -> Array.snoc (Array.snoc array mpu) mobileMpu
-    Just arrayWithAds -> arrayWithAds
+    case Array.insertAt 3 billboard array >>= Array.insertAt 4 mobileTakeover of
+    Nothing -> array
+    Just arrayWithAds ->
+    -- Try to insert after the sixth element, which is now the eight.
+        case Array.insertAt 8 leaderboard arrayWithAds >>= Array.insertAt 9 mobileMpu of
+        Nothing -> arrayWithAds
+        Just arrayWithMoreAds -> arrayWithMoreAds
 
-insertMobileMpuInMiddleOrAtEnd :: ∀ slots action.
-    Array (HH.HTML slots action) -> Array (HH.HTML slots action)
-insertMobileMpuInMiddleOrAtEnd array =
-    -- Try to insert after the third element.
-    case Array.insertAt 3 mobileMpu array of
-    Nothing -> Array.snoc array mobileMpu
-    Just arrayWithAds -> arrayWithAds
+videoIfWideEnough :: forall slots13 action14. Int -> Array (HH.HTML slots13 action14)
+videoIfWideEnough windowWidth = guard (windowWidth >= 1000) [video]

@@ -14,7 +14,7 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import TeamTavern.Client.Components.Ads (insertMpusInMiddleOrAtEnd)
+import TeamTavern.Client.Components.Ads (insertAdsInMiddle, mobileBanner)
 import TeamTavern.Client.Components.Content (actualContent)
 import TeamTavern.Client.Components.Divider (whiteDivider)
 import TeamTavern.Client.Components.Picture (picture)
@@ -40,8 +40,9 @@ render (Games games') = actualContent $
         [ HH.text "Games" ]
     , HH.p [ HS.class_ "games-header-subtitle" ]
         [ HH.text "Choose one of the featured games and start finding your new teammates!" ]
+    , mobileBanner
     ]
-    <> insertMpusInMiddleOrAtEnd
+    <> insertAdsInMiddle
     (games' <#> \{ title, handle, description } ->
         HH.div
         [ HS.class_ "game-card"

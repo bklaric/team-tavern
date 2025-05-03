@@ -22,6 +22,7 @@ import Effect.Class (class MonadEffect)
 import Effect.Timer (setTimeout)
 import Halogen as H
 import Halogen.HTML as HH
+import TeamTavern.Client.Components.Ads (mobileBanner)
 import TeamTavern.Client.Components.Boarding.PlayerOrTeamInput as Boarding
 import TeamTavern.Client.Components.Team.ProfileInputGroup (FieldValues)
 import TeamTavern.Client.Pages.Preboarding as Preboarding
@@ -106,6 +107,7 @@ render (Game game _ filters tab) =
             , handle: game.handle
             }
             (\(ProfileFilters.Apply filters') -> ApplyFilters filters')
+        , mobileBanner
         , case tab of
             Players input ->
                 playerProfiles
@@ -245,15 +247,26 @@ setMetaTags handleOrTitle tab =
 
 scrollProfilesIntoView :: ∀ monad. Bind monad => MonadEffect monad => monad Unit
 scrollProfilesIntoView = do
-    profileCard <- Html.window >>= Window.document <#> HtmlDocument.toParentNode
-        >>= ParentNode.querySelector (QuerySelector "#profiles-card")
+    -- On mobile, we want to scroll to the bottom of the profiles card
+    -- so that the mobile banner under it is in view.
+    windowWidth <- Html.window >>= Window.innerWidth # H.liftEffect
+    let selector = QuerySelector if windowWidth >= 1000 then "#profiles-card" else "#filters-card"
+    card <- Html.window >>= Window.document <#> HtmlDocument.toParentNode
+        >>= ParentNode.querySelector selector
         <#> (\element -> element >>= HtmlElement.fromElement)
         # H.liftEffect
-    case profileCard of
+    case card of
         Just element ->
-            void $ H.liftEffect $ setTimeout 0 do
-                offsetTop <- round <$> HtmlElement.offsetTop element
-                Html.window >>= Window.scroll 0 (offsetTop - 41 - 21)
+            void $ H.liftEffect $ setTimeout 0
+                if windowWidth >= 1000
+                then do
+                    offsetTop <- round <$> HtmlElement.offsetTop element
+                    -- offsetTop - topBarHeight - gap
+                    Html.window >>= Window.scroll 0 (offsetTop - 41 - 21)
+                else do
+                    offsetTop <- round <$> HtmlElement.offsetTop element
+                    height <- round <$> HtmlElement.offsetHeight element
+                    Html.window >>= Window.scroll 0 (offsetTop + height - 41)
         Nothing -> pure unit
 
 readQueryParams

@@ -13,7 +13,7 @@ import Data.Variant (onMatch)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
-import TeamTavern.Client.Components.Ads (mobileMpu)
+import TeamTavern.Client.Components.Ads (mobileBanner, mobileMpu, videoIfWideEnough)
 import TeamTavern.Client.Components.Content (actualContent, contentColumns, contentDescription, contentHeader, contentHeaderSection, contentHeading', contentHeadingFaIcon)
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
@@ -38,6 +38,8 @@ import TeamTavern.Routes.Shared.Organization (OrganizationNW(..), nameOrHandleNW
 import TeamTavern.Routes.Team.ViewTeam (ViewTeam)
 import TeamTavern.Routes.Team.ViewTeam as ViewTeam
 import Type.Proxy (Proxy(..))
+import Web.HTML as Html
+import Web.HTML.Window as Window
 
 type Input = { handle :: String }
 
@@ -48,6 +50,7 @@ type Loaded =
     , editTeamModalShown :: Boolean
     , editProfileModalShown :: Maybe ViewTeam.OkContentProfile
     , deleteProfileModalShown :: Maybe ViewTeam.OkContentProfile
+    , windowWidth :: Int
     }
 
 data State
@@ -105,10 +108,13 @@ render (Loaded state @ { team: team', status } ) =
         case status of
         SignedInOwner -> "View and edit all your team's details and profiles."
         _ -> "View all team's details and profiles."
+    , mobileBanner
     ]
     <>
     [ contentColumns
-        [ HH.div_
+        [ HH.div_ $
+            videoIfWideEnough state.windowWidth
+            <>
             [ contacts team' status ShowEditContactsModal
             , details team' status ShowEditTeamModal
             ]
@@ -140,6 +146,7 @@ modifyLoaded mod =
 handleAction :: ∀ output left.
     Action -> H.HalogenM State Action ChildSlots output (Async left) Unit
 handleAction Initialize = do
+    windowWidth <- Html.window >>= Window.innerWidth # H.liftEffect
     state <- H.get
     case state of
         Empty input -> do
@@ -158,6 +165,7 @@ handleAction Initialize = do
                             , editTeamModalShown: false
                             , editProfileModalShown: Nothing
                             , deleteProfileModalShown: Nothing
+                            , windowWidth
                             }
                         let nameOrHandle = nameOrHandleNW team'.handle team'.organization
                         setMeta (nameOrHandle <> " | TeamTavern")

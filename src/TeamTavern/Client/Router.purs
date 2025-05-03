@@ -11,8 +11,7 @@ import Halogen (liftEffect)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
-import TeamTavern.Client.Components.Ads (descriptionLeaderboards, skinLeft, skinRight, stickyLeaderboards)
-import TeamTavern.Client.Components.Ads as Ads
+import TeamTavern.Client.Components.Ads (desktopTakeover)
 import TeamTavern.Client.Components.Content (content, singleContent)
 import TeamTavern.Client.Components.Footer (footer)
 import TeamTavern.Client.Components.Footer as Footer
@@ -86,9 +85,9 @@ topBarWithContent
 topBarWithContent handle content' = HH.div_
     [ topBar handle
     , content
-        [ skinLeft
-        , HH.div_ $ descriptionLeaderboards <> [content', Ads.player] <> stickyLeaderboards
-        , skinRight
+        [ HH.div_ []
+        , HH.div_ [desktopTakeover, content']
+        , HH.div_ []
         ]
     , footer
     ]
