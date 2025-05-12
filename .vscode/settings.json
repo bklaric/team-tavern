@@ -6,9 +6,5 @@
         "**/CVS": true,
         "**/.DS_Store": true,
         "**/Thumbs.db": true
-    },
-    "editor.rulers": [
-        80,
-        100
-    ]
+    }
 }
