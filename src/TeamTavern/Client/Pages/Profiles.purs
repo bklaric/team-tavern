@@ -22,7 +22,8 @@ import Effect.Class (class MonadEffect)
 import Effect.Timer (setTimeout)
 import Halogen as H
 import Halogen.HTML as HH
-import TeamTavern.Client.Components.Ads (mobileBanner)
+import TeamTavern.Client.Components.Ads (AdSlots, mobileBanner)
+import TeamTavern.Client.Components.Ads as Ads
 import TeamTavern.Client.Components.Boarding.PlayerOrTeamInput as Boarding
 import TeamTavern.Client.Components.Team.ProfileInputGroup (FieldValues)
 import TeamTavern.Client.Pages.Preboarding as Preboarding
@@ -87,7 +88,7 @@ data State
     | Game ViewGame.OkContent (Maybe PlayerInfo) Filters Tab
     | Error
 
-type ChildSlots =
+type ChildSlots = AdSlots
     ( gameHeader :: Slot___
     , playerProfiles :: PlayerProfiles.Slot
     , teamProfiles :: TeamProfiles.Slot
@@ -247,6 +248,8 @@ setMetaTags handleOrTitle tab =
 
 scrollProfilesIntoView :: ∀ monad. Bind monad => MonadEffect monad => monad Unit
 scrollProfilesIntoView = do
+    -- On desktop, we want to scroll to the top
+    -- so that the desktop takeover is in view.
     -- On mobile, we want to scroll to the bottom of the profiles card
     -- so that the mobile banner under it is in view.
     windowWidth <- Html.window >>= Window.innerWidth # H.liftEffect
@@ -262,7 +265,7 @@ scrollProfilesIntoView = do
                 then do
                     offsetTop <- round <$> HtmlElement.offsetTop element
                     -- offsetTop - topBarHeight - gap
-                    Html.window >>= Window.scroll 0 (offsetTop - 41 - 21)
+                    Html.window >>= Window.scroll 0 0 -- (offsetTop - 41 - 21)
                 else do
                     offsetTop <- round <$> HtmlElement.offsetTop element
                     height <- round <$> HtmlElement.offsetHeight element
@@ -378,8 +381,9 @@ handleAction Init = do
     case state of
         Empty input -> handleAction $ Receive input
         _ -> pure unit
-handleAction (Receive input) =
+handleAction (Receive input) = do
     loadTab input
+    H.query (Proxy :: _ "mobileBanner") unit (Ads.Refresh unit) # void
 handleAction (ApplyFilters filters) = do
     writeQueryParams filters
     scrollProfilesIntoView

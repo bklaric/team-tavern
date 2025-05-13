@@ -15,4 +15,6 @@ type SlotQ__ query = H.Slot query Void Unit
 
 type Slot_OI output index = H.Slot (Const Void) output index
 
+type SlotQ_I query index = H.Slot query Void index
+
 type Slot__String = Slot__I String

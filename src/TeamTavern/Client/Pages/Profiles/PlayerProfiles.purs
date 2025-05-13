@@ -11,7 +11,8 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import TeamTavern.Client.Components.Ads (insertAdsInMiddle)
+import TeamTavern.Client.Components.Ads (AdSlots, insertAdsInMiddle)
+import TeamTavern.Client.Components.Ads as Ads
 import TeamTavern.Client.Components.Card (cardHeader, cardHeading, cardSection, cardSubheading)
 import TeamTavern.Client.Components.Detail (detailColumn, detailColumnHeading4, detailColumns, textDetail)
 import TeamTavern.Client.Components.Divider (divider)
@@ -34,6 +35,7 @@ import TeamTavern.Routes.Shared.Platform (Platform, Platforms)
 import TeamTavern.Routes.Shared.PlayerContacts (PlayerContactsOpen)
 import TeamTavern.Routes.Shared.Tracker (Trackers)
 import Type.Proxy (Proxy(..))
+import Type.Row (type (+))
 import Web.UIEvent.MouseEvent (MouseEvent)
 
 type PlayerProfile = PlayerContactsOpen
@@ -74,7 +76,7 @@ data Output = PageChanged Int | PreboardingClicked
 
 type Slot = Slot_O_ Output
 
-type ChildSlots = PlatformIdSlots
+type ChildSlots = PlatformIdSlots + AdSlots
     ( players :: Slot__String
     , discordTag :: Slot__String
     , playerProfileOptions :: Slot__String
@@ -166,7 +168,12 @@ render { handle, trackers, profiles, profileCount, playerInfo, page } =
     ]
 
 handleAction :: ∀ left. Action -> H.HalogenM State Action ChildSlots Output (Async left) Unit
-handleAction (Receive input) = H.put input
+handleAction (Receive input) = do
+    H.put input
+    H.query (Proxy :: _ "billboard") unit (Ads.Refresh unit) # void
+    H.query (Proxy :: _ "leaderboard") unit (Ads.Refresh unit) # void
+    H.query (Proxy :: _ "mobileTakeover") unit (Ads.Refresh unit) # void
+    H.query (Proxy :: _ "mobileMpu") unit (Ads.Refresh unit) # void
 handleAction (ChangePage page) = H.raise $ PageChanged page
 handleAction (OpenPreboarding mouseEvent) = do
     preventMouseDefault mouseEvent

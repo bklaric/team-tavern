@@ -14,7 +14,7 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import TeamTavern.Client.Components.Ads (insertAdsInMiddle, mobileBanner)
+import TeamTavern.Client.Components.Ads (AdSlots, insertAdsInMiddle, mobileBanner)
 import TeamTavern.Client.Components.Content (actualContent)
 import TeamTavern.Client.Components.Divider (whiteDivider)
 import TeamTavern.Client.Components.Picture (picture)
@@ -33,7 +33,7 @@ data Action = Init | Navigate String Boolean MouseEvent
 
 data State = Empty | Games ViewAllGames.OkContent
 
-render :: ∀ slots monad. MonadEffect monad => State -> H.ComponentHTML Action slots monad
+render :: ∀ slots monad. MonadEffect monad => State -> H.ComponentHTML Action (AdSlots slots) monad
 render Empty = HH.div_ []
 render (Games games') = actualContent $
     [ HH.h1 [ HS.class_ "games-header-title" ]

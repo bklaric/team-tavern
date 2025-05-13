@@ -17,7 +17,7 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Record as Record
 import Record.Extra (pick)
-import TeamTavern.Client.Components.Ads (videoIfWideEnough)
+import TeamTavern.Client.Components.Ads (AdSlots, videoIfWideEnough)
 import TeamTavern.Client.Components.Button (button)
 import TeamTavern.Client.Components.Card (cardHeading, cardSection, cardSectionHeading)
 import TeamTavern.Client.Components.Input (inputGroup, inputLabel)
@@ -105,7 +105,7 @@ data Output = Apply Filters
 
 type Slot = Slot_O_ Output
 
-type ChildSlots =
+type ChildSlots = AdSlots
     ( language :: MultiSelect.Slot String Unit
     , location :: MultiTreeSelect.Slot String
     , multiSelectField :: MultiSelect.Slot Option String

@@ -13,7 +13,7 @@ import Effect.Class (class MonadEffect)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
-import TeamTavern.Client.Components.Ads (billboard, leaderboard, mobileMpu, mobileTakeover)
+import TeamTavern.Client.Components.Ads (AdSlots, billboard, leaderboard, mobileMpu, mobileTakeover)
 import TeamTavern.Client.Components.Boarding.PlayerOrTeamInput as Boarding
 import TeamTavern.Client.Pages.Home.CallToAction (callToAction')
 import TeamTavern.Client.Pages.Home.Connect (connect')
@@ -46,7 +46,7 @@ data State
     = Empty { handle :: String }
     | Loaded { game :: ViewGame.OkContent }
 
-type ChildSlots =
+type ChildSlots = AdSlots
     ( viewAllPlayers :: Slot___
     , viewAllTeams :: Slot___
     )

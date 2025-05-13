@@ -13,7 +13,7 @@ import Data.Variant (onMatch)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
-import TeamTavern.Client.Components.Ads (mobileBanner, mobileMpu, videoIfWideEnough)
+import TeamTavern.Client.Components.Ads (AdSlots, mobileBanner, mobileMpu, videoIfWideEnough)
 import TeamTavern.Client.Components.Content (actualContent, contentColumns, contentDescription, contentHeader, contentHeaderSection, contentHeading', contentHeadingFaIcon)
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
@@ -40,6 +40,7 @@ import TeamTavern.Routes.Team.ViewTeam as ViewTeam
 import Type.Proxy (Proxy(..))
 import Web.HTML as Html
 import Web.HTML.Window as Window
+import Type.Row (type (+))
 
 type Input = { handle :: String }
 
@@ -70,7 +71,7 @@ data Action
     | ShowDeleteProfileModal ViewTeam.OkContentProfile
     | HideDeleteProfileModal
 
-type ChildSlots = PlatformIdSlots
+type ChildSlots = PlatformIdSlots + AdSlots
     ( discordTag :: Slot__String
     , games :: Slot__String
     , createProfile :: Slot___
