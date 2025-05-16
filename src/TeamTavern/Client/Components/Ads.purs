@@ -107,13 +107,18 @@ component placementName = Hooks.component \{queryToken} _ -> Hooks.do
     pubSub /\ pubSubId <- Hooks.useState Nothing
     let writePlacement listener placement' = HSub.notify listener (Hooks.put placementId (Just placement'))
     Hooks.useQuery queryToken \(Refresh send) -> do
-        -- Let's try refreshing only if the ad has been up for at least 5 seconds.
-        now' <- now <#> unInstant <#> toDuration # liftEffect
-        lastRefreshInstant' <- lastRefreshInstant # maybe now pure <#> unInstant <#> toDuration # liftEffect
-        when ((now' <> negateDuration lastRefreshInstant') > (Seconds 5.0)) do
-            now <#> Just # liftEffect >>= Hooks.put lastRefreshInstantId
-            pubSub # foldMap \{listener} ->
-                refreshAd placementName (toNullable placement) (writePlacement listener) # liftEffect
+        -- -- Let's try refreshing only if the ad has been up for at least 5 seconds.
+        -- now' <- now <#> unInstant <#> toDuration # liftEffect
+        -- lastRefreshInstant' <- lastRefreshInstant # maybe now pure <#> unInstant <#> toDuration # liftEffect
+        -- when ((now' <> negateDuration lastRefreshInstant') > (Seconds 5.0)) do
+        --     now <#> Just # liftEffect >>= Hooks.put lastRefreshInstantId
+        --     pubSub # foldMap \{listener} ->
+        --         refreshAd placementName (toNullable placement) (writePlacement listener) # liftEffect
+
+        -- Nvm, refresh it immediately.
+        pubSub # foldMap \{listener} ->
+            refreshAd placementName (toNullable placement) (writePlacement listener) # liftEffect
+
         pure $ Just $ send
     Hooks.useLifecycleEffect do
         now <#> Just # liftEffect >>= Hooks.put lastRefreshInstantId
