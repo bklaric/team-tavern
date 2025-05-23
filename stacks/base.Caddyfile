@@ -28,11 +28,10 @@ handle_path /api/* {
     reverse_proxy node:8080
 }
 
-# Serve directly while we're veryfing for Venatus.
-# # Redirect ads.txt request to kumo.network-n.com with 301.
-# handle_path /ads.txt {
-#     redir https://kumo.network-n.com/adstxt/?domain=teamtavern.net 301
-# }
+# Redirect ads.txt request to adstxt.venatusmedia.com with 301.
+handle_path /ads.txt {
+    redir https://adstxt.venatusmedia.com/teamtavern.net/ads.txt 301
+}
 
 # Serve all other static files.
 
