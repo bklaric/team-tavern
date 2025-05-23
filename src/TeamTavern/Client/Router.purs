@@ -11,7 +11,7 @@ import Halogen (liftEffect)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
-import TeamTavern.Client.Components.Ads (descriptionLeaderboards, skinLeft, skinRight, stickyLeaderboards)
+import TeamTavern.Client.Components.Ads (AdSlots, desktopTakeover, horizontalSticky, mobileHorizontalSticky, verticalSticky)
 import TeamTavern.Client.Components.Ads as Ads
 import TeamTavern.Client.Components.Content (content, singleContent)
 import TeamTavern.Client.Components.Footer (footer)
@@ -45,7 +45,9 @@ import TeamTavern.Client.Script.Analytics (track)
 import TeamTavern.Client.Script.Cookie (getPlayerNickname, hasPlayerIdCookie)
 import TeamTavern.Client.Script.Navigate (navigateReplace_)
 import TeamTavern.Client.Script.QueryParams (getFragmentParam)
-import TeamTavern.Client.Shared.Slot (Slot___)
+import TeamTavern.Client.Shared.Slot (Slot___, SlotQ__)
+import Type.Proxy (Proxy(..))
+import Type.Row (type (+))
 import Web.HTML (window)
 import Web.HTML.Window (localStorage)
 import Web.Storage.Storage (getItem)
@@ -78,28 +80,30 @@ data State
     | DeleteAlert
     | NotFound
 
+type Hmm slots = Footer.ChildSlots + AdSlots + slots
+
 topBarWithContent
     :: ∀ query children left
     .  Maybe String
-    -> (H.ComponentHTML query (Footer.ChildSlots (topBar :: Slot___ | children)) (Async left))
-    -> H.ComponentHTML query (Footer.ChildSlots (topBar :: Slot___ | children)) (Async left)
+    -> (H.ComponentHTML query (Footer.ChildSlots + AdSlots (topBar :: Slot___ | children)) (Async left))
+    -> H.ComponentHTML query (Footer.ChildSlots + AdSlots (topBar :: Slot___ | children)) (Async left)
 topBarWithContent handle content' = HH.div_
     [ topBar handle
     , content
-        [ skinLeft
-        , HH.div_ $ descriptionLeaderboards <> [content', Ads.player] <> stickyLeaderboards
-        , skinRight
+        [ HH.div_ []
+        , HH.div_ [desktopTakeover, content', verticalSticky, horizontalSticky, mobileHorizontalSticky]
+        , HH.div_ []
         ]
     , footer
     ]
 
 render :: ∀ action left. State -> H.ComponentHTML action _ (Async left)
 render Empty = HH.div_ []
-render Home = HH.div_ [ topBar Nothing, home, footer ]
+render Home = HH.div_ [ topBar Nothing, home, footer, horizontalSticky, mobileHorizontalSticky ]
 render Games = topBarWithContent Nothing $ games
 render About = topBarWithContent Nothing $ about
 render Privacy = topBarWithContent Nothing $ privacyPolicy
-render (Game input) = HH.div_ [ topBar $ Just input.handle, game input, footer ]
+render (Game input) = HH.div_ [ topBar $ Just input.handle, game input, footer, horizontalSticky, mobileHorizontalSticky ]
 render (GameTabs input) = topBarWithContent (Just input.handle) $ GameTabs.gameTabs input
 render (Player input) = topBarWithContent Nothing $ player input
 render (PlayerProfile input) = topBarWithContent Nothing $ playerProfile input
@@ -228,11 +232,22 @@ handleAction (Init state route) = do
         Nothing -> pure unit
 
 handleQuery
-    :: ∀ send action output wut left
+    :: ∀ send action output slots left
     .  Query send
-    -> H.HalogenM State action wut output (Async left) (Maybe send)
+    -> H.HalogenM State action
+        ( verticalSticky :: SlotQ__ Ads.Query
+        , desktopTakeover :: SlotQ__ Ads.Query
+        , horizontalSticky :: SlotQ__ Ads.Query
+        , mobileHorizontalSticky :: SlotQ__ Ads.Query
+        | slots
+        )
+        output (Async left) (Maybe send)
 handleQuery (ChangeRoute state route send) = do
     handleAction (Init state route)
+    H.query (Proxy :: _ "desktopTakeover") unit (Ads.Refresh unit) # void
+    H.query (Proxy :: _ "verticalSticky") unit (Ads.Refresh unit) # void
+    H.query (Proxy :: _ "horizontalSticky") unit (Ads.Refresh unit) # void
+    H.query (Proxy :: _ "mobileHorizontalSticky") unit (Ads.Refresh unit) # void
     pure $ Just send
 
 router :: ∀ input output left.

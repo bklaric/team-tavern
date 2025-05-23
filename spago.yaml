@@ -1,0 +1,121 @@
+package:
+  dependencies:
+    - aff
+    - arrays
+    - bifunctors
+    - console
+    - const
+    - contravariant
+    - control
+    - css
+    - datetime
+    - effect
+    - either
+    - enums
+    - error
+    - foldable-traversable
+    - foreign
+    - foreign-object
+    - formatters
+    - functions
+    - halogen
+    - halogen-css
+    - halogen-hooks
+    - halogen-svg-elems
+    - http-methods
+    - integers
+    - js-timers
+    - js-uri
+    - lists
+    - maybe
+    - media-types
+    - newtype
+    - nodey
+    - nonempty
+    - now
+    - nullable
+    - options
+    - ordered-collections
+    - parallel
+    - parsing
+    - partial
+    - pg
+    - prelude
+    - record
+    - refs
+    - strings
+    - stringutils
+    - transformers
+    - tuples
+    - typelevel-prelude
+    - undefined
+    - unfoldable
+    - unicode
+    - unsafe-coerce
+    - unsafe-reference
+    - uri
+    - variant
+    - web-dom
+    - web-events
+    - web-html
+    - web-storage
+    - web-uievents
+    - yoga-json
+  name: team-tavern-server
+workspace:
+  extraPackages:
+    error:
+      dependencies: []
+      git: ssh://git@github.com/bklaric/purescript-error.git
+      ref: v2.0.0
+    jarilo:
+      dependencies:
+        - http-methods
+        - record
+        - uri
+        - variant
+      git: ssh://git@github.com/bklaric/purescript-jarilo.git
+      ref: v2.0.0-rc2
+    nodey:
+      dependencies:
+        - arrays
+        - console
+        - effect
+        - either
+        - error
+        - foreign
+        - foreign-object
+        - lists
+        - maybe
+        - nullable
+        - prelude
+        - refs
+        - transformers
+        - undefined
+        - unsafe-coerce
+      git: ssh://git@github.com/bklaric/purescript-nodey.git
+      ref: v1.0.3
+    pg:
+      dependencies:
+        - arrays
+        - control
+        - effect
+        - either
+        - error
+        - foreign
+        - maybe
+        - nodey
+        - nullable
+        - options
+        - prelude
+        - transformers
+        - unsafe-coerce
+        - yoga-json
+      git: ssh://git@github.com/bklaric/purescript-pg.git
+      ref: v1.0.1
+    undefined:
+      dependencies: []
+      git: ssh://git@github.com/bklaric/purescript-undefined.git
+      ref: v2.0.0
+  packageSet:
+    url: https://raw.githubusercontent.com/purescript/package-sets/psc-0.15.2-20220610/packages.json

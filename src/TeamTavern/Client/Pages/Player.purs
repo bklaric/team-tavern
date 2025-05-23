@@ -13,7 +13,7 @@ import Data.Variant (onMatch)
 import Halogen as H
 import Halogen.HTML as HH
 import Record.Extra (pick)
-import TeamTavern.Client.Components.Ads (mobileMpu)
+import TeamTavern.Client.Components.Ads (AdSlots, mobileBanner, mobileMpu, videoIfWideEnough)
 import TeamTavern.Client.Components.Content (actualContent, contentColumns, contentDescription, contentHeader, contentHeaderSection, contentHeading', contentHeadingFaIcon)
 import TeamTavern.Client.Components.Modal as Modal
 import TeamTavern.Client.Components.Player.ProfileDetails (PlatformIdSlots)
@@ -37,6 +37,9 @@ import TeamTavern.Client.Shared.Slot (Slot___, Slot__String)
 import TeamTavern.Routes.Player.ViewPlayer (ViewPlayer)
 import TeamTavern.Routes.Player.ViewPlayer as ViewPlayer
 import Type.Proxy (Proxy(..))
+import Web.HTML as Html
+import Web.HTML.Window as Window
+import Type.Row (type (+))
 
 type Input = { nickname :: String }
 
@@ -48,6 +51,7 @@ type Loaded =
     , editProfileModalShown :: Maybe ViewPlayer.OkContentProfile
     , deleteProfileModalShown :: Maybe ViewPlayer.OkContentProfile
     , createTeamModalShown :: Boolean
+    , windowWidth :: Int
     }
 
 data State
@@ -70,7 +74,7 @@ data Action
     | ShowCreateTeamModal
     | HideCreateTeamModal
 
-type ChildSlots = PlatformIdSlots
+type ChildSlots = PlatformIdSlots + AdSlots
     ( discordTag :: Slot__String
     , team :: Slot__String
     , games :: Slot__String
@@ -97,10 +101,13 @@ render (Loaded state @ { player: player', status }) =
         case status of
         SignedInSelf -> "View and edit all your details, profiles and teams."
         _ -> "View all player's details, profiles and teams."
+    , mobileBanner
     ]
     <>
     [ contentColumns
-        [ HH.div_
+        [ HH.div_ $
+            videoIfWideEnough state.windowWidth
+            <>
             [ contacts player' status ShowEditContactsModal
             , details player' status ShowEditPlayerModal
             ]
@@ -139,6 +146,7 @@ handleAction Initialize = do
         Empty input -> handleAction $ Receive input
         _ -> pure unit
 handleAction (Receive input) = do
+    windowWidth <- Html.window >>= Window.innerWidth # H.liftEffect
     timezone <- getClientTimezone
     result <- H.lift $ Async.attempt $
         fetchPathQuery (Proxy :: _ ViewPlayer) input { timezone }
@@ -155,6 +163,7 @@ handleAction (Receive input) = do
                     , editProfileModalShown: Nothing
                     , deleteProfileModalShown: Nothing
                     , createTeamModalShown: false
+                    , windowWidth
                     }
                 setMeta (player'.nickname <> " | TeamTavern")
                     ("View all details, profiles and teams of player " <> player'.nickname <> ".")

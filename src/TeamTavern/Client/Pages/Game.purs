@@ -13,7 +13,7 @@ import Effect.Class (class MonadEffect)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
-import TeamTavern.Client.Components.Ads (player, stickyLeaderboards)
+import TeamTavern.Client.Components.Ads (AdSlots, billboard, leaderboard, mobileMpu, mobileTakeover)
 import TeamTavern.Client.Components.Boarding.PlayerOrTeamInput as Boarding
 import TeamTavern.Client.Pages.Home.CallToAction (callToAction')
 import TeamTavern.Client.Pages.Home.Connect (connect')
@@ -46,7 +46,7 @@ data State
     = Empty { handle :: String }
     | Loaded { game :: ViewGame.OkContent }
 
-type ChildSlots =
+type ChildSlots = AdSlots
     ( viewAllPlayers :: Slot___
     , viewAllTeams :: Slot___
     )
@@ -58,13 +58,15 @@ render (Loaded { game: game' @ { handle, shortTitle } }) =
     HH.div [ HP.class_ $ HH.ClassName "home" ] $
     [ callToAction' handle shortTitle (OpenPlayerProfiles handle) (OpenTeamProfiles handle) (OpenPreboarding game')
     , forPlayers' handle shortTitle (OpenPlayerPreboarding game')
+    , billboard
+    , mobileTakeover
     , forTeams' handle shortTitle (OpenTeamPreboarding game')
     , findProfiles' handle shortTitle (OpenPlayerProfiles handle) (OpenTeamProfiles handle)
+    , leaderboard
+    , mobileMpu
     , connect' shortTitle
     , features' handle shortTitle (OpenPreboarding game')
     ]
-    <> [player]
-    <> stickyLeaderboards
 
 loadGame :: ∀ left. String -> Async left (Maybe ViewGame.OkContent)
 loadGame handle = Async.unify do

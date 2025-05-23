@@ -1,7 +1,6 @@
 module TeamTavern.Client.Pages.Privacy (privacyPolicy) where
 
 import Halogen.HTML as HH
-import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Components.Anchor (textAnchor_)
 import TeamTavern.Client.Snippets.Class as HS
 
@@ -98,5 +97,4 @@ privacyPolicy =
   , HH.p_ [ HH.text "(f) ", textAnchor_ "https://privacy.microsoft.com/en-us/windows-10-microsoft-edge-and-privacy" "(Edge)." ]
   , HH.p_ [ HH.text "12.2 Blocking all cookies will have a negative impact upon the usability of many websites." ]
   , HH.p_ [ HH.text "12.3 If you block cookies, you will not be able to use all the features on our website." ]
-  , HH.p_ [ HH.text "12.4 You can manage your cookies ", HH.a [ HS.class_ "nn-cmp-show", HP.href "#" ] [ HH.text "here" ], HH.text "." ]
   ]

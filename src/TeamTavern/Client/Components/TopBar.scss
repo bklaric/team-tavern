@@ -5,7 +5,8 @@
     width: 100%;
     background-color: white;
     border-bottom: 1px solid #ccc;
-    z-index: 2;
+    // Vertical sticky ads have a z-index of 1000.
+    z-index: 2000;
 }
 
 .top-bar-content {

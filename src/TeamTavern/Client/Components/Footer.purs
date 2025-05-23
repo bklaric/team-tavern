@@ -26,15 +26,9 @@ footer :: ∀ monad action children. MonadEffect monad =>
     H.ComponentHTML action (ChildSlots children) monad
 footer = HH.div [ HP.class_ $ HH.ClassName "footer" ]
     [ HH.div [ HP.class_ $ HH.ClassName "footer-content" ]
-        [ HH.div_
+        [ HH.div [HS.class_ "footer-content-links"]
             [ navigationAnchor (Proxy :: _ "aboutAnchor")
                 { path: "/about", content: HH.text "About" }
-            , HH.a
-                [ HS.class_ "nn-cmp-show"
-                , HP.prop (H.PropName "style") "margin-left: 21px; margin-right: 21px;"
-                , HP.href "#"
-                ]
-                [ HH.text "Manage Cookie Settings" ]
             , navigationAnchor (Proxy :: _ "privacyAnchor")
                 { path: "/privacy", content: HH.text "Privacy Policy" }
             ]

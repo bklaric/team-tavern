@@ -6,51 +6,9 @@
     }
 }
 
-.filters-mpu {
-    @extend .ad;
-    position: sticky;
-    top: 41px;
-}
-
-#celtra-reveal-wrapper, .sticky-leaderboard {
-    @extend .ad;
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    position: sticky;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    z-index: 2;
-    pointer-events: none;
-
-    &>* {
-        pointer-events: initial;
-    }
-}
-
-#nn_lb2 {
+.mobile_mpu,
+.mobile_banner {
     @media screen and (min-width: 1000px) {
-        display: block;
-        min-height: 250px;
+        display: none;
     }
-}
-
-#nn_skinl {
-    justify-self: flex-end;
-    align-self: flex-start;
-    position: sticky;
-    top: 41px;
-}
-
-#nn_skinr {
-    justify-self: flex-start;
-    align-self: flex-start;
-    position: sticky;
-    top: 41px;
-}
-
-#nn_player {
-    max-width: 800px;
-    margin: auto;
 }

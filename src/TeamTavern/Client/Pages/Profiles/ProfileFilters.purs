@@ -14,11 +14,12 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.CSS as HC
 import Halogen.HTML.Events as HE
+import Halogen.HTML.Properties as HP
 import Record as Record
 import Record.Extra (pick)
-import TeamTavern.Client.Components.Ads (filtersMpu)
+import TeamTavern.Client.Components.Ads (AdSlots, videoIfWideEnough)
 import TeamTavern.Client.Components.Button (button)
-import TeamTavern.Client.Components.Card (card, cardHeading, cardSection, cardSectionHeading)
+import TeamTavern.Client.Components.Card (cardHeading, cardSection, cardSectionHeading)
 import TeamTavern.Client.Components.Input (inputGroup, inputLabel)
 import TeamTavern.Client.Components.InputGroup (timeRangeInputGroup)
 import TeamTavern.Client.Components.Select.MultiSelect as MultiSelect
@@ -72,6 +73,7 @@ type State =
     , tab :: ProfileTab
     , handle :: String
     , createAlertModalShown :: Boolean
+    , windowWidth :: Int
     }
 
 data Action
@@ -103,7 +105,7 @@ data Output = Apply Filters
 
 type Slot = Slot_O_ Output
 
-type ChildSlots =
+type ChildSlots = AdSlots
     ( language :: MultiSelect.Slot String Unit
     , location :: MultiTreeSelect.Slot String
     , multiSelectField :: MultiSelect.Slot Option String
@@ -116,8 +118,8 @@ headerCaret class_ visible =
 
 render :: ∀ left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render state =
-    HH.div_ $ [
-    card $
+    HH.div_ $ videoIfWideEnough state.windowWidth <> [
+    HH.div [ HP.id "filters-card", HS.class_ "card" ] $
     [ HH.div
         [ HS.class_ "card-header"
         , HE.onClick $ const ToggleFiltersVisibility
@@ -214,7 +216,6 @@ render state =
         ]
     else []
     ]
-    <> [ filtersMpu ]
     <> guard state.createAlertModalShown
         [ createAlert
             { handle: state.handle
@@ -235,6 +236,7 @@ handleAction Initialize = do
         { filtersVisible = showFilters
         , playerFiltersVisible = showFilters
         , profileFiltersVisible = showFilters
+        , windowWidth = windowWidth
         }
 handleAction (Receive { platforms, fields, filters, tab }) = do
     H.modify_ _
@@ -374,6 +376,7 @@ initialState { platforms, fields, filters, tab, handle } =
     , tab
     , handle
     , createAlertModalShown: false
+    , windowWidth: 0
     }
 
 component :: ∀ query left. H.Component query Input Output (Async left)

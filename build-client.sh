@@ -18,7 +18,8 @@ cp src/TeamTavern/Client/Static/Css/* dist-client/css/
 cp src/TeamTavern/Client/Static/Fonts/* dist-client/webfonts/
 discriminator=`openssl rand -hex 8`
 sass src/TeamTavern/Client/Style/Main.scss "dist-client/style.min.${discriminator}.css" --style compressed
-spago bundle-app --main TeamTavern.Client.Main --to dist-client/app.min.${discriminator}.js --no-install --no-build --minify
+echo "import { main } from './output/TeamTavern.Client.Main/index.js'; main();" | esbuild --bundle --outfile=dist-client/app.min.${discriminator}.js --minify
+# spago bundle-app --main TeamTavern.Client.Main --to dist-client/app.min.${discriminator}.js --no-install --no-build --minify
 sed -i -e "s/app.min.js/app.min.$discriminator.js/g" dist-client/index.html
 sed -i -e "s/style.min.css/style.min.$discriminator.css/g" dist-client/index.html
 sed -i -e "s/app.min.js/app.min.$discriminator.js/g" dist-client/index.prerender.html
