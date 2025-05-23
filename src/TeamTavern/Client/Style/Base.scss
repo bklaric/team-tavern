@@ -29,6 +29,9 @@ body {
     color: $text-color;
     background-color: #f7f7f7;
     margin: 0;
+    // Because the new Venatus sticky vertical ads
+    // can cause horizontal scrollbars.
+    overflow-x: hidden;
 }
 
 h1,
