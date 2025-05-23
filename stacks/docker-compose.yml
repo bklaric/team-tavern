@@ -51,5 +51,6 @@ services:
       - rendertron
 
 # Named volume for API's node_modules directory.
+# We're using this because we don't want to see container's node_modules on the host.
 volumes:
   node_modules:
