@@ -66,7 +66,7 @@ mobileMpu = slot (Proxy :: _ "mobileMpu") "mobile_mpu"
 
 video :: forall monad action slots. MonadEffect monad =>
     HH.ComponentHTML action (AdSlots slots) monad
-video = slot (Proxy :: _ "video") "video"
+video = slot (Proxy :: _ "video") "video_slider"
 
 verticalSticky :: forall monad action slots. MonadEffect monad =>
     HH.ComponentHTML action (AdSlots slots) monad
