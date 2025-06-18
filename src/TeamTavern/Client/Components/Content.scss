@@ -30,6 +30,10 @@
     display: grid;
     gap: 21px;
     padding: 21px 0;
+
+    @media screen and (min-width: 1000px){
+        padding-bottom: 90px;
+    }
 }
 
 .content-header {
