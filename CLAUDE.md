@@ -198,8 +198,8 @@ container.
   surrounding file.
 - JavaScript FFI: one `.js` per `.purs`, `export const` arrow chains, curried
   and thunked for effects, as in `Client/Script/`.
-- Shell scripts, SQL, YAML, Caddyfiles and `.env` are LF-only via
-  `.gitattributes`; a stray CR breaks bash and docker compose.
+- Every text file is LF, normalized on the way in by `.gitattributes`; a stray
+  CR breaks bash and docker compose.
 - Commit subjects are imperative and capitalised, without a trailing period;
   the body says why.
 
