@@ -1,3 +1,5 @@
+@use "Base" as *;
+
 body {
     --cmpBgColor: white;
     --cmpTextColor: #{$text-color};

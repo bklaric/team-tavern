@@ -1,3 +1,7 @@
+@use "../Style/Base" as *;
+@use "Button";
+@use "Popover";
+
 .top-bar {
     top: 0;
     position: fixed;

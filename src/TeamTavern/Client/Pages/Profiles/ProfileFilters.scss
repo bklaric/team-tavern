@@ -1,3 +1,8 @@
+@use "../../Style/Base" as *;
+@use "../../Components/TopBar";
+@use "../../Components/Button";
+@use "../../Components/Input";
+
 .filters-title {
     display: flex;
     align-items: center;

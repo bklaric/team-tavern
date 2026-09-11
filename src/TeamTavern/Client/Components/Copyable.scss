@@ -1,3 +1,6 @@
+@use "../Style/Reset";
+@use "../Style/Base" as *;
+
 .copyable {
     @extend a;
     cursor: pointer;

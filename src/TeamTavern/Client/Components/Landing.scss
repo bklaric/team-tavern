@@ -1,3 +1,6 @@
+@use "../Style/Base" as *;
+@use "Button";
+
 .landing-section {
     &:nth-child(2n + 1) {
         background-color: hsl(24deg 25% 93%);

@@ -1,3 +1,6 @@
+@use "../Style/Base" as *;
+@use "Button";
+
 .form {
     display: flex;
     flex-direction: column;
