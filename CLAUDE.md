@@ -229,7 +229,7 @@ Local markdown files under `specs/<feature-slug>/`. See `docs/agents/issue-track
 
 ### Triage labels
 
-The five default triage labels, unchanged. See `docs/agents/triage-labels.md`.
+The five default triage labels, plus `resolved` for closing an issue. See `docs/agents/triage-labels.md`.
 
 ### Domain docs
 
