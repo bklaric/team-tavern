@@ -1,8 +1,17 @@
+// The Venatus script defines __VM and drains the queue it holds. Ad slots are
+// rendered on pages the prerenderer visits, and index.prerender.html loads no
+// ad scripts, so the queue has to exist on its own here. Without it every ad
+// slot throws and takes the rest of the page's render with it.
+function adQueue() {
+    self.__VM = self.__VM || [];
+    return self.__VM;
+}
+
 export function createAd(placementName) {
     return function (element) {
         return function (writePlacement) {
             return function () {
-                self.__VM.push(function (admanager, scope) {
+                adQueue().push(function (admanager, scope) {
                     console.log("createAd", placementName)
                     if (placementName === "vertical_sticky") {
                         scope.Config.verticalSticky().display();
@@ -26,7 +35,7 @@ export function createAd(placementName) {
 export function removeAd(placementName) {
     return function (placement) {
         return function () {
-            self.__VM.push(function (admanager, scope) {
+            adQueue().push(function (admanager, scope) {
                 console.log("removeAd", placementName)
                 if (placementName === "vertical_sticky") {
                     scope.Config.verticalSticky().destroy();
@@ -43,7 +52,7 @@ export function refreshAd(placementName) {
         return function (writePlacement) {
             return function () {
                 console.log("refreshAd", placementName, placement);
-                self.__VM.push(function (admanager, scope) {
+                adQueue().push(function (admanager, scope) {
                     if (placementName === "vertical_sticky") {
                         scope.Config.verticalSticky().reload();
                     }
