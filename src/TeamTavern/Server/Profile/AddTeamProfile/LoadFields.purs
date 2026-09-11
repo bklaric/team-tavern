@@ -1,11 +1,11 @@
 module TeamTavern.Server.Profile.AddTeamProfile.LoadFields (Option, Field, Game, loadFields) where
 
 import Async (Async)
-import Postgres.Client (Client)
-import Postgres.Query (Query(..), (:))
+import JavaScript.Npm.Pg.Client (Client)
+import JavaScript.Npm.Pg.Query (Query(..), (:))
 import TeamTavern.Routes.Shared.Platform (Platforms)
-import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstInternal)
+import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
 
 type Option =
     { id :: Int

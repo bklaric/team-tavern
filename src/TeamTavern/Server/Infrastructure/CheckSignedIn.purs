@@ -5,10 +5,10 @@ import Prelude
 import Async (Async)
 import Async as Async
 import Data.Bifunctor (lmap)
-import Data.Maybe (Maybe(..))
-import Postgres.Async.Query (query)
-import Postgres.Query (class Querier, Query(..), (:), (:|))
-import Postgres.Result (rowCount)
+import Data.Maybe (Maybe(..), fromMaybe)
+import JavaScript.Npm.Pg.Async (query)
+import JavaScript.Npm.Pg.Query (class Querier, Query(..), (:), (:|))
+import JavaScript.Npm.Pg.Result (rowCount)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo, Cookies, lookupCookieInfo)
 
 queryString :: Query
@@ -32,6 +32,6 @@ checkSignedIn querier cookies =
             <- querier
             #  query queryString (id : nickname :| token)
             #  lmap (const Nothing)
-        if rowCount result == 0
+        if fromMaybe 0 (rowCount result) == 0
         then pure Nothing
         else pure $ Just cookieInfo

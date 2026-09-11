@@ -5,9 +5,8 @@ import Prelude
 import Async (Async)
 import Effect.Class.Console (logShow)
 import Jarilo (noContent_)
-import Postgres.Pool (Pool)
-import Postgres.Query (Query(..), (:|))
-import Sendgrid (Message, sendAsync)
+import JavaScript.Npm.Pg.Pool (Pool)
+import JavaScript.Npm.Pg.Query (Query(..), (:|))
 import TeamTavern.Routes.Password.ForgotPassword as ForgotPassword
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.Deployment (Deployment(..))
@@ -16,6 +15,7 @@ import TeamTavern.Server.Infrastructure.GenerateNonce (Nonce, generateNonce, toS
 import TeamTavern.Server.Infrastructure.Postgres (LoadSingleError, queryFirstNotFound)
 import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
+import TeamTavern.Server.Infrastructure.Sendgrid (Message, sendAsync)
 
 type Player = {email :: String, nickname :: String}
 

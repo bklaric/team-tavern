@@ -5,8 +5,8 @@ import Prelude
 import Async (Async)
 import Data.Nullable (toNullable)
 import Jarilo (noContent_)
-import Postgres.Pool (Pool)
-import Postgres.Query (class Querier, Query(..), QueryParameter, (:), (:|))
+import JavaScript.Npm.Pg.Pool (Pool)
+import JavaScript.Npm.Pg.Query (class Querier, Query(..), QueryParameter, (:), (:|))
 import TeamTavern.Routes.Team.UpdateTeam as UpdateTeam
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.EnsureSignedInOwner (ensureSignedInOwner)

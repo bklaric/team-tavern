@@ -8,6 +8,7 @@
             "aff",
             "arrays",
             "bifunctors",
+            "bklaric",
             "console",
             "const",
             "contravariant",
@@ -17,7 +18,6 @@
             "effect",
             "either",
             "enums",
-            "error",
             "foldable-traversable",
             "foreign",
             "foreign-object",
@@ -35,25 +35,22 @@
             "maybe",
             "media-types",
             "newtype",
-            "nodey",
             "nonempty",
             "now",
             "nullable",
-            "options",
             "ordered-collections",
             "parallel",
             "parsing",
             "partial",
-            "pg",
             "prelude",
             "record",
+            "record-extra",
             "refs",
             "strings",
             "stringutils",
             "transformers",
             "tuples",
             "typelevel-prelude",
-            "undefined",
             "unfoldable",
             "unicode",
             "unsafe-coerce",
@@ -722,66 +719,8 @@
       }
     },
     "extra_packages": {
-      "error": {
-        "git": "ssh://git@github.com/bklaric/purescript-error.git",
-        "ref": "v2.0.0",
-        "dependencies": []
-      },
-      "jarilo": {
-        "git": "ssh://git@github.com/bklaric/purescript-jarilo.git",
-        "ref": "v2.0.0-rc2",
-        "dependencies": [
-          "http-methods",
-          "record",
-          "uri",
-          "variant"
-        ]
-      },
-      "nodey": {
-        "git": "ssh://git@github.com/bklaric/purescript-nodey.git",
-        "ref": "v1.0.3",
-        "dependencies": [
-          "arrays",
-          "console",
-          "effect",
-          "either",
-          "error",
-          "foreign",
-          "foreign-object",
-          "lists",
-          "maybe",
-          "nullable",
-          "prelude",
-          "refs",
-          "transformers",
-          "undefined",
-          "unsafe-coerce"
-        ]
-      },
-      "pg": {
-        "git": "ssh://git@github.com/bklaric/purescript-pg.git",
-        "ref": "v1.0.1",
-        "dependencies": [
-          "arrays",
-          "control",
-          "effect",
-          "either",
-          "error",
-          "foreign",
-          "maybe",
-          "nodey",
-          "nullable",
-          "options",
-          "prelude",
-          "transformers",
-          "unsafe-coerce",
-          "yoga-json"
-        ]
-      },
-      "undefined": {
-        "git": "ssh://git@github.com/bklaric/purescript-undefined.git",
-        "ref": "v2.0.0",
-        "dependencies": []
+      "bklaric": {
+        "path": "../purescript-bklaric"
       }
     }
   },
@@ -838,6 +777,71 @@
         "newtype",
         "prelude",
         "tuples"
+      ]
+    },
+    "bklaric": {
+      "type": "local",
+      "path": "../purescript-bklaric",
+      "dependencies": [
+        "aff",
+        "arrays",
+        "bifunctors",
+        "console",
+        "const",
+        "contravariant",
+        "control",
+        "css",
+        "datetime",
+        "debug",
+        "effect",
+        "either",
+        "enums",
+        "foldable-traversable",
+        "foreign",
+        "foreign-object",
+        "formatters",
+        "functions",
+        "halogen",
+        "halogen-css",
+        "halogen-hooks",
+        "halogen-svg-elems",
+        "http-methods",
+        "integers",
+        "js-timers",
+        "js-uri",
+        "lists",
+        "literals",
+        "maybe",
+        "media-types",
+        "newtype",
+        "nonempty",
+        "now",
+        "nullable",
+        "ordered-collections",
+        "parallel",
+        "parsing",
+        "partial",
+        "prelude",
+        "record",
+        "record-extra",
+        "refs",
+        "strings",
+        "stringutils",
+        "transformers",
+        "tuples",
+        "typelevel-prelude",
+        "unfoldable",
+        "unicode",
+        "unsafe-coerce",
+        "unsafe-reference",
+        "uri",
+        "variant",
+        "web-dom",
+        "web-events",
+        "web-html",
+        "web-storage",
+        "web-uievents",
+        "yoga-json"
       ]
     },
     "catenable-lists": {
@@ -957,6 +961,15 @@
         "tuples"
       ]
     },
+    "debug": {
+      "type": "registry",
+      "version": "6.0.2",
+      "integrity": "sha256-d/EzRm/J2JyzvlIeo2Ex78Y7HRB0IXBitnVJywL4gHk=",
+      "dependencies": [
+        "functions",
+        "prelude"
+      ]
+    },
     "distributive": {
       "type": "registry",
       "version": "6.0.0",
@@ -1021,12 +1034,6 @@
         "tuples",
         "unfoldable"
       ]
-    },
-    "error": {
-      "type": "git",
-      "url": "ssh://git@github.com/bklaric/purescript-error.git",
-      "rev": "0fee4d26ecf047bd9f48146ef31db700169de0f8",
-      "dependencies": []
     },
     "exceptions": {
       "type": "registry",
@@ -1515,6 +1522,20 @@
         "unfoldable"
       ]
     },
+    "literals": {
+      "type": "registry",
+      "version": "1.0.2",
+      "integrity": "sha256-ZkGRFD6gb8etYvyMYpX1Z7lx1Tql7R1VGnD1Dzinup8=",
+      "dependencies": [
+        "integers",
+        "maybe",
+        "numbers",
+        "partial",
+        "prelude",
+        "typelevel-prelude",
+        "unsafe-coerce"
+      ]
+    },
     "maybe": {
       "type": "registry",
       "version": "6.0.0",
@@ -1542,28 +1563,6 @@
       "dependencies": [
         "prelude",
         "safe-coerce"
-      ]
-    },
-    "nodey": {
-      "type": "git",
-      "url": "ssh://git@github.com/bklaric/purescript-nodey.git",
-      "rev": "dcff53799dc88958eccc30b570c38f4ec480e0c4",
-      "dependencies": [
-        "arrays",
-        "console",
-        "effect",
-        "either",
-        "error",
-        "foreign",
-        "foreign-object",
-        "lists",
-        "maybe",
-        "nullable",
-        "prelude",
-        "refs",
-        "transformers",
-        "undefined",
-        "unsafe-coerce"
       ]
     },
     "nonempty": {
@@ -1607,20 +1606,6 @@
         "functions",
         "maybe",
         "prelude"
-      ]
-    },
-    "options": {
-      "type": "registry",
-      "version": "7.0.0",
-      "integrity": "sha256-q/E8Hvdn1crgoyBQeZ/b83vVprlFBSIwtb6twt3KQJU=",
-      "dependencies": [
-        "contravariant",
-        "foreign",
-        "foreign-object",
-        "maybe",
-        "newtype",
-        "prelude",
-        "tuples"
       ]
     },
     "ordered-collections": {
@@ -1708,27 +1693,6 @@
       "version": "4.0.0",
       "integrity": "sha256-mdrlJBAgFMh79hNRW39uv7c+BwnnaOrAMmdh7+VhEhs=",
       "dependencies": []
-    },
-    "pg": {
-      "type": "git",
-      "url": "ssh://git@github.com/bklaric/purescript-pg.git",
-      "rev": "02b8e7536fd88f1f6cb8d308785846da64d2acb6",
-      "dependencies": [
-        "arrays",
-        "control",
-        "effect",
-        "either",
-        "error",
-        "foreign",
-        "maybe",
-        "nodey",
-        "nullable",
-        "options",
-        "prelude",
-        "transformers",
-        "unsafe-coerce",
-        "yoga-json"
-      ]
     },
     "prelude": {
       "type": "registry",
@@ -1847,6 +1811,20 @@
         "functions",
         "prelude",
         "unsafe-coerce"
+      ]
+    },
+    "record-extra": {
+      "type": "registry",
+      "version": "5.0.1",
+      "integrity": "sha256-I+H7vgVDblDXeodgm4cj1qeBe4WFOOqWt3z0jnbxZlw=",
+      "dependencies": [
+        "arrays",
+        "functions",
+        "lists",
+        "prelude",
+        "record",
+        "tuples",
+        "typelevel-prelude"
       ]
     },
     "refs": {
@@ -1999,12 +1977,6 @@
         "prelude",
         "type-equality"
       ]
-    },
-    "undefined": {
-      "type": "git",
-      "url": "ssh://git@github.com/bklaric/purescript-undefined.git",
-      "rev": "1cbf5599b8e71defead7fe7dcc90cd91dde8b3a3",
-      "dependencies": []
     },
     "unfoldable": {
       "type": "registry",

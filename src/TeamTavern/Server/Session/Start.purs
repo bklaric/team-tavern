@@ -6,7 +6,7 @@ import Async (Async)
 import Data.Newtype (wrap)
 import Data.Variant (match)
 import Jarilo (noContent)
-import Postgres.Pool (Pool)
+import JavaScript.Npm.Pg.Pool (Pool)
 import TeamTavern.Routes.Session.StartSession as StartSession
 import TeamTavern.Server.Infrastructure.Cookie (Cookies, setCookieHeaderFull)
 import TeamTavern.Server.Infrastructure.Deployment (Deployment)

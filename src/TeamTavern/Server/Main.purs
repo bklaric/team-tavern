@@ -7,17 +7,12 @@ import Control.Monad.Except (ExceptT(..), runExceptT)
 import Control.Monad.Maybe.Trans (lift)
 import Data.Either (either, note)
 import Data.Int (fromString)
-import Data.Maybe (Maybe(..))
-import Data.Options (Options, (:=))
 import Effect (Effect)
 import Effect.Console (log)
 import Jarilo.Serve (serve)
-import Node.Process (lookupEnv)
-import Node.Server (ListenOptions(..))
-import Postgres.Client.Config (ClientConfig, database, host, password, port, user)
-import Postgres.Pool (Pool)
-import Postgres.Pool as Pool
-import Sendgrid (setApiKey)
+import JavaScript.Node.Process (lookupEnv)
+import JavaScript.Npm.Pg.Pool (Pool)
+import JavaScript.Npm.Pg.Pool as Pool
 import TeamTavern.Routes.All (AllRoutes)
 import TeamTavern.Routes.Profile.ViewPlayerProfilesByGame (bundlePlayerFilters)
 import TeamTavern.Routes.Profile.ViewTeamProfilesByGame (bundleTeamFilters)
@@ -29,6 +24,7 @@ import TeamTavern.Server.Game.ViewAllGames (viewAllGames)
 import TeamTavern.Server.Game.ViewGame (viewGame)
 import TeamTavern.Server.Infrastructure.Deployment (Deployment)
 import TeamTavern.Server.Infrastructure.Deployment as Deployment
+import TeamTavern.Server.Infrastructure.Sendgrid (setApiKey)
 import TeamTavern.Server.Password.ForgotPassword (forgotPassword)
 import TeamTavern.Server.Password.ResetPassword (resetPassword)
 import TeamTavern.Server.Player.Delete (delete) as Player
@@ -57,13 +53,8 @@ import TeamTavern.Server.Team.UpdateContacts (updateContacts) as Team
 import TeamTavern.Server.Team.View (view) as Team
 import Type.Proxy (Proxy(..))
 
-listenOptions :: ListenOptions
-listenOptions = TcpListenOptions
-    { port: Just 8080
-    , host: Just "0.0.0.0"
-    , backlog: Nothing
-    , exclusive: Nothing
-    }
+listenOptions :: { port :: Int, host :: String }
+listenOptions = { port: 8080, host: "0.0.0.0" }
 
 setSendGridApiKey :: ExceptT String Effect Unit
 setSendGridApiKey = do
@@ -90,25 +81,10 @@ loadPostgresVariables = do
         <#> note ("Couldn't read variable PGDATABASE.") # ExceptT
     pure { user, password, host, port, database }
 
-createPostgresConfig ::
-    { user :: String
-    , password :: String
-    , host :: String
-    , port :: Int
-    , database :: String
-    }
-    -> Options ClientConfig
-createPostgresConfig variables =
-    user := variables.user
-    <> password := variables.password
-    <> host := variables.host
-    <> port := variables.port
-    <> database := variables.database
-
 createPostgresPool :: ExceptT String Effect Pool
 createPostgresPool = do
-    postgresConfig <- loadPostgresVariables <#> createPostgresConfig
-    lift $ Pool.create mempty postgresConfig
+    postgresVariables <- loadPostgresVariables
+    lift $ Pool.create postgresVariables
 
 loadDeployment :: ExceptT String Effect Deployment
 loadDeployment =

@@ -4,8 +4,8 @@ import Prelude
 
 import Async (Async)
 import Jarilo (noContent_)
-import Postgres.Pool (Pool)
-import Postgres.Query (class Querier, Query(..), (:|))
+import JavaScript.Npm.Pg.Pool (Pool)
+import JavaScript.Npm.Pg.Query (class Querier, Query(..), (:|))
 import TeamTavern.Routes.Player.UpdatePlayerPassword as UpdatePlayerPassword
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.EnsureSignedInAs (ensureSignedInAs)

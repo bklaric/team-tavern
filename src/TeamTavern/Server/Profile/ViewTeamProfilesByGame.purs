@@ -4,7 +4,7 @@ import Prelude
 
 import Async (Async)
 import Jarilo (ok_)
-import Postgres.Pool (Pool)
+import JavaScript.Npm.Pg.Pool (Pool)
 import TeamTavern.Routes.Profile.Shared (ProfilePage)
 import TeamTavern.Routes.Shared.Filters (Filters)
 import TeamTavern.Routes.Shared.Types (Timezone, Handle)

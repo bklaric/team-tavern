@@ -6,7 +6,7 @@ import Async (Async)
 import Data.Map (Map)
 import Data.Newtype (unwrap)
 import Jarilo (noContent_)
-import Postgres.Pool (Pool)
+import JavaScript.Npm.Pg.Pool (Pool)
 import TeamTavern.Routes.Player.UpdatePlayer as UpdatePlayer
 import TeamTavern.Server.Infrastructure.EnsureSignedInAs (ensureSignedInAs)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)

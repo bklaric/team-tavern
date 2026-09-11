@@ -4,16 +4,15 @@ import Prelude
 
 import Async (Async)
 import Async as Async
-import Browser.Async.Fetch as Fetch
-import Browser.Fetch.Response as FetchRes
 import Data.Bifunctor (lmap)
 import Data.HTTP.Method (Method(..))
 import Data.Maybe (Maybe(..))
-import Data.Options ((:=))
 import Halogen (liftEffect)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
+import JavaScript.Web.Fetch.Async as Fetch
+import JavaScript.Web.Fetch.Response as FetchRes
 import TeamTavern.Client.Script.Url as Url
 import TeamTavern.Client.Shared.Slot (Slot___)
 import TeamTavern.Client.Snippets.Class as HS
@@ -61,7 +60,7 @@ handleAction Initialize = do
         Just id, Just token -> do
             nextState <- H.lift $ Async.unify do
                 let url = "/api/alerts/" <> id <> "?token=" <> token
-                response <- Fetch.fetch url (Fetch.method := DELETE) # lmap (const Error)
+                response <- Fetch.fetch url { method: show DELETE } # lmap (const Error)
                 case FetchRes.status response of
                     204 -> pure Deleted
                     404 -> pure NotFound

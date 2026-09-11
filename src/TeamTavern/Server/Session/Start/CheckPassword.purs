@@ -8,7 +8,7 @@ import Data.Array (singleton)
 import Data.Bifunctor (lmap)
 import Data.Variant (inj)
 import Jarilo (InternalRow_, BadRequestRow, badRequest_, internal__)
-import Postgres.Query (class Querier, Query(..), (:))
+import JavaScript.Npm.Pg.Query (class Querier, Query(..), (:))
 import TeamTavern.Routes.Session.StartSession as StartSession
 import TeamTavern.Server.Infrastructure.Error (Terror(..), TerrorVar, lmapElaborate)
 import TeamTavern.Server.Infrastructure.Log (print)

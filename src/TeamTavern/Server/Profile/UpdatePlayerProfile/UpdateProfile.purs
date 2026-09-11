@@ -3,8 +3,8 @@ module TeamTavern.Server.Profile.UpdatePlayerProfile.UpdateProfile (updateProfil
 import Prelude
 
 import Async (Async)
-import Postgres.Client (Client)
-import Postgres.Query (Query(..), QueryParameter, (:), (:|))
+import JavaScript.Npm.Pg.Client (Client)
+import JavaScript.Npm.Pg.Query (Query(..), QueryParameter, (:), (:|))
 import TeamTavern.Routes.Profile.AddPlayerProfile as AddPlayerProfile
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstInternal, queryNone)
 import TeamTavern.Server.Infrastructure.Response (InternalTerror_)

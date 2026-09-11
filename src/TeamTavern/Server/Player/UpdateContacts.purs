@@ -5,7 +5,7 @@ import Prelude
 import Async (Async)
 import Data.Newtype (unwrap)
 import Jarilo (noContent_)
-import Postgres.Pool (Pool)
+import JavaScript.Npm.Pg.Pool (Pool)
 import TeamTavern.Routes.Player.UpdatePlayerContacts as UpdatePlayerContacts
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.EnsureSignedInAs (ensureSignedInAs)

@@ -4,8 +4,6 @@ import Prelude
 
 import Async (Async)
 import Async as Async
-import Browser.Async.Fetch as Fetch
-import Browser.Async.Fetch.Response as FetchRes
 import Data.Bifunctor (lmap)
 import Data.Maybe (Maybe(..))
 import Effect.Class (class MonadEffect)
@@ -14,6 +12,8 @@ import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
+import JavaScript.Web.Fetch.Async as Fetch
+import JavaScript.Web.Fetch.Async as FetchRes
 import TeamTavern.Client.Components.Ads (AdSlots, insertAdsInMiddle, mobileBanner)
 import TeamTavern.Client.Components.Content (actualContent)
 import TeamTavern.Client.Components.Divider (whiteDivider)
@@ -93,9 +93,8 @@ loadGames = Async.unify do
     response' <- Fetch.fetch_ "/api/games" # lmap (const Empty)
     games' :: ViewAllGames.OkContent <-
         case FetchRes.status response' of
-        200 -> FetchRes.text response'
-            >>= JsonAsync.readJSON
-            # lmap (const Empty)
+        200 -> FetchRes.text response' # lmap (const Empty)
+            >>= (JsonAsync.readJSON >>> lmap (const Empty))
         _ -> Async.left Empty
     pure $ Games games'
 

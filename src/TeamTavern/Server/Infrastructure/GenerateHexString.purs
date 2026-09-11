@@ -6,12 +6,13 @@ import Async (Async, fromEffect, fromEitherCont)
 import Data.Bifunctor (lmap)
 import Data.Newtype (class Newtype)
 import Jarilo (internal__)
-import Node.Buffer (toString__)
-import Node.Crypto (randomBytes)
-import Node.Encoding (Encoding(..))
+import JavaScript.Node.Buffer (toString__)
+import JavaScript.Node.Crypto (randomBytes)
+import Literals (StringLit, stringLit)
 import TeamTavern.Server.Infrastructure.Error (Terror(..))
 import TeamTavern.Server.Infrastructure.Log (print)
 import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
+import Untagged.Union (asOneOf)
 
 newtype ByteCount = ByteCount Int
 
@@ -23,5 +24,5 @@ generateHexString (ByteCount byteCount) = do
         # fromEitherCont
         # lmap \error -> Terror internal__
             [ "There has been an error generating a hex string: " <> print error ]
-    string <- toString__ Hex bytes # fromEffect
+    string <- toString__ (asOneOf (stringLit :: StringLit "hex")) bytes # fromEffect
     pure string

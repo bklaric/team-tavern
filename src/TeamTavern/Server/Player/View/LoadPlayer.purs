@@ -6,7 +6,7 @@ import Async (Async)
 import Data.Bifunctor (lmap)
 import Data.Maybe (Maybe, maybe)
 import Data.Newtype (unwrap)
-import Postgres.Query (class Querier, Query(..), (:|))
+import JavaScript.Npm.Pg.Query (class Querier, Query(..), (:|))
 import TeamTavern.Routes.Player.ViewPlayer as ViewPlayer
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo)
 import TeamTavern.Server.Infrastructure.Error (elaborate)

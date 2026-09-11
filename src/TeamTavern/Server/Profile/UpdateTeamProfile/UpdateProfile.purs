@@ -3,8 +3,8 @@ module TeamTavern.Server.Profile.UpdateTeamProfile.UpdateProfile (updateProfile)
 import Prelude
 
 import Async (Async)
-import Postgres.Client (Client)
-import Postgres.Query (Query(..), QueryParameter, (:), (:|))
+import JavaScript.Npm.Pg.Client (Client)
+import JavaScript.Npm.Pg.Query (Query(..), QueryParameter, (:), (:|))
 import TeamTavern.Routes.Shared.Platform as Platform
 import TeamTavern.Routes.Shared.Size as Size
 import TeamTavern.Routes.Shared.Types (Handle)

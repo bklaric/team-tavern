@@ -5,7 +5,7 @@ import Prelude
 import Async (Async, fromEitherCont)
 import Data.Either (Either(..))
 import Effect (Effect)
-import Error (Error)
+import JavaScript.Error (Error)
 
 foreign import writeTextImpl
     :: (Error -> Effect Unit)

@@ -4,7 +4,7 @@ import Prelude
 
 import Async (Async)
 import Jarilo (ForbiddenRow_)
-import Postgres.Query (class Querier, Query(..), (:|))
+import JavaScript.Npm.Pg.Query (class Querier, Query(..), (:|))
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo, Cookies)
 import TeamTavern.Server.Infrastructure.EnsureSignedIn (EnsureSignedInError, ensureSignedIn)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstNotAuthorized)

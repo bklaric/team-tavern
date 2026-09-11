@@ -3,7 +3,7 @@ module TeamTavern.Server.Player.UpdateContacts.LoadRequiredPlatforms (loadRequir
 import Prelude
 
 import Async (Async)
-import Postgres.Query (class Querier, Query(..), (:))
+import JavaScript.Npm.Pg.Query (class Querier, Query(..), (:))
 import TeamTavern.Routes.Shared.Platform (Platform)
 import TeamTavern.Server.Infrastructure.Postgres (queryMany)
 import TeamTavern.Server.Infrastructure.Response (InternalTerror_)

@@ -4,10 +4,10 @@ import Prelude
 
 import Async (Async)
 import Async as Async
-import Postgres.Client (Client)
-import Postgres.Query (Query(..), (:|))
-import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
+import JavaScript.Npm.Pg.Client (Client)
+import JavaScript.Npm.Pg.Query (Query(..), (:|))
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstInternal, queryNone)
+import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
 import TeamTavern.Server.Profile.AddPlayerProfile.ValidateFieldValues (FieldId, FieldValue(..), FieldValueId, FieldValueType(..), OptionId)
 
 type ProfileId = Int

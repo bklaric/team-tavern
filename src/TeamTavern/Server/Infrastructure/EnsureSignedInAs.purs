@@ -7,7 +7,7 @@ import Async as Async
 import Data.Newtype (unwrap)
 import Data.String (toLower)
 import Jarilo (ForbiddenRow_, forbidden__)
-import Postgres.Query (class Querier)
+import JavaScript.Npm.Pg.Query (class Querier)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo, Cookies)
 import TeamTavern.Server.Infrastructure.EnsureSignedIn (EnsureSignedInError, ensureSignedIn)
 import TeamTavern.Server.Infrastructure.Error (Terror(..))

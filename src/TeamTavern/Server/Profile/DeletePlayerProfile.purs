@@ -3,10 +3,11 @@ module TeamTavern.Server.Profile.DeletePlayerProfile (deletePlayerProfile) where
 import Prelude
 
 import Async (Async, left)
+import Data.Maybe (fromMaybe)
 import Jarilo (noContent_, notFound__)
-import Postgres.Pool (Pool)
-import Postgres.Query (Query(..), (:|))
-import Postgres.Result (rowCount)
+import JavaScript.Npm.Pg.Pool (Pool)
+import JavaScript.Npm.Pg.Query (Query(..), (:|))
+import JavaScript.Npm.Pg.Result (rowCount)
 import TeamTavern.Routes.Profile.DeletePlayerProfile as DPP
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.EnsureSignedInAs (ensureSignedInAs)
@@ -28,7 +29,7 @@ deletePlayerProfile pool cookies { nickname, handle } =
     sendResponse "Error deleting player profile" do
     cookieInfo <- ensureSignedInAs pool cookies nickname
     result <- queryInternal pool queryString (cookieInfo.id :| handle)
-    if rowCount result > 0
+    if fromMaybe 0 (rowCount result) > 0
         then pure noContent_
         else left $ Terror notFound__
             [ "No player profile deleted."

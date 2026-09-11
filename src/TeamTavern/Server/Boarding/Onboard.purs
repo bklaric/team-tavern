@@ -12,7 +12,7 @@ import Data.Maybe (Maybe(..))
 import Data.Newtype (unwrap)
 import Data.Variant (inj)
 import Jarilo (badRequest_, ok_)
-import Postgres.Pool (Pool)
+import JavaScript.Npm.Pg.Pool (Pool)
 import Record.Extra (pick)
 import TeamTavern.Routes.Boarding.Onboard as Onboard
 import TeamTavern.Routes.Shared.Platform (Platform(..))

@@ -9,7 +9,7 @@ import Data.Foldable (elem)
 import Data.Map (Map)
 import Data.Maybe (Maybe(..))
 import Jarilo (badRequest_, noContent_)
-import Postgres.Pool (Pool)
+import JavaScript.Npm.Pg.Pool (Pool)
 import TeamTavern.Routes.Profile.AddTeamProfile as AddTeamProfile
 import TeamTavern.Routes.Shared.Platform (Platform(..))
 import TeamTavern.Server.Infrastructure.EnsureSignedInOwner (ensureSignedInOwner)

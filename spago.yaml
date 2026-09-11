@@ -3,6 +3,7 @@ package:
     - aff
     - arrays
     - bifunctors
+    - bklaric
     - console
     - const
     - contravariant
@@ -12,7 +13,6 @@ package:
     - effect
     - either
     - enums
-    - error
     - foldable-traversable
     - foreign
     - foreign-object
@@ -30,25 +30,22 @@ package:
     - maybe
     - media-types
     - newtype
-    - nodey
     - nonempty
     - now
     - nullable
-    - options
     - ordered-collections
     - parallel
     - parsing
     - partial
-    - pg
     - prelude
     - record
+    - record-extra
     - refs
     - strings
     - stringutils
     - transformers
     - tuples
     - typelevel-prelude
-    - undefined
     - unfoldable
     - unicode
     - unsafe-coerce
@@ -64,58 +61,7 @@ package:
   name: team-tavern-server
 workspace:
   extraPackages:
-    error:
-      dependencies: []
-      git: ssh://git@github.com/bklaric/purescript-error.git
-      ref: v2.0.0
-    jarilo:
-      dependencies:
-        - http-methods
-        - record
-        - uri
-        - variant
-      git: ssh://git@github.com/bklaric/purescript-jarilo.git
-      ref: v2.0.0-rc2
-    nodey:
-      dependencies:
-        - arrays
-        - console
-        - effect
-        - either
-        - error
-        - foreign
-        - foreign-object
-        - lists
-        - maybe
-        - nullable
-        - prelude
-        - refs
-        - transformers
-        - undefined
-        - unsafe-coerce
-      git: ssh://git@github.com/bklaric/purescript-nodey.git
-      ref: v1.0.3
-    pg:
-      dependencies:
-        - arrays
-        - control
-        - effect
-        - either
-        - error
-        - foreign
-        - maybe
-        - nodey
-        - nullable
-        - options
-        - prelude
-        - transformers
-        - unsafe-coerce
-        - yoga-json
-      git: ssh://git@github.com/bklaric/purescript-pg.git
-      ref: v1.0.1
-    undefined:
-      dependencies: []
-      git: ssh://git@github.com/bklaric/purescript-undefined.git
-      ref: v2.0.0
+    bklaric:
+      path: ../purescript-bklaric
   packageSet:
     registry: 77.10.0

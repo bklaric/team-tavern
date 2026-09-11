@@ -4,8 +4,8 @@ import Prelude
 
 import Async (Async)
 import Jarilo (ok_)
-import Postgres.Pool (Pool)
-import Postgres.Query (Query(..))
+import JavaScript.Npm.Pg.Pool (Pool)
+import JavaScript.Npm.Pg.Query (Query(..))
 import TeamTavern.Routes.Game.ViewAllGames as ViewAllGames
 import TeamTavern.Server.Infrastructure.Postgres (queryMany_)
 import TeamTavern.Server.Infrastructure.Response (InternalTerror_)

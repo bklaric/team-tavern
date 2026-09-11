@@ -3,11 +3,11 @@ module TeamTavern.Server.Infrastructure.EnsureSignedIn (EnsureSignedInError, ens
 import Prelude
 
 import Async (Async, left, right)
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), fromMaybe)
 import Jarilo (InternalRow_, NotAuthorizedRow_, notAuthorized__)
-import Postgres.Async.Query (query)
-import Postgres.Query (class Querier, Query(..), (:), (:|))
-import Postgres.Result (rowCount)
+import JavaScript.Npm.Pg.Async (query)
+import JavaScript.Npm.Pg.Query (class Querier, Query(..), (:), (:|))
+import JavaScript.Npm.Pg.Result (rowCount)
 import TeamTavern.Server.Infrastructure.Cookie (CookieInfo, Cookies, lookupCookieInfo)
 import TeamTavern.Server.Infrastructure.Error (Terror(..), TerrorVar)
 import TeamTavern.Server.Infrastructure.Postgres (reportDatabaseError)
@@ -34,7 +34,7 @@ ensureSignedIn querier cookies =
         [ "No cookie info has been found in cookies: " <> show cookies]
     Just cookieInfo @ { id, nickname, token } -> do
         result <- querier # query queryString (id : nickname :| token) # reportDatabaseError
-        if rowCount result == 0
+        if fromMaybe 0 (rowCount result) == 0
         then left $ Terror notAuthorized__
             [ "Client session in cookies is invalid: " <> show cookieInfo ]
         else right cookieInfo

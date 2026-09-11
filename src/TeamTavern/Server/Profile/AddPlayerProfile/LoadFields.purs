@@ -1,10 +1,10 @@
 module TeamTavern.Server.Profile.AddPlayerProfile.LoadFields (Option, Field, Game, loadFields) where
 
 import Async (Async)
-import Postgres.Query (class Querier, Query(..), (:))
+import JavaScript.Npm.Pg.Query (class Querier, Query(..), (:))
 import TeamTavern.Routes.Shared.Platform (Platforms)
-import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstInternal)
+import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
 
 type Handle = String
 

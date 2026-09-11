@@ -4,8 +4,6 @@ import Prelude
 
 import Async (Async)
 import Async as Async
-import Browser.Async.Fetch as Fetch
-import Browser.Async.Fetch.Response as FetchRes
 import Client.Pages.Home.ForTeams (forTeams')
 import Data.Bifunctor (lmap)
 import Data.Maybe (Maybe(..))
@@ -13,6 +11,8 @@ import Effect.Class (class MonadEffect)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
+import JavaScript.Web.Fetch.Async as Fetch
+import JavaScript.Web.Fetch.Async as FetchRes
 import TeamTavern.Client.Components.Ads (AdSlots, billboard, leaderboard, mobileMpu, mobileTakeover)
 import TeamTavern.Client.Components.Boarding.PlayerOrTeamInput as Boarding
 import TeamTavern.Client.Pages.Home.CallToAction (callToAction')
@@ -75,7 +75,8 @@ loadGame handle = Async.unify do
         # lmap (const Nothing)
     content <-
         case FetchRes.status response of
-        200 -> FetchRes.text response >>= JsonAsync.readJSON # lmap (const Nothing)
+        200 -> FetchRes.text response # lmap (const Nothing)
+            >>= (JsonAsync.readJSON >>> lmap (const Nothing))
         _ -> Async.left Nothing
     pure $ Just content
 

@@ -5,7 +5,7 @@ import Prelude
 import Async (Async)
 import Data.Map (Map)
 import Jarilo (ok_)
-import Postgres.Pool (Pool)
+import JavaScript.Npm.Pg.Pool (Pool)
 import TeamTavern.Routes.Player.ViewPlayer as ViewPlayer
 import TeamTavern.Server.Infrastructure.CheckSignedIn (checkSignedIn)
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)

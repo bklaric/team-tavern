@@ -4,7 +4,7 @@ import Prelude
 
 import Async (Async)
 import Data.Nullable (toNullable)
-import Postgres.Query (class Querier, Query(..), QueryParameter, (:), (:|))
+import JavaScript.Npm.Pg.Query (class Querier, Query(..), QueryParameter, (:), (:|))
 import TeamTavern.Server.Infrastructure.Postgres (queryNone)
 import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
 import TeamTavern.Server.Player.UpdatePlayer.ValidatePlayer (Player)

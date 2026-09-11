@@ -4,8 +4,6 @@ import Prelude
 
 import Async (Async)
 import Async as Async
-import Browser.Async.Fetch as Fetch
-import Browser.Async.Fetch.Response as FetchRes
 import Control.Bind (bindFlipped)
 import Data.Array (foldl, intercalate)
 import Data.Array as Array
@@ -22,6 +20,8 @@ import Effect.Class (class MonadEffect)
 import Effect.Timer (setTimeout)
 import Halogen as H
 import Halogen.HTML as HH
+import JavaScript.Web.Fetch.Async as Fetch
+import JavaScript.Web.Fetch.Async as FetchRes
 import TeamTavern.Client.Components.Ads (AdSlots, mobileBanner)
 import TeamTavern.Client.Components.Ads as Ads
 import TeamTavern.Client.Components.Boarding.PlayerOrTeamInput as Boarding
@@ -156,7 +156,8 @@ loadPlayerProfiles handle page filters = Async.unify do
         # lmap (const Nothing)
     content <-
         case FetchRes.status response of
-        200 -> FetchRes.text response >>= Json.readJSON # lmap (const Nothing)
+        200 -> FetchRes.text response # lmap (const Nothing)
+            >>= (Json.readJSON >>> lmap (const Nothing))
         _ -> Async.left Nothing
     pure content
 
@@ -193,7 +194,8 @@ loadTeamProfiles handle page filters = Async.unify do
         # lmap (const Nothing)
     content <-
         case FetchRes.status response of
-        200 -> FetchRes.text response >>= Json.readJSON # lmap (const Nothing)
+        200 -> FetchRes.text response # lmap (const Nothing)
+            >>= (Json.readJSON >>> lmap (const Nothing))
         _ -> Async.left Nothing
     pure content
 

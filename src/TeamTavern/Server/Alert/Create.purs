@@ -5,8 +5,8 @@ import Prelude
 import Async (Async)
 import Data.Nullable (toNullable)
 import Jarilo (noContent_)
-import Postgres.Pool (Pool)
-import Postgres.Query (Query(..), QueryParameter, (:), (:|))
+import JavaScript.Npm.Pg.Pool (Pool)
+import JavaScript.Npm.Pg.Query (Query(..), QueryParameter, (:), (:|))
 import TeamTavern.Routes.Alert.CreateAlert as CreateAlert
 import TeamTavern.Routes.Shared.Organization as Organization
 import TeamTavern.Routes.Shared.Platform as Platform

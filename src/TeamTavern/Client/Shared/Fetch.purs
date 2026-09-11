@@ -3,11 +3,11 @@ module TeamTavern.Client.Shared.Fetch where
 import Prelude
 
 import Async (attempt)
-import Browser.Fetch (Credentials(..))
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.Variant (match, onMatch)
 import Jarilo as Jarilo
+import Jarilo.Fetch (Credentials(..))
 
 fetch proxy path query body = let
     options = Jarilo.defaultOptions

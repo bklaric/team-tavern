@@ -3,10 +3,11 @@ module TeamTavern.Server.Player.Delete (delete) where
 import Prelude
 
 import Async (Async, left)
+import Data.Maybe (fromMaybe)
 import Jarilo (noContent, notFound__)
-import Postgres.Pool (Pool)
-import Postgres.Query (Query(..), (:))
-import Postgres.Result (rowCount)
+import JavaScript.Npm.Pg.Pool (Pool)
+import JavaScript.Npm.Pg.Query (Query(..), (:))
+import JavaScript.Npm.Pg.Result (rowCount)
 import TeamTavern.Server.Infrastructure.Cookie (Cookies, removeCookieHeader)
 import TeamTavern.Server.Infrastructure.EnsureSignedInAs (ensureSignedInAs)
 import TeamTavern.Server.Infrastructure.Error (Terror(..))
@@ -21,7 +22,7 @@ delete pool nickname cookies =
     sendResponse "Error deleting player" do
     cookieInfo <- ensureSignedInAs pool cookies nickname
     result <- queryInternal pool queryString (cookieInfo.id : [])
-    if rowCount result > 0
+    if fromMaybe 0 (rowCount result) > 0
         then pure $ noContent removeCookieHeader
         else left $ Terror notFound__
             [ "No player deleted."

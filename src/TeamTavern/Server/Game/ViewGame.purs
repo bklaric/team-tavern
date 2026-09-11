@@ -5,8 +5,8 @@ import Prelude
 import Async (Async)
 import Data.Bifunctor (lmap)
 import Jarilo (ok_)
-import Postgres.Pool (Pool)
-import Postgres.Query (Query(..), (:))
+import JavaScript.Npm.Pg.Pool (Pool)
+import JavaScript.Npm.Pg.Query (Query(..), (:))
 import TeamTavern.Routes.Game.ViewGame as ViewGame
 import TeamTavern.Server.Infrastructure.Error (elaborate)
 import TeamTavern.Server.Infrastructure.Postgres (LoadSingleError, queryFirstNotFound)

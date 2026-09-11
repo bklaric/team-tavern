@@ -4,7 +4,7 @@ import Prelude
 
 import Async (Async)
 import Data.String (joinWith)
-import Postgres.Query (class Querier, Query(..))
+import JavaScript.Npm.Pg.Query (class Querier, Query(..))
 import TeamTavern.Routes.Shared.Filters (Field)
 import TeamTavern.Routes.Shared.Types (Handle)
 import TeamTavern.Server.Infrastructure.Postgres (prepareString, queryMany_)

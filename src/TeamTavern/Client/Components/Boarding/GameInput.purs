@@ -4,13 +4,13 @@ import Prelude
 
 import Async (Async)
 import Async as Async
-import Browser.Async.Fetch as Fetch
-import Browser.Async.Fetch.Response as FetchRes
 import Data.Bifunctor (lmap)
 import Data.Maybe (Maybe(..), maybe)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
+import JavaScript.Web.Fetch.Async as Fetch
+import JavaScript.Web.Fetch.Async as FetchRes
 import TeamTavern.Client.Components.RadioCard (radioCard, radioCards)
 import TeamTavern.Client.Shared.Slot (Slot_O_)
 import TeamTavern.Routes.Game.ViewAllGames as ViewAllGames
@@ -53,14 +53,16 @@ loadGames :: ∀ left. Async left (Maybe ViewAllGames.OkContent)
 loadGames = Async.unify do
     response <- Fetch.fetch_ "/api/games" # lmap (const Nothing)
     case FetchRes.status response of
-        200 -> FetchRes.text response >>= Json.readJSON # lmap (const Nothing)
+        200 -> FetchRes.text response # lmap (const Nothing)
+            >>= (Json.readJSON >>> lmap (const Nothing))
         _ -> Async.left Nothing
 
 loadGame :: ∀ left. String -> Async left (Maybe ViewGame.OkContent)
 loadGame handle = Async.unify do
     response <- Fetch.fetch_ ("/api/games/" <> handle) # lmap (const Nothing)
     case FetchRes.status response of
-        200 -> FetchRes.text response >>= Json.readJSON # lmap (const Nothing)
+        200 -> FetchRes.text response # lmap (const Nothing)
+            >>= (Json.readJSON >>> lmap (const Nothing))
         _ -> Async.left Nothing
 
 handleAction :: ∀ action slots left.

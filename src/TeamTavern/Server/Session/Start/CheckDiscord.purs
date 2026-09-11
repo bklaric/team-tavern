@@ -5,9 +5,9 @@ import Prelude
 import Async (Async)
 import Data.Variant (inj)
 import Jarilo (badRequest_)
-import Postgres.Query (class Querier, Query(..), (:))
-import TeamTavern.Server.Infrastructure.Postgres (queryFirst)
+import JavaScript.Npm.Pg.Query (class Querier, Query(..), (:))
 import TeamTavern.Server.Infrastructure.FetchDiscordUser (DiscordUserContent)
+import TeamTavern.Server.Infrastructure.Postgres (queryFirst)
 import Type.Proxy (Proxy(..))
 
 queryString :: Query
