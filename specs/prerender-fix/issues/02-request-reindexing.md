@@ -1,7 +1,6 @@
 # Ask Google to recrawl
 
 Status: ready-for-human
-Blocked by: 01, 03
 
 Only the site owner can do this, in Search Console.
 
