@@ -118,4 +118,4 @@ workspace:
       git: ssh://git@github.com/bklaric/purescript-undefined.git
       ref: v2.0.0
   packageSet:
-    url: https://raw.githubusercontent.com/purescript/package-sets/psc-0.15.2-20220610/packages.json
+    registry: 77.10.0
