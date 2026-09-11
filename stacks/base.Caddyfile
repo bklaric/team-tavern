@@ -1,8 +1,16 @@
 encode gzip zstd
 
 # Serve index.prerender.html to the prerenderer.
+#
+# Caddy orders handle blocks itself (named matchers before path matchers), so
+# this block runs before the /api/* block for every request. The prerenderer's
+# browser calls the API with the same user agent, so the API must be excluded
+# here or it receives this HTML instead of JSON and every page prerenders empty.
 
-@prerender_header header_regexp User-Agent (?i)(headlesschrome)
+@prerender_header {
+    header_regexp User-Agent (?i)(headlesschrome)
+    not path /api/*
+}
 
 handle @prerender_header {
     try_files {path} /index.prerender.html
