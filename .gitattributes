@@ -1,0 +1,12 @@
+# Default: let git normalize text files in the repo, but keep files that are
+# consumed by Linux containers or bash (Git Bash) checked out with LF endings.
+# CRLF breaks bash scripts (`\r` gets treated as part of the command) and
+# docker compose env_file values (trailing `\r` ends up in the variable).
+
+*.sh        text eol=lf
+*.Caddyfile text eol=lf
+*.sql       text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+.env        text eol=lf
+sftp-*      text eol=lf

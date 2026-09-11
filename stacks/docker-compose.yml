@@ -1,5 +1,3 @@
-version: "3.7"
-
 services:
   postgres:
     image: postgres:14.4
@@ -11,13 +9,16 @@ services:
       - ${POSTGRES_BACKUP_PATH}:/backups
 
   node:
-    image: node:22.15.0
+    # Keep in step with the Volta pin in package.json.
+    image: node:24.21.0
     container_name: node
     restart: unless-stopped
     # Bash -c is necessary because of cd and &&, which are shell builtin commands.
+    # --omit=dev: server.js bundles everything except bcrypt, pg and
+    # @sendgrid/mail, so the build toolchain has no place in this container.
     command: >
       bash -c "cd /root/team-tavern/dist-server &&
-              npm ci &&
+              npm ci --omit=dev &&
               node server.js"
     env_file: .env
     volumes:

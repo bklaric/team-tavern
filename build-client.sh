@@ -1,4 +1,9 @@
 #!/bin/bash
+set -e
+cd "$(dirname "$0")"
+# Tools come from devDependencies, so everyone builds with the same versions.
+# Safe only because nothing below invokes spago -- see the note in build.sh.
+export PATH="$PWD/node_modules/.bin:$PATH"
 mkdir -p dist-client
 rm -rf dist-client/*
 mkdir dist-client/images
