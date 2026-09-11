@@ -220,3 +220,17 @@ container.
   fix, not a contract to publish.
 - **No changelog sections.** Nothing in this repo needs a "Recent changes" or
   "Migration notes" heading. `git log` is the changelog.
+
+## Agent skills
+
+### Issue tracker
+
+Local markdown files under `specs/<feature-slug>/`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The five default triage labels, unchanged. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `CONTEXT.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
