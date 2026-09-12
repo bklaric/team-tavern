@@ -1,6 +1,6 @@
 # Ask Google to recrawl
 
-Status: ready-for-human
+Status: resolved
 
 Only the site owner can do this, in Search Console.
 
@@ -13,3 +13,18 @@ Only the site owner can do this, in Search Console.
 ## Done when
 
 The crawled-page view for a game page shows listings, and each page has been submitted for indexing.
+
+## Comments
+
+Done in Search Console. `sitemap.txt` is resubmitted and `/`, `/games` and all
+eleven `/games/<handle>` pages have been inspected and submitted for indexing.
+
+URL inspection found every game landing page *unindexed* rather than indexed
+with empty content. That is the missing half of the traffic story: the two
+faults in the spec did not just strip the listings from what Google saw, they
+left the game pages out of the index altogether, which is why organic traffic
+fell away after the Caddy upgrade and the move of ad insertion into the client.
+
+Reindexing is a request, not a guarantee, so the fix is only confirmed once the
+pages return to the index. Compare clicks and impressions for the game pages
+four weeks from 2026-09-12 against the week before the fix.
