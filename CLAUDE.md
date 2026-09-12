@@ -13,7 +13,7 @@ src/TeamTavern/
   Client/     Halogen SPA, its styles and static assets
   Shared/     static data both sides need (countries, languages, timezones)
   Database/   SQL schema, migrations and seed data
-stacks/       docker compose, Caddyfiles and the .env for the local stack
+stacks/       docker compose, Caddyfiles, env files and the test seed
 test/         a stub; the compiler is the only check
 ```
 
@@ -24,8 +24,8 @@ Generated, never edited, all git-ignored: `output/` (compiled PureScript),
 
 - **Node and npm** are pinned by Volta in `package.json`; with Volta installed
   the right versions are picked up automatically. The `node` service in
-  `stacks/docker-compose.yml` pins the same Node version for the container,
-  and nothing enforces agreement, so change both together.
+  both compose files under `stacks/` pins the same Node version for the
+  container, and nothing enforces agreement, so change all three together.
 - **purs, spago, sass and esbuild** come from `devDependencies`, so
   `npm install` is the only setup step. No global installs.
 - **Git Bash** on Windows. The scripts are bash and do not run under
@@ -61,6 +61,23 @@ that with `--omit=dev`, so the build toolchain never enters the image.
 
 ## Running the stack
 
+Two compose projects, and they can run at once. The development stack keeps its
+data in host directories next to the repo; the test stack keeps its in named
+volumes, so `down -v` throws the database away and the next boot seeds a fresh
+one. Both serve the same `dist-client/` and `dist-server/`, so `./build.sh` has
+to have run either way.
+
+|               | Development                 | Test                             |
+| ------------- | --------------------------- | -------------------------------- |
+| Compose file  | `stacks/docker-compose.yml` | `stacks/docker-compose.test.yml` |
+| Env file      | `stacks/.env`               | `stacks/test.env`                |
+| Project name  | default                     | `teamtavern-test`                |
+| Site          | <https://localhost>         | <https://localhost:8443>         |
+| Database      | `team_tavern`               | `team_tavern_test`               |
+| Postgres data | host directory              | named volume, seeded on boot     |
+
+### The development stack
+
 `stacks/.env` configures docker compose. Besides the database and SendGrid
 credentials it names four host directories that are bind-mounted into the
 containers and live next to the repo, not in it:
@@ -78,7 +95,39 @@ selects which `stacks/<name>.Caddyfile` Caddy loads.
 The site is served at <https://localhost> with a Caddy-issued self-signed
 certificate, so expect a browser warning, or `curl -k`.
 
-Expected noise in local development, none of it a bug to fix:
+`stacks/.env` is committed. The Postgres credentials in it are real, but the
+database is reachable only from inside the compose network, so they are
+usable only by someone already on the server. The SendGrid key is a
+placeholder; the real one lives in the production `.env` on the server and is
+not in the repo.
+
+### The test stack
+
+`stacks/test.env` is self-contained: its own database name, its own throwaway
+credentials and the two Caddy host ports. It names no host directory, so the
+stack carries nothing between runs. Caddy loads `stacks/test.Caddyfile`, which
+the compose file mounts directly rather than selecting by `ENVIRONMENT`.
+
+```bash
+docker compose --env-file stacks/test.env -f stacks/docker-compose.test.yml up -d
+docker compose --env-file stacks/test.env -f stacks/docker-compose.test.yml down -v
+```
+
+The compose file names the project itself, so `-p teamtavern-test` is already
+implied. `--env-file` is not: the port variables are declared required, so
+without it compose refuses to start rather than binding arbitrary host ports.
+
+`stacks/test-seed/seed.sh` builds the database on the first boot of the Postgres
+volume, which is why `down -v` rather than `down` is what resets it. It applies
+`TablesCurrent.sql`, then `Seed/`, then `stacks/test-seed/players.sql`. That
+last one gives every seeded game one player and one profile, so the listing
+pages have a row to assert on; the nickname is the handle title-cased with
+`Tester` after it, so `apex` gets `ApexTester`. A cold boot answers on the API
+within a few seconds.
+
+### Expected noise
+
+None of it is a bug to fix:
 
 - **Rendertron returns 400.** Caddy rewrites bot requests to
   `rendertron:3000/render/https://localhost/`, and inside that container
@@ -92,12 +141,6 @@ Expected noise in local development, none of it a bug to fix:
 - **`$'\r': command not found`**, or a container that cannot reach
   `postgres`: a file has CRLF endings. See the line-ending rule under Code
   style.
-
-`stacks/.env` is committed. The Postgres credentials in it are real, but the
-database is reachable only from inside the compose network, so they are
-usable only by someone already on the server. The SendGrid key is a
-placeholder; the real one lives in the production `.env` on the server and is
-not in the repo.
 
 ## Dependencies
 
@@ -183,12 +226,15 @@ an `index.html` fallback for SPA paths.
 
 ## Database
 
-`Database/` is plain SQL and nothing in the repo runs it. `TablesBase.sql` is
-the schema `Migrations/*.sql` (dated, each in its own transaction) build on;
-`TablesCurrent.sql` is the resulting schema for reading. `Seed/` holds the
-game and region rows. A schema change is a new dated migration plus the
-matching edit to `TablesCurrent.sql`, applied by hand to the `postgres`
-container.
+`Database/` is plain SQL. `TablesBase.sql` is the schema `Migrations/*.sql`
+(dated, each in its own transaction) build on; `TablesCurrent.sql` is the
+resulting schema for reading; `Seed/` holds the game and region rows. A schema
+change is a new dated migration plus the matching edit to `TablesCurrent.sql`,
+applied by hand to the `postgres` container of the development stack.
+
+Only the test stack runs any of it, and it runs `TablesCurrent.sql` rather than
+replaying the migrations, so a `TablesCurrent.sql` that drifts from the
+migrations fails the test stack rather than going unnoticed.
 
 ## Code style
 

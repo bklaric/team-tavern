@@ -1,7 +1,6 @@
 # Playwright scaffold
 
 Status: ready-for-agent
-Blocked by: 01
 
 The runner, config and stack boot, with no assertions yet.
 

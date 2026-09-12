@@ -1,6 +1,6 @@
 # Isolated test stack
 
-Status: ready-for-agent
+Status: resolved
 
 A second compose project for tests that leaves the development stack and its database alone.
 
@@ -14,3 +14,30 @@ A second compose project for tests that leaves the development stack and its dat
 ## Done when
 
 `docker compose -p teamtavern-test up` and `down -v` can run while the development stack is up, and the development database is unchanged afterwards.
+
+## Comments
+
+Landed as `stacks/test.env`, `stacks/test.Caddyfile`,
+`stacks/docker-compose.test.yml` and `stacks/test-seed/`, with the two stacks
+documented side by side under Running the stack in `CLAUDE.md`.
+
+The seed departs from the plan above. `TablesBase.sql` plus the migrations does
+not build an empty database: `2023-03-13-overwatch-2.sql` inserts field options
+against field id 31 and `2023-04-07-account-trackers.sql` reads game ids by
+handles no seed file carries, so both fail on a fresh volume. The migrations
+repair production rows, so replaying them is meaningless anyway. The seed
+applies `TablesCurrent.sql` instead, then `Seed/`, then a new
+`stacks/test-seed/players.sql` that derives one player and one profile per row
+of `game`.
+
+That exposed a second thing: `TablesCurrent.sql` had `field.ilk` as `integer`,
+but `2023-04-01-improved-filtering.sql` changes it to `text` and the production
+database confirms `text`. The game seeds insert `'single'` and `'multi'`, so the
+stale type broke the seed. Corrected in the same change.
+
+Verified with the development stack running throughout: both stacks up at once,
+`https://localhost:8443/api/games/<handle>/players` returning a seeded nickname
+for all four of apex, hots, r6s and splitgate, zero psql errors in the postgres
+log, `https://localhost` still serving the development site, and the development
+row counts (31196 players, 26881 profiles, 11 games) identical before and after
+`down -v`, which removed every test volume.

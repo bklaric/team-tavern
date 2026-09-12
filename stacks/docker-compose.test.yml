@@ -1,0 +1,61 @@
+# The test stack. It shares the built client and server bundles with the
+# development stack and nothing else: its database is a named volume seeded from
+# src/TeamTavern/Database on first boot, and its Caddy listens on shifted host
+# ports, so both stacks can run at once and `down -v` throws this one away
+# without touching development data.
+#
+# A whole file rather than an override of docker-compose.yml because volumes
+# merge across `-f` files instead of replacing: an override would mount the
+# development Postgres host directory and the named volume on the same path.
+
+name: teamtavern-test
+
+services:
+  postgres:
+    image: postgres:14.4
+    env_file: test.env
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../src/TeamTavern/Database:/database:ro
+      - ./test-seed:/test-seed:ro
+      - ./test-seed/seed.sh:/docker-entrypoint-initdb.d/seed.sh:ro
+
+  node:
+    # Keep in step with the Volta pin in package.json.
+    image: node:24.21.0
+    command: >
+      bash -c "cd /root/team-tavern/dist-server &&
+              npm ci --omit=dev &&
+              node server.js"
+    env_file: test.env
+    volumes:
+      - ../dist-server:/root/team-tavern/dist-server
+      - node_modules:/root/team-tavern/dist-server/node_modules
+    depends_on:
+      - postgres
+
+  rendertron:
+    image: dockette/rendertron
+    depends_on:
+      - node
+
+  caddy:
+    image: caddy:2.10.0
+    ports:
+      - "${CADDY_HTTP_PORT:?set in stacks/test.env; pass --env-file stacks/test.env}:80"
+      - "${CADDY_HTTPS_PORT:?set in stacks/test.env; pass --env-file stacks/test.env}:443"
+    volumes:
+      - ./base.Caddyfile:/etc/caddy/base.Caddyfile
+      - ./test.Caddyfile:/etc/caddy/Caddyfile
+      - ../dist-client:/srv
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - node
+      - rendertron
+
+volumes:
+  postgres_data:
+  node_modules:
+  caddy_data:
+  caddy_config:
