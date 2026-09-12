@@ -9,7 +9,7 @@ Mirror `enhanced-image-viewer`: a `test-playwright/` directory, TypeScript, `@pl
 ## Constraints
 
 - **Isolated stack.** The development stack holds a restored production database and must not be touched. Tests run their own compose project with a throwaway Postgres seeded from `src/TeamTavern/Database/`, their own Caddy port, and their own env file.
-- **Real bot path.** Rendertron resolves `localhost` to itself, so the bot request must reach the site by a name the rendertron container can resolve. The development Caddyfile serves that name and the bot rewrite targets it instead of the incoming host.
+- **Real bot path.** Rendertron resolves `localhost` to itself, so the bot request must reach the site by a name the rendertron container can resolve. The development and test Caddyfiles serve that name and the bot rewrite targets it instead of the incoming host.
 - **No production access.** Nothing in the suite talks to `teamtavern.net`.
 
 ## Smoke checks

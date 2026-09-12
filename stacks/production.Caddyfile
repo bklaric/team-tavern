@@ -1,5 +1,5 @@
 www.teamtavern.net {
-    import base.Caddyfile
+    import base.Caddyfile https://www.teamtavern.net
 }
 
 teamtavern.net {

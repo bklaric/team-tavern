@@ -1,3 +1,7 @@
-localhost
+# The prerenderer resolves `localhost` to its own container, so the site also
+# answers to its compose service name over plain HTTP, and that name is the
+# render origin.
 
-import base.Caddyfile
+localhost, http://caddy {
+    import base.Caddyfile http://caddy
+}

@@ -18,6 +18,11 @@ handle @prerender_header {
 }
 
 # Proxy bot requests to the prerenderer.
+#
+# The render origin is the first import argument rather than the incoming scheme
+# and host, because the prerenderer's browser has to resolve that name itself.
+# Locally the incoming host is the one name it cannot use: inside that container
+# `localhost` is the prerenderer.
 
 @bot_header_and_not_static_file {
     header_regexp User-Agent (?i)(baiduspider|bingbot|discordbot|embedly|facebot|facebookexternalhit|googlebot|linkedinbot|outbrain|pinterest|pinterestbot|quora\slink\spreview|rogerbot|showyoubot|slackbot|telegrambot|twitterbot|vkshare|W3C_Validator|whatsapp|yandex)
@@ -26,7 +31,7 @@ handle @prerender_header {
 
 handle @bot_header_and_not_static_file {
     reverse_proxy rendertron:3000 {
-        rewrite /render/{scheme}://{host}{uri}
+        rewrite /render/{args[0]}{uri}
     }
 }
 

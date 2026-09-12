@@ -67,6 +67,10 @@ volumes, so `down -v` throws the database away and the next boot seeds a fresh
 one. Both serve the same `dist-client/` and `dist-server/`, so `./build.sh` has
 to have run either way.
 
+Both also answer to `http://caddy` on their compose network, and that name is
+the render origin passed to `base.Caddyfile`. Rendertron's browser has to fetch
+the site itself, and inside that container `localhost` is rendertron.
+
 |               | Development                 | Test                             |
 | ------------- | --------------------------- | -------------------------------- |
 | Compose file  | `stacks/docker-compose.yml` | `stacks/docker-compose.test.yml` |
@@ -130,9 +134,6 @@ A cold boot answers on the API within a few seconds.
 
 None of it is a bug to fix:
 
-- **Rendertron returns 400.** Caddy rewrites bot requests to
-  `rendertron:3000/render/https://localhost/`, and inside that container
-  `localhost` is rendertron itself. Only the bot prerender path is affected.
 - **`API key does not start with "SG."`** on node startup: `SENDGRID_API_KEY`
   in `stacks/.env` is a placeholder. Outbound email is off; everything else
   works.
