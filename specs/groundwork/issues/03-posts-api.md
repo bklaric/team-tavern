@@ -1,7 +1,6 @@
 # Posts API
 
-Status: ready-for-agent
-Blocked by: 01
+Status: wontfix
 
 Routes in `Routes/Post/` and handlers in `Server/Post/` replacing the profile routes for both directions.
 
@@ -16,3 +15,7 @@ Routes in `Routes/Post/` and handlers in `Server/Post/` replacing the profile ro
 ## Done when
 
 `spago build` passes with the old routes gone, and the search endpoint returns the expected posts for each filter against the migrated local database.
+
+## Comments
+
+Dropped with the post model. The profile routes stay as they are.

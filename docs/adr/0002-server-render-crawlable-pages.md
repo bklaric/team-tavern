@@ -4,7 +4,7 @@ status: accepted
 
 # Crawlable pages are rendered to HTML by the Node server
 
-The home page and the two listing pages per game are rendered on demand by the Node server, from the same queries the API runs, using the string renderer for halogen-vdom. Caddy sends bot user agents to that server; browsers get the SPA. There is no headless-browser prerenderer. The previous prerenderer served every data-driven page empty for sixteen months because its browser's API calls were caught by a Caddy rule, and nothing could notice: a rendering layer that runs a browser cannot be checked without running one. Rendering in the server process makes the crawlable HTML a plain function of data that a test can call.
+Every page the sitemap lists, home, the games list, and per game the landing page and the two listings, is rendered on demand by the Node server, from the same queries the API runs, using the string renderer for halogen-vdom. Caddy sends bot user agents to that server; browsers get the SPA. There is no headless-browser prerenderer. The previous prerenderer served every data-driven page empty for sixteen months because its browser's API calls were caught by a Caddy rule, and nothing could notice: a rendering layer that runs a browser cannot be checked without running one. Rendering in the server process makes the crawlable HTML a plain function of data that a test can call.
 
 ## Considered options
 

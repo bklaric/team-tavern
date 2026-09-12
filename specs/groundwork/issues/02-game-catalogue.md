@@ -1,7 +1,6 @@
 # Game catalogue
 
-Status: ready-for-agent
-Blocked by: 01
+Status: wontfix
 
 A game is a seed row with an IGDB id. Everything visual and textual derives from it.
 
@@ -16,3 +15,7 @@ A game is a seed row with an IGDB id. Everything visual and textual derives from
 ## Done when
 
 Adding a twelfth game is one script run and one seed row, and its two listing pages render with templated copy and a cover.
+
+## Comments
+
+Dropped. The landing pages stay, and they are what the per-game assets exist for, so the catalogue change belongs to the UI-first redesign that will replace them.

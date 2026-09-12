@@ -1,7 +1,6 @@
 # Client pages
 
-Status: ready-for-agent
-Blocked by: 03, 04
+Status: wontfix
 
 The SPA rebuilt around the post model. Old profile, team, game landing and alert pages go.
 
@@ -17,3 +16,7 @@ The SPA rebuilt around the post model. Old profile, team, game landing and alert
 ## Done when
 
 A visitor can find posts for a game, create a post and account in one flow, and renew it from their player page, in the running stack.
+
+## Comments
+
+Dropped with the post model. No page changes in this spec; the SPA is touched only where 05 extracts views the server renders.

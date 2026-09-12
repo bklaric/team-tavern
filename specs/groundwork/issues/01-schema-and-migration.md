@@ -1,6 +1,6 @@
 # Schema and migration
 
-Status: ready-for-agent
+Status: wontfix
 
 The new tables and the one-transaction migration from the current schema, developed and rehearsed against the restored production dump in the local database.
 
@@ -14,3 +14,7 @@ The new tables and the one-transaction migration from the current schema, develo
 ## Done when
 
 The rehearsal passes against the 2026-09-11 dump and `TablesCurrent.sql` matches what the migration produces.
+
+## Comments
+
+Dropped with the post model. The spec keeps the existing player, team, profile, field and alert tables; the identity constraint and index move into 04 and the emailed-at columns into 07, both applied by hand since no rows are transformed. The reasons are in the spec's out-of-scope section and in `docs/adr/0001-no-team-entity.md`.
