@@ -9,12 +9,12 @@ values (
 
 insert into field (game_id, ilk, label, key, icon, ordinal)
 values
-    ((select id from game where game.handle = 'csgo'), 'single', 'Competitive rank', 'competitive-rank', 'fas fa-medal', 3),
-    ((select id from game where game.handle = 'csgo'), 'single', 'Wingman rank', 'wingman-rank', 'fas fa-medal', 4),
-    ((select id from game where game.handle = 'csgo'), 'single', 'Danger Zone rank', 'danger-zone-rank', 'fas fa-medal', 5),
-    ((select id from game where game.handle = 'csgo'), 'single', 'Faceit rank', 'faceit-rank', 'fas fa-medal', 6),
-    ((select id from game where game.handle = 'csgo'), 'multi', 'Role', 'role', 'fas fa-bullseye', 7),
-    ((select id from game where game.handle = 'csgo'), 'multi', 'Interest', 'interest', 'fas fa-crosshairs', 8);
+    ((select id from game where game.handle = 'csgo'), 'single', 'Competitive rank', 'competitive-rank', 'fas fa-medal', 1),
+    ((select id from game where game.handle = 'csgo'), 'single', 'Wingman rank', 'wingman-rank', 'fas fa-medal', 2),
+    ((select id from game where game.handle = 'csgo'), 'single', 'Danger Zone rank', 'danger-zone-rank', 'fas fa-medal', 3),
+    ((select id from game where game.handle = 'csgo'), 'single', 'Faceit rank', 'faceit-rank', 'fas fa-medal', 4),
+    ((select id from game where game.handle = 'csgo'), 'multi', 'Role', 'role', 'fas fa-bullseye', 5),
+    ((select id from game where game.handle = 'csgo'), 'multi', 'Interest', 'interest', 'fas fa-crosshairs', 6);
 
 insert into field_option (field_id, label, key, ordinal)
 values

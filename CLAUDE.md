@@ -239,9 +239,7 @@ addresses rows by ids only production has, so nothing can replay it and nothing
 catches it going stale.
 
 `Seed/Games/` is the production game catalogue, so it is checked against the
-development database rather than written freehand. Field ordinals are
-production's own and start above 1 for `csgo` and `dota2`; only their order
-matters.
+development database rather than written freehand.
 
 ## Code style
 

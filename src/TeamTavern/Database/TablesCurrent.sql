@@ -7,7 +7,7 @@ create table player
     , discord_id text unique
 
     -- Contact
-    , discord_tag text
+    , discord_tag varchar(37)
     , steam_id text
     , riot_id text
     , battle_tag text
@@ -43,7 +43,7 @@ create table team
     , website text
 
     -- Contact
-    , discord_tag text
+    , discord_tag varchar(37)
     , discord_server text
     , steam_id text
     , riot_id text
@@ -107,6 +107,8 @@ create table field
     , ordinal int not null
     );
 
+create index field_game_id_idx on field (game_id);
+
 create table field_option
     ( id serial not null primary key
     , field_id integer not null references field(id) on delete cascade
@@ -115,14 +117,16 @@ create table field_option
     , ordinal int not null
     );
 
+create index field_option_field_id_idx on field_option (field_id);
+
 create table player_profile
     ( id serial not null primary key
     , player_id integer not null references player(id) on delete cascade
     , game_id integer not null references game(id)
     , platform text not null
-    , new_or_returning boolean not null
-    , about text[] not null default array[]::text[]
-    , ambitions text[] not null default array[]::text[]
+    , new_or_returning boolean not null default false
+    , about text[] not null
+    , ambitions text[] not null
     , created timestamptz not null default current_timestamp
     , updated timestamptz not null default current_timestamp
     , unique (game_id, player_id)
@@ -134,11 +138,17 @@ create table player_profile_field_value
     , field_id integer not null references field(id)
     );
 
+create index player_profile_field_value_player_profile_id_idx on player_profile_field_value (player_profile_id);
+create index player_profile_field_value_field_id_idx on player_profile_field_value (field_id);
+
 create table player_profile_field_value_option
     ( id serial not null primary key
     , player_profile_field_value_id integer not null references player_profile_field_value(id) on delete cascade
     , field_option_id integer not null references field_option(id)
     );
+
+create index player_profile_field_value_op_player_profile_field_value_id_idx on player_profile_field_value_option (player_profile_field_value_id);
+create index player_profile_field_value_option_field_option_id_idx on player_profile_field_value_option (field_option_id);
 
 create table team_profile
     ( id serial not null primary key

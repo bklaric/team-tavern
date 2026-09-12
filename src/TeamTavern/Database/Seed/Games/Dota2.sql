@@ -9,11 +9,11 @@ values (
 
 insert into field (game_id, ilk, label, key, icon, ordinal)
 values
-    ((select id from game where game.handle = 'dota2'), 'single', 'Rank', 'rank', 'fas fa-medal', 4),
-    ((select id from game where game.handle = 'dota2'), 'multi', 'Region', 'region', 'fas fa-globe-europe', 5),
-    ((select id from game where game.handle = 'dota2'), 'multi', 'Role', 'role', 'fas fa-bullseye', 6),
-    ((select id from game where game.handle = 'dota2'), 'multi', 'Battle cup tier', 'battle-cup-tier', 'fas fa-trophy', 7),
-    ((select id from game where game.handle = 'dota2'), 'multi', 'Interest', 'interest', 'fas fa-crosshairs', 8);
+    ((select id from game where game.handle = 'dota2'), 'single', 'Rank', 'rank', 'fas fa-medal', 1),
+    ((select id from game where game.handle = 'dota2'), 'multi', 'Region', 'region', 'fas fa-globe-europe', 2),
+    ((select id from game where game.handle = 'dota2'), 'multi', 'Role', 'role', 'fas fa-bullseye', 3),
+    ((select id from game where game.handle = 'dota2'), 'multi', 'Battle cup tier', 'battle-cup-tier', 'fas fa-trophy', 4),
+    ((select id from game where game.handle = 'dota2'), 'multi', 'Interest', 'interest', 'fas fa-crosshairs', 5);
 
 insert into field_option (field_id, label, key, ordinal)
 values
