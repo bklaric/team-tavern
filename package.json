@@ -1,4 +1,5 @@
 {
+  "name": "team-tavern",
   "dependencies": {
     "@sendgrid/mail": "^8.1.6",
     "bcrypt": "^6.0.0",
