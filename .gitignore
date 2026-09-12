@@ -10,3 +10,5 @@
 /.sass-cache
 /dist*
 /.spago
+/playwright-report/
+/test-results/

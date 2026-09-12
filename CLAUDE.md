@@ -8,17 +8,19 @@ and share their HTTP contract as PureScript types.
 
 ```
 src/TeamTavern/
-  Routes/     the HTTP contract, shared by client and server
-  Server/     Node API (Jarilo handlers over Postgres)
-  Client/     Halogen SPA, its styles and static assets
-  Shared/     static data both sides need (countries, languages, timezones)
-  Database/   SQL schema and seed data
-stacks/       docker compose, Caddyfiles, env files and the test seed
-test/         a stub; the compiler is the only check
+  Routes/         the HTTP contract, shared by client and server
+  Server/         Node API (Jarilo handlers over Postgres)
+  Client/         Halogen SPA, its styles and static assets
+  Shared/         static data both sides need (countries, languages, timezones)
+  Database/       SQL schema and seed data
+stacks/           docker compose, Caddyfiles, env files and the test seed
+test-playwright/  the Playwright suite and the stack boot it runs first
+test/             a stub; nothing runs it
 ```
 
 Generated, never edited, all git-ignored: `output/` (compiled PureScript),
-`dist-client/`, `dist-server/`, `.spago/`.
+`dist-client/`, `dist-server/`, `.spago/`, and Playwright's `playwright-report/`
+and `test-results/`.
 
 ## Environment
 
@@ -26,8 +28,10 @@ Generated, never edited, all git-ignored: `output/` (compiled PureScript),
   the right versions are picked up automatically. The `node` service in
   both compose files under `stacks/` pins the same Node version for the
   container, and nothing enforces agreement, so change all three together.
-- **purs, spago, sass and esbuild** come from `devDependencies`, so
-  `npm install` is the only setup step. No global installs.
+- **purs, spago, sass, esbuild and Playwright** come from `devDependencies`, so
+  setup is `npm install` plus, for the browser Playwright drives,
+  `./node_modules/.bin/playwright install chromium`, which downloads Chromium
+  into a per-user cache outside the repo. No global installs.
 - **Git Bash** on Windows. The scripts are bash and do not run under
   `cmd.exe` or PowerShell. **OpenSSL** must be on PATH for the cache-busting
   asset hash in `build-client.sh`; Git Bash ships it.
@@ -37,10 +41,12 @@ Generated, never edited, all git-ignored: `output/` (compiled PureScript),
 
 ```bash
 npm install         # once
-spago build         # compile everything into output/; this is the check
+spago build         # compile everything into output/
 ./build.sh          # spago build + build-client.sh + build-server.sh
 ./run-stack.sh      # docker compose up: postgres, node, rendertron, caddy
 ./deploy-server.sh  # rebuild the server bundle and restart the node container
+npm test            # boot the test stack and run the Playwright suite
+npm run typecheck   # tsc over test-playwright/ and playwright.config.ts
 ```
 
 Bare `spago` and `purs` work because Volta shims them and, since both are
@@ -50,8 +56,18 @@ never put `node_modules/.bin` on PATH before running spago: spago then finds
 the `purs.cmd` shim, which Node refuses to spawn, and the build dies with
 `spawn EINVAL`.
 
-There are no tests. A change is verified when `spago build` reports no errors
-and the affected page or endpoint behaves in the running stack.
+`npm test` is Playwright, configured in `playwright.config.ts`.
+`test-playwright/stack.setup.ts` takes the test stack down with `-v`, brings it
+back up and waits for `/api/games` to answer, and the specs in
+`test-playwright/integration/` then run against it. The stack serves
+`dist-client/` and `dist-server/` out of the repo, so `./build.sh` has to have
+run first; the setup says so rather than letting the wait time out.
+
+Nothing typechecks the suite on the way to running it, since Playwright strips
+the types without reading them, so `npm run typecheck` is a separate step.
+
+A change is verified when `spago build` reports no errors, `npm test` passes, and
+the affected page or endpoint behaves in the running stack.
 
 `build-client.sh` compiles Sass and bundles the client into `dist-client/`
 under hashed file names. `build-server.sh` bundles the server into
@@ -120,6 +136,8 @@ docker compose --env-file stacks/test.env -f stacks/docker-compose.test.yml down
 The compose file names the project itself, so `-p teamtavern-test` is already
 implied. `--env-file` is not: the port variables are declared required, so
 without it compose refuses to start rather than binding arbitrary host ports.
+`npm test` runs both commands itself, so a test run takes this stack down and
+reseeds it from whatever state it was in.
 
 `stacks/test-seed/seed.sh` builds the database on the first boot of the Postgres
 volume, which is why `down -v` rather than `down` is what resets it. It applies

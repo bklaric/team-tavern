@@ -1,7 +1,6 @@
 # Smoke specs
 
 Status: ready-for-agent
-Blocked by: 03
 
 One spec file, `test-playwright/integration/smoke.spec.ts`, with the four checks from the spec. Each check uses a seeded game handle from the test database.
 
@@ -11,6 +10,9 @@ One spec file, `test-playwright/integration/smoke.spec.ts`, with the four checks
 - **Bot gets listings.** Request `/games/<handle>/players` with the Googlebot user agent; assert the body contains a `<title>` naming the game and at least one seeded player's nickname.
 - **Browser gets listings.** Open `/games/<handle>/players` in Playwright's Chromium; assert a seeded nickname is visible.
 - **API under a browser user agent.** Request `/api/games/<handle>` normally; assert the response lists the game's seeded fields.
+
+Delete `test-playwright/integration/.gitkeep`, which only holds the directory open
+until this spec lands.
 
 Use Playwright's `request` fixture for the three HTTP checks and `page` for the browser one. Set `ignoreHTTPSErrors` since the test Caddy uses a self-signed certificate.
 
