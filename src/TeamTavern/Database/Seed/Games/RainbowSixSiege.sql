@@ -3,7 +3,7 @@ values (
     'Rainbow Six: Siege',
     'R6S',
     'r6s',
-    array['Find Rainbow Six: Siege teammates for lots of stuff, I need to check first.']::varchar[],
+    array['Find Rainbow Six: Siege teammates for deathmatch, unranked, ranked and more.']::varchar[],
     array['steam', 'ubisoft-connect', 'playstation', 'xbox']::varchar[]
 );
 

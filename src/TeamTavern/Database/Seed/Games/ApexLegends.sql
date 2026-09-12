@@ -34,3 +34,9 @@ values
     ((select id from field where field.key = 'interest' and field.game_id = ((select id from game where game.handle = 'apex'))), 'Unranked arenas', 'unranked-arenas', 3),
     ((select id from field where field.key = 'interest' and field.game_id = ((select id from game where game.handle = 'apex'))), 'Ranked arenas', 'ranked-arenas', 4),
     ((select id from field where field.key = 'interest' and field.game_id = ((select id from game where game.handle = 'apex'))), 'Leagues/tournaments', 'leagues-tournaments', 5);
+
+insert into tracker (game_id, platform, title, template)
+values
+    ((select id from game where game.handle = 'apex'), 'origin', 'tracker.gg', 'https://tracker.gg/apex/profile/origin/'),
+    ((select id from game where game.handle = 'apex'), 'playstation', 'tracker.gg', 'https://tracker.gg/apex/profile/psn/'),
+    ((select id from game where game.handle = 'apex'), 'steam', 'tracker.gg', 'https://tracker.gg/apex/profile/steam/');

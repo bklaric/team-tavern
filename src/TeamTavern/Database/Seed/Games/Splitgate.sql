@@ -42,3 +42,9 @@ values
     ((select id from field where field.key = 'interest' and field.game_id = ((select id from game where game.handle = 'splitgate'))), 'Ranked takedown', 'ranked-takedown', 3),
     ((select id from field where field.key = 'interest' and field.game_id = ((select id from game where game.handle = 'splitgate'))), 'Ranked 2v2', 'ranked-2v2', 4),
     ((select id from field where field.key = 'interest' and field.game_id = ((select id from game where game.handle = 'splitgate'))), 'Leagues/tournaments', 'leagues-tournaments', 5);
+
+insert into tracker (game_id, platform, title, template)
+values
+    ((select id from game where game.handle = 'splitgate'), 'xbox', 'tracker.gg', 'https://tracker.gg/splitgate/profile/xbl/'),
+    ((select id from game where game.handle = 'splitgate'), 'playstation', 'tracker.gg', 'https://tracker.gg/splitgate/profile/psn/'),
+    ((select id from game where game.handle = 'splitgate'), 'steam', 'tracker.gg', 'https://tracker.gg/splitgate/profile/steam/');

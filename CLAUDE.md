@@ -12,7 +12,7 @@ src/TeamTavern/
   Server/     Node API (Jarilo handlers over Postgres)
   Client/     Halogen SPA, its styles and static assets
   Shared/     static data both sides need (countries, languages, timezones)
-  Database/   SQL schema, migrations and seed data
+  Database/   SQL schema and seed data
 stacks/       docker compose, Caddyfiles, env files and the test seed
 test/         a stub; the compiler is the only check
 ```
@@ -122,8 +122,9 @@ volume, which is why `down -v` rather than `down` is what resets it. It applies
 `TablesCurrent.sql`, then `Seed/`, then `stacks/test-seed/players.sql`. That
 last one gives every seeded game one player and one profile, so the listing
 pages have a row to assert on; the nickname is the handle title-cased with
-`Tester` after it, so `apex` gets `ApexTester`. A cold boot answers on the API
-within a few seconds.
+`Tester` after it, so `apex` gets `ApexTester`. `Seed/Games/` carries all eleven
+production games, so every game handle the site serves has a page with content.
+A cold boot answers on the API within a few seconds.
 
 ### Expected noise
 
@@ -226,15 +227,21 @@ an `index.html` fallback for SPA paths.
 
 ## Database
 
-`Database/` is plain SQL. `TablesBase.sql` is the schema `Migrations/*.sql`
-(dated, each in its own transaction) build on; `TablesCurrent.sql` is the
-resulting schema for reading; `Seed/` holds the game and region rows. A schema
-change is a new dated migration plus the matching edit to `TablesCurrent.sql`,
-applied by hand to the `postgres` container of the development stack.
+`Database/` is plain SQL. `TablesCurrent.sql` is the schema; `Seed/` holds the
+region rows and one file per game, each carrying that game's fields, field
+options and trackers. Only the test stack runs them, on every fresh boot.
 
-Only the test stack runs any of it, and it runs `TablesCurrent.sql` rather than
-replaying the migrations, so a `TablesCurrent.sql` that drifts from the
-migrations fails the test stack rather than going unnoticed.
+A schema change edits `TablesCurrent.sql` and is applied by hand to the
+`postgres` container of the development stack and to production. A change that
+also has to transform rows already out there needs a migration script beside it,
+deleted once it has run everywhere. A migration kept past that point rots: it
+addresses rows by ids only production has, so nothing can replay it and nothing
+catches it going stale.
+
+`Seed/Games/` is the production game catalogue, so it is checked against the
+development database rather than written freehand. Field ordinals are
+production's own and start above 1 for `csgo` and `dota2`; only their order
+matters.
 
 ## Code style
 

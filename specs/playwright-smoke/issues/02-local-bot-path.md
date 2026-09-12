@@ -13,4 +13,4 @@ The bot handler rewrites to `rendertron:3000/render/{scheme}://{host}{uri}`. Loc
 
 ## Done when
 
-`curl -k -A Googlebot https://localhost:8443/games/apex` returns HTML with listings in it. The test stack seeds `apex`, `hots`, `r6s` and `splitgate`; it has no `valorant`.
+`curl -k -A Googlebot https://localhost:8443/games/valorant` returns HTML with listings in it.
