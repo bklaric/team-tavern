@@ -15,8 +15,8 @@ Mirror `enhanced-image-viewer`: a `test-playwright/` directory, TypeScript, `@pl
 ## Smoke checks
 
 1. `/api/games/<handle>` with a `HeadlessChrome` user agent returns JSON.
-2. `/games/<handle>` with a Googlebot user agent returns HTML containing at least one listing and a game-specific `<title>`.
-3. `/games/<handle>` in a real browser renders the listings.
+2. `/games/<handle>/players` with a Googlebot user agent returns HTML containing at least one listing and a game-specific `<title>`.
+3. `/games/<handle>/players` in a real browser renders the listings.
 4. `/api/games/<handle>` with a browser user agent returns JSON with the game's fields.
 
 ## Out of scope

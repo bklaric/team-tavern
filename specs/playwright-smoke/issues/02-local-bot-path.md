@@ -13,7 +13,7 @@ The bot handler rewrites to `rendertron:3000/render/{scheme}://{host}{uri}`. Loc
 
 ## Done when
 
-`curl -k -A Googlebot https://localhost:8443/games/valorant` returns HTML with listings in it.
+`curl -k -A Googlebot https://localhost:8443/games/valorant/players` returns HTML with listings in it.
 
 ## Comments
 
@@ -50,16 +50,13 @@ exclusion — and then on a cold test stack. The rendertron log shows
 the caddy log has no errors. The browser path and the port-80 redirect for
 `localhost` are unchanged.
 
-**The "Done when" above does not hold as literally written, and cannot.**
-`curl -k -A Googlebot https://localhost:8443/games/valorant` returns 200 and
+The "Done when" above named `/games/valorant`, which is the game landing page
+and has no listings on it to return. It now names `/games/valorant/players`,
+and so do the two listing checks in `spec.md` and issue 04. Both paths were
+measured and both go through rendertron: `/games/valorant` prerenders 200 and
 14143 bytes with the game-specific `<title>`, against 5.6 KB for the unrendered
-shell, so the prerender demonstrably runs — but that URL is the game landing
-page and has no listings on it to return. The listings are one level down:
-`https://localhost:8443/games/valorant/players` prerenders the seeded
-`ValorantTester` profile and "Showing 1 - 1 out of 1 players". Both paths were
-checked and both go through rendertron; the acceptance criterion was met at the
-second URL rather than the one it names. Recorded on issue 04, whose bot check
-and `spec.md`'s smoke check 2 name the same landing page.
+shell, and `/games/valorant/players` prerenders the seeded `ValorantTester`
+profile and "Showing 1 - 1 out of 1 players".
 
 One consequence for the smoke specs: rendertron injects a `<base href>` when
 the document has none, and `Client/Script/Meta.purs` builds canonical and
