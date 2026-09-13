@@ -47,8 +47,7 @@ addPlayer :: ∀ querier errors errors'. Querier querier =>
 addPlayer pool { email, nickname, hash } = do
     result <- pool # query queryString (email : nickname :| hash) # lmap \error ->
         case code error == unique_violation of
-        true | constraint error == Just "player_email_key"
-            || constraint error == Just "player_lower_email_key"
+        true | constraint error == Just "player_lower_email_key"
             -> Terror
                 (badRequest_ $ inj (Proxy :: _ "emailTaken") {})
                 ["Player email is taken: " <> show email, print error]

@@ -1,10 +1,12 @@
-module TeamTavern.Server.Infrastructure.FetchDiscordUser where
+module TeamTavern.Server.Infrastructure.FetchDiscordUser
+    (DiscordApiUrl(..), DiscordUserContent, fetchDiscordUser, verifiedEmail) where
 
 import Prelude
 
 import Async (Async, attempt, left)
 import Data.Bifunctor (lmap)
 import Data.Either (Either(..))
+import Data.Maybe (Maybe(..))
 import Foreign.Object as Object
 import Jarilo (internal__)
 import JavaScript.Error (message, name)
@@ -14,16 +16,27 @@ import TeamTavern.Server.Infrastructure.Error (Terror(..))
 import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
 import Yoga.JSON.Async (readJSON)
 
+-- | Where Discord's API lives, `https://discord.com/api` outside the test stack.
+newtype DiscordApiUrl = DiscordApiUrl String
+
+-- | Discord leaves out `email` and `verified` without the `email` scope, and
+-- | sends a null email for an account that has none.
 type DiscordUserContent =
     { id :: String
     , username :: String
     , discriminator :: String
+    , email :: Maybe String
+    , verified :: Maybe Boolean
     }
 
+verifiedEmail :: DiscordUserContent -> Maybe String
+verifiedEmail { email, verified: Just true } = email
+verifiedEmail _ = Nothing
+
 fetchDiscordUser :: forall responses.
-    String -> Async (InternalTerror_ responses) DiscordUserContent
-fetchDiscordUser accessToken = do
-    let userUrl = "https://discord.com/api/users/@me"
+    DiscordApiUrl -> String -> Async (InternalTerror_ responses) DiscordUserContent
+fetchDiscordUser (DiscordApiUrl apiUrl) accessToken = do
+    let userUrl = apiUrl <> "/users/@me"
     let options =
             { method: "GET"
             , headers: Object.singleton "Authorization" ("Bearer " <> accessToken)

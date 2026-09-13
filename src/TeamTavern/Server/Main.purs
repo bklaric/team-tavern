@@ -7,6 +7,7 @@ import Control.Monad.Except (ExceptT(..), runExceptT)
 import Control.Monad.Maybe.Trans (lift)
 import Data.Either (either, note)
 import Data.Int (fromString)
+import Data.Maybe (fromMaybe)
 import Effect (Effect)
 import Effect.Console (log)
 import Jarilo.Serve (serve)
@@ -24,6 +25,7 @@ import TeamTavern.Server.Game.ViewAllGames (viewAllGames)
 import TeamTavern.Server.Game.ViewGame (viewGame)
 import TeamTavern.Server.Infrastructure.Deployment (Deployment)
 import TeamTavern.Server.Infrastructure.Deployment as Deployment
+import TeamTavern.Server.Infrastructure.FetchDiscordUser (DiscordApiUrl(..))
 import TeamTavern.Server.Infrastructure.Sendgrid (setApiKey)
 import TeamTavern.Server.Password.ForgotPassword (forgotPassword)
 import TeamTavern.Server.Password.ResetPassword (resetPassword)
@@ -93,10 +95,16 @@ loadDeployment =
     <#> note "Couldn't read variable DEPLOYMENT."
     # ExceptT
 
-runServer :: Deployment -> Pool -> Effect Unit
-runServer deployment pool = serve (Proxy :: _ AllRoutes) listenOptions
+loadDiscordApiUrl :: Effect DiscordApiUrl
+loadDiscordApiUrl =
+    lookupEnv "DISCORD_API_URL"
+    <#> fromMaybe "https://discord.com/api"
+    <#> DiscordApiUrl
+
+runServer :: Deployment -> DiscordApiUrl -> Pool -> Effect Unit
+runServer deployment discordApiUrl pool = serve (Proxy :: _ AllRoutes) listenOptions
     { startSession: \{ cookies, body } ->
-        Session.start deployment pool cookies body
+        Session.start deployment discordApiUrl pool cookies body
     , endSession: const
         Session.end
     , forgotPassword: \{ cookies, body } ->
@@ -110,7 +118,7 @@ runServer deployment pool = serve (Proxy :: _ AllRoutes) listenOptions
     , viewPlayer: \{ path: { nickname } , query: { timezone }, cookies, headers } ->
         Player.view pool cookies { nickname, timezone } headers
     , registerPlayer: \{ cookies, body } ->
-        Player.register deployment pool cookies body
+        Player.register deployment discordApiUrl pool cookies body
     , updatePlayer: \{ path, cookies, body } ->
         Player.updatePlayer pool path.nickname cookies body
     , deletePlayer: \{ path, cookies } ->
@@ -154,7 +162,7 @@ runServer deployment pool = serve (Proxy :: _ AllRoutes) listenOptions
     , onboard: \{ cookies, body } ->
         Onboard.onboard pool cookies body
     , preboard: \{ cookies, body } ->
-        Preboard.preboard deployment pool cookies body
+        Preboard.preboard deployment discordApiUrl pool cookies body
     , createAlert: \{ body } ->
         Alert.createAlert pool body
     , deleteAlert: \{ path: { id }, query: { token } } ->
@@ -164,6 +172,7 @@ runServer deployment pool = serve (Proxy :: _ AllRoutes) listenOptions
 main :: Effect Unit
 main = either log pure =<< runExceptT do
     deployment <- loadDeployment
+    discordApiUrl <- lift loadDiscordApiUrl
     pool <- createPostgresPool
     setSendGridApiKey
-    lift $ runServer deployment pool
+    lift $ runServer deployment discordApiUrl pool

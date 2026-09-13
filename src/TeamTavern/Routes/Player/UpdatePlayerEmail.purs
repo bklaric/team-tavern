@@ -1,5 +1,6 @@
 module TeamTavern.Routes.Player.UpdatePlayerEmail where
 
+import Data.Maybe (Maybe)
 import Data.Variant (Variant)
 import Jarilo (type (!), type (/), type (==>), BadRequestJson, Capture, Forbidden_, Literal, NoContent, NotAuthorized_, PutJson_, Internal_)
 
@@ -11,6 +12,7 @@ type UpdatePlayerEmail =
     RequestContent
     ==> NoContent ! BadRequestJson BadContent ! NotAuthorized_ ! Forbidden_ ! Internal_
 
-type RequestContent = {email :: String, password :: String}
+-- A Discord player has no password and sends none.
+type RequestContent = {email :: String, password :: Maybe String}
 
 type BadContent = Variant (email :: {}, emailTaken :: {}, wrongPassword :: {})

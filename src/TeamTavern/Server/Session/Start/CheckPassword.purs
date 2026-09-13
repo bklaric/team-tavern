@@ -29,8 +29,8 @@ queryString = Query """
         player.nickname,
         player.password_hash as hash
     from player
-    where lower(player.email) = lower($1)
-        or lower(player.nickname) = lower($1)
+    where player.password_hash is not null
+        and (lower(player.email) = lower($1) or lower(player.nickname) = lower($1))
     """
 
 checkPassword

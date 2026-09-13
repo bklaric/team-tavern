@@ -26,6 +26,7 @@ queryString = Query """
         select player.id, $2
         from player
         where lower(player.email) = lower($1)
+            and player.password_hash is not null
         returning player_id
     )
     select player.email, player.nickname

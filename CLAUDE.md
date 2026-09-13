@@ -19,7 +19,7 @@ test/             a stub; nothing runs it
 ```
 
 Generated, never edited, all git-ignored: `output/` (compiled PureScript),
-`dist-client/`, `dist-server/`, `.spago/`, and Playwright's `playwright-report/`
+`dist-client/`, `dist-server/`, `dist-test/`, `.spago/`, and Playwright's `playwright-report/`
 and `test-results/`.
 
 ## Environment
@@ -60,8 +60,8 @@ the `purs.cmd` shim, which Node refuses to spawn, and the build dies with
 `test-playwright/stack.setup.ts` takes the test stack down with `-v`, brings it
 back up and waits for `/api/games` to answer, and the specs in
 `test-playwright/integration/` then run against it. The stack serves
-`dist-client/` and `dist-server/` out of the repo, so `./build.sh` has to have
-run first; the setup says so rather than letting the wait time out.
+`dist-client/`, `dist-server/` and `dist-test/` out of the repo, so `./build.sh`
+has to have run first; the setup says so rather than letting the wait time out.
 
 Nothing typechecks the suite on the way to running it, since Playwright strips
 the types without reading them, so `npm run typecheck` is a separate step.
@@ -73,7 +73,9 @@ the affected page or endpoint behaves in the running stack.
 under hashed file names. `build-server.sh` bundles the server into
 `dist-server/server.js` with `bcrypt`, `pg` and `@sendgrid/mail` left
 external, and copies the root `package.json` beside it; the container installs
-that with `--omit=dev`, so the build toolchain never enters the image.
+that with `--omit=dev`, so the build toolchain never enters the image. It also
+bundles `DiscordStub/Main.purs` into `dist-test/discord-stub.js`, which only the
+test stack runs.
 
 ## Running the stack
 
@@ -139,12 +141,19 @@ without it compose refuses to start rather than binding arbitrary host ports.
 `npm test` runs both commands itself, so a test run takes this stack down and
 reseeds it from whatever state it was in.
 
+The test stack has no Discord. Its `discord` service runs
+`dist-test/discord-stub.js`, and `DISCORD_API_URL` in `test.env` points the
+server at it. The stub answers the user endpoint with whatever user the access
+token names, the URI-encoded JSON of that user, so a spec can sign up and sign in
+with Discord as anyone, verified email or not.
+
 `stacks/test-seed/seed.sh` builds the database on the first boot of the Postgres
 volume, which is why `down -v` rather than `down` is what resets it. It applies
 `TablesCurrent.sql`, then `Seed/`, then `stacks/test-seed/players.sql`. That
 last one gives every seeded game one player and one profile, so the listing
 pages have a row to assert on; the nickname is the handle title-cased with
-`Tester` after it, so `apex` gets `ApexTester`. `Seed/Games/` carries all eleven
+`Tester` after it, so `apex` gets `ApexTester`, the email is
+`apex@example.com`, and the password is `tester-password`. `Seed/Games/` carries all eleven
 production games, so every game handle the site serves has a page with content.
 A cold boot answers on the API within a few seconds.
 
@@ -217,7 +226,8 @@ an `index.html` fallback for SPA paths.
   matching branch where it can fire.
 - Configuration is environment variables read once in `Server/Main.purs`
   (`PG*`, `SENDGRID_API_KEY`, `DEPLOYMENT` = `local` | `cloud`), supplied by
-  `stacks/.env`.
+  `stacks/.env`. `DISCORD_API_URL` is optional and defaults to Discord's own
+  API; only `stacks/test.env` sets it.
 
 ## Client conventions
 
@@ -246,16 +256,23 @@ an `index.html` fallback for SPA paths.
 
 ## Database
 
-`Database/` is plain SQL. `TablesCurrent.sql` is the schema; `Seed/` holds the
-region rows and one file per game, each carrying that game's fields, field
-options and trackers. Only the test stack runs them, on every fresh boot.
+`Database/` is plain SQL. `TablesCurrent.sql` is the schema, and it is what the
+test stack builds from. `TablesBase.sql` is the schema production and the
+development database had before the scripts in `Migrations/`, so
+`TablesBase.sql` with those scripts applied in date order gives
+`TablesCurrent.sql`. `Seed/` holds the region rows and one file per game, each
+carrying that game's fields, field options and trackers. Only the test stack
+runs them, on every fresh boot.
 
-A schema change edits `TablesCurrent.sql` and is applied by hand to the
-`postgres` container of the development stack and to production. A change that
-also has to transform rows already out there needs a migration script beside it,
-deleted once it has run everywhere. A migration kept past that point rots: it
-addresses rows by ids only production has, so nothing can replay it and nothing
-catches it going stale.
+A schema change is a dated script in `Migrations/`, one transaction, and the
+same edit to `TablesCurrent.sql`. The script is applied by hand to the
+`postgres` container of the development stack and to production. Before it
+goes out, apply `TablesBase.sql` and the scripts to one scratch database and
+`TablesCurrent.sql` to another, and `pg_dump --schema-only` both: the dumps
+must not differ. Once a script has run everywhere, `TablesBase.sql` is replaced
+with `TablesCurrent.sql` and the script is deleted. A migration kept past that
+point rots: it may address rows by ids only production has, so nothing can
+replay it and nothing catches it going stale.
 
 `Seed/Games/` is the production game catalogue, so it is checked against the
 development database rather than written freehand.

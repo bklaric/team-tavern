@@ -33,6 +33,14 @@ services:
       - node_modules:/root/team-tavern/dist-server/node_modules
     depends_on:
       - postgres
+      - discord
+
+  # Answers the Discord API the node container calls, at DISCORD_API_URL in test.env.
+  discord:
+    image: node:24.21.0
+    command: node /root/dist-test/discord-stub.js
+    volumes:
+      - ../dist-test:/root/dist-test:ro
 
   rendertron:
     image: dockette/rendertron

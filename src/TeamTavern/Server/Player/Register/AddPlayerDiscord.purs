@@ -6,16 +6,17 @@ import Async (Async, note)
 import Data.Array (head)
 import Data.Bifunctor (lmap)
 import Data.Maybe (Maybe(..))
+import Data.Nullable (toNullable)
 import Data.Variant (inj)
 import Jarilo (badRequest_, internal__)
 import JavaScript.Node.Errors.Class (code)
 import JavaScript.Npm.Pg.Async (query)
 import JavaScript.Npm.Pg.Error (constraint)
 import JavaScript.Npm.Pg.Error.Codes (unique_violation)
-import JavaScript.Npm.Pg.Query (class Querier, Query(..), (:|))
+import JavaScript.Npm.Pg.Query (class Querier, Query(..), (:), (:|))
 import JavaScript.Npm.Pg.Result (rows)
 import TeamTavern.Server.Infrastructure.Error (Terror(..))
-import TeamTavern.Server.Infrastructure.FetchDiscordUser (DiscordUserContent)
+import TeamTavern.Server.Infrastructure.FetchDiscordUser (DiscordUserContent, verifiedEmail)
 import TeamTavern.Server.Infrastructure.Log (print)
 import TeamTavern.Server.Infrastructure.Postgres (databaseErrorLines)
 import TeamTavern.Server.Player.Domain.Nickname (Nickname)
@@ -24,15 +25,16 @@ import Yoga.JSON.Async (read)
 
 queryString :: Query
 queryString = Query """
-    insert into player (nickname, discord_id)
-    values ($1, $2)
+    insert into player (nickname, discord_id, email)
+    values ($1, $2, $3)
     returning id
     """
 
 addPlayerDiscord :: forall querier. Querier querier =>
     querier -> Nickname -> DiscordUserContent -> Async _ Int
-addPlayerDiscord querier nickname {id} = do
-    result <- querier # query queryString (nickname :| id)
+addPlayerDiscord querier nickname discordUser = do
+    result <- querier
+        # query queryString (nickname : discordUser.id :| toNullable (verifiedEmail discordUser))
         # lmap \error ->
             case code error == unique_violation of
             true | constraint error == Just "player_nickname_key"

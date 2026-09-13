@@ -180,7 +180,7 @@ handleAction SignInWithDiscord = do
         <> "?client_id=1068667687661740052"
         <> "&redirect_uri=https%3A%2F%2F" <> host' <> "%2Fsignin"
         <> "&response_type=token"
-        <> "&scope=identify"
+        <> "&scope=identify%20email"
         <> "&prompt=none"
 
 component :: ∀ query input output left.

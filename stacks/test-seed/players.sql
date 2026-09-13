@@ -1,6 +1,8 @@
 -- One player with one profile for every seeded game, so that every listing page
 -- has a row to assert on. Derived from the game table rather than written out
 -- per game, so a new file in Seed/Games gets a profile without an edit here.
+-- Every player needs a sign-in identity, so each signs in with the password
+-- `tester-password`, whose bcrypt hash this is.
 
 with tester as (
     select
@@ -12,8 +14,15 @@ with tester as (
     from game
 ),
 inserted as (
-    insert into player (email, nickname, languages, location, microphone)
-    select email, nickname, array['English'], 'Croatia', true from tester
+    insert into player (email, nickname, password_hash, languages, location, microphone)
+    select
+        email,
+        nickname,
+        '$2b$10$.ooPKTLO.JoL61KIvfsTKu2Nx1awadTkA9C1h/29.mIbi86dhHFwO',
+        array['English'],
+        'Croatia',
+        true
+    from tester
     returning id, nickname
 )
 insert into player_profile (player_id, game_id, platform, new_or_returning, about, ambitions)

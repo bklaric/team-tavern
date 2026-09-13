@@ -456,7 +456,7 @@ sendRequest state = Async.attempt do
                 <> "?client_id=1068667687661740052"
                 <> "&redirect_uri=https%3A%2F%2F" <> host' <> "%2Fpreboarding%2Fregister"
                 <> "&response_type=token"
-                <> "&scope=identify"
+                <> "&scope=identify%20email"
                 <> "&prompt=none"
             Async.left state
     (body :: Preboard.RequestContent) <-

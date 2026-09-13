@@ -157,7 +157,7 @@ sendRegisterRequest state = Async.unify do
                 <> "?client_id=1068667687661740052"
                 <> "&redirect_uri=https%3A%2F%2F" <> host' <> "%2Fregister"
                 <> "&response_type=token"
-                <> "&scope=identify"
+                <> "&scope=identify%20email"
                 <> "&prompt=none"
             Async.left $ Just state
     response' <- fetchBody (Proxy :: _ RegisterPlayer) body

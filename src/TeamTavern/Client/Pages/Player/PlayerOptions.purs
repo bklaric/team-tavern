@@ -41,7 +41,7 @@ component = Hooks.component $ \_ {email, hasPassword, nickname} -> Hooks.do
             []
         ]
         <> guard changeEmailModalShown
-            [ changeEmail {email, nickname}
+            [ changeEmail {email, hasPassword: hasPassword == Just true, nickname}
                 (const $ Hooks.put changeEmailModalShownId false)
             ]
         <> guard changePasswordModalShown
@@ -55,16 +55,19 @@ component = Hooks.component $ \_ {email, hasPassword, nickname} -> Hooks.do
             ])
             deleteModalShown
         )
+        -- The API sends hasPassword only to the player themselves.
         (case hasPassword of
-            Just true ->
+            Just hasPassword' ->
                 [ popoverItem
                     (const $ Hooks.put changeEmailModalShownId true)
                     [ HH.text "Change email" ]
-                , popoverItem
+                ]
+                <> guard hasPassword'
+                [ popoverItem
                     (const $ Hooks.put changePasswordModalShownId true)
                     [ HH.text "Change password" ]
                 ]
-            _ -> []
+            Nothing -> []
         <>
         [ popoverItem
             (const $ Hooks.put deleteModalShownId $ Just nickname)

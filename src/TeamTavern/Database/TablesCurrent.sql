@@ -1,6 +1,6 @@
 create table player
     ( id serial not null primary key
-    , email varchar(254) unique
+    , email varchar(254)
     , nickname varchar(40) not null unique
 
     -- Oauth
@@ -30,9 +30,13 @@ create table player
 
     , password_hash character(60)
     , registered timestamptz not null default current_timestamp
+
+    -- The sign-in identity: a password or a Discord account, exactly one.
+    , constraint player_identity_check check (num_nonnulls(password_hash, discord_id) = 1)
     );
 
-create unique index player_lower_email_key on player (lower(email));
+-- A password player may sign in with the email, so it is unique among those only.
+create unique index player_lower_email_key on player (lower(email)) where password_hash is not null;
 create unique index player_lower_nickname_key on player (lower(nickname));
 
 create table team

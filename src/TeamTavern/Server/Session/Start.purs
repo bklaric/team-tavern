@@ -11,7 +11,7 @@ import TeamTavern.Routes.Session.StartSession as StartSession
 import TeamTavern.Server.Infrastructure.Cookie (Cookies, setCookieHeaderFull)
 import TeamTavern.Server.Infrastructure.Deployment (Deployment)
 import TeamTavern.Server.Infrastructure.EnsureNotSignedIn (ensureNotSignedIn)
-import TeamTavern.Server.Infrastructure.FetchDiscordUser (fetchDiscordUser)
+import TeamTavern.Server.Infrastructure.FetchDiscordUser (DiscordApiUrl, fetchDiscordUser)
 import TeamTavern.Server.Infrastructure.Postgres (transaction)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Session.Domain.Token as Token
@@ -20,8 +20,8 @@ import TeamTavern.Server.Session.Start.CheckPassword (checkPassword)
 import TeamTavern.Server.Session.Start.CreateSession (createSession)
 
 start :: ∀ left.
-    Deployment -> Pool -> Cookies -> StartSession.RequestContent -> Async left _
-start deployment pool cookies body =
+    Deployment -> DiscordApiUrl -> Pool -> Cookies -> StartSession.RequestContent -> Async left _
+start deployment discordApiUrl pool cookies body =
     sendResponse "Error starting session" do
     -- Ensure player isn't signed in.
     ensureNotSignedIn cookies
@@ -36,8 +36,8 @@ start deployment pool cookies body =
                 checkPassword bodyEmail client
             , discord: \{accessToken} -> do
                 -- Fetch user from Discord API.
-                discordUser <- fetchDiscordUser accessToken
-                -- Check if he already has an account.
+                discordUser <- fetchDiscordUser discordApiUrl accessToken
+                -- Check if they already have an account, filling in a missing contact email.
                 checkDiscord client discordUser
             }
 

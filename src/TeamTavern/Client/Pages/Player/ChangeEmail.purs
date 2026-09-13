@@ -5,7 +5,8 @@ import Prelude
 import Async (Async, attempt)
 import Control.Monad.Trans.Class (lift)
 import Data.Either (Either(..))
-import Data.Maybe (Maybe, maybe)
+import Data.Maybe (Maybe(..), maybe)
+import Data.Monoid (guard)
 import Data.Tuple.Nested ((/\))
 import Data.Variant (match, onMatch)
 import Effect.Class (liftEffect)
@@ -25,10 +26,11 @@ import TeamTavern.Routes.Player.UpdatePlayerEmail (UpdatePlayerEmail)
 import Type.Proxy (Proxy(..))
 import Web.Event.Event (preventDefault)
 
-type Input = {email :: Maybe String, nickname :: String}
+-- A Discord player has no password, so is not asked for one.
+type Input = {email :: Maybe String, hasPassword :: Boolean, nickname :: String}
 
 component :: ∀ query output left. H.Component query Input output (Async left)
-component = Hooks.component \_ input @ {nickname} -> Hooks.do
+component = Hooks.component \_ input @ {hasPassword, nickname} -> Hooks.do
     email /\ emailId <- Hooks.useState $ maybe "" identity input.email
     emailError /\ emailErrorId <- Hooks.useState false
     emailTaken /\ emailTakenId <- Hooks.useState false
@@ -45,7 +47,7 @@ component = Hooks.component \_ input @ {nickname} -> Hooks.do
             Hooks.put submittingId true
             response <- lift $ attempt $
                 fetchPathBody (Proxy :: _ UpdatePlayerEmail)
-                {nickname} {email, password}
+                {nickname} {email, password: if hasPassword then Just password else Nothing}
             Hooks.put submittingId false
             case response of
                 Left _ -> Hooks.put otherErrorId true
@@ -68,15 +70,17 @@ component = Hooks.component \_ input @ {nickname} -> Hooks.do
             ]
             <> InputError.emailError emailError
             <> InputError.emailTaken emailTaken
-        , inputGroup $
-            [ inputLabel_ "Password"
-            , passwordInput_ password (Hooks.put passwordId)
-            ]
-            <> InputError.passwordWrong wrongPassword
-        , HH.p [ HS.class_ "boarding-description" ]
-            [ HH.text $ "Enter your password to confirm changing your email." ]
-        , submitButton "fas fa-edit" "Change email" "Changing email..." submitting
         ]
+        <> guard hasPassword
+            [ inputGroup $
+                [ inputLabel_ "Password"
+                , passwordInput_ password (Hooks.put passwordId)
+                ]
+                <> InputError.passwordWrong wrongPassword
+            , HH.p [ HS.class_ "boarding-description" ]
+                [ HH.text $ "Enter your password to confirm changing your email." ]
+            ]
+        <> [ submitButton "fas fa-edit" "Change email" "Changing email..." submitting ]
         <> otherFormError otherError
 
 changeEmail

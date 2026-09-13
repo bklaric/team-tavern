@@ -19,17 +19,30 @@ import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.EnsureSignedInAs (ensureSignedInAs)
 import TeamTavern.Server.Infrastructure.Error (Terror(..), lmapElaborate)
 import TeamTavern.Server.Infrastructure.Log (print)
-import TeamTavern.Server.Infrastructure.Postgres (databaseErrorLines, queryFirst, transaction)
+import TeamTavern.Server.Infrastructure.Postgres (databaseErrorLines, queryFirst, queryFirstInternal, transaction)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Infrastructure.ValidateEmail (Email, validateEmail')
 import TeamTavern.Server.Player.Domain.Id (Id)
 import Type.Proxy (Proxy(..))
+
+comparePassword :: String -> Maybe String -> String -> Async _ Unit
+comparePassword nickname password hash = do
+    let wrongPassword = badRequest_ $ inj (Proxy :: _ "wrongPassword") {}
+    case password of
+        Nothing -> left $ Terror wrongPassword
+            ["No password entered for user: " <> nickname]
+        Just password' -> do
+            matches <- Bcrypt.compare password' hash # lmap \error ->
+                Terror internal__ ["Bcrypt error while checking hash: " <> print error]
+            when (not matches) $ left $ Terror wrongPassword
+                ["Wrong password entered for user: " <> nickname]
 
 passwordQueryString :: Query
 passwordQueryString = Query """
     select player.password_hash as hash
     from player
     where lower(player.nickname) = lower($1)
+        and player.password_hash is not null
     """
 
 checkPassword :: ∀ querier. Querier querier =>
@@ -40,13 +53,26 @@ checkPassword nickname password querier = do
     -- Load player hash.
     {hash} :: {hash :: String} <-
         queryFirst wrongPassword querier passwordQueryString (nickname : [])
-        # lmapElaborate ("Can't find player: " <> nickname)
+        # lmapElaborate ("Can't find player with a password: " <> nickname)
 
-    -- Compare hash with password.
-    matches <- Bcrypt.compare password hash # lmap \error ->
-        Terror internal__ ["Bcrypt error while checking hash: " <> print error]
-    when (not matches) $ left $ Terror wrongPassword
-        ["Wrong password entered for user: " <> nickname]
+    comparePassword nickname (Just password) hash
+
+identityQueryString :: Query
+identityQueryString = Query """
+    select player.password_hash as hash
+    from player
+    where player.id = $1
+    """
+
+-- | A player with a password confirms the change with it. A Discord player has
+-- | none to give, and being signed in is all that is asked.
+checkIdentity :: ∀ querier. Querier querier =>
+    Id -> String -> Maybe String -> querier -> Async _ Unit
+checkIdentity id nickname password querier = do
+    {hash} :: {hash :: Maybe String} <- queryFirstInternal querier identityQueryString (id : [])
+    case hash of
+        Nothing -> pure unit
+        Just hash' -> comparePassword nickname password hash'
 
 emailQueryString :: Query
 emailQueryString = Query """
@@ -60,8 +86,7 @@ updateEmail :: forall querier. Querier querier =>
 updateEmail id email querier = do
     querier # execute emailQueryString (id :| email) # lmap \error ->
         case code error == unique_violation of
-        true | constraint error == Just "player_email_key"
-            || constraint error == Just "player_lower_email_key"
+        true | constraint error == Just "player_lower_email_key"
             -> Terror
                 (badRequest_ $ inj (Proxy :: _ "emailTaken") {})
                 ["Player email is taken: " <> show email, print error]
@@ -78,8 +103,8 @@ updatePlayerEmail pool nickname cookies body =
     email <- validateEmail' body.email
 
     pool # transaction \client -> do
-        -- Make sure the password is correct.
-        checkPassword nickname body.password client
+        -- Make sure the password is correct, if the player has one.
+        checkIdentity id nickname body.password client
 
         -- Update email.
         updateEmail id email client

@@ -10,7 +10,7 @@ import TeamTavern.Routes.Player.RegisterPlayer as RegisterPlayer
 import TeamTavern.Server.Infrastructure.Cookie (Cookies, setCookieHeaderFull)
 import TeamTavern.Server.Infrastructure.Deployment (Deployment)
 import TeamTavern.Server.Infrastructure.EnsureNotSignedIn (ensureNotSignedIn)
-import TeamTavern.Server.Infrastructure.FetchDiscordUser (fetchDiscordUser)
+import TeamTavern.Server.Infrastructure.FetchDiscordUser (DiscordApiUrl, fetchDiscordUser)
 import TeamTavern.Server.Infrastructure.Postgres (transaction)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Player.Domain.Hash (generateHash)
@@ -21,8 +21,9 @@ import TeamTavern.Server.Player.Register.ValidateRegistration (validateRegistrat
 import TeamTavern.Server.Session.Domain.Token as Token
 import TeamTavern.Server.Session.Start.CreateSession (createSession)
 
-register :: ∀ left. Deployment -> Pool -> Cookies -> RegisterPlayer.RequestContent -> Async left _
-register deployment pool cookies content =
+register :: ∀ left.
+    Deployment -> DiscordApiUrl -> Pool -> Cookies -> RegisterPlayer.RequestContent -> Async left _
+register deployment discordApiUrl pool cookies content =
     sendResponse "Error registering player" do
     -- Ensure not signed in.
     ensureNotSignedIn cookies
@@ -48,7 +49,7 @@ register deployment pool cookies content =
                 pure {id, nickname}
 
         , discord: \{nickname, accessToken} -> do
-            discordUser <- fetchDiscordUser accessToken
+            discordUser <- fetchDiscordUser discordApiUrl accessToken
             pool # transaction \client -> do
                 id <- addPlayerDiscord client nickname discordUser
                 createSession id token client

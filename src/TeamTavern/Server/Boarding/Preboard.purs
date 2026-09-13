@@ -21,7 +21,7 @@ import TeamTavern.Server.Infrastructure.Cookie (Cookies, setCookieHeaderFull)
 import TeamTavern.Server.Infrastructure.Deployment (Deployment)
 import TeamTavern.Server.Infrastructure.EnsureNotSignedIn (ensureNotSignedIn)
 import TeamTavern.Server.Infrastructure.Error (Terror(..))
-import TeamTavern.Server.Infrastructure.FetchDiscordUser (fetchDiscordUser)
+import TeamTavern.Server.Infrastructure.FetchDiscordUser (DiscordApiUrl, fetchDiscordUser)
 import TeamTavern.Server.Infrastructure.Postgres (transaction)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Player.Domain.Hash (generateHash)
@@ -50,8 +50,9 @@ import TeamTavern.Server.Team.Infrastructure.ValidateTeam (validateTeamV)
 import TeamTavern.Server.Team.Infrastructure.WriteContacts as TeamIdunno
 import Type.Proxy (Proxy(..))
 
-preboard :: ∀ left. Deployment -> Pool -> Cookies -> Preboard.RequestContent -> Async left _
-preboard deployment pool cookies content =
+preboard :: ∀ left.
+    Deployment -> DiscordApiUrl -> Pool -> Cookies -> Preboard.RequestContent -> Async left _
+preboard deployment discordApiUrl pool cookies content =
     sendResponse "Error preboarding" do
 
     -- Ensure the player is not signed in.
@@ -103,7 +104,7 @@ preboard deployment pool cookies content =
 
                     pure {id, nickname}
                 , discord: \{nickname, accessToken} -> do
-                    discordUser <- fetchDiscordUser accessToken
+                    discordUser <- fetchDiscordUser discordApiUrl accessToken
                     id <- addPlayerDiscord client nickname discordUser
                         # lmap (map (over { badRequest: \(AppResponse headers body) -> AppResponse headers (Nea.singleton body) }))
                     pure {id, nickname}
@@ -172,7 +173,7 @@ preboard deployment pool cookies content =
 
                     pure {id, nickname}
                 , discord: \{nickname, accessToken} -> do
-                    discordUser <- fetchDiscordUser accessToken
+                    discordUser <- fetchDiscordUser discordApiUrl accessToken
                     id <- addPlayerDiscord client nickname discordUser
                         # lmap (map (over { badRequest: \(AppResponse headers body) -> AppResponse headers (Nea.singleton body) }))
                     pure {id, nickname}
