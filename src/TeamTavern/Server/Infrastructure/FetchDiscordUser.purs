@@ -7,13 +7,15 @@ import Async (Async, attempt, left)
 import Data.Bifunctor (lmap)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
+import Data.Validated as Validated
 import Foreign.Object as Object
 import Jarilo (internal__)
 import JavaScript.Error (message, name)
 import JavaScript.Web.Fetch.Async (fetch, text)
 import JavaScript.Web.Fetch.Response (status)
-import TeamTavern.Server.Infrastructure.Error (Terror(..))
+import TeamTavern.Server.Infrastructure.Error (Terror(..), ValidatedTerrorNeaVar)
 import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
+import TeamTavern.Server.Infrastructure.ValidateEmail (Email, toString, validateEmail)
 import Yoga.JSON.Async (readJSON)
 
 -- | Where Discord's API lives, `https://discord.com/api` outside the test stack.
@@ -29,8 +31,13 @@ type DiscordUserContent =
     , verified :: Maybe Boolean
     }
 
+-- | Discord vouches for owning the address, not for its shape, so it passes the
+-- | same validation as an address a player types in.
 verifiedEmail :: DiscordUserContent -> Maybe String
-verifiedEmail { email, verified: Just true } = email
+verifiedEmail { email: Just email, verified: Just true } =
+    (validateEmail email :: ValidatedTerrorNeaVar (email :: {}) Email)
+    # Validated.hush
+    <#> toString
 verifiedEmail _ = Nothing
 
 fetchDiscordUser :: forall responses.

@@ -1,7 +1,6 @@
 # Renewal email
 
 Status: ready-for-agent
-Blocked by: 04
 
 One email per player when their profiles pass 30 days without an update, each profile with a one-click renew link.
 

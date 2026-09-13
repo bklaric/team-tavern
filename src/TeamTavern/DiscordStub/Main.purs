@@ -16,17 +16,10 @@ import JavaScript.Node.Http.Server (createServer_C')
 import JavaScript.Node.Http.ServerResponse (ServerResponse, writeHead_)
 import JavaScript.Node.Net.Server (listen_)
 import JavaScript.Node.Stream.Writable (end__, endString__)
+import TeamTavern.Server.Infrastructure.FetchDiscordUser (DiscordUserContent)
 import Yoga.JSON (readJSON_, writeJSON)
 
-type DiscordUser =
-    { id :: String
-    , username :: String
-    , discriminator :: String
-    , email :: Maybe String
-    , verified :: Maybe Boolean
-    }
-
-readUser :: IncomingMessage -> Maybe DiscordUser
+readUser :: IncomingMessage -> Maybe DiscordUserContent
 readUser request =
     header "authorization" request
     >>= stripPrefix (Pattern "Bearer ")

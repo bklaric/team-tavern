@@ -26,8 +26,9 @@ and `test-results/`.
 
 - **Node and npm** are pinned by Volta in `package.json`; with Volta installed
   the right versions are picked up automatically. The `node` service in
-  both compose files under `stacks/` pins the same Node version for the
-  container, and nothing enforces agreement, so change all three together.
+  both compose files under `stacks/`, and the test stack's `discord` service,
+  pin the same Node version for their containers, and nothing enforces
+  agreement, so change all four together.
 - **purs, spago, sass, esbuild and Playwright** come from `devDependencies`, so
   setup is `npm install` plus, for the browser Playwright drives,
   `./node_modules/.bin/playwright install chromium`, which downloads Chromium

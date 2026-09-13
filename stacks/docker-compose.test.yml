@@ -37,6 +37,7 @@ services:
 
   # Answers the Discord API the node container calls, at DISCORD_API_URL in test.env.
   discord:
+    # Keep in step with the Volta pin in package.json.
     image: node:24.21.0
     command: node /root/dist-test/discord-stub.js
     volumes:

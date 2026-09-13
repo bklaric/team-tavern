@@ -1,7 +1,7 @@
 # Cutover
 
 Status: ready-for-human
-Blocked by: 04, 05, 07, 08
+Blocked by: 05, 07, 08
 
 One deploy that applies the schema statements and switches the bot path. Only the site owner has the server.
 

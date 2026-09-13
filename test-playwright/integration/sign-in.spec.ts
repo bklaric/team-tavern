@@ -12,8 +12,6 @@ function unique(prefix: string): string {
 
 const password = "tester-password";
 
-// The route bodies are PureScript Variants, which Yoga.JSON encodes as an object with the
-// one case as its key, and so are the bad request bodies that come back.
 type DiscordUser = { id: string, email?: string | null, verified?: boolean | null };
 
 // `Server/Infrastructure/FetchDiscordUser.purs` calls the discord service in the test
@@ -44,6 +42,8 @@ test.afterEach(async () => {
     await Promise.all(contexts.map(context => context.dispose()));
 });
 
+// The registration and session bodies are PureScript Variants, which Yoga.JSON encodes as
+// an object with the one case as its key, and so are the bad request bodies that come back.
 async function registerWithPassword(email: string, nickname = unique("P")) {
     const context = await newPlayer();
     const response = await context.post("/api/players", {
@@ -110,6 +110,20 @@ test("a Discord sign-up with an unverified email gets no contact email", async (
     const { context, nickname } = await registerWithDiscord(discordUser(`${unique("unverified")}@example.com`, false));
 
     expect(await contactEmail(context, nickname)).toBeNull();
+});
+
+// Discord vouches for the address, not its shape, and the column holds 254 characters.
+test("a Discord player whose verified email is not a usable address still signs up and in", async () => {
+    const tooLong = `${"a".repeat(250)}@example.com`;
+    for (const email of ["", tooLong]) {
+        const user = discordUser(email, true);
+        const { context, nickname } = await registerWithDiscord(user);
+        expect(await contactEmail(context, nickname)).toBeNull();
+
+        const signInContext = await newPlayer();
+        expect((await signInWithDiscord(signInContext, user)).status()).toBe(204);
+        expect(await contactEmail(signInContext, nickname)).toBeNull();
+    }
 });
 
 test("a Discord player without a contact email gets the verified one on the next sign-in", async () => {
