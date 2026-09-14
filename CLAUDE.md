@@ -64,6 +64,11 @@ back up and waits for `/api/games` to answer, and the specs in
 `dist-client/`, `dist-server/` and `dist-test/` out of the repo, so `./build.sh`
 has to have run first; the setup says so rather than letting the wait time out.
 
+A spec drives the site through the browser, as a player would: it sets up what it
+needs through the pages and asserts on what they show, never by calling the API
+or the database. What the API answers can be right while the page shows the wrong
+thing, and only the page is what players see.
+
 Nothing typechecks the suite on the way to running it, since Playwright strips
 the types without reading them, so `npm run typecheck` is a separate step.
 
@@ -146,7 +151,20 @@ The test stack has no Discord. Its `discord` service runs
 `dist-test/discord-stub.js`, and `DISCORD_API_URL` in `test.env` points the
 server at it. The stub answers the user endpoint with whatever user the access
 token names, the URI-encoded JSON of that user, so a spec can sign up and sign in
-with Discord as anyone, verified email or not.
+with Discord as anyone, verified email or not. The browser half of the flow never
+reaches Discord either: `test-playwright/integration/sign-in.spec.ts` answers the
+pages' redirect to Discord's authorize URL itself, sending the browser straight
+back with such a token, and checks the scope and redirect URI the page asked for.
+
+What no test reaches is Discord itself: the redirect URIs registered on the
+Discord app and the real user endpoint. Before a deploy that touches sign-in,
+check them by hand against the development stack, whose `https://localhost`
+pages are registered redirect URIs, with a real Discord account:
+
+1. Create an account with Discord at <https://localhost/register>. It lands on
+   onboarding, and Change email on the account page shows the Discord address.
+2. Sign out, sign in with Discord at <https://localhost/signin>, and land signed in.
+3. `docker logs node` shows no Discord errors for either.
 
 `stacks/test-seed/seed.sh` builds the database on the first boot of the Postgres
 volume, which is why `down -v` rather than `down` is what resets it. It applies
