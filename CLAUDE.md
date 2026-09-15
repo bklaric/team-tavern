@@ -194,9 +194,21 @@ None of it is a bug to fix:
 
 ## Dependencies
 
-`spago.yaml` pins the package set (`registry: 77.10.0`) and one extra package:
-`bklaric`, resolved from the sibling checkout at `../purescript-bklaric`. That
-library supplies `Async`, `AsyncV`, `Jarilo`, `Data.Validated`, `Bcrypt`,
+`spago.yaml` pins the package set (`registry: 77.10.0`) and three extra
+packages, each resolved from a sibling checkout next to the repo:
+
+| Package          | Checkout                        | Branch                 |
+| ---------------- | ------------------------------- | ---------------------- |
+| `bklaric`        | `../purescript-bklaric`         | `main`                 |
+| `untagged-union` | `../purescript-untagged-union`  | `recursive-castable`   |
+| `yoga-json`      | `../purescript-yoga-json`       | `fix-variant-decoding` |
+
+The last two are forks that `bklaric` builds against. A path package's own
+workspace does not carry over, so team-tavern names them itself. The build
+compiles whatever branch each checkout has out, so a checkout on another
+branch builds against different code.
+
+`bklaric` supplies `Async`, `AsyncV`, `Jarilo`, `Data.Validated`, `Bcrypt`,
 `Log` and every `JavaScript.*` FFI module (`JavaScript.Npm.Pg`,
 `JavaScript.Web.Fetch`, `JavaScript.Node.*`, ...). A missing or stale sibling
 checkout is the first thing to suspect when an import from those namespaces
