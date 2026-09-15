@@ -721,6 +721,12 @@
     "extra_packages": {
       "bklaric": {
         "path": "../purescript-bklaric"
+      },
+      "untagged-union": {
+        "path": "../purescript-untagged-union"
+      },
+      "yoga-json": {
+        "path": "../purescript-yoga-json"
       }
     }
   },
@@ -834,6 +840,7 @@
         "unicode",
         "unsafe-coerce",
         "unsafe-reference",
+        "untagged-union",
         "uri",
         "variant",
         "web-dom",
@@ -2019,6 +2026,21 @@
         "prelude"
       ]
     },
+    "untagged-union": {
+      "type": "local",
+      "path": "../purescript-untagged-union",
+      "dependencies": [
+        "either",
+        "foreign",
+        "foreign-object",
+        "literals",
+        "maybe",
+        "newtype",
+        "prelude",
+        "tuples",
+        "unsafe-coerce"
+      ]
+    },
     "uri": {
       "type": "registry",
       "version": "9.0.0",
@@ -2212,9 +2234,8 @@
       ]
     },
     "yoga-json": {
-      "type": "registry",
-      "version": "5.2.1",
-      "integrity": "sha256-12I7qIf27oKV/D/YRcHtGpN8n7GQ0Bm3uzvI4ZjOQrs=",
+      "type": "local",
+      "path": "../purescript-yoga-json",
       "dependencies": [
         "arrays",
         "bifunctors",

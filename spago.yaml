@@ -63,5 +63,9 @@ workspace:
   extraPackages:
     bklaric:
       path: ../purescript-bklaric
+    untagged-union:
+      path: ../purescript-untagged-union
+    yoga-json:
+      path: ../purescript-yoga-json
   packageSet:
     registry: 77.10.0
