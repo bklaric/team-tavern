@@ -73,8 +73,16 @@
   <script>
     self.__VM = self.__VM || [];
     self.__VM.push(function (admanager, scope) {
+      // Google shows the interstitial on the first link click after it loads,
+      // so it is held back until the player has navigated once.
+      scope.Config.autoPlacements('interstitial').remove();
+      var interstitialAdded = false;
       scope.Instances.pageManager.on('navigated', () => {
         scope.Instances.pageManager.newPageSession(false);
+        if (!interstitialAdded) {
+          interstitialAdded = true;
+          scope.Config.get('interstitial').displayBody();
+        }
       }, false);
     });
   </script>
