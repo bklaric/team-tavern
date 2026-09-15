@@ -62,14 +62,13 @@
     }
 }
 
-// A segment of the bar rather than a floating button: full height, side
-// borders only, square corners.
+// A segment of the bar rather than a floating button: full height, no
+// borders, square corners.
 .top-bar-games {
     @extend .secondary-button;
     height: 40px;
     padding: 0 12px;
-    border-top: 0;
-    border-bottom: 0;
+    border: 0;
     border-radius: 0;
 }
 
