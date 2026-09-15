@@ -5,3 +5,10 @@
 # out of the repo whatever wrote the file.
 
 * text=auto eol=lf
+
+# Images and video are never text, whatever the heuristic makes of their bytes.
+*.webp binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.mp4 binary

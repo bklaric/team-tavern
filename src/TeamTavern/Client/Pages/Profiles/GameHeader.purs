@@ -10,10 +10,10 @@ data ProfileTab = Players | Teams
 
 data Tab = Profiles ProfileTab
 
-type Input = { title :: String, shortTitle :: String, tab :: Tab }
+type Input = { title :: String, description :: Array String, tab :: Tab }
 
 gameHeader :: ∀ slots action. Input -> Array (HH.HTML slots action)
-gameHeader { title, shortTitle, tab } =
+gameHeader { title, description, tab } =
     [ contentHeader
         [ contentHeaderSection
             [ contentHeading'
@@ -22,8 +22,5 @@ gameHeader { title, shortTitle, tab } =
                 Profiles Teams -> [ HH.i [ HS.class_ "fas fa-users content-heading-icon" ] [], HH.text $ title <> " teams / LFM / LFP" ]
             ]
         ]
-    , contentDescription
-        case tab of
-        Profiles Players -> "Find " <> shortTitle <> " players looking for a team. Create your own player profile and let everyone know you're looking to team up."
-        Profiles Teams -> "Find  " <> shortTitle <> " teams looking for players. Create your own team profile and recruit new members for your team."
     ]
+    <> (description <#> contentDescription)

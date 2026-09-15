@@ -1,0 +1,41 @@
+@use "../../Style/Base" as *;
+
+.home-games {
+    padding: 42px 21px;
+    // Keeps the heading clear of the fixed top bar on a direct /#games load.
+    scroll-margin-top: 41px;
+}
+
+.home-games-heading {
+    max-width: 1000px;
+    margin: 0 auto 28px;
+    font-size: 26px;
+    font-weight: 500;
+    line-height: 1.2;
+    text-align: center;
+}
+
+.home-games-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 21px;
+    max-width: 1000px;
+    margin: auto;
+}
+
+.home-game {
+    text-align: center;
+}
+
+.home-game-cover {
+    display: block;
+    margin-bottom: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.home-game-links {
+    font-size: 14px;
+    font-weight: 500;
+}

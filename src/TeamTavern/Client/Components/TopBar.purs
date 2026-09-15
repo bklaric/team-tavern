@@ -15,7 +15,7 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Halogen.Query.Event as ES
-import TeamTavern.Client.Components.Divider (divider)
+import TeamTavern.Client.Components.GameCover (gameCover)
 import TeamTavern.Client.Script.Cookie (getPlayerNickname)
 import TeamTavern.Client.Script.Navigate (navigateWithEvent_)
 import TeamTavern.Client.Script.Request (get)
@@ -82,71 +82,43 @@ render state = HH.div_ $
                         ]
                     , HH.span [ HS.class_ "top-bar-title-text" ] [ HH.text "TeamTavern" ]
                     ]
-                , HH.div [ HS.class_ "top-bar-game-selection" ]
-                    [ case state.selectedGame of
-                        Nothing ->
-                            HH.a
-                            [ HS.class_ "top-bar-games"
-                            , HP.href "/games"
-                            , HE.onClick $ Navigate "/games"
-                            ]
-                            [ HH.i [ HS.class_ "fas fa-gamepad top-bar-games-icon"] []
-                            , HH.text "Games"
-                            ]
-                        Just { handle, title, shortTitle } ->
-                            HH.a
-                            [ HS.class_ "top-bar-games"
-                            , HP.href $ "/games/" <> handle
-                            , HE.onClick $ Navigate ("/games/" <> handle)
-                            ]
-                            [ HH.img
-                                [ HS.class_ "top-bar-games-icon"
-                                , HP.src $ "/images/" <> handle <> "/icon-orange.png"
+                , HH.div [ HS.class_ "top-bar-game-selection" ] $
+                    [ HH.button
+                        [ HS.class_ "top-bar-games"
+                        , HP.title "Games"
+                        , HE.onClick ToggleGamesPopunder
+                        ] $
+                        [ HH.i [ HS.class_ "fas fa-gamepad top-bar-games-icon" ] [] ]
+                        <>
+                        ( case state.selectedGame of
+                            Nothing ->
+                                [ HH.text "Games" ]
+                            Just { title, shortTitle } ->
+                                [ HH.span [ HS.class_ "top-bar-games-title" ] [ HH.text title ]
+                                , HH.span [ HS.class_ "top-bar-games-short-title" ] [ HH.text shortTitle ]
                                 ]
-                            , HH.span [ HS.class_ "top-bar-games-title" ] [ HH.text title ]
-                            , HH.span [ HS.class_ "top-bar-games-short-title" ] [ HH.text shortTitle ]
-                            ]
-                    , HH.div [ HS.class_ "top-bar-games-popover-container" ] $
+                        )
+                        <>
                         [ HH.i
-                            [ HS.class_ "fas fa-caret-down top-bar-games-caret"
-                            , HE.onClick $ ToggleGamesPopunder
+                            [ HS.class_ $ "top-bar-games-caret fas fa-caret-"
+                                <> if state.gamesVisible then "up" else "down"
                             ]
                             []
                         ]
-                        <>
-                        ( guard state.gamesVisible $ Array.singleton $
-                            HH.div [ HS.class_ "top-bar-games-popover" ] $
-                            foldMap (_ <#> \{ handle, title } ->
-                                HH.div [ HS.class_ "top-bar-game" ]
-                                [ HH.a
-                                    [ HS.class_ "top-bar-game-link"
-                                    , HP.href $ "/games/" <> handle
-                                    , HE.onClick $ Navigate ("/games/" <> handle)
-                                    ]
-                                    [ HH.img
-                                        [ HS.class_ "top-bar-game-icon"
-                                        , HP.src $ "/images/" <> handle <> "/icon-orange.png"
-                                        ]
-                                    , HH.span [ HS.class_ "top-bar-game-title" ]
-                                        [ HH.text title ]
-                                    ]
-                                , HH.div_
-                                    [ HH.a
-                                        [ HP.href $ "/games/" <> handle <> "/players"
-                                        , HE.onClick $ Navigate ("/games/" <> handle <> "/players")
-                                        ]
-                                        [ HH.text "Players" ]
-                                    , divider
-                                    , HH.a
-                                        [ HP.href $ "/games/" <> handle <> "/teams"
-                                        , HE.onClick $ Navigate ("/games/" <> handle <> "/teams")
-                                        ]
-                                        [ HH.text "Teams" ]
-                                    ]
-                                ])
-                                state.games
-                        )
                     ]
+                    <>
+                    ( guard state.gamesVisible $ Array.singleton $
+                        HH.div [ HS.class_ "top-bar-games-popover" ] $
+                        foldMap (_ <#> \game @ { handle } ->
+                            let players = "/games/" <> handle <> "/players" in
+                            HH.a
+                            [ HS.class_ "top-bar-game"
+                            , HP.href players
+                            , HE.onClick $ Navigate players
+                            ]
+                            [ HH.div [ HS.class_ "top-bar-game-cover" ] [ gameCover game ] ])
+                            state.games
+                    )
                 ]
                 <>
                 foldMap (\{ handle } ->

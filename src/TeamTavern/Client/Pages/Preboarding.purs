@@ -637,7 +637,7 @@ handleAction Exit = do
     navigate_
         case game of
         Selected _ -> "/"
-        Preselected { handle } -> "/games/" <> handle
+        Preselected { handle } -> "/games/" <> handle <> "/players"
 handleAction (SetStep step) = do
     state <- H.get
     case step of

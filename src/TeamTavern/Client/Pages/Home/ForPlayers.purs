@@ -1,7 +1,5 @@
 module TeamTavern.Client.Pages.Home.ForPlayers where
 
-import Prelude
-
 import Data.Maybe (Maybe(..))
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Landing (landingSection, landingSectionButton, landingSectionDescription, landingSectionHeading, landingSectionImage, landingSectionSubheading, landingSectionText)
@@ -24,25 +22,6 @@ forPlayers onClick =
         , landingSectionDescription "Finish creating your account by choosing your nickname and password."
         , landingSectionSubheading "You're done!"
         , landingSectionDescription "Your account and your first player profile are created. You're ready to find your new teammates!"
-        , landingSectionButton "Create player profile" "/preboarding/start" onClick
-        ]
-    ]
-
-forPlayers' :: ∀ slots action. String -> String -> (MouseEvent -> action) -> HH.HTML slots action
-forPlayers' handle title onClick =
-    landingSection
-    [ landingSectionImage (Just title) $ "/images/" <> handle <> "/for-players"
-    , landingSectionText $
-        [ landingSectionHeading "fas fa-user" "LFG / LFT / Looking for a team?"
-        , landingSectionDescription "Let everyone know you're looking to team up in three easy steps:"
-        , landingSectionSubheading "1. Tell us about yourself"
-        , landingSectionDescription "Describe yourself to find like-minded gamers."
-        , landingSectionSubheading $ "2. Fill out your " <> title <> " profile"
-        , landingSectionDescription "Share your in-game stats, achievements and about to find equally skilled teammates."
-        , landingSectionSubheading "3. Create your account"
-        , landingSectionDescription "Finish creating your account by choosing your nickname and password."
-        , landingSectionSubheading "You're done!"
-        , landingSectionDescription $ "Your account and your " <> title <> " player profile are created. You're ready to find your new teammates!"
         , landingSectionButton "Create player profile" "/preboarding/start" onClick
         ]
     ]

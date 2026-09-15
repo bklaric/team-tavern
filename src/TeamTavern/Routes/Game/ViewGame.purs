@@ -13,6 +13,7 @@ type OkContent =
     { title :: String
     , shortTitle :: String
     , handle :: String
+    , description :: Array String
     , platforms :: Platforms
     , trackers :: Trackers
     , fields :: Fields

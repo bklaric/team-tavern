@@ -1,0 +1,8 @@
+@use "../Style/Base" as *;
+
+.game-cover {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 2 / 3;
+}

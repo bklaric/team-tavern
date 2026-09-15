@@ -8,9 +8,9 @@ import Data.Bifunctor (lmap)
 import Data.Maybe (Maybe(..), maybe)
 import Halogen as H
 import Halogen.HTML as HH
-import Halogen.HTML.Properties as HP
 import JavaScript.Web.Fetch.Async as Fetch
 import JavaScript.Web.Fetch.Async as FetchRes
+import TeamTavern.Client.Components.GameCover (gameCover)
 import TeamTavern.Client.Components.RadioCard (radioCard, radioCards)
 import TeamTavern.Client.Shared.Slot (Slot_O_)
 import TeamTavern.Routes.Game.ViewAllGames as ViewAllGames
@@ -37,15 +37,10 @@ render { games, selected } =
     [ radioCards $
         ( games <#> \game ->
             radioCard
-            ("/images/" <> game.handle <> "/tile")
+            (gameCover game)
             (maybe false (_.handle >>> (_ == game.handle)) selected)
             (SelectGame game)
-            [ HH.img
-                [ HP.class_ $ HH.ClassName "top-bar-game-icon"
-                , HP.src $ "/images/" <> game.handle <> "/icon-white.png"
-                ]
-            , HH.text game.title
-            ]
+            [ HH.text game.title ]
         )
     ]
 

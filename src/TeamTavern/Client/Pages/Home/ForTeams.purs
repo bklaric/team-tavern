@@ -1,7 +1,5 @@
 module Client.Pages.Home.ForTeams where
 
-import Prelude
-
 import Data.Maybe (Maybe(..))
 import Halogen.HTML as HH
 import TeamTavern.Client.Components.Landing (landingSection, landingSectionButton, landingSectionDescription, landingSectionHeading, landingSectionImage, landingSectionSubheading, landingSectionText)
@@ -11,7 +9,7 @@ forTeams :: ∀ slots action. (MouseEvent -> action) -> HH.HTML slots action
 forTeams onClick =
     landingSection
     [ landingSectionImage Nothing "/images/for-teams"
-    , landingSectionText $
+    , landingSectionText
         [ landingSectionHeading "fas fa-users" "LFM / LFP / Looking for players?"
         , landingSectionDescription "Recruit new members for your team and expand your online community in four easy steps:"
         , landingSectionSubheading "1. Tell us about your team"
@@ -24,25 +22,6 @@ forTeams onClick =
         , landingSectionDescription "Finish creating your account by choosing your nickname and password."
         , landingSectionSubheading "You're done!"
         , landingSectionDescription "Your account, your team and your first team profile are created. You're ready to recruit new team members!"
-        , landingSectionButton "Create team profile" "/preboarding/start" onClick
-        ]
-    ]
-
-forTeams' :: ∀ slots action. String -> String -> (MouseEvent -> action) -> HH.HTML slots action
-forTeams' handle title onClick =
-    landingSection
-    [ landingSectionImage (Just title) $ "/images/" <> handle <> "/for-teams"
-    , landingSectionText $
-        [ landingSectionHeading "fas fa-users" "LFM / LFP / Looking for players?"
-        , landingSectionDescription "Recruit new members for your team and expand your online community in three easy steps:"
-        , landingSectionSubheading "1. Tell us about your team"
-        , landingSectionDescription "Describe your team to find players that fit best into your team."
-        , landingSectionSubheading $ "2. Fill out your team's " <> title <> " profile"
-        , landingSectionDescription "Tell us about your team's about and what you're looking for in new team members."
-        , landingSectionSubheading "3. Create your account"
-        , landingSectionDescription "Finish creating your account by choosing your nickname and password."
-        , landingSectionSubheading "You're done!"
-        , landingSectionDescription $ "Your account, your team and your " <> title <> " team profile are created. You're ready to recruit new team members!"
         , landingSectionButton "Create team profile" "/preboarding/start" onClick
         ]
     ]

@@ -20,9 +20,7 @@ import TeamTavern.Client.Components.TopBar (topBar)
 import TeamTavern.Client.Pages.About (about)
 import TeamTavern.Client.Pages.DeleteAlert (deleteAlert)
 import TeamTavern.Client.Pages.ForgotPassword (forgotPassword)
-import TeamTavern.Client.Pages.Game (game)
 import TeamTavern.Client.Pages.GameTabs as GameTabs
-import TeamTavern.Client.Pages.Games (games)
 import TeamTavern.Client.Pages.Home (home)
 import TeamTavern.Client.Pages.Onboarding (onboarding)
 import TeamTavern.Client.Pages.Onboarding as Onboarding
@@ -60,10 +58,8 @@ data Action = Init Foreign String
 data State
     = Empty
     | Home
-    | Games
     | About
     | Privacy
-    | Game { handle :: String }
     | GameTabs GameTabs.Input
     | Player { nickname :: String }
     | PlayerProfile PlayerProfile.Input
@@ -100,10 +96,8 @@ topBarWithContent handle content' = HH.div_
 render :: ∀ action left. State -> H.ComponentHTML action _ (Async left)
 render Empty = HH.div_ []
 render Home = HH.div_ [ topBar Nothing, home, footer, horizontalSticky, mobileHorizontalSticky ]
-render Games = topBarWithContent Nothing $ games
 render About = topBarWithContent Nothing $ about
 render Privacy = topBarWithContent Nothing $ privacyPolicy
-render (Game input) = HH.div_ [ topBar $ Just input.handle, game input, footer, horizontalSticky, mobileHorizontalSticky ]
 render (GameTabs input) = topBarWithContent (Just input.handle) $ GameTabs.gameTabs input
 render (Player input) = topBarWithContent Nothing $ player input
 render (PlayerProfile input) = topBarWithContent Nothing $ playerProfile input
@@ -206,13 +200,6 @@ handleAction (Init state route) = do
                 _, _, _ -> navigateReplace_ "/" *> nothing
         ["", "teams", handle] ->
             just $ Team { handle }
-        ["", "games"] ->
-            just Games
-        ["", "games", handle] -> do
-            signedIn <- hasPlayerIdCookie
-            if signedIn
-                then (navigateReplace_ $ "/games/" <> handle <> "/players") *> nothing
-                else just $ Game { handle }
         ["", "games", handle, "players" ] ->
             just $ GameTabs { handle, tab: GameHeader.Profiles GameHeader.Players }
         ["", "games", handle, "teams" ] ->

@@ -36,9 +36,6 @@ landingSectionDescription :: ∀ slots action. String -> HH.HTML slots action
 landingSectionDescription description =
     HH.p [ HS.class_ "landing-section-description" ] [ HH.text description ]
 
-landingSectionButtons :: ∀ slots action. Array (HH.HTML slots action) -> HH.HTML slots action
-landingSectionButtons = HH.div [ HS.class_ "landing-section-buttons" ]
-
 landingSectionButton :: ∀ slots action.
     String -> String -> (MouseEvent -> action) -> HH.HTML slots action
 landingSectionButton text url onClick =

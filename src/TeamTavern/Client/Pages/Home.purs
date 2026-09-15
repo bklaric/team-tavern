@@ -15,9 +15,11 @@ import TeamTavern.Client.Pages.Home.Connect (connect)
 import TeamTavern.Client.Pages.Home.Features (features)
 import TeamTavern.Client.Pages.Home.FindProfiles (findProfiles)
 import TeamTavern.Client.Pages.Home.ForPlayers (forPlayers)
+import TeamTavern.Client.Pages.Home.Games (games)
 import TeamTavern.Client.Pages.Preboarding as Preboarding
 import TeamTavern.Client.Script.Meta (setMeta)
-import TeamTavern.Client.Script.Navigate (navigate, navigate_)
+import TeamTavern.Client.Script.Navigate (navigate)
+import TeamTavern.Client.Script.Scroll (scrollToId)
 import TeamTavern.Client.Shared.Slot (Slot___)
 import TeamTavern.Client.Snippets.PreventMouseDefault (preventMouseDefault)
 import Type.Proxy (Proxy(..))
@@ -28,23 +30,24 @@ data Action
     | OpenPreboarding MouseEvent
     | OpenPlayerPreboarding MouseEvent
     | OpenTeamPreboarding MouseEvent
-    | OpenGames MouseEvent
+    | ScrollToGames MouseEvent
 
 type State = Unit
 
 type ChildSlots = AdSlots
-    ( viewAllGames :: Slot___
+    ( games :: Slot___
     )
 
 render :: ∀ left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render _ =
     HH.div [ HP.class_ $ HH.ClassName "home" ] $
-    [ callToAction OpenGames OpenPreboarding
+    [ callToAction ScrollToGames OpenPreboarding
+    , games
     , forPlayers OpenPlayerPreboarding
     , billboard
     , mobileTakeover
     , forTeams OpenTeamPreboarding
-    , findProfiles OpenGames
+    , findProfiles ScrollToGames
     , leaderboard
     , mobileMpu
     , connect
@@ -67,9 +70,9 @@ handleAction (OpenPlayerPreboarding mouseEvent) = do
 handleAction (OpenTeamPreboarding mouseEvent) = do
     preventMouseDefault mouseEvent
     navigate (Preboarding.emptyInput (Just Boarding.Team) Nothing) "/preboarding/start"
-handleAction (OpenGames mouseEvent) = do
+handleAction (ScrollToGames mouseEvent) = do
     preventMouseDefault mouseEvent
-    navigate_ "/games"
+    scrollToId "games"
 
 component :: ∀ query input output left. H.Component query input output (Async left)
 component = H.mkComponent

@@ -11,7 +11,6 @@ import Halogen (lift)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
-import Halogen.HTML.Properties as HP
 import Halogen.Hooks as Hooks
 import TeamTavern.Client.Components.Popover (popover, popoverButtonCaret, popoverItem, togglePopover, usePopover)
 import TeamTavern.Client.Pages.Player.CreateProfile (createProfile)
@@ -67,10 +66,5 @@ createProfileButton = Hooks.component $ \_ player -> Hooks.do
                     Nothing -> pure unit
                     Just game'' -> Hooks.put modalShownId $ Just { player, game: game'' }
             )
-            [ HH.img
-                [ HS.class_ "game-card-logo"
-                , HP.src $ "/images/" <> game.handle <> "/icon-black.png"
-                ]
-            , HH.text game.title
-            ]
+            [ HH.text game.title ]
         )

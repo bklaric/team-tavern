@@ -310,6 +310,15 @@ replay it and nothing catches it going stale.
 `Seed/Games/` is the production game catalogue, so it is checked against the
 development database rather than written freehand.
 
+A game is its seed file plus one cover, a 600x900 WebP at
+`Client/Static/Images/Games/<handle>.webp`, served as `/images/games/<handle>.webp`.
+The cover is the only per-game asset: the header dropdown, the home page grid and
+the onboarding picker all show it, and nothing shows a game icon. Every seeded
+game must have one; nothing generates a stand-in, and `games.spec.ts` fails on a
+home page tile whose cover does not load at that size. Steam's
+`library_600x900_2x.jpg` is that shape for games on Steam; SteamGridDB carries
+the same shape for the rest.
+
 ## Code style
 
 - PureScript: 4-space indentation, `∀` for `forall`, explicit alphabetised

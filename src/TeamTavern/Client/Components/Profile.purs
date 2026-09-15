@@ -5,7 +5,6 @@ import Prelude
 import Data.Symbol (class IsSymbol)
 import Effect.Class (class MonadEffect)
 import Halogen.HTML as HH
-import Halogen.HTML.Properties as HP
 import Prim.Row (class Cons)
 import TeamTavern.Client.Components.NavigationAnchor (navigationAnchorIndexed)
 import TeamTavern.Client.Shared.Slot (Slot__I, Slot__String)
@@ -36,18 +35,7 @@ profileHeading'
 profileHeading' label handle path heading =
     HH.h3
     [ HS.class_ "profile-heading" ]
-    [ navigationAnchorIndexed label handle
-        { path
-        , content: HH.span_
-            [ HH.img
-                [ HS.class_ "profile-heading-icon"
-                , HP.src $ "/images/" <> handle <> "/icon-orange.png"
-                , HP.alt $ heading <> " logo"
-                ]
-            , HH.text heading
-            ]
-        }
-    ]
+    [ navigationAnchorIndexed label handle { path, content: HH.text heading } ]
 
 profileSubheading :: ∀ slots action. String -> HH.HTML slots action
 profileSubheading subheading = HH.span [ HS.class_ "profile-subheading" ] [ HH.text subheading ]

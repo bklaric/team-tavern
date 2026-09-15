@@ -30,7 +30,7 @@ type ChildSlots =
 render :: ∀ left. State -> H.ComponentHTML Action ChildSlots (Async left)
 render (Empty _) = HH.div_ []
 render (Loaded { game, tab }) = actualContent $
-    gameHeader { title: game.title, shortTitle: game.shortTitle, tab }
+    gameHeader { title: game.title, description: game.description, tab }
     <>
     [ case tab of
         Profiles Players -> profiles { game, tab: Players }
