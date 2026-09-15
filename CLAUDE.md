@@ -102,7 +102,7 @@ git tag, so the first `up` on a machine builds it, and that takes a while.
 | Compose file  | `stacks/docker-compose.yml` | `stacks/docker-compose.test.yml` |
 | Env file      | `stacks/.env`               | `stacks/test.env`                |
 | Project name  | default                     | `teamtavern-test`                |
-| Site          | <https://localhost>         | <https://localhost:8443>         |
+| Site          | <http://localhost:8000>     | <http://localhost:8080>          |
 | Database      | `team_tavern`               | `team_tavern_test`               |
 | Postgres data | host directory              | named volume, seeded on boot     |
 
@@ -122,8 +122,12 @@ containers and live next to the repo, not in it:
 On Windows these use the `/c/Users/...` form. `ENVIRONMENT` in the same file
 selects which `stacks/<name>.Caddyfile` Caddy loads.
 
-The site is served at <https://localhost> with a Caddy-issued self-signed
-certificate, so expect a browser warning, or `curl -k`.
+Both local stacks serve plain HTTP, on the host port `CADDY_HTTP_PORT` names:
+8000 in `stacks/.env`, 8080 in `stacks/test.env`. Production shares
+`docker-compose.yml`, leaves the variable unset and takes ports 80 and 443,
+where `production.Caddyfile` serves HTTPS. Session cookies drop `Secure` under
+`DEPLOYMENT=local`, and browsers treat `http://localhost` as a secure context,
+so nothing on the site needs HTTPS locally.
 
 `stacks/.env` is committed. The Postgres credentials in it are real, but the
 database is reachable only from inside the compose network, so they are
@@ -134,7 +138,7 @@ not in the repo.
 ### The test stack
 
 `stacks/test.env` is self-contained: its own database name, its own throwaway
-credentials and the two Caddy host ports. It names no host directory, so the
+credentials and the Caddy host port. It names no host directory, so the
 stack carries nothing between runs. Caddy loads `stacks/test.Caddyfile`, which
 the compose file mounts directly rather than selecting by `ENVIRONMENT`.
 
@@ -144,8 +148,8 @@ docker compose --env-file stacks/test.env -f stacks/docker-compose.test.yml down
 ```
 
 The compose file names the project itself, so `-p teamtavern-test` is already
-implied. `--env-file` is not: the port variables are declared required, so
-without it compose refuses to start rather than binding arbitrary host ports.
+implied. `--env-file` is not: the port variable is declared required, so
+without it compose refuses to start rather than binding an arbitrary host port.
 `npm test` runs both commands itself, so a test run takes this stack down and
 reseeds it from whatever state it was in.
 
@@ -160,12 +164,12 @@ back with such a token, and checks the scope and redirect URI the page asked for
 
 What no test reaches is Discord itself: the redirect URIs registered on the
 Discord app and the real user endpoint. Before a deploy that touches sign-in,
-check them by hand against the development stack, whose `https://localhost`
+check them by hand against the development stack, whose `http://localhost:8000`
 pages are registered redirect URIs, with a real Discord account:
 
-1. Create an account with Discord at <https://localhost/register>. It lands on
+1. Create an account with Discord at <http://localhost:8000/register>. It lands on
    onboarding, and Change email on the account page shows the Discord address.
-2. Sign out, sign in with Discord at <https://localhost/signin>, and land signed in.
+2. Sign out, sign in with Discord at <http://localhost:8000/signin>, and land signed in.
 3. `docker logs node` shows no Discord errors for either.
 
 `stacks/test-seed/seed.sh` builds the database on the first boot of the Postgres

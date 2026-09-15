@@ -26,8 +26,9 @@ import TeamTavern.Client.Components.RegistrationInputDiscord as RegistrationInpu
 import TeamTavern.Client.Pages.Onboarding as Onboarding
 import TeamTavern.Client.Pages.Preboarding (RegistrationMode(..))
 import TeamTavern.Client.Script.Analytics (aliasNickname, identifyNickname, track_)
+import TeamTavern.Client.Script.Discord (authorizeWithDiscord)
 import TeamTavern.Client.Script.Meta (setMeta)
-import TeamTavern.Client.Script.Navigate (hardNavigate, navigate, navigateWithEvent_)
+import TeamTavern.Client.Script.Navigate (navigate, navigateWithEvent_)
 import TeamTavern.Client.Script.QueryParams (getFragmentParam)
 import TeamTavern.Client.Shared.Fetch (fetchBody)
 import TeamTavern.Client.Shared.Slot (Slot___)
@@ -37,8 +38,7 @@ import Type.Proxy (Proxy(..))
 import Web.Event.Event (preventDefault)
 import Web.Event.Internal.Types (Event)
 import Web.HTML (window)
-import Web.HTML.Location (host)
-import Web.HTML.Window (localStorage, location)
+import Web.HTML.Window (localStorage)
 import Web.Storage.Storage (getItem, setItem)
 import Web.UIEvent.MouseEvent (MouseEvent)
 import Yoga.JSON (readJSON_, writeJSON)
@@ -152,13 +152,7 @@ sendRegisterRequest state = Async.unify do
             {nickname: state.registrationDiscord.nickname, accessToken}
         Discord, Nothing -> do
             window >>= localStorage >>= setItem "register" (writeJSON state) # liftEffect
-            host' <- window >>= location >>= host # liftEffect
-            hardNavigate $ "https://discord.com/api/oauth2/authorize"
-                <> "?client_id=1068667687661740052"
-                <> "&redirect_uri=https%3A%2F%2F" <> host' <> "%2Fregister"
-                <> "&response_type=token"
-                <> "&scope=identify%20email"
-                <> "&prompt=none"
+            authorizeWithDiscord "/register"
             Async.left $ Just state
     response' <- fetchBody (Proxy :: _ RegisterPlayer) body
         # lmap (const $ Just $ state { otherError = true })

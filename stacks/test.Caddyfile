@@ -1,7 +1,10 @@
+# Plain HTTP on Caddy's port 80, which docker-compose.test.yml publishes on the
+# host port CADDY_HTTP_PORT names. The host matcher ignores the port, so requests
+# to localhost:<that port> land here.
+#
 # The prerenderer resolves `localhost` to its own container, so the site also
-# answers to its compose service name over plain HTTP, and that name is the
-# render origin.
+# answers to its compose service name, and that name is the render origin.
 
-localhost, http://caddy {
+http://localhost, http://caddy {
     import base.Caddyfile http://caddy
 }

@@ -6,12 +6,8 @@ export default defineConfig({
     // Opening the report server on a failure would block the terminal the run came from.
     reporter: [["html", { open: "never" }]],
     use: {
-        // The test Caddy serves the site block `localhost` on a shifted HTTPS port under a
-        // certificate it issues itself, so verification has to be off. Its port 80 redirect
-        // drops the shifted port, which lands on the development stack, so talk to the
-        // HTTPS port directly rather than letting a redirect pick the target.
-        baseURL: "https://localhost:8443",
-        ignoreHTTPSErrors: true,
+        // CADDY_HTTP_PORT in stacks/test.env.
+        baseURL: "http://localhost:8080",
         trace: "on-first-retry",
     },
     projects: [

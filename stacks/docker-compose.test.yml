@@ -59,7 +59,6 @@ services:
     image: caddy:2.10.0
     ports:
       - "${CADDY_HTTP_PORT:?set in stacks/test.env; pass --env-file stacks/test.env}:80"
-      - "${CADDY_HTTPS_PORT:?set in stacks/test.env; pass --env-file stacks/test.env}:443"
     volumes:
       - ./base.Caddyfile:/etc/caddy/base.Caddyfile
       - ./test.Caddyfile:/etc/caddy/Caddyfile

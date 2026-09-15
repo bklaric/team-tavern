@@ -46,7 +46,8 @@ addPasswordReset pool email nonce = do
 message :: Deployment -> Player -> Nonce -> Message
 message deployment { email, nickname } nonce = let
     link = case deployment of
-        Local -> "https://localhost/reset-password?nonce=" <> toString nonce
+        -- Only logged, and the development and test stacks serve on different ports.
+        Local -> "/reset-password?nonce=" <> toString nonce
         Cloud -> "https://www.teamtavern.net/reset-password?nonce=" <> toString nonce
     in
     { to: email

@@ -46,9 +46,11 @@ services:
     image: caddy:2.10.0
     container_name: caddy
     restart: unless-stopped
+    # Production leaves both unset and takes 80 and 443. The development .env
+    # shifts the HTTP port, and its Caddyfile serves nothing on 443.
     ports:
-      - "80:80"
-      - "443:443"
+      - "${CADDY_HTTP_PORT:-80}:80"
+      - "${CADDY_HTTPS_PORT:-443}:443"
     volumes:
       - ${TEAMTAVERN_PATH}/stacks/base.Caddyfile:/etc/caddy/base.Caddyfile
       - ${TEAMTAVERN_PATH}/stacks/${ENVIRONMENT}.Caddyfile:/etc/caddy/Caddyfile

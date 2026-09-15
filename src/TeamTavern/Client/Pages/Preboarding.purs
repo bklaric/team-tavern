@@ -36,8 +36,9 @@ import TeamTavern.Client.Components.RegistrationInputDiscord as RegistrationInpu
 import TeamTavern.Client.Components.Team.ProfileFormInput as TeamProfileFormInput
 import TeamTavern.Client.Components.Team.TeamFormInput as TeamFormInput
 import TeamTavern.Client.Script.Analytics (aliasNickname, identifyNickname, track)
+import TeamTavern.Client.Script.Discord (authorizeWithDiscord)
 import TeamTavern.Client.Script.Meta (setMeta)
-import TeamTavern.Client.Script.Navigate (hardNavigate, navigate, navigate_, replaceState)
+import TeamTavern.Client.Script.Navigate (navigate, navigate_, replaceState)
 import TeamTavern.Client.Shared.Fetch (fetchBody)
 import TeamTavern.Client.Shared.Slot (Slot___)
 import TeamTavern.Client.Snippets.Class as HS
@@ -47,8 +48,7 @@ import TeamTavern.Routes.Game.ViewGame as ViewGame
 import TeamTavern.Routes.Shared.Platform (Platform(..))
 import Type.Proxy (Proxy(..))
 import Web.HTML (window)
-import Web.HTML.Location (host)
-import Web.HTML.Window (localStorage, location)
+import Web.HTML.Window (localStorage)
 import Web.Storage.Storage (setItem)
 import Yoga.JSON (class ReadForeign, class WriteForeign, readImpl, writeImpl, writeJSON)
 
@@ -451,13 +451,7 @@ sendRequest state = Async.attempt do
             {nickname: state.registrationDiscord.nickname, accessToken}
         Discord, Nothing -> do
             window >>= localStorage >>= setItem "preboard" (writeJSON state) # liftEffect
-            host' <- window >>= location >>= host # liftEffect
-            hardNavigate $ "https://discord.com/api/oauth2/authorize"
-                <> "?client_id=1068667687661740052"
-                <> "&redirect_uri=https%3A%2F%2F" <> host' <> "%2Fpreboarding%2Fregister"
-                <> "&response_type=token"
-                <> "&scope=identify%20email"
-                <> "&prompt=none"
+            authorizeWithDiscord "/preboarding/register"
             Async.left state
     (body :: Preboard.RequestContent) <-
         case state of

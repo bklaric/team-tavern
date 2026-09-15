@@ -8,8 +8,8 @@ const repositoryRoot = path.join(__dirname, "..");
 const testStack = {
     cwd: repositoryRoot,
     config: "stacks/docker-compose.test.yml",
-    // The compose file declares the Caddy host ports as required variables, so compose
-    // refuses to start without the env file that sets them. The nested array keeps the
+    // The compose file declares the Caddy host port as a required variable, so compose
+    // refuses to start without the env file that sets it. The nested array keeps the
     // flag and its value as separate argv entries, and a compose option has to precede
     // the subcommand, which is where this library puts them.
     composeOptions: [["--env-file", "stacks/test.env"]],
