@@ -44,7 +44,7 @@ and `test-results/`.
 npm install         # once
 spago build         # compile everything into output/
 ./build.sh          # spago build + build-client.sh + build-server.sh
-./run-stack.sh      # docker compose up: postgres, node, rendertron, caddy
+./run-stack.sh      # docker compose up: postgres, node, renderready, caddy
 ./deploy-server.sh  # rebuild the server bundle and restart the node container
 npm test            # boot the test stack and run the Playwright suite
 npm run typecheck   # tsc over test-playwright/ and playwright.config.ts
@@ -92,8 +92,10 @@ one. Both serve the same `dist-client/` and `dist-server/`, so `./build.sh` has
 to have run either way.
 
 Both also answer to `http://caddy` on their compose network, and that name is
-the render origin passed to `base.Caddyfile`. Rendertron's browser has to fetch
-the site itself, and inside that container `localhost` is rendertron.
+the render origin passed to `base.Caddyfile`. Renderready's browser has to fetch
+the site itself, and inside that container `localhost` is renderready. Neither
+compose file pulls a renderready image: the service is built from the upstream
+git tag, so the first `up` on a machine builds it, and that takes a while.
 
 |               | Development                 | Test                             |
 | ------------- | --------------------------- | -------------------------------- |
@@ -220,7 +222,7 @@ the server bundle leaves external, plus the build toolchain in devDependencies.
    declares, so pages `match` / `onMatch` on it.
 
 In the running stack Caddy proxies `/api/*` to the node container, sends bot
-user agents to rendertron, and serves everything else from `dist-client/` with
+user agents to renderready, and serves everything else from `dist-client/` with
 an `index.html` fallback for SPA paths.
 
 ## Server conventions

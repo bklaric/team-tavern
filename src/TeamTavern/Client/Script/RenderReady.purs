@@ -1,4 +1,4 @@
-module TeamTavern.Client.Script.Rendertron where
+module TeamTavern.Client.Script.RenderReady where
 
 import Prelude
 
@@ -15,8 +15,9 @@ import Web.HTML.HTMLDocument as HTMLDocument
 import Web.HTML.HTMLElement as HTMLElement
 import Web.HTML.Window (document)
 
-appendRendetronStatus :: forall m. Bind m => MonadEffect m => String -> m Unit
-appendRendetronStatus status = do
+-- The prerenderer answers a bot with the status this tag names instead of 200.
+appendRenderReadyStatus :: forall m. Bind m => MonadEffect m => String -> m Unit
+appendRenderReadyStatus status = do
     statusMeta <-
         window
         >>= document
@@ -24,11 +25,11 @@ appendRendetronStatus status = do
         <#> (Document.fromNode >>> unsafePartial fromJust)
         >>= Document.createElement "meta"
         # liftEffect
-    statusMeta # setAttribute "name" "render:status_code" # liftEffect
+    statusMeta # setAttribute "name" "renderready-status-code" # liftEffect
     statusMeta # setAttribute "content" status # liftEffect
     window >>= document >>= head
         <#> (unsafePartial fromJust >>> HTMLElement.toNode)
         >>= appendChild (statusMeta # Element.toNode) # liftEffect
 
-appendRendetronNotFound :: forall m. Bind m => MonadEffect m => m Unit
-appendRendetronNotFound = appendRendetronStatus "404"
+appendRenderReadyNotFound :: forall m. Bind m => MonadEffect m => m Unit
+appendRenderReadyNotFound = appendRenderReadyStatus "404"

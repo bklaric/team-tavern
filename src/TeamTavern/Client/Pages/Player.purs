@@ -30,7 +30,7 @@ import TeamTavern.Client.Pages.Player.Profiles (profiles)
 import TeamTavern.Client.Pages.Player.Status (Status(..), getStatus)
 import TeamTavern.Client.Pages.Player.Teams (teams)
 import TeamTavern.Client.Script.Meta (setMeta)
-import TeamTavern.Client.Script.Rendertron (appendRendetronNotFound)
+import TeamTavern.Client.Script.RenderReady (appendRenderReadyNotFound)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Shared.Fetch (fetchPathQuery)
 import TeamTavern.Client.Shared.Slot (Slot___, Slot__String)
@@ -168,7 +168,7 @@ handleAction (Receive input) = do
                 setMeta (player'.nickname <> " | TeamTavern")
                     ("View all details, profiles and teams of player " <> player'.nickname <> ".")
             , notFound: const do
-                appendRendetronNotFound
+                appendRenderReadyNotFound
                 H.put NotFound
             }
             (const $ H.put Error)

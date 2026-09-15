@@ -4,11 +4,14 @@ encode gzip zstd
 #
 # Caddy orders handle blocks itself (named matchers before path matchers), so
 # this block runs before the /api/* block for every request. The prerenderer's
-# browser calls the API with the same user agent, so the API must be excluded
+# browser sends X-RenderReady on its API calls too, so the API must be excluded
 # here or it receives this HTML instead of JSON and every page prerenders empty.
+#
+# The header, not the user agent, is what marks the prerenderer: its user agent
+# reads as ordinary Chrome.
 
 @prerender_header {
-    header_regexp User-Agent (?i)(headlesschrome)
+    header X-RenderReady 1
     not path /api/*
 }
 
@@ -23,6 +26,12 @@ handle @prerender_header {
 # and host, because the prerenderer's browser has to resolve that name itself.
 # Locally the incoming host is the one name it cannot use: inside that container
 # `localhost` is the prerenderer.
+#
+# Caddy percent-encodes {uri} inside the query value, so a page's own query
+# string arrives as part of the url parameter rather than beside it.
+#
+# The prerenderer passes on the validators of the shell it was served, which
+# every page shares, so they are dropped rather than let pages claim them.
 
 @bot_header_and_not_static_file {
     header_regexp User-Agent (?i)(baiduspider|bingbot|discordbot|embedly|facebot|facebookexternalhit|googlebot|linkedinbot|outbrain|pinterest|pinterestbot|quora\slink\spreview|rogerbot|showyoubot|slackbot|telegrambot|twitterbot|vkshare|W3C_Validator|whatsapp|yandex)
@@ -30,8 +39,10 @@ handle @prerender_header {
 }
 
 handle @bot_header_and_not_static_file {
-    reverse_proxy rendertron:3000 {
-        rewrite /render/{args[0]}{uri}
+    reverse_proxy renderready:3000 {
+        rewrite /render?url={args[0]}{uri}
+        header_down -ETag
+        header_down -Last-Modified
     }
 }
 

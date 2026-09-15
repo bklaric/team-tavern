@@ -14,8 +14,9 @@ const game = {
 
 const listingPath = `/games/${game.handle}/players`;
 
-// Caddy tells the three kinds of visitor apart by user agent alone, so each block below
-// visits the same listing under the user agent of one kind.
+// Caddy tells the three kinds of visitor apart by what they send: the prerenderer's browser by
+// its `X-RenderReady` header, a bot by its user agent. Each block below visits the same listing
+// as one kind.
 
 async function expectListingRendered(page: Page) {
     await expect(page).toHaveTitle(game.title);
@@ -37,12 +38,9 @@ test.describe("a browser", () => {
 
 // What the prerenderer's browser sends. Caddy answers every page under it with the prerender
 // shell, which boots the site and calls the API for the page's data, so the listing only
-// renders if the API answers this user agent with JSON rather than with the shell.
+// renders if the API answers this header with JSON rather than with the shell.
 test.describe("a headless browser", () => {
-    test.use({
-        userAgent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)"
-            + " HeadlessChrome/153.0.8010.12 Safari/537.36",
-    });
+    test.use({ extraHTTPHeaders: { "X-RenderReady": "1" } });
 
     test("is served the prerender shell, which renders the player listings", async ({ page }) => {
         await page.goto(listingPath);
@@ -77,6 +75,17 @@ test.describe("a bot", () => {
         await expect(page.getByText(game.listingCount)).toBeVisible();
     });
 
+    // The page names the status in a meta tag the prerenderer reads, so a crawler drops the page
+    // rather than indexing the message.
+    test("is answered 404 for a player who does not exist", async ({ page }) => {
+        test.slow();
+
+        const response = await page.goto("/players/NobodyTester", { timeout: 60_000 });
+
+        expect(response?.status()).toBe(404);
+        await expect(page.getByText("Player could not be found.")).toBeVisible();
+    });
+
     // A bot goes on to fetch what the prerendered HTML names, under the same user agent, so
     // Caddy has to serve those files rather than hand them to the prerenderer as pages.
     // The HTML is based on the render origin, which is the site itself in production and here
@@ -97,11 +106,14 @@ test.describe("a bot", () => {
 
         await page.goto(listingPath, { timeout: 60_000 });
 
-        // Only the site's own files; the CDN stylesheets the page also links are not Caddy's to serve.
+        // The prerenderer writes every link absolute. Only the site's own files count; the CDN
+        // stylesheets the page also links are not Caddy's to serve.
         const paths = async (selector: string, attribute: string) =>
             (await page.locator(selector).evaluateAll((elements, attribute) =>
                 elements.map(element => element.getAttribute(attribute) ?? ""), attribute))
-            .filter(path => path.startsWith("/"));
+            .map(link => new URL(link, baseURL))
+            .filter(url => url.origin === baseURL)
+            .map(url => url.pathname);
         const stylesheets = await paths('link[rel="stylesheet"]', "href");
         const images = await paths("img", "src");
         expect(stylesheets.length).toBeGreaterThan(0);

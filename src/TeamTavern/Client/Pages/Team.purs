@@ -30,7 +30,7 @@ import TeamTavern.Client.Pages.Team.Status (Status(..), getStatus)
 import TeamTavern.Client.Pages.Team.TeamOptions (teamOptions)
 import TeamTavern.Client.Pages.Team.TeamProfileOptions as TeamProfileOptions
 import TeamTavern.Client.Script.Meta (setMeta)
-import TeamTavern.Client.Script.Rendertron (appendRendetronNotFound)
+import TeamTavern.Client.Script.RenderReady (appendRenderReadyNotFound)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Shared.Fetch (fetchPathQuery)
 import TeamTavern.Client.Shared.Slot (Slot___, Slot__String)
@@ -172,7 +172,7 @@ handleAction Initialize = do
                         setMeta (nameOrHandle <> " | TeamTavern")
                             ("View all details and profiles of team " <> nameOrHandle <> ".")
                     , notFound: const $ do
-                        appendRendetronNotFound
+                        appendRenderReadyNotFound
                         H.put NotFound
                     }
                     (const $ H.put Error)

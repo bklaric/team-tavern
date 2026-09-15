@@ -27,10 +27,18 @@ services:
     depends_on:
       - postgres
 
-  rendertron:
-    image: dockette/rendertron
-    container_name: rendertron
+  renderready:
+    # No published image, so the first `up` builds it from the tag.
+    build: https://github.com/lukapozega/renderready.git#v1.0.0
+    container_name: renderready
     restart: unless-stopped
+    environment:
+      # Without it, renderready fetches the page itself and hands it to Chromium, which then
+      # treats the page as public and blocks its scripts from reaching the private `caddy`
+      # address. No render needs a redirect followed: every page path answers 200.
+      FOLLOW_REDIRECTS: "true"
+      # Matches subdomains too, so www and staging render.
+      ALLOWED_DOMAINS: caddy,teamtavern.net
     depends_on:
       - node
 
@@ -49,7 +57,7 @@ services:
       - ${CADDY_DOCKER_PATH}/config:/config
     depends_on:
       - node
-      - rendertron
+      - renderready
 
 # Named volume for API's node_modules directory.
 # We're using this because we don't want to see container's node_modules on the host.

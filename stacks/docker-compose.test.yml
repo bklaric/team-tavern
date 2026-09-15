@@ -43,8 +43,15 @@ services:
     volumes:
       - ../dist-test:/root/dist-test:ro
 
-  rendertron:
-    image: dockette/rendertron
+  renderready:
+    # No published image, so the first `up` builds it from the tag.
+    build: https://github.com/lukapozega/renderready.git#v1.0.0
+    environment:
+      # Without it, renderready fetches the page itself and hands it to Chromium, which then
+      # treats the page as public and blocks its scripts from reaching the private `caddy`
+      # address. No render needs a redirect followed: every page path answers 200.
+      FOLLOW_REDIRECTS: "true"
+      ALLOWED_DOMAINS: caddy
     depends_on:
       - node
 
@@ -61,7 +68,7 @@ services:
       - caddy_config:/config
     depends_on:
       - node
-      - rendertron
+      - renderready
 
 volumes:
   postgres_data:
