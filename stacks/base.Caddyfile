@@ -32,13 +32,19 @@ handle @prerender_header {
 #
 # The prerenderer passes on the validators of the shell it was served, which
 # every page shares, so they are dropped rather than let pages claim them.
+#
+# Any path without a file behind it is rendered, and the client router decides
+# whether it is a page: one it does not know declares a 404 the prerenderer
+# answers with. So the routes live only in the router. The root is a directory,
+# which the file matcher counts as a file, so it is let through by name.
 
-@bot_header_and_not_static_file {
+@bot_page {
     header_regexp User-Agent (?i)(baiduspider|bingbot|discordbot|embedly|facebot|facebookexternalhit|googlebot|linkedinbot|outbrain|pinterest|pinterestbot|quora\slink\spreview|rogerbot|showyoubot|slackbot|telegrambot|twitterbot|vkshare|W3C_Validator|whatsapp|yandex)
-    not path_regexp (?i)(css|eot|ico|jpg|js|mp4|png|svg|ttf|txt|webmanifest|webp|woff|woff2)
+    not path /api/* /images/*
+    expression `{path} == "/" || !file({"try_files": [{path}]})`
 }
 
-handle @bot_header_and_not_static_file {
+handle @bot_page {
     reverse_proxy renderready:3000 {
         rewrite /render?url={args[0]}{uri}
         header_down -ETag

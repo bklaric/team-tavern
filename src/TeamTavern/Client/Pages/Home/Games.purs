@@ -4,7 +4,7 @@ import Prelude
 
 import Async (Async)
 import Data.Foldable (foldMap)
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(..), isNothing)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
@@ -12,6 +12,7 @@ import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Components.Divider (divider)
 import TeamTavern.Client.Components.GameCover (gameCover)
 import TeamTavern.Client.Script.Navigate (navigateWithEvent_)
+import TeamTavern.Client.Script.RenderReady (appendRenderReadyUnavailable)
 import TeamTavern.Client.Script.Request (get)
 import TeamTavern.Client.Shared.Slot (Slot___)
 import TeamTavern.Client.Snippets.Class as HS
@@ -51,7 +52,10 @@ render games' =
 
 handleAction :: ∀ slots output left.
     Action -> H.HalogenM State Action slots output (Async left) Unit
-handleAction Initialize = H.lift (get "/api/games") >>= H.put
+handleAction Initialize = do
+    games' <- H.lift $ get "/api/games"
+    when (isNothing games') appendRenderReadyUnavailable
+    H.put games'
 handleAction (Navigate url event) = navigateWithEvent_ url event
 
 component :: ∀ query input output left. H.Component query input output (Async left)

@@ -30,7 +30,7 @@ import TeamTavern.Client.Pages.Player.Profiles (profiles)
 import TeamTavern.Client.Pages.Player.Status (Status(..), getStatus)
 import TeamTavern.Client.Pages.Player.Teams (teams)
 import TeamTavern.Client.Script.Meta (setMeta)
-import TeamTavern.Client.Script.RenderReady (appendRenderReadyNotFound)
+import TeamTavern.Client.Script.RenderReady (appendRenderReadyNotFound, appendRenderReadyUnavailable)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Shared.Fetch (fetchPathQuery)
 import TeamTavern.Client.Shared.Slot (Slot___, Slot__String)
@@ -151,7 +151,7 @@ handleAction (Receive input) = do
     result <- H.lift $ Async.attempt $
         fetchPathQuery (Proxy :: _ ViewPlayer) input { timezone }
     case result of
-        Left _ -> H.put Error
+        Left _ -> appendRenderReadyUnavailable *> H.put Error
         Right response -> response # onMatch
             { ok: \player' -> do
                 status <- getStatus player'.nickname
@@ -171,7 +171,7 @@ handleAction (Receive input) = do
                 appendRenderReadyNotFound
                 H.put NotFound
             }
-            (const $ H.put Error)
+            (const $ appendRenderReadyUnavailable *> H.put Error)
 handleAction ShowEditContactsModal = modifyLoaded _ { editContactsModalShown = true }
 handleAction HideEditContactsModal = modifyLoaded _ { editContactsModalShown = false }
 handleAction ShowEditPlayerModal = modifyLoaded _ { editPlayerModalShown = true }

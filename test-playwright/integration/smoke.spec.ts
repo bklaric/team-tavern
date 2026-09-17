@@ -1,4 +1,6 @@
 import { expect, Page, test } from "@playwright/test";
+import compose from "docker-compose";
+import { rethrowComposeError, testStack, waitForApi } from "../stack";
 
 // One seeded game carries every check. `stacks/test-seed/players.sql` derives the nickname
 // as initcap(handle) || 'Tester', `Client/Pages/Profiles.purs` builds the title from the
@@ -33,6 +35,13 @@ test.describe("a browser", () => {
         await expectListingRendered(page);
         for (const label of game.fieldLabels)
             await expect(page.getByText(label, { exact: true }).first()).toBeVisible();
+    });
+
+    test("stays on a path the site does not have and says so", async ({ page }) => {
+        await page.goto("/nopage");
+
+        await expect(page.getByText("Page could not be found.")).toBeVisible();
+        await expect(page).toHaveURL(/\/nopage$/);
     });
 });
 
@@ -86,6 +95,38 @@ test.describe("a bot", () => {
         await expect(page.getByText("Player could not be found.")).toBeVisible();
     });
 
+    test("is answered 404 for a game that does not exist", async ({ page }) => {
+        test.slow();
+
+        const response = await page.goto("/games/nogame/players", { timeout: 60_000 });
+
+        expect(response?.status()).toBe(404);
+        await expect(page.getByText("Game could not be found.")).toBeVisible();
+    });
+
+    // Caddy knows no routes: every path without a file behind it is rendered, and the router
+    // declares the 404 for one it does not know, whether or not the path looks like a file.
+    for (const path of ["/nopage", "/nopage.txt"])
+        test(`is answered 404 for ${path}, which is neither a page nor a file`, async ({ page }) => {
+            test.slow();
+
+            const response = await page.goto(path, { timeout: 60_000 });
+
+            expect(response?.status()).toBe(404);
+            await expect(page.getByText("Page could not be found.")).toBeVisible();
+        });
+
+    // The root is a directory, which Caddy's file matcher counts as a file, so it is the one
+    // page path that has to be let through to the prerenderer by name.
+    test("is served the prerendered home page", async ({ page }) => {
+        test.slow();
+
+        const response = await page.goto("/", { timeout: 60_000 });
+
+        expect(response?.status()).toBe(200);
+        await expect(page).toHaveTitle("Esports Team Finder / LFG / LFT / LFM / LFP | TeamTavern");
+    });
+
     // A bot goes on to fetch what the prerendered HTML names, under the same user agent, so
     // Caddy has to serve those files rather than hand them to the prerenderer as pages.
     // The HTML is based on the render origin, which is the site itself in production and here
@@ -128,5 +169,50 @@ test.describe("a bot", () => {
         const logo = page.getByRole("img", { name: "TeamTavern logo" });
         await expect(logo).toHaveCSS("width", "26px");
         expect(await logo.evaluate(image => (image as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
+    });
+});
+
+// With the API stopped, a page's own request for its data fails, and the page names a 503 for
+// the prerenderer to answer with, so a crawler keeps what it has instead of indexing the error.
+// The API comes back up before the block ends, whether its tests passed or not.
+test.describe("a bot, while the API is down", () => {
+    test.use({
+        userAgent: "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
+        javaScriptEnabled: false,
+    });
+
+    test.beforeAll(async () => {
+        await rethrowComposeError(() => compose.stopOne("node", testStack));
+    });
+
+    test.afterAll(async ({ request }) => {
+        // The node container reinstalls its dependencies on every start.
+        test.setTimeout(120_000);
+        await rethrowComposeError(() => compose.upOne("node", testStack));
+        await waitForApi(request);
+    });
+
+    for (const { path, message } of [
+        { path: `/players/${game.nickname}`, message: "There has been an error loading the player." },
+        { path: listingPath, message: "There has been an error loading the game." },
+    ])
+        test(`is answered 503 for ${path}`, async ({ page }) => {
+            test.slow();
+
+            const response = await page.goto(path, { timeout: 60_000 });
+
+            expect(response?.status()).toBe(503);
+            await expect(page.getByText(message)).toBeVisible();
+        });
+
+    // The home page shows no message when its game grid fails to load, only an empty grid.
+    test("is answered 503 for the home page", async ({ page }) => {
+        test.slow();
+
+        const response = await page.goto("/", { timeout: 60_000 });
+
+        expect(response?.status()).toBe(503);
+        await expect(page.getByRole("heading", { name: "Pick your game" })).toBeVisible();
+        await expect(page.locator("#games .home-game")).toHaveCount(0);
     });
 });

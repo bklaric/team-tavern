@@ -43,6 +43,7 @@ import TeamTavern.Client.Script.Analytics (track)
 import TeamTavern.Client.Script.Cookie (getPlayerNickname, hasPlayerIdCookie)
 import TeamTavern.Client.Script.Navigate (navigateReplace_)
 import TeamTavern.Client.Script.QueryParams (getFragmentParam)
+import TeamTavern.Client.Script.RenderReady (appendRenderReadyNotFound)
 import TeamTavern.Client.Shared.Slot (Slot___, SlotQ__)
 import Type.Proxy (Proxy(..))
 import Type.Row (type (+))
@@ -112,7 +113,7 @@ render ResetPasswordSuccess = singleContent [ resetPasswordSuccess ]
 render (Onboarding input) = onboarding input
 render (Preboarding input) = preboarding input
 render DeleteAlert = singleContent [ deleteAlert ]
-render NotFound = HH.p_ [ HH.text "You're fucken lost, mate." ]
+render NotFound = topBarWithContent Nothing $ HH.p_ [ HH.text "Page could not be found." ]
 
 just :: ∀ t5 t7. Applicative t5 => t7 -> t5 (Maybe t7)
 just = pure <<< Just
@@ -213,7 +214,7 @@ handleAction (Init state route) = do
         ["", "remove-alert" ] ->
             just $ DeleteAlert
         _ ->
-            navigateReplace_ "/" *> nothing
+            appendRenderReadyNotFound *> just NotFound
     case newState of
         Just newState' -> H.put newState'
         Nothing -> pure unit

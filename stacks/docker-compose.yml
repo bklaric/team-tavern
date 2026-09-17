@@ -37,6 +37,8 @@ services:
       # treats the page as public and blocks its scripts from reaching the private `caddy`
       # address. No render needs a redirect followed: every page path answers 200.
       FOLLOW_REDIRECTS: "true"
+      # A render that never settles is a page that failed to load, not one to index half-drawn.
+      TIMEOUT_STATUS_CODE: "503"
       # Matches subdomains too, so www and staging render.
       ALLOWED_DOMAINS: caddy,teamtavern.net
     depends_on:

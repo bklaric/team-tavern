@@ -39,6 +39,7 @@ import TeamTavern.Client.Script.Analytics (track, track_)
 import TeamTavern.Client.Script.Cookie (PlayerInfo, getPlayerInfo)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigate, navigate_)
+import TeamTavern.Client.Script.RenderReady (appendRenderReadyUnavailable)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Script.Url as Url
 import TeamTavern.Client.Shared.Slot (Slot___)
@@ -216,6 +217,7 @@ loadTab { game: game @ { handle, shortTitle, fields }, tab: GameHeader.Players }
                 }
             H.liftEffect $ setMetaTags shortTitle GameHeader.Players
         Nothing -> do
+            appendRenderReadyUnavailable
             H.put Error
             H.liftEffect $ setMetaTags handle GameHeader.Players
 loadTab { game: game @ { handle, shortTitle, fields }, tab: GameHeader.Teams } = do
@@ -233,6 +235,7 @@ loadTab { game: game @ { handle, shortTitle, fields }, tab: GameHeader.Teams } =
                 }
             H.liftEffect $ setMetaTags shortTitle GameHeader.Teams
         Nothing -> do
+            appendRenderReadyUnavailable
             H.put Error
             H.liftEffect $ setMetaTags handle GameHeader.Teams
 

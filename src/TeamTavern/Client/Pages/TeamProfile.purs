@@ -28,7 +28,7 @@ import TeamTavern.Client.Script.Analytics (track)
 import TeamTavern.Client.Script.LastUpdated (lastUpdated)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.QueryParams (getQueryParam)
-import TeamTavern.Client.Script.RenderReady (appendRenderReadyNotFound)
+import TeamTavern.Client.Script.RenderReady (appendRenderReadyNotFound, appendRenderReadyUnavailable)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Shared.Fetch (fetchPathQuery)
 import TeamTavern.Client.Shared.Slot (Slot___, Slot__String)
@@ -165,7 +165,7 @@ handleAction (Receive input) = do
     result <- H.lift $ Async.attempt $
         fetchPathQuery (Proxy :: _ ViewTeamProfile) input { timezone }
     case result of
-        Left _ -> H.put Error
+        Left _ -> appendRenderReadyUnavailable *> H.put Error
         Right response -> response # onMatch
             { ok: \teamProfile' @ { owner, title } -> do
                 status <- getStatus owner
@@ -178,7 +178,7 @@ handleAction (Receive input) = do
                 appendRenderReadyNotFound
                 H.put NotFound
             }
-            (const $ H.put Error)
+            (const $ appendRenderReadyUnavailable *> H.put Error)
 
 component :: ∀ query output left. H.Component query Input output (Async left)
 component = H.mkComponent

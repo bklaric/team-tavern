@@ -33,3 +33,8 @@ appendRenderReadyStatus status = do
 
 appendRenderReadyNotFound :: forall m. Bind m => MonadEffect m => m Unit
 appendRenderReadyNotFound = appendRenderReadyStatus "404"
+
+-- A page that failed to load is answered 503, so a crawler keeps what it has and comes back
+-- rather than indexing the error message.
+appendRenderReadyUnavailable :: forall m. Bind m => MonadEffect m => m Unit
+appendRenderReadyUnavailable = appendRenderReadyStatus "503"
