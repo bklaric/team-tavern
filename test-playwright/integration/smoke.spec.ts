@@ -16,6 +16,16 @@ const game = {
 
 const listingPath = `/games/${game.handle}/players`;
 
+// The same seed gives the player an organized team with a profile for the game, named after
+// the game in the same way.
+const team = { handle: `${game.handle}-testers`, name: "Valorant Testers" };
+
+const playerPath = `/players/${game.nickname}`;
+const playerProfilePath = `${playerPath}/profiles/${game.handle}`;
+const teamListingPath = `/games/${game.handle}/teams`;
+const teamPath = `/teams/${team.handle}`;
+const teamProfilePath = `${teamPath}/profiles/${game.handle}`;
+
 // Caddy tells the three kinds of visitor apart by what they send: the prerenderer's browser by
 // its `X-RenderReady` header, a bot by its user agent. Each block below visits the same listing
 // as one kind.
@@ -35,6 +45,35 @@ test.describe("a browser", () => {
         await expectListingRendered(page);
         for (const label of game.fieldLabels)
             await expect(page.getByText(label, { exact: true }).first()).toBeVisible();
+    });
+
+    // `stacks/test-seed/players.sql` gives the player an organized team with a profile for the
+    // game. The server writes a team's organization into JSON in four queries, and each page
+    // below reads it from a different one, so each names the team by its name, not its handle.
+    test("is served the organized team by name wherever it appears", async ({ page }) => {
+        await page.goto(teamListingPath);
+        await expect(page.getByRole("link", { name: team.name }).first()).toBeVisible();
+
+        await page.goto(teamPath);
+        await expect(page.getByText(team.name).first()).toBeVisible();
+
+        await page.goto(teamProfilePath);
+        await expect(page.getByText(team.name).first()).toBeVisible();
+
+        await page.goto(playerPath);
+        await expect(page.getByRole("link", { name: team.name }).first()).toBeVisible();
+    });
+
+    // Caddy answers the redirect itself; the ad network's file is not the suite's to fetch.
+    test("is redirected from ads.txt to the ad network's", async ({ page }) => {
+        const adsTxt = "https://adstxt.venatusmedia.com/teamtavern.net/ads.txt";
+        await page.route(adsTxt, route => route.fulfill({ contentType: "text/plain", body: "" }));
+
+        const response = await page.goto("/ads.txt");
+
+        const redirect = await response?.request().redirectedFrom()?.response();
+        expect(redirect?.status()).toBe(301);
+        expect(page.url()).toBe(adsTxt);
     });
 
     test("stays on a path the site does not have and says so", async ({ page }) => {
@@ -77,31 +116,57 @@ test.describe("a bot", () => {
         // to the compose-internal `http://caddy`, so the stylesheets and images it names do not
         // resolve outside that network. Production's origin is the public site, which bots can
         // fetch; here only the content is checked.
-        await page.goto(listingPath, { timeout: 60_000 });
+        const response = await page.goto(listingPath, { timeout: 60_000 });
 
+        expect(response?.status()).toBe(200);
         await expect(page).toHaveTitle(game.title);
         await expect(page.getByText(game.nickname).first()).toBeVisible();
         await expect(page.getByText(game.listingCount)).toBeVisible();
     });
 
+    // Each of these pages loads its data from its own endpoint, and the title is set only once
+    // that data arrived.
+    for (const { path, title } of [
+        { path: teamListingPath, title: "Teams / LFM / LFP - Valorant Team Finder | TeamTavern" },
+        { path: playerPath, title: `${game.nickname} | TeamTavern` },
+        { path: playerProfilePath, title: `${game.nickname} - Valorant | TeamTavern` },
+        { path: teamPath, title: `${team.name} | TeamTavern` },
+        { path: teamProfilePath, title: `${team.name} - Valorant | TeamTavern` },
+    ])
+        test(`is served ${path} prerendered`, async ({ page }) => {
+            test.slow();
+
+            const response = await page.goto(path, { timeout: 60_000 });
+
+            expect(response?.status()).toBe(200);
+            await expect(page).toHaveTitle(title);
+        });
+
     // The page names the status in a meta tag the prerenderer reads, so a crawler drops the page
-    // rather than indexing the message.
-    test("is answered 404 for a player who does not exist", async ({ page }) => {
-        test.slow();
+    // rather than indexing the message. The seeded player and team have a profile for their own
+    // game only.
+    for (const { path, message } of [
+        { path: "/players/NobodyTester", message: "Player could not be found." },
+        { path: `${playerPath}/profiles/apex`, message: "Player profile could not be found." },
+        { path: "/teams/nobody-testers", message: "Team could not be found." },
+        { path: `${teamPath}/profiles/apex`, message: "Team profile could not be found." },
+        { path: "/games/nogame/players", message: "Game could not be found." },
+    ])
+        test(`is answered 404 for ${path}`, async ({ page }) => {
+            test.slow();
 
-        const response = await page.goto("/players/NobodyTester", { timeout: 60_000 });
+            const response = await page.goto(path, { timeout: 60_000 });
+
+            expect(response?.status()).toBe(404);
+            await expect(page.getByText(message)).toBeVisible();
+        });
+
+    // Caddy answers a missing image itself rather than rendering it as a page.
+    test("is answered 404 for an image that does not exist, without a render", async ({ page }) => {
+        const response = await page.goto("/images/games/nogame.webp");
 
         expect(response?.status()).toBe(404);
-        await expect(page.getByText("Player could not be found.")).toBeVisible();
-    });
-
-    test("is answered 404 for a game that does not exist", async ({ page }) => {
-        test.slow();
-
-        const response = await page.goto("/games/nogame/players", { timeout: 60_000 });
-
-        expect(response?.status()).toBe(404);
-        await expect(page.getByText("Game could not be found.")).toBeVisible();
+        expect(response?.headers()["content-type"] ?? "").not.toContain("text/html");
     });
 
     // Caddy knows no routes: every path without a file behind it is rendered, and the router
@@ -193,7 +258,10 @@ test.describe("a bot, while the API is down", () => {
     });
 
     for (const { path, message } of [
-        { path: `/players/${game.nickname}`, message: "There has been an error loading the player." },
+        { path: playerPath, message: "There has been an error loading the player." },
+        { path: playerProfilePath, message: "There has been an error loading the player profile." },
+        { path: teamPath, message: "There has been an error loading the team." },
+        { path: teamProfilePath, message: "There has been an error loading the team profile." },
         { path: listingPath, message: "There has been an error loading the game." },
     ])
         test(`is answered 503 for ${path}`, async ({ page }) => {

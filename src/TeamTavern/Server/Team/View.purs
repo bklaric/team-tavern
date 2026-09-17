@@ -21,13 +21,11 @@ queryString timezone = Query $ """
         case
             when team.organization = 'informal'
             then json_build_object(
-                'type', '"informal"'::jsonb,
-                'value', '{}'::jsonb
+                'informal', '{}'::jsonb
             )
             when team.organization = 'organized'
             then json_build_object(
-                'type', '"organized"'::jsonb,
-                'value', json_build_object(
+                'organized', json_build_object(
                     'name', team.name,
                     'website', team.website
                 )

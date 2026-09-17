@@ -1,4 +1,4 @@
--- One player with one profile for every seeded game, so that every listing page
+-- One player with one profile for every seeded game, so that every player listing page
 -- has a row to assert on. Derived from the game table rather than written out
 -- per game, so a new file in Seed/Games gets a profile without an edit here.
 -- Every player needs a sign-in identity, so each signs in with the password
@@ -35,3 +35,32 @@ select
     array['Find a team to play ' || tester.title || ' with.']
 from tester
 join inserted on inserted.nickname = tester.nickname;
+
+-- Each player also owns one organized team with a profile for the same game, so
+-- that every team listing has a row too, and the team shows its name rather than
+-- its handle wherever the site names it.
+
+with inserted as (
+    insert into team (owner_id, handle, name, organization, languages, microphone)
+    select
+        player.id,
+        game.handle || '-testers',
+        initcap(game.handle) || ' Testers',
+        'organized',
+        array['English'],
+        true
+    from game
+    join player on player.nickname = initcap(game.handle) || 'Tester'
+    returning id, handle
+)
+insert into team_profile (team_id, game_id, size, platforms, new_or_returning, about, ambitions)
+select
+    inserted.id,
+    game.id,
+    'party',
+    array[game.platforms[1]],
+    false,
+    array['Seeded team profile for ' || game.title || '.'],
+    array['Find players to play ' || game.title || ' with.']
+from game
+join inserted on inserted.handle = game.handle || '-testers';

@@ -236,13 +236,11 @@ from (
         case
             when organization = 'informal'
             then json_build_object(
-                'type', '"informal"'::jsonb,
-                'value', '{}'::jsonb
+                'informal', '{}'::jsonb
             )
             when organization = 'organized'
             then json_build_object(
-                'type', '"organized"'::jsonb,
-                'value', json_build_object(
+                'organized', json_build_object(
                     'name', name,
                     'website', website
                 )
