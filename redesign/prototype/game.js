@@ -3,9 +3,6 @@
 // a post makes, and the editor for each field.
 
 const GAME = FEED_DATA;
-// The dump's date stands in for now, so freshness reads as it did that day.
-const NOW = new Date(GAME.now);
-const DAY = 864e5;
 const BATCH = 20;
 
 // Which of today's game fields play the parts the brief gives them. Games not
@@ -98,18 +95,6 @@ const inViewerTime = (from, to, timeZone) => {
     return { from: wrap(toMinutes(from) + shift), to: wrap(toMinutes(to) + shift) };
 };
 
-// Clock times follow the viewer's locale, "19:00" or "7pm", with no timezone
-// name: the viewer knows their own.
-const TWELVE_HOUR = ["h11", "h12"].includes(
-    new Intl.DateTimeFormat(undefined, { hour: "numeric" }).resolvedOptions().hourCycle);
-
-const clock = minutes => {
-    const h = Math.floor(minutes / 60);
-    const m = String(minutes % 60).padStart(2, "0");
-    if (!TWELVE_HOUR) return `${String(h).padStart(2, "0")}:${m}`;
-    return `${h % 12 || 12}${m === "00" ? "" : `:${m}`}${h < 12 ? "am" : "pm"}`;
-};
-
 const formatHours = hours =>
     hours.from === hours.to ? "Online all day" : `${clock(hours.from)}–${clock(hours.to)}`;
 
@@ -132,33 +117,42 @@ const hoursOverlap = (a, b) => {
     return [...hoursCovered(b)].some(h => covered.has(h));
 };
 
-const ago = date => {
-    const minutes = Math.max(1, Math.round((NOW - date) / 60000));
-    const unit = (n, name) => `${n} ${name}${n === 1 ? "" : "s"} ago`;
-    if (minutes < 60) return unit(minutes, "minute");
-    const hours = Math.round(minutes / 60);
-    if (hours < 24) return unit(hours, "hour");
-    const days = Math.round(hours / 24);
-    if (days < 14) return unit(days, "day");
-    if (days < 60) return unit(Math.round(days / 7), "week");
-    if (days < 365) return unit(Math.round(days / 30), "month");
-    return unit(Math.round(days / 365), "year");
+// Contacts. How the owner wants to be reached sets the card's button (brief
+// 5.6); the contacts are what the contact panel shows.
+const contactButtonOf = (reach, contacts) => {
+    if (reach === "discord") return { label: "Join Discord", icon: "discord" };
+    if (reach === "website") return { label: "Visit site", icon: "external-link" };
+    if (reach === "offsite") {
+        return contacts.some(c => c.label === "Discord")
+            ? { label: "Add on Discord", icon: "discord" }
+            : { label: "Add in game", icon: "gamepad-2" };
+    }
+    if (reach === "either") return { label: "Contact", icon: "message-circle" };
+    return { label: "Message", icon: "message-circle" };
+};
+
+const asUrl = value => (/^https?:\/\//.test(value) ? value : `https://${value}`);
+const linkContact = (label, value) => ({ label, value, url: asUrl(value) });
+
+// Today's rows say whether a contact exists, not what it is: the dump's handles
+// stay out of the sample. The prototype makes one up from the name.
+const handleOf = name => name.toLowerCase().replace(/[^a-z0-9._]+/g, "") || "player";
+
+const reachOf = raw => raw.type === "community"
+    ? (raw.has_discord_server ? "discord" : raw.has_website ? "website" : "message")
+    : (raw.has_discord ? "offsite" : "message");
+
+const contactsOf = raw => {
+    const slug = handleOf(raw.name || raw.owner);
+    return [
+        raw.type !== "community" && raw.has_discord && { label: "Discord", value: handleOf(raw.owner) },
+        raw.type !== "player" && raw.has_discord_server
+            && linkContact(raw.type === "community" ? "Discord invite" : "Discord server", `discord.gg/${slug}`),
+        raw.type !== "player" && raw.has_website && linkContact("Website", `${slug}.gg`),
+    ].filter(Boolean);
 };
 
 // Posts. Today's rows become the brief's post types.
-
-const lifetime = type => (type === "community" ? 90 : 30) * DAY;
-
-const contactOf = raw => {
-    if (raw.type === "community") {
-        if (raw.has_discord_server) return { label: "Join Discord", icon: "discord" };
-        if (raw.has_website) return { label: "Visit site", icon: "external-link" };
-        return { label: "Message", icon: "message-circle" };
-    }
-    return raw.has_discord
-        ? { label: "Add on Discord", icon: "discord" }
-        : { label: "Message", icon: "message-circle" };
-};
 
 // Today's teams record no size, so a group's slots are made up from its id.
 const slotsOf = raw => {
@@ -208,18 +202,169 @@ const normalize = raw => {
         text,
         returning: raw.new_or_returning,
         organized: raw.organized,
-        contact: contactOf(raw),
+        reach: reachOf(raw),
+        contacts: contactsOf(raw),
+        contact: contactButtonOf(reachOf(raw), contactsOf(raw)),
         slots: raw.type === "group" ? slotsOf(raw) : undefined,
     };
 };
 
-const POSTS = GAME.players.concat(GAME.teams).map(normalize);
+// Posts from drafts: what the post screen writes, and what the prototype's
+// accounts have published.
 
-const languageOptions = (() => {
-    const counts = {};
-    POSTS.forEach(p => p.languages.forEach(l => { counts[l] = (counts[l] || 0) + 1; }));
-    return Object.keys(counts).sort((a, b) => counts[b] - counts[a]).map(l => ({ value: l, label: l }));
-})();
+// What the brief makes game fields that today's data lacks, made up for the
+// prototype: the game account players add each other by and a community's
+// kinds. Trackers are the seed's: each links a profile built from the game
+// account.
+const GAME_EXTRAS = {
+    apex: {
+        account: { key: "ea", label: "EA ID", placeholder: "Your EA ID" },
+        trackers: [
+            { title: "tracker.gg", url: id => `https://tracker.gg/apex/profile/origin/${encodeURIComponent(id)}` },
+        ],
+        kinds: ["Discord server", "Clan", "Esports organization"],
+    },
+    valorant: {
+        account: { key: "riot", label: "Riot ID", placeholder: "Name#TAG" },
+        trackers: [
+            { title: "tracker.gg", url: id => `https://tracker.gg/valorant/profile/riot/${encodeURIComponent(id)}` },
+            { title: "blitz.gg", url: id => `https://blitz.gg/valorant/profile/${id.replace("#", "-")}` },
+        ],
+        kinds: ["Discord server", "Clan", "Esports organization"],
+    },
+    lol: {
+        account: { key: "riot", label: "Riot ID", placeholder: "Name#TAG" },
+        kinds: ["Discord server", "Clan", "Esports organization"],
+    },
+    valheim: {
+        account: { key: "steam", label: "Steam profile", placeholder: "steamcommunity.com/id/…" },
+        kinds: ["Dedicated server", "Discord server", "Clan"],
+    },
+};
+const EXTRAS = GAME_EXTRAS[GAME.handle] || {
+    account: { key: "steam", label: "Steam profile", placeholder: "steamcommunity.com/id/…" },
+    kinds: ["Discord server", "Clan"],
+};
+
+const ageAt = birthday => {
+    if (!birthday) return undefined;
+    const born = new Date(birthday);
+    const months = NOW.getUTCMonth() - born.getUTCMonth();
+    const beforeBirthday = months < 0 || (months === 0 && NOW.getUTCDate() < born.getUTCDate());
+    const age = NOW.getUTCFullYear() - born.getUTCFullYear() - (beforeBirthday ? 1 : 0);
+    return age > 0 && age < 120 ? age : undefined;
+};
+
+const rankRangeOf = range => {
+    if (!range || (!range.from && !range.to)) return undefined;
+    const from = range.from ? rankIndex(range.from) : 0;
+    const to = range.to ? rankIndex(range.to) : gameOptions(ROLES.rank).length - 1;
+    return [Math.min(from, to), Math.max(from, to)];
+};
+
+// The game's fields a post doesn't name by the part they play. A community
+// isn't asked for rank or roles, so for one they are among them.
+const otherGameFieldsOf = type => {
+    const named = type === "community" ? [ROLES.lookingFor] : [ROLES.rank, ROLES.roles, ROLES.lookingFor];
+    return GAME.fields.filter(f => !named.includes(f.key));
+};
+
+// Player and group posts show their owner's Discord and game account; groups
+// and communities their server and site.
+const draftContacts = (type, d) => [
+    type !== "community" && d.discord && { label: "Discord", value: d.discord },
+    type !== "community" && d.gameAccount && { label: EXTRAS.account.label, value: d.gameAccount },
+    type !== "player" && d.discordServer && linkContact(type === "community" ? "Discord invite" : "Discord server", d.discordServer),
+    type !== "player" && d.website && linkContact("Website", d.website),
+].filter(Boolean);
+
+// A draft's post, in the shape toCard takes. Hours are written in the owner's
+// timezone; others see them in theirs, the owner as written.
+const draftPost = (type, d, owner, updated, { id = "draft", own = false, inTheirTime = false } = {}) => {
+    const named = (d.name || "").trim();
+    const name = type === "player" ? owner || "You"
+        : named || (owner ? undefined : type === "group" ? "Your group" : "Your community");
+    const otherFields = otherGameFieldsOf(type).filter(f => has(d[`field:${f.key}`])).map(f => ({
+        label: f.label,
+        value: [].concat(d[`field:${f.key}`]).map(v => optionLabel(f.key, v)).join(", "),
+    }));
+    const hours = d.hours && d.hours.from && d.hours.to
+        ? (inTheirTime ? inViewerTime(d.hours.from, d.hours.to, d.timezone) : { from: toMinutes(d.hours.from), to: toMinutes(d.hours.to) })
+        : null;
+    const at = updated ? new Date(updated) : NOW;
+    const reach = type === "community" ? d.join || "message" : d.reach || "message";
+    const contacts = draftContacts(type, d);
+    return {
+        id,
+        own,
+        type,
+        name,
+        owner,
+        updated: at,
+        freshness: `Active ${ago(at)}`,
+        expired: at.getTime() + lifetime(type) <= NOW.getTime(),
+        age: type === "player" ? ageAt(d.birthday) : undefined,
+        ageFrom: Number((d.ageRange || {}).from) || undefined,
+        ageTo: Number((d.ageRange || {}).to) || undefined,
+        location: d.location,
+        region: CONTINENT_OF[d.location],
+        regions: d.regions || [],
+        languages: d.languages || [],
+        hours,
+        mic: !!d.mic,
+        rank: type === "player" && d.rank ? rankIndex(d.rank) : undefined,
+        rankRange: type === "group" ? rankRangeOf(d.rankRange) : undefined,
+        roles: type === "community" ? [] : d.roles || [],
+        lookingFor: d.lookingFor || [],
+        otherFields,
+        text: (d.text || "").trim(),
+        returning: type === "player" && d.returning,
+        organized: type === "group" && d.organized,
+        kind: type === "community" ? d.kind : undefined,
+        experience: type === "community" ? d.experience : undefined,
+        platforms: knownPlatforms(d.platforms),
+        reach,
+        contacts,
+        contact: contactButtonOf(reach, contacts),
+        slots: type !== "group" ? undefined
+            : ROLES.server ? { wants: d.wantsFrom === d.wantsTo ? `${d.wantsFrom}` : `${d.wantsFrom}–${d.wantsTo}` }
+            : { members: d.members, total: d.total },
+        trackers: type === "player" && d.gameAccount && EXTRAS.trackers
+            ? EXTRAS.trackers.map(t => ({ title: t.title, url: t.url(d.gameAccount) }))
+            : [],
+    };
+};
+
+// Facts about a player and their contacts live on the account, and posts show
+// them as the account has them now (brief 6, step 3).
+const ACCOUNT_FACTS = {
+    player: ["location", "languages", "birthday", "timezone", "discord", "gameAccount"],
+    group: ["timezone", "discord", "gameAccount"],
+    community: [],
+};
+
+const accountFactOf = (person, key) =>
+    key === "gameAccount" ? (person.accounts || {})[EXTRAS.account.key] : person[key];
+
+const withPerson = (type, d, person) => ({
+    ...d,
+    ...Object.fromEntries(ACCOUNT_FACTS[type].map(key => [key, accountFactOf(person, key)]).filter(([, v]) => v !== undefined)),
+});
+
+// The prototype's accounts post in the feed too: Kestrel's Night Owls is in
+// Valorant's, and whatever the viewer publishes is in its game's.
+const accountPosts = () => {
+    const people = Object.values(PRESETS).map(p => (account && account.id === p.id ? account : p));
+    if (account && !PRESETS[account.id]) people.push(account);
+    return people.filter(person => person.nickname).flatMap(person => person.posts
+        .filter(p => p.game === GAME.handle && p.draft)
+        .map(p => draftPost(p.type, withPerson(p.type, p.draft, person), person.nickname, p.updated, {
+            id: postId(person, p),
+            own: !!account && person.id === account.id,
+            inTheirTime: true,
+        })));
+};
+
 const locationOptions = GAME.locations.map(l => ({ value: l.name, label: l.name }));
 const regionOptions = REGIONS.map(r => ({ value: r, label: r }));
 const hourOptions = Array.from({ length: 24 }, (_, h) =>
@@ -479,4 +624,44 @@ const readEditor = (element, f) => {
         case "toggle": return part("value").checked;
         default: return { from: part("from").value || undefined, to: part("to").value || undefined };
     }
+};
+
+// Every post in the feed, the accounts' among them, and the languages they use,
+// most used first.
+
+const POSTS = GAME.players.concat(GAME.teams).map(normalize).concat(accountPosts());
+
+const languageOptions = (() => {
+    const counts = {};
+    POSTS.forEach(p => p.languages.forEach(l => { counts[l] = (counts[l] || 0) + 1; }));
+    return Object.keys(counts).sort((a, b) => counts[b] - counts[a]).map(l => ({ value: l, label: l }));
+})();
+
+// What the contact panel and a conversation keep of a post (messaging.js).
+
+const postInfo = post => ({
+    id: post.id,
+    game: GAME.handle,
+    type: post.type,
+    name: post.name,
+    owner: post.owner,
+    updated: post.updated.toISOString(),
+    slots: post.slots,
+    facts: toCard(post, {}).facts,
+    reach: post.reach,
+    contacts: post.contacts,
+});
+
+const postInfoById = id => {
+    const post = POSTS.find(p => p.id === id);
+    return post && postInfo(post);
+};
+
+// The viewer's post in this game, which the owner of a post they message sees
+// in the conversation's header: their player post, else their group or
+// community post.
+const viewerPostIn = () => {
+    const mine = POSTS.filter(p => p.own);
+    const post = ["player", "group", "community"].map(type => mine.find(p => p.type === type)).find(Boolean);
+    return post ? { type: post.type, name: post.name, owner: post.owner, facts: toCard(post, {}).facts } : null;
 };

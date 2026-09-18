@@ -48,10 +48,12 @@ const missesOf = m => (m.compared === 0 ? Infinity : m.misses);
 const tierOf = m => Math.min(missesOf(m), 2);
 const TIER_HEADINGS = ["Fits you", "Missing one thing", "Missing more"];
 
+// The viewer's own posts are in the feed only while the description is empty,
+// and a blocked player's posts never are (brief 4 and 10).
 const ordered = () => {
     const empty = descriptionIsEmpty();
     const entries = POSTS
-        .filter(p => visibleTypes().includes(p.type))
+        .filter(p => visibleTypes().includes(p.type) && !hiddenFromViewer(p.owner) && (empty || !p.own))
         .map(post => ({ post, m: empty ? {} : compare(post, description.type, current()) }));
     const byOrder = (a, b) =>
         (empty ? 0 : missesOf(a.m) - missesOf(b.m) || 0) || b.post.updated - a.post.updated;
@@ -83,7 +85,7 @@ const renderFeed = () => {
             tier = tierOf(e.m);
             html.push(`<h3 class="tier-heading">${TIER_HEADINGS[tier]} <span class="tier-count tabular">${tierCounts[tier]}</span></h3>`);
         }
-        stack.push(renderCard(toCard(e.post, e.m), !empty));
+        stack.push(renderCard(withViewer(toCard(e.post, e.m), e.post), !empty));
     });
     flush();
     document.getElementById("feed").innerHTML = html.join("");
@@ -277,6 +279,11 @@ document.addEventListener("click", event => {
     } else if (data.action === "publish") {
         // The post screen reads the description from storage, however it was set.
         saveDescription();
+    } else if (data.card === "edit") {
+        const post = POSTS.find(p => p.id === target.closest(".card").dataset.id);
+        location.href = `post.html?game=${GAME.handle}&type=${post.type}&from=edit`;
+    } else if (data.card === "renew") {
+        renew(target.closest(".card").dataset.id);
     } else if (data.action === "load-more") {
         shown += BATCH;
         renderFeed();
@@ -311,6 +318,25 @@ PHONE.addEventListener("change", () => {
     render();
 });
 
+// The viewer's own posts: renewing one makes it active for another 30 days, or
+// 90 for a community (brief 9).
+const renew = id => {
+    const post = POSTS.find(p => p.id === id);
+    const stored = account.posts.find(p => postId(account, p) === id);
+    stored.updated = NOW.toISOString();
+    saveAccount();
+    Object.assign(post, { updated: NOW, expired: false, freshness: `Active ${ago(NOW)}` });
+    renderFeed();
+    toast(`Renewed. Your post stays active for ${lifetime(post.type) / DAY} days from today.`);
+};
+
+const onMessagingChange = () => {
+    renderFeed();
+    paintHeader();
+};
+
+const pageHeaderOptions = () => ({ newPostHref: `post.html?game=${encodeURIComponent(GAME.handle)}` });
+
 // The page.
 
 const activeCount = POSTS.filter(p => !p.expired).length;
@@ -322,4 +348,6 @@ document.getElementById("feed-header").innerHTML = `
         <p>Find players, groups and communities</p>
         <div class="feed-active tabular">${activeCount} active ${activeCount === 1 ? "post" : "posts"}</div>
     </div>`;
+paintChrome();
 render();
+openPanelFromQuery();

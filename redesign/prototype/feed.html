@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="tokens.css">
     <link rel="stylesheet" href="base.css">
     <link rel="stylesheet" href="components.css">
+    <link rel="stylesheet" href="prototype.css">
     <style>
         .feed-page {
             display: flex;
@@ -37,17 +38,8 @@
     </style>
 </head>
 <body>
-<header class="site-header">
-    <div class="site-header-inner">
-        <a class="logo" href="#"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"></svg><span class="logo-word">TeamTavern</span></a>
-        <button class="button button-text" type="button" id="games">Games</button>
-        <div class="site-header-actions">
-            <a class="button button-outline button-small" href="#" id="new-post">New post</a>
-            <a class="button button-text button-small" href="#">Sign in</a>
-            <a class="button button-text button-small hide-phone" href="#">Sign up</a>
-        </div>
-    </div>
-</header>
+<div class="prototype-bar" id="prototype-bar"></div>
+<div id="header"></div>
 
 <main class="feed-page">
     <div class="feed-header" id="feed-header"></div>
@@ -58,26 +50,26 @@
     <div class="load-more" id="load-more"></div>
 </main>
 <div id="sheet"></div>
+<div id="panel"></div>
 
 <script src="icons.js"></script>
 <script src="prototype.js"></script>
+<script src="site.js"></script>
+<script src="conversations.js"></script>
 <script>
     // feed.html?game=<handle> reads data/<handle>.js, written by export-sample.sh.
     const handle = new URLSearchParams(location.search).get("game") || "valorant";
     document.write(`<script src="data/${handle}.js"><\/script>`);
 </script>
 <script>
-    document.querySelector(".logo .icon").innerHTML = ICONS.flame;
-    document.getElementById("games").insertAdjacentHTML("beforeend", icon("chevron-down"));
-    document.getElementById("new-post").insertAdjacentHTML("afterbegin", icon("plus"));
-    document.getElementById("new-post").href = `post.html?game=${encodeURIComponent(handle)}`;
     if (typeof FEED_DATA === "undefined") {
         document.querySelector(".feed-page").innerHTML = `<div class="missing-data">
             <h2>No sample for ${escapeHtml(handle)}</h2>
             <p class="muted" style="margin-top: 8px">Run <code>./redesign/prototype/export-sample.sh ${escapeHtml(handle)}</code> with the development stack's postgres running.</p>
         </div>`;
+        paintChrome();
     } else {
-        document.write(`<script src="game.js"><\/script><script src="feed.js"><\/script>`);
+        document.write(`<script src="game.js"><\/script><script src="messaging.js"><\/script><script src="feed.js"><\/script>`);
     }
 </script>
 </body>

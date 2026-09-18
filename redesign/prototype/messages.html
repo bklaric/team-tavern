@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Messages</title>
+    <link rel="preconnect" href="https://rsms.me/">
+    <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+    <link rel="stylesheet" href="tokens.css">
+    <link rel="stylesheet" href="base.css">
+    <link rel="stylesheet" href="components.css">
+    <link rel="stylesheet" href="prototype.css">
+    <style>
+        /* The inbox fills the window below the header: the list of
+           conversations and the open one beside it on a desktop, one or the
+           other below that. Each scrolls on its own. */
+        body {
+            display: flex;
+            flex-direction: column;
+            height: 100dvh;
+        }
+
+        #app {
+            flex: 1;
+            min-height: 0;
+        }
+
+        .messages-page {
+            display: grid;
+            grid-template-columns: 360px minmax(0, 1fr);
+            max-width: 1200px;
+            height: 100%;
+            margin: 0 auto;
+            border-inline: 1px solid var(--border);
+        }
+
+        .inbox {
+            padding: var(--space-6) var(--space-2) var(--space-8);
+            overflow-y: auto;
+            border-right: 1px solid var(--border);
+        }
+
+        .inbox h1 {
+            padding: 0 var(--space-3);
+        }
+
+        .conversation {
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .conversation-body {
+            display: flex;
+            flex: 1;
+            flex-direction: column;
+            gap: var(--space-3);
+            padding: var(--space-4);
+            overflow-y: auto;
+        }
+
+        .conversation-body > .thread {
+            margin-top: auto;
+        }
+
+        .conversation-composer {
+            padding: var(--space-3) var(--space-4);
+            border-top: 1px solid var(--border);
+        }
+
+        .conversation-empty {
+            display: grid;
+            place-items: center;
+            height: 100%;
+            color: var(--text-muted);
+        }
+
+        .messages-alone {
+            max-width: 560px;
+            margin: 0 auto;
+            padding: var(--space-8) var(--space-4);
+        }
+
+        @media (min-width: 1024px) {
+            .messages-back {
+                display: none;
+            }
+        }
+
+        @media (max-width: 1023px) {
+            .messages-page {
+                grid-template-columns: minmax(0, 1fr);
+                max-width: var(--feed-width);
+                border: none;
+            }
+
+            .inbox {
+                border-right: none;
+            }
+
+            .messages-page[data-open] .inbox,
+            .messages-page:not([data-open]) .conversation {
+                display: none;
+            }
+
+            .conversation-header {
+                padding-left: var(--space-1);
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="prototype-bar" id="prototype-bar"></div>
+<div id="header"></div>
+<main id="app"></main>
+
+<script src="icons.js"></script>
+<script src="prototype.js"></script>
+<script src="site.js"></script>
+<script src="conversations.js"></script>
+<script src="messaging.js"></script>
+<script src="messages.js"></script>
+</body>
+</html>

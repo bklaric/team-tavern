@@ -89,6 +89,20 @@
             font-size: var(--size-12);
         }
 
+        .sheet-panel {
+            position: relative;
+            inset: auto;
+            z-index: auto;
+            max-width: 440px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-card);
+            background: var(--raised);
+        }
+
+        .sheet-inbox {
+            max-width: 360px;
+        }
+
         .digits {
             display: inline-grid;
             gap: 2px;
@@ -160,6 +174,12 @@
     </section>
 
     <section>
+        <h2>Contact and messaging</h2>
+        <p class="sheet-note">Every card's contact button opens one panel: the contacts the owner shared and the conversation about the post. The owner's preference decides which comes first; a conversation already under way always does. On a desktop the panel is a side panel, on a phone the whole screen.</p>
+        <div id="messaging"></div>
+    </section>
+
+    <section>
         <h2>Posting</h2>
         <p class="sheet-note">The type chooser as posting's first step, and the controls of the post screen. A chosen pill takes the text color, not ember: it is an answer, not a call to act.</p>
         <div id="posting"></div>
@@ -169,6 +189,9 @@
 <script src="icons.js"></script>
 <script src="prototype.js"></script>
 <script src="fixtures.js"></script>
+<script src="site.js"></script>
+<script src="conversations.js"></script>
+<script src="messaging.js"></script>
 <script>
     const $ = id => document.getElementById(id);
 
@@ -284,6 +307,39 @@
             <div class="confirm-actions"><button class="button button-destructive" type="button">${icon("trash-2")}Delete post</button><button class="button button-text" type="button">Keep it</button></div></div>
         <p class="sheet-caption">Or, between two ways to do one thing</p>
         <div class="rule">or</div>`;
+
+    const conversation = id => CONVERSATION_FIXTURES.find(c => c.id === id);
+    const panel = (post, body, menu) => `<div class="overlay contact-panel sheet-panel">${panelInnerHtml(post, body, menu)}</div>`;
+    const nightOwls = conversation("c-vex-night-owls").post;
+    const shadowFox = conversation("c-kestrel-shadowfox").post;
+    const farlands = conversation("c-kestrel-farlands");
+    const quill = conversation("c-kestrel-quill");
+    const inbox = [
+        `<h2 class="inbox-heading">Your posts</h2><div class="inbox-group"><div class="inbox-post">
+            <img class="inbox-cover" src="${coverOf("valorant")}" alt="">
+            <span class="inbox-post-text"><span class="inbox-post-name">Night Owls</span><span class="inbox-kind">Valorant group · 2 conversations</span></span></div>
+            ${inboxRowHtml(conversation("c-ashen-night-owls"), "Ashen", "", null, "Kestrel")}
+            ${inboxRowHtml(conversation("c-vex-night-owls"), "Vex", "", "c-vex-night-owls", "Kestrel")}</div>`,
+        `<h2 class="inbox-heading">Posts you messaged</h2>`,
+        inboxRowHtml(farlands, `The Farlands <span class="inbox-kind">· Valheim community</span>`, `<img class="inbox-cover" src="${coverOf("valheim")}" alt="">`, null, "Kestrel"),
+    ].join("");
+    $("messaging").innerHTML = `
+        <p class="sheet-caption">The owner prefers messages: the message box first, their contacts after</p>
+        ${panel(nightOwls, panelBody(nightOwls, null, 0, "Vex"))}
+        <p class="sheet-caption">The owner prefers Discord: contacts first, and Send is outlined</p>
+        ${panel(shadowFox, panelBody(shadowFox, null, 0, "Kestrel"))}
+        <p class="sheet-caption">A community joined on Discord: the invite is the one filled button</p>
+        ${panel(farlands.post, panelBody(farlands.post, null, 0, "Kestrel"))}
+        <p class="sheet-caption">A conversation under way comes first, with what's new marked</p>
+        ${panel(farlands.post, panelBody(farlands.post, farlands, 1, "Kestrel"))}
+        <p class="sheet-caption">An older post: its owner may no longer be looking</p>
+        ${panel(quill.post, panelBody(quill.post, quill, 1, "Kestrel"))}
+        <p class="sheet-caption">The menu, and blocking</p>
+        ${panel(nightOwls, blockHtml("Kestrel"), true)}
+        <p class="sheet-caption">Inbox rows, grouped by post, with unread marked and the open conversation raised</p>
+        <div class="sheet-inbox">${inbox}</div>
+        <p class="sheet-caption">A toast, with Undo where the action can be undone</p>
+        <div class="sheet-row"><div class="toast"><span class="toast-text">Danya is blocked.</span><button class="button button-text button-small" type="button">Undo</button></div></div>`;
 </script>
 </body>
 </html>

@@ -74,11 +74,11 @@ const ownerLine = post => {
 const actions = post => {
     if (post.bare) return "";
     if (post.own) {
-        return `<button class="button button-outline button-small" type="button">${icon("pencil")}Edit</button>
-            <button class="button button-outline button-small" type="button">${icon("refresh-cw")}Renew</button>`;
+        return `<button class="button button-outline button-small" type="button" data-card="edit">${icon("pencil")}Edit</button>
+            <button class="button button-outline button-small" type="button" data-card="renew">${icon("refresh-cw")}Renew</button>`;
     }
     if (post.messaged) {
-        return `<button class="button button-outline button-small" type="button">${icon("message-circle")}Open conversation</button>`;
+        return `<button class="button button-outline button-small card-contact" type="button">${icon("message-circle")}Open conversation</button>`;
     }
     const c = post.contact;
     return `<button class="button button-outline button-small card-contact" type="button">${icon(c.icon)}${escapeHtml(c.label)}</button>`;
