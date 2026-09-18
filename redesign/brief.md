@@ -695,6 +695,12 @@ context, so each field can be compared the way the pair of post types calls for.
   from it: from their player post if they have one, otherwise from their group or
   community post. Changing the description offers to update the post. That
   description isn't empty, so their own post leaves the feed (section 4).
+- **Proposed:** a viewer with a post of the chosen type in the game is never asked
+  to publish another. While the description says what that post says, the
+  publish prompt's place holds a muted line with no button: "Showing what fits
+  Night Owls, your group post." Once it differs, the prompt reads "Update Night
+  Owls with this" and its button **Update post** opens the post screen on the
+  post, with the description's fields in place of the post's.
 - **Proposed:** the bar is headed "Tell us about you", with a line saying that what
   fits comes first. Without it the chips read as ordinary filters, not as the
   viewer's own details.
@@ -932,6 +938,56 @@ first. A post of theirs that has expired says so and offers **Renew**.
 - **Decided:** a signed-in player with no posts gets the signed-out home page.
 - **Decided:** the rest of the account is the account page (11.5), reached from
   the account menu in the header (11.4).
+- **Proposed:** signed out, a line under "What are you posting?" says what the
+  site is: "Find players, groups and communities for the games you play. Post
+  once, and we'll tell you when someone new fits." The cover grid follows under
+  "Or browse a game".
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│ Your posts                                                              │
+│                                                                         │
+│ ┌───────┐  Kestrel  PLAYER                                              │
+│ │ cover │  Croatia · HR, EN · Mic · PvE, Building · Returning player    │
+│ │       │  ! Expires in 3 days · No conversations yet ·                 │
+│ │       │  Contacts shown 2 times                                       │
+│ └───────┘  [ See what fits ]  Edit  [ Renew ]                           │
+│            + New Valheim post                                           │
+│                                                                         │
+│ ┌───────┐  Night Owls  GROUP  ●●●○○ 3 of 5                              │
+│ │ cover │  Platinum – Diamond · Needs Lurker, Supporter · EU · EN, HR   │
+│ │       │  Active for 24 more days · 3 conversations ● 1 unread ·       │
+│ │       │  Contacts shown 14 times                                      │
+│ └───────┘  [ See what fits ]  Edit  Renew                               │
+│            + New Valorant post                                          │
+│ ─────────────────────────────────────────────────────────────────────── │
+│ Other games                                                             │
+│ [cover] [cover] [cover] [cover]                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+- **Proposed:** a post on the home page is its card's heading and fact line,
+  then its state, its conversations and how often its contacts were shown, then
+  **See what fits**, **Edit** and **Renew**. The owner's words stay off it: the
+  owner wrote them.
+- **Proposed:** the owner is the one player who knows a post expires, so the
+  state counts forward: "Active for 24 more days"; in its last week, when the
+  renewal email goes out, "Expires in 3 days" in full weight with an icon; after
+  that, "Expired 3 weeks ago", saying that it is listed under older posts and
+  that match emails are paused.
+- **Proposed:** **Renew** is plain text while the post is active and outlined in
+  its last week or once expired. The page has no filled button: no one of its
+  actions is the thing to do.
+- **Proposed:** the conversation count opens the inbox on the post's first
+  conversation with unread messages, in the inbox's order, or on its first
+  conversation when none are unread. Contact reveals read "Contacts shown 14
+  times", and are left out while there are none.
+- **Proposed:** a game's cover stands beside its posts with no title, their top
+  edges level: the logo on the cover names the game, and the cover opens its
+  feed. On a phone the cover is too small to read, so the name sits beside it,
+  above the posts. While the player lacks a post type in the game, "New
+  Valorant post" below the last post starts the flow at the type step with the
+  game known. Games keep the catalogue's order, so renewing doesn't move a post.
 
 ### 11.3 Notification list
 
@@ -1207,8 +1263,8 @@ What the brief's screens already call for; the prototypes settle their shape.
 
 | Area    | Components                                                                   |
 | ------- | ---------------------------------------------------------------------------- |
-| Card    | The card shell, fact line, match mark, slot pips, freshness label, the already-messaged mark |
-| Feed    | Type chooser (radio cards, also step 1 of posting), description bar with **More**, segmented control, publish prompt, tier heading, labelled divider, **Load more** |
+| Card    | The card shell, fact line, match mark, slot pips, freshness label, the already-messaged mark, the home page's own post with its state and counts |
+| Feed    | Type chooser (radio cards, also step 1 of posting), description bar with **More**, segmented control, publish prompt and its muted line for the viewer's own post, tier heading, labelled divider, **Load more** |
 | Inputs  | Pills for a field's few options, one or several; tokens for a few out of many, such as languages; select, range picker (rank, age), an hours range that crosses midnight, count stepper ("3 of 5"), checkbox, radio group, text area with prompts, an account fact with **Change** |
 | Overlay | Modal, side panel, full-screen sheet, dropdown                                |
 | Contact | Contact panel, contact row with **Copy**, message box, conversation thread, the unread line, the ⋯ menu with Report and Block |

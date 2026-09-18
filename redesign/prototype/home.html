@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>TeamTavern</title>
+    <link rel="preconnect" href="https://rsms.me/">
+    <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+    <link rel="stylesheet" href="tokens.css">
+    <link rel="stylesheet" href="base.css">
+    <link rel="stylesheet" href="components.css">
+    <link rel="stylesheet" href="prototype.css">
+    <style>
+        .home {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-8);
+            max-width: var(--feed-width);
+            margin: 0 auto;
+            padding: var(--space-8) var(--space-4) 96px;
+        }
+
+        .home-start,
+        .home-games {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-4);
+        }
+
+        .home-lead {
+            margin-top: calc(-1 * var(--space-2));
+            color: var(--text-muted);
+            font-size: var(--size-16);
+        }
+
+        .home-games {
+            padding-top: var(--space-8);
+            border-top: 1px solid var(--border);
+        }
+
+        /* A game the player has posts in: its cover on the left and the posts
+           beside it, their top edges level. The cover is the game's heading;
+           its logo names the game, and the name is there for screen readers.
+           On a phone the cover shrinks too small to read, so it sits beside
+           the name, and the posts take the full width below. */
+        .home-game {
+            display: grid;
+            grid-template-columns: 112px minmax(0, 1fr);
+            gap: var(--space-5);
+            align-items: start;
+        }
+
+        .home-game-cover {
+            display: block;
+            color: var(--text);
+        }
+
+        .home-game-cover img {
+            display: block;
+            width: 100%;
+            aspect-ratio: 2 / 3;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-card);
+            background: var(--raised);
+            object-fit: cover;
+        }
+
+        .home-game-cover:hover img {
+            border-color: var(--text-muted);
+        }
+
+        .home-game-name {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            clip-path: inset(50%);
+            white-space: nowrap;
+        }
+
+        .home-game-posts {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: var(--space-3);
+        }
+
+        .home-game-posts > .card {
+            align-self: stretch;
+        }
+
+        @media (max-width: 639px) {
+            .home {
+                gap: var(--space-6);
+            }
+
+            .home-game {
+                grid-template-columns: minmax(0, 1fr);
+                gap: var(--space-3);
+            }
+
+            .home-game-heading {
+                font-size: var(--size-16);
+            }
+
+            .home-game-cover {
+                display: flex;
+                align-items: center;
+                gap: var(--space-3);
+            }
+
+            .home-game-cover:hover {
+                color: var(--text);
+            }
+
+            .home-game-cover img {
+                width: 32px;
+                border-radius: var(--radius-small);
+            }
+
+            .home-game-name {
+                position: static;
+                width: auto;
+                height: auto;
+                overflow: visible;
+                clip-path: none;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="prototype-bar" id="prototype-bar"></div>
+<div id="header"></div>
+<main id="app"></main>
+
+<script src="icons.js"></script>
+<script src="prototype.js"></script>
+<script src="site.js"></script>
+<script src="conversations.js"></script>
+<script src="home.js"></script>
+</body>
+</html>

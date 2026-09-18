@@ -168,9 +168,46 @@ const renderSheet = () => `<div class="overlay" role="dialog" aria-modal="true" 
     <div class="overlay-footer"><button class="button button-primary" type="button" data-action="close-sheet">Show posts</button></div>
 </div>`;
 
+// The viewer's own post of the described type in this game, and whether the
+// description says what it says. Lists compare as sets, and empty values as
+// absent, since the bar and the post screen store them differently.
+const ownPostOfType = () => signedIn()
+    ? account.posts.find(p => p.game === GAME.handle && p.type === description.type && p.draft)
+    : undefined;
+
+const normalized = value =>
+    isEmpty(value) ? null
+    : Array.isArray(value) ? [...value].sort()
+    : typeof value === "object" ? Object.fromEntries(Object.entries(value).filter(([, v]) => !isEmpty(v)).sort())
+    : String(value);
+
+const describesPost = stored => {
+    const post = describedBy(stored.type, withPerson(stored.type, stored.draft, account));
+    return descriptionFields(stored.type).every(f =>
+        JSON.stringify(normalized(current()[f.key])) === JSON.stringify(normalized(post[f.key])));
+};
+
+// A viewer with a post of the type isn't asked to publish another (brief 7.1).
+// While the description says what the post says, the feed says whose post it
+// is showing what fits; once it differs, it offers to update the post.
+const renderOwnPostPrompt = stored => {
+    if (descriptionIsEmpty()) return "";
+    const player = stored.type === "player";
+    const name = player ? "" : escapeHtml(stored.draft.name || `${account.nickname}'s ${stored.type}`);
+    if (describesPost(stored)) {
+        return `<div class="publish-prompt publish-prompt-quiet">${icon(TYPES[stored.type].icon)}
+            <p>Showing what fits ${player ? "your player post" : `${name}, your ${stored.type} post`}.</p></div>`;
+    }
+    return `<div class="publish-prompt">${icon("flame")}
+        <p>Update ${player ? "your player post" : name} with this: ${player ? "groups and players" : "players"} who fit it find you, and we'll tell you when someone new does.</p>
+        <a class="button button-primary" data-action="publish" href="post.html?game=${GAME.handle}&type=${stored.type}&from=feed">Update post</a></div>`;
+};
+
 // The prompt follows a description that has something in it. A game with no
 // active posts shows it regardless, since that is all there is to do there.
 const renderPublishPrompt = () => {
+    const stored = ownPostOfType();
+    if (stored) return renderOwnPostPrompt(stored);
     const quiet = !POSTS.some(p => !p.expired);
     if (descriptionIsEmpty() && !quiet) return "";
     const who = description.type === "player" ? "groups and players can find you too" : "players can find you too";

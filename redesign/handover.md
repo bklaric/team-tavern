@@ -58,6 +58,26 @@ Decided/Proposed/Open statuses are kept current as things settle.
   - The prototype's accounts post too: Kestrel's Night Owls is in the Valorant
     feed, with **Edit** and **Renew** for Kestrel and a contact button for
     everyone else, and whatever a viewer publishes joins its game's feed.
+- **Home page** (brief 11.2): `home.html`, where the logo leads. Signed out, or
+  signed in without a post, it is "What are you posting?" with the type cards,
+  then the cover grid into each game's feed. With posts it is the player's
+  posts by game, each with its state, conversations and contact reveals, and
+  **See what fits**, **Edit** and **Renew**; the other games follow. Settled
+  while building it, Proposed in the brief:
+  - A post there is its card's heading and facts without the owner's words.
+  - The state counts forward for the owner: active for so many more days,
+    "Expires in 3 days" in its last week, then expired, with what that means.
+  - Renew is outlined only in the last week or once expired; the page has no
+    filled button.
+  - The conversation count opens the inbox on the post's first unread
+    conversation, in the inbox's order, else on its first conversation.
+  - A game's cover stands beside its posts without a title, top edges level;
+    on a phone the name sits beside the shrunken cover. Games keep the
+    catalogue's order, so renewing doesn't move a post, and a game without all
+    three of the player's types offers a new post for it below the last.
+  - A feed whose description comes from the viewer's own post of that type
+    says so in a muted line, and offers **Update post** once the description
+    differs, never Publish post.
 
 ## Files
 
@@ -65,13 +85,14 @@ Decided/Proposed/Open statuses are kept current as things settle.
 | --- | --- |
 | `tokens.css`, `base.css`, `components.css` | The system: these become the new `Client/Style` |
 | `prototype.css` | The prototype bar and stand-ins: not part of the system |
-| `prototype.js` | `renderCard(post, marked)` and the shared helpers (icons, facts, slots) |
-| `site.js` | What every page shares: the clock, games, the accounts the bar switches between, the conversation, block and report store that stands in for the server, the header, the prototype bar and toasts |
+| `prototype.js` | `renderCard(post, marked)`, `renderOwnPost(post)` and the shared helpers (icons, facts, slots) |
+| `site.js` | What every page shares: the clock, games, the type cards, the accounts the bar switches between, the conversation, block, report and contact reveal store that stands in for the server, the header, the prototype bar and toasts |
 | `game.js` | One game's data and what the pages derive from it: game fields, posts (the dump's and the accounts'), made-up contacts, game extras (Riot ID, community kinds), `compare(post, type, description)`, `toCard`, and the field editors |
 | `feed.js` | Feed only: the description, tiers, the bar and the phone sheet |
 | `post.js` | Post creation, and the site's one sign-up screen |
 | `messaging.js` | The contact panel, the conversation thread, inbox rows, block and report |
 | `messages.js` | The inbox page |
+| `home.js` | The home page |
 | `conversations.js` | Handwritten conversations the store starts with; nobody in them is from the dump |
 | `fixtures.js` | Handwritten posts for the sheet; production content stays out of the repo |
 | `export-sample.sh` + `.sql` | Writes `data/<handle>.js` from the dev database (git-ignored). Valorant, Valheim, LoL and Apex are exported |
@@ -92,6 +113,14 @@ Decided/Proposed/Open statuses are kept current as things settle.
 - With a conversation open, **Reply as** the other side answers it. Dashed
   "Stand-in" toasts say what the site does offstage, such as whether a message
   sends an email (brief 10).
+- Kestrel has a post in each state: Night Owls, active; a Valheim player post in
+  its last week; and an expired Dota 2 player post. Dota 2 has no sample, so
+  that post's See what fits and Edit reach the "No sample" page. Each post
+  keeps a copy of its card from when it was published, since the home page
+  spans games and `game.js` holds one.
+- Contact reveals start from made-up counts, and every contact panel opened
+  on a post with contacts adds one, so Vex opening Night Owls' panel shows on
+  Kestrel's home page.
 - Kestrel's inbox has something of every kind: an unread reply, a conversation
   in Russian, one on an expired Dota 2 post, a community with join links, and an
   older post nobody answered. The dump records only whether a contact exists,
@@ -110,9 +139,13 @@ Decided/Proposed/Open statuses are kept current as things settle.
 
 ## Not yet prototyped
 
-Notifications (11.3), the home page (11.2), the header's Games and account menus
-(11.4), the account page (11.5), where blocked players are listed and unblocked,
-and post pages (11.1), which the contact panel also opens from.
+Notifications (11.3), the header's Games and account menus (11.4), the account
+page (11.5), where blocked players are listed and unblocked, and post pages
+(11.1), which the contact panel and the home page's post names also open from.
+
+A feed doesn't yet prefill the description from the viewer's post in the game
+on a first visit (brief 7.1); it takes one only through See what fits or
+Matches.
 
 The game catalogue is stale (Splitgate is dead, CS:GO becomes CS2) and is to be
 handled separately.

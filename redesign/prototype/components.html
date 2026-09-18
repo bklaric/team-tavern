@@ -180,6 +180,12 @@
     </section>
 
     <section>
+        <h2>Your posts</h2>
+        <p class="sheet-note">The home page shows a player's own posts with their state and what they have produced. Renew is outlined once a post is in its last week or has expired; before that it is plain text.</p>
+        <div id="own-posts"></div>
+    </section>
+
+    <section>
         <h2>Posting</h2>
         <p class="sheet-note">The type chooser as posting's first step, and the controls of the post screen. A chosen pill takes the text color, not ember: it is an answer, not a call to act.</p>
         <div id="posting"></div>
@@ -267,10 +273,7 @@
         <button type="button" aria-label="More"${value >= max ? " disabled" : ""}>${icon("plus")}</button></div>`;
     $("posting").innerHTML = `
         <p class="sheet-caption">Type chooser</p>
-        <div class="type-cards">
-            <a class="type-card" href="#">${icon("user")}<span class="type-card-text"><span class="type-card-title">I'm a player looking for a group</span><span class="type-card-example">Groups, communities and other players find you</span></span>${icon("chevron-right")}</a>
-            <a class="type-card" href="#">${icon("users")}<span class="type-card-text"><span class="type-card-title">We're a group looking for players</span><span class="type-card-example">“Three of us play most nights, need a fifth”</span><span class="type-card-mine">You have one for Valorant</span></span>${icon("chevron-right")}</a>
-        </div>
+        ${typeCardsHtml(() => "#", type => type === "group" ? "You have one for Valorant" : "")}
         <p class="sheet-caption">Pills, several or one</p>
         <div class="pills">${pill("In-game leader")}${pill("Lurker", true)}${pill("Supporter", true)}</div>
         <div class="pills" style="margin-top: 8px">${pill("Dedicated server", true, "radio")}${pill("Discord server", false, "radio")}${pill("Clan", false, "radio")}</div>
@@ -307,6 +310,17 @@
             <div class="confirm-actions"><button class="button button-destructive" type="button">${icon("trash-2")}Delete post</button><button class="button button-text" type="button">Keep it</button></div></div>
         <p class="sheet-caption">Or, between two ways to do one thing</p>
         <div class="rule">or</div>`;
+
+    const ownPost = (post, rest) => ({
+        fitsHref: "#", editHref: "#", conversationsHref: "#", conversations: 0, reveals: 0, ...post, ...rest,
+    });
+    $("own-posts").innerHTML = [
+        ["Active, with an unread conversation", ownPost({ id: "own-1", type: "group", name: "Night Owls", ...NIGHT_OWLS_CARD },
+            { days: 24, conversations: 3, unread: 1, reveals: 14 })],
+        ["In its last week", ownPost({ id: "own-2", type: "player", name: "Kestrel", ...VALHEIM_DUO_CARD }, { days: 3, reveals: 2 })],
+        ["Expired", ownPost({ id: "own-3", type: "player", name: "Kestrel", ...KESTREL_DOTA_CARD },
+            { days: -24, expired: true, expiredAgo: "3 weeks ago", conversations: 1, reveals: 9 })],
+    ].map(([caption, post]) => `<p class="sheet-caption">${caption}</p>${renderOwnPost(post)}`).join("");
 
     const conversation = id => CONVERSATION_FIXTURES.find(c => c.id === id);
     const panel = (post, body, menu) => `<div class="overlay contact-panel sheet-panel">${panelInnerHtml(post, body, menu)}</div>`;

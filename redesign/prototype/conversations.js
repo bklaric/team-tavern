@@ -14,16 +14,8 @@ const NIGHT_OWLS_POST = {
     name: "Night Owls",
     owner: "Kestrel",
     updated: "2026-09-06T19:12:00Z",
-    slots: { members: 3, total: 5 },
-    facts: [
-        { text: "Platinum – Diamond" },
-        { text: "Needs Lurker, Supporter" },
-        { text: "EU" },
-        { text: "EN, HR" },
-        { icon: "mic", label: "Microphone required" },
-        { text: "Ages 18+" },
-        { text: "Competitive" },
-    ],
+    slots: NIGHT_OWLS_CARD.slots,
+    facts: NIGHT_OWLS_CARD.facts,
     reach: "message",
     contacts: [
         { label: "Discord", value: "kestrel" },
@@ -38,7 +30,7 @@ const KESTREL_DOTA_POST = {
     name: "Kestrel",
     owner: "Kestrel",
     updated: "2026-07-20T17:40:00Z",
-    facts: [{ text: "Legend 2" }, { text: "Soft support, Hard support" }, { text: "Croatia" }, { text: "HR, EN" }],
+    facts: KESTREL_DOTA_CARD.facts,
     reach: "offsite",
     contacts: [
         { label: "Discord", value: "kestrel" },
