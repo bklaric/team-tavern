@@ -103,6 +103,7 @@ team_posts as (
 select json_build_object(
     'handle', (select handle from this_game),
     'title', (select title from this_game),
+    'platforms', (select platforms from this_game),
     'now', :'now',
     'locations', (
         select json_agg(json_build_object('name', continents.name, 'continent', continents.continent) order by continents.name)

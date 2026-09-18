@@ -267,6 +267,11 @@ sense, with options of its own. Each field takes one option or several, as suits
 the field. A game field such as server region is the same field on all three
 post types.
 
+**Proposed:** platform's options are what a player plays on, not where they bought
+the game: PC, PlayStation, Xbox, Switch. A post picks every platform it plays on,
+all of them for a crossplay community. A game on one platform has no platform
+field. Where a game has one, it is on all three cards, after the languages.
+
 **Decided:** a player gives their location; a group or community gives the
 regions of the players it is looking for. Every location maps to a region, which
 is how the two are compared (7.2).
@@ -371,8 +376,8 @@ experience level are facts like any other, in the fact line or behind Details
 
 | Type      | On the card                                                        | Behind Details                                                            |
 | --------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------- |
-| Player    | Rank, roles, location, language, microphone, Looking for | Age, online hours, remaining game fields, trackers                  |
-| Group     | Open slots, needed roles, rank range, regions, language, microphone, ages | Online hours, remaining game fields               |
+| Player    | Rank, roles, location, language, platform, microphone, Looking for | Age, online hours, remaining game fields, trackers        |
+| Group     | Open slots, needed roles, rank range, regions, language, platform, microphone, ages | Online hours, remaining game fields     |
 | Community | Kind, regions, language, platform, Looking for, experience level   | Remaining game fields, the rest of the pitch                              |
 
 ### 5.5 Free text and "Looking for"
@@ -1009,6 +1014,7 @@ Account menu
 | Team with no profile (1,200)       | Nothing                                      |
 | Team name, website, Discord server | Fields on the group or community post        |
 | About and ambitions                | Joined into the one text field               |
+| Platforms (Steam, Origin, ...)     | Platform, every PC store as PC               |
 | Alert                              | Nothing, or a post for its owner (open)      |
 
 - **Open:** existing alerts come from anonymous emails and have no place in the new

@@ -11,6 +11,7 @@ const BATCH = 20;
 // Which of today's game fields play the parts the brief gives them. Games not
 // listed have no rank, roles or Looking for, and show every field under Details.
 const GAME_ROLES = {
+    apex: { rank: "battle-royale-rank", lookingFor: "interest", groupSize: 3 },
     valorant: { rank: "rank", roles: "role", lookingFor: "interest", groupSize: 5 },
     lol: { rank: "rank", roles: "role", lookingFor: "interest", groupSize: 5 },
     valheim: { lookingFor: "server-focus", server: true },
@@ -54,6 +55,20 @@ const optionLabel = (key, value) => {
 const rankIndex = value => gameOptions(ROLES.rank).findIndex(o => o.value === value);
 const rankLabel = index => (gameOptions(ROLES.rank)[index] || {}).label;
 const valuesOf = (raw, key) => (key && raw.fields && raw.fields[key]) || [];
+
+// Platforms. Today's are stores as much as devices; the brief's platform is what
+// a player plays on, so every PC store is one option. A game on one platform has
+// no platform field (brief 5).
+const PLATFORM_OF = {
+    steam: "pc", origin: "pc", riot: "pc", "battle.net": "pc", "ubisoft-connect": "pc",
+    playstation: "playstation", xbox: "xbox", switch: "switch",
+};
+const PLATFORM_LABELS = { pc: "PC", playstation: "PlayStation", xbox: "Xbox", switch: "Switch" };
+const platformsOf = stored => [...new Set(stored.map(p => PLATFORM_OF[p]))];
+const platformOptions = (platforms => platforms.length > 1
+    ? platforms.map(p => ({ value: p, label: PLATFORM_LABELS[p] }))
+    : [])(platformsOf(GAME.platforms || []));
+const knownPlatforms = values => platformOptions.map(o => o.value).filter(p => (values || []).includes(p));
 
 // Time. Online hours are stored in the owner's timezone and shown in the
 // viewer's (brief 5).
@@ -188,6 +203,7 @@ const normalize = raw => {
         rankRange: raw.type !== "player" && ranks.length ? [Math.min(...ranks), Math.max(...ranks)] : undefined,
         roles: valuesOf(raw, ROLES.roles),
         lookingFor: valuesOf(raw, ROLES.lookingFor),
+        platforms: knownPlatforms(platformsOf(raw.platforms || [])),
         otherFields,
         text,
         returning: raw.new_or_returning,
@@ -215,11 +231,13 @@ const descriptionFields = type => {
     const lookingFor = ROLES.lookingFor && { key: "lookingFor", label: "Looking for", kind: "multi", options: gameOptions(ROLES.lookingFor) };
     const languages = { key: "languages", label: "Languages", kind: "multi", options: languageOptions };
     const regions = { key: "regions", label: "Regions", kind: "multi", options: regionOptions };
+    const platforms = platformOptions.length && { key: "platforms", label: "Platform", kind: "multi", options: platformOptions };
     const hours = { key: "hours", label: "Usually online", kind: "hours", more: true };
     const fields = {
         player: [
             ROLES.rank && { key: "rank", label: "Rank", kind: "single", options: gameOptions(ROLES.rank) },
             ROLES.roles && { key: "roles", label: "Roles", kind: "multi", options: gameOptions(ROLES.roles) },
+            platforms,
             { key: "location", label: "Location", kind: "select", options: locationOptions },
             languages,
             { key: "age", label: "Age", kind: "number" },
@@ -230,6 +248,7 @@ const descriptionFields = type => {
         group: [
             ROLES.roles && { key: "roles", label: "Roles you need", kind: "multi", options: gameOptions(ROLES.roles) },
             ROLES.rank && { key: "rankRange", label: "Rank range", kind: "rankRange", options: gameOptions(ROLES.rank) },
+            platforms,
             regions,
             languages,
             { key: "ageRange", label: "Ages", kind: "ageRange" },
@@ -237,7 +256,7 @@ const descriptionFields = type => {
             hours,
             { key: "mic", label: "Microphone", kind: "toggle", toggleLabel: "Microphone required", more: true },
         ],
-        community: [regions, languages, lookingFor],
+        community: [regions, languages, platforms, lookingFor],
     };
     return fields[type].filter(Boolean);
 };
@@ -292,6 +311,7 @@ const compare = (post, type, d) => {
     const shared = () => {
         check("languages", has(d.languages), post.languages.length, () => overlaps(d.languages, post.languages));
         check("lookingFor", has(d.lookingFor), post.lookingFor.length, () => overlaps(d.lookingFor, post.lookingFor));
+        check("platforms", has(d.platforms), post.platforms.length, () => overlaps(d.platforms, post.platforms));
     };
 
     if (type === "player") {
@@ -345,7 +365,7 @@ const agesText = (from, to) =>
 
 const missingText = (key, post) => ({
     rank: "Rank", roles: "Roles", needs: "Roles needed", languages: "Languages",
-    hours: "Online hours", age: "Age", ages: "Ages", lookingFor: "Looking for",
+    hours: "Online hours", age: "Age", ages: "Ages", lookingFor: "Looking for", platforms: "Platform",
     location: post.type === "player" ? "Location" : "Regions",
 })[key] + " not given";
 
@@ -378,7 +398,7 @@ const toCard = (post, m) => {
         slot("location", post.regions.length, { text: regions });
     }
     slot("languages", post.languages.length, { text: post.languages.map(languageCode).join(", ") });
-    slot(null, post.platforms && post.platforms.length, { text: (post.platforms || []).join(", ") });
+    slot("platforms", post.platforms.length, { text: post.platforms.map(p => PLATFORM_LABELS[p]).join(", ") });
     if (post.mic && post.type !== "community") {
         facts.push({ icon: "mic", label: post.type === "group" ? "Microphone required" : "Microphone", match: match("mic") });
     } else if (m.mic === "miss") {
