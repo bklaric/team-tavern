@@ -114,6 +114,5 @@ Notifications (11.3), the home page (11.2), the header's Games and account menus
 (11.4), the account page (11.5), where blocked players are listed and unblocked,
 and post pages (11.1), which the contact panel also opens from.
 
-The post creation work is committed; contact and messaging and this handover
-aren't. The game catalogue is stale too (Splitgate is dead, CS:GO becomes CS2)
-and is to be handled separately.
+The game catalogue is stale (Splitgate is dead, CS:GO becomes CS2) and is to be
+handled separately.
