@@ -7,36 +7,16 @@ const HANDLE = query.get("game");
 const POST_TYPE = TYPES[query.get("type")] ? query.get("type") : null;
 const HAS_DATA = typeof FEED_DATA !== "undefined";
 const STEP = query.get("step") || (!POST_TYPE ? "type" : !HANDLE ? "game" : "post");
+// A sign-up asked for from elsewhere, such as a contact panel, returns there
+// (brief 6, step 4). TO names whom the player wanted to contact.
+const NEXT = query.get("next");
+const TO = query.get("to");
 
 const url = changes => {
-    const next = new URLSearchParams();
-    Object.entries({ game: HANDLE, type: POST_TYPE, ...changes }).forEach(([k, v]) => { if (v) next.set(k, v); });
-    return `post.html?${next}`;
+    const params = new URLSearchParams();
+    Object.entries({ game: HANDLE, type: POST_TYPE, next: NEXT, to: TO, ...changes }).forEach(([k, v]) => { if (v) params.set(k, v); });
+    return `post.html?${params}`;
 };
-
-const readJson = (key, fallback) => {
-    try {
-        return JSON.parse(localStorage.getItem(key)) ?? fallback;
-    } catch {
-        return fallback;
-    }
-};
-
-const GAMES = [
-    { handle: "apex", title: "Apex Legends" },
-    { handle: "csgo", title: "Counter Strike: Global Offensive" },
-    { handle: "dota2", title: "Dota 2" },
-    { handle: "hots", title: "Heroes of the Storm" },
-    { handle: "lol", title: "League of Legends" },
-    { handle: "overwatch", title: "Overwatch" },
-    { handle: "r6s", title: "Rainbow Six: Siege" },
-    { handle: "splitgate", title: "Splitgate" },
-    { handle: "tf2", title: "Team Fortress 2" },
-    { handle: "valheim", title: "Valheim" },
-    { handle: "valorant", title: "Valorant" },
-];
-const gameTitle = handle => (GAMES.find(g => g.handle === handle) || { title: handle }).title;
-const coverOf = handle => `../../src/TeamTavern/Client/Static/Images/Games/${handle}.webp`;
 
 // The type step uses the feed's words for each type (brief 6, step 1).
 const POST_TYPES = {
@@ -70,124 +50,14 @@ const POST_TYPES = {
 };
 const PLURAL = { player: "players", group: "groups", community: "communities" };
 
-// What the brief makes game fields that today's data lacks, made up for the
-// prototype: the game account players add each other by and a community's
-// kinds. Trackers are the seed's: each links a profile built from the game
-// account.
-const GAME_EXTRAS = {
-    apex: {
-        account: { key: "ea", label: "EA ID", placeholder: "Your EA ID" },
-        trackers: [
-            { title: "tracker.gg", url: id => `https://tracker.gg/apex/profile/origin/${encodeURIComponent(id)}` },
-        ],
-        kinds: ["Discord server", "Clan", "Esports organization"],
-    },
-    valorant: {
-        account: { key: "riot", label: "Riot ID", placeholder: "Name#TAG" },
-        trackers: [
-            { title: "tracker.gg", url: id => `https://tracker.gg/valorant/profile/riot/${encodeURIComponent(id)}` },
-            { title: "blitz.gg", url: id => `https://blitz.gg/valorant/profile/${id.replace("#", "-")}` },
-        ],
-        kinds: ["Discord server", "Clan", "Esports organization"],
-    },
-    lol: {
-        account: { key: "riot", label: "Riot ID", placeholder: "Name#TAG" },
-        kinds: ["Discord server", "Clan", "Esports organization"],
-    },
-    valheim: {
-        account: { key: "steam", label: "Steam profile", placeholder: "steamcommunity.com/id/…" },
-        kinds: ["Dedicated server", "Discord server", "Clan"],
-    },
-};
-const EXTRAS = GAME_EXTRAS[HANDLE] || {
-    account: { key: "steam", label: "Steam profile", placeholder: "steamcommunity.com/id/…" },
-    kinds: ["Discord server", "Clan"],
-};
 const EXPERIENCE = ["New players welcome", "All experience levels", "Experienced players"];
 
-// Accounts. The prototype bar switches between these; registering makes a new one.
-
-const NIGHT_OWLS = {
-    name: "Night Owls",
-    members: 3,
-    total: 5,
-    roles: ["lurker", "supporter"],
-    rankRange: { from: "platinum", to: "diamond" },
-    regions: ["Europe"],
-    languages: ["English", "Croatian"],
-    mic: true,
-    ageRange: { from: "18" },
-    lookingFor: ["competitive"],
-    text: "Three friends who play most nights, we want to stop solo queuing for the last two spots. No tilt, comms on, we review our losses on Sundays.",
-    reach: "message",
-    hours: { from: "21:00", to: "01:00" },
-};
-
-const PRESETS = {
-    kestrel: {
-        id: "kestrel",
-        nickname: "Kestrel",
-        email: "kestrel@example.com",
-        location: "Croatia",
-        languages: ["Croatian", "English"],
-        birthday: "1998-04-12",
-        timezone: "Europe/Zagreb",
-        discord: "kestrel",
-        accounts: { riot: "Kestrel#EUW" },
-        unread: { messages: 2, notifications: 3 },
-        posts: [
-            { game: "valorant", type: "group", conversations: 3, updated: "2026-09-06T19:12:00Z", draft: NIGHT_OWLS },
-            { game: "dota2", type: "player", conversations: 1, updated: "2026-08-30T17:40:00Z" },
-        ],
-    },
-    vex: {
-        id: "vex",
-        nickname: "Vex",
-        email: "vex@example.com",
-        discord: "vex.omen",
-        accounts: {},
-        posts: [],
-    },
-};
-
-const ACCOUNT_KEY = "tt-proto-account";
-let account = readJson(ACCOUNT_KEY, null);
-const saveAccount = () => localStorage.setItem(ACCOUNT_KEY, JSON.stringify(account));
-const useAccount = id => {
-    account = id === "out" ? null : structuredClone(PRESETS[id]);
-    saveAccount();
-};
-
-// Switching accounts from the prototype bar starts every draft over, as signing
-// out would.
-const switchAccount = id => {
-    Object.keys(localStorage).filter(k => k.startsWith("tt-draft-")).forEach(k => localStorage.removeItem(k));
-    useAccount(id);
-};
-
-if (query.get("as")) {
-    switchAccount(query.get("as"));
-    query.delete("as");
-    history.replaceState(null, "", `post.html?${query}`);
-}
-
-// Signing up with Discord makes an account without a nickname; the register
-// step asks for one.
-const signedIn = () => !!(account && account.nickname);
 const existing = () => account && account.posts.find(p => p.game === HANDLE && p.type === POST_TYPE);
 const otherPosts = () => account ? account.posts.filter(p => p !== existing()) : [];
 
-// Facts about the player and their contacts live on the account, and posts show
-// them as the account has them now (brief 6, step 3).
-const accountFacts = () => ({
-    player: ["location", "languages", "birthday", "timezone", "discord", "gameAccount"],
-    group: ["timezone", "discord", "gameAccount"],
-    community: [],
-})[POST_TYPE];
-
-const accountValue = key => !account ? undefined
-    : key === "gameAccount" ? (account.accounts || {})[EXTRAS.account.key]
-    : account[key];
+// Facts about the player and their contacts live on the account (game.js).
+const accountFacts = () => ACCOUNT_FACTS[POST_TYPE];
+const accountValue = key => account ? accountFactOf(account, key) : undefined;
 
 const setAccountValue = (key, value) => {
     if (key === "gameAccount") account.accounts = { ...account.accounts, [EXTRAS.account.key]: value };
@@ -250,21 +120,6 @@ let previewExpanded = false;
 let confirmingDelete = false;
 let overlay = query.get("sheet");
 const previewMode = () => localStorage.getItem("tt-proto-preview") || "sheet";
-
-// Dates and ages. The dump's date is now, as in the feed.
-
-const ageAt = birthday => {
-    if (!birthday) return undefined;
-    const born = new Date(birthday);
-    const months = NOW.getUTCMonth() - born.getUTCMonth();
-    const beforeBirthday = months < 0 || (months === 0 && NOW.getUTCDate() < born.getUTCDate());
-    const age = NOW.getUTCFullYear() - born.getUTCFullYear() - (beforeBirthday ? 1 : 0);
-    return age > 0 && age < 120 ? age : undefined;
-};
-
-// Month names are in the site's language; the order of day and month follows
-// the viewer's locale where it is an English one.
-const DATE_LOCALE = navigator.language.startsWith("en") ? navigator.language : "en-GB";
 
 const formatDate = value =>
     new Date(value).toLocaleDateString(DATE_LOCALE, { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
@@ -376,19 +231,15 @@ const contactFields = () => POST_TYPE === "community"
         ] : []),
     ];
 
-// The game's fields the screen doesn't already ask for by name. A community
-// isn't asked for rank or roles, so for one they are among them.
-const otherGameFields = () => {
-    const named = POST_TYPE === "community" ? [ROLES.lookingFor] : [ROLES.rank, ROLES.roles, ROLES.lookingFor];
-    return GAME.fields.filter(f => !named.includes(f.key)).map(f => ({
-        key: `field:${f.key}`,
-        gameField: f.key,
-        label: f.label,
-        kind: f.ilk === "single" && POST_TYPE === "player" ? "choose" : "pills",
-        options: gameOptions(f.key),
-        placeholder: `Choose your ${f.label.toLowerCase()}`,
-    }));
-};
+// The game's fields the screen doesn't already ask for by name.
+const otherGameFields = () => otherGameFieldsOf(POST_TYPE).map(f => ({
+    key: `field:${f.key}`,
+    gameField: f.key,
+    label: f.label,
+    kind: f.ilk === "single" && POST_TYPE === "player" ? "choose" : "pills",
+    options: gameOptions(f.key),
+    placeholder: `Choose your ${f.label.toLowerCase()}`,
+}));
 
 const timeFields = () => [
     { key: "hours", label: "Usually online", kind: "hours" },
@@ -402,74 +253,8 @@ const fieldByKey = key => allFields().find(f => f.key === key);
 // the browser's.
 const valueOf = f => f.key === "timezone" ? draft.timezone || VIEWER_TZ : draft[f.key];
 
-// The card a draft makes: the post in the shape toCard takes, as the feed
-// would show it.
-
-const rankRangeOf = range => {
-    if (!range || (!range.from && !range.to)) return undefined;
-    const from = range.from ? rankIndex(range.from) : 0;
-    const to = range.to ? rankIndex(range.to) : gameOptions(ROLES.rank).length - 1;
-    return [Math.min(from, to), Math.max(from, to)];
-};
-
-const contactButton = d => {
-    if (POST_TYPE === "community") {
-        if (d.join === "discord") return { label: "Join Discord", icon: "discord" };
-        if (d.join === "website") return { label: "Visit site", icon: "external-link" };
-        return { label: "Message", icon: "message-circle" };
-    }
-    if (d.reach === "offsite") {
-        return d.discord ? { label: "Add on Discord", icon: "discord" } : { label: "Add in game", icon: "gamepad-2" };
-    }
-    if (d.reach === "either") return { label: "Contact", icon: "message-circle" };
-    return { label: "Message", icon: "message-circle" };
-};
-
-const postOf = (d, owner, updated) => {
-    const type = POST_TYPE;
-    const named = (d.name || "").trim();
-    const name = type === "player" ? owner || "You"
-        : named || (owner ? undefined : type === "group" ? "Your group" : "Your community");
-    const otherFields = otherGameFields().filter(f => has(d[f.key])).map(f => ({
-        label: f.label,
-        value: [].concat(d[f.key]).map(v => optionLabel(f.gameField, v)).join(", "),
-    }));
-    return {
-        id: "draft",
-        type,
-        name,
-        owner,
-        freshness: updated ? `Active ${ago(new Date(updated))}` : "Active just now",
-        expired: false,
-        age: type === "player" ? ageAt(d.birthday) : undefined,
-        ageFrom: Number((d.ageRange || {}).from) || undefined,
-        ageTo: Number((d.ageRange || {}).to) || undefined,
-        location: d.location,
-        region: CONTINENT_OF[d.location],
-        regions: d.regions || [],
-        languages: d.languages || [],
-        hours: d.hours && d.hours.from && d.hours.to ? { from: toMinutes(d.hours.from), to: toMinutes(d.hours.to) } : null,
-        mic: !!d.mic,
-        rank: type === "player" && d.rank ? rankIndex(d.rank) : undefined,
-        rankRange: type === "group" ? rankRangeOf(d.rankRange) : undefined,
-        roles: type === "community" ? [] : d.roles || [],
-        lookingFor: d.lookingFor || [],
-        otherFields,
-        text: (d.text || "").trim(),
-        returning: type === "player" && d.returning,
-        organized: type === "group" && d.organized,
-        kind: type === "community" ? d.kind : undefined,
-        experience: type === "community" ? d.experience : undefined,
-        platforms: knownPlatforms(d.platforms),
-        contact: contactButton(d),
-        slots: type !== "group" ? undefined
-            : ROLES.server ? { wants: d.wantsFrom === d.wantsTo ? `${d.wantsFrom}` : `${d.wantsFrom}–${d.wantsTo}` }
-            : { members: d.members, total: d.total },
-        trackers: type === "player" && d.gameAccount && EXTRAS.trackers
-            ? EXTRAS.trackers.map(t => ({ title: t.title, url: t.url(d.gameAccount) }))
-            : [],
-    };
-};
+// The card a draft makes, as the feed would show it (game.js).
+const postOf = (d, owner, updated) => draftPost(POST_TYPE, d, owner, updated);
 
 // Until the player has registered, the preview reads "Posted by you".
 const previewCard = () => renderCard({
@@ -611,41 +396,15 @@ const fieldHtml = f => {
 
 // The page around the steps.
 
-const headerHtml = () => {
-    const unread = (account && account.unread) || {};
-    const count = n => n ? `<span class="badge" aria-hidden="true">${n}</span>` : "";
-    const right = signedIn()
-        ? `<a class="icon-button header-count" href="#" aria-label="Messages${unread.messages ? `, ${unread.messages} unread` : ""}">${icon("mail")}${count(unread.messages)}</a>
-           <a class="icon-button header-count" href="#" aria-label="Notifications${unread.notifications ? `, ${unread.notifications} new` : ""}">${icon("bell")}${count(unread.notifications)}</a>
-           <button class="avatar" type="button" aria-label="Account menu">${escapeHtml(account.nickname[0].toUpperCase())}</button>`
-        : `<a class="button button-text button-small" href="${POST_TYPE && HANDLE ? url({ step: "register", mode: "signin" }) : "#"}">Sign in</a>
-           <a class="button button-text button-small hide-phone" href="#">Sign up</a>`;
-    return `<header class="site-header"><div class="site-header-inner">
-        <a class="logo" href="#">${icon("flame")}<span class="logo-word">TeamTavern</span></a>
-        <button class="button button-text" type="button">Games${icon("chevron-down")}</button>
-        <div class="site-header-actions">
-            <a class="button button-outline button-small" href="post.html" aria-label="New post">${icon("plus")}<span${signedIn() ? " class=\"hide-phone\"" : ""}>New post</span></a>
-            ${right}
-        </div>
-    </div></header>`;
-};
+// Signed out, Sign in on the post flow keeps the draft through it.
+const pageHeaderOptions = () => (POST_TYPE && HANDLE && !NEXT ? { signInHref: url({ step: "register", mode: "signin" }) } : {});
 
-const prototypeBarHtml = () => {
-    const as = !account ? "out" : account.id;
-    const option = (value, label) => `<option value="${value}"${as === value ? " selected" : ""}>${label}</option>`;
+const pageBarExtras = () => {
     const preview = previewMode();
-    return `<strong>Prototype</strong>
-        <label>Viewing as <select data-proto="as">
-            ${option("out", "Signed out")}
-            ${option("kestrel", "Kestrel, who has a Valorant group post")}
-            ${option("vex", "Vex, before a first post")}
-            ${as === "new" ? option("new", `${escapeHtml(account.nickname || account.discordName)}, just signed up`) : ""}
-        </select></label>
-        ${STEP === "post" ? `<label>Preview below desktop <select data-proto="preview">
-            <option value="sheet"${preview === "sheet" ? " selected" : ""}>On demand</option>
-            <option value="top"${preview === "top" ? " selected" : ""}>Above the fields</option>
-        </select></label>` : ""}
-        <button type="button" data-proto="reset">Start over</button>`;
+    return STEP === "post" ? `<label>Preview below desktop <select data-proto="preview">
+        <option value="sheet"${preview === "sheet" ? " selected" : ""}>On demand</option>
+        <option value="top"${preview === "top" ? " selected" : ""}>Above the fields</option>
+    </select></label>` : "";
 };
 
 const contextHtml = () => `<div class="step-context">
@@ -713,7 +472,7 @@ const renderExisting = () => {
         ${existingCard(post)}
         ${confirmingDelete ? `<div class="confirm" role="alertdialog" aria-labelledby="confirm-title" aria-describedby="confirm-text">
             <h3 id="confirm-title">Delete ${escapeHtml(name)}?</h3>
-            <p id="confirm-text">${conversationsText(post.conversations)}</p>
+            <p id="confirm-text">${conversationsText(conversationsOfPost(postId(account, post)).length)}</p>
             <div class="confirm-actions">
                 <button class="button button-destructive" type="button" data-action="confirm-delete">${icon("trash-2")}Delete post</button>
                 <button class="button button-text" type="button" data-action="cancel-delete">Keep it</button>
@@ -772,12 +531,19 @@ const regField = (name, label, type, autocomplete, hint) => `<div class="field${
 
 const registerMode = () => account && !account.nickname ? "nickname" : query.get("mode") || "signup";
 
+// Where the player goes once signed in: back where they came from, or on with
+// the post.
+const leave = () => {
+    location.href = NEXT;
+};
+
 const renderRegister = () => {
     if (signedIn()) {
-        location.replace(url({ step: null }));
+        location.replace(NEXT || url({ step: null }));
         return "";
     }
     const mode = registerMode();
+    if (NEXT) return renderSignUp(mode);
     const post = `${gameTitle(HANDLE)} ${POST_TYPE} post`;
     const discord = `<button class="button button-outline" type="button" data-action="discord-signup" style="width: 100%">${icon("discord")}Continue with Discord</button>
         <div class="rule">or</div>`;
@@ -815,6 +581,53 @@ const renderRegister = () => {
             ${regField("nickname", "Nickname", "text", "nickname", "Shown on your posts.")}
             ${regField("password", "Password", "password", "new-password", "At least 8 characters.")}
             <button class="button button-primary" type="submit">Create account and publish</button>
+        </form>
+        <p class="muted">Already have an account? <a href="${url({ step: "register", mode: "signin" })}">Sign in</a></p>
+    </div>`;
+};
+
+// The same screen reached from anywhere else. From a contact panel it says whom
+// the player is about to contact.
+const renderSignUp = mode => {
+    const discord = `<button class="button button-outline" type="button" data-action="discord-signup" style="width: 100%">${icon("discord")}Continue with Discord</button>
+        <div class="rule">or</div>`;
+    const lead = TO
+        ? `Messages and contacts need an account. You'll come straight back to ${escapeHtml(TO)}'s post.`
+        : "Find players, groups and communities, and hear when someone new fits.";
+    if (mode === "nickname") {
+        entered.nickname ??= account.discordName;
+        return `<div class="flow flow-narrow">
+            <h1>Pick a nickname</h1>
+            <p class="flow-lead">It's shown on your posts and your messages. We took it from Discord; change it if you like.</p>
+            <form class="form form-tight" data-form="nickname" novalidate>
+                ${regField("nickname", "Nickname", "text", "nickname")}
+                <button class="button button-primary" type="submit">Continue</button>
+            </form>
+        </div>`;
+    }
+    if (mode === "signin") {
+        entered.email ??= "kestrel@example.com";
+        return `<div class="flow flow-narrow">
+            <h1>${TO ? `Sign in to contact ${escapeHtml(TO)}` : "Sign in"}</h1>
+            ${TO ? `<p class="flow-lead">You'll come straight back to ${escapeHtml(TO)}'s post.</p>` : ""}
+            ${discord}
+            <form class="form form-tight" data-form="signin" novalidate>
+                ${regField("email", "Email", "email", "email")}
+                ${regField("password", "Password", "password", "current-password")}
+                <button class="button button-primary" type="submit">Sign in</button>
+            </form>
+            <p class="muted">New here? <a href="${url({ step: "register", mode: null })}">Create an account</a></p>
+        </div>`;
+    }
+    return `<div class="flow flow-narrow">
+        <h1>${TO ? `Sign up to contact ${escapeHtml(TO)}` : "Create your account"}</h1>
+        <p class="flow-lead">${lead}</p>
+        ${discord}
+        <form class="form form-tight" data-form="signup" novalidate>
+            ${regField("email", "Email", "email", "email")}
+            ${regField("nickname", "Nickname", "text", "nickname", "Shown on your posts and your messages.")}
+            ${regField("password", "Password", "password", "new-password", "At least 8 characters.")}
+            <button class="button button-primary" type="submit">Create account</button>
         </form>
         <p class="muted">Already have an account? <a href="${url({ step: "register", mode: "signin" })}">Sign in</a></p>
     </div>`;
@@ -880,7 +693,7 @@ const renderMatches = () => {
     const described = descriptionOf(post.draft);
     const types = POST_TYPE === "player" ? ["group", "community", "player"] : ["player"];
     const entries = POSTS
-        .filter(p => types.includes(p.type) && !p.expired)
+        .filter(p => types.includes(p.type) && !p.expired && !p.own && !hiddenFromViewer(p.owner))
         .map(p => ({ post: p, m: compare(p, POST_TYPE, described) }));
     const fits = entries.filter(e => e.m.compared && !e.m.misses);
     const byCloseness = (a, b) => (missCount(a.m) - missCount(b.m) || 0) || b.post.updated - a.post.updated;
@@ -889,7 +702,7 @@ const renderMatches = () => {
         <div class="live-heading">${icon("flame")}<h1>${query.get("updated") ? "Your post is updated" : "Your post is live"}</h1></div>
         <h2>${fits.length ? fitsSentence(fits) : `Nobody fits your ${POST_TYPE === "player" ? "post" : POST_TYPE} yet`}</h2>
         ${fits.length ? "" : `<p class="flow-lead">${shown.length ? "These come closest. " : ""}We'll email you when someone fits.</p>`}
-        ${shown.length ? `<div class="feed-stack">${shown.map(e => renderCard(toCard(e.post, e.m), true)).join("")}</div>` : ""}
+        ${shown.length ? `<div class="feed-stack">${shown.map(e => renderCard(withViewer(toCard(e.post, e.m), e.post), true)).join("")}</div>` : ""}
         <div class="flow-actions">
             <a class="button button-primary" href="feed.html?game=${HANDLE}" data-action="see-all">See all</a>
         </div>
@@ -939,10 +752,11 @@ const TITLES = {
     conflict: "You already have a post", matches: "Your post is live",
 };
 
+const onMessagingChange = () => paint();
+
 const paint = () => {
-    document.getElementById("prototype-bar").innerHTML = prototypeBarHtml();
-    document.getElementById("header").innerHTML = headerHtml();
-    const needsGame = ["post", "register", "conflict", "matches"].includes(STEP);
+    paintChrome();
+    const needsGame = ["post", "conflict", "matches"].includes(STEP) || (STEP === "register" && !NEXT);
     const render = needsGame && !HAS_DATA ? missingHtml : {
         type: renderType, game: renderGame, post: renderPost,
         register: renderRegister, conflict: renderConflict, matches: renderMatches,
@@ -1018,7 +832,6 @@ const publish = updated => {
     account.posts = account.posts.filter(p => p !== previous).concat({
         game: HANDLE,
         type: POST_TYPE,
-        conversations: previous ? previous.conversations : 0,
         updated: NOW.toISOString(),
         draft: fields,
     });
@@ -1049,6 +862,7 @@ const submitPost = () => {
 // between the two. Otherwise, from the post screen the player goes on writing;
 // from the register step the post goes live.
 const afterSignIn = onPostScreen => {
+    if (NEXT) return leave();
     draft = withDefaults(withAccount(draft));
     saveDraft();
     if (existing()) {
@@ -1085,7 +899,8 @@ const submitRegister = (mode, form) => {
         account.nickname = value("nickname");
     }
     saveAccount();
-    publish(false);
+    if (NEXT) leave();
+    else publish(false);
 };
 
 const HANDLERS = {
@@ -1105,8 +920,10 @@ const HANDLERS = {
     "discord-new": () => {
         account = { id: "new", nickname: null, discordName: "Mira", discord: "mira.plays", accounts: {}, posts: [] };
         saveAccount();
-        draft.discord = account.discord;
-        saveDraft();
+        if (POST_TYPE && HANDLE) {
+            draft.discord = account.discord;
+            saveDraft();
+        }
         overlay = null;
         paint();
     },
@@ -1129,6 +946,7 @@ const HANDLERS = {
         paint();
     },
     "confirm-delete": () => {
+        deleteConversationsOf(postId(account, existing()));
         account.posts = account.posts.filter(p => p !== existing());
         saveAccount();
         localStorage.removeItem(DRAFT_KEY);
@@ -1167,9 +985,6 @@ document.addEventListener("change", event => {
         draft[key] = (draft[key] || []).concat(target.value);
         repaintField(key, "[data-add]");
         clearError(key);
-    } else if (target.dataset.proto === "as") {
-        switchAccount(target.value);
-        location.reload();
     } else if (target.dataset.proto === "preview") {
         localStorage.setItem("tt-proto-preview", target.value);
         paint();
@@ -1195,17 +1010,15 @@ document.addEventListener("click", event => {
     } else if (data.change) {
         changing.add(data.change);
         repaintField(data.change, "input, select");
-    } else if (data.proto === "reset") {
-        Object.keys(localStorage).filter(k => k.startsWith("tt-draft-") || k === ACCOUNT_KEY).forEach(k => localStorage.removeItem(k));
-        location.href = "post.html";
     } else if (data.action && HANDLERS[data.action]) {
         HANDLERS[data.action](target, event);
     }
 });
 
 document.addEventListener("submit", event => {
-    event.preventDefault();
     const form = event.target.dataset.form;
+    if (!form) return;
+    event.preventDefault();
     if (form === "post") submitPost();
     else submitRegister(form, event.target);
 });

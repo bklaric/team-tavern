@@ -1,0 +1,54 @@
+/* The prototype's own controls: not part of the design. They stay usable
+   above a backdrop, under the overlay itself. */
+
+.prototype-bar {
+    position: relative;
+    z-index: 30;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2) var(--space-4);
+    padding: 6px var(--space-4);
+    border-bottom: 1px dashed var(--input-border);
+    background: #0B0A09;
+    color: var(--text-muted);
+    font-size: var(--size-12);
+}
+
+.prototype-bar select,
+.prototype-bar button {
+    height: 24px;
+    padding: 0 var(--space-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-small);
+    background: var(--floor);
+    color: var(--text);
+    font: inherit;
+    cursor: pointer;
+}
+
+/* A stand-in: what the real site does somewhere the prototype can't go, such
+   as Discord or an email. */
+
+.stand-in {
+    border-style: dashed;
+}
+
+.stand-in .overlay-body {
+    gap: var(--space-3);
+}
+
+.toast.stand-in {
+    background: #0B0A09;
+    color: var(--text-muted);
+}
+
+.stand-in-label {
+    flex: none;
+    padding: 0 6px;
+    border: 1px dashed var(--input-border);
+    border-radius: var(--radius-small);
+    font-size: var(--size-12);
+    font-weight: 600;
+    line-height: 18px;
+}

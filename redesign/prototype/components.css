@@ -1326,3 +1326,509 @@
     height: 1px;
     background: var(--border);
 }
+
+/* The contact panel: a side panel on a desktop, holding the owner's contacts
+   and the conversation about the post; full screen on a phone. */
+
+@media (min-width: 640px) {
+    .overlay-side {
+        inset: 0 0 0 auto;
+        width: min(440px, 100vw);
+        border-left: 1px solid var(--border);
+        background: var(--raised);
+        box-shadow: -24px 0 64px rgb(0 0 0 / 0.5);
+    }
+}
+
+.panel-header {
+    height: auto;
+    min-height: 56px;
+    align-items: flex-start;
+    padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
+}
+
+.panel-title {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    padding-top: var(--space-2);
+}
+
+.panel-title h2 {
+    font-size: var(--size-16);
+    overflow-wrap: anywhere;
+}
+
+.panel-title p {
+    color: var(--text-muted);
+    font-size: var(--size-12);
+}
+
+.panel-tools {
+    display: flex;
+    flex: none;
+}
+
+.panel-section {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-3);
+}
+
+.panel-section > h3 {
+    font-size: var(--size-14);
+}
+
+.panel-section > .button {
+    align-self: flex-start;
+}
+
+.form-report {
+    gap: var(--space-5);
+}
+
+/* Contact rows: what the owner shared, each with Copy. */
+
+.contact-rows {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    background: var(--table);
+}
+
+.contact-row {
+    display: grid;
+    grid-template-columns: 112px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--space-1) var(--space-3);
+    min-height: 48px;
+    padding: var(--space-2) var(--space-2) var(--space-2) var(--space-3);
+}
+
+.contact-row + .contact-row {
+    border-top: 1px solid var(--border);
+}
+
+.contact-label {
+    color: var(--text-muted);
+    font-size: var(--size-12);
+    font-weight: 500;
+}
+
+.contact-value {
+    font-weight: 500;
+    overflow-wrap: anywhere;
+}
+
+a.contact-value {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+}
+
+@media (max-width: 639px) {
+    .contact-row {
+        grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .contact-label {
+        grid-column: 1 / -1;
+    }
+}
+
+/* The conversation: the other side's messages on the left, the viewer's on
+   the right. Neither is ember: a message is something to read, not to click.
+   On a raised surface the thread sits in a well of floor. */
+
+.thread {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.thread-well {
+    max-height: min(420px, 50vh);
+    padding: var(--space-3);
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    background: var(--floor);
+}
+
+.thread-day {
+    align-self: center;
+    margin: var(--space-4) 0 var(--space-2);
+    color: var(--text-muted);
+    font-size: var(--size-12);
+    font-weight: 500;
+}
+
+.thread-day:first-child {
+    margin-top: 0;
+}
+
+.thread-new {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin: var(--space-2) 0;
+    color: var(--ember);
+    font-size: var(--size-12);
+    font-weight: 600;
+}
+
+.thread-new::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--ember);
+}
+
+.message {
+    align-self: flex-start;
+    max-width: min(85%, 560px);
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--border);
+    border-radius: 12px 12px 12px var(--radius-small);
+    background: var(--table);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.message-own {
+    align-self: flex-end;
+    border-color: transparent;
+    border-radius: 12px 12px var(--radius-small) 12px;
+    background: var(--raised);
+}
+
+.message-meta {
+    margin: 2px 0 var(--space-2);
+    color: var(--text-muted);
+    font-size: var(--size-12);
+}
+
+.message-meta-own {
+    align-self: flex-end;
+}
+
+.message-meta:last-child {
+    margin-bottom: 0;
+}
+
+.composer {
+    display: flex;
+    align-items: flex-end;
+    gap: var(--space-2);
+}
+
+.composer .textarea {
+    flex: 1;
+    min-width: 0;
+    min-height: 40px;
+    max-height: 160px;
+    padding-top: var(--space-2);
+    padding-bottom: var(--space-2);
+    resize: none;
+}
+
+.composer .button {
+    height: 40px;
+}
+
+/* A menu from a button, such as Report and Block. */
+
+.menu-wrap {
+    position: relative;
+}
+
+.menu {
+    position: absolute;
+    top: calc(100% + var(--space-1));
+    right: 0;
+    z-index: 35;
+    display: flex;
+    flex-direction: column;
+    min-width: 200px;
+    padding: var(--space-1);
+    border: 1px solid var(--input-border);
+    border-radius: var(--radius-card);
+    background: var(--raised);
+    box-shadow: 0 12px 32px rgb(0 0 0 / 0.5);
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    height: 36px;
+    padding: 0 var(--space-3);
+    border: none;
+    border-radius: var(--radius-small);
+    background: none;
+    text-align: left;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.menu-item:hover,
+.menu-item:focus-visible {
+    background: var(--table);
+}
+
+.menu-item .icon {
+    color: var(--text-muted);
+}
+
+.menu-item-destructive,
+.menu-item-destructive .icon {
+    color: var(--error);
+}
+
+/* Toasts: a line at the bottom of the screen after an action, with Undo where
+   it can be undone. */
+
+.toasts {
+    position: fixed;
+    left: 50%;
+    bottom: var(--space-6);
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+    width: max-content;
+    max-width: calc(100vw - 32px);
+    transform: translateX(-50%);
+    pointer-events: none;
+}
+
+.toast {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-height: 44px;
+    padding: var(--space-2) var(--space-4);
+    border: 1px solid var(--input-border);
+    border-radius: var(--radius-card);
+    background: var(--raised);
+    box-shadow: 0 12px 32px rgb(0 0 0 / 0.5);
+    pointer-events: auto;
+}
+
+.toast:has(.button) {
+    padding-right: var(--space-2);
+}
+
+.toast .button {
+    color: var(--ember);
+}
+
+/* The inbox: conversations grouped by the post they are about. */
+
+.unread-dot {
+    width: 8px;
+    height: 8px;
+    flex: none;
+    border-radius: 50%;
+    background: var(--ember);
+}
+
+.inbox-heading {
+    margin: var(--space-6) 0 var(--space-2);
+    padding: 0 var(--space-3);
+    color: var(--text-muted);
+    font-size: var(--size-12);
+    font-weight: 500;
+}
+
+.inbox-post {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-2) var(--space-3) var(--space-1);
+}
+
+.inbox-cover {
+    width: 24px;
+    height: 36px;
+    flex: none;
+    border-radius: var(--radius-small);
+    background: var(--raised);
+    object-fit: cover;
+}
+
+.inbox-post-text {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.inbox-post-name {
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.inbox-kind {
+    color: var(--text-muted);
+    font-size: var(--size-12);
+    font-weight: 500;
+}
+
+.inbox-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-control);
+    color: var(--text);
+}
+
+.inbox-group .inbox-row {
+    padding-left: calc(var(--space-3) + 24px + var(--space-3));
+}
+
+.inbox-row:hover {
+    background: var(--table);
+    color: var(--text);
+    text-decoration: none;
+}
+
+.inbox-row[aria-current="page"] {
+    background: var(--raised);
+}
+
+.inbox-row-main {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.inbox-row-top {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-2);
+}
+
+.inbox-row-title {
+    min-width: 0;
+    overflow: hidden;
+    font-weight: 500;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.inbox-row-time {
+    flex: none;
+    margin-left: auto;
+    color: var(--text-muted);
+    font-size: var(--size-12);
+}
+
+.inbox-row-snippet {
+    overflow: hidden;
+    color: var(--text-muted);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.inbox-row-unread .inbox-row-title {
+    font-weight: 600;
+}
+
+.inbox-row-unread .inbox-row-snippet {
+    color: var(--text);
+}
+
+/* The header of a conversation in the inbox: who it is with and the post it
+   is about. */
+
+.conversation-header {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-2) var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--border);
+}
+
+.conversation-title {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: var(--space-1);
+    min-width: 0;
+    padding-top: var(--space-1);
+}
+
+.conversation-title h2 {
+    font-size: var(--size-16);
+    overflow-wrap: anywhere;
+}
+
+.conversation-context {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-1) var(--space-2);
+    color: var(--text-muted);
+    font-size: var(--size-12);
+    font-weight: 500;
+}
+
+.conversation-context .button {
+    height: 24px;
+    font-size: var(--size-12);
+}
+
+.conversation-header .facts {
+    font-size: var(--size-12);
+}
+
+.thread-contacts summary {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    color: var(--text-muted);
+    font-size: var(--size-12);
+    font-weight: 500;
+    cursor: pointer;
+    list-style: none;
+}
+
+.thread-contacts summary::-webkit-details-marker {
+    display: none;
+}
+
+.thread-contacts summary:hover {
+    color: var(--text);
+}
+
+.thread-contacts[open] summary .icon {
+    transform: rotate(180deg);
+}
+
+.thread-contacts .contact-rows {
+    margin-top: var(--space-2);
+}
+
+/* A page with nothing to show yet, and what to do about it. */
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
+    padding: var(--space-6);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    background: var(--table);
+}
+
+.empty-state p {
+    color: var(--text-muted);
+}

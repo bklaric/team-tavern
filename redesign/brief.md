@@ -429,8 +429,25 @@ experience level are facts like any other, in the fact line or behind Details
   its button reads **Open conversation** and opens the panel on it.
 - **Decided:** on the viewer's own post, in the feed or on its page, **Edit** and
   **Renew** take the place of the contact button, as on the home page (11.2).
-- **Open:** on a desktop the panel is a modal or a side panel; on a phone it is
-  full-screen. Prototyping decides.
+- **Decided:** on a desktop the panel is a side panel on the right, not a modal,
+  so the card it was opened from stays in view beside it; on a phone it is
+  full-screen.
+- **Proposed:** the preferences that point off-site (Add on Discord, Add in game,
+  Join Discord, Visit site) put the contacts first, under a heading in the
+  owner's terms ("Prefers Discord", "Join on Discord"), and "or message on
+  TeamTavern" follows. Message me and Either is fine put the message box first,
+  and "or add Kestrel off-site" follows. A conversation already under way
+  always comes first.
+- **Proposed:** the panel's one filled button is what comes first: **Send**, or a
+  community's **Open the invite** or **Visit site**. When contacts come first,
+  **Send** is outlined.
+- **Proposed:** before the first message, the panel says where replies go: "Your
+  message starts a conversation about Night Owls. Replies show up here and in
+  your inbox." Messages carry no subject or greeting template.
+- **Proposed:** Enter sends and Shift+Enter starts a new line, as on Discord. On
+  a phone Enter is a new line and **Send** sends.
+- **Proposed:** the panel's menu holds **Report this post** and **Block Kestrel**
+  (section 10).
 
 ```
 ┌───────────────────────────────────────────────────────────┐
@@ -821,36 +838,69 @@ the field:
 ### Inbox
 
 **Proposed:** the inbox is grouped by post, which tells owners what their posts
-produced.
+produced. Under each of the player's own posts are its conversations, one row
+per player who wrote, so an owner sees who wrote without opening the post
+first. A post of theirs that has expired says so and offers **Renew**.
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
 │ Messages                                                             │
 │                                                                      │
 │ Your posts                                                           │
-│   Night Owls · Valorant group        3 conversations  ● 1 new        │
-│   Kestrel · Dota 2 player            1 conversation                  │
+│ ▌ Night Owls · Valorant group · 3 conversations                      │
+│     Ashen                                          10 hours ago    ● │
+│     Hi, Diamond support here, mostly Killjoy and Cypher…             │
+│     Vex                                              2 days ago      │
+│     You: Sent. See you at 9                                          │
+│ ▌ Kestrel · Dota 2 player · 1 conversation · Expired     [ Renew ]   │
+│     Tidebringer                                      8 days ago      │
 │                                                                      │
 │ Posts you messaged                                                   │
-│   The Farlands · Valheim community   Eirik: "Welcome, here's the…"   │
-│   ShadowFox · Valorant player        You: "Want to duo tonight?"     │
+│ ▌ The Farlands · Valheim community                 43 minutes ago  ● │
+│   Eirik: Welcome! Yes, join the Discord and grab the Viking role…    │
+│ ▌ ShadowFox · Valorant player                        14 hours ago    │
+│   You: Want to duo tonight? Diamond support, on from 21:00.          │
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
+- **Proposed:** a row about the player's own post is titled with the other
+  player, and its last message carries only "You:"; a row about someone else's
+  post is titled with the post and names whoever wrote last.
+- **Proposed:** on a desktop the open conversation sits beside the list; below
+  that it has the screen to itself, with ← back to the list.
+
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
-│ ← Night Owls · Valorant group                                        │
-│   Conversation with Vex · Diamond 1 · Controller · EU                │
+│ Ashen                                                            ⋯   │
+│ Diamond · Supporter, Lurker · Germany · EN, DE · 🎤                  │
+│ About your post Night Owls · Valorant group                          │
 │ ──────────────────────────────────────────────────────────────────── │
-│   Vex: Hey, saw you need a Controller, I main Omen…                  │
-│   You: Nice, we play around 9 CET, want to join tonight?             │
+│                                Today                                 │
+│ New ──────────────────────────────────────────────────────────────── │
+│ ┌──────────────────────────────────────────────┐                     │
+│ │ Hi, Diamond support here, mostly Killjoy and │                     │
+│ │ Cypher. Free most nights after 21:00.        │                     │
+│ └──────────────────────────────────────────────┘                     │
+│ Ashen · 00:48                                                        │
 │ ──────────────────────────────────────────────────────────────────── │
 │ [ Write a message…                                        ] [ Send ] │
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
-**Proposed:** the conversation header shows the other player's card facts when they
-have a post in the same game, and their nickname otherwise.
+- **Proposed:** a conversation about the player's own post is headed with the
+  other player: their card facts when they have a post in the same game, their
+  nickname otherwise, and the post it is about below. A conversation about
+  someone else's post is headed with that post and its facts, with the owner's
+  contacts folded under "Kestrel's contacts", or "Ways to join" for a community.
+- **Proposed:** a line marks where the unread messages begin, and a run of
+  messages from one side shares one line of who and when.
+- **Proposed:** a conversation about an expired post says "This is an older post.
+  Quill may no longer be looking."
+- **Proposed:** blocking and reporting are in the ⋯ menu of the panel and of the
+  conversation. Blocking asks first and says what it does; a toast then says
+  "Danya is blocked." with **Undo**. A report picks one reason (spam or
+  advertising; harassment, hate or threats; selling accounts, boosting or
+  cheats; something else), may say more, and may also block.
 
 ## 11. Around the feed
 
@@ -1161,8 +1211,8 @@ What the brief's screens already call for; the prototypes settle their shape.
 | Feed    | Type chooser (radio cards, also step 1 of posting), description bar with **More**, segmented control, publish prompt, tier heading, labelled divider, **Load more** |
 | Inputs  | Pills for a field's few options, one or several; tokens for a few out of many, such as languages; select, range picker (rank, age), an hours range that crosses midnight, count stepper ("3 of 5"), checkbox, radio group, text area with prompts, an account fact with **Change** |
 | Overlay | Modal, side panel, full-screen sheet, dropdown                                |
-| Contact | Contact panel, contact row with **Copy**, message box, conversation thread   |
-| Lists   | Notification rows grouped by post, inbox rows, unread badge, the account page's definition list, toggle switch, a confirmation that shows counts |
+| Contact | Contact panel, contact row with **Copy**, message box, conversation thread, the unread line, the ⋯ menu with Report and Block |
+| Lists   | Notification rows grouped by post, inbox rows, unread badge and dot, the account page's definition list, toggle switch, a confirmation that shows counts, a toast with **Undo** |
 
 - **Proposed:** one card shell for all three types, with fixed rows: heading,
   facts, the player's words and the footer. Types differ in what fills the rows

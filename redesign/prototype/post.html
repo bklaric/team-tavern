@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="tokens.css">
     <link rel="stylesheet" href="base.css">
     <link rel="stylesheet" href="components.css">
+    <link rel="stylesheet" href="prototype.css">
     <style>
         /* Layout of the flow's pages. */
         .flow {
@@ -212,39 +213,6 @@
             border-radius: var(--radius-card);
             background: var(--table);
         }
-
-        /* Prototype controls: not part of the design. */
-        .prototype-bar {
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            gap: var(--space-2) var(--space-4);
-            padding: 6px var(--space-4);
-            border-bottom: 1px dashed var(--input-border);
-            background: #0B0A09;
-            color: var(--text-muted);
-            font-size: var(--size-12);
-        }
-
-        .prototype-bar select,
-        .prototype-bar button {
-            height: 24px;
-            padding: 0 var(--space-2);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-small);
-            background: var(--floor);
-            color: var(--text);
-            font: inherit;
-            cursor: pointer;
-        }
-
-        .stand-in {
-            border-style: dashed;
-        }
-
-        .stand-in .overlay-body {
-            gap: var(--space-3);
-        }
     </style>
 </head>
 <body>
@@ -252,16 +220,19 @@
 <div id="header"></div>
 <main id="app"></main>
 <div id="overlay"></div>
+<div id="panel"></div>
 
 <script src="icons.js"></script>
 <script src="prototype.js"></script>
+<script src="site.js"></script>
+<script src="conversations.js"></script>
 <script>
     // post.html?game=<handle> reads data/<handle>.js, written by export-sample.sh.
     const requested = new URLSearchParams(location.search).get("game");
     if (requested) document.write(`<script src="data/${requested}.js"><\/script>`);
 </script>
 <script>
-    if (typeof FEED_DATA !== "undefined") document.write(`<script src="game.js"><\/script>`);
+    if (typeof FEED_DATA !== "undefined") document.write(`<script src="game.js"><\/script><script src="messaging.js"><\/script>`);
     document.write(`<script src="post.js"><\/script>`);
 </script>
 </body>
