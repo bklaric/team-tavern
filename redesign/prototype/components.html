@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>TeamTavern design system</title>
+    <link rel="preconnect" href="https://rsms.me/">
+    <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+    <link rel="stylesheet" href="tokens.css">
+    <link rel="stylesheet" href="base.css">
+    <link rel="stylesheet" href="components.css">
+    <style>
+        /* Layout of this sheet only; not part of the system. */
+        .sheet {
+            max-width: var(--feed-width);
+            margin: 0 auto;
+            padding: var(--space-12) var(--space-4) 96px;
+        }
+
+        .sheet > section {
+            margin-top: var(--space-12);
+        }
+
+        .sheet > section > h2 {
+            margin-bottom: var(--space-2);
+        }
+
+        .sheet-note {
+            margin-bottom: var(--space-4);
+            color: var(--text-muted);
+        }
+
+        .sheet-caption {
+            margin: var(--space-6) 0 var(--space-2);
+            color: var(--text-muted);
+            font-size: var(--size-12);
+            font-weight: 500;
+        }
+
+        .sheet-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: var(--space-3);
+        }
+
+        .swatches {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: var(--space-3);
+        }
+
+        .swatch {
+            border: 1px solid var(--border);
+            border-radius: var(--radius-card);
+            overflow: hidden;
+            background: var(--table);
+            font-size: var(--size-12);
+        }
+
+        .swatch-color {
+            height: 56px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .swatch-label {
+            padding: var(--space-2) var(--space-3);
+        }
+
+        .swatch-label span {
+            display: block;
+            color: var(--text-muted);
+        }
+
+        .type-specimen {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-3);
+        }
+
+        .type-specimen .muted {
+            font-size: var(--size-12);
+        }
+
+        .viewer {
+            padding: var(--space-3) var(--space-4);
+            border-radius: var(--radius-card);
+            background: var(--raised);
+            font-size: var(--size-12);
+        }
+
+        .digits {
+            display: inline-grid;
+            gap: 2px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+<main class="sheet">
+    <h1>TeamTavern design system</h1>
+    <p class="sheet-note" style="margin-top: 8px">Every component in every state. Brief section 14.</p>
+
+    <section>
+        <h2>Color</h2>
+        <p class="sheet-note">Stone for surfaces, wood for cards, moss for what fits, ember for the one thing that asks for a click.</p>
+        <div class="swatches" id="swatches"></div>
+    </section>
+
+    <section>
+        <h2>Type</h2>
+        <p class="sheet-note">Inter, five sizes, three weights.</p>
+        <div class="type-specimen">
+            <div><h1>Find players, groups and communities</h1><span class="muted">28 / 600: page titles</span></div>
+            <div><h2>Your post is live</h2><span class="muted">20 / 600: section headings</span></div>
+            <div><h3>Night Owls</h3><span class="muted">16 / 600: card names</span></div>
+            <div><div style="font-weight: 500">Diamond 2 · Duelist, Initiator · Croatia · EN, DE</div><span class="muted">14 / 500: the fact line</span></div>
+            <div><div>Three friends who play most nights, we want to stop solo queuing.</div><span class="muted">14 / 400: body and the player's words</span></div>
+            <div><div style="font-size: 12px; font-weight: 500">Active 2 days ago</div><span class="muted">12 / 500: labels</span></div>
+            <div>
+                <div>Ищу команду · Ψάχνω ομάδα · Szukam ekipy · Tìm đồng đội · Suche Gruppe</div>
+                <span class="muted">Scripts players write in</span>
+            </div>
+            <div class="sheet-row" style="align-items: flex-start; gap: 32px">
+                <div>
+                    <div class="digits"><span>19–23</span><span>08–12</span><span>21–01</span></div>
+                    <div class="muted">Proportional</div>
+                </div>
+                <div>
+                    <div class="digits tabular"><span>19–23</span><span>08–12</span><span>21–01</span></div>
+                    <div class="muted">Tabular, for hours, ages and counts</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <h2>Buttons</h2>
+        <p class="sheet-note">Filled ember once per screen. Card contact buttons are outlined.</p>
+        <div class="sheet-row" id="buttons"></div>
+    </section>
+
+    <section>
+        <h2>Facts and match marks</h2>
+        <p class="sheet-note">Everything a card shows about a post is a fact, Looking for included. Marks sit on the facts and say what fits the viewer's description and what doesn't; ≠ is information, not an error. A field the viewer filled in and the post left empty is a mismatch too.</p>
+        <div class="sheet-row" id="marks"></div>
+        <div class="sheet-row" style="margin-top: 12px" id="pips"></div>
+    </section>
+
+    <section>
+        <h2>A feed</h2>
+        <p class="sheet-note">Each fact is marked where it stands. A compared field the card doesn't otherwise show, such as a player's age, joins the end of the fact line.</p>
+        <div class="viewer">Viewer: <span id="viewer"></span></div>
+        <div id="feed"></div>
+    </section>
+
+    <section>
+        <h2>Card states</h2>
+        <div id="states"></div>
+    </section>
+</main>
+
+<script src="icons.js"></script>
+<script src="prototype.js"></script>
+<script src="fixtures.js"></script>
+<script>
+    const $ = id => document.getElementById(id);
+
+    const tokens = [
+        ["floor", "--floor"], ["table", "--table"], ["raised", "--raised"], ["border", "--border"],
+        ["input-border", "--input-border"], ["text", "--text"], ["text-muted", "--text-muted"],
+        ["text-faint", "--text-faint"], ["ember", "--ember"],
+        ["ember-hover", "--ember-hover"], ["on-ember", "--on-ember"], ["moss", "--moss"],
+        ["error", "--error"],
+    ];
+    const styles = getComputedStyle(document.documentElement);
+    $("swatches").innerHTML = tokens.map(([name, variable]) =>
+        `<div class="swatch"><div class="swatch-color" style="background: var(${variable})"></div>
+         <div class="swatch-label">${name}<span>${styles.getPropertyValue(variable).trim()}</span></div></div>`
+    ).join("");
+
+    $("buttons").innerHTML = `
+        <button class="button button-primary" type="button">Publish post</button>
+        <button class="button button-outline button-small" type="button">${icon("plus")}New post</button>
+        <button class="button button-outline button-small" type="button">${icon("discord")}Add on Discord</button>
+        <button class="button button-outline button-small" type="button">${icon("message-circle")}Message</button>
+        <button class="button button-outline button-small" type="button">${icon("external-link")}Visit site</button>
+        <button class="button button-text button-small" type="button">Details ${icon("chevron-down")}</button>
+        <button class="button button-destructive" type="button">Delete account</button>`;
+
+    $("marks").innerHTML = `<div class="facts-clip"><div class="facts">${[
+        { text: "Diamond 2", match: "fit" }, { text: "EU", match: "fit" },
+        { text: "Platinum 1 – Platinum 2", match: "miss" }, { text: "PT", match: "miss" },
+        { text: "Ranked climb", match: "fit" }, { text: "Returning player" },
+        { text: "Age 24", match: "fit" }, { text: "Rank not given", match: "miss" },
+    ].map(fact).join("")}</div></div>`;
+    $("pips").innerHTML = `<span class="card-slots">${pips(3, 5)}<span class="tabular">3 of 5</span></span>
+        <span class="card-slots">${pips(4, 5)}<span class="tabular">4 of 5</span></span>
+        <span class="card-slots">${pips(1, 3)}<span class="tabular">1 of 3</span></span>`;
+
+    $("viewer").textContent = VIEWER;
+    $("feed").innerHTML = `
+        <h3 class="tier-heading">Fits you <span class="tier-count tabular">3</span></h3>
+        <div class="feed-stack">
+            ${renderCard(FIXTURES.nightOwls, true)}
+            ${renderCard(FIXTURES.radiantRising, true)}
+            ${renderCard(FIXTURES.shadowFox, true)}
+        </div>
+        <h3 class="tier-heading">Missing one thing <span class="tier-count tabular">12</span></h3>
+        <div class="feed-stack">${renderCard(FIXTURES.afterglow, true)}</div>
+        <h3 class="tier-heading">Missing more</h3>
+        <div class="feed-stack">${renderCard(FIXTURES.lumen, true)}</div>
+        <div class="divider">Older posts · they may no longer be looking</div>
+        <div class="feed-stack">
+            ${renderCard(FIXTURES.expiredPlayer, true)}
+            ${renderCard(FIXTURES.expiredGroup, true)}
+        </div>`;
+
+    const states = [
+        ["Expanded", { ...FIXTURES.shadowFox, expanded: true }],
+        ["Community, expanded: the full pitch and the remaining fields", { ...FIXTURES.farlands, expanded: true }],
+        ["Community, collapsed: four lines of the pitch", FIXTURES.farlands],
+        ["Unnamed group on a server game: no rank, the heading counts players wanted", FIXTURES.valheimGroup],
+        ["Your own post: Edit and Renew replace the contact button", { ...FIXTURES.nightOwls, own: true }],
+        ["Already messaged", { ...FIXTURES.shadowFox, messaged: "2 days ago" }],
+        ["Preview on the post screen, before registering", { ...FIXTURES.nightOwls, preview: true }],
+        ["Long name, many roles, Cyrillic text", FIXTURES.stress],
+        ["Almost empty: no hours, no microphone, no Looking for, no text", FIXTURES.sparse],
+    ];
+    $("states").innerHTML = states.map(([caption, post]) =>
+        `<p class="sheet-caption">${caption}</p>${renderCard(post)}`).join("");
+</script>
+</body>
+</html>

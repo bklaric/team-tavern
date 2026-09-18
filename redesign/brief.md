@@ -174,29 +174,30 @@ community posts.
 │         Find players, groups and communities                            │
 │         38 active posts                                                 │
 ├─────────────────────────────────────────────────────────────────────────┤
+│ Tell us about you                                                       │
 │ (•) I'm a player looking for a group                                    │
 │ ( ) We're a group looking for players                                   │
 │ ( ) We're a community looking for members                               │
 │                                                                         │
-│ Diamond 2 ▾  Controller, Sentinel ▾  Croatia ▾  EN, DE ▾  19–23 ▾  🎤   │
+│ Diamond 2 ▾  Controller, Sentinel ▾  Croatia ▾  EN, DE ▾  19:00–23:00 ▾│
 │ More ▾                                                                  │
 ├─────────────────────────────────────────────────────────────────────────┤
 │ ✦ Publish this as your post: groups and players can find you too, and   │
 │   we'll tell you when someone new fits.               [ Publish post ]  │
 ├─────────────────────────────────────────────────────────────────────────┤
-│ Showing  [ All ]  [ Groups ]  [ Communities ]  [ Players ]              │
+│ Showing  [ All ]  [ Players ]  [ Groups ]  [ Communities ]              │
 │                                                                         │
 │ Fits you (3)                                                            │
-│  group card      ✓ Needs Controller · ✓ Diamond fits · ✓ EU · ✓ 21–23   │
+│  group card      ✓ Needs Controller · ✓ Diamond · ✓ EU · ✓ 21:00–23:00  │
 │  community card  ✓ EU · ✓ EN · ✓ PC                                     │
-│  player card     ✓ Diamond 1 · ✓ EU · ✓ 19–22 · ✓ EN                    │
+│  player card     ✓ Diamond 1 · ✓ EU · ✓ 19:00–22:00 · ✓ EN              │
 │ Missing one thing (12)                                                  │
-│  group card      ✓ Needs Sentinel · ✓ EU · ✓ 21–23 · ≠ Platinum 1–2     │
+│  group card      ✓ Needs Sentinel · ✓ EU · ✓ 21:00–23:00 · ≠ Plat 1–2   │
 │ Missing more                                                            │
-│  player card     ✓ EU · ≠ Bronze 2 · ≠ Online 08–12 · ≠ PT              │
+│  player card     ✓ EU · ≠ Bronze 2 · ≠ 08:00–12:00 · ≠ PT               │
 ├──────────── Older posts · they may no longer be looking ────────────────┤
-│  player card (dimmed)                        Expired 2 months ago       │
-│  group card (dimmed)                         Expired 1 year ago         │
+│  player card (dimmed)                        Active 3 months ago        │
+│  group card (dimmed)                         Active 1 year ago          │
 │                           [ Load more ]                                 │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
@@ -206,7 +207,7 @@ community posts.
   their post would have. The feed shows the posts that fit (section 7). The
   description is a post draft, so publishing it is a few clicks away.
 - **Decided:** a player viewer sees groups, communities and players, and narrows
-  what is shown with **Showing: All, Groups, Communities, Players**. That changes
+  what is shown with **Showing: All, Players, Groups, Communities**. That changes
   the view, not the description. Group and community viewers see only players, so
   they get no segments.
 - **Decided:** an empty description shows every post, ordered by activity (7.1).
@@ -270,16 +271,23 @@ post types.
 regions of the players it is looking for. Every location maps to a region, which
 is how the two are compared (7.2).
 
-**Decided:** cards show online hours in the viewer's timezone, converted from the
-owner's, so they read the same way as the ✓ and ≠ marks (5.6).
+**Decided:** online hours wait behind Details (5.4), like a player's age, and
+join the end of the fact line while the viewer's description compares them. They
+show in the viewer's timezone, converted from the owner's, so they read the same
+way as the ✓ and ≠ marks (5.6). They follow the viewer's locale, "19:00–01:00" or
+"7pm–1am", and carry no timezone name: the viewer knows their own.
+
+**Decided:** a card has no badges. Looking for, new or returning, organized and
+experience level are facts like any other, in the fact line or behind Details
+(5.4). The fact line wraps as it needs to.
 
 ### 5.1 Player card
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
 │ ShadowFox                                  PLAYER    Active 2 days ago  │
-│ Diamond 2 · Duelist, Initiator · Croatia · EN, DE · 19–23 CET · 🎤      │
-│ [ Ranked climb ]  [ Returning player ]                                  │
+│ Diamond 2 · Duelist, Initiator · Croatia · EN, DE · 🎤 ·                │
+│ Ranked climb · Returning player                                         │
 │ "Peak Immortal last act, looking for a consistent duo. Chill but I want │
 │  to improve, happy to review VODs together…"                            │
 │                                  [ Add on Discord ]        Details ⌄    │
@@ -290,26 +298,26 @@ owner's, so they read the same way as the ✓ and ≠ marks (5.6).
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│ Night Owls                                  GROUP    Active 5 hours ago │
-│ ●●●○○  3 of 5 · Needs Controller, Sentinel                              │
-│ Platinum 1 – Diamond 3 · EU · EN · 21–01 CET · 🎤 · Ages 18+            │
-│ [ Ranked climb ]                                                        │
+│ Night Owls   GROUP  ●●●○○ 3 of 5                     Active 5 hours ago │
+│ Platinum 1 – Diamond 3 · Needs Controller, Sentinel · EU · EN ·         │
+│ 🎤 · Ages 18+ · Ranked climb                                            │
 │ "Three friends who play most nights, we want to stop solo queuing for   │
 │  the last two spots. No tilt, comms on…"                                │
 │ Posted by Kestrel                       [ Message ]        Details ⌄    │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
-- **Proposed:** the open slots and needed roles are the headline, where a player
-  card has rank. They are what a solo player scans for.
+- **Proposed:** the open slots sit in the heading beside the type, and the needed
+  roles are the second fact, where a player card has its roles, so player and group
+  cards read the same way.
 - **Proposed:** ranges and sets replace single values: rank range, age range, one
   or more regions.
 - **Proposed:** a name is optional; without one the heading reads "Kestrel's group".
 - **Proposed:** "Posted by" names the owner, since conversations are between players.
   It is plain text: there is no player page to link to (11.1).
-- **Proposed:** for server games the headline reads "Wants 2–3 more on our server",
-  and rank disappears where the game has none.
-- **Proposed:** "Organized" is a tag, with the website behind the contact button
+- **Proposed:** for server games the heading reads "Wants 2–3 more" in place of
+  the slots, and rank disappears where the game has none.
+- **Proposed:** "Organized" is a fact, with the website behind the contact button
   (5.6).
 
 ### 5.3 Community card
@@ -317,8 +325,8 @@ owner's, so they read the same way as the ✓ and ≠ marks (5.6).
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
 │ The Farlands                                COMMUNITY                   │
-│ Dedicated server · EU · EN · PC                   Active 1 week ago     │
-│ [ Events ]  [ Casual ]  [ All experience levels ]                       │
+│ Dedicated server · EU · EN · PC ·                 Active 1 week ago     │
+│ Events, Casual · All experience levels                                  │
 │                                                                         │
 │ "Looking for a fun and friendly Valheim community server? Join The      │
 │  Farlands: weekly boss raids, a trading hub, building contests and      │
@@ -334,7 +342,7 @@ owner's, so they read the same way as the ✓ and ≠ marks (5.6).
 - **Decided:** the Discord invite and website sit behind the contact button like
   other contacts, so opening them requires sign-in.
 - **Proposed:** a community carries a Looking for (5.5) and an experience level,
-  shown as tags.
+  shown in the fact line.
 - **Out of scope:** community logos. They need uploads and moderation.
 
 ### 5.4 Expanding a card
@@ -344,8 +352,8 @@ owner's, so they read the same way as the ✓ and ≠ marks (5.6).
 │  to improve, happy to review VODs together. I play most evenings after  │
 │  work and I'm free all weekend."                                        │
 │                                                                         │
-│ Age 24 · Agents: Jett, Raze, Sova · Playstyle: Aggressive               │
-│ Tracker: tracker.gg/shadowfox ↗                                         │
+│ Age 24 · Usually online 19:00–23:00 · Agents: Jett, Raze, Sova          │
+│ Playstyle: Aggressive · Tracker: tracker.gg/shadowfox ↗                 │
 │                                  [ Add on Discord ]        Details ⌃    │
 ```
 
@@ -363,8 +371,8 @@ owner's, so they read the same way as the ✓ and ≠ marks (5.6).
 
 | Type      | On the card                                                        | Behind Details                                                            |
 | --------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------- |
-| Player    | Rank, roles, location, language, online hours, microphone, Looking for | Age, remaining game fields, trackers                                |
-| Group     | Open slots, needed roles, rank range, regions, language, online hours, microphone, ages | Remaining game fields                             |
+| Player    | Rank, roles, location, language, microphone, Looking for | Age, online hours, remaining game fields, trackers                  |
+| Group     | Open slots, needed roles, rank range, regions, language, microphone, ages | Online hours, remaining game fields               |
 | Community | Kind, regions, language, platform, Looking for, experience level   | Remaining game fields, the rest of the pitch                              |
 
 ### 5.5 Free text and "Looking for"
@@ -374,17 +382,22 @@ owner's, so they read the same way as the ✓ and ≠ marks (5.6).
   are written, and are nearly always one of a few answers.
 - **Proposed:** a structured **Looking for** on all three post types, one or more
   of the game's options, such as Casual, Ranked climb or Competitive for Valorant,
-  and Events or Roleplay for Valheim. Each choice is a card tag, and together they
-  are a matching field.
+  and Events or Roleplay for Valheim. The choices are one fact on the card and one
+  matching field.
 - **Decided:** the options are set per game and are the same for all three post
   types, so a player's answer compares directly with a group's or a community's.
-- **Proposed:** "New or returning player" stays, as a tag.
+- **Proposed:** "New or returning player" stays, as a fact.
 
 ### 5.6 Card actions
 
-- **Proposed:** in the feed, each card lists what fits the viewer's description
-  ("✓ Needs Controller", "✓ Diamond fits") and what doesn't ("≠ Platinum 1–2"),
-  which is what makes the fuzzy ordering (7.2) legible.
+- **Proposed:** in the feed, each card says what fits the viewer's description and
+  what doesn't, which is what makes the fuzzy ordering (7.2) legible.
+- **Decided:** the marks sit on the card's own facts: "✓ Needs Controller",
+  "✓ Platinum 1 – Diamond 3", "≠ PT". A separate row of marks would repeat most of
+  the fact line. A field the viewer filled in and the post left empty shows in the
+  place it would take, "≠ Rank not given" where the rank would be. A compared
+  field the card doesn't otherwise show, such as a player's age behind Details,
+  joins the end of the fact line with its mark.
 - **Decided:** a post offers both on-site messaging and off-site contacts
   (Discord tag, Riot ID and the other game accounts).
 - **Decided:** messaging and revealing contacts both require sign-in.
@@ -490,15 +503,15 @@ Type ─▶ Game ─▶ Post ─▶ Register or sign in ─▶ Matches
 ┌──────────────────────────────────────┬──────────────────────────────────┐
 │ Valorant · group                     │ Preview                          │
 │                                      │ ┌──────────────────────────────┐ │
-│ Group name       [Night Owls]        │ │ Night Owls            GROUP  │ │
-│ How many are you, and how many do    │ │ ●●●○○ 3 of 5 · Needs         │ │
-│ you want in total?                   │ │ Controller, Sentinel         │ │
-│   [ 3 ] of [ 5 ]                     │ │ Plat 1 – Dia 3 · EU · EN     │ │
-│ Roles you need   [Controller][Sent…] │ │ 21–01 CET · 🎤               │ │
-│ Rank range       [Plat 1] – [Dia 3]  │ │ [ Ranked climb ]             │ │
+│ Group name       [Night Owls]        │ │ Night Owls GROUP ●●●○○ 3/5   │ │
+│ How many are you, and how many do    │ │ Plat 1 – Dia 3 · Needs       │ │
+│ you want in total?                   │ │ Controller, Sentinel · EU ·  │ │
+│   [ 3 ] of [ 5 ]                     │ │ EN · 🎤 ·                    │ │
+│ Roles you need   [Controller][Sent…] │ │ Ranked climb                 │ │
+│ Rank range       [Plat 1] – [Dia 3]  │ │                              │ │
 │ Regions          [EU ▾]              │ │ "Three friends who play most │ │
 │ Language         [EN ▾]              │ │  nights, we want to stop…"   │ │
-│ Usually online   [21:00] – [01:00]   │ │ Posted by Kestrel [ Message ]│ │
+│ Ages             [18] – [  ]         │ │ Posted by Kestrel [ Message ]│ │
 │ Looking for      [✓] Ranked climb    │ │                     Details ⌄│ │
 │ Microphone       [✓] Required        │ └──────────────────────────────┘ │
 │                                      │                                  │
@@ -516,7 +529,7 @@ Type ─▶ Game ─▶ Post ─▶ Register or sign in ─▶ Matches
 │ Website          [https://…]         │                                  │
 │                                      │                                  │
 │ ⌄ Add more details (optional)        │                                  │
-│   Agents, playstyle                  │                                  │
+│   Online hours, agents, playstyle    │                                  │
 │                                      │                                  │
 │ Your post stays active for 30 days.  │                                  │
 │ We'll email you before it expires,   │                                  │
@@ -528,11 +541,10 @@ Type ─▶ Game ─▶ Post ─▶ Register or sign in ─▶ Matches
    The screen has four parts, in the order the card shows them:
 
    - **The card's fields.** Only the fields the card shows.
-     - *Player:* rank, roles, location, language, online hours, microphone,
-       Looking for, new or returning.
+     - *Player:* rank, roles, location, language, microphone, Looking for, new
+       or returning.
      - *Group:* optional name, size and open slots, needed roles, rank range,
-       regions, language, online hours, microphone, age range, Looking for,
-       organized.
+       regions, language, microphone, age range, Looking for, organized.
      - *Community:* name, kind, Looking for, experience level, regions, language,
        platform.
    - **In your words.** One text field with prompts and an example. **Proposed:**
@@ -546,10 +558,13 @@ Type ─▶ Game ─▶ Post ─▶ Register or sign in ─▶ Matches
      weekday and weekend hours: online times are the field players leave empty most
      often (56% filled) and the criterion alerts use least (41%), and a second range
      doubles that friction.
+   - **Proposed:** online hours sit under **Add more details**, since the card keeps
+     them behind Details (5.4), and the timezone they are written in sits beside
+     them.
    - **Decided:** facts about the player (age, languages, location, timezone) and
      their contacts are asked once and live on the account. This screen asks for
-     them where the account doesn't have them yet: location, languages and timezone
-     with the card's fields, since the card shows them, and birthday under **Add
+     them where the account doesn't have them yet: location and languages with the
+     card's fields, since the card shows them, and birthday and timezone under **Add
      more details**. There is no separate details step. Player posts show the facts
      as the account has them now, and every player and group post the player owns
      shows their contacts; changing either on the account page (11.5) doesn't renew
@@ -647,6 +662,9 @@ context, so each field can be compared the way the pair of post types calls for.
   from it: from their player post if they have one, otherwise from their group or
   community post. Changing the description offers to update the post. That
   description isn't empty, so their own post leaves the feed (section 4).
+- **Proposed:** the bar is headed "Tell us about you", with a line saying that what
+  fits comes first. Without it the chips read as ordinary filters, not as the
+  viewer's own details.
 - **Proposed:** the bar carries only the fields matching compares for the chosen
   type (7.2), the most used first and the rest under **More**. Fields that aren't
   compared, such as a group's size or name, are filled in on the post screen after
@@ -662,24 +680,32 @@ what doesn't (section 5.6), so the ordering is legible.
 
 ```
 Fits you (3)
-  group card      ✓ Needs Controller · ✓ Diamond fits · ✓ EU · ✓ 21–23
-  player card     ✓ Diamond 1 · ✓ EU · ✓ 19–22 · ✓ EN
+  group card      ✓ Needs Controller · ✓ Diamond · ✓ EU · ✓ 21:00–23:00
+  player card     ✓ Diamond 1 · ✓ EU · ✓ 19:00–22:00 · ✓ EN
   community card  ✓ EU · ✓ EN · ✓ PC
 Missing one thing (12)
-  group card      ✓ Needs Sentinel · ✓ EU · ✓ 21–23 · ≠ Platinum 1–2
+  group card      ✓ Needs Sentinel · ✓ EU · ✓ 21:00–23:00 · ≠ Platinum 1–2
 Missing more
-  player card     ✓ EU · ≠ Bronze 2 · ≠ Online 08–12 · ≠ PT
+  player card     ✓ EU · ≠ Bronze 2 · ≠ 08:00–12:00 · ≠ PT
 ```
 
 **Decided:** posts are split into tiers by how many fields they match, each under
 its own heading, so the ordering explains itself.
 
-**Open:** what makes a post a fit. Some fields must match for a post to fit;
-others are nice to have and only lift it within the feed. A fit is what the "Fits
-you" tier, the Matches screen (section 6) and match notifications (section 8)
-count. Which fields must match, whether the system or the player decides, and how
-a field left empty on either side counts are settled in testing and tuned after
-launch.
+**Decided:** a field the viewer filled in and the post left empty counts as a
+mismatch. A post that says nothing about rank doesn't fit a Silver player any
+better than one that says Diamond, so a sparse post can't rise above posts that
+give their details. A field the viewer left empty isn't compared at all.
+
+**Proposed:** the tiers count against the fields that apply to the post's type:
+"Fits you" matches every one of them, "Missing one thing" all but one. A post with
+none of them, such as a community when the viewer has filled in only rank and
+roles, goes to the last tier.
+
+**Open:** whether some fields must match for a post to fit while others only lift
+it within the feed. A fit is what the "Fits you" tier, the Matches screen (section
+6) and match notifications (section 8) count. Which fields must match, and whether
+the system or the player decides, are settled in testing and tuned after launch.
 
 **Proposed:** what a field compares against depends on the two post types, not on
 the field:
@@ -742,8 +768,10 @@ the field:
 - **Proposed:** an expired post can be renewed any time from the home page (11.2).
 - **Proposed:** expired posts can still be messaged, with a note that the owner may
   not reply. The owner's email about the message includes a **Renew** button.
-- **Proposed:** the card shows "Active 2 days ago" for active posts and "Expired
-  2 months ago" for expired ones, both counted from the last renewal or edit.
+- **Decided:** every card says when it was last active, "Active 2 days ago" or
+  "Active 3 months ago", counted from the last renewal or edit. Players don't know
+  when a post expires, so "Expired 2 months ago" would read a month off; the divider
+  and the faded card say that it has.
 
 ## 10. Messaging
 
@@ -904,7 +932,9 @@ Account menu
 - **Proposed:** **Games** opens the cover grid, and each cover opens that game's
   feed. For a signed-in player, games where they have a post carry a mark.
 - **Proposed:** **New post** is the header's one prominent button, signed in or
-  out, since it is the start of the funnel. **Sign up** is a plain link: most
+  out, since it is the start of the funnel. It is outlined, not filled, so it
+  doesn't compete with the one filled button of the page below it (14.1), such as
+  **Publish post** on the feed. **Sign up** is a plain link: most
   players register through New post, and the rest are asked to when they first
   open a contact panel.
 - **Proposed:** the inbox icon opens the inbox page and shows how many
@@ -1015,15 +1045,157 @@ the current model lacks:
 - **Email switches** on the account, one per kind of email.
 - **Events** for measurement.
 
-## 14. Not covered yet
+## 14. Design system
+
+The design system is extracted from the prototypes. This section is what they
+start from: the palette, type, icons and layout they share, and the components the
+brief's screens already call for.
+
+### 14.1 Color
+
+- **Decided:** dark by default. Game covers are the site's only per-game art and
+  carry most of its color. They stand out on dark, and players come from Discord,
+  Steam and trackers, which are dark too.
+- **Decided:** the palette comes from the tavern: gray stone, brown wood, green
+  nature and red fire. Cards are tables on a stone floor.
+- **Proposed:** tokens are CSS custom properties named by role, never by value, so
+  a light theme is a second set of values for the same names. No light theme is
+  designed for the first release.
+- **Proposed:** the values, each checked against WCAG AA on every surface it is
+  used on: 4.5:1 for text, 3:1 for control edges.
+
+| Token        | Value     | From   | Used for                                          | Lowest contrast |
+| ------------ | --------- | ------ | ------------------------------------------------- | --------------- |
+| floor        | `#141210` | stone  | Page background                                   |                 |
+| table        | `#1F1A16` | wood   | Cards                                             |                 |
+| raised       | `#2A241F` | stone  | Panels, menus, inputs, the description bar        |                 |
+| border       | `#3B332C` | stone  | Card edges, dividers                              | decorative      |
+| input-border | `#7F7366` | stone  | Edges of inputs and controls                      | 3.3             |
+| text         | `#EFE9E2` |        | Headings and body text                            | 12.7            |
+| text-muted   | `#AFA397` |        | Freshness, labels, ≠ marks                        | 6.2             |
+| text-faint   | `#968A7D` |        | Expired cards, placeholders                       | 4.5             |
+| ember        | `#F2823F` | fire   | Primary buttons, links, focus ring, unread counts | 5.9             |
+| ember-hover  | `#F59A62` | fire   | Hover on ember                                    |                 |
+| on-ember     | `#1A0F0A` |        | Text on ember buttons                             | 7.2             |
+| moss         | `#8FC06E` | nature | ✓ marks                                           | 7.3             |
+| error        | `#F0587A` |        | Form errors, destructive actions                  | 4.7             |
+
+- **Proposed:** fire is scarce and marks what asks for a click: one filled ember
+  button per screen, links, the focus ring and unread counts. A card's contact
+  button is outlined, so a feed of twenty cards doesn't show twenty filled buttons,
+  and so is the header's **New post** (11.4).
+- **Proposed:** green means one thing, a field that fits. ≠ is muted stone, never
+  error: a mismatch is information (7.2), and a thin feed full of red would look
+  broken. Both marks carry their glyph, so neither relies on color.
+- **Proposed:** error is a rose kept apart from the ember, and always comes with
+  an icon and a message.
+- **Proposed:** an expired card keeps the table surface and its text drops to
+  text-faint. It fades without turning transparent, so it still passes contrast.
+- **Proposed:** post types have no color of their own, only a label and a glyph
+  (14.3). Type colors would compete with the match marks and the covers.
+
+### 14.2 Type
+
+- **Decided:** Inter, self-hosted with the Latin, Latin Extended, Cyrillic and
+  Greek subsets, since posts are written in many languages.
+- **Proposed:** tabular figures for hours, ages, counts and slots, so they line up
+  down the feed.
+- **Proposed:** five sizes, 12, 14, 16, 20 and 28 px, in weights 400, 500 and 600.
+  A card uses four steps: the heading (name, type, freshness) at 16/600, the fact
+  line at 14/500, labels at 12/500, and the player's words at 14/400. The fact line is
+  the most read text on the site, so it gets the strongest body weight.
+
+### 14.3 Icons
+
+- **Decided:** Lucide, inlined as SVG. No icon font.
+- **Decided:** no per-game icons. Ranks, roles and agents are text, and the cover
+  stays a game's only asset, so a new game is still one seed file and one cover.
+- **Proposed:** the set the brief needs: user, users and castle for the three post
+  types; mic, bell, mail, copy, check, not-equal, chevron, close, plus, menu,
+  external link and alert; and Discord's own mark on Discord buttons, which Lucide
+  doesn't carry.
+
+### 14.4 Layout and motion
+
+- **Proposed:** spacing on a 4 px grid.
+- **Proposed:** the feed is one column about 720 px wide, not a grid: cards are
+  compared, and comparing reads down. On a desktop that leaves room on either side
+  for the ad rails section 15 expects.
+- **Proposed:** two breakpoints. Below 640 px is a phone, where overlays go
+  full-screen (4, 5.6, 7.1, 11.4); from 1024 px is a desktop, where the rails
+  appear.
+- **Proposed:** a card's expansion animates its height, and doesn't animate under
+  reduced motion.
+
+### 14.5 Components
+
+What the brief's screens already call for; the prototypes settle their shape.
+
+| Area    | Components                                                                   |
+| ------- | ---------------------------------------------------------------------------- |
+| Card    | The card shell, fact line, match mark, slot pips, freshness label, the already-messaged mark |
+| Feed    | Type chooser (radio cards, also step 1 of posting), description bar with **More**, segmented control, publish prompt, tier heading, labelled divider, **Load more** |
+| Inputs  | Single and multi select, range picker (rank, age), an hours range that crosses midnight, count stepper ("3 of 5"), checkbox, radio group, text area with prompts, collapsible section |
+| Overlay | Modal, side panel, full-screen sheet, dropdown                                |
+| Contact | Contact panel, contact row with **Copy**, message box, conversation thread   |
+| Lists   | Notification rows grouped by post, inbox rows, unread badge, the account page's definition list, toggle switch, a confirmation that shows counts |
+
+- **Proposed:** one card shell for all three types, with fixed rows: heading,
+  facts, the player's words and the footer. Types differ in what fills the rows
+  and in how many lines of text show before the cut: two for players and groups,
+  four for communities. This is the first answer the prototypes try to the mixed
+  card sizes in section 4.
+- **Open:** on a phone, a group or community card's footer holds "Posted by", the
+  contact button and **Details**, and **Details** wraps onto a line of its own.
+  Moving it beside the contact button or moving the owner's line up are the
+  candidates.
+- **Proposed:** a match mark has two states, fits and doesn't, and sits on the
+  fact it is about (5.6). A field that isn't compared carries no mark.
+- **Proposed:** one overlay component, shown as a modal or side panel on a
+  desktop, a full-screen sheet on a phone, or a dropdown from the header. The
+  description bar, the contact panel, Games, notifications and the account menu
+  all use it. It traps focus while open and returns it on close.
+- **Proposed:** buttons come in three weights: filled ember, once per screen;
+  outlined, for card contact buttons, the header's **New post** and secondary
+  actions; and plain text, for
+  **Details ⌄**, **Sign in** and the like. Destructive actions are outlined in
+  error.
+
+### 14.6 Voice
+
+- **Proposed:** the brief's own copy sets the voice: "Fits you", "Missing one
+  thing", "Older posts · they may no longer be looking".
+- **Proposed:** sentence case everywhere. Choices are in the player's voice ("I'm a
+  player looking for a group", "We're a group looking for players"). The site
+  never says "team". A thin or empty state ends with something to do: "Publish
+  your post and we'll tell you when someone fits."
+
+### 14.7 Logo
+
+- **Open:** a new logo in the palette. The phone header shows only its mark
+  (11.4), so the mark has to read on its own at 24 px. A hearth flame is the first
+  direction to try.
+
+### 14.8 Prototype content
+
+- **Proposed:** prototypes use content from the production dump rather than
+  placeholder text, and include:
+  - about texts in several languages and scripts;
+  - long nicknames and group names;
+  - empty fields, especially online hours (56% filled);
+  - Valheim, which has no rank, so a group's heading reads "Wants 2–3 more";
+  - a game whose posts have all expired, so the divider is at the top;
+  - an expanded card with many game fields;
+  - every overlay at phone width.
+
+## 15. Not covered yet
 
 - Competitions and leagues.
-- Design system and visual language.
 - Ads. Every layout in this brief is ad-free. Ads fit around the design rather
   than the design around them, so they are placed last. Side panels and a bottom
   sticky are likely; the rest is open.
 
-## 15. Out of scope
+## 16. Out of scope
 
 Decided against for now, listed so they aren't reopened by accident:
 

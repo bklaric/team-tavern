@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Feed</title>
+    <link rel="preconnect" href="https://rsms.me/">
+    <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+    <link rel="stylesheet" href="tokens.css">
+    <link rel="stylesheet" href="base.css">
+    <link rel="stylesheet" href="components.css">
+    <style>
+        .feed-page {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-5);
+            max-width: var(--feed-width);
+            margin: 0 auto;
+            padding: var(--space-8) var(--space-4) 96px;
+        }
+
+        .feed-page > div:empty {
+            display: none;
+        }
+
+        #feed > .divider:first-child,
+        #feed > .tier-heading:first-child {
+            margin-top: 0;
+        }
+
+        .missing-data {
+            padding: var(--space-6);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-card);
+            background: var(--table);
+        }
+    </style>
+</head>
+<body>
+<header class="site-header">
+    <div class="site-header-inner">
+        <a class="logo" href="#"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"></svg><span class="logo-word">TeamTavern</span></a>
+        <button class="button button-text" type="button" id="games">Games</button>
+        <div class="site-header-actions">
+            <a class="button button-outline button-small" href="#" id="new-post">New post</a>
+            <a class="button button-text button-small" href="#">Sign in</a>
+            <a class="button button-text button-small hide-phone" href="#">Sign up</a>
+        </div>
+    </div>
+</header>
+
+<main class="feed-page">
+    <div class="feed-header" id="feed-header"></div>
+    <div id="description"></div>
+    <div id="publish"></div>
+    <div id="segments"></div>
+    <div id="feed"></div>
+    <div class="load-more" id="load-more"></div>
+</main>
+<div id="sheet"></div>
+
+<script src="icons.js"></script>
+<script src="prototype.js"></script>
+<script>
+    // feed.html?game=<handle> reads data/<handle>.js, written by export-sample.sh.
+    const handle = new URLSearchParams(location.search).get("game") || "valorant";
+    document.write(`<script src="data/${handle}.js"><\/script>`);
+</script>
+<script>
+    document.querySelector(".logo .icon").innerHTML = ICONS.flame;
+    document.getElementById("games").insertAdjacentHTML("beforeend", icon("chevron-down"));
+    document.getElementById("new-post").insertAdjacentHTML("afterbegin", icon("plus"));
+    if (typeof FEED_DATA === "undefined") {
+        document.querySelector(".feed-page").innerHTML = `<div class="missing-data">
+            <h2>No sample for ${escapeHtml(handle)}</h2>
+            <p class="muted" style="margin-top: 8px">Run <code>./redesign/prototype/export-sample.sh ${escapeHtml(handle)}</code> with the development stack's postgres running.</p>
+        </div>`;
+    } else {
+        document.write(`<script src="feed.js"><\/script>`);
+    }
+</script>
+</body>
+</html>
