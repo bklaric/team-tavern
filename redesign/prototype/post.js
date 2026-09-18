@@ -71,10 +71,17 @@ const POST_TYPES = {
 const PLURAL = { player: "players", group: "groups", community: "communities" };
 
 // What the brief makes game fields that today's data lacks, made up for the
-// prototype: the game account players add each other by, a community's kinds
-// and the platforms. Trackers are the seed's: each links a profile built from
-// the game account.
+// prototype: the game account players add each other by and a community's
+// kinds. Trackers are the seed's: each links a profile built from the game
+// account.
 const GAME_EXTRAS = {
+    apex: {
+        account: { key: "ea", label: "EA ID", placeholder: "Your EA ID" },
+        trackers: [
+            { title: "tracker.gg", url: id => `https://tracker.gg/apex/profile/origin/${encodeURIComponent(id)}` },
+        ],
+        kinds: ["Discord server", "Clan", "Esports organization"],
+    },
     valorant: {
         account: { key: "riot", label: "Riot ID", placeholder: "Name#TAG" },
         trackers: [
@@ -82,7 +89,6 @@ const GAME_EXTRAS = {
             { title: "blitz.gg", url: id => `https://blitz.gg/valorant/profile/${id.replace("#", "-")}` },
         ],
         kinds: ["Discord server", "Clan", "Esports organization"],
-        platforms: ["PC", "PlayStation", "Xbox"],
     },
     lol: {
         account: { key: "riot", label: "Riot ID", placeholder: "Name#TAG" },
@@ -91,7 +97,6 @@ const GAME_EXTRAS = {
     valheim: {
         account: { key: "steam", label: "Steam profile", placeholder: "steamcommunity.com/id/…" },
         kinds: ["Dedicated server", "Discord server", "Clan"],
-        platforms: ["PC", "Xbox"],
     },
 };
 const EXTRAS = GAME_EXTRAS[HANDLE] || {
@@ -276,6 +281,7 @@ const cardFields = () => {
     const lookingFor = ROLES.lookingFor && { key: "lookingFor", label: "Looking for", kind: "pills", options: gameOptions(ROLES.lookingFor) };
     const languages = { key: "languages", label: "Languages", kind: "tokens", options: languageOptions };
     const regions = { key: "regions", label: "Regions", kind: "pills", options: regionOptions, hint: "Where the players you're looking for are" };
+    const platforms = platformOptions.length && { key: "platforms", label: "Platform", kind: "pills", options: platformOptions };
     const nameHint = signedIn()
         ? `Without one, the card says “${account.nickname}'s group”.`
         : "Without one, the card is named after you.";
@@ -283,6 +289,7 @@ const cardFields = () => {
         player: [
             ROLES.rank && { key: "rank", label: "Rank", kind: "choose", options: gameOptions(ROLES.rank), placeholder: "Choose your rank" },
             ROLES.roles && { key: "roles", label: "Roles", kind: "pills", options: gameOptions(ROLES.roles) },
+            platforms,
             ...otherGameFields(),
             { key: "location", label: "Location", kind: "select", options: locationOptions, placeholder: "Choose a country", account: true },
             { ...languages, account: true },
@@ -299,6 +306,7 @@ const cardFields = () => {
                 : { key: "size", label: "How many are you, and how many do you want in total?", kind: "size" },
             ROLES.roles && { key: "roles", label: "Roles you need", kind: "pills", options: gameOptions(ROLES.roles) },
             ROLES.rank && { key: "rankRange", label: "Rank range", kind: "rankRange", options: gameOptions(ROLES.rank) },
+            platforms,
             ...otherGameFields(),
             regions,
             languages,
@@ -315,7 +323,7 @@ const cardFields = () => {
             { key: "experience", label: "Experience level", kind: "radioPills", options: asOptions(EXPERIENCE) },
             regions,
             languages,
-            EXTRAS.platforms && { key: "platforms", label: "Platform", kind: "pills", options: asOptions(EXTRAS.platforms) },
+            platforms,
             ...otherGameFields(),
         ],
     };
@@ -452,7 +460,7 @@ const postOf = (d, owner, updated) => {
         organized: type === "group" && d.organized,
         kind: type === "community" ? d.kind : undefined,
         experience: type === "community" ? d.experience : undefined,
-        platforms: type === "community" ? d.platforms : undefined,
+        platforms: knownPlatforms(d.platforms),
         contact: contactButton(d),
         slots: type !== "group" ? undefined
             : ROLES.server ? { wants: d.wantsFrom === d.wantsTo ? `${d.wantsFrom}` : `${d.wantsFrom}–${d.wantsTo}` }
@@ -838,9 +846,9 @@ const renderConflict = () => {
 // Step 5: Matches. The feed's matching, with the new post as the description.
 
 const DESCRIBED = {
-    player: ["rank", "roles", "location", "languages", "lookingFor", "hours", "mic"],
-    group: ["roles", "rankRange", "regions", "languages", "ageRange", "lookingFor", "hours", "mic"],
-    community: ["regions", "languages", "lookingFor"],
+    player: ["rank", "roles", "platforms", "location", "languages", "lookingFor", "hours", "mic"],
+    group: ["roles", "rankRange", "platforms", "regions", "languages", "ageRange", "lookingFor", "hours", "mic"],
+    community: ["regions", "languages", "platforms", "lookingFor"],
 };
 
 const descriptionOf = d => {
