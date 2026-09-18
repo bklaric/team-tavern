@@ -514,6 +514,8 @@ Type ─▶ Game ─▶ Post ─▶ Register or sign in ─▶ Matches
 │ Ages             [18] – [  ]         │ │ Posted by Kestrel [ Message ]│ │
 │ Looking for      [✓] Ranked climb    │ │                     Details ⌄│ │
 │ Microphone       [✓] Required        │ └──────────────────────────────┘ │
+│ Usually online   [21:00] – [01:00]   │                                  │
+│ Timezone         Europe/Zagreb       │                                  │
 │                                      │                                  │
 │ Tell people about your group         │                                  │
 │ [Three friends who play most nights… │                                  │
@@ -528,9 +530,6 @@ Type ─▶ Game ─▶ Post ─▶ Register or sign in ─▶ Matches
 │ Discord server   [discord.gg/…]      │                                  │
 │ Website          [https://…]         │                                  │
 │                                      │                                  │
-│ ⌄ Add more details (optional)        │                                  │
-│   Online hours, agents, playstyle    │                                  │
-│                                      │                                  │
 │ Your post stays active for 30 days.  │                                  │
 │ We'll email you before it expires,   │                                  │
 │ and tell you when someone new fits.  │                                  │
@@ -538,34 +537,43 @@ Type ─▶ Game ─▶ Post ─▶ Register or sign in ─▶ Matches
 └──────────────────────────────────────┴──────────────────────────────────┘
 ```
 
-   The screen has four parts, in the order the card shows them:
+   The screen has three parts:
 
-   - **The card's fields.** Only the fields the card shows.
-     - *Player:* rank, roles, location, language, microphone, Looking for, new
-       or returning.
-     - *Group:* optional name, size and open slots, needed roles, rank range,
-       regions, language, microphone, age range, Looking for, organized.
+   - **The post's fields.** Every field of the post, the game's own fields among
+     them, with nothing behind a click.
+     - *Player:* rank, roles, the game's other fields, location, language,
+       birthday, microphone, Looking for, new or returning, online hours and
+       timezone.
+     - *Group:* optional name, size and open slots, needed roles, rank range, the
+       game's other fields, regions, language, microphone, age range, Looking for,
+       organized, online hours and timezone.
      - *Community:* name, kind, Looking for, experience level, regions, language,
-       platform.
-   - **In your words.** One text field with prompts and an example. **Proposed:**
-     optional for player and group posts, required for communities.
+       platform and the game's fields.
+   - **In your words.** One text field with prompts and an example. **Decided:**
+     required for communities, where the text is the product, and optional for
+     player and group posts.
    - **Contact.** How people reach the post, prefilled from the account.
-   - **Add more details (optional).** Collapsed, holding every field the card
-     doesn't show.
 
    - **Decided:** online hours are one range, "Usually online 21:00–01:00", in the
      player's timezone, and a range may cross midnight. There are no separate
      weekday and weekend hours: online times are the field players leave empty most
      often (56% filled) and the criterion alerts use least (41%), and a second range
      doubles that friction.
-   - **Proposed:** online hours sit under **Add more details**, since the card keeps
-     them behind Details (5.4), and the timezone they are written in sits beside
-     them.
+   - **Decided:** what the card shows up front and what it keeps behind Details
+     (5.4) is the card's concern, not the screen's: the screen asks for every field
+     in one place. A field behind a click is a field left empty, and online hours
+     are already the one players skip most.
+   - **Decided:** only a community's name and its words are required. They carry a
+     **Required** tag, and no field carries an optional one. The game account ID
+     (Riot ID, Steam ID and the like) is optional like every other contact:
+     messaging on the site reaches every post.
+   - **Decided:** trackers aren't fields. Each game's tracker templates build them
+     from the player's game account ID, and the ID's field says which profiles the
+     card will link.
    - **Decided:** facts about the player (age, languages, location, timezone) and
      their contacts are asked once and live on the account. This screen asks for
-     them where the account doesn't have them yet: location and languages with the
-     card's fields, since the card shows them, and birthday and timezone under **Add
-     more details**. There is no separate details step. Player posts show the facts
+     them where the account doesn't have them yet, with the post's fields. There is
+     no separate details step. Player posts show the facts
      as the account has them now, and every player and group post the player owns
      shows their contacts; changing either on the account page (11.5) doesn't renew
      any post. Group and community posts carry their own regions, languages and age
@@ -574,9 +582,12 @@ Type ─▶ Game ─▶ Post ─▶ Register or sign in ─▶ Matches
    - **Decided:** a player who already has other posts is told, beside an account
      fact or contact they change here, that the change applies to all their posts.
      A player writing their first post isn't.
+   - **Proposed:** an account fact or contact the account already holds shows as
+     its value, "Croatia · From your account · Change", not as an input, and
+     Change opens the input.
    - **Decided:** the preview expands with **Details ⌄**, as cards do in the feed
-     (5.4). The card's fields change the card itself; **Add more details** fills in
-     only what the expansion shows, which is why it is a separate section.
+     (5.4). Most fields change the card itself; some, such as online hours, fill in
+     only what the expansion shows.
    - **Proposed:** player and group posts ask "How should people reach you?":
      message me on TeamTavern, add me on Discord or in game, or either, followed by
      the game's contact fields. A group may also give a Discord server invite and a
@@ -601,8 +612,10 @@ Type ─▶ Game ─▶ Post ─▶ Register or sign in ─▶ Matches
    - **Proposed:** the renewal and notification rules are stated above **Publish
      post**: "Your post stays active for 30 days. We'll email you before it
      expires, and tell you when someone new fits." Communities read 90 days.
-   - **Open:** on a phone the side-by-side preview becomes the card above the
-     fields, or a preview opened on demand. Prototyping decides.
+   - **Decided:** below a desktop the preview is opened on demand: a bar at the
+     bottom of the screen holds **Preview** and **Publish post**, and Preview
+     opens the card in a sheet. A card above the fields scrolls away before the
+     player reaches the text they write, which is what the preview is for.
 4. **Register or sign in** (signed out only). The draft is kept through it.
    - **Decided:** this is the site's one sign-up screen: email, nickname and
      password, or **Continue with Discord**, with a link to sign in instead. The
@@ -623,14 +636,12 @@ Type ─▶ Game ─▶ Post ─▶ Register or sign in ─▶ Matches
 │ │ player card                                           │ │
 │ │ player card                                           │ │
 │ └───────────────────────────────────────────────────────┘ │
-│ [ See all ]              Add more details to your post →  │
+│ [ See all ]                                               │
 └───────────────────────────────────────────────────────────┘
 ```
 
    - **Proposed:** with nothing matching well, the closest posts are shown with
      what doesn't fit, and "We'll email you when someone fits."
-   - **Proposed:** a player who left **Add more details** empty is offered it once
-     more here.
 
 ## 7. Matching
 
@@ -1086,7 +1097,8 @@ brief's screens already call for.
   and so is the header's **New post** (11.4).
 - **Proposed:** green means one thing, a field that fits. ≠ is muted stone, never
   error: a mismatch is information (7.2), and a thin feed full of red would look
-  broken. Both marks carry their glyph, so neither relies on color.
+  broken. Both marks carry their glyph, so neither relies on color. For the same
+  reason "Your post is live" carries the ember flame, not a green check.
 - **Proposed:** error is a rose kept apart from the ember, and always comes with
   an icon and a message.
 - **Proposed:** an expired card keeps the table surface and its text drops to
@@ -1110,6 +1122,12 @@ brief's screens already call for.
 - **Decided:** Lucide, inlined as SVG. No icon font.
 - **Decided:** no per-game icons. Ranks, roles and agents are text, and the cover
   stays a game's only asset, so a new game is still one seed file and one cover.
+- **Decided:** the cover grid shows no titles. Each cover carries its game's logo,
+  readable at the grid's tile size and naming the game as the site does, and the
+  title is the tile's accessible name. A cover without such a logo doesn't
+  qualify.
+- **Decided:** no search above the cover grid while the catalogue fits in about
+  two rows on a desktop. Recognising a logo is faster than typing a name.
 - **Proposed:** the set the brief needs: user, users and castle for the three post
   types; mic, bell, mail, copy, check, not-equal, chevron, close, plus, menu,
   external link and alert; and Discord's own mark on Discord buttons, which Lucide
@@ -1135,7 +1153,7 @@ What the brief's screens already call for; the prototypes settle their shape.
 | ------- | ---------------------------------------------------------------------------- |
 | Card    | The card shell, fact line, match mark, slot pips, freshness label, the already-messaged mark |
 | Feed    | Type chooser (radio cards, also step 1 of posting), description bar with **More**, segmented control, publish prompt, tier heading, labelled divider, **Load more** |
-| Inputs  | Single and multi select, range picker (rank, age), an hours range that crosses midnight, count stepper ("3 of 5"), checkbox, radio group, text area with prompts, collapsible section |
+| Inputs  | Pills for a field's few options, one or several; tokens for a few out of many, such as languages; select, range picker (rank, age), an hours range that crosses midnight, count stepper ("3 of 5"), checkbox, radio group, text area with prompts, an account fact with **Change** |
 | Overlay | Modal, side panel, full-screen sheet, dropdown                                |
 | Contact | Contact panel, contact row with **Copy**, message box, conversation thread   |
 | Lists   | Notification rows grouped by post, inbox rows, unread badge, the account page's definition list, toggle switch, a confirmation that shows counts |
@@ -1145,10 +1163,9 @@ What the brief's screens already call for; the prototypes settle their shape.
   and in how many lines of text show before the cut: two for players and groups,
   four for communities. This is the first answer the prototypes try to the mixed
   card sizes in section 4.
-- **Open:** on a phone, a group or community card's footer holds "Posted by", the
-  contact button and **Details**, and **Details** wraps onto a line of its own.
-  Moving it beside the contact button or moving the owner's line up are the
-  candidates.
+- **Decided:** on a phone, a group or community card's footer puts "Posted by" on
+  a row of its own, and the contact button and **Details** share the row below
+  it, so **Details** never wraps onto a line by itself.
 - **Proposed:** a match mark has two states, fits and doesn't, and sits on the
   fact it is about (5.6). A field that isn't compared carries no mark.
 - **Proposed:** one overlay component, shown as a modal or side panel on a

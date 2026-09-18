@@ -158,6 +158,12 @@
         <h2>Card states</h2>
         <div id="states"></div>
     </section>
+
+    <section>
+        <h2>Posting</h2>
+        <p class="sheet-note">The type chooser as posting's first step, and the controls of the post screen. A chosen pill takes the text color, not ember: it is an answer, not a call to act.</p>
+        <div id="posting"></div>
+    </section>
 </main>
 
 <script src="icons.js"></script>
@@ -229,6 +235,55 @@
     ];
     $("states").innerHTML = states.map(([caption, post]) =>
         `<p class="sheet-caption">${caption}</p>${renderCard(post)}`).join("");
+
+    const pill = (label, checked, type = "checkbox") =>
+        `<label class="pill"><input type="${type}" name="sheet-pill-${type}"${checked ? " checked" : ""}>${icon("check")}${label}</label>`;
+    const stepper = (value, min, max) => `<div class="stepper">
+        <button type="button" aria-label="Fewer"${value <= min ? " disabled" : ""}>${icon("minus")}</button>
+        <output>${value}</output>
+        <button type="button" aria-label="More"${value >= max ? " disabled" : ""}>${icon("plus")}</button></div>`;
+    $("posting").innerHTML = `
+        <p class="sheet-caption">Type chooser</p>
+        <div class="type-cards">
+            <a class="type-card" href="#">${icon("user")}<span class="type-card-text"><span class="type-card-title">I'm a player looking for a group</span><span class="type-card-example">Groups, communities and other players find you</span></span>${icon("chevron-right")}</a>
+            <a class="type-card" href="#">${icon("users")}<span class="type-card-text"><span class="type-card-title">We're a group looking for players</span><span class="type-card-example">“Three of us play most nights, need a fifth”</span><span class="type-card-mine">You have one for Valorant</span></span>${icon("chevron-right")}</a>
+        </div>
+        <p class="sheet-caption">Pills, several or one</p>
+        <div class="pills">${pill("In-game leader")}${pill("Lurker", true)}${pill("Supporter", true)}</div>
+        <div class="pills" style="margin-top: 8px">${pill("Dedicated server", true, "radio")}${pill("Discord server", false, "radio")}${pill("Clan", false, "radio")}</div>
+        <p class="sheet-caption">Tokens, for a few out of many</p>
+        <div class="tokens">
+            <span class="token">Croatian<button class="icon-button" type="button" aria-label="Remove Croatian">${icon("x")}</button></span>
+            <span class="token">English<button class="icon-button" type="button" aria-label="Remove English">${icon("x")}</button></span>
+            <select class="select" aria-label="Add a language"><option>Add another</option></select>
+        </div>
+        <p class="sheet-caption">Count stepper: a group of 4 of 5 can't grow its members</p>
+        <div class="count-row">${stepper(4, 1, 4)}<span class="muted">of</span>${stepper(5, 2, 10)}</div>
+        <p class="sheet-caption">Fields: an account fact, a changed one, an error</p>
+        <div class="form-section">
+            <div class="field"><span class="field-label">Location</span>
+                <div class="account-fact"><span class="account-fact-value">Croatia</span><span class="account-fact-source">From your account</span><button class="button button-text button-small" type="button">Change</button></div></div>
+            <div class="field"><label class="field-label" for="sheet-discord">Discord</label>
+                <input class="input" id="sheet-discord" value="kestrel.gg">
+                <span class="field-note">${icon("info")}Applies to all your posts</span></div>
+            <div class="field field-invalid"><label class="field-label" for="sheet-name">Community name</label>
+                <input class="input" id="sheet-name">
+                <span class="field-error">${icon("circle-alert")}Give your community a name.</span></div>
+            <div class="field"><label class="field-label" for="sheet-text">Tell people about your community<span class="field-tag">Required</span></label>
+                <textarea class="textarea" id="sheet-text" placeholder="Weekly events, a friendly Discord and admins online most evenings."></textarea>
+                <span class="field-hint">Ideas: What do members do together? How big are you, and what are the rules?</span></div>
+            <label class="check"><input type="checkbox" checked>Microphone required</label>
+            <div class="field"><span class="field-label">How should people reach you?</span>
+                <div class="choice-list">
+                    <label class="choice"><input type="radio" name="sheet-reach" checked>Message me on TeamTavern</label>
+                    <label class="choice"><input type="radio" name="sheet-reach">Add me on Discord or in game</label>
+                </div></div>
+        </div>
+        <p class="sheet-caption">A confirmation with the counts</p>
+        <div class="confirm"><h3>Delete Night Owls?</h3><p>3 conversations will be deleted for both of you.</p>
+            <div class="confirm-actions"><button class="button button-destructive" type="button">${icon("trash-2")}Delete post</button><button class="button button-text" type="button">Keep it</button></div></div>
+        <p class="sheet-caption">Or, between two ways to do one thing</p>
+        <div class="rule">or</div>`;
 </script>
 </body>
 </html>

@@ -70,13 +70,14 @@
     document.querySelector(".logo .icon").innerHTML = ICONS.flame;
     document.getElementById("games").insertAdjacentHTML("beforeend", icon("chevron-down"));
     document.getElementById("new-post").insertAdjacentHTML("afterbegin", icon("plus"));
+    document.getElementById("new-post").href = `post.html?game=${encodeURIComponent(handle)}`;
     if (typeof FEED_DATA === "undefined") {
         document.querySelector(".feed-page").innerHTML = `<div class="missing-data">
             <h2>No sample for ${escapeHtml(handle)}</h2>
             <p class="muted" style="margin-top: 8px">Run <code>./redesign/prototype/export-sample.sh ${escapeHtml(handle)}</code> with the development stack's postgres running.</p>
         </div>`;
     } else {
-        document.write(`<script src="feed.js"><\/script>`);
+        document.write(`<script src="game.js"><\/script><script src="feed.js"><\/script>`);
     }
 </script>
 </body>

@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>New post</title>
+    <link rel="preconnect" href="https://rsms.me/">
+    <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+    <link rel="stylesheet" href="tokens.css">
+    <link rel="stylesheet" href="base.css">
+    <link rel="stylesheet" href="components.css">
+    <style>
+        /* Layout of the flow's pages. */
+        .flow {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-6);
+            max-width: var(--feed-width);
+            margin: 0 auto;
+            padding: var(--space-8) var(--space-4) 96px;
+        }
+
+        .flow-narrow {
+            max-width: 432px;
+        }
+
+        .flow-wide {
+            max-width: 1120px;
+        }
+
+        .flow-lead {
+            margin-top: calc(-1 * var(--space-4));
+            color: var(--text-muted);
+        }
+
+        .step-context {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: var(--space-1) var(--space-3);
+            color: var(--text-muted);
+            font-size: var(--size-12);
+            font-weight: 500;
+        }
+
+        .step-context img {
+            width: 24px;
+            height: 36px;
+            border-radius: var(--radius-small);
+            object-fit: cover;
+        }
+
+        .step-context strong {
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        .step-context .button {
+            height: 24px;
+            font-size: var(--size-12);
+        }
+
+        @media (max-width: 639px) {
+            .step-context img {
+                display: none;
+            }
+
+            .step-context {
+                column-gap: var(--space-1);
+            }
+        }
+
+        .post-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 440px;
+            gap: var(--space-12);
+            align-items: start;
+        }
+
+        .post-layout .form {
+            max-width: 600px;
+        }
+
+        .preview-column {
+            position: sticky;
+            top: 80px;
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-3);
+        }
+
+        .preview-label {
+            display: flex;
+            justify-content: space-between;
+            color: var(--text-muted);
+            font-size: var(--size-12);
+            font-weight: 500;
+        }
+
+        .publish-footer {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: var(--space-4);
+            padding-top: var(--space-6);
+            border-top: 1px solid var(--border);
+        }
+
+        .publish-footer p + p {
+            margin-top: var(--space-1);
+            color: var(--text-muted);
+        }
+
+        .action-bar {
+            display: none;
+        }
+
+        /* Below a desktop the preview leaves the side: on demand in a sheet, or
+           above the fields, and Publish sits in a bar at the bottom. */
+        @media (max-width: 1023px) {
+            .post-layout {
+                grid-template-columns: minmax(0, 1fr);
+                gap: var(--space-6);
+            }
+
+            .post-layout .form {
+                max-width: none;
+            }
+
+            .preview-column {
+                display: none;
+            }
+
+            .preview-top .preview-column {
+                display: flex;
+                order: -1;
+                position: static;
+            }
+
+            .publish-footer .button {
+                display: none;
+            }
+
+            .action-bar {
+                position: sticky;
+                bottom: 0;
+                z-index: 5;
+                display: flex;
+                gap: var(--space-2);
+                padding: var(--space-3) var(--space-4);
+                border-top: 1px solid var(--border);
+                background: var(--floor);
+            }
+
+            .action-bar .button-primary {
+                flex: 1;
+            }
+
+            .flow-wide {
+                padding-bottom: var(--space-8);
+            }
+        }
+
+        .form-tight {
+            gap: var(--space-5);
+        }
+
+        .form .editor {
+            max-width: 440px;
+        }
+
+        /* A field's note and error hold nothing most of the time, and then take
+           no gap. */
+        [data-note],
+        [data-error] {
+            display: contents;
+        }
+
+        .live-heading {
+            display: flex;
+            align-items: center;
+            gap: var(--space-3);
+        }
+
+        .live-heading .icon {
+            width: 28px;
+            height: 28px;
+            color: var(--ember);
+        }
+
+        .flow-actions {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: var(--space-3) var(--space-4);
+        }
+
+        .flow-actions .push {
+            margin-left: auto;
+        }
+
+        .caption {
+            margin-bottom: calc(-1 * var(--space-3));
+            color: var(--text-muted);
+            font-size: var(--size-12);
+            font-weight: 500;
+        }
+
+        .missing-data {
+            padding: var(--space-6);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-card);
+            background: var(--table);
+        }
+
+        /* Prototype controls: not part of the design. */
+        .prototype-bar {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: var(--space-2) var(--space-4);
+            padding: 6px var(--space-4);
+            border-bottom: 1px dashed var(--input-border);
+            background: #0B0A09;
+            color: var(--text-muted);
+            font-size: var(--size-12);
+        }
+
+        .prototype-bar select,
+        .prototype-bar button {
+            height: 24px;
+            padding: 0 var(--space-2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-small);
+            background: var(--floor);
+            color: var(--text);
+            font: inherit;
+            cursor: pointer;
+        }
+
+        .stand-in {
+            border-style: dashed;
+        }
+
+        .stand-in .overlay-body {
+            gap: var(--space-3);
+        }
+    </style>
+</head>
+<body>
+<div class="prototype-bar" id="prototype-bar"></div>
+<div id="header"></div>
+<main id="app"></main>
+<div id="overlay"></div>
+
+<script src="icons.js"></script>
+<script src="prototype.js"></script>
+<script>
+    // post.html?game=<handle> reads data/<handle>.js, written by export-sample.sh.
+    const requested = new URLSearchParams(location.search).get("game");
+    if (requested) document.write(`<script src="data/${requested}.js"><\/script>`);
+</script>
+<script>
+    if (typeof FEED_DATA !== "undefined") document.write(`<script src="game.js"><\/script>`);
+    document.write(`<script src="post.js"><\/script>`);
+</script>
+</body>
+</html>

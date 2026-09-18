@@ -56,8 +56,9 @@ const heading = post => {
 const details = post => {
     const rows = (post.details || []).map(d =>
         `<div class="detail"><span class="detail-label">${escapeHtml(d.label)}</span><span>${escapeHtml(d.value)}</span></div>`);
-    const trackers = (post.trackers || []).map(t =>
-        `<div class="detail"><span class="detail-label">Tracker</span><a href="#">${escapeHtml(t)} ${icon("external-link")}</a></div>`);
+    // A tracker is { title, url }, or a bare title that links nowhere.
+    const trackers = (post.trackers || []).map(t => (typeof t === "string" ? { title: t, url: "#" } : t)).map(t =>
+        `<div class="detail"><span class="detail-label">Tracker</span><a href="${escapeHtml(t.url)}"${t.url === "#" ? "" : ` target="_blank" rel="noopener"`}>${escapeHtml(t.title)} ${icon("external-link")}</a></div>`);
     const all = rows.concat(trackers);
     return all.length ? `<div class="card-details">${all.join("")}</div>` : "";
 };
@@ -69,7 +70,9 @@ const ownerLine = post => {
     return `<span class="card-owner">${verb} ${who}</span>`;
 };
 
+// A bare card has no actions: it stands beside the choice it is about.
 const actions = post => {
+    if (post.bare) return "";
     if (post.own) {
         return `<button class="button button-outline button-small" type="button">${icon("pencil")}Edit</button>
             <button class="button button-outline button-small" type="button">${icon("refresh-cw")}Renew</button>`;
