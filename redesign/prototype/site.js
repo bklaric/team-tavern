@@ -59,12 +59,72 @@ const dayLabel = date => {
     return date.toLocaleDateString(DATE_LOCALE, { day: "numeric", month: "long" });
 };
 
+const ageAt = birthday => {
+    if (!birthday) return undefined;
+    const born = new Date(birthday);
+    const months = NOW.getUTCMonth() - born.getUTCMonth();
+    const beforeBirthday = months < 0 || (months === 0 && NOW.getUTCDate() < born.getUTCDate());
+    const age = NOW.getUTCFullYear() - born.getUTCFullYear() - (beforeBirthday ? 1 : 0);
+    return age > 0 && age < 120 ? age : undefined;
+};
+
+const isEmpty = value =>
+    value === undefined || value === null || value === "" || value === false
+    || (Array.isArray(value) && value.length === 0)
+    || (typeof value === "object" && !Array.isArray(value) && Object.values(value).every(isEmpty));
+
 const readJson = (key, fallback) => {
     try {
         return JSON.parse(localStorage.getItem(key)) ?? fallback;
     } catch {
         return fallback;
     }
+};
+
+// Post types. The type chooser uses the player's own words, each with a short
+// example (brief 6, step 1); the home page and the first step of posting show it.
+
+const TYPE_CARDS = [
+    { type: "player", icon: "user", choice: "I'm a player looking for a group", example: "Groups, communities and other players find you" },
+    { type: "group", icon: "users", choice: "We're a group looking for players", example: "“Three of us play most nights, need a fifth”" },
+    { type: "community", icon: "castle", choice: "We're a community looking for members", example: "“Our server runs weekly events, all welcome”" },
+];
+
+// href(type) is where each card leads; note(type) is an optional line under
+// the example.
+const typeCardsHtml = (href, note = () => "") => `<div class="type-cards">${TYPE_CARDS.map(t => `<a class="type-card" href="${href(t.type)}">
+    ${icon(t.icon)}
+    <span class="type-card-text">
+        <span class="type-card-title">${t.choice}</span>
+        <span class="type-card-example">${t.example}</span>
+        ${note(t.type) ? `<span class="type-card-mine">${note(t.type)}</span>` : ""}
+    </span>
+    ${icon("chevron-right")}
+</a>`).join("")}</div>`;
+
+// What a post says about its owner, as the feed's description takes it: the
+// fields matching compares for the type, and a player's age from their
+// birthday (brief 7.1).
+const DESCRIBED = {
+    player: ["rank", "roles", "platforms", "location", "languages", "lookingFor", "hours", "mic"],
+    group: ["roles", "rankRange", "platforms", "regions", "languages", "ageRange", "lookingFor", "hours", "mic"],
+    community: ["regions", "languages", "platforms", "lookingFor"],
+};
+
+const describedBy = (type, d) => {
+    const described = Object.fromEntries(DESCRIBED[type].filter(k => !isEmpty(d[k])).map(k => [k, d[k]]));
+    if (type === "player" && ageAt(d.birthday)) described.age = String(ageAt(d.birthday));
+    return described;
+};
+
+// See what fits and the Matches screen open a game's feed with the description
+// taken from a post (brief 11.2).
+const describeFeed = (game, type, described) => {
+    const key = `tt-description-${game}`;
+    const stored = readJson(key, null) || { type: "player", player: {}, group: {}, community: {} };
+    stored.type = type;
+    stored[type] = described;
+    localStorage.setItem(key, JSON.stringify(stored));
 };
 
 // Games.
@@ -103,6 +163,39 @@ const NIGHT_OWLS = {
     hours: { from: "21:00", to: "01:00" },
 };
 
+// Kestrel's Valheim post, which is about to expire.
+const VALHEIM_DUO = {
+    lookingFor: ["pve", "building"],
+    "field:server-characters": ["new-characters"],
+    "field:server-type": ["vanilla"],
+    mic: true,
+    returning: true,
+    text: "Starting over with a friend after a long break. We'd like a small vanilla server with a few people who build and go after the bosses together in the evenings.",
+    reach: "either",
+    hours: { from: "20:00", to: "23:00" },
+};
+
+// A post's card as its owner last published it. The home page shows posts from
+// every game, and game.js holds one game at a time, so publishing keeps a copy.
+const NIGHT_OWLS_CARD = {
+    slots: { members: 3, total: 5 },
+    facts: [
+        { text: "Platinum – Diamond" },
+        { text: "Needs Lurker, Supporter" },
+        { text: "EU" },
+        { text: "EN, HR" },
+        { icon: "mic", label: "Microphone required" },
+        { text: "Ages 18+" },
+        { text: "Competitive" },
+    ],
+};
+const VALHEIM_DUO_CARD = {
+    facts: [{ text: "Croatia" }, { text: "HR, EN" }, { icon: "mic", label: "Microphone" }, { text: "PvE, Building" }, { text: "Returning player" }],
+};
+const KESTREL_DOTA_CARD = {
+    facts: [{ text: "Legend 2" }, { text: "Soft support, Hard support" }, { text: "Croatia" }, { text: "HR, EN" }],
+};
+
 const PRESETS = {
     kestrel: {
         id: "kestrel",
@@ -116,8 +209,9 @@ const PRESETS = {
         accounts: { riot: "Kestrel#EUW" },
         unread: { notifications: 3 },
         posts: [
-            { game: "valorant", type: "group", updated: "2026-09-06T19:12:00Z", draft: NIGHT_OWLS },
-            { game: "dota2", type: "player", updated: "2026-07-20T17:40:00Z" },
+            { game: "valorant", type: "group", updated: "2026-09-06T19:12:00Z", draft: NIGHT_OWLS, card: NIGHT_OWLS_CARD },
+            { game: "valheim", type: "player", updated: "2026-08-16T10:00:00Z", draft: VALHEIM_DUO, card: VALHEIM_DUO_CARD },
+            { game: "dota2", type: "player", updated: "2026-07-20T17:40:00Z", card: KESTREL_DOTA_CARD },
         ],
     },
     vex: {
@@ -161,6 +255,19 @@ const switchAccount = id => {
 // step asks for one.
 const signedIn = () => !!(account && account.nickname);
 const me = () => (signedIn() ? account.nickname : null);
+
+// Contact reveals: how often a post's contact panel showed its contacts or
+// join links, which the home page counts for the owner (brief 5.6, 11.2). The
+// counts the prototype starts with are made up; opening a panel adds to them.
+
+const REVEALS_KEY = "tt-proto-reveals";
+const STARTING_REVEALS = { "kestrel-valorant-group": 14, "kestrel-valheim-player": 2, "kestrel-dota2-player": 9 };
+const revealsOf = id => (STARTING_REVEALS[id] || 0) + (readJson(REVEALS_KEY, {})[id] || 0);
+const reveal = id => {
+    const counts = readJson(REVEALS_KEY, {});
+    counts[id] = (counts[id] || 0) + 1;
+    localStorage.setItem(REVEALS_KEY, JSON.stringify(counts));
+};
 
 // Blocks and reports. A block hides two players from each other, both ways
 // (brief 10). Players are known by nickname here.
@@ -276,7 +383,7 @@ const headerHtml = () => {
         : `<a class="button button-text button-small" href="${options.signInHref || signUpHref("signin")}">Sign in</a>
            <a class="button button-text button-small hide-phone" href="${options.signUpHref || signUpHref()}">Sign up</a>`;
     return `<header class="site-header"><div class="site-header-inner">
-        <a class="logo" href="#">${icon("flame")}<span class="logo-word">TeamTavern</span></a>
+        <a class="logo" href="home.html">${icon("flame")}<span class="logo-word">TeamTavern</span></a>
         <button class="button button-text" type="button">Games${icon("chevron-down")}</button>
         <div class="site-header-actions">
             <a class="button button-outline button-small" href="${options.newPostHref}" aria-label="New post">${icon("plus")}<span${signedIn() ? " class=\"hide-phone\"" : ""}>New post</span></a>
@@ -325,7 +432,7 @@ const paintChrome = () => {
 // included, and opens the page again with only its game.
 const startOver = () => {
     Object.keys(localStorage).filter(k => k.startsWith("tt-draft-")).forEach(k => localStorage.removeItem(k));
-    [ACCOUNT_KEY, CONVERSATIONS_KEY, BLOCKS_KEY, REPORTS_KEY, CLOCK_KEY].forEach(k => localStorage.removeItem(k));
+    [ACCOUNT_KEY, CONVERSATIONS_KEY, BLOCKS_KEY, REPORTS_KEY, REVEALS_KEY, CLOCK_KEY].forEach(k => localStorage.removeItem(k));
     const game = new URLSearchParams(location.search).get("game");
     location.href = `${location.pathname.split("/").pop()}${game ? `?game=${game}` : ""}`;
 };

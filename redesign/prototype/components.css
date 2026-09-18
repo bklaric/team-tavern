@@ -678,6 +678,20 @@
     flex: 1;
 }
 
+/* A description that says what the viewer's own post says asks for nothing:
+   it only says whose post the feed is fitting. */
+.publish-prompt-quiet {
+    padding-block: var(--space-3);
+    background: none;
+    color: var(--text-muted);
+}
+
+.publish-prompt-quiet > .icon {
+    width: 16px;
+    height: 16px;
+    color: var(--text-muted);
+}
+
 @media (max-width: 639px) {
     .publish-prompt {
         flex-wrap: wrap;
@@ -953,6 +967,72 @@
 .type-card-mine {
     color: var(--text-muted);
     font-size: var(--size-12);
+}
+
+/* A player's own post on the home page: the card's heading and facts, then its
+   state and what it has produced, then See what fits, Edit and Renew. */
+
+.own-post-status {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-1) var(--space-4);
+    color: var(--text-muted);
+    font-size: var(--size-12);
+    font-weight: 500;
+}
+
+.own-post-state,
+.own-post-stat {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.own-post-state .icon,
+.own-post-stat .icon {
+    width: 14px;
+    height: 14px;
+}
+
+a.own-post-stat {
+    color: var(--text-muted);
+}
+
+a.own-post-stat:hover {
+    color: var(--text);
+}
+
+/* A post in its last week says so in full text, with its icon, so it doesn't
+   rely on color. */
+.own-post-state-soon {
+    color: var(--text);
+    font-weight: 600;
+}
+
+.own-post-unread {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    margin-left: var(--space-1);
+    color: var(--text);
+}
+
+.own-post-unread::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--ember);
+}
+
+.own-post .card-footer {
+    margin-top: 0;
+}
+
+.card-expired .own-post-status,
+.card-expired a.own-post-stat {
+    color: var(--text-faint);
 }
 
 /* Forms: fields stacked label over control, in sections. */

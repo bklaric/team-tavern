@@ -117,6 +117,54 @@ const renderCard = (post, marked = false) => {
     </article>`;
 };
 
+// A player's own post on the home page (brief 11.2): its card's heading and
+// facts, its state, what it has produced, and See what fits, Edit and Renew.
+// post is { id, type, name, slots, facts, days, expired, conversations, unread,
+// conversationsHref, reveals, expiredAgo, fitsHref, editHref }, where days is
+// how many are left and a post in its last week is about to expire.
+const EXPIRING_DAYS = 7;
+
+const ownPostState = post => {
+    if (post.expired) {
+        return `<span class="own-post-state">${icon("clock")}Expired ${escapeHtml(post.expiredAgo)}. It's listed under older posts, and match emails are paused.</span>`;
+    }
+    const days = post.days;
+    return days <= EXPIRING_DAYS
+        ? `<span class="own-post-state own-post-state-soon">${icon("circle-alert")}${days ? `Expires in ${days} ${days === 1 ? "day" : "days"}` : "Expires today"}</span>`
+        : `<span class="own-post-state">${icon("clock")}Active for ${days} more days</span>`;
+};
+
+const ownPostConversations = post => {
+    const n = post.conversations;
+    if (!n) return `<span class="own-post-stat">${icon("message-circle")}No conversations yet</span>`;
+    return `<a class="own-post-stat" href="${post.conversationsHref}">${icon("message-circle")}${n} ${n === 1 ? "conversation" : "conversations"}${
+        post.unread ? `<span class="own-post-unread">${post.unread} unread</span>` : ""}</a>`;
+};
+
+const renderOwnPost = post => {
+    const type = TYPES[post.type];
+    const soon = !post.expired && post.days <= EXPIRING_DAYS;
+    const facts = post.facts.map(fact).join("");
+    return `<article class="card own-post${post.expired ? " card-expired" : ""}" data-id="${escapeHtml(post.id)}">
+        <div class="card-heading">
+            <a class="card-name" href="#">${escapeHtml(post.name)}</a>
+            <span class="card-type">${icon(type.icon)}${type.label}</span>
+            ${slots(post.slots)}
+        </div>
+        ${facts ? `<div class="facts-clip"><div class="facts">${facts}</div></div>` : ""}
+        <div class="own-post-status">
+            ${ownPostState(post)}
+            ${ownPostConversations(post)}
+            ${post.reveals ? `<span class="own-post-stat">${icon("eye")}Contacts shown ${post.reveals} ${post.reveals === 1 ? "time" : "times"}</span>` : ""}
+        </div>
+        <div class="card-footer">
+            <a class="button button-outline button-small" href="${post.fitsHref}" data-fits="${escapeHtml(post.id)}">${icon("search")}See what fits</a>
+            <a class="button button-text button-small" href="${post.editHref}">${icon("pencil")}Edit</a>
+            <button class="button ${post.expired || soon ? "button-outline" : "button-text"} button-small" type="button" data-renew="${escapeHtml(post.id)}">${icon("refresh-cw")}Renew</button>
+        </div>
+    </article>`;
+};
+
 const reducedMotion = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 // The card grows in place: its height animates from the collapsed to the

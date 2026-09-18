@@ -272,6 +272,7 @@ const openPanel = post => {
         close: closePanel,
         changed: messagingChanged,
     });
+    if (post.contacts.length) reveal(post.id);
     document.body.style.overflow = "hidden";
     const messageFirst = messaging.conversation() || !post.contacts.length || !OFFSITE.includes(post.reach);
     messaging.paint(messageFirst ? "composer" : "close");

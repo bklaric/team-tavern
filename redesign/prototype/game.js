@@ -246,15 +246,6 @@ const EXTRAS = GAME_EXTRAS[GAME.handle] || {
     kinds: ["Discord server", "Clan"],
 };
 
-const ageAt = birthday => {
-    if (!birthday) return undefined;
-    const born = new Date(birthday);
-    const months = NOW.getUTCMonth() - born.getUTCMonth();
-    const beforeBirthday = months < 0 || (months === 0 && NOW.getUTCDate() < born.getUTCDate());
-    const age = NOW.getUTCFullYear() - born.getUTCFullYear() - (beforeBirthday ? 1 : 0);
-    return age > 0 && age < 120 ? age : undefined;
-};
-
 const rankRangeOf = range => {
     if (!range || (!range.from && !range.to)) return undefined;
     const from = range.from ? rankIndex(range.from) : 0;
@@ -405,11 +396,6 @@ const descriptionFields = type => {
     };
     return fields[type].filter(Boolean);
 };
-
-const isEmpty = value =>
-    value === undefined || value === null || value === "" || value === false
-    || (Array.isArray(value) && value.length === 0)
-    || (typeof value === "object" && !Array.isArray(value) && Object.values(value).every(isEmpty));
 
 const shortList = labels => labels.length > 2 ? `${labels.slice(0, 2).join(", ")} +${labels.length - 2}` : labels.join(", ");
 

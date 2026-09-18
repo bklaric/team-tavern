@@ -18,11 +18,9 @@ const url = changes => {
     return `post.html?${params}`;
 };
 
-// The type step uses the feed's words for each type (brief 6, step 1).
+// What the post screen says for each type.
 const POST_TYPES = {
     player: {
-        choice: "I'm a player looking for a group",
-        example: "Groups, communities and other players find you",
         title: "Tell groups and players about you",
         words: "About you and what you're looking for",
         ideas: "How do you play? What are you aiming for? When are you usually on?",
@@ -30,8 +28,6 @@ const POST_TYPES = {
         days: 30,
     },
     group: {
-        choice: "We're a group looking for players",
-        example: "“Three of us play most nights, need a fifth”",
         title: "Tell players about your group",
         words: "Tell people about your group",
         ideas: "How do you play? What are you aiming for this season?",
@@ -39,8 +35,6 @@ const POST_TYPES = {
         days: 30,
     },
     community: {
-        choice: "We're a community looking for members",
-        example: "“Our server runs weekly events, all welcome”",
         title: "Tell players about your community",
         words: "Tell people about your community",
         ideas: "What do members do together? How big are you, and what are the rules?",
@@ -98,12 +92,15 @@ const withDefaults = d => ({
 const loadDraft = () => {
     let d = readJson(DRAFT_KEY, {});
     const from = query.get("from");
-    if (from === "edit" && existing() && existing().draft) d = { ...structuredClone(existing().draft), editing: true };
+    // Edit, and Update post on a feed, start from the post as it is.
+    if ((from === "edit" || from === "feed") && existing() && existing().draft) d = { ...structuredClone(existing().draft), editing: true };
     if (d.editing && !existing()) delete d.editing;
     if (from === "feed") {
-        // A description's age isn't a birthday, so it stays behind.
+        // A description's age isn't a birthday, so it stays behind. Updating a
+        // post takes the description as it is, fields cleared from it included.
         const { age, ...described } = (readJson(`tt-description-${HANDLE}`, {}) || {})[POST_TYPE] || {};
-        d = { ...d, ...described };
+        const cleared = d.editing ? Object.fromEntries(DESCRIBED[POST_TYPE].map(k => [k, undefined])) : {};
+        d = { ...d, ...cleared, ...described };
     }
     if (from) {
         query.delete("from");
@@ -426,15 +423,7 @@ const renderType = () => {
     return `<div class="flow">
         ${HANDLE ? `<div class="step-context"><img src="${coverOf(HANDLE)}" alt=""><strong>${escapeHtml(gameTitle(HANDLE))}</strong></div>` : ""}
         <h1>What are you posting?</h1>
-        <div class="type-cards">${Object.entries(POST_TYPES).map(([type, t]) => `<a class="type-card" href="${url({ type })}">
-            ${icon(TYPES[type].icon)}
-            <span class="type-card-text">
-                <span class="type-card-title">${t.choice}</span>
-                <span class="type-card-example">${t.example}</span>
-                ${mine(type) ? `<span class="type-card-mine">You have one for ${escapeHtml(gameTitle(HANDLE))}</span>` : ""}
-            </span>
-            ${icon("chevron-right")}
-        </a>`).join("")}</div>
+        ${typeCardsHtml(type => url({ type }), type => mine(type) ? `You have one for ${escapeHtml(gameTitle(HANDLE))}` : "")}
         <p class="muted">Just looking? Open a game from Games to browse its feed.</p>
     </div>`;
 };
@@ -658,17 +647,7 @@ const renderConflict = () => {
 
 // Step 5: Matches. The feed's matching, with the new post as the description.
 
-const DESCRIBED = {
-    player: ["rank", "roles", "platforms", "location", "languages", "lookingFor", "hours", "mic"],
-    group: ["roles", "rankRange", "platforms", "regions", "languages", "ageRange", "lookingFor", "hours", "mic"],
-    community: ["regions", "languages", "platforms", "lookingFor"],
-};
-
-const descriptionOf = d => {
-    const described = Object.fromEntries(DESCRIBED[POST_TYPE].filter(k => has(d[k])).map(k => [k, d[k]]));
-    if (POST_TYPE === "player" && ageAt(d.birthday)) described.age = String(ageAt(d.birthday));
-    return described;
-};
+const descriptionOf = d => describedBy(POST_TYPE, d);
 
 const missCount = m => (m.compared ? m.misses : Infinity);
 
@@ -829,11 +808,13 @@ const publish = updated => {
     if (!account.timezone) account.timezone = draft.timezone || VIEWER_TZ;
     const previous = existing();
     const { editing, ...fields } = draft;
+    const card = toCard(postOf(fields, account.nickname), {});
     account.posts = account.posts.filter(p => p !== previous).concat({
         game: HANDLE,
         type: POST_TYPE,
         updated: NOW.toISOString(),
         draft: fields,
+        card: { slots: card.slots, facts: card.facts },
     });
     saveAccount();
     localStorage.removeItem(DRAFT_KEY);
@@ -960,13 +941,7 @@ const HANDLERS = {
         location.href = `feed.html?game=${HANDLE}`;
     },
     // The feed opens with the description taken from the post (brief 11.2).
-    "see-all": () => {
-        const key = `tt-description-${HANDLE}`;
-        const stored = readJson(key, null) || { type: "player", player: {}, group: {}, community: {} };
-        stored.type = POST_TYPE;
-        stored[POST_TYPE] = descriptionOf(existing().draft);
-        localStorage.setItem(key, JSON.stringify(stored));
-    },
+    "see-all": () => describeFeed(HANDLE, POST_TYPE, descriptionOf(existing().draft)),
 };
 
 document.addEventListener("input", event => {
