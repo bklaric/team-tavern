@@ -118,12 +118,6 @@ let confirmingDelete = false;
 let overlay = query.get("sheet");
 const previewMode = () => localStorage.getItem("tt-proto-preview") || "sheet";
 
-const formatDate = value =>
-    new Date(value).toLocaleDateString(DATE_LOCALE, { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
-
-const timezoneOptions = () => (Intl.supportedValuesOf ? Intl.supportedValuesOf("timeZone") : [VIEWER_TZ])
-    .map(zone => ({ value: zone, label: zone.replaceAll("_", " ") }));
-
 // Fields. The screen has three parts: the post's fields, the player's words,
 // and contact (brief 6, step 3).
 
@@ -262,9 +256,9 @@ const previewCard = () => renderCard({
 
 const paintPreview = () => document.querySelectorAll("[data-preview]").forEach(el => { el.innerHTML = previewCard(); });
 
-// Controls.
-
-const controlId = key => `c-${key.replace(":", "-")}`;
+// Controls. The controls themselves are shared with the account page
+// (fields.js); what is here is the post screen's own: the count steppers, and
+// the Discord input, which signed out offers to sign up with it.
 
 const stepper = (key, value, min, max, label) => `<div class="stepper" role="group" aria-label="${label}">
     <button type="button" data-step="${key}:-1" aria-label="Fewer"${value <= min ? " disabled" : ""}>${icon("minus")}</button>
@@ -272,74 +266,32 @@ const stepper = (key, value, min, max, label) => `<div class="stepper" role="gro
     <button type="button" data-step="${key}:1" aria-label="More"${value >= max ? " disabled" : ""}>${icon("plus")}</button>
 </div>`;
 
-const selectHtml = (id, options, value, placeholder) =>
-    `<select class="select" id="${id}" data-control>${placeholder ? `<option value="">${placeholder}</option>` : ""}${options.map(o =>
-        `<option value="${escapeHtml(o.value)}"${o.value === value ? " selected" : ""}>${escapeHtml(o.label)}</option>`).join("")}</select>`;
-
 const controlHtml = (f, value) => {
-    const id = controlId(f.key);
-    const text = type => `<input class="input" type="${type}" id="${id}" data-control value="${escapeHtml(value ?? "")}" placeholder="${escapeHtml(f.placeholder || "")}" autocomplete="off">`;
     switch (f.kind) {
-        case "text": return text("text");
-        case "date": return `<input class="input" type="date" id="${id}" data-control value="${value ?? ""}" style="max-width: 200px">`;
-        case "textarea":
-            return `<textarea class="textarea" id="${id}" data-control rows="5" placeholder="${escapeHtml(f.placeholder)}">${escapeHtml(value ?? "")}</textarea>`;
         case "discord":
             // Signed out, the Discord input offers to sign up with it (brief 6, step 3).
-            return account ? text("text") : `<div class="input-row">${text("text")}
+            return account ? inputHtml(f, value) : `<div class="input-row">${inputHtml(f, value)}
                 <button class="button button-outline" type="button" data-action="discord-signup">${icon("discord")}Sign up with Discord</button></div>`;
-        case "choose":
-        case "select":
-            return selectHtml(id, f.options, value, f.placeholder);
-        case "timezone":
-            return selectHtml(id, timezoneOptions(), value);
-        case "pills":
-        case "radioPills": {
-            const multi = f.kind === "pills";
-            const chosen = multi ? value || [] : [value];
-            return `<div class="pills" role="${multi ? "group" : "radiogroup"}" aria-labelledby="l-${id}">${f.options.map(o =>
-                `<label class="pill"><input type="${multi ? "checkbox" : "radio"}" name="${id}" value="${escapeHtml(o.value)}"${chosen.includes(o.value) ? " checked" : ""}>${icon("check")}${escapeHtml(o.label)}</label>`
-            ).join("")}</div>`;
-        }
-        case "radioList":
-            return `<div class="choice-list" role="radiogroup" aria-labelledby="l-${id}">${f.options.map(o =>
-                `<label class="choice"><input type="radio" name="${id}" value="${o.value}"${o.value === value ? " checked" : ""}>${escapeHtml(o.label)}</label>`
-            ).join("")}</div>`;
-        case "check":
-            return `<label class="check"><input type="checkbox" id="${id}" data-control${value ? " checked" : ""}>${escapeHtml(f.text)}</label>`;
-        case "tokens": {
-            const chosen = value || [];
-            const rest = f.options.filter(o => !chosen.includes(o.value));
-            return `<div class="tokens">${chosen.map(v =>
-                `<span class="token">${escapeHtml(v)}<button class="icon-button" type="button" data-remove="${escapeHtml(v)}" aria-label="Remove ${escapeHtml(v)}">${icon("x")}</button></span>`
-            ).join("")}
-                <select class="select" id="${id}" data-add aria-labelledby="l-${id}"><option value="">${chosen.length ? "Add another" : "Add a language"}</option>${rest.map(o =>
-                    `<option value="${escapeHtml(o.value)}">${escapeHtml(o.label)}</option>`).join("")}</select></div>`;
-        }
         case "size":
             return `<div class="count-row">${stepper("members", draft.members, 1, draft.total - 1, "Players in the group")}
                 <span class="muted">of</span>${stepper("total", draft.total, 2, 10, "Players in total")}</div>`;
         case "wants":
             return `<div class="count-row"><span class="muted">From</span>${stepper("wantsFrom", draft.wantsFrom, 1, 20, "At least")}
                 <span class="muted">to</span>${stepper("wantsTo", draft.wantsTo, draft.wantsFrom, 30, "At most")}</div>`;
-        default:
+        // A rank range, an hours range and an age range are the description
+        // bar's editors (game.js), so the bar and the screen ask alike.
+        case "rankRange":
+        case "hours":
+        case "ageRange":
             return editor(f, value, "post");
+        default:
+            return fieldControlHtml(f, value);
     }
 };
 
-const readField = (element, f) => {
-    const control = element.querySelector("[data-control]");
-    switch (f.kind) {
-        case "pills": return [...element.querySelectorAll("input:checked")].map(i => i.value);
-        case "radioPills":
-        case "radioList": return (element.querySelector("input:checked") || {}).value;
-        case "check": return control.checked;
-        case "rankRange":
-        case "hours":
-        case "ageRange": return readEditor(element.querySelector("[data-editor]"), f);
-        default: return control.value === "" ? undefined : control.value;
-    }
-};
+const readField = (element, f) => ["rankRange", "hours", "ageRange"].includes(f.kind)
+    ? readEditor(element.querySelector("[data-editor]"), f)
+    : readControl(element, f);
 
 // An account fact the account holds shows as that value until the player
 // changes it here. Changing one is changing it on every post they own.
@@ -349,11 +301,11 @@ const sameValue = (a, b) => JSON.stringify(a ?? null) === JSON.stringify(b ?? nu
 const folded = f => f.account && signedIn() && !changing.has(f.key)
     && has(accountValue(f.key)) && sameValue(draft[f.key], accountValue(f.key));
 
-const factText = (f, value) =>
-    f.kind === "tokens" ? value.join(", ")
-    : f.kind === "date" ? `${formatDate(value)}, shown as age ${ageAt(value)}`
-    : f.kind === "timezone" ? value.replaceAll("_", " ")
-    : value;
+const accountFactHtml = (f, value) => `<div class="account-fact">
+    <span class="account-fact-value">${escapeHtml(factText(f, value))}</span>
+    <span class="account-fact-source">From your account</span>
+    <button class="button button-text button-small" type="button" data-change="${f.key}">Change</button>
+</div>`;
 
 const noteHtml = f => {
     const changed = changing.has(f.key) || !sameValue(draft[f.key], accountValue(f.key));
@@ -362,33 +314,19 @@ const noteHtml = f => {
         : "";
 };
 
-const errorHtml = message => message ? `<span class="field-error" role="alert">${icon("circle-alert")}${escapeHtml(message)}</span>` : "";
-
 const hintOf = f => account && !account.nickname && f.key === "discord"
     ? "From Discord. You'll pick a nickname when you publish."
     : f.hint;
 
-const LABELLED = ["text", "textarea", "date", "choose", "select", "timezone", "discord"];
-
 const fieldHtml = f => {
     const value = valueOf(f);
-    const id = controlId(f.key);
     const fold = folded(f);
-    const tag = !fold && LABELLED.includes(f.kind) ? "label" : "span";
-    const label = f.kind === "check" ? "" : `<${tag} class="field-label" id="l-${id}"${tag === "label" ? ` for="${id}"` : ""}>${escapeHtml(f.label)}${
-        f.required ? `<span class="field-tag">Required</span>` : ""}</${tag}>`;
-    const hint = !fold && hintOf(f) ? `<span class="field-hint">${escapeHtml(hintOf(f))}</span>` : "";
-    return `<div class="field${errors[f.key] ? " field-invalid" : ""}" data-field="${f.key}">
-        ${label}
-        ${fold ? `<div class="account-fact">
-            <span class="account-fact-value">${escapeHtml(factText(f, value))}</span>
-            <span class="account-fact-source">From your account</span>
-            <button class="button button-text button-small" type="button" data-change="${f.key}">Change</button>
-        </div>` : controlHtml(f, value)}
-        ${hint}
-        <span data-note>${noteHtml(f)}</span>
-        <span data-error>${errorHtml(errors[f.key])}</span>
-    </div>`;
+    return fieldShellHtml(f, fold ? accountFactHtml(f, value) : controlHtml(f, value), {
+        labelled: !fold && LABELLED.includes(f.kind),
+        hint: fold ? "" : hintOf(f),
+        note: noteHtml(f),
+        error: errorHtml(errors[f.key]),
+    });
 };
 
 // The page around the steps.
@@ -434,11 +372,10 @@ const renderGame = () => `<div class="flow">
     <div class="step-context"><strong>${TYPES[POST_TYPE].label} post</strong>
         <a class="button button-text button-small" href="${url({ type: null })}">Change type</a></div>
     <h1>Which game?</h1>
-    <div class="cover-grid">${GAMES.map(g => {
-        const mine = account && account.posts.some(p => p.game === g.handle && p.type === POST_TYPE);
-        return `<a class="cover" href="${url({ game: g.handle })}"><img src="${coverOf(g.handle)}" alt="${escapeHtml(g.title)}">${
-            mine ? `<span class="cover-mark">Your post</span>` : ""}</a>`;
-    }).join("")}</div>
+    ${coverGridHtml(GAMES, {
+        href: g => url({ game: g.handle }),
+        mark: g => account && account.posts.some(p => p.game === g.handle && p.type === POST_TYPE) ? "Your post" : "",
+    })}
 </div>`;
 
 // Step 3: Post, or, for a player who already has a post of this type for the
@@ -711,6 +648,14 @@ const overlayHtml = () => {
                 <button class="icon-button" type="button" data-action="close-overlay" aria-label="Close">${icon("x")}</button></div>
             <div class="overlay-body">
                 <p class="muted">The real button leaves for Discord and comes back here with the draft kept. Who signs in?</p>
+                <div class="field">
+                    <label class="field-label" for="mira-address">Mira's address, as Discord sends it</label>
+                    <select class="select" id="mira-address">
+                        <option value="verified">mira@example.com, verified</option>
+                        <option value="unverified">mira@example.com, not verified</option>
+                        <option value="none">None</option>
+                    </select>
+                </div>
                 <button class="button button-outline" type="button" data-action="discord-new">${icon("discord")}A new player, Mira</button>
                 <button class="button button-outline" type="button" data-action="discord-existing">${icon("discord")}Kestrel, who has an account</button>
             </div>
@@ -808,15 +753,16 @@ const publish = updated => {
     if (!account.timezone) account.timezone = draft.timezone || VIEWER_TZ;
     const previous = existing();
     const { editing, ...fields } = draft;
-    const card = toCard(postOf(fields, account.nickname), {});
-    account.posts = account.posts.filter(p => p !== previous).concat({
-        game: HANDLE,
-        type: POST_TYPE,
-        updated: NOW.toISOString(),
-        draft: fields,
-        card: { slots: card.slots, facts: card.facts },
-    });
+    const stored = { game: HANDLE, type: POST_TYPE, updated: NOW.toISOString(), draft: fields };
+    const post = postOf(fields, account.nickname, stored.updated);
+    const card = toCard(post, {});
+    account.posts = account.posts.filter(p => p !== previous).concat({ ...stored, card: { slots: card.slots, facts: card.facts } });
     saveAccount();
+    // A post notifies the owners it fits when it is published, or renewed after
+    // it expired; editing or renewing an active one notifies nobody (brief 8).
+    if (!previous || expiredPost(previous)) {
+        notifyOwnersFitBy({ ...post, id: postId(account, stored) }, POST_TYPE, account.nickname);
+    }
     localStorage.removeItem(DRAFT_KEY);
     location.href = url({ step: "matches", updated: updated || editing ? "1" : null });
 };
@@ -875,7 +821,8 @@ const submitRegister = (mode, form) => {
         return;
     }
     if (mode === "signup") {
-        account = { id: "new", nickname: value("nickname"), email: value("email"), accounts: {}, posts: [] };
+        account = { id: "new", nickname: value("nickname"), email: value("email"), emailConfirmed: false, accounts: {}, posts: [] };
+        toastOnNextPage(`The real site emails ${account.email} a link to confirm it, and sends it nothing else until it is clicked.`, { standIn: true });
     } else {
         account.nickname = value("nickname");
     }
@@ -899,7 +846,18 @@ const HANDLERS = {
         paintOverlay();
     },
     "discord-new": () => {
-        account = { id: "new", nickname: null, discordName: "Mira", discord: "mira.plays", accounts: {}, posts: [] };
+        // Sign-up takes Discord's username for the contact and its address for
+        // the email; an address Discord hasn't verified is confirmed the way a
+        // typed one is (brief 6, step 4).
+        const address = document.getElementById("mira-address").value;
+        account = { id: "new", nickname: null, discordName: "Mira", discord: "mira.plays", signIn: "discord", accounts: {}, posts: [] };
+        if (address !== "none") {
+            account.email = "mira@example.com";
+            account.emailConfirmed = address === "verified";
+        }
+        if (address === "unverified") {
+            toastOnNextPage("Discord hasn't verified mira@example.com, so the real site emails it a link to confirm it, and nothing else until it is clicked.", { standIn: true });
+        }
         saveAccount();
         if (POST_TYPE && HANDLE) {
             draft.discord = account.discord;

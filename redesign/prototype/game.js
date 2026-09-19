@@ -15,24 +15,11 @@ const GAME_ROLES = {
 };
 const ROLES = GAME_ROLES[GAME.handle] || { groupSize: 5 };
 
-const LANGUAGE_CODES = {
-    English: "EN", German: "DE", Russian: "RU", French: "FR", Hindi: "HI", Spanish: "ES",
-    Filipino: "FIL", Polish: "PL", Dutch: "NL", Arabic: "AR", Portuguese: "PT", Swedish: "SV",
-    Romanian: "RO", Czech: "CS", Italian: "IT", Ukrainian: "UK", Danish: "DA", Turkish: "TR",
-    Hungarian: "HU", Serbian: "SR", Mandarin: "ZH", Greek: "EL", Croatian: "HR", Malay: "MS",
-    Slovak: "SK", Japanese: "JA", Norwegian: "NO", Indonesian: "ID", Bengali: "BN", Finnish: "FI",
-    Lithuanian: "LT", Bosnian: "BS", Cantonese: "YUE", Persian: "FA", Thai: "TH", Vietnamese: "VI",
-    Bulgarian: "BG", Urdu: "UR", Korean: "KO", Latvian: "LV", Estonian: "ET", Slovenian: "SL",
-    Albanian: "SQ", Macedonian: "MK", Hebrew: "HE", Tagalog: "TL", Tamil: "TA", Punjabi: "PA",
-};
-const languageCode = name => LANGUAGE_CODES[name] || name;
-
 const REGIONS = ["Europe", "North America", "South America", "Asia", "Africa", "Oceania"];
 const REGION_SHORT = {
     "Europe": "EU", "North America": "NA", "South America": "SA",
     "Asia": "Asia", "Africa": "Africa", "Oceania": "OCE",
 };
-const CONTINENT_OF = Object.fromEntries(GAME.locations.map(l => [l.name, l.continent]));
 
 const TYPE_CHOICES = [
     { type: "player", icon: "user", text: "I'm a player looking for a group" },
@@ -69,8 +56,6 @@ const knownPlatforms = values => platformOptions.map(o => o.value).filter(p => (
 
 // Time. Online hours are stored in the owner's timezone and shown in the
 // viewer's (brief 5).
-
-const VIEWER_TZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 const offsetOf = timeZone => {
     try {
@@ -176,6 +161,7 @@ const normalize = raw => {
     const text = ambitions && !about.includes(ambitions) ? [about, ambitions].filter(Boolean).join("\n\n") : about;
     return {
         id: raw.id,
+        href: postPageHref(GAME.handle, raw.id),
         type: raw.type,
         name: raw.name,
         owner: raw.owner,
@@ -213,19 +199,17 @@ const normalize = raw => {
 // accounts have published.
 
 // What the brief makes game fields that today's data lacks, made up for the
-// prototype: the game account players add each other by and a community's
-// kinds. Trackers are the seed's: each links a profile built from the game
-// account.
+// prototype: a community's kinds, and the trackers, which are the seed's, each
+// linking a profile built from the game account the game is played with
+// (fields.js).
 const GAME_EXTRAS = {
     apex: {
-        account: { key: "ea", label: "EA ID", placeholder: "Your EA ID" },
         trackers: [
             { title: "tracker.gg", url: id => `https://tracker.gg/apex/profile/origin/${encodeURIComponent(id)}` },
         ],
         kinds: ["Discord server", "Clan", "Esports organization"],
     },
     valorant: {
-        account: { key: "riot", label: "Riot ID", placeholder: "Name#TAG" },
         trackers: [
             { title: "tracker.gg", url: id => `https://tracker.gg/valorant/profile/riot/${encodeURIComponent(id)}` },
             { title: "blitz.gg", url: id => `https://blitz.gg/valorant/profile/${id.replace("#", "-")}` },
@@ -233,18 +217,13 @@ const GAME_EXTRAS = {
         kinds: ["Discord server", "Clan", "Esports organization"],
     },
     lol: {
-        account: { key: "riot", label: "Riot ID", placeholder: "Name#TAG" },
         kinds: ["Discord server", "Clan", "Esports organization"],
     },
     valheim: {
-        account: { key: "steam", label: "Steam profile", placeholder: "steamcommunity.com/id/…" },
         kinds: ["Dedicated server", "Discord server", "Clan"],
     },
 };
-const EXTRAS = GAME_EXTRAS[GAME.handle] || {
-    account: { key: "steam", label: "Steam profile", placeholder: "steamcommunity.com/id/…" },
-    kinds: ["Discord server", "Clan"],
-};
+const EXTRAS = { account: gameAccountOf(GAME.handle), kinds: ["Discord server", "Clan"], ...GAME_EXTRAS[GAME.handle] };
 
 const rankRangeOf = range => {
     if (!range || (!range.from && !range.to)) return undefined;
@@ -271,7 +250,7 @@ const draftContacts = (type, d) => [
 
 // A draft's post, in the shape toCard takes. Hours are written in the owner's
 // timezone; others see them in theirs, the owner as written.
-const draftPost = (type, d, owner, updated, { id = "draft", own = false, inTheirTime = false } = {}) => {
+const draftPost = (type, d, owner, updated, { id, own = false, inTheirTime = false } = {}) => {
     const named = (d.name || "").trim();
     const name = type === "player" ? owner || "You"
         : named || (owner ? undefined : type === "group" ? "Your group" : "Your community");
@@ -286,7 +265,9 @@ const draftPost = (type, d, owner, updated, { id = "draft", own = false, inTheir
     const reach = type === "community" ? d.join || "message" : d.reach || "message";
     const contacts = draftContacts(type, d);
     return {
-        id,
+        id: id || "draft",
+        // A draft has no page of its own: only a published post's name links to one.
+        href: id && postPageHref(GAME.handle, id),
         own,
         type,
         name,
@@ -345,9 +326,7 @@ const withPerson = (type, d, person) => ({
 // The prototype's accounts post in the feed too: Kestrel's Night Owls is in
 // Valorant's, and whatever the viewer publishes is in its game's.
 const accountPosts = () => {
-    const people = Object.values(PRESETS).map(p => (account && account.id === p.id ? account : p));
-    if (account && !PRESETS[account.id]) people.push(account);
-    return people.filter(person => person.nickname).flatMap(person => person.posts
+    return knownPeople().flatMap(person => person.posts
         .filter(p => p.game === GAME.handle && p.draft)
         .map(p => draftPost(p.type, withPerson(p.type, p.draft, person), person.nickname, p.updated, {
             id: postId(person, p),
@@ -356,7 +335,32 @@ const accountPosts = () => {
         })));
 };
 
-const locationOptions = GAME.locations.map(l => ({ value: l.name, label: l.name }));
+// Every post tells its owner when a post that fits it appears (brief 8). A
+// published post is compared with the other players' posts in this game the way
+// the feed compares it with their description, and the owners of the ones it
+// fits are notified. A post that has expired isn't told until it is renewed,
+// and a block stops it both ways (brief 10).
+const notifyOwnersFitBy = (post, type, owner) => {
+    knownPeople()
+        .filter(person => person.nickname !== owner && !blockedBetween(person.nickname, owner))
+        .forEach(person => person.posts
+            .filter(p => p.game === GAME.handle && p.draft && !expiredPost(p))
+            .forEach(p => {
+                const described = describedBy(p.type, withPerson(p.type, p.draft, person));
+                const m = compare(post, p.type, described);
+                if (!m.compared || m.misses) return;
+                addNotification({
+                    id: `n-${postId(person, p)}-${post.id}`,
+                    for: person.nickname,
+                    post: { id: postId(person, p), game: p.game, type: p.type, name: storedPostName(person, p) },
+                    kind: "fits",
+                    about: { id: post.id, game: GAME.handle, type, name: post.name || `${owner}'s ${type}` },
+                    at: NOW.toISOString(),
+                    read: false,
+                });
+            }));
+};
+
 const regionOptions = REGIONS.map(r => ({ value: r, label: r }));
 const hourOptions = Array.from({ length: 24 }, (_, h) =>
     ({ value: `${String(h).padStart(2, "0")}:00`, label: clock(h * 60) }));
@@ -429,7 +433,6 @@ const summary = (f, value) => {
 const fit = condition => (condition ? "fit" : "miss");
 const overlaps = (a, b) => a.some(x => b.includes(x));
 const within = (x, from, to) => x >= (from ?? -Infinity) && x <= (to ?? Infinity);
-const has = value => !isEmpty(value);
 
 const compare = (post, type, d) => {
     const m = {};
@@ -558,6 +561,7 @@ const toCard = (post, m) => {
 
     return {
         id: post.id,
+        href: post.href,
         type: post.type,
         name: post.name,
         owner: post.owner,

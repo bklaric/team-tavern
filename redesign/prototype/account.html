@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Account</title>
+    <link rel="preconnect" href="https://rsms.me/">
+    <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+    <link rel="stylesheet" href="tokens.css">
+    <link rel="stylesheet" href="base.css">
+    <link rel="stylesheet" href="components.css">
+    <link rel="stylesheet" href="prototype.css">
+    <style>
+        .account {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-8);
+            max-width: var(--feed-width);
+            margin: 0 auto;
+            padding: var(--space-8) var(--space-4) 96px;
+        }
+
+        /* Two sections, ruled apart: what every post of the player's shows, and
+           what nobody else sees. */
+        .account-section {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-4);
+        }
+
+        .account-section + .account-section {
+            padding-top: var(--space-8);
+            border-top: 1px solid var(--border);
+        }
+
+        .account-lead {
+            margin-top: calc(-1 * var(--space-3));
+            color: var(--text-muted);
+        }
+
+        .account-actions {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: var(--space-3);
+        }
+
+        /* Delete account stands apart from the list it follows, at its end. */
+        .account-actions-end {
+            justify-content: flex-end;
+        }
+
+        .account .form-section > h2 {
+            font-size: var(--size-16);
+        }
+    </style>
+</head>
+<body>
+<div class="prototype-bar" id="prototype-bar"></div>
+<div id="header"></div>
+<main id="app"></main>
+
+<script src="icons.js"></script>
+<script src="prototype.js"></script>
+<script src="site.js"></script>
+<script src="fields.js"></script>
+<script src="conversations.js"></script>
+<script src="notifications.js"></script>
+<script src="account.js"></script>
+</body>
+</html>

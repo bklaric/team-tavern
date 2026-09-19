@@ -43,6 +43,26 @@
     color: var(--text-muted);
 }
 
+/* A stand-in that stays on the page, rather than passing in a toast: what a
+   crawler or a mail server gets, which a browser can't show. */
+
+.stand-in-note {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    border: 1px dashed var(--input-border);
+    border-radius: var(--radius-card);
+    color: var(--text-muted);
+    font-size: var(--size-12);
+}
+
+.stand-in-note code {
+    color: var(--text);
+    font-size: var(--size-12);
+    overflow-wrap: anywhere;
+}
+
 .stand-in-label {
     flex: none;
     padding: 0 6px;

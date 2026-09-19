@@ -5,15 +5,6 @@
 
 const TYPE_ORDER = ["player", "group", "community"];
 
-const expiresAt = post => new Date(post.updated).getTime() + lifetime(post.type);
-const expired = post => expiresAt(post) <= NOW.getTime();
-const daysLeft = post => Math.round((expiresAt(post) - NOW.getTime()) / DAY);
-
-const feedHref = game => `feed.html?game=${encodeURIComponent(game)}`;
-
-const coverGridHtml = games => `<div class="cover-grid">${games.map(g =>
-    `<a class="cover" href="${feedHref(g.handle)}"><img src="${coverOf(g.handle)}" alt="${escapeHtml(g.title)}"></a>`).join("")}</div>`;
-
 // Signed out, and signed in without a post.
 
 const startHtml = () => `<div class="home">
@@ -28,28 +19,17 @@ const startHtml = () => `<div class="home">
     </section>
 </div>`;
 
-// A player's own post, as renderOwnPost takes it. The conversations link opens
-// the inbox on the post's first conversation in the inbox's order, latest
-// first, that has unread messages, else on its first conversation.
+// A player's own post, as renderOwnPost takes it: the card it was published
+// with, what the owner is told about it, and its own page, which its name opens.
 const ownPost = stored => {
     const id = postId(account, stored);
-    const conversations = visibleConversations()
-        .filter(c => c.post.id === id)
-        .sort((a, b) => new Date(b.messages.at(-1).at) - new Date(a.messages.at(-1).at));
-    const unread = conversations.filter(c => unreadIn(c, me()));
-    const opened = unread[0] || conversations[0];
     return {
         id,
+        href: postPageHref(stored.game, id),
         type: stored.type,
-        name: (stored.draft && stored.draft.name) || (stored.type === "player" ? account.nickname : `${account.nickname}'s ${stored.type}`),
+        name: storedPostName(account, stored),
         ...(stored.card || { facts: [] }),
-        days: daysLeft(stored),
-        expired: expired(stored),
-        expiredAgo: ago(new Date(expiresAt(stored))),
-        conversations: conversations.length,
-        unread: unread.length,
-        conversationsHref: opened ? `messages.html?c=${encodeURIComponent(opened.id)}` : "messages.html",
-        reveals: revealsOf(id),
+        ...ownPostStats(stored),
         fitsHref: feedHref(stored.game),
         editHref: `post.html?game=${stored.game}&type=${stored.type}&from=edit`,
     };

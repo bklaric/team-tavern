@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Post</title>
+    <link rel="preconnect" href="https://rsms.me/">
+    <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+    <link rel="stylesheet" href="tokens.css">
+    <link rel="stylesheet" href="base.css">
+    <link rel="stylesheet" href="components.css">
+    <link rel="stylesheet" href="prototype.css">
+    <style>
+        .post-page {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-4);
+            max-width: var(--feed-width);
+            margin: 0 auto;
+            padding: var(--space-6) var(--space-4) 96px;
+        }
+
+        .post-back {
+            align-self: flex-start;
+        }
+
+        /* A line about the post itself: that it is old, or that its owner is
+           blocked, so the missing contact button has a reason. */
+        .post-note {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            color: var(--text-muted);
+        }
+
+        .post-note .icon {
+            flex: none;
+            width: 16px;
+            height: 16px;
+        }
+
+        /* The way into the game's feed, which shows what fits the viewer's own
+           description. It reads as the feed's own header, so the game and how
+           much is going on in it are where they are there. */
+        .post-feed {
+            display: flex;
+            align-items: center;
+            gap: var(--space-4);
+            margin-top: var(--space-4);
+            padding: var(--space-4);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-card);
+            background: var(--table);
+        }
+
+        .post-feed .feed-cover {
+            width: 56px;
+            height: 84px;
+        }
+
+        .post-feed-text {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .post-feed-text p {
+            margin-top: var(--space-1);
+            color: var(--text-muted);
+        }
+
+        .post-feed-described {
+            display: flex;
+            align-items: center;
+            gap: var(--space-2);
+            min-width: 0;
+        }
+
+        .post-feed-described .icon {
+            flex: none;
+        }
+
+        .post-feed-described span {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .post-gone {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: var(--space-3);
+            padding: var(--space-8) 0 var(--space-4);
+        }
+
+        .missing-data {
+            padding: var(--space-6);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-card);
+            background: var(--table);
+        }
+
+        @media (max-width: 639px) {
+            .post-feed {
+                flex-wrap: wrap;
+            }
+
+            .post-feed .button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="prototype-bar" id="prototype-bar"></div>
+<div id="header"></div>
+
+<main class="post-page" id="app"></main>
+<div id="panel"></div>
+
+<script src="icons.js"></script>
+<script src="prototype.js"></script>
+<script src="site.js"></script>
+<script src="fields.js"></script>
+<script src="conversations.js"></script>
+<script src="notifications.js"></script>
+<script>
+    // post-page.html?game=<handle>&id=<post id> reads data/<handle>.js, as the
+    // feed does: a post's page is one post of one game's feed.
+    const handle = new URLSearchParams(location.search).get("game") || "valorant";
+    document.write(`<script src="data/${handle}.js"><\/script>`);
+</script>
+<script>
+    if (typeof FEED_DATA === "undefined") {
+        document.getElementById("app").innerHTML = `<div class="missing-data">
+            <h2>No sample for ${escapeHtml(handle)}</h2>
+            <p class="muted" style="margin-top: 8px">Run <code>./redesign/prototype/export-sample.sh ${escapeHtml(handle)}</code> with the development stack's postgres running.</p>
+        </div>`;
+        paintChrome();
+    } else {
+        document.write(`<script src="game.js"><\/script><script src="messaging.js"><\/script><script src="post-page.js"><\/script>`);
+    }
+</script>
+</body>
+</html>

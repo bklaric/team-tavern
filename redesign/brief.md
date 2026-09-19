@@ -647,6 +647,19 @@ Type ─▶ Game ─▶ Post ─▶ Register or sign in ─▶ Matches
      with Discord on the post screen sees only the nickname prompt here; one who
      continues with Discord here goes on to the same prompt. Discord prefills it,
      and the player can edit it.
+   - **Proposed:** registering with Discord fills the Discord contact with the
+     username and the email with the address Discord gives, both of which the
+     player may then change. Signing in with Discord fills an email the account
+     lacks and never replaces one, since the player may have chosen another.
+   - **Proposed:** an address is confirmed either by Discord, which says whether
+     it verified it, or by a link the site emails: a typed address, an address
+     Discord has not verified, and a changed one all get the link. Until it is
+     clicked, that link is the only email the site sends to the address. Nothing
+     else waits on it: posting, contacting and messaging are the site's own.
+   - **Proposed:** a Discord account may arrive with no address at all, such as
+     one registered on Discord with a phone number. The player posts and messages
+     as anyone does, and the account page asks for an address so the site can
+     write.
 5. **Matches.** "Your post is live", followed by posts that fit it.
 
 ```
@@ -823,8 +836,8 @@ the field:
   emailed to the site admin.
 - **Decided:** a block hides the two players from each other, both ways. Neither
   sees the other's posts in a feed, their conversations leave both inboxes, and
-  neither is notified of the other's posts. Unblocking brings it all back, so
-  nothing is deleted.
+  neither is notified of the other's posts. Unblocking, from the blocked list on
+  the account page (11.5), brings it all back, so nothing is deleted.
 - **Decided:** a post page is public, so a blocked player can still reach one
   through a link. The page shows the post without its contact button.
 - **Decided:** an email is sent when a conversation receives a message while it has
@@ -924,6 +937,57 @@ first. A post of theirs that has expired says so and offers **Renew**.
 - **Decided:** there is no public player page. A post's own page is the only
   public page about a player.
 
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│ ← Back to Valorant posts                                                │
+│                                                                         │
+│ ShadowFox                            Valorant player  Active 2 days ago │
+│ Diamond 2 · Duelist, Initiator · Croatia · EN, DE · 🎤 · Ranked climb   │
+│ "Peak Immortal last act, looking for a consistent duo. Chill but I want │
+│  to improve, happy to review VODs together. I play most evenings after  │
+│  work and I'm free all weekend."                                        │
+│ Age 24 · Usually online 19:00–23:00 · Agents: Jett, Raze, Sova          │
+│ Playstyle: Aggressive · Tracker: tracker.gg/shadowfox ↗                 │
+│                                                      [ Add on Discord ] │
+├─────────────────────────────────────────────────────────────────────────┤
+│ [cover]  More Valorant posts                      [ See what fits you ] │
+│          Posts that fit you come first.                                 │
+│          🧍 Diamond 2 · Duelist · Croatia · EN                          │
+│          38 active posts                                                │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+- **Proposed:** the card is the page: its name is the page's heading and links
+  nowhere, it is expanded with no **Details** left to press, and its type names
+  the game, "Valorant player". A page is opened from a search result, a shared
+  link or a match email as often as from the feed, where the game is overhead.
+- **Proposed:** the card carries no match marks. A description is personal and
+  isn't shared (7.1), and what fits is the feed's business; the way into the
+  feed below the post is where the viewer's own description comes in.
+- **Proposed:** the contact button is the page's one filled button. A card's
+  button is outlined so a feed of twenty cards doesn't show twenty filled ones
+  (14.1), but a page holds one card, and contacting it is what the page is for.
+- **Proposed:** the way into the feed carries the game's cover, how many posts
+  are active and what the feed will show: what fits the viewer's description,
+  with that description under it, or the whole feed while they have none.
+- **Proposed:** on the owner's own post the page is their view of it, as on the
+  home page (11.2): **Edit** and **Renew** in place of the contact button, the
+  state, the conversations and the contact reveals under the facts, and **See
+  what fits**, which opens the feed with the description taken from this post,
+  in place of the invitation to browse.
+- **Proposed:** **Back to Valorant posts** shows only while the feed is the
+  page behind, and is the browser's own Back, which is what keeps the batches. A
+  page opened from a link has no feed behind it, and the way into the feed below
+  the post is its only one.
+- **Proposed:** a visitor to an expired post is told it is old before they
+  write: "This is an older post. ShadowFox may no longer be looking, but you can
+  still write." Its owner reads the post's state instead, which says what
+  expiry means for them.
+- **Proposed:** a blocked player's post keeps its page without its contact
+  button (section 10), under a line saying why, so nothing reads as broken. The
+  line links to the blocked list on the account page (11.5), which is where the
+  block is undone.
+
 ### 11.2 Home page
 
 - **Decided:** the home page starts post creation. It opens with "What are you
@@ -966,10 +1030,10 @@ first. A post of theirs that has expired says so and offers **Renew**.
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
-- **Proposed:** a post on the home page is its card's heading and fact line,
-  then its state, its conversations and how often its contacts were shown, then
-  **See what fits**, **Edit** and **Renew**. The owner's words stay off it: the
-  owner wrote them.
+- **Proposed:** a post on the home page is its card's heading, which opens the
+  post's page (11.1), and its fact line, then its state, its conversations and
+  how often its contacts were shown, then **See what fits**, **Edit** and
+  **Renew**. The owner's words stay off it: the owner wrote them.
 - **Proposed:** the owner is the one player who knows a post expires, so the
   state counts forward: "Active for 24 more days"; in its last week, when the
   renewal email goes out, "Expires in 3 days" in full weight with an icon; after
@@ -999,26 +1063,59 @@ first. A post of theirs that has expired says so and offers **Renew**.
 | A new post fits one of yours (8)      | That post's page (11.1)       |
 | One of your posts is about to expire  | The home page (11.2)          |
 
-- **Proposed:** the list is grouped by the player's own posts, each notification
+- **Decided:** the list is grouped by the player's own posts, each notification
   under the post it is about, so a player with two posts in a game can tell them
-  apart.
+  apart. The heading names the post as its card does, "Night Owls · Valorant
+  group", and is plain text: the rows are what open anything.
+- **Proposed:** the post with the newest notification comes first, so what just
+  happened leads. Inside a post its own expiry comes first, since it is the row
+  with something to do, and the posts that fit follow, newest first.
 - **Decided:** every fitting post is its own notification, never merged with
   others (section 8).
+- **Proposed:** a row about a post that fits names it and its type, and carries
+  the time it was published, the same relative time a card's freshness uses:
+  "NightHell fits · Player · 4 weeks ago".
+- **Proposed:** the expiry notification reads the post's state now, in the words
+  the home page gives its owner, rather than recording the moment it fired:
+  "Expires in 3 days", then "Expired 3 weeks ago". It carries no time of its
+  own, since its text already says when, and renewing the post takes it away.
+  There is one per post, never a second.
+- **Proposed:** unread rows carry a dot, and **Mark all read** in the heading
+  row clears them all; it shows only while something is unread. The count on the
+  bell is how many are unread, and opening a notification reads it.
+- **Proposed:** a notification lives under the post it is about, so deleting
+  that post takes its notifications with it, as it takes its conversations
+  (section 10). Nothing else removes one: a row whose fitting post has since
+  expired or been deleted still opens that post's page, which says which it is
+  (11.1).
 - **Decided:** messages aren't notifications. The inbox's link in the header shows
   how many conversations are unread.
 - **Proposed:** contact reveals are counts on the home page, never notifications.
+- **Proposed:** the list scrolls inside the dropdown rather than paging, and
+  there is no page of notifications to send it to. The oldest fall off once a
+  player has more than the list holds.
+- **Proposed:** with nothing in it the list says so and offers the way out of
+  that: "No notifications yet. Every post tells you when someone new fits it,
+  and before it expires", with **New post**. A player without posts can't be
+  told anything.
+- **Decided:** on a phone the list opens full-screen, like Games (11.4), and
+  **Mark all read** sits above it, where the heading row is the screen's own.
 
 ```
 ┌──────────────────────────────────────────┐
 │ Notifications              Mark all read │
 │                                          │
 │ Night Owls · Valorant group              │
-│ ● Vex fits · player · 2 hours ago        │
-│ ● Mira fits · player · yesterday         │
+│ ● Vex fits                               │
+│   Player · just now                      │
+│ ● NightHell fits                         │
+│   Player · 4 weeks ago                   │
+│   Tatami fits                            │
+│   Player · 7 weeks ago                   │
 │                                          │
-│ Kestrel · Dota 2 player                  │
-│ ● Expires in 3 days · 2 days ago         │
-│   Ancients fits · community · last week  │
+│ Kestrel · Valheim player                 │
+│ ● Expires in 3 days                      │
+│   Renew it from your posts.              │
 └──────────────────────────────────────────┘
 ```
 
@@ -1036,7 +1133,7 @@ Signed in
 
 Phone, signed out                          Phone, signed in
 ┌────────────────────────────────────────┐ ┌────────────────────────────────────────┐
-│ ◆  Games ▾              [ + Post ]  ☰  │ │ ◆  Games ▾         [ + ]  ✉ 2  🔔 3  K │
+│ ◆  Games ▾          [ + New post ]  ☰  │ │ ◆  Games ▾         [ + ]  ✉ 2  🔔 3  K │
 └────────────────────────────────────────┘ └────────────────────────────────────────┘
 
 Account menu
@@ -1049,25 +1146,39 @@ Account menu
 └──────────────────────┘
 ```
 
-- **Proposed:** the logo leads home: the start of post creation signed out, the
+- **Decided:** the logo leads home: the start of post creation signed out, the
   player's posts signed in (11.2).
-- **Proposed:** **Games** opens the cover grid, and each cover opens that game's
+- **Decided:** **Games** opens the cover grid, and each cover opens that game's
   feed. For a signed-in player, games where they have a post carry a mark.
-- **Proposed:** **New post** is the header's one prominent button, signed in or
+- **Proposed:** the grid holds the whole catalogue at once, in about two rows, on
+  covers smaller than the home page's and larger than a phone's, so nothing is
+  scrolled or searched for (14.3). The mark reads "Your post", or "Your posts"
+  where there are several: the header knows no post type, so it marks the game
+  rather than a post of the type being written, as posting's grid does.
+- **Decided:** **New post** is the header's one prominent button, signed in or
   out, since it is the start of the funnel. It is outlined, not filled, so it
   doesn't compete with the one filled button of the page below it (14.1), such as
   **Publish post** on the feed. **Sign up** is a plain link: most
   players register through New post, and the rest are asked to when they first
   open a contact panel.
-- **Proposed:** the inbox icon opens the inbox page and shows how many
+- **Decided:** the inbox icon opens the inbox page and shows how many
   conversations are unread. The bell opens the notification list (11.3).
-- **Proposed:** the account menu holds **Your posts**, **Account** and **Sign
-  out**. Your posts repeats the logo's destination, since nobody expects the
-  logo to lead to their own posts.
-- **Proposed:** on a phone the logo shrinks to its mark, and New post stays
-  visible. Signed out, a menu holds Sign in and Sign up. Games and notifications
-  open full-screen, like the description bar, and the account menu opens as a
-  sheet.
+- **Proposed:** the icon of the page the viewer is already on takes full weight,
+  where the others are muted.
+- **Decided:** the account menu holds **Your posts**, **Account** and **Sign
+  out**, under the player's nickname. Your posts repeats the logo's destination,
+  since nobody expects the logo to lead to their own posts.
+- **Proposed:** **Sign out** lands on the home page: the page the player was on
+  may have been theirs, and signed out the home page is what the site is for.
+- **Decided:** on a phone the logo shrinks to its mark, and New post stays
+  visible: with its label signed out, and as the plus alone signed in, where the
+  two counts and the account button share the row with it. Signed out, a menu
+  holds Sign in and Sign up. Games and notifications open full-screen, like the
+  description bar, and the account menu opens as a sheet from the bottom, which
+  is as tall as the few rows it holds.
+- **Decided:** one menu is open at a time. A click outside closes it, and so
+  does Escape, which gives the focus back to the button that opened it; opening
+  one puts the focus on its first item, and a phone's full-screen menu keeps it.
 
 ### 11.5 Account page
 
@@ -1076,18 +1187,21 @@ Account menu
 │ Account                                                   │
 │                                                           │
 │ Shown on your posts                                       │
+│ Every post you have shows these, as your account has them │
+│ now. Change one here and it changes on all 3 at once.     │
 │   Nickname    Kestrel                                     │
 │   Birthday    12 April 1998, shown as age 28              │
 │   Location    Croatia                                     │
 │   Languages   Croatian, English                           │
 │   Timezone    Europe/Zagreb                               │
 │   Contacts    Discord kestrel · Riot ID Kestrel#EUW       │
-│                                                  [ Edit ] │
+│ [ Edit ]                                                  │
 │                                                           │
 │ Only you see this                                         │
-│   Sign-in     kestrel@example.com, password   [ Change ]  │
+│   Email       kestrel@example.com                  Change │
+│   Sign-in     Email and password                   Change │
 │   Emails      [✓] Matches  [✓] Messages  [✓] Renewals     │
-│   Blocked     2 players                       [ Manage ]  │
+│   Blocked     Danya                               Unblock │
 │                                        [ Delete account ] │
 └───────────────────────────────────────────────────────────┘
 ```
@@ -1095,16 +1209,41 @@ Account menu
 - **Decided:** one account page with two sections. **Shown on your posts** holds
   the facts about the player and their contacts, which posts show live (section 6,
   step 3), so editing them changes every post at once. **Only you see this**
-  holds how the player signs in, email switches, blocked players and deleting the
-  account.
-- **Proposed:** sign-in shows the player's one way of signing in, an email and
-  password or Discord, and changes it.
-- **Proposed:** match, message and renewal emails each have an on/off switch.
-  Every email carries an unsubscribe link, and it lands on these switches.
-- **Proposed:** blocked players are listed with **Unblock**, which brings back
-  what the block hid (section 10).
+  holds the email, how the player signs in, email switches, blocked players and
+  deleting the account.
+- **Decided:** the email and the way the player signs in are rows of their own.
+  Discord knows an account by its Discord id, so the email is where the site
+  writes whether the player signs in with it or with Discord, and a Discord
+  player changes it without leaving Discord.
+- **Decided:** sign-in shows the player's one way of signing in, an email and
+  password or Discord, and changes it either way. Moving to Discord takes the
+  password's place and leaves the email as it is; moving to a password signs in
+  with the address the account already holds, and asks for one where it has
+  none. Discord stays on the posts as a contact either way, and a Discord that
+  already signs in to another account is refused.
+- **Proposed:** the email row says where the address stands (section 6, step 4):
+  confirmed, waiting for its link with **Send again**, or missing, which says
+  what the site can't tell the player about. Changing it asks the new address to
+  confirm itself.
+- **Proposed:** match, message and renewal emails each have an on/off switch,
+  each saying what it would send. Every email carries an unsubscribe link, and it
+  lands on these switches. While the address is unconfirmed or missing, the
+  switches say that nothing is sent whatever they are set to.
+- **Decided:** blocked players are listed with **Unblock**, which brings back
+  what the block hid (section 10). The list stands in the section rather than
+  behind a button of its own: it holds a few names at most, and a blocked
+  player's post links to it (11.1).
 - **Decided:** **Delete account** deletes the account's posts and conversations
   (section 10), and says so, with the counts, before it does.
+- **Proposed:** the facts and contacts are edited together, under one **Edit**,
+  rather than a row at a time: they are given together when a post is written,
+  and the line under the heading says what changing one reaches. **Edit** sits
+  under the list, where **Save changes** takes its place.
+- **Proposed:** a game account (Riot ID, Steam profile, EA ID) belongs to the
+  games played with it, so the page asks for every kind and says where each
+  shows. A post asks only for the one its game uses (section 6, step 3).
+- **Proposed:** the page has no filled button until something is being edited,
+  where **Save changes** is it. **Delete account** is outlined in error (14.1).
 
 ## 12. Relaunch and measurement
 
@@ -1166,6 +1305,9 @@ the current model lacks:
 - **Notifications.** An on-site notification list and badge.
 - **Contact preference** on posts, and a count of contact reveals per post.
 - **Email switches** on the account, one per kind of email.
+- **A confirmed address.** Whether the account's email is confirmed, and the link
+  that confirms it. Today's schema holds neither, and its check that an account
+  has a password or a Discord id, never both, is what the sign-in row changes.
 - **Events** for measurement.
 
 ## 14. Design system
@@ -1264,9 +1406,9 @@ What the brief's screens already call for; the prototypes settle their shape.
 | Area    | Components                                                                   |
 | ------- | ---------------------------------------------------------------------------- |
 | Card    | The card shell, fact line, match mark, slot pips, freshness label, the already-messaged mark, the home page's own post with its state and counts |
-| Feed    | Type chooser (radio cards, also step 1 of posting), description bar with **More**, segmented control, publish prompt and its muted line for the viewer's own post, tier heading, labelled divider, **Load more** |
+| Feed    | Type chooser (radio cards, also step 1 of posting), description bar with **More**, segmented control, publish prompt and its muted line for the viewer's own post, tier heading, labelled divider, **Load more**, a post page's way into the feed |
 | Inputs  | Pills for a field's few options, one or several; tokens for a few out of many, such as languages; select, range picker (rank, age), an hours range that crosses midnight, count stepper ("3 of 5"), checkbox, radio group, text area with prompts, an account fact with **Change** |
-| Overlay | Modal, side panel, full-screen sheet, dropdown                                |
+| Overlay | Modal, side panel, full-screen sheet, sheet from the bottom, dropdown         |
 | Contact | Contact panel, contact row with **Copy**, message box, conversation thread, the unread line, the ⋯ menu with Report and Block |
 | Lists   | Notification rows grouped by post, inbox rows, unread badge and dot, the account page's definition list, toggle switch, a confirmation that shows counts, a toast with **Undo** |
 
@@ -1283,7 +1425,9 @@ What the brief's screens already call for; the prototypes settle their shape.
 - **Proposed:** one overlay component, shown as a modal or side panel on a
   desktop, a full-screen sheet on a phone, or a dropdown from the header. The
   description bar, the contact panel, Games, notifications and the account menu
-  all use it. It traps focus while open and returns it on close.
+  all use it. It traps focus while open and returns it on close. A menu of a few
+  short rows opens as a sheet from the bottom of a phone rather than
+  full-screen, which would read as a page (11.4).
 - **Proposed:** buttons come in three weights: filled ember, once per screen;
   outlined, for card contact buttons, the header's **New post** and secondary
   actions; and plain text, for

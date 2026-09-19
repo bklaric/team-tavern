@@ -374,6 +374,30 @@ const onMessagingChange = () => {
 
 const pageHeaderOptions = () => ({ newPostHref: `post.html?game=${encodeURIComponent(GAME.handle)}` });
 
+// Opening a post's own page leaves the feed, and Back brings it back with its
+// loaded batches intact (brief 11.1). The feed keeps what it had loaded for the
+// tab, and puts it back when the browser returns to it.
+
+const FEED_STATE_KEY = `tt-feed-${GAME.handle}`;
+
+const saveFeedState = () =>
+    sessionStorage.setItem(FEED_STATE_KEY, JSON.stringify({ shown, segment, y: Math.round(scrollY) }));
+
+addEventListener("pagehide", saveFeedState);
+
+// Only Back restores a feed. Opening one afresh starts at the first batch,
+// since the posts it holds may have changed.
+const cameBack = () => (performance.getEntriesByType("navigation")[0] || {}).type === "back_forward";
+
+const restoreFeed = () => {
+    const saved = cameBack() && sessionStorage.getItem(FEED_STATE_KEY);
+    if (!saved) return;
+    const state = JSON.parse(saved);
+    shown = state.shown;
+    segment = state.segment;
+    return state.y;
+};
+
 // The page.
 
 const activeCount = POSTS.filter(p => !p.expired).length;
@@ -386,5 +410,7 @@ document.getElementById("feed-header").innerHTML = `
         <div class="feed-active tabular">${activeCount} active ${activeCount === 1 ? "post" : "posts"}</div>
     </div>`;
 paintChrome();
+const backTo = restoreFeed();
 render();
+if (backTo !== undefined) scrollTo(0, backTo);
 openPanelFromQuery();

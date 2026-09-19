@@ -339,7 +339,13 @@ const send = () => {
     messaging.paint("composer");
     messaging.changed();
     const renew = c.post.owner === to && postExpired(c.post) ? ", with a Renew button, since the post has expired" : "";
-    toast(emailed ? `${to} gets an email about your message${renew}.` : `No email: ${to} hasn't read your last message yet.`, { standIn: true });
+    // Only an account the prototype knows can lack a confirmed address; the
+    // dump's players stand for ones that have one.
+    const known = knownPeople().find(p => p.nickname === to);
+    const unreachable = known && emailState(known) !== "confirmed";
+    toast(!emailed ? `No email: ${to} hasn't read your last message yet.`
+        : unreachable ? `No email: ${to} has no confirmed address.`
+        : `${to} gets an email about your message${renew}.`, { standIn: true });
 };
 
 const confirmBlock = () => {

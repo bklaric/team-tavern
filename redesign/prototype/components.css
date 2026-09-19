@@ -402,11 +402,182 @@
     margin-left: auto;
 }
 
+/* Games, notifications and the account menu hang from the button that opens
+   them. On a phone they open full screen or as a sheet instead, outside the
+   header, so the sticky header's stacking context doesn't hold them down. */
+
+.header-wrap {
+    position: relative;
+}
+
+.site-header .show-phone {
+    display: none;
+}
+
 @media (max-width: 639px) {
     .logo-word,
     .site-header .hide-phone {
         display: none;
     }
+
+    .site-header .show-phone {
+        display: block;
+    }
+}
+
+/* A dropdown panel from the header: the cover grid for Games, the list for
+   notifications. Menus of plain items take .menu instead. */
+
+.header-dropdown {
+    position: absolute;
+    top: calc(100% + var(--space-2));
+    left: 0;
+    z-index: 35;
+    max-height: calc(100vh - 88px);
+    padding: var(--space-4);
+    border: 1px solid var(--input-border);
+    border-radius: var(--radius-card);
+    background: var(--raised);
+    box-shadow: 0 12px 32px rgb(0 0 0 / 0.5);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+}
+
+/* The whole catalogue in about two rows, so opening Games shows every game at
+   once and nothing needs a search above it (brief 14.3). The covers are
+   smaller than the home page's, and still larger than a phone's. */
+.header-dropdown-games {
+    width: min(860px, calc(100vw - var(--space-8)));
+}
+
+.header-dropdown-games .cover-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+}
+
+.header-dropdown-notifications {
+    left: auto;
+    right: 0;
+    width: min(400px, calc(100vw - var(--space-8)));
+}
+
+/* The icon of the page the viewer is already on. */
+.site-header [aria-current="page"] {
+    color: var(--text);
+}
+
+.header-menu-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    margin-bottom: var(--space-3);
+}
+
+.header-menu-heading h2 {
+    font-size: var(--size-16);
+}
+
+/* The notification list (brief 11.3): the player's own posts, each holding the
+   notifications about it. It scrolls inside the dropdown that holds it; there
+   is no page to send it to. */
+
+.notifications {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+/* On a phone the heading row is the overlay's, so Mark all read sits above the
+   list instead. */
+.notifications-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: var(--space-2);
+}
+
+.notification-group {
+    display: flex;
+    flex-direction: column;
+}
+
+/* The post the notifications under it are about. It names the post as its card
+   does, "Night Owls · Valorant group", so a player with two posts in a game
+   tells them apart. */
+.notification-heading {
+    padding: 0 var(--space-2) var(--space-1);
+    color: var(--text-muted);
+    font-size: var(--size-12);
+    font-weight: 500;
+}
+
+.notification {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-2);
+    padding: var(--space-2);
+    border-radius: var(--radius-control);
+    color: var(--text);
+}
+
+.notification:hover,
+.notification:focus-visible {
+    background: var(--table);
+    color: var(--text);
+    text-decoration: none;
+}
+
+/* The dot's place is kept on rows that have been read, so every row's text
+   starts on the same line down the list. */
+.notification-mark {
+    display: flex;
+    align-items: center;
+    width: 8px;
+    height: 20px;
+    flex: none;
+}
+
+.notification-main {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.notification-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow-wrap: anywhere;
+    font-weight: 500;
+}
+
+.notification-title .icon {
+    width: 14px;
+    height: 14px;
+    flex: none;
+    color: var(--text-muted);
+}
+
+.notification-meta {
+    color: var(--text-muted);
+    font-size: var(--size-12);
+}
+
+.notification-unread .notification-title {
+    font-weight: 600;
+}
+
+.notification-unread .notification-title .icon {
+    color: var(--text);
+}
+
+/* Nothing yet, and what to do about it: Vex has no posts, so no post of theirs
+   can tell them anything (brief 14.6). */
+.notifications-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
+    color: var(--text-muted);
 }
 
 /* Feed header: the cover, the game and how many posts are active. */
@@ -1336,6 +1507,169 @@ a.own-post-stat:hover {
     font-size: var(--size-12);
 }
 
+/* The account page's definition list (brief 11.5): a label, what the account
+   holds, and where there is one, the way to change it. On a phone the label
+   sits above its value, where 132 px of it would leave nothing for the value. */
+
+.data-list {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    background: var(--table);
+}
+
+.data-row {
+    display: grid;
+    grid-template-columns: 132px minmax(0, 1fr) auto;
+    gap: var(--space-2) var(--space-4);
+    align-items: baseline;
+    padding: var(--space-4);
+}
+
+.data-row + .data-row {
+    border-top: 1px solid var(--border);
+}
+
+.data-row dt {
+    color: var(--text-muted);
+    font-size: var(--size-12);
+    font-weight: 500;
+}
+
+.data-value {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+    min-width: 0;
+    margin: 0;
+    font-weight: 500;
+    overflow-wrap: anywhere;
+}
+
+.data-line {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.data-action {
+    margin: 0;
+}
+
+@media (max-width: 639px) {
+    .data-row {
+        grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .data-row dt {
+        grid-column: 1 / -1;
+    }
+}
+
+/* A player named with one action: the blocked list on the account page. */
+
+.person-rows {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.person-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    min-height: 28px;
+}
+
+/* A switch: on or off the moment it is flipped, where a checkbox waits for the
+   form it sits in. */
+
+.switches {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.switch {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+    cursor: pointer;
+}
+
+.switch input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+}
+
+.switch-track {
+    position: relative;
+    flex: none;
+    width: 36px;
+    height: 20px;
+    margin-top: 1px;
+    border: 1px solid var(--input-border);
+    border-radius: 999px;
+    background: var(--raised);
+    transition: background 120ms ease-out, border-color 120ms ease-out;
+}
+
+.switch-track::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    transition: transform 120ms ease-out, background 120ms ease-out;
+}
+
+.switch input:checked + .switch-track {
+    border-color: var(--ember);
+    background: var(--ember);
+}
+
+.switch input:checked + .switch-track::after {
+    background: var(--on-ember);
+    transform: translateX(16px);
+}
+
+.switch input:focus-visible + .switch-track {
+    outline: 2px solid var(--ember);
+    outline-offset: 2px;
+}
+
+.switch-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-weight: 500;
+}
+
+.switch-note {
+    color: var(--text-muted);
+    font-size: var(--size-12);
+    font-weight: 400;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .switch-track,
+    .switch-track::after {
+        transition: none;
+    }
+}
+
 /* The overlay as a modal from 640 px, centred over a backdrop. Below that it
    is the full-screen sheet. */
 
@@ -1369,6 +1703,23 @@ a.own-post-stat:hover {
     .overlay-modal .overlay-footer .button {
         width: auto;
     }
+}
+
+/* The overlay as a sheet from the bottom of the screen, for a menu of a few
+   short rows such as the account menu (brief 11.4): a whole screen for them
+   would read as a page. */
+
+.overlay-bottom {
+    inset: auto 0 0 0;
+    border-top: 1px solid var(--border);
+    border-radius: var(--radius-card) var(--radius-card) 0 0;
+    background: var(--raised);
+}
+
+.overlay-bottom .overlay-body {
+    flex: none;
+    gap: var(--space-1);
+    padding: var(--space-2) var(--space-2) var(--space-6);
 }
 
 /* A confirmation that says what will be lost, with the counts. */
@@ -1640,6 +1991,20 @@ a.contact-value {
     box-shadow: 0 12px 32px rgb(0 0 0 / 0.5);
 }
 
+/* The account menu's own heading, the nickname it belongs to. */
+.menu-label {
+    padding: var(--space-2) var(--space-3) var(--space-1);
+    color: var(--text-muted);
+    font-size: var(--size-12);
+    font-weight: 500;
+}
+
+.menu-divider {
+    height: 1px;
+    margin: var(--space-1) var(--space-2);
+    background: var(--border);
+}
+
 .menu-item {
     display: flex;
     align-items: center;
@@ -1649,6 +2014,7 @@ a.contact-value {
     border: none;
     border-radius: var(--radius-small);
     background: none;
+    color: var(--text);
     text-align: left;
     white-space: nowrap;
     cursor: pointer;
@@ -1657,6 +2023,19 @@ a.contact-value {
 .menu-item:hover,
 .menu-item:focus-visible {
     background: var(--table);
+    color: var(--text);
+    text-decoration: none;
+}
+
+/* The same items in a phone's sheet, where a row is a touch target. */
+.sheet-menu {
+    display: flex;
+    flex-direction: column;
+}
+
+.sheet-menu .menu-item {
+    height: 48px;
+    font-size: var(--size-16);
 }
 
 .menu-item .icon {

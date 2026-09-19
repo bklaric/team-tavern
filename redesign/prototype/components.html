@@ -103,6 +103,37 @@
             max-width: 360px;
         }
 
+        /* The header and the menus it opens, standing still on the page
+           rather than stuck to the top of it or hanging from a button. */
+        .sheet-header .site-header {
+            position: static;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-card);
+        }
+
+        .sheet-dropdown {
+            position: static;
+            width: auto;
+            max-width: 860px;
+            padding: var(--space-4);
+            border: 1px solid var(--input-border);
+            border-radius: var(--radius-card);
+            background: var(--raised);
+        }
+
+        .sheet-dropdown .cover-grid {
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        }
+
+        .sheet-dropdown-menu {
+            max-width: 220px;
+            padding: var(--space-1);
+        }
+
+        .sheet-dropdown-notifications {
+            max-width: 400px;
+        }
+
         .digits {
             display: inline-grid;
             gap: 2px;
@@ -155,6 +186,18 @@
     </section>
 
     <section>
+        <h2>Header</h2>
+        <p class="sheet-note">The logo leads home and New post is the header's one prominent button, outlined so it doesn't compete with the filled button of the page below it. Games opens the whole catalogue, the inbox and the bell carry their counts, and the account menu holds the rest. On a phone the logo is its mark, Games and notifications open full screen and the account menu as a sheet.</p>
+        <div id="header-states"></div>
+    </section>
+
+    <section>
+        <h2>Notifications</h2>
+        <p class="sheet-note">The bell's list (brief 11.3), grouped by the player's own posts: a post that fits opens its own page, and a post of yours about to expire opens your posts, where it is renewed. Messages aren't here; the inbox has its own count in the header.</p>
+        <div id="notification-states"></div>
+    </section>
+
+    <section>
         <h2>Facts and match marks</h2>
         <p class="sheet-note">Everything a card shows about a post is a fact, Looking for included. Marks sit on the facts and say what fits the viewer's description and what doesn't; ≠ is information, not an error. A field the viewer filled in and the post left empty is a mismatch too.</p>
         <div class="sheet-row" id="marks"></div>
@@ -186,6 +229,12 @@
     </section>
 
     <section>
+        <h2>Account</h2>
+        <p class="sheet-note">The account page (brief 11.5) is one definition list per section: the facts and contacts every post of the player's shows, edited here once for all of them, and what nobody else sees. A switch is on or off the moment it is pressed, where a checkbox waits for the form it sits in. The email row carries whether the address is confirmed, since until it is, the link confirming it is the only email the site sends.</p>
+        <div id="account"></div>
+    </section>
+
+    <section>
         <h2>Posting</h2>
         <p class="sheet-note">The type chooser as posting's first step, and the controls of the post screen. A chosen pill takes the text color, not ember: it is an answer, not a call to act.</p>
         <div id="posting"></div>
@@ -196,7 +245,9 @@
 <script src="prototype.js"></script>
 <script src="fixtures.js"></script>
 <script src="site.js"></script>
+<script src="fields.js"></script>
 <script src="conversations.js"></script>
+<script src="notifications.js"></script>
 <script src="messaging.js"></script>
 <script>
     const $ = id => document.getElementById(id);
@@ -222,6 +273,43 @@
         <button class="button button-outline button-small" type="button">${icon("external-link")}Visit site</button>
         <button class="button button-text button-small" type="button">Details ${icon("chevron-down")}</button>
         <button class="button button-destructive" type="button">Delete account</button>`;
+
+    // The header as each viewer gets it, and the menus it opens. The sheet has
+    // no account of its own, so it borrows one to draw the signed-in header;
+    // its copies of the menus are there to be read, and don't act.
+    const headerAs = who => {
+        account = who ? structuredClone(PRESETS[who]) : null;
+        return `<div class="sheet-header">${headerHtml()}</div>`;
+    };
+    $("header-states").innerHTML = `
+        <p class="sheet-caption">Signed out</p>
+        ${headerAs(null)}
+        <p class="sheet-caption">Signed in, with unread messages and notifications</p>
+        ${headerAs("kestrel")}
+        <p class="sheet-caption">Games: the whole catalogue, a game the player has posted in marked</p>
+        <div class="sheet-dropdown">${gamesMenuHtml()}</div>
+        <p class="sheet-caption">The account menu</p>
+        <div class="menu sheet-dropdown sheet-dropdown-menu" role="menu">
+            <p class="menu-label">Kestrel</p>${accountMenuHtml()}
+        </div>`;
+    account = readJson(ACCOUNT_KEY, null);
+    $("header-states").addEventListener("click", event => event.preventDefault());
+
+    // The bell's list, as the dropdown draws it. On a phone Mark all read sits
+    // above the list, where the overlay's own header carries the title.
+    const notificationsAs = who => {
+        account = structuredClone(PRESETS[who]);
+        return `<div class="sheet-dropdown sheet-dropdown-notifications">
+            ${phoneWidth.matches ? "" : `<div class="header-menu-heading"><h2>Notifications</h2>${markAllReadHtml()}</div>`}
+            ${notificationsMenuHtml()}</div>`;
+    };
+    $("notification-states").innerHTML = `
+        <p class="sheet-caption">Kestrel's list: what fits each of their posts, and one of them about to expire</p>
+        ${notificationsAs("kestrel")}
+        <p class="sheet-caption">Nothing yet: Vex has no posts, so nothing can tell them anything</p>
+        ${notificationsAs("vex")}`;
+    account = readJson(ACCOUNT_KEY, null);
+    $("notification-states").addEventListener("click", event => event.preventDefault());
 
     $("marks").innerHTML = `<div class="facts-clip"><div class="facts">${[
         { text: "Diamond 2", match: "fit" }, { text: "EU", match: "fit" },
@@ -310,6 +398,39 @@
             <div class="confirm-actions"><button class="button button-destructive" type="button">${icon("trash-2")}Delete post</button><button class="button button-text" type="button">Keep it</button></div></div>
         <p class="sheet-caption">Or, between two ways to do one thing</p>
         <div class="rule">or</div>`;
+
+    const dataRow = (label, value, action) => `<div class="data-row"><dt>${label}</dt><dd class="data-value">${value}</dd>${
+        action ? `<dd class="data-action">${action}</dd>` : ""}</div>`;
+    const emailSwitch = (key, label, note, on) =>
+        `<span>${fieldControlHtml({ key: `sheet-${key}`, kind: "switch", text: label, note }, on)}</span>`;
+    const textButton = label => `<button class="button button-text button-small" type="button">${label}</button>`;
+    const blockedRow = who => `<li class="person-row"><span class="person-name">${who}</span>${textButton("Unblock")}</li>`;
+    $("account").innerHTML = `
+        <p class="sheet-caption">What the posts show, under the one Edit that changes them all</p>
+        <dl class="data-list">
+            ${dataRow("Nickname", "Kestrel")}
+            ${dataRow("Birthday", "12 April 1998, shown as age 28")}
+            ${dataRow("Languages", "Croatian, English")}
+            ${dataRow("Contacts", "Discord kestrel · Riot ID Kestrel#EUW")}
+        </dl>
+        <p class="sheet-caption">What only the player sees: the email and how they sign in, the email switches and the blocked list</p>
+        <dl class="data-list">
+            ${dataRow("Email", "kestrel@example.com", textButton("Change"))}
+            ${dataRow("Email", `mira@example.com
+                <p class="field-hint">Not confirmed yet. We sent it a link, and send it nothing else until the link is clicked.</p>
+                ${textButton("Send again")}`, textButton("Change"))}
+            ${dataRow("Email", `<span class="muted">No address</span>
+                <p class="field-hint">Matches, messages and renewals are emailed, so without one the site can't tell you about them.</p>`, textButton("Add"))}
+            ${dataRow("Sign-in", "Email and password", textButton("Change"))}
+            ${dataRow("Sign-in", `<span class="data-line">${icon("discord")}Discord</span>`, textButton("Use a password"))}
+            ${dataRow("Emails", `<div class="switches">
+                ${emailSwitch("matches", "Matches", "When a new post fits one of yours.", true)}
+                ${emailSwitch("messages", "Messages", "When someone writes, once per conversation until you read it.", true)}
+                ${emailSwitch("renewals", "Renewals", "Before one of your posts expires, with one click to renew it.", false)}
+            </div>`)}
+            ${dataRow("Blocked", `<ul class="person-rows">${blockedRow("Danya")}${blockedRow("Quill")}</ul>
+                <p class="field-hint">Neither of you sees the other's posts or messages. Unblocking brings all of it back.</p>`)}
+        </dl>`;
 
     const ownPost = (post, rest) => ({
         fitsHref: "#", editHref: "#", conversationsHref: "#", conversations: 0, reveals: 0, ...post, ...rest,

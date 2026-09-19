@@ -44,9 +44,13 @@ const fact = f => {
 const heading = post => {
     const type = TYPES[post.type];
     const name = post.name || `${post.owner}'s ${post.type}`;
+    // On its own page the card is the page, so its name is the page's heading
+    // and links nowhere (brief 11.1).
     return `<div class="card-heading">
-        <a class="card-name" href="${post.href || "#"}">${escapeHtml(name)}</a>
-        <span class="card-type">${icon(type.icon)}${type.label}</span>
+        ${post.page
+            ? `<h1 class="card-name">${escapeHtml(name)}</h1>`
+            : `<a class="card-name" href="${post.href || "#"}">${escapeHtml(name)}</a>`}
+        <span class="card-type">${icon(type.icon)}${post.typeLabel || type.label}</span>
         ${slots(post.slots)}
         ${post.own ? `<span class="card-own">Your post</span>` : ""}
         <span class="card-freshness">${escapeHtml(post.freshness)}</span>
@@ -77,11 +81,15 @@ const actions = post => {
         return `<button class="button button-outline button-small" type="button" data-card="edit">${icon("pencil")}Edit</button>
             <button class="button button-outline button-small" type="button" data-card="renew">${icon("refresh-cw")}Renew</button>`;
     }
+    // A card's contact button is outlined, so a feed of twenty cards doesn't
+    // show twenty filled ones. A post's own page holds one card, and contacting
+    // it is what the page is for, so there it is the page's one filled button.
+    const weight = post.page ? "button-primary" : "button-outline button-small";
     if (post.messaged) {
-        return `<button class="button button-outline button-small card-contact" type="button">${icon("message-circle")}Open conversation</button>`;
+        return `<button class="button ${weight} card-contact" type="button">${icon("message-circle")}Open conversation</button>`;
     }
     const c = post.contact;
-    return `<button class="button button-outline button-small card-contact" type="button">${icon(c.icon)}${escapeHtml(c.label)}</button>`;
+    return `<button class="button ${weight} card-contact" type="button">${icon(c.icon)}${escapeHtml(c.label)}</button>`;
 };
 
 // A card expands only when there is more to show than it already does.
@@ -93,7 +101,7 @@ const footer = post => `<div class="card-footer">
             ${post.messaged ? `<span class="card-messaged">${icon("message-circle")}You messaged ${escapeHtml(post.messaged)}</span>` : ""}
         </div>
         ${actions(post)}
-        ${expandable(post) || post.text ? `<button class="button button-text button-small card-details-toggle" type="button" aria-expanded="${!!post.expanded}">
+        ${!post.page && (expandable(post) || post.text) ? `<button class="button button-text button-small card-details-toggle" type="button" aria-expanded="${!!post.expanded}">
             Details ${icon("chevron-down")}
         </button>` : ""}
     </div>`;
@@ -103,7 +111,8 @@ const footer = post => `<div class="card-footer">
 const renderCard = (post, marked = false) => {
     const classes = ["card", `card-${post.type}`];
     if (post.expired) classes.push("card-expired");
-    if (post.expanded) classes.push("card-expanded");
+    // On its own page a post is an expanded card, with nothing left to expand.
+    if (post.expanded || post.page) classes.push("card-expanded");
     const unmark = f => marked ? f : { ...f, match: undefined };
     // A compared-only fact, such as online hours, otherwise waits behind Details.
     const shownFacts = post.facts.filter(f => !f.comparedOnly || (marked && f.match));
@@ -113,25 +122,36 @@ const renderCard = (post, marked = false) => {
         ${facts ? `<div class="facts-clip"><div class="facts">${facts}</div></div>` : ""}
         ${post.text ? `<p class="card-text">${escapeHtml(post.text)}</p>` : ""}
         ${details(post)}
+        ${post.status || ""}
         ${footer(post)}
     </article>`;
 };
 
 // A player's own post on the home page (brief 11.2): its card's heading and
 // facts, its state, what it has produced, and See what fits, Edit and Renew.
-// post is { id, type, name, slots, facts, days, expired, conversations, unread,
-// conversationsHref, reveals, expiredAgo, fitsHref, editHref }, where days is
-// how many are left and a post in its last week is about to expire.
+// post is { id, href, type, name, slots, facts, days, expired, conversations,
+// unread, conversationsHref, reveals, expiredAgo, fitsHref, editHref }, where
+// href is the post's own page and days is how many are left, a post in its last
+// week being about to expire.
 const EXPIRING_DAYS = 7;
 
-const ownPostState = post => {
+// What a post's state says to its owner, on the home page, on the post's own
+// page and in the notification list (brief 11.3): how long it stays active, or
+// what expiry means now that it has.
+const ownPostStateText = post => {
     if (post.expired) {
-        return `<span class="own-post-state">${icon("clock")}Expired ${escapeHtml(post.expiredAgo)}. It's listed under older posts, and match emails are paused.</span>`;
+        return { icon: "clock", text: `Expired ${post.expiredAgo}`, note: "It's listed under older posts, and match emails are paused." };
     }
     const days = post.days;
     return days <= EXPIRING_DAYS
-        ? `<span class="own-post-state own-post-state-soon">${icon("circle-alert")}${days ? `Expires in ${days} ${days === 1 ? "day" : "days"}` : "Expires today"}</span>`
-        : `<span class="own-post-state">${icon("clock")}Active for ${days} more days</span>`;
+        ? { icon: "circle-alert", soon: true, text: days ? `Expires in ${days} ${days === 1 ? "day" : "days"}` : "Expires today" }
+        : { icon: "clock", text: `Active for ${days} more days` };
+};
+
+const ownPostState = post => {
+    const state = ownPostStateText(post);
+    return `<span class="own-post-state${state.soon ? " own-post-state-soon" : ""}">${icon(state.icon)}${
+        escapeHtml(state.text)}${state.note ? `. ${escapeHtml(state.note)}` : ""}</span>`;
 };
 
 const ownPostConversations = post => {
@@ -141,22 +161,27 @@ const ownPostConversations = post => {
         post.unread ? `<span class="own-post-unread">${post.unread} unread</span>` : ""}</a>`;
 };
 
+// The state, the conversations and the contact reveals, which only the owner
+// sees: on the home page under the post's facts, and on the post's own page
+// under the post itself.
+const ownPostStatus = post => `<div class="own-post-status">
+    ${ownPostState(post)}
+    ${ownPostConversations(post)}
+    ${post.reveals ? `<span class="own-post-stat">${icon("eye")}Contacts shown ${post.reveals} ${post.reveals === 1 ? "time" : "times"}</span>` : ""}
+</div>`;
+
 const renderOwnPost = post => {
     const type = TYPES[post.type];
     const soon = !post.expired && post.days <= EXPIRING_DAYS;
     const facts = post.facts.map(fact).join("");
     return `<article class="card own-post${post.expired ? " card-expired" : ""}" data-id="${escapeHtml(post.id)}">
         <div class="card-heading">
-            <a class="card-name" href="#">${escapeHtml(post.name)}</a>
+            <a class="card-name" href="${post.href || "#"}">${escapeHtml(post.name)}</a>
             <span class="card-type">${icon(type.icon)}${type.label}</span>
             ${slots(post.slots)}
         </div>
         ${facts ? `<div class="facts-clip"><div class="facts">${facts}</div></div>` : ""}
-        <div class="own-post-status">
-            ${ownPostState(post)}
-            ${ownPostConversations(post)}
-            ${post.reveals ? `<span class="own-post-stat">${icon("eye")}Contacts shown ${post.reveals} ${post.reveals === 1 ? "time" : "times"}</span>` : ""}
-        </div>
+        ${ownPostStatus(post)}
         <div class="card-footer">
             <a class="button button-outline button-small" href="${post.fitsHref}" data-fits="${escapeHtml(post.id)}">${icon("search")}See what fits</a>
             <a class="button button-text button-small" href="${post.editHref}">${icon("pencil")}Edit</a>
