@@ -6,6 +6,9 @@
 -- Every post updated in the year before now is taken, and at least the 60 most
 -- recently updated, so a game with no recent activity still has a feed.
 
+-- Today's regions nest, and a team names any level of them. The top level is
+-- the six continents, which the prototype reads through the twelve regions the
+-- brief settles on (game.js).
 with recursive continents (name, continent) as (
     select name, name from region where superregion_name is null
     union all
@@ -26,14 +29,12 @@ player_posts as (
         profile.updated,
         date_part('year', age(:'now'::timestamptz, player.birthday))::int as age,
         player.location,
-        (select continent from continents where continents.name = player.location) as region,
         coalesce(player.languages, '{}') as languages,
         player.timezone,
         to_char(coalesce(player.weekday_from, player.weekend_from), 'HH24:MI') as online_from,
         to_char(coalesce(player.weekday_to, player.weekend_to), 'HH24:MI') as online_to,
         player.microphone,
         player.discord_tag is not null as has_discord,
-        profile.new_or_returning,
         array_to_string(profile.about, E'\n') as about,
         array_to_string(profile.ambitions, E'\n') as ambitions,
         case when profile.platform is null then '{}' else array[profile.platform] end as platforms,
@@ -77,8 +78,6 @@ team_posts as (
         team.discord_tag is not null as has_discord,
         team.discord_server is not null as has_discord_server,
         team.website is not null as has_website,
-        team.organization = 'organized' as organized,
-        profile.new_or_returning,
         array_to_string(profile.about, E'\n') as about,
         array_to_string(profile.ambitions, E'\n') as ambitions,
         coalesce(profile.platforms, '{}') as platforms,
@@ -105,11 +104,6 @@ select json_build_object(
     'title', (select title from this_game),
     'platforms', (select platforms from this_game),
     'now', :'now',
-    'locations', (
-        select json_agg(json_build_object('name', continents.name, 'continent', continents.continent) order by continents.name)
-        from continents
-        where not exists (select 1 from region child where child.superregion_name = continents.name)
-    ),
     'fields', (
         select json_agg(json_build_object(
             'key', field.key,

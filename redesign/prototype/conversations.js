@@ -86,7 +86,7 @@ const CONVERSATION_FIXTURES = [
             post: {
                 type: "group",
                 name: "Ancient Echoes",
-                facts: [{ text: "Legend – Ancient" }, { text: "Needs Hard support" }, { text: "EU" }, { text: "EN" }],
+                facts: [{ text: "Legend – Ancient" }, { text: "Hard support" }, { text: "Europe" }, { text: "EN" }],
             },
         },
         messages: [
@@ -105,7 +105,7 @@ const CONVERSATION_FIXTURES = [
             name: "The Farlands",
             owner: "Eirik",
             updated: "2026-09-01T12:00:00Z",
-            facts: [{ text: "Dedicated server" }, { text: "EU" }, { text: "EN" }, { text: "Events, Casual" }, { text: "All experience levels" }],
+            facts: [{ text: "Modded" }, { text: "Europe" }, { text: "EN" }, { text: "Events, Casual" }],
             reach: "discord",
             contacts: [
                 { label: "Discord invite", value: "discord.gg/farlands", url: "https://discord.gg/farlands" },

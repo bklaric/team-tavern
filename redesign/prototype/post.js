@@ -44,8 +44,6 @@ const POST_TYPES = {
 };
 const PLURAL = { player: "players", group: "groups", community: "communities" };
 
-const EXPERIENCE = ["New players welcome", "All experience levels", "Experienced players"];
-
 const existing = () => account && account.posts.find(p => p.game === HANDLE && p.type === POST_TYPE);
 const otherPosts = () => account ? account.posts.filter(p => p !== existing()) : [];
 
@@ -74,7 +72,7 @@ const withAccount = d => {
     });
     if (POST_TYPE !== "player" && account) {
         if (next.languages === undefined && account.languages) next.languages = account.languages.slice();
-        if (next.regions === undefined && account.location) next.regions = [CONTINENT_OF[account.location]].filter(Boolean);
+        if (next.regions === undefined && account.location) next.regions = [REGION_OF[account.location]].filter(Boolean);
     }
     return next;
 };
@@ -82,10 +80,9 @@ const withAccount = d => {
 const withDefaults = d => ({
     reach: POST_TYPE === "community" ? undefined : "message",
     join: POST_TYPE === "community" ? "discord" : undefined,
-    members: 2,
-    total: ROLES.groupSize || 5,
-    wantsFrom: 1,
-    wantsTo: 3,
+    size: 2,
+    wantedFrom: 1,
+    wantedTo: 1,
     ...d,
 });
 
@@ -121,8 +118,6 @@ const previewMode = () => localStorage.getItem("tt-proto-preview") || "sheet";
 // Fields. The screen has three parts: the post's fields, the player's words,
 // and contact (brief 6, step 3).
 
-const asOptions = list => list.map(o => (typeof o === "string" ? { value: o, label: o } : o));
-
 const cardFields = () => {
     const lookingFor = ROLES.lookingFor && { key: "lookingFor", label: "Looking for", kind: "pills", options: gameOptions(ROLES.lookingFor) };
     const languages = { key: "languages", label: "Languages", kind: "tokens", options: languageOptions };
@@ -142,14 +137,11 @@ const cardFields = () => {
             { key: "birthday", label: "Birthday", kind: "date", account: true, hint: "Your card shows your age, never your birthday." },
             { key: "mic", label: "Microphone", kind: "check", text: "I use a microphone" },
             lookingFor,
-            { key: "returning", label: "Returning player", kind: "check", text: "I'm returning to the game after a break" },
             ...timeFields(),
         ],
         group: [
             { key: "name", label: "Group name", kind: "text", hint: nameHint },
-            ROLES.server
-                ? { key: "wants", label: "How many more players do you want?", kind: "wants" }
-                : { key: "size", label: "How many are you, and how many do you want in total?", kind: "size" },
+            { key: "size", label: "How many are you, and how many more do you want?", kind: "size" },
             ROLES.roles && { key: "roles", label: "Roles you need", kind: "pills", options: gameOptions(ROLES.roles) },
             ROLES.rank && { key: "rankRange", label: "Rank range", kind: "rankRange", options: gameOptions(ROLES.rank) },
             platforms,
@@ -159,17 +151,17 @@ const cardFields = () => {
             { key: "mic", label: "Microphone", kind: "check", text: "Microphone required" },
             { key: "ageRange", label: "Ages", kind: "ageRange" },
             lookingFor,
-            { key: "organized", label: "Organized", kind: "check", text: "We're organized: set times, a fixed lineup or a coach" },
             ...timeFields(),
         ],
         community: [
             { key: "name", label: "Community name", kind: "text", required: true },
-            { key: "kind", label: "Kind", kind: "radioPills", options: asOptions(EXTRAS.kinds) },
             lookingFor,
-            { key: "experience", label: "Experience level", kind: "radioPills", options: asOptions(EXPERIENCE) },
             regions,
             languages,
             platforms,
+            { key: "ageRange", label: "Ages", kind: "ageRange" },
+            { key: "mic", label: "Microphone", kind: "check", text: "Microphone required" },
+            ...timeFields(),
             ...otherGameFields(),
         ],
     };
@@ -272,12 +264,14 @@ const controlHtml = (f, value) => {
             // Signed out, the Discord input offers to sign up with it (brief 6, step 3).
             return account ? inputHtml(f, value) : `<div class="input-row">${inputHtml(f, value)}
                 <button class="button button-outline" type="button" data-action="discord-signup">${icon("discord")}Sign up with Discord</button></div>`;
+        // How many you are and how many more you want, which is what the card
+        // heading reads back (brief 5.2). The second number is there for a
+        // group that will take either, and reads as one where they agree.
         case "size":
-            return `<div class="count-row">${stepper("members", draft.members, 1, draft.total - 1, "Players in the group")}
-                <span class="muted">of</span>${stepper("total", draft.total, 2, 10, "Players in total")}</div>`;
-        case "wants":
-            return `<div class="count-row"><span class="muted">From</span>${stepper("wantsFrom", draft.wantsFrom, 1, 20, "At least")}
-                <span class="muted">to</span>${stepper("wantsTo", draft.wantsTo, draft.wantsFrom, 30, "At most")}</div>`;
+            return `<div class="count-row">${stepper("size", draft.size, 1, 30, "Players in the group")}
+                <span class="muted">players, want</span>${stepper("wantedFrom", draft.wantedFrom, 1, 30, "At least")}
+                <span class="muted">to</span>${stepper("wantedTo", draft.wantedTo, draft.wantedFrom, 30, "At most")}
+                <span class="muted">more</span></div>`;
         // A rank range, an hours range and an age range are the description
         // bar's editors (game.js), so the bar and the screen ask alike.
         case "rankRange":
@@ -725,10 +719,9 @@ const clamp = (value, low, high) => Math.max(low, Math.min(high, value));
 
 const stepValue = (key, delta) => {
     draft[key] += delta;
-    draft.total = clamp(draft.total, 2, 10);
-    draft.members = clamp(draft.members, 1, draft.total - 1);
-    draft.wantsFrom = clamp(draft.wantsFrom, 1, 20);
-    draft.wantsTo = clamp(draft.wantsTo, draft.wantsFrom, 30);
+    draft.size = clamp(draft.size, 1, 30);
+    draft.wantedFrom = clamp(draft.wantedFrom, 1, 30);
+    draft.wantedTo = clamp(draft.wantedTo, draft.wantedFrom, 30);
 };
 
 const validate = () => {

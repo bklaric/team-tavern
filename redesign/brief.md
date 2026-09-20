@@ -188,11 +188,11 @@ community posts.
 │ Showing  [ All ]  [ Players ]  [ Groups ]  [ Communities ]              │
 │                                                                         │
 │ Fits you (3)                                                            │
-│  group card      ✓ Needs Controller · ✓ Diamond · ✓ EU · ✓ 21:00–23:00  │
+│  group card      ✓ Controller · ✓ Diamond · ✓ EU · ✓ 21:00–23:00        │
 │  community card  ✓ EU · ✓ EN · ✓ PC                                     │
 │  player card     ✓ Diamond 1 · ✓ EU · ✓ 19:00–22:00 · ✓ EN              │
 │ Missing one thing (12)                                                  │
-│  group card      ✓ Needs Sentinel · ✓ EU · ✓ 21:00–23:00 · ≠ Plat 1–2   │
+│  group card      ✓ Sentinel · ✓ EU · ✓ 21:00–23:00 · ≠ Plat 1–2         │
 │ Missing more                                                            │
 │  player card     ✓ EU · ≠ Bronze 2 · ≠ 08:00–12:00 · ≠ PT               │
 ├──────────── Older posts · they may no longer be looking ────────────────┤
@@ -261,9 +261,11 @@ profile. Browsing is scanning for the few facts that rule someone in or out.
 rank and role for Valorant, rank and position for LoL. Either the first fields by
 order or a "shown on card" flag per field.
 
-**Decided:** platform, a community's kind (such as a dedicated server) and the
-Looking for options (5.5) are game fields: a game has them only where they make
-sense, with options of its own. Each field takes one option or several, as suits
+**Decided:** platform and the Looking for options (5.5) are game fields: a game
+has them only where they make sense, with options of its own. There is no field
+for what kind of thing a community is: what it runs on and how it is played are
+already the game's own fields, such as Valheim's server type, and a community
+that is a clan or a Discord says so in its words. Each field takes one option or several, as suits
 the field. A game field such as server region is the same field on all three
 post types.
 
@@ -272,9 +274,63 @@ the game: PC, PlayStation, Xbox, Switch. A post picks every platform it plays on
 all of them for a crossplay community. A game on one platform has no platform
 field. Where a game has one, it is on all three cards, after the languages.
 
-**Decided:** a player gives their location; a group or community gives the
-regions of the players it is looking for. Every location maps to a region, which
-is how the two are compared (7.2).
+**Decided:** a player gives their location, which is a country and only a
+country; a group or community gives regions, and only regions. Every country
+belongs to exactly one region, which is how the two are compared (7.2), so it is
+one comparison whichever pair of post types is being matched.
+
+**Decided:** a region is the set of places close enough to each other to play
+together, which is what the latency between them decides. Whether two players
+can understand each other is the languages field's business, so a split that is
+really about language does not belong here: West and East Europe are one region,
+because Lisbon to Warsaw is about 50ms and what separates those players is that
+they speak different languages. The twelve:
+
+| | | |
+| ---------------- | ------------------ | ---------------- |
+| Europe           | North America      | South Asia       |
+| Middle East      | Central America    | East Asia        |
+| North Africa     | South America      | Southeast Asia   |
+| Sub-Saharan Africa | Central Asia     | Oceania          |
+
+**Decided:** what puts a country in a region is where its players are served,
+not the continent a map draws it on. Two players never ping each other: both
+ping a game server, so a region holds the countries whose players can find a
+common server playable for both, and nine of the twelve are a region some
+publisher already runs servers for. Russia is in Europe, since most of its
+players are west of the Urals and play on European servers, and Turkey, the
+Caucasus and Cyprus are too, since Istanbul is about 45ms from Frankfurt and
+every publisher routes them west. Where the map and the servers disagree, the
+servers decide:
+
+| Country       | Region          | Why                                                                                            |
+| ------------- | --------------- | ---------------------------------------------------------------------------------------------- |
+| Greenland     | Europe          | Its cable runs through Iceland to Denmark, and nothing it reaches is in North America          |
+| Sudan         | Middle East     | Its cables land in Jeddah, 30ms off, where Khartoum to Casablanca is over 100ms through Europe |
+| Mexico        | North America   | Monterrey is 25ms from Dallas, Tijuana 110ms from Panama City                                  |
+| The Caribbean | Central America | Havana is 40ms from Mexico City and 100ms from Seattle, and Florida only makes it look near    |
+
+**Decided:** the twelve stay, though latency alone would give about six. Dallas
+is about 45ms from both San Juan and Seattle, and São Paulo is nearer Bogotá than
+Lisbon is Moscow, so the Americas would be one region and East and Southeast Asia
+another. A region also has to be legible to the player picking one, and it has to
+filter: one that holds everyone filters nothing. The splits past the sixth are
+what keep the field worth answering.
+
+**Decided:** North Africa, Central Asia and Sub-Saharan Africa have no servers of
+their own, and are kept anyway. The Maghreb plays European servers and Egypt
+Middle Eastern ones; Central Asia plays Moscow's, and Almaty is 110ms from
+Frankfurt, too far to fold into Europe; Sub-Saharan Africa has Johannesburg,
+which Lagos is 120ms from. Each holds players nobody serves well, which is a
+reason to name the region rather than to merge it away.
+
+**Decided:** the mapping is every country and inhabited dependency of more than
+about ten thousand residents, some 230 of them, each under the name a player
+would look for rather than its official one.
+
+**Open:** countries on the edge of a region play happily with the region next
+door. Sorting a post that misses by the nearest region, rather than counting it
+a plain miss, is worth doing and is out of scope for the first release.
 
 **Decided:** online hours wait behind Details (5.4), like a player's age, and
 join the end of the fact line while the viewer's description compares them. They
@@ -282,9 +338,15 @@ show in the viewer's timezone, converted from the owner's, so they read the same
 way as the ✓ and ≠ marks (5.6). They follow the viewer's locale, "19:00–01:00" or
 "7pm–1am", and carry no timezone name: the viewer knows their own.
 
-**Decided:** a card has no badges. Looking for, new or returning, organized and
-experience level are facts like any other, in the fact line or behind Details
-(5.4). The fact line wraps as it needs to.
+**Decided:** a player post's facts say what the player is; a group's or a
+community's say what it is looking for. The same field reads both ways: a group's
+rank range is the range it wants, its regions are where it wants players, its
+microphone is one it wants them to have. Nothing on the card marks the
+difference, because the post's type already does, and the description bar says
+the same thing as the viewer chooses (7.1).
+
+**Decided:** a card has no badges. Looking for is a fact like any other, in the
+fact line or behind Details (5.4). The fact line wraps as it needs to.
 
 ### 5.1 Player card
 
@@ -292,7 +354,7 @@ experience level are facts like any other, in the fact line or behind Details
 ┌─────────────────────────────────────────────────────────────────────────┐
 │ ShadowFox                                  PLAYER    Active 2 days ago  │
 │ Diamond 2 · Duelist, Initiator · Croatia · EN, DE · 🎤 ·                │
-│ Ranked climb · Returning player                                         │
+│ Ranked climb                                                            │
 │ "Peak Immortal last act, looking for a consistent duo. Chill but I want │
 │  to improve, happy to review VODs together…"                            │
 │                                  [ Add on Discord ]        Details ⌄    │
@@ -303,8 +365,8 @@ experience level are facts like any other, in the fact line or behind Details
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│ Night Owls   GROUP  ●●●○○ 3 of 5                     Active 5 hours ago │
-│ Platinum 1 – Diamond 3 · Needs Controller, Sentinel · EU · EN ·         │
+│ Night Owls   GROUP  3 players, wants 2 more          Active 5 hours ago │
+│ Platinum 1 – Diamond 3 · Controller, Sentinel · EU · EN ·               │
 │ 🎤 · Ages 18+ · Ranked climb                                            │
 │ "Three friends who play most nights, we want to stop solo queuing for   │
 │  the last two spots. No tilt, comms on…"                                │
@@ -312,7 +374,8 @@ experience level are facts like any other, in the fact line or behind Details
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
-- **Proposed:** the open slots sit in the heading beside the type, and the needed
+- **Proposed:** the heading says how many the group is and how many more it wants,
+  "3 players, wants 2 more", or "wants 2–3 more" where either will do. The needed
   roles are the second fact, where a player card has its roles, so player and group
   cards read the same way.
 - **Proposed:** ranges and sets replace single values: rank range, age range, one
@@ -320,18 +383,14 @@ experience level are facts like any other, in the fact line or behind Details
 - **Proposed:** a name is optional; without one the heading reads "Kestrel's group".
 - **Proposed:** "Posted by" names the owner, since conversations are between players.
   It is plain text: there is no player page to link to (11.1).
-- **Proposed:** for server games the heading reads "Wants 2–3 more" in place of
-  the slots, and rank disappears where the game has none.
-- **Proposed:** "Organized" is a fact, with the website behind the contact button
-  (5.6).
+- **Proposed:** the website sits behind the contact button (5.6).
 
 ### 5.3 Community card
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
-│ The Farlands                                COMMUNITY                   │
-│ Dedicated server · EU · EN · PC ·                 Active 1 week ago     │
-│ Events, Casual · All experience levels                                  │
+│ The Farlands   COMMUNITY                              Active 1 week ago │
+│ Modded · EU · EN · PC · Events, Casual                                  │
 │                                                                         │
 │ "Looking for a fun and friendly Valheim community server? Join The      │
 │  Farlands: weekly boss raids, a trading hub, building contests and      │
@@ -346,8 +405,13 @@ experience level are facts like any other, in the fact line or behind Details
   community the text is the product.
 - **Decided:** the Discord invite and website sit behind the contact button like
   other contacts, so opening them requires sign-in.
-- **Proposed:** a community carries a Looking for (5.5) and an experience level,
-  shown in the fact line.
+- **Proposed:** a community carries a Looking for (5.5) in the fact line with its
+  other fields. Every field value stays in that line whatever the post type, so
+  nothing has to decide which belong in the heading.
+- **Proposed:** a community carries an age range, a microphone and online hours
+  as a group does, and they are compared with a player's the same way (7.2).
+  Production fills them on 88%, 83% and 47% of its community profiles, so they
+  are facts communities do give.
 - **Out of scope:** community logos. They need uploads and moderation.
 
 ### 5.4 Expanding a card
@@ -378,7 +442,7 @@ experience level are facts like any other, in the fact line or behind Details
 | --------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------- |
 | Player    | Rank, roles, location, language, platform, microphone, Looking for | Age, online hours, remaining game fields, trackers        |
 | Group     | Open slots, needed roles, rank range, regions, language, platform, microphone, ages | Online hours, remaining game fields     |
-| Community | Kind, regions, language, platform, Looking for, experience level   | Remaining game fields, the rest of the pitch                              |
+| Community | Regions, language, platform, microphone, ages, Looking for         | Online hours, remaining game fields, the rest of the pitch                |
 
 ### 5.5 Free text and "Looking for"
 
@@ -391,13 +455,12 @@ experience level are facts like any other, in the fact line or behind Details
   matching field.
 - **Decided:** the options are set per game and are the same for all three post
   types, so a player's answer compares directly with a group's or a community's.
-- **Proposed:** "New or returning player" stays, as a fact.
 
 ### 5.6 Card actions
 
 - **Proposed:** in the feed, each card says what fits the viewer's description and
   what doesn't, which is what makes the fuzzy ordering (7.2) legible.
-- **Decided:** the marks sit on the card's own facts: "✓ Needs Controller",
+- **Decided:** the marks sit on the card's own facts: "✓ Controller",
   "✓ Platinum 1 – Diamond 3", "≠ PT". A separate row of marks would repeat most of
   the fact line. A field the viewer filled in and the post left empty shows in the
   place it would take, "≠ Rank not given" where the rank would be. A compared
@@ -525,10 +588,10 @@ Type ─▶ Game ─▶ Post ─▶ Register or sign in ─▶ Matches
 ┌──────────────────────────────────────┬──────────────────────────────────┐
 │ Valorant · group                     │ Preview                          │
 │                                      │ ┌──────────────────────────────┐ │
-│ Group name       [Night Owls]        │ │ Night Owls GROUP ●●●○○ 3/5   │ │
-│ How many are you, and how many do    │ │ Plat 1 – Dia 3 · Needs       │ │
-│ you want in total?                   │ │ Controller, Sentinel · EU ·  │ │
-│   [ 3 ] of [ 5 ]                     │ │ EN · 🎤 ·                    │ │
+│ Group name       [Night Owls]        │ │ Night Owls GROUP             │ │
+│ How many are you, and how many more  │ │ 3 players, wants 2 more      │ │
+│ do you want?                         │ │ Plat 1 – Dia 3 · Controller, │ │
+│   [ 3 ] players, want [ 2 ] more     │ │ Sentinel · EU · EN · 🎤 ·    │ │
 │ Roles you need   [Controller][Sent…] │ │ Ranked climb                 │ │
 │ Rank range       [Plat 1] – [Dia 3]  │ │                              │ │
 │ Regions          [EU ▾]              │ │ "Three friends who play most │ │
@@ -564,13 +627,12 @@ Type ─▶ Game ─▶ Post ─▶ Register or sign in ─▶ Matches
    - **The post's fields.** Every field of the post, the game's own fields among
      them, with nothing behind a click.
      - *Player:* rank, roles, the game's other fields, location, language,
-       birthday, microphone, Looking for, new or returning, online hours and
-       timezone.
-     - *Group:* optional name, size and open slots, needed roles, rank range, the
-       game's other fields, regions, language, microphone, age range, Looking for,
-       organized, online hours and timezone.
-     - *Community:* name, kind, Looking for, experience level, regions, language,
-       platform and the game's fields.
+       birthday, microphone, Looking for, online hours and timezone.
+     - *Group:* optional name, how many you are and how many more you want,
+       needed roles, rank range, the game's other fields, regions, language,
+       microphone, age range, Looking for, online hours and timezone.
+     - *Community:* name, Looking for, regions, language, platform, age
+       range, microphone, online hours and the game's fields.
    - **In your words.** One text field with prompts and an example. **Decided:**
      required for communities, where the text is the product, and optional for
      player and group posts.
@@ -717,6 +779,10 @@ context, so each field can be compared the way the pair of post types calls for.
 - **Proposed:** the bar is headed "Tell us about you", with a line saying that what
   fits comes first. Without it the chips read as ordinary filters, not as the
   viewer's own details.
+- **Proposed:** under the three choices a line says which way to read the fields,
+  since it changes with the choice: a player describes themselves, a group or a
+  community describes the players it wants. It is the same inversion the cards
+  carry (5.2), and the bar is where the viewer first meets it.
 - **Proposed:** the bar carries only the fields matching compares for the chosen
   type (7.2), the most used first and the rest under **More**. Fields that aren't
   compared, such as a group's size or name, are filled in on the post screen after
@@ -732,11 +798,11 @@ what doesn't (section 5.6), so the ordering is legible.
 
 ```
 Fits you (3)
-  group card      ✓ Needs Controller · ✓ Diamond · ✓ EU · ✓ 21:00–23:00
+  group card      ✓ Controller · ✓ Diamond · ✓ EU · ✓ 21:00–23:00
   player card     ✓ Diamond 1 · ✓ EU · ✓ 19:00–22:00 · ✓ EN
   community card  ✓ EU · ✓ EN · ✓ PC
 Missing one thing (12)
-  group card      ✓ Needs Sentinel · ✓ EU · ✓ 21:00–23:00 · ≠ Platinum 1–2
+  group card      ✓ Sentinel · ✓ EU · ✓ 21:00–23:00 · ≠ Platinum 1–2
 Missing more
   player card     ✓ EU · ≠ Bronze 2 · ≠ 08:00–12:00 · ≠ PT
 ```
@@ -765,13 +831,23 @@ the field:
 | Viewer is a | Shown       | Fields compared                                                                 |
 | ----------- | ----------- | -------------------------------------------------------------------------------- |
 | Player      | Groups      | The viewer's roles against the group's needed roles; their rank inside its range; their location against its regions; language, platform, age, hours, microphone, Looking for |
-| Player      | Players     | Rank closeness; location, language, platform, age, hours, microphone, Looking for; shared roles count as a match |
-| Player      | Communities | Location against its regions; language, platform, Looking for                                    |
+| Player      | Players     | Rank closeness; location, language, platform, age, hours, microphone, Looking for; the two of you covering two different roles |
+| Player      | Communities | Location against its regions; language, platform, age, hours, microphone, Looking for            |
 | Group       | Players     | The group's needed roles against the player's roles; the group's rank range against their rank; the rest as above |
-| Community   | Players     | Regions against their location; language, platform, Looking for                                    |
+| Community   | Players     | Regions against their location; language, platform, age, hours, microphone, Looking for            |
 
 - **Proposed:** hours overlap in the viewer's timezone, and "near" rank is a few
   steps either way in the game's ordered rank options.
+- **Proposed:** between two players, roles fit when the two of you can cover two
+  different roles, which is all a duo needs, so the only miss is two players who
+  each play one role and it is the same one. Two Mid mains can't duo, a Mid
+  looking for a Jungler is the ordinary case, and two players who both play Mid
+  and Jungle fit by splitting them. Roles are the one field where what you are
+  short of is what you are looking for, so fitting is covering different options
+  rather than holding the same one. Both of you get the same answer, where a
+  rule that read one set against the other would call a pair a fit from one seat
+  and a miss from the other. Between a player and a group nothing changes: a
+  group names the roles it needs and you fit by filling one.
 - **Decided:** a player's location is compared through the region it maps to:
   against a group's or community's regions, or against another player's region.
   Game fields such as server region compare directly.
@@ -804,6 +880,13 @@ the field:
 - **Decided:** every fitting post is its own notification; notifications are never
   merged into one. An email can carry several, grouped by the post of yours they
   fit.
+- **Decided:** the emails go out on a period rather than on the instant. A worker
+  takes the fits and expiries of the period that has passed and sends each owner
+  one email, grouped by the post of theirs they are about. Nothing records what
+  has been sent, since a notification falls in one period: a post renewed after
+  it expired fits again, and that puts its notification in the period the
+  renewal falls in. An expiry the owner has already renewed away is gone before
+  the worker sees it, so nothing is sent.
 - **Proposed:** notifications stop when the post expires, and resume when it is
   renewed.
 - **Decided:** each post in a match email links to that post's page (11.1).
@@ -1012,14 +1095,14 @@ first. A post of theirs that has expired says so and offers **Renew**.
 │ Your posts                                                              │
 │                                                                         │
 │ ┌───────┐  Kestrel  PLAYER                                              │
-│ │ cover │  Croatia · HR, EN · Mic · PvE, Building · Returning player    │
+│ │ cover │  Croatia · HR, EN · Mic · PvE, Building                       │
 │ │       │  ! Expires in 3 days · No conversations yet ·                 │
 │ │       │  Contacts shown 2 times                                       │
 │ └───────┘  [ See what fits ]  Edit  [ Renew ]                           │
 │            + New Valheim post                                           │
 │                                                                         │
-│ ┌───────┐  Night Owls  GROUP  ●●●○○ 3 of 5                              │
-│ │ cover │  Platinum – Diamond · Needs Lurker, Supporter · EU · EN, HR   │
+│ ┌───────┐  Night Owls  GROUP  3 players, wants 2 more                   │
+│ │ cover │  Platinum – Diamond · Lurker, Supporter · EU · EN, HR         │
 │ │       │  Active for 24 more days · 3 conversations ● 1 unread ·       │
 │ │       │  Contacts shown 14 times                                      │
 │ └───────┘  [ See what fits ]  Edit  Renew                               │
@@ -1083,10 +1166,10 @@ first. A post of theirs that has expired says so and offers **Renew**.
 - **Proposed:** unread rows carry a dot, and **Mark all read** in the heading
   row clears them all; it shows only while something is unread. The count on the
   bell is how many are unread, and opening a notification reads it.
-- **Proposed:** a notification lives under the post it is about, so deleting
-  that post takes its notifications with it, as it takes its conversations
-  (section 10). Nothing else removes one: a row whose fitting post has since
-  expired or been deleted still opens that post's page, which says which it is
+- **Proposed:** a notification is about two posts, the player's own and the one
+  that fits it, and deleting either takes it away, as deleting a post takes its
+  conversations (section 10). Nothing else removes one: a row whose fitting post
+  has since expired still stands and opens that post's page, which says so
   (11.1).
 - **Decided:** messages aren't notifications. The inbox's link in the header shows
   how many conversations are unread.
@@ -1219,8 +1302,9 @@ Account menu
   password or Discord, and changes it either way. Moving to Discord takes the
   password's place and leaves the email as it is; moving to a password signs in
   with the address the account already holds, and asks for one where it has
-  none. Discord stays on the posts as a contact either way, and a Discord that
-  already signs in to another account is refused.
+  none. Discord stays on the posts as a contact either way. Either move is
+  refused where what it would sign in with already signs in to another account:
+  the Discord, or the address the account holds, which the player then changes.
 - **Proposed:** the email row says where the address stands (section 6, step 4):
   confirmed, waiting for its link with **Send again**, or missing, which says
   what the site can't tell the player about. Changing it asks the new address to
@@ -1259,18 +1343,28 @@ Account menu
 | Team with no profile (1,200)       | Nothing                                      |
 | Team name, website, Discord server | Fields on the group or community post        |
 | About and ambitions                | Joined into the one text field               |
+| Player location                    | The country it names, else nothing           |
 | Platforms (Steam, Origin, ...)     | Platform, every PC store as PC               |
 | Alert                              | Nothing, or a post for its owner (open)      |
 
+- **Proposed:** a location carries over only where it names a country. Three in
+  four do not: they name a region of today's tree, most often just Europe or
+  North America, and those players arrive without one until the account page asks.
 - **Open:** existing alerts come from anonymous emails and have no place in the new
   model. Whether any carry over is decided with the model; dropping them all is
   acceptable.
 - **Open:** a one-time relaunch email to existing players and alert subscribers.
 - **Open:** Search Console shows few paginated feed pages were ever indexed. Watch
   indexing of posts and feeds after launch.
-- **Proposed:** a minimal first-party event log from launch, so the relaunch can be
-  judged: feed views, descriptions started, posts published, post views, contact
-  reveals, conversations started, renewals and returning visits.
+- **Decided:** the relaunch is judged by feed views, descriptions started, posts
+  published, post views, contact reveals, conversations started, renewals and
+  returning visits, and they are measured with an analytics product rather than
+  a log of the site's own. A product follows one visitor through the funnel and
+  counts the ones who come back, which is what these eight are for, and the site
+  keeps no table it would have to trim. Contact reveals are also counted on the
+  post itself, since the home page shows an owner their own (11.2).
+- **Open:** which product, and what it costs in consent for an audience that is
+  largely European.
 
 ## 13. Data model gaps
 
@@ -1279,16 +1373,18 @@ the current model lacks:
 
 - **Posts.** Player, group and community posts in place of player profiles, teams,
   team profiles and alerts, with at most one post per player, type and game.
-- **Group fields.** Size, open slots, needed roles, a rank range, an age range, a
-  set of regions, and an optional name, website and Discord server.
-- **Community fields.** Name, experience level, Discord invite and website.
+- **Group fields.** How many the group is and how many more it wants, needed
+  roles, a rank range, an age range, a set of regions, and an optional name,
+  website and Discord server.
+- **Community fields.** Name, an age range, Discord invite and website.
 - **One free text field** in place of about and ambitions, and a **Looking for**
   value on all three post types.
 - **Game fields.** Which fields appear on a card, whether a field takes one option
-  or several, and platform, a community's kind and the Looking for options as
-  per-game fields with per-game options.
-- **Regions.** Group and community regions, and a mapping from every location to
-  a region.
+  or several, and platform and the Looking for options as per-game fields with
+  per-game options.
+- **Regions.** Group and community regions, and the mapping from every country to
+  one of the twelve (5), in place of today's three-level tree, whose nodes a
+  player can be in at any depth.
 - **Freshness.** A last renewal or edit time that sorts the feed and decides expiry,
   30 days for player and group posts and 90 for communities.
 - **Renewal links** that renew one post without signing in.
@@ -1308,7 +1404,6 @@ the current model lacks:
 - **A confirmed address.** Whether the account's email is confirmed, and the link
   that confirms it. Today's schema holds neither, and its check that an account
   has a password or a Discord id, never both, is what the sign-in row changes.
-- **Events** for measurement.
 
 ## 14. Design system
 
@@ -1407,7 +1502,7 @@ What the brief's screens already call for; the prototypes settle their shape.
 | ------- | ---------------------------------------------------------------------------- |
 | Card    | The card shell, fact line, match mark, slot pips, freshness label, the already-messaged mark, the home page's own post with its state and counts |
 | Feed    | Type chooser (radio cards, also step 1 of posting), description bar with **More**, segmented control, publish prompt and its muted line for the viewer's own post, tier heading, labelled divider, **Load more**, a post page's way into the feed |
-| Inputs  | Pills for a field's few options, one or several; tokens for a few out of many, such as languages; select, range picker (rank, age), an hours range that crosses midnight, count stepper ("3 of 5"), checkbox, radio group, text area with prompts, an account fact with **Change** |
+| Inputs  | Pills for a field's few options, one or several; tokens for a few out of many, such as languages; select, range picker (rank, age), an hours range that crosses midnight, count stepper ("3 players, want 2 more"), checkbox, radio group, text area with prompts, an account fact with **Change** |
 | Overlay | Modal, side panel, full-screen sheet, sheet from the bottom, dropdown         |
 | Contact | Contact panel, contact row with **Copy**, message box, conversation thread, the unread line, the ⋯ menu with Report and Block |
 | Lists   | Notification rows grouped by post, inbox rows, unread badge and dot, the account page's definition list, toggle switch, a confirmation that shows counts, a toast with **Undo** |

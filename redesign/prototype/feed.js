@@ -120,9 +120,21 @@ const chip = f => {
     </div>`;
 };
 
-const typeChoices = prefix => `<div class="choices" role="radiogroup" aria-label="You are">${TYPE_CHOICES.map(c =>
-    `<label class="choice"><input type="radio" name="${prefix}-type" value="${c.type}"${description.type === c.type ? " checked" : ""}>${icon(c.icon)}${c.text}</label>`
-).join("")}</div>`;
+// A player fills the fields in about themselves; a group or a community fills
+// them in about the players it wants. It is the inversion the cards carry
+// (brief 5), and the bar is where the viewer first meets it.
+const READING = {
+    player: "Fill these in about yourself.",
+    group: "Fill these in about the players you want.",
+    community: "Fill these in about the members you want.",
+};
+
+const typeChoices = prefix => `<div class="type-choice">
+    <div class="choices" role="radiogroup" aria-label="You are">${TYPE_CHOICES.map(c =>
+        `<label class="choice"><input type="radio" name="${prefix}-type" value="${c.type}"${description.type === c.type ? " checked" : ""}>${icon(c.icon)}${c.text}</label>`
+    ).join("")}</div>
+    <p class="description-reading">${READING[description.type]}</p>
+</div>`;
 
 const renderBar = () => {
     const fields = descriptionFields(description.type);

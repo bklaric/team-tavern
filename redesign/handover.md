@@ -2,6 +2,10 @@
 
 Read `redesign/brief.md` first; it is the source of truth, and its
 Decided/Proposed/Open statuses are kept current as things settle.
+`redesign/schema.sql` is the data model being written from it, with
+`redesign/seed-regions.sql` and `redesign/seed-countries.sql` beside it; all
+three are verified against Postgres and none has replaced
+`src/TeamTavern/Database/` yet.
 
 ## Where things stand
 
@@ -9,7 +13,14 @@ Decided/Proposed/Open statuses are kept current as things settle.
   `redesign/prototype/components.html` is the sheet showing every component and state.
 - **Feed** (brief 4, 5, 7): `feed.html?game=valorant` runs on real posts from the
   12 September dump: the description bar, matching, tiers, the expired divider,
-  Load more and the phone sheet.
+  Load more and the phone sheet. The bar is headed "Tell us about you" and says
+  posts that fit come first; under the three choices a line says which way to
+  read the fields, since it changes with the choice. One card question the brief
+  answers twice: a community says what it runs on through the game's own fields,
+  so Valheim's server type leads its card as brief 5.3's example does, and leads
+  a player's and a group's there too, since a game field is the same field on
+  all three post types (brief 5), where brief 5.4's table keeps every game field
+  but rank, roles and Looking for behind Details.
 - **Post creation** (brief 6): `post.html` runs the whole flow: Type, Game, Post,
   Register or sign in, Matches, plus the existing-post check, delete with its
   counts, the sign-in conflict, and Sign up with Discord. The feed's **Publish
@@ -24,8 +35,10 @@ Decided/Proposed/Open statuses are kept current as things settle.
     carries an optional tag. Every field of the post is on the screen, with
     nothing behind a click: what the card keeps behind Details doesn't shape the
     form. Trackers come from the game account ID through the game's templates.
-  - Multi-option fields with few options are pills; languages are tokens with an
-    "Add a language" select; group size is a count stepper.
+  - Multi-option fields with few options are pills, the twelve regions among
+    them; languages are tokens with an "Add a language" select. A group is asked
+    how many it is and how many more it wants in one row of count steppers,
+    "[3] players, want [2] to [2] more", which the card heading reads back.
   - The cover grid has no captions: four tiles across on a desktop, three on a
     phone, the title as each image's alt text. A game the player already has a
     post of this type in says "Your post" on its cover. No search yet (brief 14.3).
@@ -39,6 +52,26 @@ Decided/Proposed/Open statuses are kept current as things settle.
   compared on every pair of types. A post that plays across platforms but names
   one, such as Apex's The Void, marked `≠ PC` for a PlayStation viewer, is today's
   data, not a gap in the model: a post picks every platform it plays on.
+- **Matching** (brief 7.2): a group and a community ask for the players they
+  want in the same fields, so `compare` in `game.js` puts them through the same
+  comparison but for the roles and the rank range only a group names: the ages,
+  the microphone and the online hours are compared whichever of the two a player
+  meets, and whichever way round. A microphone is compared only where the viewer
+  gave one, since a player saying they use one and a group asking for one are
+  both an answer, while silence is not.
+- **Regions and countries** (brief 5, 7.2): the twelve regions and the 229
+  countries are in `fields.js`, written from `redesign/seed-regions.sql` and
+  `redesign/seed-countries.sql`. A player gives a country, a group or community
+  gives regions, and a country is compared through the region it is in. Settled
+  while writing them in:
+  - A card names a region by its own name, cut at the compass point:
+    "N. America", "SE Asia". No code fits twelve, since SA is South America and
+    South Asia at once, and a region has to be legible to the player picking one
+    (brief 5). The brief's card diagrams still abbreviate Europe to EU.
+  - A post that names all twelve reads "Anywhere" rather than spending the fact
+    line on the list.
+  - A group or community picks from twelve pills; the bar's chip counts the
+    rest off, "Europe, Middle East +3".
 - **Contact and messaging** (brief 5.6, 10): every card's contact button opens
   the contact panel in `feed.html` and on the Matches screen, and
   `messages.html` is the inbox. Signed out, the button leads to the sign-up
@@ -197,8 +230,8 @@ Decided/Proposed/Open statuses are kept current as things settle.
 | `prototype.css` | The prototype bar and stand-ins: not part of the system |
 | `prototype.js` | `renderCard(post, marked)`, `renderOwnPost(post)` and the shared helpers (icons, facts, slots) |
 | `site.js` | What every page shares: the clock, games and the cover grid, the type cards, the accounts the bar switches between, the store that stands in for the server (conversations, notifications, blocks, reports, contact reveals, email switches and the facts each account holds), where the feed and a post's page live, what an owner is told about a post, the header with its Games, notification and account menus, the prototype bar and toasts |
-| `fields.js` | What the post screen and the account page both ask for: the countries with their regions, the languages, the game accounts, and the control each kind of field draws, reads back and shows as a value |
-| `game.js` | One game's data and what the pages derive from it: game fields, posts (the dump's and the accounts'), made-up contacts, game extras (community kinds, trackers), `compare(post, type, description)`, `toCard`, and the editors for a rank, age or hours range |
+| `fields.js` | What the post screen and the account page both ask for: the twelve regions, the countries and the region each is in, the languages, the game accounts, and the control each kind of field draws, reads back and shows as a value |
+| `game.js` | One game's data and what the pages derive from it: game fields, posts (the dump's and the accounts'), made-up contacts, trackers, the dump's places read through the twelve regions, `compare(post, type, description)`, `toCard`, and the editors for a rank, age or hours range |
 | `feed.js` | Feed only: the description, tiers, the bar and the phone sheet |
 | `post.js` | Post creation, and the site's one sign-up screen |
 | `messaging.js` | The contact panel, the conversation thread, inbox rows, block and report |
@@ -209,7 +242,7 @@ Decided/Proposed/Open statuses are kept current as things settle.
 | `conversations.js` | Handwritten conversations the store starts with; nobody in them is from the dump |
 | `notifications.js` | Handwritten notifications the store starts with; the posts that fit are the dump's, apart from Dota 2's, which has no sample |
 | `fixtures.js` | Handwritten posts for the sheet; production content stays out of the repo |
-| `export-sample.sh` + `.sql` | Writes `data/<handle>.js` from the dev database (git-ignored). Valorant, Valheim, LoL and Apex are exported. A sample's `locations` is the same `continents` rows `fields.js` carries, which is where a fresh country list comes from |
+| `export-sample.sh` + `.sql` | Writes `data/<handle>.js` from the dev database (git-ignored). Valorant, Valheim, LoL and Apex are exported. A team's places come out as today's six continents; nothing else about a place does, since the twelve regions and their countries are the prototype's own |
 | `screenshot.mjs` | Phone and desktop screenshots; `--parts`, `--sections`, `--locale=en-US` |
 
 ## Using the pages
@@ -347,6 +380,14 @@ or in a dashed toast:
   notes on the page.
 - **Counts that a server would keep.** Contact reveals start from made-up
   numbers, and every panel opened on a post with contacts adds one.
+- **A group's numbers.** Today's teams record neither how many they are nor how
+  many more they want, so a group from the dump has both made up from its id.
+- **The dump's places.** A team names today's regions, and a post reads its six
+  continents as every one of the twelve they cover, which is what they meant: a
+  team looking across Asia names five. A player's location is a country under
+  the name the twelve give it, except where today's field let them answer with a
+  region instead, which a card shows as it stands and matching reads as the
+  region it falls in.
 - **Dota 2.** Kestrel has a post in it, and no sample was exported for it, so
   everything Dota 2 leads to reaches the "No sample" page. Exporting it with
   `export-sample.sh dota2` fills it in.

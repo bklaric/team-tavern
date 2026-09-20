@@ -18,17 +18,20 @@ const markIcon = match => icon(match === "fit" ? "check" : "equal-not", "fact-ma
 const markLabel = match =>
     `<span class="visually-hidden">${match === "fit" ? "Fits:" : "Doesn't fit:"}</span>`;
 
-const pips = (members, total) =>
-    `<span class="pips" aria-hidden="true">${
-        Array.from({ length: total }, (_, i) => `<span class="pip${i < members ? "" : " pip-open"}"></span>`).join("")
-    }</span>`;
-
-// A group's size sits in the heading beside its type: "●●●○○ 3 of 5", or on a
-// server game "Wants 2–3 more".
-const slots = s => !s ? ""
-    : s.wants
-    ? `<span class="card-slots">Wants <span class="tabular">${escapeHtml(s.wants)}</span> more</span>`
-    : `<span class="card-slots">${pips(s.members, s.total)}<span class="tabular">${s.members} of ${s.total}</span></span>`;
+// A group's size sits in the heading beside its type: how many it is and how
+// many more it wants, "3 players, wants 2 more", or a range where either will
+// do (brief 5.2). A group that says only how many more it wants opens with
+// that.
+const slots = s => {
+    if (!s) return "";
+    const wanted = s.wantedFrom && s.wantedTo && s.wantedTo !== s.wantedFrom
+        ? `${s.wantedFrom}–${s.wantedTo}`
+        : s.wantedFrom || s.wantedTo;
+    const size = s.size ? `${s.size} player${s.size === 1 ? "" : "s"}` : "";
+    const wants = wanted ? `${size ? "wants" : "Wants"} ${wanted} more` : "";
+    const text = [size, wants].filter(Boolean).join(", ");
+    return text ? `<span class="card-slots tabular">${escapeHtml(text)}</span>` : "";
+};
 
 // A fact is { text } or { icon, label }, with an optional match of "fit" or
 // "miss" that marks the fact itself.

@@ -114,7 +114,7 @@ const typeCardsHtml = (href, note = () => "") => `<div class="type-cards">${TYPE
 const DESCRIBED = {
     player: ["rank", "roles", "platforms", "location", "languages", "lookingFor", "hours", "mic"],
     group: ["roles", "rankRange", "platforms", "regions", "languages", "ageRange", "lookingFor", "hours", "mic"],
-    community: ["regions", "languages", "platforms", "lookingFor"],
+    community: ["regions", "languages", "platforms", "ageRange", "lookingFor", "hours", "mic"],
 };
 
 const describedBy = (type, d) => {
@@ -173,8 +173,9 @@ const postPageHref = (game, id) =>
 
 const NIGHT_OWLS = {
     name: "Night Owls",
-    members: 3,
-    total: 5,
+    size: 3,
+    wantedFrom: 2,
+    wantedTo: 2,
     roles: ["lurker", "supporter"],
     rankRange: { from: "platinum", to: "diamond" },
     regions: ["Europe"],
@@ -193,7 +194,6 @@ const VALHEIM_DUO = {
     "field:server-characters": ["new-characters"],
     "field:server-type": ["vanilla"],
     mic: true,
-    returning: true,
     text: "Starting over with a friend after a long break. We'd like a small vanilla server with a few people who build and go after the bosses together in the evenings.",
     reach: "either",
     hours: { from: "20:00", to: "23:00" },
@@ -202,11 +202,11 @@ const VALHEIM_DUO = {
 // A post's card as its owner last published it. The home page shows posts from
 // every game, and game.js holds one game at a time, so publishing keeps a copy.
 const NIGHT_OWLS_CARD = {
-    slots: { members: 3, total: 5 },
+    slots: { size: 3, wantedFrom: 2, wantedTo: 2 },
     facts: [
         { text: "Platinum – Diamond" },
-        { text: "Needs Lurker, Supporter" },
-        { text: "EU" },
+        { text: "Lurker, Supporter" },
+        { text: "Europe" },
         { text: "EN, HR" },
         { icon: "mic", label: "Microphone required" },
         { text: "Ages 18+" },
@@ -214,7 +214,7 @@ const NIGHT_OWLS_CARD = {
     ],
 };
 const VALHEIM_DUO_CARD = {
-    facts: [{ text: "Croatia" }, { text: "HR, EN" }, { icon: "mic", label: "Microphone" }, { text: "PvE, Building" }, { text: "Returning player" }],
+    facts: [{ text: "Vanilla" }, { text: "Croatia" }, { text: "HR, EN" }, { icon: "mic", label: "Microphone" }, { text: "PvE, Building" }],
 };
 const KESTREL_DOTA_CARD = {
     facts: [{ text: "Legend 2" }, { text: "Soft support, Hard support" }, { text: "Croatia" }, { text: "HR, EN" }],

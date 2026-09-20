@@ -3,69 +3,106 @@
 // back. A field is { key, label, kind, options, placeholder, hint }. Classic
 // script, loaded after site.js and before game.js and the pages.
 
-// Countries and the region each is in, the site's own list rather than a
-// game's: a player's location is compared through its region (brief 7.2), and
-// the account page asks for one with no game loaded.
+// Regions and countries: the site's own lists, not a game's. A region is the
+// set of places close enough to each other to play together, which is what the
+// latency between them decides (brief 5). A player's location is a country and
+// only a country, and is compared through the region that country is in; a
+// group or community gives regions and never countries, so the two meet in one
+// comparison whichever pair of post types is matched (brief 7.2).
+//
+// redesign/seed-regions.sql and redesign/seed-countries.sql hold the same two
+// lists, and say why each country falls where it does.
+
+const REGIONS = [
+    "Europe", "Middle East", "North Africa", "Sub-Saharan Africa", "North America",
+    "Central America", "South America", "Central Asia", "South Asia", "East Asia",
+    "Southeast Asia", "Oceania",
+];
+
+// What a card's fact line and the description bar call a region. No code fits
+// all twelve: EU and NA are read everywhere, but SA is South America and South
+// Asia at once, so a name cut at the compass point is what stays legible.
+const REGION_SHORT = {
+    "Europe": "Europe", "Middle East": "Middle East", "North Africa": "N. Africa",
+    "Sub-Saharan Africa": "Sub-Saharan Africa", "North America": "N. America",
+    "Central America": "C. America", "South America": "S. America",
+    "Central Asia": "C. Asia", "South Asia": "S. Asia", "East Asia": "E. Asia",
+    "Southeast Asia": "SE Asia", "Oceania": "Oceania",
+};
+
+const regionOptions = REGIONS.map(r => ({ value: r, label: r }));
 
 const COUNTRIES_BY_REGION = {
-    "Africa": [
-        "Algeria", "Angola", "Benin", "Botswana", "Burkina Faso", "Burundi", "Cabo Verde",
-        "Cameroon", "Central African Republic", "Chad", "Comoros", "Côte d'Ivoire",
-        "Democratic Republic of the Congo", "Djibouti", "Egypt", "Equatorial Guinea", "Eritrea",
-        "Eswatini (Swaziland)", "Ethiopia", "Gabon", "Gambia", "Ghana", "Guinea",
-        "Guinea-Bissau", "Kenya", "Lesotho", "Liberia", "Libya", "Madagascar", "Malawi", "Mali",
-        "Mauritania", "Mauritius", "Mayotte", "Morocco", "Mozambique", "Namibia", "Niger",
-        "Nigeria", "Republic of the Congo", "Réunion", "Rwanda",
-        "Saint Helena Ascension and Tristan da Cunha", "São Tomé and Príncipe", "Senegal",
-        "Seychelles", "Sierra Leone", "Somalia", "South Africa, Republic of", "South Sudan",
-        "Sudan", "Tanzania", "Togo", "Tunisia", "Uganda", "Zambia", "Zimbabwe",
-    ],
-    "Asia": [
-        "Afghanistan", "Armenia", "Azerbaijan", "Bahrein", "Bangladesh", "Bhutan", "Brunei",
-        "Cambodia", "China", "Cyprus", "Georgia", "Hong Kong", "India", "Indonesia", "Iran",
-        "Iraq", "Israel", "Japan", "Jordan", "Kazakhstan", "Kuwait", "Kyrgyzstan", "Laos",
-        "Lebanon", "Macau", "Malaysia", "Maldives", "Mongolia", "Myanmar", "Nepal",
-        "North Asia (Russia)", "North Korea", "Oman", "Pakistan", "Palestine", "Philippines",
-        "Qatar", "Saudi Arabia", "Singapore", "South Korea", "Sri Lanka", "Syria", "Taiwan",
-        "Tajikistan", "Thailand", "Timor Leste", "Turkey", "Turkmenistan", "UAE", "Uzbekistan",
-        "Vietnam", "Yemen",
-    ],
     "Europe": [
-        "Albania", "Andorra", "Austria", "Belarus", "Belgium", "Bosnia and Herzegovina",
-        "Bulgaria", "Croatia", "Czech Republic", "Denmark", "Estonia", "Finland", "France",
-        "Germany", "Greece", "Hungary", "Ireland", "Italy", "Kosovo", "Latvia", "Lichtenstein",
-        "Lithuania", "Luxemburg", "Moldova", "Monaco", "Montenegro", "Netherlands",
-        "North Macedonia", "Norway", "Poland", "Portugal", "Romania", "Russia", "Serbia",
-        "Slovakia", "Slovenia", "Spain", "Sweden", "Switzerland", "Ukraine", "United Kingdom",
+        "Albania", "Andorra", "Armenia", "Austria", "Azerbaijan", "Belarus", "Belgium",
+        "Bosnia and Herzegovina", "Bulgaria", "Croatia", "Cyprus", "Czechia", "Denmark", "Estonia",
+        "Faroe Islands", "Finland", "France", "Georgia", "Germany", "Gibraltar", "Greece",
+        "Greenland", "Guernsey", "Hungary", "Iceland", "Ireland", "Isle of Man", "Italy", "Jersey",
+        "Kosovo", "Latvia", "Liechtenstein", "Lithuania", "Luxembourg", "Malta", "Moldova",
+        "Monaco", "Montenegro", "Netherlands", "North Macedonia", "Norway", "Poland", "Portugal",
+        "Romania", "Russia", "San Marino", "Serbia", "Slovakia", "Slovenia", "Spain", "Sweden",
+        "Switzerland", "Turkey", "Ukraine", "United Kingdom",
+    ],
+    "Middle East": [
+        "Bahrain", "Iran", "Iraq", "Israel", "Jordan", "Kuwait", "Lebanon", "Oman", "Palestine",
+        "Qatar", "Saudi Arabia", "Sudan", "Syria", "United Arab Emirates", "Yemen",
+    ],
+    "North Africa": [
+        "Algeria", "Egypt", "Libya", "Morocco", "Tunisia",
+    ],
+    "Sub-Saharan Africa": [
+        "Angola", "Benin", "Botswana", "Burkina Faso", "Burundi", "Cabo Verde", "Cameroon",
+        "Central African Republic", "Chad", "Comoros", "Côte d'Ivoire",
+        "Democratic Republic of the Congo", "Djibouti", "Equatorial Guinea", "Eritrea", "Eswatini",
+        "Ethiopia", "Gabon", "Gambia", "Ghana", "Guinea", "Guinea-Bissau", "Kenya", "Lesotho",
+        "Liberia", "Madagascar", "Malawi", "Mali", "Mauritania", "Mauritius", "Mayotte",
+        "Mozambique", "Namibia", "Niger", "Nigeria", "Republic of the Congo", "Réunion", "Rwanda",
+        "São Tomé and Príncipe", "Senegal", "Seychelles", "Sierra Leone", "Somalia", "South Africa",
+        "South Sudan", "Tanzania", "Togo", "Uganda", "Zambia", "Zimbabwe",
     ],
     "North America": [
-        "Anguilla", "Antigua and Barbuda", "Aruba", "Barbados", "Belize", "Bermuda", "Bonaire",
-        "British Virgin Islands", "Canada", "Cayman Islands", "Costa Rica", "Cuba", "Curaçao",
-        "Dominica", "Dominican Republic", "El Salvador", "Greenland", "Grenada", "Guatemala",
-        "Haiti", "Honduras", "Jamaica", "Mexico", "Montserrat", "Nicaragua", "Panama",
-        "Puerto Rico", "Saint Barthélemy", "Saint Kitts and Nevis", "Saint Lucia",
-        "Saint Martin", "Saint Vincent and the Grenadines", "Sint Maarten", "The Bahamas",
-        "Trinidad and Tobago", "Turks and Caicos Islands", "United States of America",
-        "United States Virgin Islands",
+        "Bermuda", "Canada", "Mexico", "United States",
     ],
-    "Oceania": [
-        "American Samoa", "Australia", "Cook Islands", "Easter Island",
-        "Federated States of Micronesia", "Fiji", "French Polynesia", "Hawaii", "Kiribati",
-        "Marshall Islands", "Nauru", "New Zealand", "Niue", "Norfolk Island", "Palau",
-        "Papua New Guinea", "Pitcairn Islands", "Rotuma", "Samoa", "Solomon Islands", "Tokelau",
-        "Tonga", "Tuvalu", "Vanuatu", "Wallis and Futuna",
+    "Central America": [
+        "Anguilla", "Antigua and Barbuda", "Aruba", "Bahamas", "Barbados", "Belize", "Bonaire",
+        "British Virgin Islands", "Cayman Islands", "Costa Rica", "Cuba", "Curaçao", "Dominica",
+        "Dominican Republic", "El Salvador", "Grenada", "Guadeloupe", "Guatemala", "Haiti",
+        "Honduras", "Jamaica", "Martinique", "Nicaragua", "Panama", "Puerto Rico",
+        "Saint Barthélemy", "Saint Kitts and Nevis", "Saint Lucia", "Saint Martin",
+        "Saint Vincent and the Grenadines", "Sint Maarten", "Trinidad and Tobago",
+        "Turks and Caicos Islands", "United States Virgin Islands",
     ],
     "South America": [
-        "Argentina", "Bolivia", "Brazil", "Chile", "Colombia", "Ecuador", "Falkland Islands",
-        "French Guiana", "Guyana", "Paraguay", "Peru", "Suriname", "Uruguay", "Venezuela",
+        "Argentina", "Bolivia", "Brazil", "Chile", "Colombia", "Ecuador", "French Guiana", "Guyana",
+        "Paraguay", "Peru", "Suriname", "Uruguay", "Venezuela",
+    ],
+    "Central Asia": [
+        "Kazakhstan", "Kyrgyzstan", "Tajikistan", "Turkmenistan", "Uzbekistan",
+    ],
+    "South Asia": [
+        "Afghanistan", "Bangladesh", "Bhutan", "India", "Maldives", "Nepal", "Pakistan",
+        "Sri Lanka",
+    ],
+    "East Asia": [
+        "China", "Hong Kong", "Japan", "Macau", "Mongolia", "North Korea", "South Korea", "Taiwan",
+    ],
+    "Southeast Asia": [
+        "Brunei", "Cambodia", "Indonesia", "Laos", "Malaysia", "Myanmar", "Philippines",
+        "Singapore", "Thailand", "Timor-Leste", "Vietnam",
+    ],
+    "Oceania": [
+        "American Samoa", "Australia", "Cook Islands", "Fiji", "French Polynesia", "Guam",
+        "Kiribati", "Marshall Islands", "Micronesia", "Nauru", "New Caledonia", "New Zealand",
+        "Northern Mariana Islands", "Palau", "Papua New Guinea", "Samoa", "Solomon Islands",
+        "Tonga", "Tuvalu", "Vanuatu", "Wallis and Futuna",
     ],
 };
 
 const COUNTRIES = Object.entries(COUNTRIES_BY_REGION)
-    .flatMap(([continent, names]) => names.map(name => ({ name, continent })))
+    .flatMap(([region, names]) => names.map(name => ({ name, region })))
     .sort((a, b) => a.name.localeCompare(b.name));
 
-const CONTINENT_OF = Object.fromEntries(COUNTRIES.map(c => [c.name, c.continent]));
+const REGION_OF = Object.fromEntries(COUNTRIES.map(c => [c.name, c.region]));
 const locationOptions = COUNTRIES.map(c => ({ value: c.name, label: c.name }));
 
 // The languages players write in, with the code cards show them by.

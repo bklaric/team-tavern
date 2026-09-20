@@ -5,21 +5,18 @@
 const GAME = FEED_DATA;
 const BATCH = 20;
 
-// Which of today's game fields play the parts the brief gives them. Games not
-// listed have no rank, roles or Looking for, and show every field under Details.
+// Which of today's game fields play the parts the brief gives them, and which
+// of the rest lead a card rather than waiting behind Details (brief 5). Games
+// not listed have no rank, roles or Looking for, and show every field under
+// Details. Valheim's server type is what a community there runs on, which is
+// why no post says what kind of thing it is.
 const GAME_ROLES = {
-    apex: { rank: "battle-royale-rank", lookingFor: "interest", groupSize: 3 },
-    valorant: { rank: "rank", roles: "role", lookingFor: "interest", groupSize: 5 },
-    lol: { rank: "rank", roles: "role", lookingFor: "interest", groupSize: 5 },
-    valheim: { lookingFor: "server-focus", server: true },
+    apex: { rank: "battle-royale-rank", lookingFor: "interest" },
+    valorant: { rank: "rank", roles: "role", lookingFor: "interest" },
+    lol: { rank: "rank", roles: "role", lookingFor: "interest" },
+    valheim: { onCard: ["server-type"], lookingFor: "server-focus" },
 };
-const ROLES = GAME_ROLES[GAME.handle] || { groupSize: 5 };
-
-const REGIONS = ["Europe", "North America", "South America", "Asia", "Africa", "Oceania"];
-const REGION_SHORT = {
-    "Europe": "EU", "North America": "NA", "South America": "SA",
-    "Asia": "Asia", "Africa": "Africa", "Oceania": "OCE",
-};
+const ROLES = { onCard: [], ...GAME_ROLES[GAME.handle] };
 
 const TYPE_CHOICES = [
     { type: "player", icon: "user", text: "I'm a player looking for a group" },
@@ -137,22 +134,71 @@ const contactsOf = raw => {
     ].filter(Boolean);
 };
 
+// Today's places, read through the twelve regions (fields.js). Today's regions
+// are the six continents, and a player's location is a country or one of those
+// regions, so a sample carries both. A country is renamed where the twelve call
+// it something else and read through the region it is in; one of today's
+// regions is read through the region it falls in, and a team's continent
+// through every region it covers, which is what it meant.
+
+const LEGACY_COUNTRIES = {
+    "Bahrein": "Bahrain", "Czech Republic": "Czechia", "Eswatini (Swaziland)": "Eswatini",
+    "Federated States of Micronesia": "Micronesia", "Lichtenstein": "Liechtenstein",
+    "Luxemburg": "Luxembourg", "North Asia (Russia)": "Russia",
+    "South Africa, Republic of": "South Africa", "The Bahamas": "Bahamas",
+    "Timor Leste": "Timor-Leste", "UAE": "United Arab Emirates",
+    "United States of America": "United States",
+};
+
+const LEGACY_REGION_OF = {
+    "Europe": "Europe", "West Europe": "Europe", "East Europe": "Europe",
+    "North Europe": "Europe", "West Asia": "Middle East", "North Africa": "North Africa",
+    "Africa": "Sub-Saharan Africa", "East Africa": "Sub-Saharan Africa",
+    "North America": "North America", "South America": "South America",
+    "South South America": "South America", "Asia": "East Asia", "South Asia": "South Asia",
+    "Southeast Asia": "Southeast Asia", "Oceania": "Oceania",
+};
+
+const REGIONS_OF_CONTINENT = {
+    "Europe": ["Europe"],
+    "North America": ["North America", "Central America"],
+    "South America": ["South America"],
+    "Africa": ["North Africa", "Sub-Saharan Africa"],
+    "Asia": ["Middle East", "Central Asia", "South Asia", "East Asia", "Southeast Asia"],
+    "Oceania": ["Oceania"],
+};
+
+const locationOf = raw => LEGACY_COUNTRIES[raw.location] || raw.location;
+const regionOfLocation = location =>
+    location && (REGION_OF[location] || LEGACY_REGION_OF[location]);
+const regionsOf = raw => {
+    const regions = new Set((raw.regions || []).flatMap(r => REGIONS_OF_CONTINENT[r] || [r]));
+    return REGIONS.filter(r => regions.has(r));
+};
+
 // Posts. Today's rows become the brief's post types.
 
-// Today's teams record no size, so a group's slots are made up from its id.
+// Today's teams record neither how many they are nor how many more they want,
+// so a group's numbers are made up from its id.
 const slotsOf = raw => {
     const n = Number(raw.id.slice(1));
-    if (ROLES.server) return { wants: `${1 + (n % 2)}–${3 + (n % 2)}` };
-    return { members: 1 + (n % 3), total: ROLES.groupSize };
+    const wanted = 1 + (n % 3);
+    return { size: 1 + (n % 4), wantedFrom: wanted, wantedTo: wanted + (n % 2) };
 };
+
+// The game's fields a card leads with, by post type: the ones the brief gives a
+// part to, and the rest a game marks as decisive (brief 5). The others wait
+// behind Details.
+const cardFieldKeys = type => (type === "community"
+    ? [ROLES.lookingFor]
+    : [ROLES.rank, ROLES.roles, ROLES.lookingFor]).concat(ROLES.onCard).filter(Boolean);
 
 const normalize = raw => {
     const updated = new Date(raw.updated);
     const expired = updated.getTime() + lifetime(raw.type) <= NOW.getTime();
     const ranks = valuesOf(raw, ROLES.rank).map(rankIndex).filter(i => i >= 0);
-    const shownKeys = raw.type === "community"
-        ? [ROLES.lookingFor]
-        : [ROLES.rank, ROLES.roles, ROLES.lookingFor];
+    const shownKeys = cardFieldKeys(raw.type);
+    const location = locationOf(raw);
     const otherFields = GAME.fields
         .filter(f => !shownKeys.includes(f.key) && valuesOf(raw, f.key).length)
         .map(f => ({ label: f.label, value: valuesOf(raw, f.key).map(v => optionLabel(f.key, v)).join(", ") }));
@@ -173,9 +219,9 @@ const normalize = raw => {
         age: raw.age || undefined,
         ageFrom: raw.age_from || undefined,
         ageTo: raw.age_to || undefined,
-        location: raw.location,
-        region: raw.region,
-        regions: raw.regions || [],
+        location,
+        region: regionOfLocation(location),
+        regions: regionsOf(raw),
         languages: raw.languages || [],
         hours: raw.online_from && raw.online_to ? inViewerTime(raw.online_from, raw.online_to, raw.timezone) : null,
         mic: !!raw.microphone,
@@ -183,11 +229,12 @@ const normalize = raw => {
         rankRange: raw.type !== "player" && ranks.length ? [Math.min(...ranks), Math.max(...ranks)] : undefined,
         roles: valuesOf(raw, ROLES.roles),
         lookingFor: valuesOf(raw, ROLES.lookingFor),
+        onCard: ROLES.onCard
+            .map(key => valuesOf(raw, key).map(v => optionLabel(key, v)).join(", "))
+            .filter(Boolean),
         platforms: knownPlatforms(platformsOf(raw.platforms || [])),
         otherFields,
         text,
-        returning: raw.new_or_returning,
-        organized: raw.organized,
         reach: reachOf(raw),
         contacts: contactsOf(raw),
         contact: contactButtonOf(reachOf(raw), contactsOf(raw)),
@@ -198,32 +245,22 @@ const normalize = raw => {
 // Posts from drafts: what the post screen writes, and what the prototype's
 // accounts have published.
 
-// What the brief makes game fields that today's data lacks, made up for the
-// prototype: a community's kinds, and the trackers, which are the seed's, each
-// linking a profile built from the game account the game is played with
-// (fields.js).
+// The trackers, which are the seed's: each links a profile built from the game
+// account the game is played with (fields.js).
 const GAME_EXTRAS = {
     apex: {
         trackers: [
             { title: "tracker.gg", url: id => `https://tracker.gg/apex/profile/origin/${encodeURIComponent(id)}` },
         ],
-        kinds: ["Discord server", "Clan", "Esports organization"],
     },
     valorant: {
         trackers: [
             { title: "tracker.gg", url: id => `https://tracker.gg/valorant/profile/riot/${encodeURIComponent(id)}` },
             { title: "blitz.gg", url: id => `https://blitz.gg/valorant/profile/${id.replace("#", "-")}` },
         ],
-        kinds: ["Discord server", "Clan", "Esports organization"],
-    },
-    lol: {
-        kinds: ["Discord server", "Clan", "Esports organization"],
-    },
-    valheim: {
-        kinds: ["Dedicated server", "Discord server", "Clan"],
     },
 };
-const EXTRAS = { account: gameAccountOf(GAME.handle), kinds: ["Discord server", "Clan"], ...GAME_EXTRAS[GAME.handle] };
+const EXTRAS = { account: gameAccountOf(GAME.handle), ...GAME_EXTRAS[GAME.handle] };
 
 const rankRangeOf = range => {
     if (!range || (!range.from && !range.to)) return undefined;
@@ -232,8 +269,8 @@ const rankRangeOf = range => {
     return [Math.min(from, to), Math.max(from, to)];
 };
 
-// The game's fields a post doesn't name by the part they play. A community
-// isn't asked for rank or roles, so for one they are among them.
+// The game's fields the post screen doesn't already ask for by name. A
+// community isn't asked for rank or roles, so for one they are among them.
 const otherGameFieldsOf = type => {
     const named = type === "community" ? [ROLES.lookingFor] : [ROLES.rank, ROLES.roles, ROLES.lookingFor];
     return GAME.fields.filter(f => !named.includes(f.key));
@@ -254,10 +291,11 @@ const draftPost = (type, d, owner, updated, { id, own = false, inTheirTime = fal
     const named = (d.name || "").trim();
     const name = type === "player" ? owner || "You"
         : named || (owner ? undefined : type === "group" ? "Your group" : "Your community");
-    const otherFields = otherGameFieldsOf(type).filter(f => has(d[`field:${f.key}`])).map(f => ({
-        label: f.label,
-        value: [].concat(d[`field:${f.key}`]).map(v => optionLabel(f.key, v)).join(", "),
-    }));
+    const shownKeys = cardFieldKeys(type);
+    const gameFieldText = key => [].concat(d[`field:${key}`] || []).map(v => optionLabel(key, v)).join(", ");
+    const otherFields = otherGameFieldsOf(type)
+        .filter(f => has(d[`field:${f.key}`]) && !shownKeys.includes(f.key))
+        .map(f => ({ label: f.label, value: gameFieldText(f.key) }));
     const hours = d.hours && d.hours.from && d.hours.to
         ? (inTheirTime ? inViewerTime(d.hours.from, d.hours.to, d.timezone) : { from: toMinutes(d.hours.from), to: toMinutes(d.hours.to) })
         : null;
@@ -279,7 +317,7 @@ const draftPost = (type, d, owner, updated, { id, own = false, inTheirTime = fal
         ageFrom: Number((d.ageRange || {}).from) || undefined,
         ageTo: Number((d.ageRange || {}).to) || undefined,
         location: d.location,
-        region: CONTINENT_OF[d.location],
+        region: REGION_OF[d.location],
         regions: d.regions || [],
         languages: d.languages || [],
         hours,
@@ -288,19 +326,16 @@ const draftPost = (type, d, owner, updated, { id, own = false, inTheirTime = fal
         rankRange: type === "group" ? rankRangeOf(d.rankRange) : undefined,
         roles: type === "community" ? [] : d.roles || [],
         lookingFor: d.lookingFor || [],
+        onCard: ROLES.onCard.map(gameFieldText).filter(Boolean),
         otherFields,
         text: (d.text || "").trim(),
-        returning: type === "player" && d.returning,
-        organized: type === "group" && d.organized,
-        kind: type === "community" ? d.kind : undefined,
-        experience: type === "community" ? d.experience : undefined,
         platforms: knownPlatforms(d.platforms),
         reach,
         contacts,
         contact: contactButtonOf(reach, contacts),
-        slots: type !== "group" ? undefined
-            : ROLES.server ? { wants: d.wantsFrom === d.wantsTo ? `${d.wantsFrom}` : `${d.wantsFrom}–${d.wantsTo}` }
-            : { members: d.members, total: d.total },
+        slots: type === "group"
+            ? { size: Number(d.size) || undefined, wantedFrom: Number(d.wantedFrom) || undefined, wantedTo: Number(d.wantedTo) || undefined }
+            : undefined,
         trackers: type === "player" && d.gameAccount && EXTRAS.trackers
             ? EXTRAS.trackers.map(t => ({ title: t.title, url: t.url(d.gameAccount) }))
             : [],
@@ -361,7 +396,6 @@ const notifyOwnersFitBy = (post, type, owner) => {
             }));
 };
 
-const regionOptions = REGIONS.map(r => ({ value: r, label: r }));
 const hourOptions = Array.from({ length: 24 }, (_, h) =>
     ({ value: `${String(h).padStart(2, "0")}:00`, label: clock(h * 60) }));
 
@@ -396,7 +430,15 @@ const descriptionFields = type => {
             hours,
             { key: "mic", label: "Microphone", kind: "toggle", toggleLabel: "Microphone required", more: true },
         ],
-        community: [regions, languages, platforms, lookingFor],
+        community: [
+            regions,
+            languages,
+            platforms,
+            { key: "ageRange", label: "Ages", kind: "ageRange" },
+            lookingFor,
+            hours,
+            { key: "mic", label: "Microphone", kind: "toggle", toggleLabel: "Microphone required", more: true },
+        ],
     };
     return fields[type].filter(Boolean);
 };
@@ -410,7 +452,9 @@ const summary = (f, value) => {
         case "select": return value;
         case "multi":
             if (f.key === "languages") return value.map(languageCode).join(", ");
-            if (f.key === "regions") return value.map(r => REGION_SHORT[r]).join(", ");
+            if (f.key === "regions") {
+                return value.length === REGIONS.length ? "Anywhere" : shortList(value.map(r => REGION_SHORT[r]));
+            }
             return shortList(value.map(v => f.options.find(o => o.value === v).label));
         case "number": return `Age ${value}`;
         case "hours": return value.from && value.to ? `${clock(toMinutes(value.from))}–${clock(toMinutes(value.to))}` : null;
@@ -432,6 +476,7 @@ const summary = (f, value) => {
 
 const fit = condition => (condition ? "fit" : "miss");
 const overlaps = (a, b) => a.some(x => b.includes(x));
+const covers = (a, b) => new Set([...a, ...b]).size > 1;
 const within = (x, from, to) => x >= (from ?? -Infinity) && x <= (to ?? Infinity);
 
 const compare = (post, type, d) => {
@@ -442,6 +487,9 @@ const compare = (post, type, d) => {
     const hoursGiven = has(d.hours) && d.hours.from && d.hours.to;
     const viewerHours = () => ({ from: toMinutes(d.hours.from), to: toMinutes(d.hours.to) });
     const hours = () => check("hours", hoursGiven, post.hours, () => hoursOverlap(viewerHours(), post.hours));
+    // A microphone is compared only where the viewer gave one: a player says
+    // they use one, a group or a community that it wants one.
+    const mic = () => { if (d.mic) m.mic = fit(post.mic); };
     const shared = () => {
         check("languages", has(d.languages), post.languages.length, () => overlaps(d.languages, post.languages));
         check("lookingFor", has(d.lookingFor), post.lookingFor.length, () => overlaps(d.lookingFor, post.lookingFor));
@@ -450,23 +498,29 @@ const compare = (post, type, d) => {
 
     if (type === "player") {
         const rank = has(d.rank) ? rankIndex(d.rank) : undefined;
-        const continent = has(d.location) ? CONTINENT_OF[d.location] : undefined;
+        const region = has(d.location) ? REGION_OF[d.location] : undefined;
         if (post.type === "player") {
             check("rank", rank !== undefined, post.rank !== undefined, () => Math.abs(rank - post.rank) <= 1);
-            check("roles", has(d.roles), post.roles.length, () => overlaps(d.roles, post.roles));
-            check("location", continent, post.region, () => continent === post.region);
+            // What you are short of is what you are looking for, so two players
+            // fit when between them they cover two different roles, which is
+            // all a duo needs and is the same answer from either seat
+            // (brief 7.2).
+            check("roles", has(d.roles), post.roles.length, () => covers(d.roles, post.roles));
+            check("location", region, post.region, () => region === post.region);
             check("age", has(d.age), post.age, () => Math.abs(Number(d.age) - post.age) <= 3);
-            hours();
-            if (d.mic) m.mic = fit(post.mic);
-        } else if (post.type === "group") {
-            check("needs", has(d.roles), post.roles.length, () => overlaps(d.roles, post.roles));
-            check("rank", rank !== undefined, post.rankRange, () => within(rank, ...post.rankRange));
-            check("location", continent, post.regions.length, () => post.regions.includes(continent));
-            check("ages", has(d.age), post.ageFrom || post.ageTo, () => within(Number(d.age), post.ageFrom, post.ageTo));
-            hours();
         } else {
-            check("location", continent, post.regions.length, () => post.regions.includes(continent));
+            // A group and a community ask for the players they want in the same
+            // fields (brief 5.3), so a player compares with them alike but for
+            // the roles and the rank range only a group names.
+            if (post.type === "group") {
+                check("roles", has(d.roles), post.roles.length, () => overlaps(d.roles, post.roles));
+                check("rank", rank !== undefined, post.rankRange, () => within(rank, ...post.rankRange));
+            }
+            check("location", region, post.regions.length, () => post.regions.includes(region));
+            check("ages", has(d.age), post.ageFrom || post.ageTo, () => within(Number(d.age), post.ageFrom, post.ageTo));
         }
+        hours();
+        mic();
         shared();
     } else if (post.type === "player") {
         if (type === "group") {
@@ -474,12 +528,12 @@ const compare = (post, type, d) => {
             check("rank", has(d.rankRange), post.rank !== undefined, () => within(post.rank,
                 d.rankRange.from ? rankIndex(d.rankRange.from) : undefined,
                 d.rankRange.to ? rankIndex(d.rankRange.to) : undefined));
-            check("age", has(d.ageRange), post.age, () =>
-                within(post.age, Number(d.ageRange.from) || undefined, Number(d.ageRange.to) || undefined));
-            hours();
-            if (d.mic) m.mic = fit(post.mic);
         }
+        check("age", has(d.ageRange), post.age, () =>
+            within(post.age, Number(d.ageRange.from) || undefined, Number(d.ageRange.to) || undefined));
         check("location", has(d.regions), post.region, () => d.regions.includes(post.region));
+        hours();
+        mic();
         shared();
     }
 
@@ -498,8 +552,9 @@ const agesText = (from, to) =>
     from && to ? `Ages ${from}–${to}` : from ? `Ages ${from}+` : `Ages up to ${to}`;
 
 const missingText = (key, post) => ({
-    rank: "Rank", roles: "Roles", needs: "Roles needed", languages: "Languages",
-    hours: "Online hours", age: "Age", ages: "Ages", lookingFor: "Looking for", platforms: "Platform",
+    rank: "Rank", languages: "Languages", hours: "Online hours", age: "Age", ages: "Ages",
+    lookingFor: "Looking for", platforms: "Platform",
+    roles: post.type === "group" ? "Roles needed" : "Roles",
     location: post.type === "player" ? "Location" : "Regions",
 })[key] + " not given";
 
@@ -514,44 +569,42 @@ const toCard = (post, m) => {
         if (given) facts.push({ ...f, match: key ? match(key) : undefined });
         else if (key && m[key] === "missing") facts.push({ text: missingText(key, post), match: "miss" });
     };
-    const regions = post.regions.map(r => REGION_SHORT[r] || r).join(", ");
+    const regions = post.regions.length === REGIONS.length
+        ? "Anywhere"
+        : post.regions.map(r => REGION_SHORT[r] || r).join(", ");
     const rankRange = post.rankRange && (post.rankRange[0] === post.rankRange[1]
         ? rankLabel(post.rankRange[0])
         : `${rankLabel(post.rankRange[0])} – ${rankLabel(post.rankRange[1])}`);
 
+    // A group's or a community's facts say what it is looking for, and a
+    // player's what they are; the post's type says which, so nothing in the
+    // line marks it (brief 5).
     if (post.type === "player") {
         slot("rank", post.rank !== undefined, { text: rankLabel(post.rank) });
         slot("roles", post.roles.length, { text: labelsOf(ROLES.roles, post.roles).join(", ") });
-        slot("location", post.location, { text: post.location });
     } else if (post.type === "group") {
         slot("rank", post.rankRange, { text: rankRange });
-        slot("needs", post.roles.length, { text: `Needs ${labelsOf(ROLES.roles, post.roles).join(", ")}` });
-        slot("location", post.regions.length, { text: regions });
-    } else {
-        slot(null, post.kind, { text: post.kind });
-        slot("location", post.regions.length, { text: regions });
+        slot("roles", post.roles.length, { text: labelsOf(ROLES.roles, post.roles).join(", ") });
     }
+    post.onCard.forEach(text => slot(null, text, { text }));
+    if (post.type === "player") slot("location", post.location, { text: post.location });
+    else slot("location", post.regions.length, { text: regions });
     slot("languages", post.languages.length, { text: post.languages.map(languageCode).join(", ") });
     slot("platforms", post.platforms.length, { text: post.platforms.map(p => PLATFORM_LABELS[p]).join(", ") });
-    if (post.mic && post.type !== "community") {
-        facts.push({ icon: "mic", label: post.type === "group" ? "Microphone required" : "Microphone", match: match("mic") });
+    if (post.mic) {
+        facts.push({ icon: "mic", label: post.type === "player" ? "Microphone" : "Microphone required", match: match("mic") });
     } else if (m.mic === "miss") {
         facts.push({ icon: "mic-off", label: "No microphone", match: "miss" });
     }
-    if (post.type === "group") slot("ages", post.ageFrom || post.ageTo, { text: agesText(post.ageFrom, post.ageTo) });
+    if (post.type !== "player") slot("ages", post.ageFrom || post.ageTo, { text: agesText(post.ageFrom, post.ageTo) });
     slot("lookingFor", post.lookingFor.length, { text: labelsOf(ROLES.lookingFor, post.lookingFor).join(", ") });
-    slot(null, post.experience, { text: post.experience });
-    slot(null, post.returning, { text: "Returning player" });
-    slot(null, post.organized && post.type === "group", { text: "Organized" });
     // Online hours and a player's age wait behind Details, and join the end of the
     // line only while compared.
-    if (post.type !== "community") {
-        slot("hours", post.hours && m.hours, { text: post.hours && formatHours(post.hours), tabular: true });
-    }
+    slot("hours", post.hours && m.hours, { text: post.hours && formatHours(post.hours), tabular: true });
     if (post.type === "player") slot("age", post.age && m.age, { text: `Age ${post.age}` });
 
     const details = post.otherFields.slice();
-    if (post.type !== "community" && post.hours) {
+    if (post.hours) {
         const allDay = post.hours.from === post.hours.to;
         details.unshift({ label: "Usually online", value: allDay ? "All day" : formatHours(post.hours) });
     }
