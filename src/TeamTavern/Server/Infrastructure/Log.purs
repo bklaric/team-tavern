@@ -3,12 +3,31 @@ module TeamTavern.Server.Infrastructure.Log where
 import Prelude
 
 import Data.Array as Array
+import Data.Formatter.DateTime (FormatterCommand(..), format)
+import Data.List (List(..), (:))
 import Data.String as String
 import Effect (Effect)
+import Effect.Console (log)
+import Effect.Now (nowDateTime)
 import JavaScript.Error (message, name)
 import JavaScript.Node.Errors.Class (class NodeError, code)
-import Log (logStamped)
 import TeamTavern.Server.Infrastructure.Error (Terror(..))
+
+datetimeFormat :: List FormatterCommand
+datetimeFormat =
+    YearFull : Placeholder "-" :
+    MonthTwoDigits : Placeholder "-" :
+    DayOfMonthTwoDigits : Placeholder " " :
+    Hours24 : Placeholder ":" :
+    MinutesTwoDigits : Placeholder ":" :
+    SecondsTwoDigits : Nil
+
+-- | Logs the line prefixed with the local date and time.
+logStamped :: String -> Effect Unit
+logStamped string =
+    nowDateTime
+    <#> format datetimeFormat
+    >>= \dateTime -> log $ dateTime <> " - " <> string
 
 logError :: ∀ errors. String -> Terror errors -> Effect Unit
 logError heading (Terror _ lines) =

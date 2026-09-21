@@ -8,9 +8,10 @@ import Control.Monad.Maybe.Trans (lift)
 import Data.Either (either, note)
 import Data.Int (fromString)
 import Data.Maybe (fromMaybe)
+import Data.String as String
 import Effect (Effect)
 import Effect.Console (log)
-import Jarilo.Serve (serve)
+import Jarilo.Serve (ServeOptions, serve)
 import JavaScript.Node.Process (lookupEnv)
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Pool as Pool
@@ -26,6 +27,7 @@ import TeamTavern.Server.Game.ViewGame (viewGame)
 import TeamTavern.Server.Infrastructure.Deployment (Deployment)
 import TeamTavern.Server.Infrastructure.Deployment as Deployment
 import TeamTavern.Server.Infrastructure.FetchDiscordUser (DiscordApiUrl(..))
+import TeamTavern.Server.Infrastructure.Log (logStamped, print)
 import TeamTavern.Server.Infrastructure.Sendgrid (setApiKey)
 import TeamTavern.Server.Password.ForgotPassword (forgotPassword)
 import TeamTavern.Server.Password.ResetPassword (resetPassword)
@@ -55,8 +57,15 @@ import TeamTavern.Server.Team.UpdateContacts (updateContacts) as Team
 import TeamTavern.Server.Team.View (view) as Team
 import Type.Proxy (Proxy(..))
 
-listenOptions :: { port :: Int, host :: String }
-listenOptions = { port: 8080, host: "0.0.0.0" }
+serveOptions :: ServeOptions { port :: Int, host :: String }
+serveOptions =
+    { listen: { port: 8080, host: "0.0.0.0" }
+    , onRejected: \{ method, url, statusCode, reason } ->
+        logStamped $ String.joinWith " | "
+            ["Rejected request", show statusCode <> " " <> method <> " " <> url, reason]
+    , onStreamError: \error ->
+        logStamped $ "Request stream error | " <> print error
+    }
 
 setSendGridApiKey :: ExceptT String Effect Unit
 setSendGridApiKey = do
@@ -102,7 +111,7 @@ loadDiscordApiUrl =
     <#> DiscordApiUrl
 
 runServer :: Deployment -> DiscordApiUrl -> Pool -> Effect Unit
-runServer deployment discordApiUrl pool = serve (Proxy :: _ AllRoutes) listenOptions
+runServer deployment discordApiUrl pool = serve (Proxy :: _ AllRoutes) serveOptions
     { startSession: \{ cookies, body } ->
         Session.start deployment discordApiUrl pool cookies body
     , endSession: const

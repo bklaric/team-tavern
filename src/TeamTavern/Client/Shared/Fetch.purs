@@ -3,17 +3,17 @@ module TeamTavern.Client.Shared.Fetch where
 import Prelude
 
 import Async (attempt)
+import Async.Promisey (promiseToAsync)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.Variant (match, onMatch)
 import Jarilo as Jarilo
-import Jarilo.Fetch (Credentials(..))
+import Literals (StringLit, stringLit)
 
-fetch proxy path query body = let
-    options = Jarilo.defaultOptions
-        { pathPrefix = Just "/api", credentials = Just Include }
-    in
-    Jarilo.fetch proxy path query body options
+fetch proxy path query body =
+    Jarilo.fetch proxy path query body "/api"
+        { credentials: (stringLit :: StringLit "include") }
+    # promiseToAsync
 
 fetchPath proxy path = fetch proxy path {} unit
 

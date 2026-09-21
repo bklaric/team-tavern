@@ -183,6 +183,20 @@ test("a Discord account and a password account sharing an address are two player
     await expectSignedInAs(page, discordNickname);
 });
 
+// The server parses the body whatever the header says, so only the request itself shows
+// whether the page named what it sent.
+test("a password sign-in sends its body labelled as JSON", async ({ page }) => {
+    const nickname = await registerWithPassword(page, `${unique("labelled")}@example.com`);
+    await signOut(page);
+
+    const signInRequest = page.waitForRequest(request =>
+        request.method() === "POST" && new URL(request.url()).pathname === "/api/sessions");
+    await submitPasswordSignIn(page, nickname);
+
+    expect((await signInRequest).headers()["content-type"]).toBe("application/json");
+    await expectSignedInAs(page, nickname);
+});
+
 test("a password sign-in does not find a Discord player", async ({ page }) => {
     const email = `${unique("discordonly")}@example.com`;
     await fakeDiscord(page, discordUser(email, true));
