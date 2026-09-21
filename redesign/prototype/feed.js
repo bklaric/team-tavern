@@ -105,7 +105,7 @@ const chip = f => {
     const value = current()[f.key];
     const text = summary(f, value);
     if (f.kind === "toggle") {
-        return `<div class="field-chip-wrap"><button class="field-chip${value ? " field-chip-filled" : ""}" type="button" data-toggle="${f.key}" aria-pressed="${!!value}">${icon("mic")}${f.label}</button></div>`;
+        return `<div class="field-chip-wrap"><button class="field-chip${value ? " field-chip-filled" : ""}" type="button" data-toggle="${f.key}" aria-pressed="${!!value}">${f.icon ? icon(f.icon) : ""}${f.label}</button></div>`;
     }
     const open = openField === f.key;
     return `<div class="field-chip-wrap" data-field="${f.key}">
@@ -385,6 +385,18 @@ const onMessagingChange = () => {
 };
 
 const pageHeaderOptions = () => ({ newPostHref: `post.html?game=${encodeURIComponent(GAME.handle)}` });
+
+// How near two players' ranks have to be (game.js), to compare the two rules.
+const pageBarExtras = () => `<label>Near rank <select data-proto="near">
+    <option value="tier"${nearByTier() ? " selected" : ""}>Within a tier</option>
+    <option value="step"${nearByTier() ? "" : " selected"}>Within one step</option>
+</select></label>`;
+
+document.addEventListener("change", event => {
+    if (event.target.dataset.proto !== "near") return;
+    localStorage.setItem(NEAR_KEY, event.target.value);
+    renderFeed();
+});
 
 // Opening a post's own page leaves the feed, and Back brings it back with its
 // loaded batches intact (brief 11.1). The feed keeps what it had loaded for the

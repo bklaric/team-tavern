@@ -44,21 +44,49 @@ three are verified against Postgres and none has replaced
     post of this type in says "Your post" on its cover. No search yet (brief 14.3).
   - "Your post is live" carries the ember flame, not a green check: green means
     only a field that fits.
-- **Platform** (brief 5, 7.2): `feed.html?game=apex` and `post.html?game=apex`.
-  The options come from the seed's `game.platforms`, with every PC store (Steam,
-  Origin, Riot, Battle.net, Ubisoft Connect) folded into PC; a game left with one
-  platform has no field, so Valorant, Valheim and LoL show none. It takes several
-  options on every post type, sits on every card after the languages, and is
-  compared on every pair of types. A post that plays across platforms but names
-  one, such as Apex's The Void, marked `≠ PC` for a PlayStation viewer, is today's
-  data, not a gap in the model: a post picks every platform it plays on.
-- **Matching** (brief 7.2): a group and a community ask for the players they
-  want in the same fields, so `compare` in `game.js` puts them through the same
-  comparison but for the roles and the rank range only a group names: the ages,
-  the microphone and the online hours are compared whichever of the two a player
+- **Game fields** (brief 5, 7.2): every game in the catalogue has a sample, and
+  the pages read a game's fields from it with their `ilk`, `ordered`, `slotted`,
+  `applies_to` and `on_card` (`redesign/schema.sql`); nothing in the prototype
+  names a field. A post's answers use the keys the post screen writes:
+  `field:<key>` for the options chosen or a yes, `range:<key>` for an ordered
+  field on a group or community. Settled while building it:
+  - The fields `on_card` marks lead the card in the game's order, then the
+    location or regions, languages, microphone and ages. The rest wait behind
+    Details, and join the end of the fact line while compared, as the hours do.
+    That puts platform and Looking for before the location, where the brief's
+    diagrams have them after the languages.
+  - Where a card leads with more than one ladder, which is only Overwatch, each
+    rank names itself: "Tank rank Emerald 3".
+  - A yes-or-no field is a checkbox on the post screen and a toggle in the bar.
+    A player's reads as the field, "In-game leader", asked as "I can be an
+    in-game leader"; a group's as a need, "Needs an in-game leader". A viewer
+    who ticks it sees "Not an in-game leader" or "Doesn't need an in-game
+    leader" marked on a post that didn't.
+  - A group asks a range of every ordered field, "Tank rank range" to "6v6 rank
+    range", and its slotted field as "Roles you need".
+  - A slotted field offers **Any role** (Any position, Any class), which ticks
+    every option; a card and the bar's chip read every option back as "Any
+    role", as twelve regions read "Anywhere".
+  - Platform is a field like any other, so a game whose seed has none shows
+    none.
+- **Matching** (brief 7.2): `compare` in `game.js` takes each field that both
+  post types are asked and compares it by what it is. An ordered field is near
+  between two players and inside the range against a group; a slotted one is
+  covered between two players and filled against a group; a boolean fits on
+  agreement and only where the viewer ticked it; any other field fits on a
+  shared option. The account's facts keep their own rules: a group and a
+  community ask for the players they want in the same ones, so the ages, the
+  microphone and the online hours are compared whichever of the two a player
   meets, and whichever way round. A microphone is compared only where the viewer
   gave one, since a player saying they use one and a group asking for one are
   both an answer, while silence is not.
+- **Rank closeness** (brief 7.2, Proposed, not yet settled): two players' ranks
+  are near within a tier of each other. A tier is the options whose labels
+  differ only in a trailing division, and the game's commonest tier is how many
+  steps that is: 3 in Valorant, 4 in League and Apex, 5 in Overwatch, Dota,
+  HotS and Siege. A ladder without divisions, such as TF2's divisions, Faceit
+  levels or CS2's Premier rating, counts one step. **Near rank** in the
+  prototype bar switches the feed to one step everywhere, to compare.
 - **Regions and countries** (brief 5, 7.2): the twelve regions and the 229
   countries are in `fields.js`, written from `redesign/seed-regions.sql` and
   `redesign/seed-countries.sql`. A player gives a country, a group or community
@@ -231,7 +259,7 @@ three are verified against Postgres and none has replaced
 | `prototype.js` | `renderCard(post, marked)`, `renderOwnPost(post)` and the shared helpers (icons, facts, slots) |
 | `site.js` | What every page shares: the clock, games and the cover grid, the type cards, the accounts the bar switches between, the store that stands in for the server (conversations, notifications, blocks, reports, contact reveals, email switches and the facts each account holds), where the feed and a post's page live, what an owner is told about a post, the header with its Games, notification and account menus, the prototype bar and toasts |
 | `fields.js` | What the post screen and the account page both ask for: the twelve regions, the countries and the region each is in, the languages, the game accounts, and the control each kind of field draws, reads back and shows as a value |
-| `game.js` | One game's data and what the pages derive from it: game fields, posts (the dump's and the accounts'), made-up contacts, trackers, the dump's places read through the twelve regions, `compare(post, type, description)`, `toCard`, and the editors for a rank, age or hours range |
+| `game.js` | One game's data and what the pages derive from it: game fields, posts (the dump's and the accounts'), made-up contacts, trackers, rank closeness, `compare(post, type, description)`, `toCard`, and the editors for a rank, age or hours range |
 | `feed.js` | Feed only: the description, tiers, the bar and the phone sheet |
 | `post.js` | Post creation, and the site's one sign-up screen |
 | `messaging.js` | The contact panel, the conversation thread, inbox rows, block and report |
@@ -240,9 +268,9 @@ three are verified against Postgres and none has replaced
 | `post-page.js` | A post's own page: the post, what its owner is told, and the way into the game's feed |
 | `account.js` | The account page: the facts the posts show, and what only the player sees |
 | `conversations.js` | Handwritten conversations the store starts with; nobody in them is from the dump |
-| `notifications.js` | Handwritten notifications the store starts with; the posts that fit are the dump's, apart from Dota 2's, which has no sample |
+| `notifications.js` | Handwritten notifications the store starts with; the posts that fit are the dump's, apart from Dota 2's, which are made up |
 | `fixtures.js` | Handwritten posts for the sheet; production content stays out of the repo |
-| `export-sample.sh` + `.sql` | Writes `data/<handle>.js` from the dev database (git-ignored). Valorant, Valheim, LoL and Apex are exported. A team's places come out as today's six continents; nothing else about a place does, since the twelve regions and their countries are the prototype's own |
+| `export-sample.sh` + `.sql` | Writes `data/<handle>.js` (git-ignored) from `redesign_import`, the dump in the new schema that `redesign/import/import.sh` builds: the game's fields with their metadata, trackers, and posts with their options, ranges and flags. Every game is exported |
 | `screenshot.mjs` | Phone and desktop screenshots; `--parts`, `--sections`, `--locale=en-US` |
 
 ## Using the pages
@@ -264,8 +292,7 @@ three are verified against Postgres and none has replaced
   "Stand-in" toasts say what the site does offstage, such as whether a message
   sends an email (brief 10).
 - Kestrel has a post in each state: Night Owls, active; a Valheim player post in
-  its last week; and an expired Dota 2 player post. Dota 2 has no sample, so
-  that post's See what fits and Edit reach the "No sample" page. Each post
+  its last week; and an expired Dota 2 player post. Each post
   keeps a copy of its card from when it was published, since the home page
   spans games and `game.js` holds one.
 - Contact reveals start from made-up counts, and every contact panel opened
@@ -274,9 +301,7 @@ three are verified against Postgres and none has replaced
 - A post's page opens from any card's name, in the feed, on the Matches screen
   and on the home page. To reach one directly, `post-page.html?game=valorant&id=<id>`
   takes any id the game's sample holds, `kestrel-valorant-group` for Night Owls,
-  and anything else, such as `id=gone`, gets the deleted post's page. Kestrel's
-  Dota 2 post has no sample, so its name reaches the "No sample" page, as its
-  See what fits and Edit do.
+  and anything else, such as `id=gone`, gets the deleted post's page.
 - Load more on the feed, open a post from a card's name and press Back: the
   batches and the scroll position are where they were. Switching who is viewing,
   or **Start over**, forgets that along with the rest.
@@ -291,13 +316,12 @@ three are verified against Postgres and none has replaced
   post that has since expired; the Valheim post's own "Expires in 3 days"; and
   under the expired Dota 2 post its "Expired 3 weeks ago" with a group and a
   community that fit it. A row opens what it is about, so the Valorant ones
-  reach real pages and the Dota 2 ones the "No sample" page, as everything
-  Dota 2 does here. Vex has no posts, so their list is the empty state, and
+  reach real pages and the made-up Dota 2 ones the deleted post's page. Vex has no posts, so their list is the empty state, and
   signed out there is no bell at all.
 - To make a notification happen, publish a post that fits one of Kestrel's:
-  as Vex, describe yourself on the Valorant feed as a Diamond Supporter in
-  Europe who speaks English, is on from 21:00 and plays competitive, publish
-  that, then switch to Kestrel, where the bell says "Vex fits · just now" under
+  as Vex, describe yourself on the Valorant feed as a Diamond 1 Sentinel on PC
+  who can be the in-game leader, plays Ranked, is in Germany, speaks English,
+  uses a microphone and is on from 21:00, publish that with a birthday, then switch to Kestrel, where the bell says "Vex fits · just now" under
   Night Owls and the row opens Vex's post. Editing or renewing an active post
   notifies nobody (brief 8).
 - **Account** in the account menu opens the account page. Edit changes the facts
@@ -352,8 +376,6 @@ Every screen the brief describes is prototyped. What is left of it:
 - A feed doesn't prefill the description from the viewer's post in the game on a
   first visit (brief 7.1); it takes one only through See what fits, Matches or a
   renewal link.
-- The game catalogue is stale (Splitgate is dead, CS:GO becomes CS2) and is to
-  be handled separately.
 - The ads of section 15 have no place in any layout yet.
 
 ## Stand-ins
@@ -381,15 +403,9 @@ or in a dashed toast:
   numbers, and every panel opened on a post with contacts adds one.
 - **A group's numbers.** Today's teams record neither how many they are nor how
   many more they want, so a group from the dump has both made up from its id.
-- **The dump's places.** A team names today's regions, and a post reads its six
-  continents as every one of the twelve they cover, which is what they meant: a
-  team looking across Asia names five. A player's location is a country under
-  the name the twelve give it, except where today's field let them answer with a
-  region instead, which a card shows as it stands and matching reads as the
-  region it falls in.
-- **Dota 2.** Kestrel has a post in it, and no sample was exported for it, so
-  everything Dota 2 leads to reaches the "No sample" page. Exporting it with
-  `export-sample.sh dota2` fills it in.
+- **Dota 2's notifications.** The group and community that fit Kestrel's Dota 2
+  post are made up, as the conversations are, so their rows open the deleted
+  post's page.
 
 Two things the prototype does deliberately, which read as gaps until they are
 read twice: a conversation keeps the post's facts and contacts as it saw them,

@@ -13,30 +13,30 @@
 const NOTIFICATION_FIXTURES = [
     // Night Owls, active until 6 October: Valorant players who fit it.
     {
-        id: "n-night-owls-p14124",
+        id: "n-night-owls-14487",
         for: "Kestrel",
         post: { id: "kestrel-valorant-group", game: "valorant", type: "group", name: "Night Owls" },
         kind: "fits",
-        about: { id: "p14124", game: "valorant", type: "player", name: "NightHell" },
+        about: { id: "14487", game: "valorant", type: "player", name: "NightHell" },
         at: "2026-08-13T12:55:23Z",
         read: false,
     },
     {
         // Since expired: the row still opens the post's page, which says so.
-        id: "n-night-owls-p25861",
+        id: "n-night-owls-25532",
         for: "Kestrel",
         post: { id: "kestrel-valorant-group", game: "valorant", type: "group", name: "Night Owls" },
         kind: "fits",
-        about: { id: "p25861", game: "valorant", type: "player", name: "purpiii" },
+        about: { id: "25532", game: "valorant", type: "player", name: "purpiii" },
         at: "2026-07-25T22:24:33Z",
         read: false,
     },
     {
-        id: "n-night-owls-p26728",
+        id: "n-night-owls-26377",
         for: "Kestrel",
         post: { id: "kestrel-valorant-group", game: "valorant", type: "group", name: "Night Owls" },
         kind: "fits",
-        about: { id: "p26728", game: "valorant", type: "player", name: "Tatami" },
+        about: { id: "26377", game: "valorant", type: "player", name: "Tatami" },
         at: "2026-07-24T14:33:09Z",
         read: true,
     },

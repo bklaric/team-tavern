@@ -109,16 +109,18 @@ const typeCardsHtml = (href, note = () => "") => `<div class="type-cards">${TYPE
 </a>`).join("")}</div>`;
 
 // What a post says about its owner, as the feed's description takes it: the
-// fields matching compares for the type, and a player's age from their
-// birthday (brief 7.1).
+// fields matching compares for the type, which are its answers to the game's
+// fields and these account facts, and a player's age from their birthday
+// (brief 7.1).
 const DESCRIBED = {
-    player: ["rank", "roles", "platforms", "location", "languages", "lookingFor", "hours", "mic"],
-    group: ["roles", "rankRange", "platforms", "regions", "languages", "ageRange", "lookingFor", "hours", "mic"],
-    community: ["regions", "languages", "platforms", "ageRange", "lookingFor", "hours", "mic"],
+    player: ["location", "languages", "hours", "mic"],
+    group: ["regions", "languages", "ageRange", "hours", "mic"],
+    community: ["regions", "languages", "ageRange", "hours", "mic"],
 };
 
 const describedBy = (type, d) => {
-    const described = Object.fromEntries(DESCRIBED[type].filter(k => !isEmpty(d[k])).map(k => [k, d[k]]));
+    const described = Object.fromEntries(Object.entries(d)
+        .filter(([k, v]) => (DESCRIBED[type].includes(k) || k.startsWith("field:") || k.startsWith("range:")) && !isEmpty(v)));
     if (type === "player" && ageAt(d.birthday)) described.age = String(ageAt(d.birthday));
     return described;
 };
@@ -137,13 +139,12 @@ const describeFeed = (game, type, described) => {
 
 const GAMES = [
     { handle: "apex", title: "Apex Legends" },
-    { handle: "csgo", title: "Counter Strike: Global Offensive" },
+    { handle: "cs2", title: "Counter-Strike 2" },
     { handle: "dota2", title: "Dota 2" },
     { handle: "hots", title: "Heroes of the Storm" },
     { handle: "lol", title: "League of Legends" },
     { handle: "overwatch", title: "Overwatch" },
-    { handle: "r6s", title: "Rainbow Six: Siege" },
-    { handle: "splitgate", title: "Splitgate" },
+    { handle: "r6s", title: "Rainbow Six Siege" },
     { handle: "tf2", title: "Team Fortress 2" },
     { handle: "valheim", title: "Valheim" },
     { handle: "valorant", title: "Valorant" },
@@ -176,13 +177,15 @@ const NIGHT_OWLS = {
     size: 3,
     wantedFrom: 2,
     wantedTo: 2,
-    roles: ["lurker", "supporter"],
-    rankRange: { from: "platinum", to: "diamond" },
+    "range:rank": { from: "platinum-1", to: "diamond-3" },
+    "field:role": ["controller", "sentinel"],
+    "field:in-game-leader": true,
+    "field:platform": ["pc"],
+    "field:looking-for": ["ranked", "premier"],
     regions: ["Europe"],
     languages: ["English", "Croatian"],
     mic: true,
     ageRange: { from: "18" },
-    lookingFor: ["competitive"],
     text: "Three friends who play most nights, we want to stop solo queuing for the last two spots. No tilt, comms on, we review our losses on Sundays.",
     reach: "message",
     hours: { from: "21:00", to: "01:00" },
@@ -190,9 +193,10 @@ const NIGHT_OWLS = {
 
 // Kestrel's Valheim post, which is about to expire.
 const VALHEIM_DUO = {
-    lookingFor: ["pve", "building"],
-    "field:server-characters": ["new-characters"],
     "field:server-type": ["vanilla"],
+    "field:platform": ["pc"],
+    "field:looking-for": ["pve", "building"],
+    "field:server-characters": ["new-characters"],
     mic: true,
     text: "Starting over with a friend after a long break. We'd like a small vanilla server with a few people who build and go after the bosses together in the evenings.",
     reach: "either",
@@ -204,20 +208,31 @@ const VALHEIM_DUO = {
 const NIGHT_OWLS_CARD = {
     slots: { size: 3, wantedFrom: 2, wantedTo: 2 },
     facts: [
-        { text: "Platinum – Diamond" },
-        { text: "Lurker, Supporter" },
+        { text: "Platinum 1 – Diamond 3" },
+        { text: "Controller, Sentinel" },
+        { text: "PC" },
+        { text: "Ranked, Premier" },
         { text: "Europe" },
         { text: "EN, HR" },
         { icon: "mic", label: "Microphone required" },
         { text: "Ages 18+" },
-        { text: "Competitive" },
     ],
 };
 const VALHEIM_DUO_CARD = {
-    facts: [{ text: "Vanilla" }, { text: "Croatia" }, { text: "HR, EN" }, { icon: "mic", label: "Microphone" }, { text: "PvE, Building" }],
+    facts: [{ text: "Vanilla" }, { text: "PC" }, { text: "PvE, Building" }, { text: "Croatia" }, { text: "HR, EN" }, { icon: "mic", label: "Microphone" }],
+};
+// Kestrel's Dota 2 post, which has expired.
+const KESTREL_DOTA = {
+    "field:rank": "legend-2",
+    "field:position": ["soft-support", "hard-support"],
+    "field:server": ["europe-west", "europe-east"],
+    "field:looking-for": ["ranked"],
+    text: "Support player, 4 or 5, looking for a party to climb out of Legend with. I ward, I stack, I don't take farm.",
+    reach: "message",
+    hours: { from: "19:00", to: "23:00" },
 };
 const KESTREL_DOTA_CARD = {
-    facts: [{ text: "Legend 2" }, { text: "Soft support, Hard support" }, { text: "Croatia" }, { text: "HR, EN" }],
+    facts: [{ text: "Legend 2" }, { text: "Soft support (4), Hard support (5)" }, { text: "Ranked" }, { text: "Croatia" }, { text: "HR, EN" }],
 };
 
 const PRESETS = {
@@ -234,7 +249,7 @@ const PRESETS = {
         posts: [
             { game: "valorant", type: "group", updated: "2026-09-06T19:12:00Z", draft: NIGHT_OWLS, card: NIGHT_OWLS_CARD },
             { game: "valheim", type: "player", updated: "2026-08-16T10:00:00Z", draft: VALHEIM_DUO, card: VALHEIM_DUO_CARD },
-            { game: "dota2", type: "player", updated: "2026-07-20T17:40:00Z", card: KESTREL_DOTA_CARD },
+            { game: "dota2", type: "player", updated: "2026-07-20T17:40:00Z", draft: KESTREL_DOTA, card: KESTREL_DOTA_CARD },
         ],
     },
     vex: {

@@ -127,11 +127,11 @@ const languageList = Object.keys(LANGUAGE_CODES).sort().map(l => ({ value: l, la
 
 const GAME_ACCOUNTS = {
     riot: { key: "riot", label: "Riot ID", placeholder: "Name#TAG", note: "On your Valorant and League of Legends posts." },
-    steam: { key: "steam", label: "Steam profile", placeholder: "steamcommunity.com/id/…", note: "On your posts for every other game." },
+    battle_tag: { key: "battle_tag", label: "BattleTag", placeholder: "Name#1234", note: "On your Overwatch and Heroes of the Storm posts." },
     ea: { key: "ea", label: "EA ID", placeholder: "Your EA ID", note: "On your Apex Legends posts." },
+    ubisoft: { key: "ubisoft", label: "Ubisoft username", placeholder: "Your Ubisoft username", note: "On your Rainbow Six Siege posts." },
+    steam: { key: "steam", label: "Steam profile", placeholder: "steamcommunity.com/id/…", note: "On your posts for every other game." },
 };
-const GAME_ACCOUNT_OF = { apex: "ea", valorant: "riot", lol: "riot" };
-const gameAccountOf = handle => GAME_ACCOUNTS[GAME_ACCOUNT_OF[handle] || "steam"];
 
 const timezoneOptions = () => (Intl.supportedValuesOf ? Intl.supportedValuesOf("timeZone") : [VIEWER_TZ])
     .map(zone => ({ value: zone, label: zone.replaceAll("_", " ") }));
@@ -140,6 +140,20 @@ const formatDate = value =>
     new Date(value).toLocaleDateString(DATE_LOCALE, { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
 
 // Controls.
+
+// Posts say Flex and Fill often, so a slotted field offers every option at
+// once: "Any role" ticks them all, and the card reads it back the same way.
+const allButton = f => f.all
+    ? `<button class="button button-text button-small" type="button" data-all>${escapeHtml(f.all)}</button>`
+    : "";
+
+document.addEventListener("click", event => {
+    const button = event.target.closest("[data-all]");
+    if (!button) return;
+    const boxes = [...button.closest("[data-editor], [data-field]").querySelectorAll("input[type=checkbox]")];
+    boxes.forEach(box => { box.checked = true; });
+    boxes[0].dispatchEvent(new Event("input", { bubbles: true }));
+});
 
 const controlId = key => `c-${key.replace(":", "-")}`;
 
@@ -172,7 +186,7 @@ const fieldControlHtml = (f, value) => {
             const chosen = multi ? value || [] : [value];
             return `<div class="pills" role="${multi ? "group" : "radiogroup"}" aria-labelledby="l-${id}">${f.options.map(o =>
                 `<label class="pill"><input type="${multi ? "checkbox" : "radio"}" name="${id}" value="${escapeHtml(o.value)}"${chosen.includes(o.value) ? " checked" : ""}>${icon("check")}${escapeHtml(o.label)}</label>`
-            ).join("")}</div>`;
+            ).join("")}${allButton(f)}</div>`;
         }
         case "radioList":
             return `<div class="choice-list" role="radiogroup" aria-labelledby="l-${id}">${f.options.map(o =>

@@ -1,129 +1,102 @@
 -- One game's posts as JSON, for the prototype feed. Run by export-sample.sh with
--- the variables handle and now. Player profiles become player posts, team
--- profiles of size party become group posts and those of size community become
--- community posts. Contact handles and emails stay out: only whether one exists.
+-- the variables handle and now, against the dump imported into the new schema
+-- (redesign/import). Contact handles and emails stay out: only whether one
+-- exists.
 --
 -- Every post updated in the year before now is taken, and at least the 60 most
--- recently updated, so a game with no recent activity still has a feed.
+-- recently updated players and the 60 most recently updated groups and
+-- communities, so a game with no recent activity still has a feed.
 
--- Today's regions nest, and a team names any level of them. The top level is
--- the six continents, which the prototype reads through the twelve regions the
--- brief settles on (game.js).
-with recursive continents (name, continent) as (
-    select name, name from region where superregion_name is null
-    union all
-    select region.name, continents.continent
-    from region join continents on region.superregion_name = continents.name
-),
-
-this_game as (
+with this_game as (
     select * from game where handle = :'handle'
 ),
 
-player_posts as (
+posts as (
     select
-        'p' || profile.id as id,
-        'player' as type,
-        player.nickname as name,
-        player.nickname as owner,
-        profile.updated,
-        date_part('year', age(:'now'::timestamptz, player.birthday))::int as age,
-        player.location,
-        coalesce(player.languages, '{}') as languages,
-        player.timezone,
-        to_char(coalesce(player.weekday_from, player.weekend_from), 'HH24:MI') as online_from,
-        to_char(coalesce(player.weekday_to, player.weekend_to), 'HH24:MI') as online_to,
-        player.microphone,
-        player.discord_tag is not null as has_discord,
-        array_to_string(profile.about, E'\n') as about,
-        array_to_string(profile.ambitions, E'\n') as ambitions,
-        case when profile.platform is null then '{}' else array[profile.platform] end as platforms,
-        (
-            select json_object_agg(field.key, (
-                select json_agg(field_option.key order by field_option.ordinal)
-                from player_profile_field_value_option value_option
-                join field_option on field_option.id = value_option.field_option_id
-                where value_option.player_profile_field_value_id = field_value.id
-            ))
-            from player_profile_field_value field_value
-            join field on field.id = field_value.field_id
-            where field_value.player_profile_id = profile.id
-        ) as fields,
-        row_number() over (order by profile.updated desc) as recency
-    from player_profile profile
-    join player on player.id = profile.player_id
-    where profile.game_id = (select id from this_game)
-),
-
-team_posts as (
-    select
-        't' || profile.id as id,
-        case profile.size when 'community' then 'community' else 'group' end as type,
-        team.name,
+        post.id::text as id,
+        post.ilk as type,
+        case when post.ilk = 'player' then owner.nickname else post.name end as name,
         owner.nickname as owner,
-        team.id as team_id,
-        profile.updated,
-        team.age_from,
-        team.age_to,
+        post.updated,
+        case when post.ilk = 'player'
+            then date_part('year', age(:'now'::timestamptz, owner.birthday))::int end as age,
+        case when post.ilk = 'player' then owner.country end as country,
+        case when post.ilk = 'player' then owner.languages else post.languages end as languages,
+        post.regions,
+        post.age_from,
+        post.age_to,
+        owner.timezone,
+        to_char(post.online_from, 'HH24:MI') as online_from,
+        to_char(post.online_to, 'HH24:MI') as online_to,
+        post.microphone,
+        post.contact_preference as reach,
+        owner.discord_tag is not null as has_discord,
+        post.discord_server is not null as has_discord_server,
+        post.website is not null as has_website,
+        array_to_string(post.summary, E'\n') as text,
         coalesce((
-            select array_agg(distinct continents.continent)
-            from unnest(team.locations) location
-            join continents on continents.name = location
-        ), '{}') as regions,
-        coalesce(team.languages, '{}') as languages,
-        team.timezone,
-        to_char(coalesce(team.weekday_from, team.weekend_from), 'HH24:MI') as online_from,
-        to_char(coalesce(team.weekday_to, team.weekend_to), 'HH24:MI') as online_to,
-        team.microphone,
-        team.discord_tag is not null as has_discord,
-        team.discord_server is not null as has_discord_server,
-        team.website is not null as has_website,
-        array_to_string(profile.about, E'\n') as about,
-        array_to_string(profile.ambitions, E'\n') as ambitions,
-        coalesce(profile.platforms, '{}') as platforms,
-        (
-            select json_object_agg(field.key, (
-                select json_agg(field_option.key order by field_option.ordinal)
-                from team_profile_field_value_option value_option
-                join field_option on field_option.id = value_option.field_option_id
-                where value_option.team_profile_field_value_id = field_value.id
-            ))
-            from team_profile_field_value field_value
-            join field on field.id = field_value.field_id
-            where field_value.team_profile_id = profile.id
-        ) as fields,
-        row_number() over (order by profile.updated desc) as recency
-    from team_profile profile
-    join team on team.id = profile.team_id
-    join player owner on owner.id = team.owner_id
-    where profile.game_id = (select id from this_game)
+            select json_object_agg(answer.key, answer.options)
+            from (
+                select field.key, json_agg(option.key order by option.ordinal) as options
+                from post_field_option answer
+                join field_option option on option.id = answer.field_option_id
+                join field on field.id = option.field_id
+                where answer.post_id = post.id
+                group by field.key
+            ) answer
+        ), '{}') as fields,
+        coalesce((
+            select json_object_agg(field.key, json_build_array(from_option.key, to_option.key))
+            from post_field_range range
+            join field on field.id = range.field_id
+            left join field_option from_option on from_option.id = range.from_option_id
+            left join field_option to_option on to_option.id = range.to_option_id
+            where range.post_id = post.id
+        ), '{}') as ranges,
+        coalesce((
+            select json_agg(field.key)
+            from post_field_flag flag
+            join field on field.id = flag.field_id
+            where flag.post_id = post.id
+        ), '[]') as flags,
+        row_number() over (partition by post.ilk = 'player' order by post.updated desc) as recency
+    from post
+    join player owner on owner.id = post.player_id
+    where post.game_id = (select id from this_game)
 )
 
 select json_build_object(
     'handle', (select handle from this_game),
     'title', (select title from this_game),
-    'platforms', (select platforms from this_game),
     'now', :'now',
+    'contacts', (
+        select json_agg(kind order by kind)
+        from game_contact where game_id = (select id from this_game)
+    ),
+    'trackers', (
+        select coalesce(json_agg(json_build_object(
+            'contact', contact_kind, 'title', title, 'template', template) order by id), '[]')
+        from tracker where game_id = (select id from this_game)
+    ),
     'fields', (
         select json_agg(json_build_object(
             'key', field.key,
             'label', field.label,
             'ilk', field.ilk,
+            'ordered', field.ordered,
+            'slotted', field.slotted,
+            'appliesTo', field.applies_to,
+            'onCard', field.on_card,
             'options', (
-                select json_agg(json_build_object('key', field_option.key, 'label', field_option.label) order by field_option.ordinal)
-                from field_option where field_option.field_id = field.id
+                select coalesce(json_agg(json_build_object('key', option.key, 'label', option.label) order by option.ordinal), '[]')
+                from field_option option where option.field_id = field.id
             )
         ) order by field.ordinal)
         from field where field.game_id = (select id from this_game)
     ),
-    'players', (
+    'posts', (
         select coalesce(json_agg(to_jsonb(post) - 'recency' order by updated desc), '[]')
-        from player_posts post
-        where updated > :'now'::timestamptz - interval '1 year' or recency <= 60
-    ),
-    'teams', (
-        select coalesce(json_agg(to_jsonb(post) - 'recency' order by updated desc), '[]')
-        from team_posts post
+        from posts post
         where updated > :'now'::timestamptz - interval '1 year' or recency <= 60
     )
 );

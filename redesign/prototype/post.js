@@ -96,7 +96,7 @@ const loadDraft = () => {
         // A description's age isn't a birthday, so it stays behind. Updating a
         // post takes the description as it is, fields cleared from it included.
         const { age, ...described } = (readJson(`tt-description-${HANDLE}`, {}) || {})[POST_TYPE] || {};
-        const cleared = d.editing ? Object.fromEntries(DESCRIBED[POST_TYPE].map(k => [k, undefined])) : {};
+        const cleared = d.editing ? Object.fromEntries(descriptionFields(POST_TYPE).map(f => [f.key, undefined])) : {};
         d = { ...d, ...cleared, ...described };
     }
     if (from) {
@@ -119,53 +119,41 @@ const previewMode = () => localStorage.getItem("tt-proto-preview") || "sheet";
 // and contact (brief 6, step 3).
 
 const cardFields = () => {
-    const lookingFor = ROLES.lookingFor && { key: "lookingFor", label: "Looking for", kind: "pills", options: gameOptions(ROLES.lookingFor) };
     const languages = { key: "languages", label: "Languages", kind: "tokens", options: languageOptions };
     const regions = { key: "regions", label: "Regions", kind: "pills", options: regionOptions, hint: "Where the players you're looking for are" };
-    const platforms = platformOptions.length && { key: "platforms", label: "Platform", kind: "pills", options: platformOptions };
     const nameHint = signedIn()
         ? `Without one, the card says “${account.nickname}'s group”.`
         : "Without one, the card is named after you.";
     const fields = {
         player: [
-            ROLES.rank && { key: "rank", label: "Rank", kind: "choose", options: gameOptions(ROLES.rank), placeholder: "Choose your rank" },
-            ROLES.roles && { key: "roles", label: "Roles", kind: "pills", options: gameOptions(ROLES.roles) },
-            platforms,
-            ...otherGameFields(),
+            ...gameFields(),
             { key: "location", label: "Location", kind: "select", options: locationOptions, placeholder: "Choose a country", account: true },
             { ...languages, account: true },
             { key: "birthday", label: "Birthday", kind: "date", account: true, hint: "Your card shows your age, never your birthday." },
             { key: "mic", label: "Microphone", kind: "check", text: "I use a microphone" },
-            lookingFor,
             ...timeFields(),
         ],
         group: [
             { key: "name", label: "Group name", kind: "text", hint: nameHint },
             { key: "size", label: "How many are you, and how many more do you want?", kind: "size" },
-            ROLES.roles && { key: "roles", label: "Roles you need", kind: "pills", options: gameOptions(ROLES.roles) },
-            ROLES.rank && { key: "rankRange", label: "Rank range", kind: "rankRange", options: gameOptions(ROLES.rank) },
-            platforms,
-            ...otherGameFields(),
+            ...gameFields(),
             regions,
             languages,
             { key: "mic", label: "Microphone", kind: "check", text: "Microphone required" },
             { key: "ageRange", label: "Ages", kind: "ageRange" },
-            lookingFor,
             ...timeFields(),
         ],
         community: [
             { key: "name", label: "Community name", kind: "text", required: true },
-            lookingFor,
+            ...gameFields(),
             regions,
             languages,
-            platforms,
             { key: "ageRange", label: "Ages", kind: "ageRange" },
             { key: "mic", label: "Microphone", kind: "check", text: "Microphone required" },
             ...timeFields(),
-            ...otherGameFields(),
         ],
     };
-    return fields[POST_TYPE].filter(Boolean);
+    return fields[POST_TYPE];
 };
 
 const wordsField = () => ({
@@ -214,15 +202,27 @@ const contactFields = () => POST_TYPE === "community"
         ] : []),
     ];
 
-// The game's fields the screen doesn't already ask for by name.
-const otherGameFields = () => otherGameFieldsOf(POST_TYPE).map(f => ({
-    key: `field:${f.key}`,
-    gameField: f.key,
-    label: f.label,
-    kind: f.ilk === "single" && POST_TYPE === "player" ? "choose" : "pills",
-    options: gameOptions(f.key),
-    placeholder: `Choose your ${f.label.toLowerCase()}`,
-}));
+// The game's fields the post type is asked, in the game's order. A group asks
+// for a range of every ordered field and for the slots it needs; a yes-or-no
+// field is a checkbox, which a group reads as a need (game.js).
+const gameFields = () => fieldsFor(POST_TYPE).map(f => {
+    const key = answerKey(f, POST_TYPE);
+    if (f.ilk === "boolean") {
+        return { key, label: f.label, kind: "check", text: POST_TYPE === "player" ? `I can be ${article(f.label)} ${f.label.toLowerCase()}` : flagText(f, POST_TYPE) };
+    }
+    if (f.ordered) {
+        return POST_TYPE === "player"
+            ? { key, label: f.label, kind: "choose", options: optionsOf(f), placeholder: `Choose your ${f.label.toLowerCase()}` }
+            : { key, label: `${f.label} range`, kind: "rankRange", options: optionsOf(f) };
+    }
+    return {
+        key,
+        label: POST_TYPE === "group" && f.slotted ? `${plural(f.label)} you need` : f.label,
+        kind: f.ilk === "single" ? "radioPills" : "pills",
+        options: optionsOf(f),
+        all: f.slotted && anyText(f),
+    };
+});
 
 const timeFields = () => [
     { key: "hours", label: "Usually online", kind: "hours" },

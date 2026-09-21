@@ -59,7 +59,7 @@ const CONVERSATION_FIXTURES = [
             post: {
                 type: "player",
                 name: "Ashen",
-                facts: [{ text: "Diamond" }, { text: "Supporter, Lurker" }, { text: "Germany" }, { text: "EN, DE" }, { icon: "mic", label: "Microphone" }],
+                facts: [{ text: "Diamond 2" }, { text: "Sentinel" }, { text: "PC" }, { text: "Germany" }, { text: "EN, DE" }, { icon: "mic", label: "Microphone" }],
             },
         },
         messages: [
@@ -128,7 +128,7 @@ const CONVERSATION_FIXTURES = [
             name: "ShadowFox",
             owner: "ShadowFox",
             updated: "2026-09-10T09:00:00Z",
-            facts: [{ text: "Diamond" }, { text: "Entry fragger, Sniper" }, { text: "Croatia" }, { text: "EN, DE" }, { icon: "mic", label: "Microphone" }, { text: "Competitive" }],
+            facts: [{ text: "Diamond 2" }, { text: "Duelist, Initiator" }, { text: "PC" }, { text: "Ranked" }, { text: "Croatia" }, { text: "EN, DE" }, { icon: "mic", label: "Microphone" }],
             reach: "offsite",
             contacts: [
                 { label: "Discord", value: "shadowfox" },
