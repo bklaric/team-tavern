@@ -4,16 +4,19 @@
 -- spans them and rank closeness counts in steps of one (brief 7.2). Immortal is
 -- the one medal without stars: past it the ladder is a regional leaderboard.
 --
--- Positions are Dota's own 1 to 5, labelled with the names that go with the
--- numbers. They are slotted: two players fit by covering two different ones,
--- which is what a Dota duo is short of.
+-- Positions are Dota's own 1 to 5, labelled with both the name and the number:
+-- players write "carry" and "offlane" by name but "pos 4" and "pos 5" by
+-- number. They are slotted: two players fit by covering two different ones,
+-- which is what a Dota duo is short of. The Dota community doesn't speak of an
+-- in-game leader, so there is no such field.
 --
 -- Server is which of Valve's regions a post queues on, not where its players
 -- live: that is the post's own regions field. Dota asks for it in the
 -- matchmaking settings and a stack has to agree on one, so it stays.
 --
 -- Battle Cup still runs its weekend bracket in the client, tiers 3 to 8, so the
--- tier stays as a second ordered field behind the medal.
+-- tier stays as a second ordered field behind the medal, and Battle Cup is the
+-- team format a stack is recruited for by name.
 --
 -- Dota 2 runs on PC alone, so there is no platform field.
 
@@ -22,7 +25,7 @@ values
     ( 'Dota 2'
     , 'Dota 2'
     , 'dota2'
-    , array['Find Dota 2 players, groups and communities: a duo, a full five, or a community to play with.']
+    , array['Find Dota 2 players, groups and communities: a ranked duo, a five for Battle Cup, or a community to play with.']
     );
 
 insert into game_contact (game_id, kind)
@@ -115,10 +118,11 @@ join (values
     ('battle-cup-tier', 'tier-7', 'Tier 7', 5),
     ('battle-cup-tier', 'tier-8', 'Tier 8', 6),
 
-    ('looking-for', 'casual',       'Casual',                  1),
-    ('looking-for', 'ranked-climb', 'Ranked climb',            2),
-    ('looking-for', 'battle-cup',   'Battle Cup',              3),
-    ('looking-for', 'competitive',  'Leagues and tournaments', 4)
+    ('looking-for', 'casual',             'Casual',                 1),
+    ('looking-for', 'ranked',             'Ranked',                 2),
+    ('looking-for', 'scrims-tournaments', 'Scrims and tournaments', 3),
+    ('looking-for', 'learning-the-game',  'Learning the game',      4),
+    ('looking-for', 'battle-cup',         'Battle Cup',             5)
 ) as option (field_key, key, label, ordinal) on option.field_key = field.key
 where game.handle = 'dota2';
 

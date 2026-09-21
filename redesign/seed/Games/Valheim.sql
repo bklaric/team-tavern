@@ -7,9 +7,13 @@
 --
 -- Valheim has no rank and no roles. The game sorts nobody by skill and gives
 -- nobody a part to play, so what a post is looking for carries the card alone.
+-- With no queues and no ranked play, Looking for keeps the shared Casual and
+-- Learning the game and then names the playstyles a world is run for, the ones
+-- Valheim servers advertise themselves by: PvE, Building, PvP, Roleplay.
 --
--- Crossplay reaches all four platforms, but a modded world runs on Steam alone,
--- so what a post plays on decides who can join it.
+-- Crossplay reaches all four platforms, but a modded world runs on PC alone and
+-- a console cannot keep a dedicated world online, so what a post plays on
+-- decides who can join it.
 
 insert into game (title, short_title, handle, description)
 values
@@ -53,10 +57,12 @@ join (values
     ('platform', 'xbox',        'Xbox',        3),
     ('platform', 'switch',      'Switch',      4),
 
-    ('looking-for', 'casual',   'Casual',   1),
-    ('looking-for', 'building', 'Building', 2),
-    ('looking-for', 'events',   'Events',   3),
-    ('looking-for', 'roleplay', 'Roleplay', 4),
+    ('looking-for', 'casual',            'Casual',            1),
+    ('looking-for', 'learning-the-game', 'Learning the game', 2),
+    ('looking-for', 'pve',               'PvE',               3),
+    ('looking-for', 'building',          'Building',          4),
+    ('looking-for', 'pvp',               'PvP',               5),
+    ('looking-for', 'roleplay',          'Roleplay',          6),
 
     ('server-characters', 'new-characters',      'New characters',      1),
     ('server-characters', 'existing-characters', 'Existing characters', 2)

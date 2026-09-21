@@ -142,7 +142,11 @@ create table field
     , key varchar(40) not null
     , label varchar(40) not null
 
-    , ilk text not null -- 'single', 'multi'
+    -- A boolean has no options: a post either says yes, a row in
+    -- post_field_flag, or says no. It is never left unanswered, so unlike an
+    -- empty single or multi it does not count as a miss, and two posts fit on
+    -- it when they agree (brief 7.2).
+    , ilk text not null -- 'single', 'multi', 'boolean'
 
     -- Whether the options have a meaningful order. An ordered field can be
     -- given as a range (post_field_range) and compared by how far apart two
@@ -172,7 +176,7 @@ create table field
     , ordinal int not null
 
     , unique (game_id, key)
-    , constraint field_ilk_check check (ilk in ('single', 'multi'))
+    , constraint field_ilk_check check (ilk in ('single', 'multi', 'boolean'))
     , constraint field_applies_to_check check
         (applies_to <@ '{player,group,community}' and applies_to <> '{}')
     );
@@ -355,6 +359,14 @@ create table post_field_range
     , foreign key (to_option_id, field_id) references field_option (id, field_id)
     , constraint post_field_range_not_empty check
         (num_nonnulls(from_option_id, to_option_id) > 0)
+    );
+
+-- A post's yes to a boolean field. The absence of a row is its no.
+
+create table post_field_flag
+    ( post_id integer not null references post(id) on delete cascade
+    , field_id integer not null references field(id)
+    , primary key (post_id, field_id)
     );
 
 -- Messaging

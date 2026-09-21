@@ -4,8 +4,17 @@
 -- (brief 5.1), so a rank range spans divisions and rank closeness counts in
 -- steps of one (brief 7.2). Radiant is the one tier without them.
 --
--- Roles are the agent roles, which is what a Valorant player says they play.
--- They are slotted: two players fit by covering two different ones.
+-- Roles are the agent roles, which is what a Valorant player says they play,
+-- under their official names: players write Duelist, Initiator and Sentinel far
+-- more than entry, init or senti, and Controller as often as smokes. They are
+-- slotted: two players fit by covering two different ones.
+--
+-- In-game leader is asked beside the roles because teams recruit for one by
+-- name. It says a player can lead on top of the role they play, so it fits by
+-- agreeing rather than as a slot.
+--
+-- Premier is the one team format in Looking for: Riot's weekly team league,
+-- played by a team formed ahead of time and recruited for by name.
 --
 -- Valorant runs on PC, PlayStation and Xbox, and crossplay is between the two
 -- consoles only, so what a post plays on is worth a field here.
@@ -15,7 +24,7 @@ values
     ( 'Valorant'
     , 'Valorant'
     , 'valorant'
-    , array['Find Valorant players, groups and communities: a duo, a five stack, or a server to play on.']
+    , array['Find Valorant players, groups and communities: a duo, a five stack, a Premier team, or a server to play on.']
     );
 
 insert into game_contact (game_id, kind)
@@ -28,10 +37,11 @@ insert into field (game_id, key, label, ilk, ordered, slotted, applies_to, on_ca
 select game.id, field.key, field.label, field.ilk, field.ordered, field.slotted, field.applies_to, field.on_card, field.ordinal
 from game
 cross join (values
-    ('rank',        'Rank',        'single', true,  false, array['player', 'group'],              true, 1),
-    ('role',        'Role',        'multi',  false, true,  array['player', 'group'],              true, 2),
-    ('platform',    'Platform',    'multi',  false, false, array['player', 'group', 'community'], true, 3),
-    ('looking-for', 'Looking for', 'multi',  false, false, array['player', 'group', 'community'], true, 4)
+    ('rank',           'Rank',           'single',  true,  false, array['player', 'group'],              true,  1),
+    ('role',           'Role',           'multi',   false, true,  array['player', 'group'],              true,  2),
+    ('in-game-leader', 'In-game leader', 'boolean', false, false, array['player', 'group'],              false, 3),
+    ('platform',       'Platform',       'multi',   false, false, array['player', 'group', 'community'], true,  4),
+    ('looking-for',    'Looking for',    'multi',   false, false, array['player', 'group', 'community'], true,  5)
 ) as field (key, label, ilk, ordered, slotted, applies_to, on_card, ordinal)
 where game.handle = 'valorant';
 
@@ -75,10 +85,11 @@ join (values
     ('platform', 'playstation', 'PlayStation', 2),
     ('platform', 'xbox',        'Xbox',        3),
 
-    ('looking-for', 'casual',      'Casual',      1),
-    ('looking-for', 'ranked-climb', 'Ranked climb', 2),
-    ('looking-for', 'scrims',      'Scrims',      3),
-    ('looking-for', 'tournaments', 'Tournaments', 4)
+    ('looking-for', 'casual',             'Casual',                 1),
+    ('looking-for', 'ranked',             'Ranked',                 2),
+    ('looking-for', 'scrims-tournaments', 'Scrims and tournaments', 3),
+    ('looking-for', 'learning-the-game',  'Learning the game',      4),
+    ('looking-for', 'premier',            'Premier',                5)
 ) as option (field_key, key, label, ordinal) on option.field_key = field.key
 where game.handle = 'valorant';
 

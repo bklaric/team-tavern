@@ -74,7 +74,52 @@ join game_contact c on c.game_id = g.id
 group by g.id, g.handle
 order by g.handle;"
 
+# The fields every game answers in its own words, side by side, for the pass
+# over the whole catalogue that follows a parallel run.
+psql_db -c "
+select g.handle, f.key,
+       coalesce(string_agg(o.label, ', ' order by o.ordinal), '(' || f.ilk || ')') as options
+from game g
+join field f on f.game_id = g.id
+left join field_option o on o.field_id = f.id
+where f.key = 'looking-for' or f.slotted
+group by g.handle, f.id, f.key
+order by f.key, g.handle;"
+
+# The intents every game shares, in order, and the words that give one away
+# when it turns up under another key.
+shared="(values
+    ('casual', 'Casual', 1),
+    ('ranked', 'Ranked', 2),
+    ('scrims-tournaments', 'Scrims and tournaments', 3),
+    ('learning-the-game', 'Learning the game', 4)
+) as shared (key, label, ordinal)"
+shared_words='casual|rank|competitive|tournament|scrim|league|learn|new|beginner|returning'
+
 problems=$(psql_db -tA -c "
+select 'shared Looking for option under another label: ' || g.handle || '.' || o.key
+from game g join field f on f.game_id = g.id join field_option o on o.field_id = f.id
+join $shared on shared.key = o.key
+where f.key = 'looking-for' and o.label <> shared.label
+union all
+select 'Looking for option that reads as a shared intent: ' || g.handle || '.' || o.key
+from game g join field f on f.game_id = g.id join field_option o on o.field_id = f.id
+where f.key = 'looking-for'
+  and not exists (select 1 from $shared where shared.key = o.key)
+  and (o.key ~* '$shared_words' or o.label ~* '$shared_words')
+union all
+select 'Looking for options not shared first, in the shared order: ' || g.handle
+from game g join field f on f.game_id = g.id join field_option o on o.field_id = f.id
+left join $shared on shared.key = o.key
+where f.key = 'looking-for'
+group by g.handle
+having array_agg(o.key order by o.ordinal)
+    <> array_agg(o.key order by shared.ordinal nulls last, o.ordinal)
+union all
+select 'role option that is a job or an any-slot, not a slot: ' || g.handle || '.' || f.key || '.' || o.key
+from game g join field f on f.game_id = g.id join field_option o on o.field_id = f.id
+where f.slotted and o.key ~ '^(in-game-leader|igl|flex|fill|any)$'
+union all
 select 'no looking-for field: ' || g.handle
 from game g
 where not exists (select 1 from field f where f.game_id = g.id and f.key = 'looking-for')
@@ -104,6 +149,10 @@ union all
 select 'slotted field is not multi: ' || g.handle || '.' || f.key
 from game g join field f on f.game_id = g.id
 where f.slotted and f.ilk <> 'multi'
+union all
+select 'boolean field with options: ' || g.handle || '.' || f.key
+from game g join field f on f.game_id = g.id
+where f.ilk = 'boolean' and exists (select 1 from field_option o where o.field_id = f.id)
 union all
 select 'ordered or slotted field reaches communities: ' || g.handle || '.' || f.key
 from game g join field f on f.game_id = g.id

@@ -9,15 +9,22 @@
 -- (brief 7.2). Which league a post plays in follows from its regions, so it is
 -- not a field of its own.
 --
--- Classes are the nine, in the game's own offense, defense and support order.
--- They are slotted: Highlander fields one of each, so two players fit by
--- covering two different ones, and a roster short a Medic is short exactly that.
+-- Classes are the nine, in the game's own offense, defense and support order,
+-- and they are what a TF2 post says it plays: the league recruitment boards
+-- ask for classes, not positions. They are slotted: Highlander fields one of
+-- each, so two players fit by covering two different ones, and a roster short a
+-- Medic is short exactly that. A league post rarely names a main caller, so
+-- there is no in-game leader field.
 --
 -- Format is what a competitive post plays, and a pug community answers it too.
 --
 -- Server type is what a community server runs, which is where most of TF2 is
 -- played, so all three post types answer it and a community post is often
--- nothing but this field and its words.
+-- nothing but this field and its words. Playing on community servers is
+-- therefore not a Looking for option: it is casual play, and the server type
+-- says which kind. Ranked is Valve's competitive queue; league seasons, cups
+-- and scrims are Scrims and tournaments. Mann vs. Machine is the one team
+-- format, whose Mann Up tours a party of up to six takes on together.
 --
 -- Team Fortress 2 runs on PC alone, so there is no platform field.
 
@@ -97,10 +104,11 @@ join (values
     ('server-type', 'trade',        'Trade',              7),
     ('server-type', 'custom',       'Custom game modes',  8),
 
-    ('looking-for', 'casual',            'Casual',            1),
-    ('looking-for', 'community-servers', 'Community servers', 2),
-    ('looking-for', 'competitive',       'Competitive',       3),
-    ('looking-for', 'mann-vs-machine',   'Mann vs. Machine',  4)
+    ('looking-for', 'casual',             'Casual',                 1),
+    ('looking-for', 'ranked',             'Ranked',                 2),
+    ('looking-for', 'scrims-tournaments', 'Scrims and tournaments', 3),
+    ('looking-for', 'learning-the-game',  'Learning the game',      4),
+    ('looking-for', 'mann-vs-machine',    'Mann vs. Machine',       5)
 ) as option (field_key, key, label, ordinal) on option.field_key = field.key
 where game.handle = 'tf2';
 

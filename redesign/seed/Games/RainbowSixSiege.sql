@@ -6,24 +6,28 @@
 -- and Diamond. The Legend Division past Champion I is solo queue only and asks
 -- for a Champion rank to enter, so nothing a post states ever lands there.
 --
--- Roles span both sides, because every player plays both: entry and support
--- attack, roamer and anchor defend, flex and in-game leader do either. They are
--- slotted: two players fit by covering two different ones.
+-- Roles are the jobs players name: entry and support on attack, roamer and
+-- anchor on defence, with support played on both. Every player plays both
+-- sides, so a player picks a job for each, and the field stays one list rather
+-- than one per side, so a group short of only an entry answers one field. They
+-- are slotted: two players fit by covering two different ones. Fragger is
+-- folded into entry and hard breach and intel into support, as the posts use
+-- them. In-game leader is its own yes-or-no field, since the caller still plays
+-- a job on each side.
 --
 -- Siege runs on PC, PlayStation and Xbox, so what a post plays on is worth a
 -- field here. The options are platform families, which is why the two console
 -- generations are one option each.
 --
--- Learning the game is one of the things to be looking for: Siege asks more of a
--- new player than the rest of the catalogue does, and a post that says so is
--- after something different from one climbing ranked.
+-- Siege Cup is a team format: an official 5-stack tournament that runs every
+-- few weekends, and players recruit for it by name.
 
 insert into game (title, short_title, handle, description)
 values
     ( 'Rainbow Six Siege'
     , 'R6S'
     , 'r6s'
-    , array['Find Rainbow Six Siege players, groups and communities: a ranked duo, a five stack, or a clan to run with.']
+    , array['Find Rainbow Six Siege players, groups and communities: a ranked duo, a fifth for your stack, a team for Siege Cup and scrims, or a clan to run with.']
     );
 
 insert into game_contact (game_id, kind)
@@ -36,10 +40,11 @@ insert into field (game_id, key, label, ilk, ordered, slotted, applies_to, on_ca
 select game.id, field.key, field.label, field.ilk, field.ordered, field.slotted, field.applies_to, field.on_card, field.ordinal
 from game
 cross join (values
-    ('rank',        'Rank',        'single', true,  false, array['player', 'group'],              true, 1),
-    ('role',        'Role',        'multi',  false, true,  array['player', 'group'],              true, 2),
-    ('platform',    'Platform',    'multi',  false, false, array['player', 'group', 'community'], true, 3),
-    ('looking-for', 'Looking for', 'multi',  false, false, array['player', 'group', 'community'], true, 4)
+    ('rank',           'Rank',           'single',  true,  false, array['player', 'group'],              true,  1),
+    ('role',           'Role',           'multi',   false, true,  array['player', 'group'],              true,  2),
+    ('in-game-leader', 'In-game leader', 'boolean', false, false, array['player', 'group'],              false, 3),
+    ('platform',       'Platform',       'multi',   false, false, array['player', 'group', 'community'], true,  4),
+    ('looking-for',    'Looking for',    'multi',   false, false, array['player', 'group', 'community'], true,  5)
 ) as field (key, label, ilk, ordered, slotted, applies_to, on_card, ordinal)
 where game.handle = 'r6s';
 
@@ -89,21 +94,20 @@ join (values
     ('rank', 'champion-ii',  'Champion II',  39),
     ('rank', 'champion-i',   'Champion I',   40),
 
-    ('role', 'entry',          'Entry',          1),
-    ('role', 'support',        'Support',        2),
-    ('role', 'roamer',         'Roamer',         3),
-    ('role', 'anchor',         'Anchor',         4),
-    ('role', 'flex',           'Flex',           5),
-    ('role', 'in-game-leader', 'In-game leader', 6),
+    ('role', 'entry',   'Entry',   1),
+    ('role', 'support', 'Support', 2),
+    ('role', 'roamer',  'Roamer',  3),
+    ('role', 'anchor',  'Anchor',  4),
 
     ('platform', 'pc',          'PC',          1),
     ('platform', 'playstation', 'PlayStation', 2),
     ('platform', 'xbox',        'Xbox',        3),
 
-    ('looking-for', 'casual',            'Casual',            1),
-    ('looking-for', 'ranked-climb',      'Ranked climb',      2),
-    ('looking-for', 'competitive',       'Competitive',       3),
-    ('looking-for', 'learning-the-game', 'Learning the game', 4)
+    ('looking-for', 'casual',             'Casual',                 1),
+    ('looking-for', 'ranked',             'Ranked',                 2),
+    ('looking-for', 'scrims-tournaments', 'Scrims and tournaments', 3),
+    ('looking-for', 'learning-the-game',  'Learning the game',      4),
+    ('looking-for', 'siege-cup',          'Siege Cup',              5)
 ) as option (field_key, key, label, ordinal) on option.field_key = field.key
 where game.handle = 'r6s';
 

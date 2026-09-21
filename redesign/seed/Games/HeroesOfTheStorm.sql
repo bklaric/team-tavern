@@ -6,8 +6,16 @@
 -- Grand Master have no divisions: Master is ordered by rank points and Grand
 -- Master is the top hundred of a region's Master players.
 --
--- Roles are Blizzard's six hero roles, which is what a Heroes player says they
--- play. They are slotted: two players fit by covering two different ones.
+-- Roles are the four a Heroes player posts by: tank, bruiser, healer and DPS.
+-- Blizzard's ranged and melee assassins are one DPS slot in how players write
+-- it, and Blizzard's Support heroes are a pick rather than a slot a team fills.
+-- They are slotted: two players fit by covering two different ones. Heroes
+-- players don't name a shotcaller as a slot, so there is no in-game leader
+-- field.
+--
+-- Looking for is the shared intents, ARAM and Quick Match under Casual. The
+-- game has one ranked queue and no official team format; leagues such as
+-- Heroes Lounge are community-run and sit under Scrims and tournaments.
 --
 -- The game runs on PC only, so it has no platform field.
 --
@@ -72,16 +80,14 @@ join (values
     ('rank', 'master',       'Master',       26),
     ('rank', 'grand-master', 'Grand Master', 27),
 
-    ('role', 'tank',            'Tank',            1),
-    ('role', 'bruiser',         'Bruiser',         2),
-    ('role', 'support',         'Support',         3),
-    ('role', 'healer',          'Healer',          4),
-    ('role', 'melee-assassin',  'Melee Assassin',  5),
-    ('role', 'ranged-assassin', 'Ranged Assassin', 6),
+    ('role', 'tank',    'Tank',    1),
+    ('role', 'bruiser', 'Bruiser', 2),
+    ('role', 'healer',  'Healer',  3),
+    ('role', 'dps',     'DPS',     4),
 
-    ('looking-for', 'casual',       'Casual',       1),
-    ('looking-for', 'ranked-climb', 'Ranked climb', 2),
-    ('looking-for', 'aram',         'ARAM',         3),
-    ('looking-for', 'tournaments',  'Tournaments',  4)
+    ('looking-for', 'casual',             'Casual',                 1),
+    ('looking-for', 'ranked',             'Ranked',                 2),
+    ('looking-for', 'scrims-tournaments', 'Scrims and tournaments', 3),
+    ('looking-for', 'learning-the-game',  'Learning the game',      4)
 ) as option (field_key, key, label, ordinal) on option.field_key = field.key
 where game.handle = 'hots';

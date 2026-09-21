@@ -354,7 +354,7 @@ fact line or behind Details (5.4). The fact line wraps as it needs to.
 ┌─────────────────────────────────────────────────────────────────────────┐
 │ ShadowFox                                  PLAYER    Active 2 days ago  │
 │ Diamond 2 · Duelist, Initiator · Croatia · EN, DE · 🎤 ·                │
-│ Ranked climb                                                            │
+│ Ranked                                                                  │
 │ "Peak Immortal last act, looking for a consistent duo. Chill but I want │
 │  to improve, happy to review VODs together…"                            │
 │                                  [ Add on Discord ]        Details ⌄    │
@@ -367,7 +367,7 @@ fact line or behind Details (5.4). The fact line wraps as it needs to.
 ┌─────────────────────────────────────────────────────────────────────────┐
 │ Night Owls   GROUP  3 players, wants 2 more          Active 5 hours ago │
 │ Platinum 1 – Diamond 3 · Controller, Sentinel · EU · EN ·               │
-│ 🎤 · Ages 18+ · Ranked climb                                            │
+│ 🎤 · Ages 18+ · Ranked                                                  │
 │ "Three friends who play most nights, we want to stop solo queuing for   │
 │  the last two spots. No tilt, comms on…"                                │
 │ Posted by Kestrel                       [ Message ]        Details ⌄    │
@@ -390,7 +390,7 @@ fact line or behind Details (5.4). The fact line wraps as it needs to.
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
 │ The Farlands   COMMUNITY                              Active 1 week ago │
-│ Modded · EU · EN · PC · Events, Casual                                  │
+│ Modded · EU · EN · PC · Building, Casual                                │
 │                                                                         │
 │ "Looking for a fun and friendly Valheim community server? Join The      │
 │  Farlands: weekly boss raids, a trading hub, building contests and      │
@@ -450,8 +450,8 @@ fact line or behind Details (5.4). The fact line wraps as it needs to.
   looking for". Ambitions are left empty most often, overlap with about when both
   are written, and are nearly always one of a few answers.
 - **Proposed:** a structured **Looking for** on all three post types, one or more
-  of the game's options, such as Casual, Ranked climb or Competitive for Valorant,
-  and Events or Roleplay for Valheim. The choices are one fact on the card and one
+  of the game's options, such as Casual, Ranked or Premier for Valorant,
+  and Building or Roleplay for Valheim. The choices are one fact on the card and one
   matching field.
 - **Decided:** the options are set per game and are the same for all three post
   types, so a player's answer compares directly with a group's or a community's.
@@ -592,12 +592,12 @@ Type ─▶ Game ─▶ Post ─▶ Register or sign in ─▶ Matches
 │ How many are you, and how many more  │ │ 3 players, wants 2 more      │ │
 │ do you want?                         │ │ Plat 1 – Dia 3 · Controller, │ │
 │   [ 3 ] players, want [ 2 ] more     │ │ Sentinel · EU · EN · 🎤 ·    │ │
-│ Roles you need   [Controller][Sent…] │ │ Ranked climb                 │ │
+│ Roles you need   [Controller][Sent…] │ │ Ranked                       │ │
 │ Rank range       [Plat 1] – [Dia 3]  │ │                              │ │
 │ Regions          [EU ▾]              │ │ "Three friends who play most │ │
 │ Language         [EN ▾]              │ │  nights, we want to stop…"   │ │
 │ Ages             [18] – [  ]         │ │ Posted by Kestrel [ Message ]│ │
-│ Looking for      [✓] Ranked climb    │ │                     Details ⌄│ │
+│ Looking for      [✓] Ranked          │ │                     Details ⌄│ │
 │ Microphone       [✓] Required        │ └──────────────────────────────┘ │
 │ Usually online   [21:00] – [01:00]   │                                  │
 │ Timezone         Europe/Zagreb       │                                  │
@@ -856,6 +856,13 @@ the field:
   rule that read one set against the other would call a pair a fit from one seat
   and a miss from the other. Between a player and a group nothing changes: a
   group names the roles it needs and you fit by filling one.
+- **Proposed:** a yes-or-no game field, such as In-game leader in the shooters
+  whose players name one, is answered by every post: leaving it unticked says
+  no, so it is never the empty field that counts as a miss. A viewer who leaves
+  it unticked isn't compared on it, and one who ticks it fits the posts that
+  tick it too. In-game leader says a player can lead, not that leading is all
+  they play, so it is a fact like a language rather than a role: a group that
+  ticks it wants someone who can lead.
 - **Decided:** a player's location is compared through the region it maps to:
   against a group's or community's regions, or against another player's region.
   Game fields such as server region compare directly.
@@ -1033,7 +1040,7 @@ first. A post of theirs that has expired says so and offers **Renew**.
 │ ← Back to Valorant posts                                                │
 │                                                                         │
 │ ShadowFox                            Valorant player  Active 2 days ago │
-│ Diamond 2 · Duelist, Initiator · Croatia · EN, DE · 🎤 · Ranked climb   │
+│ Diamond 2 · Duelist, Initiator · Croatia · EN, DE · 🎤 · Ranked         │
 │ "Peak Immortal last act, looking for a consistent duo. Chill but I want │
 │  to improve, happy to review VODs together. I play most evenings after  │
 │  work and I'm free all weekend."                                        │

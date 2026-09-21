@@ -14,9 +14,19 @@
 -- ladder on the same eighteen, separate from either. Danger Zone is not in CS2,
 -- so nothing here ranks it.
 --
--- Roles are the five a CS player claims plus the in-game leader. They are
--- slotted: two players fit by covering two different ones, and two AWPers do
--- not.
+-- Roles are the jobs CS players claim on LFT boards and in their own posts:
+-- entry, rifler, AWPer, lurker and support, and the CT-side anchor, which
+-- players name as often as lurker. A player gives their T-side and CT-side jobs
+-- together, so the list carries both. They are slotted: two players fit by
+-- covering two different ones, and two AWPers do not.
+--
+-- In-game leader is asked beside the roles because teams recruit for one by
+-- name. It says a player can lead on top of the role they play, so it fits by
+-- agreeing rather than as a slot.
+--
+-- Looking for has no team format. Premier is the ranked queue and Wingman a
+-- mode, and the leagues players recruit for, ESEA and the like, are run by
+-- third parties, so all of them fall under Ranked or Scrims and tournaments.
 --
 -- Faceit is where the ladder above Premier is played, and it grades on its ten
 -- levels, so it stays as a third ordered field.
@@ -28,7 +38,7 @@ values
     ( 'Counter-Strike 2'
     , 'CS2'
     , 'cs2'
-    , array['Find Counter-Strike 2 players, groups and communities: a Wingman duo, a five stack, or a server to play on.']
+    , array['Find Counter-Strike 2 players, groups and communities: a Premier duo, a five stack for Faceit, an ESEA team, or a server to play on.']
     );
 
 insert into game_contact (game_id, kind)
@@ -41,12 +51,13 @@ insert into field (game_id, key, label, ilk, ordered, slotted, applies_to, on_ca
 select game.id, field.key, field.label, field.ilk, field.ordered, field.slotted, field.applies_to, field.on_card, field.ordinal
 from game
 cross join (values
-    ('premier-rating', 'Premier rating',          'single', true,  false, array['player', 'group'],              true,  1),
-    ('role',           'Role',                    'multi',  false, true,  array['player', 'group'],              true,  2),
-    ('looking-for',    'Looking for',             'multi',  false, false, array['player', 'group', 'community'], true,  3),
-    ('skill-group',    'Competitive skill group', 'single', true,  false, array['player', 'group'],              false, 4),
-    ('wingman-rank',   'Wingman rank',            'single', true,  false, array['player', 'group'],              false, 5),
-    ('faceit-level',   'Faceit level',            'single', true,  false, array['player', 'group'],              false, 6)
+    ('premier-rating', 'Premier rating',          'single',  true,  false, array['player', 'group'],              true,  1),
+    ('role',           'Role',                    'multi',   false, true,  array['player', 'group'],              true,  2),
+    ('in-game-leader', 'In-game leader',          'boolean', false, false, array['player', 'group'],              false, 3),
+    ('looking-for',    'Looking for',             'multi',   false, false, array['player', 'group', 'community'], true,  4),
+    ('skill-group',    'Competitive skill group', 'single',  true,  false, array['player', 'group'],              false, 5),
+    ('wingman-rank',   'Wingman rank',            'single',  true,  false, array['player', 'group'],              false, 6),
+    ('faceit-level',   'Faceit level',            'single',  true,  false, array['player', 'group'],              false, 7)
 ) as field (key, label, ilk, ordered, slotted, applies_to, on_card, ordinal)
 where game.handle = 'cs2';
 
@@ -87,17 +98,17 @@ join (values
     ('premier-rating', '29k',       '29k',      30),
     ('premier-rating', '30k-plus',  '30k+',     31),
 
-    ('role', 'entry-fragger',  'Entry fragger',  1),
-    ('role', 'rifler',         'Rifler',         2),
-    ('role', 'awper',          'AWPer',          3),
-    ('role', 'lurker',         'Lurker',         4),
-    ('role', 'support',        'Support',        5),
-    ('role', 'in-game-leader', 'In-game leader', 6),
+    ('role', 'entry-fragger', 'Entry fragger', 1),
+    ('role', 'rifler',        'Rifler',        2),
+    ('role', 'awper',         'AWPer',         3),
+    ('role', 'lurker',        'Lurker',        4),
+    ('role', 'support',       'Support',       5),
+    ('role', 'anchor',        'Anchor',        6),
 
-    ('looking-for', 'casual',       'Casual',                  1),
-    ('looking-for', 'ranked-climb', 'Ranked climb',            2),
-    ('looking-for', 'wingman',      'Wingman',                 3),
-    ('looking-for', 'competitive',  'Leagues and tournaments', 4),
+    ('looking-for', 'casual',             'Casual',                 1),
+    ('looking-for', 'ranked',             'Ranked',                 2),
+    ('looking-for', 'scrims-tournaments', 'Scrims and tournaments', 3),
+    ('looking-for', 'learning-the-game',  'Learning the game',      4),
 
     ('skill-group', 'silver-1',                      'Silver I',                      1),
     ('skill-group', 'silver-2',                      'Silver II',                     2),

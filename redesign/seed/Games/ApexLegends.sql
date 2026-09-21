@@ -10,13 +10,13 @@
 -- rank range spans divisions and rank closeness counts in steps of one
 -- (brief 7.2). Rookie, Master and Apex Predator have no divisions.
 --
--- Classes are the legend classes, which is what an Apex player says they play
--- and what a squad is built out of. They are slotted: two players fit by
--- covering two different ones.
---
--- Mixtape stands where Arenas did: Control, Gun Run and Team Deathmatch are one
--- rotating playlist, and someone after them is after the playlist, not a mode
--- within it.
+-- Roles are the jobs a squad splits, fragger and support, not the legend
+-- classes: Apex players name their legends, and the class names are nobody's
+-- vocabulary, while the posts that state a job say fragger or support, with
+-- anchor as another word for support and refrag for a second fragger. They are
+-- slotted: two players fit by covering two different ones. In-game leader is
+-- its own yes-or-no field, since the caller still frags or supports: it says
+-- a player can lead, and fits by agreeing rather than as a slot.
 --
 -- Switch means Switch 2. Support for the original Switch ended with Season 29,
 -- and everything else runs on PC, PlayStation and Xbox, so what a post plays on
@@ -27,7 +27,7 @@ values
     ( 'Apex Legends'
     , 'Apex Legends'
     , 'apex'
-    , array['Find Apex Legends players, groups and communities: a third for your trio, a squad to climb ranked with, or a community to drop with.']
+    , array['Find Apex Legends players, groups and communities: a third for your trio, a squad to climb ranked with, a team for scrims and the Challenger Circuit, or a community to drop with.']
     );
 
 insert into game_contact (game_id, kind)
@@ -42,10 +42,11 @@ insert into field (game_id, key, label, ilk, ordered, slotted, applies_to, on_ca
 select game.id, field.key, field.label, field.ilk, field.ordered, field.slotted, field.applies_to, field.on_card, field.ordinal
 from game
 cross join (values
-    ('rank',        'Rank',        'single', true,  false, array['player', 'group'],              true, 1),
-    ('class',       'Class',       'multi',  false, true,  array['player', 'group'],              true, 2),
-    ('platform',    'Platform',    'multi',  false, false, array['player', 'group', 'community'], true, 3),
-    ('looking-for', 'Looking for', 'multi',  false, false, array['player', 'group', 'community'], true, 4)
+    ('rank',           'Rank',           'single',  true,  false, array['player', 'group'],              true,  1),
+    ('role',           'Role',           'multi',   false, true,  array['player', 'group'],              true,  2),
+    ('in-game-leader', 'In-game leader', 'boolean', false, false, array['player', 'group'],              false, 3),
+    ('platform',       'Platform',       'multi',   false, false, array['player', 'group', 'community'], true,  4),
+    ('looking-for',    'Looking for',    'multi',   false, false, array['player', 'group', 'community'], true,  5)
 ) as field (key, label, ilk, ordered, slotted, applies_to, on_card, ordinal)
 where game.handle = 'apex';
 
@@ -78,21 +79,18 @@ join (values
     ('rank', 'master',        'Master',          22),
     ('rank', 'apex-predator', 'Apex Predator',   23),
 
-    ('class', 'assault',    'Assault',    1),
-    ('class', 'skirmisher', 'Skirmisher', 2),
-    ('class', 'recon',      'Recon',      3),
-    ('class', 'support',    'Support',    4),
-    ('class', 'controller', 'Controller', 5),
+    ('role', 'fragger', 'Fragger', 1),
+    ('role', 'support', 'Support', 2),
 
     ('platform', 'pc',          'PC',          1),
     ('platform', 'playstation', 'PlayStation', 2),
     ('platform', 'xbox',        'Xbox',        3),
     ('platform', 'switch',      'Switch',      4),
 
-    ('looking-for', 'casual',       'Casual',       1),
-    ('looking-for', 'ranked-climb', 'Ranked climb', 2),
-    ('looking-for', 'mixtape',      'Mixtape',      3),
-    ('looking-for', 'competitive',  'Competitive',  4)
+    ('looking-for', 'casual',             'Casual',                 1),
+    ('looking-for', 'ranked',             'Ranked',                 2),
+    ('looking-for', 'scrims-tournaments', 'Scrims and tournaments', 3),
+    ('looking-for', 'learning-the-game',  'Learning the game',      4)
 ) as option (field_key, key, label, ordinal) on option.field_key = field.key
 where game.handle = 'apex';
 

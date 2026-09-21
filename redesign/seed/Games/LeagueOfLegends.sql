@@ -7,8 +7,14 @@
 -- reverse of the numbering inside each tier. Master, Grandmaster and Challenger
 -- have no divisions and are one option each.
 --
--- Roles are the five positions, in lane order. They are slotted: two players
--- fit by covering two different ones, which is what a Mid and a Jungler are.
+-- Roles are the five positions, in lane order and under the names League
+-- players post them by. They are slotted: two players fit by covering two
+-- different ones, which is what a Mid and a Jungler are. League players don't
+-- name a shotcaller as a slot, so there is no in-game leader field.
+--
+-- Looking for is the shared intents, ARAM and the other fun modes under Casual
+-- and ranked flex under Ranked, then Clash: a premade five's bracket on a
+-- regular schedule, recruited for by name.
 --
 -- Clash tier is the bracket a team is seeded into, numbered like the divisions
 -- with I at the top, so its ordinals run IV up to I as well. It is a second
@@ -22,7 +28,7 @@ values
     ( 'League of Legends'
     , 'LoL'
     , 'lol'
-    , array['Find League of Legends players, groups and communities: a duo to climb with, a five stack for Clash, or a place to play ARAM in.']
+    , array['Find League of Legends players, groups and communities: a duo to climb with, a five stack for Clash, a team for scrims and tournaments, or a place to play ARAM in.']
     );
 
 insert into game_contact (game_id, kind)
@@ -85,10 +91,11 @@ join (values
     ('role', 'adc',     'ADC',     4),
     ('role', 'support', 'Support', 5),
 
-    ('looking-for', 'casual',       'Casual',       1),
-    ('looking-for', 'ranked-climb', 'Ranked climb', 2),
-    ('looking-for', 'aram',         'ARAM',         3),
-    ('looking-for', 'clash',        'Clash',        4),
+    ('looking-for', 'casual',             'Casual',                 1),
+    ('looking-for', 'ranked',             'Ranked',                 2),
+    ('looking-for', 'scrims-tournaments', 'Scrims and tournaments', 3),
+    ('looking-for', 'learning-the-game',  'Learning the game',      4),
+    ('looking-for', 'clash',              'Clash',                  5),
 
     ('clash-tier', 'tier-iv',  'Tier IV',  1),
     ('clash-tier', 'tier-iii', 'Tier III', 2),
