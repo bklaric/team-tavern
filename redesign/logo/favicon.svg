@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>TeamTavern</title>
+  <rect width="64" height="64" rx="12" fill="#141210"/>
+  <g transform="translate(32 32) scale(1.12) translate(-32 -33)">
+    <path d="M34 8C35 20 50 27 50 43C50 52 42 58 32 58C22 58 14 52 14 43C14 35 18 30 21 24C23 29 26 32 28 32C27 23 29 14 34 8Z" fill="#F2823F"/>
+    <path d="M33 32C34 39 41 42 41 49C41 54 37 58 32 58C27 58 23 54 23 49C23 45 25 42 27 40C28 42 29 43 31 43C30.5 39 31.5 35 33 32Z" fill="#1A0F0A"/>
+  </g>
+</svg>

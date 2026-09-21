@@ -361,10 +361,9 @@
     text-decoration: none;
 }
 
-.logo .icon {
-    width: 22px;
-    height: 22px;
-    color: var(--ember);
+.logo-mark {
+    width: 24px;
+    height: 24px;
 }
 
 .site-header-actions {

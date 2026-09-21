@@ -609,7 +609,7 @@ const renderMatches = () => {
     const byCloseness = (a, b) => (missCount(a.m) - missCount(b.m) || 0) || b.post.updated - a.post.updated;
     const shown = (fits.length ? fits : entries).slice().sort(byCloseness).slice(0, 3);
     return `<div class="flow">
-        <div class="live-heading">${icon("flame")}<h1>${query.get("updated") ? "Your post is updated" : "Your post is live"}</h1></div>
+        <div class="live-heading">${icon("party-popper")}<h1>${query.get("updated") ? "Your post is updated" : "Your post is live"}</h1></div>
         <h2>${fits.length ? fitsSentence(fits) : `Nobody fits your ${POST_TYPE === "player" ? "post" : POST_TYPE} yet`}</h2>
         ${fits.length ? "" : `<p class="flow-lead">${shown.length ? "These come closest. " : ""}We'll email you when someone fits.</p>`}
         ${shown.length ? `<div class="feed-stack">${shown.map(e => renderCard(withViewer(toCard(e.post, e.m), e.post), true)).join("")}</div>` : ""}

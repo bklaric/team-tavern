@@ -354,8 +354,7 @@ Every screen the brief describes is prototyped. What is left of it:
   renewal link.
 - The game catalogue is stale (Splitgate is dead, CS:GO becomes CS2) and is to
   be handled separately.
-- The logo is Lucide's flame standing in for a logo of the site's own (brief
-  14.7), and the ads of section 15 have no place in any layout yet.
+- The ads of section 15 have no place in any layout yet.
 
 ## Stand-ins
 

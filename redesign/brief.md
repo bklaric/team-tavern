@@ -1458,7 +1458,7 @@ brief's screens already call for.
 - **Proposed:** green means one thing, a field that fits. ≠ is muted stone, never
   error: a mismatch is information (7.2), and a thin feed full of red would look
   broken. Both marks carry their glyph, so neither relies on color. For the same
-  reason "Your post is live" carries the ember flame, not a green check.
+  reason "Your post is live" carries an ember party popper, not a green check.
 - **Proposed:** error is a rose kept apart from the ember, and always comes with
   an icon and a message.
 - **Proposed:** an expired card keeps the table surface and its text drops to
@@ -1490,7 +1490,8 @@ brief's screens already call for.
   two rows on a desktop. Recognising a logo is faster than typing a name.
 - **Proposed:** the set the brief needs: user, users and castle for the three post
   types; mic, bell, mail, copy, check, not-equal, chevron, close, plus, menu,
-  external link and alert; and Discord's own mark on Discord buttons, which Lucide
+  external link and alert; megaphone for the prompt to publish and party popper
+  for a post gone live; and Discord's own mark on Discord buttons, which Lucide
   doesn't carry.
 
 ### 14.4 Layout and motion
@@ -1551,9 +1552,14 @@ What the brief's screens already call for; the prototypes settle their shape.
 
 ### 14.7 Logo
 
-- **Open:** a new logo in the palette. The phone header shows only its mark
-  (11.4), so the mark has to read on its own at 24 px. A hearth flame is the first
-  direction to try.
+- **Decided:** the logo is a hearth flame in ember, the TeamTavern wordmark
+  beside it in the header. `redesign/logo/mark.svg` is the flame alone,
+  transparent and unpadded, for the header and anywhere else the site shows its
+  mark; on a phone it stands alone at 24 px (11.4). The mark is the site's
+  identity only, never a UI icon, so no Lucide flame stands beside it either.
+- **Decided:** `redesign/logo/favicon.svg` is the same flame, padded on a
+  rounded tile of the floor colour, so it reads on a browser tab whatever the
+  tab's colour. It is the site's favicon.
 
 ### 14.8 Prototype content
 

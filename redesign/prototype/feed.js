@@ -210,7 +210,7 @@ const renderOwnPostPrompt = stored => {
         return `<div class="publish-prompt publish-prompt-quiet">${icon(TYPES[stored.type].icon)}
             <p>Showing what fits ${player ? "your player post" : `${name}, your ${stored.type} post`}.</p></div>`;
     }
-    return `<div class="publish-prompt">${icon("flame")}
+    return `<div class="publish-prompt">${icon("megaphone")}
         <p>Update ${player ? "your player post" : name} with this: ${player ? "groups and players" : "players"} who fit it find you, and we'll tell you when someone new does.</p>
         <a class="button button-primary" data-action="publish" href="post.html?game=${GAME.handle}&type=${stored.type}&from=feed">Update post</a></div>`;
 };
@@ -226,7 +226,7 @@ const renderPublishPrompt = () => {
     const text = descriptionIsEmpty()
         ? `Nobody has posted for ${escapeHtml(GAME.title)} lately. Publish your post and we'll tell you when someone fits.`
         : `Publish this as your post: ${who}, and we'll tell you when someone new fits.`;
-    return `<div class="publish-prompt">${icon("flame")}
+    return `<div class="publish-prompt">${icon("megaphone")}
         <p>${text}</p>
         <a class="button button-primary" data-action="publish" href="post.html?game=${GAME.handle}&type=${description.type}&from=feed">Publish post</a></div>`;
 };

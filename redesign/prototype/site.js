@@ -773,7 +773,7 @@ const headerHtml = () => {
                ${dropdown("menu")}
            </div>`;
     return `<header class="site-header"><div class="site-header-inner">
-        <a class="logo" href="home.html">${icon("flame")}<span class="logo-word">TeamTavern</span></a>
+        <a class="logo" href="home.html" aria-label="TeamTavern"><img class="logo-mark" src="../logo/mark.svg" alt=""><span class="logo-word">TeamTavern</span></a>
         <div class="header-wrap">
             <button class="button button-text" type="button" data-header="games" aria-haspopup="dialog" aria-expanded="${open("games")}">Games${icon("chevron-down")}</button>
             ${dropdown("games")}
