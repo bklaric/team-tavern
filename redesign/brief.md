@@ -820,10 +820,18 @@ give their details. A field the viewer left empty isn't compared at all.
 none of them, such as a community when the viewer has filled in only rank and
 roles, goes to the last tier.
 
-**Open:** whether some fields must match for a post to fit while others only lift
-it within the feed. A fit is what the "Fits you" tier, the Matches screen (section
-6) and match notifications (section 8) count. Which fields must match, and whether
-the system or the player decides, are settled in testing and tuned after launch.
+**Decided:** every field the viewer filled in must match for a post to fit. A fit
+is what the "Fits you" tier, the Matches screen (section 6) and match
+notifications (section 8) count, and it is the top tier by another name: a post
+fits when it misses nothing the viewer asked about. The viewer decides how tight
+that is by how much they fill in, which is the same control the description
+already gives them, so nothing else has to be tuned.
+
+**Decided:** a description that fits nothing produces no notification rather than
+a loose one. Telling an owner about the closest posts when none fit is worth
+doing and is out of scope for the first release: it is a second kind of
+notification with its own copy and its own threshold, and it is easier to judge
+once there is traffic to judge it on.
 
 **Proposed:** what a field compares against depends on the two post types, not on
 the field:
@@ -1095,7 +1103,7 @@ first. A post of theirs that has expired says so and offers **Renew**.
 │ Your posts                                                              │
 │                                                                         │
 │ ┌───────┐  Kestrel  PLAYER                                              │
-│ │ cover │  Croatia · HR, EN · Mic · PvE, Building                       │
+│ │ cover │  Croatia · HR, EN · Mic · Casual, Building                    │
 │ │       │  ! Expires in 3 days · No conversations yet ·                 │
 │ │       │  Contacts shown 2 times                                       │
 │ └───────┘  [ See what fits ]  Edit  [ Renew ]                           │
@@ -1350,21 +1358,21 @@ Account menu
 - **Proposed:** a location carries over only where it names a country. Three in
   four do not: they name a region of today's tree, most often just Europe or
   North America, and those players arrive without one until the account page asks.
-- **Open:** existing alerts come from anonymous emails and have no place in the new
-  model. Whether any carry over is decided with the model; dropping them all is
-  acceptable.
+- **Decided:** existing alerts come from anonymous emails and have no place in the
+  new model. None carry over. Everything else is imported as far as it converts,
+  and the rows that don't fit are dropped.
 - **Open:** a one-time relaunch email to existing players and alert subscribers.
 - **Open:** Search Console shows few paginated feed pages were ever indexed. Watch
   indexing of posts and feeds after launch.
 - **Decided:** the relaunch is judged by feed views, descriptions started, posts
   published, post views, contact reveals, conversations started, renewals and
-  returning visits, and they are measured with an analytics product rather than
-  a log of the site's own. A product follows one visitor through the funnel and
-  counts the ones who come back, which is what these eight are for, and the site
-  keeps no table it would have to trim. Contact reveals are also counted on the
-  post itself, since the home page shows an owner their own (11.2).
-- **Open:** which product, and what it costs in consent for an audience that is
-  largely European.
+  returning visits. Measuring them needs a product that follows one visitor
+  through the funnel and counts the ones who come back, and picking one is out of
+  scope for the first release: it is a consent question as much as a tooling one
+  for an audience that is largely European. The relaunch ships without analytics,
+  and the eight are what the product is chosen against when it is.
+- **Decided:** contact reveals are counted on the post itself whatever else is
+  measured, since the home page shows an owner their own (11.2).
 
 ## 13. Data model gaps
 
@@ -1384,7 +1392,9 @@ the current model lacks:
   per-game options.
 - **Regions.** Group and community regions, and the mapping from every country to
   one of the twelve (5), in place of today's three-level tree, whose nodes a
-  player can be in at any depth.
+  player can be in at any depth. Matching reads the mapping in the database; the
+  post screen and the account page read the same lists from an endpoint, rather
+  than carrying 229 countries in the bundle.
 - **Freshness.** A last renewal or edit time that sorts the feed and decides expiry,
   30 days for player and group posts and 90 for communities.
 - **Renewal links** that renew one post without signing in.
@@ -1392,8 +1402,9 @@ the current model lacks:
 - **Matching.** How many fields of a post match a description or another post
   (7.2), per pair of post types, including rank closeness from the game's ordered
   rank options; usable as a sort key and as a cursor for Load more, and degrading
-  to plain recency when the description is empty. Which fields must match for a
-  post to fit.
+  to plain recency when the description is empty. Counted in the query, not after
+  it: Load more continues from a match count and a renewal time together (4), and
+  a score the database didn't produce can't be a cursor.
 - **Match notifications.** One per fitting post, fired on publish and on renewal
   after expiry, for the owners of posts it fits, with emails that carry several.
 - **Messaging.** Conversations tied to a post, messages, unread state, blocks and
