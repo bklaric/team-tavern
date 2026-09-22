@@ -381,11 +381,6 @@ What every later page needs signed in and out.
     as rows over the seeded Valorant and Valheim fields, which the page fetches
     through `viewGame`. Where the prototype names a field the seed doesn't
     have (Agents, Playstyle), the fixture uses one it does.
-  - Left open: on `/forgot-password`, an email typed within about 100 ms of the
-    client-side navigation from Sign in is sometimes wiped by a re-render,
-    though the input handler and the element survive. It shows at `HEAD` as
-    well and makes `sign-in.spec.ts`'s reset-link case flaky. Logging hides it,
-    so it is timing inside Halogen's first renders of the page.
 
 ### 6. The feed
 

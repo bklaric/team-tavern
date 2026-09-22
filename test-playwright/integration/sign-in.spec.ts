@@ -194,6 +194,7 @@ test("a Discord player is not found by a password sign-in or a password reset", 
 test("a password player asks for a reset link", async ({ page }) => {
     await page.goto("/signin");
     await page.getByRole("link", { name: "Forgot password?" }).click();
+    await expect(page.getByRole("heading", { name: "Forgot password" })).toBeVisible();
     await page.getByLabel("Email").fill("apex@example.com");
     await page.getByRole("button", { name: "Send link" }).click();
 
