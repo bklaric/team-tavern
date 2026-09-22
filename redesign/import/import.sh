@@ -28,4 +28,8 @@ cat redesign/schema.sql redesign/seed-regions.sql redesign/seed-countries.sql re
 { echo 'begin;'; cat redesign/import/mapping.sql redesign/import/import.sql; echo 'commit;'; } \
     | psql_target
 
+# A restore leaves the planner without statistics, and the feed query's plans
+# go wrong without them.
+psql_target -c "vacuum analyze;"
+
 psql_target < redesign/import/report.sql

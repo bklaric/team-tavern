@@ -844,8 +844,16 @@ the field:
 | Group       | Players     | The group's needed roles against the player's roles; the group's rank range against their rank; the rest as above |
 | Community   | Players     | Regions against their location; language, platform, age, hours, microphone, Looking for            |
 
-- **Proposed:** hours overlap in the viewer's timezone, and "near" rank is a few
-  steps either way in the game's ordered rank options.
+- **Proposed:** hours overlap in the viewer's timezone.
+- **Decided:** two players' ranks are near within a tier's width of each other,
+  counted in steps along the game's ordered rank options. A tier is the options
+  whose labels differ only in a trailing division, Diamond 1 to Diamond 3, and
+  the game's commonest tier size is its width: 3 in Valorant, 4 in League and
+  Apex, 5 in Overwatch, Dota, HotS and Siege. So Diamond 3 and Ascendant 3 are
+  near, and Diamond 1 and Ascendant 2 are not. A ladder without divisions, such
+  as TF2's divisions, Faceit levels or CS2's Premier rating, counts one step.
+  The width is read from the labels, so relabelling a game's ranks changes it; a
+  width the seed states outright waits until usage shows the rule needs one.
 - **Proposed:** between two players, roles fit when the two of you can cover two
   different roles, which is all a duo needs, so the only miss is two players who
   each play one role and it is the same one. Two Mid mains can't duo, a Mid

@@ -7,6 +7,41 @@ Decided/Proposed/Open statuses are kept current as things settle.
 three are verified against Postgres and none has replaced
 `src/TeamTavern/Database/` yet.
 
+## The feed query
+
+`redesign/feed/feed.sql` is the one query behind a feed batch (brief 4, 7), in
+the positional `$n` form a Jarilo handler sends, ready to move into a server
+handler. The description is one `jsonb` parameter keyed by the game's field and
+option keys, as the prototype's draft is; the query's header documents it and
+the other five parameters. It returns 20 posts with their card data, the marks
+each card shows, the tier counts, whether more follow, and a cursor for the
+next batch, passed back as it came.
+
+- **It matches the prototype.** `redesign/feed/check.mjs` runs `compare` from
+  `game.js` in a browser and diffs it with the query's marks, misses and
+  compared counts over every sampled post of four Valorant descriptions (player,
+  group, community) and one League one: none differ. Run it after changing
+  either side, with the samples freshly exported.
+- **It holds up on the dump.** `redesign/feed/bench.sh` times it against
+  `redesign_import`. On Valorant, the largest feed (14.9k posts, 27 active), a
+  first batch takes 30–45 ms, about what today's player listing takes on the
+  same machine (26 ms); a batch that reaches the expired posts 90–200 ms, since
+  it ranks every post in the game. The Docker VM here counts a million rows
+  several times slower than a server does, so compare with a baseline measured
+  alongside, not with absolute times.
+- **What keeps it fast**, each explained where it is in the query: expired posts
+  are compared only once a batch reaches them, which the cursor's count of posts
+  shown decides; a post's answers to the game fields fold into two bitmasks, the
+  fields answered and the fields that fit; timezones are converted once each;
+  ages are compared as birthday bounds; and the marks and card are built for the
+  batch alone.
+- **What it leaves out.** The count of expired posts, since counting them would
+  rank them, and the divider shows none; and the header's active count, a
+  game-level figure for its own query.
+- `redesign/import/import.sh` now ends with `vacuum analyze`. Without statistics
+  the planner misjudged the answers by three orders of magnitude and the query
+  took seconds.
+
 ## Where things stand
 
 - **Design system** (brief 14): dark by default, tavern palette, Inter, Lucide.
@@ -80,10 +115,10 @@ three are verified against Postgres and none has replaced
   meets, and whichever way round. A microphone is compared only where the viewer
   gave one, since a player saying they use one and a group asking for one are
   both an answer, while silence is not.
-- **Rank closeness** (brief 7.2, Proposed, not yet settled): two players' ranks
-  are near within a tier of each other. A tier is the options whose labels
-  differ only in a trailing division, and the game's commonest tier is how many
-  steps that is: 3 in Valorant, 4 in League and Apex, 5 in Overwatch, Dota,
+- **Rank closeness** (brief 7.2, Decided): two players' ranks are near within a
+  tier's width of each other, read from the labels until usage shows the seed
+  should state it. A tier is the options whose labels differ only in a trailing
+  division, and the game's commonest tier is how many steps that is: 3 in Valorant, 4 in League and Apex, 5 in Overwatch, Dota,
   HotS and Siege. A ladder without divisions, such as TF2's divisions, Faceit
   levels or CS2's Premier rating, counts one step. **Near rank** in the
   prototype bar switches the feed to one step everywhere, to compare.
