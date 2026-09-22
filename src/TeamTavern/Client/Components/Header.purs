@@ -5,9 +5,10 @@ import Prelude
 import Async (Async)
 import Async as Async
 import Data.Array (find)
+import Data.Array as Array
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..), isJust, maybe)
-import Data.String (Pattern(..), stripPrefix, take, toUpper)
+import Data.String (Pattern(..), split, stripPrefix, take, toUpper)
 import Data.Tuple.Nested ((/\))
 import Data.Variant (onMatch)
 import Halogen as H
@@ -17,7 +18,7 @@ import Halogen.HTML.Properties as HP
 import Halogen.HTML.Properties.ARIA as HPA
 import Halogen.Hooks as Hooks
 import TeamTavern.Client.Components.Button (Size(..), Weight(..), buttonLink)
-import TeamTavern.Client.Components.CoverGrid (coverGrid)
+import TeamTavern.Client.Components.CoverGrid (coverGrid, feedPath)
 import TeamTavern.Client.Components.Menu (menuDivider, menuItem, menuLabel, menuLink, sheetMenu)
 import TeamTavern.Client.Components.Overlay (Presentation(..), overlay, useOverlay)
 import TeamTavern.Client.Components.Unread (badge)
@@ -171,7 +172,7 @@ component = Hooks.component \_ { path, visit } -> Hooks.do
             , menuLink (authPath "/signup" state.back) [ HH.text "Sign up" ]
             ]
 
-        body Games = [ coverGrid { games: state.games, mark: postsIn >>> postsMark } ]
+        body Games = [ coverGrid { games: state.games, href: feedPath, mark: postsIn >>> postsMark } ]
         body Notifications
             | phone = [ notificationsEmpty ]
             | otherwise =
@@ -212,12 +213,17 @@ component = Hooks.component \_ { path, visit } -> Hooks.do
 
         counted label word n = label <> if n > 0 then ", " <> show n <> " " <> word else ""
 
+        -- On a game's pages, New post knows the game (brief 6).
+        newPostPath = case Array.take 3 $ split (Pattern "/") path of
+            [ "", "games", handle ] -> "/post?game=" <> handle
+            _ -> "/post"
+
         newPost signedIn =
             HH.a
             [ HS.class_ "button button-outline button-small"
-            , HP.href "/post"
+            , HP.href newPostPath
             , HPA.label "New post"
-            , HE.onClick $ navigateWithEvent_ "/post"
+            , HE.onClick $ navigateWithEvent_ newPostPath
             ]
             [ Icons.plus
             , HH.span (if signedIn then [ HS.class_ "hide-phone" ] else []) [ HH.text "New post" ]

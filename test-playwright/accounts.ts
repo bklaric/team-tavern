@@ -41,3 +41,17 @@ export async function signOut(page: Page) {
     await expectPage(page, "/");
     await expect(page.getByRole("link", { name: "Sign in" })).toBeVisible();
 }
+
+// A player new to the site, signed up with a password and signed in, landing on the home
+// page. Their nickname is unique to the run, and so is their email.
+export async function signUp(page: Page, prefix = "P"): Promise<string> {
+    const nickname = unique(prefix);
+    await page.goto("/signup");
+    await page.getByLabel("Email").fill(`${nickname.toLowerCase()}@example.com`);
+    await page.getByLabel("Nickname").fill(nickname);
+    await page.getByLabel("Password").fill(password);
+    await page.getByRole("button", { name: "Create account" }).click();
+    await expectPage(page, "/");
+    await expect(page.getByRole("button", { name: "Account menu" })).toBeVisible();
+    return nickname;
+}

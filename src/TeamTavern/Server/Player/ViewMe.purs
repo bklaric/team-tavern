@@ -21,7 +21,10 @@ nicknameQuery = Query """
 
 gamesQuery :: Query
 gamesQuery = Query """
-    select game.handle, count(*)::int as posts
+    select
+        game.handle,
+        count(*)::int as posts,
+        array_agg(post.ilk order by array_position(array['player', 'group', 'community'], post.ilk)) as types
     from post
         join game on game.id = post.game_id
     where post.player_id = $1

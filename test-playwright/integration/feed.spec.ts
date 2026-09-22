@@ -56,7 +56,7 @@ test.describe("the feed", () => {
         ]);
         await expect(card(page, "Night Owls").locator(".fact-fit")).toHaveText(["Fits:Platinum 1 – Diamond 3", "Fits:Ranked"]);
         await expect(card(page, "ValorantTester").locator(".fact-miss")).toHaveText(["Doesn't fit:Casual"]);
-        await expect(page.getByRole("link", { name: "Publish post" })).toHaveAttribute("href", "/games/valorant/post/player");
+        await expect(page.getByRole("link", { name: "Publish post" })).toHaveAttribute("href", "/games/valorant/post/player?from=feed");
         await expect(page.getByRole("button", { name: "Load more" })).toHaveCount(0);
 
         // The description is kept for the game, so it outlasts the page.
@@ -109,7 +109,7 @@ test.describe("the feed", () => {
 
         await page.getByRole("button", { name: "Microphone", exact: true }).click();
         await expect(page.getByText("Update Night Owls with this", { exact: false })).toBeVisible();
-        await expect(page.getByRole("link", { name: "Update post" })).toHaveAttribute("href", "/games/valorant/post/group");
+        await expect(page.getByRole("link", { name: "Update post" })).toHaveAttribute("href", "/games/valorant/post/group?from=feed");
     });
 
     test("comes back from a post's page as it was left", async ({ page }) => {

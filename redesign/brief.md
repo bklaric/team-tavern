@@ -577,7 +577,7 @@ Type ─▶ Game ─▶ Post ─▶ Register or sign in ─▶ Matches
 
    - **Decided:** the player option keeps "looking for a group", the phrase players
      already use; its example says who finds the post.
-   - **Proposed:** no "Just browsing" choice. Browsing starts from a game cover,
+   - **Decided:** no "Just browsing" choice. Browsing starts from a game cover,
      on the home page (11.2) or in the header.
 2. **Game.** The cover grid, as in the header and home page.
 3. **Post.** One screen holds everything the post needs, beside a live preview of
@@ -666,17 +666,17 @@ Type ─▶ Game ─▶ Post ─▶ Register or sign in ─▶ Matches
    - **Decided:** a player who already has other posts is told, beside an account
      fact or contact they change here, that the change applies to all their posts.
      A player writing their first post isn't.
-   - **Proposed:** an account fact or contact the account already holds shows as
+   - **Decided:** an account fact or contact the account already holds shows as
      its value, "Croatia · From your account · Change", not as an input, and
      Change opens the input.
    - **Decided:** the preview expands with **Details ⌄**, as cards do in the feed
      (5.4). Most fields change the card itself; some, such as online hours, fill in
      only what the expansion shows.
-   - **Proposed:** player and group posts ask "How should people reach you?":
+   - **Decided:** player and group posts ask "How should people reach you?":
      message me on TeamTavern, add me on Discord or in game, or either, followed by
      the game's contact fields. A group may also give a Discord server invite and a
      website.
-   - **Proposed:** community posts ask "How do people join?": a Discord invite, a
+   - **Decided:** community posts ask "How do people join?": a Discord invite, a
      website, or "they message me first". No link is mandatory; 71% of today's
      communities have a Discord server and 30% a website, but some vet applicants
      or run on a game server.
@@ -691,9 +691,9 @@ Type ─▶ Game ─▶ Post ─▶ Register or sign in ─▶ Matches
      register step then asks only for a nickname; signing in to an existing
      account runs the existing-post check (Entry points) and skips the register
      step.
-   - **Proposed:** until the player has registered, the preview reads "Posted by
+   - **Decided:** until the player has registered, the preview reads "Posted by
      you".
-   - **Proposed:** the renewal and notification rules are stated above **Publish
+   - **Decided:** the renewal and notification rules are stated above **Publish
      post**: "Your post stays active for 30 days. We'll email you before it
      expires, and tell you when someone new fits." Communities read 90 days.
    - **Decided:** below a desktop the preview is opened on demand: a bar at the
@@ -737,7 +737,7 @@ Type ─▶ Game ─▶ Post ─▶ Register or sign in ─▶ Matches
 └───────────────────────────────────────────────────────────┘
 ```
 
-   - **Proposed:** with nothing matching well, the closest posts are shown with
+   - **Decided:** with nothing matching well, the closest posts are shown with
      what doesn't fit, and "We'll email you when someone fits."
 
 ## 7. Matching

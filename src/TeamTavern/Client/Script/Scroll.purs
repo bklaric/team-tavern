@@ -1,5 +1,6 @@
 module TeamTavern.Client.Script.Scroll
-    ( onScroll
+    ( focusFirstInvalid
+    , onScroll
     , scrollRestorationManual
     , scrollToId
     ) where
@@ -35,3 +36,7 @@ onScroll = onScrollImpl
 -- | drawn what it had: the browser would do it on `popstate`, before anything
 -- | is there to scroll to.
 foreign import scrollRestorationManual :: Effect Unit
+
+-- | Brings the first field marked invalid into view and focuses its control,
+-- | once the page has drawn the marks.
+foreign import focusFirstInvalid :: Effect Unit

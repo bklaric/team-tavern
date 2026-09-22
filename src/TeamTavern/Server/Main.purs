@@ -32,6 +32,10 @@ import TeamTavern.Server.Player.ConfirmEmail (confirmEmail)
 import TeamTavern.Server.Player.Register (register)
 import TeamTavern.Server.Player.ResendConfirmation (resendConfirmation)
 import TeamTavern.Server.Player.ViewMe (viewMe)
+import TeamTavern.Server.Post.CreatePost (createPost)
+import TeamTavern.Server.Post.DeletePost (deletePost)
+import TeamTavern.Server.Post.UpdatePost (updatePost)
+import TeamTavern.Server.Post.ViewOwnPost (viewOwnPost)
 import TeamTavern.Server.Session.End (end) as Session
 import TeamTavern.Server.Session.Start (start) as Session
 import Type.Proxy (Proxy(..))
@@ -115,6 +119,14 @@ runServer deployment discordApiUrl pool = serve (Proxy :: _ AllRoutes) serveOpti
         viewFeed pool handle cookies body
     , viewOwnDescriptions: \{ path: { handle }, cookies } ->
         viewOwnDescriptions pool handle cookies
+    , viewOwnPost: \{ path, cookies } ->
+        viewOwnPost pool path.handle path.type cookies
+    , createPost: \{ path, cookies, body } ->
+        createPost pool path.handle path.type cookies body
+    , updatePost: \{ path, cookies, body } ->
+        updatePost pool path.handle path.type cookies body
+    , deletePost: \{ path, cookies } ->
+        deletePost pool path.handle path.type cookies
     , viewCountries: const $
         viewCountries pool
     }

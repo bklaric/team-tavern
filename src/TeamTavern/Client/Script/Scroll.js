@@ -7,3 +7,13 @@ export const onScrollImpl = callback => () => {
 export const scrollRestorationManual = () => {
     history.scrollRestoration = "manual";
 };
+
+export const focusFirstInvalid = () => {
+    requestAnimationFrame(() => {
+        const field = document.querySelector(".field-invalid");
+        if (!field) return;
+        field.scrollIntoView({ block: "center" });
+        const control = field.querySelector("input, textarea, select");
+        if (control) control.focus({ preventScroll: true });
+    });
+};

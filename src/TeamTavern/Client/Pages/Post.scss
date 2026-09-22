@@ -1,0 +1,153 @@
+/* The steps of posting (brief 6): the type and the game, the post screen with
+   its preview beside it, and Matches. */
+
+.flow-wide {
+    max-width: 1120px;
+}
+
+/* Which game and type the step is about, with the ways to change them. */
+
+.step-context {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-1) var(--space-3);
+    color: var(--text-muted);
+    font-size: var(--size-12);
+    font-weight: 500;
+}
+
+.step-context img {
+    width: 24px;
+    height: 36px;
+    border-radius: var(--radius-small);
+    object-fit: cover;
+}
+
+.step-context strong {
+    color: var(--text);
+    font-weight: 600;
+}
+
+.step-context .button {
+    height: 24px;
+    font-size: var(--size-12);
+}
+
+@media (max-width: 639px) {
+    .step-context img {
+        display: none;
+    }
+
+    .step-context {
+        column-gap: var(--space-1);
+    }
+}
+
+/* The fields, and the card they make beside them. */
+
+.post-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 440px;
+    gap: var(--space-12);
+    align-items: start;
+}
+
+.post-layout .form {
+    max-width: 600px;
+}
+
+.preview-column {
+    position: sticky;
+    top: 80px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.preview-label {
+    display: flex;
+    justify-content: space-between;
+    color: var(--text-muted);
+    font-size: var(--size-12);
+    font-weight: 500;
+}
+
+.publish-footer {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-4);
+    padding-top: var(--space-6);
+    border-top: 1px solid var(--border);
+}
+
+.publish-footer p + p {
+    margin-top: var(--space-1);
+    color: var(--text-muted);
+}
+
+.action-bar {
+    display: none;
+}
+
+/* Below a desktop the preview leaves the side for a sheet opened on demand,
+   and Publish sits in a bar at the bottom. */
+@media (max-width: 1023px) {
+    .post-layout {
+        grid-template-columns: minmax(0, 1fr);
+        gap: var(--space-6);
+    }
+
+    .post-layout .form {
+        max-width: none;
+    }
+
+    .preview-column {
+        display: none;
+    }
+
+    .publish-footer .button {
+        display: none;
+    }
+
+    .action-bar {
+        position: sticky;
+        bottom: 0;
+        z-index: 5;
+        display: flex;
+        gap: var(--space-2);
+        padding: var(--space-3) var(--space-4);
+        border-top: 1px solid var(--border);
+        background: var(--floor);
+    }
+
+    .action-bar .button-primary {
+        flex: 1;
+    }
+
+    .flow-wide {
+        padding-bottom: var(--space-8);
+    }
+}
+
+/* Matches: the post is live, with the ember flame. */
+
+.live-heading {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.live-heading .icon {
+    width: 28px;
+    height: 28px;
+    color: var(--ember);
+}
+
+.flow-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3) var(--space-4);
+}

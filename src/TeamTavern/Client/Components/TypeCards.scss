@@ -1,0 +1,57 @@
+/* The type chooser, in the player's own words: a card per type, each with an
+   example, leading to the next step of posting. */
+
+.type-cards {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.type-card {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    padding: var(--space-4) var(--space-5);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    background: var(--table);
+    color: var(--text);
+}
+
+.type-card:hover {
+    border-color: var(--input-border);
+    color: var(--text);
+    text-decoration: none;
+}
+
+.type-card > .icon {
+    width: 24px;
+    height: 24px;
+    color: var(--text-muted);
+}
+
+.type-card > .icon:last-child {
+    width: 20px;
+    height: 20px;
+}
+
+.type-card-text {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.type-card-title {
+    font-size: var(--size-16);
+    font-weight: 600;
+}
+
+.type-card-example {
+    color: var(--text-muted);
+}
+
+.type-card-mine {
+    color: var(--text-muted);
+    font-size: var(--size-12);
+}

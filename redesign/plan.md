@@ -25,7 +25,7 @@ brief marks Proposed, the brief's status is updated in the same commit.
 - [x] 4. Accounts, sessions and the header
 - [x] 5. Game data and the card
 - [x] 6. The feed
-- [ ] 7. Post creation
+- [ ] 7. Post creation (7a done: the server and the signed-in flow)
 - [ ] 8. Post pages
 - [ ] 9. Home page
 - [ ] 10. Contact panel and renewal
@@ -498,6 +498,47 @@ What every later page needs signed in and out.
   New post on a game with an existing post shows the check; edit changes the
   card; delete with the count removes it. Both password and Discord sign-up on
   the way.
+- Split in two. 7a, done: the endpoints, the Type and Game steps, the post
+  screen with its preview, the existing-post check, Matches and `post.spec.ts`.
+  7b, next: the signed-out flow, which is the register step inside the flow,
+  Sign up with Discord beside the Discord input, and the choice between updating
+  the existing post and discarding the draft. Until 7b, Publish signed out goes
+  to `/signup?back=` the post screen, and the player presses Publish again once
+  back; `post.spec.ts`'s signed-out case asserts that detour and 7b replaces it.
+- Settled here:
+  - A player has one post per game and type, so all four endpoints are
+    addressed by them at `/api/games/:handle/own/:type`: `viewOwnPost` (`GET`,
+    the post if there is one, with its conversation count, and what the account
+    holds), `createPost` (`POST`, `exists` if there already is one), `updatePost`
+    (`PUT`, which moves `updated` to now) and `deletePost` (`DELETE`). The shapes
+    are `Routes/Shared/Post.purs`: the post's content, answered by field key as a
+    description is, and the account's facts and contacts, keyed by `game_contact`
+    kind. Validation names each wrong field (`Server/Post/Infrastructure/ValidatePost.purs`),
+    and a post keeps only what its type has.
+  - The account's facts and contacts are written only where the screen gives
+    them, so leaving one empty keeps what the account holds. The timezone is
+    written with every post, since the hours are in it.
+  - The screen asks every contact the game takes, not one game account, with
+    the tracker hint on the kind the game's trackers read. Their labels are
+    `Client/Shared/Contacts.purs`.
+  - `viewMe`'s games carry the types posted, which mark "Your post" on the Game
+    step and "You have one for …" on the Type step.
+  - Paths: `/post?game=<handle>` is the Type step knowing the game, which the
+    header's New post opens from a game's pages. `?from=edit` opens the post
+    screen on the post, and `?from=feed` on the post (or the draft) with the
+    feed's description over it; the feed's Edit and its Publish and Update post
+    use them. The screen drops `?from` once it has the draft, which it keeps in
+    `tt-draft-<game>-<type>`. Matches is `…/live`, with `?updated=1` after an
+    edit.
+  - Matches reads the post's description through `viewOwnDescriptions` and asks
+    the feed with it. A player post's fits are counted by type, following the
+    cursor while the batch still holds fits; a group's or community's is the
+    feed's own count. Nothing notifies yet: step 13 puts the fit query's call in
+    `createPost`.
+  - The preview's card is `Draft.toCard`; a card with id 0, which only a draft
+    has, names its post without linking to a page.
+  - `post.spec.ts` posts in League of Legends, since `feed.spec.ts` asserts
+    Valorant's feed whole.
 
 ### 8. Post pages
 

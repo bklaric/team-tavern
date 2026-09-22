@@ -12,6 +12,10 @@ import TeamTavern.Routes.Player.ConfirmEmail (ConfirmEmail)
 import TeamTavern.Routes.Player.RegisterPlayer (RegisterPlayer)
 import TeamTavern.Routes.Player.ResendConfirmation (ResendConfirmation)
 import TeamTavern.Routes.Player.ViewMe (ViewMe)
+import TeamTavern.Routes.Post.CreatePost (CreatePost)
+import TeamTavern.Routes.Post.DeletePost (DeletePost)
+import TeamTavern.Routes.Post.UpdatePost (UpdatePost)
+import TeamTavern.Routes.Post.ViewOwnPost (ViewOwnPost)
 import TeamTavern.Routes.Session.EndSession (EndSession)
 import TeamTavern.Routes.Session.StartSession (StartSession)
 
@@ -37,6 +41,12 @@ type FeedRoutes
     =   "viewFeed"            : ViewFeed
     <|> "viewOwnDescriptions" : ViewOwnDescriptions
 
+type PostRoutes
+    =   "viewOwnPost" : ViewOwnPost
+    <|> "createPost"  : CreatePost
+    <|> "updatePost"  : UpdatePost
+    <|> "deletePost"  : DeletePost
+
 type CountryRoutes
     =   "viewCountries" : ViewCountries
 
@@ -46,4 +56,5 @@ type AllRoutes
     <|> PlayerRoutes
     <|> GameRoutes
     <|> FeedRoutes
+    <|> PostRoutes
     <|> CountryRoutes

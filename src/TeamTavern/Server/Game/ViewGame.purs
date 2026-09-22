@@ -1,4 +1,4 @@
-module TeamTavern.Server.Game.ViewGame (viewGame) where
+module TeamTavern.Server.Game.ViewGame (loadGame, viewGame) where
 
 import Prelude
 

@@ -11,7 +11,7 @@ import Data.Variant (onMatch)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.Hooks as Hooks
-import TeamTavern.Client.Components.CoverGrid (coverGrid)
+import TeamTavern.Client.Components.CoverGrid (coverGrid, feedPath)
 import TeamTavern.Client.Script.RenderReady (appendRenderReadyUnavailable)
 import TeamTavern.Client.Shared.Fetch (fetchSimple)
 import TeamTavern.Client.Shared.Slot (Slot___)
@@ -42,7 +42,7 @@ component = Hooks.component \_ _ -> Hooks.do
         , HH.h2_ [ HH.text "Browse a game" ]
         , case games of
             Loading -> HH.div_ []
-            Loaded games' -> coverGrid { games: games', mark: const Nothing }
+            Loaded games' -> coverGrid { games: games', href: feedPath, mark: const Nothing }
             Failed -> HH.p_ [ HH.text "There has been an error loading the games." ]
         ]
 

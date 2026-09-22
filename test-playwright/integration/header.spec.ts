@@ -16,6 +16,13 @@ test.describe("signed out, the header", () => {
     });
 });
 
+test("New post on a game's pages knows the game", async ({ page }) => {
+    await page.goto("/games/apex");
+
+    await expect(page.getByRole("banner").getByRole("link", { name: "New post" }))
+        .toHaveAttribute("href", "/post?game=apex");
+});
+
 // The seed gives ValorantTester one Valorant post and GroupTester two, a group and a
 // community (`stacks/test-seed/players.sql`).
 test.describe("Games", () => {

@@ -1,4 +1,4 @@
-module TeamTavern.Client.Components.Card (Viewer, card, flagText) where
+module TeamTavern.Client.Components.Card (Viewer, card, flagText, tierOf) where
 
 import Prelude
 
@@ -276,7 +276,10 @@ card { game, viewer, post, marked, expanded, preview, onToggle, onContact, onEdi
         , if expanded then Just "card-expanded" else Nothing
         ]
     heading = HH.div [ HS.class_ "card-heading" ] $ catMaybes
-        [ Just $ HH.a [ HS.class_ "card-name", HP.href href, HE.onClick $ navigateWithEvent_ href ] [ HH.text name ]
+        -- A draft on the post screen has no page yet, nor an id.
+        [ Just if post.id == 0
+            then HH.span [ HS.class_ "card-name" ] [ HH.text name ]
+            else HH.a [ HS.class_ "card-name", HP.href href, HE.onClick $ navigateWithEvent_ href ] [ HH.text name ]
         , Just $ HH.span [ HS.class_ "card-type" ] $ typeLabel post.type
         , slotsText post <#> \slots -> HH.span [ HS.class_ "card-slots tabular" ] [ HH.text slots ]
         , if post.own then Just $ HH.span [ HS.class_ "card-own" ] [ HH.text "Your post" ] else Nothing
@@ -340,3 +343,12 @@ card { game, viewer, post, marked, expanded, preview, onToggle, onContact, onEdi
     , if null detailRows then Nothing else Just $ HH.div [ HS.class_ "card-details" ] detailRows
     , Just footer
     ]
+
+-- | Which tier of the feed a card's marks put it in: 0 fits, 1 misses one
+-- | thing, 2 misses more. A card none of the description applies to goes last.
+tierOf :: CardRow -> Int
+tierOf post = let
+    marks = Object.values post.marks
+    misses = marks # filter (notEq "fit") # length
+    in
+    if null marks then 2 else min misses 2

@@ -1,4 +1,4 @@
-module TeamTavern.Server.Country.ViewCountries (viewCountries) where
+module TeamTavern.Server.Country.ViewCountries (loadCountries, viewCountries) where
 
 import Prelude
 

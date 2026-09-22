@@ -5,7 +5,7 @@ import Prelude
 import Async (Async)
 import Async as Async
 import Control.Alt ((<|>))
-import Data.Array (concatMap, elem, filter, find, foldl, index, length, null, snoc, sortBy)
+import Data.Array (concatMap, elem, filter, find, foldl, index, null, snoc, sortBy)
 import Data.Foldable (for_)
 import Data.Int (round)
 import Data.Either (Either(..))
@@ -19,7 +19,6 @@ import Effect.Class (liftEffect)
 import Effect.Now (now)
 import Effect.Ref (Ref)
 import Effect.Ref as Ref
-import Foreign.Object as Object
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
@@ -29,7 +28,7 @@ import Halogen.HTML.Properties.ARIA as HPA
 import Halogen.Hooks as Hooks
 import Halogen.Subscription as Subscription
 import TeamTavern.Client.Components.Button (Size(..), Weight(..), button)
-import TeamTavern.Client.Components.Card (Viewer, card)
+import TeamTavern.Client.Components.Card (Viewer, card, tierOf)
 import TeamTavern.Client.Components.Divider (divider, tierHeading)
 import TeamTavern.Client.Components.Overlay (Presentation(..), useOverlay)
 import TeamTavern.Client.Components.UsePhone (usePhone)
@@ -117,15 +116,6 @@ segments =
 
 olderPosts :: String
 olderPosts = "Older posts · they may no longer be looking"
-
--- A card's marks say how it fits: a tier counts its misses, and a post none of
--- the description applies to goes to the last tier.
-tierOf :: CardRow -> Int
-tierOf post = let
-    marks = Object.values post.marks
-    misses = marks # filter (notEq "fit") # length
-    in
-    if null marks then 2 else min misses 2
 
 -- The languages the loaded posts use, most used first, then every other.
 languagesByUse :: Array CardRow -> Array String
@@ -331,7 +321,7 @@ component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
             ]
             [ HH.text label ]
             where
-            path = "/games/" <> handle <> "/post/" <> type_
+            path = "/games/" <> handle <> "/post/" <> type_ <> "?from=feed"
 
         prompt icon quiet content =
             HH.div [ HS.class_ $ "publish-prompt" <> if quiet then " publish-prompt-quiet" else "" ]
@@ -398,7 +388,7 @@ component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
             , preview: false
             , onToggle: \(event :: MouseEvent) -> toggleCardOf event post.id
             , onContact: pure unit
-            , onEdit: navigate_ $ "/games/" <> handle <> "/post/" <> post.type
+            , onEdit: navigate_ $ "/games/" <> handle <> "/post/" <> post.type <> "?from=edit"
             , onRenew: pure unit
             }
 

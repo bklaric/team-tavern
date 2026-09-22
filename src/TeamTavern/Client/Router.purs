@@ -23,6 +23,10 @@ import TeamTavern.Client.Pages.Feed (FeedCache, feed)
 import TeamTavern.Client.Pages.ForgotPassword (forgotPassword)
 import TeamTavern.Client.Pages.Home (home)
 import TeamTavern.Client.Pages.Placeholder (placeholder)
+import TeamTavern.Client.Pages.Post.Game (postGame)
+import TeamTavern.Client.Pages.Post.Matches (matches)
+import TeamTavern.Client.Pages.Post.Screen (postScreen)
+import TeamTavern.Client.Pages.Post.Type (postType)
 import TeamTavern.Client.Pages.Privacy (privacyPolicy)
 import TeamTavern.Client.Pages.ResetPassword (resetPassword)
 import TeamTavern.Client.Pages.SignIn (signIn)
@@ -69,6 +73,10 @@ type ChildSlots =
     , confirmEmail :: Slot___
     , design :: Slot___
     , feed :: Slot__I Int
+    , postType :: Slot__I Int
+    , postGame :: Slot__I Int
+    , postScreen :: Slot__I Int
+    , matches :: Slot__I Int
     )
 
 route :: String -> State
@@ -121,6 +129,10 @@ description = "Find players and groups for your game on TeamTavern. Say who you'
 
 renderPage :: ∀ action left. Visit -> H.ComponentHTML action ChildSlots (Async left)
 renderPage { page: Feed { handle }, visit, restore, cache } = feed visit { handle, restore, cache }
+renderPage { page: PostType, visit } = postType visit
+renderPage { page: PostGame { type_ }, visit } = postGame visit type_
+renderPage { page: PostScreen { handle, type_ }, visit } = postScreen visit { handle, type_ }
+renderPage { page: Matches { handle, type_ }, visit } = matches visit { handle, type_ }
 renderPage { page } = renderPage' page
 
 renderPage' :: ∀ action left. State -> H.ComponentHTML action ChildSlots (Async left)
