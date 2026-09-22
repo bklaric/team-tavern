@@ -2,7 +2,8 @@ module TeamTavern.Server.Session.Start where
 
 import Prelude
 
-import Async (Async)
+import Async (Async, foreach)
+import Data.Maybe (Maybe(..))
 import Data.Newtype (wrap)
 import Data.Variant (match)
 import Jarilo (noContent)
@@ -14,6 +15,7 @@ import TeamTavern.Server.Infrastructure.EnsureNotSignedIn (ensureNotSignedIn)
 import TeamTavern.Server.Infrastructure.FetchDiscordUser (DiscordApiUrl, fetchDiscordUser)
 import TeamTavern.Server.Infrastructure.Postgres (transaction)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
+import TeamTavern.Server.Player.Infrastructure.SendConfirmation (sendConfirmation)
 import TeamTavern.Server.Session.Domain.Token as Token
 import TeamTavern.Server.Session.Start.CheckDiscord (checkDiscord)
 import TeamTavern.Server.Session.Start.CheckPassword (checkPassword)
@@ -29,20 +31,25 @@ start deployment discordApiUrl pool cookies body =
     -- Generate session token.
     token <- Token.generate
 
-    pool # transaction \client -> do
-        {id, nickname} <- body # match
+    {id, nickname, confirmation} <- pool # transaction \client -> do
+        {id, nickname, confirmation} <- body # match
             { password: \bodyEmail -> do
                 -- Check if password hash matches.
-                checkPassword bodyEmail client
+                checkPassword bodyEmail client <#> \{id, nickname} ->
+                    {id, nickname, confirmation: Nothing}
             , discord: \{accessToken} -> do
                 -- Fetch user from Discord API.
                 discordUser <- fetchDiscordUser discordApiUrl accessToken
-                -- Check if they already have an account, filling in a missing contact email.
+                -- Check if they already have an account, filling in a missing email.
                 checkDiscord client discordUser
             }
 
         -- Create a new session.
         createSession id token client
 
-        pure $ noContent $ setCookieHeaderFull deployment
-            {id: wrap id, nickname: wrap nickname, token}
+        pure {id, nickname, confirmation}
+
+    foreach confirmation $ sendConfirmation deployment
+
+    pure $ noContent $ setCookieHeaderFull deployment
+        {id: wrap id, nickname: wrap nickname, token}

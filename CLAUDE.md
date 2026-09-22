@@ -159,17 +159,26 @@ server at it. The stub answers the user endpoint with whatever user the access
 token names, the URI-encoded JSON of that user, so a spec can sign up and sign in
 with Discord as anyone, verified email or not. The browser half of the flow never
 reaches Discord either: a spec answers the pages' redirect to Discord's
-authorize URL itself, sending the browser straight back with such a token, and
-checks the scope and redirect URI the page asked for.
+authorize URL itself, sending the browser straight back with such a token and
+the `state` the page sent, and checks the scope and redirect URI the page asked
+for.
+
+Every Discord button sends the browser back to `/signin`, the one redirect URI
+registered on the Discord app for each origin, and what the player was doing
+rides along in session storage. The sign-in page signs in a player Discord
+knows, and asks one it doesn't for a nickname, which finishes registering them.
 
 What no test reaches is Discord itself: the redirect URIs registered on the
 Discord app and the real user endpoint. Before a deploy that touches sign-in,
-check them by hand against the development stack, whose `http://localhost:8000`
-pages are registered redirect URIs, with a real Discord account:
+check them by hand against the development stack, whose
+`http://localhost:8000/signin` is a registered redirect URI, with a real Discord
+account:
 
-1. Create an account with Discord at <http://localhost:8000/register>. It lands on
-   onboarding, and Change email on the account page shows the Discord address.
-2. Sign out, sign in with Discord at <http://localhost:8000/signin>, and land signed in.
+1. At <http://localhost:8000/signup>, Continue with Discord. The sign-in page
+   asks for a nickname, prefilled with the Discord username, and Continue lands
+   on the home page signed in.
+2. Sign out, Continue with Discord at <http://localhost:8000/signin>, and land
+   signed in without being asked for a nickname.
 3. `docker logs node` shows no Discord errors for either.
 
 `stacks/test-seed/seed.sh` builds the database on the first boot of the Postgres

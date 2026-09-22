@@ -14,6 +14,7 @@ cp src/TeamTavern/Client/Static/index.html dist-client/index.html
 cp src/TeamTavern/Client/Static/index.prerender.html dist-client/index.prerender.html
 cp src/TeamTavern/Client/Static/ads.txt dist-client/ads.txt
 cp src/TeamTavern/Client/Static/favicon.svg dist-client/favicon.svg
+cp src/TeamTavern/Client/Static/logo-mark.svg dist-client/logo-mark.svg
 cp src/TeamTavern/Client/Static/logo-512.png dist-client/logo-512.png
 cp -r src/TeamTavern/Client/Static/Images/Games/. dist-client/images/games/
 cp src/TeamTavern/Client/Static/Fonts/* dist-client/fonts/

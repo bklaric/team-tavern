@@ -8,13 +8,10 @@ import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
 import Data.Variant (onMatch)
-import Effect.Class (class MonadEffect)
 import Halogen as H
 import Halogen.HTML as HH
-import Halogen.HTML.Events as HE
-import Halogen.HTML.Properties as HP
 import Halogen.Hooks as Hooks
-import TeamTavern.Client.Script.Navigate (navigateWithEvent_)
+import TeamTavern.Client.Components.CoverGrid (coverGrid)
 import TeamTavern.Client.Script.RenderReady (appendRenderReadyUnavailable)
 import TeamTavern.Client.Shared.Fetch (fetchSimple)
 import TeamTavern.Client.Shared.Slot (Slot___)
@@ -24,14 +21,6 @@ import TeamTavern.Routes.Game.ViewGames as ViewGames
 import Type.Proxy (Proxy(..))
 
 data Games = Loading | Loaded ViewGames.OkContent | Failed
-
-cover :: ∀ slots m. MonadEffect m =>
-    ViewGames.OkGameContent -> HH.HTML slots (Hooks.HookM m Unit)
-cover { handle, title } =
-    HH.a [ HS.class_ "cover", HP.href path, HE.onClick $ navigateWithEvent_ path ]
-    [ HH.img [ HP.src $ "/images/games/" <> handle <> ".webp", HP.alt title ] ]
-    where
-    path = "/games/" <> handle
 
 component :: ∀ query input output left. H.Component query input output (Async left)
 component = Hooks.component \_ _ -> Hooks.do
@@ -53,7 +42,7 @@ component = Hooks.component \_ _ -> Hooks.do
         , HH.h2_ [ HH.text "Browse a game" ]
         , case games of
             Loading -> HH.div_ []
-            Loaded games' -> HH.div [ HS.class_ "cover-grid" ] $ games' <#> cover
+            Loaded games' -> coverGrid { games: games', mark: const Nothing }
             Failed -> HH.p_ [ HH.text "There has been an error loading the games." ]
         ]
 

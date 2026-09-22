@@ -3,15 +3,18 @@ module TeamTavern.Client.Components.Menu
     , menuItem
     , menuItemDestructive
     , menuLabel
+    , menuLink
     , sheetMenu
     ) where
 
 import Prelude
 
+import Effect.Class (class MonadEffect)
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Halogen.HTML.Properties.ARIA as HPA
+import TeamTavern.Client.Script.Navigate (navigateWithEvent_)
 import TeamTavern.Client.Snippets.Class as HS
 
 -- The rows of a menu: the body of a dropdown with the class "menu" and role
@@ -31,6 +34,11 @@ item class_ onClick =
 
 menuItem :: ∀ w i. i -> Array (HH.HTML w i) -> HH.HTML w i
 menuItem = item "menu-item"
+
+-- A row that goes to a page of the site without reloading it.
+menuLink :: ∀ w m. MonadEffect m => String -> Array (HH.HTML w (m Unit)) -> HH.HTML w (m Unit)
+menuLink path =
+    HH.a [ HS.class_ "menu-item", HP.href path, HPA.role "menuitem", HE.onClick $ navigateWithEvent_ path ]
 
 menuItemDestructive :: ∀ w i. i -> Array (HH.HTML w i) -> HH.HTML w i
 menuItemDestructive = item "menu-item menu-item-destructive"

@@ -1,5 +1,5 @@
 module TeamTavern.Server.Infrastructure.FetchDiscordUser
-    (DiscordApiUrl(..), DiscordUserContent, fetchDiscordUser, verifiedEmail) where
+    (DiscordApiUrl(..), DiscordUserContent, discordEmail, discordTag, fetchDiscordUser) where
 
 import Prelude
 
@@ -31,14 +31,21 @@ type DiscordUserContent =
     , verified :: Maybe Boolean
     }
 
--- | Discord vouches for owning the address, not for its shape, so it passes the
--- | same validation as an address a player types in.
-verifiedEmail :: DiscordUserContent -> Maybe String
-verifiedEmail { email: Just email, verified: Just true } =
+-- | The address Discord gives, and whether Discord verified it, which confirms
+-- | it. Discord vouches for owning the address, not for its shape, so it passes
+-- | the same validation as an address a player types in.
+discordEmail :: DiscordUserContent -> Maybe { email :: String, confirmed :: Boolean }
+discordEmail { email: Just email, verified } =
     (validateEmail email :: ValidatedTerrorNeaVar (email :: {}) Email)
     # Validated.hush
-    <#> toString
-verifiedEmail _ = Nothing
+    <#> \valid -> { email: toString valid, confirmed: verified == Just true }
+discordEmail _ = Nothing
+
+-- | What other players type to add the player on Discord: the username alone
+-- | since Discord dropped discriminators, which it now reports as "0".
+discordTag :: DiscordUserContent -> String
+discordTag { username, discriminator: "0" } = username
+discordTag { username, discriminator } = username <> "#" <> discriminator
 
 fetchDiscordUser :: forall responses.
     DiscordApiUrl -> String -> Async (InternalTerror_ responses) DiscordUserContent

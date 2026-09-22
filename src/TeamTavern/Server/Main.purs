@@ -24,6 +24,10 @@ import TeamTavern.Server.Infrastructure.Log (logStamped, print)
 import TeamTavern.Server.Infrastructure.Sendgrid (setApiKey)
 import TeamTavern.Server.Password.ForgotPassword (forgotPassword)
 import TeamTavern.Server.Password.ResetPassword (resetPassword)
+import TeamTavern.Server.Player.ConfirmEmail (confirmEmail)
+import TeamTavern.Server.Player.Register (register)
+import TeamTavern.Server.Player.ResendConfirmation (resendConfirmation)
+import TeamTavern.Server.Player.ViewMe (viewMe)
 import TeamTavern.Server.Session.End (end) as Session
 import TeamTavern.Server.Session.Start (start) as Session
 import Type.Proxy (Proxy(..))
@@ -85,12 +89,20 @@ runServer :: Deployment -> DiscordApiUrl -> Pool -> Effect Unit
 runServer deployment discordApiUrl pool = serve (Proxy :: _ AllRoutes) serveOptions
     { startSession: \{ cookies, body } ->
         Session.start deployment discordApiUrl pool cookies body
-    , endSession: const
-        Session.end
+    , endSession: \{ cookies } ->
+        Session.end pool cookies
     , forgotPassword: \{ cookies, body } ->
         forgotPassword deployment pool cookies body
     , resetPassword: \{ cookies, body } ->
         resetPassword pool cookies body
+    , registerPlayer: \{ cookies, body } ->
+        register deployment discordApiUrl pool cookies body
+    , viewMe: \{ cookies } ->
+        viewMe pool cookies
+    , confirmEmail: \{ body } ->
+        confirmEmail pool body
+    , resendConfirmation: \{ cookies } ->
+        resendConfirmation deployment pool cookies
     , viewGames: const $
         viewGames pool
     }

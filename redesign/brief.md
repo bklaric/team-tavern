@@ -709,11 +709,11 @@ Type ─▶ Game ─▶ Post ─▶ Register or sign in ─▶ Matches
      with Discord on the post screen sees only the nickname prompt here; one who
      continues with Discord here goes on to the same prompt. Discord prefills it,
      and the player can edit it.
-   - **Proposed:** registering with Discord fills the Discord contact with the
+   - **Decided:** registering with Discord fills the Discord contact with the
      username and the email with the address Discord gives, both of which the
      player may then change. Signing in with Discord fills an email the account
      lacks and never replaces one, since the player may have chosen another.
-   - **Proposed:** an address is confirmed either by Discord, which says whether
+   - **Decided:** an address is confirmed either by Discord, which says whether
      it verified it, or by a link the site emails: a typed address, an address
      Discord has not verified, and a changed one all get the link. Until it is
      clicked, that link is the only email the site sends to the address. Nothing
@@ -1274,7 +1274,7 @@ Account menu
 - **Decided:** the account menu holds **Your posts**, **Account** and **Sign
   out**, under the player's nickname. Your posts repeats the logo's destination,
   since nobody expects the logo to lead to their own posts.
-- **Proposed:** **Sign out** lands on the home page: the page the player was on
+- **Decided:** **Sign out** lands on the home page: the page the player was on
   may have been theirs, and signed out the home page is what the site is for.
 - **Decided:** on a phone the logo shrinks to its mark, and New post stays
   visible: with its label signed out, and as the plus alone signed in, where the

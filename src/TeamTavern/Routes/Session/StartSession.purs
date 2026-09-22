@@ -19,8 +19,10 @@ type RequestContent = Variant
     , discord :: RequestContentDiscord
     )
 
+-- | `unknownDiscord` carries the Discord username, which the nickname prompt
+-- | offers to a player registering with Discord.
 type BadContent = Variant
     ( unknownPlayer :: {}
     , wrongPassword :: {}
-    , unknownDiscord :: {}
+    , unknownDiscord :: { nickname :: String }
     )

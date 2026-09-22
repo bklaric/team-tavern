@@ -22,7 +22,7 @@ brief marks Proposed, the brief's status is updated in the same commit.
 - [x] 1. Database in place
 - [x] 2. Clear the ground
 - [x] 3. Design system in the client
-- [ ] 4. Accounts, sessions and the header
+- [x] 4. Accounts, sessions and the header
 - [ ] 5. Game data and the card
 - [ ] 6. The feed
 - [ ] 7. Post creation
@@ -288,6 +288,43 @@ What every later page needs signed in and out.
   in, the nickname prompt, sign out landing home); `header.spec.ts` (menus
   open one at a time, Escape, Games grid marks the games posted in, once step
   7 gives a post to mark).
+- Settled here:
+  - Every Discord round trip returns to `/signin`, the redirect URI the Discord
+    app already has for each origin, with a random `state` checked on return.
+    Where the player was headed rides in session storage (`tt-discord`), so
+    step 7's Sign up with Discord passes the post screen's path and keeps its
+    draft in local storage as the description bar does. `/signin` signs in a
+    player Discord knows; for one it doesn't, `startSession` answers
+    `unknownDiscord` with the Discord username, and the page shows the nickname
+    prompt, which registers them. `/signup` has no Discord return of its own.
+  - The account pages return through `?back=`, a path on the site that is never
+    an account page (`Client/Script/Back.purs`); the header's Sign in and Sign up
+    carry the page they are opened from.
+  - `viewMe` is `GET /api/me`: the nickname, both unread counts (zero until
+    steps 11 and 13) and each game the player has posts in with how many. The
+    header shows the cookie's nickname at once and replaces it with `viewMe`,
+    read again on every navigation, which the router counts so even a link to
+    the open page closes the menu. A refused session shows signed out.
+  - Registration stores a Discord address that validates whether or not
+    Discord verified it, confirmed only if verified, and the Discord tag as
+    the username (`name#1234` where Discord still reports a discriminator).
+    Sign-in fills a missing email by the same rule. A typed or unverified
+    address gets an `email_confirmation` row and the confirmation email; a
+    failed send is logged and doesn't fail the request.
+  - `confirmEmail` (`POST /api/confirm-email`) uses a link once, doesn't
+    expire, works signed out, and confirms only while the player's email is
+    still the address it was sent to. `resendConfirmation`
+    (`POST /api/confirm-email/resend`) has no page until step 15.
+  - Sign-in takes the email or the nickname, as the server always has.
+  - Signing out revokes the session row as well as clearing the cookies.
+  - The header's covers come from `Client/Components/CoverGrid.purs`, which the
+    home page uses too; the account pages are `Flow.purs` columns
+    (`.flow`, `.flow-narrow`, `.flow-lead`, `.form-tight` from `post.html`).
+  - Hooks effects hold the component's next render until they finish, so the
+    header forks its fetches; a page whose clicks must answer while it loads
+    does the same.
+  - No spec follows the confirmation or reset link: their nonces reach only the
+    node log until step 14's mail stub, whose `email.spec.ts` covers both.
 
 ## Phase 2: listings
 
@@ -513,7 +550,9 @@ What every later page needs signed in and out.
   configuration is untouched.
 - Specs: `email.spec.ts`: a message sends one email and a second message none;
   the renewal email's link renews signed out and lands on the feed; the
-  confirmation link confirms; a switch off sends nothing.
+  confirmation link confirms, once, and not after the email has changed; the
+  password reset link sets a password that then signs in; a switch off sends
+  nothing.
 
 ### 15. Account page
 
@@ -544,9 +583,9 @@ What every later page needs signed in and out.
   `noindex` on an expired post's render.
 - Caddy redirects for the old paths worth keeping: `/games/:handle/players`
   and `/teams` to `/games/:handle`; everything else old is a 404.
-- Discord: the new redirect URIs (`/signup`, `/signin`, the post screen) are
-  registered on the Discord app for the dev stack, and the manual check in
-  `CLAUDE.md` run.
+- Discord: `/signin` is the one redirect URI (step 4) and already registered;
+  the manual check in `CLAUDE.md` is run against the dev stack once its
+  database is the new model.
 
 ### 17. Ads
 

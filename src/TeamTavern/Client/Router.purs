@@ -10,10 +10,16 @@ import Foreign (Foreign)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.Hooks as Hooks
+import TeamTavern.Client.Components.Header (header)
+import TeamTavern.Client.Pages.ConfirmEmail (confirmEmail)
 import TeamTavern.Client.Pages.Design (design)
+import TeamTavern.Client.Pages.ForgotPassword (forgotPassword)
 import TeamTavern.Client.Pages.Home (home)
 import TeamTavern.Client.Pages.Placeholder (placeholder)
 import TeamTavern.Client.Pages.Privacy (privacyPolicy)
+import TeamTavern.Client.Pages.ResetPassword (resetPassword)
+import TeamTavern.Client.Pages.SignIn (signIn)
+import TeamTavern.Client.Pages.SignUp (signUp)
 import TeamTavern.Client.Script.Meta (setMeta, setMetaRobots)
 import TeamTavern.Client.Script.RenderReady (appendRenderReadyNotFound)
 import TeamTavern.Client.Shared.Slot (Slot___)
@@ -43,7 +49,16 @@ data State
     | Design
     | NotFound
 
-type ChildSlots = (home :: Slot___, design :: Slot___)
+type ChildSlots =
+    ( header :: Slot___
+    , home :: Slot___
+    , signUp :: Slot___
+    , signIn :: Slot___
+    , forgotPassword :: Slot___
+    , resetPassword :: Slot___
+    , confirmEmail :: Slot___
+    , design :: Slot___
+    )
 
 route :: String -> State
 route path =
@@ -93,30 +108,42 @@ name NotFound = "Page could not be found."
 description :: String
 description = "Find players and groups for your game on TeamTavern. Say who you're looking for and see who fits."
 
-render :: ∀ action left. State -> H.ComponentHTML action ChildSlots (Async left)
-render Empty = HH.div_ []
-render Home = home
-render Privacy = privacyPolicy
-render Design = design
-render page = placeholder $ name page
+renderPage :: ∀ action left. State -> H.ComponentHTML action ChildSlots (Async left)
+renderPage Empty = HH.div_ []
+renderPage Home = home
+renderPage SignUp = signUp
+renderPage SignIn = signIn
+renderPage ForgotPassword = forgotPassword
+renderPage ResetPassword = resetPassword
+renderPage ConfirmEmail = confirmEmail
+renderPage Privacy = privacyPolicy
+renderPage Design = design
+renderPage page = placeholder $ name page
+
+-- Every navigation is counted, even to the page already open, so the header
+-- reads who is signed in on each.
+type Visit = { page :: State, path :: String, visit :: Int }
+
+render :: ∀ action left. Visit -> H.ComponentHTML action ChildSlots (Async left)
+render { page, path, visit } = HH.div_ [ header { path, visit }, renderPage page ]
 
 router :: ∀ input output left. Foreign -> String -> H.Component Query input output (Async left)
 router _ initialPath = Hooks.component \{ queryToken } _ -> Hooks.do
-    page /\ pageId <- Hooks.useState Empty
+    visit /\ visitId <- Hooks.useState { page: Empty, path: "", visit: 0 }
 
     let changeRoute path = do
-            let page' = route path
-            case page' of
+            let page = route path
+            case page of
                 Home -> setMeta "TeamTavern" description
                 NotFound -> do
                     appendRenderReadyNotFound
                     setMeta "Page not found | TeamTavern" description
-                _ -> setMeta (name page' <> " | TeamTavern") description
+                _ -> setMeta (name page <> " | TeamTavern") description
             -- The components page is a tool for building the site, not a page of it.
-            setMetaRobots case page' of
+            setMetaRobots case page of
                 Design -> "noindex"
                 _ -> "index, follow"
-            Hooks.put pageId page'
+            Hooks.modify_ visitId \{ visit: count } -> { page, path, visit: count + 1 }
 
     Hooks.useLifecycleEffect do
         changeRoute initialPath
@@ -126,4 +153,4 @@ router _ initialPath = Hooks.component \{ queryToken } _ -> Hooks.do
         changeRoute path
         pure $ Just send
 
-    Hooks.pure $ render page
+    Hooks.pure $ render visit

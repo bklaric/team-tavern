@@ -1,0 +1,51 @@
+/* The cover grid: the game picker in the header, on the home page and in
+   posting. Covers carry no caption: the logo on each names the game, and the
+   title is the image's alt text. */
+
+.cover-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: var(--space-4);
+}
+
+@media (max-width: 639px) {
+    .cover-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: var(--space-3);
+    }
+}
+
+.cover {
+    position: relative;
+    display: block;
+    border-radius: var(--radius-card);
+}
+
+.cover img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 2 / 3;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    background: var(--raised);
+    object-fit: cover;
+}
+
+.cover:hover img {
+    border-color: var(--text-muted);
+}
+
+/* A note about the player's own posts sits on the cover, so no tile grows
+   taller than its row. */
+.cover-mark {
+    position: absolute;
+    left: var(--space-2);
+    bottom: var(--space-2);
+    padding: 2px var(--space-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-small);
+    background: color-mix(in srgb, var(--floor) 88%, transparent);
+    color: var(--text);
+    font-size: var(--size-12);
+    font-weight: 500;
+}
