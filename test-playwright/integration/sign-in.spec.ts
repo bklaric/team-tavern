@@ -1,5 +1,6 @@
 import { expect, Page, test } from "@playwright/test";
 import { expectSignedInAs, password, signIn, signOut, submitPasswordSignIn, unique } from "../accounts";
+import { expectPage } from "../pages";
 
 type DiscordUser = { id: string, username: string, email: string | null, verified: boolean };
 
@@ -50,7 +51,7 @@ async function signUpWithDiscord(page: Page, discord: FakeDiscord, nickname = un
     await expect(page.getByLabel("Nickname")).toHaveValue(discord.user.username);
     await page.getByLabel("Nickname").fill(nickname);
     await page.getByRole("button", { name: "Continue" }).click();
-    await expect(page).toHaveURL(url => url.pathname === "/");
+    await expectPage(page, "/");
     return nickname;
 }
 
@@ -58,10 +59,11 @@ test("signing up with a password returns the player to the page they came from",
     const nickname = unique("P");
     await page.goto("/games/valorant");
     await page.getByRole("link", { name: "Sign up" }).click();
+    await expectPage(page, "/signup");
 
     await fillSignUp(page, `${unique("signup")}@example.com`, nickname);
 
-    await expect(page).toHaveURL(url => url.pathname === "/games/valorant");
+    await expectPage(page, "/games/valorant");
     await expectSignedInAs(page, nickname);
 });
 
@@ -82,13 +84,13 @@ test("signing up says what is wrong with each field", async ({ page }) => {
 
     await fillSignUp(page, `${unique("taken")}@example.com`, "valoranttester");
     await expect(page.getByText("This nickname is taken. Please pick another one.")).toBeVisible();
-    await expect(page).toHaveURL(url => url.pathname === "/signup");
+    await expectPage(page, "/signup");
 });
 
 test("signing in with a password takes the email or the nickname", async ({ page }) => {
     for (const emailOrNickname of ["new@example.com", "newtester"]) {
         await submitPasswordSignIn(page, emailOrNickname);
-        await expect(page).toHaveURL(url => url.pathname === "/");
+        await expectPage(page, "/");
         await expectSignedInAs(page, "NewTester");
         await signOut(page);
     }
@@ -105,11 +107,12 @@ test("signing in with a password says which half is wrong", async ({ page }) => 
 test("signing in from the header returns the player to the page they came from", async ({ page }) => {
     await page.goto("/games/apex");
     await page.getByRole("link", { name: "Sign in" }).click();
+    await expectPage(page, "/signin");
     await page.getByLabel("Email or nickname").fill("apex@example.com");
     await page.getByLabel("Password").fill(password);
     await page.getByRole("button", { name: "Sign in", exact: true }).click();
 
-    await expect(page).toHaveURL(url => url.pathname === "/games/apex");
+    await expectPage(page, "/games/apex");
     await expectSignedInAs(page, "ApexTester");
 });
 
@@ -118,13 +121,14 @@ test("signing up with Discord asks Discord for the email and comes back through 
     const nickname = unique("D");
     await page.goto("/games/valorant");
     await page.getByRole("link", { name: "Sign up" }).click();
+    await expectPage(page, "/signup");
     await page.getByRole("button", { name: "Continue with Discord" }).click();
 
     await expect(page.getByLabel("Nickname")).toHaveValue(discord.user.username);
     await page.getByLabel("Nickname").fill(nickname);
     await page.getByRole("button", { name: "Continue" }).click();
 
-    await expect(page).toHaveURL(url => url.pathname === "/games/valorant");
+    await expectPage(page, "/games/valorant");
     await expectSignedInAs(page, nickname);
     const [authorize] = discord.authorizeRequests;
     expect(authorize.searchParams.get("scope")).toBe("identify email");
@@ -144,7 +148,7 @@ test("the nickname prompt says when the nickname is taken", async ({ page }) => 
     const nickname = unique("D");
     await page.getByLabel("Nickname").fill(nickname);
     await page.getByRole("button", { name: "Continue" }).click();
-    await expect(page).toHaveURL(url => url.pathname === "/");
+    await expectPage(page, "/");
     await expectSignedInAs(page, nickname);
     expect(discord.authorizeRequests).toHaveLength(1);
 });
@@ -157,7 +161,7 @@ test("signing in with Discord to an account signs in without asking for a nickna
     await page.goto("/signin");
     await page.getByRole("button", { name: "Continue with Discord" }).click();
 
-    await expect(page).toHaveURL(url => url.pathname === "/");
+    await expectPage(page, "/");
     await expectSignedInAs(page, nickname);
 });
 
@@ -194,7 +198,7 @@ test("a Discord player is not found by a password sign-in or a password reset", 
 test("a password player asks for a reset link", async ({ page }) => {
     await page.goto("/signin");
     await page.getByRole("link", { name: "Forgot password?" }).click();
-    await expect(page.getByRole("heading", { name: "Forgot password" })).toBeVisible();
+    await expectPage(page, "/forgot-password");
     await page.getByLabel("Email").fill("apex@example.com");
     await page.getByRole("button", { name: "Send link" }).click();
 

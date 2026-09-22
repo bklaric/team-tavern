@@ -22,7 +22,7 @@ import Web.Event.EventTarget (dispatchEvent)
 import Web.HTML (window)
 import Web.HTML.History (DocumentTitle(..), URL(..), pushState)
 import Web.HTML.History as History
-import Web.HTML.Location (pathname, search, setHref)
+import Web.HTML.Location (href, pathname, search, setHref)
 import Web.HTML.Window (history, location)
 import Web.HTML.Window as Window
 import Web.UIEvent.MouseEvent (MouseEvent, altKey, button, ctrlKey, metaKey, shiftKey, toEvent)
@@ -36,17 +36,21 @@ navigated = EventType "teamtavern:navigated"
 -- The router hears of the change on a later tick, once whatever called this is
 -- done: it re-renders as soon as it hears, and doing that inside a page's own
 -- handler or initializer pulls the page out from under it. The history entry
--- is written at once, so going back in between leaves it intact, and the
--- router shows whatever the location is by the time it hears.
+-- is written at once, so going back in between leaves it intact. Going back or
+-- forward in between routes the page it reaches on `popstate`, and the
+-- navigation it overtook is dropped rather than routed again over that page.
 type WriteHistory = Foreign -> DocumentTitle -> URL -> History.History -> Effect Unit
 
 changeLocation :: WriteHistory -> Foreign -> String -> Effect Unit -> Effect Unit
 changeLocation writeHistory state path after = do
     window >>= history >>= writeHistory state (DocumentTitle path) (URL path)
+    written <- window >>= location >>= href
     event <- CustomEvent.new navigated
     void $ setTimeout 0 do
-        window <#> Window.toEventTarget >>= dispatchEvent (CustomEvent.toEvent event) # void
-        after
+        current <- window >>= location >>= href
+        when (current == written) do
+            window <#> Window.toEventTarget >>= dispatchEvent (CustomEvent.toEvent event) # void
+            after
 
 -- A link to the page already open adds no entry to go back through.
 navigate :: ∀ effect state. MonadEffect effect =>

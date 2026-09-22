@@ -14,6 +14,7 @@ import Effect.Ref as Ref
 import Foreign (Foreign)
 import Halogen as H
 import Halogen.HTML as HH
+import Halogen.HTML.Properties as HP
 import Halogen.Hooks as Hooks
 import TeamTavern.Client.Components.Header (header)
 import TeamTavern.Client.Pages.ConfirmEmail (confirmEmail)
@@ -145,8 +146,12 @@ type Visit =
     , cache :: Ref (Map String FeedCache)
     }
 
+-- The path marks the page drawn for it, in the same render as the page, so a
+-- test can tell when the location's page has arrived and not only the location.
 render :: ∀ action left. Visit -> H.ComponentHTML action ChildSlots (Async left)
-render visit = HH.div_ [ header { path: visit.path, visit: visit.visit }, renderPage visit ]
+render visit =
+    HH.div [ HP.attr (HH.AttrName "data-path") visit.path ]
+    [ header { path: visit.path, visit: visit.visit }, renderPage visit ]
 
 router :: ∀ input output left. Foreign -> String -> H.Component Query input output (Async left)
 router _ initialPath = Hooks.component \{ queryToken } _ -> Hooks.do

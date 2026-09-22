@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { signIn } from "../accounts";
+import { expectPage } from "../pages";
 
 test.describe("signed out, the header", () => {
     test("offers New post, Sign in and Sign up, and no inbox or bell", async ({ page }) => {
@@ -44,7 +45,7 @@ test.describe("Games", () => {
         await page.getByRole("button", { name: "Games" }).click();
         await page.getByRole("dialog", { name: "Games" }).getByRole("link", { name: "Apex Legends" }).click();
 
-        await expect(page).toHaveURL(url => url.pathname === "/games/apex");
+        await expectPage(page, "/games/apex");
         await expect(page.getByRole("dialog", { name: "Games" })).toHaveCount(0);
     });
 });
@@ -84,12 +85,12 @@ test.describe("the header's menus", () => {
         await signIn(page, "NewTester");
 
         await page.getByRole("link", { name: "Messages" }).click();
-        await expect(page).toHaveURL(url => url.pathname === "/messages");
+        await expectPage(page, "/messages");
         await expect(page.getByRole("link", { name: "Messages" })).toHaveAttribute("aria-current", "page");
 
         await page.getByRole("button", { name: "Account menu" }).click();
         await page.getByRole("menuitem", { name: "Account" }).click();
-        await expect(page).toHaveURL(url => url.pathname === "/account");
+        await expectPage(page, "/account");
         await expect(page.getByRole("menu", { name: "NewTester" })).toHaveCount(0);
     });
 });
@@ -106,7 +107,7 @@ test.describe("on a phone, the header", () => {
         const menu = page.getByRole("dialog", { name: "Menu" });
         await expect(menu.getByRole("menuitem", { name: "Sign in" })).toBeVisible();
         await menu.getByRole("menuitem", { name: "Sign up" }).click();
-        await expect(page).toHaveURL(url => url.pathname === "/signup");
+        await expectPage(page, "/signup");
         await expect(menu).toHaveCount(0);
     });
 

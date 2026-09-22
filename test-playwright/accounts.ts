@@ -1,4 +1,5 @@
 import { expect, Page } from "@playwright/test";
+import { expectPage } from "./pages";
 
 // Every seeded account shares this password (`stacks/test-seed/players.sql`).
 export const password = "tester-password";
@@ -22,7 +23,7 @@ export async function submitPasswordSignIn(page: Page, emailOrNickname: string, 
 // the player once the page has changed.
 export async function signIn(page: Page, emailOrNickname: string) {
     await submitPasswordSignIn(page, emailOrNickname);
-    await expect(page).toHaveURL(url => url.pathname === "/");
+    await expectPage(page, "/");
     await expect(page.getByRole("button", { name: "Account menu" })).toBeVisible();
 }
 
@@ -37,6 +38,6 @@ export async function expectSignedInAs(page: Page, nickname: string) {
 export async function signOut(page: Page) {
     await page.getByRole("button", { name: "Account menu" }).click();
     await page.getByRole("menuitem", { name: "Sign out" }).click();
-    await expect(page).toHaveURL(url => url.pathname === "/");
+    await expectPage(page, "/");
     await expect(page.getByRole("link", { name: "Sign in" })).toBeVisible();
 }

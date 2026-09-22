@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { expectPage } from "../pages";
 
 // `Database/Seed/Games/` seeds one file per game, and the catalogue lists them by title.
 const gameCount = 10;
@@ -26,7 +27,7 @@ test.describe("the home page", () => {
         }
 
         await tile.click();
-        await expect(page).toHaveURL(new RegExp(`${feedPath}$`));
+        await expectPage(page, feedPath);
         await expect(page.getByRole("heading", { name: game.title, level: 1 })).toBeVisible();
     });
 });

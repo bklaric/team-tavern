@@ -1,5 +1,6 @@
 import { expect, Page, test } from "@playwright/test";
 import { signIn } from "../accounts";
+import { expectPage } from "../pages";
 
 // Valorant's seeded posts (`stacks/test-seed/players.sql`): ValorantTester's player post
 // (Platinum 1, Duelist, Casual), GroupTester's group Night Owls (Platinum 1 to Diamond 3,
@@ -122,11 +123,10 @@ test.describe("the feed", () => {
         expect(y).toBeGreaterThan(0);
 
         await target.getByRole("link", { name: "ValorantTester" }).click();
-        await expect(page).toHaveURL(/\/games\/valorant\/posts\/\d+$/);
-        await expect(page.getByRole("heading", { name: "Post", level: 1 })).toBeVisible();
+        await expectPage(page, /^\/games\/valorant\/posts\/\d+$/);
         await page.goBack();
 
-        await expect(page).toHaveURL(url => url.pathname === feedPath);
+        await expectPage(page, feedPath);
         await expect(details).toHaveAttribute("aria-expanded", "true");
         await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(y);
         await expect(page.getByRole("button", { name: "Looking for: Ranked" })).toBeVisible();

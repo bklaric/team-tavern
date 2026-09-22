@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { expectPage } from "../pages";
 
 // A feed is headed by its game's title.
 const feedHeading = { name: "Apex Legends", level: 1 };
@@ -12,7 +13,7 @@ test("a link clicked with Ctrl or Cmd opens in a new tab and leaves this one", a
     ]);
 
     await expect(tab).toHaveURL(url => url.pathname === "/signin");
-    await expect(page).toHaveURL(url => url.pathname === "/games/apex");
+    await expectPage(page, "/games/apex");
     await expect(page.getByRole("heading", feedHeading)).toBeVisible();
 });
 
@@ -21,14 +22,16 @@ test("back and forward go through the pages opened, once each", async ({ page })
     const logo = page.getByRole("link", { name: "TeamTavern" });
 
     await logo.click();
-    await expect(page).toHaveURL(url => url.pathname === "/");
+    await expectPage(page, "/");
     await logo.click();
 
     await page.goBack();
+    await expectPage(page, "/games/apex");
     await expect(page).toHaveURL(url => url.pathname === "/games/apex");
     await expect(page.getByRole("heading", feedHeading)).toBeVisible();
 
     await page.goForward();
+    await expectPage(page, "/");
     await expect(page).toHaveURL(url => url.pathname === "/");
     await expect(page.getByRole("heading", feedHeading)).toHaveCount(0);
 });

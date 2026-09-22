@@ -69,6 +69,11 @@ needs through the pages and asserts on what they show, never by calling the API
 or the database. What the API answers can be right while the page shows the wrong
 thing, and only the page is what players see.
 
+An in-app link writes the URL at once and draws the page a tick later, so a spec
+waits for the page, not the URL, before acting on it: `expectPage` in
+`test-playwright/pages.ts` waits for the path the router marks on the page it has
+drawn. `toHaveURL` is for where the URL itself is what's under test.
+
 Nothing typechecks the suite on the way to running it, since Playwright strips
 the types without reading them, so `npm run typecheck` is a separate step.
 
