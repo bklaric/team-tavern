@@ -2,10 +2,15 @@ module TeamTavern.Client.Pages.Design (design) where
 
 import Prelude
 
+import Async (Async)
+import Async as Async
 import Data.Array (delete, elem, range, snoc)
+import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Data.Tuple.Nested ((/\))
-import Effect.Class (class MonadEffect)
+import Data.Variant (onMatch)
+import Effect.Class (liftEffect)
+import Effect.Now (now)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
@@ -14,6 +19,7 @@ import Halogen.HTML.Properties.ARIA as HPA
 import Halogen.Hooks as Hooks
 import TeamTavern.Client.Components.AccountFact (accountFact)
 import TeamTavern.Client.Components.Button (Size(..), Weight(..), button, iconButton)
+import TeamTavern.Client.Components.Card (Viewer, card)
 import TeamTavern.Client.Components.Check (check, choiceList, choices, switch, switches)
 import TeamTavern.Client.Components.Confirm (confirm)
 import TeamTavern.Client.Components.DataList (dataList, personRow, personRows, row)
@@ -29,8 +35,14 @@ import TeamTavern.Client.Components.Toast (toasts, useToast)
 import TeamTavern.Client.Components.Tokens as Tokens
 import TeamTavern.Client.Components.Unread (badge, unreadDot)
 import TeamTavern.Client.Icons as Icons
+import TeamTavern.Client.Pages.Design.Cards (fixtures)
+import TeamTavern.Client.Script.Expand (toggleCard)
+import TeamTavern.Client.Script.Timezone (getClientTimezone)
+import TeamTavern.Client.Shared.Fetch (fetchPath)
 import TeamTavern.Client.Shared.Slot (Slot___)
 import TeamTavern.Client.Snippets.Class as HS
+import TeamTavern.Routes.Game.ViewGame (ViewGame)
+import TeamTavern.Routes.Game.ViewGame as ViewGame
 import TeamTavern.Shared.Languages (allLanguages)
 import Type.Proxy (Proxy(..))
 
@@ -68,6 +80,10 @@ type State =
     , messages :: Boolean
     , renewals :: Boolean
     , confirming :: Boolean
+    , viewer :: Maybe Viewer
+    , valorant :: Maybe ViewGame.OkContent
+    , valheim :: Maybe ViewGame.OkContent
+    , expanded :: Array String
     }
 
 initialState :: State
@@ -96,6 +112,10 @@ initialState =
     , messages: true
     , renewals: false
     , confirming: false
+    , viewer: Nothing
+    , valorant: Nothing
+    , valheim: Nothing
+    , expanded: [ "state-expanded", "state-community-expanded" ]
     }
 
 roleOptions :: Array Option
@@ -154,10 +174,24 @@ sheetRow = HH.div [ HS.class_ "sheet-row" ]
 toggle :: String -> Array String -> Array String
 toggle value values = if elem value values then delete value values else snoc values value
 
-component :: ∀ query input output m. MonadEffect m => H.Component query input output m
+component :: ∀ query input output left. H.Component query input output (Async left)
 component = Hooks.component \_ _ -> Hooks.do
     state /\ stateId <- Hooks.useState initialState
     { toast, showToast, dismissToast } <- useToast
+
+    -- The cards read the seeded games' fields, as the feed's do.
+    Hooks.useLifecycleEffect do
+        now' <- liftEffect now
+        timezone <- getClientTimezone
+        Hooks.modify_ stateId _ { viewer = Just { now: now', timezone } }
+        let load handle put = void $ Hooks.fork do
+                result <- H.lift $ Async.attempt $ fetchPath (Proxy :: _ ViewGame) { handle }
+                case result of
+                    Right response -> response # onMatch { ok: put } (const $ pure unit)
+                    Left _ -> pure unit
+        load "valorant" \game -> Hooks.modify_ stateId _ { valorant = Just game }
+        load "valheim" \game -> Hooks.modify_ stateId _ { valheim = Just game }
+        pure Nothing
 
     let set = Hooks.modify_ stateId
         open which = set _ { overlay = Just which }
@@ -515,6 +549,54 @@ component = Hooks.component \_ _ -> Hooks.do
                 ]
             ]
 
+        cards = section "Cards"
+            "One shell for the three post types. Marked, the facts carry what fits the viewer's description: a Valorant Controller at Diamond 1 in Croatia, speaking English, online 19:00–23:00, looking for ranked games."
+            case state.viewer, state.valorant, state.valheim of
+            Just viewer, Just valorant, Just valheim -> let
+                posts = fixtures viewer.now
+                cardOf key game { marked, preview } post = card
+                    { game
+                    , viewer
+                    , post
+                    , marked
+                    , expanded: elem key state.expanded
+                    , preview
+                    , onToggle: \event -> toggleCard event $ set \state' -> state' { expanded = toggle key state'.expanded }
+                    , onContact: pure unit
+                    , onEdit: pure unit
+                    , onRenew: pure unit
+                    }
+                feedCard key = cardOf key valorant { marked: true, preview: false }
+                cardState label key game post = [ caption label, cardOf key game { marked: false, preview: false } post ]
+                in
+                [ caption "A feed, marked"
+                , HH.div [ HS.class_ "feed-stack" ]
+                    [ tierHeading "Fits you" (Just 3)
+                    , feedCard "feed-night-owls" posts.nightOwls
+                    , feedCard "feed-radiant-rising" posts.radiantRising
+                    , feedCard "feed-shadow-fox" posts.shadowFox
+                    , tierHeading "Missing one thing" (Just 12)
+                    , feedCard "feed-afterglow" posts.afterglow
+                    , tierHeading "Missing more" Nothing
+                    , feedCard "feed-lumen" posts.lumen
+                    , divider "Older posts · they may no longer be looking"
+                    , feedCard "feed-expired-player" posts.expiredPlayer
+                    , feedCard "feed-expired-group" posts.expiredGroup
+                    ]
+                ]
+                <> cardState "Expanded" "state-expanded" valorant posts.shadowFox
+                <> cardState "A community, expanded" "state-community-expanded" valheim posts.farlands
+                <> cardState "A community, collapsed" "state-community" valheim posts.farlands
+                <> cardState "A group with no name, on a server game" "state-unnamed" valheim posts.valheimGroup
+                <> cardState "Your own post" "state-own" valorant posts.ownNightOwls
+                <> cardState "Already messaged" "state-messaged" valorant posts.messagedShadowFox
+                <> [ caption "A preview on the post screen"
+                    , cardOf "state-preview" valorant { marked: false, preview: true } posts.nightOwls
+                    ]
+                <> cardState "A long name, every role and Cyrillic words" "state-stress" valorant posts.stress
+                <> cardState "Almost empty" "state-sparse" valorant posts.sparse
+            _, _, _ -> [ caption "Loading the games' fields." ]
+
         textButton label = button Text Small (pure unit) [ HH.text label ]
 
         account = section "Definition list"
@@ -552,6 +634,7 @@ component = Hooks.component \_ _ -> Hooks.do
             , inputs
             , confirmations
             , feed
+            , cards
             , unread
             , account
             ]
@@ -559,5 +642,5 @@ component = Hooks.component \_ _ -> Hooks.do
         <> overlayLayers
         <> [ toasts toast dismissToast ]
 
-design :: ∀ action slots m. MonadEffect m => H.ComponentHTML action (design :: Slot___ | slots) m
+design :: ∀ action slots left. H.ComponentHTML action (design :: Slot___ | slots) (Async left)
 design = HH.slot_ (Proxy :: _ "design") unit component unit

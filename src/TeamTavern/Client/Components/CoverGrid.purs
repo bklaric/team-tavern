@@ -10,12 +10,10 @@ import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Script.Navigate (navigateWithEvent_)
 import TeamTavern.Client.Snippets.Class as HS
 
-type Game = { handle :: String, title :: String }
-
 -- Every game's cover, each opening that game's feed, with a note on the covers
 -- that have one, such as the header's "Your post".
-coverGrid :: ∀ w m. MonadEffect m =>
-    { games :: Array Game, mark :: String -> Maybe String } -> HH.HTML w (m Unit)
+coverGrid :: ∀ w m game. MonadEffect m =>
+    { games :: Array { handle :: String, title :: String | game }, mark :: String -> Maybe String } -> HH.HTML w (m Unit)
 coverGrid { games, mark } =
     HH.div [ HS.class_ "cover-grid" ] $ games <#> \{ handle, title } -> let
         path = "/games/" <> handle

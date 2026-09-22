@@ -14,8 +14,14 @@ import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 -- The catalogue's order is the titles' order, wherever the site lists games.
 loadGamesQuery :: Query
 loadGamesQuery = Query """
-    select game.handle, game.title
+    select
+        game.handle,
+        game.title,
+        count(post.id) filter (where post.updated > now() - case when post.ilk = 'community'
+            then interval '90 days' else interval '30 days' end)::int as active
     from game
+        left join post on post.game_id = game.id
+    group by game.id
     order by game.title
     """
 

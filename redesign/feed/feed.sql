@@ -449,11 +449,17 @@ select
     post.name,
     owner.nickname as owner,
     coalesce(batch.player_id = $2, false) as own,
-    exists (
-        select from conversation
+    -- Times come as ISO strings, as they are in JSON, so the server reads a
+    -- row as the client does. When the viewer first wrote about the post, or
+    -- null where they haven't.
+    (
+        select to_jsonb(min(message.created))
+        from conversation
+        join message on message.conversation_id = conversation.id
         where conversation.post_id = batch.id and conversation.messager_id = $2
+            and message.sender_id = $2
     ) as messaged,
-    batch.updated,
+    to_jsonb(batch.updated) as updated,
     batch.expired,
     post.summary,
     case when post.ilk = 'player' then date_part('year', age($6, owner.birthday)) end as age,
@@ -462,13 +468,17 @@ select
     post.regions,
     post.age_from,
     post.age_to,
+    post.group_size,
+    post.group_wanted_from,
+    post.group_wanted_to,
     owner.timezone,
     to_char(post.online_from, 'HH24:MI') as online_from,
     to_char(post.online_to, 'HH24:MI') as online_to,
     post.microphone,
     post.contact_preference,
     -- Which contacts the post offers, never the contacts themselves: those are
-    -- revealed from the contact panel, which counts it (brief 11.2).
+    -- revealed from the contact panel, which counts it (brief 11.2). A game
+    -- account a tracker links is the exception, below.
     array(
         select kind from game_contact
         where game_contact.game_id = post.game_id
@@ -486,6 +496,28 @@ select
             end is not null
         order by kind
     ) as contacts,
+    -- A player post's trackers, each with the owner's account its template
+    -- takes, so the card links their profiles behind Details (brief 5.4).
+    coalesce((
+        select jsonb_agg(jsonb_build_object(
+            'title', tracker.title, 'template', tracker.template, 'account', account
+        ) order by tracker.id)
+        from tracker
+        cross join lateral (select case tracker.contact_kind
+            when 'discord' then owner.discord_tag
+            when 'steam' then owner.steam_id
+            when 'riot' then owner.riot_id
+            when 'battle_tag' then owner.battle_tag
+            when 'ea' then owner.ea_id
+            when 'ubisoft' then owner.ubisoft_username
+            when 'psn' then owner.psn_id
+            when 'gamer_tag' then owner.gamer_tag
+            when 'friend_code' then owner.friend_code
+        end as account) accounts
+        where tracker.game_id = post.game_id
+            and post.ilk = 'player'
+            and account is not null
+    ), '[]') as trackers,
     post.discord_server is not null as has_discord_server,
     post.website is not null as has_website,
     coalesce((

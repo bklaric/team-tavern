@@ -23,7 +23,7 @@ brief marks Proposed, the brief's status is updated in the same commit.
 - [x] 2. Clear the ground
 - [x] 3. Design system in the client
 - [x] 4. Accounts, sessions and the header
-- [ ] 5. Game data and the card
+- [x] 5. Game data and the card
 - [ ] 6. The feed
 - [ ] 7. Post creation
 - [ ] 8. Post pages
@@ -349,6 +349,43 @@ What every later page needs signed in and out.
   the post screen's preview, so one type feeds all three.
 - Verify: `/design` shows the fixtures of `fixtures.js` as cards; compared by
   screenshot with `components.html`.
+- Settled here:
+  - `viewGames` carries each game's `active` count. `viewGame` is
+    `GET /api/games/:handle`, 404 for an unknown handle, with `shortTitle`,
+    `active`, the contact kinds, the trackers (`contact`, `title`, `template`)
+    and the fields (`Routes/Shared/Field.purs`) with their options in order.
+    `viewCountries` is `GET /api/countries`: the regions in order, and the
+    countries by region, then name.
+  - The card row is `Routes/Shared/Card.purs`, labelled with `feed.sql`'s own
+    column names so the server's `read` decodes a row as it comes. `feed.sql`
+    now also returns the group's numbers; `messaged` as the time of the viewer's
+    first message, null without one; a player post's trackers, each with the
+    owner's account its template takes; and both times as ISO strings, since
+    node-pg hands `timestamptz` over as a `Date`. `check.mjs` still agrees and
+    `bench.sh` is unchanged within noise.
+  - A tracker shows the owner's game account ID to anyone reading the card
+    (brief 5.4), without the reveal the contact panel counts.
+  - `Client/Components/Card.purs` is a render function over the row, the game
+    from `viewGame` and the viewer (`now`, timezone). A player's heading is
+    their nickname. Unmarked, a card ignores whatever marks its row carries.
+    Marks are keyed by the field's bare key, as `feed.sql` gives them. The
+    caller owns the expansion and wraps its change in `toggleCard`
+    (`Client/Script/Expand.purs`), which animates the height unless motion is
+    reduced.
+  - `Script/Ago.purs` is the prototype's `ago`, replacing `LastUpdated.purs`.
+    Language codes are `languageCode` in `Shared/Languages.purs`. Region names
+    are `Card/Regions.purs`.
+  - The card's rules are in `Card.scss`. `.feed-stack` stays in the monolith
+    for step 6.
+  - `/design`'s cards are `Pages/Design/Cards.purs`, the prototype's fixtures
+    as rows over the seeded Valorant and Valheim fields, which the page fetches
+    through `viewGame`. Where the prototype names a field the seed doesn't
+    have (Agents, Playstyle), the fixture uses one it does.
+  - Left open: on `/forgot-password`, an email typed within about 100 ms of the
+    client-side navigation from Sign in is sometimes wiped by a re-render,
+    though the input handler and the element survive. It shows at `HEAD` as
+    well and makes `sign-in.spec.ts`'s reset-link case flaky. Logging hides it,
+    so it is timing inside Halogen's first renders of the page.
 
 ### 6. The feed
 

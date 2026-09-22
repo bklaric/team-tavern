@@ -1,4 +1,67 @@
-module TeamTavern.Shared.Languages where
+module TeamTavern.Shared.Languages (allLanguages, languageCode) where
+
+import Prelude
+
+import Data.Maybe (fromMaybe)
+import Data.Tuple (Tuple(..))
+import Foreign.Object as Object
+
+-- The languages players name most often, by the codes a card's fact line
+-- writes them with. The rest are written out in full.
+codes :: Object.Object String
+codes = Object.fromFoldable
+    [ Tuple "English" "EN"
+    , Tuple "German" "DE"
+    , Tuple "Russian" "RU"
+    , Tuple "French" "FR"
+    , Tuple "Hindi" "HI"
+    , Tuple "Spanish" "ES"
+    , Tuple "Filipino" "FIL"
+    , Tuple "Polish" "PL"
+    , Tuple "Dutch" "NL"
+    , Tuple "Arabic" "AR"
+    , Tuple "Portuguese" "PT"
+    , Tuple "Swedish" "SV"
+    , Tuple "Romanian" "RO"
+    , Tuple "Czech" "CS"
+    , Tuple "Italian" "IT"
+    , Tuple "Ukrainian" "UK"
+    , Tuple "Danish" "DA"
+    , Tuple "Turkish" "TR"
+    , Tuple "Hungarian" "HU"
+    , Tuple "Serbian" "SR"
+    , Tuple "Mandarin" "ZH"
+    , Tuple "Greek" "EL"
+    , Tuple "Croatian" "HR"
+    , Tuple "Malay" "MS"
+    , Tuple "Slovak" "SK"
+    , Tuple "Japanese" "JA"
+    , Tuple "Norwegian" "NO"
+    , Tuple "Indonesian" "ID"
+    , Tuple "Bengali" "BN"
+    , Tuple "Finnish" "FI"
+    , Tuple "Lithuanian" "LT"
+    , Tuple "Bosnian" "BS"
+    , Tuple "Cantonese" "YUE"
+    , Tuple "Persian" "FA"
+    , Tuple "Thai" "TH"
+    , Tuple "Vietnamese" "VI"
+    , Tuple "Bulgarian" "BG"
+    , Tuple "Urdu" "UR"
+    , Tuple "Korean" "KO"
+    , Tuple "Latvian" "LV"
+    , Tuple "Estonian" "ET"
+    , Tuple "Slovenian" "SL"
+    , Tuple "Albanian" "SQ"
+    , Tuple "Macedonian" "MK"
+    , Tuple "Hebrew" "HE"
+    , Tuple "Tagalog" "TL"
+    , Tuple "Tamil" "TA"
+    , Tuple "Punjabi" "PA"
+    ]
+
+languageCode :: String -> String
+languageCode language = Object.lookup language codes # fromMaybe language
 
 allLanguages :: Array String
 allLanguages =

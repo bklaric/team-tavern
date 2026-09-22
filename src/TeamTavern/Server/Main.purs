@@ -16,6 +16,8 @@ import JavaScript.Node.Process (lookupEnv)
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Pool as Pool
 import TeamTavern.Routes.All (AllRoutes)
+import TeamTavern.Server.Country.ViewCountries (viewCountries)
+import TeamTavern.Server.Game.ViewGame (viewGame)
 import TeamTavern.Server.Game.ViewGames (viewGames)
 import TeamTavern.Server.Infrastructure.Deployment (Deployment)
 import TeamTavern.Server.Infrastructure.Deployment as Deployment
@@ -105,6 +107,10 @@ runServer deployment discordApiUrl pool = serve (Proxy :: _ AllRoutes) serveOpti
         resendConfirmation deployment pool cookies
     , viewGames: const $
         viewGames pool
+    , viewGame: \{ path: { handle } } ->
+        viewGame pool handle
+    , viewCountries: const $
+        viewCountries pool
     }
 
 main :: Effect Unit

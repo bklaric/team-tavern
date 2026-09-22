@@ -10,6 +10,8 @@ module TeamTavern.Client.Icons
     , copy
     , check
     , equalNot
+    , fitMark
+    , missMark
     , chevronDown
     , chevronUp
     , chevronRight
@@ -39,6 +41,8 @@ module TeamTavern.Client.Icons
     , discord
     ) where
 
+import Prelude
+
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import Halogen.Svg.Elements as SE
@@ -47,7 +51,14 @@ import Web.HTML.Common (AttrName(..))
 -- The class is an attribute, since HP.class_ sets className, which an SVG
 -- element doesn't let a script write.
 icon :: ∀ w i. Array (HH.HTML w i) -> HH.HTML w i
-icon = SE.svg [ attr "class" "icon", attr "viewBox" "0 0 24 24", attr "aria-hidden" "true" ]
+icon = classedIcon ""
+
+classedIcon :: ∀ w i. String -> Array (HH.HTML w i) -> HH.HTML w i
+classedIcon class_ = SE.svg
+    [ attr "class" $ if class_ == "" then "icon" else "icon " <> class_
+    , attr "viewBox" "0 0 24 24"
+    , attr "aria-hidden" "true"
+    ]
 
 attr :: ∀ r i. String -> String -> HP.IProp r i
 attr name = HP.attr (AttrName name)
@@ -105,16 +116,29 @@ copy = icon
     ]
 
 check :: ∀ w i. HH.HTML w i
-check = icon
+check = icon checkShapes
+
+checkShapes :: ∀ w i. Array (HH.HTML w i)
+checkShapes =
     [ SE.path [ attr "d" "M20 6 9 17l-5-5" ]
     ]
 
 equalNot :: ∀ w i. HH.HTML w i
-equalNot = icon
+equalNot = icon equalNotShapes
+
+equalNotShapes :: ∀ w i. Array (HH.HTML w i)
+equalNotShapes =
     [ SE.line [ attr "x1" "5", attr "x2" "19", attr "y1" "9", attr "y2" "9" ]
     , SE.line [ attr "x1" "5", attr "x2" "19", attr "y1" "15", attr "y2" "15" ]
     , SE.line [ attr "x1" "19", attr "x2" "5", attr "y1" "5", attr "y2" "19" ]
     ]
+
+-- The marks a card's fact carries: check where it fits, ≠ where it doesn't.
+fitMark :: ∀ w i. HH.HTML w i
+fitMark = classedIcon "fact-mark" checkShapes
+
+missMark :: ∀ w i. HH.HTML w i
+missMark = classedIcon "fact-mark" equalNotShapes
 
 chevronDown :: ∀ w i. HH.HTML w i
 chevronDown = icon
