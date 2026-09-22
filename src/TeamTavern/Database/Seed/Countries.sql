@@ -1,4 +1,4 @@
--- The countries, one region each (redesign/schema.sql, brief 5). A player's
+-- The countries, one region each (TablesCurrent.sql, brief 5). A player's
 -- location is a country and only a country, so this table is the whole of how a
 -- player is compared with a group's or a community's regions (brief 7.2).
 --

@@ -1,58 +1,124 @@
-insert into game (title, short_title, handle, description, platforms)
-values (
-    'Team Fortress 2',
-    'TF2',
-    'tf2',
-    array['Find TF2 teammates for casual, competitive, MvM, community servers and more.']::varchar[],
-    array['steam']::varchar[]
-);
+-- Team Fortress 2
+--
+-- Two ladders, and the one players state leads. Division is the league season a
+-- post plays in, ETF2L's in Europe and RGL's in North America on one ordered
+-- ladder labelled with both names, and it is what a TF2 post says about its
+-- level. Valve's own competitive rank ships with the game and so is here too,
+-- behind Details: its queue sits empty, so almost no post will carry one. A
+-- rank range spans either ladder and rank closeness counts in steps of one
+-- (brief 7.2). Which league a post plays in follows from its regions, so it is
+-- not a field of its own.
+--
+-- Classes are the nine, in the game's own offense, defense and support order,
+-- and they are what a TF2 post says it plays: the league recruitment boards
+-- ask for classes, not positions. They are slotted: Highlander fields one of
+-- each, so two players fit by covering two different ones, and a roster short a
+-- Medic is short exactly that. A league post rarely names a main caller, so
+-- there is no in-game leader field.
+--
+-- Format is what a competitive post plays, and a pug community answers it too.
+--
+-- Server type is what a community server runs, which is where most of TF2 is
+-- played, so all three post types answer it and a community post is often
+-- nothing but this field and its words. Playing on community servers is
+-- therefore not a Looking for option: it is casual play, and the server type
+-- says which kind. Ranked is Valve's competitive queue; league seasons, cups
+-- and scrims are Scrims and tournaments. Mann vs. Machine is the one team
+-- format, whose Mann Up tours a party of up to six takes on together.
+--
+-- Team Fortress 2 runs on PC alone, so there is no platform field.
 
-insert into field (game_id, ilk, label, key, icon, ordinal)
+insert into game (title, short_title, handle, description)
 values
-    ((select id from game where game.handle = 'tf2'), 'single', 'Rank', 'rank', 'fas fa-medal', 1),
-    ((select id from game where game.handle = 'tf2'), 'single', 'Faceit rank', 'faceit-rank', 'fas fa-medal', 2),
-    ((select id from game where game.handle = 'tf2'), 'single', 'Faceit league', 'faceit-league', 'fas fa-medal', 3),
-    ((select id from game where game.handle = 'tf2'), 'multi', 'Class', 'class', 'fas fa-bullseye', 4),
-    ((select id from game where game.handle = 'tf2'), 'multi', 'Interest', 'interest', 'fas fa-crosshairs', 5);
+    ( 'Team Fortress 2'
+    , 'TF2'
+    , 'tf2'
+    , array['Find Team Fortress 2 players, groups and communities: a class main for your roster, a team to play 6s or Highlander with, or a server to call home.']
+    );
 
-insert into field_option (field_id, label, key, ordinal)
-values
-    ((select id from field where field.key = 'rank' and field.game_id = ((select id from game where game.handle = 'tf2'))), 'Mercenary', 'mercenary', 1),
-    ((select id from field where field.key = 'rank' and field.game_id = ((select id from game where game.handle = 'tf2'))), 'Contract Killer', 'contract-killer', 2),
-    ((select id from field where field.key = 'rank' and field.game_id = ((select id from game where game.handle = 'tf2'))), 'Executioner', 'executioner', 3),
-    ((select id from field where field.key = 'rank' and field.game_id = ((select id from game where game.handle = 'tf2'))), 'Expert Assasin', 'expert-assasin', 4),
-    ((select id from field where field.key = 'rank' and field.game_id = ((select id from game where game.handle = 'tf2'))), 'Death Merchant', 'death-merchant', 5),
-    ((select id from field where field.key = 'faceit-rank' and field.game_id = ((select id from game where game.handle = 'tf2'))), '1', '1', 1),
-    ((select id from field where field.key = 'faceit-rank' and field.game_id = ((select id from game where game.handle = 'tf2'))), '2', '2', 2),
-    ((select id from field where field.key = 'faceit-rank' and field.game_id = ((select id from game where game.handle = 'tf2'))), '3', '3', 3),
-    ((select id from field where field.key = 'faceit-rank' and field.game_id = ((select id from game where game.handle = 'tf2'))), '4', '4', 4),
-    ((select id from field where field.key = 'faceit-rank' and field.game_id = ((select id from game where game.handle = 'tf2'))), '5', '5', 5),
-    ((select id from field where field.key = 'faceit-rank' and field.game_id = ((select id from game where game.handle = 'tf2'))), '6', '6', 6),
-    ((select id from field where field.key = 'faceit-rank' and field.game_id = ((select id from game where game.handle = 'tf2'))), '7', '7', 7),
-    ((select id from field where field.key = 'faceit-rank' and field.game_id = ((select id from game where game.handle = 'tf2'))), '8', '8', 8),
-    ((select id from field where field.key = 'faceit-rank' and field.game_id = ((select id from game where game.handle = 'tf2'))), '9', '9', 9),
-    ((select id from field where field.key = 'faceit-rank' and field.game_id = ((select id from game where game.handle = 'tf2'))), '10', '10', 10),
-    ((select id from field where field.key = 'faceit-league' and field.game_id = ((select id from game where game.handle = 'tf2'))), 'Unremarkable', 'unremarkable', 1),
-    ((select id from field where field.key = 'faceit-league' and field.game_id = ((select id from game where game.handle = 'tf2'))), 'Notably Dangerous', 'notably-dangerous', 2),
-    ((select id from field where field.key = 'faceit-league' and field.game_id = ((select id from game where game.handle = 'tf2'))), 'Face Melting', 'face-melting', 3),
-    ((select id from field where field.key = 'faceit-league' and field.game_id = ((select id from game where game.handle = 'tf2'))), 'Server Clearing', 'server-clearing', 4),
-    ((select id from field where field.key = 'faceit-league' and field.game_id = ((select id from game where game.handle = 'tf2'))), 'Hale''s Own', 'hales-own', 5),
-    ((select id from field where field.key = 'class' and field.game_id = ((select id from game where game.handle = 'tf2'))), 'Scout', 'scout', 1),
-    ((select id from field where field.key = 'class' and field.game_id = ((select id from game where game.handle = 'tf2'))), 'Soldier', 'soldier', 2),
-    ((select id from field where field.key = 'class' and field.game_id = ((select id from game where game.handle = 'tf2'))), 'Pyro', 'pyro', 3),
-    ((select id from field where field.key = 'class' and field.game_id = ((select id from game where game.handle = 'tf2'))), 'Demoman', 'demoman', 4),
-    ((select id from field where field.key = 'class' and field.game_id = ((select id from game where game.handle = 'tf2'))), 'Heavy', 'heavy', 5),
-    ((select id from field where field.key = 'class' and field.game_id = ((select id from game where game.handle = 'tf2'))), 'Engineer', 'engineer', 6),
-    ((select id from field where field.key = 'class' and field.game_id = ((select id from game where game.handle = 'tf2'))), 'Medic', 'medic', 7),
-    ((select id from field where field.key = 'class' and field.game_id = ((select id from game where game.handle = 'tf2'))), 'Sniper', 'sniper', 8),
-    ((select id from field where field.key = 'class' and field.game_id = ((select id from game where game.handle = 'tf2'))), 'Spy', 'spy', 9),
-    ((select id from field where field.key = 'interest' and field.game_id = ((select id from game where game.handle = 'tf2'))), 'Casual', 'casual', 1),
-    ((select id from field where field.key = 'interest' and field.game_id = ((select id from game where game.handle = 'tf2'))), 'Competitive', 'competitive', 2),
-    ((select id from field where field.key = 'interest' and field.game_id = ((select id from game where game.handle = 'tf2'))), 'Mann vs. Machine', 'mann-vs-machine', 3),
-    ((select id from field where field.key = 'interest' and field.game_id = ((select id from game where game.handle = 'tf2'))), 'Community servers', 'community-servers', 4),
-    ((select id from field where field.key = 'interest' and field.game_id = ((select id from game where game.handle = 'tf2'))), 'Faceit', 'faceit', 5),
-    ((select id from field where field.key = 'interest' and field.game_id = ((select id from game where game.handle = 'tf2'))), 'Leagues/tournaments', 'leagues-tournaments', 6);
+insert into game_contact (game_id, kind)
+select game.id, contact.kind
+from game
+cross join (values ('discord'), ('steam')) as contact (kind)
+where game.handle = 'tf2';
 
-insert into tracker (game_id, platform, title, template)
-values
-    ((select id from game where game.handle = 'tf2'), 'steam', 'tr2center.com', 'https://tf2center.com/profile/');
+insert into field (game_id, key, label, ilk, ordered, slotted, applies_to, on_card, ordinal)
+select game.id, field.key, field.label, field.ilk, field.ordered, field.slotted, field.applies_to, field.on_card, field.ordinal
+from game
+cross join (values
+    ('division',    'Division',    'single', true,  false, array['player', 'group'],              true,  1),
+    ('rank',        'Rank',        'single', true,  false, array['player', 'group'],              false, 2),
+    ('class',       'Class',       'multi',  false, true,  array['player', 'group'],              true,  3),
+    ('format',      'Format',      'multi',  false, false, array['player', 'group', 'community'], false, 4),
+    ('server-type', 'Server type', 'multi',  false, false, array['player', 'group', 'community'], false, 5),
+    ('looking-for', 'Looking for', 'multi',  false, false, array['player', 'group', 'community'], true,  6)
+) as field (key, label, ilk, ordered, slotted, applies_to, on_card, ordinal)
+where game.handle = 'tf2';
+
+insert into field_option (field_id, key, label, ordinal)
+select field.id, option.key, option.label, option.ordinal
+from field
+join game on game.id = field.game_id
+join (values
+    ('division', 'fresh-newcomer',   'Fresh / Newcomer',     1),
+    ('division', 'open-amateur',     'Open / Amateur',       2),
+    ('division', 'low-intermediate', 'Low / Intermediate',   3),
+    ('division', 'mid-main',         'Mid / Main',           4),
+    ('division', 'high-advanced',    'High / Advanced',      5),
+    ('division', 'prem-invite',      'Premiership / Invite', 6),
+
+    ('rank', 'mercenary-i',           'Mercenary I',           1),
+    ('rank', 'mercenary-ii',          'Mercenary II',          2),
+    ('rank', 'mercenary-iii',         'Mercenary III',         3),
+    ('rank', 'contract-killer-i',     'Contract Killer I',     4),
+    ('rank', 'contract-killer-ii',    'Contract Killer II',    5),
+    ('rank', 'contract-killer-iii',   'Contract Killer III',   6),
+    ('rank', 'executioner-i',         'Executioner I',         7),
+    ('rank', 'executioner-ii',        'Executioner II',        8),
+    ('rank', 'executioner-iii',       'Executioner III',       9),
+    ('rank', 'expert-assassin-i',     'Expert Assassin I',     10),
+    ('rank', 'expert-assassin-ii',    'Expert Assassin II',    11),
+    ('rank', 'expert-assassin-iii',   'Expert Assassin III',   12),
+    ('rank', 'death-merchant',        'Death Merchant',        13),
+
+    ('class', 'scout',    'Scout',    1),
+    ('class', 'soldier',  'Soldier',  2),
+    ('class', 'pyro',     'Pyro',     3),
+    ('class', 'demoman',  'Demoman',  4),
+    ('class', 'heavy',    'Heavy',    5),
+    ('class', 'engineer', 'Engineer', 6),
+    ('class', 'medic',    'Medic',    7),
+    ('class', 'sniper',   'Sniper',   8),
+    ('class', 'spy',      'Spy',      9),
+
+    ('format', 'sixes',      'Sixes (6v6)',      1),
+    ('format', 'highlander', 'Highlander (9v9)', 2),
+    ('format', 'ultiduo',    'Ultiduo (2v2)',    3),
+
+    ('server-type', 'vanilla',      'Vanilla',            1),
+    ('server-type', 'saxton-hale',  'Versus Saxton Hale', 2),
+    ('server-type', 'jump',         'Jump',               3),
+    ('server-type', 'surf',         'Surf',               4),
+    ('server-type', 'mge',          'MGE',                5),
+    ('server-type', 'dodgeball',    'Dodgeball',          6),
+    ('server-type', 'trade',        'Trade',              7),
+    ('server-type', 'custom',       'Custom game modes',  8),
+
+    ('looking-for', 'casual',             'Casual',                 1),
+    ('looking-for', 'ranked',             'Ranked',                 2),
+    ('looking-for', 'scrims-tournaments', 'Scrims and tournaments', 3),
+    ('looking-for', 'learning-the-game',  'Learning the game',      4),
+    ('looking-for', 'mann-vs-machine',    'Mann vs. Machine',       5)
+) as option (field_key, key, label, ordinal) on option.field_key = field.key
+where game.handle = 'tf2';
+
+insert into tracker (game_id, contact_kind, title, template)
+select game.id, tracker.contact_kind, tracker.title, tracker.template
+from game
+cross join (values
+    ('steam', 'logs.tf',   'https://logs.tf/profile/'),
+    ('steam', 'demos.tf',  'https://demos.tf/profiles/'),
+    ('steam', 'etf2l.org', 'https://etf2l.org/search/'),
+    ('steam', 'rgl.gg',    'https://rgl.gg/Public/PlayerProfile.aspx?p=')
+) as tracker (contact_kind, title, template)
+where game.handle = 'tf2';

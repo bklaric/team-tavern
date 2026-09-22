@@ -3,9 +3,9 @@
 The redesign in `redesign/brief.md` is built as a rewrite of the application on
 the existing platform: PureScript on both sides, Jarilo on the server, Halogen
 Hooks for every page and component, Postgres, the two compose stacks, Caddy,
-renderready for crawlers and Playwright for the suite. `redesign/schema.sql` is
-the model, `redesign/seed*.sql` and `redesign/seed/Games/` the catalogue,
-`redesign/feed/feed.sql` the feed query, `redesign/import/` the relaunch import,
+renderready for crawlers and Playwright for the suite. `src/TeamTavern/Database/`
+holds the model and the catalogue, `redesign/feed/feed.sql` the feed query,
+`redesign/import/` the relaunch import,
 and `redesign/prototype/` the specification of every screen's behaviour and
 styling. `redesign/handover.md` describes the prototypes and stays as their
 reference; this file tracks the implementation.
@@ -19,7 +19,7 @@ brief marks Proposed, the brief's status is updated in the same commit.
 
 ## Progress
 
-- [ ] 1. Database in place
+- [x] 1. Database in place
 - [ ] 2. Clear the ground
 - [ ] 3. Design system in the client
 - [ ] 4. Accounts, sessions and the header
@@ -138,6 +138,20 @@ is, update this list.
 - Verify: `docker compose ... up` on the test stack seeds without error; the
   handover's `bench.sh` and `check.mjs` still pass against `redesign_import`
   (nothing here changes them, but they prove the seeds and the schema agree).
+- Settled here:
+  - The expired post belongs to a fourth account, `ExpiredTester`, rather than
+    to one of the others, so every type stays above the divider and the owner
+    specs of steps 9 and 14 have an expired post whose owner is known. The
+    second Valorant account is `GroupTester`, the one without a post
+    `NewTester`; all use `tester-password`.
+  - A derived player post answers a single field with its middle option, a
+    multi field with its first, and every boolean with yes; the contact
+    preference is `either`. The group is reached by `message`, the community
+    joined by `discord`.
+  - `import.sh` reads the schema and seeds from `src/TeamTavern/Database/`,
+    the one edit under `redesign/import/`.
+  - `npm test` is red from this commit until step 2: the old application does
+    not run on the new schema.
 
 ### 2. Clear the ground
 

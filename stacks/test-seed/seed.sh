@@ -15,6 +15,7 @@ apply() {
 apply /database/TablesCurrent.sql
 
 apply /database/Seed/Regions.sql
+apply /database/Seed/Countries.sql
 
 for game in /database/Seed/Games/*.sql; do
     apply "$game"

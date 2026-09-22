@@ -22,7 +22,8 @@ psql_admin -c "drop database if exists $target;" -c "create database $target;"
 docker exec postgres pg_dump -U "$user" --no-owner --no-privileges team_tavern | psql_target >/dev/null
 psql_target -c "alter schema public rename to legacy;" -c "create schema public;"
 
-cat redesign/schema.sql redesign/seed-regions.sql redesign/seed-countries.sql redesign/seed/Games/*.sql \
+database=src/TeamTavern/Database
+cat "$database/TablesCurrent.sql" "$database/Seed/Regions.sql" "$database/Seed/Countries.sql" "$database"/Seed/Games/*.sql \
     | psql_target
 
 { echo 'begin;'; cat redesign/import/mapping.sql redesign/import/import.sql; echo 'commit;'; } \

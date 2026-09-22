@@ -19,14 +19,12 @@ never a port of what the old file says, and never from memory alone.
 
 ## Where things are
 
-- The seed directory holds one file per game under `Games/`:
-  `redesign/seed/Games/` while the redesigned schema still lives in
-  `redesign/schema.sql`, `src/TeamTavern/Database/Seed/Games/` once it has
-  replaced `Database/TablesCurrent.sql`. The verify script picks whichever is
-  current.
-- The schema's comments on `game_contact`, `field`, `field_option` and
-  `tracker` define what `ordered`, `slotted`, `applies_to` and `on_card` mean.
-  Read them before writing; the rules below assume them.
+- The seed directory is `src/TeamTavern/Database/Seed/`, one file per game
+  under `Games/`, with `Regions.sql` and `Countries.sql` beside them.
+- The schema is `src/TeamTavern/Database/TablesCurrent.sql`. Its comments on
+  `game_contact`, `field`, `field_option` and `tracker` define what `ordered`,
+  `slotted`, `applies_to` and `on_card` mean. Read them before writing; the
+  rules below assume them.
 - `Games/Valorant.sql` in the seed directory is the pattern: follow its SQL
   idiom (`cross join (values ...)`, `join (values ...) on option.field_key =
   field.key`), column order, alignment and header-comment shape exactly.

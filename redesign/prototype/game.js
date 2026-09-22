@@ -11,7 +11,7 @@ const TYPE_CHOICES = [
     { type: "community", icon: "castle", text: "We're a community looking for members" },
 ];
 
-// Game fields. A field says how it is matched and shown (redesign/schema.sql):
+// Game fields. A field says how it is matched and shown (src/TeamTavern/Database/TablesCurrent.sql):
 // its ilk, whether its options are ordered or slots on a team, which post types
 // ask it, and whether it leads the card.
 

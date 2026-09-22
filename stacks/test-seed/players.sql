@@ -1,66 +1,218 @@
--- One player with one profile for every seeded game, so that every player listing page
--- has a row to assert on. Derived from the game table rather than written out
--- per game, so a new file in Seed/Games gets a profile without an edit here.
--- Every player needs a sign-in identity, so each signs in with the password
--- `tester-password`, whose bcrypt hash this is.
+-- The accounts and posts the specs drive the site with. Every account signs in
+-- with the password `tester-password`, whose bcrypt hash this is, and is
+-- confirmed, so the email features have someone to send to.
+--
+-- Every account gives the same facts and fills every contact column, so
+-- whichever contacts a game offers, its cards have some to show. A post's
+-- renewal nonce is derived rather than random, so a boot gives the same one.
+
+create function seed_player(nickname text, email text) returns integer
+language sql as $$
+    insert into player
+        ( nickname, email, email_confirmed, password_hash
+        , birthday, languages, country, timezone
+        , discord_tag, steam_id, riot_id, battle_tag, ea_id
+        , ubisoft_username, psn_id, gamer_tag, friend_code
+        )
+    values
+        ( nickname, email, true, '$2b$10$.ooPKTLO.JoL61KIvfsTKu2Nx1awadTkA9C1h/29.mIbi86dhHFwO'
+        , date '2000-06-15', array['English'], 'Croatia', 'Europe/Zagreb'
+        , nickname, nickname, nickname || '#EUW', nickname || '#1234', nickname
+        , nickname, nickname, nickname, 'SW-1234-5678-9012'
+        )
+    returning id
+$$;
+
+-- One tester per game with a player post, derived from the game table, so a
+-- new file in Seed/Games gets one without an edit here. The nickname is the
+-- handle title-cased with Tester after it, so `apex` gets `ApexTester`, and
+-- the email is `apex@example.com`.
+--
+-- The post answers every field a player is asked: a single field with its
+-- middle option, so a rank lands mid-ladder; a multi field with its first; a
+-- boolean with yes.
 
 with tester as (
     select
         game.id as game_id,
         game.title,
-        game.platforms[1] as platform,
-        game.handle || '@example.com' as email,
-        initcap(game.handle) || 'Tester' as nickname
+        initcap(game.handle) || 'Tester' as nickname,
+        game.handle || '@example.com' as email
     from game
 ),
-inserted as (
-    insert into player (email, nickname, password_hash, languages, location, microphone)
-    select
-        email,
-        nickname,
-        '$2b$10$.ooPKTLO.JoL61KIvfsTKu2Nx1awadTkA9C1h/29.mIbi86dhHFwO',
-        array['English'],
-        'Croatia',
-        true
+account as (
+    select tester.*, seed_player(tester.nickname, tester.email) as player_id
     from tester
-    returning id, nickname
-)
-insert into player_profile (player_id, game_id, platform, new_or_returning, about, ambitions)
-select
-    inserted.id,
-    tester.game_id,
-    tester.platform,
-    false,
-    array['Seeded profile for ' || tester.title || '.'],
-    array['Find a team to play ' || tester.title || ' with.']
-from tester
-join inserted on inserted.nickname = tester.nickname;
-
--- Each player also owns one organized team with a profile for the same game, so
--- that every team listing has a row too, and the team shows its name rather than
--- its handle wherever the site names it.
-
-with inserted as (
-    insert into team (owner_id, handle, name, organization, languages, microphone)
+),
+posted as (
+    insert into post
+        ( player_id, game_id, ilk, renewal_nonce, summary
+        , microphone, online_from, online_to, contact_preference
+        )
     select
-        player.id,
-        game.handle || '-testers',
-        initcap(game.handle) || ' Testers',
-        'organized',
-        array['English'],
-        true
-    from game
-    join player on player.nickname = initcap(game.handle) || 'Tester'
-    returning id, handle
+        account.player_id,
+        account.game_id,
+        'player',
+        left(md5(account.nickname || '-player'), 20),
+        array['Seeded player post for ' || account.title || '.'],
+        true,
+        time '19:00',
+        time '23:00',
+        'either'
+    from account
+    returning id, game_id
+),
+flagged as (
+    insert into post_field_flag (post_id, field_id)
+    select posted.id, field.id
+    from posted
+    join field on field.game_id = posted.game_id
+        and field.ilk = 'boolean' and 'player' = any(field.applies_to)
 )
-insert into team_profile (team_id, game_id, size, platforms, new_or_returning, about, ambitions)
+insert into post_field_option (post_id, field_option_id)
+select posted.id, chosen.id
+from posted
+join field on field.game_id = posted.game_id
+    and field.ilk <> 'boolean' and 'player' = any(field.applies_to)
+cross join lateral (
+    select option.id
+    from field_option option
+    cross join (select (max(ordinal) + 1) / 2 as middle from field_option where field_id = field.id) ladder
+    where option.field_id = field.id
+    order by case when field.ilk = 'single' then abs(option.ordinal - ladder.middle) else option.ordinal end
+    limit 1
+) chosen;
+
+-- The hand-written Valorant posts below answer their fields by key. A post is
+-- found by its owner and type, since a player has one post of each type per
+-- game and these accounts post in Valorant alone.
+
+create function seed_post_option(nickname text, ilk text, field_key text, option_keys text[]) returns void
+language sql as $$
+    insert into post_field_option (post_id, field_option_id)
+    select post.id, option.id
+    from post
+    join player on player.id = post.player_id
+    join field on field.game_id = post.game_id and field.key = field_key
+    join field_option option on option.field_id = field.id and option.key = any(option_keys)
+    where player.nickname = seed_post_option.nickname and post.ilk = seed_post_option.ilk
+$$;
+
+create function seed_post_range(nickname text, ilk text, field_key text, from_key text, to_key text) returns void
+language sql as $$
+    insert into post_field_range (post_id, field_id, from_option_id, to_option_id)
+    select
+        post.id,
+        field.id,
+        (select id from field_option where field_id = field.id and key = from_key),
+        (select id from field_option where field_id = field.id and key = to_key)
+    from post
+    join player on player.id = post.player_id
+    join field on field.game_id = post.game_id and field.key = field_key
+    where player.nickname = seed_post_range.nickname and post.ilk = seed_post_range.ilk
+$$;
+
+-- Valorant carries every post type, so its feed mixes all three: a second
+-- account owns a group post and a community post, both modelled on the
+-- prototype's fixtures.
+
+select seed_player('GroupTester', 'group@example.com');
+
+insert into post
+    ( player_id, game_id, ilk, renewal_nonce, summary
+    , microphone, online_from, online_to, contact_preference
+    , name, regions, languages, age_from
+    , group_size, group_wanted_from, group_wanted_to
+    )
 select
-    inserted.id,
+    player.id,
     game.id,
-    'party',
-    array[game.platforms[1]],
+    'group',
+    left(md5('GroupTester-group'), 20),
+    array['Three friends who play most nights, we want to stop solo queuing for the last two spots. No tilt, comms on, we review our losses on Sundays.'],
+    true,
+    time '21:00',
+    time '01:00',
+    'message',
+    'Night Owls',
+    array['Europe'],
+    array['English'],
+    18,
+    3,
+    2,
+    2
+from player, game
+where player.nickname = 'GroupTester' and game.handle = 'valorant';
+
+select
+    seed_post_range('GroupTester', 'group', 'rank', 'platinum-1', 'diamond-3'),
+    seed_post_option('GroupTester', 'group', 'role', array['controller', 'sentinel']),
+    seed_post_option('GroupTester', 'group', 'platform', array['pc']),
+    seed_post_option('GroupTester', 'group', 'looking-for', array['ranked']);
+
+insert into post
+    ( player_id, game_id, ilk, renewal_nonce, summary
+    , microphone, online_from, online_to, contact_preference
+    , name, regions, languages, age_from, discord_server, website
+    )
+select
+    player.id,
+    game.id,
+    'community',
+    left(md5('GroupTester-community'), 20),
+    array['An EU Valorant community of about 400 players. We run in-house 10-mans every Friday, a monthly cup with small prizes, and coaching nights where our Immortal and Radiant members review your VODs. Find a duo in #lfg, join a scrim team, or just hang out in voice.'],
+    true,
+    time '18:00',
+    time '01:00',
+    'discord',
+    'Radiant Rising',
+    array['Europe'],
+    array['English'],
+    16,
+    'https://discord.gg/radiantrising',
+    'https://radiantrising.example.com'
+from player, game
+where player.nickname = 'GroupTester' and game.handle = 'valorant';
+
+select
+    seed_post_option('GroupTester', 'community', 'platform', array['pc']),
+    seed_post_option('GroupTester', 'community', 'looking-for', array['casual', 'ranked']);
+
+-- An account with no post, for what the site shows a player who has none.
+
+select seed_player('NewTester', 'new@example.com');
+
+-- A Valorant player post past its 30 days, so the feed's divider has something
+-- under it and the owner's pages have an expired post to renew.
+
+select seed_player('ExpiredTester', 'expired@example.com');
+
+insert into post
+    ( player_id, game_id, ilk, renewal_nonce, summary
+    , microphone, online_from, online_to, contact_preference
+    , created, updated
+    )
+select
+    player.id,
+    game.id,
+    'player',
+    left(md5('ExpiredTester-player'), 20),
+    array['Seeded player post that has expired.'],
     false,
-    array['Seeded team profile for ' || game.title || '.'],
-    array['Find players to play ' || game.title || ' with.']
-from game
-join inserted on inserted.handle = game.handle || '-testers';
+    time '22:30',
+    time '02:00',
+    'either',
+    current_timestamp - interval '45 days',
+    current_timestamp - interval '45 days'
+from player, game
+where player.nickname = 'ExpiredTester' and game.handle = 'valorant';
+
+select
+    seed_post_option('ExpiredTester', 'player', 'rank', array['gold-1']),
+    seed_post_option('ExpiredTester', 'player', 'role', array['duelist']),
+    seed_post_option('ExpiredTester', 'player', 'platform', array['pc']),
+    seed_post_option('ExpiredTester', 'player', 'looking-for', array['casual']);
+
+drop function seed_post_range(text, text, text, text, text);
+drop function seed_post_option(text, text, text, text[]);
+drop function seed_player(text, text);

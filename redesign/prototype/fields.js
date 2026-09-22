@@ -10,7 +10,7 @@
 // group or community gives regions and never countries, so the two meet in one
 // comparison whichever pair of post types is matched (brief 7.2).
 //
-// redesign/seed-regions.sql and redesign/seed-countries.sql hold the same two
+// src/TeamTavern/Database/Seed/Regions.sql and Countries.sql hold the same two
 // lists, and say why each country falls where it does.
 
 const REGIONS = [

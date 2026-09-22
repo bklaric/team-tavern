@@ -13,18 +13,11 @@
 
 set -euo pipefail
 
-# The redesigned schema lives under redesign/ until it replaces the one in
-# Database/, and the seeds sit beside whichever schema is current.
-if [ -f redesign/schema.sql ]; then
-    schema=redesign/schema.sql
-    games_dir=redesign/seed/Games
-    regions=(redesign/seed-regions.sql redesign/seed-countries.sql)
-else
-    schema=src/TeamTavern/Database/TablesCurrent.sql
-    games_dir=src/TeamTavern/Database/Seed/Games
-    regions=()
-    for f in src/TeamTavern/Database/Seed/*.sql; do regions+=("$f"); done
-fi
+database=src/TeamTavern/Database
+schema=$database/TablesCurrent.sql
+games_dir=$database/Seed/Games
+# Countries reference regions, so the order matters.
+regions=("$database/Seed/Regions.sql" "$database/Seed/Countries.sql")
 covers_dir=src/TeamTavern/Client/Static/Images/Games
 
 if [ $# -eq 0 ]; then

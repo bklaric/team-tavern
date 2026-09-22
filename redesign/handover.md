@@ -2,10 +2,9 @@
 
 Read `redesign/brief.md` first; it is the source of truth, and its
 Decided/Proposed/Open statuses are kept current as things settle.
-`redesign/schema.sql` is the data model being written from it, with
-`redesign/seed-regions.sql` and `redesign/seed-countries.sql` beside it; all
-three are verified against Postgres and none has replaced
-`src/TeamTavern/Database/` yet.
+`src/TeamTavern/Database/TablesCurrent.sql` is the data model written from it,
+with `Seed/Regions.sql` and `Seed/Countries.sql` beside it; the test stack
+builds on all three.
 
 ## The feed query
 
@@ -81,7 +80,7 @@ next batch, passed back as it came.
     only a field that fits.
 - **Game fields** (brief 5, 7.2): every game in the catalogue has a sample, and
   the pages read a game's fields from it with their `ilk`, `ordered`, `slotted`,
-  `applies_to` and `on_card` (`redesign/schema.sql`); nothing in the prototype
+  `applies_to` and `on_card` (`src/TeamTavern/Database/TablesCurrent.sql`); nothing in the prototype
   names a field. A post's answers use the keys the post screen writes:
   `field:<key>` for the options chosen or a yes, `range:<key>` for an ordered
   field on a group or community. Settled while building it:
@@ -123,8 +122,8 @@ next batch, passed back as it came.
   levels or CS2's Premier rating, counts one step. **Near rank** in the
   prototype bar switches the feed to one step everywhere, to compare.
 - **Regions and countries** (brief 5, 7.2): the twelve regions and the 229
-  countries are in `fields.js`, written from `redesign/seed-regions.sql` and
-  `redesign/seed-countries.sql`. A player gives a country, a group or community
+  countries are in `fields.js`, written from `src/TeamTavern/Database/Seed/Regions.sql`
+  and `Seed/Countries.sql`. A player gives a country, a group or community
   gives regions, and a country is compared through the region it is in. Settled
   while writing them in:
   - A card names a region by its own name, cut at the compass point:

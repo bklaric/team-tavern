@@ -1,35 +1,93 @@
-insert into game (title, short_title, handle, description, platforms)
-values (
-    'Heroes of the Storm',
-    'HotS',
-    'hots',
-    array['Find Heroes of the Storm teammates for unranked, ranked, ARAM and more.']::varchar[],
-    array['battle.net']::varchar[]
-);
+-- Heroes of the Storm
+--
+-- Ranks carry their divisions, five to a tier and numbered downwards so that
+-- Bronze 5 is the bottom of Bronze and Bronze 1 the top, so a rank range spans
+-- divisions and rank closeness counts in steps of one (brief 7.2). Master and
+-- Grand Master have no divisions: Master is ordered by rank points and Grand
+-- Master is the top hundred of a region's Master players.
+--
+-- Roles are the four a Heroes player posts by: tank, bruiser, healer and DPS.
+-- Blizzard's ranged and melee assassins are one DPS slot in how players write
+-- it, and Blizzard's Support heroes are a pick rather than a slot a team fills.
+-- They are slotted: two players fit by covering two different ones. Heroes
+-- players don't name a shotcaller as a slot, so there is no in-game leader
+-- field.
+--
+-- Looking for is the shared intents, ARAM and Quick Match under Casual. The
+-- game has one ranked queue and no official team format; leagues such as
+-- Heroes Lounge are community-run and sit under Scrims and tournaments.
+--
+-- The game runs on PC only, so it has no platform field.
+--
+-- It also has no tracker. The stat sites that are still up key a player page by
+-- region and an internal id rather than by BattleTag, so none of them can be
+-- reached by appending a contact to a template.
 
-insert into field (game_id, ilk, label, key, icon, ordinal)
+insert into game (title, short_title, handle, description)
 values
-    ((select id from game where game.handle = 'hots'), 'single', 'Rank', 'rank', 'fas fa-medal', 1),
-    ((select id from game where game.handle = 'hots'), 'multi', 'Role', 'role', 'fas fa-bullseye', 2),
-    ((select id from game where game.handle = 'hots'), 'multi', 'Interest', 'interest', 'fas fa-crosshairs', 3);
+    ( 'Heroes of the Storm'
+    , 'HotS'
+    , 'hots'
+    , array['Find Heroes of the Storm players, groups and communities: a Storm League core, an ARAM crew, or a Discord to draft with.']
+    );
 
-insert into field_option (field_id, label, key, ordinal)
-values
-    ((select id from field where field.key = 'rank' and field.game_id = ((select id from game where game.handle = 'hots'))), 'Bronze', 'bronze', 1),
-    ((select id from field where field.key = 'rank' and field.game_id = ((select id from game where game.handle = 'hots'))), 'Silver', 'silver', 2),
-    ((select id from field where field.key = 'rank' and field.game_id = ((select id from game where game.handle = 'hots'))), 'Gold', 'gold', 3),
-    ((select id from field where field.key = 'rank' and field.game_id = ((select id from game where game.handle = 'hots'))), 'Platinum', 'platinum', 4),
-    ((select id from field where field.key = 'rank' and field.game_id = ((select id from game where game.handle = 'hots'))), 'Diamond', 'diamond', 5),
-    ((select id from field where field.key = 'rank' and field.game_id = ((select id from game where game.handle = 'hots'))), 'Master', 'master', 6),
-    ((select id from field where field.key = 'rank' and field.game_id = ((select id from game where game.handle = 'hots'))), 'Grand Master', 'grand-master', 7),
-    ((select id from field where field.key = 'role' and field.game_id = ((select id from game where game.handle = 'hots'))), 'Tank', 'tank', 1),
-    ((select id from field where field.key = 'role' and field.game_id = ((select id from game where game.handle = 'hots'))), 'Offlane', 'offlane', 2),
-    ((select id from field where field.key = 'role' and field.game_id = ((select id from game where game.handle = 'hots'))), 'DPS', 'dps', 3),
-    ((select id from field where field.key = 'role' and field.game_id = ((select id from game where game.handle = 'hots'))), 'Healer', 'healer', 4),
-    ((select id from field where field.key = 'role' and field.game_id = ((select id from game where game.handle = 'hots'))), 'Flex', 'flex', 5),
-    ((select id from field where field.key = 'interest' and field.game_id = ((select id from game where game.handle = 'hots'))), 'Quick match', 'quick-match', 1),
-    ((select id from field where field.key = 'interest' and field.game_id = ((select id from game where game.handle = 'hots'))), 'Unranked', 'unranked', 2),
-    ((select id from field where field.key = 'interest' and field.game_id = ((select id from game where game.handle = 'hots'))), 'Ranked', 'ranked', 3),
-    ((select id from field where field.key = 'interest' and field.game_id = ((select id from game where game.handle = 'hots'))), 'ARAM', 'aram', 4),
-    ((select id from field where field.key = 'interest' and field.game_id = ((select id from game where game.handle = 'hots'))), 'Custom games', 'custom-games', 5),
-    ((select id from field where field.key = 'interest' and field.game_id = ((select id from game where game.handle = 'hots'))), 'Leagues/tournaments', 'leagues-tournaments', 6);
+insert into game_contact (game_id, kind)
+select game.id, contact.kind
+from game
+cross join (values ('discord'), ('battle_tag')) as contact (kind)
+where game.handle = 'hots';
+
+insert into field (game_id, key, label, ilk, ordered, slotted, applies_to, on_card, ordinal)
+select game.id, field.key, field.label, field.ilk, field.ordered, field.slotted, field.applies_to, field.on_card, field.ordinal
+from game
+cross join (values
+    ('rank',        'Rank',        'single', true,  false, array['player', 'group'],              true, 1),
+    ('role',        'Role',        'multi',  false, true,  array['player', 'group'],              true, 2),
+    ('looking-for', 'Looking for', 'multi',  false, false, array['player', 'group', 'community'], true, 3)
+) as field (key, label, ilk, ordered, slotted, applies_to, on_card, ordinal)
+where game.handle = 'hots';
+
+insert into field_option (field_id, key, label, ordinal)
+select field.id, option.key, option.label, option.ordinal
+from field
+join game on game.id = field.game_id
+join (values
+    ('rank', 'bronze-5',     'Bronze 5',     1),
+    ('rank', 'bronze-4',     'Bronze 4',     2),
+    ('rank', 'bronze-3',     'Bronze 3',     3),
+    ('rank', 'bronze-2',     'Bronze 2',     4),
+    ('rank', 'bronze-1',     'Bronze 1',     5),
+    ('rank', 'silver-5',     'Silver 5',     6),
+    ('rank', 'silver-4',     'Silver 4',     7),
+    ('rank', 'silver-3',     'Silver 3',     8),
+    ('rank', 'silver-2',     'Silver 2',     9),
+    ('rank', 'silver-1',     'Silver 1',     10),
+    ('rank', 'gold-5',       'Gold 5',       11),
+    ('rank', 'gold-4',       'Gold 4',       12),
+    ('rank', 'gold-3',       'Gold 3',       13),
+    ('rank', 'gold-2',       'Gold 2',       14),
+    ('rank', 'gold-1',       'Gold 1',       15),
+    ('rank', 'platinum-5',   'Platinum 5',   16),
+    ('rank', 'platinum-4',   'Platinum 4',   17),
+    ('rank', 'platinum-3',   'Platinum 3',   18),
+    ('rank', 'platinum-2',   'Platinum 2',   19),
+    ('rank', 'platinum-1',   'Platinum 1',   20),
+    ('rank', 'diamond-5',    'Diamond 5',    21),
+    ('rank', 'diamond-4',    'Diamond 4',    22),
+    ('rank', 'diamond-3',    'Diamond 3',    23),
+    ('rank', 'diamond-2',    'Diamond 2',    24),
+    ('rank', 'diamond-1',    'Diamond 1',    25),
+    ('rank', 'master',       'Master',       26),
+    ('rank', 'grand-master', 'Grand Master', 27),
+
+    ('role', 'tank',    'Tank',    1),
+    ('role', 'bruiser', 'Bruiser', 2),
+    ('role', 'healer',  'Healer',  3),
+    ('role', 'dps',     'DPS',     4),
+
+    ('looking-for', 'casual',             'Casual',                 1),
+    ('looking-for', 'ranked',             'Ranked',                 2),
+    ('looking-for', 'scrims-tournaments', 'Scrims and tournaments', 3),
+    ('looking-for', 'learning-the-game',  'Learning the game',      4)
+) as option (field_key, key, label, ordinal) on option.field_key = field.key
+where game.handle = 'hots';

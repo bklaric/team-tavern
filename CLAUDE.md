@@ -174,13 +174,17 @@ pages are registered redirect URIs, with a real Discord account:
 
 `stacks/test-seed/seed.sh` builds the database on the first boot of the Postgres
 volume, which is why `down -v` rather than `down` is what resets it. It applies
-`TablesCurrent.sql`, then `Seed/`, then `stacks/test-seed/players.sql`. That
-last one gives every seeded game one player and one profile, so the listing
-pages have a row to assert on; the nickname is the handle title-cased with
-`Tester` after it, so `apex` gets `ApexTester`, the email is
-`apex@example.com`, and the password is `tester-password`. `Seed/Games/` carries all eleven
-production games, so every game handle the site serves has a page with content.
-A cold boot answers on the API within a few seconds.
+`TablesCurrent.sql`, then `Seed/Regions.sql`, `Seed/Countries.sql` and
+`Seed/Games/`, then `stacks/test-seed/players.sql`. That last one gives every
+seeded game one account with a player post, so the feed has a row to assert
+on; the nickname is the handle title-cased with `Tester` after it, so `apex`
+gets `ApexTester`, the email is `apex@example.com`, and the password is
+`tester-password`. Valorant also gets `GroupTester` (`group@example.com`) with a
+group post and a community post, `ExpiredTester` (`expired@example.com`) with a
+player post past its 30 days, and `NewTester` (`new@example.com`) with no post;
+all share the password. `Seed/Games/` carries all ten production games, so every
+game handle the site serves has a page with content. A cold boot answers on the
+API within a few seconds.
 
 ### Expected noise
 
@@ -297,9 +301,9 @@ an `index.html` fallback for SPA paths.
 test stack builds from. `TablesBase.sql` is the schema production and the
 development database had before the scripts in `Migrations/`, so
 `TablesBase.sql` with those scripts applied in date order gives
-`TablesCurrent.sql`. `Seed/` holds the region rows and one file per game, each
-carrying that game's fields, field options and trackers. Only the test stack
-runs them, on every fresh boot.
+`TablesCurrent.sql`. `Seed/` holds the region and country rows and one file per
+game, each carrying that game's contacts, fields, field options and trackers.
+Only the test stack runs them, on every fresh boot.
 
 A schema change is a dated script in `Migrations/`, one transaction, and the
 same edit to `TablesCurrent.sql`. The script is applied by hand to the
