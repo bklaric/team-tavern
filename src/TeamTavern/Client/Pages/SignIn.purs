@@ -6,7 +6,8 @@ import Async (Async)
 import Async as Async
 import Data.Array.NonEmpty as Nea
 import Data.Either (Either(..))
-import Data.Maybe (Maybe(..), isJust)
+import Data.Foldable (for_)
+import Data.Maybe (Maybe(..), fromMaybe, isJust)
 import Data.String (null, trim)
 import Data.Tuple.Nested ((/\))
 import Data.Variant (inj, match, onMatch)
@@ -18,6 +19,7 @@ import TeamTavern.Client.Components.Button (Size(..), Weight(..), button)
 import TeamTavern.Client.Components.Divider (rule)
 import TeamTavern.Client.Components.Flow (flow, flowError, flowLead, flowLink, formTight, submitButton, textField)
 import TeamTavern.Client.Icons as Icons
+import TeamTavern.Client.Pages.Post.Register (Publishing, publishing, publishingPost)
 import TeamTavern.Client.Script.Back (authPath, readBack)
 import TeamTavern.Client.Script.Cookie (hasPlayerIdCookie)
 import TeamTavern.Client.Script.Discord (authorizeWithDiscord, takeDiscordReturn)
@@ -39,9 +41,13 @@ data Screen
     | Discord
     | Nickname { accessToken :: String }
 
+-- | `publishing` is the post the page goes on to publish when it is the
+-- | register step of posting, and `post` how that post is named.
 type State =
     { screen :: Screen
     , back :: String
+    , publishing :: Maybe Publishing
+    , post :: Maybe String
     , emailOrNickname :: String
     , password :: String
     , nickname :: String
@@ -61,6 +67,8 @@ initialState :: State
 initialState =
     { screen: Password
     , back: "/"
+    , publishing: Nothing
+    , post: Nothing
     , emailOrNickname: ""
     , password: ""
     , nickname: ""
@@ -76,7 +84,7 @@ component = Hooks.component \_ _ -> Hooks.do
         failWith errors = set _ { sending = false, errors = errors }
 
         startDiscordSession accessToken back = do
-            set _ { screen = Discord, back = back }
+            set _ { screen = Discord, back = back, publishing = publishing back }
             result <- H.lift $ Async.attempt $ fetchBody (Proxy :: _ StartSession)
                 (inj (Proxy :: _ "discord") { accessToken })
             case result of
@@ -157,7 +165,11 @@ component = Hooks.component \_ _ -> Hooks.do
             Just { accessToken, back } -> startDiscordSession accessToken back
             Nothing -> do
                 back <- readBack
-                if signedIn then navigateReplace_ back else set _ { back = back }
+                if signedIn then navigateReplace_ back else do
+                    set _ { back = back, publishing = publishing back }
+                    for_ (publishing back) \publishing' -> void $ Hooks.fork do
+                        post <- H.lift $ publishingPost publishing'
+                        set _ { post = post }
         pure Nothing
 
     let formError = case state.errors.form of
@@ -166,8 +178,13 @@ component = Hooks.component \_ _ -> Hooks.do
 
     Hooks.pure case state.screen of
         Password -> flow $
-            [ HH.h1_ [ HH.text "Sign in" ]
-            , button Outline Regular (authorizeWithDiscord state.back)
+            [ HH.h1_ [ HH.text if isJust state.publishing then "Sign in to publish" else "Sign in" ] ]
+            <> (if isJust state.publishing
+                then [ flowLead $ "Your " <> fromMaybe "post" state.post
+                    <> " goes live as soon as you're signed in. Nothing you wrote is lost." ]
+                else [])
+            <>
+            [ button Outline Regular (authorizeWithDiscord state.back)
                 [ Icons.discord, HH.text "Continue with Discord" ]
             , rule "or"
             , formTight submitPassword $
@@ -185,7 +202,7 @@ component = Hooks.component \_ _ -> Hooks.do
                     }
                 ]
                 <> formError
-                <> [ submitButton state.sending "Sign in" ]
+                <> [ submitButton state.sending if isJust state.publishing then "Sign in and publish" else "Sign in" ]
             , HH.p [ HS.class_ "muted" ] [ flowLink (authPath "/forgot-password" state.back) "Forgot password?" ]
             , HH.p [ HS.class_ "muted" ]
                 [ HH.text "New here? ", flowLink (authPath "/signup" state.back) "Create an account" ]
@@ -207,7 +224,7 @@ component = Hooks.component \_ _ -> Hooks.do
                     }
                 ]
                 <> formError
-                <> [ submitButton state.sending "Continue" ]
+                <> [ submitButton state.sending if isJust state.publishing then "Publish post" else "Continue" ]
             ]
 
 signIn :: ∀ action slots left. H.ComponentHTML action (signIn :: Slot___ | slots) (Async left)

@@ -11,7 +11,7 @@ import Prelude
 
 import Data.Array (delete, elem, filter, index, null, snoc, sortBy)
 import Data.Int as Int
-import Data.Maybe (Maybe(..), fromMaybe, isJust, maybe)
+import Data.Maybe (Maybe(..), fromMaybe, isJust, isNothing, maybe)
 import Data.String (Pattern(..), Replacement(..), joinWith, replaceAll, split, toLower)
 import Data.String.CodeUnits as CodeUnits
 import Effect.Class (class MonadEffect)
@@ -22,6 +22,7 @@ import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import Halogen.Hooks (HookM)
 import TeamTavern.Client.Components.AccountFact (accountFact)
+import TeamTavern.Client.Components.Button (Size(..), Weight(..), button)
 import TeamTavern.Client.Components.Card (flagText)
 import TeamTavern.Client.Components.Check (check, choiceList)
 import TeamTavern.Client.Components.Field (Labelling(..), field, field_)
@@ -31,6 +32,7 @@ import TeamTavern.Client.Components.Pills (pills)
 import TeamTavern.Client.Components.Range (ageRange, hoursHint, hoursRange, optionRange)
 import TeamTavern.Client.Components.Stepper (countRow, stepper)
 import TeamTavern.Client.Components.Tokens as Tokens
+import TeamTavern.Client.Icons as Icons
 import TeamTavern.Client.Pages.Post.Draft (Draft)
 import TeamTavern.Client.Shared.Contacts (contactLabel, contactPlaceholder)
 import TeamTavern.Client.Snippets.Class as HS
@@ -46,6 +48,8 @@ type Html m slots = H.ComponentHTML (HookM m Unit) (tokens :: Tokens.Slot | slot
 -- | whose facts show as their values until Change (`changing`) opens them;
 -- | `otherPosts` is whether changing one changes other posts too. `onChange`
 -- | names the field it changes, so the field's error goes with the change.
+-- | `onDiscord` signs up with Discord, which signed out the Discord input
+-- | offers (brief 6, step 3).
 type Context m =
     { game :: ViewGame.OkContent
     , type_ :: String
@@ -60,6 +64,7 @@ type Context m =
     , timezone :: String
     , onChange :: String -> (Draft -> Draft) -> HookM m Unit
     , onUnfold :: String -> HookM m Unit
+    , onDiscord :: HookM m Unit
     }
 
 idOf :: String -> String
@@ -459,10 +464,17 @@ contactFields context@{ game, type_ } =
         [] -> Nothing
         titles | type_ == "player" -> Just $ "Your card links your " <> joinWith " and " titles <> " profile from it."
         _ -> Nothing
-    contactField kind =
-        accountField context (Contact kind) (contactLabel kind) For (trackerHint kind)
-        (input [ HP.id $ idOf kind ]
+    contactInput kind =
+        input [ HP.id $ idOf kind ]
             { value: Object.lookup kind context.draft.contacts # fromMaybe ""
             , placeholder: contactPlaceholder kind
             , onInput: \value -> context.onChange kind \draft -> draft { contacts = Object.insert kind value draft.contacts }
-            })
+            }
+    contactField kind =
+        accountField context (Contact kind) (contactLabel kind) For (trackerHint kind)
+        if kind == "discord" && isNothing context.account
+        then HH.div [ HS.class_ "input-row" ]
+            [ contactInput kind
+            , button Outline Regular context.onDiscord [ Icons.discord, HH.text "Sign up with Discord" ]
+            ]
+        else contactInput kind

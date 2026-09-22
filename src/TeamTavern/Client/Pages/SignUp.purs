@@ -6,7 +6,8 @@ import Async (Async)
 import Async as Async
 import Data.Array.NonEmpty (elem)
 import Data.Either (Either(..))
-import Data.Maybe (Maybe(..), isJust)
+import Data.Foldable (for_)
+import Data.Maybe (Maybe(..), fromMaybe, isJust)
 import Data.String (Pattern(..), contains, length, null, trim)
 import Data.Tuple.Nested ((/\))
 import Data.Variant (inj, match, onMatch)
@@ -18,6 +19,7 @@ import TeamTavern.Client.Components.Button (Size(..), Weight(..), button)
 import TeamTavern.Client.Components.Divider (rule)
 import TeamTavern.Client.Components.Flow (flow, flowError, flowLead, flowLink, formTight, submitButton, textField)
 import TeamTavern.Client.Icons as Icons
+import TeamTavern.Client.Pages.Post.Register (Publishing, publishing, publishingPost)
 import TeamTavern.Client.Script.Back (authPath, readBack)
 import TeamTavern.Client.Script.Cookie (hasPlayerIdCookie)
 import TeamTavern.Client.Script.Discord (authorizeWithDiscord)
@@ -40,8 +42,12 @@ type Errors =
 noErrors :: Errors
 noErrors = { email: Nothing, nickname: Nothing, password: Nothing, form: Nothing }
 
+-- | `publishing` is the post the page goes on to publish when it is the
+-- | register step of posting, and `post` how that post is named.
 type State =
     { back :: String
+    , publishing :: Maybe Publishing
+    , post :: Maybe String
     , email :: String
     , nickname :: String
     , password :: String
@@ -65,7 +71,7 @@ validate { email, nickname, password } = noErrors
 component :: ∀ query input output left. H.Component query input output (Async left)
 component = Hooks.component \_ _ -> Hooks.do
     state /\ stateId <- Hooks.useState
-        ({ back: "/", email: "", nickname: "", password: "", errors: noErrors, sending: false } :: State)
+        ({ back: "/", publishing: Nothing, post: Nothing, email: "", nickname: "", password: "", errors: noErrors, sending: false } :: State)
 
     let set = Hooks.modify_ stateId
         failWith errors = set _ { sending = false, errors = errors }
@@ -105,12 +111,19 @@ component = Hooks.component \_ _ -> Hooks.do
     Hooks.useLifecycleEffect do
         signedIn <- hasPlayerIdCookie
         back <- readBack
-        if signedIn then navigateReplace_ back else set _ { back = back }
+        if signedIn then navigateReplace_ back else do
+            set _ { back = back, publishing = publishing back }
+            for_ (publishing back) \publishing' -> void $ Hooks.fork do
+                post <- H.lift $ publishingPost publishing'
+                set _ { post = post }
         pure Nothing
 
     Hooks.pure $ flow
         [ HH.h1_ [ HH.text "Create your account" ]
-        , flowLead "Find players, groups and communities, and hear when someone new fits."
+        , flowLead case state.publishing of
+            Just _ -> "Your " <> fromMaybe "post" state.post
+                <> " goes live as soon as you're signed up. Nothing you wrote is lost."
+            Nothing -> "Find players, groups and communities, and hear when someone new fits."
         , button Outline Regular (authorizeWithDiscord state.back)
             [ Icons.discord, HH.text "Continue with Discord" ]
         , rule "or"
@@ -137,7 +150,9 @@ component = Hooks.component \_ _ -> Hooks.do
             <> (case state.errors.form of
                 Just error -> [ flowError error ]
                 Nothing -> [])
-            <> [ submitButton state.sending "Create account" ]
+            <> [ submitButton state.sending
+                    if isJust state.publishing then "Create account and publish" else "Create account"
+               ]
         , HH.p [ HS.class_ "muted" ]
             [ HH.text "Already have an account? ", flowLink (authPath "/signin" state.back) "Sign in" ]
         ]

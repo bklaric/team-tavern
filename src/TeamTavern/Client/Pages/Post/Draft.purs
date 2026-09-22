@@ -36,10 +36,13 @@ import Yoga.JSON (readJSON_, writeJSON)
 -- | What the post screen holds while it is written (brief 6, step 3): the
 -- | post's fields and the account's facts and contacts, which publishing
 -- | writes to the account. `editing` is whether it will replace the player's
--- | post rather than publish a new one. `languages` are the account's on a
--- | player post, the post's own on a group or community.
+-- | post rather than publish a new one; `signedOut` whether it was last
+-- | written signed out, so signing in checks it against the account's post.
+-- | `languages` are the account's on a player post, the post's own on a group
+-- | or community.
 type Draft =
     { editing :: Boolean
+    , signedOut :: Boolean
     , options :: Object (Array String)
     , ranges :: Object Range
     , flags :: Array String
@@ -68,6 +71,7 @@ type Draft =
 emptyDraft :: String -> Draft
 emptyDraft type_ =
     { editing: false
+    , signedOut: false
     , options: Object.empty
     , ranges: Object.empty
     , flags: []
@@ -167,7 +171,7 @@ withAccount type_ regionOf account draft = draft
         then maybe [] pure (account.country >>= regionOf)
         else draft.regions
     , timezone = draft.timezone <|> account.timezone
-    , contacts = Object.union draft.contacts account.contacts
+    , contacts = Object.union (draft.contacts # Object.filter (isJust <<< blank)) account.contacts
     }
     where
     player = type_ == "player"

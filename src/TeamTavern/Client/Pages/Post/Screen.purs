@@ -37,8 +37,10 @@ import TeamTavern.Client.Pages.Feed.Description (current, loadStored)
 import TeamTavern.Client.Pages.Placeholder (placeholder)
 import TeamTavern.Client.Pages.Post.Draft (Draft, clearDraft, emptyDraft, fromContent, fromDescription, gameContacts, loadDraft, saveDraft, toCard, toRequest, withAccount)
 import TeamTavern.Client.Pages.Post.Fields (cardFields, contactFields, contactKeys, wordsField)
+import TeamTavern.Client.Pages.Post.Register (registerBack)
 import TeamTavern.Client.Script.Back (authPath)
 import TeamTavern.Client.Script.Cookie (getPlayerNickname, hasPlayerIdCookie)
+import TeamTavern.Client.Script.Discord (authorizeWithDiscord)
 import TeamTavern.Client.Script.Expand (toggleCard)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigate_, replaceState)
@@ -71,13 +73,16 @@ type Input = { handle :: String, type_ :: String }
 data Screen = Loading | Missing | Failed | Ready
 
 -- | `own` is the signed-in player's post of the type, with their account;
--- | `otherPosts` whether they have posts besides it.
+-- | `otherPosts` whether they have posts besides it. `conflicting` is whether
+-- | the draft meets that post, which the player then either updates with the
+-- | draft or keeps as it is (brief 6, Entry points).
 type State =
     { screen :: Screen
     , game :: Maybe ViewGame.OkContent
     , countries :: ViewCountries.OkContent
     , own :: Maybe ViewOwnPost.OkContent
     , otherPosts :: Boolean
+    , conflicting :: Boolean
     , nickname :: Maybe String
     , draft :: Draft
     , changing :: Array String
@@ -87,6 +92,7 @@ type State =
     , confirmingDelete :: Boolean
     , previewOpen :: Boolean
     , previewExpanded :: Boolean
+    , ownExpanded :: Boolean
     , timezone :: String
     , now :: Maybe { instant :: Instant, iso :: String, date :: Date }
     }
@@ -155,6 +161,7 @@ component = Hooks.component \_ { handle, type_ } -> Hooks.do
         , countries: { regions: [], countries: [] }
         , own: Nothing
         , otherPosts: false
+        , conflicting: false
         , nickname: Nothing
         , draft: emptyDraft type_
         , changing: []
@@ -164,6 +171,7 @@ component = Hooks.component \_ { handle, type_ } -> Hooks.do
         , confirmingDelete: false
         , previewOpen: false
         , previewExpanded: false
+        , ownExpanded: false
         , timezone: "UTC"
         , now: Nothing
         } :: State)
@@ -177,7 +185,7 @@ component = Hooks.component \_ { handle, type_ } -> Hooks.do
         -- Every change is kept, so the draft outlasts the page.
         changeDraft key change = do
             state' <- Hooks.modify stateId \state' -> state'
-                { draft = change state'.draft
+                { draft = (change state'.draft) { signedOut = isNothing state'.own }
                 , errors =
                     if elem key (maybe [] contactKeys state'.game)
                     then foldl (flip Object.delete) state'.errors (maybe [] contactKeys state'.game)
@@ -210,12 +218,13 @@ component = Hooks.component \_ { handle, type_ } -> Hooks.do
                     (const $ set _ { sending = false, formError = Just somethingWrong })
                 Left _ -> set _ { sending = false, formError = Just somethingWrong }
 
-        -- The player's post as it now is, after another tab published one.
+        -- The player's post as it now is, after another tab published one,
+        -- which the draft then meets.
         reloadOwn = do
             result <- H.lift $ Async.attempt $ fetchPath (Proxy :: _ ViewOwnPost) { handle, type: type_ }
             case result of
                 Right response -> response # onMatch
-                    { ok: \own -> set _ { own = Just own, draft = (emptyDraft type_), sending = false } }
+                    { ok: \own -> set _ { own = Just own, conflicting = true, sending = false } }
                     (const $ set _ { sending = false, formError = Just somethingWrong })
                 Left _ -> set _ { sending = false, formError = Just somethingWrong }
 
@@ -228,10 +237,10 @@ component = Hooks.component \_ { handle, type_ } -> Hooks.do
                     set _ { errors = errors, previewOpen = false }
                     liftEffect focusFirstInvalid
                 else if isNothing state'.own then do
-                    -- Signed out, the player signs up and comes back to the
-                    -- draft, which waits in local storage.
-                    liftEffect $ saveDraft handle type_ state'.draft
-                    navigate_ $ authPath "/signup" path
+                    -- Signed out, the player signs up or in and comes back to
+                    -- the draft, which waits in local storage, to publish it.
+                    liftEffect $ saveDraft handle type_ state'.draft { signedOut = true }
+                    navigate_ $ authPath "/signup" $ registerBack path
                 else do
                     set _ { sending = true, formError = Nothing, previewOpen = false }
                     let request = toRequest game type_ (fromMaybe state'.timezone state'.draft.timezone) state'.draft
@@ -267,6 +276,22 @@ component = Hooks.component \_ { handle, type_ } -> Hooks.do
         submit event = do
             liftEffect $ preventDefault event
             publish
+
+        -- Discord brings the player back here signed in, with the draft.
+        signUpWithDiscord = do
+            state' <- Hooks.get stateId
+            liftEffect $ saveDraft handle type_ state'.draft { signedOut = true }
+            authorizeWithDiscord path
+
+        updateExisting = do
+            state' <- Hooks.modify stateId \state' -> state'
+                { draft = state'.draft { editing = true, signedOut = false }, conflicting = false }
+            liftEffect $ saveDraft handle type_ state'.draft
+            publish
+
+        discardDraft = do
+            liftEffect $ clearDraft handle type_
+            navigate_ $ "/games/" <> handle
 
     useOverlay previewRef Modal state.previewOpen (set _ { previewOpen = false })
 
@@ -316,7 +341,14 @@ component = Hooks.component \_ { handle, type_ } -> Hooks.do
                                 Just "feed" -> maybe identity fromDescription described
                                     (fromPost <|> kept # fromMaybe (emptyDraft type_))
                                 _ -> kept # fromMaybe (emptyDraft type_)
-                            draft = maybe identity (withAccount type_ (regionOf countries) <<< _.account) own base
+                            -- Signed in, a draft written signed out meets the
+                            -- player's post, if they have one, and is theirs
+                            -- to write on otherwise.
+                            conflicting = base.signedOut && isJust post
+                            draft = case own of
+                                Just own' -> withAccount type_ (regionOf countries) own'.account base
+                                    # \draft' -> draft' { signedOut = conflicting }
+                                Nothing -> base
                         -- The draft is saved as it now is, so a reload doesn't
                         -- lay the description over it again.
                         when (isJust from) $ replaceState {} path
@@ -327,8 +359,11 @@ component = Hooks.component \_ { handle, type_ } -> Hooks.do
                             , countries = countries
                             , own = own
                             , otherPosts = otherPosts
+                            , conflicting = conflicting
                             , draft = draft
                             }
+                        -- Back from the register step, the post goes live.
+                        when (from == Just "register" && isJust own && not conflicting) publish
                     , notFound: const do
                         appendRenderReadyNotFound
                         setMeta "Page not found | TeamTavern" ""
@@ -377,29 +412,36 @@ component = Hooks.component \_ { handle, type_ } -> Hooks.do
                     <> " days. We'll email you before it expires, and tell you when someone new fits." ] ]
                 <> if signedIn then [] else [ HH.p_ [ HH.text "You'll create an account next. Nothing you've written is lost." ] ]
 
+        -- The player's post of this type, as the feed shows it.
+        ownCard game now' own post = let
+            draft = withAccount type_ (regionOf state.countries) own.account (fromContent type_ post.content)
+            in
+            card
+            { game
+            , viewer: { now: now'.instant, timezone: state.timezone }
+            , post: (toCard game type_ { nickname: state.nickname, updated: post.updated, today: now'.date } draft)
+                { id = post.id }
+            , marked: false
+            , expanded: state.ownExpanded
+            , preview: true
+            , onToggle: \event -> toggleCard event $ set \state' -> state' { ownExpanded = not state'.ownExpanded }
+            , onContact: pure unit
+            , onEdit: pure unit
+            , onRenew: pure unit
+            }
+
+        existingHeading game = HH.h1_ [ HH.text $ "You already have a " <> game.title <> " " <> type_ <> " post" ]
+
         -- A player with a post of this type for the game is shown it, with
         -- Edit it and Delete it (brief 6).
         existing game now' own post = let
             name = post.content.name # fromMaybe ("your " <> game.title <> " " <> type_ <> " post")
-            draft = withAccount type_ (regionOf state.countries) own.account (fromContent type_ post.content)
             in
             HH.div [ HS.class_ "flow" ] $
             [ context game
-            , HH.h1_ [ HH.text $ "You already have a " <> game.title <> " " <> type_ <> " post" ]
+            , existingHeading game
             , flowLead $ "You can have one " <> type_ <> " post for each game. Edit this one, or delete it to start a new one."
-            , card
-                { game
-                , viewer: { now: now'.instant, timezone: state.timezone }
-                , post: (toCard game type_ { nickname: state.nickname, updated: post.updated, today: now'.date } draft)
-                    { id = post.id }
-                , marked: false
-                , expanded: state.previewExpanded
-                , preview: true
-                , onToggle: togglePreview
-                , onContact: pure unit
-                , onEdit: pure unit
-                , onRenew: pure unit
-                }
+            , ownCard game now' own post
             ]
             <> maybe [] (pure <<< flowError) state.formError
             <> if state.confirmingDelete
@@ -426,6 +468,32 @@ component = Hooks.component \_ { handle, type_ } -> Hooks.do
                     ]
                 ]
 
+        -- A draft that meets the player's post, once they have signed in or
+        -- published from another tab: update the post with it, or keep the
+        -- post and discard the draft (brief 6, Entry points).
+        conflict game now' own post =
+            HH.div [ HS.class_ "flow" ] $
+            [ existingHeading game
+            , flowLead "Update it with what you just wrote, or keep it as it is and discard what you wrote."
+            , HH.p [ HS.class_ "caption" ] [ HH.text "Your post" ]
+            , ownCard game now' own post
+            , HH.p [ HS.class_ "caption" ] [ HH.text "What you just wrote" ]
+            , previewCard game now' state.draft now'.iso state.previewExpanded togglePreview
+            ]
+            <> maybe [] (pure <<< flowError) state.formError
+            <>
+            [ HH.div [ HS.class_ "flow-actions" ]
+                [ HH.button
+                    [ HS.class_ "button button-primary"
+                    , HP.type_ HP.ButtonButton
+                    , HP.disabled state.sending
+                    , HE.onClick $ const updateExisting
+                    ]
+                    [ HH.text "Update my post" ]
+                , button Outline Regular discardDraft [ HH.text "Keep my post as it is" ]
+                ]
+            ]
+
         fieldContext game =
             { game
             , type_
@@ -440,6 +508,7 @@ component = Hooks.component \_ { handle, type_ } -> Hooks.do
             , timezone: state.timezone
             , onChange: changeDraft
             , onUnfold: \key -> set \state' -> state' { changing = snoc state'.changing key }
+            , onDiscord: signUpWithDiscord
             }
 
         form game now' =
@@ -490,6 +559,7 @@ component = Hooks.component \_ { handle, type_ } -> Hooks.do
         Missing, _, _ -> placeholder "Page could not be found."
         Failed, _, _ -> placeholder "There has been an error loading the post screen."
         Ready, Just game, Just now' -> case state.own of
+            Just own | Just post <- own.post, state.conflicting -> conflict game now' own post
             Just own | Just post <- own.post, not state.draft.editing -> existing game now' own post
             _ -> HH.div_ $ form game now'
         _, _, _ -> HH.div [ HS.class_ "flow flow-wide" ] []

@@ -25,7 +25,7 @@ brief marks Proposed, the brief's status is updated in the same commit.
 - [x] 4. Accounts, sessions and the header
 - [x] 5. Game data and the card
 - [x] 6. The feed
-- [ ] 7. Post creation (7a done: the server and the signed-in flow)
+- [x] 7. Post creation
 - [ ] 8. Post pages
 - [ ] 9. Home page
 - [ ] 10. Contact panel and renewal
@@ -498,13 +498,11 @@ What every later page needs signed in and out.
   New post on a game with an existing post shows the check; edit changes the
   card; delete with the count removes it. Both password and Discord sign-up on
   the way.
-- Split in two. 7a, done: the endpoints, the Type and Game steps, the post
+- Built in two parts. 7a: the endpoints, the Type and Game steps, the post
   screen with its preview, the existing-post check, Matches and `post.spec.ts`.
-  7b, next: the signed-out flow, which is the register step inside the flow,
-  Sign up with Discord beside the Discord input, and the choice between updating
-  the existing post and discarding the draft. Until 7b, Publish signed out goes
-  to `/signup?back=` the post screen, and the player presses Publish again once
-  back; `post.spec.ts`'s signed-out case asserts that detour and 7b replaces it.
+  7b: the signed-out flow, which is the register step inside the flow, Sign up
+  with Discord beside the Discord input, and the choice between updating the
+  existing post and discarding the draft.
 - Settled here:
   - A player has one post per game and type, so all four endpoints are
     addressed by them at `/api/games/:handle/own/:type`: `viewOwnPost` (`GET`,
@@ -539,6 +537,24 @@ What every later page needs signed in and out.
     has, names its post without linking to a page.
   - `post.spec.ts` posts in League of Legends, since `feed.spec.ts` asserts
     Valorant's feed whole.
+  - The register step is `/signup` and `/signin`, the one sign-up screen,
+    returning to the post screen with `?from=register`. Given that `back`
+    (`Pages/Post/Register.purs`), they name the post and read Create account and
+    publish, Sign in to publish and, at the nickname prompt, Publish post. Back
+    on the post screen signed in, the draft publishes and the player lands on
+    Matches.
+  - A draft carries `signedOut`, set when it is written or published signed out.
+    Whichever way the player then signs in (the register step, Sign up with
+    Discord, the header's Sign in), the screen checks it against their post of
+    the type: with one, it shows both cards under "You already have a …" with
+    Update my post (the draft replaces the post whole, and `updated` moves) and
+    Keep my post as it is (the draft is dropped and the feed opens). A create
+    answered `exists`, another tab having published, shows the same choice.
+  - Sign up with Discord returns to `/signin` like every Discord trip, and a
+    player Discord doesn't know picks their nickname there, before the post
+    screen, which registers them before they publish. The Discord
+    contact then comes from the account: a blank contact in the draft no longer
+    hides the account's.
 
 ### 8. Post pages
 

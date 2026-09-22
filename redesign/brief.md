@@ -687,10 +687,10 @@ Type ─▶ Game ─▶ Post ─▶ Register or sign in ─▶ Matches
      works, since nothing checks it.
    - **Decided:** when signed out, a **Sign up with Discord** button sits beside the
      Discord input. It saves the draft, registers or signs in with Discord, and
-     returns to this screen with the Discord tag filled in. A new account's
-     register step then asks only for a nickname; signing in to an existing
-     account runs the existing-post check (Entry points) and skips the register
-     step.
+     returns to this screen with the Discord tag filled in. A new account picks
+     its nickname on the way back, before the screen, and Publish then posts at
+     once; signing in to an existing account runs the existing-post check (Entry
+     points). Either way the register step is skipped.
    - **Decided:** until the player has registered, the preview reads "Posted by
      you".
    - **Decided:** the renewal and notification rules are stated above **Publish
@@ -705,10 +705,10 @@ Type ─▶ Game ─▶ Post ─▶ Register or sign in ─▶ Matches
      password, or **Continue with Discord**, with a link to sign in instead. The
      header's **Sign up**, and opening a contact panel signed out, lead to the same
      screen, and it returns the player to where they were.
-   - **Decided:** registration always asks for a nickname. A player who signed up
-     with Discord on the post screen sees only the nickname prompt here; one who
-     continues with Discord here goes on to the same prompt. Discord prefills it,
-     and the player can edit it.
+   - **Decided:** registration always asks for a nickname. A player new to the
+     site who continues with Discord, here or on the post screen, is asked for it
+     when Discord sends them back. Discord prefills it, and the player can edit
+     it.
    - **Decided:** registering with Discord fills the Discord contact with the
      username and the email with the address Discord gives, both of which the
      player may then change. Signing in with Discord fills an email the account

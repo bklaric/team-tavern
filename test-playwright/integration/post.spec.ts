@@ -1,5 +1,6 @@
 import { expect, Page, test } from "@playwright/test";
-import { password, signUp, unique } from "../accounts";
+import { password, signOut, signUp, unique } from "../accounts";
+import { discordUser, fakeDiscord, signUpWithDiscord } from "../discord";
 import { expectPage } from "../pages";
 
 // Posts go into League of Legends, whose feed holds only LolTester's seeded player post
@@ -180,7 +181,7 @@ test.describe("posting", () => {
         await expect(discord).toContainText("Applies to all your posts");
     });
 
-    test("keeps the draft through signing up", async ({ page }) => {
+    test("publishes a draft written signed out once the player has signed up", async ({ page }) => {
         await page.goto("/games/lol/post/player");
         await expect(page.getByText("You'll create an account next. Nothing you've written is lost.")).toBeVisible();
         await expect(page.getByRole("complementary", { name: "Preview" }).locator(".card-name")).toHaveText("You");
@@ -188,16 +189,110 @@ test.describe("posting", () => {
 
         await page.getByRole("button", { name: "Publish post" }).click();
         await expectPage(page, "/signup");
+        await expect(page.getByText("Your League of Legends player post goes live as soon as you're signed up.")).toBeVisible();
         const nickname = unique("P");
         await page.getByLabel("Email").fill(`${nickname.toLowerCase()}@example.com`);
         await page.getByLabel("Nickname").fill(nickname);
         await page.getByLabel("Password").fill(password);
-        await page.getByRole("button", { name: "Create account" }).click();
+        await page.getByRole("button", { name: "Create account and publish" }).click();
+
+        await expectPage(page, "/games/lol/post/player/live");
+        await expect(page.getByRole("heading", { name: "Your post is live" })).toBeVisible();
+
+        // The post answers none of the feed's fields, so the feed it describes is the whole
+        // feed, the post in it.
+        await page.goto(feedPath);
+        await expectSettled(page);
+        await expect(card(page, nickname)).toContainText("Support main, evenings.");
+    });
+
+    test("signs up with Discord beside the Discord input and comes back to the draft", async ({ page }) => {
+        const discord = await fakeDiscord(page, discordUser(`${unique("dpost")}@example.com`, true));
+        await page.goto("/games/lol/post/player");
+        await page.getByLabel("About you and what you're looking for").fill("Jungle, weekends.");
+
+        await page.getByRole("button", { name: "Sign up with Discord" }).click();
+        await expect(page.getByRole("heading", { name: "Pick a nickname" })).toBeVisible();
+        await page.getByLabel("Nickname").fill(unique("D"));
+        await page.getByRole("button", { name: "Continue" }).click();
 
         await expectPage(page, "/games/lol/post/player");
-        await expect(page.getByLabel("About you and what you're looking for")).toHaveValue("Support main, evenings.");
+        await expect(page.getByLabel("About you and what you're looking for")).toHaveValue("Jungle, weekends.");
+        await expect(field(page, "Discord").locator(".account-fact")).toContainText(discord.user.username);
+        await expect(page.getByText("You'll create an account next.")).toHaveCount(0);
+
         await page.getByRole("button", { name: "Publish post" }).click();
         await expectPage(page, "/games/lol/post/player/live");
+    });
+
+    test("publishes once a player new to Discord's sign-up has picked a nickname", async ({ page }) => {
+        await fakeDiscord(page, discordUser(null, false));
+        await page.goto("/games/lol/post/player");
+        await page.getByLabel("About you and what you're looking for").fill("Mid, most nights.");
+
+        await page.getByRole("button", { name: "Publish post" }).click();
+        await expectPage(page, "/signup");
+        await page.getByRole("button", { name: "Continue with Discord" }).click();
+        await expect(page.getByRole("heading", { name: "Pick a nickname" })).toBeVisible();
+        await page.getByLabel("Nickname").fill(unique("D"));
+        await page.getByRole("button", { name: "Publish post" }).click();
+
+        await expectPage(page, "/games/lol/post/player/live");
+        await expect(page.getByRole("heading", { name: "Your post is live" })).toBeVisible();
+    });
+
+    test("signing in to publish offers to update the post the player already has", async ({ page }) => {
+        const nickname = await signUp(page);
+        const name = unique("Rift Owls ");
+        await publishGroup(page, name);
+        await signOut(page);
+
+        await page.goto("/games/lol/post/group");
+        const renamed = unique("Rift Hawks ");
+        await page.getByLabel("Group name").fill(renamed);
+        await page.getByRole("button", { name: "Publish post" }).click();
+        await expectPage(page, "/signup");
+        await page.locator(".flow").getByRole("link", { name: "Sign in" }).click();
+        await expectPage(page, "/signin");
+        await expect(page.getByRole("heading", { name: "Sign in to publish" })).toBeVisible();
+        await page.getByLabel("Email or nickname").fill(nickname);
+        await page.getByLabel("Password").fill(password);
+        await page.getByRole("button", { name: "Sign in and publish" }).click();
+
+        await expectPage(page, "/games/lol/post/group");
+        await expect(page.getByRole("heading", { name: "You already have a League of Legends group post" })).toBeVisible();
+        await expect(card(page, name)).toHaveCount(1);
+        await expect(card(page, renamed)).toHaveCount(1);
+        await page.getByRole("button", { name: "Update my post" }).click();
+
+        await expectPage(page, "/games/lol/post/group/live");
+        await expect(page.getByRole("heading", { name: "Your post is updated" })).toBeVisible();
+        await page.goto("/games/lol/post/group");
+        await expect(card(page, renamed)).toHaveCount(1);
+        await expect(card(page, name)).toHaveCount(0);
+    });
+
+    test("signing in with Discord can keep the post the player already has", async ({ page }) => {
+        const discord = await fakeDiscord(page, discordUser(`${unique("dkeep")}@example.com`, true));
+        await signUpWithDiscord(page, discord);
+        const name = unique("Rift Owls ");
+        await publishGroup(page, name);
+        await signOut(page);
+
+        await page.goto("/games/lol/post/group");
+        const renamed = unique("Rift Hawks ");
+        await page.getByLabel("Group name").fill(renamed);
+        await page.getByRole("button", { name: "Sign up with Discord" }).click();
+
+        await expectPage(page, "/games/lol/post/group");
+        await expect(page.getByRole("heading", { name: "You already have a League of Legends group post" })).toBeVisible();
+        await page.getByRole("button", { name: "Keep my post as it is" }).click();
+        await expectPage(page, feedPath);
+
+        await page.goto("/games/lol/post/group");
+        await expect(page.getByRole("button", { name: "Edit it" })).toBeVisible();
+        await expect(card(page, name)).toHaveCount(1);
+        await expect(card(page, renamed)).toHaveCount(0);
     });
 
     test("starts from the type, then the game, marking the games the player has posted in", async ({ page }) => {

@@ -131,6 +131,15 @@
     }
 }
 
+/* A draft meeting the player's post: each card under what it is. */
+
+.caption {
+    margin-bottom: calc(-1 * var(--space-3));
+    color: var(--text-muted);
+    font-size: var(--size-12);
+    font-weight: 500;
+}
+
 /* Matches: the post is live, with the ember flame. */
 
 .live-heading {
