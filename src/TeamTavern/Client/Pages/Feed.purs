@@ -91,6 +91,8 @@ type State =
     , stored :: Stored
     , segment :: String
     , feed :: Maybe ViewFeed.OkContent
+    -- The batch asked for last hasn't answered.
+    , busy :: Boolean
     , loadingMore :: Boolean
     , failed :: Boolean
     , expanded :: Array Int
@@ -142,6 +144,7 @@ component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
         , stored: maybe emptyStored _.stored restore
         , segment: maybe "all" _.segment restore
         , feed: restore <#> _.feed
+        , busy: isNothing restore
         , loadingMore: false
         , failed: false
         , expanded: maybe [] _.expanded restore
@@ -177,7 +180,7 @@ component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
         -- last is shown, whatever order the answers come back in.
         load cursor = do
             request <- liftEffect $ Ref.modify (_ + 1) requestRef
-            state' <- Hooks.get stateId
+            state' <- Hooks.modify stateId _ { busy = true }
             timezone <- getClientTimezone
             let description = current state'.stored
             result <- H.lift $ Async.attempt $ fetchPathBody (Proxy :: _ ViewFeed) { handle }
@@ -188,7 +191,7 @@ component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
             latest <- liftEffect $ Ref.read requestRef
             let failed = do
                     when (isNothing state'.feed) appendRenderReadyUnavailable
-                    update _ { failed = true, loadingMore = false }
+                    update _ { failed = true, loadingMore = false, busy = false }
             when (latest == request) case result of
                 Right response -> response # onMatch
                     { ok: \batch -> update \state'' -> state''
@@ -197,9 +200,10 @@ component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
                             _, _ -> batch
                         , failed = false
                         , loadingMore = false
+                        , busy = false
                         }
                     -- The game's own lookup says it isn't found.
-                    , notFound: const $ pure unit
+                    , notFound: const $ Hooks.modify_ stateId _ { busy = false }
                     }
                     (const failed)
                 Left _ -> failed
@@ -461,9 +465,10 @@ component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
             , publishPrompt game
             , segmentButtons
             , case state.feed, state.viewer of
-                Just feed', Just viewer -> HH.div [ HS.class_ "feed" ] $ posts game viewer feed'
-                _, _ | state.failed -> HH.p_ [ HH.text "There has been an error loading the posts." ]
-                _, _ -> HH.text ""
+                Nothing, _ | state.failed -> HH.p_ [ HH.text "There has been an error loading the posts." ]
+                feed', viewer ->
+                    HH.div [ HS.class_ "feed", HPA.busy $ show state.busy ] $
+                        fromMaybe [] $ posts game <$> viewer <*> feed'
             , case state.feed of
                 Just { more: true } ->
                     HH.div [ HS.class_ "load-more" ]

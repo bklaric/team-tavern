@@ -12,6 +12,9 @@ const olderPosts = /^Older posts/;
 // The feed from the top: tier headings, the divider and each card's name, in order.
 const feedOrder = (page: Page) => page.locator(".feed").locator(".tier-heading, .divider, .card-name");
 
+// The feed is busy from the moment it asks for posts until the latest request answers.
+const expectSettled = (page: Page) => expect(page.locator(".feed")).toHaveAttribute("aria-busy", "false");
+
 const card = (page: Page, name: string) =>
     page.locator(".card").filter({ has: page.getByRole("link", { name, exact: true }) });
 
@@ -22,6 +25,7 @@ async function describe(page: Page, chip: string, fill: (editor: ReturnType<Page
     await fill(editor);
     await page.keyboard.press("Escape");
     await expect(editor).toHaveCount(0);
+    await expectSettled(page);
 }
 
 async function describeRankedPlatinum(page: Page) {
@@ -112,7 +116,6 @@ test.describe("the feed", () => {
         await page.setViewportSize({ width: 1280, height: 600 });
         await page.goto(feedPath);
         await describeRankedPlatinum(page);
-        await expect(feedOrder(page).first()).toHaveText(/^Fits you/);
         const details = card(page, "Night Owls").getByRole("button", { name: "Details" });
         await details.click();
         await expect(details).toHaveAttribute("aria-expanded", "true");
