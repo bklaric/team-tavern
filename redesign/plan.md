@@ -404,7 +404,10 @@ What every later page needs signed in and out.
     with the cursor; the empty-feed states.
   - Batches and scroll position kept across Back from a post page: the loaded
     feed lives in a cache keyed by game that the router owns, restored on
-    `popstate`, dropped on a fresh navigation.
+    `popstate`, dropped on a fresh navigation. The browser's own scroll
+    restoration runs on `popstate`, before the page has drawn anything, so
+    `history.scrollRestoration` goes to `manual` and the site restores the
+    position itself once the batches are back.
   - Title and description meta per game.
 - Specs: `feed.spec.ts`: the seeded posts appear in activity order with an
   empty description; a description moves the fitting post into Fits you and
