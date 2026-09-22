@@ -2,7 +2,6 @@ module TeamTavern.Client.Script.Scroll
     ( onScroll
     , scrollRestorationManual
     , scrollToId
-    , scrollToOnceDrawn
     ) where
 
 import Prelude
@@ -24,13 +23,6 @@ scrollToId id = liftEffect do
     for_ (element >>= fromElement) \element' -> do
         top <- offsetTop element'
         window >>= scroll 0 (round top - 41)
-
-foreign import scrollToOnceDrawnImpl :: Number -> Effect Unit -> Effect Unit
-
--- | Scrolls to a position the page is still drawing its way down to, then
--- | calls back.
-scrollToOnceDrawn :: ∀ monad. MonadEffect monad => Number -> Effect Unit -> monad Unit
-scrollToOnceDrawn y done = liftEffect $ scrollToOnceDrawnImpl y done
 
 foreign import onScrollImpl :: (Number -> Effect Unit) -> Effect (Effect Unit)
 

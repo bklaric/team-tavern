@@ -7,6 +7,7 @@ import Async as Async
 import Control.Alt ((<|>))
 import Data.Array (concatMap, elem, filter, find, foldl, index, length, null, snoc, sortBy)
 import Data.Foldable (for_)
+import Data.Int (round)
 import Data.Either (Either(..))
 import Data.Map (Map)
 import Data.Map as Map
@@ -42,7 +43,7 @@ import TeamTavern.Client.Script.Cookie (getPlayerNickname, hasPlayerIdCookie)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigateWithEvent_, navigate_)
 import TeamTavern.Client.Script.RenderReady (appendRenderReadyNotFound, appendRenderReadyUnavailable)
-import TeamTavern.Client.Script.Scroll (onScroll, scrollToOnceDrawn)
+import TeamTavern.Client.Script.Scroll (onScroll)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Shared.Fetch (fetchPath, fetchPathBody, fetchSimple)
 import TeamTavern.Client.Shared.Slot (Slot__I)
@@ -59,14 +60,18 @@ import TeamTavern.Shared.Languages (allLanguages)
 import Type.Proxy (Proxy(..))
 import Web.HTML (window)
 import Web.HTML.Location (pathname)
-import Web.HTML.Window (location)
+import Web.HTML.Window (location, scroll)
 import Web.UIEvent.MouseEvent (MouseEvent)
 
 -- | What the feed had loaded, put back when the browser returns to it
 -- | (brief 11.1): the description, the batches, the cards opened and where
--- | the page was scrolled to.
+-- | the page was scrolled to, with everything else its first render draws, so
+-- | the page is as tall as it was left before anything is fetched again.
 type FeedCache =
-    { stored :: Stored
+    { game :: ViewGame.OkContent
+    , viewer :: Viewer
+    , own :: Array OwnDescription
+    , stored :: Stored
     , segment :: String
     , feed :: ViewFeed.OkContent
     , expanded :: Array Int
@@ -137,9 +142,9 @@ languagesByUse posts = used <> filter (not <<< flip elem used) allLanguages
 component :: ∀ query output left. H.Component query Input output (Async left)
 component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
     state /\ stateId <- Hooks.useState
-        { game: Loading
+        { game: maybe Loading (Loaded <<< _.game) restore
         , countries: { regions: [], countries: [] }
-        , own: []
+        , own: maybe [] _.own restore
         , nickname: Nothing
         , stored: maybe emptyStored _.stored restore
         , segment: maybe "all" _.segment restore
@@ -151,11 +156,9 @@ component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
         , openField: Nothing
         , showMore: false
         , sheetOpen: false
-        , viewer: Nothing
+        , viewer: restore <#> _.viewer
         }
     _ /\ requestRef <- Hooks.useRef 0
-    -- Where Back left the page, until the page is scrolled back to it.
-    _ /\ scrollRef <- Hooks.useRef (restore <#> _.y)
     phone <- usePhone
 
     let popoverRef = H.RefLabel "feed-popover"
@@ -164,17 +167,22 @@ component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
         -- Every change is kept for Back, which puts the feed back as it was.
         update f = do
             state' <- Hooks.modify stateId f
-            for_ state'.feed \feed' -> liftEffect $ Ref.modify_
-                (Map.alter
-                    (\entry -> Just
-                        { stored: state'.stored
-                        , segment: state'.segment
-                        , feed: feed'
-                        , expanded: state'.expanded
-                        , y: maybe 0.0 _.y entry
-                        })
-                    handle)
-                cache
+            case state'.game, state'.viewer, state'.feed of
+                Loaded game, Just viewer, Just feed' -> liftEffect $ Ref.modify_
+                    (Map.alter
+                        (\entry -> Just
+                            { game
+                            , viewer
+                            , own: state'.own
+                            , stored: state'.stored
+                            , segment: state'.segment
+                            , feed: feed'
+                            , expanded: state'.expanded
+                            , y: maybe 0.0 _.y entry
+                            })
+                        handle)
+                    cache
+                _, _, _ -> pure unit
 
         -- A batch after the cursor, or the first. Only the batch asked for
         -- last is shown, whatever order the answers come back in.
@@ -252,7 +260,8 @@ component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
         timezone <- getClientTimezone
         nickname <- getPlayerNickname
         signedIn <- hasPlayerIdCookie
-        Hooks.modify_ stateId _ { viewer = Just { now: now', timezone }, nickname = nickname }
+        -- A feed put back reads the time afresh for how long ago each post was.
+        update _ { viewer = Just { now: now', timezone }, nickname = nickname }
         -- Opened afresh, the feed starts over, and so does what Back restores.
         when (isNothing restore) $ liftEffect $ Ref.modify_ (Map.delete handle) cache
 
@@ -265,7 +274,7 @@ component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
                             ( "Find " <> game.title <> " players, groups and communities on TeamTavern. "
                             <> "Say who you're looking for and see who fits."
                             )
-                        Hooks.modify_ stateId _ { game = Loaded game }
+                        update _ { game = Loaded game }
                     , notFound: const do
                         appendRenderReadyNotFound
                         setMeta "Page not found | TeamTavern" ""
@@ -290,20 +299,20 @@ component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
                 pure case result of
                     Right response -> response # onMatch { ok: identity } (const [])
                     Left _ -> []
-            Hooks.modify_ stateId _ { own = own }
+            update _ { own = own }
             when (isNothing restore) do
                 stored <- liftEffect $ loadStored handle
                 Hooks.modify_ stateId _ { stored = stored <|> storedFrom own # fromMaybe emptyStored }
                 load Nothing
 
-        for_ restore \{ y } -> scrollToOnceDrawn y $ Ref.write Nothing scrollRef
+        -- The first render drew the feed as it was left, so it can be
+        -- scrolled to where it was at once.
+        for_ restore \{ y } -> liftEffect $ window >>= scroll 0 (round y)
         -- Leaving by a link scrolls the next page to the top once the location
-        -- is already its, and coming back scrolls a page not yet drawn: neither
-        -- is where the feed was left.
+        -- is already its, which is not where the feed was left.
         subscription <- Hooks.subscribe $ Subscription.makeEmitter onScroll <#> \y -> liftEffect do
             path <- window >>= location >>= pathname
-            restoring <- Ref.read scrollRef <#> isJust
-            when (path == "/games/" <> handle && not restoring) $
+            when (path == "/games/" <> handle) $
                 Ref.modify_ (Map.update (\entry -> Just entry { y = y }) handle) cache
         pure $ Just $ Hooks.unsubscribe subscription
 

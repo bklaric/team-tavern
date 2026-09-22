@@ -447,9 +447,14 @@ What every later page needs signed in and out.
     keeps each game's feed as a `FeedCache` (description, Showing, batches,
     cards opened, scroll position), and hands it only to a feed the browser
     went back or forward to; any other arrival starts afresh and replaces it.
-    `history.scrollRestoration` is manual: the feed scrolls back once the page
-    is tall enough (`scrollToOnceDrawn`), and any other page Back reaches
-    starts at the top. Cards are keyed by post id.
+    `history.scrollRestoration` is manual. The cache also carries the game,
+    the viewer and the viewer's own posts, so a feed put back is drawn whole
+    on its first render and scrolls back in its initializer; any other page
+    Back reaches starts at the top. Cards are keyed by post id.
+  - The router marks its root with the path it has drawn (`data-path`), and
+    specs wait on that through `expectPage` rather than on the URL. The feed
+    is `aria-busy` until its latest request answers. A navigation that Back or
+    Forward overtakes before its tick is dropped.
   - The feed sets its own title and description once `viewGame` answers; an
     unknown handle is the not-found page with renderready's 404.
   - Load more has no spec, the seed having fewer than 21 posts in a game; it
