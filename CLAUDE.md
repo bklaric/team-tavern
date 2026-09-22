@@ -302,6 +302,13 @@ an `index.html` fallback for SPA paths.
 - Components run in `Async left` and are written with Halogen Hooks. Child
   slot types come from `Client/Shared/Slot.purs` (`Slot___`, `SlotQ__`,
   `Slot_O_`, ...).
+- A page forks its fetches from `useLifecycleEffect` rather than awaiting them
+  there, and what follows a fetch happens in the fork, not in a tick effect
+  watching for its result. Hooks runs effects only after a render that the
+  first render, or state changed by an action, query or new input, sets off.
+  State set by code that an effect started, a fork included, is drawn but runs
+  no effect until an action next changes state, so on a page nobody touches a
+  tick effect never sees it.
 - A list whose order or contents change while the page is open is keyed by a
   stable id, with `Halogen.HTML.Elements.Keyed`. Unkeyed, Halogen reuses the
   elements by position, and a click aimed at one item lands on whichever took
