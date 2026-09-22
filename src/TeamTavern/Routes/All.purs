@@ -2,6 +2,8 @@ module TeamTavern.Routes.All where
 
 import Jarilo (type (<|>), type (:))
 import TeamTavern.Routes.Country.ViewCountries (ViewCountries)
+import TeamTavern.Routes.Feed.ViewFeed (ViewFeed)
+import TeamTavern.Routes.Feed.ViewOwnDescriptions (ViewOwnDescriptions)
 import TeamTavern.Routes.Game.ViewGame (ViewGame)
 import TeamTavern.Routes.Game.ViewGames (ViewGames)
 import TeamTavern.Routes.Password.ForgotPassword (ForgotPassword)
@@ -31,6 +33,10 @@ type GameRoutes
     =   "viewGames" : ViewGames
     <|> "viewGame"  : ViewGame
 
+type FeedRoutes
+    =   "viewFeed"            : ViewFeed
+    <|> "viewOwnDescriptions" : ViewOwnDescriptions
+
 type CountryRoutes
     =   "viewCountries" : ViewCountries
 
@@ -39,4 +45,5 @@ type AllRoutes
     <|> PasswordRoutes
     <|> PlayerRoutes
     <|> GameRoutes
+    <|> FeedRoutes
     <|> CountryRoutes

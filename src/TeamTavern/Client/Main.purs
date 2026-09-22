@@ -14,6 +14,7 @@ import Halogen.VDom.Driver (runUI)
 import Partial.Unsafe (unsafePartial)
 import TeamTavern.Client.Router (Query(..), router)
 import TeamTavern.Client.Script.Navigate (navigated)
+import TeamTavern.Client.Script.Scroll (scrollRestorationManual)
 import Web.DOM.NonElementParentNode (getElementById)
 import Web.Event.Event (Event, EventType)
 import Web.Event.EventTarget (EventListener, addEventListener)
@@ -41,9 +42,10 @@ main = HA.runHalogenAff do
     state <- window >>= Window.history >>= History.state # liftEffect
     path <- window >>= Window.location >>= Location.pathname # liftEffect
     { query } <- runUI (hoist (asyncToAff absurd) (router state path)) unit spa
-    navigationListener <- createListener \_ -> do
-        state' <- window >>= Window.history >>= History.state
-        path' <- window >>= Window.location >>= Location.pathname
-        query (ChangeRoute state' path' unit) # void # launchAff_
-    addWindowListener PSET.popstate navigationListener
-    addWindowListener navigated navigationListener
+    liftEffect scrollRestorationManual
+    let navigationListener popped = createListener \_ -> do
+            state' <- window >>= Window.history >>= History.state
+            path' <- window >>= Window.location >>= Location.pathname
+            query (ChangeRoute state' path' popped unit) # void # launchAff_
+    addWindowListener PSET.popstate =<< navigationListener true
+    addWindowListener navigated =<< navigationListener false

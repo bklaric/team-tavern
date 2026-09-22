@@ -232,7 +232,7 @@ community posts.
   acceptable.
 - **Decided:** renewal is allowed at any time and moves the post up. Bumping has
   never been a problem, so nothing prevents it.
-- **Proposed:** the header shows how many posts are active, not the total, which
+- **Decided:** the header shows how many posts are active, not the total, which
   overstates activity.
 - **Proposed:** pages whose posts are all expired are kept out of search engines.
 - **Decided:** cards expand in place (5.4), so browsing the feed doesn't navigate
@@ -764,27 +764,30 @@ context, so each field can be compared the way the pair of post types calls for.
   prefilled from it (section 6, step 3), and the feed invites it: "Publish
   this as your post: groups and players can find you too, and we'll tell you when
   someone new fits."
-- **Proposed:** the draft is stored locally, so seeing what fits needs no account.
-  Publishing does.
-- **Proposed:** a player with a post in the game gets the description prefilled
+- **Decided:** the draft is stored locally, one for each type in each game, so
+  seeing what fits needs no account. Publishing does.
+- **Decided:** a player with a post in the game gets the description prefilled
   from it: from their player post if they have one, otherwise from their group or
-  community post. Changing the description offers to update the post. That
-  description isn't empty, so their own post leaves the feed (section 4).
-- **Proposed:** a viewer with a post of the chosen type in the game is never asked
+  community post. The prefill applies while nothing is stored for the game, and
+  isn't stored until the description changes, so until then it follows the post.
+  Changing the description offers to update the post. That description isn't
+  empty, so their own post leaves the feed (section 4).
+- **Decided:** a viewer with a post of the chosen type in the game is never asked
   to publish another. While the description says what that post says, the
   publish prompt's place holds a muted line with no button: "Showing what fits
   Night Owls, your group post." Once it differs, the prompt reads "Update Night
   Owls with this" and its button **Update post** opens the post screen on the
   post, with the description's fields in place of the post's.
-- **Proposed:** the bar is headed "Tell us about you", with a line saying that what
+- **Decided:** the bar is headed "Tell us about you", with a line saying that what
   fits comes first. Without it the chips read as ordinary filters, not as the
   viewer's own details.
-- **Proposed:** under the three choices a line says which way to read the fields,
+- **Decided:** under the three choices a line says which way to read the fields,
   since it changes with the choice: a player describes themselves, a group or a
   community describes the players it wants. It is the same inversion the cards
   carry (5.2), and the bar is where the viewer first meets it.
-- **Proposed:** the bar carries only the fields matching compares for the chosen
-  type (7.2), the most used first and the rest under **More**. Fields that aren't
+- **Decided:** the bar carries only the fields matching compares for the chosen
+  type (7.2): the game's fields that lead the card and the account's facts first,
+  and the rest under **More**. Fields that aren't
   compared, such as a group's size or name, are filled in on the post screen after
   **Publish post**.
 - **Decided:** on a phone the bar is a full-screen modal. The feed updates when the

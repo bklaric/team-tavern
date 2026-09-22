@@ -407,9 +407,9 @@ next batch, passed back as it came.
 
 Every screen the brief describes is prototyped. What is left of it:
 
-- A feed doesn't prefill the description from the viewer's post in the game on a
-  first visit (brief 7.1); it takes one only through See what fits, Matches or a
-  renewal link.
+- The prototype's feed doesn't prefill the description from the viewer's post in
+  the game on a first visit (brief 7.1); it takes one only through See what fits,
+  Matches or a renewal link. The site's feed does.
 - The ads of section 15 have no place in any layout yet.
 
 ## Stand-ins

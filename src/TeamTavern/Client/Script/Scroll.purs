@@ -1,9 +1,15 @@
-module TeamTavern.Client.Script.Scroll (scrollToId) where
+module TeamTavern.Client.Script.Scroll
+    ( onScroll
+    , scrollRestorationManual
+    , scrollToId
+    , scrollToOnceDrawn
+    ) where
 
 import Prelude
 
 import Data.Foldable (for_)
 import Data.Int (round)
+import Effect (Effect)
 import Effect.Class (class MonadEffect, liftEffect)
 import Web.DOM.NonElementParentNode (getElementById)
 import Web.HTML (window)
@@ -18,3 +24,22 @@ scrollToId id = liftEffect do
     for_ (element >>= fromElement) \element' -> do
         top <- offsetTop element'
         window >>= scroll 0 (round top - 41)
+
+foreign import scrollToOnceDrawnImpl :: Number -> Effect Unit -> Effect Unit
+
+-- | Scrolls to a position the page is still drawing its way down to, then
+-- | calls back.
+scrollToOnceDrawn :: ∀ monad. MonadEffect monad => Number -> Effect Unit -> monad Unit
+scrollToOnceDrawn y done = liftEffect $ scrollToOnceDrawnImpl y done
+
+foreign import onScrollImpl :: (Number -> Effect Unit) -> Effect (Effect Unit)
+
+-- | Calls back with the page's scroll position as it scrolls, until the
+-- | returned effect stops it.
+onScroll :: (Number -> Effect Unit) -> Effect (Effect Unit)
+onScroll = onScrollImpl
+
+-- | The site puts a page's scroll position back itself, once the page has
+-- | drawn what it had: the browser would do it on `popstate`, before anything
+-- | is there to scroll to.
+foreign import scrollRestorationManual :: Effect Unit

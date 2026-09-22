@@ -1,4 +1,4 @@
-module TeamTavern.Client.Components.Card (Viewer, card) where
+module TeamTavern.Client.Components.Card (Viewer, card, flagText) where
 
 import Prelude
 
@@ -61,8 +61,8 @@ plain text = TextFact { text, tabular: false, match: Nothing }
 missed :: String -> Fact
 missed text = TextFact { text, tabular: false, match: Just Miss }
 
--- How a field reads: a player's yes is the field itself, a group's or a
--- community's is what it needs (brief 5).
+-- | How a field reads: a player's yes is the field itself, a group's or a
+-- | community's is what it needs (brief 5).
 flagText :: String -> Field -> Boolean -> String
 flagText type_ field yes = let
     label = toLower field.label

@@ -39,7 +39,13 @@
 -- shifting when posts are renewed under it (brief 4), and counts the posts
 -- shown so far, which says whether the next batch reaches the expired ones.
 
-with viewer as (
+-- node-pg sends the parameters untyped, and Postgres gives each the type it is
+-- first read as, so they are read here, before anything else reads them.
+with parameters as (
+    select $1::text, $2::integer, $3::jsonb, $4::text[], $5::jsonb, $6::timestamptz
+),
+
+viewer as (
     select
         viewer.*,
         -- The hours the viewer covers, as whole hours on a 24-hour circle: an

@@ -1,4 +1,4 @@
-module TeamTavern.Client.Components.Card.Hours (Hours, inViewerTime, hoursText) where
+module TeamTavern.Client.Components.Card.Hours (Hours, hoursText, inViewerTime, toMinutes) where
 
 import Prelude
 

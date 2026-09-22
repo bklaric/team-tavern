@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Times feed.sql against redesign_import, the production dump in the new schema
+# Times the feed query, src/TeamTavern/Server/Feed/Feed.sql, against
+# redesign_import, the production dump in the new schema
 # (redesign/import/import.sh), with now at the dump's date:
 #
 #   redesign/feed/bench.sh [database] [runs]    defaults: redesign_import 20
@@ -28,7 +29,7 @@ cases=(
 
 psql_db() { docker exec -i postgres psql -U "$user" -d "$database" -v ON_ERROR_STOP=1 -qAt "$@"; }
 
-query="$(cat "$here/feed.sql")"
+query="$(cat "$here/../../src/TeamTavern/Server/Feed/Feed.sql")"
 
 run_case() {
     local handle="$1" viewer="$2" description="$3" types="$4" cursor="$5" analyze="$6"

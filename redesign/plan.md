@@ -24,7 +24,7 @@ brief marks Proposed, the brief's status is updated in the same commit.
 - [x] 3. Design system in the client
 - [x] 4. Accounts, sessions and the header
 - [x] 5. Game data and the card
-- [ ] 6. The feed
+- [x] 6. The feed
 - [ ] 7. Post creation
 - [ ] 8. Post pages
 - [ ] 9. Home page
@@ -395,8 +395,9 @@ What every later page needs signed in and out.
   - The description bar: the three choices, the line that says which way to
     read the fields, the compared fields for the chosen type with the most
     used first and the rest under More, the phone's full-screen sheet that
-    applies on close. Draft in local storage per game and type
-    (`tt-draft-<game>-<type>`), which step 7's post screen reads.
+    applies on close. The description in local storage per game
+    (`tt-description-<game>`), which step 7's post screen reads into its own
+    draft (`tt-draft-<game>-<type>`).
   - Publish prompt, the muted line for the viewer's own post of the type, and
     Update post once the description differs (needs step 7 for the button's
     destination; the line and the button appear here, the button's page then).
@@ -414,6 +415,45 @@ What every later page needs signed in and out.
   marks its facts; Showing narrows; the expired post sits under the divider;
   Load more is absent with fewer than 21 posts (a second spec case seeds
   nothing extra, so it asserts the button's absence and the tier counts).
+- Settled here:
+  - `viewFeed` answers `{ posts, tiers, more, cursor }`, the tiers counting
+    active posts and the cursor the last row's. An empty `showing` is every
+    type, and a group or community is shown players whatever it asks.
+  - `Server/Feed/Feed.sql` is `Feed.js`'s text import from its place in `src/`,
+    since purs copies only the `.js` into `output/`. The query opens by typing
+    its six parameters, which node-pg sends untyped. Its tier counts are
+    `bigint`, which node-pg gives as strings. `bench.sh` is unchanged within
+    noise; `check.mjs --api <origin>` pages the endpoint along its cursor and
+    agrees with the prototype on everything but ages, which the samples carry
+    as of the dump's date, so that way leaves them to the psql way.
+  - One description shape everywhere, the query's, as
+    `Routes/Shared/Description.purs`: stored under `tt-description-<game>` as
+    `{ type, player, group, community }`, sent as the request, and made from a
+    post by `viewOwnDescriptions` (`GET /api/games/:handle/own`, signed in), whose
+    SQL steps 7 and 13 can reuse. The request fills in the viewer's timezone
+    where the description has none; hours edited in the bar drop the one a
+    post's description came with.
+  - With nothing stored for the game, the description starts from the viewer's
+    own post, player first, unstored until changed, so it follows the post
+    until then. Clear all stores an empty one.
+  - The bar's order is the prototype's rule, not usage: `on_card` game fields,
+    the account's facts, then the other game fields, hours and microphone
+    under More. Languages offer those the loaded posts use first, then every
+    other. A filled chip is labelled with its field and value ("Rank:
+    Platinum 1").
+  - A card's tier is read from its marks: the ones that aren't `fit` are its
+    misses, and a card with none goes last.
+  - Back: the router tells `popstate` from a link (`ChangeRoute`'s `popped`),
+    keeps each game's feed as a `FeedCache` (description, Showing, batches,
+    cards opened, scroll position), and hands it only to a feed the browser
+    went back or forward to; any other arrival starts afresh and replaces it.
+    `history.scrollRestoration` is manual: the feed scrolls back once the page
+    is tall enough (`scrollToOnceDrawn`), and any other page Back reaches
+    starts at the top. Cards are keyed by post id.
+  - The feed sets its own title and description once `viewGame` answers; an
+    unknown handle is the not-found page with renderready's 404.
+  - Load more has no spec, the seed having fewer than 21 posts in a game; it
+    was run in the browser against `redesign_import` through the endpoint.
 
 ### 7. Post creation
 

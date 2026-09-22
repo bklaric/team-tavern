@@ -1,0 +1,486 @@
+module TeamTavern.Client.Pages.Feed (FeedCache, Input, feed) where
+
+import Prelude
+
+import Async (Async)
+import Async as Async
+import Control.Alt ((<|>))
+import Data.Array (concatMap, elem, filter, find, foldl, index, length, null, snoc, sortBy)
+import Data.Foldable (for_)
+import Data.Either (Either(..))
+import Data.Map (Map)
+import Data.Map as Map
+import Data.Maybe (Maybe(..), fromMaybe, isJust, isNothing, maybe)
+import Data.Tuple (Tuple(..), fst, snd)
+import Data.Tuple.Nested ((/\))
+import Data.Variant (onMatch)
+import Effect.Class (liftEffect)
+import Effect.Now (now)
+import Effect.Ref (Ref)
+import Effect.Ref as Ref
+import Foreign.Object as Object
+import Halogen as H
+import Halogen.HTML as HH
+import Halogen.HTML.Events as HE
+import Halogen.HTML.Elements.Keyed as HK
+import Halogen.HTML.Properties as HP
+import Halogen.HTML.Properties.ARIA as HPA
+import Halogen.Hooks as Hooks
+import Halogen.Subscription as Subscription
+import TeamTavern.Client.Components.Button (Size(..), Weight(..), button)
+import TeamTavern.Client.Components.Card (Viewer, card)
+import TeamTavern.Client.Components.Divider (divider, tierHeading)
+import TeamTavern.Client.Components.Overlay (Presentation(..), useOverlay)
+import TeamTavern.Client.Components.UsePhone (usePhone)
+import TeamTavern.Client.Icons as Icons
+import TeamTavern.Client.Pages.Feed.Bar (bar, sheet, summaryButton, typeIcon)
+import TeamTavern.Client.Pages.Feed.Description (Stored, current, describes, emptyDescription, emptyStored, isEmpty, loadStored, saveStored, setCurrent, storedFrom)
+import TeamTavern.Client.Pages.Feed.Fields (Lists, barFields)
+import TeamTavern.Client.Pages.Placeholder (placeholder)
+import TeamTavern.Client.Script.Expand (toggleCard)
+import TeamTavern.Client.Script.Cookie (getPlayerNickname, hasPlayerIdCookie)
+import TeamTavern.Client.Script.Meta (setMeta)
+import TeamTavern.Client.Script.Navigate (navigateWithEvent_, navigate_)
+import TeamTavern.Client.Script.RenderReady (appendRenderReadyNotFound, appendRenderReadyUnavailable)
+import TeamTavern.Client.Script.Scroll (onScroll, scrollToOnceDrawn)
+import TeamTavern.Client.Script.Timezone (getClientTimezone)
+import TeamTavern.Client.Shared.Fetch (fetchPath, fetchPathBody, fetchSimple)
+import TeamTavern.Client.Shared.Slot (Slot__I)
+import TeamTavern.Client.Snippets.Class as HS
+import TeamTavern.Routes.Country.ViewCountries (ViewCountries)
+import TeamTavern.Routes.Country.ViewCountries as ViewCountries
+import TeamTavern.Routes.Feed.ViewFeed (ViewFeed)
+import TeamTavern.Routes.Feed.ViewFeed as ViewFeed
+import TeamTavern.Routes.Feed.ViewOwnDescriptions (OwnDescription, ViewOwnDescriptions)
+import TeamTavern.Routes.Game.ViewGame (ViewGame)
+import TeamTavern.Routes.Game.ViewGame as ViewGame
+import TeamTavern.Routes.Shared.Card (CardRow)
+import TeamTavern.Shared.Languages (allLanguages)
+import Type.Proxy (Proxy(..))
+import Web.HTML (window)
+import Web.HTML.Location (pathname)
+import Web.HTML.Window (location)
+import Web.UIEvent.MouseEvent (MouseEvent)
+
+-- | What the feed had loaded, put back when the browser returns to it
+-- | (brief 11.1): the description, the batches, the cards opened and where
+-- | the page was scrolled to.
+type FeedCache =
+    { stored :: Stored
+    , segment :: String
+    , feed :: ViewFeed.OkContent
+    , expanded :: Array Int
+    , y :: Number
+    }
+
+-- | `restore` is the feed as it was left, given only when the browser went
+-- | back or forward to it; `cache` is where the feed keeps itself for that.
+type Input =
+    { handle :: String
+    , restore :: Maybe FeedCache
+    , cache :: Ref (Map String FeedCache)
+    }
+
+data Game = Loading | Loaded ViewGame.OkContent | Missing | Failed
+
+type State =
+    { game :: Game
+    , countries :: ViewCountries.OkContent
+    , own :: Array OwnDescription
+    , nickname :: Maybe String
+    , stored :: Stored
+    , segment :: String
+    , feed :: Maybe ViewFeed.OkContent
+    , loadingMore :: Boolean
+    , failed :: Boolean
+    , expanded :: Array Int
+    , openField :: Maybe String
+    , showMore :: Boolean
+    , sheetOpen :: Boolean
+    , viewer :: Maybe Viewer
+    }
+
+segments :: Array { value :: String, label :: String }
+segments =
+    [ { value: "all", label: "All" }
+    , { value: "player", label: "Players" }
+    , { value: "group", label: "Groups" }
+    , { value: "community", label: "Communities" }
+    ]
+
+olderPosts :: String
+olderPosts = "Older posts · they may no longer be looking"
+
+-- A card's marks say how it fits: a tier counts its misses, and a post none of
+-- the description applies to goes to the last tier.
+tierOf :: CardRow -> Int
+tierOf post = let
+    marks = Object.values post.marks
+    misses = marks # filter (notEq "fit") # length
+    in
+    if null marks then 2 else min misses 2
+
+-- The languages the loaded posts use, most used first, then every other.
+languagesByUse :: Array CardRow -> Array String
+languagesByUse posts = used <> filter (not <<< flip elem used) allLanguages
+    where
+    used =
+        posts
+        # concatMap _.languages
+        # foldl (\counts language -> Map.insertWith (+) language 1 counts) Map.empty
+        # (Map.toUnfoldable :: _ -> Array (Tuple String Int))
+        # sortBy (\a b -> compare (snd b) (snd a) <> compare (fst a) (fst b))
+        <#> fst
+
+component :: ∀ query output left. H.Component query Input output (Async left)
+component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
+    state /\ stateId <- Hooks.useState
+        { game: Loading
+        , countries: { regions: [], countries: [] }
+        , own: []
+        , nickname: Nothing
+        , stored: maybe emptyStored _.stored restore
+        , segment: maybe "all" _.segment restore
+        , feed: restore <#> _.feed
+        , loadingMore: false
+        , failed: false
+        , expanded: maybe [] _.expanded restore
+        , openField: Nothing
+        , showMore: false
+        , sheetOpen: false
+        , viewer: Nothing
+        }
+    _ /\ requestRef <- Hooks.useRef 0
+    -- Where Back left the page, until the page is scrolled back to it.
+    _ /\ scrollRef <- Hooks.useRef (restore <#> _.y)
+    phone <- usePhone
+
+    let popoverRef = H.RefLabel "feed-popover"
+        sheetRef = H.RefLabel "feed-sheet"
+
+        -- Every change is kept for Back, which puts the feed back as it was.
+        update f = do
+            state' <- Hooks.modify stateId f
+            for_ state'.feed \feed' -> liftEffect $ Ref.modify_
+                (Map.alter
+                    (\entry -> Just
+                        { stored: state'.stored
+                        , segment: state'.segment
+                        , feed: feed'
+                        , expanded: state'.expanded
+                        , y: maybe 0.0 _.y entry
+                        })
+                    handle)
+                cache
+
+        -- A batch after the cursor, or the first. Only the batch asked for
+        -- last is shown, whatever order the answers come back in.
+        load cursor = do
+            request <- liftEffect $ Ref.modify (_ + 1) requestRef
+            state' <- Hooks.get stateId
+            timezone <- getClientTimezone
+            let description = current state'.stored
+            result <- H.lift $ Async.attempt $ fetchPathBody (Proxy :: _ ViewFeed) { handle }
+                { description: description { timezone = description.timezone <|> Just timezone }
+                , showing: if state'.segment == "all" then [] else [ state'.segment ]
+                , cursor
+                }
+            latest <- liftEffect $ Ref.read requestRef
+            let failed = do
+                    when (isNothing state'.feed) appendRenderReadyUnavailable
+                    update _ { failed = true, loadingMore = false }
+            when (latest == request) case result of
+                Right response -> response # onMatch
+                    { ok: \batch -> update \state'' -> state''
+                        { feed = Just case cursor, state''.feed of
+                            Just _, Just loaded -> batch { posts = loaded.posts <> batch.posts }
+                            _, _ -> batch
+                        , failed = false
+                        , loadingMore = false
+                        }
+                    -- The game's own lookup says it isn't found.
+                    , notFound: const $ pure unit
+                    }
+                    (const failed)
+                Left _ -> failed
+
+        reload = void $ Hooks.fork $ load Nothing
+
+        loadMore = do
+            state' <- Hooks.get stateId
+            unless state'.loadingMore do
+                update _ { loadingMore = true }
+                void $ Hooks.fork $ load $ state'.feed >>= _.cursor
+
+        -- The description follows every change on a desktop; on a phone the
+        -- feed waits for the sheet to close (brief 7.1).
+        change stored = do
+            state' <- Hooks.modify stateId _ { stored = stored }
+            liftEffect $ saveStored handle stored
+            unless state'.sheetOpen reload
+
+        changeDescription description = do
+            state' <- Hooks.get stateId
+            change $ setCurrent description state'.stored
+
+        changeType type_ = do
+            state' <- Hooks.get stateId
+            update _ { segment = "all", openField = Nothing, showMore = false }
+            change state'.stored { type = type_ }
+
+        closeSheet = do
+            update _ { sheetOpen = false }
+            reload
+
+    useOverlay popoverRef (Dropdown { className: "popover", role: "dialog" })
+        (isJust state.openField && not phone) (update _ { openField = Nothing })
+    useOverlay sheetRef FullScreen (state.sheetOpen && phone) closeSheet
+
+    -- Crossing the breakpoint closes whatever the other layout had open.
+    Hooks.captures { phone } Hooks.useTickEffect do
+        state' <- Hooks.get stateId
+        update _ { openField = Nothing }
+        when state'.sheetOpen closeSheet
+        pure Nothing
+
+    Hooks.useLifecycleEffect do
+        now' <- liftEffect now
+        timezone <- getClientTimezone
+        nickname <- getPlayerNickname
+        signedIn <- hasPlayerIdCookie
+        Hooks.modify_ stateId _ { viewer = Just { now: now', timezone }, nickname = nickname }
+        -- Opened afresh, the feed starts over, and so does what Back restores.
+        when (isNothing restore) $ liftEffect $ Ref.modify_ (Map.delete handle) cache
+
+        void $ Hooks.fork do
+            result <- H.lift $ Async.attempt $ fetchPath (Proxy :: _ ViewGame) { handle }
+            case result of
+                Right response -> response # onMatch
+                    { ok: \game -> do
+                        setMeta (game.title <> ": find players, groups and communities | TeamTavern")
+                            ( "Find " <> game.title <> " players, groups and communities on TeamTavern. "
+                            <> "Say who you're looking for and see who fits."
+                            )
+                        Hooks.modify_ stateId _ { game = Loaded game }
+                    , notFound: const do
+                        appendRenderReadyNotFound
+                        setMeta "Page not found | TeamTavern" ""
+                        Hooks.modify_ stateId _ { game = Missing }
+                    }
+                    (const $ appendRenderReadyUnavailable *> Hooks.modify_ stateId _ { game = Failed })
+                Left _ -> appendRenderReadyUnavailable *> Hooks.modify_ stateId _ { game = Failed }
+
+        void $ Hooks.fork do
+            result <- H.lift $ Async.attempt $ fetchSimple (Proxy :: _ ViewCountries)
+            case result of
+                Right response -> response # onMatch
+                    { ok: \countries -> Hooks.modify_ stateId _ { countries = countries } }
+                    (const $ pure unit)
+                Left _ -> pure unit
+
+        -- With nothing described for the game yet, the description starts
+        -- from the viewer's own post in it (brief 7.1), unsaved until changed.
+        void $ Hooks.fork do
+            own <- if not signedIn then pure [] else do
+                result <- H.lift $ Async.attempt $ fetchPath (Proxy :: _ ViewOwnDescriptions) { handle }
+                pure case result of
+                    Right response -> response # onMatch { ok: identity } (const [])
+                    Left _ -> []
+            Hooks.modify_ stateId _ { own = own }
+            when (isNothing restore) do
+                stored <- liftEffect $ loadStored handle
+                Hooks.modify_ stateId _ { stored = stored <|> storedFrom own # fromMaybe emptyStored }
+                load Nothing
+
+        for_ restore \{ y } -> scrollToOnceDrawn y $ Ref.write Nothing scrollRef
+        -- Leaving by a link scrolls the next page to the top once the location
+        -- is already its, and coming back scrolls a page not yet drawn: neither
+        -- is where the feed was left.
+        subscription <- Hooks.subscribe $ Subscription.makeEmitter onScroll <#> \y -> liftEffect do
+            path <- window >>= location >>= pathname
+            restoring <- Ref.read scrollRef <#> isJust
+            when (path == "/games/" <> handle && not restoring) $
+                Ref.modify_ (Map.update (\entry -> Just entry { y = y }) handle) cache
+        pure $ Just $ Hooks.unsubscribe subscription
+
+    let description = current state.stored
+        empty = isEmpty description
+
+        publishLink type_ label =
+            HH.a
+            [ HS.class_ "button button-primary"
+            , HP.href path
+            , HE.onClick \event -> do
+                -- The post screen reads the description from storage,
+                -- however it was set.
+                liftEffect $ saveStored handle state.stored
+                navigateWithEvent_ path event
+            ]
+            [ HH.text label ]
+            where
+            path = "/games/" <> handle <> "/post/" <> type_
+
+        prompt icon quiet content =
+            HH.div [ HS.class_ $ "publish-prompt" <> if quiet then " publish-prompt-quiet" else "" ]
+            ([ icon, HH.p_ [ HH.text content.text ] ] <> maybe [] pure content.action)
+
+        -- A viewer with a post of the type isn't asked to publish another
+        -- (brief 7.1). While the description says what the post says, the
+        -- feed says whose post it is showing what fits; once it differs, it
+        -- offers to update the post.
+        publishPrompt game = case find (_.type >>> eq description.type) state.own of
+            Just own
+                | empty -> HH.text ""
+                | describes own.description description ->
+                    prompt (typeIcon own.type) true
+                        { text: "Showing what fits " <> ownName own true <> ".", action: Nothing }
+                | otherwise ->
+                    prompt Icons.megaphone false
+                        { text: "Update " <> ownName own false <> " with this: "
+                            <> (if own.type == "player" then "groups and players" else "players")
+                            <> " who fit it find you, and we'll tell you when someone new does."
+                        , action: Just $ publishLink own.type "Update post"
+                        }
+            Nothing
+                | empty && game.active > 0 -> HH.text ""
+                | otherwise ->
+                    prompt Icons.megaphone false
+                        { text:
+                            if empty
+                            then "Nobody has posted for " <> game.title
+                                <> " lately. Publish your post and we'll tell you when someone fits."
+                            else "Publish this as your post: "
+                                <> (if description.type == "player" then "groups and players" else "players")
+                                <> " can find you too, and we'll tell you when someone new fits."
+                        , action: Just $ publishLink description.type "Publish post"
+                        }
+
+        ownName own quiet =
+            if own.type == "player" then "your player post"
+            else
+                let name = own.name <|> (state.nickname <#> \nickname -> nickname <> "'s " <> own.type)
+                        # fromMaybe ("your " <> own.type)
+                in if quiet then name <> ", your " <> own.type <> " post" else name
+
+        segmentButtons =
+            if description.type /= "player" then HH.text ""
+            else HH.div_ $ pure $ HH.div [ HS.class_ "segments", HPA.role "group", HPA.label "Showing" ] $
+                segments <#> \{ value, label } ->
+                    HH.button
+                    [ HS.class_ "segment"
+                    , HP.type_ HP.ButtonButton
+                    , HPA.pressed $ show $ state.segment == value
+                    , HE.onClick $ const do
+                        update _ { segment = value }
+                        reload
+                    ]
+                    [ HH.text label ]
+
+        cardOf game viewer post = card
+            { game
+            , viewer
+            , post
+            , marked: not empty
+            , expanded: elem post.id state.expanded
+            , preview: false
+            , onToggle: \(event :: MouseEvent) -> toggleCardOf event post.id
+            , onContact: pure unit
+            , onEdit: navigate_ $ "/games/" <> handle <> "/post/" <> post.type
+            , onRenew: pure unit
+            }
+
+        toggleCardOf event id = toggleCard event $ update \state' -> state'
+            { expanded = if elem id state'.expanded then filter (notEq id) state'.expanded else snoc state'.expanded id }
+
+        -- Active posts in tiers, then the divider, then expired posts in the
+        -- same order without headings (brief 4 and 7.2).
+        posts game viewer { posts: rows, tiers } = let
+            counts = [ tiers.fits, tiers.missingOne, tiers.missingMore ]
+            headings = [ "Fits you", "Missing one thing", "Missing more" ]
+            flush acc = if null acc.stack then acc else acc
+                { html = snoc acc.html (HK.div [ HS.class_ "feed-stack" ] acc.stack), stack = [] }
+            step acc post = let
+                acc' =
+                    if post.expired && not acc.expired
+                    then (flush acc) { html = snoc (flush acc).html (divider olderPosts), expired = true }
+                    else acc
+                tier = tierOf post
+                acc'' =
+                    if not empty && not post.expired && Just tier /= acc'.tier
+                    then (flush acc')
+                        { html = snoc (flush acc').html
+                            (tierHeading (fromMaybe "" $ headingAt tier) (countAt tier))
+                        , tier = Just tier
+                        }
+                    else acc'
+                in
+                -- Keyed, so a card's element stays with its post as the order changes.
+                acc'' { stack = snoc acc''.stack (Tuple (show post.id) (cardOf game viewer post)) }
+            headingAt tier = index headings tier
+            countAt tier = index counts tier
+            in
+            (flush $ foldl step { html: [], stack: [], tier: Nothing, expired: false } rows).html
+
+    Hooks.pure case state.game of
+        Missing -> placeholder "Page could not be found."
+        Failed -> placeholder "There has been an error loading the game."
+        Loading -> HH.div [ HS.class_ "feed-page" ] []
+        Loaded game -> let
+            lists :: Lists
+            lists =
+                { countries: state.countries.countries <#> _.name
+                , regions: state.countries.regions
+                , languages: languagesByUse (maybe [] _.posts state.feed)
+                }
+            fields = barFields game lists description.type
+            in
+            HH.div [ HS.class_ "feed-page" ]
+            [ HH.div [ HS.class_ "feed-header" ]
+                [ HH.img [ HS.class_ "feed-cover", HP.src $ "/images/games/" <> game.handle <> ".webp", HP.alt "" ]
+                , HH.div_
+                    [ HH.h1_ [ HH.text game.title ]
+                    , HH.p_ [ HH.text "Find players, groups and communities" ]
+                    , HH.div [ HS.class_ "feed-active tabular" ]
+                        [ HH.text $ show game.active <> " active " <> if game.active == 1 then "post" else "posts" ]
+                    ]
+                ]
+            , if phone
+                then summaryButton { fields, description, onOpen: update _ { sheetOpen = true } }
+                else bar
+                    { ref: popoverRef
+                    , fields
+                    , description
+                    , openField: state.openField
+                    , showMore: state.showMore
+                    , onType: changeType
+                    , onChange: changeDescription
+                    , onOpen: \field -> update _ { openField = field }
+                    , onMore: update _ { showMore = true }
+                    , onClearAll: change $ setCurrent (emptyDescription description.type) state.stored
+                    }
+            , publishPrompt game
+            , segmentButtons
+            , case state.feed, state.viewer of
+                Just feed', Just viewer -> HH.div [ HS.class_ "feed" ] $ posts game viewer feed'
+                _, _ | state.failed -> HH.p_ [ HH.text "There has been an error loading the posts." ]
+                _, _ -> HH.text ""
+            , case state.feed of
+                Just { more: true } ->
+                    HH.div [ HS.class_ "load-more" ]
+                    [ button Outline Regular loadMore [ HH.text "Load more" ] ]
+                _ -> HH.text ""
+            , if phone && state.sheetOpen
+                then sheet
+                    { ref: sheetRef
+                    , fields
+                    , description
+                    , onType: changeType
+                    , onChange: changeDescription
+                    , onClose: closeSheet
+                    }
+                else HH.text ""
+            ]
+
+feed :: ∀ action slots left.
+    Int -> Input -> H.ComponentHTML action (feed :: Slot__I Int | slots) (Async left)
+feed visit input = HH.slot_ (Proxy :: _ "feed") visit component input

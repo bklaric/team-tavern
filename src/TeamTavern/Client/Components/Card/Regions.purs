@@ -1,4 +1,4 @@
-module TeamTavern.Client.Components.Card.Regions (regionsText) where
+module TeamTavern.Client.Components.Card.Regions (regionCount, regionShortName, regionsText) where
 
 import Prelude
 
@@ -27,8 +27,14 @@ shortNames = Object.fromFoldable
     , Tuple "Oceania" "Oceania"
     ]
 
+regionShortName :: String -> String
+regionShortName region = Object.lookup region shortNames # fromMaybe region
+
+regionCount :: Int
+regionCount = Object.size shortNames
+
 -- | A post's regions as its fact line reads them. All twelve read Anywhere.
 regionsText :: Array String -> String
 regionsText regions
-    | length regions == Object.size shortNames = "Anywhere"
-    | otherwise = regions <#> (\region -> Object.lookup region shortNames # fromMaybe region) # joinWith ", "
+    | length regions == regionCount = "Anywhere"
+    | otherwise = regions <#> regionShortName # joinWith ", "

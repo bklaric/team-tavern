@@ -17,6 +17,8 @@ import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Pool as Pool
 import TeamTavern.Routes.All (AllRoutes)
 import TeamTavern.Server.Country.ViewCountries (viewCountries)
+import TeamTavern.Server.Feed.ViewFeed (viewFeed)
+import TeamTavern.Server.Feed.ViewOwnDescriptions (viewOwnDescriptions)
 import TeamTavern.Server.Game.ViewGame (viewGame)
 import TeamTavern.Server.Game.ViewGames (viewGames)
 import TeamTavern.Server.Infrastructure.Deployment (Deployment)
@@ -109,6 +111,10 @@ runServer deployment discordApiUrl pool = serve (Proxy :: _ AllRoutes) serveOpti
         viewGames pool
     , viewGame: \{ path: { handle } } ->
         viewGame pool handle
+    , viewFeed: \{ path: { handle }, cookies, body } ->
+        viewFeed pool handle cookies body
+    , viewOwnDescriptions: \{ path: { handle }, cookies } ->
+        viewOwnDescriptions pool handle cookies
     , viewCountries: const $
         viewCountries pool
     }

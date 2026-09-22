@@ -270,7 +270,11 @@ an `index.html` fallback for SPA paths.
   (`Nickname`, `Password`, `Hash`); `Server/<Area>/Infrastructure/` holds
   helpers shared across that area's handlers.
 - SQL is written inline as `Query """ ... """` with positional `$n` parameters
-  supplied through `:` and `:|`, and rows are decoded with Yoga.JSON `read`.
+  supplied through `:` and `:|`, and rows are decoded with Yoga.JSON `read`. The
+  feed query is too big to inline: `Server/Feed/Feed.sql` is a file of its own,
+  which `Feed.js` imports as text from its place in `src/` and
+  `build-server.sh` bundles with esbuild's text loader. node-pg sends parameters
+  untyped, so a query Postgres can't type from their first use casts them there.
   Postgres errors are mapped to typed errors by constraint name
   (`player_nickname_key` and friends), so a new unique constraint needs a
   matching branch where it can fire.

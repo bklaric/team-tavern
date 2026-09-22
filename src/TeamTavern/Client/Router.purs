@@ -3,9 +3,14 @@ module TeamTavern.Client.Router (Query(..), router) where
 import Prelude
 
 import Async (Async)
-import Data.Maybe (Maybe(..))
+import Data.Map (Map)
+import Data.Map as Map
+import Data.Maybe (Maybe(..), isNothing)
 import Data.String (Pattern(..), split)
 import Data.Tuple.Nested ((/\))
+import Effect.Class (liftEffect)
+import Effect.Ref (Ref)
+import Effect.Ref as Ref
 import Foreign (Foreign)
 import Halogen as H
 import Halogen.HTML as HH
@@ -13,6 +18,7 @@ import Halogen.Hooks as Hooks
 import TeamTavern.Client.Components.Header (header)
 import TeamTavern.Client.Pages.ConfirmEmail (confirmEmail)
 import TeamTavern.Client.Pages.Design (design)
+import TeamTavern.Client.Pages.Feed (FeedCache, feed)
 import TeamTavern.Client.Pages.ForgotPassword (forgotPassword)
 import TeamTavern.Client.Pages.Home (home)
 import TeamTavern.Client.Pages.Placeholder (placeholder)
@@ -22,10 +28,13 @@ import TeamTavern.Client.Pages.SignIn (signIn)
 import TeamTavern.Client.Pages.SignUp (signUp)
 import TeamTavern.Client.Script.Meta (setMeta, setMetaRobots)
 import TeamTavern.Client.Script.RenderReady (appendRenderReadyNotFound)
-import TeamTavern.Client.Shared.Slot (Slot___)
+import TeamTavern.Client.Shared.Slot (Slot__I, Slot___)
+import Web.HTML (window)
+import Web.HTML.Window (scroll)
 
--- The history state rides along for the pages that will read it.
-data Query send = ChangeRoute Foreign String send
+-- The history state rides along for the pages that will read it. `popped` is
+-- whether the browser went back or forward, rather than a link being followed.
+data Query send = ChangeRoute Foreign String Boolean send
 
 data State
     = Empty
@@ -58,6 +67,7 @@ type ChildSlots =
     , resetPassword :: Slot___
     , confirmEmail :: Slot___
     , design :: Slot___
+    , feed :: Slot__I Int
     )
 
 route :: String -> State
@@ -108,49 +118,69 @@ name NotFound = "Page could not be found."
 description :: String
 description = "Find players and groups for your game on TeamTavern. Say who you're looking for and see who fits."
 
-renderPage :: ∀ action left. State -> H.ComponentHTML action ChildSlots (Async left)
-renderPage Empty = HH.div_ []
-renderPage Home = home
-renderPage SignUp = signUp
-renderPage SignIn = signIn
-renderPage ForgotPassword = forgotPassword
-renderPage ResetPassword = resetPassword
-renderPage ConfirmEmail = confirmEmail
-renderPage Privacy = privacyPolicy
-renderPage Design = design
-renderPage page = placeholder $ name page
+renderPage :: ∀ action left. Visit -> H.ComponentHTML action ChildSlots (Async left)
+renderPage { page: Feed { handle }, visit, restore, cache } = feed visit { handle, restore, cache }
+renderPage { page } = renderPage' page
+
+renderPage' :: ∀ action left. State -> H.ComponentHTML action ChildSlots (Async left)
+renderPage' Empty = HH.div_ []
+renderPage' Home = home
+renderPage' SignUp = signUp
+renderPage' SignIn = signIn
+renderPage' ForgotPassword = forgotPassword
+renderPage' ResetPassword = resetPassword
+renderPage' ConfirmEmail = confirmEmail
+renderPage' Privacy = privacyPolicy
+renderPage' Design = design
+renderPage' page = placeholder $ name page
 
 -- Every navigation is counted, even to the page already open, so the header
--- reads who is signed in on each.
-type Visit = { page :: State, path :: String, visit :: Int }
+-- reads who is signed in on each and a feed opened again starts over. A feed
+-- the browser went back or forward to is restored from the cache it keeps.
+type Visit =
+    { page :: State
+    , path :: String
+    , visit :: Int
+    , restore :: Maybe FeedCache
+    , cache :: Ref (Map String FeedCache)
+    }
 
 render :: ∀ action left. Visit -> H.ComponentHTML action ChildSlots (Async left)
-render { page, path, visit } = HH.div_ [ header { path, visit }, renderPage page ]
+render visit = HH.div_ [ header { path: visit.path, visit: visit.visit }, renderPage visit ]
 
 router :: ∀ input output left. Foreign -> String -> H.Component Query input output (Async left)
 router _ initialPath = Hooks.component \{ queryToken } _ -> Hooks.do
-    visit /\ visitId <- Hooks.useState { page: Empty, path: "", visit: 0 }
+    _ /\ cache <- Hooks.useRef Map.empty
+    visit /\ visitId <- Hooks.useState { page: Empty, path: "", visit: 0, restore: Nothing, cache }
 
-    let changeRoute path = do
+    let changeRoute path popped = do
             let page = route path
             case page of
                 Home -> setMeta "TeamTavern" description
                 NotFound -> do
                     appendRenderReadyNotFound
                     setMeta "Page not found | TeamTavern" description
+                -- A feed names its game once it has it.
+                Feed _ -> pure unit
                 _ -> setMeta (name page <> " | TeamTavern") description
             -- The components page is a tool for building the site, not a page of it.
             setMetaRobots case page of
                 Design -> "noindex"
                 _ -> "index, follow"
-            Hooks.modify_ visitId \{ visit: count } -> { page, path, visit: count + 1 }
+            restore <- case page of
+                Feed { handle } | popped -> liftEffect $ Ref.read cache <#> Map.lookup handle
+                _ -> pure Nothing
+            -- The browser leaves the scroll position alone, so a page it went
+            -- back to starts at the top unless it puts its own back.
+            when (popped && isNothing restore) $ liftEffect $ window >>= scroll 0 0
+            Hooks.modify_ visitId \{ visit: count } -> { page, path, visit: count + 1, restore, cache }
 
     Hooks.useLifecycleEffect do
-        changeRoute initialPath
+        changeRoute initialPath false
         pure Nothing
 
-    Hooks.useQuery queryToken \(ChangeRoute _ path send) -> do
-        changeRoute path
+    Hooks.useQuery queryToken \(ChangeRoute _ path popped send) -> do
+        changeRoute path popped
         pure $ Just send
 
     Hooks.pure $ render visit
