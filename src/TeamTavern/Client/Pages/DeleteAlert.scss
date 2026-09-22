@@ -1,8 +1,0 @@
-@use "../Style/Form";
-
-.single-message {
-    @extend .single-form-container;
-    background-color: white;
-    padding: 21px;
-    text-align: center;
-}

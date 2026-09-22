@@ -20,7 +20,7 @@ brief marks Proposed, the brief's status is updated in the same commit.
 ## Progress
 
 - [x] 1. Database in place
-- [ ] 2. Clear the ground
+- [x] 2. Clear the ground
 - [ ] 3. Design system in the client
 - [ ] 4. Accounts, sessions and the header
 - [ ] 5. Game data and the card
@@ -175,6 +175,33 @@ a minimal suite, so every later step lands on green.
   new ones.
 - Verify: `./build.sh`, `npm test`, `npm run typecheck` all green; the dev
   stack serves the placeholder home page with the covers.
+- Settled here:
+  - `Server/Player/Domain/` (`Hash`, `Id`, `Nickname`, `Password`) stays, since
+    the session cookie and password reset use it; the rest of `Server/Player`
+    and every `Routes/Player` route is gone, and step 4 writes registration
+    anew. The session and password SQL still addresses the old `player`
+    columns; step 4 reworks it, and nothing in the suite signs in until then.
+  - `viewGames` is `GET /api/games` with each game's handle and title, in
+    title order, which is the catalogue's order.
+  - `components.css` is in as `Client/Style/Components.scss` already, since the
+    home page's cover grid uses its `.cover-grid` section. Pages the redesign
+    has not built render `Client/Pages/Placeholder.purs`, a heading styled by
+    `Placeholder.scss`.
+  - The router is a Hooks component with one `State` case per path in the
+    table above, and sets each page's title and description itself.
+  - `/privacy` keeps today's text in `Client/Pages/Privacy.purs`, styled by
+    `base.css` alone.
+  - Inter is the Google Fonts build of the variable face, upright only, in the
+    Latin, Latin Extended, Cyrillic and Greek subsets (each with its `-ext`
+    half), under the family name `InterVariable` that `tokens.css` asks for.
+  - `logo-512.png`, the favicon rendered at 512 px, is the Apple touch icon and
+    the social card image, since neither takes an SVG.
+  - The shell's title is "TeamTavern" and its description "Find players and
+    groups for your game on TeamTavern. Say who you're looking for and see who
+    fits." Step 9 may replace both with the home page's own.
+  - The development database still holds the old catalogue, so its home page
+    shows csgo and splitgate without covers until the relaunch rehearsal of
+    step 19 builds it from the import.
 
 ## Phase 1: foundations
 

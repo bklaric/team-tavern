@@ -52,17 +52,6 @@ handle @bot_page {
     }
 }
 
-# Redirect the retired game list and bare game paths to the pages that carry
-# them now. `redir` sorts before every `handle` block, so a bot gets the
-# redirect rather than a prerender of it. Both matchers are anchored at the
-# root, so the api's own /api/games paths never match.
-
-@games_list path /games /games/
-redir @games_list / 301
-
-@bare_game path_regexp bare_game ^/games/([^/]+)/?$
-redir @bare_game /games/{re.bare_game.1}/players 301
-
 # Proxy api requests to the api.
 
 handle_path /api/* {

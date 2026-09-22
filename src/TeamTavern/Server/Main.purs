@@ -16,14 +16,7 @@ import JavaScript.Node.Process (lookupEnv)
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Pool as Pool
 import TeamTavern.Routes.All (AllRoutes)
-import TeamTavern.Routes.Profile.ViewPlayerProfilesByGame (bundlePlayerFilters)
-import TeamTavern.Routes.Profile.ViewTeamProfilesByGame (bundleTeamFilters)
-import TeamTavern.Server.Alert.Create (createAlert) as Alert
-import TeamTavern.Server.Alert.Delete (deleteAlert) as Alert
-import TeamTavern.Server.Boarding.Onboard as Onboard
-import TeamTavern.Server.Boarding.Preboard as Preboard
-import TeamTavern.Server.Game.ViewAllGames (viewAllGames)
-import TeamTavern.Server.Game.ViewGame (viewGame)
+import TeamTavern.Server.Game.ViewGames (viewGames)
 import TeamTavern.Server.Infrastructure.Deployment (Deployment)
 import TeamTavern.Server.Infrastructure.Deployment as Deployment
 import TeamTavern.Server.Infrastructure.FetchDiscordUser (DiscordApiUrl(..))
@@ -31,30 +24,8 @@ import TeamTavern.Server.Infrastructure.Log (logStamped, print)
 import TeamTavern.Server.Infrastructure.Sendgrid (setApiKey)
 import TeamTavern.Server.Password.ForgotPassword (forgotPassword)
 import TeamTavern.Server.Password.ResetPassword (resetPassword)
-import TeamTavern.Server.Player.Delete (delete) as Player
-import TeamTavern.Server.Player.Register (register) as Player
-import TeamTavern.Server.Player.UpdateContacts (updateContacts) as Player
-import TeamTavern.Server.Player.UpdatePlayer (updatePlayer) as Player
-import TeamTavern.Server.Player.UpdatePlayerEmail (updatePlayerEmail)
-import TeamTavern.Server.Player.UpdatePlayerPassword (updatePlayerPassword)
-import TeamTavern.Server.Player.View (view) as Player
-import TeamTavern.Server.Profile.AddPlayerProfile (addPlayerProfile)
-import TeamTavern.Server.Profile.AddTeamProfile (addTeamProfile)
-import TeamTavern.Server.Profile.DeletePlayerProfile (deletePlayerProfile)
-import TeamTavern.Server.Profile.DeleteTeamProfile (deleteTeamProfile)
-import TeamTavern.Server.Profile.UpdatePlayerProfile (updatePlayerProfile)
-import TeamTavern.Server.Profile.UpdateTeamProfile (updateTeamProfile)
-import TeamTavern.Server.Profile.ViewPlayerProfile (viewPlayerProfile)
-import TeamTavern.Server.Profile.ViewPlayerProfilesByGame (viewPlayerProfilesByGame)
-import TeamTavern.Server.Profile.ViewTeamProfile (viewTeamProfile)
-import TeamTavern.Server.Profile.ViewTeamProfilesByGame (viewTeamProfilesByGame)
 import TeamTavern.Server.Session.End (end) as Session
 import TeamTavern.Server.Session.Start (start) as Session
-import TeamTavern.Server.Team.Create (create) as Team
-import TeamTavern.Server.Team.DeleteTeam (deleteTeam)
-import TeamTavern.Server.Team.Update (update) as Team
-import TeamTavern.Server.Team.UpdateContacts (updateContacts) as Team
-import TeamTavern.Server.Team.View (view) as Team
 import Type.Proxy (Proxy(..))
 
 serveOptions :: ServeOptions { port :: Int, host :: String }
@@ -120,62 +91,8 @@ runServer deployment discordApiUrl pool = serve (Proxy :: _ AllRoutes) serveOpti
         forgotPassword deployment pool cookies body
     , resetPassword: \{ cookies, body } ->
         resetPassword pool cookies body
-    , viewAllGames: const $
-        viewAllGames pool
-    , viewGame: \{ path: { handle } } ->
-        viewGame pool handle
-    , viewPlayer: \{ path: { nickname } , query: { timezone }, cookies, headers } ->
-        Player.view pool cookies { nickname, timezone } headers
-    , registerPlayer: \{ cookies, body } ->
-        Player.register deployment discordApiUrl pool cookies body
-    , updatePlayer: \{ path, cookies, body } ->
-        Player.updatePlayer pool path.nickname cookies body
-    , deletePlayer: \{ path, cookies } ->
-        Player.delete pool path.nickname cookies
-    , updatePlayerContacts: \{ path, cookies, body } ->
-        Player.updateContacts pool path.nickname cookies body
-    , updatePlayerEmail: \{ path, cookies, body } ->
-        updatePlayerEmail pool path.nickname cookies body
-    , updatePlayerPassword: \{ path, cookies, body } ->
-        updatePlayerPassword pool path.nickname cookies body
-    , viewTeam: \{ path: { handle }, query: { timezone }, headers } ->
-        Team.view pool { handle, timezone } headers
-    , createTeam: \{ cookies, body } ->
-        Team.create pool cookies body
-    , updateTeam: \{ path, cookies, body } ->
-        Team.update pool cookies path body
-    , deleteTeam: \{ path, cookies } ->
-        deleteTeam pool cookies path
-    , updateTeamContacts: \{ path, cookies, body } ->
-        Team.updateContacts pool cookies path body
-    , addPlayerProfile: \{ path, cookies, body } ->
-        addPlayerProfile pool cookies path body
-    , addTeamProfile: \{ path, cookies, body } ->
-        addTeamProfile pool cookies path body
-    , updatePlayerProfile: \{ path, cookies, body } ->
-        updatePlayerProfile pool cookies path body
-    , updateTeamProfile: \{ path, cookies, body } ->
-        updateTeamProfile pool cookies path body
-    , deletePlayerProfile: \{ path, cookies } ->
-        deletePlayerProfile pool cookies path
-    , deleteTeamProfile: \{ path, cookies } ->
-        deleteTeamProfile pool cookies path
-    , viewPlayerProfilesByGame: \{ path: { handle }, query } ->
-        viewPlayerProfilesByGame pool handle query.page query.timezone $ bundlePlayerFilters query
-    , viewTeamProfilesByGame: \{ path: { handle }, query } ->
-        viewTeamProfilesByGame pool handle query.page query.timezone $ bundleTeamFilters query
-    , viewPlayerProfile: \{ path: { nickname, handle }, query: { timezone } } ->
-        viewPlayerProfile pool { nickname, handle, timezone }
-    , viewTeamProfile: \{ path: { teamHandle, gameHandle }, query: { timezone } } ->
-        viewTeamProfile pool { teamHandle, gameHandle, timezone }
-    , onboard: \{ cookies, body } ->
-        Onboard.onboard pool cookies body
-    , preboard: \{ cookies, body } ->
-        Preboard.preboard deployment discordApiUrl pool cookies body
-    , createAlert: \{ body } ->
-        Alert.createAlert pool body
-    , deleteAlert: \{ path: { id }, query: { token } } ->
-        Alert.deleteAlert pool { id, token }
+    , viewGames: const $
+        viewGames pool
     }
 
 main :: Effect Unit

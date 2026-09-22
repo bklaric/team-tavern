@@ -1,89 +1,61 @@
-module TeamTavern.Client.Pages.Home where
+module TeamTavern.Client.Pages.Home (home) where
 
 import Prelude
 
 import Async (Async)
-import Client.Pages.Home.ForTeams (forTeams)
+import Async as Async
+import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
+import Data.Tuple.Nested ((/\))
+import Data.Variant (onMatch)
+import Effect.Class (class MonadEffect)
 import Halogen as H
 import Halogen.HTML as HH
+import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import TeamTavern.Client.Components.Ads (AdSlots, billboard, leaderboard, mobileMpu, mobileTakeover)
-import TeamTavern.Client.Components.Boarding.PlayerOrTeamInput as Boarding
-import TeamTavern.Client.Pages.Home.CallToAction (callToAction)
-import TeamTavern.Client.Pages.Home.Connect (connect)
-import TeamTavern.Client.Pages.Home.Features (features)
-import TeamTavern.Client.Pages.Home.FindProfiles (findProfiles)
-import TeamTavern.Client.Pages.Home.ForPlayers (forPlayers)
-import TeamTavern.Client.Pages.Home.Games (games)
-import TeamTavern.Client.Pages.Preboarding as Preboarding
-import TeamTavern.Client.Script.Meta (setMeta)
-import TeamTavern.Client.Script.Navigate (navigate)
-import TeamTavern.Client.Script.Scroll (scrollToId)
+import Halogen.Hooks as Hooks
+import TeamTavern.Client.Script.Navigate (navigateWithEvent_)
+import TeamTavern.Client.Script.RenderReady (appendRenderReadyUnavailable)
+import TeamTavern.Client.Shared.Fetch (fetchSimple)
 import TeamTavern.Client.Shared.Slot (Slot___)
-import TeamTavern.Client.Snippets.PreventMouseDefault (preventMouseDefault)
+import TeamTavern.Client.Snippets.Class as HS
+import TeamTavern.Routes.Game.ViewGames (ViewGames)
+import TeamTavern.Routes.Game.ViewGames as ViewGames
 import Type.Proxy (Proxy(..))
-import Web.UIEvent.MouseEvent (MouseEvent)
 
-data Action
-    = Initialize
-    | OpenPreboarding MouseEvent
-    | OpenPlayerPreboarding MouseEvent
-    | OpenTeamPreboarding MouseEvent
-    | ScrollToGames MouseEvent
+data Games = Loading | Loaded ViewGames.OkContent | Failed
 
-type State = Unit
-
-type ChildSlots = AdSlots
-    ( games :: Slot___
-    )
-
-render :: ∀ left. State -> H.ComponentHTML Action ChildSlots (Async left)
-render _ =
-    HH.div [ HP.class_ $ HH.ClassName "home" ] $
-    [ callToAction ScrollToGames OpenPreboarding
-    , games
-    , forPlayers OpenPlayerPreboarding
-    , billboard
-    , mobileTakeover
-    , forTeams OpenTeamPreboarding
-    , findProfiles ScrollToGames
-    , leaderboard
-    , mobileMpu
-    , connect
-    , features OpenPreboarding
-    ]
-
-handleAction :: ∀ action output slots left.
-    Action -> H.HalogenM State action slots output (Async left) Unit
-handleAction Initialize = setMeta
-    "Esports Team Finder / LFG / LFT / LFM / LFP | TeamTavern"
-    ( "Find esports players and teams looking for teammates on TeamTavern, an esports team finding platform. "
-    <> "Create your own player or team profile and let them find you."
-    )
-handleAction (OpenPreboarding mouseEvent) = do
-    preventMouseDefault mouseEvent
-    navigate (Preboarding.emptyInput Nothing Nothing) "/preboarding/start"
-handleAction (OpenPlayerPreboarding mouseEvent) = do
-    preventMouseDefault mouseEvent
-    navigate (Preboarding.emptyInput (Just Boarding.Player) Nothing) "/preboarding/start"
-handleAction (OpenTeamPreboarding mouseEvent) = do
-    preventMouseDefault mouseEvent
-    navigate (Preboarding.emptyInput (Just Boarding.Team) Nothing) "/preboarding/start"
-handleAction (ScrollToGames mouseEvent) = do
-    preventMouseDefault mouseEvent
-    scrollToId "games"
+cover :: ∀ slots m. MonadEffect m =>
+    ViewGames.OkGameContent -> HH.HTML slots (Hooks.HookM m Unit)
+cover { handle, title } =
+    HH.a [ HS.class_ "cover", HP.href path, HE.onClick $ navigateWithEvent_ path ]
+    [ HH.img [ HP.src $ "/images/games/" <> handle <> ".webp", HP.alt title ] ]
+    where
+    path = "/games/" <> handle
 
 component :: ∀ query input output left. H.Component query input output (Async left)
-component = H.mkComponent
-    { initialState: const unit
-    , render
-    , eval: H.mkEval $ H.defaultEval
-        { handleAction = handleAction
-        , initialize = Just Initialize
-        }
-    }
+component = Hooks.component \_ _ -> Hooks.do
+    games /\ gamesId <- Hooks.useState Loading
 
-home :: ∀ query children left.
-    HH.ComponentHTML query (home :: Slot___ | children) (Async left)
-home = HH.slot (Proxy :: _ "home") unit component unit absurd
+    Hooks.useLifecycleEffect do
+        let failed = appendRenderReadyUnavailable *> Hooks.put gamesId Failed
+        result <- H.lift $ Async.attempt $ fetchSimple (Proxy :: _ ViewGames)
+        case result of
+            Left _ -> failed
+            Right response -> response # onMatch
+                { ok: Hooks.put gamesId <<< Loaded }
+                (const failed)
+        pure Nothing
+
+    Hooks.pure $
+        HH.div [ HS.class_ "placeholder" ]
+        [ HH.h1_ [ HH.text "TeamTavern" ]
+        , HH.h2_ [ HH.text "Browse a game" ]
+        , case games of
+            Loading -> HH.div_ []
+            Loaded games' -> HH.div [ HS.class_ "cover-grid" ] $ games' <#> cover
+            Failed -> HH.p_ [ HH.text "There has been an error loading the games." ]
+        ]
+
+home :: ∀ action slots left. H.ComponentHTML action (home :: Slot___ | slots) (Async left)
+home = HH.slot_ (Proxy :: _ "home") unit component unit

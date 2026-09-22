@@ -2,66 +2,26 @@ import { expect, Page, test } from "@playwright/test";
 import compose from "docker-compose";
 import { rethrowComposeError, testStack, waitForApi } from "../stack";
 
-// One seeded game carries every check. `stacks/test-seed/players.sql` derives the nickname
-// as initcap(handle) || 'Tester', `Client/Pages/Profiles.purs` builds the title from the
-// game's short title, and `Database/Seed/Games/Valorant.sql` seeds the three fields.
-const game = {
-    handle: "valorant",
-    nickname: "ValorantTester",
-    title: "Players / LFG / LFT - Valorant Team Finder | TeamTavern",
-    fieldLabels: ["Rank", "Role", "Interest"],
-    // One seeded profile per game, so the listing counts exactly one.
-    listingCount: "Showing 1 - 1 out of 1 players",
-};
-
-const listingPath = `/games/${game.handle}/players`;
-
-// The same seed gives the player an organized team with a profile for the game, named after
-// the game in the same way.
-const team = { handle: `${game.handle}-testers`, name: "Valorant Testers" };
-
-const playerPath = `/players/${game.nickname}`;
-const playerProfilePath = `${playerPath}/profiles/${game.handle}`;
-const teamListingPath = `/games/${game.handle}/teams`;
-const teamPath = `/teams/${team.handle}`;
-const teamProfilePath = `${teamPath}/profiles/${game.handle}`;
+// The home page loads its cover grid from `/api/games`, so it is the page that shows whether
+// the site and the API both answer. `Database/Seed/Games/` seeds ten games.
+const home = { path: "/", title: "TeamTavern", gameCount: 10 };
 
 // Caddy tells the three kinds of visitor apart by what they send: the prerenderer's browser by
-// its `X-RenderReady` header, a bot by its user agent. Each block below visits the same listing
+// its `X-RenderReady` header, a bot by its user agent. Each block below visits the home page
 // as one kind.
 
-async function expectListingRendered(page: Page) {
-    await expect(page).toHaveTitle(game.title);
-    await expect(page.getByRole("link", { name: game.nickname })).toBeVisible();
-    await expect(page.getByText(game.listingCount)).toBeVisible();
+async function expectHomeRendered(page: Page) {
+    await expect(page).toHaveTitle(home.title);
+    await expect(page.locator(".cover-grid .cover")).toHaveCount(home.gameCount);
 }
 
 // The browser fixture carries the Desktop Chrome user agent the config sets, not headless
 // Chromium's own, so this is served the site itself.
 test.describe("a browser", () => {
-    test("is served the player listings with the game's fields", async ({ page }) => {
-        await page.goto(listingPath);
+    test("is served the home page with the game covers", async ({ page }) => {
+        await page.goto(home.path);
 
-        await expectListingRendered(page);
-        for (const label of game.fieldLabels)
-            await expect(page.getByText(label, { exact: true }).first()).toBeVisible();
-    });
-
-    // `stacks/test-seed/players.sql` gives the player an organized team with a profile for the
-    // game. The server writes a team's organization into JSON in four queries, and each page
-    // below reads it from a different one, so each names the team by its name, not its handle.
-    test("is served the organized team by name wherever it appears", async ({ page }) => {
-        await page.goto(teamListingPath);
-        await expect(page.getByRole("link", { name: team.name }).first()).toBeVisible();
-
-        await page.goto(teamPath);
-        await expect(page.getByText(team.name).first()).toBeVisible();
-
-        await page.goto(teamProfilePath);
-        await expect(page.getByText(team.name).first()).toBeVisible();
-
-        await page.goto(playerPath);
-        await expect(page.getByRole("link", { name: team.name }).first()).toBeVisible();
+        await expectHomeRendered(page);
     });
 
     // Caddy answers the redirect itself; the ad network's file is not the suite's to fetch.
@@ -85,17 +45,17 @@ test.describe("a browser", () => {
 });
 
 // What the prerenderer's browser sends. Caddy answers every page under it with the prerender
-// shell, which boots the site and calls the API for the page's data, so the listing only
+// shell, which boots the site and calls the API for the page's data, so the page only
 // renders if the API answers this header with JSON rather than with the shell.
 test.describe("a headless browser", () => {
     test.use({ extraHTTPHeaders: { "X-RenderReady": "1" } });
 
-    test("is served the prerender shell, which renders the player listings", async ({ page }) => {
-        await page.goto(listingPath);
+    test("is served the prerender shell, which renders the home page", async ({ page }) => {
+        await page.goto(home.path);
 
-        // The shell is `index.html` without analytics and ads, so no ad script says it is the shell.
+        // The shell is `index.html` without ads, so no ad script says it is the shell.
         await expect(page.locator('script[src*="vntsm.com"]')).toHaveCount(0);
-        await expectListingRendered(page);
+        await expectHomeRendered(page);
     });
 });
 
@@ -107,59 +67,18 @@ test.describe("a bot", () => {
         javaScriptEnabled: false,
     });
 
-    // The prerenderer drives a real browser against the site, which is the slowest thing in
-    // the suite and slowest of all on the first render after a boot.
-    test("is served the prerendered player listings", async ({ page }) => {
+    // The root is a directory, which Caddy's file matcher counts as a file, so it is the one
+    // page path that has to be let through to the prerenderer by name. The prerenderer drives
+    // a real browser against the site, which is the slowest thing in the suite and slowest of
+    // all on the first render after a boot.
+    test("is served the prerendered home page", async ({ page }) => {
         test.slow();
 
-        // The prerenderer bases the HTML on the origin it rendered, which `test.Caddyfile` sets
-        // to the compose-internal `http://caddy`, so the stylesheets and images it names do not
-        // resolve outside that network. Production's origin is the public site, which bots can
-        // fetch; here only the content is checked.
-        const response = await page.goto(listingPath, { timeout: 60_000 });
+        const response = await page.goto(home.path, { timeout: 60_000 });
 
         expect(response?.status()).toBe(200);
-        await expect(page).toHaveTitle(game.title);
-        await expect(page.getByText(game.nickname).first()).toBeVisible();
-        await expect(page.getByText(game.listingCount)).toBeVisible();
+        await expectHomeRendered(page);
     });
-
-    // Each of these pages loads its data from its own endpoint, and the title is set only once
-    // that data arrived.
-    for (const { path, title } of [
-        { path: teamListingPath, title: "Teams / LFM / LFP - Valorant Team Finder | TeamTavern" },
-        { path: playerPath, title: `${game.nickname} | TeamTavern` },
-        { path: playerProfilePath, title: `${game.nickname} - Valorant | TeamTavern` },
-        { path: teamPath, title: `${team.name} | TeamTavern` },
-        { path: teamProfilePath, title: `${team.name} - Valorant | TeamTavern` },
-    ])
-        test(`is served ${path} prerendered`, async ({ page }) => {
-            test.slow();
-
-            const response = await page.goto(path, { timeout: 60_000 });
-
-            expect(response?.status()).toBe(200);
-            await expect(page).toHaveTitle(title);
-        });
-
-    // The page names the status in a meta tag the prerenderer reads, so a crawler drops the page
-    // rather than indexing the message. The seeded player and team have a profile for their own
-    // game only.
-    for (const { path, message } of [
-        { path: "/players/NobodyTester", message: "Player could not be found." },
-        { path: `${playerPath}/profiles/apex`, message: "Player profile could not be found." },
-        { path: "/teams/nobody-testers", message: "Team could not be found." },
-        { path: `${teamPath}/profiles/apex`, message: "Team profile could not be found." },
-        { path: "/games/nogame/players", message: "Game could not be found." },
-    ])
-        test(`is answered 404 for ${path}`, async ({ page }) => {
-            test.slow();
-
-            const response = await page.goto(path, { timeout: 60_000 });
-
-            expect(response?.status()).toBe(404);
-            await expect(page.getByText(message)).toBeVisible();
-        });
 
     // Caddy answers a missing image itself rather than rendering it as a page.
     test("is answered 404 for an image that does not exist, without a render", async ({ page }) => {
@@ -181,24 +100,13 @@ test.describe("a bot", () => {
             await expect(page.getByText("Page could not be found.")).toBeVisible();
         });
 
-    // The root is a directory, which Caddy's file matcher counts as a file, so it is the one
-    // page path that has to be let through to the prerenderer by name.
-    test("is served the prerendered home page", async ({ page }) => {
-        test.slow();
-
-        const response = await page.goto("/", { timeout: 60_000 });
-
-        expect(response?.status()).toBe(200);
-        await expect(page).toHaveTitle("Esports Team Finder / LFG / LFT / LFM / LFP | TeamTavern");
-    });
-
     // A bot goes on to fetch what the prerendered HTML names, under the same user agent, so
     // Caddy has to serve those files rather than hand them to the prerenderer as pages.
     // The HTML is based on the render origin, which is the site itself in production and here
     // the compose-internal `http://caddy`, so this puts the site's origin in its place.
     test("can fetch the stylesheets and images the prerendered page names", async ({ page, baseURL }) => {
         test.slow();
-        await page.route(url => url.pathname === listingPath, async route => {
+        await page.route(url => url.pathname === home.path, async route => {
             const response = await route.fetch({ timeout: 60_000 });
             const body = (await response.text()).replaceAll("http://caddy", baseURL!);
             await route.fulfill({ response, body });
@@ -206,14 +114,13 @@ test.describe("a bot", () => {
         const served = new Map<string, { status: number, contentType: string }>();
         page.on("response", response => {
             const url = new URL(response.url());
-            if (url.origin === baseURL && url.pathname !== listingPath)
+            if (url.origin === baseURL && url.pathname !== home.path)
                 served.set(url.pathname, { status: response.status(), contentType: response.headers()["content-type"] ?? "" });
         });
 
-        await page.goto(listingPath, { timeout: 60_000 });
+        await page.goto(home.path, { timeout: 60_000 });
 
-        // The prerenderer writes every link absolute. Only the site's own files count; the CDN
-        // stylesheets the page also links are not Caddy's to serve.
+        // The prerenderer writes every link absolute.
         const paths = async (selector: string, attribute: string) =>
             (await page.locator(selector).evaluateAll((elements, attribute) =>
                 elements.map(element => element.getAttribute(attribute) ?? ""), attribute))
@@ -225,15 +132,14 @@ test.describe("a bot", () => {
         expect(stylesheets.length).toBeGreaterThan(0);
         expect(images.length).toBeGreaterThan(0);
 
+        for (const image of await page.locator("img").all())
+            await image.scrollIntoViewIfNeeded();
         for (const path of stylesheets)
-            expect(served.get(path), path).toEqual({ status: 200, contentType: expect.stringContaining("text/css") });
+            await expect.poll(() => served.get(path), path)
+                .toEqual({ status: 200, contentType: expect.stringContaining("text/css") });
         for (const path of images)
-            expect(served.get(path), path).toEqual({ status: 200, contentType: expect.stringContaining("image/") });
-
-        // The logo is a 180px icon the site's stylesheet sizes down, so both arrived and applied.
-        const logo = page.getByRole("img", { name: "TeamTavern logo" });
-        await expect(logo).toHaveCSS("width", "26px");
-        expect(await logo.evaluate(image => (image as HTMLImageElement).naturalWidth)).toBeGreaterThan(0);
+            await expect.poll(() => served.get(path), path)
+                .toEqual({ status: 200, contentType: expect.stringContaining("image/") });
     });
 });
 
@@ -257,30 +163,13 @@ test.describe("a bot, while the API is down", () => {
         await waitForApi(request);
     });
 
-    for (const { path, message } of [
-        { path: playerPath, message: "There has been an error loading the player." },
-        { path: playerProfilePath, message: "There has been an error loading the player profile." },
-        { path: teamPath, message: "There has been an error loading the team." },
-        { path: teamProfilePath, message: "There has been an error loading the team profile." },
-        { path: listingPath, message: "There has been an error loading the game." },
-    ])
-        test(`is answered 503 for ${path}`, async ({ page }) => {
-            test.slow();
-
-            const response = await page.goto(path, { timeout: 60_000 });
-
-            expect(response?.status()).toBe(503);
-            await expect(page.getByText(message)).toBeVisible();
-        });
-
-    // The home page shows no message when its game grid fails to load, only an empty grid.
     test("is answered 503 for the home page", async ({ page }) => {
         test.slow();
 
-        const response = await page.goto("/", { timeout: 60_000 });
+        const response = await page.goto(home.path, { timeout: 60_000 });
 
         expect(response?.status()).toBe(503);
-        await expect(page.getByRole("heading", { name: "Pick your game" })).toBeVisible();
-        await expect(page.locator("#games .home-game")).toHaveCount(0);
+        await expect(page.getByText("There has been an error loading the games.")).toBeVisible();
+        await expect(page.locator(".cover")).toHaveCount(0);
     });
 });

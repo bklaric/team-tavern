@@ -1,13 +1,17 @@
 module TeamTavern.Client.Pages.Privacy (privacyPolicy) where
 
 import Halogen.HTML as HH
-import TeamTavern.Client.Components.Anchor (textAnchor_)
+import Halogen.HTML.Properties as HP
 import TeamTavern.Client.Snippets.Class as HS
+
+textAnchor_ :: ∀ slots action. String -> String -> HH.HTML slots action
+textAnchor_ url text =
+    HH.a [ HP.target "_blank", HP.rel "noopener", HP.href url ] [ HH.text text ]
 
 privacyPolicy :: ∀ slots action. HH.HTML slots action
 privacyPolicy =
-  HH.div [ HS.class_ "privacy-policy" ]
-  [ HH.p_ [ HH.text "Privacy Policy" ]
+  HH.div [ HS.class_ "placeholder" ]
+  [ HH.h1_ [ HH.text "Privacy Policy" ]
   , HH.p_ [ HH.text "1. Introduction" ]
   , HH.p_ [ HH.text "1.1 We are committed to safeguarding the privacy of our website visitors and service users." ]
   , HH.p_ [ HH.text "1.2 This policy applies where we are acting as a data controller with respect to the personal data of our website visitors and service users; in other words, where we determine the purposes and means of the processing of that personal data." ]

@@ -3,249 +3,121 @@ module TeamTavern.Client.Router (Query(..), router) where
 import Prelude
 
 import Async (Async)
-import Control.Monad.Maybe.Trans (MaybeT(..), runMaybeT)
 import Data.Maybe (Maybe(..))
 import Data.String (Pattern(..), split)
+import Data.Tuple.Nested ((/\))
 import Foreign (Foreign)
-import Halogen (liftEffect)
 import Halogen as H
 import Halogen.HTML as HH
-import Halogen.HTML.Properties as HP
-import TeamTavern.Client.Components.Ads (AdSlots, desktopTakeover, horizontalSticky, mobileHorizontalSticky, verticalSticky)
-import TeamTavern.Client.Components.Ads as Ads
-import TeamTavern.Client.Components.Content (content, singleContent)
-import TeamTavern.Client.Components.Footer (footer)
-import TeamTavern.Client.Components.Footer as Footer
-import TeamTavern.Client.Components.TopBar (topBar)
-import TeamTavern.Client.Pages.About (about)
-import TeamTavern.Client.Pages.DeleteAlert (deleteAlert)
-import TeamTavern.Client.Pages.ForgotPassword (forgotPassword)
-import TeamTavern.Client.Pages.GameTabs as GameTabs
+import Halogen.Hooks as Hooks
 import TeamTavern.Client.Pages.Home (home)
-import TeamTavern.Client.Pages.Onboarding (onboarding)
-import TeamTavern.Client.Pages.Onboarding as Onboarding
-import TeamTavern.Client.Pages.Player (player)
-import TeamTavern.Client.Pages.PlayerProfile (playerProfile)
-import TeamTavern.Client.Pages.PlayerProfile as PlayerProfile
-import TeamTavern.Client.Pages.Preboarding (preboarding)
-import TeamTavern.Client.Pages.Preboarding as Preboarding
+import TeamTavern.Client.Pages.Placeholder (placeholder)
 import TeamTavern.Client.Pages.Privacy (privacyPolicy)
-import TeamTavern.Client.Pages.Profiles.GameHeader as GameHeader
-import TeamTavern.Client.Pages.Register (register)
-import TeamTavern.Client.Pages.ResetPassword (resetPassword)
-import TeamTavern.Client.Pages.ResetPasswordSent (resetPasswordSent)
-import TeamTavern.Client.Pages.ResetPasswordSuccess (resetPasswordSuccess)
-import TeamTavern.Client.Pages.SignIn (signIn)
-import TeamTavern.Client.Pages.Team (team)
-import TeamTavern.Client.Pages.TeamProfile (teamProfile)
-import TeamTavern.Client.Pages.TeamProfile as TeamProfile
-import TeamTavern.Client.Script.Analytics (track)
-import TeamTavern.Client.Script.Cookie (getPlayerNickname, hasPlayerIdCookie)
-import TeamTavern.Client.Script.Navigate (navigateReplace_)
-import TeamTavern.Client.Script.QueryParams (getFragmentParam)
+import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.RenderReady (appendRenderReadyNotFound)
-import TeamTavern.Client.Shared.Slot (Slot___, SlotQ__)
-import Type.Proxy (Proxy(..))
-import Type.Row (type (+))
-import Web.HTML (window)
-import Web.HTML.Window (localStorage)
-import Web.Storage.Storage (getItem)
-import Yoga.JSON (readJSON_, read_)
+import TeamTavern.Client.Shared.Slot (Slot___)
 
+-- The history state rides along for the pages that will read it.
 data Query send = ChangeRoute Foreign String send
-
-data Action = Init Foreign String
 
 data State
     = Empty
     | Home
-    | About
-    | Privacy
-    | GameTabs GameTabs.Input
-    | Player { nickname :: String }
-    | PlayerProfile PlayerProfile.Input
-    | TeamProfile TeamProfile.Input
-    | Team { handle :: String }
-    | Register
+    | Feed { handle :: String }
+    | Post { handle :: String, id :: String }
+    | PostType
+    | PostGame { type_ :: String }
+    | PostScreen { handle :: String, type_ :: String }
+    | Matches { handle :: String, type_ :: String }
+    | SignUp
     | SignIn
     | ForgotPassword
-    | ResetPasswordSent { email :: String }
     | ResetPassword
-    | ResetPasswordSuccess
-    | Onboarding Onboarding.Input
-    | Preboarding Preboarding.Input
-    | DeleteAlert
+    | ConfirmEmail
+    | Renew
+    | Messages
+    | Conversation { conversation :: String }
+    | Account
+    | Privacy
+    | Design
     | NotFound
 
-type Hmm slots = Footer.ChildSlots + AdSlots + slots
+type ChildSlots = (home :: Slot___)
 
-topBarWithContent
-    :: ∀ query children left
-    .  Maybe String
-    -> (H.ComponentHTML query (Footer.ChildSlots + AdSlots (topBar :: Slot___ | children)) (Async left))
-    -> H.ComponentHTML query (Footer.ChildSlots + AdSlots (topBar :: Slot___ | children)) (Async left)
-topBarWithContent handle content' = HH.div_
-    [ topBar handle
-    , content
-        [ HH.div_ []
-        , HH.div_ [desktopTakeover, content', verticalSticky, horizontalSticky, mobileHorizontalSticky]
-        , HH.div_ []
-        ]
-    , footer
-    ]
+route :: String -> State
+route path =
+    case split (Pattern "/") path of
+    ["", ""] -> Home
+    ["", "games", handle] -> Feed { handle }
+    ["", "games", handle, "posts", id] -> Post { handle, id }
+    ["", "post"] -> PostType
+    ["", "post", type_] -> PostGame { type_ }
+    ["", "games", handle, "post", type_] -> PostScreen { handle, type_ }
+    ["", "games", handle, "post", type_, "live"] -> Matches { handle, type_ }
+    ["", "signup"] -> SignUp
+    ["", "signin"] -> SignIn
+    ["", "forgot-password"] -> ForgotPassword
+    ["", "reset-password"] -> ResetPassword
+    ["", "confirm-email"] -> ConfirmEmail
+    ["", "renew"] -> Renew
+    ["", "messages"] -> Messages
+    ["", "messages", conversation] -> Conversation { conversation }
+    ["", "account"] -> Account
+    ["", "privacy"] -> Privacy
+    ["", "design"] -> Design
+    _ -> NotFound
 
-render :: ∀ action left. State -> H.ComponentHTML action _ (Async left)
+name :: State -> String
+name Empty = ""
+name Home = "TeamTavern"
+name (Feed _) = "Feed"
+name (Post _) = "Post"
+name PostType = "New post"
+name (PostGame _) = "New post"
+name (PostScreen _) = "Post"
+name (Matches _) = "Your post is live"
+name SignUp = "Sign up"
+name SignIn = "Sign in"
+name ForgotPassword = "Forgot password"
+name ResetPassword = "Reset password"
+name ConfirmEmail = "Confirm email"
+name Renew = "Renew post"
+name Messages = "Messages"
+name (Conversation _) = "Messages"
+name Account = "Account"
+name Privacy = "Privacy policy"
+name Design = "Design"
+name NotFound = "Page could not be found."
+
+description :: String
+description = "Find players and groups for your game on TeamTavern. Say who you're looking for and see who fits."
+
+render :: ∀ action left. State -> H.ComponentHTML action ChildSlots (Async left)
 render Empty = HH.div_ []
-render Home = HH.div_ [ topBar Nothing, home, footer, horizontalSticky, mobileHorizontalSticky ]
-render About = topBarWithContent Nothing $ about
-render Privacy = topBarWithContent Nothing $ privacyPolicy
-render (GameTabs input) = topBarWithContent (Just input.handle) $ GameTabs.gameTabs input
-render (Player input) = topBarWithContent Nothing $ player input
-render (PlayerProfile input) = topBarWithContent Nothing $ playerProfile input
-render (TeamProfile input) = topBarWithContent Nothing $ teamProfile input
-render (Team input) = topBarWithContent Nothing $ team input
-render Register = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ register ] ]
-render SignIn = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ signIn ] ]
-render ForgotPassword = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ forgotPassword ] ]
-render (ResetPasswordSent resetPasswordData) = singleContent [ resetPasswordSent resetPasswordData ]
-render ResetPassword = singleContent [ HH.div [ HP.class_ $ HH.ClassName "single-form-container" ] [ resetPassword ] ]
-render ResetPasswordSuccess = singleContent [ resetPasswordSuccess ]
-render (Onboarding input) = onboarding input
-render (Preboarding input) = preboarding input
-render DeleteAlert = singleContent [ deleteAlert ]
-render NotFound = topBarWithContent Nothing $ HH.p_ [ HH.text "Page could not be found." ]
+render Home = home
+render Privacy = privacyPolicy
+render page = placeholder $ name page
 
-just :: ∀ t5 t7. Applicative t5 => t7 -> t5 (Maybe t7)
-just = pure <<< Just
+router :: ∀ input output left. Foreign -> String -> H.Component Query input output (Async left)
+router _ initialPath = Hooks.component \{ queryToken } _ -> Hooks.do
+    page /\ pageId <- Hooks.useState Empty
 
-nothing :: ∀ t1 t3. Applicative t1 => t1 (Maybe t3)
-nothing = pure Nothing
+    let changeRoute path = do
+            let page' = route path
+            case page' of
+                Home -> setMeta "TeamTavern" description
+                NotFound -> do
+                    appendRenderReadyNotFound
+                    setMeta "Page not found | TeamTavern" description
+                _ -> setMeta (name page' <> " | TeamTavern") description
+            Hooks.put pageId page'
 
-handleAction :: ∀ action output slots left.
-    Action -> H.HalogenM State action slots output (Async left) Unit
-handleAction (Init state route) = do
-    liftEffect $ track "Page view" { path: route }
-    newState <- case split (Pattern "/") route of
-        ["", ""] -> do
-            nickname <- getPlayerNickname
-            case nickname of
-                Just nickname' -> (navigateReplace_ $ "/players/" <> nickname') *> nothing
-                Nothing -> just Home
-        ["", "about"] ->
-            just About
-        ["", "privacy"] ->
-            just Privacy
-        ["", "register"] ->
-            ifM hasPlayerIdCookie
-            (navigateReplace_ "/" *> nothing)
-            (just Register)
-        ["", "signin"] ->
-            ifM hasPlayerIdCookie
-            (navigateReplace_ "/" *> nothing)
-            (just SignIn)
-        ["", "forgot-password"] ->
-            ifM hasPlayerIdCookie
-            (navigateReplace_ "/" *> nothing)
-            (just ForgotPassword)
-        ["", "reset-password-sent"] ->
-            case read_ state of
-            Just email -> just $ ResetPasswordSent email
-            Nothing -> navigateReplace_ "/" *> nothing
-        ["", "reset-password"] ->
-            ifM hasPlayerIdCookie
-            (navigateReplace_ "/" *> nothing)
-            (just ResetPassword)
-        ["", "reset-password-success"] ->
-            ifM hasPlayerIdCookie
-            (navigateReplace_ "/" *> nothing)
-            (just ResetPasswordSuccess)
-        ["", "onboarding", stepPath] ->
-            let stepMaybe =
-                    case stepPath of
-                    "start" -> Just Onboarding.Greeting
-                    "player-or-team" -> Just Onboarding.PlayerOrTeam
-                    "player" -> Just Onboarding.Player
-                    "team" -> Just Onboarding.Team
-                    "game" -> Just Onboarding.Game
-                    "player-profile" -> Just Onboarding.PlayerProfile
-                    "team-profile" -> Just Onboarding.TeamProfile
-                    _ -> Nothing
-                (stateMaybe :: Maybe Onboarding.Input) = read_ state
-            in
-            case stateMaybe, stepMaybe of
-                Just input, Just step -> just $ Onboarding input { step = step }
-                _, _ -> navigateReplace_ "/" *> nothing
-        ["", "preboarding", stepPath] ->
-            let stepMaybe =
-                    case stepPath of
-                    "start" -> Just Preboarding.Greeting
-                    "player-or-team" -> Just Preboarding.PlayerOrTeam
-                    "player" -> Just Preboarding.Player
-                    "team" -> Just Preboarding.Team
-                    "game" -> Just Preboarding.Game
-                    "player-profile" -> Just Preboarding.PlayerProfile
-                    "team-profile" -> Just Preboarding.TeamProfile
-                    "register" -> Just Preboarding.Register
-                    _ -> Nothing
-                (stateMaybe :: Maybe Preboarding.Input) = read_ state
-            in do
-            stateMaybeStorage <- runMaybeT do
-                accessToken <- MaybeT $ getFragmentParam "access_token"
-                stateJson <- window >>= localStorage >>= getItem "preboard" # liftEffect # MaybeT
-                state' <- (readJSON_ :: _ -> _ Preboarding.Input) stateJson # pure # MaybeT
-                pure (state' {accessToken = Just accessToken})
-            signedIn <- hasPlayerIdCookie
-            case stateMaybe, stateMaybeStorage, stepMaybe of
-                _, Just input, Just step | not signedIn -> just $ Preboarding input { step = step }
-                Just input, _, Just step | not signedIn -> just $ Preboarding input { step = step }
-                _, _, _ -> navigateReplace_ "/" *> nothing
-        ["", "teams", handle] ->
-            just $ Team { handle }
-        ["", "games", handle, "players" ] ->
-            just $ GameTabs { handle, tab: GameHeader.Profiles GameHeader.Players }
-        ["", "games", handle, "teams" ] ->
-            just $ GameTabs { handle, tab: GameHeader.Profiles GameHeader.Teams }
-        ["", "players", nickname] ->
-            just $ Player { nickname }
-        ["", "players", nickname, "profiles", handle] ->
-            just $ PlayerProfile { nickname, handle }
-        ["", "teams", teamHandle, "profiles", gameHandle] ->
-            just $ TeamProfile { teamHandle, gameHandle }
-        ["", "remove-alert" ] ->
-            just $ DeleteAlert
-        _ ->
-            appendRenderReadyNotFound *> just NotFound
-    case newState of
-        Just newState' -> H.put newState'
-        Nothing -> pure unit
+    Hooks.useLifecycleEffect do
+        changeRoute initialPath
+        pure Nothing
 
-handleQuery
-    :: ∀ send action output slots left
-    .  Query send
-    -> H.HalogenM State action
-        ( verticalSticky :: SlotQ__ Ads.Query
-        , desktopTakeover :: SlotQ__ Ads.Query
-        , horizontalSticky :: SlotQ__ Ads.Query
-        , mobileHorizontalSticky :: SlotQ__ Ads.Query
-        | slots
-        )
-        output (Async left) (Maybe send)
-handleQuery (ChangeRoute state route send) = do
-    handleAction (Init state route)
-    H.query (Proxy :: _ "desktopTakeover") unit (Ads.Refresh unit) # void
-    H.query (Proxy :: _ "verticalSticky") unit (Ads.Refresh unit) # void
-    H.query (Proxy :: _ "horizontalSticky") unit (Ads.Refresh unit) # void
-    H.query (Proxy :: _ "mobileHorizontalSticky") unit (Ads.Refresh unit) # void
-    pure $ Just send
+    Hooks.useQuery queryToken \(ChangeRoute _ path send) -> do
+        changeRoute path
+        pure $ Just send
 
-router :: ∀ input output left.
-    Foreign -> String -> H.Component Query input output (Async left)
-router state route = H.mkComponent
-    { initialState: const Empty
-    , render
-    , eval: H.mkEval $ H.defaultEval
-        { handleQuery = handleQuery
-        , handleAction = handleAction
-        , initialize = Just $ Init state route
-        }
-    }
+    Hooks.pure $ render page

@@ -1,0 +1,50 @@
+/* The design tokens of brief section 14, named by role. A light theme is a
+   second set of values for the same names. */
+
+:root {
+    /* Stone and wood: surfaces. Cards are tables on a stone floor. */
+    --floor: #141210;
+    --table: #1F1A16;
+    --raised: #2A241F;
+    --border: #3B332C;
+    --input-border: #7F7366;
+
+    /* Text, each at least 4.5:1 on every surface above. */
+    --text: #EFE9E2;
+    --text-muted: #AFA397;
+    --text-faint: #968A7D;
+
+    /* Fire: the one thing on a screen that asks for a click. */
+    --ember: #F2823F;
+    --ember-hover: #F59A62;
+    --on-ember: #1A0F0A;
+
+    /* Nature: a field that fits. */
+    --moss: #8FC06E;
+
+    --error: #F0587A;
+
+    --font: "InterVariable", "Inter", system-ui, sans-serif;
+
+    --size-12: 12px;
+    --size-14: 14px;
+    --size-16: 16px;
+    --size-20: 20px;
+    --size-28: 28px;
+
+    /* The 4 px grid. */
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 20px;
+    --space-6: 24px;
+    --space-8: 32px;
+    --space-12: 48px;
+
+    --radius-small: 4px;
+    --radius-control: 6px;
+    --radius-card: 8px;
+
+    --feed-width: 720px;
+}

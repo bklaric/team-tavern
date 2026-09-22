@@ -11,7 +11,7 @@ src/TeamTavern/
   Routes/         the HTTP contract, shared by client and server
   Server/         Node API (Jarilo handlers over Postgres)
   Client/         Halogen SPA, its styles and static assets
-  Shared/         static data both sides need (countries, languages, timezones)
+  Shared/         static data both sides need (languages, timezones)
   Database/       SQL schema and seed data
 stacks/           docker compose, Caddyfiles, env files and the test seed
 test-playwright/  the Playwright suite and the stack boot it runs first
@@ -158,9 +158,9 @@ The test stack has no Discord. Its `discord` service runs
 server at it. The stub answers the user endpoint with whatever user the access
 token names, the URI-encoded JSON of that user, so a spec can sign up and sign in
 with Discord as anyone, verified email or not. The browser half of the flow never
-reaches Discord either: `test-playwright/integration/sign-in.spec.ts` answers the
-pages' redirect to Discord's authorize URL itself, sending the browser straight
-back with such a token, and checks the scope and redirect URI the page asked for.
+reaches Discord either: a spec answers the pages' redirect to Discord's
+authorize URL itself, sending the browser straight back with such a token, and
+checks the scope and redirect URI the page asked for.
 
 What no test reaches is Discord itself: the redirect URIs registered on the
 Discord app and the real user endpoint. Before a deploy that touches sign-in,
@@ -281,18 +281,20 @@ an `index.html` fallback for SPA paths.
 - `Client/Pages/` are routed pages, `Client/Components/` are reusable pieces,
   `Client/Script/` are browser helpers (each `.js` is the FFI for the `.purs`
   beside it), `Client/Snippets/` are tiny HTML helpers such as `HS.class_`.
-- Components run in `Async left` and are written either as `H.mkComponent`
-  with `Action` / `State` / `handleAction`, or with Halogen Hooks. Match the
-  neighbouring code; both are in use. Child slot types come from
-  `Client/Shared/Slot.purs` (`Slot___`, `SlotQ__`, `Slot_O_`, ...).
-- Styles are Sass. Every page or component with styling has a `.scss` next to
-  its `.purs`, opens with `@use "../Style/Base" as *;` for the shared
-  variables and placeholders, and is registered with a `@use` line in
-  `Client/Style/Main.scss`. A stylesheet not listed there is not in the
-  bundle. Classes are plain kebab-case strings (`primary-button`,
-  `form-heading`) applied with `HS.class_`.
-- `Client/Static/` (index.html, favicons, fonts, images, robots and sitemap)
-  is copied verbatim by `build-client.sh`; adding a new directory there means
+- Components run in `Async left` and are written with Halogen Hooks. Child
+  slot types come from `Client/Shared/Slot.purs` (`Slot___`, `SlotQ__`,
+  `Slot_O_`, ...).
+- Styles are Sass over plain CSS. `Client/Style/tokens.css` holds the design
+  tokens as custom properties and `base.css` the element defaults, both as the
+  prototype in `redesign/prototype/` has them; `Components.scss` is the
+  prototype's `components.css`, which gives up each component's section to a
+  `.scss` beside that component's `.purs`. Every stylesheet is registered with
+  a `@use` line in `Client/Style/Main.scss`; one not listed there is not in the
+  bundle. Classes are plain kebab-case strings, named as the prototype names
+  them, applied with `HS.class_`.
+- `Client/Static/` (the two index files, the favicon and `logo-512.png`, the
+  Inter fonts with their `inter.css`, the game covers, robots and ads.txt) is
+  copied verbatim by `build-client.sh`; adding a file or directory there means
   adding a `cp` line to that script.
 
 ## Database
@@ -320,8 +322,8 @@ development database rather than written freehand.
 
 A game is its seed file plus one cover, a 600x900 WebP at
 `Client/Static/Images/Games/<handle>.webp`, served as `/images/games/<handle>.webp`.
-The cover is the only per-game asset: the header dropdown, the home page grid and
-the onboarding picker all show it, and nothing shows a game icon. Every seeded
+The cover is the only per-game asset: every cover grid shows it, and nothing
+shows a game icon. Every seeded
 game must have one; nothing generates a stand-in, and `games.spec.ts` fails on a
 home page tile whose cover does not load at that size. Steam's
 `library_600x900_2x.jpg` is that shape for games on Steam; SteamGridDB carries
