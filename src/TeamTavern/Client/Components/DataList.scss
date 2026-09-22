@@ -1,0 +1,80 @@
+/* The account page's definition list (brief 11.5): a label, what the account
+   holds, and where there is one, the way to change it. On a phone the label
+   sits above its value, where 132 px of it would leave nothing for the value. */
+
+.data-list {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    background: var(--table);
+}
+
+.data-row {
+    display: grid;
+    grid-template-columns: 132px minmax(0, 1fr) auto;
+    gap: var(--space-2) var(--space-4);
+    align-items: baseline;
+    padding: var(--space-4);
+}
+
+.data-row + .data-row {
+    border-top: 1px solid var(--border);
+}
+
+.data-row dt {
+    color: var(--text-muted);
+    font-size: var(--size-12);
+    font-weight: 500;
+}
+
+.data-value {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+    min-width: 0;
+    margin: 0;
+    font-weight: 500;
+    overflow-wrap: anywhere;
+}
+
+.data-line {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.data-action {
+    margin: 0;
+}
+
+@media (max-width: 639px) {
+    .data-row {
+        grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .data-row dt {
+        grid-column: 1 / -1;
+    }
+}
+
+/* A player named with one action: the blocked list on the account page. */
+
+.person-rows {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.person-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    min-height: 28px;
+}

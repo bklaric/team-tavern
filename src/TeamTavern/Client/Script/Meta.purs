@@ -51,6 +51,9 @@ setMetaUrl = do
     setLink "hreflang-en" url
     setLink "hreflang-default" url
 
+setMetaRobots :: ∀ monad. MonadEffect monad => String -> monad Unit
+setMetaRobots content = liftEffect $ setMetaContent content "meta-robots"
+
 setMeta :: ∀ monad. MonadEffect monad => String -> String -> monad Unit
 setMeta title description = liftEffect do
     setMetaTitle title

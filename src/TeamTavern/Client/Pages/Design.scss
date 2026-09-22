@@ -1,0 +1,93 @@
+/* The layout of the /design page; not part of the system. */
+
+.sheet {
+    max-width: var(--feed-width);
+    margin: 0 auto;
+    padding: var(--space-12) var(--space-4) 96px;
+}
+
+.sheet > section {
+    margin-top: var(--space-12);
+}
+
+.sheet > section > h2 {
+    margin-bottom: var(--space-2);
+}
+
+.sheet-note {
+    margin-bottom: var(--space-4);
+    color: var(--text-muted);
+}
+
+.sheet-caption {
+    margin: var(--space-6) 0 var(--space-2);
+    color: var(--text-muted);
+    font-size: var(--size-12);
+    font-weight: 500;
+}
+
+.sheet-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.swatches {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: var(--space-3);
+}
+
+.swatch {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    overflow: hidden;
+    background: var(--table);
+    font-size: var(--size-12);
+}
+
+.swatch-color {
+    height: 56px;
+    border-bottom: 1px solid var(--border);
+}
+
+.swatch-label {
+    padding: var(--space-2) var(--space-3);
+}
+
+.swatch-label span {
+    display: block;
+    color: var(--text-muted);
+}
+
+.type-specimen {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.type-specimen .muted {
+    font-size: var(--size-12);
+}
+
+.digits {
+    display: inline-grid;
+    gap: 2px;
+    font-weight: 500;
+}
+
+.sheet-lead {
+    margin-top: var(--space-2);
+}
+
+.sheet-digits {
+    align-items: flex-start;
+    gap: var(--space-8);
+}
+
+.sheet-unread {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+}

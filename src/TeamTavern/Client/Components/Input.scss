@@ -1,0 +1,40 @@
+/* A one-line input, a select and a text area. */
+
+.input,
+.select {
+    height: 36px;
+    padding: 0 var(--space-3);
+    border: 1px solid var(--input-border);
+    border-radius: var(--radius-control);
+    background: var(--floor);
+    color: var(--text);
+    font: inherit;
+}
+
+.input:focus,
+.select:focus {
+    border-color: var(--ember);
+    outline: none;
+}
+
+.textarea {
+    min-height: 128px;
+    padding: 10px var(--space-3);
+    border: 1px solid var(--input-border);
+    border-radius: var(--radius-control);
+    background: var(--floor);
+    color: var(--text);
+    font: inherit;
+    line-height: 1.5;
+    resize: vertical;
+}
+
+.textarea:focus {
+    border-color: var(--ember);
+    outline: none;
+}
+
+.input::placeholder,
+.textarea::placeholder {
+    color: var(--text-faint);
+}

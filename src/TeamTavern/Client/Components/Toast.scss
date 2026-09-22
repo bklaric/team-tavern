@@ -1,0 +1,38 @@
+/* Toasts: a line at the bottom of the screen after an action, with Undo where
+   it can be undone. */
+
+.toasts {
+    position: fixed;
+    left: 50%;
+    bottom: var(--space-6);
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2);
+    width: max-content;
+    max-width: calc(100vw - 32px);
+    transform: translateX(-50%);
+    pointer-events: none;
+}
+
+.toast {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    min-height: 44px;
+    padding: var(--space-2) var(--space-4);
+    border: 1px solid var(--input-border);
+    border-radius: var(--radius-card);
+    background: var(--raised);
+    box-shadow: 0 12px 32px rgb(0 0 0 / 0.5);
+    pointer-events: auto;
+}
+
+.toast:has(.button) {
+    padding-right: var(--space-2);
+}
+
+.toast .button {
+    color: var(--ember);
+}

@@ -1,0 +1,116 @@
+/* The overlay: full screen by default, which is what every presentation is on
+   a phone. */
+
+.overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    display: flex;
+    flex-direction: column;
+    background: var(--floor);
+}
+
+.overlay-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    height: 56px;
+    padding: 0 var(--space-2) 0 var(--space-4);
+    border-bottom: 1px solid var(--border);
+}
+
+.overlay-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+    padding: var(--space-4);
+    overflow-y: auto;
+}
+
+.overlay-footer {
+    padding: var(--space-3) var(--space-4);
+    border-top: 1px solid var(--border);
+}
+
+.overlay-footer .button {
+    width: 100%;
+}
+
+/* The overlay as a modal from 640 px, centred over a backdrop. Below that it
+   is the full-screen sheet. */
+
+.backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 29;
+    background: rgb(0 0 0 / 0.6);
+}
+
+@media (min-width: 640px) {
+    .overlay-modal {
+        inset: auto;
+        top: 50%;
+        left: 50%;
+        width: min(560px, calc(100vw - 32px));
+        max-height: calc(100vh - 64px);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-card);
+        background: var(--raised);
+        box-shadow: 0 24px 64px rgb(0 0 0 / 0.6);
+        transform: translate(-50%, -50%);
+    }
+
+    .overlay-modal .overlay-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: var(--space-2);
+    }
+
+    .overlay-modal .overlay-footer .button {
+        width: auto;
+    }
+}
+
+/* The overlay as a sheet from the bottom of the screen, for a menu of a few
+   short rows such as the account menu (brief 11.4): a whole screen for them
+   would read as a page. */
+
+.overlay-bottom {
+    inset: auto 0 0 0;
+    border-top: 1px solid var(--border);
+    border-radius: var(--radius-card) var(--radius-card) 0 0;
+    background: var(--raised);
+}
+
+.overlay-bottom .overlay-body {
+    flex: none;
+    gap: var(--space-1);
+    padding: var(--space-2) var(--space-2) var(--space-6);
+}
+
+/* The overlay as a side panel from 640 px, such as the contact panel; full
+   screen below that. */
+
+@media (min-width: 640px) {
+    .overlay-side {
+        inset: 0 0 0 auto;
+        width: min(440px, 100vw);
+        border-left: 1px solid var(--border);
+        background: var(--raised);
+        box-shadow: -24px 0 64px rgb(0 0 0 / 0.5);
+    }
+}
+
+/* The layer holding an overlay and its backdrop takes no box of its own. */
+
+.overlay-layer {
+    display: contents;
+}
+
+/* The title in the overlay's own header, which is smaller than a page's. */
+
+.overlay-header > h2 {
+    font-size: var(--size-16);
+}

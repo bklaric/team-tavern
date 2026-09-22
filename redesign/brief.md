@@ -1503,7 +1503,7 @@ brief's screens already call for.
   qualify.
 - **Decided:** no search above the cover grid while the catalogue fits in about
   two rows on a desktop. Recognising a logo is faster than typing a name.
-- **Proposed:** the set the brief needs: user, users and castle for the three post
+- **Decided:** the set the brief needs: user, users and castle for the three post
   types; mic, bell, mail, copy, check, not-equal, chevron, close, plus, menu,
   external link and alert; megaphone for the prompt to publish and party popper
   for a post gone live; and Discord's own mark on Discord buttons, which Lucide
@@ -1544,13 +1544,15 @@ What the brief's screens already call for; the prototypes settle their shape.
   it, so **Details** never wraps onto a line by itself.
 - **Proposed:** a match mark has two states, fits and doesn't, and sits on the
   fact it is about (5.6). A field that isn't compared carries no mark.
-- **Proposed:** one overlay component, shown as a modal or side panel on a
+- **Decided:** one overlay component, shown as a modal or side panel on a
   desktop, a full-screen sheet on a phone, or a dropdown from the header. The
   description bar, the contact panel, Games, notifications and the account menu
   all use it. It traps focus while open and returns it on close. A menu of a few
   short rows opens as a sheet from the bottom of a phone rather than
-  full-screen, which would read as a page (11.4).
-- **Proposed:** buttons come in three weights: filled ember, once per screen;
+  full-screen, which would read as a page (11.4). Every presentation but the
+  dropdown is modal: the page behind is inert and doesn't scroll. A dropdown
+  leaves the page usable and closes on a press outside it.
+- **Decided:** buttons come in three weights: filled ember, once per screen;
   outlined, for card contact buttons, the header's **New post** and secondary
   actions; and plain text, for
   **Details ⌄**, **Sign in** and the like. Destructive actions are outlined in

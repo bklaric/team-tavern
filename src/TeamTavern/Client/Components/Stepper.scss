@@ -1,0 +1,45 @@
+/* Count stepper: "3 of 5". */
+
+.count-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.stepper {
+    display: inline-flex;
+    align-items: center;
+    height: 36px;
+    border: 1px solid var(--input-border);
+    border-radius: var(--radius-control);
+    background: var(--floor);
+}
+
+.stepper button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 34px;
+    border: none;
+    background: none;
+    color: var(--text-muted);
+    cursor: pointer;
+}
+
+.stepper button:hover:not(:disabled) {
+    color: var(--text);
+}
+
+.stepper button:disabled {
+    color: var(--border);
+    cursor: default;
+}
+
+.stepper output {
+    min-width: 24px;
+    font-weight: 600;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}

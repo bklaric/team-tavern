@@ -21,7 +21,7 @@ brief marks Proposed, the brief's status is updated in the same commit.
 
 - [x] 1. Database in place
 - [x] 2. Clear the ground
-- [ ] 3. Design system in the client
+- [x] 3. Design system in the client
 - [ ] 4. Accounts, sessions and the header
 - [ ] 5. Game data and the card
 - [ ] 6. The feed
@@ -230,6 +230,32 @@ from `components.css`, shown on `/design`.
 - Verify: `/design` matches `components.html` side by side at 375 px and
   1280 px, by screenshot; keyboard runs through every overlay; `npm test`
   stays green (no spec for `/design`, it is a tool).
+- Settled here:
+  - A component is a render function taking its state and handlers, so the
+    page owning the state owns the actions. Only Tokens (focus goes to the add
+    select once a token's button is gone) and the toast (its timer, as the
+    `useToast` hook) keep anything of their own.
+  - The overlay is `useOverlay` plus the `overlay` render function, not a child
+    component, so its content keeps the caller's actions. `Client/Script/Overlay.js`
+    does the holding: the modal four make everything beside the overlay's layer
+    and its ancestors `inert`, lock the scroll with a count so nested overlays
+    release only their own, and keep Tab inside; Escape closes only the newest
+    overlay; focus returns to the opener unless the player put it elsewhere. A
+    dropdown is not modal, closes on a press outside itself and its opener, and
+    takes its class and role from the caller (`menu`, later `header-dropdown`).
+  - Callers pick the presentation with `usePhone` (below 640 px); the modal and
+    side panel also go full screen on a phone through the CSS alone.
+  - Icons set `class` as an attribute: `HP.class_` writes `className`, which an
+    SVG element refuses.
+  - The hours range's note is its field's hint (`hoursHint`); an age range is two
+    number inputs. The type chooser's link cards (`typeCardsHtml`) are posting's
+    and the home page's, built in step 7 or 9; `choices` here are the radio cards.
+  - The shells carry `<meta id="meta-robots">`, set by the router: `noindex` on
+    `/design`, the same switch step 8 needs for an expired post.
+  - Left in `Components.scss`: everything a later component owns (cards, header,
+    feed bar, popover, contact panel, inbox, notifications, cover grid). The
+    moved sections are registered in `Main.scss` in their old order, before the
+    monolith, so its overrides still win.
 
 ### 4. Accounts, sessions and the header
 

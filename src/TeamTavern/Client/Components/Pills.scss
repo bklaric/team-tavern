@@ -1,0 +1,56 @@
+/* Pills: a field's options as toggles, one or several. A chosen pill takes
+   the text color, not ember: it is an answer, not a call to act. */
+
+.pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+}
+
+.pill {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 32px;
+    padding: 0 var(--space-3);
+    border: 1px solid var(--input-border);
+    border-radius: 999px;
+    color: var(--text-muted);
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.pill input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.pill .icon {
+    display: none;
+    width: 14px;
+    height: 14px;
+}
+
+.pill:hover {
+    border-color: var(--text-muted);
+    color: var(--text);
+}
+
+.pill:has(input:checked) {
+    padding-left: 10px;
+    border-color: var(--text);
+    background: var(--raised);
+    color: var(--text);
+}
+
+.pill:has(input:checked) .icon {
+    display: inline;
+}
+
+.pill:has(input:focus-visible) {
+    outline: 2px solid var(--ember);
+    outline-offset: 2px;
+}

@@ -10,10 +10,11 @@ import Foreign (Foreign)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.Hooks as Hooks
+import TeamTavern.Client.Pages.Design (design)
 import TeamTavern.Client.Pages.Home (home)
 import TeamTavern.Client.Pages.Placeholder (placeholder)
 import TeamTavern.Client.Pages.Privacy (privacyPolicy)
-import TeamTavern.Client.Script.Meta (setMeta)
+import TeamTavern.Client.Script.Meta (setMeta, setMetaRobots)
 import TeamTavern.Client.Script.RenderReady (appendRenderReadyNotFound)
 import TeamTavern.Client.Shared.Slot (Slot___)
 
@@ -42,7 +43,7 @@ data State
     | Design
     | NotFound
 
-type ChildSlots = (home :: Slot___)
+type ChildSlots = (home :: Slot___, design :: Slot___)
 
 route :: String -> State
 route path =
@@ -96,6 +97,7 @@ render :: ∀ action left. State -> H.ComponentHTML action ChildSlots (Async lef
 render Empty = HH.div_ []
 render Home = home
 render Privacy = privacyPolicy
+render Design = design
 render page = placeholder $ name page
 
 router :: ∀ input output left. Foreign -> String -> H.Component Query input output (Async left)
@@ -110,6 +112,10 @@ router _ initialPath = Hooks.component \{ queryToken } _ -> Hooks.do
                     appendRenderReadyNotFound
                     setMeta "Page not found | TeamTavern" description
                 _ -> setMeta (name page' <> " | TeamTavern") description
+            -- The components page is a tool for building the site, not a page of it.
+            setMetaRobots case page' of
+                Design -> "noindex"
+                _ -> "index, follow"
             Hooks.put pageId page'
 
     Hooks.useLifecycleEffect do

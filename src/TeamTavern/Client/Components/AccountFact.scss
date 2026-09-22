@@ -1,0 +1,19 @@
+/* An account fact on a form: the value the account holds, and a way to
+   change it. */
+
+.account-fact {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-1) var(--space-3);
+    min-height: 32px;
+}
+
+.account-fact-value {
+    font-weight: 500;
+}
+
+.account-fact-source {
+    color: var(--text-muted);
+    font-size: var(--size-12);
+}
