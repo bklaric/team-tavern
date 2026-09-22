@@ -302,6 +302,13 @@ an `index.html` fallback for SPA paths.
 - Components run in `Async left` and are written with Halogen Hooks. Child
   slot types come from `Client/Shared/Slot.purs` (`Slot___`, `SlotQ__`,
   `Slot_O_`, ...).
+- A list whose order or contents change while the page is open is keyed by a
+  stable id, with `Halogen.HTML.Elements.Keyed`. Unkeyed, Halogen reuses the
+  elements by position, and a click aimed at one item lands on whichever took
+  its place.
+- A list that refetches while the page is open carries `aria-busy`, true from
+  a request until the latest one answers, and specs wait for it to settle
+  before acting on the list, as `feed.spec.ts` does.
 - Styles are Sass over plain CSS. `Client/Style/tokens.css` holds the design
   tokens as custom properties and `base.css` the element defaults, both as the
   prototype in `redesign/prototype/` has them; `Components.scss` is the
