@@ -1,4 +1,4 @@
-module TeamTavern.Client.Components.Card (Viewer, card, flagText, tierOf) where
+module TeamTavern.Client.Components.Card (Place(..), Viewer, card, flagText, postName, tierOf, typeIcon) where
 
 import Prelude
 
@@ -208,10 +208,20 @@ renderFact (IconFact { icon, label, match }) =
        , HH.span [ HS.class_ "visually-hidden" ] [ HH.text label ]
        ]
 
+-- | What a card's heading calls the post: a player by their nickname, a group
+-- | or a community by its name, or after its owner where it has none.
+postName :: CardRow -> String
+postName post = if post.type == "player" then post.owner else fromMaybe (post.owner <> "'s " <> post.type) post.name
+
+typeIcon :: ∀ w i. String -> HH.HTML w i
+typeIcon "group" = Icons.users
+typeIcon "community" = Icons.castle
+typeIcon _ = Icons.user
+
 typeLabel :: ∀ w i. String -> Array (HH.HTML w i)
-typeLabel "group" = [ Icons.users, HH.text "Group" ]
-typeLabel "community" = [ Icons.castle, HH.text "Community" ]
-typeLabel _ = [ Icons.user, HH.text "Player" ]
+typeLabel "group" = [ typeIcon "group", HH.text "Group" ]
+typeLabel "community" = [ typeIcon "community", HH.text "Community" ]
+typeLabel type_ = [ typeIcon type_, HH.text "Player" ]
 
 -- A group's size: how many it is and how many more it wants, "3 players, wants
 -- 2 more", or a range where either will do (brief 5.2). A group that says only
@@ -238,25 +248,47 @@ contactButton post = case post.contact_preference of
     "either" -> [ Icons.messageCircle, HH.text "Contact" ]
     _ -> [ Icons.messageCircle, HH.text "Message" ]
 
+-- | Where a card is shown. A preview is the post screen's: its owner is "you"
+-- | and it has no actions. A page is the post's own (brief 11.1): the card is
+-- | the page, its name the heading, open with no Details, and its contact
+-- | button the page's one filled button. A block either way leaves the page no
+-- | actions; the owner's `status` goes under the details.
+data Place w i
+    = Listed
+    | Preview
+    | Page { blocked :: Boolean, status :: Array (HH.HTML w i) }
+
 -- | A post as a card (brief 5). `marked` shows the facts' marks; without it the
--- | card reads as it does with an empty description, marks or not. A preview is the post
--- | screen's: its owner is "you" and it has no actions. The viewer's own post
--- | offers Edit and Renew in place of the contact button, and a post the viewer
--- | has written about opens that conversation (brief 5.6).
+-- | card reads as it does with an empty description, marks or not. The viewer's
+-- | own post offers Edit and Renew in place of the contact button, and a post the
+-- | viewer has written about opens that conversation (brief 5.6).
 card :: ∀ w m. MonadEffect m =>
     { game :: ViewGame.OkContent
     , viewer :: Viewer
     , post :: CardRow
     , marked :: Boolean
     , expanded :: Boolean
-    , preview :: Boolean
+    , place :: Place w (m Unit)
     , onToggle :: MouseEvent -> m Unit
     , onContact :: m Unit
     , onEdit :: m Unit
     , onRenew :: m Unit
     }
     -> HH.HTML w (m Unit)
-card { game, viewer, post, marked, expanded, preview, onToggle, onContact, onEdit, onRenew } = let
+card { game, viewer, post, marked, expanded: expanded', place, onToggle, onContact, onEdit, onRenew } = let
+    preview = case place of
+        Preview -> true
+        _ -> false
+    page = case place of
+        Page _ -> true
+        _ -> false
+    blocked = case place of
+        Page { blocked: blocked' } -> blocked'
+        _ -> false
+    status = case place of
+        Page { status: status' } -> status'
+        _ -> []
+    expanded = expanded' || page
     hours = do
         from <- post.online_from
         to <- post.online_to
@@ -267,7 +299,7 @@ card { game, viewer, post, marked, expanded, preview, onToggle, onContact, onEdi
     long = CodeUnits.length text > (if post.type == "community" then 360 else 170)
         || length (split (Pattern "\n") text) > 2
     expandable = not null details || not null post.trackers || long
-    name = if post.type == "player" then post.owner else fromMaybe (post.owner <> "'s " <> post.type) post.name
+    name = postName post
     href = "/games/" <> game.handle <> "/posts/" <> show post.id
     classes = joinWith " " $ catMaybes
         [ Just "card"
@@ -277,10 +309,15 @@ card { game, viewer, post, marked, expanded, preview, onToggle, onContact, onEdi
         ]
     heading = HH.div [ HS.class_ "card-heading" ] $ catMaybes
         -- A draft on the post screen has no page yet, nor an id.
-        [ Just if post.id == 0
+        [ Just if page
+            then HH.h1 [ HS.class_ "card-name" ] [ HH.text name ]
+            else if post.id == 0
             then HH.span [ HS.class_ "card-name" ] [ HH.text name ]
             else HH.a [ HS.class_ "card-name", HP.href href, HE.onClick $ navigateWithEvent_ href ] [ HH.text name ]
-        , Just $ HH.span [ HS.class_ "card-type" ] $ typeLabel post.type
+        -- A page is opened from anywhere, so its type names the game.
+        , Just $ HH.span [ HS.class_ "card-type" ] if page
+            then [ typeIcon post.type, HH.text $ game.title <> " " <> post.type ]
+            else typeLabel post.type
         , slotsText post <#> \slots -> HH.span [ HS.class_ "card-slots tabular" ] [ HH.text slots ]
         , if post.own then Just $ HH.span [ HS.class_ "card-own" ] [ HH.text "Your post" ] else Nothing
         , Just $ HH.span [ HS.class_ "card-freshness" ] [ HH.text $ "Active " <> ago viewer.now post.updated ]
@@ -306,16 +343,20 @@ card { game, viewer, post, marked, expanded, preview, onToggle, onContact, onEdi
     messagedLine = post.messaged <#> \time ->
         HH.span [ HS.class_ "card-messaged" ] [ Icons.messageCircle, HH.text $ "You messaged " <> ago viewer.now time ]
     -- A card's contact button is outlined, so a feed of twenty cards doesn't
-    -- show twenty filled ones.
+    -- show twenty filled ones. Its panel is still to come, so the page's is
+    -- disabled.
     contact content =
         HH.button
-        [ HS.class_ "button button-outline button-small card-contact"
+        [ HS.class_ if page
+            then "button button-primary card-contact"
+            else "button button-outline button-small card-contact"
         , HP.type_ HP.ButtonButton
+        , HP.disabled page
         , HE.onClick $ const onContact
         ]
         content
     actions
-        | preview = []
+        | preview || blocked = []
         | post.own =
             [ button Outline Small onEdit [ Icons.pencil, HH.text "Edit" ]
             , button Outline Small onRenew [ Icons.refreshCw, HH.text "Renew" ]
@@ -331,9 +372,9 @@ card { game, viewer, post, marked, expanded, preview, onToggle, onContact, onEdi
         ]
         [ HH.text "Details", Icons.chevronDown ]
     footer = HH.div [ HS.class_ "card-footer" ] $
-        [ HH.div [ HS.class_ "card-meta" ] $ catMaybes [ ownerLine, messagedLine ] ]
+        [ HH.div [ HS.class_ "card-meta" ] $ catMaybes [ ownerLine, if blocked then Nothing else messagedLine ] ]
         <> actions
-        <> (if expandable || text /= "" then [ toggle ] else [])
+        <> (if not page && (expandable || text /= "") then [ toggle ] else [])
     in
     HH.article [ HS.class_ classes ] $ catMaybes
     [ Just heading
@@ -341,8 +382,9 @@ card { game, viewer, post, marked, expanded, preview, onToggle, onContact, onEdi
         else Just $ HH.div [ HS.class_ "facts-clip" ] [ HH.div [ HS.class_ "facts" ] $ renderFact <$> facts ]
     , if text == "" then Nothing else Just $ HH.p [ HS.class_ "card-text" ] [ HH.text text ]
     , if null detailRows then Nothing else Just $ HH.div [ HS.class_ "card-details" ] detailRows
-    , Just footer
     ]
+    <> status
+    <> [ footer ]
 
 -- | Which tier of the feed a card's marks put it in: 0 fits, 1 misses one
 -- | thing, 2 misses more. A card none of the description applies to goes last.

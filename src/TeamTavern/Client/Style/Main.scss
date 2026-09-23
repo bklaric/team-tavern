@@ -20,10 +20,12 @@
 @use "../Components/Header";
 @use "../Components/CoverGrid";
 @use "../Components/Card";
+@use "../Components/OwnPostStatus";
 @use "../Components/TypeCards";
 @use "../Pages/Feed";
 @use "../Pages/Feed/Bar";
 @use "../Pages/Post";
+@use "../Pages/PostPage";
 @use "Components";
 @use "../Pages/Placeholder";
 @use "../Pages/Design";

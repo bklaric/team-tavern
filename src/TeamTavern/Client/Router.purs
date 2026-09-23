@@ -3,8 +3,10 @@ module TeamTavern.Client.Router (Query(..), router) where
 import Prelude
 
 import Async (Async)
+import Data.Foldable (for_)
 import Data.Map (Map)
 import Data.Map as Map
+import Data.Int as Int
 import Data.Maybe (Maybe(..), isNothing)
 import Data.String (Pattern(..), split)
 import Data.Tuple.Nested ((/\))
@@ -27,25 +29,28 @@ import TeamTavern.Client.Pages.Post.Game (postGame)
 import TeamTavern.Client.Pages.Post.Matches (matches)
 import TeamTavern.Client.Pages.Post.Screen (postScreen)
 import TeamTavern.Client.Pages.Post.Type (postType)
+import TeamTavern.Client.Pages.PostPage (postPage)
 import TeamTavern.Client.Pages.Privacy (privacyPolicy)
 import TeamTavern.Client.Pages.ResetPassword (resetPassword)
 import TeamTavern.Client.Pages.SignIn (signIn)
 import TeamTavern.Client.Pages.SignUp (signUp)
 import TeamTavern.Client.Script.Meta (setMeta, setMetaRobots)
+import TeamTavern.Client.Script.Previous (previousOf, stampPrevious)
 import TeamTavern.Client.Script.RenderReady (appendRenderReadyNotFound)
 import TeamTavern.Client.Shared.Slot (Slot__I, Slot___)
 import Web.HTML (window)
 import Web.HTML.Window (scroll)
 
--- The history state rides along for the pages that will read it. `popped` is
--- whether the browser went back or forward, rather than a link being followed.
+-- The history state carries the path of the page the entry was opened from,
+-- where the site stamped it. `popped` is whether the browser went back or
+-- forward, rather than a link being followed.
 data Query send = ChangeRoute Foreign String Boolean send
 
 data State
     = Empty
     | Home
     | Feed { handle :: String }
-    | Post { handle :: String, id :: String }
+    | Post { handle :: String, id :: Int }
     | PostType
     | PostGame { type_ :: String }
     | PostScreen { handle :: String, type_ :: String }
@@ -73,6 +78,7 @@ type ChildSlots =
     , confirmEmail :: Slot___
     , design :: Slot___
     , feed :: Slot__I Int
+    , postPage :: Slot__I Int
     , postType :: Slot__I Int
     , postGame :: Slot__I Int
     , postScreen :: Slot__I Int
@@ -84,7 +90,7 @@ route path =
     case split (Pattern "/") path of
     ["", ""] -> Home
     ["", "games", handle] -> Feed { handle }
-    ["", "games", handle, "posts", id] -> Post { handle, id }
+    ["", "games", handle, "posts", id] | Just id' <- Int.fromString id -> Post { handle, id: id' }
     ["", "post"] -> PostType
     ["", "post", type_] -> PostGame { type_ }
     ["", "games", handle, "post", type_] -> PostScreen { handle, type_ }
@@ -129,6 +135,8 @@ description = "Find players and groups for your game on TeamTavern. Say who you'
 
 renderPage :: ∀ action left. Visit -> H.ComponentHTML action ChildSlots (Async left)
 renderPage { page: Feed { handle }, visit, restore, cache } = feed visit { handle, restore, cache }
+renderPage { page: Post { handle, id }, visit, previous } =
+    postPage visit { handle, id, feedBehind: previous == Just ("/games/" <> handle) }
 renderPage { page: PostType, visit } = postType visit
 renderPage { page: PostGame { type_ }, visit } = postGame visit type_
 renderPage { page: PostScreen { handle, type_ }, visit } = postScreen visit { handle, type_ }
@@ -150,12 +158,14 @@ renderPage' page = placeholder $ name page
 -- Every navigation is counted, even to the page already open, so the header
 -- reads who is signed in on each and a feed opened again starts over. A feed
 -- the browser went back or forward to is restored from the cache it keeps.
+-- `previous` is the path the browser's Back returns to, where the site knows it.
 type Visit =
     { page :: State
     , path :: String
     , visit :: Int
     , restore :: Maybe FeedCache
     , cache :: Ref (Map String FeedCache)
+    , previous :: Maybe String
     }
 
 -- The path marks the page drawn for it, in the same render as the page, so a
@@ -166,20 +176,34 @@ render visit =
     [ header { path: visit.path, visit: visit.visit }, renderPage visit ]
 
 router :: ∀ input output left. Foreign -> String -> H.Component Query input output (Async left)
-router _ initialPath = Hooks.component \{ queryToken } _ -> Hooks.do
+router initialState initialPath = Hooks.component \{ queryToken } _ -> Hooks.do
     _ /\ cache <- Hooks.useRef Map.empty
-    visit /\ visitId <- Hooks.useState { page: Empty, path: "", visit: 0, restore: Nothing, cache }
+    visit /\ visitId <- Hooks.useState
+        { page: Empty, path: "", visit: 0, restore: Nothing, cache, previous: Nothing }
 
-    let changeRoute path popped = do
+    let changeRoute state path popped = do
             let page = route path
             case page of
                 Home -> setMeta "TeamTavern" description
                 NotFound -> do
                     appendRenderReadyNotFound
                     setMeta "Page not found | TeamTavern" description
-                -- A feed names its game once it has it.
+                -- A feed and a post name themselves once they have their game.
                 Feed _ -> pure unit
+                Post _ -> pure unit
                 _ -> setMeta (name page <> " | TeamTavern") description
+            -- A link stamps the entry it opens with the page it left, which the
+            -- entry keeps through a reload and a trip back and forth. A link to
+            -- the open page replaces its entry, which keeps the stamp it had.
+            left <- Hooks.get visitId
+            previous <-
+                if popped || left.path == "" then pure $ previousOf state
+                else if left.path == path then do
+                    for_ left.previous $ liftEffect <<< stampPrevious
+                    pure left.previous
+                else do
+                    liftEffect $ stampPrevious left.path
+                    pure $ Just left.path
             -- The components page is a tool for building the site, not a page of it.
             setMetaRobots case page of
                 Design -> "noindex"
@@ -190,14 +214,14 @@ router _ initialPath = Hooks.component \{ queryToken } _ -> Hooks.do
             -- The browser leaves the scroll position alone, so a page it went
             -- back to starts at the top unless it puts its own back.
             when (popped && isNothing restore) $ liftEffect $ window >>= scroll 0 0
-            Hooks.modify_ visitId \{ visit: count } -> { page, path, visit: count + 1, restore, cache }
+            Hooks.modify_ visitId \{ visit: count } -> { page, path, visit: count + 1, restore, cache, previous }
 
     Hooks.useLifecycleEffect do
-        changeRoute initialPath false
+        changeRoute initialState initialPath false
         pure Nothing
 
-    Hooks.useQuery queryToken \(ChangeRoute _ path popped send) -> do
-        changeRoute path popped
+    Hooks.useQuery queryToken \(ChangeRoute state path popped send) -> do
+        changeRoute state path popped
         pure $ Just send
 
     Hooks.pure $ render visit

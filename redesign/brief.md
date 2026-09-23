@@ -1041,7 +1041,7 @@ first. A post of theirs that has expired says so and offers **Renew**.
 - **Decided:** an expired post's page is kept out of search engines. It carries a
   robots `noindex` tag while the post is expired, which crawlers get in the
   prerendered HTML, and the sitemap leaves the post out. Renewal removes both.
-- **Proposed:** a deleted post's page says the post is gone and links to the feed,
+- **Decided:** a deleted post's page says the post is gone and links to the feed,
   and answers crawlers with a 404.
 - **Decided:** there is no public player page. A post's own page is the only
   public page about a player.
@@ -1066,36 +1066,38 @@ first. A post of theirs that has expired says so and offers **Renew**.
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
-- **Proposed:** the card is the page: its name is the page's heading and links
+- **Decided:** the card is the page: its name is the page's heading and links
   nowhere, it is expanded with no **Details** left to press, and its type names
   the game, "Valorant player". A page is opened from a search result, a shared
   link or a match email as often as from the feed, where the game is overhead.
-- **Proposed:** the card carries no match marks. A description is personal and
+- **Decided:** the card carries no match marks. A description is personal and
   isn't shared (7.1), and what fits is the feed's business; the way into the
   feed below the post is where the viewer's own description comes in.
-- **Proposed:** the contact button is the page's one filled button. A card's
+- **Decided:** the contact button is the page's one filled button. A card's
   button is outlined so a feed of twenty cards doesn't show twenty filled ones
   (14.1), but a page holds one card, and contacting it is what the page is for.
-- **Proposed:** the way into the feed carries the game's cover, how many posts
+- **Decided:** the way into the feed carries the game's cover, how many posts
   are active and what the feed will show: what fits the viewer's description,
   with that description under it, or the whole feed while they have none.
-- **Proposed:** on the owner's own post the page is their view of it, as on the
+- **Decided:** on the owner's own post the page is their view of it, as on the
   home page (11.2): **Edit** and **Renew** in place of the contact button, the
   state, the conversations and the contact reveals under the facts, and **See
   what fits**, which opens the feed with the description taken from this post,
   in place of the invitation to browse.
-- **Proposed:** **Back to Valorant posts** shows only while the feed is the
+- **Decided:** **Back to Valorant posts** shows only while the feed is the
   page behind, and is the browser's own Back, which is what keeps the batches. A
   page opened from a link has no feed behind it, and the way into the feed below
   the post is its only one.
-- **Proposed:** a visitor to an expired post is told it is old before they
+- **Decided:** a visitor to an expired post is told it is old before they
   write: "This is an older post. ShadowFox may no longer be looking, but you can
   still write." Its owner reads the post's state instead, which says what
   expiry means for them.
-- **Proposed:** a blocked player's post keeps its page without its contact
+- **Decided:** a blocked player's post keeps its page without its contact
   button (section 10), under a line saying why, so nothing reads as broken. The
   line links to the blocked list on the account page (11.5), which is where the
-  block is undone.
+  block is undone. A player the owner blocked reads only "There's no way to
+  contact this post.": the block is the owner's, and the page doesn't tell them
+  of it.
 
 ### 11.2 Home page
 

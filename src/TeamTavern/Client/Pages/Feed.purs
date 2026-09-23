@@ -28,12 +28,12 @@ import Halogen.HTML.Properties.ARIA as HPA
 import Halogen.Hooks as Hooks
 import Halogen.Subscription as Subscription
 import TeamTavern.Client.Components.Button (Size(..), Weight(..), button)
-import TeamTavern.Client.Components.Card (Viewer, card, tierOf)
+import TeamTavern.Client.Components.Card (Place(..), Viewer, card, tierOf, typeIcon)
 import TeamTavern.Client.Components.Divider (divider, tierHeading)
 import TeamTavern.Client.Components.Overlay (Presentation(..), useOverlay)
 import TeamTavern.Client.Components.UsePhone (usePhone)
 import TeamTavern.Client.Icons as Icons
-import TeamTavern.Client.Pages.Feed.Bar (bar, sheet, summaryButton, typeIcon)
+import TeamTavern.Client.Pages.Feed.Bar (bar, sheet, summaryButton)
 import TeamTavern.Client.Pages.Feed.Description (Stored, current, describes, emptyDescription, emptyStored, isEmpty, loadStored, saveStored, setCurrent, storedFrom)
 import TeamTavern.Client.Pages.Feed.Fields (Lists, barFields)
 import TeamTavern.Client.Pages.Placeholder (placeholder)
@@ -384,7 +384,7 @@ component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
             , post
             , marked: not empty
             , expanded: elem post.id state.expanded
-            , preview: false
+            , place: Listed
             , onToggle: \(event :: MouseEvent) -> toggleCardOf event post.id
             , onContact: pure unit
             , onEdit: navigate_ $ "/games/" <> handle <> "/post/" <> post.type <> "?from=edit"

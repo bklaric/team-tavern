@@ -32,7 +32,8 @@ type Posts r =
     | r
     )
 
-type Fixtures = { | Posts (ownNightOwls :: CardRow, messagedShadowFox :: CardRow) }
+-- `ownExpires` is when the own post runs out, for its status on its page.
+type Fixtures = { ownExpires :: String | Posts (ownNightOwls :: CardRow, messagedShadowFox :: CardRow) }
 
 blank :: CardRow
 blank =
@@ -86,6 +87,7 @@ fixtures now = let
     Record.union
         { ownNightOwls: posts.nightOwls { own = true, marks = Object.empty }
         , messagedShadowFox: posts.shadowFox { messaged = Just $ ago $ 2.0 * 1440.0 }
+        , ownExpires: ago $ -24.0 * 1440.0
         }
         posts
 

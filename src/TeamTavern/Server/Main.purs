@@ -36,6 +36,7 @@ import TeamTavern.Server.Post.CreatePost (createPost)
 import TeamTavern.Server.Post.DeletePost (deletePost)
 import TeamTavern.Server.Post.UpdatePost (updatePost)
 import TeamTavern.Server.Post.ViewOwnPost (viewOwnPost)
+import TeamTavern.Server.Post.ViewPost (viewPost)
 import TeamTavern.Server.Session.End (end) as Session
 import TeamTavern.Server.Session.Start (start) as Session
 import Type.Proxy (Proxy(..))
@@ -119,6 +120,8 @@ runServer deployment discordApiUrl pool = serve (Proxy :: _ AllRoutes) serveOpti
         viewFeed pool handle cookies body
     , viewOwnDescriptions: \{ path: { handle }, cookies } ->
         viewOwnDescriptions pool handle cookies
+    , viewPost: \{ path, cookies } ->
+        viewPost pool path.handle path.id cookies
     , viewOwnPost: \{ path, cookies } ->
         viewOwnPost pool path.handle path.type cookies
     , createPost: \{ path, cookies, body } ->

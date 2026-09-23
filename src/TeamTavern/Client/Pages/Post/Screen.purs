@@ -27,7 +27,7 @@ import Halogen.HTML.Properties as HP
 import Halogen.HTML.Properties.ARIA as HPA
 import Halogen.Hooks as Hooks
 import TeamTavern.Client.Components.Button (Size(..), Weight(..), button, buttonLink)
-import TeamTavern.Client.Components.Card (card)
+import TeamTavern.Client.Components.Card (Place(..), card)
 import TeamTavern.Client.Components.Confirm (confirm)
 import TeamTavern.Client.Components.Field (formSection)
 import TeamTavern.Client.Components.Flow (flowError, flowLead, submitButton)
@@ -387,7 +387,7 @@ component = Hooks.component \_ { handle, type_ } -> Hooks.do
             , post: toCard game type_ { nickname: state.nickname, updated, today: now'.date } draft
             , marked: false
             , expanded
-            , preview: not signedIn
+            , place: if signedIn then Listed else Preview
             , onToggle
             , onContact: pure unit
             , onEdit: pure unit
@@ -418,7 +418,7 @@ component = Hooks.component \_ { handle, type_ } -> Hooks.do
                 { id = post.id }
             , marked: false
             , expanded: state.ownExpanded
-            , preview: true
+            , place: Preview
             , onToggle: \event -> toggleCard event $ set \state' -> state' { ownExpanded = not state'.ownExpanded }
             , onContact: pure unit
             , onEdit: pure unit

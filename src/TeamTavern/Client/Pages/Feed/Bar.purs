@@ -1,4 +1,4 @@
-module TeamTavern.Client.Pages.Feed.Bar (bar, sheet, summaryButton, typeIcon) where
+module TeamTavern.Client.Pages.Feed.Bar (bar, sheet, summaryButton) where
 
 import Prelude
 
@@ -11,6 +11,7 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Halogen.HTML.Properties.ARIA as HPA
 import TeamTavern.Client.Components.Button (Size(..), Weight(..), button)
+import TeamTavern.Client.Components.Card (typeIcon)
 import TeamTavern.Client.Components.Check (choices)
 import TeamTavern.Client.Components.Overlay (Presentation(..), overlay)
 import TeamTavern.Client.Icons as Icons
@@ -18,11 +19,6 @@ import TeamTavern.Client.Pages.Feed.Description (isEmpty)
 import TeamTavern.Client.Pages.Feed.Fields (BarField, clear, editor, isToggle, summary, toggle)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Shared.Description (Description)
-
-typeIcon :: ∀ w i. String -> HH.HTML w i
-typeIcon "group" = Icons.users
-typeIcon "community" = Icons.castle
-typeIcon _ = Icons.user
 
 -- A player fills the fields in about themselves; a group or a community fills
 -- them in about the players it wants. It is the inversion the cards carry

@@ -16,6 +16,7 @@ import TeamTavern.Routes.Post.CreatePost (CreatePost)
 import TeamTavern.Routes.Post.DeletePost (DeletePost)
 import TeamTavern.Routes.Post.UpdatePost (UpdatePost)
 import TeamTavern.Routes.Post.ViewOwnPost (ViewOwnPost)
+import TeamTavern.Routes.Post.ViewPost (ViewPost)
 import TeamTavern.Routes.Session.EndSession (EndSession)
 import TeamTavern.Routes.Session.StartSession (StartSession)
 
@@ -42,7 +43,8 @@ type FeedRoutes
     <|> "viewOwnDescriptions" : ViewOwnDescriptions
 
 type PostRoutes
-    =   "viewOwnPost" : ViewOwnPost
+    =   "viewPost"    : ViewPost
+    <|> "viewOwnPost" : ViewOwnPost
     <|> "createPost"  : CreatePost
     <|> "updatePost"  : UpdatePost
     <|> "deletePost"  : DeletePost

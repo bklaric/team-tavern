@@ -7,7 +7,7 @@ import Async as Async
 import Control.Alt ((<|>))
 import Data.Array (elem, filter, find, init, last, length, null, snoc, take)
 import Data.Either (hush)
-import Data.Maybe (Maybe(..), fromMaybe, isJust, maybe)
+import Data.Maybe (Maybe(..), isJust, maybe)
 import Data.String (joinWith)
 import Data.Tuple.Nested ((/\))
 import Data.Variant (onMatch)
@@ -19,10 +19,10 @@ import Halogen.HTML.Elements.Keyed as HK
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Halogen.Hooks as Hooks
-import TeamTavern.Client.Components.Card (Viewer, card, tierOf)
+import TeamTavern.Client.Components.Card (Place(..), Viewer, card, tierOf)
 import TeamTavern.Client.Components.Flow (flowLead)
 import TeamTavern.Client.Icons as Icons
-import TeamTavern.Client.Pages.Feed.Description (emptyStored, loadStored, saveStored, setCurrent)
+import TeamTavern.Client.Pages.Feed.Description (storeDescription)
 import TeamTavern.Client.Pages.Placeholder (placeholder)
 import TeamTavern.Client.Script.Expand (toggleCard)
 import TeamTavern.Client.Script.Navigate (navigateReplace_, navigateWithEvent_)
@@ -151,7 +151,7 @@ component = Hooks.component \_ { handle, type_ } -> Hooks.do
             , post
             , marked: true
             , expanded: elem post.id state.expanded
-            , preview: false
+            , place: Listed
             , onToggle: toggle post.id
             , onContact: pure unit
             , onEdit: pure unit
@@ -165,8 +165,7 @@ component = Hooks.component \_ { handle, type_ } -> Hooks.do
             [ HS.class_ "button button-primary"
             , HP.href feedPath
             , HE.onClick \event -> do
-                stored <- liftEffect $ loadStored handle <#> fromMaybe emptyStored
-                liftEffect $ saveStored handle $ setCurrent description stored { type = type_ }
+                liftEffect $ storeDescription handle type_ description
                 navigateWithEvent_ feedPath event
             ]
             [ HH.text "See all" ]

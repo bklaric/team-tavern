@@ -3,9 +3,10 @@ module TeamTavern.Routes.Shared.Card where
 import Data.Maybe (Maybe)
 import Foreign.Object (Object)
 
--- | A post as a card shows it: a row of `redesign/feed/feed.sql`, labelled with
--- | the query's own column names so a row reads straight into it. The feed,
--- | the post page and the post screen's preview all render one.
+-- | A post as a card shows it: a row of `Server/Feed/Feed.sql`, labelled with
+-- | the query's own column names so a row reads straight into it, and of the
+-- | queries that share its columns (`Server/Post/Infrastructure/CardColumns.purs`).
+-- | The feed, the post page and the post screen's preview all render one.
 -- |
 -- | A player post takes its age, country and languages from its owner's
 -- | account; `options` holds each field's chosen option keys, `ranges` a group's

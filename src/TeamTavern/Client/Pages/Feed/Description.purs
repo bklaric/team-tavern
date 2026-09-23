@@ -8,13 +8,14 @@ module TeamTavern.Client.Pages.Feed.Description
     , loadStored
     , saveStored
     , setCurrent
+    , storeDescription
     , storedFrom
     ) where
 
 import Prelude
 
 import Data.Array (all, find, null, sort)
-import Data.Maybe (Maybe(..), isJust, isNothing)
+import Data.Maybe (Maybe(..), fromMaybe, isJust, isNothing)
 import Effect (Effect)
 import Foreign.Object as Object
 import TeamTavern.Routes.Feed.ViewOwnDescriptions (OwnDescription)
@@ -96,6 +97,13 @@ loadStored handle =
 saveStored :: String -> Stored -> Effect Unit
 saveStored handle stored =
     window >>= localStorage >>= setItem (storageKey handle) (writeJSON stored)
+
+-- | Makes a description of the type the one the game's feed opens with, as
+-- | See what fits does with a post's (brief 11.2).
+storeDescription :: String -> String -> Description -> Effect Unit
+storeDescription handle type_ description = do
+    stored <- loadStored handle <#> fromMaybe emptyStored
+    saveStored handle $ setCurrent description stored { type = type_ }
 
 -- | A description that gives nothing shows every post by activity, as the
 -- | feed's query decides.

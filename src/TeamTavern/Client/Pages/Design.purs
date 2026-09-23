@@ -19,7 +19,7 @@ import Halogen.HTML.Properties.ARIA as HPA
 import Halogen.Hooks as Hooks
 import TeamTavern.Client.Components.AccountFact (accountFact)
 import TeamTavern.Client.Components.Button (Size(..), Weight(..), button, iconButton)
-import TeamTavern.Client.Components.Card (Viewer, card)
+import TeamTavern.Client.Components.Card (Place(..), Viewer, card)
 import TeamTavern.Client.Components.Check (check, choiceList, choices, switch, switches)
 import TeamTavern.Client.Components.Confirm (confirm)
 import TeamTavern.Client.Components.DataList (dataList, personRow, personRows, row)
@@ -28,6 +28,7 @@ import TeamTavern.Client.Components.Field (Labelling(..), field, field_, formSec
 import TeamTavern.Client.Components.Input (Option, input, select, textarea)
 import TeamTavern.Client.Components.Menu (menuDivider, menuItem, menuItemDestructive, menuLabel, sheetMenu)
 import TeamTavern.Client.Components.Overlay (Presentation(..), overlay, useOverlay)
+import TeamTavern.Client.Components.OwnPostStatus (ownPostStatus)
 import TeamTavern.Client.Components.Pills (pills)
 import TeamTavern.Client.Components.Range (ageRange, hoursHint, hoursRange, optionRange)
 import TeamTavern.Client.Components.Stepper (countRow, stepper)
@@ -554,20 +555,20 @@ component = Hooks.component \_ _ -> Hooks.do
             case state.viewer, state.valorant, state.valheim of
             Just viewer, Just valorant, Just valheim -> let
                 posts = fixtures viewer.now
-                cardOf key game { marked, preview } post = card
+                cardOf key game { marked, place } post = card
                     { game
                     , viewer
                     , post
                     , marked
                     , expanded: elem key state.expanded
-                    , preview
+                    , place
                     , onToggle: \event -> toggleCard event $ set \state' -> state' { expanded = toggle key state'.expanded }
                     , onContact: pure unit
                     , onEdit: pure unit
                     , onRenew: pure unit
                     }
-                feedCard key = cardOf key valorant { marked: true, preview: false }
-                cardState label key game post = [ caption label, cardOf key game { marked: false, preview: false } post ]
+                feedCard key = cardOf key valorant { marked: true, place: Listed }
+                cardState label key game post = [ caption label, cardOf key game { marked: false, place: Listed } post ]
                 in
                 [ caption "A feed, marked"
                 , HH.div [ HS.class_ "feed-stack" ]
@@ -591,7 +592,21 @@ component = Hooks.component \_ _ -> Hooks.do
                 <> cardState "Your own post" "state-own" valorant posts.ownNightOwls
                 <> cardState "Already messaged" "state-messaged" valorant posts.messagedShadowFox
                 <> [ caption "A preview on the post screen"
-                    , cardOf "state-preview" valorant { marked: false, preview: true } posts.nightOwls
+                    , cardOf "state-preview" valorant { marked: false, place: Preview } posts.nightOwls
+                    , caption "On its own page"
+                    , cardOf "state-page" valorant { marked: false, place: Page { blocked: false, status: [] } } posts.shadowFox
+                    , caption "Your own post on its own page"
+                    , cardOf "state-page-own" valorant
+                        { marked: false
+                        , place: Page
+                            { blocked: false
+                            , status:
+                                [ ownPostStatus { now: viewer.now, expires: posts.ownExpires, conversations: 3, reveals: 14 } ]
+                            }
+                        }
+                        posts.ownNightOwls
+                    , caption "On its own page, blocked"
+                    , cardOf "state-page-blocked" valorant { marked: false, place: Page { blocked: true, status: [] } } posts.nightOwls
                     ]
                 <> cardState "A long name, every role and Cyrillic words" "state-stress" valorant posts.stress
                 <> cardState "Almost empty" "state-sparse" valorant posts.sparse

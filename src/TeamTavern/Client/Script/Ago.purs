@@ -1,4 +1,4 @@
-module TeamTavern.Client.Script.Ago (ago) where
+module TeamTavern.Client.Script.Ago (ago, millisOf) where
 
 import Prelude
 
@@ -6,6 +6,7 @@ import Data.DateTime.Instant (Instant, unInstant)
 import Data.Int (round, toNumber)
 import Data.Newtype (unwrap)
 
+-- | An ISO time in milliseconds since the epoch.
 foreign import millisOf :: String -> Number
 
 unit' :: Int -> String -> String

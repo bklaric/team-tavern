@@ -26,7 +26,7 @@ brief marks Proposed, the brief's status is updated in the same commit.
 - [x] 5. Game data and the card
 - [x] 6. The feed
 - [x] 7. Post creation
-- [ ] 8. Post pages
+- [x] 8. Post pages
 - [ ] 9. Home page
 - [ ] 10. Contact panel and renewal
 - [ ] 11. Messaging and the inbox
@@ -578,6 +578,37 @@ What every later page needs signed in and out.
   seed has more than 20 posts in one game, else on the scroll position), the
   expired post carries `noindex`, an unknown id is the gone page and a bot gets
   404.
+- Settled here:
+  - `viewPost` is `GET /api/games/:handle/posts/:id`, answering
+    `{ post, blocked, owner }`: the card row with no marks, who blocked whom
+    (`viewer` or `owner`) where either did, and for the owner only
+    `{ expires, conversations, reveals }`. `expires` is the time the post runs
+    out, so the 30 and 90 days stay in SQL. Not found is a missing id or one of
+    another game, the gone page when `viewGame` knows the game. An id that isn't
+    a number is the not-found page.
+  - The card's columns but its marks are `Server/Post/Infrastructure/CardColumns.purs`,
+    `Feed.sql`'s last select over a `post`, its `owner` and `parameters`, for
+    step 9's `viewOwnPosts` too. `Feed.sql` keeps its own copy for `bench.sh`
+    and `check.mjs`.
+  - The card takes a `place`: `Listed`, `Preview` (the post screen's) or
+    `Page { blocked, status }`. On a page the name is the `h1`, the type reads
+    "Valorant player", Details goes, the contact button is filled, and until
+    step 10 it is disabled. A block leaves no actions and no "You messaged".
+    The owner's state, conversations and reveals are `Components/OwnPostStatus.purs`,
+    which step 9 reuses; the conversation count is text until step 11 gives it
+    the inbox, and it counts no unread until then.
+  - Back shows when the history entry was opened from the game's feed. A link
+    stamps each entry it opens with the path it left (`Script/Previous.purs`),
+    so the entry knows after a reload and a trip back and forth; the router
+    hands the post page what the entry says.
+  - The way into the feed reads the description the feed would open with, what
+    is stored or else the viewer's own posts. See what fits stores the post's
+    description first, as Matches' See all does (`storeDescription`).
+  - A player the owner blocked reads "There's no way to contact this post.",
+    which doesn't say who blocked whom. Neither blocked line can be reached in
+    the browser before step 12, whose `block.spec.ts` asserts the one it makes.
+  - The title is "Night Owls · Valorant group | TeamTavern", the description the
+    post's words cut to 155 characters.
 
 ### 9. Home page
 
