@@ -1,4 +1,4 @@
-module TeamTavern.Server.Feed.ViewOwnDescriptions (ownDescriptionsQuery, viewOwnDescriptions) where
+module TeamTavern.Server.Feed.ViewOwnDescriptions (descriptionJson, ownDescriptionsQuery, viewOwnDescriptions) where
 
 import Prelude
 
@@ -13,34 +13,40 @@ import TeamTavern.Server.Infrastructure.Postgres (queryMany)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Post.Infrastructure.Answers (flagsJson, optionsJson, rangesJson)
 
--- | A player's posts in a game, each as the description `Feed.sql` takes: its
--- | answers, and the account's country, age and languages for a player post.
--- | The hours are in the owner's timezone, as the post keeps them.
+-- | A post as the description `Feed.sql` takes: its answers, and the account's
+-- | country, age and languages for a player post. The hours are in the owner's
+-- | timezone, as the post keeps them. SQL over a `post` and its `owner`.
+descriptionJson :: String
+descriptionJson = """
+    jsonb_build_object(
+        'type', post.ilk,
+        'options', """ <> optionsJson <> """,
+        'ranges', """ <> rangesJson <> """,
+        'flags', """ <> flagsJson <> """,
+        'country', case when post.ilk = 'player' then owner.country end,
+        'age', case when post.ilk = 'player'
+            then date_part('year', age(now(), owner.birthday))::integer end,
+        'regions', to_jsonb(post.regions),
+        'ageFrom', post.age_from,
+        'ageTo', post.age_to,
+        'languages', to_jsonb(case when post.ilk = 'player' then owner.languages else post.languages end),
+        'online', case when post.online_from is not null and post.online_to is not null
+            then jsonb_build_object(
+                'from', to_char(post.online_from, 'HH24:MI'),
+                'to', to_char(post.online_to, 'HH24:MI'))
+            end,
+        'timezone', owner.timezone,
+        'microphone', post.microphone
+    )
+    """
+
+-- | A player's posts in a game, each as the description it makes.
 ownDescriptionsQuery :: Query
 ownDescriptionsQuery = Query $ """
     select
         post.ilk as type,
         post.name,
-        jsonb_build_object(
-            'type', post.ilk,
-            'options', """ <> optionsJson <> """,
-            'ranges', """ <> rangesJson <> """,
-            'flags', """ <> flagsJson <> """,
-            'country', case when post.ilk = 'player' then owner.country end,
-            'age', case when post.ilk = 'player'
-                then date_part('year', age(now(), owner.birthday))::integer end,
-            'regions', to_jsonb(post.regions),
-            'ageFrom', post.age_from,
-            'ageTo', post.age_to,
-            'languages', to_jsonb(case when post.ilk = 'player' then owner.languages else post.languages end),
-            'online', case when post.online_from is not null and post.online_to is not null
-                then jsonb_build_object(
-                    'from', to_char(post.online_from, 'HH24:MI'),
-                    'to', to_char(post.online_to, 'HH24:MI'))
-                end,
-            'timezone', owner.timezone,
-            'microphone', post.microphone
-        ) as description
+        """ <> descriptionJson <> """ as description
     from post
     join game on game.id = post.game_id
     join player owner on owner.id = post.player_id

@@ -27,7 +27,7 @@ brief marks Proposed, the brief's status is updated in the same commit.
 - [x] 6. The feed
 - [x] 7. Post creation
 - [x] 8. Post pages
-- [ ] 9. Home page
+- [x] 9. Home page
 - [ ] 10. Contact panel and renewal
 - [ ] 11. Messaging and the inbox
 - [ ] 12. Block and report
@@ -624,14 +624,46 @@ What every later page needs signed in and out.
 - Specs: `home.spec.ts`: signed out shows the type cards and every cover;
   signed in as the seeded owner shows their posts with the right state words;
   Renew moves a post's freshness.
+- Settled here:
+  - `viewOwnPosts` is `GET /api/own`, signed in: the games the player has posts
+    in, in catalogue order, each with its posts in type order as
+    `{ post, owner, description }`. `post` is the card row with no marks,
+    `owner` the `OwnerView` the post page's owner reads too
+    (`Routes/Shared/OwnPost.purs`: `expires`, `conversations`, `unread`,
+    `reveals`, from `Server/Post/Infrastructure/OwnerColumns.purs`), and
+    `description` the one the post makes, as `viewOwnDescriptions` gives it
+    (`descriptionJson`), so See what fits stores it without a request of its own.
+    A conversation is unread when the other side wrote after `owner_read_at`.
+  - `renewPost` came forward from step 10, since the step's spec renews:
+    `POST /api/games/:handle/posts/:id/renew`, signed in, not found for a post
+    that isn't the player's. It moves `updated` to now and deletes the post's
+    expiry notification (`ClearExpiry.purs`), which `updatePost` now does too,
+    since an edit renews.
+  - The home page's post is `ownCard` in `Card.purs`: heading, unmarked facts,
+    the `OwnPostStatus`, then See what fits (outlined), Edit (text) and Renew,
+    outlined while `renewDue` (the last week, or expired). The status says how
+    many conversations are unread; it links nowhere until step 11.
+  - Home is a `Slot__I Int` keyed by visit, so signing in or out onto `/` asks
+    again. Signed out (`viewOwnPosts` refused) or without posts it is the start
+    page. It fetches `viewGame` for each game posted in, for the facts' labels.
+    After Renew it asks again and says "Renewed. Your post stays active for 30
+    days from today." (90 for a community) in a toast; the keyed cards keep the
+    focus on the button.
+  - The titles are "TeamTavern: find players, groups and communities" signed out,
+    which the shells now carry, with the lead line as the site's description,
+    and "Your posts | TeamTavern" with posts.
+  - The seed's `OwnerTester` (`owner@example.com`) has a post in each state: the
+    Dota 2 group Kestrel's Nest, active; a Heroes of the Storm player post,
+    expired; a Valheim player post in its last week. The games are ones no spec
+    asserts the feed of, so the spec's renewal moves nothing another reads.
 
 ## Phase 3: contact
 
 ### 10. Contact panel and renewal
 
 - Server: `revealContacts` by post id, signed in, counting the reveal on the
-  post and returning the contacts and join links; `renewPost` by id, signed
-  in, setting `updated` and deleting the post's expiry notification.
+  post and returning the contacts and join links. `renewPost` is in from step
+  9; the feed's and the post page's Renew call it here.
 - Client, from `messaging.js`: the panel as a side panel and full-screen
   sheet, the preference ordering, the contact rows with Copy, Open the invite
   and Visit site, the "or message on TeamTavern" fold, the reply note before

@@ -19,7 +19,7 @@ import Halogen.HTML.Properties.ARIA as HPA
 import Halogen.Hooks as Hooks
 import TeamTavern.Client.Components.AccountFact (accountFact)
 import TeamTavern.Client.Components.Button (Size(..), Weight(..), button, iconButton)
-import TeamTavern.Client.Components.Card (Place(..), Viewer, card)
+import TeamTavern.Client.Components.Card (Place(..), Viewer, card, ownCard)
 import TeamTavern.Client.Components.Check (check, choiceList, choices, switch, switches)
 import TeamTavern.Client.Components.Confirm (confirm)
 import TeamTavern.Client.Components.DataList (dataList, personRow, personRows, row)
@@ -28,7 +28,7 @@ import TeamTavern.Client.Components.Field (Labelling(..), field, field_, formSec
 import TeamTavern.Client.Components.Input (Option, input, select, textarea)
 import TeamTavern.Client.Components.Menu (menuDivider, menuItem, menuItemDestructive, menuLabel, sheetMenu)
 import TeamTavern.Client.Components.Overlay (Presentation(..), overlay, useOverlay)
-import TeamTavern.Client.Components.OwnPostStatus (ownPostStatus)
+import TeamTavern.Client.Components.OwnPostStatus (ownPostStatus, renewDue)
 import TeamTavern.Client.Components.Pills (pills)
 import TeamTavern.Client.Components.Range (ageRange, hoursHint, hoursRange, optionRange)
 import TeamTavern.Client.Components.Stepper (countRow, stepper)
@@ -601,10 +601,23 @@ component = Hooks.component \_ _ -> Hooks.do
                         , place: Page
                             { blocked: false
                             , status:
-                                [ ownPostStatus { now: viewer.now, expires: posts.ownExpires, conversations: 3, reveals: 14 } ]
+                                [ ownPostStatus
+                                    { now: viewer.now, expires: posts.ownExpires, conversations: 3, unread: 1, reveals: 14 }
+                                ]
                             }
                         }
                         posts.ownNightOwls
+                    , caption "Your own post on the home page"
+                    , ownCard
+                        { game: valorant
+                        , viewer
+                        , post: posts.ownNightOwls
+                        , status: ownPostStatus
+                            { now: viewer.now, expires: posts.ownExpires, conversations: 3, unread: 1, reveals: 14 }
+                        , renewDue: renewDue viewer.now posts.ownExpires
+                        , onFits: const $ pure unit
+                        , onRenew: pure unit
+                        }
                     , caption "On its own page, blocked"
                     , cardOf "state-page-blocked" valorant { marked: false, place: Page { blocked: true, status: [] } } posts.nightOwls
                     ]

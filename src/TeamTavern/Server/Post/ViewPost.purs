@@ -13,12 +13,14 @@ import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Query (Query(..), (:), (:|))
 import TeamTavern.Routes.Post.ViewPost as ViewPost
 import TeamTavern.Routes.Shared.Card (CardRow)
+import TeamTavern.Routes.Shared.OwnPost (OwnerView)
 import TeamTavern.Server.Infrastructure.CheckSignedIn (checkSignedIn)
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.Error (Terror(..), elaborate)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstNotFound)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Post.Infrastructure.CardColumns (cardColumns)
+import TeamTavern.Server.Post.Infrastructure.OwnerColumns (ownerView)
 import Yoga.JSON.Async (read)
 
 -- The page shows no marks: a description is the viewer's own, and what fits is
@@ -39,12 +41,7 @@ postQuery = Query $ """
                 where blocker_id = post.player_id and blocked_id = parameters.viewer)
             then 'owner'
         end as blocked,
-        case when post.player_id = parameters.viewer then jsonb_build_object(
-            'expires', post.updated + case when post.ilk = 'community'
-                then interval '90 days' else interval '30 days' end,
-            'conversations', (select count(*) from conversation where conversation.post_id = post.id),
-            'reveals', post.contact_reveals
-        ) end as owner_view
+        case when post.player_id = parameters.viewer then """ <> ownerView <> """ end as owner_view
     from parameters
     join game on game.handle = parameters.handle
     join post on post.game_id = game.id and post.id = parameters.id
@@ -54,7 +51,7 @@ postQuery = Query $ """
 -- The columns the query adds to the card's.
 type Extras =
     { blocked :: Maybe String
-    , owner_view :: Maybe ViewPost.OwnerView
+    , owner_view :: Maybe OwnerView
     }
 
 viewPost :: ∀ left. Pool -> String -> Int -> Cookies -> Async left _

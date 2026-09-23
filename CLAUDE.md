@@ -197,7 +197,9 @@ gets `ApexTester`, the email is `apex@example.com`, and the password is
 group post and a community post, `ExpiredTester` (`expired@example.com`) with a
 player post past its 30 days, and `NewTester` (`new@example.com`) with no post, and Counter-Strike 2 gets
 `LeaderlessTester` (`leaderless@example.com`) with a group post that wants an
-in-game leader; all share the password. `Seed/Games/` carries all ten production games, so every
+in-game leader. `OwnerTester` (`owner@example.com`) has a post in each state
+for the home page: an active group in Dota 2, an expired player post in Heroes
+of the Storm and one in its last week in Valheim. All share the password. `Seed/Games/` carries all ten production games, so every
 game handle the site serves has a page with content. A cold boot answers on the
 API within a few seconds.
 

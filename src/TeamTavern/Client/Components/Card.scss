@@ -231,3 +231,10 @@
         margin-left: auto;
     }
 }
+
+/* A player's own post on the home page: the card's heading and facts, then its
+   state and what it has produced, then See what fits, Edit and Renew. */
+
+.own-post .card-footer {
+    margin-top: 0;
+}

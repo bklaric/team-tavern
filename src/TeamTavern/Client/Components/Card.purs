@@ -1,4 +1,4 @@
-module TeamTavern.Client.Components.Card (Place(..), Viewer, card, flagText, postName, tierOf, typeIcon) where
+module TeamTavern.Client.Components.Card (Place(..), Viewer, card, flagText, ownCard, postName, tierOf, typeIcon) where
 
 import Prelude
 
@@ -16,7 +16,7 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Halogen.HTML.Properties.ARIA as HPA
 import JSURI (encodeURIComponent)
-import TeamTavern.Client.Components.Button (Size(..), Weight(..), button)
+import TeamTavern.Client.Components.Button (Size(..), Weight(..), button, buttonLink)
 import TeamTavern.Client.Components.Card.Hours (Hours, hoursText, inViewerTime)
 import TeamTavern.Client.Components.Card.Regions (regionsText)
 import TeamTavern.Client.Icons as Icons
@@ -211,6 +211,21 @@ renderFact (IconFact { icon, label, match }) =
        , HH.span [ HS.class_ "visually-hidden" ] [ HH.text label ]
        ]
 
+factLine :: ∀ w i. Array Fact -> Maybe (HH.HTML w i)
+factLine facts
+    | null facts = Nothing
+    | otherwise = Just $ HH.div [ HS.class_ "facts-clip" ] [ HH.div [ HS.class_ "facts" ] $ renderFact <$> facts ]
+
+-- The post's hours in the viewer's clock, where it gives any.
+hoursOf :: Viewer -> CardRow -> Maybe Hours
+hoursOf viewer post = do
+    from <- post.online_from
+    to <- post.online_to
+    inViewerTime viewer post.timezone from to
+
+postPath :: ViewGame.OkContent -> CardRow -> String
+postPath game post = "/games/" <> game.handle <> "/posts/" <> show post.id
+
 -- | What a card's heading calls the post: a player by their nickname, a group
 -- | or a community by its name, or after its owner where it has none.
 postName :: CardRow -> String
@@ -292,10 +307,7 @@ card { game, viewer, post, marked, expanded: expanded', place, onToggle, onConta
         Page { status: status' } -> status'
         _ -> []
     expanded = expanded' || page
-    hours = do
-        from <- post.online_from
-        to <- post.online_to
-        inViewerTime viewer post.timezone from to
+    hours = hoursOf viewer post
     facts = factsOf game (if marked then post else post { marks = Object.empty }) hours
     details = detailsOf game post hours
     text = post.summary # joinWith "\n" # trim
@@ -303,7 +315,7 @@ card { game, viewer, post, marked, expanded: expanded', place, onToggle, onConta
         || length (split (Pattern "\n") text) > 2
     expandable = not null details || not null post.trackers || long
     name = postName post
-    href = "/games/" <> game.handle <> "/posts/" <> show post.id
+    href = postPath game post
     classes = joinWith " " $ catMaybes
         [ Just "card"
         , Just $ "card-" <> post.type
@@ -381,13 +393,49 @@ card { game, viewer, post, marked, expanded: expanded', place, onToggle, onConta
     in
     HH.article [ HS.class_ classes ] $ catMaybes
     [ Just heading
-    , if null facts then Nothing
-        else Just $ HH.div [ HS.class_ "facts-clip" ] [ HH.div [ HS.class_ "facts" ] $ renderFact <$> facts ]
+    , factLine facts
     , if text == "" then Nothing else Just $ HH.p [ HS.class_ "card-text" ] [ HH.text text ]
     , if null detailRows then Nothing else Just $ HH.div [ HS.class_ "card-details" ] detailRows
     ]
     <> status
     <> [ footer ]
+
+-- | A post on its owner's home page (brief 11.2): its heading, which opens its
+-- | page, and its fact line, without its words, then its `status` and what the
+-- | owner can do with it. None of that is filled, since no one action is the
+-- | thing to do; Renew is outlined when it is due.
+ownCard :: ∀ w m. MonadEffect m =>
+    { game :: ViewGame.OkContent
+    , viewer :: Viewer
+    , post :: CardRow
+    , status :: HH.HTML w (m Unit)
+    , renewDue :: Boolean
+    , onFits :: MouseEvent -> m Unit
+    , onRenew :: m Unit
+    }
+    -> HH.HTML w (m Unit)
+ownCard { game, viewer, post, status, renewDue, onFits, onRenew } = let
+    href = postPath game post
+    feedPath = "/games/" <> game.handle
+    editPath = "/games/" <> game.handle <> "/post/" <> post.type <> "?from=edit"
+    in
+    HH.article
+    [ HS.class_ $ "card own-post card-" <> post.type <> if post.expired then " card-expired" else "" ] $ catMaybes
+    [ Just $ HH.div [ HS.class_ "card-heading" ] $ catMaybes
+        [ Just $ HH.a [ HS.class_ "card-name", HP.href href, HE.onClick $ navigateWithEvent_ href ]
+            [ HH.text $ postName post ]
+        , Just $ HH.span [ HS.class_ "card-type" ] $ typeLabel post.type
+        , slotsText post <#> \slots -> HH.span [ HS.class_ "card-slots tabular" ] [ HH.text slots ]
+        ]
+    , factLine $ factsOf game post { marks = Object.empty } (hoursOf viewer post)
+    , Just status
+    , Just $ HH.div [ HS.class_ "card-footer" ]
+        [ HH.a [ HS.class_ "button button-outline button-small", HP.href feedPath, HE.onClick onFits ]
+            [ Icons.search, HH.text "See what fits" ]
+        , buttonLink Text Small editPath [ Icons.pencil, HH.text "Edit" ]
+        , button (if renewDue then Outline else Text) Small onRenew [ Icons.refreshCw, HH.text "Renew" ]
+        ]
+    ]
 
 -- | Which tier of the feed a card's marks put it in: 0 fits, 1 misses one
 -- | thing, 2 misses more. A card none of the description applies to goes last.

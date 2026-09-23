@@ -78,7 +78,7 @@ test.describe("the header's menus", () => {
 
         await accountButton.click();
         await expect(account).toBeVisible();
-        await page.getByRole("heading", { name: "TeamTavern" }).click();
+        await page.getByRole("heading", { name: "What are you posting?" }).click();
         await expect(account).toHaveCount(0);
 
         // A second press on the button that opened it closes it.

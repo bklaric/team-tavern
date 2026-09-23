@@ -4,7 +4,7 @@ import { rethrowComposeError, testStack, waitForApi } from "../stack";
 
 // The home page loads its cover grid from `/api/games`, so it is the page that shows whether
 // the site and the API both answer. `Database/Seed/Games/` seeds ten games.
-const home = { path: "/", title: "TeamTavern", gameCount: 10 };
+const home = { path: "/", title: "TeamTavern: find players, groups and communities", gameCount: 10 };
 
 // Caddy tells the three kinds of visitor apart by what they send: the prerenderer's browser by
 // its `X-RenderReady` header, a bot by its user agent. Each block below visits the home page

@@ -244,8 +244,8 @@ component = Hooks.component \_ { handle, id, feedBehind } -> Hooks.do
                 , place: Page
                     { blocked: isJust page.blocked
                     , status: case page.owner of
-                        Just { expires, conversations, reveals } ->
-                            [ ownPostStatus { now: viewer.now, expires, conversations, reveals } ]
+                        Just { expires, conversations, unread, reveals } ->
+                            [ ownPostStatus { now: viewer.now, expires, conversations, unread, reveals } ]
                         Nothing -> []
                     }
                 , onToggle: const $ pure unit

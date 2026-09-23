@@ -85,7 +85,7 @@ cross join lateral (
 
 -- The hand-written posts below answer their fields by key. A post is found by
 -- its owner and type, since a player has one post of each type per game and
--- these accounts post in one game alone.
+-- the accounts that use them post in one game alone.
 
 create function seed_post_option(nickname text, ilk text, field_key text, option_keys text[]) returns void
 language sql as $$
@@ -265,6 +265,63 @@ from post
 join player on player.id = post.player_id
 join field on field.game_id = post.game_id and field.key = 'in-game-leader'
 where player.nickname = 'LeaderlessTester' and post.ilk = 'group';
+
+-- An owner with a post in each state, for the home page: a group that is
+-- active, a player post in its last week and one expired. They are in games
+-- whose feeds no spec asserts, so renewing one moves nothing another spec reads.
+-- The posts answer none of their games' fields.
+
+select seed_player('OwnerTester', 'owner@example.com');
+
+insert into post
+    ( player_id, game_id, ilk, renewal_nonce, summary
+    , microphone, online_from, online_to, contact_preference
+    , name, regions, languages, age_from
+    , group_size, group_wanted_from, group_wanted_to
+    )
+select
+    player.id,
+    game.id,
+    'group',
+    left(md5('OwnerTester-group'), 20),
+    array['Two of us queue most evenings and want a steady trio for ranked.'],
+    true,
+    time '19:00',
+    time '23:00',
+    'message',
+    'Kestrel''s Nest',
+    array['Europe'],
+    array['English'],
+    18,
+    2,
+    1,
+    1
+from player, game
+where player.nickname = 'OwnerTester' and game.handle = 'dota2';
+
+insert into post
+    ( player_id, game_id, ilk, renewal_nonce, summary
+    , microphone, online_from, online_to, contact_preference
+    , created, updated
+    )
+select
+    player.id,
+    game.id,
+    'player',
+    left(md5('OwnerTester-player-' || game.handle), 20),
+    array['Seeded player post of OwnerTester''s.'],
+    true,
+    time '20:00',
+    time '23:30',
+    'either',
+    current_timestamp - posted.age,
+    current_timestamp - posted.age
+from player, game
+join (values
+    ('hots', interval '45 days'),
+    ('valheim', interval '26 days')
+) as posted (handle, age) on posted.handle = game.handle
+where player.nickname = 'OwnerTester';
 
 drop function seed_post_range(text, text, text, text, text);
 drop function seed_post_option(text, text, text, text[]);

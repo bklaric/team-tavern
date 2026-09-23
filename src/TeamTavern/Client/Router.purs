@@ -70,7 +70,7 @@ data State
 
 type ChildSlots =
     ( header :: Slot___
-    , home :: Slot___
+    , home :: Slot__I Int
     , signUp :: Slot___
     , signIn :: Slot___
     , forgotPassword :: Slot___
@@ -131,12 +131,13 @@ name Design = "Design"
 name NotFound = "Page could not be found."
 
 description :: String
-description = "Find players and groups for your game on TeamTavern. Say who you're looking for and see who fits."
+description = "Find players, groups and communities for the games you play. Post once, and we'll tell you when someone new fits."
 
 renderPage :: ∀ action left. Visit -> H.ComponentHTML action ChildSlots (Async left)
 renderPage { page: Feed { handle }, visit, restore, cache } = feed visit { handle, restore, cache }
 renderPage { page: Post { handle, id }, visit, previous } =
     postPage visit { handle, id, feedBehind: previous == Just ("/games/" <> handle) }
+renderPage { page: Home, visit } = home visit
 renderPage { page: PostType, visit } = postType visit
 renderPage { page: PostGame { type_ }, visit } = postGame visit type_
 renderPage { page: PostScreen { handle, type_ }, visit } = postScreen visit { handle, type_ }
@@ -145,7 +146,6 @@ renderPage { page } = renderPage' page
 
 renderPage' :: ∀ action left. State -> H.ComponentHTML action ChildSlots (Async left)
 renderPage' Empty = HH.div_ []
-renderPage' Home = home
 renderPage' SignUp = signUp
 renderPage' SignIn = signIn
 renderPage' ForgotPassword = forgotPassword
@@ -184,7 +184,7 @@ router initialState initialPath = Hooks.component \{ queryToken } _ -> Hooks.do
     let changeRoute state path popped = do
             let page = route path
             case page of
-                Home -> setMeta "TeamTavern" description
+                Home -> setMeta "TeamTavern: find players, groups and communities" description
                 NotFound -> do
                     appendRenderReadyNotFound
                     setMeta "Page not found | TeamTavern" description

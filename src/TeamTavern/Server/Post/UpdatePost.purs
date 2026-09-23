@@ -15,6 +15,7 @@ import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstNotFound, transaction)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
+import TeamTavern.Server.Post.Infrastructure.ClearExpiry (clearExpiry)
 import TeamTavern.Server.Post.Infrastructure.LoadCatalogue (loadCatalogue)
 import TeamTavern.Server.Post.Infrastructure.ValidatePost (validatePost)
 import TeamTavern.Server.Post.Infrastructure.WriteAccount (writeAccount)
@@ -63,4 +64,5 @@ updatePost pool handle type_ cookies content =
             : toNullable post.groupSize : toNullable post.groupWantedFrom :| toNullable post.groupWantedTo
             )
         writeAnswers client gameId postId post
+        clearExpiry client postId
     pure noContent_

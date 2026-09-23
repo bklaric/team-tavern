@@ -926,7 +926,7 @@ the field:
   signed out, so it names the post the description comes from.
 - **Decided:** community posts are active for 90 days.
 - **Decided:** expired posts stay in the feed below the divider (section 4).
-- **Proposed:** an expired post can be renewed any time from the home page (11.2).
+- **Decided:** an expired post can be renewed any time from the home page (11.2).
 - **Proposed:** expired posts can still be messaged, with a note that the owner may
   not reply. The owner's email about the message includes a **Renew** button.
 - **Decided:** every card says when it was last active, "Active 2 days ago" or
@@ -1113,7 +1113,7 @@ first. A post of theirs that has expired says so and offers **Renew**.
 - **Decided:** a signed-in player with no posts gets the signed-out home page.
 - **Decided:** the rest of the account is the account page (11.5), reached from
   the account menu in the header (11.4).
-- **Proposed:** signed out, a line under "What are you posting?" says what the
+- **Decided:** signed out, a line under "What are you posting?" says what the
   site is: "Find players, groups and communities for the games you play. Post
   once, and we'll tell you when someone new fits." The cover grid follows under
   "Or browse a game".
@@ -1141,23 +1141,23 @@ first. A post of theirs that has expired says so and offers **Renew**.
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
-- **Proposed:** a post on the home page is its card's heading, which opens the
+- **Decided:** a post on the home page is its card's heading, which opens the
   post's page (11.1), and its fact line, then its state, its conversations and
   how often its contacts were shown, then **See what fits**, **Edit** and
   **Renew**. The owner's words stay off it: the owner wrote them.
-- **Proposed:** the owner is the one player who knows a post expires, so the
+- **Decided:** the owner is the one player who knows a post expires, so the
   state counts forward: "Active for 24 more days"; in its last week, when the
   renewal email goes out, "Expires in 3 days" in full weight with an icon; after
   that, "Expired 3 weeks ago", saying that it is listed under older posts and
   that match emails are paused.
-- **Proposed:** **Renew** is plain text while the post is active and outlined in
+- **Decided:** **Renew** is plain text while the post is active and outlined in
   its last week or once expired. The page has no filled button: no one of its
   actions is the thing to do.
 - **Proposed:** the conversation count opens the inbox on the post's first
   conversation with unread messages, in the inbox's order, or on its first
   conversation when none are unread. Contact reveals read "Contacts shown 14
   times", and are left out while there are none.
-- **Proposed:** a game's cover stands beside its posts with no title, their top
+- **Decided:** a game's cover stands beside its posts with no title, their top
   edges level: the logo on the cover names the game, and the cover opens its
   feed. On a phone the cover is too small to read, so the name sits beside it,
   above the posts. While the player lacks a post type in the game, "New
