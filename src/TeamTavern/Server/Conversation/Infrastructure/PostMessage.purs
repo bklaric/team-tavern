@@ -1,4 +1,4 @@
-module TeamTavern.Server.Conversation.Infrastructure.PostMessage (validateMessage, postMessage) where
+module TeamTavern.Server.Conversation.Infrastructure.PostMessage (maxLength, validateMessage, postMessage) where
 
 import Prelude
 
@@ -15,6 +15,7 @@ import Jarilo (BadRequestRow_, badRequest__, internal__)
 import JavaScript.Npm.Pg.Client (Client)
 import JavaScript.Npm.Pg.Query (Query(..), (:), (:|))
 import TeamTavern.Routes.Shared.Conversation (Conversation)
+import TeamTavern.Server.Block.Infrastructure.Blocked (blockedBetween)
 import TeamTavern.Server.Conversation.Infrastructure.LoadConversation (loadConversation, markRead)
 import TeamTavern.Server.Conversation.Infrastructure.SendMessageEmail (MessageEmail)
 import TeamTavern.Server.Conversation.Infrastructure.Unread (unreadFor)
@@ -70,10 +71,7 @@ recipientQuery = Query $ """
         case when post.player_id = $2 then conversation.messager_id else post.player_id end
     where conversation.id = $1
         and $2 in (post.player_id, conversation.messager_id)
-        and not exists (
-            select from block
-            where blocker_id = post.player_id and blocked_id = conversation.messager_id
-                or blocker_id = conversation.messager_id and blocked_id = post.player_id)
+        and not """ <> blockedBetween "post.player_id" "conversation.messager_id" <> """
     for update of conversation
     """
 

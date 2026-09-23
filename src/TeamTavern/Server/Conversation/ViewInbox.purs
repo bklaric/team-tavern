@@ -10,13 +10,15 @@ import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Query (Query(..), (:))
 import TeamTavern.Routes.Conversation.ViewInbox (InboxRow)
 import TeamTavern.Routes.Conversation.ViewInbox as ViewInbox
+import TeamTavern.Server.Block.Infrastructure.Blocked (blockedBetween)
 import TeamTavern.Server.Conversation.Infrastructure.Unread (unreadFor)
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
 import TeamTavern.Server.Infrastructure.Postgres (queryMany)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 
--- Every conversation the viewer is a side of, latest message first.
+-- Every conversation the viewer is a side of, latest message first, but those
+-- a block hides from both sides.
 inboxQuery :: Query
 inboxQuery = Query $ """
     with parameters as (
@@ -69,6 +71,7 @@ inboxQuery = Query $ """
         limit 1
     ) last
     join player sender on sender.id = last.sender_id
+    where not """ <> blockedBetween "post.player_id" "conversation.messager_id" <> """
     order by last.created desc, conversation.id desc
     """
 

@@ -7,6 +7,7 @@ import Jarilo (ok)
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Query (Query(..), (:))
 import TeamTavern.Routes.Player.ViewMe as ViewMe
+import TeamTavern.Server.Block.Infrastructure.Blocked (blockedBetween)
 import TeamTavern.Server.Conversation.Infrastructure.Unread (unreadFor)
 import TeamTavern.Server.Infrastructure.Cookie (Cookies, setCookieHeader)
 import TeamTavern.Server.Infrastructure.Deployment (Deployment)
@@ -15,7 +16,8 @@ import TeamTavern.Server.Infrastructure.Postgres (queryFirstInternal, queryMany)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 
 -- The conversations about the player's posts and those they started, each
--- counted once however much is unread in it (brief 11.4).
+-- counted once however much is unread in it (brief 11.4), but those a block
+-- hides.
 playerQuery :: Query
 playerQuery = Query $ """
     select
@@ -26,6 +28,7 @@ playerQuery = Query $ """
             join post on post.id = conversation.post_id
             where (post.player_id = player.id or conversation.messager_id = player.id)
                 and """ <> unreadFor "player.id" <> """
+                and not """ <> blockedBetween "post.player_id" "conversation.messager_id" <> """
         ) as unread_conversations
     from player
     where player.id = $1

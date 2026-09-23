@@ -11,6 +11,7 @@ import Jarilo (ok_)
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Query (Query(..), (:), (:|))
 import TeamTavern.Routes.Conversation.ViewPostConversation as ViewPostConversation
+import TeamTavern.Server.Block.Infrastructure.Blocked (blockedBetween)
 import TeamTavern.Server.Conversation.Infrastructure.LoadConversation (loadConversation, markRead)
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
@@ -18,12 +19,13 @@ import TeamTavern.Server.Infrastructure.Postgres (queryFirstMaybe)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 
 conversationQuery :: Query
-conversationQuery = Query """
+conversationQuery = Query $ """
     select conversation.id
     from game
     join post on post.game_id = game.id
     join conversation on conversation.post_id = post.id
     where game.handle = $1 and post.id = $2 and conversation.messager_id = $3
+        and not """ <> blockedBetween "post.player_id" "conversation.messager_id" <> """
     """
 
 viewPostConversation :: ∀ left. Pool -> String -> Int -> Cookies -> Async left _

@@ -39,11 +39,13 @@ import Halogen.HTML.Properties.ARIA as HPA
 import Halogen.Hooks (type (<>), Hook, HookM, HookType, Pure, UseState)
 import Halogen.Hooks as Hooks
 import Halogen.Hooks.Hook (class HookNewtype)
+import TeamTavern.Client.Components.BlockReport (BlockReport, UseBlockReport, blockReportBody, moreMenu, useBlockReport)
 import TeamTavern.Client.Components.Card (postName)
 import TeamTavern.Client.Components.Composer (ComposerActions, ComposerState, UseComposer, composer, useComposer)
 import TeamTavern.Client.Components.Divider (rule)
 import TeamTavern.Client.Components.Overlay (Panel, Presentation(..), UseOverlay, panelHeader, sidePanel, useOverlay)
 import TeamTavern.Client.Components.Thread (newFrom, olderPostNote, thread)
+import TeamTavern.Client.Components.Toast (Toast)
 import TeamTavern.Client.Icons as Icons
 import TeamTavern.Client.Script.Ago (ago)
 import TeamTavern.Client.Script.Back (authPath)
@@ -52,6 +54,7 @@ import TeamTavern.Client.Script.Navigate (navigate_)
 import TeamTavern.Client.Script.QueryParams (getQueryParam, removeQueryParam)
 import TeamTavern.Client.Script.Thread (scrollThreadsToEnd)
 import TeamTavern.Client.Script.Unread (announceUnread)
+import TeamTavern.Client.Shared.Block (reportPost)
 import TeamTavern.Client.Shared.Contacts (contactLabel)
 import TeamTavern.Client.Shared.Fetch (fetchPath, fetchPathBody)
 import TeamTavern.Client.Shared.Me (fetchMe)
@@ -91,8 +94,14 @@ type ContactPanel =
 
 type PanelActions i = { onClose :: i, onCopy :: String -> i, composer :: ComposerActions i }
 
--- | The panel with its message box and what they do, which the page draws.
-type PanelView i = { panel :: ContactPanel, composer :: ComposerState, actions :: PanelActions i }
+-- | The panel with its message box, its ⋯ menu and what they do, which the
+-- | page draws.
+type PanelView i =
+    { panel :: ContactPanel
+    , composer :: ComposerState
+    , blockReport :: BlockReport i
+    , actions :: PanelActions i
+    }
 
 type ContactRow = { label :: String, value :: String, link :: Boolean }
 
@@ -101,6 +110,9 @@ panelRef = H.RefLabel "contact-panel"
 
 messageRef :: H.RefLabel
 messageRef = H.RefLabel "contact-panel-message"
+
+menuRef :: H.RefLabel
+menuRef = H.RefLabel "contact-panel-menu"
 
 offers :: CardRow -> Boolean
 offers post = not null post.contacts || post.has_discord_server || post.has_website
@@ -216,8 +228,10 @@ messageSection { now, view: { panel: { post, thread: thread', loading }, compose
     ]
     <> composer { ref: messageRef, primary: first, state: composerState, actions: actions.composer }
 
+-- Blocking and reporting stand in place of the rest.
 panelBody :: ∀ w i. Props i -> Array (HH.HTML w i)
-panelBody props@{ view: { panel: { post } } }
+panelBody props@{ view: { panel: { post }, blockReport } }
+    | Just body <- blockReportBody { who: post.owner, reportTitle: postName post } blockReport = [ body ]
     | not offers post = [ messageSection props true ]
     | contactsLead post = [ contactsSection props true, rule "or message on TeamTavern", messageSection props false ]
     | otherwise =
@@ -227,8 +241,13 @@ panelBody props@{ view: { panel: { post } } }
         ]
 
 panelOf :: ∀ w i. H.RefLabel -> Props i -> Panel w i
-panelOf ref { now, view: { panel, actions } } =
-    { ref, title: postName panel.post, subtitle: subtitle now panel, tools: [], onClose: actions.onClose }
+panelOf ref { now, view: { panel, blockReport, actions } } =
+    { ref
+    , title: postName panel.post
+    , subtitle: subtitle now panel
+    , tools: [ moreMenu menuRef { who: panel.post.owner, reportLabel: "Report this post" } blockReport ]
+    , onClose: actions.onClose
+    }
 
 -- | The panel as a side panel on a desktop and the whole screen on a phone.
 contactPanel :: ∀ w i. Instant -> PanelView i -> HH.HTML w i
@@ -270,27 +289,46 @@ contactingOwner path =
 
 foreign import data UseContactPanel :: HookType
 
-instance HookNewtype UseContactPanel (UseState (Maybe ContactPanel) <> UseOverlay <> UseComposer <> Pure)
+instance HookNewtype UseContactPanel
+    (UseState (Maybe ContactPanel) <> UseBlockReport <> UseOverlay <> UseComposer <> Pure)
 
 -- | The page's contact panel, given what to do once the viewer has written
 -- | about a post, with the time of their first message, so the page's card
--- | can say so. Signed out, opening it leads to sign up, which returns to the
+-- | can say so, and once they have blocked its owner or undone that, so the
+-- | page can ask again for what it shows. The page's toast says what the ⋯
+-- | menu did. Signed out, opening it leads to sign up, which returns to the
 -- | page with the post in `?contact=` for `openPanelById`.
 useContactPanel :: ∀ left.
-    (Int -> String -> HookM (Async left) Unit)
+    { onMessaged :: Int -> String -> HookM (Async left) Unit
+    , onBlockChange :: HookM (Async left) Unit
+    , showToast :: Toast (Async left) -> HookM (Async left) Unit
+    }
     -> Hook (Async left) UseContactPanel
         { panel :: Maybe (PanelView (HookM (Async left) Unit))
         , openPanel :: { signedIn :: Boolean, game :: ViewGame.OkContent } -> CardRow -> HookM (Async left) Unit
         , openPanelById :: ViewGame.OkContent -> Int -> HookM (Async left) Unit
         , closePanel :: HookM (Async left) Unit
         }
-useContactPanel onMessaged = Hooks.wrap Hooks.do
+useContactPanel { onMessaged, onBlockChange, showToast } = Hooks.wrap Hooks.do
     panel /\ panelId <- Hooks.useState Nothing
 
     let closePanel = Hooks.put panelId Nothing
         update id f = Hooks.modify_ panelId $ map \panel' -> if panel'.post.id == id then f panel' else panel'
 
-    useOverlay panelRef Side (isJust panel) closePanel
+    { blockReport, back, reset } <- useBlockReport
+        { ref: menuRef
+        , scope: ".overlay-side"
+        , subject: Hooks.get panelId <#> map \{ game, post } ->
+            { who: post.owner, report: reportPost { handle: game.handle, id: post.id } }
+        , close: closePanel
+        , changed: onBlockChange
+        , showToast
+        }
+
+    -- Escape leaves blocking or reporting for the panel before it closes it.
+    useOverlay panelRef Side (isJust panel) do
+        wentBack <- back
+        unless wentBack closePanel
 
     let send draft = Hooks.get panelId >>= case _ of
             Nothing -> pure false
@@ -316,6 +354,7 @@ useContactPanel onMessaged = Hooks.wrap Hooks.do
                 navigate_ $ authPath "/signup" $ path <> "?contact=" <> show post.id
             | otherwise = do
                 message.clear
+                reset
                 Hooks.put panelId $ Just
                     { game: { handle: game.handle, title: game.title }
                     , post
@@ -359,6 +398,7 @@ useContactPanel onMessaged = Hooks.wrap Hooks.do
         view = panel <#> \panel' ->
             { panel: panel'
             , composer: message.state
+            , blockReport
             , actions: { onClose: closePanel, onCopy: copy, composer: message.actions }
             }
 

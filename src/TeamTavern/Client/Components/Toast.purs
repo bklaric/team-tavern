@@ -55,7 +55,8 @@ useToast = Hooks.wrap Hooks.do
 
     Hooks.pure { toast, showToast, dismissToast }
 
--- Where the toast shows, announced as it appears. Its action dismisses it too.
+-- Where the toast shows, announced as it appears. Its action dismisses it
+-- first, so the action can show a toast of its own.
 toasts :: ∀ w m. Maybe (Toast m) -> HookM m Unit -> HH.HTML w (HookM m Unit)
 toasts toast dismissToast =
     HH.div [ HS.class_ "toasts", HPA.role "status" ] $
@@ -63,5 +64,5 @@ toasts toast dismissToast =
         HH.div [ HS.class_ "toast" ] $
         [ HH.span [ HS.class_ "toast-text" ] [ HH.text text ] ]
         <> maybe []
-            (\{ label, onAction } -> [ button Text Small (onAction *> dismissToast) [ HH.text label ] ])
+            (\{ label, onAction } -> [ button Text Small (dismissToast *> onAction) [ HH.text label ] ])
             action

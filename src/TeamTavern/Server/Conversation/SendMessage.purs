@@ -9,6 +9,7 @@ import Jarilo (ok_)
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Query (Query(..), (:), (:|))
 import TeamTavern.Routes.Shared.Conversation (MessageContent)
+import TeamTavern.Server.Block.Infrastructure.Blocked (blockedBetween)
 import TeamTavern.Server.Conversation.Infrastructure.PostMessage (postMessage, validateMessage)
 import TeamTavern.Server.Conversation.Infrastructure.SendMessageEmail (sendMessageEmail)
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
@@ -20,15 +21,12 @@ import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 
 -- Nobody messages their own post, or a post of a player either has blocked.
 postQuery :: Query
-postQuery = Query """
+postQuery = Query $ """
     select post.id
     from game
     join post on post.game_id = game.id
     where game.handle = $1 and post.id = $2 and post.player_id <> $3
-        and not exists (
-            select from block
-            where blocker_id = $3 and blocked_id = post.player_id
-                or blocker_id = post.player_id and blocked_id = $3)
+        and not """ <> blockedBetween "$3" "post.player_id" <> """
     """
 
 startQuery :: Query

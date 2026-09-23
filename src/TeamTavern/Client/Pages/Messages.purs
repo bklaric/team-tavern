@@ -24,6 +24,7 @@ import Halogen.HTML.Properties as HP
 import Halogen.HTML.Properties.ARIA as HPA
 import Halogen.Hooks (HookM)
 import Halogen.Hooks as Hooks
+import TeamTavern.Client.Components.BlockReport (blockReportBody, moreMenu, useBlockReport)
 import TeamTavern.Client.Components.Button (Size(..), Weight(..), button, buttonLink)
 import TeamTavern.Client.Components.Card (Viewer, postFacts, postName)
 import TeamTavern.Client.Components.Composer (composer, useComposer)
@@ -37,10 +38,11 @@ import TeamTavern.Client.Script.Ago (ago)
 import TeamTavern.Client.Script.Back (authPath)
 import TeamTavern.Client.Script.Clipboard (writeTextAsync)
 import TeamTavern.Client.Script.Meta (setMeta)
-import TeamTavern.Client.Script.Navigate (navigateWithEvent_)
+import TeamTavern.Client.Script.Navigate (navigateWithEvent_, navigate_)
 import TeamTavern.Client.Script.Thread (isWide, scrollThreadsToEnd)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Script.Unread (announceUnread)
+import TeamTavern.Client.Shared.Block (reportConversation)
 import TeamTavern.Client.Shared.Fetch (fetchPath, fetchPathBody, fetchSimple)
 import TeamTavern.Client.Shared.Renew (renew, renewFailed) as Renew
 import TeamTavern.Client.Shared.Slot (Slot__I)
@@ -56,6 +58,7 @@ import TeamTavern.Routes.Shared.Card (CardRow)
 import TeamTavern.Routes.Shared.Conversation (Conversation)
 import Type.Proxy (Proxy(..))
 import Web.HTML.HTMLElement (focus)
+import Web.UIEvent.KeyboardEvent as KeyboardEvent
 
 -- The inbox (brief 10): conversations grouped by the post they are about, the
 -- player's own posts first, and the open one beside the list on a desktop or
@@ -89,6 +92,9 @@ type State =
 
 messageRef :: H.RefLabel
 messageRef = H.RefLabel "conversation-message"
+
+menuRef :: H.RefLabel
+menuRef = H.RefLabel "conversation-menu"
 
 conversationPath :: Int -> String
 conversationPath id = "/messages/" <> show id
@@ -193,6 +199,19 @@ component = Hooks.component \_ { conversation: openId, visit } -> Hooks.do
 
     message <- useComposer messageRef send
 
+    -- A block takes the conversation out of both inboxes, so the list shows
+    -- without it and with nothing chosen. Undo puts it back in the list.
+    { blockReport, back, reset } <- useBlockReport
+        { ref: menuRef
+        , scope: ".conversation"
+        , subject: Hooks.get stateId <#> \state' -> case state'.open of
+            Open { conversation } -> Just { who: conversation.other, report: reportConversation conversation.id }
+            _ -> Nothing
+        , close: navigate_ "/messages"
+        , changed: Hooks.get stateId <#> _.visit >>= loadInbox
+        , showToast
+        }
+
     -- Every visit asks for the inbox again, and for the conversation it opens.
     -- The inbox and the conversation are asked for at once; the row of the one
     -- opened is marked read here, whichever answers first.
@@ -203,7 +222,9 @@ component = Hooks.component \_ { conversation: openId, visit } -> Hooks.do
         let same = case previous, openId of
                 Open { conversation }, Just id -> conversation.id == id
                 _, _ -> false
-        unless same message.clear
+        unless same do
+            message.clear
+            reset
         set _
             { visit = visit
             , viewer = Just { now: now', timezone }
@@ -302,7 +323,7 @@ component = Hooks.component \_ { conversation: openId, visit } -> Hooks.do
         headerHtml viewer { conversation, game, revealed, copied } = let
             post = conversation.post
             kind = game.title <> " " <> post.type
-            back = HH.a
+            backLink = HH.a
                 [ HS.class_ "icon-button messages-back"
                 , HP.href "/messages"
                 , HPA.label "All messages"
@@ -354,33 +375,44 @@ component = Hooks.component \_ { conversation: openId, visit } -> Hooks.do
                         else []
             in
             HH.div [ HS.class_ "conversation-header" ]
-            [ back
+            [ backLink
             , HH.div [ HS.class_ "conversation-title" ] $
                 [ HH.h2 [ HP.id "conversation-title" ] [ HH.text $ titleOf conversation ] ] <> lines
+            , moreMenu menuRef { who: conversation.other, reportLabel: "Report " <> conversation.other } blockReport
             ]
 
+        -- Blocking and reporting stand in place of the thread and the message
+        -- box, and Escape leaves them for the thread.
         conversationHtml viewer = case state.open of
             Open opened@{ conversation, new } ->
-                HH.section [ HS.class_ "conversation", HPA.labelledBy "conversation-title" ]
-                [ headerHtml viewer opened
-                , HH.div [ HS.class_ "conversation-body" ] $
-                    (if conversation.post.own then [] else maybe [] pure (olderPostNote conversation.post))
-                    <>
-                    [ thread
-                        { now: viewer.now
-                        , other: conversation.other
-                        , messages: conversation.messages
-                        , newFrom: new
-                        }
-                    ]
-                , HH.div [ HS.class_ "conversation-composer" ] $
-                    composer { ref: messageRef, primary: true, state: message.state, actions: message.actions }
-                ]
+                HH.section
+                [ HS.class_ "conversation"
+                , HPA.labelledBy "conversation-title"
+                , HE.onKeyDown \event -> when (KeyboardEvent.key event == "Escape") $ void back
+                ] $
+                [ headerHtml viewer opened ]
+                <> case blockReportBody { who: conversation.other, reportTitle: conversation.other } blockReport of
+                    Just body -> [ HH.div [ HS.class_ "conversation-body" ] [ body ] ]
+                    Nothing ->
+                        [ HH.div [ HS.class_ "conversation-body" ] $
+                            (if conversation.post.own then [] else maybe [] pure (olderPostNote conversation.post))
+                            <>
+                            [ thread
+                                { now: viewer.now
+                                , other: conversation.other
+                                , messages: conversation.messages
+                                , newFrom: new
+                                }
+                            ]
+                        , HH.div [ HS.class_ "conversation-composer" ] $
+                            composer { ref: messageRef, primary: true, state: message.state, actions: message.actions }
+                        ]
             Opening _ -> HH.section [ HS.class_ "conversation", HPA.busy "true" ] []
             _ -> HH.section [ HS.class_ "conversation" ]
                 [ HH.div [ HS.class_ "conversation-empty" ] [ HH.text "Choose a conversation." ] ]
 
-        alone content = HH.div [ HS.class_ "messages-alone" ] [ content ]
+        -- A block can empty the inbox, and its toast still shows.
+        alone content = HH.div [ HS.class_ "messages-alone" ] [ content, toasts toast dismissToast ]
 
     Hooks.pure case state.inbox, state.viewer of
         Loaded inbox, Just viewer

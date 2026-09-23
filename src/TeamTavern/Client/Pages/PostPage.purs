@@ -93,11 +93,24 @@ goBack event = liftEffect do
 component :: ∀ query output left. H.Component query Input output (Async left)
 component = Hooks.component \_ { handle, id, feedBehind } -> Hooks.do
     state /\ stateId <- Hooks.useState ({ page: Loading, viewer: Nothing } :: State)
-    { panel, openPanel, openPanelById, closePanel } <- useContactPanel \id' time ->
-        Hooks.modify_ stateId \state' -> case state'.page of
+    { toast, showToast, dismissToast } <- useToast
+
+    -- The page reads the post again, which a block leaves without its contact
+    -- button, under the line saying why, and Undo gives back.
+    let readPost = do
+            result <- H.lift $ Async.attempt $ fetchPath (Proxy :: _ ViewPost) { handle, id }
+            for_ (hush result >>= onMatch { ok: Just } (const Nothing)) \page ->
+                Hooks.modify_ stateId \state' -> case state'.page of
+                    Shown shown -> state' { page = Shown shown { page = page } }
+                    _ -> state'
+
+    { panel, openPanel, openPanelById } <- useContactPanel
+        { onMessaged: \id' time -> Hooks.modify_ stateId \state' -> case state'.page of
             Shown shown -> state' { page = Shown shown { page = shown.page { post = markMessaged id' time shown.page.post } } }
             _ -> state'
-    { toast, showToast, dismissToast } <- useToast
+        , onBlockChange: void $ Hooks.fork readPost
+        , showToast
+        }
 
     let feedPath = "/games/" <> handle
 
@@ -165,12 +178,8 @@ component = Hooks.component \_ { handle, id, feedBehind } -> Hooks.do
             case renewed of
                 Nothing -> showToast { text: renewFailed, action: Nothing }
                 Just text -> do
-                    result <- H.lift $ Async.attempt $ fetchPath (Proxy :: _ ViewPost) { handle, id }
-                    for_ (hush result >>= onMatch { ok: Just } (const Nothing)) \page -> do
-                        setMetaRobots "index, follow"
-                        Hooks.modify_ stateId \state' -> case state'.page of
-                            Shown shown -> state' { page = Shown shown { page = page } }
-                            _ -> state'
+                    readPost
+                    setMetaRobots "index, follow"
                     showToast { text, action: Nothing }
 
         feedSection game { page: { post, owner }, own, described } = let

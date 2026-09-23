@@ -11,13 +11,14 @@ import Jarilo (internal__)
 import JavaScript.Npm.Pg.Query (class Querier, Query(..), (:), (:|))
 import TeamTavern.Routes.Shared.Card (CardRow)
 import TeamTavern.Routes.Shared.Conversation (Conversation, Message)
+import TeamTavern.Server.Block.Infrastructure.Blocked (blockedBetween)
 import TeamTavern.Server.Infrastructure.Error (Terror(..))
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstMaybe, queryMany, queryNone)
 import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
 import TeamTavern.Server.Post.Infrastructure.CardColumns (cardColumns)
 import Yoga.JSON.Async (read)
 
--- Only a side of the conversation finds it.
+-- Only a side of the conversation finds it, and not after a block either way.
 conversationQuery :: Query
 conversationQuery = Query $ """
     with parameters as (
@@ -41,6 +42,7 @@ conversationQuery = Query $ """
     join player owner on owner.id = post.player_id
     join player messager on messager.id = conversation.messager_id
     where parameters.viewer in (post.player_id, conversation.messager_id)
+        and not """ <> blockedBetween "post.player_id" "conversation.messager_id" <> """
     """
 
 -- The columns the query adds to the card's.

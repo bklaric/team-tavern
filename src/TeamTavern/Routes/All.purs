@@ -1,6 +1,11 @@
 module TeamTavern.Routes.All where
 
 import Jarilo (type (<|>), type (:))
+import TeamTavern.Routes.Block.Block (Block)
+import TeamTavern.Routes.Block.ReportConversation (ReportConversation)
+import TeamTavern.Routes.Block.ReportPost (ReportPost)
+import TeamTavern.Routes.Block.Unblock (Unblock)
+import TeamTavern.Routes.Block.ViewBlocked (ViewBlocked)
 import TeamTavern.Routes.Conversation.SendMessage (SendMessage)
 import TeamTavern.Routes.Conversation.SendReply (SendReply)
 import TeamTavern.Routes.Conversation.ViewConversation (ViewConversation)
@@ -67,6 +72,13 @@ type ConversationRoutes
     <|> "sendMessage"          : SendMessage
     <|> "sendReply"            : SendReply
 
+type BlockRoutes
+    =   "block"              : Block
+    <|> "unblock"            : Unblock
+    <|> "viewBlocked"        : ViewBlocked
+    <|> "reportPost"         : ReportPost
+    <|> "reportConversation" : ReportConversation
+
 type CountryRoutes
     =   "viewCountries" : ViewCountries
 
@@ -78,4 +90,5 @@ type AllRoutes
     <|> FeedRoutes
     <|> PostRoutes
     <|> ConversationRoutes
+    <|> BlockRoutes
     <|> CountryRoutes

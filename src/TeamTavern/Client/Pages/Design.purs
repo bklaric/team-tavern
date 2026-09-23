@@ -16,8 +16,10 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Halogen.HTML.Properties.ARIA as HPA
+import Halogen.Hooks (HookM)
 import Halogen.Hooks as Hooks
 import TeamTavern.Client.Components.AccountFact (accountFact)
+import TeamTavern.Client.Components.BlockReport (BlockReport, View(..))
 import TeamTavern.Client.Components.Button (Size(..), Weight(..), button, iconButton)
 import TeamTavern.Client.Components.Card (Place(..), Viewer, card, ownCard)
 import TeamTavern.Client.Components.Check (check, choiceList, choices, switch, switches)
@@ -175,6 +177,25 @@ section heading note content =
 
 sheetRow :: ∀ w i. Array (HH.HTML w i) -> HH.HTML w i
 sheetRow = HH.div [ HS.class_ "sheet-row" ]
+
+-- The ⋯ menu and what it opens, standing still.
+still :: ∀ m. Boolean -> View -> BlockReport (HookM m Unit)
+still menuOpen view =
+    { menuOpen
+    , view
+    , actions:
+        { onMenu: pure unit
+        , onCloseMenu: pure unit
+        , onAskReport: pure unit
+        , onAskBlock: pure unit
+        , onCancel: pure unit
+        , onBlock: pure unit
+        , onReason: const $ pure unit
+        , onDetail: const $ pure unit
+        , onAlsoBlock: const $ pure unit
+        , onSend: const $ pure unit
+        }
+    }
 
 toggle :: String -> Array String -> Array String
 toggle value values = if elem value values then delete value values else snoc values value
@@ -546,7 +567,7 @@ component = Hooks.component \_ _ -> Hooks.do
             case state.viewer of
             Just viewer -> let
                 posts = fixtures viewer.now
-                sheet key label post contacts =
+                sheetWith blockReport key label post contacts =
                     [ caption label
                     , contactPanelSheet (H.RefLabel $ "design-panel-" <> key) viewer.now
                         { panel:
@@ -558,6 +579,7 @@ component = Hooks.component \_ _ -> Hooks.do
                             , loading: false
                             }
                         , composer: idleComposer
+                        , blockReport
                         , actions:
                             { onClose: pure unit
                             , onCopy: const $ pure unit
@@ -565,6 +587,7 @@ component = Hooks.component \_ _ -> Hooks.do
                             }
                         }
                     ]
+                sheet = sheetWith $ still false Main
                 none = { contacts: [], discord_server: Nothing, website: Nothing }
                 in
                 sheet "message" "The owner prefers messages: the message box first, their contacts after" posts.nightOwls
@@ -577,6 +600,17 @@ component = Hooks.component \_ _ -> Hooks.do
                 <> sheet "older" "An older post with nothing to reveal: its owner may no longer be looking"
                     posts.expiredPlayer { contacts = [] }
                     none
+                <> sheetWith (still true Blocking) "block"
+                    "The ⋯ menu, open, and blocking the owner: what a block does, said before it does it"
+                    posts.nightOwls none
+                <> sheetWith
+                    (still false $ Reporting
+                        { reason: "", detail: "Asked me to pay for a rank boost.", alsoBlock: true
+                        , missing: true, sending: false, failed: false
+                        })
+                    "report"
+                    "Reporting a post: one reason, more if the player wants, and a block too. Sent without a reason, it asks for one"
+                    posts.nightOwls none
             Nothing -> []
 
         messaging = section "Messages"
@@ -646,6 +680,7 @@ component = Hooks.component \_ _ -> Hooks.do
                         , loading: false
                         }
                     , composer: idleComposer
+                    , blockReport: still false Main
                     , actions:
                         { onClose: pure unit
                         , onCopy: const $ pure unit

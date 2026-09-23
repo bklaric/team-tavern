@@ -22,6 +22,7 @@ import Halogen.Hooks as Hooks
 import TeamTavern.Client.Components.Card (Place(..), Viewer, card, tierOf)
 import TeamTavern.Client.Components.ContactPanel (contactPanel, markMessaged, useContactPanel)
 import TeamTavern.Client.Components.Flow (flowLead)
+import TeamTavern.Client.Components.Toast (toasts, useToast)
 import TeamTavern.Client.Icons as Icons
 import TeamTavern.Client.Pages.Feed.Description (storeDescription)
 import TeamTavern.Client.Pages.Placeholder (placeholder)
@@ -94,26 +95,13 @@ component :: ∀ query output left. H.Component query Input output (Async left)
 component = Hooks.component \_ { handle, type_ } -> Hooks.do
     state /\ stateId <- Hooks.useState
         ({ screen: Loading, updated: false, viewer: Nothing, expanded: [] } :: State)
-    { panel, openPanel } <- useContactPanel \id time ->
-        Hooks.modify_ stateId \state' -> case state'.screen of
-            Ready loaded -> state'
-                { screen = Ready loaded
-                    { fits = markMessaged id time <$> loaded.fits
-                    , posts = markMessaged id time <$> loaded.posts
-                    }
-                }
-            _ -> state'
+    { toast, showToast, dismissToast } <- useToast
 
     let postPath = "/games/" <> handle <> "/post/" <> type_
         set = Hooks.modify_ stateId
 
-    Hooks.useLifecycleEffect do
-        now' <- liftEffect now
-        timezone <- getClientTimezone
-        updated <- getQueryParam "updated" <#> isJust
-        set _ { viewer = Just { now: now', timezone }, updated = updated }
-
-        void $ Hooks.fork do
+        load = do
+            timezone <- getClientTimezone
             game <- H.lift $ Async.attempt (fetchPath (Proxy :: _ ViewGame) { handle })
                 <#> (hush >=> onMatch { ok: Just } (const Nothing))
             own <- H.lift $ Async.attempt (fetchPath (Proxy :: _ ViewOwnDescriptions) { handle })
@@ -150,6 +138,27 @@ component = Hooks.component \_ { handle, type_ } -> Hooks.do
                         Nothing -> set _ { screen = Failed }
                 Just _, Just Nothing -> navigateReplace_ postPath
                 _, _ -> set _ { screen = Failed }
+
+    -- A block takes the owner's post out of the fits, and Undo puts it back.
+    { panel, openPanel } <- useContactPanel
+        { onMessaged: \id time -> Hooks.modify_ stateId \state' -> case state'.screen of
+            Ready loaded -> state'
+                { screen = Ready loaded
+                    { fits = markMessaged id time <$> loaded.fits
+                    , posts = markMessaged id time <$> loaded.posts
+                    }
+                }
+            _ -> state'
+        , onBlockChange: void $ Hooks.fork load
+        , showToast
+        }
+
+    Hooks.useLifecycleEffect do
+        now' <- liftEffect now
+        timezone <- getClientTimezone
+        updated <- getQueryParam "updated" <#> isJust
+        set _ { viewer = Just { now: now', timezone }, updated = updated }
+        void $ Hooks.fork load
         pure Nothing
 
     let toggle id (event :: MouseEvent) = toggleCard event $ set \state' -> state'
@@ -206,6 +215,7 @@ component = Hooks.component \_ { handle, type_ } -> Hooks.do
                 else [ HK.div [ HS.class_ "feed-stack" ] $ shown <#> \post -> show post.id /\ cardOf loaded.game viewer post ])
             <> [ HH.div [ HS.class_ "flow-actions" ] [ seeAll loaded.description ] ]
             <> maybe [] (\panel' -> [ contactPanel viewer.now panel' ]) panel
+            <> [ toasts toast dismissToast ]
         _, _ -> HH.div [ HS.class_ "flow" ] []
 
 matches :: ∀ action slots left.

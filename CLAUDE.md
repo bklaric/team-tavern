@@ -294,7 +294,8 @@ an `index.html` fallback for SPA paths.
   (`player_nickname_key` and friends), so a new unique constraint needs a
   matching branch where it can fire.
 - Configuration is environment variables read once in `Server/Main.purs`
-  (`PG*`, `SENDGRID_API_KEY`, `DEPLOYMENT` = `local` | `cloud`), supplied by
+  (`PG*`, `SENDGRID_API_KEY`, `DEPLOYMENT` = `local` | `cloud`, and
+  `ADMIN_EMAIL`, where reports of players are mailed), supplied by
   `stacks/.env`. `DISCORD_API_URL` is optional and defaults to Discord's own
   API; only `stacks/test.env` sets it.
 

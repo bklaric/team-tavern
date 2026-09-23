@@ -153,9 +153,6 @@ component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
         }
     _ /\ requestRef <- Hooks.useRef 0
     phone <- usePhone
-    { panel, openPanel, openPanelById, closePanel } <- useContactPanel \id time ->
-        Hooks.modify_ stateId \state' -> state'
-            { feed = state'.feed <#> \feed' -> feed' { posts = markMessaged id time <$> feed'.posts } }
     { toast, showToast, dismissToast } <- useToast
 
     let popoverRef = H.RefLabel "feed-popover"
@@ -215,7 +212,15 @@ component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
 
         reload = void $ Hooks.fork $ load Nothing
 
-        loadMore = do
+    -- A block takes the owner's posts out of the feed, and Undo puts them back.
+    { panel, openPanel, openPanelById } <- useContactPanel
+        { onMessaged: \id time -> Hooks.modify_ stateId \state' -> state'
+            { feed = state'.feed <#> \feed' -> feed' { posts = markMessaged id time <$> feed'.posts } }
+        , onBlockChange: reload
+        , showToast
+        }
+
+    let loadMore = do
             state' <- Hooks.get stateId
             unless state'.loadingMore do
                 update _ { loadingMore = true }

@@ -9,6 +9,7 @@ import Jarilo (ok_)
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Query (Query(..), (:), (:|))
 import TeamTavern.Routes.Post.RevealContacts as RevealContacts
+import TeamTavern.Server.Block.Infrastructure.Blocked (blockedBetween)
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
 import TeamTavern.Server.Infrastructure.Error (elaborate)
@@ -38,10 +39,7 @@ revealQuery = Query $ """
         join post on post.game_id = game.id
         join player owner on owner.id = post.player_id
         where game.handle = $1 and post.id = $2
-            and not exists (
-                select from block
-                where blocker_id = $3 and blocked_id = post.player_id
-                    or blocker_id = post.player_id and blocked_id = $3)
+            and not """ <> blockedBetween "$3" "post.player_id" <> """
     ),
     counted as (
         update post

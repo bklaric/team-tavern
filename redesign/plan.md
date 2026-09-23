@@ -30,7 +30,7 @@ brief marks Proposed, the brief's status is updated in the same commit.
 - [x] 9. Home page
 - [x] 10. Contact panel and renewal
 - [x] 11. Messaging and the inbox
-- [ ] 12. Block and report
+- [x] 12. Block and report
 - [ ] 13. Fit notifications
 - [ ] 14. Expiry, email and the worker
 - [ ] 15. Account page
@@ -788,6 +788,43 @@ What every later page needs signed in and out.
 - Specs: `block.spec.ts`: after a block the other's post leaves the feed and
   the conversation both inboxes; the post's page shows the line; Undo brings
   it back.
+- Settled here:
+  - A block is keyed by nickname: `block` is `POST /api/blocks/:nickname` and
+    `unblock` `DELETE` to the same path, which the panel (the post's owner), the
+    conversation (the other side), the toast's Undo and step 15's Unblock all
+    name. Not found is a nickname nobody has or the viewer's own; blocking twice
+    is blocking once. `viewBlocked` is `GET /api/blocks`, the viewer's own blocks
+    by nickname, for step 15.
+  - A report is `reportPost` (`POST /api/games/:handle/posts/:id/report`, against
+    the owner) or `reportConversation` (`POST /api/messages/:id/report`, against
+    the other side, about the conversation's post), with
+    `{ reason, detail, block }` (`Routes/Shared/Report.purs`, which also holds the
+    four reasons' labels for the form and the email). "Also block" is the same
+    request and transaction. The detail may be as long as a message. The email
+    goes to `ADMIN_EMAIL`, a required variable in both env files and in
+    production's `.env`, after the transaction, and a failed send is logged, as
+    the message email's is.
+  - The two-way lookup is `blockedBetween` (`Server/Block/Infrastructure/Blocked.purs`),
+    which `viewInbox`, both conversation views, `viewMe`'s unread count, the
+    owner's counts (`OwnerColumns`), `revealContacts` and sending use.
+    `Feed.sql` keeps its own copy. `viewOwnPost`'s conversation count doesn't
+    apply it, since it counts what deleting the post deletes.
+  - The menu, the confirmation and the report form are `Components/BlockReport.purs`:
+    `useBlockReport`, which the contact panel and the inbox's conversation share,
+    and `moreMenu` and `blockReportBody`, which stand the confirmation or the form
+    in place of the body. The menu is a dropdown on a phone too, as the prototype
+    has it. Escape leaves either for the body before it closes the panel.
+    `useContactPanel` takes `{ onMessaged, onBlockChange, showToast }`: the feed
+    asks for its first batch again, the post page reads the post again, and
+    Matches, which now has a toast, loads again.
+  - After a block the panel closes, or the inbox shows its list with nothing
+    chosen, and the toast says "Kestrel is blocked." with Undo, which unblocks
+    and says "Kestrel is unblocked." without opening anything again. A report
+    that also blocks says "Report sent. Kestrel is blocked." with the same Undo,
+    which keeps the report; the prototype said nothing of the report there. A
+    toast's action dismisses it before it runs, so the action's own toast shows.
+  - `/design` shows the panel with its menu open over the confirmation, and the
+    report form asking for a reason, which `components.html` doesn't have.
 
 ## Phase 4: notifications and email
 
@@ -803,7 +840,8 @@ What every later page needs signed in and out.
 - Server: on `createPost`, and on `renewPost` or the nonce renewal of an
   expired post, upsert a `fit` notification for every post it fits, blocked
   pairs excluded (`notification_fit_key`); `viewNotifications` grouped by own
-  post in the settled order; `markNotificationsRead` for all and for one; the
+  post in the settled order, hiding with `blockedBetween` what a block made
+  after the notification was, as the prototype doesn't; `markNotificationsRead` for all and for one; the
   unread count into `viewMe`; deleting a post cascades.
 - Client, from `site.js`'s notification menu: the bell's dropdown and phone
   screen, rows opening the fitting post's page or the home page, Mark all
@@ -903,7 +941,8 @@ card's expansion, contrast of every token on every surface it is used on. A
   player, a team owner whose team became a group post).
 - Runbook, written in this step and kept under `redesign/relaunch.md`:
   backup; stop node; build the new database from the dump with the import;
-  rename it into place; deploy the new bundles; start node; the Discord
+  rename it into place; `ADMIN_EMAIL` in the production `.env`; deploy the new
+  bundles; start node; the Discord
   redirect URIs on the production app; the manual Discord check; watch
   `docker logs node` for the first worker period.
 - After it holds: `TablesBase.sql` and `TablesCurrent.sql` are already the

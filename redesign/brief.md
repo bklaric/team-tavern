@@ -510,7 +510,7 @@ fact line or behind Details (5.4). The fact line wraps as it needs to.
   your inbox." Messages carry no subject or greeting template.
 - **Decided:** Enter sends and Shift+Enter starts a new line, as on Discord. On
   a phone Enter is a new line and **Send** sends.
-- **Proposed:** the panel's menu holds **Report this post** and **Block Kestrel**
+- **Decided:** the panel's menu holds **Report this post** and **Block Kestrel**
   (section 10).
 
 ```
@@ -1025,7 +1025,7 @@ first. A post of theirs that has expired says so and offers **Renew**.
   messages from one side shares one line of who and when.
 - **Decided:** a conversation about an expired post says "This is an older post.
   Quill may no longer be looking."
-- **Proposed:** blocking and reporting are in the ⋯ menu of the panel and of the
+- **Decided:** blocking and reporting are in the ⋯ menu of the panel and of the
   conversation. Blocking asks first and says what it does; a toast then says
   "Danya is blocked." with **Undo**. A report picks one reason (spam or
   advertising; harassment, hate or threats; selling accounts, boosting or

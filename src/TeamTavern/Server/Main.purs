@@ -16,6 +16,12 @@ import JavaScript.Node.Process (lookupEnv)
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Pool as Pool
 import TeamTavern.Routes.All (AllRoutes)
+import TeamTavern.Server.Block.Block (block)
+import TeamTavern.Server.Block.Infrastructure.SendReportEmail (AdminEmail(..))
+import TeamTavern.Server.Block.ReportConversation (reportConversation)
+import TeamTavern.Server.Block.ReportPost (reportPost)
+import TeamTavern.Server.Block.Unblock (unblock)
+import TeamTavern.Server.Block.ViewBlocked (viewBlocked)
 import TeamTavern.Server.Conversation.SendMessage (sendMessage)
 import TeamTavern.Server.Conversation.SendReply (sendReply)
 import TeamTavern.Server.Conversation.ViewConversation (viewConversation)
@@ -102,8 +108,15 @@ loadDiscordApiUrl =
     <#> fromMaybe "https://discord.com/api"
     <#> DiscordApiUrl
 
-runServer :: Deployment -> DiscordApiUrl -> Pool -> Effect Unit
-runServer deployment discordApiUrl pool = serve (Proxy :: _ AllRoutes) serveOptions
+loadAdminEmail :: ExceptT String Effect AdminEmail
+loadAdminEmail =
+    lookupEnv "ADMIN_EMAIL"
+    <#> map AdminEmail
+    <#> note "Couldn't read variable ADMIN_EMAIL."
+    # ExceptT
+
+runServer :: Deployment -> DiscordApiUrl -> AdminEmail -> Pool -> Effect Unit
+runServer deployment discordApiUrl adminEmail pool = serve (Proxy :: _ AllRoutes) serveOptions
     { startSession: \{ cookies, body } ->
         Session.start deployment discordApiUrl pool cookies body
     , endSession: \{ cookies } ->
@@ -152,6 +165,16 @@ runServer deployment discordApiUrl pool = serve (Proxy :: _ AllRoutes) serveOpti
         sendMessage deployment pool path.handle path.id cookies body
     , sendReply: \{ path: { id }, cookies, body } ->
         sendReply deployment pool id cookies body
+    , block: \{ path: { nickname }, cookies } ->
+        block pool nickname cookies
+    , unblock: \{ path: { nickname }, cookies } ->
+        unblock pool nickname cookies
+    , viewBlocked: \{ cookies } ->
+        viewBlocked pool cookies
+    , reportPost: \{ path, cookies, body } ->
+        reportPost deployment adminEmail pool path.handle path.id cookies body
+    , reportConversation: \{ path: { id }, cookies, body } ->
+        reportConversation deployment adminEmail pool id cookies body
     , deletePost: \{ path, cookies } ->
         deletePost pool path.handle path.type cookies
     , viewCountries: const $
@@ -162,6 +185,7 @@ main :: Effect Unit
 main = either log pure =<< runExceptT do
     deployment <- loadDeployment
     discordApiUrl <- lift loadDiscordApiUrl
+    adminEmail <- loadAdminEmail
     pool <- createPostgresPool
     setSendGridApiKey
-    lift $ runServer deployment discordApiUrl pool
+    lift $ runServer deployment discordApiUrl adminEmail pool
