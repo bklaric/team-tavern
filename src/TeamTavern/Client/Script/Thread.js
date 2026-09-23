@@ -17,3 +17,5 @@ export const scrollThreadsToEnd = () => {
         });
     });
 };
+
+export const isWide = () => matchMedia("(min-width: 1024px)").matches;

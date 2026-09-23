@@ -1,4 +1,4 @@
-module TeamTavern.Client.Components.Thread (newFrom, thread) where
+module TeamTavern.Client.Components.Thread (newFrom, olderPostNote, thread) where
 
 import Prelude
 
@@ -8,9 +8,11 @@ import Data.Maybe (Maybe(..), maybe)
 import Data.String (joinWith)
 import Halogen.HTML as HH
 import Halogen.HTML.Properties.ARIA as HPA
+import TeamTavern.Client.Icons as Icons
 import TeamTavern.Client.Script.Ago (millisOf)
 import TeamTavern.Client.Script.Day (dayLabel, timeOfDay)
 import TeamTavern.Client.Snippets.Class as HS
+import TeamTavern.Routes.Shared.Card (CardRow)
 import TeamTavern.Routes.Shared.Conversation (Message)
 
 -- | Where the New line goes: before the first message the other side wrote
@@ -58,3 +60,11 @@ thread { now, other, messages, newFrom: new } =
                     [ HH.text $ who <> " · " <> timeOfDay message.created ]
                 ]
             else []
+
+-- | What a conversation about an expired post says above its thread, to the
+-- | side that isn't the owner (brief 9).
+olderPostNote :: ∀ w i. CardRow -> Maybe (HH.HTML w i)
+olderPostNote post
+    | post.expired = Just $ HH.span [ HS.class_ "field-note" ]
+        [ Icons.info, HH.text $ "This is an older post. " <> post.owner <> " may no longer be looking." ]
+    | otherwise = Nothing

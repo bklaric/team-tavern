@@ -1,4 +1,4 @@
-module TeamTavern.Client.Components.Card (Place(..), Viewer, card, flagText, ownCard, postName, tierOf, typeIcon) where
+module TeamTavern.Client.Components.Card (Place(..), Viewer, card, flagText, ownCard, postFacts, postName, tierOf, typeIcon) where
 
 import Prelude
 
@@ -6,7 +6,7 @@ import Control.Alt ((<|>))
 import Data.Array (catMaybes, elem, filter, find, findIndex, head, index, length, mapMaybe, null)
 import Data.DateTime.Instant (Instant)
 import Data.Int (floor)
-import Data.Maybe (Maybe(..), fromMaybe, isJust, isNothing)
+import Data.Maybe (Maybe(..), fromMaybe, isJust, isNothing, maybe)
 import Data.String (Pattern(..), joinWith, split, toLower, trim)
 import Data.String.CodeUnits as CodeUnits
 import Effect.Class (class MonadEffect)
@@ -443,3 +443,9 @@ tierOf post = let
     misses = marks # filter (notEq "fit") # length
     in
     if null marks then 2 else min misses 2
+
+-- | A post's facts on one line, unmarked, after `lead` where there is one, as a
+-- | conversation's header shows them.
+postFacts :: ∀ w i. ViewGame.OkContent -> Viewer -> Maybe String -> CardRow -> Maybe (HH.HTML w i)
+postFacts game viewer lead post =
+    factLine $ maybe [] (pure <<< plain) lead <> factsOf game post { marks = Object.empty } (hoursOf viewer post)

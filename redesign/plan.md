@@ -29,7 +29,7 @@ brief marks Proposed, the brief's status is updated in the same commit.
 - [x] 8. Post pages
 - [x] 9. Home page
 - [x] 10. Contact panel and renewal
-- [ ] 11. Messaging and the inbox
+- [x] 11. Messaging and the inbox
 - [ ] 12. Block and report
 - [ ] 13. Fit notifications
 - [ ] 14. Expiry, email and the worker
@@ -756,6 +756,24 @@ What every later page needs signed in and out.
     and a message that fails stays in the box under an error. The thread is
     `Components/Thread.purs`. `useContactPanel` takes what to do once the viewer
     has written, so the feed, the post page and Matches mark their card.
+  - `/messages` and `/messages/:id` are one `Pages/Messages.purs` in a slot
+    keyed by nothing, so choosing a row keeps the list drawn; each visit asks
+    for the inbox and, at the same time, the conversation, whose row it then
+    marks read. An id that isn't a number is the not-found page; one the viewer
+    isn't a side of shows "Choose a conversation." The page names itself
+    "Ashen · Messages" once the conversation is in, and focuses the message box
+    from 1024 px, where the list sits beside it.
+  - About someone else's post, the owner's contacts fold under the header and
+    are asked for as the fold first opens, which counts a reveal as the panel's
+    opening does. The rows are `Components/InboxRow.purs`, the empty and
+    signed-out states `Components/EmptyState.purs`, and `Shared/Renew.purs`
+    renews any `{ id, type }`, for the inbox's Renew.
+  - `OwnerView` carries `conversation`, the one its count opens: the latest
+    with anything unread, else the latest. `ownPostStatus` makes the count a
+    link to it on the home page and the owner's post page.
+  - `messages.spec.ts` writes to HeroesOfTheStormTester, whom no other spec
+    messages; its writers are new to each run. The owner's counts are read as
+    they change, since earlier tests leave the owner conversations unread.
 
 ### 12. Block and report
 

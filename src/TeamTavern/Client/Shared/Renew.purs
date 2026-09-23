@@ -9,12 +9,11 @@ import Data.Maybe (Maybe(..))
 import Data.Variant (onMatch)
 import TeamTavern.Client.Shared.Fetch (fetchPath)
 import TeamTavern.Routes.Post.RenewPost (RenewPost)
-import TeamTavern.Routes.Shared.Card (CardRow)
 import Type.Proxy (Proxy(..))
 
 -- | Renews one of the player's posts in the game (brief 9), answering with what
 -- | the toast then says, or nothing where it couldn't.
-renew :: ∀ left. String -> CardRow -> Async left (Maybe String)
+renew :: ∀ post left. String -> { id :: Int, type :: String | post } -> Async left (Maybe String)
 renew handle post =
     Async.attempt (fetchPath (Proxy :: _ RenewPost) { handle, id: post.id }) <#> \result ->
         hush result >>= onMatch

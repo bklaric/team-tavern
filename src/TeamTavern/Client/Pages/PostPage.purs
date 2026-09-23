@@ -271,8 +271,17 @@ component = Hooks.component \_ { handle, id, feedBehind } -> Hooks.do
                 , place: Page
                     { blocked: isJust page.blocked
                     , status: case page.owner of
-                        Just { expires, conversations, unread, reveals } ->
-                            [ ownPostStatus { now: viewer.now, expires, conversations, unread, reveals } ]
+                        Just { expires, conversations, unread, conversation, reveals } ->
+                            [ ownPostStatus
+                                { now: viewer.now
+                                , expires
+                                , conversations
+                                , unread
+                                , conversation
+                                , reveals
+                                , onOpen: navigateWithEvent_
+                                }
+                            ]
                         Nothing -> []
                     }
                 , onToggle: const $ pure unit

@@ -1,4 +1,4 @@
-module TeamTavern.Client.Pages.Design.Cards (Fixtures, Posts, fixtures) where
+module TeamTavern.Client.Pages.Design.Cards (Fixtures, Posts, fixtures, minutesAgo) where
 
 import Prelude
 
@@ -81,7 +81,7 @@ marks = Object.fromFoldable
 
 fixtures :: Instant -> Fixtures
 fixtures now = let
-    ago minutes = minutesBefore (unwrap $ unInstant now) minutes
+    ago = minutesAgo now
     posts = posted ago
     in
     Record.union
@@ -302,3 +302,7 @@ posted ago = let
         , options = options [ Tuple "rank" [ "silver-1" ] ]
         }
     }
+
+-- | The ISO time some minutes before now, as a fixture's times are given.
+minutesAgo :: Instant -> Number -> String
+minutesAgo now = minutesBefore (unwrap $ unInstant now)

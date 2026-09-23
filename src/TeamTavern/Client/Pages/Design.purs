@@ -27,6 +27,7 @@ import TeamTavern.Client.Components.ContactPanel (Revealed(..), contactPanelShee
 import TeamTavern.Client.Components.DataList (dataList, personRow, personRows, row)
 import TeamTavern.Client.Components.Divider (divider, rule, tierHeading)
 import TeamTavern.Client.Components.Field (Labelling(..), field, field_, formSection)
+import TeamTavern.Client.Components.InboxRow (inboxRow)
 import TeamTavern.Client.Components.Input (Option, input, select, textarea)
 import TeamTavern.Client.Components.Menu (menuDivider, menuItem, menuItemDestructive, menuLabel, sheetMenu)
 import TeamTavern.Client.Components.Overlay (Presentation(..), overlay, sidePanel, useOverlay)
@@ -34,11 +35,12 @@ import TeamTavern.Client.Components.OwnPostStatus (ownPostStatus, renewDue)
 import TeamTavern.Client.Components.Pills (pills)
 import TeamTavern.Client.Components.Range (ageRange, hoursHint, hoursRange, optionRange)
 import TeamTavern.Client.Components.Stepper (countRow, stepper)
+import TeamTavern.Client.Components.Thread (newFrom, thread)
 import TeamTavern.Client.Components.Toast (toasts, useToast)
 import TeamTavern.Client.Components.Tokens as Tokens
 import TeamTavern.Client.Components.Unread (badge, unreadDot)
 import TeamTavern.Client.Icons as Icons
-import TeamTavern.Client.Pages.Design.Cards (fixtures)
+import TeamTavern.Client.Pages.Design.Cards (fixtures, minutesAgo)
 import TeamTavern.Client.Script.Expand (toggleCard)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Shared.Fetch (fetchPath)
@@ -577,6 +579,82 @@ component = Hooks.component \_ _ -> Hooks.do
                     none
             Nothing -> []
 
+        messaging = section "Messages"
+            "The conversation about a post, in the contact panel and the inbox, and the inbox's rows. A run of messages from one side shares one line of who and when, and a line marks where the unread begin."
+            case state.viewer of
+            Just viewer -> let
+                ago = minutesAgo viewer.now
+                posts = fixtures viewer.now
+                owner = posts.nightOwls.owner
+                messages =
+                    [ { mine: true, content: [ "Hi! Diamond Controller here, mostly Omen. Free most nights after 21:00." ], created: ago 1500.0 }
+                    , { mine: false, content: [ "Hey, sounds good. We play ranked on Tuesdays, Thursdays and Sundays." ], created: ago 1490.0 }
+                    , { mine: false, content: [ "Can you do Thursday?" ], created: ago 1488.0 }
+                    , { mine: true, content: [ "Thursday works.", "See you at 9" ], created: ago 45.0 }
+                    , { mine: false, content: [ "Sent you an invite on Discord." ], created: ago 12.0 }
+                    , { mine: false, content: [ "It's the Night Owls server." ], created: ago 11.0 }
+                    ]
+                readTo = Just $ ago 30.0
+                inboxPost =
+                    { id: 1, type: "group", name: Just "Night Owls", owner: "Kestrel"
+                    , handle: "valorant", game: "Valorant", expired: false
+                    }
+                ashen =
+                    { id: 1
+                    , post: inboxPost
+                    , other: "Ashen"
+                    , last: { mine: false, sender: "Ashen", content: [ "Hi, Diamond support here, mostly Killjoy and Cypher." ], created: ago 600.0 }
+                    , unread: true
+                    }
+                inboxRow' current ownPost row' = inboxRow { now: viewer.now, current, ownPost, row: row' }
+                in
+                [ caption "A thread, with where the unread begin"
+                , HH.div [ HS.class_ "thread-well" ]
+                    [ thread { now: viewer.now, other: owner, messages, newFrom: newFrom readTo messages } ]
+                , caption "Inbox rows: about your post, unread and read, then about one you messaged, open"
+                , HH.div [ HS.class_ "sheet-inbox" ]
+                    [ inboxRow' false true ashen
+                    , inboxRow' false true ashen
+                        { id = 2
+                        , other = "Vex"
+                        , last = { mine: true, sender: "Kestrel", content: [ "Sent. See you at 9" ], created: ago 2880.0 }
+                        , unread = false
+                        }
+                    , inboxRow' true false ashen
+                        { id = 3
+                        , post = inboxPost { type = "community", name = Just "The Farlands", owner = "Eirik", handle = "valheim", game = "Valheim" }
+                        , other = "Eirik"
+                        , last = { mine: false, sender: "Eirik", content: [ "Welcome! Yes, join the Discord and grab the Viking role." ], created: ago 43.0 }
+                        }
+                    ]
+                , caption "The contact panel once there is a conversation"
+                , contactPanelSheet (H.RefLabel "design-panel-thread") viewer.now
+                    { panel:
+                        { game: { handle: "valorant", title: "Valorant" }
+                        , post: posts.nightOwls { messaged = Just $ ago 1500.0 }
+                        , revealed: Revealed { contacts: [ { kind: "discord", value: owner } ], discord_server: Nothing, website: Nothing }
+                        , copied: Nothing
+                        , thread: Just
+                            { id: 1
+                            , game: { handle: "valorant", title: "Valorant" }
+                            , post: posts.nightOwls
+                            , other: owner
+                            , otherPost: Nothing
+                            , readTo
+                            , messages
+                            }
+                        , loading: false
+                        }
+                    , composer: idleComposer
+                    , actions:
+                        { onClose: pure unit
+                        , onCopy: const $ pure unit
+                        , composer: { onDraft: const $ pure unit, onKeyDown: const $ pure unit, onSend: const $ pure unit }
+                        }
+                    }
+                ]
+            Nothing -> []
+
         unread = section "Unread"
             "A count on an icon, read out from the button's label, and a dot on a row."
             [ sheetRow
@@ -642,7 +720,7 @@ component = Hooks.component \_ _ -> Hooks.do
                             { blocked: false
                             , status:
                                 [ ownPostStatus
-                                    { now: viewer.now, expires: posts.ownExpires, conversations: 3, unread: 1, reveals: 14 }
+                                    { now: viewer.now, expires: posts.ownExpires, conversations: 3, unread: 1, conversation: Nothing, reveals: 14, onOpen: const $ const $ pure unit }
                                 ]
                             }
                         }
@@ -653,7 +731,7 @@ component = Hooks.component \_ _ -> Hooks.do
                         , viewer
                         , post: posts.ownNightOwls
                         , status: ownPostStatus
-                            { now: viewer.now, expires: posts.ownExpires, conversations: 3, unread: 1, reveals: 14 }
+                            { now: viewer.now, expires: posts.ownExpires, conversations: 3, unread: 1, conversation: Nothing, reveals: 14, onOpen: const $ const $ pure unit }
                         , renewDue: renewDue viewer.now posts.ownExpires
                         , onFits: const $ pure unit
                         , onRenew: pure unit
@@ -704,6 +782,7 @@ component = Hooks.component \_ _ -> Hooks.do
             , feed
             , cards
             , contactPanels
+            , messaging
             , unread
             , account
             ]

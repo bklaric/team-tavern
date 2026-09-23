@@ -24,6 +24,7 @@ import TeamTavern.Client.Pages.Design (design)
 import TeamTavern.Client.Pages.Feed (FeedCache, feed)
 import TeamTavern.Client.Pages.ForgotPassword (forgotPassword)
 import TeamTavern.Client.Pages.Home (home)
+import TeamTavern.Client.Pages.Messages (messages)
 import TeamTavern.Client.Pages.Placeholder (placeholder)
 import TeamTavern.Client.Pages.Post.Game (postGame)
 import TeamTavern.Client.Pages.Post.Matches (matches)
@@ -62,7 +63,7 @@ data State
     | ConfirmEmail
     | Renew
     | Messages
-    | Conversation { conversation :: String }
+    | Conversation { conversation :: Int }
     | Account
     | Privacy
     | Design
@@ -83,6 +84,7 @@ type ChildSlots =
     , postGame :: Slot__I Int
     , postScreen :: Slot__I Int
     , matches :: Slot__I Int
+    , messages :: Slot__I Unit
     )
 
 route :: String -> State
@@ -102,7 +104,7 @@ route path =
     ["", "confirm-email"] -> ConfirmEmail
     ["", "renew"] -> Renew
     ["", "messages"] -> Messages
-    ["", "messages", conversation] -> Conversation { conversation }
+    ["", "messages", conversation] | Just conversation' <- Int.fromString conversation -> Conversation { conversation: conversation' }
     ["", "account"] -> Account
     ["", "privacy"] -> Privacy
     ["", "design"] -> Design
@@ -142,6 +144,8 @@ renderPage { page: PostType, visit } = postType visit
 renderPage { page: PostGame { type_ }, visit } = postGame visit type_
 renderPage { page: PostScreen { handle, type_ }, visit } = postScreen visit { handle, type_ }
 renderPage { page: Matches { handle, type_ }, visit } = matches visit { handle, type_ }
+renderPage { page: Messages, visit } = messages { conversation: Nothing, visit }
+renderPage { page: Conversation { conversation }, visit } = messages { conversation: Just conversation, visit }
 renderPage { page } = renderPage' page
 
 renderPage' :: ∀ action left. State -> H.ComponentHTML action ChildSlots (Async left)
@@ -188,9 +192,11 @@ router initialState initialPath = Hooks.component \{ queryToken } _ -> Hooks.do
                 NotFound -> do
                     appendRenderReadyNotFound
                     setMeta "Page not found | TeamTavern" description
-                -- A feed and a post name themselves once they have their game.
+                -- A feed and a post name themselves once they have their game, and
+                -- a conversation once it has its post.
                 Feed _ -> pure unit
                 Post _ -> pure unit
+                Conversation _ -> pure unit
                 _ -> setMeta (name page <> " | TeamTavern") description
             -- A link stamps the entry it opens with the page it left, which the
             -- entry keeps through a reload and a trip back and forth. A link to

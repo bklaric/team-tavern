@@ -955,7 +955,7 @@ the field:
   already has unread ones send nothing. This is counted per conversation.
 - **Decided:** a message email opens the conversation in the inbox.
 - **Decided:** no Discord integration besides sign-in.
-- **Proposed:** either side can start a conversation, through the other's post. A
+- **Decided:** either side can start a conversation, through the other's post. A
   player without posts can message.
 - **Decided:** deleting a post deletes its conversations, for both sides. Before
   deleting, the owner is told how many: "3 conversations will be deleted for both
@@ -966,7 +966,7 @@ the field:
 
 ### Inbox
 
-**Proposed:** the inbox is grouped by post, which tells owners what their posts
+**Decided:** the inbox is grouped by post, which tells owners what their posts
 produced. Under each of the player's own posts are its conversations, one row
 per player who wrote, so an owner sees who wrote without opening the post
 first. A post of theirs that has expired says so and offers **Renew**.
@@ -992,10 +992,10 @@ first. A post of theirs that has expired says so and offers **Renew**.
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
-- **Proposed:** a row about the player's own post is titled with the other
+- **Decided:** a row about the player's own post is titled with the other
   player, and its last message carries only "You:"; a row about someone else's
   post is titled with the post and names whoever wrote last.
-- **Proposed:** on a desktop the open conversation sits beside the list; below
+- **Decided:** on a desktop the open conversation sits beside the list; below
   that it has the screen to itself, with ← back to the list.
 
 ```
@@ -1016,14 +1016,14 @@ first. A post of theirs that has expired says so and offers **Renew**.
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
-- **Proposed:** a conversation about the player's own post is headed with the
+- **Decided:** a conversation about the player's own post is headed with the
   other player: their card facts when they have a post in the same game, their
   nickname otherwise, and the post it is about below. A conversation about
   someone else's post is headed with that post and its facts, with the owner's
   contacts folded under "Kestrel's contacts", or "Ways to join" for a community.
-- **Proposed:** a line marks where the unread messages begin, and a run of
+- **Decided:** a line marks where the unread messages begin, and a run of
   messages from one side shares one line of who and when.
-- **Proposed:** a conversation about an expired post says "This is an older post.
+- **Decided:** a conversation about an expired post says "This is an older post.
   Quill may no longer be looking."
 - **Proposed:** blocking and reporting are in the ⋯ menu of the panel and of the
   conversation. Blocking asks first and says what it does; a toast then says
@@ -1154,7 +1154,7 @@ first. A post of theirs that has expired says so and offers **Renew**.
 - **Decided:** **Renew** is plain text while the post is active and outlined in
   its last week or once expired. The page has no filled button: no one of its
   actions is the thing to do.
-- **Proposed:** the conversation count opens the inbox on the post's first
+- **Decided:** the conversation count opens the inbox on the post's first
   conversation with unread messages, in the inbox's order, or on its first
   conversation when none are unread. Contact reveals read "Contacts shown 14
   times", and are left out while there are none.

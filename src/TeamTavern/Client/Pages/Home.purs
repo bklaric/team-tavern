@@ -122,7 +122,9 @@ component = Hooks.component \_ _ -> Hooks.do
                     , expires: owner.expires
                     , conversations: owner.conversations
                     , unread: owner.unread
+                    , conversation: owner.conversation
                     , reveals: owner.reveals
+                    , onOpen: navigateWithEvent_
                     }
                 , renewDue: renewDue viewer.now owner.expires
                 -- The feed opens with the description the post makes.

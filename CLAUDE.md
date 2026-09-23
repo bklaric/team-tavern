@@ -314,7 +314,10 @@ an `index.html` fallback for SPA paths.
   `Slot_O_`, ...).
 - Who is signed in comes from the server: `fetchMe` in `Client/Shared/Me.purs`
   asks `/api/me`, since the session cookie is out of the page's reach. A page
-  that needs it asks from a fork, like any other fetch.
+  that needs it asks from a fork, like any other fetch. The header asks on
+  every navigation; a page that changes what it counts, by reading a
+  conversation or sending a message, calls `announceUnread` from
+  `Client/Script/Unread.purs` and the header asks again.
 - A page forks its fetches from `useLifecycleEffect` rather than awaiting them
   there, and what follows a fetch happens in the fork, not in a tick effect
   watching for its result. Hooks runs effects only after a render that the

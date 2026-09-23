@@ -43,7 +43,7 @@ import TeamTavern.Client.Components.Card (postName)
 import TeamTavern.Client.Components.Composer (ComposerActions, ComposerState, UseComposer, composer, useComposer)
 import TeamTavern.Client.Components.Divider (rule)
 import TeamTavern.Client.Components.Overlay (Panel, Presentation(..), UseOverlay, panelHeader, sidePanel, useOverlay)
-import TeamTavern.Client.Components.Thread (newFrom, thread)
+import TeamTavern.Client.Components.Thread (newFrom, olderPostNote, thread)
 import TeamTavern.Client.Icons as Icons
 import TeamTavern.Client.Script.Ago (ago)
 import TeamTavern.Client.Script.Back (authPath)
@@ -196,10 +196,7 @@ messageSection { now, view: { panel: { post, thread: thread', loading }, compose
     [ if first
         then Just $ HH.h3_ [ HH.text $ (if isJust post.messaged then "Your conversation with " else "Message ") <> post.owner ]
         else Nothing
-    , if post.expired
-        then Just $ HH.span [ HS.class_ "field-note" ]
-            [ Icons.info, HH.text $ "This is an older post. " <> post.owner <> " may no longer be looking." ]
-        else Nothing
+    , olderPostNote post
     , Just case thread' of
         Just conversation ->
             HH.div [ HS.class_ "thread-well" ]
