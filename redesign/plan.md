@@ -33,7 +33,7 @@ brief marks Proposed, the brief's status is updated in the same commit.
 - [x] 11. Messaging and the inbox
 - [x] 12. Block and report
 - [x] 13. Fit notifications
-- [ ] 14. Expiry, email and the worker
+- [x] 14. Expiry, email and the worker
 - [ ] 15. Account page
 - [ ] 16. Crawlers, sitemap and old paths
 - [ ] 17. Ads
@@ -976,6 +976,36 @@ What every later page needs signed in and out.
     (`quiet@example.com`) has message emails off and a post in Counter-Strike 2.
   - A confirmation link that does nothing once the email has changed needs the
     account page to change it, so `account.spec.ts` in step 15 asserts it.
+  - The worker is `Server/Worker.purs`, started by `Main.purs` beside the server
+    on bklaric's `JavaScript.Node.Timers.setInterval`. The period is
+    `WORKER_PERIOD` in seconds, an hour when unset, which production leaves it;
+    `test.env` sets 2. Each run covers the time from when the one before it
+    began, the first from the process's start, so the periods neither gap nor
+    overlap while node runs. What is created while it is down, or committed in
+    the moment a period closes, is on the bell but in no email.
+  - An expiry row is inserted, not upserted: `AddExpiries.purs` gives one to
+    each active post in its last week that has none, and leaves one it finds
+    alone, since a refreshed row would be in every period's email. Renewal
+    deletes it, so the post's next last week adds another.
+  - `SendPeriodEmails.purs` takes the period's rows to a confirmed address, fits
+    under the Matches switch (and not across a block, as the list hides them)
+    and expiries under the Renewals switch, whether or not the owner has read
+    them on the site. The subject counts them ("A new post fits yours", "2 of
+    your posts expire soon", both joined by ", and"); the body greets the owner
+    and heads each post "Your Team Fortress 2 community Night Shift", its fits
+    listed as links to their pages ("FitsTester · player post") and its expiry
+    as "It expires in 5 days.", rounded as the home page rounds, with Renew. A
+    community joined by Discord or website is asked whether the link still
+    works. `Email.purs` gained the `Heading` and `Links` blocks for it.
+  - The seed's `FitsTester` (`fits@example.com`) has an expired Apex Legends post
+    answering as ApexLegendsTester's in the other role, since two players in one
+    slot don't fit, so renewing it puts a fit in the next
+    period's email to `apex-legends@example.com`. `ExpiringTester`
+    (`expiring@example.com`) has a Team Fortress 2 player post and the community
+    Night Shift, both in their last week without their notice, which the first
+    period gives them and emails together. QuietTester has renewal emails off
+    and a Team Fortress 2 post in its last week. OwnerTester's seeded expiry is
+    dated when its last week began, before the worker starts.
 
 ### 15. Account page
 

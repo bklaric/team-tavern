@@ -26,8 +26,10 @@ type Email =
     }
 
 data Block
-    = Paragraph String
+    = Heading String
+    | Paragraph String
     | Quote (Array String)
+    | Links (Array { label :: String, path :: String })
     | Button { label :: String, path :: String }
     | Note String
 
@@ -52,6 +54,9 @@ unsubscribePath = "/account#emails"
 
 blockHtml :: String -> Block -> String
 blockHtml origin = case _ of
+    Heading content ->
+        "<h2 style=\"margin:24px 0 8px;" <> font <> "font-size:18px;font-weight:600;line-height:1.4;color:" <> text <> ";\">"
+        <> escape content <> "</h2>"
     Paragraph content ->
         "<p style=\"margin:0 0 16px;" <> font <> "font-size:16px;line-height:1.5;color:" <> text <> ";\">"
         <> escape content <> "</p>"
@@ -59,6 +64,12 @@ blockHtml origin = case _ of
         "<div style=\"margin:0 0 16px;padding:12px 16px;background:#2A241F;border-left:3px solid #F2823F;"
         <> "border-radius:4px;" <> font <> "font-size:16px;line-height:1.5;color:" <> text <> ";\">"
         <> joinWith "<br>" (escape <$> lines) <> "</div>"
+    Links links ->
+        "<ul style=\"margin:0 0 16px;padding:0 0 0 20px;" <> font <> "font-size:16px;line-height:1.5;color:" <> text <> ";\">"
+        <> joinWith "" (links <#> \{ label, path } ->
+            "<li style=\"margin:0 0 4px;\"><a href=\"" <> escape (origin <> path) <> "\" style=\"color:#F2823F;\">"
+            <> escape label <> "</a></li>")
+        <> "</ul>"
     Button { label, path } ->
         "<p style=\"margin:0 0 16px;\"><a href=\"" <> escape (origin <> path) <> "\" style=\"display:inline-block;"
         <> "padding:10px 20px;background:#F2823F;border-radius:6px;" <> font
@@ -92,8 +103,10 @@ html origin email =
 
 blockText :: String -> Block -> String
 blockText origin = case _ of
+    Heading content -> content
     Paragraph content -> content
     Quote lines -> joinWith "\n" $ ("> " <> _) <$> lines
+    Links links -> joinWith "\n" $ links <#> \{ label, path } -> "- " <> label <> ": " <> origin <> path
     Button { label, path } -> label <> ": " <> origin <> path
     Note content -> content
 

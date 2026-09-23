@@ -325,10 +325,11 @@ join (values
 where player.nickname = 'OwnerTester';
 
 -- The post in its last week has had its notice that it is expiring, as the
--- period worker gives one, so the bell's list has an expiry row.
+-- period worker gives one, so the bell's list has an expiry row. It is dated
+-- when the last week began, before the worker started, so no period emails it.
 
-insert into notification (post_id, kind)
-select post.id, 'expiry'
+insert into notification (post_id, kind, created)
+select post.id, 'expiry', post.updated + interval '23 days'
 from post
 join player on player.id = post.player_id
 join game on game.id = post.game_id
@@ -394,12 +395,13 @@ where player.nickname = 'RenewTester' and game.handle in ('rainbow-six-siege', '
 
 -- Owners whose mail the email specs read: MailTester's with an active post and
 -- an expired one, whose message email carries Renew, and QuietTester's with
--- message emails switched off. Their games' feeds are read by card, never whole.
+-- message and renewal emails switched off, whose Team Fortress 2 post is in its
+-- last week. Their games' feeds are read by card, never whole.
 
 select seed_player('MailTester', 'mail@example.com');
 select seed_player('QuietTester', 'quiet@example.com');
 
-update player set email_messages = false where nickname = 'QuietTester';
+update player set email_messages = false, email_renewals = false where nickname = 'QuietTester';
 
 insert into post
     ( player_id, game_id, ilk, renewal_nonce, summary
@@ -422,9 +424,111 @@ from player
 join (values
     ('MailTester', 'counter-strike-2', interval '0 days'),
     ('MailTester', 'overwatch', interval '40 days'),
-    ('QuietTester', 'counter-strike-2', interval '0 days')
+    ('QuietTester', 'counter-strike-2', interval '0 days'),
+    ('QuietTester', 'team-fortress-2', interval '25 days')
 ) as posted (nickname, handle, age) on posted.nickname = player.nickname
 join game on game.handle = posted.handle;
+
+-- FitsTester's expired Apex Legends post answers as ApexLegendsTester's does
+-- but plays the other role, since two players in one slot don't fit, so
+-- renewing it fits that post and ApexLegendsTester's next period email tells of
+-- it.
+
+select seed_player('FitsTester', 'fits@example.com');
+
+insert into post
+    ( player_id, game_id, ilk, renewal_nonce, summary
+    , microphone, online_from, online_to, contact_preference
+    , created, updated
+    )
+select
+    player.id,
+    tester.game_id,
+    'player',
+    left(md5('FitsTester-player'), 20),
+    array['Seeded player post of FitsTester''s.'],
+    tester.microphone,
+    tester.online_from,
+    tester.online_to,
+    tester.contact_preference,
+    current_timestamp - interval '40 days',
+    current_timestamp - interval '40 days'
+from player, post tester
+join player owner on owner.id = tester.player_id
+where player.nickname = 'FitsTester' and owner.nickname = 'ApexLegendsTester';
+
+insert into post_field_option (post_id, field_option_id)
+select fits.id, answer.field_option_id
+from post fits
+join player fitter on fitter.id = fits.player_id
+join player owner on owner.nickname = 'ApexLegendsTester'
+join post tester on tester.player_id = owner.id
+join post_field_option answer on answer.post_id = tester.id
+join field_option option on option.id = answer.field_option_id
+join field on field.id = option.field_id
+where fitter.nickname = 'FitsTester' and not field.slotted;
+
+select seed_post_option('FitsTester', 'player', 'role', array['support']);
+
+insert into post_field_flag (post_id, field_id)
+select fits.id, answer.field_id
+from post fits
+join player fitter on fitter.id = fits.player_id
+join player owner on owner.nickname = 'ApexLegendsTester'
+join post tester on tester.player_id = owner.id
+join post_field_flag answer on answer.post_id = tester.id
+where fitter.nickname = 'FitsTester';
+
+-- ExpiringTester's Team Fortress 2 posts are both in their last week without
+-- their notice, so the worker's first period gives both and emails them
+-- together: a player post and a community joined through its Discord invite.
+
+select seed_player('ExpiringTester', 'expiring@example.com');
+
+insert into post
+    ( player_id, game_id, ilk, renewal_nonce, summary
+    , microphone, online_from, online_to, contact_preference
+    , created, updated
+    )
+select
+    player.id,
+    game.id,
+    'player',
+    left(md5('ExpiringTester-player'), 20),
+    array['Seeded player post of ExpiringTester''s.'],
+    true,
+    time '20:00',
+    time '23:00',
+    'either',
+    current_timestamp - interval '25 days',
+    current_timestamp - interval '25 days'
+from player, game
+where player.nickname = 'ExpiringTester' and game.handle = 'team-fortress-2';
+
+insert into post
+    ( player_id, game_id, ilk, renewal_nonce, summary
+    , microphone, online_from, online_to, contact_preference
+    , name, regions, languages, discord_server
+    , created, updated
+    )
+select
+    player.id,
+    game.id,
+    'community',
+    left(md5('ExpiringTester-community'), 20),
+    array['A late-night casual server crowd that plays until the last map ends.'],
+    true,
+    time '22:00',
+    time '02:00',
+    'discord',
+    'Night Shift',
+    array['Europe'],
+    array['English'],
+    'discord.gg/nightshift',
+    current_timestamp - interval '85 days',
+    current_timestamp - interval '85 days'
+from player, game
+where player.nickname = 'ExpiringTester' and game.handle = 'team-fortress-2';
 
 drop function seed_post_range(text, text, text, text, text);
 drop function seed_post_option(text, text, text, text[]);

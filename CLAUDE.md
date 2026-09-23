@@ -218,9 +218,13 @@ runs a community there joined through its website, so every contact preference
 has a post. `RenewTester` (`renew@example.com`) has expired player posts in
 Rainbow Six Siege and Overwatch. `MailTester` (`mail@example.com`) has an active
 player post in Counter-Strike 2 and an expired one in Overwatch, and
-`QuietTester` (`quiet@example.com`) a post in Counter-Strike 2 and message
-emails switched off, for the email spec. All share the password, and all are
-confirmed. `Seed/Games/` carries all ten production games, so every
+`QuietTester` (`quiet@example.com`) a post in Counter-Strike 2, one in Team
+Fortress 2 in its last week, and message and renewal emails switched off, for
+the email spec. For the worker's email, `FitsTester` (`fits@example.com`) has an
+expired Apex Legends post that fits ApexLegendsTester's once renewed, and
+`ExpiringTester` (`expiring@example.com`) a player post and the community Night
+Shift in Team Fortress 2, both in their last week. All share the password, and
+all are confirmed. `Seed/Games/` carries all ten production games, so every
 game handle the site serves has a page with content. A cold boot answers on the
 API within a few seconds.
 
@@ -319,7 +323,12 @@ an `index.html` fallback for SPA paths.
   `stacks/.env`. `DISCORD_API_URL` is optional and defaults to Discord's own
   API; only `stacks/test.env` sets it. `SENDGRID_API_URL` is optional too:
   without it, `DEPLOYMENT=local` only logs its email; with it, the server sends
-  there. Only `stacks/test.env` sets it.
+  there. Only `stacks/test.env` sets it. `WORKER_PERIOD` is optional as well:
+  the seconds between the worker's runs, an hour unless `stacks/test.env`'s 2.
+- `Server/Worker.purs` runs in the node process on that period. Each run gives
+  the posts that have entered their last week their expiry notification and
+  sends every owner one email of the fits and expiries created since the run
+  before, grouped by their post. Nothing records what was sent.
 - An email is an `Email` of blocks from `Server/Infrastructure/Email.purs`,
   which renders its HTML, in the site's palette, and its text from the same
   blocks. Links are paths, which the `Mailer` puts behind production's origin

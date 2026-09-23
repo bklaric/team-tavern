@@ -492,8 +492,9 @@ create index notification_post_id_created_idx on notification (post_id, created 
 create index notification_fitting_post_id_idx on notification (fitting_post_id);
 
 -- One expiry row per post, never a second; renewing the post deletes it
--- (brief 11.3), and a firing that finds one still there refreshes it rather
--- than failing on this.
+-- (brief 11.3). The worker adds one as the post's last week begins and leaves
+-- one it finds alone, since the period's email takes the rows created in the
+-- period and a refreshed row would be emailed again.
 create unique index notification_expiry_key on notification (post_id) where kind = 'expiry';
 
 -- One row per fitting post, however often it fits. A post renewed after it

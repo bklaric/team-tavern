@@ -5,7 +5,8 @@ import { expectPage } from "../pages";
 // The test stack's mail service keeps what the site sends, and shows an address's mail at
 // /mail on the site's origin, newest first, each email in a frame whose links open in the
 // tab. MailTester and QuietTester (`stacks/test-seed/players.sql`) are written to only
-// here; the players writing to them are new to each test.
+// here; the players writing to them are new to each test. FitsTester and ExpiringTester
+// are here for the worker's period email, which the test stack sends every two seconds.
 
 const card = (page: Page, name: string) =>
     page.locator(".card").filter({ has: page.getByRole("link", { name, exact: true }) });
@@ -41,6 +42,19 @@ const emails = (page: Page, subject: string) =>
     page.getByRole("article").filter({ has: page.getByRole("heading", { name: subject, exact: true }) });
 
 const body = (email: Locator) => email.frameLocator("iframe");
+
+// The mail page shows what had come when it was opened, and a period's email comes when
+// the period ends, so the page is opened again until it is there.
+async function periodEmail(page: Page, address: string, subject: string): Promise<Locator> {
+    const email = emails(page, subject);
+    await expect(async () => {
+        await openMail(page, address);
+        await expect(email).toHaveCount(1, { timeout: 1_000 });
+    }).toPass({ timeout: 15_000 });
+    return email;
+}
+
+const bell = (page: Page) => page.getByRole("button", { name: /^Notifications/ });
 
 test.describe("email", () => {
     test("tells an owner of a conversation once until they read it, and opens it", async ({ page, browser }) => {
@@ -127,5 +141,56 @@ test.describe("email", () => {
         await submitPasswordSignIn(page, address, "a-new-password");
         await expectPage(page, "/");
         await expect(page.getByRole("button", { name: "Account menu" })).toBeVisible();
+    });
+
+    test("tells an owner in the period's email of a post that fits theirs, and opens it", async ({ page, browser }) => {
+        await signIn(page, "fits@example.com");
+        await page.getByRole("region", { name: "Apex Legends", exact: true }).getByRole("button", { name: "Renew" }).click();
+        await expect(page.getByRole("status")).toHaveText("Renewed. Your post stays active for 30 days from today.");
+
+        const owner = await (await browser.newContext()).newPage();
+        const email = await periodEmail(owner, "apex-legends@example.com", "A new post fits yours");
+        await expect(body(email).getByRole("heading", { name: "Your Apex Legends player post" })).toBeVisible();
+        await expect(body(email).getByText("A new post fits it:")).toBeVisible();
+        await expect(body(email).getByRole("link", { name: "Renew" })).toHaveCount(0);
+
+        await body(email).getByRole("link", { name: "FitsTester · player post" }).click();
+        await expectPage(owner, /^\/games\/apex-legends\/posts\/\d+$/);
+        await expect(owner.getByRole("heading", { level: 1, name: "FitsTester" })).toBeVisible();
+    });
+
+    test("reminds an owner of their posts in their last week in one email, and renews from it", async ({ page }) => {
+        const email = await periodEmail(page, "expiring@example.com", "2 of your posts expire soon");
+        await expect(body(email).getByRole("heading")).toHaveText([
+            "Your Team Fortress 2 player post",
+            "Your Team Fortress 2 community Night Shift",
+        ]);
+        await expect(body(email).getByText(/^It expires in \d+ days?\.$/)).toHaveCount(2);
+        // A community is joined through a link nothing checks, so its owner is asked.
+        await expect(body(email).getByText(/^Does its Discord invite still work\?/)).toHaveCount(1);
+        await expect(body(email).getByText("Renew it and it stays active for 90 days from today:")).toBeVisible();
+        const renew = body(email).getByRole("link", { name: "Renew" });
+        await expect(renew).toHaveCount(2);
+
+        await renew.nth(1).click();
+        await expectPage(page, "/games/team-fortress-2");
+        await expect(page.getByText("Night Shift is active again for 90 days. Showing what fits it.")).toBeVisible();
+    });
+
+    test("sends nothing about a post in its last week to an owner who switched renewal emails off", async ({ page }) => {
+        // The notice on the bell says the worker has had its period with the post, and
+        // the period's email would have gone with it.
+        await signIn(page, "quiet@example.com");
+        await expect(async () => {
+            await page.reload();
+            await expect(bell(page)).toHaveAccessibleName(/^Notifications, \d+ new$/, { timeout: 1_000 });
+        }).toPass({ timeout: 15_000 });
+        await bell(page).click();
+        const group = page.getByRole("dialog", { name: "Notifications" }).locator(".notification-group")
+            .filter({ has: page.getByRole("heading", { name: "QuietTester · Team Fortress 2 player" }) });
+        await expect(group.locator(".notification-title")).toHaveText(/^Expires in \d+ days?$/);
+
+        await openMail(page, "quiet@example.com");
+        await expect(page.getByText("No emails.")).toBeVisible();
     });
 });

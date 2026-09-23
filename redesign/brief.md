@@ -684,7 +684,7 @@ Type ─▶ Game ─▶ Post ─▶ Register or sign in ─▶ Matches
    - **Decided:** the answer sets the card's contact button (5.6). On-site messaging
      exists on every post, so no post is unreachable and every off-site contact is
      optional.
-   - **Proposed:** a community's renewal email asks whether the invite link still
+   - **Decided:** a community's renewal email asks whether the invite link still
      works, since nothing checks it.
    - **Decided:** when signed out, a **Sign up with Discord** button sits beside the
      Discord input. It saves the draft, registers or signs in with Discord, and

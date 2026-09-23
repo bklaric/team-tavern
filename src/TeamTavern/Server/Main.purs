@@ -3,7 +3,7 @@ module TeamTavern.Server.Main where
 import Prelude
 
 import Control.Bind (bindFlipped)
-import Control.Monad.Except (ExceptT(..), runExceptT)
+import Control.Monad.Except (ExceptT(..), except, runExceptT)
 import Control.Monad.Maybe.Trans (lift)
 import Data.Either (either, note)
 import Data.Int (fromString)
@@ -58,6 +58,7 @@ import TeamTavern.Server.Post.ViewOwnPosts (viewOwnPosts)
 import TeamTavern.Server.Post.ViewPost (viewPost)
 import TeamTavern.Server.Session.End (end) as Session
 import TeamTavern.Server.Session.Start (start) as Session
+import TeamTavern.Server.Worker (startWorker)
 import Type.Proxy (Proxy(..))
 
 serveOptions :: ServeOptions { port :: Int, host :: String }
@@ -128,6 +129,15 @@ loadMailer deployment = do
         Cloud, _ -> { origin: "https://www.teamtavern.net", send: true }
         Local, Just _ -> { origin: "", send: true }
         Local, Nothing -> { origin: "", send: false }
+
+-- | The worker's period in seconds, an hour unless WORKER_PERIOD says otherwise,
+-- | as the test stack's does.
+loadWorkerPeriod :: ExceptT String Effect Int
+loadWorkerPeriod = do
+    period <- lift $ lookupEnv "WORKER_PERIOD"
+    case period of
+        Nothing -> pure 3600
+        Just string -> fromString string # note "Couldn't read variable WORKER_PERIOD." # except
 
 loadAdminEmail :: ExceptT String Effect AdminEmail
 loadAdminEmail =
@@ -215,7 +225,9 @@ main = either log pure =<< runExceptT do
     deployment <- loadDeployment
     discordApiUrl <- lift loadDiscordApiUrl
     adminEmail <- loadAdminEmail
+    workerPeriod <- loadWorkerPeriod
     pool <- createPostgresPool
     setSendGridApiKey
     mailer <- lift $ loadMailer deployment
+    lift $ startWorker workerPeriod mailer pool
     lift $ runServer deployment mailer discordApiUrl adminEmail pool
