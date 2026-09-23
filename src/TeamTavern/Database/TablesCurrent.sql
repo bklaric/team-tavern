@@ -81,12 +81,13 @@ create unique index player_lower_nickname_key on player (lower(nickname));
 create table session
     ( id serial not null primary key
     , player_id integer not null references player(id) on delete cascade
-    , token character(40) not null
+    , token_hash character(64) not null
     , revoked boolean not null default false
     , generated timestamptz not null default current_timestamp
     );
 
 create index session_player_id_idx on session (player_id);
+create index session_token_hash_idx on session (token_hash);
 
 create table password_reset
     ( id serial not null primary key

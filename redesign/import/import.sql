@@ -83,8 +83,10 @@ left join legacy.location_country on location_country.old_name = old.location;
 
 select setval('player_id_seq', (select max(id) from player));
 
-insert into session (player_id, token, revoked, generated)
-select player_id, token, revoked, generated
+-- The new schema keeps a SHA-256 of each token, the hash the server takes of
+-- the token a browser sends.
+insert into session (player_id, token_hash, revoked, generated)
+select player_id, encode(sha256(convert_to(token, 'UTF8')), 'hex'), revoked, generated
 from legacy.session
 where not revoked;
 
