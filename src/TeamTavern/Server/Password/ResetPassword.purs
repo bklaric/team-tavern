@@ -9,7 +9,7 @@ import JavaScript.Npm.Pg.Query (class Querier, Query(..), (:), (:|))
 import TeamTavern.Routes.Password.ResetPassword as ResetPassword
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.EnsureNotSignedIn (ensureNotSignedIn)
-import TeamTavern.Server.Infrastructure.Postgres (LoadSingleError, queryFirstNotFound, queryNone)
+import TeamTavern.Server.Infrastructure.Postgres (LoadSingleError, queryFirstNotFound, queryNone, transaction)
 import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Player.Domain.Hash (Hash, generateHash)
@@ -44,6 +44,20 @@ updatePassword :: forall querier errors. Querier querier =>
 updatePassword querier playerId hash =
     queryNone querier passwordQueryString (playerId :| hash)
 
+-- Whoever else holds a session of the player's, perhaps the one the reset is
+-- meant to lock out, has it ended with the old password.
+sessionsQueryString :: Query
+sessionsQueryString = Query """
+    update session
+    set revoked = true
+    where session.player_id = $1
+    """
+
+revokeSessions :: forall querier errors. Querier querier =>
+    querier -> Int -> Async (InternalTerror_ errors) Unit
+revokeSessions querier playerId =
+    queryNone querier sessionsQueryString (playerId : [])
+
 resetPassword :: forall left.
     Pool -> Cookies  -> ResetPassword.RequestContent -> Async left _
 resetPassword pool cookies {password, nonce} =
@@ -54,13 +68,15 @@ resetPassword pool cookies {password, nonce} =
     -- Validate password.
     validPassword <- validatePassword' password
 
-    -- Ensure nonce is valid.
-    playerId <- ensureValidNonce pool nonce
-
     -- Generate password hash.
     hash <- generateHash validPassword
 
-    -- Update the password.
-    updatePassword pool playerId hash
+    pool # transaction \client -> do
+        -- Ensure nonce is valid.
+        playerId <- ensureValidNonce client nonce
+
+        -- Update the password and end every session.
+        updatePassword client playerId hash
+        revokeSessions client playerId
 
     pure noContent_
