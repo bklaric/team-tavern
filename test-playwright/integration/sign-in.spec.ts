@@ -200,3 +200,19 @@ test("signing out lands on the home page signed out", async ({ page }) => {
     await page.reload();
     await expect(page.getByRole("link", { name: "Sign in" })).toBeVisible();
 });
+
+// A browser sends a cookie without `SameSite` along with a form another site posts here,
+// and Chromium does so for two minutes after the cookie is set even by default. The
+// browser reports such a cookie as `Lax` all the same, so the test reads what it was sent.
+test("the session cookies go only with requests the site starts", async ({ page }) => {
+    const signingIn = page.waitForResponse(response =>
+        response.url().endsWith("/api/sessions") && response.request().method() === "POST");
+    await signIn(page, "NewTester");
+
+    const setCookies = await (await signingIn).headerValues("set-cookie");
+    expect(setCookies.map(cookie => cookie.split("=")[0]).sort())
+        .toEqual(["teamtavern-id", "teamtavern-nickname", "teamtavern-token"]);
+    for (const cookie of setCookies) {
+        expect(cookie).toContain("; SameSite=Lax");
+    }
+});

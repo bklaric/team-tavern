@@ -42,25 +42,30 @@ lookupCookieInfo cookies = do
     token <- lookup tokenCookieName cookies <#> wrap
     pure { id, nickname, token }
 
--- Set cookies.
+-- Set cookies. `SameSite=Lax` keeps a browser from sending them with any
+-- request another site starts other than following a link here, so another
+-- site can't act as the player.
 
 setIdCookie :: Id -> String
 setIdCookie id =
     idCookieName <> "=" <> toString id
     <> "; Max-Age=" <> show (top :: Int)
     <> "; Path=/"
+    <> "; SameSite=Lax"
 
 setNicknameCookie :: Nickname -> String
 setNicknameCookie nickname =
     nicknameCookieName <> "=" <> unwrap nickname
     <> "; Max-Age=" <> show (top :: Int)
     <> "; Path=/"
+    <> "; SameSite=Lax"
 
 setTokenCookie :: Deployment -> Token -> String
 setTokenCookie deployment token =
     tokenCookieName <> "=" <> unwrap token
     <> "; Max-Age=" <> show (top :: Int)
     <> "; Path=/"
+    <> "; SameSite=Lax"
     <> "; HttpOnly"
     <> case deployment of
         Local -> ""
