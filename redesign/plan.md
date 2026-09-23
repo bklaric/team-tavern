@@ -321,6 +321,8 @@ What every later page needs signed in and out.
   - Signing out revokes the session row as well as clearing the cookie.
     Signing in or up replaces the session the browser holds, revoking it, so
     none of the account routes refuses a browser that is signed in.
+  - A session lasts a year from its last use. `viewMe`, which the header asks
+    on every page, renews the cookie for as long.
   - The header's covers come from `Client/Components/CoverGrid.purs`, which the
     home page uses too; the account pages are `Flow.purs` columns
     (`.flow`, `.flow-narrow`, `.flow-lead`, `.form-tight` from `post.html`).

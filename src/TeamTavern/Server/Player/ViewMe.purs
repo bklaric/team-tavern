@@ -3,11 +3,12 @@ module TeamTavern.Server.Player.ViewMe (viewMe) where
 import Prelude
 
 import Async (Async)
-import Jarilo (ok_)
+import Jarilo (ok)
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Query (Query(..), (:))
 import TeamTavern.Routes.Player.ViewMe as ViewMe
-import TeamTavern.Server.Infrastructure.Cookie (Cookies)
+import TeamTavern.Server.Infrastructure.Cookie (Cookies, setCookieHeader)
+import TeamTavern.Server.Infrastructure.Deployment (Deployment)
 import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstInternal, queryMany)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
@@ -33,10 +34,13 @@ gamesQuery = Query """
     """
 
 -- The site has no messages or notifications to count, so both counts are zero.
-viewMe :: ∀ left. Pool -> Cookies -> Async left _
-viewMe pool cookies =
+-- The header asks on every page, so the answer renews the session cookie,
+-- which then lapses when the session does.
+viewMe :: ∀ left. Deployment -> Pool -> Cookies -> Async left _
+viewMe deployment pool cookies =
     sendResponse "Error viewing the signed-in player" do
-    {id} <- ensureSignedIn pool cookies
+    {id, token} <- ensureSignedIn pool cookies
     {nickname} :: {nickname :: String} <- queryFirstInternal pool nicknameQuery (id : [])
     games :: Array ViewMe.OkGameContent <- queryMany pool gamesQuery (id : [])
-    pure $ ok_ ({nickname, unreadConversations: 0, unreadNotifications: 0, games} :: ViewMe.OkContent)
+    pure $ ok (setCookieHeader deployment token)
+        ({nickname, unreadConversations: 0, unreadNotifications: 0, games} :: ViewMe.OkContent)

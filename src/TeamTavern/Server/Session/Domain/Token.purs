@@ -1,4 +1,4 @@
-module TeamTavern.Server.Session.Domain.Token (Token(..), TokenHash, generate, hash) where
+module TeamTavern.Server.Session.Domain.Token (Token(..), TokenHash, generate, hash, sessionDays) where
 
 import Prelude
 
@@ -26,6 +26,11 @@ instance Show Token where show = genericShow
 -- | session a browser could hold. The token is random, so a plain SHA-256
 -- | keeps it as hidden as a slow hash would.
 newtype TokenHash = TokenHash String
+
+-- | How long a session lasts from its last use, and its cookie from the last
+-- | page that renewed it.
+sessionDays :: Int
+sessionDays = 365
 
 tokenByteCount :: ByteCount
 tokenByteCount = ByteCount 20

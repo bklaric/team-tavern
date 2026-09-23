@@ -106,7 +106,7 @@ runServer deployment discordApiUrl pool = serve (Proxy :: _ AllRoutes) serveOpti
     , registerPlayer: \{ cookies, body } ->
         register deployment discordApiUrl pool cookies body
     , viewMe: \{ cookies } ->
-        viewMe pool cookies
+        viewMe deployment pool cookies
     , confirmEmail: \{ body } ->
         confirmEmail pool body
     , resendConfirmation: \{ cookies } ->

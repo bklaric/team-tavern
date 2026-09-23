@@ -88,6 +88,7 @@ create table session
     , token_hash character(64) not null
     , revoked boolean not null default false
     , generated timestamptz not null default current_timestamp
+    , last_used timestamptz not null default current_timestamp
     );
 
 create index session_player_id_idx on session (player_id);

@@ -15,7 +15,7 @@ import Data.MultiMap (MultiMap, singleton)
 import Data.Newtype (unwrap, wrap)
 import Data.NonEmpty ((:|))
 import TeamTavern.Server.Infrastructure.Deployment (Deployment(..))
-import TeamTavern.Server.Session.Domain.Token (Token)
+import TeamTavern.Server.Session.Domain.Token (Token, sessionDays)
 
 -- The session is the one cookie, which only the server reads. The client
 -- learns who is signed in by asking the server.
@@ -34,7 +34,7 @@ lookupToken cookies = lookup tokenCookieName cookies <#> wrap
 setCookieHeader :: Deployment -> Token -> MultiMap String String
 setCookieHeader deployment token =
     tokenCookieName <> "=" <> unwrap token
-    <> "; Max-Age=" <> show (top :: Int)
+    <> "; Max-Age=" <> show (sessionDays * 24 * 60 * 60)
     <> "; Path=/"
     <> "; SameSite=Lax"
     <> "; HttpOnly"

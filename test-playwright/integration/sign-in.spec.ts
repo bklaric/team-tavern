@@ -121,6 +121,27 @@ test("signing in on a page opened before another tab signed in replaces that ses
     await expect(page.getByRole("banner").getByRole("link", { name: "Sign in" })).toBeVisible();
 });
 
+// The seed gives ExpiredTester two sessions with known tokens, one last used eleven
+// months ago and one thirteen (`stacks/test-seed/players.sql`).
+test("a session lasts a year from its last use, and every page renews it", async ({ page, context, baseURL }) => {
+    const hold = async (token: string) => {
+        await context.clearCookies();
+        await context.addCookies([{ name: "teamtavern-token", value: token, url: baseURL! }]);
+    };
+
+    await hold("11111111111111111111111111111111111111cd");
+    await page.goto("/");
+    await expect(page.getByRole("banner").getByRole("link", { name: "Sign in" })).toBeVisible();
+
+    const recent = "11111111111111111111111111111111111111ab";
+    await hold(recent);
+    const asked = page.waitForResponse(response => response.url().endsWith("/api/me"));
+    await page.goto("/");
+    await expectSignedInAs(page, "ExpiredTester");
+    expect(await (await asked).headerValue("set-cookie"))
+        .toContain(`teamtavern-token=${recent}; Max-Age=${365 * 24 * 60 * 60};`);
+});
+
 test("signing up with Discord asks Discord for the email and comes back through the sign-in page", async ({ page, baseURL }) => {
     const discord = await fakeDiscord(page, discordUser(`${unique("discord")}@example.com`, true));
     const nickname = unique("D");

@@ -213,6 +213,16 @@ select
     seed_post_option('ExpiredTester', 'player', 'platform', array['pc']),
     seed_post_option('ExpiredTester', 'player', 'looking-for', array['casual']);
 
+-- Two sessions of ExpiredTester's with known tokens, one last used within the
+-- year a session lasts and one before it.
+insert into session (player_id, token_hash, generated, last_used)
+select player.id, encode(sha256(convert_to(token, 'UTF8')), 'hex'), last_used, last_used
+from player, (values
+    ('11111111111111111111111111111111111111ab', current_timestamp - interval '11 months'),
+    ('11111111111111111111111111111111111111cd', current_timestamp - interval '13 months')
+) as idle (token, last_used)
+where player.nickname = 'ExpiredTester';
+
 drop function seed_post_range(text, text, text, text, text);
 drop function seed_post_option(text, text, text, text[]);
 drop function seed_player(text, text);
