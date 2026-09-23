@@ -25,7 +25,7 @@ import TeamTavern.Client.Script.Discord (authorizeWithDiscord, takeDiscordReturn
 import TeamTavern.Client.Script.Navigate (navigateReplace_, navigate_)
 import TeamTavern.Client.Shared.AccountErrors (nicknameInvalid, nicknameTaken, somethingWrong)
 import TeamTavern.Client.Shared.Fetch (fetchBody)
-import TeamTavern.Client.Shared.SignedIn (signedIn)
+import TeamTavern.Client.Shared.Me (fetchMe)
 import TeamTavern.Client.Shared.Slot (Slot___)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Player.RegisterPlayer (RegisterPlayer)
@@ -95,7 +95,6 @@ component = Hooks.component \_ _ -> Hooks.do
                             set _ { screen = Nickname { accessToken }, nickname = nickname }
                         }
                         (const $ failWith noErrors { form = Just somethingWrong })
-                    , forbidden: const $ navigateReplace_ back
                     }
                     (const $ failWith noErrors { form = Just somethingWrong })
                 Left _ -> failWith noErrors { form = Just somethingWrong }
@@ -124,7 +123,6 @@ component = Hooks.component \_ _ -> Hooks.do
                                 { password = Just "Entered password is incorrect." }
                             , unknownDiscord: const $ failWith noErrors { form = Just somethingWrong }
                             }
-                        , forbidden: const $ navigate_ state.back
                         }
                         (const $ failWith noErrors { form = Just somethingWrong })
                     Left _ -> failWith noErrors { form = Just somethingWrong }
@@ -153,7 +151,6 @@ component = Hooks.component \_ _ -> Hooks.do
                                 { form = Just "This Discord account already has a TeamTavern account. Sign in with Discord instead." }
                             , emailTaken: const $ failWith noErrors { form = Just somethingWrong }
                             }
-                        , forbidden: const $ navigateReplace_ state.back
                         }
                         (const $ failWith noErrors { form = Just somethingWrong })
                     Left _ -> failWith noErrors { form = Just somethingWrong }
@@ -166,8 +163,8 @@ component = Hooks.component \_ _ -> Hooks.do
                 back <- readBack
                 set _ { back = back, publishing = publishing back }
                 void $ Hooks.fork do
-                    signedIn' <- H.lift signedIn
-                    when signedIn' $ navigateReplace_ back
+                    me <- H.lift fetchMe
+                    when (isJust me) $ navigateReplace_ back
                 for_ (publishing back) \publishing' -> void $ Hooks.fork do
                     post <- H.lift $ publishingPost publishing'
                     set _ { post = post }

@@ -39,7 +39,6 @@ import TeamTavern.Client.Pages.Post.Draft (Draft, clearDraft, emptyDraft, fromCo
 import TeamTavern.Client.Pages.Post.Fields (cardFields, contactFields, contactKeys, wordsField)
 import TeamTavern.Client.Pages.Post.Register (registerBack)
 import TeamTavern.Client.Script.Back (authPath)
-import TeamTavern.Client.Script.Cookie (getPlayerNickname, hasPlayerIdCookie)
 import TeamTavern.Client.Script.Discord (authorizeWithDiscord)
 import TeamTavern.Client.Script.Expand (toggleCard)
 import TeamTavern.Client.Script.Meta (setMeta)
@@ -51,13 +50,13 @@ import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Shared.AccountErrors (somethingWrong)
 import TeamTavern.Client.Shared.Contacts (contactLabel)
 import TeamTavern.Client.Shared.Fetch (fetchPath, fetchPathBody, fetchSimple)
+import TeamTavern.Client.Shared.Me (fetchMe)
 import TeamTavern.Client.Shared.Slot (Slot__I)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Country.ViewCountries (ViewCountries)
 import TeamTavern.Routes.Country.ViewCountries as ViewCountries
 import TeamTavern.Routes.Game.ViewGame (ViewGame)
 import TeamTavern.Routes.Game.ViewGame as ViewGame
-import TeamTavern.Routes.Player.ViewMe (ViewMe)
 import TeamTavern.Routes.Post.CreatePost (CreatePost)
 import TeamTavern.Routes.Post.DeletePost (DeletePost)
 import TeamTavern.Routes.Post.UpdatePost (UpdatePost)
@@ -300,28 +299,23 @@ component = Hooks.component \_ { handle, type_ } -> Hooks.do
         iso <- liftEffect $ JSDate.now >>= JSDate.toISOString
         date <- liftEffect nowDate
         timezone <- getClientTimezone
-        nickname <- getPlayerNickname
-        signedIn <- hasPlayerIdCookie
         from <- getQueryParam "from"
-        set _ { now = Just { instant, iso, date }, timezone = timezone, nickname = nickname }
+        set _ { now = Just { instant, iso, date }, timezone = timezone }
 
         void $ Hooks.fork do
             let failed = set _ { screen = Failed }
             gameResult <- H.lift $ hush <$> Async.attempt (fetchPath (Proxy :: _ ViewGame) { handle })
             countriesResult <- H.lift $ hush <$> Async.attempt (fetchSimple (Proxy :: _ ViewCountries))
+            me <- H.lift fetchMe
             ownResult <-
-                if signedIn
+                if isJust me
                 then H.lift $ hush <$> Async.attempt (fetchPath (Proxy :: _ ViewOwnPost) { handle, type: type_ })
-                else pure Nothing
-            meResult <-
-                if signedIn
-                then H.lift $ hush <$> Async.attempt (fetchSimple (Proxy :: _ ViewMe))
                 else pure Nothing
             let countries = countriesResult >>= onMatch { ok: Just } (const Nothing)
                     # fromMaybe { regions: [], countries: [] }
                 own = ownResult >>= onMatch { ok: Just } (const Nothing)
-                posts = meResult >>= onMatch { ok: Just } (const Nothing) # maybe 0 \me ->
-                    foldl (\count game -> count + game.posts) 0 me.games
+                posts = me # maybe 0 \me' ->
+                    foldl (\count game -> count + game.posts) 0 me'.games
                 otherPosts = posts > (if isJust (own >>= _.post) then 1 else 0)
             case gameResult of
                 Nothing -> failed
@@ -357,6 +351,7 @@ component = Hooks.component \_ { handle, type_ } -> Hooks.do
                             { screen = Ready
                             , game = Just game
                             , countries = countries
+                            , nickname = me <#> _.nickname
                             , own = own
                             , otherPosts = otherPosts
                             , conflicting = conflicting

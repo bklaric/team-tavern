@@ -2,11 +2,11 @@ module TeamTavern.Routes.Player.RegisterPlayer where
 
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Variant (Variant)
-import Jarilo (type (!), type (==>), BadRequestJson, Forbidden_, Internal_, Literal, NoContent, PostJson_)
+import Jarilo (type (!), type (==>), BadRequestJson, Internal_, Literal, NoContent, PostJson_)
 
 type RegisterPlayer =
     PostJson_ (Literal "players") RequestContent
-    ==> (NoContent ! BadRequestJson BadContent ! Forbidden_ ! Internal_)
+    ==> (NoContent ! BadRequestJson BadContent ! Internal_)
 
 type RequestContent = Variant
     ( password ::

@@ -272,8 +272,9 @@ What every later page needs signed in and out.
   - `viewMe`: what the header shows, nickname, unread conversation count,
     unread notification count, the games the player has posts in. Counts are
     zero until steps 11 and 13 fill them.
-  - Session cookies keep today's names and shape, so sessions imported at the
-    relaunch keep players signed in.
+  - The session cookie keeps today's name and token, so sessions imported at
+    the relaunch keep players signed in. It is the only cookie, `HttpOnly`,
+    and only the server reads it.
 - Client:
   - Header (11.4) with Games (the cover grid, `coverGridHtml` in `site.js`),
     the inbox icon and bell (counts only; the lists come in 11 and 13), the
@@ -281,7 +282,8 @@ What every later page needs signed in and out.
   - Sign up (the one sign-up screen, 6 step 4), Sign in, Forgot password,
     Reset password, the confirm-email landing. Each returns the player where
     they came from (`?back=` or history state).
-  - The signed-in state read from the cookies as today.
+  - The signed-in state asked of `viewMe` (`fetchMe`), the cookie being out
+    of the page's reach.
 - Discord stub: unchanged; the spec answers the authorize redirect itself as
   `sign-in.spec.ts` does now.
 - Specs: `sign-in.spec.ts` rewritten (password and Discord, sign up and sign
@@ -302,9 +304,9 @@ What every later page needs signed in and out.
     carry the page they are opened from.
   - `viewMe` is `GET /api/me`: the nickname, both unread counts (zero until
     steps 11 and 13) and each game the player has posts in with how many. The
-    header shows the cookie's nickname at once and replaces it with `viewMe`,
-    read again on every navigation, which the router counts so even a link to
-    the open page closes the menu. A refused session shows signed out.
+    header shows neither the account nor Sign in until `viewMe` first answers,
+    and asks again on every navigation, which the router counts so even a link
+    to the open page closes the menu. A refused session shows signed out.
   - Registration stores a Discord address that validates whether or not
     Discord verified it, confirmed only if verified, and the Discord tag as
     the username (`name#1234` where Discord still reports a discriminator).
@@ -316,7 +318,9 @@ What every later page needs signed in and out.
     still the address it was sent to. `resendConfirmation`
     (`POST /api/confirm-email/resend`) has no page until step 15.
   - Sign-in takes the email or the nickname, as the server always has.
-  - Signing out revokes the session row as well as clearing the cookies.
+  - Signing out revokes the session row as well as clearing the cookie.
+    Signing in or up replaces the session the browser holds, revoking it, so
+    none of the account routes refuses a browser that is signed in.
   - The header's covers come from `Client/Components/CoverGrid.purs`, which the
     home page uses too; the account pages are `Flow.purs` columns
     (`.flow`, `.flow-narrow`, `.flow-lead`, `.form-tight` from `post.html`).

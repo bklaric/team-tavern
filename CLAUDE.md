@@ -130,9 +130,9 @@ selects which `stacks/<name>.Caddyfile` Caddy loads.
 Both local stacks serve plain HTTP, on the host port `CADDY_HTTP_PORT` names:
 8000 in `stacks/.env`, 8080 in `stacks/test.env`. Production shares
 `docker-compose.yml`, leaves the variable unset and takes ports 80 and 443,
-where `production.Caddyfile` serves HTTPS. Session cookies drop `Secure` under
-`DEPLOYMENT=local`, and browsers treat `http://localhost` as a secure context,
-so nothing on the site needs HTTPS locally.
+where `production.Caddyfile` serves HTTPS. The session cookie drops `Secure`
+under `DEPLOYMENT=local`, and browsers treat `http://localhost` as a secure
+context, so nothing on the site needs HTTPS locally.
 
 `stacks/.env` is committed. The Postgres credentials in it are real, but the
 database is reachable only from inside the compose network, so they are
@@ -264,7 +264,9 @@ an `index.html` fallback for SPA paths.
 - A handler runs in `Async (TerrorVar responses)` and is wrapped in
   `sendResponse "<heading>"`, which logs the error lines and turns the error
   into the HTTP response variant. Signed-in checks come from
-  `Server/Infrastructure/EnsureSignedIn*.purs` and `CheckSignedIn.purs`.
+  `Server/Infrastructure/EnsureSignedIn.purs` and `CheckSignedIn.purs`, which
+  look the session up by the token in the one cookie, `HttpOnly` and
+  `SameSite=Lax`.
 - Errors are `Terror error (Array String)` from
   `Server/Infrastructure/Error.purs`: the typed error the client sees plus
   free-text lines for the log. Validation accumulates with `Validated` and
@@ -302,6 +304,9 @@ an `index.html` fallback for SPA paths.
 - Components run in `Async left` and are written with Halogen Hooks. Child
   slot types come from `Client/Shared/Slot.purs` (`Slot___`, `SlotQ__`,
   `Slot_O_`, ...).
+- Who is signed in comes from the server: `fetchMe` in `Client/Shared/Me.purs`
+  asks `/api/me`, since the session cookie is out of the page's reach. A page
+  that needs it asks from a fork, like any other fetch.
 - A page forks its fetches from `useLifecycleEffect` rather than awaiting them
   there, and what follows a fetch happens in the fork, not in a tick effect
   watching for its result. Hooks runs effects only after a render that the

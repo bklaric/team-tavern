@@ -25,7 +25,6 @@ import TeamTavern.Client.Components.Unread (badge)
 import TeamTavern.Client.Components.UsePhone (usePhone)
 import TeamTavern.Client.Icons as Icons
 import TeamTavern.Client.Script.Back (authPath, currentBack)
-import TeamTavern.Client.Script.Cookie (getPlayerInfo)
 import TeamTavern.Client.Script.Navigate (navigateWithEvent_, navigate_)
 import TeamTavern.Client.Shared.Fetch (fetchSimple)
 import TeamTavern.Client.Shared.Slot (Slot___)
@@ -43,16 +42,17 @@ data Menu = Games | Notifications | AccountMenu | SignedOutMenu
 
 derive instance Eq Menu
 
+-- Who the header shows, which only the server can say. Until it first has,
+-- the header shows neither the account nor Sign in.
+data Viewer = Unknown | SignedOut | SignedIn ViewMe.OkContent
+
 type State =
-    { me :: Maybe ViewMe.OkContent
+    { viewer :: Viewer
+    , visit :: Int
     , games :: Array ViewGames.OkGameContent
     , back :: String
     , menu :: Maybe Menu
     }
-
--- The player the cookies name, until the server says what the header shows.
-fromCookie :: String -> ViewMe.OkContent
-fromCookie nickname = { nickname, unreadConversations: 0, unreadNotifications: 0, games: [] }
 
 ref :: Menu -> H.RefLabel
 ref Games = H.RefLabel "header-games"
@@ -87,7 +87,7 @@ type Input = { path :: String, visit :: Int }
 component :: ∀ query output left. H.Component query Input output (Async left)
 component = Hooks.component \_ { path, visit } -> Hooks.do
     phone <- usePhone
-    state /\ stateId <- Hooks.useState ({ me: Nothing, games: [], back: "/", menu: Nothing } :: State)
+    state /\ stateId <- Hooks.useState ({ viewer: Unknown, visit, games: [], back: "/", menu: Nothing } :: State)
 
     let set = Hooks.modify_ stateId
         close = set _ { menu = Nothing }
@@ -102,26 +102,21 @@ component = Hooks.component \_ { path, visit } -> Hooks.do
                 Left _ -> pure unit
         pure Nothing
 
-    -- Every visit reads the cookies afresh, so signing in or out shows on the
-    -- next page, and a stale cookie the server refuses shows signed out. The
-    -- counts are fetched on a fork: the header renders nothing new until its
-    -- effects are done, and a menu opened meanwhile has to open.
+    -- Every visit asks the server afresh, so signing in or out shows on the
+    -- next page. The header keeps showing what it last knew meanwhile, and
+    -- takes an answer only while its visit is the latest. The server is asked
+    -- on a fork: the header renders nothing new until its effects are done,
+    -- and a menu opened meanwhile has to open.
     Hooks.captures { visit } Hooks.useTickEffect do
         back <- currentBack
-        cookie <- getPlayerInfo
-        set \state' -> state'
-            { back = back
-            , menu = Nothing
-            , me = cookie <#> \{ nickname } -> case state'.me of
-                Just me | me.nickname == nickname -> me
-                _ -> fromCookie nickname
-            }
-        when (isJust cookie) $ void $ Hooks.fork do
+        set _ { back = back, menu = Nothing, visit = visit }
+        void $ Hooks.fork do
             result <- H.lift $ Async.attempt $ fetchSimple (Proxy :: _ ViewMe)
+            let answer viewer = set \state' -> if state'.visit == visit then state' { viewer = viewer } else state'
             case result of
                 Right response -> response # onMatch
-                    { ok: \me -> set _ { me = Just me }
-                    , notAuthorized: const $ set _ { me = Nothing }
+                    { ok: answer <<< SignedIn
+                    , notAuthorized: const $ answer SignedOut
                     }
                     (const $ pure unit)
                 Left _ -> pure unit
@@ -141,7 +136,7 @@ component = Hooks.component \_ { path, visit } -> Hooks.do
         -- have been theirs, and signed out the home page is what the site is for.
         signOut = do
             void $ H.lift $ Async.attempt $ fetchSimple (Proxy :: _ EndSession)
-            set _ { me = Nothing, menu = Nothing }
+            set _ { viewer = SignedOut, menu = Nothing }
             navigate_ "/"
 
         link class_ path' =
@@ -149,11 +144,14 @@ component = Hooks.component \_ { path, visit } -> Hooks.do
 
         title Games = "Games"
         title Notifications = "Notifications"
-        title AccountMenu = maybe "" _.nickname state.me
+        title AccountMenu = case state.viewer of
+            SignedIn me -> me.nickname
+            _ -> ""
         title SignedOutMenu = "Menu"
 
-        postsIn handle =
-            state.me >>= _.games >>> find (_.handle >>> eq handle) # maybe 0 _.posts
+        postsIn handle = case state.viewer of
+            SignedIn me -> me.games # find (_.handle >>> eq handle) # maybe 0 _.posts
+            _ -> 0
 
         notificationsEmpty =
             HH.div [ HS.class_ "notifications-empty" ]
@@ -264,8 +262,10 @@ component = Hooks.component \_ { path, visit } -> Hooks.do
                     , HH.span [ HS.class_ "logo-word" ] [ HH.text "TeamTavern" ]
                     ]
                 , opener Games "header-wrap" "dialog" Nothing [ HH.text "Games", Icons.chevronDown ]
-                , HH.div [ HS.class_ "site-header-actions" ] $
-                    maybe signedOutActions signedInActions state.me
+                , HH.div [ HS.class_ "site-header-actions" ] case state.viewer of
+                    Unknown -> []
+                    SignedOut -> signedOutActions
+                    SignedIn me -> signedInActions me
                 ]
             ]
         , case state.menu of

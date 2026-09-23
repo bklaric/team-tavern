@@ -15,14 +15,13 @@ import Halogen.Hooks as Hooks
 import TeamTavern.Client.Components.Button (Size(..), Weight(..), buttonLink)
 import TeamTavern.Client.Components.CoverGrid (coverGrid)
 import TeamTavern.Client.Pages.Placeholder (placeholder)
-import TeamTavern.Client.Script.Cookie (hasPlayerIdCookie)
 import TeamTavern.Client.Script.RenderReady (appendRenderReadyNotFound)
 import TeamTavern.Client.Shared.Fetch (fetchSimple)
+import TeamTavern.Client.Shared.Me (fetchMe)
 import TeamTavern.Client.Shared.Slot (Slot__I)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Game.ViewGames (ViewGames)
 import TeamTavern.Routes.Game.ViewGames as ViewGames
-import TeamTavern.Routes.Player.ViewMe (ViewMe)
 import TeamTavern.Routes.Player.ViewMe as ViewMe
 import Type.Proxy (Proxy(..))
 
@@ -45,15 +44,12 @@ component = Hooks.component \_ type_ -> Hooks.do
     state /\ stateId <- Hooks.useState ({ games: [], me: Nothing } :: State)
 
     Hooks.useLifecycleEffect do
-        signedIn <- hasPlayerIdCookie
         case typeTitle type_ of
             Nothing -> appendRenderReadyNotFound
             Just _ -> void $ Hooks.fork do
                 games <- H.lift $ Async.attempt (fetchSimple (Proxy :: _ ViewGames))
                     <#> (hush >=> onMatch { ok: Just } (const Nothing))
-                me <- if not signedIn then pure Nothing else
-                    H.lift $ Async.attempt (fetchSimple (Proxy :: _ ViewMe))
-                    <#> (hush >=> onMatch { ok: Just } (const Nothing))
+                me <- H.lift fetchMe
                 Hooks.modify_ stateId _ { games = games # maybe [] identity, me = me }
         pure Nothing
 

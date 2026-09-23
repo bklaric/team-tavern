@@ -8,9 +8,7 @@ import Jarilo (noContent_)
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Query (Query(..), (:|))
 import TeamTavern.Routes.Password.ForgotPassword as ForgotPassword
-import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.Deployment (Deployment(..))
-import TeamTavern.Server.Infrastructure.EnsureNotSignedIn (ensureNotSignedIn)
 import TeamTavern.Server.Infrastructure.GenerateNonce (Nonce, generateNonce, toString)
 import TeamTavern.Server.Infrastructure.Postgres (LoadSingleError, queryFirstNotFound)
 import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
@@ -74,14 +72,10 @@ forgotPassword
     :: forall left
     .  Deployment
     -> Pool
-    -> Cookies
     -> ForgotPassword.RequestContent
     -> Async left _
-forgotPassword deployment pool cookies {email} =
+forgotPassword deployment pool {email} =
     sendResponse "Error sending password reset email" do
-    -- Ensure user is not signed in.
-    ensureNotSignedIn cookies
-
     -- Generate password reset nonce.
     nonce <- generateNonce
 

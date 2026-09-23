@@ -2,7 +2,6 @@ module TeamTavern.Client.Shared.AccountErrors
     ( nicknameInvalid
     , nicknameTaken
     , passwordShort
-    , signedInAlready
     , somethingWrong
     ) where
 
@@ -16,9 +15,6 @@ nicknameTaken = "This nickname is taken. Please pick another one."
 
 passwordShort :: String
 passwordShort = "Use at least 8 characters."
-
-signedInAlready :: String
-signedInAlready = "You're signed in. Sign out to reset a password."
 
 somethingWrong :: String
 somethingWrong = "Something went wrong. Please try again."

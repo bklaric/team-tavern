@@ -15,7 +15,7 @@ import Halogen.HTML.Properties as HP
 import Halogen.Hooks as Hooks
 import TeamTavern.Client.Components.Flow (flow, flowError, flowLead, flowLink, formTight, submitButton, textField)
 import TeamTavern.Client.Script.Back (authPath, readBack)
-import TeamTavern.Client.Shared.AccountErrors (signedInAlready, somethingWrong)
+import TeamTavern.Client.Shared.AccountErrors (somethingWrong)
 import TeamTavern.Client.Shared.Fetch (fetchBody)
 import TeamTavern.Client.Shared.Slot (Slot___)
 import TeamTavern.Client.Snippets.Class as HS
@@ -52,7 +52,6 @@ component = Hooks.component \_ _ -> Hooks.do
                     Right response -> response # onMatch
                         { noContent: const $ set _ { sending = false, sentTo = Just email }
                         , notFound: const $ fail (Just "No account signs in with a password at this email.") Nothing
-                        , forbidden: const $ fail Nothing (Just signedInAlready)
                         }
                         (const $ fail Nothing $ Just somethingWrong)
                     Left _ -> fail Nothing $ Just somethingWrong

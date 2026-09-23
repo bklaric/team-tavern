@@ -99,10 +99,10 @@ runServer deployment discordApiUrl pool = serve (Proxy :: _ AllRoutes) serveOpti
         Session.start deployment discordApiUrl pool cookies body
     , endSession: \{ cookies } ->
         Session.end pool cookies
-    , forgotPassword: \{ cookies, body } ->
-        forgotPassword deployment pool cookies body
-    , resetPassword: \{ cookies, body } ->
-        resetPassword pool cookies body
+    , forgotPassword: \{ body } ->
+        forgotPassword deployment pool body
+    , resetPassword: \{ body } ->
+        resetPassword pool body
     , registerPlayer: \{ cookies, body } ->
         register deployment discordApiUrl pool cookies body
     , viewMe: \{ cookies } ->

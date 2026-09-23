@@ -71,9 +71,9 @@ test("signing in from the header returns the player to the page they came from",
     await expectSignedInAs(page, "ApexTester");
 });
 
-// The cookies of a signed-out session, which a browser also keeps across a reset of the
-// database, name a session the server refuses, and the server removes them when it does.
-// Until then a request still carries them, so the test waits for that before acting.
+// The cookie of a signed-out session, which a browser also keeps across a reset of the
+// database, names a session the server refuses. The header asks the server and shows
+// Sign in only once it has answered.
 test("a browser holding a session the server refuses can sign in again", async ({ page, context }) => {
     await signIn(page, "NewTester");
     const refused = await context.cookies();
@@ -81,8 +81,7 @@ test("a browser holding a session the server refuses can sign in again", async (
     const openHolding = async (path: string) => {
         await context.addCookies(refused);
         await page.goto(path);
-        await expect.poll(async () => (await context.cookies())
-            .filter(cookie => cookie.name.startsWith("teamtavern-"))).toEqual([]);
+        await expect(page.getByRole("banner").getByRole("link", { name: "Sign in" })).toBeVisible();
     };
 
     await openHolding("/games/valorant");
@@ -98,6 +97,28 @@ test("a browser holding a session the server refuses can sign in again", async (
     await openHolding(`/signup?back=${encodeURIComponent("/games/valorant")}`);
     await expectPage(page, "/signup");
     await expect(page.getByRole("heading", { name: "Create your account" })).toBeVisible();
+});
+
+// A sign-in form can be open in one tab while another tab signs in. Sending it replaces
+// the session the browser holds, which ends for good.
+test("signing in on a page opened before another tab signed in replaces that session", async ({ page, context }) => {
+    const earlier = await context.newPage();
+    await earlier.goto("/signin");
+    await expect(earlier.getByLabel("Email or nickname")).toBeVisible();
+    await signIn(page, "ApexTester");
+    const replaced = await context.cookies();
+
+    await earlier.getByLabel("Email or nickname").fill("new@example.com");
+    await earlier.getByLabel("Password").fill(password);
+    await earlier.getByRole("button", { name: "Sign in", exact: true }).click();
+    await expectPage(earlier, "/");
+    await expectSignedInAs(earlier, "NewTester");
+    await page.reload();
+    await expectSignedInAs(page, "NewTester");
+
+    await context.addCookies(replaced);
+    await page.reload();
+    await expect(page.getByRole("banner").getByRole("link", { name: "Sign in" })).toBeVisible();
 });
 
 test("signing up with Discord asks Discord for the email and comes back through the sign-in page", async ({ page, baseURL }) => {
@@ -204,17 +225,16 @@ test("signing out lands on the home page signed out", async ({ page }) => {
 // A browser sends a cookie without `SameSite` along with a form another site posts here,
 // and Chromium does so for two minutes after the cookie is set even by default. The
 // browser reports such a cookie as `Lax` all the same, so the test reads what it was sent.
-test("the session cookies go only with requests the site starts", async ({ page }) => {
+test("the session cookie goes only with requests the site starts", async ({ page }) => {
     const signingIn = page.waitForResponse(response =>
         response.url().endsWith("/api/sessions") && response.request().method() === "POST");
     await signIn(page, "NewTester");
 
     const setCookies = await (await signingIn).headerValues("set-cookie");
-    expect(setCookies.map(cookie => cookie.split("=")[0]).sort())
-        .toEqual(["teamtavern-id", "teamtavern-nickname", "teamtavern-token"]);
-    for (const cookie of setCookies) {
-        expect(cookie).toContain("; SameSite=Lax");
-    }
+    expect(setCookies).toHaveLength(1);
+    expect(setCookies[0]).toMatch(/^teamtavern-token=/);
+    expect(setCookies[0]).toContain("; SameSite=Lax");
+    expect(setCookies[0]).toContain("; HttpOnly");
 });
 
 // A form can post JSON by naming a field with all of it but the last value, which the

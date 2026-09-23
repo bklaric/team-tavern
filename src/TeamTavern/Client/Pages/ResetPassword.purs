@@ -18,7 +18,7 @@ import JSURI (decodeURIComponent)
 import TeamTavern.Client.Components.Button (Size(..), Weight(..), buttonLink)
 import TeamTavern.Client.Components.Flow (flow, flowError, flowLead, flowLink, formTight, submitButton, textField)
 import TeamTavern.Client.Script.QueryParams (getQueryParam)
-import TeamTavern.Client.Shared.AccountErrors (passwordShort, signedInAlready, somethingWrong)
+import TeamTavern.Client.Shared.AccountErrors (passwordShort, somethingWrong)
 import TeamTavern.Client.Shared.Fetch (fetchBody)
 import TeamTavern.Client.Shared.Slot (Slot___)
 import TeamTavern.Client.Snippets.Class as HS
@@ -58,7 +58,6 @@ component = Hooks.component \_ _ -> Hooks.do
                         { noContent: const $ set _ { sending = false, screen = Done }
                         , badRequest: const $ fail (Just passwordShort) Nothing
                         , notFound: const $ set _ { sending = false, screen = Expired }
-                        , forbidden: const $ fail Nothing (Just signedInAlready)
                         }
                         (const $ fail Nothing $ Just somethingWrong)
                     Left _ -> fail Nothing $ Just somethingWrong

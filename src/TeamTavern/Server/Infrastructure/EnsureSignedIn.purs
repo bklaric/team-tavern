@@ -1,43 +1,40 @@
-module TeamTavern.Server.Infrastructure.EnsureSignedIn (EnsureSignedInError, ensureSignedIn) where
+module TeamTavern.Server.Infrastructure.EnsureSignedIn (EnsureSignedInError, SignedIn, ensureSignedIn) where
 
 import Prelude
 
 import Async (Async, left, right)
-import Data.Maybe (Maybe(..), fromMaybe)
-import Jarilo (InternalRow_, NotAuthorizedRow_, notAuthorized, notAuthorized__)
-import JavaScript.Npm.Pg.Async (query)
-import JavaScript.Npm.Pg.Query (class Querier, Query(..), (:), (:|))
-import JavaScript.Npm.Pg.Result (rowCount)
-import TeamTavern.Server.Infrastructure.Cookie (CookieInfo, Cookies, lookupCookieInfo, removeCookieHeader)
+import Data.Maybe (Maybe(..))
+import Data.Newtype (wrap)
+import Jarilo (InternalRow_, NotAuthorizedRow_, notAuthorized__)
+import JavaScript.Npm.Pg.Query (class Querier, Query(..), (:))
+import TeamTavern.Server.Infrastructure.Cookie (Cookies, lookupToken)
 import TeamTavern.Server.Infrastructure.Error (Terror(..), TerrorVar)
-import TeamTavern.Server.Infrastructure.Postgres (reportDatabaseError)
+import TeamTavern.Server.Infrastructure.Postgres (queryMany)
+import TeamTavern.Server.Player.Domain.Id (Id)
 import Type.Row (type (+))
 
 type EnsureSignedInError errors = TerrorVar (InternalRow_ + NotAuthorizedRow_ + errors)
 
+type SignedIn = { id :: Id }
+
 queryString :: Query
 queryString = Query """
-    select session.id
+    select session.player_id as id
     from session
-    join player on player.id = session.player_id
-    where player.id = $1
-        and lower(player.nickname) = lower($2)
-        and session.token = $3
-        and revoked = false
+    where session.token = $1
+        and not session.revoked
     """
 
--- A session the server refuses has its cookies removed, so the client, which
--- reads the id and nickname cookies to tell whether the player is signed in,
--- sees them signed out from then on.
+-- A token the server refuses is answered like no token at all. The cookie
+-- holding it does no harm, as nothing reads it but this, and the next sign-in
+-- replaces it.
 ensureSignedIn :: ∀ querier errors. Querier querier =>
-    querier -> Cookies -> Async (EnsureSignedInError errors) CookieInfo
+    querier -> Cookies -> Async (EnsureSignedInError errors) SignedIn
 ensureSignedIn querier cookies =
-    case lookupCookieInfo cookies of
-    Nothing -> left $ Terror notAuthorized__
-        [ "No cookie info has been found in cookies: " <> show cookies]
-    Just cookieInfo @ { id, nickname, token } -> do
-        result <- querier # query queryString (id : nickname :| token) # reportDatabaseError
-        if fromMaybe 0 (rowCount result) == 0
-        then left $ Terror (notAuthorized removeCookieHeader unit)
-            [ "Client session in cookies is invalid: " <> show cookieInfo ]
-        else right cookieInfo
+    case lookupToken cookies of
+    Nothing -> left $ Terror notAuthorized__ [ "No session token has been found in cookies." ]
+    Just token -> do
+        rows :: Array { id :: Int } <- queryMany querier queryString (token : [])
+        case rows of
+            [ { id } ] -> right { id: wrap id }
+            _ -> left $ Terror notAuthorized__ [ "The session token in cookies has no session." ]

@@ -38,13 +38,13 @@ import TeamTavern.Client.Pages.Feed.Description (Stored, current, describes, emp
 import TeamTavern.Client.Pages.Feed.Fields (Lists, barFields)
 import TeamTavern.Client.Pages.Placeholder (placeholder)
 import TeamTavern.Client.Script.Expand (toggleCard)
-import TeamTavern.Client.Script.Cookie (getPlayerNickname, hasPlayerIdCookie)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigateWithEvent_, navigate_)
 import TeamTavern.Client.Script.RenderReady (appendRenderReadyNotFound, appendRenderReadyUnavailable)
 import TeamTavern.Client.Script.Scroll (onScroll)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Shared.Fetch (fetchPath, fetchPathBody, fetchSimple)
+import TeamTavern.Client.Shared.Me (fetchMe)
 import TeamTavern.Client.Shared.Slot (Slot__I)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Country.ViewCountries (ViewCountries)
@@ -248,10 +248,8 @@ component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
     Hooks.useLifecycleEffect do
         now' <- liftEffect now
         timezone <- getClientTimezone
-        nickname <- getPlayerNickname
-        signedIn <- hasPlayerIdCookie
         -- A feed put back reads the time afresh for how long ago each post was.
-        update _ { viewer = Just { now: now', timezone }, nickname = nickname }
+        update _ { viewer = Just { now: now', timezone } }
         -- Opened afresh, the feed starts over, and so does what Back restores.
         when (isNothing restore) $ liftEffect $ Ref.modify_ (Map.delete handle) cache
 
@@ -284,12 +282,13 @@ component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
         -- With nothing described for the game yet, the description starts
         -- from the viewer's own post in it (brief 7.1), unsaved until changed.
         void $ Hooks.fork do
-            own <- if not signedIn then pure [] else do
+            me <- H.lift fetchMe
+            own <- if isNothing me then pure [] else do
                 result <- H.lift $ Async.attempt $ fetchPath (Proxy :: _ ViewOwnDescriptions) { handle }
                 pure case result of
                     Right response -> response # onMatch { ok: identity } (const [])
                     Left _ -> []
-            update _ { own = own }
+            update _ { own = own, nickname = me <#> _.nickname }
             when (isNothing restore) do
                 stored <- liftEffect $ loadStored handle
                 Hooks.modify_ stateId _ { stored = stored <|> storedFrom own # fromMaybe emptyStored }

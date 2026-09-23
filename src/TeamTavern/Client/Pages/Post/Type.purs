@@ -14,14 +14,13 @@ import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import Halogen.Hooks as Hooks
 import TeamTavern.Client.Components.TypeCards (typeCards)
-import TeamTavern.Client.Script.Cookie (hasPlayerIdCookie)
 import TeamTavern.Client.Script.QueryParams (getQueryParam)
 import TeamTavern.Client.Shared.Fetch (fetchSimple)
+import TeamTavern.Client.Shared.Me (fetchMe)
 import TeamTavern.Client.Shared.Slot (Slot__I)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Game.ViewGames (ViewGames)
 import TeamTavern.Routes.Game.ViewGames as ViewGames
-import TeamTavern.Routes.Player.ViewMe (ViewMe)
 import TeamTavern.Routes.Player.ViewMe as ViewMe
 import Type.Proxy (Proxy(..))
 
@@ -39,14 +38,11 @@ component = Hooks.component \_ _ -> Hooks.do
 
     Hooks.useLifecycleEffect do
         handle <- getQueryParam "game"
-        signedIn <- hasPlayerIdCookie
         Hooks.modify_ stateId _ { handle = handle }
         void $ Hooks.fork do
             games <- H.lift $ Async.attempt (fetchSimple (Proxy :: _ ViewGames))
                 <#> (hush >=> onMatch { ok: Just } (const Nothing))
-            me <- if not signedIn then pure Nothing else
-                H.lift $ Async.attempt (fetchSimple (Proxy :: _ ViewMe))
-                <#> (hush >=> onMatch { ok: Just } (const Nothing))
+            me <- H.lift fetchMe
             Hooks.modify_ stateId _ { games = games # maybe [] identity, me = me }
         pure Nothing
 

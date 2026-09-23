@@ -7,8 +7,6 @@ import Jarilo (noContent_)
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Query (class Querier, Query(..), (:), (:|))
 import TeamTavern.Routes.Password.ResetPassword as ResetPassword
-import TeamTavern.Server.Infrastructure.Cookie (Cookies)
-import TeamTavern.Server.Infrastructure.EnsureNotSignedIn (ensureNotSignedIn)
 import TeamTavern.Server.Infrastructure.Postgres (LoadSingleError, queryFirstNotFound, queryNone, transaction)
 import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
@@ -59,12 +57,9 @@ revokeSessions querier playerId =
     queryNone querier sessionsQueryString (playerId : [])
 
 resetPassword :: forall left.
-    Pool -> Cookies  -> ResetPassword.RequestContent -> Async left _
-resetPassword pool cookies {password, nonce} =
+    Pool -> ResetPassword.RequestContent -> Async left _
+resetPassword pool {password, nonce} =
     sendResponse "Error resetting password" do
-    -- Ensure user is not signed in.
-    ensureNotSignedIn cookies
-
     -- Validate password.
     validPassword <- validatePassword' password
 
