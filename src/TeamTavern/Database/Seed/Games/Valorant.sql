@@ -10,8 +10,8 @@
 -- slotted: two players fit by covering two different ones.
 --
 -- In-game leader is asked beside the roles because teams recruit for one by
--- name. It says a player can lead on top of the role they play, so it fits by
--- agreeing rather than as a slot.
+-- name. It says a player can lead on top of the role they play, and any number
+-- can, so it is not a slot: two players fit when either can lead.
 --
 -- Premier is the one team format in Looking for: Riot's weekly team league,
 -- played by a team formed ahead of time and recruited for by name.

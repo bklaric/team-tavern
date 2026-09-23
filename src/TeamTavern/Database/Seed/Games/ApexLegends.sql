@@ -16,7 +16,7 @@
 -- anchor as another word for support and refrag for a second fragger. They are
 -- slotted: two players fit by covering two different ones. In-game leader is
 -- its own yes-or-no field, since the caller still frags or supports: it says
--- a player can lead, and fits by agreeing rather than as a slot.
+-- a player can lead, and two players fit when either can.
 --
 -- Switch means Switch 2. Support for the original Switch ended with Season 29,
 -- and everything else runs on PC, PlayStation and Xbox, so what a post plays on

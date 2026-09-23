@@ -142,8 +142,10 @@ create table field
 
     -- A boolean has no options: a post either says yes, a row in
     -- post_field_flag, or says no. It is never left unanswered, so unlike an
-    -- empty single or multi it does not count as a miss, and two posts fit on
-    -- it when they agree (brief 7.2).
+    -- empty single or multi it does not count as a miss. It is a job a player
+    -- can take on top of their slot, and any number can: two players fit when
+    -- either takes it, and a group that wants it fits a player who does
+    -- (brief 7.2).
     , ilk text not null -- 'single', 'multi', 'boolean'
 
     -- Whether the options have a meaningful order. An ordered field can be

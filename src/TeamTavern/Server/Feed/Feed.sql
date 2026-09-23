@@ -109,6 +109,9 @@ near as (
 -- The game fields the description gives, as option ordinals: the options
 -- chosen, a player's point as lo = hi, and a range with its open ends open.
 -- Each field has a bit of its own, which is how a post's answers are counted.
+-- A player's no to a boolean is given too, since what the other side can do
+-- still counts: another player who can lead fits them, and a group that wants
+-- a leader misses them.
 described as (
     select
         field.id,
@@ -118,6 +121,7 @@ described as (
         field.ordered,
         field.slotted,
         field.applies_to,
+        field.ilk = 'boolean' and coalesce($3->'flags', '[]') ? field.key as said,
         near.steps as near_steps,
         chosen.ordinals,
         case when field.ordered then
@@ -143,7 +147,7 @@ described as (
     left join field_option range_to
         on range_to.field_id = field.id and range_to.key = $3->'ranges'->field.key->>'to'
     where case
-        when field.ilk = 'boolean' then coalesce($3->'flags', '[]') ? field.key
+        when field.ilk = 'boolean' then viewer.type = 'player' or coalesce($3->'flags', '[]') ? field.key
         when field.ordered and viewer.type <> 'player' then
             range_from.id is not null or range_to.id is not null
         else chosen.ordinals is not null
@@ -151,19 +155,23 @@ described as (
 ),
 
 -- The described fields each post type is asked, as masks of their bits. A
--- field one of the two types isn't asked counts neither way.
+-- field one of the two types isn't asked counts neither way. The booleans, and
+-- those the viewer said yes to, are masks of their own, since whether one is
+-- compared depends on both answers.
 asked as (
     select
         coalesce(bit_or(bit) filter (where 'player' = any(applies_to)), 0) as player,
         coalesce(bit_or(bit) filter (where 'group' = any(applies_to)), 0) as group_,
-        coalesce(bit_or(bit) filter (where 'community' = any(applies_to)), 0) as community
+        coalesce(bit_or(bit) filter (where 'community' = any(applies_to)), 0) as community,
+        coalesce(bit_or(bit) filter (where ilk = 'boolean'), 0) as flags,
+        coalesce(bit_or(bit) filter (where said), 0) as said
     from described
 ),
 
 -- A description that gives nothing shows every post by activity, the viewer's
--- own among them (brief 4).
+-- own among them (brief 4). A player's no to a boolean gives nothing.
 description as (
-    select not exists (select from described)
+    select not exists (select from described where ilk <> 'boolean' or said)
         and viewer.region is null and viewer.age is null
         and viewer.regions = '{}' and viewer.age_from is null and viewer.age_to is null
         and viewer.languages = '{}' and not viewer.microphone
@@ -367,8 +375,11 @@ answer as (
         select described.lo <= coalesce(range_to.ordinal, 2147483647)
             and coalesce(range_from.ordinal, 0) <= described.hi as fits
     ) range_fits
+    -- A boolean is a job a player can take on top of their slot, and any
+    -- number can. Two players fit when either takes it; a group that wants it
+    -- fits a player who does.
     union all
-    select flag.post_id, described.bit, true, true
+    select flag.post_id, described.bit, true, described.said
     from post_field_flag flag
     join described on described.id = flag.field_id
 ),
@@ -402,15 +413,20 @@ ranked as (
     cross join viewer
     cross join asked
     left join answered on answered.post_id = candidate.id
+    cross join description
+    -- A boolean is compared where the post said yes to it, and against another
+    -- player also where the viewer did; a group that doesn't want it doesn't
+    -- mind who can. A player's no alone compares nothing.
     cross join lateral (
         select
-            case candidate.ilk
-                when 'player' then asked.player
-                when 'group' then asked.group_
-                else asked.community
+            case
+                when description.empty then 0
+                when candidate.ilk = 'player' then asked.player & ~(asked.flags & ~asked.said & ~coalesce(answered.answered, 0))
+                when candidate.ilk = 'group' then asked.group_ & ~(asked.flags & ~coalesce(answered.answered, 0))
+                else asked.community & ~(asked.flags & ~coalesce(answered.answered, 0))
             end as asked,
             case when viewer.type = 'player' and candidate.ilk = 'player'
-                then coalesce(answered.fitted_players, 0)
+                then coalesce(answered.fitted_players, 0) | asked.said
                 else coalesce(answered.fitted, 0)
             end as fitted
     ) fields

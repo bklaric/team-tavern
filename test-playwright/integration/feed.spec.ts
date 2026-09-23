@@ -56,6 +56,7 @@ test.describe("the feed", () => {
         ]);
         await expect(card(page, "Night Owls").locator(".fact-fit")).toHaveText(["Fits:Platinum 1 – Diamond 3", "Fits:Ranked"]);
         await expect(card(page, "ValorantTester").locator(".fact-miss")).toHaveText(["Doesn't fit:Casual"]);
+        await expect(card(page, "ValorantTester").locator(".fact-fit")).toHaveText(["Fits:Platinum 1", "Fits:In-game leader"]);
         await expect(page.getByRole("link", { name: "Publish post" })).toHaveAttribute("href", "/games/valorant/post/player?from=feed");
         await expect(page.getByRole("button", { name: "Load more" })).toHaveCount(0);
 
@@ -67,6 +68,19 @@ test.describe("the feed", () => {
             /^Missing one thing\s*1$/, "ValorantTester",
             olderPosts, "ExpiredTester",
         ]);
+    });
+
+    // ValorantTester can lead; ExpiredTester can't, and Night Owls don't ask for a leader.
+    test("fits two players when either can lead, and a group that doesn't ask for a leader either way", async ({ page }) => {
+        await page.goto(feedPath);
+        await page.getByRole("button", { name: "More", exact: true }).click();
+        await page.getByRole("button", { name: "In-game leader", exact: true }).click();
+        await expectSettled(page);
+
+        await expect(card(page, "ValorantTester").locator(".fact-fit")).toHaveText(["Fits:In-game leader"]);
+        await expect(card(page, "ExpiredTester").locator(".fact-fit")).toHaveText(["Fits:In-game leader: you"]);
+        await expect(card(page, "Night Owls").locator(".fact-fit, .fact-miss")).toHaveCount(0);
+        await expect(card(page, "Night Owls")).not.toContainText("leader");
     });
 
     test("narrows to one type of post with Showing", async ({ page }) => {
@@ -140,5 +154,24 @@ test.describe("the feed", () => {
 
         await expect(page.getByRole("heading", { name: "Page could not be found." })).toBeVisible();
         await expect(page.locator('meta[name="renderready-status-code"]')).toHaveAttribute("content", "404");
+    });
+});
+
+// LeaderlessTester's group Last Call in Counter-Strike 2, Ranked, wants a player who can lead.
+test.describe("a group that wants an in-game leader", () => {
+    test("misses a player who can't lead and fits one who can", async ({ page }) => {
+        await page.goto("/games/cs2");
+        await describe(page, "Looking for", editor => editor.getByLabel("Ranked").check());
+
+        const group = card(page, "Last Call");
+        await expect(group.locator(".fact-fit")).toHaveText(["Fits:Ranked"]);
+        await expect(group.locator(".fact-miss")).toHaveText(["Doesn't fit:Needs an in-game leader"]);
+
+        await page.getByRole("button", { name: "More", exact: true }).click();
+        await page.getByRole("button", { name: "In-game leader", exact: true }).click();
+        await expectSettled(page);
+
+        await expect(group.locator(".fact-fit")).toHaveText(["Fits:Ranked", "Fits:Needs an in-game leader"]);
+        await expect(group.locator(".fact-miss")).toHaveCount(0);
     });
 });

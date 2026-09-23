@@ -21,8 +21,8 @@
 -- covering two different ones, and two AWPers do not.
 --
 -- In-game leader is asked beside the roles because teams recruit for one by
--- name. It says a player can lead on top of the role they play, so it fits by
--- agreeing rather than as a slot.
+-- name. It says a player can lead on top of the role they play, and any number
+-- can, so it is not a slot: two players fit when either can lead.
 --
 -- Looking for has no team format. Premier is the ranked queue and Wingman a
 -- mode, and the leagues players recruit for, ESEA and the like, are run by

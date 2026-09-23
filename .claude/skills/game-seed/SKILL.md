@@ -214,8 +214,8 @@ to be one where that's true: slots a team fills.
   `boolean`, `slotted` false, `applies_to` `{player,group}`, `on_card` false,
   with no options, keyed and labelled as the community says it
   (`in-game-leader`, `In-game leader`). It says a player can take the job, not
-  that it is all they play, so it fits by agreeing, as the schema's comment on
-  `ilk` says. A game whose community doesn't name such a job, as Dota's
+  that it is all they play, so two players fit when either takes it, as the
+  schema's comment on `ilk` says. A game whose community doesn't name such a job, as Dota's
   doesn't, has no such field.
 - **No Flex, Fill or Any.** A player who plays anything picks every option,
   which is what covering any slot means under the slot rule; an option of its

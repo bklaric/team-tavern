@@ -145,6 +145,9 @@ factsOf game post hours = let
         in
         if field.ilk == "boolean" && isNothing text && markOf field.key == Just "miss"
         then [ missed $ flagText post.type field false ]
+        -- Another player who can't take the job fits a viewer who can.
+        else if field.ilk == "boolean" && isNothing text && markOf field.key == Just "fit"
+        then [ TextFact { text: field.label <> ": you", tabular: false, match: Just Fit } ]
         else slot field.key field.label (if shown field then named <#> plain else Nothing)
     fields = filter (\field -> elem post.type field.appliesTo) game.fields
     microphone

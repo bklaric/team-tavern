@@ -83,9 +83,9 @@ cross join lateral (
     limit 1
 ) chosen;
 
--- The hand-written Valorant posts below answer their fields by key. A post is
--- found by its owner and type, since a player has one post of each type per
--- game and these accounts post in Valorant alone.
+-- The hand-written posts below answer their fields by key. A post is found by
+-- its owner and type, since a player has one post of each type per game and
+-- these accounts post in one game alone.
 
 create function seed_post_option(nickname text, ilk text, field_key text, option_keys text[]) returns void
 language sql as $$
@@ -222,6 +222,49 @@ from player, (values
     ('11111111111111111111111111111111111111cd', current_timestamp - interval '13 months')
 ) as idle (token, last_used)
 where player.nickname = 'ExpiredTester';
+
+-- A Counter-Strike 2 group that wants a player who can lead, for how an
+-- in-game leader fits against a group that asks for one. It is in CS2 so that
+-- Valorant's feed, which the specs assert whole, stays as it is.
+
+select seed_player('LeaderlessTester', 'leaderless@example.com');
+
+insert into post
+    ( player_id, game_id, ilk, renewal_nonce, summary
+    , microphone, online_from, online_to, contact_preference
+    , name, regions, languages, age_from
+    , group_size, group_wanted_from, group_wanted_to
+    )
+select
+    player.id,
+    game.id,
+    'group',
+    left(md5('LeaderlessTester-group'), 20),
+    array['Four of us grinding Premier, and nobody wants to call. Looking for someone who can run the mid-round and keep the comms calm.'],
+    true,
+    time '20:00',
+    time '00:00',
+    'message',
+    'Last Call',
+    array['Europe'],
+    array['English'],
+    18,
+    4,
+    1,
+    1
+from player, game
+where player.nickname = 'LeaderlessTester' and game.handle = 'cs2';
+
+select
+    seed_post_range('LeaderlessTester', 'group', 'premier-rating', '10k', '14k'),
+    seed_post_option('LeaderlessTester', 'group', 'looking-for', array['ranked']);
+
+insert into post_field_flag (post_id, field_id)
+select post.id, field.id
+from post
+join player on player.id = post.player_id
+join field on field.game_id = post.game_id and field.key = 'in-game-leader'
+where player.nickname = 'LeaderlessTester' and post.ilk = 'group';
 
 drop function seed_post_range(text, text, text, text, text);
 drop function seed_post_option(text, text, text, text[]);

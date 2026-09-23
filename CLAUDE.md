@@ -195,8 +195,9 @@ on; the nickname is the handle title-cased with `Tester` after it, so `apex`
 gets `ApexTester`, the email is `apex@example.com`, and the password is
 `tester-password`. Valorant also gets `GroupTester` (`group@example.com`) with a
 group post and a community post, `ExpiredTester` (`expired@example.com`) with a
-player post past its 30 days, and `NewTester` (`new@example.com`) with no post;
-all share the password. `Seed/Games/` carries all ten production games, so every
+player post past its 30 days, and `NewTester` (`new@example.com`) with no post, and Counter-Strike 2 gets
+`LeaderlessTester` (`leaderless@example.com`) with a group post that wants an
+in-game leader; all share the password. `Seed/Games/` carries all ten production games, so every
 game handle the site serves has a page with content. A cold boot answers on the
 API within a few seconds.
 
