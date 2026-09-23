@@ -32,7 +32,7 @@ insert into game (title, short_title, handle, description)
 values
     ( 'Team Fortress 2'
     , 'TF2'
-    , 'tf2'
+    , 'team-fortress-2'
     , array['Find Team Fortress 2 players, groups and communities: a class main for your roster, a team to play 6s or Highlander with, or a server to call home.']
     );
 
@@ -40,7 +40,7 @@ insert into game_contact (game_id, kind)
 select game.id, contact.kind
 from game
 cross join (values ('discord'), ('steam')) as contact (kind)
-where game.handle = 'tf2';
+where game.handle = 'team-fortress-2';
 
 insert into field (game_id, key, label, ilk, ordered, slotted, applies_to, on_card, ordinal)
 select game.id, field.key, field.label, field.ilk, field.ordered, field.slotted, field.applies_to, field.on_card, field.ordinal
@@ -53,7 +53,7 @@ cross join (values
     ('server-type', 'Server type', 'multi',  false, false, array['player', 'group', 'community'], false, 5),
     ('looking-for', 'Looking for', 'multi',  false, false, array['player', 'group', 'community'], true,  6)
 ) as field (key, label, ilk, ordered, slotted, applies_to, on_card, ordinal)
-where game.handle = 'tf2';
+where game.handle = 'team-fortress-2';
 
 insert into field_option (field_id, key, label, ordinal)
 select field.id, option.key, option.label, option.ordinal
@@ -110,7 +110,7 @@ join (values
     ('looking-for', 'learning-the-game',  'Learning the game',      4),
     ('looking-for', 'mann-vs-machine',    'Mann vs. Machine',       5)
 ) as option (field_key, key, label, ordinal) on option.field_key = field.key
-where game.handle = 'tf2';
+where game.handle = 'team-fortress-2';
 
 insert into tracker (game_id, contact_kind, title, template)
 select game.id, tracker.contact_kind, tracker.title, tracker.template
@@ -121,4 +121,4 @@ cross join (values
     ('steam', 'etf2l.org', 'https://etf2l.org/search/'),
     ('steam', 'rgl.gg',    'https://rgl.gg/Public/PlayerProfile.aspx?p=')
 ) as tracker (contact_kind, title, template)
-where game.handle = 'tf2';
+where game.handle = 'team-fortress-2';

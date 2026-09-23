@@ -26,7 +26,7 @@ insert into game (title, short_title, handle, description)
 values
     ( 'Apex Legends'
     , 'Apex Legends'
-    , 'apex'
+    , 'apex-legends'
     , array['Find Apex Legends players, groups and communities: a third for your trio, a squad to climb ranked with, a team for scrims and the Challenger Circuit, or a community to drop with.']
     );
 
@@ -36,7 +36,7 @@ from game
 cross join (values
     ('discord'), ('ea'), ('steam'), ('psn'), ('gamer_tag'), ('friend_code')
 ) as contact (kind)
-where game.handle = 'apex';
+where game.handle = 'apex-legends';
 
 insert into field (game_id, key, label, ilk, ordered, slotted, applies_to, on_card, ordinal)
 select game.id, field.key, field.label, field.ilk, field.ordered, field.slotted, field.applies_to, field.on_card, field.ordinal
@@ -48,7 +48,7 @@ cross join (values
     ('platform',       'Platform',       'multi',   false, false, array['player', 'group', 'community'], true,  4),
     ('looking-for',    'Looking for',    'multi',   false, false, array['player', 'group', 'community'], true,  5)
 ) as field (key, label, ilk, ordered, slotted, applies_to, on_card, ordinal)
-where game.handle = 'apex';
+where game.handle = 'apex-legends';
 
 insert into field_option (field_id, key, label, ordinal)
 select field.id, option.key, option.label, option.ordinal
@@ -92,7 +92,7 @@ join (values
     ('looking-for', 'scrims-tournaments', 'Scrims and tournaments', 3),
     ('looking-for', 'learning-the-game',  'Learning the game',      4)
 ) as option (field_key, key, label, ordinal) on option.field_key = field.key
-where game.handle = 'apex';
+where game.handle = 'apex-legends';
 
 -- tracker.gg looks an Apex player up by the account they play on, so there is
 -- one tracker per account it can find. It holds no Steam profiles: a Steam
@@ -106,4 +106,4 @@ cross join (values
     ('psn',       'tracker.gg', 'https://apex.tracker.gg/profile/psn/'),
     ('gamer_tag', 'tracker.gg', 'https://apex.tracker.gg/profile/xbl/')
 ) as tracker (contact_kind, title, template)
-where game.handle = 'apex';
+where game.handle = 'apex-legends';

@@ -24,7 +24,7 @@ cases=(
     "player, every field|valorant|null|{\"type\": \"player\", \"options\": {\"rank\": [\"diamond-2\"], \"role\": [\"controller\", \"sentinel\"], \"platform\": [\"pc\"], \"looking-for\": [\"ranked\"]}, \"flags\": [\"in-game-leader\"], \"country\": \"Croatia\", \"age\": 24, \"languages\": [\"English\"], \"online\": {\"from\": \"19:00\", \"to\": \"23:00\"}, \"timezone\": \"Europe/Zagreb\", \"microphone\": true}|{player,group,community}"
     "player, rank and role, players only|valorant|null|{\"type\": \"player\", \"options\": {\"rank\": [\"gold-1\"], \"role\": [\"duelist\"]}}|{player}"
     "group, every field|valorant|null|{\"type\": \"group\", \"options\": {\"role\": [\"controller\", \"initiator\"], \"platform\": [\"pc\"]}, \"ranges\": {\"rank\": {\"from\": \"platinum-1\", \"to\": \"diamond-3\"}}, \"regions\": [\"Europe\"], \"ageFrom\": 18, \"ageTo\": 30, \"languages\": [\"English\", \"German\"], \"online\": {\"from\": \"20:00\", \"to\": \"02:00\"}, \"timezone\": \"Europe/Berlin\", \"microphone\": true}|{player}"
-    "lol player, every field|lol|null|{\"type\": \"player\", \"options\": {\"role\": [\"mid\"]}, \"country\": \"Germany\", \"languages\": [\"English\"], \"online\": {\"from\": \"18:00\", \"to\": \"22:00\"}, \"timezone\": \"Europe/Berlin\", \"microphone\": true}|{player,group,community}"
+    "lol player, every field|league-of-legends|null|{\"type\": \"player\", \"options\": {\"role\": [\"mid\"]}, \"country\": \"Germany\", \"languages\": [\"English\"], \"online\": {\"from\": \"18:00\", \"to\": \"22:00\"}, \"timezone\": \"Europe/Berlin\", \"microphone\": true}|{player,group,community}"
 )
 
 psql_db() { docker exec -i postgres psql -U "$user" -d "$database" -v ON_ERROR_STOP=1 -qAt "$@"; }

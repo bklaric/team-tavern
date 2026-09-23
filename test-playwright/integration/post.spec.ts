@@ -3,12 +3,12 @@ import { password, signOut, signUp, unique } from "../accounts";
 import { discordUser, fakeDiscord, signUpWithDiscord } from "../discord";
 import { expectPage } from "../pages";
 
-// Posts go into League of Legends, whose feed holds only LolTester's seeded player post
-// (`stacks/test-seed/players.sql`): Gold I, Top, Casual, Croatia, English. Valorant's feed
-// is the one `feed.spec.ts` asserts whole. Every test signs up a player of its own, and
-// the posts they publish stay clear of LolTester's rank and role unless a test means them
-// to fit.
-const feedPath = "/games/lol";
+// Posts go into League of Legends, whose feed holds only LeagueOfLegendsTester's seeded
+// player post (`stacks/test-seed/players.sql`): Gold I, Top, Casual, Croatia, English.
+// Valorant's feed is the one `feed.spec.ts` asserts whole. Every test signs up a player of
+// its own, and the posts they publish stay clear of LeagueOfLegendsTester's rank and role
+// unless a test means them to fit.
+const feedPath = "/games/league-of-legends";
 
 const expectSettled = (page: Page) => expect(page.locator(".feed")).toHaveAttribute("aria-busy", "false");
 
@@ -24,9 +24,9 @@ const pill = (page: Page, group: string, text: string) =>
     page.getByRole("group", { name: group }).locator(".pill", { hasText: new RegExp(`^${text}$`) });
 
 // A group of Rift Owls wanting a Top laner from Gold IV to Platinum I, for Casual games:
-// LolTester fits it.
+// LeagueOfLegendsTester fits it.
 async function publishGroup(page: Page, name: string) {
-    await page.goto("/games/lol/post/group");
+    await page.goto("/games/league-of-legends/post/group");
     await expect(page.getByRole("heading", { name: "Tell players about your group" })).toBeVisible();
     await page.getByLabel("Group name").fill(name);
     await pill(page, "Roles you need", "Top").click();
@@ -34,7 +34,7 @@ async function publishGroup(page: Page, name: string) {
     await field(page, "Rank range").getByLabel("Highest").selectOption("platinum-i");
     await pill(page, "Looking for", "Casual").click();
     await page.getByRole("button", { name: "Publish post" }).click();
-    await expectPage(page, "/games/lol/post/group/live");
+    await expectPage(page, "/games/league-of-legends/post/group/live");
 }
 
 test.describe("posting", () => {
@@ -51,7 +51,7 @@ test.describe("posting", () => {
         await expectSettled(page);
 
         await page.getByRole("link", { name: "Publish post" }).click();
-        await expectPage(page, "/games/lol/post/player");
+        await expectPage(page, "/games/league-of-legends/post/player");
         await expect(page.getByRole("heading", { name: "Tell groups and players about you" })).toBeVisible();
         await expect(page.getByLabel("Rank", { exact: true })).toHaveValue("iron-iv");
         await expect(page.getByRole("group", { name: "Role" }).getByLabel("Support")).toBeChecked();
@@ -65,7 +65,7 @@ test.describe("posting", () => {
 
         await page.getByRole("button", { name: "Publish post" }).click();
 
-        await expectPage(page, "/games/lol/post/player/live");
+        await expectPage(page, "/games/league-of-legends/post/player/live");
         await expect(page.getByRole("heading", { name: "Your post is live" })).toBeVisible();
         await expect(page.getByRole("heading", { name: "Nobody fits your post yet" })).toBeVisible();
         await expect(page.getByText("These come closest. We'll email you when someone fits.")).toBeVisible();
@@ -90,8 +90,8 @@ test.describe("posting", () => {
 
         await expect(page.getByRole("heading", { name: "Your post is live" })).toBeVisible();
         await expect(page.getByRole("heading", { name: "1 player fits your group right now" })).toBeVisible();
-        await expect(card(page, "LolTester")).toHaveCount(1);
-        await expect(card(page, "LolTester").locator(".fact-fit").first()).toBeVisible();
+        await expect(card(page, "LeagueOfLegendsTester")).toHaveCount(1);
+        await expect(card(page, "LeagueOfLegendsTester").locator(".fact-fit").first()).toBeVisible();
     });
 
     test("starts from the type with the game known, and offers the post the player already has", async ({ page }) => {
@@ -107,7 +107,7 @@ test.describe("posting", () => {
         await expect(groupCard).toContainText("You have one for League of Legends");
 
         await groupCard.click();
-        await expectPage(page, "/games/lol/post/group");
+        await expectPage(page, "/games/league-of-legends/post/group");
         await expect(page.getByRole("heading", { name: "You already have a League of Legends group post" })).toBeVisible();
         await expect(card(page, name)).toHaveCount(1);
 
@@ -119,7 +119,7 @@ test.describe("posting", () => {
         await page.getByLabel("Group name").fill(renamed);
         await page.getByRole("button", { name: "Save post" }).click();
 
-        await expectPage(page, "/games/lol/post/group/live");
+        await expectPage(page, "/games/league-of-legends/post/group/live");
         await expect(page.getByRole("heading", { name: "Your post is updated" })).toBeVisible();
 
         // The feed starts from the player's post, which names it.
@@ -132,7 +132,7 @@ test.describe("posting", () => {
         const name = unique("Rift Owls ");
         await publishGroup(page, name);
 
-        await page.goto("/games/lol/post/group");
+        await page.goto("/games/league-of-legends/post/group");
         await page.getByRole("button", { name: "Delete it" }).click();
         const confirmation = page.getByRole("alertdialog", { name: `Delete ${name}?` });
         await expect(confirmation).toContainText("It has no conversations.");
@@ -148,7 +148,7 @@ test.describe("posting", () => {
 
     test("names what a community is missing and publishes nothing", async ({ page }) => {
         await signUp(page);
-        await page.goto("/games/lol/post/community");
+        await page.goto("/games/league-of-legends/post/community");
 
         await page.getByRole("button", { name: "Publish post" }).click();
 
@@ -156,7 +156,7 @@ test.describe("posting", () => {
         await expect(page.getByText("Tell players what your community is about.")).toBeVisible();
         await expect(page.getByText("Add your invite, or choose another way to join.")).toBeVisible();
         await expect(page.getByLabel("Community name")).toBeFocused();
-        await expectPage(page, "/games/lol/post/community");
+        await expectPage(page, "/games/league-of-legends/post/community");
 
         await page.getByLabel("Community name").fill("Rift Academy");
         await expect(page.getByText("Give your community a name.")).toHaveCount(0);
@@ -164,12 +164,12 @@ test.describe("posting", () => {
 
     test("shows the account's facts as they are, and says a change reaches every post", async ({ page }) => {
         await signUp(page);
-        await page.goto("/games/lol/post/player");
+        await page.goto("/games/league-of-legends/post/player");
         await page.getByLabel("Discord", { exact: true }).fill("rift.owl");
         await page.getByRole("button", { name: "Publish post" }).click();
-        await expectPage(page, "/games/lol/post/player/live");
+        await expectPage(page, "/games/league-of-legends/post/player/live");
 
-        await page.goto("/games/lol/post/group");
+        await page.goto("/games/league-of-legends/post/group");
         const discord = field(page, "Discord");
         await expect(discord.locator(".account-fact")).toContainText("rift.owl");
         await expect(discord.locator(".account-fact")).toContainText("From your account");
@@ -182,7 +182,7 @@ test.describe("posting", () => {
     });
 
     test("publishes a draft written signed out once the player has signed up", async ({ page }) => {
-        await page.goto("/games/lol/post/player");
+        await page.goto("/games/league-of-legends/post/player");
         await expect(page.getByText("You'll create an account next. Nothing you've written is lost.")).toBeVisible();
         await expect(page.getByRole("complementary", { name: "Preview" }).locator(".card-name")).toHaveText("You");
         await page.getByLabel("About you and what you're looking for").fill("Support main, evenings.");
@@ -196,7 +196,7 @@ test.describe("posting", () => {
         await page.getByLabel("Password").fill(password);
         await page.getByRole("button", { name: "Create account and publish" }).click();
 
-        await expectPage(page, "/games/lol/post/player/live");
+        await expectPage(page, "/games/league-of-legends/post/player/live");
         await expect(page.getByRole("heading", { name: "Your post is live" })).toBeVisible();
 
         // The post answers none of the feed's fields, so the feed it describes is the whole
@@ -208,7 +208,7 @@ test.describe("posting", () => {
 
     test("signs up with Discord beside the Discord input and comes back to the draft", async ({ page }) => {
         const discord = await fakeDiscord(page, discordUser(`${unique("dpost")}@example.com`, true));
-        await page.goto("/games/lol/post/player");
+        await page.goto("/games/league-of-legends/post/player");
         await page.getByLabel("About you and what you're looking for").fill("Jungle, weekends.");
 
         await page.getByRole("button", { name: "Sign up with Discord" }).click();
@@ -216,18 +216,18 @@ test.describe("posting", () => {
         await page.getByLabel("Nickname").fill(unique("D"));
         await page.getByRole("button", { name: "Continue" }).click();
 
-        await expectPage(page, "/games/lol/post/player");
+        await expectPage(page, "/games/league-of-legends/post/player");
         await expect(page.getByLabel("About you and what you're looking for")).toHaveValue("Jungle, weekends.");
         await expect(field(page, "Discord").locator(".account-fact")).toContainText(discord.user.username);
         await expect(page.getByText("You'll create an account next.")).toHaveCount(0);
 
         await page.getByRole("button", { name: "Publish post" }).click();
-        await expectPage(page, "/games/lol/post/player/live");
+        await expectPage(page, "/games/league-of-legends/post/player/live");
     });
 
     test("publishes once a player new to Discord's sign-up has picked a nickname", async ({ page }) => {
         await fakeDiscord(page, discordUser(null, false));
-        await page.goto("/games/lol/post/player");
+        await page.goto("/games/league-of-legends/post/player");
         await page.getByLabel("About you and what you're looking for").fill("Mid, most nights.");
 
         await page.getByRole("button", { name: "Publish post" }).click();
@@ -237,7 +237,7 @@ test.describe("posting", () => {
         await page.getByLabel("Nickname").fill(unique("D"));
         await page.getByRole("button", { name: "Publish post" }).click();
 
-        await expectPage(page, "/games/lol/post/player/live");
+        await expectPage(page, "/games/league-of-legends/post/player/live");
         await expect(page.getByRole("heading", { name: "Your post is live" })).toBeVisible();
     });
 
@@ -247,7 +247,7 @@ test.describe("posting", () => {
         await publishGroup(page, name);
         await signOut(page);
 
-        await page.goto("/games/lol/post/group");
+        await page.goto("/games/league-of-legends/post/group");
         const renamed = unique("Rift Hawks ");
         await page.getByLabel("Group name").fill(renamed);
         await page.getByRole("button", { name: "Publish post" }).click();
@@ -259,15 +259,15 @@ test.describe("posting", () => {
         await page.getByLabel("Password").fill(password);
         await page.getByRole("button", { name: "Sign in and publish" }).click();
 
-        await expectPage(page, "/games/lol/post/group");
+        await expectPage(page, "/games/league-of-legends/post/group");
         await expect(page.getByRole("heading", { name: "You already have a League of Legends group post" })).toBeVisible();
         await expect(card(page, name)).toHaveCount(1);
         await expect(card(page, renamed)).toHaveCount(1);
         await page.getByRole("button", { name: "Update my post" }).click();
 
-        await expectPage(page, "/games/lol/post/group/live");
+        await expectPage(page, "/games/league-of-legends/post/group/live");
         await expect(page.getByRole("heading", { name: "Your post is updated" })).toBeVisible();
-        await page.goto("/games/lol/post/group");
+        await page.goto("/games/league-of-legends/post/group");
         await expect(card(page, renamed)).toHaveCount(1);
         await expect(card(page, name)).toHaveCount(0);
     });
@@ -279,17 +279,17 @@ test.describe("posting", () => {
         await publishGroup(page, name);
         await signOut(page);
 
-        await page.goto("/games/lol/post/group");
+        await page.goto("/games/league-of-legends/post/group");
         const renamed = unique("Rift Hawks ");
         await page.getByLabel("Group name").fill(renamed);
         await page.getByRole("button", { name: "Sign up with Discord" }).click();
 
-        await expectPage(page, "/games/lol/post/group");
+        await expectPage(page, "/games/league-of-legends/post/group");
         await expect(page.getByRole("heading", { name: "You already have a League of Legends group post" })).toBeVisible();
         await page.getByRole("button", { name: "Keep my post as it is" }).click();
         await expectPage(page, feedPath);
 
-        await page.goto("/games/lol/post/group");
+        await page.goto("/games/league-of-legends/post/group");
         await expect(page.getByRole("button", { name: "Edit it" })).toBeVisible();
         await expect(card(page, name)).toHaveCount(1);
         await expect(card(page, renamed)).toHaveCount(0);

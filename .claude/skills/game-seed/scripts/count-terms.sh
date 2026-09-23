@@ -7,7 +7,7 @@
 #
 # The regex is a Postgres one (\m and \M are word boundaries) matched against
 # the lower-cased text. The handle is the dump's, which may predate a rename
-# (csgo, not cs2). Run from the repo root with the development stack up.
+# (csgo, not counter-strike-2). Run from the repo root with the development stack up.
 
 set -euo pipefail
 

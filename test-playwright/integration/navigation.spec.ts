@@ -5,7 +5,7 @@ import { expectPage } from "../pages";
 const feedHeading = { name: "Apex Legends", level: 1 };
 
 test("a link clicked with Ctrl or Cmd opens in a new tab and leaves this one", async ({ page }) => {
-    await page.goto("/games/apex");
+    await page.goto("/games/apex-legends");
 
     const [tab] = await Promise.all([
         page.context().waitForEvent("page"),
@@ -13,12 +13,12 @@ test("a link clicked with Ctrl or Cmd opens in a new tab and leaves this one", a
     ]);
 
     await expect(tab).toHaveURL(url => url.pathname === "/signin");
-    await expectPage(page, "/games/apex");
+    await expectPage(page, "/games/apex-legends");
     await expect(page.getByRole("heading", feedHeading)).toBeVisible();
 });
 
 test("back and forward go through the pages opened, once each", async ({ page }) => {
-    await page.goto("/games/apex");
+    await page.goto("/games/apex-legends");
     const logo = page.getByRole("link", { name: "TeamTavern" });
 
     await logo.click();
@@ -26,8 +26,8 @@ test("back and forward go through the pages opened, once each", async ({ page })
     await logo.click();
 
     await page.goBack();
-    await expectPage(page, "/games/apex");
-    await expect(page).toHaveURL(url => url.pathname === "/games/apex");
+    await expectPage(page, "/games/apex-legends");
+    await expect(page).toHaveURL(url => url.pathname === "/games/apex-legends");
     await expect(page.getByRole("heading", feedHeading)).toBeVisible();
 
     await page.goForward();

@@ -126,8 +126,8 @@ is, update this list.
   that order.
 - `stacks/test-seed/players.sql` is rewritten for posts. It has to give the
   specs enough to drive every later step through the browser: for every game,
-  one account with a player post (nickname `<Handle>Tester`, email
-  `<handle>@example.com`, password `tester-password`, as today); for Valorant
+  one account with a player post (nickname `<Handle>Tester` with the handle's
+  hyphens dropped, email `<handle>@example.com`, password `tester-password`, as today); for Valorant
   also a second account owning a group post and a community post, so the feed
   mixes all three types; and a third account with no post, for the "signed in
   without a post" states. Posts carry answers to the game's fields, hours, a
@@ -788,7 +788,10 @@ What every later page needs signed in and out.
   API down; the stylesheets and cover images a bot's page names are served;
   `noindex` on an expired post's render.
 - Caddy redirects for the old paths worth keeping: `/games/:handle/players`
-  and `/teams` to `/games/:handle`; everything else old is a 404.
+  and `/teams` to `/games/:handle`, the old handle turned into the new one as
+  `legacy.game_map` in `redesign/import/mapping.sql` turns it (`lol` to
+  `league-of-legends`, `csgo` to `counter-strike-2`); everything else old is a
+  404. `/games` already redirects to the home page.
 - Discord: `/signin` is the one redirect URI (step 4) and already registered;
   the manual check in `CLAUDE.md` is run against the dev stack once its
   database is the new model.

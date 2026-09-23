@@ -26,7 +26,7 @@ insert into game (title, short_title, handle, description)
 values
     ( 'Rainbow Six Siege'
     , 'R6S'
-    , 'r6s'
+    , 'rainbow-six-siege'
     , array['Find Rainbow Six Siege players, groups and communities: a ranked duo, a fifth for your stack, a team for Siege Cup and scrims, or a clan to run with.']
     );
 
@@ -34,7 +34,7 @@ insert into game_contact (game_id, kind)
 select game.id, contact.kind
 from game
 cross join (values ('discord'), ('steam'), ('ubisoft'), ('psn'), ('gamer_tag')) as contact (kind)
-where game.handle = 'r6s';
+where game.handle = 'rainbow-six-siege';
 
 insert into field (game_id, key, label, ilk, ordered, slotted, applies_to, on_card, ordinal)
 select game.id, field.key, field.label, field.ilk, field.ordered, field.slotted, field.applies_to, field.on_card, field.ordinal
@@ -46,7 +46,7 @@ cross join (values
     ('platform',       'Platform',       'multi',   false, false, array['player', 'group', 'community'], true,  4),
     ('looking-for',    'Looking for',    'multi',   false, false, array['player', 'group', 'community'], true,  5)
 ) as field (key, label, ilk, ordered, slotted, applies_to, on_card, ordinal)
-where game.handle = 'r6s';
+where game.handle = 'rainbow-six-siege';
 
 insert into field_option (field_id, key, label, ordinal)
 select field.id, option.key, option.label, option.ordinal
@@ -109,7 +109,7 @@ join (values
     ('looking-for', 'learning-the-game',  'Learning the game',      4),
     ('looking-for', 'siege-cup',          'Siege Cup',              5)
 ) as option (field_key, key, label, ordinal) on option.field_key = field.key
-where game.handle = 'r6s';
+where game.handle = 'rainbow-six-siege';
 
 insert into tracker (game_id, contact_kind, title, template)
 select game.id, tracker.contact_kind, tracker.title, tracker.template
@@ -119,4 +119,4 @@ cross join (values
     ('psn',       'r6.tracker.network', 'https://r6.tracker.network/r6siege/profile/psn/'),
     ('gamer_tag', 'r6.tracker.network', 'https://r6.tracker.network/r6siege/profile/xbl/')
 ) as tracker (contact_kind, title, template)
-where game.handle = 'r6s';
+where game.handle = 'rainbow-six-siege';

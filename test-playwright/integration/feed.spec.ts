@@ -160,7 +160,7 @@ test.describe("the feed", () => {
 // LeaderlessTester's group Last Call in Counter-Strike 2, Ranked, wants a player who can lead.
 test.describe("a group that wants an in-game leader", () => {
     test("misses a player who can't lead and fits one who can", async ({ page }) => {
-        await page.goto("/games/cs2");
+        await page.goto("/games/counter-strike-2");
         await describe(page, "Looking for", editor => editor.getByLabel("Ranked").check());
 
         const group = card(page, "Last Call");

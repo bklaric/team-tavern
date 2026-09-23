@@ -24,7 +24,7 @@ insert into game (title, short_title, handle, description)
 values
     ( 'Dota 2'
     , 'Dota 2'
-    , 'dota2'
+    , 'dota-2'
     , array['Find Dota 2 players, groups and communities: a ranked duo, a five for Battle Cup, or a community to play with.']
     );
 
@@ -32,7 +32,7 @@ insert into game_contact (game_id, kind)
 select game.id, contact.kind
 from game
 cross join (values ('discord'), ('steam')) as contact (kind)
-where game.handle = 'dota2';
+where game.handle = 'dota-2';
 
 insert into field (game_id, key, label, ilk, ordered, slotted, applies_to, on_card, ordinal)
 select game.id, field.key, field.label, field.ilk, field.ordered, field.slotted, field.applies_to, field.on_card, field.ordinal
@@ -44,7 +44,7 @@ cross join (values
     ('battle-cup-tier', 'Battle Cup tier', 'single', true,  false, array['player', 'group'],              false, 4),
     ('looking-for',     'Looking for',     'multi',  false, false, array['player', 'group', 'community'], true,  5)
 ) as field (key, label, ilk, ordered, slotted, applies_to, on_card, ordinal)
-where game.handle = 'dota2';
+where game.handle = 'dota-2';
 
 insert into field_option (field_id, key, label, ordinal)
 select field.id, option.key, option.label, option.ordinal
@@ -124,7 +124,7 @@ join (values
     ('looking-for', 'learning-the-game',  'Learning the game',      4),
     ('looking-for', 'battle-cup',         'Battle Cup',             5)
 ) as option (field_key, key, label, ordinal) on option.field_key = field.key
-where game.handle = 'dota2';
+where game.handle = 'dota-2';
 
 insert into tracker (game_id, contact_kind, title, template)
 select game.id, tracker.contact_kind, tracker.title, tracker.template
@@ -133,4 +133,4 @@ cross join (values
     ('steam', 'opendota.com', 'https://www.opendota.com/players/'),
     ('steam', 'dotabuff.com', 'https://www.dotabuff.com/players/')
 ) as tracker (contact_kind, title, template)
-where game.handle = 'dota2';
+where game.handle = 'dota-2';

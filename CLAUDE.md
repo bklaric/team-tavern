@@ -191,8 +191,9 @@ volume, which is why `down -v` rather than `down` is what resets it. It applies
 `TablesCurrent.sql`, then `Seed/Regions.sql`, `Seed/Countries.sql` and
 `Seed/Games/`, then `stacks/test-seed/players.sql`. That last one gives every
 seeded game one account with a player post, so the feed has a row to assert
-on; the nickname is the handle title-cased with `Tester` after it, so `apex`
-gets `ApexTester`, the email is `apex@example.com`, and the password is
+on; the nickname is the handle title-cased with its hyphens dropped and
+`Tester` after it, so `apex-legends` gets `ApexLegendsTester`, the email is
+`apex-legends@example.com`, and the password is
 `tester-password`. Valorant also gets `GroupTester` (`group@example.com`) with a
 group post and a community post, `ExpiredTester` (`expired@example.com`) with a
 player post past its 30 days, and `NewTester` (`new@example.com`) with no post, and Counter-Strike 2 gets
@@ -368,6 +369,12 @@ game must have one; nothing generates a stand-in, and `games.spec.ts` fails on a
 home page tile whose cover does not load at that size. Steam's
 `library_600x900_2x.jpg` is that shape for games on Steam; SteamGridDB carries
 the same shape for the rest.
+
+A game's handle is its common title, without a publisher prefix, lowercased,
+apostrophes dropped and every other run of non-alphanumerics a single hyphen:
+`counter-strike-2`, `heroes-of-the-storm`. It is the game's URL,
+`/games/<handle>`, so it outlives a rebrand; a handle that has to change anyway
+takes its cover with it and leaves a redirect from the old one.
 
 ## Code style
 

@@ -52,6 +52,12 @@ handle @bot_page {
     }
 }
 
+# The home page is the list of games. `redir` sorts before every `handle`
+# block, so a bot gets the redirect rather than a prerender of it.
+
+redir /games / 301
+redir /games/ / 301
+
 # Proxy api requests to the api.
 
 handle_path /api/* {

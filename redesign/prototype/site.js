@@ -137,20 +137,23 @@ const describeFeed = (game, type, described) => {
 
 // Games.
 
+// The sample data keys games by the old site's handles; the covers are named by
+// the site's own.
 const GAMES = [
-    { handle: "apex", title: "Apex Legends" },
-    { handle: "cs2", title: "Counter-Strike 2" },
-    { handle: "dota2", title: "Dota 2" },
-    { handle: "hots", title: "Heroes of the Storm" },
-    { handle: "lol", title: "League of Legends" },
-    { handle: "overwatch", title: "Overwatch" },
-    { handle: "r6s", title: "Rainbow Six Siege" },
-    { handle: "tf2", title: "Team Fortress 2" },
-    { handle: "valheim", title: "Valheim" },
-    { handle: "valorant", title: "Valorant" },
+    { handle: "apex", site: "apex-legends", title: "Apex Legends" },
+    { handle: "cs2", site: "counter-strike-2", title: "Counter-Strike 2" },
+    { handle: "dota2", site: "dota-2", title: "Dota 2" },
+    { handle: "hots", site: "heroes-of-the-storm", title: "Heroes of the Storm" },
+    { handle: "lol", site: "league-of-legends", title: "League of Legends" },
+    { handle: "overwatch", site: "overwatch", title: "Overwatch" },
+    { handle: "r6s", site: "rainbow-six-siege", title: "Rainbow Six Siege" },
+    { handle: "tf2", site: "team-fortress-2", title: "Team Fortress 2" },
+    { handle: "valheim", site: "valheim", title: "Valheim" },
+    { handle: "valorant", site: "valorant", title: "Valorant" },
 ];
 const gameTitle = handle => (GAMES.find(g => g.handle === handle) || { title: handle }).title;
-const coverOf = handle => `../../src/TeamTavern/Client/Static/Images/Games/${handle}.webp`;
+const coverOf = handle =>
+    `../../src/TeamTavern/Client/Static/Images/Games/${(GAMES.find(g => g.handle === handle) || { site: handle }).site}.webp`;
 
 // The cover grid: the game picker in the header (brief 11.4), on the home page
 // (11.2) and in the second step of posting (6). It carries no captions: each

@@ -25,8 +25,9 @@ $$;
 
 -- One tester per game with a player post, derived from the game table, so a
 -- new file in Seed/Games gets one without an edit here. The nickname is the
--- handle title-cased with Tester after it, so `apex` gets `ApexTester`, and
--- the email is `apex@example.com`.
+-- handle title-cased with its hyphens dropped and Tester after it, so
+-- `apex-legends` gets `ApexLegendsTester`, and the email is
+-- `apex-legends@example.com`.
 --
 -- The post answers every field a player is asked: a single field with its
 -- middle option, so a rank lands mid-ladder; a multi field with its first; a
@@ -36,7 +37,7 @@ with tester as (
     select
         game.id as game_id,
         game.title,
-        initcap(game.handle) || 'Tester' as nickname,
+        replace(initcap(game.handle), '-', '') || 'Tester' as nickname,
         game.handle || '@example.com' as email
     from game
 ),
@@ -253,7 +254,7 @@ select
     1,
     1
 from player, game
-where player.nickname = 'LeaderlessTester' and game.handle = 'cs2';
+where player.nickname = 'LeaderlessTester' and game.handle = 'counter-strike-2';
 
 select
     seed_post_range('LeaderlessTester', 'group', 'premier-rating', '10k', '14k'),
@@ -297,7 +298,7 @@ select
     1,
     1
 from player, game
-where player.nickname = 'OwnerTester' and game.handle = 'dota2';
+where player.nickname = 'OwnerTester' and game.handle = 'dota-2';
 
 insert into post
     ( player_id, game_id, ilk, renewal_nonce, summary
@@ -318,7 +319,7 @@ select
     current_timestamp - posted.age
 from player, game
 join (values
-    ('hots', interval '45 days'),
+    ('heroes-of-the-storm', interval '45 days'),
     ('valheim', interval '26 days')
 ) as posted (handle, age) on posted.handle = game.handle
 where player.nickname = 'OwnerTester';

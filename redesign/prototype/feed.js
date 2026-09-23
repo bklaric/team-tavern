@@ -427,7 +427,7 @@ const restoreFeed = () => {
 const activeCount = POSTS.filter(p => !p.expired).length;
 document.title = `${GAME.title}: find players, groups and communities`;
 document.getElementById("feed-header").innerHTML = `
-    <img class="feed-cover" src="../../src/TeamTavern/Client/Static/Images/Games/${GAME.handle}.webp" alt="">
+    <img class="feed-cover" src="${coverOf(GAME.handle)}" alt="">
     <div>
         <h1>${escapeHtml(GAME.title)}</h1>
         <p>Find players, groups and communities</p>

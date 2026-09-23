@@ -153,8 +153,11 @@ no evidence behind it is a guess, and says so.
   true — only when the game runs on **more than one platform family**. The
   families are PC, PlayStation, Xbox and Switch; every PC store is PC, and
   Switch 2 is Switch. A single-family game has no platform field at all.
-- Keep the existing `handle`: the cover is named after it. If the handle has to
-  change (CS:GO became `cs2`), the cover must be renamed with it, and say so.
+- A new game's `handle` follows the rule in `CLAUDE.md` (`counter-strike-2`).
+  Keep an existing one, even through a rebrand: it is the game's URL and the
+  cover is named after it. If it has to change anyway, as when CS:GO became
+  Counter-Strike 2, the cover is renamed with it and the old path needs a
+  redirect, so say so.
 
 ### Ranks
 

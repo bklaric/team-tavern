@@ -68,12 +68,12 @@ test.describe("the home page", () => {
         await signIn(page, owner);
 
         await game(page, "Dota 2").getByRole("link", { name: "Edit" }).click();
-        await expectPage(page, "/games/dota2/post/group");
+        await expectPage(page, "/games/dota-2/post/group");
         await expect(page.getByRole("heading", { name: "Edit your group post" })).toBeVisible();
 
         await page.goto("/");
         await game(page, "Dota 2").getByRole("link", { name: "See what fits" }).click();
-        await expectPage(page, "/games/dota2");
+        await expectPage(page, "/games/dota-2");
         await expect(page.getByText("Showing what fits Kestrel's Nest, your group post.")).toBeVisible();
     });
 
@@ -96,7 +96,7 @@ test.describe("the home page", () => {
 
         // The owner's feed leaves their own posts out, so the feed is read signed out.
         await signOut(page);
-        await page.goto("/games/hots");
+        await page.goto("/games/heroes-of-the-storm");
         await expect(page.locator(".feed")).toHaveAttribute("aria-busy", "false");
         await expect(page.locator(".feed .divider")).toHaveCount(0);
         const card = page.locator(".card").filter({ has: page.getByRole("link", { name: "OwnerTester", exact: true }) });

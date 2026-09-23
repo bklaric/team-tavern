@@ -60,15 +60,15 @@ test("signing in with a password says which half is wrong", async ({ page }) => 
 });
 
 test("signing in from the header returns the player to the page they came from", async ({ page }) => {
-    await page.goto("/games/apex");
+    await page.goto("/games/apex-legends");
     await page.getByRole("link", { name: "Sign in" }).click();
     await expectPage(page, "/signin");
-    await page.getByLabel("Email or nickname").fill("apex@example.com");
+    await page.getByLabel("Email or nickname").fill("apex-legends@example.com");
     await page.getByLabel("Password").fill(password);
     await page.getByRole("button", { name: "Sign in", exact: true }).click();
 
-    await expectPage(page, "/games/apex");
-    await expectSignedInAs(page, "ApexTester");
+    await expectPage(page, "/games/apex-legends");
+    await expectSignedInAs(page, "ApexLegendsTester");
 });
 
 // The cookie of a signed-out session, which a browser also keeps across a reset of the
@@ -105,7 +105,7 @@ test("signing in on a page opened before another tab signed in replaces that ses
     const earlier = await context.newPage();
     await earlier.goto("/signin");
     await expect(earlier.getByLabel("Email or nickname")).toBeVisible();
-    await signIn(page, "ApexTester");
+    await signIn(page, "ApexLegendsTester");
     const replaced = await context.cookies();
 
     await earlier.getByLabel("Email or nickname").fill("new@example.com");
@@ -225,11 +225,11 @@ test("a password player asks for a reset link", async ({ page }) => {
     await page.goto("/signin");
     await page.getByRole("link", { name: "Forgot password?" }).click();
     await expectPage(page, "/forgot-password");
-    await page.getByLabel("Email").fill("apex@example.com");
+    await page.getByLabel("Email").fill("apex-legends@example.com");
     await page.getByRole("button", { name: "Send link" }).click();
 
     await expect(page.getByRole("heading", { name: "Check your email" })).toBeVisible();
-    await expect(page.getByText("We sent a link to apex@example.com.")).toBeVisible();
+    await expect(page.getByText("We sent a link to apex-legends@example.com.")).toBeVisible();
 });
 
 test("signing out lands on the home page signed out", async ({ page }) => {

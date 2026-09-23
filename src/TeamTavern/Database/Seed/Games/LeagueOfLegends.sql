@@ -27,7 +27,7 @@ insert into game (title, short_title, handle, description)
 values
     ( 'League of Legends'
     , 'LoL'
-    , 'lol'
+    , 'league-of-legends'
     , array['Find League of Legends players, groups and communities: a duo to climb with, a five stack for Clash, a team for scrims and tournaments, or a place to play ARAM in.']
     );
 
@@ -35,7 +35,7 @@ insert into game_contact (game_id, kind)
 select game.id, contact.kind
 from game
 cross join (values ('discord'), ('riot')) as contact (kind)
-where game.handle = 'lol';
+where game.handle = 'league-of-legends';
 
 insert into field (game_id, key, label, ilk, ordered, slotted, applies_to, on_card, ordinal)
 select game.id, field.key, field.label, field.ilk, field.ordered, field.slotted, field.applies_to, field.on_card, field.ordinal
@@ -46,7 +46,7 @@ cross join (values
     ('looking-for', 'Looking for', 'multi',  false, false, array['player', 'group', 'community'], true,  3),
     ('clash-tier',  'Clash tier',  'single', true,  false, array['player', 'group'],              false, 4)
 ) as field (key, label, ilk, ordered, slotted, applies_to, on_card, ordinal)
-where game.handle = 'lol';
+where game.handle = 'league-of-legends';
 
 insert into field_option (field_id, key, label, ordinal)
 select field.id, option.key, option.label, option.ordinal
@@ -102,7 +102,7 @@ join (values
     ('clash-tier', 'tier-ii',  'Tier II',  3),
     ('clash-tier', 'tier-i',   'Tier I',   4)
 ) as option (field_key, key, label, ordinal) on option.field_key = field.key
-where game.handle = 'lol';
+where game.handle = 'league-of-legends';
 
 insert into tracker (game_id, contact_kind, title, template)
 select game.id, tracker.contact_kind, tracker.title, tracker.template
@@ -113,4 +113,4 @@ cross join (values
     ('riot', 'op.gg',      'https://op.gg/summoners/search?q='),
     ('riot', 'tracker.gg', 'https://tracker.gg/lol/profile/riot/')
 ) as tracker (contact_kind, title, template)
-where game.handle = 'lol';
+where game.handle = 'league-of-legends';

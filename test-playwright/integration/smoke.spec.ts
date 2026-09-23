@@ -1,5 +1,6 @@
 import { expect, Page, test } from "@playwright/test";
 import compose from "docker-compose";
+import { expectPage } from "../pages";
 import { rethrowComposeError, testStack, waitForApi } from "../stack";
 
 // The home page loads its cover grid from `/api/games`, so it is the page that shows whether
@@ -35,6 +36,17 @@ test.describe("a browser", () => {
         expect(redirect?.status()).toBe(301);
         expect(page.url()).toBe(adsTxt);
     });
+
+    // The home page is the list of games, so there is no page of its own at `/games`.
+    for (const path of ["/games", "/games/"])
+        test(`is redirected from ${path} to the home page`, async ({ page }) => {
+            const response = await page.goto(path);
+
+            const redirect = await response?.request().redirectedFrom()?.response();
+            expect(redirect?.status()).toBe(301);
+            await expectPage(page, home.path);
+            await expectHomeRendered(page);
+        });
 
     test("stays on a path the site does not have and says so", async ({ page }) => {
         await page.goto("/nopage");

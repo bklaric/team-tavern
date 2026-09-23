@@ -17,10 +17,10 @@ test.describe("signed out, the header", () => {
 });
 
 test("New post on a game's pages knows the game", async ({ page }) => {
-    await page.goto("/games/apex");
+    await page.goto("/games/apex-legends");
 
     await expect(page.getByRole("banner").getByRole("link", { name: "New post" }))
-        .toHaveAttribute("href", "/post?game=apex");
+        .toHaveAttribute("href", "/post?game=apex-legends");
 });
 
 // The seed gives ValorantTester one Valorant post and GroupTester two, a group and a
@@ -52,7 +52,7 @@ test.describe("Games", () => {
         await page.getByRole("button", { name: "Games" }).click();
         await page.getByRole("dialog", { name: "Games" }).getByRole("link", { name: "Apex Legends" }).click();
 
-        await expectPage(page, "/games/apex");
+        await expectPage(page, "/games/apex-legends");
         await expect(page.getByRole("dialog", { name: "Games" })).toHaveCount(0);
     });
 });

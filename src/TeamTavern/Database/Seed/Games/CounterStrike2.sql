@@ -37,7 +37,7 @@ insert into game (title, short_title, handle, description)
 values
     ( 'Counter-Strike 2'
     , 'CS2'
-    , 'cs2'
+    , 'counter-strike-2'
     , array['Find Counter-Strike 2 players, groups and communities: a Premier duo, a five stack for Faceit, an ESEA team, or a server to play on.']
     );
 
@@ -45,7 +45,7 @@ insert into game_contact (game_id, kind)
 select game.id, contact.kind
 from game
 cross join (values ('discord'), ('steam')) as contact (kind)
-where game.handle = 'cs2';
+where game.handle = 'counter-strike-2';
 
 insert into field (game_id, key, label, ilk, ordered, slotted, applies_to, on_card, ordinal)
 select game.id, field.key, field.label, field.ilk, field.ordered, field.slotted, field.applies_to, field.on_card, field.ordinal
@@ -59,7 +59,7 @@ cross join (values
     ('wingman-rank',   'Wingman rank',            'single',  true,  false, array['player', 'group'],              false, 6),
     ('faceit-level',   'Faceit level',            'single',  true,  false, array['player', 'group'],              false, 7)
 ) as field (key, label, ilk, ordered, slotted, applies_to, on_card, ordinal)
-where game.handle = 'cs2';
+where game.handle = 'counter-strike-2';
 
 insert into field_option (field_id, key, label, ordinal)
 select field.id, option.key, option.label, option.ordinal
@@ -159,7 +159,7 @@ join (values
     ('faceit-level', 'level-9',  'Level 9',  9),
     ('faceit-level', 'level-10', 'Level 10', 10)
 ) as option (field_key, key, label, ordinal) on option.field_key = field.key
-where game.handle = 'cs2';
+where game.handle = 'counter-strike-2';
 
 insert into tracker (game_id, contact_kind, title, template)
 select game.id, tracker.contact_kind, tracker.title, tracker.template
@@ -168,4 +168,4 @@ cross join (values
     ('steam', 'tracker.gg', 'https://tracker.gg/cs2/profile/steam/'),
     ('steam', 'csstats.gg', 'https://csstats.gg/player/')
 ) as tracker (contact_kind, title, template)
-where game.handle = 'cs2';
+where game.handle = 'counter-strike-2';

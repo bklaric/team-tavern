@@ -27,7 +27,7 @@ insert into game (title, short_title, handle, description)
 values
     ( 'Heroes of the Storm'
     , 'HotS'
-    , 'hots'
+    , 'heroes-of-the-storm'
     , array['Find Heroes of the Storm players, groups and communities: a Storm League core, an ARAM crew, or a Discord to draft with.']
     );
 
@@ -35,7 +35,7 @@ insert into game_contact (game_id, kind)
 select game.id, contact.kind
 from game
 cross join (values ('discord'), ('battle_tag')) as contact (kind)
-where game.handle = 'hots';
+where game.handle = 'heroes-of-the-storm';
 
 insert into field (game_id, key, label, ilk, ordered, slotted, applies_to, on_card, ordinal)
 select game.id, field.key, field.label, field.ilk, field.ordered, field.slotted, field.applies_to, field.on_card, field.ordinal
@@ -45,7 +45,7 @@ cross join (values
     ('role',        'Role',        'multi',  false, true,  array['player', 'group'],              true, 2),
     ('looking-for', 'Looking for', 'multi',  false, false, array['player', 'group', 'community'], true, 3)
 ) as field (key, label, ilk, ordered, slotted, applies_to, on_card, ordinal)
-where game.handle = 'hots';
+where game.handle = 'heroes-of-the-storm';
 
 insert into field_option (field_id, key, label, ordinal)
 select field.id, option.key, option.label, option.ordinal
@@ -90,4 +90,4 @@ join (values
     ('looking-for', 'scrims-tournaments', 'Scrims and tournaments', 3),
     ('looking-for', 'learning-the-game',  'Learning the game',      4)
 ) as option (field_key, key, label, ordinal) on option.field_key = field.key
-where game.handle = 'hots';
+where game.handle = 'heroes-of-the-storm';

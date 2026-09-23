@@ -63,7 +63,7 @@ const cases = [
         sql: { type: "community", ranges: { rank: { from: "ascendant-1", to: null } }, regions: ["North America", "Europe"], ageFrom: 16, options: { "looking-for": ["casual"] } },
     },
     {
-        name: "lol player", game: "lol", type: "player", types: ["player", "group", "community"],
+        name: "lol player", game: "league-of-legends", type: "player", types: ["player", "group", "community"],
         proto: { "field:role": ["mid"], location: "Germany", languages: ["English"], hours: { from: "18:00", to: "22:00" }, mic: true },
         sql: { type: "player", options: { role: ["mid"] }, country: "Germany", languages: ["English"], online: { from: "18:00", to: "22:00" }, timezone: TZ, microphone: true },
     },
