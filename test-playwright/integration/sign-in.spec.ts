@@ -71,6 +71,35 @@ test("signing in from the header returns the player to the page they came from",
     await expectSignedInAs(page, "ApexTester");
 });
 
+// The cookies of a signed-out session, which a browser also keeps across a reset of the
+// database, name a session the server refuses, and the server removes them when it does.
+// Until then a request still carries them, so the test waits for that before acting.
+test("a browser holding a session the server refuses can sign in again", async ({ page, context }) => {
+    await signIn(page, "NewTester");
+    const refused = await context.cookies();
+    await signOut(page);
+    const openHolding = async (path: string) => {
+        await context.addCookies(refused);
+        await page.goto(path);
+        await expect.poll(async () => (await context.cookies())
+            .filter(cookie => cookie.name.startsWith("teamtavern-"))).toEqual([]);
+    };
+
+    await openHolding("/games/valorant");
+    await page.getByRole("link", { name: "Sign in" }).click();
+    await expectPage(page, "/signin");
+    await page.getByLabel("Email or nickname").fill("new@example.com");
+    await page.getByLabel("Password").fill(password);
+    await page.getByRole("button", { name: "Sign in", exact: true }).click();
+    await expectPage(page, "/games/valorant");
+    await expectSignedInAs(page, "NewTester");
+    await signOut(page);
+
+    await openHolding(`/signup?back=${encodeURIComponent("/games/valorant")}`);
+    await expectPage(page, "/signup");
+    await expect(page.getByRole("heading", { name: "Create your account" })).toBeVisible();
+});
+
 test("signing up with Discord asks Discord for the email and comes back through the sign-in page", async ({ page, baseURL }) => {
     const discord = await fakeDiscord(page, discordUser(`${unique("discord")}@example.com`, true));
     const nickname = unique("D");

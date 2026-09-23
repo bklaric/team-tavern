@@ -21,11 +21,11 @@ import TeamTavern.Client.Components.Flow (flow, flowError, flowLead, flowLink, f
 import TeamTavern.Client.Icons as Icons
 import TeamTavern.Client.Pages.Post.Register (Publishing, publishing, publishingPost)
 import TeamTavern.Client.Script.Back (authPath, readBack)
-import TeamTavern.Client.Script.Cookie (hasPlayerIdCookie)
 import TeamTavern.Client.Script.Discord (authorizeWithDiscord, takeDiscordReturn)
 import TeamTavern.Client.Script.Navigate (navigateReplace_, navigate_)
 import TeamTavern.Client.Shared.AccountErrors (nicknameInvalid, nicknameTaken, somethingWrong)
 import TeamTavern.Client.Shared.Fetch (fetchBody)
+import TeamTavern.Client.Shared.SignedIn (signedIn)
 import TeamTavern.Client.Shared.Slot (Slot___)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Player.RegisterPlayer (RegisterPlayer)
@@ -159,17 +159,18 @@ component = Hooks.component \_ _ -> Hooks.do
                     Left _ -> failWith noErrors { form = Just somethingWrong }
 
     Hooks.useLifecycleEffect do
-        signedIn <- hasPlayerIdCookie
         discordReturn <- takeDiscordReturn
         case discordReturn of
             Just { accessToken, back } -> startDiscordSession accessToken back
             Nothing -> do
                 back <- readBack
-                if signedIn then navigateReplace_ back else do
-                    set _ { back = back, publishing = publishing back }
-                    for_ (publishing back) \publishing' -> void $ Hooks.fork do
-                        post <- H.lift $ publishingPost publishing'
-                        set _ { post = post }
+                set _ { back = back, publishing = publishing back }
+                void $ Hooks.fork do
+                    signedIn' <- H.lift signedIn
+                    when signedIn' $ navigateReplace_ back
+                for_ (publishing back) \publishing' -> void $ Hooks.fork do
+                    post <- H.lift $ publishingPost publishing'
+                    set _ { post = post }
         pure Nothing
 
     let formError = case state.errors.form of

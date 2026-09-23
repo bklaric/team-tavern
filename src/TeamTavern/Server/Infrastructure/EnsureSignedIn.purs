@@ -4,11 +4,11 @@ import Prelude
 
 import Async (Async, left, right)
 import Data.Maybe (Maybe(..), fromMaybe)
-import Jarilo (InternalRow_, NotAuthorizedRow_, notAuthorized__)
+import Jarilo (InternalRow_, NotAuthorizedRow_, notAuthorized, notAuthorized__)
 import JavaScript.Npm.Pg.Async (query)
 import JavaScript.Npm.Pg.Query (class Querier, Query(..), (:), (:|))
 import JavaScript.Npm.Pg.Result (rowCount)
-import TeamTavern.Server.Infrastructure.Cookie (CookieInfo, Cookies, lookupCookieInfo)
+import TeamTavern.Server.Infrastructure.Cookie (CookieInfo, Cookies, lookupCookieInfo, removeCookieHeader)
 import TeamTavern.Server.Infrastructure.Error (Terror(..), TerrorVar)
 import TeamTavern.Server.Infrastructure.Postgres (reportDatabaseError)
 import Type.Row (type (+))
@@ -26,6 +26,9 @@ queryString = Query """
         and revoked = false
     """
 
+-- A session the server refuses has its cookies removed, so the client, which
+-- reads the id and nickname cookies to tell whether the player is signed in,
+-- sees them signed out from then on.
 ensureSignedIn :: ∀ querier errors. Querier querier =>
     querier -> Cookies -> Async (EnsureSignedInError errors) CookieInfo
 ensureSignedIn querier cookies =
@@ -35,6 +38,6 @@ ensureSignedIn querier cookies =
     Just cookieInfo @ { id, nickname, token } -> do
         result <- querier # query queryString (id : nickname :| token) # reportDatabaseError
         if fromMaybe 0 (rowCount result) == 0
-        then left $ Terror notAuthorized__
+        then left $ Terror (notAuthorized removeCookieHeader unit)
             [ "Client session in cookies is invalid: " <> show cookieInfo ]
         else right cookieInfo
