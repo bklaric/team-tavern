@@ -875,9 +875,10 @@ What every later page needs signed in and out.
     `compare`, since `notifyOwnersFitBy` sees only the prototype's preset
     accounts. `--at` judges at an earlier time, when more of the dump was
     active; at 2025-09-01 the two agree on all 16,709 fitting pairs, and at
-    2024-09-01 on all 388,620. `check.mjs` itself now differs from the
-    prototype on In-game leader between two players, which the feed fits when
-    either can lead since 5a5168ce and the prototype's `compare` doesn't. On
+    2024-09-01 on all 388,620. The prototype's `compare` fits In-game leader as
+    the feed does, two players when either can lead and a group that wants one
+    with a player who can, and `check.mjs` agrees on every case, with the
+    samples exported under the spelled-out handles. On
     `redesign_import` a Valorant post takes about 9 ms against today's 9 active
     posts, and about 155 ms judged at 2024-09-01, when 2,218 count as active.
   - The check found teams in the dump with ages of 100 and more for no limit.

@@ -434,13 +434,21 @@ const within = (x, from, to) => x >= (from ?? -Infinity) && x <= (to ?? Infinity
 // A game field is compared by what the field is, never by which field it is.
 // An ordered field is near between two players and inside the range against a
 // group; a slotted one is covered between two players and filled against a
-// group; a boolean fits on agreement, and only where the viewer said yes, since
-// a no is every post's default; anything else fits on a shared option.
+// group; a boolean is a job a player takes on top of their slot, and any number
+// can, so two players fit when either takes it, a group that wants it fits a
+// player who does, and a group that doesn't want it doesn't mind; anything else
+// fits on a shared option.
 const compareGameField = (f, post, type, d, check, m) => {
     const key = `field:${f.key}`;
     const players = type === "player" && post.type === "player";
     if (f.ilk === "boolean") {
-        if (d[key]) m[key] = fit(post.answers[key]);
+        if (players) {
+            if (d[key] || post.answers[key]) m[key] = "fit";
+        } else if (type === "player") {
+            if (post.answers[key]) m[key] = fit(d[key]);
+        } else if (d[key]) {
+            m[key] = fit(post.answers[key]);
+        }
     } else if (f.ordered) {
         const mine = orderedIn(f, d, type);
         const theirs = orderedIn(f, post.answers, post.type);
