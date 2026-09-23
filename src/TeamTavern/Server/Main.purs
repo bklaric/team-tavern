@@ -37,6 +37,9 @@ import TeamTavern.Server.Infrastructure.Deployment as Deployment
 import TeamTavern.Server.Infrastructure.FetchDiscordUser (DiscordApiUrl(..))
 import TeamTavern.Server.Infrastructure.Log (logStamped, print)
 import TeamTavern.Server.Infrastructure.Sendgrid (setApiKey)
+import TeamTavern.Server.Notification.ReadNotification (readNotification)
+import TeamTavern.Server.Notification.ReadNotifications (readNotifications)
+import TeamTavern.Server.Notification.ViewNotifications (viewNotifications)
 import TeamTavern.Server.Password.ForgotPassword (forgotPassword)
 import TeamTavern.Server.Password.ResetPassword (resetPassword)
 import TeamTavern.Server.Player.ConfirmEmail (confirmEmail)
@@ -175,6 +178,12 @@ runServer deployment discordApiUrl adminEmail pool = serve (Proxy :: _ AllRoutes
         reportPost deployment adminEmail pool path.handle path.id cookies body
     , reportConversation: \{ path: { id }, cookies, body } ->
         reportConversation deployment adminEmail pool id cookies body
+    , viewNotifications: \{ cookies } ->
+        viewNotifications pool cookies
+    , readNotifications: \{ cookies } ->
+        readNotifications pool cookies
+    , readNotification: \{ path: { id }, cookies } ->
+        readNotification pool id cookies
     , deletePost: \{ path, cookies } ->
         deletePost pool path.handle path.type cookies
     , viewCountries: const $

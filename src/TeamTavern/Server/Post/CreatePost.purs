@@ -30,6 +30,7 @@ import TeamTavern.Server.Infrastructure.Log (print)
 import TeamTavern.Server.Infrastructure.Postgres (databaseErrorLines, transaction)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Post.Infrastructure.LoadCatalogue (loadCatalogue)
+import TeamTavern.Server.Post.Infrastructure.NotifyFits (notifyFits)
 import TeamTavern.Server.Post.Infrastructure.ValidatePost (ValidPost, validatePost)
 import TeamTavern.Server.Post.Infrastructure.WriteAccount (writeAccount)
 import TeamTavern.Server.Post.Infrastructure.WriteAnswers (writeAnswers)
@@ -81,7 +82,8 @@ insertPost client { playerId, gameId, type_, nonce } { post, summary } = do
         # lmap \error -> Terror internal__ [ "Error reading post id: " <> show error ]
 
 -- | Publishes a post, writing the account facts and contacts it gave to the
--- | account in the same transaction (brief 6, step 3).
+-- | account in the same transaction (brief 6, step 3), and telling the owners
+-- | of the posts it fits (brief 8).
 createPost :: ∀ left. Pool -> String -> String -> Cookies -> RequestContent -> Async left _
 createPost pool handle type_ cookies content =
     sendResponse "Error creating post" do
@@ -95,4 +97,5 @@ createPost pool handle type_ cookies content =
         writeAccount client playerId valid.account
         postId <- insertPost client { playerId, gameId, type_, nonce: Nonce.toString nonce } valid
         writeAnswers client gameId postId valid.post
+        notifyFits client postId
     pure noContent_

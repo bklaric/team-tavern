@@ -14,10 +14,11 @@ import TeamTavern.Server.Infrastructure.Deployment (Deployment)
 import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstInternal, queryMany)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
+import TeamTavern.Server.Notification.Infrastructure.Visible (visibleNotification)
 
 -- The conversations about the player's posts and those they started, each
--- counted once however much is unread in it (brief 11.4), but those a block
--- hides.
+-- counted once however much is unread in it (brief 11.4), and the unread
+-- notifications about their posts, but those a block hides.
 playerQuery :: Query
 playerQuery = Query $ """
     select
@@ -29,7 +30,14 @@ playerQuery = Query $ """
             where (post.player_id = player.id or conversation.messager_id = player.id)
                 and """ <> unreadFor "player.id" <> """
                 and not """ <> blockedBetween "post.player_id" "conversation.messager_id" <> """
-        ) as unread_conversations
+        ) as unread_conversations,
+        (
+            select count(*)::int
+            from notification
+            join post on post.id = notification.post_id
+            where post.player_id = player.id and not notification.read
+                and """ <> visibleNotification <> """
+        ) as unread_notifications
     from player
     where player.id = $1
     """
@@ -47,15 +55,19 @@ gamesQuery = Query """
     order by game.title
     """
 
--- The site has no notifications to count yet, so that count is zero.
 -- The header asks on every page, so the answer renews the session cookie,
 -- which then lapses when the session does.
 viewMe :: ∀ left. Deployment -> Pool -> Cookies -> Async left _
 viewMe deployment pool cookies =
     sendResponse "Error viewing the signed-in player" do
     {id, token} <- ensureSignedIn pool cookies
-    {nickname, unread_conversations} :: {nickname :: String, unread_conversations :: Int}
+    {nickname, unread_conversations, unread_notifications}
+        :: {nickname :: String, unread_conversations :: Int, unread_notifications :: Int}
         <- queryFirstInternal pool playerQuery (id : [])
     games :: Array ViewMe.OkGameContent <- queryMany pool gamesQuery (id : [])
     pure $ ok (setCookieHeader deployment token)
-        ({nickname, unreadConversations: unread_conversations, unreadNotifications: 0, games} :: ViewMe.OkContent)
+        ( { nickname
+          , unreadConversations: unread_conversations
+          , unreadNotifications: unread_notifications
+          , games
+          } :: ViewMe.OkContent )

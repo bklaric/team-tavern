@@ -4,8 +4,9 @@ The redesign in `redesign/brief.md` is built as a rewrite of the application on
 the existing platform: PureScript on both sides, Jarilo on the server, Halogen
 Hooks for every page and component, Postgres, the two compose stacks, Caddy,
 renderready for crawlers and Playwright for the suite. `src/TeamTavern/Database/`
-holds the model and the catalogue, `redesign/feed/feed.sql` the feed query,
-`redesign/import/` the relaunch import,
+holds the model and the catalogue, `src/TeamTavern/Server/Feed/` the feed and
+fit queries with `redesign/feed/` checking them, `redesign/import/` the
+relaunch import,
 and `redesign/prototype/` the specification of every screen's behaviour and
 styling. `redesign/handover.md` describes the prototypes and stays as their
 reference; this file tracks the implementation.
@@ -31,7 +32,7 @@ brief marks Proposed, the brief's status is updated in the same commit.
 - [x] 10. Contact panel and renewal
 - [x] 11. Messaging and the inbox
 - [x] 12. Block and report
-- [ ] 13. Fit notifications
+- [x] 13. Fit notifications
 - [ ] 14. Expiry, email and the worker
 - [ ] 15. Account page
 - [ ] 16. Crawlers, sitemap and old paths
@@ -833,7 +834,7 @@ What every later page needs signed in and out.
 - `Server/Feed/Fits.sql`: for one post, the other active posts in the game it
   fits, judged from each of those posts' owners' seats: their post as the
   description, this post as the one candidate, fit meaning no miss (brief 7.2,
-  Decided). Derived from `feed.sql`'s `described`, `answer` and `ranked`,
+  Decided). Derived from `Feed.sql`'s `described`, `answer` and `ranked`,
   with the description built from a post's rows rather than from JSON. Checked
   the way `check.mjs` checks the feed, against `notifyOwnersFitBy` in
   `game.js`.
@@ -852,6 +853,53 @@ What every later page needs signed in and out.
 - Specs: `notifications.spec.ts`: publish a post that fits a seeded one, the
   seeded owner's bell counts it, the row opens the new post's page, Mark all
   read clears it.
+- Settled here:
+  - A notification and Matches judge from opposite seats. Matches is the posts
+    that fit the new post (brief 6), from the new post's seat; a notification
+    goes to the owner of each post the new post fits, from theirs. They agree
+    only for a pair that fits both ways, which is the pair
+    `notifications.spec.ts` publishes. As in the feed, a group or community is
+    told of players alone.
+  - `Server/Feed/Fits.sql` takes the post and now and returns the ids of the
+    posts it fits. Every part names the part of `Feed.sql` it follows, and each
+    seat's description is read from the post's rows as `descriptionJson` writes
+    it. `notifyFits` (`Server/Post/Infrastructure/NotifyFits.purs`) wraps it in
+    the upsert on `notification_fit_key`, so a renewal after expiry puts the
+    same row back on top, unread. `createPost` calls it, and so do `renewPost`
+    and `updatePost` when the post had expired, which their queries read
+    before the update. An edit of an expired post renews it, and the prototype
+    notified on it.
+  - `redesign/feed/check-fits.mjs` checks `Fits.sql` against `Feed.sql` run from
+    every active post's seat, with `descriptionJson` taken from the compiled
+    `output/`. That is transitive through `check.mjs` to the prototype's
+    `compare`, since `notifyOwnersFitBy` sees only the prototype's preset
+    accounts. `--at` judges at an earlier time, when more of the dump was
+    active; at 2025-09-01 the two agree on all 16,709 fitting pairs, and at
+    2024-09-01 on all 388,620. `check.mjs` itself now differs from the
+    prototype on In-game leader between two players, which the feed fits when
+    either can lead since 5a5168ce and the prototype's `compare` doesn't. On
+    `redesign_import` a Valorant post takes about 9 ms against today's 9 active
+    posts, and about 155 ms judged at 2024-09-01, when 2,218 count as active.
+  - The check found teams in the dump with ages of 100 and more for no limit.
+    As a description such an age puts a birthday out of the date range, and
+    both queries fail. The import now leaves an age outside 13 to 99, what
+    `ValidatePost` allows, open.
+  - The routes: `viewNotifications` (`GET /api/notifications`) gives the newest
+    50, each with the player's own post, including its `expires`, and the
+    fitting post for a `fit`. `readNotifications` (`POST /api/notifications/read`)
+    and `readNotification` (`POST /api/notifications/:id/read`) mark them.
+    `visibleNotification` (`Server/Notification/Infrastructure/Visible.purs`)
+    hides a fit that a block came between, in the list and in `viewMe`'s count.
+    Deleting either post deletes the row by cascade.
+  - The list is `Components/Notifications.purs`, a render function the header
+    fills. The header fetches the list each time the bell opens. Opening a row
+    reads it, Mark all read reads them all, and the header then asks `viewMe`
+    for the count again. An expiry row reads `termWords` from `OwnPostStatus`,
+    in the home page's words, and has no time of its own.
+  - `Client/Style/Components.scss` held only the notification section, which
+    is now `Components/Notifications.scss`, so the monolith is gone.
+  - The seed gives OwnerTester's Valheim post, in its last week, an unread
+    expiry notification, as step 14's worker will.
 
 ### 14. Expiry, email and the worker
 
@@ -864,7 +912,9 @@ What every later page needs signed in and out.
   still works.
 - `renewByNonce`: `GET /renew?nonce=` lands on the client, which calls the
   endpoint, then opens the game's feed with the description built from the
-  renewed post under a note that it is active again; works signed out.
+  renewed post under a note that it is active again; works signed out. Like
+  `renewPost`, it clears the post's expiry and calls `notifyFits` when the
+  post had expired.
 - Emails as HTML with the site's palette, one module each: confirmation,
   password reset, match digest, renewal, message, report. Every player email
   carries the unsubscribe link to `/account#emails`.
@@ -961,7 +1011,7 @@ card's expansion, contrast of every token on every surface it is used on. A
   still hold, the area names, the database section (no migrations until the
   first post-relaunch one), the test seed's accounts, the mail stub, the
   worker, the `.sql` text modules, the `/design` page if it stays.
-- `Components.scss` is empty and deleted; `/design` is kept or removed.
+- `/design` is kept or removed.
 - The memory notes for this project are updated to say the relaunch shipped.
 
 ## What is not in the plan

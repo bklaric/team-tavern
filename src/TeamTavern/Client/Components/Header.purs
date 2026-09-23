@@ -6,12 +6,15 @@ import Async (Async)
 import Async as Async
 import Data.Array (find)
 import Data.Array as Array
+import Data.DateTime.Instant (Instant)
 import Data.Either (Either(..))
 import Data.Foldable (for_)
 import Data.Maybe (Maybe(..), isJust, maybe)
 import Data.String (Pattern(..), split, stripPrefix, take, toUpper)
 import Data.Tuple.Nested ((/\))
 import Data.Variant (onMatch)
+import Effect.Class (liftEffect)
+import Effect.Now (now)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
@@ -19,22 +22,27 @@ import Halogen.HTML.Properties as HP
 import Halogen.HTML.Properties.ARIA as HPA
 import Halogen.Hooks as Hooks
 import Halogen.Subscription as Subscription
-import TeamTavern.Client.Components.Button (Size(..), Weight(..), buttonLink)
 import TeamTavern.Client.Components.CoverGrid (coverGrid, feedPath)
 import TeamTavern.Client.Components.Menu (menuDivider, menuItem, menuLabel, menuLink, sheetMenu)
+import TeamTavern.Client.Components.Notifications (notificationPath, notifications)
 import TeamTavern.Client.Components.Overlay (Presentation(..), overlay, useOverlay)
 import TeamTavern.Client.Components.Unread (badge)
 import TeamTavern.Client.Components.UsePhone (usePhone)
 import TeamTavern.Client.Icons as Icons
 import TeamTavern.Client.Script.Back (authPath, currentBack)
+import TeamTavern.Client.Script.Focus (focusSoon)
 import TeamTavern.Client.Script.Navigate (navigateWithEvent_, navigate_)
 import TeamTavern.Client.Script.Unread (onUnread)
-import TeamTavern.Client.Shared.Fetch (fetchSimple)
+import TeamTavern.Client.Shared.Fetch (fetchPathNoContent, fetchSimple)
 import TeamTavern.Client.Shared.Me (fetchMe)
 import TeamTavern.Client.Shared.Slot (Slot___)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Game.ViewGames (ViewGames)
 import TeamTavern.Routes.Game.ViewGames as ViewGames
+import TeamTavern.Routes.Notification.ReadNotification (ReadNotification)
+import TeamTavern.Routes.Notification.ReadNotifications (ReadNotifications)
+import TeamTavern.Routes.Notification.ViewNotifications (ViewNotifications)
+import TeamTavern.Routes.Notification.ViewNotifications as ViewNotifications
 import TeamTavern.Routes.Player.ViewMe (ViewMe)
 import TeamTavern.Routes.Player.ViewMe as ViewMe
 import TeamTavern.Routes.Session.EndSession (EndSession)
@@ -56,7 +64,12 @@ type State =
     , games :: Array ViewGames.OkGameContent
     , back :: String
     , menu :: Maybe Menu
+    , notifications :: Maybe { now :: Instant, list :: Array ViewNotifications.Notification }
     }
+
+sameViewer :: Viewer -> Viewer -> Boolean
+sameViewer (SignedIn one) (SignedIn other) = one.nickname == other.nickname
+sameViewer _ _ = false
 
 ref :: Menu -> H.RefLabel
 ref Games = H.RefLabel "header-games"
@@ -91,15 +104,64 @@ type Input = { path :: String, visit :: Int }
 component :: ∀ query output left. H.Component query Input output (Async left)
 component = Hooks.component \_ { path, visit } -> Hooks.do
     phone <- usePhone
-    state /\ stateId <- Hooks.useState ({ viewer: Unknown, visit, games: [], back: "/", menu: Nothing } :: State)
+    state /\ stateId <- Hooks.useState
+        ({ viewer: Unknown, visit, games: [], back: "/", menu: Nothing, notifications: Nothing } :: State)
 
     let set = Hooks.modify_ stateId
         close = set _ { menu = Nothing }
         isOpen menu = state.menu == Just menu
-        toggle menu = if isOpen menu then close else set _ { menu = Just menu }
+
+        -- The counts are asked for again once something has been read.
+        -- Only a player signed in reads anything.
+        refreshMe = do
+            me <- H.lift fetchMe
+            for_ me \me' -> set \state' -> case state'.viewer of
+                SignedIn _ -> state' { viewer = SignedIn me' }
+                _ -> state'
+
+        -- The list is asked for each time it opens, and shows what it last
+        -- held meanwhile.
+        loadNotifications = do
+            result <- H.lift $ Async.attempt $ fetchSimple (Proxy :: _ ViewNotifications)
+            now' <- liftEffect now
+            case result of
+                Right response -> response # onMatch
+                    { ok: \list -> set _ { notifications = Just { now: now', list } } }
+                    (const $ pure unit)
+                Left _ -> pure unit
+
+        toggle menu
+            | isOpen menu = close
+            | otherwise = do
+                set _ { menu = Just menu }
+                when (menu == Notifications) $ void $ Hooks.fork loadNotifications
+
+        markRead read = set \state' -> state'
+            { notifications = state'.notifications <#> \loaded ->
+                loaded { list = loaded.list <#> \notification ->
+                    if read notification then notification { read = true } else notification }
+            }
+
+        -- Opening a notification reads it (brief 11.3).
+        openNotification notification event = do
+            unless notification.read do
+                markRead (_.id >>> eq notification.id)
+                void $ Hooks.fork do
+                    void $ H.lift $ fetchPathNoContent (Proxy :: _ ReadNotification) { id: notification.id }
+                    refreshMe
+            navigateWithEvent_ (notificationPath notification) event
+
+        -- The list stays open with every row read. Mark all read goes with the
+        -- last unread row, so the focus moves to the first row.
+        readAll = do
+            markRead $ const true
+            liftEffect $ focusSoon ".site-header-root .notification"
+            void $ Hooks.fork do
+                void $ H.lift $ Async.attempt $ fetchSimple (Proxy :: _ ReadNotifications)
+                refreshMe
 
     -- A page that reads a conversation or sends a message says so, and the
-    -- count is asked for again. Only a player signed in reads one.
+    -- count is asked for again.
     Hooks.useLifecycleEffect do
         void $ Hooks.fork do
             result <- H.lift $ Async.attempt $ fetchSimple (Proxy :: _ ViewGames)
@@ -107,24 +169,26 @@ component = Hooks.component \_ { path, visit } -> Hooks.do
                 Right response -> response # onMatch { ok: \games -> set _ { games = games } } (const $ pure unit)
                 Left _ -> pure unit
         subscription <- Hooks.subscribe $ Subscription.makeEmitter (\emit -> onUnread (emit unit)) <#> \_ ->
-            void $ Hooks.fork do
-                me <- H.lift fetchMe
-                for_ me \me' -> set \state' -> case state'.viewer of
-                    SignedIn _ -> state' { viewer = SignedIn me' }
-                    _ -> state'
+            void $ Hooks.fork refreshMe
         pure $ Just $ Hooks.unsubscribe subscription
 
     -- Every visit asks the server afresh, so signing in or out shows on the
     -- next page. The header keeps showing what it last knew meanwhile, and
     -- takes an answer only while its visit is the latest. The server is asked
     -- on a fork: the header renders nothing new until its effects are done,
-    -- and a menu opened meanwhile has to open.
+    -- and a menu opened meanwhile has to open. Another player's notifications
+    -- are not kept to show meanwhile.
     Hooks.captures { visit } Hooks.useTickEffect do
         back <- currentBack
         set _ { back = back, menu = Nothing, visit = visit }
         void $ Hooks.fork do
             result <- H.lift $ Async.attempt $ fetchSimple (Proxy :: _ ViewMe)
-            let answer viewer = set \state' -> if state'.visit == visit then state' { viewer = viewer } else state'
+            let answer viewer = set \state' ->
+                    if state'.visit /= visit then state'
+                    else state'
+                        { viewer = viewer
+                        , notifications = if sameViewer state'.viewer viewer then state'.notifications else Nothing
+                        }
             case result of
                 Right response -> response # onMatch
                     { ok: answer <<< SignedIn
@@ -148,7 +212,7 @@ component = Hooks.component \_ { path, visit } -> Hooks.do
         -- have been theirs, and signed out the home page is what the site is for.
         signOut = do
             void $ H.lift $ Async.attempt $ fetchSimple (Proxy :: _ EndSession)
-            set _ { viewer = SignedOut, menu = Nothing }
+            set _ { viewer = SignedOut, menu = Nothing, notifications = Nothing }
             navigate_ "/"
 
         link class_ path' =
@@ -165,12 +229,6 @@ component = Hooks.component \_ { path, visit } -> Hooks.do
             SignedIn me -> me.games # find (_.handle >>> eq handle) # maybe 0 _.posts
             _ -> 0
 
-        notificationsEmpty =
-            HH.div [ HS.class_ "notifications-empty" ]
-            [ HH.p_ [ HH.text "No notifications yet. Every post tells you when someone new fits it, and before it expires." ]
-            , buttonLink Outline Small "/post" [ Icons.plus, HH.text "New post" ]
-            ]
-
         items AccountMenu =
             [ menuLink "/" [ HH.text "Your posts" ]
             , menuLink "/account" [ HH.text "Account" ]
@@ -183,12 +241,8 @@ component = Hooks.component \_ { path, visit } -> Hooks.do
             ]
 
         body Games = [ coverGrid { games: state.games, href: feedPath, mark: postsIn >>> postsMark } ]
-        body Notifications
-            | phone = [ notificationsEmpty ]
-            | otherwise =
-                [ HH.div [ HS.class_ "header-menu-heading" ] [ HH.h2_ [ HH.text "Notifications" ] ]
-                , notificationsEmpty
-                ]
+        body Notifications = notifications
+            { phone, loaded: state.notifications, onOpen: openNotification, onReadAll: readAll }
         body menu
             | phone = [ sheetMenu $ items menu ]
             | otherwise = [ menuLabel $ title menu ] <> items menu

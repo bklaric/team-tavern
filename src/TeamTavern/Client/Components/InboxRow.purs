@@ -3,7 +3,7 @@ module TeamTavern.Client.Components.InboxRow (inboxCover, inboxPostName, inboxRo
 import Prelude
 
 import Data.DateTime.Instant (Instant)
-import Data.Maybe (fromMaybe)
+import Data.Maybe (Maybe, fromMaybe)
 import Data.String (joinWith)
 import Effect.Class (class MonadEffect)
 import Halogen.HTML as HH
@@ -13,11 +13,11 @@ import TeamTavern.Client.Components.Unread (unreadDot)
 import TeamTavern.Client.Script.Ago (ago)
 import TeamTavern.Client.Script.Navigate (navigateWithEvent_)
 import TeamTavern.Client.Snippets.Class as HS
-import TeamTavern.Routes.Conversation.ViewInbox (InboxPost, InboxRow)
+import TeamTavern.Routes.Conversation.ViewInbox (InboxRow)
 
 -- | What the inbox calls a post: a player post by its owner, a group or a
 -- | community by its name.
-inboxPostName :: InboxPost -> String
+inboxPostName :: ∀ post. { type :: String, name :: Maybe String, owner :: String | post } -> String
 inboxPostName post =
     if post.type == "player" then post.owner else fromMaybe (post.owner <> "'s " <> post.type) post.name
 

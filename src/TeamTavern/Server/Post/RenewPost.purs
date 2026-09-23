@@ -14,22 +14,35 @@ import TeamTavern.Server.Infrastructure.Error (elaborate)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstNotFound, transaction)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Post.Infrastructure.ClearExpiry (clearExpiry)
+import TeamTavern.Server.Post.Infrastructure.NotifyFits (notifyFits)
 
+-- Whether the post had expired is read before the update, since returning sees
+-- only the new time.
 renewQuery :: Query
 renewQuery = Query """
     update post
     set updated = now()
-    from game
-    where game.id = post.game_id and game.handle = $1 and post.id = $2 and post.player_id = $3
-    returning post.id
+    from (
+        select post.id, post.updated <= now() - case when post.ilk = 'community'
+            then interval '90 days' else interval '30 days' end as expired
+        from post
+        join game on game.id = post.game_id
+        where game.handle = $1 and post.id = $2 and post.player_id = $3
+        for update of post
+    ) renewed
+    where post.id = renewed.id
+    returning renewed.expired
     """
 
+-- | Renewing an expired post tells the owners of the posts it fits again, as
+-- | publishing it did (brief 8); renewing an active one tells nobody.
 renewPost :: ∀ left. Pool -> String -> Int -> Cookies -> Async left _
 renewPost pool handle postId cookies =
     sendResponse "Error renewing post" do
     { id } <- ensureSignedIn pool cookies
     pool # transaction \client -> do
-        (_ :: { id :: Int }) <- queryFirstNotFound client renewQuery (handle : postId :| unwrap id)
+        { expired } :: { expired :: Boolean } <- queryFirstNotFound client renewQuery (handle : postId :| unwrap id)
             # lmap (elaborate ("Can't find post " <> show postId <> " of game " <> handle <> " to renew"))
         clearExpiry client postId
+        when expired $ notifyFits client postId
     pure noContent_

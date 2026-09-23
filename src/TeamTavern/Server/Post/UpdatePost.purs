@@ -17,11 +17,13 @@ import TeamTavern.Server.Infrastructure.Postgres (queryFirstNotFound, transactio
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Post.Infrastructure.ClearExpiry (clearExpiry)
 import TeamTavern.Server.Post.Infrastructure.LoadCatalogue (loadCatalogue)
+import TeamTavern.Server.Post.Infrastructure.NotifyFits (notifyFits)
 import TeamTavern.Server.Post.Infrastructure.ValidatePost (validatePost)
 import TeamTavern.Server.Post.Infrastructure.WriteAccount (writeAccount)
 import TeamTavern.Server.Post.Infrastructure.WriteAnswers (writeAnswers)
 
--- Saving renews the post (brief 9), so updated moves to now.
+-- Saving renews the post (brief 9), so updated moves to now. Whether it had
+-- expired is read before the update, since returning sees only the new time.
 updateQuery :: Query
 updateQuery = Query """
     update post
@@ -41,8 +43,15 @@ updateQuery = Query """
         group_size = $16::integer,
         group_wanted_from = $17::integer,
         group_wanted_to = $18::integer
-    where player_id = $1 and game_id = $2 and ilk = $3
-    returning id
+    from (
+        select id, updated <= now() - case when ilk = 'community'
+            then interval '90 days' else interval '30 days' end as expired
+        from post
+        where player_id = $1 and game_id = $2 and ilk = $3
+        for update
+    ) saved
+    where post.id = saved.id
+    returning post.id, saved.expired
     """
 
 updatePost :: ∀ left. Pool -> String -> String -> Cookies -> RequestContent -> Async left _
@@ -55,7 +64,7 @@ updatePost pool handle type_ cookies content =
     let playerId = unwrap id
     pool # transaction \client -> do
         writeAccount client playerId account
-        { id: postId } :: { id :: Int } <- queryFirstNotFound client updateQuery
+        { id: postId, expired } :: { id :: Int, expired :: Boolean } <- queryFirstNotFound client updateQuery
             ( playerId : gameId : type_ : summary : post.microphone
             : toNullable (post.online <#> _.from) : toNullable (post.online <#> _.to)
             : post.contactPreference : toNullable post.name : post.regions : post.languages
@@ -65,4 +74,7 @@ updatePost pool handle type_ cookies content =
             )
         writeAnswers client gameId postId post
         clearExpiry client postId
+        -- Saving an expired post renews it, which tells the owners of the
+        -- posts it fits again (brief 8), as publishing it did.
+        when expired $ notifyFits client postId
     pure noContent_

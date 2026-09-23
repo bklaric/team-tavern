@@ -200,7 +200,8 @@ player post past its 30 days, and `NewTester` (`new@example.com`) with no post, 
 `LeaderlessTester` (`leaderless@example.com`) with a group post that wants an
 in-game leader. `OwnerTester` (`owner@example.com`) has a post in each state
 for the home page: an active group in Dota 2, an expired player post in Heroes
-of the Storm and one in its last week in Valheim. Team Fortress 2's tester
+of the Storm and one in its last week in Valheim, whose unread expiry
+notification gives the bell's list an expiry row. Team Fortress 2's tester
 would rather be added off-site, and `CommunityTester` (`community@example.com`)
 runs a community there joined through its website, so every contact preference
 has a post. `RenewTester` (`renew@example.com`) has expired player posts in
@@ -286,9 +287,12 @@ an `index.html` fallback for SPA paths.
   helpers shared across that area's handlers.
 - SQL is written inline as `Query """ ... """` with positional `$n` parameters
   supplied through `:` and `:|`, and rows are decoded with Yoga.JSON `read`. The
-  feed query is too big to inline: `Server/Feed/Feed.sql` is a file of its own,
-  which `Feed.js` imports as text from its place in `src/` and
-  `build-server.sh` bundles with esbuild's text loader. node-pg sends parameters
+  feed query and the fit query that notifications come from are too big to
+  inline: `Server/Feed/Feed.sql` and `Fits.sql` are files of their own, which
+  `Feed.js` and `Fits.js` import as text from their place in `src/` and
+  `build-server.sh` bundles with esbuild's text loader. `Fits.sql` is `Feed.sql`
+  turned round, so a change to how two posts compare is made in both, and
+  `redesign/feed/check-fits.mjs` checks that they agree. node-pg sends parameters
   untyped, so a query Postgres can't type from their first use casts them there.
   Postgres errors are mapped to typed errors by constraint name
   (`player_nickname_key` and friends), so a new unique constraint needs a
@@ -335,9 +339,9 @@ an `index.html` fallback for SPA paths.
   before acting on the list, as `feed.spec.ts` does.
 - Styles are Sass over plain CSS. `Client/Style/tokens.css` holds the design
   tokens as custom properties and `base.css` the element defaults, both as the
-  prototype in `redesign/prototype/` has them; `Components.scss` is the
-  prototype's `components.css`, which gives up each component's section to a
-  `.scss` beside that component's `.purs`. Every stylesheet is registered with
+  prototype in `redesign/prototype/` has them. Each section of the prototype's
+  `components.css` is a `.scss` beside the `.purs` of the component or page it
+  styles. Every stylesheet is registered with
   a `@use` line in `Client/Style/Main.scss`; one not listed there is not in the
   bundle. Classes are plain kebab-case strings, named as the prototype names
   them, applied with `HS.class_`.

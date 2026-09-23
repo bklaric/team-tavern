@@ -1,4 +1,4 @@
-module TeamTavern.Client.Components.OwnPostStatus (ownPostStatus, renewDue) where
+module TeamTavern.Client.Components.OwnPostStatus (ownPostStatus, renewDue, termWords) where
 
 import Prelude
 
@@ -38,6 +38,19 @@ renewDue now expires = case termOf now expires of
     Active _ -> false
     _ -> true
 
+-- | How long a post stays active, as its owner is told it: "Active for 12 more
+-- | days", "Expires in 3 days" or "Expired 2 weeks ago". The last week says so
+-- | with an icon of its own, so it doesn't rely on color.
+termWords :: ∀ w i. Instant -> String -> { icon :: HH.HTML w i, text :: String, soon :: Boolean }
+termWords now expires = case termOf now expires of
+    Expired -> { icon: Icons.clock, text: "Expired " <> ago now expires, soon: false }
+    Expiring days ->
+        { icon: Icons.circleAlert
+        , text: if days == 0 then "Expires today" else "Expires in " <> plural days "day"
+        , soon: true
+        }
+    Active days -> { icon: Icons.clock, text: "Active for " <> show days <> " more days", soon: false }
+
 -- | What a post's owner is told about it under its facts (brief 11.2): how long
 -- | it stays active, or what expiry means now that it has, how many
 -- | conversations it produced, how many of them are unread, and how often its
@@ -54,22 +67,13 @@ ownPostStatus :: ∀ w i.
     }
     -> HH.HTML w i
 ownPostStatus { now, expires, conversations, unread, conversation, reveals, onOpen } = let
-    state = case termOf now expires of
-        Expired ->
-            HH.span [ HS.class_ "own-post-state" ]
-            [ Icons.clock
-            , HH.text $ "Expired " <> ago now expires
-                <> ". It's listed under older posts, and match emails are paused."
-            ]
-        -- The last week says so in full, with its icon, so it doesn't rely on color.
-        Expiring days ->
-            HH.span [ HS.class_ "own-post-state own-post-state-soon" ]
-            [ Icons.circleAlert
-            , HH.text if days == 0 then "Expires today" else "Expires in " <> plural days "day"
-            ]
-        Active days ->
-            HH.span [ HS.class_ "own-post-state" ]
-            [ Icons.clock, HH.text $ "Active for " <> show days <> " more days" ]
+    term = termWords now expires
+    note = case termOf now expires of
+        Expired -> ". It's listed under older posts, and match emails are paused."
+        _ -> ""
+    state =
+        HH.span [ HS.class_ if term.soon then "own-post-state own-post-state-soon" else "own-post-state" ]
+        [ term.icon, HH.text $ term.text <> note ]
     stat icon text = HH.span [ HS.class_ "own-post-stat" ] [ icon, HH.text text ]
     conversationsStat = case conversation of
         Just id | conversations > 0 -> let path = "/messages/" <> show id in

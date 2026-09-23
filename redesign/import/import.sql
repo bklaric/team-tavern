@@ -207,7 +207,11 @@ select source.post_id, source.player_id, source.game_id, source.ilk,
             join legacy.location_country on location_country.old_name = location
             join country on country.name = location_country.country_name)),
     source.languages, source.website, source.discord_server,
-    source.age_from, source.age_to
+    -- An age a post can't give (ValidatePost.purs) is left open: teams put 100
+    -- and more for no limit, and matching reads such an age as a birthday
+    -- out of the date range.
+    case when source.age_from between 13 and 99 then source.age_from end,
+    case when source.age_to between 13 and 99 then source.age_to end
 from legacy.post_source source
 join player owner on owner.id = source.player_id
 cross join lateral (

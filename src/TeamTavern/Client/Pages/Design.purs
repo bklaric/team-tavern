@@ -32,6 +32,7 @@ import TeamTavern.Client.Components.Field (Labelling(..), field, field_, formSec
 import TeamTavern.Client.Components.InboxRow (inboxRow)
 import TeamTavern.Client.Components.Input (Option, input, select, textarea)
 import TeamTavern.Client.Components.Menu (menuDivider, menuItem, menuItemDestructive, menuLabel, sheetMenu)
+import TeamTavern.Client.Components.Notifications (notifications)
 import TeamTavern.Client.Components.Overlay (Presentation(..), overlay, sidePanel, useOverlay)
 import TeamTavern.Client.Components.OwnPostStatus (ownPostStatus, renewDue)
 import TeamTavern.Client.Components.Pills (pills)
@@ -52,6 +53,8 @@ import TeamTavern.Routes.Game.ViewGame (ViewGame)
 import TeamTavern.Routes.Game.ViewGame as ViewGame
 import TeamTavern.Shared.Languages (allLanguages)
 import Type.Proxy (Proxy(..))
+import Web.Event.Event (preventDefault)
+import Web.UIEvent.MouseEvent (toEvent)
 
 -- Every component of the design system in every state, as the prototype's
 -- components.html shows them, to be checked by eye and screenshotted. Each
@@ -690,6 +693,46 @@ component = Hooks.component \_ _ -> Hooks.do
                 ]
             Nothing -> []
 
+        notificationList = section "Notifications"
+            "The bell's list: the player's own posts, each holding what fits it and its own expiry, the post with the newest leading. Opening a row reads it."
+            case state.viewer of
+            Just viewer -> let
+                ago = minutesAgo viewer.now
+                day = 24.0 * 60.0
+                nightOwls =
+                    { id: 1, type: "group", name: Just "Night Owls", owner: "Kestrel"
+                    , handle: "valorant", game: "Valorant", expires: ago (-18.0 * day)
+                    }
+                valheim = nightOwls { id = 2, type = "player", name = Nothing, handle = "valheim", game = "Valheim", expires = ago (-3.0 * day) }
+                dota = nightOwls { id = 3, type = "player", name = Nothing, handle = "dota-2", game = "Dota 2", expires = ago (21.0 * day) }
+                fits id post created read fittingType name owner =
+                    { id, kind: "fit", created: ago created, read, post
+                    , fitting: Just { id: 100 + id, type: fittingType, name, owner }
+                    }
+                expiry id post created read = { id, kind: "expiry", created: ago created, read, post, fitting: Nothing }
+                list =
+                    [ fits 1 nightOwls 40.0 false "player" Nothing "NightHell"
+                    , expiry 2 valheim 300.0 false
+                    , fits 3 nightOwls 1500.0 false "player" Nothing "purpiii"
+                    , fits 4 nightOwls (4.0 * day) true "player" Nothing "Tatami"
+                    , expiry 5 dota (21.0 * day) true
+                    , fits 6 dota (30.0 * day) true "group" (Just "Ancient Echoes") "Morrow"
+                    , fits 7 dota (32.0 * day) true "community" (Just "The Ancients") "Oskar"
+                    ]
+                sheet loaded = HH.div [ HS.class_ "sheet-notifications" ] $ notifications
+                    { phone: false
+                    , loaded: Just { now: viewer.now, list: loaded }
+                    , onOpen: \_ event -> liftEffect $ preventDefault $ toEvent event
+                    , onReadAll: pure unit
+                    }
+                in
+                [ caption "What fits each of Kestrel's posts, one about to expire and one expired"
+                , sheet list
+                , caption "Nothing yet: a player without posts has nothing to be told"
+                , sheet []
+                ]
+            Nothing -> []
+
         unread = section "Unread"
             "A count on an icon, read out from the button's label, and a dot on a row."
             [ sheetRow
@@ -818,6 +861,7 @@ component = Hooks.component \_ _ -> Hooks.do
             , cards
             , contactPanels
             , messaging
+            , notificationList
             , unread
             , account
             ]

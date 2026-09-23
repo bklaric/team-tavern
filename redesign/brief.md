@@ -902,8 +902,9 @@ the field:
   players; a group or community post of new players.
 - **Decided:** notifications need an account, since publishing does.
 - **Decided:** notifications go by email and to an on-site notification badge.
-- **Proposed:** a notification fires when a fitting post is published, or renewed
-  after it expired. Edits and renewals of active posts don't notify.
+- **Decided:** a notification fires when a fitting post is published, or renewed
+  after it expired, whether by Renew or by saving an edit, which renews too.
+  Edits and renewals of active posts don't notify.
 - **Decided:** every fitting post is its own notification; notifications are never
   merged into one. An email can carry several, grouped by the post of yours they
   fit.
@@ -914,7 +915,7 @@ the field:
   it expired fits again, and that puts its notification in the period the
   renewal falls in. An expiry the owner has already renewed away is gone before
   the worker sees it, so nothing is sent.
-- **Proposed:** notifications stop when the post expires, and resume when it is
+- **Decided:** notifications stop when the post expires, and resume when it is
   renewed.
 - **Decided:** each post in a match email links to that post's page (11.1).
 
@@ -1179,23 +1180,23 @@ first. A post of theirs that has expired says so and offers **Renew**.
   under the post it is about, so a player with two posts in a game can tell them
   apart. The heading names the post as its card does, "Night Owls · Valorant
   group", and is plain text: the rows are what open anything.
-- **Proposed:** the post with the newest notification comes first, so what just
+- **Decided:** the post with the newest notification comes first, so what just
   happened leads. Inside a post its own expiry comes first, since it is the row
   with something to do, and the posts that fit follow, newest first.
 - **Decided:** every fitting post is its own notification, never merged with
   others (section 8).
-- **Proposed:** a row about a post that fits names it and its type, and carries
+- **Decided:** a row about a post that fits names it and its type, and carries
   the time it was published, the same relative time a card's freshness uses:
   "NightHell fits · Player · 4 weeks ago".
-- **Proposed:** the expiry notification reads the post's state now, in the words
+- **Decided:** the expiry notification reads the post's state now, in the words
   the home page gives its owner, rather than recording the moment it fired:
   "Expires in 3 days", then "Expired 3 weeks ago". It carries no time of its
   own, since its text already says when, and renewing the post takes it away.
   There is one per post, never a second.
-- **Proposed:** unread rows carry a dot, and **Mark all read** in the heading
+- **Decided:** unread rows carry a dot, and **Mark all read** in the heading
   row clears them all; it shows only while something is unread. The count on the
   bell is how many are unread, and opening a notification reads it.
-- **Proposed:** a notification is about two posts, the player's own and the one
+- **Decided:** a notification is about two posts, the player's own and the one
   that fits it, and deleting either takes it away, as deleting a post takes its
   conversations (section 10). Nothing else removes one: a row whose fitting post
   has since expired still stands and opens that post's page, which says so
@@ -1203,10 +1204,10 @@ first. A post of theirs that has expired says so and offers **Renew**.
 - **Decided:** messages aren't notifications. The inbox's link in the header shows
   how many conversations are unread.
 - **Proposed:** contact reveals are counts on the home page, never notifications.
-- **Proposed:** the list scrolls inside the dropdown rather than paging, and
-  there is no page of notifications to send it to. The oldest fall off once a
-  player has more than the list holds.
-- **Proposed:** with nothing in it the list says so and offers the way out of
+- **Decided:** the list scrolls inside the dropdown rather than paging, and
+  there is no page of notifications to send it to. It holds the newest 50, and
+  the oldest fall off once a player has more.
+- **Decided:** with nothing in it the list says so and offers the way out of
   that: "No notifications yet. Every post tells you when someone new fits it,
   and before it expires", with **New post**. A player without posts can't be
   told anything.

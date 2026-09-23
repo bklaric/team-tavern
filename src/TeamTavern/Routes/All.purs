@@ -16,6 +16,9 @@ import TeamTavern.Routes.Feed.ViewFeed (ViewFeed)
 import TeamTavern.Routes.Feed.ViewOwnDescriptions (ViewOwnDescriptions)
 import TeamTavern.Routes.Game.ViewGame (ViewGame)
 import TeamTavern.Routes.Game.ViewGames (ViewGames)
+import TeamTavern.Routes.Notification.ReadNotification (ReadNotification)
+import TeamTavern.Routes.Notification.ReadNotifications (ReadNotifications)
+import TeamTavern.Routes.Notification.ViewNotifications (ViewNotifications)
 import TeamTavern.Routes.Password.ForgotPassword (ForgotPassword)
 import TeamTavern.Routes.Password.ResetPassword (ResetPassword)
 import TeamTavern.Routes.Player.ConfirmEmail (ConfirmEmail)
@@ -79,6 +82,11 @@ type BlockRoutes
     <|> "reportPost"         : ReportPost
     <|> "reportConversation" : ReportConversation
 
+type NotificationRoutes
+    =   "viewNotifications" : ViewNotifications
+    <|> "readNotifications" : ReadNotifications
+    <|> "readNotification"  : ReadNotification
+
 type CountryRoutes
     =   "viewCountries" : ViewCountries
 
@@ -91,4 +99,5 @@ type AllRoutes
     <|> PostRoutes
     <|> ConversationRoutes
     <|> BlockRoutes
+    <|> NotificationRoutes
     <|> CountryRoutes

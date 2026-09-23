@@ -91,8 +91,8 @@
     color: var(--text);
 }
 
-/* Nothing yet, and what to do about it: Vex has no posts, so no post of theirs
-   can tell them anything (brief 14.6). */
+/* Nothing yet, and what to do about it: a player without posts has nothing to
+   be told about (brief 14.6). */
 .notifications-empty {
     display: flex;
     flex-direction: column;

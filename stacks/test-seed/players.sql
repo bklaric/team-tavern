@@ -324,6 +324,16 @@ join (values
 ) as posted (handle, age) on posted.handle = game.handle
 where player.nickname = 'OwnerTester';
 
+-- The post in its last week has had its notice that it is expiring, as the
+-- period worker gives one, so the bell's list has an expiry row.
+
+insert into notification (post_id, kind)
+select post.id, 'expiry'
+from post
+join player on player.id = post.player_id
+join game on game.id = post.game_id
+where player.nickname = 'OwnerTester' and game.handle = 'valheim';
+
 -- Every way a post asks to be reached, for the contact panel. Team Fortress
 -- 2's tester would rather be added off-site, and a community there is joined
 -- through its website; Valorant carries the other four.

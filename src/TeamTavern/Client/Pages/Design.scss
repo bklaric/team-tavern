@@ -106,3 +106,12 @@
 .sheet-inbox {
     max-width: 360px;
 }
+
+/* The bell's list as its dropdown holds it, standing in the page. */
+.sheet-notifications {
+    max-width: 400px;
+    padding: var(--space-4);
+    border: 1px solid var(--input-border);
+    border-radius: var(--radius-card);
+    background: var(--raised);
+}
