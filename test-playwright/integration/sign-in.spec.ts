@@ -216,3 +216,26 @@ test("the session cookies go only with requests the site starts", async ({ page 
         expect(cookie).toContain("; SameSite=Lax");
     }
 });
+
+// A form can post JSON by naming a field with all of it but the last value, which the
+// form's `=` and the field's value finish. Another site's form is labelled as text, so
+// the server refuses it however well the JSON inside it reads.
+test("another site's form signs nobody up", async ({ page, baseURL }) => {
+    const nickname = unique("Forged");
+    const registration = JSON.stringify({
+        password: { email: `${nickname.toLowerCase()}@example.com`, nickname, password },
+    });
+    const field = registration.slice(0, -1) + ',"pad":"';
+    await page.route("http://attacker.test/", route => route.fulfill({
+        contentType: "text/html",
+        body: `<form method="post" enctype="text/plain" action="${baseURL}/api/players">`
+            + `<input name='${field}' value='"}'></form>`
+            + `<script>document.forms[0].submit()</script>`,
+    }));
+
+    await page.goto("http://attacker.test/", { waitUntil: "commit" });
+    await page.waitForURL(`${baseURL}/api/players`);
+
+    await submitPasswordSignIn(page, nickname);
+    await expect(page.getByText("No account exists with this email or nickname.")).toBeVisible();
+});
