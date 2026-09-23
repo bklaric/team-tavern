@@ -26,6 +26,17 @@
     font-weight: 500;
 }
 
+/* A contact panel standing still on the page rather than over it. */
+.sheet-panel {
+    position: relative;
+    inset: auto;
+    z-index: auto;
+    max-width: 440px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    background: var(--raised);
+}
+
 .sheet-row {
     display: flex;
     flex-wrap: wrap;

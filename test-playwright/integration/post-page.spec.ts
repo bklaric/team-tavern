@@ -125,6 +125,28 @@ test.describe("a post's page", () => {
         await expect(page.locator("#meta-robots")).toHaveAttribute("content", "noindex");
     });
 
+    test("renews its owner's expired post, which is back in search engines", async ({ page }) => {
+        // RenewTester's Overwatch post is past its 30 days.
+        await page.goto("/games/overwatch");
+        await expect(page.locator(".feed")).toHaveAttribute("aria-busy", "false");
+        await card(page, "RenewTester").getByRole("link", { name: "RenewTester" }).click();
+        await expectPage(page, /^\/games\/overwatch\/posts\/\d+$/);
+        const url = page.url();
+        await signIn(page, "renew@example.com");
+        await page.goto(url);
+        await expect(page.locator(".own-post-state")).toHaveText(/^Expired/);
+        await expect(page.locator("#meta-robots")).toHaveAttribute("content", "noindex");
+
+        const renew = page.getByRole("button", { name: "Renew" });
+        await renew.click();
+
+        await expect(page.getByRole("status")).toHaveText("Renewed. Your post stays active for 30 days from today.");
+        await expect(page.locator(".own-post-state")).toHaveText("Active for 30 more days");
+        await expect(page.locator(".card")).not.toHaveClass(/card-expired/);
+        await expect(page.locator("#meta-robots")).toHaveAttribute("content", "index, follow");
+        await expect(renew).toBeFocused();
+    });
+
     test("is gone for a post that isn't there", async ({ page }) => {
         await page.goto(`${feedPath}/posts/999999`);
 

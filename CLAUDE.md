@@ -200,7 +200,11 @@ player post past its 30 days, and `NewTester` (`new@example.com`) with no post, 
 `LeaderlessTester` (`leaderless@example.com`) with a group post that wants an
 in-game leader. `OwnerTester` (`owner@example.com`) has a post in each state
 for the home page: an active group in Dota 2, an expired player post in Heroes
-of the Storm and one in its last week in Valheim. All share the password. `Seed/Games/` carries all ten production games, so every
+of the Storm and one in its last week in Valheim. Team Fortress 2's tester
+would rather be added off-site, and `CommunityTester` (`community@example.com`)
+runs a community there joined through its website, so every contact preference
+has a post. `RenewTester` (`renew@example.com`) has expired player posts in
+Rainbow Six Siege and Overwatch. All share the password. `Seed/Games/` carries all ten production games, so every
 game handle the site serves has a page with content. A cold boot answers on the
 API within a few seconds.
 

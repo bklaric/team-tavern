@@ -8,7 +8,7 @@ import Control.Alt ((<|>))
 import Control.Parallel (parallel, sequential)
 import Data.Array (catMaybes, find, mapMaybe)
 import Data.Either (Either(..), hush)
-import Data.Foldable (for_)
+import Data.Foldable (for_, traverse_)
 import Data.Maybe (Maybe(..), fromMaybe, isJust)
 import Data.String (joinWith, trim)
 import Data.String.CodeUnits as CodeUnits
@@ -24,7 +24,9 @@ import Halogen.HTML.Properties as HP
 import Halogen.HTML.Properties.ARIA as HPA
 import Halogen.Hooks as Hooks
 import TeamTavern.Client.Components.Card (Place(..), Viewer, card, postName, typeIcon)
+import TeamTavern.Client.Components.ContactPanel (contactPanel, takeContactParam, useContactPanel)
 import TeamTavern.Client.Components.OwnPostStatus (ownPostStatus)
+import TeamTavern.Client.Components.Toast (toasts, useToast)
 import TeamTavern.Client.Icons as Icons
 import TeamTavern.Client.Pages.Feed.Description (current, loadStored, storeDescription, storedFrom)
 import TeamTavern.Client.Pages.Feed.Fields (barFields, summary)
@@ -35,6 +37,7 @@ import TeamTavern.Client.Script.RenderReady (appendRenderReadyNotFound, appendRe
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Shared.Fetch (fetchPath)
 import TeamTavern.Client.Shared.Me (fetchMe)
+import TeamTavern.Client.Shared.Renew (renew, renewFailed)
 import TeamTavern.Client.Shared.Slot (Slot__I)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Feed.ViewOwnDescriptions (OwnDescription, ViewOwnDescriptions)
@@ -57,6 +60,7 @@ type Input = { handle :: String, id :: Int, feedBehind :: Boolean }
 type Shown =
     { game :: ViewGame.OkContent
     , page :: ViewPost.OkContent
+    , signedIn :: Boolean
     , own :: Array OwnDescription
     , described :: Maybe { type :: String, text :: String }
     }
@@ -89,6 +93,8 @@ goBack event = liftEffect do
 component :: ∀ query output left. H.Component query Input output (Async left)
 component = Hooks.component \_ { handle, id, feedBehind } -> Hooks.do
     state /\ stateId <- Hooks.useState ({ page: Loading, viewer: Nothing } :: State)
+    { panel, openPanel, openPanelById, closePanel, copy } <- useContactPanel
+    { toast, showToast, dismissToast } <- useToast
 
     let feedPath = "/games/" <> handle
 
@@ -132,7 +138,10 @@ component = Hooks.component \_ { handle, id, feedBehind } -> Hooks.do
                             -- An expired post keeps its page, but out of search
                             -- engines until it is renewed (brief 11.1).
                             when page.post.expired $ setMetaRobots "noindex"
-                            Hooks.modify_ stateId _ { page = Shown { game: game'', page, own, described } }
+                            Hooks.modify_ stateId _
+                                { page = Shown { game: game'', page, signedIn: isJust me, own, described } }
+                            -- Back from signing up to contact the post, its panel opens.
+                            takeContactParam >>= traverse_ (openPanelById game'')
                         , notFound: const do
                             appendRenderReadyNotFound
                             setMeta ("This post is gone · " <> game''.title <> " | TeamTavern")
@@ -146,7 +155,22 @@ component = Hooks.component \_ { handle, id, feedBehind } -> Hooks.do
                 _, _ -> failed
         pure Nothing
 
-    let feedSection game { page: { post, owner }, own, described } = let
+    -- The page reads the renewed post again, which the card's Renew keeps the
+    -- focus through, and is back in search engines.
+    let renewPost post = void $ Hooks.fork do
+            renewed <- H.lift $ renew handle post
+            case renewed of
+                Nothing -> showToast { text: renewFailed, action: Nothing }
+                Just text -> do
+                    result <- H.lift $ Async.attempt $ fetchPath (Proxy :: _ ViewPost) { handle, id }
+                    for_ (hush result >>= onMatch { ok: Just } (const Nothing)) \page -> do
+                        setMetaRobots "index, follow"
+                        Hooks.modify_ stateId \state' -> case state'.page of
+                            Shown shown -> state' { page = Shown shown { page = page } }
+                            _ -> state'
+                    showToast { text, action: Nothing }
+
+        feedSection game { page: { post, owner }, own, described } = let
             ownDescription = own # find (_.type >>> eq post.type) <#> _.description
             name = postName post
             title
@@ -249,11 +273,13 @@ component = Hooks.component \_ { handle, id, feedBehind } -> Hooks.do
                         Nothing -> []
                     }
                 , onToggle: const $ pure unit
-                , onContact: pure unit
+                , onContact: openPanel { signedIn: shown.signedIn, game } page.post
                 , onEdit: navigate_ $ "/games/" <> handle <> "/post/" <> page.post.type <> "?from=edit"
-                , onRenew: pure unit
+                , onRenew: renewPost page.post
                 }
             , Just $ feedSection game shown
+            , panel <#> \panel' -> contactPanel { now: viewer.now, panel: panel', onClose: closePanel, onCopy: copy }
+            , Just $ toasts toast dismissToast
             ]
         _, _ -> HH.div [ HS.class_ "post-page" ] []
 

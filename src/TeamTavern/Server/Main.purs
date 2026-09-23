@@ -35,6 +35,7 @@ import TeamTavern.Server.Player.ViewMe (viewMe)
 import TeamTavern.Server.Post.CreatePost (createPost)
 import TeamTavern.Server.Post.DeletePost (deletePost)
 import TeamTavern.Server.Post.RenewPost (renewPost)
+import TeamTavern.Server.Post.RevealContacts (revealContacts)
 import TeamTavern.Server.Post.UpdatePost (updatePost)
 import TeamTavern.Server.Post.ViewOwnPost (viewOwnPost)
 import TeamTavern.Server.Post.ViewOwnPosts (viewOwnPosts)
@@ -134,6 +135,8 @@ runServer deployment discordApiUrl pool = serve (Proxy :: _ AllRoutes) serveOpti
         updatePost pool path.handle path.type cookies body
     , renewPost: \{ path, cookies } ->
         renewPost pool path.handle path.id cookies
+    , revealContacts: \{ path, cookies } ->
+        revealContacts pool path.handle path.id cookies
     , deletePost: \{ path, cookies } ->
         deletePost pool path.handle path.type cookies
     , viewCountries: const $

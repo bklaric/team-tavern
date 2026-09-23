@@ -113,6 +113,23 @@ test.describe("the feed", () => {
         await expect(page.getByText("Showing what fits your player post.")).toHaveCount(0);
     });
 
+    test("renews the viewer's expired post, which moves up above the divider", async ({ page }) => {
+        // RenewTester's Rainbow Six Siege post is past its 30 days.
+        await signIn(page, "renew@example.com");
+        await page.goto("/games/rainbow-six-siege");
+        await page.getByRole("button", { name: "Clear all" }).click();
+        await expectSettled(page);
+        await expect(card(page, "RenewTester")).toHaveClass(/card-expired/);
+
+        await card(page, "RenewTester").getByRole("button", { name: "Renew" }).click();
+
+        await expect(page.getByRole("status")).toHaveText("Renewed. Your post stays active for 30 days from today.");
+        await expectSettled(page);
+        await expect(card(page, "RenewTester")).not.toHaveClass(/card-expired/);
+        await expect(card(page, "RenewTester").locator(".card-freshness")).toHaveText("Active just now");
+        await expect(page.locator(".feed .divider")).toHaveCount(0);
+    });
+
     test("offers to update the viewer's post once the description differs from it", async ({ page }) => {
         await signIn(page, "group@example.com");
         await page.goto(feedPath);

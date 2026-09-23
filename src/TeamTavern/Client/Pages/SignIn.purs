@@ -17,6 +17,7 @@ import Halogen.HTML.Properties as HP
 import Halogen.Hooks as Hooks
 import TeamTavern.Client.Components.Button (Size(..), Weight(..), button)
 import TeamTavern.Client.Components.Divider (rule)
+import TeamTavern.Client.Components.ContactPanel (contacting, contactingOwner)
 import TeamTavern.Client.Components.Flow (flow, flowError, flowLead, flowLink, formTight, submitButton, textField)
 import TeamTavern.Client.Icons as Icons
 import TeamTavern.Client.Pages.Post.Register (Publishing, publishing, publishingPost)
@@ -42,12 +43,14 @@ data Screen
     | Nickname { accessToken :: String }
 
 -- | `publishing` is the post the page goes on to publish when it is the
--- | register step of posting, and `post` how that post is named.
+-- | register step of posting, and `post` how that post is named. `contacting`
+-- | is whose post the page returns to contact.
 type State =
     { screen :: Screen
     , back :: String
     , publishing :: Maybe Publishing
     , post :: Maybe String
+    , contacting :: Maybe String
     , emailOrNickname :: String
     , password :: String
     , nickname :: String
@@ -69,6 +72,7 @@ initialState =
     , back: "/"
     , publishing: Nothing
     , post: Nothing
+    , contacting: Nothing
     , emailOrNickname: ""
     , password: ""
     , nickname: ""
@@ -168,6 +172,9 @@ component = Hooks.component \_ _ -> Hooks.do
                 for_ (publishing back) \publishing' -> void $ Hooks.fork do
                     post <- H.lift $ publishingPost publishing'
                     set _ { post = post }
+                for_ (contacting back) \contacting' -> void $ Hooks.fork do
+                    owner <- H.lift $ contactingOwner contacting'
+                    set _ { contacting = owner }
         pure Nothing
 
     let formError = case state.errors.form of
@@ -177,10 +184,11 @@ component = Hooks.component \_ _ -> Hooks.do
     Hooks.pure case state.screen of
         Password -> flow $
             [ HH.h1_ [ HH.text if isJust state.publishing then "Sign in to publish" else "Sign in" ] ]
-            <> (if isJust state.publishing
-                then [ flowLead $ "Your " <> fromMaybe "post" state.post
+            <> (case state.publishing, state.contacting of
+                Just _, _ -> [ flowLead $ "Your " <> fromMaybe "post" state.post
                     <> " goes live as soon as you're signed in. Nothing you wrote is lost." ]
-                else [])
+                _, Just owner -> [ flowLead $ "You'll come straight back to " <> owner <> "'s post." ]
+                _, _ -> [])
             <>
             [ button Outline Regular (authorizeWithDiscord state.back)
                 [ Icons.discord, HH.text "Continue with Discord" ]

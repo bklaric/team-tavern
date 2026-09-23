@@ -1,7 +1,10 @@
 module TeamTavern.Client.Components.Overlay
-    ( Presentation(..)
+    ( Panel
+    , Presentation(..)
     , UseOverlay
     , overlay
+    , panelHeader
+    , sidePanel
     , useOverlay
     ) where
 
@@ -51,31 +54,66 @@ type Overlay i =
 -- empty. A dropdown has no header and no footer; the title is its label.
 overlay :: ∀ w i. Overlay i -> Array (HH.HTML w i) -> Array (HH.HTML w i) -> HH.HTML w i
 overlay { ref, presentation, title, onClose } body footer =
-    HH.div [ HP.ref ref, HS.class_ "overlay-layer" ]
     case presentation of
     Dropdown { className, role } ->
+        HH.div [ HP.ref ref, HS.class_ "overlay-layer" ]
         [ HH.div [ HS.class_ className, HPA.role role, HPA.label title ] body ]
     _ ->
-        backdrop <>
-        [ HH.div
-            [ HS.class_ $ "overlay" <> presentationClass
-            , HPA.role "dialog"
-            , HPA.modal "true"
-            , HPA.labelledBy titleId
+        dialog ref presentation onClose
+        [ HH.div [ HS.class_ "overlay-header" ]
+            [ HH.h2 [ HP.id $ titleId ref ] [ HH.text title ]
+            , iconButton "Close" onClose Icons.x
             ]
-            ( [ HH.div [ HS.class_ "overlay-header" ]
-                [ HH.h2 [ HP.id titleId ] [ HH.text title ]
-                , iconButton "Close" onClose Icons.x
-                ]
-              , HH.div [ HS.class_ "overlay-body" ] body
-              ]
-              <> case footer of
-                [] -> []
-                _ -> [ HH.div [ HS.class_ "overlay-footer" ] footer ]
-            )
         ]
+        body
+        footer
+
+type Panel w i =
+    { ref :: H.RefLabel
+    , title :: String
+    , subtitle :: String
+    , tools :: Array (HH.HTML w i)
+    , onClose :: i
+    }
+
+-- | A side panel whose header says what it is about under its title, with the
+-- | caller's tools beside Close.
+sidePanel :: ∀ w i. Panel w i -> Array (HH.HTML w i) -> HH.HTML w i
+sidePanel panel@{ ref, onClose } body = dialog ref Side onClose [ panelHeader panel ] body []
+
+-- | The side panel's header, for a page that shows one standing still.
+panelHeader :: ∀ w i. Panel w i -> HH.HTML w i
+panelHeader { ref, title, subtitle, tools, onClose } =
+    HH.div [ HS.class_ "overlay-header panel-header" ]
+    [ HH.div [ HS.class_ "panel-title" ]
+        [ HH.h2 [ HP.id $ titleId ref ] [ HH.text title ]
+        , HH.p_ [ HH.text subtitle ]
+        ]
+    , HH.div [ HS.class_ "panel-tools" ] $ tools <> [ iconButton "Close" onClose Icons.x ]
+    ]
+
+titleId :: H.RefLabel -> String
+titleId ref = unwrap ref <> "-title"
+
+dialog :: ∀ w i.
+    H.RefLabel -> Presentation -> i -> Array (HH.HTML w i) -> Array (HH.HTML w i) -> Array (HH.HTML w i) -> HH.HTML w i
+dialog ref presentation onClose header body footer =
+    HH.div [ HP.ref ref, HS.class_ "overlay-layer" ] $
+    backdrop <>
+    [ HH.div
+        [ HS.class_ $ "overlay" <> presentationClass
+        , HPA.role "dialog"
+        , HPA.modal "true"
+        , HPA.labelledBy $ titleId ref
+        ]
+        ( header
+          <> [ HH.div [ HS.class_ "overlay-body" ] body ]
+          <> case footer of
+            [] -> []
+            _ -> [ HH.div [ HS.class_ "overlay-footer" ] footer ]
+        )
+    ]
     where
-    titleId = unwrap ref <> "-title"
     backdrop = case presentation of
         FullScreen -> []
         _ -> [ HH.div [ HS.class_ "backdrop", HE.onClick $ const onClose ] [] ]

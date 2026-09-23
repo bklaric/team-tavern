@@ -1,0 +1,119 @@
+/* The contact panel: a side panel on a desktop, holding the owner's contacts
+   and the conversation about the post; full screen on a phone. */
+
+.panel-header {
+    height: auto;
+    min-height: 56px;
+    align-items: flex-start;
+    padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
+}
+
+.panel-title {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    padding-top: var(--space-2);
+}
+
+.panel-title h2 {
+    font-size: var(--size-16);
+    overflow-wrap: anywhere;
+}
+
+.panel-title p {
+    color: var(--text-muted);
+    font-size: var(--size-12);
+}
+
+.panel-tools {
+    display: flex;
+    flex: none;
+}
+
+.panel-section {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-3);
+}
+
+.panel-section > h3 {
+    font-size: var(--size-14);
+}
+
+.panel-section > .button {
+    align-self: flex-start;
+}
+
+/* Contact rows: what the owner shared, each with Copy. */
+
+.contact-rows {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    background: var(--table);
+}
+
+.contact-row {
+    display: grid;
+    grid-template-columns: 112px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: var(--space-1) var(--space-3);
+    min-height: 48px;
+    padding: var(--space-2) var(--space-2) var(--space-2) var(--space-3);
+}
+
+.contact-row + .contact-row {
+    border-top: 1px solid var(--border);
+}
+
+.contact-label {
+    color: var(--text-muted);
+    font-size: var(--size-12);
+    font-weight: 500;
+}
+
+.contact-value {
+    font-weight: 500;
+    overflow-wrap: anywhere;
+}
+
+a.contact-value {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+}
+
+@media (max-width: 639px) {
+    .contact-row {
+        grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .contact-label {
+        grid-column: 1 / -1;
+    }
+}
+
+/* The message box under the conversation. */
+
+.composer {
+    display: flex;
+    align-items: flex-end;
+    gap: var(--space-2);
+}
+
+.composer .textarea {
+    flex: 1;
+    min-width: 0;
+    min-height: 40px;
+    max-height: 160px;
+    padding-top: var(--space-2);
+    padding-bottom: var(--space-2);
+    resize: none;
+}
+
+.composer .button {
+    height: 40px;
+}

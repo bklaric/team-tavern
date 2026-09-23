@@ -324,6 +324,64 @@ join (values
 ) as posted (handle, age) on posted.handle = game.handle
 where player.nickname = 'OwnerTester';
 
+-- Every way a post asks to be reached, for the contact panel. Team Fortress
+-- 2's tester would rather be added off-site, and a community there is joined
+-- through its website; Valorant carries the other four.
+
+update post
+set contact_preference = 'offsite'
+from player
+where player.id = post.player_id and player.nickname = 'TeamFortress2Tester';
+
+select seed_player('CommunityTester', 'community@example.com');
+
+insert into post
+    ( player_id, game_id, ilk, renewal_nonce, summary
+    , microphone, online_from, online_to, contact_preference
+    , name, regions, languages, website
+    )
+select
+    player.id,
+    game.id,
+    'community',
+    left(md5('CommunityTester-community'), 20),
+    array['A payload server community with a pub night every Thursday and a league team for anyone who wants one.'],
+    true,
+    time '19:00',
+    time '23:00',
+    'website',
+    'Payload Pals',
+    array['Europe'],
+    array['English'],
+    'payloadpals.example.com'
+from player, game
+where player.nickname = 'CommunityTester' and game.handle = 'team-fortress-2';
+
+-- An owner with two expired posts to renew, one from the feed and one from
+-- its page, in games whose feeds no other spec asserts.
+
+select seed_player('RenewTester', 'renew@example.com');
+
+insert into post
+    ( player_id, game_id, ilk, renewal_nonce, summary
+    , microphone, online_from, online_to, contact_preference
+    , created, updated
+    )
+select
+    player.id,
+    game.id,
+    'player',
+    left(md5('RenewTester-player-' || game.handle), 20),
+    array['Seeded player post of RenewTester''s.'],
+    true,
+    time '20:00',
+    time '23:00',
+    'either',
+    current_timestamp - interval '40 days',
+    current_timestamp - interval '40 days'
+from player, game
+where player.nickname = 'RenewTester' and game.handle in ('rainbow-six-siege', 'overwatch');
+
 drop function seed_post_range(text, text, text, text, text);
 drop function seed_post_option(text, text, text, text[]);
 drop function seed_player(text, text);

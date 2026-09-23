@@ -256,7 +256,7 @@ slotsText post = let
     [] -> Nothing
     parts -> Just $ joinWith ", " parts
 
--- What the contact button says: how the post asked to be reached (brief 5.5).
+-- What the contact button says: how the post asked to be reached (brief 5.6).
 contactButton :: ∀ w i. CardRow -> Array (HH.HTML w i)
 contactButton post = case post.contact_preference of
     "discord" -> [ Icons.discord, HH.text "Join Discord" ]
@@ -358,15 +358,13 @@ card { game, viewer, post, marked, expanded: expanded', place, onToggle, onConta
     messagedLine = post.messaged <#> \time ->
         HH.span [ HS.class_ "card-messaged" ] [ Icons.messageCircle, HH.text $ "You messaged " <> ago viewer.now time ]
     -- A card's contact button is outlined, so a feed of twenty cards doesn't
-    -- show twenty filled ones. Its panel is still to come, so the page's is
-    -- disabled.
+    -- show twenty filled ones.
     contact content =
         HH.button
         [ HS.class_ if page
             then "button button-primary card-contact"
             else "button button-outline button-small card-contact"
         , HP.type_ HP.ButtonButton
-        , HP.disabled page
         , HE.onClick $ const onContact
         ]
         content

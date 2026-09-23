@@ -22,12 +22,13 @@ import TeamTavern.Client.Components.Button (Size(..), Weight(..), button, iconBu
 import TeamTavern.Client.Components.Card (Place(..), Viewer, card, ownCard)
 import TeamTavern.Client.Components.Check (check, choiceList, choices, switch, switches)
 import TeamTavern.Client.Components.Confirm (confirm)
+import TeamTavern.Client.Components.ContactPanel (Revealed(..), contactPanelSheet)
 import TeamTavern.Client.Components.DataList (dataList, personRow, personRows, row)
 import TeamTavern.Client.Components.Divider (divider, rule, tierHeading)
 import TeamTavern.Client.Components.Field (Labelling(..), field, field_, formSection)
 import TeamTavern.Client.Components.Input (Option, input, select, textarea)
 import TeamTavern.Client.Components.Menu (menuDivider, menuItem, menuItemDestructive, menuLabel, sheetMenu)
-import TeamTavern.Client.Components.Overlay (Presentation(..), overlay, useOverlay)
+import TeamTavern.Client.Components.Overlay (Presentation(..), overlay, sidePanel, useOverlay)
 import TeamTavern.Client.Components.OwnPostStatus (ownPostStatus, renewDue)
 import TeamTavern.Client.Components.Pills (pills)
 import TeamTavern.Client.Components.Range (ageRange, hoursHint, hoursRange, optionRange)
@@ -316,14 +317,14 @@ component = Hooks.component \_ _ -> Hooks.do
                     ]
                 else HH.text ""
             , if isOpen SideOverlay
-                then overlay { ref: refs.side, presentation: Side, title: "Night Owls", onClose: close }
+                then sidePanel
+                    { ref: refs.side, title: "Night Owls", subtitle: "Valorant group · Posted by Kestrel", tools: [], onClose: close }
                     [ HH.p_ [ HH.text "A side panel from 640 px, standing at the page's right edge; the whole screen on a phone." ]
                     , HH.div [ HS.class_ "sheet-row" ]
                         [ button Outline Small (pure unit) [ Icons.copy, HH.text "Copy" ]
                         , button Outline Small (pure unit) [ Icons.discord, HH.text "Open the invite" ]
                         ]
                     ]
-                    []
                 else HH.text ""
             , if isOpen FullScreenOverlay
                 then overlay { ref: refs.fullScreen, presentation: FullScreen, title: "Tell us about you", onClose: close }
@@ -537,6 +538,39 @@ component = Hooks.component \_ _ -> Hooks.do
             , rule "or"
             ]
 
+        contactPanels = section "Contact panel"
+            "Every contact button opens one panel, with what the owner shared and the conversation about the post. What the owner prefers comes first; a conversation under way always does."
+            case state.viewer of
+            Just viewer -> let
+                posts = fixtures viewer.now
+                sheet key label post contacts =
+                    [ caption label
+                    , contactPanelSheet (H.RefLabel $ "design-panel-" <> key)
+                        { now: viewer.now
+                        , panel:
+                            { game: { handle: "valorant", title: "Valorant" }
+                            , post
+                            , revealed: Revealed contacts
+                            , copied: if key == "offsite" then Just post.owner else Nothing
+                            }
+                        , onClose: pure unit
+                        , onCopy: const $ pure unit
+                        }
+                    ]
+                none = { contacts: [], discord_server: Nothing, website: Nothing }
+                in
+                sheet "message" "The owner prefers messages: the message box first, their contacts after" posts.nightOwls
+                    none { contacts = [ { kind: "discord", value: "kestrel" }, { kind: "riot", value: "Kestrel#EUW" } ] }
+                <> sheet "offsite" "The owner prefers Discord: contacts first, and Send is outlined, with one just copied" posts.shadowFox
+                    none { contacts = [ { kind: "discord", value: "ShadowFox" } ] }
+                <> sheet "community" "A community joined on Discord: the invite is the one filled button"
+                    posts.radiantRising { contacts = [] }
+                    none { discord_server = Just "discord.gg/radiantrising", website = Just "radiantrising.gg" }
+                <> sheet "older" "An older post with nothing to reveal: its owner may no longer be looking"
+                    posts.expiredPlayer { contacts = [] }
+                    none
+            Nothing -> []
+
         unread = section "Unread"
             "A count on an icon, read out from the button's label, and a dot on a row."
             [ sheetRow
@@ -663,6 +697,7 @@ component = Hooks.component \_ _ -> Hooks.do
             , confirmations
             , feed
             , cards
+            , contactPanels
             , unread
             , account
             ]

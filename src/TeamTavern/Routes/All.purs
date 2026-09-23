@@ -15,6 +15,7 @@ import TeamTavern.Routes.Player.ViewMe (ViewMe)
 import TeamTavern.Routes.Post.CreatePost (CreatePost)
 import TeamTavern.Routes.Post.DeletePost (DeletePost)
 import TeamTavern.Routes.Post.RenewPost (RenewPost)
+import TeamTavern.Routes.Post.RevealContacts (RevealContacts)
 import TeamTavern.Routes.Post.UpdatePost (UpdatePost)
 import TeamTavern.Routes.Post.ViewOwnPost (ViewOwnPost)
 import TeamTavern.Routes.Post.ViewOwnPosts (ViewOwnPosts)
@@ -45,13 +46,14 @@ type FeedRoutes
     <|> "viewOwnDescriptions" : ViewOwnDescriptions
 
 type PostRoutes
-    =   "viewPost"     : ViewPost
-    <|> "viewOwnPosts" : ViewOwnPosts
-    <|> "viewOwnPost"  : ViewOwnPost
-    <|> "createPost"   : CreatePost
-    <|> "updatePost"   : UpdatePost
-    <|> "renewPost"    : RenewPost
-    <|> "deletePost"   : DeletePost
+    =   "viewPost"       : ViewPost
+    <|> "viewOwnPosts"   : ViewOwnPosts
+    <|> "viewOwnPost"    : ViewOwnPost
+    <|> "createPost"     : CreatePost
+    <|> "updatePost"     : UpdatePost
+    <|> "renewPost"      : RenewPost
+    <|> "revealContacts" : RevealContacts
+    <|> "deletePost"     : DeletePost
 
 type CountryRoutes
     =   "viewCountries" : ViewCountries

@@ -17,6 +17,7 @@ import Halogen.HTML.Properties as HP
 import Halogen.Hooks as Hooks
 import TeamTavern.Client.Components.Button (Size(..), Weight(..), button)
 import TeamTavern.Client.Components.Divider (rule)
+import TeamTavern.Client.Components.ContactPanel (contacting, contactingOwner)
 import TeamTavern.Client.Components.Flow (flow, flowError, flowLead, flowLink, formTight, submitButton, textField)
 import TeamTavern.Client.Icons as Icons
 import TeamTavern.Client.Pages.Post.Register (Publishing, publishing, publishingPost)
@@ -43,11 +44,13 @@ noErrors :: Errors
 noErrors = { email: Nothing, nickname: Nothing, password: Nothing, form: Nothing }
 
 -- | `publishing` is the post the page goes on to publish when it is the
--- | register step of posting, and `post` how that post is named.
+-- | register step of posting, and `post` how that post is named. `contacting`
+-- | is whose post the page returns to contact.
 type State =
     { back :: String
     , publishing :: Maybe Publishing
     , post :: Maybe String
+    , contacting :: Maybe String
     , email :: String
     , nickname :: String
     , password :: String
@@ -71,7 +74,7 @@ validate { email, nickname, password } = noErrors
 component :: ∀ query input output left. H.Component query input output (Async left)
 component = Hooks.component \_ _ -> Hooks.do
     state /\ stateId <- Hooks.useState
-        ({ back: "/", publishing: Nothing, post: Nothing, email: "", nickname: "", password: "", errors: noErrors, sending: false } :: State)
+        ({ back: "/", publishing: Nothing, post: Nothing, contacting: Nothing, email: "", nickname: "", password: "", errors: noErrors, sending: false } :: State)
 
     let set = Hooks.modify_ stateId
         failWith errors = set _ { sending = false, errors = errors }
@@ -116,14 +119,18 @@ component = Hooks.component \_ _ -> Hooks.do
         for_ (publishing back) \publishing' -> void $ Hooks.fork do
             post <- H.lift $ publishingPost publishing'
             set _ { post = post }
+        for_ (contacting back) \contacting' -> void $ Hooks.fork do
+            owner <- H.lift $ contactingOwner contacting'
+            set _ { contacting = owner }
         pure Nothing
 
     Hooks.pure $ flow
         [ HH.h1_ [ HH.text "Create your account" ]
-        , flowLead case state.publishing of
-            Just _ -> "Your " <> fromMaybe "post" state.post
+        , flowLead case state.publishing, state.contacting of
+            Just _, _ -> "Your " <> fromMaybe "post" state.post
                 <> " goes live as soon as you're signed up. Nothing you wrote is lost."
-            Nothing -> "Find players, groups and communities, and hear when someone new fits."
+            _, Just owner -> "Messages and contacts need an account. You'll come straight back to " <> owner <> "'s post."
+            _, _ -> "Find players, groups and communities, and hear when someone new fits."
         , button Outline Regular (authorizeWithDiscord state.back)
             [ Icons.discord, HH.text "Continue with Discord" ]
         , rule "or"

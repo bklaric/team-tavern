@@ -3,6 +3,7 @@ module TeamTavern.Server.Post.Infrastructure.CardColumns (cardColumns) where
 import Prelude
 
 import TeamTavern.Server.Post.Infrastructure.Answers (flagsJson, optionsJson, rangesJson)
+import TeamTavern.Server.Post.Infrastructure.ContactAccount (contactAccount)
 
 -- | A card's columns but its marks, as `Feed.sql`'s last select writes them,
 -- | since both decode into `CardRow`: SQL over a `post`, its `owner` and
@@ -43,17 +44,7 @@ cardColumns = """
         select kind from game_contact
         where game_contact.game_id = post.game_id
             and post.ilk <> 'community'
-            and case kind
-                when 'discord' then owner.discord_tag
-                when 'steam' then owner.steam_id
-                when 'riot' then owner.riot_id
-                when 'battle_tag' then owner.battle_tag
-                when 'ea' then owner.ea_id
-                when 'ubisoft' then owner.ubisoft_username
-                when 'psn' then owner.psn_id
-                when 'gamer_tag' then owner.gamer_tag
-                when 'friend_code' then owner.friend_code
-            end is not null
+            and """ <> contactAccount "owner" "kind" <> """ is not null
         order by kind
     ) as contacts,
     coalesce((
@@ -61,17 +52,7 @@ cardColumns = """
             'title', tracker.title, 'template', tracker.template, 'account', account
         ) order by tracker.id)
         from tracker
-        cross join lateral (select case tracker.contact_kind
-            when 'discord' then owner.discord_tag
-            when 'steam' then owner.steam_id
-            when 'riot' then owner.riot_id
-            when 'battle_tag' then owner.battle_tag
-            when 'ea' then owner.ea_id
-            when 'ubisoft' then owner.ubisoft_username
-            when 'psn' then owner.psn_id
-            when 'gamer_tag' then owner.gamer_tag
-            when 'friend_code' then owner.friend_code
-        end as account) accounts
+        cross join lateral (select """ <> contactAccount "owner" "tracker.contact_kind" <> """ as account) accounts
         where tracker.game_id = post.game_id
             and post.ilk = 'player'
             and account is not null

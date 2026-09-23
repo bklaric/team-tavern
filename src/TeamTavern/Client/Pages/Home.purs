@@ -35,13 +35,13 @@ import TeamTavern.Client.Script.Navigate (navigateWithEvent_)
 import TeamTavern.Client.Script.RenderReady (appendRenderReadyUnavailable)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Shared.Fetch (fetchPath, fetchSimple)
+import TeamTavern.Client.Shared.Renew (renew, renewFailed) as Renew
 import TeamTavern.Client.Shared.Slot (Slot__I)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Game.ViewGame (ViewGame)
 import TeamTavern.Routes.Game.ViewGame as ViewGame
 import TeamTavern.Routes.Game.ViewGames (ViewGames)
 import TeamTavern.Routes.Game.ViewGames as ViewGames
-import TeamTavern.Routes.Post.RenewPost (RenewPost)
 import TeamTavern.Routes.Post.ViewOwnPosts (OwnPost, ViewOwnPosts)
 import Type.Proxy (Proxy(..))
 
@@ -97,16 +97,12 @@ component = Hooks.component \_ _ -> Hooks.do
 
     let renew :: String -> OwnPost -> HookM (Async left) Unit
         renew handle { post } = void $ Hooks.fork do
-            result <- H.lift $ Async.attempt $ fetchPath (Proxy :: _ RenewPost) { handle, id: post.id }
-            case hush result >>= onMatch { noContent: Just } (const Nothing) of
-                Nothing -> showToast { text: "Your post couldn't be renewed. Try again.", action: Nothing }
-                Just _ -> do
+            renewed <- H.lift $ Renew.renew handle post
+            case renewed of
+                Nothing -> showToast { text: Renew.renewFailed, action: Nothing }
+                Just text -> do
                     H.lift load >>= show'
-                    showToast
-                        { text: "Renewed. Your post stays active for "
-                            <> (if post.type == "community" then "90" else "30") <> " days from today."
-                        , action: Nothing
-                        }
+                    showToast { text, action: Nothing }
 
         gamesSection title games =
             HH.section [ HS.class_ "home-games", HPA.labelledBy "games-title" ]

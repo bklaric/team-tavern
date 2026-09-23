@@ -28,7 +28,7 @@ brief marks Proposed, the brief's status is updated in the same commit.
 - [x] 7. Post creation
 - [x] 8. Post pages
 - [x] 9. Home page
-- [ ] 10. Contact panel and renewal
+- [x] 10. Contact panel and renewal
 - [ ] 11. Messaging and the inbox
 - [ ] 12. Block and report
 - [ ] 13. Fit notifications
@@ -673,6 +673,35 @@ What every later page needs signed in and out.
 - Specs: `contact.spec.ts`: each preference gives its button label and order;
   signed out leads to sign up and back; a reveal shows on the owner's home
   page as Contacts shown once.
+- Settled here:
+  - `revealContacts` is `POST /api/games/:handle/posts/:id/contacts`, signed in,
+    answering `{ contacts, discord_server, website }`: the owner's accounts of the
+    game's contact kinds, Discord first, none for a community. Not found is a post
+    of another game or one either side has blocked. One statement reads them and
+    counts the reveal where it shows anything and the viewer isn't the owner, so
+    every opening counts. The kind-to-column `case` is `ContactAccount.purs`, which
+    `CardColumns` uses too.
+  - The panel is `Components/ContactPanel.purs`: `useContactPanel`, which the feed,
+    the post page and Matches use, and the `contactPanel` render function. It
+    asks for the contacts as it opens, drawing the rest at once. Steam, a Discord
+    server or invite and a website are links, `https://` added where the owner
+    left it out. The message box is disabled until step 11; the ⋯ menu goes into
+    the header's `tools` in step 12. The header is `Overlay.purs`'s `sidePanel`,
+    a title with a line under it.
+  - Signed out, the button goes to `/signup` returning to the page's path with
+    `?contact=<id>`, which the page takes out of the address and opens the
+    panel from through `viewPost`, so a post in a later batch opens too. The
+    account pages keep their headings and say "You'll come straight back to
+    X's post."; a Discord trip carries the same `back`.
+  - Renew on the feed asks for the feed again, since the post moves; on the
+    post page it reads the post again and puts `index, follow` back. Both toast
+    as the home page does (`Shared/Renew.purs`).
+  - The seed has every preference: `TeamFortress2Tester` is `offsite`, and
+    `CommunityTester` (`community@example.com`) runs Payload Pals in Team
+    Fortress 2, joined by `website`. `RenewTester` (`renew@example.com`) has
+    expired posts in Rainbow Six Siege and Overwatch for the feed's and the
+    page's Renew. `contact.spec.ts` opens no panel on Night Owls, whose owner's
+    page `post-page.spec.ts` reads for no reveals.
 
 ### 11. Messaging and the inbox
 

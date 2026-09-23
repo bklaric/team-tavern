@@ -6,7 +6,7 @@ import Async (Async)
 import Async as Async
 import Control.Alt ((<|>))
 import Data.Array (concatMap, elem, filter, find, foldl, index, null, snoc, sortBy)
-import Data.Foldable (for_)
+import Data.Foldable (for_, traverse_)
 import Data.Int (round)
 import Data.Either (Either(..))
 import Data.Map (Map)
@@ -29,8 +29,10 @@ import Halogen.Hooks as Hooks
 import Halogen.Subscription as Subscription
 import TeamTavern.Client.Components.Button (Size(..), Weight(..), button)
 import TeamTavern.Client.Components.Card (Place(..), Viewer, card, tierOf, typeIcon)
+import TeamTavern.Client.Components.ContactPanel (contactPanel, takeContactParam, useContactPanel)
 import TeamTavern.Client.Components.Divider (divider, tierHeading)
 import TeamTavern.Client.Components.Overlay (Presentation(..), useOverlay)
+import TeamTavern.Client.Components.Toast (toasts, useToast)
 import TeamTavern.Client.Components.UsePhone (usePhone)
 import TeamTavern.Client.Icons as Icons
 import TeamTavern.Client.Pages.Feed.Bar (bar, sheet, summaryButton)
@@ -45,6 +47,7 @@ import TeamTavern.Client.Script.Scroll (onScroll)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Shared.Fetch (fetchPath, fetchPathBody, fetchSimple)
 import TeamTavern.Client.Shared.Me (fetchMe)
+import TeamTavern.Client.Shared.Renew (renew, renewFailed)
 import TeamTavern.Client.Shared.Slot (Slot__I)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Country.ViewCountries (ViewCountries)
@@ -150,6 +153,8 @@ component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
         }
     _ /\ requestRef <- Hooks.useRef 0
     phone <- usePhone
+    { panel, openPanel, openPanelById, closePanel, copy } <- useContactPanel
+    { toast, showToast, dismissToast } <- useToast
 
     let popoverRef = H.RefLabel "feed-popover"
         sheetRef = H.RefLabel "feed-sheet"
@@ -263,6 +268,8 @@ component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
                             <> "Say who you're looking for and see who fits."
                             )
                         update _ { game = Loaded game }
+                        -- Back from signing up to contact a post, its panel opens.
+                        takeContactParam >>= traverse_ (openPanelById game)
                     , notFound: const do
                         appendRenderReadyNotFound
                         setMeta "Page not found | TeamTavern" ""
@@ -386,10 +393,20 @@ component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
             , expanded: elem post.id state.expanded
             , place: Listed
             , onToggle: \(event :: MouseEvent) -> toggleCardOf event post.id
-            , onContact: pure unit
+            , onContact: openPanel { signedIn: isJust state.nickname, game } post
             , onEdit: navigate_ $ "/games/" <> handle <> "/post/" <> post.type <> "?from=edit"
-            , onRenew: pure unit
+            , onRenew: renewPost post
             }
+
+        -- A renewed post is active again, so the feed is asked again for
+        -- where it now stands.
+        renewPost post = void $ Hooks.fork do
+            renewed <- H.lift $ renew handle post
+            case renewed of
+                Nothing -> showToast { text: renewFailed, action: Nothing }
+                Just text -> do
+                    load Nothing
+                    showToast { text, action: Nothing }
 
         toggleCardOf event id = toggleCard event $ update \state' -> state'
             { expanded = if elem id state'.expanded then filter (notEq id) state'.expanded else snoc state'.expanded id }
@@ -482,6 +499,10 @@ component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
                     , onClose: closeSheet
                     }
                 else HH.text ""
+            , case panel, state.viewer of
+                Just panel', Just viewer -> contactPanel { now: viewer.now, panel: panel', onClose: closePanel, onCopy: copy }
+                _, _ -> HH.text ""
+            , toasts toast dismissToast
             ]
 
 feed :: ∀ action slots left.

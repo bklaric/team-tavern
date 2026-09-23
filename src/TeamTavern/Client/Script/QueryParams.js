@@ -21,3 +21,9 @@ export const getFragmentParamImpl = function (param) {
         return null;
     }
 }
+
+export const removeQueryParamImpl = param => () => {
+    const url = new URL(window.location.href);
+    url.searchParams.delete(param);
+    history.replaceState(history.state, "", url.pathname + url.search + url.hash);
+};

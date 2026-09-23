@@ -486,8 +486,9 @@ fact line or behind Details (5.4). The fact line wraps as it needs to.
   the conversation about the post with a message box. The preference decides which
   comes first. The message box is always there: contact on the site is what brings
   both sides back, and it keeps a post whose owner gave no contacts reachable.
-- **Proposed:** opening a panel that shows contacts or join links counts as a
-  reveal, so owners can be told how often it happens.
+- **Decided:** opening a panel that shows contacts or join links counts as a
+  reveal, so owners can be told how often it happens. Every opening counts, and
+  never the owner's own.
 - **Decided:** a card the viewer already has a conversation about says so, and
   its button reads **Open conversation** and opens the panel on it.
 - **Decided:** on the viewer's own post, in the feed or on its page, **Edit** and
@@ -495,16 +496,16 @@ fact line or behind Details (5.4). The fact line wraps as it needs to.
 - **Decided:** on a desktop the panel is a side panel on the right, not a modal,
   so the card it was opened from stays in view beside it; on a phone it is
   full-screen.
-- **Proposed:** the preferences that point off-site (Add on Discord, Add in game,
+- **Decided:** the preferences that point off-site (Add on Discord, Add in game,
   Join Discord, Visit site) put the contacts first, under a heading in the
   owner's terms ("Prefers Discord", "Join on Discord"), and "or message on
   TeamTavern" follows. Message me and Either is fine put the message box first,
   and "or add Kestrel off-site" follows. A conversation already under way
   always comes first.
-- **Proposed:** the panel's one filled button is what comes first: **Send**, or a
+- **Decided:** the panel's one filled button is what comes first: **Send**, or a
   community's **Open the invite** or **Visit site**. When contacts come first,
   **Send** is outlined.
-- **Proposed:** before the first message, the panel says where replies go: "Your
+- **Decided:** before the first message, the panel says where replies go: "Your
   message starts a conversation about Night Owls. Replies show up here and in
   your inbox." Messages carry no subject or greeting template.
 - **Proposed:** Enter sends and Shift+Enter starts a new line, as on Discord. On
