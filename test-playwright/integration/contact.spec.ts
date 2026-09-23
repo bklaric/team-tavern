@@ -58,7 +58,7 @@ test.describe("the contact panel", () => {
         await expect(dialog.getByText(
             "Your message starts a conversation about ValorantTester's post. Replies show up here and in your inbox."))
             .toBeVisible();
-        await expect(dialog.getByRole("textbox", { name: "Message" })).toBeDisabled();
+        await expect(dialog.getByRole("textbox", { name: "Message" })).toBeEnabled();
         await expect(dialog.getByRole("button", { name: "Send" })).toHaveClass(/button-primary/);
     });
 

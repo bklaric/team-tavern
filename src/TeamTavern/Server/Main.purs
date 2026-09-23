@@ -16,6 +16,11 @@ import JavaScript.Node.Process (lookupEnv)
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Pool as Pool
 import TeamTavern.Routes.All (AllRoutes)
+import TeamTavern.Server.Conversation.SendMessage (sendMessage)
+import TeamTavern.Server.Conversation.SendReply (sendReply)
+import TeamTavern.Server.Conversation.ViewConversation (viewConversation)
+import TeamTavern.Server.Conversation.ViewInbox (viewInbox)
+import TeamTavern.Server.Conversation.ViewPostConversation (viewPostConversation)
 import TeamTavern.Server.Country.ViewCountries (viewCountries)
 import TeamTavern.Server.Feed.ViewFeed (viewFeed)
 import TeamTavern.Server.Feed.ViewOwnDescriptions (viewOwnDescriptions)
@@ -137,6 +142,16 @@ runServer deployment discordApiUrl pool = serve (Proxy :: _ AllRoutes) serveOpti
         renewPost pool path.handle path.id cookies
     , revealContacts: \{ path, cookies } ->
         revealContacts pool path.handle path.id cookies
+    , viewInbox: \{ cookies } ->
+        viewInbox pool cookies
+    , viewConversation: \{ path: { id }, cookies } ->
+        viewConversation pool id cookies
+    , viewPostConversation: \{ path, cookies } ->
+        viewPostConversation pool path.handle path.id cookies
+    , sendMessage: \{ path, cookies, body } ->
+        sendMessage deployment pool path.handle path.id cookies body
+    , sendReply: \{ path: { id }, cookies, body } ->
+        sendReply deployment pool id cookies body
     , deletePost: \{ path, cookies } ->
         deletePost pool path.handle path.type cookies
     , viewCountries: const $

@@ -29,7 +29,7 @@ import Halogen.Hooks as Hooks
 import Halogen.Subscription as Subscription
 import TeamTavern.Client.Components.Button (Size(..), Weight(..), button)
 import TeamTavern.Client.Components.Card (Place(..), Viewer, card, tierOf, typeIcon)
-import TeamTavern.Client.Components.ContactPanel (contactPanel, takeContactParam, useContactPanel)
+import TeamTavern.Client.Components.ContactPanel (contactPanel, markMessaged, takeContactParam, useContactPanel)
 import TeamTavern.Client.Components.Divider (divider, tierHeading)
 import TeamTavern.Client.Components.Overlay (Presentation(..), useOverlay)
 import TeamTavern.Client.Components.Toast (toasts, useToast)
@@ -153,7 +153,9 @@ component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
         }
     _ /\ requestRef <- Hooks.useRef 0
     phone <- usePhone
-    { panel, openPanel, openPanelById, closePanel, copy } <- useContactPanel
+    { panel, openPanel, openPanelById, closePanel } <- useContactPanel \id time ->
+        Hooks.modify_ stateId \state' -> state'
+            { feed = state'.feed <#> \feed' -> feed' { posts = markMessaged id time <$> feed'.posts } }
     { toast, showToast, dismissToast } <- useToast
 
     let popoverRef = H.RefLabel "feed-popover"
@@ -500,7 +502,7 @@ component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
                     }
                 else HH.text ""
             , case panel, state.viewer of
-                Just panel', Just viewer -> contactPanel { now: viewer.now, panel: panel', onClose: closePanel, onCopy: copy }
+                Just panel', Just viewer -> contactPanel viewer.now panel'
                 _, _ -> HH.text ""
             , toasts toast dismissToast
             ]

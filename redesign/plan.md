@@ -720,6 +720,42 @@ What every later page needs signed in and out.
 - Specs: `messages.spec.ts` with two browser contexts: one player writes on
   the other's post, the owner sees the unread count, the row and the New line,
   replies, the first sees it in the panel and the inbox.
+- Built in two parts. 11a: the endpoints, the email, the panel's thread and
+  message box, and the header's count. 11b: the inbox page, the home page's
+  conversation link and `/design`'s messaging.
+- Settled here:
+  - Five routes answer with one `Conversation` shape (`Routes/Shared/Conversation.purs`):
+    the post as an unmarked card row, the other side's nickname, for the owner
+    the other player's post in the game (player, then group, then community),
+    `readTo`, where the viewer had read to, and the messages. `viewInbox` is
+    `GET /api/messages`; `viewConversation` `GET /api/messages/:id`;
+    `viewPostConversation` `GET /api/games/:handle/posts/:id/messages`, the
+    viewer's own conversation about a post, for the panel; `sendMessage` `POST`
+    to that path, which starts the conversation; `sendReply` `POST /api/messages/:id`,
+    from either side. Both views mark the viewer's side read, so reading is a
+    `GET` with an effect, and only a player signed in can make it.
+  - A message is kept as its lines, blank lines at either end and spaces at
+    line ends dropped, at most 2000 characters, which the message box's
+    `maxlength` also says. Nothing is sent for a blank one.
+  - Sending locks the conversation, reads whether the recipient already had
+    anything unread, adds the message and sets the sender's read mark, all in
+    one transaction, so the sender's own message is never unread and two sent at
+    once can't both email. Neither side of a block can send.
+  - The message email (`SendMessageEmail.purs`) is plain, as the confirmation
+    email is, until step 14 styles them all: who wrote, the message, the link to
+    `/messages/<id>` and, to an owner whose post has expired, its renewal link.
+    `Local` logs it.
+  - `viewMe` counts the conversations with anything unread on either side
+    (`Server/Conversation/Infrastructure/Unread.purs`). A page that reads a
+    conversation or sends a message fires `tt-unread` on the window
+    (`Script/Unread.purs`), and the header asks `viewMe` again, since its own
+    asking on each visit can answer before the read lands.
+  - The message box is `Components/Composer.purs`, a render function and
+    `useComposer`, which the panel and the inbox share: Enter sends except on a
+    phone, Shift+Enter and composing don't, the box grows to its `max-height`,
+    and a message that fails stays in the box under an error. The thread is
+    `Components/Thread.purs`. `useContactPanel` takes what to do once the viewer
+    has written, so the feed, the post page and Matches mark their card.
 
 ### 12. Block and report
 

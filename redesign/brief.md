@@ -508,7 +508,7 @@ fact line or behind Details (5.4). The fact line wraps as it needs to.
 - **Decided:** before the first message, the panel says where replies go: "Your
   message starts a conversation about Night Owls. Replies show up here and in
   your inbox." Messages carry no subject or greeting template.
-- **Proposed:** Enter sends and Shift+Enter starts a new line, as on Discord. On
+- **Decided:** Enter sends and Shift+Enter starts a new line, as on Discord. On
   a phone Enter is a new line and **Send** sends.
 - **Proposed:** the panel's menu holds **Report this post** and **Block Kestrel**
   (section 10).
@@ -928,7 +928,7 @@ the field:
 - **Decided:** community posts are active for 90 days.
 - **Decided:** expired posts stay in the feed below the divider (section 4).
 - **Decided:** an expired post can be renewed any time from the home page (11.2).
-- **Proposed:** expired posts can still be messaged, with a note that the owner may
+- **Decided:** expired posts can still be messaged, with a note that the owner may
   not reply. The owner's email about the message includes a **Renew** button.
 - **Decided:** every card says when it was last active, "Active 2 days ago" or
   "Active 3 months ago", counted from the last renewal or edit. Players don't know

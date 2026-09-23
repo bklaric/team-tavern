@@ -24,7 +24,7 @@ import Halogen.HTML.Properties as HP
 import Halogen.HTML.Properties.ARIA as HPA
 import Halogen.Hooks as Hooks
 import TeamTavern.Client.Components.Card (Place(..), Viewer, card, postName, typeIcon)
-import TeamTavern.Client.Components.ContactPanel (contactPanel, takeContactParam, useContactPanel)
+import TeamTavern.Client.Components.ContactPanel (contactPanel, markMessaged, takeContactParam, useContactPanel)
 import TeamTavern.Client.Components.OwnPostStatus (ownPostStatus)
 import TeamTavern.Client.Components.Toast (toasts, useToast)
 import TeamTavern.Client.Icons as Icons
@@ -93,7 +93,10 @@ goBack event = liftEffect do
 component :: ∀ query output left. H.Component query Input output (Async left)
 component = Hooks.component \_ { handle, id, feedBehind } -> Hooks.do
     state /\ stateId <- Hooks.useState ({ page: Loading, viewer: Nothing } :: State)
-    { panel, openPanel, openPanelById, closePanel, copy } <- useContactPanel
+    { panel, openPanel, openPanelById, closePanel } <- useContactPanel \id' time ->
+        Hooks.modify_ stateId \state' -> case state'.page of
+            Shown shown -> state' { page = Shown shown { page = shown.page { post = markMessaged id' time shown.page.post } } }
+            _ -> state'
     { toast, showToast, dismissToast } <- useToast
 
     let feedPath = "/games/" <> handle
@@ -278,7 +281,7 @@ component = Hooks.component \_ { handle, id, feedBehind } -> Hooks.do
                 , onRenew: renewPost page.post
                 }
             , Just $ feedSection game shown
-            , panel <#> \panel' -> contactPanel { now: viewer.now, panel: panel', onClose: closePanel, onCopy: copy }
+            , panel <#> contactPanel viewer.now
             , Just $ toasts toast dismissToast
             ]
         _, _ -> HH.div [ HS.class_ "post-page" ] []

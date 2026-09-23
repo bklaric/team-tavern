@@ -20,7 +20,7 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Halogen.Hooks as Hooks
 import TeamTavern.Client.Components.Card (Place(..), Viewer, card, tierOf)
-import TeamTavern.Client.Components.ContactPanel (contactPanel, useContactPanel)
+import TeamTavern.Client.Components.ContactPanel (contactPanel, markMessaged, useContactPanel)
 import TeamTavern.Client.Components.Flow (flowLead)
 import TeamTavern.Client.Icons as Icons
 import TeamTavern.Client.Pages.Feed.Description (storeDescription)
@@ -94,7 +94,15 @@ component :: ∀ query output left. H.Component query Input output (Async left)
 component = Hooks.component \_ { handle, type_ } -> Hooks.do
     state /\ stateId <- Hooks.useState
         ({ screen: Loading, updated: false, viewer: Nothing, expanded: [] } :: State)
-    { panel, openPanel, closePanel, copy } <- useContactPanel
+    { panel, openPanel } <- useContactPanel \id time ->
+        Hooks.modify_ stateId \state' -> case state'.screen of
+            Ready loaded -> state'
+                { screen = Ready loaded
+                    { fits = markMessaged id time <$> loaded.fits
+                    , posts = markMessaged id time <$> loaded.posts
+                    }
+                }
+            _ -> state'
 
     let postPath = "/games/" <> handle <> "/post/" <> type_
         set = Hooks.modify_ stateId
@@ -197,7 +205,7 @@ component = Hooks.component \_ { handle, type_ } -> Hooks.do
             <> (if null shown then []
                 else [ HK.div [ HS.class_ "feed-stack" ] $ shown <#> \post -> show post.id /\ cardOf loaded.game viewer post ])
             <> [ HH.div [ HS.class_ "flow-actions" ] [ seeAll loaded.description ] ]
-            <> maybe [] (\panel' -> [ contactPanel { now: viewer.now, panel: panel', onClose: closePanel, onCopy: copy } ]) panel
+            <> maybe [] (\panel' -> [ contactPanel viewer.now panel' ]) panel
         _, _ -> HH.div [ HS.class_ "flow" ] []
 
 matches :: ∀ action slots left.

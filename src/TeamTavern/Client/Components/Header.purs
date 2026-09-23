@@ -7,6 +7,7 @@ import Async as Async
 import Data.Array (find)
 import Data.Array as Array
 import Data.Either (Either(..))
+import Data.Foldable (for_)
 import Data.Maybe (Maybe(..), isJust, maybe)
 import Data.String (Pattern(..), split, stripPrefix, take, toUpper)
 import Data.Tuple.Nested ((/\))
@@ -17,6 +18,7 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Halogen.HTML.Properties.ARIA as HPA
 import Halogen.Hooks as Hooks
+import Halogen.Subscription as Subscription
 import TeamTavern.Client.Components.Button (Size(..), Weight(..), buttonLink)
 import TeamTavern.Client.Components.CoverGrid (coverGrid, feedPath)
 import TeamTavern.Client.Components.Menu (menuDivider, menuItem, menuLabel, menuLink, sheetMenu)
@@ -26,7 +28,9 @@ import TeamTavern.Client.Components.UsePhone (usePhone)
 import TeamTavern.Client.Icons as Icons
 import TeamTavern.Client.Script.Back (authPath, currentBack)
 import TeamTavern.Client.Script.Navigate (navigateWithEvent_, navigate_)
+import TeamTavern.Client.Script.Unread (onUnread)
 import TeamTavern.Client.Shared.Fetch (fetchSimple)
+import TeamTavern.Client.Shared.Me (fetchMe)
 import TeamTavern.Client.Shared.Slot (Slot___)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Game.ViewGames (ViewGames)
@@ -94,13 +98,21 @@ component = Hooks.component \_ { path, visit } -> Hooks.do
         isOpen menu = state.menu == Just menu
         toggle menu = if isOpen menu then close else set _ { menu = Just menu }
 
+    -- A page that reads a conversation or sends a message says so, and the
+    -- count is asked for again. Only a player signed in reads one.
     Hooks.useLifecycleEffect do
         void $ Hooks.fork do
             result <- H.lift $ Async.attempt $ fetchSimple (Proxy :: _ ViewGames)
             case result of
                 Right response -> response # onMatch { ok: \games -> set _ { games = games } } (const $ pure unit)
                 Left _ -> pure unit
-        pure Nothing
+        subscription <- Hooks.subscribe $ Subscription.makeEmitter (\emit -> onUnread (emit unit)) <#> \_ ->
+            void $ Hooks.fork do
+                me <- H.lift fetchMe
+                for_ me \me' -> set \state' -> case state'.viewer of
+                    SignedIn _ -> state' { viewer = SignedIn me' }
+                    _ -> state'
+        pure $ Just $ Hooks.unsubscribe subscription
 
     -- Every visit asks the server afresh, so signing in or out shows on the
     -- next page. The header keeps showing what it last knew meanwhile, and

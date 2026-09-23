@@ -1,6 +1,11 @@
 module TeamTavern.Routes.All where
 
 import Jarilo (type (<|>), type (:))
+import TeamTavern.Routes.Conversation.SendMessage (SendMessage)
+import TeamTavern.Routes.Conversation.SendReply (SendReply)
+import TeamTavern.Routes.Conversation.ViewConversation (ViewConversation)
+import TeamTavern.Routes.Conversation.ViewInbox (ViewInbox)
+import TeamTavern.Routes.Conversation.ViewPostConversation (ViewPostConversation)
 import TeamTavern.Routes.Country.ViewCountries (ViewCountries)
 import TeamTavern.Routes.Feed.ViewFeed (ViewFeed)
 import TeamTavern.Routes.Feed.ViewOwnDescriptions (ViewOwnDescriptions)
@@ -55,6 +60,13 @@ type PostRoutes
     <|> "revealContacts" : RevealContacts
     <|> "deletePost"     : DeletePost
 
+type ConversationRoutes
+    =   "viewInbox"            : ViewInbox
+    <|> "viewConversation"     : ViewConversation
+    <|> "viewPostConversation" : ViewPostConversation
+    <|> "sendMessage"          : SendMessage
+    <|> "sendReply"            : SendReply
+
 type CountryRoutes
     =   "viewCountries" : ViewCountries
 
@@ -65,4 +77,5 @@ type AllRoutes
     <|> GameRoutes
     <|> FeedRoutes
     <|> PostRoutes
+    <|> ConversationRoutes
     <|> CountryRoutes

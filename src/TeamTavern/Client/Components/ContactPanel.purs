@@ -1,11 +1,16 @@
 module TeamTavern.Client.Components.ContactPanel
     ( ContactPanel
+    , PanelActions
+    , PanelView
     , Revealed(..)
     , UseContactPanel
     , contactPanel
     , contactPanelSheet
     , contacting
     , contactingOwner
+    , contactRows
+    , href
+    , markMessaged
     , takeContactParam
     , useContactPanel
     ) where
@@ -14,6 +19,7 @@ import Prelude
 
 import Async (Async, fromEffectCont)
 import Async as Async
+import Control.Alt ((<|>))
 import Data.Array (catMaybes, elem, find, null)
 import Data.DateTime.Instant (Instant)
 import Data.Either (hush, isRight)
@@ -34,23 +40,30 @@ import Halogen.Hooks (type (<>), Hook, HookM, HookType, Pure, UseState)
 import Halogen.Hooks as Hooks
 import Halogen.Hooks.Hook (class HookNewtype)
 import TeamTavern.Client.Components.Card (postName)
+import TeamTavern.Client.Components.Composer (ComposerActions, ComposerState, UseComposer, composer, useComposer)
 import TeamTavern.Client.Components.Divider (rule)
 import TeamTavern.Client.Components.Overlay (Panel, Presentation(..), UseOverlay, panelHeader, sidePanel, useOverlay)
+import TeamTavern.Client.Components.Thread (newFrom, thread)
 import TeamTavern.Client.Icons as Icons
 import TeamTavern.Client.Script.Ago (ago)
 import TeamTavern.Client.Script.Back (authPath)
 import TeamTavern.Client.Script.Clipboard (writeTextAsync)
 import TeamTavern.Client.Script.Navigate (navigate_)
 import TeamTavern.Client.Script.QueryParams (getQueryParam, removeQueryParam)
+import TeamTavern.Client.Script.Thread (scrollThreadsToEnd)
+import TeamTavern.Client.Script.Unread (announceUnread)
 import TeamTavern.Client.Shared.Contacts (contactLabel)
-import TeamTavern.Client.Shared.Fetch (fetchPath)
+import TeamTavern.Client.Shared.Fetch (fetchPath, fetchPathBody)
 import TeamTavern.Client.Shared.Me (fetchMe)
 import TeamTavern.Client.Snippets.Class as HS
+import TeamTavern.Routes.Conversation.SendMessage (SendMessage)
+import TeamTavern.Routes.Conversation.ViewPostConversation (ViewPostConversation)
 import TeamTavern.Routes.Game.ViewGame as ViewGame
 import TeamTavern.Routes.Post.RevealContacts (RevealContacts)
 import TeamTavern.Routes.Post.RevealContacts as RevealContacts
 import TeamTavern.Routes.Post.ViewPost (ViewPost)
 import TeamTavern.Routes.Shared.Card (CardRow)
+import TeamTavern.Routes.Shared.Conversation (Conversation)
 import Type.Proxy (Proxy(..))
 import Web.HTML (window)
 import Web.HTML.Location (pathname)
@@ -64,18 +77,30 @@ import Web.HTML.Window (location)
 -- | the card only knows which there are.
 data Revealed = Revealing | Revealed RevealContacts.OkContent | Unrevealed
 
--- | `copied` is the value whose Copy has just worked.
+-- | `copied` is the value whose Copy has just worked. `thread` is the
+-- | conversation about the post once the viewer has one, which the panel asks
+-- | for as it opens while `loading`.
 type ContactPanel =
     { game :: { handle :: String, title :: String }
     , post :: CardRow
     , revealed :: Revealed
     , copied :: Maybe String
+    , thread :: Maybe Conversation
+    , loading :: Boolean
     }
+
+type PanelActions i = { onClose :: i, onCopy :: String -> i, composer :: ComposerActions i }
+
+-- | The panel with its message box and what they do, which the page draws.
+type PanelView i = { panel :: ContactPanel, composer :: ComposerState, actions :: PanelActions i }
 
 type ContactRow = { label :: String, value :: String, link :: Boolean }
 
 panelRef :: H.RefLabel
 panelRef = H.RefLabel "contact-panel"
+
+messageRef :: H.RefLabel
+messageRef = H.RefLabel "contact-panel-message"
 
 offers :: CardRow -> Boolean
 offers post = not null post.contacts || post.has_discord_server || post.has_website
@@ -99,7 +124,7 @@ contactsHeading post = case post.contact_preference of
     "discord" -> "Join on Discord"
     _ -> "Join on their website"
 
--- A link as the owner typed it, which may leave out the scheme.
+-- | A link as the owner typed it, which may leave out the scheme.
 href :: String -> String
 href value
     | isJust (stripPrefix (Pattern "https://") value) || isJust (stripPrefix (Pattern "http://") value) = value
@@ -114,7 +139,7 @@ rows post { contacts, discord_server, website } =
         , website <#> \value -> { label: "Website", value, link: true }
         ]
 
-type Props i = { now :: Instant, panel :: ContactPanel, onClose :: i, onCopy :: String -> i }
+type Props i = { now :: Instant, view :: PanelView i }
 
 -- A community's invite or website is the panel's one filled button when it
 -- comes first.
@@ -129,8 +154,8 @@ joinButton { post, revealed } = case post.type, post.contact_preference, reveale
     link value =
         HH.a [ HS.class_ "button button-primary", HP.href $ href value, HP.target "_blank", HP.rel "noopener" ]
 
-contactRow :: ∀ w i. Props i -> ContactRow -> HH.HTML w i
-contactRow { panel, onCopy } { label, value, link } =
+contactRow :: ∀ w i. { copied :: Maybe String, onCopy :: String -> i } -> ContactRow -> HH.HTML w i
+contactRow { copied, onCopy } { label, value, link } =
     HH.div [ HS.class_ "contact-row" ]
     [ HH.span [ HS.class_ "contact-label" ] [ HH.text label ]
     , if link
@@ -143,22 +168,30 @@ contactRow { panel, onCopy } { label, value, link } =
         , HPA.label $ "Copy " <> label
         , HE.onClick $ const $ onCopy value
         ]
-        if panel.copied == Just value then [ Icons.check, HH.text "Copied" ] else [ Icons.copy, HH.text "Copy" ]
+        if copied == Just value then [ Icons.check, HH.text "Copied" ] else [ Icons.copy, HH.text "Copy" ]
     ]
 
+-- | The rows of what a post's owner shared, each with Copy, as the panel and
+-- | the inbox show them.
+contactRows :: ∀ w i.
+    { post :: CardRow, revealed :: RevealContacts.OkContent, copied :: Maybe String, onCopy :: String -> i }
+    -> HH.HTML w i
+contactRows { post, revealed, copied, onCopy } =
+    HH.div [ HS.class_ "contact-rows" ] $ contactRow { copied, onCopy } <$> rows post revealed
+
 contactsSection :: ∀ w i. Props i -> Boolean -> HH.HTML w i
-contactsSection props@{ panel } first =
+contactsSection { view: { panel, actions } } first =
     HH.section [ HS.class_ "panel-section", HPA.label "Contacts" ] $
     (if first then [ HH.h3_ [ HH.text $ contactsHeading panel.post ] ] <> joinButton panel else [])
     <> case panel.revealed of
         Revealing -> [ HH.div [ HPA.busy "true" ] [] ]
         Unrevealed -> [ HH.p [ HS.class_ "muted" ] [ HH.text "The contacts couldn't be shown. Close the panel and try again." ] ]
-        Revealed revealed -> [ HH.div [ HS.class_ "contact-rows" ] $ contactRow props <$> rows panel.post revealed ]
+        Revealed revealed ->
+            [ contactRows { post: panel.post, revealed, copied: panel.copied, onCopy: actions.onCopy } ]
 
 -- The message box is the panel's one filled button when it comes first.
--- Messages are still to come, so it waits disabled.
 messageSection :: ∀ w i. Props i -> Boolean -> HH.HTML w i
-messageSection { panel: { post } } first =
+messageSection { now, view: { panel: { post, thread: thread', loading }, composer: composerState, actions } } first =
     HH.section [ HS.class_ "panel-section", HPA.label "Conversation" ] $ catMaybes
     [ if first
         then Just $ HH.h3_ [ HH.text $ (if isJust post.messaged then "Your conversation with " else "Message ") <> post.owner ]
@@ -167,30 +200,27 @@ messageSection { panel: { post } } first =
         then Just $ HH.span [ HS.class_ "field-note" ]
             [ Icons.info, HH.text $ "This is an older post. " <> post.owner <> " may no longer be looking." ]
         else Nothing
-    , Just $ HH.p [ HS.class_ "muted" ]
-        [ HH.text $ "Your message starts a conversation about "
-            <> (if post.type == "player" then post.owner <> "'s post" else postName post)
-            <> ". Replies show up here and in your inbox."
-        ]
-    , Just $ HH.form [ HS.class_ "composer" ]
-        [ HH.textarea
-            [ HS.class_ "textarea"
-            , HP.rows 1
-            , HPA.label "Message"
-            , HP.placeholder "Write a message…"
-            , HP.disabled true
+    , Just case thread' of
+        Just conversation ->
+            HH.div [ HS.class_ "thread-well" ]
+            [ thread
+                { now
+                , other: conversation.other
+                , messages: conversation.messages
+                , newFrom: newFrom conversation.readTo conversation.messages
+                }
             ]
-        , HH.button
-            [ HS.class_ if first then "button button-primary" else "button button-outline"
-            , HP.type_ HP.ButtonSubmit
-            , HP.disabled true
+        Nothing | loading -> HH.div [ HS.class_ "thread-well", HPA.busy "true" ] []
+        Nothing -> HH.p [ HS.class_ "muted" ]
+            [ HH.text $ "Your message starts a conversation about "
+                <> (if post.type == "player" then post.owner <> "'s post" else postName post)
+                <> ". Replies show up here and in your inbox."
             ]
-            [ HH.text "Send" ]
-        ]
     ]
+    <> composer { ref: messageRef, primary: first, state: composerState, actions: actions.composer }
 
 panelBody :: ∀ w i. Props i -> Array (HH.HTML w i)
-panelBody props@{ panel: { post } }
+panelBody props@{ view: { panel: { post } } }
     | not offers post = [ messageSection props true ]
     | contactsLead post = [ contactsSection props true, rule "or message on TeamTavern", messageSection props false ]
     | otherwise =
@@ -200,15 +230,16 @@ panelBody props@{ panel: { post } }
         ]
 
 panelOf :: ∀ w i. H.RefLabel -> Props i -> Panel w i
-panelOf ref { now, panel, onClose } = { ref, title: postName panel.post, subtitle: subtitle now panel, tools: [], onClose }
+panelOf ref { now, view: { panel, actions } } =
+    { ref, title: postName panel.post, subtitle: subtitle now panel, tools: [], onClose: actions.onClose }
 
 -- | The panel as a side panel on a desktop and the whole screen on a phone.
-contactPanel :: ∀ w i. Props i -> HH.HTML w i
-contactPanel props = sidePanel (panelOf panelRef props) (panelBody props)
+contactPanel :: ∀ w i. Instant -> PanelView i -> HH.HTML w i
+contactPanel now view = let props = { now, view } in sidePanel (panelOf panelRef props) (panelBody props)
 
 -- | The panel standing still on a page, as the components page shows it.
-contactPanelSheet :: ∀ w i. H.RefLabel -> Props i -> HH.HTML w i
-contactPanelSheet ref props =
+contactPanelSheet :: ∀ w i. H.RefLabel -> Instant -> PanelView i -> HH.HTML w i
+contactPanelSheet ref now view = let props = { now, view } in
     HH.div [ HS.class_ "overlay sheet-panel" ]
     [ panelHeader (panelOf ref props), HH.div [ HS.class_ "overlay-body" ] (panelBody props) ]
 
@@ -242,18 +273,21 @@ contactingOwner path =
 
 foreign import data UseContactPanel :: HookType
 
-instance HookNewtype UseContactPanel (UseState (Maybe ContactPanel) <> UseOverlay <> Pure)
+instance HookNewtype UseContactPanel (UseState (Maybe ContactPanel) <> UseOverlay <> UseComposer <> Pure)
 
--- | The page's contact panel. Signed out, opening it leads to sign up, which
--- | returns to the page with the post in `?contact=` for `openPanelById`.
-useContactPanel :: ∀ left. Hook (Async left) UseContactPanel
-    { panel :: Maybe ContactPanel
-    , openPanel :: { signedIn :: Boolean, game :: ViewGame.OkContent } -> CardRow -> HookM (Async left) Unit
-    , openPanelById :: ViewGame.OkContent -> Int -> HookM (Async left) Unit
-    , closePanel :: HookM (Async left) Unit
-    , copy :: String -> HookM (Async left) Unit
-    }
-useContactPanel = Hooks.wrap Hooks.do
+-- | The page's contact panel, given what to do once the viewer has written
+-- | about a post, with the time of their first message, so the page's card
+-- | can say so. Signed out, opening it leads to sign up, which returns to the
+-- | page with the post in `?contact=` for `openPanelById`.
+useContactPanel :: ∀ left.
+    (Int -> String -> HookM (Async left) Unit)
+    -> Hook (Async left) UseContactPanel
+        { panel :: Maybe (PanelView (HookM (Async left) Unit))
+        , openPanel :: { signedIn :: Boolean, game :: ViewGame.OkContent } -> CardRow -> HookM (Async left) Unit
+        , openPanelById :: ViewGame.OkContent -> Int -> HookM (Async left) Unit
+        , closePanel :: HookM (Async left) Unit
+        }
+useContactPanel onMessaged = Hooks.wrap Hooks.do
     panel /\ panelId <- Hooks.useState Nothing
 
     let closePanel = Hooks.put panelId Nothing
@@ -261,21 +295,51 @@ useContactPanel = Hooks.wrap Hooks.do
 
     useOverlay panelRef Side (isJust panel) closePanel
 
+    let send draft = Hooks.get panelId >>= case _ of
+            Nothing -> pure false
+            Just { game, post } -> do
+                result <- H.lift $ Async.attempt $
+                    fetchPathBody (Proxy :: _ SendMessage) { handle: game.handle, id: post.id } { content: draft }
+                case hush result >>= onMatch { ok: Just } (const Nothing) of
+                    Just conversation -> do
+                        let messaged = post.messaged <|> (find _.mine conversation.messages <#> _.created)
+                        update post.id _ { thread = Just conversation, post = post { messaged = messaged } }
+                        for_ messaged $ onMessaged post.id
+                        liftEffect do
+                            announceUnread
+                            scrollThreadsToEnd
+                        pure true
+                    Nothing -> pure false
+
+    message <- useComposer messageRef send
+
     let openPanel { signedIn, game } post
             | not signedIn = do
                 path <- liftEffect $ window >>= location >>= pathname
                 navigate_ $ authPath "/signup" $ path <> "?contact=" <> show post.id
             | otherwise = do
+                message.clear
                 Hooks.put panelId $ Just
                     { game: { handle: game.handle, title: game.title }
                     , post
                     , revealed: if offers post then Revealing else Revealed { contacts: [], discord_server: Nothing, website: Nothing }
                     , copied: Nothing
+                    , thread: Nothing
+                    , loading: isJust post.messaged
                     }
                 when (offers post) $ void $ Hooks.fork do
                     result <- H.lift $ Async.attempt $ fetchPath (Proxy :: _ RevealContacts) { handle: game.handle, id: post.id }
                     let revealed = hush result >>= onMatch { ok: Just } (const Nothing) # maybe Unrevealed Revealed
                     update post.id _ { revealed = revealed }
+                -- Reading the conversation here marks it read, as the inbox does.
+                when (isJust post.messaged) $ void $ Hooks.fork do
+                    result <- H.lift $ Async.attempt $
+                        fetchPath (Proxy :: _ ViewPostConversation) { handle: game.handle, id: post.id }
+                    let thread' = hush result >>= onMatch { ok: _.conversation } (const Nothing)
+                    update post.id \panel' -> panel' { thread = panel'.thread <|> thread', loading = false }
+                    liftEffect do
+                        announceUnread
+                        scrollThreadsToEnd
 
         -- Only for a player signed in, and a post they can't contact opens
         -- nothing.
@@ -295,4 +359,17 @@ useContactPanel = Hooks.wrap Hooks.do
                     H.lift $ fromEffectCont \done -> void $ setTimeout 2000 $ done unit
                     update id' \panel' -> if panel'.copied == Just value then panel' { copied = Nothing } else panel'
 
-    Hooks.pure { panel, openPanel, openPanelById, closePanel, copy }
+        view = panel <#> \panel' ->
+            { panel: panel'
+            , composer: message.state
+            , actions: { onClose: closePanel, onCopy: copy, composer: message.actions }
+            }
+
+    Hooks.pure { panel: view, openPanel, openPanelById, closePanel }
+
+-- | The card of the post written about, once the viewer has, with the time of
+-- | their first message.
+markMessaged :: Int -> String -> CardRow -> CardRow
+markMessaged id time post
+    | post.id == id = post { messaged = post.messaged <|> Just time }
+    | otherwise = post

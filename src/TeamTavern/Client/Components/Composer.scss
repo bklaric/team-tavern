@@ -1,0 +1,21 @@
+/* The message box under the conversation. */
+
+.composer {
+    display: flex;
+    align-items: flex-end;
+    gap: var(--space-2);
+}
+
+.composer .textarea {
+    flex: 1;
+    min-width: 0;
+    min-height: 40px;
+    max-height: 160px;
+    padding-top: var(--space-2);
+    padding-bottom: var(--space-2);
+    resize: none;
+}
+
+.composer .button {
+    height: 40px;
+}

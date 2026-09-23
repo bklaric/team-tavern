@@ -21,6 +21,7 @@ import TeamTavern.Client.Components.AccountFact (accountFact)
 import TeamTavern.Client.Components.Button (Size(..), Weight(..), button, iconButton)
 import TeamTavern.Client.Components.Card (Place(..), Viewer, card, ownCard)
 import TeamTavern.Client.Components.Check (check, choiceList, choices, switch, switches)
+import TeamTavern.Client.Components.Composer (idleComposer)
 import TeamTavern.Client.Components.Confirm (confirm)
 import TeamTavern.Client.Components.ContactPanel (Revealed(..), contactPanelSheet)
 import TeamTavern.Client.Components.DataList (dataList, personRow, personRows, row)
@@ -545,16 +546,21 @@ component = Hooks.component \_ _ -> Hooks.do
                 posts = fixtures viewer.now
                 sheet key label post contacts =
                     [ caption label
-                    , contactPanelSheet (H.RefLabel $ "design-panel-" <> key)
-                        { now: viewer.now
-                        , panel:
+                    , contactPanelSheet (H.RefLabel $ "design-panel-" <> key) viewer.now
+                        { panel:
                             { game: { handle: "valorant", title: "Valorant" }
                             , post
                             , revealed: Revealed contacts
                             , copied: if key == "offsite" then Just post.owner else Nothing
+                            , thread: Nothing
+                            , loading: false
                             }
-                        , onClose: pure unit
-                        , onCopy: const $ pure unit
+                        , composer: idleComposer
+                        , actions:
+                            { onClose: pure unit
+                            , onCopy: const $ pure unit
+                            , composer: { onDraft: const $ pure unit, onKeyDown: const $ pure unit, onSend: const $ pure unit }
+                            }
                         }
                     ]
                 none = { contacts: [], discord_server: Nothing, website: Nothing }
