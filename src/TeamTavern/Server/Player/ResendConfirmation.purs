@@ -7,7 +7,7 @@ import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Query (Query(..), (:))
 import Jarilo (noContent_)
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
-import TeamTavern.Server.Infrastructure.Deployment (Deployment)
+import TeamTavern.Server.Infrastructure.Email (Mailer)
 import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstMaybe)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
@@ -23,13 +23,13 @@ queryString = Query """
         and not player.email_confirmed
     """
 
-resendConfirmation :: ∀ left. Deployment -> Pool -> Cookies -> Async left _
-resendConfirmation deployment pool cookies =
+resendConfirmation :: ∀ left. Mailer -> Pool -> Cookies -> Async left _
+resendConfirmation mailer pool cookies =
     sendResponse "Error resending email confirmation" do
     {id} <- ensureSignedIn pool cookies
     player :: _ {id :: Int, nickname :: String, email :: String} <-
         queryFirstMaybe pool queryString (id : [])
     foreach player \{id: playerId, nickname, email} -> do
         nonce <- addConfirmation pool playerId email
-        sendConfirmation deployment {email, nickname, nonce}
+        sendConfirmation mailer {email, nickname, nonce}
     pure noContent_

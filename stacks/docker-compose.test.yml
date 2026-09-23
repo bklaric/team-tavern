@@ -34,12 +34,22 @@ services:
     depends_on:
       - postgres
       - discord
+      - mail
 
   # Answers the Discord API the node container calls, at DISCORD_API_URL in test.env.
   discord:
     # Keep in step with the Volta pin in package.json.
     image: node:24.21.0
     command: node /root/dist-test/discord-stub.js
+    volumes:
+      - ../dist-test:/root/dist-test:ro
+
+  # Takes the mail the node container sends to SENDGRID_API_URL in test.env, and
+  # shows it at /mail on Caddy's port.
+  mail:
+    # Keep in step with the Volta pin in package.json.
+    image: node:24.21.0
+    command: node /root/dist-test/mail-stub.js
     volumes:
       - ../dist-test:/root/dist-test:ro
 

@@ -27,6 +27,7 @@ import TeamTavern.Routes.Player.ResendConfirmation (ResendConfirmation)
 import TeamTavern.Routes.Player.ViewMe (ViewMe)
 import TeamTavern.Routes.Post.CreatePost (CreatePost)
 import TeamTavern.Routes.Post.DeletePost (DeletePost)
+import TeamTavern.Routes.Post.RenewByNonce (RenewByNonce)
 import TeamTavern.Routes.Post.RenewPost (RenewPost)
 import TeamTavern.Routes.Post.RevealContacts (RevealContacts)
 import TeamTavern.Routes.Post.UpdatePost (UpdatePost)
@@ -65,6 +66,7 @@ type PostRoutes
     <|> "createPost"     : CreatePost
     <|> "updatePost"     : UpdatePost
     <|> "renewPost"      : RenewPost
+    <|> "renewByNonce"   : RenewByNonce
     <|> "revealContacts" : RevealContacts
     <|> "deletePost"     : DeletePost
 

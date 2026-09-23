@@ -32,6 +32,7 @@ import TeamTavern.Client.Pages.Post.Screen (postScreen)
 import TeamTavern.Client.Pages.Post.Type (postType)
 import TeamTavern.Client.Pages.PostPage (postPage)
 import TeamTavern.Client.Pages.Privacy (privacyPolicy)
+import TeamTavern.Client.Pages.Renew (renew)
 import TeamTavern.Client.Pages.ResetPassword (resetPassword)
 import TeamTavern.Client.Pages.SignIn (signIn)
 import TeamTavern.Client.Pages.SignUp (signUp)
@@ -77,6 +78,7 @@ type ChildSlots =
     , forgotPassword :: Slot___
     , resetPassword :: Slot___
     , confirmEmail :: Slot___
+    , renew :: Slot___
     , design :: Slot___
     , feed :: Slot__I Int
     , postPage :: Slot__I Int
@@ -155,6 +157,7 @@ renderPage' SignIn = signIn
 renderPage' ForgotPassword = forgotPassword
 renderPage' ResetPassword = resetPassword
 renderPage' ConfirmEmail = confirmEmail
+renderPage' Renew = renew
 renderPage' Privacy = privacyPolicy
 renderPage' Design = design
 renderPage' page = placeholder $ name page
@@ -210,9 +213,11 @@ router initialState initialPath = Hooks.component \{ queryToken } _ -> Hooks.do
                 else do
                     liftEffect $ stampPrevious left.path
                     pure $ Just left.path
-            -- The components page is a tool for building the site, not a page of it.
+            -- The components page is a tool for building the site, not a page of
+            -- it, and a renewal link renews whenever it is opened.
             setMetaRobots case page of
                 Design -> "noindex"
+                Renew -> "noindex"
                 _ -> "index, follow"
             restore <- case page of
                 Feed { handle } | popped -> liftEffect $ Ref.read cache <#> Map.lookup handle

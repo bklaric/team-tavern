@@ -3,16 +3,12 @@ module TeamTavern.Server.Player.Infrastructure.SendConfirmation
 
 import Prelude
 
-import Async (Async, attempt, fromEffect)
-import Data.Either (Either(..))
-import Effect.Class.Console (logShow)
+import Async (Async)
 import JavaScript.Npm.Pg.Query (class Querier, Query(..), (:), (:|))
-import TeamTavern.Server.Infrastructure.Deployment (Deployment(..))
+import TeamTavern.Server.Infrastructure.Email (Block(..), Email, Mailer, sendEmail)
 import TeamTavern.Server.Infrastructure.GenerateNonce (Nonce, generateNonce, toString)
-import TeamTavern.Server.Infrastructure.Log (logError)
 import TeamTavern.Server.Infrastructure.Postgres (queryNone)
 import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
-import TeamTavern.Server.Infrastructure.Sendgrid (Message, sendAsync)
 
 type Confirmation = { email :: String, nickname :: String, nonce :: Nonce }
 
@@ -31,35 +27,22 @@ addConfirmation querier playerId email = do
     queryNone querier addConfirmationQuery (playerId : email :| nonce)
     pure nonce
 
-message :: Deployment -> Confirmation -> Message
-message deployment { email, nickname, nonce } = let
-    link = case deployment of
-        -- Only logged, and the development and test stacks serve on different ports.
-        Local -> "/confirm-email?nonce=" <> toString nonce
-        Cloud -> "https://www.teamtavern.net/confirm-email?nonce=" <> toString nonce
-    in
+confirmationEmail :: Confirmation -> Email
+confirmationEmail { email, nickname, nonce } =
     { to: email
-    , from: "admin@teamtavern.net"
     , subject: "Confirm your email"
-    , html: "Hi " <> nickname <> ",<br /><br />"
-        <> "Open the link below to confirm this address for your TeamTavern account:<br /><br />"
-        <> "<a href=\"" <> link <> "\">" <> link <> "</a><br /><br />"
-        <> "Until you do, this is the only email TeamTavern sends it. "
-        <> "If you didn't sign up, please ignore this email."
-    , text: "Hi " <> nickname <> ",\n"
-        <> "Open the link below to confirm this address for your TeamTavern account:\n"
-        <> link <> "\n"
-        <> "Until you do, this is the only email TeamTavern sends it. "
-        <> "If you didn't sign up, please ignore this email."
+    , blocks:
+        [ Paragraph $ "Hi " <> nickname <> ","
+        , Paragraph "Confirm this address for your TeamTavern account:"
+        , Button { label: "Confirm email", path: "/confirm-email?nonce=" <> toString nonce }
+        , Note $ "Until you do, this is the only email TeamTavern sends it. "
+            <> "If you didn't sign up, please ignore this email."
+        ]
+    , unsubscribe: true
     }
 
 -- | A failed send is logged and doesn't fail the request that sent it: the
 -- | account is made either way, and the account page sends the link again.
-sendConfirmation :: ∀ left. Deployment -> Confirmation -> Async left Unit
-sendConfirmation deployment confirmation = do
-    result <- attempt case deployment of
-        Local -> logShow $ message deployment confirmation
-        Cloud -> sendAsync $ message deployment confirmation
-    case result of
-        Left error -> fromEffect $ logError "Error sending email confirmation" error
-        Right _ -> pure unit
+sendConfirmation :: ∀ left. Mailer -> Confirmation -> Async left Unit
+sendConfirmation mailer confirmation =
+    sendEmail mailer "Error sending email confirmation" $ confirmationEmail confirmation

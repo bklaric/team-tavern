@@ -3,17 +3,14 @@ module TeamTavern.Server.Password.ForgotPassword (forgotPassword) where
 import Prelude
 
 import Async (Async)
-import Effect.Class.Console (logShow)
 import Jarilo (noContent_)
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Query (Query(..), (:|))
 import TeamTavern.Routes.Password.ForgotPassword as ForgotPassword
-import TeamTavern.Server.Infrastructure.Deployment (Deployment(..))
+import TeamTavern.Server.Infrastructure.Email (Block(..), Email, Mailer, deliver)
 import TeamTavern.Server.Infrastructure.GenerateNonce (Nonce, generateNonce, toString)
 import TeamTavern.Server.Infrastructure.Postgres (LoadSingleError, queryFirstNotFound)
-import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
-import TeamTavern.Server.Infrastructure.Sendgrid (Message, sendAsync)
 
 type Player = {email :: String, nickname :: String}
 
@@ -41,40 +38,26 @@ addPasswordReset
 addPasswordReset pool email nonce = do
     queryFirstNotFound pool queryString (email :| nonce)
 
-message :: Deployment -> Player -> Nonce -> Message
-message deployment { email, nickname } nonce = let
-    link = case deployment of
-        -- Only logged, and the development and test stacks serve on different ports.
-        Local -> "/reset-password?nonce=" <> toString nonce
-        Cloud -> "https://www.teamtavern.net/reset-password?nonce=" <> toString nonce
-    in
+resetEmail :: Player -> Nonce -> Email
+resetEmail { email, nickname } nonce =
     { to: email
-    , from: "admin@teamtavern.net"
     , subject: "Password reset"
-    , html: "Hi " <> nickname <> ",<br /><br />"
-        <> "Open the link below to reset your TeamTavern account password:<br /><br />"
-        <> "<a href=\"" <> link <> "\">" <> link <> "</a><br /><br />"
-        <> "If you haven't made a password reset request, please ignore this email."
-    , text: "Hi " <> nickname <> ",\n"
-        <> "Open the link below to reset your TeamTavern account password:\n"
-        <> link <> "\n"
-        <> "If you haven't made a password reset request, please ignore this email."
+    , blocks:
+        [ Paragraph $ "Hi " <> nickname <> ","
+        , Paragraph "Choose a new password for your TeamTavern account:"
+        , Button { label: "Reset password", path: "/reset-password?nonce=" <> toString nonce }
+        , Note "If you haven't made a password reset request, please ignore this email."
+        ]
+    , unsubscribe: true
     }
-
-sendPasswordResetEmail :: forall errors.
-    Deployment -> Player -> Nonce -> Async (InternalTerror_ errors) Unit
-sendPasswordResetEmail deployment player nonce =
-    case deployment of
-    Local -> logShow $ message deployment player nonce
-    Cloud -> sendAsync $ message deployment player nonce
 
 forgotPassword
     :: forall left
-    .  Deployment
+    .  Mailer
     -> Pool
     -> ForgotPassword.RequestContent
     -> Async left _
-forgotPassword deployment pool {email} =
+forgotPassword mailer pool {email} =
     sendResponse "Error sending password reset email" do
     -- Generate password reset nonce.
     nonce <- generateNonce
@@ -82,7 +65,8 @@ forgotPassword deployment pool {email} =
     -- Save password reset nonce.
     player <- addPasswordReset pool email nonce
 
-    -- Send password reset email.
-    sendPasswordResetEmail deployment player nonce
+    -- Send password reset email. The player waits for it, so a failed send
+    -- fails the request.
+    deliver mailer $ resetEmail player nonce
 
     pure noContent_

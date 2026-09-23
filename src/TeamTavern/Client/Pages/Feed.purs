@@ -7,7 +7,7 @@ import Async as Async
 import Control.Alt ((<|>))
 import Data.Array (concatMap, elem, filter, find, foldl, index, null, snoc, sortBy)
 import Data.Foldable (for_, traverse_)
-import Data.Int (round)
+import Data.Int (fromString, round)
 import Data.Either (Either(..))
 import Data.Map (Map)
 import Data.Map as Map
@@ -42,6 +42,7 @@ import TeamTavern.Client.Pages.Placeholder (placeholder)
 import TeamTavern.Client.Script.Expand (toggleCard)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigateWithEvent_, navigate_)
+import TeamTavern.Client.Script.QueryParams (getQueryParam, removeQueryParam)
 import TeamTavern.Client.Script.RenderReady (appendRenderReadyNotFound, appendRenderReadyUnavailable)
 import TeamTavern.Client.Script.Scroll (onScroll)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
@@ -57,6 +58,7 @@ import TeamTavern.Routes.Feed.ViewFeed as ViewFeed
 import TeamTavern.Routes.Feed.ViewOwnDescriptions (OwnDescription, ViewOwnDescriptions)
 import TeamTavern.Routes.Game.ViewGame (ViewGame)
 import TeamTavern.Routes.Game.ViewGame as ViewGame
+import TeamTavern.Routes.Post.ViewPost (ViewPost)
 import TeamTavern.Routes.Shared.Card (CardRow)
 import TeamTavern.Shared.Languages (allLanguages)
 import Type.Proxy (Proxy(..))
@@ -107,6 +109,8 @@ type State =
     , showMore :: Boolean
     , sheetOpen :: Boolean
     , viewer :: Maybe Viewer
+    -- The note a renewal link lands under, until the description changes.
+    , renewed :: Maybe String
     }
 
 segments :: Array { value :: String, label :: String }
@@ -119,6 +123,16 @@ segments =
 
 olderPosts :: String
 olderPosts = "Older posts · they may no longer be looking"
+
+-- Signed out, the note names whose post the description came from (brief 9).
+renewedNote :: CardRow -> String
+renewedNote post =
+    subject <> " is active again for " <> days <> " days. Showing what fits it."
+    where
+    subject
+        | post.own = "Your " <> post.type <> " post"
+        | otherwise = fromMaybe (post.owner <> "'s " <> post.type <> " post") post.name
+    days = if post.type == "community" then "90" else "30"
 
 -- The languages the loaded posts use, most used first, then every other.
 languagesByUse :: Array CardRow -> Array String
@@ -150,6 +164,7 @@ component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
         , showMore: false
         , sheetOpen: false
         , viewer: restore <#> _.viewer
+        , renewed: Nothing
         }
     _ /\ requestRef <- Hooks.useRef 0
     phone <- usePhone
@@ -229,7 +244,7 @@ component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
         -- The description follows every change on a desktop; on a phone the
         -- feed waits for the sheet to close (brief 7.1).
         change stored = do
-            state' <- Hooks.modify stateId _ { stored = stored }
+            state' <- Hooks.modify stateId _ { stored = stored, renewed = Nothing }
             liftEffect $ saveStored handle stored
             unless state'.sheetOpen reload
 
@@ -284,6 +299,18 @@ component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
                     }
                     (const $ appendRenderReadyUnavailable *> Hooks.modify_ stateId _ { game = Failed })
                 Left _ -> appendRenderReadyUnavailable *> Hooks.modify_ stateId _ { game = Failed }
+
+        -- Landed on from a renewal link, whose page stored the post's description.
+        void $ Hooks.fork do
+            renewedId <- getQueryParam "renewed" <#> (_ >>= fromString)
+            for_ renewedId \id -> do
+                removeQueryParam "renewed"
+                result <- H.lift $ Async.attempt $ fetchPath (Proxy :: _ ViewPost) { handle, id }
+                case result of
+                    Right response -> response # onMatch
+                        { ok: \{ post } -> Hooks.modify_ stateId _ { renewed = Just $ renewedNote post } }
+                        (const $ pure unit)
+                    Left _ -> pure unit
 
         void $ Hooks.fork do
             result <- H.lift $ Async.attempt $ fetchSimple (Proxy :: _ ViewCountries)
@@ -484,7 +511,9 @@ component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
                     , onMore: update _ { showMore = true }
                     , onClearAll: change $ setCurrent (emptyDescription description.type) state.stored
                     }
-            , publishPrompt game
+            , case state.renewed of
+                Just text -> prompt Icons.refreshCw true { text, action: Nothing }
+                Nothing -> publishPrompt game
             , segmentButtons
             , case state.feed, state.viewer of
                 Nothing, _ | state.failed -> HH.p_ [ HH.text "There has been an error loading the posts." ]

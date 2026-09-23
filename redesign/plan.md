@@ -906,18 +906,19 @@ What every later page needs signed in and out.
 
 - Server worker, on a period read from the environment (an hour in
   production, seconds in `test.env`): posts entering their last week get an
-  `expiry` notification (upsert) and a renewal email; every owner with fit or
-  expiry notifications created in the period that passed gets one email
-  grouped by their posts (brief 8). Switches, `email_confirmed` and a missing
-  address are honoured. A community's renewal email asks whether its invite
-  still works.
+  `expiry` notification (upsert); every owner with fit or expiry
+  notifications created in the period that passed gets one email grouped by
+  their posts (brief 8), each post with its new fits and, in its last week,
+  Renew. Switches, `email_confirmed` and a missing address are honoured: the
+  Matches switch governs the fits and the Renewals switch the expiries. A
+  community's expiry asks whether its invite still works.
 - `renewByNonce`: `GET /renew?nonce=` lands on the client, which calls the
   endpoint, then opens the game's feed with the description built from the
   renewed post under a note that it is active again; works signed out. Like
   `renewPost`, it clears the post's expiry and calls `notifyFits` when the
   post had expired.
 - Emails as HTML with the site's palette, one module each: confirmation,
-  password reset, match digest, renewal, message, report. Every player email
+  password reset, the period's email, message, report. Every player email
   carries the unsubscribe link to `/account#emails`.
 - Test stack: a `mail` service like `discord`, `DiscordStub`'s sibling, that
   accepts SendGrid's mail send request and serves the captured emails as a
@@ -931,6 +932,50 @@ What every later page needs signed in and out.
   confirmation link confirms, once, and not after the email has changed; the
   password reset link sets a password that then signs in; a switch off sends
   nothing.
+- Built in two parts. 14a: the mail stub, HTML for the emails already sent,
+  `renewByNonce` and its landing, and `email.spec.ts` for those. 14b: the
+  worker, its expiry rows and the period's email, with their specs.
+- Settled here:
+  - The worker sends each owner one email a period, as brief 8 decides, not a
+    renewal email apart from a match email: fits and expiries are grouped by the
+    owner's post in the same email.
+  - Where an email links and whether it is sent is the `Mailer` in
+    `Server/Infrastructure/Email.purs`: production's origin and SendGrid; the
+    local stacks' empty origin, logged, unless `SENDGRID_API_URL` names something
+    that takes SendGrid's requests. `Main.purs` sets that as the SendGrid
+    client's base URL after the key, which resets it (`setBaseUrl` in bklaric's
+    `JavaScript.Npm.Sendgrid`). Handlers that sent email by `Deployment` take the
+    `Mailer`; the cookie still reads the `Deployment`.
+  - An email is an `Email` of `Block`s (paragraph, quote, button, note), which
+    make both its HTML and its text, escaped. The HTML is one table layout with
+    the palette inline. Every player email links "Choose which emails you get"
+    to `/account#emails`; the report to the admin doesn't. `sendEmail` logs a
+    failed send and goes on; the password reset uses `deliver`, which fails the
+    request, since the player waits for that email.
+  - The message email names the expired post's place as listed under older
+    posts, which is where it is, and offers Renew as a button.
+  - The mail stub is `src/TeamTavern/MailStub/Main.purs`, built to
+    `dist-test/mail-stub.js`, the test stack's `mail` service. It takes
+    `POST /v3/mail/send` and shows an address's mail at `/mail?to=<address>`,
+    newest first, each email in a frame whose links open the tab. Only
+    `test.Caddyfile` routes `/mail` to it, on the site's origin, so the emails'
+    relative links open the site.
+  - `renewByNonce` is `POST /api/renew` with `{ nonce }`, signed out or as
+    anyone, answering `{ handle, id, type, description }`. It shares
+    `Server/Post/Infrastructure/Renew.purs` with `renewPost`, so both clear the
+    expiry and notify on renewing an expired post. A link opened twice renews
+    twice.
+  - `/renew` (`Pages/Renew.purs`, `noindex`) stores the description and
+    replaces itself with `/games/<handle>?renewed=<id>`. The feed takes the
+    parameter out of the address, reads the post through `viewPost`, and puts
+    "MailTester's player post is active again for 30 days. Showing what fits
+    it." (a group or community by its name, "Your player post" to its owner) in
+    the publish prompt's place, until the description changes.
+  - The seed's `MailTester` (`mail@example.com`) has an active player post in
+    Counter-Strike 2 and an expired one in Overwatch; `QuietTester`
+    (`quiet@example.com`) has message emails off and a post in Counter-Strike 2.
+  - A confirmation link that does nothing once the email has changed needs the
+    account page to change it, so `account.spec.ts` in step 15 asserts it.
 
 ### 15. Account page
 
@@ -945,7 +990,8 @@ What every later page needs signed in and out.
   `#emails` and `#blocked` landings, signed out sent to sign in and back.
 - Specs: `account.spec.ts`: a changed location shows on the owner's post in
   the feed and on its page; a changed nickname shows in the other player's
-  inbox; a changed email shows unconfirmed; delete lands home signed out and
+  inbox; a changed email shows unconfirmed, and the link sent to the old one
+  confirms nothing; delete lands home signed out and
   the posts are gone from the feed.
 
 ## Phase 5: launch

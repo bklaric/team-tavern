@@ -13,3 +13,6 @@ echo "main();" >> dist-server/server.js
 mkdir -p dist-test
 esbuild output/TeamTavern.DiscordStub.Main/index.js --outfile=dist-test/discord-stub.js --platform=node --bundle --format=cjs
 echo "main();" >> dist-test/discord-stub.js
+# And its SendGrid.
+esbuild output/TeamTavern.MailStub.Main/index.js --outfile=dist-test/mail-stub.js --platform=node --bundle --format=cjs
+echo "main();" >> dist-test/mail-stub.js

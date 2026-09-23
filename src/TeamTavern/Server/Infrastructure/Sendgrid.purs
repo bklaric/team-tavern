@@ -8,7 +8,7 @@ import Data.Array (singleton)
 import Data.Bifunctor (lmap)
 import Jarilo (internal__)
 import JavaScript.Npm.Sendgrid (Message)
-import JavaScript.Npm.Sendgrid (Message, send, setApiKey) as Sendgrid
+import JavaScript.Npm.Sendgrid (Message, send, setApiKey, setBaseUrl) as Sendgrid
 import TeamTavern.Server.Infrastructure.Error (Terror(..))
 import TeamTavern.Server.Infrastructure.Log (print)
 import TeamTavern.Server.Infrastructure.Response (InternalTerror_)

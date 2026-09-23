@@ -85,8 +85,9 @@ under hashed file names. `build-server.sh` bundles the server into
 `dist-server/server.js` with `bcrypt`, `pg` and `@sendgrid/mail` left
 external, and copies the root `package.json` beside it; the container installs
 that with `--omit=dev`, so the build toolchain never enters the image. It also
-bundles `DiscordStub/Main.purs` into `dist-test/discord-stub.js`, which only the
-test stack runs.
+bundles `DiscordStub/Main.purs` into `dist-test/discord-stub.js` and
+`MailStub/Main.purs` into `dist-test/mail-stub.js`, which only the test stack
+runs.
 
 ## Running the stack
 
@@ -168,6 +169,16 @@ authorize URL itself, sending the browser straight back with such a token and
 the `state` the page sent, and checks the scope and redirect URI the page asked
 for.
 
+The test stack has no SendGrid either. Its `mail` service runs
+`dist-test/mail-stub.js`, and `SENDGRID_API_URL` in `test.env` points the
+server's SendGrid client at it, so the server sends as production does. The stub
+keeps every email and shows an address's mail at
+`http://localhost:8080/mail?to=<address>`, which `test.Caddyfile` routes on the
+site's origin, newest first, each email in a frame. A spec reads its player's
+email there and clicks the links in it, which are relative outside production
+and so open the test site. The development stack sets no `SENDGRID_API_URL`, and
+its node log shows each email's text instead.
+
 Every Discord button sends the browser back to `/signin`, the one redirect URI
 registered on the Discord app for each origin, and what the player was doing
 rides along in session storage. The sign-in page signs in a player Discord
@@ -205,7 +216,11 @@ notification gives the bell's list an expiry row. Team Fortress 2's tester
 would rather be added off-site, and `CommunityTester` (`community@example.com`)
 runs a community there joined through its website, so every contact preference
 has a post. `RenewTester` (`renew@example.com`) has expired player posts in
-Rainbow Six Siege and Overwatch. All share the password. `Seed/Games/` carries all ten production games, so every
+Rainbow Six Siege and Overwatch. `MailTester` (`mail@example.com`) has an active
+player post in Counter-Strike 2 and an expired one in Overwatch, and
+`QuietTester` (`quiet@example.com`) a post in Counter-Strike 2 and message
+emails switched off, for the email spec. All share the password, and all are
+confirmed. `Seed/Games/` carries all ten production games, so every
 game handle the site serves has a page with content. A cold boot answers on the
 API within a few seconds.
 
@@ -214,8 +229,9 @@ API within a few seconds.
 None of it is a bug to fix:
 
 - **`API key does not start with "SG."`** on node startup: `SENDGRID_API_KEY`
-  in `stacks/.env` is a placeholder. Outbound email is off; everything else
-  works.
+  in `stacks/.env` and `stacks/test.env` is a placeholder. The development
+  stack logs its email rather than sending it, and the test stack sends to its
+  mail stub, which takes any key.
 - **`npm warn install-scripts ... bcrypt`** on node startup: npm skips the
   unapproved install script, and bcrypt does not need it because it ships
   Node-API prebuilds that `node-gyp-build` picks at require time.
@@ -301,7 +317,13 @@ an `index.html` fallback for SPA paths.
   (`PG*`, `SENDGRID_API_KEY`, `DEPLOYMENT` = `local` | `cloud`, and
   `ADMIN_EMAIL`, where reports of players are mailed), supplied by
   `stacks/.env`. `DISCORD_API_URL` is optional and defaults to Discord's own
-  API; only `stacks/test.env` sets it.
+  API; only `stacks/test.env` sets it. `SENDGRID_API_URL` is optional too:
+  without it, `DEPLOYMENT=local` only logs its email; with it, the server sends
+  there. Only `stacks/test.env` sets it.
+- An email is an `Email` of blocks from `Server/Infrastructure/Email.purs`,
+  which renders its HTML, in the site's palette, and its text from the same
+  blocks. Links are paths, which the `Mailer` puts behind production's origin
+  and leaves relative on the local stacks.
 
 ## Client conventions
 

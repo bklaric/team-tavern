@@ -392,6 +392,40 @@ select
 from player, game
 where player.nickname = 'RenewTester' and game.handle in ('rainbow-six-siege', 'overwatch');
 
+-- Owners whose mail the email specs read: MailTester's with an active post and
+-- an expired one, whose message email carries Renew, and QuietTester's with
+-- message emails switched off. Their games' feeds are read by card, never whole.
+
+select seed_player('MailTester', 'mail@example.com');
+select seed_player('QuietTester', 'quiet@example.com');
+
+update player set email_messages = false where nickname = 'QuietTester';
+
+insert into post
+    ( player_id, game_id, ilk, renewal_nonce, summary
+    , microphone, online_from, online_to, contact_preference
+    , created, updated
+    )
+select
+    player.id,
+    game.id,
+    'player',
+    left(md5(player.nickname || '-player-' || game.handle), 20),
+    array['Seeded player post of ' || player.nickname || '''s.'],
+    true,
+    time '20:00',
+    time '23:00',
+    'either',
+    current_timestamp - posted.age,
+    current_timestamp - posted.age
+from player
+join (values
+    ('MailTester', 'counter-strike-2', interval '0 days'),
+    ('MailTester', 'overwatch', interval '40 days'),
+    ('QuietTester', 'counter-strike-2', interval '0 days')
+) as posted (nickname, handle, age) on posted.nickname = player.nickname
+join game on game.handle = posted.handle;
+
 drop function seed_post_range(text, text, text, text, text);
 drop function seed_post_option(text, text, text, text[]);
 drop function seed_player(text, text);

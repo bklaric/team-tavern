@@ -13,7 +13,7 @@ import TeamTavern.Server.Block.Infrastructure.AddReport (Reported, addReport, va
 import TeamTavern.Server.Block.Infrastructure.Blocked (blockedBetween)
 import TeamTavern.Server.Block.Infrastructure.SendReportEmail (AdminEmail, sendReportEmail)
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
-import TeamTavern.Server.Infrastructure.Deployment (Deployment)
+import TeamTavern.Server.Infrastructure.Email (Mailer)
 import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
 import TeamTavern.Server.Infrastructure.Error (elaborate)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstNotFound, transaction)
@@ -45,8 +45,8 @@ reportedQuery = Query $ """
         and not """ <> blockedBetween "post.player_id" "conversation.messager_id" <> """
     """
 
-reportConversation :: ∀ left. Deployment -> AdminEmail -> Pool -> Int -> Cookies -> Report -> Async left _
-reportConversation deployment adminEmail pool conversationId cookies body =
+reportConversation :: ∀ left. Mailer -> AdminEmail -> Pool -> Int -> Cookies -> Report -> Async left _
+reportConversation mailer adminEmail pool conversationId cookies body =
     sendResponse "Error reporting conversation" do
     { id } <- ensureSignedIn pool cookies
     report <- validateReport body
@@ -56,5 +56,5 @@ reportConversation deployment adminEmail pool conversationId cookies body =
             # lmap (elaborate ("Can't find conversation " <> show conversationId <> " to report"))
         addReport client viewer reported report
         pure reported
-    sendReportEmail deployment adminEmail reported report
+    sendReportEmail mailer adminEmail reported report
     pure noContent_

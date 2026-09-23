@@ -7,4 +7,10 @@
 
 http://localhost, http://caddy {
     import base.Caddyfile http://caddy
+
+    # The mail stub's page, on the site's origin, so the relative links in the
+    # emails it shows open the site.
+    handle /mail {
+        reverse_proxy mail:3000
+    }
 }

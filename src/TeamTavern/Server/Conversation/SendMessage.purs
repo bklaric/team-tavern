@@ -13,7 +13,7 @@ import TeamTavern.Server.Block.Infrastructure.Blocked (blockedBetween)
 import TeamTavern.Server.Conversation.Infrastructure.PostMessage (postMessage, validateMessage)
 import TeamTavern.Server.Conversation.Infrastructure.SendMessageEmail (sendMessageEmail)
 import TeamTavern.Server.Infrastructure.Cookie (Cookies)
-import TeamTavern.Server.Infrastructure.Deployment (Deployment)
+import TeamTavern.Server.Infrastructure.Email (Mailer)
 import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
 import TeamTavern.Server.Infrastructure.Error (elaborate)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstInternal, queryFirstNotFound, queryNone, transaction)
@@ -41,8 +41,8 @@ conversationQuery = Query """
     select id from conversation where post_id = $1 and messager_id = $2
     """
 
-sendMessage :: ∀ left. Deployment -> Pool -> String -> Int -> Cookies -> MessageContent -> Async left _
-sendMessage deployment pool handle postId cookies { content } =
+sendMessage :: ∀ left. Mailer -> Pool -> String -> Int -> Cookies -> MessageContent -> Async left _
+sendMessage mailer pool handle postId cookies { content } =
     sendResponse "Error sending message" do
     { id } <- ensureSignedIn pool cookies
     lines <- validateMessage content
@@ -53,5 +53,5 @@ sendMessage deployment pool handle postId cookies { content } =
         queryNone client startQuery (postId :| viewer)
         { id: conversationId } :: { id :: Int } <- queryFirstInternal client conversationQuery (postId :| viewer)
         postMessage client conversationId viewer lines
-    foreach email $ sendMessageEmail deployment
+    foreach email $ sendMessageEmail mailer
     pure $ ok_ conversation

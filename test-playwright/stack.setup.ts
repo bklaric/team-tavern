@@ -6,7 +6,8 @@ import { repositoryRoot, rethrowComposeError, testStack, waitForApi } from "./st
 
 // The stack serves these out of the repository rather than out of an image, so without
 // them it answers nothing and the wait below is all that would notice, a minute later.
-const builtBundles = ["dist-client/index.html", "dist-server/server.js", "dist-test/discord-stub.js"];
+const builtBundles = [
+    "dist-client/index.html", "dist-server/server.js", "dist-test/discord-stub.js", "dist-test/mail-stub.js"];
 
 setup("boot the test stack", async ({ request }) => {
     const missing = builtBundles.filter(bundle => !fs.existsSync(path.join(repositoryRoot, bundle)));

@@ -7,7 +7,7 @@ import Control.Monad.Except (ExceptT(..), runExceptT)
 import Control.Monad.Maybe.Trans (lift)
 import Data.Either (either, note)
 import Data.Int (fromString)
-import Data.Maybe (fromMaybe)
+import Data.Maybe (Maybe(..), fromMaybe)
 import Data.String as String
 import Effect (Effect)
 import Effect.Console (log)
@@ -32,11 +32,12 @@ import TeamTavern.Server.Feed.ViewFeed (viewFeed)
 import TeamTavern.Server.Feed.ViewOwnDescriptions (viewOwnDescriptions)
 import TeamTavern.Server.Game.ViewGame (viewGame)
 import TeamTavern.Server.Game.ViewGames (viewGames)
-import TeamTavern.Server.Infrastructure.Deployment (Deployment)
+import TeamTavern.Server.Infrastructure.Deployment (Deployment(..))
 import TeamTavern.Server.Infrastructure.Deployment as Deployment
+import TeamTavern.Server.Infrastructure.Email (Mailer(..))
 import TeamTavern.Server.Infrastructure.FetchDiscordUser (DiscordApiUrl(..))
 import TeamTavern.Server.Infrastructure.Log (logStamped, print)
-import TeamTavern.Server.Infrastructure.Sendgrid (setApiKey)
+import TeamTavern.Server.Infrastructure.Sendgrid (setApiKey, setBaseUrl)
 import TeamTavern.Server.Notification.ReadNotification (readNotification)
 import TeamTavern.Server.Notification.ReadNotifications (readNotifications)
 import TeamTavern.Server.Notification.ViewNotifications (viewNotifications)
@@ -48,6 +49,7 @@ import TeamTavern.Server.Player.ResendConfirmation (resendConfirmation)
 import TeamTavern.Server.Player.ViewMe (viewMe)
 import TeamTavern.Server.Post.CreatePost (createPost)
 import TeamTavern.Server.Post.DeletePost (deletePost)
+import TeamTavern.Server.Post.RenewByNonce (renewByNonce)
 import TeamTavern.Server.Post.RenewPost (renewPost)
 import TeamTavern.Server.Post.RevealContacts (revealContacts)
 import TeamTavern.Server.Post.UpdatePost (updatePost)
@@ -111,6 +113,22 @@ loadDiscordApiUrl =
     <#> fromMaybe "https://discord.com/api"
     <#> DiscordApiUrl
 
+-- | Production sends through SendGrid and links to its own origin. The local
+-- | stacks link relative to the site they serve, and only log, unless
+-- | SENDGRID_API_URL names something that takes SendGrid's requests, as the test
+-- | stack's mail stub does. The key is set by then, since setting it resets the
+-- | base URL.
+loadMailer :: Deployment -> Effect Mailer
+loadMailer deployment = do
+    apiUrl <- lookupEnv "SENDGRID_API_URL"
+    case apiUrl of
+        Just url -> setBaseUrl url
+        Nothing -> pure unit
+    pure $ Mailer case deployment, apiUrl of
+        Cloud, _ -> { origin: "https://www.teamtavern.net", send: true }
+        Local, Just _ -> { origin: "", send: true }
+        Local, Nothing -> { origin: "", send: false }
+
 loadAdminEmail :: ExceptT String Effect AdminEmail
 loadAdminEmail =
     lookupEnv "ADMIN_EMAIL"
@@ -118,24 +136,24 @@ loadAdminEmail =
     <#> note "Couldn't read variable ADMIN_EMAIL."
     # ExceptT
 
-runServer :: Deployment -> DiscordApiUrl -> AdminEmail -> Pool -> Effect Unit
-runServer deployment discordApiUrl adminEmail pool = serve (Proxy :: _ AllRoutes) serveOptions
+runServer :: Deployment -> Mailer -> DiscordApiUrl -> AdminEmail -> Pool -> Effect Unit
+runServer deployment mailer discordApiUrl adminEmail pool = serve (Proxy :: _ AllRoutes) serveOptions
     { startSession: \{ cookies, body } ->
-        Session.start deployment discordApiUrl pool cookies body
+        Session.start deployment mailer discordApiUrl pool cookies body
     , endSession: \{ cookies } ->
         Session.end pool cookies
     , forgotPassword: \{ body } ->
-        forgotPassword deployment pool body
+        forgotPassword mailer pool body
     , resetPassword: \{ body } ->
         resetPassword pool body
     , registerPlayer: \{ cookies, body } ->
-        register deployment discordApiUrl pool cookies body
+        register deployment mailer discordApiUrl pool cookies body
     , viewMe: \{ cookies } ->
         viewMe deployment pool cookies
     , confirmEmail: \{ body } ->
         confirmEmail pool body
     , resendConfirmation: \{ cookies } ->
-        resendConfirmation deployment pool cookies
+        resendConfirmation mailer pool cookies
     , viewGames: const $
         viewGames pool
     , viewGame: \{ path: { handle } } ->
@@ -156,6 +174,8 @@ runServer deployment discordApiUrl adminEmail pool = serve (Proxy :: _ AllRoutes
         updatePost pool path.handle path.type cookies body
     , renewPost: \{ path, cookies } ->
         renewPost pool path.handle path.id cookies
+    , renewByNonce: \{ body } ->
+        renewByNonce pool body
     , revealContacts: \{ path, cookies } ->
         revealContacts pool path.handle path.id cookies
     , viewInbox: \{ cookies } ->
@@ -165,9 +185,9 @@ runServer deployment discordApiUrl adminEmail pool = serve (Proxy :: _ AllRoutes
     , viewPostConversation: \{ path, cookies } ->
         viewPostConversation pool path.handle path.id cookies
     , sendMessage: \{ path, cookies, body } ->
-        sendMessage deployment pool path.handle path.id cookies body
+        sendMessage mailer pool path.handle path.id cookies body
     , sendReply: \{ path: { id }, cookies, body } ->
-        sendReply deployment pool id cookies body
+        sendReply mailer pool id cookies body
     , block: \{ path: { nickname }, cookies } ->
         block pool nickname cookies
     , unblock: \{ path: { nickname }, cookies } ->
@@ -175,9 +195,9 @@ runServer deployment discordApiUrl adminEmail pool = serve (Proxy :: _ AllRoutes
     , viewBlocked: \{ cookies } ->
         viewBlocked pool cookies
     , reportPost: \{ path, cookies, body } ->
-        reportPost deployment adminEmail pool path.handle path.id cookies body
+        reportPost mailer adminEmail pool path.handle path.id cookies body
     , reportConversation: \{ path: { id }, cookies, body } ->
-        reportConversation deployment adminEmail pool id cookies body
+        reportConversation mailer adminEmail pool id cookies body
     , viewNotifications: \{ cookies } ->
         viewNotifications pool cookies
     , readNotifications: \{ cookies } ->
@@ -197,4 +217,5 @@ main = either log pure =<< runExceptT do
     adminEmail <- loadAdminEmail
     pool <- createPostgresPool
     setSendGridApiKey
-    lift $ runServer deployment discordApiUrl adminEmail pool
+    mailer <- lift $ loadMailer deployment
+    lift $ runServer deployment mailer discordApiUrl adminEmail pool
