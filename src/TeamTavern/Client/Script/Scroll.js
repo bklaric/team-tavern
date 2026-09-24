@@ -8,6 +8,15 @@ export const scrollRestorationManual = () => {
     history.scrollRestoration = "manual";
 };
 
+export const focusCenteredImpl = id => () => {
+    requestAnimationFrame(() => {
+        const element = document.getElementById(id);
+        if (!element) return;
+        element.scrollIntoView({ block: "center" });
+        element.focus({ preventScroll: true });
+    });
+};
+
 export const focusFirstInvalid = () => {
     requestAnimationFrame(() => {
         const field = document.querySelector(".field-invalid");

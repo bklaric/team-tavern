@@ -1339,7 +1339,7 @@ Account menu
   confirmed, waiting for its link with **Send again**, or missing, which says
   what the site can't tell the player about. Changing it asks the new address to
   confirm itself.
-- **Proposed:** match, message and renewal emails each have an on/off switch,
+- **Decided:** match, message and renewal emails each have an on/off switch,
   each saying what it would send. Every email carries an unsubscribe link, and it
   lands on these switches. While the address is unconfirmed or missing, the
   switches say that nothing is sent whatever they are set to.
@@ -1349,14 +1349,14 @@ Account menu
   player's post links to it (11.1).
 - **Decided:** **Delete account** deletes the account's posts and conversations
   (section 10), and says so, with the counts, before it does.
-- **Proposed:** the facts and contacts are edited together, under one **Edit**,
+- **Decided:** the facts and contacts are edited together, under one **Edit**,
   rather than a row at a time: they are given together when a post is written,
   and the line under the heading says what changing one reaches. **Edit** sits
   under the list, where **Save changes** takes its place.
-- **Proposed:** a game account (Riot ID, Steam profile, EA ID) belongs to the
+- **Decided:** a game account (Riot ID, Steam profile, EA ID) belongs to the
   games played with it, so the page asks for every kind and says where each
   shows. A post asks only for the one its game uses (section 6, step 3).
-- **Proposed:** the page has no filled button until something is being edited,
+- **Decided:** the page has no filled button until something is being edited,
   where **Save changes** is it. **Delete account** is outlined in error (14.1).
 
 ## 12. Relaunch and measurement

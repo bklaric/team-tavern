@@ -6,7 +6,7 @@ import Async (Async)
 import Async as Async
 import Control.Parallel (parallel, sequential)
 import Data.Array (filter, length, notElem)
-import Data.Either (Either(..), hush)
+import Data.Either (hush)
 import Data.Maybe (Maybe(..))
 import Data.Traversable (sequence, traverse)
 import Data.Tuple (Tuple(..))
@@ -32,6 +32,7 @@ import TeamTavern.Client.Icons as Icons
 import TeamTavern.Client.Pages.Feed.Description (storeDescription)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigateWithEvent_)
+import TeamTavern.Client.Script.QueryParams (getQueryParam, removeQueryParam)
 import TeamTavern.Client.Script.RenderReady (appendRenderReadyUnavailable)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Shared.Fetch (fetchPath, fetchSimple)
@@ -92,6 +93,11 @@ component = Hooks.component \_ _ -> Hooks.do
             Hooks.put pageId page'
 
     Hooks.useLifecycleEffect do
+        -- Deleting an account lands here, signed out.
+        deleted <- getQueryParam "account" <#> eq (Just "deleted")
+        when deleted do
+            removeQueryParam "account"
+            showToast { text: "Your account is deleted.", action: Nothing }
         void $ Hooks.fork $ H.lift load >>= show'
         pure Nothing
 
@@ -168,6 +174,7 @@ component = Hooks.component \_ _ -> Hooks.do
                 , typeCards { href: \type_ -> "/post/" <> type_, note: const Nothing }
                 ]
             , gamesSection "Or browse a game" games
+            , toasts toast dismissToast
             ]
         -- Games keep the catalogue's order, so renewing a post doesn't move it.
         Posts { games, own, viewer } -> let

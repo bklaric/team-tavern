@@ -19,6 +19,7 @@ import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
 import Halogen.Hooks as Hooks
 import TeamTavern.Client.Components.Header (header)
+import TeamTavern.Client.Pages.Account (account)
 import TeamTavern.Client.Pages.ConfirmEmail (confirmEmail)
 import TeamTavern.Client.Pages.Design (design)
 import TeamTavern.Client.Pages.Feed (FeedCache, feed)
@@ -73,6 +74,7 @@ data State
 type ChildSlots =
     ( header :: Slot___
     , home :: Slot__I Int
+    , account :: Slot__I Int
     , signUp :: Slot___
     , signIn :: Slot___
     , forgotPassword :: Slot___
@@ -142,6 +144,7 @@ renderPage { page: Feed { handle }, visit, restore, cache } = feed visit { handl
 renderPage { page: Post { handle, id }, visit, previous } =
     postPage visit { handle, id, feedBehind: previous == Just ("/games/" <> handle) }
 renderPage { page: Home, visit } = home visit
+renderPage { page: Account, visit } = account visit
 renderPage { page: PostType, visit } = postType visit
 renderPage { page: PostGame { type_ }, visit } = postGame visit type_
 renderPage { page: PostScreen { handle, type_ }, visit } = postScreen visit { handle, type_ }
@@ -214,10 +217,12 @@ router initialState initialPath = Hooks.component \{ queryToken } _ -> Hooks.do
                     liftEffect $ stampPrevious left.path
                     pure $ Just left.path
             -- The components page is a tool for building the site, not a page of
-            -- it, and a renewal link renews whenever it is opened.
+            -- it, a renewal link renews whenever it is opened, and an account is
+            -- nobody else's.
             setMetaRobots case page of
                 Design -> "noindex"
                 Renew -> "noindex"
+                Account -> "noindex"
                 _ -> "index, follow"
             restore <- case page of
                 Feed { handle } | popped -> liftEffect $ Ref.read cache <#> Map.lookup handle

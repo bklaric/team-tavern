@@ -1023,6 +1023,37 @@ What every later page needs signed in and out.
   inbox; a changed email shows unconfirmed, and the link sent to the old one
   confirms nothing; delete lands home signed out and
   the posts are gone from the feed.
+- Built in two parts. 15a: the page, its facts, switches, blocked list and
+  Delete account, with the email and sign-in rows read only. 15b: changing the
+  email with Send again, and the two sign-in moves.
+- Settled here:
+  - The routes are `viewAccount` (`GET /api/account`), `updateFacts`
+    (`PUT /api/account/facts`, `{ nickname, account }` with the post screen's
+    `AccountContent`), `updateSwitches` (`PUT /api/account/switches`) and
+    `deleteAccount` (`DELETE /api/account`, which clears the cookie), in
+    `Routes/Account/` and `Server/Account/`. `viewAccount` gives every contact
+    kind some game offers with the titles of the games that offer it, so each
+    field says where it shows ("On all your posts." for Discord, which every
+    game offers), and counts the posts and the conversations deleting would
+    take.
+  - `updateFacts` writes every column as given, so a fact can be cleared, where
+    the post screen's `writeAccount` only fills. Its checks of country,
+    languages, birthday, timezone and contacts are `ValidateAccount.purs`, which
+    `ValidatePost` shares, allowing a post only its game's contact kinds.
+  - The page is `Pages/Account.purs`, `noindex`. Signed out, it replaces itself
+    with sign-in, returning to `/account` with the fragment it was opened on;
+    `#email`, `#emails` and `#blocked` put their row mid-screen and focus it.
+    Saving the facts announces to the header, which asks `viewMe` again and so
+    shows a new nickname. A switch saves as it flips and flips back if saving
+    fails. The blocked list is keyed by nickname, and Unblock's toast has Undo.
+    Delete account lands on `/?account=deleted`, which the home page takes out
+    of the address and says "Your account is deleted." for.
+  - The delete confirmation counts as the prototype does, with the verb agreeing:
+    "Your 1 post goes with it."
+  - The feed leaves out the viewer's own posts, so `account.spec.ts` reads the
+    changed location as a visitor. It renames a player who wrote to
+    OverwatchTester and blocks CounterStrike2Tester, whom no other spec uses,
+    and signs up everyone it changes.
 
 ## Phase 5: launch
 

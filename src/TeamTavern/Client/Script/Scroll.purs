@@ -1,5 +1,6 @@
 module TeamTavern.Client.Script.Scroll
-    ( focusFirstInvalid
+    ( focusCentered
+    , focusFirstInvalid
     , onScroll
     , scrollRestorationManual
     , scrollToId
@@ -40,3 +41,10 @@ foreign import scrollRestorationManual :: Effect Unit
 -- | Brings the first field marked invalid into view and focuses its control,
 -- | once the page has drawn the marks.
 foreign import focusFirstInvalid :: Effect Unit
+
+foreign import focusCenteredImpl :: String -> Effect Unit
+
+-- | Puts the element with the id in the middle of the screen and focuses it,
+-- | once the page has drawn it, as a link to a part of a page lands there.
+focusCentered :: ∀ monad. MonadEffect monad => String -> monad Unit
+focusCentered id = liftEffect $ focusCenteredImpl id

@@ -9,10 +9,10 @@ module TeamTavern.Client.Pages.Post.Fields
 
 import Prelude
 
-import Data.Array (delete, elem, filter, index, null, snoc, sortBy)
+import Data.Array (delete, elem, filter, null, snoc, sortBy)
 import Data.Int as Int
 import Data.Maybe (Maybe(..), fromMaybe, isJust, isNothing, maybe)
-import Data.String (Pattern(..), Replacement(..), joinWith, replaceAll, split, toLower)
+import Data.String (joinWith, toLower)
 import Data.String.CodeUnits as CodeUnits
 import Effect.Class (class MonadEffect)
 import Foreign.Object (Object)
@@ -35,12 +35,12 @@ import TeamTavern.Client.Components.Tokens as Tokens
 import TeamTavern.Client.Icons as Icons
 import TeamTavern.Client.Pages.Post.Draft (Draft)
 import TeamTavern.Client.Shared.Contacts (contactLabel, contactPlaceholder)
+import TeamTavern.Client.Shared.Facts (dateText, timezoneOptions, timezoneText)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Game.ViewGame as ViewGame
 import TeamTavern.Routes.Shared.Field (Field)
 import TeamTavern.Routes.Shared.Post (AccountContent)
 import TeamTavern.Shared.Languages (allLanguages)
-import TeamTavern.Shared.Timezones (allTimezones)
 
 type Html m slots = H.ComponentHTML (HookM m Unit) (tokens :: Tokens.Slot | slots) m
 
@@ -118,19 +118,9 @@ draftValue draft = case _ of
     Timezone -> draft.timezone
     Contact kind -> Object.lookup kind draft.contacts >>= \value -> if value == "" then Nothing else Just value
 
-months :: Array String
-months =
-    [ "January", "February", "March", "April", "May", "June"
-    , "July", "August", "September", "October", "November", "December"
-    ]
-
--- How a fact reads where it is shown rather than asked for.
 factText :: Fact -> String -> String
-factText Birthday value = case split (Pattern "-") value <#> Int.fromString of
-    [ Just year, Just month, Just day ] ->
-        show day <> " " <> fromMaybe "" (index months (month - 1)) <> " " <> show year
-    _ -> value
-factText Timezone value = replaceAll (Pattern "_") (Replacement " ") value
+factText Birthday value = dateText value
+factText Timezone value = timezoneText value
 factText _ value = value
 
 -- A fact the account holds shows as its value, "Croatia · From your
@@ -314,7 +304,7 @@ timeFields context@{ draft } =
     , accountField context Timezone "Timezone" For
         (Just "Your hours are in this timezone. Everyone else sees them in theirs.")
         (select [ HP.id $ idOf "timezone" ]
-            { options: allTimezones <#> \{ name } -> { value: name, label: factText Timezone name }
+            { options: timezoneOptions
             , value: fromMaybe context.timezone draft.timezone
             , placeholder: Nothing
             , onChange: \value -> context.onChange "timezone" _ { timezone = Just value }

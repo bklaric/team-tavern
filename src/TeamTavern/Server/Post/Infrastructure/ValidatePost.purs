@@ -8,12 +8,11 @@ import Data.Array (all, any, elem, find, length, null)
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Array.NonEmpty as Nea
 import Data.Bifunctor (lmap)
-import Data.Date (Date, exactDate)
-import Data.Enum (toEnum)
+import Data.Date (Date)
 import Data.Foldable (sequence_)
 import Data.Int as Int
 import Data.Maybe (Maybe(..), fromMaybe, isJust, isNothing, maybe)
-import Data.String (Pattern(..), joinWith, split, trim)
+import Data.String (Pattern(..), joinWith, split)
 import Data.String as String
 import Data.Tuple (Tuple(..))
 import Data.Validated (Validated, invalid)
@@ -25,11 +24,11 @@ import TeamTavern.Routes.Country.ViewCountries as ViewCountries
 import TeamTavern.Routes.Game.ViewGame as ViewGame
 import TeamTavern.Routes.Shared.Field (Field)
 import TeamTavern.Routes.Shared.Post (AccountContent, BadContent, PostContent, PostError, RequestContent)
+import TeamTavern.Server.Account.Infrastructure.ValidateAccount (accountChecks, blank, normalizedAccount)
 import TeamTavern.Server.Domain.Paragraph as Paragraph
 import TeamTavern.Server.Infrastructure.Error (Terror(..))
 import TeamTavern.Server.Infrastructure.Response (BadRequestTerror)
 import TeamTavern.Shared.Languages (allLanguages)
-import TeamTavern.Shared.Timezones (allTimezones)
 import Type.Proxy (Proxy(..))
 
 -- | A post as it is stored: its text as paragraphs, and only the fields its
@@ -48,9 +47,6 @@ ensure false error line = invalid $ Terror (Nea.singleton error) [ line ]
 
 fieldError :: String -> PostError
 fieldError key = inj (Proxy :: _ "field") { key }
-
-blank :: Maybe String -> Maybe String
-blank value = value <#> trim >>= \value' -> if value' == "" then Nothing else Just value'
 
 paragraphs :: String -> Array String
 paragraphs text = Paragraph.create text
@@ -75,25 +71,11 @@ normalized type_ { post, account } =
         , discordServer = if player then Nothing else blank post.discordServer
         , website = if player then Nothing else blank post.website
         }
-    , account: account
-        { country = blank account.country
-        , birthday = blank account.birthday
-        , timezone = blank account.timezone
-        , contacts = account.contacts <#> trim # Object.filter (_ /= "")
-        }
+    , account: normalizedAccount account
     }
     where
     player = type_ == "player"
     group = type_ == "group"
-
-parseDate :: String -> Maybe Date
-parseDate text = case split (Pattern "-") text <#> Int.fromString of
-    [ Just year, Just month, Just day ] -> do
-        year' <- toEnum year
-        month' <- toEnum month
-        day' <- toEnum day
-        exactDate year' month' day'
-    _ -> Nothing
 
 isTime :: String -> Boolean
 isTime text = case split (Pattern ":") text <#> Int.fromString of
@@ -178,20 +160,8 @@ checks game countries type_ today { post, account } summary =
     , ensure (shorterThan 200 post.website) (inj (Proxy :: _ "website") {}) "The website is too long."
     , ensure (post.contactPreference /= "offsite" || not Object.isEmpty account.contacts)
         (inj (Proxy :: _ "reach") {}) "Reached off site with no contact."
-    , ensure (maybe true (\country -> any (_.name >>> eq country) countries.countries) account.country)
-        (fieldError "location") ("Unknown country: " <> fromMaybe "" account.country)
-    , ensure (all (flip elem allLanguages) account.languages) (fieldError "languages")
-        ("Unknown languages: " <> joinWith ", " account.languages)
-    , ensure (maybe true (\birthday -> parseDate birthday # maybe false (_ <= today)) account.birthday)
-        (fieldError "birthday") ("Birthday isn't a past date: " <> fromMaybe "" account.birthday)
-    , ensure (maybe true (\timezone -> any (_.name >>> eq timezone) allTimezones) account.timezone)
-        (fieldError "timezone") ("Unknown timezone: " <> fromMaybe "" account.timezone)
     ]
-    <> (Object.toUnfoldable account.contacts <#> \(Tuple kind value) ->
-        ensure
-            (elem kind game.contacts && String.length value <= (if kind == "discord" then 37 else 100))
-            (inj (Proxy :: _ "contact") { kind })
-            ("Contact isn't the game's or is too long: " <> kind))
+    <> accountChecks game.contacts countries today account
     where
     preferences =
         if type_ == "community" then [ "discord", "website", "message" ] else [ "message", "offsite", "either" ]

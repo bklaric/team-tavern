@@ -16,6 +16,10 @@ import JavaScript.Node.Process (lookupEnv)
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Pool as Pool
 import TeamTavern.Routes.All (AllRoutes)
+import TeamTavern.Server.Account.DeleteAccount (deleteAccount)
+import TeamTavern.Server.Account.UpdateFacts (updateFacts)
+import TeamTavern.Server.Account.UpdateSwitches (updateSwitches)
+import TeamTavern.Server.Account.ViewAccount (viewAccount)
 import TeamTavern.Server.Block.Block (block)
 import TeamTavern.Server.Block.Infrastructure.SendReportEmail (AdminEmail(..))
 import TeamTavern.Server.Block.ReportConversation (reportConversation)
@@ -164,6 +168,14 @@ runServer deployment mailer discordApiUrl adminEmail pool = serve (Proxy :: _ Al
         confirmEmail pool body
     , resendConfirmation: \{ cookies } ->
         resendConfirmation mailer pool cookies
+    , viewAccount: \{ cookies } ->
+        viewAccount pool cookies
+    , updateFacts: \{ cookies, body } ->
+        updateFacts pool cookies body
+    , updateSwitches: \{ cookies, body } ->
+        updateSwitches pool cookies body
+    , deleteAccount: \{ cookies } ->
+        deleteAccount pool cookies
     , viewGames: const $
         viewGames pool
     , viewGame: \{ path: { handle } } ->

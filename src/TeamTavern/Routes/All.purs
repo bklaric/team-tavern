@@ -1,6 +1,10 @@
 module TeamTavern.Routes.All where
 
 import Jarilo (type (<|>), type (:))
+import TeamTavern.Routes.Account.DeleteAccount (DeleteAccount)
+import TeamTavern.Routes.Account.UpdateFacts (UpdateFacts)
+import TeamTavern.Routes.Account.UpdateSwitches (UpdateSwitches)
+import TeamTavern.Routes.Account.ViewAccount (ViewAccount)
 import TeamTavern.Routes.Block.Block (Block)
 import TeamTavern.Routes.Block.ReportConversation (ReportConversation)
 import TeamTavern.Routes.Block.ReportPost (ReportPost)
@@ -51,6 +55,12 @@ type PlayerRoutes
     <|> "confirmEmail"       : ConfirmEmail
     <|> "resendConfirmation" : ResendConfirmation
 
+type AccountRoutes
+    =   "viewAccount"    : ViewAccount
+    <|> "updateFacts"    : UpdateFacts
+    <|> "updateSwitches" : UpdateSwitches
+    <|> "deleteAccount"  : DeleteAccount
+
 type GameRoutes
     =   "viewGames" : ViewGames
     <|> "viewGame"  : ViewGame
@@ -96,6 +106,7 @@ type AllRoutes
     =    SessionRoutes
     <|> PasswordRoutes
     <|> PlayerRoutes
+    <|> AccountRoutes
     <|> GameRoutes
     <|> FeedRoutes
     <|> PostRoutes
