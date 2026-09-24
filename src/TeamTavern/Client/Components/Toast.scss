@@ -29,6 +29,12 @@
     pointer-events: auto;
 }
 
+/* It names players, whose nicknames can be one long word. */
+.toast-text {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
 .toast:has(.button) {
     padding-right: var(--space-2);
 }

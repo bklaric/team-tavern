@@ -17,7 +17,8 @@ const PART = 1400;
 const locale = (args.find(arg => arg.startsWith("--locale=")) || "").slice("--locale=".length) || undefined;
 const named = args.filter(arg => arg.includes(".html"));
 const pages = named.length ? named : readdirSync(here).filter(name => name.endsWith(".html"));
-const widths = { phone: 390, desktop: 1280 };
+// The site's test-playwright/screenshots.mjs takes the same widths, so the two compare.
+const widths = { phone: 375, desktop: 1280 };
 
 const slug = page => page
     .replace(".html", "")

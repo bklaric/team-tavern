@@ -34,12 +34,28 @@ const inertAround = layer => {
     return taken;
 };
 
+// A dropdown hangs from its button, so one opened near the window's right edge
+// moves left until it is clear of it by the page's margin.
+const keepInView = layer => {
+    const dropdown = layer.firstElementChild;
+    if (dropdown) {
+        const margin = 16;
+        const overshoot = dropdown.getBoundingClientRect().right - (document.documentElement.clientWidth - margin);
+        if (overshoot > 0) {
+            dropdown.style.translate = `${-overshoot}px 0`;
+        }
+    }
+};
+
 export const hold = layer => modal => onClose => () => {
     const opener = document.activeElement;
     const entry = { layer, modal };
     open.push(entry);
 
     const taken = modal ? inertAround(layer) : [];
+    if (!modal) {
+        keepInView(layer);
+    }
     if (modal && scrollLocks++ === 0) {
         document.body.style.overflow = "hidden";
         announceModal(true);

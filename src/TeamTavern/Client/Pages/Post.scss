@@ -30,7 +30,8 @@
 }
 
 .step-context .button {
-    height: 24px;
+    min-height: 24px;
+    padding-block: 0;
     font-size: var(--size-12);
 }
 

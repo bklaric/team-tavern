@@ -231,10 +231,12 @@
     color: var(--text-muted);
     font-size: var(--size-12);
     font-weight: 500;
+    overflow-wrap: anywhere;
 }
 
 .conversation-context .button {
-    height: 24px;
+    min-height: 24px;
+    padding-block: 0;
     font-size: var(--size-12);
 }
 

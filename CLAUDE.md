@@ -19,8 +19,8 @@ test/             a stub; nothing runs it
 ```
 
 Generated, never edited, all git-ignored: `output/` (compiled PureScript),
-`dist-client/`, `dist-server/`, `dist-test/`, `.spago/`, and Playwright's `playwright-report/`
-and `test-results/`.
+`dist-client/`, `dist-server/`, `dist-test/`, `.spago/`, Playwright's `playwright-report/`
+and `test-results/`, and `test-playwright/screenshots/`.
 
 ## Environment
 
@@ -79,6 +79,15 @@ the types without reading them, so `npm run typecheck` is a separate step.
 
 A change is verified when `spago build` reports no errors, `npm test` passes, and
 the affected page or endpoint behaves in the running stack.
+
+`test-playwright/screenshots.mjs` shoots every screen of the site at 375 px and
+1280 px against the running test stack, into `test-playwright/screenshots/`, for
+checking a change by eye; `--only=<text>` picks scenes by name. Run it as
+`"$(volta which node)" test-playwright/screenshots.mjs`, since the plain `node`
+shim goes through `cmd.exe`. It makes what the seed lacks, a conversation or a
+block, through the pages, so run it on a stack the next `npm test` reseeds.
+`phone.spec.ts` holds every page and overlay to a 375 px window with the
+longest names a player can give.
 
 `build-client.sh` compiles Sass and bundles the client into `dist-client/`
 under hashed file names. `build-server.sh` bundles the server into

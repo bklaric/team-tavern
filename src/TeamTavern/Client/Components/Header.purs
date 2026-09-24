@@ -327,7 +327,7 @@ component = Hooks.component \_ { path, visit } -> Hooks.do
                     [ HH.img [ HS.class_ "logo-mark", HP.src "/logo-mark.svg", HP.alt "" ]
                     , HH.span [ HS.class_ "logo-word" ] [ HH.text "TeamTavern" ]
                     ]
-                , opener Games "header-wrap" "dialog" Nothing [ HH.text "Games", Icons.chevronDown ]
+                , opener Games "header-wrap header-wrap-games" "dialog" Nothing [ HH.text "Games", Icons.chevronDown ]
                 , HH.div [ HS.class_ "site-header-actions" ] case state.viewer of
                     Unknown -> []
                     SignedOut -> signedOutActions

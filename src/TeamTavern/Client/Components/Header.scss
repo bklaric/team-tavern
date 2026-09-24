@@ -94,6 +94,21 @@
     width: min(860px, calc(100vw - var(--space-8)));
 }
 
+/* Hanging from Games, the grid runs off the window's right edge until the window
+   is a desktop's, so until then it hangs from the header, which the sticky
+   position makes its containing block, across the header's width. */
+@media (max-width: 1023px) {
+    .header-wrap-games {
+        position: static;
+    }
+
+    .header-dropdown-games {
+        left: var(--space-4);
+        right: var(--space-4);
+        width: auto;
+    }
+}
+
 .header-dropdown-games .cover-grid {
     grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
 }

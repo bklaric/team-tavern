@@ -25,6 +25,13 @@ p {
     margin: 0;
 }
 
+/* Headings name players and groups, whose names can be one long word. */
+h1,
+h2,
+h3 {
+    overflow-wrap: anywhere;
+}
+
 h1 {
     font-size: var(--size-28);
     line-height: 1.2;

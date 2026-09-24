@@ -1157,6 +1157,37 @@ footer rows. Focus order and trapping in every overlay, reduced motion on the
 card's expansion, contrast of every token on every surface it is used on. A
 `screenshots.mjs` beside the suite, like the prototype's, so the pass repeats.
 
+- Built in two parts. 18a: `screenshots.mjs`, the comparison at 375 px and what
+  it found, and `phone.spec.ts`. 18b: focus, keyboard and contrast, with axe in
+  `accessibility.spec.ts`.
+- Settled here:
+  - `test-playwright/screenshots.mjs` shoots each scene at 375 and 1280 px
+    against the test stack: the home page three ways, the header's menus, the
+    feed with its bar, Showing and a card open, a post's page four ways, the
+    contact panel four ways, posting from type to Matches, the account pages,
+    the inbox and a thread, block, report and the toast, and the account page.
+    It signs in through the form, makes a conversation and a block through the
+    pages, blocks the ad script, and shoots a page with an overlay open as the
+    window shows it. The prototype's `screenshot.mjs` shoots phones at 375 px too.
+  - Side by side, the screens agreed with the prototype's. What didn't hold was
+    the longest names: a 40 character nickname and a 50 character group name,
+    one word each, ran off a phone in the ⋯ menu, the block confirmation's
+    heading and button, the toast and the conversation's header. Headings, the
+    toast and those lines now break anywhere, the ⋯ menu is at most 280 px with
+    rows that wrap, and a button wraps its label rather than spill, which only
+    happens where a row has no room, so its fixed heights are minimums.
+  - Games hangs across the header, not from its button, below 1024 px, where
+    from the button it ran off the right edge. Any other dropdown opened near
+    the right edge, as a chip's popover can be, moves left until it fits
+    (`keepInView` in `Overlay.js`).
+  - `phone.spec.ts` fails on any element past a 375 px window's edge that no box
+    inside the window clips, and on content running past the window or
+    scrolling sideways, across every page signed out, with the longest names
+    as their owner and as a reader, and in every overlay; and on the header's
+    and the bar's dropdowns at 640 and 800 px.
+  - The prototype's preview above the fields (`preview-top`) was a switch on its
+    bar; the preview on demand, which the site builds, is the design.
+
 ### 19. Relaunch
 
 - Rehearse on a copy: `redesign/import/import.sh` against the newest dump;

@@ -12,3 +12,4 @@
 /.spago
 /playwright-report/
 /test-results/
+/test-playwright/screenshots/
