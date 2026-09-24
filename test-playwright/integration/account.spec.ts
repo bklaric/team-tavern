@@ -296,6 +296,9 @@ test.describe("the account page", () => {
         await expect(row(page, "Email")).toContainText("No address");
         await expect(page.getByText("None of these is sent without an address.")).toBeVisible();
         await signInRow.getByRole("button", { name: "Use a password" }).click();
+        // The form puts the focus in its first field a frame after it opens, which
+        // would take the typing from a field filled before then.
+        await expect(page.getByLabel("Email", { exact: true })).toBeFocused();
         await page.getByLabel("Password").fill("a-new-password");
         await signInRow.getByRole("button", { name: "Save", exact: true }).click();
         await expect(signInRow.getByText("Enter your email address.")).toBeVisible();
