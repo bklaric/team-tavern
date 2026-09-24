@@ -56,7 +56,7 @@
 .segments {
     display: inline-flex;
     padding: 3px;
-    border: 1px solid var(--input-border);
+    border: 1px solid var(--border);
     border-radius: var(--radius-control);
     background: var(--table);
 }
@@ -77,11 +77,8 @@
     color: var(--text);
 }
 
-/* Pressed reads from its edge as well as its surface, which alone is too close
-   to the group's to see. */
 .segment[aria-pressed="true"] {
     background: var(--raised);
-    box-shadow: inset 0 0 0 1px var(--text-muted);
     color: var(--text);
 }
 

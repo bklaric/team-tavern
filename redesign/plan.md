@@ -1221,10 +1221,12 @@ card's expansion, contrast of every token on every surface it is used on. A
     makes it describe the field's control and marks the control invalid while
     it shows: the control is the caller's, so the field can't set them itself.
     A range is a group named for its field.
-  - Contrast (brief 14.1, now Decided): the radio cards, the Showing segments,
-    the type cards and the description button take input-border edges, a
-    pressed segment a text-muted inner edge, a focused text field the focus
-    ring beside its ember edge, and a button waiting on something fades.
+  - Contrast (brief 14.1, now Decided): the radio cards, the type cards and the
+    description button take input-border edges, a focused text field the focus
+    ring beside its ember edge, and a button waiting on something fades. The
+    Showing segments keep the card edge between the description and the cards,
+    where a lighter one stood out from both, and a pressed segment has no edge
+    of its own; their labels name them.
   - `accessibility.spec.ts` checks with the keyboard what axe can't: the skip
     link and a link's focus on `main`, Tab going round the contact panel with
     the header inert, the report toast live under the panel, a dropdown closing

@@ -1457,10 +1457,12 @@ brief's screens already call for.
 - **Decided:** the values, each checked against WCAG AA on every surface it is
   used on: 4.5:1 for text, 3:1 for control edges. The lowest contrast below is
   the lowest pair the site draws. Every control takes its edge from
-  input-border, the radio cards, the Showing segments, the type cards and the
-  phone's description button among them, and border is left to card edges and
-  dividers. A pressed segment carries a text-muted edge as well as its raised
-  surface, which beside the table is too close to see. A text field's ember
+  input-border, the radio cards, the type cards and the phone's description
+  button among them, and border is left to card edges and dividers. The
+  Showing segments are the exception: they sit between the description and the
+  cards, and read as one with them, so their group keeps the card edge, and
+  the pressed segment is told by its brighter text as well as its surface.
+  Their labels name them, which WCAG accepts in place of an edge. A text field's ember
   edge comes with the ember focus ring, since the edge alone differs little
   from the edge at rest. A link in running text is underlined, since beside
   text-muted its color alone is too close to tell it by.
