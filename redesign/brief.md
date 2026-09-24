@@ -1383,7 +1383,10 @@ Account menu
 - **Decided:** existing alerts come from anonymous emails and have no place in the
   new model. None carry over. Everything else is imported as far as it converts,
   and the rows that don't fit are dropped.
-- **Open:** a one-time relaunch email to existing players and alert subscribers.
+- **Decided:** imported addresses arrive unconfirmed, since the old site never
+  confirmed one. A day after the relaunch, one email goes to every imported
+  player seen in the year before it: what changed, and the link that confirms
+  the address. Older accounts and alert subscribers get nothing.
 - **Open:** Search Console shows few paginated feed pages were ever indexed. Watch
   indexing of posts and feeds after launch.
 - **Decided:** the relaunch is judged by feed views, descriptions started, posts

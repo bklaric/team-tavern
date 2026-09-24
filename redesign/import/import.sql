@@ -34,6 +34,32 @@ begin
     end if;
 end $$;
 
+-- A zone under its name now.
+create function pg_temp.zone(name text)
+returns text language sql stable as $$
+    select coalesce((select new_name from legacy.timezone_map where old_name = name), name)
+$$;
+
+-- A timezone Postgres doesn't know fails every query that reads a post's hours
+-- in it, the feed's among them, so it stops the import instead.
+do $$
+declare
+    unknown text;
+begin
+    select string_agg(distinct timezone, ', ')
+    into unknown
+    from (
+        select pg_temp.zone(timezone) as timezone from legacy.player
+        union all
+        select pg_temp.zone(timezone) from legacy.team
+    ) zones
+    where timezone is not null
+        and not exists (select 1 from pg_timezone_names where pg_timezone_names.name = zones.timezone);
+    if unknown is not null then
+        raise exception 'Timezones Postgres does not know, for timezone_map: %', unknown;
+    end if;
+end $$;
+
 -- Every answer a mapping can give, with the new ids: option_map's rows, and a
 -- platform wherever the game has a platform field with that option. A boolean
 -- field's row names no option.
@@ -74,7 +100,7 @@ insert into player
     , registered
     )
 select old.id, old.nickname, old.email, old.password_hash, old.discord_id,
-    old.birthday, old.languages, location_country.country_name, old.timezone,
+    old.birthday, old.languages, location_country.country_name, pg_temp.zone(old.timezone),
     old.discord_tag, old.steam_id, old.riot_id, old.battle_tag, old.ea_id,
     old.ubisoft_username, old.psn_id, old.gamer_tag, old.friend_code,
     old.registered
@@ -101,7 +127,7 @@ with source as (
         profile.player_id, profile.game_id as old_game_id,
         profile.about, profile.ambitions, profile.created, profile.updated,
         array[profile.platform] as platforms, profile.new_or_returning,
-        player.microphone, player.timezone,
+        player.microphone, pg_temp.zone(player.timezone) as timezone,
         player.weekday_from, player.weekday_to, player.weekend_from, player.weekend_to,
         null::text as name, null::text as website, null::text as discord_server,
         '{}'::text[] as locations, '{}'::text[] as languages,
@@ -114,7 +140,7 @@ with source as (
         team.owner_id, profile.game_id,
         profile.about, profile.ambitions, profile.created, profile.updated,
         profile.platforms, profile.new_or_returning,
-        team.microphone, team.timezone,
+        team.microphone, pg_temp.zone(team.timezone),
         team.weekday_from, team.weekday_to, team.weekend_from, team.weekend_to,
         -- A community has to have a name, and an unnamed team was shown by its
         -- handle, which is its owner's nickname.
@@ -166,12 +192,12 @@ set post_id = nextval('post_id_seq')
 where dropped_because is null;
 
 -- Posts keep their hours in the owner's timezone, and a team kept its own, so a
--- team's hours move into its owner's. The dump's date stands for the offsets.
+-- team's hours move into its owner's. The import's date stands for the offsets.
 create function pg_temp.in_owner_time(t time, source_timezone text, owner_timezone text)
-returns time language sql immutable as $$
+returns time language sql stable as $$
     select case
         when source_timezone is null or owner_timezone is null then t
-        else ((date '2026-09-12' + t) at time zone source_timezone at time zone owner_timezone)::time
+        else ((current_date + t) at time zone source_timezone at time zone owner_timezone)::time
     end
 $$;
 

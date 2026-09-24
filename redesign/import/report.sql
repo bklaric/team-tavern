@@ -5,10 +5,14 @@
 \pset footer off
 
 \echo
-\echo 'Posts, active as of the dump (30 days, 90 for communities)'
+\echo 'Posts, active now (30 days, 90 for communities), and in their last week'
 select game.handle as game, post.ilk, count(*) as posts,
-    count(*) filter (where post.updated > timestamptz '2026-09-12 08:23:58Z'
-        - case when post.ilk = 'community' then interval '90 days' else interval '30 days' end) as active
+    count(*) filter (where post.updated > now()
+        - case when post.ilk = 'community' then interval '90 days' else interval '30 days' end) as active,
+    count(*) filter (where post.updated > now()
+            - case when post.ilk = 'community' then interval '90 days' else interval '30 days' end
+        and post.updated <= now()
+            - case when post.ilk = 'community' then interval '83 days' else interval '23 days' end) as last_week
 from post
 join game on game.id = post.game_id
 group by game.handle, post.ilk

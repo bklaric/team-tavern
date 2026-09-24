@@ -368,6 +368,27 @@ insert into legacy.country_map (old_name, new_name) values
     ('UAE', 'United Arab Emirates'),
     ('United States of America', 'United States');
 
+-- Today's timezones that are old names of zones, under their names now. The
+-- zone data Postgres 18 reads knows only these, and the site's list offers
+-- only these.
+create table legacy.timezone_map
+    ( old_name text primary key
+    , new_name text not null
+    );
+
+insert into legacy.timezone_map (old_name, new_name) values
+    ('America/Argentina/ComodRivadavia', 'America/Argentina/Catamarca'),
+    ('America/Fort_Wayne', 'America/Indiana/Indianapolis'),
+    ('America/Godthab', 'America/Nuuk'),
+    ('America/Indianapolis', 'America/Indiana/Indianapolis'),
+    ('America/Rosario', 'America/Argentina/Cordoba'),
+    ('Asia/Choibalsan', 'Asia/Ulaanbaatar'),
+    ('Asia/Ujung_Pandang', 'Asia/Makassar'),
+    ('Europe/Kiev', 'Europe/Kyiv'),
+    ('Europe/Uzhgorod', 'Europe/Kyiv'),
+    ('Europe/Zaporozhye', 'Europe/Kyiv'),
+    ('Pacific/Enderbury', 'Pacific/Kanton');
+
 -- The regions each of today's inner nodes covers, for a team's locations. A
 -- country among them is read through its own region instead. A continent is
 -- every region it takes in, which is what a team naming one meant; reading

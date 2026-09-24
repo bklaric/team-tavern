@@ -1255,6 +1255,56 @@ card's expansion, contrast of every token on every surface it is used on. A
   old production had.
 - The relaunch email to existing players (brief 12, Open) is decided here,
   not before.
+- Rehearsed on the dump of 2026-09-24 (00:00 UTC), restored into the
+  development stack's Postgres 18 and imported with `import.sh
+  team_tavern_relaunch`, then renamed into place as the runbook does:
+  - The dump held 31,212 players, 26,892 player profiles, 3,078 team profiles
+    and 3,980 alerts. The import made 31,212 players (6,803 with a country,
+    26,362 with a timezone) and 38,295 posts, 76 of them active at the import
+    and 13 in their last week. Valorant has 14,889 posts, 23 active. The drops
+    are the kinds the mapping expects: Splitgate's 73 profiles, communities
+    with no text, an owner's older post of a type, answers to fields a type
+    isn't asked, CS2's Danger Zone, Apex's Arenas, TF2's FACEIT and the stores
+    of games with no platform field.
+  - Postgres 18's image didn't know `Europe/Kiev` and ten other old zone
+    names the site's own timezone list offers. Seven of them are carried by
+    about 400 players and teams, and browsers still report such names
+    (`Asia/Calcutta`). The import stopped on one. The feed does `at time zone`
+    on the owner's and the viewer's zones, so one such name fails the feed.
+    The names are moved to the zones' current ones rather than put back with
+    `tzdata-legacy` in an image of our own: `timezone_map` in `mapping.sql`
+    renames them in the import, which stops on any name Postgres doesn't know;
+    the list drops the eight whose current name it already has and renames
+    Kiev, Godthab and Enderbury; and `getClientTimezone` gives the browser's
+    zone as the list's entry that Intl takes for the same zone.
+    `feed.spec.ts` shows the feed to a browser that reports `Asia/Calcutta`.
+  - `import.sh` reads the user and the old database from the environment, and
+    from `stacks/.env` without it, so it runs unchanged on the server from an
+    unpacked copy of `redesign/import/` and the schema and seeds. Hours move
+    between zones on the import's date, and the report counts active posts as
+    of now.
+  - Every feed, the imported group Eternal Reign and community ThƎ UndƎrground,
+    the sitemap and the old paths' redirects answered on the imported database.
+    The signed-in click-through as imported players is left to the day, with a
+    real account, since impersonating one here was refused.
+- Settled here:
+  - Imported addresses stay unconfirmed: the old site never confirmed one, and
+    mailing unverified addresses is what sinks a sender's reputation. 11,611
+    imported players have an address; 924 were seen (registered, signed in or
+    updated a post) in the year before the import and 179 in 90 days.
+  - The relaunch email goes a day after the relaunch to those 924: what
+    changed and the confirm-email link, so renewals and fits reach them.
+    `RelaunchEmail/Main.purs` sends it from the node container as
+    `release/server/relaunch-email.js`, counts without `--send`, and skips
+    anyone who already has a confirmation row, so it can be run again. On the
+    development stack it counted 924, logged 924, then counted 0, and its link
+    confirmed the address. Alert subscribers get nothing.
+  - Production still runs `master`'s checkout layout, so the runbook moves it
+    aside and puts the release in `~/team-tavern`. Postgres 18 gets a new data
+    directory rather than the old one moved aside, so rolling back is starting
+    the old stack again. The images are built and pulled before the downtime,
+    and Postgres is restored and imported before anything else of the release
+    starts, so the new site never serves an empty database.
 
 ### 20. Cleanup and docs
 
