@@ -1245,6 +1245,11 @@ card's expansion, contrast of every token on every surface it is used on. A
   bundles; start node; the Discord
   redirect URIs on the production app; the manual Discord check; watch
   `docker logs tt-node` for the first worker period.
+- Postgres goes from 14 to 18 with the relaunch, since the release's compose
+  file runs 18.6; its section of the runbook is written, and the import slots
+  into it between the restore and bringing the site back. It was rehearsed on
+  the development stack's copy of production: every table's row count matched
+  the 14 copy's.
 - After it holds: `TablesBase.sql` and `TablesCurrent.sql` are already the
   same file; `redesign/import/` is deleted, since it addresses rows only the
   old production had.
