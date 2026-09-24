@@ -21,14 +21,18 @@
     border-radius: var(--radius-card);
 }
 
+/* Every cover is 600x900, which the image's width and height attributes give
+   as its shape before it loads. The shape is the image's own, inside its
+   border: a 2 / 3 ratio set here would take in the border, leave the image a
+   fraction of a pixel off 2:3, and have it scaled and cut with seams at its
+   edges. */
 .cover img {
     display: block;
     width: 100%;
-    aspect-ratio: 2 / 3;
+    height: auto;
     border: 1px solid var(--border);
     border-radius: var(--radius-card);
     background: var(--raised);
-    object-fit: cover;
 }
 
 .cover:hover img {

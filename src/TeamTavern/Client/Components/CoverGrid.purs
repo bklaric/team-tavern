@@ -27,5 +27,5 @@ coverGrid { games, href, mark } =
         path = href handle
         in
         HH.a [ HS.class_ "cover", HP.href path, HE.onClick $ navigateWithEvent_ path ] $
-        [ HH.img [ HP.src $ "/images/games/" <> handle <> ".webp", HP.alt title ] ]
+        [ HH.img [ HP.src $ "/images/games/" <> handle <> ".webp", HP.alt title, HP.width 600, HP.height 900 ] ]
         <> maybe [] (\mark' -> [ HH.span [ HS.class_ "cover-mark" ] [ HH.text mark' ] ]) (mark handle)

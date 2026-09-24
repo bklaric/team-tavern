@@ -45,14 +45,15 @@
     color: var(--text);
 }
 
+/* Shaped by its width and height attributes, inside its border, as the cover
+   grid's covers are (`CoverGrid.scss`). */
 .home-game-cover img {
     display: block;
     width: 100%;
-    aspect-ratio: 2 / 3;
+    height: auto;
     border: 1px solid var(--border);
     border-radius: var(--radius-card);
     background: var(--raised);
-    object-fit: cover;
 }
 
 .home-game-cover:hover img {

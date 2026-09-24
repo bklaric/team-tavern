@@ -149,7 +149,7 @@ component = Hooks.component \_ _ -> Hooks.do
             Tuple game.handle $ HH.section [ HS.class_ "home-game", HPA.labelledBy headingId ]
             [ HH.h2 [ HS.class_ "home-game-heading", HP.id headingId ]
                 [ HH.a [ HS.class_ "home-game-cover", HP.href feed, HE.onClick $ navigateWithEvent_ feed ]
-                    [ HH.img [ HP.src $ "/images/games/" <> game.handle <> ".webp", HP.alt "" ]
+                    [ HH.img [ HP.src $ "/images/games/" <> game.handle <> ".webp", HP.alt "", HP.width 600, HP.height 900 ]
                     , HH.span [ HS.class_ "home-game-name" ] [ HH.text game.title ]
                     ]
                 ]
