@@ -11,6 +11,13 @@
     background: var(--table);
 }
 
+/* While Details animates the card's height, its rows keep their own and the
+   card clips them, rather than squeezing the clipped fact line and text. */
+
+.card > * {
+    flex-shrink: 0;
+}
+
 .card-heading {
     display: flex;
     flex-wrap: wrap;
