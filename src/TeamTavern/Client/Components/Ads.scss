@@ -1,0 +1,58 @@
+/* Ads around a page: a takeover above it and a skyscraper on either side of
+   its column on a desktop. The stickies on the window's floor are Venatus's
+   own. */
+
+.ad:empty {
+    display: none;
+}
+
+.ad-takeover {
+    display: flex;
+    justify-content: center;
+}
+
+.ad-takeover .ad {
+    margin: var(--space-6) var(--space-4) 0;
+}
+
+.ad-rail {
+    display: none;
+}
+
+/* A 160 px skyscraper fits on either side of the column from here. */
+@media (min-width: 1100px) {
+    .ads-page {
+        display: grid;
+        grid-template-columns: 1fr minmax(0, var(--feed-width)) 1fr;
+    }
+
+    .ad-takeover {
+        grid-column: 1 / -1;
+        grid-row: 1;
+    }
+
+    .ads-content {
+        grid-column: 2;
+        grid-row: 2;
+        min-width: 0;
+    }
+
+    .ad-rail {
+        display: block;
+        position: sticky;
+        top: calc(56px + var(--space-6));
+        grid-row: 2;
+        align-self: start;
+        justify-self: center;
+        width: 160px;
+        margin-top: var(--space-6);
+    }
+
+    .ad-rail-left {
+        grid-column: 1;
+    }
+
+    .ad-rail-right {
+        grid-column: 3;
+    }
+}

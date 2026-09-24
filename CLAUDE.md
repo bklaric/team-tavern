@@ -372,6 +372,10 @@ redirects the old site's feed paths to the new ones by `legacy.game_map`.
   stable id, with `Halogen.HTML.Elements.Keyed`. Unkeyed, Halogen reuses the
   elements by position, and a click aimed at one item lands on whichever took
   its place.
+- Ads are Venatus units. `Ads.around` in `Client/Components/Ads.purs` places
+  a page's units around its content, on the feed and a post's page. Every unit
+  goes through the `self.__VM` queue, which `Ads.js` creates when no ad
+  script has, since the prerender shell loads none.
 - A list that refetches while the page is open carries `aria-busy`, true from
   a request until the latest one answers, and specs wait for it to settle
   before acting on the list, as `feed.spec.ts` does.

@@ -3,8 +3,12 @@
 const open = [];
 
 // Every modal overlay locks the page's scroll, and the page scrolls again only
-// once the last of them lets go.
+// once the last of them lets go. The page hears of both, as `modalchange`.
 let scrollLocks = 0;
+
+const announceModal = open => {
+    document.dispatchEvent(new CustomEvent("modalchange", { detail: open }));
+};
 
 const focusable =
     "a[href], button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), summary";
@@ -38,6 +42,7 @@ export const hold = layer => modal => onClose => () => {
     const taken = modal ? inertAround(layer) : [];
     if (modal && scrollLocks++ === 0) {
         document.body.style.overflow = "hidden";
+        announceModal(true);
     }
 
     const body = layer.querySelector(".overlay-body");
@@ -94,6 +99,7 @@ export const hold = layer => modal => onClose => () => {
         taken.forEach(element => { element.inert = false; });
         if (modal && --scrollLocks === 0) {
             document.body.style.overflow = "";
+            announceModal(false);
         }
         // Focus goes back to the opener unless the player has put it
         // somewhere else, as a press outside a dropdown does.

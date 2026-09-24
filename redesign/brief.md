@@ -1522,9 +1522,9 @@ brief's screens already call for.
 - **Proposed:** the feed is one column about 720 px wide, not a grid: cards are
   compared, and comparing reads down. On a desktop that leaves room on either side
   for the ad rails section 15 expects.
-- **Proposed:** two breakpoints. Below 640 px is a phone, where overlays go
-  full-screen (4, 5.6, 7.1, 11.4); from 1024 px is a desktop, where the rails
-  appear.
+- **Decided:** two breakpoints. Below 640 px is a phone, where overlays go
+  full-screen (4, 5.6, 7.1, 11.4); from 1024 px is a desktop. The ad rails
+  appear from 1100 px, where a 160 px unit fits beside the feed's column (15).
 - **Proposed:** a card's expansion animates its height, and doesn't animate under
   reduced motion.
 
@@ -1601,8 +1601,11 @@ What the brief's screens already call for; the prototypes settle their shape.
 
 - Competitions and leagues.
 - Ads. Every layout in this brief is ad-free. Ads fit around the design rather
-  than the design around them, so they are placed last. Side panels and a bottom
-  sticky are likely; the rest is open.
+  than the design around them, so they were placed last. **Decided:** only the
+  feed and a post's page carry them: a skyscraper on either side of the column
+  from 1100 px, a takeover above the page and a sticky on the window's floor
+  from 1024 px, and a sticky on a phone's floor, which steps aside while an
+  overlay is open. The interstitial after the first navigation stays.
 
 ## 16. Out of scope
 

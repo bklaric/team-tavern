@@ -36,7 +36,7 @@ brief marks Proposed, the brief's status is updated in the same commit.
 - [x] 14. Expiry, email and the worker
 - [x] 15. Account page
 - [x] 16. Crawlers, sitemap and old paths
-- [ ] 17. Ads
+- [x] 17. Ads
 - [ ] 18. Phone and accessibility pass
 - [ ] 19. Relaunch
 - [ ] 20. Cleanup and docs
@@ -1128,6 +1128,25 @@ Brief 15: side rails from 1024 px on the feed and the post page, a bottom
 sticky on a phone, using the Venatus units the old site had. Nothing the brief
 fixes moves for them: the feed stays one 720 px column. `reloadAds` returns
 here if the units need it on navigation.
+
+- Settled here:
+  - Only the feed and a post's page carry units, placed by `Ads.around` in
+    `Client/Components/Ads.purs` around the page's content. From 1100 px, where
+    a 160 px unit fits beside the column, the page draws a sticky rail on each
+    side and shows Venatus's `skyscraper` in each; the rails are the page's own
+    rather than Venatus's `vertical_sticky`, so overlays cover them and they
+    never cover the column. From 1024 px there is `desktop_takeover` above the
+    content and `horizontal_sticky` on the window's floor; below 640 px,
+    `mobile_horizontal_sticky`. 640 to 1023 px has none.
+  - Each unit is shown while its media query matches and removed when it stops,
+    and the floor stickies step aside while a modal overlay is open, which
+    `Overlay.js` announces as `modalchange`, since they would cover the bottom
+    of a phone's sheet. A removal goes through the Venatus queue behind its
+    display, so a page left before the script loads leaves nothing behind.
+  - No `reloadAds`: a new visit mounts the page again, and its units with it.
+    The interstitial stays as `index.html` has it, after the first navigation.
+  - `ads.spec.ts` answers the Venatus script with a fake that draws each unit
+    as a box of its size; the real script fills nothing on a local origin.
 
 ### 18. Phone and accessibility pass
 

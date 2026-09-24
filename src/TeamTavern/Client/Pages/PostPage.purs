@@ -23,6 +23,7 @@ import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Halogen.HTML.Properties.ARIA as HPA
 import Halogen.Hooks as Hooks
+import TeamTavern.Client.Components.Ads as Ads
 import TeamTavern.Client.Components.Card (Place(..), Viewer, card, postName, typeIcon)
 import TeamTavern.Client.Components.ContactPanel (contactPanel, markMessaged, takeContactParam, useContactPanel)
 import TeamTavern.Client.Components.OwnPostStatus (ownPostStatus)
@@ -245,7 +246,7 @@ component = Hooks.component \_ { handle, id, feedBehind } -> Hooks.do
                     ]
                 | otherwise -> Nothing
 
-    Hooks.pure case state.page, state.viewer of
+    Hooks.pure $ Ads.around case state.page, state.viewer of
         Missing, _ -> placeholder "Page could not be found."
         Failed, _ -> placeholder "There has been an error loading the post."
         Gone game, _ ->

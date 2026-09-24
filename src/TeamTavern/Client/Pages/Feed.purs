@@ -27,6 +27,7 @@ import Halogen.HTML.Properties as HP
 import Halogen.HTML.Properties.ARIA as HPA
 import Halogen.Hooks as Hooks
 import Halogen.Subscription as Subscription
+import TeamTavern.Client.Components.Ads as Ads
 import TeamTavern.Client.Components.Button (Size(..), Weight(..), button)
 import TeamTavern.Client.Components.Card (Place(..), Viewer, card, tierOf, typeIcon)
 import TeamTavern.Client.Components.ContactPanel (contactPanel, markMessaged, takeContactParam, useContactPanel)
@@ -474,7 +475,7 @@ component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
             in
             (flush $ foldl step { html: [], stack: [], tier: Nothing, expired: false } rows).html
 
-    Hooks.pure case state.game of
+    Hooks.pure $ Ads.around case state.game of
         Missing -> placeholder "Page could not be found."
         Failed -> placeholder "There has been an error loading the game."
         Loading -> HH.div [ HS.class_ "feed-page" ] []
