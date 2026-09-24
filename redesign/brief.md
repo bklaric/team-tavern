@@ -601,7 +601,7 @@ Type ─▶ Game ─▶ Post ─▶ Register or sign in ─▶ Matches
 │ Looking for      [✓] Ranked          │ │                     Details ⌄│ │
 │ Microphone       [✓] Required        │ └──────────────────────────────┘ │
 │ Usually online   [21:00] – [01:00]   │                                  │
-│ Timezone         Europe/Zagreb       │                                  │
+│ Timezone         Croatia             │                                  │
 │                                      │                                  │
 │ Tell people about your group         │                                  │
 │ [Three friends who play most nights… │                                  │
@@ -1306,7 +1306,7 @@ Account menu
 │   Birthday    12 April 1998, shown as age 28              │
 │   Location    Croatia                                     │
 │   Languages   Croatian, English                           │
-│   Timezone    Europe/Zagreb                               │
+│   Timezone    Croatia                                     │
 │   Contacts    Discord kestrel · Riot ID Kestrel#EUW       │
 │ [ Edit ]                                                  │
 │                                                           │

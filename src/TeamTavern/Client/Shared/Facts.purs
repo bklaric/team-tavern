@@ -2,13 +2,15 @@ module TeamTavern.Client.Shared.Facts (ageOn, dateText, parseDate, timezoneOptio
 
 import Prelude
 
-import Data.Array (index)
+import Data.Array (find, index)
 import Data.Date (Date, day, exactDate, month, year)
 import Data.Enum (fromEnum, toEnum)
 import Data.Int as Int
-import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.String (Pattern(..), Replacement(..), replaceAll, split)
 import Data.Tuple (Tuple(..))
+import Foreign.Object (Object)
+import Foreign.Object as Object
 import TeamTavern.Client.Components.Input (Option)
 import TeamTavern.Shared.Timezones (allTimezones)
 
@@ -47,8 +49,21 @@ ageOn today birthday = parseDate birthday >>= \born -> let
     in
     if born > today then Nothing else Just if birthdayCome then years else years - 1
 
-timezoneText :: String -> String
-timezoneText = replaceAll (Pattern "_") (Replacement " ")
+zoneCounts :: Object Int
+zoneCounts = allTimezones <#> (\{ country } -> Tuple country 1) # Object.fromFoldableWith (+)
 
+-- A zone is named by its country alone where the country has only the one.
+manyZones :: String -> Boolean
+manyZones country = Object.lookup country zoneCounts # maybe false (_ > 1)
+
+-- | A zone where it's shown, "Croatia" or "New York, United States".
+timezoneText :: String -> String
+timezoneText name = case find (_.name >>> eq name) allTimezones of
+    Just { city, country } | manyZones country -> city <> ", " <> country
+    Just { country } -> country
+    Nothing -> replaceAll (Pattern "_") (Replacement " ") name
+
+-- | The zones to pick from, "Croatia" or "United States: New York".
 timezoneOptions :: Array Option
-timezoneOptions = allTimezones <#> \{ name } -> { value: name, label: timezoneText name }
+timezoneOptions = allTimezones <#> \{ city, country, name } ->
+    { value: name, label: if manyZones country then country <> ": " <> city else country }

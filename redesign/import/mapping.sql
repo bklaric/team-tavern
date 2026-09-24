@@ -368,9 +368,10 @@ insert into legacy.country_map (old_name, new_name) values
     ('UAE', 'United Arab Emirates'),
     ('United States of America', 'United States');
 
--- Today's timezones that are old names of zones, under their names now. The
--- zone data Postgres 18 reads knows only these, and the site's list offers
--- only these.
+-- Today's timezones that aren't in tzdb's zone.tab, under the zone.tab name of
+-- the same zone in the same country. The site's list offers only zone.tab's
+-- names, and the zone data Postgres 18 reads knows the first eleven here by
+-- their new names only.
 create table legacy.timezone_map
     ( old_name text primary key
     , new_name text not null
@@ -387,7 +388,32 @@ insert into legacy.timezone_map (old_name, new_name) values
     ('Europe/Kiev', 'Europe/Kyiv'),
     ('Europe/Uzhgorod', 'Europe/Kyiv'),
     ('Europe/Zaporozhye', 'Europe/Kyiv'),
-    ('Pacific/Enderbury', 'Pacific/Kanton');
+    ('Pacific/Enderbury', 'Pacific/Kanton'),
+    ('Africa/Timbuktu', 'Africa/Bamako'),
+    ('America/Atka', 'America/Adak'),
+    ('America/Coral_Harbour', 'America/Atikokan'),
+    ('America/Ensenada', 'America/Tijuana'),
+    ('America/Montreal', 'America/Toronto'),
+    ('America/Nipigon', 'America/Toronto'),
+    ('America/Pangnirtung', 'America/Iqaluit'),
+    ('America/Porto_Acre', 'America/Rio_Branco'),
+    ('America/Rainy_River', 'America/Winnipeg'),
+    ('America/Santa_Isabel', 'America/Tijuana'),
+    ('America/Shiprock', 'America/Denver'),
+    ('America/Thunder_Bay', 'America/Toronto'),
+    ('America/Yellowknife', 'America/Edmonton'),
+    ('Asia/Chongqing', 'Asia/Shanghai'),
+    ('Asia/Harbin', 'Asia/Shanghai'),
+    ('Asia/Istanbul', 'Europe/Istanbul'),
+    ('Asia/Kashgar', 'Asia/Urumqi'),
+    ('Asia/Tel_Aviv', 'Asia/Jerusalem'),
+    ('Atlantic/Jan_Mayen', 'Arctic/Longyearbyen'),
+    ('Australia/Canberra', 'Australia/Sydney'),
+    ('Australia/Currie', 'Australia/Hobart'),
+    ('Europe/Belfast', 'Europe/London'),
+    ('Europe/Tiraspol', 'Europe/Chisinau'),
+    ('Pacific/Samoa', 'Pacific/Pago_Pago'),
+    ('Pacific/Yap', 'Pacific/Chuuk');
 
 -- The regions each of today's inner nodes covers, for a team's locations. A
 -- country among them is read through its own region instead. A continent is

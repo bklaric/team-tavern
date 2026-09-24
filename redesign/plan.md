@@ -1278,6 +1278,10 @@ card's expansion, contrast of every token on every surface it is used on. A
     Kiev, Godthab and Enderbury; and `getClientTimezone` gives the browser's
     zone as the list's entry that Intl takes for the same zone.
     `feed.spec.ts` shows the feed to a browser that reports `Asia/Calcutta`.
+    The list is tzdb's `zone.tab` now, written by
+    `redesign/timezones/generate.mjs` and labelled by country and city, and
+    `timezone_map` carries the 25 old aliases it dropped to the same zone in
+    the same country.
   - `import.sh` reads the user and the old database from the environment, and
     from `stacks/.env` without it, so it runs unchanged on the server from an
     unpacked copy of `redesign/import/` and the schema and seeds. Hours move

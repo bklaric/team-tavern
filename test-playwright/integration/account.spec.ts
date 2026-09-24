@@ -65,6 +65,26 @@ test.describe("the account page", () => {
         await expect(visitor.locator(".card")).toContainText("Germany");
     });
 
+    // The seeded testers are on Europe/Zagreb, Croatia's only zone.
+    test("names a timezone by its country alone where the country has one", async ({ page }) => {
+        await signIn(page, "new@example.com");
+        await openAccount(page);
+        await expect(row(page, "Timezone")).toHaveText("Croatia");
+
+        await page.getByRole("button", { name: "Edit" }).click();
+        await expect(page.getByLabel("Timezone").locator("option:checked")).toHaveText("Croatia");
+    });
+
+    test("names a timezone by its city where the country has several", async ({ page }) => {
+        await signUp(page, "T");
+        await openAccount(page);
+        await page.getByRole("button", { name: "Edit" }).click();
+        await page.getByLabel("Timezone").selectOption({ label: "United States: New York" });
+        await page.getByRole("button", { name: "Save changes" }).click();
+
+        await expect(row(page, "Timezone")).toHaveText("New York, United States");
+    });
+
     test("renames the player where others see their messages, and refuses a taken name", async ({ browser }) => {
         const writer = await (await browser.newContext()).newPage();
         const owner = await (await browser.newContext()).newPage();
