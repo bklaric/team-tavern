@@ -43,6 +43,7 @@ import TeamTavern.Routes.Post.ViewOwnPosts (ViewOwnPosts)
 import TeamTavern.Routes.Post.ViewPost (ViewPost)
 import TeamTavern.Routes.Session.EndSession (EndSession)
 import TeamTavern.Routes.Session.StartSession (StartSession)
+import TeamTavern.Routes.Sitemap.ViewSitemap (ViewSitemap)
 
 type SessionRoutes
     =   "startSession" : StartSession
@@ -108,6 +109,9 @@ type NotificationRoutes
 type CountryRoutes
     =   "viewCountries" : ViewCountries
 
+type SitemapRoutes
+    =   "viewSitemap" : ViewSitemap
+
 type AllRoutes
     =    SessionRoutes
     <|> PasswordRoutes
@@ -120,3 +124,4 @@ type AllRoutes
     <|> BlockRoutes
     <|> NotificationRoutes
     <|> CountryRoutes
+    <|> SitemapRoutes

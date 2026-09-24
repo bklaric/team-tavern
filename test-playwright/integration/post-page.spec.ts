@@ -163,20 +163,3 @@ test.describe("a post's page", () => {
         await expect(page.locator('meta[name="renderready-status-code"]')).toHaveAttribute("content", "404");
     });
 });
-
-// With scripts off, the page is the HTML the prerenderer returned.
-test.describe("a bot on a post's page", () => {
-    test.use({
-        userAgent: "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)",
-        javaScriptEnabled: false,
-    });
-
-    test("is answered 404 for a post that isn't there", async ({ page }) => {
-        test.slow();
-
-        const response = await page.goto(`${feedPath}/posts/999999`, { timeout: 60_000 });
-
-        expect(response?.status()).toBe(404);
-        await expect(page.getByRole("heading", { name: "This post is gone" })).toBeVisible();
-    });
-});

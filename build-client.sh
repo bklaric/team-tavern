@@ -9,7 +9,6 @@ rm -rf dist-client/*
 mkdir dist-client/images
 mkdir dist-client/images/games
 mkdir dist-client/fonts
-cp src/TeamTavern/Client/Static/robots.txt dist-client/robots.txt
 cp src/TeamTavern/Client/Static/index.html dist-client/index.html
 cp src/TeamTavern/Client/Static/index.prerender.html dist-client/index.prerender.html
 cp src/TeamTavern/Client/Static/ads.txt dist-client/ads.txt

@@ -6,13 +6,15 @@ encode gzip zstd
 # this block runs before the /api/* block for every request. The prerenderer's
 # browser sends X-RenderReady on its API calls too, so the API must be excluded
 # here or it receives this HTML instead of JSON and every page prerenders empty.
+# The sitemap and robots have no file behind them either, and are excluded for
+# the same reason.
 #
 # The header, not the user agent, is what marks the prerenderer: its user agent
 # reads as ordinary Chrome.
 
 @prerender_header {
     header X-RenderReady 1
-    not path /api/*
+    not path /api/* /sitemap.xml /robots.txt
 }
 
 handle @prerender_header {
@@ -36,11 +38,13 @@ handle @prerender_header {
 # Any path without a file behind it is rendered, and the client router decides
 # whether it is a page: one it does not know declares a 404 the prerenderer
 # answers with. So the routes live only in the router. The root is a directory,
-# which the file matcher counts as a file, so it is let through by name.
+# which the file matcher counts as a file, so it is let through by name. The
+# sitemap and robots are answered below without a file, so they are kept out by
+# name.
 
 @bot_page {
     header_regexp User-Agent (?i)(baiduspider|bingbot|discordbot|embedly|facebot|facebookexternalhit|googlebot|linkedinbot|outbrain|pinterest|pinterestbot|quora\slink\spreview|rogerbot|showyoubot|slackbot|telegrambot|twitterbot|vkshare|W3C_Validator|whatsapp|yandex)
-    not path /api/* /images/*
+    not path /api/* /images/* /sitemap.xml /robots.txt
     expression `{path} == "/" || !file({"try_files": [{path}]})`
 }
 
@@ -58,10 +62,51 @@ handle @bot_page {
 redir /games / 301
 redir /games/ / 301
 
+# A game's old feeds, its players and its teams, are its one feed now, under the
+# handle `legacy.game_map` in redesign/import/mapping.sql gives it. Where the
+# handle changed, the old bare feed is linked too, since it redirected to the
+# players. Splitgate left the catalogue, so its old paths are the router's 404,
+# as is every other old path.
+
+map {path} {old_feed} {
+    ~^/games/apex(?:/(?:players|teams))?/?$  /games/apex-legends
+    ~^/games/csgo(?:/(?:players|teams))?/?$  /games/counter-strike-2
+    ~^/games/dota2(?:/(?:players|teams))?/?$ /games/dota-2
+    ~^/games/hots(?:/(?:players|teams))?/?$  /games/heroes-of-the-storm
+    ~^/games/lol(?:/(?:players|teams))?/?$   /games/league-of-legends
+    ~^/games/r6s(?:/(?:players|teams))?/?$   /games/rainbow-six-siege
+    ~^/games/tf2(?:/(?:players|teams))?/?$   /games/team-fortress-2
+    ~^/games/(overwatch|valheim|valorant)/(?:players|teams)/?$ /games/${1}
+    default none
+}
+
+@old_feed not vars {old_feed} none
+redir @old_feed {old_feed} 301
+
 # Proxy api requests to the api.
 
 handle_path /api/* {
     reverse_proxy node:8080
+}
+
+# The sitemap is the api's, since only the database knows the posts, but
+# crawlers look for it at the root.
+
+handle /sitemap.xml {
+    reverse_proxy node:8080
+}
+
+# Each origin names its own sitemap.
+
+handle /robots.txt {
+    header Content-Type "text/plain; charset=utf-8"
+    respond <<TXT
+        User-agent: *
+        Allow: /
+
+        Sitemap: {http.request.scheme}://{http.request.hostport}/sitemap.xml
+
+        TXT 200
 }
 
 # A missing image is a 404, not the SPA shell.

@@ -1,0 +1,88 @@
+import { expect, test } from "@playwright/test";
+import { expectPage, postPath } from "../pages";
+
+const googlebot = "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)";
+
+// `Database/Seed/Games/` seeds the ten games of the catalogue.
+const handles = [
+    "apex-legends", "counter-strike-2", "dota-2", "heroes-of-the-storm", "league-of-legends",
+    "overwatch", "rainbow-six-siege", "team-fortress-2", "valheim", "valorant",
+];
+
+// Neither robots nor the sitemap is a page, so Caddy answers a bot with the file itself
+// rather than with a render of it.
+test.describe("a bot", () => {
+    test.use({ userAgent: googlebot });
+
+    test("is pointed to the sitemap by robots.txt", async ({ page, baseURL }) => {
+        const response = await page.goto("/robots.txt");
+
+        expect(response?.status()).toBe(200);
+        expect(response?.headers()["content-type"]).toContain("text/plain");
+        expect(await response?.text()).toContain(`Sitemap: ${baseURL}/sitemap.xml`);
+    });
+
+    // Valorant's seeded posts include GroupTester's group Night Owls, active, and
+    // ExpiredTester's player post, past its 30 days.
+    test("finds the home page, every feed and the active posts in the sitemap, and no expired one", async ({ page, browser, baseURL }) => {
+        const nightOwls = await postPath(browser, baseURL!, "/games/valorant", "Night Owls");
+        const expired = await postPath(browser, baseURL!, "/games/valorant", "ExpiredTester");
+
+        const response = await page.goto("/sitemap.xml");
+
+        expect(response?.status()).toBe(200);
+        expect(response?.headers()["content-type"]).toContain("application/xml");
+        const locations = [...(await response!.text()).matchAll(/<loc>([^<]*)<\/loc>/g)].map(match => match[1]);
+        expect(locations).toEqual(expect.arrayContaining([
+            `${baseURL}/`,
+            ...handles.map(handle => `${baseURL}/games/${handle}`),
+            `${baseURL}${nightOwls}`,
+        ]));
+        expect(locations).not.toContain(`${baseURL}${expired}`);
+    });
+});
+
+// The old site's feeds were a game's players and its teams, under handles some of which
+// have changed. Each is the game's one feed now.
+const oldFeeds = [
+    ["/games/lol/players", "/games/league-of-legends"],
+    ["/games/csgo/teams/", "/games/counter-strike-2"],
+    ["/games/lol", "/games/league-of-legends"],
+    ["/games/valorant/players", "/games/valorant"],
+];
+
+test.describe("an old feed's path", () => {
+    for (const [oldPath, newPath] of oldFeeds)
+        test(`takes a browser from ${oldPath} to ${newPath}`, async ({ page }) => {
+            const response = await page.goto(oldPath);
+
+            const redirect = await response?.request().redirectedFrom()?.response();
+            expect(redirect?.status()).toBe(301);
+            await expectPage(page, newPath);
+        });
+
+    // Caddy redirects before it hands anything to the prerenderer, so the bot is told where
+    // the page went rather than served a render of the old path.
+    for (const [oldPath, newPath] of oldFeeds)
+        test(`takes a bot from ${oldPath} to ${newPath}`, async ({ request }) => {
+            const response = await request.get(oldPath, { headers: { "User-Agent": googlebot }, maxRedirects: 0 });
+
+            expect(response.status()).toBe(301);
+            expect(response.headers()["location"]).toBe(newPath);
+        });
+});
+
+// A game that left the catalogue and the old players' and teams' own pages have nothing to
+// go to.
+test.describe("an old path with no page of its own", () => {
+    test.use({ userAgent: googlebot, javaScriptEnabled: false });
+
+    for (const path of ["/games/splitgate/players", "/players/SomeNickname"])
+        test(`is answered 404 to a bot at ${path}`, async ({ page }) => {
+            test.slow();
+
+            const response = await page.goto(path, { timeout: 60_000 });
+
+            expect(response?.status()).toBe(404);
+        });
+});

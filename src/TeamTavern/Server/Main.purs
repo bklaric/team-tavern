@@ -65,6 +65,7 @@ import TeamTavern.Server.Post.ViewOwnPosts (viewOwnPosts)
 import TeamTavern.Server.Post.ViewPost (viewPost)
 import TeamTavern.Server.Session.End (end) as Session
 import TeamTavern.Server.Session.Start (start) as Session
+import TeamTavern.Server.Sitemap.ViewSitemap (viewSitemap)
 import TeamTavern.Server.Worker (startWorker)
 import Type.Proxy (Proxy(..))
 
@@ -239,6 +240,8 @@ runServer deployment mailer discordApiUrl adminEmail pool = serve (Proxy :: _ Al
         deletePost pool path.handle path.type cookies
     , viewCountries: const $
         viewCountries pool
+    , viewSitemap: \{ headers } ->
+        viewSitemap pool headers
     }
 
 main :: Effect Unit

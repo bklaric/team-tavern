@@ -35,7 +35,7 @@ brief marks Proposed, the brief's status is updated in the same commit.
 - [x] 13. Fit notifications
 - [x] 14. Expiry, email and the worker
 - [x] 15. Account page
-- [ ] 16. Crawlers, sitemap and old paths
+- [x] 16. Crawlers, sitemap and old paths
 - [ ] 17. Ads
 - [ ] 18. Phone and accessibility pass
 - [ ] 19. Relaunch
@@ -1097,6 +1097,30 @@ What every later page needs signed in and out.
 - Discord: `/signin` is the one redirect URI (step 4) and already registered;
   the manual check in `CLAUDE.md` is run against the dev stack once its
   database is the new model.
+- Settled here:
+  - `viewSitemap` is `GET /sitemap.xml` on node, which Caddy hands over as it
+    is rather than under `/api`. It answers with Jarilo's new `OkText`, a string
+    in the media type the route names, which bklaric gained for it. It lists
+    the home page, every game's feed in catalogue order and every active post's
+    page with its `updated` as `lastmod`, by game, then newest first. The
+    addresses are absolute, built from the request's `Host` and
+    `X-Forwarded-Proto`, which Caddy passes on, so production, staging and the
+    test stack each list their own. One file holds 50,000 addresses, far more
+    than the active posts, so there is no sitemap index.
+  - Caddy answers `/robots.txt` itself: everything allowed, and the sitemap of
+    the origin asked. The empty static file is gone. Both paths are kept out of
+    the prerender matchers by name, as `/api/*` is, since neither has a file.
+  - The old feeds are one `map` in `base.Caddyfile` from `legacy.game_map`:
+    `/players` and `/teams`, with or without a trailing slash, go to the game's
+    feed with a 301, and so does an old handle's bare feed, which the old site
+    redirected to its players and so is linked. Splitgate, the old player and
+    team pages and every other old path are the router's 404.
+  - The smoke spec runs its three visitors over the home page, Valorant's feed
+    and Night Owls's page, whose path it reads off the feed (`postPath` in
+    `pages.ts`), and the bot's gone post moved there from `post-page.spec.ts`.
+    `crawlers.spec.ts` follows robots to the sitemap and the old paths.
+  - The manual Discord check waits for step 19: the development database
+    holds the old model until the relaunch rehearsal builds it from the import.
 
 ### 17. Ads
 

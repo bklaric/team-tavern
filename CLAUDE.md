@@ -289,7 +289,11 @@ the server bundle leaves external, plus the build toolchain in devDependencies.
 
 In the running stack Caddy proxies `/api/*` to the node container, sends bot
 user agents to renderready, and serves everything else from `dist-client/` with
-an `index.html` fallback for SPA paths.
+an `index.html` fallback for SPA paths. `/sitemap.xml` goes to node as it is,
+outside `/api`: the one route that answers with something other than JSON, an
+`OkText` whose absolute addresses are built from the origin the request came
+in on. Caddy answers `/robots.txt` itself, naming that origin's sitemap, and
+redirects the old site's feed paths to the new ones by `legacy.game_map`.
 
 ## Server conventions
 
@@ -380,7 +384,7 @@ an `index.html` fallback for SPA paths.
   bundle. Classes are plain kebab-case strings, named as the prototype names
   them, applied with `HS.class_`.
 - `Client/Static/` (the two index files, the favicon and `logo-512.png`, the
-  Inter fonts with their `inter.css`, the game covers, robots and ads.txt) is
+  Inter fonts with their `inter.css`, the game covers and ads.txt) is
   copied verbatim by `build-client.sh`; adding a file or directory there means
   adding a `cp` line to that script.
 
