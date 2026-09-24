@@ -86,14 +86,14 @@ redir @old_feed {old_feed} 301
 # Proxy api requests to the api.
 
 handle_path /api/* {
-    reverse_proxy node:8080
+    reverse_proxy node
 }
 
 # The sitemap is the api's, since only the database knows the posts, but
 # crawlers look for it at the root.
 
 handle /sitemap.xml {
-    reverse_proxy node:8080
+    reverse_proxy node
 }
 
 # Each origin names its own sitemap.

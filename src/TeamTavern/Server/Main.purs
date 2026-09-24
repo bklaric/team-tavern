@@ -71,7 +71,7 @@ import Type.Proxy (Proxy(..))
 
 serveOptions :: ServeOptions { port :: Int, host :: String }
 serveOptions =
-    { listen: { port: 8080, host: "0.0.0.0" }
+    { listen: { port: 80, host: "0.0.0.0" }
     , onRejected: \{ method, url, statusCode, reason } ->
         logStamped $ String.joinWith " | "
             ["Rejected request", show statusCode <> " " <> method <> " " <> url, reason]
