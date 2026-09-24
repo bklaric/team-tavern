@@ -13,6 +13,7 @@ import Halogen.Aff as HA
 import Halogen.VDom.Driver (runUI)
 import Partial.Unsafe (unsafePartial)
 import TeamTavern.Client.Router (Query(..), router)
+import TeamTavern.Client.Script.Invalid (describeInvalid)
 import TeamTavern.Client.Script.Navigate (navigated)
 import TeamTavern.Client.Script.Scroll (scrollRestorationManual)
 import Web.DOM.NonElementParentNode (getElementById)
@@ -43,6 +44,7 @@ main = HA.runHalogenAff do
     path <- window >>= Window.location >>= Location.pathname # liftEffect
     { query } <- runUI (hoist (asyncToAff absurd) (router state path)) unit spa
     liftEffect scrollRestorationManual
+    liftEffect describeInvalid
     let navigationListener popped = createListener \_ -> do
             state' <- window >>= Window.history >>= History.state
             path' <- window >>= Window.location >>= Location.pathname

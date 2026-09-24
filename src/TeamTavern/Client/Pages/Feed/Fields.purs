@@ -234,7 +234,8 @@ editor id field description onChange =
             setRange range' = onChange description { ranges = Object.insert field.key range' description.ranges }
         in
         [ optionRange field.options
-            { from: fromMaybe "" range.from
+            { name: field.label
+            , from: fromMaybe "" range.from
             , to: fromMaybe "" range.to
             , onFrom: \value -> setRange range { from = blank value }
             , onTo: \value -> setRange range { to = blank value }
@@ -271,7 +272,8 @@ editor id field description onChange =
         ]
     Ages ->
         [ ageRange
-            { from: maybe "" show description.ageFrom
+            { name: field.label
+            , from: maybe "" show description.ageFrom
             , to: maybe "" show description.ageTo
             , onFrom: \value -> onChange description { ageFrom = Int.fromString value }
             , onTo: \value -> onChange description { ageTo = Int.fromString value }
@@ -283,7 +285,8 @@ editor id field description onChange =
             setOnline online' = onChange description { online = Just online', timezone = Nothing }
         in
         [ hoursRange
-            { from: fromMaybe "" online.from
+            { name: field.label
+            , from: fromMaybe "" online.from
             , to: fromMaybe "" online.to
             , onFrom: \value -> setOnline online { from = blank value }
             , onTo: \value -> setOnline online { to = blank value }

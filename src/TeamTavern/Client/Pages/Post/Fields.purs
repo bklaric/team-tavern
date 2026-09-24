@@ -199,7 +199,8 @@ gameFields context@{ type_, draft } =
             in
             field (shell context key (gameField.label <> " range") Group Nothing)
             [ optionRange (optionsOf gameField)
-                { from: fromMaybe "" range.from
+                { name: gameField.label <> " range"
+                , from: fromMaybe "" range.from
                 , to: fromMaybe "" range.to
                 , onFrom: \value -> setRange _ { from = blank value }
                 , onTo: \value -> setRange _ { to = blank value }
@@ -284,7 +285,8 @@ agesField :: ∀ m slots. MonadEffect m => Context m -> Html m slots
 agesField context =
     field (shell context "ages" "Ages" Group Nothing)
     [ ageRange
-        { from: maybe "" show context.draft.ageFrom
+        { name: "Ages"
+        , from: maybe "" show context.draft.ageFrom
         , to: maybe "" show context.draft.ageTo
         , onFrom: \value -> context.onChange "ages" _ { ageFrom = Int.fromString value }
         , onTo: \value -> context.onChange "ages" _ { ageTo = Int.fromString value }
@@ -295,7 +297,8 @@ timeFields :: ∀ m slots. MonadEffect m => Context m -> Array (Html m slots)
 timeFields context@{ draft } =
     [ field (shell context "hours" "Usually online" Group (Just hoursHint))
         [ hoursRange
-            { from: fromMaybe "" draft.online.from
+            { name: "Usually online"
+            , from: fromMaybe "" draft.online.from
             , to: fromMaybe "" draft.online.to
             , onFrom: \value -> context.onChange "hours" _ { online { from = blank value } }
             , onTo: \value -> context.onChange "hours" _ { online { to = blank value } }

@@ -2,7 +2,7 @@ module TeamTavern.Client.Pages.Feed.Bar (bar, sheet, summaryButton) where
 
 import Prelude
 
-import Data.Array (any, filter, mapMaybe, null)
+import Data.Array (any, filter, mapMaybe, mapWithIndex, null)
 import Data.Maybe (Maybe(..), fromMaybe, isJust, maybe)
 import Data.String (joinWith)
 import Halogen as H
@@ -13,7 +13,7 @@ import Halogen.HTML.Properties.ARIA as HPA
 import TeamTavern.Client.Components.Button (Size(..), Weight(..), button)
 import TeamTavern.Client.Components.Card (typeIcon)
 import TeamTavern.Client.Components.Check (choices)
-import TeamTavern.Client.Components.Overlay (Presentation(..), overlay)
+import TeamTavern.Client.Components.Overlay (Presentation(..), overlay, overlayId)
 import TeamTavern.Client.Icons as Icons
 import TeamTavern.Client.Pages.Feed.Description (isEmpty)
 import TeamTavern.Client.Pages.Feed.Fields (BarField, clear, editor, isToggle, summary, toggle)
@@ -69,7 +69,9 @@ bar { ref, fields, description, openField, showMore, onType, onChange, onOpen, o
         ]
     , typeChoice "bar-type" description.type onType
     , HH.div [ HS.class_ "field-chips" ] $
-        (primary <> shownMore <#> chip)
+        (primary <#> chip [])
+        <> mapWithIndex (\index -> chip if index == 0 then [ HP.attr (HH.AttrName "data-first-more") "" ] else [])
+            shownMore
         <> (if null more || not (null shownMore) then []
             else [ HH.button [ HS.class_ "field-chip", HP.type_ HP.ButtonButton, HE.onClick $ const onMore ]
                 [ HH.text "More", Icons.chevronDown ] ])
@@ -81,16 +83,19 @@ bar { ref, fields, description, openField, showMore, onType, onChange, onOpen, o
     more = filter _.more fields
     -- A field under More that holds something stays in view.
     shownMore = if showMore || any (\field -> isJust $ summary field description) more then more else []
-    chip field
+    -- The first chip More shows is marked, so the focus can go to it.
+    chip marks field
         | isToggle field =
             let on = isJust $ summary field description in
             HH.div [ HS.class_ "field-chip-wrap" ]
             [ HH.button
-                [ HS.class_ $ "field-chip" <> if on then " field-chip-filled" else ""
-                , HP.type_ HP.ButtonButton
-                , HPA.pressed $ show on
-                , HE.onClick $ const $ onChange $ toggleOf field
-                ]
+                ( [ HS.class_ $ "field-chip" <> if on then " field-chip-filled" else ""
+                  , HP.type_ HP.ButtonButton
+                  , HPA.pressed $ show on
+                  , HE.onClick $ const $ onChange $ toggleOf field
+                  ]
+                  <> marks
+                )
                 [ HH.text field.label ]
             ]
         | otherwise =
@@ -99,14 +104,17 @@ bar { ref, fields, description, openField, showMore, onType, onChange, onOpen, o
             in
             HH.div [ HS.class_ "field-chip-wrap" ]
             [ HH.button
-                [ HS.class_ $ "field-chip" <> if isJust text then " field-chip-filled" else ""
-                , HP.type_ HP.ButtonButton
-                , HPA.expanded $ show open
-                , HPA.hasPopup "dialog"
-                -- A filled chip reads what it holds, so it names its field too.
-                , HPA.label $ maybe field.label (\text' -> field.label <> ": " <> text') text
-                , HE.onClick $ const $ onOpen if open then Nothing else Just field.key
-                ]
+                ( [ HS.class_ $ "field-chip" <> if isJust text then " field-chip-filled" else ""
+                  , HP.type_ HP.ButtonButton
+                  , HPA.expanded $ show open
+                  , HPA.controls $ overlayId ref
+                  , HPA.hasPopup "dialog"
+                  -- A filled chip reads what it holds, so it names its field too.
+                  , HPA.label $ maybe field.label (\text' -> field.label <> ": " <> text') text
+                  , HE.onClick $ const $ onOpen if open then Nothing else Just field.key
+                  ]
+                  <> marks
+                )
                 [ HH.text $ fromMaybe field.label text, Icons.chevronDown ]
             , if open
                 then overlay
@@ -130,7 +138,8 @@ bar { ref, fields, description, openField, showMore, onType, onChange, onOpen, o
 -- | The description on a phone: a summary that opens the full-screen sheet.
 summaryButton :: ∀ w i. { fields :: Array BarField, description :: Description, onOpen :: i } -> HH.HTML w i
 summaryButton { fields, description, onOpen } =
-    HH.button [ HS.class_ "description-summary", HP.type_ HP.ButtonButton, HE.onClick $ const onOpen ]
+    HH.button
+    [ HS.class_ "description-summary", HP.type_ HP.ButtonButton, HPA.hasPopup "dialog", HE.onClick $ const onOpen ]
     [ typeIcon description.type
     , HH.span_ [ HH.text text ]
     , Icons.pencil

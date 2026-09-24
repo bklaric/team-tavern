@@ -3,6 +3,7 @@ module TeamTavern.Client.Components.Overlay
     , Presentation(..)
     , UseOverlay
     , overlay
+    , overlayId
     , panelHeader
     , sidePanel
     , useOverlay
@@ -57,7 +58,7 @@ overlay { ref, presentation, title, onClose } body footer =
     case presentation of
     Dropdown { className, role } ->
         HH.div [ HP.ref ref, HS.class_ "overlay-layer" ]
-        [ HH.div [ HS.class_ className, HPA.role role, HPA.label title ] body ]
+        [ HH.div [ HP.id $ overlayId ref, HS.class_ className, HPA.role role, HPA.label title ] body ]
     _ ->
         dialog ref presentation onClose
         [ HH.div [ HS.class_ "overlay-header" ]
@@ -92,6 +93,10 @@ panelHeader { ref, title, subtitle, tools, onClose } =
     , HH.div [ HS.class_ "panel-tools" ] $ tools <> [ iconButton "Close" onClose Icons.x ]
     ]
 
+-- | The overlay's id, for the aria-controls of the button that opens it.
+overlayId :: H.RefLabel -> String
+overlayId = unwrap
+
 titleId :: H.RefLabel -> String
 titleId ref = unwrap ref <> "-title"
 
@@ -101,7 +106,8 @@ dialog ref presentation onClose header body footer =
     HH.div [ HP.ref ref, HS.class_ "overlay-layer" ] $
     backdrop <>
     [ HH.div
-        [ HS.class_ $ "overlay" <> presentationClass
+        [ HP.id $ overlayId ref
+        , HS.class_ $ "overlay" <> presentationClass
         , HPA.role "dialog"
         , HPA.modal "true"
         , HPA.labelledBy $ titleId ref

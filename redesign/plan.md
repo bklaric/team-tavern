@@ -37,7 +37,7 @@ brief marks Proposed, the brief's status is updated in the same commit.
 - [x] 15. Account page
 - [x] 16. Crawlers, sitemap and old paths
 - [x] 17. Ads
-- [ ] 18. Phone and accessibility pass
+- [x] 18. Phone and accessibility pass
 - [ ] 19. Relaunch
 - [ ] 20. Cleanup and docs
 
@@ -1187,6 +1187,49 @@ card's expansion, contrast of every token on every surface it is used on. A
     and the bar's dropdowns at 640 and 800 px.
   - The prototype's preview above the fields (`preview-top`) was a switch on its
     bar; the preview on demand, which the site builds, is the design.
+  - axe (`@axe-core/playwright`, WCAG 2.1 A and AA) over every page kind and
+    overlay, signed out and in, at 1280 and 375 px, found two things: links in
+    running text told apart by color alone, now underlined, and a conversation's
+    closed contacts fold that stayed `aria-busy` until opened.
+  - Menus are disclosures, not ARIA menus: the account menu, ☰ and ⋯ are groups
+    of links and buttons named for their button, which carries `aria-expanded`
+    and `aria-controls`. Every overlay has its ref as its id (`overlayId`).
+  - `Overlay.js` takes the control last pressed as the opener where the focus
+    isn't on one, as in Safari, which doesn't focus a button it presses; this
+    wasn't run in Safari. A dropdown closes when the focus leaves it and its
+    button. Tab stops only at the checked radio of a group, and at anything
+    with a `tabindex`. The focus goes to `[data-autofocus]`, else the first
+    thing in the overlay's body, and an overlay whose content is still coming,
+    as the notifications are, takes the focus once it comes unless the player
+    has moved it. On a touch screen an overlay that would open on a text field
+    opens on its heading, so the keyboard doesn't rise over it. The Preview
+    sheet opens on its lead line, not the preview card's buttons.
+  - The toasts are `data-overlay-live`: a modal leaves them live and Tab
+    reaches them. A toast waits while the pointer or the focus is on it, and
+    its action hands the focus to `main`.
+  - The router wraps the page in `main#content`, focused without scrolling on
+    every link to another page but not on Back, Forward or the first page; the
+    header's first stop is Skip to content. The components page's own `main` is
+    a `div`.
+  - Page confirmations are `pageConfirm`, which Escape cancels, and deleting a
+    post moves the focus into the confirmation and back as deleting the account
+    does. More and Clear all hand the focus to the chips; the stepper at its
+    end, Send and the phone's Publish are `aria-disabled` instead of disabled.
+    The account pages' submit buttons stay disabled while they send, since the
+    focus then goes to an error or the next page.
+  - A field's error has an id, and `Script/Invalid.js`, started in `Main.purs`,
+    makes it describe the field's control and marks the control invalid while
+    it shows: the control is the caller's, so the field can't set them itself.
+    A range is a group named for its field.
+  - Contrast (brief 14.1, now Decided): the radio cards, the Showing segments,
+    the type cards and the description button take input-border edges, a
+    pressed segment a text-muted inner edge, a focused text field the focus
+    ring beside its ember edge, and a button waiting on something fades.
+  - `accessibility.spec.ts` checks with the keyboard what axe can't: the skip
+    link and a link's focus on `main`, Tab going round the contact panel with
+    the header inert, the report toast live under the panel, a dropdown closing
+    on Tab, the bell's list taking the focus, Escape on each confirmation, the
+    stepper keeping the focus, and the phone's sheet opening on its type.
 
 ### 19. Relaunch
 

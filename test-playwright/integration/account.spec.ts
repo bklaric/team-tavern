@@ -137,7 +137,7 @@ test.describe("the account page", () => {
         await card(page, owner).locator(".card-contact").click();
         const panel = page.getByRole("dialog", { name: owner });
         await panel.getByRole("button", { name: "More" }).click();
-        await panel.getByRole("menuitem", { name: `Block ${owner}` }).click();
+        await panel.getByRole("group", { name: "More" }).getByRole("button", { name: `Block ${owner}` }).click();
         await panel.getByRole("button", { name: `Block ${owner}` }).click();
         await expect(card(page, owner)).toHaveCount(0);
 

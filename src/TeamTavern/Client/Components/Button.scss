@@ -31,6 +31,15 @@
     text-decoration: none;
 }
 
+/* A button waiting on what it started, such as Publish while the post goes,
+   fades and stops answering the pointer. */
+.button:disabled,
+.button[aria-disabled="true"] {
+    opacity: 0.6;
+    cursor: default;
+    pointer-events: none;
+}
+
 .button-small {
     min-height: 32px;
     padding: var(--space-1) var(--space-3);

@@ -37,6 +37,7 @@ import TeamTavern.Client.Pages.Renew (renew)
 import TeamTavern.Client.Pages.ResetPassword (resetPassword)
 import TeamTavern.Client.Pages.SignIn (signIn)
 import TeamTavern.Client.Pages.SignUp (signUp)
+import TeamTavern.Client.Script.Focus (focusStill)
 import TeamTavern.Client.Script.Meta (setMeta, setMetaRobots)
 import TeamTavern.Client.Script.Previous (previousOf, stampPrevious)
 import TeamTavern.Client.Script.RenderReady (appendRenderReadyNotFound)
@@ -180,10 +181,14 @@ type Visit =
 
 -- The path marks the page drawn for it, in the same render as the page, so a
 -- test can tell when the location's page has arrived and not only the location.
+-- The page is the document's main content, which the header's skip link and a
+-- link to another page focus.
 render :: ∀ action left. Visit -> H.ComponentHTML action ChildSlots (Async left)
 render visit =
     HH.div [ HP.attr (HH.AttrName "data-path") visit.path ]
-    [ header { path: visit.path, visit: visit.visit }, renderPage visit ]
+    [ header { path: visit.path, visit: visit.visit }
+    , HH.main [ HP.id "content", HP.tabIndex (-1) ] [ renderPage visit ]
+    ]
 
 router :: ∀ input output left. Foreign -> String -> H.Component Query input output (Async left)
 router initialState initialPath = Hooks.component \{ queryToken } _ -> Hooks.do
@@ -231,6 +236,10 @@ router initialState initialPath = Hooks.component \{ queryToken } _ -> Hooks.do
             -- back to starts at the top unless it puts its own back.
             when (popped && isNothing restore) $ liftEffect $ window >>= scroll 0 0
             Hooks.modify_ visitId \{ visit: count } -> { page, path, visit: count + 1, restore, cache, previous }
+            -- A screen reader goes on reading the page a link left unless the
+            -- focus moves to the new one. Back and Forward, and the first page,
+            -- leave the focus to the browser.
+            unless (popped || left.path == "") $ liftEffect $ focusStill "#content"
 
     Hooks.useLifecycleEffect do
         changeRoute initialState initialPath false

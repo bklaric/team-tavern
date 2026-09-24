@@ -262,7 +262,7 @@ const scenes = [
             const panel = await openPanel(page, "dota-2", "Dota2Tester");
             await panel.getByRole("button", { name: "More" }).click();
             await shot("menu");
-            await panel.getByRole("menuitem", { name: "Block Dota2Tester" }).click();
+            await panel.getByRole("group", { name: "More" }).getByRole("button", { name: "Block Dota2Tester" }).click();
             await shot("confirm");
             await panel.getByRole("button", { name: "Block Dota2Tester" }).click();
             await page.locator(".toast").waitFor();
@@ -274,7 +274,7 @@ const scenes = [
         name: "report", signUp: "R", run: async (page, shot) => {
             const panel = await openPanel(page, "dota-2", "Dota2Tester");
             await panel.getByRole("button", { name: "More" }).click();
-            await panel.getByRole("menuitem", { name: "Report this post" }).click();
+            await panel.getByRole("group", { name: "More" }).getByRole("button", { name: "Report this post" }).click();
             await shot();
         },
     },

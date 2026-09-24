@@ -61,10 +61,24 @@ a:hover {
     text-decoration: underline;
 }
 
+/* A link in running text is told from the text around it by more than its
+   color, which beside muted text is too close to go by. */
+:where(p, li, dd) a:not([class]) {
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
 :focus-visible {
     outline: 2px solid var(--ember);
     outline-offset: 2px;
     border-radius: 2px;
+}
+
+/* The page's content takes the focus from the skip link and from a link to
+   another page, so that a screen reader reads on from there. It is where the
+   reader is, not something to press, so it draws no ring. */
+#content:focus {
+    outline: none;
 }
 
 button {

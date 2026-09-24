@@ -31,13 +31,13 @@ export async function signIn(page: Page, emailOrNickname: string) {
 // header names them.
 export async function expectSignedInAs(page: Page, nickname: string) {
     await page.getByRole("button", { name: "Account menu" }).click();
-    await expect(page.getByRole("menu", { name: nickname })).toBeVisible();
+    await expect(page.getByRole("group", { name: nickname })).toBeVisible();
     await page.keyboard.press("Escape");
 }
 
 export async function signOut(page: Page) {
     await page.getByRole("button", { name: "Account menu" }).click();
-    await page.getByRole("menuitem", { name: "Sign out" }).click();
+    await page.getByRole("button", { name: "Sign out" }).click();
     await expectPage(page, "/");
     await expect(page.getByRole("link", { name: "Sign in" })).toBeVisible();
 }

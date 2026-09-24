@@ -158,12 +158,12 @@ test.describe("on a phone", () => {
 
         await panel.getByRole("button", { name: "More" }).click();
         await expectFits(reader);
-        await panel.getByRole("menuitem", { name: `Block ${nickname}` }).click();
+        await panel.getByRole("group", { name: "More" }).getByRole("button", { name: `Block ${nickname}` }).click();
         await expect(panel.getByRole("alertdialog", { name: `Block ${nickname}?` })).toBeVisible();
         await expectFits(reader);
         await panel.getByRole("button", { name: "Cancel" }).click();
         await panel.getByRole("button", { name: "More" }).click();
-        await panel.getByRole("menuitem", { name: "Report this post" }).click();
+        await panel.getByRole("group", { name: "More" }).getByRole("button", { name: "Report this post" }).click();
         await expect(panel.getByRole("heading", { name: `Report ${nickname}` })).toBeVisible();
         await expectFits(reader);
         await reader.keyboard.press("Escape");
@@ -215,7 +215,7 @@ test.describe("on a phone", () => {
         await visit(reader, `/games/${handle}`);
         await card(reader, nickname).locator(".card-contact").click();
         await panel.getByRole("button", { name: "More" }).click();
-        await panel.getByRole("menuitem", { name: `Block ${nickname}` }).click();
+        await panel.getByRole("group", { name: "More" }).getByRole("button", { name: `Block ${nickname}` }).click();
         await panel.getByRole("button", { name: `Block ${nickname}` }).click();
         await expect(reader.locator(".toast-text")).toHaveText(`${nickname} is blocked.`);
         await expectFits(reader);

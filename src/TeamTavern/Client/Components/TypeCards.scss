@@ -12,14 +12,14 @@
     align-items: center;
     gap: var(--space-4);
     padding: var(--space-4) var(--space-5);
-    border: 1px solid var(--border);
+    border: 1px solid var(--input-border);
     border-radius: var(--radius-card);
     background: var(--table);
     color: var(--text);
 }
 
 .type-card:hover {
-    border-color: var(--input-border);
+    border-color: var(--text-muted);
     color: var(--text);
     text-decoration: none;
 }

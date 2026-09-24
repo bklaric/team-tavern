@@ -42,7 +42,8 @@ field_ id label =
 labelId :: String -> String
 labelId id = "l-" <> id
 
--- The label over the control, then the hint, a note and an error.
+-- The label over the control, then the hint, a note and an error, which the
+-- page ties to the control (`Script/Invalid.js`).
 field :: ∀ w i. Field -> Array (HH.HTML w i) -> HH.HTML w i
 field { id, label, labelling, required, hint, note, error } control =
     HH.div [ HS.class_ $ "field" <> if isJust error then " field-invalid" else "" ] $
@@ -52,7 +53,8 @@ field { id, label, labelling, required, hint, note, error } control =
         [ hint <#> \hint' -> HH.span [ HS.class_ "field-hint" ] [ HH.text hint' ]
         , note <#> \note' -> HH.span [ HS.class_ "field-note" ] [ Icons.info, HH.text note' ]
         , error <#> \error' ->
-            HH.span [ HS.class_ "field-error", HPA.role "alert" ] [ Icons.circleAlert, HH.text error' ]
+            HH.span [ HP.id $ id <> "-error", HS.class_ "field-error", HPA.role "alert" ]
+            [ Icons.circleAlert, HH.text error' ]
         ]
     where
     labelText = [ HH.text label ] <> if required then [ HH.span [ HS.class_ "field-tag" ] [ HH.text "Required" ] ] else []

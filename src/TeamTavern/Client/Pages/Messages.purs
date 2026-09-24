@@ -369,7 +369,8 @@ component = Hooks.component \_ { conversation: openId, visit } -> Hooks.do
                                         contactRows { post, revealed: revealed', copied, onCopy: copy }
                                     Just Unrevealed -> HH.p [ HS.class_ "muted" ]
                                         [ HH.text "The contacts couldn't be shown. Try again later." ]
-                                    _ -> HH.div [ HPA.busy "true" ] []
+                                    Just Revealing -> HH.div [ HPA.busy "true" ] []
+                                    Nothing -> HH.div_ []
                                 ]
                             ]
                         else []

@@ -33,7 +33,7 @@ import TeamTavern.Client.Components.InboxRow (inboxRow)
 import TeamTavern.Client.Components.Input (Option, input, select, textarea)
 import TeamTavern.Client.Components.Menu (menuDivider, menuItem, menuItemDestructive, menuLabel, sheetMenu)
 import TeamTavern.Client.Components.Notifications (notifications)
-import TeamTavern.Client.Components.Overlay (Presentation(..), overlay, sidePanel, useOverlay)
+import TeamTavern.Client.Components.Overlay (Presentation(..), overlay, overlayId, sidePanel, useOverlay)
 import TeamTavern.Client.Components.OwnPostStatus (ownPostStatus, renewDue)
 import TeamTavern.Client.Components.Pills (pills)
 import TeamTavern.Client.Components.Range (ageRange, hoursHint, hoursRange, optionRange)
@@ -226,7 +226,7 @@ component = Hooks.component \_ _ -> Hooks.do
         open which = set _ { overlay = Just which }
         close = set _ { overlay = Nothing }
         isOpen which = state.overlay == Just which
-        menuPresentation = Dropdown { className: "menu", role: "menu" }
+        menuPresentation = Dropdown { className: "menu", role: "group" }
         refs =
             { modal: H.RefLabel "design-modal"
             , side: H.RefLabel "design-side"
@@ -317,8 +317,8 @@ component = Hooks.component \_ _ -> Hooks.do
                     [ HH.button
                         [ HS.class_ "button button-outline"
                         , HP.type_ HP.ButtonButton
-                        , HPA.hasPopup "menu"
                         , HPA.expanded $ show $ isOpen DropdownOverlay
+                        , HPA.controls $ overlayId refs.dropdown
                         , HE.onClick $ const if isOpen DropdownOverlay then close else open DropdownOverlay
                         ]
                         [ HH.text "Dropdown ", Icons.chevronDown ]
@@ -411,7 +411,7 @@ component = Hooks.component \_ _ -> Hooks.do
         rankField =
             field ((field_ "design-rank" "Rank range") { labelling = Group })
             [ optionRange rankOptions
-                { from: state.rankFrom, to: state.rankTo
+                { name: "Rank range", from: state.rankFrom, to: state.rankTo
                 , onFrom: \value -> set _ { rankFrom = value }, onTo: \value -> set _ { rankTo = value }
                 }
             ]
@@ -419,7 +419,7 @@ component = Hooks.component \_ _ -> Hooks.do
         ageField =
             field ((field_ "design-age" "Ages") { labelling = Group })
             [ ageRange
-                { from: state.ageFrom, to: state.ageTo
+                { name: "Ages", from: state.ageFrom, to: state.ageTo
                 , onFrom: \value -> set _ { ageFrom = value }, onTo: \value -> set _ { ageTo = value }
                 }
             ]
@@ -427,7 +427,7 @@ component = Hooks.component \_ _ -> Hooks.do
         hoursField =
             field ((field_ "design-hours" "Online") { labelling = Group, hint = Just hoursHint })
             [ hoursRange
-                { from: state.hoursFrom, to: state.hoursTo
+                { name: "Online", from: state.hoursFrom, to: state.hoursTo
                 , onFrom: \value -> set _ { hoursFrom = value }, onTo: \value -> set _ { hoursTo = value }
                 }
             ]
@@ -848,7 +848,7 @@ component = Hooks.component \_ _ -> Hooks.do
 
     Hooks.pure $
         HH.div_ $
-        [ HH.main [ HS.class_ "sheet" ]
+        [ HH.div [ HS.class_ "sheet" ]
             [ HH.h1_ [ HH.text "TeamTavern design system" ]
             , HH.p [ HS.class_ "sheet-note sheet-lead" ] [ HH.text "Every component in every state. Brief section 14." ]
             , colors

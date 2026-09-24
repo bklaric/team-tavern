@@ -28,12 +28,12 @@
     cursor: pointer;
 }
 
-.stepper button:hover:not(:disabled) {
+.stepper button:hover:not([aria-disabled="true"]) {
     color: var(--text);
 }
 
-.stepper button:disabled {
-    color: var(--border);
+.stepper button[aria-disabled="true"] {
+    color: var(--input-border);
     cursor: default;
 }
 

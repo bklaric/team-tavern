@@ -18,13 +18,13 @@
     line-height: 1.3;
     gap: var(--space-2);
     padding: var(--space-2) var(--space-3);
-    border: 1px solid var(--border);
+    border: 1px solid var(--input-border);
     border-radius: var(--radius-control);
     cursor: pointer;
 }
 
 .choice:hover {
-    border-color: var(--input-border);
+    border-color: var(--text-muted);
 }
 
 .choice:has(input:checked) {

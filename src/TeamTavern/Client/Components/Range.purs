@@ -17,23 +17,27 @@ import TeamTavern.Client.Components.Input (Option, input, select)
 import TeamTavern.Client.Script.Clock (clock)
 import TeamTavern.Client.Snippets.Class as HS
 
-type Range i = { from :: String, to :: String, onFrom :: String -> i, onTo :: String -> i }
+-- `name` is the field's, such as "Rank range", which names the two ends
+-- together, so that "Lowest" is read as the lowest rank.
+type Range i = { name :: String, from :: String, to :: String, onFrom :: String -> i, onTo :: String -> i }
 
 -- Two ends with "to" between them. Either end may be left empty.
-range' :: ∀ w i. HH.HTML w i -> HH.HTML w i -> HH.HTML w i
-range' from to = HH.div [ HS.class_ "range" ] [ from, HH.span [ HS.class_ "muted" ] [ HH.text "to" ], to ]
+range' :: ∀ w i. String -> HH.HTML w i -> HH.HTML w i -> HH.HTML w i
+range' name from to =
+    HH.div [ HS.class_ "range", HPA.role "group", HPA.label name ]
+    [ from, HH.span [ HS.class_ "muted" ] [ HH.text "to" ], to ]
 
 -- A range over a field's ordered options, such as ranks, lowest first.
 optionRange :: ∀ w i. Array Option -> Range i -> HH.HTML w i
-optionRange options { from, to, onFrom, onTo } =
-    range'
+optionRange options { name, from, to, onFrom, onTo } =
+    range' name
     (select [ HPA.label "Lowest" ] { options, value: from, placeholder: Just "Lowest", onChange: onFrom })
     (select [ HPA.label "Highest" ] { options, value: to, placeholder: Just "Highest", onChange: onTo })
 
 -- Ages a player may be, in years.
 ageRange :: ∀ w i. Range i -> HH.HTML w i
-ageRange { from, to, onFrom, onTo } =
-    range' (age "From" from onFrom) (age "To" to onTo)
+ageRange { name, from, to, onFrom, onTo } =
+    range' name (age "From" from onFrom) (age "To" to onTo)
     where
     age label value onInput =
         input
@@ -57,7 +61,7 @@ hoursHint = "In your own time. A range can cross midnight."
 -- When a player is online, from one hour to another; to can come before from,
 -- since the range can cross midnight.
 hoursRange :: ∀ w i. Range i -> HH.HTML w i
-hoursRange { from, to, onFrom, onTo } =
-    range'
+hoursRange { name, from, to, onFrom, onTo } =
+    range' name
     (select [ HPA.label "From" ] { options: hourOptions, value: from, placeholder: Just "From", onChange: onFrom })
     (select [ HPA.label "To" ] { options: hourOptions, value: to, placeholder: Just "To", onChange: onTo })

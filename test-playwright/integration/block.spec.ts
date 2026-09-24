@@ -1,4 +1,4 @@
-import { expect, Page, test } from "@playwright/test";
+import { expect, Locator, Page, test } from "@playwright/test";
 import { signIn, signUp } from "../accounts";
 import { expectPage } from "../pages";
 
@@ -11,6 +11,9 @@ const owner = "Dota2Tester";
 
 const card = (page: Page, name: string) =>
     page.locator(".card").filter({ has: page.getByRole("link", { name, exact: true }) });
+
+// The rows the ⋯ button opens, named for it.
+const more = (scope: Locator) => scope.getByRole("group", { name: "More" });
 
 async function openFeed(page: Page) {
     await page.goto(`/games/${handle}`);
@@ -45,8 +48,8 @@ test.describe("blocking and reporting", () => {
         const postPath = await card(writer, owner).getByRole("link", { name: owner, exact: true }).getAttribute("href");
 
         await panel.getByRole("button", { name: "More" }).click();
-        await expect(panel.getByRole("menuitem")).toHaveText(["Report this post", `Block ${owner}`]);
-        await panel.getByRole("menuitem", { name: `Block ${owner}` }).click();
+        await expect(more(panel).getByRole("button")).toHaveText(["Report this post", `Block ${owner}`]);
+        await more(panel).getByRole("button", { name: `Block ${owner}` }).click();
         const confirm = panel.getByRole("alertdialog", { name: `Block ${owner}?` });
         await expect(confirm).toHaveAccessibleDescription(
             "You won't see each other's posts, your conversations leave both inboxes, and neither of you hears about the other's new posts. Nothing is deleted: unblocking brings it all back.");
@@ -63,7 +66,7 @@ test.describe("blocking and reporting", () => {
 
         await card(writer, owner).locator(".card-contact").click();
         await panel.getByRole("button", { name: "More" }).click();
-        await panel.getByRole("menuitem", { name: `Block ${owner}` }).click();
+        await more(panel).getByRole("button", { name: `Block ${owner}` }).click();
         await panel.getByRole("button", { name: `Block ${owner}` }).click();
         await expect(card(writer, owner)).toHaveCount(0);
 
@@ -86,7 +89,7 @@ test.describe("blocking and reporting", () => {
         const panel = page.getByRole("dialog", { name: owner });
 
         await panel.getByRole("button", { name: "More" }).click();
-        await panel.getByRole("menuitem", { name: "Report this post" }).click();
+        await more(panel).getByRole("button", { name: "Report this post" }).click();
         await expect(panel.getByRole("heading", { name: `Report ${owner}` })).toBeVisible();
         await expect(panel.getByRole("radio", { name: "Spam or advertising" })).toBeFocused();
         await panel.getByRole("button", { name: "Send report" }).click();
@@ -118,14 +121,14 @@ test.describe("blocking and reporting", () => {
         const conversation = ownerPage.getByRole("region", { name: nickname });
 
         await conversation.getByRole("button", { name: "More" }).click();
-        await conversation.getByRole("menuitem", { name: `Report ${nickname}` }).click();
+        await more(conversation).getByRole("button", { name: `Report ${nickname}` }).click();
         await expect(conversation.getByRole("textbox", { name: "Message" })).toHaveCount(0);
         // Escape leaves the report for the conversation.
         await ownerPage.keyboard.press("Escape");
         await expect(conversation.getByRole("textbox", { name: "Message" })).toBeVisible();
 
         await conversation.getByRole("button", { name: "More" }).click();
-        await conversation.getByRole("menuitem", { name: `Report ${nickname}` }).click();
+        await more(conversation).getByRole("button", { name: `Report ${nickname}` }).click();
         await conversation.getByRole("radio", { name: "Harassment, hate or threats" }).check();
         await conversation.getByLabel(`Also block ${nickname}`).check();
         await conversation.getByRole("button", { name: "Send report" }).click();

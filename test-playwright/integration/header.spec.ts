@@ -62,7 +62,7 @@ test.describe("the header's menus", () => {
         await signIn(page, "NewTester");
         const games = page.getByRole("dialog", { name: "Games" });
         const accountButton = page.getByRole("button", { name: "Account menu" });
-        const account = page.getByRole("menu", { name: "NewTester" });
+        const account = page.getByRole("group", { name: "NewTester" });
 
         await page.getByRole("button", { name: "Games" }).click();
         await expect(games).toBeVisible();
@@ -71,7 +71,7 @@ test.describe("the header's menus", () => {
         await expect(games).toHaveCount(0);
 
         // Opening a menu puts the focus in it, and Escape gives it back to the button.
-        await expect(account.getByRole("menuitem", { name: "Your posts" })).toBeFocused();
+        await expect(account.getByRole("link", { name: "Your posts" })).toBeFocused();
         await page.keyboard.press("Escape");
         await expect(account).toHaveCount(0);
         await expect(accountButton).toBeFocused();
@@ -96,9 +96,9 @@ test.describe("the header's menus", () => {
         await expect(page.getByRole("link", { name: "Messages" })).toHaveAttribute("aria-current", "page");
 
         await page.getByRole("button", { name: "Account menu" }).click();
-        await page.getByRole("menuitem", { name: "Account" }).click();
+        await page.getByRole("group", { name: "NewTester" }).getByRole("link", { name: "Account" }).click();
         await expectPage(page, "/account");
-        await expect(page.getByRole("menu", { name: "NewTester" })).toHaveCount(0);
+        await expect(page.getByRole("group", { name: "NewTester" })).toHaveCount(0);
     });
 });
 
@@ -112,8 +112,8 @@ test.describe("on a phone, the header", () => {
         await page.getByRole("button", { name: "Menu" }).click();
 
         const menu = page.getByRole("dialog", { name: "Menu" });
-        await expect(menu.getByRole("menuitem", { name: "Sign in" })).toBeVisible();
-        await menu.getByRole("menuitem", { name: "Sign up" }).click();
+        await expect(menu.getByRole("link", { name: "Sign in" })).toBeVisible();
+        await menu.getByRole("link", { name: "Sign up" }).click();
         await expectPage(page, "/signup");
         await expect(menu).toHaveCount(0);
     });
@@ -125,7 +125,7 @@ test.describe("on a phone, the header", () => {
 
         const sheet = page.getByRole("dialog", { name: "NewTester" });
         await expect(sheet).toHaveClass(/overlay-bottom/);
-        await expect(sheet.getByRole("menuitem", { name: "Sign out" })).toBeVisible();
+        await expect(sheet.getByRole("button", { name: "Sign out" })).toBeVisible();
         await sheet.getByRole("button", { name: "Close" }).click();
         await expect(sheet).toHaveCount(0);
     });

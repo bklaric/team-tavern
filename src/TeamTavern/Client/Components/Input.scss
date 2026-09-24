@@ -11,10 +11,11 @@
     font: inherit;
 }
 
+/* The ember edge says where typing goes, and the site's focus ring outside it
+   says so plainly: the edge alone is too close to the edge at rest. */
 .input:focus,
 .select:focus {
     border-color: var(--ember);
-    outline: none;
 }
 
 .textarea {
@@ -31,7 +32,6 @@
 
 .textarea:focus {
     border-color: var(--ember);
-    outline: none;
 }
 
 .input::placeholder,

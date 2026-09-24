@@ -28,7 +28,7 @@ import Halogen.HTML.Properties.ARIA as HPA
 import Halogen.Hooks as Hooks
 import TeamTavern.Client.Components.Button (Size(..), Weight(..), button, buttonLink)
 import TeamTavern.Client.Components.Card (Place(..), card)
-import TeamTavern.Client.Components.Confirm (confirm)
+import TeamTavern.Client.Components.Confirm (pageConfirm)
 import TeamTavern.Client.Components.Field (formSection)
 import TeamTavern.Client.Components.Flow (flowError, flowLead, submitButton)
 import TeamTavern.Client.Components.Overlay (Presentation(..), overlay, useOverlay)
@@ -41,6 +41,7 @@ import TeamTavern.Client.Pages.Post.Register (registerBack)
 import TeamTavern.Client.Script.Back (authPath)
 import TeamTavern.Client.Script.Discord (authorizeWithDiscord)
 import TeamTavern.Client.Script.Expand (toggleCard)
+import TeamTavern.Client.Script.Focus (focusSoon)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigate_, replaceState)
 import TeamTavern.Client.Script.QueryParams (getQueryParam)
@@ -227,9 +228,11 @@ component = Hooks.component \_ { handle, type_ } -> Hooks.do
                     (const $ set _ { sending = false, formError = Just somethingWrong })
                 Left _ -> set _ { sending = false, formError = Just somethingWrong }
 
+        -- Publish stays focusable while the post goes, so a second press is
+        -- turned away here.
         publish = do
             state' <- Hooks.get stateId
-            for_ state'.game \game -> do
+            unless state'.sending $ for_ state'.game \game -> do
                 let errors = validate game type_ state'.draft
                 if not Object.isEmpty errors
                 then do
@@ -441,7 +444,7 @@ component = Hooks.component \_ { handle, type_ } -> Hooks.do
             <> maybe [] (pure <<< flowError) state.formError
             <> if state.confirmingDelete
                 then
-                [ confirm
+                [ pageConfirm
                     { id: "delete-post"
                     , title: "Delete " <> name <> "?"
                     , text:
@@ -452,16 +455,24 @@ component = Hooks.component \_ { handle, type_ } -> Hooks.do
                     , action: [ Icons.trash2, HH.text "Delete post" ]
                     , onConfirm: deletePost
                     , cancel: "Keep it"
-                    , onCancel: set _ { confirmingDelete = false }
+                    , onCancel: keepPost
                     }
                 ]
                 else
                 [ HH.div [ HS.class_ "flow-actions" ]
                     [ button Primary Regular startEditing [ Icons.pencil, HH.text "Edit it" ]
-                    , button Destructive Regular (set _ { confirmingDelete = true, formError = Nothing })
-                        [ Icons.trash2, HH.text "Delete it" ]
+                    , button Destructive Regular askDelete [ Icons.trash2, HH.text "Delete it" ]
                     ]
                 ]
+
+        -- The confirmation stands in place of Delete it, so the focus goes
+        -- into it and back.
+        askDelete = do
+            set _ { confirmingDelete = true, formError = Nothing }
+            liftEffect $ focusSoon ".confirm .button-text"
+        keepPost = do
+            set _ { confirmingDelete = false }
+            liftEffect $ focusSoon ".flow-actions .button-destructive"
 
         -- A draft that meets the player's post, once they have signed in or
         -- published from another tab: update the post with it, or keep the
@@ -535,7 +546,7 @@ component = Hooks.component \_ { handle, type_ } -> Hooks.do
                 , HH.button
                     [ HS.class_ "button button-primary"
                     , HP.type_ HP.ButtonButton
-                    , HP.disabled state.sending
+                    , HPA.disabled $ show state.sending
                     , HE.onClick $ const publish
                     ]
                     [ HH.text publishLabel ]
@@ -543,7 +554,14 @@ component = Hooks.component \_ { handle, type_ } -> Hooks.do
             , if state.previewOpen
                 then overlay
                     { ref: previewRef, presentation: Modal, title: "Preview", onClose: set _ { previewOpen = false } }
-                    [ HH.p [ HS.class_ "field-hint" ] [ HH.text $ "As it shows in the " <> game.title <> " feed" ]
+                    -- The card's buttons do nothing here, so the sheet opens on
+                    -- what it shows rather than on them.
+                    [ HH.p
+                        [ HS.class_ "field-hint"
+                        , HP.tabIndex (-1)
+                        , HP.attr (HH.AttrName "data-autofocus") ""
+                        ]
+                        [ HH.text $ "As it shows in the " <> game.title <> " feed" ]
                     , previewCard game now' state.draft now'.iso state.previewExpanded togglePreview
                     ]
                     [ button Primary Regular publish [ HH.text publishLabel ] ]

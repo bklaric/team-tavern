@@ -31,7 +31,7 @@ import TeamTavern.Client.Components.Field (Labelling(..), field, field_)
 import TeamTavern.Client.Components.Flow (flowError, submitButton)
 import TeamTavern.Client.Components.Input (textarea)
 import TeamTavern.Client.Components.Menu (menuItem, menuItemDestructive)
-import TeamTavern.Client.Components.Overlay (Presentation(..), UseOverlay, overlay, useOverlay)
+import TeamTavern.Client.Components.Overlay (Presentation(..), UseOverlay, overlay, overlayId, useOverlay)
 import TeamTavern.Client.Components.Toast (Toast)
 import TeamTavern.Client.Icons as Icons
 import TeamTavern.Client.Script.Focus (focusSoon)
@@ -87,7 +87,7 @@ newForm :: ReportForm
 newForm = { reason: "", detail: "", alsoBlock: false, missing: false, sending: false, failed: false }
 
 menuPresentation :: Presentation
-menuPresentation = Dropdown { className: "menu", role: "menu" }
+menuPresentation = Dropdown { className: "menu", role: "group" }
 
 blockText :: String
 blockText = "You won't see each other's posts, your conversations leave both inboxes, and neither of you hears about the other's new posts. Nothing is deleted: unblocking brings it all back."
@@ -100,8 +100,8 @@ moreMenu ref { who, reportLabel } { menuOpen, actions } =
         [ HS.class_ "icon-button"
         , HP.type_ HP.ButtonButton
         , HPA.label "More"
-        , HPA.hasPopup "menu"
         , HPA.expanded $ show menuOpen
+        , HPA.controls $ overlayId ref
         , HE.onClick $ const actions.onMenu
         ]
         [ Icons.ellipsis ]

@@ -25,7 +25,7 @@ import Halogen.Subscription as Subscription
 import TeamTavern.Client.Components.CoverGrid (coverGrid, feedPath)
 import TeamTavern.Client.Components.Menu (menuDivider, menuItem, menuLabel, menuLink, sheetMenu)
 import TeamTavern.Client.Components.Notifications (notificationPath, notifications)
-import TeamTavern.Client.Components.Overlay (Presentation(..), overlay, useOverlay)
+import TeamTavern.Client.Components.Overlay (Presentation(..), overlay, overlayId, useOverlay)
 import TeamTavern.Client.Components.Unread (badge)
 import TeamTavern.Client.Components.UsePhone (usePhone)
 import TeamTavern.Client.Icons as Icons
@@ -47,6 +47,8 @@ import TeamTavern.Routes.Player.ViewMe (ViewMe)
 import TeamTavern.Routes.Player.ViewMe as ViewMe
 import TeamTavern.Routes.Session.EndSession (EndSession)
 import Type.Proxy (Proxy(..))
+import Web.Event.Event (preventDefault)
+import Web.UIEvent.MouseEvent as MouseEvent
 
 -- One menu is open at a time: Games, notifications, the account menu, or, on
 -- a phone signed out, the menu holding Sign in and Sign up.
@@ -79,7 +81,9 @@ ref SignedOutMenu = H.RefLabel "header-menu"
 
 -- On a desktop a menu hangs from its button. On a phone Games and
 -- notifications take the whole screen, like the feed's description, and the
--- menus of a few rows are a sheet from the bottom.
+-- menus of a few rows are a sheet from the bottom. A menu's rows are links and
+-- buttons that Tab goes through, not an ARIA menu, which would promise the
+-- arrow keys.
 presentation :: Boolean -> Menu -> Presentation
 presentation true Games = FullScreen
 presentation true Notifications = FullScreen
@@ -88,7 +92,7 @@ presentation false Games =
     Dropdown { className: "header-dropdown header-dropdown-games header-menu", role: "dialog" }
 presentation false Notifications =
     Dropdown { className: "header-dropdown header-dropdown-notifications header-menu", role: "dialog" }
-presentation false _ = Dropdown { className: "menu header-menu", role: "menu" }
+presentation false _ = Dropdown { className: "menu header-menu", role: "group" }
 
 -- The header doesn't know which post type is being looked for, so it marks the
 -- game rather than a post.
@@ -256,7 +260,8 @@ component = Hooks.component \_ { path, visit } -> Hooks.do
         -- context.
         dropdown menu = if isOpen menu && not phone then menuOverlay menu else HH.text ""
 
-        opener menu class_ popup label content =
+        -- What opens is a dialog, but for a desktop's menu, which is a list.
+        opener menu class_ label content =
             HH.div [ HS.class_ class_ ]
             [ HH.button
                 ( [ HS.class_ $ case menu of
@@ -265,15 +270,29 @@ component = Hooks.component \_ { path, visit } -> Hooks.do
                         Notifications -> "icon-button header-count"
                         SignedOutMenu -> "icon-button"
                   , HP.type_ HP.ButtonButton
-                  , HPA.hasPopup popup
                   , HPA.expanded $ show $ isOpen menu
+                  , HPA.controls $ overlayId $ ref menu
                   , HE.onClick $ const $ toggle menu
                   ]
+                  <> (case presentation phone menu of
+                        Dropdown { role: "group" } -> []
+                        _ -> [ HPA.hasPopup "dialog" ])
                   <> maybe [] (\label' -> [ HPA.label label' ]) label
                 )
                 content
             , dropdown menu
             ]
+
+        -- Past the header, for a keyboard or a screen reader.
+        skipLink =
+            HH.a
+            [ HS.class_ "skip-link"
+            , HP.href "#content"
+            , HE.onClick \event -> liftEffect do
+                preventDefault $ MouseEvent.toEvent event
+                focusSoon "#content"
+            ]
+            [ HH.text "Skip to content" ]
 
         counted label word n = label <> if n > 0 then ", " <> show n <> " " <> word else ""
 
@@ -305,10 +324,10 @@ component = Hooks.component \_ { path, visit } -> Hooks.do
                     then [ HP.attr (HH.AttrName "aria-current") "page" ] else []
                 )
                 ([ Icons.mail ] <> if me.unreadConversations > 0 then [ badge me.unreadConversations ] else [])
-            , opener Notifications "header-wrap" "dialog"
+            , opener Notifications "header-wrap"
                 (Just $ counted "Notifications" "new" me.unreadNotifications)
                 ([ Icons.bell ] <> if me.unreadNotifications > 0 then [ badge me.unreadNotifications ] else [])
-            , opener AccountMenu "header-wrap" "menu" (Just "Account menu")
+            , opener AccountMenu "header-wrap" (Just "Account menu")
                 [ HH.text $ toUpper $ take 1 me.nickname ]
             ]
 
@@ -316,18 +335,19 @@ component = Hooks.component \_ { path, visit } -> Hooks.do
             [ newPost false
             , link "button button-text button-small hide-phone" (authPath "/signin" state.back) [ HH.text "Sign in" ]
             , link "button button-text button-small hide-phone" (authPath "/signup" state.back) [ HH.text "Sign up" ]
-            , opener SignedOutMenu "header-wrap show-phone" "menu" (Just "Menu") [ Icons.menu ]
+            , opener SignedOutMenu "header-wrap show-phone" (Just "Menu") [ Icons.menu ]
             ]
 
     Hooks.pure $
         HH.div [ HS.class_ "site-header-root" ]
         [ HH.header [ HS.class_ "site-header" ]
-            [ HH.div [ HS.class_ "site-header-inner" ]
+            [ skipLink
+            , HH.div [ HS.class_ "site-header-inner" ]
                 [ HH.a [ HS.class_ "logo", HP.href "/", HPA.label "TeamTavern", HE.onClick $ navigateWithEvent_ "/" ]
                     [ HH.img [ HS.class_ "logo-mark", HP.src "/logo-mark.svg", HP.alt "" ]
                     , HH.span [ HS.class_ "logo-word" ] [ HH.text "TeamTavern" ]
                     ]
-                , opener Games "header-wrap header-wrap-games" "dialog" Nothing [ HH.text "Games", Icons.chevronDown ]
+                , opener Games "header-wrap header-wrap-games" Nothing [ HH.text "Games", Icons.chevronDown ]
                 , HH.div [ HS.class_ "site-header-actions" ] case state.viewer of
                     Unknown -> []
                     SignedOut -> signedOutActions

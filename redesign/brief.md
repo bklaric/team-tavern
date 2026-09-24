@@ -1454,8 +1454,16 @@ brief's screens already call for.
 - **Proposed:** tokens are CSS custom properties named by role, never by value, so
   a light theme is a second set of values for the same names. No light theme is
   designed for the first release.
-- **Proposed:** the values, each checked against WCAG AA on every surface it is
-  used on: 4.5:1 for text, 3:1 for control edges.
+- **Decided:** the values, each checked against WCAG AA on every surface it is
+  used on: 4.5:1 for text, 3:1 for control edges. The lowest contrast below is
+  the lowest pair the site draws. Every control takes its edge from
+  input-border, the radio cards, the Showing segments, the type cards and the
+  phone's description button among them, and border is left to card edges and
+  dividers. A pressed segment carries a text-muted edge as well as its raised
+  surface, which beside the table is too close to see. A text field's ember
+  edge comes with the ember focus ring, since the edge alone differs little
+  from the edge at rest. A link in running text is underlined, since beside
+  text-muted its color alone is too close to tell it by.
 
 | Token        | Value     | From   | Used for                                          | Lowest contrast |
 | ------------ | --------- | ------ | ------------------------------------------------- | --------------- |
@@ -1466,7 +1474,7 @@ brief's screens already call for.
 | input-border | `#7F7366` | stone  | Edges of inputs and controls                      | 3.3             |
 | text         | `#EFE9E2` |        | Headings and body text                            | 12.7            |
 | text-muted   | `#AFA397` |        | Freshness, labels, ≠ marks                        | 6.2             |
-| text-faint   | `#968A7D` |        | Expired cards, placeholders                       | 4.5             |
+| text-faint   | `#968A7D` |        | Expired cards, placeholders                       | 5.1             |
 | ember        | `#F2823F` | fire   | Primary buttons, links, focus ring, unread counts | 5.9             |
 | ember-hover  | `#F59A62` | fire   | Hover on ember                                    |                 |
 | on-ember     | `#1A0F0A` |        | Text on ember buttons                             | 7.2             |
@@ -1525,8 +1533,8 @@ brief's screens already call for.
 - **Decided:** two breakpoints. Below 640 px is a phone, where overlays go
   full-screen (4, 5.6, 7.1, 11.4); from 1024 px is a desktop. The ad rails
   appear from 1100 px, where a 160 px unit fits beside the feed's column (15).
-- **Proposed:** a card's expansion animates its height, and doesn't animate under
-  reduced motion.
+- **Decided:** a card's expansion animates its height, and doesn't animate under
+  reduced motion; nothing else on the site moves.
 
 ### 14.5 Components
 

@@ -28,7 +28,7 @@ import Halogen.Hooks (HookM)
 import Halogen.Hooks as Hooks
 import TeamTavern.Client.Components.Button (Size(..), Weight(..), button)
 import TeamTavern.Client.Components.Check (switch, switches)
-import TeamTavern.Client.Components.Confirm (confirm)
+import TeamTavern.Client.Components.Confirm (pageConfirm)
 import TeamTavern.Client.Components.DataList (dataList, personRow, personRows)
 import TeamTavern.Client.Components.Field (Labelling(..), field, field_, formSection)
 import TeamTavern.Client.Components.Divider (rule)
@@ -734,7 +734,7 @@ component = Hooks.component \_ _ -> Hooks.do
 
         deleteHtml account' =
             if state.confirmingDelete
-            then confirm
+            then pageConfirm
                 { id: "delete"
                 , title: "Delete your account?"
                 , text: deleteText account'

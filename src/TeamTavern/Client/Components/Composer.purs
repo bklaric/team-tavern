@@ -60,10 +60,12 @@ composer { ref, primary, state, actions } =
             , HE.onValueInput actions.onDraft
             , HE.onKeyDown actions.onKeyDown
             ]
+        -- Send keeps the focus while the message goes; `submit` turns away a
+        -- second press.
         , HH.button
             [ HS.class_ if primary then "button button-primary" else "button button-outline"
             , HP.type_ HP.ButtonSubmit
-            , HP.disabled state.sending
+            , HPA.disabled $ show state.sending
             ]
             [ HH.text "Send" ]
         ]

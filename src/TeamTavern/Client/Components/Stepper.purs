@@ -9,8 +9,9 @@ import Halogen.HTML.Properties.ARIA as HPA
 import TeamTavern.Client.Icons as Icons
 import TeamTavern.Client.Snippets.Class as HS
 
--- A count with Fewer and More, each disabled at its end. onStep gets the new
--- count.
+-- A count with Fewer and More, each unavailable at its end, where it keeps the
+-- focus a disabled button would drop and a press leaves the count as it is.
+-- onStep gets the new count.
 stepper :: ∀ w i. { label :: String, value :: Int, min :: Int, max :: Int, onStep :: Int -> i } -> HH.HTML w i
 stepper { label, value, min, max, onStep } =
     HH.div [ HS.class_ "stepper", HPA.role "group", HPA.label label ]
@@ -19,12 +20,12 @@ stepper { label, value, min, max, onStep } =
     , step "More" (value >= max) (value + 1) Icons.plus
     ]
     where
-    step stepLabel disabled next icon =
+    step stepLabel atEnd next icon =
         HH.button
         [ HP.type_ HP.ButtonButton
         , HPA.label stepLabel
-        , HP.disabled disabled
-        , HE.onClick $ const $ onStep next
+        , HPA.disabled $ show atEnd
+        , HE.onClick $ const $ onStep $ clamp min max next
         ]
         [ icon ]
 

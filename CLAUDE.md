@@ -388,9 +388,26 @@ redirects the old site's feed paths to the new ones by `legacy.game_map`.
 - A list that refetches while the page is open carries `aria-busy`, true from
   a request until the latest one answers, and specs wait for it to settle
   before acting on the list, as `feed.spec.ts` does.
+- Every overlay goes through `useOverlay` and `Client/Script/Overlay.js`,
+  which holds the page behind a modal one, keeps Tab inside it, and puts the
+  focus on the overlay's `[data-autofocus]`, else the first thing in its body,
+  once it has one. A region marked `data-overlay-live`, such as the toasts,
+  stays live and in reach under a modal. A menu is a disclosure: a group of
+  links and buttons that Tab goes through, never `role=menu`, which promises
+  arrow keys. Its button carries `aria-expanded` and `aria-controls` with the
+  overlay's `overlayId`.
+- A control that goes away or would be disabled while it has the focus hands
+  the focus on or keeps it: a button waiting on what it started is
+  `aria-disabled`, its handler turning a second press away, and a control
+  that disappears moves the focus to what took its place. A page's
+  confirmation is `pageConfirm`, which Escape cancels. A field's error is tied
+  to its control by `Client/Script/Invalid.js`. The router's `main#content`
+  takes the focus on every link to another page, and the header's skip link
+  leads to it. `accessibility.spec.ts` runs axe over every page kind and
+  overlay and checks the keyboard.
 - Styles are Sass over plain CSS. `Client/Style/tokens.css` holds the design
-  tokens as custom properties and `base.css` the element defaults, both as the
-  prototype in `redesign/prototype/` has them. Each section of the prototype's
+  tokens as custom properties, as the prototype in `redesign/prototype/` has
+  them, and `base.css` the element defaults. Each section of the prototype's
   `components.css` is a `.scss` beside the `.purs` of the component or page it
   styles. Every stylesheet is registered with
   a `@use` line in `Client/Style/Main.scss`; one not listed there is not in the

@@ -41,6 +41,7 @@ import TeamTavern.Client.Pages.Feed.Description (Stored, current, describes, emp
 import TeamTavern.Client.Pages.Feed.Fields (Lists, barFields)
 import TeamTavern.Client.Pages.Placeholder (placeholder)
 import TeamTavern.Client.Script.Expand (toggleCard)
+import TeamTavern.Client.Script.Focus (focusSoon)
 import TeamTavern.Client.Script.Meta (setMeta)
 import TeamTavern.Client.Script.Navigate (navigateWithEvent_, navigate_)
 import TeamTavern.Client.Script.QueryParams (getQueryParam, removeQueryParam)
@@ -509,8 +510,14 @@ component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
                     , onType: changeType
                     , onChange: changeDescription
                     , onOpen: \field -> update _ { openField = field }
-                    , onMore: update _ { showMore = true }
-                    , onClearAll: change $ setCurrent (emptyDescription description.type) state.stored
+                    -- More and Clear all go once pressed, and hand the focus on
+                    -- to the chips they leave.
+                    , onMore: do
+                        update _ { showMore = true }
+                        liftEffect $ focusSoon "[data-first-more]"
+                    , onClearAll: do
+                        change $ setCurrent (emptyDescription description.type) state.stored
+                        liftEffect $ focusSoon ".field-chips .field-chip"
                     }
             , case state.renewed of
                 Just text -> prompt Icons.refreshCw true { text, action: Nothing }

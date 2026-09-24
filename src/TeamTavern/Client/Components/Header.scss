@@ -9,6 +9,28 @@
     backdrop-filter: blur(8px);
 }
 
+/* Out of sight until the keyboard reaches it, the header's first stop. */
+.skip-link {
+    position: absolute;
+    top: var(--space-2);
+    left: var(--space-4);
+    z-index: 40;
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-control);
+    background: var(--ember);
+    color: var(--on-ember);
+    font-weight: 600;
+    transform: translateY(-200%);
+}
+
+.skip-link:focus-visible {
+    transform: none;
+}
+
+.skip-link:hover {
+    color: var(--on-ember);
+}
+
 .site-header-inner {
     display: flex;
     align-items: center;
