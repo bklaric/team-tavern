@@ -17,6 +17,9 @@ import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Pool as Pool
 import TeamTavern.Routes.All (AllRoutes)
 import TeamTavern.Server.Account.DeleteAccount (deleteAccount)
+import TeamTavern.Server.Account.SwitchToDiscord (switchToDiscord)
+import TeamTavern.Server.Account.SwitchToPassword (switchToPassword)
+import TeamTavern.Server.Account.UpdateEmail (updateEmail)
 import TeamTavern.Server.Account.UpdateFacts (updateFacts)
 import TeamTavern.Server.Account.UpdateSwitches (updateSwitches)
 import TeamTavern.Server.Account.ViewAccount (viewAccount)
@@ -174,6 +177,12 @@ runServer deployment mailer discordApiUrl adminEmail pool = serve (Proxy :: _ Al
         updateFacts pool cookies body
     , updateSwitches: \{ cookies, body } ->
         updateSwitches pool cookies body
+    , updateEmail: \{ cookies, body } ->
+        updateEmail mailer pool cookies body
+    , switchToDiscord: \{ cookies, body } ->
+        switchToDiscord discordApiUrl pool cookies body
+    , switchToPassword: \{ cookies, body } ->
+        switchToPassword mailer pool cookies body
     , deleteAccount: \{ cookies } ->
         deleteAccount pool cookies
     , viewGames: const $

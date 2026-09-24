@@ -1335,7 +1335,7 @@ Account menu
   none. Discord stays on the posts as a contact either way. Either move is
   refused where what it would sign in with already signs in to another account:
   the Discord, or the address the account holds, which the player then changes.
-- **Proposed:** the email row says where the address stands (section 6, step 4):
+- **Decided:** the email row says where the address stands (section 6, step 4):
   confirmed, waiting for its link with **Send again**, or missing, which says
   what the site can't tell the player about. Changing it asks the new address to
   confirm itself.

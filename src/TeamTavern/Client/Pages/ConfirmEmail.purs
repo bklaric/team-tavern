@@ -14,11 +14,12 @@ import Halogen.HTML as HH
 import Halogen.Hooks as Hooks
 import JSURI (decodeURIComponent)
 import TeamTavern.Client.Components.Button (Size(..), Weight(..), buttonLink)
-import TeamTavern.Client.Components.Flow (flow, flowLead)
+import TeamTavern.Client.Components.Flow (flow, flowLead, flowLink)
 import TeamTavern.Client.Script.QueryParams (getQueryParam)
 import TeamTavern.Client.Shared.AccountErrors (somethingWrong)
 import TeamTavern.Client.Shared.Fetch (fetchBody)
 import TeamTavern.Client.Shared.Slot (Slot___)
+import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Player.ConfirmEmail (ConfirmEmail)
 import Type.Proxy (Proxy(..))
 
@@ -53,7 +54,11 @@ component = Hooks.component \_ _ -> Hooks.do
             ]
         Expired -> flow
             [ HH.h1_ [ HH.text "This link doesn't work" ]
-            , flowLead "It has been used already, or your account's email has changed since it was sent. Your account page sends a new one."
+            , HH.p [ HS.class_ "flow-lead" ]
+                [ HH.text "It has been used already, or your account's email has changed since it was sent. "
+                , flowLink "/account#email" "Your account page"
+                , HH.text " sends a new one."
+                ]
             ]
         Failed -> flow
             [ HH.h1_ [ HH.text "Confirm email" ]

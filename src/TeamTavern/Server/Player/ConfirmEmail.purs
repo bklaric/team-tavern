@@ -12,6 +12,7 @@ import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 
 -- A link confirms the address it was sent to and nothing else: it is used up
 -- either way, and confirms only while the player's email is still that address.
+-- One that confirmed nothing is answered as not found.
 -- It doesn't expire, since until it is clicked the site sends the address
 -- nothing else, and works signed out, from whatever browser opens the email.
 queryString :: Query
@@ -28,8 +29,9 @@ queryString = Query """
         from consumed
         where player.id = consumed.player_id
             and lower(player.email) = lower(consumed.email)
+        returning player.id
     )
-    select player_id as "playerId" from consumed
+    select id as "playerId" from confirmed
     """
 
 confirmEmail :: ∀ left. Pool -> ConfirmEmail.RequestContent -> Async left _

@@ -6,6 +6,7 @@ import Async (Async)
 import Async as Async
 import Control.Parallel (parallel, sequential)
 import Data.Array (catMaybes, elem, filter, mapMaybe, null, snoc, sortWith, unsnoc)
+import Data.Foldable (traverse_)
 import Data.Date (Date)
 import Data.Either (hush)
 import Data.Maybe (Maybe(..), fromMaybe, isJust, maybe)
@@ -30,18 +31,20 @@ import TeamTavern.Client.Components.Check (switch, switches)
 import TeamTavern.Client.Components.Confirm (confirm)
 import TeamTavern.Client.Components.DataList (dataList, personRow, personRows)
 import TeamTavern.Client.Components.Field (Labelling(..), field, field_, formSection)
-import TeamTavern.Client.Components.Flow (flowError)
+import TeamTavern.Client.Components.Divider (rule)
+import TeamTavern.Client.Components.Flow (flowError, formTight, textField)
 import TeamTavern.Client.Components.Input (input, select)
 import TeamTavern.Client.Components.Toast (toasts, useToast)
 import TeamTavern.Client.Components.Tokens as Tokens
 import TeamTavern.Client.Icons as Icons
 import TeamTavern.Client.Script.Back (authPath)
+import TeamTavern.Client.Script.Discord (authorizeSwitchToDiscord, takeSwitchToken)
 import TeamTavern.Client.Script.Focus (focusSoon)
 import TeamTavern.Client.Script.Navigate (navigateReplace_, navigate_)
 import TeamTavern.Client.Script.Scroll (focusCentered, focusFirstInvalid)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Script.Unread (announceUnread)
-import TeamTavern.Client.Shared.AccountErrors (nicknameInvalid, nicknameTaken, somethingWrong)
+import TeamTavern.Client.Shared.AccountErrors (nicknameInvalid, nicknameTaken, passwordShort, somethingWrong)
 import TeamTavern.Client.Shared.Block (block, unblock)
 import TeamTavern.Client.Shared.Contacts (contactLabel, contactPlaceholder)
 import TeamTavern.Client.Shared.Facts (ageOn, dateText, timezoneOptions, timezoneText)
@@ -49,6 +52,9 @@ import TeamTavern.Client.Shared.Fetch (fetchBody, fetchSimple)
 import TeamTavern.Client.Shared.Slot (Slot__I)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Account.DeleteAccount (DeleteAccount)
+import TeamTavern.Routes.Account.SwitchToDiscord (SwitchToDiscord)
+import TeamTavern.Routes.Account.SwitchToPassword (SwitchToPassword)
+import TeamTavern.Routes.Account.UpdateEmail (UpdateEmail)
 import TeamTavern.Routes.Account.UpdateFacts (UpdateFacts)
 import TeamTavern.Routes.Account.UpdateFacts as UpdateFacts
 import TeamTavern.Routes.Account.UpdateSwitches (UpdateSwitches)
@@ -56,6 +62,7 @@ import TeamTavern.Routes.Account.ViewAccount (ViewAccount)
 import TeamTavern.Routes.Account.ViewAccount as ViewAccount
 import TeamTavern.Routes.Block.ViewBlocked (ViewBlocked)
 import TeamTavern.Routes.Country.ViewCountries (ViewCountries)
+import TeamTavern.Routes.Player.ResendConfirmation (ResendConfirmation)
 import TeamTavern.Shared.Languages (allLanguages)
 import Type.Proxy (Proxy(..))
 import Web.Event.Event (Event, preventDefault)
@@ -86,11 +93,19 @@ type Facts =
     , contacts :: Object String
     }
 
--- `errors` are keyed by the field they are under, and `form` is what went
--- wrong with the form as a whole.
+-- The sign-in form: the address a password signs in with, asked only of an
+-- account without one, and the password.
+type SignIn = { email :: String, password :: String }
+
+-- Each form open holds what is typed into it. The email and sign-in forms
+-- stand in their rows, and opening one closes the other. `errors` are keyed by
+-- the field they are under, and `form` and `sign-in` are what went wrong with
+-- the facts or the sign-in form as a whole.
 type State =
     { page :: Page
     , facts :: Maybe Facts
+    , email :: Maybe String
+    , signIn :: Maybe SignIn
     , errors :: Object String
     , saving :: Boolean
     , confirmingDelete :: Boolean
@@ -98,7 +113,14 @@ type State =
 
 initialState :: State
 initialState =
-    { page: Loading, facts: Nothing, errors: Object.empty, saving: false, confirmingDelete: false }
+    { page: Loading
+    , facts: Nothing
+    , email: Nothing
+    , signIn: Nothing
+    , errors: Object.empty
+    , saving: false
+    , confirmingDelete: false
+    }
 
 -- The rows a link to the page can land on, by the fragment it names.
 landings :: Array String
@@ -163,6 +185,12 @@ factsErrors today facts = Object.fromFoldable $ catMaybes
 
 birthdayInvalid :: String
 birthdayInvalid = "Enter the day you were born."
+
+emailInvalid :: String
+emailInvalid = "Enter your email address."
+
+emailTaken :: String
+emailTaken = "Another account signs in with this email."
 
 serverErrors :: UpdateFacts.BadContent -> Object String
 serverErrors = match
@@ -238,6 +266,36 @@ component = Hooks.component \_ _ -> Hooks.do
             page <- H.lift load
             Hooks.modify_ stateId _ { page = page }
 
+        focusSignIn = liftEffect $ focusSoon "#sign-in .data-action .button"
+
+        -- Back from Discord with the token of a switch to it. A Discord that
+        -- signs in to another account is refused in the sign-in form, where the
+        -- player chose it.
+        switchToDiscord :: String -> HookM (Async left) Unit
+        switchToDiscord accessToken = do
+            result <- H.lift $ Async.attempt $ fetchBody (Proxy :: _ SwitchToDiscord) { accessToken }
+            let failed = showToast { text: "Discord couldn't take your password's place. Try again.", action: Nothing }
+            case hush result of
+                Nothing -> failed
+                Just response -> response # onMatch
+                    { ok: \{ contact } -> do
+                        reload
+                        focusSignIn
+                        showToast
+                            { text: "You sign in with Discord now"
+                                <> maybe "" (\contact' -> ", and your posts offer Discord " <> contact' <> " as a contact") contact
+                                <> "."
+                            , action: Nothing
+                            }
+                    , badRequest: \_ -> do
+                        Hooks.modify_ stateId _
+                            { signIn = Just { email: "", password: "" }
+                            , errors = Object.singleton "sign-in" "This Discord already signs in to another account."
+                            }
+                        liftEffect $ focusSoon "#sign-in .button-outline"
+                    }
+                    (const failed)
+
     Hooks.useLifecycleEffect do
         void $ Hooks.fork do
             page <- H.lift load
@@ -250,6 +308,7 @@ component = Hooks.component \_ _ -> Hooks.do
                     Hooks.modify_ stateId _ { page = page }
                     let landing = CodeUnits.drop 1 hash
                     when (elem landing landings) $ focusCentered landing
+                    takeSwitchToken >>= traverse_ switchToDiscord
         pure Nothing
 
     let focusEdit = liftEffect $ focusSoon "#facts-title ~ .account-actions .button"
@@ -346,7 +405,122 @@ component = Hooks.component \_ _ -> Hooks.do
             then navigate_ "/?account=deleted"
             else showToast { text: "Your account couldn't be deleted. Try again.", action: Nothing }
 
+        focusEmail = liftEffect $ focusSoon "#email .data-action .button"
+
+        changeEmail = Hooks.get stateId >>= _.page >>> case _ of
+            Loaded { account: account' } -> do
+                Hooks.modify_ stateId _
+                    { email = Just $ fromMaybe "" account'.email, signIn = Nothing, errors = Object.empty }
+                liftEffect $ focusSoon "#account-email"
+            _ -> pure unit
+
+        cancelEmail = do
+            Hooks.modify_ stateId _ { email = Nothing, errors = Object.empty }
+            focusEmail
+
+        saveEmail :: Event -> HookM (Async left) Unit
+        saveEmail event = do
+            liftEffect $ preventDefault event
+            state' <- Hooks.get stateId
+            case state'.page, state'.email of
+                Loaded { account: account' }, Just email | not state'.saving -> do
+                    let failed errors = do
+                            Hooks.modify_ stateId _ { saving = false, errors = errors }
+                            liftEffect focusFirstInvalid
+                    Hooks.modify_ stateId _ { saving = true, errors = Object.empty }
+                    result <- H.lift $ Async.attempt $ fetchBody (Proxy :: _ UpdateEmail) { email }
+                    case hush result of
+                        Nothing -> failed $ Object.singleton "email" somethingWrong
+                        Just response -> response # onMatch
+                            { noContent: \_ -> do
+                                reload
+                                Hooks.modify_ stateId _ { email = Nothing, saving = false }
+                                focusEmail
+                                when (map toLower account'.email /= Just (toLower $ trim email)) $
+                                    showToast { text: "Your email is changed.", action: Nothing }
+                            , badRequest: failed <<< Object.singleton "email" <<< match
+                                { email: \_ -> emailInvalid
+                                , emailTaken: \_ -> emailTaken
+                                }
+                            }
+                            (\_ -> failed $ Object.singleton "email" somethingWrong)
+                _, _ -> pure unit
+
+        sendAgain email = do
+            result <- H.lift $ Async.attempt $ fetchSimple (Proxy :: _ ResendConfirmation)
+            showToast
+                { text:
+                    if isJust $ hush result >>= onMatch { noContent: const $ Just unit } (const Nothing)
+                    then "Sent again to " <> email <> "."
+                    else "The link couldn't be sent. Try again."
+                , action: Nothing
+                }
+
+        changeSignIn = do
+            Hooks.modify_ stateId _ { signIn = Just { email: "", password: "" }, email = Nothing, errors = Object.empty }
+            liftEffect $ focusSoon "#sign-in form :is(.input, .button)"
+
+        cancelSignIn = do
+            Hooks.modify_ stateId _ { signIn = Nothing, errors = Object.empty }
+            focusSignIn
+
+        setSignIn key change = Hooks.modify_ stateId \state' -> state'
+            { signIn = state'.signIn <#> change, errors = Object.delete key state'.errors }
+
+        -- A password account changes its password here; a Discord account
+        -- moves to a password, with the address it holds or the one it gives.
+        saveSignIn :: Event -> HookM (Async left) Unit
+        saveSignIn event = do
+            liftEffect $ preventDefault event
+            state' <- Hooks.get stateId
+            case state'.page, state'.signIn of
+                Loaded { account: account' }, Just signIn | not state'.saving -> do
+                    let failed errors = do
+                            Hooks.modify_ stateId _ { saving = false, errors = errors }
+                            liftEffect focusFirstInvalid
+                        wasDiscord = account'.signIn == "discord"
+                        taken = case account'.email of
+                            Just email -> Object.singleton "sign-in" $
+                                "Another account signs in with " <> email <> ". Change your email to sign in with a password."
+                            Nothing -> Object.singleton "sign-in-email" emailTaken
+                    Hooks.modify_ stateId _ { saving = true, errors = Object.empty }
+                    result <- H.lift $ Async.attempt $ fetchBody (Proxy :: _ SwitchToPassword)
+                        { password: signIn.password
+                        , email: if isJust account'.email then Nothing else Just signIn.email
+                        }
+                    case hush result of
+                        Nothing -> failed $ Object.singleton "sign-in" somethingWrong
+                        Just response -> response # onMatch
+                            { noContent: \_ -> do
+                                reload
+                                Hooks.modify_ stateId _ { signIn = Nothing, saving = false }
+                                focusSignIn
+                                showToast
+                                    { text:
+                                        if wasDiscord
+                                        then "You sign in with your email and password now."
+                                        else "Your password is changed."
+                                    , action: Nothing
+                                    }
+                            , badRequest: failed <<< match
+                                { password: \_ -> Object.singleton "sign-in-password" passwordShort
+                                , email: \_ -> Object.singleton "sign-in-email" emailInvalid
+                                , emailTaken: \_ -> taken
+                                }
+                            }
+                            (\_ -> failed $ Object.singleton "sign-in" somethingWrong)
+                _, _ -> pure unit
+
     let errorOf key = Object.lookup key state.errors
+
+        -- The form's one filled button, the only one on the page.
+        formActions label onCancel =
+            HH.div [ HS.class_ "account-actions" ]
+            [ HH.button
+                [ HS.class_ "button button-primary", HP.type_ HP.ButtonSubmit, HP.disabled state.saving ]
+                [ Icons.check, HH.text label ]
+            , button Text Regular onCancel [ HH.text "Cancel" ]
+            ]
 
         textInput id key label hint' value placeholder onInput =
             field ((field_ id label) { hint = hint', error = errorOf key })
@@ -402,14 +576,7 @@ component = Hooks.component \_ _ -> Hooks.do
                         \value -> setFacts kind \facts' -> facts' { contacts = Object.insert kind value facts'.contacts })
             ]
             <> maybe [] (\error -> [ flowError error ]) (errorOf "form")
-            <>
-            [ HH.div [ HS.class_ "account-actions" ]
-                [ HH.button
-                    [ HS.class_ "button button-primary", HP.type_ HP.ButtonSubmit, HP.disabled state.saving ]
-                    [ Icons.check, HH.text "Save changes" ]
-                , button Text Regular cancelEditing [ HH.text "Cancel" ]
-                ]
-            ]
+            <> [ formActions "Save changes" cancelEditing ]
 
         contactsText contacts =
             contacts # mapMaybe (\{ kind, value } -> value <#> \value' -> contactLabel kind <> " " <> value')
@@ -448,21 +615,91 @@ component = Hooks.component \_ _ -> Hooks.do
 
         -- The address, and whether the site can use it yet: until its link is
         -- clicked the link is all it gets, and without one nothing is emailed.
-        emailValue account' = case account'.email of
-            Nothing ->
+        emailValue account' = case state.email, account'.email of
+            Just email, _ ->
+                [ formTight saveEmail
+                    [ textField
+                        { id: "account-email", label: "Email", type_: HP.InputEmail
+                        , autocomplete: HP.AutocompleteEmail, hint: Nothing, error: errorOf "email"
+                        , value: email, onInput: \value -> Hooks.modify_ stateId _ { email = Just value }
+                        }
+                    , hint $ (if account'.signIn == "password" then "You sign in with it too. " else "")
+                        <> "A new address gets a link to confirm it before anything else is sent there."
+                    , formActions "Save" cancelEmail
+                    ]
+                ]
+            Nothing, Nothing ->
                 [ muted "No address"
                 , hint "Matches, messages and renewals are emailed, so without one the site can't tell you about them."
                 ]
-            Just email | not account'.emailConfirmed ->
+            Nothing, Just email | not account'.emailConfirmed ->
                 [ HH.text email
                 , hint "Not confirmed yet. We sent it a link, and send it nothing else until the link is clicked."
+                , button Text Small (sendAgain email) [ HH.text "Send again" ]
                 ]
-            Just email -> [ HH.text email ]
+            Nothing, Just email -> [ HH.text email ]
 
-        signInValue account' =
-            if account'.signIn == "discord"
-            then [ HH.span [ HS.class_ "data-line" ] [ Icons.discord, HH.text "Discord" ] ]
-            else [ HH.text "Email and password" ]
+        emailAction account' =
+            if isJust state.email then Nothing
+            else Just $ button Text Small changeEmail
+                [ HH.text if isJust account'.email then "Change" else "Add" ]
+
+        passwordField label signIn =
+            textField
+                { id: "account-password", label, type_: HP.InputPassword
+                , autocomplete: HP.AutocompleteNewPassword, hint: Just "At least 8 characters."
+                , error: errorOf "sign-in-password", value: signIn.password
+                , onInput: \value -> setSignIn "sign-in-password" _ { password = value }
+                }
+
+        -- A password account moves to Discord or picks a new password; a
+        -- Discord account moves to a password, which signs in with the
+        -- account's email, so one without an address gives one here.
+        signInForm account' signIn =
+            formTight saveSignIn $
+            maybe [] (\error -> [ flowError error ]) (errorOf "sign-in")
+            <>
+            ( if account'.signIn == "discord"
+                then
+                    [ hint $ "A password takes Discord's place"
+                        <> maybe "" (", and you sign in with " <> _) account'.email
+                        <> ". Discord stays on your posts as a contact."
+                    ]
+                    <> (if isJust account'.email then [] else
+                        [ textField
+                            { id: "account-sign-in-email", label: "Email", type_: HP.InputEmail
+                            , autocomplete: HP.AutocompleteEmail, hint: Nothing, error: errorOf "sign-in-email"
+                            , value: signIn.email, onInput: \value -> setSignIn "sign-in-email" _ { email = value }
+                            }
+                        ])
+                    <> [ passwordField "Password" signIn ]
+                else
+                    [ HH.div [ HS.class_ "field" ]
+                        [ HH.button
+                            [ HS.class_ "button button-outline account-discord"
+                            , HP.type_ HP.ButtonButton
+                            , HE.onClick $ const authorizeSwitchToDiscord
+                            ]
+                            [ Icons.discord, HH.text "Continue with Discord" ]
+                        , hint "Discord takes your password's place. Your email stays as it is."
+                        ]
+                    , rule "or"
+                    , passwordField "New password" signIn
+                    ]
+            )
+            <> [ formActions "Save" cancelSignIn ]
+
+        signInValue account' = case state.signIn of
+            Just signIn -> [ signInForm account' signIn ]
+            Nothing ->
+                if account'.signIn == "discord"
+                then [ HH.span [ HS.class_ "data-line" ] [ Icons.discord, HH.text "Discord" ] ]
+                else [ HH.text "Email and password" ]
+
+        signInAction account' =
+            if isJust state.signIn then Nothing
+            else Just $ button Text Small changeSignIn
+                [ HH.text if account'.signIn == "discord" then "Use a password" else "Change" ]
 
         emailsValue account' = let
             switch' key text note checked change =
@@ -514,8 +751,8 @@ component = Hooks.component \_ _ -> Hooks.do
             [ HH.h2 [ HP.id "private-title" ] [ HH.text "Only you see this" ]
             , HH.p [ HS.class_ "account-lead" ] [ HH.text "None of it shows on your posts." ]
             , dataList
-                [ { id: Just "email", label: "Email", value: emailValue account', action: Nothing }
-                , { id: Nothing, label: "Sign-in", value: signInValue account', action: Nothing }
+                [ { id: Just "email", label: "Email", value: emailValue account', action: emailAction account' }
+                , { id: Just "sign-in", label: "Sign-in", value: signInValue account', action: signInAction account' }
                 , { id: Just "emails", label: "Emails", value: emailsValue account', action: Nothing }
                 , { id: Just "blocked", label: "Blocked", value: blockedValue blocked, action: Nothing }
                 ]

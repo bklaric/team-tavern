@@ -1,10 +1,9 @@
 import { expect, Locator, Page, test } from "@playwright/test";
 import { signIn, signOut, signUp, submitPasswordSignIn } from "../accounts";
+import { body, emails, openMail } from "../mail";
 import { expectPage } from "../pages";
 
-// The test stack's mail service keeps what the site sends, and shows an address's mail at
-// /mail on the site's origin, newest first, each email in a frame whose links open in the
-// tab. MailTester and QuietTester (`stacks/test-seed/players.sql`) are written to only
+// MailTester and QuietTester (`stacks/test-seed/players.sql`) are written to only
 // here; the players writing to them are new to each test. FitsTester and ExpiringTester
 // are here for the worker's period email, which the test stack sends every two seconds.
 
@@ -32,16 +31,6 @@ async function writeTo(page: Page, handle: string, owner: string, messages: stri
     const panel = page.getByRole("dialog", { name: owner });
     for (const message of messages) await send(panel, message);
 }
-
-async function openMail(page: Page, address: string) {
-    await page.goto(`/mail?to=${encodeURIComponent(address)}`);
-    await expect(page.getByRole("heading", { name: `Mail to ${address}` })).toBeVisible();
-}
-
-const emails = (page: Page, subject: string) =>
-    page.getByRole("article").filter({ has: page.getByRole("heading", { name: subject, exact: true }) });
-
-const body = (email: Locator) => email.frameLocator("iframe");
 
 // The mail page shows what had come when it was opened, and a period's email comes when
 // the period ends, so the page is opened again until it is there.

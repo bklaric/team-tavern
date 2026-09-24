@@ -34,7 +34,7 @@ brief marks Proposed, the brief's status is updated in the same commit.
 - [x] 12. Block and report
 - [x] 13. Fit notifications
 - [x] 14. Expiry, email and the worker
-- [ ] 15. Account page
+- [x] 15. Account page
 - [ ] 16. Crawlers, sitemap and old paths
 - [ ] 17. Ads
 - [ ] 18. Phone and accessibility pass
@@ -1054,6 +1054,29 @@ What every later page needs signed in and out.
     changed location as a visitor. It renames a player who wrote to
     OverwatchTester and blocks CounterStrike2Tester, whom no other spec uses,
     and signs up everyone it changes.
+  - 15b's routes are `updateEmail` (`PUT /api/account/email`),
+    `switchToDiscord` (`POST /api/account/discord`, with Discord's access
+    token) and `switchToPassword` (`PUT /api/account/password`), which is also
+    how a password account changes its password, and ends every other session
+    of the account. Send again is step 4's `resendConfirmation`. A taken
+    address or Discord is refused by the constraint that holds it,
+    `player_lower_email_key` or `player_discord_id_key`; the email index binds
+    only accounts with a password, so it fires on taking a password too.
+    Neither change asks for the password the account has, as the prototype
+    doesn't, since a Discord account has none.
+  - An address changed only in case is left as it is. A changed one is
+    unconfirmed and gets the link. `confirmEmail` now answers a link to an
+    address the account no longer holds as not found, which it had answered as
+    confirmed while confirming nothing, and `/confirm-email` then links the
+    account page for a new one.
+  - A switch to Discord is a trip of its own: `authorizeSwitchToDiscord` marks
+    it in the stored trip, `/signin` keeps the token it comes back with for the
+    account page instead of signing in, and the account page makes the switch.
+    A Discord another account signs in with is refused in the sign-in form.
+    Discord's username becomes the Discord contact only where the account had
+    none.
+  - `test-playwright/mail.ts` holds the helpers `email.spec.ts` and
+    `account.spec.ts` share for reading the mail stub.
 
 ## Phase 5: launch
 

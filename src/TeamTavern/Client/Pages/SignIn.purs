@@ -22,7 +22,7 @@ import TeamTavern.Client.Components.Flow (flow, flowError, flowLead, flowLink, f
 import TeamTavern.Client.Icons as Icons
 import TeamTavern.Client.Pages.Post.Register (Publishing, publishing, publishingPost)
 import TeamTavern.Client.Script.Back (authPath, readBack)
-import TeamTavern.Client.Script.Discord (authorizeWithDiscord, takeDiscordReturn)
+import TeamTavern.Client.Script.Discord (authorizeWithDiscord, keepSwitchToken, takeDiscordReturn)
 import TeamTavern.Client.Script.Navigate (navigateReplace_, navigate_)
 import TeamTavern.Client.Shared.AccountErrors (nicknameInvalid, nicknameTaken, somethingWrong)
 import TeamTavern.Client.Shared.Fetch (fetchBody)
@@ -162,6 +162,9 @@ component = Hooks.component \_ _ -> Hooks.do
     Hooks.useLifecycleEffect do
         discordReturn <- takeDiscordReturn
         case discordReturn of
+            Just { accessToken, back, switching: true } -> do
+                keepSwitchToken accessToken
+                navigateReplace_ back
             Just { accessToken, back } -> startDiscordSession accessToken back
             Nothing -> do
                 back <- readBack

@@ -1,4 +1,10 @@
-module TeamTavern.Client.Script.Discord (authorizeWithDiscord, takeDiscordReturn) where
+module TeamTavern.Client.Script.Discord
+    ( authorizeSwitchToDiscord
+    , authorizeWithDiscord
+    , keepSwitchToken
+    , takeDiscordReturn
+    , takeSwitchToken
+    ) where
 
 import Prelude
 
@@ -23,14 +29,24 @@ foreign import randomState :: Effect String
 storageKey :: String
 storageKey = "tt-discord"
 
-type Trip = { state :: String, back :: String }
+-- A trip that switches the account to Discord signs nobody in: the sign-in
+-- page hands its token on to the account page.
+type Trip = { state :: String, back :: String, switching :: Boolean }
 
 -- | Sends the browser to Discord, which sends it to the sign-in page with an
 -- | access token in the fragment; the sign-in page then goes on to `back`.
 authorizeWithDiscord :: ∀ effect. MonadEffect effect => String -> effect Unit
-authorizeWithDiscord back = liftEffect do
+authorizeWithDiscord back = authorize { back, switching: false }
+
+-- | Sends the browser to Discord to sign the account in with it in its
+-- | password's place, and back to the account page, which does the switch.
+authorizeSwitchToDiscord :: ∀ effect. MonadEffect effect => effect Unit
+authorizeSwitchToDiscord = authorize { back: "/account", switching: true }
+
+authorize :: ∀ effect. MonadEffect effect => { back :: String, switching :: Boolean } -> effect Unit
+authorize { back, switching } = liftEffect do
     state <- randomState
-    window >>= sessionStorage >>= setItem storageKey (writeJSON ({ state, back } :: Trip))
+    window >>= sessionStorage >>= setItem storageKey (writeJSON ({ state, back, switching } :: Trip))
     origin' <- window >>= location >>= origin
     hardNavigate $ "https://discord.com/api/oauth2/authorize"
         <> "?client_id=1068667687661740052"
@@ -40,10 +56,11 @@ authorizeWithDiscord back = liftEffect do
         <> "&state=" <> state
         <> "&prompt=none"
 
--- | The access token Discord came back with and where the trip was headed. The
--- | fragment is cleared either way, so a reload doesn't use the token twice.
+-- | The access token Discord came back with, where the trip was headed and
+-- | whether it switches the account to Discord. The fragment is cleared either
+-- | way, so a reload doesn't use the token twice.
 takeDiscordReturn :: ∀ effect. MonadEffect effect =>
-    effect (Maybe { accessToken :: String, back :: String })
+    effect (Maybe { accessToken :: String, back :: String, switching :: Boolean })
 takeDiscordReturn = do
     accessToken <- getFragmentParam "access_token" <#> (_ >>= decodeURIComponent)
     returnedState <- getFragmentParam "state" <#> (_ >>= decodeURIComponent)
@@ -58,6 +75,22 @@ takeDiscordReturn = do
             query <- search location'
             replaceState {} (path <> query)
             pure case trip of
-                Just ({ state, back } :: Trip) | Just state == returnedState ->
-                    Just { accessToken: accessToken', back }
+                Just ({ state, back, switching } :: Trip) | Just state == returnedState ->
+                    Just { accessToken: accessToken', back, switching }
                 _ -> Nothing
+
+switchKey :: String
+switchKey = "tt-discord-switch"
+
+-- | Keeps the token of a trip that switches the account to Discord for the
+-- | account page.
+keepSwitchToken :: ∀ effect. MonadEffect effect => String -> effect Unit
+keepSwitchToken accessToken = liftEffect $ window >>= sessionStorage >>= setItem switchKey accessToken
+
+-- | The token a switch to Discord came back with, taken once.
+takeSwitchToken :: ∀ effect. MonadEffect effect => effect (Maybe String)
+takeSwitchToken = liftEffect do
+    storage <- window >>= sessionStorage
+    accessToken <- getItem switchKey storage
+    removeItem switchKey storage
+    pure accessToken

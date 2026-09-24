@@ -183,6 +183,9 @@ Every Discord button sends the browser back to `/signin`, the one redirect URI
 registered on the Discord app for each origin, and what the player was doing
 rides along in session storage. The sign-in page signs in a player Discord
 knows, and asks one it doesn't for a nickname, which finishes registering them.
+A trip from the account page's Continue with Discord signs nobody in: the
+sign-in page hands its token back to the account page, which moves the account
+from its password to that Discord.
 
 What no test reaches is Discord itself: the redirect URIs registered on the
 Discord app and the real user endpoint. Before a deploy that touches sign-in,
