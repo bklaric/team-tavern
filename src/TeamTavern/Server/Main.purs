@@ -7,7 +7,7 @@ import Control.Monad.Except (ExceptT(..), except, runExceptT)
 import Control.Monad.Maybe.Trans (lift)
 import Data.Either (either, note)
 import Data.Int (fromString)
-import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Maybe (Maybe(..), fromMaybe, isJust)
 import Data.String as String
 import Effect (Effect)
 import Effect.Console (log)
@@ -39,9 +39,9 @@ import TeamTavern.Server.Feed.ViewFeed (viewFeed)
 import TeamTavern.Server.Feed.ViewOwnDescriptions (viewOwnDescriptions)
 import TeamTavern.Server.Game.ViewGame (viewGame)
 import TeamTavern.Server.Game.ViewGames (viewGames)
-import TeamTavern.Server.Infrastructure.Deployment (Deployment(..))
-import TeamTavern.Server.Infrastructure.Deployment as Deployment
 import TeamTavern.Server.Infrastructure.Email (Mailer(..))
+import TeamTavern.Server.Infrastructure.Environment (Environment(..))
+import TeamTavern.Server.Infrastructure.Environment as Environment
 import TeamTavern.Server.Infrastructure.FetchDiscordUser (DiscordApiUrl(..))
 import TeamTavern.Server.Infrastructure.Log (logStamped, print)
 import TeamTavern.Server.Infrastructure.Sendgrid (setApiKey, setBaseUrl)
@@ -109,11 +109,11 @@ createPostgresPool = do
     postgresVariables <- loadPostgresVariables
     lift $ Pool.create postgresVariables
 
-loadDeployment :: ExceptT String Effect Deployment
-loadDeployment =
-    lookupEnv "DEPLOYMENT"
-    <#> bindFlipped Deployment.fromString
-    <#> note "Couldn't read variable DEPLOYMENT."
+loadEnvironment :: ExceptT String Effect Environment
+loadEnvironment =
+    lookupEnv "ENVIRONMENT"
+    <#> bindFlipped Environment.fromString
+    <#> note "Couldn't read variable ENVIRONMENT."
     # ExceptT
 
 loadDiscordApiUrl :: Effect DiscordApiUrl
@@ -122,21 +122,22 @@ loadDiscordApiUrl =
     <#> fromMaybe "https://discord.com/api"
     <#> DiscordApiUrl
 
--- | Production sends through SendGrid and links to its own origin. The local
--- | stacks link relative to the site they serve, and only log, unless
+-- | Staging and production send through SendGrid and link to their own origin.
+-- | The local stacks link relative to the site they serve, and only log, unless
 -- | SENDGRID_API_URL names something that takes SendGrid's requests, as the test
 -- | stack's mail stub does. The key is set by then, since setting it resets the
 -- | base URL.
-loadMailer :: Deployment -> Effect Mailer
-loadMailer deployment = do
+loadMailer :: Environment -> Effect Mailer
+loadMailer environment = do
     apiUrl <- lookupEnv "SENDGRID_API_URL"
     case apiUrl of
         Just url -> setBaseUrl url
         Nothing -> pure unit
-    pure $ Mailer case deployment, apiUrl of
-        Cloud, _ -> { origin: "https://www.teamtavern.net", send: true }
-        Local, Just _ -> { origin: "", send: true }
-        Local, Nothing -> { origin: "", send: false }
+    pure $ Mailer case environment of
+        Production -> { origin: "https://www.teamtavern.net", send: true }
+        Staging -> { origin: "https://staging.teamtavern.net", send: true }
+        Development -> { origin: "", send: isJust apiUrl }
+        Test -> { origin: "", send: isJust apiUrl }
 
 -- | The worker's period in seconds, an hour unless WORKER_PERIOD says otherwise,
 -- | as the test stack's does.
@@ -154,10 +155,10 @@ loadAdminEmail =
     <#> note "Couldn't read variable ADMIN_EMAIL."
     # ExceptT
 
-runServer :: Deployment -> Mailer -> DiscordApiUrl -> AdminEmail -> Pool -> Effect Unit
-runServer deployment mailer discordApiUrl adminEmail pool = serve (Proxy :: _ AllRoutes) serveOptions
+runServer :: Environment -> Mailer -> DiscordApiUrl -> AdminEmail -> Pool -> Effect Unit
+runServer environment mailer discordApiUrl adminEmail pool = serve (Proxy :: _ AllRoutes) serveOptions
     { startSession: \{ cookies, body } ->
-        Session.start deployment mailer discordApiUrl pool cookies body
+        Session.start environment mailer discordApiUrl pool cookies body
     , endSession: \{ cookies } ->
         Session.end pool cookies
     , forgotPassword: \{ body } ->
@@ -165,9 +166,9 @@ runServer deployment mailer discordApiUrl adminEmail pool = serve (Proxy :: _ Al
     , resetPassword: \{ body } ->
         resetPassword pool body
     , registerPlayer: \{ cookies, body } ->
-        register deployment mailer discordApiUrl pool cookies body
+        register environment mailer discordApiUrl pool cookies body
     , viewMe: \{ cookies } ->
-        viewMe deployment pool cookies
+        viewMe environment pool cookies
     , confirmEmail: \{ body } ->
         confirmEmail pool body
     , resendConfirmation: \{ cookies } ->
@@ -246,12 +247,12 @@ runServer deployment mailer discordApiUrl adminEmail pool = serve (Proxy :: _ Al
 
 main :: Effect Unit
 main = either log pure =<< runExceptT do
-    deployment <- loadDeployment
+    environment <- loadEnvironment
     discordApiUrl <- lift loadDiscordApiUrl
     adminEmail <- loadAdminEmail
     workerPeriod <- loadWorkerPeriod
     pool <- createPostgresPool
     setSendGridApiKey
-    mailer <- lift $ loadMailer deployment
+    mailer <- lift $ loadMailer environment
     lift $ startWorker workerPeriod mailer pool
-    lift $ runServer deployment mailer discordApiUrl adminEmail pool
+    lift $ runServer environment mailer discordApiUrl adminEmail pool

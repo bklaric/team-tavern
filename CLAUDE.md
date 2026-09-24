@@ -19,14 +19,14 @@ test/             a stub; nothing runs it
 ```
 
 Generated, never edited, all git-ignored: `output/` (compiled PureScript),
-`dist-client/`, `dist-server/`, `dist-test/`, `.spago/`, Playwright's `playwright-report/`
-and `test-results/`, and `test-playwright/screenshots/`.
+`release/` (what a server runs), `dist-test/`, `.spago/`, Playwright's
+`playwright-report/` and `test-results/`, and `test-playwright/screenshots/`.
 
 ## Environment
 
 - **Node and npm** are pinned by Volta in `package.json`; with Volta installed
-  the right versions are picked up automatically. The `node` service in
-  both compose files under `stacks/`, and the test stack's `discord` service,
+  the right versions are picked up automatically. The `tt-node` service in
+  both compose files under `stacks/`, and the test stack's `tt-discord` service,
   pin the same Node version for their containers, and nothing enforces
   agreement, so change all four together.
 - **purs, spago, sass, esbuild and Playwright** come from `devDependencies`, so
@@ -41,13 +41,13 @@ and `test-results/`, and `test-playwright/screenshots/`.
 ## Build and verify
 
 ```bash
-npm install         # once
-spago build         # compile everything into output/
-./build.sh          # spago build + build-client.sh + build-server.sh
-./run-stack.sh      # docker compose up: postgres, node, renderready, caddy
-./deploy-server.sh  # rebuild the server bundle and restart the node container
-npm test            # boot the test stack and run the Playwright suite
-npm run typecheck   # tsc over test-playwright/ and playwright.config.ts
+npm install                 # once
+spago build                 # compile everything into output/
+./build.sh                  # spago build + build-client.sh + build-server.sh, into release/
+./run-development-stack.sh  # docker compose up: tt-postgres, tt-node, tt-renderready, tt-caddy
+npm test                    # boot the test stack and run the Playwright suite
+npm run typecheck           # tsc over test-playwright/ and playwright.config.ts
+./deploy-release.sh <host>  # upload release/ to a server and bring its stack up
 ```
 
 Bare `spago` and `purs` work because Volta shims them and, since both are
@@ -61,8 +61,8 @@ the `purs.cmd` shim, which Node refuses to spawn, and the build dies with
 `test-playwright/stack.setup.ts` takes the test stack down with `-v`, brings it
 back up and waits for `/api/games` to answer, and the specs in
 `test-playwright/integration/` then run against it. The stack serves
-`dist-client/`, `dist-server/` and `dist-test/` out of the repo, so `./build.sh`
-has to have run first; the setup says so rather than letting the wait time out.
+`release/` and `dist-test/` out of the repo, so `./build.sh` has to have run
+first; the setup says so rather than letting the wait time out.
 
 A spec drives the site through the browser, as a player would: it sets up what it
 needs through the pages and asserts on what they show, never by calling the API
@@ -89,60 +89,66 @@ block, through the pages, so run it on a stack the next `npm test` reseeds.
 `phone.spec.ts` holds every page and overlay to a 375 px window with the
 longest names a player can give.
 
-`build-client.sh` compiles Sass and bundles the client into `dist-client/`
+`build-client.sh` compiles Sass and bundles the client into `release/client/`
 under hashed file names. `build-server.sh` bundles the server into
-`dist-server/server.js` with `bcrypt`, `pg` and `@sendgrid/mail` left
+`release/server/server.js` with `bcrypt`, `pg` and `@sendgrid/mail` left
 external, and copies the root `package.json` beside it; the container installs
 that with `--omit=dev`, so the build toolchain never enters the image. It also
 bundles `DiscordStub/Main.purs` into `dist-test/discord-stub.js` and
 `MailStub/Main.purs` into `dist-test/mail-stub.js`, which only the test stack
-runs.
+runs. `build.sh` then copies in what runs them: `stacks/docker-compose.release.yml`
+as `release/compose.yml`, every Caddyfile but the test stack's into
+`release/caddy/`, and `backup-database.sh`.
 
 ## Running the stack
 
 Two compose projects, and they can run at once. The development stack keeps its
 data in host directories next to the repo; the test stack keeps its in named
 volumes, so `down -v` throws the database away and the next boot seeds a fresh
-one. Both serve the same `dist-client/` and `dist-server/`, so `./build.sh` has
-to have run either way.
+one. Both serve the same `release/` a server gets, so `./build.sh` has to have
+run either way.
 
-Both also answer to `http://caddy` on their compose network, and that name is
+Both also answer to `http://tt-caddy` on their compose network, and that name is
 the render origin passed to `base.Caddyfile`. Renderready's browser has to fetch
 the site itself, and inside that container `localhost` is renderready. Neither
 compose file pulls a renderready image: the service is built from the upstream
 git tag, so the first `up` on a machine builds it, and that takes a while.
 
-|               | Development                 | Test                             |
-| ------------- | --------------------------- | -------------------------------- |
-| Compose file  | `stacks/docker-compose.yml` | `stacks/docker-compose.test.yml` |
-| Env file      | `stacks/.env`               | `stacks/test.env`                |
-| Project name  | default                     | `teamtavern-test`                |
-| Site          | <http://localhost:8000>     | <http://localhost:8080>          |
-| Database      | `team_tavern`               | `team_tavern_test`               |
-| Postgres data | host directory              | named volume, seeded on boot     |
+|               | Development               | Test                             |
+| ------------- | ------------------------- | -------------------------------- |
+| Compose file  | `release/compose.yml`     | `stacks/docker-compose.test.yml` |
+| Env file      | `stacks/.env`             | `stacks/test.env`                |
+| Project name  | `teamtavern`              | `teamtavern-test`                |
+| Site          | <http://localhost:8000>   | <http://localhost:8080>          |
+| Database      | `team_tavern`             | `team_tavern_test`               |
+| Postgres data | host directory            | named volume, seeded on boot     |
 
 ### The development stack
 
-`stacks/.env` configures docker compose. Besides the database and SendGrid
-credentials it names four host directories that are bind-mounted into the
-containers and live next to the repo, not in it:
+`run-development-stack.sh` runs the release as a server does, from
+`release/compose.yml`, passing `stacks/.env` with `--env-file` where a server
+has its `.env` beside the compose file. That file configures docker compose, and compose hands each
+container what it needs of it. Besides the database and SendGrid credentials it
+names three host directories that are bind-mounted into the containers and live
+next to the repo, not in it:
 
 | Variable               | Contents                          |
 | ---------------------- | --------------------------------- |
-| `TEAMTAVERN_PATH`      | this repo                         |
 | `POSTGRES_DOCKER_PATH` | Postgres data, persists across restarts |
 | `POSTGRES_BACKUP_PATH` | database backups                  |
 | `CADDY_DOCKER_PATH`    | Caddy's `data` and `config` dirs  |
 
 On Windows these use the `/c/Users/...` form. `ENVIRONMENT` in the same file
-selects which `stacks/<name>.Caddyfile` Caddy loads.
+names the stack: `development`, `test`, `staging` or `production`. Caddy loads
+the Caddyfile of that name from `release/caddy/`, and the server reads it for
+what differs between stacks, in `Server/Infrastructure/Environment.purs`.
 
 Both local stacks serve plain HTTP, on the host port `CADDY_HTTP_PORT` names:
-8000 in `stacks/.env`, 8080 in `stacks/test.env`. Production shares
-`docker-compose.yml`, leaves the variable unset and takes ports 80 and 443,
-where `production.Caddyfile` serves HTTPS. The session cookie drops `Secure`
-under `DEPLOYMENT=local`, and browsers treat `http://localhost` as a secure
-context, so nothing on the site needs HTTPS locally.
+8000 in `stacks/.env`, 8080 in `stacks/test.env`. Production runs the same
+`compose.yml`, leaves the variable unset and takes ports 80 and 443, where
+`production.Caddyfile` serves HTTPS. The session cookie drops `Secure` in the
+`development` and `test` environments, and browsers treat `http://localhost` as
+a secure context, so nothing on the site needs HTTPS locally.
 
 `stacks/.env` is committed. The Postgres credentials in it are real, but the
 database is reachable only from inside the compose network, so they are
@@ -168,7 +174,7 @@ without it compose refuses to start rather than binding an arbitrary host port.
 `npm test` runs both commands itself, so a test run takes this stack down and
 reseeds it from whatever state it was in.
 
-The test stack has no Discord. Its `discord` service runs
+The test stack has no Discord. Its `tt-discord` service runs
 `dist-test/discord-stub.js`, and `DISCORD_API_URL` in `test.env` points the
 server at it. The stub answers the user endpoint with whatever user the access
 token names, the URI-encoded JSON of that user, so a spec can sign up and sign in
@@ -178,7 +184,7 @@ authorize URL itself, sending the browser straight back with such a token and
 the `state` the page sent, and checks the scope and redirect URI the page asked
 for.
 
-The test stack has no SendGrid either. Its `mail` service runs
+The test stack has no SendGrid either. Its `tt-mail` service runs
 `dist-test/mail-stub.js`, and `SENDGRID_API_URL` in `test.env` points the
 server's SendGrid client at it, so the server sends as production does. The stub
 keeps every email and shows an address's mail at
@@ -207,7 +213,7 @@ account:
    on the home page signed in.
 2. Sign out, Continue with Discord at <http://localhost:8000/signin>, and land
    signed in without being asked for a nickname.
-3. `docker logs node` shows no Discord errors for either.
+3. `docker logs tt-node` shows no Discord errors for either.
 
 `stacks/test-seed/seed.sh` builds the database on the first boot of the Postgres
 volume, which is why `down -v` rather than `down` is what resets it. It applies
@@ -240,6 +246,20 @@ all are confirmed. `Seed/Games/` carries all ten production games, so every
 game handle the site serves has a page with content. A cold boot answers on the
 API within a few seconds.
 
+### A server
+
+A server holds no checkout, only a release: `~/team-tavern` is `release/` as
+uploaded, plus the server's own `.env` beside `compose.yml`, which compose reads
+from there. That `.env` sets what `stacks/.env` does, with the real SendGrid key,
+`ENVIRONMENT=production` (or `staging`) and no `CADDY_HTTP_PORT`. A release never
+carries one.
+
+`./build.sh && ./deploy-release.sh user@host` uploads `release/` over SFTP,
+the index files last so no page names a script still on its way, and runs
+`docker compose up -d --force-recreate --remove-orphans` there. The files are
+bind-mounted, so recreating the containers is what picks them up. The nightly
+backup is `cron.txt`, run from the crontab of the user that owns the directory.
+
 ### Expected noise
 
 None of it is a bug to fix:
@@ -252,7 +272,7 @@ None of it is a bug to fix:
   unapproved install script, and bcrypt does not need it because it ships
   Node-API prebuilds that `node-gyp-build` picks at require time.
 - **`$'\r': command not found`**, or a container that cannot reach
-  `postgres`: a file has CRLF endings. See the line-ending rule under Code
+  `tt-postgres`: a file has CRLF endings. See the line-ending rule under Code
   style.
 
 ## Dependencies
@@ -297,7 +317,7 @@ the server bundle leaves external, plus the build toolchain in devDependencies.
    declares, so pages `match` / `onMatch` on it.
 
 In the running stack Caddy proxies `/api/*` to the node container, sends bot
-user agents to renderready, and serves everything else from `dist-client/` with
+user agents to renderready, and serves everything else from `release/client/` with
 an `index.html` fallback for SPA paths. `/sitemap.xml` goes to node as it is,
 outside `/api`: the one route that answers with something other than JSON, an
 `OkText` whose absolute addresses are built from the origin the request came
@@ -334,12 +354,14 @@ redirects the old site's feed paths to the new ones by `legacy.game_map`.
   (`player_nickname_key` and friends), so a new unique constraint needs a
   matching branch where it can fire.
 - Configuration is environment variables read once in `Server/Main.purs`
-  (`PG*`, `SENDGRID_API_KEY`, `DEPLOYMENT` = `local` | `cloud`, and
-  `ADMIN_EMAIL`, where reports of players are mailed), supplied by
-  `stacks/.env`. `DISCORD_API_URL` is optional and defaults to Discord's own
-  API; only `stacks/test.env` sets it. `SENDGRID_API_URL` is optional too:
-  without it, `DEPLOYMENT=local` only logs its email; with it, the server sends
-  there. Only `stacks/test.env` sets it. `WORKER_PERIOD` is optional as well:
+  (`PG*`, `SENDGRID_API_KEY`, `ENVIRONMENT`, and `ADMIN_EMAIL`, where reports
+  of players are mailed), which the release's `compose.yml` hands the node
+  container from the stack's `.env`. `ENVIRONMENT` decides the cookie's
+  `Secure` and the origin of the links in an email. `DISCORD_API_URL` is
+  optional and defaults to Discord's own API; only `stacks/test.env` sets it.
+  `SENDGRID_API_URL` is optional too: without it, the development stack only
+  logs its email; with it, the server sends there. Only `stacks/test.env` sets
+  it. `WORKER_PERIOD` is optional as well:
   the seconds between the worker's runs, an hour unless `stacks/test.env`'s 2.
 - `Server/Worker.purs` runs in the node process on that period. Each run gives
   the posts that have entered their last week their expiry notification and
@@ -430,7 +452,7 @@ Only the test stack runs them, on every fresh boot.
 
 A schema change is a dated script in `Migrations/`, one transaction, and the
 same edit to `TablesCurrent.sql`. The script is applied by hand to the
-`postgres` container of the development stack and to production. Before it
+`tt-postgres` container of the development stack and to production. Before it
 goes out, apply `TablesBase.sql` and the scripts to one scratch database and
 `TablesCurrent.sql` to another, and `pg_dump --schema-only` both: the dumps
 must not differ. Once a script has run everywhere, `TablesBase.sql` is replaced

@@ -28,7 +28,7 @@ for term in "$@"; do
     terms+="${terms:+, }(\$\$${label}\$\$, \$\$${regex}\$\$)"
 done
 
-docker exec -i postgres psql -U "$user" -d team_tavern -v ON_ERROR_STOP=1 -q <<SQL
+docker exec -i tt-postgres psql -U "$user" -d team_tavern -v ON_ERROR_STOP=1 -q <<SQL
 with post as (
     select lower(array_to_string(about || ambitions, ' ')) as text, updated
     from (

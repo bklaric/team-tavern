@@ -10,8 +10,8 @@ import TeamTavern.Routes.Player.ViewMe as ViewMe
 import TeamTavern.Server.Block.Infrastructure.Blocked (blockedBetween)
 import TeamTavern.Server.Conversation.Infrastructure.Unread (unreadFor)
 import TeamTavern.Server.Infrastructure.Cookie (Cookies, setCookieHeader)
-import TeamTavern.Server.Infrastructure.Deployment (Deployment)
 import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
+import TeamTavern.Server.Infrastructure.Environment (Environment)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstInternal, queryMany)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Server.Notification.Infrastructure.Visible (visibleNotification)
@@ -57,15 +57,15 @@ gamesQuery = Query """
 
 -- The header asks on every page, so the answer renews the session cookie,
 -- which then lapses when the session does.
-viewMe :: ∀ left. Deployment -> Pool -> Cookies -> Async left _
-viewMe deployment pool cookies =
+viewMe :: ∀ left. Environment -> Pool -> Cookies -> Async left _
+viewMe environment pool cookies =
     sendResponse "Error viewing the signed-in player" do
     {id, token} <- ensureSignedIn pool cookies
     {nickname, unread_conversations, unread_notifications}
         :: {nickname :: String, unread_conversations :: Int, unread_notifications :: Int}
         <- queryFirstInternal pool playerQuery (id : [])
     games :: Array ViewMe.OkGameContent <- queryMany pool gamesQuery (id : [])
-    pure $ ok (setCookieHeader deployment token)
+    pure $ ok (setCookieHeader environment token)
         ( { nickname
           , unreadConversations: unread_conversations
           , unreadNotifications: unread_notifications

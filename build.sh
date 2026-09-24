@@ -15,3 +15,10 @@ cd "$(dirname "$0")"
 # These run as separate processes, so the PATH they set does not leak back here.
 ./build-client.sh
 ./build-server.sh
+
+# And the stack that runs them, so release/ is all a server needs besides its
+# .env. The test Caddyfile stays behind, with the rest of the test stack.
+mkdir -p release/caddy
+cp stacks/docker-compose.release.yml release/compose.yml
+cp stacks/base.Caddyfile stacks/development.Caddyfile stacks/staging.Caddyfile stacks/production.Caddyfile release/caddy/
+cp backup-database.sh release/backup-database.sh

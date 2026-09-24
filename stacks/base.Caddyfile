@@ -49,7 +49,7 @@ handle @prerender_header {
 }
 
 handle @bot_page {
-    reverse_proxy renderready:3000 {
+    reverse_proxy tt-renderready:3000 {
         rewrite /render?url={args[0]}{uri}
         header_down -ETag
         header_down -Last-Modified
@@ -86,14 +86,14 @@ redir @old_feed {old_feed} 301
 # Proxy api requests to the api.
 
 handle_path /api/* {
-    reverse_proxy node
+    reverse_proxy tt-node
 }
 
 # The sitemap is the api's, since only the database knows the posts, but
 # crawlers look for it at the root.
 
 handle /sitemap.xml {
-    reverse_proxy node
+    reverse_proxy tt-node
 }
 
 # Each origin names its own sitemap.

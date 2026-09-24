@@ -5,12 +5,12 @@
 # The prerenderer resolves `localhost` to its own container, so the site also
 # answers to its compose service name, and that name is the render origin.
 
-http://localhost, http://caddy {
-    import base.Caddyfile http://caddy
+http://localhost, http://tt-caddy {
+    import base.Caddyfile http://tt-caddy
 
     # The mail stub's page, on the site's origin, so the relative links in the
     # emails it shows open the site.
     handle /mail {
-        reverse_proxy mail:3000
+        reverse_proxy tt-mail:3000
     }
 }

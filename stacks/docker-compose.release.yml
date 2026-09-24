@@ -1,0 +1,94 @@
+# The stack a release runs. build.sh copies this file into release/ as
+# compose.yml, beside the client, the server and the Caddyfiles it mounts, so
+# every relative path below is relative to release/ and the file does not run
+# from here.
+#
+# The rest comes from a .env beside it, which each machine keeps for itself and
+# a release never carries: on a server that is the .env in the release's
+# directory, and the development stack passes stacks/.env with --env-file.
+
+name: teamtavern
+
+# Every container is named as its service, so `docker` and `docker compose` take
+# the same name, and the tt- prefix sets them apart from other containers on the
+# machine.
+services:
+  tt-postgres:
+    image: postgres:14.4
+    container_name: tt-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+      POSTGRES_DB: ${POSTGRES_DB:?}
+    volumes:
+      - ${POSTGRES_DOCKER_PATH:?}:/var/lib/postgresql/data
+      - ${POSTGRES_BACKUP_PATH:?}:/backups
+
+  tt-node:
+    # Keep in step with the Volta pin in package.json.
+    image: node:24.21.0
+    container_name: tt-node
+    restart: unless-stopped
+    # Bash -c is necessary because of cd and &&, which are shell builtin commands.
+    # --omit=dev: server.js bundles everything except bcrypt, pg and
+    # @sendgrid/mail, so the build toolchain has no place in this container.
+    command: >
+      bash -c "cd /root/team-tavern/server &&
+              npm ci --omit=dev &&
+              node server.js"
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT:?}
+      PGHOST: tt-postgres
+      PGPORT: 5432
+      PGUSER: ${POSTGRES_USER:?}
+      PGPASSWORD: ${POSTGRES_PASSWORD:?}
+      PGDATABASE: ${POSTGRES_DB:?}
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY:?}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:?}
+    volumes:
+      - ./server:/root/team-tavern/server
+      # Keeps the container's node_modules off the host.
+      - node_modules:/root/team-tavern/server/node_modules
+    depends_on:
+      - tt-postgres
+
+  tt-renderready:
+    # No published image, so the first `up` builds it from the tag.
+    build: https://github.com/lukapozega/renderready.git#v1.0.0
+    container_name: tt-renderready
+    restart: unless-stopped
+    environment:
+      # Without it, renderready fetches the page itself and hands it to Chromium, which then
+      # treats the page as public and blocks its scripts from reaching the private `tt-caddy`
+      # address. No render needs a redirect followed: every page path answers 200.
+      FOLLOW_REDIRECTS: "true"
+      # A render that never settles is a page that failed to load, not one to index half-drawn.
+      TIMEOUT_STATUS_CODE: "503"
+      # Matches subdomains too, so www and staging render.
+      ALLOWED_DOMAINS: tt-caddy,teamtavern.net
+    depends_on:
+      - tt-node
+
+  tt-caddy:
+    image: caddy:2.10.0
+    container_name: tt-caddy
+    restart: unless-stopped
+    # Each environment has its Caddyfile in caddy/, named after it.
+    command: caddy run --config /etc/caddy/${ENVIRONMENT:?}.Caddyfile --adapter caddyfile
+    # Production leaves both unset and takes 80 and 443. The development .env
+    # shifts the HTTP port, and its Caddyfile serves nothing on 443.
+    ports:
+      - "${CADDY_HTTP_PORT:-80}:80"
+      - "${CADDY_HTTPS_PORT:-443}:443"
+    volumes:
+      - ./caddy:/etc/caddy:ro
+      - ./client:/srv:ro
+      - ${CADDY_DOCKER_PATH:?}/data:/data
+      - ${CADDY_DOCKER_PATH:?}/config:/config
+    depends_on:
+      - tt-node
+      - tt-renderready
+
+volumes:
+  node_modules:

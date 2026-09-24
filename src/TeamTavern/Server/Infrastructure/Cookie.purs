@@ -14,7 +14,7 @@ import Data.Maybe (Maybe)
 import Data.MultiMap (MultiMap, singleton)
 import Data.Newtype (unwrap, wrap)
 import Data.NonEmpty ((:|))
-import TeamTavern.Server.Infrastructure.Deployment (Deployment(..))
+import TeamTavern.Server.Infrastructure.Environment (Environment, servesHttps)
 import TeamTavern.Server.Session.Domain.Token (Token, sessionDays)
 
 -- The session is the one cookie, which only the server reads. The client
@@ -31,16 +31,14 @@ lookupToken cookies = lookup tokenCookieName cookies <#> wrap
 -- `SameSite=Lax` keeps a browser from sending the cookie with any request
 -- another site starts other than following a link here, so another site can't
 -- act as the player.
-setCookieHeader :: Deployment -> Token -> MultiMap String String
-setCookieHeader deployment token =
+setCookieHeader :: Environment -> Token -> MultiMap String String
+setCookieHeader environment token =
     tokenCookieName <> "=" <> unwrap token
     <> "; Max-Age=" <> show (sessionDays * 24 * 60 * 60)
     <> "; Path=/"
     <> "; SameSite=Lax"
     <> "; HttpOnly"
-    <> case deployment of
-        Local -> ""
-        Cloud -> "; Secure"
+    <> (if servesHttps environment then "; Secure" else "")
     # oneCookie
 
 removeCookieHeader :: MultiMap String String

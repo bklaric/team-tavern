@@ -13,7 +13,7 @@ now="2026-09-12T08:23:58Z"
 
 mkdir -p "$here/data"
 for handle in "$@"; do
-    json="$(docker exec -i postgres psql -U bklaric -d redesign_import -At -v ON_ERROR_STOP=1 \
+    json="$(docker exec -i tt-postgres psql -U bklaric -d redesign_import -At -v ON_ERROR_STOP=1 \
         -v handle="$handle" -v now="$now" < "$here/export-sample.sql")"
     printf 'FEED_DATA = %s;\n' "$json" > "$here/data/$handle.js"
     echo "$here/data/$handle.js"

@@ -10,8 +10,8 @@ import Jarilo (noContent)
 import JavaScript.Npm.Pg.Pool (Pool)
 import TeamTavern.Routes.Player.RegisterPlayer as RegisterPlayer
 import TeamTavern.Server.Infrastructure.Cookie (Cookies, setCookieHeader)
-import TeamTavern.Server.Infrastructure.Deployment (Deployment)
 import TeamTavern.Server.Infrastructure.Email (Mailer)
+import TeamTavern.Server.Infrastructure.Environment (Environment)
 import TeamTavern.Server.Infrastructure.FetchDiscordUser (DiscordApiUrl, discordEmail, fetchDiscordUser)
 import TeamTavern.Server.Infrastructure.Postgres (transaction)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
@@ -26,8 +26,8 @@ import TeamTavern.Server.Session.Infrastructure.RevokeSession (revokeSession)
 import TeamTavern.Server.Session.Start.CreateSession (createSession)
 
 register :: ∀ left.
-    Deployment -> Mailer -> DiscordApiUrl -> Pool -> Cookies -> RegisterPlayer.RequestContent -> Async left _
-register deployment mailer discordApiUrl pool cookies content =
+    Environment -> Mailer -> DiscordApiUrl -> Pool -> Cookies -> RegisterPlayer.RequestContent -> Async left _
+register environment mailer discordApiUrl pool cookies content =
     sendResponse "Error registering player" do
     -- Validate register model.
     registration <- validateRegistration content
@@ -73,4 +73,4 @@ register deployment mailer discordApiUrl pool cookies content =
 
     foreach confirmation $ sendConfirmation mailer
 
-    pure $ noContent $ setCookieHeader deployment token
+    pure $ noContent $ setCookieHeader environment token

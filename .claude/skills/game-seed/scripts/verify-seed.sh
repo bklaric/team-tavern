@@ -33,8 +33,8 @@ fi
 user=$(grep '^POSTGRES_USER=' stacks/.env | cut -d= -f2 | tr -d '\r')
 db="seed_check_$$_$RANDOM"
 
-psql_admin() { docker exec -i postgres psql -U "$user" -d postgres -q "$@"; }
-psql_db() { docker exec -i postgres psql -U "$user" -d "$db" -v ON_ERROR_STOP=1 -q "$@"; }
+psql_admin() { docker exec -i tt-postgres psql -U "$user" -d postgres -q "$@"; }
+psql_db() { docker exec -i tt-postgres psql -U "$user" -d "$db" -v ON_ERROR_STOP=1 -q "$@"; }
 
 psql_admin -c "create database $db;"
 trap 'psql_admin -c "drop database if exists $db;" >/dev/null' EXIT

@@ -394,7 +394,7 @@ next batch, passed back as it came.
 
 ## Practicalities
 
-- The dev stack's `postgres` container holds the dump; the export needs it running.
+- The dev stack's `tt-postgres` container holds the dump; the export needs it running.
 - Screenshot with `"$(volta which node)" redesign/prototype/screenshot.mjs ...`. The
   plain `node` shim passes arguments through `cmd.exe`, which splits URLs at `&`.
 - Bash heredocs containing apostrophes fail in this environment. Write one-off

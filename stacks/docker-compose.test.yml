@@ -1,17 +1,19 @@
-# The test stack. It shares the built client and server bundles with the
-# development stack and nothing else: its database is a named volume seeded from
-# src/TeamTavern/Database on first boot, and its Caddy listens on shifted host
-# ports, so both stacks can run at once and `down -v` throws this one away
-# without touching development data.
+# The test stack. It serves the client and server out of release/, the same
+# files a server gets, and shares nothing else with the development stack: its
+# database is a named volume seeded from src/TeamTavern/Database on first boot,
+# and its Caddy listens on a shifted host port, so both stacks can run at once
+# and `down -v` throws this one away without touching development data.
 #
-# A whole file rather than an override of docker-compose.yml because volumes
-# merge across `-f` files instead of replacing: an override would mount the
-# development Postgres host directory and the named volume on the same path.
+# A whole file rather than an override of docker-compose.release.yml because
+# volumes merge across `-f` files instead of replacing: an override would mount
+# the development Postgres host directory and the named volume on the same path.
 
 name: teamtavern-test
 
+# The services have the release's names, which base.Caddyfile addresses, but no
+# container_name, since the release's containers already have theirs.
 services:
-  postgres:
+  tt-postgres:
     image: postgres:14.4
     env_file: test.env
     volumes:
@@ -20,24 +22,24 @@ services:
       - ./test-seed:/test-seed:ro
       - ./test-seed/seed.sh:/docker-entrypoint-initdb.d/seed.sh:ro
 
-  node:
+  tt-node:
     # Keep in step with the Volta pin in package.json.
     image: node:24.21.0
     command: >
-      bash -c "cd /root/team-tavern/dist-server &&
+      bash -c "cd /root/team-tavern/server &&
               npm ci --omit=dev &&
               node server.js"
     env_file: test.env
     volumes:
-      - ../dist-server:/root/team-tavern/dist-server
-      - node_modules:/root/team-tavern/dist-server/node_modules
+      - ../release/server:/root/team-tavern/server
+      - node_modules:/root/team-tavern/server/node_modules
     depends_on:
-      - postgres
-      - discord
-      - mail
+      - tt-postgres
+      - tt-discord
+      - tt-mail
 
   # Answers the Discord API the node container calls, at DISCORD_API_URL in test.env.
-  discord:
+  tt-discord:
     # Keep in step with the Volta pin in package.json.
     image: node:24.21.0
     command: node /root/dist-test/discord-stub.js
@@ -46,40 +48,40 @@ services:
 
   # Takes the mail the node container sends to SENDGRID_API_URL in test.env, and
   # shows it at /mail on Caddy's port.
-  mail:
+  tt-mail:
     # Keep in step with the Volta pin in package.json.
     image: node:24.21.0
     command: node /root/dist-test/mail-stub.js
     volumes:
       - ../dist-test:/root/dist-test:ro
 
-  renderready:
+  tt-renderready:
     # No published image, so the first `up` builds it from the tag.
     build: https://github.com/lukapozega/renderready.git#v1.0.0
     environment:
       # Without it, renderready fetches the page itself and hands it to Chromium, which then
-      # treats the page as public and blocks its scripts from reaching the private `caddy`
+      # treats the page as public and blocks its scripts from reaching the private `tt-caddy`
       # address. No render needs a redirect followed: every page path answers 200.
       FOLLOW_REDIRECTS: "true"
       # A render that never settles is a page that failed to load, not one to index half-drawn.
       TIMEOUT_STATUS_CODE: "503"
-      ALLOWED_DOMAINS: caddy
+      ALLOWED_DOMAINS: tt-caddy
     depends_on:
-      - node
+      - tt-node
 
-  caddy:
+  tt-caddy:
     image: caddy:2.10.0
     ports:
       - "${CADDY_HTTP_PORT:?set in stacks/test.env; pass --env-file stacks/test.env}:80"
     volumes:
-      - ./base.Caddyfile:/etc/caddy/base.Caddyfile
-      - ./test.Caddyfile:/etc/caddy/Caddyfile
-      - ../dist-client:/srv
+      - ../release/caddy/base.Caddyfile:/etc/caddy/base.Caddyfile:ro
+      - ./test.Caddyfile:/etc/caddy/Caddyfile:ro
+      - ../release/client:/srv:ro
       - caddy_data:/data
       - caddy_config:/config
     depends_on:
-      - node
-      - renderready
+      - tt-node
+      - tt-renderready
 
 volumes:
   postgres_data:

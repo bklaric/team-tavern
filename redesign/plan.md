@@ -1244,7 +1244,7 @@ card's expansion, contrast of every token on every surface it is used on. A
   rename it into place; `ADMIN_EMAIL` in the production `.env`; deploy the new
   bundles; start node; the Discord
   redirect URIs on the production app; the manual Discord check; watch
-  `docker logs node` for the first worker period.
+  `docker logs tt-node` for the first worker period.
 - After it holds: `TablesBase.sql` and `TablesCurrent.sql` are already the
   same file; `redesign/import/` is deleted, since it addresses rows only the
   old production had.

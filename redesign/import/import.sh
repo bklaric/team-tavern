@@ -14,12 +14,12 @@ set -euo pipefail
 target="${1:-redesign_import}"
 user=$(grep '^POSTGRES_USER=' stacks/.env | cut -d= -f2 | tr -d '\r')
 
-psql_admin() { docker exec -i postgres psql -U "$user" -d postgres -v ON_ERROR_STOP=1 -q "$@"; }
-psql_target() { docker exec -i postgres psql -U "$user" -d "$target" -v ON_ERROR_STOP=1 -q "$@"; }
+psql_admin() { docker exec -i tt-postgres psql -U "$user" -d postgres -v ON_ERROR_STOP=1 -q "$@"; }
+psql_target() { docker exec -i tt-postgres psql -U "$user" -d "$target" -v ON_ERROR_STOP=1 -q "$@"; }
 
 psql_admin -c "drop database if exists $target;" -c "create database $target;"
 
-docker exec postgres pg_dump -U "$user" --no-owner --no-privileges team_tavern | psql_target >/dev/null
+docker exec tt-postgres pg_dump -U "$user" --no-owner --no-privileges team_tavern | psql_target >/dev/null
 psql_target -c "alter schema public rename to legacy;" -c "create schema public;"
 
 database=src/TeamTavern/Database

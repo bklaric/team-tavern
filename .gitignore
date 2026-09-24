@@ -9,6 +9,7 @@
 /.psa*
 /.sass-cache
 /dist*
+/release/
 /.spago
 /playwright-report/
 /test-results/

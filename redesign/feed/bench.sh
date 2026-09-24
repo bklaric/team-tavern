@@ -27,7 +27,7 @@ cases=(
     "lol player, every field|league-of-legends|null|{\"type\": \"player\", \"options\": {\"role\": [\"mid\"]}, \"country\": \"Germany\", \"languages\": [\"English\"], \"online\": {\"from\": \"18:00\", \"to\": \"22:00\"}, \"timezone\": \"Europe/Berlin\", \"microphone\": true}|{player,group,community}"
 )
 
-psql_db() { docker exec -i postgres psql -U "$user" -d "$database" -v ON_ERROR_STOP=1 -qAt "$@"; }
+psql_db() { docker exec -i tt-postgres psql -U "$user" -d "$database" -v ON_ERROR_STOP=1 -qAt "$@"; }
 
 query="$(cat "$here/../../src/TeamTavern/Server/Feed/Feed.sql")"
 

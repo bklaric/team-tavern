@@ -9,8 +9,8 @@ import Jarilo (noContent)
 import JavaScript.Npm.Pg.Pool (Pool)
 import TeamTavern.Routes.Session.StartSession as StartSession
 import TeamTavern.Server.Infrastructure.Cookie (Cookies, setCookieHeader)
-import TeamTavern.Server.Infrastructure.Deployment (Deployment)
 import TeamTavern.Server.Infrastructure.Email (Mailer)
+import TeamTavern.Server.Infrastructure.Environment (Environment)
 import TeamTavern.Server.Infrastructure.FetchDiscordUser (DiscordApiUrl, fetchDiscordUser)
 import TeamTavern.Server.Infrastructure.Postgres (transaction)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
@@ -22,8 +22,8 @@ import TeamTavern.Server.Session.Start.CheckPassword (checkPassword)
 import TeamTavern.Server.Session.Start.CreateSession (createSession)
 
 start :: ∀ left.
-    Deployment -> Mailer -> DiscordApiUrl -> Pool -> Cookies -> StartSession.RequestContent -> Async left _
-start deployment mailer discordApiUrl pool cookies body =
+    Environment -> Mailer -> DiscordApiUrl -> Pool -> Cookies -> StartSession.RequestContent -> Async left _
+start environment mailer discordApiUrl pool cookies body =
     sendResponse "Error starting session" do
     -- Generate session token.
     token <- Token.generate
@@ -49,4 +49,4 @@ start deployment mailer discordApiUrl pool cookies body =
 
     foreach confirmation $ sendConfirmation mailer
 
-    pure $ noContent $ setCookieHeader deployment token
+    pure $ noContent $ setCookieHeader environment token

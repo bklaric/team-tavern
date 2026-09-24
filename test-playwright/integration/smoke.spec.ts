@@ -179,14 +179,14 @@ test.describe("a bot", () => {
     // A bot goes on to fetch what the prerendered HTML names, under the same user agent, so
     // Caddy has to serve those files rather than hand them to the prerenderer as pages.
     // The HTML is based on the render origin, which is the site itself in production and here
-    // the compose-internal `http://caddy`, so this puts the site's origin in its place.
+    // the compose-internal `http://tt-caddy`, so this puts the site's origin in its place.
     for (const kind of pageKinds)
         test(`can fetch the stylesheets and images ${kind.name} names`, async ({ page, baseURL }) => {
             test.slow();
             const path = kind.path();
             await page.route(url => url.pathname === path, async route => {
                 const response = await route.fetch({ timeout: 60_000 });
-                const body = (await response.text()).replaceAll("http://caddy", baseURL!);
+                const body = (await response.text()).replaceAll("http://tt-caddy", baseURL!);
                 await route.fulfill({ response, body });
             });
             const served = new Map<string, { status: number, contentType: string }>();
@@ -228,13 +228,13 @@ test.describe("a bot, while the API is down", () => {
     test.use({ userAgent: googlebot, javaScriptEnabled: false });
 
     test.beforeAll(async () => {
-        await rethrowComposeError(() => compose.stopOne("node", testStack));
+        await rethrowComposeError(() => compose.stopOne("tt-node", testStack));
     });
 
     test.afterAll(async ({ request }) => {
         // The node container reinstalls its dependencies on every start.
         test.setTimeout(120_000);
-        await rethrowComposeError(() => compose.upOne("node", testStack));
+        await rethrowComposeError(() => compose.upOne("tt-node", testStack));
         await waitForApi(request);
     });
 
