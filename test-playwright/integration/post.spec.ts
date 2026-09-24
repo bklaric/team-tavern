@@ -1,4 +1,4 @@
-import { expect, Page, test } from "@playwright/test";
+import { expect, Locator, Page, test } from "@playwright/test";
 import { password, signOut, signUp, unique } from "../accounts";
 import { discordUser, fakeDiscord, signUpWithDiscord } from "../discord";
 import { expectPage } from "../pages";
@@ -204,6 +204,29 @@ test.describe("posting", () => {
         await page.goto(feedPath);
         await expectSettled(page);
         await expect(card(page, nickname)).toContainText("Support main, evenings.");
+    });
+
+    test("shows the text as the paragraphs a blank line parts, apart from each other", async ({ page }) => {
+        const nickname = await signUp(page);
+        await page.goto("/games/league-of-legends/post/player");
+        await page.getByLabel("About you and what you're looking for")
+            .fill("Support main,\nmostly evenings.\n\nVoice on, no tilt.");
+
+        const expectParagraphs = async (text: Locator) => {
+            await expect(text.locator("p")).toHaveText(["Support main, mostly evenings.", "Voice on, no tilt."]);
+            const [first, second] = await Promise.all([0, 1].map(i => text.locator("p").nth(i).boundingBox()));
+            expect(second!.y).toBeGreaterThan(first!.y + first!.height);
+        };
+        const preview = page.getByRole("complementary", { name: "Preview" }).locator(".card");
+        await preview.getByRole("button", { name: "Details" }).click();
+        await expectParagraphs(preview.locator(".card-text"));
+
+        await page.getByRole("button", { name: "Publish post" }).click();
+        await expectPage(page, "/games/league-of-legends/post/player/live");
+        await page.goto(feedPath);
+        await expectSettled(page);
+        await card(page, nickname).getByRole("button", { name: "Details" }).click();
+        await expectParagraphs(card(page, nickname).locator(".card-text"));
     });
 
     test("signs up with Discord beside the Discord input and comes back to the draft", async ({ page }) => {

@@ -148,8 +148,9 @@
 }
 
 .card-expanded .card-text {
-    display: block;
-    white-space: pre-line;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
 }
 
 .card-expanded .card-details {

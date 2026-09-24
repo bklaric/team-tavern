@@ -7,7 +7,7 @@ import Data.Array (catMaybes, elem, filter, find, findIndex, head, index, length
 import Data.DateTime.Instant (Instant)
 import Data.Int (floor)
 import Data.Maybe (Maybe(..), fromMaybe, isJust, isNothing, maybe)
-import Data.String (Pattern(..), joinWith, split, toLower, trim)
+import Data.String (joinWith, toLower, trim)
 import Data.String.CodeUnits as CodeUnits
 import Effect.Class (class MonadEffect)
 import Foreign.Object as Object
@@ -310,9 +310,9 @@ card { game, viewer, post, marked, expanded: expanded', place, onToggle, onConta
     hours = hoursOf viewer post
     facts = factsOf game (if marked then post else post { marks = Object.empty }) hours
     details = detailsOf game post hours
-    text = post.summary # joinWith "\n" # trim
-    long = CodeUnits.length text > (if post.type == "community" then 360 else 170)
-        || length (split (Pattern "\n") text) > 2
+    paragraphs = post.summary <#> trim # filter (_ /= "")
+    long = CodeUnits.length (joinWith " " paragraphs) > (if post.type == "community" then 360 else 170)
+        || length paragraphs > 2
     expandable = not null details || not null post.trackers || long
     name = postName post
     href = postPath game post
@@ -387,12 +387,13 @@ card { game, viewer, post, marked, expanded: expanded', place, onToggle, onConta
     footer = HH.div [ HS.class_ "card-footer" ] $
         [ HH.div [ HS.class_ "card-meta" ] $ catMaybes [ ownerLine, if blocked then Nothing else messagedLine ] ]
         <> actions
-        <> (if not page && (expandable || text /= "") then [ toggle ] else [])
+        <> (if not page && (expandable || not null paragraphs) then [ toggle ] else [])
     in
     HH.article [ HS.class_ classes ] $ catMaybes
     [ Just heading
     , factLine facts
-    , if text == "" then Nothing else Just $ HH.p [ HS.class_ "card-text" ] [ HH.text text ]
+    , if null paragraphs then Nothing
+        else Just $ HH.div [ HS.class_ "card-text" ] (paragraphs <#> \paragraph -> HH.p_ [ HH.text paragraph ])
     , if null detailRows then Nothing else Just $ HH.div [ HS.class_ "card-details" ] detailRows
     ]
     <> status

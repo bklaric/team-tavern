@@ -15,7 +15,7 @@ module TeamTavern.Client.Pages.Post.Draft
 import Prelude
 
 import Control.Alt ((<|>))
-import Data.Array (elem, mapMaybe, null, sort)
+import Data.Array (elem, filter, mapMaybe, null, sort)
 import Data.Date (Date, day, month, year)
 import Data.Enum (fromEnum)
 import Data.Int as Int
@@ -249,7 +249,7 @@ toCard game type_ { nickname, updated, today } draft =
     , messaged: Nothing
     , updated
     , expired: false
-    , summary: if trim draft.text == "" then [] else [ trim draft.text ]
+    , summary: draft.text # split (Pattern "\n\n") <#> trim # filter (_ /= "")
     , age: if player then draft.birthday >>= ageOn today else Nothing
     , country: if player then draft.country else Nothing
     , languages: draft.languages
