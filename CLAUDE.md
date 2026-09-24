@@ -77,8 +77,12 @@ drawn. `toHaveURL` is for where the URL itself is what's under test.
 Nothing typechecks the suite on the way to running it, since Playwright strips
 the types without reading them, so `npm run typecheck` is a separate step.
 
-A change is verified when `spago build` reports no errors, `npm test` passes, and
-the affected page or endpoint behaves in the running stack.
+A change is verified when `spago build` reports no errors, the specs that cover
+what it touches pass, and the affected page or endpoint behaves in the running
+stack. Name those specs, `npm test -- feed.spec.ts post-page.spec.ts`; the stack
+setup still runs first. The full suite takes a long while, so run it only when a
+change reaches across the site, such as the router, the header or the shared
+styles, and no handful of specs covers it.
 
 `test-playwright/screenshots.mjs` shoots every screen of the site at 375 px and
 1280 px against the running test stack, into `test-playwright/screenshots/`, for
