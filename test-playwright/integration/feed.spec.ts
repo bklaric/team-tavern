@@ -174,6 +174,21 @@ test.describe("the feed", () => {
     });
 });
 
+// Chromium reports India's zone by its old name, which Postgres doesn't know. The feed sends
+// the viewer's zone, so it has to name it as the site's list does.
+test.describe("a browser that reports its zone by an old name", () => {
+    test.use({ timezoneId: "Asia/Calcutta" });
+
+    test("is shown the feed", async ({ page }) => {
+        await page.goto(feedPath);
+        expect(await page.evaluate(() => Intl.DateTimeFormat().resolvedOptions().timeZone)).toBe("Asia/Calcutta");
+        await expectSettled(page);
+
+        await expect(feedOrder(page)).toHaveText(
+            ["Radiant Rising", "Night Owls", "ValorantTester", olderPosts, "ExpiredTester"]);
+    });
+});
+
 // LeaderlessTester's group Last Call in Counter-Strike 2, Ranked, wants a player who can lead.
 test.describe("a group that wants an in-game leader", () => {
     test("misses a player who can't lead and fits one who can", async ({ page }) => {

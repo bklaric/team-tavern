@@ -249,10 +249,6 @@ allTimezones =
         , city: "Catamarca"
         , country: "Argentina"
         },
-        { name: "America/Argentina/ComodRivadavia"
-        , city: "Comodoro Rivadavia"
-        , country: "Argentina"
-        },
         { name: "America/Argentina/Cordoba"
         , city: "Córdoba"
         , country: "Argentina"
@@ -441,10 +437,6 @@ allTimezones =
         , city: "Fort Nelson"
         , country: "Canada"
         },
-        { name: "America/Fort_Wayne"
-        , city: "Fort Wayne"
-        , country: "United States"
-        },
         { name: "America/Fortaleza"
         , city: "Fortaleza"
         , country: "Brazil"
@@ -452,10 +444,6 @@ allTimezones =
         { name: "America/Glace_Bay"
         , city: "Glace Bay"
         , country: "Canada"
-        },
-        { name: "America/Godthab"
-        , city: "Nuuk"
-        , country: "Greenland"
         },
         { name: "America/Goose_Bay"
         , city: "Goose Bay"
@@ -527,10 +515,6 @@ allTimezones =
         },
         { name: "America/Indiana/Winamac"
         , city: "Winamac"
-        , country: "United States"
-        },
-        { name: "America/Indianapolis"
-        , city: "Indianapolis"
         , country: "United States"
         },
         { name: "America/Inuvik"
@@ -677,6 +661,10 @@ allTimezones =
         , city: "New Salem"
         , country: "United States"
         },
+        { name: "America/Nuuk"
+        , city: "Nuuk"
+        , country: "Greenland"
+        },
         { name: "America/Ojinaga"
         , city: "Ojinaga"
         , country: "Mexico"
@@ -744,10 +732,6 @@ allTimezones =
         { name: "America/Rio_Branco"
         , city: "Rio Branco"
         , country: "Brazil"
-        },
-        { name: "America/Rosario"
-        , city: "Rosario"
-        , country: "Argentina"
         },
         { name: "America/Santa_Isabel"
         , city: "Santa Isabel"
@@ -968,10 +952,6 @@ allTimezones =
         { name: "Asia/Chita"
         , city: "Chita"
         , country: "Russia"
-        },
-        { name: "Asia/Choibalsan"
-        , city: "Choibalsan"
-        , country: "Mongolia"
         },
         { name: "Asia/Chongqing"
         , city: "Chongqing"
@@ -1213,10 +1193,6 @@ allTimezones =
         , city: "Tomsk"
         , country: "Russia"
         },
-        { name: "Asia/Ujung_Pandang"
-        , city: "Makassar"
-        , country: "Indonesia"
-        },
         { name: "Asia/Ulaanbaatar"
         , city: "Ulaanbaatar"
         , country: "Mongolia"
@@ -1437,13 +1413,13 @@ allTimezones =
         , city: "Kaliningrad"
         , country: "Russia"
         },
-        { name: "Europe/Kiev"
-        , city: "Kiev"
-        , country: "Ukraine"
-        },
         { name: "Europe/Kirov"
         , city: "Kirov"
         , country: "Russia"
+        },
+        { name: "Europe/Kyiv"
+        , city: "Kyiv"
+        , country: "Ukraine"
         },
         { name: "Europe/Lisbon"
         , city: "Lisbon"
@@ -1557,10 +1533,6 @@ allTimezones =
         , city: "Ulyanovsk"
         , country: "Russia"
         },
-        { name: "Europe/Uzhgorod"
-        , city: "Uzhgorod"
-        , country: "Ukraine"
-        },
         { name: "Europe/Vaduz"
         , city: "Vaduz"
         , country: "Liechtenstein"
@@ -1588,10 +1560,6 @@ allTimezones =
         { name: "Europe/Zagreb"
         , city: "Zagreb"
         , country: "Croatia"
-        },
-        { name: "Europe/Zaporozhye"
-        , city: "Zaporizhia"
-        , country: "Ukraine"
         },
         { name: "Europe/Zurich"
         , city: "Zürich"
@@ -1669,10 +1637,6 @@ allTimezones =
         , city: "Port Vila"
         , country: "Vanuatu"
         },
-        { name: "Pacific/Enderbury"
-        , city: "Phoenix Islands"
-        , country: "Kiribati"
-        },
         { name: "Pacific/Fakaofo"
         , city: "Atafu"
         , country: "Tokelau"
@@ -1704,6 +1668,10 @@ allTimezones =
         { name: "Pacific/Honolulu"
         , city: "Honolulu"
         , country: "United States"
+        },
+        { name: "Pacific/Kanton"
+        , city: "Phoenix Islands"
+        , country: "Kiribati"
         },
         { name: "Pacific/Kiritimati"
         , city: "Kiritimati"
