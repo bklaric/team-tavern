@@ -1260,7 +1260,8 @@ card's expansion, contrast of every token on every surface it is used on. A
   team_tavern_relaunch`, then renamed into place as the runbook does:
   - The dump held 31,212 players, 26,892 player profiles, 3,078 team profiles
     and 3,980 alerts. The import made 31,212 players (6,803 with a country,
-    26,362 with a timezone) and 38,295 posts, 76 of them active at the import
+    26,362 with a timezone), set the post ids to run to 38,295 (the `setval`
+    it prints, not a count of posts), and had 76 posts active at the import
     and 13 in their last week. Valorant has 14,889 posts, 23 active. The drops
     are the kinds the mapping expects: Splitgate's 73 profiles, communities
     with no text, an owner's older post of a type, answers to fields a type
@@ -1303,12 +1304,25 @@ card's expansion, contrast of every token on every surface it is used on. A
     anyone who already has a confirmation row, so it can be run again. On the
     development stack it counted 924, logged 924, then counted 0, and its link
     confirmed the address. Alert subscribers get nothing.
-  - Production still runs `master`'s checkout layout, so the runbook moves it
-    aside and puts the release in `~/team-tavern`. Postgres 18 gets a new data
-    directory rather than the old one moved aside, so rolling back is starting
-    the old stack again. The images are built and pulled before the downtime,
-    and Postgres is restored and imported before anything else of the release
-    starts, so the new site never serves an empty database.
+  - The relaunch moves production off the DigitalOcean Droplet, on Ubuntu
+    22.04 and Compose 2.12, too old for the runbook, to a new Hetzner server on
+    Ubuntu 26.04, and the switch is a DNS change at Namecheap rather than the
+    reserved IP. The Droplet is left as it stopped, so rolling back is starting
+    its containers and pointing DNS back. The images are built and pulled
+    before the downtime, and Postgres is restored and imported before anything
+    else of the release starts, so the new site never serves an empty database.
+- Relaunched on 2026-09-25 from `aee258c6`, following `relaunch.md`:
+  - The dump was taken at 09:05 UTC and the new site answered from 09:16. The
+    import made 31,213 players (6,802 with a country, 26,363 with a timezone)
+    and 29,805 posts, 67 active and 10 in their last week; Valorant has 14,890
+    posts, 23 active. The drops are the rehearsal's kinds.
+  - The `legacy` schema the import leaves in the new database took the
+    gzipped backup to 25 MB, over SendGrid's attachment limit once encoded, so
+    the runbook drops it after the rename. The backup is 9.6 MB without it.
+  - Caddy got fresh certificates on the new server, DNS having been switched
+    before it started. Password and Discord sign-in, the feeds, the sitemap and
+    the old paths' redirects work on production. The worker's first run, at
+    10:15, gave the 10 posts in their last week their expiry notifications.
 
 ### 20. Cleanup and docs
 
