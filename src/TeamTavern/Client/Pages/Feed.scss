@@ -134,3 +134,20 @@
     justify-content: center;
     margin-top: var(--space-6);
 }
+
+/* What the board is and how it works, below the posts. */
+
+.feed-about {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    margin-top: var(--space-12);
+    padding-top: var(--space-8);
+    border-top: 1px solid var(--border);
+    color: var(--text-muted);
+}
+
+.feed-about h2 {
+    color: var(--text);
+    font-size: var(--size-16);
+}

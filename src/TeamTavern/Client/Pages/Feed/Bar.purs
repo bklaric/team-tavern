@@ -64,8 +64,8 @@ bar :: ∀ w i. Bar i -> HH.HTML w i
 bar { ref, fields, description, openField, showMore, onType, onChange, onOpen, onMore, onClearAll } =
     HH.section [ HS.class_ "description", HPA.labelledBy "description-heading" ]
     [ HH.div [ HS.class_ "description-heading" ]
-        [ HH.h2 [ HP.id "description-heading" ] [ HH.text "Tell us about you" ]
-        , HH.p_ [ HH.text "Posts that fit you come first." ]
+        [ HH.h2 [ HP.id "description-heading" ] [ HH.text "Find posts that fit you" ]
+        , HH.p_ [ HH.text "Tell us about you, and posts that fit come first." ]
         ]
     , typeChoice "bar-type" description.type onType
     , HH.div [ HS.class_ "field-chips" ] $

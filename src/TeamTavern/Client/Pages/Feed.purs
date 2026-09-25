@@ -5,13 +5,14 @@ import Prelude
 import Async (Async)
 import Async as Async
 import Control.Alt ((<|>))
-import Data.Array (concatMap, elem, filter, find, foldl, head, index, null, snoc, sortBy)
+import Data.Array (concatMap, elem, filter, find, foldl, head, index, null, snoc, sortBy, unsnoc)
 import Data.Foldable (for_, traverse_)
 import Data.Int (fromString, round)
 import Data.Either (Either(..))
 import Data.Map (Map)
 import Data.Map as Map
 import Data.Maybe (Maybe(..), fromMaybe, isJust, isNothing, maybe)
+import Data.String (joinWith)
 import Data.Tuple (Tuple(..), fst, snd)
 import Data.Tuple.Nested ((/\))
 import Data.Variant (onMatch)
@@ -135,6 +136,37 @@ renewedNote post =
         | post.own = "Your " <> post.type <> " post"
         | otherwise = fromMaybe (post.owner <> "'s " <> post.type <> " post") post.name
     days = if post.type == "community" then "90" else "30"
+
+-- The game's own first paragraph, under its name and in the page's meta
+-- description.
+introOf :: ViewGame.OkContent -> String
+introOf game = game.description # head
+    # fromMaybe ("Find " <> game.title <> " players, groups and communities.")
+
+-- What the board is and how it works, after the feed rather than between a
+-- player and the posts. It names the filters the game's cards lead with, as
+-- the bar labels them.
+about :: ∀ w i. ViewGame.OkContent -> HH.HTML w i
+about game =
+    HH.section [ HS.class_ "feed-about", HPA.labelledBy "feed-about-heading" ]
+    [ HH.h2 [ HP.id "feed-about-heading" ] [ HH.text $ "How " <> game.title <> " LFG works on TeamTavern" ]
+    , HH.p_ [ HH.text $ "TeamTavern is a free board for " <> game.title <> ": players looking for a group, "
+        <> "groups looking for players, and communities looking for members. "
+        <> "You can browse every post without an account."
+        ]
+    , HH.p_ [ HH.text $ "Tell us about you, and the posts that fit you come first. The "
+        <> listed (game.fields # filter _.onCard <#> _.label)
+        <> " filters narrow them down, as do location, languages and age."
+        ]
+    , HH.p_ [ HH.text $ "A post stays up for 30 days, and a community's for 90. "
+        <> "Publish your own, and we'll tell you whenever a new post fits it. "
+        <> "Message a poster on TeamTavern, or add them on the accounts they share."
+        ]
+    ]
+    where
+    listed labels = case unsnoc labels of
+        Just { init, last } | not (null init) -> joinWith ", " init <> " and " <> last
+        _ -> joinWith "" labels
 
 -- The languages the loaded posts use, most used first, then every other.
 languagesByUse :: Array CardRow -> Array String
@@ -287,10 +319,7 @@ component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
             case result of
                 Right response -> response # onMatch
                     { ok: \game -> do
-                        setMeta (game.title <> " LFG and team finder | TeamTavern")
-                            ( game.description # head # fromMaybe
-                                ("Find " <> game.title <> " players, groups and communities on TeamTavern.")
-                            )
+                        setMeta (game.title <> " LFG and team finder | TeamTavern") (introOf game)
                         update _ { game = Loaded game }
                         -- Back from signing up to contact a post, its panel opens.
                         takeContactParam >>= traverse_ (openPanelById game)
@@ -494,7 +523,7 @@ component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
                 [ HH.img [ HS.class_ "feed-cover", HP.src $ "/images/games/" <> game.handle <> ".webp", HP.alt "" ]
                 , HH.div_
                     [ HH.h1_ [ HH.text $ game.title <> " LFG" ]
-                    , HH.p_ [ HH.text "Find players, groups and communities" ]
+                    , HH.p_ [ HH.text $ introOf game ]
                     , HH.div [ HS.class_ "feed-active tabular" ]
                         [ HH.text $ show game.active <> " active " <> if game.active == 1 then "post" else "posts" ]
                     ]
@@ -533,6 +562,7 @@ component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
                     HH.div [ HS.class_ "load-more" ]
                     [ button Outline Regular loadMore [ HH.text "Load more" ] ]
                 _ -> HH.text ""
+            , about game
             , if phone && state.sheetOpen
                 then sheet
                     { ref: sheetRef

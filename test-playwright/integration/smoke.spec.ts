@@ -42,9 +42,13 @@ const pageKinds = [
         expectRendered: async (page: Page) => {
             await expect(page).toHaveTitle("Valorant LFG and team finder | TeamTavern");
             await expect(page.getByRole("heading", { name: "Valorant LFG", exact: true, level: 1 })).toBeVisible();
-            // The game's own description, from its seed file.
-            await expect(page.locator('meta[name="description"]')).toHaveAttribute("content",
-                "Find Valorant players, groups and communities: a duo, a five stack, a Premier team, or a server to play on.");
+            // The game's own description, from its seed file, under its name and as the meta
+            // description; and after the posts, how the board works, with the game's filters.
+            const intro = "Find Valorant players, groups and communities: a duo, a five stack, a Premier team, or a server to play on.";
+            await expect(page.getByText(intro, { exact: true })).toBeVisible();
+            await expect(page.locator('meta[name="description"]')).toHaveAttribute("content", intro);
+            await expect(page.getByRole("heading", { name: "How Valorant LFG works on TeamTavern", level: 2 })).toBeVisible();
+            await expect(page.getByText("The Rank, Role, Platform and Looking for filters narrow them down")).toBeVisible();
             await expect(page.getByRole("link", { name: "Night Owls", exact: true })).toBeVisible();
         },
         failure: "There has been an error loading the game.",
