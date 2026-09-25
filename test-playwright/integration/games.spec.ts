@@ -28,6 +28,6 @@ test.describe("the home page", () => {
 
         await tile.click();
         await expectPage(page, feedPath);
-        await expect(page.getByRole("heading", { name: game.title, level: 1 })).toBeVisible();
+        await expect(page.getByRole("heading", { name: `${game.title} LFG`, level: 1 })).toBeVisible();
     });
 });

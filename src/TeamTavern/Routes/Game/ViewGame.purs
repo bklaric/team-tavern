@@ -19,6 +19,7 @@ type OkContent =
     { handle :: String
     , title :: String
     , shortTitle :: String
+    , description :: Array String
     , active :: Int
     , contacts :: Array String
     , trackers :: Array Tracker

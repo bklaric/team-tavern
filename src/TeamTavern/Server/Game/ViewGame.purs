@@ -18,6 +18,7 @@ loadGameQuery = Query """
         game.handle,
         game.title,
         game.short_title as "shortTitle",
+        game.description,
         (   select count(*)::int
             from post
             where post.game_id = game.id

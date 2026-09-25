@@ -24,7 +24,7 @@ test.describe("the home page", () => {
         await page.goto("/");
 
         await expectStart(page);
-        await expect(page).toHaveTitle("TeamTavern: find players, groups and communities");
+        await expect(page).toHaveTitle("TeamTavern: LFG for players, groups and communities");
         await page.locator(".type-card").nth(1).click();
         await expectPage(page, "/post/group");
     });

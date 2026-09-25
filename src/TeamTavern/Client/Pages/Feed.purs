@@ -5,7 +5,7 @@ import Prelude
 import Async (Async)
 import Async as Async
 import Control.Alt ((<|>))
-import Data.Array (concatMap, elem, filter, find, foldl, index, null, snoc, sortBy)
+import Data.Array (concatMap, elem, filter, find, foldl, head, index, null, snoc, sortBy)
 import Data.Foldable (for_, traverse_)
 import Data.Int (fromString, round)
 import Data.Either (Either(..))
@@ -287,9 +287,9 @@ component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
             case result of
                 Right response -> response # onMatch
                     { ok: \game -> do
-                        setMeta (game.title <> ": find players, groups and communities | TeamTavern")
-                            ( "Find " <> game.title <> " players, groups and communities on TeamTavern. "
-                            <> "Say who you're looking for and see who fits."
+                        setMeta (game.title <> " LFG and team finder | TeamTavern")
+                            ( game.description # head # fromMaybe
+                                ("Find " <> game.title <> " players, groups and communities on TeamTavern.")
                             )
                         update _ { game = Loaded game }
                         -- Back from signing up to contact a post, its panel opens.
@@ -493,7 +493,7 @@ component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
             [ HH.div [ HS.class_ "feed-header" ]
                 [ HH.img [ HS.class_ "feed-cover", HP.src $ "/images/games/" <> game.handle <> ".webp", HP.alt "" ]
                 , HH.div_
-                    [ HH.h1_ [ HH.text game.title ]
+                    [ HH.h1_ [ HH.text $ game.title <> " LFG" ]
                     , HH.p_ [ HH.text "Find players, groups and communities" ]
                     , HH.div [ HS.class_ "feed-active tabular" ]
                         [ HH.text $ show game.active <> " active " <> if game.active == 1 then "post" else "posts" ]

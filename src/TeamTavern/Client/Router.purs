@@ -199,7 +199,7 @@ router initialState initialPath = Hooks.component \{ queryToken } _ -> Hooks.do
     let changeRoute state path popped = do
             let page = route path
             case page of
-                Home -> setMeta "TeamTavern: find players, groups and communities" description
+                Home -> setMeta "TeamTavern: LFG for players, groups and communities" description
                 NotFound -> do
                     appendRenderReadyNotFound
                     setMeta "Page not found | TeamTavern" description

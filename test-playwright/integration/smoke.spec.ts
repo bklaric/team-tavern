@@ -7,7 +7,7 @@ const googlebot = "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.co
 
 // The home page loads its cover grid from `/api/games`, so it is the page that shows whether
 // the site and the API both answer. `Database/Seed/Games/` seeds ten games.
-const home = { path: "/", title: "TeamTavern: find players, groups and communities", gameCount: 10 };
+const home = { path: "/", title: "TeamTavern: LFG for players, groups and communities", gameCount: 10 };
 
 // Valorant's seeded posts (`stacks/test-seed/players.sql`) include GroupTester's group Night
 // Owls, active, and ExpiredTester's player post, past its 30 days. Their paths are read off
@@ -40,7 +40,11 @@ const pageKinds = [
         name: "a game's feed",
         path: () => feedPath,
         expectRendered: async (page: Page) => {
-            await expect(page).toHaveTitle("Valorant: find players, groups and communities | TeamTavern");
+            await expect(page).toHaveTitle("Valorant LFG and team finder | TeamTavern");
+            await expect(page.getByRole("heading", { name: "Valorant LFG", exact: true, level: 1 })).toBeVisible();
+            // The game's own description, from its seed file.
+            await expect(page.locator('meta[name="description"]')).toHaveAttribute("content",
+                "Find Valorant players, groups and communities: a duo, a five stack, a Premier team, or a server to play on.");
             await expect(page.getByRole("link", { name: "Night Owls", exact: true })).toBeVisible();
         },
         failure: "There has been an error loading the game.",
