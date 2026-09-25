@@ -4,11 +4,12 @@ import { expectPage } from "../pages";
 // The Venatus script fills nothing on a local origin, so this one stands in for it. Like
 // the real one it drains the queue the page has built up and then runs whatever is pushed
 // at once, and it draws each unit as a box of the unit's size, in the element given or on
-// the window's floor. The interstitial `index.html` asks for is not drawn.
+// the window's floor. A unit in the page sits inline-block inside a span, as Google's
+// frame does. The interstitial `index.html` asks for is not drawn.
 const fakeVenatus = `(() => {
     const sizes = {
-        skyscraper: "width: 160px; height: 600px",
-        desktop_takeover: "width: 970px; height: 250px",
+        skyscraper: "display: inline-block; width: 160px; height: 600px",
+        desktop_takeover: "display: inline-block; width: 970px; height: 250px",
         horizontal_sticky: "position: fixed; bottom: 0; left: 0; width: 728px; height: 90px",
         mobile_horizontal_sticky: "position: fixed; bottom: 0; left: 0; width: 320px; height: 50px",
     };
@@ -16,9 +17,11 @@ const fakeVenatus = `(() => {
         if (!sizes[name]) {
             return { remove() {} };
         }
-        const node = document.createElement("div");
-        node.dataset.fakeAd = name;
-        node.style.cssText = sizes[name];
+        const frame = document.createElement("div");
+        frame.dataset.fakeAd = name;
+        frame.style.cssText = sizes[name];
+        const node = document.createElement("span");
+        node.appendChild(frame);
         parent.appendChild(node);
         return { remove: () => node.remove() };
     };
@@ -79,6 +82,19 @@ test.describe("the ads", () => {
         const takeover = await box(page, "[data-fake-ad=desktop_takeover]");
         const header = await box(page, ".feed-header");
         expect(takeover.y + takeover.height).toBeLessThanOrEqual(header.y);
+    });
+
+    test("keep the takeover's room before it fills, so the page stays put when it does", async ({ page }) => {
+        await page.unroute("https://hb.vntsm.com/**");
+        await page.route("https://hb.vntsm.com/**", route => route.fulfill({ contentType: "text/javascript", body: "" }));
+        await page.setViewportSize({ width: 1280, height: 900 });
+        await openFeed(page);
+        const before = await box(page, ".feed-header");
+
+        await page.addScriptTag({ content: fakeVenatus });
+        await expect(unit(page, "desktop_takeover")).toBeVisible();
+        const after = await box(page, ".feed-header");
+        expect(after.y).toBe(before.y);
     });
 
     test("drop the rails where a skyscraper no longer fits beside the column", async ({ page }) => {

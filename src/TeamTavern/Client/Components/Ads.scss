@@ -2,6 +2,13 @@
    its column on a desktop. The stickies on the window's floor are Venatus's
    own. */
 
+/* Google sets a creative's frame inline-block inside inline spans, so a line
+   height would add room for descenders under it and the unit would outgrow
+   the room kept for it. */
+.ad {
+    line-height: 0;
+}
+
 .ad:empty {
     display: none;
 }
@@ -17,6 +24,16 @@
 
 .ad-rail {
     display: none;
+}
+
+/* The takeover shows from here, and its billboard's room is kept from the
+   start, empty or not, so the page stays put when one arrives or when Venatus
+   swaps it for the next. */
+@media (min-width: 1024px) {
+    .ad-takeover .ad {
+        display: block;
+        min-height: 250px;
+    }
 }
 
 /* A 160 px skyscraper fits on either side of the column from here. */
