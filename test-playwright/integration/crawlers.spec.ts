@@ -94,6 +94,25 @@ test.describe("an old feed's path", () => {
         });
 });
 
+// No page's path ends in a slash, and the router would not know one that did.
+test.describe("a path with a trailing slash", () => {
+    test("takes a browser to the page", async ({ page }) => {
+        const response = await page.goto("/games/valorant/");
+
+        const redirect = await response?.request().redirectedFrom()?.response();
+        expect(redirect?.status()).toBe(301);
+        await expectPage(page, "/games/valorant");
+    });
+
+    for (const [path, location] of [["/games/valorant/", "/games/valorant"], ["/games/valorant/?utm_source=x", "/games/valorant?utm_source=x"]])
+        test(`takes a bot from ${path} to ${location}`, async ({ request }) => {
+            const response = await request.get(path, { headers: { "User-Agent": googlebot }, maxRedirects: 0 });
+
+            expect(response.status()).toBe(301);
+            expect(response.headers()["location"]).toBe(location);
+        });
+});
+
 // A game that left the catalogue and the old players' and teams' own pages have nothing to
 // go to.
 test.describe("an old path with no page of its own", () => {

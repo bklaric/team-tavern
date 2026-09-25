@@ -89,6 +89,16 @@ map {path} {old_feed} {
 @old_feed not vars {old_feed} none
 redir @old_feed {old_feed} 301
 
+# No page's path ends in a slash, so a link that adds one is sent to the page.
+# The router knows no such path and would be a bot's 404. An old feed's path
+# is sent above, straight to its new one.
+
+@trailing_slash {
+    path_regexp trailing_slash ^(.+)/$
+    not path /api/*
+}
+redir @trailing_slash {re.trailing_slash.1}{?query} 301
+
 # Proxy api requests to the api.
 
 handle_path /api/* {
