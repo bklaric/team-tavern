@@ -1,5 +1,11 @@
 encode gzip zstd
 
+# Where both compose files mount the client. Caddy would serve its working
+# directory without it, but then the paths try_files rewrites to lose their
+# leading slash, and no path matcher sees them.
+
+root * /srv
+
 # Serve index.prerender.html to the prerenderer.
 #
 # Caddy orders handle blocks itself (named matchers before path matchers), so
@@ -120,9 +126,28 @@ handle_path /ads.txt {
     redir https://adstxt.venatusmedia.com/teamtavern.net/ads.txt 301
 }
 
+# Every build names its script and stylesheet anew, so a browser keeps them for
+# good. The fonts, covers and icons keep their names when they change, so they
+# are kept a week.
+
+@build_named path /app.min.* /style.min.*
+header @build_named Cache-Control "public, max-age=31536000, immutable"
+
+@same_named path /fonts/* /images/* /favicon.svg /logo-*
+header @same_named Cache-Control "public, max-age=604800"
+
 # Serve all other static files.
+#
+# The shell names the build's script and stylesheet, so a browser asks for it
+# again on every visit, or it would run an old build for days after a deploy.
+# The route lets the header see the path try_files rewrote to.
+
+@shell path / /index.html
 
 handle {
-    try_files {path} /index.html
+    route {
+        try_files {path} /index.html
+        header @shell Cache-Control no-cache
+    }
     file_server
 }

@@ -93,6 +93,25 @@ test.describe("a browser", () => {
             await expectHomeRendered(page);
         });
 
+    // Every build names its script and stylesheet anew, and the shell names the build's. The
+    // root is a directory rather than a path rewritten to the shell, so it is a kind of its own.
+    for (const kind of pageKinds)
+        test(`keeps the build's files for good and asks again for the shell of ${kind.name}`, async ({ page }) => {
+            const cacheControl = new Map<string, string>();
+            page.on("response", response =>
+                cacheControl.set(new URL(response.url()).pathname, response.headers()["cache-control"] ?? ""));
+
+            const shell = await page.goto(kind.path());
+            await kind.expectRendered(page);
+
+            expect(shell?.headers()["cache-control"]).toBe("no-cache");
+            const build = [...cacheControl].filter(([path]) => /^\/(app|style)\.min\./.test(path));
+            expect(build.map(([path]) => path.split(".")[0])).toEqual(expect.arrayContaining(["/app", "/style"]));
+            for (const [path, value] of build)
+                expect(value, path).toBe("public, max-age=31536000, immutable");
+            expect(cacheControl.get("/fonts/inter.css")).toBe("public, max-age=604800");
+        });
+
     test("stays on a path the site does not have and says so", async ({ page }) => {
         await page.goto("/nopage");
 
