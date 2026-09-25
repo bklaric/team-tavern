@@ -43,7 +43,7 @@ handle @prerender_header {
 # name.
 
 @bot_page {
-    header_regexp User-Agent (?i)(baiduspider|bingbot|discordbot|embedly|facebot|facebookexternalhit|googlebot|linkedinbot|outbrain|pinterest|pinterestbot|quora\slink\spreview|rogerbot|showyoubot|slackbot|telegrambot|twitterbot|vkshare|W3C_Validator|whatsapp|yandex)
+    header_regexp User-Agent (?i)(amazonbot|applebot|baiduspider|bingbot|bytespider|ccbot|chatgpt-user|claude-searchbot|claude-user|claudebot|discordbot|duckassistbot|embedly|facebot|facebookexternalhit|googlebot|gptbot|linkedinbot|oai-searchbot|outbrain|perplexity-user|perplexitybot|pinterest|pinterestbot|quora\slink\spreview|rogerbot|showyoubot|slackbot|telegrambot|twitterbot|vkshare|W3C_Validator|whatsapp|yandex)
     not path /api/* /images/* /sitemap.xml /robots.txt
     expression `{path} == "/" || !file({"try_files": [{path}]})`
 }
