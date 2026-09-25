@@ -94,6 +94,27 @@ test.describe("an old feed's path", () => {
         });
 });
 
+// Search gets the pages anyone comes to read, not the forms or a player's own pages.
+// Crawlers read the robots tag from the prerendered HTML.
+test.describe("a page's robots tag", () => {
+    test.use({ userAgent: googlebot, javaScriptEnabled: false });
+
+    for (const [path, robots] of [
+        ["/privacy", "index, follow"],
+        ["/signin", "noindex"],
+        ["/messages", "noindex"],
+        ["/post", "noindex"],
+    ])
+        test(`says ${robots} to a bot at ${path}`, async ({ page }) => {
+            test.slow();
+
+            const response = await page.goto(path, { timeout: 60_000 });
+
+            expect(response?.status()).toBe(200);
+            await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", robots);
+        });
+});
+
 // No page's path ends in a slash, and the router would not know one that did.
 test.describe("a path with a trailing slash", () => {
     test("takes a browser to the page", async ({ page }) => {

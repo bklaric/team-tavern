@@ -221,14 +221,15 @@ router initialState initialPath = Hooks.component \{ queryToken } _ -> Hooks.do
                 else do
                     liftEffect $ stampPrevious left.path
                     pure $ Just left.path
-            -- The components page is a tool for building the site, not a page of
-            -- it, a renewal link renews whenever it is opened, and an account is
-            -- nobody else's.
+            -- Search gets the pages anyone comes to read. The rest are forms, a
+            -- player's own pages and tools, and a page stays out of search until
+            -- it is named here. A post takes itself out once it has expired.
             setMetaRobots case page of
-                Design -> "noindex"
-                Renew -> "noindex"
-                Account -> "noindex"
-                _ -> "index, follow"
+                Home -> "index, follow"
+                Feed _ -> "index, follow"
+                Post _ -> "index, follow"
+                Privacy -> "index, follow"
+                _ -> "noindex"
             restore <- case page of
                 Feed { handle } | popped -> liftEffect $ Ref.read cache <#> Map.lookup handle
                 _ -> pure Nothing
