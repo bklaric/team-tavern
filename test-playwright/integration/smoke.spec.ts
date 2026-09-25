@@ -112,6 +112,16 @@ test.describe("a browser", () => {
             expect(cacheControl.get("/fonts/inter.css")).toBe("public, max-age=604800");
         });
 
+    test("is told to keep to HTTPS, to trust the content types and to send only the origin away", async ({ page }) => {
+        const response = await page.goto(feedPath);
+
+        expect(response?.headers()).toMatchObject({
+            "strict-transport-security": "max-age=31536000",
+            "x-content-type-options": "nosniff",
+            "referrer-policy": "strict-origin-when-cross-origin",
+        });
+    });
+
     test("stays on a path the site does not have and says so", async ({ page }) => {
         await page.goto("/nopage");
 

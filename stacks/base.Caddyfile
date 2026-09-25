@@ -6,6 +6,15 @@ encode gzip zstd
 
 root * /srv
 
+# A browser ignores Strict-Transport-Security over plain HTTP, so the local
+# stacks can send it too.
+
+header {
+    Strict-Transport-Security "max-age=31536000"
+    X-Content-Type-Options nosniff
+    Referrer-Policy strict-origin-when-cross-origin
+}
+
 # Serve index.prerender.html to the prerenderer.
 #
 # Caddy orders handle blocks itself (named matchers before path matchers), so
