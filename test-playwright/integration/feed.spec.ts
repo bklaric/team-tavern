@@ -70,6 +70,17 @@ test.describe("the feed", () => {
         ]);
     });
 
+    test("keeps a field's editor open while its options are picked by their names", async ({ page }) => {
+        await page.goto(feedPath);
+        await page.getByRole("button", { name: "Looking for", exact: true }).click();
+        const editor = page.getByRole("dialog", { name: "Looking for" });
+        await editor.getByText("Casual", { exact: true }).click();
+        await editor.getByText("Ranked", { exact: true }).click();
+
+        await expect(editor.getByLabel("Casual")).toBeChecked();
+        await expect(editor.getByLabel("Ranked")).toBeChecked();
+    });
+
     // ValorantTester can lead; ExpiredTester can't, and Night Owls don't ask for a leader.
     test("fits two players when either can lead, and a group that doesn't ask for a leader either way", async ({ page }) => {
         await page.goto(feedPath);

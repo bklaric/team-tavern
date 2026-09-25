@@ -167,6 +167,10 @@ export const hold = layer => modal => onClose => () => {
 
     // A dropdown closes on a press anywhere but itself and the button that
     // opened it, which toggles it on its own, and once the focus leaves both.
+    // A press on something in it that takes no focus, such as a checkbox's
+    // label, sends the focus to the nearest focusable element around it, and
+    // `main#content` is one, so the focus landing around the dropdown hasn't
+    // left it.
     const outside = target =>
         target instanceof Node && !layer.contains(target) && !(opener && opener.contains(target));
     const onPointerDown = event => {
@@ -175,7 +179,7 @@ export const hold = layer => modal => onClose => () => {
         }
     };
     const onFocusIn = event => {
-        if (outside(event.target)) {
+        if (outside(event.target) && !event.target.contains(layer)) {
             onClose();
         }
     };
