@@ -43,6 +43,14 @@
     background: var(--table);
 }
 
+/* The game's posts that follow this one in its feed. */
+.post-more {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    margin-top: var(--space-4);
+}
+
 .post-feed .feed-cover {
     width: 56px;
     height: 84px;

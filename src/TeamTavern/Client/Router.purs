@@ -17,7 +17,9 @@ import Foreign (Foreign)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
+import Halogen.Hooks (HookM)
 import Halogen.Hooks as Hooks
+import TeamTavern.Client.Components.Footer (footer)
 import TeamTavern.Client.Components.Header (header)
 import TeamTavern.Client.Pages.Account (account)
 import TeamTavern.Client.Pages.ConfirmEmail (confirmEmail)
@@ -42,6 +44,7 @@ import TeamTavern.Client.Script.Meta (setMeta, setMetaRobots)
 import TeamTavern.Client.Script.Previous (previousOf, stampPrevious)
 import TeamTavern.Client.Script.RenderReady (appendRenderReadyNotFound)
 import TeamTavern.Client.Shared.Slot (Slot__I, Slot___)
+import TeamTavern.Client.Snippets.Class as HS
 import Web.HTML (window)
 import Web.HTML.Window (scroll)
 
@@ -182,12 +185,17 @@ type Visit =
 -- The path marks the page drawn for it, in the same render as the page, so a
 -- test can tell when the location's page has arrived and not only the location.
 -- The page is the document's main content, which the header's skip link and a
--- link to another page focus.
-render :: ∀ action left. Visit -> H.ComponentHTML action ChildSlots (Async left)
+-- link to another page focus. The inbox fills the window, and has no footer
+-- below it.
+render :: ∀ left. Visit -> H.ComponentHTML (HookM (Async left) Unit) ChildSlots (Async left)
 render visit =
-    HH.div [ HP.attr (HH.AttrName "data-path") visit.path ]
+    HH.div [ HS.class_ "site", HP.attr (HH.AttrName "data-path") visit.path ]
     [ header { path: visit.path, visit: visit.visit }
     , HH.main [ HP.id "content", HP.tabIndex (-1) ] [ renderPage visit ]
+    , case visit.page of
+        Messages -> HH.text ""
+        Conversation _ -> HH.text ""
+        _ -> footer
     ]
 
 router :: ∀ input output left. Foreign -> String -> H.Component Query input output (Async left)

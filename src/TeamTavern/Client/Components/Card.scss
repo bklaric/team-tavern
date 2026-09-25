@@ -11,6 +11,18 @@
     background: var(--table);
 }
 
+/* A card cut down to its heading and facts, one of a post page's others. */
+
+.card-brief {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    background: var(--table);
+}
+
 /* While Details animates the card's height, its rows keep their own and the
    card clips them, rather than squeezing the clipped fact line and text. */
 

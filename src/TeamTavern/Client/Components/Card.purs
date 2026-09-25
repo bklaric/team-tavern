@@ -1,4 +1,4 @@
-module TeamTavern.Client.Components.Card (Place(..), Viewer, card, flagText, ownCard, postFacts, postName, tierOf, typeIcon) where
+module TeamTavern.Client.Components.Card (Place(..), Viewer, briefCard, card, flagText, ownCard, postFacts, postName, tierOf, typeIcon) where
 
 import Prelude
 
@@ -398,6 +398,24 @@ card { game, viewer, post, marked, expanded: expanded', place, onToggle, onConta
     ]
     <> status
     <> [ footer ]
+
+-- | A post among the others on a post's page: its heading, which opens its
+-- | page, and its fact line, without its words.
+briefCard :: ∀ w m. MonadEffect m =>
+    { game :: ViewGame.OkContent, viewer :: Viewer, post :: CardRow } -> HH.HTML w (m Unit)
+briefCard { game, viewer, post } = let
+    href = postPath game post
+    in
+    HH.article [ HS.class_ "card-brief" ] $ catMaybes
+    [ Just $ HH.div [ HS.class_ "card-heading" ] $ catMaybes
+        [ Just $ HH.a [ HS.class_ "card-name", HP.href href, HE.onClick $ navigateWithEvent_ href ]
+            [ HH.text $ postName post ]
+        , Just $ HH.span [ HS.class_ "card-type" ] $ typeLabel post.type
+        , slotsText post <#> \slots -> HH.span [ HS.class_ "card-slots tabular" ] [ HH.text slots ]
+        , Just $ HH.span [ HS.class_ "card-freshness" ] [ HH.text $ "Active " <> ago viewer.now post.updated ]
+        ]
+    , factLine $ factsOf game post { marks = Object.empty } (hoursOf viewer post)
+    ]
 
 -- | A post on its owner's home page (brief 11.2): its heading, which opens its
 -- | page, and its fact line, without its words, then its `status` and what the

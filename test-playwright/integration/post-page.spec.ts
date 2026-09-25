@@ -24,7 +24,7 @@ test.describe("a post's page", () => {
         await openFromFeed(page, "Night Owls");
 
         await expect(page.getByRole("heading", { name: "Night Owls", level: 1 })).toBeVisible();
-        await expect(page.locator(".card-type")).toHaveText("Valorant group");
+        await expect(page.locator(".card .card-type")).toHaveText("Valorant group");
         await expect(page.getByText("Usually online")).toBeVisible();
         await expect(page.getByRole("button", { name: "Details" })).toHaveCount(0);
         await expect(page.locator(".fact-fit, .fact-miss")).toHaveCount(0);
@@ -145,6 +145,42 @@ test.describe("a post's page", () => {
         await expect(page.locator(".card")).not.toHaveClass(/card-expired/);
         await expect(page.locator("#meta-robots")).toHaveAttribute("content", "index, follow");
         await expect(renew).toBeFocused();
+    });
+
+    // Other specs add Valorant posts as they run, so the feed is read again whenever
+    // one lands between reading it and opening the post.
+    test("links the game's active posts that follow it in the feed, then those at its top", async ({ page }) => {
+        const others = page.locator(".post-more .card-name");
+        await expect(async () => {
+            await page.goto(feedPath);
+            await expect(page.locator(".feed")).toHaveAttribute("aria-busy", "false");
+            const active = await page.locator(".feed .card:not(.card-expired) .card-name").allTextContents();
+            const at = active.indexOf("ValorantTester");
+            expect(at).toBeGreaterThanOrEqual(0);
+            await card(page, "ValorantTester").getByRole("link", { name: "ValorantTester", exact: true }).click();
+            await expectPage(page, postPath);
+            await expect(page.getByRole("heading", { name: "Other Valorant posts" })).toBeVisible();
+            expect(await others.allTextContents())
+                .toEqual([...active.slice(at + 1), ...active.slice(0, at)].slice(0, 6));
+        }).toPass();
+
+        const name = await others.first().textContent();
+        await others.first().click();
+
+        await expectPage(page, postPath);
+        await expect(page.getByRole("heading", { name: name!, level: 1 })).toBeVisible();
+    });
+
+    test("of an expired post links the active posts at the top of the feed", async ({ page }) => {
+        await expect(async () => {
+            await page.goto(feedPath);
+            await expect(page.locator(".feed")).toHaveAttribute("aria-busy", "false");
+            const active = await page.locator(".feed .card:not(.card-expired) .card-name").allTextContents();
+            await card(page, "ExpiredTester").getByRole("link", { name: "ExpiredTester", exact: true }).click();
+            await expectPage(page, postPath);
+            await expect(page.getByRole("heading", { name: "Other Valorant posts" })).toBeVisible();
+            expect(await page.locator(".post-more .card-name").allTextContents()).toEqual(active.slice(0, 6));
+        }).toPass();
     });
 
     test("is gone for a post that isn't there", async ({ page }) => {

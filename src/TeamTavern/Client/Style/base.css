@@ -74,6 +74,17 @@ a:hover {
     border-radius: 2px;
 }
 
+/* The page fills the window at least, so the footer sits at its bottom. */
+.site {
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
+}
+
+.site > main {
+    flex: 1;
+}
+
 /* The page's content takes the focus from the skip link and from a link to
    another page, so that a screen reader reads on from there. It is where the
    reader is, not something to press, so it draws no ring. */

@@ -13,9 +13,11 @@ type ViewPost =
 
 -- | `blocked` is who blocked whom, `viewer` or `owner`, where either did: the
 -- | page shows the post without its contact button (brief 10). `owner` is
--- | there only for the post's owner.
+-- | there only for the post's owner. `more` is six of the game's other active
+-- | posts, those after this one in the feed.
 type OkContent =
     { post :: CardRow
     , blocked :: Maybe String
     , owner :: Maybe OwnerView
+    , more :: Array CardRow
     }

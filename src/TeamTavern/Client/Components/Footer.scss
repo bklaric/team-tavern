@@ -1,0 +1,32 @@
+/* Site footer. */
+
+.site-footer {
+    border-top: 1px solid var(--border);
+    color: var(--text-faint);
+    font-size: var(--size-12);
+}
+
+.site-footer-inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2) var(--space-6);
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--space-6) var(--space-4);
+}
+
+.site-footer-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-5);
+}
+
+.site-footer-links a {
+    color: var(--text-muted);
+}
+
+.site-footer-links a:hover {
+    color: var(--text);
+}

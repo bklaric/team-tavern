@@ -44,7 +44,8 @@ test.describe("a bot", () => {
 
 // AI crawlers run no scripts, so without a render they would read the empty shell. The
 // answer engines' bots fetch a page to cite it, the training crawlers to learn the site.
-// With scripts off, what the page shows is the HTML the prerenderer returned.
+// With scripts off, what the page shows is the HTML the prerenderer returned, whose links
+// it has made absolute on the render origin.
 const aiCrawlers = [
     ["OAI-SearchBot", "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; OAI-SearchBot/1.0; +https://openai.com/searchbot"],
     ["ClaudeBot", "Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; ClaudeBot/1.0; +claudebot@anthropic.com)"],
@@ -61,6 +62,19 @@ for (const [name, userAgent] of aiCrawlers)
 
             expect(response?.status()).toBe(200);
             await expect(page.getByRole("link", { name: "Night Owls", exact: true })).toBeVisible();
+            await expect(page.getByRole("contentinfo").getByRole("link", { name: "Privacy" })).toHaveAttribute("href", /\/privacy$/);
+        });
+
+        test("is served a post with links to the game's other posts", async ({ page, browser, baseURL }) => {
+            test.slow();
+            const nightOwls = await postPath(browser, baseURL!, "/games/valorant", "Night Owls");
+
+            const response = await page.goto(nightOwls, { timeout: 60_000 });
+
+            expect(response?.status()).toBe(200);
+            const others = page.getByRole("region", { name: "Other Valorant posts" }).getByRole("link");
+            await expect(others.first()).toHaveAttribute("href", /\/games\/valorant\/posts\/\d+$/);
+            await expect(others.filter({ hasText: /^Night Owls$/ })).toHaveCount(0);
         });
     });
 

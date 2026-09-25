@@ -83,6 +83,7 @@ async function openPanel(page, handle, name) {
 async function openPost(page, handle, name) {
     await open(page, `/games/${handle}`);
     await card(page, name).getByRole("link", { name, exact: true }).click();
+    await page.getByRole("heading", { name, exact: true, level: 1 }).waitFor();
     await settle(page);
 }
 
@@ -173,6 +174,7 @@ const scenes = [
         name: "post-page-owner", as: "group@example.com", run: async (page, shot) => {
             await open(page, "/");
             await page.getByRole("link", { name: "Night Owls", exact: true }).click();
+            await page.getByRole("heading", { name: "Night Owls", exact: true, level: 1 }).waitFor();
             await settle(page);
             await shot();
         },

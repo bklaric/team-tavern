@@ -6,7 +6,7 @@ import Async (Async)
 import Async as Async
 import Control.Alt ((<|>))
 import Control.Parallel (parallel, sequential)
-import Data.Array (catMaybes, find, mapMaybe)
+import Data.Array (catMaybes, find, mapMaybe, null)
 import Data.Either (Either(..), hush)
 import Data.Foldable (for_, traverse_)
 import Data.Maybe (Maybe(..), fromMaybe, isJust)
@@ -19,12 +19,13 @@ import Effect.Class (class MonadEffect, liftEffect)
 import Effect.Now (now)
 import Halogen as H
 import Halogen.HTML as HH
+import Halogen.HTML.Elements.Keyed as HK
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Halogen.HTML.Properties.ARIA as HPA
 import Halogen.Hooks as Hooks
 import TeamTavern.Client.Components.Ads as Ads
-import TeamTavern.Client.Components.Card (Place(..), Viewer, card, postName, typeIcon)
+import TeamTavern.Client.Components.Card (Place(..), Viewer, briefCard, card, postName, typeIcon)
 import TeamTavern.Client.Components.ContactPanel (contactPanel, markMessaged, takeContactParam, useContactPanel)
 import TeamTavern.Client.Components.OwnPostStatus (ownPostStatus)
 import TeamTavern.Client.Components.Toast (toasts, useToast)
@@ -223,6 +224,15 @@ component = Hooks.component \_ { handle, id, feedBehind } -> Hooks.do
                 [ Icons.search, HH.text label ]
             ]
 
+        moreSection game viewer more
+            | null more = Nothing
+            | otherwise = Just $
+                HH.section [ HS.class_ "post-more", HPA.labelledBy "post-more-title" ]
+                [ HH.h2 [ HP.id "post-more-title" ] [ HH.text $ "Other " <> game.title <> " posts" ]
+                , HK.div [ HS.class_ "feed-stack" ] $ more <#> \post ->
+                    Tuple (show post.id) (briefCard { game, viewer, post })
+                ]
+
         notes { post, blocked, owner } = case blocked of
             Just "viewer" -> Just $ HH.p [ HS.class_ "post-note" ]
                 [ Icons.ban
@@ -300,6 +310,7 @@ component = Hooks.component \_ { handle, id, feedBehind } -> Hooks.do
                 , onRenew: renewPost page.post
                 }
             , Just $ feedSection game shown
+            , moreSection game viewer page.more
             , panel <#> contactPanel viewer.now
             , Just $ toasts toast dismissToast
             ]
