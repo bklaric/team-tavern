@@ -6,8 +6,8 @@ import Prelude
 import Data.Array (all, any, elem)
 import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Array.NonEmpty as Nea
-import Data.Date (Date, exactDate)
-import Data.Enum (toEnum)
+import Data.Date (Date, day, exactDate, month, year)
+import Data.Enum (fromEnum, toEnum)
 import Data.Int as Int
 import Data.Maybe (Maybe(..), fromMaybe, maybe)
 import Data.String (Pattern(..), joinWith, split, trim)
@@ -49,6 +49,13 @@ parseDate text = case split (Pattern "-") text <#> Int.fromString of
         exactDate year' month' day'
     _ -> Nothing
 
+-- The terms' minimum age. Someone born on 29 February turns 16 on 1 March in
+-- a common year.
+sixteenOn :: Date -> Date -> Boolean
+sixteenOn today born =
+    Tuple (fromEnum (year born) + 16) (Tuple (month born) (day born))
+    <= Tuple (fromEnum (year today)) (Tuple (month today) (day today))
+
 -- | Checks a normalized account against the countries, languages and
 -- | timezones there are, and its contacts against the kinds `contactKinds`
 -- | allows.
@@ -59,8 +66,8 @@ accountChecks contactKinds countries today account =
         (fieldError "location") ("Unknown country: " <> fromMaybe "" account.country)
     , ensure (all (flip elem allLanguages) account.languages) (fieldError "languages")
         ("Unknown languages: " <> joinWith ", " account.languages)
-    , ensure (maybe true (\birthday -> parseDate birthday # maybe false (_ <= today)) account.birthday)
-        (fieldError "birthday") ("Birthday isn't a past date: " <> fromMaybe "" account.birthday)
+    , ensure (maybe true (\birthday -> parseDate birthday # maybe false (sixteenOn today)) account.birthday)
+        (fieldError "birthday") ("Birthday isn't 16 years ago or earlier: " <> fromMaybe "" account.birthday)
     , ensure (maybe true (\timezone -> any (_.name >>> eq timezone) allTimezones) account.timezone)
         (fieldError "timezone") ("Unknown timezone: " <> fromMaybe "" account.timezone)
     ]

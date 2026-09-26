@@ -3,6 +3,7 @@ module TeamTavern.Client.Shared.AccountErrors
     , nicknameTaken
     , passwordShort
     , somethingWrong
+    , tooYoung
     ) where
 
 -- What the account pages say when what was entered is turned down.
@@ -18,3 +19,6 @@ passwordShort = "Use at least 8 characters."
 
 somethingWrong :: String
 somethingWrong = "Something went wrong. Please try again."
+
+tooYoung :: String
+tooYoung = "You must be 16 or older to use TeamTavern."

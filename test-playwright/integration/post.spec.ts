@@ -1,5 +1,5 @@
 import { expect, Locator, Page, test } from "@playwright/test";
-import { password, signOut, signUp, unique } from "../accounts";
+import { bornAgo, password, signOut, signUp, unique } from "../accounts";
 import { discordUser, fakeDiscord, signUpWithDiscord } from "../discord";
 import { expectPage } from "../pages";
 
@@ -160,6 +160,43 @@ test.describe("posting", () => {
 
         await page.getByLabel("Community name").fill("Rift Academy");
         await expect(page.getByText("Give your community a name.")).toHaveCount(0);
+    });
+
+    test("turns away a birthday under 16 and publishes nothing", async ({ page }) => {
+        await signUp(page);
+        await page.goto("/games/league-of-legends/post/player");
+        await page.getByLabel("Birthday").fill(bornAgo(16, -3));
+
+        await page.getByRole("button", { name: "Publish post" }).click();
+
+        await expect(page.getByText("You must be 16 or older to use TeamTavern.")).toBeVisible();
+        await expect(page.getByLabel("Birthday")).toBeFocused();
+        await expectPage(page, "/games/league-of-legends/post/player");
+    });
+
+    // The post keeps the words, and only the page shows them starred.
+    test("stars out a slur in the text, on the card and in the page's description", async ({ page }) => {
+        const nickname = await signUp(page);
+        await page.goto("/games/league-of-legends/post/player");
+        await page.getByLabel("About you and what you're looking for")
+            .fill("No retarded flamers. Fire retardant welcome.");
+        await page.getByRole("button", { name: "Publish post" }).click();
+        await expectPage(page, "/games/league-of-legends/post/player/live");
+
+        await page.goto(feedPath);
+        await expectSettled(page);
+        await expect(card(page, nickname)).toContainText("No ******** flamers. Fire retardant welcome.");
+
+        await card(page, nickname).getByRole("link", { name: nickname, exact: true }).click();
+        await expectPage(page, /^\/games\/league-of-legends\/posts\/\d+$/);
+        await expect(page.locator(".card")).toContainText("No ******** flamers. Fire retardant welcome.");
+        await expect(page.locator('meta[name="description"]'))
+            .toHaveAttribute("content", "No ******** flamers. Fire retardant welcome.");
+
+        await page.goto("/games/league-of-legends/post/player");
+        await page.getByRole("button", { name: "Edit it" }).click();
+        await expect(page.getByLabel("About you and what you're looking for"))
+            .toHaveValue("No retarded flamers. Fire retardant welcome.");
     });
 
     test("shows the account's facts as they are, and says a change reaches every post", async ({ page }) => {

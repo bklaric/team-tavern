@@ -22,6 +22,7 @@ import TeamTavern.Client.Components.Card.Regions (regionsText)
 import TeamTavern.Client.Icons as Icons
 import TeamTavern.Client.Script.Ago (ago)
 import TeamTavern.Client.Script.Navigate (navigateWithEvent_)
+import TeamTavern.Client.Shared.Censor (censor)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Game.ViewGame as ViewGame
 import TeamTavern.Routes.Shared.Card (CardRow)
@@ -310,7 +311,7 @@ card { game, viewer, post, marked, expanded: expanded', place, onToggle, onConta
     hours = hoursOf viewer post
     facts = factsOf game (if marked then post else post { marks = Object.empty }) hours
     details = detailsOf game post hours
-    paragraphs = post.summary <#> trim # filter (_ /= "")
+    paragraphs = post.summary <#> trim # filter (_ /= "") <#> censor
     long = CodeUnits.length (joinWith " " paragraphs) > (if post.type == "community" then 360 else 170)
         || length paragraphs > 2
     expandable = not null details || not null post.trackers || long

@@ -48,8 +48,9 @@ import TeamTavern.Client.Script.QueryParams (getQueryParam)
 import TeamTavern.Client.Script.RenderReady (appendRenderReadyNotFound)
 import TeamTavern.Client.Script.Scroll (focusFirstInvalid)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
-import TeamTavern.Client.Shared.AccountErrors (somethingWrong)
+import TeamTavern.Client.Shared.AccountErrors (somethingWrong, tooYoung)
 import TeamTavern.Client.Shared.Contacts (contactLabel)
+import TeamTavern.Client.Shared.Facts (ageOn)
 import TeamTavern.Client.Shared.Fetch (fetchPath, fetchPathBody, fetchSimple)
 import TeamTavern.Client.Shared.Me (fetchMe)
 import TeamTavern.Client.Shared.Slot (Slot__I)
@@ -116,9 +117,11 @@ days _ = 30
 
 -- The checks the server makes that the screen can name before sending
 -- (brief 6, step 3).
-validate :: ViewGame.OkContent -> String -> Draft -> Object String
-validate game type_ draft = Object.fromFoldable $ foldl (\errors (key /\ error) -> maybe errors (snoc errors <<< (key /\ _)) error) []
-    [ "name" /\ (if community && trim draft.name == "" then Just "Give your community a name." else Nothing)
+validate :: ViewGame.OkContent -> String -> Date -> Draft -> Object String
+validate game type_ today draft = Object.fromFoldable $ foldl (\errors (key /\ error) -> maybe errors (snoc errors <<< (key /\ _)) error) []
+    [ "birthday" /\
+        (if type_ == "player" && maybe false (_ < 16) (draft.birthday >>= ageOn today) then Just tooYoung else Nothing)
+    , "name" /\ (if community && trim draft.name == "" then Just "Give your community a name." else Nothing)
     , "text" /\ (if community && trim draft.text == "" then Just "Tell players what your community is about." else Nothing)
     , "discordServer" /\
         (if community && draft.reach == "discord" && trim draft.discordServer == ""
@@ -150,7 +153,7 @@ serverError = match
     , discordServer: const $ Just { key: "discordServer", error: "Check your invite, or choose another way to join." }
     , website: const $ Just { key: "website", error: "Check your website, or choose another way to join." }
     , contact: \{ kind } -> Just { key: kind, error: "Check this account." }
-    , field: const Nothing
+    , field: \{ key } -> if key == "birthday" then Just { key, error: tooYoung } else Nothing
     }
 
 component :: ∀ query output left. H.Component query Input output (Async left)
@@ -233,7 +236,8 @@ component = Hooks.component \_ { handle, type_ } -> Hooks.do
         publish = do
             state' <- Hooks.get stateId
             unless state'.sending $ for_ state'.game \game -> do
-                let errors = validate game type_ state'.draft
+                today <- liftEffect nowDate
+                let errors = validate game type_ today state'.draft
                 if not Object.isEmpty errors
                 then do
                     set _ { errors = errors, previewOpen = false }

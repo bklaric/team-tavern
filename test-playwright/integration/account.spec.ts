@@ -1,5 +1,5 @@
 import { expect, Page, test } from "@playwright/test";
-import { expectSignedInAs, password, signIn, signOut, signUp, submitPasswordSignIn, unique } from "../accounts";
+import { bornAgo, expectSignedInAs, password, signIn, signOut, signUp, submitPasswordSignIn, unique } from "../accounts";
 import { discordUser, fakeDiscord, signUpWithDiscord } from "../discord";
 import { body, emails, openMail } from "../mail";
 import { expectPage } from "../pages";
@@ -63,6 +63,21 @@ test.describe("the account page", () => {
         await card(visitor, nickname).getByRole("link", { name: nickname, exact: true }).click();
         await expectPage(visitor, /^\/games\/rainbow-six-siege\/posts\/\d+$/);
         await expect(visitor.locator(".card")).toContainText("Germany");
+    });
+
+    test("turns away a birthday under 16, the terms' minimum age", async ({ page }) => {
+        await signUp(page, "Y");
+        await openAccount(page);
+
+        await page.getByRole("button", { name: "Edit" }).click();
+        await page.getByLabel("Birthday").fill(bornAgo(16, -3));
+        await page.getByRole("button", { name: "Save changes" }).click();
+        await expect(page.getByText("You must be 16 or older to use TeamTavern.")).toBeVisible();
+        await expect(page.getByLabel("Birthday")).toBeFocused();
+
+        await page.getByLabel("Birthday").fill(bornAgo(16, 3));
+        await page.getByRole("button", { name: "Save changes" }).click();
+        await expect(row(page, "Birthday")).toHaveText(/, shown as age 16$/);
     });
 
     // The seeded testers are on Europe/Zagreb, Croatia's only zone.

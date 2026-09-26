@@ -44,7 +44,7 @@ import TeamTavern.Client.Script.Navigate (navigateReplace_, navigate_)
 import TeamTavern.Client.Script.Scroll (focusCentered, focusFirstInvalid)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Script.Unread (announceUnread)
-import TeamTavern.Client.Shared.AccountErrors (nicknameInvalid, nicknameTaken, passwordShort, somethingWrong)
+import TeamTavern.Client.Shared.AccountErrors (nicknameInvalid, nicknameTaken, passwordShort, somethingWrong, tooYoung)
 import TeamTavern.Client.Shared.Block (block, unblock)
 import TeamTavern.Client.Shared.Contacts (contactLabel, contactPlaceholder)
 import TeamTavern.Client.Shared.Facts (ageOn, dateText, timezoneOptions, timezoneText)
@@ -178,9 +178,10 @@ factsRequest facts =
 factsErrors :: Date -> Facts -> Object String
 factsErrors today facts = Object.fromFoldable $ catMaybes
     [ if trim facts.nickname == "" then Just $ Tuple "nickname" "Choose a nickname." else Nothing
-    , if facts.birthday /= "" && not (isJust $ ageOn today facts.birthday)
-        then Just $ Tuple "birthday" birthdayInvalid
-        else Nothing
+    , if facts.birthday == "" then Nothing else case ageOn today facts.birthday of
+        Nothing -> Just $ Tuple "birthday" birthdayInvalid
+        Just age | age < 16 -> Just $ Tuple "birthday" tooYoung
+        Just _ -> Nothing
     ]
 
 birthdayInvalid :: String

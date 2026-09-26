@@ -37,6 +37,7 @@ import TeamTavern.Client.Script.Meta (setMeta, setMetaRobots)
 import TeamTavern.Client.Script.Navigate (navigateWithEvent_, navigate_)
 import TeamTavern.Client.Script.RenderReady (appendRenderReadyNotFound, appendRenderReadyUnavailable)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
+import TeamTavern.Client.Shared.Censor (censor)
 import TeamTavern.Client.Shared.Fetch (fetchPath)
 import TeamTavern.Client.Shared.Me (fetchMe)
 import TeamTavern.Client.Shared.Renew (renew, renewFailed)
@@ -77,7 +78,7 @@ typeName game type_ = game.title <> " " <> type_
 -- A search result shows the post's own words.
 metaDescription :: ViewGame.OkContent -> ViewPost.OkContent -> String
 metaDescription game { post } = let
-    text = post.summary # joinWith " " # trim
+    text = post.summary # joinWith " " # trim # censor
     in
     if text == "" then postName post <> ", a " <> typeName game post.type <> " post on TeamTavern."
     else if CodeUnits.length text > 155 then trim (CodeUnits.take 154 text) <> "…"

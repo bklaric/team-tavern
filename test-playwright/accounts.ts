@@ -12,6 +12,17 @@ export function unique(prefix: string): string {
     return `${prefix}${Date.now().toString(36)}${suffixes}`;
 }
 
+// A birthday the given years and days before today, as a date input takes it. The site's
+// minimum age is 16, and the page and the server may disagree on the day around midnight, so a
+// test keeps a few days clear of that boundary.
+export function bornAgo(years: number, days = 0): string {
+    const date = new Date();
+    date.setFullYear(date.getFullYear() - years);
+    date.setDate(date.getDate() - days);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
 export async function submitPasswordSignIn(page: Page, emailOrNickname: string, password_ = password) {
     await page.goto("/signin");
     await page.getByLabel("Email or nickname").fill(emailOrNickname);
