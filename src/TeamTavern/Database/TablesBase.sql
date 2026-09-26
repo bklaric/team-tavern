@@ -1,10 +1,6 @@
--- The redesigned schema (redesign/brief.md). It replaces player profiles, teams,
--- team profiles and alerts with posts, and adds messaging, notifications and the
--- account rows the brief's account page asks for.
---
--- This is a relaunch, not a migration: there is no dated script in Migrations/
--- that turns TablesCurrent.sql into this one. When it settles it becomes
--- TablesCurrent.sql, and production is rebuilt from it with a one-off import.
+-- The schema (redesign/brief.md): players, the game catalogue, posts of three
+-- types, messaging, notifications, and the account rows the brief's account
+-- page asks for.
 
 -- Regions and countries
 --
@@ -146,8 +142,10 @@ create table field
 
     -- A boolean has no options: a post either says yes, a row in
     -- post_field_flag, or says no. It is never left unanswered, so unlike an
-    -- empty single or multi it does not count as a miss, and two posts fit on
-    -- it when they agree (brief 7.2).
+    -- empty single or multi it does not count as a miss. It is a job a player
+    -- can take on top of their slot, and any number can: two players fit when
+    -- either takes it, and a group that wants it fits a player who does
+    -- (brief 7.2).
     , ilk text not null -- 'single', 'multi', 'boolean'
 
     -- Whether the options have a meaningful order. An ordered field can be
@@ -494,8 +492,9 @@ create index notification_post_id_created_idx on notification (post_id, created 
 create index notification_fitting_post_id_idx on notification (fitting_post_id);
 
 -- One expiry row per post, never a second; renewing the post deletes it
--- (brief 11.3), and a firing that finds one still there refreshes it rather
--- than failing on this.
+-- (brief 11.3). The worker adds one as the post's last week begins and leaves
+-- one it finds alone, since the period's email takes the rows created in the
+-- period and a refreshed row would be emailed again.
 create unique index notification_expiry_key on notification (post_id) where kind = 'expiry';
 
 -- One row per fitting post, however often it fits. A post renewed after it
