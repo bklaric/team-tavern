@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 import { expectPage, postPath } from "../pages";
 
 const googlebot = "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)";
@@ -132,6 +132,77 @@ test.describe("a page's robots tag", () => {
             expect(response?.status()).toBe(200);
             await expect(page.locator('meta[name="robots"]')).toHaveAttribute("content", robots);
         });
+});
+
+// Search engines read a page's JSON-LD from the prerendered HTML. Its addresses are on the
+// origin the page was rendered at, so they are matched on their paths.
+test.describe("a page's structured data", () => {
+    test.use({ userAgent: googlebot, javaScriptEnabled: false });
+
+    const structuredData = (page: Page) =>
+        page.locator('script[type="application/ld+json"]').textContent().then(text => JSON.parse(text!));
+
+    const trail = (breadcrumbs: any) =>
+        breadcrumbs.itemListElement.map((crumb: any) =>
+            ({ position: crumb.position, name: crumb.name, path: new URL(crumb.item).pathname }));
+
+    test("names the site and who runs it on the home page", async ({ page }) => {
+        test.slow();
+
+        await page.goto("/", { timeout: 60_000 });
+
+        const { "@context": context, "@graph": [organization, website] } = await structuredData(page);
+        expect(context).toBe("https://schema.org");
+        expect(organization).toMatchObject({ "@type": "Organization", name: "TeamTavern" });
+        expect(new URL(organization.logo).pathname).toBe("/logo-512.png");
+        expect(website).toMatchObject({ "@type": "WebSite", name: "TeamTavern", publisher: { "@id": organization["@id"] } });
+    });
+
+    test("leads from the home page to a game's feed", async ({ page }) => {
+        test.slow();
+
+        await page.goto("/games/valorant", { timeout: 60_000 });
+
+        const breadcrumbs = await structuredData(page);
+        expect(breadcrumbs["@type"]).toBe("BreadcrumbList");
+        expect(trail(breadcrumbs)).toEqual([
+            { position: 1, name: "Home", path: "/" },
+            { position: 2, name: "Valorant", path: "/games/valorant" },
+        ]);
+    });
+
+    test("leads from the home page through the game's feed to a post", async ({ page, browser, baseURL }) => {
+        test.slow();
+        const nightOwls = await postPath(browser, baseURL!, "/games/valorant", "Night Owls");
+
+        await page.goto(nightOwls, { timeout: 60_000 });
+
+        expect(trail(await structuredData(page))).toEqual([
+            { position: 1, name: "Home", path: "/" },
+            { position: 2, name: "Valorant", path: "/games/valorant" },
+            { position: 3, name: "Night Owls · Valorant group", path: nightOwls },
+        ]);
+    });
+
+    test("is left out of a page with nothing to say", async ({ page }) => {
+        test.slow();
+
+        await page.goto("/about", { timeout: 60_000 });
+
+        await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+        await expect(page.locator('script[type="application/ld+json"]')).toHaveCount(0);
+    });
+});
+
+// The site moves between pages without a reload, so the page left takes its JSON-LD with it.
+test("a page drops the structured data of the page before it", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.locator('script[type="application/ld+json"]')).toHaveCount(1);
+
+    await page.getByRole("contentinfo").getByRole("link", { name: "About" }).click();
+
+    await expectPage(page, "/about");
+    await expect(page.locator('script[type="application/ld+json"]')).toHaveCount(0);
 });
 
 // No page's path ends in a slash, and the router would not know one that did.

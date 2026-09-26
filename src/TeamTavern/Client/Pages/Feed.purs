@@ -43,7 +43,7 @@ import TeamTavern.Client.Pages.Feed.Fields (Lists, barFields)
 import TeamTavern.Client.Pages.Placeholder (placeholder)
 import TeamTavern.Client.Script.Expand (toggleCard)
 import TeamTavern.Client.Script.Focus (focusSoon)
-import TeamTavern.Client.Script.Meta (setMeta)
+import TeamTavern.Client.Script.Meta (setBreadcrumbs, setMeta)
 import TeamTavern.Client.Script.Navigate (navigateWithEvent_, navigate_)
 import TeamTavern.Client.Script.QueryParams (getQueryParam, removeQueryParam)
 import TeamTavern.Client.Script.RenderReady (appendRenderReadyNotFound, appendRenderReadyUnavailable)
@@ -320,6 +320,7 @@ component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
                 Right response -> response # onMatch
                     { ok: \game -> do
                         setMeta (game.title <> " LFG and team finder | TeamTavern") (introOf game)
+                        setBreadcrumbs [ { name: game.title, path: "/games/" <> handle } ]
                         update _ { game = Loaded game }
                         -- Back from signing up to contact a post, its panel opens.
                         takeContactParam >>= traverse_ (openPanelById game)

@@ -33,7 +33,7 @@ import TeamTavern.Client.Icons as Icons
 import TeamTavern.Client.Pages.Feed.Description (current, loadStored, storeDescription, storedFrom)
 import TeamTavern.Client.Pages.Feed.Fields (barFields, summary)
 import TeamTavern.Client.Pages.Placeholder (placeholder)
-import TeamTavern.Client.Script.Meta (setMeta, setMetaRobots)
+import TeamTavern.Client.Script.Meta (setBreadcrumbs, setMeta, setMetaRobots)
 import TeamTavern.Client.Script.Navigate (navigateWithEvent_, navigate_)
 import TeamTavern.Client.Script.RenderReady (appendRenderReadyNotFound, appendRenderReadyUnavailable)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
@@ -151,9 +151,12 @@ component = Hooks.component \_ { handle, id, feedBehind } -> Hooks.do
                                         # mapMaybe (flip summary description') of
                                     [] -> Nothing
                                     parts -> Just { type: description'.type, text: joinWith " · " parts }
-                            setMeta
-                                (postName page.post <> " · " <> typeName game'' page.post.type <> " | TeamTavern")
-                                (metaDescription game'' page)
+                            let named = postName page.post <> " · " <> typeName game'' page.post.type
+                            setMeta (named <> " | TeamTavern") (metaDescription game'' page)
+                            setBreadcrumbs
+                                [ { name: game''.title, path: feedPath }
+                                , { name: named, path: feedPath <> "/posts/" <> show id }
+                                ]
                             -- An expired post keeps its page, but out of search
                             -- engines until it is renewed (brief 11.1).
                             when page.post.expired $ setMetaRobots "noindex"
