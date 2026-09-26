@@ -239,6 +239,10 @@ const scenes = [
     { name: "sign-up", run: async (page, shot) => { await open(page, "/signup"); await shot(); } },
     { name: "sign-in", run: async (page, shot) => { await open(page, "/signin"); await shot(); } },
     { name: "forgot-password", run: async (page, shot) => { await open(page, "/forgot-password"); await shot(); } },
+    { name: "about", run: async (page, shot) => { await open(page, "/about"); await shot(); } },
+    { name: "contact", run: async (page, shot) => { await open(page, "/contact"); await shot(); } },
+    { name: "terms", run: async (page, shot) => { await open(page, "/terms"); await shot(); } },
+    { name: "privacy", run: async (page, shot) => { await open(page, "/privacy"); await shot(); } },
     {
         name: "nickname", run: async (page, shot) => {
             await fakeDiscord(page);

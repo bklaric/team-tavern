@@ -1,0 +1,40 @@
+/* A page of running text. */
+
+.document {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    max-width: var(--feed-width);
+    margin: 0 auto;
+    padding: var(--space-8) var(--space-4);
+    color: var(--text-muted);
+}
+
+.document h1,
+.document h2 {
+    color: var(--text);
+}
+
+.document section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    margin-top: var(--space-4);
+}
+
+.document h2 {
+    font-size: var(--size-16);
+}
+
+.document ul {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin: 0;
+    padding-left: var(--space-5);
+}
+
+.document strong {
+    color: var(--text);
+    font-weight: 600;
+}

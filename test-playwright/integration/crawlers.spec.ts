@@ -9,6 +9,9 @@ const handles = [
     "overwatch", "rainbow-six-siege", "team-fortress-2", "valheim", "valorant",
 ];
 
+// The site's own pages, which the footer links from every page.
+const sitePages = ["/about", "/contact", "/terms", "/privacy"];
+
 // Neither robots nor the sitemap is a page, so Caddy answers a bot with the file itself
 // rather than with a render of it.
 test.describe("a bot", () => {
@@ -24,7 +27,7 @@ test.describe("a bot", () => {
 
     // Valorant's seeded posts include GroupTester's group Night Owls, active, and
     // ExpiredTester's player post, past its 30 days.
-    test("finds the home page, every feed and the active posts in the sitemap, and no expired one", async ({ page, browser, baseURL }) => {
+    test("finds the home page, the site's own pages, every feed and the active posts in the sitemap, and no expired one", async ({ page, browser, baseURL }) => {
         const nightOwls = await postPath(browser, baseURL!, "/games/valorant", "Night Owls");
         const expired = await postPath(browser, baseURL!, "/games/valorant", "ExpiredTester");
 
@@ -35,6 +38,7 @@ test.describe("a bot", () => {
         const locations = [...(await response!.text()).matchAll(/<loc>([^<]*)<\/loc>/g)].map(match => match[1]);
         expect(locations).toEqual(expect.arrayContaining([
             `${baseURL}/`,
+            ...sitePages.map(path => `${baseURL}${path}`),
             ...handles.map(handle => `${baseURL}/games/${handle}`),
             `${baseURL}${nightOwls}`,
         ]));
@@ -62,7 +66,8 @@ for (const [name, userAgent] of aiCrawlers)
 
             expect(response?.status()).toBe(200);
             await expect(page.getByRole("link", { name: "Night Owls", exact: true })).toBeVisible();
-            await expect(page.getByRole("contentinfo").getByRole("link", { name: "Privacy" })).toHaveAttribute("href", /\/privacy$/);
+            for (const path of sitePages)
+                await expect(page.getByRole("contentinfo").locator(`a[href$="${path}"]`)).toHaveCount(1);
         });
 
         test("is served a post with links to the game's other posts", async ({ page, browser, baseURL }) => {
@@ -114,7 +119,7 @@ test.describe("a page's robots tag", () => {
     test.use({ userAgent: googlebot, javaScriptEnabled: false });
 
     for (const [path, robots] of [
-        ["/privacy", "index, follow"],
+        ...sitePages.map(path => [path, "index, follow"]),
         ["/signin", "noindex"],
         ["/messages", "noindex"],
         ["/post", "noindex"],

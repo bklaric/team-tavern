@@ -23,10 +23,21 @@
     gap: var(--space-2) var(--space-5);
 }
 
-.site-footer-links a {
+/* Cookie settings is a button among the links, and looks like them. */
+.site-footer-links button {
+    padding: 0;
+    border: 0;
+    background: none;
+    font-size: inherit;
+    cursor: pointer;
+}
+
+.site-footer-links a,
+.site-footer-links button {
     color: var(--text-muted);
 }
 
-.site-footer-links a:hover {
+.site-footer-links a:hover,
+.site-footer-links button:hover {
     color: var(--text);
 }

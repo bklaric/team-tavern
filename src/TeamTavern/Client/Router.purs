@@ -21,8 +21,10 @@ import Halogen.Hooks (HookM)
 import Halogen.Hooks as Hooks
 import TeamTavern.Client.Components.Footer (footer)
 import TeamTavern.Client.Components.Header (header)
+import TeamTavern.Client.Pages.About (about)
 import TeamTavern.Client.Pages.Account (account)
 import TeamTavern.Client.Pages.ConfirmEmail (confirmEmail)
+import TeamTavern.Client.Pages.Contact (contact)
 import TeamTavern.Client.Pages.Design (design)
 import TeamTavern.Client.Pages.Feed (FeedCache, feed)
 import TeamTavern.Client.Pages.ForgotPassword (forgotPassword)
@@ -34,11 +36,12 @@ import TeamTavern.Client.Pages.Post.Matches (matches)
 import TeamTavern.Client.Pages.Post.Screen (postScreen)
 import TeamTavern.Client.Pages.Post.Type (postType)
 import TeamTavern.Client.Pages.PostPage (postPage)
-import TeamTavern.Client.Pages.Privacy (privacyPolicy)
+import TeamTavern.Client.Pages.Privacy (privacy)
 import TeamTavern.Client.Pages.Renew (renew)
 import TeamTavern.Client.Pages.ResetPassword (resetPassword)
 import TeamTavern.Client.Pages.SignIn (signIn)
 import TeamTavern.Client.Pages.SignUp (signUp)
+import TeamTavern.Client.Pages.Terms (terms)
 import TeamTavern.Client.Script.Focus (focusStill)
 import TeamTavern.Client.Script.Meta (setMeta, setMetaRobots)
 import TeamTavern.Client.Script.Previous (previousOf, stampPrevious)
@@ -71,6 +74,9 @@ data State
     | Messages
     | Conversation { conversation :: Int }
     | Account
+    | About
+    | Contact
+    | Terms
     | Privacy
     | Design
     | NotFound
@@ -114,6 +120,9 @@ route path =
     ["", "messages"] -> Messages
     ["", "messages", conversation] | Just conversation' <- Int.fromString conversation -> Conversation { conversation: conversation' }
     ["", "account"] -> Account
+    ["", "about"] -> About
+    ["", "contact"] -> Contact
+    ["", "terms"] -> Terms
     ["", "privacy"] -> Privacy
     ["", "design"] -> Design
     _ -> NotFound
@@ -136,14 +145,23 @@ name Renew = "Renew post"
 name Messages = "Messages"
 name (Conversation _) = "Messages"
 name Account = "Account"
+name About = "About"
+name Contact = "Contact"
+name Terms = "Terms of use"
 name Privacy = "Privacy policy"
 name Design = "Design"
 name NotFound = "Page could not be found."
 
-description :: String
-description = "Find players, groups and communities for the games you play. Post once, and we'll tell you when someone new fits."
+description :: State -> String
+description About = "Why TeamTavern exists, how it works and who runs it."
+description Contact = "How to reach TeamTavern, report a post or a player, and delete your account."
+description Terms = "The rules for using TeamTavern: the minimum age, what you may post, and how moderation works."
+description Privacy = "What TeamTavern keeps about you, why, who handles it for us, and your rights."
+description _ = "Find players, groups and communities for the games you play. Post once, and we'll tell you when someone new fits."
 
-renderPage :: ∀ action left. Visit -> H.ComponentHTML action ChildSlots (Async left)
+type Action left = HookM (Async left) Unit
+
+renderPage :: ∀ left. Visit -> H.ComponentHTML (Action left) ChildSlots (Async left)
 renderPage { page: Feed { handle }, visit, restore, cache } = feed visit { handle, restore, cache }
 renderPage { page: Post { handle, id }, visit, previous } =
     postPage visit { handle, id, feedBehind: previous == Just ("/games/" <> handle) }
@@ -157,7 +175,7 @@ renderPage { page: Messages, visit } = messages { conversation: Nothing, visit }
 renderPage { page: Conversation { conversation }, visit } = messages { conversation: Just conversation, visit }
 renderPage { page } = renderPage' page
 
-renderPage' :: ∀ action left. State -> H.ComponentHTML action ChildSlots (Async left)
+renderPage' :: ∀ left. State -> H.ComponentHTML (Action left) ChildSlots (Async left)
 renderPage' Empty = HH.div_ []
 renderPage' SignUp = signUp
 renderPage' SignIn = signIn
@@ -165,7 +183,10 @@ renderPage' ForgotPassword = forgotPassword
 renderPage' ResetPassword = resetPassword
 renderPage' ConfirmEmail = confirmEmail
 renderPage' Renew = renew
-renderPage' Privacy = privacyPolicy
+renderPage' About = about
+renderPage' Contact = contact
+renderPage' Terms = terms
+renderPage' Privacy = privacy
 renderPage' Design = design
 renderPage' page = placeholder $ name page
 
@@ -187,7 +208,7 @@ type Visit =
 -- The page is the document's main content, which the header's skip link and a
 -- link to another page focus. The inbox fills the window, and has no footer
 -- below it.
-render :: ∀ left. Visit -> H.ComponentHTML (HookM (Async left) Unit) ChildSlots (Async left)
+render :: ∀ left. Visit -> H.ComponentHTML (Action left) ChildSlots (Async left)
 render visit =
     HH.div [ HS.class_ "site", HP.attr (HH.AttrName "data-path") visit.path ]
     [ header { path: visit.path, visit: visit.visit }
@@ -207,16 +228,16 @@ router initialState initialPath = Hooks.component \{ queryToken } _ -> Hooks.do
     let changeRoute state path popped = do
             let page = route path
             case page of
-                Home -> setMeta "TeamTavern: LFG for players, groups and communities" description
+                Home -> setMeta "TeamTavern: LFG for players, groups and communities" (description page)
                 NotFound -> do
                     appendRenderReadyNotFound
-                    setMeta "Page not found | TeamTavern" description
+                    setMeta "Page not found | TeamTavern" (description page)
                 -- A feed and a post name themselves once they have their game, and
                 -- a conversation once it has its post.
                 Feed _ -> pure unit
                 Post _ -> pure unit
                 Conversation _ -> pure unit
-                _ -> setMeta (name page <> " | TeamTavern") description
+                _ -> setMeta (name page <> " | TeamTavern") (description page)
             -- A link stamps the entry it opens with the page it left, which the
             -- entry keeps through a reload and a trip back and forth. A link to
             -- the open page replaces its entry, which keeps the stamp it had.
@@ -236,6 +257,9 @@ router initialState initialPath = Hooks.component \{ queryToken } _ -> Hooks.do
                 Home -> "index, follow"
                 Feed _ -> "index, follow"
                 Post _ -> "index, follow"
+                About -> "index, follow"
+                Contact -> "index, follow"
+                Terms -> "index, follow"
                 Privacy -> "index, follow"
                 _ -> "noindex"
             restore <- case page of

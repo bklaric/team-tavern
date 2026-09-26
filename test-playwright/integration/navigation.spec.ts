@@ -18,13 +18,38 @@ test("a link clicked with Ctrl or Cmd opens in a new tab and leaves this one", a
     await expect(page.getByRole("heading", feedHeading)).toBeVisible();
 });
 
-test("the footer leads to the privacy policy", async ({ page }) => {
+for (const [link, path, heading] of [
+    ["About", "/about", "About TeamTavern"],
+    ["Contact", "/contact", "Contact"],
+    ["Terms", "/terms", "Terms of use"],
+    ["Privacy", "/privacy", "Privacy policy"],
+])
+    test(`the footer leads to ${path}`, async ({ page }) => {
+        await page.goto("/games/apex-legends");
+
+        await page.getByRole("contentinfo").getByRole("link", { name: link, exact: true }).click();
+
+        await expectPage(page, path);
+        await expect(page.getByRole("heading", { name: heading, exact: true, level: 1 })).toBeVisible();
+    });
+
+// Venatus loads Google's consent dialog. This stands in for it with a queue that runs
+// what is pushed at once and a dialog that counts how often it is opened.
+test("the footer's cookie settings open the consent dialog again", async ({ page }) => {
+    await page.route(url => url.hostname === "hb.vntsm.com", route => route.abort());
+    await page.addInitScript(`
+        self.consentOpened = 0;
+        self.googlefc = {
+            callbackQueue: { push: callback => callback() },
+            showRevocationMessage: () => { self.consentOpened += 1; },
+        };
+    `);
     await page.goto("/games/apex-legends");
+    await expectPage(page, "/games/apex-legends");
 
-    await page.getByRole("contentinfo").getByRole("link", { name: "Privacy" }).click();
+    await page.getByRole("contentinfo").getByRole("button", { name: "Cookie settings" }).click();
 
-    await expectPage(page, "/privacy");
-    await expect(page.getByRole("heading", { name: "Privacy Policy", level: 1 })).toBeVisible();
+    await expect.poll(() => page.evaluate(() => (self as unknown as { consentOpened: number }).consentOpened)).toBe(1);
 });
 
 // The inbox fills the window below the header, with nothing under it.

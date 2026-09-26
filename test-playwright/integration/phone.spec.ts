@@ -106,7 +106,7 @@ const card = (page: Page, name: string) =>
 
 test.describe("on a phone", () => {
     test("every page fits signed out", async ({ page }) => {
-        for (const path of ["/", `/games/${handle}`, "/signin", "/signup", "/forgot-password", "/privacy",
+        for (const path of ["/", `/games/${handle}`, "/signin", "/signup", "/forgot-password", "/about", "/contact", "/terms", "/privacy",
             "/post", "/post/player", "/messages", "/no-such-page"]) {
             await visit(page, path);
         }

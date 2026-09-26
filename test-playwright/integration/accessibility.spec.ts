@@ -43,7 +43,7 @@ for (const [device, viewport] of [["desktop", { width: 1280, height: 800 }], ["p
 
         test("pages and overlays signed out pass axe", async ({ page }) => {
             for (const path of ["/", "/games/valorant", "/games/valorant/posts/999999", "/signin", "/signup",
-                "/forgot-password", "/privacy", "/post", "/post/player", "/games/valorant/post/player",
+                "/forgot-password", "/about", "/contact", "/terms", "/privacy", "/post", "/post/player", "/games/valorant/post/player",
                 "/messages", "/no-such-page"]) {
                 await visit(page, path);
             }
