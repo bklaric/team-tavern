@@ -6,6 +6,7 @@ import Data.Array (mapWithIndex)
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import Effect.Class (class MonadEffect, liftEffect)
+import TeamTavern.Client.Snippets.Cover (coverPath)
 import Web.DOM.NonElementParentNode (getElementById)
 import Web.HTML (window)
 import Web.HTML.HTMLDocument (setTitle, toNonElementParentNode)
@@ -71,7 +72,7 @@ setLogoImage = setMetaImage "/logo-512.png" "TeamTavern logo"
 
 -- | A game's cover, for its feed and its posts.
 setCoverImage :: ∀ monad fields. MonadEffect monad => { handle :: String, title :: String | fields } -> monad Unit
-setCoverImage { handle, title } = setMetaImage ("/images/games/" <> handle <> ".webp") (title <> " cover")
+setCoverImage { handle, title } = setMetaImage (coverPath handle) (title <> " cover")
 
 setMetaRobots :: ∀ monad. MonadEffect monad => String -> monad Unit
 setMetaRobots content = liftEffect $ setMetaContent content "meta-robots"

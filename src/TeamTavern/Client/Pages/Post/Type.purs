@@ -19,6 +19,7 @@ import TeamTavern.Client.Shared.Fetch (fetchSimple)
 import TeamTavern.Client.Shared.Me (fetchMe)
 import TeamTavern.Client.Shared.Slot (Slot__I)
 import TeamTavern.Client.Snippets.Class as HS
+import TeamTavern.Client.Snippets.Cover (smallCoverPath)
 import TeamTavern.Routes.Game.ViewGames (ViewGames)
 import TeamTavern.Routes.Game.ViewGames as ViewGames
 import TeamTavern.Routes.Player.ViewMe as ViewMe
@@ -54,7 +55,7 @@ component = Hooks.component \_ _ -> Hooks.do
         HH.div [ HS.class_ "flow" ] $
         ( game # maybe [] \{ handle, title } ->
             [ HH.div [ HS.class_ "step-context" ]
-                [ HH.img [ HP.src $ "/images/games/" <> handle <> ".webp", HP.alt "" ]
+                [ HH.img [ HP.src $ smallCoverPath handle, HP.alt "" ]
                 , HH.strong_ [ HH.text title ]
                 ]
             ]

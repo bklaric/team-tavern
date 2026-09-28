@@ -13,6 +13,7 @@ import TeamTavern.Client.Components.Unread (unreadDot)
 import TeamTavern.Client.Script.Ago (ago)
 import TeamTavern.Client.Script.Navigate (navigateWithEvent_)
 import TeamTavern.Client.Snippets.Class as HS
+import TeamTavern.Client.Snippets.Cover (smallCoverPath)
 import TeamTavern.Routes.Conversation.ViewInbox (InboxRow)
 
 -- | What the inbox calls a post: a player post by its owner, a group or a
@@ -22,7 +23,7 @@ inboxPostName post =
     if post.type == "player" then post.owner else fromMaybe (post.owner <> "'s " <> post.type) post.name
 
 inboxCover :: ∀ w i. String -> HH.HTML w i
-inboxCover handle = HH.img [ HS.class_ "inbox-cover", HP.src $ "/images/games/" <> handle <> ".webp", HP.alt "" ]
+inboxCover handle = HH.img [ HS.class_ "inbox-cover", HP.src $ smallCoverPath handle, HP.alt "" ]
 
 -- | A conversation in the inbox, opening it. Under one of the player's own
 -- | posts it is titled with the other player and needs only "You:" before its

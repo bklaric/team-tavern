@@ -39,6 +39,7 @@ import TeamTavern.Client.Shared.Fetch (fetchPath, fetchSimple)
 import TeamTavern.Client.Shared.Renew (renew, renewFailed) as Renew
 import TeamTavern.Client.Shared.Slot (Slot__I)
 import TeamTavern.Client.Snippets.Class as HS
+import TeamTavern.Client.Snippets.Cover (smallCoverPath)
 import TeamTavern.Routes.Game.ViewGame (ViewGame)
 import TeamTavern.Routes.Game.ViewGame as ViewGame
 import TeamTavern.Routes.Game.ViewGames (ViewGames)
@@ -149,7 +150,7 @@ component = Hooks.component \_ _ -> Hooks.do
             Tuple game.handle $ HH.section [ HS.class_ "home-game", HPA.labelledBy headingId ]
             [ HH.h2 [ HS.class_ "home-game-heading", HP.id headingId ]
                 [ HH.a [ HS.class_ "home-game-cover", HP.href feed, HE.onClick $ navigateWithEvent_ feed ]
-                    [ HH.img [ HP.src $ "/images/games/" <> game.handle <> ".webp", HP.alt "", HP.width 600, HP.height 900 ]
+                    [ HH.img [ HP.src $ smallCoverPath game.handle, HP.alt "", HP.width 600, HP.height 900 ]
                     , HH.span [ HS.class_ "home-game-name" ] [ HH.text game.title ]
                     ]
                 ]

@@ -264,8 +264,9 @@ to be one where that's true: slots a team fills.
 ## A new game, not a refresh
 
 A new game also needs its cover before it can ship — the home page grid, the
-header dropdown and the post screen all show it, and `games.spec.ts` fails on
-a tile whose cover doesn't load at 600x900. Steam's `library_600x900_2x.jpg`
+header dropdown and the post screen all show it. The build fails on a cover
+that isn't 600x900, and `games.spec.ts` on a tile whose cover doesn't load.
+Steam's `library_600x900_2x.jpg`
 is that shape for games on Steam; SteamGridDB carries it for the rest. The
 logo on it has to name the game legibly at tile size, since the grid shows no
 titles. The verify script lists any game without a cover.

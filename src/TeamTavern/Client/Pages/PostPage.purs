@@ -43,6 +43,7 @@ import TeamTavern.Client.Shared.Me (fetchMe)
 import TeamTavern.Client.Shared.Renew (renew, renewFailed)
 import TeamTavern.Client.Shared.Slot (Slot__I)
 import TeamTavern.Client.Snippets.Class as HS
+import TeamTavern.Client.Snippets.Cover (smallCoverPath)
 import TeamTavern.Routes.Feed.ViewOwnDescriptions (OwnDescription, ViewOwnDescriptions)
 import TeamTavern.Routes.Game.ViewGame (ViewGame)
 import TeamTavern.Routes.Game.ViewGame as ViewGame
@@ -211,7 +212,7 @@ component = Hooks.component \_ { handle, id, feedBehind } -> Hooks.do
                 | otherwise = "Browse " <> game.title <> " posts"
             in
             HH.section [ HS.class_ "post-feed", HPA.labelledBy "post-feed-title" ]
-            [ HH.img [ HS.class_ "feed-cover", HP.src $ "/images/games/" <> game.handle <> ".webp", HP.alt "" ]
+            [ HH.img [ HS.class_ "feed-cover", HP.src $ smallCoverPath game.handle, HP.alt "" ]
             , HH.div [ HS.class_ "post-feed-text" ] $ catMaybes
                 [ Just $ HH.h2 [ HP.id "post-feed-title" ] [ HH.text title ]
                 , Just $ HH.p_ [ HH.text line ]

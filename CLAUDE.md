@@ -29,7 +29,7 @@ Generated, never edited, all git-ignored: `output/` (compiled PureScript),
   both compose files under `stacks/`, and the test stack's `tt-discord` service,
   pin the same Node version for their containers, and nothing enforces
   agreement, so change all four together.
-- **purs, spago, sass, esbuild and Playwright** come from `devDependencies`, so
+- **purs, spago, sass, esbuild, sharp and Playwright** come from `devDependencies`, so
   setup is `npm install` plus, for the browser Playwright drives,
   `./node_modules/.bin/playwright install chromium`, which downloads Chromium
   into a per-user cache outside the repo. No global installs.
@@ -441,8 +441,8 @@ redirects the old site's feed paths to the new ones by `legacy.game_map`.
   them, applied with `HS.class_`.
 - `Client/Static/` (the two index files, the favicon and `logo-512.png`, the
   Inter fonts with their `inter.css`, the game covers and ads.txt) is
-  copied verbatim by `build-client.sh`; adding a file or directory there means
-  adding a `cp` line to that script.
+  copied verbatim by `build-client.sh`, the covers through `build-covers.mjs`;
+  adding a file or directory there means adding a `cp` line to that script.
 
 ## Database
 
@@ -470,9 +470,12 @@ development database rather than written freehand.
 A game is its seed file plus one cover, a 600x900 WebP at
 `Client/Static/Images/Games/<handle>.webp`, served as `/images/games/<handle>.webp`.
 The cover is the only per-game asset: every cover grid shows it, and nothing
-shows a game icon. Every seeded
-game must have one; nothing generates a stand-in, and `games.spec.ts` fails on a
-home page tile whose cover does not load at that size. Steam's
+shows a game icon. `build-covers.mjs`, run by `build-client.sh`, fails the
+build on a cover of another size and makes the 400x600 copy under
+`/images/games/400/` that the site's covers load; `Client/Snippets/Cover.purs`
+names both, and only shared links and wide phones take the original. Every
+seeded game must have one; nothing generates a stand-in, and `games.spec.ts`
+fails on a home page tile whose cover does not load. Steam's
 `library_600x900_2x.jpg` is that shape for games on Steam; SteamGridDB carries
 the same shape for the rest.
 

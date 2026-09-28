@@ -54,6 +54,7 @@ import TeamTavern.Client.Shared.Me (fetchMe)
 import TeamTavern.Client.Shared.Renew (renew, renewFailed)
 import TeamTavern.Client.Shared.Slot (Slot__I)
 import TeamTavern.Client.Snippets.Class as HS
+import TeamTavern.Client.Snippets.Cover (smallCoverPath)
 import TeamTavern.Routes.Country.ViewCountries (ViewCountries)
 import TeamTavern.Routes.Country.ViewCountries as ViewCountries
 import TeamTavern.Routes.Feed.ViewFeed (ViewFeed)
@@ -522,7 +523,7 @@ component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
             in
             HH.div [ HS.class_ "feed-page" ]
             [ HH.div [ HS.class_ "feed-header" ]
-                [ HH.img [ HS.class_ "feed-cover", HP.src $ "/images/games/" <> game.handle <> ".webp", HP.alt "" ]
+                [ HH.img [ HS.class_ "feed-cover", HP.src $ smallCoverPath game.handle, HP.alt "" ]
                 , HH.div_
                     [ HH.h1_ [ HH.text $ game.title <> " LFG" ]
                     , HH.p_ [ HH.text $ introOf game ]

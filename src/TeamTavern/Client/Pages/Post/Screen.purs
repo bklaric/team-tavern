@@ -55,6 +55,7 @@ import TeamTavern.Client.Shared.Fetch (fetchPath, fetchPathBody, fetchSimple)
 import TeamTavern.Client.Shared.Me (fetchMe)
 import TeamTavern.Client.Shared.Slot (Slot__I)
 import TeamTavern.Client.Snippets.Class as HS
+import TeamTavern.Client.Snippets.Cover (smallCoverPath)
 import TeamTavern.Routes.Country.ViewCountries (ViewCountries)
 import TeamTavern.Routes.Country.ViewCountries as ViewCountries
 import TeamTavern.Routes.Game.ViewGame (ViewGame)
@@ -378,7 +379,7 @@ component = Hooks.component \_ { handle, type_ } -> Hooks.do
 
         context game =
             HH.div [ HS.class_ "step-context" ] $
-            [ HH.img [ HP.src $ "/images/games/" <> handle <> ".webp", HP.alt "" ]
+            [ HH.img [ HP.src $ smallCoverPath handle, HP.alt "" ]
             , HH.span_ [ HH.strong_ [ HH.text game.title ], HH.text $ " · " <> typeTitle type_ <> " post" ]
             ]
             <> if state.draft.editing then []
