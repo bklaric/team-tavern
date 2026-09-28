@@ -35,7 +35,7 @@ import TeamTavern.Client.Script.Navigate (navigateWithEvent_)
 import TeamTavern.Client.Script.QueryParams (getQueryParam, removeQueryParam)
 import TeamTavern.Client.Script.RenderReady (appendRenderReadyUnavailable)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
-import TeamTavern.Client.Shared.Fetch (fetchPath, fetchSimple)
+import TeamTavern.Client.Shared.Fetch (expecting, fetchPath, fetchSimple)
 import TeamTavern.Client.Shared.Renew (renew, renewFailed) as Renew
 import TeamTavern.Client.Shared.Slot (Slot__I)
 import TeamTavern.Client.Snippets.Class as HS
@@ -65,7 +65,7 @@ load :: ∀ left. Async left Page
 load = do
     Tuple games own <- sequential $ Tuple
         <$> parallel (Async.attempt $ fetchSimple (Proxy :: _ ViewGames))
-        <*> parallel (Async.attempt $ fetchSimple (Proxy :: _ ViewOwnPosts))
+        <*> parallel (Async.attempt $ fetchSimple (expecting [ "notAuthorized" ] (Proxy :: _ ViewOwnPosts)))
     let own' = hush own >>= onMatch { ok: Just, notAuthorized: const $ Just [] } (const Nothing)
     case hush games >>= onMatch { ok: Just } (const Nothing), own' of
         Nothing, _ -> pure $ Failed "There has been an error loading the games."

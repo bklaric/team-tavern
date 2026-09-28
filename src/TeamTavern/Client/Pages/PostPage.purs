@@ -38,7 +38,7 @@ import TeamTavern.Client.Script.Navigate (navigateWithEvent_, navigate_)
 import TeamTavern.Client.Script.RenderReady (appendRenderReadyNotFound, appendRenderReadyUnavailable)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Shared.Censor (censor)
-import TeamTavern.Client.Shared.Fetch (fetchPath)
+import TeamTavern.Client.Shared.Fetch (expecting, fetchPath)
 import TeamTavern.Client.Shared.Me (fetchMe)
 import TeamTavern.Client.Shared.Renew (renew, renewFailed)
 import TeamTavern.Client.Shared.Slot (Slot__I)
@@ -128,8 +128,8 @@ component = Hooks.component \_ { handle, id, feedBehind } -> Hooks.do
         Hooks.modify_ stateId _ { viewer = Just { now: now', timezone } }
         void $ Hooks.fork do
             Tuple game post <- H.lift $ sequential $ Tuple
-                <$> parallel (Async.attempt $ fetchPath (Proxy :: _ ViewGame) { handle })
-                <*> parallel (Async.attempt $ fetchPath (Proxy :: _ ViewPost) { handle, id })
+                <$> parallel (Async.attempt $ fetchPath (expecting [ "notFound" ] (Proxy :: _ ViewGame)) { handle })
+                <*> parallel (Async.attempt $ fetchPath (expecting [ "notFound" ] (Proxy :: _ ViewPost)) { handle, id })
             let failed = do
                     appendRenderReadyUnavailable
                     Hooks.modify_ stateId _ { page = Failed }

@@ -16,7 +16,7 @@ import Halogen.Hooks as Hooks
 import TeamTavern.Client.Components.Flow (flow, flowError, flowLead, flowLink, formTight, submitButton, textField)
 import TeamTavern.Client.Script.Back (authPath, readBack)
 import TeamTavern.Client.Shared.AccountErrors (somethingWrong)
-import TeamTavern.Client.Shared.Fetch (fetchBody)
+import TeamTavern.Client.Shared.Fetch (expecting, fetchBody)
 import TeamTavern.Client.Shared.Slot (Slot___)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Password.ForgotPassword (ForgotPassword)
@@ -47,7 +47,7 @@ component = Hooks.component \_ _ -> Hooks.do
             then fail (Just "Enter your email address.") Nothing
             else do
                 set _ { sending = true, error = Nothing, formError = Nothing }
-                result <- H.lift $ Async.attempt $ fetchBody (Proxy :: _ ForgotPassword) { email }
+                result <- H.lift $ Async.attempt $ fetchBody (expecting [ "notFound" ] (Proxy :: _ ForgotPassword)) { email }
                 case result of
                     Right response -> response # onMatch
                         { noContent: const $ set _ { sending = false, sentTo = Just email }

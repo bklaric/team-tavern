@@ -20,7 +20,7 @@ import TeamTavern.Client.Pages.Feed.Description (storeDescription)
 import TeamTavern.Client.Script.Navigate (navigateReplace_)
 import TeamTavern.Client.Script.QueryParams (getQueryParam)
 import TeamTavern.Client.Shared.AccountErrors (somethingWrong)
-import TeamTavern.Client.Shared.Fetch (fetchBody)
+import TeamTavern.Client.Shared.Fetch (expecting, fetchBody)
 import TeamTavern.Client.Shared.Slot (Slot___)
 import TeamTavern.Routes.Post.RenewByNonce (RenewByNonce)
 import Type.Proxy (Proxy(..))
@@ -40,7 +40,7 @@ component = Hooks.component \_ _ -> Hooks.do
             case nonce of
                 Nothing -> Hooks.put stateId Broken
                 Just nonce' -> do
-                    result <- H.lift $ Async.attempt $ fetchBody (Proxy :: _ RenewByNonce) { nonce: nonce' }
+                    result <- H.lift $ Async.attempt $ fetchBody (expecting [ "notFound" ] (Proxy :: _ RenewByNonce)) { nonce: nonce' }
                     case result of
                         Right response -> response # onMatch
                             { ok: \{ handle, id, type: type_, description } -> do

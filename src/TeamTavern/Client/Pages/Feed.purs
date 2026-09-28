@@ -49,7 +49,7 @@ import TeamTavern.Client.Script.QueryParams (getQueryParam, removeQueryParam)
 import TeamTavern.Client.Script.RenderReady (appendRenderReadyNotFound, appendRenderReadyUnavailable)
 import TeamTavern.Client.Script.Scroll (onScroll)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
-import TeamTavern.Client.Shared.Fetch (fetchPath, fetchPathBody, fetchSimple)
+import TeamTavern.Client.Shared.Fetch (expecting, fetchPath, fetchPathBody, fetchSimple)
 import TeamTavern.Client.Shared.Me (fetchMe)
 import TeamTavern.Client.Shared.Renew (renew, renewFailed)
 import TeamTavern.Client.Shared.Slot (Slot__I)
@@ -235,7 +235,7 @@ component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
             state' <- Hooks.modify stateId _ { busy = true }
             timezone <- getClientTimezone
             let description = current state'.stored
-            result <- H.lift $ Async.attempt $ fetchPathBody (Proxy :: _ ViewFeed) { handle }
+            result <- H.lift $ Async.attempt $ fetchPathBody (expecting [ "notFound" ] (Proxy :: _ ViewFeed)) { handle }
                 { description: description { timezone = description.timezone <|> Just timezone }
                 , showing: if state'.segment == "all" then [] else [ state'.segment ]
                 , cursor
@@ -316,7 +316,7 @@ component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
         when (isNothing restore) $ liftEffect $ Ref.modify_ (Map.delete handle) cache
 
         void $ Hooks.fork do
-            result <- H.lift $ Async.attempt $ fetchPath (Proxy :: _ ViewGame) { handle }
+            result <- H.lift $ Async.attempt $ fetchPath (expecting [ "notFound" ] (Proxy :: _ ViewGame)) { handle }
             case result of
                 Right response -> response # onMatch
                     { ok: \game -> do

@@ -51,7 +51,7 @@ import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Shared.AccountErrors (somethingWrong, tooYoung)
 import TeamTavern.Client.Shared.Contacts (contactLabel)
 import TeamTavern.Client.Shared.Facts (ageOn)
-import TeamTavern.Client.Shared.Fetch (fetchPath, fetchPathBody, fetchSimple)
+import TeamTavern.Client.Shared.Fetch (expecting, fetchPath, fetchPathBody, fetchSimple)
 import TeamTavern.Client.Shared.Me (fetchMe)
 import TeamTavern.Client.Shared.Slot (Slot__I)
 import TeamTavern.Client.Snippets.Class as HS
@@ -206,7 +206,7 @@ component = Hooks.component \_ { handle, type_ } -> Hooks.do
 
         deletePost = do
             set _ { sending = true }
-            result <- H.lift $ Async.attempt $ fetchPath (Proxy :: _ DeletePost) { handle, type: type_ }
+            result <- H.lift $ Async.attempt $ fetchPath (expecting [ "notFound" ] (Proxy :: _ DeletePost)) { handle, type: type_ }
             let deleted = do
                     liftEffect $ clearDraft handle type_
                     set \state' -> state'
@@ -254,8 +254,8 @@ component = Hooks.component \_ { handle, type_ } -> Hooks.do
                         editing = state'.draft.editing
                     result <- H.lift $ Async.attempt
                         if editing
-                        then fetchPathBody (Proxy :: _ UpdatePost) { handle, type: type_ } request
-                        else fetchPathBody (Proxy :: _ CreatePost) { handle, type: type_ } request
+                        then fetchPathBody (expecting [ "badRequest" ] (Proxy :: _ UpdatePost)) { handle, type: type_ } request
+                        else fetchPathBody (expecting [ "badRequest" ] (Proxy :: _ CreatePost)) { handle, type: type_ } request
                     let failed = set _ { sending = false, formError = Just somethingWrong }
                     case result of
                         Right response -> response # onMatch
@@ -312,7 +312,7 @@ component = Hooks.component \_ { handle, type_ } -> Hooks.do
 
         void $ Hooks.fork do
             let failed = set _ { screen = Failed }
-            gameResult <- H.lift $ hush <$> Async.attempt (fetchPath (Proxy :: _ ViewGame) { handle })
+            gameResult <- H.lift $ hush <$> Async.attempt (fetchPath (expecting [ "notFound" ] (Proxy :: _ ViewGame)) { handle })
             countriesResult <- H.lift $ hush <$> Async.attempt (fetchSimple (Proxy :: _ ViewCountries))
             me <- H.lift fetchMe
             ownResult <-

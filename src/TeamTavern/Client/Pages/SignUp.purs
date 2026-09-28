@@ -25,7 +25,7 @@ import TeamTavern.Client.Script.Back (authPath, readBack)
 import TeamTavern.Client.Script.Discord (authorizeWithDiscord)
 import TeamTavern.Client.Script.Navigate (navigateReplace_, navigate_)
 import TeamTavern.Client.Shared.AccountErrors (nicknameInvalid, nicknameTaken, passwordShort, somethingWrong)
-import TeamTavern.Client.Shared.Fetch (fetchBody)
+import TeamTavern.Client.Shared.Fetch (expecting, fetchBody)
 import TeamTavern.Client.Shared.Me (fetchMe)
 import TeamTavern.Client.Shared.Slot (Slot___)
 import TeamTavern.Client.Snippets.Class as HS
@@ -86,7 +86,7 @@ component = Hooks.component \_ _ -> Hooks.do
             then failWith errors
             else do
                 set _ { sending = true, errors = noErrors }
-                result <- H.lift $ Async.attempt $ fetchBody (Proxy :: _ RegisterPlayer)
+                result <- H.lift $ Async.attempt $ fetchBody (expecting [ "badRequest" ] (Proxy :: _ RegisterPlayer))
                     (inj (Proxy :: _ "password")
                         { email: trim state.email, nickname: trim state.nickname, password: state.password })
                 case result of

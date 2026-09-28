@@ -43,7 +43,7 @@ import TeamTavern.Client.Script.Thread (isWide, scrollThreadsToEnd)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Script.Unread (announceUnread)
 import TeamTavern.Client.Shared.Block (reportConversation)
-import TeamTavern.Client.Shared.Fetch (fetchPath, fetchPathBody, fetchSimple)
+import TeamTavern.Client.Shared.Fetch (expecting, fetchPath, fetchPathBody, fetchSimple)
 import TeamTavern.Client.Shared.Renew (renew, renewFailed) as Renew
 import TeamTavern.Client.Shared.Slot (Slot__I)
 import TeamTavern.Client.Snippets.Class as HS
@@ -122,7 +122,7 @@ component = Hooks.component \_ { conversation: openId, visit } -> Hooks.do
         whileCurrent visit' f = set \state' -> if state'.visit == visit' then f state' else state'
 
         loadInbox visit' = do
-            result <- H.lift $ Async.attempt $ fetchSimple (Proxy :: _ ViewInbox)
+            result <- H.lift $ Async.attempt $ fetchSimple (expecting [ "notAuthorized" ] (Proxy :: _ ViewInbox))
             let inbox = case hush result of
                     Just response -> response # onMatch
                         { ok: Loaded, notAuthorized: const SignedOut } (const Failed)

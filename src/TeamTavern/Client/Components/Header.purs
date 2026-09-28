@@ -33,7 +33,7 @@ import TeamTavern.Client.Script.Back (authPath, currentBack)
 import TeamTavern.Client.Script.Focus (focusSoon)
 import TeamTavern.Client.Script.Navigate (navigateWithEvent_, navigate_)
 import TeamTavern.Client.Script.Unread (onUnread)
-import TeamTavern.Client.Shared.Fetch (fetchPathNoContent, fetchSimple)
+import TeamTavern.Client.Shared.Fetch (expecting, fetchPathNoContent, fetchSimple)
 import TeamTavern.Client.Shared.Me (fetchMe)
 import TeamTavern.Client.Shared.Slot (Slot___)
 import TeamTavern.Client.Snippets.Class as HS
@@ -186,7 +186,7 @@ component = Hooks.component \_ { path, visit } -> Hooks.do
         back <- currentBack
         set _ { back = back, menu = Nothing, visit = visit }
         void $ Hooks.fork do
-            result <- H.lift $ Async.attempt $ fetchSimple (Proxy :: _ ViewMe)
+            result <- H.lift $ Async.attempt $ fetchSimple (expecting [ "notAuthorized" ] (Proxy :: _ ViewMe))
             let answer viewer = set \state' ->
                     if state'.visit /= visit then state'
                     else state'

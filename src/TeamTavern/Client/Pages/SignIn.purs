@@ -25,7 +25,7 @@ import TeamTavern.Client.Script.Back (authPath, readBack)
 import TeamTavern.Client.Script.Discord (authorizeWithDiscord, keepSwitchToken, takeDiscordReturn)
 import TeamTavern.Client.Script.Navigate (navigateReplace_, navigate_)
 import TeamTavern.Client.Shared.AccountErrors (nicknameInvalid, nicknameTaken, somethingWrong)
-import TeamTavern.Client.Shared.Fetch (fetchBody)
+import TeamTavern.Client.Shared.Fetch (expecting, fetchBody)
 import TeamTavern.Client.Shared.Me (fetchMe)
 import TeamTavern.Client.Shared.Slot (Slot___)
 import TeamTavern.Client.Snippets.Class as HS
@@ -89,7 +89,7 @@ component = Hooks.component \_ _ -> Hooks.do
 
         startDiscordSession accessToken back = do
             set _ { screen = Discord, back = back, publishing = publishing back }
-            result <- H.lift $ Async.attempt $ fetchBody (Proxy :: _ StartSession)
+            result <- H.lift $ Async.attempt $ fetchBody (expecting [ "badRequest" ] (Proxy :: _ StartSession))
                 (inj (Proxy :: _ "discord") { accessToken })
             case result of
                 Right response -> response # onMatch
@@ -114,7 +114,7 @@ component = Hooks.component \_ _ -> Hooks.do
             then failWith errors
             else do
                 set _ { sending = true, errors = noErrors }
-                result <- H.lift $ Async.attempt $ fetchBody (Proxy :: _ StartSession)
+                result <- H.lift $ Async.attempt $ fetchBody (expecting [ "badRequest" ] (Proxy :: _ StartSession))
                     (inj (Proxy :: _ "password")
                         { emailOrNickname: trim state.emailOrNickname, password: state.password })
                 case result of
@@ -137,7 +137,7 @@ component = Hooks.component \_ _ -> Hooks.do
             then failWith noErrors { nickname = Just "Choose a nickname." }
             else do
                 set _ { sending = true, errors = noErrors }
-                result <- H.lift $ Async.attempt $ fetchBody (Proxy :: _ RegisterPlayer)
+                result <- H.lift $ Async.attempt $ fetchBody (expecting [ "badRequest" ] (Proxy :: _ RegisterPlayer))
                     (inj (Proxy :: _ "discord") { nickname: trim state.nickname, accessToken })
                 case result of
                     Right response -> response # onMatch

@@ -19,7 +19,7 @@ import TeamTavern.Client.Components.Button (Size(..), Weight(..), buttonLink)
 import TeamTavern.Client.Components.Flow (flow, flowError, flowLead, flowLink, formTight, submitButton, textField)
 import TeamTavern.Client.Script.QueryParams (getQueryParam)
 import TeamTavern.Client.Shared.AccountErrors (passwordShort, somethingWrong)
-import TeamTavern.Client.Shared.Fetch (fetchBody)
+import TeamTavern.Client.Shared.Fetch (expecting, fetchBody)
 import TeamTavern.Client.Shared.Slot (Slot___)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Password.ResetPassword (ResetPassword)
@@ -51,7 +51,7 @@ component = Hooks.component \_ _ -> Hooks.do
             then fail (Just passwordShort) Nothing
             else do
                 set _ { sending = true, error = Nothing, formError = Nothing }
-                result <- H.lift $ Async.attempt $ fetchBody (Proxy :: _ ResetPassword)
+                result <- H.lift $ Async.attempt $ fetchBody (expecting [ "badRequest", "notFound" ] (Proxy :: _ ResetPassword))
                     { password: state.password, nonce: state.nonce }
                 case result of
                     Right response -> response # onMatch

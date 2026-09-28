@@ -10,6 +10,7 @@ import TeamTavern.Routes.Account.UpdateSwitches (UpdateSwitches)
 import TeamTavern.Routes.Account.ViewAccount (ViewAccount)
 import TeamTavern.Routes.Block.Block (Block)
 import TeamTavern.Routes.Block.ReportConversation (ReportConversation)
+import TeamTavern.Routes.ClientError.ReportClientError (ReportClientError)
 import TeamTavern.Routes.Block.ReportPost (ReportPost)
 import TeamTavern.Routes.Block.Unblock (Unblock)
 import TeamTavern.Routes.Block.ViewBlocked (ViewBlocked)
@@ -116,6 +117,9 @@ type SitemapRoutes
 type LlmsTxtRoutes
     =   "viewLlmsTxt" : ViewLlmsTxt
 
+type ClientErrorRoutes
+    =   "reportClientError" : ReportClientError
+
 type AllRoutes
     =    SessionRoutes
     <|> PasswordRoutes
@@ -130,3 +134,4 @@ type AllRoutes
     <|> CountryRoutes
     <|> SitemapRoutes
     <|> LlmsTxtRoutes
+    <|> ClientErrorRoutes

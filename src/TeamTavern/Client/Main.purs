@@ -4,7 +4,7 @@ import Prelude
 
 import Async.Aff (asyncToAff)
 import Control.Bind (bindFlipped)
-import Data.Maybe (fromJust)
+import Data.Maybe (Maybe(..), fromJust)
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (class MonadEffect)
@@ -13,9 +13,11 @@ import Halogen.Aff as HA
 import Halogen.VDom.Driver (runUI)
 import Partial.Unsafe (unsafePartial)
 import TeamTavern.Client.Router (Query(..), router)
+import TeamTavern.Client.Script.ClientError (onOwnError)
 import TeamTavern.Client.Script.Invalid (describeInvalid)
 import TeamTavern.Client.Script.Navigate (navigated)
 import TeamTavern.Client.Script.Scroll (scrollRestorationManual)
+import TeamTavern.Client.Shared.ClientError (reportClientError)
 import Web.DOM.NonElementParentNode (getElementById)
 import Web.Event.Event (Event, EventType)
 import Web.Event.EventTarget (EventListener, addEventListener)
@@ -37,7 +39,7 @@ addWindowListener event listener =
     window <#> Window.toEventTarget >>= addEventListener event listener false # liftEffect
 
 main :: Effect Unit
-main = HA.runHalogenAff do
+main = onOwnError (reportClientError Nothing) *> HA.runHalogenAff do
     _ <- HA.awaitBody
     (spa :: _) <- window >>= document <#> toNonElementParentNode >>= getElementById "spa-teamtavern" <#> bindFlipped fromElement <#> unsafePartial fromJust # liftEffect
     state <- window >>= Window.history >>= History.state # liftEffect

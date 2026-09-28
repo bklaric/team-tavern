@@ -48,7 +48,7 @@ import TeamTavern.Client.Shared.AccountErrors (nicknameInvalid, nicknameTaken, p
 import TeamTavern.Client.Shared.Block (block, unblock)
 import TeamTavern.Client.Shared.Contacts (contactLabel, contactPlaceholder)
 import TeamTavern.Client.Shared.Facts (ageOn, dateText, timezoneOptions, timezoneText)
-import TeamTavern.Client.Shared.Fetch (fetchBody, fetchSimple)
+import TeamTavern.Client.Shared.Fetch (expecting, fetchBody, fetchSimple)
 import TeamTavern.Client.Shared.Slot (Slot__I)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Account.DeleteAccount (DeleteAccount)
@@ -126,11 +126,13 @@ initialState =
 landings :: Array String
 landings = [ "email", "emails", "blocked" ]
 
+-- Signed out, the account's answer says so, and the blocked list's says the
+-- same thing again.
 load :: ∀ left. Async left Page
 load = do
     results <- sequential $ { account: _, blocked: _, countries: _ }
-        <$> parallel (Async.attempt $ fetchSimple (Proxy :: _ ViewAccount))
-        <*> parallel (Async.attempt $ fetchSimple (Proxy :: _ ViewBlocked))
+        <$> parallel (Async.attempt $ fetchSimple (expecting [ "notAuthorized" ] (Proxy :: _ ViewAccount)))
+        <*> parallel (Async.attempt $ fetchSimple (expecting [ "notAuthorized" ] (Proxy :: _ ViewBlocked)))
         <*> parallel (Async.attempt $ fetchSimple (Proxy :: _ ViewCountries))
     today <- liftEffect nowDate
     pure case hush results.account of
@@ -274,7 +276,7 @@ component = Hooks.component \_ _ -> Hooks.do
         -- player chose it.
         switchToDiscord :: String -> HookM (Async left) Unit
         switchToDiscord accessToken = do
-            result <- H.lift $ Async.attempt $ fetchBody (Proxy :: _ SwitchToDiscord) { accessToken }
+            result <- H.lift $ Async.attempt $ fetchBody (expecting [ "badRequest" ] (Proxy :: _ SwitchToDiscord)) { accessToken }
             let failed = showToast { text: "Discord couldn't take your password's place. Try again.", action: Nothing }
             case hush result of
                 Nothing -> failed
@@ -342,7 +344,7 @@ component = Hooks.component \_ _ -> Hooks.do
                     then failed errors
                     else do
                         Hooks.modify_ stateId _ { saving = true, errors = Object.empty }
-                        result <- H.lift $ Async.attempt $ fetchBody (Proxy :: _ UpdateFacts) (factsRequest facts)
+                        result <- H.lift $ Async.attempt $ fetchBody (expecting [ "badRequest" ] (Proxy :: _ UpdateFacts)) (factsRequest facts)
                         case hush result of
                             Nothing -> failed $ Object.singleton "form" somethingWrong
                             Just response -> response # onMatch
@@ -429,7 +431,7 @@ component = Hooks.component \_ _ -> Hooks.do
                             Hooks.modify_ stateId _ { saving = false, errors = errors }
                             liftEffect focusFirstInvalid
                     Hooks.modify_ stateId _ { saving = true, errors = Object.empty }
-                    result <- H.lift $ Async.attempt $ fetchBody (Proxy :: _ UpdateEmail) { email }
+                    result <- H.lift $ Async.attempt $ fetchBody (expecting [ "badRequest" ] (Proxy :: _ UpdateEmail)) { email }
                     case hush result of
                         Nothing -> failed $ Object.singleton "email" somethingWrong
                         Just response -> response # onMatch
@@ -485,7 +487,7 @@ component = Hooks.component \_ _ -> Hooks.do
                                 "Another account signs in with " <> email <> ". Change your email to sign in with a password."
                             Nothing -> Object.singleton "sign-in-email" emailTaken
                     Hooks.modify_ stateId _ { saving = true, errors = Object.empty }
-                    result <- H.lift $ Async.attempt $ fetchBody (Proxy :: _ SwitchToPassword)
+                    result <- H.lift $ Async.attempt $ fetchBody (expecting [ "badRequest" ] (Proxy :: _ SwitchToPassword))
                         { password: signIn.password
                         , email: if isJust account'.email then Nothing else Just signIn.email
                         }

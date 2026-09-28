@@ -33,6 +33,7 @@ import TeamTavern.Server.Block.ReportConversation (reportConversation)
 import TeamTavern.Server.Block.ReportPost (reportPost)
 import TeamTavern.Server.Block.Unblock (unblock)
 import TeamTavern.Server.Block.ViewBlocked (viewBlocked)
+import TeamTavern.Server.ClientError.ReportClientError (ClientErrorLimit, createClientErrorLimit, reportClientError)
 import TeamTavern.Server.Conversation.SendMessage (sendMessage)
 import TeamTavern.Server.Conversation.SendReply (sendReply)
 import TeamTavern.Server.Conversation.ViewConversation (viewConversation)
@@ -48,8 +49,8 @@ import TeamTavern.Server.Infrastructure.Environment (Environment(..))
 import TeamTavern.Server.Infrastructure.Environment as Environment
 import TeamTavern.Server.Infrastructure.FetchDiscordUser (DiscordApiUrl(..))
 import TeamTavern.Server.Infrastructure.Log (logStamped, print)
-import TeamTavern.Server.Infrastructure.Sendgrid (setApiKey, setBaseUrl)
 import TeamTavern.Server.Infrastructure.Postgres (databaseErrorLines)
+import TeamTavern.Server.Infrastructure.Sendgrid (setApiKey, setBaseUrl)
 import TeamTavern.Server.LlmsTxt.ViewLlmsTxt (viewLlmsTxt)
 import TeamTavern.Server.Notification.ReadNotification (readNotification)
 import TeamTavern.Server.Notification.ReadNotifications (readNotifications)
@@ -110,10 +111,10 @@ loadPostgresVariables = do
         <#> note ("Couldn't read variable PGDATABASE.") # ExceptT
     pure { user, password, host, port, database }
 
-createPostgresPool :: ExceptT String Effect Pool
 -- Postgres ending a connection the pool holds idle, as a restart does, makes
 -- the pool emit an error, and an error nobody listens for ends the process.
 -- The pool drops that client and connects afresh for the next query.
+createPostgresPool :: ExceptT String Effect Pool
 createPostgresPool = do
     postgresVariables <- loadPostgresVariables
     pool <- lift $ Pool.create postgresVariables
@@ -168,8 +169,8 @@ loadAdminEmail =
     <#> note "Couldn't read variable ADMIN_EMAIL."
     # ExceptT
 
-runServer :: Environment -> Mailer -> DiscordApiUrl -> AdminEmail -> Pool -> Effect Unit
-runServer environment mailer discordApiUrl adminEmail pool = serve (Proxy :: _ AllRoutes) serveOptions
+runServer :: Environment -> Mailer -> DiscordApiUrl -> AdminEmail -> ClientErrorLimit -> Pool -> Effect Unit
+runServer environment mailer discordApiUrl adminEmail clientErrorLimit pool = serve (Proxy :: _ AllRoutes) serveOptions
     { startSession: \{ cookies, body } ->
         Session.start environment mailer discordApiUrl pool cookies body
     , endSession: \{ cookies } ->
@@ -258,6 +259,8 @@ runServer environment mailer discordApiUrl adminEmail pool = serve (Proxy :: _ A
         viewSitemap pool headers
     , viewLlmsTxt: \{ headers } ->
         viewLlmsTxt pool headers
+    , reportClientError: \{ headers, body } ->
+        reportClientError clientErrorLimit headers body
     }
 
 main :: Effect Unit
@@ -269,5 +272,6 @@ main = either log pure =<< runExceptT do
     pool <- createPostgresPool
     setSendGridApiKey
     mailer <- lift $ loadMailer environment
+    clientErrorLimit <- lift createClientErrorLimit
     lift $ startWorker workerPeriod mailer pool
-    lift $ runServer environment mailer discordApiUrl adminEmail pool
+    lift $ runServer environment mailer discordApiUrl adminEmail clientErrorLimit pool

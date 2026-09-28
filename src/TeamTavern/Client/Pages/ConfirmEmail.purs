@@ -17,7 +17,7 @@ import TeamTavern.Client.Components.Button (Size(..), Weight(..), buttonLink)
 import TeamTavern.Client.Components.Flow (flow, flowLead, flowLink)
 import TeamTavern.Client.Script.QueryParams (getQueryParam)
 import TeamTavern.Client.Shared.AccountErrors (somethingWrong)
-import TeamTavern.Client.Shared.Fetch (fetchBody)
+import TeamTavern.Client.Shared.Fetch (expecting, fetchBody)
 import TeamTavern.Client.Shared.Slot (Slot___)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Player.ConfirmEmail (ConfirmEmail)
@@ -35,7 +35,7 @@ component = Hooks.component \_ _ -> Hooks.do
         case nonce of
             Nothing -> Hooks.put stateId Expired
             Just nonce' -> do
-                result <- H.lift $ Async.attempt $ fetchBody (Proxy :: _ ConfirmEmail) { nonce: nonce' }
+                result <- H.lift $ Async.attempt $ fetchBody (expecting [ "notFound" ] (Proxy :: _ ConfirmEmail)) { nonce: nonce' }
                 Hooks.put stateId case result of
                     Right response -> response # onMatch
                         { noContent: const Confirmed

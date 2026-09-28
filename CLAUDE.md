@@ -400,6 +400,16 @@ redirects the old site's feed paths to the new ones by `legacy.game_map`.
   conversation or sending a message, calls `announceUnread` from
   `Client/Script/Unread.purs` and the header asks again.
 - A page forks its fetches from `useLifecycleEffect` rather than awaiting them
+- The server logs only its own failures, so the client reports the ones it
+  didn't expect to `/api/client/errors`, which logs each as a `Client error`
+  line, at most 60 a minute. `Client/Shared/Fetch.purs` reports a response
+  the route doesn't declare, and any `badRequest`, `notAuthorized`,
+  `forbidden` or `notFound` the call doesn't name. A call that handles one of
+  those by name names it there too, as `fetchBody (expecting [ "badRequest" ]
+  (Proxy :: _ UpdateEmail))`, or every time it happens lands in the log.
+  Errors the site's own script throws and nothing catches are reported too;
+  a lost network is not. A report carries paths only, never a query string,
+  which holds the nonces of the links in emails.
   there, and what follows a fetch happens in the fork, not in a tick effect
   watching for its result. Hooks runs effects only after a render that the
   first render, or state changed by an action, query or new input, sets off.
