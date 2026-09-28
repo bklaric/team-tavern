@@ -174,6 +174,26 @@ test.describe("posting", () => {
         await expectPage(page, "/games/league-of-legends/post/player");
     });
 
+    // A post's page with no more than its facts adds nothing to the card in the feed.
+    test("keeps a post without text out of search engines, and describes it by its facts", async ({ page }) => {
+        const nickname = await signUp(page);
+        await page.goto("/games/league-of-legends/post/player");
+        await expect(page.getByText(/^A few sentences get your post found by more players\. Ideas: /)).toBeVisible();
+        await page.getByLabel("Rank", { exact: true }).selectOption("iron-iv");
+        await page.getByLabel("Location").selectOption("Croatia");
+        await page.getByLabel("I use a microphone").check();
+        await page.getByRole("button", { name: "Publish post" }).click();
+        await expectPage(page, "/games/league-of-legends/post/player/live");
+
+        await page.goto("/");
+        await page.locator(".own-post").getByRole("link", { name: nickname, exact: true }).click();
+        await expectPage(page, /^\/games\/league-of-legends\/posts\/\d+$/);
+
+        await expect(page.locator('meta[name="description"]'))
+            .toHaveAttribute("content", `${nickname}, League of Legends player: Iron IV, from Croatia, has a microphone.`);
+        await expect(page.locator("#meta-robots")).toHaveAttribute("content", "noindex");
+    });
+
     // The post keeps the words, and only the page shows them starred.
     test("stars out a slur in the text, on the card and in the page's description", async ({ page }) => {
         const nickname = await signUp(page);

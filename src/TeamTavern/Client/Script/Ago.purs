@@ -1,4 +1,4 @@
-module TeamTavern.Client.Script.Ago (ago, millisOf) where
+module TeamTavern.Client.Script.Ago (ago, isoOf, millisOf) where
 
 import Prelude
 
@@ -8,6 +8,10 @@ import Data.Newtype (unwrap)
 
 -- | An ISO time in milliseconds since the epoch.
 foreign import millisOf :: String -> Number
+
+-- | An ISO time in UTC to the millisecond, the form a `datetime` attribute
+-- | takes, where Postgres gives microseconds and an offset.
+foreign import isoOf :: String -> String
 
 unit' :: Int -> String -> String
 unit' count name = show count <> " " <> name <> (if count == 1 then "" else "s") <> " ago"

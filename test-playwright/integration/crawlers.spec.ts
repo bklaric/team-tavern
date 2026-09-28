@@ -44,6 +44,23 @@ test.describe("a bot", () => {
         ]));
         expect(locations).not.toContain(`${baseURL}${expired}`);
     });
+
+    // ValorantTester's seeded post is active, and says only "Seeded player post for Valorant."
+    test("finds no post that says too little, and dates the home page and a feed by their newest post", async ({ page, browser, baseURL }) => {
+        const thin = await postPath(browser, baseURL!, "/games/valorant", "ValorantTester");
+
+        const response = await page.goto("/sitemap.xml");
+
+        const urls = new Map([...(await response!.text())
+            .matchAll(/<url><loc>([^<]*)<\/loc>(?:<lastmod>([^<]*)<\/lastmod>)?<\/url>/g)]
+            .map(match => [match[1], match[2]]));
+        expect(urls.has(`${baseURL}${thin}`)).toBe(false);
+        const posts = [...urls].filter(([location]) => location.includes("/posts/"));
+        const newest = (prefix: string) =>
+            posts.filter(([location]) => location.startsWith(prefix)).map(([, lastmod]) => lastmod!).sort().at(-1);
+        expect(urls.get(`${baseURL}/`)).toBe(newest(`${baseURL}/games/`));
+        expect(urls.get(`${baseURL}/games/valorant`)).toBe(newest(`${baseURL}/games/valorant/`));
+    });
 });
 
 // AI crawlers run no scripts, so without a render they would read the empty shell. The

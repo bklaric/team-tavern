@@ -369,7 +369,8 @@ from player, game
 where player.nickname = 'CommunityTester' and game.handle = 'team-fortress-2';
 
 -- An owner with two expired posts to renew, one from the feed and one from
--- its page, in games whose feeds no other spec asserts.
+-- its page, in games whose feeds no other spec asserts. The text is long
+-- enough for a renewed post's page to be indexed.
 
 select seed_player('RenewTester', 'renew@example.com');
 
@@ -383,7 +384,7 @@ select
     game.id,
     'player',
     left(md5('RenewTester-player-' || game.handle), 20),
-    array['Seeded player post of RenewTester''s.'],
+    array['Seeded player post of RenewTester''s. Back after a long break and looking for a steady duo who plays ranked most evenings and keeps the comms calm.'],
     true,
     time '20:00',
     time '23:00',

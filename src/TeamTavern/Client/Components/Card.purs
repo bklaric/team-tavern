@@ -1,9 +1,9 @@
-module TeamTavern.Client.Components.Card (Place(..), Viewer, briefCard, card, flagText, ownCard, postFacts, postName, tierOf, typeIcon) where
+module TeamTavern.Client.Components.Card (Place(..), Viewer, briefCard, card, factWords, flagText, ownCard, postFacts, postName, tierOf, typeIcon) where
 
 import Prelude
 
 import Control.Alt ((<|>))
-import Data.Array (catMaybes, elem, filter, find, findIndex, head, index, length, mapMaybe, null)
+import Data.Array (catMaybes, elem, filter, find, findIndex, head, index, length, mapMaybe, null, unsnoc)
 import Data.DateTime.Instant (Instant)
 import Data.Int (floor)
 import Data.Maybe (Maybe(..), fromMaybe, isJust, isNothing, maybe)
@@ -18,9 +18,9 @@ import Halogen.HTML.Properties.ARIA as HPA
 import JSURI (encodeURIComponent)
 import TeamTavern.Client.Components.Button (Size(..), Weight(..), button, buttonLink)
 import TeamTavern.Client.Components.Card.Hours (Hours, hoursText, inViewerTime)
-import TeamTavern.Client.Components.Card.Regions (regionsText)
+import TeamTavern.Client.Components.Card.Regions (regionCount, regionsText)
 import TeamTavern.Client.Icons as Icons
-import TeamTavern.Client.Script.Ago (ago)
+import TeamTavern.Client.Script.Ago (ago, isoOf)
 import TeamTavern.Client.Script.Navigate (navigateWithEvent_)
 import TeamTavern.Client.Shared.Censor (censor)
 import TeamTavern.Client.Snippets.Class as HS
@@ -224,6 +224,11 @@ hoursOf viewer post = do
     to <- post.online_to
     inViewerTime viewer post.timezone from to
 
+-- How long ago a time was, carrying the time itself, which a page read long
+-- after it was drawn still gets right.
+agoTime :: ∀ w i. Viewer -> String -> HH.HTML w i
+agoTime viewer time = HH.time [ HP.attr (HH.AttrName "datetime") (isoOf time) ] [ HH.text $ ago viewer.now time ]
+
 postPath :: ViewGame.OkContent -> CardRow -> String
 postPath game post = "/games/" <> game.handle <> "/posts/" <> show post.id
 
@@ -336,7 +341,7 @@ card { game, viewer, post, marked, expanded: expanded', place, onToggle, onConta
             else typeLabel post.type
         , slotsText post <#> \slots -> HH.span [ HS.class_ "card-slots tabular" ] [ HH.text slots ]
         , if post.own then Just $ HH.span [ HS.class_ "card-own" ] [ HH.text "Your post" ] else Nothing
-        , Just $ HH.span [ HS.class_ "card-freshness" ] [ HH.text $ "Active " <> ago viewer.now post.updated ]
+        , Just $ HH.span [ HS.class_ "card-freshness" ] [ HH.text "Active ", agoTime viewer post.updated ]
         ]
     detailRow { label, value } =
         HH.div [ HS.class_ "detail" ] [ HH.span [ HS.class_ "detail-label" ] [ HH.text label ], HH.span_ [ HH.text value ] ]
@@ -357,7 +362,7 @@ card { game, viewer, post, marked, expanded: expanded', place, onToggle, onConta
             [ HH.text $ (if post.type == "community" then "Run by " else "Posted by ")
                 <> if preview then "you" else post.owner ]
     messagedLine = post.messaged <#> \time ->
-        HH.span [ HS.class_ "card-messaged" ] [ Icons.messageCircle, HH.text $ "You messaged " <> ago viewer.now time ]
+        HH.span [ HS.class_ "card-messaged" ] [ Icons.messageCircle, HH.text "You messaged ", agoTime viewer time ]
     -- A card's contact button is outlined, so a feed of twenty cards doesn't
     -- show twenty filled ones.
     contact content =
@@ -413,7 +418,7 @@ briefCard { game, viewer, post } = let
             [ HH.text $ postName post ]
         , Just $ HH.span [ HS.class_ "card-type" ] $ typeLabel post.type
         , slotsText post <#> \slots -> HH.span [ HS.class_ "card-slots tabular" ] [ HH.text slots ]
-        , Just $ HH.span [ HS.class_ "card-freshness" ] [ HH.text $ "Active " <> ago viewer.now post.updated ]
+        , Just $ HH.span [ HS.class_ "card-freshness" ] [ HH.text "Active ", agoTime viewer post.updated ]
         ]
     , factLine $ factsOf game post { marks = Object.empty } (hoursOf viewer post)
     ]
@@ -463,6 +468,34 @@ tierOf post = let
     misses = marks # filter (notEq "fit") # length
     in
     if null marks then 2 else min misses 2
+
+-- "A", "A and B", "A, B and C".
+listed :: Array String -> String
+listed items = case unsnoc items of
+    Just { init, last } | not null init -> joinWith ", " init <> " and " <> last
+    _ -> joinWith "" items
+
+-- | A post's facts as words, unmarked, as a search result reads them: the
+-- | game's fields as the fact line has them, then where the post is, what it
+-- | speaks and its microphone as a sentence says them.
+factWords :: ViewGame.OkContent -> CardRow -> Array String
+factWords game post = let
+    player = post.type == "player"
+    gameFacts = factsOf game
+        post { marks = Object.empty, country = Nothing, regions = [], languages = [], microphone = false } Nothing
+    in
+    (gameFacts <#> case _ of
+        TextFact { text } -> text
+        IconFact { label } -> label)
+    <> catMaybes
+        [ if player then post.country <#> ("from " <> _)
+            else if null post.regions then Nothing
+            else if length post.regions == regionCount then Just "anywhere"
+            else Just $ "in " <> listed post.regions
+        , if null post.languages then Nothing else Just $ "speaks " <> listed post.languages
+        , if not post.microphone then Nothing
+            else Just if player then "has a microphone" else "needs a microphone"
+        ]
 
 -- | A post's facts on one line, unmarked, after `lead` where there is one, as a
 -- | conversation's header shows them.

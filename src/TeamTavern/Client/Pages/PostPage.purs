@@ -25,7 +25,7 @@ import Halogen.HTML.Properties as HP
 import Halogen.HTML.Properties.ARIA as HPA
 import Halogen.Hooks as Hooks
 import TeamTavern.Client.Components.Ads as Ads
-import TeamTavern.Client.Components.Card (Place(..), Viewer, briefCard, card, postName, typeIcon)
+import TeamTavern.Client.Components.Card (Place(..), Viewer, briefCard, card, factWords, postName, typeIcon)
 import TeamTavern.Client.Components.ContactPanel (contactPanel, markMessaged, takeContactParam, useContactPanel)
 import TeamTavern.Client.Components.OwnPostStatus (ownPostStatus)
 import TeamTavern.Client.Components.Toast (toasts, useToast)
@@ -48,6 +48,7 @@ import TeamTavern.Routes.Game.ViewGame (ViewGame)
 import TeamTavern.Routes.Game.ViewGame as ViewGame
 import TeamTavern.Routes.Post.ViewPost (ViewPost)
 import TeamTavern.Routes.Post.ViewPost as ViewPost
+import TeamTavern.Shared.Thin (thin)
 import Type.Proxy (Proxy(..))
 import Web.Event.Event (preventDefault)
 import Web.HTML (window)
@@ -75,12 +76,15 @@ type State = { page :: Page, viewer :: Maybe Viewer }
 typeName :: ViewGame.OkContent -> String -> String
 typeName game type_ = game.title <> " " <> type_
 
--- A search result shows the post's own words.
+-- A search result shows the post's own words, or its facts where it has none.
 metaDescription :: ViewGame.OkContent -> ViewPost.OkContent -> String
 metaDescription game { post } = let
     text = post.summary # joinWith " " # trim # censor
+    named = postName post <> ", " <> typeName game post.type
     in
-    if text == "" then postName post <> ", a " <> typeName game post.type <> " post on TeamTavern."
+    if text == "" then case factWords game post of
+        [] -> named <> " on TeamTavern."
+        facts -> named <> ": " <> joinWith ", " facts <> "."
     else if CodeUnits.length text > 155 then trim (CodeUnits.take 154 text) <> "…"
     else text
 
@@ -158,8 +162,9 @@ component = Hooks.component \_ { handle, id, feedBehind } -> Hooks.do
                                 , { name: named, path: feedPath <> "/posts/" <> show id }
                                 ]
                             -- An expired post keeps its page, but out of search
-                            -- engines until it is renewed (brief 11.1).
-                            when page.post.expired $ setMetaRobots "noindex"
+                            -- engines until it is renewed (brief 11.1), and so does
+                            -- one that says too little until its owner says more.
+                            when (page.post.expired || thin page.post.summary) $ setMetaRobots "noindex"
                             Hooks.modify_ stateId _
                                 { page = Shown { game: game'', page, signedIn: isJust me, own, described } }
                             -- Back from signing up to contact the post, its panel opens.
@@ -178,14 +183,14 @@ component = Hooks.component \_ { handle, id, feedBehind } -> Hooks.do
         pure Nothing
 
     -- The page reads the renewed post again, which the card's Renew keeps the
-    -- focus through, and is back in search engines.
+    -- focus through, and is back in search engines unless it says too little.
     let renewPost post = void $ Hooks.fork do
             renewed <- H.lift $ renew handle post
             case renewed of
                 Nothing -> showToast { text: renewFailed, action: Nothing }
                 Just text -> do
                     readPost
-                    setMetaRobots "index, follow"
+                    unless (thin post.summary) $ setMetaRobots "index, follow"
                     showToast { text, action: Nothing }
 
         feedSection game { page: { post, owner }, own, described } = let

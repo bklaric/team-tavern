@@ -379,12 +379,14 @@ wordsText = case _ of
         }
 
 -- | The player's own words, required only of a community, where the text is
--- | the product.
+-- | the product. A post that says too little stays out of search engines, so
+-- | the hint asks for a few sentences.
 wordsField :: ∀ m slots. MonadEffect m => Context m -> Html m slots
 wordsField context = let
     words = wordsText context.type_
+    hint = "A few sentences get your post found by more players. Ideas: " <> words.ideas
     in
-    field ((shell context "text" words.label For (Just $ "Ideas: " <> words.ideas))
+    field ((shell context "text" words.label For (Just hint))
         { required = context.type_ == "community" })
     [ textarea [ HP.id $ idOf "text" ]
         { value: context.draft.text

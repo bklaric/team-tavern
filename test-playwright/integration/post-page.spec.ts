@@ -31,6 +31,8 @@ test.describe("a post's page", () => {
         await expect(page.locator(".card .button-primary")).toHaveText("Message");
         await expect(page).toHaveTitle("Night Owls · Valorant group | TeamTavern");
         await expect(page.locator("#meta-robots")).toHaveAttribute("content", "index, follow");
+        await expect(page.locator(".card .card-freshness time"))
+            .toHaveAttribute("datetime", /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/);
     });
 
     test("goes back to the feed as it was left", async ({ page }) => {
