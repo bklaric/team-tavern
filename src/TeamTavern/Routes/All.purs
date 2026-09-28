@@ -41,6 +41,7 @@ import TeamTavern.Routes.Post.UpdatePost (UpdatePost)
 import TeamTavern.Routes.Post.ViewOwnPost (ViewOwnPost)
 import TeamTavern.Routes.Post.ViewOwnPosts (ViewOwnPosts)
 import TeamTavern.Routes.Post.ViewPost (ViewPost)
+import TeamTavern.Routes.LlmsTxt.ViewLlmsTxt (ViewLlmsTxt)
 import TeamTavern.Routes.Session.EndSession (EndSession)
 import TeamTavern.Routes.Session.StartSession (StartSession)
 import TeamTavern.Routes.Sitemap.ViewSitemap (ViewSitemap)
@@ -112,6 +113,9 @@ type CountryRoutes
 type SitemapRoutes
     =   "viewSitemap" : ViewSitemap
 
+type LlmsTxtRoutes
+    =   "viewLlmsTxt" : ViewLlmsTxt
+
 type AllRoutes
     =    SessionRoutes
     <|> PasswordRoutes
@@ -125,3 +129,4 @@ type AllRoutes
     <|> NotificationRoutes
     <|> CountryRoutes
     <|> SitemapRoutes
+    <|> LlmsTxtRoutes

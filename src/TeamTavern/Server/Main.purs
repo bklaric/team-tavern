@@ -45,6 +45,7 @@ import TeamTavern.Server.Infrastructure.Environment as Environment
 import TeamTavern.Server.Infrastructure.FetchDiscordUser (DiscordApiUrl(..))
 import TeamTavern.Server.Infrastructure.Log (logStamped, print)
 import TeamTavern.Server.Infrastructure.Sendgrid (setApiKey, setBaseUrl)
+import TeamTavern.Server.LlmsTxt.ViewLlmsTxt (viewLlmsTxt)
 import TeamTavern.Server.Notification.ReadNotification (readNotification)
 import TeamTavern.Server.Notification.ReadNotifications (readNotifications)
 import TeamTavern.Server.Notification.ViewNotifications (viewNotifications)
@@ -243,6 +244,8 @@ runServer environment mailer discordApiUrl adminEmail pool = serve (Proxy :: _ A
         viewCountries pool
     , viewSitemap: \{ headers } ->
         viewSitemap pool headers
+    , viewLlmsTxt: \{ headers } ->
+        viewLlmsTxt pool headers
     }
 
 main :: Effect Unit

@@ -21,15 +21,15 @@ header {
 # this block runs before the /api/* block for every request. The prerenderer's
 # browser sends X-RenderReady on its API calls too, so the API must be excluded
 # here or it receives this HTML instead of JSON and every page prerenders empty.
-# The sitemap and robots have no file behind them either, and are excluded for
-# the same reason.
+# The sitemap, robots and llms.txt have no file behind them either, and are
+# excluded for the same reason.
 #
 # The header, not the user agent, is what marks the prerenderer: its user agent
 # reads as ordinary Chrome.
 
 @prerender_header {
     header X-RenderReady 1
-    not path /api/* /sitemap.xml /robots.txt
+    not path /api/* /sitemap.xml /robots.txt /llms.txt
 }
 
 handle @prerender_header {
@@ -54,12 +54,12 @@ handle @prerender_header {
 # whether it is a page: one it does not know declares a 404 the prerenderer
 # answers with. So the routes live only in the router. The root is a directory,
 # which the file matcher counts as a file, so it is let through by name. The
-# sitemap and robots are answered below without a file, so they are kept out by
-# name.
+# sitemap, robots and llms.txt are answered below without a file, and nothing
+# under /.well-known/ is a page, so they are kept out by name.
 
 @bot_page {
     header_regexp User-Agent (?i)(amazonbot|applebot|baiduspider|bingbot|bytespider|ccbot|chatgpt-user|claude-searchbot|claude-user|claudebot|discordbot|duckassistbot|embedly|facebot|facebookexternalhit|googlebot|gptbot|linkedinbot|oai-searchbot|outbrain|perplexity-user|perplexitybot|pinterest|pinterestbot|quora\slink\spreview|rogerbot|showyoubot|slackbot|telegrambot|twitterbot|vkshare|W3C_Validator|whatsapp|yandex)
-    not path /api/* /images/* /sitemap.xml /robots.txt
+    not path /api/* /images/* /sitemap.xml /robots.txt /llms.txt /.well-known/*
     expression `{path} == "/" || !file({"try_files": [{path}]})`
 }
 
@@ -134,9 +134,23 @@ handle /robots.txt {
         TXT 200
 }
 
+# The site's summary for language models lists the games, which only the
+# database knows.
+
+handle /llms.txt {
+    reverse_proxy tt-node
+}
+
 # A missing image is a 404, not the SPA shell.
 
 handle /images/* {
+    file_server
+}
+
+# The site publishes nothing under /.well-known/, so what a client looks for
+# there is a 404 too. Caddy answers its own ACME challenges before any handle.
+
+handle /.well-known/* {
     file_server
 }
 

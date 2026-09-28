@@ -63,6 +63,35 @@ test.describe("a bot", () => {
     });
 });
 
+// llms.txt and /.well-known/ are fetched by crawlers and by tools that read as a browser
+// alike, and neither is a page: each gets the file, or a 404 where there is none.
+for (const [who, userAgent] of [["a bot", googlebot], ["a browser", undefined]] as const)
+    test.describe(who, () => {
+        if (userAgent) test.use({ userAgent });
+
+        test("is given llms.txt, linking every feed and the site's own pages", async ({ page, baseURL }) => {
+            const response = await page.goto("/llms.txt");
+
+            expect(response?.status()).toBe(200);
+            expect(response?.headers()["content-type"]).toContain("text/plain");
+            const text = await response!.text();
+            expect(text).toMatch(/^# TeamTavern\n\n> Find players, groups and communities/);
+            expect(text).toContain(`- [Valorant LFG](${baseURL}/games/valorant)\n`);
+            const links = [...text.matchAll(/^- \[[^\]]+\]\(([^)]+)\)$/gm)].map(match => match[1]);
+            expect(links).toEqual(expect.arrayContaining([
+                ...handles.map(handle => `${baseURL}/games/${handle}`),
+                ...sitePages.map(path => `${baseURL}${path}`),
+                `${baseURL}/sitemap.xml`,
+            ]));
+        });
+
+        test("finds nothing under /.well-known/", async ({ page }) => {
+            const response = await page.goto("/.well-known/ai-catalog.json");
+
+            expect(response?.status()).toBe(404);
+        });
+    });
+
 // AI crawlers run no scripts, so without a render they would read the empty shell. The
 // answer engines' bots fetch a page to cite it, the training crawlers to learn the site.
 // With scripts off, what the page shows is the HTML the prerenderer returned, whose links

@@ -6,13 +6,13 @@ import Async (Async)
 import Data.Array (filter, find)
 import Data.Foldable (fold, foldMap, maximum)
 import Data.Map (Map)
-import Data.Map as Map
-import Data.Maybe (Maybe(..), fromMaybe)
+import Data.Maybe (Maybe(..))
 import Data.String (Pattern(..), Replacement(..), replaceAll)
 import Jarilo (ok_)
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Query (Query(..))
 import TeamTavern.Server.Infrastructure.Postgres (queryMany_)
+import TeamTavern.Server.Infrastructure.RequestOrigin (requestOrigin)
 import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
 import TeamTavern.Shared.Thin (thin)
@@ -48,15 +48,6 @@ loadGames pool = queryMany_ pool loadGamesQuery
 
 loadPosts :: ∀ errors. Pool -> Async (InternalTerror_ errors) (Array Post)
 loadPosts pool = queryMany_ pool loadPostsQuery
-
--- A sitemap's addresses are absolute, and each origin the site answers on
--- (production, staging, the local stacks) lists its own. Caddy passes the
--- request's host on and says in `X-Forwarded-Proto` how it was reached.
-origin :: Map String String -> String
-origin headers =
-    (Map.lookup "x-forwarded-proto" headers # fromMaybe "http")
-    <> "://"
-    <> (Map.lookup "host" headers # fromMaybe "")
 
 escape :: String -> String
 escape =
@@ -94,4 +85,4 @@ viewSitemap pool headers =
     sendResponse "Error viewing sitemap" do
     games <- loadGames pool
     posts <- loadPosts pool <#> filter (not <<< thin <<< _.summary)
-    pure $ ok_ $ sitemap (origin headers) games posts
+    pure $ ok_ $ sitemap (requestOrigin headers) games posts
