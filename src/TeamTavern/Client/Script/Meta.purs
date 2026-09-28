@@ -57,6 +57,22 @@ setMetaUrl = do
     setLink "hreflang-en" url
     setLink "hreflang-default" url
 
+-- | The image a shared link shows, at a path on the site's origin.
+setMetaImage :: ∀ monad. MonadEffect monad => String -> String -> monad Unit
+setMetaImage path alt = liftEffect do
+    origin' <- window >>= location >>= origin
+    setMetaContent (origin' <> path) "meta-twitter-image"
+    setMetaContent (origin' <> path) "meta-og-image"
+    setMetaContent alt "meta-twitter-image-alt"
+    setMetaContent alt "meta-og-image-alt"
+
+setLogoImage :: ∀ monad. MonadEffect monad => monad Unit
+setLogoImage = setMetaImage "/logo-512.png" "TeamTavern logo"
+
+-- | A game's cover, for its feed and its posts.
+setCoverImage :: ∀ monad fields. MonadEffect monad => { handle :: String, title :: String | fields } -> monad Unit
+setCoverImage { handle, title } = setMetaImage ("/images/games/" <> handle <> ".webp") (title <> " cover")
+
 setMetaRobots :: ∀ monad. MonadEffect monad => String -> monad Unit
 setMetaRobots content = liftEffect $ setMetaContent content "meta-robots"
 

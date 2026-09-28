@@ -43,7 +43,7 @@ import TeamTavern.Client.Pages.SignIn (signIn)
 import TeamTavern.Client.Pages.SignUp (signUp)
 import TeamTavern.Client.Pages.Terms (terms)
 import TeamTavern.Client.Script.Focus (focusStill)
-import TeamTavern.Client.Script.Meta (clearStructuredData, setMeta, setMetaRobots, setSiteData)
+import TeamTavern.Client.Script.Meta (clearStructuredData, setLogoImage, setMeta, setMetaRobots, setSiteData)
 import TeamTavern.Client.Script.Previous (previousOf, stampPrevious)
 import TeamTavern.Client.Script.RenderReady (appendRenderReadyNotFound)
 import TeamTavern.Client.Shared.Slot (Slot__I, Slot___)
@@ -228,6 +228,7 @@ router initialState initialPath = Hooks.component \{ queryToken } _ -> Hooks.do
     let changeRoute state path popped = do
             let page = route path
             clearStructuredData
+            setLogoImage
             case page of
                 Home -> do
                     setMeta "TeamTavern: LFG for players, groups and communities" (description page)
@@ -235,9 +236,9 @@ router initialState initialPath = Hooks.component \{ queryToken } _ -> Hooks.do
                 NotFound -> do
                     appendRenderReadyNotFound
                     setMeta "Page not found | TeamTavern" (description page)
-                -- A feed and a post name themselves and give their breadcrumbs once
-                -- they have their game, and a conversation names itself once it has
-                -- its post.
+                -- A feed and a post name themselves and give their breadcrumbs and
+                -- cover once they have their game, and a conversation names itself
+                -- once it has its post.
                 Feed _ -> pure unit
                 Post _ -> pure unit
                 Conversation _ -> pure unit

@@ -33,7 +33,7 @@ import TeamTavern.Client.Icons as Icons
 import TeamTavern.Client.Pages.Feed.Description (current, loadStored, storeDescription, storedFrom)
 import TeamTavern.Client.Pages.Feed.Fields (barFields, summary)
 import TeamTavern.Client.Pages.Placeholder (placeholder)
-import TeamTavern.Client.Script.Meta (setBreadcrumbs, setMeta, setMetaRobots)
+import TeamTavern.Client.Script.Meta (setBreadcrumbs, setCoverImage, setMeta, setMetaRobots)
 import TeamTavern.Client.Script.Navigate (navigateWithEvent_, navigate_)
 import TeamTavern.Client.Script.RenderReady (appendRenderReadyNotFound, appendRenderReadyUnavailable)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
@@ -161,6 +161,7 @@ component = Hooks.component \_ { handle, id, feedBehind } -> Hooks.do
                                 [ { name: game''.title, path: feedPath }
                                 , { name: named, path: feedPath <> "/posts/" <> show id }
                                 ]
+                            setCoverImage game''
                             -- An expired post keeps its page, but out of search
                             -- engines until it is renewed (brief 11.1), and so does
                             -- one that says too little until its owner says more.

@@ -222,6 +222,49 @@ test("a page drops the structured data of the page before it", async ({ page }) 
     await expect(page.locator('script[type="application/ld+json"]')).toHaveCount(0);
 });
 
+// A shared link shows the game's cover for a feed or a post, and the logo for the rest.
+test.describe("a page's share image", () => {
+    test.use({ userAgent: googlebot, javaScriptEnabled: false });
+
+    const expectImage = async (page: Page, path: string, alt: string) => {
+        for (const name of ["og:image", "twitter:image"]) {
+            const content = await page.locator(`meta[property="${name}"], meta[name="${name}"]`).getAttribute("content");
+            expect(new URL(content!).pathname).toBe(path);
+        }
+        await expect(page.locator('meta[property="og:image:alt"]')).toHaveAttribute("content", alt);
+        await expect(page.locator('meta[name="twitter:image:alt"]')).toHaveAttribute("content", alt);
+    };
+
+    test("is the game's cover on its feed and its posts", async ({ page, browser, baseURL }) => {
+        test.slow();
+        const nightOwls = await postPath(browser, baseURL!, "/games/valorant", "Night Owls");
+
+        await page.goto("/games/valorant", { timeout: 60_000 });
+        await expectImage(page, "/images/games/valorant.webp", "Valorant cover");
+
+        await page.goto(nightOwls, { timeout: 60_000 });
+        await expectImage(page, "/images/games/valorant.webp", "Valorant cover");
+    });
+
+    test("is the logo on a page of the site's own", async ({ page }) => {
+        test.slow();
+
+        await page.goto("/about", { timeout: 60_000 });
+
+        await expectImage(page, "/logo-512.png", "TeamTavern logo");
+    });
+});
+
+test("a page drops the share image of the game before it", async ({ page }) => {
+    await page.goto("/games/valorant");
+    await expect(page.locator('meta[property="og:image"]')).toHaveAttribute("content", /\/images\/games\/valorant\.webp$/);
+
+    await page.getByRole("contentinfo").getByRole("link", { name: "About" }).click();
+
+    await expectPage(page, "/about");
+    await expect(page.locator('meta[property="og:image"]')).toHaveAttribute("content", /\/logo-512\.png$/);
+});
+
 // No page's path ends in a slash, and the router would not know one that did.
 test.describe("a path with a trailing slash", () => {
     test("takes a browser to the page", async ({ page }) => {
