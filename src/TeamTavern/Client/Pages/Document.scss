@@ -11,7 +11,8 @@
 }
 
 .document h1,
-.document h2 {
+.document h2,
+.document h3 {
     color: var(--text);
 }
 
@@ -37,4 +38,57 @@
 .document strong {
     color: var(--text);
     font-weight: 600;
+}
+
+/* A guide's text is HTML the server makes from Markdown, and its elements take
+   the document's column as their own. */
+
+.guide {
+    display: contents;
+}
+
+.guide h2 {
+    margin-top: var(--space-4);
+}
+
+.guide h3 {
+    font-size: var(--size-14);
+}
+
+/* A table wraps its cells to fit a phone, which is narrower than any of the
+   guides' tables. */
+.guide table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--size-14);
+}
+
+.guide th,
+.guide td {
+    padding: var(--space-2);
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    vertical-align: top;
+    overflow-wrap: anywhere;
+}
+
+.guide th {
+    color: var(--text);
+    font-weight: 600;
+}
+
+.document .guide-list {
+    gap: var(--space-6);
+    padding-left: 0;
+    list-style: none;
+}
+
+.guide-list li {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+}
+
+.guide-updated {
+    font-size: var(--size-14);
 }

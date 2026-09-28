@@ -8,6 +8,7 @@ import Data.Map (Map)
 import Jarilo (ok_)
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Query (Query(..))
+import TeamTavern.Server.Guide.Guides (guides)
 import TeamTavern.Server.Infrastructure.Postgres (queryMany_)
 import TeamTavern.Server.Infrastructure.RequestOrigin (requestOrigin)
 import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
@@ -37,6 +38,9 @@ llmsTxt origin games = fold
     , "Post once, and we'll tell you when someone new fits.\n\n"
     , "## Games\n\n"
     , games # foldMap \{ title, handle } -> link origin (title <> " LFG") ("/games/" <> handle)
+    , "\n## Guides\n\n"
+    , link origin "Guides" "/guides"
+    , guides # foldMap \{ heading, slug } -> link origin heading ("/guides/" <> slug)
     , "\n## About\n\n"
     , link origin "About" "/about"
     , link origin "Contact" "/contact"

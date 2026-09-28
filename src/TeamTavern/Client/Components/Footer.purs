@@ -20,7 +20,8 @@ footer =
     [ HH.div [ HS.class_ "site-footer-inner" ]
         [ HH.span_ [ HH.text "TeamTavern" ]
         , HH.nav [ HS.class_ "site-footer-links", HPA.label "Site" ]
-            [ link "/about" "About"
+            [ link "/guides" "Guides"
+            , link "/about" "About"
             , link "/contact" "Contact"
             , link "/terms" "Terms"
             , link "/privacy" "Privacy"

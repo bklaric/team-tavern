@@ -6,6 +6,7 @@ import Data.Array (mapWithIndex)
 import Data.Maybe (Maybe(..))
 import Effect (Effect)
 import Effect.Class (class MonadEffect, liftEffect)
+import Foreign (Foreign)
 import TeamTavern.Client.Snippets.Cover (coverPath)
 import Web.DOM.NonElementParentNode (getElementById)
 import Web.HTML (window)
@@ -91,7 +92,19 @@ setStructuredData = liftEffect <<< setStructuredData_ <<< writeJSON
 clearStructuredData :: ∀ monad. MonadEffect monad => monad Unit
 clearStructuredData = liftEffect clearStructuredData_
 
+organizationId :: String -> String
+organizationId origin' = origin' <> "/#organization"
+
 -- The site's logo is the square PNG, since search engines take no SVG logo.
+organization :: String -> Foreign
+organization origin' = write
+    { "@type": "Organization"
+    , "@id": organizationId origin'
+    , name: "TeamTavern"
+    , url: origin' <> "/"
+    , logo: origin' <> "/logo-512.png"
+    }
+
 setSiteData :: ∀ monad. MonadEffect monad => String -> monad Unit
 setSiteData description = liftEffect do
     origin' <- window >>= location >>= origin
@@ -99,32 +112,62 @@ setSiteData description = liftEffect do
     setStructuredData
         { "@context": "https://schema.org"
         , "@graph":
-            [ write
-                { "@type": "Organization"
-                , "@id": home <> "#organization"
-                , name: "TeamTavern"
-                , url: home
-                , logo: origin' <> "/logo-512.png"
-                }
+            [ organization origin'
             , write
                 { "@type": "WebSite"
                 , "@id": home <> "#website"
                 , name: "TeamTavern"
                 , url: home
                 , description
-                , publisher: { "@id": home <> "#organization" }
+                , publisher: { "@id": organizationId origin' }
                 }
             ]
         }
 
--- | The trail from the home page, which comes first, to the page itself, which
--- | comes last.
-setBreadcrumbs :: ∀ monad. MonadEffect monad => Array { name :: String, path :: String } -> monad Unit
+type Crumb = { name :: String, path :: String }
+
+-- The trail from the home page, which comes first, to the page itself, which
+-- comes last.
+breadcrumbItems :: String -> Array Crumb -> Array Foreign
+breadcrumbItems origin' crumbs =
+    [ { name: "Home", path: "/" } ] <> crumbs # mapWithIndex \index { name, path } ->
+        write { "@type": "ListItem", position: index + 1, name, item: origin' <> path }
+
+setBreadcrumbs :: ∀ monad. MonadEffect monad => Array Crumb -> monad Unit
 setBreadcrumbs crumbs = liftEffect do
     origin' <- window >>= location >>= origin
     setStructuredData
         { "@context": "https://schema.org"
         , "@type": "BreadcrumbList"
-        , itemListElement: [ { name: "Home", path: "/" } ] <> crumbs # mapWithIndex \index { name, path } ->
-            { "@type": "ListItem", position: index + 1, name, item: origin' <> path }
+        , itemListElement: breadcrumbItems origin' crumbs
+        }
+
+-- | A guide is an article by TeamTavern itself, which names no one person, on
+-- | the trail from the home page through the guides. The dates are ISO.
+setGuideData :: ∀ monad. MonadEffect monad =>
+    { path :: String, heading :: String, description :: String, published :: String, updated :: String }
+    -> monad Unit
+setGuideData { path, heading, description, published, updated } = liftEffect do
+    origin' <- window >>= location >>= origin
+    setStructuredData
+        { "@context": "https://schema.org"
+        , "@graph":
+            [ organization origin'
+            , write
+                { "@type": "Article"
+                , "@id": origin' <> path <> "#article"
+                , headline: heading
+                , description
+                , datePublished: published
+                , dateModified: updated
+                , mainEntityOfPage: origin' <> path
+                , author: { "@id": organizationId origin' }
+                , publisher: { "@id": organizationId origin' }
+                }
+            , write
+                { "@type": "BreadcrumbList"
+                , itemListElement: breadcrumbItems origin'
+                    [ { name: "Guides", path: "/guides" }, { name: heading, path } ]
+                }
+            ]
         }

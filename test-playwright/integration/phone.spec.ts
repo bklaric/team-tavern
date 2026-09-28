@@ -111,6 +111,14 @@ test.describe("on a phone", () => {
             await visit(page, path);
         }
 
+        // The guides draw once their text has come, a guide's tables with it.
+        await page.goto("/guides");
+        await expect(page.getByRole("link", { name: "How to join an esports team" })).toBeVisible();
+        await expectFits(page);
+        await page.goto("/guides/join-an-esports-team");
+        await expect(page.getByRole("table")).toBeVisible();
+        await expectFits(page);
+
         await page.goto(`/games/${handle}`);
         await settled(page);
         await page.locator(".description-summary").click();

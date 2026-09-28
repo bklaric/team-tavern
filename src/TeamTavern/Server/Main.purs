@@ -44,6 +44,8 @@ import TeamTavern.Server.Feed.ViewFeed (viewFeed)
 import TeamTavern.Server.Feed.ViewOwnDescriptions (viewOwnDescriptions)
 import TeamTavern.Server.Game.ViewGame (viewGame)
 import TeamTavern.Server.Game.ViewGames (viewGames)
+import TeamTavern.Server.Guide.ViewGuide (viewGuide)
+import TeamTavern.Server.Guide.ViewGuides (viewGuides)
 import TeamTavern.Server.Infrastructure.Email (Mailer(..))
 import TeamTavern.Server.Infrastructure.Environment (Environment(..))
 import TeamTavern.Server.Infrastructure.Environment as Environment
@@ -255,6 +257,10 @@ runServer environment mailer discordApiUrl adminEmail clientErrorLimit pool = se
         deletePost pool path.handle path.type cookies
     , viewCountries: const $
         viewCountries pool
+    , viewGuides: const
+        viewGuides
+    , viewGuide: \{ path: { slug } } ->
+        viewGuide slug
     , viewSitemap: \{ headers } ->
         viewSitemap pool headers
     , viewLlmsTxt: \{ headers } ->

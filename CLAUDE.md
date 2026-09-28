@@ -361,6 +361,14 @@ redirects the old site's feed paths to the new ones by `legacy.game_map`.
   Postgres errors are mapped to typed errors by constraint name
   (`player_nickname_key` and friends), so a new unique constraint needs a
   matching branch where it can fire.
+- A guide is a Markdown file in `Server/Guide/`, imported as text by `Guides.js`
+  the way `Feed.sql` is, and an entry in `Guides.purs` with its slug, titles
+  and dates. The server turns each into HTML once as it starts, and
+  `Client/Pages/Guide.purs` fetches that and sets it as the page's HTML, so
+  the client bundle carries no guide text. That HTML is trusted because it is
+  the repo's own; nothing a player writes goes through it. The slug is the
+  guide's URL for good. `updated` orders the guides and dates them in the
+  sitemap, so it changes when a fact in the guide does, not for a typo.
 - Configuration is environment variables read once in `Server/Main.purs`
   (`PG*`, `SENDGRID_API_KEY`, `ENVIRONMENT`, and `ADMIN_EMAIL`, where reports
   of players are mailed), which the release's `compose.yml` hands the node

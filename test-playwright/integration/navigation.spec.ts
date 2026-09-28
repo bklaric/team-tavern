@@ -19,6 +19,7 @@ test("a link clicked with Ctrl or Cmd opens in a new tab and leaves this one", a
 });
 
 for (const [link, path, heading] of [
+    ["Guides", "/guides", "Guides"],
     ["About", "/about", "About TeamTavern"],
     ["Contact", "/contact", "Contact"],
     ["Terms", "/terms", "Terms of use"],

@@ -28,6 +28,8 @@ import TeamTavern.Client.Pages.Contact (contact)
 import TeamTavern.Client.Pages.Design (design)
 import TeamTavern.Client.Pages.Feed (FeedCache, feed)
 import TeamTavern.Client.Pages.ForgotPassword (forgotPassword)
+import TeamTavern.Client.Pages.Guide (guide)
+import TeamTavern.Client.Pages.Guides (guides)
 import TeamTavern.Client.Pages.Home (home)
 import TeamTavern.Client.Pages.Messages (messages)
 import TeamTavern.Client.Pages.Placeholder (placeholder)
@@ -43,7 +45,7 @@ import TeamTavern.Client.Pages.SignIn (signIn)
 import TeamTavern.Client.Pages.SignUp (signUp)
 import TeamTavern.Client.Pages.Terms (terms)
 import TeamTavern.Client.Script.Focus (focusStill)
-import TeamTavern.Client.Script.Meta (clearStructuredData, setLogoImage, setMeta, setMetaRobots, setSiteData)
+import TeamTavern.Client.Script.Meta (clearStructuredData, setBreadcrumbs, setLogoImage, setMeta, setMetaRobots, setSiteData)
 import TeamTavern.Client.Script.Previous (previousOf, stampPrevious)
 import TeamTavern.Client.Script.RenderReady (appendRenderReadyNotFound)
 import TeamTavern.Client.Shared.Slot (Slot__I, Slot___)
@@ -74,6 +76,8 @@ data State
     | Messages
     | Conversation { conversation :: Int }
     | Account
+    | Guides
+    | Guide { slug :: String }
     | About
     | Contact
     | Terms
@@ -99,6 +103,8 @@ type ChildSlots =
     , postScreen :: Slot__I Int
     , matches :: Slot__I Int
     , messages :: Slot__I Unit
+    , guides :: Slot__I Int
+    , guide :: Slot__I Int
     )
 
 route :: String -> State
@@ -120,6 +126,8 @@ route path =
     ["", "messages"] -> Messages
     ["", "messages", conversation] | Just conversation' <- Int.fromString conversation -> Conversation { conversation: conversation' }
     ["", "account"] -> Account
+    ["", "guides"] -> Guides
+    ["", "guides", slug] -> Guide { slug }
     ["", "about"] -> About
     ["", "contact"] -> Contact
     ["", "terms"] -> Terms
@@ -145,6 +153,8 @@ name Renew = "Renew post"
 name Messages = "Messages"
 name (Conversation _) = "Messages"
 name Account = "Account"
+name Guides = "Guides"
+name (Guide _) = "Guide"
 name About = "About"
 name Contact = "Contact"
 name Terms = "Terms of use"
@@ -153,6 +163,7 @@ name Design = "Design"
 name NotFound = "Page could not be found."
 
 description :: State -> String
+description Guides = "How to find people to play with: joining an esports team, making one, and the team formats each game plays."
 description About = "Why TeamTavern exists, how it works and who runs it."
 description Contact = "How to reach TeamTavern, report a post or a player, and delete your account."
 description Terms = "The rules for using TeamTavern: the minimum age, what you may post, and how moderation works."
@@ -171,6 +182,8 @@ renderPage { page: PostType, visit } = postType visit
 renderPage { page: PostGame { type_ }, visit } = postGame visit type_
 renderPage { page: PostScreen { handle, type_ }, visit } = postScreen visit { handle, type_ }
 renderPage { page: Matches { handle, type_ }, visit } = matches visit { handle, type_ }
+renderPage { page: Guides, visit } = guides visit
+renderPage { page: Guide { slug }, visit } = guide visit slug
 renderPage { page: Messages, visit } = messages { conversation: Nothing, visit }
 renderPage { page: Conversation { conversation }, visit } = messages { conversation: Just conversation, visit }
 renderPage { page } = renderPage' page
@@ -237,11 +250,15 @@ router initialState initialPath = Hooks.component \{ queryToken } _ -> Hooks.do
                     appendRenderReadyNotFound
                     setMeta "Page not found | TeamTavern" (description page)
                 -- A feed and a post name themselves and give their breadcrumbs and
-                -- cover once they have their game, and a conversation names itself
-                -- once it has its post.
+                -- cover once they have their game, a conversation names itself
+                -- once it has its post, and a guide once it has its text.
                 Feed _ -> pure unit
                 Post _ -> pure unit
                 Conversation _ -> pure unit
+                Guide _ -> pure unit
+                Guides -> do
+                    setMeta (name page <> " | TeamTavern") (description page)
+                    setBreadcrumbs [ { name: name page, path: "/guides" } ]
                 _ -> setMeta (name page <> " | TeamTavern") (description page)
             -- A link stamps the entry it opens with the page it left, which the
             -- entry keeps through a reload and a trip back and forth. A link to
@@ -262,6 +279,8 @@ router initialState initialPath = Hooks.component \{ queryToken } _ -> Hooks.do
                 Home -> "index, follow"
                 Feed _ -> "index, follow"
                 Post _ -> "index, follow"
+                Guides -> "index, follow"
+                Guide _ -> "index, follow"
                 About -> "index, follow"
                 Contact -> "index, follow"
                 Terms -> "index, follow"

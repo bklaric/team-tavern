@@ -239,6 +239,20 @@ const scenes = [
     { name: "sign-up", run: async (page, shot) => { await open(page, "/signup"); await shot(); } },
     { name: "sign-in", run: async (page, shot) => { await open(page, "/signin"); await shot(); } },
     { name: "forgot-password", run: async (page, shot) => { await open(page, "/forgot-password"); await shot(); } },
+    {
+        name: "guides", run: async (page, shot) => {
+            await open(page, "/guides");
+            await page.locator(".guide-list").waitFor();
+            await shot();
+        },
+    },
+    {
+        name: "guide", run: async (page, shot) => {
+            await open(page, "/guides/join-an-esports-team");
+            await page.locator(".guide").waitFor({ state: "attached" });
+            await shot();
+        },
+    },
     { name: "about", run: async (page, shot) => { await open(page, "/about"); await shot(); } },
     { name: "contact", run: async (page, shot) => { await open(page, "/contact"); await shot(); } },
     { name: "terms", run: async (page, shot) => { await open(page, "/terms"); await shot(); } },

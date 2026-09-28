@@ -24,6 +24,8 @@ import TeamTavern.Routes.Feed.ViewFeed (ViewFeed)
 import TeamTavern.Routes.Feed.ViewOwnDescriptions (ViewOwnDescriptions)
 import TeamTavern.Routes.Game.ViewGame (ViewGame)
 import TeamTavern.Routes.Game.ViewGames (ViewGames)
+import TeamTavern.Routes.Guide.ViewGuide (ViewGuide)
+import TeamTavern.Routes.Guide.ViewGuides (ViewGuides)
 import TeamTavern.Routes.Notification.ReadNotification (ReadNotification)
 import TeamTavern.Routes.Notification.ReadNotifications (ReadNotifications)
 import TeamTavern.Routes.Notification.ViewNotifications (ViewNotifications)
@@ -111,6 +113,10 @@ type NotificationRoutes
 type CountryRoutes
     =   "viewCountries" : ViewCountries
 
+type GuideRoutes
+    =   "viewGuides" : ViewGuides
+    <|> "viewGuide"  : ViewGuide
+
 type SitemapRoutes
     =   "viewSitemap" : ViewSitemap
 
@@ -132,6 +138,7 @@ type AllRoutes
     <|> BlockRoutes
     <|> NotificationRoutes
     <|> CountryRoutes
+    <|> GuideRoutes
     <|> SitemapRoutes
     <|> LlmsTxtRoutes
     <|> ClientErrorRoutes

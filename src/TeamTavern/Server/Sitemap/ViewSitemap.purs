@@ -11,6 +11,7 @@ import Data.String (Pattern(..), Replacement(..), replaceAll)
 import Jarilo (ok_)
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Query (Query(..))
+import TeamTavern.Server.Guide.Guides (guides)
 import TeamTavern.Server.Infrastructure.Postgres (queryMany_)
 import TeamTavern.Server.Infrastructure.RequestOrigin (requestOrigin)
 import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
@@ -65,13 +66,15 @@ url origin' path lastmod = fold
     ]
 
 -- The home page and a game's feed change as their newest post does, which the
--- posts' order puts first in each game.
+-- posts' order puts first in each game, and the guides as their latest guide does.
 sitemap :: String -> Array Game -> Array Post -> String
 sitemap origin' games posts = fold
     [ "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
     , "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n"
     , url origin' "/" (posts <#> _.updated # maximum)
     , [ "/about", "/contact", "/terms", "/privacy" ] # foldMap \path -> url origin' path Nothing
+    , url origin' "/guides" (guides <#> _.updated # maximum)
+    , guides # foldMap \{ slug, updated } -> url origin' ("/guides/" <> slug) (Just updated)
     , games # foldMap \{ handle } ->
         url origin' ("/games/" <> handle) (posts # find (_.handle >>> eq handle) <#> _.updated)
     , posts # foldMap \{ handle, id, updated } ->

@@ -10,7 +10,9 @@ const handles = [
 ];
 
 // The site's own pages, which the footer links from every page.
-const sitePages = ["/about", "/contact", "/terms", "/privacy"];
+const sitePages = ["/guides", "/about", "/contact", "/terms", "/privacy"];
+
+const guidePath = "/guides/join-an-esports-team";
 
 // Neither robots nor the sitemap is a page, so Caddy answers a bot with the file itself
 // rather than with a render of it.
@@ -61,6 +63,19 @@ test.describe("a bot", () => {
         expect(urls.get(`${baseURL}/`)).toBe(newest(`${baseURL}/games/`));
         expect(urls.get(`${baseURL}/games/valorant`)).toBe(newest(`${baseURL}/games/valorant/`));
     });
+
+    test("finds each guide in the sitemap dated by its last update, and the guides by the latest", async ({ page, baseURL }) => {
+        const response = await page.goto("/sitemap.xml");
+
+        const urls = new Map([...(await response!.text())
+            .matchAll(/<url><loc>([^<]*)<\/loc>(?:<lastmod>([^<]*)<\/lastmod>)?<\/url>/g)]
+            .map(match => [match[1], match[2]]));
+        const guides = [...urls].filter(([location]) => location.startsWith(`${baseURL}/guides/`));
+        expect(guides.map(([location]) => location)).toContain(`${baseURL}${guidePath}`);
+        for (const [, lastmod] of guides)
+            expect(lastmod).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+        expect(urls.get(`${baseURL}/guides`)).toBe(guides.map(([, lastmod]) => lastmod!).sort().at(-1));
+    });
 });
 
 // llms.txt and /.well-known/ are fetched by crawlers and by tools that read as a browser
@@ -69,7 +84,7 @@ for (const [who, userAgent] of [["a bot", googlebot], ["a browser", undefined]] 
     test.describe(who, () => {
         if (userAgent) test.use({ userAgent });
 
-        test("is given llms.txt, linking every feed and the site's own pages", async ({ page, baseURL }) => {
+        test("is given llms.txt, linking every feed, the guides and the site's own pages", async ({ page, baseURL }) => {
             const response = await page.goto("/llms.txt");
 
             expect(response?.status()).toBe(200);
@@ -81,6 +96,7 @@ for (const [who, userAgent] of [["a bot", googlebot], ["a browser", undefined]] 
             expect(links).toEqual(expect.arrayContaining([
                 ...handles.map(handle => `${baseURL}/games/${handle}`),
                 ...sitePages.map(path => `${baseURL}${path}`),
+                `${baseURL}${guidePath}`,
                 `${baseURL}/sitemap.xml`,
             ]));
         });
@@ -127,6 +143,18 @@ for (const [name, userAgent] of aiCrawlers)
             await expect(others.first()).toHaveAttribute("href", /\/games\/valorant\/posts\/\d+$/);
             await expect(others.filter({ hasText: /^Night Owls$/ })).toHaveCount(0);
         });
+
+        test("is served a guide prerendered, with its text", async ({ page }) => {
+            test.slow();
+
+            const response = await page.goto(guidePath, { timeout: 60_000 });
+
+            expect(response?.status()).toBe(200);
+            await expect(page.getByRole("heading", { name: "How to join an esports team", level: 1 })).toBeVisible();
+            await expect(page.getByRole("table")).toBeVisible();
+            await expect(page.getByRole("link", { name: "Valorant players and groups on TeamTavern" }))
+                .toHaveAttribute("href", /\/games\/valorant$/);
+        });
     });
 
 // The old site's feeds were a game's players and its teams, under handles some of which
@@ -166,6 +194,7 @@ test.describe("a page's robots tag", () => {
 
     for (const [path, robots] of [
         ...sitePages.map(path => [path, "index, follow"]),
+        [guidePath, "index, follow"],
         ["/signin", "noindex"],
         ["/messages", "noindex"],
         ["/post", "noindex"],
@@ -227,6 +256,42 @@ test.describe("a page's structured data", () => {
             { position: 1, name: "Home", path: "/" },
             { position: 2, name: "Valorant", path: "/games/valorant" },
             { position: 3, name: "Night Owls · Valorant group", path: nightOwls },
+        ]);
+    });
+
+    test("leads from the home page to the guides", async ({ page }) => {
+        test.slow();
+
+        await page.goto("/guides", { timeout: 60_000 });
+
+        expect(trail(await structuredData(page))).toEqual([
+            { position: 1, name: "Home", path: "/" },
+            { position: 2, name: "Guides", path: "/guides" },
+        ]);
+    });
+
+    test("names TeamTavern as a guide's author and publisher, and leads to it through the guides", async ({ page }) => {
+        test.slow();
+
+        await page.goto(guidePath, { timeout: 60_000 });
+
+        const { "@context": context, "@graph": graph } = await structuredData(page);
+        expect(context).toBe("https://schema.org");
+        const node = (type: string) => graph.find((node: any) => node["@type"] === type);
+        const organization = node("Organization");
+        expect(organization).toMatchObject({ name: "TeamTavern" });
+        expect(node("Article")).toMatchObject({
+            headline: "How to join an esports team",
+            datePublished: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
+            dateModified: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
+            author: { "@id": organization["@id"] },
+            publisher: { "@id": organization["@id"] },
+        });
+        expect(new URL(node("Article").mainEntityOfPage).pathname).toBe(guidePath);
+        expect(trail(node("BreadcrumbList"))).toEqual([
+            { position: 1, name: "Home", path: "/" },
+            { position: 2, name: "Guides", path: "/guides" },
+            { position: 3, name: "How to join an esports team", path: guidePath },
         ]);
     });
 
@@ -326,4 +391,16 @@ test.describe("an old path with no page of its own", () => {
 
             expect(response?.status()).toBe(404);
         });
+});
+
+test.describe("a guide that doesn't exist", () => {
+    test.use({ userAgent: googlebot, javaScriptEnabled: false });
+
+    test("is answered 404 to a bot", async ({ page }) => {
+        test.slow();
+
+        const response = await page.goto("/guides/no-such-guide", { timeout: 60_000 });
+
+        expect(response?.status()).toBe(404);
+    });
 });

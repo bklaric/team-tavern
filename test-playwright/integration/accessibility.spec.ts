@@ -48,6 +48,14 @@ for (const [device, viewport] of [["desktop", { width: 1280, height: 800 }], ["p
                 await visit(page, path);
             }
 
+            // The guides draw once their text has come.
+            await page.goto("/guides");
+            await expect(page.getByRole("link", { name: "How to join an esports team" })).toBeVisible();
+            await expectAccessible(page, "/guides");
+            await page.goto("/guides/join-an-esports-team");
+            await expect(page.getByRole("table")).toBeVisible();
+            await expectAccessible(page, "/guides/join-an-esports-team");
+
             await openFeed(page, "valorant");
             await card(page, "Night Owls").getByRole("link", { name: "Night Owls", exact: true }).click();
             await expectPage(page, /^\/games\/valorant\/posts\/\d+$/);
