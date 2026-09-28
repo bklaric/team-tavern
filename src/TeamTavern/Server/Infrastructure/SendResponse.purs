@@ -5,18 +5,24 @@ import Prelude
 import Async (Async, alwaysRight, examineLeftWithEffect)
 import Data.Map (Map)
 import Data.Map as Map
-import Data.Variant (Variant)
+import Data.Variant (Variant, on)
+import Jarilo.Router.Response (AppResponse)
 import TeamTavern.Server.Infrastructure.Error (Terror(..), TerrorVar, lmapElaborate)
 import TeamTavern.Server.Infrastructure.Log (logError)
+import Type.Proxy (Proxy(..))
 
+-- | Logs only an internal error. Every other status is an answer the client
+-- | handles, and logging those buries the failures among signed-out visitors,
+-- | taken nicknames and deleted posts.
 sendResponse
-    :: ∀ responses
+    :: ∀ responses body
     .  String
-    -> Async (TerrorVar responses) (Variant responses)
-    -> (∀ left. Async left (Variant responses))
+    -> Async (TerrorVar (internal :: AppResponse body | responses)) (Variant (internal :: AppResponse body | responses))
+    -> (∀ left. Async left (Variant (internal :: AppResponse body | responses)))
 sendResponse heading =
     alwaysRight (\(Terror error _) -> error) identity
-    <<< examineLeftWithEffect (logError heading)
+    <<< examineLeftWithEffect \terror@(Terror error _) ->
+        error # on (Proxy :: _ "internal") (const $ logError heading terror) (const $ pure unit)
 
 lmapElaborateReferrer :: ∀ right error.
     Map String String -> Async (Terror error) right -> Async (Terror error) right

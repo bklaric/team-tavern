@@ -331,15 +331,18 @@ redirects the old site's feed paths to the new ones by `legacy.game_map`.
 ## Server conventions
 
 - A handler runs in `Async (TerrorVar responses)` and is wrapped in
-  `sendResponse "<heading>"`, which logs the error lines and turns the error
-  into the HTTP response variant. Signed-in checks come from
-  `Server/Infrastructure/EnsureSignedIn.purs` and `CheckSignedIn.purs`, which
-  look the session up by the token in the one cookie, `HttpOnly` and
-  `SameSite=Lax`.
+  `sendResponse "<heading>"`, which turns the error into the HTTP response
+  variant and logs its lines only when it is `internal`. Every other status is
+  an answer the client handles, so a signed-out visitor or a taken nickname
+  leaves nothing in the log. `CheckSignedIn.purs` looks the session up by the
+  token in the one cookie, `HttpOnly` and `SameSite=Lax`, for a route anyone
+  may ask, taking a refused token for none but passing a failed lookup on as
+  `internal`; `EnsureSignedIn.purs` answers `notAuthorized` without one.
 - Errors are `Terror error (Array String)` from
   `Server/Infrastructure/Error.purs`: the typed error the client sees plus
-  free-text lines for the log. Validation accumulates with `Validated` and
-  `NonEmptyArray` of `Variant`s; see the `Terror*` aliases in that module.
+  free-text lines, which the log gets for an internal error. Validation
+  accumulates with `Validated` and `NonEmptyArray` of `Variant`s; see the
+  `Terror*` aliases in that module.
 - A handler with several steps gets a sibling folder of the same name
   (`Server/Player/Register/AddPlayer.purs`, `.../ValidateRegistration.purs`),
   one step per module. `Server/<Area>/Domain/` holds validated value types
