@@ -320,7 +320,8 @@ the server bundle leaves external, plus the build toolchain in devDependencies.
    and sends cookies. The response comes back as the same `Variant` the route
    declares, so pages `match` / `onMatch` on it.
 
-In the running stack Caddy proxies `/api/*` to the node container, sends bot
+In the running stack Caddy proxies `/api/*` to the node container, refusing a
+body past 64 KB with a 413 since the server reads a body whole, sends bot
 user agents to renderready, and serves everything else from `release/client/` with
 an `index.html` fallback for SPA paths. `/sitemap.xml` goes to node as it is,
 outside `/api`: the one route that answers with something other than JSON, an
@@ -399,7 +400,6 @@ redirects the old site's feed paths to the new ones by `legacy.game_map`.
   every navigation; a page that changes what it counts, by reading a
   conversation or sending a message, calls `announceUnread` from
   `Client/Script/Unread.purs` and the header asks again.
-- A page forks its fetches from `useLifecycleEffect` rather than awaiting them
 - The server logs only its own failures, so the client reports the ones it
   didn't expect to `/api/client/errors`, which logs each as a `Client error`
   line, at most 60 a minute. `Client/Shared/Fetch.purs` reports a response
@@ -410,6 +410,7 @@ redirects the old site's feed paths to the new ones by `legacy.game_map`.
   Errors the site's own script throws and nothing catches are reported too;
   a lost network is not. A report carries paths only, never a query string,
   which holds the nonces of the links in emails.
+- A page forks its fetches from `useLifecycleEffect` rather than awaiting them
   there, and what follows a fetch happens in the fork, not in a tick effect
   watching for its result. Hooks runs effects only after a render that the
   first render, or state changed by an action, query or new input, sets off.

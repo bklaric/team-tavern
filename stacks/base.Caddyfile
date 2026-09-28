@@ -108,9 +108,14 @@ redir @old_feed {old_feed} 301
 }
 redir @trailing_slash {re.trailing_slash.1}{?query} 301
 
-# Proxy api requests to the api.
+# Proxy api requests to the api. The api reads a body whole before it looks at
+# it, so Caddy refuses one past what any route takes: a post's, the largest,
+# comes to a few kilobytes.
 
 handle_path /api/* {
+    request_body {
+        max_size 64KB
+    }
     reverse_proxy tt-node
 }
 
