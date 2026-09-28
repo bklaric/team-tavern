@@ -5,6 +5,7 @@ import Prelude
 import Control.Bind (bindFlipped)
 import Control.Monad.Except (ExceptT(..), except, runExceptT)
 import Control.Monad.Maybe.Trans (lift)
+import Data.Array as Array
 import Data.Either (either, note)
 import Data.Int (fromString)
 import Data.Maybe (Maybe(..), fromMaybe, isJust)
@@ -12,9 +13,12 @@ import Data.String as String
 import Effect (Effect)
 import Effect.Console (log)
 import Jarilo.Serve (ServeOptions, serve)
+import JavaScript.Node.Events.EventEmitter (on)
+import JavaScript.Node.Events.EventListener (toEventListener)
 import JavaScript.Node.Process (lookupEnv)
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Pool as Pool
+import JavaScript.Npm.Pg.Pool.Events as PoolEvents
 import TeamTavern.Routes.All (AllRoutes)
 import TeamTavern.Server.Account.DeleteAccount (deleteAccount)
 import TeamTavern.Server.Account.SwitchToDiscord (switchToDiscord)
@@ -45,6 +49,7 @@ import TeamTavern.Server.Infrastructure.Environment as Environment
 import TeamTavern.Server.Infrastructure.FetchDiscordUser (DiscordApiUrl(..))
 import TeamTavern.Server.Infrastructure.Log (logStamped, print)
 import TeamTavern.Server.Infrastructure.Sendgrid (setApiKey, setBaseUrl)
+import TeamTavern.Server.Infrastructure.Postgres (databaseErrorLines)
 import TeamTavern.Server.LlmsTxt.ViewLlmsTxt (viewLlmsTxt)
 import TeamTavern.Server.Notification.ReadNotification (readNotification)
 import TeamTavern.Server.Notification.ReadNotifications (readNotifications)
@@ -106,9 +111,16 @@ loadPostgresVariables = do
     pure { user, password, host, port, database }
 
 createPostgresPool :: ExceptT String Effect Pool
+-- Postgres ending a connection the pool holds idle, as a restart does, makes
+-- the pool emit an error, and an error nobody listens for ends the process.
+-- The pool drops that client and connects afresh for the next query.
 createPostgresPool = do
     postgresVariables <- loadPostgresVariables
-    lift $ Pool.create postgresVariables
+    pool <- lift $ Pool.create postgresVariables
+    lift $ pool # on PoolEvents.error (toEventListener \error _ ->
+        logStamped $ String.joinWith " | " $ Array.cons "Idle Postgres connection lost" $ databaseErrorLines error)
+        # void
+    pure pool
 
 loadEnvironment :: ExceptT String Effect Environment
 loadEnvironment =
