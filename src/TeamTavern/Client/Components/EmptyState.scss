@@ -1,0 +1,16 @@
+/* A page with nothing to show yet, and what to do about it. */
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
+    padding: var(--space-6);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    background: var(--table);
+}
+
+.empty-state p {
+    color: var(--text-muted);
+}

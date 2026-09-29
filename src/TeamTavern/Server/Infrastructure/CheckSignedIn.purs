@@ -1,37 +1,42 @@
-module TeamTavern.Server.Infrastructure.CheckSignedIn (checkSignedIn) where
+module TeamTavern.Server.Infrastructure.CheckSignedIn (SignedIn, checkSignedIn) where
 
 import Prelude
 
 import Async (Async)
-import Async as Async
-import Data.Bifunctor (lmap)
-import Data.Maybe (Maybe(..), fromMaybe)
-import JavaScript.Npm.Pg.Async (query)
-import JavaScript.Npm.Pg.Query (class Querier, Query(..), (:), (:|))
-import JavaScript.Npm.Pg.Result (rowCount)
-import TeamTavern.Server.Infrastructure.Cookie (CookieInfo, Cookies, lookupCookieInfo)
+import Data.Maybe (Maybe(..))
+import Data.Newtype (wrap)
+import JavaScript.Npm.Pg.Query (class Querier, Query(..), (:|))
+import TeamTavern.Server.Infrastructure.Cookie (Cookies, lookupToken)
+import TeamTavern.Server.Infrastructure.Postgres (queryMany)
+import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
+import TeamTavern.Server.Player.Domain.Id (Id)
+import TeamTavern.Server.Session.Domain.Token (Token, hash, sessionDays)
 
+type SignedIn = { id :: Id, token :: Token }
+
+-- A session lapses when it goes unused for its days, and every use starts
+-- them over.
 queryString :: Query
 queryString = Query """
-    select session.id
-    from session
-    join player on player.id = session.player_id
-    where player.id = $1
-        and lower(player.nickname) = lower($2)
-        and session.token = $3
-        and revoked = false
+    update session
+    set last_used = current_timestamp
+    where session.token_hash = $1
+        and not session.revoked
+        and session.last_used > current_timestamp - make_interval(days => $2)
+    returning session.player_id as id
     """
 
+-- | The player signed in, for a route anyone may ask. A token the server
+-- | refuses is taken like no token at all. The cookie holding it does no harm,
+-- | as nothing reads it but this, and the next sign-in replaces it.
 checkSignedIn :: ∀ querier errors. Querier querier =>
-    querier -> Cookies -> Async errors (Maybe CookieInfo)
+    querier -> Cookies -> Async (InternalTerror_ errors) (Maybe SignedIn)
 checkSignedIn querier cookies =
-    case lookupCookieInfo cookies of
+    case lookupToken cookies of
     Nothing -> pure Nothing
-    Just cookieInfo @ { id, nickname, token } -> Async.unify do
-        result
-            <- querier
-            #  query queryString (id : nickname :| token)
-            #  lmap (const Nothing)
-        if fromMaybe 0 (rowCount result) == 0
-        then pure Nothing
-        else pure $ Just cookieInfo
+    Just token -> do
+        tokenHash <- hash token
+        rows :: Array { id :: Int } <- queryMany querier queryString (tokenHash :| sessionDays)
+        pure case rows of
+            [ { id } ] -> Just { id: wrap id, token }
+            _ -> Nothing

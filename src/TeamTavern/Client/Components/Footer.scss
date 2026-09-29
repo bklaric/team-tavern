@@ -1,46 +1,43 @@
-@use "../Style/Base" as *;
+/* Site footer. */
 
-.footer {
-    display: block;
-    background: white;
-    border-top: 1px solid #ccc;
-    width: 100%;
+.site-footer {
+    border-top: 1px solid var(--border);
+    color: var(--text-faint);
+    font-size: var(--size-12);
 }
 
-.footer-content {
+.site-footer-inner {
     display: flex;
-    justify-content: space-between;
+    flex-wrap: wrap;
     align-items: center;
-    flex-direction: column;
-    color: $primary-color;
-    font-weight: 500;
-    padding: 0 21px;
-    margin: auto;
-
-    > * {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        width: 100%;
-        min-height: 40px;
-        text-align: center;
-    }
-
-    @media screen and (min-width: 550px) {
-        flex-direction: row;
-
-        > * {
-            width: unset;
-        }
-    }
+    justify-content: space-between;
+    gap: var(--space-2) var(--space-6);
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--space-6) var(--space-4);
 }
 
-.footer-content-links {
+.site-footer-links {
     display: flex;
-    gap: 21px;
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-5);
 }
 
-.footer-icon {
-    font-size: 26px;
-    margin-left: 14px;
+/* Cookie settings is a button among the links, and looks like them. */
+.site-footer-links button {
+    padding: 0;
+    border: 0;
+    background: none;
+    font-size: inherit;
+    cursor: pointer;
+}
+
+.site-footer-links a,
+.site-footer-links button {
+    color: var(--text-muted);
+}
+
+.site-footer-links a:hover,
+.site-footer-links button:hover {
+    color: var(--text);
 }

@@ -1,4 +1,4 @@
-module TeamTavern.Client.Script.QueryParams (getQueryParam, getFragmentParam) where
+module TeamTavern.Client.Script.QueryParams (getQueryParam, getFragmentParam, removeQueryParam) where
 
 import Prelude
 
@@ -16,3 +16,10 @@ foreign import getFragmentParamImpl :: String -> Effect (Nullable String)
 
 getFragmentParam :: ∀ monad. MonadEffect monad => String -> monad (Maybe String)
 getFragmentParam param = getFragmentParamImpl param <#> toMaybe # liftEffect
+
+foreign import removeQueryParamImpl :: String -> Effect Unit
+
+-- | Takes the parameter out of the address without a history entry of its own,
+-- | keeping the entry's state.
+removeQueryParam :: ∀ monad. MonadEffect monad => String -> monad Unit
+removeQueryParam param = removeQueryParamImpl param # liftEffect

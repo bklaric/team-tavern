@@ -3,65 +3,90 @@ module TeamTavern.Server.Main where
 import Prelude
 
 import Control.Bind (bindFlipped)
-import Control.Monad.Except (ExceptT(..), runExceptT)
+import Control.Monad.Except (ExceptT(..), except, runExceptT)
 import Control.Monad.Maybe.Trans (lift)
+import Data.Array as Array
 import Data.Either (either, note)
 import Data.Int (fromString)
-import Data.Maybe (fromMaybe)
+import Data.Maybe (Maybe(..), fromMaybe)
+import Data.String as String
 import Effect (Effect)
 import Effect.Console (log)
-import Jarilo.Serve (serve)
+import Jarilo.Serve (ServeOptions, serve)
+import JavaScript.Node.Events.EventEmitter (on)
+import JavaScript.Node.Events.EventListener (toEventListener)
 import JavaScript.Node.Process (lookupEnv)
 import JavaScript.Npm.Pg.Pool (Pool)
 import JavaScript.Npm.Pg.Pool as Pool
+import JavaScript.Npm.Pg.Pool.Events as PoolEvents
 import TeamTavern.Routes.All (AllRoutes)
-import TeamTavern.Routes.Profile.ViewPlayerProfilesByGame (bundlePlayerFilters)
-import TeamTavern.Routes.Profile.ViewTeamProfilesByGame (bundleTeamFilters)
-import TeamTavern.Server.Alert.Create (createAlert) as Alert
-import TeamTavern.Server.Alert.Delete (deleteAlert) as Alert
-import TeamTavern.Server.Boarding.Onboard as Onboard
-import TeamTavern.Server.Boarding.Preboard as Preboard
-import TeamTavern.Server.Game.ViewAllGames (viewAllGames)
+import TeamTavern.Server.Account.DeleteAccount (deleteAccount)
+import TeamTavern.Server.Account.SwitchToDiscord (switchToDiscord)
+import TeamTavern.Server.Account.SwitchToPassword (switchToPassword)
+import TeamTavern.Server.Account.UpdateEmail (updateEmail)
+import TeamTavern.Server.Account.UpdateFacts (updateFacts)
+import TeamTavern.Server.Account.UpdateSwitches (updateSwitches)
+import TeamTavern.Server.Account.ViewAccount (viewAccount)
+import TeamTavern.Server.Block.Block (block)
+import TeamTavern.Server.Block.Infrastructure.SendReportEmail (AdminEmail(..))
+import TeamTavern.Server.Block.ReportConversation (reportConversation)
+import TeamTavern.Server.Block.ReportPost (reportPost)
+import TeamTavern.Server.Block.Unblock (unblock)
+import TeamTavern.Server.Block.ViewBlocked (viewBlocked)
+import TeamTavern.Server.ClientError.ReportClientError (ClientErrorLimit, createClientErrorLimit, reportClientError)
+import TeamTavern.Server.Conversation.SendMessage (sendMessage)
+import TeamTavern.Server.Conversation.SendReply (sendReply)
+import TeamTavern.Server.Conversation.ViewConversation (viewConversation)
+import TeamTavern.Server.Conversation.ViewInbox (viewInbox)
+import TeamTavern.Server.Conversation.ViewPostConversation (viewPostConversation)
+import TeamTavern.Server.Country.ViewCountries (viewCountries)
+import TeamTavern.Server.Feed.ViewFeed (viewFeed)
+import TeamTavern.Server.Feed.ViewOwnDescriptions (viewOwnDescriptions)
 import TeamTavern.Server.Game.ViewGame (viewGame)
-import TeamTavern.Server.Infrastructure.Deployment (Deployment)
-import TeamTavern.Server.Infrastructure.Deployment as Deployment
+import TeamTavern.Server.Game.ViewGames (viewGames)
+import TeamTavern.Server.Guide.ViewGuide (viewGuide)
+import TeamTavern.Server.Guide.ViewGuides (viewGuides)
+import TeamTavern.Server.Infrastructure.Email (Mailer(..))
+import TeamTavern.Server.Infrastructure.Environment (Environment(..))
+import TeamTavern.Server.Infrastructure.Environment as Environment
 import TeamTavern.Server.Infrastructure.FetchDiscordUser (DiscordApiUrl(..))
-import TeamTavern.Server.Infrastructure.Sendgrid (setApiKey)
+import TeamTavern.Server.Infrastructure.Log (logStamped, print)
+import TeamTavern.Server.Infrastructure.Postgres (databaseErrorLines)
+import TeamTavern.Server.Infrastructure.Ses (createClient)
+import TeamTavern.Server.LlmsTxt.ViewLlmsTxt (viewLlmsTxt)
+import TeamTavern.Server.Notification.ReadNotification (readNotification)
+import TeamTavern.Server.Notification.ReadNotifications (readNotifications)
+import TeamTavern.Server.Notification.ViewNotifications (viewNotifications)
 import TeamTavern.Server.Password.ForgotPassword (forgotPassword)
 import TeamTavern.Server.Password.ResetPassword (resetPassword)
-import TeamTavern.Server.Player.Delete (delete) as Player
-import TeamTavern.Server.Player.Register (register) as Player
-import TeamTavern.Server.Player.UpdateContacts (updateContacts) as Player
-import TeamTavern.Server.Player.UpdatePlayer (updatePlayer) as Player
-import TeamTavern.Server.Player.UpdatePlayerEmail (updatePlayerEmail)
-import TeamTavern.Server.Player.UpdatePlayerPassword (updatePlayerPassword)
-import TeamTavern.Server.Player.View (view) as Player
-import TeamTavern.Server.Profile.AddPlayerProfile (addPlayerProfile)
-import TeamTavern.Server.Profile.AddTeamProfile (addTeamProfile)
-import TeamTavern.Server.Profile.DeletePlayerProfile (deletePlayerProfile)
-import TeamTavern.Server.Profile.DeleteTeamProfile (deleteTeamProfile)
-import TeamTavern.Server.Profile.UpdatePlayerProfile (updatePlayerProfile)
-import TeamTavern.Server.Profile.UpdateTeamProfile (updateTeamProfile)
-import TeamTavern.Server.Profile.ViewPlayerProfile (viewPlayerProfile)
-import TeamTavern.Server.Profile.ViewPlayerProfilesByGame (viewPlayerProfilesByGame)
-import TeamTavern.Server.Profile.ViewTeamProfile (viewTeamProfile)
-import TeamTavern.Server.Profile.ViewTeamProfilesByGame (viewTeamProfilesByGame)
+import TeamTavern.Server.Player.ConfirmEmail (confirmEmail)
+import TeamTavern.Server.Player.Register (register)
+import TeamTavern.Server.Player.ResendConfirmation (resendConfirmation)
+import TeamTavern.Server.Player.ViewMe (viewMe)
+import TeamTavern.Server.Post.CreatePost (createPost)
+import TeamTavern.Server.Post.DeletePost (deletePost)
+import TeamTavern.Server.Post.RenewByNonce (renewByNonce)
+import TeamTavern.Server.Post.RenewPost (renewPost)
+import TeamTavern.Server.Post.RevealContacts (revealContacts)
+import TeamTavern.Server.Post.UpdatePost (updatePost)
+import TeamTavern.Server.Post.ViewOwnPost (viewOwnPost)
+import TeamTavern.Server.Post.ViewOwnPosts (viewOwnPosts)
+import TeamTavern.Server.Post.ViewPost (viewPost)
 import TeamTavern.Server.Session.End (end) as Session
 import TeamTavern.Server.Session.Start (start) as Session
-import TeamTavern.Server.Team.Create (create) as Team
-import TeamTavern.Server.Team.DeleteTeam (deleteTeam)
-import TeamTavern.Server.Team.Update (update) as Team
-import TeamTavern.Server.Team.UpdateContacts (updateContacts) as Team
-import TeamTavern.Server.Team.View (view) as Team
+import TeamTavern.Server.Sitemap.ViewSitemap (viewSitemap)
+import TeamTavern.Server.Worker (startWorker)
 import Type.Proxy (Proxy(..))
 
-listenOptions :: { port :: Int, host :: String }
-listenOptions = { port: 8080, host: "0.0.0.0" }
-
-setSendGridApiKey :: ExceptT String Effect Unit
-setSendGridApiKey = do
-    key <- lookupEnv "SENDGRID_API_KEY" <#> note "Couldn't read variable SENDGRID_API_KEY" # ExceptT
-    lift $ setApiKey key
+serveOptions :: ServeOptions { port :: Int, host :: String }
+serveOptions =
+    { listen: { port: 80, host: "0.0.0.0" }
+    , onRejected: \{ method, url, statusCode, reason } ->
+        logStamped $ String.joinWith " | "
+            ["Rejected request", show statusCode <> " " <> method <> " " <> url, reason]
+    , onStreamError: \error ->
+        logStamped $ "Request stream error | " <> print error
+    }
 
 loadPostgresVariables :: ExceptT String Effect
     { user :: String
@@ -83,16 +108,23 @@ loadPostgresVariables = do
         <#> note ("Couldn't read variable PGDATABASE.") # ExceptT
     pure { user, password, host, port, database }
 
+-- Postgres ending a connection the pool holds idle, as a restart does, makes
+-- the pool emit an error, and an error nobody listens for ends the process.
+-- The pool drops that client and connects afresh for the next query.
 createPostgresPool :: ExceptT String Effect Pool
 createPostgresPool = do
     postgresVariables <- loadPostgresVariables
-    lift $ Pool.create postgresVariables
+    pool <- lift $ Pool.create postgresVariables
+    lift $ pool # on PoolEvents.error (toEventListener \error _ ->
+        logStamped $ String.joinWith " | " $ Array.cons "Idle Postgres connection lost" $ databaseErrorLines error)
+        # void
+    pure pool
 
-loadDeployment :: ExceptT String Effect Deployment
-loadDeployment =
-    lookupEnv "DEPLOYMENT"
-    <#> bindFlipped Deployment.fromString
-    <#> note "Couldn't read variable DEPLOYMENT."
+loadEnvironment :: ExceptT String Effect Environment
+loadEnvironment =
+    lookupEnv "ENVIRONMENT"
+    <#> bindFlipped Environment.fromString
+    <#> note "Couldn't read variable ENVIRONMENT."
     # ExceptT
 
 loadDiscordApiUrl :: Effect DiscordApiUrl
@@ -101,78 +133,146 @@ loadDiscordApiUrl =
     <#> fromMaybe "https://discord.com/api"
     <#> DiscordApiUrl
 
-runServer :: Deployment -> DiscordApiUrl -> Pool -> Effect Unit
-runServer deployment discordApiUrl pool = serve (Proxy :: _ AllRoutes) listenOptions
+-- | Staging and production send through SES and link to their own origin. The
+-- | local stacks link relative to the site they serve, and only log, unless
+-- | AWS_ENDPOINT_URL_SESV2 names something that takes SES's requests, as the
+-- | test stack's mail stub does. The SDK reads that variable itself.
+loadMailer :: Environment -> ExceptT String Effect Mailer
+loadMailer environment = do
+    accessKeyId <- lookupEnv "AWS_ACCESS_KEY_ID"
+        <#> note "Couldn't read variable AWS_ACCESS_KEY_ID." # ExceptT
+    secretAccessKey <- lookupEnv "AWS_SECRET_ACCESS_KEY"
+        <#> note "Couldn't read variable AWS_SECRET_ACCESS_KEY." # ExceptT
+    endpoint <- lift $ lookupEnv "AWS_ENDPOINT_URL_SESV2"
+    client <- lift $ createClient { accessKeyId, secretAccessKey }
+    pure $ Mailer case environment of
+        Production -> { origin: "https://www.teamtavern.net", client: Just client }
+        Staging -> { origin: "https://staging.teamtavern.net", client: Just client }
+        Development -> { origin: "", client: endpoint $> client }
+        Test -> { origin: "", client: endpoint $> client }
+
+-- | The worker's period in seconds, an hour unless WORKER_PERIOD says otherwise,
+-- | as the test stack's does.
+loadWorkerPeriod :: ExceptT String Effect Int
+loadWorkerPeriod = do
+    period <- lift $ lookupEnv "WORKER_PERIOD"
+    case period of
+        Nothing -> pure 3600
+        Just string -> fromString string # note "Couldn't read variable WORKER_PERIOD." # except
+
+loadAdminEmail :: ExceptT String Effect AdminEmail
+loadAdminEmail =
+    lookupEnv "ADMIN_EMAIL"
+    <#> map AdminEmail
+    <#> note "Couldn't read variable ADMIN_EMAIL."
+    # ExceptT
+
+runServer :: Environment -> Mailer -> DiscordApiUrl -> AdminEmail -> ClientErrorLimit -> Pool -> Effect Unit
+runServer environment mailer discordApiUrl adminEmail clientErrorLimit pool = serve (Proxy :: _ AllRoutes) serveOptions
     { startSession: \{ cookies, body } ->
-        Session.start deployment discordApiUrl pool cookies body
-    , endSession: const
-        Session.end
-    , forgotPassword: \{ cookies, body } ->
-        forgotPassword deployment pool cookies body
-    , resetPassword: \{ cookies, body } ->
-        resetPassword pool cookies body
-    , viewAllGames: const $
-        viewAllGames pool
+        Session.start environment mailer discordApiUrl pool cookies body
+    , endSession: \{ cookies } ->
+        Session.end pool cookies
+    , forgotPassword: \{ body } ->
+        forgotPassword mailer pool body
+    , resetPassword: \{ body } ->
+        resetPassword pool body
+    , registerPlayer: \{ cookies, body } ->
+        register environment mailer discordApiUrl pool cookies body
+    , viewMe: \{ cookies } ->
+        viewMe environment pool cookies
+    , confirmEmail: \{ body } ->
+        confirmEmail pool body
+    , resendConfirmation: \{ cookies } ->
+        resendConfirmation mailer pool cookies
+    , viewAccount: \{ cookies } ->
+        viewAccount pool cookies
+    , updateFacts: \{ cookies, body } ->
+        updateFacts pool cookies body
+    , updateSwitches: \{ cookies, body } ->
+        updateSwitches pool cookies body
+    , updateEmail: \{ cookies, body } ->
+        updateEmail mailer pool cookies body
+    , switchToDiscord: \{ cookies, body } ->
+        switchToDiscord discordApiUrl pool cookies body
+    , switchToPassword: \{ cookies, body } ->
+        switchToPassword mailer pool cookies body
+    , deleteAccount: \{ cookies } ->
+        deleteAccount pool cookies
+    , viewGames: const $
+        viewGames pool
     , viewGame: \{ path: { handle } } ->
         viewGame pool handle
-    , viewPlayer: \{ path: { nickname } , query: { timezone }, cookies, headers } ->
-        Player.view pool cookies { nickname, timezone } headers
-    , registerPlayer: \{ cookies, body } ->
-        Player.register deployment discordApiUrl pool cookies body
-    , updatePlayer: \{ path, cookies, body } ->
-        Player.updatePlayer pool path.nickname cookies body
-    , deletePlayer: \{ path, cookies } ->
-        Player.delete pool path.nickname cookies
-    , updatePlayerContacts: \{ path, cookies, body } ->
-        Player.updateContacts pool path.nickname cookies body
-    , updatePlayerEmail: \{ path, cookies, body } ->
-        updatePlayerEmail pool path.nickname cookies body
-    , updatePlayerPassword: \{ path, cookies, body } ->
-        updatePlayerPassword pool path.nickname cookies body
-    , viewTeam: \{ path: { handle }, query: { timezone }, headers } ->
-        Team.view pool { handle, timezone } headers
-    , createTeam: \{ cookies, body } ->
-        Team.create pool cookies body
-    , updateTeam: \{ path, cookies, body } ->
-        Team.update pool cookies path body
-    , deleteTeam: \{ path, cookies } ->
-        deleteTeam pool cookies path
-    , updateTeamContacts: \{ path, cookies, body } ->
-        Team.updateContacts pool cookies path body
-    , addPlayerProfile: \{ path, cookies, body } ->
-        addPlayerProfile pool cookies path body
-    , addTeamProfile: \{ path, cookies, body } ->
-        addTeamProfile pool cookies path body
-    , updatePlayerProfile: \{ path, cookies, body } ->
-        updatePlayerProfile pool cookies path body
-    , updateTeamProfile: \{ path, cookies, body } ->
-        updateTeamProfile pool cookies path body
-    , deletePlayerProfile: \{ path, cookies } ->
-        deletePlayerProfile pool cookies path
-    , deleteTeamProfile: \{ path, cookies } ->
-        deleteTeamProfile pool cookies path
-    , viewPlayerProfilesByGame: \{ path: { handle }, query } ->
-        viewPlayerProfilesByGame pool handle query.page query.timezone $ bundlePlayerFilters query
-    , viewTeamProfilesByGame: \{ path: { handle }, query } ->
-        viewTeamProfilesByGame pool handle query.page query.timezone $ bundleTeamFilters query
-    , viewPlayerProfile: \{ path: { nickname, handle }, query: { timezone } } ->
-        viewPlayerProfile pool { nickname, handle, timezone }
-    , viewTeamProfile: \{ path: { teamHandle, gameHandle }, query: { timezone } } ->
-        viewTeamProfile pool { teamHandle, gameHandle, timezone }
-    , onboard: \{ cookies, body } ->
-        Onboard.onboard pool cookies body
-    , preboard: \{ cookies, body } ->
-        Preboard.preboard deployment discordApiUrl pool cookies body
-    , createAlert: \{ body } ->
-        Alert.createAlert pool body
-    , deleteAlert: \{ path: { id }, query: { token } } ->
-        Alert.deleteAlert pool { id, token }
+    , viewFeed: \{ path: { handle }, cookies, body } ->
+        viewFeed pool handle cookies body
+    , viewOwnDescriptions: \{ path: { handle }, cookies } ->
+        viewOwnDescriptions pool handle cookies
+    , viewPost: \{ path, cookies } ->
+        viewPost pool path.handle path.id cookies
+    , viewOwnPosts: \{ cookies } ->
+        viewOwnPosts pool cookies
+    , viewOwnPost: \{ path, cookies } ->
+        viewOwnPost pool path.handle path.type cookies
+    , createPost: \{ path, cookies, body } ->
+        createPost pool path.handle path.type cookies body
+    , updatePost: \{ path, cookies, body } ->
+        updatePost pool path.handle path.type cookies body
+    , renewPost: \{ path, cookies } ->
+        renewPost pool path.handle path.id cookies
+    , renewByNonce: \{ body } ->
+        renewByNonce pool body
+    , revealContacts: \{ path, cookies } ->
+        revealContacts pool path.handle path.id cookies
+    , viewInbox: \{ cookies } ->
+        viewInbox pool cookies
+    , viewConversation: \{ path: { id }, cookies } ->
+        viewConversation pool id cookies
+    , viewPostConversation: \{ path, cookies } ->
+        viewPostConversation pool path.handle path.id cookies
+    , sendMessage: \{ path, cookies, body } ->
+        sendMessage mailer pool path.handle path.id cookies body
+    , sendReply: \{ path: { id }, cookies, body } ->
+        sendReply mailer pool id cookies body
+    , block: \{ path: { nickname }, cookies } ->
+        block pool nickname cookies
+    , unblock: \{ path: { nickname }, cookies } ->
+        unblock pool nickname cookies
+    , viewBlocked: \{ cookies } ->
+        viewBlocked pool cookies
+    , reportPost: \{ path, cookies, body } ->
+        reportPost mailer adminEmail pool path.handle path.id cookies body
+    , reportConversation: \{ path: { id }, cookies, body } ->
+        reportConversation mailer adminEmail pool id cookies body
+    , viewNotifications: \{ cookies } ->
+        viewNotifications pool cookies
+    , readNotifications: \{ cookies } ->
+        readNotifications pool cookies
+    , readNotification: \{ path: { id }, cookies } ->
+        readNotification pool id cookies
+    , deletePost: \{ path, cookies } ->
+        deletePost pool path.handle path.type cookies
+    , viewCountries: const $
+        viewCountries pool
+    , viewGuides: const
+        viewGuides
+    , viewGuide: \{ path: { slug } } ->
+        viewGuide slug
+    , viewSitemap: \{ headers } ->
+        viewSitemap pool headers
+    , viewLlmsTxt: \{ headers } ->
+        viewLlmsTxt pool headers
+    , reportClientError: \{ headers, body } ->
+        reportClientError clientErrorLimit headers body
     }
 
 main :: Effect Unit
 main = either log pure =<< runExceptT do
-    deployment <- loadDeployment
+    environment <- loadEnvironment
     discordApiUrl <- lift loadDiscordApiUrl
+    adminEmail <- loadAdminEmail
+    workerPeriod <- loadWorkerPeriod
     pool <- createPostgresPool
-    setSendGridApiKey
-    lift $ runServer deployment discordApiUrl pool
+    mailer <- loadMailer environment
+    clientErrorLimit <- lift createClientErrorLimit
+    lift $ startWorker workerPeriod mailer pool
+    lift $ runServer environment mailer discordApiUrl adminEmail clientErrorLimit pool

@@ -1,0 +1,29 @@
+/* A page of one narrow column: signing in, signing up and the rest of the
+   account pages, and the steps of posting. */
+
+.flow {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+    max-width: var(--feed-width);
+    margin: 0 auto;
+    padding: var(--space-8) var(--space-4) 96px;
+}
+
+.flow-narrow {
+    max-width: 432px;
+}
+
+.flow-lead {
+    margin-top: calc(-1 * var(--space-4));
+    color: var(--text-muted);
+}
+
+/* A button standing alone across the column, such as Continue with Discord. */
+.flow > .button {
+    width: 100%;
+}
+
+.form-tight {
+    gap: var(--space-5);
+}

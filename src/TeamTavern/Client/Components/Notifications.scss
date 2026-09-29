@@ -1,0 +1,102 @@
+/* The notification list (brief 11.3): the player's own posts, each holding the
+   notifications about it. It scrolls inside the dropdown that holds it; there
+   is no page to send it to. */
+
+.notifications {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+/* On a phone the heading row is the overlay's, so Mark all read sits above the
+   list instead. */
+.notifications-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: var(--space-2);
+}
+
+.notification-group {
+    display: flex;
+    flex-direction: column;
+}
+
+/* The post the notifications under it are about. It names the post as its card
+   does, "Night Owls · Valorant group", so a player with two posts in a game
+   tells them apart. */
+.notification-heading {
+    padding: 0 var(--space-2) var(--space-1);
+    color: var(--text-muted);
+    font-size: var(--size-12);
+    font-weight: 500;
+}
+
+.notification {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-2);
+    padding: var(--space-2);
+    border-radius: var(--radius-control);
+    color: var(--text);
+}
+
+.notification:hover,
+.notification:focus-visible {
+    background: var(--table);
+    color: var(--text);
+    text-decoration: none;
+}
+
+/* The dot's place is kept on rows that have been read, so every row's text
+   starts on the same line down the list. */
+.notification-mark {
+    display: flex;
+    align-items: center;
+    width: 8px;
+    height: 20px;
+    flex: none;
+}
+
+.notification-main {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.notification-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    overflow-wrap: anywhere;
+    font-weight: 500;
+}
+
+.notification-title .icon {
+    width: 14px;
+    height: 14px;
+    flex: none;
+    color: var(--text-muted);
+}
+
+.notification-meta {
+    color: var(--text-muted);
+    font-size: var(--size-12);
+}
+
+.notification-unread .notification-title {
+    font-weight: 600;
+}
+
+.notification-unread .notification-title .icon {
+    color: var(--text);
+}
+
+/* Nothing yet, and what to do about it: a player without posts has nothing to
+   be told about (brief 14.6). */
+.notifications-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
+    color: var(--text-muted);
+}

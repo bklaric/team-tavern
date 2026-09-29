@@ -1,60 +1,20 @@
 module TeamTavern.Routes.Shared.Field where
 
-import Data.Maybe (Maybe)
-
 type Option =
     { key :: String
     , label :: String
     }
 
-type Options = Array Option
-
+-- | A game's field as posts answer it. `ilk` is `single`, `multi` or
+-- | `boolean`; `appliesTo` names the post types that answer it; options come
+-- | in the game's order, worst to best where the field is `ordered`.
 type Field =
-    { ilk :: String
-    , key :: String
+    { key :: String
     , label :: String
-    , icon :: String
-    , options :: Options
+    , ilk :: String
+    , ordered :: Boolean
+    , slotted :: Boolean
+    , appliesTo :: Array String
+    , onCard :: Boolean
+    , options :: Array Option
     }
-
-type Fields = Array Field
-
-type Value =
-    { field ::
-        { ilk :: String
-        , key :: String
-        , label :: String
-        , icon :: String
-        }
-    , option :: Maybe Option
-    , options :: Maybe Options
-    }
-
-type Values = Array Value
-
-type ValueMulti =
-    { field ::
-        { ilk :: String
-        , key :: String
-        , label :: String
-        , icon :: String
-        }
-    , options :: Options
-    }
-
-type ValuesMulti = Array ValueMulti
-
-type ValueSimple =
-    { fieldKey :: String
-    , optionKey :: Maybe String
-    , optionKeys :: Maybe (Array String)
-    }
-
-type ValuesSimple = Array ValueSimple
-
-type ValueSimpleMulti =
-    { fieldKey :: String
-    , optionKeys :: Array String
-    }
-
-type ValuesSimpleMulti = Array ValueSimpleMulti

@@ -1,38 +1,53 @@
 module TeamTavern.Routes.All where
 
 import Jarilo (type (<|>), type (:))
-import TeamTavern.Routes.Alert.CreateAlert (CreateAlert)
-import TeamTavern.Routes.Alert.DeleteAlert (DeleteAlert)
-import TeamTavern.Routes.Boarding.Onboard (Onboard)
-import TeamTavern.Routes.Boarding.Preboard (Preboard)
-import TeamTavern.Routes.Game.ViewAllGames (ViewAllGames)
+import TeamTavern.Routes.Account.DeleteAccount (DeleteAccount)
+import TeamTavern.Routes.Account.SwitchToDiscord (SwitchToDiscord)
+import TeamTavern.Routes.Account.SwitchToPassword (SwitchToPassword)
+import TeamTavern.Routes.Account.UpdateEmail (UpdateEmail)
+import TeamTavern.Routes.Account.UpdateFacts (UpdateFacts)
+import TeamTavern.Routes.Account.UpdateSwitches (UpdateSwitches)
+import TeamTavern.Routes.Account.ViewAccount (ViewAccount)
+import TeamTavern.Routes.Block.Block (Block)
+import TeamTavern.Routes.Block.ReportConversation (ReportConversation)
+import TeamTavern.Routes.ClientError.ReportClientError (ReportClientError)
+import TeamTavern.Routes.Block.ReportPost (ReportPost)
+import TeamTavern.Routes.Block.Unblock (Unblock)
+import TeamTavern.Routes.Block.ViewBlocked (ViewBlocked)
+import TeamTavern.Routes.Conversation.SendMessage (SendMessage)
+import TeamTavern.Routes.Conversation.SendReply (SendReply)
+import TeamTavern.Routes.Conversation.ViewConversation (ViewConversation)
+import TeamTavern.Routes.Conversation.ViewInbox (ViewInbox)
+import TeamTavern.Routes.Conversation.ViewPostConversation (ViewPostConversation)
+import TeamTavern.Routes.Country.ViewCountries (ViewCountries)
+import TeamTavern.Routes.Feed.ViewFeed (ViewFeed)
+import TeamTavern.Routes.Feed.ViewOwnDescriptions (ViewOwnDescriptions)
 import TeamTavern.Routes.Game.ViewGame (ViewGame)
+import TeamTavern.Routes.Game.ViewGames (ViewGames)
+import TeamTavern.Routes.Guide.ViewGuide (ViewGuide)
+import TeamTavern.Routes.Guide.ViewGuides (ViewGuides)
+import TeamTavern.Routes.Notification.ReadNotification (ReadNotification)
+import TeamTavern.Routes.Notification.ReadNotifications (ReadNotifications)
+import TeamTavern.Routes.Notification.ViewNotifications (ViewNotifications)
 import TeamTavern.Routes.Password.ForgotPassword (ForgotPassword)
 import TeamTavern.Routes.Password.ResetPassword (ResetPassword)
-import TeamTavern.Routes.Player.DeletePlayer (DeletePlayer)
+import TeamTavern.Routes.Player.ConfirmEmail (ConfirmEmail)
 import TeamTavern.Routes.Player.RegisterPlayer (RegisterPlayer)
-import TeamTavern.Routes.Player.UpdatePlayer (UpdatePlayer)
-import TeamTavern.Routes.Player.UpdatePlayerContacts (UpdatePlayerContacts)
-import TeamTavern.Routes.Player.UpdatePlayerEmail (UpdatePlayerEmail)
-import TeamTavern.Routes.Player.UpdatePlayerPassword (UpdatePlayerPassword)
-import TeamTavern.Routes.Player.ViewPlayer (ViewPlayer)
-import TeamTavern.Routes.Profile.AddPlayerProfile (AddPlayerProfile)
-import TeamTavern.Routes.Profile.AddTeamProfile (AddTeamProfile)
-import TeamTavern.Routes.Profile.DeletePlayerProfile (DeletePlayerProfile)
-import TeamTavern.Routes.Profile.DeleteTeamProfile (DeleteTeamProfile)
-import TeamTavern.Routes.Profile.UpdatePlayerProfile (UpdatePlayerProfile)
-import TeamTavern.Routes.Profile.UpdateTeamProfile (UpdateTeamProfile)
-import TeamTavern.Routes.Profile.ViewPlayerProfile (ViewPlayerProfile)
-import TeamTavern.Routes.Profile.ViewPlayerProfilesByGame (ViewPlayerProfilesByGame)
-import TeamTavern.Routes.Profile.ViewTeamProfile (ViewTeamProfile)
-import TeamTavern.Routes.Profile.ViewTeamProfilesByGame (ViewTeamProfilesByGame)
+import TeamTavern.Routes.Player.ResendConfirmation (ResendConfirmation)
+import TeamTavern.Routes.Player.ViewMe (ViewMe)
+import TeamTavern.Routes.Post.CreatePost (CreatePost)
+import TeamTavern.Routes.Post.DeletePost (DeletePost)
+import TeamTavern.Routes.Post.RenewByNonce (RenewByNonce)
+import TeamTavern.Routes.Post.RenewPost (RenewPost)
+import TeamTavern.Routes.Post.RevealContacts (RevealContacts)
+import TeamTavern.Routes.Post.UpdatePost (UpdatePost)
+import TeamTavern.Routes.Post.ViewOwnPost (ViewOwnPost)
+import TeamTavern.Routes.Post.ViewOwnPosts (ViewOwnPosts)
+import TeamTavern.Routes.Post.ViewPost (ViewPost)
+import TeamTavern.Routes.LlmsTxt.ViewLlmsTxt (ViewLlmsTxt)
 import TeamTavern.Routes.Session.EndSession (EndSession)
 import TeamTavern.Routes.Session.StartSession (StartSession)
-import TeamTavern.Routes.Team.CreateTeam (CreateTeam)
-import TeamTavern.Routes.Team.DeleteTeam (DeleteTeam)
-import TeamTavern.Routes.Team.UpdateTeam (UpdateTeam)
-import TeamTavern.Routes.Team.UpdateTeamContacts (UpdateTeamContacts)
-import TeamTavern.Routes.Team.ViewTeam (ViewTeam)
+import TeamTavern.Routes.Sitemap.ViewSitemap (ViewSitemap)
 
 type SessionRoutes
     =   "startSession" : StartSession
@@ -42,52 +57,88 @@ type PasswordRoutes
     =   "forgotPassword" : ForgotPassword
     <|> "resetPassword"  : ResetPassword
 
-type GameRoutes
-    =   "viewAllGames" : ViewAllGames
-    <|> "viewGame"     : ViewGame
-
 type PlayerRoutes
-    =   "viewPlayer"     : ViewPlayer
-    <|> "registerPlayer" : RegisterPlayer
-    <|> "updatePlayer"   : UpdatePlayer
-    <|> "deletePlayer"   : DeletePlayer
-    <|> "updatePlayerContacts" : UpdatePlayerContacts
-    <|> "updatePlayerEmail"    : UpdatePlayerEmail
-    <|> "updatePlayerPassword" : UpdatePlayerPassword
+    =   "registerPlayer"     : RegisterPlayer
+    <|> "viewMe"             : ViewMe
+    <|> "confirmEmail"       : ConfirmEmail
+    <|> "resendConfirmation" : ResendConfirmation
 
-type TeamRoutes
-    =   "viewTeam"   : ViewTeam
-    <|> "createTeam" : CreateTeam
-    <|> "updateTeam" : UpdateTeam
-    <|> "deleteTeam" : DeleteTeam
-    <|> "updateTeamContacts" : UpdateTeamContacts
+type AccountRoutes
+    =   "viewAccount"      : ViewAccount
+    <|> "updateFacts"      : UpdateFacts
+    <|> "updateSwitches"   : UpdateSwitches
+    <|> "updateEmail"      : UpdateEmail
+    <|> "switchToDiscord"  : SwitchToDiscord
+    <|> "switchToPassword" : SwitchToPassword
+    <|> "deleteAccount"    : DeleteAccount
 
-type ProfileRoutes
-    =   "addPlayerProfile"         : AddPlayerProfile
-    <|> "addTeamProfile"           : AddTeamProfile
-    <|> "updatePlayerProfile"      : UpdatePlayerProfile
-    <|> "updateTeamProfile"        : UpdateTeamProfile
-    <|> "deletePlayerProfile"      : DeletePlayerProfile
-    <|> "deleteTeamProfile"        : DeleteTeamProfile
-    <|> "viewPlayerProfilesByGame" : ViewPlayerProfilesByGame
-    <|> "viewTeamProfilesByGame"   : ViewTeamProfilesByGame
-    <|> "viewPlayerProfile"        : ViewPlayerProfile
-    <|> "viewTeamProfile"          : ViewTeamProfile
+type GameRoutes
+    =   "viewGames" : ViewGames
+    <|> "viewGame"  : ViewGame
 
-type BoardRoutes
-    =   "onboard"  : Onboard
-    <|> "preboard" : Preboard
+type FeedRoutes
+    =   "viewFeed"            : ViewFeed
+    <|> "viewOwnDescriptions" : ViewOwnDescriptions
 
-type AlertRoutes
-    =   "createAlert" : CreateAlert
-    <|> "deleteAlert" : DeleteAlert
+type PostRoutes
+    =   "viewPost"       : ViewPost
+    <|> "viewOwnPosts"   : ViewOwnPosts
+    <|> "viewOwnPost"    : ViewOwnPost
+    <|> "createPost"     : CreatePost
+    <|> "updatePost"     : UpdatePost
+    <|> "renewPost"      : RenewPost
+    <|> "renewByNonce"   : RenewByNonce
+    <|> "revealContacts" : RevealContacts
+    <|> "deletePost"     : DeletePost
+
+type ConversationRoutes
+    =   "viewInbox"            : ViewInbox
+    <|> "viewConversation"     : ViewConversation
+    <|> "viewPostConversation" : ViewPostConversation
+    <|> "sendMessage"          : SendMessage
+    <|> "sendReply"            : SendReply
+
+type BlockRoutes
+    =   "block"              : Block
+    <|> "unblock"            : Unblock
+    <|> "viewBlocked"        : ViewBlocked
+    <|> "reportPost"         : ReportPost
+    <|> "reportConversation" : ReportConversation
+
+type NotificationRoutes
+    =   "viewNotifications" : ViewNotifications
+    <|> "readNotifications" : ReadNotifications
+    <|> "readNotification"  : ReadNotification
+
+type CountryRoutes
+    =   "viewCountries" : ViewCountries
+
+type GuideRoutes
+    =   "viewGuides" : ViewGuides
+    <|> "viewGuide"  : ViewGuide
+
+type SitemapRoutes
+    =   "viewSitemap" : ViewSitemap
+
+type LlmsTxtRoutes
+    =   "viewLlmsTxt" : ViewLlmsTxt
+
+type ClientErrorRoutes
+    =   "reportClientError" : ReportClientError
 
 type AllRoutes
     =    SessionRoutes
     <|> PasswordRoutes
-    <|> GameRoutes
     <|> PlayerRoutes
-    <|> TeamRoutes
-    <|> ProfileRoutes
-    <|> BoardRoutes
-    <|> AlertRoutes
+    <|> AccountRoutes
+    <|> GameRoutes
+    <|> FeedRoutes
+    <|> PostRoutes
+    <|> ConversationRoutes
+    <|> BlockRoutes
+    <|> NotificationRoutes
+    <|> CountryRoutes
+    <|> GuideRoutes
+    <|> SitemapRoutes
+    <|> LlmsTxtRoutes
+    <|> ClientErrorRoutes

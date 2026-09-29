@@ -1,76 +1,55 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Locator } from "@playwright/test";
+import { expectPage } from "../pages";
 
-// `Database/Seed/Games/` seeds one file per game, and `Valorant.sql` carries this description.
-const gameCount = 11;
-const game = {
-    handle: "valorant",
-    title: "Valorant",
-    description: "Find Valorant teammates for unrated, competitive, spike rush matches and more.",
-};
+// `Database/Seed/Games/` seeds one file per game, and the catalogue lists them by title.
+const gameCount = 10;
+const game = { handle: "valorant", title: "Valorant" };
+const feedPath = `/games/${game.handle}`;
 
-const listingPath = `/games/${game.handle}/players`;
-
-// Caddy answers the retired paths with a redirect before anything else sees them, so the page
-// the browser lands on was reached through a 301, not through the site replacing the path itself.
-test.describe("a retired path", () => {
-    test("a game's bare path lands on its player listing", async ({ page }) => {
-        const response = await page.goto(`/games/${game.handle}`);
-
-        const redirect = await response?.request().redirectedFrom()?.response();
-        expect(redirect?.status()).toBe(301);
-        await expect(page).toHaveURL(new RegExp(`${listingPath}$`));
-    });
-
-    test("the game list lands on the home page", async ({ page }) => {
-        const response = await page.goto("/games");
-
-        const redirect = await response?.request().redirectedFrom()?.response();
-        expect(redirect?.status()).toBe(301);
-        await expect(page).toHaveURL(/\/$/);
-    });
-});
+// The file a cover has loaded, once it has.
+const loadedFile = (cover: Locator) =>
+    cover.evaluate((image: HTMLImageElement) =>
+        image.complete && image.naturalWidth > 0 ? new URL(image.currentSrc).pathname : null);
 
 test.describe("the home page", () => {
-    test("shows every game's cover with a link to its player listing", async ({ page }) => {
+    test("shows every game's cover with a link to its feed", async ({ page }) => {
         await page.goto("/");
 
-        const grid = page.locator("#games");
-        await expect(grid.locator(".home-game")).toHaveCount(gameCount);
-        const tile = grid.getByRole("link", { name: game.title }).first();
-        await expect(tile).toHaveAttribute("href", listingPath);
+        const grid = page.locator(".cover-grid");
+        await expect(grid.locator(".cover")).toHaveCount(gameCount);
+        await expect(grid.getByRole("link").first()).toHaveAccessibleName("Apex Legends");
+        const tile = grid.getByRole("link", { name: game.title, exact: true });
+        await expect(tile).toHaveAttribute("href", feedPath);
 
-        // Every seeded game has to carry a 600x900 cover under `Static/Images/Games`; a
-        // missing or misshapen one shows up here as an image that never gets its size.
-        const covers = grid.locator(".home-game img");
-        await expect(covers).toHaveCount(gameCount);
-        for (const cover of await covers.all()) {
+        // Every seeded game has to carry a 600x900 cover under `Static/Images/Games`, which
+        // `build-covers.mjs` checks, and the 400x600 copy it makes of it is what a 160px
+        // tile loads. A missing one shows up here as an image that never loads.
+        const tiles = grid.getByRole("link");
+        await expect(tiles).toHaveCount(gameCount);
+        for (const link of await tiles.all()) {
+            const handle = (await link.getAttribute("href"))!.replace("/games/", "");
+            const cover = link.locator("img");
             await cover.scrollIntoViewIfNeeded();
-            await expect(cover).toHaveJSProperty("naturalWidth", 600);
-            await expect(cover).toHaveJSProperty("naturalHeight", 900);
+            await expect.poll(() => loadedFile(cover)).toBe(`/images/games/400/${handle}.webp`);
         }
 
         await tile.click();
-        await expect(page).toHaveURL(new RegExp(`${listingPath}$`));
+        await expectPage(page, feedPath);
+        await expect(page.getByRole("heading", { name: `${game.title} LFG`, level: 1 })).toBeVisible();
     });
 });
 
-test.describe("a listing page", () => {
-    test("describes its game", async ({ page }) => {
-        await page.goto(listingPath);
+// A phone's tile is a third of its width, so a narrow one at 3x still makes do with the
+// copy, and only a wide one needs the original.
+for (const [width, file] of [[375, `/images/games/400/${game.handle}.webp`], [600, `/images/games/${game.handle}.webp`]] as const)
+    test.describe(`a ${width} px window at 3x`, () => {
+        test.use({ viewport: { width, height: 800 }, deviceScaleFactor: 3 });
 
-        await expect(page.getByText(game.description)).toBeVisible();
+        test(`loads ${file} for a home page tile`, async ({ page }) => {
+            await page.goto("/");
+
+            const cover = page.locator(".cover-grid").getByRole("link", { name: game.title, exact: true }).locator("img");
+            await cover.scrollIntoViewIfNeeded();
+            await expect.poll(() => loadedFile(cover)).toBe(file);
+        });
     });
-
-    // Desktop Chrome is wide enough for the header to name the current game in full, and
-    // that name is the dropdown's button.
-    test("opens the game dropdown from the header", async ({ page }) => {
-        await page.goto(listingPath);
-
-        await page.getByRole("button", { name: game.title }).click();
-
-        const popover = page.locator(".top-bar-games-popover");
-        await expect(popover.locator(".top-bar-game")).toHaveCount(gameCount);
-        await expect(popover.getByRole("link", { name: "Apex Legends" }))
-            .toHaveAttribute("href", "/games/apex/players");
-    });
-});

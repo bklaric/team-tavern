@@ -4,195 +4,237 @@ import Prelude
 
 import Async (Async)
 import Async as Async
-import Data.Bifunctor (lmap)
-import Data.Maybe (Maybe(..), isNothing)
+import Data.Array.NonEmpty as Nea
+import Data.Either (Either(..))
+import Data.Foldable (for_)
+import Data.Maybe (Maybe(..), fromMaybe, isJust)
+import Data.String (null, trim)
+import Data.Tuple.Nested ((/\))
 import Data.Variant (inj, match, onMatch)
 import Halogen as H
 import Halogen.HTML as HH
-import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import TeamTavern.Client.Components.Form (form, formError, otherFormError)
-import TeamTavern.Client.Components.Input (inputError, inputGroup, inputLabel_, requiredTextLineInputNamed)
-import TeamTavern.Client.Components.InputError as InputError
-import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor, navigationAnchorClassed)
-import TeamTavern.Client.Components.PasswordInput (passwordInput_)
-import TeamTavern.Client.Script.Analytics (registerSignedIn, track_)
-import TeamTavern.Client.Script.Discord (authorizeWithDiscord)
-import TeamTavern.Client.Script.Meta (setMeta)
-import TeamTavern.Client.Script.Navigate (navigate_)
-import TeamTavern.Client.Script.QueryParams (getFragmentParam)
-import TeamTavern.Client.Shared.Fetch (fetchBody)
+import Halogen.Hooks as Hooks
+import TeamTavern.Client.Components.Button (Size(..), Weight(..), button)
+import TeamTavern.Client.Components.Divider (rule)
+import TeamTavern.Client.Components.ContactPanel (contacting, contactingOwner)
+import TeamTavern.Client.Components.Flow (flow, flowError, flowLead, flowLink, formTight, submitButton, textField)
+import TeamTavern.Client.Icons as Icons
+import TeamTavern.Client.Pages.Post.Register (Publishing, publishing, publishingPost)
+import TeamTavern.Client.Script.Back (authPath, readBack)
+import TeamTavern.Client.Script.Discord (authorizeWithDiscord, keepSwitchToken, takeDiscordReturn)
+import TeamTavern.Client.Script.Navigate (navigateReplace_, navigate_)
+import TeamTavern.Client.Shared.AccountErrors (nicknameInvalid, nicknameTaken, somethingWrong)
+import TeamTavern.Client.Shared.Fetch (expecting, fetchBody)
+import TeamTavern.Client.Shared.Me (fetchMe)
 import TeamTavern.Client.Shared.Slot (Slot___)
 import TeamTavern.Client.Snippets.Class as HS
+import TeamTavern.Routes.Player.RegisterPlayer (RegisterPlayer)
 import TeamTavern.Routes.Session.StartSession (StartSession)
 import Type.Proxy (Proxy(..))
 import Web.Event.Event (preventDefault)
-import Web.Event.Internal.Types (Event)
 
-data Action
-    = Init
-    | UpdateEmailOrNickname String
-    | UpdatePassword String
-    | SignIn Event
-    | SignInWithDiscord
+-- Discord sends every player it signs in back here. One with an account is
+-- signed in and goes on; one without picks a nickname, which is the rest of
+-- registering with Discord.
+data Screen
+    = Password
+    | Discord
+    | Nickname { accessToken :: String }
 
+-- | `publishing` is the post the page goes on to publish when it is the
+-- | register step of posting, and `post` how that post is named. `contacting`
+-- | is whose post the page returns to contact.
 type State =
-    { emailOrNickname :: String
+    { screen :: Screen
+    , back :: String
+    , publishing :: Maybe Publishing
+    , post :: Maybe String
+    , contacting :: Maybe String
+    , emailOrNickname :: String
     , password :: String
-    , unknownPlayer :: Boolean
-    , wrongPassword :: Boolean
-    , unknownDiscord :: Boolean
-    , otherError :: Boolean
-    , submitting :: Boolean
+    , nickname :: String
+    , errors ::
+        { emailOrNickname :: Maybe String
+        , password :: Maybe String
+        , nickname :: Maybe String
+        , form :: Maybe String
+        }
+    , sending :: Boolean
     }
 
-render :: ∀ left. State -> H.ComponentHTML Action _ (Async left)
-render
-    { emailOrNickname
-    , password
-    , unknownPlayer
-    , wrongPassword
-    , unknownDiscord
-    , otherError
-    , submitting
-    } = form SignIn $
-    [ HH.h1 [ HS.class_ "form-heading" ]
-        [ HH.text "Sign in to "
-        , navigationAnchor (Proxy :: _ "home")
-            { path: "/", content: HH.text "TeamTavern" }
-        ]
-    , inputGroup $
-        [ inputLabel_ "Email or nickname"
-        , requiredTextLineInputNamed "emailOrNickname" emailOrNickname UpdateEmailOrNickname
-        ]
-        <> inputError unknownPlayer "No account exists with this email or nickname."
-    , inputGroup $
-        [ HH.label
-            [ HS.class_ "input-label" ]
-            [ HH.text "Password"
-            , navigationAnchorClassed (Proxy :: _ "forgotPasswordAnchor")
-                { class_: "forgot-password"
-                , path: "/forgot-password"
-                , content: HH.text "Forgot password?"
-                , disableTabIndex: true
-                }
+noErrors :: { emailOrNickname :: Maybe String, password :: Maybe String, nickname :: Maybe String, form :: Maybe String }
+noErrors = { emailOrNickname: Nothing, password: Nothing, nickname: Nothing, form: Nothing }
+
+initialState :: State
+initialState =
+    { screen: Password
+    , back: "/"
+    , publishing: Nothing
+    , post: Nothing
+    , contacting: Nothing
+    , emailOrNickname: ""
+    , password: ""
+    , nickname: ""
+    , errors: noErrors
+    , sending: false
+    }
+
+component :: ∀ query input output left. H.Component query input output (Async left)
+component = Hooks.component \_ _ -> Hooks.do
+    state /\ stateId <- Hooks.useState initialState
+
+    let set = Hooks.modify_ stateId
+        failWith errors = set _ { sending = false, errors = errors }
+
+        startDiscordSession accessToken back = do
+            set _ { screen = Discord, back = back, publishing = publishing back }
+            result <- H.lift $ Async.attempt $ fetchBody (expecting [ "badRequest" ] (Proxy :: _ StartSession))
+                (inj (Proxy :: _ "discord") { accessToken })
+            case result of
+                Right response -> response # onMatch
+                    { noContent: const $ navigateReplace_ back
+                    , badRequest: onMatch
+                        { unknownDiscord: \{ nickname } ->
+                            set _ { screen = Nickname { accessToken }, nickname = nickname }
+                        }
+                        (const $ failWith noErrors { form = Just somethingWrong })
+                    }
+                    (const $ failWith noErrors { form = Just somethingWrong })
+                Left _ -> failWith noErrors { form = Just somethingWrong }
+
+        submitPassword event = do
+            H.liftEffect $ preventDefault event
+            let errors = noErrors
+                    { emailOrNickname =
+                        if null $ trim state.emailOrNickname then Just "Enter your email or nickname." else Nothing
+                    , password = if null state.password then Just "Enter your password." else Nothing
+                    }
+            if isJust errors.emailOrNickname || isJust errors.password
+            then failWith errors
+            else do
+                set _ { sending = true, errors = noErrors }
+                result <- H.lift $ Async.attempt $ fetchBody (expecting [ "badRequest" ] (Proxy :: _ StartSession))
+                    (inj (Proxy :: _ "password")
+                        { emailOrNickname: trim state.emailOrNickname, password: state.password })
+                case result of
+                    Right response -> response # onMatch
+                        { noContent: const $ navigate_ state.back
+                        , badRequest: match
+                            { unknownPlayer: const $ failWith noErrors
+                                { emailOrNickname = Just "No account exists with this email or nickname." }
+                            , wrongPassword: const $ failWith noErrors
+                                { password = Just "Entered password is incorrect." }
+                            , unknownDiscord: const $ failWith noErrors { form = Just somethingWrong }
+                            }
+                        }
+                        (const $ failWith noErrors { form = Just somethingWrong })
+                    Left _ -> failWith noErrors { form = Just somethingWrong }
+
+        submitNickname accessToken event = do
+            H.liftEffect $ preventDefault event
+            if null $ trim state.nickname
+            then failWith noErrors { nickname = Just "Choose a nickname." }
+            else do
+                set _ { sending = true, errors = noErrors }
+                result <- H.lift $ Async.attempt $ fetchBody (expecting [ "badRequest" ] (Proxy :: _ RegisterPlayer))
+                    (inj (Proxy :: _ "discord") { nickname: trim state.nickname, accessToken })
+                case result of
+                    Right response -> response # onMatch
+                        { noContent: const $ navigateReplace_ state.back
+                        , badRequest: match
+                            { registration: \errors -> failWith noErrors
+                                { nickname = errors # Nea.head # match
+                                    { email: const $ Just somethingWrong
+                                    , nickname: const $ Just nicknameInvalid
+                                    , password: const $ Just somethingWrong
+                                    }
+                                }
+                            , nicknameTaken: const $ failWith noErrors { nickname = Just nicknameTaken }
+                            , discordTaken: const $ failWith noErrors
+                                { form = Just "This Discord account already has a TeamTavern account. Sign in with Discord instead." }
+                            , emailTaken: const $ failWith noErrors { form = Just somethingWrong }
+                            }
+                        }
+                        (const $ failWith noErrors { form = Just somethingWrong })
+                    Left _ -> failWith noErrors { form = Just somethingWrong }
+
+    Hooks.useLifecycleEffect do
+        discordReturn <- takeDiscordReturn
+        case discordReturn of
+            Just { accessToken, back, switching: true } -> do
+                keepSwitchToken accessToken
+                navigateReplace_ back
+            Just { accessToken, back } -> startDiscordSession accessToken back
+            Nothing -> do
+                back <- readBack
+                set _ { back = back, publishing = publishing back }
+                void $ Hooks.fork do
+                    me <- H.lift fetchMe
+                    when (isJust me) $ navigateReplace_ back
+                for_ (publishing back) \publishing' -> void $ Hooks.fork do
+                    post <- H.lift $ publishingPost publishing'
+                    set _ { post = post }
+                for_ (contacting back) \contacting' -> void $ Hooks.fork do
+                    owner <- H.lift $ contactingOwner contacting'
+                    set _ { contacting = owner }
+        pure Nothing
+
+    let formError = case state.errors.form of
+            Just error -> [ flowError error ]
+            Nothing -> []
+
+    Hooks.pure case state.screen of
+        Password -> flow $
+            [ HH.h1_ [ HH.text if isJust state.publishing then "Sign in to publish" else "Sign in" ] ]
+            <> (case state.publishing, state.contacting of
+                Just _, _ -> [ flowLead $ "Your " <> fromMaybe "post" state.post
+                    <> " goes live as soon as you're signed in. Nothing you wrote is lost." ]
+                _, Just owner -> [ flowLead $ "You'll come straight back to " <> owner <> "'s post." ]
+                _, _ -> [])
+            <>
+            [ button Outline Regular (authorizeWithDiscord state.back)
+                [ Icons.discord, HH.text "Continue with Discord" ]
+            , rule "or"
+            , formTight submitPassword $
+                [ textField
+                    { id: "signin-email", label: "Email or nickname"
+                    , type_: HP.InputText, autocomplete: HP.AutocompleteUsername
+                    , hint: Nothing, error: state.errors.emailOrNickname
+                    , value: state.emailOrNickname, onInput: \value -> set _ { emailOrNickname = value }
+                    }
+                , textField
+                    { id: "signin-password", label: "Password"
+                    , type_: HP.InputPassword, autocomplete: HP.AutocompleteCurrentPassword
+                    , hint: Nothing, error: state.errors.password
+                    , value: state.password, onInput: \value -> set _ { password = value }
+                    }
+                ]
+                <> formError
+                <> [ submitButton state.sending if isJust state.publishing then "Sign in and publish" else "Sign in" ]
+            , HH.p [ HS.class_ "muted" ] [ flowLink (authPath "/forgot-password" state.back) "Forgot password?" ]
+            , HH.p [ HS.class_ "muted" ]
+                [ HH.text "New here? ", flowLink (authPath "/signup" state.back) "Create an account" ]
             ]
-        , passwordInput_ password UpdatePassword
-        ]
-        <> InputError.passwordWrong wrongPassword
-    , HH.button
-        [ HS.class_ "primary-button"
-        , HP.disabled $ emailOrNickname == "" || password == "" || submitting
-        ]
-        [ HH.i [ HS.class_ "fas fa-sign-in-alt button-icon" ] []
-        , HH.text
-            if submitting
-            then "Signing in..."
-            else "Sign in"
-        ]
-    ]
-    <> formError unknownDiscord
-        "No account exists for this Discord user. Try creating an account instead."
-    <> otherFormError otherError
-    <>
-    [ HH.div [HP.style "display: flex; align-items: center; margin: 28px 0;"]
-        [ HH.hr [HP.style "flex: 1 1 auto;"]
-        , HH.span [HP.style "padding: 0 10px"] [HH.text "Or"]
-        , HH.hr [HP.style "flex: 1 1 auto;"]
-        ]
-    , HH.button
-        [ HS.class_ "regular-button"
-        , HP.type_ HP.ButtonButton
-        , HE.onClick $ const SignInWithDiscord
-        ]
-        [ HH.i [ HS.class_ "fab fa-discord button-icon", HP.style "font-size: 20px;" ] []
-        , HH.text "Sign in with Discord"
-        ]
-    , HH.p
-        [ HS.class_ "form-bottom-text"]
-        [ HH.text "New to TeamTavern? "
-        , navigationAnchor (Proxy :: _ "registerAnchor")
-            { path: "/register", content: HH.text "Create an account." }
-        ]
-    ]
+        Discord -> flow $
+            [ HH.h1_ [ HH.text "Sign in" ]
+            , flowLead "Signing you in with Discord…"
+            ]
+            <> formError
+        Nickname { accessToken } -> flow
+            [ HH.h1_ [ HH.text "Pick a nickname" ]
+            , flowLead "It's shown on your posts and your messages. We took it from Discord; change it if you like."
+            , formTight (submitNickname accessToken) $
+                [ textField
+                    { id: "signin-nickname", label: "Nickname"
+                    , type_: HP.InputText, autocomplete: HP.AutocompleteNickname
+                    , hint: Nothing, error: state.errors.nickname
+                    , value: state.nickname, onInput: \value -> set _ { nickname = value }
+                    }
+                ]
+                <> formError
+                <> [ submitButton state.sending if isJust state.publishing then "Publish post" else "Continue" ]
+            ]
 
-sendSignInRequest :: ∀ left. State -> Maybe String -> Async left (Maybe State)
-sendSignInRequest state @ {emailOrNickname, password} accessTokenMaybe = Async.unify do
-    let body =
-            case accessTokenMaybe of
-            Nothing -> inj (Proxy :: _ "password") {emailOrNickname, password}
-            Just accessToken -> inj (Proxy :: _ "discord") {accessToken}
-    response <- fetchBody (Proxy :: _ StartSession) body
-        # lmap (const $ Just $ state {otherError = true})
-    nextState <- pure $ onMatch
-        { noContent: const Nothing
-        , badRequest: \error -> Just $ match
-            { unknownPlayer: const $ state {unknownPlayer = true}
-            , wrongPassword: const $ state {wrongPassword = true}
-            , unknownDiscord: const $ state {unknownDiscord = true}
-            }
-            error
-        }
-        (const $ Just state {otherError = true})
-        response
-    when (isNothing nextState) $ track_ "Sign in"
-    pure nextState
-
-handleAction :: ∀ slots output left.
-    Action -> H.HalogenM State Action slots output (Async left) Unit
-handleAction Init = do
-    setMeta "Sign in | TeamTavern" "Sign in to TeamTavern."
-    accessTokenMaybe <- getFragmentParam "access_token"
-    case accessTokenMaybe of
-        Nothing -> pure unit
-        Just accessToken -> do
-            state <- H.get
-            newState <- H.lift $ sendSignInRequest state (Just accessToken)
-            case newState of
-                Nothing -> do
-                    registerSignedIn
-                    navigate_ "/"
-                Just newState' -> H.put newState' { submitting = false }
-handleAction (UpdateEmailOrNickname emailOrNickname) =
-    H.modify_ (_ { emailOrNickname = emailOrNickname })
-handleAction (UpdatePassword password) =
-    H.modify_ (_ { password = password })
-handleAction (SignIn event) = do
-    H.liftEffect $ preventDefault event
-    state <- H.gets (_
-        { unknownPlayer = false
-        , wrongPassword = false
-        , otherError    = false
-        , submitting    = true
-        })
-    H.put state
-    newState <- H.lift $ sendSignInRequest state Nothing
-    case newState of
-        Nothing -> do
-            registerSignedIn
-            navigate_ "/"
-        Just newState' -> H.put newState' { submitting = false }
-handleAction SignInWithDiscord = authorizeWithDiscord "/signin"
-
-component :: ∀ query input output left.
-    H.Component query input output (Async left)
-component = H.mkComponent
-    { initialState: const
-        { emailOrNickname: ""
-        , password: ""
-        , unknownPlayer: false
-        , wrongPassword: false
-        , unknownDiscord: false
-        , otherError: false
-        , submitting: false
-        }
-    , render
-    , eval: H.mkEval $ H.defaultEval
-        { handleAction = handleAction
-        , initialize = Just Init
-        }
-    }
-
-signIn :: ∀ query children left.
-    HH.ComponentHTML query (signIn :: Slot___ | children) (Async left)
-signIn = HH.slot (Proxy :: _ "signIn") unit component unit absurd
+signIn :: ∀ action slots left. H.ComponentHTML action (signIn :: Slot___ | slots) (Async left)
+signIn = HH.slot_ (Proxy :: _ "signIn") unit component unit

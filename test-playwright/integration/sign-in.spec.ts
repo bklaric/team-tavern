@@ -1,251 +1,282 @@
 import { expect, Page, test } from "@playwright/test";
+import { expectSignedInAs, password, signIn, signOut, submitPasswordSignIn, unique } from "../accounts";
+import { discordUser, fakeDiscord, signUpWithDiscord } from "../discord";
+import { expectPage } from "../pages";
 
-// The suite shares one database, so every player a test creates carries a suffix unique to
-// the run and to the test, and a retry does not collide with what a failed attempt left.
-let suffixes = 0;
-function unique(prefix: string): string {
-    suffixes += 1;
-    return `${prefix}${Date.now().toString(36)}${suffixes}`;
+async function fillSignUp(page: Page, email: string, nickname: string, password_ = password) {
+    await page.getByLabel("Email").fill(email);
+    await page.getByLabel("Nickname").fill(nickname);
+    await page.getByLabel("Password").fill(password_);
+    await page.getByRole("button", { name: "Create account" }).click();
 }
 
-const password = "tester-password";
+test("signing up with a password returns the player to the page they came from", async ({ page }) => {
+    const nickname = unique("P");
+    await page.goto("/games/valorant");
+    await page.getByRole("link", { name: "Sign up" }).click();
+    await expectPage(page, "/signup");
 
-type DiscordUser = { id: string, email: string | null, verified: boolean };
+    await fillSignUp(page, `${unique("signup")}@example.com`, nickname);
 
-function discordUser(email: string | null, verified: boolean): DiscordUser {
-    return { id: unique(""), email, verified };
-}
-
-// The pages send the browser to Discord's authorize URL, and Discord sends it back to the
-// page named in `redirect_uri` with an access token in the fragment. This plays Discord's
-// part: it answers with a token for whichever user is set at the time, which the discord
-// service in the test stack reads back as that user (see `DiscordStub/Main.purs`), and
-// records each authorize URL so a test can check what the page asked for.
-type FakeDiscord = { user: DiscordUser, authorizeRequests: URL[] };
-
-async function fakeDiscord(page: Page, user: DiscordUser): Promise<FakeDiscord> {
-    const discord: FakeDiscord = { user, authorizeRequests: [] };
-    await page.route(url => url.hostname === "discord.com" && url.pathname === "/api/oauth2/authorize", route => {
-        const authorize = new URL(route.request().url());
-        discord.authorizeRequests.push(authorize);
-        const { id, email, verified } = discord.user;
-        const token = encodeURIComponent(JSON.stringify({ id, username: id, discriminator: "0", email, verified }));
-        return route.fulfill({
-            status: 302,
-            headers: { location: `${authorize.searchParams.get("redirect_uri")}#token_type=Bearer&access_token=${token}` },
-        });
-    });
-    return discord;
-}
-
-async function registerWithPassword(page: Page, email: string, nickname = unique("P")): Promise<string> {
-    await page.goto("/register");
-    await page.locator('input[name="email"]').fill(email);
-    await page.locator('input[name="nickname"]').fill(nickname);
-    await page.locator('input[name="password"]').fill(password);
-    // Button names start with their icon's glyph, and one more button starts "Create account".
-    await page.getByRole("button", { name: /Create account$/ }).click();
-    await page.waitForURL(url => url.pathname === "/onboarding/start");
-    return nickname;
-}
-
-// The first button switches the form to Discord and the second, in its place, submits it.
-async function signUpWithDiscord(page: Page, nickname = unique("D")): Promise<string> {
-    await page.goto("/register");
-    await page.getByRole("button", { name: "Create account with Discord" }).click();
-    await page.locator('input[name="nickname"]').fill(nickname);
-    await page.getByRole("button", { name: "Create account with Discord" }).click();
-    await page.waitForURL(url => url.pathname === "/onboarding/start");
-    return nickname;
-}
-
-async function submitPasswordSignIn(page: Page, emailOrNickname: string) {
-    await page.goto("/signin");
-    await page.locator('input[name="emailOrNickname"]').fill(emailOrNickname);
-    await page.locator('input[name="password"]').fill(password);
-    await page.getByRole("button", { name: /Sign in$/ }).click();
-}
-
-async function signInWithDiscord(page: Page) {
-    await page.goto("/signin");
-    await page.getByRole("button", { name: "Sign in with Discord" }).click();
-}
-
-// The header links a signed-in player to their own page, which is what names them.
-async function expectSignedInAs(page: Page, nickname: string) {
-    await expect(page.getByRole("link", { name: "Account" })).toHaveAttribute("href", `/players/${nickname}`);
-}
-
-// Onboarding, where a sign-up lands, has no top bar, so this signs out from home, and
-// signing out reloads the site there.
-async function signOut(page: Page) {
-    await page.goto("/");
-    await page.getByRole("button", { name: "Sign out" }).click();
-    await expect(page.getByRole("button", { name: "Sign out" })).toHaveCount(0);
-}
-
-// Change email opens with the player's contact email filled in, the one place a page shows it.
-async function openChangeEmail(page: Page, nickname: string) {
-    await page.goto(`/players/${nickname}`);
-    await page.locator(".options-button-icon").click();
-    await page.locator(".popover-item", { hasText: "Change email" }).click();
-    await expect(page.locator('input[name="email"]')).toBeVisible();
-}
-
-// A changed email reloads the player page it was changed on, which closes the form.
-async function expectEmailChanged(page: Page) {
-    await expect(page.locator('input[name="email"]')).toHaveCount(0);
-    await page.waitForLoadState();
-}
-
-async function expectContactEmail(page: Page, nickname: string, email: string) {
-    await openChangeEmail(page, nickname);
-    await expect(page.locator('input[name="email"]')).toHaveValue(email);
-}
-
-test("signing up with Discord asks Discord for the email and keeps the verified address", async ({ page, baseURL }) => {
-    const email = `${unique("signup")}@example.com`;
-    const discord = await fakeDiscord(page, discordUser(email, true));
-
-    const nickname = await signUpWithDiscord(page);
-
-    expect(discord.authorizeRequests.map(authorize => authorize.searchParams.get("scope"))).toEqual(["identify email"]);
-    expect(discord.authorizeRequests[0].searchParams.get("redirect_uri")).toBe(`${baseURL}/register`);
-    await expectContactEmail(page, nickname, email);
+    await expectPage(page, "/games/valorant");
+    await expectSignedInAs(page, nickname);
 });
 
-test("signing up with Discord with an unverified email leaves the contact email empty", async ({ page }) => {
-    await fakeDiscord(page, discordUser(`${unique("unverified")}@example.com`, false));
+test("signing up says what is wrong with each field", async ({ page }) => {
+    await page.goto("/signup");
 
-    const nickname = await signUpWithDiscord(page);
+    await fillSignUp(page, "not an address", "", "short");
+    await expect(page.getByText("Enter your email address.")).toBeVisible();
+    await expect(page.getByText("Choose a nickname.")).toBeVisible();
+    await expect(page.getByText("Use at least 8 characters.")).toBeVisible();
 
-    await expectContactEmail(page, nickname, "");
+    await fillSignUp(page, `${unique("spaced")}@example.com`, "has spaces");
+    await expect(page.getByText("Use up to 40 letters, digits, dashes, underscores and dots, without spaces.")).toBeVisible();
+
+    // Both are the seeded Valorant account's, the nickname in other letter case.
+    await fillSignUp(page, "valorant@example.com", unique("P"));
+    await expect(page.getByText("An account already uses this email. Sign in instead.")).toBeVisible();
+
+    await fillSignUp(page, `${unique("taken")}@example.com`, "valoranttester");
+    await expect(page.getByText("This nickname is taken. Please pick another one.")).toBeVisible();
+    await expectPage(page, "/signup");
 });
 
-// Discord vouches for the address, not its shape, and the column holds 254 characters.
-test("a Discord player whose verified email is not a usable address still signs up and in", async ({ page }) => {
-    const discord = await fakeDiscord(page, discordUser(null, true));
-
-    for (const email of ["", `${"a".repeat(250)}@example.com`]) {
-        discord.user = discordUser(email, true);
-        const nickname = await signUpWithDiscord(page);
-        await expectContactEmail(page, nickname, "");
-        await signOut(page);
-
-        await signInWithDiscord(page);
-        await expectSignedInAs(page, nickname);
+test("signing in with a password takes the email or the nickname", async ({ page }) => {
+    for (const emailOrNickname of ["new@example.com", "newtester"]) {
+        await submitPasswordSignIn(page, emailOrNickname);
+        await expectPage(page, "/");
+        await expectSignedInAs(page, "NewTester");
         await signOut(page);
     }
 });
 
-test("signing in with Discord fills a missing contact email with the verified address", async ({ page, baseURL }) => {
+test("signing in with a password says which half is wrong", async ({ page }) => {
+    await submitPasswordSignIn(page, "NewTester", "wrong-password");
+    await expect(page.getByText("Entered password is incorrect.")).toBeVisible();
+
+    await submitPasswordSignIn(page, unique("nobody"));
+    await expect(page.getByText("No account exists with this email or nickname.")).toBeVisible();
+});
+
+test("signing in from the header returns the player to the page they came from", async ({ page }) => {
+    await page.goto("/games/apex-legends");
+    await page.getByRole("link", { name: "Sign in" }).click();
+    await expectPage(page, "/signin");
+    await page.getByLabel("Email or nickname").fill("apex-legends@example.com");
+    await page.getByLabel("Password").fill(password);
+    await page.getByRole("button", { name: "Sign in", exact: true }).click();
+
+    await expectPage(page, "/games/apex-legends");
+    await expectSignedInAs(page, "ApexLegendsTester");
+});
+
+// The cookie of a signed-out session, which a browser also keeps across a reset of the
+// database, names a session the server refuses. The header asks the server and shows
+// Sign in only once it has answered.
+test("a browser holding a session the server refuses can sign in again", async ({ page, context }) => {
+    await signIn(page, "NewTester");
+    const refused = await context.cookies();
+    await signOut(page);
+    const openHolding = async (path: string) => {
+        await context.addCookies(refused);
+        await page.goto(path);
+        await expect(page.getByRole("banner").getByRole("link", { name: "Sign in" })).toBeVisible();
+    };
+
+    await openHolding("/games/valorant");
+    await page.getByRole("link", { name: "Sign in" }).click();
+    await expectPage(page, "/signin");
+    await page.getByLabel("Email or nickname").fill("new@example.com");
+    await page.getByLabel("Password").fill(password);
+    await page.getByRole("button", { name: "Sign in", exact: true }).click();
+    await expectPage(page, "/games/valorant");
+    await expectSignedInAs(page, "NewTester");
+    await signOut(page);
+
+    await openHolding(`/signup?back=${encodeURIComponent("/games/valorant")}`);
+    await expectPage(page, "/signup");
+    await expect(page.getByRole("heading", { name: "Create your account" })).toBeVisible();
+});
+
+// A sign-in form can be open in one tab while another tab signs in. Sending it replaces
+// the session the browser holds, which ends for good.
+test("signing in on a page opened before another tab signed in replaces that session", async ({ page, context }) => {
+    const earlier = await context.newPage();
+    await earlier.goto("/signin");
+    await expect(earlier.getByLabel("Email or nickname")).toBeVisible();
+    await signIn(page, "ApexLegendsTester");
+    const replaced = await context.cookies();
+
+    await earlier.getByLabel("Email or nickname").fill("new@example.com");
+    await earlier.getByLabel("Password").fill(password);
+    await earlier.getByRole("button", { name: "Sign in", exact: true }).click();
+    await expectPage(earlier, "/");
+    await expectSignedInAs(earlier, "NewTester");
+    await page.reload();
+    await expectSignedInAs(page, "NewTester");
+
+    await context.addCookies(replaced);
+    await page.reload();
+    await expect(page.getByRole("banner").getByRole("link", { name: "Sign in" })).toBeVisible();
+});
+
+// The seed gives ExpiredTester two sessions with known tokens, one last used eleven
+// months ago and one thirteen (`stacks/test-seed/players.sql`).
+test("a session lasts a year from its last use, and every page renews it", async ({ page, context, baseURL }) => {
+    const hold = async (token: string) => {
+        await context.clearCookies();
+        await context.addCookies([{ name: "teamtavern-token", value: token, url: baseURL! }]);
+    };
+
+    await hold("11111111111111111111111111111111111111cd");
+    await page.goto("/");
+    await expect(page.getByRole("banner").getByRole("link", { name: "Sign in" })).toBeVisible();
+
+    const recent = "11111111111111111111111111111111111111ab";
+    await hold(recent);
+    const asked = page.waitForResponse(response => response.url().endsWith("/api/me"));
+    await page.goto("/");
+    await expectSignedInAs(page, "ExpiredTester");
+    expect(await (await asked).headerValue("set-cookie"))
+        .toContain(`teamtavern-token=${recent}; Max-Age=${365 * 24 * 60 * 60};`);
+});
+
+test("signing up with Discord asks Discord for the email and comes back through the sign-in page", async ({ page, baseURL }) => {
+    const discord = await fakeDiscord(page, discordUser(`${unique("discord")}@example.com`, true));
+    const nickname = unique("D");
+    await page.goto("/games/valorant");
+    await page.getByRole("link", { name: "Sign up" }).click();
+    await expectPage(page, "/signup");
+    await page.getByRole("button", { name: "Continue with Discord" }).click();
+
+    await expect(page.getByLabel("Nickname")).toHaveValue(discord.user.username);
+    await page.getByLabel("Nickname").fill(nickname);
+    await page.getByRole("button", { name: "Continue" }).click();
+
+    await expectPage(page, "/games/valorant");
+    await expectSignedInAs(page, nickname);
+    const [authorize] = discord.authorizeRequests;
+    expect(authorize.searchParams.get("scope")).toBe("identify email");
+    expect(authorize.searchParams.get("redirect_uri")).toBe(`${baseURL}/signin`);
+    expect(authorize.searchParams.get("state")).toMatch(/^[0-9a-f]{32}$/);
+});
+
+test("the nickname prompt says when the nickname is taken", async ({ page }) => {
     const discord = await fakeDiscord(page, discordUser(null, false));
-    const nickname = await signUpWithDiscord(page);
-    await signOut(page);
-    const email = `${unique("signin")}@example.com`;
-    discord.user = { ...discord.user, email, verified: true };
+    await page.goto("/signup");
+    await page.getByRole("button", { name: "Continue with Discord" }).click();
 
-    await signInWithDiscord(page);
+    await page.getByLabel("Nickname").fill("ValorantTester");
+    await page.getByRole("button", { name: "Continue" }).click();
+    await expect(page.getByText("This nickname is taken. Please pick another one.")).toBeVisible();
 
+    const nickname = unique("D");
+    await page.getByLabel("Nickname").fill(nickname);
+    await page.getByRole("button", { name: "Continue" }).click();
+    await expectPage(page, "/");
     await expectSignedInAs(page, nickname);
-    const signInRequest = discord.authorizeRequests[1];
-    expect(signInRequest.searchParams.get("scope")).toBe("identify email");
-    expect(signInRequest.searchParams.get("redirect_uri")).toBe(`${baseURL}/signin`);
-    await expectContactEmail(page, nickname, email);
+    expect(discord.authorizeRequests).toHaveLength(1);
 });
 
-test("signing in with Discord never replaces a contact email the player has", async ({ page }) => {
-    const email = `${unique("first")}@example.com`;
-    const discord = await fakeDiscord(page, discordUser(email, true));
-    const nickname = await signUpWithDiscord(page);
+test("signing in with Discord to an account signs in without asking for a nickname", async ({ page }) => {
+    const discord = await fakeDiscord(page, discordUser(`${unique("again")}@example.com`, true));
+    const nickname = await signUpWithDiscord(page, discord);
     await signOut(page);
-    discord.user = { ...discord.user, email: `${unique("changed")}@example.com` };
 
-    await signInWithDiscord(page);
+    await page.goto("/signin");
+    await page.getByRole("button", { name: "Continue with Discord" }).click();
 
+    await expectPage(page, "/");
     await expectSignedInAs(page, nickname);
-    await expectContactEmail(page, nickname, email);
 });
 
-test("a Discord account and a password account sharing an address are two players who both sign in", async ({ page }) => {
-    const email = `${unique("shared")}@example.com`;
-    await fakeDiscord(page, discordUser(email, true));
-    const passwordNickname = await registerWithPassword(page, email);
-    await signOut(page);
-    const discordNickname = await signUpWithDiscord(page);
-    await signOut(page);
+// Discord hands back a token for the tab that asked; one arriving without the state the
+// page sent is refused, so a link can't sign someone in as another player.
+test("a Discord token without the page's state signs nobody in", async ({ page }) => {
+    const user = discordUser(null, false);
+    const token = encodeURIComponent(JSON.stringify({ ...user, discriminator: "0" }));
 
-    await submitPasswordSignIn(page, email);
-    await expectSignedInAs(page, passwordNickname);
-    await signOut(page);
+    await page.goto(`/signin#token_type=Bearer&access_token=${token}&state=forged`);
 
-    await signInWithDiscord(page);
-    await expectSignedInAs(page, discordNickname);
+    await expect(page.getByRole("heading", { name: "Sign in" })).toBeVisible();
+    await expect(page.getByLabel("Email or nickname")).toBeVisible();
+    await expect(page.getByRole("link", { name: "Sign in" })).toBeVisible();
 });
 
-test("a password sign-in does not find a Discord player", async ({ page }) => {
+test("a Discord player is not found by a password sign-in or a password reset", async ({ page }) => {
     const email = `${unique("discordonly")}@example.com`;
-    await fakeDiscord(page, discordUser(email, true));
-    const nickname = await signUpWithDiscord(page);
+    const discord = await fakeDiscord(page, discordUser(email, true));
+    const nickname = await signUpWithDiscord(page, discord);
     await signOut(page);
 
     for (const emailOrNickname of [nickname, email]) {
         await submitPasswordSignIn(page, emailOrNickname);
         await expect(page.getByText("No account exists with this email or nickname.")).toBeVisible();
     }
-});
-
-test("a password reset is not offered to a Discord player", async ({ page }) => {
-    const email = `${unique("noreset")}@example.com`;
-    await fakeDiscord(page, discordUser(email, true));
-    await signUpWithDiscord(page);
-    await signOut(page);
 
     await page.goto("/forgot-password");
-    await page.locator("form input").fill(email);
-    await page.getByRole("button", { name: "Send password reset email" }).click();
-
-    await expect(page.getByText("No account exists with this email.")).toBeVisible();
+    await page.getByLabel("Email").fill(email);
+    await page.getByRole("button", { name: "Send link" }).click();
+    await expect(page.getByText("No account signs in with a password at this email.")).toBeVisible();
 });
 
-test("a Discord player changes the contact email without a password, even to a password player's", async ({ page }) => {
-    const passwordPlayersEmail = `${unique("taken")}@example.com`;
-    await registerWithPassword(page, passwordPlayersEmail);
-    await signOut(page);
-    await fakeDiscord(page, discordUser(null, false));
-    const nickname = await signUpWithDiscord(page);
+test("a password player asks for a reset link", async ({ page }) => {
+    await page.goto("/signin");
+    await page.getByRole("link", { name: "Forgot password?" }).click();
+    await expectPage(page, "/forgot-password");
+    await page.getByLabel("Email").fill("apex-legends@example.com");
+    await page.getByRole("button", { name: "Send link" }).click();
 
-    await openChangeEmail(page, nickname);
-    await expect(page.locator('input[name="password"]')).toHaveCount(0);
-    await page.locator('input[name="email"]').fill(passwordPlayersEmail);
-    await page.getByRole("button", { name: "Change email" }).click();
-
-    await expectEmailChanged(page);
-    await expectContactEmail(page, nickname, passwordPlayersEmail);
+    await expect(page.getByRole("heading", { name: "Check your email" })).toBeVisible();
+    await expect(page.getByText("We sent a link to apex-legends@example.com.")).toBeVisible();
 });
 
-test("a password player changes the email only with the password and only to a free address", async ({ page }) => {
-    const takenEmail = `${unique("taken")}@example.com`;
-    await registerWithPassword(page, takenEmail);
+test("signing out lands on the home page signed out", async ({ page }) => {
+    await signIn(page, "ValorantTester");
+    await page.goto("/games/valorant");
+
     await signOut(page);
-    const nickname = await registerWithPassword(page, `${unique("own")}@example.com`);
-    const newEmail = `${unique("new")}@example.com`;
-    await openChangeEmail(page, nickname);
-    const emailInput = page.locator('input[name="email"]');
-    const passwordInput = page.locator('input[name="password"]');
-    const submit = page.getByRole("button", { name: "Change email" });
 
-    await emailInput.fill(newEmail);
-    await submit.click();
-    await expect(page.getByText("Entered password is incorrect.")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Account menu" })).toHaveCount(0);
+    await page.reload();
+    await expect(page.getByRole("link", { name: "Sign in" })).toBeVisible();
+});
 
-    await emailInput.fill(takenEmail.toUpperCase());
-    await passwordInput.fill(password);
-    await submit.click();
-    await expect(page.getByText("This email is already taken, please pick another one.")).toBeVisible();
+// A browser sends a cookie without `SameSite` along with a form another site posts here,
+// and Chromium does so for two minutes after the cookie is set even by default. The
+// browser reports such a cookie as `Lax` all the same, so the test reads what it was sent.
+test("the session cookie goes only with requests the site starts", async ({ page }) => {
+    const signingIn = page.waitForResponse(response =>
+        response.url().endsWith("/api/sessions") && response.request().method() === "POST");
+    await signIn(page, "NewTester");
 
-    await emailInput.fill(newEmail);
-    await submit.click();
-    await expectEmailChanged(page);
-    await expectContactEmail(page, nickname, newEmail);
+    const setCookies = await (await signingIn).headerValues("set-cookie");
+    expect(setCookies).toHaveLength(1);
+    expect(setCookies[0]).toMatch(/^teamtavern-token=/);
+    expect(setCookies[0]).toContain("; SameSite=Lax");
+    expect(setCookies[0]).toContain("; HttpOnly");
+});
+
+// A form can post JSON by naming a field with all of it but the last value, which the
+// form's `=` and the field's value finish. Another site's form is labelled as text, so
+// the server refuses it however well the JSON inside it reads.
+test("another site's form signs nobody up", async ({ page, baseURL }) => {
+    const nickname = unique("Forged");
+    const registration = JSON.stringify({
+        password: { email: `${nickname.toLowerCase()}@example.com`, nickname, password },
+    });
+    const field = registration.slice(0, -1) + ',"pad":"';
+    await page.route("http://attacker.test/", route => route.fulfill({
+        contentType: "text/html",
+        body: `<form method="post" enctype="text/plain" action="${baseURL}/api/players">`
+            + `<input name='${field}' value='"}'></form>`
+            + `<script>document.forms[0].submit()</script>`,
+    }));
+
+    await page.goto("http://attacker.test/", { waitUntil: "commit" });
+    await page.waitForURL(`${baseURL}/api/players`);
+
+    await submitPasswordSignIn(page, nickname);
+    await expect(page.getByText("No account exists with this email or nickname.")).toBeVisible();
 });

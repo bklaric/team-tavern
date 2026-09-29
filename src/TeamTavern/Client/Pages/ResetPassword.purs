@@ -1,140 +1,101 @@
-module TeamTavern.Client.Pages.ResetPassword where
+module TeamTavern.Client.Pages.ResetPassword (resetPassword) where
 
 import Prelude
 
 import Async (Async)
 import Async as Async
-import Data.Bifunctor (lmap)
-import Data.Maybe (Maybe(..), isNothing)
-import Data.Variant (match, onMatch)
+import Control.Bind (bindFlipped)
+import Data.Either (Either(..))
+import Data.Maybe (Maybe(..))
+import Data.String (length)
+import Data.Tuple.Nested ((/\))
+import Data.Variant (onMatch)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
-import TeamTavern.Client.Components.Form (form, formError, otherFormError)
-import TeamTavern.Client.Components.Input (inputGroup, inputLabel_)
-import TeamTavern.Client.Components.InputError as InputError
-import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
-import TeamTavern.Client.Components.PasswordInput (passwordInput_)
-import TeamTavern.Client.Script.Analytics (track_)
-import TeamTavern.Client.Script.Meta (setMeta)
-import TeamTavern.Client.Script.Navigate (navigateReplace_, navigate_)
+import Halogen.Hooks as Hooks
+import JSURI (decodeURIComponent)
+import TeamTavern.Client.Components.Button (Size(..), Weight(..), buttonLink)
+import TeamTavern.Client.Components.Flow (flow, flowError, flowLead, flowLink, formTight, submitButton, textField)
 import TeamTavern.Client.Script.QueryParams (getQueryParam)
-import TeamTavern.Client.Shared.Fetch (fetchBody)
+import TeamTavern.Client.Shared.AccountErrors (passwordShort, somethingWrong)
+import TeamTavern.Client.Shared.Fetch (expecting, fetchBody)
+import TeamTavern.Client.Shared.Slot (Slot___)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Password.ResetPassword (ResetPassword)
 import Type.Proxy (Proxy(..))
-import Web.Event.Event as Event
-import Web.Event.Internal.Types (Event)
+import Web.Event.Event (preventDefault)
 
-data Action
-    = Initialize
-    | UpdatePassword LoadedState String
-    | ResetPassword LoadedState Event
+data Screen = Form | Expired | Done
 
-type LoadedState =
-    { password :: String
-    , passwordError :: Boolean
+type State =
+    { screen :: Screen
     , nonce :: String
-    , nonceError :: Boolean
-    , otherError :: Boolean
-    , submitting :: Boolean
+    , password :: String
+    , error :: Maybe String
+    , formError :: Maybe String
+    , sending :: Boolean
     }
 
-data State = Empty | Loaded LoadedState
+component :: ∀ query input output left. H.Component query input output (Async left)
+component = Hooks.component \_ _ -> Hooks.do
+    state /\ stateId <- Hooks.useState
+        ({ screen: Form, nonce: "", password: "", error: Nothing, formError: Nothing, sending: false } :: State)
 
-render :: forall left. State -> H.ComponentHTML Action _ (Async left)
-render Empty = HH.div_ []
-render (Loaded state @
-    { password
-    , passwordError
-    , nonceError
-    , otherError
-    , submitting
-    }) =
-    form (ResetPassword state) $
-    [ HH.h1 [ HS.class_ "form-heading" ]
-        [ HH.text "Reset your "
-        , navigationAnchor (Proxy :: _ "home")
-            { path: "/", content: HH.text "TeamTavern" }
-        , HH.text " password"
-        ]
-    , inputGroup $
-        [ inputLabel_ "New password"
-        , passwordInput_ password (UpdatePassword state)
-        ]
-        <> InputError.passwordError passwordError
-    , HH.button
-        [ HS.class_ "primary-button"
-        , HP.disabled $ password == "" || submitting
-        ]
-        [ HH.i [ HS.class_ "fas fa-key button-icon" ] []
-        , HH.text
-            if submitting
-            then "Reseting password..."
-            else "Reset password"
-        ]
-    ]
-    <> formError nonceError ("This password reset link has expired or is invalid. "
-        <> "Please request another password reset link and try again.")
-    <> otherFormError otherError
+    let set = Hooks.modify_ stateId
+        fail error formError = set _ { sending = false, error = error, formError = formError }
 
-sendPasswordResetRequest ::
-    LoadedState -> (forall left. Async left (Maybe LoadedState))
-sendPasswordResetRequest state @ {password, nonce} = Async.unify do
-    response <- fetchBody (Proxy :: _ ResetPassword) {password, nonce}
-        # lmap (const $ Just $ state { otherError = true })
-    nextState <- pure $ onMatch
-        { noContent: const Nothing
-        , badRequest: match
-            {password: const $ Just $ state {passwordError = true}}
-        , notFound: const $ Just $ state {nonceError = true}
-        }
-        (const $ Just $ state {otherError = true})
-        response
-    when (isNothing nextState) $ track_ "Password reset"
-    pure nextState
+        submit event = do
+            H.liftEffect $ preventDefault event
+            if length state.password < 8
+            then fail (Just passwordShort) Nothing
+            else do
+                set _ { sending = true, error = Nothing, formError = Nothing }
+                result <- H.lift $ Async.attempt $ fetchBody (expecting [ "badRequest", "notFound" ] (Proxy :: _ ResetPassword))
+                    { password: state.password, nonce: state.nonce }
+                case result of
+                    Right response -> response # onMatch
+                        { noContent: const $ set _ { sending = false, screen = Done }
+                        , badRequest: const $ fail (Just passwordShort) Nothing
+                        , notFound: const $ set _ { sending = false, screen = Expired }
+                        }
+                        (const $ fail Nothing $ Just somethingWrong)
+                    Left _ -> fail Nothing $ Just somethingWrong
 
-handleAction :: forall slots output left.
-    Action -> H.HalogenM State Action slots output (Async left) Unit
-handleAction Initialize = do
-    nonce <- getQueryParam "nonce"
-    case nonce of
-        Nothing -> navigateReplace_ "/"
-        Just nonce' -> H.put $ Loaded
-            { password: ""
-            , passwordError: false
-            , nonce: nonce'
-            , nonceError: false
-            , otherError: false
-            , submitting: false
-            }
-    setMeta  "Reset your password | TeamTavern" "Reset your TeamTavern password."
-handleAction (UpdatePassword state password) =
-    H.put $ Loaded $ state { password = password }
-handleAction (ResetPassword state event) = do
-    H.liftEffect $ Event.preventDefault event
-    let state' = state
-            { passwordError = false
-            , nonceError    = false
-            , otherError    = false
-            , submitting    = true
-            }
-    H.put $ Loaded state'
-    newState <- H.lift $ sendPasswordResetRequest state'
-    case newState of
-        Nothing -> navigate_ "/reset-password-success"
-        Just newState' -> H.put $ Loaded newState' { submitting = false }
+    Hooks.useLifecycleEffect do
+        nonce <- getQueryParam "nonce" <#> bindFlipped decodeURIComponent
+        case nonce of
+            Just nonce' -> set _ { nonce = nonce' }
+            Nothing -> set _ { screen = Expired }
+        pure Nothing
 
-component :: forall query input output left.
-    H.Component query input output (Async left)
-component = H.mkComponent
-    { initialState: const Empty
-    , render
-    , eval: H.mkEval $ H.defaultEval
-        { handleAction = handleAction
-        , initialize = Just Initialize
-        }
-    }
+    Hooks.pure case state.screen of
+        Done -> flow
+            [ HH.h1_ [ HH.text "Your password is changed" ]
+            , flowLead "Sign in with your new password."
+            , buttonLink Primary Regular "/signin" [ HH.text "Sign in" ]
+            ]
+        Expired -> flow
+            [ HH.h1_ [ HH.text "This link doesn't work" ]
+            , flowLead "A password reset link works once, within an hour of being sent."
+            , HH.p [ HS.class_ "muted" ] [ flowLink "/forgot-password" "Send a new link" ]
+            ]
+        Form -> flow
+            [ HH.h1_ [ HH.text "Choose a new password" ]
+            , formTight submit $
+                [ textField
+                    { id: "reset-password", label: "New password"
+                    , type_: HP.InputPassword, autocomplete: HP.AutocompleteNewPassword
+                    , hint: Just "At least 8 characters.", error: state.error
+                    , value: state.password, onInput: \value -> set _ { password = value }
+                    }
+                ]
+                <> (case state.formError of
+                    Just error -> [ flowError error ]
+                    Nothing -> [])
+                <> [ submitButton state.sending "Change password" ]
+            ]
 
-resetPassword :: forall query left. HH.ComponentHTML query _ (Async left)
-resetPassword = HH.slot (Proxy :: _ "resetPassword") unit component unit absurd
+resetPassword :: ∀ action slots left.
+    H.ComponentHTML action (resetPassword :: Slot___ | slots) (Async left)
+resetPassword = HH.slot_ (Proxy :: _ "resetPassword") unit component unit

@@ -3,70 +3,24 @@ module TeamTavern.Client.Pages.About (about) where
 import Prelude
 
 import Data.Maybe (Maybe(..))
-import Effect.Class (class MonadEffect)
-import Halogen as H
 import Halogen.HTML as HH
-import Halogen.HTML.Properties as HP
-import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
-import TeamTavern.Client.Script.Meta (setMeta)
-import TeamTavern.Client.Shared.Slot (Slot___)
-import TeamTavern.Client.Snippets.Class as HS
-import TeamTavern.Client.Snippets.SocialMediaUrls (discordUrl, redditUrl, steamId, twitterUrl)
-import Type.Proxy (Proxy(..))
+import TeamTavern.Client.Pages.Document (document)
 
-data Action = Initialize
-
-type ChildSlots = (emailAnchor :: Slot___)
-
-render :: ∀ monad. MonadEffect monad => HH.ComponentHTML Action ChildSlots monad
-render = HH.div [ HS.class_ "about" ] $
-    [ HH.h1 [ HS.class_ "about-title" ] [ HH.text "About TeamTavern" ]
-    , HH.h2 [ HS.class_ "about-heading" ] [ HH.text "What is TeamTavern?" ]
-    , HH.p [ HS.class_ "about-text" ]
-        [ HH.text $ "TeamTavern is an online platform for finding esports teammates. "
-            <> "It aims to provide players of various online multiplayer games "
-            <> "with a common meeting place where they can find each other and form teams. "
+about :: ∀ w i. HH.HTML w i
+about =
+    document { title: "About TeamTavern", updated: Nothing }
+    [ HH.p_ [ HH.text $ "TeamTavern started in 2018. Public matchmaking had worn us down: teams were "
+        <> "disorganised and hardly anyone talked. We wanted to find players at our skill level, but had "
+        <> "no idea where to look. Without friends to play with, we were also missing out on co-op games. "
+        <> "We figured we weren't the only ones, so we made a place to find people to play online games with."
         ]
-    , HH.h2 [ HS.class_ "about-heading" ] [ HH.text "How does TeamTavern work?" ]
-    , HH.p [ HS.class_ "about-text" ]
-        [ HH.text $ "Select a game and browse players looking for a team and teams looking for players. "
-            <> "Filter players and teams to find your ideal teammates. "
-            <> "If you still can't find suitable teammates, create your own profile and let them find you."
+    , HH.p_ [ HH.text $ "That's still what it is. Players, groups and communities post what they're "
+        <> "looking for in a game: rank, role, region, language, and when they're online. You can browse "
+        <> "the posts and message anyone who fits. Or post once, and TeamTavern emails you when someone "
+        <> "new fits your post."
         ]
-    , HH.h2 [ HS.class_ "about-heading" ] [ HH.text "How to contact TeamTavern?" ]
-    , HH.p [ HS.class_ "about-text" ]
-        [ HH.text "You can contact "
-        , navigationAnchor (Proxy :: _ "emailAnchor")
-            { path: "mailto:admin@teamtavern.net", content: HH.text "admin@teamtavern.net" }
-        , HH.text " for all inquiries regarding TeamTavern."
+    , HH.p_ [ HH.text $ "Posts stay up for 30 days, and community posts for 90. After that they expire, "
+        <> "and you can renew them."
         ]
-    , HH.p [ HS.class_ "about-text" ]
-        [ HH.text "Additionally, TeamTavern maintains the following social media presence: " ]
-    , HH.ul [ HS.class_ "about-list" ]
-        [ HH.li_ [ HH.a [ HP.href discordUrl ] [ HH.text "Discord server" ] ]
-        , HH.li_ [ HH.a [ HP.href redditUrl ] [ HH.text "Subreddit" ] ]
-        , HH.li_ [ HH.a [ HP.href steamId ] [ HH.text "Steam community group" ] ]
-        , HH.li_ [ HH.a [ HP.href twitterUrl ] [ HH.text "Twitter account" ] ]
-        ]
-    , HH.p [ HS.class_ "about-text" ]
-        [ HH.text "Come find out about the latest updates, give feedback, ask questions, find teammates or just say hi!" ]
+    , HH.p_ [ HH.text "TeamTavern is run from Croatia. Ads keep it free." ]
     ]
-
-handleAction :: ∀ monad. MonadEffect monad => Action -> monad Unit
-handleAction Initialize =
-    setMeta "About | TeamTavern" "TeamTavern is an online platform for finding esports teammates."
-
-component :: ∀ monad output input query. MonadEffect monad =>
-    H.Component query input output monad
-component = H.mkComponent
-    { initialState: const unit
-    , render: const render
-    , eval: H.mkEval $ H.defaultEval
-        { handleAction = handleAction
-        , initialize = Just Initialize
-        }
-    }
-
-about :: ∀ action monad children. MonadEffect monad =>
-    HH.ComponentHTML action (about :: Slot___ | children) monad
-about = HH.slot (Proxy :: _ "about") unit component unit absurd

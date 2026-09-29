@@ -1,70 +1,260 @@
-@use "../Style/Base" as *;
+/* The card. One shell for all three post types, with fixed rows: heading,
+   facts, the player's words and the footer. */
 
 .card {
-    border-top: $border;
-    border-bottom: $border;
-    background-color: white;
-    width: 100%;
-
-    &:last-child {
-        margin-bottom: 0;
-    }
-
-    > :not(:first-child) {
-        border-top: $border;
-    }
-
-    @media screen and (min-width: 1000px) {
-        border: $border;
-        border-radius: 4px;
-    }
-}
-
-.card-header {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    min-height: 40px;
-    padding: 7px 21px;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-5);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    background: var(--table);
 }
 
-.card-heading {
-    display: inline;
-    font-size: 14px;
-    line-height: 1.5;
-    margin: 0;
+/* A card cut down to its heading and facts, one of a post page's others. */
+
+.card-brief {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    background: var(--table);
+}
+
+/* While Details animates the card's height, its rows keep their own and the
+   card clips them, rather than squeezing the clipped fact line and text. */
+
+.card > * {
     flex-shrink: 0;
 }
 
-.card-subheading {
-    font-size: 12px;
-    line-height: 1.5;
-    color: $light-text-color;
-}
-
-.card-header>* {
-    min-height: 40px;
-    box-sizing: border-box;
+.card-heading {
     display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-1) var(--space-3);
+}
+
+.card-name {
+    color: var(--text);
+    font-size: var(--size-16);
+    font-weight: 600;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+
+.card-name:hover {
+    color: var(--text);
+}
+
+.card-type {
+    display: inline-flex;
     align-items: center;
-}
-
-.card-section {
-    padding: 21px;
-}
-
-.card-section-header {
-    padding: 7px 21px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    cursor: pointer;
-}
-
-.card-section-heading {
-    font-size: 14px;
+    gap: 5px;
+    color: var(--text-muted);
+    font-size: var(--size-12);
     font-weight: 500;
-    line-height: 1.5;
-    margin: 0;
+    white-space: nowrap;
+}
+
+.card-freshness {
+    margin-left: auto;
+    color: var(--text-muted);
+    font-size: var(--size-12);
+    white-space: nowrap;
+}
+
+.card-own {
+    padding: 0 6px;
+    border: 1px solid var(--input-border);
+    border-radius: var(--radius-small);
+    color: var(--text-muted);
+    font-size: var(--size-12);
+    font-weight: 500;
+    line-height: 18px;
+}
+
+.card-slots {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    color: var(--text);
+    font-size: var(--size-12);
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+/* Every fact opens with its separator, and the row is pulled left by one
+   separator's width and clipped, so no line of a wrapped row starts with one. */
+
+.facts-clip {
+    overflow: hidden;
+}
+
+.facts {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    row-gap: 2px;
+    margin-left: -16px;
+    font-size: var(--size-14);
+    font-weight: 500;
+}
+
+.fact {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+}
+
+.fact::before {
+    content: "·";
+    width: 16px;
+    margin-right: calc(-1 * var(--space-1));
+    color: var(--text-faint);
+    font-weight: 400;
+    text-align: center;
+}
+
+/* Match marks sit on the facts themselves. Both carry their glyph, and a
+   mismatch is muted rather than an error: it is information. */
+
+.fact-fit {
+    color: var(--moss);
+}
+
+.fact-miss {
+    color: var(--text-muted);
+}
+
+.fact-mark {
+    width: 14px;
+    height: 14px;
+}
+
+.card-text {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: var(--text-lines, 2);
+    overflow: hidden;
+    color: var(--text);
+    overflow-wrap: anywhere;
+}
+
+.card-community .card-text {
+    --text-lines: 4;
+}
+
+.card-details {
+    display: none;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--border);
+}
+
+.detail {
+    display: flex;
+    gap: var(--space-3);
+}
+
+.detail-label {
+    flex: none;
+    width: 144px;
+    color: var(--text-muted);
+}
+
+.card-expanded .card-text {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.card-expanded .card-details {
+    display: flex;
+}
+
+.card-footer {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-2);
+    margin-top: var(--space-1);
+}
+
+.card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-1) var(--space-3);
+    margin-right: auto;
+    color: var(--text-muted);
+    font-size: var(--size-12);
+}
+
+.card-messaged {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+}
+
+.card-details-toggle[aria-expanded="true"] .icon {
+    transform: rotate(180deg);
+}
+
+/* An expired card keeps its surface and fades its text, so it still passes
+   contrast. */
+
+.card-expired,
+.card-expired .card-name,
+.card-expired .card-text,
+.card-expired .card-slots {
+    color: var(--text-faint);
+}
+
+.card-expired .fact-fit {
+    color: var(--moss);
+}
+
+@media (max-width: 639px) {
+    .card {
+        padding: var(--space-4);
+    }
+
+    .detail {
+        flex-direction: column;
+        gap: 0;
+    }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    .card-details-toggle .icon {
+        transition: transform 150ms ease;
+    }
+}
+
+/* On a phone a card's footer puts the owner's line on a row of its own, above
+   the buttons, so Details never wraps onto a line by itself. */
+
+@media (max-width: 639px) {
+    .card-meta {
+        flex-basis: 100%;
+    }
+
+    .card-meta:not(:has(*)) {
+        display: none;
+    }
+
+    .card-meta + * {
+        margin-left: auto;
+    }
+}
+
+/* A player's own post on the home page: the card's heading and facts, then its
+   state and what it has produced, then See what fits, Edit and Renew. */
+
+.own-post .card-footer {
+    margin-top: 0;
 }

@@ -1,99 +1,50 @@
-module TeamTavern.Server.Infrastructure.Cookie where
+module TeamTavern.Server.Infrastructure.Cookie
+    ( Cookies
+    , lookupToken
+    , removeCookieHeader
+    , setCookieHeader
+    ) where
 
 import Prelude
 
-import Data.List (List(..), (:))
+import Data.List (List(..))
 import Data.List.Types (NonEmptyList(..))
 import Data.Map (Map, lookup)
 import Data.Maybe (Maybe)
 import Data.MultiMap (MultiMap, singleton)
 import Data.Newtype (unwrap, wrap)
 import Data.NonEmpty ((:|))
-import TeamTavern.Server.Infrastructure.Deployment (Deployment(..))
-import TeamTavern.Server.Player.Domain.Id (Id, fromString, toString)
-import TeamTavern.Server.Player.Domain.Nickname (Nickname)
-import TeamTavern.Server.Session.Domain.Token (Token)
+import TeamTavern.Server.Infrastructure.Environment (Environment, servesHttps)
+import TeamTavern.Server.Session.Domain.Token (Token, sessionDays)
+
+-- The session is the one cookie, which only the server reads. The client
+-- learns who is signed in by asking the server.
 
 type Cookies = Map String String
-
-type CookieInfo =
-    { id :: Id
-    , nickname :: Nickname
-    , token :: Token
-    }
-
--- Cookie ids.
-
-idCookieName :: String
-idCookieName = "teamtavern-id"
-
-nicknameCookieName :: String
-nicknameCookieName = "teamtavern-nickname"
 
 tokenCookieName :: String
 tokenCookieName = "teamtavern-token"
 
--- Look up cookies.
+lookupToken :: Cookies -> Maybe Token
+lookupToken cookies = lookup tokenCookieName cookies <#> wrap
 
-lookupCookieInfo :: Map String String -> Maybe CookieInfo
-lookupCookieInfo cookies = do
-    id <- lookup idCookieName cookies >>= fromString
-    nickname <- lookup nicknameCookieName cookies <#> wrap
-    token <- lookup tokenCookieName cookies <#> wrap
-    pure { id, nickname, token }
-
--- Set cookies.
-
-setIdCookie :: Id -> String
-setIdCookie id =
-    idCookieName <> "=" <> toString id
-    <> "; Max-Age=" <> show (top :: Int)
-    <> "; Path=/"
-
-setNicknameCookie :: Nickname -> String
-setNicknameCookie nickname =
-    nicknameCookieName <> "=" <> unwrap nickname
-    <> "; Max-Age=" <> show (top :: Int)
-    <> "; Path=/"
-
-setTokenCookie :: Deployment -> Token -> String
-setTokenCookie deployment token =
+-- `SameSite=Lax` keeps a browser from sending the cookie with any request
+-- another site starts other than following a link here, so another site can't
+-- act as the player.
+setCookieHeader :: Environment -> Token -> MultiMap String String
+setCookieHeader environment token =
     tokenCookieName <> "=" <> unwrap token
-    <> "; Max-Age=" <> show (top :: Int)
+    <> "; Max-Age=" <> show (sessionDays * 24 * 60 * 60)
     <> "; Path=/"
+    <> "; SameSite=Lax"
     <> "; HttpOnly"
-    <> case deployment of
-        Local -> ""
-        Cloud -> "; Secure"
-
-setCookieHeaderNickname :: CookieInfo -> MultiMap String String
-setCookieHeaderNickname { nickname } =
-    setNicknameCookie nickname :| Nil
-    # NonEmptyList
-    # singleton "Set-Cookie"
-
-setCookieHeaderFull :: Deployment -> CookieInfo -> MultiMap String String
-setCookieHeaderFull deployment { id, nickname, token } =
-    setIdCookie id :| setNicknameCookie nickname : setTokenCookie deployment token : Nil
-    # NonEmptyList
-    # singleton "Set-Cookie"
-
--- Remove cookies.
-
-removeIdCookie :: String
-removeIdCookie =
-    idCookieName <> "=; expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/"
-
-removeNicknameCookie :: String
-removeNicknameCookie =
-    nicknameCookieName <> "=; expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/"
-
-removeTokenCookie :: String
-removeTokenCookie =
-    tokenCookieName <> "=; expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/"
+    <> (if servesHttps environment then "; Secure" else "")
+    # oneCookie
 
 removeCookieHeader :: MultiMap String String
 removeCookieHeader =
-    removeIdCookie :| removeNicknameCookie : removeTokenCookie : Nil
-    # NonEmptyList
-    # singleton "Set-Cookie"
+    tokenCookieName <> "=; expires=Thu, 01 Jan 1970 00:00:00 GMT; Path=/"
+    # oneCookie
+
+oneCookie :: String -> MultiMap String String
+oneCookie cookie = singleton "Set-Cookie" $ NonEmptyList $ cookie :| Nil

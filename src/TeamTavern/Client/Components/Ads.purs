@@ -1,154 +1,77 @@
-module TeamTavern.Client.Components.Ads where
+module TeamTavern.Client.Components.Ads (Slot, around) where
 
 import Prelude
 
-import Data.Array as Array
-import Data.DateTime.Instant (unInstant)
-import Data.Foldable (foldMap)
-import Data.Maybe (Maybe(..), maybe)
-import Data.Monoid (guard)
-import Data.Nullable (Nullable, toNullable)
-import Data.Symbol (class IsSymbol)
-import Data.Time.Duration (Seconds(..), negateDuration, toDuration)
-import Data.Tuple.Nested ((/\))
+import Data.Const (Const)
+import Data.Maybe (Maybe(..))
+import Data.Nullable (Nullable, null, toNullable)
 import Effect (Effect)
-import Effect.Class (class MonadEffect)
-import Effect.Now (now)
-import Halogen (RefLabel(..), liftEffect)
+import Effect.Class (class MonadEffect, liftEffect)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
+import Halogen.HTML.Properties.ARIA as HPA
 import Halogen.Hooks as Hooks
-import Halogen.Subscription as HSub
-import Prim.Row (class Cons)
-import TeamTavern.Client.Shared.Slot (SlotQ__)
+import TeamTavern.Client.Shared.Slot (Slot__String)
 import TeamTavern.Client.Snippets.Class as HS
 import Type.Proxy (Proxy(..))
 import Web.HTML (HTMLElement)
 
-type AdSlots slots =
-    ( desktopTakeover :: SlotQ__ Query
-    , mobileTakeover :: SlotQ__ Query
-    , billboard :: SlotQ__ Query
-    , leaderboard :: SlotQ__ Query
-    , mobileBanner :: SlotQ__ Query
-    , mobileMpu :: SlotQ__ Query
-    , video :: SlotQ__ Query
-    , verticalSticky :: SlotQ__ Query
-    , horizontalSticky :: SlotQ__ Query
-    , mobileHorizontalSticky :: SlotQ__ Query
-    | slots
-    )
+type Slot = Slot__String
 
-desktopTakeover :: forall monad action slots. MonadEffect monad =>
-    HH.ComponentHTML action (AdSlots slots) monad
-desktopTakeover = slot (Proxy :: _ "desktopTakeover") "desktop_takeover"
+foreign import mount :: String -> String -> Nullable HTMLElement -> Effect (Effect Unit)
 
-mobileTakeover :: forall monad action slots. MonadEffect monad =>
-    HH.ComponentHTML action (AdSlots slots) monad
-mobileTakeover = slot (Proxy :: _ "mobileTakeover") "mobile_takeover"
+desktop :: String
+desktop = "(min-width: 1024px)"
 
-billboard :: forall monad action slots. MonadEffect monad =>
-    HH.ComponentHTML action (AdSlots slots) monad
-billboard = slot (Proxy :: _ "billboard") "billboard"
+-- Where a 160 px skyscraper fits on either side of the feed's column.
+rails :: String
+rails = "(min-width: 1100px)"
 
-leaderboard :: forall monad action slots. MonadEffect monad =>
-    HH.ComponentHTML action (AdSlots slots) monad
-leaderboard = slot (Proxy :: _ "leaderboard") "leaderboard"
+phone :: String
+phone = "(max-width: 639px)"
 
-mobileBanner :: forall monad action slots. MonadEffect monad =>
-    HH.ComponentHTML action (AdSlots slots) monad
-mobileBanner = slot (Proxy :: _ "mobileBanner") "mobile_banner"
+adRef :: H.RefLabel
+adRef = H.RefLabel "ad"
 
-mobileMpu :: forall monad action slots. MonadEffect monad =>
-    HH.ComponentHTML action (AdSlots slots) monad
-mobileMpu = slot (Proxy :: _ "mobileMpu") "mobile_mpu"
-
-video :: forall monad action slots. MonadEffect monad =>
-    HH.ComponentHTML action (AdSlots slots) monad
-video = slot (Proxy :: _ "video") "video_slider"
-
-verticalSticky :: forall monad action slots. MonadEffect monad =>
-    HH.ComponentHTML action (AdSlots slots) monad
-verticalSticky = slot (Proxy :: _ "verticalSticky") "vertical_sticky"
-
-horizontalSticky :: forall monad action slots. MonadEffect monad =>
-    HH.ComponentHTML action (AdSlots slots) monad
-horizontalSticky = slot (Proxy :: _ "horizontalSticky") "horizontal_sticky"
-
-mobileHorizontalSticky :: forall monad action slots. MonadEffect monad =>
-    HH.ComponentHTML action (AdSlots slots) monad
-mobileHorizontalSticky = slot (Proxy :: _ "mobileHorizontalSticky") "mobile_horizontal_sticky"
-
-slot :: forall action output slots monad label slots'
-    .  Cons label (H.Slot Query output Unit) slots' slots
-    => IsSymbol label
-    => MonadEffect monad
-    => Proxy label
-    -> String
-    -> HH.ComponentHTML action slots monad
-slot proxy placementName = HH.slot_ proxy unit (component placementName) unit
-
-foreign import data Placement :: Type
-
-foreign import createAd :: String -> Nullable HTMLElement -> (Placement -> Effect Unit) -> Effect Unit
-
-foreign import removeAd :: String -> Nullable Placement -> Effect Unit
-
-foreign import refreshAd :: String -> Nullable Placement -> (Placement -> Effect Unit) -> Effect Unit
-
-data Query send = Refresh send
-
-component :: forall input output monad. MonadEffect monad =>
-    String -> H.Component Query input output monad
-component placementName = Hooks.component \{queryToken} _ -> Hooks.do
-    lastRefreshInstant /\ lastRefreshInstantId <- Hooks.useState Nothing
-    placement /\ placementId <- Hooks.useState Nothing
-    pubSub /\ pubSubId <- Hooks.useState Nothing
-    let writePlacement listener placement' = HSub.notify listener (Hooks.put placementId (Just placement'))
-    Hooks.useQuery queryToken \(Refresh send) -> do
-        -- -- Let's try refreshing only if the ad has been up for at least 5 seconds.
-        -- now' <- now <#> unInstant <#> toDuration # liftEffect
-        -- lastRefreshInstant' <- lastRefreshInstant # maybe now pure <#> unInstant <#> toDuration # liftEffect
-        -- when ((now' <> negateDuration lastRefreshInstant') > (Seconds 5.0)) do
-        --     now <#> Just # liftEffect >>= Hooks.put lastRefreshInstantId
-        --     pubSub # foldMap \{listener} ->
-        --         refreshAd placementName (toNullable placement) (writePlacement listener) # liftEffect
-
-        -- Nvm, refresh it immediately.
-        pubSub # foldMap \{listener} ->
-            refreshAd placementName (toNullable placement) (writePlacement listener) # liftEffect
-
-        pure $ Just $ send
+-- A Venatus placement shown into its element while the media query matches.
+inPage :: ∀ query input output m. MonadEffect m => String -> String -> H.Component query input output m
+inPage placement media = Hooks.component \_ _ -> Hooks.do
     Hooks.useLifecycleEffect do
-        now <#> Just # liftEffect >>= Hooks.put lastRefreshInstantId
+        element <- Hooks.getHTMLElementRef adRef
+        unmount <- liftEffect $ mount placement media $ toNullable element
+        pure $ Just $ liftEffect unmount
+    Hooks.pure $ HH.div [ HP.ref adRef, HS.class_ "ad" ] []
 
-        pubSub' @ {emitter, listener} <- HSub.create # liftEffect
-        Hooks.put pubSubId $ Just pubSub'
-        _ <- Hooks.subscribe emitter
+-- A Venatus placement on the window's floor, which Venatus draws itself.
+floor :: ∀ query input output m. MonadEffect m => String -> String -> H.Component query input output m
+floor placement media = Hooks.component \_ _ -> Hooks.do
+    Hooks.useLifecycleEffect do
+        unmount <- liftEffect $ mount placement media null
+        pure $ Just $ liftEffect unmount
+    Hooks.pure $ HH.text ""
 
-        elementMaybe <- Hooks.getHTMLElementRef (RefLabel "ad")
+ad :: ∀ action slots m. MonadEffect m =>
+    String -> H.Component (Const Void) Unit Void m -> HH.ComponentHTML action (ad :: Slot | slots) m
+ad key component = HH.slot_ (Proxy :: _ "ad") key component unit
 
-        createAd placementName (toNullable elementMaybe) (writePlacement listener) # liftEffect
-        pure $ Just do
-            placementMaybe <- Hooks.get placementId
-            removeAd placementName (toNullable placementMaybe) # liftEffect
-    Hooks.pure $ HH.div [HP.ref $ RefLabel "ad", HS.class_ $ "ad " <> placementName] []
+rail :: ∀ action slots m. MonadEffect m => String -> HH.ComponentHTML action (ad :: Slot | slots) m
+rail side =
+    HH.aside [ HS.class_ $ "ad-rail ad-rail-" <> side, HPA.label "Advertisement" ]
+    [ ad ("rail-" <> side) $ inPage "skyscraper" rails ]
 
--- Utils
-
-insertAdsInMiddle :: forall  action monad slots. MonadEffect monad =>
-    Array (HH.ComponentHTML action (AdSlots slots) monad) -> Array (HH.ComponentHTML action (AdSlots slots) monad)
-insertAdsInMiddle array =
-    -- Try to insert after the third element.
-    case Array.insertAt 3 billboard array >>= Array.insertAt 4 mobileTakeover of
-    Nothing -> array
-    Just arrayWithAds ->
-    -- Try to insert after the sixth element, which is now the eight.
-        case Array.insertAt 8 leaderboard arrayWithAds >>= Array.insertAt 9 mobileMpu of
-        Nothing -> arrayWithAds
-        Just arrayWithMoreAds -> arrayWithMoreAds
-
-videoIfWideEnough :: forall monad action slots. MonadEffect monad =>
-    Int -> Array (HH.ComponentHTML action (AdSlots slots) monad)
-videoIfWideEnough windowWidth = guard (windowWidth >= 1000) [video]
+-- | A page's ads around its content: a takeover above it and a skyscraper on
+-- | either side on a desktop, and a sticky on the window's floor on a desktop
+-- | and on a phone. A page keeps its units while it renders, and a new visit
+-- | mounts the page, and so its units, again.
+around :: ∀ action slots m. MonadEffect m =>
+    HH.ComponentHTML action (ad :: Slot | slots) m -> HH.ComponentHTML action (ad :: Slot | slots) m
+around content =
+    HH.div [ HS.class_ "ads-page" ]
+    [ HH.div [ HS.class_ "ad-takeover" ] [ ad "takeover" $ inPage "desktop_takeover" desktop ]
+    , rail "left"
+    , HH.div [ HS.class_ "ads-content" ] [ content ]
+    , rail "right"
+    , ad "bottom" $ floor "horizontal_sticky" desktop
+    , ad "phone-bottom" $ floor "mobile_horizontal_sticky" phone
+    ]

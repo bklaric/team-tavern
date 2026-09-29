@@ -1,0 +1,17 @@
+/* A confirmation that says what will be lost, with the counts. */
+
+.confirm {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    border: 1px solid var(--error);
+    border-radius: var(--radius-card);
+    background: var(--table);
+}
+
+.confirm-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+}

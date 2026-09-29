@@ -4,14 +4,11 @@ import Prelude
 
 import Async (Async)
 import Async.Validated (fromValidated) as AsyncVal
-import AsyncV (AsyncV)
-import AsyncV as AsyncV
-import Data.Array.NonEmpty (NonEmptyArray)
 import Data.Bifunctor (lmap)
 import Data.Variant (Variant, inj, match)
 import Jarilo (badRequest_)
 import TeamTavern.Routes.Player.RegisterPlayer as RegisterPlayer
-import TeamTavern.Server.Infrastructure.Error (TerrorNeaVar, ValidatedTerrorNea)
+import TeamTavern.Server.Infrastructure.Error (ValidatedTerrorNea)
 import TeamTavern.Server.Infrastructure.Error as Terror
 import TeamTavern.Server.Infrastructure.Response (BadRequestTerror)
 import TeamTavern.Server.Infrastructure.ValidateEmail (Email, validateEmail)
@@ -30,8 +27,6 @@ type Registration = Variant
         , accessToken :: String
         }
     )
-
-type RegistrationErrors = NonEmptyArray RegisterPlayer.RegistrationError
 
 validateRegistration'
     :: RegisterPlayer.RequestContent
@@ -59,13 +54,3 @@ validateRegistration identifiers =
     # lmap
         (Terror.label ((Proxy :: _ "registration"))
         >>> map badRequest_)
-
-validateRegistrationV
-    :: ∀ errors
-    .  RegisterPlayer.RequestContent
-    -> AsyncV (TerrorNeaVar (registration :: RegistrationErrors | errors)) Registration
-validateRegistrationV =
-    validateRegistration'
-    >>> AsyncV.fromValidated
-    >>> AsyncV.lmap
-        (Terror.labelNea ((Proxy :: _ "registration")))

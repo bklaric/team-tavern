@@ -1,14 +1,75 @@
-.ad {
-    text-align: center;
+/* Ads around a page: a takeover above it and a skyscraper on either side of
+   its column on a desktop. The stickies on the window's floor are Venatus's
+   own. */
 
-    &:empty {
-        display: none;
+/* Google sets a creative's frame inline-block inside inline spans, so a line
+   height would add room for descenders under it and the unit would outgrow
+   the room kept for it. */
+.ad {
+    line-height: 0;
+}
+
+.ad:empty {
+    display: none;
+}
+
+.ad-takeover {
+    display: flex;
+    justify-content: center;
+}
+
+.ad-takeover .ad {
+    margin: var(--space-6) var(--space-4) 0;
+}
+
+.ad-rail {
+    display: none;
+}
+
+/* The takeover shows from here, and its billboard's room is kept from the
+   start, empty or not, so the page stays put when one arrives or when Venatus
+   swaps it for the next. */
+@media (min-width: 1024px) {
+    .ad-takeover .ad {
+        display: block;
+        min-height: 250px;
     }
 }
 
-.mobile_mpu,
-.mobile_banner {
-    @media screen and (min-width: 1000px) {
-        display: none;
+/* A 160 px skyscraper fits on either side of the column from here. */
+@media (min-width: 1100px) {
+    .ads-page {
+        display: grid;
+        grid-template-columns: 1fr minmax(0, var(--feed-width)) 1fr;
+    }
+
+    .ad-takeover {
+        grid-column: 1 / -1;
+        grid-row: 1;
+    }
+
+    .ads-content {
+        grid-column: 2;
+        grid-row: 2;
+        min-width: 0;
+    }
+
+    .ad-rail {
+        display: block;
+        position: sticky;
+        top: calc(56px + var(--space-6));
+        grid-row: 2;
+        align-self: start;
+        justify-self: center;
+        width: 160px;
+        margin-top: var(--space-6);
+    }
+
+    .ad-rail-left {
+        grid-column: 1;
+    }
+
+    .ad-rail-right {
+        grid-column: 3;
     }
 }

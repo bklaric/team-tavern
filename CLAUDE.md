@@ -11,7 +11,7 @@ src/TeamTavern/
   Routes/         the HTTP contract, shared by client and server
   Server/         Node API (Jarilo handlers over Postgres)
   Client/         Halogen SPA, its styles and static assets
-  Shared/         static data both sides need (countries, languages, timezones)
+  Shared/         static data both sides need (languages, timezones)
   Database/       SQL schema and seed data
 stacks/           docker compose, Caddyfiles, env files and the test seed
 test-playwright/  the Playwright suite and the stack boot it runs first
@@ -19,17 +19,17 @@ test/             a stub; nothing runs it
 ```
 
 Generated, never edited, all git-ignored: `output/` (compiled PureScript),
-`dist-client/`, `dist-server/`, `dist-test/`, `.spago/`, and Playwright's `playwright-report/`
-and `test-results/`.
+`release/` (what a server runs), `dist-test/`, `.spago/`, Playwright's
+`playwright-report/` and `test-results/`, and `test-playwright/screenshots/`.
 
 ## Environment
 
 - **Node and npm** are pinned by Volta in `package.json`; with Volta installed
-  the right versions are picked up automatically. The `node` service in
-  both compose files under `stacks/`, and the test stack's `discord` service,
+  the right versions are picked up automatically. The `tt-node` service in
+  both compose files under `stacks/`, and the test stack's `tt-discord` service,
   pin the same Node version for their containers, and nothing enforces
   agreement, so change all four together.
-- **purs, spago, sass, esbuild and Playwright** come from `devDependencies`, so
+- **purs, spago, sass, esbuild, sharp and Playwright** come from `devDependencies`, so
   setup is `npm install` plus, for the browser Playwright drives,
   `./node_modules/.bin/playwright install chromium`, which downloads Chromium
   into a per-user cache outside the repo. No global installs.
@@ -41,13 +41,13 @@ and `test-results/`.
 ## Build and verify
 
 ```bash
-npm install         # once
-spago build         # compile everything into output/
-./build.sh          # spago build + build-client.sh + build-server.sh
-./run-stack.sh      # docker compose up: postgres, node, renderready, caddy
-./deploy-server.sh  # rebuild the server bundle and restart the node container
-npm test            # boot the test stack and run the Playwright suite
-npm run typecheck   # tsc over test-playwright/ and playwright.config.ts
+npm install                 # once
+spago build                 # compile everything into output/
+./build.sh                  # spago build + build-client.sh + build-server.sh, into release/
+./run-development-stack.sh  # docker compose up: tt-postgres, tt-node, tt-renderready, tt-caddy
+npm test                    # boot the test stack and run the Playwright suite
+npm run typecheck           # tsc over test-playwright/ and playwright.config.ts
+./deploy-release.sh <host>  # upload release/ to a server and bring its stack up
 ```
 
 Bare `spago` and `purs` work because Volta shims them and, since both are
@@ -61,77 +61,102 @@ the `purs.cmd` shim, which Node refuses to spawn, and the build dies with
 `test-playwright/stack.setup.ts` takes the test stack down with `-v`, brings it
 back up and waits for `/api/games` to answer, and the specs in
 `test-playwright/integration/` then run against it. The stack serves
-`dist-client/`, `dist-server/` and `dist-test/` out of the repo, so `./build.sh`
-has to have run first; the setup says so rather than letting the wait time out.
+`release/` and `dist-test/` out of the repo, so `./build.sh` has to have run
+first; the setup says so rather than letting the wait time out.
 
 A spec drives the site through the browser, as a player would: it sets up what it
 needs through the pages and asserts on what they show, never by calling the API
 or the database. What the API answers can be right while the page shows the wrong
 thing, and only the page is what players see.
 
+An in-app link writes the URL at once and draws the page a tick later, so a spec
+waits for the page, not the URL, before acting on it: `expectPage` in
+`test-playwright/pages.ts` waits for the path the router marks on the page it has
+drawn. `toHaveURL` is for where the URL itself is what's under test.
+
 Nothing typechecks the suite on the way to running it, since Playwright strips
 the types without reading them, so `npm run typecheck` is a separate step.
 
-A change is verified when `spago build` reports no errors, `npm test` passes, and
-the affected page or endpoint behaves in the running stack.
+A change is verified when `spago build` reports no errors, the specs that cover
+what it touches pass, and the affected page or endpoint behaves in the running
+stack. Name those specs, `npm test -- feed.spec.ts post-page.spec.ts`; the stack
+setup still runs first. The full suite takes a long while, so run it only when a
+change reaches across the site, such as the router, the header or the shared
+styles, and no handful of specs covers it.
 
-`build-client.sh` compiles Sass and bundles the client into `dist-client/`
+`test-playwright/screenshots.mjs` shoots every screen of the site at 375 px and
+1280 px against the running test stack, into `test-playwright/screenshots/`, for
+checking a change by eye; `--only=<text>` picks scenes by name. Run it as
+`"$(volta which node)" test-playwright/screenshots.mjs`, since the plain `node`
+shim goes through `cmd.exe`. It makes what the seed lacks, a conversation or a
+block, through the pages, so run it on a stack the next `npm test` reseeds.
+`phone.spec.ts` holds every page and overlay to a 375 px window with the
+longest names a player can give.
+
+`build-client.sh` compiles Sass and bundles the client into `release/client/`
 under hashed file names. `build-server.sh` bundles the server into
-`dist-server/server.js` with `bcrypt`, `pg` and `@sendgrid/mail` left
+`release/server/server.js` with `bcrypt`, `pg` and `@aws-sdk/client-sesv2` left
 external, and copies the root `package.json` beside it; the container installs
 that with `--omit=dev`, so the build toolchain never enters the image. It also
-bundles `DiscordStub/Main.purs` into `dist-test/discord-stub.js`, which only the
-test stack runs.
+bundles `DiscordStub/Main.purs` into `dist-test/discord-stub.js` and
+`MailStub/Main.purs` into `dist-test/mail-stub.js`, which only the test stack
+runs. `build.sh` then copies in what runs them: `stacks/docker-compose.release.yml`
+as `release/compose.yml`, every Caddyfile but the test stack's into
+`release/caddy/`, and `backup-database.sh`.
 
 ## Running the stack
 
 Two compose projects, and they can run at once. The development stack keeps its
 data in host directories next to the repo; the test stack keeps its in named
 volumes, so `down -v` throws the database away and the next boot seeds a fresh
-one. Both serve the same `dist-client/` and `dist-server/`, so `./build.sh` has
-to have run either way.
+one. Both serve the same `release/` a server gets, so `./build.sh` has to have
+run either way.
 
-Both also answer to `http://caddy` on their compose network, and that name is
+Both also answer to `http://tt-caddy` on their compose network, and that name is
 the render origin passed to `base.Caddyfile`. Renderready's browser has to fetch
 the site itself, and inside that container `localhost` is renderready. Neither
 compose file pulls a renderready image: the service is built from the upstream
 git tag, so the first `up` on a machine builds it, and that takes a while.
 
-|               | Development                 | Test                             |
-| ------------- | --------------------------- | -------------------------------- |
-| Compose file  | `stacks/docker-compose.yml` | `stacks/docker-compose.test.yml` |
-| Env file      | `stacks/.env`               | `stacks/test.env`                |
-| Project name  | default                     | `teamtavern-test`                |
-| Site          | <http://localhost:8000>     | <http://localhost:8080>          |
-| Database      | `team_tavern`               | `team_tavern_test`               |
-| Postgres data | host directory              | named volume, seeded on boot     |
+|               | Development               | Test                             |
+| ------------- | ------------------------- | -------------------------------- |
+| Compose file  | `release/compose.yml`     | `stacks/docker-compose.test.yml` |
+| Env file      | `stacks/.env`             | `stacks/test.env`                |
+| Project name  | `teamtavern`              | `teamtavern-test`                |
+| Site          | <http://localhost:8000>   | <http://localhost:8080>          |
+| Database      | `team_tavern`             | `team_tavern_test`               |
+| Postgres data | host directory            | named volume, seeded on boot     |
 
 ### The development stack
 
-`stacks/.env` configures docker compose. Besides the database and SendGrid
-credentials it names four host directories that are bind-mounted into the
-containers and live next to the repo, not in it:
+`run-development-stack.sh` runs the release as a server does, from
+`release/compose.yml`, passing `stacks/.env` with `--env-file` where a server
+has its `.env` beside the compose file. That file configures docker compose, and compose hands each
+container what it needs of it. Besides the database and AWS credentials it
+names three host directories that are bind-mounted into the containers and live
+next to the repo, not in it:
 
 | Variable               | Contents                          |
 | ---------------------- | --------------------------------- |
-| `TEAMTAVERN_PATH`      | this repo                         |
 | `POSTGRES_DOCKER_PATH` | Postgres data, persists across restarts |
 | `POSTGRES_BACKUP_PATH` | database backups                  |
 | `CADDY_DOCKER_PATH`    | Caddy's `data` and `config` dirs  |
 
 On Windows these use the `/c/Users/...` form. `ENVIRONMENT` in the same file
-selects which `stacks/<name>.Caddyfile` Caddy loads.
+names the stack: `development`, `test`, `staging` or `production`. Caddy loads
+the Caddyfile of that name from `release/caddy/`, and the server reads it for
+what differs between stacks, in `Server/Infrastructure/Environment.purs`.
 
 Both local stacks serve plain HTTP, on the host port `CADDY_HTTP_PORT` names:
-8000 in `stacks/.env`, 8080 in `stacks/test.env`. Production shares
-`docker-compose.yml`, leaves the variable unset and takes ports 80 and 443,
-where `production.Caddyfile` serves HTTPS. Session cookies drop `Secure` under
-`DEPLOYMENT=local`, and browsers treat `http://localhost` as a secure context,
-so nothing on the site needs HTTPS locally.
+8000 in `stacks/.env`, 8080 in `stacks/test.env`. Production runs the same
+`compose.yml`, leaves the variable unset and takes ports 80 and 443, where
+`production.Caddyfile` serves HTTPS. The session cookie drops `Secure` in the
+`development` and `test` environments, and browsers treat `http://localhost` as
+a secure context, so nothing on the site needs HTTPS locally.
 
 `stacks/.env` is committed. The Postgres credentials in it are real, but the
 database is reachable only from inside the compose network, so they are
-usable only by someone already on the server. The SendGrid key is a
+usable only by someone already on the server. The AWS key pair is a
 placeholder; the real one lives in the production `.env` on the server and is
 not in the repo.
 
@@ -153,47 +178,110 @@ without it compose refuses to start rather than binding an arbitrary host port.
 `npm test` runs both commands itself, so a test run takes this stack down and
 reseeds it from whatever state it was in.
 
-The test stack has no Discord. Its `discord` service runs
+The test stack has no Discord. Its `tt-discord` service runs
 `dist-test/discord-stub.js`, and `DISCORD_API_URL` in `test.env` points the
 server at it. The stub answers the user endpoint with whatever user the access
 token names, the URI-encoded JSON of that user, so a spec can sign up and sign in
 with Discord as anyone, verified email or not. The browser half of the flow never
-reaches Discord either: `test-playwright/integration/sign-in.spec.ts` answers the
-pages' redirect to Discord's authorize URL itself, sending the browser straight
-back with such a token, and checks the scope and redirect URI the page asked for.
+reaches Discord either: a spec answers the pages' redirect to Discord's
+authorize URL itself, sending the browser straight back with such a token and
+the `state` the page sent, and checks the scope and redirect URI the page asked
+for.
+
+The test stack has no SES either. Its `tt-mail` service runs
+`dist-test/mail-stub.js`, and `AWS_ENDPOINT_URL_SESV2` in `test.env` points the
+server's SES client at it, so the server sends as production does. The stub
+keeps every email and shows an address's mail at
+`http://localhost:8080/mail?to=<address>`, which `test.Caddyfile` routes on the
+site's origin, newest first, each email in a frame. A spec reads its player's
+email there and clicks the links in it, which are relative outside production
+and so open the test site. The development stack sets no `AWS_ENDPOINT_URL_SESV2`, and
+its node log shows each email's text instead.
+
+Every Discord button sends the browser back to `/signin`, the one redirect URI
+registered on the Discord app for each origin, and what the player was doing
+rides along in session storage. The sign-in page signs in a player Discord
+knows, and asks one it doesn't for a nickname, which finishes registering them.
+A trip from the account page's Continue with Discord signs nobody in: the
+sign-in page hands its token back to the account page, which moves the account
+from its password to that Discord.
 
 What no test reaches is Discord itself: the redirect URIs registered on the
 Discord app and the real user endpoint. Before a deploy that touches sign-in,
-check them by hand against the development stack, whose `http://localhost:8000`
-pages are registered redirect URIs, with a real Discord account:
+check them by hand against the development stack, whose
+`http://localhost:8000/signin` is a registered redirect URI, with a real Discord
+account:
 
-1. Create an account with Discord at <http://localhost:8000/register>. It lands on
-   onboarding, and Change email on the account page shows the Discord address.
-2. Sign out, sign in with Discord at <http://localhost:8000/signin>, and land signed in.
-3. `docker logs node` shows no Discord errors for either.
+1. At <http://localhost:8000/signup>, Continue with Discord. The sign-in page
+   asks for a nickname, prefilled with the Discord username, and Continue lands
+   on the home page signed in.
+2. Sign out, Continue with Discord at <http://localhost:8000/signin>, and land
+   signed in without being asked for a nickname.
+3. `docker logs tt-node` shows no Discord errors for either.
 
 `stacks/test-seed/seed.sh` builds the database on the first boot of the Postgres
 volume, which is why `down -v` rather than `down` is what resets it. It applies
-`TablesCurrent.sql`, then `Seed/`, then `stacks/test-seed/players.sql`. That
-last one gives every seeded game one player and one profile, so the listing
-pages have a row to assert on; the nickname is the handle title-cased with
-`Tester` after it, so `apex` gets `ApexTester`, the email is
-`apex@example.com`, and the password is `tester-password`. `Seed/Games/` carries all eleven
-production games, so every game handle the site serves has a page with content.
-A cold boot answers on the API within a few seconds.
+`TablesCurrent.sql`, then `Seed/Regions.sql`, `Seed/Countries.sql` and
+`Seed/Games/`, then `stacks/test-seed/players.sql`. That last one gives every
+seeded game one account with a player post, so the feed has a row to assert
+on; the nickname is the handle title-cased with its hyphens dropped and
+`Tester` after it, so `apex-legends` gets `ApexLegendsTester`, the email is
+`apex-legends@example.com`, and the password is
+`tester-password`. Valorant also gets `GroupTester` (`group@example.com`) with a
+group post and a community post, `ExpiredTester` (`expired@example.com`) with a
+player post past its 30 days, and `NewTester` (`new@example.com`) with no post, and Counter-Strike 2 gets
+`LeaderlessTester` (`leaderless@example.com`) with a group post that wants an
+in-game leader. `OwnerTester` (`owner@example.com`) has a post in each state
+for the home page: an active group in Dota 2, an expired player post in Heroes
+of the Storm and one in its last week in Valheim, whose unread expiry
+notification gives the bell's list an expiry row. Team Fortress 2's tester
+would rather be added off-site, and `CommunityTester` (`community@example.com`)
+runs a community there joined through its website, so every contact preference
+has a post. `RenewTester` (`renew@example.com`) has expired player posts in
+Rainbow Six Siege and Overwatch. `MailTester` (`mail@example.com`) has an active
+player post in Counter-Strike 2 and an expired one in Overwatch, and
+`QuietTester` (`quiet@example.com`) a post in Counter-Strike 2, one in Team
+Fortress 2 in its last week, and message and renewal emails switched off, for
+the email spec. For the worker's email, `FitsTester` (`fits@example.com`) has an
+expired Apex Legends post that fits ApexLegendsTester's once renewed, and
+`ExpiringTester` (`expiring@example.com`) a player post and the community Night
+Shift in Team Fortress 2, both in their last week. All share the password, and
+all are confirmed. `Seed/Games/` carries all ten production games, so every
+game handle the site serves has a page with content. A cold boot answers on the
+API within a few seconds.
+
+### A server
+
+A server holds no checkout, only a release: `~/team-tavern` is `release/` as
+uploaded, plus the server's own `.env` beside `compose.yml`, which compose reads
+from there. That `.env` sets what `stacks/.env` does, with the real AWS key pair,
+`ENVIRONMENT=production` (or `staging`) and no `CADDY_HTTP_PORT`. A release never
+carries one.
+
+`./build.sh && ./deploy-release.sh user@host` uploads `release/` over SFTP,
+the index files last so no page names a script still on its way, and runs
+`docker compose up -d --force-recreate --remove-orphans` there. The files are
+bind-mounted, so recreating the containers is what picks them up. The nightly
+backup is `cron.txt`, run from the crontab of the user that owns the directory:
+`backup-database.sh` mails a gzipped dump through SES, signing the request with
+curl's `--aws-sigv4`.
+
+Email goes out through SES in `eu-central-1`, where `teamtavern.net` is
+verified by the Easy DKIM records in its Namecheap DNS. The key pair is the IAM
+user `teamtavern-ses`'s, whose one policy lets it send only as
+`admin@teamtavern.net`, so every email the server and the backup send is from
+that address. SES keeps its account-level suppression list on for bounces and
+complaints, and Virtual Deliverability Manager shows their rates.
 
 ### Expected noise
 
 None of it is a bug to fix:
 
-- **`API key does not start with "SG."`** on node startup: `SENDGRID_API_KEY`
-  in `stacks/.env` is a placeholder. Outbound email is off; everything else
-  works.
 - **`npm warn install-scripts ... bcrypt`** on node startup: npm skips the
   unapproved install script, and bcrypt does not need it because it ships
   Node-API prebuilds that `node-gyp-build` picks at require time.
 - **`$'\r': command not found`**, or a container that cannot reach
-  `postgres`: a file has CRLF endings. See the line-ending rule under Code
+  `tt-postgres`: a file has CRLF endings. See the line-ending rule under Code
   style.
 
 ## Dependencies
@@ -218,7 +306,7 @@ branch builds against different code.
 checkout is the first thing to suspect when an import from those namespaces
 fails. Its own `src/CLAUDE.md` governs changes made there.
 
-The npm side is three runtime packages (`bcrypt`, `pg`, `@sendgrid/mail`) that
+The npm side is three runtime packages (`bcrypt`, `pg`, `@aws-sdk/client-sesv2`) that
 the server bundle leaves external, plus the build toolchain in devDependencies.
 
 ## How a request flows
@@ -237,34 +325,73 @@ the server bundle leaves external, plus the build toolchain in devDependencies.
    and sends cookies. The response comes back as the same `Variant` the route
    declares, so pages `match` / `onMatch` on it.
 
-In the running stack Caddy proxies `/api/*` to the node container, sends bot
-user agents to renderready, and serves everything else from `dist-client/` with
-an `index.html` fallback for SPA paths.
+In the running stack Caddy proxies `/api/*` to the node container, refusing a
+body past 64 KB with a 413 since the server reads a body whole, sends bot
+user agents to renderready, and serves everything else from `release/client/` with
+an `index.html` fallback for SPA paths. `/sitemap.xml` goes to node as it is,
+outside `/api`: the one route that answers with something other than JSON, an
+`OkText` whose absolute addresses are built from the origin the request came
+in on. Caddy answers `/robots.txt` itself, naming that origin's sitemap, and
+redirects the old site's feed paths to the new ones by `legacy.game_map`.
 
 ## Server conventions
 
 - A handler runs in `Async (TerrorVar responses)` and is wrapped in
-  `sendResponse "<heading>"`, which logs the error lines and turns the error
-  into the HTTP response variant. Signed-in checks come from
-  `Server/Infrastructure/EnsureSignedIn*.purs` and `CheckSignedIn.purs`.
+  `sendResponse "<heading>"`, which turns the error into the HTTP response
+  variant and logs its lines only when it is `internal`. Every other status is
+  an answer the client handles, so a signed-out visitor or a taken nickname
+  leaves nothing in the log. `CheckSignedIn.purs` looks the session up by the
+  token in the one cookie, `HttpOnly` and `SameSite=Lax`, for a route anyone
+  may ask, taking a refused token for none but passing a failed lookup on as
+  `internal`; `EnsureSignedIn.purs` answers `notAuthorized` without one.
 - Errors are `Terror error (Array String)` from
   `Server/Infrastructure/Error.purs`: the typed error the client sees plus
-  free-text lines for the log. Validation accumulates with `Validated` and
-  `NonEmptyArray` of `Variant`s; see the `Terror*` aliases in that module.
+  free-text lines, which the log gets for an internal error. Validation
+  accumulates with `Validated` and `NonEmptyArray` of `Variant`s; see the
+  `Terror*` aliases in that module.
 - A handler with several steps gets a sibling folder of the same name
   (`Server/Player/Register/AddPlayer.purs`, `.../ValidateRegistration.purs`),
   one step per module. `Server/<Area>/Domain/` holds validated value types
   (`Nickname`, `Password`, `Hash`); `Server/<Area>/Infrastructure/` holds
   helpers shared across that area's handlers.
 - SQL is written inline as `Query """ ... """` with positional `$n` parameters
-  supplied through `:` and `:|`, and rows are decoded with Yoga.JSON `read`.
+  supplied through `:` and `:|`, and rows are decoded with Yoga.JSON `read`. The
+  feed query and the fit query that notifications come from are too big to
+  inline: `Server/Feed/Feed.sql` and `Fits.sql` are files of their own, which
+  `Feed.js` and `Fits.js` import as text from their place in `src/` and
+  `build-server.sh` bundles with esbuild's text loader. `Fits.sql` is `Feed.sql`
+  turned round, so a change to how two posts compare is made in both, and
+  `redesign/feed/check-fits.mjs` checks that they agree. node-pg sends parameters
+  untyped, so a query Postgres can't type from their first use casts them there.
   Postgres errors are mapped to typed errors by constraint name
   (`player_nickname_key` and friends), so a new unique constraint needs a
   matching branch where it can fire.
+- A guide is a Markdown file in `Server/Guide/`, imported as text by `Guides.js`
+  the way `Feed.sql` is, and an entry in `Guides.purs` with its slug, titles
+  and dates. The server turns each into HTML once as it starts, and
+  `Client/Pages/Guide.purs` fetches that and sets it as the page's HTML, so
+  the client bundle carries no guide text. That HTML is trusted because it is
+  the repo's own; nothing a player writes goes through it. The slug is the
+  guide's URL for good. `updated` orders the guides and dates them in the
+  sitemap, so it changes when a fact in the guide does, not for a typo.
 - Configuration is environment variables read once in `Server/Main.purs`
-  (`PG*`, `SENDGRID_API_KEY`, `DEPLOYMENT` = `local` | `cloud`), supplied by
-  `stacks/.env`. `DISCORD_API_URL` is optional and defaults to Discord's own
-  API; only `stacks/test.env` sets it.
+  (`PG*`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `ENVIRONMENT`, and
+  `ADMIN_EMAIL`, where reports of players are mailed), which the release's
+  `compose.yml` hands the node container from the stack's `.env`.
+  `ENVIRONMENT` decides the cookie's `Secure` and the origin of the links in an
+  email. `DISCORD_API_URL` is optional and defaults to Discord's own API; only
+  `stacks/test.env` sets it. `AWS_ENDPOINT_URL_SESV2` is optional too, and the
+  SES client reads it itself: without it, the development stack only logs its
+  email; with it, the server sends there. Only `stacks/test.env` sets it. `WORKER_PERIOD` is optional as well:
+  the seconds between the worker's runs, an hour unless `stacks/test.env`'s 2.
+- `Server/Worker.purs` runs in the node process on that period. Each run gives
+  the posts that have entered their last week their expiry notification and
+  sends every owner one email of the fits and expiries created since the run
+  before, grouped by their post. Nothing records what was sent.
+- An email is an `Email` of blocks from `Server/Infrastructure/Email.purs`,
+  which renders its HTML, in the site's palette, and its text from the same
+  blocks. Links are paths, which the `Mailer` puts behind production's origin
+  and leaves relative on the local stacks.
 
 ## Client conventions
 
@@ -277,19 +404,72 @@ an `index.html` fallback for SPA paths.
 - `Client/Pages/` are routed pages, `Client/Components/` are reusable pieces,
   `Client/Script/` are browser helpers (each `.js` is the FFI for the `.purs`
   beside it), `Client/Snippets/` are tiny HTML helpers such as `HS.class_`.
-- Components run in `Async left` and are written either as `H.mkComponent`
-  with `Action` / `State` / `handleAction`, or with Halogen Hooks. Match the
-  neighbouring code; both are in use. Child slot types come from
-  `Client/Shared/Slot.purs` (`Slot___`, `SlotQ__`, `Slot_O_`, ...).
-- Styles are Sass. Every page or component with styling has a `.scss` next to
-  its `.purs`, opens with `@use "../Style/Base" as *;` for the shared
-  variables and placeholders, and is registered with a `@use` line in
-  `Client/Style/Main.scss`. A stylesheet not listed there is not in the
-  bundle. Classes are plain kebab-case strings (`primary-button`,
-  `form-heading`) applied with `HS.class_`.
-- `Client/Static/` (index.html, favicons, fonts, images, robots and sitemap)
-  is copied verbatim by `build-client.sh`; adding a new directory there means
-  adding a `cp` line to that script.
+- Components run in `Async left` and are written with Halogen Hooks. Child
+  slot types come from `Client/Shared/Slot.purs` (`Slot___`, `SlotQ__`,
+  `Slot_O_`, ...).
+- Who is signed in comes from the server: `fetchMe` in `Client/Shared/Me.purs`
+  asks `/api/me`, since the session cookie is out of the page's reach. A page
+  that needs it asks from a fork, like any other fetch. The header asks on
+  every navigation; a page that changes what it counts, by reading a
+  conversation or sending a message, calls `announceUnread` from
+  `Client/Script/Unread.purs` and the header asks again.
+- The server logs only its own failures, so the client reports the ones it
+  didn't expect to `/api/client/errors`, which logs each as a `Client error`
+  line, at most 60 a minute. `Client/Shared/Fetch.purs` reports a response
+  the route doesn't declare, and any `badRequest`, `notAuthorized`,
+  `forbidden` or `notFound` the call doesn't name. A call that handles one of
+  those by name names it there too, as `fetchBody (expecting [ "badRequest" ]
+  (Proxy :: _ UpdateEmail))`, or every time it happens lands in the log.
+  Errors the site's own script throws and nothing catches are reported too;
+  a lost network is not. A report carries paths only, never a query string,
+  which holds the nonces of the links in emails.
+- A page forks its fetches from `useLifecycleEffect` rather than awaiting them
+  there, and what follows a fetch happens in the fork, not in a tick effect
+  watching for its result. Hooks runs effects only after a render that the
+  first render, or state changed by an action, query or new input, sets off.
+  State set by code that an effect started, a fork included, is drawn but runs
+  no effect until an action next changes state, so on a page nobody touches a
+  tick effect never sees it.
+- A list whose order or contents change while the page is open is keyed by a
+  stable id, with `Halogen.HTML.Elements.Keyed`. Unkeyed, Halogen reuses the
+  elements by position, and a click aimed at one item lands on whichever took
+  its place.
+- Ads are Venatus units. `Ads.around` in `Client/Components/Ads.purs` places
+  a page's units around its content, on the feed, a post's page, the guides and each guide. Every unit
+  goes through the `self.__VM` queue, which `Ads.js` creates when no ad
+  script has, since the prerender shell loads none.
+- A list that refetches while the page is open carries `aria-busy`, true from
+  a request until the latest one answers, and specs wait for it to settle
+  before acting on the list, as `feed.spec.ts` does.
+- Every overlay goes through `useOverlay` and `Client/Script/Overlay.js`,
+  which holds the page behind a modal one, keeps Tab inside it, and puts the
+  focus on the overlay's `[data-autofocus]`, else the first thing in its body,
+  once it has one. A region marked `data-overlay-live`, such as the toasts,
+  stays live and in reach under a modal. A menu is a disclosure: a group of
+  links and buttons that Tab goes through, never `role=menu`, which promises
+  arrow keys. Its button carries `aria-expanded` and `aria-controls` with the
+  overlay's `overlayId`.
+- A control that goes away or would be disabled while it has the focus hands
+  the focus on or keeps it: a button waiting on what it started is
+  `aria-disabled`, its handler turning a second press away, and a control
+  that disappears moves the focus to what took its place. A page's
+  confirmation is `pageConfirm`, which Escape cancels. A field's error is tied
+  to its control by `Client/Script/Invalid.js`. The router's `main#content`
+  takes the focus on every link to another page, and the header's skip link
+  leads to it. `accessibility.spec.ts` runs axe over every page kind and
+  overlay and checks the keyboard.
+- Styles are Sass over plain CSS. `Client/Style/tokens.css` holds the design
+  tokens as custom properties, as the prototype in `redesign/prototype/` has
+  them, and `base.css` the element defaults. Each section of the prototype's
+  `components.css` is a `.scss` beside the `.purs` of the component or page it
+  styles. Every stylesheet is registered with
+  a `@use` line in `Client/Style/Main.scss`; one not listed there is not in the
+  bundle. Classes are plain kebab-case strings, named as the prototype names
+  them, applied with `HS.class_`.
+- `Client/Static/` (the two index files, the favicon and `logo-512.png`, the
+  Inter fonts with their `inter.css`, the game covers and ads.txt) is
+  copied verbatim by `build-client.sh`, the covers through `build-covers.mjs`;
+  adding a file or directory there means adding a `cp` line to that script.
 
 ## Database
 
@@ -297,13 +477,13 @@ an `index.html` fallback for SPA paths.
 test stack builds from. `TablesBase.sql` is the schema production and the
 development database had before the scripts in `Migrations/`, so
 `TablesBase.sql` with those scripts applied in date order gives
-`TablesCurrent.sql`. `Seed/` holds the region rows and one file per game, each
-carrying that game's fields, field options and trackers. Only the test stack
-runs them, on every fresh boot.
+`TablesCurrent.sql`. `Seed/` holds the region and country rows and one file per
+game, each carrying that game's contacts, fields, field options and trackers.
+Only the test stack runs them, on every fresh boot.
 
 A schema change is a dated script in `Migrations/`, one transaction, and the
 same edit to `TablesCurrent.sql`. The script is applied by hand to the
-`postgres` container of the development stack and to production. Before it
+`tt-postgres` container of the development stack and to production. Before it
 goes out, apply `TablesBase.sql` and the scripts to one scratch database and
 `TablesCurrent.sql` to another, and `pg_dump --schema-only` both: the dumps
 must not differ. Once a script has run everywhere, `TablesBase.sql` is replaced
@@ -316,12 +496,30 @@ development database rather than written freehand.
 
 A game is its seed file plus one cover, a 600x900 WebP at
 `Client/Static/Images/Games/<handle>.webp`, served as `/images/games/<handle>.webp`.
-The cover is the only per-game asset: the header dropdown, the home page grid and
-the onboarding picker all show it, and nothing shows a game icon. Every seeded
-game must have one; nothing generates a stand-in, and `games.spec.ts` fails on a
-home page tile whose cover does not load at that size. Steam's
+The cover is the only per-game asset: every cover grid shows it, and nothing
+shows a game icon. `build-covers.mjs`, run by `build-client.sh`, fails the
+build on a cover of another size and makes the 400x600 copy under
+`/images/games/400/` that the site's covers load; `Client/Snippets/Cover.purs`
+names both, and only shared links and wide phones take the original. Every
+seeded game must have one; nothing generates a stand-in, and `games.spec.ts`
+fails on a home page tile whose cover does not load. Steam's
 `library_600x900_2x.jpg` is that shape for games on Steam; SteamGridDB carries
 the same shape for the rest.
+
+`Shared/Timezones.purs`, the zones a player picks from, is generated by
+`redesign/timezones/generate.mjs` from tzdb's `zone.tab`, with CLDR's English
+city names and the country names of `Seed/Countries.sql`; it fails on a country
+it can't name and on a zone the Postgres image in the compose files doesn't
+know. The picker names a zone by its country, and by country and city where the
+country has several. A zone the list drops that the old site offered needs a
+row in `redesign/import/mapping.sql`'s `timezone_map`, or the import carries it
+in as a name the picker doesn't offer.
+
+A game's handle is its common title, without a publisher prefix, lowercased,
+apostrophes dropped and every other run of non-alphanumerics a single hyphen:
+`counter-strike-2`, `heroes-of-the-storm`. It is the game's URL,
+`/games/<handle>`, so it outlives a rebrand; a handle that has to change anyway
+takes its cover with it and leaves a redirect from the old one.
 
 ## Code style
 

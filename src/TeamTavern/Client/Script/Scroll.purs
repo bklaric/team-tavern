@@ -1,9 +1,17 @@
-module TeamTavern.Client.Script.Scroll (scrollToId) where
+module TeamTavern.Client.Script.Scroll
+    ( focusCentered
+    , focusFirstInvalid
+    , onScroll
+    , scrollRestorationManual
+    , scrollToFragment
+    , scrollToId
+    ) where
 
 import Prelude
 
 import Data.Foldable (for_)
 import Data.Int (round)
+import Effect (Effect)
 import Effect.Class (class MonadEffect, liftEffect)
 import Web.DOM.NonElementParentNode (getElementById)
 import Web.HTML (window)
@@ -18,3 +26,34 @@ scrollToId id = liftEffect do
     for_ (element >>= fromElement) \element' -> do
         top <- offsetTop element'
         window >>= scroll 0 (round top - 41)
+
+foreign import onScrollImpl :: (Number -> Effect Unit) -> Effect (Effect Unit)
+
+-- | Calls back with the page's scroll position as it scrolls, until the
+-- | returned effect stops it.
+onScroll :: (Number -> Effect Unit) -> Effect (Effect Unit)
+onScroll = onScrollImpl
+
+-- | The site puts a page's scroll position back itself, once the page has
+-- | drawn what it had: the browser would do it on `popstate`, before anything
+-- | is there to scroll to.
+foreign import scrollRestorationManual :: Effect Unit
+
+-- | Brings the first field marked invalid into view and focuses its control,
+-- | once the page has drawn the marks.
+foreign import focusFirstInvalid :: Effect Unit
+
+foreign import scrollToFragmentImpl :: Effect Unit
+
+-- | Brings the element the URL's fragment names to the top of the screen, once
+-- | the page has drawn it. The browser looks for it only as the page loads,
+-- | before a page that fetches its text has anything to scroll to.
+scrollToFragment :: ∀ monad. MonadEffect monad => monad Unit
+scrollToFragment = liftEffect scrollToFragmentImpl
+
+foreign import focusCenteredImpl :: String -> Effect Unit
+
+-- | Puts the element with the id in the middle of the screen and focuses it,
+-- | once the page has drawn it, as a link to a part of a page lands there.
+focusCentered :: ∀ monad. MonadEffect monad => String -> monad Unit
+focusCentered id = liftEffect $ focusCenteredImpl id

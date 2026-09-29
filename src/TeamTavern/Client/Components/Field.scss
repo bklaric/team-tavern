@@ -1,0 +1,90 @@
+/* Forms: fields stacked label over control, in sections. */
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+}
+
+.form-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-5);
+}
+
+.form-section + .form-section {
+    padding-top: var(--space-8);
+    border-top: 1px solid var(--border);
+}
+
+.form-section > h2 {
+    font-size: var(--size-16);
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+}
+
+.field > .input,
+.field > .select,
+.field > .textarea,
+.field > .editor {
+    width: 100%;
+}
+
+.field .select {
+    max-width: 100%;
+}
+
+.field-label {
+    font-weight: 600;
+}
+
+.field-tag {
+    margin-left: var(--space-1);
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+.field-hint {
+    color: var(--text-muted);
+    font-size: var(--size-12);
+}
+
+.field-note,
+.field-error {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: var(--size-12);
+    font-weight: 500;
+}
+
+.field-note {
+    color: var(--text-muted);
+}
+
+.field-error {
+    color: var(--error);
+}
+
+.field-invalid .input,
+.field-invalid .textarea,
+.field-invalid .select {
+    border-color: var(--error);
+}
+
+.input-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    width: 100%;
+}
+
+.input-row .input {
+    flex: 1 1 200px;
+    min-width: 0;
+}

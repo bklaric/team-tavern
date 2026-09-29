@@ -4,124 +4,91 @@ import Prelude
 
 import Async (Async)
 import Async as Async
-import Data.Bifunctor (lmap)
-import Data.Maybe (Maybe(..), isNothing)
+import Data.Either (Either(..))
+import Data.Maybe (Maybe(..))
+import Data.String (null, trim)
+import Data.Tuple.Nested ((/\))
 import Data.Variant (onMatch)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.HTML.Properties as HP
-import TeamTavern.Client.Components.Form (form, formError, otherFormError)
-import TeamTavern.Client.Components.Input (inputGroup, inputLabel_, requiredTextLineInput)
-import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
-import TeamTavern.Client.Script.Analytics (track_)
-import TeamTavern.Client.Script.Meta (setMeta)
-import TeamTavern.Client.Script.Navigate (navigate)
-import TeamTavern.Client.Shared.Fetch (fetchBody)
+import Halogen.Hooks as Hooks
+import TeamTavern.Client.Components.Flow (flow, flowError, flowLead, flowLink, formTight, submitButton, textField)
+import TeamTavern.Client.Script.Back (authPath, readBack)
+import TeamTavern.Client.Shared.AccountErrors (somethingWrong)
+import TeamTavern.Client.Shared.Fetch (expecting, fetchBody)
+import TeamTavern.Client.Shared.Slot (Slot___)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Password.ForgotPassword (ForgotPassword)
 import Type.Proxy (Proxy(..))
-import Web.Event.Event as Event
-import Web.Event.Internal.Types (Event)
-
-data Action
-    = Initialize
-    | UpdateEmail String
-    | ResetPassword Event
+import Web.Event.Event (preventDefault)
 
 type State =
-    { email :: String
-    , unknownEmail :: Boolean
-    , otherError :: Boolean
-    , submitting :: Boolean
+    { back :: String
+    , email :: String
+    , error :: Maybe String
+    , formError :: Maybe String
+    , sending :: Boolean
+    , sentTo :: Maybe String
     }
 
-render :: forall left. State -> H.ComponentHTML Action _ (Async left)
-render { email, unknownEmail, otherError, submitting } =
-    form ResetPassword $
-    [ HH.h1 [ HS.class_ "form-heading" ]
-        [ HH.text "Reset your "
-        , navigationAnchor (Proxy :: _ "home")
-            { path: "/", content: HH.text "TeamTavern" }
-        , HH.text " password"
-        ]
-    , HH.p [ HS.class_ "form-subheading" ]
-        [ HH.text $ "Enter your account email address "
-            <> "and you will receive a link to reset your password."
-        ]
-    , inputGroup
-        [ inputLabel_ "Email"
-        , requiredTextLineInput email UpdateEmail
-        ]
-    , HH.button
-        [ HS.class_ "primary-button"
-        , HP.disabled $ email == "" || submitting
-        ]
-        [ HH.i [ HS.class_ "fas fa-key button-icon" ] []
-        , HH.text
-            if submitting
-            then "Sending password reset email..."
-            else "Send password reset email"
-        ]
-    ]
-    <> formError unknownEmail "No account exists with this email."
-    <> otherFormError otherError
-    <>
-    [ HH.p
-        [ HS.class_ "form-bottom-text"]
-        [ HH.text "Remembered your password? "
-        , navigationAnchor (Proxy :: _ "signinAnchor")
-            { path: "/signin", content: HH.text "Sign in." }
-        ]
-    ]
+component :: ∀ query input output left. H.Component query input output (Async left)
+component = Hooks.component \_ _ -> Hooks.do
+    state /\ stateId <- Hooks.useState
+        ({ back: "/", email: "", error: Nothing, formError: Nothing, sending: false, sentTo: Nothing } :: State)
 
-sendPasswordResetRequest :: forall left. State -> Async left (Maybe State)
-sendPasswordResetRequest state @ {email} = Async.unify do
-    response <- fetchBody (Proxy :: _ ForgotPassword) {email}
-        # lmap (const $ Just $ state {otherError = true})
-    nextState <- pure $ onMatch
-        { noContent: const Nothing
-        , notFound: const $ Just $ state {unknownEmail = true}
-        }
-        (const $ Just $ state {otherError = true})
-        response
-    when (isNothing nextState) $ track_ "Password forgot"
-    pure nextState
+    let set = Hooks.modify_ stateId
+        fail error formError = set _ { sending = false, error = error, formError = formError }
 
-handleAction :: forall slots output left.
-    Action -> H.HalogenM State Action slots output (Async left) Unit
-handleAction Initialize =
-    setMeta "Forgot password | TeamTavern" "Request a password reset email."
-handleAction (UpdateEmail email) =
-    H.modify_ _ {email = email}
-handleAction (ResetPassword event) = do
-    H.liftEffect $ Event.preventDefault event
-    state <- H.modify _
-        { unknownEmail = false
-        , otherError   = false
-        , submitting   = true
-        }
-    newState <- H.lift $ sendPasswordResetRequest state
-    case newState of
-        Nothing -> H.liftEffect $
-            navigate { email: state.email } "/reset-password-sent"
-        Just newState' -> H.put newState' { submitting = false }
+        submit event = do
+            H.liftEffect $ preventDefault event
+            let email = trim state.email
+            if null email
+            then fail (Just "Enter your email address.") Nothing
+            else do
+                set _ { sending = true, error = Nothing, formError = Nothing }
+                result <- H.lift $ Async.attempt $ fetchBody (expecting [ "notFound" ] (Proxy :: _ ForgotPassword)) { email }
+                case result of
+                    Right response -> response # onMatch
+                        { noContent: const $ set _ { sending = false, sentTo = Just email }
+                        , notFound: const $ fail (Just "No account signs in with a password at this email.") Nothing
+                        }
+                        (const $ fail Nothing $ Just somethingWrong)
+                    Left _ -> fail Nothing $ Just somethingWrong
 
-component :: forall query input output left.
-    H.Component query input output (Async left)
-component = H.mkComponent
-    { initialState: const
-        { email: ""
-        , unknownEmail: false
-        , otherError: false
-        , submitting: false
-        }
-    , render
-    , eval: H.mkEval $ H.defaultEval
-        { handleAction = handleAction
-        , initialize = Just Initialize
-        }
-    }
+    Hooks.useLifecycleEffect do
+        back <- readBack
+        set _ { back = back }
+        pure Nothing
 
-forgotPassword :: forall query left. HH.ComponentHTML query _ (Async left)
-forgotPassword =
-    HH.slot (Proxy :: _ "forgotPassword") unit component unit absurd
+    let signInLine =
+            HH.p [ HS.class_ "muted" ]
+            [ HH.text "Remembered it? ", flowLink (authPath "/signin" state.back) "Sign in" ]
+
+    Hooks.pure case state.sentTo of
+        Just email -> flow
+            [ HH.h1_ [ HH.text "Check your email" ]
+            , flowLead $ "We sent a link to " <> email <> ". Open it within an hour to choose a new password."
+            , signInLine
+            ]
+        Nothing -> flow
+            [ HH.h1_ [ HH.text "Forgot password" ]
+            , flowLead "Enter your account's email and we'll send you a link to choose a new password."
+            , formTight submit $
+                [ textField
+                    { id: "forgot-email", label: "Email"
+                    , type_: HP.InputEmail, autocomplete: HP.AutocompleteEmail
+                    , hint: Nothing, error: state.error
+                    , value: state.email, onInput: \value -> set _ { email = value }
+                    }
+                ]
+                <> (case state.formError of
+                    Just error -> [ flowError error ]
+                    Nothing -> [])
+                <> [ submitButton state.sending "Send link" ]
+            , signInLine
+            ]
+
+forgotPassword :: ∀ action slots left.
+    H.ComponentHTML action (forgotPassword :: Slot___ | slots) (Async left)
+forgotPassword = HH.slot_ (Proxy :: _ "forgotPassword") unit component unit

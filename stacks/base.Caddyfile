@@ -1,18 +1,35 @@
 encode gzip zstd
 
+# Where both compose files mount the client. Caddy would serve its working
+# directory without it, but then the paths try_files rewrites to lose their
+# leading slash, and no path matcher sees them.
+
+root * /srv
+
+# A browser ignores Strict-Transport-Security over plain HTTP, so the local
+# stacks can send it too.
+
+header {
+    Strict-Transport-Security "max-age=31536000"
+    X-Content-Type-Options nosniff
+    Referrer-Policy strict-origin-when-cross-origin
+}
+
 # Serve index.prerender.html to the prerenderer.
 #
 # Caddy orders handle blocks itself (named matchers before path matchers), so
 # this block runs before the /api/* block for every request. The prerenderer's
 # browser sends X-RenderReady on its API calls too, so the API must be excluded
 # here or it receives this HTML instead of JSON and every page prerenders empty.
+# The sitemap, robots and llms.txt have no file behind them either, and are
+# excluded for the same reason.
 #
 # The header, not the user agent, is what marks the prerenderer: its user agent
 # reads as ordinary Chrome.
 
 @prerender_header {
     header X-RenderReady 1
-    not path /api/*
+    not path /api/* /sitemap.xml /robots.txt /llms.txt
 }
 
 handle @prerender_header {
@@ -36,37 +53,97 @@ handle @prerender_header {
 # Any path without a file behind it is rendered, and the client router decides
 # whether it is a page: one it does not know declares a 404 the prerenderer
 # answers with. So the routes live only in the router. The root is a directory,
-# which the file matcher counts as a file, so it is let through by name.
+# which the file matcher counts as a file, so it is let through by name. The
+# sitemap, robots and llms.txt are answered below without a file, and nothing
+# under /.well-known/ is a page, so they are kept out by name.
 
 @bot_page {
-    header_regexp User-Agent (?i)(baiduspider|bingbot|discordbot|embedly|facebot|facebookexternalhit|googlebot|linkedinbot|outbrain|pinterest|pinterestbot|quora\slink\spreview|rogerbot|showyoubot|slackbot|telegrambot|twitterbot|vkshare|W3C_Validator|whatsapp|yandex)
-    not path /api/* /images/*
+    header_regexp User-Agent (?i)(amazonbot|applebot|baiduspider|bingbot|bytespider|cardyb|ccbot|chatgpt-user|claude-searchbot|claude-user|claudebot|discordbot|duckassistbot|duckduckbot|embedly|facebot|facebookexternalhit|google-inspectiontool|googlebot|gptbot|iframely|linkedinbot|mastodon|oai-searchbot|outbrain|perplexity-user|perplexitybot|pinterest|pinterestbot|quora\slink\spreview|redditbot|rogerbot|showyoubot|skypeuripreview|slackbot|steamchaturllookup|telegrambot|twitterbot|vkshare|W3C_Validator|whatsapp|yandex)
+    not path /api/* /images/* /sitemap.xml /robots.txt /llms.txt /.well-known/*
     expression `{path} == "/" || !file({"try_files": [{path}]})`
 }
 
 handle @bot_page {
-    reverse_proxy renderready:3000 {
+    reverse_proxy tt-renderready:3000 {
         rewrite /render?url={args[0]}{uri}
         header_down -ETag
         header_down -Last-Modified
     }
 }
 
-# Redirect the retired game list and bare game paths to the pages that carry
-# them now. `redir` sorts before every `handle` block, so a bot gets the
-# redirect rather than a prerender of it. Both matchers are anchored at the
-# root, so the api's own /api/games paths never match.
+# The home page is the list of games. `redir` sorts before every `handle`
+# block, so a bot gets the redirect rather than a prerender of it.
 
-@games_list path /games /games/
-redir @games_list / 301
+redir /games / 301
+redir /games/ / 301
 
-@bare_game path_regexp bare_game ^/games/([^/]+)/?$
-redir @bare_game /games/{re.bare_game.1}/players 301
+# A game's old feeds, its players and its teams, are its one feed now, under the
+# handle `legacy.game_map` in redesign/import/mapping.sql gives it. Where the
+# handle changed, the old bare feed is linked too, since it redirected to the
+# players. Splitgate left the catalogue, so its old paths are the router's 404,
+# as is every other old path.
 
-# Proxy api requests to the api.
+map {path} {old_feed} {
+    ~^/games/apex(?:/(?:players|teams))?/?$  /games/apex-legends
+    ~^/games/csgo(?:/(?:players|teams))?/?$  /games/counter-strike-2
+    ~^/games/dota2(?:/(?:players|teams))?/?$ /games/dota-2
+    ~^/games/hots(?:/(?:players|teams))?/?$  /games/heroes-of-the-storm
+    ~^/games/lol(?:/(?:players|teams))?/?$   /games/league-of-legends
+    ~^/games/r6s(?:/(?:players|teams))?/?$   /games/rainbow-six-siege
+    ~^/games/tf2(?:/(?:players|teams))?/?$   /games/team-fortress-2
+    ~^/games/(overwatch|valheim|valorant)/(?:players|teams)/?$ /games/${1}
+    default none
+}
+
+@old_feed not vars {old_feed} none
+redir @old_feed {old_feed} 301
+
+# No page's path ends in a slash, so a link that adds one is sent to the page.
+# The router knows no such path and would be a bot's 404. An old feed's path
+# is sent above, straight to its new one.
+
+@trailing_slash {
+    path_regexp trailing_slash ^(.+)/$
+    not path /api/*
+}
+redir @trailing_slash {re.trailing_slash.1}{?query} 301
+
+# Proxy api requests to the api. The api reads a body whole before it looks at
+# it, so Caddy refuses one past what any route takes: a post's, the largest,
+# comes to a few kilobytes.
 
 handle_path /api/* {
-    reverse_proxy node:8080
+    request_body {
+        max_size 64KB
+    }
+    reverse_proxy tt-node
+}
+
+# The sitemap is the api's, since only the database knows the posts, but
+# crawlers look for it at the root.
+
+handle /sitemap.xml {
+    reverse_proxy tt-node
+}
+
+# Each origin names its own sitemap.
+
+handle /robots.txt {
+    header Content-Type "text/plain; charset=utf-8"
+    respond <<TXT
+        User-agent: *
+        Allow: /
+
+        Sitemap: {http.request.scheme}://{http.request.hostport}/sitemap.xml
+
+        TXT 200
+}
+
+# The site's summary for language models lists the games, which only the
+# database knows.
+
+handle /llms.txt {
+    reverse_proxy tt-node
 }
 
 # A missing image is a 404, not the SPA shell.
@@ -75,14 +152,40 @@ handle /images/* {
     file_server
 }
 
+# The site publishes nothing under /.well-known/, so what a client looks for
+# there is a 404 too. Caddy answers its own ACME challenges before any handle.
+
+handle /.well-known/* {
+    file_server
+}
+
 # Redirect ads.txt request to adstxt.venatusmedia.com with 301.
 handle_path /ads.txt {
     redir https://adstxt.venatusmedia.com/teamtavern.net/ads.txt 301
 }
 
+# Every build names its script and stylesheet anew, so a browser keeps them for
+# good. The fonts, covers and icons keep their names when they change, so they
+# are kept a week.
+
+@build_named path /app.min.* /style.min.*
+header @build_named Cache-Control "public, max-age=31536000, immutable"
+
+@same_named path /fonts/* /images/* /favicon.svg /logo-*
+header @same_named Cache-Control "public, max-age=604800"
+
 # Serve all other static files.
+#
+# The shell names the build's script and stylesheet, so a browser asks for it
+# again on every visit, or it would run an old build for days after a deploy.
+# The route lets the header see the path try_files rewrote to.
+
+@shell path / /index.html
 
 handle {
-    try_files {path} /index.html
+    route {
+        try_files {path} /index.html
+        header @shell Cache-Control no-cache
+    }
     file_server
 }

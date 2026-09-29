@@ -1,42 +1,34 @@
-module TeamTavern.Client.Components.Footer where
+module TeamTavern.Client.Components.Footer (footer) where
 
 import Prelude
 
-import Effect.Class (class MonadEffect)
-import Halogen as H
+import Effect.Class (class MonadEffect, liftEffect)
 import Halogen.HTML as HH
+import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
-import TeamTavern.Client.Components.Anchor (iconAnchor)
-import TeamTavern.Client.Components.NavigationAnchor (navigationAnchor)
-import TeamTavern.Client.Shared.Slot (Slot___)
+import Halogen.HTML.Properties.ARIA as HPA
+import TeamTavern.Client.Script.Consent (showConsentSettings)
+import TeamTavern.Client.Script.Navigate (navigateWithEvent_)
 import TeamTavern.Client.Snippets.Class as HS
-import TeamTavern.Client.Snippets.SocialMediaUrls (discordUrl, redditUrl, steamId, twitterUrl)
-import Type.Proxy (Proxy(..))
 
-type ChildSlots children =
-    ( aboutAnchor :: Slot___
-    , privacyAnchor :: Slot___
-    , discordAnchor :: Slot___
-    , redditAnchor :: Slot___
-    , steamAnchor :: Slot___
-    , twitterAnchor :: Slot___
-    | children )
-
-footer :: ∀ monad action children. MonadEffect monad =>
-    H.ComponentHTML action (ChildSlots children) monad
-footer = HH.div [ HP.class_ $ HH.ClassName "footer" ]
-    [ HH.div [ HP.class_ $ HH.ClassName "footer-content" ]
-        [ HH.div [HS.class_ "footer-content-links"]
-            [ navigationAnchor (Proxy :: _ "aboutAnchor")
-                { path: "/about", content: HH.text "About" }
-            , navigationAnchor (Proxy :: _ "privacyAnchor")
-                { path: "/privacy", content: HH.text "Privacy Policy" }
-            ]
-        , HH.div_
-            [ iconAnchor discordUrl "TeamTavern Discord server" "fab fa-discord footer-icon"
-            , iconAnchor redditUrl "TeamTavern subreddit" "fab fa-reddit footer-icon"
-            , iconAnchor steamId "TeamTavern Steam group" "fab fa-steam footer-icon"
-            , iconAnchor twitterUrl "TeamTavern Twitter account" "fab fa-twitter footer-icon"
+-- The site's own pages, linked from every page so that search finds them, and
+-- the consent dialog, which a visitor has to be able to reopen as easily as
+-- they first answered it.
+footer :: ∀ w m. MonadEffect m => HH.HTML w (m Unit)
+footer =
+    HH.footer [ HS.class_ "site-footer" ]
+    [ HH.div [ HS.class_ "site-footer-inner" ]
+        [ HH.span_ [ HH.text "TeamTavern" ]
+        , HH.nav [ HS.class_ "site-footer-links", HPA.label "Site" ]
+            [ link "/guides" "Guides"
+            , link "/about" "About"
+            , link "/contact" "Contact"
+            , link "/terms" "Terms"
+            , link "/privacy" "Privacy"
+            , HH.button [ HP.type_ HP.ButtonButton, HE.onClick \_ -> liftEffect showConsentSettings ]
+                [ HH.text "Cookie settings" ]
             ]
         ]
     ]
+    where
+    link path text = HH.a [ HP.href path, HE.onClick $ navigateWithEvent_ path ] [ HH.text text ]

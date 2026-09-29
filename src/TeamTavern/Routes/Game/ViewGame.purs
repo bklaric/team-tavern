@@ -1,20 +1,27 @@
 module TeamTavern.Routes.Game.ViewGame where
 
-import Jarilo (type (!), type (/), type (==>), Capture, Get_, Internal_, Literal, OkJson, NotFound_)
-import TeamTavern.Routes.Shared.Field (Fields)
-import TeamTavern.Routes.Shared.Platform (Platforms)
-import TeamTavern.Routes.Shared.Tracker (Trackers)
+import Jarilo (type (!), type (/), type (==>), Capture, Get_, Internal_, Literal, NotFound_, OkJson)
+import TeamTavern.Routes.Shared.Field (Field)
 
 type ViewGame =
     Get_ (Literal "games" / Capture "handle" String)
     ==> OkJson OkContent ! NotFound_ ! Internal_
 
+-- | A tracker links a player's profile: its template followed by the player's
+-- | account of the `contact` kind.
+type Tracker =
+    { contact :: String
+    , title :: String
+    , template :: String
+    }
+
 type OkContent =
-    { title :: String
+    { handle :: String
+    , title :: String
     , shortTitle :: String
-    , handle :: String
     , description :: Array String
-    , platforms :: Platforms
-    , trackers :: Trackers
-    , fields :: Fields
+    , active :: Int
+    , contacts :: Array String
+    , trackers :: Array Tracker
+    , fields :: Array Field
     }

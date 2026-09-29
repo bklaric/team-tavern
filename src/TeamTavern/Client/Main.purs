@@ -4,7 +4,7 @@ import Prelude
 
 import Async.Aff (asyncToAff)
 import Control.Bind (bindFlipped)
-import Data.Maybe (fromJust)
+import Data.Maybe (Maybe(..), fromJust)
 import Effect (Effect)
 import Effect.Aff (launchAff_)
 import Effect.Class (class MonadEffect)
@@ -13,14 +13,16 @@ import Halogen.Aff as HA
 import Halogen.VDom.Driver (runUI)
 import Partial.Unsafe (unsafePartial)
 import TeamTavern.Client.Router (Query(..), router)
-import TeamTavern.Client.Script.Analytics (identifyNickname, registerSignedIn)
-import TeamTavern.Client.Script.ReloadAds (reloadAds)
+import TeamTavern.Client.Script.ClientError (onOwnError)
+import TeamTavern.Client.Script.Invalid (describeInvalid)
+import TeamTavern.Client.Script.Navigate (navigated)
+import TeamTavern.Client.Script.Scroll (scrollRestorationManual)
+import TeamTavern.Client.Shared.ClientError (reportClientError)
 import Web.DOM.NonElementParentNode (getElementById)
-import Web.Event.Event (Event, EventType(..))
+import Web.Event.Event (Event, EventType)
 import Web.Event.EventTarget (EventListener, addEventListener)
 import Web.Event.EventTarget as DOM
 import Web.HTML (window)
-import Web.HTML.Event.PopStateEvent as PSE
 import Web.HTML.Event.PopStateEvent.EventTypes as PSET
 import Web.HTML.HTMLDocument (toNonElementParentNode)
 import Web.HTML.HTMLElement (fromElement)
@@ -37,18 +39,17 @@ addWindowListener event listener =
     window <#> Window.toEventTarget >>= addEventListener event listener false # liftEffect
 
 main :: Effect Unit
-main = HA.runHalogenAff do
+main = onOwnError (reportClientError Nothing) *> HA.runHalogenAff do
     _ <- HA.awaitBody
-    identifyNickname
-    registerSignedIn
     (spa :: _) <- window >>= document <#> toNonElementParentNode >>= getElementById "spa-teamtavern" <#> bindFlipped fromElement <#> unsafePartial fromJust # liftEffect
     state <- window >>= Window.history >>= History.state # liftEffect
     path <- window >>= Window.location >>= Location.pathname # liftEffect
     { query } <- runUI (hoist (asyncToAff absurd) (router state path)) unit spa
-    navigationListener <- createListener \event -> do
-        let state' = PSE.fromEvent event # unsafePartial fromJust # PSE.state
-        path' <- window >>= Window.location >>= Location.pathname
-        query (ChangeRoute state' path' unit) # void # launchAff_
-    addWindowListener PSET.popstate navigationListener
-    orientationListener <- createListener $ const reloadAds
-    addWindowListener (EventType "orientationchange") orientationListener
+    liftEffect scrollRestorationManual
+    liftEffect describeInvalid
+    let navigationListener popped = createListener \_ -> do
+            state' <- window >>= Window.history >>= History.state
+            path' <- window >>= Window.location >>= Location.pathname
+            query (ChangeRoute state' path' popped unit) # void # launchAff_
+    addWindowListener PSET.popstate =<< navigationListener true
+    addWindowListener navigated =<< navigationListener false

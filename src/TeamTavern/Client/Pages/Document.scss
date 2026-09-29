@@ -1,0 +1,248 @@
+/* A page of running text, set larger than the rest of the site for reading.
+   At 16 px the column holds about 75 characters a line. */
+
+.document {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    max-width: var(--feed-width);
+    margin: 0 auto;
+    padding: var(--space-8) var(--space-4);
+    color: var(--text-muted);
+    font-size: var(--size-16);
+    line-height: 1.6;
+}
+
+.document h1,
+.document h2,
+.document h3 {
+    color: var(--text);
+}
+
+.document > h1 + .muted {
+    font-size: var(--size-14);
+}
+
+.document section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    margin-top: var(--space-4);
+}
+
+.document ul {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin: 0;
+    padding-left: var(--space-5);
+}
+
+.document strong {
+    color: var(--text);
+    font-weight: 600;
+}
+
+/* A guide's text is HTML the server makes from Markdown, and its elements take
+   the document's column as their own. */
+
+.guide {
+    display: contents;
+}
+
+.guide h2 {
+    margin-top: var(--space-4);
+}
+
+/* A link to a part of a guide puts it below the sticky header, not under it. */
+.guide [id] {
+    scroll-margin-top: calc(56px + var(--space-4));
+}
+
+/* A table wraps its cells to fit a phone, which is narrower than any of the
+   guides' tables. A column is kept as wide as its longest word, so words break
+   only where one is too long for the whole table. */
+.guide table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--size-14);
+}
+
+.guide th,
+.guide td {
+    padding: var(--space-2);
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    vertical-align: top;
+    overflow-wrap: break-word;
+}
+
+.guide th {
+    color: var(--text);
+    font-weight: 600;
+}
+
+.document .guide ol {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin: 0;
+    padding-left: var(--space-5);
+}
+
+/* The summary a guide opens with. */
+.guide blockquote {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin: 0;
+    padding: var(--space-3) var(--space-4);
+    border-left: 2px solid var(--ember);
+    border-radius: var(--radius-small);
+    background: var(--table);
+}
+
+/* A game's cover beside the paragraph that opens its section. The paragraph
+   is a flex item, so it grows to hold the cover. */
+.guide .guide-cover {
+    float: left;
+    width: 64px;
+    height: 96px;
+    margin: var(--space-1) var(--space-3) 0 0;
+    border-radius: var(--radius-small);
+}
+
+/* A bar chart of shares drawn with HTML, so its text keeps the page's size on a
+   phone. Each bar's --share is its percentage; a bar takes at most 80% of its
+   row, leaving room for the figure at its end. */
+.guide-chart {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    margin: 0;
+    padding: var(--space-4);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    font-size: var(--size-12);
+    --groups: #d9733a;
+    --players: #5b8fd6;
+}
+
+.guide-chart figcaption {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+}
+
+.guide-chart figcaption strong {
+    font-size: var(--size-14);
+}
+
+.guide-chart .guide-chart-legend {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: var(--space-1) var(--space-4);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.guide-chart-legend li {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.guide-chart-legend li::before {
+    content: "";
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    background: var(--swatch);
+}
+
+.guide-chart-heading {
+    color: var(--text);
+    font-weight: 600;
+}
+
+.guide-chart-heading span {
+    color: var(--text-faint);
+    font-weight: 400;
+}
+
+.guide-chart dl {
+    display: grid;
+    grid-template-columns: minmax(0, 7.5rem) minmax(0, 1fr);
+    gap: 2px var(--space-3);
+    margin: var(--space-2) 0 0;
+}
+
+.guide-chart dt {
+    grid-row: span 2;
+    align-self: center;
+    overflow-wrap: anywhere;
+}
+
+.guide-chart dt:not(:first-child),
+.guide-chart dt:not(:first-child) + dd {
+    margin-top: var(--space-2);
+}
+
+.guide-chart dd {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin: 0;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
+}
+
+.guide-chart dd::before {
+    content: "";
+    flex: none;
+    width: calc(var(--share) * 0.8);
+    height: 10px;
+    border-radius: 0 var(--radius-small) var(--radius-small) 0;
+    background: var(--swatch);
+}
+
+/* Every chart sets group posts against player posts, in the same two colours. */
+.guide-chart .groups {
+    --swatch: var(--groups);
+}
+
+.guide-chart .players {
+    --swatch: var(--players);
+}
+
+/* The guides index: each guide under a rule, its title, then when it was
+   updated, then what it covers. */
+.document .guide-list {
+    gap: 0;
+    margin-top: var(--space-2);
+    padding-left: 0;
+    list-style: none;
+}
+
+.guide-list li {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    padding: var(--space-6) 0;
+    border-top: 1px solid var(--border);
+}
+
+.guide-list h2 a {
+    text-decoration: none;
+}
+
+.guide-list h2 a:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.guide-updated {
+    color: var(--text-faint);
+    font-size: var(--size-14);
+}
