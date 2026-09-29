@@ -9,6 +9,8 @@ foreign import joinAnEsportsTeamText :: String
 
 foreign import makeAnEsportsTeamText :: String
 
+foreign import marvelRivalsChampionshipTeamText :: String
+
 foreign import markdownToHtml :: String -> String
 
 -- | The slug is the guide's URL, so it never changes. `updated` is the date a
@@ -33,7 +35,7 @@ guides = sortBy (flip $ comparing _.updated)
       , description: "Most esports teams are amateur five-stacks playing Premier, Clash, ESEA or Siege Cup. "
             <> "Here's what each game asks of your account, what teams look for, and where to find one."
       , published: "2026-09-29"
-      , updated: "2026-09-29"
+      , updated: "2026-09-30"
       , html: markdownToHtml joinAnEsportsTeamText
       }
     , { slug: "make-an-esports-team"
@@ -42,7 +44,16 @@ guides = sortBy (flip $ comparing _.updated)
       , description: "Starting an amateur team? How to pick your format, recruit for the roles you're missing, "
             <> "run tryouts, find scrims, and the roster rules each game's tournament enforces."
       , published: "2026-09-29"
-      , updated: "2026-09-29"
+      , updated: "2026-09-30"
       , html: markdownToHtml makeAnEsportsTeamText
+      }
+    , { slug: "marvel-rivals-championship-team"
+      , heading: "How to build a Marvel Rivals Championship team"
+      , title: "Marvel Rivals Championship: how to build a Faction and qualify"
+      , description: "Every member at Platinum 3, one platform, a roster that locks at sign-up: how to recruit a Faction "
+            <> "for the Marvel Rivals Championship and the way to Ignite."
+      , published: "2026-09-30"
+      , updated: "2026-09-30"
+      , html: markdownToHtml marvelRivalsChampionshipTeamText
       }
     ]

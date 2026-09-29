@@ -47,6 +47,21 @@ test("the guides to joining and making a team lead to each other", async ({ page
     await expect(page.getByRole("figure", { name: /^Groups asking for each role/ })).toBeInViewport();
 });
 
+test("the guide to joining a team leads to the Marvel Rivals guide, and that to its game's feed", async ({ page }) => {
+    await page.goto(guidePath);
+    await expect(page.getByRole("heading", { name: guideHeading, level: 1 })).toBeVisible();
+
+    await page.getByRole("link", { name: "How to build a Marvel Rivals Championship team" }).click();
+
+    await expectPage(page, "/guides/marvel-rivals-championship-team");
+    await expect(page.getByRole("heading", { name: "How to build a Marvel Rivals Championship team", level: 1 })).toBeVisible();
+
+    await page.getByRole("link", { name: "Marvel Rivals players and groups on TeamTavern" }).last().click();
+
+    await expectPage(page, "/games/marvel-rivals");
+    await expect(page.getByRole("heading", { name: "Marvel Rivals", level: 1 })).toBeVisible();
+});
+
 // The guide's text comes after the page loads, so the page, not the browser,
 // finds the part of it the address names.
 test("an address naming a part of a guide opens the guide at it", async ({ page }) => {

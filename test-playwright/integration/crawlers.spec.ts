@@ -14,7 +14,7 @@ const sitePages = ["/guides", "/about", "/contact", "/terms", "/privacy"];
 
 const guidePath = "/guides/join-an-esports-team";
 
-const guidePaths = [guidePath, "/guides/make-an-esports-team"];
+const guidePaths = [guidePath, "/guides/make-an-esports-team", "/guides/marvel-rivals-championship-team"];
 
 // Neither robots nor the sitemap is a page, so Caddy answers a bot with the file itself
 // rather than with a render of it.
