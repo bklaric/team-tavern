@@ -10,7 +10,7 @@ const owner = "owner@example.com";
 const game = (page: Page, title: string) => page.getByRole("region", { name: title, exact: true });
 
 async function expectStart(page: Page) {
-    await expect(page.getByRole("heading", { name: "What are you posting?", level: 1 })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "What are you looking for?", level: 1 })).toBeVisible();
     await expect(page.locator(".type-card")).toHaveCount(3);
     await expect(page.locator(".type-card").nth(0)).toHaveAttribute("href", "/post/player");
     await expect(page.locator(".type-card").nth(1)).toHaveAttribute("href", "/post/group");
@@ -20,7 +20,7 @@ async function expectStart(page: Page) {
 }
 
 test.describe("the home page", () => {
-    test("asks a visitor what they are posting, and shows every game", async ({ page }) => {
+    test("asks a visitor what they are looking for, and shows every game", async ({ page }) => {
         await page.goto("/");
 
         await expectStart(page);
@@ -61,7 +61,7 @@ test.describe("the home page", () => {
 
         await dota.getByRole("link", { name: "New Dota 2 post" }).click();
         await expectPage(page, "/post");
-        await expect(page.getByRole("heading", { name: "What are you posting?" })).toBeVisible();
+        await expect(page.getByRole("heading", { name: "What are you looking for?" })).toBeVisible();
     });
 
     test("edits a post, and shows what fits it", async ({ page }) => {

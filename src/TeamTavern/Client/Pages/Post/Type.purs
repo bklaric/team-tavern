@@ -61,7 +61,7 @@ component = Hooks.component \_ _ -> Hooks.do
             ]
         )
         <>
-        [ HH.h1_ [ HH.text "What are you posting?" ]
+        [ HH.h1_ [ HH.text "What are you looking for?" ]
         , typeCards
             { href: \type_ -> case state.handle of
                 Just handle -> "/games/" <> handle <> "/post/" <> type_

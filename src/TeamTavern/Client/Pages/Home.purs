@@ -170,7 +170,7 @@ component = Hooks.component \_ _ -> Hooks.do
         Start games ->
             HH.div [ HS.class_ "home" ]
             [ HH.section [ HS.class_ "home-start", HPA.labelledBy "start-title" ]
-                [ HH.h1 [ HP.id "start-title" ] [ HH.text "What are you posting?" ]
+                [ HH.h1 [ HP.id "start-title" ] [ HH.text "What are you looking for?" ]
                 , HH.p [ HS.class_ "home-lead" ] [ HH.text lead ]
                 , typeCards { href: \type_ -> "/post/" <> type_, note: const Nothing }
                 ]
