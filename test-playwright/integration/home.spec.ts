@@ -64,6 +64,18 @@ test.describe("the home page", () => {
         await expect(page.getByRole("heading", { name: "What are you looking for?" })).toBeVisible();
     });
 
+    test("copies a post's address to share it", async ({ page, context }) => {
+        await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+        await signIn(page, owner);
+        const dota = game(page, "Dota 2");
+
+        await dota.getByRole("button", { name: "Share" }).click();
+
+        await expect(page.getByRole("status")).toHaveText("Link copied.");
+        const href = await dota.getByRole("link", { name: "Kestrel's Nest" }).getAttribute("href");
+        expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(new URL(href!, page.url()).href);
+    });
+
     test("edits a post, and shows what fits it", async ({ page }) => {
         await signIn(page, owner);
 

@@ -23,7 +23,7 @@ import Halogen.HTML.Properties.ARIA as HPA
 import Halogen.Hooks (HookM)
 import Halogen.Hooks as Hooks
 import TeamTavern.Client.Components.Button (Size(..), Weight(..), buttonLink)
-import TeamTavern.Client.Components.Card (Viewer, ownCard)
+import TeamTavern.Client.Components.Card (Viewer, ownCard, postName, postPath)
 import TeamTavern.Client.Components.CoverGrid (coverGrid, feedPath)
 import TeamTavern.Client.Components.OwnPostStatus (ownPostStatus, renewDue)
 import TeamTavern.Client.Components.Toast (toasts, useToast)
@@ -37,6 +37,7 @@ import TeamTavern.Client.Script.RenderReady (appendRenderReadyUnavailable)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Shared.Fetch (expecting, fetchPath, fetchSimple)
 import TeamTavern.Client.Shared.Renew (renew, renewFailed) as Renew
+import TeamTavern.Client.Shared.Share (sharePage)
 import TeamTavern.Client.Shared.Slot (Slot__I)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Client.Snippets.Cover (smallCoverPath)
@@ -139,6 +140,7 @@ component = Hooks.component \_ _ -> Hooks.do
                     liftEffect $ storeDescription game.handle post.type description
                     navigateWithEvent_ feed event
                 , onRenew: renew game.handle own
+                , onShare: sharePage showToast { title: postName post, path: postPath game post }
                 }
 
         -- The cover stands in for the game's name, which is there for screen

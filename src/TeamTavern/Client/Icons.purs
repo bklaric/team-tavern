@@ -8,6 +8,7 @@ module TeamTavern.Client.Icons
     , bell
     , mail
     , copy
+    , link
     , check
     , equalNot
     , fitMark
@@ -113,6 +114,12 @@ copy :: ∀ w i. HH.HTML w i
 copy = icon
     [ SE.rect [ attr "width" "14", attr "height" "14", attr "x" "8", attr "y" "8", attr "rx" "2", attr "ry" "2" ]
     , SE.path [ attr "d" "M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" ]
+    ]
+
+link :: ∀ w i. HH.HTML w i
+link = icon
+    [ SE.path [ attr "d" "M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" ]
+    , SE.path [ attr "d" "M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" ]
     ]
 
 check :: ∀ w i. HH.HTML w i

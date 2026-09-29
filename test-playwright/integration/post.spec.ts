@@ -94,6 +94,26 @@ test.describe("posting", () => {
         await expect(card(page, "LeagueOfLegendsTester").locator(".fact-fit").first()).toBeVisible();
     });
 
+    test("gives the new post's address to share, which opens the post", async ({ page, context, baseURL }) => {
+        await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+        await signUp(page);
+        const name = unique("Rift Owls ");
+
+        await publishGroup(page, name);
+
+        const share = page.locator(".live-share");
+        const address = share.getByRole("link");
+        const host = new URL(baseURL!).host;
+        await expect(address).toHaveText(new RegExp(`^${host}/games/league-of-legends/posts/\\d+$`));
+        await share.getByRole("button", { name: "Share" }).click();
+        await expect(page.getByRole("status")).toHaveText("Link copied.");
+        expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(`http://${await address.textContent()}`);
+
+        await address.click();
+        await expectPage(page, /^\/games\/league-of-legends\/posts\/\d+$/);
+        await expect(page.getByRole("heading", { name, level: 1 })).toBeVisible();
+    });
+
     test("starts from the type with the game known, and offers the post the player already has", async ({ page }) => {
         await signUp(page);
         const name = unique("Rift Owls ");

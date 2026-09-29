@@ -400,6 +400,7 @@ component = Hooks.component \_ { handle, type_ } -> Hooks.do
             , onContact: pure unit
             , onEdit: pure unit
             , onRenew: pure unit
+            , onShare: pure unit
             }
 
         togglePreview (event :: MouseEvent) =
@@ -431,6 +432,7 @@ component = Hooks.component \_ { handle, type_ } -> Hooks.do
             , onContact: pure unit
             , onEdit: pure unit
             , onRenew: pure unit
+            , onShare: pure unit
             }
 
         existingHeading game = HH.h1_ [ HH.text $ "You already have a " <> game.title <> " " <> type_ <> " post" ]

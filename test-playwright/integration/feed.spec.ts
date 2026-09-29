@@ -101,6 +101,21 @@ test.describe("the feed", () => {
         await expect(feedOrder(page)).toHaveText(["Night Owls"]);
     });
 
+    test("offers a card's address to share once its details are open", async ({ page, context }) => {
+        await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+        await page.goto(feedPath);
+        await expectSettled(page);
+        const nightOwls = card(page, "Night Owls");
+        await expect(nightOwls.getByRole("button", { name: "Share" })).toHaveCount(0);
+
+        await nightOwls.getByRole("button", { name: "Details" }).click();
+        await nightOwls.getByRole("button", { name: "Share" }).click();
+
+        await expect(page.getByRole("status")).toHaveText("Link copied.");
+        const href = await nightOwls.getByRole("link", { name: "Night Owls", exact: true }).getAttribute("href");
+        expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(new URL(href!, page.url()).href);
+    });
+
     test("shows a group only players, with no Showing", async ({ page }) => {
         await page.goto(feedPath);
         await page.getByLabel("We're a group looking for players").check();

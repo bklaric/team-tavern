@@ -155,6 +155,33 @@
     color: var(--ember);
 }
 
+/* The new post's address, to hand on. */
+
+.live-share {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    padding: var(--space-4);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    background: var(--table);
+    color: var(--text-muted);
+}
+
+.live-share-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+}
+
+.live-share-address {
+    min-width: 0;
+    font-weight: 500;
+    overflow-wrap: anywhere;
+}
+
 .flow-actions {
     display: flex;
     flex-wrap: wrap;

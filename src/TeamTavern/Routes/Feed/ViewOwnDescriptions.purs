@@ -11,7 +11,8 @@ type ViewOwnDescriptions =
     ==> OkJson OkContent ! NotAuthorized_ ! Internal_
 
 type OwnDescription =
-    { type :: String
+    { id :: Int
+    , type :: String
     , name :: Maybe String
     , description :: Description
     }

@@ -30,7 +30,7 @@ import Halogen.Hooks as Hooks
 import Halogen.Subscription as Subscription
 import TeamTavern.Client.Components.Ads as Ads
 import TeamTavern.Client.Components.Button (Size(..), Weight(..), button)
-import TeamTavern.Client.Components.Card (Place(..), Viewer, card, tierOf, typeIcon)
+import TeamTavern.Client.Components.Card (Place(..), Viewer, card, postName, postPath, tierOf, typeIcon)
 import TeamTavern.Client.Components.ContactPanel (contactPanel, markMessaged, takeContactParam, useContactPanel)
 import TeamTavern.Client.Components.Divider (divider, tierHeading)
 import TeamTavern.Client.Components.Overlay (Presentation(..), useOverlay)
@@ -52,6 +52,7 @@ import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Shared.Fetch (expecting, fetchPath, fetchPathBody, fetchSimple)
 import TeamTavern.Client.Shared.Me (fetchMe)
 import TeamTavern.Client.Shared.Renew (renew, renewFailed)
+import TeamTavern.Client.Shared.Share (sharePage)
 import TeamTavern.Client.Shared.Slot (Slot__I)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Client.Snippets.Cover (smallCoverPath)
@@ -464,6 +465,7 @@ component = Hooks.component \_ { handle, restore, cache } -> Hooks.do
             , onContact: openPanel { signedIn: isJust state.nickname, game } post
             , onEdit: navigate_ $ "/games/" <> handle <> "/post/" <> post.type <> "?from=edit"
             , onRenew: renewPost post
+            , onShare: sharePage showToast { title: postName post, path: postPath game post }
             }
 
         -- A renewed post is active again, so the feed is asked again for

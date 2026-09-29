@@ -44,6 +44,7 @@ descriptionJson = """
 ownDescriptionsQuery :: Query
 ownDescriptionsQuery = Query $ """
     select
+        post.id,
         post.ilk as type,
         post.name,
         """ <> descriptionJson <> """ as description

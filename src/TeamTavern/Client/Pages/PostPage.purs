@@ -25,7 +25,7 @@ import Halogen.HTML.Properties as HP
 import Halogen.HTML.Properties.ARIA as HPA
 import Halogen.Hooks as Hooks
 import TeamTavern.Client.Components.Ads as Ads
-import TeamTavern.Client.Components.Card (Place(..), Viewer, briefCard, card, factWords, postName, typeIcon)
+import TeamTavern.Client.Components.Card (Place(..), Viewer, briefCard, card, factWords, postName, postPath, typeIcon)
 import TeamTavern.Client.Components.ContactPanel (contactPanel, markMessaged, takeContactParam, useContactPanel)
 import TeamTavern.Client.Components.OwnPostStatus (ownPostStatus)
 import TeamTavern.Client.Components.Toast (toasts, useToast)
@@ -41,6 +41,7 @@ import TeamTavern.Client.Shared.Censor (censor)
 import TeamTavern.Client.Shared.Fetch (expecting, fetchPath)
 import TeamTavern.Client.Shared.Me (fetchMe)
 import TeamTavern.Client.Shared.Renew (renew, renewFailed)
+import TeamTavern.Client.Shared.Share (sharePage)
 import TeamTavern.Client.Shared.Slot (Slot__I)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Client.Snippets.Cover (smallCoverPath)
@@ -319,6 +320,7 @@ component = Hooks.component \_ { handle, id, feedBehind } -> Hooks.do
                 , onContact: openPanel { signedIn: shown.signedIn, game } page.post
                 , onEdit: navigate_ $ "/games/" <> handle <> "/post/" <> page.post.type <> "?from=edit"
                 , onRenew: renewPost page.post
+                , onShare: sharePage showToast { title: postName page.post, path: postPath game page.post }
                 }
             , Just $ feedSection game shown
             , moreSection game viewer page.more

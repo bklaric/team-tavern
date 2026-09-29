@@ -1,4 +1,4 @@
-module TeamTavern.Client.Components.Card (Place(..), Viewer, briefCard, card, factWords, flagText, ownCard, postFacts, postName, tierOf, typeIcon) where
+module TeamTavern.Client.Components.Card (Place(..), Viewer, briefCard, card, factWords, flagText, ownCard, postFacts, postName, postPath, tierOf, typeIcon) where
 
 import Prelude
 
@@ -229,7 +229,7 @@ hoursOf viewer post = do
 agoTime :: ∀ w i. Viewer -> String -> HH.HTML w i
 agoTime viewer time = HH.time [ HP.attr (HH.AttrName "datetime") (isoOf time) ] [ HH.text $ ago viewer.now time ]
 
-postPath :: ViewGame.OkContent -> CardRow -> String
+postPath :: ∀ fields. { handle :: String | fields } -> CardRow -> String
 postPath game post = "/games/" <> game.handle <> "/posts/" <> show post.id
 
 -- | What a card's heading calls the post: a player by their nickname, a group
@@ -285,7 +285,9 @@ data Place w i
 -- | A post as a card (brief 5). `marked` shows the facts' marks; without it the
 -- | card reads as it does with an empty description, marks or not. The viewer's
 -- | own post offers Edit and Renew in place of the contact button, and a post the
--- | viewer has written about opens that conversation (brief 5.6).
+-- | viewer has written about opens that conversation (brief 5.6). Share follows
+-- | them on a post's page and on a card opened for its details, which a feed of
+-- | twenty cards doesn't show twenty of.
 card :: ∀ w m. MonadEffect m =>
     { game :: ViewGame.OkContent
     , viewer :: Viewer
@@ -297,9 +299,10 @@ card :: ∀ w m. MonadEffect m =>
     , onContact :: m Unit
     , onEdit :: m Unit
     , onRenew :: m Unit
+    , onShare :: m Unit
     }
     -> HH.HTML w (m Unit)
-card { game, viewer, post, marked, expanded: expanded', place, onToggle, onContact, onEdit, onRenew } = let
+card { game, viewer, post, marked, expanded: expanded', place, onToggle, onContact, onEdit, onRenew, onShare } = let
     preview = case place of
         Preview -> true
         _ -> false
@@ -382,6 +385,9 @@ card { game, viewer, post, marked, expanded: expanded', place, onToggle, onConta
             ]
         | isJust post.messaged = [ contact [ Icons.messageCircle, HH.text "Open conversation" ] ]
         | otherwise = [ contact $ contactButton post ]
+    share
+        | preview || blocked || post.id == 0 || not expanded = []
+        | otherwise = [ button (if page then Outline else Text) Small onShare [ Icons.link, HH.text "Share" ] ]
     toggle =
         HH.button
         [ HS.class_ "button button-text button-small card-details-toggle"
@@ -393,6 +399,7 @@ card { game, viewer, post, marked, expanded: expanded', place, onToggle, onConta
     footer = HH.div [ HS.class_ "card-footer" ] $
         [ HH.div [ HS.class_ "card-meta" ] $ catMaybes [ ownerLine, if blocked then Nothing else messagedLine ] ]
         <> actions
+        <> share
         <> (if not page && (expandable || not null paragraphs) then [ toggle ] else [])
     in
     HH.article [ HS.class_ classes ] $ catMaybes
@@ -435,9 +442,10 @@ ownCard :: ∀ w m. MonadEffect m =>
     , renewDue :: Boolean
     , onFits :: MouseEvent -> m Unit
     , onRenew :: m Unit
+    , onShare :: m Unit
     }
     -> HH.HTML w (m Unit)
-ownCard { game, viewer, post, status, renewDue, onFits, onRenew } = let
+ownCard { game, viewer, post, status, renewDue, onFits, onRenew, onShare } = let
     href = postPath game post
     feedPath = "/games/" <> game.handle
     editPath = "/games/" <> game.handle <> "/post/" <> post.type <> "?from=edit"
@@ -457,6 +465,7 @@ ownCard { game, viewer, post, status, renewDue, onFits, onRenew } = let
             [ Icons.search, HH.text "See what fits" ]
         , buttonLink Text Small editPath [ Icons.pencil, HH.text "Edit" ]
         , button (if renewDue then Outline else Text) Small onRenew [ Icons.refreshCw, HH.text "Renew" ]
+        , button Text Small onShare [ Icons.link, HH.text "Share" ]
         ]
     ]
 

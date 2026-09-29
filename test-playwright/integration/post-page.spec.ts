@@ -35,6 +35,16 @@ test.describe("a post's page", () => {
             .toHaveAttribute("datetime", /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/);
     });
 
+    test("copies its address for a visitor to share", async ({ page, context }) => {
+        await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+        await openFromFeed(page, "Night Owls");
+
+        await page.locator(".card").getByRole("button", { name: "Share" }).click();
+
+        await expect(page.getByRole("status")).toHaveText("Link copied.");
+        expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(page.url());
+    });
+
     test("goes back to the feed as it was left", async ({ page }) => {
         await page.setViewportSize({ width: 1280, height: 600 });
         await page.goto(feedPath);
@@ -107,6 +117,7 @@ test.describe("a post's page", () => {
         await expect(page.locator(".card-own")).toHaveText("Your post");
         await expect(page.getByRole("button", { name: "Edit" })).toBeVisible();
         await expect(page.getByRole("button", { name: "Renew" })).toBeVisible();
+        await expect(page.getByRole("button", { name: "Share" })).toBeVisible();
         await expect(page.locator(".card-contact")).toHaveCount(0);
         await expect(page.locator(".own-post-state")).toHaveText(/^Active for \d+ more days$/);
         await expect(page.getByText("No conversations yet")).toBeVisible();
@@ -199,5 +210,24 @@ test.describe("a post's page", () => {
 
         await expect(page.getByRole("heading", { name: "Page could not be found." })).toBeVisible();
         await expect(page.locator('meta[name="renderready-status-code"]')).toHaveAttribute("content", "404");
+    });
+});
+
+// A headless browser has no share sheet, so the page's stands in and keeps what it was given.
+test.describe("a post's page on a phone", () => {
+    test.use({ viewport: { width: 375, height: 800 }, isMobile: true, hasTouch: true });
+
+    test("hands its address to the share sheet", async ({ page }) => {
+        await page.addInitScript(() => {
+            (window as any).shared = [];
+            navigator.share = async data => { (window as any).shared.push(data); };
+        });
+        await openFromFeed(page, "Night Owls");
+
+        await page.locator(".card").getByRole("button", { name: "Share" }).click();
+
+        await expect.poll(() => page.evaluate(() => (window as any).shared))
+            .toEqual([{ title: "Night Owls", url: page.url() }]);
+        await expect(page.locator(".toast")).toHaveCount(0);
     });
 });

@@ -762,6 +762,7 @@ component = Hooks.component \_ _ -> Hooks.do
                     , onContact: pure unit
                     , onEdit: pure unit
                     , onRenew: pure unit
+                    , onShare: pure unit
                     }
                 feedCard key = cardOf key valorant { marked: true, place: Listed }
                 cardState label key game post = [ caption label, cardOf key game { marked: false, place: Listed } post ]
@@ -813,6 +814,7 @@ component = Hooks.component \_ _ -> Hooks.do
                         , renewDue: renewDue viewer.now posts.ownExpires
                         , onFits: const $ pure unit
                         , onRenew: pure unit
+                        , onShare: pure unit
                         }
                     , caption "On its own page, blocked"
                     , cardOf "state-page-blocked" valorant { marked: false, place: Page { blocked: true, status: [] } } posts.nightOwls

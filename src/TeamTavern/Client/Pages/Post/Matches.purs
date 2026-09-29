@@ -19,7 +19,8 @@ import Halogen.HTML.Elements.Keyed as HK
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Halogen.Hooks as Hooks
-import TeamTavern.Client.Components.Card (Place(..), Viewer, card, tierOf)
+import TeamTavern.Client.Components.Button (Size(..), Weight(..), button)
+import TeamTavern.Client.Components.Card (Place(..), Viewer, card, postName, postPath, tierOf)
 import TeamTavern.Client.Components.ContactPanel (contactPanel, markMessaged, useContactPanel)
 import TeamTavern.Client.Components.Flow (flowLead)
 import TeamTavern.Client.Components.Toast (toasts, useToast)
@@ -31,6 +32,7 @@ import TeamTavern.Client.Script.Navigate (navigateReplace_, navigateWithEvent_)
 import TeamTavern.Client.Script.QueryParams (getQueryParam)
 import TeamTavern.Client.Script.Timezone (getClientTimezone)
 import TeamTavern.Client.Shared.Fetch (fetchPath, fetchPathBody)
+import TeamTavern.Client.Shared.Share (sharePage)
 import TeamTavern.Client.Shared.Slot (Slot__I)
 import TeamTavern.Client.Snippets.Class as HS
 import TeamTavern.Routes.Feed.ViewFeed (ViewFeed)
@@ -40,14 +42,19 @@ import TeamTavern.Routes.Game.ViewGame as ViewGame
 import TeamTavern.Routes.Shared.Card (CardRow)
 import TeamTavern.Routes.Shared.Description (Description)
 import Type.Proxy (Proxy(..))
+import Web.HTML (window)
+import Web.HTML.Location (host)
+import Web.HTML.Window (location)
 import Web.UIEvent.MouseEvent (MouseEvent)
 
 type Input = { handle :: String, type_ :: String }
 
 -- | `fits` are the active posts that fit the new one, all of them; `posts`
--- | the first batch, which holds the closest when nothing fits.
+-- | the first batch, which holds the closest when nothing fits. `own` is the
+-- | new post's page, by its path and its address without the scheme.
 type Loaded =
     { game :: ViewGame.OkContent
+    , own :: { path :: String, address :: String, name :: Maybe String }
     , description :: Description
     , fits :: Array CardRow
     , fitCount :: Int
@@ -97,7 +104,7 @@ component = Hooks.component \_ { handle, type_ } -> Hooks.do
         ({ screen: Loading, updated: false, viewer: Nothing, expanded: [] } :: State)
     { toast, showToast, dismissToast } <- useToast
 
-    let postPath = "/games/" <> handle <> "/post/" <> type_
+    let screenPath = "/games/" <> handle <> "/post/" <> type_
         set = Hooks.modify_ stateId
 
         load = do
@@ -107,8 +114,10 @@ component = Hooks.component \_ { handle, type_ } -> Hooks.do
             own <- H.lift $ Async.attempt (fetchPath (Proxy :: _ ViewOwnDescriptions) { handle })
                 <#> (hush >=> onMatch { ok: Just } (const Nothing))
             case game, own <#> find (_.type >>> eq type_) of
-                Just game', Just (Just { description }) -> do
+                Just game', Just (Just { id, name, description }) -> do
+                    host' <- liftEffect $ window >>= location >>= host
                     let description' = description { timezone = description.timezone <|> Just timezone }
+                        ownPath = "/games/" <> handle <> "/posts/" <> show id
                         batch cursor = H.lift $ Async.attempt
                             (fetchPathBody (Proxy :: _ ViewFeed) { handle } { description: description', showing: [], cursor })
                             <#> (hush >=> onMatch { ok: Just } (const Nothing))
@@ -129,6 +138,7 @@ component = Hooks.component \_ { handle, type_ } -> Hooks.do
                         Just { posts, count } -> set _
                             { screen = Ready
                                 { game: game'
+                                , own: { path: ownPath, address: host' <> ownPath, name }
                                 , description: description'
                                 , fits: filter fits posts
                                 , fitCount: count
@@ -136,7 +146,7 @@ component = Hooks.component \_ { handle, type_ } -> Hooks.do
                                 }
                             }
                         Nothing -> set _ { screen = Failed }
-                Just _, Just Nothing -> navigateReplace_ postPath
+                Just _, Just Nothing -> navigateReplace_ screenPath
                 _, _ -> set _ { screen = Failed }
 
     -- A block takes the owner's post out of the fits, and Undo puts it back.
@@ -176,7 +186,27 @@ component = Hooks.component \_ { handle, type_ } -> Hooks.do
             , onContact: openPanel { signedIn: true, game } post
             , onEdit: pure unit
             , onRenew: pure unit
+            , onShare: sharePage showToast { title: postName post, path: postPath game post }
             }
+
+        -- The new post's page is what the player hands on, since a link to it
+        -- previews the post.
+        shareSection game own =
+            HH.div [ HS.class_ "live-share" ]
+            [ HH.p_ [ HH.text $ "Share your post wherever you look for "
+                <> (if type_ == "player" then "a team" else "players")
+                <> ". Its link shows what you wrote." ]
+            , HH.div [ HS.class_ "live-share-row" ]
+                [ HH.a [ HS.class_ "live-share-address", HP.href own.path, HE.onClick $ navigateWithEvent_ own.path ]
+                    [ HH.text own.address ]
+                , button Outline Small
+                    (sharePage showToast
+                        { title: maybe "" (_ <> " · ") own.name <> game.title <> " " <> type_
+                        , path: own.path
+                        })
+                    [ Icons.link, HH.text "Share" ]
+                ]
+            ]
 
         -- See all opens the feed with the new post as its description
         -- (brief 11.2).
@@ -203,6 +233,7 @@ component = Hooks.component \_ { handle, type_ } -> Hooks.do
                 [ Icons.partyPopper
                 , HH.h1_ [ HH.text if state.updated then "Your post is updated" else "Your post is live" ]
                 ]
+            , shareSection loaded.game loaded.own
             , HH.h2_ [ HH.text
                 if null loaded.fits then "Nobody fits your " <> noun <> " yet"
                 else fitsSentence type_ loaded.fitCount loaded.fits
