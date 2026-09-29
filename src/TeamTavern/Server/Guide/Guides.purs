@@ -30,8 +30,8 @@ guides = sortBy (flip $ comparing _.updated)
       , title: "How to join an esports team: the way in for Valorant, League, CS2 and more"
       , description: "Most esports teams are amateur five-stacks playing Premier, Clash, ESEA or Siege Cup. "
             <> "Here's what each game asks of your account, what teams look for, and where to find one."
-      , published: "2026-09-28"
-      , updated: "2026-09-28"
+      , published: "2026-09-29"
+      , updated: "2026-09-29"
       , html: markdownToHtml joinAnEsportsTeamText
       }
     ]

@@ -248,8 +248,12 @@ const scenes = [
     },
     {
         name: "guide", run: async (page, shot) => {
-            await open(page, "/guides/join-an-esports-team");
-            await page.locator(".guide").waitFor({ state: "attached" });
+            // The covers are lazy, and those below the window never load on their own, so
+            // the whole page's shot loads them at once.
+            await page.goto("/guides/join-an-esports-team");
+            await page.locator(".guide table").waitFor();
+            await page.evaluate(() => document.querySelectorAll("img[loading=lazy]").forEach(image => image.loading = "eager"));
+            await settle(page);
             await shot();
         },
     },

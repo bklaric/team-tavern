@@ -282,6 +282,7 @@ test.describe("a page's structured data", () => {
         expect(organization).toMatchObject({ name: "TeamTavern" });
         expect(node("Article")).toMatchObject({
             headline: "How to join an esports team",
+            image: expect.stringMatching(/\/logo-512\.png$/),
             datePublished: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
             dateModified: expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
             author: { "@id": organization["@id"] },

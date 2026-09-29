@@ -158,6 +158,7 @@ setGuideData { path, heading, description, published, updated } = liftEffect do
                 , "@id": origin' <> path <> "#article"
                 , headline: heading
                 , description
+                , image: origin' <> "/logo-512.png"
                 , datePublished: published
                 , dateModified: updated
                 , mainEntityOfPage: origin' <> path

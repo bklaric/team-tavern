@@ -45,8 +45,8 @@ component = Hooks.component \_ _ -> Hooks.do
                 [ HH.ul [ HS.class_ "guide-list" ] $ guides' <#> \{ slug, heading, description, updated } ->
                     HH.li_
                     [ HH.h2_ [ link ("/guides/" <> slug) heading ]
-                    , HH.p_ [ HH.text description ]
                     , HH.p [ HS.class_ "guide-updated" ] [ HH.text $ "Updated " <> longDate updated ]
+                    , HH.p_ [ HH.text description ]
                     ]
                 ]
 
