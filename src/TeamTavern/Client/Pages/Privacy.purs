@@ -10,7 +10,7 @@ import TeamTavern.Client.Pages.Document (adminEmail, document, link, section)
 
 privacy :: ∀ w m. MonadEffect m => HH.HTML w (m Unit)
 privacy =
-    document { title: "Privacy policy", updated: Just "26 September 2026" }
+    document { title: "Privacy policy", updated: Just "29 September 2026" }
     [ section "Who's responsible"
         [ HH.p_
             [ HH.text "TeamTavern, run from Croatia, is responsible for your data. Contact: "
@@ -50,7 +50,7 @@ privacy =
     , section "Who handles data for us"
         [ HH.ul_
             [ item "Hetzner" "(Germany) hosts the site and database."
-            , item "Twilio SendGrid" "(US) sends our emails, including the text of messages you receive."
+            , item "Amazon Web Services" "(US) sends our emails from its servers in Germany, including the text of messages you receive."
             , item "Google" "(US) runs the consent dialog and our email, which holds reports, what you send us and our database backups."
             , item "Discord" "(US) is involved only if you sign in with it. We receive your Discord id, username and email."
             ]

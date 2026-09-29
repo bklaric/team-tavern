@@ -1,7 +1,7 @@
 {
   "name": "team-tavern",
   "dependencies": {
-    "@sendgrid/mail": "^8.1.6",
+    "@aws-sdk/client-sesv2": "^3.1142.0",
     "bcrypt": "^6.0.0",
     "pg": "^8.23.0"
   },

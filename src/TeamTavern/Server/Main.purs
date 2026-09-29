@@ -8,7 +8,7 @@ import Control.Monad.Maybe.Trans (lift)
 import Data.Array as Array
 import Data.Either (either, note)
 import Data.Int (fromString)
-import Data.Maybe (Maybe(..), fromMaybe, isJust)
+import Data.Maybe (Maybe(..), fromMaybe)
 import Data.String as String
 import Effect (Effect)
 import Effect.Console (log)
@@ -52,7 +52,7 @@ import TeamTavern.Server.Infrastructure.Environment as Environment
 import TeamTavern.Server.Infrastructure.FetchDiscordUser (DiscordApiUrl(..))
 import TeamTavern.Server.Infrastructure.Log (logStamped, print)
 import TeamTavern.Server.Infrastructure.Postgres (databaseErrorLines)
-import TeamTavern.Server.Infrastructure.Sendgrid (setApiKey, setBaseUrl)
+import TeamTavern.Server.Infrastructure.Ses (createClient)
 import TeamTavern.Server.LlmsTxt.ViewLlmsTxt (viewLlmsTxt)
 import TeamTavern.Server.Notification.ReadNotification (readNotification)
 import TeamTavern.Server.Notification.ReadNotifications (readNotifications)
@@ -87,11 +87,6 @@ serveOptions =
     , onStreamError: \error ->
         logStamped $ "Request stream error | " <> print error
     }
-
-setSendGridApiKey :: ExceptT String Effect Unit
-setSendGridApiKey = do
-    key <- lookupEnv "SENDGRID_API_KEY" <#> note "Couldn't read variable SENDGRID_API_KEY" # ExceptT
-    lift $ setApiKey key
 
 loadPostgresVariables :: ExceptT String Effect
     { user :: String
@@ -138,22 +133,23 @@ loadDiscordApiUrl =
     <#> fromMaybe "https://discord.com/api"
     <#> DiscordApiUrl
 
--- | Staging and production send through SendGrid and link to their own origin.
--- | The local stacks link relative to the site they serve, and only log, unless
--- | SENDGRID_API_URL names something that takes SendGrid's requests, as the test
--- | stack's mail stub does. The key is set by then, since setting it resets the
--- | base URL.
-loadMailer :: Environment -> Effect Mailer
+-- | Staging and production send through SES and link to their own origin. The
+-- | local stacks link relative to the site they serve, and only log, unless
+-- | AWS_ENDPOINT_URL_SESV2 names something that takes SES's requests, as the
+-- | test stack's mail stub does. The SDK reads that variable itself.
+loadMailer :: Environment -> ExceptT String Effect Mailer
 loadMailer environment = do
-    apiUrl <- lookupEnv "SENDGRID_API_URL"
-    case apiUrl of
-        Just url -> setBaseUrl url
-        Nothing -> pure unit
+    accessKeyId <- lookupEnv "AWS_ACCESS_KEY_ID"
+        <#> note "Couldn't read variable AWS_ACCESS_KEY_ID." # ExceptT
+    secretAccessKey <- lookupEnv "AWS_SECRET_ACCESS_KEY"
+        <#> note "Couldn't read variable AWS_SECRET_ACCESS_KEY." # ExceptT
+    endpoint <- lift $ lookupEnv "AWS_ENDPOINT_URL_SESV2"
+    client <- lift $ createClient { accessKeyId, secretAccessKey }
     pure $ Mailer case environment of
-        Production -> { origin: "https://www.teamtavern.net", send: true }
-        Staging -> { origin: "https://staging.teamtavern.net", send: true }
-        Development -> { origin: "", send: isJust apiUrl }
-        Test -> { origin: "", send: isJust apiUrl }
+        Production -> { origin: "https://www.teamtavern.net", client: Just client }
+        Staging -> { origin: "https://staging.teamtavern.net", client: Just client }
+        Development -> { origin: "", client: endpoint $> client }
+        Test -> { origin: "", client: endpoint $> client }
 
 -- | The worker's period in seconds, an hour unless WORKER_PERIOD says otherwise,
 -- | as the test stack's does.
@@ -276,8 +272,7 @@ main = either log pure =<< runExceptT do
     adminEmail <- loadAdminEmail
     workerPeriod <- loadWorkerPeriod
     pool <- createPostgresPool
-    setSendGridApiKey
-    mailer <- lift $ loadMailer environment
+    mailer <- loadMailer environment
     clientErrorLimit <- lift createClientErrorLimit
     lift $ startWorker workerPeriod mailer pool
     lift $ runServer environment mailer discordApiUrl adminEmail clientErrorLimit pool

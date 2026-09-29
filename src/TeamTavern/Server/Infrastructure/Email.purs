@@ -5,15 +5,16 @@ import Prelude
 
 import Async (Async, attempt, fromEffect)
 import Data.Either (Either(..))
+import Data.Maybe (Maybe(..))
 import Data.String (Pattern(..), Replacement(..), joinWith, replaceAll)
 import TeamTavern.Server.Infrastructure.Log (logError, logStamped)
 import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
-import TeamTavern.Server.Infrastructure.Sendgrid (Message, sendAsync)
+import TeamTavern.Server.Infrastructure.Ses (SendEmailParams, SesV2Client, sendAsync)
 
--- | Where the links in an email point, and whether it is sent or only logged.
--- | The origin is empty where emails are only read on the site's own origin:
--- | logged, or captured by the test stack's mail stub.
-newtype Mailer = Mailer { origin :: String, send :: Boolean }
+-- | Where the links in an email point, and the client that sends it, without
+-- | which it is only logged. The origin is empty where emails are only read on
+-- | the site's own origin: logged, or captured by the test stack's mail stub.
+newtype Mailer = Mailer { origin :: String, client :: Maybe SesV2Client }
 
 -- | An email is its blocks, which make both the HTML and the text body, so the
 -- | two say the same thing. A button's path is on the site. A player's email
@@ -117,10 +118,11 @@ plain origin email =
         then "\n\n--\nChoose which emails you get: " <> origin <> unsubscribePath <> "\n"
         else "\n"
 
-message :: String -> Email -> Message
+-- The one sender the IAM user's policy lets it send as.
+message :: String -> Email -> SendEmailParams
 message origin email =
-    { to: email.to
-    , from: "admin@teamtavern.net"
+    { fromEmailAddress: "admin@teamtavern.net"
+    , toAddresses: [ email.to ]
     , subject: email.subject
     , html: html origin email
     , text: plain origin email
@@ -128,9 +130,9 @@ message origin email =
 
 -- | Sends the email, or logs its text where the mailer only logs.
 deliver :: ∀ errors. Mailer -> Email -> Async (InternalTerror_ errors) Unit
-deliver (Mailer { origin, send }) email
-    | send = sendAsync $ message origin email
-    | otherwise = fromEffect $ logStamped $
+deliver (Mailer { origin, client }) email = case client of
+    Just client' -> sendAsync client' $ message origin email
+    Nothing -> fromEffect $ logStamped $
         "Email to " <> email.to <> " | " <> email.subject <> "\n" <> plain origin email
 
 -- | Delivers the email and logs a failure under the heading rather than

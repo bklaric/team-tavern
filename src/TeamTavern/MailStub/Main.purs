@@ -1,4 +1,4 @@
--- | Stands in for SendGrid in the test stack. It keeps every email the server
+-- | Stands in for SES in the test stack. It keeps every email the server
 -- | sends and shows those to an address at `/mail?to=<address>`, which Caddy
 -- | serves on the site's own origin, so a spec opens its player's mail in the
 -- | browser and follows the links in it as the player would.
@@ -6,8 +6,8 @@ module TeamTavern.MailStub.Main (main) where
 
 import Prelude
 
-import Data.Array (concatMap, filter, find, null)
-import Data.Maybe (Maybe(..), maybe)
+import Data.Array (filter, null)
+import Data.Maybe (Maybe(..))
 import Data.String (Pattern(..), Replacement(..), joinWith, replaceAll, stripPrefix)
 import Effect (Effect)
 import Effect.Ref (Ref)
@@ -26,20 +26,21 @@ import Yoga.JSON (readJSON_)
 
 type Mail = { to :: String, subject :: String, html :: String }
 
--- | The part of SendGrid's mail send request the page shows.
+-- | The part of SES's SendEmail request, with a simple message, the page shows.
 type SendRequest =
-    { personalizations :: Array { to :: Array { email :: String } }
-    , subject :: String
-    , content :: Array { type :: String, value :: String }
+    { "Destination" :: { "ToAddresses" :: Array String }
+    , "Content" :: { "Simple" ::
+        { "Subject" :: { "Data" :: String }
+        , "Body" :: { "Html" :: { "Data" :: String } }
+        } }
     }
 
 mailsOf :: SendRequest -> Array Mail
 mailsOf request = let
-    html = request.content # find (_.type >>> eq "text/html") # maybe "" _.value
+    message = request."Content"."Simple"
     in
-    request.personalizations
-    # concatMap _.to
-    <#> \{ email } -> { to: email, subject: request.subject, html }
+    request."Destination"."ToAddresses"
+    <#> \to -> { to, subject: message."Subject"."Data", html: message."Body"."Html"."Data" }
 
 escape :: String -> String
 escape = replaceAll (Pattern "&") (Replacement "&amp;")
@@ -72,14 +73,13 @@ reply status contentType body response = do
 respond :: Ref (Array Mail) -> IncomingMessage -> ServerResponse -> Effect Unit
 respond store request response =
     case method request, url request of
-    Just "POST", Just "/v3/mail/send" ->
+    Just "POST", Just "/v2/email/outbound-emails" ->
         request # collectDataEvents (map unsafeCoerce >>> concat_ >=> toString___ >=> \body ->
             case readJSON_ body of
             Just sendRequest -> do
                 -- Newest first.
                 Ref.modify_ (\mails -> mailsOf sendRequest <> mails) store
-                response # writeHead_ 202 (unsafeToForeign {})
-                response # end__ # void
+                response # reply 200 "application/json" "{\"MessageId\":\"stub\"}"
             Nothing -> response # reply 400 "text/plain" "Not a mail send request")
         # void
     Just "GET", Just path | Just to <- stripPrefix (Pattern "/mail?to=") path >>= decodeURIComponent -> do

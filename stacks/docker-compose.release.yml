@@ -34,7 +34,7 @@ services:
     restart: unless-stopped
     # Bash -c is necessary because of cd and &&, which are shell builtin commands.
     # --omit=dev: server.js bundles everything except bcrypt, pg and
-    # @sendgrid/mail, so the build toolchain has no place in this container.
+    # @aws-sdk/client-sesv2, so the build toolchain has no place in this container.
     command: >
       bash -c "cd /root/team-tavern/server &&
               npm ci --omit=dev &&
@@ -46,7 +46,8 @@ services:
       PGUSER: ${POSTGRES_USER:?}
       PGPASSWORD: ${POSTGRES_PASSWORD:?}
       PGDATABASE: ${POSTGRES_DB:?}
-      SENDGRID_API_KEY: ${SENDGRID_API_KEY:?}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:?}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:?}
       ADMIN_EMAIL: ${ADMIN_EMAIL:?}
     volumes:
       - ./server:/root/team-tavern/server

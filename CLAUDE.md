@@ -95,7 +95,7 @@ longest names a player can give.
 
 `build-client.sh` compiles Sass and bundles the client into `release/client/`
 under hashed file names. `build-server.sh` bundles the server into
-`release/server/server.js` with `bcrypt`, `pg` and `@sendgrid/mail` left
+`release/server/server.js` with `bcrypt`, `pg` and `@aws-sdk/client-sesv2` left
 external, and copies the root `package.json` beside it; the container installs
 that with `--omit=dev`, so the build toolchain never enters the image. It also
 bundles `DiscordStub/Main.purs` into `dist-test/discord-stub.js` and
@@ -132,7 +132,7 @@ git tag, so the first `up` on a machine builds it, and that takes a while.
 `run-development-stack.sh` runs the release as a server does, from
 `release/compose.yml`, passing `stacks/.env` with `--env-file` where a server
 has its `.env` beside the compose file. That file configures docker compose, and compose hands each
-container what it needs of it. Besides the database and SendGrid credentials it
+container what it needs of it. Besides the database and AWS credentials it
 names three host directories that are bind-mounted into the containers and live
 next to the repo, not in it:
 
@@ -156,7 +156,7 @@ a secure context, so nothing on the site needs HTTPS locally.
 
 `stacks/.env` is committed. The Postgres credentials in it are real, but the
 database is reachable only from inside the compose network, so they are
-usable only by someone already on the server. The SendGrid key is a
+usable only by someone already on the server. The AWS key pair is a
 placeholder; the real one lives in the production `.env` on the server and is
 not in the repo.
 
@@ -188,14 +188,14 @@ authorize URL itself, sending the browser straight back with such a token and
 the `state` the page sent, and checks the scope and redirect URI the page asked
 for.
 
-The test stack has no SendGrid either. Its `tt-mail` service runs
-`dist-test/mail-stub.js`, and `SENDGRID_API_URL` in `test.env` points the
-server's SendGrid client at it, so the server sends as production does. The stub
+The test stack has no SES either. Its `tt-mail` service runs
+`dist-test/mail-stub.js`, and `AWS_ENDPOINT_URL_SESV2` in `test.env` points the
+server's SES client at it, so the server sends as production does. The stub
 keeps every email and shows an address's mail at
 `http://localhost:8080/mail?to=<address>`, which `test.Caddyfile` routes on the
 site's origin, newest first, each email in a frame. A spec reads its player's
 email there and clicks the links in it, which are relative outside production
-and so open the test site. The development stack sets no `SENDGRID_API_URL`, and
+and so open the test site. The development stack sets no `AWS_ENDPOINT_URL_SESV2`, and
 its node log shows each email's text instead.
 
 Every Discord button sends the browser back to `/signin`, the one redirect URI
@@ -254,7 +254,7 @@ API within a few seconds.
 
 A server holds no checkout, only a release: `~/team-tavern` is `release/` as
 uploaded, plus the server's own `.env` beside `compose.yml`, which compose reads
-from there. That `.env` sets what `stacks/.env` does, with the real SendGrid key,
+from there. That `.env` sets what `stacks/.env` does, with the real AWS key pair,
 `ENVIRONMENT=production` (or `staging`) and no `CADDY_HTTP_PORT`. A release never
 carries one.
 
@@ -262,16 +262,21 @@ carries one.
 the index files last so no page names a script still on its way, and runs
 `docker compose up -d --force-recreate --remove-orphans` there. The files are
 bind-mounted, so recreating the containers is what picks them up. The nightly
-backup is `cron.txt`, run from the crontab of the user that owns the directory.
+backup is `cron.txt`, run from the crontab of the user that owns the directory:
+`backup-database.sh` mails a gzipped dump through SES, signing the request with
+curl's `--aws-sigv4`.
+
+Email goes out through SES in `eu-central-1`, where `teamtavern.net` is
+verified by the Easy DKIM records in its Namecheap DNS. The key pair is the IAM
+user `teamtavern-ses`'s, whose one policy lets it send only as
+`admin@teamtavern.net`, so every email the server and the backup send is from
+that address. SES keeps its account-level suppression list on for bounces and
+complaints, and Virtual Deliverability Manager shows their rates.
 
 ### Expected noise
 
 None of it is a bug to fix:
 
-- **`API key does not start with "SG."`** on node startup: `SENDGRID_API_KEY`
-  in `stacks/.env` and `stacks/test.env` is a placeholder. The development
-  stack logs its email rather than sending it, and the test stack sends to its
-  mail stub, which takes any key.
 - **`npm warn install-scripts ... bcrypt`** on node startup: npm skips the
   unapproved install script, and bcrypt does not need it because it ships
   Node-API prebuilds that `node-gyp-build` picks at require time.
@@ -301,7 +306,7 @@ branch builds against different code.
 checkout is the first thing to suspect when an import from those namespaces
 fails. Its own `src/CLAUDE.md` governs changes made there.
 
-The npm side is three runtime packages (`bcrypt`, `pg`, `@sendgrid/mail`) that
+The npm side is three runtime packages (`bcrypt`, `pg`, `@aws-sdk/client-sesv2`) that
 the server bundle leaves external, plus the build toolchain in devDependencies.
 
 ## How a request flows
@@ -370,14 +375,14 @@ redirects the old site's feed paths to the new ones by `legacy.game_map`.
   guide's URL for good. `updated` orders the guides and dates them in the
   sitemap, so it changes when a fact in the guide does, not for a typo.
 - Configuration is environment variables read once in `Server/Main.purs`
-  (`PG*`, `SENDGRID_API_KEY`, `ENVIRONMENT`, and `ADMIN_EMAIL`, where reports
-  of players are mailed), which the release's `compose.yml` hands the node
-  container from the stack's `.env`. `ENVIRONMENT` decides the cookie's
-  `Secure` and the origin of the links in an email. `DISCORD_API_URL` is
-  optional and defaults to Discord's own API; only `stacks/test.env` sets it.
-  `SENDGRID_API_URL` is optional too: without it, the development stack only
-  logs its email; with it, the server sends there. Only `stacks/test.env` sets
-  it. `WORKER_PERIOD` is optional as well:
+  (`PG*`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `ENVIRONMENT`, and
+  `ADMIN_EMAIL`, where reports of players are mailed), which the release's
+  `compose.yml` hands the node container from the stack's `.env`.
+  `ENVIRONMENT` decides the cookie's `Secure` and the origin of the links in an
+  email. `DISCORD_API_URL` is optional and defaults to Discord's own API; only
+  `stacks/test.env` sets it. `AWS_ENDPOINT_URL_SESV2` is optional too, and the
+  SES client reads it itself: without it, the development stack only logs its
+  email; with it, the server sends there. Only `stacks/test.env` sets it. `WORKER_PERIOD` is optional as well:
   the seconds between the worker's runs, an hour unless `stacks/test.env`'s 2.
 - `Server/Worker.purs` runs in the node process on that period. Each run gives
   the posts that have entered their last week their expiry notification and

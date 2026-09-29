@@ -1,17 +1,47 @@
 #!/bin/bash
+# Emails a gzipped dump of the database through SES, as admin@teamtavern.net,
+# the one sender the IAM user's policy allows.
+set -o pipefail
 # UTC ISO timestamp for file name.
 DATETIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-# Dump database, gzip it, encode it in base64 and store it in variable.
-BACKUP_BASE64=$(docker exec tt-postgres pg_dump --username "$POSTGRES_USER" "$POSTGRES_DB" | gzip -c | base64 -w 0)
-# Prepare JSON body for Sendgrid API.
-DATA='{"personalizations": [{"to": [{"email": "branimir.klaric.bk@gmail.com"}]}],"from": {"email": "backup@teamtavern.net"},"subject":"Database backup '$DATETIME'","content": [{"type": "text/plain","value": "Database backup."}], "attachments": [{"content": "'$BACKUP_BASE64'", "type": "application/gzip", "filename": "'$DATETIME'-database-backup.sql.gz"}]}'
-# Write JSON body into a file.
-# We're doing this because curl complains if we pass it a large --data argument.
-# However, it can read --data from files just fine.
-echo $DATA > ~/database-backup-body
-# Call the Sendgrid API.
-curl --request POST \
-    --url https://api.sendgrid.com/v3/mail/send \
-    --header "authorization: Bearer $SENDGRID_API_KEY" \
+FROM="admin@teamtavern.net"
+TO="branimir.klaric.bk@gmail.com"
+BOUNDARY="database-backup-$DATETIME"
+# The raw email: a line of text and the dump attached. Its lines end in CRLF,
+# as email's do.
+message() {
+    printf '%s\r\n' \
+        "From: $FROM" \
+        "To: $TO" \
+        "Subject: Database backup $DATETIME" \
+        "MIME-Version: 1.0" \
+        "Content-Type: multipart/mixed; boundary=\"$BOUNDARY\"" \
+        "" \
+        "--$BOUNDARY" \
+        "Content-Type: text/plain; charset=utf-8" \
+        "" \
+        "Database backup." \
+        "" \
+        "--$BOUNDARY" \
+        "Content-Type: application/gzip" \
+        "Content-Disposition: attachment; filename=\"$DATETIME-database-backup.sql.gz\"" \
+        "Content-Transfer-Encoding: base64" \
+        ""
+    docker exec tt-postgres pg_dump --username "$POSTGRES_USER" "$POSTGRES_DB" \
+        | gzip -c | base64 -w 76 | sed 's/$/\r/'
+    printf '%s\r\n' "--$BOUNDARY--"
+}
+# SES's SendEmail request carries the raw email encoded once more. It goes
+# through a file because curl refuses a --data argument this large.
+{
+    printf '{"FromEmailAddress":"%s","Destination":{"ToAddresses":["%s"]},"Content":{"Raw":{"Data":"' "$FROM" "$TO"
+    message | base64 -w 0
+    printf '"}}}'
+} > ~/database-backup-body
+# Curl signs the request with the IAM user's key, as the AWS SDK would.
+curl --silent --show-error --fail-with-body \
+    --aws-sigv4 "aws:amz:eu-central-1:ses" \
+    --user "$AWS_ACCESS_KEY_ID:$AWS_SECRET_ACCESS_KEY" \
     --header 'Content-Type: application/json' \
-    --data @${HOME}/database-backup-body
+    --data @${HOME}/database-backup-body \
+    https://email.eu-central-1.amazonaws.com/v2/email/outbound-emails

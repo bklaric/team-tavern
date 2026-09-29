@@ -19,7 +19,7 @@ import TeamTavern.Server.Infrastructure.GenerateNonce (toString)
 import TeamTavern.Server.Infrastructure.Log (logError, logStamped)
 import TeamTavern.Server.Infrastructure.Postgres (queryMany_)
 import TeamTavern.Server.Infrastructure.Response (InternalTerror_)
-import TeamTavern.Server.Main (createPostgresPool, loadEnvironment, loadMailer, setSendGridApiKey)
+import TeamTavern.Server.Main (createPostgresPool, loadEnvironment, loadMailer)
 import TeamTavern.Server.Player.Infrastructure.SendConfirmation (Confirmation, addConfirmation)
 
 -- | The one email of the relaunch (brief 12). Every player the import brought
@@ -79,7 +79,7 @@ send mailer pool { id, nickname, email } = do
     nonce <- addConfirmation pool id email
     deliver mailer $ relaunchEmail { email, nickname, nonce }
 
--- | One at a time, so SendGrid sees a trickle; a failure is logged and the
+-- | One at a time, so SES sees a trickle; a failure is logged and the
 -- | rest go on.
 sendAll :: Mailer -> Pool -> Array Recipient -> Async (InternalTerror_ ()) Int
 sendAll mailer pool recipients = recipients # traverse sendOne <#> sum
@@ -102,8 +102,7 @@ main :: Effect Unit
 main = either (\error -> log error *> exit 1) pure =<< runExceptT do
     environment <- loadEnvironment
     pool <- createPostgresPool
-    setSendGridApiKey
-    mailer <- lift $ loadMailer environment
+    mailer <- loadMailer environment
     sending' <- lift sending
     lift $ runSafeAsync pure (alwaysRightWithEffect
         (\error -> logError "Error in the relaunch email" error *> exit 1)
