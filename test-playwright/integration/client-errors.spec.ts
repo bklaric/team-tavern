@@ -49,7 +49,7 @@ test("a failure the page handles is not reported", async ({ page }) => {
     const reports = collectReports(page);
 
     await page.goto("/");
-    await expect(page.locator(".cover-grid .cover")).toHaveCount(10);
+    await expect(page.locator(".cover-grid .cover")).toHaveCount(11);
     await submitPasswordSignIn(page, "NewTester", "wrong-password");
     await expect(page.getByText("Entered password is incorrect.")).toBeVisible();
 

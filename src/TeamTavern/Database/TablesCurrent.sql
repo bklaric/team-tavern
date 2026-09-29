@@ -69,6 +69,10 @@ create table player
 
     , registered timestamptz not null default current_timestamp
 
+    -- A contact like those above. It sits last because a column added to a
+    -- live table can only go at the end, and this schema has to match one.
+    , marvel_rivals_username text
+
     , constraint player_identity_check check (num_nonnulls(password_hash, discord_id) = 1)
     );
 
@@ -131,7 +135,7 @@ create table game_contact
     , primary key (game_id, kind)
     , constraint game_contact_kind_check check (kind in
         ('discord', 'steam', 'riot', 'battle_tag', 'ea'
-        , 'ubisoft', 'psn', 'gamer_tag', 'friend_code'))
+        , 'ubisoft', 'marvel_rivals', 'psn', 'gamer_tag', 'friend_code'))
     );
 
 create table field

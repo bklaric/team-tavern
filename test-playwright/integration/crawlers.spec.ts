@@ -3,10 +3,10 @@ import { expectPage, postPath } from "../pages";
 
 const googlebot = "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)";
 
-// `Database/Seed/Games/` seeds the ten games of the catalogue.
+// `Database/Seed/Games/` seeds the eleven games of the catalogue.
 const handles = [
     "apex-legends", "counter-strike-2", "dota-2", "heroes-of-the-storm", "league-of-legends",
-    "overwatch", "rainbow-six-siege", "team-fortress-2", "valheim", "valorant",
+    "marvel-rivals", "overwatch", "rainbow-six-siege", "team-fortress-2", "valheim", "valorant",
 ];
 
 // The site's own pages, which the footer links from every page.
@@ -14,7 +14,7 @@ const sitePages = ["/guides", "/about", "/contact", "/terms", "/privacy"];
 
 const guidePath = "/guides/join-an-esports-team";
 
-const guidePaths = [guidePath, "/guides/make-an-esports-team"];
+const guidePaths = [guidePath, "/guides/make-an-esports-team", "/guides/marvel-rivals-championship-team"];
 
 // Neither robots nor the sitemap is a page, so Caddy answers a bot with the file itself
 // rather than with a render of it.

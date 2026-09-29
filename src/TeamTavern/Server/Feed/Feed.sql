@@ -512,6 +512,7 @@ select
                 when 'battle_tag' then owner.battle_tag
                 when 'ea' then owner.ea_id
                 when 'ubisoft' then owner.ubisoft_username
+                when 'marvel_rivals' then owner.marvel_rivals_username
                 when 'psn' then owner.psn_id
                 when 'gamer_tag' then owner.gamer_tag
                 when 'friend_code' then owner.friend_code
@@ -532,6 +533,7 @@ select
             when 'battle_tag' then owner.battle_tag
             when 'ea' then owner.ea_id
             when 'ubisoft' then owner.ubisoft_username
+            when 'marvel_rivals' then owner.marvel_rivals_username
             when 'psn' then owner.psn_id
             when 'gamer_tag' then owner.gamer_tag
             when 'friend_code' then owner.friend_code

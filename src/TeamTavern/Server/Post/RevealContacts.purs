@@ -15,7 +15,7 @@ import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
 import TeamTavern.Server.Infrastructure.Error (elaborate)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstNotFound)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
-import TeamTavern.Server.Post.Infrastructure.ContactAccount (contactAccount)
+import TeamTavern.Server.Post.Infrastructure.ContactAccount (contactAccount, contactOrder)
 
 -- A reveal counts only where it shows something, and never the owner's own.
 revealQuery :: Query
@@ -26,7 +26,7 @@ revealQuery = Query $ """
             post.player_id,
             coalesce((
                 select jsonb_agg(jsonb_build_object('kind', game_contact.kind, 'value', account)
-                    order by game_contact.kind <> 'discord', game_contact.kind)
+                    order by """ <> contactOrder "game_contact.kind" <> """)
                 from game_contact
                 cross join lateral (select """ <> contactAccount "owner" "game_contact.kind" <> """ as account) accounts
                 where game_contact.game_id = post.game_id

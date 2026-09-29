@@ -11,7 +11,7 @@ Most guides to this are careers pieces. They tell you to practise, stream and ne
 
 ## What an esports team is below pro level
 
-An amateur esports team is a group of five players (three in Apex Legends, six or nine in Team Fortress 2) that plays together on a fixed schedule, in its game's team tournament, in a league, or in scrims. Scrims are practice matches against another team, arranged between the two teams.
+An amateur esports team is a group of five players (three in Apex Legends, six in Marvel Rivals, six or nine in Team Fortress 2) that plays together on a fixed schedule, in its game's team tournament, in a league, or in scrims. Scrims are practice matches against another team, arranged between the two teams.
 
 Teams come in three kinds:
 
@@ -101,6 +101,7 @@ Most team formats set a bar for your account, and some cost money. Check yours b
 | **League of Legends: Clash**, 5 players | Level 30, ranked placements this year or last, SMS on a mobile number, and a ticket each, for Blue Essence or RP or from the Clash mission | 12 weekends in 2026 |
 | **Dota 2: Battle Cup**, 5 players | Dota Plus, or a $0.99 ticket | Weekly |
 | **Overwatch: FACEIT open qualifier**, 5 players | – | At the start of each OWCS season, in NA and EMEA |
+| **Marvel Rivals: the Championship**, 6–12 players | Platinum 3 in the season's Competitive, and every member on one platform | Once a season |
 | **Counter-Strike 2: ESEA**, 5 players | – | Seasons |
 | **Apex Legends: ALGS Challenger Circuit**, 3 players | – | Open tournaments in each split |
 | **Rainbow Six Siege: Siege Cup**, 5 players | The paid game, not free access | – |
@@ -138,6 +139,12 @@ Clash doesn't lead to pro play. Teams that want more than Clash play scrims and 
 <img class="guide-cover" src="/images/games/400/overwatch.webp" alt="" width="400" height="600" loading="lazy"> Overwatch has no in-game group finder, so teams form outside the game. The open path to the top runs through FACEIT. Under [Blizzard's OWCS rules](https://esports.overwatch.com/en-us/news/owcs-2026-season-competitive-details), each season in North America and EMEA starts with an open qualifier there, and between stages the top two teams of the FACEIT League Master Division play the bottom two OWCS teams for their places.
 
 [Overwatch players and groups on TeamTavern](/games/overwatch)
+
+### Marvel Rivals: the Championship
+
+<img class="guide-cover" src="/images/games/400/marvel-rivals.webp" alt="" width="400" height="600" loading="lazy"> The Marvel Rivals Championship is the game's own tournament, run once a season from the Tournament tab. A team is a Faction of six to twelve players on one platform, and [NetEase's Season 7 rules](https://www.marvelrivals.com/Marvel_Rivals_Championship_S7_Tournament_Rules_V1.7_EN.pdf) require every member to reach Platinum 3 in that season's Competitive before the Faction registers, after which its roster is locked until it's out. On PC the Championship leads to Ignite, the pro circuit, while console Factions play a Championship of their own. [How to build a Marvel Rivals Championship team](/guides/marvel-rivals-championship-team) covers the rules, who you can queue ranked with and how to recruit a Faction.
+
+[Marvel Rivals players and groups on TeamTavern](/games/marvel-rivals)
 
 ### Counter-Strike 2
 
@@ -193,6 +200,7 @@ Pro teams recruit from the top of the same ladders amateur teams play on, and ea
 - **Valorant:** Premier's Invite division, then Challengers. [Riot says](https://competitiveops.riotgames.com/en-US/VALORANT) Premier had sent over 40 teams into Challengers by 2024.
 - **Counter-Strike 2:** ESEA, then ESL Challenger League, two teams per region each season, then the VRS invitations to the bigger events.
 - **Overwatch:** the FACEIT League, then promotion matches against the bottom OWCS teams.
+- **Marvel Rivals:** the Championship on PC, then the Annual Qualifier for Ignite's Pro Circuit, for the top Factions and the Champion Points leaders.
 - **Apex Legends:** the Challenger Circuit, then the Pro League Qualifier, then the Pro League.
 - **Rainbow Six Siege:** the Challenger Series, then the regional league.
 
