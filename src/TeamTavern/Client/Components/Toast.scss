@@ -1,10 +1,12 @@
 /* Toasts: a line at the bottom of the screen after an action, with Undo where
-   it can be undone. */
+   it can be undone. They clear the 90 px sticky ad on the window's floor,
+   which covers anything under it, on every page, since a unit may not fill
+   and a page can't tell. */
 
 .toasts {
     position: fixed;
     left: 50%;
-    bottom: var(--space-6);
+    bottom: calc(90px + var(--space-6));
     z-index: 50;
     display: flex;
     flex-direction: column;
