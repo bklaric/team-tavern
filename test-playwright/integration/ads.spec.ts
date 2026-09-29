@@ -42,6 +42,8 @@ const fakeVenatus = `(() => {
 
 const feedPath = "/games/valorant";
 
+const guidePath = "/guides/join-an-esports-team";
+
 const unit = (page: Page, name: string) => page.locator(`[data-fake-ad="${name}"]`);
 
 async function openFeed(page: Page) {
@@ -123,6 +125,35 @@ test.describe("the ads", () => {
         await expect(unit(page, "horizontal_sticky")).toHaveCount(1);
     });
 
+    test("are the same on the guides and on a guide, around its column", async ({ page }) => {
+        await page.setViewportSize({ width: 1280, height: 900 });
+        await page.goto("/guides");
+        await expect(page.getByRole("heading", { name: "Guides", level: 1 })).toBeVisible();
+        await expect(unit(page, "skyscraper")).toHaveCount(2);
+        await expect(unit(page, "desktop_takeover")).toBeVisible();
+        await expect(unit(page, "horizontal_sticky")).toBeVisible();
+
+        await page.getByRole("link", { name: "How to join an esports team" }).click();
+        await expectPage(page, guidePath);
+        const heading = page.getByRole("heading", { name: "How to join an esports team", level: 1 });
+        await expect(heading).toBeVisible();
+
+        await expect(unit(page, "skyscraper")).toHaveCount(2);
+        await expect(unit(page, "desktop_takeover")).toBeVisible();
+        await expect(unit(page, "horizontal_sticky")).toBeVisible();
+
+        const column = await box(page, ".document");
+        const left = await box(page, ".ad-rail-left [data-fake-ad]");
+        const right = await box(page, ".ad-rail-right [data-fake-ad]");
+        const middle = await page.evaluate(() => document.documentElement.clientWidth / 2);
+        expect(Math.abs(column.x + column.width / 2 - middle)).toBeLessThanOrEqual(1);
+        expect(left.x + left.width).toBeLessThanOrEqual(column.x);
+        expect(right.x).toBeGreaterThanOrEqual(column.x + column.width);
+
+        const takeover = await box(page, "[data-fake-ad=desktop_takeover]");
+        expect(takeover.y + takeover.height).toBeLessThanOrEqual((await heading.boundingBox())!.y);
+    });
+
     test("leave with the page, and the home page has none", async ({ page }) => {
         await page.setViewportSize({ width: 1280, height: 900 });
         await openFeed(page);
@@ -151,5 +182,13 @@ test.describe("the ads on a phone", () => {
         await page.keyboard.press("Escape");
         await expect(page.getByRole("dialog", { name: "Tell us about you" })).toHaveCount(0);
         await expect(unit(page, "mobile_horizontal_sticky")).toBeVisible();
+    });
+
+    test("are the same one sticky on a guide", async ({ page }) => {
+        await page.goto(guidePath);
+        await expect(page.getByRole("heading", { name: "How to join an esports team", level: 1 })).toBeVisible();
+
+        await expect(unit(page, "mobile_horizontal_sticky")).toBeVisible();
+        await expect(page.locator("[data-fake-ad]")).toHaveCount(1);
     });
 });

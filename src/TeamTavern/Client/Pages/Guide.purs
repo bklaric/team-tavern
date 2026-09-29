@@ -16,6 +16,7 @@ import Halogen.HTML as HH
 import Halogen.HTML.Events as HE
 import Halogen.HTML.Properties as HP
 import Halogen.Hooks as Hooks
+import TeamTavern.Client.Components.Ads as Ads
 import TeamTavern.Client.Pages.Document (document, longDate)
 import TeamTavern.Client.Pages.Placeholder (placeholder)
 import TeamTavern.Client.Script.Meta (setGuideData, setMeta)
@@ -81,7 +82,7 @@ component = Hooks.component \_ slug -> Hooks.do
         Loading -> HH.div_ []
         Missing -> placeholder "Page could not be found."
         Failed -> placeholder "There has been an error loading the guide."
-        Shown { heading, updated, html } ->
+        Shown { heading, updated, html } -> Ads.around $
             document { title: heading, updated: Just $ longDate updated }
             [ HH.div [ HS.class_ "guide", HP.prop (HH.PropName "innerHTML") html, HE.onClick followLink ] [] ]
 

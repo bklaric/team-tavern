@@ -11,6 +11,7 @@ import Data.Variant (onMatch)
 import Halogen as H
 import Halogen.HTML as HH
 import Halogen.Hooks as Hooks
+import TeamTavern.Client.Components.Ads as Ads
 import TeamTavern.Client.Pages.Document (document, link, longDate)
 import TeamTavern.Client.Script.RenderReady (appendRenderReadyUnavailable)
 import TeamTavern.Client.Shared.Fetch (fetchSimple)
@@ -36,7 +37,7 @@ component = Hooks.component \_ _ -> Hooks.do
                     Hooks.put pageId Failed
         pure Nothing
 
-    Hooks.pure $ document { title: "Guides", updated: Nothing } $
+    Hooks.pure $ Ads.around $ document { title: "Guides", updated: Nothing } $
         [ HH.p_ [ HH.text "How to find people to play with: joining a team, making one, and the team formats each game plays." ] ]
         <> case page of
             Loading -> []

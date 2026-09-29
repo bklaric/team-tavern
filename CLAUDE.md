@@ -430,7 +430,7 @@ redirects the old site's feed paths to the new ones by `legacy.game_map`.
   elements by position, and a click aimed at one item lands on whichever took
   its place.
 - Ads are Venatus units. `Ads.around` in `Client/Components/Ads.purs` places
-  a page's units around its content, on the feed and a post's page. Every unit
+  a page's units around its content, on the feed, a post's page, the guides and each guide. Every unit
   goes through the `self.__VM` queue, which `Ads.js` creates when no ad
   script has, since the prerender shell loads none.
 - A list that refetches while the page is open carries `aria-busy`, true from
