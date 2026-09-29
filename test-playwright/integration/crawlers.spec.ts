@@ -160,6 +160,38 @@ for (const [name, userAgent] of aiCrawlers)
         });
     });
 
+// A link pasted into a chat or a post is previewed from the page a bot fetches, and a
+// search engine's testing tool reads the page as its crawler does. None of them runs
+// scripts, so each is served the render, whose share tags are the post's.
+const previewBots = [
+    ["Reddit", "Mozilla/5.0 (compatible; redditbot/1.0; +http://www.reddit.com/feedback)"],
+    ["Steam chat", "Valve/Steam HTTP Client 1.0 (SteamChatURLLookup)"],
+    ["Bluesky", "Mozilla/5.0 (compatible; Bluesky Cardyb/1.1; +mailto:support@bsky.app)"],
+    ["Mastodon", "http.rb/5.1.1 (Mastodon/4.2.10; +https://mastodon.social/)"],
+    ["Iframely", "Iframely/1.3.1 (+https://iframely.com/docs/about)"],
+    ["Teams", "Mozilla/5.0 (Windows NT 6.1; WOW64) SkypeUriPreview Preview/0.5 skype-url-preview@microsoft.com"],
+    ["Google-InspectionTool", "Mozilla/5.0 (compatible; Google-InspectionTool/1.0)"],
+    ["DuckDuckBot", "DuckDuckBot/1.1; (+http://duckduckgo.com/duckduckbot.html)"],
+];
+
+for (const [name, userAgent] of previewBots)
+    test.describe(name, () => {
+        test.use({ userAgent, javaScriptEnabled: false });
+
+        test("is served a post prerendered, with its share tags", async ({ page, browser, baseURL }) => {
+            test.slow();
+            const nightOwls = await postPath(browser, baseURL!, "/games/valorant", "Night Owls");
+
+            const response = await page.goto(nightOwls, { timeout: 60_000 });
+
+            expect(response?.status()).toBe(200);
+            await expect(page.locator('meta[property="og:title"]'))
+                .toHaveAttribute("content", "Night Owls · Valorant group | TeamTavern");
+            await expect(page.locator('meta[property="og:image"]'))
+                .toHaveAttribute("content", /\/images\/games\/valorant\.webp$/);
+        });
+    });
+
 // The old site's feeds were a game's players and its teams, under handles some of which
 // have changed. Each is the game's one feed now.
 const oldFeeds = [
@@ -324,13 +356,21 @@ test("a page drops the structured data of the page before it", async ({ page }) 
 test.describe("a page's share image", () => {
     test.use({ userAgent: googlebot, javaScriptEnabled: false });
 
-    const expectImage = async (page: Page, path: string, alt: string) => {
+    type Image = { path: string, alt: string, width: string, height: string, type: string };
+
+    const cover: Image =
+        { path: "/images/games/valorant.webp", alt: "Valorant cover", width: "600", height: "900", type: "image/webp" };
+
+    const expectImage = async (page: Page, image: Image) => {
         for (const name of ["og:image", "twitter:image"]) {
             const content = await page.locator(`meta[property="${name}"], meta[name="${name}"]`).getAttribute("content");
-            expect(new URL(content!).pathname).toBe(path);
+            expect(new URL(content!).pathname).toBe(image.path);
         }
-        await expect(page.locator('meta[property="og:image:alt"]')).toHaveAttribute("content", alt);
-        await expect(page.locator('meta[name="twitter:image:alt"]')).toHaveAttribute("content", alt);
+        await expect(page.locator('meta[property="og:image:alt"]')).toHaveAttribute("content", image.alt);
+        await expect(page.locator('meta[name="twitter:image:alt"]')).toHaveAttribute("content", image.alt);
+        await expect(page.locator('meta[property="og:image:width"]')).toHaveAttribute("content", image.width);
+        await expect(page.locator('meta[property="og:image:height"]')).toHaveAttribute("content", image.height);
+        await expect(page.locator('meta[property="og:image:type"]')).toHaveAttribute("content", image.type);
     };
 
     test("is the game's cover on its feed and its posts", async ({ page, browser, baseURL }) => {
@@ -338,10 +378,10 @@ test.describe("a page's share image", () => {
         const nightOwls = await postPath(browser, baseURL!, "/games/valorant", "Night Owls");
 
         await page.goto("/games/valorant", { timeout: 60_000 });
-        await expectImage(page, "/images/games/valorant.webp", "Valorant cover");
+        await expectImage(page, cover);
 
         await page.goto(nightOwls, { timeout: 60_000 });
-        await expectImage(page, "/images/games/valorant.webp", "Valorant cover");
+        await expectImage(page, cover);
     });
 
     test("is the logo on a page of the site's own", async ({ page }) => {
@@ -349,7 +389,8 @@ test.describe("a page's share image", () => {
 
         await page.goto("/about", { timeout: 60_000 });
 
-        await expectImage(page, "/logo-512.png", "TeamTavern logo");
+        await expectImage(page,
+            { path: "/logo-512.png", alt: "TeamTavern logo", width: "512", height: "512", type: "image/png" });
     });
 });
 

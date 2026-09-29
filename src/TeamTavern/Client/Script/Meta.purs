@@ -59,21 +59,29 @@ setMetaUrl = do
     setLink "hreflang-en" url
     setLink "hreflang-default" url
 
--- | The image a shared link shows, at a path on the site's origin.
-setMetaImage :: ∀ monad. MonadEffect monad => String -> String -> monad Unit
-setMetaImage path alt = liftEffect do
+-- | The image a shared link shows, at a path on the site's origin. Its size
+-- | lets a preview lay out the image before it has fetched it.
+setMetaImage :: ∀ monad. MonadEffect monad =>
+    { path :: String, alt :: String, width :: Int, height :: Int, type_ :: String } -> monad Unit
+setMetaImage { path, alt, width, height, type_ } = liftEffect do
     origin' <- window >>= location >>= origin
     setMetaContent (origin' <> path) "meta-twitter-image"
     setMetaContent (origin' <> path) "meta-og-image"
     setMetaContent alt "meta-twitter-image-alt"
     setMetaContent alt "meta-og-image-alt"
+    setMetaContent (show width) "meta-og-image-width"
+    setMetaContent (show height) "meta-og-image-height"
+    setMetaContent type_ "meta-og-image-type"
 
 setLogoImage :: ∀ monad. MonadEffect monad => monad Unit
-setLogoImage = setMetaImage "/logo-512.png" "TeamTavern logo"
+setLogoImage = setMetaImage
+    { path: "/logo-512.png", alt: "TeamTavern logo", width: 512, height: 512, type_: "image/png" }
 
--- | A game's cover, for its feed and its posts.
+-- | A game's cover, for its feed and its posts, at the size `build-covers.mjs`
+-- | holds every cover to.
 setCoverImage :: ∀ monad fields. MonadEffect monad => { handle :: String, title :: String | fields } -> monad Unit
-setCoverImage { handle, title } = setMetaImage (coverPath handle) (title <> " cover")
+setCoverImage { handle, title } = setMetaImage
+    { path: coverPath handle, alt: title <> " cover", width: 600, height: 900, type_: "image/webp" }
 
 setMetaRobots :: ∀ monad. MonadEffect monad => String -> monad Unit
 setMetaRobots content = liftEffect $ setMetaContent content "meta-robots"
