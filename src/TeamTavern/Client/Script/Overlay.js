@@ -4,6 +4,10 @@ const open = [];
 
 // Every modal overlay locks the page's scroll, and the page scrolls again only
 // once the last of them lets go. The page hears of both, as `modalchange`.
+// The lock is a class rather than the body's inline style, which Google's
+// interstitial saves as it opens and writes back as it closes: a link in a
+// phone's menu opens the ad and closes the menu under it, and the style
+// written back would lock the page with no overlay left to let go.
 let scrollLocks = 0;
 
 const announceModal = open => {
@@ -105,7 +109,7 @@ export const hold = layer => modal => onClose => () => {
 
     const taken = modal ? inertAround(layer) : [];
     if (modal && scrollLocks++ === 0) {
-        document.body.style.overflow = "hidden";
+        document.body.classList.add("scroll-locked");
         announceModal(true);
     }
     if (!modal) {
@@ -198,7 +202,7 @@ export const hold = layer => modal => onClose => () => {
         open.splice(open.indexOf(entry), 1);
         taken.forEach(element => { element.inert = false; });
         if (modal && --scrollLocks === 0) {
-            document.body.style.overflow = "";
+            document.body.classList.remove("scroll-locked");
             announceModal(false);
         }
         // Focus goes back to the opener unless the player has put it

@@ -103,6 +103,12 @@
     }
 }
 
+/* The page behind a modal overlay, which `Overlay.js` holds still. */
+
+.scroll-locked {
+    overflow: hidden;
+}
+
 /* The layer holding an overlay and its backdrop takes no box of its own. */
 
 .overlay-layer {
