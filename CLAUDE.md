@@ -246,7 +246,7 @@ the email spec. For the worker's email, `FitsTester` (`fits@example.com`) has an
 expired Apex Legends post that fits ApexLegendsTester's once renewed, and
 `ExpiringTester` (`expiring@example.com`) a player post and the community Night
 Shift in Team Fortress 2, both in their last week. All share the password, and
-all are confirmed. `Seed/Games/` carries all ten production games, so every
+all are confirmed. `Seed/Games/` carries every production game, so every
 game handle the site serves has a page with content. A cold boot answers on the
 API within a few seconds.
 

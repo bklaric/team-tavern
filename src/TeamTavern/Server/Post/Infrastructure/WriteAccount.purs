@@ -25,6 +25,7 @@ queryString = Query """
         battle_tag = coalesce($6::jsonb->>'battle_tag', battle_tag),
         ea_id = coalesce($6::jsonb->>'ea', ea_id),
         ubisoft_username = coalesce($6::jsonb->>'ubisoft', ubisoft_username),
+        marvel_rivals_username = coalesce($6::jsonb->>'marvel_rivals', marvel_rivals_username),
         psn_id = coalesce($6::jsonb->>'psn', psn_id),
         gamer_tag = coalesce($6::jsonb->>'gamer_tag', gamer_tag),
         friend_code = coalesce($6::jsonb->>'friend_code', friend_code)

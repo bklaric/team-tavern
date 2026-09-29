@@ -29,6 +29,7 @@ accountQuery = Query """
             'battle_tag', player.battle_tag,
             'ea', player.ea_id,
             'ubisoft', player.ubisoft_username,
+            'marvel_rivals', player.marvel_rivals_username,
             'psn', player.psn_id,
             'gamer_tag', player.gamer_tag,
             'friend_code', player.friend_code

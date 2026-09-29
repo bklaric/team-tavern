@@ -12,10 +12,8 @@ import TeamTavern.Server.Infrastructure.Cookie (Cookies)
 import TeamTavern.Server.Infrastructure.EnsureSignedIn (ensureSignedIn)
 import TeamTavern.Server.Infrastructure.Postgres (queryFirstInternal)
 import TeamTavern.Server.Infrastructure.SendResponse (sendResponse)
-import TeamTavern.Server.Post.Infrastructure.ContactAccount (contactAccount)
+import TeamTavern.Server.Post.Infrastructure.ContactAccount (contactAccount, contactOrder)
 
--- The contact kinds in the order the page asks for them: Discord, which every
--- game offers, then the game accounts, then the consoles'.
 accountQuery :: Query
 accountQuery = Query $ """
     select
@@ -30,9 +28,7 @@ accountQuery = Query $ """
                     'value', """ <> contactAccount "player" "offered.kind" <> """,
                     'games', offered.games,
                     'everyGame', offered.every_game
-                ) order by array_position(
-                    array['discord', 'riot', 'battle_tag', 'ea', 'ubisoft', 'steam', 'psn', 'gamer_tag', 'friend_code'],
-                    offered.kind))
+                ) order by """ <> contactOrder "offered.kind" <> """)
             from (
                 select
                     game_contact.kind,

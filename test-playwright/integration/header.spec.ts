@@ -32,7 +32,7 @@ test.describe("Games", () => {
         await page.getByRole("button", { name: "Games" }).click();
 
         const games = page.getByRole("dialog", { name: "Games" });
-        await expect(games.getByRole("link")).toHaveCount(10);
+        await expect(games.getByRole("link")).toHaveCount(11);
         await expect(games.getByRole("link", { name: /^Valorant/ })).toContainText("Your post");
         await expect(games.locator(".cover-mark")).toHaveCount(1);
     });

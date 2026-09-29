@@ -72,6 +72,16 @@ test.describe("the contact panel", () => {
         await expect(dialog.getByRole("button", { name: "Send" })).toHaveClass(/button-outline/);
     });
 
+    // Marvel Rivals offers Discord, its own account and both consoles' accounts.
+    test("lists Discord, then the game's own account, then the platforms'", async ({ page }) => {
+        await signIn(page, "new@example.com");
+        await openFeed(page, "marvel-rivals");
+        const dialog = await openPanel(page, "MarvelRivalsTester");
+
+        await expect(dialog.locator(".contact-label")).toHaveText(
+            ["Discord", "Marvel Rivals username", "PSN ID", "Xbox gamertag"]);
+    });
+
     test("makes a community's invite or website the one filled button", async ({ page }) => {
         await signIn(page, "new@example.com");
         await openFeed(page, "valorant");
